@@ -124,6 +124,11 @@ pub enum Op {
         fill: Option<Rgba>,
         mode: Mode,
     },
+    /// v2: move a layer within the stack; index 0 is the bottom layer.
+    LayerReorder {
+        layer: LayerRef,
+        to_index: usize,
+    },
     /// v2: text in the built-in bitmap font, laid out from its top-left corner.
     Text {
         layer: LayerRef,
@@ -223,7 +228,11 @@ fn op(v: &Value, version: u8) -> Result<Op> {
     if version < 2
         && matches!(
             name,
-            "raster.stroke_path" | "raster.flood_fill" | "raster.shape" | "raster.text"
+            "raster.stroke_path"
+                | "raster.flood_fill"
+                | "raster.shape"
+                | "raster.text"
+                | "layer.reorder"
         )
     {
         return Err(bad(format!(
@@ -314,6 +323,13 @@ fn op(v: &Value, version: u8) -> Result<Op> {
                 stroke,
                 fill,
                 mode: mode(&o["mode"])?,
+            }
+        }
+        "layer.reorder" => {
+            let o = obj(v, &["op", "layer_ref", "to_index"], &[])?;
+            Op::LayerReorder {
+                layer: layer_ref(&o["layer_ref"])?,
+                to_index: int_in(&o["to_index"], 0, 99_999, "to_index")? as usize,
             }
         }
         "raster.text" => {

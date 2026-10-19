@@ -258,6 +258,17 @@ impl Stage<'_> {
                     *target = None;
                 }
             }
+            Op::LayerReorder { layer, to_index } => {
+                let id = self.resolve(layer)?;
+                if *to_index >= self.doc.roots.len() {
+                    return Err(Error::new(
+                        ErrorCode::InputSchema,
+                        "to_index is beyond the top of the stack",
+                    ));
+                }
+                self.doc.roots.retain(|r| *r != id);
+                self.doc.roots.insert(*to_index, id);
+            }
             Op::LayerSetProperties {
                 layer,
                 name,

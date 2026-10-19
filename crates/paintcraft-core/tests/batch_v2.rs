@@ -511,3 +511,60 @@ fn unsupported_text_fails_the_whole_batch_naming_the_character() {
     .unwrap_err();
     assert_eq!(e.code, ErrorCode::InputSchema, "text is v2 only");
 }
+
+#[test]
+fn reordering_layers_changes_the_stack_and_the_render() {
+    let mut s = Session::new(new_document(2, 1, None, 0, POLICY).unwrap());
+    let add = |name: &str, c: &str| {
+        format!(
+            r##"{{"op":"layer.add","ref":"{name}","name":"{name}","width":2,"height":1,"origin":{{"x":0,"y":0}},"default_pixel":"{c}"}}"##
+        )
+    };
+    let r = run(
+        &mut s,
+        2,
+        &format!(
+            "[{},{},{}]",
+            add("red", "#FF0000FF"),
+            add("green", "#00FF00FF"),
+            add("blue", "#0000FFFF")
+        ),
+    )
+    .unwrap();
+    let (red, green, blue) = (r.aliases["red"], r.aliases["green"], r.aliases["blue"]);
+    let top = |s: &Session| s.document().roots.clone();
+    assert_eq!(top(&s), [red, green, blue]);
+    let image =
+        |s: &Session| paintcraft_core::render::render_flat(s.document()).unwrap()[..4].to_vec();
+    assert_eq!(image(&s), [0, 0, 255, 255]);
+    let move_to = |s: &mut Session, id: Uuid, i: usize| {
+        run(
+            s,
+            2,
+            &format!(
+                r#"[{{"op":"layer.reorder","layer_ref":{},"to_index":{i}}}]"#,
+                lref(id)
+            ),
+        )
+    };
+    assert!(move_to(&mut s, red, 2).unwrap().committed);
+    assert_eq!(top(&s), [green, blue, red]);
+    assert_eq!(image(&s), [255, 0, 0, 255], "red is now on top");
+    assert!(move_to(&mut s, red, 0).unwrap().committed);
+    assert_eq!(top(&s), [red, green, blue]);
+    assert!(
+        !move_to(&mut s, red, 0).unwrap().committed,
+        "already there: a no-op"
+    );
+    let e = move_to(&mut s, red, 3).unwrap_err();
+    assert_eq!(
+        (e.code, e.operation_index),
+        (ErrorCode::InputSchema, Some(0))
+    );
+    s.undo().unwrap();
+    assert_eq!(
+        top(&s),
+        [green, blue, red],
+        "undo restores the previous order"
+    );
+}
