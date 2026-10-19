@@ -6,14 +6,21 @@
 //! shortcuts push tokenized actions into the editor's outbox, which runs each
 //! activation once.
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use std::time::Duration;
 
 use eframe::egui::{self, Color32, Pos2, Rect, Sense, Vec2};
+use paintcraft_core::document::{hex, import_image};
 use paintcraft_core::execute::Selection;
 use paintcraft_core::render::render_flat;
+use paintcraft_formats::export::{self, KNOWN_LOSSES};
+use paintcraft_formats::image::{self, ImageFormat};
+use paintcraft_formats::recovery::{Found, Recovery};
+use paintcraft_formats::save;
 use paintcraft_types::Rgba;
 use paintcraft_ui::editor::{Action, Editor, Preview, ShapeStyle, Tool};
 use paintcraft_ui::view::View;
+use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
 /// Button and shortcut codes mixed into activation tokens.
@@ -32,7 +39,16 @@ const DEFAULT_SIZE: (u32, u32) = (320, 320);
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum Confirm {
     DiscardForNew,
+    DiscardForOpen(PathBuf),
     ReplaceFile(PathBuf),
+    QuitUnsaved,
+    /// Export to a flat image, naming what it would lose and whether it replaces a file.
+    Export {
+        path: PathBuf,
+        format: ImageFormat,
+        losses: Vec<String>,
+        exists: bool,
+    },
 }
 
 impl std::fmt::Debug for App {
@@ -58,6 +74,11 @@ pub struct App {
     canvas_rect: Option<Rect>,
     hover_doc: Option<(i64, i64)>,
     exit_after_frames: Option<u64>,
+    recovery_dir: Option<PathBuf>,
+    recoverable: Vec<Found>,
+    autosave_every: Duration,
+    last_autosave: f64,
+    allow_close: bool,
 }
 
 fn token(ctx: &egui::Context, code: u64) -> u64 {
@@ -74,40 +95,163 @@ fn token(ctx: &egui::Context, code: u64) -> u64 {
 
 impl App {
     pub fn new(path: Option<PathBuf>) -> App {
-        let (editor, bound) = match path.as_deref() {
-            Some(p) if p.exists() => match Editor::open(p) {
-                Ok(e) => (e, Some(p.to_path_buf())),
-                Err(e) => {
-                    let mut fresh = Editor::new_document(DEFAULT_SIZE.0, DEFAULT_SIZE.1)
-                        .expect("default size is valid");
-                    fresh.set_path(p.to_path_buf());
-                    eprintln!("cannot open {}: {e}", p.display());
-                    (fresh, None)
-                }
-            },
-            _ => (
-                Editor::new_document(DEFAULT_SIZE.0, DEFAULT_SIZE.1)
-                    .expect("default size is valid"),
-                None,
-            ),
-        };
-        let path_text = path.map_or_else(
+        let path_text = path.as_deref().map_or_else(
             || "untitled.pcnd".to_owned(),
             |p| p.to_string_lossy().into_owned(),
         );
-        App {
-            editor,
+        let mut app = App {
+            editor: Editor::new_document(DEFAULT_SIZE.0, DEFAULT_SIZE.1)
+                .expect("default size is valid"),
             texture: None,
             texture_key: None,
             rendered: Vec::new(),
             zoom: 1,
             path_text,
-            bound,
+            bound: None,
             confirm: None,
             canvas_rect: None,
             hover_doc: None,
             exit_after_frames: None,
+            recovery_dir: None,
+            recoverable: Vec::new(),
+            autosave_every: Duration::from_secs(5),
+            last_autosave: 0.0,
+            allow_close: false,
+        };
+        if let Some(p) = path.filter(|p| p.exists())
+            && let Err(e) = app.open_path(&p)
+        {
+            eprintln!("cannot open {}: {e}", p.display());
+            app.editor.set_path(p);
         }
+        app
+    }
+
+    /// Protect work with crash-recovery checkpoints in `dir`, and offer whatever an
+    /// earlier crashed session left behind.
+    pub fn with_recovery(mut self, dir: PathBuf) -> App {
+        self.recoverable = Recovery::scan(&dir);
+        self.recovery_dir = Some(dir);
+        self.attach_recovery();
+        self
+    }
+
+    fn attach_recovery(&mut self) {
+        if let Some(dir) = &self.recovery_dir {
+            match Recovery::start(dir) {
+                Ok(r) => self.editor.attach_recovery(r),
+                Err(e) => self
+                    .editor
+                    .set_status(format!("Crash recovery unavailable: {e}")),
+            }
+        }
+    }
+
+    pub fn autosave_every(mut self, every: Duration) -> App {
+        self.autosave_every = every;
+        self
+    }
+
+    pub fn set_path_text(&mut self, text: &str) {
+        self.path_text = text.to_owned();
+    }
+
+    /// Swap in a new editor; its predecessor's work was already saved or deliberately discarded.
+    fn install(&mut self, editor: Editor) {
+        self.editor.discard_checkpoint();
+        self.editor = editor;
+        self.texture_key = None;
+        self.attach_recovery();
+    }
+
+    /// Open a `.pcnd` document or import a PNG, BMP or JPEG picture.
+    fn open_path(&mut self, path: &Path) -> paintcraft_types::Result<()> {
+        let bytes = std::fs::read(path).map_err(|e| {
+            paintcraft_types::Error::new(
+                paintcraft_types::ErrorCode::StorageFailed,
+                format!("cannot read {}: {}", path.display(), e.kind()),
+            )
+        })?;
+        let (editor, bound, note) = if image::ImageFormat::sniff(&bytes).is_some() {
+            let img = image::decode(&bytes)?;
+            let doc = import_image(
+                img.width,
+                img.height,
+                &img.rgba,
+                &hex(&Sha256::digest(&bytes)),
+            )?;
+            let note = if img.losses.is_empty() {
+                format!("Imported {}", path.display())
+            } else {
+                format!(
+                    "Imported {} (not kept: {})",
+                    path.display(),
+                    img.losses.join(", ")
+                )
+            };
+            // A picture is a new document; it is not bound to the image file.
+            (Editor::with_document(doc, None), None, note)
+        } else {
+            let editor = Editor::open(path)?;
+            (
+                editor,
+                Some(path.to_path_buf()),
+                format!("Opened {}", path.display()),
+            )
+        };
+        self.install(editor);
+        self.bound = bound;
+        self.editor.set_status(note);
+        Ok(())
+    }
+
+    fn open_requested(&mut self) {
+        let path = PathBuf::from(self.path_text.trim());
+        if self.editor.is_dirty() {
+            self.confirm = Some(Confirm::DiscardForOpen(path));
+        } else if let Err(e) = self.open_path(&path) {
+            self.editor.set_status(format!("Cannot open: {e}"));
+        }
+    }
+
+    /// Plan an export to the format named by the file extension; losses and
+    /// replacement are confirmed before anything is written.
+    fn export_requested(&mut self) {
+        let path = PathBuf::from(self.path_text.trim());
+        let Some(format) = ImageFormat::from_extension(&path) else {
+            self.editor
+                .set_status("Name the file .png, .bmp or .jpg to export");
+            return;
+        };
+        let all: Vec<String> = KNOWN_LOSSES.iter().map(|l| (*l).to_owned()).collect();
+        match export::export_flat(self.editor.document(), format, 90, &all) {
+            Ok(plan) => {
+                self.confirm = Some(Confirm::Export {
+                    exists: path.exists(),
+                    path,
+                    format,
+                    losses: plan.losses,
+                })
+            }
+            Err(e) => self.editor.set_status(format!("Cannot export: {e}")),
+        }
+    }
+
+    fn do_export(&mut self, path: &Path, format: ImageFormat, losses: &[String]) {
+        let result = export::export_flat(self.editor.document(), format, 90, losses)
+            .map_err(|e| e.to_string());
+        let status = match result {
+            Ok(flat) => {
+                let outcome = save::save(path, &flat.bytes, true);
+                if outcome.is_success() {
+                    format!("Exported {}", path.display())
+                } else {
+                    format!("Not exported safely: {}", outcome.reasons.join("; "))
+                }
+            }
+            Err(e) => format!("Cannot export: {e}"),
+        };
+        self.editor.set_status(status);
     }
 
     /// Close the window after this many frames (smoke runs).
@@ -238,6 +382,12 @@ impl App {
             if ui.button("Save").clicked() {
                 self.save_requested(&ctx);
             }
+            if ui.button("Open").clicked() {
+                self.open_requested();
+            }
+            if ui.button("Export").clicked() {
+                self.export_requested();
+            }
             let file_label = ui.label("File");
             ui.add(egui::TextEdit::singleline(&mut self.path_text))
                 .labelled_by(file_label.id);
@@ -261,9 +411,8 @@ impl App {
 
     fn new_document(&mut self) {
         if let Ok(e) = Editor::new_document(DEFAULT_SIZE.0, DEFAULT_SIZE.1) {
-            self.editor = e;
+            self.install(e);
             self.bound = None;
-            self.texture_key = None;
         }
     }
 
@@ -390,10 +539,11 @@ impl App {
             return;
         };
         let ctx = ui.ctx().clone();
-        let (title, text) = match &confirm {
-            Confirm::DiscardForNew => (
+        let (title, text, go) = match &confirm {
+            Confirm::DiscardForNew | Confirm::DiscardForOpen(_) => (
                 "Discard changes?",
                 "The current document has unsaved changes.".to_owned(),
+                "Continue",
             ),
             Confirm::ReplaceFile(p) => (
                 "Replace file?",
@@ -401,7 +551,29 @@ impl App {
                     "{} already exists and is not this document's file.",
                     p.display()
                 ),
+                "Continue",
             ),
+            Confirm::QuitUnsaved => (
+                "Quit without saving?",
+                "There are unsaved changes. A recovery copy is kept and offered next time."
+                    .to_owned(),
+                "Quit anyway",
+            ),
+            Confirm::Export {
+                path,
+                format,
+                losses,
+                exists,
+            } => {
+                let mut t = format!("Export {} as {}.", path.display(), format.name());
+                if !losses.is_empty() {
+                    t += &format!("\nThis export loses: {}.", losses.join(", "));
+                }
+                if *exists {
+                    t += "\nThe file exists and will be replaced.";
+                }
+                ("Export", t, "Export now")
+            }
         };
         egui::Window::new(title)
             .collapsible(false)
@@ -410,15 +582,79 @@ impl App {
             .show(&ctx, |ui| {
                 ui.label(text);
                 ui.horizontal(|ui| {
-                    if ui.button("Continue").clicked() {
+                    if ui.button(go).clicked() {
                         match confirm {
                             Confirm::DiscardForNew => self.new_document(),
+                            Confirm::DiscardForOpen(p) => {
+                                if let Err(e) = self.open_path(&p) {
+                                    self.editor.set_status(format!("Cannot open: {e}"));
+                                }
+                            }
                             Confirm::ReplaceFile(p) => self.do_save(&ctx, p),
+                            Confirm::QuitUnsaved => {
+                                self.allow_close = true;
+                                ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                            }
+                            Confirm::Export {
+                                path,
+                                format,
+                                losses,
+                                ..
+                            } => self.do_export(&path, format, &losses),
                         }
                         self.confirm = None;
                     }
                     if ui.button("Cancel").clicked() {
                         self.confirm = None;
+                    }
+                });
+            });
+    }
+
+    /// Offer work left behind by a crashed session.
+    fn recovery_dialog(&mut self, ui: &mut egui::Ui) {
+        if self.recoverable.is_empty() {
+            return;
+        }
+        let ctx = ui.ctx().clone();
+        let item = self.recoverable[0].clone();
+        let name = item
+            .original
+            .clone()
+            .unwrap_or_else(|| "an unsaved document".to_owned());
+        egui::Window::new("Recover unsaved work?")
+            .collapsible(false)
+            .resizable(false)
+            .anchor(egui::Align2::CENTER_CENTER, Vec2::ZERO)
+            .show(&ctx, |ui| {
+                ui.label(format!(
+                    "PaintCraft found unsaved work from an earlier session: {name}."
+                ));
+                ui.horizontal(|ui| {
+                    if ui.button("Recover").clicked() {
+                        match Editor::recover(&item.checkpoint) {
+                            Ok(e) => {
+                                self.install(e);
+                                self.bound = None;
+                                if let Some(o) = &item.original {
+                                    self.path_text.clone_from(o);
+                                }
+                                if let Some(dir) = &self.recovery_dir {
+                                    Recovery::discard(dir, item.session);
+                                }
+                                self.recoverable.remove(0);
+                            }
+                            Err(e) => self.editor.set_status(format!("Cannot recover: {e}")),
+                        }
+                    }
+                    if ui.button("Discard").clicked() {
+                        if let Some(dir) = &self.recovery_dir {
+                            Recovery::discard(dir, item.session);
+                        }
+                        self.recoverable.remove(0);
+                    }
+                    if ui.button("Ask later").clicked() {
+                        self.recoverable.clear();
                     }
                 });
             });
@@ -666,10 +902,27 @@ impl App {
             self.layer_panel(ui);
         });
         egui::CentralPanel::default().show(ui, |ui| self.canvas(ui, first_pass));
+        self.recovery_dialog(ui);
         self.confirm_dialog(ui);
+        if first_pass
+            && ctx.input(|i| i.viewport().close_requested())
+            && self.editor.is_dirty()
+            && !self.allow_close
+        {
+            ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
+            self.confirm = Some(Confirm::QuitUnsaved);
+        }
         if self.editor.run_pending() > 0 {
             ctx.request_repaint();
             self.sync_texture(&ctx);
+        }
+        let now = ctx.input(|i| i.time);
+        if now - self.last_autosave >= self.autosave_every.as_secs_f64() {
+            self.last_autosave = now;
+            self.editor.autosave();
+        }
+        if self.editor.is_dirty() {
+            ctx.request_repaint_after(self.autosave_every.max(Duration::from_millis(250)));
         }
         if let Some(n) = self.exit_after_frames {
             // egui repaints only on events; a smoke run must keep frames coming.

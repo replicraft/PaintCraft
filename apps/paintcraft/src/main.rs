@@ -4,7 +4,7 @@ use paintcraft::App;
 
 fn main() -> eframe::Result {
     let path = std::env::args_os().nth(1).map(std::path::PathBuf::from);
-    let mut app = App::new(path);
+    let mut app = App::new(path).with_recovery(paintcraft_formats::recovery::default_dir());
     // Smoke runs: close after N frames, e.g. PAINTCRAFT_EXIT_AFTER_FRAMES=30.
     if let Some(n) = std::env::var("PAINTCRAFT_EXIT_AFTER_FRAMES")
         .ok()

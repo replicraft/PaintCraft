@@ -205,7 +205,7 @@ impl Editor {
     /// A new white document with one `Background` layer as the editing target.
     pub fn new_document(width: u32, height: u32) -> Result<Editor> {
         let doc = new_document(width, height, Some(Rgba([255, 255, 255, 255])), 0, POLICY)?;
-        let mut e = Editor::from_document(doc, None);
+        let mut e = Editor::with_document(doc, None);
         e.status = format!("New {width}×{height} document");
         Ok(e)
     }
@@ -217,12 +217,13 @@ impl Editor {
                 format!("cannot read file: {}", e.kind()),
             )
         })?;
-        let mut e = Editor::from_document(pcnd::read(&bytes)?, Some(path.to_path_buf()));
+        let mut e = Editor::with_document(pcnd::read(&bytes)?, Some(path.to_path_buf()));
         e.status = format!("Opened {}", path.display());
         Ok(e)
     }
 
-    fn from_document(doc: Document, path: Option<PathBuf>) -> Editor {
+    /// An editor over an existing document, optionally bound to a file.
+    pub fn with_document(doc: Document, path: Option<PathBuf>) -> Editor {
         let target = doc.roots.last().copied();
         Editor {
             session: Session::new(doc),
@@ -250,7 +251,7 @@ impl Editor {
                 format!("cannot read the checkpoint: {}", e.kind()),
             )
         })?;
-        let mut e = Editor::from_document(pcnd::read(&bytes)?, None);
+        let mut e = Editor::with_document(pcnd::read(&bytes)?, None);
         e.session.mark_unsaved();
         e.status = "Recovered unsaved work".into();
         Ok(e)
@@ -284,6 +285,18 @@ impl Editor {
                 false
             }
         }
+    }
+
+    /// The user chose to throw this work away: its checkpoint must not come back.
+    pub fn discard_checkpoint(&mut self) {
+        if let Some(r) = &self.recovery {
+            r.clear();
+        }
+        self.checkpointed = None;
+    }
+
+    pub fn set_status(&mut self, status: impl Into<String>) {
+        self.status = status.into();
     }
 
     /// Whether a checkpoint of the current work exists (the document is dirty and was checkpointed).
@@ -1136,7 +1149,7 @@ mod tests {
     #[test]
     fn selecting_needs_no_target_layer_but_painting_does() {
         // A document with no layers at all.
-        let mut e = Editor::from_document(
+        let mut e = Editor::with_document(
             paintcraft_core::document::new_document(32, 32, None, 0, POLICY).unwrap(),
             None,
         );

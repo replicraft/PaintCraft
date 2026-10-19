@@ -2401,6 +2401,7 @@ dependencies = [
  "paintcraft-formats",
  "paintcraft-types",
  "paintcraft-ui",
+ "sha2",
  "uuid",
 ]
 
