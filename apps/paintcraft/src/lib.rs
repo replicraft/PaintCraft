@@ -9,6 +9,8 @@ mod chrome;
 #[path = "app/colors.rs"]
 mod colors;
 pub mod controller;
+#[path = "app/cursor.rs"]
+mod cursor;
 #[path = "app/files.rs"]
 mod files;
 #[path = "app/history.rs"]

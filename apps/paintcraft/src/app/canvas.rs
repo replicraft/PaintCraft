@@ -51,7 +51,7 @@ impl App {
                         pos,
                         button,
                         pressed: true,
-                        ..
+                        modifiers,
                     } => {
                         let button = match button {
                             egui::PointerButton::Primary => {
@@ -83,7 +83,11 @@ impl App {
                                 Experience::Studio => Rgba::TRANSPARENT,
                             };
                             self.editor.pointer_down_subpixel(d, button);
+                            self.editor.constrain_shape(modifiers.shift);
                         }
+                    }
+                    egui::Event::ModifiersChanged(modifiers) => {
+                        self.editor.constrain_shape(modifiers.shift);
                     }
                     egui::Event::PointerMoved(pos) => {
                         if let Some(d) = view.to_doc_subpixel((pos.x, pos.y)) {
@@ -94,7 +98,7 @@ impl App {
                         pos,
                         button,
                         pressed: false,
-                        ..
+                        modifiers,
                     } => {
                         let button = match button {
                             egui::PointerButton::Primary => {
@@ -113,6 +117,7 @@ impl App {
                         if let Some(d) = view.to_doc_subpixel((pos.x, pos.y)) {
                             self.editor.pointer_move_subpixel(d);
                         }
+                        self.editor.constrain_shape(modifiers.shift);
                         self.editor.pointer_up_button(button);
                     }
                     _ => {}
@@ -120,6 +125,8 @@ impl App {
             }
         }
 
+        // Shift may change without a pointer event. Apply it before preview or release.
+        self.editor.constrain_shape(ui.input(|i| i.modifiers.shift));
         self.sync_texture(ui.ctx());
 
         // Transparency checkerboard, then the composite. Display only: the document is untouched.
@@ -174,6 +181,7 @@ impl App {
             self.draw_pixel_grid(&painter, rect, &view);
         }
         self.draw_overlays(&painter, &view, ppp);
+        self.draw_tool_cursor(ui, &painter, visible_canvas, &view, ppp);
         if let Some((x, y)) = self.pending_center.take() {
             let center =
                 rect.min + Vec2::new(x * view.points_per_pixel(), y * view.points_per_pixel());

@@ -175,3 +175,6 @@ mod font_text;
 
 #[path = "gui/ui_hover.rs"]
 mod ui_hover;
+
+#[path = "gui/tool_interactions.rs"]
+mod tool_interactions;

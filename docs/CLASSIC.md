@@ -130,3 +130,9 @@ Orange/Yellow/Green/Turquoise/Indigo/Purple and lighter-color naming; the eight
 additional project swatches have descriptive names. These extra slots are not a
 claim of an exact native Windows 11 palette. Studio floating panels are constrained
 below the document tabs so added options cannot cover tab controls.
+
+Shift constrains rectangles to squares and ellipses to circles while drawing.
+Lines snap to horizontal, vertical or 45-degree directions. Releasing Shift
+restores the unconstrained pointer geometry before placement. The eraser shows
+its exact square pixel footprint, scaled with canvas zoom, with contrasting edges
+that remain visible over light and dark pixels. Its overlay does not edit pixels.

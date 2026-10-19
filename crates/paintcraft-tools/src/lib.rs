@@ -1,4 +1,6 @@
 //! Tool state machines produce intentions; the application publishes them.
+mod geometry;
+
 pub use paintcraft_core::types::policy::BlendMode;
 use paintcraft_core::types::{Rgba, text::TextOptions};
 pub use paintcraft_input::PointerButton;
@@ -235,6 +237,7 @@ struct Gesture {
     options: ToolOptions,
     points: Vec<(i64, i64)>,
     point_scale: u32,
+    constrain_shape: bool,
 }
 
 #[derive(Debug)]
@@ -310,6 +313,7 @@ impl ToolState {
             options: self.options,
             points: vec![at],
             point_scale: 1,
+            constrain_shape: false,
         });
     }
     /// Round brushes retain fixed-point positions; other tools stay pixel exact.
@@ -383,10 +387,7 @@ impl ToolState {
             });
         }
         let g = self.gesture.as_ref()?;
-        let (first, last) = (
-            g.points[0],
-            *g.points.last().expect("a gesture has a point"),
-        );
+        let (first, last) = geometry::endpoints(g.tool, &g.points, g.constrain_shape);
         Some(match g.tool {
             Tool::Pencil | Tool::Brush | Tool::Eraser => {
                 let (size, round, color, mode) = Self::brush_of(g);
@@ -458,6 +459,13 @@ impl ToolState {
         (stroke, fill)
     }
 
+    /// Live modifier: retain raw pointer geometry so releasing Shift restores it.
+    pub fn constrain_shape(&mut self, enabled: bool) {
+        if let Some(g) = &mut self.gesture {
+            g.constrain_shape = enabled;
+        }
+    }
+
     pub fn gesture_points(&self) -> &[(i64, i64)] {
         self.gesture.as_ref().map_or(&[], |g| &g.points)
     }
@@ -501,10 +509,7 @@ impl ToolState {
             return None;
         }
         let g = self.gesture.take()?;
-        let (first, last) = (
-            g.points[0],
-            *g.points.last().expect("a gesture has a point"),
-        );
+        let (first, last) = geometry::endpoints(g.tool, &g.points, g.constrain_shape);
         let action = match g.tool {
             Tool::Pencil | Tool::Brush | Tool::Eraser => {
                 let (size, round, color, mode) = Self::brush_of(&g);
