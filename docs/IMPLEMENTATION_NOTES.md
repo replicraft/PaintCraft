@@ -37,8 +37,17 @@ sink. Pixel scratch retains one 4 MiB chunk and one raster block; document metad
 sorted block coordinates and the central directory are accounted separately. Directory
 scratch has an 8 MiB provisional cap. This remains the existing non-ZIP64 v1 subset.
 The in-memory convenience writer uses the same encoder. Partial-write, failing-sink,
-round-trip and conformance tests preserve canonical bytes. SAVE-09 is partial: native
-save consumers and process-wide memory admission still need integration and measurement.
+round-trip and conformance tests preserve canonical bytes. SAVE-09 is partial: process-wide memory admission and measured native backpressure remain pending.
+
+The desktop's explicit native save and CLI new/apply/import now stream directly to
+same-filesystem staging files. A byte-quota sink hashes accepted writes; bounded
+64 KiB reads verify staged and replaced contents without loading a second archive.
+Encoder errors, ignored failed writes, staging corruption and pre-replace barriers
+cannot publish partial files. Receipt IDs are stable, and coordinators can stamp a
+save sequence and binding generation. Injected phase failures distinguish known
+replacement from confirmed durability. Temporary-link cleanup follows the successful
+create boundary. Ambiguous replace errors retain staging and prohibit automatic retry.
+This does not yet provide ordered background saves or external-writer exclusion.
 
 ## GPU compositor and native dialogs
 

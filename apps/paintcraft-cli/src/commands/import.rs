@@ -33,8 +33,7 @@ pub fn run(a: Options, json: bool) -> Reply {
                 losses_acknowledged: img.losses,
                 destination: dest,
             };
-            let (receipt, ok, summary) =
-                write_output(dest, a.output.overwrite, pcnd::write(&doc), &ctx);
+            let (receipt, ok, summary) = write_native(dest, a.output.overwrite, &doc, &ctx);
             Ok(Written {
                 engine: None,
                 receipt,

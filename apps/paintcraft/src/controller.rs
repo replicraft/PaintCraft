@@ -647,14 +647,9 @@ impl Editor {
             self.status = "Choose a file name before saving".into();
             return;
         };
-        let bytes = match pcnd::write(self.document()) {
-            Ok(b) => b,
-            Err(e) => {
-                self.status = format!("Not saved: {e}");
-                return;
-            }
-        };
-        let outcome = save::save(&path, &bytes, true);
+        let outcome = save::save_with(&path, true, save::STAGED_FILE_BYTES_MAX, |sink| {
+            pcnd::write_to(self.document(), sink)
+        });
         if outcome.is_success() {
             self.save_outcome = Some(true);
             self.session.mark_saved();

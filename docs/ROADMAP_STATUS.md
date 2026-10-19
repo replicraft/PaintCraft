@@ -26,7 +26,7 @@ unchanged by dependency and crate refactors.
 | T07 | M1 | Recorded history navigation | partial | Recorded linear undo/redo exists; branching nodes and randomized navigation evidence remain. |
 | T08 | M1 | PCND and headless round trip | partial | Canonical PCND and CLI round trips pass; full native subset/hostile-archive scope remains. |
 | T09 | M1 | First complete editor slice | partial | Complete pencil/session/display/save slice passes; native input qualification depends on T02. |
-| T10 | M2 | Ordered save and recovery journal | partial | Safe save and checkpoint recovery exist; ordered asynchronous queues, failure injection and stale-completion guards remain. |
+| T10 | M2 | Ordered save and recovery journal | partial | Streaming staged saves, bounded read-back and injected phase failures pass; ordered asynchronous queues and stale-completion guards remain. |
 | T11 | M2 | Bounded history and store GC | partial | Shared snapshot retention is bounded; leases, segment GC, compaction and physical resource evidence remain. |
 | T12 | M2 | Ordered renderer and region effects | partial | Ordered scalar and GPU flat composition exist; ROI effects, dirty-prefix cache and group plans remain. |
 | T13 | M2 | Scheduler and GPU preparation | partial | Bounded Rayon preparation, owner-scoped handles, cancellation and stale-result tests exist; priorities, async I/O, device epochs and physical budget/fairness evidence remain. |

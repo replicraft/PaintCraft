@@ -162,6 +162,22 @@ fn write_output(
         Ok(b) => save::save(dest, &b, overwrite),
         Err(e) => save::not_attempted(&e),
     };
+    finish_output(dest, ctx, outcome)
+}
+
+fn write_native(
+    dest: &Path,
+    overwrite: bool,
+    document: &paintcraft_document::Document,
+    ctx: &Context<'_>,
+) -> (Value, bool, String) {
+    let outcome = save::save_with(dest, overwrite, save::STAGED_FILE_BYTES_MAX, |sink| {
+        pcnd::write_to(document, sink)
+    });
+    finish_output(dest, ctx, outcome)
+}
+
+fn finish_output(dest: &Path, ctx: &Context<'_>, outcome: Outcome) -> (Value, bool, String) {
     let summary = if outcome.is_success() {
         format!("wrote {}", dest.display())
     } else {

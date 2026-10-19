@@ -34,12 +34,8 @@ pub fn run(a: Options, json: bool) -> Reply {
                 losses_acknowledged: vec![],
                 destination: dest,
             };
-            let (file, ok, summary) = write_output(
-                dest,
-                a.output.overwrite,
-                pcnd::write(session.document()),
-                &ctx,
-            );
+            let (file, ok, summary) =
+                write_native(dest, a.output.overwrite, session.document(), &ctx);
             Ok(Written {
                 engine: Some(receipt.to_value()),
                 receipt: file,
