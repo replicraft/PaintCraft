@@ -21,7 +21,7 @@ use paintcraft_formats::export::{self, KNOWN_LOSSES};
 use paintcraft_formats::image::{self, ImageFormat};
 use paintcraft_formats::recovery::{Found, Recovery};
 use paintcraft_formats::save;
-use paintcraft_render::render_flat;
+use paintcraft_render::{gpu::GpuRenderer, render_flat};
 use paintcraft_ui::view::View;
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
@@ -69,6 +69,7 @@ impl std::fmt::Debug for App {
 
 pub struct App {
     editor: Editor,
+    gpu: Option<GpuRenderer>,
     texture: Option<egui::TextureHandle>,
     texture_key: Option<(Uuid, u64)>,
     /// Straight RGBA8 flat render of what the texture shows.
@@ -109,6 +110,18 @@ fn token(ctx: &egui::Context, code: u64) -> u64 {
 }
 
 impl App {
+    pub fn with_gpu(mut self, cc: &eframe::CreationContext<'_>) -> Self {
+        if let Some(state) = &cc.wgpu_render_state {
+            match GpuRenderer::new(state.device.clone(), state.queue.clone()) {
+                Ok(gpu) => {
+                    self.gpu = Some(gpu);
+                    self.texture_key = None;
+                }
+                Err(e) => self.editor.set_status(format!("Using CPU rendering: {e}")),
+            }
+        }
+        self
+    }
     pub fn new(path: Option<PathBuf>) -> App {
         let path_text = path.as_deref().map_or_else(
             || "untitled.pcnd".to_owned(),
@@ -117,6 +130,7 @@ impl App {
         let mut app = App {
             editor: Editor::new_document(DEFAULT_SIZE.0, DEFAULT_SIZE.1)
                 .expect("default size is valid"),
+            gpu: None,
             texture: None,
             texture_key: None,
             rendered: Vec::new(),
@@ -432,7 +446,22 @@ impl App {
             return;
         }
         let doc = self.editor.document();
-        match render_flat(doc) {
+        let pixels = if let Some(gpu) = &self.gpu {
+            match gpu.render(doc) {
+                Ok(pixels) => Ok(pixels),
+                Err(e) => {
+                    let reason = format!("Using CPU rendering: {e}");
+                    self.gpu = None;
+                    let result = render_flat(doc);
+                    self.editor.set_status(reason);
+                    result
+                }
+            }
+        } else {
+            render_flat(doc)
+        };
+        let doc = self.editor.document();
+        match pixels {
             Ok(px) => {
                 let image = egui::ColorImage::from_rgba_unmultiplied(
                     [doc.canvas.0 as usize, doc.canvas.1 as usize],

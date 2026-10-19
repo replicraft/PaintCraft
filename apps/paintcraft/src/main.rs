@@ -15,6 +15,7 @@ fn main() -> eframe::Result {
         app = app.exit_after(n);
     }
     let options = eframe::NativeOptions {
+        renderer: eframe::Renderer::Wgpu,
         viewport: eframe::egui::ViewportBuilder::default()
             .with_title("PaintCraft")
             .with_inner_size([960.0, 720.0]),
@@ -23,6 +24,6 @@ fn main() -> eframe::Result {
     eframe::run_native(
         "PaintCraft",
         options,
-        Box::new(move |_cc| Ok(Box::new(app))),
+        Box::new(move |cc| Ok(Box::new(app.with_gpu(cc)))),
     )
 }

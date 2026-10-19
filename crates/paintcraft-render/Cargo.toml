@@ -7,12 +7,18 @@ rust-version.workspace = true
 license-file.workspace = true
 publish.workspace = true
 
+[features]
+default = []
+gpu = ["dep:wgpu"]
+
 [dependencies]
+wgpu = { workspace = true, optional = true }
 paintcraft-core.workspace = true
 paintcraft-raster.workspace = true
 paintcraft-document.workspace = true
 
 [dev-dependencies]
+pollster.workspace = true
 paintcraft-editor.workspace = true
 
 [lints]

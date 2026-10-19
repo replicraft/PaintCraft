@@ -23,7 +23,7 @@ paintcraft-tools.workspace = true
 paintcraft-raster.workspace = true
 paintcraft-document.workspace = true
 paintcraft-commands.workspace = true
-paintcraft-render.workspace = true
+paintcraft-render = { workspace = true, features = ["gpu"] }
 
 paintcraft-core.workspace = true
 paintcraft-editor.workspace = true
