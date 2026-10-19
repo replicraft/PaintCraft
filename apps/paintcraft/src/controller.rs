@@ -9,13 +9,13 @@
 use std::path::{Path, PathBuf};
 
 use paintcraft_commands::Batch;
-use paintcraft_core::execute::Selection;
-use paintcraft_core::session::Session;
+use paintcraft_core::types::json::Value;
+use paintcraft_core::types::{Result, Rgba};
 use paintcraft_document::{Document, POLICY, new_document};
+use paintcraft_editor::execute::Selection;
+use paintcraft_editor::session::Session;
 use paintcraft_formats::recovery::Recovery;
 use paintcraft_formats::{pcnd, save};
-use paintcraft_types::json::Value;
-use paintcraft_types::{Result, Rgba};
 use uuid::Uuid;
 
 use paintcraft_ui::outbox::{Outbox, Token};
@@ -67,8 +67,8 @@ impl Editor {
 
     pub fn open(path: &Path) -> Result<Editor> {
         let bytes = std::fs::read(path).map_err(|e| {
-            paintcraft_types::Error::new(
-                paintcraft_types::ErrorCode::StorageFailed,
+            paintcraft_core::types::Error::new(
+                paintcraft_core::types::ErrorCode::StorageFailed,
                 format!("cannot read file: {}", e.kind()),
             )
         })?;
@@ -96,8 +96,8 @@ impl Editor {
     /// bound to any file until the user saves it.
     pub fn recover(checkpoint: &Path) -> Result<Editor> {
         let bytes = std::fs::read(checkpoint).map_err(|e| {
-            paintcraft_types::Error::new(
-                paintcraft_types::ErrorCode::StorageFailed,
+            paintcraft_core::types::Error::new(
+                paintcraft_core::types::ErrorCode::StorageFailed,
                 format!("cannot read the checkpoint: {}", e.kind()),
             )
         })?;
@@ -521,7 +521,7 @@ impl Editor {
         &mut self,
         operations: Vec<Value>,
         done: &str,
-    ) -> Option<paintcraft_core::session::Receipt> {
+    ) -> Option<paintcraft_editor::session::Receipt> {
         let t = self.session.ticket();
         let batch = Value::object([
             ("schema", Value::str("paintcraft.batch/v2")),
@@ -972,7 +972,7 @@ mod tests {
         assert_eq!(e.run_pending(), 1);
         assert_eq!(
             e.selection(),
-            Selection::Rect(paintcraft_types::Rect::new(10, 10, 41, 41).unwrap())
+            Selection::Rect(paintcraft_core::types::Rect::new(10, 10, 41, 41).unwrap())
         );
         e.tool = Tool::Fill;
         e.pointer_down((200, 200));

@@ -22,7 +22,7 @@ pub fn run(a: Options, _json: bool) -> Reply {
                 }
             };
             Ok((
-                paintcraft_types::json::parse(text.as_bytes())
+                paintcraft_core::types::json::parse(text.as_bytes())
                     .expect("embedded schema is valid JSON"),
                 String::new(),
             ))

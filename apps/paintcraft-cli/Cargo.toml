@@ -18,8 +18,8 @@ paintcraft-commands.workspace = true
 paintcraft-render.workspace = true
 
 clap.workspace = true
-paintcraft-types.workspace = true
 paintcraft-core.workspace = true
+paintcraft-editor.workspace = true
 paintcraft-formats.workspace = true
 sha2.workspace = true
 

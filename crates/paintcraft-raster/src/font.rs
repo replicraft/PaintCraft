@@ -6,14 +6,14 @@
 //! claim of fidelity to any application's text tool.
 
 use font8x8::{BASIC_FONTS, LATIN_FONTS, UnicodeFonts};
-use paintcraft_types::Rect;
+use paintcraft_core::types::Rect;
 
 use crate::shape::Span;
 
 /// Pixels per glyph cell at scale 1.
 pub const CELL: i64 = 8;
-pub use paintcraft_types::policy::SCALE_MAX;
-pub use paintcraft_types::policy::TEXT_CHARS_MAX;
+pub use paintcraft_core::types::policy::SCALE_MAX;
+pub use paintcraft_core::types::policy::TEXT_CHARS_MAX;
 
 /// Row bitmaps, least significant bit leftmost. Control characters other than
 /// newline, and the DEL range, have no glyph.

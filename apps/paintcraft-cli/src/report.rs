@@ -1,7 +1,7 @@
 //! JSON reporting: error/v1, the file-command envelope and printing.
 
-use paintcraft_types::Error;
-use paintcraft_types::json::{self, Value};
+use paintcraft_core::types::Error;
+use paintcraft_core::types::json::{self, Value};
 
 pub fn error_value(e: &Error) -> Value {
     let mut pairs = vec![

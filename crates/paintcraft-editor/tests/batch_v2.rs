@@ -1,9 +1,9 @@
 //! Batch v2 operations: brush strokes, flood fill and shapes. Expected pictures
 //! are derived by hand from the geometry definitions, not copied from output.
 
-use paintcraft_core::session::{Receipt, Session};
+use paintcraft_core::types::{Error, ErrorCode, Rgba};
 use paintcraft_document::{POLICY, new_document};
-use paintcraft_types::{Error, ErrorCode, Rgba};
+use paintcraft_editor::session::{Receipt, Session};
 use uuid::Uuid;
 
 fn session(w: u32, h: u32) -> (Session, Uuid) {
@@ -372,7 +372,7 @@ fn undo_restores_the_exact_state_after_every_v2_operation() {
 #[test]
 fn parser_agrees_with_the_v2_json_schema_on_every_grammar_case() {
     use paintcraft_commands::Batch;
-    use paintcraft_types::json::{self, Value};
+    use paintcraft_core::types::json::{self, Value};
     let path =
         std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../conformance/grammar-v2.cases");
     let doc = json::parse(&std::fs::read(path).unwrap()).unwrap();

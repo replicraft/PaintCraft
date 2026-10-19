@@ -5,7 +5,7 @@
 
 use std::collections::HashSet;
 
-use paintcraft_types::{Error, ErrorCode, Result};
+use paintcraft_core::types::{Error, ErrorCode, Result};
 
 /// DOS timestamp 2026-10-15 00:00:00, shared with the published specimen.
 const DOS_DATE: u16 = ((2026 - 1980) << 9) | (10 << 5) | 15;

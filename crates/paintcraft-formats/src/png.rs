@@ -1,6 +1,6 @@
 //! PNG output of the flat render: 8-bit straight RGBA, no ancillary metadata.
 
-use paintcraft_types::{Error, ErrorCode, Result};
+use paintcraft_core::types::{Error, ErrorCode, Result};
 
 pub fn encode_rgba8(width: u32, height: u32, rgba: &[u8]) -> Result<Vec<u8>> {
     let expected = u64::from(width) * u64::from(height) * 4;

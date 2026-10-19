@@ -5,12 +5,12 @@ use std::fs::File;
 use std::io::Read as _;
 use std::path::{Path, PathBuf};
 
-use paintcraft_core::session::Session;
+use paintcraft_core::types::json::Value;
+use paintcraft_core::types::{Error, ErrorCode, Result, Rgba};
 use paintcraft_document::{Document, POLICY, hex, import_image, new_document};
+use paintcraft_editor::session::Session;
 use paintcraft_formats::image::{self, ImageFormat};
 use paintcraft_formats::{export, pcnd};
-use paintcraft_types::json::Value;
-use paintcraft_types::{Error, ErrorCode, Result, Rgba};
 use sha2::{Digest, Sha256};
 
 use crate::report::{envelope, error_value, json_line};

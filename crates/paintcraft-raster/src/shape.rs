@@ -8,7 +8,7 @@
 
 use std::collections::HashMap;
 
-use paintcraft_types::Rect;
+use paintcraft_core::types::Rect;
 
 /// Inclusive horizontal run on absolute row `y`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]

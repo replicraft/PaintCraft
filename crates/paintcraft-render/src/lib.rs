@@ -5,7 +5,7 @@
 //! bounds and composite it with straight RGBA8 source-over. Output is straight
 //! RGBA8 encoded sRGB, row-major.
 
-use paintcraft_types::{Error, ErrorCode, Result, Rgba};
+use paintcraft_core::types::{Error, ErrorCode, Result, Rgba};
 
 use paintcraft_document::Document;
 
@@ -56,8 +56,8 @@ pub fn render_flat(doc: &Document) -> Result<Vec<u8>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use paintcraft_core::session::Session;
     use paintcraft_document::{POLICY, new_document};
+    use paintcraft_editor::session::Session;
 
     fn run(s: &mut Session, ops: &str) {
         let t = s.ticket();

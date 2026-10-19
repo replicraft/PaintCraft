@@ -6,11 +6,11 @@ use std::fs;
 use std::path::PathBuf;
 
 use paintcraft_commands::Batch;
-use paintcraft_core::session::Session;
+use paintcraft_core::types::Rgba;
+use paintcraft_core::types::json::{self, Value};
 use paintcraft_document::{hex, new_document};
+use paintcraft_editor::session::Session;
 use paintcraft_formats::pcnd;
-use paintcraft_types::Rgba;
-use paintcraft_types::json::{self, Value};
 use sha2::{Digest, Sha256};
 
 #[test]

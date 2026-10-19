@@ -52,8 +52,8 @@ pub fn run(_a: Options, json: bool) -> Reply {
                             "fresh-write",
                             "paintcraft-formats",
                         ),
-                        row("batch.v1.edit", POLICY, "edit", "paintcraft-core"),
-                        row("flat.render", POLICY, "render", "paintcraft-core"),
+                        row("batch.v1.edit", POLICY, "edit", "paintcraft-editor"),
+                        row("flat.render", POLICY, "render", "paintcraft-render"),
                         row(
                             "png.rgba8.write",
                             "png/rgba8-straight",

@@ -1,4 +1,4 @@
-use paintcraft_types::Rect;
+use paintcraft_core::types::Rect;
 
 /// The session's selection projection.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

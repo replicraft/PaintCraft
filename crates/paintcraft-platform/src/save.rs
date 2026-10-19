@@ -7,9 +7,9 @@ use std::fs::{self, File, OpenOptions};
 use std::io::Write as _;
 use std::path::{Path, PathBuf};
 
-use paintcraft_types::json::Value;
-use paintcraft_types::policy::hex;
-use paintcraft_types::{Error, ErrorCode};
+use paintcraft_core::types::json::Value;
+use paintcraft_core::types::policy::hex;
+use paintcraft_core::types::{Error, ErrorCode};
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
 

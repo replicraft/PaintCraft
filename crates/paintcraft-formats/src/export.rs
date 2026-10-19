@@ -1,8 +1,8 @@
 //! Flat image export of a document, with every loss named and acknowledged.
 
+use paintcraft_core::types::{Error, ErrorCode, Result};
 use paintcraft_document::Document;
 use paintcraft_render::render_flat;
-use paintcraft_types::{Error, ErrorCode, Result};
 
 use crate::image::{self, ImageFormat};
 
@@ -77,9 +77,9 @@ pub fn export_flat(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use paintcraft_core::session::Session;
+    use paintcraft_core::types::Rgba;
     use paintcraft_document::{POLICY, new_document};
-    use paintcraft_types::Rgba;
+    use paintcraft_editor::session::Session;
 
     fn doc_with(ops: &str) -> Document {
         let mut s =

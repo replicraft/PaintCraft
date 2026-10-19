@@ -13,8 +13,8 @@ use std::fs::{self, File, OpenOptions};
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
-use paintcraft_types::json::{self, Value};
-use paintcraft_types::{Error, ErrorCode, Result};
+use paintcraft_core::types::json::{self, Value};
+use paintcraft_core::types::{Error, ErrorCode, Result};
 use uuid::Uuid;
 
 use crate::save;

@@ -1,5 +1,5 @@
 //! Tool state machines produce intentions; the application publishes them.
-use paintcraft_types::Rgba;
+use paintcraft_core::types::Rgba;
 use uuid::Uuid;
 const POINTS_PER_OP: usize = 65_536;
 const OPS_PER_BATCH: usize = 1024;
@@ -221,7 +221,7 @@ impl ToolState {
             scale: self
                 .options
                 .text_scale
-                .clamp(1, paintcraft_types::policy::SCALE_MAX as u32),
+                .clamp(1, paintcraft_core::types::policy::SCALE_MAX as u32),
             color: self.color,
         });
     }

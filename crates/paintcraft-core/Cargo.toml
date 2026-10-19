@@ -1,6 +1,6 @@
 [package]
 name = "paintcraft-core"
-description = "Sparse raster, immutable document, atomic batch execution and history"
+description = "IDs, checked rectangles, pixels, stable errors and strict JSON for PaintCraft"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -8,20 +8,7 @@ license-file.workspace = true
 publish.workspace = true
 
 [dependencies]
-paintcraft-history.workspace = true
-
-paintcraft-commands.workspace = true
-
-paintcraft-document.workspace = true
-
-paintcraft-raster.workspace = true
-
-paintcraft-types.workspace = true
 uuid.workspace = true
-
-[dev-dependencies]
-sha2.workspace = true
-paintcraft-render.workspace = true
 
 [lints]
 workspace = true

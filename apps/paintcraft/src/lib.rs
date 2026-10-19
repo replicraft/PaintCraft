@@ -14,14 +14,14 @@ use std::time::Duration;
 use crate::controller::{Action, Editor, Preview, ShapeStyle, Tool};
 use crate::settings::{ClassicVariant, Loaded, Settings};
 use eframe::egui::{self, Color32, Pos2, Rect, Sense, Vec2};
-use paintcraft_core::execute::Selection;
+use paintcraft_core::types::Rgba;
 use paintcraft_document::{hex, import_image};
+use paintcraft_editor::execute::Selection;
 use paintcraft_formats::export::{self, KNOWN_LOSSES};
 use paintcraft_formats::image::{self, ImageFormat};
 use paintcraft_formats::recovery::{Found, Recovery};
 use paintcraft_formats::save;
 use paintcraft_render::render_flat;
-use paintcraft_types::Rgba;
 use paintcraft_ui::view::View;
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
@@ -317,10 +317,10 @@ impl App {
     }
 
     /// Open a `.pcnd` document or import a PNG, BMP or JPEG picture.
-    fn open_path(&mut self, path: &Path) -> paintcraft_types::Result<()> {
+    fn open_path(&mut self, path: &Path) -> paintcraft_core::types::Result<()> {
         let bytes = std::fs::read(path).map_err(|e| {
-            paintcraft_types::Error::new(
-                paintcraft_types::ErrorCode::StorageFailed,
+            paintcraft_core::types::Error::new(
+                paintcraft_core::types::ErrorCode::StorageFailed,
                 format!("cannot read {}: {}", path.display(), e.kind()),
             )
         })?;
@@ -1136,7 +1136,7 @@ impl App {
                 scale,
                 color: c,
             }) => {
-                let canvas = paintcraft_types::Rect::new(
+                let canvas = paintcraft_core::types::Rect::new(
                     i64::MIN / 4,
                     i64::MIN / 4,
                     i64::MAX / 2,

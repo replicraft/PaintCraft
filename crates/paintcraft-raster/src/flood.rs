@@ -5,7 +5,7 @@
 //! entirely on the original pixels before anything is painted, so painting
 //! cannot change what counts as inside.
 
-use paintcraft_types::{Error, ErrorCode, Rect, Result, Rgba};
+use paintcraft_core::types::{Error, ErrorCode, Rect, Result, Rgba};
 
 use crate::raster::RasterLayer;
 use crate::shape::Span;

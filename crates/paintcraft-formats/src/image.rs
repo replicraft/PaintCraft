@@ -6,7 +6,7 @@
 //! an unsupported BMP variant is refused, and JPEG output (lossy, no alpha) is
 //! reported as a loss the caller must acknowledge.
 
-use paintcraft_types::{Error, ErrorCode, Result};
+use paintcraft_core::types::{Error, ErrorCode, Result};
 
 /// Untrusted-decode pixel budget (the pack's soft limit).
 pub const DECODE_PIXELS_MAX: u64 = 268_435_456;

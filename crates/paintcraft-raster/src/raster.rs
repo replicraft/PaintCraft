@@ -10,7 +10,7 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use paintcraft_types::{Error, ErrorCode, Rect, Result, Rgba};
+use paintcraft_core::types::{Error, ErrorCode, Rect, Result, Rgba};
 
 pub const TILE_EDGE: u32 = 256;
 const TILE_PIXELS: usize = (TILE_EDGE as usize) * (TILE_EDGE as usize);
@@ -27,7 +27,7 @@ pub struct TileCoord {
     pub ty: i64,
 }
 
-pub use paintcraft_types::policy::BlendMode;
+pub use paintcraft_core::types::policy::BlendMode;
 
 fn blend(mode: BlendMode, src: Rgba, dst: Rgba) -> Rgba {
     match mode {

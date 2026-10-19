@@ -3,15 +3,15 @@
 
 use std::collections::{BTreeMap, HashMap};
 
-use paintcraft_types::{Error, ErrorCode, Rect, Result, Rgba};
+use paintcraft_core::types::{Error, ErrorCode, Rect, Result, Rgba};
 use uuid::Uuid;
 
 use paintcraft_commands::{Batch, LayerRef, Mode, Op, ShapeKind};
+use paintcraft_core::types::ids::deterministic_id;
 use paintcraft_document::{COORD_ABS_MAX, Document, LAYER_COUNT_MAX, Layer};
 use paintcraft_raster::flood;
 use paintcraft_raster::shape::{self, Figure, Span, SpanSet};
 use paintcraft_raster::{Admission, RasterLayer};
-use paintcraft_types::ids::deterministic_id;
 
 /// Emitted-pixel and segment budgets for all pencil operations in one batch.
 pub const PENCIL_PIXELS_MAX: i128 = 16_777_216;
@@ -19,7 +19,7 @@ pub const PENCIL_SEGMENTS_MAX: i128 = 1_048_576;
 /// Stamp rows (path pixels × brush diameter) per batch for all brush strokes.
 pub const STROKE_ROWS_MAX: i128 = 16_777_216;
 /// Staged pixel storage per batch (the untrusted-decode soft limit).
-pub use paintcraft_types::policy::STAGED_PIXELS_MAX;
+pub use paintcraft_core::types::policy::STAGED_PIXELS_MAX;
 
 pub use paintcraft_raster::Selection;
 
@@ -530,8 +530,8 @@ fn walk_clipped(
 mod tests {
     use super::*;
     use paintcraft_commands::Mode;
+    use paintcraft_core::types::Rgba;
     use paintcraft_document::{POLICY, new_document};
-    use paintcraft_types::Rgba;
 
     fn batch_of(operations: Vec<Op>) -> Batch {
         Batch {

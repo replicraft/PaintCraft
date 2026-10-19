@@ -15,8 +15,8 @@ paintcraft-document.workspace = true
 paintcraft-commands.workspace = true
 paintcraft-render.workspace = true
 
-paintcraft-types.workspace = true
 paintcraft-core.workspace = true
+paintcraft-editor.workspace = true
 sha2.workspace = true
 uuid.workspace = true
 crc32fast.workspace = true

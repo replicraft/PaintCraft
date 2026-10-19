@@ -9,7 +9,7 @@ use eframe::egui::{Event, Key, Modifiers, PointerButton, Pos2, Vec2};
 use egui_kittest::Harness;
 use egui_kittest::kittest::{NodeT, Queryable};
 use paintcraft::App;
-use paintcraft_types::Rgba;
+use paintcraft_core::types::Rgba;
 
 fn harness_with(app: App, ppp: f32, two_passes: bool) -> Harness<'static, App> {
     let mut h = Harness::builder()
@@ -397,8 +397,8 @@ fn new_document_asks_before_discarding_unsaved_work() {
 #[test]
 fn gui_and_core_produce_identical_pixels_for_the_same_stroke() {
     use paintcraft_commands::Batch;
-    use paintcraft_core::session::Session;
     use paintcraft_document::{POLICY, new_document};
+    use paintcraft_editor::session::Session;
     use paintcraft_render::render_flat;
 
     let mut h = harness();

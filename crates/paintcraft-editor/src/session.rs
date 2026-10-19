@@ -8,14 +8,14 @@
 use std::collections::BTreeMap;
 use std::sync::Arc;
 
-use paintcraft_types::json::Value;
-use paintcraft_types::{Error, ErrorCode, Result};
+use paintcraft_core::types::json::Value;
+use paintcraft_core::types::{Error, ErrorCode, Result};
 use uuid::Uuid;
 
 use crate::execute::{STAGED_PIXELS_MAX, Selection, execute_with_budget};
 use paintcraft_commands::Batch;
+use paintcraft_core::types::ids::deterministic_id;
 use paintcraft_document::{Document, POLICY};
-use paintcraft_types::ids::deterministic_id;
 
 pub use paintcraft_history::DEFAULT_HISTORY_BYTES;
 use paintcraft_history::{History, Snapshot};
@@ -231,8 +231,8 @@ impl Session {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use paintcraft_core::types::Rgba;
     use paintcraft_document::new_document;
-    use paintcraft_types::Rgba;
 
     fn batch(s: &Session, ops: &str) -> Vec<u8> {
         let t = s.ticket();

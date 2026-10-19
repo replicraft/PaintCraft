@@ -1,0 +1,27 @@
+[package]
+name = "paintcraft-editor"
+description = "Editor sessions, transaction preparation and atomic publication"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license-file.workspace = true
+publish.workspace = true
+
+[dependencies]
+paintcraft-history.workspace = true
+
+paintcraft-commands.workspace = true
+
+paintcraft-document.workspace = true
+
+paintcraft-raster.workspace = true
+
+paintcraft-core.workspace = true
+uuid.workspace = true
+
+[dev-dependencies]
+sha2.workspace = true
+paintcraft-render.workspace = true
+
+[lints]
+workspace = true

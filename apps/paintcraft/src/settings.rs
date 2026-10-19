@@ -6,8 +6,8 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use paintcraft_core::types::json::{self, Value};
 use paintcraft_platform::save;
-use paintcraft_types::json::{self, Value};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ClassicVariant {

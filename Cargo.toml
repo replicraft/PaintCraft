@@ -11,26 +11,19 @@ license-file = "LICENSE"
 publish = false
 
 [workspace.dependencies]
-# PaintCraft engine and application contracts.
-paintcraft-types = { path = "crates/paintcraft-types" }
+# PaintCraft foundations and editing engine.
 paintcraft-core = { path = "crates/paintcraft-core" }
-paintcraft-formats = { path = "crates/paintcraft-formats" }
-paintcraft-ui = { path = "crates/paintcraft-ui" }
-
 paintcraft-raster = { path = "crates/paintcraft-raster" }
-
 paintcraft-document = { path = "crates/paintcraft-document" }
-
 paintcraft-commands = { path = "crates/paintcraft-commands" }
-
-paintcraft-render = { path = "crates/paintcraft-render" }
-
 paintcraft-history = { path = "crates/paintcraft-history" }
-
+paintcraft-editor = { path = "crates/paintcraft-editor" }
 paintcraft-input = { path = "crates/paintcraft-input" }
 paintcraft-tools = { path = "crates/paintcraft-tools" }
-
+paintcraft-render = { path = "crates/paintcraft-render" }
+paintcraft-formats = { path = "crates/paintcraft-formats" }
 paintcraft-platform = { path = "crates/paintcraft-platform" }
+paintcraft-ui = { path = "crates/paintcraft-ui" }
 
 # Command-line interface.
 clap = { version = "4.6.7", features = ["derive"] }

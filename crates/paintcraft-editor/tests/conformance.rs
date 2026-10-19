@@ -6,12 +6,12 @@ use std::fs;
 use std::path::PathBuf;
 
 use paintcraft_commands::Batch;
-use paintcraft_core::execute::Selection;
-use paintcraft_core::session::Session;
+use paintcraft_core::types::json::{self, Value};
+use paintcraft_core::types::{Error, Rgba};
 use paintcraft_document::{Document, hex, new_document};
+use paintcraft_editor::execute::Selection;
+use paintcraft_editor::session::Session;
 use paintcraft_render::render_flat;
-use paintcraft_types::json::{self, Value};
-use paintcraft_types::{Error, Rgba};
 use sha2::{Digest, Sha256};
 
 const HEX_LIMIT: u64 = 64;
