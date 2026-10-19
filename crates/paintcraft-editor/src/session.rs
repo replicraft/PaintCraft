@@ -20,6 +20,9 @@ use paintcraft_document::{Document, POLICY};
 pub use paintcraft_history::DEFAULT_HISTORY_BYTES;
 use paintcraft_history::{History, Snapshot};
 
+mod history;
+pub use history::{HistoryTicket, HistoryView};
+
 /// `paintcraft.result/v1`.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Receipt {
@@ -76,6 +79,7 @@ pub struct Ticket {
 
 #[derive(Debug)]
 pub struct Session {
+    owner: Uuid,
     doc: Arc<Document>,
     selection: Selection,
     epoch: u64,
@@ -89,6 +93,7 @@ impl Session {
     pub fn new(doc: Document) -> Session {
         let doc = Arc::new(doc);
         Session {
+            owner: Uuid::new_v4(),
             saved_state: Some(doc.state_id),
             history: History::new(Snapshot {
                 document: Arc::clone(&doc),
@@ -201,11 +206,14 @@ impl Session {
             deterministic_id(&["history", &base, &self.epoch.to_string(), &batch.digest]);
         let doc = Arc::new(staged.doc);
         // The single publication point: document, selection, history and epoch together.
-        self.history.record(Snapshot {
-            document: Arc::clone(&doc),
-            selection: staged.selection,
-            history_id: Some(history_id),
-        });
+        self.history.record_labeled(
+            Snapshot {
+                document: Arc::clone(&doc),
+                selection: staged.selection,
+                history_id: Some(history_id),
+            },
+            history::label(batch),
+        );
         self.doc = doc;
         self.selection = staged.selection;
         self.epoch += 1;
