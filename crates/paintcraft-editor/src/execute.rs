@@ -142,16 +142,7 @@ impl Stage<'_> {
         Ok(())
     }
 
-    /// A brush stroke along `points`: charge the budgets, then stamp, merge and paint.
-    fn stroke(
-        &mut self,
-        id: Uuid,
-        points: &[(i64, i64)],
-        size: u32,
-        round: bool,
-        color: Rgba,
-        mode: Mode,
-    ) -> Result<()> {
+    fn charge_stroke(&mut self, points: &[(i64, i64)], size: u32) -> Result<()> {
         let length: i128 = points
             .windows(2)
             .map(|w| i128::from((w[1].0 - w[0].0).abs().max((w[1].1 - w[0].1).abs())))
@@ -168,6 +159,20 @@ impl Stage<'_> {
                 "stroke work budget exceeded",
             ));
         }
+        Ok(())
+    }
+
+    /// A brush stroke along `points`: charge the budgets, then stamp, merge and paint.
+    fn stroke(
+        &mut self,
+        id: Uuid,
+        points: &[(i64, i64)],
+        size: u32,
+        round: bool,
+        color: Rgba,
+        mode: Mode,
+    ) -> Result<()> {
+        self.charge_stroke(points, size)?;
         let Some(clip) = self.editable(&self.doc.layers[&id]) else {
             return Ok(());
         };
@@ -342,9 +347,58 @@ impl Stage<'_> {
                 mode,
                 size,
                 round,
+                smooth,
             } => {
                 let id = self.resolve(layer)?;
-                self.stroke(id, points, *size, *round, *color, *mode)?;
+                if *smooth {
+                    self.charge_stroke(points, *size)?;
+                    let Some(area) = self.editable(&self.doc.layers[&id]) else {
+                        return Ok(());
+                    };
+                    // Coverage scales source alpha once; all overlapping geometry
+                    // was unioned by the rasterizer before any pixel is blended.
+                    for run in paintcraft_raster::smooth::round_path(points, *size, &area)? {
+                        if *mode == Mode::Replace && run.samples < 16 {
+                            let l = self.doc.layers.get_mut(&id).expect("resolved");
+                            for x in run.x0..=run.x1 {
+                                let (lx, ly) = (x - l.origin.0, run.y - l.origin.1);
+                                let dst = l.raster.get(lx, ly);
+                                let mut mixed = *color;
+                                for (out, (&src, &dst)) in
+                                    mixed.0.iter_mut().zip(color.0.iter().zip(dst.0.iter()))
+                                {
+                                    *out = ((u16::from(src) * u16::from(run.samples)
+                                        + u16::from(dst) * u16::from(16 - run.samples)
+                                        + 8)
+                                        / 16) as u8;
+                                }
+                                l.raster.blend_pixel(
+                                    lx,
+                                    ly,
+                                    mixed,
+                                    Mode::Replace,
+                                    &mut self.adm,
+                                )?;
+                            }
+                            continue;
+                        }
+                        let mut covered = *color;
+                        covered.0[3] =
+                            ((u16::from(color.a()) * u16::from(run.samples) + 8) / 16) as u8;
+                        self.paint_spans(
+                            id,
+                            &[Span {
+                                y: run.y,
+                                x0: run.x0,
+                                x1: run.x1,
+                            }],
+                            covered,
+                            *mode,
+                        )?;
+                    }
+                } else {
+                    self.stroke(id, points, *size, *round, *color, *mode)?;
+                }
             }
             Op::FloodFill {
                 layer,

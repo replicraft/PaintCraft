@@ -313,11 +313,15 @@ cross-checked against the parser on independent validator verdicts
 derived by hand from the geometry definitions. Rust-generated golden vectors for v2 would
 only prove stability, not correctness.
 
-Definitions (integer-exact, so any implementation can reproduce them):
+Geometry definitions (the historical integer operations remain exact):
 
 - **Brush stamps.** Diameter `n`; square is the full `n×n` box, round is the `n×n` ellipse.
   The stamp's top-left is `centre − (n−1)/2`. A stroke's footprint is the union of stamps
   along the pencil path, and every covered pixel blends exactly once.
+- **Smooth round brush.** The desktop round brush selects the additive v2
+  `smooth-round` policy. Four-by-four coverage persists in document pixels;
+  preview and commit use identical staged execution and composition. See
+  [Brush rendering](BRUSH_RENDERING.md) for geometry, rounding, limits and tests.
 - **Ellipse.** Pixel `(px,py)` in a `w×h` box is inside when
   `(2px+1−w)²h² + (2py+1−h)²w² ≤ w²h²`. An outline of thickness `t` is the figure minus the
   same figure shrunk by `t` on every side; if nothing remains inside, it is solid.

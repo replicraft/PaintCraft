@@ -105,6 +105,7 @@ pub enum Op {
         mode: Mode,
         size: u32,
         round: bool,
+        smooth: bool,
     },
     /// v2: 4-connected fill from a seed pixel.
     FloodFill {
@@ -267,10 +268,11 @@ fn op(v: &Value, version: u8) -> Result<Op> {
                 mode: mode(&o["mode"])?,
                 size: int_in(&o["size"], 1, BRUSH_SIZE_MAX, "size")? as u32,
                 round: match o["brush"].as_str() {
-                    Some("round") => true,
+                    Some("round" | "smooth-round") => true,
                     Some("square") => false,
-                    _ => return Err(bad("brush must be round or square")),
+                    _ => return Err(bad("brush must be round, square or smooth-round")),
                 },
+                smooth: o["brush"].as_str() == Some("smooth-round"),
             }
         }
         "raster.flood_fill" => {

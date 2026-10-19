@@ -6,6 +6,9 @@ use paintcraft_document::{POLICY, new_document};
 use paintcraft_editor::session::{Receipt, Session};
 use uuid::Uuid;
 
+#[path = "batch_v2/smooth.rs"]
+mod smooth;
+
 fn session(w: u32, h: u32) -> (Session, Uuid) {
     let mut s = Session::new(new_document(w, h, None, 0, POLICY).unwrap());
     let r = run(&mut s, 2, &format!(r##"[{{"op":"layer.add","ref":"l","name":"L","width":{w},"height":{h},"origin":{{"x":0,"y":0}},"default_pixel":"#00000000"}}]"##)).unwrap();

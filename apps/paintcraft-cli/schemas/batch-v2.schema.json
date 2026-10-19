@@ -289,7 +289,7 @@
               },
               "size": {"type": "integer", "minimum": 1, "maximum": 1024},
               "brush": {
-                "enum": ["round", "square"]
+                "enum": ["round", "square", "smooth-round"]
               }
             },
             "required": ["op", "layer_ref", "points", "color", "mode", "size", "brush"],

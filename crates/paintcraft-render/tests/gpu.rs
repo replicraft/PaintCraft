@@ -23,6 +23,36 @@ fn gpu_matches_scalar_for_order_opacity_offsets_tiles_and_hidden_rgb() {
     let gpu = GpuRenderer::new(device, queue).unwrap();
     let mut doc = new_document(263, 19, None, 0, POLICY).unwrap();
     assert_eq!(gpu.render(&doc).unwrap(), render_flat(&doc).unwrap());
+    // Real smooth-brush edge alphas must survive both compositors identically.
+    let id = deterministic_id(&["smooth-brush-gpu"]);
+    let mut raster = RasterLayer::new(263, 19, Rgba::TRANSPARENT);
+    let mut admission = Admission::new(2_000_000);
+    for run in
+        paintcraft_raster::smooth::round_path(&[(2, 2), (260, 16)], 7, &doc.canvas_rect()).unwrap()
+    {
+        let alpha = ((128u16 * u16::from(run.samples) + 8) / 16) as u8;
+        raster
+            .fill_rect(
+                &paintcraft_core::types::Rect::new(run.x0, run.y, run.x1 - run.x0 + 1, 1).unwrap(),
+                Rgba([32, 64, 128, alpha]),
+                paintcraft_raster::BlendMode::SourceOver,
+                &mut admission,
+            )
+            .unwrap();
+    }
+    doc.roots.push(id);
+    doc.layers.insert(
+        id,
+        Layer {
+            id,
+            name: "Brush".into(),
+            origin: (0, 0),
+            visible: true,
+            opacity: 137,
+            raster,
+        },
+    );
+    parity(&gpu, &doc);
     // Odd extents exercise workgroup tails; width crosses the sparse tile boundary.
     for (i, (origin, opacity, visible)) in [
         ((-3, -1), 255, true),
