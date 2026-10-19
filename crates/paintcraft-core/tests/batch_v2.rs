@@ -384,3 +384,130 @@ fn parser_agrees_with_the_v2_json_schema_on_every_grammar_case() {
         assert_eq!(got.is_ok(), expect, "case {i}: {:?}", got.err());
     }
 }
+
+fn text_op(id: Uuid, at: (i64, i64), text: &str, scale: u32, color: &str, mode: &str) -> String {
+    format!(
+        r#"{{"op":"raster.text","layer_ref":{},"at":{{"x":{},"y":{}}},"text":"{}","scale":{scale},"color":"{color}","mode":"{mode}"}}"#,
+        lref(id),
+        at.0,
+        at.1,
+        text.replace('\n', "\\n")
+    )
+}
+
+#[test]
+fn text_draws_the_bitmap_font_exactly_and_respects_clipping() {
+    let (mut s, id) = session(18, 9);
+    run(
+        &mut s,
+        2,
+        &format!("[{}]", text_op(id, (1, 1), "Hi", 1, "#000000FF", "replace")),
+    )
+    .unwrap();
+    // Expected rows come from the font's own bytes (bit 0 = leftmost): 'H' and 'i'.
+    let h = [0x33u8, 0x33, 0x33, 0x3F, 0x33, 0x33, 0x33, 0x00];
+    let i = [0x0Cu8, 0x00, 0x0E, 0x0C, 0x0C, 0x0C, 0x1E, 0x00];
+    let row = |r: usize| -> String {
+        let bits = |b: u8| (0..8).map(move |x| if b >> x & 1 == 1 { '#' } else { '.' });
+        // Layer is 18 wide: one empty column, then the two 8-pixel cells, then one empty column.
+        format!(
+            ".{}{}.",
+            bits(h[r]).collect::<String>(),
+            bits(i[r]).collect::<String>()
+        )
+    };
+    let expected: Vec<String> = (0..8).map(row).collect();
+    assert_eq!(picture(&s, id)[1..9], expected[..]);
+    // Selecting a region clips glyphs mid-way.
+    run(
+        &mut s,
+        2,
+        r#"[{"op":"selection.set_rect","rect":{"x":0,"y":0,"width":4,"height":9}}]"#,
+    )
+    .unwrap();
+    let (mut s2, id2) = session(18, 9);
+    run(
+        &mut s2,
+        2,
+        r#"[{"op":"selection.set_rect","rect":{"x":0,"y":0,"width":4,"height":9}}]"#,
+    )
+    .unwrap();
+    run(
+        &mut s2,
+        2,
+        &format!(
+            "[{}]",
+            text_op(id2, (1, 1), "Hi", 1, "#000000FF", "replace")
+        ),
+    )
+    .unwrap();
+    assert!(
+        picture(&s2, id2)
+            .iter()
+            .all(|r| r[4..].chars().all(|c| c == '.')),
+        "nothing right of the selection"
+    );
+    assert_eq!(picture(&s2, id2)[1][..4], *".##.");
+}
+
+#[test]
+fn text_scales_by_whole_pixels_and_blends_once() {
+    let (mut s, id) = session(24, 20);
+    run(
+        &mut s,
+        2,
+        &format!(
+            "[{}]",
+            text_op(id, (0, 0), "I", 2, "#FF000080", "source-over")
+        ),
+    )
+    .unwrap();
+    let l = &s.document().layers[&id].raster;
+    // 'I' row 0 is 1E 0C 0C 0C 0C 0C 1E 00 -> scale 2 doubles every pixel in both directions.
+    assert_eq!(
+        (l.get(2, 0), l.get(3, 1), l.get(0, 0)),
+        (
+            Rgba([255, 0, 0, 128]),
+            Rgba([255, 0, 0, 128]),
+            Rgba::TRANSPARENT
+        )
+    );
+    assert_eq!(
+        l.get(2, 0).a(),
+        128,
+        "translucent text is not accumulated by overlapping runs"
+    );
+}
+
+#[test]
+fn unsupported_text_fails_the_whole_batch_naming_the_character() {
+    let (mut s, id) = session(10, 10);
+    let ticket = s.ticket();
+    let e = run(
+        &mut s,
+        2,
+        &format!(
+            "[{},{}]",
+            text_op(id, (0, 0), "ok", 1, "#000000FF", "replace"),
+            text_op(id, (0, 0), "a\u{1F600}", 1, "#000000FF", "replace")
+        ),
+    )
+    .unwrap_err();
+    assert_eq!(
+        (e.code, e.operation_index),
+        (ErrorCode::CapabilityUnsupported, Some(1))
+    );
+    assert!(e.message.contains("U+1F600"));
+    assert_eq!(
+        s.ticket(),
+        ticket,
+        "the first, valid operation did not publish"
+    );
+    let e = run(
+        &mut s,
+        1,
+        &format!("[{}]", text_op(id, (0, 0), "a", 1, "#000000FF", "replace")),
+    )
+    .unwrap_err();
+    assert_eq!(e.code, ErrorCode::InputSchema, "text is v2 only");
+}

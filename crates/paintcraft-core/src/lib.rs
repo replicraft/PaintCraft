@@ -4,6 +4,7 @@ pub mod commands;
 pub mod document;
 pub mod execute;
 pub mod flood;
+pub mod font;
 pub mod ids;
 pub mod raster;
 pub mod render;

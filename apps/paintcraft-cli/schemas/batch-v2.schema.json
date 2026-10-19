@@ -789,6 +789,94 @@
                 "stroke"
               ]
             }
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "raster.text"
+              },
+              "layer_ref": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ref": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                      }
+                    },
+                    "required": [
+                      "ref"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "at": {
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "type": "integer",
+                    "minimum": -140737488355327,
+                    "maximum": 140737488355327
+                  },
+                  "y": {
+                    "type": "integer",
+                    "minimum": -140737488355327,
+                    "maximum": 140737488355327
+                  }
+                },
+                "required": [
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              },
+              "text": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 1024
+              },
+              "scale": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 16
+              },
+              "color": {
+                "type": "string",
+                "pattern": "^#[0-9A-Fa-f]{8}$"
+              },
+              "mode": {
+                "enum": [
+                  "replace",
+                  "source-over"
+                ]
+              }
+            },
+            "required": [
+              "op",
+              "layer_ref",
+              "at",
+              "text",
+              "scale",
+              "color",
+              "mode"
+            ],
+            "additionalProperties": false
           }
         ]
       },

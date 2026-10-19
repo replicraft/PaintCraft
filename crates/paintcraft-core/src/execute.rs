@@ -414,6 +414,30 @@ impl Stage<'_> {
                     )?;
                 }
             }
+            Op::Text {
+                layer,
+                at,
+                text,
+                scale,
+                color,
+                mode,
+            } => {
+                let id = self.resolve(layer)?;
+                let Some(clip) = self.editable(&self.doc.layers[&id]) else {
+                    return Ok(());
+                };
+                let spans =
+                    crate::font::layout(text, *at, i64::from(*scale), &clip).map_err(|c| {
+                        Error::new(
+                            ErrorCode::CapabilityUnsupported,
+                            format!(
+                                "character U+{:04X} has no glyph in the built-in font",
+                                c as u32
+                            ),
+                        )
+                    })?;
+                self.paint_spans(id, &spans, *color, *mode)?;
+            }
             Op::SelectionSetRect { rect } => {
                 self.selection = match self.doc.canvas_rect().intersect(rect) {
                     Some(r) => Selection::Rect(r),

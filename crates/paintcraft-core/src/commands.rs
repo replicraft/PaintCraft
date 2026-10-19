@@ -124,6 +124,15 @@ pub enum Op {
         fill: Option<Rgba>,
         mode: Mode,
     },
+    /// v2: text in the built-in bitmap font, laid out from its top-left corner.
+    Text {
+        layer: LayerRef,
+        at: (i64, i64),
+        text: String,
+        scale: u32,
+        color: Rgba,
+        mode: Mode,
+    },
     CanvasResize {
         width: u32,
         height: u32,
@@ -214,7 +223,7 @@ fn op(v: &Value, version: u8) -> Result<Op> {
     if version < 2
         && matches!(
             name,
-            "raster.stroke_path" | "raster.flood_fill" | "raster.shape"
+            "raster.stroke_path" | "raster.flood_fill" | "raster.shape" | "raster.text"
         )
     {
         return Err(bad(format!(
@@ -304,6 +313,25 @@ fn op(v: &Value, version: u8) -> Result<Op> {
                 to: point(&o["to"])?,
                 stroke,
                 fill,
+                mode: mode(&o["mode"])?,
+            }
+        }
+        "raster.text" => {
+            let o = obj(
+                v,
+                &["op", "layer_ref", "at", "text", "scale", "color", "mode"],
+                &[],
+            )?;
+            let text = string(&o["text"], "text")?;
+            if text.is_empty() || text.chars().count() > crate::font::TEXT_CHARS_MAX {
+                return Err(bad("text must contain 1..=1024 characters"));
+            }
+            Op::Text {
+                layer: layer_ref(&o["layer_ref"])?,
+                at: point(&o["at"])?,
+                text,
+                scale: int_in(&o["scale"], 1, crate::font::SCALE_MAX, "scale")? as u32,
+                color: color(&o["color"])?,
                 mode: mode(&o["mode"])?,
             }
         }
