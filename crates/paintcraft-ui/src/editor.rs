@@ -24,12 +24,100 @@ const POINTS_PER_OP: usize = 65_536;
 /// Operations per batch (the schema maximum); longer gestures are cut off.
 const OPS_PER_BATCH: usize = 1024;
 
+/// How a shape is painted.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ShapeStyle {
+    Outline,
+    Filled,
+    /// Outline in the primary colour over a fill in the secondary colour.
+    Both,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Tool {
+    Pencil,
+    Brush,
+    Eraser,
+    Fill,
+    Line,
+    Rect,
+    Ellipse,
+    Select,
+}
+
+impl Tool {
+    pub const ALL: [Tool; 8] = [
+        Tool::Pencil,
+        Tool::Brush,
+        Tool::Eraser,
+        Tool::Fill,
+        Tool::Line,
+        Tool::Rect,
+        Tool::Ellipse,
+        Tool::Select,
+    ];
+
+    pub fn name(self) -> &'static str {
+        match self {
+            Tool::Pencil => "Pencil",
+            Tool::Brush => "Brush",
+            Tool::Eraser => "Eraser",
+            Tool::Fill => "Fill",
+            Tool::Line => "Line",
+            Tool::Rect => "Rectangle",
+            Tool::Ellipse => "Ellipse",
+            Tool::Select => "Select",
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ToolOptions {
+    /// Brush, eraser and outline thickness in pixels (1..=1024). The pencil is always 1.
+    pub size: u32,
+    pub round: bool,
+    pub style: ShapeStyle,
+    /// Fill tolerance, 0..=255 per channel.
+    pub tolerance: u8,
+}
+
+impl Default for ToolOptions {
+    fn default() -> Self {
+        ToolOptions {
+            size: 4,
+            round: true,
+            style: ShapeStyle::Outline,
+            tolerance: 0,
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum Action {
     Stroke {
         layer: Uuid,
         points: Vec<(i64, i64)>,
         color: Rgba,
+        size: u32,
+        round: bool,
+    },
+    Fill {
+        layer: Uuid,
+        at: (i64, i64),
+        color: Rgba,
+        tolerance: u8,
+    },
+    Shape {
+        layer: Uuid,
+        tool: Tool,
+        from: (i64, i64),
+        to: (i64, i64),
+        stroke: Option<(Rgba, u32)>,
+        fill: Option<Rgba>,
+    },
+    /// Rectangle in document pixels (inclusive corners), or `None` to deselect.
+    Select {
+        corners: Option<((i64, i64), (i64, i64))>,
     },
     AddLayer,
     SetVisible {
@@ -41,11 +129,36 @@ pub enum Action {
     Save,
 }
 
+/// What the UI should draw for an unpublished gesture.
+#[derive(Clone, Debug, PartialEq)]
+pub enum Preview {
+    Path {
+        points: Vec<(i64, i64)>,
+        size: u32,
+        round: bool,
+        color: Rgba,
+    },
+    Shape {
+        tool: Tool,
+        from: (i64, i64),
+        to: (i64, i64),
+        stroke: Option<(Rgba, u32)>,
+        fill: Option<Rgba>,
+    },
+    Marquee {
+        from: (i64, i64),
+        to: (i64, i64),
+    },
+}
+
 #[derive(Debug)]
 struct Gesture {
     token: Token,
     layer: Uuid,
+    tool: Tool,
     color: Rgba,
+    fill: Rgba,
+    options: ToolOptions,
     points: Vec<(i64, i64)>,
 }
 
@@ -61,6 +174,10 @@ pub struct LayerRow {
 pub struct Editor {
     session: Session,
     pub color: Rgba,
+    /// Fill colour for shapes drawn with `ShapeStyle::Both`.
+    pub secondary: Rgba,
+    pub tool: Tool,
+    pub options: ToolOptions,
     target: Option<Uuid>,
     gesture: Option<Gesture>,
     outbox: Outbox<Action>,
@@ -72,6 +189,14 @@ pub struct Editor {
 /// Gesture tokens live in their own half of the token space so they can never
 /// collide with the tokens the application derives for button activations.
 const GESTURE_TOKEN_BASE: Token = 1 << 63;
+
+fn layer_ref(id: Uuid) -> Value {
+    Value::object([("id", Value::str(id.to_string()))])
+}
+
+fn point(p: (i64, i64)) -> Value {
+    Value::object([("x", Value::Int(p.0)), ("y", Value::Int(p.1))])
+}
 
 impl Editor {
     /// A new white document with one `Background` layer as the editing target.
@@ -99,6 +224,9 @@ impl Editor {
         Editor {
             session: Session::new(doc),
             color: Rgba([0, 0, 0, 255]),
+            secondary: Rgba([255, 255, 255, 255]),
+            tool: Tool::Pencil,
+            options: ToolOptions::default(),
             target,
             gesture: None,
             outbox: Outbox::default(),
@@ -174,7 +302,61 @@ impl Editor {
         self.gesture.is_some()
     }
 
-    /// Points collected so far, for a live overlay.
+    /// What to draw for the unpublished gesture, if any.
+    pub fn preview(&self) -> Option<Preview> {
+        let g = self.gesture.as_ref()?;
+        let (first, last) = (
+            g.points[0],
+            *g.points.last().expect("a gesture has a point"),
+        );
+        Some(match g.tool {
+            Tool::Pencil | Tool::Brush | Tool::Eraser => {
+                let (size, round, color) = Self::brush_of(g);
+                Preview::Path {
+                    points: g.points.clone(),
+                    size,
+                    round,
+                    color,
+                }
+            }
+            Tool::Fill => return None,
+            Tool::Select => Preview::Marquee {
+                from: first,
+                to: last,
+            },
+            Tool::Line | Tool::Rect | Tool::Ellipse => {
+                let (stroke, fill) = Self::shape_paint(g);
+                Preview::Shape {
+                    tool: g.tool,
+                    from: first,
+                    to: last,
+                    stroke,
+                    fill,
+                }
+            }
+        })
+    }
+
+    fn brush_of(g: &Gesture) -> (u32, bool, Rgba) {
+        match g.tool {
+            Tool::Pencil => (1, false, g.color),
+            Tool::Eraser => (g.options.size, false, Rgba::TRANSPARENT),
+            _ => (g.options.size, g.options.round, g.color),
+        }
+    }
+
+    fn shape_paint(g: &Gesture) -> (Option<(Rgba, u32)>, Option<Rgba>) {
+        let stroke = (g.options.style != ShapeStyle::Filled || g.tool == Tool::Line)
+            .then_some((g.color, g.options.size));
+        let fill = match (g.tool, g.options.style) {
+            (Tool::Line, _) | (_, ShapeStyle::Outline) => None,
+            (_, ShapeStyle::Filled) => Some(g.color),
+            (_, ShapeStyle::Both) => Some(g.fill),
+        };
+        (stroke, fill)
+    }
+
+    /// Points of a freehand gesture, for tests and simple overlays.
     pub fn gesture_points(&self) -> &[(i64, i64)] {
         self.gesture.as_ref().map_or(&[], |g| &g.points)
     }
@@ -185,14 +367,20 @@ impl Editor {
         if self.gesture.is_some() {
             return; // a gesture already owns the pointer
         }
-        let Some(layer) = self
-            .target
-            .filter(|id| self.document().layers.contains_key(id))
-        else {
-            self.status = "No editing target: add or choose a layer".into();
-            return;
+        // Selecting does not touch pixels, so it needs no target; everything else does.
+        let layer = match (
+            self.tool,
+            self.target
+                .filter(|id| self.document().layers.contains_key(id)),
+        ) {
+            (Tool::Select, t) => t.unwrap_or_else(Uuid::nil),
+            (_, Some(layer)) => layer,
+            (_, None) => {
+                self.status = "No editing target: add or choose a layer".into();
+                return;
+            }
         };
-        if !self.document().layers[&layer].visible {
+        if self.tool != Tool::Select && !self.document().layers[&layer].visible {
             self.status = "The target layer is hidden; show it or choose another layer".into();
             return;
         }
@@ -200,32 +388,73 @@ impl Editor {
         self.gesture = Some(Gesture {
             token: self.next_gesture,
             layer,
+            tool: self.tool,
             color: self.color,
+            fill: self.secondary,
+            options: self.options,
             points: vec![doc_point],
         });
     }
 
     pub fn pointer_move(&mut self, doc_point: (i64, i64)) {
-        if let Some(g) = &mut self.gesture
-            && g.points.last() != Some(&doc_point)
-            && g.points.len() < POINTS_PER_OP * OPS_PER_BATCH
-        {
-            g.points.push(doc_point);
+        let Some(g) = &mut self.gesture else { return };
+        match g.tool {
+            Tool::Pencil | Tool::Brush | Tool::Eraser => {
+                if g.points.last() != Some(&doc_point)
+                    && g.points.len() < POINTS_PER_OP * OPS_PER_BATCH
+                {
+                    g.points.push(doc_point);
+                }
+            }
+            // Fill acts where the button went down; shapes and selections only need both ends.
+            Tool::Fill => {}
+            _ => {
+                g.points.truncate(1);
+                g.points.push(doc_point);
+            }
         }
     }
 
-    /// Finish the gesture: queue exactly one stroke. A second call does nothing.
+    /// Finish the gesture: queue exactly one action. A second call does nothing.
     pub fn pointer_up(&mut self) {
-        if let Some(g) = self.gesture.take() {
-            self.outbox.push(
-                g.token,
+        let Some(g) = self.gesture.take() else { return };
+        let (first, last) = (
+            g.points[0],
+            *g.points.last().expect("a gesture has a point"),
+        );
+        let action = match g.tool {
+            Tool::Pencil | Tool::Brush | Tool::Eraser => {
+                let (size, round, color) = Self::brush_of(&g);
                 Action::Stroke {
                     layer: g.layer,
                     points: g.points,
-                    color: g.color,
-                },
-            );
-        }
+                    color,
+                    size,
+                    round,
+                }
+            }
+            Tool::Fill => Action::Fill {
+                layer: g.layer,
+                at: first,
+                color: g.color,
+                tolerance: g.options.tolerance,
+            },
+            Tool::Select => Action::Select {
+                corners: Some((first, last)),
+            },
+            Tool::Line | Tool::Rect | Tool::Ellipse => {
+                let (stroke, fill) = Self::shape_paint(&g);
+                Action::Shape {
+                    layer: g.layer,
+                    tool: g.tool,
+                    from: first,
+                    to: last,
+                    stroke,
+                    fill,
+                }
+            }
+        };
+        self.outbox.push(g.token, action);
     }
 
     /// Escape, focus loss, device removal or a modal dialog: drop the gesture unpublished.
@@ -256,7 +485,81 @@ impl Editor {
                 layer,
                 points,
                 color,
-            } => self.stroke(layer, &points, color),
+                size,
+                round,
+            } => self.stroke(layer, &points, color, size, round),
+            Action::Fill {
+                layer,
+                at,
+                color,
+                tolerance,
+            } => {
+                let op = Value::object([
+                    ("op", Value::str("raster.flood_fill")),
+                    ("layer_ref", layer_ref(layer)),
+                    ("at", point(at)),
+                    ("color", Value::str(color.to_hex())),
+                    ("mode", Value::str("source-over")),
+                    ("tolerance", Value::Int(i64::from(tolerance))),
+                ]);
+                self.draw(vec![op], "Fill");
+            }
+            Action::Shape {
+                layer,
+                tool,
+                from,
+                to,
+                stroke,
+                fill,
+            } => {
+                let mut pairs = vec![
+                    ("op", Value::str("raster.shape")),
+                    ("layer_ref", layer_ref(layer)),
+                    (
+                        "kind",
+                        Value::str(match tool {
+                            Tool::Line => "line",
+                            Tool::Rect => "rect",
+                            _ => "ellipse",
+                        }),
+                    ),
+                    ("from", point(from)),
+                    ("to", point(to)),
+                    ("mode", Value::str("source-over")),
+                ];
+                if let Some((c, size)) = stroke {
+                    pairs.push((
+                        "stroke",
+                        Value::object([
+                            ("color", Value::str(c.to_hex())),
+                            ("size", Value::Int(i64::from(size))),
+                        ]),
+                    ));
+                }
+                if let Some(c) = fill {
+                    pairs.push(("fill", Value::str(c.to_hex())));
+                }
+                let op = Value::Object(pairs.into_iter().map(|(k, v)| (k.to_owned(), v)).collect());
+                self.draw(vec![op], tool.name());
+            }
+            Action::Select { corners } => {
+                let op = match corners {
+                    Some((a, b)) => Value::object([
+                        ("op", Value::str("selection.set_rect")),
+                        (
+                            "rect",
+                            Value::object([
+                                ("x", Value::Int(a.0.min(b.0))),
+                                ("y", Value::Int(a.1.min(b.1))),
+                                ("width", Value::Int((a.0 - b.0).abs() + 1)),
+                                ("height", Value::Int((a.1 - b.1).abs() + 1)),
+                            ]),
+                        ),
+                    ]),
+                    None => Value::object([("op", Value::str("selection.clear"))]),
+                };
+                self.commit(vec![op], "Selection changed");
+            }
             Action::AddLayer => self.add_layer(),
             Action::SetVisible { layer, visible } => {
                 let op = Value::object([
@@ -308,7 +611,7 @@ impl Editor {
     ) -> Option<paintcraft_core::session::Receipt> {
         let t = self.session.ticket();
         let batch = Value::object([
-            ("schema", Value::str("paintcraft.batch/v1")),
+            ("schema", Value::str("paintcraft.batch/v2")),
             ("atomic", Value::Bool(true)),
             ("policy", Value::str(POLICY)),
             (
@@ -335,40 +638,51 @@ impl Editor {
         }
     }
 
-    fn stroke(&mut self, layer: Uuid, points: &[(i64, i64)], color: Rgba) {
+    /// Commit drawing operations; a batch that changes nothing is reported as such.
+    fn draw(&mut self, ops: Vec<Value>, name: &str) {
+        if let Some(r) = self.commit(ops, name)
+            && !r.committed
+        {
+            self.status = format!("{name} changed nothing");
+        }
+    }
+
+    fn stroke(&mut self, layer: Uuid, points: &[(i64, i64)], color: Rgba, size: u32, round: bool) {
         if points.is_empty() {
             return;
         }
         // Long gestures are split across operations; each starts on the previous
         // chunk's last point so the path stays connected. A translucent colour
-        // blends that one joint pixel twice.
+        // blends the joint's stamp twice, once per operation.
         let mut ops = Vec::new();
         let mut start = 0;
         while start < points.len() && ops.len() < OPS_PER_BATCH {
             let end = (start + POINTS_PER_OP).min(points.len());
-            let pts = points[start..end]
-                .iter()
-                .map(|(x, y)| Value::object([("x", Value::Int(*x)), ("y", Value::Int(*y))]))
-                .collect();
             ops.push(Value::object([
-                ("op", Value::str("raster.pencil_path")),
+                ("op", Value::str("raster.stroke_path")),
+                ("layer_ref", layer_ref(layer)),
                 (
-                    "layer_ref",
-                    Value::object([("id", Value::str(layer.to_string()))]),
+                    "points",
+                    Value::Array(points[start..end].iter().map(|p| point(*p)).collect()),
                 ),
-                ("points", Value::Array(pts)),
                 ("color", Value::str(color.to_hex())),
-                ("mode", Value::str("source-over")),
+                (
+                    "mode",
+                    Value::str(if color.a() == 0 {
+                        "replace"
+                    } else {
+                        "source-over"
+                    }),
+                ),
+                ("size", Value::Int(i64::from(size))),
+                ("brush", Value::str(if round { "round" } else { "square" })),
             ]));
             if end == points.len() {
                 break;
             }
             start = end - 1;
         }
-        let drawn = self.commit(ops, "Pencil stroke");
-        if drawn.as_ref().is_some_and(|r| !r.committed) {
-            self.status = "Stroke changed nothing".into();
-        }
+        self.draw(ops, if color.a() == 0 { "Erase" } else { "Stroke" });
     }
 
     fn add_layer(&mut self) {
@@ -590,6 +904,190 @@ mod tests {
         e.run_pending();
         assert!(e.is_dirty());
         std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    // ---- tools ----------------------------------------------------------------------
+
+    fn with_tool(tool: Tool, f: impl FnOnce(&mut ToolOptions)) -> Editor {
+        let mut e = editor();
+        e.tool = tool;
+        f(&mut e.options);
+        e
+    }
+
+    #[test]
+    fn the_brush_paints_its_size_and_the_pencil_is_always_one_pixel() {
+        let mut e = with_tool(Tool::Brush, |o| {
+            o.size = 3;
+            o.round = false;
+        });
+        let layer = e.target().unwrap();
+        assert_eq!(stroke(&mut e, &[(10, 10)]), 1);
+        let covered = (0..320)
+            .flat_map(|y| (0..320).map(move |x| (x, y)))
+            .filter(|&(x, y)| pixel(&e, layer, x, y).a() == 255)
+            .count();
+        assert_eq!(covered, 9);
+        e.tool = Tool::Pencil;
+        e.options.size = 50;
+        assert_eq!(stroke(&mut e, &[(100, 100)]), 1);
+        assert_eq!(
+            pixel(&e, layer, 101, 100).a(),
+            0,
+            "size is ignored by the pencil"
+        );
+    }
+
+    #[test]
+    fn the_eraser_clears_to_transparent_in_one_undoable_step() {
+        let mut e = with_tool(Tool::Brush, |o| o.size = 1);
+        let layer = e.target().unwrap();
+        stroke(&mut e, &[(5, 5), (9, 5)]);
+        e.tool = Tool::Eraser;
+        e.options.size = 3;
+        assert_eq!(stroke(&mut e, &[(7, 5)]), 1);
+        assert_eq!(pixel(&e, layer, 7, 5), Rgba::TRANSPARENT);
+        assert_eq!(pixel(&e, layer, 5, 5).a(), 255);
+        assert_eq!(pixel(&e, layer, 9, 5).a(), 255);
+        e.request(90, Action::Undo);
+        e.run_pending();
+        assert_eq!(pixel(&e, layer, 7, 5).a(), 255);
+    }
+
+    #[test]
+    fn fill_acts_where_the_button_went_down_not_where_it_came_up() {
+        let mut e = with_tool(Tool::Fill, |_| {});
+        e.color = Rgba([255, 0, 0, 255]);
+        let layer = e.target().unwrap();
+        e.pointer_down((10, 10));
+        e.pointer_move((200, 200));
+        e.pointer_up();
+        assert_eq!(e.run_pending(), 1);
+        assert_eq!(
+            pixel(&e, layer, 300, 300),
+            Rgba([255, 0, 0, 255]),
+            "the whole transparent layer is one region"
+        );
+        assert!(e.preview().is_none());
+    }
+
+    #[test]
+    fn shapes_preview_while_dragging_and_publish_once_on_release() {
+        for (tool, style, expect_fill) in [
+            (Tool::Rect, ShapeStyle::Outline, false),
+            (Tool::Rect, ShapeStyle::Filled, true),
+            (Tool::Ellipse, ShapeStyle::Both, true),
+            (Tool::Line, ShapeStyle::Filled, false),
+        ] {
+            let mut e = with_tool(tool, |o| {
+                o.style = style;
+                o.size = 2;
+            });
+            e.secondary = Rgba([0, 0, 255, 255]);
+            let before = e.publications();
+            e.pointer_down((20, 20));
+            for p in [(30, 25), (40, 40), (60, 50)] {
+                e.pointer_move(p);
+            }
+            let Some(Preview::Shape {
+                from,
+                to,
+                fill,
+                stroke,
+                ..
+            }) = e.preview()
+            else {
+                panic!("{tool:?} should preview as a shape")
+            };
+            assert_eq!((from, to), ((20, 20), (60, 50)), "only the two ends matter");
+            assert_eq!(fill.is_some(), expect_fill, "{tool:?} {style:?}");
+            assert_eq!(
+                stroke.is_some(),
+                style != ShapeStyle::Filled || tool == Tool::Line
+            );
+            assert_eq!(e.publications(), before, "nothing is published mid-gesture");
+            e.pointer_up();
+            assert_eq!(e.run_pending(), 1, "{tool:?}");
+        }
+    }
+
+    #[test]
+    fn a_filled_rectangle_uses_the_primary_colour_and_both_uses_the_secondary_for_the_fill() {
+        let mut e = with_tool(Tool::Rect, |o| {
+            o.style = ShapeStyle::Both;
+            o.size = 1;
+        });
+        e.color = Rgba([255, 0, 0, 255]);
+        e.secondary = Rgba([0, 0, 255, 255]);
+        let layer = e.target().unwrap();
+        e.pointer_down((10, 10));
+        e.pointer_move((20, 20));
+        e.pointer_up();
+        e.run_pending();
+        assert_eq!(
+            (pixel(&e, layer, 10, 10), pixel(&e, layer, 15, 15)),
+            (Rgba([255, 0, 0, 255]), Rgba([0, 0, 255, 255]))
+        );
+        e.options.style = ShapeStyle::Filled;
+        e.pointer_down((30, 10));
+        e.pointer_move((40, 20));
+        e.pointer_up();
+        e.run_pending();
+        assert_eq!(pixel(&e, layer, 35, 15), Rgba([255, 0, 0, 255]));
+    }
+
+    #[test]
+    fn selecting_restricts_drawing_and_deselecting_restores_it() {
+        let mut e = with_tool(Tool::Select, |_| {});
+        let layer = e.target().unwrap();
+        e.pointer_down((50, 50));
+        e.pointer_move((10, 10));
+        assert!(matches!(e.preview(), Some(Preview::Marquee { .. })));
+        e.pointer_up();
+        assert_eq!(e.run_pending(), 1);
+        assert_eq!(
+            e.selection(),
+            Selection::Rect(paintcraft_types::Rect::new(10, 10, 41, 41).unwrap())
+        );
+        e.tool = Tool::Fill;
+        e.pointer_down((200, 200));
+        e.pointer_up();
+        assert_eq!(
+            e.run_pending(),
+            0,
+            "a seed outside the selection fills nothing"
+        );
+        e.pointer_down((20, 20));
+        e.pointer_up();
+        e.run_pending();
+        assert_eq!(
+            (
+                pixel(&e, layer, 20, 20).a(),
+                pixel(&e, layer, 9, 20).a(),
+                pixel(&e, layer, 51, 20).a()
+            ),
+            (255, 0, 0)
+        );
+        e.request(91, Action::Select { corners: None });
+        e.run_pending();
+        assert_eq!(e.selection(), Selection::Inactive);
+    }
+
+    #[test]
+    fn selecting_needs_no_target_layer_but_painting_does() {
+        // A document with no layers at all.
+        let mut e = Editor::from_document(
+            paintcraft_core::document::new_document(32, 32, None, 0, POLICY).unwrap(),
+            None,
+        );
+        e.tool = Tool::Select;
+        e.pointer_down((1, 1));
+        e.pointer_move((5, 5));
+        e.pointer_up();
+        assert_eq!(e.run_pending(), 1);
+        e.tool = Tool::Pencil;
+        e.pointer_down((1, 1));
+        assert!(!e.gesture_in_progress() && e.status().contains("No editing target"));
     }
 
     #[test]
