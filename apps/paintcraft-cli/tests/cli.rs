@@ -162,9 +162,25 @@ fn m1_scenario_new_apply_inspect_render() {
         "the input is never modified"
     );
 
-    let r = run(&["render", &edited, "-o", &png_path, "--json"]);
+    // The vector deliberately stores hidden RGB under alpha zero; a flat PNG cannot keep it.
+    let refused = run(&["render", &edited, "-o", &png_path, "--json"]);
+    assert_eq!(refused.code, 3);
+    assert!(!Path::new(&png_path).exists());
+    let r = run(&[
+        "render",
+        &edited,
+        "-o",
+        &png_path,
+        "--allow-loss",
+        "hidden-rgb",
+        "--json",
+    ]);
     assert_eq!(r.code, 0, "{}", r.stderr);
     let env = r.json();
+    assert_eq!(
+        env.get("file").unwrap().get("losses_acknowledged"),
+        Some(&Value::Array(vec![Value::str("hidden-rgb")]))
+    );
     assert_eq!(text(&env, &["file", "operation"]), "export");
     assert_eq!(
         env.get("file").unwrap().get("acknowledged_state_id"),
@@ -558,5 +574,108 @@ fn an_unwritable_destination_is_a_known_non_replacement() {
     assert_eq!(
         env.get("file").unwrap().get("acknowledged_state_id"),
         Some(&Value::Null)
+    );
+}
+
+#[test]
+fn import_and_export_cover_png_bmp_and_jpeg_with_explicit_losses() {
+    let s = Scratch::new("images");
+    let (doc, out_png, out_bmp, out_jpg, back) = (
+        s.path("d.pcnd"),
+        s.path("o.png"),
+        s.path("o.bmp"),
+        s.path("o.jpg"),
+        s.path("back.pcnd"),
+    );
+    run(&[
+        "new",
+        "--width",
+        "8",
+        "--height",
+        "4",
+        "--background",
+        "#336699FF",
+        "-o",
+        &doc,
+    ]);
+    assert_eq!(run(&["render", &doc, "-o", &out_png]).code, 0);
+    assert_eq!(run(&["render", &doc, "-o", &out_bmp]).code, 0);
+
+    // PNG and BMP come back as the same picture; importing twice gives byte-identical documents.
+    let r = run(&["import", &out_png, "-o", &back, "--json"]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    let first = fs::read(&back).unwrap();
+    let ins = run(&["inspect", &back, "--json"]).json();
+    assert_eq!(
+        ins.get("document")
+            .unwrap()
+            .get("canvas")
+            .unwrap()
+            .get("width"),
+        Some(&Value::Int(8))
+    );
+    assert_eq!(
+        run(&["import", &out_bmp, "-o", &back, "--overwrite"]).code,
+        0
+    );
+    let (w, h, px) = decode_png(&out_png);
+    assert_eq!((w, h, &px[..4]), (8, 4, &[0x33, 0x66, 0x99, 255][..]));
+
+    // JPEG needs the lossy acknowledgement; the file is only written once it is given.
+    let r = run(&["render", &doc, "-o", &out_jpg, "--json"]);
+    assert_eq!(r.code, 3);
+    assert!(text(&r.json(), &["engine", "message"]).contains("lossy-jpeg"));
+    assert!(!Path::new(&out_jpg).exists());
+    let r = run(&[
+        "render",
+        &doc,
+        "-o",
+        &out_jpg,
+        "--allow-loss",
+        "lossy-jpeg",
+        "--quality",
+        "95",
+        "--json",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    assert_eq!(text(&r.json(), &["file", "operation"]), "export");
+    assert_eq!(run(&["import", &out_jpg, "-o", &s.path("j.pcnd")]).code, 0);
+
+    // Bad invocations and hostile inputs.
+    assert_eq!(run(&["render", &doc, "-o", &s.path("o.xyz")]).code, 2);
+    assert_eq!(
+        run(&[
+            "render",
+            &doc,
+            "-o",
+            &s.path("x.png"),
+            "--allow-loss",
+            "bogus"
+        ])
+        .code,
+        2
+    );
+    assert_eq!(
+        run(&[
+            "render",
+            &doc,
+            "-o",
+            &s.path("x.jpg"),
+            "--allow-loss",
+            "lossy-jpeg",
+            "--quality",
+            "0"
+        ])
+        .code,
+        2
+    );
+    let junk = s.path("junk.png");
+    fs::write(&junk, b"definitely not an image").unwrap();
+    assert_eq!(run(&["import", &junk, "-o", &s.path("z.pcnd")]).code, 6);
+    assert!(!Path::new(&s.path("z.pcnd")).exists());
+    assert_eq!(
+        run(&["import", &out_png, "-o", &back]).code,
+        2,
+        "existing output is protected"
     );
 }

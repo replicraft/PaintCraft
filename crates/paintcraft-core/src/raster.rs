@@ -153,6 +153,16 @@ impl RasterLayer {
         Ok(layer)
     }
 
+    /// Whether any sample hides colour under alpha zero (non-zero RGB, alpha 0).
+    pub fn has_hidden_rgb(&self) -> bool {
+        let hidden = |p: &[u8]| p[3] == 0 && p[..3] != [0, 0, 0];
+        hidden(&self.default.0)
+            || self
+                .tiles
+                .values()
+                .any(|t| t.0.as_chunks::<4>().0.iter().any(|p| hidden(p)))
+    }
+
     pub fn width(&self) -> u32 {
         self.width
     }

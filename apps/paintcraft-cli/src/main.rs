@@ -18,7 +18,9 @@ paintcraft-cli <command> [options]
   schema batch|batch-v2 [--json]
   capabilities [--json]
   apply FILE.pcnd --operations BATCH.json -o OUT.pcnd [--expect-input-sha256 HEX] [--overwrite] [--json]
-  render FILE.pcnd -o OUT.png [--expect-input-sha256 HEX] [--on-loss error] [--allow-loss flatten] [--overwrite] [--json]
+  render FILE.pcnd -o OUT.png|.bmp|.jpg [--format F] [--quality N] [--expect-input-sha256 HEX]
+         [--allow-loss flatten,hidden-rgb,lossy-jpeg,alpha-discarded] [--overwrite] [--json]
+  import IMAGE.png|.bmp|.jpg -o OUT.pcnd [--allow-loss CODES] [--overwrite] [--json]
 
 Exit status: 0 ok; 1 internal; 2 invocation/schema; 3 unsupported; 4 stale or conflicting input;
 5 resource/cancelled; 6 file/codec/save failure.
@@ -33,6 +35,7 @@ fn dispatch(argv: &[String]) -> Reply {
         Some("capabilities") => commands::capabilities(rest),
         Some("apply") => commands::apply(rest),
         Some("render") => commands::render(rest),
+        Some("import") => commands::import(rest),
         Some("--help" | "-h" | "help") => Reply {
             stdout: HELP.as_bytes().to_vec(),
             stderr: String::new(),

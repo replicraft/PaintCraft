@@ -5,10 +5,10 @@ use std::fs::File;
 use std::io::Read as _;
 use std::path::Path;
 
-use paintcraft_core::document::{Document, POLICY, hex, new_document};
-use paintcraft_core::render::render_flat;
+use paintcraft_core::document::{Document, POLICY, hex, import_image, new_document};
 use paintcraft_core::session::Session;
-use paintcraft_formats::{pcnd, png};
+use paintcraft_formats::image::{self, ImageFormat};
+use paintcraft_formats::{export, pcnd};
 use paintcraft_types::json::Value;
 use paintcraft_types::{Error, ErrorCode, Result, Rgba};
 use sha2::{Digest, Sha256};
@@ -274,6 +274,43 @@ pub fn apply(raw: &[String]) -> Reply {
     )
 }
 
+/// Output format from `--format` or the file extension.
+fn output_format(a: &Args, dest: &Path) -> Result<ImageFormat> {
+    let by_name = a.value("format").map(|f| match f {
+        "png" => Ok(ImageFormat::Png),
+        "bmp" => Ok(ImageFormat::Bmp),
+        "jpeg" | "jpg" => Ok(ImageFormat::Jpeg),
+        _ => Err(Error::new(
+            ErrorCode::InputSchema,
+            "--format must be png, bmp or jpeg",
+        )),
+    });
+    match by_name {
+        Some(r) => r,
+        None => ImageFormat::from_extension(dest).ok_or_else(|| {
+            Error::new(
+                ErrorCode::InputSchema,
+                "cannot tell the image format; use a .png/.bmp/.jpg name or --format",
+            )
+        }),
+    }
+}
+
+fn loss_list(a: &Args) -> Result<Vec<String>> {
+    if a.value("on-loss").is_some_and(|v| v != "error") {
+        return Err(Error::new(
+            ErrorCode::InputSchema,
+            "--on-loss supports only `error`; acknowledge a loss with --allow-loss",
+        ));
+    }
+    let allowed: Vec<String> = a
+        .value("allow-loss")
+        .map(|v| v.split(',').map(str::to_owned).collect())
+        .unwrap_or_default();
+    export::check_loss_codes(&allowed)?;
+    Ok(allowed)
+}
+
 pub fn render(raw: &[String]) -> Reply {
     let json = raw.iter().any(|a| a == "--json");
     finish(
@@ -281,52 +318,85 @@ pub fn render(raw: &[String]) -> Reply {
         (|| {
             let a = Args::parse(
                 raw,
-                &["output", "expect-input-sha256", "on-loss", "allow-loss"],
+                &[
+                    "output",
+                    "expect-input-sha256",
+                    "on-loss",
+                    "allow-loss",
+                    "format",
+                    "quality",
+                ],
                 &["json", "overwrite"],
             )?;
             let input = &a.exactly(1, "one input file")?[0];
             let dest = Path::new(a.required("output")?);
-            if a.value("on-loss").is_some_and(|v| v != "error") {
+            let format = output_format(&a, dest)?;
+            let allowed = loss_list(&a)?;
+            let quality = a.number::<u8>("quality")?.unwrap_or(90);
+            if !(1..=100).contains(&quality) {
                 return Err(Error::new(
                     ErrorCode::InputSchema,
-                    "--on-loss supports only `error`; acknowledge a loss with --allow-loss",
-                ));
-            }
-            let allowed: Vec<String> = a
-                .value("allow-loss")
-                .map(|v| v.split(',').map(str::to_owned).collect())
-                .unwrap_or_default();
-            if let Some(bad) = allowed.iter().find(|c| *c != "flatten") {
-                return Err(Error::new(
-                    ErrorCode::InputSchema,
-                    format!("unknown loss code {bad:?}; known: flatten"),
+                    "--quality must be 1..=100",
                 ));
             }
             save::preflight(dest, a.flag("overwrite"))?;
             let (bytes, sha) = read_bounded(input, INPUT_MAX, "input")?;
             guard(&a, &sha)?;
             let doc = pcnd::read(&bytes)?;
-            // A flat export of several layers discards their structure. Hidden-RGB loss is not tracked yet.
-            let mut losses = Vec::new();
-            if doc.roots.len() > 1 {
-                if !allowed.iter().any(|c| c == "flatten") {
-                    return Err(Error::new(
-                        ErrorCode::CapabilityUnsupported,
-                        "PNG export would flatten layers; pass --allow-loss flatten to accept",
-                    ));
-                }
-                losses.push("flatten".to_owned());
-            }
-            let png =
-                render_flat(&doc).and_then(|px| png::encode_rgba8(doc.canvas.0, doc.canvas.1, &px));
+            // Missing acknowledgements fail here, before anything is written.
+            let flat = export::export_flat(&doc, format, quality, &allowed)?;
             let ctx = Context {
                 operation: "export",
                 source_state: doc.state_id,
                 source_sha256: Some(sha),
-                losses_acknowledged: losses,
+                losses_acknowledged: flat.losses,
                 destination: dest,
             };
-            let (receipt, ok, summary) = write_output(dest, a.flag("overwrite"), png, &ctx);
+            let (receipt, ok, summary) =
+                write_output(dest, a.flag("overwrite"), Ok(flat.bytes), &ctx);
+            Ok(Written {
+                engine: None,
+                receipt,
+                ok,
+                summary,
+            })
+        })(),
+    )
+}
+
+/// `import IMAGE -o OUT.pcnd`: make a document from a PNG, BMP or JPEG.
+pub fn import(raw: &[String]) -> Reply {
+    let json = raw.iter().any(|a| a == "--json");
+    finish(
+        json,
+        (|| {
+            let a = Args::parse(
+                raw,
+                &["output", "on-loss", "allow-loss"],
+                &["json", "overwrite"],
+            )?;
+            let input = &a.exactly(1, "one image file")?[0];
+            let dest = Path::new(a.required("output")?);
+            let allowed = loss_list(&a)?;
+            save::preflight(dest, a.flag("overwrite"))?;
+            let (bytes, sha) = read_bounded(input, INPUT_MAX, "input")?;
+            let img = image::decode(&bytes)?;
+            if let Some(l) = img.losses.iter().find(|l| !allowed.contains(l)) {
+                return Err(Error::new(
+                    ErrorCode::CapabilityUnsupported,
+                    format!("import would lose {l}; acknowledge with --allow-loss {l}"),
+                ));
+            }
+            let doc = import_image(img.width, img.height, &img.rgba, &sha)?;
+            let ctx = Context {
+                operation: "save-as",
+                source_state: doc.state_id,
+                source_sha256: Some(sha),
+                losses_acknowledged: img.losses,
+                destination: dest,
+            };
+            let (receipt, ok, summary) =
+                write_output(dest, a.flag("overwrite"), pcnd::write(&doc), &ctx);
             Ok(Written {
                 engine: None,
                 receipt,
