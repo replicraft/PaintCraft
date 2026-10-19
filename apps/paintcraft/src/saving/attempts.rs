@@ -10,18 +10,25 @@ pub(super) struct Attempt {
     ticket: Ticket,
     request: SaveRequest,
     outcome: Option<save::Outcome>,
+    retention: Option<Arc<paintcraft_formats::save_recovery::SavedAttempt>>,
     message: String,
     checking: bool,
 }
 
 impl NativeSaving {
+    pub(crate) fn has_volatile_attempts(&self) -> bool {
+        self.attempts
+            .iter()
+            .any(|attempt| attempt.retention.is_none())
+    }
+
     pub(super) fn admit_save(&self, charge: u64) -> Result<()> {
         let pending = self
             .pending
             .iter()
             .filter(|p| matches!(p.kind, PendingKind::Save(_)))
             .count();
-        if self.attempts.len() + pending >= ATTEMPTS_MAX {
+        if self.attempts.len() + self.retired_saves.len() + pending >= ATTEMPTS_MAX {
             return Err(Error::new(
                 ErrorCode::ResourceLimit,
                 "resolve incomplete saves before requesting more saves",
@@ -36,10 +43,19 @@ impl NativeSaving {
         self.admit(1, reserved)
     }
     pub(super) fn admit(&self, jobs: usize, bytes: u64) -> Result<()> {
+        let metadata = (self.retired_saves.len() as u64)
+            .checked_mul(CONTROL_BYTES)
+            .and_then(|extra| bytes.checked_add(extra))
+            .ok_or_else(|| {
+                Error::new(
+                    ErrorCode::ResourceLimit,
+                    "saved-attempt metadata charge overflows",
+                )
+            })?;
         let retained = self
             .attempts
             .iter()
-            .try_fold(bytes, |sum, attempt| {
+            .try_fold(metadata, |sum, attempt| {
                 sum.checked_add(attempt.request.charge)
             })
             .ok_or_else(|| {
@@ -75,7 +91,11 @@ impl NativeSaving {
             ));
         }
     }
-    fn request_reconciliation(&mut self, sequence: u64, mode: save::ReconcileMode) -> Result<()> {
+    pub(super) fn request_reconciliation(
+        &mut self,
+        sequence: u64,
+        mode: save::ReconcileMode,
+    ) -> Result<()> {
         let attempt = self
             .attempts
             .iter()
@@ -100,10 +120,21 @@ impl NativeSaving {
                 )
             })?
             .clone();
+        let retained = attempt.retention.clone();
         let context = self.context.clone();
         let ticket = self.submit_io(
             CONTROL_BYTES,
-            move || outcome.reconcile(mode).map(Completion::Reconciled),
+            move || {
+                let mut checked = outcome.reconcile(mode)?;
+                if let Some(retained) = retained
+                    && let Err(error) = retained.finish(&checked.outcome)
+                {
+                    checked.outcome.reasons.push(format!(
+                        "Reconciled; recovery evidence update failed: {error}"
+                    ));
+                }
+                Ok(Completion::Reconciled(checked))
+            },
             move || context.request_repaint(),
         )?;
         self.pending.push(Pending {
@@ -127,8 +158,9 @@ impl App {
         result: Result<Completion>,
     ) {
         let saving = self.saving.as_mut().expect("native I/O");
-        let outcome = match result {
-            Ok(Completion::File(outcome)) => outcome,
+        let (outcome, retention) = match result {
+            Ok(Completion::File(outcome)) => (outcome, None),
+            Ok(Completion::RetainedFile(file)) => (file.outcome, file.retention),
             Err(error) => {
                 // Worker failure cannot establish how far a replacement got.
                 self.editor.set_status(format!(
@@ -139,6 +171,7 @@ impl App {
                     ticket,
                     request,
                     outcome: None,
+                    retention: None,
                     message: error.to_string(),
                     checking: false,
                 });
@@ -150,6 +183,13 @@ impl App {
         let success = outcome.is_success();
         if success {
             self.adopt_saved_attempt(ticket, &request, &outcome);
+            if let Some(retention) = retention {
+                self.saving
+                    .as_mut()
+                    .expect("native I/O")
+                    .retired_saves
+                    .push(retention);
+            }
         } else {
             self.editor.set_status(format!(
                 "{} was not saved safely: {}",
@@ -162,6 +202,7 @@ impl App {
                 request,
                 message: outcome.reasons.join("; "),
                 outcome: Some(outcome),
+                retention,
                 checking: false,
             });
         }
@@ -227,6 +268,13 @@ impl App {
                 saving.remember_receipt(attempt.ticket, &attempt.request, &checked.outcome);
                 if checked.outcome.is_success() {
                     self.adopt_saved_attempt(attempt.ticket, &attempt.request, &checked.outcome);
+                    if let Some(retention) = attempt.retention {
+                        self.saving
+                            .as_mut()
+                            .expect("native I/O")
+                            .retired_saves
+                            .push(retention);
+                    }
                 } else {
                     attempt.message = match checked.observation {
                             save::Observation::Staged =>
@@ -323,7 +371,10 @@ impl App {
                 .set_status("Wait for inspection to finish before forgetting this save.");
             return;
         }
-        saving.attempts.remove(index);
+        let attempt = saving.attempts.remove(index);
+        if let Some(retention) = attempt.retention {
+            saving.retired_saves.push(retention);
+        }
         self.editor
             .set_status("Captured save snapshot forgotten. No destination was changed.");
     }
@@ -342,7 +393,7 @@ impl App {
         egui::CollapsingHeader::new(format!("Incomplete saves ({})", saving.attempts.len()))
             .id_salt("incomplete-save-attempts")
             .show(ui, |ui| {
-                ui.label("Captured snapshots are kept while this window is open. Inspection does not repeat a save.");
+                ui.label("Captured snapshots are kept for incomplete saves. Inspection does not repeat a save.");
                 egui::ScrollArea::vertical()
                     .id_salt("incomplete-save-list")
                     .max_height(300.0)
@@ -351,6 +402,11 @@ impl App {
                             ui.push_id(attempt.ticket.sequence(), |ui| {
                                 ui.label(attempt.request.path.to_string_lossy());
                                 ui.label(&attempt.message);
+                                ui.label(if attempt.retention.is_some() {
+                                    "A captured snapshot is stored for restart recovery."
+                                } else {
+                                    "Keep this window open to retain this snapshot."
+                                });
                                 let enabled = !attempt.checking
                                     && attempt.outcome.as_ref().is_some_and(save::Outcome::is_reconcilable);
                                 for (label, mode) in [

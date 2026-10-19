@@ -215,7 +215,13 @@ impl App {
                     .as_ref()
                     .is_some_and(saving::NativeSaving::failed);
                 (if incomplete { "Quit with an incomplete save?" } else { "Quit without saving?" },
-                if incomplete { "A requested save or recovery operation failed or is unconfirmed. Quitting abandons captured save snapshots held in this window. Available crash recovery data will be kept." }
+                if incomplete {
+                    if self.saving.as_ref().is_some_and(saving::NativeSaving::has_volatile_attempts) {
+                        "A requested save failed or is unconfirmed. Some captured snapshots could not be stored for restart recovery; quitting abandons those in-memory snapshots. Available crash recovery data will be kept."
+                    } else {
+                        "A requested save or recovery operation failed or is unconfirmed. Captured snapshots already stored for restart recovery will be kept."
+                    }
+                }
                 else { "There are unsaved changes. Available recovery data will be kept." }.to_owned(), "Quit anyway")
             }
             Confirm::Export {

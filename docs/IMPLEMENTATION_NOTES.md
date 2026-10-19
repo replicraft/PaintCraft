@@ -158,8 +158,8 @@ opened file and parent, then checks the descriptor, namespace, content and revis
 changes across those barriers remain unconfirmed. Receipt source/sequence/binding
 stamps remain caller-owned. Failure injection covers both barriers, late replacement,
 late edits/deletion and alias changes. This is not a portable exclusion mechanism or
-filesystem qualification; other platform identity adapters and restart-persistent
-uncertain-attempt retention remain pending.
+filesystem qualification; other platform identity adapters and resumed destination
+reconciliation after restart remain pending.
 
 The native desktop retains up to 16 incomplete save attempts, including known
 pre-replacement failures and worker failures, with the exact immutable document each
@@ -176,11 +176,36 @@ the originally resolved namespace rather than re-resolving a potentially changed
 Captured snapshots can be opened as unbound unsaved work, with confirmation before
 replacing newer edits or drafts, even after the original file is removed. Explicitly
 forgetting an attempt requires confirmation and does not change the destination or
-claim durability. Unresolved attempts keep close warnings active; explicitly quitting
-warns that these in-memory snapshots will be abandoned. This tranche does not yet
-persist attempt details/snapshots across restart. Native coordinator and real egui
-multipass widget tests cover these controls; target/filesystem durability qualification
-and external-process conflict handling remain separate obligations.
+claim durability. Unresolved attempts keep close warnings active. Native coordinator
+and real egui multipass widget tests cover these controls; target/filesystem durability
+qualification and external-process conflict handling remain separate obligations.
+
+Configured native saves now publish a complete captured snapshot under a separate
+locked owner in `saved-attempts/` before staging the user's output. After staging
+validation, a checksummed prepared receipt is persisted before replacement; this
+receipt deliberately records unknown replacement and no acknowledgement. A final
+receipt follows the actual outcome. The worker receives its admitted I/O ticket before
+execution, so durable records carry the same sequence as UI delivery. Snapshot/source
+state and editor session/binding stamps are retained independently of the live editor.
+Newly created recovery directory entries are synced through their first existing
+parent. These are implemented barriers, not power-loss or filesystem qualification.
+
+The store admits at most 64 owners and 1,024 entries, reserving one maximum 1 GiB
+snapshot and 64 MiB metadata slack against a conservative 4 GiB disk policy. Cooperating
+windows serialize admission; corrupt/unrelated files are retained and count toward the
+limit. Saved-attempt records are capped at 256 KiB. General recovery discovery scans
+this one fixed child namespace with a 1,024-entry bound and offers orphaned snapshots
+through the existing claimed restore flow. Restarted work remains unbound and unsaved;
+receipts from disk do not authorize rewriting a destination or adopting an association.
+A real child-process exit after replacement/before final receipt, original removal,
+fresh-coordinator recovery, corrupt evidence, store limits and failed retention are
+covered. Successful saves, successful current-process reconciliation and explicit
+forget/discard retire the old snapshots on the same FIFO. Failed capture retains RAM
+work and refuses replacement; close warns if no confirmed restart copy is available.
+The original configured retention root stays pinned across later owner initialization
+failures. Resuming destination inspection after restart, richer diagnostics/repair for
+incomplete stores, an explicit degraded save policy when the configured retention store
+is unavailable, BF07 measurements and the full platform/fault matrix remain pending.
 
 ## Native render preparation
 

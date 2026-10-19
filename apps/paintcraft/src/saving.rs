@@ -1,6 +1,7 @@
 //! Native I/O coordinator. Saves, periodic checkpoints and recovery cleanup share
 //! one bounded FIFO. Only the UI coordinator adopts results into editor state.
 mod attempts;
+mod persistence;
 pub(super) mod restoring;
 use super::*;
 use paintcraft_core::types::{Error, ErrorCode, Result, json::Value};
@@ -47,6 +48,7 @@ struct Pending {
 #[derive(Debug)]
 enum Completion {
     File(save::Outcome),
+    RetainedFile(Box<persistence::FileResult>),
     Reconciled(save::Reconciliation),
     Checkpoint(Checkpoint),
     Started {
@@ -68,6 +70,8 @@ pub(super) struct NativeSaving {
     receipt_sequence: u64,
     adopted_sequence: u64,
     attempts: Vec<attempts::Attempt>,
+    retention_directory: Option<PathBuf>,
+    retired_saves: Vec<Arc<paintcraft_formats::save_recovery::SavedAttempt>>,
     active_restore: Option<restoring::Control>,
     restore_intent: Option<restoring::Intent>,
 }
@@ -111,6 +115,8 @@ impl NativeSaving {
             receipt_sequence: 0,
             adopted_sequence: 0,
             attempts: Vec::new(),
+            retention_directory: None,
+            retired_saves: Vec::new(),
             active_restore: None,
             restore_intent: None,
         })
@@ -122,7 +128,7 @@ impl NativeSaving {
         self.adopted_sequence = 0;
     }
     pub(super) fn failed(&self) -> bool {
-        self.failed || !self.attempts.is_empty()
+        self.failed || !self.attempts.is_empty() || !self.retired_saves.is_empty()
     }
     pub(super) fn pending(&self) -> bool {
         self.io.pending_jobs() != 0
@@ -155,15 +161,22 @@ impl NativeSaving {
         self.admit_save(charge)?;
         let snapshot = document.clone();
         let destination = path.clone();
-        let ticket = self.submit_io(
+        let retention_directory = self.retention_directory.clone();
+        let editor_session = self.session;
+        let ticket = self.submit_io_with_ticket(
             charge,
-            move || {
-                Ok(Completion::File(save::save_with(
+            move |ticket| {
+                persistence::save_document(
+                    &document,
                     &destination,
-                    true,
-                    save::STAGED_FILE_BYTES_MAX,
-                    |sink| paintcraft_formats::pcnd::write_to(&document, sink),
-                )))
+                    retention_directory.as_deref(),
+                    paintcraft_formats::save_recovery::Stamp {
+                        session: editor_session,
+                        sequence: ticket.sequence(),
+                        generation,
+                        operation,
+                    },
+                )
             },
             move || ctx.request_repaint(),
         )?;
@@ -229,6 +242,10 @@ impl NativeSaving {
         directory: PathBuf,
         discover: bool,
     ) -> Result<()> {
+        // Recovery configuration is pinned; a failed later owner initialization
+        // must not retarget the already authorized save-retention store.
+        self.retention_directory
+            .get_or_insert_with(|| directory.clone());
         if self.pending.iter().any(|p| matches!(p.kind, PendingKind::Initialize { session, scope: pending_scope } if session == self.session && scope == pending_scope)) { return Ok(()); }
         // Discovery runs the native parser. This exclusive estimate prevents other
         // I/O payload jobs from overlapping it; it is not an RSS qualification.
@@ -460,6 +477,10 @@ impl App {
                 },
             }
         }
+        self.saving
+            .as_mut()
+            .expect("native I/O")
+            .pump_retired_saves();
         let saving = self.saving.as_mut().expect("native I/O");
         if self.close_after_saves && !saving.pending() {
             self.close_after_saves = false;
