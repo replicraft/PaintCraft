@@ -29,7 +29,7 @@ unchanged by dependency and crate refactors.
 | T10 | M2 | Ordered save and recovery journal | partial | Safe save and checkpoint recovery exist; ordered asynchronous queues, failure injection and stale-completion guards remain. |
 | T11 | M2 | Bounded history and store GC | partial | Shared snapshot retention is bounded; leases, segment GC, compaction and physical resource evidence remain. |
 | T12 | M2 | Ordered renderer and region effects | partial | Ordered scalar and GPU flat composition exist; ROI effects, dirty-prefix cache and group plans remain. |
-| T13 | M2 | Scheduler and GPU preparation | partial | GPU composition and readback exist; admitted workers, asynchronous transfer and device-loss lifecycle remain. |
+| T13 | M2 | Scheduler and GPU preparation | partial | Bounded Rayon preparation, owner-scoped handles, cancellation and stale-result tests exist; priorities, async I/O, device epochs and physical budget/fairness evidence remain. |
 | T14 | M2 | Tool completeness tranche | partial | Brushes, fill, shapes, rectangle selection and bitmap text work; complete selections, system text and IME remain. |
 | T15 | M2 | Classic v11 usable preview | partial | Classic choice persists and basic codecs exist; faithful v11 presentation, preserving-target flow and complete M2 prerequisites remain. |
 | T16 | M3 | Classic historical parity | not-started | Per-operation evidence records; original menu/eraser/canvas/tool lifecycles and allowed OS differences. |

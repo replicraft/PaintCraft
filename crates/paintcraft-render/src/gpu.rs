@@ -67,6 +67,14 @@ impl GpuRenderer {
         })
     }
     pub fn render(&self, doc: &Document) -> Result<Vec<u8>> {
+        self.render_cancellable(doc, || Ok(()))
+    }
+    pub fn render_cancellable(
+        &self,
+        doc: &Document,
+        check: impl Fn() -> Result<()>,
+    ) -> Result<Vec<u8>> {
+        check()?;
         let (w, h) = doc.canvas;
         let pixels = u64::from(w) * u64::from(h);
         let size = pixels * 4;
@@ -91,6 +99,7 @@ impl GpuRenderer {
         });
         let canvas = doc.canvas_rect();
         for layer in doc.layers_in_order() {
+            check()?;
             if !layer.visible || layer.opacity == 0 {
                 continue;
             }
@@ -153,7 +162,16 @@ impl GpuRenderer {
                 pass.set_bind_group(0, &bindings, &[]);
                 pass.dispatch_workgroups(width.div_ceil(8), height.div_ceil(8), 1);
             }
-            self.queue.submit([encoder.finish()]);
+            let submission = self.queue.submit([encoder.finish()]);
+            // Finish one bounded layer before admitting another source buffer.
+            // Submitted GPU work cannot be cancelled; its reservation stays live.
+            self.device
+                .poll(wgpu::PollType::Wait {
+                    submission_index: Some(submission),
+                    timeout: Some(Duration::from_secs(30)),
+                })
+                .map_err(|e| unavailable(format!("GPU layer failed: {e}")))?;
+            check()?;
         }
         let readback = self.device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("PaintCraft composite readback"),

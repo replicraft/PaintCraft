@@ -165,6 +165,10 @@ impl Editor {
         self.checkpointed.is_some() && self.is_dirty()
     }
 
+    pub fn document_snapshot(&self) -> std::sync::Arc<Document> {
+        self.session.snapshot()
+    }
+
     pub fn document(&self) -> &Document {
         self.session.document()
     }

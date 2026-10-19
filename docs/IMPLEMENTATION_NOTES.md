@@ -40,7 +40,7 @@ transparent source samples produced byte-identical results to the CPU compositor
 Other adapters/backends are not qualified by that result.
 
 The initial compositor materializes clipped layer samples, dispatches layers in order,
-then reads the composite back for the existing egui texture path. Readback is synchronous;
+then reads the composite back for the existing egui texture path. Device waits occur on an admitted native worker;
 there is no performance or zero-copy claim. Device buffer/dispatch limits are checked
 before allocating, and unsupported documents fall back to CPU rendering. GPU and dialog
 features remain optional for headless consumers.
@@ -52,6 +52,26 @@ a failed save preserves the previous binding and dirty state. Automated tests co
 binding outcomes. Interactive native-dialog behavior still needs manual checks on each OS.
 A short native desktop run with GPU/native services initialized and temporary settings
 opened and exited cleanly on macOS.
+
+## Native render preparation
+
+The native shell submits immutable document snapshots to one dedicated Rayon worker
+through `paintcraft-runtime`. Its queue is bounded to two admitted jobs and a provisional
+1 GiB estimate covering retained tile payloads and transient render buffers. Completed
+and cancelled results remain charged until consumed. Slotmap keys are owner-scoped by a
+separate UUID; neither transient keys nor generations are persisted as document IDs.
+
+Only the latest requested job/revision may update the displayed canvas. Cancellation,
+new document installation, edits and undo cannot publish obsolete prepared images.
+The CPU renderer checks cancellation at row boundaries; GPU preparation checks between
+completed layer submissions, bounding simultaneously retained source buffers. Shader
+work already submitted to the GPU is not preempted. Workers do not mutate editor state.
+Panics become failed preparations; stale callbacks/results are discarded. Tests cover
+reservation lifetime, slot reuse/ownership, cancellation and late render completion.
+
+This is an admitted render-worker baseline, not the complete T13 priority scheduler or
+a physical-memory/performance qualification. Background saves, process-wide service
+coordination, GPU device epochs and measured fairness remain pending.
 
 ## Implemented
 

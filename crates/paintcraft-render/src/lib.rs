@@ -13,6 +13,11 @@ use paintcraft_document::Document;
 pub const RENDER_PIXELS_MAX: u64 = 67_108_864;
 
 pub fn render_flat(doc: &Document) -> Result<Vec<u8>> {
+    render_cancellable(doc, || Ok(()))
+}
+
+pub fn render_cancellable(doc: &Document, check: impl Fn() -> Result<()>) -> Result<Vec<u8>> {
+    check()?;
     let (w, h) = (u64::from(doc.canvas.0), u64::from(doc.canvas.1));
     if w * h > RENDER_PIXELS_MAX {
         return Err(Error::new(
@@ -33,6 +38,7 @@ pub fn render_flat(doc: &Document) -> Result<Vec<u8>> {
         };
         span.resize(area.width() as usize * 4, 0);
         for y in area.y0..area.y1 {
+            check()?;
             layer
                 .raster
                 .read_span(y - layer.origin.1, area.x0 - layer.origin.0, &mut span);
@@ -102,6 +108,26 @@ mod tests {
                 .chunks(4)
                 .all(|p| p == [255; 4])
         );
+    }
+
+    #[test]
+    fn cancelled_render_never_returns_a_partial_composite() {
+        let doc = new_document(100, 100, Some(Rgba([255; 4])), 0, POLICY).unwrap();
+        let checks = std::cell::Cell::new(0);
+        let result = render_cancellable(&doc, || {
+            checks.set(checks.get() + 1);
+            if checks.get() >= 3 {
+                Err(Error::new(
+                    ErrorCode::OperationCancelled,
+                    "test cancellation",
+                ))
+            } else {
+                Ok(())
+            }
+        });
+        assert_eq!(result.unwrap_err().code, ErrorCode::OperationCancelled);
+        assert_eq!(checks.get(), 3);
+        assert_eq!(render_flat(&doc).unwrap(), vec![255; 100 * 100 * 4]);
     }
 
     #[test]

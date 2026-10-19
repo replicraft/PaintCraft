@@ -21,6 +21,7 @@ paintcraft-editor = { path = "crates/paintcraft-editor" }
 paintcraft-input = { path = "crates/paintcraft-input" }
 paintcraft-tools = { path = "crates/paintcraft-tools" }
 paintcraft-render = { path = "crates/paintcraft-render" }
+paintcraft-runtime = { path = "crates/paintcraft-runtime" }
 paintcraft-formats = { path = "crates/paintcraft-formats" }
 paintcraft-platform = { path = "crates/paintcraft-platform" }
 paintcraft-ui = { path = "crates/paintcraft-ui" }
@@ -40,6 +41,10 @@ raw-window-handle = "0.6.2"
 bytemuck = { version = "1.25.2", features = ["derive"] }
 wgpu = { version = "30.0.1", default-features = false, features = ["std", "parking_lot", "metal", "dx12", "vulkan", "gles", "wgsl"] }
 pollster = "0.4.0"
+
+# Admitted native CPU workers and transient handles.
+rayon = "1.12.0"
+slotmap = "1.1.1"
 
 # Continuous geometry behind PaintCraft-owned coordinate spaces.
 glam = { version = "0.34.1", default-features = false, features = ["std", "f64"] }

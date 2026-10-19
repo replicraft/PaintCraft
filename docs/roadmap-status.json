@@ -185,9 +185,10 @@
       ],
       "status": "partial",
       "evidence": [
-        "crates/paintcraft-render/src/gpu.rs"
+        "crates/paintcraft-render/src/gpu.rs",
+        "crates/paintcraft-runtime/src/lib.rs"
       ],
-      "remaining_or_scope": "GPU composition and readback exist; admitted workers, asynchronous transfer and device-loss lifecycle remain.",
+      "remaining_or_scope": "Bounded Rayon preparation, owner-scoped handles, cancellation and stale-result tests exist; priorities, async I/O, device epochs and physical budget/fairness evidence remain.",
       "acceptance": "SCHED-01\u201306 and GPU-01\u201306; no late mutation/device-loss data loss."
     },
     {

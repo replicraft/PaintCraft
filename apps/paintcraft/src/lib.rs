@@ -8,7 +8,9 @@ pub mod settings;
 // shortcuts push tokenized actions into the editor's outbox, which runs each
 // activation once.
 
+use paintcraft_runtime::{Executor, JobHandle, Limits as WorkerLimits};
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 use std::time::Duration;
 
 use crate::controller::{Action, Editor, Preview, ShapeStyle, Tool};
@@ -69,9 +71,18 @@ impl std::fmt::Debug for App {
     }
 }
 
+#[derive(Debug)]
+struct RenderedFrame {
+    key: (Uuid, u64),
+    pixels: Vec<u8>,
+    fallback: Option<String>,
+}
+
 pub struct App {
     editor: Editor,
-    gpu: Option<GpuRenderer>,
+    gpu: Option<Arc<GpuRenderer>>,
+    renderer: Option<Executor<RenderedFrame>>,
+    pending_frame: Option<((Uuid, u64), JobHandle)>,
     dialogs: Option<NativeDialogs>,
     texture: Option<egui::TextureHandle>,
     texture_key: Option<(Uuid, u64)>,
@@ -120,11 +131,21 @@ impl App {
         if let Some(state) = &cc.wgpu_render_state {
             match GpuRenderer::new(state.device.clone(), state.queue.clone()) {
                 Ok(gpu) => {
-                    self.gpu = Some(gpu);
+                    self.gpu = Some(Arc::new(gpu));
                     self.texture_key = None;
                 }
                 Err(e) => self.editor.set_status(format!("Using CPU rendering: {e}")),
             }
+        }
+        match Executor::new(WorkerLimits {
+            workers: 1,
+            pending_jobs: 2,
+            transient_bytes: 1 << 30,
+        }) {
+            Ok(renderer) => self.renderer = Some(renderer),
+            Err(error) => self
+                .editor
+                .set_status(format!("Background renderer unavailable: {error}")),
         }
         self
     }
@@ -165,6 +186,8 @@ impl App {
             editor: Editor::new_document(DEFAULT_SIZE.0, DEFAULT_SIZE.1)
                 .expect("default size is valid"),
             gpu: None,
+            renderer: None,
+            pending_frame: None,
             dialogs: None,
             texture: None,
             texture_key: None,
@@ -360,9 +383,16 @@ impl App {
 
     /// Swap in a new editor; its predecessor's work was already saved or deliberately discarded.
     fn install(&mut self, editor: Editor) {
+        if let Some((_, handle)) = self.pending_frame.take()
+            && let Some(renderer) = &self.renderer
+        {
+            renderer.cancel(handle);
+        }
         self.editor.discard_checkpoint();
         self.editor = editor;
         self.texture_key = None;
+        self.texture = None;
+        self.rendered.clear();
         self.attach_recovery();
     }
 
@@ -490,33 +520,109 @@ impl App {
 
     fn sync_texture(&mut self, ctx: &egui::Context) {
         let key = self.editor.render_key();
+        while let Some((handle, result)) = self.renderer.as_mut().and_then(Executor::poll) {
+            let expected = self.pending_frame == Some((key, handle));
+            if self
+                .pending_frame
+                .is_some_and(|(_, pending)| pending == handle)
+            {
+                self.pending_frame = None;
+            }
+            match result {
+                Ok(frame) if expected && frame.key == key => {
+                    if let Some(reason) = frame.fallback {
+                        self.gpu = None;
+                        self.editor.set_status(reason);
+                    }
+                    self.install_render(ctx, key, Ok(frame.pixels));
+                }
+                Err(error)
+                    if expected
+                        && error.code != paintcraft_core::types::ErrorCode::OperationCancelled =>
+                {
+                    self.install_render(ctx, key, Err(error))
+                }
+                _ => {} // Obsolete document/epoch results cannot replace the current canvas.
+            }
+        }
         if self.texture_key == Some(key) {
             return;
         }
-        let doc = self.editor.document();
-        let pixels = if let Some(gpu) = &self.gpu {
-            match gpu.render(doc) {
-                Ok(pixels) => Ok(pixels),
-                Err(e) => {
-                    let reason = format!("Using CPU rendering: {e}");
-                    self.gpu = None;
-                    let result = render_flat(doc);
-                    self.editor.set_status(reason);
-                    result
+        if let Some(renderer) = &mut self.renderer {
+            if let Some((pending_key, handle)) = self.pending_frame {
+                if pending_key == key {
+                    ctx.request_repaint_after(Duration::from_millis(16));
+                    return;
                 }
+                renderer.cancel(handle);
+                self.pending_frame = None;
             }
-        } else {
-            render_flat(doc)
-        };
+            let doc = self.editor.document_snapshot();
+            let tiles = doc
+                .layers
+                .values()
+                .map(|layer| layer.raster.resident_tiles() as u64)
+                .sum::<u64>();
+            let reservation = u64::from(doc.canvas.0) * u64::from(doc.canvas.1) * 16
+                + tiles * paintcraft_raster::RasterLayer::TILE_BYTES as u64;
+            let gpu = self.gpu.clone();
+            let wake = ctx.clone();
+            match renderer.submit(
+                reservation,
+                move |cancel| {
+                    let (pixels, fallback) = if let Some(gpu) = gpu {
+                        match gpu.render_cancellable(&doc, || cancel.check()) {
+                            Ok(pixels) => (pixels, None),
+                            Err(error) => {
+                                cancel.check()?;
+                                (
+                                    paintcraft_render::render_cancellable(&doc, || cancel.check())?,
+                                    Some(format!("Using CPU rendering: {error}")),
+                                )
+                            }
+                        }
+                    } else {
+                        (
+                            paintcraft_render::render_cancellable(&doc, || cancel.check())?,
+                            None,
+                        )
+                    };
+                    Ok(RenderedFrame {
+                        key,
+                        pixels,
+                        fallback,
+                    })
+                },
+                move || wake.request_repaint(),
+            ) {
+                Ok(handle) => self.pending_frame = Some((key, handle)),
+                Err(error) if renderer.pending() == 0 => self.install_render(ctx, key, Err(error)),
+                Err(_) => {} // Retry after already-admitted work releases its reservation.
+            }
+            ctx.request_repaint_after(Duration::from_millis(16));
+            return;
+        }
+        self.install_render(ctx, key, render_flat(self.editor.document()));
+    }
+
+    fn install_render(
+        &mut self,
+        ctx: &egui::Context,
+        key: (Uuid, u64),
+        pixels: paintcraft_core::types::Result<Vec<u8>>,
+    ) {
+        if key != self.editor.render_key() {
+            return;
+        }
         let doc = self.editor.document();
         match pixels {
-            Ok(px) => {
+            Ok(px) if px.len() as u64 == u64::from(doc.canvas.0) * u64::from(doc.canvas.1) * 4 => {
                 let image = egui::ColorImage::from_rgba_unmultiplied(
                     [doc.canvas.0 as usize, doc.canvas.1 as usize],
                     &px,
                 );
                 match &mut self.texture {
-                    Some(t) => t.set(image, egui::TextureOptions::NEAREST),
+                    Some(texture) => texture.set(image, egui::TextureOptions::NEAREST),
                     None => {
                         self.texture =
                             Some(ctx.load_texture("canvas", image, egui::TextureOptions::NEAREST))
@@ -524,10 +630,16 @@ impl App {
                 }
                 self.rendered = px;
             }
-            Err(e) => {
+            Ok(_) => {
                 self.texture = None;
                 self.rendered.clear();
-                eprintln!("render failed: {e}");
+                self.editor
+                    .set_status("Cannot render: worker returned an invalid pixel buffer");
+            }
+            Err(error) => {
+                self.texture = None;
+                self.rendered.clear();
+                self.editor.set_status(format!("Cannot render: {error}"));
             }
         }
         self.texture_key = Some(key);
@@ -1458,5 +1570,65 @@ mod save_binding_tests {
                 .same_semantics(app.editor.document())
         );
         std::fs::remove_dir_all(dir).unwrap();
+    }
+}
+
+#[cfg(test)]
+mod render_worker_tests {
+    use super::*;
+    use std::{sync::mpsc, time::Instant};
+
+    #[test]
+    fn an_old_completion_cannot_publish_after_a_new_edit() {
+        let mut app = App::new(None);
+        let ctx = egui::Context::default();
+        let mut executor = Executor::new(WorkerLimits {
+            workers: 1,
+            pending_jobs: 2,
+            transient_bytes: 8 << 20,
+        })
+        .unwrap();
+        let old = app.editor.render_key();
+        let (release, wait) = mpsc::sync_channel(1);
+        let (started, wait_started) = mpsc::sync_channel(1);
+        let handle = executor
+            .submit(
+                1024,
+                move |_| {
+                    started.send(()).unwrap();
+                    wait.recv().unwrap();
+                    Ok(RenderedFrame {
+                        key: old,
+                        pixels: vec![0; 320 * 320 * 4],
+                        fallback: None,
+                    })
+                },
+                || {},
+            )
+            .unwrap();
+        wait_started.recv_timeout(Duration::from_secs(5)).unwrap();
+        app.renderer = Some(executor);
+        app.pending_frame = Some((old, handle));
+        app.editor.request(12345, Action::AddLayer);
+        app.editor.run_pending();
+        let current = app.editor.render_key();
+        assert_ne!(old, current);
+        app.sync_texture(&ctx);
+        release.send(()).unwrap();
+        let deadline = Instant::now() + Duration::from_secs(5);
+        while app.texture_key != Some(current) {
+            assert!(Instant::now() < deadline, "current render did not finish");
+            app.sync_texture(&ctx);
+            std::thread::yield_now();
+        }
+        assert_eq!(app.rendered, render_flat(app.editor.document()).unwrap());
+        assert!(
+            app.rendered
+                .as_chunks::<4>()
+                .0
+                .iter()
+                .all(|pixel| pixel == &[255; 4])
+        );
+        assert_eq!(app.renderer.as_ref().unwrap().reserved_bytes(), 0);
     }
 }

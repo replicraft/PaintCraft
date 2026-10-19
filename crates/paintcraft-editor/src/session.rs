@@ -125,6 +125,11 @@ impl Session {
         self.staged_pixels = pixels;
     }
 
+    /// Freeze the published revision without cloning its tree or raster buffers.
+    pub fn snapshot(&self) -> Arc<Document> {
+        Arc::clone(&self.doc)
+    }
+
     pub fn document(&self) -> &Document {
         &self.doc
     }

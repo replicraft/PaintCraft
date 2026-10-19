@@ -25,8 +25,8 @@ Running `cargo run` at the repository root selects the desktop application.
 
 The desktop attempts GPU document composition on its existing wgpu device and falls back
 to the CPU compositor when unavailable or beyond device limits. This initial GPU backend
-reads pixels back for the shared display boundary; it does not yet offer asynchronous or
-zero-copy presentation. Headless CLI builds do not enable GPU or native-dialog dependencies.
+reads pixels back on a bounded background worker for the shared display boundary;
+zero-copy presentation remains pending. Headless CLI builds do not enable GPU or native-dialog dependencies.
 
 To require a real GPU when checking compositing parity:
 
@@ -47,6 +47,7 @@ PAINTCRAFT_REQUIRE_GPU=1 cargo test -p paintcraft-render --features gpu --test g
 | `crates/paintcraft-input` | Normalized pointer events and input descriptors |
 | `crates/paintcraft-tools` | Tool state machines, options, previews and editing intentions |
 | `crates/paintcraft-render` | Scalar reference compositor and optional wgpu compute compositor |
+| `crates/paintcraft-runtime` | Bounded native workers, cancellation and transient job handles |
 | `crates/paintcraft-formats` | Canonical PCND reader/writer, PNG/BMP/JPEG codecs, flat export and recovery checkpoints |
 | `crates/paintcraft-platform` | Filesystem save adapters and optional native `rfd` dialogs |
 | `crates/paintcraft-ui` | Shared view transforms and action outbox |
