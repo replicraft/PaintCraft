@@ -51,6 +51,9 @@ impl App {
         if self.applied_variant == Some(v) {
             return;
         }
+        if self.applied_variant.is_none() {
+            paintcraft_ui::fonts::install(ctx);
+        }
         paintcraft_classic::apply_style(ctx, v);
         self.applied_variant = Some(v);
     }

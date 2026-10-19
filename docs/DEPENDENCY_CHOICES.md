@@ -34,6 +34,7 @@ A correct integrated baseline is not a measured performance or release qualifica
 | Area | Choice | Application state |
 |---|---|---|
 | UI | egui | Integrated through eframe; Classic ribbon/vector widgets exist; reference fidelity and Studio remain pending |
+| UI font | Selawik | Unmodified Microsoft 1.01 Regular font embedded with OFL 1.1 notice; document text remains the bitmap baseline |
 | Native shell | Compare eframe with direct egui-winit/egui-wgpu | eframe remains provisional pending T02 hardware/IME traces |
 | GPU | wgpu + WGSL | Integer compositor integrated; Metal parity tested; async transfer/device-loss work pending |
 | CLI | Clap | Integrated, command modules and end-to-end tests |
