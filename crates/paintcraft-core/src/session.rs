@@ -14,7 +14,7 @@ use uuid::Uuid;
 
 use crate::commands::Batch;
 use crate::document::{Document, POLICY};
-use crate::execute::{Selection, execute};
+use crate::execute::{STAGED_PIXELS_MAX, Selection, execute_with_budget};
 use crate::ids::deterministic_id;
 
 /// `paintcraft.result/v1`.
@@ -86,6 +86,7 @@ pub struct Session {
     entries: Vec<Entry>,
     cursor: usize,
     saved_state: Uuid,
+    staged_pixels: u64,
 }
 
 impl Session {
@@ -103,7 +104,13 @@ impl Session {
             selection: Selection::Inactive,
             epoch: 0,
             cursor: 0,
+            staged_pixels: STAGED_PIXELS_MAX,
         }
+    }
+
+    /// Lower the per-batch staging budget (resource-exhaustion testing, constrained hosts).
+    pub fn set_staged_pixel_budget(&mut self, pixels: u64) {
+        self.staged_pixels = pixels;
     }
 
     pub fn document(&self) -> &Document {
@@ -148,7 +155,7 @@ impl Session {
                 "The current publication differs from the requested base.",
             ));
         }
-        let mut staged = execute(&self.doc, self.selection, batch)?;
+        let mut staged = execute_with_budget(&self.doc, self.selection, batch, self.staged_pixels)?;
         let content_changed = !staged.doc.same_semantics(&self.doc);
         if !content_changed && staged.selection == self.selection {
             return Ok(Receipt {
@@ -314,6 +321,37 @@ mod tests {
         // Walk all the way back; the root has no history id.
         while s.undo().is_some() {}
         assert_eq!(s.document().layers.len(), 1);
+    }
+
+    #[test]
+    fn resource_exhaustion_leaves_document_history_and_epoch_unchanged() {
+        let mut s = session();
+        s.apply_json(&batch(&s, &format!("[{ADD}]"))).unwrap();
+        let (ticket, doc_before) = (s.ticket(), s.document().clone());
+        s.set_staged_pixel_budget(0);
+        let layer = s.document().roots[1];
+        let e = s
+            .apply_json(&batch(&s, &format!("[{}]", fill(layer, 0, "#000000FF"))))
+            .unwrap_err();
+        assert_eq!(e.code, ErrorCode::ResourceLimit);
+        assert_eq!(s.ticket(), ticket);
+        assert!(s.document().same_semantics(&doc_before));
+        assert_eq!(
+            s.undo().map(|n| n.state_id),
+            Some(doc_before_root_state(&s)),
+            "no history entry was added"
+        );
+        s.redo();
+        s.set_staged_pixel_budget(STAGED_PIXELS_MAX);
+        assert!(
+            s.apply_json(&batch(&s, &format!("[{}]", fill(layer, 0, "#000000FF"))))
+                .unwrap()
+                .committed
+        );
+    }
+
+    fn doc_before_root_state(s: &Session) -> Uuid {
+        s.entries[0].doc.state_id
     }
 
     #[test]

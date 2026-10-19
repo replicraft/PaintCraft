@@ -47,11 +47,21 @@ pub struct Staged {
 }
 
 pub fn execute(base: &Document, selection: Selection, batch: &Batch) -> Result<Staged> {
+    execute_with_budget(base, selection, batch, STAGED_PIXELS_MAX)
+}
+
+/// As [`execute`], with an explicit staged-pixel budget (used to inject exhaustion in tests).
+pub fn execute_with_budget(
+    base: &Document,
+    selection: Selection,
+    batch: &Batch,
+    staged_pixels: u64,
+) -> Result<Staged> {
     let mut s = Stage {
         doc: base.clone(),
         selection,
         aliases: HashMap::new(),
-        adm: Admission::new(STAGED_PIXELS_MAX),
+        adm: Admission::new(staged_pixels),
         pencil_pixels: 0,
         pencil_segments: 0,
         base_state: base.state_id.to_string(),
@@ -338,6 +348,102 @@ fn walk_clipped(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::commands::Mode;
+    use crate::document::{POLICY, new_document};
+    use paintcraft_types::Rgba;
+
+    fn batch_of(operations: Vec<Op>) -> Batch {
+        Batch {
+            policy: POLICY.into(),
+            base_state: uuid::Uuid::nil(),
+            base_epoch: 0,
+            seed: None,
+            operations,
+            digest: "0".repeat(64),
+        }
+    }
+
+    fn add(alias: &str, w: u32, h: u32) -> Op {
+        Op::LayerAdd {
+            alias: alias.into(),
+            name: alias.into(),
+            width: w,
+            height: h,
+            origin: (0, 0),
+            default: Rgba::TRANSPARENT,
+        }
+    }
+
+    fn pencil(alias: &str, points: Vec<(i64, i64)>) -> Op {
+        Op::PencilPath {
+            layer: LayerRef::Alias(alias.into()),
+            points,
+            color: Rgba([1, 2, 3, 255]),
+            mode: Mode::Replace,
+        }
+    }
+
+    #[test]
+    fn pencil_segment_budget_counts_zero_length_segments() {
+        let doc = new_document(2, 2, None, 0, POLICY).unwrap();
+        // 17 × 65,535 segments exceeds 1,048,576 while emitting a single pixel each time.
+        let mut ops = vec![add("a", 2, 2)];
+        ops.extend((0..17).map(|_| pencil("a", vec![(0, 0); 65_536])));
+        let e = execute(&doc, Selection::Inactive, &batch_of(ops.clone())).unwrap_err();
+        assert_eq!(e.code, ErrorCode::ResourceLimit);
+        assert_eq!(
+            e.operation_index,
+            Some(17),
+            "the first operation that crosses the limit"
+        );
+        // Sixteen of them stay within budget.
+        ops.truncate(17);
+        assert!(execute(&doc, Selection::Inactive, &batch_of(ops)).is_ok());
+    }
+
+    #[test]
+    fn pencil_pixel_budget_is_checked_before_expansion() {
+        let doc = new_document(2, 2, None, 0, POLICY).unwrap();
+        let far = vec![(0, 0), (PENCIL_PIXELS_MAX as i64, 0)];
+        let e = execute(
+            &doc,
+            Selection::Inactive,
+            &batch_of(vec![add("a", 2, 2), pencil("a", far)]),
+        )
+        .unwrap_err();
+        assert_eq!(
+            (e.code, e.operation_index),
+            (ErrorCode::ResourceLimit, Some(1))
+        );
+        // Exactly the limit is admitted: 1 + (limit - 1) pixels.
+        let edge = vec![(0, 0), (PENCIL_PIXELS_MAX as i64 - 1, 0)];
+        assert!(
+            execute(
+                &doc,
+                Selection::Inactive,
+                &batch_of(vec![add("a", 2, 2), pencil("a", edge)])
+            )
+            .is_ok()
+        );
+    }
+
+    #[test]
+    fn exhausted_staging_aborts_with_a_resource_error() {
+        let doc = new_document(512, 512, None, 0, POLICY).unwrap();
+        let fill = Op::FillRect {
+            layer: LayerRef::Alias("a".into()),
+            rect: Rect::new(0, 0, 512, 512).unwrap(),
+            color: Rgba([9, 9, 9, 255]),
+            mode: Mode::Replace,
+        };
+        let batch = batch_of(vec![add("a", 512, 512), fill]);
+        let e = execute_with_budget(&doc, Selection::Inactive, &batch, 65_536 * 3).unwrap_err();
+        assert_eq!(
+            (e.code, e.operation_index),
+            (ErrorCode::ResourceLimit, Some(1))
+        );
+        assert!(execute_with_budget(&doc, Selection::Inactive, &batch, 65_536 * 4).is_ok());
+    }
 
     fn full_walk(a: (i64, i64), b: (i64, i64)) -> Vec<(i64, i64)> {
         let mut out = Vec::new();
