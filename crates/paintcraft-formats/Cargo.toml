@@ -13,6 +13,7 @@ paintcraft-core = { path = "../paintcraft-core" }
 sha2 = "0.11.1"
 uuid = "1.28.0"
 crc32fast = "1.5.2"
+png = "0.18.1"
 
 [lints]
 workspace = true
