@@ -50,7 +50,8 @@ PAINTCRAFT_REQUIRE_GPU=1 cargo test -p paintcraft-render --features gpu --test g
 | `crates/paintcraft-runtime` | Bounded native workers, cancellation and transient job handles |
 | `crates/paintcraft-formats` | Canonical PCND reader/writer, PNG/BMP/JPEG codecs, flat export and recovery checkpoints |
 | `crates/paintcraft-platform` | Filesystem save adapters and optional native `rfd` dialogs |
-| `crates/paintcraft-ui` | Shared view transforms and action outbox |
+| `crates/paintcraft-ui` | Shared vector widgets, view transforms and action outbox |
+| `crates/paintcraft-classic` | Classic menus, grouped tool ribbon, palette and presentation variants |
 | `apps/paintcraft` | Desktop controller, settings and egui application (wgpu) |
 | `apps/paintcraft-cli` | Headless Clap CLI; each command lives in `src/commands/` |
 | `conformance/` | Vendored batch v1 conformance vectors and the canonical specimen |

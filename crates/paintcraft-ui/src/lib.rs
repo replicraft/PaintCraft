@@ -1,7 +1,4 @@
-//! Everything the desktop application decides, without a window or egui.
-//! The application feeds pointer samples and button presses in; this crate
-//! turns them into at most one transaction per user intention and reports
-//! state back. Keeping it headless is what makes "one click, one edit" testable.
-
+//! Shared application widgets, view mapping and exactly-once action delivery.
 pub mod outbox;
 pub mod view;
+pub mod widgets;

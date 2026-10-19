@@ -1,6 +1,6 @@
 [package]
 name = "paintcraft-ui"
-description = "Window-independent editor controller: view transform, action outbox, pencil gestures"
+description = "Shared egui widgets, view transforms and exactly-once action outbox"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -9,6 +9,8 @@ publish.workspace = true
 
 [dependencies]
 paintcraft-core.workspace = true
+
+egui.workspace = true
 
 [lints]
 workspace = true

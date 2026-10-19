@@ -9,39 +9,7 @@ use std::path::{Path, PathBuf};
 use paintcraft_core::types::json::{self, Value};
 use paintcraft_platform::save;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum ClassicVariant {
-    V7,
-    V10,
-    V11,
-}
-
-impl ClassicVariant {
-    pub const ALL: [ClassicVariant; 3] =
-        [ClassicVariant::V7, ClassicVariant::V10, ClassicVariant::V11];
-    /// Selected when the user has not chosen.
-    pub const DEFAULT: ClassicVariant = ClassicVariant::V11;
-
-    pub fn id(self) -> &'static str {
-        match self {
-            ClassicVariant::V7 => "v7",
-            ClassicVariant::V10 => "v10",
-            ClassicVariant::V11 => "v11",
-        }
-    }
-
-    pub fn name(self) -> &'static str {
-        match self {
-            ClassicVariant::V7 => "Paint v7",
-            ClassicVariant::V10 => "Paint v10",
-            ClassicVariant::V11 => "Paint v11",
-        }
-    }
-
-    fn from_id(s: &str) -> Option<ClassicVariant> {
-        ClassicVariant::ALL.into_iter().find(|v| v.id() == s)
-    }
-}
+pub use paintcraft_classic::ClassicVariant;
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Settings {

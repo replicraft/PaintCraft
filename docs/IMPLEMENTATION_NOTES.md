@@ -73,6 +73,22 @@ This is an admitted render-worker baseline, not the complete T13 priority schedu
 a physical-memory/performance qualification. Background saves, process-wide service
 coordination, GPU device epochs and measured fairness remain pending.
 
+## Classic presentation
+
+`paintcraft-classic` owns the version descriptor, styles and presentation-only controls.
+The desktop feeds it a snapshot of tool options and colors; its actions pass through a
+tokenized outbox before reaching editor/platform services. Repeated layout passes cannot
+repeat New/Open/Save or reset a newly started tool gesture. Shared vector icons/widgets
+live in `paintcraft-ui`; no proprietary artwork is bundled.
+
+The initial Classic layout has File/Edit/View menus and quick actions, grouped selection,
+tools and shapes, primary/secondary colors, a 28-swatch palette, right-side layers, framed
+canvas workspace and status-bar pixel dimensions/zoom. v7/v10 show the Home ribbon family;
+v11 uses the modern palette styling. These are working presentation baselines, not pinned
+reference reproductions. KeyTips, historical target/eraser rules and reference geometry
+remain T16 work. Current-app GPU previews can be exported with the ignored
+`export_classic_ui_previews` GUI test; they are not reference capture evidence.
+
 ## Implemented
 
 | Area | What | Evidence |
@@ -84,7 +100,7 @@ coordination, GPU device epochs and measured fairness remain pending.
 | Safe save and recovery (T10) | Stage → atomic replace → read-back; a file-operation receipt; autosave checkpoints with per-session locks; recover, discard or ask later; a clean save or exit leaves nothing behind | platform `save.rs`, format `recovery.rs`, GUI tests |
 | Bounded history (T11) | Memory budget over all retained snapshots (shared tiles counted once); only the oldest undo steps are dropped, the newest edit stays undoable, the user is told | `session.rs`, editor tests |
 | CLI (T08, T33, T34) | `new`, `inspect`, `schema batch|batch-v2`, `capabilities`, `apply` (hash-guarded), `import`, `render` | 11 end-to-end tests of the real binary; output validates against the pack's schemas |
-| Editor (T09, T14 subset) | Pencil, brush (round/square), eraser, flood fill, line, rectangle, ellipse (outline/filled/both), rectangle select, bitmap text; layers: add, show/hide, move, delete, rename, opacity; undo/redo; one gesture or text object is one transaction | desktop controller tests; 28 headless egui tests |
+| Editor (T09, T14 subset) | Pencil, brush (round/square), eraser, flood fill, line, rectangle, ellipse (outline/filled/both), rectangle select, bitmap text; layers: add, show/hide, move, delete, rename, opacity; undo/redo; one gesture or text object is one transaction | desktop controller tests; headless egui tests |
 | Presentation (T15 subset) | First-visit Classic picker (v11 preselected), remembered choice, Interface button, damaged settings kept aside | GUI tests |
 
 Native evidence is limited to repeated runs of the real wgpu window, which opened, drew
@@ -157,8 +173,8 @@ Definitions (integer-exact, so any implementation can reproduce them):
   identical DocumentIds. Recovery sessions use random ids and do not rely on DocumentId.
 - **Eraser.** It clears to transparent (replace with `#00000000`), also on the opaque
   Background layer. Classic Paint erases to the background colour; that is not reproduced.
-- **Classic variants.** v7, v10 and v11 are presentation presets (rounding, panel colour,
-  accent), not captured reproductions. No fidelity claim of any kind is made.
+- **Classic variants.** v7, v10 and v11 share initial ribbon/control primitives and version styling;
+  they are not captured reproductions. No fidelity claim of any kind is made.
 - **Checkpoints on the UI thread.** Autosave writes on the UI thread when idle; fine at
   these sizes, to be moved to a background worker with large documents.
 - **Windows.** Durability confirmation syncs the destination directory, which Windows does

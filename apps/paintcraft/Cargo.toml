@@ -15,6 +15,7 @@ name = "paintcraft"
 path = "src/main.rs"
 
 [dependencies]
+paintcraft-classic.workspace = true
 paintcraft-commands.workspace = true
 paintcraft-core.workspace = true
 paintcraft-document.workspace = true
@@ -33,7 +34,7 @@ sha2.workspace = true
 uuid.workspace = true
 
 [dev-dependencies]
-egui_kittest.workspace = true
+egui_kittest = { workspace = true, features = ["wgpu"] }
 
 [lints]
 workspace = true

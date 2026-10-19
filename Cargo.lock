@@ -997,11 +997,16 @@ version = "0.37.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0979c2e37860fcf13a2bea77508607f067a9a6a84ba9bd47b5e298582fb59b86"
 dependencies = [
+ "eframe",
  "egui",
+ "egui-wgpu",
+ "image",
  "kittest",
  "log",
+ "pollster 1.0.1",
  "serde",
  "toml",
+ "wgpu",
 ]
 
 [[package]]
@@ -2304,6 +2309,7 @@ version = "0.1.0"
 dependencies = [
  "eframe",
  "egui_kittest",
+ "paintcraft-classic",
  "paintcraft-commands",
  "paintcraft-core",
  "paintcraft-document",
@@ -2318,6 +2324,16 @@ dependencies = [
  "paintcraft-ui",
  "sha2",
  "uuid",
+]
+
+[[package]]
+name = "paintcraft-classic"
+version = "0.1.0"
+dependencies = [
+ "egui",
+ "paintcraft-core",
+ "paintcraft-tools",
+ "paintcraft-ui",
 ]
 
 [[package]]
@@ -2462,6 +2478,7 @@ dependencies = [
 name = "paintcraft-ui"
 version = "0.1.0"
 dependencies = [
+ "egui",
  "paintcraft-core",
 ]
 

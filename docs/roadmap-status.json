@@ -219,9 +219,11 @@
       "status": "partial",
       "evidence": [
         "apps/paintcraft/src/settings.rs",
-        "apps/paintcraft/src/lib.rs"
+        "apps/paintcraft/src/lib.rs",
+        "crates/paintcraft-classic/src/lib.rs",
+        "crates/paintcraft-ui/src/widgets.rs"
       ],
-      "remaining_or_scope": "Classic choice persists and basic codecs exist; faithful v11 presentation, preserving-target flow and complete M2 prerequisites remain.",
+      "remaining_or_scope": "Classic menus, grouped tools, vector widgets, palette, right layers and persistent choice exist; reference fidelity, preserving-target flow and complete M2 prerequisites remain.",
       "acceptance": "Named M2 gate, no repeated picker; explicit deviations and no dead functional claims."
     },
     {

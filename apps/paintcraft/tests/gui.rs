@@ -916,3 +916,92 @@ fn renaming_and_opacity_apply_once_on_commit_not_per_keystroke() {
     );
     assert_eq!(publications(&h), before + 1);
 }
+
+#[test]
+fn classic_ribbon_tools_are_visible_and_activate_at_the_default_window_size() {
+    let mut h = Harness::builder()
+        .with_size(Vec2::new(960.0, 720.0))
+        .build_ui_state(|ui, app: &mut App| app.ui(ui), App::new(None));
+    h.run();
+    let canvas = h.state().canvas_rect().unwrap();
+    for label in [
+        "Pencil",
+        "Fill",
+        "Text",
+        "Rectangle",
+        "Select",
+        "Color #E0E0FF",
+    ] {
+        let rect = h.get_by_label(label).rect();
+        assert!(
+            rect.min.x >= 0.0 && rect.max.x <= 960.0,
+            "{label} is outside the window: {rect:?}"
+        );
+        assert!(
+            rect.max.y < canvas.min.y,
+            "{label} must be in the ribbon above the canvas"
+        );
+    }
+    h.get_by_label("Fill").click();
+    h.run();
+    assert_eq!(h.state().editor().tool, paintcraft::controller::Tool::Fill);
+}
+
+#[test]
+#[ignore = "requires a real GPU; exports current application previews, not reference captures"]
+fn export_classic_ui_previews() {
+    use paintcraft::settings::{ClassicVariant, Settings};
+    let output = std::env::var_os("PAINTCRAFT_PREVIEW_DIR")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| std::env::temp_dir().join("paintcraft-ui-previews"));
+    std::fs::create_dir_all(&output).unwrap();
+    for variant in ClassicVariant::ALL {
+        let settings = scratch("preview-settings");
+        Settings {
+            classic_variant: Some(variant),
+        }
+        .save(&settings)
+        .unwrap();
+        let mut h = Harness::builder()
+            .with_size(Vec2::new(960.0, 720.0))
+            .build_ui_state(
+                |ui, app: &mut App| app.ui(ui),
+                App::new(None).with_settings(settings.clone()),
+            );
+        h.run();
+        with_layer(&mut h);
+        h.get_by_label("Color #00A2E8").click();
+        h.run();
+        h.get_by_label("Rectangle").click();
+        h.run();
+        h.get_by_label("Filled").click();
+        h.run();
+        drag(&mut h, (45.0, 70.0), (240.0, 195.0));
+        h.get_by_label("Color #FFC90E").click();
+        h.run();
+        h.get_by_label("Ellipse").click();
+        h.run();
+        drag(&mut h, (100.0, 105.0), (285.0, 245.0));
+        h.get_by_label("Pencil").click();
+        h.run();
+        h.render()
+            .unwrap()
+            .save(output.join(format!("classic-{}.png", variant.id())))
+            .unwrap();
+        std::fs::remove_dir_all(settings).unwrap();
+    }
+}
+
+#[test]
+fn classic_tool_actions_survive_multiple_layout_passes_without_repeating_a_shape() {
+    let mut h = harness_with(App::new(None), 1.0, true);
+    with_layer(&mut h);
+    h.get_by_label("Rectangle").click();
+    h.run();
+    h.get_by_label("Filled").click();
+    h.run();
+    let before = publications(&h);
+    drag(&mut h, (5.0, 5.0), (25.0, 25.0));
+    assert_eq!(publications(&h), before + 1);
+    assert_eq!(top_pixel(&h, 15, 15).a(), 255);
+}

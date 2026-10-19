@@ -13,7 +13,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::Duration;
 
-use crate::controller::{Action, Editor, Preview, ShapeStyle, Tool};
+use crate::controller::{Action, Editor, Preview, Tool};
 use crate::settings::{ClassicVariant, Loaded, Settings};
 use eframe::egui::{self, Color32, Pos2, Rect, Sense, Vec2};
 use paintcraft_core::types::Rgba;
@@ -80,6 +80,7 @@ struct RenderedFrame {
 
 pub struct App {
     editor: Editor,
+    chrome_outbox: paintcraft_ui::outbox::Outbox<paintcraft_classic::Action>,
     gpu: Option<Arc<GpuRenderer>>,
     renderer: Option<Executor<RenderedFrame>>,
     pending_frame: Option<((Uuid, u64), JobHandle)>,
@@ -185,6 +186,7 @@ impl App {
         let mut app = App {
             editor: Editor::new_document(DEFAULT_SIZE.0, DEFAULT_SIZE.1)
                 .expect("default size is valid"),
+            chrome_outbox: Default::default(),
             gpu: None,
             renderer: None,
             pending_frame: None,
@@ -289,39 +291,7 @@ impl App {
         if self.applied_variant == Some(v) {
             return;
         }
-        let (rounding, panel, accent) = match v {
-            ClassicVariant::V7 => (
-                0u8,
-                Color32::from_rgb(233, 238, 247),
-                Color32::from_rgb(63, 119, 186),
-            ),
-            ClassicVariant::V10 => (
-                0,
-                Color32::from_rgb(243, 243, 243),
-                Color32::from_rgb(0, 120, 215),
-            ),
-            ClassicVariant::V11 => (
-                6,
-                Color32::from_rgb(249, 249, 249),
-                Color32::from_rgb(0, 95, 184),
-            ),
-        };
-        let mut vis = egui::Visuals::light();
-        vis.panel_fill = panel;
-        vis.window_fill = panel;
-        vis.selection.bg_fill = accent;
-        let r = egui::CornerRadius::same(rounding);
-        for w in [
-            &mut vis.widgets.noninteractive,
-            &mut vis.widgets.inactive,
-            &mut vis.widgets.hovered,
-            &mut vis.widgets.active,
-            &mut vis.widgets.open,
-        ] {
-            w.corner_radius = r;
-        }
-        vis.window_corner_radius = r;
-        ctx.set_visuals(vis);
+        paintcraft_classic::apply_style(ctx, v);
         self.applied_variant = Some(v);
     }
 
@@ -745,54 +715,53 @@ impl App {
 
     fn toolbar(&mut self, ui: &mut egui::Ui) {
         let ctx = ui.ctx().clone();
-        ui.horizontal_wrapped(|ui| {
-            if ui.button("New").clicked() {
-                if self.editor.is_dirty() {
-                    self.confirm = Some(Confirm::DiscardForNew);
-                } else {
-                    self.new_document();
+        let mut controls = paintcraft_classic::Controls {
+            tool: self.editor.tool,
+            options: self.editor.options,
+            primary: self.editor.color,
+            secondary: self.editor.secondary,
+        };
+        let actions = paintcraft_classic::chrome(ui, self.variant(), &mut controls);
+        for action in actions {
+            self.chrome_outbox
+                .push(token(&ctx, action.activation_code()), action);
+        }
+        for action in self.chrome_outbox.drain() {
+            use paintcraft_classic::Action as Chrome;
+            match action {
+                Chrome::New => {
+                    if self.editor.is_dirty() {
+                        self.confirm = Some(Confirm::DiscardForNew);
+                    } else {
+                        self.new_document();
+                    }
+                }
+                Chrome::Open => self.open_requested(&ctx),
+                Chrome::Save => self.save_requested(&ctx),
+                Chrome::SaveAs => self.request_dialog(&ctx, Kind::SaveAs),
+                Chrome::Export => self.export_requested(&ctx),
+                Chrome::Undo => self.request(&ctx, code::UNDO, Action::Undo),
+                Chrome::Redo => self.request(&ctx, code::REDO, Action::Redo),
+                Chrome::Interface => self.picking = Some(self.variant()),
+                Chrome::SelectTool(tool) => self.editor.select_tool(tool),
+                Chrome::SelectAll => {
+                    let (w, h) = self.editor.document().canvas;
+                    self.request(
+                        &ctx,
+                        code::SELECT_ALL,
+                        Action::Select {
+                            corners: Some(((0, 0), (i64::from(w) - 1, i64::from(h) - 1))),
+                        },
+                    );
+                }
+                Chrome::Deselect => {
+                    self.request(&ctx, code::DESELECT, Action::Select { corners: None })
                 }
             }
-            if ui.button("Add layer").clicked() {
-                self.request(&ctx, code::ADD_LAYER, Action::AddLayer);
-            }
-            if ui.button("Undo").clicked() {
-                self.request(&ctx, code::UNDO, Action::Undo);
-            }
-            if ui.button("Redo").clicked() {
-                self.request(&ctx, code::REDO, Action::Redo);
-            }
-            if ui.button("Save").clicked() {
-                self.save_requested(&ctx);
-            }
-            if ui.button("Open").clicked() {
-                self.open_requested(&ctx);
-            }
-            if ui.button("Export").clicked() {
-                self.export_requested(&ctx);
-            }
-            if ui.button("Interface").clicked() {
-                self.picking = Some(self.variant());
-            }
-            if ui.button("Save as").clicked() {
-                self.request_dialog(&ctx, Kind::SaveAs);
-            }
-            ui.separator();
-            let c = self.editor.color.0;
-            let mut color = Color32::from_rgba_unmultiplied(c[0], c[1], c[2], c[3]);
-            let swatch = ui.color_edit_button_srgba(&mut color);
-            swatch.widget_info(|| {
-                egui::WidgetInfo::labeled(egui::Role::ColorWell, true, "Pencil color")
-            });
-            if swatch.changed() {
-                let [r, g, b, a] = color.to_srgba_unmultiplied();
-                self.editor.color = Rgba([r, g, b, a]);
-            }
-            ui.label("Zoom");
-            for z in [1u32, 2, 4, 8] {
-                ui.selectable_value(&mut self.zoom, z, format!("{z}×"));
-            }
-        });
+        }
+        self.editor.options = controls.options;
+        self.editor.color = controls.primary;
+        self.editor.secondary = controls.secondary;
     }
 
     fn new_document(&mut self) {
@@ -802,96 +771,14 @@ impl App {
         }
     }
 
-    fn tool_panel(&mut self, ui: &mut egui::Ui) {
-        let ctx = ui.ctx().clone();
-        ui.heading("Tools");
-        ui.horizontal_wrapped(|ui| {
-            for tool in Tool::ALL {
-                if ui
-                    .selectable_label(self.editor.tool == tool, tool.name())
-                    .clicked()
-                {
-                    self.editor.select_tool(tool);
-                }
-            }
-        });
-        let tool = self.editor.tool;
-        if matches!(
-            tool,
-            Tool::Brush | Tool::Eraser | Tool::Line | Tool::Rect | Tool::Ellipse
-        ) {
-            ui.horizontal(|ui| {
-                let label = ui.label("Size");
-                ui.add(egui::DragValue::new(&mut self.editor.options.size).range(1..=1024))
-                    .labelled_by(label.id);
-            });
-        }
-        if tool == Tool::Brush {
-            ui.horizontal(|ui| {
-                ui.selectable_value(&mut self.editor.options.round, true, "Round");
-                ui.selectable_value(&mut self.editor.options.round, false, "Square");
-            });
-        }
-        if matches!(tool, Tool::Rect | Tool::Ellipse) {
-            ui.horizontal(|ui| {
-                ui.selectable_value(
-                    &mut self.editor.options.style,
-                    ShapeStyle::Outline,
-                    "Outline",
-                );
-                ui.selectable_value(&mut self.editor.options.style, ShapeStyle::Filled, "Filled");
-                ui.selectable_value(&mut self.editor.options.style, ShapeStyle::Both, "Both");
-            });
-            if self.editor.options.style == ShapeStyle::Both {
-                let c = self.editor.secondary.0;
-                let mut color = Color32::from_rgba_unmultiplied(c[0], c[1], c[2], c[3]);
-                let swatch = ui.color_edit_button_srgba(&mut color);
-                swatch.widget_info(|| {
-                    egui::WidgetInfo::labeled(egui::Role::ColorWell, true, "Fill color")
-                });
-                if swatch.changed() {
-                    let [r, g, b, a] = color.to_srgba_unmultiplied();
-                    self.editor.secondary = Rgba([r, g, b, a]);
-                }
-            }
-        }
-        if tool == Tool::Text {
-            ui.horizontal(|ui| {
-                let label = ui.label("Text size");
-                ui.add(
-                    egui::DragValue::new(&mut self.editor.options.text_scale)
-                        .range(1..=16)
-                        .suffix("×"),
-                )
-                .labelled_by(label.id);
-            });
-            ui.label("Click the canvas, type, then click elsewhere or press Ctrl+Enter.");
-        }
-        if tool == Tool::Fill {
-            ui.horizontal(|ui| {
-                let label = ui.label("Tolerance");
-                ui.add(egui::DragValue::new(&mut self.editor.options.tolerance).range(0..=255))
-                    .labelled_by(label.id);
-            });
-        }
-        if tool == Tool::Select {
-            let (w, h) = self.editor.document().canvas;
-            ui.horizontal(|ui| {
-                if ui.button("Select all").clicked() {
-                    let corners = Some(((0, 0), (i64::from(w) - 1, i64::from(h) - 1)));
-                    self.request(&ctx, code::SELECT_ALL, Action::Select { corners });
-                }
-                if ui.button("Deselect").clicked() {
-                    self.request(&ctx, code::DESELECT, Action::Select { corners: None });
-                }
-            });
-        }
-        ui.separator();
-    }
-
     fn layer_panel(&mut self, ui: &mut egui::Ui) {
         let ctx = ui.ctx().clone();
-        ui.heading("Layers");
+        ui.horizontal(|ui| {
+            ui.heading("Layers");
+            if ui.button("Add layer").clicked() {
+                self.request(&ctx, code::ADD_LAYER, Action::AddLayer);
+            }
+        });
         let target = self.editor.target();
         for row in self.editor.layers() {
             ui.horizontal(|ui| {
@@ -1409,7 +1296,7 @@ impl App {
         egui::Panel::top("toolbar").show(ui, |ui| self.toolbar(ui));
         egui::Panel::bottom("status").show(ui, |ui| {
             ui.horizontal(|ui| {
-                ui.label(format!(
+                let status = format!(
                     "{}{}",
                     self.editor.status(),
                     if self.editor.is_dirty() {
@@ -1417,19 +1304,34 @@ impl App {
                     } else {
                         ""
                     }
-                ));
+                );
+                ui.add(egui::Label::new(status).truncate());
                 if let Some((x, y)) = self.hover_doc {
                     ui.separator();
                     ui.label(format!("{x}, {y}"));
                 }
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    for zoom in [8u32, 4, 2, 1] {
+                        ui.selectable_value(&mut self.zoom, zoom, format!("{zoom}×"));
+                    }
+                    let (width, height) = self.editor.document().canvas;
+                    ui.label(format!("{width} × {height} px"));
+                });
             });
         });
-        egui::Panel::left("layers").show(ui, |ui| {
-            self.tool_panel(ui);
-            self.layer_panel(ui);
-        });
+        egui::Panel::right("layers")
+            .default_size(220.0)
+            .show(ui, |ui| {
+                self.layer_panel(ui);
+            });
         let accept_input = first_pass && !self.dialogs.as_ref().is_some_and(NativeDialogs::pending);
-        egui::CentralPanel::default().show(ui, |ui| self.canvas(ui, accept_input));
+        egui::CentralPanel::default()
+            .frame(
+                egui::Frame::new()
+                    .fill(Color32::from_rgb(220, 225, 232))
+                    .inner_margin(20),
+            )
+            .show(ui, |ui| self.canvas(ui, accept_input));
         self.picker_dialog(ui);
         self.recovery_dialog(ui);
         self.confirm_dialog(ui);
