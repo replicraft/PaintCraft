@@ -2,10 +2,12 @@
 
 A faithful Paint.NET / MS Paint reimplementation in Rust.
 
-**Status: first editor slice (milestone M1).** There is a CPU-only engine, a native
-`.pcnd` document format, a headless CLI and a minimal desktop editor: one canvas, one
-pencil, layers, undo/redo and safe save. Nothing here is a released or reference-qualified
-editor, and there is no Paint v7/v10/v11 or Paint.NET UI fidelity yet.
+**Status: usable preview of the editor (roadmap milestone M2, minus reference parity).**
+There is a CPU-only engine, a native `.pcnd` document format, PNG/BMP/JPEG import and
+export, a headless CLI and a desktop editor with pencil, brush, eraser, fill, shapes,
+rectangle selection, bitmap text, layers, undo/redo, safe save, crash recovery and a
+remembered Classic look. Nothing here is a released or reference-qualified editor: no
+Paint v7/v10/v11 or Paint.NET behavior or UI fidelity has been verified.
 
 ## Build and test
 
@@ -23,9 +25,9 @@ The toolchain is pinned in `rust-toolchain.toml`.
 | Path | Purpose |
 |---|---|
 | `crates/paintcraft-types` | Error codes, checked rectangles, RGBA8 arithmetic, strict JSON |
-| `crates/paintcraft-core` | Sparse raster, document, atomic batch execution, session and history, flat render |
-| `crates/paintcraft-formats` | Canonical PCND writer and bounded reader, PNG output, the safe-save service |
-| `crates/paintcraft-ui` | Window-independent editor controller: view mapping, action outbox, pencil gestures |
+| `crates/paintcraft-core` | Sparse raster, document, atomic batch execution (v1 and v2), shapes, flood fill, bitmap font, session and bounded history, flat render |
+| `crates/paintcraft-formats` | Canonical PCND writer and bounded reader, PNG/BMP/JPEG codecs, flat export with named losses, the safe-save service, crash-recovery checkpoints |
+| `crates/paintcraft-ui` | Window-independent editor controller: view mapping, action outbox, tools, text, layers, settings |
 | `apps/paintcraft` | Desktop editor (egui + wgpu) |
 | `apps/paintcraft-cli` | Headless `paintcraft-cli` binary |
 | `conformance/` | Vendored batch v1 conformance vectors and the canonical specimen |
@@ -37,7 +39,8 @@ paintcraft-cli new --width 320 --height 320 -o blank.pcnd
 paintcraft-cli inspect blank.pcnd --json          # prints the ticket a batch must carry
 paintcraft-cli apply blank.pcnd --operations edits.json -o edited.pcnd \
     --expect-input-sha256 <sha256 from inspect>
-paintcraft-cli render edited.pcnd -o preview.png
+paintcraft-cli render edited.pcnd -o preview.png      # or .bmp / .jpg; losses need --allow-loss
+paintcraft-cli import photo.jpg -o photo.pcnd
 ```
 
 Every command that writes a file prints one JSON object (`--json`) with the engine
