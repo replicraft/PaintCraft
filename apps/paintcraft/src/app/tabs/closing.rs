@@ -36,7 +36,7 @@ impl App {
         }
     }
 
-    fn try_close_tab(&mut self, id: Uuid, ctx: &egui::Context) {
+    pub(crate) fn try_close_tab(&mut self, id: Uuid, ctx: &egui::Context) {
         if self.active_tab_id() != id {
             return;
         }

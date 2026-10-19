@@ -164,3 +164,6 @@ fn switch_interface(h: &mut Harness<App>, label: &str) {
     h.get_by_label("Apply").click();
     h.run();
 }
+
+#[path = "gui/interactions.rs"]
+mod interactions;

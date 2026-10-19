@@ -13,6 +13,7 @@ impl App {
     /// and active IME composition in control of their own keyboard input.
     pub(super) fn handle_global_input(&mut self, ui: &mut egui::Ui) {
         let ctx = ui.ctx().clone();
+        self.handle_canvas_wheel(ui);
         let events = ui.input(|i| i.events.clone());
         let widget_focus = ctx.egui_wants_keyboard_input();
         for event in events {

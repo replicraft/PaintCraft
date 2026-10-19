@@ -1,5 +1,6 @@
 //! Classic presentation emits actions; editor and platform services own effects.
 pub mod canvas;
+mod palette;
 mod ribbon;
 #[derive(Debug, Default)]
 pub struct Workspace {
@@ -126,6 +127,7 @@ pub fn chrome(
             {
                 actions.push(Action::Settings);
             }
+            actions.extend(paintcraft_ui::chrome::interface_changer(ui, context));
         });
     });
     if variant != ClassicVariant::V11 {
@@ -249,6 +251,7 @@ pub fn chrome(
                                             ),
                                         )
                                     });
+                                    let response = response.on_hover_text(palette::tooltip(i, rgb));
                                     if response.clicked() {
                                         state.primary = Rgba([rgb[0], rgb[1], rgb[2], 255]);
                                     }

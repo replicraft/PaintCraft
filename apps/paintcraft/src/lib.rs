@@ -160,6 +160,8 @@ pub struct App {
     texture_key: Option<RenderKey>,
     rendered_preview: Option<Preview>,
     preview_revision: u64,
+    preview_gesture: Option<u64>,
+    preview_start_revision: u64,
     /// Straight RGBA8 flat render of what the texture shows.
     rendered: Vec<u8>,
     zoom: f32,
@@ -248,6 +250,8 @@ impl App {
             texture_key: None,
             rendered_preview: None,
             preview_revision: 0,
+            preview_gesture: None,
+            preview_start_revision: 0,
             rendered: Vec::new(),
             zoom: 1.0,
             pixel_grid: false,

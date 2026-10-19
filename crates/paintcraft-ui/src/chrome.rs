@@ -18,15 +18,23 @@ pub fn options(ui: &mut egui::Ui, state: &mut Controls, actions: &mut Vec<Action
     ui.horizontal_wrapped(|ui| {
         if matches!(
             state.tool,
-            Tool::Brush | Tool::Eraser | Tool::Line | Tool::Rect | Tool::Ellipse
+            Tool::Pencil | Tool::Brush | Tool::Eraser | Tool::Line | Tool::Rect | Tool::Ellipse
         ) {
-            let label = ui.label("Size");
+            let size = if state.tool == Tool::Pencil {
+                &mut state.options.pencil_size
+            } else {
+                &mut state.options.size
+            };
             ui.add(
-                egui::DragValue::new(&mut state.options.size)
-                    .range(1..=1024)
-                    .suffix(" px"),
-            )
-            .labelled_by(label.id);
+                egui::Slider::new(size, 1..=64)
+                    .text("Tool size")
+                    .suffix(" px")
+                    .show_value(false)
+                    .clamping(egui::SliderClamping::Edits),
+            );
+            let label = ui.label("Size");
+            ui.add(egui::DragValue::new(size).range(1..=1024).suffix(" px"))
+                .labelled_by(label.id);
         }
         if state.tool == Tool::Brush {
             ui.selectable_value(&mut state.options.round, true, "Round");
@@ -70,7 +78,7 @@ pub fn options(ui: &mut egui::Ui, state: &mut Controls, actions: &mut Vec<Action
             }
         }
         if matches!(state.tool, Tool::Pencil) {
-            ui.weak("Pencil · 1 pixel");
+            ui.weak("Pencil · hard edge");
         }
     });
 }
@@ -105,4 +113,29 @@ pub fn color_edit(ui: &mut egui::Ui, label: &str, value: &mut Rgba) {
     if response.changed() {
         *value = Rgba(color.to_srgba_unmultiplied());
     }
+}
+
+/// Kept next to Settings in either frontend; switching policy belongs to the host.
+pub fn interface_changer(ui: &mut egui::Ui, context: crate::actions::Context) -> Vec<Action> {
+    let mut actions = Vec::new();
+    ui.menu_button("Interface", |ui| {
+        for frontend in [
+            crate::actions::Frontend::Classic,
+            crate::actions::Frontend::Studio,
+        ] {
+            let action = Action::ChooseFrontend(frontend);
+            if crate::actions::menu_item(ui, action, context) {
+                actions.push(action);
+                ui.close();
+            }
+        }
+        if context.frontend == crate::actions::Frontend::Classic {
+            ui.separator();
+            if ui.button("Change Paint version…").clicked() {
+                actions.push(Action::Interface);
+                ui.close();
+            }
+        }
+    });
+    actions
 }

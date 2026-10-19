@@ -259,7 +259,7 @@ fn colors(ui: &mut egui::Ui, state: &mut Controls, context: Context, actions: &m
                     if response.secondary_clicked() {
                         state.secondary = Rgba([rgb[0], rgb[1], rgb[2], 255]);
                     }
-                    response.on_hover_text(label);
+                    response.on_hover_text(super::palette::tooltip(i, rgb));
                     if i % 10 == 9 {
                         ui.end_row();
                     }

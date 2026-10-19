@@ -28,6 +28,59 @@ impl App {
         ctx.request_repaint();
     }
 
+    pub(super) fn handle_canvas_wheel(&mut self, ui: &egui::Ui) {
+        let ctx = ui.ctx();
+        if self.document_count() == 0 || self.action_context().blocked {
+            return;
+        }
+        let Some(viewport) = self.canvas_viewport else {
+            return;
+        };
+        let Some(pointer) = ui
+            .input(|i| i.pointer.hover_pos())
+            .filter(|p| viewport.contains(*p))
+        else {
+            return;
+        };
+        if ctx.layer_id_at(pointer) != Some(ui.layer_id()) {
+            return;
+        }
+        let delta = ui.input(|i| {
+            i.events
+                .iter()
+                .filter_map(|event| {
+                    if let egui::Event::MouseWheel {
+                        unit,
+                        delta,
+                        modifiers,
+                        ..
+                    } = event
+                    {
+                        if (modifiers.ctrl || modifiers.command || modifiers.mac_cmd)
+                            && !modifiers.alt
+                        {
+                            let units = match unit {
+                                egui::MouseWheelUnit::Point => delta.y / 120.0,
+                                egui::MouseWheelUnit::Line => delta.y,
+                                egui::MouseWheelUnit::Page => delta.y * 3.0,
+                            };
+                            return units.is_finite().then_some(units);
+                        }
+                    }
+                    None
+                })
+                .sum::<f32>()
+        });
+        if delta != 0.0 {
+            let center = self.visible_document_center(ctx.pixels_per_point());
+            self.set_zoom(
+                ctx,
+                self.zoom * 1.1_f32.powf(delta.clamp(-32.0, 32.0)),
+                center,
+            );
+        }
+    }
+
     pub(super) fn dispatch_view_action(&mut self, ctx: &egui::Context, action: ViewAction) {
         if self.document_count() == 0 {
             return;

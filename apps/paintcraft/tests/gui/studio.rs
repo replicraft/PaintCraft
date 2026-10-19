@@ -55,7 +55,11 @@ fn floating_tools_do_not_paint_under_the_window_and_brush_is_undoable() {
     let before = publications(&h);
     // Move Tools over the document, then click its Brush button. A floating
     // window must own the click even where the canvas rectangle also contains it.
-    let from = Pos2::new(45.0, 160.0);
+    let from = h
+        .get_by_role_and_label(eframe::egui::Role::Window, "Tools")
+        .rect()
+        .min
+        + Vec2::new(35.0, 10.0);
     let to = h.state().canvas_rect().unwrap().min + Vec2::new(50.0, 50.0);
     h.input_mut()
         .events

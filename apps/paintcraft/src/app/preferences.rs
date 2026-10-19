@@ -86,7 +86,7 @@ fn appearance(ui: &mut egui::Ui, values: &mut Settings) {
     }
     ui.add_space(18.0);
     ui.strong("Interface");
-    ui.weak("Each interface has a separate workspace. Save changes before switching.");
+    ui.weak("Each interface has a separate workspace. Save or discard changes before switching.");
     for (value, label) in [
         (Experience::Classic, "Classic interface"),
         (Experience::Studio, "Studio interface"),

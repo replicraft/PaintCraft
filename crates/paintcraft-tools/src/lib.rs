@@ -67,7 +67,9 @@ impl Tool {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct ToolOptions {
-    /// Brush, eraser and outline thickness in pixels (1..=1024). The pencil is always 1.
+    /// Pencil thickness in pixels, captured at pointer-down (1..=1024).
+    pub pencil_size: u32,
+    /// Brush, eraser and outline thickness in pixels (1..=1024).
     pub size: u32,
     pub round: bool,
     /// Capped Brush opacity in percent, 0..=100; captured at pointer-down.
@@ -82,6 +84,7 @@ pub struct ToolOptions {
 impl Default for ToolOptions {
     fn default() -> Self {
         ToolOptions {
+            pencil_size: 1,
             size: 4,
             round: true,
             brush_opacity: 100,
@@ -310,6 +313,10 @@ impl ToolState {
         }
     }
 
+    pub fn gesture_token(&self) -> Option<u64> {
+        self.gesture.as_ref().map(|g| g.token)
+    }
+
     pub fn gesture_button(&self) -> Option<PointerButton> {
         self.gesture.as_ref().map(|g| g.button)
     }
@@ -378,7 +385,12 @@ impl ToolState {
 
     fn brush_of(g: &Gesture) -> (u32, bool, Rgba, BlendMode) {
         match g.tool {
-            Tool::Pencil => (1, false, g.color, BlendMode::SourceOver),
+            Tool::Pencil => (
+                g.options.pencil_size.clamp(1, 1024),
+                false,
+                g.color,
+                BlendMode::SourceOver,
+            ),
             Tool::Eraser => (g.options.size, false, Rgba::TRANSPARENT, BlendMode::Replace),
             _ => {
                 let mut color = g.color;

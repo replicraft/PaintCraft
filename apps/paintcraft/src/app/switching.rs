@@ -3,6 +3,7 @@ use super::*;
 #[derive(Debug)]
 pub(super) struct Switch {
     target: Experience,
+    discard: bool,
     remaining: Vec<Uuid>,
     awaiting: Option<Uuid>,
     origin: Uuid,
@@ -12,11 +13,15 @@ impl App {
     pub(super) fn interface_switch_dialog(&mut self, ctx: &egui::Context, target: Experience) {
         let response=egui::Modal::new(egui::Id::unique("switch-interface-save")).show(ctx,|ui| {
             ui.heading("Save before switching interfaces");
-            ui.label("Classic and Studio have separate document workspaces. Save all changed documents before switching.");
+            ui.label("Classic and Studio have separate document workspaces. Save changed documents, or discard them and switch.");
             ui.horizontal(|ui| {
                 if ui.button("Save and switch").clicked() && ctx.current_pass_index()==0 {
                     self.confirm=None;
                     self.begin_interface_switch(target,ctx);
+                }
+                if ui.button("Discard and switch").clicked() && ctx.current_pass_index()==0 {
+                    self.confirm=None;
+                    self.start_interface_switch(target,true,ctx);
                 }
                 if ui.button("Cancel").clicked() && ctx.current_pass_index()==0 {self.confirm=None;}
             });
@@ -27,7 +32,12 @@ impl App {
     }
 
     pub(super) fn begin_interface_switch(&mut self, target: Experience, ctx: &egui::Context) {
+        self.start_interface_switch(target, false, ctx);
+    }
+
+    fn start_interface_switch(&mut self, target: Experience, discard: bool, ctx: &egui::Context) {
         self.switching = Some(Switch {
+            discard,
             target,
             remaining: self.tabs.iter().map(|t| t.id).rev().collect(),
             awaiting: None,
@@ -70,6 +80,30 @@ impl App {
         while let Some(id) = transition.remaining.pop() {
             self.swap_tab_state(id);
             if self.editor.is_dirty() || self.has_document_drafts() {
+                if transition.discard {
+                    self.editor.cancel_gesture();
+                    self.editor.cancel_text();
+                    self.name_edit = None;
+                    self.opacity_edit = None;
+                    self.try_close_tab(id, ctx);
+                    if self.tabs.iter().any(|tab| tab.id == id) {
+                        transition.remaining.push(id);
+                        if self
+                            .saving
+                            .as_ref()
+                            .is_some_and(saving::NativeSaving::pending)
+                        {
+                            self.switching = Some(transition);
+                        } else {
+                            self.cancel_interface_switch(
+                                transition.origin,
+                                "Interface unchanged: the document could not be discarded safely.",
+                            );
+                        }
+                        return;
+                    }
+                    continue;
+                }
                 self.resolve_tab_input(ctx);
                 transition.awaiting = Some(id);
                 self.switching = Some(transition);

@@ -124,7 +124,10 @@ impl App {
         if self.applied_variant.is_none() {
             paintcraft_ui::fonts::install(ctx);
         }
-        ctx.options_mut(|options| options.zoom_with_keyboard = false);
+        ctx.options_mut(|options| {
+            options.zoom_with_keyboard = false;
+            options.input_options.zoom_modifier = egui::Modifiers::CTRL | egui::Modifiers::COMMAND;
+        });
         paintcraft_ui::theme::apply(ctx, theme);
         match experience {
             Experience::Classic => paintcraft_classic::apply_style_for_theme(ctx, v, theme),

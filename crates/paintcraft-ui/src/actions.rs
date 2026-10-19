@@ -17,6 +17,7 @@ pub enum Action {
     Redo,
     Interface,
     Settings,
+    ChooseFrontend(Frontend),
     CanvasSize,
     CanvasDefaults,
     EditColors,
@@ -91,6 +92,13 @@ impl Action {
             Self::Export => ("Export…", None),
             Self::Undo => ("Undo", Some((Key::Z, false))),
             Self::Redo => ("Redo", Some((Key::Y, false))),
+            Self::ChooseFrontend(frontend) => (
+                match frontend {
+                    Frontend::Classic => "Classic",
+                    Frontend::Studio => "Studio",
+                },
+                None,
+            ),
             Self::Interface => ("Change Paint version…", None),
             Self::Settings => (
                 "Settings…",
@@ -137,9 +145,12 @@ impl Action {
         match self {
             Self::Layer(action) => action.enabled(ctx),
             Self::View(action) => action.enabled(ctx),
-            Self::New | Self::Open | Self::Interface | Self::CanvasDefaults | Self::Settings => {
-                true
-            }
+            Self::New
+            | Self::Open
+            | Self::Interface
+            | Self::CanvasDefaults
+            | Self::Settings
+            | Self::ChooseFrontend(_) => true,
             Self::Undo => ctx.document_open && ctx.can_undo,
             Self::Redo => ctx.document_open && ctx.can_redo,
             Self::Deselect => ctx.document_open && ctx.selection_active,
@@ -151,6 +162,7 @@ impl Action {
         match self {
             Self::Layer(LayerAction::ToggleVisibility) => Some(ctx.layer_visible),
             Self::View(action) => action.checked(ctx),
+            Self::ChooseFrontend(frontend) => Some(frontend == ctx.frontend),
             Self::SelectTool(tool) => Some(ctx.document_open && tool == ctx.tool),
             _ => None,
         }
@@ -195,6 +207,7 @@ impl Action {
             Self::Close => 1010,
             Self::CanvasSize => 1011,
             Self::Settings => 1015,
+            Self::ChooseFrontend(frontend) => 1016 + frontend as u64,
             Self::CanvasDefaults => 1012,
             Self::EditColors => 1013,
             Self::EditSecondaryColors => 1014,

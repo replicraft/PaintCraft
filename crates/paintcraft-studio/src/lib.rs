@@ -15,6 +15,7 @@ pub use windows::{floating_controls, layers_window};
 
 #[derive(Clone, Debug)]
 pub struct Workspace {
+    pub canvas_top: f32,
     pub tools: bool,
     pub colors: bool,
     pub layers: bool,
@@ -26,6 +27,7 @@ pub struct Workspace {
 impl Default for Workspace {
     fn default() -> Self {
         Self {
+            canvas_top: 150.0,
             tools: true,
             colors: true,
             layers: true,

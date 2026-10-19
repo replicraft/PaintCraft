@@ -16,7 +16,11 @@ pub fn floating_controls(
         .enabled(enabled)
         .resizable(false)
         .auto_sized()
-        .default_pos(egui::pos2(12.0, 150.0))
+        .default_pos(egui::pos2(12.0, workspace.canvas_top.max(150.0)))
+        .constrain_to(egui::Rect::from_min_max(
+            egui::pos2(ctx.viewport_rect().left(), workspace.canvas_top),
+            ctx.viewport_rect().max,
+        ))
         .show(ctx, |ui| {
             ui.push_id(state_id, |ui| {
                 egui::Grid::new("studio-tool-grid")

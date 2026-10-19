@@ -57,6 +57,9 @@ impl App {
                     {
                         self.dispatch_chrome(&ctx, vec![paintcraft_ui::actions::Action::Settings]);
                     }
+                    let actions =
+                        paintcraft_ui::chrome::interface_changer(ui, self.action_context());
+                    self.dispatch_chrome(&ctx, actions);
                 });
             });
         }
@@ -143,6 +146,10 @@ impl App {
                 Chrome::Layer(action) => self.dispatch_layer_action(ctx, action),
                 Chrome::Close => self.request_close_tab(self.active_tab_id(), ctx),
                 Chrome::Settings => self.open_settings(ctx),
+                Chrome::ChooseFrontend(frontend) => self.choose_experience(match frontend {
+                    paintcraft_ui::actions::Frontend::Classic => Experience::Classic,
+                    paintcraft_ui::actions::Frontend::Studio => Experience::Studio,
+                }),
                 Chrome::Interface => self.picking = Some(self.variant()),
                 Chrome::SelectTool(tool) => self.editor.select_tool(tool),
                 Chrome::SelectAll => {
@@ -169,6 +176,7 @@ impl App {
     }
 
     pub(super) fn studio_windows(&mut self, ctx: &egui::Context) {
+        self.studio.canvas_top = self.canvas_viewport.map_or(150.0, |rect| rect.top());
         let mut controls = paintcraft_ui::chrome::Controls {
             tool: self.editor.tool,
             options: self.editor.options,

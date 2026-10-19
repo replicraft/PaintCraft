@@ -148,7 +148,7 @@ fn interface_switch_requires_saving_and_restores_completely_separate_documents()
     switch_interface(&mut h, "Classic interface");
     assert_eq!(h.state().experience(), Experience::Studio);
     assert!(h.query_by_label("Save and switch").is_some());
-    assert!(h.query_by_label("Don't save").is_none());
+    assert!(h.query_by_label("Discard and switch").is_some());
     h.get_by_label("Cancel").click();
     h.run();
     assert!(h.state().editor().is_dirty());
