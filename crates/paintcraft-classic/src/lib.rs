@@ -1,6 +1,9 @@
 //! Classic presentation emits actions; editor and platform services own effects.
 mod brush_gallery;
 pub mod canvas;
+mod ruler_axis;
+mod rulers;
+pub use rulers::RULER_SIZE;
 mod dropdowns;
 mod image_menus;
 mod palette;
@@ -108,6 +111,14 @@ pub fn chrome(
             });
             if paintcraft_ui::actions::menu_item(
                 ui,
+                Action::View(paintcraft_ui::actions::ViewAction::Rulers),
+                context,
+            ) {
+                actions.push(Action::View(paintcraft_ui::actions::ViewAction::Rulers));
+                ui.close();
+            }
+            if paintcraft_ui::actions::menu_item(
+                ui,
                 Action::View(paintcraft_ui::actions::ViewAction::PixelGrid),
                 context,
             ) {
@@ -115,6 +126,9 @@ pub fn chrome(
                 ui.close();
             }
             for &action in paintcraft_ui::actions::WORKSPACE_VIEW {
+                if action == paintcraft_ui::actions::ViewAction::Rulers {
+                    continue;
+                }
                 if action == paintcraft_ui::actions::ViewAction::FullScreen {
                     ui.separator();
                 }

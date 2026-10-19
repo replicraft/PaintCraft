@@ -251,7 +251,7 @@
         "crates/paintcraft-classic/src/lib.rs",
         "crates/paintcraft-ui/src/widgets.rs"
       ],
-      "remaining_or_scope": "Classic menus, grouped tools, vector widgets, palette, right layers and persistent choice exist; brush/transform popup presentation and disabled-state tests follow supplied photos; execution of extra brush media/transforms, reference fidelity, preserving-target flow and complete M2 prerequisites remain.",
+      "remaining_or_scope": "Classic menus, grouped tools, vector widgets, palette, right layers and persistent choice exist; brush/transform popup presentation and disabled-state tests follow supplied photos; pixel rulers, Gridlines routing, status visibility and fullscreen commands have application tests; execution of extra brush media/transforms, reference fidelity, preserving-target flow and complete M2 prerequisites remain.",
       "acceptance": "Named M2 gate, no repeated picker; explicit deviations and no dead functional claims."
     },
     {

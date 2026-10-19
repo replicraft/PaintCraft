@@ -178,7 +178,7 @@ or user preference. macOS muda exposes both commands through the same action
 outbox, with checked/enabled state revalidated on each pass. Tests verify viewport
 commands and cancellation priority; native startup validates menu accelerator
 construction. OS fullscreen transitions across supported targets still require
-platform qualification. Rulers, automatic toolbar hiding and Thumbnail remain
+platform qualification. Automatic toolbar hiding and Thumbnail remain
 unimplemented.
 
 Checkable menu rows now reserve a left indicator column and draw a checkmark,
@@ -194,3 +194,25 @@ and shortcuts resolve against the active frontend; macOS menu text and accelerat
 registrations are reconciled on frontend changes, including removing Classic-only
 bindings when entering Studio. Gridlines remain a per-document display option and
 never alter saved pixels or history.
+
+## Pixel rulers (T15)
+
+View → Rulers and Ctrl/Cmd+R toggle fixed horizontal and vertical strips around
+Classic's scrolling canvas. Their zero follows the canvas origin, including on
+centered documents; labels and ticks use document pixels. Tick spacing adapts to
+zoom/display density, uses whole-pixel minor divisions, and visits only visible
+values. Cursor markers track the same canvas position. Inch/centimeter rulers and
+reference-build parity are not claimed by this pixel-only implementation.
+
+The optional settings-v3 `classic_rulers` boolean defaults to false for old files.
+Visibility survives restart and remains separate from Studio. Plain and ruled
+Classic views share a stable document scope so scroll position survives toggling.
+A pending drawing gesture is cancelled before changing viewport geometry; ruler
+interaction never publishes document pixels, history or save state.
+
+Tests in `apps/paintcraft/tests/gui/rulers.rs` cover menu/shortcut routing,
+1×/2× drawing coordinates, persistence, scroll preservation, ruler hit isolation
+and cancellation. `crates/paintcraft-classic/src/ruler_axis.rs` checks fractional
+zoom and 1×/1.5×/2× mapping, visible intervals and integer deep-zoom ticks. GPU
+captures review both themes at 1× and 2×. These checks support this application
+behavior, not historical Paint parity or platform input qualification.

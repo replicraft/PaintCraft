@@ -81,6 +81,13 @@ impl App {
 
     pub(super) fn dispatch_view_action(&mut self, ctx: &egui::Context, action: ViewAction) {
         match action {
+            ViewAction::Rulers => {
+                self.editor.cancel_gesture();
+                self.settings.classic_rulers = !self.settings.classic_rulers;
+                self.persist_settings();
+                ctx.request_repaint();
+                return;
+            }
             ViewAction::StatusBar => {
                 self.settings.classic_status_bar = !self.settings.classic_status_bar;
                 self.persist_settings();
@@ -141,7 +148,10 @@ impl App {
                 );
                 return;
             }
-            ViewAction::PixelGrid | ViewAction::StatusBar | ViewAction::FullScreen => {
+            ViewAction::PixelGrid
+            | ViewAction::StatusBar
+            | ViewAction::FullScreen
+            | ViewAction::Rulers => {
                 unreachable!()
             }
         };

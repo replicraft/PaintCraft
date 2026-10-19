@@ -4,13 +4,27 @@ use super::*;
 
 impl App {
     pub(super) fn canvas(&mut self, ui: &mut egui::Ui, first_pass: bool) {
-        self.canvas_viewport = Some(ui.available_rect_before_wrap());
+        let mut viewport = ui.available_rect_before_wrap();
+        if self.experience() == Experience::Classic && self.settings.classic_rulers {
+            viewport.min =
+                (viewport.min + Vec2::splat(paintcraft_classic::RULER_SIZE)).min(viewport.max);
+        }
+        self.canvas_viewport = Some(viewport);
         let ppp = ui.ctx().pixels_per_point();
         let (w, h) = self.editor.document().canvas;
         let size = View::with_scale((0.0, 0.0), self.zoom, ppp).canvas_size(w, h);
         let id = egui::Id::unique(self.active_tab_id());
         let canvas_size = Vec2::new(size.0, size.1);
         match self.experience() {
+            Experience::Classic if self.settings.classic_rulers => {
+                paintcraft_classic::canvas::ruled_canvas(
+                    ui,
+                    id,
+                    canvas_size,
+                    (w, h),
+                    |ui, response, painter| self.paint_canvas(ui, response, painter, first_pass),
+                )
+            }
             Experience::Classic => {
                 paintcraft_classic::canvas::canvas(ui, id, canvas_size, |ui, response, painter| {
                     self.paint_canvas(ui, response, painter, first_pass)
@@ -36,7 +50,9 @@ impl App {
         let ppp = ui.ctx().pixels_per_point();
         let rect = response.rect;
         self.canvas_rect = Some(rect);
-        let visible_canvas = rect.intersect(painter.clip_rect());
+        let visible_canvas = rect
+            .intersect(painter.clip_rect())
+            .intersect(self.canvas_viewport.unwrap_or(rect));
         let view = View::with_scale((rect.min.x, rect.min.y), self.zoom, ppp);
         self.hover_doc = ui
             .input(|i| i.pointer.hover_pos())

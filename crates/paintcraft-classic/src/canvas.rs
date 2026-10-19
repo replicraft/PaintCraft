@@ -1,5 +1,5 @@
 //! Classic canvas presentation, independent of Studio navigation and overlays.
-pub fn canvas<R>(
+fn content<R>(
     ui: &mut egui::Ui,
     id: egui::Id,
     size: egui::Vec2,
@@ -45,4 +45,51 @@ pub fn canvas<R>(
             output
         })
         .inner
+}
+
+/// Plain and ruled views share a stable document scope, preserving scroll state.
+pub fn canvas<R>(
+    ui: &mut egui::Ui,
+    id: egui::Id,
+    size: egui::Vec2,
+    paint: impl FnOnce(&mut egui::Ui, egui::Response, egui::Painter) -> R,
+) -> R {
+    let viewport = ui.available_rect_before_wrap();
+    ui.scope_builder(
+        egui::UiBuilder::new()
+            .scope_id(id.with("classic-canvas-presentation"))
+            .max_rect(viewport),
+        |ui| content(ui, id, size, paint),
+    )
+    .inner
+}
+
+pub fn ruled_canvas<R>(
+    ui: &mut egui::Ui,
+    id: egui::Id,
+    size: egui::Vec2,
+    extent: (u32, u32),
+    paint: impl FnOnce(&mut egui::Ui, egui::Response, egui::Painter) -> R,
+) -> R {
+    let viewport = ui.available_rect_before_wrap();
+    let body = egui::Rect::from_min_max(
+        (viewport.min + egui::Vec2::splat(super::RULER_SIZE)).min(viewport.max),
+        viewport.max,
+    );
+    let (result, rect) = ui
+        .scope_builder(
+            egui::UiBuilder::new()
+                .scope_id(id.with("classic-canvas-presentation"))
+                .max_rect(body),
+            |ui| {
+                content(ui, id, size, |ui, response, painter| {
+                    let rect = response.rect;
+                    (paint(ui, response, painter), rect)
+                })
+            },
+        )
+        .inner;
+    super::rulers::paint(ui, viewport, rect, extent);
+    ui.advance_cursor_after_rect(viewport);
+    result
 }

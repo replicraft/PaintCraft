@@ -52,6 +52,7 @@ pub struct Context {
     pub pixel_grid: bool,
     pub can_fit_selection: bool,
     pub status_bar: bool,
+    pub rulers: bool,
     pub fullscreen: bool,
 }
 
@@ -159,7 +160,7 @@ impl Action {
 
     pub fn available(self, frontend: Frontend) -> bool {
         match self {
-            Self::View(ViewAction::StatusBar) => frontend == Frontend::Classic,
+            Self::View(ViewAction::StatusBar | ViewAction::Rulers) => frontend == Frontend::Classic,
             Self::Interface
             | Self::CanvasSize
             | Self::CanvasDefaults
@@ -379,6 +380,7 @@ mod tests {
             pixel_grid: false,
             can_fit_selection: false,
             status_bar: true,
+            rulers: false,
             fullscreen: false,
         };
         let ids: std::collections::HashSet<_> = FILE

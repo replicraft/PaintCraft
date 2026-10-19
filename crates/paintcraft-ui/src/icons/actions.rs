@@ -29,6 +29,7 @@ impl Action {
                 ViewAction::ActualSize => Icon::ActualSize,
                 ViewAction::PixelGrid => Icon::PixelGrid,
                 ViewAction::StatusBar => return None,
+                ViewAction::Rulers => Icon::Rulers,
                 ViewAction::FullScreen => Icon::Resize,
                 ViewAction::Double
                 | ViewAction::Quadruple

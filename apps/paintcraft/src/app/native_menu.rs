@@ -38,6 +38,7 @@ fn shortcut(action: Chrome, frontend: Frontend) -> Option<&'static str> {
         Chrome::View(ViewAction::FitWindow) => "meta+KeyB",
         Chrome::View(ViewAction::FitSelection) => "meta+shift+KeyB",
         Chrome::View(ViewAction::FullScreen) => "F11",
+        Chrome::View(ViewAction::Rulers) if frontend == Frontend::Classic => "meta+KeyR",
         Chrome::View(ViewAction::PixelGrid) if frontend == Frontend::Classic => "meta+KeyG",
         _ => return None,
     })

@@ -13,6 +13,7 @@ pub enum ViewAction {
     ActualSize,
     PixelGrid,
     StatusBar,
+    Rulers,
     FullScreen,
     Double,
     Quadruple,
@@ -21,7 +22,11 @@ pub enum ViewAction {
     SetZoom(u32),
 }
 
-pub const WORKSPACE_VIEW: &[ViewAction] = &[ViewAction::StatusBar, ViewAction::FullScreen];
+pub const WORKSPACE_VIEW: &[ViewAction] = &[
+    ViewAction::Rulers,
+    ViewAction::StatusBar,
+    ViewAction::FullScreen,
+];
 
 pub const VIEW: &[ViewAction] = &[
     ViewAction::ZoomIn,
@@ -45,6 +50,7 @@ impl ViewAction {
             Self::ActualSize => ("Actual size", Some((Key::Num0, Modifiers::COMMAND))),
             Self::PixelGrid => ("Pixel grid", None),
             Self::StatusBar => ("Status bar", None),
+            Self::Rulers => ("Rulers", Some((Key::R, Modifiers::COMMAND))),
             Self::FullScreen => ("Full screen", Some((Key::F11, Modifiers::NONE))),
             Self::Double => ("200%", None),
             Self::Quadruple => ("400%", None),
@@ -61,7 +67,7 @@ impl ViewAction {
         }
     }
     pub(super) fn enabled(self, ctx: Context) -> bool {
-        if matches!(self, Self::StatusBar | Self::FullScreen) {
+        if matches!(self, Self::StatusBar | Self::FullScreen | Self::Rulers) {
             return true;
         }
         ctx.document_open
@@ -82,6 +88,7 @@ impl ViewAction {
             Self::ActualSize => 1304,
             Self::PixelGrid => 1305,
             Self::StatusBar => 1310,
+            Self::Rulers => 1312,
             Self::FullScreen => 1311,
             Self::Double => 1306,
             Self::Quadruple => 1307,
@@ -93,6 +100,7 @@ impl ViewAction {
         match self {
             Self::PixelGrid => Some(ctx.pixel_grid),
             Self::StatusBar => Some(ctx.status_bar),
+            Self::Rulers => Some(ctx.rulers),
             Self::FullScreen => Some(ctx.fullscreen),
             _ => None,
         }
@@ -132,6 +140,7 @@ mod tests {
             pixel_grid: true,
             can_fit_selection: false,
             status_bar: true,
+            rulers: false,
             fullscreen: false,
         };
         assert_eq!(
@@ -184,6 +193,25 @@ mod tests {
                 Frontend::Classic,
                 Key::G,
                 Modifiers::COMMAND | Modifiers::SHIFT
+            ),
+            None
+        );
+    }
+    #[test]
+    fn ruler_binding_belongs_to_classic_and_requires_exact_modifiers() {
+        assert_eq!(
+            Action::from_shortcut_for(Frontend::Classic, Key::R, Modifiers::COMMAND),
+            Some(Action::View(ViewAction::Rulers))
+        );
+        assert_eq!(
+            Action::from_shortcut_for(Frontend::Studio, Key::R, Modifiers::COMMAND),
+            None
+        );
+        assert_eq!(
+            Action::from_shortcut_for(
+                Frontend::Classic,
+                Key::R,
+                Modifiers::COMMAND | Modifiers::ALT
             ),
             None
         );

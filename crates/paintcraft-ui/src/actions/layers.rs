@@ -128,6 +128,7 @@ mod tests {
             pixel_grid: false,
             can_fit_selection: false,
             status_bar: true,
+            rulers: false,
             fullscreen: false,
         };
         assert!(Action::Layer(LayerAction::MoveTop).enabled(context));

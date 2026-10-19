@@ -196,3 +196,6 @@ fn filled_shape(h: &mut Harness<App>) {
 
 #[path = "gui/workspace_view.rs"]
 mod workspace_view;
+
+#[path = "gui/rulers.rs"]
+mod rulers;

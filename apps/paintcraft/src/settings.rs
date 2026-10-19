@@ -34,6 +34,7 @@ pub struct Settings {
     pub canvas: CanvasDefaults,
     pub custom_colors: paintcraft_classic::CustomColors,
     pub classic_status_bar: bool,
+    pub classic_rulers: bool,
 }
 
 impl Default for Settings {
@@ -46,6 +47,7 @@ impl Default for Settings {
             canvas: Default::default(),
             custom_colors: Default::default(),
             classic_status_bar: true,
+            classic_rulers: false,
         }
     }
 }
@@ -121,6 +123,11 @@ fn parse(bytes: &[u8]) -> Result<Settings, String> {
     };
     Ok(Settings {
         appearance,
+        classic_rulers: match v.get("classic_rulers") {
+            None => false,
+            Some(Value::Bool(value)) => *value,
+            Some(_) => return Err("invalid Classic rulers preference".into()),
+        },
         classic_status_bar: match v.get("classic_status_bar") {
             None => true,
             Some(Value::Bool(value)) => *value,
@@ -176,6 +183,7 @@ impl Settings {
             ("custom_colors", colors::value(&self.custom_colors)),
             ("appearance", Value::str(self.appearance.id())),
             ("classic_status_bar", Value::Bool(self.classic_status_bar)),
+            ("classic_rulers", Value::Bool(self.classic_rulers)),
             ("text", text::value(&self.text)),
             (
                 "experience",
@@ -319,5 +327,15 @@ mod tests {
         );
         assert!(!parse(br#"{"schema":"paintcraft.settings/v2","experience":"classic","classic_status_bar":false}"#).unwrap().classic_status_bar);
         assert!(parse(br#"{"schema":"paintcraft.settings/v2","experience":"classic","classic_status_bar":"false"}"#).is_err());
+    }
+    #[test]
+    fn ruler_preference_is_optional_boolean_in_existing_settings() {
+        assert!(
+            !parse(br#"{"schema":"paintcraft.settings/v2","experience":"classic"}"#)
+                .unwrap()
+                .classic_rulers
+        );
+        assert!(parse(br#"{"schema":"paintcraft.settings/v2","experience":"classic","classic_rulers":true}"#).unwrap().classic_rulers);
+        assert!(parse(br#"{"schema":"paintcraft.settings/v2","experience":"classic","classic_rulers":"true"}"#).is_err());
     }
 }

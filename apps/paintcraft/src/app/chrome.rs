@@ -32,6 +32,7 @@ impl App {
             pixel_grid: self.pixel_grid,
             can_fit_selection: matches!(self.editor.selection(), Selection::Rect(_)),
             status_bar: self.settings.classic_status_bar,
+            rulers: self.settings.classic_rulers,
             fullscreen: self.fullscreen,
             blocked: self.switching.is_some()
                 || self.closing_workspace
