@@ -156,7 +156,12 @@ impl Session {
     }
 
     pub fn mark_saved(&mut self) {
-        self.saved_state = self.doc.state_id;
+        self.mark_saved_state(self.doc.state_id);
+    }
+
+    /// A confirmed save acknowledges its captured state, even if editing advanced.
+    pub fn mark_saved_state(&mut self, state: Uuid) {
+        self.saved_state = state;
     }
 
     /// Parse and execute a batch. Errors never change the session.
@@ -301,6 +306,22 @@ mod tests {
         );
         assert_eq!(s.ticket(), t);
         assert_eq!(s.document().layers.len(), 1);
+    }
+
+    #[test]
+    fn saving_a_captured_state_does_not_mark_newer_edits_clean() {
+        let mut s = session();
+        s.apply_json(&batch(&s, &format!("[{ADD}]"))).unwrap();
+        let saved = s.ticket().state_id;
+        let layer = s.document().roots[1];
+        s.apply_json(&batch(&s, &format!("[{}]", fill(layer, 0, "#000000FF"))))
+            .unwrap();
+        s.mark_saved_state(saved);
+        assert!(s.is_dirty());
+        s.undo().unwrap();
+        assert!(!s.is_dirty());
+        s.redo().unwrap();
+        assert!(s.is_dirty());
     }
 
     #[test]
