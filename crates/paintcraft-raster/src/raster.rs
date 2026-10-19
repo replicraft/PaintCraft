@@ -169,6 +169,25 @@ impl RasterLayer {
         self.default
     }
 
+    /// Extend finite bounds with the existing implicit default. Tile padding is
+    /// initialized to that default, so existing tile buffers remain shared.
+    pub fn expand_to(&mut self, width: u32, height: u32) -> Result<()> {
+        let max = paintcraft_core::types::policy::CANVAS_SIDE_MAX;
+        if width < self.width
+            || height < self.height
+            || !(1..=max).contains(&width)
+            || !(1..=max).contains(&height)
+        {
+            return Err(Error::new(
+                ErrorCode::InputSchema,
+                "invalid layer expansion",
+            ));
+        }
+        self.width = width;
+        self.height = height;
+        Ok(())
+    }
+
     /// Layer-local bounds.
     pub fn bounds(&self) -> Rect {
         Rect::from_origin_size(0, 0, self.width, self.height).expect("layers are non-empty")
@@ -576,5 +595,31 @@ mod tests {
         assert_eq!(l, m);
         assert!(m.set_block(2, 0, &[0; 4], &mut a).is_err());
         assert!(m.set_block(0, 0, &[0; 4], &mut a).is_err());
+    }
+    #[test]
+    fn expansion_preserves_hidden_rgb_and_shared_tiles_across_partial_tile_edges() {
+        let default = Rgba([12, 34, 56, 0]);
+        let mut layer = RasterLayer::new(259, 257, default);
+        let mut admission = Admission::new(65536);
+        layer
+            .blend_pixel(
+                258,
+                256,
+                Rgba([9, 8, 7, 255]),
+                BlendMode::Replace,
+                &mut admission,
+            )
+            .unwrap();
+        let original = layer.clone();
+        let identities: Vec<_> = layer.tile_identities().collect();
+        layer.expand_to(300, 300).unwrap();
+        assert_eq!(layer.tile_identities().collect::<Vec<_>>(), identities);
+        assert_eq!(layer.get(258, 256), Rgba([9, 8, 7, 255]));
+        for (x, y) in [(259, 256), (258, 257), (299, 299)] {
+            assert_eq!(layer.get(x, y), default);
+        }
+        assert_eq!((original.width(), original.height()), (259, 257));
+        assert!(layer.expand_to(1, 300).is_err());
+        assert_eq!((layer.width(), layer.height()), (300, 300));
     }
 }

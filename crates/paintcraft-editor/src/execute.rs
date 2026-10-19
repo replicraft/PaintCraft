@@ -526,6 +526,19 @@ impl Stage<'_> {
                 };
             }
             Op::SelectionClear => self.selection = Selection::Inactive,
+            Op::LayerExpand {
+                layer,
+                width,
+                height,
+            } => {
+                let id = self.resolve(layer)?;
+                self.doc
+                    .layers
+                    .get_mut(&id)
+                    .expect("resolved")
+                    .raster
+                    .expand_to(*width, *height)?;
+            }
             Op::CanvasResize {
                 width,
                 height,

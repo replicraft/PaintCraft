@@ -53,6 +53,13 @@ impl Session {
 }
 
 pub(super) fn label(batch: &Batch) -> Label {
+    if matches!(batch.operations.first(), Some(Op::CanvasResize { .. }))
+        && batch.operations[1..]
+            .iter()
+            .all(|op| matches!(op, Op::LayerExpand { .. }))
+    {
+        return Label::ResizeCanvas;
+    }
     if batch.operations.len() != 1 {
         return Label::Batch;
     }
@@ -82,6 +89,6 @@ pub(super) fn label(batch: &Batch) -> Label {
         Op::SelectionSetRect { .. } | Op::SelectionClear => Label::Selection,
         Op::Shape { .. } => Label::Shape,
         Op::Text { .. } => Label::Text,
-        Op::CanvasResize { .. } => Label::ResizeCanvas,
+        Op::CanvasResize { .. } | Op::LayerExpand { .. } => Label::ResizeCanvas,
     }
 }

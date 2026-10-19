@@ -149,6 +149,11 @@ pub enum Op {
         color: Rgba,
         mode: Mode,
     },
+    LayerExpand {
+        layer: LayerRef,
+        width: u32,
+        height: u32,
+    },
     CanvasResize {
         width: u32,
         height: u32,
@@ -239,7 +244,8 @@ fn op(v: &Value, version: u8) -> Result<Op> {
     if version < 2
         && matches!(
             name,
-            "raster.stroke_path"
+            "layer.expand"
+                | "raster.stroke_path"
                 | "raster.flood_fill"
                 | "raster.shape"
                 | "raster.text"
@@ -424,6 +430,14 @@ fn op(v: &Value, version: u8) -> Result<Op> {
         "selection.clear" => {
             obj(v, &["op"], &[])?;
             Op::SelectionClear
+        }
+        "layer.expand" => {
+            let o = obj(v, &["op", "layer_ref", "width", "height"], &[])?;
+            Op::LayerExpand {
+                layer: layer_ref(&o["layer_ref"])?,
+                width: int_in(&o["width"], 1, SIZE_MAX, "width")? as u32,
+                height: int_in(&o["height"], 1, SIZE_MAX, "height")? as u32,
+            }
         }
         "canvas.resize" => {
             let o = obj(
