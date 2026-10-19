@@ -693,7 +693,7 @@ fn opening_a_picture_imports_it_and_exporting_names_the_losses() {
 
 #[test]
 fn first_visit_shows_the_picker_with_v11_selected_and_remembers_the_choice() {
-    use paintcraft_ui::settings::{ClassicVariant, Loaded, Settings};
+    use paintcraft::settings::{ClassicVariant, Loaded, Settings};
     let dir = scratch("settings");
     {
         let mut h = harness_with(App::new(None).with_settings(dir.clone()), 1.0, false);
@@ -770,7 +770,7 @@ fn a_damaged_settings_file_is_kept_and_explained_and_the_picker_returns() {
 
 #[test]
 fn every_variant_renders_a_usable_window_with_the_same_controls() {
-    use paintcraft_ui::settings::{ClassicVariant, Settings};
+    use paintcraft::settings::{ClassicVariant, Settings};
     for v in ClassicVariant::ALL {
         let dir = scratch("variant");
         Settings {

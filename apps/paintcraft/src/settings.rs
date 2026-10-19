@@ -6,7 +6,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use paintcraft_formats::save;
+use paintcraft_platform::save;
 use paintcraft_types::json::{self, Value};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

@@ -1,4 +1,5 @@
 pub mod controller;
+pub mod settings;
 // The PaintCraft desktop UI. All decisions live in `paintcraft-ui`; this file
 // turns egui input into editor calls and editor state into pixels.
 //
@@ -11,6 +12,7 @@ use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 use crate::controller::{Action, Editor, Preview, ShapeStyle, Tool};
+use crate::settings::{ClassicVariant, Loaded, Settings};
 use eframe::egui::{self, Color32, Pos2, Rect, Sense, Vec2};
 use paintcraft_core::execute::Selection;
 use paintcraft_document::{hex, import_image};
@@ -20,7 +22,6 @@ use paintcraft_formats::recovery::{Found, Recovery};
 use paintcraft_formats::save;
 use paintcraft_render::render_flat;
 use paintcraft_types::Rgba;
-use paintcraft_ui::settings::{ClassicVariant, Loaded, Settings};
 use paintcraft_ui::view::View;
 use sha2::{Digest, Sha256};
 use uuid::Uuid;

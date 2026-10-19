@@ -8,6 +8,8 @@ license-file.workspace = true
 publish.workspace = true
 
 [dependencies]
+paintcraft-platform.workspace = true
+
 paintcraft-raster.workspace = true
 paintcraft-document.workspace = true
 paintcraft-commands.workspace = true

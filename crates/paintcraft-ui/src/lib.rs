@@ -4,5 +4,4 @@
 //! state back. Keeping it headless is what makes "one click, one edit" testable.
 
 pub mod outbox;
-pub mod settings;
 pub mod view;
