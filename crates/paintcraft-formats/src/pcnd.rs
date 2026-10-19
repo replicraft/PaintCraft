@@ -234,24 +234,45 @@ struct LayerRec {
     blocks: Vec<BlockRef>,
 }
 
-/// Read a flat PCND v1 file into an editable document.
-pub fn read(bytes: &[u8]) -> Result<Document> {
-    let members = zip::read(bytes, ENTRIES_MAX, |name| match name {
-        "manifest.json" => Some(MANIFEST_MAX),
-        "document.json" => Some(DOCUMENT_MAX),
-        n if chunk_name(n) => Some(CHUNK_MAX),
-        _ => None,
-    })?;
-    let mut files: HashMap<String, Vec<u8>> = members.into_iter().collect();
-    let manifest_bytes = files
-        .remove("manifest.json")
-        .ok_or_else(|| codec("manifest.json is missing"))?;
-    let document_bytes = files
-        .remove("document.json")
-        .ok_or_else(|| codec("document.json is missing"))?;
+/// The structurally valid contents of `manifest.json`, before any support decision.
+#[derive(Clone, Debug)]
+pub struct Manifest {
+    pub container_version: i64,
+    pub document_schema: String,
+    pub required_features: Vec<String>,
+    document_sha256: String,
+    document_bytes: usize,
+}
 
-    let manifest =
-        json::parse(&manifest_bytes).map_err(|e| codec(format!("manifest.json: {e}")))?;
+impl Manifest {
+    /// Refuse anything this build cannot edit: unknown versions, schemas or features.
+    pub fn require_supported(&self) -> Result<()> {
+        if self.container_version != 1 {
+            return Err(unsupported("unknown container version"));
+        }
+        if self.document_schema != "paintcraft.document/v1" {
+            return Err(unsupported("unknown document schema"));
+        }
+        if let Some(f) = self
+            .required_features
+            .iter()
+            .find(|f| !SUPPORTED_FEATURES.contains(&f.as_str()))
+        {
+            return Err(unsupported(format!(
+                "required feature {f:?} is not supported by this build"
+            )));
+        }
+        for needed in ["raster.rgba8", "canvas.finite"] {
+            if !self.required_features.iter().any(|f| f == needed) {
+                return Err(codec("manifest lacks mandatory feature declarations"));
+            }
+        }
+        Ok(())
+    }
+}
+
+fn parse_manifest(bytes: &[u8]) -> Result<Manifest> {
+    let manifest = json::parse(bytes).map_err(|e| codec(format!("manifest.json: {e}")))?;
     let m = obj(
         &manifest,
         "manifest",
@@ -271,39 +292,67 @@ pub fn read(bytes: &[u8]) -> Result<Document> {
     {
         return Err(codec("not a PaintCraft native manifest"));
     }
-    if m["container_version"].as_i64() != Some(1) {
-        return Err(unsupported("unknown container version"));
-    }
-    if text(&m["document_schema"], "document_schema")? != "paintcraft.document/v1" {
-        return Err(unsupported("unknown document schema"));
-    }
-    let doc_sha = sha_hex(&m["document_sha256"], "document_sha256")?;
-    let doc_len = range(
-        &m["document_bytes"],
-        2,
-        DOCUMENT_MAX as i64,
-        "document_bytes",
-    )? as usize;
     let features = m["required_features"]
         .as_array()
         .filter(|a| (1..=64).contains(&a.len()))
         .ok_or_else(|| codec("required_features must list 1..=64 features"))?;
-    let mut declared = HashSet::new();
+    let mut required_features = Vec::new();
     for f in features {
         let f = text(f, "feature")?;
         if !feature_ok(f) {
             return Err(codec("malformed feature identifier"));
         }
-        if !SUPPORTED_FEATURES.contains(&f) {
-            return Err(unsupported(format!(
-                "required feature {f:?} is not supported by this build"
-            )));
-        }
-        declared.insert(f);
+        required_features.push(f.to_owned());
     }
-    if !declared.contains("raster.rgba8") || !declared.contains("canvas.finite") {
-        return Err(codec("manifest lacks mandatory feature declarations"));
-    }
+    Ok(Manifest {
+        container_version: range(&m["container_version"], 0, 65_535, "container_version")?,
+        document_schema: text(&m["document_schema"], "document_schema")?.to_owned(),
+        required_features,
+        document_sha256: sha_hex(&m["document_sha256"], "document_sha256")?,
+        document_bytes: range(
+            &m["document_bytes"],
+            2,
+            DOCUMENT_MAX as i64,
+            "document_bytes",
+        )? as usize,
+    })
+}
+
+/// Bounded structural probe of a PCND file for open assessment. It never builds a
+/// document and never fails because a version or feature is merely unsupported.
+pub fn probe(bytes: &[u8]) -> Result<Manifest> {
+    let members = zip::read(bytes, ENTRIES_MAX, |name| match name {
+        "manifest.json" => Some(MANIFEST_MAX),
+        "document.json" => Some(DOCUMENT_MAX),
+        n if chunk_name(n) => Some(CHUNK_MAX),
+        _ => None,
+    })?;
+    let manifest = members
+        .iter()
+        .find(|m| m.0 == "manifest.json")
+        .ok_or_else(|| codec("manifest.json is missing"))?;
+    parse_manifest(&manifest.1)
+}
+
+/// Read a flat PCND v1 file into an editable document.
+pub fn read(bytes: &[u8]) -> Result<Document> {
+    let members = zip::read(bytes, ENTRIES_MAX, |name| match name {
+        "manifest.json" => Some(MANIFEST_MAX),
+        "document.json" => Some(DOCUMENT_MAX),
+        n if chunk_name(n) => Some(CHUNK_MAX),
+        _ => None,
+    })?;
+    let mut files: HashMap<String, Vec<u8>> = members.into_iter().collect();
+    let manifest_bytes = files
+        .remove("manifest.json")
+        .ok_or_else(|| codec("manifest.json is missing"))?;
+    let document_bytes = files
+        .remove("document.json")
+        .ok_or_else(|| codec("document.json is missing"))?;
+
+    let manifest = parse_manifest(&manifest_bytes)?;
+    manifest.require_supported()?;
+    let (doc_sha, doc_len) = (manifest.document_sha256, manifest.document_bytes);
     if document_bytes.len() != doc_len || sha(&document_bytes) != doc_sha {
         return Err(codec(
             "document.json length or SHA-256 does not match the manifest",
