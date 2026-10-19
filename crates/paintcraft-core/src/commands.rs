@@ -10,6 +10,7 @@ use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
 use crate::document::{COORD_ABS_MAX, hex};
+use crate::ids::parse_uuid;
 
 const SIZE_MAX: i64 = 1_048_576;
 const MAX_OPERATIONS: usize = 1024;
@@ -366,21 +367,9 @@ fn alias(v: &Value) -> Result<String> {
     }
 }
 
-/// `format: uuid`: 36 characters, hyphens at 8/13/18/23, hex elsewhere.
 fn uuid(v: &Value, what: &str) -> Result<Uuid> {
-    let s = v
-        .as_str()
-        .ok_or_else(|| bad(format!("{what} must be a string")))?;
-    let ok = s.len() == 36
-        && s.bytes().enumerate().all(|(i, c)| {
-            if matches!(i, 8 | 13 | 18 | 23) {
-                c == b'-'
-            } else {
-                c.is_ascii_hexdigit()
-            }
-        });
-    ok.then(|| Uuid::parse_str(s).ok())
-        .flatten()
+    v.as_str()
+        .and_then(parse_uuid)
         .ok_or_else(|| bad(format!("{what} must be a UUID")))
 }
 
