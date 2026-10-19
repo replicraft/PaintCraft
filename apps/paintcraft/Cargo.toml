@@ -1,0 +1,29 @@
+[package]
+name = "paintcraft"
+description = "PaintCraft desktop application (egui + wgpu)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license-file.workspace = true
+publish.workspace = true
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "paintcraft"
+path = "src/main.rs"
+
+[dependencies]
+paintcraft-types = { path = "../../crates/paintcraft-types" }
+paintcraft-core = { path = "../../crates/paintcraft-core" }
+paintcraft-formats = { path = "../../crates/paintcraft-formats" }
+paintcraft-ui = { path = "../../crates/paintcraft-ui" }
+eframe = "0.37.0"
+uuid = "1.28.0"
+
+[dev-dependencies]
+egui_kittest = "0.37.0"
+
+[lints]
+workspace = true
