@@ -1,6 +1,12 @@
 [workspace]
 resolver = "3"
-members = ["crates/*", "apps/*"]
+members = [
+    "crates/foundation/*",
+    "crates/editing/*",
+    "crates/services/*",
+    "crates/presentation/*",
+    "apps/*",
+]
 default-members = ["apps/paintcraft"]
 
 [workspace.package]
@@ -11,22 +17,28 @@ license-file = "LICENSE"
 publish = false
 
 [workspace.dependencies]
-# PaintCraft foundations and editing engine.
-paintcraft-core = { path = "crates/paintcraft-core" }
-paintcraft-raster = { path = "crates/paintcraft-raster" }
-paintcraft-document = { path = "crates/paintcraft-document" }
-paintcraft-commands = { path = "crates/paintcraft-commands" }
-paintcraft-history = { path = "crates/paintcraft-history" }
-paintcraft-editor = { path = "crates/paintcraft-editor" }
-paintcraft-input = { path = "crates/paintcraft-input" }
-paintcraft-tools = { path = "crates/paintcraft-tools" }
-paintcraft-render = { path = "crates/paintcraft-render" }
-paintcraft-runtime = { path = "crates/paintcraft-runtime" }
-paintcraft-formats = { path = "crates/paintcraft-formats" }
-paintcraft-platform = { path = "crates/paintcraft-platform" }
-paintcraft-ui = { path = "crates/paintcraft-ui" }
-paintcraft-classic = { path = "crates/paintcraft-classic" }
-paintcraft-studio = { path = "crates/paintcraft-studio" }
+# PaintCraft foundation: common types, document storage and input contracts.
+paintcraft-core = { path = "crates/foundation/paintcraft-core" }
+paintcraft-raster = { path = "crates/foundation/paintcraft-raster" }
+paintcraft-document = { path = "crates/foundation/paintcraft-document" }
+paintcraft-input = { path = "crates/foundation/paintcraft-input" }
+
+# Editing: command schemas, recorded history, sessions and tool state machines.
+paintcraft-commands = { path = "crates/editing/paintcraft-commands" }
+paintcraft-history = { path = "crates/editing/paintcraft-history" }
+paintcraft-editor = { path = "crates/editing/paintcraft-editor" }
+paintcraft-tools = { path = "crates/editing/paintcraft-tools" }
+
+# Services: rendering, scheduling, formats and OS integration.
+paintcraft-render = { path = "crates/services/paintcraft-render" }
+paintcraft-runtime = { path = "crates/services/paintcraft-runtime" }
+paintcraft-formats = { path = "crates/services/paintcraft-formats" }
+paintcraft-platform = { path = "crates/services/paintcraft-platform" }
+
+# Presentation: shared widgets and frontend skins/workspaces.
+paintcraft-ui = { path = "crates/presentation/paintcraft-ui" }
+paintcraft-classic = { path = "crates/presentation/paintcraft-classic" }
+paintcraft-studio = { path = "crates/presentation/paintcraft-studio" }
 
 # Command-line interface.
 clap = { version = "4.6.7", features = ["derive"] }

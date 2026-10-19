@@ -382,8 +382,8 @@ fn undo_restores_the_exact_state_after_every_v2_operation() {
 fn parser_agrees_with_the_v2_json_schema_on_every_grammar_case() {
     use paintcraft_commands::Batch;
     use paintcraft_core::types::json::{self, Value};
-    let path =
-        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../conformance/grammar-v2.cases");
+    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../../conformance/grammar-v2.cases");
     let doc = json::parse(&std::fs::read(path).unwrap()).unwrap();
     let cases = doc.get("cases").and_then(Value::as_array).unwrap();
     assert!(cases.len() >= 15);

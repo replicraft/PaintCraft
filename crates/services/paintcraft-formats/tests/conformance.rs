@@ -15,7 +15,7 @@ use sha2::{Digest, Sha256};
 
 #[test]
 fn canonical_pcnd_digests_match_and_round_trip() {
-    let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../conformance");
+    let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../../conformance");
     let mut files: Vec<_> = fs::read_dir(dir)
         .unwrap()
         .map(|e| e.unwrap().path())

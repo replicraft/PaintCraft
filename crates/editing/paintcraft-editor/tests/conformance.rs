@@ -17,7 +17,7 @@ use sha2::{Digest, Sha256};
 const HEX_LIMIT: u64 = 64;
 
 fn vectors() -> Vec<(String, Value)> {
-    let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../conformance");
+    let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../../conformance");
     let mut files: Vec<_> = fs::read_dir(dir)
         .unwrap()
         .map(|e| e.unwrap().path())

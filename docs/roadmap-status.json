@@ -48,7 +48,7 @@
       ],
       "status": "partial",
       "evidence": [
-        "crates/paintcraft-raster/src/raster.rs"
+        "crates/foundation/paintcraft-raster/src/raster.rs"
       ],
       "remaining_or_scope": "Sparse COW tiles and admission work; logical blob handles, resident leases and full residency accounting remain.",
       "acceptance": "MEM-03/04; hidden RGB; negative boundaries; checked sizes; explicit resource errors."
@@ -62,8 +62,8 @@
       ],
       "status": "partial",
       "evidence": [
-        "crates/paintcraft-document/src/lib.rs",
-        "crates/paintcraft-editor/src/session.rs"
+        "crates/foundation/paintcraft-document/src/lib.rs",
+        "crates/editing/paintcraft-editor/src/session.rs"
       ],
       "remaining_or_scope": "Flat immutable snapshots and split state/history identity exist; full session identity and richer nodes remain.",
       "acceptance": "STATE-01/02/03/07; flat path and group capability rejection; no accidental UI dependency."
@@ -77,8 +77,8 @@
       ],
       "status": "implemented",
       "evidence": [
-        "crates/paintcraft-editor/tests/conformance.rs",
-        "crates/paintcraft-commands/src/lib.rs"
+        "crates/editing/paintcraft-editor/tests/conformance.rs",
+        "crates/editing/paintcraft-commands/src/lib.rs"
       ],
       "remaining_or_scope": "Batch v1 oracle vectors, atomic failure and no-op behavior pass; v2 remains an independently documented extension.",
       "acceptance": "Atomic fail injection; aliases/no-op/unknown policy; stale base; every batch step of the conformance vectors replays with identical receipts, snapshots and digests (CORE-01..07, DET-01)."
@@ -92,8 +92,8 @@
       ],
       "status": "partial",
       "evidence": [
-        "crates/paintcraft-history/src/lib.rs",
-        "crates/paintcraft-editor/tests/history_navigation.rs"
+        "crates/editing/paintcraft-history/src/lib.rs",
+        "crates/editing/paintcraft-editor/tests/history_navigation.rs"
       ],
       "remaining_or_scope": "Recorded linear undo/redo, labels and guarded jumps pass seeded navigation tests; branching nodes, spill and metadata admission remain.",
       "acceptance": "Undo/redo randomized state equality; STATE-04/05/06; removed executor does not block redo."
@@ -109,7 +109,7 @@
       ],
       "status": "partial",
       "evidence": [
-        "crates/paintcraft-formats/tests/conformance.rs",
+        "crates/services/paintcraft-formats/tests/conformance.rs",
         "apps/paintcraft-cli/tests/cli.rs"
       ],
       "remaining_or_scope": "Canonical PCND and CLI round trips pass; full native subset/hostile-archive scope remains.",
@@ -141,29 +141,29 @@
       ],
       "status": "partial",
       "evidence": [
-        "crates/paintcraft-formats/src/recovery.rs",
-        "crates/paintcraft-platform/src/save.rs",
-        "crates/paintcraft-formats/src/recovery/reader.rs",
-        "crates/paintcraft-formats/src/recovery/tests.rs",
+        "crates/services/paintcraft-formats/src/recovery.rs",
+        "crates/services/paintcraft-platform/src/save.rs",
+        "crates/services/paintcraft-formats/src/recovery/reader.rs",
+        "crates/services/paintcraft-formats/src/recovery/tests.rs",
         "apps/paintcraft/src/saving.rs",
-        "crates/paintcraft-runtime/src/io.rs",
+        "crates/services/paintcraft-runtime/src/io.rs",
         "docs/RECOVERY_FORMAT.md",
-        "crates/paintcraft-formats/src/recovery/lease.rs",
+        "crates/services/paintcraft-formats/src/recovery/lease.rs",
         "apps/paintcraft/src/saving/restoring.rs",
         "apps/paintcraft/src/saving/restoring/tests.rs",
-        "crates/paintcraft-platform/src/save/reconciliation.rs",
-        "crates/paintcraft-platform/src/save/reconciliation/tests.rs",
+        "crates/services/paintcraft-platform/src/save/reconciliation.rs",
+        "crates/services/paintcraft-platform/src/save/reconciliation/tests.rs",
         "apps/paintcraft/src/saving/attempts.rs",
         "apps/paintcraft/src/saving/attempts/tests.rs",
-        "crates/paintcraft-formats/src/save_recovery.rs",
-        "crates/paintcraft-formats/src/save_recovery/tests.rs",
-        "crates/paintcraft-formats/tests/save_restart.rs",
+        "crates/services/paintcraft-formats/src/save_recovery.rs",
+        "crates/services/paintcraft-formats/src/save_recovery/tests.rs",
+        "crates/services/paintcraft-formats/tests/save_restart.rs",
         "apps/paintcraft/src/saving/persistence.rs",
         "apps/paintcraft/src/saving/persistence/tests.rs",
-        "crates/paintcraft-platform/src/save/evidence.rs",
-        "crates/paintcraft-platform/src/save/evidence/tests.rs",
-        "crates/paintcraft-formats/src/save_recovery/reconciliation.rs",
-        "crates/paintcraft-formats/src/save_recovery/reconciliation/tests.rs",
+        "crates/services/paintcraft-platform/src/save/evidence.rs",
+        "crates/services/paintcraft-platform/src/save/evidence/tests.rs",
+        "crates/services/paintcraft-formats/src/save_recovery/reconciliation.rs",
+        "crates/services/paintcraft-formats/src/save_recovery/reconciliation/tests.rs",
         "apps/paintcraft/src/saving/resumed.rs",
         "apps/paintcraft/src/saving/resumed/tests.rs"
       ],
@@ -179,7 +179,7 @@
       ],
       "status": "partial",
       "evidence": [
-        "crates/paintcraft-history/src/lib.rs"
+        "crates/editing/paintcraft-history/src/lib.rs"
       ],
       "remaining_or_scope": "Shared snapshot retention is bounded; leases, segment GC, compaction and physical resource evidence remain.",
       "acceptance": "MEM-01\u201307 under artificial low budget; actual allocator/RSS evidence, not counters alone."
@@ -194,7 +194,7 @@
       ],
       "status": "partial",
       "evidence": [
-        "crates/paintcraft-render/src/lib.rs"
+        "crates/services/paintcraft-render/src/lib.rs"
       ],
       "remaining_or_scope": "Ordered scalar and GPU flat composition exist; ROI effects, dirty-prefix cache and group plans remain.",
       "acceptance": "ROI-01\u201307 and RENDER-01\u201306; no tile seams or reordered group output."
@@ -209,8 +209,8 @@
       ],
       "status": "partial",
       "evidence": [
-        "crates/paintcraft-render/src/gpu.rs",
-        "crates/paintcraft-runtime/src/lib.rs"
+        "crates/services/paintcraft-render/src/gpu.rs",
+        "crates/services/paintcraft-runtime/src/lib.rs"
       ],
       "remaining_or_scope": "Bounded Rayon preparation, owner-scoped handles, cancellation and stale-result tests exist; priorities, async I/O, device epochs and physical budget/fairness evidence remain.",
       "acceptance": "SCHED-01\u201306 and GPU-01\u201306; no late mutation/device-loss data loss."
@@ -226,9 +226,9 @@
       ],
       "status": "partial",
       "evidence": [
-        "crates/paintcraft-tools/src/lib.rs",
+        "crates/editing/paintcraft-tools/src/lib.rs",
         "apps/paintcraft/src/controller.rs",
-        "crates/paintcraft-raster/src/smooth.rs",
+        "crates/foundation/paintcraft-raster/src/smooth.rs",
         "docs/BRUSH_RENDERING.md",
         "docs/TEXT_RENDERING.md",
         "apps/paintcraft/src/text.rs"
@@ -248,8 +248,8 @@
       "evidence": [
         "apps/paintcraft/src/settings.rs",
         "apps/paintcraft/src/lib.rs",
-        "crates/paintcraft-classic/src/lib.rs",
-        "crates/paintcraft-ui/src/widgets.rs"
+        "crates/presentation/paintcraft-classic/src/lib.rs",
+        "crates/presentation/paintcraft-ui/src/widgets.rs"
       ],
       "remaining_or_scope": "Classic menus, grouped tools, vector widgets, palette, right layers and persistent choice exist; brush/transform popup presentation and disabled-state tests follow supplied photos; pixel rulers, Gridlines routing, status visibility and fullscreen commands have application tests; execution of extra brush media/transforms, reference fidelity, preserving-target flow and complete M2 prerequisites remain.",
       "acceptance": "Named M2 gate, no repeated picker; explicit deviations and no dead functional claims."
@@ -305,7 +305,7 @@
         "T17"
       ],
       "status": "partial",
-      "evidence": ["crates/paintcraft-studio/src/lib.rs", "apps/paintcraft/tests/gui/studio.rs", "docs/STUDIO.md"],
+      "evidence": ["crates/presentation/paintcraft-studio/src/lib.rs", "apps/paintcraft/tests/gui/studio.rs", "docs/STUDIO.md"],
       "remaining_or_scope": "Studio toolbar, floating Tools/Colors/Layers, guarded History navigation and independent document tabs with owner-routed save/recovery and close handling work; shared descriptors and menu/shortcut dispatch cover existing actions; full action coverage, image operations, effects, PDN and reference parity remain.",
       "acceptance": "Release only named tested tranches; high-depth/groups not misrepresented as source features."
     },
@@ -432,7 +432,7 @@
       ],
       "status": "partial",
       "evidence": [
-        "crates/paintcraft-formats/src/pcnd.rs"
+        "crates/services/paintcraft-formats/src/pcnd.rs"
       ],
       "remaining_or_scope": "Exact v1 admission and unsupported rejection exist; all VER cases and future preview modes remain unqualified.",
       "acceptance": "VER-01..10; raw v1 fixture unchanged; unknown schema/features rejected; no automatic migration or new schema accepted from comparison alone."
@@ -461,7 +461,7 @@
       ],
       "status": "partial",
       "evidence": [
-        "crates/paintcraft-formats/src/recovery/lease.rs",
+        "crates/services/paintcraft-formats/src/recovery/lease.rs",
         "apps/paintcraft/src/saving/restoring/tests.rs"
       ],
       "remaining_or_scope": "Native recovery verifies exact input digest/IDs and retains decoded state under a source claim; general resource snapshots, source bindings, fonts/profiles and DPI/clock cases remain.",
@@ -477,21 +477,21 @@
       ],
       "status": "partial",
       "evidence": [
-        "crates/paintcraft-platform/src/save.rs",
+        "crates/services/paintcraft-platform/src/save.rs",
         "apps/paintcraft/src/lib.rs",
-        "crates/paintcraft-platform/src/save/reconciliation.rs",
-        "crates/paintcraft-platform/src/save/reconciliation/tests.rs",
+        "crates/services/paintcraft-platform/src/save/reconciliation.rs",
+        "crates/services/paintcraft-platform/src/save/reconciliation/tests.rs",
         "apps/paintcraft/src/saving/attempts.rs",
         "apps/paintcraft/src/saving/attempts/tests.rs",
-        "crates/paintcraft-formats/src/save_recovery.rs",
-        "crates/paintcraft-formats/src/save_recovery/tests.rs",
-        "crates/paintcraft-formats/tests/save_restart.rs",
+        "crates/services/paintcraft-formats/src/save_recovery.rs",
+        "crates/services/paintcraft-formats/src/save_recovery/tests.rs",
+        "crates/services/paintcraft-formats/tests/save_restart.rs",
         "apps/paintcraft/src/saving/persistence.rs",
         "apps/paintcraft/src/saving/persistence/tests.rs",
-        "crates/paintcraft-platform/src/save/evidence.rs",
-        "crates/paintcraft-platform/src/save/evidence/tests.rs",
-        "crates/paintcraft-formats/src/save_recovery/reconciliation.rs",
-        "crates/paintcraft-formats/src/save_recovery/reconciliation/tests.rs",
+        "crates/services/paintcraft-platform/src/save/evidence.rs",
+        "crates/services/paintcraft-platform/src/save/evidence/tests.rs",
+        "crates/services/paintcraft-formats/src/save_recovery/reconciliation.rs",
+        "crates/services/paintcraft-formats/src/save_recovery/reconciliation/tests.rs",
         "apps/paintcraft/src/saving/resumed.rs",
         "apps/paintcraft/src/saving/resumed/tests.rs"
       ],

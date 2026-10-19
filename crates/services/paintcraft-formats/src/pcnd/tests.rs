@@ -4,8 +4,10 @@ use paintcraft_editor::session::Session;
 use std::path::PathBuf;
 
 fn specimen() -> Vec<u8> {
-    std::fs::read(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../conformance/minimal.pcnd"))
-        .unwrap()
+    std::fs::read(
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../../conformance/minimal.pcnd"),
+    )
+    .unwrap()
 }
 
 #[test]

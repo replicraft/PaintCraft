@@ -50,8 +50,10 @@ impl TextRenderer {
     }
     fn load_bundled(db: &mut cosmic_text::fontdb::Database) {
         for bytes in [
-            include_bytes!("../../../crates/paintcraft-ui/assets/selawik/selawk.ttf").as_slice(),
-            include_bytes!("../../../crates/paintcraft-ui/assets/selawik/selawkb.ttf").as_slice(),
+            include_bytes!("../../../crates/presentation/paintcraft-ui/assets/selawik/selawk.ttf")
+                .as_slice(),
+            include_bytes!("../../../crates/presentation/paintcraft-ui/assets/selawik/selawkb.ttf")
+                .as_slice(),
         ] {
             db.load_font_data(bytes.to_vec());
         }

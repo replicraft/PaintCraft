@@ -223,7 +223,7 @@ interaction never publishes document pixels, history or save state.
 
 Tests in `apps/paintcraft/tests/gui/rulers.rs` cover menu/shortcut routing,
 1×/2× drawing coordinates, persistence, scroll preservation, ruler hit isolation
-and cancellation. `crates/paintcraft-classic/src/ruler_axis.rs` checks fractional
+and cancellation. `crates/presentation/paintcraft-classic/src/ruler_axis.rs` checks fractional
 zoom and 1×/1.5×/2× mapping, visible intervals and integer deep-zoom ticks. GPU
 captures review both themes at 1× and 2×. These checks support this application
 behavior, not historical Paint parity or platform input qualification.

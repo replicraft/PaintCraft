@@ -23,5 +23,5 @@ semantic rule intentionally changes, and review the diff.
      SHA-256 of the flat render (straight RGBA8, canvas-sized, row-major) and the SHA-256
      of the canonical PCND bytes.
 
-Replayed by `crates/paintcraft-core/tests/conformance.rs` (everything except the PCND
-digest) and `crates/paintcraft-formats/tests/conformance.rs` (PCND digests).
+Replayed by `crates/editing/paintcraft-editor/tests/conformance.rs` (everything except the PCND
+digest) and `crates/services/paintcraft-formats/tests/conformance.rs` (PCND digests).

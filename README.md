@@ -43,23 +43,30 @@ PAINTCRAFT_REQUIRE_GPU=1 cargo test -p paintcraft-render --features gpu --test g
 
 ## Layout
 
+Crates are grouped by responsibility: `foundation` holds shared contracts and
+storage, `editing` holds the editing engine, `services` holds rendering and OS/I/O
+integration, and `presentation` holds the UI and frontends. These folders organize
+the workspace without adding facade crates or changing dependency direction.
+All package dependencies remain declared at the workspace root and inherited by
+members with `workspace = true`. Application entry points stay in `apps/`.
+
 | Path | Purpose |
 |---|---|
-| `crates/paintcraft-core` | Common IDs, checked geometry, RGBA8 arithmetic, errors, policies and strict JSON under `paintcraft_core::types` |
-| `crates/paintcraft-raster` | Sparse copy-on-write tiles, selection coverage, exact shapes, flood fill and bitmap glyph kernels |
-| `crates/paintcraft-document` | Persistent document/layer state, metadata and semantic equality |
-| `crates/paintcraft-commands` | Typed batch v1/v2 descriptions and structural validation |
-| `crates/paintcraft-history` | Recorded snapshots, undo/redo navigation and bounded retention |
-| `crates/paintcraft-editor` | Editor sessions, transaction preparation and atomic publication |
-| `crates/paintcraft-input` | Normalized pointer events and input descriptors |
-| `crates/paintcraft-tools` | Tool state machines, options, previews and editing intentions |
-| `crates/paintcraft-render` | Scalar reference compositor and optional wgpu compute compositor |
-| `crates/paintcraft-runtime` | Bounded native workers, cancellation and transient job handles |
-| `crates/paintcraft-formats` | Canonical PCND reader/writer, PNG/BMP/JPEG codecs, flat export and recovery checkpoints |
-| `crates/paintcraft-platform` | Filesystem save adapters and optional native `rfd` dialogs |
-| `crates/paintcraft-ui` | Shared vector widgets, view transforms and action outbox |
-| `crates/paintcraft-classic` | Classic menus, grouped tool ribbon, palette and presentation variants |
-| `crates/paintcraft-studio` | Studio document tabs, toolbar, tool options and floating Tools/Colors/Layers/History windows |
+| `crates/foundation/paintcraft-core` | Common IDs, checked geometry, RGBA8 arithmetic, errors, policies and strict JSON under `paintcraft_core::types` |
+| `crates/foundation/paintcraft-raster` | Sparse copy-on-write tiles, selection coverage, exact shapes, flood fill and bitmap glyph kernels |
+| `crates/foundation/paintcraft-document` | Persistent document/layer state, metadata and semantic equality |
+| `crates/foundation/paintcraft-input` | Normalized pointer events and input descriptors |
+| `crates/editing/paintcraft-commands` | Typed batch v1/v2 descriptions and structural validation |
+| `crates/editing/paintcraft-history` | Recorded snapshots, undo/redo navigation and bounded retention |
+| `crates/editing/paintcraft-editor` | Editor sessions, transaction preparation and atomic publication |
+| `crates/editing/paintcraft-tools` | Tool state machines, options, previews and editing intentions |
+| `crates/services/paintcraft-render` | Scalar reference compositor and optional wgpu compute compositor |
+| `crates/services/paintcraft-runtime` | Bounded native workers, cancellation and transient job handles |
+| `crates/services/paintcraft-formats` | Canonical PCND reader/writer, PNG/BMP/JPEG codecs, flat export and recovery checkpoints |
+| `crates/services/paintcraft-platform` | Filesystem save adapters and optional native `rfd` dialogs |
+| `crates/presentation/paintcraft-ui` | Shared vector widgets, view transforms and action outbox |
+| `crates/presentation/paintcraft-classic` | Classic menus, grouped tool ribbon, palette and skins |
+| `crates/presentation/paintcraft-studio` | Studio document tabs, toolbar, tool options and floating Tools/Colors/Layers/History windows |
 | `apps/paintcraft` | Desktop controller, settings and egui application (wgpu) |
 | `apps/paintcraft-cli` | Headless Clap CLI; each command lives in `src/commands/` |
 | `conformance/` | Vendored batch v1 conformance vectors and the canonical specimen |

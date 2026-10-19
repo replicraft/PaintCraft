@@ -5,7 +5,7 @@ import json
 import math
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / 'crates/paintcraft-ui/assets/icons'
+OUT = ROOT / 'crates/presentation/paintcraft-ui/assets/icons'
 DEFS = '''<defs>
 <linearGradient id="blue" x2="0" y2="1"><stop stop-color="#59ceff"/><stop offset=".48" stop-color="#128ff5"/><stop offset="1" stop-color="#075eb9"/></linearGradient>
 <linearGradient id="gold" x2="0" y2="1"><stop stop-color="#fff49c"/><stop offset=".45" stop-color="#ffd345"/><stop offset="1" stop-color="#e89308"/></linearGradient>
