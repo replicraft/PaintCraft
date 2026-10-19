@@ -133,6 +133,11 @@ impl Session {
         self.doc.state_id != self.saved_state
     }
 
+    /// The document has changes no file contains (for example, recovered work).
+    pub fn mark_unsaved(&mut self) {
+        self.saved_state = Uuid::nil();
+    }
+
     pub fn mark_saved(&mut self) {
         self.saved_state = self.doc.state_id;
     }

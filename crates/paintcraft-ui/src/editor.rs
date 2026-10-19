@@ -12,6 +12,7 @@ use paintcraft_core::commands::Batch;
 use paintcraft_core::document::{Document, POLICY, new_document};
 use paintcraft_core::execute::Selection;
 use paintcraft_core::session::Session;
+use paintcraft_formats::recovery::Recovery;
 use paintcraft_formats::{pcnd, save};
 use paintcraft_types::json::Value;
 use paintcraft_types::{Result, Rgba};
@@ -184,6 +185,8 @@ pub struct Editor {
     next_gesture: Token,
     path: Option<PathBuf>,
     status: String,
+    recovery: Option<Recovery>,
+    checkpointed: Option<(Uuid, u64)>,
 }
 
 /// Gesture tokens live in their own half of the token space so they can never
@@ -233,7 +236,59 @@ impl Editor {
             next_gesture: GESTURE_TOKEN_BASE,
             path,
             status: String::new(),
+            recovery: None,
+            checkpointed: None,
         }
+    }
+
+    /// Open work recovered from a checkpoint. It counts as unsaved, and it is not
+    /// bound to any file until the user saves it.
+    pub fn recover(checkpoint: &Path) -> Result<Editor> {
+        let bytes = std::fs::read(checkpoint).map_err(|e| {
+            paintcraft_types::Error::new(
+                paintcraft_types::ErrorCode::StorageFailed,
+                format!("cannot read the checkpoint: {}", e.kind()),
+            )
+        })?;
+        let mut e = Editor::from_document(pcnd::read(&bytes)?, None);
+        e.session.mark_unsaved();
+        e.status = "Recovered unsaved work".into();
+        Ok(e)
+    }
+
+    /// Start protecting this editor's work with crash-recovery checkpoints.
+    pub fn attach_recovery(&mut self, recovery: Recovery) {
+        self.recovery = Some(recovery);
+        self.checkpointed = None;
+    }
+
+    /// Write a checkpoint if there is unsaved work newer than the last one.
+    /// Skipped while a gesture is in progress. Returns whether one was written.
+    pub fn autosave(&mut self) -> bool {
+        let key = self.render_key();
+        if self.gesture.is_some() || !self.is_dirty() || self.checkpointed == Some(key) {
+            return false;
+        }
+        let Some(recovery) = &self.recovery else {
+            return false;
+        };
+        let result = pcnd::write(self.session.document())
+            .and_then(|bytes| recovery.checkpoint(&bytes, self.path.as_deref()));
+        match result {
+            Ok(()) => {
+                self.checkpointed = Some(key);
+                true
+            }
+            Err(e) => {
+                self.status = format!("Autosave failed: {e}");
+                false
+            }
+        }
+    }
+
+    /// Whether a checkpoint of the current work exists (the document is dirty and was checkpointed).
+    pub fn has_checkpoint(&self) -> bool {
+        self.checkpointed.is_some() && self.is_dirty()
     }
 
     pub fn document(&self) -> &Document {
@@ -722,6 +777,11 @@ impl Editor {
         let outcome = save::save(&path, &bytes, true);
         if outcome.is_success() {
             self.session.mark_saved();
+            // The file now holds everything; the checkpoint is obsolete.
+            if let Some(r) = &self.recovery {
+                r.clear();
+            }
+            self.checkpointed = None;
             self.status = format!("Saved {}", path.display());
         } else {
             // Dirty state stays: an unconfirmed or unknown save is not a clean document.
@@ -1088,6 +1148,59 @@ mod tests {
         e.tool = Tool::Pencil;
         e.pointer_down((1, 1));
         assert!(!e.gesture_in_progress() && e.status().contains("No editing target"));
+    }
+
+    #[test]
+    fn autosave_checkpoints_unsaved_work_and_a_crash_can_be_recovered() {
+        let dir = std::env::temp_dir().join(format!(
+            "paintcraft-autosave-{}",
+            uuid::Uuid::new_v4().simple()
+        ));
+        let mut e = editor();
+        e.attach_recovery(Recovery::start(&dir).unwrap());
+        assert!(e.autosave(), "adding the layer left unsaved work");
+        assert!(!e.autosave(), "nothing newer to write");
+        let layer = e.target().unwrap();
+        e.pointer_down((3, 3));
+        assert!(!e.autosave(), "never mid-gesture");
+        e.pointer_up();
+        e.run_pending();
+        assert!(e.autosave());
+        let want = e.document().clone();
+        // The process dies: the session lock is released but the checkpoint stays.
+        drop(e);
+        let found = Recovery::scan(&dir);
+        assert_eq!(found.len(), 1);
+        let back = Editor::recover(&found[0].checkpoint).unwrap();
+        assert!(back.document().same_semantics(&want));
+        assert_eq!(back.document().layers[&layer].raster.get(3, 3).a(), 255);
+        assert!(back.is_dirty(), "recovered work is unsaved");
+        Recovery::discard(&dir, found[0].session);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn a_confirmed_save_removes_the_checkpoint_and_clean_exit_leaves_nothing() {
+        let dir = std::env::temp_dir().join(format!(
+            "paintcraft-autosave2-{}",
+            uuid::Uuid::new_v4().simple()
+        ));
+        let file = dir.join("doc.pcnd");
+        let mut e = editor();
+        e.attach_recovery(Recovery::start(&dir.join("rec")).unwrap());
+        e.set_path(file);
+        assert!(e.autosave());
+        e.request(500, Action::Save);
+        e.run_pending();
+        assert!(!e.is_dirty());
+        drop(e);
+        assert!(Recovery::scan(&dir.join("rec")).is_empty());
+        assert_eq!(
+            std::fs::read_dir(dir.join("rec")).unwrap().count(),
+            0,
+            "no stale files"
+        );
+        std::fs::remove_dir_all(dir).unwrap();
     }
 
     #[test]
