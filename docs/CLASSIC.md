@@ -44,7 +44,7 @@ The round brush preserves pointer positions in 1/256-pixel units and stores
 antialiased coverage in the document. Preview and publication use the same
 rasterizer. Brush opacity is adjustable from 0–100% and is captured for the whole
 gesture. Zero opacity leaves pixels and history unchanged; Eraser retains its
-explicit erase mode. Pencil retains exact pixel placement. See [brush rendering](BRUSH_RENDERING.md).
+explicit erase mode. Pencil defaults to one pixel and has a size slider and precise pixel entry, retaining hard edges and exact pixel placement. See [brush rendering](BRUSH_RENDERING.md).
 
 The Colors ribbon now opens a staged **Edit colors** dialog for the primary or
 secondary swatch. It provides a hue/saturation square, brightness strip, RGB/HSL
@@ -80,7 +80,9 @@ System when the optional appearance field is absent.
 
 Classic and Studio own separate canvas layout modules, scroll IDs and document
 workspaces. Switching requires saving every changed document; the transition
-offers Save and Cancel, with no discard option. Save cancellation/failure keeps
+offers Save, Discard and Cancel. Discard closes changed documents and retires their
+recovery checkpoints; they do not reappear with discarded pixels when returning.
+Save cancellation/failure keeps
 the current interface. The other frontend has its own documents, histories and
 view states, restored when switching back during the same application session.
 The shared host still owns low-level pixel rendering and input translation into
@@ -103,10 +105,25 @@ searchable picker also includes bundled Selawik. Family names are deduplicated
 without loading every font into egui. Discovery is native-only; headless tests
 use the deterministic bundled family.
 
-**Text styling is currently a UI prototype.** Changing these preferences does not
-change the bitmap text renderer. Settings → Text preferences includes an explicitly
-labelled prototype for keeping text editable until save. The preference persists,
-but it does not yet create editable text objects or rasterize them on save.
-That implementation needs styled text objects, font-face resolution/shaping,
-editable overlays, undo/redo and an atomic save-time rasterization policy that
-preserves live edits on failed/cancelled saves. It follows the UI/theme pass.
+Font family/size, bold/italic, underline/strikeout, alignment and background fill
+now affect real document text. Cosmic Text shapes the selected font and Swash
+produces hinted grayscale coverage; preview and commit use the same resolved
+mask transaction. See [the text rendering policy and library comparison](TEXT_RENDERING.md).
+
+**Keeping text editable until save remains a prototype preference.** It does not
+yet create persistent editable text objects or rasterize them on save. Text is
+currently committed to pixels when placed, with one undo step.
+
+## Interaction refinements
+
+The Interface button beside Settings switches between independent frontends and
+exposes Classic's version picker. Ctrl/Cmd + wheel zooms over the canvas without
+scaling application chrome. Pencil, brush, eraser and outlined shapes have a
+size slider plus exact pixel entry. Tool size is captured at gesture start.
+
+Fixed palette swatches now show a descriptive color name and hex in their hover
+text. The first twenty use the familiar Paint-style Black/Gray/Dark red/Red/
+Orange/Yellow/Green/Turquoise/Indigo/Purple and lighter-color naming; the eight
+additional project swatches have descriptive names. These extra slots are not a
+claim of an exact native Windows 11 palette. Studio floating panels are constrained
+below the document tabs so added options cannot cover tab controls.

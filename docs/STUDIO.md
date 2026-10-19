@@ -14,7 +14,7 @@ separately in the dependency choices and is not bundled yet.
   scroll positions and native-file bindings. New/Open/recovery preserve other tabs.
   Close supports save, discard and cancel; closing the last tab leaves an empty workspace.
 - Movable Tools and Colors windows, with real tool selection, primary/secondary
-  colors, color wheel, swap, palette, expanded RGBA/hex controls, brush size/tip, shape style, fill tolerance and bitmap text size.
+  colors, color wheel, swap, palette, expanded RGBA/hex controls, brush size/tip, shape style, fill tolerance and font text family/size/style controls.
 - A movable/resizable Layers window using the existing add, select, visibility,
   rename, opacity, reorder, duplicate and delete operations. Window menu toggles restore panels.
 - A movable History window with recorded action labels, current/redo rows, direct

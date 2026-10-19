@@ -4,13 +4,13 @@ A faithful Paint.NET / MS Paint reimplementation in Rust.
 
 **Status: usable preview of the editor (roadmap milestone M2, minus reference parity).**
 
-Studio is now the development focus. Select **Studio** in the application header
-for its compact toolbar and floating Tools, Colors, Layers and History windows. The choice
-is remembered. See [Studio progress and next steps](docs/STUDIO.md).
+Classic UI and themes are the current development focus. Use **Interface** beside
+Settings to switch between Classic and Studio; each has its own document workspace.
+Choose Save, Discard or Cancel for changed documents when switching. The choice is remembered. See [Studio progress and next steps](docs/STUDIO.md).
 Version **0.1.0** has a CPU editing engine, an exact-integer GPU compositor, a native
 `.pcnd` document format, PNG/BMP/JPEG import and
 export, a headless CLI and a desktop editor with pencil, brush, eraser, fill, shapes,
-rectangle selection, bitmap text, layers, undo/redo, safe save, crash recovery and a
+rectangle selection, antialiased font text, layers, undo/redo, safe save, crash recovery and a
 remembered Classic look. Open, Save As and Export use native file dialogs. Nothing here is a released or reference-qualified editor: no
 Paint v7/v10/v11 or Paint.NET behavior or UI fidelity has been verified.
 

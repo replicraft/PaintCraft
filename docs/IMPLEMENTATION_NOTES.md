@@ -277,7 +277,7 @@ remain T16 work. Current-app GPU previews can be exported with the ignored
 | Safe save and recovery (T10) | Streaming staging → atomic replace → bounded read-back; ordered native queue and file receipts; autosave checkpoints with per-session locks; recover, discard or ask later | platform `save.rs`, format `recovery.rs`, GUI tests |
 | Bounded history (T11) | Memory budget over all retained snapshots (shared tiles counted once); only the oldest undo steps are dropped, the newest edit stays undoable, the user is told | `session.rs`, editor tests |
 | CLI (T08, T33, T34) | `new`, `inspect`, `schema batch|batch-v2`, `capabilities`, `apply` (hash-guarded), `import`, `render` | 11 end-to-end tests of the real binary; output validates against the pack's schemas |
-| Editor (T09, T14 subset) | Pencil, brush (round/square), eraser, flood fill, line, rectangle, ellipse (outline/filled/both), rectangle select, bitmap text; layers: add, show/hide, move, delete, rename, opacity; undo/redo; one gesture or text object is one transaction | desktop controller tests; headless egui tests |
+| Editor (T09, T14 subset) | Pencil, brush (round/square), eraser, flood fill, line, rectangle, ellipse (outline/filled/both), rectangle select, desktop font text with antialiased resolved masks and legacy bitmap text; layers: add, show/hide, move, delete, rename, opacity; undo/redo; one gesture or text object is one transaction | desktop controller tests; headless egui tests |
 | Presentation (T15 subset) | First-visit Classic picker (v11 preselected), remembered choice, Interface button, damaged settings kept aside | GUI tests |
 
 Native evidence is limited to repeated runs of the real wgpu window, which opened, drew
@@ -327,9 +327,11 @@ Geometry definitions (the historical integer operations remain exact):
   same figure shrunk by `t` on every side; if nothing remains inside, it is solid.
 - **Flood fill.** 4-connected from the seed; a pixel joins when each channel differs from
   the seed pixel by at most the tolerance; the region is computed before painting.
-- **Text.** 8×8 bitmap font (`font8x8`), integer scale 1–16, no anti-aliasing. Characters
-  without a glyph fail the batch naming the code point; the editor skips and reports them.
-  This is a starting point, not a claim of fidelity to any application's text tool.
+- **Text.** Desktop text uses Cosmic Text shaping/fallback and hinted Swash grayscale
+  masks, including selected fonts, styles, alignment and background fill. Resolved
+  coverage is admitted atomically and persisted as pixels. Legacy `raster.text`
+  retains its exact 8×8 bitmap behavior for existing scripts and fixtures.
+  See [text rendering](TEXT_RENDERING.md). Editable-until-save objects and IME remain pending.
 - **Budgets** (provisional): stroke work (path pixels × brush diameter) 16,777,216 rows per
   batch, flood area 67,108,864 pixels, text up to 1,024 characters.
 

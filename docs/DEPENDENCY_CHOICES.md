@@ -34,7 +34,7 @@ A correct integrated baseline is not a measured performance or release qualifica
 | Area | Choice | Application state |
 |---|---|---|
 | UI | egui | Integrated through eframe; Classic ribbon/vector widgets and separate Studio toolbar/floating windows exist; reference fidelity and further Studio features remain pending |
-| UI font | Selawik | Unmodified Microsoft 1.01 Regular font embedded with OFL 1.1 notice; document text remains the bitmap baseline |
+| UI font | Selawik | Unmodified Microsoft 1.01 Regular and Bold embedded with OFL 1.1 notice; document text uses these plus installed fonts |
 | Retro UI font | [W95FA by MadeByArne](https://www.dafont.com/w95fa.font) | User-selected for RetroPaint; author listing identifies SIL Open Font License and commercial use. Not bundled yet; preserve the font archive's license and provenance when adopted |
 | SVG UI assets | resvg 0.48.1, default features disabled | Shared UI renders the user-supplied generated icon sheet as 68 bundled SVG adaptations; per-context density cache and all-icon render tests; SVG document import remains deferred |
 | Native shell | Compare eframe with direct egui-winit/egui-wgpu | eframe remains provisional pending T02 hardware/IME traces |
@@ -42,13 +42,13 @@ A correct integrated baseline is not a measured performance or release qualifica
 | CLI | Clap | Integrated, command modules and end-to-end tests |
 | File dialogs | rfd | Integrated for Open, Save As and Export |
 | macOS menus | muda 0.21.2, default features disabled | Optional platform menus feature; desktop action routing and guarded Quit, no CLI dependency |
-| Installed fonts | fontdb 0.24.0, std/fs only | Optional native platform fonts feature; background family enumeration for the Classic text UI prototype, no shaping/rasterizer adoption |
+| Installed fonts | fontdb 0.23.0 | Shared with Cosmic Text to avoid a second database/version; standard installed-family enumeration; native std/fs plus Cosmic memmap/std features |
 | Standard image codecs | image | Integrated baseline, 0.25.10 with only PNG/BMP/JPEG; strict admission and loss reporting remain in PaintCraft |
 | Snapshot publication | Per-document coordinator; ArcSwap candidate | Synchronous atomic session baseline; concurrent publication study pending |
 | Native container | ZIP64 reader/writer; raw and Zstd blocks | Current canonical ZIP subset is bounded and stored-only; extension must preserve v1 fixtures |
 | Storage compression | Raw/LZ4/Zstd comparison | Raw COW tile baseline; measured compression/compaction pending |
 | Color management | Evaluate moxcms/LittleCMS | Profiles currently reported as discarded; color-managed pipeline pending |
-| Text | Evaluate parley or cosmic-text plus rasterizer | Installed family enumeration and text toolbar prototype integrated; document text remains the bitmap baseline, shaping and IME pending |
+| Document text | Cosmic Text 0.19.0 + Swash 0.2.10 | std/swash/shape-run-cache, default features and fontconfig disabled; HarfRust shaping, fontdb fallback, hinted grayscale masks; atomic preview/publication; legacy bitmap commands remain stable. [Comparison](TEXT_RENDERING.md) |
 | Wasm effects | wasmi conformance baseline; Wasmtime throughput candidate | Not implemented; core wasm32 ABI is the first SDK target |
 | Statistical benchmarks | Criterion or Divan, selected at first comparison | Not yet selected |
 | Process benchmarks | Hyperfine | Installed developer tool; application decision runs not yet recorded |

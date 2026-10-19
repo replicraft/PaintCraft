@@ -229,9 +229,11 @@
         "crates/paintcraft-tools/src/lib.rs",
         "apps/paintcraft/src/controller.rs",
         "crates/paintcraft-raster/src/smooth.rs",
-        "docs/BRUSH_RENDERING.md"
+        "docs/BRUSH_RENDERING.md",
+        "docs/TEXT_RENDERING.md",
+        "apps/paintcraft/src/text.rs"
       ],
-      "remaining_or_scope": "Antialiased round brushes and identical staged path previews, Studio primary/secondary paint gestures with button ownership, fill, shapes, rectangle selection and bitmap text work; complete selections, secondary eraser/text policies, system text and IME remain.",
+      "remaining_or_scope": "Antialiased round brushes and identical staged path previews, Studio primary/secondary paint gestures with button ownership, fill, shapes, rectangle selection and font text with Cosmic Text/Swash masks work; complete selections, secondary eraser/text policies, editable text objects and IME remain.",
       "acceptance": "Tool-specific lifecycle fixtures, masked edges, focus cancel, text IME smoke cases."
     },
     {
