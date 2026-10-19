@@ -1,0 +1,524 @@
+{
+  "source": "docs/temp/paintcraft-implementation-spec-v5-hyperfine/contracts/registry/backlog.json",
+  "tasks": [
+    {
+      "id": "T01",
+      "milestone": "M0",
+      "title": "Compiled Rust scaffold and dependency lock",
+      "depends_on": [],
+      "status": "implemented",
+      "evidence": [
+        "Cargo.toml",
+        "Cargo.lock",
+        "rust-toolchain.toml"
+      ],
+      "remaining_or_scope": "Native/headless workspace builds and default desktop run are verified.",
+      "acceptance": "CPU-only tests compile without egui/wgpu; native hello-window compiled separately; toolchain and Cargo.lock recorded."
+    },
+    {
+      "id": "T02",
+      "milestone": "M0",
+      "title": "Native input and presentation spike",
+      "depends_on": [
+        "T01"
+      ],
+      "status": "partial",
+      "evidence": [
+        "apps/paintcraft/tests/gui.rs"
+      ],
+      "remaining_or_scope": "Actual-pixel and multipass tests exist; direct-shell comparison, native pen/IME traces and hardware changes remain.",
+      "acceptance": "Native traces and screen pixel test artifacts; documented unsupported hardware; decide shell without reopening egui."
+    },
+    {
+      "id": "T03",
+      "milestone": "M0",
+      "title": "Reference acquisition feasibility",
+      "depends_on": [],
+      "status": "external-evidence-pending",
+      "evidence": [],
+      "remaining_or_scope": "Legal pinned Windows Paint/Paint.NET reference binaries and repeatable captures are not present.",
+      "acceptance": "Build/hash/environment manifest, license basis, repeatable output or explicit blocker; core work not blocked."
+    },
+    {
+      "id": "T04",
+      "milestone": "M1",
+      "title": "Raster domains and blob leases",
+      "depends_on": [
+        "T01"
+      ],
+      "status": "partial",
+      "evidence": [
+        "crates/paintcraft-raster/src/raster.rs"
+      ],
+      "remaining_or_scope": "Sparse COW tiles and admission work; logical blob handles, resident leases and full residency accounting remain.",
+      "acceptance": "MEM-03/04; hidden RGB; negative boundaries; checked sizes; explicit resource errors."
+    },
+    {
+      "id": "T05",
+      "milestone": "M1",
+      "title": "Immutable document and split identity",
+      "depends_on": [
+        "T04"
+      ],
+      "status": "partial",
+      "evidence": [
+        "crates/paintcraft-document/src/lib.rs",
+        "crates/paintcraft-editor/src/session.rs"
+      ],
+      "remaining_or_scope": "Flat immutable snapshots and split state/history identity exist; full session identity and richer nodes remain.",
+      "acceptance": "STATE-01/02/03/07; flat path and group capability rejection; no accidental UI dependency."
+    },
+    {
+      "id": "T06",
+      "milestone": "M1",
+      "title": "Atomic batch and operation oracle",
+      "depends_on": [
+        "T05"
+      ],
+      "status": "implemented",
+      "evidence": [
+        "crates/paintcraft-editor/tests/conformance.rs",
+        "crates/paintcraft-commands/src/lib.rs"
+      ],
+      "remaining_or_scope": "Batch v1 oracle vectors, atomic failure and no-op behavior pass; v2 remains an independently documented extension.",
+      "acceptance": "Atomic fail injection; aliases/no-op/unknown policy; stale base; every batch step of the conformance vectors replays with identical receipts, snapshots and digests (CORE-01..07, DET-01)."
+    },
+    {
+      "id": "T07",
+      "milestone": "M1",
+      "title": "Recorded history navigation",
+      "depends_on": [
+        "T06"
+      ],
+      "status": "partial",
+      "evidence": [
+        "crates/paintcraft-history/src/lib.rs"
+      ],
+      "remaining_or_scope": "Recorded linear undo/redo exists; branching nodes and randomized navigation evidence remain.",
+      "acceptance": "Undo/redo randomized state equality; STATE-04/05/06; removed executor does not block redo."
+    },
+    {
+      "id": "T08",
+      "milestone": "M1",
+      "title": "PCND and headless round trip",
+      "depends_on": [
+        "T07",
+        "T29",
+        "T34"
+      ],
+      "status": "partial",
+      "evidence": [
+        "crates/paintcraft-formats/tests/conformance.rs",
+        "apps/paintcraft-cli/tests/cli.rs"
+      ],
+      "remaining_or_scope": "Canonical PCND and CLI round trips pass; full native subset/hostile-archive scope remains.",
+      "acceptance": "Generated specimen plus malformed corpus; canonical writer reproduces the specimen and every vector PCND/render digest (NATIVE-09, CORE-08, DET-02); CLI-01..03; no GUI dependency."
+    },
+    {
+      "id": "T09",
+      "milestone": "M1",
+      "title": "First complete editor slice",
+      "depends_on": [
+        "T02",
+        "T07",
+        "T08"
+      ],
+      "status": "partial",
+      "evidence": [
+        "apps/paintcraft/tests/gui.rs"
+      ],
+      "remaining_or_scope": "Complete pencil/session/display/save slice passes; native input qualification depends on T02.",
+      "acceptance": "Click once causes one edit; GUI/CLI/core equivalent output; failure leaves state intact."
+    },
+    {
+      "id": "T10",
+      "milestone": "M2",
+      "title": "Ordered save and recovery journal",
+      "depends_on": [
+        "T09",
+        "T32"
+      ],
+      "status": "partial",
+      "evidence": [
+        "crates/paintcraft-formats/src/recovery.rs",
+        "crates/paintcraft-platform/src/save.rs"
+      ],
+      "remaining_or_scope": "Safe save and checkpoint recovery exist; ordered asynchronous queues, failure injection and stale-completion guards remain.",
+      "acceptance": "SAVE-01\u201309 failure injection including disk full/slow sink and stale Save As completion."
+    },
+    {
+      "id": "T11",
+      "milestone": "M2",
+      "title": "Bounded history and store GC",
+      "depends_on": [
+        "T07"
+      ],
+      "status": "partial",
+      "evidence": [
+        "crates/paintcraft-history/src/lib.rs"
+      ],
+      "remaining_or_scope": "Shared snapshot retention is bounded; leases, segment GC, compaction and physical resource evidence remain.",
+      "acceptance": "MEM-01\u201307 under artificial low budget; actual allocator/RSS evidence, not counters alone."
+    },
+    {
+      "id": "T12",
+      "milestone": "M2",
+      "title": "Ordered renderer and region effects",
+      "depends_on": [
+        "T05",
+        "T09"
+      ],
+      "status": "partial",
+      "evidence": [
+        "crates/paintcraft-render/src/lib.rs"
+      ],
+      "remaining_or_scope": "Ordered scalar and GPU flat composition exist; ROI effects, dirty-prefix cache and group plans remain.",
+      "acceptance": "ROI-01\u201307 and RENDER-01\u201306; no tile seams or reordered group output."
+    },
+    {
+      "id": "T13",
+      "milestone": "M2",
+      "title": "Scheduler and GPU preparation",
+      "depends_on": [
+        "T12",
+        "T11"
+      ],
+      "status": "partial",
+      "evidence": [
+        "crates/paintcraft-render/src/gpu.rs"
+      ],
+      "remaining_or_scope": "GPU composition and readback exist; admitted workers, asynchronous transfer and device-loss lifecycle remain.",
+      "acceptance": "SCHED-01\u201306 and GPU-01\u201306; no late mutation/device-loss data loss."
+    },
+    {
+      "id": "T14",
+      "milestone": "M2",
+      "title": "Tool completeness tranche",
+      "depends_on": [
+        "T09",
+        "T12",
+        "T31"
+      ],
+      "status": "partial",
+      "evidence": [
+        "crates/paintcraft-tools/src/lib.rs",
+        "apps/paintcraft/src/controller.rs"
+      ],
+      "remaining_or_scope": "Brushes, fill, shapes, rectangle selection and bitmap text work; complete selections, system text and IME remain.",
+      "acceptance": "Tool-specific lifecycle fixtures, masked edges, focus cancel, text IME smoke cases."
+    },
+    {
+      "id": "T15",
+      "milestone": "M2",
+      "title": "Classic v11 usable preview",
+      "depends_on": [
+        "T10",
+        "T14"
+      ],
+      "status": "partial",
+      "evidence": [
+        "apps/paintcraft/src/settings.rs",
+        "apps/paintcraft/src/lib.rs"
+      ],
+      "remaining_or_scope": "Classic choice persists and basic codecs exist; faithful v11 presentation, preserving-target flow and complete M2 prerequisites remain.",
+      "acceptance": "Named M2 gate, no repeated picker; explicit deviations and no dead functional claims."
+    },
+    {
+      "id": "T16",
+      "milestone": "M3",
+      "title": "Classic historical parity",
+      "depends_on": [
+        "T03",
+        "T15"
+      ],
+      "status": "not-started",
+      "evidence": [],
+      "remaining_or_scope": "Per-operation evidence records; original menu/eraser/canvas/tool lifecycles and allowed OS differences.",
+      "acceptance": "Per-operation evidence records; original menu/eraser/canvas/tool lifecycles and allowed OS differences."
+    },
+    {
+      "id": "T17",
+      "milestone": "M3",
+      "title": "PDN and PAINT compatibility",
+      "depends_on": [
+        "T03",
+        "T08",
+        "T30"
+      ],
+      "status": "not-started",
+      "evidence": [],
+      "remaining_or_scope": "Read/write/metadata tested independently; malicious parsing bounds; no .NET deserialization/runtime. Fresh creation and source-preserving rewrite qualify independently; retain source bindings across repeated saves.",
+      "acceptance": "Read/write/metadata tested independently; malicious parsing bounds; no .NET deserialization/runtime. Fresh creation and source-preserving rewrite qualify independently; retain source bindings across repeated saves."
+    },
+    {
+      "id": "T18",
+      "milestone": "M3",
+      "title": "Wasm effect SDK for contributors",
+      "depends_on": [
+        "T06",
+        "T12",
+        "T33"
+      ],
+      "status": "not-started",
+      "evidence": [],
+      "remaining_or_scope": "ABI range/trap/halo/mask tests; one complete external-author workflow before SDK stabilization.",
+      "acceptance": "ABI range/trap/halo/mask tests; one complete external-author workflow before SDK stabilization."
+    },
+    {
+      "id": "T19",
+      "milestone": "M3",
+      "title": "Studio parity tranches",
+      "depends_on": [
+        "T12",
+        "T14",
+        "T17"
+      ],
+      "status": "not-started",
+      "evidence": [],
+      "remaining_or_scope": "Release only named tested tranches; high-depth/groups not misrepresented as source features.",
+      "acceptance": "Release only named tested tranches; high-depth/groups not misrepresented as source features."
+    },
+    {
+      "id": "T20",
+      "milestone": "M3",
+      "title": "Codec breadth",
+      "depends_on": [
+        "T08"
+      ],
+      "status": "not-started",
+      "evidence": [],
+      "remaining_or_scope": "Per-backend/variant write+read evidence, metadata/index and worker failures; no Rust-only delays.",
+      "acceptance": "Per-backend/variant write+read evidence, metadata/index and worker failures; no Rust-only delays."
+    },
+    {
+      "id": "T21",
+      "milestone": "M3",
+      "title": "Performance decision experiments",
+      "depends_on": [
+        "T13"
+      ],
+      "status": "not-started",
+      "evidence": [],
+      "remaining_or_scope": "Raw benchmark artifacts; select thresholds/index/atlas layout; no claims from theoretical speed.",
+      "acceptance": "Raw benchmark artifacts; select thresholds/index/atlas layout; no claims from theoretical speed."
+    },
+    {
+      "id": "T22",
+      "milestone": "M4",
+      "title": "Browser conformance",
+      "depends_on": [
+        "T15",
+        "T18"
+      ],
+      "status": "not-started",
+      "evidence": [],
+      "remaining_or_scope": "Native-equivalent fixtures, interruption tests and unsupported-capability reports.",
+      "acceptance": "Native-equivalent fixtures, interruption tests and unsupported-capability reports."
+    },
+    {
+      "id": "T23",
+      "milestone": "M4",
+      "title": "RetroPaint and historical formats",
+      "depends_on": [
+        "T16"
+      ],
+      "status": "not-started",
+      "evidence": [],
+      "remaining_or_scope": "Era-specific fixtures and explicit additional capabilities without changed default muscle memory.",
+      "acceptance": "Era-specific fixtures and explicit additional capabilities without changed default muscle memory."
+    },
+    {
+      "id": "T24",
+      "milestone": "M4",
+      "title": "Compact PCND container study",
+      "depends_on": [
+        "T11",
+        "T21"
+      ],
+      "status": "not-started",
+      "evidence": [],
+      "remaining_or_scope": "Benchmark justification, corruption tests and old-v1 corpus preserved.",
+      "acceptance": "Benchmark justification, corruption tests and old-v1 corpus preserved."
+    },
+    {
+      "id": "T25",
+      "milestone": "M5",
+      "title": "Mobile adaptation",
+      "depends_on": [
+        "T19",
+        "T22"
+      ],
+      "status": "not-started",
+      "evidence": [],
+      "remaining_or_scope": "Device execution, orientation/background/quota/thermal evidence; not cross-compile-only.",
+      "acceptance": "Device execution, orientation/background/quota/thermal evidence; not cross-compile-only."
+    },
+    {
+      "id": "T26",
+      "milestone": "M5",
+      "title": "Optional AI and MCP",
+      "depends_on": [
+        "T18",
+        "T19"
+      ],
+      "status": "not-started",
+      "evidence": [],
+      "remaining_or_scope": "Consent/provider/model boundaries and stale-result/undo safety; no mandatory account.",
+      "acceptance": "Consent/provider/model boundaries and stale-result/undo safety; no mandatory account."
+    },
+    {
+      "id": "T27",
+      "milestone": "M5",
+      "title": "Paint 3D research",
+      "depends_on": [],
+      "status": "not-started",
+      "evidence": [],
+      "remaining_or_scope": "Separate design and capture corpus before implementation claims.",
+      "acceptance": "Separate design and capture corpus before implementation claims."
+    },
+    {
+      "id": "T28",
+      "milestone": "RELEASE",
+      "title": "Public release readiness",
+      "depends_on": [
+        "T10",
+        "T11",
+        "T15",
+        "T35"
+      ],
+      "status": "not-started",
+      "evidence": [],
+      "remaining_or_scope": "Target-specific manual/native tests, security protocol, license notices and final capability manifest. Capability manifest claims require profile-scoped executed evidence, not model-test status.",
+      "acceptance": "Target-specific manual/native tests, security protocol, license notices and final capability manifest. Capability manifest claims require profile-scoped executed evidence, not model-test status."
+    },
+    {
+      "id": "T29",
+      "milestone": "M1",
+      "title": "Version-aware document admission",
+      "depends_on": [
+        "T01",
+        "T04"
+      ],
+      "status": "partial",
+      "evidence": [
+        "crates/paintcraft-formats/src/pcnd.rs"
+      ],
+      "remaining_or_scope": "Exact v1 admission and unsupported rejection exist; all VER cases and future preview modes remain unqualified.",
+      "acceptance": "VER-01..10; raw v1 fixture unchanged; unknown schema/features rejected; no automatic migration or new schema accepted from comparison alone."
+    },
+    {
+      "id": "T30",
+      "milestone": "M3",
+      "title": "Foreign-source lineage and preservation planner",
+      "depends_on": [
+        "T03",
+        "T08",
+        "T31"
+      ],
+      "status": "not-started",
+      "evidence": [],
+      "remaining_or_scope": "PRES-01..10; preserved opaque bytes AND relationships; dependent/unknown edit refusal; alternating original-consumer edits and source-removal recovery.",
+      "acceptance": "PRES-01..10; preserved opaque bytes AND relationships; dependent/unknown edit refusal; alternating original-consumer edits and source-removal recovery."
+    },
+    {
+      "id": "T31",
+      "milestone": "M2",
+      "title": "Frozen resource snapshots",
+      "depends_on": [
+        "T05",
+        "T07"
+      ],
+      "status": "not-started",
+      "evidence": [],
+      "remaining_or_scope": "RES-01..09; replaced/deleted source path cannot change pending output; missing final input fails; native DPI/clock transitions get real tests.",
+      "acceptance": "RES-01..09; replaced/deleted source path cannot change pending output; missing final input fails; native DPI/clock transitions get real tests."
+    },
+    {
+      "id": "T32",
+      "milestone": "M2",
+      "title": "Truthful file receipts and save associations",
+      "depends_on": [
+        "T07",
+        "T08"
+      ],
+      "status": "partial",
+      "evidence": [
+        "crates/paintcraft-platform/src/save.rs",
+        "apps/paintcraft/src/lib.rs"
+      ],
+      "remaining_or_scope": "Receipts and confirmed Save As binding exist; concurrent generations, failure matrix and filesystem qualification remain.",
+      "acceptance": "FILE-01..10; injected failures on both sides of replace/barrier; no false aborted receipt after a known side effect; native alias and filesystem qualification."
+    },
+    {
+      "id": "T33",
+      "milestone": "M1",
+      "title": "Capability discovery and admission checks",
+      "depends_on": [
+        "T01",
+        "T06"
+      ],
+      "status": "partial",
+      "evidence": [
+        "apps/paintcraft-cli/src/commands/capabilities.rs"
+      ],
+      "remaining_or_scope": "Truthful CLI manifest exists; shared generation-aware GUI/worker capability service remains.",
+      "acceptance": "CAP-01..10; disabled/unqualified native writers not enabled; capability generation or grant changes invalidate old work; document preservation survives UI capability changes."
+    },
+    {
+      "id": "T34",
+      "milestone": "M1",
+      "title": "Hash-guarded one-shot automation",
+      "depends_on": [
+        "T06",
+        "T29"
+      ],
+      "status": "partial",
+      "evidence": [
+        "apps/paintcraft-cli/src/commands/mod.rs",
+        "apps/paintcraft-cli/tests/cli.rs"
+      ],
+      "remaining_or_scope": "Immutable read and pre-parse hash guard exist; complete cancellation/retry lifecycle cases remain.",
+      "acceptance": "AUTO-01..09; fresh epoch zero does not bypass changed input; cancellation and output errors truthful; no invented persistent-service idempotency."
+    },
+    {
+      "id": "T35",
+      "milestone": "RELEASE",
+      "title": "Profile-scoped release qualification",
+      "depends_on": [
+        "T10",
+        "T15",
+        "T33"
+      ],
+      "status": "not-started",
+      "evidence": [],
+      "remaining_or_scope": "QUAL-01..10; synthetic or missing oracle cannot promote a release; foreign fresh/preserving support qualified separately; relevant backend changes invalidate scope.",
+      "acceptance": "QUAL-01..10; synthetic or missing oracle cannot promote a release; foreign fresh/preserving support qualified separately; relevant backend changes invalidate scope."
+    },
+    {
+      "id": "T36",
+      "milestone": "M3",
+      "title": "Bounded shared-component extraction review",
+      "depends_on": [
+        "T17",
+        "T18"
+      ],
+      "status": "not-started",
+      "evidence": [],
+      "remaining_or_scope": "REUSE-01..06; independent product policies/versions and CLI dependency graph; no generic Craft runtime, foreign UI, P2P or database engine requirement.",
+      "acceptance": "REUSE-01..06; independent product policies/versions and CLI dependency graph; no generic Craft runtime, foreign UI, P2P or database engine requirement."
+    },
+    {
+      "id": "T37",
+      "milestone": "M0",
+      "title": "Scoped adoption and benchmark evidence workflow",
+      "depends_on": [],
+      "status": "in-progress",
+      "evidence": [
+        "docs/DEPENDENCY_CHOICES.md",
+        "docs/ROADMAP_STATUS.md"
+      ],
+      "remaining_or_scope": "Live dependency/task ledgers are established; comparative benchmark evidence is still pending.",
+      "acceptance": "An adoption record points to real scope, tests and excluded future detail; plan-only tooling makes no repository changes; real comparisons use actual optimized code/fixtures, keep correctness/build/fixture/raw evidence and record selection/tie/rejection honestly; smoke/model results never qualify application choices."
+    }
+  ]
+}
