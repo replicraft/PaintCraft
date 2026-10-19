@@ -1,0 +1,215 @@
+//! The CLI commands. Each returns what to print and how to exit; nothing here
+//! calls `process::exit`.
+
+use std::fs::File;
+use std::io::Read as _;
+use std::path::{Path, PathBuf};
+
+use paintcraft_core::document::{Document, POLICY, hex, import_image, new_document};
+use paintcraft_core::session::Session;
+use paintcraft_formats::image::{self, ImageFormat};
+use paintcraft_formats::{export, pcnd};
+use paintcraft_types::json::Value;
+use paintcraft_types::{Error, ErrorCode, Result, Rgba};
+use sha2::{Digest, Sha256};
+
+use crate::report::{envelope, error_value, json_line};
+use paintcraft_formats::save::{self, Context, Outcome};
+
+const INPUT_MAX: u64 = 1 << 30;
+const OPERATIONS_MAX: u64 = 64 << 20;
+const BATCH_SCHEMA: &str = include_str!("../../schemas/batch.schema.json");
+const BATCH_V2_SCHEMA: &str = include_str!("../../schemas/batch-v2.schema.json");
+
+pub struct Reply {
+    pub stdout: Vec<u8>,
+    pub stderr: String,
+    pub exit: u8,
+}
+
+/// The result of a command that writes a file.
+struct Written {
+    engine: Option<Value>,
+    receipt: Value,
+    ok: bool,
+    summary: String,
+}
+
+fn storage(what: &str, e: &std::io::Error) -> Error {
+    Error::new(ErrorCode::StorageFailed, format!("{what}: {}", e.kind()))
+}
+
+/// Acquire one immutable snapshot of the input and its digest.
+fn read_bounded(path: &Path, limit: u64, what: &str) -> Result<(Vec<u8>, String)> {
+    let mut bytes = Vec::new();
+    File::open(path)
+        .and_then(|f| f.take(limit + 1).read_to_end(&mut bytes))
+        .map_err(|e| storage(&format!("cannot read {what}"), &e))?;
+    if bytes.len() as u64 > limit {
+        return Err(Error::new(
+            ErrorCode::ResourceLimit,
+            format!("{what} exceeds the {limit}-byte limit"),
+        ));
+    }
+    let sha = hex(&Sha256::digest(&bytes));
+    Ok((bytes, sha))
+}
+
+/// `--expect-input-sha256` guards the exact acquired bytes before any parsing.
+fn guard(expected: Option<&str>, actual: &str) -> Result<()> {
+    let Some(expected) = expected else {
+        return Ok(());
+    };
+    if expected.len() != 64
+        || !expected
+            .bytes()
+            .all(|c| c.is_ascii_digit() || (b'a'..=b'f').contains(&c))
+    {
+        return Err(Error::new(
+            ErrorCode::InputSchema,
+            "--expect-input-sha256 must be 64 lowercase hex digits",
+        ));
+    }
+    if expected != actual {
+        return Err(Error::new(
+            ErrorCode::ConflictStaleBase,
+            "input bytes differ from --expect-input-sha256",
+        ));
+    }
+    Ok(())
+}
+
+fn same_file(a: &Path, b: &Path) -> bool {
+    matches!((a.canonicalize(), b.canonicalize()), (Ok(x), Ok(y)) if x == y)
+}
+
+fn finish(json: bool, result: Result<Written>) -> Reply {
+    match result {
+        Err(e) => {
+            let exit = e.code.exit_code();
+            let stdout = if json {
+                json_line(&envelope(
+                    Some(error_value(&e)),
+                    None,
+                    "engine-rejected",
+                    exit,
+                ))
+            } else {
+                Vec::new()
+            };
+            Reply {
+                stdout,
+                stderr: format!("error: {e}\n"),
+                exit,
+            }
+        }
+        Ok(w) => {
+            let exit = if w.ok {
+                0
+            } else {
+                ErrorCode::StorageFailed.exit_code()
+            };
+            let outcome = if w.ok { "success" } else { "file-incomplete" };
+            let stdout = if json {
+                json_line(&envelope(w.engine, Some(w.receipt), outcome, exit))
+            } else {
+                format!("{}\n", w.summary).into_bytes()
+            };
+            Reply {
+                stdout,
+                stderr: if w.ok {
+                    String::new()
+                } else {
+                    format!("error: {}\n", w.summary)
+                },
+                exit,
+            }
+        }
+    }
+}
+
+fn bare(json: bool, result: Result<(Value, String)>) -> Reply {
+    match result {
+        Ok((value, text)) => Reply {
+            stdout: if json {
+                json_line(&value)
+            } else {
+                format!("{text}\n").into_bytes()
+            },
+            stderr: String::new(),
+            exit: 0,
+        },
+        Err(e) => Reply {
+            stdout: if json {
+                json_line(&error_value(&e))
+            } else {
+                Vec::new()
+            },
+            stderr: format!("error: {e}\n"),
+            exit: e.code.exit_code(),
+        },
+    }
+}
+
+/// Write `bytes` (or record why they could not be produced) and build the receipt.
+fn write_output(
+    dest: &Path,
+    overwrite: bool,
+    bytes: Result<Vec<u8>>,
+    ctx: &Context<'_>,
+) -> (Value, bool, String) {
+    let outcome: Outcome = match bytes {
+        Ok(b) => save::save(dest, &b, overwrite),
+        Err(e) => save::not_attempted(&e),
+    };
+    let summary = if outcome.is_success() {
+        format!("wrote {}", dest.display())
+    } else {
+        format!(
+            "{} was not saved safely: {}",
+            dest.display(),
+            outcome.reasons.join("; ")
+        )
+    };
+    (outcome.receipt(ctx), outcome.is_success(), summary)
+}
+
+#[derive(clap::Args, Debug)]
+struct Output {
+    #[arg(short = 'o', long, value_name = "FILE")]
+    output: PathBuf,
+    #[arg(long)]
+    overwrite: bool,
+}
+
+#[derive(clap::Args, Debug)]
+struct LossOptions {
+    #[arg(long, value_parser = ["error"])]
+    on_loss: Option<String>,
+    #[arg(long, value_name = "CODES")]
+    allow_loss: Option<String>,
+}
+impl LossOptions {
+    fn allowed(&self) -> Result<Vec<String>> {
+        if self.on_loss.as_deref().is_some_and(|v| v != "error") {
+            return Err(Error::new(
+                ErrorCode::InputSchema,
+                "--on-loss supports only `error`; acknowledge a loss with --allow-loss",
+            ));
+        }
+        let allowed: Vec<String> = self
+            .allow_loss
+            .as_deref()
+            .map(|v| v.split(',').map(str::to_owned).collect())
+            .unwrap_or_default();
+        export::check_loss_codes(&allowed)?;
+        Ok(allowed)
+    }
+}
+pub mod apply;
+pub mod capabilities;
+pub mod import;
+pub mod inspect;
+pub mod new;
+pub mod render;
+pub mod schema;

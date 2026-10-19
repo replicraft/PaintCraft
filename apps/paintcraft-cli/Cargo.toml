@@ -12,6 +12,7 @@ name = "paintcraft-cli"
 path = "src/main.rs"
 
 [dependencies]
+clap.workspace = true
 paintcraft-types.workspace = true
 paintcraft-core.workspace = true
 paintcraft-formats.workspace = true

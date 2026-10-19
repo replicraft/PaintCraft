@@ -548,7 +548,7 @@ fn schema_capabilities_and_usage() {
     assert!(
         run(&["new", "--width", "1", "--height", "1", "--bogus"])
             .stderr
-            .contains("unknown option")
+            .contains("unexpected argument")
     );
 }
 

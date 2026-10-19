@@ -1,68 +1,54 @@
-//! `paintcraft-cli`: headless document creation, inspection, editing and rendering.
-//! The desktop application is the separate `paintcraft` binary.
-
-mod args;
+//! Headless PaintCraft automation. Commands share engine and file-outcome contracts.
 mod commands;
 mod report;
 
+use clap::{Parser, Subcommand};
 use std::io::Write as _;
 use std::process::ExitCode;
 
-use commands::Reply;
+#[derive(Debug, Parser)]
+#[command(
+    version,
+    about,
+    after_help = "Exit status: 0 ok; 1 internal; 2 invocation/schema; 3 unsupported; 4 conflict; 5 resource/cancelled; 6 file/codec/save failure."
+)]
+struct Cli {
+    /// Print machine-readable JSON results.
+    #[arg(long, global = true)]
+    json: bool,
+    #[command(subcommand)]
+    command: Command,
+}
 
-const HELP: &str = "\
-paintcraft-cli <command> [options]
-
-  new --width W --height H -o OUT.pcnd [--background '#RRGGBBAA'] [--policy ID] [--seed N] [--overwrite] [--json]
-  inspect FILE.pcnd [--expect-input-sha256 HEX] [--json]
-  schema batch|batch-v2 [--json]
-  capabilities [--json]
-  apply FILE.pcnd --operations BATCH.json -o OUT.pcnd [--expect-input-sha256 HEX] [--overwrite] [--json]
-  render FILE.pcnd -o OUT.png|.bmp|.jpg [--format F] [--quality N] [--expect-input-sha256 HEX]
-         [--allow-loss flatten,hidden-rgb,lossy-jpeg,alpha-discarded] [--overwrite] [--json]
-  import IMAGE.png|.bmp|.jpg -o OUT.pcnd [--allow-loss CODES] [--overwrite] [--json]
-
-Exit status: 0 ok; 1 internal; 2 invocation/schema; 3 unsupported; 4 stale or conflicting input;
-5 resource/cancelled; 6 file/codec/save failure.
-";
-
-fn dispatch(argv: &[String]) -> Reply {
-    let rest = &argv[argv.len().min(1)..];
-    match argv.first().map(String::as_str) {
-        Some("new") => commands::new(rest),
-        Some("inspect") => commands::inspect(rest),
-        Some("schema") => commands::schema(rest),
-        Some("capabilities") => commands::capabilities(rest),
-        Some("apply") => commands::apply(rest),
-        Some("render") => commands::render(rest),
-        Some("import") => commands::import(rest),
-        Some("--help" | "-h" | "help") => Reply {
-            stdout: HELP.as_bytes().to_vec(),
-            stderr: String::new(),
-            exit: 0,
-        },
-        Some("--version" | "-V") => Reply {
-            stdout: format!("paintcraft-cli {}\n", env!("CARGO_PKG_VERSION")).into_bytes(),
-            stderr: String::new(),
-            exit: 0,
-        },
-        other => Reply {
-            stdout: Vec::new(),
-            stderr: format!(
-                "error: {}\n\n{HELP}",
-                other.map_or("missing command".to_owned(), |c| format!(
-                    "unknown command {c:?}"
-                ))
-            ),
-            exit: 2,
-        },
-    }
+#[derive(Debug, Subcommand)]
+enum Command {
+    /// Create a native document.
+    New(commands::new::Options),
+    /// Inspect a document and acquire its concurrency ticket.
+    Inspect(commands::inspect::Options),
+    /// Print an automation JSON schema.
+    Schema(commands::schema::Options),
+    /// Report implemented capabilities and qualification status.
+    Capabilities(commands::capabilities::Options),
+    /// Apply an atomic batch of edits.
+    Apply(commands::apply::Options),
+    /// Render a document to an image.
+    Render(commands::render::Options),
+    /// Import an image as a native document.
+    Import(commands::import::Options),
 }
 
 fn main() -> ExitCode {
-    let argv: Vec<String> = std::env::args().skip(1).collect();
-    let reply = dispatch(&argv);
-    // A broken pipe on stdout must not turn a completed command into a panic.
+    let cli = Cli::parse();
+    let reply = match cli.command {
+        Command::New(a) => commands::new::run(a, cli.json),
+        Command::Inspect(a) => commands::inspect::run(a, cli.json),
+        Command::Schema(a) => commands::schema::run(a, cli.json),
+        Command::Capabilities(a) => commands::capabilities::run(a, cli.json),
+        Command::Apply(a) => commands::apply::run(a, cli.json),
+        Command::Render(a) => commands::render::run(a, cli.json),
+        Command::Import(a) => commands::import::run(a, cli.json),
+    };
     let _ = std::io::stdout().write_all(&reply.stdout);
     eprint!("{}", reply.stderr);
     ExitCode::from(reply.exit)
