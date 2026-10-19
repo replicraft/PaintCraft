@@ -12,6 +12,9 @@ use std::sync::Arc;
 
 use paintcraft_core::types::{Error, ErrorCode, Rect, Result, Rgba};
 
+mod rows;
+pub use rows::RowSpan;
+
 pub const TILE_EDGE: u32 = 256;
 const TILE_PIXELS: usize = (TILE_EDGE as usize) * (TILE_EDGE as usize);
 

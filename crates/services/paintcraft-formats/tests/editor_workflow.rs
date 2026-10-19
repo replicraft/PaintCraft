@@ -67,17 +67,27 @@ fn layered_edit_history_native_reopen_and_independent_png_decode_agree() {
     s.redo().unwrap();
     assert!(s.document().same_semantics(&after));
     let bytes = pcnd::write(s.document()).unwrap();
-    let reopened = pcnd::read(&bytes).unwrap();
+    let dir = std::env::temp_dir().join(format!(
+        "paintcraft-backend-workflow-{}",
+        uuid::Uuid::new_v4()
+    ));
+    std::fs::create_dir_all(&dir).unwrap();
+    let native = dir.join("edited.pcnd");
+    assert!(paintcraft_formats::save::save(&native, &bytes, false).is_success());
+    let reopened = pcnd::read(&std::fs::read(native).unwrap()).unwrap();
     assert!(reopened.same_semantics(&after));
     assert_eq!(reopened.state_id, after.state_id);
     assert_eq!(render_flat(&reopened).unwrap(), expected);
     let encoded =
         export::export_flat(&reopened, ImageFormat::Png, 90, &["flatten".into()]).unwrap();
-    let mut reader = png::Decoder::new(std::io::Cursor::new(encoded.bytes))
+    let png_path = dir.join("export.png");
+    assert!(paintcraft_formats::save::save(&png_path, &encoded.bytes, false).is_success());
+    let mut reader = png::Decoder::new(std::io::Cursor::new(std::fs::read(png_path).unwrap()))
         .read_info()
         .unwrap();
     let mut pixels = vec![0; reader.output_buffer_size().unwrap()];
     let info = reader.next_frame(&mut pixels).unwrap();
     assert_eq!((info.width, info.height), (2, 2));
     assert_eq!(&pixels[..info.buffer_size()], expected);
+    std::fs::remove_dir_all(dir).unwrap();
 }

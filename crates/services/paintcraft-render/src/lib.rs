@@ -8,6 +8,7 @@
 use paintcraft_core::types::{Error, ErrorCode, Result, Rgba};
 
 use paintcraft_document::Document;
+use paintcraft_raster::RowSpan;
 
 /// Largest canvas this renderer will materialize (provisional admission limit).
 pub const RENDER_PIXELS_MAX: u64 = 67_108_864;
@@ -28,7 +29,6 @@ pub fn render_cancellable(doc: &Document, check: impl Fn() -> Result<()>) -> Res
     let width = w as usize;
     let mut out = vec![0u8; width * h as usize * 4];
     let canvas = doc.canvas_rect();
-    let mut span = Vec::new();
     for layer in doc.layers_in_order() {
         if !layer.visible || layer.opacity == 0 {
             continue;
@@ -36,23 +36,46 @@ pub fn render_cancellable(doc: &Document, check: impl Fn() -> Result<()>) -> Res
         let Some(area) = canvas.intersect(&layer.extent()) else {
             continue;
         };
-        span.resize(area.width() as usize * 4, 0);
         for y in area.y0..area.y1 {
             check()?;
-            layer
-                .raster
-                .read_span(y - layer.origin.1, area.x0 - layer.origin.0, &mut span);
-            let row = &mut out[(y as usize * width + area.x0 as usize) * 4..][..span.len()];
-            for (dst, src) in row
-                .as_chunks_mut::<4>()
-                .0
-                .iter_mut()
-                .zip(span.as_chunks::<4>().0)
-            {
-                *dst = Rgba(*src)
-                    .with_opacity(layer.opacity)
-                    .source_over(Rgba(*dst))
-                    .0;
+            let mut row = &mut out[(y as usize * width + area.x0 as usize) * 4..]
+                [..area.width() as usize * 4];
+            for span in layer.raster.row_spans(
+                (y - layer.origin.1) as u32,
+                (area.x0 - layer.origin.0) as u32,
+                area.width() as u32,
+            )? {
+                let (dst, rest) = row.split_at_mut(span.pixel_count() * 4);
+                row = rest;
+                match span {
+                    RowSpan::Uniform { color, .. } => {
+                        let color = color.with_opacity(layer.opacity);
+                        match color.a() {
+                            0 => {}
+                            255 => dst.as_chunks_mut::<4>().0.fill(color.0),
+                            _ => {
+                                for pixel in dst.as_chunks_mut::<4>().0 {
+                                    *pixel = color.source_over(Rgba(*pixel)).0;
+                                }
+                            }
+                        }
+                    }
+                    RowSpan::Pixels(src) => {
+                        for (dst, src) in dst
+                            .as_chunks_mut::<4>()
+                            .0
+                            .iter_mut()
+                            .zip(src.as_chunks::<4>().0)
+                        {
+                            let color = Rgba(*src).with_opacity(layer.opacity);
+                            match color.a() {
+                                0 => {}
+                                255 => *dst = color.0,
+                                _ => *dst = color.source_over(Rgba(*dst)).0,
+                            }
+                        }
+                    }
+                }
             }
         }
     }
