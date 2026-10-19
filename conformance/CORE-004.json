@@ -1,0 +1,112 @@
+{
+ "schema": "paintcraft.conformance/v1",
+ "id": "CORE-004",
+ "title": "Clipping to canvas and layer bounds with a negative layer origin",
+ "policy": "paintcraft.core/default-v1",
+ "requirements": [
+  "CORE-03"
+ ],
+ "oracle": "scripts/reference_engine.py",
+ "initial": {
+  "new": {
+   "width": 4,
+   "height": 3,
+   "background": null,
+   "seed": 0,
+   "policy": "paintcraft.core/default-v1"
+  }
+ },
+ "steps": [
+  {
+   "action": "apply",
+   "batch": {
+    "schema": "paintcraft.batch/v1",
+    "atomic": true,
+    "policy": "paintcraft.core/default-v1",
+    "base": {
+     "state_id": "261ea529-29f0-5a2d-b241-188711dfad3e",
+     "publication_epoch": "0"
+    },
+    "operations": [
+     {
+      "op": "layer.add",
+      "ref": "ink",
+      "name": "Ink",
+      "width": 4,
+      "height": 4,
+      "origin": {
+       "x": -2,
+       "y": -1
+      },
+      "default_pixel": "#00000000"
+     },
+     {
+      "op": "raster.fill_rect",
+      "layer_ref": {
+       "ref": "ink"
+      },
+      "rect": {
+       "x": -10,
+       "y": -10,
+       "width": 30,
+       "height": 30
+      },
+      "color": "#FF0000FF",
+      "mode": "replace"
+     }
+    ]
+   },
+   "expect": {
+    "schema": "paintcraft.result/v1",
+    "committed": true,
+    "state_id": "0af81a2b-180c-589d-8660-ca64c872f6d0",
+    "publication_epoch": "1",
+    "history_id": "91d0ede8-bc34-578f-8034-a03c73a8892a",
+    "aliases": {
+     "ink": "ccf8582b-d722-5c50-a946-ff3e7954aa48"
+    },
+    "warnings": []
+   }
+  },
+  {
+   "action": "check",
+   "expect": {
+    "dirty": true,
+    "selection": {
+     "state": "inactive"
+    },
+    "document": {
+     "document_id": "c803b485-0efd-5ee1-b11d-d72ac241e6c5",
+     "state_id": "0af81a2b-180c-589d-8660-ca64c872f6d0",
+     "canvas": {
+      "width": 4,
+      "height": 3
+     },
+     "roots": [
+      "ccf8582b-d722-5c50-a946-ff3e7954aa48"
+     ],
+     "layers": [
+      {
+       "id": "ccf8582b-d722-5c50-a946-ff3e7954aa48",
+       "name": "Ink",
+       "visible": true,
+       "opacity_u8": 255,
+       "origin": {
+        "x": -2,
+        "y": -1
+       },
+       "width": 4,
+       "height": 4,
+       "default_pixel": "#00000000",
+       "samples_sha256": "3534ec2fd710207de2da13d06c8317d2bb5fc94535d99f04f1c7505400a9730f",
+       "samples_rgba_hex": "000000000000000000000000000000000000000000000000ff0000ffff0000ff0000000000000000ff0000ffff0000ff0000000000000000ff0000ffff0000ff"
+      }
+     ]
+    },
+    "render_sha256": "9b949a62f712b68d4c15235b705d14a195881f384130f319c969eceda154e2a2",
+    "pcnd_sha256": "7bade3c471eb12225f27e71172becbaaba2b11ca889d3093c9d0d9378a879990",
+    "render_rgba_hex": "ff0000ffff0000ff0000000000000000ff0000ffff0000ff0000000000000000ff0000ffff0000ff0000000000000000"
+   }
+  }
+ ]
+}

@@ -1,0 +1,232 @@
+{
+ "schema": "paintcraft.conformance/v1",
+ "id": "CORE-003",
+ "title": "Replace stores hidden RGB; source-over integer formula; alpha-zero source is a no-op",
+ "policy": "paintcraft.core/default-v1",
+ "requirements": [
+  "CORE-02",
+  "CORE-07"
+ ],
+ "oracle": "scripts/reference_engine.py",
+ "initial": {
+  "new": {
+   "width": 4,
+   "height": 2,
+   "background": null,
+   "seed": 0,
+   "policy": "paintcraft.core/default-v1"
+  }
+ },
+ "steps": [
+  {
+   "action": "apply",
+   "batch": {
+    "schema": "paintcraft.batch/v1",
+    "atomic": true,
+    "policy": "paintcraft.core/default-v1",
+    "base": {
+     "state_id": "fd05d052-8c2b-5298-a1c8-524156133230",
+     "publication_epoch": "0"
+    },
+    "operations": [
+     {
+      "op": "layer.add",
+      "ref": "ink",
+      "name": "Ink",
+      "width": 4,
+      "height": 2,
+      "origin": {
+       "x": 0,
+       "y": 0
+      },
+      "default_pixel": "#0000FFFF"
+     },
+     {
+      "op": "raster.fill_rect",
+      "layer_ref": {
+       "ref": "ink"
+      },
+      "rect": {
+       "x": 0,
+       "y": 0,
+       "width": 1,
+       "height": 1
+      },
+      "color": "#FF000000",
+      "mode": "replace"
+     },
+     {
+      "op": "raster.fill_rect",
+      "layer_ref": {
+       "ref": "ink"
+      },
+      "rect": {
+       "x": 1,
+       "y": 0,
+       "width": 1,
+       "height": 1
+      },
+      "color": "#FF000080",
+      "mode": "source-over"
+     },
+     {
+      "op": "raster.fill_rect",
+      "layer_ref": {
+       "ref": "ink"
+      },
+      "rect": {
+       "x": 2,
+       "y": 0,
+       "width": 2,
+       "height": 2
+      },
+      "color": "#00FF0040",
+      "mode": "source-over"
+     },
+     {
+      "op": "raster.fill_rect",
+      "layer_ref": {
+       "ref": "ink"
+      },
+      "rect": {
+       "x": 3,
+       "y": 1,
+       "width": 1,
+       "height": 1
+      },
+      "color": "#FF00FF00",
+      "mode": "source-over"
+     }
+    ]
+   },
+   "expect": {
+    "schema": "paintcraft.result/v1",
+    "committed": true,
+    "state_id": "7abc2d53-9f68-5f8e-9670-1d3f89d458af",
+    "publication_epoch": "1",
+    "history_id": "147ba717-c123-5781-9deb-80e5fef844bb",
+    "aliases": {
+     "ink": "43f76c91-3506-50e2-9d33-b4065b3abcbe"
+    },
+    "warnings": []
+   }
+  },
+  {
+   "action": "check",
+   "expect": {
+    "dirty": true,
+    "selection": {
+     "state": "inactive"
+    },
+    "document": {
+     "document_id": "4b2be2f9-a626-5f4d-acab-6d48614d3d0a",
+     "state_id": "7abc2d53-9f68-5f8e-9670-1d3f89d458af",
+     "canvas": {
+      "width": 4,
+      "height": 2
+     },
+     "roots": [
+      "43f76c91-3506-50e2-9d33-b4065b3abcbe"
+     ],
+     "layers": [
+      {
+       "id": "43f76c91-3506-50e2-9d33-b4065b3abcbe",
+       "name": "Ink",
+       "visible": true,
+       "opacity_u8": 255,
+       "origin": {
+        "x": 0,
+        "y": 0
+       },
+       "width": 4,
+       "height": 2,
+       "default_pixel": "#0000FFFF",
+       "samples_sha256": "87b7991d81f7a640e9ac39be5358f36aada6313b01aeed1cbf040278936c53fc",
+       "samples_rgba_hex": "ff00000080007fff0040bfff0040bfff0000ffff0000ffff0040bfff0040bfff"
+      }
+     ]
+    },
+    "render_sha256": "0456743b51b031ea880ebaff89cf1751503f69ae15942d583843624925a1084b",
+    "pcnd_sha256": "125cfc9c55f3bc65563f176ab3c88e3aa07e6e69a0275d5e005ed9baadf3bbc9",
+    "render_rgba_hex": "0000000080007fff0040bfff0040bfff0000ffff0000ffff0040bfff0040bfff"
+   }
+  },
+  {
+   "action": "apply",
+   "batch": {
+    "schema": "paintcraft.batch/v1",
+    "atomic": true,
+    "policy": "paintcraft.core/default-v1",
+    "base": {
+     "state_id": "7abc2d53-9f68-5f8e-9670-1d3f89d458af",
+     "publication_epoch": "1"
+    },
+    "operations": [
+     {
+      "op": "raster.fill_rect",
+      "layer_ref": {
+       "id": "43f76c91-3506-50e2-9d33-b4065b3abcbe"
+      },
+      "rect": {
+       "x": 0,
+       "y": 0,
+       "width": 4,
+       "height": 2
+      },
+      "color": "#12345600",
+      "mode": "source-over"
+     }
+    ]
+   },
+   "expect": {
+    "schema": "paintcraft.result/v1",
+    "committed": false,
+    "state_id": "7abc2d53-9f68-5f8e-9670-1d3f89d458af",
+    "publication_epoch": "1",
+    "history_id": null,
+    "aliases": {},
+    "warnings": []
+   }
+  },
+  {
+   "action": "check",
+   "expect": {
+    "dirty": true,
+    "selection": {
+     "state": "inactive"
+    },
+    "document": {
+     "document_id": "4b2be2f9-a626-5f4d-acab-6d48614d3d0a",
+     "state_id": "7abc2d53-9f68-5f8e-9670-1d3f89d458af",
+     "canvas": {
+      "width": 4,
+      "height": 2
+     },
+     "roots": [
+      "43f76c91-3506-50e2-9d33-b4065b3abcbe"
+     ],
+     "layers": [
+      {
+       "id": "43f76c91-3506-50e2-9d33-b4065b3abcbe",
+       "name": "Ink",
+       "visible": true,
+       "opacity_u8": 255,
+       "origin": {
+        "x": 0,
+        "y": 0
+       },
+       "width": 4,
+       "height": 2,
+       "default_pixel": "#0000FFFF",
+       "samples_sha256": "87b7991d81f7a640e9ac39be5358f36aada6313b01aeed1cbf040278936c53fc",
+       "samples_rgba_hex": "ff00000080007fff0040bfff0040bfff0000ffff0000ffff0040bfff0040bfff"
+      }
+     ]
+    },
+    "render_sha256": "0456743b51b031ea880ebaff89cf1751503f69ae15942d583843624925a1084b",
+    "pcnd_sha256": "125cfc9c55f3bc65563f176ab3c88e3aa07e6e69a0275d5e005ed9baadf3bbc9",
+    "render_rgba_hex": "0000000080007fff0040bfff0040bfff0000ffff0000ffff0040bfff0040bfff"
+   }
+  }
+ ]
+}

@@ -1,0 +1,63 @@
+{
+ "schema": "paintcraft.conformance/v1",
+ "id": "CORE-001",
+ "title": "New document with a requested white background layer stores no blocks",
+ "policy": "paintcraft.core/default-v1",
+ "requirements": [
+  "CORE-01",
+  "CORE-08",
+  "NATIVE-09"
+ ],
+ "oracle": "scripts/reference_engine.py",
+ "initial": {
+  "new": {
+   "width": 4,
+   "height": 3,
+   "background": "#FFFFFFFF",
+   "seed": 0,
+   "policy": "paintcraft.core/default-v1"
+  }
+ },
+ "steps": [
+  {
+   "action": "check",
+   "expect": {
+    "dirty": false,
+    "selection": {
+     "state": "inactive"
+    },
+    "document": {
+     "document_id": "0e8f7e05-8919-5361-90f6-f16cacd8394d",
+     "state_id": "8080ea30-acca-57b8-9db6-6b9df3d3832a",
+     "canvas": {
+      "width": 4,
+      "height": 3
+     },
+     "roots": [
+      "4fbc9dcc-3dec-51af-88c9-3bf6a16bf1a5"
+     ],
+     "layers": [
+      {
+       "id": "4fbc9dcc-3dec-51af-88c9-3bf6a16bf1a5",
+       "name": "Background",
+       "visible": true,
+       "opacity_u8": 255,
+       "origin": {
+        "x": 0,
+        "y": 0
+       },
+       "width": 4,
+       "height": 3,
+       "default_pixel": "#FFFFFFFF",
+       "samples_sha256": "80a76a18acf8cb64fec3a659ffc4bab4a87cd9a6fde4dab2161a8751d136c9d2",
+       "samples_rgba_hex": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      }
+     ]
+    },
+    "render_sha256": "80a76a18acf8cb64fec3a659ffc4bab4a87cd9a6fde4dab2161a8751d136c9d2",
+    "pcnd_sha256": "a17d746d817d2af08c03de9b6e0ade5a5629c4d38fb7cf120f120e0485e6fa59",
+    "render_rgba_hex": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+   }
+  }
+ ]
+}

@@ -1,0 +1,371 @@
+{
+ "schema": "paintcraft.conformance/v1",
+ "id": "CORE-006",
+ "title": "Pencil: all octants, single point, shared joint once, revisits re-blend",
+ "policy": "paintcraft.core/default-v1",
+ "requirements": [
+  "CORE-04"
+ ],
+ "oracle": "scripts/reference_engine.py",
+ "initial": {
+  "new": {
+   "width": 7,
+   "height": 7,
+   "background": null,
+   "seed": 0,
+   "policy": "paintcraft.core/default-v1"
+  }
+ },
+ "steps": [
+  {
+   "action": "apply",
+   "batch": {
+    "schema": "paintcraft.batch/v1",
+    "atomic": true,
+    "policy": "paintcraft.core/default-v1",
+    "base": {
+     "state_id": "2deda1d9-9287-54ab-b003-d9e486845182",
+     "publication_epoch": "0"
+    },
+    "operations": [
+     {
+      "op": "layer.add",
+      "ref": "ink",
+      "name": "Ink",
+      "width": 7,
+      "height": 7,
+      "origin": {
+       "x": 0,
+       "y": 0
+      },
+      "default_pixel": "#00000000"
+     },
+     {
+      "op": "raster.pencil_path",
+      "layer_ref": {
+       "ref": "ink"
+      },
+      "points": [
+       {
+        "x": 3,
+        "y": 3
+       },
+       {
+        "x": 6,
+        "y": 4
+       }
+      ],
+      "color": "#FF0000FF",
+      "mode": "replace"
+     },
+     {
+      "op": "raster.pencil_path",
+      "layer_ref": {
+       "ref": "ink"
+      },
+      "points": [
+       {
+        "x": 3,
+        "y": 3
+       },
+       {
+        "x": 5,
+        "y": 6
+       }
+      ],
+      "color": "#FF0000FF",
+      "mode": "replace"
+     },
+     {
+      "op": "raster.pencil_path",
+      "layer_ref": {
+       "ref": "ink"
+      },
+      "points": [
+       {
+        "x": 3,
+        "y": 3
+       },
+       {
+        "x": 2,
+        "y": 6
+       }
+      ],
+      "color": "#FF0000FF",
+      "mode": "replace"
+     },
+     {
+      "op": "raster.pencil_path",
+      "layer_ref": {
+       "ref": "ink"
+      },
+      "points": [
+       {
+        "x": 3,
+        "y": 3
+       },
+       {
+        "x": 0,
+        "y": 5
+       }
+      ],
+      "color": "#FF0000FF",
+      "mode": "replace"
+     },
+     {
+      "op": "raster.pencil_path",
+      "layer_ref": {
+       "ref": "ink"
+      },
+      "points": [
+       {
+        "x": 3,
+        "y": 3
+       },
+       {
+        "x": 0,
+        "y": 2
+       }
+      ],
+      "color": "#FF0000FF",
+      "mode": "replace"
+     },
+     {
+      "op": "raster.pencil_path",
+      "layer_ref": {
+       "ref": "ink"
+      },
+      "points": [
+       {
+        "x": 3,
+        "y": 3
+       },
+       {
+        "x": 1,
+        "y": 0
+       }
+      ],
+      "color": "#FF0000FF",
+      "mode": "replace"
+     },
+     {
+      "op": "raster.pencil_path",
+      "layer_ref": {
+       "ref": "ink"
+      },
+      "points": [
+       {
+        "x": 3,
+        "y": 3
+       },
+       {
+        "x": 4,
+        "y": 0
+       }
+      ],
+      "color": "#FF0000FF",
+      "mode": "replace"
+     },
+     {
+      "op": "raster.pencil_path",
+      "layer_ref": {
+       "ref": "ink"
+      },
+      "points": [
+       {
+        "x": 3,
+        "y": 3
+       },
+       {
+        "x": 6,
+        "y": 1
+       }
+      ],
+      "color": "#FF0000FF",
+      "mode": "replace"
+     }
+    ]
+   },
+   "expect": {
+    "schema": "paintcraft.result/v1",
+    "committed": true,
+    "state_id": "4f185c5e-5e46-549f-962c-d1d1e9d34107",
+    "publication_epoch": "1",
+    "history_id": "0f76d953-4dcf-5393-99f8-e1a9962c7695",
+    "aliases": {
+     "ink": "2bb4d79b-ce34-5468-a012-d18447105118"
+    },
+    "warnings": []
+   }
+  },
+  {
+   "action": "check",
+   "expect": {
+    "dirty": true,
+    "selection": {
+     "state": "inactive"
+    },
+    "document": {
+     "document_id": "a72babd8-5dbb-563c-ab40-46b9854d2c8a",
+     "state_id": "4f185c5e-5e46-549f-962c-d1d1e9d34107",
+     "canvas": {
+      "width": 7,
+      "height": 7
+     },
+     "roots": [
+      "2bb4d79b-ce34-5468-a012-d18447105118"
+     ],
+     "layers": [
+      {
+       "id": "2bb4d79b-ce34-5468-a012-d18447105118",
+       "name": "Ink",
+       "visible": true,
+       "opacity_u8": 255,
+       "origin": {
+        "x": 0,
+        "y": 0
+       },
+       "width": 7,
+       "height": 7,
+       "default_pixel": "#00000000",
+       "samples_sha256": "78c6a36a1c05741b52ae9c87e36209de64270f4a36da64ce3e1c590e03534c9f",
+       "samples_rgba_hex": "00000000ff0000ff0000000000000000ff0000ff00000000000000000000000000000000ff0000ff00000000ff0000ff00000000ff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ff000000000000000000000000ff0000ffff0000ffff0000ff000000000000000000000000ff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ff00000000ff0000ff00000000ff0000ff00000000000000000000000000000000ff0000ff0000000000000000ff0000ff00000000"
+      }
+     ]
+    },
+    "render_sha256": "78c6a36a1c05741b52ae9c87e36209de64270f4a36da64ce3e1c590e03534c9f",
+    "pcnd_sha256": "372e1adc585dea5e0ba99f1b45a325dab220fd4478f45420e8095fa08ec80cc3",
+    "render_rgba_hex": "00000000ff0000ff0000000000000000ff0000ff00000000000000000000000000000000ff0000ff00000000ff0000ff00000000ff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ff000000000000000000000000ff0000ffff0000ffff0000ff000000000000000000000000ff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ff00000000ff0000ff00000000ff0000ff00000000000000000000000000000000ff0000ff0000000000000000ff0000ff00000000"
+   }
+  },
+  {
+   "action": "apply",
+   "batch": {
+    "schema": "paintcraft.batch/v1",
+    "atomic": true,
+    "policy": "paintcraft.core/default-v1",
+    "base": {
+     "state_id": "4f185c5e-5e46-549f-962c-d1d1e9d34107",
+     "publication_epoch": "1"
+    },
+    "operations": [
+     {
+      "op": "layer.add",
+      "ref": "dot",
+      "name": "Dot",
+      "width": 7,
+      "height": 7,
+      "origin": {
+       "x": 0,
+       "y": 0
+      },
+      "default_pixel": "#00000000"
+     },
+     {
+      "op": "raster.pencil_path",
+      "layer_ref": {
+       "ref": "dot"
+      },
+      "points": [
+       {
+        "x": 0,
+        "y": 6
+       }
+      ],
+      "color": "#00FF00FF",
+      "mode": "replace"
+     },
+     {
+      "op": "raster.pencil_path",
+      "layer_ref": {
+       "ref": "dot"
+      },
+      "points": [
+       {
+        "x": 4,
+        "y": 6
+       },
+       {
+        "x": 6,
+        "y": 6
+       },
+       {
+        "x": 4,
+        "y": 6
+       }
+      ],
+      "color": "#0000FF80",
+      "mode": "source-over"
+     }
+    ]
+   },
+   "expect": {
+    "schema": "paintcraft.result/v1",
+    "committed": true,
+    "state_id": "082657df-4ad9-5638-9363-d9f98954196e",
+    "publication_epoch": "2",
+    "history_id": "eb367502-9b12-56f1-8f1d-6deb17e7a5c8",
+    "aliases": {
+     "dot": "58387ff0-89a8-560f-9417-6eb0dbb9a08d"
+    },
+    "warnings": []
+   }
+  },
+  {
+   "action": "check",
+   "expect": {
+    "dirty": true,
+    "selection": {
+     "state": "inactive"
+    },
+    "document": {
+     "document_id": "a72babd8-5dbb-563c-ab40-46b9854d2c8a",
+     "state_id": "082657df-4ad9-5638-9363-d9f98954196e",
+     "canvas": {
+      "width": 7,
+      "height": 7
+     },
+     "roots": [
+      "2bb4d79b-ce34-5468-a012-d18447105118",
+      "58387ff0-89a8-560f-9417-6eb0dbb9a08d"
+     ],
+     "layers": [
+      {
+       "id": "2bb4d79b-ce34-5468-a012-d18447105118",
+       "name": "Ink",
+       "visible": true,
+       "opacity_u8": 255,
+       "origin": {
+        "x": 0,
+        "y": 0
+       },
+       "width": 7,
+       "height": 7,
+       "default_pixel": "#00000000",
+       "samples_sha256": "78c6a36a1c05741b52ae9c87e36209de64270f4a36da64ce3e1c590e03534c9f",
+       "samples_rgba_hex": "00000000ff0000ff0000000000000000ff0000ff00000000000000000000000000000000ff0000ff00000000ff0000ff00000000ff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ff000000000000000000000000ff0000ffff0000ffff0000ff000000000000000000000000ff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ff00000000ff0000ff00000000ff0000ff00000000000000000000000000000000ff0000ff0000000000000000ff0000ff00000000"
+      },
+      {
+       "id": "58387ff0-89a8-560f-9417-6eb0dbb9a08d",
+       "name": "Dot",
+       "visible": true,
+       "opacity_u8": 255,
+       "origin": {
+        "x": 0,
+        "y": 0
+       },
+       "width": 7,
+       "height": 7,
+       "default_pixel": "#00000000",
+       "samples_sha256": "1a251318b0cd0aaf391f67e8c22ece9510a3fe61c3bf7161a2e5e3a6b0020f00",
+       "samples_rgba_hex": "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ff00ff0000000000000000000000000000ffc00000ffc00000ff80"
+      }
+     ]
+    },
+    "render_sha256": "b5cc324d3ee4041805d908b9115594cb275bd4566cf7600ffc216e68e85f1d5e",
+    "pcnd_sha256": "19c13381e54ca09f1f263cdf7b0131375fe62e0fd03b05ff8e56ef3bb52ea5f0",
+    "render_rgba_hex": "00000000ff0000ff0000000000000000ff0000ff00000000000000000000000000000000ff0000ff00000000ff0000ff00000000ff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ff000000000000000000000000ff0000ffff0000ffff0000ff000000000000000000000000ff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ff00000000ff0000ff00000000ff0000ff000000000000000000ff00ff00000000ff0000ff000000000000ffc03f00c0ff0000ff80"
+   }
+  }
+ ]
+}

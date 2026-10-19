@@ -1,0 +1,162 @@
+{
+ "schema": "paintcraft.conformance/v1",
+ "id": "CORE-007",
+ "title": "Pencil pixel budget is cumulative per batch and checked before expansion",
+ "policy": "paintcraft.core/default-v1",
+ "requirements": [
+  "CORE-04",
+  "CORE-06"
+ ],
+ "oracle": "scripts/reference_engine.py",
+ "initial": {
+  "new": {
+   "width": 2,
+   "height": 2,
+   "background": null,
+   "seed": 0,
+   "policy": "paintcraft.core/default-v1"
+  }
+ },
+ "steps": [
+  {
+   "action": "apply",
+   "batch": {
+    "schema": "paintcraft.batch/v1",
+    "atomic": true,
+    "policy": "paintcraft.core/default-v1",
+    "base": {
+     "state_id": "b5e42f74-bd17-5474-9676-9116fd156c15",
+     "publication_epoch": "0"
+    },
+    "operations": [
+     {
+      "op": "layer.add",
+      "ref": "ink",
+      "name": "Ink",
+      "width": 2,
+      "height": 2,
+      "origin": {
+       "x": 0,
+       "y": 0
+      },
+      "default_pixel": "#00000000"
+     },
+     {
+      "op": "raster.pencil_path",
+      "layer_ref": {
+       "ref": "ink"
+      },
+      "points": [
+       {
+        "x": 0,
+        "y": 0
+       },
+       {
+        "x": 16777216,
+        "y": 0
+       }
+      ],
+      "color": "#FF0000FF",
+      "mode": "replace"
+     }
+    ]
+   },
+   "expect": {
+    "schema": "paintcraft.error/v1",
+    "committed": false,
+    "code": "resource.limit",
+    "operation_index": 1
+   }
+  },
+  {
+   "action": "apply",
+   "batch": {
+    "schema": "paintcraft.batch/v1",
+    "atomic": true,
+    "policy": "paintcraft.core/default-v1",
+    "base": {
+     "state_id": "b5e42f74-bd17-5474-9676-9116fd156c15",
+     "publication_epoch": "0"
+    },
+    "operations": [
+     {
+      "op": "layer.add",
+      "ref": "ink",
+      "name": "Ink",
+      "width": 2,
+      "height": 2,
+      "origin": {
+       "x": 0,
+       "y": 0
+      },
+      "default_pixel": "#00000000"
+     },
+     {
+      "op": "raster.pencil_path",
+      "layer_ref": {
+       "ref": "ink"
+      },
+      "points": [
+       {
+        "x": 0,
+        "y": 0
+       },
+       {
+        "x": 9000000,
+        "y": 0
+       }
+      ],
+      "color": "#FF0000FF",
+      "mode": "replace"
+     },
+     {
+      "op": "raster.pencil_path",
+      "layer_ref": {
+       "ref": "ink"
+      },
+      "points": [
+       {
+        "x": 0,
+        "y": 1
+       },
+       {
+        "x": 9000000,
+        "y": 1
+       }
+      ],
+      "color": "#FF0000FF",
+      "mode": "replace"
+     }
+    ]
+   },
+   "expect": {
+    "schema": "paintcraft.error/v1",
+    "committed": false,
+    "code": "resource.limit",
+    "operation_index": 2
+   }
+  },
+  {
+   "action": "check",
+   "expect": {
+    "dirty": false,
+    "selection": {
+     "state": "inactive"
+    },
+    "document": {
+     "document_id": "5669d8cb-26b2-521b-992c-e4d912048823",
+     "state_id": "b5e42f74-bd17-5474-9676-9116fd156c15",
+     "canvas": {
+      "width": 2,
+      "height": 2
+     },
+     "roots": [],
+     "layers": []
+    },
+    "render_sha256": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+    "pcnd_sha256": "aadc4455a1ef47d8184e7963f0bdfc9b6ae1ddc214d7fcea74c43efcfbc3fd1d",
+    "render_rgba_hex": "00000000000000000000000000000000"
+   }
+  }
+ ]
+}

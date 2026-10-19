@@ -1,0 +1,207 @@
+{
+ "schema": "paintcraft.conformance/v1",
+ "id": "CORE-008-top-right",
+ "title": "Canvas resize anchor top-right: odd growth and shrink, selection translation",
+ "policy": "paintcraft.core/default-v1",
+ "requirements": [
+  "CORE-05"
+ ],
+ "oracle": "scripts/reference_engine.py",
+ "initial": {
+  "new": {
+   "width": 4,
+   "height": 3,
+   "background": "#FFFFFFFF",
+   "seed": 0,
+   "policy": "paintcraft.core/default-v1"
+  }
+ },
+ "steps": [
+  {
+   "action": "apply",
+   "batch": {
+    "schema": "paintcraft.batch/v1",
+    "atomic": true,
+    "policy": "paintcraft.core/default-v1",
+    "base": {
+     "state_id": "8080ea30-acca-57b8-9db6-6b9df3d3832a",
+     "publication_epoch": "0"
+    },
+    "operations": [
+     {
+      "op": "selection.set_rect",
+      "rect": {
+       "x": 1,
+       "y": 1,
+       "width": 2,
+       "height": 1
+      }
+     }
+    ]
+   },
+   "expect": {
+    "schema": "paintcraft.result/v1",
+    "committed": true,
+    "state_id": "8080ea30-acca-57b8-9db6-6b9df3d3832a",
+    "publication_epoch": "1",
+    "history_id": "9e81a363-65c0-55dc-a7f0-7fa6d15051d5",
+    "aliases": {},
+    "warnings": []
+   }
+  },
+  {
+   "action": "apply",
+   "batch": {
+    "schema": "paintcraft.batch/v1",
+    "atomic": true,
+    "policy": "paintcraft.core/default-v1",
+    "base": {
+     "state_id": "8080ea30-acca-57b8-9db6-6b9df3d3832a",
+     "publication_epoch": "1"
+    },
+    "operations": [
+     {
+      "op": "canvas.resize",
+      "width": 7,
+      "height": 6,
+      "anchor": "top-right",
+      "outside_content": "preserve"
+     }
+    ]
+   },
+   "expect": {
+    "schema": "paintcraft.result/v1",
+    "committed": true,
+    "state_id": "f8a3c482-6319-56c3-801c-919199a894bb",
+    "publication_epoch": "2",
+    "history_id": "b6883f49-b414-5478-a320-6ae8a0140b81",
+    "aliases": {},
+    "warnings": []
+   }
+  },
+  {
+   "action": "check",
+   "expect": {
+    "dirty": true,
+    "selection": {
+     "state": "active",
+     "rect": {
+      "x": 4,
+      "y": 1,
+      "width": 2,
+      "height": 1
+     }
+    },
+    "document": {
+     "document_id": "0e8f7e05-8919-5361-90f6-f16cacd8394d",
+     "state_id": "f8a3c482-6319-56c3-801c-919199a894bb",
+     "canvas": {
+      "width": 7,
+      "height": 6
+     },
+     "roots": [
+      "4fbc9dcc-3dec-51af-88c9-3bf6a16bf1a5"
+     ],
+     "layers": [
+      {
+       "id": "4fbc9dcc-3dec-51af-88c9-3bf6a16bf1a5",
+       "name": "Background",
+       "visible": true,
+       "opacity_u8": 255,
+       "origin": {
+        "x": 3,
+        "y": 0
+       },
+       "width": 4,
+       "height": 3,
+       "default_pixel": "#FFFFFFFF",
+       "samples_sha256": "80a76a18acf8cb64fec3a659ffc4bab4a87cd9a6fde4dab2161a8751d136c9d2",
+       "samples_rgba_hex": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      }
+     ]
+    },
+    "render_sha256": "232d11c1d25e4b802614d3996706a46c31f178a53b0268f3684a4af0f3cc096b",
+    "pcnd_sha256": "9cb174eaa68bcb3d5b9ecf0c64e57a3f34a7ab024bca25fb5a98efa851679316",
+    "render_rgba_hex": "000000000000000000000000ffffffffffffffffffffffffffffffff000000000000000000000000ffffffffffffffffffffffffffffffff000000000000000000000000ffffffffffffffffffffffffffffffff000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+   }
+  },
+  {
+   "action": "undo",
+   "expect": {
+    "state_id": "8080ea30-acca-57b8-9db6-6b9df3d3832a",
+    "publication_epoch": "3",
+    "history_id": "9e81a363-65c0-55dc-a7f0-7fa6d15051d5"
+   }
+  },
+  {
+   "action": "apply",
+   "batch": {
+    "schema": "paintcraft.batch/v1",
+    "atomic": true,
+    "policy": "paintcraft.core/default-v1",
+    "base": {
+     "state_id": "8080ea30-acca-57b8-9db6-6b9df3d3832a",
+     "publication_epoch": "3"
+    },
+    "operations": [
+     {
+      "op": "canvas.resize",
+      "width": 1,
+      "height": 1,
+      "anchor": "top-right",
+      "outside_content": "preserve"
+     }
+    ]
+   },
+   "expect": {
+    "schema": "paintcraft.result/v1",
+    "committed": true,
+    "state_id": "4c717901-fc0f-536a-a839-7fe6f20b9a73",
+    "publication_epoch": "4",
+    "history_id": "a86deb58-bcc6-5327-be3b-fc04a77ba01d",
+    "aliases": {},
+    "warnings": []
+   }
+  },
+  {
+   "action": "check",
+   "expect": {
+    "dirty": true,
+    "selection": {
+     "state": "active-empty"
+    },
+    "document": {
+     "document_id": "0e8f7e05-8919-5361-90f6-f16cacd8394d",
+     "state_id": "4c717901-fc0f-536a-a839-7fe6f20b9a73",
+     "canvas": {
+      "width": 1,
+      "height": 1
+     },
+     "roots": [
+      "4fbc9dcc-3dec-51af-88c9-3bf6a16bf1a5"
+     ],
+     "layers": [
+      {
+       "id": "4fbc9dcc-3dec-51af-88c9-3bf6a16bf1a5",
+       "name": "Background",
+       "visible": true,
+       "opacity_u8": 255,
+       "origin": {
+        "x": -3,
+        "y": 0
+       },
+       "width": 4,
+       "height": 3,
+       "default_pixel": "#FFFFFFFF",
+       "samples_sha256": "80a76a18acf8cb64fec3a659ffc4bab4a87cd9a6fde4dab2161a8751d136c9d2",
+       "samples_rgba_hex": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      }
+     ]
+    },
+    "render_sha256": "ad95131bc0b799c0b1af477fb14fcf26a6a9f76079e48bf090acb7e8367bfd0e",
+    "pcnd_sha256": "f759851c805a052ed7a131bebc35e89705fd6ab8cc7ec5351ce80e59185ae2ed",
+    "render_rgba_hex": "ffffffff"
+   }
+  }
+ ]
+}

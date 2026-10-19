@@ -1,0 +1,44 @@
+{
+ "schema": "paintcraft.conformance/v1",
+ "id": "CORE-002",
+ "title": "Default new document: no layers, transparent render",
+ "policy": "paintcraft.core/default-v1",
+ "requirements": [
+  "CORE-01",
+  "CORE-08"
+ ],
+ "oracle": "scripts/reference_engine.py",
+ "initial": {
+  "new": {
+   "width": 3,
+   "height": 2,
+   "background": null,
+   "seed": 0,
+   "policy": "paintcraft.core/default-v1"
+  }
+ },
+ "steps": [
+  {
+   "action": "check",
+   "expect": {
+    "dirty": false,
+    "selection": {
+     "state": "inactive"
+    },
+    "document": {
+     "document_id": "7f71a824-9230-5459-80c4-ea8f2f372031",
+     "state_id": "a69d229f-394e-577f-b02e-7d9a4a6493cf",
+     "canvas": {
+      "width": 3,
+      "height": 2
+     },
+     "roots": [],
+     "layers": []
+    },
+    "render_sha256": "9d908ecfb6b256def8b49a7c504e6c889c4b0e41fe6ce3e01863dd7b61a20aa0",
+    "pcnd_sha256": "7f0ee3ee1b9fe069ab9061dd5a0b971092b1ed898dfa85860340180b9f86c9de",
+    "render_rgba_hex": "000000000000000000000000000000000000000000000000"
+   }
+  }
+ ]
+}

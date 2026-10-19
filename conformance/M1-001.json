@@ -1,0 +1,408 @@
+{
+ "schema": "paintcraft.conformance/v1",
+ "id": "M1-001",
+ "title": "M1 definition-of-done scenario: tile-boundary stroke, undo/redo, PCND, render",
+ "policy": "paintcraft.core/default-v1",
+ "requirements": [
+  "CORE-02",
+  "CORE-04",
+  "CORE-08",
+  "NATIVE-09"
+ ],
+ "oracle": "scripts/reference_engine.py",
+ "initial": {
+  "new": {
+   "width": 320,
+   "height": 320,
+   "background": null,
+   "seed": 0,
+   "policy": "paintcraft.core/default-v1"
+  }
+ },
+ "steps": [
+  {
+   "action": "apply",
+   "batch": {
+    "schema": "paintcraft.batch/v1",
+    "atomic": true,
+    "policy": "paintcraft.core/default-v1",
+    "base": {
+     "state_id": "7a3c2638-3c78-514a-91e9-6550601c61c1",
+     "publication_epoch": "0"
+    },
+    "operations": [
+     {
+      "op": "layer.add",
+      "ref": "ink",
+      "name": "Ink",
+      "width": 320,
+      "height": 320,
+      "origin": {
+       "x": 0,
+       "y": 0
+      },
+      "default_pixel": "#00000000"
+     },
+     {
+      "op": "raster.pencil_path",
+      "layer_ref": {
+       "ref": "ink"
+      },
+      "points": [
+       {
+        "x": 100,
+        "y": 10
+       },
+       {
+        "x": 300,
+        "y": 200
+       },
+       {
+        "x": 120,
+        "y": 300
+       }
+      ],
+      "color": "#1E40AFFF",
+      "mode": "replace"
+     },
+     {
+      "op": "raster.fill_rect",
+      "layer_ref": {
+       "ref": "ink"
+      },
+      "rect": {
+       "x": 126,
+       "y": 126,
+       "width": 4,
+       "height": 4
+      },
+      "color": "#DC262680",
+      "mode": "source-over"
+     },
+     {
+      "op": "raster.fill_rect",
+      "layer_ref": {
+       "ref": "ink"
+      },
+      "rect": {
+       "x": 254,
+       "y": 40,
+       "width": 4,
+       "height": 4
+      },
+      "color": "#FF000000",
+      "mode": "replace"
+     }
+    ]
+   },
+   "expect": {
+    "schema": "paintcraft.result/v1",
+    "committed": true,
+    "state_id": "de1c586b-adf2-56c9-b8a7-8ee5b011ee5f",
+    "publication_epoch": "1",
+    "history_id": "afc34a9c-eb24-54af-b62b-c8f73d3b231c",
+    "aliases": {
+     "ink": "cf287a07-fb0f-50d4-aec1-3737643dd70c"
+    },
+    "warnings": []
+   }
+  },
+  {
+   "action": "check",
+   "expect": {
+    "dirty": true,
+    "selection": {
+     "state": "inactive"
+    },
+    "document": {
+     "document_id": "c5653836-8f8c-523f-a57f-476a3b704034",
+     "state_id": "de1c586b-adf2-56c9-b8a7-8ee5b011ee5f",
+     "canvas": {
+      "width": 320,
+      "height": 320
+     },
+     "roots": [
+      "cf287a07-fb0f-50d4-aec1-3737643dd70c"
+     ],
+     "layers": [
+      {
+       "id": "cf287a07-fb0f-50d4-aec1-3737643dd70c",
+       "name": "Ink",
+       "visible": true,
+       "opacity_u8": 255,
+       "origin": {
+        "x": 0,
+        "y": 0
+       },
+       "width": 320,
+       "height": 320,
+       "default_pixel": "#00000000",
+       "samples_sha256": "e48dba10a83a43203a6dbe761075936f9925544063334f42d97af5146a6a5bb6"
+      }
+     ]
+    },
+    "render_sha256": "6836478fa9d739f0753b47c6f701d37424f8e09476a4f28a79c0487ced8e0d2e",
+    "pcnd_sha256": "b906d5aa071709469d3f58de3fdab57d1bf39f406b9325c91b4581fecff06f97",
+    "render_pixels": [
+     {
+      "x": 100,
+      "y": 10,
+      "rgba": "1e40afff"
+     },
+     {
+      "x": 127,
+      "y": 36,
+      "rgba": "1e40afff"
+     },
+     {
+      "x": 128,
+      "y": 37,
+      "rgba": "1e40afff"
+     },
+     {
+      "x": 255,
+      "y": 157,
+      "rgba": "1e40afff"
+     },
+     {
+      "x": 256,
+      "y": 158,
+      "rgba": "1e40afff"
+     },
+     {
+      "x": 223,
+      "y": 127,
+      "rgba": "1e40afff"
+     },
+     {
+      "x": 224,
+      "y": 128,
+      "rgba": "1e40afff"
+     },
+     {
+      "x": 256,
+      "y": 224,
+      "rgba": "1e40afff"
+     },
+     {
+      "x": 255,
+      "y": 225,
+      "rgba": "1e40afff"
+     },
+     {
+      "x": 201,
+      "y": 255,
+      "rgba": "1e40afff"
+     },
+     {
+      "x": 200,
+      "y": 256,
+      "rgba": "1e40afff"
+     },
+     {
+      "x": 127,
+      "y": 296,
+      "rgba": "1e40afff"
+     },
+     {
+      "x": 128,
+      "y": 296,
+      "rgba": "1e40afff"
+     },
+     {
+      "x": 126,
+      "y": 126,
+      "rgba": "dc262680"
+     },
+     {
+      "x": 129,
+      "y": 129,
+      "rgba": "dc262680"
+     },
+     {
+      "x": 130,
+      "y": 130,
+      "rgba": "00000000"
+     },
+     {
+      "x": 254,
+      "y": 40,
+      "rgba": "00000000"
+     },
+     {
+      "x": 0,
+      "y": 0,
+      "rgba": "00000000"
+     }
+    ]
+   }
+  },
+  {
+   "action": "undo",
+   "expect": {
+    "state_id": "7a3c2638-3c78-514a-91e9-6550601c61c1",
+    "publication_epoch": "2",
+    "history_id": null
+   }
+  },
+  {
+   "action": "check",
+   "expect": {
+    "dirty": false,
+    "selection": {
+     "state": "inactive"
+    },
+    "document": {
+     "document_id": "c5653836-8f8c-523f-a57f-476a3b704034",
+     "state_id": "7a3c2638-3c78-514a-91e9-6550601c61c1",
+     "canvas": {
+      "width": 320,
+      "height": 320
+     },
+     "roots": [],
+     "layers": []
+    },
+    "render_sha256": "d58201a30b35a60612306667b083ca4dfaf9efa107386fff36188e42c34c3c19",
+    "pcnd_sha256": "da55f29cfcccb7122022647df25ecbadb1002b8ae3c4304a049ffb6eff4087c6"
+   }
+  },
+  {
+   "action": "redo",
+   "expect": {
+    "state_id": "de1c586b-adf2-56c9-b8a7-8ee5b011ee5f",
+    "publication_epoch": "3",
+    "history_id": "afc34a9c-eb24-54af-b62b-c8f73d3b231c"
+   }
+  },
+  {
+   "action": "check",
+   "expect": {
+    "dirty": true,
+    "selection": {
+     "state": "inactive"
+    },
+    "document": {
+     "document_id": "c5653836-8f8c-523f-a57f-476a3b704034",
+     "state_id": "de1c586b-adf2-56c9-b8a7-8ee5b011ee5f",
+     "canvas": {
+      "width": 320,
+      "height": 320
+     },
+     "roots": [
+      "cf287a07-fb0f-50d4-aec1-3737643dd70c"
+     ],
+     "layers": [
+      {
+       "id": "cf287a07-fb0f-50d4-aec1-3737643dd70c",
+       "name": "Ink",
+       "visible": true,
+       "opacity_u8": 255,
+       "origin": {
+        "x": 0,
+        "y": 0
+       },
+       "width": 320,
+       "height": 320,
+       "default_pixel": "#00000000",
+       "samples_sha256": "e48dba10a83a43203a6dbe761075936f9925544063334f42d97af5146a6a5bb6"
+      }
+     ]
+    },
+    "render_sha256": "6836478fa9d739f0753b47c6f701d37424f8e09476a4f28a79c0487ced8e0d2e",
+    "pcnd_sha256": "b906d5aa071709469d3f58de3fdab57d1bf39f406b9325c91b4581fecff06f97",
+    "render_pixels": [
+     {
+      "x": 100,
+      "y": 10,
+      "rgba": "1e40afff"
+     },
+     {
+      "x": 127,
+      "y": 36,
+      "rgba": "1e40afff"
+     },
+     {
+      "x": 128,
+      "y": 37,
+      "rgba": "1e40afff"
+     },
+     {
+      "x": 255,
+      "y": 157,
+      "rgba": "1e40afff"
+     },
+     {
+      "x": 256,
+      "y": 158,
+      "rgba": "1e40afff"
+     },
+     {
+      "x": 223,
+      "y": 127,
+      "rgba": "1e40afff"
+     },
+     {
+      "x": 224,
+      "y": 128,
+      "rgba": "1e40afff"
+     },
+     {
+      "x": 256,
+      "y": 224,
+      "rgba": "1e40afff"
+     },
+     {
+      "x": 255,
+      "y": 225,
+      "rgba": "1e40afff"
+     },
+     {
+      "x": 201,
+      "y": 255,
+      "rgba": "1e40afff"
+     },
+     {
+      "x": 200,
+      "y": 256,
+      "rgba": "1e40afff"
+     },
+     {
+      "x": 127,
+      "y": 296,
+      "rgba": "1e40afff"
+     },
+     {
+      "x": 128,
+      "y": 296,
+      "rgba": "1e40afff"
+     },
+     {
+      "x": 126,
+      "y": 126,
+      "rgba": "dc262680"
+     },
+     {
+      "x": 129,
+      "y": 129,
+      "rgba": "dc262680"
+     },
+     {
+      "x": 130,
+      "y": 130,
+      "rgba": "00000000"
+     },
+     {
+      "x": 254,
+      "y": 40,
+      "rgba": "00000000"
+     },
+     {
+      "x": 0,
+      "y": 0,
+      "rgba": "00000000"
+     }
+    ]
+   }
+  }
+ ]
+}

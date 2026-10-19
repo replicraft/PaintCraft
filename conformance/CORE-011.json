@@ -1,0 +1,526 @@
+{
+ "schema": "paintcraft.conformance/v1",
+ "id": "CORE-011",
+ "title": "History: ABA ticket, dirty tracking across undo, redo branch cut",
+ "policy": "paintcraft.core/default-v1",
+ "requirements": [
+  "CORE-07",
+  "STATE-01",
+  "STATE-03"
+ ],
+ "oracle": "scripts/reference_engine.py",
+ "initial": {
+  "new": {
+   "width": 2,
+   "height": 1,
+   "background": "#FFFFFFFF",
+   "seed": 0,
+   "policy": "paintcraft.core/default-v1"
+  }
+ },
+ "steps": [
+  {
+   "action": "apply",
+   "batch": {
+    "schema": "paintcraft.batch/v1",
+    "atomic": true,
+    "policy": "paintcraft.core/default-v1",
+    "base": {
+     "state_id": "323da2a8-2dd7-5406-9088-a0ac02d96919",
+     "publication_epoch": "0"
+    },
+    "operations": [
+     {
+      "op": "layer.add",
+      "ref": "ink",
+      "name": "Ink",
+      "width": 2,
+      "height": 1,
+      "origin": {
+       "x": 0,
+       "y": 0
+      },
+      "default_pixel": "#00000000"
+     }
+    ]
+   },
+   "expect": {
+    "schema": "paintcraft.result/v1",
+    "committed": true,
+    "state_id": "ef30ffdd-5a13-597a-a1cd-e040e92f43f8",
+    "publication_epoch": "1",
+    "history_id": "8bc15b99-960d-587b-8cf3-93a334952db3",
+    "aliases": {
+     "ink": "1359f692-2b7a-5b2b-b8e4-51a99ca39680"
+    },
+    "warnings": []
+   }
+  },
+  {
+   "action": "mark-saved"
+  },
+  {
+   "action": "check",
+   "expect": {
+    "dirty": false,
+    "selection": {
+     "state": "inactive"
+    },
+    "document": {
+     "document_id": "7caa80c8-cc37-5117-85c4-6a5f92974e6d",
+     "state_id": "ef30ffdd-5a13-597a-a1cd-e040e92f43f8",
+     "canvas": {
+      "width": 2,
+      "height": 1
+     },
+     "roots": [
+      "98f1aa58-32d5-57c8-be78-95f0d5838640",
+      "1359f692-2b7a-5b2b-b8e4-51a99ca39680"
+     ],
+     "layers": [
+      {
+       "id": "98f1aa58-32d5-57c8-be78-95f0d5838640",
+       "name": "Background",
+       "visible": true,
+       "opacity_u8": 255,
+       "origin": {
+        "x": 0,
+        "y": 0
+       },
+       "width": 2,
+       "height": 1,
+       "default_pixel": "#FFFFFFFF",
+       "samples_sha256": "12a3ae445661ce5dee78d0650d33362dec29c4f82af05e7e57fb595bbbacf0ca",
+       "samples_rgba_hex": "ffffffffffffffff"
+      },
+      {
+       "id": "1359f692-2b7a-5b2b-b8e4-51a99ca39680",
+       "name": "Ink",
+       "visible": true,
+       "opacity_u8": 255,
+       "origin": {
+        "x": 0,
+        "y": 0
+       },
+       "width": 2,
+       "height": 1,
+       "default_pixel": "#00000000",
+       "samples_sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc",
+       "samples_rgba_hex": "0000000000000000"
+      }
+     ]
+    },
+    "render_sha256": "12a3ae445661ce5dee78d0650d33362dec29c4f82af05e7e57fb595bbbacf0ca",
+    "pcnd_sha256": "6bdc35a4c5d3434da1300789544befc6e453428762294b2fdbbfd578a5aefcfc",
+    "render_rgba_hex": "ffffffffffffffff"
+   }
+  },
+  {
+   "action": "apply",
+   "batch": {
+    "schema": "paintcraft.batch/v1",
+    "atomic": true,
+    "policy": "paintcraft.core/default-v1",
+    "base": {
+     "state_id": "ef30ffdd-5a13-597a-a1cd-e040e92f43f8",
+     "publication_epoch": "1"
+    },
+    "operations": [
+     {
+      "op": "raster.fill_rect",
+      "layer_ref": {
+       "ref": "x"
+      },
+      "rect": {
+       "x": 0,
+       "y": 0,
+       "width": 1,
+       "height": 1
+      },
+      "color": "#000000FF",
+      "mode": "replace"
+     },
+     {
+      "op": "layer.add",
+      "ref": "x",
+      "name": "X",
+      "width": 2,
+      "height": 1,
+      "origin": {
+       "x": 0,
+       "y": 0
+      },
+      "default_pixel": "#00000000"
+     }
+    ]
+   },
+   "expect": {
+    "schema": "paintcraft.error/v1",
+    "committed": false,
+    "code": "reference.unknown_alias",
+    "operation_index": 0
+   }
+  },
+  {
+   "action": "apply",
+   "batch": {
+    "schema": "paintcraft.batch/v1",
+    "atomic": true,
+    "policy": "paintcraft.core/default-v1",
+    "base": {
+     "state_id": "ef30ffdd-5a13-597a-a1cd-e040e92f43f8",
+     "publication_epoch": "1"
+    },
+    "operations": [
+     {
+      "op": "raster.fill_rect",
+      "layer_ref": {
+       "id": "1359f692-2b7a-5b2b-b8e4-51a99ca39680"
+      },
+      "rect": {
+       "x": 0,
+       "y": 0,
+       "width": 1,
+       "height": 1
+      },
+      "color": "#000000FF",
+      "mode": "replace"
+     }
+    ]
+   },
+   "expect": {
+    "schema": "paintcraft.result/v1",
+    "committed": true,
+    "state_id": "1035c566-65c7-5c07-a677-e82f9ada3b7e",
+    "publication_epoch": "2",
+    "history_id": "d1b117a0-dbb3-5d90-b969-20238a57bab4",
+    "aliases": {},
+    "warnings": []
+   }
+  },
+  {
+   "action": "check",
+   "expect": {
+    "dirty": true,
+    "selection": {
+     "state": "inactive"
+    },
+    "document": {
+     "document_id": "7caa80c8-cc37-5117-85c4-6a5f92974e6d",
+     "state_id": "1035c566-65c7-5c07-a677-e82f9ada3b7e",
+     "canvas": {
+      "width": 2,
+      "height": 1
+     },
+     "roots": [
+      "98f1aa58-32d5-57c8-be78-95f0d5838640",
+      "1359f692-2b7a-5b2b-b8e4-51a99ca39680"
+     ],
+     "layers": [
+      {
+       "id": "98f1aa58-32d5-57c8-be78-95f0d5838640",
+       "name": "Background",
+       "visible": true,
+       "opacity_u8": 255,
+       "origin": {
+        "x": 0,
+        "y": 0
+       },
+       "width": 2,
+       "height": 1,
+       "default_pixel": "#FFFFFFFF",
+       "samples_sha256": "12a3ae445661ce5dee78d0650d33362dec29c4f82af05e7e57fb595bbbacf0ca",
+       "samples_rgba_hex": "ffffffffffffffff"
+      },
+      {
+       "id": "1359f692-2b7a-5b2b-b8e4-51a99ca39680",
+       "name": "Ink",
+       "visible": true,
+       "opacity_u8": 255,
+       "origin": {
+        "x": 0,
+        "y": 0
+       },
+       "width": 2,
+       "height": 1,
+       "default_pixel": "#00000000",
+       "samples_sha256": "ce91ba268e126ac6e380a3218acd6ea084229097351b203a3f02cd4f04d01cac",
+       "samples_rgba_hex": "000000ff00000000"
+      }
+     ]
+    },
+    "render_sha256": "8e333fba21f15ddb741ed10958ab5828420eaeb8b24f25a873de6d410f45d146",
+    "pcnd_sha256": "7602f82199025389fd7b786dc1d835288f299729f0264ec96c214fb6107eb15c",
+    "render_rgba_hex": "000000ffffffffff"
+   }
+  },
+  {
+   "action": "undo",
+   "expect": {
+    "state_id": "ef30ffdd-5a13-597a-a1cd-e040e92f43f8",
+    "publication_epoch": "3",
+    "history_id": "8bc15b99-960d-587b-8cf3-93a334952db3"
+   }
+  },
+  {
+   "action": "check",
+   "expect": {
+    "dirty": false,
+    "selection": {
+     "state": "inactive"
+    },
+    "document": {
+     "document_id": "7caa80c8-cc37-5117-85c4-6a5f92974e6d",
+     "state_id": "ef30ffdd-5a13-597a-a1cd-e040e92f43f8",
+     "canvas": {
+      "width": 2,
+      "height": 1
+     },
+     "roots": [
+      "98f1aa58-32d5-57c8-be78-95f0d5838640",
+      "1359f692-2b7a-5b2b-b8e4-51a99ca39680"
+     ],
+     "layers": [
+      {
+       "id": "98f1aa58-32d5-57c8-be78-95f0d5838640",
+       "name": "Background",
+       "visible": true,
+       "opacity_u8": 255,
+       "origin": {
+        "x": 0,
+        "y": 0
+       },
+       "width": 2,
+       "height": 1,
+       "default_pixel": "#FFFFFFFF",
+       "samples_sha256": "12a3ae445661ce5dee78d0650d33362dec29c4f82af05e7e57fb595bbbacf0ca",
+       "samples_rgba_hex": "ffffffffffffffff"
+      },
+      {
+       "id": "1359f692-2b7a-5b2b-b8e4-51a99ca39680",
+       "name": "Ink",
+       "visible": true,
+       "opacity_u8": 255,
+       "origin": {
+        "x": 0,
+        "y": 0
+       },
+       "width": 2,
+       "height": 1,
+       "default_pixel": "#00000000",
+       "samples_sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc",
+       "samples_rgba_hex": "0000000000000000"
+      }
+     ]
+    },
+    "render_sha256": "12a3ae445661ce5dee78d0650d33362dec29c4f82af05e7e57fb595bbbacf0ca",
+    "pcnd_sha256": "6bdc35a4c5d3434da1300789544befc6e453428762294b2fdbbfd578a5aefcfc",
+    "render_rgba_hex": "ffffffffffffffff"
+   }
+  },
+  {
+   "action": "apply",
+   "batch": {
+    "schema": "paintcraft.batch/v1",
+    "atomic": true,
+    "policy": "paintcraft.core/default-v1",
+    "base": {
+     "state_id": "ef30ffdd-5a13-597a-a1cd-e040e92f43f8",
+     "publication_epoch": "1"
+    },
+    "operations": [
+     {
+      "op": "raster.fill_rect",
+      "layer_ref": {
+       "id": "1359f692-2b7a-5b2b-b8e4-51a99ca39680"
+      },
+      "rect": {
+       "x": 1,
+       "y": 0,
+       "width": 1,
+       "height": 1
+      },
+      "color": "#000000FF",
+      "mode": "replace"
+     }
+    ]
+   },
+   "expect": {
+    "schema": "paintcraft.error/v1",
+    "committed": false,
+    "code": "conflict.stale_base"
+   }
+  },
+  {
+   "action": "redo",
+   "expect": {
+    "state_id": "1035c566-65c7-5c07-a677-e82f9ada3b7e",
+    "publication_epoch": "4",
+    "history_id": "d1b117a0-dbb3-5d90-b969-20238a57bab4"
+   }
+  },
+  {
+   "action": "undo",
+   "expect": {
+    "state_id": "ef30ffdd-5a13-597a-a1cd-e040e92f43f8",
+    "publication_epoch": "5",
+    "history_id": "8bc15b99-960d-587b-8cf3-93a334952db3"
+   }
+  },
+  {
+   "action": "undo",
+   "expect": {
+    "state_id": "323da2a8-2dd7-5406-9088-a0ac02d96919",
+    "publication_epoch": "6",
+    "history_id": null
+   }
+  },
+  {
+   "action": "check",
+   "expect": {
+    "dirty": true,
+    "selection": {
+     "state": "inactive"
+    },
+    "document": {
+     "document_id": "7caa80c8-cc37-5117-85c4-6a5f92974e6d",
+     "state_id": "323da2a8-2dd7-5406-9088-a0ac02d96919",
+     "canvas": {
+      "width": 2,
+      "height": 1
+     },
+     "roots": [
+      "98f1aa58-32d5-57c8-be78-95f0d5838640"
+     ],
+     "layers": [
+      {
+       "id": "98f1aa58-32d5-57c8-be78-95f0d5838640",
+       "name": "Background",
+       "visible": true,
+       "opacity_u8": 255,
+       "origin": {
+        "x": 0,
+        "y": 0
+       },
+       "width": 2,
+       "height": 1,
+       "default_pixel": "#FFFFFFFF",
+       "samples_sha256": "12a3ae445661ce5dee78d0650d33362dec29c4f82af05e7e57fb595bbbacf0ca",
+       "samples_rgba_hex": "ffffffffffffffff"
+      }
+     ]
+    },
+    "render_sha256": "12a3ae445661ce5dee78d0650d33362dec29c4f82af05e7e57fb595bbbacf0ca",
+    "pcnd_sha256": "c3e8a180018f4ce95d3f0f88afebc5ab745f9cc55edb32ce6049d67b13dc247d",
+    "render_rgba_hex": "ffffffffffffffff"
+   }
+  },
+  {
+   "action": "redo",
+   "expect": {
+    "state_id": "ef30ffdd-5a13-597a-a1cd-e040e92f43f8",
+    "publication_epoch": "7",
+    "history_id": "8bc15b99-960d-587b-8cf3-93a334952db3"
+   }
+  },
+  {
+   "action": "apply",
+   "batch": {
+    "schema": "paintcraft.batch/v1",
+    "atomic": true,
+    "policy": "paintcraft.core/default-v1",
+    "base": {
+     "state_id": "ef30ffdd-5a13-597a-a1cd-e040e92f43f8",
+     "publication_epoch": "7"
+    },
+    "operations": [
+     {
+      "op": "raster.fill_rect",
+      "layer_ref": {
+       "id": "1359f692-2b7a-5b2b-b8e4-51a99ca39680"
+      },
+      "rect": {
+       "x": 1,
+       "y": 0,
+       "width": 1,
+       "height": 1
+      },
+      "color": "#0000FFFF",
+      "mode": "replace"
+     }
+    ]
+   },
+   "expect": {
+    "schema": "paintcraft.result/v1",
+    "committed": true,
+    "state_id": "a89d6d82-3962-5dc3-8844-748dac15b774",
+    "publication_epoch": "8",
+    "history_id": "893dfff0-0d03-5ece-a1bb-0ce9c0b161a8",
+    "aliases": {},
+    "warnings": []
+   }
+  },
+  {
+   "action": "redo",
+   "expect": {
+    "available": false
+   }
+  },
+  {
+   "action": "check",
+   "expect": {
+    "dirty": true,
+    "selection": {
+     "state": "inactive"
+    },
+    "document": {
+     "document_id": "7caa80c8-cc37-5117-85c4-6a5f92974e6d",
+     "state_id": "a89d6d82-3962-5dc3-8844-748dac15b774",
+     "canvas": {
+      "width": 2,
+      "height": 1
+     },
+     "roots": [
+      "98f1aa58-32d5-57c8-be78-95f0d5838640",
+      "1359f692-2b7a-5b2b-b8e4-51a99ca39680"
+     ],
+     "layers": [
+      {
+       "id": "98f1aa58-32d5-57c8-be78-95f0d5838640",
+       "name": "Background",
+       "visible": true,
+       "opacity_u8": 255,
+       "origin": {
+        "x": 0,
+        "y": 0
+       },
+       "width": 2,
+       "height": 1,
+       "default_pixel": "#FFFFFFFF",
+       "samples_sha256": "12a3ae445661ce5dee78d0650d33362dec29c4f82af05e7e57fb595bbbacf0ca",
+       "samples_rgba_hex": "ffffffffffffffff"
+      },
+      {
+       "id": "1359f692-2b7a-5b2b-b8e4-51a99ca39680",
+       "name": "Ink",
+       "visible": true,
+       "opacity_u8": 255,
+       "origin": {
+        "x": 0,
+        "y": 0
+       },
+       "width": 2,
+       "height": 1,
+       "default_pixel": "#00000000",
+       "samples_sha256": "6186530e872ac29959a0c223aed23944f12c6b609e64a0a8bd1be20b5006a8b2",
+       "samples_rgba_hex": "000000000000ffff"
+      }
+     ]
+    },
+    "render_sha256": "1ba25c4719a6c15901f29304dca0d7cf9ba27eefcf3c6ac913d9e2d0e083943e",
+    "pcnd_sha256": "99c790bbe76abb15be0ee9b1a4ca3e524801cdefbfdaef9f1fec32ac3001416b",
+    "render_rgba_hex": "ffffffff0000ffff"
+   }
+  }
+ ]
+}

@@ -1,0 +1,455 @@
+{
+ "schema": "paintcraft.conformance/v1",
+ "id": "CORE-009",
+ "title": "Alias/ID resolution, deletion, duplicates and error precedence",
+ "policy": "paintcraft.core/default-v1",
+ "requirements": [
+  "CORE-06"
+ ],
+ "oracle": "scripts/reference_engine.py",
+ "initial": {
+  "new": {
+   "width": 2,
+   "height": 2,
+   "background": "#FFFFFFFF",
+   "seed": 0,
+   "policy": "paintcraft.core/default-v1"
+  }
+ },
+ "steps": [
+  {
+   "action": "apply",
+   "batch": {
+    "schema": "paintcraft.batch/v1",
+    "atomic": true,
+    "policy": "paintcraft.core/default-v1",
+    "base": {
+     "state_id": "5272305c-435c-504f-9941-2113ab7dc49f",
+     "publication_epoch": "0"
+    },
+    "operations": [
+     {
+      "op": "layer.add",
+      "ref": "a",
+      "name": "A",
+      "width": 2,
+      "height": 2,
+      "origin": {
+       "x": 0,
+       "y": 0
+      },
+      "default_pixel": "#00000000"
+     },
+     {
+      "op": "layer.delete",
+      "layer_ref": {
+       "ref": "a"
+      }
+     },
+     {
+      "op": "raster.fill_rect",
+      "layer_ref": {
+       "ref": "a"
+      },
+      "rect": {
+       "x": 0,
+       "y": 0,
+       "width": 1,
+       "height": 1
+      },
+      "color": "#FFFFFFFF",
+      "mode": "replace"
+     }
+    ]
+   },
+   "expect": {
+    "schema": "paintcraft.error/v1",
+    "committed": false,
+    "code": "reference.unknown_alias",
+    "operation_index": 2
+   }
+  },
+  {
+   "action": "apply",
+   "batch": {
+    "schema": "paintcraft.batch/v1",
+    "atomic": true,
+    "policy": "paintcraft.core/default-v1",
+    "base": {
+     "state_id": "5272305c-435c-504f-9941-2113ab7dc49f",
+     "publication_epoch": "0"
+    },
+    "operations": [
+     {
+      "op": "layer.delete",
+      "layer_ref": {
+       "id": "99999999-9999-4999-8999-999999999999"
+      }
+     }
+    ]
+   },
+   "expect": {
+    "schema": "paintcraft.error/v1",
+    "committed": false,
+    "code": "reference.unknown_id",
+    "operation_index": 0
+   }
+  },
+  {
+   "action": "apply",
+   "batch": {
+    "schema": "paintcraft.batch/v1",
+    "atomic": true,
+    "policy": "paintcraft.core/default-v1",
+    "base": {
+     "state_id": "5272305c-435c-504f-9941-2113ab7dc49f",
+     "publication_epoch": "0"
+    },
+    "operations": [
+     {
+      "op": "layer.add",
+      "ref": "a",
+      "name": "A",
+      "width": 2,
+      "height": 2,
+      "origin": {
+       "x": 0,
+       "y": 0
+      },
+      "default_pixel": "#00000000"
+     },
+     {
+      "op": "layer.add",
+      "ref": "a",
+      "name": "A",
+      "width": 2,
+      "height": 2,
+      "origin": {
+       "x": 0,
+       "y": 0
+      },
+      "default_pixel": "#00000000"
+     }
+    ]
+   },
+   "expect": {
+    "schema": "paintcraft.error/v1",
+    "committed": false,
+    "code": "input.schema",
+    "operation_index": 1
+   }
+  },
+  {
+   "action": "apply",
+   "batch": {
+    "schema": "paintcraft.batch/v1",
+    "atomic": true,
+    "policy": "paintcraft.core/default-v1",
+    "base": {
+     "state_id": "5272305c-435c-504f-9941-2113ab7dc49f",
+     "publication_epoch": "0"
+    },
+    "operations": [
+     {
+      "op": "layer.add",
+      "ref": "a",
+      "name": "A",
+      "width": 2,
+      "height": 2,
+      "origin": {
+       "x": 0,
+       "y": 0
+      },
+      "default_pixel": "#00000000"
+     },
+     {
+      "op": "layer.delete",
+      "layer_ref": {
+       "ref": "a"
+      }
+     },
+     {
+      "op": "layer.add",
+      "ref": "a",
+      "name": "A",
+      "width": 2,
+      "height": 2,
+      "origin": {
+       "x": 0,
+       "y": 0
+      },
+      "default_pixel": "#00000000"
+     }
+    ]
+   },
+   "expect": {
+    "schema": "paintcraft.error/v1",
+    "committed": false,
+    "code": "input.schema",
+    "operation_index": 2
+   }
+  },
+  {
+   "action": "apply",
+   "batch": {
+    "schema": "paintcraft.batch/v1",
+    "atomic": true,
+    "policy": "paintcraft.core/default-v1",
+    "base": {
+     "state_id": "5272305c-435c-504f-9941-2113ab7dc49f",
+     "publication_epoch": "0"
+    },
+    "operations": [
+     {
+      "op": "raster.fill_rect",
+      "layer_ref": {
+       "ref": "later"
+      },
+      "rect": {
+       "x": 0,
+       "y": 0,
+       "width": 1,
+       "height": 1
+      },
+      "color": "#FFFFFFFF",
+      "mode": "replace"
+     },
+     {
+      "op": "layer.add",
+      "ref": "later",
+      "name": "Later",
+      "width": 2,
+      "height": 2,
+      "origin": {
+       "x": 0,
+       "y": 0
+      },
+      "default_pixel": "#00000000"
+     }
+    ]
+   },
+   "expect": {
+    "schema": "paintcraft.error/v1",
+    "committed": false,
+    "code": "reference.unknown_alias",
+    "operation_index": 0
+   }
+  },
+  {
+   "action": "apply",
+   "batch": {
+    "schema": "paintcraft.batch/v1",
+    "atomic": true,
+    "policy": "paintcraft.core/missing-v1",
+    "base": {
+     "state_id": "5272305c-435c-504f-9941-2113ab7dc49f",
+     "publication_epoch": "7"
+    },
+    "operations": [
+     {
+      "op": "layer.add",
+      "ref": "a",
+      "name": "A",
+      "width": 2,
+      "height": 2,
+      "origin": {
+       "x": 0,
+       "y": 0
+      },
+      "default_pixel": "#00000000"
+     }
+    ]
+   },
+   "expect": {
+    "schema": "paintcraft.error/v1",
+    "committed": false,
+    "code": "policy.unknown"
+   }
+  },
+  {
+   "action": "apply",
+   "batch": {
+    "schema": "paintcraft.batch/v1",
+    "atomic": true,
+    "policy": "paintcraft.core/default-v1",
+    "base": {
+     "state_id": "5272305c-435c-504f-9941-2113ab7dc49f",
+     "publication_epoch": "7"
+    },
+    "operations": [
+     {
+      "op": "layer.add",
+      "ref": "a",
+      "name": "A",
+      "width": 2,
+      "height": 2,
+      "origin": {
+       "x": 0,
+       "y": 0
+      },
+      "default_pixel": "#00000000"
+     }
+    ]
+   },
+   "expect": {
+    "schema": "paintcraft.error/v1",
+    "committed": false,
+    "code": "conflict.stale_base"
+   }
+  },
+  {
+   "action": "apply",
+   "batch": {
+    "schema": "paintcraft.batch/v1",
+    "atomic": false,
+    "policy": "paintcraft.core/default-v1",
+    "base": {
+     "state_id": "5272305c-435c-504f-9941-2113ab7dc49f",
+     "publication_epoch": "0"
+    },
+    "operations": [
+     {
+      "op": "layer.add",
+      "ref": "a",
+      "name": "A",
+      "width": 2,
+      "height": 2,
+      "origin": {
+       "x": 0,
+       "y": 0
+      },
+      "default_pixel": "#00000000"
+     }
+    ]
+   },
+   "expect": {
+    "schema": "paintcraft.error/v1",
+    "committed": false,
+    "code": "input.schema"
+   }
+  },
+  {
+   "action": "apply",
+   "batch": {
+    "schema": "paintcraft.batch/v1",
+    "atomic": true,
+    "policy": "paintcraft.core/default-v1",
+    "base": {
+     "state_id": "5272305c-435c-504f-9941-2113ab7dc49f",
+     "publication_epoch": "18446744073709551616"
+    },
+    "operations": [
+     {
+      "op": "layer.add",
+      "ref": "a",
+      "name": "A",
+      "width": 2,
+      "height": 2,
+      "origin": {
+       "x": 0,
+       "y": 0
+      },
+      "default_pixel": "#00000000"
+     }
+    ]
+   },
+   "expect": {
+    "schema": "paintcraft.error/v1",
+    "committed": false,
+    "code": "input.schema"
+   }
+  },
+  {
+   "action": "apply",
+   "batch": {
+    "schema": "paintcraft.batch/v1",
+    "atomic": true,
+    "policy": "paintcraft.core/default-v1",
+    "base": {
+     "state_id": "5272305c-435c-504f-9941-2113ab7dc49f",
+     "publication_epoch": "0"
+    },
+    "operations": [
+     {
+      "op": "layer.add",
+      "ref": "a",
+      "name": "A",
+      "width": 2,
+      "height": 2,
+      "origin": {
+       "x": 0,
+       "y": 0
+      },
+      "default_pixel": "#00000000"
+     },
+     {
+      "op": "layer.delete",
+      "layer_ref": {
+       "ref": "a"
+      }
+     }
+    ]
+   },
+   "expect": {
+    "schema": "paintcraft.result/v1",
+    "committed": false,
+    "state_id": "5272305c-435c-504f-9941-2113ab7dc49f",
+    "publication_epoch": "0",
+    "history_id": null,
+    "aliases": {},
+    "warnings": []
+   }
+  },
+  {
+   "action": "apply",
+   "batch": {
+    "schema": "paintcraft.batch/v1",
+    "atomic": true,
+    "policy": "paintcraft.core/default-v1",
+    "base": {
+     "state_id": "5272305c-435c-504f-9941-2113ab7dc49f",
+     "publication_epoch": "0"
+    },
+    "operations": [
+     {
+      "op": "layer.delete",
+      "layer_ref": {
+       "id": "390b05b7-7c2c-5e50-a0da-e2e52266fad7"
+      }
+     }
+    ]
+   },
+   "expect": {
+    "schema": "paintcraft.result/v1",
+    "committed": true,
+    "state_id": "5fc6a544-e89b-5629-805f-2ba2726d8f2e",
+    "publication_epoch": "1",
+    "history_id": "691f8ffa-efd9-5126-829f-c8793f091278",
+    "aliases": {},
+    "warnings": []
+   }
+  },
+  {
+   "action": "check",
+   "expect": {
+    "dirty": true,
+    "selection": {
+     "state": "inactive"
+    },
+    "document": {
+     "document_id": "920a4c53-9d6f-5f62-a309-fc8d16664739",
+     "state_id": "5fc6a544-e89b-5629-805f-2ba2726d8f2e",
+     "canvas": {
+      "width": 2,
+      "height": 2
+     },
+     "roots": [],
+     "layers": []
+    },
+    "render_sha256": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+    "pcnd_sha256": "24e5c9e46d7537df022340905ef730e1bcac96222b9f45042dab44de1227fe57",
+    "render_rgba_hex": "00000000000000000000000000000000"
+   }
+  }
+ ]
+}

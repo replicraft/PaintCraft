@@ -1,0 +1,99 @@
+{
+ "schema": "paintcraft.conformance/v1",
+ "id": "CORE-012",
+ "title": "Canonical JSON keeps non-ASCII names as raw UTF-8",
+ "policy": "paintcraft.core/default-v1",
+ "requirements": [
+  "DET-02",
+  "NATIVE-09"
+ ],
+ "oracle": "scripts/reference_engine.py",
+ "initial": {
+  "new": {
+   "width": 1,
+   "height": 1,
+   "background": null,
+   "seed": 7,
+   "policy": "paintcraft.core/default-v1"
+  }
+ },
+ "steps": [
+  {
+   "action": "apply",
+   "batch": {
+    "schema": "paintcraft.batch/v1",
+    "atomic": true,
+    "policy": "paintcraft.core/default-v1",
+    "base": {
+     "state_id": "a3c70017-5f2d-58e2-bdbd-3614af22a631",
+     "publication_epoch": "0"
+    },
+    "operations": [
+     {
+      "op": "layer.add",
+      "ref": "ink",
+      "name": "Ébauche ✏️ \"quoted\" \\ tab\t",
+      "width": 1,
+      "height": 1,
+      "origin": {
+       "x": 0,
+       "y": 0
+      },
+      "default_pixel": "#00000000"
+     }
+    ]
+   },
+   "expect": {
+    "schema": "paintcraft.result/v1",
+    "committed": true,
+    "state_id": "3faefade-d993-5e3d-a3bf-3839c2a14663",
+    "publication_epoch": "1",
+    "history_id": "a92a5c61-63a9-5f40-8e0d-73e95b30e1c0",
+    "aliases": {
+     "ink": "6ed991b3-0f8e-5856-b012-715b6ecadd73"
+    },
+    "warnings": []
+   }
+  },
+  {
+   "action": "check",
+   "expect": {
+    "dirty": true,
+    "selection": {
+     "state": "inactive"
+    },
+    "document": {
+     "document_id": "b2967b6b-8652-5eed-8af4-7a0fe1551679",
+     "state_id": "3faefade-d993-5e3d-a3bf-3839c2a14663",
+     "canvas": {
+      "width": 1,
+      "height": 1
+     },
+     "roots": [
+      "6ed991b3-0f8e-5856-b012-715b6ecadd73"
+     ],
+     "layers": [
+      {
+       "id": "6ed991b3-0f8e-5856-b012-715b6ecadd73",
+       "name": "Ébauche ✏️ \"quoted\" \\ tab\t",
+       "visible": true,
+       "opacity_u8": 255,
+       "origin": {
+        "x": 0,
+        "y": 0
+       },
+       "width": 1,
+       "height": 1,
+       "default_pixel": "#00000000",
+       "samples_sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119",
+       "samples_rgba_hex": "00000000"
+      }
+     ]
+    },
+    "render_sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119",
+    "pcnd_sha256": "af6ac990cd889c2dea4a93f9829b73232efdb9ea4f9bb54c6d84673c8b24b3ba",
+    "render_rgba_hex": "00000000"
+   }
+  }
+ ]
+}
