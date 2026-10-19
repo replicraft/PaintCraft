@@ -1,0 +1,17 @@
+[package]
+name = "paintcraft-ui"
+description = "Window-independent editor controller: view transform, action outbox, pencil gestures"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license-file.workspace = true
+publish.workspace = true
+
+[dependencies]
+paintcraft-types = { path = "../paintcraft-types" }
+paintcraft-core = { path = "../paintcraft-core" }
+paintcraft-formats = { path = "../paintcraft-formats" }
+uuid = "1.28.0"
+
+[lints]
+workspace = true
