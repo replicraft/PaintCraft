@@ -52,7 +52,7 @@ independent behavioral reference evidence.
 | View menu | partially working | Zoom in/out, actual size, fit window/selection and a display-only pixel grid work; rulers, units, pan tools and overscroll remain |
 | Settings | partially working | Experience/version persistence works; utility-window persistence and reference settings pages remain |
 | Selection/clipboard/image/adjustments/effects | partially working | Rectangle selection and existing drawing tools work; clipboard, transforms, adjustment/effect registries and preview lifecycles remain |
-| Classic v11 fidelity | in progress | Current frontend priority; subpixel brush input and percentage zoom controls work; full ribbon, colors dialog and remaining editing workflows remain |
+| Classic v11 fidelity | in progress | Current frontend priority; subpixel brush input and percentage zoom controls work; staged RGB/HSL color picker and persistent custom palettes work; full ribbon and remaining editing workflows remain |
 
 Finish one functional slice at a time. Shared action descriptors and menu/shortcut equivalence now cover existing
 operations, respecting text/IME and modal ownership. Subsequent slices add missing

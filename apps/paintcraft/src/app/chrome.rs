@@ -145,6 +145,9 @@ impl App {
                         },
                     );
                 }
+                Chrome::EditColors | Chrome::EditSecondaryColors => {
+                    self.begin_color_dialog(ctx, action == Chrome::EditSecondaryColors)
+                }
                 Chrome::CanvasSize | Chrome::CanvasDefaults => {
                     self.begin_canvas_dialog(ctx, action == Chrome::CanvasDefaults)
                 }
@@ -353,6 +356,10 @@ impl App {
             return;
         };
         let ctx = ui.ctx().clone();
+        if let Confirm::Colors(draft) = confirm {
+            self.classic_color_dialog(&ctx, draft);
+            return;
+        }
         if let Confirm::Canvas(draft) = confirm {
             self.canvas_settings_dialog(&ctx, draft);
             return;
@@ -362,7 +369,7 @@ impl App {
             return;
         }
         let (title, text, go) = match &confirm {
-            Confirm::Canvas(_) | Confirm::LayerProperties(_) => unreachable!("properties handled above"),
+            Confirm::Colors(_) | Confirm::Canvas(_) | Confirm::LayerProperties(_) => unreachable!("properties handled above"),
             Confirm::DiscardForNew
             | Confirm::DiscardForOpen(_)
             | Confirm::DiscardForRecovery(_)
@@ -426,7 +433,7 @@ impl App {
             ui.horizontal(|ui| {
                 if ui.button(go).clicked() {
                     match confirm {
-                        Confirm::Canvas(_) | Confirm::LayerProperties(_) => {
+                        Confirm::Colors(_) | Confirm::Canvas(_) | Confirm::LayerProperties(_) => {
                             unreachable!("properties handled above")
                         }
                         Confirm::DiscardForNew => self.new_document(),

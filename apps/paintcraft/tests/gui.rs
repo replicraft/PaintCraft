@@ -144,3 +144,6 @@ mod classic_zoom;
 
 #[path = "gui/canvas_settings.rs"]
 mod canvas_settings;
+
+#[path = "gui/classic_colors.rs"]
+mod classic_colors;

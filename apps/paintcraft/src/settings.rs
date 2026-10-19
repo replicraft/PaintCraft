@@ -4,6 +4,7 @@
 //! moved aside (not deleted), defaults are used, and the reason is reported.
 
 mod canvas;
+mod colors;
 pub use canvas::{CanvasDefaults, DEFAULT_SIZE, SIZE_MAX};
 
 use std::fs;
@@ -27,6 +28,7 @@ pub struct Settings {
     /// `None` until the first-visit picker has been answered.
     pub classic_variant: Option<ClassicVariant>,
     pub canvas: CanvasDefaults,
+    pub custom_colors: paintcraft_classic::CustomColors,
 }
 
 /// What loading found, so the application can explain a fallback.
@@ -94,6 +96,7 @@ fn parse(bytes: &[u8]) -> Result<Settings, String> {
         CanvasDefaults::default()
     };
     Ok(Settings {
+        custom_colors: colors::parse(v.get("custom_colors"))?,
         canvas,
         classic_variant,
         experience,
@@ -132,11 +135,13 @@ impl Settings {
 
     pub fn save(&self, dir: &Path) -> Result<(), String> {
         CanvasDefaults::parse(&self.canvas.value())?;
+        colors::parse(Some(&colors::value(&self.custom_colors)))?;
         fs::create_dir_all(dir)
             .map_err(|e| format!("cannot create the settings folder: {}", e.kind()))?;
         let v = Value::object([
             ("schema", Value::str("paintcraft.settings/v3")),
             ("canvas", self.canvas.value()),
+            ("custom_colors", colors::value(&self.custom_colors)),
             (
                 "experience",
                 Value::str(match self.experience {

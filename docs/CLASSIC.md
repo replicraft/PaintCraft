@@ -44,6 +44,19 @@ The round brush preserves pointer positions in 1/256-pixel units and stores
 antialiased coverage in the document. Preview and publication use the same
 rasterizer. Pencil retains exact pixel placement. See [brush rendering](BRUSH_RENDERING.md).
 
-The full ribbon, brush media gallery, staged Edit colors dialog, clipboard,
+The Colors ribbon now opens a staged **Edit colors** dialog for the primary or
+secondary swatch. It provides a hue/saturation square, brightness strip, RGB/HSL
+fields, six-digit RGB hex entry, 48 basic colors and 28 custom slots. OK adopts
+the selected RGB; Cancel/Escape discard all staged changes. Incomplete/invalid
+hex disables OK. Existing alpha is preserved, including hidden RGB under alpha
+zero. Hue/saturation intent survives black while adjusting the picker.
+
+Custom colors are saved in the settings file on OK and remain available after
+restart. Palette changes are tool preferences and add no document history or
+unsaved marker. The optional settings-v3 `custom_colors` field defaults to empty
+for existing preference files. The palette layout follows the supplied photo;
+native palette values and color-processing parity remain unqualified.
+
+The full ribbon, brush media gallery, clipboard,
 selection variants, transforms and resize handles remain active development
 work. This frontend is not yet a finished reproduction of Windows Paint.

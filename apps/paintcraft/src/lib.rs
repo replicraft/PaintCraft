@@ -6,6 +6,8 @@ mod canvas;
 mod canvas_settings;
 #[path = "app/chrome.rs"]
 mod chrome;
+#[path = "app/colors.rs"]
+mod colors;
 pub mod controller;
 #[path = "app/files.rs"]
 mod files;
@@ -80,8 +82,9 @@ mod code {
 const DEFAULT_SIZE: (u32, u32) = settings::DEFAULT_SIZE;
 const STUDIO_SIZE: (u32, u32) = (320, 320);
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq)]
 enum Confirm {
+    Colors(colors::ColorDraft),
     Canvas(canvas_settings::CanvasDraft),
     LayerProperties(layers::PropertiesDraft),
     DiscardForNew,
