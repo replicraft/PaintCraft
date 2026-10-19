@@ -80,6 +80,21 @@ binding outcomes. Interactive native-dialog behavior still needs manual checks o
 A short native desktop run with GPU/native services initialized and temporary settings
 opened and exited cleanly on macOS.
 
+## Recovery journal
+
+[Recovery store v1](RECOVERY_FORMAT.md) owns the private on-disk encoding and limits.
+Immutable full snapshots become durable before checksummed commit segments; two
+alternating heads retain a previous valid generation. Recovery replays only a backed,
+contiguous tail. Native parser admission and snapshot identities are verified before
+an orphan is offered. Valid legacy checkpoints are retained as an input format.
+
+Protocol interruption, corrupt payload, torn/missing tail, live-lock protection,
+interrupted discard and GC tests pass on the local macOS filesystem (SAVE-07/08).
+Durable discard markers prevent cleanup interruptions from reviving old data. GC
+failure does not negate an already durable checkpoint. Disk/record limits are
+provisional; power-loss, platform, process-wide admission and performance qualification
+remain pending. Ordered background autosave integration remains separate work.
+
 ## Ordered native saves
 
 The desktop enables Tokio 1.53.3 (`rt`, `sync`) only at the native I/O consumer.

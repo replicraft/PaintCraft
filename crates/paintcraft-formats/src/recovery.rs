@@ -1,28 +1,29 @@
-//! Crash recovery checkpoints.
-//!
-//! Each editing session owns `<session>.lock` (held with an advisory lock for
-//! as long as the process lives), `<session>.pcnd` (the latest checkpoint) and
-//! `<session>.json` (which file the document came from). A checkpoint is
-//! replaced atomically, so a crash at any moment leaves either the previous
-//! complete checkpoint or the new one. A session whose lock can be taken is
-//! orphaned: its owner is gone, so its checkpoint is offered for recovery.
-//! Checkpoints are deliberately separate from the user's file and from undo
-//! history: recovery restores the latest document, not the history.
-
-use std::fs::{self, File, OpenOptions};
-use std::path::{Path, PathBuf};
-use std::time::SystemTime;
-
-use paintcraft_core::types::json::{self, Value};
-use paintcraft_core::types::{Error, ErrorCode, Result};
-use uuid::Uuid;
-
+//! Private, checksummed recovery journal. Immutable payloads become durable before
+//! commit segments, then alternating heads publish a validated journal position.
+//! A head anchors a full semantic snapshot; only contiguous backed tail records
+//! may advance it. Recovery restores content, not the entire undo history.
+mod journal;
+mod reader;
 use crate::save;
-
+use journal::{
+    Commit, Head, RECORD_MAX, SNAPSHOT_BYTES_MAX, TAIL_RECORDS_MAX, commit_path, hash, head_path,
+    payload_path, read_bounded,
+};
+use paintcraft_core::types::{
+    Error, ErrorCode, Result,
+    json::{self, Value},
+};
+use paintcraft_document::Document;
+use std::{
+    fs::{self, File, OpenOptions},
+    path::{Path, PathBuf},
+    sync::Mutex,
+    time::SystemTime,
+};
+use uuid::Uuid;
 fn storage(what: &str, e: &std::io::Error) -> Error {
     Error::new(ErrorCode::StorageFailed, format!("{what}: {}", e.kind()))
 }
-
 /// Where checkpoints live. `PAINTCRAFT_RECOVERY_DIR` overrides the platform default.
 pub fn default_dir() -> PathBuf {
     if let Some(d) = std::env::var_os("PAINTCRAFT_RECOVERY_DIR") {
@@ -46,244 +47,440 @@ pub fn default_dir() -> PathBuf {
     }
 }
 
+/// Limits are provisional disk/admission policy, not a performance qualification.
+const RETAINED_BYTES_MAX: u64 = 4 << 30;
+const OWNED_FILES_MAX: usize = 256;
+#[derive(Debug, Default)]
+struct JournalState {
+    sequence: u64,
+    previous: Option<String>,
+    heads: [Option<Head>; 2],
+    retained: Vec<Commit>,
+    orphans: Vec<(Uuid, u64)>,
+    blocked: bool,
+    cleared: bool,
+    epoch: u64,
+}
 #[derive(Debug)]
 pub struct Recovery {
     dir: PathBuf,
     session: Uuid,
-    /// Held for the life of the session; dropping it marks the session orphaned.
+    state: Mutex<JournalState>,
     _lock: File,
 }
-
-/// An orphaned checkpoint that can be recovered.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Found {
     pub session: Uuid,
     pub checkpoint: PathBuf,
-    /// The file the document was opened from or saved to, if any.
     pub original: Option<String>,
     pub modified: SystemTime,
+    /// Zero denotes a validated legacy standalone checkpoint.
+    pub sequence: u64,
+}
+#[derive(Clone, Debug)]
+pub struct Checkpoint {
+    pub sequence: u64,
+    pub state_id: Uuid,
+    pub completed: SystemTime,
+    pub warnings: Vec<String>,
+}
+#[derive(Debug, Default)]
+pub struct ScanReport {
+    pub found: Vec<Found>,
+    pub issues: Vec<String>,
+}
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Phase {
+    BeforePayload,
+    AfterPayload,
+    AfterCommit,
+    AfterHead,
+    BeforeGc,
 }
 
+fn sync_directory(dir: &Path) -> Result<()> {
+    File::open(dir)
+        .and_then(|f| f.sync_all())
+        .map_err(|e| storage("recovery directory sync failed", &e))
+}
+fn outcome(out: &save::Outcome, what: &str) -> Result<()> {
+    if out.is_success() {
+        Ok(())
+    } else {
+        Err(Error::new(
+            ErrorCode::StorageFailed,
+            format!("{what}: {}", out.reasons.join("; ")),
+        ))
+    }
+}
+fn tombstone(dir: &Path, session: Uuid) -> PathBuf {
+    dir.join(format!("{session}.cleared"))
+}
+fn cleared_bytes(session: Uuid) -> Vec<u8> {
+    json::canonical(&Value::object([
+        ("schema", Value::str("paintcraft.recovery-cleared/v1")),
+        ("session", Value::str(session.to_string())),
+    ]))
+}
+fn owned(name: &str, session: Uuid) -> bool {
+    if let Some((stem, temporary)) = name
+        .strip_prefix('.')
+        .and_then(|name| name.rsplit_once(".paintcraft-"))
+        && temporary
+            .strip_suffix(".tmp")
+            .is_some_and(|id| Uuid::parse_str(id).is_ok_and(|uuid| uuid.simple().to_string() == id))
+    {
+        return owned(stem, session);
+    }
+    let prefix = format!("{session}.");
+    let Some(suffix) = name.strip_prefix(&prefix) else {
+        return false;
+    };
+    if matches!(
+        suffix,
+        "lock" | "json" | "pcnd" | "cleared" | "head-0.json" | "head-1.json"
+    ) {
+        return true;
+    }
+    if let Some(sequence) = suffix
+        .strip_prefix("journal-")
+        .and_then(|s| s.strip_suffix(".json"))
+    {
+        return sequence.len() == 20
+            && sequence
+                .parse::<u64>()
+                .is_ok_and(|n| n > 0 && format!("{n:020}") == sequence);
+    }
+    suffix
+        .strip_prefix("payload-")
+        .and_then(|s| s.strip_suffix(".pcnd"))
+        .is_some_and(|s| Uuid::parse_str(s).is_ok_and(|id| id.to_string() == s))
+}
+fn owned_paths(dir: &Path, session: Uuid) -> Result<Vec<PathBuf>> {
+    let mut paths = Vec::new();
+    for (count, entry) in fs::read_dir(dir)
+        .map_err(|e| storage("cannot list recovery files", &e))?
+        .enumerate()
+    {
+        if count >= 100_000 {
+            return Err(Error::new(
+                ErrorCode::ResourceLimit,
+                "recovery directory scan limit reached",
+            ));
+        }
+        let entry = entry.map_err(|e| storage("cannot inspect recovery entry", &e))?;
+        if entry
+            .file_name()
+            .to_str()
+            .is_some_and(|s| owned(s, session))
+        {
+            if paths.len() >= OWNED_FILES_MAX {
+                return Err(Error::new(
+                    ErrorCode::ResourceLimit,
+                    "recovery session file limit reached",
+                ));
+            }
+            paths.push(entry.path());
+        }
+    }
+    Ok(paths)
+}
+fn remove_if_present(path: &Path) -> Result<()> {
+    match fs::remove_file(path) {
+        Ok(()) => Ok(()),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(e) => Err(storage("cannot remove recovery file", &e)),
+    }
+}
 impl Recovery {
-    /// Begin a session: create the directory and take this session's lock.
-    pub fn start(dir: &Path) -> Result<Recovery> {
-        fs::create_dir_all(dir).map_err(|e| storage("cannot create the recovery directory", &e))?;
+    pub fn start(dir: &Path) -> Result<Self> {
+        fs::create_dir_all(dir).map_err(|e| storage("cannot create recovery directory", &e))?;
         let session = Uuid::new_v4();
         let lock = OpenOptions::new()
+            .read(true)
             .write(true)
             .create_new(true)
             .open(dir.join(format!("{session}.lock")))
-            .map_err(|e| storage("cannot create the session lock", &e))?;
-        lock.try_lock().map_err(|e| {
-            storage(
-                "cannot lock the session",
-                &std::io::Error::other(e.to_string()),
+            .map_err(|e| storage("cannot create recovery lock", &e))?;
+        lock.try_lock().map_err(|_| {
+            Error::new(
+                ErrorCode::StorageFailed,
+                "cannot acquire recovery session lock",
             )
         })?;
-        Ok(Recovery {
-            dir: dir.to_path_buf(),
+        sync_directory(dir)?;
+        Ok(Self {
+            dir: dir.to_owned(),
             session,
+            state: Mutex::new(JournalState::default()),
             _lock: lock,
         })
     }
-
     pub fn session(&self) -> Uuid {
         self.session
     }
-
-    fn path(&self, ext: &str) -> PathBuf {
-        self.dir.join(format!("{}.{ext}", self.session))
-    }
-
-    /// Atomically replace this session's checkpoint with `pcnd_bytes`.
-    pub fn checkpoint(&self, pcnd_bytes: &[u8], original: Option<&Path>) -> Result<()> {
-        let meta = json::canonical(&Value::object([(
-            "original",
-            original.map_or(Value::Null, |p| Value::str(p.to_string_lossy())),
-        )]));
-        let outcome = save::save(&self.path("json"), &meta, true);
-        if !outcome.is_success() {
+    /// Compatibility entry point. Validate untrusted bytes using native admission.
+    pub fn checkpoint(&self, bytes: &[u8], original: Option<&Path>) -> Result<()> {
+        if bytes.len() as u64 > SNAPSHOT_BYTES_MAX {
             return Err(Error::new(
-                ErrorCode::StorageFailed,
-                format!(
-                    "recovery metadata not saved: {}",
-                    outcome.reasons.join("; ")
-                ),
+                ErrorCode::ResourceLimit,
+                "recovery snapshot exceeds its limit",
             ));
         }
-        let outcome = save::save(&self.path("pcnd"), pcnd_bytes, true);
-        if outcome.is_success() {
-            Ok(())
-        } else {
-            Err(Error::new(
+        self.checkpoint_document(&crate::pcnd::read(bytes)?, original)
+            .map(|_| ())
+    }
+    pub fn read_checkpoint(path: &Path) -> Result<Document> {
+        crate::pcnd::read(&read_bounded(path, SNAPSHOT_BYTES_MAX)?)
+    }
+
+    pub fn checkpoint_document(
+        &self,
+        document: &Document,
+        original: Option<&Path>,
+    ) -> Result<Checkpoint> {
+        self.checkpoint_impl(document, original, |_| Ok(()))
+    }
+    fn checkpoint_impl(
+        &self,
+        document: &Document,
+        original: Option<&Path>,
+        mut barrier: impl FnMut(Phase) -> Result<()>,
+    ) -> Result<Checkpoint> {
+        let mut state = self
+            .state
+            .lock()
+            .map_err(|_| Error::new(ErrorCode::StorageFailed, "recovery coordinator poisoned"))?;
+        if state.blocked {
+            return Err(Error::new(
                 ErrorCode::StorageFailed,
-                format!("checkpoint not saved: {}", outcome.reasons.join("; ")),
-            ))
+                "recovery requires reconciliation after an uncertain journal write",
+            ));
         }
-    }
-
-    /// The document was saved or closed cleanly: nothing is left to recover.
-    pub fn clear(&self) {
-        for ext in ["pcnd", "json"] {
-            let _ = fs::remove_file(self.path(ext));
+        if state.cleared {
+            remove_if_present(&tombstone(&self.dir, self.session))?;
+            sync_directory(&self.dir)?;
+            state.cleared = false;
         }
-    }
-
-    /// Orphaned sessions that have a checkpoint, oldest first.
-    pub fn scan(dir: &Path) -> Vec<Found> {
-        let Ok(entries) = fs::read_dir(dir) else {
-            return Vec::new();
+        // Reclaim only unreferenced payloads. A committed payload is never removed
+        // here, even if its head publication failed.
+        state.orphans.retain(|(id, _)| {
+            remove_if_present(&payload_path(&self.dir, self.session, *id)).is_err()
+        });
+        let retained = state
+            .retained
+            .iter()
+            .map(|c| c.bytes)
+            .chain(state.orphans.iter().map(|(_, bytes)| *bytes))
+            .try_fold(0u64, u64::checked_add)
+            .ok_or_else(|| {
+                Error::new(ErrorCode::ResourceLimit, "recovery byte charge overflows")
+            })?;
+        let remaining = RETAINED_BYTES_MAX
+            .saturating_sub(retained)
+            .min(SNAPSHOT_BYTES_MAX);
+        if remaining == 0 || state.retained.len() >= TAIL_RECORDS_MAX {
+            return Err(Error::new(
+                ErrorCode::ResourceLimit,
+                "recovery retention exhausted before head publication",
+            ));
+        }
+        let sequence = state
+            .sequence
+            .checked_add(1)
+            .ok_or_else(|| Error::new(ErrorCode::ResourceLimit, "recovery sequence exhausted"))?;
+        let payload = Uuid::new_v4();
+        let path = payload_path(&self.dir, self.session, payload);
+        barrier(Phase::BeforePayload)?;
+        let mut encoding_error = None;
+        let written = save::save_with(&path, false, remaining, |sink| {
+            crate::pcnd::write_to(document, sink).inspect_err(|e| encoding_error = Some(e.clone()))
+        });
+        if let Some(error) = encoding_error {
+            return Err(error);
+        }
+        if !written.is_success() {
+            state.blocked = matches!(
+                written.replacement,
+                save::Replacement::Replaced | save::Replacement::Unknown
+            );
+            // No journal reference exists yet. Retain uncertain output for diagnosis.
+            outcome(&written, "recovery payload not durably saved")?;
+        }
+        let bytes = fs::metadata(&path)
+            .map_err(|e| storage("cannot inspect saved recovery payload", &e))?
+            .len();
+        state.orphans.push((payload, bytes));
+        barrier(Phase::AfterPayload)?;
+        let commit = Commit {
+            sequence,
+            previous: state.previous.clone(),
+            payload,
+            bytes,
+            sha256: written.staged_sha256.expect("successful staged digest"),
+            document: document.document_id,
+            state: document.state_id,
+            original: original.map(|p| p.to_string_lossy().into_owned()),
         };
-        let mut found = Vec::new();
-        for e in entries.flatten() {
-            let path = e.path();
-            if path.extension().is_none_or(|x| x != "lock") {
-                continue;
-            }
-            let Some(session) = path
-                .file_stem()
-                .and_then(|s| s.to_str())
-                .and_then(|s| Uuid::parse_str(s).ok())
-            else {
-                continue;
-            };
-            let Ok(lock) = OpenOptions::new().write(true).open(&path) else {
-                continue;
-            };
-            if lock.try_lock().is_err() {
-                continue; // a live session owns it
-            }
-            let checkpoint = dir.join(format!("{session}.pcnd"));
-            let Ok(meta) = fs::metadata(&checkpoint) else {
-                // Orphaned with nothing to recover: tidy up.
-                let _ = fs::remove_file(&path);
-                let _ = fs::remove_file(dir.join(format!("{session}.json")));
-                continue;
-            };
-            let original = fs::read(dir.join(format!("{session}.json")))
-                .ok()
-                .and_then(|b| json::parse(&b).ok())
-                .and_then(|v| v.get("original").and_then(Value::as_str).map(str::to_owned));
-            found.push(Found {
-                session,
-                checkpoint,
-                original,
-                modified: meta.modified().unwrap_or(SystemTime::UNIX_EPOCH),
-            });
+        let record = commit.encode();
+        Commit::decode(&record)?; // Check record/path/size policy before publishing.
+        let committed = save::save(
+            &commit_path(&self.dir, self.session, sequence),
+            &record,
+            false,
+        );
+        if !committed.is_success() {
+            state.blocked = matches!(
+                committed.replacement,
+                save::Replacement::Replaced | save::Replacement::Unknown
+            );
+            return outcome(&committed, "recovery journal commit not durable")
+                .map(|_| unreachable!());
         }
-        found.sort_by_key(|f| f.modified);
-        found
+        state.orphans.retain(|(id, _)| *id != payload);
+        state.retained.push(commit);
+        state.sequence = sequence;
+        state.previous = Some(hash(&record));
+        barrier(Phase::AfterCommit)?;
+        let head = Head {
+            sequence,
+            commit_sha256: hash(&record),
+        };
+        let slot = sequence % 2;
+        let head_path = head_path(&self.dir, self.session, slot);
+        if fs::symlink_metadata(&head_path).is_ok_and(|m| !m.is_file()) {
+            return Err(Error::new(
+                ErrorCode::TargetInvalid,
+                "invalid recovery head file type",
+            ));
+        }
+        outcome(
+            &save::save(&head_path, &head.encode(), true),
+            "recovery head not durable",
+        )?;
+        state.heads[slot as usize] = Some(head);
+        barrier(Phase::AfterHead)?;
+        barrier(Phase::BeforeGc)?;
+        let completed = SystemTime::now();
+        let cleanup = (|| -> Result<()> {
+            let floor = state
+                .heads
+                .iter()
+                .flatten()
+                .map(|h| h.sequence)
+                .min()
+                .expect("published head");
+            let obsolete: Vec<_> = state
+                .retained
+                .iter()
+                .filter(|old| old.sequence < floor)
+                .cloned()
+                .collect();
+            for old in &obsolete {
+                remove_if_present(&commit_path(&self.dir, self.session, old.sequence))?;
+            }
+            // Persist reference removal before reclaiming its payload, so an interrupted
+            // GC cannot leave a durable segment pointing to deleted data.
+            sync_directory(&self.dir)?;
+            for old in &obsolete {
+                remove_if_present(&payload_path(&self.dir, self.session, old.payload))?;
+            }
+            sync_directory(&self.dir)?;
+            state.retained.retain(|old| old.sequence >= floor);
+            Ok(())
+        })();
+        Ok(Checkpoint {
+            sequence,
+            state_id: document.state_id,
+            completed,
+            warnings: cleanup
+                .err()
+                .map(|e| format!("recovery garbage collection pending: {e}"))
+                .into_iter()
+                .collect(),
+        })
     }
-
-    /// Delete an orphaned session's files (the user declined or finished recovery).
-    pub fn discard(dir: &Path, session: Uuid) {
-        for ext in ["pcnd", "json", "lock"] {
-            let _ = fs::remove_file(dir.join(format!("{session}.{ext}")));
+    /// Record discard durably before cleanup so an interrupted cleanup cannot revive it.
+    pub fn clear(&self) -> Result<()> {
+        let mut state = self
+            .state
+            .lock()
+            .map_err(|_| Error::new(ErrorCode::StorageFailed, "recovery coordinator poisoned"))?;
+        state.epoch = state
+            .epoch
+            .checked_add(1)
+            .ok_or_else(|| Error::new(ErrorCode::ResourceLimit, "recovery epoch exhausted"))?;
+        if let Err(error) = clear_owned(&self.dir, self.session) {
+            state.blocked = true;
+            return Err(error);
         }
+        let epoch = state.epoch;
+        *state = JournalState {
+            cleared: true,
+            epoch,
+            ..Default::default()
+        };
+        Ok(())
+    }
+    pub fn scan(dir: &Path) -> Vec<Found> {
+        Self::scan_report(dir).found
+    }
+    pub fn scan_report(dir: &Path) -> ScanReport {
+        reader::scan_report(dir)
+    }
+    /// Refuse to remove a live session's store.
+    pub fn discard(dir: &Path, session: Uuid) -> Result<()> {
+        let path = dir.join(format!("{session}.lock"));
+        let lock = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .open(&path)
+            .map_err(|e| storage("cannot open recovery lock for discard", &e))?;
+        lock.try_lock()
+            .map_err(|_| Error::new(ErrorCode::StorageFailed, "recovery session is still live"))?;
+        clear_owned(dir, session)?;
+        remove_if_present(&tombstone(dir, session))?;
+        remove_if_present(&path)?;
+        sync_directory(dir)
     }
 }
-
+fn clear_owned(dir: &Path, session: Uuid) -> Result<()> {
+    let marker = tombstone(dir, session);
+    if fs::symlink_metadata(&marker).is_ok_and(|m| !m.is_file()) {
+        return Err(Error::new(
+            ErrorCode::TargetInvalid,
+            "invalid recovery discard marker type",
+        ));
+    }
+    outcome(
+        &save::save(&marker, &cleared_bytes(session), true),
+        "recovery discard not durable",
+    )?;
+    for path in owned_paths(dir, session)? {
+        if path == marker
+            || path.file_name().and_then(|n| n.to_str()) == Some(format!("{session}.lock").as_str())
+        {
+            continue;
+        }
+        remove_if_present(&path)?;
+    }
+    sync_directory(dir)
+}
 impl Drop for Recovery {
     fn drop(&mut self) {
-        // The lock file goes with a clean end of session; a checkpoint that was not
-        // cleared stays behind (it has no lock, so it is offered next start).
-        if !self.path("pcnd").exists() {
-            let _ = fs::remove_file(self.path("lock"));
-            let _ = fs::remove_file(self.path("json"));
+        if owned_paths(&self.dir, self.session).is_ok_and(|paths| {
+            paths.iter().all(|p| {
+                p.file_name().and_then(|n| n.to_str()).is_some_and(|n| {
+                    n == format!("{}.lock", self.session)
+                        || n == format!("{}.cleared", self.session)
+                })
+            })
+        }) {
+            let _ = remove_if_present(&tombstone(&self.dir, self.session));
+            let _ = remove_if_present(&self.dir.join(format!("{}.lock", self.session)));
         }
     }
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn scratch(name: &str) -> PathBuf {
-        let d = std::env::temp_dir().join(format!(
-            "paintcraft-recovery-{name}-{}",
-            Uuid::new_v4().simple()
-        ));
-        fs::create_dir_all(&d).unwrap();
-        d
-    }
-
-    #[test]
-    fn a_live_session_is_not_offered_but_a_crashed_one_is() {
-        let dir = scratch("crash");
-        let r = Recovery::start(&dir).unwrap();
-        r.checkpoint(b"first", Some(Path::new("/tmp/a.pcnd")))
-            .unwrap();
-        assert!(Recovery::scan(&dir).is_empty(), "the owner is alive");
-        let session = r.session();
-        // Simulate a crash: the lock is released but the checkpoint stays.
-        drop(r);
-        let found = Recovery::scan(&dir);
-        assert_eq!(found.len(), 1);
-        assert_eq!(
-            (found[0].session, found[0].original.as_deref()),
-            (session, Some("/tmp/a.pcnd"))
-        );
-        assert_eq!(fs::read(&found[0].checkpoint).unwrap(), b"first");
-        Recovery::discard(&dir, session);
-        assert!(Recovery::scan(&dir).is_empty());
-        assert_eq!(
-            fs::read_dir(&dir).unwrap().count(),
-            0,
-            "nothing left behind"
-        );
-        fs::remove_dir_all(dir).unwrap();
-    }
-
-    #[test]
-    fn checkpoints_replace_atomically_and_clear_removes_everything() {
-        let dir = scratch("replace");
-        let r = Recovery::start(&dir).unwrap();
-        for n in 0..5u8 {
-            r.checkpoint(&[n; 1000], None).unwrap();
-        }
-        assert_eq!(
-            fs::read(dir.join(format!("{}.pcnd", r.session()))).unwrap(),
-            vec![4u8; 1000]
-        );
-        assert_eq!(
-            fs::read_dir(&dir).unwrap().count(),
-            3,
-            "lock, checkpoint and metadata only; no staging files"
-        );
-        r.clear();
-        drop(r);
-        assert_eq!(fs::read_dir(&dir).unwrap().count(), 0);
-        fs::remove_dir_all(dir).unwrap();
-    }
-
-    #[test]
-    fn orphaned_locks_without_checkpoints_are_tidied_and_garbage_is_ignored() {
-        let dir = scratch("tidy");
-        let r = Recovery::start(&dir).unwrap();
-        let s = r.session();
-        std::mem::forget(r); // keeps the lock fd open: still "live" in this process
-        assert!(Recovery::scan(&dir).is_empty());
-        fs::write(dir.join("notes.txt"), b"x").unwrap();
-        fs::write(dir.join("not-a-uuid.lock"), b"").unwrap();
-        assert!(Recovery::scan(&dir).is_empty());
-        assert!(
-            dir.join("notes.txt").exists() && dir.join("not-a-uuid.lock").exists(),
-            "unrelated files are untouched"
-        );
-        assert!(dir.join(format!("{s}.lock")).exists());
-        // A missing directory is simply nothing to recover.
-        assert!(Recovery::scan(&dir.join("absent")).is_empty());
-        fs::remove_dir_all(dir).unwrap();
-    }
-
-    #[test]
-    fn failure_to_write_is_reported_not_swallowed() {
-        let dir = scratch("fail");
-        let r = Recovery::start(&dir).unwrap();
-        fs::remove_dir_all(&dir).unwrap();
-        assert_eq!(
-            r.checkpoint(b"x", None).unwrap_err().code,
-            ErrorCode::StorageFailed
-        );
-    }
-}
+mod tests;
