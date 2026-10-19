@@ -30,6 +30,16 @@ JPEG output explicitly composites alpha over white. ICC/EXIF loss is reported, a
 CLI import loss codes can be acknowledged separately from export loss codes. These
 are capability/correctness choices; BF03/BF25 comparative performance remains pending.
 
+## Streaming native encoder
+
+PCND `write_to` emits canonical stored-ZIP bytes through a backpressured `Write`
+sink. Pixel scratch retains one 4 MiB chunk and one raster block; document metadata,
+sorted block coordinates and the central directory are accounted separately. Directory
+scratch has an 8 MiB provisional cap. This remains the existing non-ZIP64 v1 subset.
+The in-memory convenience writer uses the same encoder. Partial-write, failing-sink,
+round-trip and conformance tests preserve canonical bytes. SAVE-09 is partial: native
+save consumers and process-wide memory admission still need integration and measurement.
+
 ## GPU compositor and native dialogs
 
 The desktop shares eframe's wgpu device with an ordered compute compositor. WGSL uses

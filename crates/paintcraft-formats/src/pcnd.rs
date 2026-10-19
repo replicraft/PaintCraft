@@ -34,15 +34,23 @@ fn sha(bytes: &[u8]) -> String {
 
 /// Canonical PCND v1 bytes for a flat document.
 pub fn write(doc: &Document) -> Result<Vec<u8>> {
-    let mut chunks: Vec<Vec<u8>> = vec![Vec::new()];
+    let mut bytes = Vec::new();
+    write_to(doc, &mut bytes)?;
+    Ok(bytes)
+}
+
+/// Canonical output with at most one 4 MiB payload chunk and one block in scratch.
+/// The sink owns backpressure; no whole-image payload queue is constructed.
+pub fn write_to(doc: &Document, sink: impl std::io::Write) -> Result<()> {
+    let mut chunks: Vec<usize> = vec![0];
     let mut layer_records = Vec::new();
     for layer in doc.layers_in_order() {
         let mut blocks = Vec::new();
-        for (bx, by, _w, _h, data) in layer.raster.blocks() {
-            if !chunks.last().expect("one chunk").is_empty()
-                && chunks.last().expect("one chunk").len() + data.len() > CHUNK_TARGET
+        for (bx, by, _w, _h, data) in layer.raster.blocks_iter() {
+            if *chunks.last().expect("one chunk") != 0
+                && *chunks.last().expect("one chunk") + data.len() > CHUNK_TARGET
             {
-                chunks.push(Vec::new());
+                chunks.push(0);
             }
             let index = chunks.len() - 1;
             let chunk = chunks.last_mut().expect("one chunk");
@@ -50,13 +58,13 @@ pub fn write(doc: &Document) -> Result<Vec<u8>> {
                 ("block_x", Value::Int(i64::from(bx))),
                 ("block_y", Value::Int(i64::from(by))),
                 ("entry", Value::str(format!("data/chunk-{index:06}.bin"))),
-                ("offset", int(chunk.len())),
+                ("offset", int(*chunk)),
                 ("stored_bytes", int(data.len())),
                 ("decoded_bytes", int(data.len())),
                 ("encoding", Value::str("raw")),
                 ("sha256", Value::str(sha(&data))),
             ]));
-            chunk.extend_from_slice(&data);
+            *chunk += data.len();
         }
         layer_records.push(Value::object([
             ("kind", Value::str("raster")),
@@ -130,19 +138,26 @@ pub fn write(doc: &Document) -> Result<Vec<u8>> {
             Value::Array(SUPPORTED_FEATURES.iter().map(|f| Value::str(*f)).collect()),
         ),
     ]));
-    let mut members: Vec<(String, Vec<u8>)> = vec![
-        ("document.json".into(), document),
-        ("manifest.json".into(), manifest),
-    ];
-    members.extend(
-        chunks
-            .into_iter()
-            .enumerate()
-            .filter(|(_, c)| !c.is_empty())
-            .map(|(i, c)| (format!("data/chunk-{i:06}.bin"), c)),
-    );
-    members.sort_by(|a, b| a.0.as_bytes().cmp(b.0.as_bytes()));
-    Ok(zip::write_stored(&members))
+    let mut archive = zip::StoredWriter::new(sink);
+    let mut chunk = Vec::with_capacity(CHUNK_TARGET);
+    let mut index = 0;
+    for layer in doc.layers_in_order() {
+        for (_, _, _, _, data) in layer.raster.blocks_iter() {
+            if !chunk.is_empty() && chunk.len() + data.len() > CHUNK_TARGET {
+                archive.member(&format!("data/chunk-{index:06}.bin"), &chunk)?;
+                chunk.clear();
+                index += 1;
+            }
+            chunk.extend_from_slice(&data);
+        }
+    }
+    if !chunk.is_empty() {
+        archive.member(&format!("data/chunk-{index:06}.bin"), &chunk)?;
+    }
+    archive.member("document.json", &document)?;
+    archive.member("manifest.json", &manifest)?;
+    archive.finish()?;
+    Ok(())
 }
 
 fn codec(m: impl Into<String>) -> Error {
@@ -618,6 +633,69 @@ mod tests {
             PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../conformance/minimal.pcnd"),
         )
         .unwrap()
+    }
+
+    #[test]
+    fn streaming_output_matches_canonical_bytes_under_partial_writes() {
+        struct Sink {
+            hash: Sha256,
+            bytes: usize,
+            largest: usize,
+        }
+        impl std::io::Write for Sink {
+            fn write(&mut self, input: &[u8]) -> std::io::Result<usize> {
+                self.largest = self.largest.max(input.len());
+                let count = input.len().min(1024);
+                self.hash.update(&input[..count]);
+                self.bytes += count;
+                Ok(count)
+            }
+            fn flush(&mut self) -> std::io::Result<()> {
+                Ok(())
+            }
+        }
+        let width = 2048;
+        let height = 768;
+        let pixels: Vec<u8> = (0..width * height)
+            .flat_map(|pixel| [(pixel % 251) as u8, 45, 83, 255])
+            .collect();
+        let doc =
+            paintcraft_document::import_image(width, height, &pixels, "streaming-fixture").unwrap();
+        let expected = write(&doc).unwrap();
+        let mut sink = Sink {
+            hash: Sha256::new(),
+            bytes: 0,
+            largest: 0,
+        };
+        write_to(&doc, &mut sink).unwrap();
+        assert_eq!(sink.bytes, expected.len());
+        assert_eq!(hex(&sink.hash.finalize()), sha(&expected));
+        assert!(
+            sink.largest <= CHUNK_TARGET,
+            "payload chunks must obey sink backpressure"
+        );
+        assert!(read(&expected).unwrap().same_semantics(&doc));
+    }
+
+    #[test]
+    fn failed_streaming_sink_does_not_change_the_source() {
+        struct Full;
+        impl std::io::Write for Full {
+            fn write(&mut self, _: &[u8]) -> std::io::Result<usize> {
+                Err(std::io::Error::new(
+                    std::io::ErrorKind::StorageFull,
+                    "injected disk full",
+                ))
+            }
+            fn flush(&mut self) -> std::io::Result<()> {
+                Ok(())
+            }
+        }
+        let bytes = specimen();
+        let doc = read(&bytes).unwrap();
+        let error = write_to(&doc, Full).unwrap_err();
+        assert_eq!(error.code, ErrorCode::StorageFailed);
+        assert_eq!(write(&doc).unwrap(), bytes);
     }
 
     #[test]

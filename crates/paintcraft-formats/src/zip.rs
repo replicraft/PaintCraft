@@ -15,6 +15,8 @@ const UNIX_FILE_0644: u32 = 0o100644 << 16;
 const LOCAL_SIG: u32 = 0x0403_4b50;
 const CENTRAL_SIG: u32 = 0x0201_4b50;
 const EOCD_SIG: u32 = 0x0605_4b50;
+/// Provisional directory scratch bound for the native stored-ZIP adapter.
+const DIRECTORY_BYTES_MAX: usize = 8 * 1024 * 1024;
 
 fn u16le(b: &[u8], at: usize) -> Option<u16> {
     Some(u16::from_le_bytes(b.get(at..at + 2)?.try_into().ok()?))
@@ -24,66 +26,126 @@ fn u32le(b: &[u8], at: usize) -> Option<u32> {
     Some(u32::from_le_bytes(b.get(at..at + 4)?.try_into().ok()?))
 }
 
-/// Canonical archive. `members` must already be in byte-wise name order.
-///
-/// Panics if the archive would need ZIP64 (65,535 members or 4 GiB): the container
-/// budgets keep real documents far below that, so reaching it is a caller bug.
+/// Canonical in-memory convenience wrapper. Streaming callers use `StoredWriter`.
+/// Panics only if a caller supplies an archive outside the supported ZIP subset.
 pub fn write_stored(members: &[(String, Vec<u8>)]) -> Vec<u8> {
-    let payload: usize = members.iter().map(|(n, d)| d.len() + n.len() + 100).sum();
-    assert!(
-        members.len() < 0xFFFF && payload < 0xFFFF_0000,
-        "archive exceeds the non-ZIP64 limits"
-    );
-    let mut out = Vec::new();
-    let mut central = Vec::new();
+    let mut writer = StoredWriter::new(Vec::new());
     for (name, data) in members {
-        let offset = out.len() as u32;
-        let crc = crc32fast::hash(data);
-        let (size, nlen) = (data.len() as u32, name.len() as u16);
-        // Local file header.
-        out.extend_from_slice(&LOCAL_SIG.to_le_bytes());
-        out.extend_from_slice(&20u16.to_le_bytes()); // version needed
-        out.extend_from_slice(&0u16.to_le_bytes()); // flags
-        out.extend_from_slice(&0u16.to_le_bytes()); // stored
-        out.extend_from_slice(&DOS_TIME.to_le_bytes());
-        out.extend_from_slice(&DOS_DATE.to_le_bytes());
-        out.extend_from_slice(&crc.to_le_bytes());
-        out.extend_from_slice(&size.to_le_bytes());
-        out.extend_from_slice(&size.to_le_bytes());
-        out.extend_from_slice(&nlen.to_le_bytes());
-        out.extend_from_slice(&0u16.to_le_bytes()); // extra length
-        out.extend_from_slice(name.as_bytes());
-        out.extend_from_slice(data);
-        // Central directory entry.
-        central.extend_from_slice(&CENTRAL_SIG.to_le_bytes());
-        central.extend_from_slice(&0x0314u16.to_le_bytes()); // made by: Unix, 2.0
-        central.extend_from_slice(&20u16.to_le_bytes());
-        central.extend_from_slice(&0u16.to_le_bytes());
-        central.extend_from_slice(&0u16.to_le_bytes());
-        central.extend_from_slice(&DOS_TIME.to_le_bytes());
-        central.extend_from_slice(&DOS_DATE.to_le_bytes());
-        central.extend_from_slice(&crc.to_le_bytes());
-        central.extend_from_slice(&size.to_le_bytes());
-        central.extend_from_slice(&size.to_le_bytes());
-        central.extend_from_slice(&nlen.to_le_bytes());
-        central.extend_from_slice(&0u16.to_le_bytes()); // extra
-        central.extend_from_slice(&0u16.to_le_bytes()); // comment
-        central.extend_from_slice(&0u16.to_le_bytes()); // disk
-        central.extend_from_slice(&0u16.to_le_bytes()); // internal attributes
-        central.extend_from_slice(&UNIX_FILE_0644.to_le_bytes());
-        central.extend_from_slice(&offset.to_le_bytes());
-        central.extend_from_slice(name.as_bytes());
+        writer.member(name, data).expect("admitted ZIP member");
     }
-    let dir_offset = out.len() as u32;
-    out.extend_from_slice(&central);
-    out.extend_from_slice(&EOCD_SIG.to_le_bytes());
-    out.extend_from_slice(&[0, 0, 0, 0]); // disk numbers
-    out.extend_from_slice(&(members.len() as u16).to_le_bytes());
-    out.extend_from_slice(&(members.len() as u16).to_le_bytes());
-    out.extend_from_slice(&(central.len() as u32).to_le_bytes());
-    out.extend_from_slice(&dir_offset.to_le_bytes());
-    out.extend_from_slice(&0u16.to_le_bytes()); // comment length
-    out
+    writer.finish().expect("admitted ZIP archive")
+}
+
+/// Stored canonical ZIP output. The caller supplies members in byte-wise name order.
+/// Pixel payloads are not retained after `member` returns; only directory records are.
+#[derive(Debug)]
+pub struct StoredWriter<W> {
+    sink: W,
+    offset: u64,
+    central: Vec<u8>,
+    members: u16,
+}
+fn output_error(error: std::io::Error) -> Error {
+    Error::new(
+        if error.kind() == std::io::ErrorKind::FileTooLarge {
+            ErrorCode::ResourceLimit
+        } else {
+            ErrorCode::StorageFailed
+        },
+        format!("archive output failed: {}", error.kind()),
+    )
+}
+impl<W: std::io::Write> StoredWriter<W> {
+    pub fn new(sink: W) -> Self {
+        Self {
+            sink,
+            offset: 0,
+            central: Vec::new(),
+            members: 0,
+        }
+    }
+    pub fn member(&mut self, name: &str, data: &[u8]) -> Result<()> {
+        let size = u32::try_from(data.len()).map_err(|_| unsupported("member requires ZIP64"))?;
+        let nlen = u16::try_from(name.len())
+            .map_err(|_| unsupported("ZIP member name exceeds its limit"))?;
+        let offset =
+            u32::try_from(self.offset).map_err(|_| unsupported("archive requires ZIP64"))?;
+        if self.members >= 0xfffe {
+            return Err(unsupported("archive member count requires ZIP64"));
+        }
+        let end = self
+            .offset
+            .checked_add(30 + u64::from(nlen) + u64::from(size))
+            .ok_or_else(|| unsupported("archive size overflows"))?;
+        if end >= u64::from(u32::MAX) {
+            return Err(unsupported("archive requires ZIP64"));
+        }
+        if self.central.len().saturating_add(46 + name.len()) > DIRECTORY_BYTES_MAX {
+            return Err(Error::new(
+                ErrorCode::ResourceLimit,
+                "ZIP directory exceeds its scratch budget",
+            ));
+        }
+        let crc = crc32fast::hash(data);
+        let mut local = Vec::with_capacity(30 + name.len());
+        local.extend_from_slice(&LOCAL_SIG.to_le_bytes());
+        local.extend_from_slice(&20u16.to_le_bytes());
+        local.extend_from_slice(&0u16.to_le_bytes());
+        local.extend_from_slice(&0u16.to_le_bytes());
+        local.extend_from_slice(&DOS_TIME.to_le_bytes());
+        local.extend_from_slice(&DOS_DATE.to_le_bytes());
+        local.extend_from_slice(&crc.to_le_bytes());
+        local.extend_from_slice(&size.to_le_bytes());
+        local.extend_from_slice(&size.to_le_bytes());
+        local.extend_from_slice(&nlen.to_le_bytes());
+        local.extend_from_slice(&0u16.to_le_bytes());
+        local.extend_from_slice(name.as_bytes());
+        self.sink.write_all(&local).map_err(output_error)?;
+        self.sink.write_all(data).map_err(output_error)?;
+        self.central.extend_from_slice(&CENTRAL_SIG.to_le_bytes());
+        self.central.extend_from_slice(&0x0314u16.to_le_bytes());
+        self.central.extend_from_slice(&20u16.to_le_bytes());
+        self.central.extend_from_slice(&0u16.to_le_bytes());
+        self.central.extend_from_slice(&0u16.to_le_bytes());
+        self.central.extend_from_slice(&DOS_TIME.to_le_bytes());
+        self.central.extend_from_slice(&DOS_DATE.to_le_bytes());
+        self.central.extend_from_slice(&crc.to_le_bytes());
+        self.central.extend_from_slice(&size.to_le_bytes());
+        self.central.extend_from_slice(&size.to_le_bytes());
+        self.central.extend_from_slice(&nlen.to_le_bytes());
+        self.central.extend_from_slice(&0u16.to_le_bytes());
+        self.central.extend_from_slice(&0u16.to_le_bytes());
+        self.central.extend_from_slice(&0u16.to_le_bytes());
+        self.central.extend_from_slice(&0u16.to_le_bytes());
+        self.central
+            .extend_from_slice(&UNIX_FILE_0644.to_le_bytes());
+        self.central.extend_from_slice(&offset.to_le_bytes());
+        self.central.extend_from_slice(name.as_bytes());
+        self.offset = end;
+        self.members += 1;
+        Ok(())
+    }
+    pub fn finish(mut self) -> Result<W> {
+        let central_size = u32::try_from(self.central.len())
+            .map_err(|_| unsupported("directory requires ZIP64"))?;
+        let central_offset =
+            u32::try_from(self.offset).map_err(|_| unsupported("archive requires ZIP64"))?;
+        if self.offset + u64::from(central_size) + 22 >= u64::from(u32::MAX) {
+            return Err(unsupported("archive requires ZIP64"));
+        }
+        self.sink.write_all(&self.central).map_err(output_error)?;
+        let mut end = Vec::with_capacity(22);
+        end.extend_from_slice(&EOCD_SIG.to_le_bytes());
+        end.extend_from_slice(&0u16.to_le_bytes());
+        end.extend_from_slice(&0u16.to_le_bytes());
+        end.extend_from_slice(&self.members.to_le_bytes());
+        end.extend_from_slice(&self.members.to_le_bytes());
+        end.extend_from_slice(&central_size.to_le_bytes());
+        end.extend_from_slice(&central_offset.to_le_bytes());
+        end.extend_from_slice(&0u16.to_le_bytes());
+        self.sink.write_all(&end).map_err(output_error)?;
+        Ok(self.sink)
+    }
 }
 
 fn codec(m: &str) -> Error {

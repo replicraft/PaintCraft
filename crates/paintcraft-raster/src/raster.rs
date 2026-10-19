@@ -320,6 +320,12 @@ impl RasterLayer {
     /// Non-default 256×256 blocks, in (by, bx) order, as `(bx, by, width, height, rgba)`.
     /// Blocks equal to the default (including hidden RGB) are omitted.
     pub fn blocks(&self) -> Vec<(u32, u32, u32, u32, Vec<u8>)> {
+        self.blocks_iter().collect()
+    }
+
+    /// Materialize one persistence block at a time. Only the coordinate index
+    /// is retained across iterations, so sink backpressure bounds pixel scratch.
+    pub fn blocks_iter(&self) -> impl Iterator<Item = (u32, u32, u32, u32, Vec<u8>)> + '_ {
         let mut coords: Vec<TileCoord> = self.tiles.keys().copied().collect();
         coords.sort_by_key(|c| (c.ty, c.tx));
         coords
@@ -337,7 +343,6 @@ impl RasterLayer {
                 }
                 (bx, by, w, h, data)
             })
-            .collect()
     }
 
     /// Install a decoded block (reader side). `data` must be exactly `w*h*4` bytes.
