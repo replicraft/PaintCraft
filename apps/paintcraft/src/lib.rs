@@ -19,6 +19,7 @@ use paintcraft_formats::recovery::{Found, Recovery};
 use paintcraft_formats::save;
 use paintcraft_types::Rgba;
 use paintcraft_ui::editor::{Action, Editor, Preview, ShapeStyle, Tool};
+use paintcraft_ui::settings::{ClassicVariant, Loaded, Settings};
 use paintcraft_ui::view::View;
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
@@ -79,6 +80,11 @@ pub struct App {
     autosave_every: Duration,
     last_autosave: f64,
     allow_close: bool,
+    settings_dir: Option<PathBuf>,
+    settings: Settings,
+    /// The variant highlighted in the first-visit picker.
+    picking: Option<ClassicVariant>,
+    applied_variant: Option<ClassicVariant>,
 }
 
 fn token(ctx: &egui::Context, code: u64) -> u64 {
@@ -117,6 +123,10 @@ impl App {
             autosave_every: Duration::from_secs(5),
             last_autosave: 0.0,
             allow_close: false,
+            settings_dir: None,
+            settings: Settings::default(),
+            picking: None,
+            applied_variant: None,
         };
         if let Some(p) = path.filter(|p| p.exists())
             && let Err(e) = app.open_path(&p)
@@ -144,6 +154,137 @@ impl App {
                     .editor
                     .set_status(format!("Crash recovery unavailable: {e}")),
             }
+        }
+    }
+
+    /// Load saved settings from `dir`. With no saved Classic variant the first-visit
+    /// picker is shown, with the default (v11) selected.
+    pub fn with_settings(mut self, dir: PathBuf) -> App {
+        let (settings, loaded) = Settings::load(&dir);
+        if let Loaded::Unusable { reason, moved_to } = loaded {
+            let kept = moved_to.map_or_else(String::new, |p| format!(" (kept as {})", p.display()));
+            self.editor.set_status(format!(
+                "Settings were unusable ({reason}){kept}; using defaults"
+            ));
+        }
+        self.picking = settings
+            .classic_variant
+            .is_none()
+            .then_some(ClassicVariant::DEFAULT);
+        self.settings = settings;
+        self.settings_dir = Some(dir);
+        self
+    }
+
+    /// The Classic variant in effect (the default until one is chosen).
+    pub fn variant(&self) -> ClassicVariant {
+        self.settings
+            .classic_variant
+            .unwrap_or(ClassicVariant::DEFAULT)
+    }
+
+    pub fn picker_open(&self) -> bool {
+        self.picking.is_some()
+    }
+
+    fn choose_variant(&mut self, v: ClassicVariant) {
+        self.settings.classic_variant = Some(v);
+        if let Some(dir) = &self.settings_dir
+            && let Err(e) = self.settings.save(dir)
+        {
+            self.editor
+                .set_status(format!("Could not save the interface choice: {e}"));
+        }
+        self.picking = None;
+    }
+
+    /// Presentation presets. These are look-and-feel starting points, not captured
+    /// reproductions of the original applications.
+    fn apply_style(&mut self, ctx: &egui::Context) {
+        let v = self.variant();
+        if self.applied_variant == Some(v) {
+            return;
+        }
+        let (rounding, panel, accent) = match v {
+            ClassicVariant::V7 => (
+                0u8,
+                Color32::from_rgb(233, 238, 247),
+                Color32::from_rgb(63, 119, 186),
+            ),
+            ClassicVariant::V10 => (
+                0,
+                Color32::from_rgb(243, 243, 243),
+                Color32::from_rgb(0, 120, 215),
+            ),
+            ClassicVariant::V11 => (
+                6,
+                Color32::from_rgb(249, 249, 249),
+                Color32::from_rgb(0, 95, 184),
+            ),
+        };
+        let mut vis = egui::Visuals::light();
+        vis.panel_fill = panel;
+        vis.window_fill = panel;
+        vis.selection.bg_fill = accent;
+        let r = egui::CornerRadius::same(rounding);
+        for w in [
+            &mut vis.widgets.noninteractive,
+            &mut vis.widgets.inactive,
+            &mut vis.widgets.hovered,
+            &mut vis.widgets.active,
+            &mut vis.widgets.open,
+        ] {
+            w.corner_radius = r;
+        }
+        vis.window_corner_radius = r;
+        ctx.set_visuals(vis);
+        self.applied_variant = Some(v);
+    }
+
+    /// First-visit picker, also reachable later from the toolbar.
+    fn picker_dialog(&mut self, ui: &mut egui::Ui) {
+        let Some(mut current) = self.picking else {
+            return;
+        };
+        let ctx = ui.ctx().clone();
+        let mut done = false;
+        egui::Window::new("Choose your Paint")
+            .collapsible(false)
+            .resizable(false)
+            .anchor(egui::Align2::CENTER_CENTER, Vec2::ZERO)
+            .show(&ctx, |ui| {
+                ui.label("Pick the look you know. You can change it later from Interface.");
+                ui.horizontal(|ui| {
+                    for v in ClassicVariant::ALL {
+                        let (rect, response) =
+                            ui.allocate_exact_size(Vec2::new(150.0, 110.0), Sense::click());
+                        response.widget_info(|| {
+                            egui::WidgetInfo::selected(
+                                egui::Role::RadioButton,
+                                true,
+                                current == v,
+                                v.name(),
+                            )
+                        });
+                        if response.clicked() {
+                            current = v;
+                        }
+                        draw_variant_thumbnail(ui.painter(), rect, v, current == v);
+                    }
+                });
+                ui.horizontal(|ui| {
+                    for v in ClassicVariant::ALL {
+                        ui.add_sized([150.0, 18.0], egui::Label::new(v.name()));
+                    }
+                });
+                if ui.button("Continue").clicked() {
+                    done = true;
+                }
+            });
+        if done {
+            self.choose_variant(current);
+        } else {
+            self.picking = Some(current);
         }
     }
 
@@ -387,6 +528,9 @@ impl App {
             }
             if ui.button("Export").clicked() {
                 self.export_requested();
+            }
+            if ui.button("Interface").clicked() {
+                self.picking = Some(self.variant());
             }
             let file_label = ui.label("File");
             ui.add(egui::TextEdit::singleline(&mut self.path_text))
@@ -878,6 +1022,7 @@ impl App {
         if first_pass {
             self.handle_global_input(ui);
         }
+        self.apply_style(&ctx);
         self.sync_texture(&ctx);
         egui::Panel::top("toolbar").show(ui, |ui| self.toolbar(ui));
         egui::Panel::bottom("status").show(ui, |ui| {
@@ -902,6 +1047,7 @@ impl App {
             self.layer_panel(ui);
         });
         egui::CentralPanel::default().show(ui, |ui| self.canvas(ui, first_pass));
+        self.picker_dialog(ui);
         self.recovery_dialog(ui);
         self.confirm_dialog(ui);
         if first_pass
@@ -938,4 +1084,62 @@ impl eframe::App for App {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         App::ui(self, ui);
     }
+}
+
+/// A small schematic of each variant's window, so the choice is visual.
+fn draw_variant_thumbnail(p: &egui::Painter, rect: Rect, v: ClassicVariant, selected: bool) {
+    let (bar, ribbon, canvas) = match v {
+        ClassicVariant::V7 => (
+            Color32::from_rgb(120, 160, 215),
+            Color32::from_rgb(214, 224, 240),
+            Color32::WHITE,
+        ),
+        ClassicVariant::V10 => (
+            Color32::from_rgb(255, 255, 255),
+            Color32::from_rgb(235, 235, 235),
+            Color32::WHITE,
+        ),
+        ClassicVariant::V11 => (
+            Color32::from_rgb(243, 243, 243),
+            Color32::from_rgb(250, 250, 250),
+            Color32::WHITE,
+        ),
+    };
+    let round = if v == ClassicVariant::V11 { 8.0 } else { 0.0 };
+    let stroke = if selected {
+        egui::Stroke::new(3.0, Color32::from_rgb(0, 95, 184))
+    } else {
+        egui::Stroke::new(1.0, Color32::GRAY)
+    };
+    p.rect_filled(rect, round, Color32::from_gray(220));
+    p.rect_filled(
+        Rect::from_min_size(rect.min, Vec2::new(rect.width(), 14.0)),
+        round,
+        bar,
+    );
+    p.rect_filled(
+        Rect::from_min_size(
+            rect.min + Vec2::new(0.0, 14.0),
+            Vec2::new(rect.width(), 28.0),
+        ),
+        0.0,
+        ribbon,
+    );
+    for i in 0..6 {
+        let x = rect.min.x + 8.0 + i as f32 * 14.0;
+        p.rect_filled(
+            Rect::from_min_size(Pos2::new(x, rect.min.y + 20.0), Vec2::splat(10.0)),
+            if v == ClassicVariant::V11 { 5.0 } else { 0.0 },
+            Color32::from_gray(150),
+        );
+    }
+    p.rect_filled(
+        Rect::from_min_max(
+            rect.min + Vec2::new(8.0, 50.0),
+            rect.max - Vec2::new(8.0, 8.0),
+        ),
+        0.0,
+        canvas,
+    );
+    p.rect_stroke(rect, round, stroke, egui::StrokeKind::Inside);
 }
