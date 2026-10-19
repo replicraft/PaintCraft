@@ -8,6 +8,7 @@ impl App {
         let (w, h) = self.editor.document().canvas;
         let size = View::new((0.0, 0.0), self.zoom, ppp).canvas_size(w, h);
         egui::ScrollArea::both()
+            .id_salt(("document-canvas", self.active_tab_id()))
             .auto_shrink([false, false])
             .show(ui, |ui| {
                 let canvas_size = Vec2::new(size.0, size.1);

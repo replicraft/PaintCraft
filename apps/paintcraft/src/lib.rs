@@ -17,6 +17,8 @@ mod recovery;
 mod rendering;
 mod saving;
 pub mod settings;
+#[path = "app/tabs.rs"]
+mod tabs;
 #[cfg(test)]
 #[path = "app/tests.rs"]
 mod tests;
@@ -78,6 +80,7 @@ enum Confirm {
     DiscardForSaveSnapshot(u64),
     ForgetSaveSnapshot(u64),
     ReplaceFile(PathBuf),
+    ReplaceSharedFile(PathBuf),
     QuitUnsaved,
     /// Export to a flat image, naming what it would lose and whether it replaces a file.
     Export {
@@ -107,13 +110,21 @@ struct RenderedFrame {
 type RenderKey = (Uuid, u64, u64);
 
 pub struct App {
+    context: egui::Context,
     editor: Editor,
+    tabs: Vec<tabs::Tab>,
+    active_tab: usize,
+    next_tab_number: u64,
+    tab_closing: Option<Uuid>,
+    tab_close_wait: Option<Uuid>,
+    tab_save_close: Option<(Uuid, Uuid)>,
     chrome_outbox: paintcraft_ui::outbox::Outbox<paintcraft_ui::chrome::Action>,
     studio: paintcraft_studio::Workspace,
     gpu: Option<Arc<GpuRenderer>>,
     renderer: Option<Executor<RenderedFrame>>,
     pending_frame: Option<(RenderKey, JobHandle)>,
     dialogs: Option<NativeDialogs>,
+    dialog_owner: Option<Uuid>,
     texture: Option<egui::TextureHandle>,
     texture_key: Option<RenderKey>,
     rendered_preview: Option<Preview>,
@@ -128,6 +139,7 @@ pub struct App {
     saving: Option<saving::NativeSaving>,
     save_activation: Option<u64>,
     close_after_saves: bool,
+    closing_workspace: bool,
     confirm: Option<Confirm>,
     canvas_rect: Option<Rect>,
     hover_doc: Option<(i64, i64)>,
@@ -170,14 +182,22 @@ impl App {
             |p| p.to_string_lossy().into_owned(),
         );
         let mut app = App {
+            context: Default::default(),
             editor: Editor::new_document(DEFAULT_SIZE.0, DEFAULT_SIZE.1)
                 .expect("default size is valid"),
+            tabs: vec![tabs::Tab::initial()],
+            active_tab: 0,
+            next_tab_number: 1,
+            tab_closing: None,
+            tab_close_wait: None,
+            tab_save_close: None,
             chrome_outbox: Default::default(),
             studio: Default::default(),
             gpu: None,
             renderer: None,
             pending_frame: None,
             dialogs: None,
+            dialog_owner: None,
             texture: None,
             texture_key: None,
             rendered_preview: None,
@@ -190,6 +210,7 @@ impl App {
             saving: None,
             save_activation: None,
             close_after_saves: false,
+            closing_workspace: false,
             confirm: None,
             canvas_rect: None,
             hover_doc: None,

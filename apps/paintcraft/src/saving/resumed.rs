@@ -9,9 +9,15 @@ struct Reacquire {
 }
 #[derive(Debug)]
 pub(super) struct Request {
+    session: Uuid,
     id: Uuid,
     scope: Uuid,
     found: Found,
+}
+impl Request {
+    pub(super) fn owner(&self) -> Uuid {
+        self.session
+    }
 }
 #[derive(Debug)]
 struct Report {
@@ -24,6 +30,11 @@ pub(super) struct State {
     dialog: Option<Reacquire>,
     active: Option<(Uuid, Uuid)>,
     report: Option<Report>,
+}
+impl State {
+    pub(super) fn busy(&self) -> bool {
+        self.dialog.is_some() || self.active.is_some()
+    }
 }
 impl NativeSaving {
     pub(crate) fn cancel_inspection(&mut self) {
@@ -50,6 +61,7 @@ impl NativeSaving {
             return Ok(());
         }
         let request = Request {
+            session: self.session,
             id: Uuid::new_v4(),
             scope,
             found,
@@ -76,6 +88,7 @@ impl NativeSaving {
 }
 impl App {
     pub(crate) fn locate_recovered_destination(&mut self, ctx: &egui::Context, found: Found) {
+        let dialog_owner = self.active_tab_id();
         let Some(dialogs) = &mut self.dialogs else {
             self.editor.set_status(
                 "Locating a saved destination requires the native desktop file picker.",
@@ -97,6 +110,7 @@ impl App {
         });
         let context = ctx.clone();
         // Stored diagnostic/display paths do not supply this read capability.
+        self.dialog_owner = Some(dialog_owner);
         dialogs.request(Kind::InspectRecovery, None, move || {
             context.request_repaint()
         });

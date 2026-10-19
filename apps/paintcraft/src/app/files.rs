@@ -4,6 +4,9 @@ use super::*;
 
 impl App {
     pub(super) fn request_dialog(&mut self, ctx: &egui::Context, kind: Kind) {
+        if self.document_count() == 0 && kind != Kind::Open {
+            return;
+        }
         self.editor.cancel_gesture();
         self.editor.commit_text();
         let suggested = if kind == Kind::Export {
@@ -11,7 +14,11 @@ impl App {
         } else {
             PathBuf::from(&self.path_text)
         };
-        if let Some(dialogs) = &mut self.dialogs {
+        let owner = self.active_tab_id();
+        if let Some(dialogs) = &mut self.dialogs
+            && !dialogs.pending()
+        {
+            self.dialog_owner = (owner != Uuid::nil()).then_some(owner);
             let ctx = ctx.clone();
             dialogs.request(kind, Some(&suggested), move || ctx.request_repaint());
         }
@@ -21,6 +28,30 @@ impl App {
         let Some(completion) = self.dialogs.as_mut().and_then(NativeDialogs::poll) else {
             return;
         };
+        self.complete_dialog(ctx, completion);
+    }
+
+    pub(super) fn complete_dialog(
+        &mut self,
+        ctx: &egui::Context,
+        completion: paintcraft_platform::dialogs::Completion,
+    ) {
+        let owner = self.dialog_owner.take();
+        if (completion.path.is_some() || completion.kind == Kind::InspectRecovery)
+            && let Some(owner) = owner
+        {
+            if !self.tabs.iter().any(|t| t.id == owner) {
+                self.editor.set_status(
+                    "The file dialog's document is no longer open; its selection was not applied.",
+                );
+                return;
+            }
+            self.activate_tab(owner, ctx);
+            if self.active_tab_id() != owner {
+                self.editor.set_status("The file dialog's document could not be activated; its selection was not applied.");
+                return;
+            }
+        }
         if completion.kind == Kind::InspectRecovery {
             self.recovered_destination_selected(completion.path);
             return;
@@ -28,7 +59,9 @@ impl App {
         let Some(path) = completion.path else {
             return;
         };
-        self.path_text = path.to_string_lossy().into_owned();
+        if completion.kind != Kind::Open {
+            self.path_text = path.to_string_lossy().into_owned();
+        }
         match completion.kind {
             Kind::Open => self.open_selected(path),
             Kind::SaveAs => self.save_selected(ctx, path),
@@ -57,6 +90,9 @@ impl App {
     }
 
     pub(super) fn install(&mut self, editor: Editor) -> paintcraft_core::types::Result<()> {
+        if self.experience() == Experience::Studio || self.tabs.is_empty() {
+            return self.add_document_tab(editor, &self.context.clone());
+        }
         self.prepare_editor_replacement()?;
         self.publish_editor(editor);
         Ok(())
@@ -81,6 +117,12 @@ impl App {
 
     /// Open a `.pcnd` document or import a PNG, BMP or JPEG picture.
     pub(super) fn open_path(&mut self, path: &Path) -> paintcraft_core::types::Result<()> {
+        if self.experience() == Experience::Studio
+            && let Some(id) = self.tab_bound_to_path(path)
+        {
+            self.activate_tab(id, &self.context.clone());
+            return Ok(());
+        }
         let bytes = std::fs::read(path).map_err(|e| {
             paintcraft_core::types::Error::new(
                 paintcraft_core::types::ErrorCode::StorageFailed,
@@ -116,6 +158,13 @@ impl App {
         };
         self.install(editor)?;
         self.bound = bound;
+        self.path_text = if self.bound.is_some() {
+            path.to_path_buf()
+        } else {
+            path.with_extension("pcnd")
+        }
+        .to_string_lossy()
+        .into_owned();
         self.editor.set_status(note);
         Ok(())
     }
@@ -129,7 +178,7 @@ impl App {
     }
 
     pub(super) fn open_selected(&mut self, path: PathBuf) {
-        if self.editor.is_dirty() {
+        if self.experience() == Experience::Classic && self.editor.is_dirty() {
             self.confirm = Some(Confirm::DiscardForOpen(path));
         } else if let Err(e) = self.open_path(&path) {
             self.editor.set_status(format!("Cannot open: {e}"));
@@ -139,6 +188,9 @@ impl App {
     /// Plan an export to the format named by the file extension; losses and
     /// replacement are confirmed before anything is written.
     pub(super) fn export_requested(&mut self, ctx: &egui::Context) {
+        if self.document_count() == 0 {
+            return;
+        }
         if self.dialogs.is_some() {
             self.request_dialog(ctx, Kind::Export);
         } else {
@@ -184,6 +236,9 @@ impl App {
     }
 
     pub(super) fn save_requested(&mut self, ctx: &egui::Context) {
+        if self.document_count() == 0 {
+            return;
+        }
         if self.dialogs.is_some() && self.bound.is_none() {
             self.request_dialog(ctx, Kind::SaveAs);
             return;
@@ -197,6 +252,10 @@ impl App {
 
     pub(super) fn save_selected(&mut self, ctx: &egui::Context, path: PathBuf) {
         if path.as_os_str().is_empty() {
+            return;
+        }
+        if self.other_document_destination(&path) {
+            self.confirm = Some(Confirm::ReplaceSharedFile(path));
             return;
         }
         if path.exists() && self.bound.as_deref() != Some(path.as_path()) {
@@ -238,9 +297,11 @@ impl App {
         };
         if success {
             self.path_text = path.to_string_lossy().into_owned();
-            self.bound = Some(path);
+            self.bound = Some(path.clone());
             self.protect_recovery_source();
             self.pump_recovery_handoff();
+            let snapshot = self.editor.document_snapshot();
+            self.destination_written(&path, &snapshot, Some(self.active_tab_id()));
         } else {
             self.editor.restore_path(previous);
         }

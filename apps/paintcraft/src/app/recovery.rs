@@ -8,7 +8,7 @@ impl App {
     pub fn with_recovery(mut self, dir: PathBuf) -> App {
         // This is startup configuration, not a live store-migration API. Retain
         // the active owner until a separately implemented durable handoff exists.
-        if self.editor.recovery_handle().is_some() {
+        if self.has_live_recovery() {
             if self.recovery_dir.as_ref() != Some(&dir) {
                 self.editor.set_status("The recovery folder cannot be changed while it is active. Existing recovery data has been retained.");
             }
@@ -77,7 +77,7 @@ impl App {
     pub(super) fn recover_requested(&mut self, item: Found) {
         self.editor.commit_text();
         self.editor.run_pending();
-        if self.editor.is_dirty() {
+        if self.experience() == Experience::Classic && self.editor.is_dirty() {
             self.confirm = Some(Confirm::DiscardForRecovery(item));
         } else {
             self.do_recover(item);
@@ -106,8 +106,8 @@ impl App {
 
     pub(super) fn recover_found(&mut self, item: &Found) -> paintcraft_core::types::Result<()> {
         let claimed = Recovery::claim(item)?;
-        self.prepare_editor_replacement()?;
-        self.publish_editor(Editor::recovered_document(claimed.document));
+        self.install(Editor::recovered_document(claimed.document))?;
+        self.forget_recovery_offer(item.session);
         self.recovery_source = Some(saving::restoring::Handoff::new(claimed.lease));
         self.bound = None;
         if let Some(original) = &item.original {
@@ -141,10 +141,7 @@ impl App {
                     "PaintCraft found unsaved work from an earlier session: {name}."
                 ));
                 self.recovered_inspection_controls(ui, &item);
-                let restoring = self
-                    .saving
-                    .as_ref()
-                    .is_some_and(|saving| saving.offer_busy(&item));
+                let restoring = self.recovery_offer_busy(&item);
                 ui.horizontal(|ui| {
                     if ui
                         .add_enabled(

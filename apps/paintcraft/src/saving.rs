@@ -4,6 +4,7 @@ mod attempts;
 mod persistence;
 pub(super) mod restoring;
 mod resumed;
+pub(crate) mod sessions;
 use super::*;
 use paintcraft_core::types::{Error, ErrorCode, Result, json::Value};
 use paintcraft_formats::recovery::{Checkpoint, RecoveryToken};
@@ -342,13 +343,15 @@ impl App {
             self.editor
                 .set_status("Waiting for requested saves and recovery before closing…");
         } else if self.allow_close {
-            ctx.send_viewport_cmd(egui::ViewportCommand::Close);
-        } else if self.saving.as_ref().is_some_and(NativeSaving::failed) {
+            self.request_workspace_close(ctx);
+        } else if self.saving.as_ref().is_some_and(NativeSaving::failed)
+            || self.any_dirty_documents()
+        {
             self.confirm = Some(Confirm::QuitUnsaved);
         } else {
-            match self.clean_recovery_before_close() {
+            match self.clean_all_recovery_before_close() {
                 Ok(true) => self.close_after_saves = true,
-                Ok(false) => ctx.send_viewport_cmd(egui::ViewportCommand::Close),
+                Ok(false) => self.request_workspace_close(ctx),
                 Err(error) => {
                     self.allow_close = false;
                     self.editor
@@ -358,6 +361,125 @@ impl App {
             }
         }
     }
+    fn complete_native(&mut self, ticket: Ticket, kind: PendingKind, result: Result<Completion>) {
+        let saving = self.saving.as_mut().expect("native I/O");
+        match kind {
+            PendingKind::Save(request) => self.complete_save(ticket, request, result),
+            PendingKind::Reconcile { sequence } => self.complete_reconciliation(sequence, result),
+            PendingKind::Resumed(request) => self.complete_resumed_inspection(*request, result),
+            PendingKind::Checkpoint {
+                session,
+                token,
+                key,
+            } => {
+                if session != saving.session
+                    || self
+                        .editor
+                        .recovery_handle()
+                        .is_none_or(|r| !r.is_current(token))
+                {
+                    return;
+                }
+                match result {
+                    Ok(Completion::Checkpoint(info)) => {
+                        self.editor.accept_checkpoint(token, key, info);
+                        if let Some(source) = &mut self.recovery_source {
+                            source.protect();
+                        }
+                    }
+                    Err(error) if error.code == ErrorCode::OperationCancelled => {}
+                    Err(error) => {
+                        saving.failed = true;
+                        self.editor.set_status(format!("Autosave failed: {error}"));
+                    }
+                    _ => unreachable!("typed checkpoint completion"),
+                }
+            }
+            PendingKind::Initialize { session, scope } => match result {
+                Ok(Completion::Started { report, recovery }) => {
+                    if scope == self.recovery_scope {
+                        if let Some(report) = report
+                            && self.recovery_needs_scan
+                        {
+                            self.recovery_needs_scan = false;
+                            self.recoverable = report.found;
+                            if !report.issues.is_empty() {
+                                self.editor.set_status(
+                                    report
+                                        .issues
+                                        .into_iter()
+                                        .take(3)
+                                        .collect::<Vec<_>>()
+                                        .join("; "),
+                                );
+                            }
+                        }
+                        if session == saving.session {
+                            match recovery {
+                                Ok(recovery) if self.editor.recovery_handle().is_none() => {
+                                    self.editor.attach_shared_recovery(recovery);
+                                    if self.editor.status() == "Checking crash recovery…" {
+                                        self.editor.set_status("Crash recovery ready");
+                                    }
+                                }
+                                Ok(recovery) => {
+                                    if let Err(error) = saving.retire_recovery(recovery) {
+                                        self.editor.set_status(format!(
+                                            "Unused recovery cleanup failed: {error}"
+                                        ));
+                                        saving.failed = true;
+                                    }
+                                }
+                                Err(error) => self
+                                    .editor
+                                    .set_status(format!("Crash recovery unavailable: {error}")),
+                            }
+                            return;
+                        }
+                    }
+                    if let Ok(recovery) = recovery
+                        && let Err(error) = saving.retire_recovery(recovery)
+                    {
+                        self.editor
+                            .set_status(format!("Unused recovery cleanup failed: {error}"));
+                        saving.failed = true;
+                    }
+                }
+                Err(error) => self
+                    .editor
+                    .set_status(format!("Recovery initialization failed: {error}")),
+                _ => unreachable!("typed initialization completion"),
+            },
+            PendingKind::Restore(request) => self.apply_claimed_recovery(*request, result),
+            PendingKind::OfferDiscard { scope, session } => match result {
+                Ok(Completion::Cleanup) => {
+                    if scope == self.recovery_scope {
+                        self.recoverable.retain(|offer| offer.session != session);
+                        if self.editor.status() == "Discarding recovery copy…" {
+                            self.editor.set_status("Recovery copy discarded");
+                        }
+                    }
+                }
+                Err(error) => {
+                    saving.failed = true;
+                    self.editor
+                        .set_status(format!("Cannot discard recovery: {error}"));
+                }
+                _ => unreachable!("typed orphan discard completion"),
+            },
+            PendingKind::Cleanup => match result {
+                Ok(Completion::Cleanup) => {}
+                Err(error) if error.code == ErrorCode::OperationCancelled => {}
+                Err(error) => {
+                    saving.failed = true;
+                    self.editor
+                        .set_status(format!("Recovery cleanup failed: {error}"));
+                }
+                _ => unreachable!("typed cleanup completion"),
+            },
+        }
+    }
+
     pub(super) fn poll_native_saves(&mut self, ctx: &egui::Context) {
         if self.saving.is_none() {
             return;
@@ -365,124 +487,7 @@ impl App {
         while let Some((ticket, kind, result)) =
             self.saving.as_mut().and_then(NativeSaving::poll_completion)
         {
-            let saving = self.saving.as_mut().expect("native I/O");
-            match kind {
-                PendingKind::Save(request) => self.complete_save(ticket, request, result),
-                PendingKind::Reconcile { sequence } => {
-                    self.complete_reconciliation(sequence, result)
-                }
-                PendingKind::Resumed(request) => self.complete_resumed_inspection(*request, result),
-                PendingKind::Checkpoint {
-                    session,
-                    token,
-                    key,
-                } => {
-                    if session != saving.session
-                        || self
-                            .editor
-                            .recovery_handle()
-                            .is_none_or(|r| !r.is_current(token))
-                    {
-                        continue;
-                    }
-                    match result {
-                        Ok(Completion::Checkpoint(info)) => {
-                            self.editor.accept_checkpoint(token, key, info);
-                            if let Some(source) = &mut self.recovery_source {
-                                source.protect();
-                            }
-                        }
-                        Err(error) if error.code == ErrorCode::OperationCancelled => {}
-                        Err(error) => {
-                            saving.failed = true;
-                            self.editor.set_status(format!("Autosave failed: {error}"));
-                        }
-                        _ => unreachable!("typed checkpoint completion"),
-                    }
-                }
-                PendingKind::Initialize { session, scope } => match result {
-                    Ok(Completion::Started { report, recovery }) => {
-                        if scope == self.recovery_scope {
-                            if let Some(report) = report
-                                && self.recovery_needs_scan
-                            {
-                                self.recovery_needs_scan = false;
-                                self.recoverable = report.found;
-                                if !report.issues.is_empty() {
-                                    self.editor.set_status(
-                                        report
-                                            .issues
-                                            .into_iter()
-                                            .take(3)
-                                            .collect::<Vec<_>>()
-                                            .join("; "),
-                                    );
-                                }
-                            }
-                            if session == saving.session {
-                                match recovery {
-                                    Ok(recovery) if self.editor.recovery_handle().is_none() => {
-                                        self.editor.attach_shared_recovery(recovery);
-                                        if self.editor.status() == "Checking crash recovery…" {
-                                            self.editor.set_status("Crash recovery ready");
-                                        }
-                                    }
-                                    Ok(recovery) => {
-                                        if let Err(error) = saving.retire_recovery(recovery) {
-                                            self.editor.set_status(format!(
-                                                "Unused recovery cleanup failed: {error}"
-                                            ));
-                                            saving.failed = true;
-                                        }
-                                    }
-                                    Err(error) => self
-                                        .editor
-                                        .set_status(format!("Crash recovery unavailable: {error}")),
-                                }
-                                continue;
-                            }
-                        }
-                        if let Ok(recovery) = recovery
-                            && let Err(error) = saving.retire_recovery(recovery)
-                        {
-                            self.editor
-                                .set_status(format!("Unused recovery cleanup failed: {error}"));
-                            saving.failed = true;
-                        }
-                    }
-                    Err(error) => self
-                        .editor
-                        .set_status(format!("Recovery initialization failed: {error}")),
-                    _ => unreachable!("typed initialization completion"),
-                },
-                PendingKind::Restore(request) => self.apply_claimed_recovery(*request, result),
-                PendingKind::OfferDiscard { scope, session } => match result {
-                    Ok(Completion::Cleanup) => {
-                        if scope == self.recovery_scope {
-                            self.recoverable.retain(|offer| offer.session != session);
-                            if self.editor.status() == "Discarding recovery copy…" {
-                                self.editor.set_status("Recovery copy discarded");
-                            }
-                        }
-                    }
-                    Err(error) => {
-                        saving.failed = true;
-                        self.editor
-                            .set_status(format!("Cannot discard recovery: {error}"));
-                    }
-                    _ => unreachable!("typed orphan discard completion"),
-                },
-                PendingKind::Cleanup => match result {
-                    Ok(Completion::Cleanup) => {}
-                    Err(error) if error.code == ErrorCode::OperationCancelled => {}
-                    Err(error) => {
-                        saving.failed = true;
-                        self.editor
-                            .set_status(format!("Recovery cleanup failed: {error}"));
-                    }
-                    _ => unreachable!("typed cleanup completion"),
-                },
-            }
+            self.route_native_completion(ticket, kind, result);
         }
         self.saving
             .as_mut()
@@ -493,24 +498,24 @@ impl App {
             self.close_after_saves = false;
             if saving.failed() {
                 self.allow_close = false;
-                self.editor.set_status("A requested save or recovery operation failed or remains unconfirmed. Review the document before closing.");
-            } else if !self.editor.is_dirty() && self.editor.checkpoint_info().is_some() {
-                match saving.clear_recovery(&mut self.editor) {
-                    Ok(()) => self.close_after_saves = true,
+                self.editor.set_status("A requested save or recovery operation failed or remains unconfirmed. Review the documents before closing.");
+            } else if self.any_dirty_documents() && !self.allow_close {
+                self.confirm = Some(Confirm::QuitUnsaved);
+            } else if !self.allow_close {
+                match self.clean_all_recovery_before_close() {
+                    Ok(true) => self.close_after_saves = true,
+                    Ok(false) => self.request_workspace_close(ctx),
                     Err(error) => {
-                        saving.failed = true;
-                        self.allow_close = false;
                         self.editor
                             .set_status(format!("Recovery cleanup before close failed: {error}"));
+                        self.confirm = Some(Confirm::QuitUnsaved);
                     }
                 }
-            } else if self.editor.is_dirty() && !self.allow_close {
-                self.confirm = Some(Confirm::QuitUnsaved);
             } else {
-                ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                self.request_workspace_close(ctx);
             }
         }
-        if !self.close_after_saves && !self.allow_close {
+        if !self.close_after_saves && !self.closing_workspace && !self.allow_close {
             if self.recovery_needs_init {
                 self.attach_recovery();
             }

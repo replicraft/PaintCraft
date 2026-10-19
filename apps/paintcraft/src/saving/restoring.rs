@@ -58,6 +58,11 @@ pub(super) struct Request {
     offer: Found,
     drafts: Drafts,
 }
+impl Request {
+    pub(super) fn owner(&self) -> Uuid {
+        self.session
+    }
+}
 #[derive(Debug)]
 pub(super) struct Intent {
     request: Request,
@@ -230,7 +235,7 @@ impl App {
             source.protect();
         }
     }
-    pub(super) fn pump_restore(&mut self) {
+    pub(crate) fn pump_restore(&mut self) {
         if let Some(saving) = &mut self.saving
             && let Err(error) = saving.try_restore(&self.editor, self.recovery_scope)
         {
@@ -305,6 +310,9 @@ impl App {
             && request.key == self.editor.render_key()
             && !self.editor.gesture_in_progress()
             && !self.editor.is_editing_text()
+            && self.confirm.is_none()
+            && self.tab_closing.is_none()
+            && self.dialog_owner.is_none()
             && !self.close_after_saves
             && !self.allow_close;
         if active {
@@ -332,7 +340,12 @@ impl App {
             }
             return;
         }
-        if let Err(error) = self.prepare_editor_replacement() {
+        let admission = if self.experience() == Experience::Studio {
+            self.check_tab_capacity()
+        } else {
+            self.prepare_editor_replacement()
+        };
+        if let Err(error) = admission {
             self.editor
                 .set_status(format!("Recovery not applied: {error}"));
             if let Err(error) = self
@@ -349,7 +362,14 @@ impl App {
         let ClaimedRecovery {
             document, lease, ..
         } = *claim;
-        self.publish_editor(Editor::recovered_document(document));
+        let editor = Editor::recovered_document(document);
+        if self.experience() == Experience::Studio {
+            self.add_document_tab(editor, &self.context.clone())
+                .expect("tab admission checked before recovered publication");
+        } else {
+            self.publish_editor(editor);
+        }
+        self.forget_recovery_offer(request.offer.session);
         self.recovery_source = Some(Handoff::new(lease));
         self.bound = None;
         if let Some(original) = request.offer.original {

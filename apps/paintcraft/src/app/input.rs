@@ -4,12 +4,17 @@ use super::*;
 
 impl App {
     pub(super) fn request(&mut self, ctx: &egui::Context, code: u64, action: Action) {
-        self.editor.request(token(ctx, code), action);
+        if self.document_count() > 0 {
+            self.editor.request(token(ctx, code), action);
+        }
     }
 
     /// Keyboard shortcuts and window events; first pass only. Each key press is
     /// judged with the modifiers it arrived with, not the pointer-time state.
     pub(super) fn handle_global_input(&mut self, ui: &mut egui::Ui) {
+        if self.document_count() == 0 {
+            return;
+        }
         let ctx = ui.ctx().clone();
         let events = ui.input(|i| i.events.clone());
         let text_focus = self.editor.is_editing_text() && !ctx.egui_wants_keyboard_input();

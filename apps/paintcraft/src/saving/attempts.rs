@@ -16,6 +16,12 @@ pub(super) struct Attempt {
 }
 
 impl NativeSaving {
+    pub(super) fn attempt_owner(&self, sequence: u64) -> Option<Uuid> {
+        self.attempts
+            .iter()
+            .find(|a| a.ticket.sequence() == sequence)
+            .map(|a| a.request.session)
+    }
     pub(crate) fn has_volatile_attempts(&self) -> bool {
         self.attempts
             .iter()
@@ -182,7 +188,17 @@ impl App {
         saving.remember_receipt(ticket, &request, &outcome);
         let success = outcome.is_success();
         if success {
-            self.adopt_saved_attempt(ticket, &request, &outcome);
+            let adopted = self.adopt_saved_attempt(ticket, &request, &outcome);
+            let owner = if adopted {
+                self.tab_for_session(request.session)
+            } else {
+                None
+            };
+            self.destination_written(
+                outcome.resolved_destination().unwrap_or(&request.path),
+                &request.snapshot,
+                owner,
+            );
             if let Some(retention) = retention {
                 self.saving
                     .as_mut()
@@ -212,14 +228,14 @@ impl App {
         ticket: Ticket,
         request: &SaveRequest,
         outcome: &save::Outcome,
-    ) {
+    ) -> bool {
         let saving = self.saving.as_mut().expect("native I/O");
         if request.session != saving.session
             || request.generation != saving.generation
             || ticket.sequence() < saving.adopted_sequence
             || !outcome.is_success()
         {
-            return;
+            return false;
         }
         // Bind the originally captured namespace even if the dialog alias changed.
         let path = outcome
@@ -251,6 +267,7 @@ impl App {
                 path.display()
             ));
         }
+        true
     }
     pub(super) fn complete_reconciliation(&mut self, sequence: u64, result: Result<Completion>) {
         let saving = self.saving.as_mut().expect("native I/O");
@@ -267,7 +284,24 @@ impl App {
             Ok(Completion::Reconciled(checked)) => {
                 saving.remember_receipt(attempt.ticket, &attempt.request, &checked.outcome);
                 if checked.outcome.is_success() {
-                    self.adopt_saved_attempt(attempt.ticket, &attempt.request, &checked.outcome);
+                    let adopted = self.adopt_saved_attempt(
+                        attempt.ticket,
+                        &attempt.request,
+                        &checked.outcome,
+                    );
+                    let owner = if adopted {
+                        self.tab_for_session(attempt.request.session)
+                    } else {
+                        None
+                    };
+                    self.destination_written(
+                        checked
+                            .outcome
+                            .resolved_destination()
+                            .unwrap_or(&attempt.request.path),
+                        &attempt.request.snapshot,
+                        owner,
+                    );
                     if let Some(retention) = attempt.retention {
                         self.saving
                             .as_mut()
@@ -304,6 +338,10 @@ impl App {
         }
     }
     pub(crate) fn saved_snapshot_requested(&mut self, sequence: u64) {
+        if self.experience() == Experience::Studio {
+            self.open_saved_snapshot(sequence);
+            return;
+        }
         self.editor.commit_text();
         self.editor.run_pending();
         let layers = &self.editor.document().layers;
