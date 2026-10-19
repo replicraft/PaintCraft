@@ -9,12 +9,13 @@ publish.workspace = true
 
 [features]
 default = []
-gpu = ["dep:wgpu"]
+gpu = ["dep:wgpu", "dep:bytemuck"]
 
 [dependencies]
 paintcraft-core.workspace = true
 paintcraft-document.workspace = true
 
+bytemuck = { workspace = true, optional = true }
 wgpu = { workspace = true, optional = true }
 
 [dev-dependencies]

@@ -7,6 +7,28 @@ use paintcraft_document::Document;
 use std::{sync::mpsc, time::Duration};
 use wgpu::util::DeviceExt as _;
 
+/// Explicit WGSL `Params` layout; all integer fields are staged as little endian.
+#[derive(Clone, Copy, Debug, bytemuck::Pod, bytemuck::Zeroable)]
+#[repr(C)]
+struct LayerParams {
+    origin: [u32; 2],
+    extent: [u32; 2],
+    canvas_width: u32,
+    opacity: u32,
+    padding: [u32; 2],
+}
+impl LayerParams {
+    fn new(origin: [u32; 2], extent: [u32; 2], canvas_width: u32, opacity: u8) -> Self {
+        Self {
+            origin: origin.map(u32::to_le),
+            extent: extent.map(u32::to_le),
+            canvas_width: canvas_width.to_le(),
+            opacity: u32::from(opacity).to_le(),
+            padding: [0; 2],
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct GpuRenderer {
     device: wgpu::Device,
@@ -93,24 +115,17 @@ impl GpuRenderer {
                     contents: &bytes,
                     usage: wgpu::BufferUsages::STORAGE,
                 });
-            let params: Vec<u8> = [
-                area.x0 as u32,
-                area.y0 as u32,
-                width,
-                height,
+            let params = LayerParams::new(
+                [area.x0 as u32, area.y0 as u32],
+                [width, height],
                 w,
-                u32::from(layer.opacity),
-                0,
-                0,
-            ]
-            .into_iter()
-            .flat_map(u32::to_le_bytes)
-            .collect();
+                layer.opacity,
+            );
             let uniform = self
                 .device
                 .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                     label: Some("PaintCraft layer bounds"),
-                    contents: &params,
+                    contents: bytemuck::bytes_of(&params),
                     usage: wgpu::BufferUsages::UNIFORM,
                 });
             let bindings = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
@@ -171,5 +186,24 @@ impl GpuRenderer {
             .to_vec();
         readback.unmap();
         Ok(bytes)
+    }
+}
+
+#[cfg(test)]
+mod layout_tests {
+    use super::*;
+    #[test]
+    fn staging_matches_wgsl_offsets_and_endianness() {
+        assert_eq!(std::mem::size_of::<LayerParams>(), 32);
+        assert_eq!(std::mem::offset_of!(LayerParams, origin), 0);
+        assert_eq!(std::mem::offset_of!(LayerParams, extent), 8);
+        assert_eq!(std::mem::offset_of!(LayerParams, canvas_width), 16);
+        assert_eq!(std::mem::offset_of!(LayerParams, opacity), 20);
+        assert_eq!(std::mem::offset_of!(LayerParams, padding), 24);
+        let params = LayerParams::new([1, 2], [0x12345678, 4], 5, 127);
+        let bytes = bytemuck::bytes_of(&params);
+        assert_eq!(&bytes[8..12], &[0x78, 0x56, 0x34, 0x12]);
+        assert_eq!(&bytes[20..24], &[127, 0, 0, 0]);
+        assert_eq!(&bytes[24..], &[0; 8]);
     }
 }

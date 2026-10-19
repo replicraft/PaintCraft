@@ -2410,6 +2410,7 @@ dependencies = [
 name = "paintcraft-render"
 version = "0.1.0"
 dependencies = [
+ "bytemuck",
  "paintcraft-core",
  "paintcraft-document",
  "paintcraft-editor",
