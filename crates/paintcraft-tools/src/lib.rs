@@ -72,6 +72,9 @@ pub struct ToolOptions {
     /// Brush, eraser and outline thickness in pixels (1..=1024).
     pub size: u32,
     pub round: bool,
+    /// Replacement pixel for erasing, captured at pointer-down. Transparent for
+    /// layered editors; an opaque canvas color for paint-style frontends.
+    pub eraser_color: Rgba,
     /// Capped Brush opacity in percent, 0..=100; captured at pointer-down.
     pub brush_opacity: u8,
     pub style: ShapeStyle,
@@ -87,6 +90,7 @@ impl Default for ToolOptions {
             pencil_size: 1,
             size: 4,
             round: true,
+            eraser_color: Rgba::TRANSPARENT,
             brush_opacity: 100,
             style: ShapeStyle::Outline,
             tolerance: 0,
@@ -422,7 +426,12 @@ impl ToolState {
                 g.color,
                 BlendMode::SourceOver,
             ),
-            Tool::Eraser => (g.options.size, false, Rgba::TRANSPARENT, BlendMode::Replace),
+            Tool::Eraser => (
+                g.options.size,
+                false,
+                g.options.eraser_color,
+                BlendMode::Replace,
+            ),
             _ => {
                 let mut color = g.color;
                 color.0[3] = ((u16::from(color.a()) * u16::from(g.options.brush_opacity.min(100))

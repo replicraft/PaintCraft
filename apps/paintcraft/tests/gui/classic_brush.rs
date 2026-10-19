@@ -119,7 +119,7 @@ fn brush_opacity_previews_release_exactly_zero_is_noop_and_eraser_still_erases()
             release(b),
         ]);
         h.run();
-        assert_eq!(top_pixel(&h, 65, 70), Rgba::TRANSPARENT);
+        assert_eq!(top_pixel(&h, 65, 70), Rgba([255, 255, 255, 255]));
         h.get_by_label("Undo").click();
         h.run();
         assert!(h.state().editor().document().same_semantics(&painted));

@@ -53,7 +53,9 @@ its own tool options.
 Preview and release share one captured `Stroke`, including an explicit mode.
 Brush and Pencil use source-over; zero-opacity Brush and alpha-zero Pencil strokes
 leave pixels, StateId, dirty state and history unchanged. Eraser uses replace
-explicitly. Alpha zero alone no longer selects erasing behavior. CLI operations
+explicitly, with its replacement color captured at pointer-down. Classic restores
+the first opaque raster ground in document root order, falling back to white for
+imported or transparent documents; Studio replaces pixels with transparency. Alpha zero alone no longer selects erasing behavior. CLI operations
 retain their explicit `mode` contract.
 
 Within a single operation the swept geometry is unioned before blending, so

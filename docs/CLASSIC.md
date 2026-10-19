@@ -43,8 +43,11 @@ Keyboard zoom controls the canvas, preserving the size of the application UI.
 The round brush preserves pointer positions in 1/256-pixel units and stores
 antialiased coverage in the document. Preview and publication use the same
 rasterizer. Brush opacity is adjustable from 0–100% and is captured for the whole
-gesture. Zero opacity leaves pixels and history unchanged; Eraser retains its
-explicit erase mode. Pencil defaults to one pixel and has a size slider and precise pixel entry, retaining hard edges and exact pixel placement. See [brush rendering](BRUSH_RENDERING.md).
+gesture. Zero opacity leaves pixels and history unchanged. Eraser restores the
+opaque canvas background color, defaulting to white for imported images without
+a solid canvas ground. Pencil defaults to one pixel and has a size slider and
+precise pixel entry, retaining hard edges and exact pixel placement. See
+[brush rendering](BRUSH_RENDERING.md).
 
 The Colors ribbon now opens a staged **Edit colors** dialog for the primary or
 secondary swatch. It provides a hue/saturation square, brightness strip, RGB/HSL

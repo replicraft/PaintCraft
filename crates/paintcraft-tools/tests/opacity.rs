@@ -43,3 +43,22 @@ fn transparent_paint_is_source_over_and_only_eraser_replaces_pixels() {
         assert_eq!(stroke.mode, mode);
     }
 }
+
+#[test]
+fn eraser_replacement_color_is_captured_for_preview_and_release() {
+    let mut tools = ToolState::default();
+    tools.tool = Tool::Eraser;
+    let canvas = Rgba([32, 96, 160, 255]);
+    tools.options.eraser_color = canvas;
+    tools.pointer_down(Uuid::nil(), (2, 3));
+    tools.options.eraser_color = Rgba::TRANSPARENT;
+    let Some(Preview::Path(preview)) = tools.preview() else {
+        panic!("eraser preview");
+    };
+    assert_eq!(preview.color, canvas);
+    assert_eq!(preview.mode, BlendMode::Replace);
+    let (_, Action::Stroke(released)) = tools.pointer_up().unwrap() else {
+        panic!("eraser stroke");
+    };
+    assert_eq!(preview, released);
+}

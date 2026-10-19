@@ -312,7 +312,7 @@ fn fill_and_eraser_work_from_the_palette() {
     h.get_by_label("Eraser").click();
     h.run();
     drag(&mut h, (100.0, 100.0), (120.0, 100.0));
-    assert_eq!(top_pixel(&h, 110, 100), Rgba::TRANSPARENT);
+    assert_eq!(top_pixel(&h, 110, 100), Rgba([255, 255, 255, 255]));
     assert_eq!(top_pixel(&h, 110, 120).a(), 255);
 }
 
