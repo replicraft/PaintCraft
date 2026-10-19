@@ -117,6 +117,9 @@ mod tests {
             layer_index: Some(0),
             layer_count: 2,
             layer_visible: true,
+            zoom: 1.0,
+            pixel_grid: false,
+            can_fit_selection: false,
         };
         assert!(Action::Layer(LayerAction::MoveTop).enabled(context));
         assert!(!Action::Layer(LayerAction::MoveBottom).enabled(context));

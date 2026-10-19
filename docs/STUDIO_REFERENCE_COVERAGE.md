@@ -43,6 +43,7 @@ behavior remain unqualified.
 | History | working | Recorded labels, undo/redo and guarded direct navigation; branching/spill is separate work |
 | File workflows | partially working | New/Open/Save/Save As/Export and native dialogs work; shared metadata and menu/shortcut dispatch cover existing operations; Save All, recent files, printing and acquisition remain |
 | Colors and layers | partially working | Primary/secondary swatches, swap, wheel, palette and More RGBA/hex controls work; layer selection/visibility/rename/opacity/reorder/add/delete/duplicate and staged properties work; custom palettes, thumbnails, merge/transforms and broader blend modes remain |
+| View menu | partially working | Zoom in/out, actual size, fit window/selection and a display-only pixel grid work; rulers, units, pan tools and overscroll remain |
 | Settings | partially working | Experience/version persistence works; utility-window persistence and reference settings pages remain |
 | Selection/clipboard/image/adjustments/effects | partially working | Rectangle selection and existing drawing tools work; clipboard, transforms, adjustment/effect registries and preview lifecycles remain |
 | Classic v11 fidelity | deferred | Existing separate Classic frontend retained; reference-driven expansion follows Studio coverage |

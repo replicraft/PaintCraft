@@ -8,7 +8,7 @@ separately in the dependency choices and is not bundled yet.
 
 ## Implemented presentation slice
 
-- Compact File/Edit/Layers/Window menus, file and undo/redo toolbar, and tool options.
+- Compact File/Edit/View/Layers/Window menus, file and undo/redo toolbar, and tool options.
 - Document tabs with independent editors, histories, targets, tools, colors, zoom,
   scroll positions and native-file bindings. New/Open/recovery preserve other tabs.
   Close supports save, discard and cancel; closing the last tab leaves an empty workspace.
@@ -229,3 +229,34 @@ adds one undo entry. Escape, document switching and modal entry cancel safely.
 See [pointer ownership](INPUT_GESTURES.md) for normalized input APIs, tests and
 limits. Secondary selection, text and eraser behavior and Classic button policies
 remain separate compatibility work; this is not full Paint.NET tool parity.
+
+## View menu and pixel grid
+
+Zoom In/Out, Zoom to Window, Zoom to Selection, Actual Size and Pixel Grid now
+share the Studio action registry. Zoom shortcuts use Command/Ctrl plus/minus,
+Command/Ctrl+B, Shift+Command/Ctrl+B and Command/Ctrl+0. Plus accepts the keyboard's
+Shift modifier and the Equals-key alias. These shortcuts zoom the document;
+egui's built-in whole-interface zoom shortcuts are disabled in Studio.
+
+Fractional scaling allows zoom-out and fitted views. Actual Size remains one
+physical screen pixel per document pixel at any display scale. Step zoom preserves
+the visible document center; fit commands center the document or real nonempty
+selection using the scroll area. Native zoom is bounded to 1/65536–64×; this range
+and fit padding are current implementation policies, not qualified reference values.
+Zoom changes cancel an active stroke so its remaining samples cannot use a changed
+mapping. Text drafts are retained.
+
+Pixel Grid is an overlay at magnification of at least four physical pixels per
+document pixel. It draws only visible boundaries with one-physical-pixel strokes,
+without scanning the document area or changing the rendered image buffer. Zoom,
+grid and pending viewport centering belong to each document. None changes pixels,
+selection, history, dirty state or PCND bytes. Rulers, units/DPI metadata, overscroll,
+pan tools and persistent viewport settings remain separate work.
+
+Tests cover physical scaling, fractional drawing coordinates, actual size, fit at
+multiple DPI scales, fitting/scrolling to a selection, menu/shortcut/preset dispatch,
+per-tab ownership and exact history/PCND preservation. They also guard against a
+scrolled canvas accepting clicks on the menu bar outside its visible clip.
+The ignored native-GPU review test `view::render_studio_pixel_grid_for_review`
+writes `/tmp/paintcraft-studio-pixel-grid.png`. These controls address `5image.png`;
+visual and behavioral reference qualification remains incomplete.

@@ -80,6 +80,7 @@ impl App {
         if self.applied_variant.is_none() {
             paintcraft_ui::fonts::install(ctx);
         }
+        ctx.options_mut(|options| options.zoom_with_keyboard = experience != Experience::Studio);
         let style = egui::Style {
             visuals: egui::Visuals::light(),
             ..Default::default()

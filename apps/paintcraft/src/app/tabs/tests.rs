@@ -43,7 +43,7 @@ fn five_documents_keep_their_editors_history_bindings_and_zoom_across_modes() {
             app.new_document();
         }
         paint(&mut app, i + 1);
-        app.zoom = 1u32 << i;
+        app.zoom = (1u32 << i) as f32;
         app.bound = Some(PathBuf::from(format!("doc-{i}.pcnd")));
         documents.push((
             app.active_tab_id(),

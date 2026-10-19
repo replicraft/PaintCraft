@@ -4,9 +4,10 @@ use super::*;
 
 impl App {
     pub(super) fn canvas(&mut self, ui: &mut egui::Ui, first_pass: bool) {
+        self.canvas_viewport = Some(ui.available_rect_before_wrap());
         let ppp = ui.ctx().pixels_per_point();
         let (w, h) = self.editor.document().canvas;
-        let size = View::new((0.0, 0.0), self.zoom, ppp).canvas_size(w, h);
+        let size = View::with_scale((0.0, 0.0), self.zoom, ppp).canvas_size(w, h);
         egui::ScrollArea::both()
             .id_salt(("document-canvas", self.active_tab_id()))
             .auto_shrink([false, false])
@@ -25,10 +26,11 @@ impl App {
                 };
                 let rect = response.rect;
                 self.canvas_rect = Some(rect);
-                let view = View::new((rect.min.x, rect.min.y), self.zoom, ppp);
+                let visible_canvas = rect.intersect(painter.clip_rect());
+                let view = View::with_scale((rect.min.x, rect.min.y), self.zoom, ppp);
                 self.hover_doc = ui
                     .input(|i| i.pointer.hover_pos())
-                    .filter(|p| rect.contains(*p))
+                    .filter(|p| visible_canvas.contains(*p))
                     .and_then(|p| view.to_doc((p.x, p.y)));
 
                 if first_pass {
@@ -52,7 +54,7 @@ impl App {
                                     }
                                     _ => continue,
                                 };
-                                if (rect.contains(pos)
+                                if (visible_canvas.contains(pos)
                                     && ui.ctx().layer_id_at(pos) == Some(painter.layer_id()))
                                     && let Some(d) = view.to_doc((pos.x, pos.y))
                                 {
@@ -133,7 +135,18 @@ impl App {
                     );
                 }
 
+                if self.pixel_grid {
+                    self.draw_pixel_grid(&painter, rect, &view);
+                }
                 self.draw_overlays(&painter, &view, ppp);
+                if let Some((x, y)) = self.pending_center.take() {
+                    let center = rect.min
+                        + Vec2::new(x * view.points_per_pixel(), y * view.points_per_pixel());
+                    ui.scroll_to_rect(
+                        Rect::from_center_size(center, Vec2::ZERO),
+                        Some(egui::Align::Center),
+                    );
+                }
             });
     }
 

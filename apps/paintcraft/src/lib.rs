@@ -24,6 +24,8 @@ mod tabs;
 #[cfg(test)]
 #[path = "app/tests.rs"]
 mod tests;
+#[path = "app/view.rs"]
+mod view;
 #[path = "app/window.rs"]
 mod window;
 // The PaintCraft desktop UI. Shared widgets live in `paintcraft-ui`;
@@ -135,7 +137,9 @@ pub struct App {
     preview_revision: u64,
     /// Straight RGBA8 flat render of what the texture shows.
     rendered: Vec<u8>,
-    zoom: u32,
+    zoom: f32,
+    pixel_grid: bool,
+    pending_center: Option<(f32, f32)>,
     path_text: String,
     /// The file this document was opened from or last saved to.
     bound: Option<PathBuf>,
@@ -146,6 +150,7 @@ pub struct App {
     closing_workspace: bool,
     confirm: Option<Confirm>,
     canvas_rect: Option<Rect>,
+    canvas_viewport: Option<Rect>,
     hover_doc: Option<(i64, i64)>,
     exit_after_frames: Option<u64>,
     recovery_dir: Option<PathBuf>,
@@ -208,7 +213,9 @@ impl App {
             rendered_preview: None,
             preview_revision: 0,
             rendered: Vec::new(),
-            zoom: 1,
+            zoom: 1.0,
+            pixel_grid: false,
+            pending_center: None,
             path_text,
             bound: None,
             pending_save: None,
@@ -218,6 +225,7 @@ impl App {
             closing_workspace: false,
             confirm: None,
             canvas_rect: None,
+            canvas_viewport: None,
             hover_doc: None,
             exit_after_frames: None,
             recovery_dir: None,

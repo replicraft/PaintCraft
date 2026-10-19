@@ -2,7 +2,9 @@
 use egui::{Key, KeyboardShortcut, Modifiers};
 use paintcraft_tools::Tool;
 mod layers;
+mod view;
 pub use layers::{LAYERS, LayerAction};
+pub use view::{VIEW, ViewAction, ZOOM_MAX, ZOOM_MIN};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Action {
@@ -19,6 +21,7 @@ pub enum Action {
     Deselect,
     Close,
     Layer(LayerAction),
+    View(ViewAction),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -39,6 +42,9 @@ pub struct Context {
     pub layer_index: Option<usize>,
     pub layer_count: usize,
     pub layer_visible: bool,
+    pub zoom: f32,
+    pub pixel_grid: bool,
+    pub can_fit_selection: bool,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -65,11 +71,14 @@ pub const EDIT: &[Action] = &[
 
 impl Action {
     pub fn descriptor(self) -> Descriptor {
+        if let Self::View(action) = self {
+            return action.descriptor();
+        }
         if let Self::Layer(action) = self {
             return action.descriptor();
         }
         let (label, key) = match self {
-            Self::Layer(_) => unreachable!(),
+            Self::Layer(_) | Self::View(_) => unreachable!(),
             Self::New => ("New", Some((Key::N, false))),
             Self::Open => ("Open…", Some((Key::O, false))),
             Self::Save => ("Save", Some((Key::S, false))),
@@ -99,7 +108,7 @@ impl Action {
     pub fn available(self, frontend: Frontend) -> bool {
         match self {
             Self::Interface => frontend == Frontend::Classic,
-            Self::Layer(_) => frontend == Frontend::Studio,
+            Self::Layer(_) | Self::View(_) => frontend == Frontend::Studio,
             _ => true,
         }
     }
@@ -110,6 +119,7 @@ impl Action {
         }
         match self {
             Self::Layer(action) => action.enabled(ctx),
+            Self::View(action) => action.enabled(ctx),
             Self::New | Self::Open | Self::Interface => true,
             Self::Undo => ctx.document_open && ctx.can_undo,
             Self::Redo => ctx.document_open && ctx.can_redo,
@@ -121,6 +131,7 @@ impl Action {
     pub fn checked(self, ctx: Context) -> Option<bool> {
         match self {
             Self::Layer(LayerAction::ToggleVisibility) => Some(ctx.layer_visible),
+            Self::View(action) => action.checked(ctx),
             Self::SelectTool(tool) => Some(ctx.document_open && tool == ctx.tool),
             _ => None,
         }
@@ -129,6 +140,9 @@ impl Action {
     /// Exact logical-key/modifier matching prevents Save As from falling through
     /// to Save and avoids treating AltGr combinations as application commands.
     pub fn from_shortcut(key: Key, modifiers: Modifiers) -> Option<Self> {
+        if matches!(key, Key::Plus | Key::Equals) && modifiers.command && !modifiers.alt {
+            return Some(Self::View(ViewAction::ZoomIn));
+        }
         if key == Key::Z && modifiers.matches_exact(Modifiers::COMMAND | Modifiers::SHIFT) {
             return Some(Self::Redo);
         }
@@ -136,6 +150,7 @@ impl Action {
             .chain(EDIT)
             .copied()
             .chain(LAYERS.iter().copied().map(Self::Layer))
+            .chain(VIEW.iter().copied().map(Self::View))
             .find(|a| {
                 a.descriptor()
                     .shortcut
@@ -146,6 +161,7 @@ impl Action {
     pub fn activation_code(self) -> u64 {
         match self {
             Self::Layer(action) => 1200 + action as u64,
+            Self::View(action) => 1300 + action as u64,
             Self::New => 1000,
             Self::Open => 1001,
             Self::Save => 1002,
@@ -242,6 +258,9 @@ mod tests {
             layer_index: None,
             layer_count: 0,
             layer_visible: false,
+            zoom: 1.0,
+            pixel_grid: false,
+            can_fit_selection: false,
         };
         let ids: std::collections::HashSet<_> = FILE
             .iter()

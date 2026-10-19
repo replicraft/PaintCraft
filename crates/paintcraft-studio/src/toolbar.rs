@@ -27,6 +27,17 @@ pub fn toolbar(
                 }
             }
         });
+        ui.menu_button("View", |ui| {
+            for (index, &action) in actions::VIEW.iter().enumerate() {
+                if index == 5 {
+                    ui.separator();
+                }
+                if actions::menu_item(ui, Action::View(action), context) {
+                    actions.push(Action::View(action));
+                    ui.close();
+                }
+            }
+        });
         ui.menu_button("Layers", |ui| {
             for (index, &action) in actions::LAYERS.iter().enumerate() {
                 if matches!(index, 3 | 4 | 8 | 12) {

@@ -32,7 +32,9 @@ impl Tab {
 struct DocumentState {
     editor: Editor,
     session: SessionState,
-    zoom: u32,
+    zoom: f32,
+    pixel_grid: bool,
+    pending_center: Option<(f32, f32)>,
     path_text: String,
     bound: Option<PathBuf>,
     pending_save: Option<(PathBuf, Option<PathBuf>)>,
@@ -49,7 +51,9 @@ impl DocumentState {
         Self {
             editor,
             session: Default::default(),
-            zoom: 1,
+            zoom: 1.0,
+            pixel_grid: false,
+            pending_center: None,
             path_text: "untitled.pcnd".into(),
             bound: None,
             pending_save: None,
@@ -65,6 +69,8 @@ impl DocumentState {
     fn swap(&mut self, app: &mut App) {
         std::mem::swap(&mut self.editor, &mut app.editor);
         std::mem::swap(&mut self.zoom, &mut app.zoom);
+        std::mem::swap(&mut self.pixel_grid, &mut app.pixel_grid);
+        std::mem::swap(&mut self.pending_center, &mut app.pending_center);
         std::mem::swap(&mut self.path_text, &mut app.path_text);
         std::mem::swap(&mut self.bound, &mut app.bound);
         std::mem::swap(&mut self.pending_save, &mut app.pending_save);

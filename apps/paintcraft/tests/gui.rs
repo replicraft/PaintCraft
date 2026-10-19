@@ -131,3 +131,5 @@ mod properties;
 mod secondary;
 #[path = "gui/shortcuts.rs"]
 mod shortcuts;
+#[path = "gui/view.rs"]
+mod view;

@@ -28,6 +28,9 @@ impl App {
             layer_index,
             layer_count: self.editor.document().roots.len(),
             layer_visible,
+            zoom: self.zoom,
+            pixel_grid: self.pixel_grid,
+            can_fit_selection: matches!(self.editor.selection(), Selection::Rect(_)),
             blocked: self.closing_workspace
                 || self.close_after_saves
                 || self.confirm.is_some()
@@ -127,6 +130,7 @@ impl App {
                 Chrome::Export => self.export_requested(ctx),
                 Chrome::Undo => self.request(ctx, code::UNDO, Action::Undo),
                 Chrome::Redo => self.request(ctx, code::REDO, Action::Redo),
+                Chrome::View(action) => self.dispatch_view_action(ctx, action),
                 Chrome::Layer(action) => self.dispatch_layer_action(ctx, action),
                 Chrome::Close => self.request_close_tab(self.active_tab_id(), ctx),
                 Chrome::Interface => self.picking = Some(self.variant()),
