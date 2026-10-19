@@ -65,6 +65,7 @@ impl App {
             .default_size(220.0)
             .show(ui, |ui| {
                 self.layer_panel(ui);
+                self.incomplete_save_panel(ui);
             });
         let accept_input = first_pass && !self.dialogs.as_ref().is_some_and(NativeDialogs::pending);
         egui::CentralPanel::default()

@@ -147,7 +147,7 @@ SAVE-01. Repeated layout passes cannot submit duplicate saves. Close requests dr
 accepted writes, and failures keep the window open for a new explicit decision.
 The deterministic headless UI harness retains its synchronous adapter; native queue
 integration has separate tests. Open-to-save conflict fingerprints,
-full receipt reconciliation and BF07 performance qualification remain pending.
+restart-persistent receipt reconciliation and BF07 performance qualification remain pending.
 
 The platform save outcome now retains private attempt evidence for bounded local-Unix
 reinspection (FILE-02/03). `Outcome::reconcile` revises the same operation ID without
@@ -158,8 +158,29 @@ opened file and parent, then checks the descriptor, namespace, content and revis
 changes across those barriers remain unconfirmed. Receipt source/sequence/binding
 stamps remain caller-owned. Failure injection covers both barriers, late replacement,
 late edits/deletion and alias changes. This is not a portable exclusion mechanism or
-filesystem qualification; other platform identity adapters, desktop reconciliation
-controls and restart-persistent uncertain-attempt retention remain pending.
+filesystem qualification; other platform identity adapters and restart-persistent
+uncertain-attempt retention remain pending.
+
+The native desktop retains up to 16 incomplete save attempts, including known
+pre-replacement failures and worker failures, with the exact immutable document each
+request captured. Their conservative snapshot charges share the 1 GiB I/O admission
+budget; save admission leaves 1 MiB available for control work. This is an estimate,
+not allocator/RSS qualification. A later successful save does not hide earlier failed
+attempts or release their snapshots. The Incomplete saves panel queues inspection and
+explicit persistence confirmation on the same FIFO. Revised receipts retain the
+original operation ID, save sequence and binding generation. Only the current session
+and binding generation may adopt a confirmed result, and an older save sequence cannot
+regress a newer acknowledged state or replace the latest receipt. Adopted paths use
+the originally resolved namespace rather than re-resolving a potentially changed alias.
+
+Captured snapshots can be opened as unbound unsaved work, with confirmation before
+replacing newer edits or drafts, even after the original file is removed. Explicitly
+forgetting an attempt requires confirmation and does not change the destination or
+claim durability. Unresolved attempts keep close warnings active; explicitly quitting
+warns that these in-memory snapshots will be abandoned. This tranche does not yet
+persist attempt details/snapshots across restart. Native coordinator and real egui
+multipass widget tests cover these controls; target/filesystem durability qualification
+and external-process conflict handling remain separate obligations.
 
 ## Native render preparation
 

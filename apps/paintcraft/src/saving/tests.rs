@@ -3,7 +3,7 @@ use std::{sync::mpsc, time::Instant};
 pub(super) fn scratch() -> PathBuf {
     let path = std::env::temp_dir().join(format!("paintcraft-ordered-save-{}", Uuid::new_v4()));
     std::fs::create_dir(&path).unwrap();
-    path
+    std::fs::canonicalize(path).unwrap()
 }
 pub(super) fn app() -> App {
     let mut app = App::new(None);

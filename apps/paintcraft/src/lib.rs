@@ -72,6 +72,8 @@ enum Confirm {
     DiscardForNew,
     DiscardForOpen(PathBuf),
     DiscardForRecovery(Found),
+    DiscardForSaveSnapshot(u64),
+    ForgetSaveSnapshot(u64),
     ReplaceFile(PathBuf),
     QuitUnsaved,
     /// Export to a flat image, naming what it would lose and whether it replaces a file.

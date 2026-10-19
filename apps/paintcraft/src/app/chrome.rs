@@ -190,10 +190,16 @@ impl App {
         let (title, text, go) = match &confirm {
             Confirm::DiscardForNew
             | Confirm::DiscardForOpen(_)
-            | Confirm::DiscardForRecovery(_) => (
+            | Confirm::DiscardForRecovery(_)
+            | Confirm::DiscardForSaveSnapshot(_) => (
                 "Discard changes?",
                 "The current document has unsaved changes.".to_owned(),
                 "Continue",
+            ),
+            Confirm::ForgetSaveSnapshot(_) => (
+                "Forget captured save snapshot?",
+                "This discards the snapshot retained for an incomplete save. The destination may have changed, and forgetting does not establish that it was saved safely.".to_owned(),
+                "Forget snapshot",
             ),
             Confirm::ReplaceFile(p) => (
                 "Replace file?",
@@ -209,7 +215,7 @@ impl App {
                     .as_ref()
                     .is_some_and(saving::NativeSaving::failed);
                 (if incomplete { "Quit with an incomplete save?" } else { "Quit without saving?" },
-                if incomplete { "A requested save or recovery operation failed or is unconfirmed. Available recovery data will be kept." }
+                if incomplete { "A requested save or recovery operation failed or is unconfirmed. Quitting abandons captured save snapshots held in this window. Available crash recovery data will be kept." }
                 else { "There are unsaved changes. Available recovery data will be kept." }.to_owned(), "Quit anyway")
             }
             Confirm::Export {
@@ -244,6 +250,12 @@ impl App {
                                 }
                             }
                             Confirm::DiscardForRecovery(item) => self.do_recover(item),
+                            Confirm::DiscardForSaveSnapshot(sequence) => {
+                                self.open_saved_snapshot(sequence)
+                            }
+                            Confirm::ForgetSaveSnapshot(sequence) => {
+                                self.forget_incomplete_save(sequence)
+                            }
                             Confirm::ReplaceFile(p) => self.do_save(&ctx, p),
                             Confirm::QuitUnsaved => {
                                 self.allow_close = true;

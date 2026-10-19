@@ -120,13 +120,13 @@ impl NativeSaving {
                 "current document changed before recovery could start",
             ));
         }
-        if self.io.admit(1, READ_CHARGE).is_err() {
+        if self.admit(1, READ_CHARGE).is_err() {
             return Ok(());
         }
         let intent = self.restore_intent.take().expect("pending intent");
         let offer = intent.request.offer.clone();
         let context = self.context.clone();
-        let ticket = self.io.submit(
+        let ticket = self.submit_io(
             READ_CHARGE,
             move || {
                 if intent.cancelled.load(Ordering::Acquire) {
@@ -160,11 +160,11 @@ impl NativeSaving {
                 "recovery control charge overflows",
             )
         })?;
-        self.io.admit(count, bytes)
+        self.admit(count, bytes)
     }
     pub(crate) fn discard_source(&mut self, source: Handoff) -> Result<()> {
         let context = self.context.clone();
-        let ticket = self.io.submit(
+        let ticket = self.submit_io(
             CONTROL_CHARGE,
             move || {
                 source.discard()?;
@@ -190,7 +190,7 @@ impl NativeSaving {
             .to_owned();
         let session = offer.session;
         let context = self.context.clone();
-        let ticket = self.io.submit(
+        let ticket = self.submit_io(
             CONTROL_CHARGE,
             move || {
                 Recovery::discard(&directory, session)?;
@@ -209,7 +209,7 @@ impl NativeSaving {
     }
     fn dispose_claim(&mut self, claim: Box<ClaimedRecovery>) -> Result<()> {
         let context = self.context.clone();
-        let ticket = self.io.submit(
+        let ticket = self.submit_io(
             READ_CHARGE,
             move || {
                 drop(claim);

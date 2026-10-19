@@ -54,12 +54,7 @@ fn reconcile(
     mut barrier: impl FnMut(Phase) -> std::io::Result<()>,
 ) -> Result<Reconciliation, Error> {
     let attempt = original.attempt.as_ref().ok_or_else(unavailable)?;
-    if original.is_success()
-        || !matches!(
-            original.replacement,
-            Replacement::Replaced | Replacement::Unknown
-        )
-    {
+    if !original.is_reconcilable() {
         return Err(unavailable());
     }
     let mut outcome = original.clone();

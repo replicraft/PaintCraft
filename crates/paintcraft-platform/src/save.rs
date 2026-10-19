@@ -59,6 +59,21 @@ pub struct Outcome {
 }
 
 impl Outcome {
+    /// The namespace captured before encoding; callers must not re-resolve a late alias.
+    pub fn resolved_destination(&self) -> Option<&Path> {
+        self.attempt
+            .as_ref()
+            .map(|attempt| attempt.destination.as_path())
+    }
+
+    pub fn is_reconcilable(&self) -> bool {
+        self.attempt.is_some()
+            && !self.is_success()
+            && matches!(
+                self.replacement,
+                Replacement::Replaced | Replacement::Unknown
+            )
+    }
     /// Known replacement with the requested durability confirmed.
     pub fn is_success(&self) -> bool {
         self.replacement == Replacement::Replaced && self.durable

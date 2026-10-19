@@ -1,5 +1,6 @@
 //! Native I/O coordinator. Saves, periodic checkpoints and recovery cleanup share
 //! one bounded FIFO. Only the UI coordinator adopts results into editor state.
+mod attempts;
 pub(super) mod restoring;
 use super::*;
 use paintcraft_core::types::{Error, ErrorCode, Result, json::Value};
@@ -13,10 +14,15 @@ struct SaveRequest {
     source: Uuid,
     path: PathBuf,
     operation: &'static str,
+    snapshot: Arc<paintcraft_document::Document>,
+    charge: u64,
 }
 #[derive(Debug)]
 enum PendingKind {
     Save(SaveRequest),
+    Reconcile {
+        sequence: u64,
+    },
     Checkpoint {
         session: Uuid,
         token: RecoveryToken,
@@ -41,6 +47,7 @@ struct Pending {
 #[derive(Debug)]
 enum Completion {
     File(save::Outcome),
+    Reconciled(save::Reconciliation),
     Checkpoint(Checkpoint),
     Started {
         report: Option<paintcraft_formats::recovery::ScanReport>,
@@ -58,6 +65,9 @@ pub(super) struct NativeSaving {
     pending: Vec<Pending>,
     failed: bool,
     last_receipt: Option<Value>,
+    receipt_sequence: u64,
+    adopted_sequence: u64,
+    attempts: Vec<attempts::Attempt>,
     active_restore: Option<restoring::Control>,
     restore_intent: Option<restoring::Intent>,
 }
@@ -98,6 +108,9 @@ impl NativeSaving {
             pending: Vec::new(),
             failed: false,
             last_receipt: None,
+            receipt_sequence: 0,
+            adopted_sequence: 0,
+            attempts: Vec::new(),
             active_restore: None,
             restore_intent: None,
         })
@@ -106,9 +119,10 @@ impl NativeSaving {
         self.cancel_restore();
         self.session = Uuid::new_v4();
         self.generation = 0;
+        self.adopted_sequence = 0;
     }
     pub(super) fn failed(&self) -> bool {
-        self.failed
+        self.failed || !self.attempts.is_empty()
     }
     pub(super) fn pending(&self) -> bool {
         self.io.pending_jobs() != 0
@@ -138,8 +152,10 @@ impl NativeSaving {
         let document = editor.document_snapshot();
         let source = document.state_id;
         let charge = snapshot_charge(&document)?;
+        self.admit_save(charge)?;
+        let snapshot = document.clone();
         let destination = path.clone();
-        let ticket = self.io.submit(
+        let ticket = self.submit_io(
             charge,
             move || {
                 Ok(Completion::File(save::save_with(
@@ -163,6 +179,8 @@ impl NativeSaving {
                 source,
                 path,
                 operation,
+                snapshot,
+                charge,
             }),
         });
         Ok(())
@@ -177,7 +195,7 @@ impl NativeSaving {
         let charge = snapshot_charge(&document)?;
         let original = editor.path().map(Path::to_owned);
         let context = self.context.clone();
-        let ticket = self.io.submit(
+        let ticket = self.submit_io(
             charge,
             move || {
                 recovery
@@ -216,7 +234,7 @@ impl NativeSaving {
         // I/O payload jobs from overlapping it; it is not an RSS qualification.
         let charge = if discover { 1 << 30 } else { 64 * 1024 };
         let context = self.context.clone();
-        let ticket = self.io.submit(
+        let ticket = self.submit_io(
             charge,
             move || {
                 let report = discover.then(|| Recovery::scan_report(&directory));
@@ -235,10 +253,10 @@ impl NativeSaving {
         Ok(())
     }
     fn retire_recovery(&mut self, recovery: Arc<Recovery>) -> Result<()> {
-        self.io.admit(1, 64 * 1024)?;
+        self.admit(1, 64 * 1024)?;
         let token = recovery.invalidate()?;
         let context = self.context.clone();
-        let ticket = self.io.submit(
+        let ticket = self.submit_io(
             64 * 1024,
             move || {
                 recovery.clear_at(token)?;
@@ -259,10 +277,10 @@ impl NativeSaving {
         };
         // Capacity is checked before invalidation, so an admission failure leaves
         // existing recovery work and the current editor intact.
-        self.io.admit(1, 64 * 1024)?;
+        self.admit(1, 64 * 1024)?;
         let token = recovery.invalidate()?;
         let context = self.context.clone();
-        let ticket = self.io.submit(
+        let ticket = self.submit_io(
             64 * 1024,
             move || {
                 recovery.clear_at(token)?;
@@ -302,6 +320,8 @@ impl App {
                 .set_status("Waiting for requested saves and recovery before closing…");
         } else if self.allow_close {
             ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+        } else if self.saving.as_ref().is_some_and(NativeSaving::failed) {
+            self.confirm = Some(Confirm::QuitUnsaved);
         } else {
             match self.clean_recovery_before_close() {
                 Ok(true) => self.close_after_saves = true,
@@ -324,68 +344,9 @@ impl App {
         {
             let saving = self.saving.as_mut().expect("native I/O");
             match kind {
-                PendingKind::Save(request) => {
-                    let outcome = match result {
-                        Ok(Completion::File(outcome)) => outcome,
-                        Err(error) => {
-                            saving.failed = true;
-                            self.editor.set_status(format!(
-                                "Save outcome unconfirmed for {}: {error}",
-                                request.path.display()
-                            ));
-                            continue;
-                        }
-                        _ => unreachable!("typed save completion"),
-                    };
-                    let success = outcome.is_success();
-                    saving.failed |= !success;
-                    saving.last_receipt = Some(outcome.receipt_stamped(
-                        &save::Context {
-                            operation: request.operation,
-                            source_state: request.source,
-                            source_sha256: None,
-                            losses_acknowledged: vec![],
-                            destination: &request.path,
-                        },
-                        ticket.sequence(),
-                        request.generation,
-                    ));
-                    if request.session == saving.session
-                        && request.generation == saving.generation
-                        && success
-                    {
-                        self.editor.set_path(request.path.clone());
-                        self.path_text = request.path.to_string_lossy().into_owned();
-                        self.bound = Some(request.path.clone());
-                        self.editor.acknowledge_saved_state(request.source);
-                        if let Some(source) = &mut self.recovery_source {
-                            source.protect();
-                        }
-                        self.editor.set_status(format!(
-                            "Saved {}{}",
-                            request.path.display(),
-                            if self.editor.is_dirty() {
-                                "; newer edits remain unsaved"
-                            } else {
-                                ""
-                            }
-                        ));
-                        if !self.editor.is_dirty()
-                            && let Err(error) = saving.clear_recovery(&mut self.editor)
-                        {
-                            self.editor.set_status(format!(
-                                "Saved {}; recovery cleanup not queued: {error}",
-                                request.path.display()
-                            ));
-                        }
-                    }
-                    if !success {
-                        self.editor.set_status(format!(
-                            "{} was not saved safely: {}",
-                            request.path.display(),
-                            outcome.reasons.join("; ")
-                        ));
-                    }
+                PendingKind::Save(request) => self.complete_save(ticket, request, result),
+                PendingKind::Reconcile { sequence } => {
+                    self.complete_reconciliation(sequence, result)
                 }
                 PendingKind::Checkpoint {
                     session,
@@ -502,7 +463,7 @@ impl App {
         let saving = self.saving.as_mut().expect("native I/O");
         if self.close_after_saves && !saving.pending() {
             self.close_after_saves = false;
-            if saving.failed {
+            if saving.failed() {
                 self.allow_close = false;
                 self.editor.set_status("A requested save or recovery operation failed or remains unconfirmed. Review the document before closing.");
             } else if !self.editor.is_dirty() && self.editor.checkpoint_info().is_some() {
