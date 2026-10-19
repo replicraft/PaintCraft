@@ -52,7 +52,14 @@ impl LayerAction {
             ),
             Self::ToggleVisibility => (
                 "Toggle layer visibility",
-                Some((Key::Comma, Modifiers::COMMAND)),
+                Some((
+                    Key::Comma,
+                    if cfg!(target_os = "macos") {
+                        Modifiers::COMMAND | Modifiers::SHIFT
+                    } else {
+                        Modifiers::COMMAND
+                    },
+                )),
             ),
             Self::GoTop => (
                 "Go to top layer",

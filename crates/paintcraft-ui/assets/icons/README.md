@@ -20,7 +20,12 @@ root. The named Rust asset mapping lives in `src/icons/assets.rs`.
 Shared tool and toolbar buttons use these SVGs in Classic and Studio. Implemented
 menu actions use corresponding icons. The full set is available through
 `paintcraft_ui::icons::Icon`; assets for unimplemented tools/effects are retained
-without exposing nonfunctional controls.
+with disabled previews for the current UI/theme pass.
+
+Two additional project-authored SVGs, `settings.svg` and `layers.svg`, provide
+application chrome. They are not adaptations of sheet cells and are intentionally
+absent from the 68-cell source manifest/generator. The Rust asset set contains
+70 icons and the same vector/transparency tests cover the two additions.
 
 The UI uses [resvg 0.48.1](https://docs.rs/resvg/0.48.1/resvg/) without default
 features, rasterizing bundled sources at display density. Per-context derived

@@ -6,3 +6,5 @@ pub mod icons;
 pub mod outbox;
 pub mod view;
 pub mod widgets;
+
+pub mod theme;

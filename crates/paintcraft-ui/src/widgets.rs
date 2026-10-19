@@ -1,5 +1,5 @@
 //! Shared icon widgets; no operating-system or editor-session side effects.
-use egui::{Color32, Rect, Response, Sense, Stroke, StrokeKind, Ui, Vec2};
+use egui::{Rect, Response, Sense, Stroke, StrokeKind, Ui, Vec2};
 
 pub use crate::icons::Icon;
 
@@ -15,7 +15,7 @@ pub fn icon_button(ui: &mut Ui, label: &str, icon: Icon, selected: bool, large: 
     });
     let visuals = ui.style().interact_selectable(&response, false);
     let ink = if selected {
-        Color32::from_rgb(0, 95, 184)
+        ui.visuals().selection.stroke.color
     } else {
         visuals.fg_stroke.color
     };
@@ -24,7 +24,7 @@ pub fn icon_button(ui: &mut Ui, label: &str, icon: Icon, selected: bool, large: 
             rect.shrink(1.0),
             4.0,
             if selected {
-                Color32::from_rgb(224, 236, 249)
+                ui.visuals().selection.bg_fill
             } else {
                 visuals.bg_fill
             },

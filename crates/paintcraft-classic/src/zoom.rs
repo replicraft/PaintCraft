@@ -73,8 +73,10 @@ pub fn zoom_controls(ui: &mut egui::Ui, context: Context, state_id: egui::Id) ->
                 let menu = egui::ComboBox::from_id_salt("zoom-presets")
                     .selected_text("")
                     .width(12.0)
-                    .height(400.0)
+                    .height(460.0)
                     .show_ui(ui, |ui| {
+                        ui.spacing_mut().item_spacing.y = 1.0;
+                        ui.spacing_mut().button_padding.y = 2.0;
                         for value in [
                             100000, 90000, 80000, 70000, 60000, 50000, 40000, 30000, 20000, 10000,
                             7500, 5000, 2500, 1250,

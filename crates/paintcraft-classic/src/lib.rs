@@ -1,4 +1,12 @@
 //! Classic presentation emits actions; editor and platform services own effects.
+pub mod canvas;
+mod ribbon;
+#[derive(Debug, Default)]
+pub struct Workspace {
+    pub layers: bool,
+}
+mod text;
+pub use text::{TextAlignment, TextOptions, text_options};
 mod colors;
 pub use colors::{
     CUSTOM_COLOR_COUNT, ColorEditor, ColorResponse, CustomColors, edit_colors_dialog,
@@ -52,6 +60,7 @@ pub fn chrome(
     ui: &mut egui::Ui,
     variant: ClassicVariant,
     state: &mut Controls,
+    workspace: &mut Workspace,
     context: paintcraft_ui::actions::Context,
 ) -> Vec<Action> {
     let mut actions = Vec::new();
@@ -105,9 +114,17 @@ pub fn chrome(
                 actions.push(action);
             }
         }
+        if variant != ClassicVariant::V11
+            && ui.button("Layers").clicked()
+            && ui.ctx().current_pass_index() == 0
+        {
+            workspace.layers = !workspace.layers;
+        }
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            if ui.button("Interface").clicked() {
-                actions.push(Action::Interface);
+            if paintcraft_ui::widgets::icon_button(ui, "Settings…", Icon::Settings, false, false)
+                .clicked()
+            {
+                actions.push(Action::Settings);
             }
         });
     });
@@ -120,6 +137,10 @@ pub fn chrome(
             );
             ui.label("PaintCraft");
         });
+    }
+    if variant == ClassicVariant::V11 {
+        ribbon::ribbon(ui, state, workspace, context, &mut actions);
+        return actions;
     }
     ui.separator();
     egui::ScrollArea::horizontal()
@@ -299,38 +320,25 @@ const PALETTE: [[u8; 3]; 28] = [
 
 /// Initial presentation styles; reference-build qualification remains separate.
 pub fn apply_style(ctx: &egui::Context, v: ClassicVariant) {
-    let (rounding, panel, accent) = match v {
-        ClassicVariant::V7 => (
-            0u8,
-            Color32::from_rgb(233, 238, 247),
-            Color32::from_rgb(63, 119, 186),
-        ),
-        ClassicVariant::V10 => (
-            0,
-            Color32::from_rgb(243, 243, 243),
-            Color32::from_rgb(0, 120, 215),
-        ),
-        ClassicVariant::V11 => (
-            6,
-            Color32::from_rgb(249, 249, 249),
-            Color32::from_rgb(0, 95, 184),
-        ),
-    };
-    let mut vis = egui::Visuals::light();
-    vis.panel_fill = panel;
-    vis.window_fill = panel;
-    vis.selection.bg_fill = accent;
-    vis.selection.stroke = egui::Stroke::new(1.0, Color32::WHITE);
-    let r = egui::CornerRadius::same(rounding);
-    for w in [
-        &mut vis.widgets.noninteractive,
-        &mut vis.widgets.inactive,
-        &mut vis.widgets.hovered,
-        &mut vis.widgets.active,
-        &mut vis.widgets.open,
-    ] {
-        w.corner_radius = r;
-    }
-    vis.window_corner_radius = r;
-    ctx.set_visuals(vis);
+    paintcraft_ui::theme::apply(ctx, egui::Theme::Light);
+    apply_style_for_theme(ctx, v, egui::Theme::Light);
+}
+
+pub fn apply_style_for_theme(ctx: &egui::Context, v: ClassicVariant, theme: egui::Theme) {
+    ctx.style_mut_of(theme, |style| {
+        let radius = if v == ClassicVariant::V11 { 5 } else { 0 };
+        style.spacing.item_spacing = egui::vec2(6.0, 5.0);
+        style.spacing.button_padding = egui::vec2(6.0, 4.0);
+        for widget in [
+            &mut style.visuals.widgets.inactive,
+            &mut style.visuals.widgets.hovered,
+            &mut style.visuals.widgets.active,
+            &mut style.visuals.widgets.open,
+        ] {
+            widget.corner_radius = egui::CornerRadius::same(radius);
+        }
+        if v == ClassicVariant::V7 && theme == egui::Theme::Light {
+            style.visuals.panel_fill = Color32::from_rgb(233, 238, 247);
+        }
+    });
 }

@@ -1,6 +1,8 @@
 //! Named assets adapted from the user-supplied generated icon sheet.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Icon {
+    Settings,
+    Layers,
     New,
     Open,
     Save,
@@ -76,7 +78,9 @@ pub enum Icon {
 }
 
 impl Icon {
-    pub const ALL: [Self; 68] = [
+    pub const ALL: [Self; 70] = [
+        Self::Settings,
+        Self::Layers,
         Self::New,
         Self::Open,
         Self::Save,
@@ -149,6 +153,8 @@ impl Icon {
 
     pub fn name(self) -> &'static str {
         match self {
+            Self::Settings => "settings",
+            Self::Layers => "layers",
             Self::New => "new",
             Self::Open => "open",
             Self::Save => "save",
@@ -225,6 +231,8 @@ impl Icon {
 
     pub fn svg(self) -> &'static [u8] {
         match self {
+            Self::Settings => include_bytes!("../../assets/icons/settings.svg"),
+            Self::Layers => include_bytes!("../../assets/icons/layers.svg"),
             Self::New => include_bytes!("../../assets/icons/new.svg"),
             Self::Open => include_bytes!("../../assets/icons/open.svg"),
             Self::Save => include_bytes!("../../assets/icons/save.svg"),

@@ -5,6 +5,7 @@ use crate::actions::{Action, Context, LayerAction, ViewAction};
 impl Action {
     pub fn icon(self, ctx: Context) -> Option<Icon> {
         Some(match self {
+            Self::Settings => Icon::Settings,
             Self::New => Icon::New,
             Self::Open => Icon::Open,
             Self::Save => Icon::Save,
@@ -13,7 +14,9 @@ impl Action {
             Self::Undo => Icon::Undo,
             Self::Redo => Icon::Redo,
             Self::SelectAll | Self::Deselect => Icon::RectangleSelect,
-            Self::Interface | Self::CanvasDefaults | Self::SelectTool(_) => return None,
+            Self::Interface | Self::CanvasDefaults | Self::SelectTool(_) => {
+                return None;
+            }
             Self::CanvasSize => Icon::CanvasSize,
             Self::EditColors | Self::EditSecondaryColors => Icon::ColorBalance,
             Self::View(action) => match action {

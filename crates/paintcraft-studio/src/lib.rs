@@ -1,4 +1,5 @@
 //! Studio presentation. Actions are executed by the application shell.
+pub mod canvas;
 mod colors;
 mod history;
 mod properties;
@@ -36,12 +37,18 @@ impl Default for Workspace {
 }
 
 pub fn apply_style(ctx: &egui::Context) {
-    ctx.set_theme(egui::Theme::Light);
-    ctx.style_mut_of(egui::Theme::Light, |style| {
+    paintcraft_ui::theme::apply(ctx, egui::Theme::Light);
+    apply_style_for_theme(ctx, egui::Theme::Light);
+}
+
+pub fn apply_style_for_theme(ctx: &egui::Context, theme: egui::Theme) {
+    ctx.style_mut_of(theme, |style| {
         style.spacing.item_spacing = egui::vec2(5.0, 4.0);
         style.spacing.button_padding = egui::vec2(5.0, 3.0);
-        style.visuals.panel_fill = egui::Color32::from_rgb(242, 242, 242);
-        style.visuals.window_fill = egui::Color32::from_rgb(250, 250, 250);
+        if theme == egui::Theme::Light {
+            style.visuals.panel_fill = egui::Color32::from_rgb(242, 242, 242);
+            style.visuals.window_fill = egui::Color32::from_rgb(250, 250, 250);
+        }
         style.visuals.window_corner_radius = egui::CornerRadius::same(3);
         style.visuals.selection.bg_fill = egui::Color32::from_rgb(0, 95, 184);
         style.visuals.selection.stroke = egui::Stroke::new(1.0, egui::Color32::WHITE);
