@@ -9,6 +9,8 @@ publish.workspace = true
 
 [dependencies]
 paintcraft-types = { path = "../paintcraft-types" }
+sha2 = "0.11.1"
+uuid = { version = "1.28.0", features = ["v5"] }
 
 [lints]
 workspace = true

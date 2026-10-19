@@ -1,0 +1,242 @@
+//! The persistent document: canvas, ordered flat layer roots and raster content.
+//! Selection, tools and history are session state and live elsewhere.
+
+use std::collections::HashMap;
+
+use paintcraft_types::json::{self, Value};
+use paintcraft_types::{Error, ErrorCode, Rect, Result, Rgba};
+use sha2::{Digest, Sha256};
+use uuid::Uuid;
+
+use crate::ids::deterministic_id;
+use crate::raster::RasterLayer;
+
+pub const POLICY: &str = "paintcraft.core/default-v1";
+pub const CANVAS_SIDE_MAX: u32 = 1_048_576;
+pub const COORD_ABS_MAX: i64 = 140_737_488_355_327;
+pub const LAYER_COUNT_MAX: usize = 100_000;
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Layer {
+    pub id: Uuid,
+    pub name: String,
+    /// Document-space position of the layer's local (0,0).
+    pub origin: (i64, i64),
+    pub visible: bool,
+    pub opacity: u8,
+    pub raster: RasterLayer,
+}
+
+impl Layer {
+    /// Document-space rectangle covered by the layer.
+    pub fn extent(&self) -> Rect {
+        Rect::from_origin_size(
+            self.origin.0,
+            self.origin.1,
+            self.raster.width(),
+            self.raster.height(),
+        )
+        .expect("origin is range-checked at admission")
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct Document {
+    pub document_id: Uuid,
+    pub state_id: Uuid,
+    pub canvas: (u32, u32),
+    /// Bottom to top.
+    pub roots: Vec<Uuid>,
+    pub layers: HashMap<Uuid, Layer>,
+    pub title: Option<String>,
+}
+
+impl Document {
+    pub fn canvas_rect(&self) -> Rect {
+        Rect::from_origin_size(0, 0, self.canvas.0, self.canvas.1).expect("canvas is non-empty")
+    }
+
+    pub fn layer(&self, id: &Uuid) -> Option<&Layer> {
+        self.layers.get(id)
+    }
+
+    /// Roots in stacking order, bottom to top.
+    pub fn layers_in_order(&self) -> impl Iterator<Item = &Layer> {
+        self.roots.iter().map(|id| &self.layers[id])
+    }
+
+    /// Persisted meaning, excluding the StateId itself.
+    pub fn same_semantics(&self, other: &Document) -> bool {
+        self.document_id == other.document_id
+            && self.canvas == other.canvas
+            && self.roots == other.roots
+            && self.title == other.title
+            && self
+                .roots
+                .iter()
+                .all(|id| self.layers[id] == other.layers[id])
+    }
+}
+
+/// The shared document factory behind `paintcraft-cli new`: a transparent
+/// document with no layers, or one full-canvas `Background` layer when a
+/// background colour is requested.
+pub fn new_document(
+    width: u32,
+    height: u32,
+    background: Option<Rgba>,
+    seed: u64,
+    policy: &str,
+) -> Result<Document> {
+    if !(1..=CANVAS_SIDE_MAX).contains(&width) || !(1..=CANVAS_SIDE_MAX).contains(&height) {
+        return Err(Error::new(
+            ErrorCode::InputSchema,
+            "canvas dimensions out of range",
+        ));
+    }
+    if seed > 9_007_199_254_740_991 {
+        return Err(Error::new(ErrorCode::InputSchema, "seed out of range"));
+    }
+    if policy != POLICY {
+        return Err(Error::new(
+            ErrorCode::PolicyUnknown,
+            format!("policy {policy:?} is not implemented"),
+        ));
+    }
+    let params = Value::object([
+        (
+            "background",
+            background.map_or(Value::Null, |c| Value::str(c.to_hex())),
+        ),
+        ("height", Value::Int(i64::from(height))),
+        ("policy", Value::str(policy)),
+        ("seed", Value::Int(seed as i64)),
+        ("width", Value::Int(i64::from(width))),
+    ]);
+    let digest = hex(&Sha256::digest(json::canonical(&params)));
+    let mut layers = HashMap::new();
+    let mut roots = Vec::new();
+    if let Some(color) = background {
+        let id = deterministic_id(&["layer", "new", &digest, "0"]);
+        layers.insert(
+            id,
+            Layer {
+                id,
+                name: "Background".to_owned(),
+                origin: (0, 0),
+                visible: true,
+                opacity: 255,
+                raster: RasterLayer::new(width, height, color),
+            },
+        );
+        roots.push(id);
+    }
+    Ok(Document {
+        document_id: deterministic_id(&["document", &digest]),
+        state_id: deterministic_id(&["state", "new", &digest]),
+        canvas: (width, height),
+        roots,
+        layers,
+        title: None,
+    })
+}
+
+pub fn hex(bytes: &[u8]) -> String {
+    use std::fmt::Write as _;
+    bytes
+        .iter()
+        .fold(String::with_capacity(bytes.len() * 2), |mut s, b| {
+            let _ = write!(s, "{b:02x}");
+            s
+        })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const WHITE: Rgba = Rgba([255, 255, 255, 255]);
+
+    #[test]
+    fn default_is_transparent_with_no_layers() {
+        let d = new_document(5, 4, None, 0, POLICY).unwrap();
+        assert!(d.roots.is_empty() && d.layers.is_empty());
+        assert_eq!(d.canvas, (5, 4));
+    }
+
+    #[test]
+    fn requested_background_is_one_full_canvas_layer_without_blocks() {
+        let d = new_document(5, 4, Some(WHITE), 0, POLICY).unwrap();
+        let layer = d.layer(&d.roots[0]).unwrap();
+        assert_eq!(
+            (
+                layer.name.as_str(),
+                layer.origin,
+                layer.opacity,
+                layer.visible
+            ),
+            ("Background", (0, 0), 255, true)
+        );
+        assert_eq!(
+            (
+                layer.raster.width(),
+                layer.raster.height(),
+                layer.raster.default_pixel()
+            ),
+            (5, 4, WHITE)
+        );
+        assert!(layer.raster.blocks().is_empty());
+        assert_eq!(layer.extent(), d.canvas_rect());
+    }
+
+    #[test]
+    fn ids_are_deterministic_and_parameter_sensitive() {
+        let a = new_document(5, 4, Some(WHITE), 0, POLICY).unwrap();
+        let b = new_document(5, 4, Some(WHITE), 0, POLICY).unwrap();
+        assert_eq!(
+            (a.document_id, a.state_id, a.roots.clone()),
+            (b.document_id, b.state_id, b.roots)
+        );
+        assert_ne!(
+            new_document(5, 4, Some(WHITE), 1, POLICY)
+                .unwrap()
+                .document_id,
+            a.document_id
+        );
+        assert_ne!(
+            new_document(5, 4, None, 0, POLICY).unwrap().document_id,
+            a.document_id
+        );
+    }
+
+    #[test]
+    fn invalid_requests_have_stable_codes() {
+        let code = |r: Result<Document>| r.unwrap_err().code;
+        assert_eq!(
+            code(new_document(0, 2, None, 0, POLICY)),
+            ErrorCode::InputSchema
+        );
+        assert_eq!(
+            code(new_document(2, CANVAS_SIDE_MAX + 1, None, 0, POLICY)),
+            ErrorCode::InputSchema
+        );
+        assert_eq!(
+            code(new_document(2, 2, None, 1 << 60, POLICY)),
+            ErrorCode::InputSchema
+        );
+        assert_eq!(
+            code(new_document(2, 2, None, 0, "paintcraft.core/missing-v1")),
+            ErrorCode::PolicyUnknown
+        );
+    }
+
+    #[test]
+    fn same_semantics_ignores_state_id_only() {
+        let a = new_document(2, 2, Some(WHITE), 0, POLICY).unwrap();
+        let mut b = a.clone();
+        b.state_id = Uuid::nil();
+        assert!(a.same_semantics(&b));
+        b.layers.get_mut(&b.roots[0].clone()).unwrap().opacity = 7;
+        assert!(!a.same_semantics(&b));
+    }
+}
