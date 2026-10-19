@@ -212,7 +212,7 @@ fn export_classic_ui_previews() {
         h.run();
         h.get_by_label("Rectangle").click();
         h.run();
-        h.get_by_label("Filled").click();
+        filled_shape(&mut h);
         h.run();
         drag(&mut h, (45.0, 70.0), (240.0, 195.0));
         h.get_by_label("Color #FFC90E").click();

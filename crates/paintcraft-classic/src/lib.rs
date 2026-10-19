@@ -1,5 +1,6 @@
 //! Classic presentation emits actions; editor and platform services own effects.
 pub mod canvas;
+mod dropdowns;
 mod palette;
 mod ribbon;
 #[derive(Debug, Default)]
@@ -65,9 +66,12 @@ pub fn chrome(
     context: paintcraft_ui::actions::Context,
 ) -> Vec<Action> {
     let mut actions = Vec::new();
-    ui.horizontal(|ui| {
+    egui::MenuBar::new().ui(ui, |ui| {
         ui.menu_button("File", |ui| {
             for &action in paintcraft_ui::actions::FILE {
+                if matches!(action, Action::Save | Action::Close) {
+                    ui.separator();
+                }
                 if paintcraft_ui::actions::menu_item(ui, action, context) {
                     actions.push(action);
                     ui.close();
@@ -76,6 +80,9 @@ pub fn chrome(
         });
         ui.menu_button("Edit", |ui| {
             for &action in paintcraft_ui::actions::EDIT {
+                if action == Action::SelectAll {
+                    ui.separator();
+                }
                 if paintcraft_ui::actions::menu_item(ui, action, context) {
                     actions.push(action);
                     ui.close();
@@ -83,11 +90,24 @@ pub fn chrome(
             }
         });
         ui.menu_button("View", |ui| {
-            for &action in paintcraft_ui::actions::VIEW {
-                if paintcraft_ui::actions::menu_item(ui, Action::View(action), context) {
-                    actions.push(Action::View(action));
-                    ui.close();
+            ui.menu_button("Zoom", |ui| {
+                for &action in paintcraft_ui::actions::VIEW {
+                    if action == paintcraft_ui::actions::ViewAction::PixelGrid {
+                        continue;
+                    }
+                    if paintcraft_ui::actions::menu_item(ui, Action::View(action), context) {
+                        actions.push(Action::View(action));
+                        ui.close();
+                    }
                 }
+            });
+            if paintcraft_ui::actions::menu_item(
+                ui,
+                Action::View(paintcraft_ui::actions::ViewAction::PixelGrid),
+                context,
+            ) {
+                actions.push(Action::View(paintcraft_ui::actions::ViewAction::PixelGrid));
+                ui.close();
             }
             ui.separator();
             for action in [Action::CanvasSize, Action::CanvasDefaults] {
@@ -155,6 +175,7 @@ pub fn chrome(
                     if tool_button(ui, state, Tool::Select, true) {
                         actions.push(Action::SelectTool(Tool::Select));
                     }
+                    dropdowns::selection(ui, state, context, &mut actions);
                 });
                 ui.separator();
                 ribbon_group(ui, "Tools", |ui| {

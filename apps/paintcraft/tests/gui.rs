@@ -178,3 +178,18 @@ mod ui_hover;
 
 #[path = "gui/tool_interactions.rs"]
 mod tool_interactions;
+
+#[path = "gui/classic_dropdowns.rs"]
+mod classic_dropdowns;
+
+/// Classic v11 uses the ribbon dropdown; older variants use the inline style.
+fn filled_shape(h: &mut Harness<App>) {
+    if let Some(button) = h.query_by_label("Filled") {
+        button.click();
+    } else {
+        h.get_by_label("Shape outline").click();
+        h.run();
+        h.get_by_label("No outline").click();
+    }
+    h.run();
+}

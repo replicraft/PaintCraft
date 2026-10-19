@@ -27,6 +27,7 @@ pub(super) fn ribbon(
                     if tool_button(ui, state, Tool::Select, true) {
                         actions.push(Action::SelectTool(Tool::Select));
                     }
+                    super::dropdowns::selection(ui, state, context, actions);
                 });
                 ui.separator();
                 group(ui, "Image", |ui| {
@@ -73,66 +74,83 @@ pub(super) fn ribbon(
                     if tool_button(ui, state, Tool::Brush, true) {
                         actions.push(Action::SelectTool(Tool::Brush));
                     }
+                    super::dropdowns::brushes(ui, state, actions);
                 });
                 ui.separator();
                 group(ui, "Shapes", |ui| {
-                    egui::Frame::new()
-                        .stroke(ui.visuals().widgets.noninteractive.bg_stroke)
-                        .corner_radius(4)
-                        .inner_margin(2)
-                        .show(ui, |ui| {
-                            ui.spacing_mut().button_padding = Vec2::splat(2.0);
-                            egui::Grid::new("windows11-shapes")
-                                .spacing(Vec2::ZERO)
-                                .show(ui, |ui| {
-                                    for (i, icon) in [
-                                        Icon::Line,
-                                        Icon::Curve,
-                                        Icon::Ellipse,
-                                        Icon::Rectangle,
-                                        Icon::RoundedRectangle,
-                                        Icon::Triangle,
-                                        Icon::Hexagon,
-                                        Icon::Star,
-                                        Icon::SpeechBubble,
-                                        Icon::Heart,
-                                        Icon::Lightning,
-                                        Icon::Burst,
-                                    ]
-                                    .into_iter()
-                                    .enumerate()
-                                    {
-                                        let tool = match icon {
-                                            Icon::Line => Some(Tool::Line),
-                                            Icon::Ellipse => Some(Tool::Ellipse),
-                                            Icon::Rectangle => Some(Tool::Rect),
-                                            _ => None,
-                                        };
-                                        if let Some(tool) = tool {
-                                            if compact_icon(
-                                                ui,
-                                                tool.name(),
-                                                icon,
-                                                state.tool == tool,
-                                            )
-                                            .clicked()
-                                            {
-                                                state.tool = tool;
-                                                actions.push(Action::SelectTool(tool));
-                                            }
-                                        } else {
-                                            ui.add_enabled_ui(false, |ui| {
-                                                compact_icon(ui, icon.name(), icon, false)
-                                            })
-                                            .inner
-                                            .on_hover_text("UI preview · shape not implemented");
-                                        }
-                                        if i % 6 == 5 {
-                                            ui.end_row();
-                                        }
-                                    }
-                                });
-                        });
+                    ui.horizontal_top(|ui| {
+                        egui::Frame::new()
+                            .stroke(ui.visuals().widgets.noninteractive.bg_stroke)
+                            .corner_radius(4)
+                            .inner_margin(2)
+                            .show(ui, |ui| {
+                                ui.spacing_mut().button_padding = Vec2::splat(2.0);
+                                egui::ScrollArea::vertical()
+                                    .id_salt("classic-shapes-gallery")
+                                    .max_height(56.0)
+                                    .max_width(132.0)
+                                    .show(ui, |ui| {
+                                        egui::Grid::new("windows11-shapes")
+                                            .spacing(Vec2::ZERO)
+                                            .show(ui, |ui| {
+                                                for (i, icon) in [
+                                                    Icon::Line,
+                                                    Icon::Curve,
+                                                    Icon::Ellipse,
+                                                    Icon::Rectangle,
+                                                    Icon::RoundedRectangle,
+                                                    Icon::Triangle,
+                                                    Icon::Hexagon,
+                                                    Icon::Star,
+                                                    Icon::SpeechBubble,
+                                                    Icon::Heart,
+                                                    Icon::Lightning,
+                                                    Icon::Burst,
+                                                ]
+                                                .into_iter()
+                                                .enumerate()
+                                                {
+                                                    let tool = match icon {
+                                                        Icon::Line => Some(Tool::Line),
+                                                        Icon::Ellipse => Some(Tool::Ellipse),
+                                                        Icon::Rectangle => Some(Tool::Rect),
+                                                        _ => None,
+                                                    };
+                                                    if let Some(tool) = tool {
+                                                        if compact_icon(
+                                                            ui,
+                                                            tool.name(),
+                                                            icon,
+                                                            state.tool == tool,
+                                                        )
+                                                        .clicked()
+                                                        {
+                                                            state.tool = tool;
+                                                            actions.push(Action::SelectTool(tool));
+                                                        }
+                                                    } else {
+                                                        ui.add_enabled_ui(false, |ui| {
+                                                            compact_icon(
+                                                                ui,
+                                                                icon.name(),
+                                                                icon,
+                                                                false,
+                                                            )
+                                                        })
+                                                        .inner
+                                                        .on_disabled_hover_text(
+                                                            "UI preview · shape not implemented",
+                                                        );
+                                                    }
+                                                    if i % 5 == 4 {
+                                                        ui.end_row();
+                                                    }
+                                                }
+                                            });
+                                    });
+                            });
+                        ui.vertical(|ui| super::dropdowns::shape_paint(ui, state));
+                    });
                 });
                 ui.separator();
                 group(ui, "Colors", |ui| colors(ui, state, context, actions));
@@ -153,7 +171,7 @@ pub(super) fn ribbon(
             egui::Layout::top_down(egui::Align::Min),
             |ui| {
                 ui.set_min_height(40.0);
-                paintcraft_ui::chrome::options(ui, state, actions)
+                paintcraft_ui::chrome::options_with_shape_style(ui, state, actions, false)
             },
         );
     }
@@ -180,9 +198,16 @@ fn group(ui: &mut egui::Ui, label: &str, contents: impl FnOnce(&mut egui::Ui)) {
 }
 
 fn prototype(ui: &mut egui::Ui, label: &str, icon: Icon) {
-    ui.add_enabled_ui(false, |ui| icon_button(ui, label, icon, false, false))
-        .inner
-        .on_hover_text(format!("UI preview · {label} is not implemented"));
+    ui.add_enabled_ui(false, |ui| {
+        paintcraft_ui::widgets::icon_button_with_tooltip(
+            ui,
+            label,
+            icon,
+            false,
+            false,
+            format!("UI preview · {label} is not implemented"),
+        )
+    });
 }
 
 fn compact_icon(ui: &mut egui::Ui, label: &str, icon: Icon, selected: bool) -> egui::Response {

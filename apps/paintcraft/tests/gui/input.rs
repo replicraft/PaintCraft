@@ -284,7 +284,7 @@ fn choosing_a_tool_and_dragging_makes_one_shape_transaction() {
     with_layer(&mut h);
     h.get_by_label("Rectangle").click();
     h.run();
-    h.get_by_label("Filled").click();
+    filled_shape(&mut h);
     h.run();
     let before = publications(&h);
     drag(&mut h, (20.0, 30.0), (60.0, 50.0));
@@ -422,7 +422,7 @@ fn classic_tool_actions_survive_multiple_layout_passes_without_repeating_a_shape
     with_layer(&mut h);
     h.get_by_label("Rectangle").click();
     h.run();
-    h.get_by_label("Filled").click();
+    filled_shape(&mut h);
     h.run();
     let before = publications(&h);
     drag(&mut h, (5.0, 5.0), (25.0, 25.0));

@@ -15,6 +15,16 @@ pub struct Controls {
 pub use crate::actions::Action;
 
 pub fn options(ui: &mut egui::Ui, state: &mut Controls, actions: &mut Vec<Action>) {
+    options_with_shape_style(ui, state, actions, true);
+}
+
+/// Classic v11 supplies shape styles through its ribbon dropdowns.
+pub fn options_with_shape_style(
+    ui: &mut egui::Ui,
+    state: &mut Controls,
+    actions: &mut Vec<Action>,
+    show_shape_style: bool,
+) {
     ui.horizontal_wrapped(|ui| {
         if matches!(
             state.tool,
@@ -49,7 +59,7 @@ pub fn options(ui: &mut egui::Ui, state: &mut Controls, actions: &mut Vec<Action
                     .suffix("%"),
             );
         }
-        if matches!(state.tool, Tool::Rect | Tool::Ellipse) {
+        if show_shape_style && matches!(state.tool, Tool::Rect | Tool::Ellipse) {
             for (style, label) in [
                 (ShapeStyle::Outline, "Outline"),
                 (ShapeStyle::Filled, "Filled"),

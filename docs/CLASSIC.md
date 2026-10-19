@@ -136,3 +136,10 @@ Lines snap to horizontal, vertical or 45-degree directions. Releasing Shift
 restores the unconstrained pointer geometry before placement. The eraser shows
 its exact square pixel footprint, scaled with canvas zoom, with contrasting edges
 that remain visible over light and dark pixels. Its overlay does not edit pixels.
+
+The Classic menu bar supports hover switching and a nested Zoom submenu. Selection
+has a rectangular-selection popup with Select all/Deselect; free-form selection
+remains disabled. The Brushes popup selects the working round/square tips and
+shows their current selection. Shape Outline and Fill popups select the supported
+solid/no-paint combinations. Textured brushes, extra shape implementations and
+other reference menu commands remain incomplete; this is not full menu parity.
