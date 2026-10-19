@@ -1,0 +1,478 @@
+[
+  {
+    "name": "new",
+    "label": "New",
+    "source_row": 1,
+    "source_column": 1,
+    "file": "new.svg"
+  },
+  {
+    "name": "open",
+    "label": "Open",
+    "source_row": 1,
+    "source_column": 2,
+    "file": "open.svg"
+  },
+  {
+    "name": "save",
+    "label": "Save",
+    "source_row": 1,
+    "source_column": 3,
+    "file": "save.svg"
+  },
+  {
+    "name": "save-as",
+    "label": "Save As",
+    "source_row": 1,
+    "source_column": 4,
+    "file": "save-as.svg"
+  },
+  {
+    "name": "print",
+    "label": "Print",
+    "source_row": 1,
+    "source_column": 5,
+    "file": "print.svg"
+  },
+  {
+    "name": "close",
+    "label": "Close",
+    "source_row": 1,
+    "source_column": 6,
+    "file": "close.svg"
+  },
+  {
+    "name": "undo",
+    "label": "Undo",
+    "source_row": 1,
+    "source_column": 7,
+    "file": "undo.svg"
+  },
+  {
+    "name": "redo",
+    "label": "Redo",
+    "source_row": 1,
+    "source_column": 8,
+    "file": "redo.svg"
+  },
+  {
+    "name": "cut",
+    "label": "Cut",
+    "source_row": 1,
+    "source_column": 9,
+    "file": "cut.svg"
+  },
+  {
+    "name": "copy",
+    "label": "Copy",
+    "source_row": 1,
+    "source_column": 10,
+    "file": "copy.svg"
+  },
+  {
+    "name": "paste",
+    "label": "Paste",
+    "source_row": 1,
+    "source_column": 11,
+    "file": "paste.svg"
+  },
+  {
+    "name": "copy-merged",
+    "label": "Copy Merged",
+    "source_row": 1,
+    "source_column": 12,
+    "file": "copy-merged.svg"
+  },
+  {
+    "name": "zoom-in",
+    "label": "Zoom In",
+    "source_row": 2,
+    "source_column": 1,
+    "file": "zoom-in.svg"
+  },
+  {
+    "name": "zoom-out",
+    "label": "Zoom Out",
+    "source_row": 2,
+    "source_column": 2,
+    "file": "zoom-out.svg"
+  },
+  {
+    "name": "fit-window",
+    "label": "Fit Window",
+    "source_row": 2,
+    "source_column": 3,
+    "file": "fit-window.svg"
+  },
+  {
+    "name": "actual-size",
+    "label": "Actual Size",
+    "source_row": 2,
+    "source_column": 4,
+    "file": "actual-size.svg"
+  },
+  {
+    "name": "pixel-grid",
+    "label": "Pixel Grid",
+    "source_row": 2,
+    "source_column": 5,
+    "file": "pixel-grid.svg"
+  },
+  {
+    "name": "rulers",
+    "label": "Rulers",
+    "source_row": 2,
+    "source_column": 6,
+    "file": "rulers.svg"
+  },
+  {
+    "name": "rectangle-select",
+    "label": "Rectangle Select",
+    "source_row": 2,
+    "source_column": 7,
+    "file": "rectangle-select.svg"
+  },
+  {
+    "name": "lasso-select",
+    "label": "Lasso Select",
+    "source_row": 2,
+    "source_column": 8,
+    "file": "lasso-select.svg"
+  },
+  {
+    "name": "magic-wand",
+    "label": "Magic Wand",
+    "source_row": 2,
+    "source_column": 9,
+    "file": "magic-wand.svg"
+  },
+  {
+    "name": "move",
+    "label": "Move",
+    "source_row": 2,
+    "source_column": 10,
+    "file": "move.svg"
+  },
+  {
+    "name": "crop",
+    "label": "Crop",
+    "source_row": 2,
+    "source_column": 11,
+    "file": "crop.svg"
+  },
+  {
+    "name": "resize",
+    "label": "Resize",
+    "source_row": 2,
+    "source_column": 12,
+    "file": "resize.svg"
+  },
+  {
+    "name": "canvas-size",
+    "label": "Canvas Size",
+    "source_row": 3,
+    "source_column": 1,
+    "file": "canvas-size.svg"
+  },
+  {
+    "name": "pencil",
+    "label": "Pencil",
+    "source_row": 3,
+    "source_column": 2,
+    "file": "pencil.svg"
+  },
+  {
+    "name": "brush",
+    "label": "Brush",
+    "source_row": 3,
+    "source_column": 3,
+    "file": "brush.svg"
+  },
+  {
+    "name": "spray",
+    "label": "Spray",
+    "source_row": 3,
+    "source_column": 4,
+    "file": "spray.svg"
+  },
+  {
+    "name": "eraser",
+    "label": "Eraser",
+    "source_row": 3,
+    "source_column": 5,
+    "file": "eraser.svg"
+  },
+  {
+    "name": "bucket",
+    "label": "Bucket",
+    "source_row": 3,
+    "source_column": 6,
+    "file": "bucket.svg"
+  },
+  {
+    "name": "eyedropper",
+    "label": "Eyedropper",
+    "source_row": 3,
+    "source_column": 7,
+    "file": "eyedropper.svg"
+  },
+  {
+    "name": "clone-stamp",
+    "label": "Clone Stamp",
+    "source_row": 3,
+    "source_column": 8,
+    "file": "clone-stamp.svg"
+  },
+  {
+    "name": "recolor",
+    "label": "Recolor",
+    "source_row": 3,
+    "source_column": 9,
+    "file": "recolor.svg"
+  },
+  {
+    "name": "text",
+    "label": "Text",
+    "source_row": 3,
+    "source_column": 10,
+    "file": "text.svg"
+  },
+  {
+    "name": "line",
+    "label": "Line",
+    "source_row": 3,
+    "source_column": 11,
+    "file": "line.svg"
+  },
+  {
+    "name": "curve",
+    "label": "Curve",
+    "source_row": 3,
+    "source_column": 12,
+    "file": "curve.svg"
+  },
+  {
+    "name": "rectangle",
+    "label": "Rectangle",
+    "source_row": 4,
+    "source_column": 1,
+    "file": "rectangle.svg"
+  },
+  {
+    "name": "rounded-rectangle",
+    "label": "Rounded Rectangle",
+    "source_row": 4,
+    "source_column": 2,
+    "file": "rounded-rectangle.svg"
+  },
+  {
+    "name": "ellipse",
+    "label": "Ellipse",
+    "source_row": 4,
+    "source_column": 3,
+    "file": "ellipse.svg"
+  },
+  {
+    "name": "hexagon",
+    "label": "Hexagon",
+    "source_row": 4,
+    "source_column": 4,
+    "file": "hexagon.svg"
+  },
+  {
+    "name": "triangle",
+    "label": "Triangle",
+    "source_row": 4,
+    "source_column": 5,
+    "file": "triangle.svg"
+  },
+  {
+    "name": "star",
+    "label": "Star",
+    "source_row": 4,
+    "source_column": 6,
+    "file": "star.svg"
+  },
+  {
+    "name": "star-outline",
+    "label": "Star Outline",
+    "source_row": 4,
+    "source_column": 7,
+    "file": "star-outline.svg"
+  },
+  {
+    "name": "speech-bubble",
+    "label": "Speech Bubble",
+    "source_row": 4,
+    "source_column": 8,
+    "file": "speech-bubble.svg"
+  },
+  {
+    "name": "rounded-speech-bubble",
+    "label": "Rounded Speech Bubble",
+    "source_row": 4,
+    "source_column": 9,
+    "file": "rounded-speech-bubble.svg"
+  },
+  {
+    "name": "heart",
+    "label": "Heart",
+    "source_row": 4,
+    "source_column": 10,
+    "file": "heart.svg"
+  },
+  {
+    "name": "lightning",
+    "label": "Lightning",
+    "source_row": 4,
+    "source_column": 11,
+    "file": "lightning.svg"
+  },
+  {
+    "name": "burst",
+    "label": "Burst",
+    "source_row": 4,
+    "source_column": 12,
+    "file": "burst.svg"
+  },
+  {
+    "name": "add-layer",
+    "label": "Add Layer",
+    "source_row": 5,
+    "source_column": 1,
+    "file": "add-layer.svg"
+  },
+  {
+    "name": "delete-layer",
+    "label": "Delete Layer",
+    "source_row": 5,
+    "source_column": 2,
+    "file": "delete-layer.svg"
+  },
+  {
+    "name": "duplicate-layer",
+    "label": "Duplicate Layer",
+    "source_row": 5,
+    "source_column": 3,
+    "file": "duplicate-layer.svg"
+  },
+  {
+    "name": "merge-down",
+    "label": "Merge Down",
+    "source_row": 5,
+    "source_column": 4,
+    "file": "merge-down.svg"
+  },
+  {
+    "name": "show-layer",
+    "label": "Show Layer",
+    "source_row": 5,
+    "source_column": 5,
+    "file": "show-layer.svg"
+  },
+  {
+    "name": "hide-layer",
+    "label": "Hide Layer",
+    "source_row": 5,
+    "source_column": 6,
+    "file": "hide-layer.svg"
+  },
+  {
+    "name": "move-layer-up",
+    "label": "Move Layer Up",
+    "source_row": 5,
+    "source_column": 7,
+    "file": "move-layer-up.svg"
+  },
+  {
+    "name": "move-layer-down",
+    "label": "Move Layer Down",
+    "source_row": 5,
+    "source_column": 8,
+    "file": "move-layer-down.svg"
+  },
+  {
+    "name": "rotate-clockwise",
+    "label": "Rotate Clockwise",
+    "source_row": 5,
+    "source_column": 9,
+    "file": "rotate-clockwise.svg"
+  },
+  {
+    "name": "rotate-counterclockwise",
+    "label": "Rotate Counterclockwise",
+    "source_row": 5,
+    "source_column": 10,
+    "file": "rotate-counterclockwise.svg"
+  },
+  {
+    "name": "flip-horizontal",
+    "label": "Flip Horizontal",
+    "source_row": 5,
+    "source_column": 11,
+    "file": "flip-horizontal.svg"
+  },
+  {
+    "name": "flip-vertical",
+    "label": "Flip Vertical",
+    "source_row": 5,
+    "source_column": 12,
+    "file": "flip-vertical.svg"
+  },
+  {
+    "name": "brightness",
+    "label": "Brightness",
+    "source_row": 6,
+    "source_column": 1,
+    "file": "brightness.svg"
+  },
+  {
+    "name": "contrast",
+    "label": "Contrast",
+    "source_row": 6,
+    "source_column": 2,
+    "file": "contrast.svg"
+  },
+  {
+    "name": "hue-saturation",
+    "label": "Hue Saturation",
+    "source_row": 6,
+    "source_column": 3,
+    "file": "hue-saturation.svg"
+  },
+  {
+    "name": "curves",
+    "label": "Curves",
+    "source_row": 6,
+    "source_column": 4,
+    "file": "curves.svg"
+  },
+  {
+    "name": "blur",
+    "label": "Blur",
+    "source_row": 6,
+    "source_column": 5,
+    "file": "blur.svg"
+  },
+  {
+    "name": "sharpen",
+    "label": "Sharpen",
+    "source_row": 6,
+    "source_column": 6,
+    "file": "sharpen.svg"
+  },
+  {
+    "name": "levels",
+    "label": "Levels",
+    "source_row": 6,
+    "source_column": 7,
+    "file": "levels.svg"
+  },
+  {
+    "name": "color-balance",
+    "label": "Color Balance",
+    "source_row": 6,
+    "source_column": 8,
+    "file": "color-balance.svg"
+  }
+]

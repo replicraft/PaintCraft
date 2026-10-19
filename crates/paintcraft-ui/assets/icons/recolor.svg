@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+<title>Recolor</title>
+<defs>
+<linearGradient id="blue" x2="0" y2="1"><stop stop-color="#59ceff"/><stop offset=".48" stop-color="#128ff5"/><stop offset="1" stop-color="#075eb9"/></linearGradient>
+<linearGradient id="gold" x2="0" y2="1"><stop stop-color="#fff49c"/><stop offset=".45" stop-color="#ffd345"/><stop offset="1" stop-color="#e89308"/></linearGradient>
+<linearGradient id="paper" x2="0" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#cbd8e8"/></linearGradient>
+<linearGradient id="slate" x2="0" y2="1"><stop stop-color="#747f8f"/><stop offset="1" stop-color="#242e3c"/></linearGradient>
+<linearGradient id="red" x2="0" y2="1"><stop stop-color="#ff7a95"/><stop offset="1" stop-color="#e7274e"/></linearGradient>
+<linearGradient id="green" x2="0" y2="1"><stop stop-color="#b2f795"/><stop offset="1" stop-color="#27942e"/></linearGradient>
+</defs>
+<g stroke="#101d2b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+<g transform="translate(2 2) scale(.9)"><path d="M32 32V5A27 27 0 0 1 55 45Z" fill="#f53065" stroke-width="1.5"/><path d="M32 32L55 45A27 27 0 0 1 9 45Z" fill="#54c83d" stroke-width="1.5"/><path d="M32 32L9 45A27 27 0 0 1 32 5Z" fill="#2e9dff" stroke-width="1.5"/><circle cx="32" cy="32" r="10" fill="#f9e77c" stroke="none"/></g><g transform="translate(23 16) scale(.65)"><path d="M25 36L45 8Q49 3 54 7Q58 10 54 16L34 43Z" fill="url(#blue)" /><path d="M25 35L35 42L29 49L18 42Z" fill="url(#paper)" /><path d="M18 42Q8 43 8 54Q7 59 3 60Q26 64 30 49Z" fill="url(#slate)" /><path d="M32 30L47 10" fill="none" stroke="#9ee6ff" stroke-width="2" /></g>
+</g>
+</svg>

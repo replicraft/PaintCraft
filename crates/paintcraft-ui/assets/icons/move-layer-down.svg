@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+<title>Move Layer Down</title>
+<defs>
+<linearGradient id="blue" x2="0" y2="1"><stop stop-color="#59ceff"/><stop offset=".48" stop-color="#128ff5"/><stop offset="1" stop-color="#075eb9"/></linearGradient>
+<linearGradient id="gold" x2="0" y2="1"><stop stop-color="#fff49c"/><stop offset=".45" stop-color="#ffd345"/><stop offset="1" stop-color="#e89308"/></linearGradient>
+<linearGradient id="paper" x2="0" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#cbd8e8"/></linearGradient>
+<linearGradient id="slate" x2="0" y2="1"><stop stop-color="#747f8f"/><stop offset="1" stop-color="#242e3c"/></linearGradient>
+<linearGradient id="red" x2="0" y2="1"><stop stop-color="#ff7a95"/><stop offset="1" stop-color="#e7274e"/></linearGradient>
+<linearGradient id="green" x2="0" y2="1"><stop stop-color="#b2f795"/><stop offset="1" stop-color="#27942e"/></linearGradient>
+</defs>
+<g stroke="#101d2b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+<g transform="translate(0 15) scale(1 .75)"><path d="M6 26L31 10L58 26L32 43Z" fill="url(#paper)" /><path d="M8 37L32 53L56 37M8 46L32 61L56 46" fill="none" stroke="#5b738e" stroke-width="5"/></g><path d="M24 3H40V19H50L32 37L14 19H24Z" fill="url(#green)" />
+</g>
+</svg>

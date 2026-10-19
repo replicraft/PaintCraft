@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+<title>Zoom Out</title>
+<defs>
+<linearGradient id="blue" x2="0" y2="1"><stop stop-color="#59ceff"/><stop offset=".48" stop-color="#128ff5"/><stop offset="1" stop-color="#075eb9"/></linearGradient>
+<linearGradient id="gold" x2="0" y2="1"><stop stop-color="#fff49c"/><stop offset=".45" stop-color="#ffd345"/><stop offset="1" stop-color="#e89308"/></linearGradient>
+<linearGradient id="paper" x2="0" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#cbd8e8"/></linearGradient>
+<linearGradient id="slate" x2="0" y2="1"><stop stop-color="#747f8f"/><stop offset="1" stop-color="#242e3c"/></linearGradient>
+<linearGradient id="red" x2="0" y2="1"><stop stop-color="#ff7a95"/><stop offset="1" stop-color="#e7274e"/></linearGradient>
+<linearGradient id="green" x2="0" y2="1"><stop stop-color="#b2f795"/><stop offset="1" stop-color="#27942e"/></linearGradient>
+</defs>
+<g stroke="#101d2b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+<path d="M43 40L59 55Q62 59 57 62L39 45Z" fill="url(#paper)" /><circle cx="27" cy="27" r="22" fill="url(#paper)" /><circle cx="27" cy="27" r="16" fill="url(#blue)" /><path d="M17 27H37" fill="none" stroke="#fff" stroke-width="4" />
+</g>
+</svg>
