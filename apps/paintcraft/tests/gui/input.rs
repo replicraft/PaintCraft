@@ -424,3 +424,30 @@ fn classic_tool_actions_survive_multiple_layout_passes_without_repeating_a_shape
     assert_eq!(publications(&h), before + 1);
     assert_eq!(top_pixel(&h, 15, 15).a(), 255);
 }
+
+#[test]
+fn brush_preview_and_release_have_identical_canvas_pixels() {
+    let mut h = harness();
+    with_layer(&mut h);
+    h.get_by_label("Brush").click();
+    h.run();
+    let (a, b) = (at(&h, 20.0, 20.0), at(&h, 70.0, 43.0));
+    let before = publications(&h);
+    h.event(Event::PointerMoved(a));
+    h.event(press(a));
+    h.step();
+    h.event(Event::PointerMoved(b));
+    h.step();
+    h.run();
+    let preview = h.state().rendered().to_vec();
+    assert_eq!(publications(&h), before);
+    h.event(release(b));
+    h.step();
+    h.run();
+    assert_eq!(publications(&h), before + 1);
+    assert_eq!(preview, h.state().rendered());
+    assert!((15..48).any(|y| (15..75).any(|x| {
+        let a = top_pixel(&h, x, y).a();
+        a > 0 && a < 255
+    })));
+}

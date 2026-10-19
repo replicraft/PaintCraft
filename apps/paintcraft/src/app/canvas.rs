@@ -20,43 +20,6 @@ impl App {
                     .filter(|p| rect.contains(*p))
                     .and_then(|p| view.to_doc((p.x, p.y)));
 
-                // Transparency checkerboard, then the composite. Display only: the document is untouched.
-                painter.rect_filled(rect, 0.0, Color32::from_gray(200));
-                let cell = 8.0 / ppp;
-                let visible = painter.clip_rect().intersect(rect);
-                let (mut y, mut row) = (
-                    rect.min.y + ((visible.min.y - rect.min.y) / cell).floor() * cell,
-                    ((visible.min.y - rect.min.y) / cell).floor() as i64,
-                );
-                while y < visible.max.y {
-                    let (mut x, mut col) = (
-                        rect.min.x + ((visible.min.x - rect.min.x) / cell).floor() * cell,
-                        ((visible.min.x - rect.min.x) / cell).floor() as i64,
-                    );
-                    while x < visible.max.x {
-                        if (row + col) % 2 == 0 {
-                            painter.rect_filled(
-                                Rect::from_min_size(Pos2::new(x, y), Vec2::splat(cell))
-                                    .intersect(rect),
-                                0.0,
-                                Color32::from_gray(235),
-                            );
-                        }
-                        x += cell;
-                        col += 1;
-                    }
-                    y += cell;
-                    row += 1;
-                }
-                if let Some(t) = &self.texture {
-                    painter.image(
-                        t.id(),
-                        rect,
-                        Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)),
-                        Color32::WHITE,
-                    );
-                }
-
                 if first_pass {
                     let events = ui.input(|i| i.events.clone());
                     for event in events {
@@ -95,6 +58,45 @@ impl App {
                     }
                 }
 
+                self.sync_texture(ui.ctx());
+
+                // Transparency checkerboard, then the composite. Display only: the document is untouched.
+                painter.rect_filled(rect, 0.0, Color32::from_gray(200));
+                let cell = 8.0 / ppp;
+                let visible = painter.clip_rect().intersect(rect);
+                let (mut y, mut row) = (
+                    rect.min.y + ((visible.min.y - rect.min.y) / cell).floor() * cell,
+                    ((visible.min.y - rect.min.y) / cell).floor() as i64,
+                );
+                while y < visible.max.y {
+                    let (mut x, mut col) = (
+                        rect.min.x + ((visible.min.x - rect.min.x) / cell).floor() * cell,
+                        ((visible.min.x - rect.min.x) / cell).floor() as i64,
+                    );
+                    while x < visible.max.x {
+                        if (row + col) % 2 == 0 {
+                            painter.rect_filled(
+                                Rect::from_min_size(Pos2::new(x, y), Vec2::splat(cell))
+                                    .intersect(rect),
+                                0.0,
+                                Color32::from_gray(235),
+                            );
+                        }
+                        x += cell;
+                        col += 1;
+                    }
+                    y += cell;
+                    row += 1;
+                }
+                if let Some(t) = &self.texture {
+                    painter.image(
+                        t.id(),
+                        rect,
+                        Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)),
+                        Color32::WHITE,
+                    );
+                }
+
                 self.draw_overlays(&painter, &view, ppp);
             });
     }
@@ -131,41 +133,7 @@ impl App {
         }
         let color = |c: Rgba| Color32::from_rgba_unmultiplied(c.0[0], c.0[1], c.0[2], c.0[3]);
         match self.editor.preview() {
-            Some(Preview::Path {
-                points,
-                size,
-                round,
-                color: c,
-            }) => {
-                // Erasing previews as a pale outline; the real pixels change on release.
-                let shade = if c.a() == 0 {
-                    Color32::from_rgba_unmultiplied(255, 255, 255, 160)
-                } else {
-                    color(c)
-                };
-                let width = (size as f32 * px).max(1.0 / ppp);
-                let centres: Vec<Pos2> = points
-                    .iter()
-                    .map(|p| screen(*p) + Vec2::splat(px / 2.0))
-                    .collect();
-                if centres.len() > 1 {
-                    painter.add(egui::Shape::line(
-                        centres.clone(),
-                        egui::Stroke::new(width, shade),
-                    ));
-                }
-                for c in centres {
-                    if round {
-                        painter.circle_filled(c, width / 2.0, shade);
-                    } else {
-                        painter.rect_filled(
-                            Rect::from_center_size(c, Vec2::splat(width)),
-                            0.0,
-                            shade,
-                        );
-                    }
-                }
-            }
+            Some(Preview::Path { .. }) => {} // Rendered through the same staged pixels as publication.
             Some(Preview::Shape {
                 tool,
                 from,

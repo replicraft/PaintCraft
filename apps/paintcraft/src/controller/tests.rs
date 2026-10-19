@@ -206,7 +206,7 @@ fn the_brush_paints_its_size_and_the_pencil_is_always_one_pixel() {
 
 #[test]
 fn the_eraser_clears_to_transparent_in_one_undoable_step() {
-    let mut e = with_tool(Tool::Brush, |o| o.size = 1);
+    let mut e = with_tool(Tool::Pencil, |o| o.size = 1);
     let layer = e.target().unwrap();
     stroke(&mut e, &[(5, 5), (9, 5)]);
     e.tool = Tool::Eraser;

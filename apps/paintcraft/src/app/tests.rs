@@ -51,6 +51,64 @@ mod render_worker_tests {
     use std::{sync::mpsc, time::Instant};
 
     #[test]
+    fn cancelled_preview_cannot_publish_over_a_new_gesture_on_the_same_state() {
+        let mut app = App::new(None);
+        let ctx = egui::Context::default();
+        app.editor.select_tool(Tool::Brush);
+        app.editor.pointer_down((8, 8));
+        app.sync_texture(&ctx);
+        let old = app.presentation_key();
+        let (release, wait) = mpsc::sync_channel(1);
+        let (started, wait_started) = mpsc::sync_channel(1);
+        let mut executor = Executor::new(WorkerLimits {
+            workers: 1,
+            pending_jobs: 2,
+            transient_bytes: 512 << 20,
+        })
+        .unwrap();
+        let handle = executor
+            .submit(
+                1024,
+                move |_| {
+                    started.send(()).unwrap();
+                    wait.recv().unwrap();
+                    Ok(RenderedFrame {
+                        key: old,
+                        pixels: vec![0; 320 * 320 * 4],
+                        fallback: None,
+                    })
+                },
+                || {},
+            )
+            .unwrap();
+        wait_started.recv_timeout(Duration::from_secs(5)).unwrap();
+        app.renderer = Some(executor);
+        app.pending_frame = Some((old, handle));
+        app.editor.cancel_gesture();
+        app.editor.pointer_down((30, 40));
+        app.sync_texture(&ctx);
+        let current = app.presentation_key();
+        assert_eq!((old.0, old.1), (current.0, current.1));
+        assert_ne!(old.2, current.2);
+        release.send(()).unwrap();
+        let deadline = Instant::now() + Duration::from_secs(5);
+        while app.texture_key != Some(current) {
+            assert!(Instant::now() < deadline);
+            app.sync_texture(&ctx);
+            std::thread::yield_now();
+        }
+        let doc = paintcraft_editor::execute::execute(
+            app.editor.document(),
+            app.editor.selection(),
+            &app.editor.preview_batch().unwrap().unwrap(),
+        )
+        .unwrap()
+        .doc;
+        assert_eq!(app.rendered, render_flat(&doc).unwrap());
+        assert_eq!(app.renderer.as_ref().unwrap().reserved_bytes(), 0);
+    }
+
+    #[test]
     fn an_old_completion_cannot_publish_after_a_new_edit() {
         let mut app = App::new(None);
         let ctx = egui::Context::default();
@@ -60,7 +118,7 @@ mod render_worker_tests {
             transient_bytes: 8 << 20,
         })
         .unwrap();
-        let old = app.editor.render_key();
+        let old = app.presentation_key();
         let (release, wait) = mpsc::sync_channel(1);
         let (started, wait_started) = mpsc::sync_channel(1);
         let handle = executor
@@ -83,7 +141,7 @@ mod render_worker_tests {
         app.pending_frame = Some((old, handle));
         app.editor.request(12345, Action::AddLayer);
         app.editor.run_pending();
-        let current = app.editor.render_key();
+        let current = app.presentation_key();
         assert_ne!(old, current);
         app.sync_texture(&ctx);
         release.send(()).unwrap();

@@ -6,6 +6,9 @@
 //! progress, so a cancelled or interrupted gesture changes nothing and a stroke
 //! is one undo step. Commands reach the session only through the [`Outbox`].
 
+#[path = "controller/strokes.rs"]
+mod strokes;
+
 use std::{
     path::{Path, PathBuf},
     sync::Arc,
@@ -641,44 +644,6 @@ impl Editor {
         {
             self.status = format!("{name} changed nothing");
         }
-    }
-
-    fn stroke(&mut self, layer: Uuid, points: &[(i64, i64)], color: Rgba, size: u32, round: bool) {
-        if points.is_empty() {
-            return;
-        }
-        // Long gestures are split across operations; each starts on the previous
-        // chunk's last point so the path stays connected. A translucent colour
-        // blends the joint's stamp twice, once per operation.
-        let mut ops = Vec::new();
-        let mut start = 0;
-        while start < points.len() && ops.len() < OPS_PER_BATCH {
-            let end = (start + POINTS_PER_OP).min(points.len());
-            ops.push(Value::object([
-                ("op", Value::str("raster.stroke_path")),
-                ("layer_ref", layer_ref(layer)),
-                (
-                    "points",
-                    Value::Array(points[start..end].iter().map(|p| point(*p)).collect()),
-                ),
-                ("color", Value::str(color.to_hex())),
-                (
-                    "mode",
-                    Value::str(if color.a() == 0 {
-                        "replace"
-                    } else {
-                        "source-over"
-                    }),
-                ),
-                ("size", Value::Int(i64::from(size))),
-                ("brush", Value::str(if round { "round" } else { "square" })),
-            ]));
-            if end == points.len() {
-                break;
-            }
-            start = end - 1;
-        }
-        self.draw(ops, if color.a() == 0 { "Erase" } else { "Stroke" });
     }
 
     fn add_layer(&mut self) {

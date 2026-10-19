@@ -96,20 +96,24 @@ impl std::fmt::Debug for App {
 
 #[derive(Debug)]
 struct RenderedFrame {
-    key: (Uuid, u64),
+    key: RenderKey,
     pixels: Vec<u8>,
     fallback: Option<String>,
 }
+
+type RenderKey = (Uuid, u64, u64);
 
 pub struct App {
     editor: Editor,
     chrome_outbox: paintcraft_ui::outbox::Outbox<paintcraft_classic::Action>,
     gpu: Option<Arc<GpuRenderer>>,
     renderer: Option<Executor<RenderedFrame>>,
-    pending_frame: Option<((Uuid, u64), JobHandle)>,
+    pending_frame: Option<(RenderKey, JobHandle)>,
     dialogs: Option<NativeDialogs>,
     texture: Option<egui::TextureHandle>,
-    texture_key: Option<(Uuid, u64)>,
+    texture_key: Option<RenderKey>,
+    rendered_preview: Option<Preview>,
+    preview_revision: u64,
     /// Straight RGBA8 flat render of what the texture shows.
     rendered: Vec<u8>,
     zoom: u32,
@@ -171,6 +175,8 @@ impl App {
             dialogs: None,
             texture: None,
             texture_key: None,
+            rendered_preview: None,
+            preview_revision: 0,
             rendered: Vec::new(),
             zoom: 1,
             path_text,
