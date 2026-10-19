@@ -2,7 +2,7 @@
 use egui::{Color32, Vec2};
 use paintcraft_core::types::Rgba;
 use paintcraft_tools::Tool;
-use paintcraft_ui::widgets::{Icon, icon_button};
+use paintcraft_ui::widgets::Icon;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ClassicVariant {
@@ -41,31 +41,25 @@ impl ClassicVariant {
 pub use paintcraft_ui::chrome::{Action, Controls};
 use paintcraft_ui::chrome::{color_edit, options, tool_button};
 
-pub fn chrome(ui: &mut egui::Ui, variant: ClassicVariant, state: &mut Controls) -> Vec<Action> {
+pub fn chrome(
+    ui: &mut egui::Ui,
+    variant: ClassicVariant,
+    state: &mut Controls,
+    context: paintcraft_ui::actions::Context,
+) -> Vec<Action> {
     let mut actions = Vec::new();
     ui.horizontal(|ui| {
         ui.menu_button("File", |ui| {
-            for (label, action) in [
-                ("New", Action::New),
-                ("Open…", Action::Open),
-                ("Save", Action::Save),
-                ("Save as…", Action::SaveAs),
-                ("Export…", Action::Export),
-            ] {
-                if ui.button(label).clicked() {
+            for &action in paintcraft_ui::actions::FILE {
+                if paintcraft_ui::actions::menu_item(ui, action, context) {
                     actions.push(action);
                     ui.close();
                 }
             }
         });
         ui.menu_button("Edit", |ui| {
-            for (label, action) in [
-                ("Undo", Action::Undo),
-                ("Redo", Action::Redo),
-                ("Select all", Action::SelectAll),
-                ("Deselect", Action::Deselect),
-            ] {
-                if ui.button(label).clicked() {
+            for &action in paintcraft_ui::actions::EDIT {
+                if paintcraft_ui::actions::menu_item(ui, action, context) {
                     actions.push(action);
                     ui.close();
                 }
@@ -78,15 +72,15 @@ pub fn chrome(ui: &mut egui::Ui, variant: ClassicVariant, state: &mut Controls) 
             }
         });
         ui.separator();
-        for (label, icon, action) in [
-            ("New", Icon::New, Action::New),
-            ("Open", Icon::Open, Action::Open),
-            ("Save", Icon::Save, Action::Save),
-            ("Export", Icon::Export, Action::Export),
-            ("Undo", Icon::Undo, Action::Undo),
-            ("Redo", Icon::Redo, Action::Redo),
+        for (icon, action) in [
+            (Icon::New, Action::New),
+            (Icon::Open, Action::Open),
+            (Icon::Save, Action::Save),
+            (Icon::Export, Action::Export),
+            (Icon::Undo, Action::Undo),
+            (Icon::Redo, Action::Redo),
         ] {
-            if icon_button(ui, label, icon, false, false).clicked() {
+            if paintcraft_ui::actions::toolbar_button(ui, action, icon, context) {
                 actions.push(action);
             }
         }

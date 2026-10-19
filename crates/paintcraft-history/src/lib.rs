@@ -106,6 +106,9 @@ impl History {
     pub fn undo_depth(&self) -> usize {
         self.cursor
     }
+    pub fn redo_depth(&self) -> usize {
+        self.entries.len() - self.cursor - 1
+    }
     pub fn last_trimmed(&self) -> usize {
         self.last_trimmed
     }

@@ -111,6 +111,7 @@ type RenderKey = (Uuid, u64, u64);
 
 pub struct App {
     context: egui::Context,
+    ime_composing: bool,
     editor: Editor,
     tabs: Vec<tabs::Tab>,
     active_tab: usize,
@@ -183,6 +184,7 @@ impl App {
         );
         let mut app = App {
             context: Default::default(),
+            ime_composing: false,
             editor: Editor::new_document(DEFAULT_SIZE.0, DEFAULT_SIZE.1)
                 .expect("default size is valid"),
             tabs: vec![tabs::Tab::initial()],

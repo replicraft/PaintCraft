@@ -217,6 +217,9 @@ impl Editor {
     pub fn undo_depth(&self) -> usize {
         self.session.undo_depth()
     }
+    pub fn redo_depth(&self) -> usize {
+        self.session.redo_depth()
+    }
 
     /// The user chose to throw this work away: its checkpoint must not come back.
     pub fn discard_checkpoint(&mut self) -> Result<()> {

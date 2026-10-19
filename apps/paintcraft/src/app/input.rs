@@ -9,54 +9,56 @@ impl App {
         }
     }
 
-    /// Keyboard shortcuts and window events; first pass only. Each key press is
-    /// judged with the modifiers it arrived with, not the pointer-time state.
+    /// First pass only. Match modifiers from the event, and leave focused widgets
+    /// and active IME composition in control of their own keyboard input.
     pub(super) fn handle_global_input(&mut self, ui: &mut egui::Ui) {
-        if self.document_count() == 0 {
-            return;
-        }
         let ctx = ui.ctx().clone();
         let events = ui.input(|i| i.events.clone());
-        let text_focus = self.editor.is_editing_text() && !ctx.egui_wants_keyboard_input();
+        let widget_focus = ctx.egui_wants_keyboard_input();
         for event in events {
+            let text_focus =
+                self.document_count() > 0 && self.editor.is_editing_text() && !widget_focus;
             match event {
+                egui::Event::Ime(egui::ImeEvent::Preedit { text, .. }) => {
+                    self.ime_composing = !text.is_empty();
+                }
+                egui::Event::Ime(egui::ImeEvent::Commit(_)) => self.ime_composing = false,
                 egui::Event::Key {
                     key,
                     pressed: true,
                     repeat,
                     modifiers,
                     ..
-                } => match key {
-                    // Holding Backspace or Enter repeats while typing; one-shot commands do not.
+                } if !widget_focus && !self.ime_composing => match key {
                     egui::Key::Enter if text_focus && !modifiers.command => {
-                        self.editor.type_text("\n")
+                        self.editor.type_text("\n");
                     }
                     egui::Key::Backspace if text_focus => self.editor.backspace(),
                     _ if repeat => {}
-                    egui::Key::Z if modifiers.command && modifiers.shift => {
-                        self.request(&ctx, code::REDO, Action::Redo)
+                    egui::Key::Enter if modifiers.command && text_focus => {
+                        self.editor.commit_text();
                     }
-                    egui::Key::Z if modifiers.command => {
-                        self.request(&ctx, code::UNDO, Action::Undo)
-                    }
-                    egui::Key::Y if modifiers.command => {
-                        self.request(&ctx, code::REDO, Action::Redo)
-                    }
-                    egui::Key::S if modifiers.command => self.save_requested(&ctx),
-                    egui::Key::Enter if modifiers.command => self.editor.commit_text(),
                     egui::Key::Escape => {
                         self.editor.cancel_gesture();
                         self.editor.cancel_text();
                     }
-                    _ => {}
+                    _ => {
+                        if let Some(action) =
+                            paintcraft_ui::actions::Action::from_shortcut(key, modifiers)
+                        {
+                            self.dispatch_chrome(&ctx, vec![action]);
+                        }
+                    }
                 },
                 // Focus loss ends an unfinished gesture without publishing it.
                 egui::Event::WindowFocused(false) => {
+                    self.ime_composing = false;
                     self.editor.cancel_gesture();
                     self.editor.commit_text();
                 }
-                // Typed characters go to the text being edited unless a text field has the keyboard.
-                egui::Event::Text(typed) if text_focus => self.editor.type_text(&typed),
+                egui::Event::Text(typed) if text_focus && !self.ime_composing => {
+                    self.editor.type_text(&typed);
+                }
                 _ => {}
             }
         }

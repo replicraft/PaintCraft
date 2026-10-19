@@ -12,38 +12,7 @@ pub struct Controls {
     pub primary: Rgba,
     pub secondary: Rgba,
 }
-#[derive(Clone, Copy, Debug)]
-pub enum Action {
-    New,
-    Open,
-    Save,
-    SaveAs,
-    Export,
-    Undo,
-    Redo,
-    Interface,
-    SelectTool(Tool),
-    SelectAll,
-    Deselect,
-}
-
-impl Action {
-    pub fn activation_code(self) -> u64 {
-        match self {
-            Self::New => 1000,
-            Self::Open => 1001,
-            Self::Save => 1002,
-            Self::SaveAs => 1003,
-            Self::Export => 1004,
-            Self::Undo => 1005,
-            Self::Redo => 1006,
-            Self::Interface => 1007,
-            Self::SelectAll => 1008,
-            Self::Deselect => 1009,
-            Self::SelectTool(tool) => 1100 + tool as u64,
-        }
-    }
-}
+pub use crate::actions::Action;
 
 pub fn options(ui: &mut egui::Ui, state: &mut Controls, actions: &mut Vec<Action>) {
     ui.horizontal_wrapped(|ui| {

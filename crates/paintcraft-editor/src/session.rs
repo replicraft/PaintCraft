@@ -118,6 +118,9 @@ impl Session {
     pub fn undo_depth(&self) -> usize {
         self.history.undo_depth()
     }
+    pub fn redo_depth(&self) -> usize {
+        self.history.redo_depth()
+    }
     pub fn last_trimmed(&self) -> usize {
         self.history.last_trimmed()
     }

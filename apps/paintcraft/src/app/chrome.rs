@@ -3,6 +3,27 @@
 use super::*;
 
 impl App {
+    pub(super) fn action_context(&self) -> paintcraft_ui::actions::Context {
+        use paintcraft_ui::actions::{Context, Frontend};
+        let pending_text = self.editor.is_editing_text();
+        Context {
+            frontend: match self.experience() {
+                Experience::Classic => Frontend::Classic,
+                Experience::Studio => Frontend::Studio,
+            },
+            document_open: self.document_count() > 0,
+            can_undo: self.editor.undo_depth() > 0 || pending_text,
+            can_redo: self.editor.redo_depth() > 0 && !pending_text,
+            selection_active: self.editor.selection() != Selection::Inactive,
+            tool: self.editor.tool,
+            blocked: self.closing_workspace
+                || self.close_after_saves
+                || self.confirm.is_some()
+                || self.tab_closing.is_some()
+                || self.dialogs.as_ref().is_some_and(NativeDialogs::pending),
+        }
+    }
+
     pub(super) fn toolbar(&mut self, ui: &mut egui::Ui) {
         let ctx = ui.ctx().clone();
         ui.horizontal(|ui| {
@@ -25,18 +46,21 @@ impl App {
             primary: self.editor.color,
             secondary: self.editor.secondary,
         };
-        let document_open = self.document_count() > 0;
+        let action_context = self.action_context();
         let actions = ui
             .push_id(("document-chrome", self.active_tab_id()), |ui| {
                 match self.experience() {
-                    Experience::Classic => {
-                        paintcraft_classic::chrome(ui, self.variant(), &mut controls)
-                    }
+                    Experience::Classic => paintcraft_classic::chrome(
+                        ui,
+                        self.variant(),
+                        &mut controls,
+                        action_context,
+                    ),
                     Experience::Studio => paintcraft_studio::toolbar(
                         ui,
                         &mut controls,
                         &mut self.studio,
-                        document_open,
+                        action_context,
                     ),
                 }
             })
@@ -55,15 +79,31 @@ impl App {
         self.editor.options = controls.options;
         self.editor.color = controls.primary;
         self.editor.secondary = controls.secondary;
+        self.dispatch_chrome(ctx, actions);
+    }
+
+    pub(super) fn dispatch_chrome(
+        &mut self,
+        ctx: &egui::Context,
+        actions: Vec<paintcraft_ui::chrome::Action>,
+    ) {
         for action in actions {
             self.chrome_outbox
                 .push(token(ctx, action.activation_code()), action);
         }
         for action in self.chrome_outbox.drain() {
+            // Earlier events in a coalesced frame may have queued an edit or
+            // history move. Its result determines this action's enabled state.
+            self.editor.run_pending();
+            if !action.enabled(self.action_context()) {
+                continue;
+            }
             use paintcraft_ui::chrome::Action as Chrome;
             match action {
                 Chrome::New => {
-                    if self.experience() == Experience::Classic && self.editor.is_dirty() {
+                    if self.experience() == Experience::Classic
+                        && (self.editor.is_dirty() || self.has_document_drafts())
+                    {
                         self.confirm = Some(Confirm::DiscardForNew);
                     } else {
                         self.new_document();
@@ -75,6 +115,7 @@ impl App {
                 Chrome::Export => self.export_requested(ctx),
                 Chrome::Undo => self.request(ctx, code::UNDO, Action::Undo),
                 Chrome::Redo => self.request(ctx, code::REDO, Action::Redo),
+                Chrome::Close => self.request_close_tab(self.active_tab_id(), ctx),
                 Chrome::Interface => self.picking = Some(self.variant()),
                 Chrome::SelectTool(tool) => self.editor.select_tool(tool),
                 Chrome::SelectAll => {

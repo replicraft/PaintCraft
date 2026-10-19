@@ -1,49 +1,27 @@
 use crate::Workspace;
+use paintcraft_ui::actions::{self, Context};
 use paintcraft_ui::chrome::{Action, Controls, options};
-use paintcraft_ui::widgets::{Icon, icon_button};
+use paintcraft_ui::widgets::Icon;
 
 pub fn toolbar(
     ui: &mut egui::Ui,
     state: &mut Controls,
     workspace: &mut Workspace,
-    document_open: bool,
+    context: Context,
 ) -> Vec<Action> {
     let mut actions = Vec::new();
     egui::MenuBar::new().ui(ui, |ui| {
         ui.menu_button("File", |ui| {
-            for (label, action) in [
-                ("New", Action::New),
-                ("Open…", Action::Open),
-                ("Save", Action::Save),
-                ("Save as…", Action::SaveAs),
-                ("Export…", Action::Export),
-            ] {
-                if ui
-                    .add_enabled(
-                        document_open || matches!(action, Action::New | Action::Open),
-                        egui::Button::new(label),
-                    )
-                    .clicked()
-                {
+            for &action in actions::FILE {
+                if actions::menu_item(ui, action, context) {
                     actions.push(action);
                     ui.close();
                 }
             }
         });
         ui.menu_button("Edit", |ui| {
-            for (label, action) in [
-                ("Undo", Action::Undo),
-                ("Redo", Action::Redo),
-                ("Select all", Action::SelectAll),
-                ("Deselect", Action::Deselect),
-            ] {
-                if ui
-                    .add_enabled(
-                        document_open || matches!(action, Action::New | Action::Open),
-                        egui::Button::new(label),
-                    )
-                    .clicked()
-                {
+            for &action in actions::EDIT {
+                if actions::menu_item(ui, action, context) {
                     actions.push(action);
                     ui.close();
                 }
@@ -57,22 +35,15 @@ pub fn toolbar(
         });
     });
     ui.horizontal(|ui| {
-        for (label, icon, action) in [
-            ("New", Icon::New, Action::New),
-            ("Open", Icon::Open, Action::Open),
-            ("Save", Icon::Save, Action::Save),
-            ("Export", Icon::Export, Action::Export),
-            ("Undo", Icon::Undo, Action::Undo),
-            ("Redo", Icon::Redo, Action::Redo),
+        for (icon, action) in [
+            (Icon::New, Action::New),
+            (Icon::Open, Action::Open),
+            (Icon::Save, Action::Save),
+            (Icon::Export, Action::Export),
+            (Icon::Undo, Action::Undo),
+            (Icon::Redo, Action::Redo),
         ] {
-            if ui
-                .add_enabled_ui(
-                    document_open || matches!(action, Action::New | Action::Open),
-                    |ui| icon_button(ui, label, icon, false, false),
-                )
-                .inner
-                .clicked()
-            {
+            if paintcraft_ui::actions::toolbar_button(ui, action, icon, context) {
                 actions.push(action);
             }
         }
@@ -80,6 +51,6 @@ pub fn toolbar(
         ui.label(state.tool.name());
     });
     ui.separator();
-    ui.add_enabled_ui(document_open, |ui| options(ui, state, &mut actions));
+    ui.add_enabled_ui(context.document_open, |ui| options(ui, state, &mut actions));
     actions
 }

@@ -41,15 +41,15 @@ behavior remain unqualified.
 | Studio workspace | partially working | Separate frontend, toolbar/options, floating Tools/Colors/History/Layers and centered canvas; reference spacing, theme and several tools remain |
 | Document switching/close | working | Independent sessions, histories, view/tool state, bindings, owner-routed native saves/recovery and save/discard/cancel close; text tabs rather than reference thumbnails |
 | History | working | Recorded labels, undo/redo and guarded direct navigation; branching/spill is separate work |
-| File workflows | partially working | New/Open/Save/Save As/Export and native dialogs work; shared action metadata, shortcut completeness, Save All, recent files, printing and acquisition remain |
+| File workflows | partially working | New/Open/Save/Save As/Export and native dialogs work; shared metadata and menu/shortcut dispatch cover existing operations; Save All, recent files, printing and acquisition remain |
 | Colors and layers | partially working | Primary/secondary palette, layer selection/visibility/rename/opacity/reorder/add/delete work; wheel, More controls, thumbnails, duplicate/merge and properties dialog remain |
 | Settings | partially working | Experience/version persistence works; utility-window persistence and reference settings pages remain |
 | Selection/clipboard/image/adjustments/effects | partially working | Rectangle selection and existing drawing tools work; clipboard, transforms, adjustment/effect registries and preview lifecycles remain |
 | Classic v11 fidelity | deferred | Existing separate Classic frontend retained; reference-driven expansion follows Studio coverage |
 
-Finish one functional slice at a time. The next shared slice is action descriptors
-and menu/shortcut equivalence for existing operations, respecting text/IME and
-modal ownership. Subsequent slices add missing Studio editing operations before
+Finish one functional slice at a time. Shared action descriptors and menu/shortcut equivalence now cover existing
+operations, respecting text/IME and modal ownership. Subsequent slices add missing
+Studio editing operations before
 exposing their menu entries. Every new operation needs engine/history tests and
 actual UI dispatch; visible placeholder menus do not count as completed features.
 

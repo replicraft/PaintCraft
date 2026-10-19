@@ -38,8 +38,8 @@ for the running session, not across restarts.
 
 ## Next Studio work
 
-1. Shared action descriptors and menu/shortcut equivalence, then the remaining
-   Studio menus and workflows described in the supplied reference plan.
+1. Expand the shared action registry with the remaining Studio menus and working
+   workflows described in the supplied reference plan.
 2. Expand history storage and metadata admission, then qualified branching/spill
    behavior; the recorded History window is implemented on the current linear store.
 3. Image/layer editing operations and richer selection interactions through typed
@@ -116,3 +116,25 @@ cargo test -p paintcraft --test gui tabs::render_document_tabs_for_review -- --i
 
 See [reference coverage](STUDIO_REFERENCE_COVERAGE.md) for the supplied screenshot
 inventory and the next functional slices.
+
+## Shared action dispatch
+
+`paintcraft-ui::actions` defines the semantic identities, labels, shortcuts,
+frontend availability, enabled states and tool check states for existing shared
+actions. Both frontend menus and file/history toolbar controls consume it. The
+desktop dispatcher validates enabled state again before execution and uses the
+same action outbox for shortcuts, menus and toolbars. It flushes preceding edits
+before checking later events in a coalesced frame, so Undo followed by Redo works
+in arrival order.
+
+New, Open, Save, Save As, Close, Undo, Redo, Select All and Deselect have command-key
+shortcuts (Ctrl on Windows/Linux, Command on macOS). Shift+Command+Z also invokes
+Redo. Save As does not fall through to Save. Focused widgets and active IME
+preedit retain keyboard ownership; modal/file-dialog ownership blocks background
+actions. This protects input routing; full system-font/IME canvas text is still
+pending. Engine-only operations remain available through their typed commands
+and CLI; native document-window actions have no headless equivalent.
+
+Save All, recent files, printing, acquisition and the remaining editing commands
+are not registered as working controls yet. The registry is a first slice for
+existing actions, not a claim of complete menu or CLI coverage.
