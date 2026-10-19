@@ -15,6 +15,7 @@ impl Action {
             Self::SelectAll | Self::Deselect => Icon::RectangleSelect,
             Self::Interface | Self::CanvasDefaults | Self::SelectTool(_) => return None,
             Self::CanvasSize => Icon::CanvasSize,
+            Self::EditColors | Self::EditSecondaryColors => Icon::ColorBalance,
             Self::View(action) => match action {
                 ViewAction::ZoomIn => Icon::ZoomIn,
                 ViewAction::ZoomOut => Icon::ZoomOut,

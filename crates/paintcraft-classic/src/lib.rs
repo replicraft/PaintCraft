@@ -1,4 +1,8 @@
 //! Classic presentation emits actions; editor and platform services own effects.
+mod colors;
+pub use colors::{
+    CUSTOM_COLOR_COUNT, ColorEditor, ColorResponse, CustomColors, edit_colors_dialog,
+};
 mod zoom;
 pub use zoom::zoom_controls;
 
@@ -42,7 +46,7 @@ impl ClassicVariant {
 }
 
 pub use paintcraft_ui::chrome::{Action, Controls};
-use paintcraft_ui::chrome::{color_edit, options, tool_button};
+use paintcraft_ui::chrome::{options, tool_button};
 
 pub fn chrome(
     ui: &mut egui::Ui,
@@ -168,8 +172,27 @@ pub fn chrome(
                 ribbon_group(ui, "Colors", |ui| {
                     ui.horizontal(|ui| {
                         ui.vertical(|ui| {
-                            color_edit(ui, "Pencil color", &mut state.primary);
-                            color_edit(ui, "Fill color", &mut state.secondary);
+                            for (label, color, action) in [
+                                ("Pencil color", state.primary, Action::EditColors),
+                                ("Fill color", state.secondary, Action::EditSecondaryColors),
+                            ] {
+                                let response = ui.add_enabled(
+                                    action.enabled(context),
+                                    egui::Button::new("")
+                                        .fill(Color32::from_rgb(color.0[0], color.0[1], color.0[2]))
+                                        .min_size(Vec2::new(36.0, 22.0)),
+                                );
+                                response.widget_info(|| {
+                                    egui::WidgetInfo::labeled(
+                                        egui::Role::ColorWell,
+                                        action.enabled(context) && ui.is_enabled(),
+                                        label,
+                                    )
+                                });
+                                if response.clicked() {
+                                    actions.push(action);
+                                }
+                            }
                         });
                         egui::Grid::new("classic-palette")
                             .min_col_width(0.0)
@@ -217,6 +240,9 @@ pub fn chrome(
                                 }
                             });
                     });
+                    if paintcraft_ui::actions::menu_item(ui, Action::EditColors, context) {
+                        actions.push(Action::EditColors);
+                    }
                 });
             });
         });

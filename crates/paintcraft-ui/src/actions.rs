@@ -18,6 +18,8 @@ pub enum Action {
     Interface,
     CanvasSize,
     CanvasDefaults,
+    EditColors,
+    EditSecondaryColors,
     SelectTool(Tool),
     SelectAll,
     Deselect,
@@ -91,6 +93,8 @@ impl Action {
             Self::Interface => ("Change Paint version…", None),
             Self::CanvasSize => ("Canvas size…", None),
             Self::CanvasDefaults => ("Default canvas size…", None),
+            Self::EditColors => ("Edit colors…", None),
+            Self::EditSecondaryColors => ("Edit secondary color…", None),
             Self::SelectTool(tool) => (tool.name(), None),
             Self::SelectAll => ("Select all", Some((Key::A, false))),
             Self::Deselect => ("Deselect", Some((Key::D, false))),
@@ -111,9 +115,11 @@ impl Action {
 
     pub fn available(self, frontend: Frontend) -> bool {
         match self {
-            Self::Interface | Self::CanvasSize | Self::CanvasDefaults => {
-                frontend == Frontend::Classic
-            }
+            Self::Interface
+            | Self::CanvasSize
+            | Self::CanvasDefaults
+            | Self::EditColors
+            | Self::EditSecondaryColors => frontend == Frontend::Classic,
             Self::Layer(_) => frontend == Frontend::Studio,
             _ => true,
         }
@@ -181,6 +187,8 @@ impl Action {
             Self::Close => 1010,
             Self::CanvasSize => 1011,
             Self::CanvasDefaults => 1012,
+            Self::EditColors => 1013,
+            Self::EditSecondaryColors => 1014,
             Self::SelectTool(tool) => 1100 + tool as u64,
         }
     }
