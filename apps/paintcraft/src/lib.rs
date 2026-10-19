@@ -2,6 +2,8 @@
 mod appearance;
 #[path = "app/canvas.rs"]
 mod canvas;
+#[path = "app/canvas_settings.rs"]
+mod canvas_settings;
 #[path = "app/chrome.rs"]
 mod chrome;
 pub mod controller;
@@ -72,12 +74,15 @@ mod code {
     pub const DELETE: u64 = 11;
     pub const MOVE: u64 = 12;
     pub const HISTORY: u64 = 13;
+    pub const CANVAS_SIZE: u64 = 14;
 }
 
-const DEFAULT_SIZE: (u32, u32) = (320, 320);
+const DEFAULT_SIZE: (u32, u32) = settings::DEFAULT_SIZE;
+const STUDIO_SIZE: (u32, u32) = (320, 320);
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum Confirm {
+    Canvas(canvas_settings::CanvasDraft),
     LayerProperties(layers::PropertiesDraft),
     DiscardForNew,
     DiscardForOpen(PathBuf),

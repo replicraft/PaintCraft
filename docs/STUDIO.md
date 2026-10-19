@@ -1,6 +1,7 @@
 # PaintCraft Studio
 
-Studio is the current development priority. Its first presentation slice lives in
+Studio remains available while Classic is the current development priority. Its
+presentation lives in
 `paintcraft-studio`, with the desktop shell supplying the editor and native services.
 Select **Studio** in the application header; the choice is saved for the next launch.
 Selawik remains the interface font. RetroPaint's selected font, W95FA, is recorded
@@ -28,8 +29,9 @@ Classic presentation crate. The shell executes actions through its existing outb
 the presentation never writes files or mutates published document state directly.
 Clicks in floating windows cannot start strokes on the canvas underneath them.
 
-Settings v2 saves the active experience independently of the Classic version.
-V1 settings migrate to Classic with their original version retained. Launching a
+Settings v3 saves the active experience independently of the Classic version and
+adds Classic canvas-size preferences. V1/v2 settings migrate with their original
+interface choice retained. Studio New retains its existing 320 × 320 size. Launching a
 saved Studio workspace skips the Classic picker; entering Classic for the first
 time still asks for its version. Switching presentation preserves the current
 document, target and history; an active stroke is cancelled and active text follows

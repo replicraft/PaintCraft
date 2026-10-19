@@ -74,7 +74,7 @@ mod render_worker_tests {
                     wait.recv().unwrap();
                     Ok(RenderedFrame {
                         key: old,
-                        pixels: vec![0; 320 * 320 * 4],
+                        pixels: vec![0; DEFAULT_SIZE.0 as usize * DEFAULT_SIZE.1 as usize * 4],
                         fallback: None,
                     })
                 },
@@ -129,7 +129,7 @@ mod render_worker_tests {
                     wait.recv().unwrap();
                     Ok(RenderedFrame {
                         key: old,
-                        pixels: vec![0; 320 * 320 * 4],
+                        pixels: vec![0; DEFAULT_SIZE.0 as usize * DEFAULT_SIZE.1 as usize * 4],
                         fallback: None,
                     })
                 },

@@ -308,9 +308,19 @@ impl App {
     }
 
     pub(super) fn new_document(&mut self) {
-        if let Ok(e) = Editor::new_document(DEFAULT_SIZE.0, DEFAULT_SIZE.1) {
+        let size = if self.experience() == Experience::Classic {
+            self.settings.canvas.new_size()
+        } else {
+            STUDIO_SIZE
+        };
+        if let Ok(e) = Editor::new_document(size.0, size.1) {
             match self.install(e) {
-                Ok(()) => self.bound = None,
+                Ok(()) => {
+                    self.bound = None;
+                    if self.experience() == Experience::Classic {
+                        self.remember_canvas_size(size);
+                    }
+                }
                 Err(error) => self
                     .editor
                     .set_status(format!("Cannot replace document: {error}")),

@@ -13,6 +13,20 @@ impl App {
                 "Settings were unusable ({reason}){kept}; using defaults"
             ));
         }
+        if self.editor.path().is_none() && !self.editor.is_dirty() && self.document_count() == 1 {
+            let size = match settings.experience {
+                Experience::Classic => settings.canvas.new_size(),
+                Experience::Studio => STUDIO_SIZE,
+            };
+            if self.editor.document().canvas != size {
+                match Editor::new_document(size.0, size.1) {
+                    Ok(editor) => self.publish_editor(editor),
+                    Err(e) => self
+                        .editor
+                        .set_status(format!("Cannot create preferred canvas: {e}")),
+                }
+            }
+        }
         self.picking = (settings.experience == Experience::Classic
             && settings.classic_variant.is_none())
         .then_some(ClassicVariant::DEFAULT);
@@ -45,12 +59,12 @@ impl App {
         self.persist_settings();
     }
 
-    fn persist_settings(&mut self) {
+    pub(super) fn persist_settings(&mut self) {
         if let Some(dir) = &self.settings_dir
             && let Err(e) = self.settings.save(dir)
         {
             self.editor
-                .set_status(format!("Could not save the interface choice: {e}"));
+                .set_status(format!("Could not save preferences: {e}"));
         }
     }
 
@@ -64,7 +78,7 @@ impl App {
             && let Err(e) = self.settings.save(dir)
         {
             self.editor
-                .set_status(format!("Could not save the interface choice: {e}"));
+                .set_status(format!("Could not save preferences: {e}"));
         }
         self.picking = None;
     }

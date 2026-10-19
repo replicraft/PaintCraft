@@ -13,7 +13,8 @@ impl Action {
             Self::Undo => Icon::Undo,
             Self::Redo => Icon::Redo,
             Self::SelectAll | Self::Deselect => Icon::RectangleSelect,
-            Self::Interface | Self::SelectTool(_) => return None,
+            Self::Interface | Self::CanvasDefaults | Self::SelectTool(_) => return None,
+            Self::CanvasSize => Icon::CanvasSize,
             Self::View(action) => match action {
                 ViewAction::ZoomIn => Icon::ZoomIn,
                 ViewAction::ZoomOut => Icon::ZoomOut,

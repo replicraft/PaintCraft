@@ -8,6 +8,10 @@ fn every_classic_variant_centers_small_canvases_at_each_display_scale() {
             let dir = scratch(&format!("classic-center-{}", uuid::Uuid::new_v4()));
             paintcraft::settings::Settings {
                 classic_variant: Some(variant),
+                canvas: paintcraft::settings::CanvasDefaults {
+                    configured: (320, 320),
+                    ..Default::default()
+                },
                 ..Default::default()
             }
             .save(&dir)

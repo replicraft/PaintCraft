@@ -123,6 +123,10 @@ pub enum Action {
     Select {
         corners: Option<((i64, i64), (i64, i64))>,
     },
+    ResizeCanvas {
+        width: u32,
+        height: u32,
+    },
     AddLayer,
     DuplicateLayer {
         layer: Uuid,

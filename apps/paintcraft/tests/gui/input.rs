@@ -15,7 +15,7 @@ fn one_click_is_one_transaction_and_the_texture_shows_it() {
     assert_eq!(publications(&h), before + 1, "exactly one transaction");
     assert_eq!(top_pixel(&h, 10, 20), Rgba([0, 0, 0, 255]));
     assert_eq!(top_pixel(&h, 11, 20), Rgba::TRANSPARENT);
-    let shown = &h.state().rendered()[(20 * 320 + 10) * 4..][..4];
+    let shown = &h.state().rendered()[(20 * 1000 + 10) * 4..][..4];
     assert_eq!(
         shown,
         [0, 0, 0, 255],
@@ -184,12 +184,12 @@ fn undo_and_redo_by_keyboard_and_button_each_run_once() {
 
 #[test]
 fn canvas_pixels_are_actual_pixels_at_any_display_scale() {
-    for (ppp, expect) in [(1.0f32, 320.0f32), (2.0, 160.0)] {
+    for (ppp, expect) in [(1.0f32, (1000.0f32, 486.0f32)), (2.0, (500.0, 243.0))] {
         let h = harness_with(App::new(None), ppp, false);
         let r = h.state().canvas_rect().unwrap();
         assert_eq!(
             (r.width(), r.height()),
-            (expect, expect),
+            expect,
             "ppp {ppp}: one document pixel per physical pixel"
         );
     }
@@ -198,7 +198,7 @@ fn canvas_pixels_are_actual_pixels_at_any_display_scale() {
     h.run();
     h.get_by_label("400%").click();
     h.run();
-    assert_eq!(h.state().canvas_rect().unwrap().width(), 1280.0);
+    assert_eq!(h.state().canvas_rect().unwrap().width(), 4000.0);
 }
 
 #[test]
@@ -210,14 +210,14 @@ fn zoomed_clicks_hit_the_right_document_pixel() {
     h.get_by_label("400%").click();
     h.run();
     let origin = h.state().canvas_rect().unwrap().min;
-    let p = origin + Vec2::new(4.0 * 160.0 + 1.0, 4.0 * 160.0 + 2.0);
+    let p = origin + Vec2::new(4.0 * 500.0 + 1.0, 4.0 * 243.0 + 2.0);
     h.input_mut()
         .events
         .extend([Event::PointerMoved(p), press(p), release(p)]);
     h.step();
     h.run();
-    assert_eq!(top_pixel(&h, 160, 160).a(), 255);
-    assert_eq!(top_pixel(&h, 161, 160).a(), 0);
+    assert_eq!(top_pixel(&h, 500, 243).a(), 255);
+    assert_eq!(top_pixel(&h, 501, 243).a(), 0);
 }
 
 #[test]
@@ -246,7 +246,7 @@ fn gui_and_core_produce_identical_pixels_for_the_same_stroke() {
 
     // The same intent applied to the engine directly, with no GUI involved.
     let mut core =
-        Session::new(new_document(320, 320, Some(Rgba([255, 255, 255, 255])), 0, POLICY).unwrap());
+        Session::new(new_document(1000, 486, Some(Rgba([255, 255, 255, 255])), 0, POLICY).unwrap());
     let run = |s: &mut Session, ops: &str| {
         let t = s.ticket();
         let text = format!(
@@ -256,7 +256,7 @@ fn gui_and_core_produce_identical_pixels_for_the_same_stroke() {
         s.apply(&Batch::from_json(text.as_bytes()).unwrap())
             .unwrap()
     };
-    let layer = run(&mut core, r##"[{"op":"layer.add","ref":"l","name":"Layer 2","width":320,"height":320,"origin":{"x":0,"y":0},"default_pixel":"#00000000"}]"##).aliases["l"];
+    let layer = run(&mut core, r##"[{"op":"layer.add","ref":"l","name":"Layer 2","width":1000,"height":486,"origin":{"x":0,"y":0},"default_pixel":"#00000000"}]"##).aliases["l"];
     run(
         &mut core,
         &format!(
@@ -293,7 +293,7 @@ fn choosing_a_tool_and_dragging_makes_one_shape_transaction() {
     assert_eq!(top_pixel(&h, 60, 50), Rgba([0, 0, 0, 255]));
     assert_eq!(top_pixel(&h, 61, 50).a(), 0);
     assert_eq!(
-        h.state().rendered()[(40 * 320 + 40) * 4 + 3],
+        h.state().rendered()[(40 * 1000 + 40) * 4 + 3],
         255,
         "the display shows the shape"
     );

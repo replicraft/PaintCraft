@@ -20,6 +20,16 @@ These seven photos were inspected on 2026-10-19. They supplement the original
 They establish visible presentation and available operations; they do not
 establish independently measured brush pixel semantics.
 
+## Canvas size
+
+New Classic documents start at **1000 × 486 pixels**. **View → Default canvas size…**
+sets the configured width/height and chooses between that default and remembering
+the last created/resized Classic canvas. The choice survives restart. Changing
+preferences leaves the current document and history untouched.
+
+**View → Canvas size…** stages a top-left resize with Apply/Cancel, one undo step
+and preserved off-canvas content. See [the canvas-size policy](CANVAS_SIZES.md).
+
 ## Current behavior
 
 Classic has separate v7/v10/v11 presentation presets, SVG tool icons, centered

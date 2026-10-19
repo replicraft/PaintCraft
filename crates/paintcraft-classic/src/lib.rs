@@ -76,6 +76,13 @@ pub fn chrome(
                 }
             }
             ui.separator();
+            for action in [Action::CanvasSize, Action::CanvasDefaults] {
+                if paintcraft_ui::actions::menu_item(ui, action, context) {
+                    actions.push(action);
+                    ui.close();
+                }
+            }
+            ui.separator();
             if ui.button("Change Paint version…").clicked() {
                 actions.push(Action::Interface);
                 ui.close();

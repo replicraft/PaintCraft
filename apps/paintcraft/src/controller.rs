@@ -6,6 +6,8 @@
 //! progress, so a cancelled or interrupted gesture changes nothing and a stroke
 //! is one undo step. Commands reach the session only through the [`Outbox`].
 
+#[path = "controller/canvas.rs"]
+mod canvas;
 #[path = "controller/history.rs"]
 mod history;
 #[path = "controller/layers.rs"]
@@ -390,6 +392,7 @@ impl Editor {
 
     fn execute(&mut self, action: Action) {
         match action {
+            Action::ResizeCanvas { width, height } => self.resize_canvas(width, height),
             Action::Stroke {
                 layer,
                 points,

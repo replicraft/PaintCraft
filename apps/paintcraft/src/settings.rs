@@ -3,6 +3,9 @@
 //! A damaged or unfamiliar settings file never costs the user anything: it is
 //! moved aside (not deleted), defaults are used, and the reason is reported.
 
+mod canvas;
+pub use canvas::{CanvasDefaults, DEFAULT_SIZE, SIZE_MAX};
+
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -23,6 +26,7 @@ pub struct Settings {
     pub experience: Experience,
     /// `None` until the first-visit picker has been answered.
     pub classic_variant: Option<ClassicVariant>,
+    pub canvas: CanvasDefaults,
 }
 
 /// What loading found, so the application can explain a fallback.
@@ -69,7 +73,7 @@ fn parse(bytes: &[u8]) -> Result<Settings, String> {
     let version = v.get("schema").and_then(Value::as_str);
     if !matches!(
         version,
-        Some("paintcraft.settings/v1" | "paintcraft.settings/v2")
+        Some("paintcraft.settings/v1" | "paintcraft.settings/v2" | "paintcraft.settings/v3")
     ) {
         return Err("unrecognized settings version".into());
     }
@@ -84,7 +88,13 @@ fn parse(bytes: &[u8]) -> Result<Settings, String> {
         (_, Some("studio")) => Experience::Studio,
         _ => return Err("unknown interface experience".into()),
     };
+    let canvas = if version == Some("paintcraft.settings/v3") {
+        CanvasDefaults::parse(v.get("canvas").ok_or("missing canvas preferences")?)?
+    } else {
+        CanvasDefaults::default()
+    };
     Ok(Settings {
+        canvas,
         classic_variant,
         experience,
     })
@@ -121,10 +131,12 @@ impl Settings {
     }
 
     pub fn save(&self, dir: &Path) -> Result<(), String> {
+        CanvasDefaults::parse(&self.canvas.value())?;
         fs::create_dir_all(dir)
             .map_err(|e| format!("cannot create the settings folder: {}", e.kind()))?;
         let v = Value::object([
-            ("schema", Value::str("paintcraft.settings/v2")),
+            ("schema", Value::str("paintcraft.settings/v3")),
+            ("canvas", self.canvas.value()),
             (
                 "experience",
                 Value::str(match self.experience {
@@ -172,6 +184,7 @@ mod tests {
     #[test]
     fn v1_settings_migrate_without_losing_the_classic_choice() {
         let s = parse(br#"{"schema":"paintcraft.settings/v1","classic_variant":"v10"}"#).unwrap();
+        assert_eq!(s.canvas.new_size(), (1000, 486));
         assert_eq!(s.experience, Experience::Classic);
         assert_eq!(s.classic_variant, Some(ClassicVariant::V10));
     }
@@ -182,6 +195,7 @@ mod tests {
         let s = Settings {
             experience: Experience::Studio,
             classic_variant: None,
+            ..Default::default()
         };
         s.save(&dir).unwrap();
         assert_eq!(Settings::load(&dir), (s, Loaded::Ok));

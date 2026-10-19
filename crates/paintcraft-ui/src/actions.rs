@@ -16,6 +16,8 @@ pub enum Action {
     Undo,
     Redo,
     Interface,
+    CanvasSize,
+    CanvasDefaults,
     SelectTool(Tool),
     SelectAll,
     Deselect,
@@ -87,6 +89,8 @@ impl Action {
             Self::Undo => ("Undo", Some((Key::Z, false))),
             Self::Redo => ("Redo", Some((Key::Y, false))),
             Self::Interface => ("Change Paint version…", None),
+            Self::CanvasSize => ("Canvas size…", None),
+            Self::CanvasDefaults => ("Default canvas size…", None),
             Self::SelectTool(tool) => (tool.name(), None),
             Self::SelectAll => ("Select all", Some((Key::A, false))),
             Self::Deselect => ("Deselect", Some((Key::D, false))),
@@ -107,7 +111,9 @@ impl Action {
 
     pub fn available(self, frontend: Frontend) -> bool {
         match self {
-            Self::Interface => frontend == Frontend::Classic,
+            Self::Interface | Self::CanvasSize | Self::CanvasDefaults => {
+                frontend == Frontend::Classic
+            }
             Self::Layer(_) => frontend == Frontend::Studio,
             _ => true,
         }
@@ -120,7 +126,7 @@ impl Action {
         match self {
             Self::Layer(action) => action.enabled(ctx),
             Self::View(action) => action.enabled(ctx),
-            Self::New | Self::Open | Self::Interface => true,
+            Self::New | Self::Open | Self::Interface | Self::CanvasDefaults => true,
             Self::Undo => ctx.document_open && ctx.can_undo,
             Self::Redo => ctx.document_open && ctx.can_redo,
             Self::Deselect => ctx.document_open && ctx.selection_active,
@@ -173,6 +179,8 @@ impl Action {
             Self::SelectAll => 1008,
             Self::Deselect => 1009,
             Self::Close => 1010,
+            Self::CanvasSize => 1011,
+            Self::CanvasDefaults => 1012,
             Self::SelectTool(tool) => 1100 + tool as u64,
         }
     }

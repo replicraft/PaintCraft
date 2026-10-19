@@ -145,6 +145,9 @@ impl App {
                         },
                     );
                 }
+                Chrome::CanvasSize | Chrome::CanvasDefaults => {
+                    self.begin_canvas_dialog(ctx, action == Chrome::CanvasDefaults)
+                }
                 Chrome::Deselect => {
                     self.request(ctx, code::DESELECT, Action::Select { corners: None })
                 }
@@ -350,12 +353,16 @@ impl App {
             return;
         };
         let ctx = ui.ctx().clone();
+        if let Confirm::Canvas(draft) = confirm {
+            self.canvas_settings_dialog(&ctx, draft);
+            return;
+        }
         if let Confirm::LayerProperties(draft) = confirm {
             self.layer_properties_dialog(&ctx, draft);
             return;
         }
         let (title, text, go) = match &confirm {
-            Confirm::LayerProperties(_) => unreachable!("properties handled above"),
+            Confirm::Canvas(_) | Confirm::LayerProperties(_) => unreachable!("properties handled above"),
             Confirm::DiscardForNew
             | Confirm::DiscardForOpen(_)
             | Confirm::DiscardForRecovery(_)
@@ -419,7 +426,9 @@ impl App {
             ui.horizontal(|ui| {
                 if ui.button(go).clicked() {
                     match confirm {
-                        Confirm::LayerProperties(_) => unreachable!("properties handled above"),
+                        Confirm::Canvas(_) | Confirm::LayerProperties(_) => {
+                            unreachable!("properties handled above")
+                        }
                         Confirm::DiscardForNew => self.new_document(),
                         Confirm::DiscardForOpen(p) => {
                             if let Err(e) = self.open_path(&p) {
