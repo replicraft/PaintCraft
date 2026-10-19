@@ -69,6 +69,17 @@ fn with_layer(h: &mut Harness<App>) {
     h.run();
 }
 
+/// A key release, so the next press of the same key is a new press and not a repeat.
+fn key_up(key: Key, modifiers: Modifiers) -> Event {
+    Event::Key {
+        key,
+        physical_key: Some(key),
+        pressed: false,
+        repeat: false,
+        modifiers,
+    }
+}
+
 fn key(key: Key, modifiers: Modifiers) -> Event {
     Event::Key {
         key,
@@ -775,4 +786,78 @@ fn every_variant_renders_a_usable_window_with_the_same_controls() {
         assert_eq!(top_pixel(&h, 20, 5).a(), 255, "{v:?}");
         std::fs::remove_dir_all(dir).unwrap();
     }
+}
+
+#[test]
+fn typing_text_on_the_canvas_places_one_undoable_text_object() {
+    let mut h = harness();
+    with_layer(&mut h);
+    h.get_by_label("Text").click();
+    h.run();
+    let before = publications(&h);
+    let p = at(&h, 20.0, 30.0);
+    h.input_mut()
+        .events
+        .extend([Event::PointerMoved(p), press(p), release(p)]);
+    h.step();
+    h.input_mut().events.push(Event::Text("Hi".into()));
+    h.step();
+    h.input_mut().events.extend([
+        key(Key::Enter, Modifiers::NONE),
+        key_up(Key::Enter, Modifiers::NONE),
+    ]);
+    h.step();
+    h.input_mut().events.push(Event::Text("x".into()));
+    h.step();
+    h.input_mut().events.extend([
+        key(Key::Backspace, Modifiers::NONE),
+        key_up(Key::Backspace, Modifiers::NONE),
+    ]);
+    h.step();
+    h.run();
+    assert_eq!(publications(&h), before, "typing publishes nothing");
+    h.event(key(Key::Enter, Modifiers::COMMAND));
+    h.step();
+    h.run();
+    assert_eq!(
+        publications(&h),
+        before + 1,
+        "one transaction for the whole text"
+    );
+    // 'H' row 0 is 0x33 = bits 0,1,4,5; at scale 2 from x = 20 that is x 20..=23 and 28..=31.
+    let lit: Vec<bool> = (20..32).map(|x| top_pixel(&h, x, 30).a() == 255).collect();
+    assert_eq!(
+        lit,
+        [
+            true, true, true, true, false, false, false, false, true, true, true, true
+        ]
+    );
+    h.get_by_label("Undo").click();
+    h.run();
+    assert_eq!(top_pixel(&h, 20, 30).a(), 0);
+}
+
+#[test]
+fn escape_discards_text_and_keyboard_focus_in_a_field_keeps_typing_out_of_the_canvas() {
+    let mut h = harness();
+    with_layer(&mut h);
+    h.get_by_label("Text").click();
+    h.run();
+    let before = publications(&h);
+    let p = at(&h, 40.0, 40.0);
+    h.input_mut()
+        .events
+        .extend([Event::PointerMoved(p), press(p), release(p)]);
+    h.step();
+    h.input_mut().events.push(Event::Text("gone".into()));
+    h.step();
+    h.input_mut().events.push(key(Key::Escape, Modifiers::NONE));
+    h.step();
+    h.input_mut()
+        .events
+        .push(key(Key::Enter, Modifiers::COMMAND));
+    h.step();
+    h.run();
+    assert_eq!(publications(&h), before);
+    assert!(!h.state().editor().is_editing_text());
 }

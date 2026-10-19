@@ -44,10 +44,11 @@ pub enum Tool {
     Rect,
     Ellipse,
     Select,
+    Text,
 }
 
 impl Tool {
-    pub const ALL: [Tool; 8] = [
+    pub const ALL: [Tool; 9] = [
         Tool::Pencil,
         Tool::Brush,
         Tool::Eraser,
@@ -56,6 +57,7 @@ impl Tool {
         Tool::Rect,
         Tool::Ellipse,
         Tool::Select,
+        Tool::Text,
     ];
 
     pub fn name(self) -> &'static str {
@@ -68,6 +70,7 @@ impl Tool {
             Tool::Rect => "Rectangle",
             Tool::Ellipse => "Ellipse",
             Tool::Select => "Select",
+            Tool::Text => "Text",
         }
     }
 }
@@ -80,6 +83,8 @@ pub struct ToolOptions {
     pub style: ShapeStyle,
     /// Fill tolerance, 0..=255 per channel.
     pub tolerance: u8,
+    /// Text size as a whole-number multiple of the 8-pixel font (1..=16).
+    pub text_scale: u32,
 }
 
 impl Default for ToolOptions {
@@ -89,6 +94,7 @@ impl Default for ToolOptions {
             round: true,
             style: ShapeStyle::Outline,
             tolerance: 0,
+            text_scale: 2,
         }
     }
 }
@@ -115,6 +121,13 @@ pub enum Action {
         to: (i64, i64),
         stroke: Option<(Rgba, u32)>,
         fill: Option<Rgba>,
+    },
+    Text {
+        layer: Uuid,
+        at: (i64, i64),
+        text: String,
+        scale: u32,
+        color: Rgba,
     },
     /// Rectangle in document pixels (inclusive corners), or `None` to deselect.
     Select {
@@ -150,6 +163,23 @@ pub enum Preview {
         from: (i64, i64),
         to: (i64, i64),
     },
+    Text {
+        at: (i64, i64),
+        text: String,
+        scale: u32,
+        color: Rgba,
+    },
+}
+
+/// Text being typed; it becomes one transaction when committed.
+#[derive(Debug)]
+struct TextEdit {
+    token: Token,
+    layer: Uuid,
+    at: (i64, i64),
+    text: String,
+    scale: u32,
+    color: Rgba,
 }
 
 #[derive(Debug)]
@@ -181,6 +211,7 @@ pub struct Editor {
     pub options: ToolOptions,
     target: Option<Uuid>,
     gesture: Option<Gesture>,
+    text: Option<TextEdit>,
     outbox: Outbox<Action>,
     next_gesture: Token,
     path: Option<PathBuf>,
@@ -233,6 +264,7 @@ impl Editor {
             options: ToolOptions::default(),
             target,
             gesture: None,
+            text: None,
             outbox: Outbox::default(),
             next_gesture: GESTURE_TOKEN_BASE,
             path,
@@ -379,8 +411,105 @@ impl Editor {
         self.gesture.is_some()
     }
 
+    // ---- text -------------------------------------------------------------------
+
+    fn begin_text(&mut self, at: (i64, i64)) {
+        self.commit_text();
+        let Some(layer) = self
+            .target
+            .filter(|id| self.document().layers.contains_key(id))
+        else {
+            self.status = "No editing target: add or choose a layer".into();
+            return;
+        };
+        if !self.document().layers[&layer].visible {
+            self.status = "The target layer is hidden; show it or choose another layer".into();
+            return;
+        }
+        self.next_gesture += 1;
+        let scale = self
+            .options
+            .text_scale
+            .clamp(1, paintcraft_core::font::SCALE_MAX as u32);
+        self.text = Some(TextEdit {
+            token: self.next_gesture,
+            layer,
+            at,
+            text: String::new(),
+            scale,
+            color: self.color,
+        });
+        self.status =
+            "Type your text; click elsewhere or press Ctrl+Enter to place it, Escape to cancel"
+                .into();
+    }
+
+    pub fn is_editing_text(&self) -> bool {
+        self.text.is_some()
+    }
+
+    /// Type into the text being edited. Characters the built-in font cannot draw
+    /// are skipped, and the user is told.
+    pub fn type_text(&mut self, typed: &str) {
+        let Some(t) = &mut self.text else { return };
+        let mut skipped = 0;
+        for c in typed.chars() {
+            if !paintcraft_core::font::supported(c) {
+                skipped += 1;
+            } else if t.text.chars().count() < paintcraft_core::font::TEXT_CHARS_MAX {
+                t.text.push(c);
+            }
+        }
+        if skipped > 0 {
+            self.status = format!("Skipped {skipped} character(s) the built-in font cannot draw");
+        }
+    }
+
+    pub fn backspace(&mut self) {
+        if let Some(t) = &mut self.text {
+            t.text.pop();
+        }
+    }
+
+    /// Place the typed text as one transaction. Empty text places nothing.
+    pub fn commit_text(&mut self) {
+        if let Some(t) = self.text.take()
+            && !t.text.is_empty()
+        {
+            self.outbox.push(
+                t.token,
+                Action::Text {
+                    layer: t.layer,
+                    at: t.at,
+                    text: t.text,
+                    scale: t.scale,
+                    color: t.color,
+                },
+            );
+        }
+    }
+
+    pub fn cancel_text(&mut self) {
+        self.text = None;
+    }
+
+    /// Switch tools. Text in progress is placed, a half-drawn gesture is dropped.
+    pub fn select_tool(&mut self, tool: Tool) {
+        self.commit_text();
+        self.cancel_gesture();
+        self.tool = tool;
+    }
+
     /// What to draw for the unpublished gesture, if any.
     pub fn preview(&self) -> Option<Preview> {
+        if let Some(t) = &self.text {
+            return Some(Preview::Text {
+                at: t.at,
+                text: t.text.clone(),
+                scale: t.scale,
+                color: t.color,
+            });
+        }
         let g = self.gesture.as_ref()?;
         let (first, last) = (
             g.points[0],
@@ -396,7 +525,7 @@ impl Editor {
                     color,
                 }
             }
-            Tool::Fill => return None,
+            Tool::Fill | Tool::Text => return None,
             Tool::Select => Preview::Marquee {
                 from: first,
                 to: last,
@@ -441,6 +570,11 @@ impl Editor {
     // ---- pointer input ----------------------------------------------------------
 
     pub fn pointer_down(&mut self, doc_point: (i64, i64)) {
+        if self.tool == Tool::Text {
+            self.begin_text(doc_point);
+            return;
+        }
+        self.commit_text();
         if self.gesture.is_some() {
             return; // a gesture already owns the pointer
         }
@@ -484,7 +618,7 @@ impl Editor {
                 }
             }
             // Fill acts where the button went down; shapes and selections only need both ends.
-            Tool::Fill => {}
+            Tool::Fill | Tool::Text => {}
             _ => {
                 g.points.truncate(1);
                 g.points.push(doc_point);
@@ -510,6 +644,7 @@ impl Editor {
                     round,
                 }
             }
+            Tool::Text => return,
             Tool::Fill => Action::Fill {
                 layer: g.layer,
                 at: first,
@@ -544,6 +679,10 @@ impl Editor {
     /// Queue a command for one user activation. `token` must be stable across
     /// layout passes of the same activation and different between activations.
     pub fn request(&mut self, token: Token, action: Action) -> bool {
+        // Typed text is part of the document the user is about to undo, save or change.
+        if !matches!(action, Action::Text { .. }) {
+            self.commit_text();
+        }
         self.outbox.push(token, action)
     }
 
@@ -618,6 +757,24 @@ impl Editor {
                 }
                 let op = Value::Object(pairs.into_iter().map(|(k, v)| (k.to_owned(), v)).collect());
                 self.draw(vec![op], tool.name());
+            }
+            Action::Text {
+                layer,
+                at,
+                text,
+                scale,
+                color,
+            } => {
+                let op = Value::object([
+                    ("op", Value::str("raster.text")),
+                    ("layer_ref", layer_ref(layer)),
+                    ("at", point(at)),
+                    ("text", Value::str(text)),
+                    ("scale", Value::Int(i64::from(scale))),
+                    ("color", Value::str(color.to_hex())),
+                    ("mode", Value::str("source-over")),
+                ]);
+                self.draw(vec![op], "Text");
             }
             Action::Select { corners } => {
                 let op = match corners {
@@ -1245,6 +1402,121 @@ mod tests {
         }
         assert!(said, "the status must mention dropped history");
         assert!(e.undo_depth() >= 1 && e.undo_depth() < 31);
+    }
+
+    // ---- text -----------------------------------------------------------------------
+
+    fn text_editor() -> Editor {
+        let mut e = editor();
+        e.select_tool(Tool::Text);
+        e.options.text_scale = 1;
+        e
+    }
+
+    fn lit(e: &Editor, layer: Uuid) -> usize {
+        (0..320)
+            .flat_map(|y| (0..320).map(move |x| (x, y)))
+            .filter(|&(x, y)| pixel(e, layer, x, y).a() == 255)
+            .count()
+    }
+
+    #[test]
+    fn typing_then_clicking_elsewhere_places_the_text_as_one_transaction() {
+        let mut e = text_editor();
+        let layer = e.target().unwrap();
+        let before = e.publications();
+        e.pointer_down((10, 10));
+        e.pointer_up();
+        e.type_text("Hi");
+        assert!(e.is_editing_text());
+        assert!(matches!(e.preview(), Some(Preview::Text { ref text, .. }) if text == "Hi"));
+        assert_eq!(e.run_pending(), 0, "typing publishes nothing");
+        assert_eq!(lit(&e, layer), 0);
+        e.pointer_down((100, 100)); // click elsewhere: places "Hi", starts a new text box
+        e.pointer_up();
+        assert_eq!(e.run_pending(), 1);
+        assert_eq!(e.publications(), before + 1);
+        assert!(lit(&e, layer) > 20);
+        assert!(
+            e.is_editing_text() && e.preview().is_some(),
+            "a new empty text box is open"
+        );
+        e.request(60, Action::Undo);
+        e.run_pending();
+        assert_eq!(lit(&e, layer), 0, "the whole text is one undo step");
+    }
+
+    #[test]
+    fn backspace_cancel_and_empty_text_place_nothing() {
+        let mut e = text_editor();
+        let layer = e.target().unwrap();
+        e.pointer_down((5, 5));
+        e.type_text("ab");
+        e.backspace();
+        e.backspace();
+        e.backspace();
+        e.commit_text();
+        assert_eq!(e.run_pending(), 0, "empty text");
+        e.pointer_down((5, 5));
+        e.type_text("zzz");
+        e.cancel_text();
+        e.commit_text();
+        assert_eq!((e.run_pending(), lit(&e, layer)), (0, 0));
+        assert!(!e.is_editing_text());
+    }
+
+    #[test]
+    fn switching_tools_saving_and_undoing_place_pending_text_first() {
+        let mut e = text_editor();
+        let layer = e.target().unwrap();
+        e.pointer_down((5, 5));
+        e.type_text("A");
+        e.select_tool(Tool::Pencil);
+        assert_eq!(e.run_pending(), 1);
+        assert!(lit(&e, layer) > 0);
+        e.select_tool(Tool::Text);
+        e.pointer_down((50, 50));
+        e.type_text("B");
+        e.request(61, Action::Undo); // places B, then undoes it
+        assert_eq!(e.run_pending(), 2);
+        assert_eq!(pixel(&e, layer, 50, 52).a(), 0, "B was placed then undone");
+        assert!(
+            pixel(&e, layer, 5, 7).a() > 0 || lit(&e, layer) > 0,
+            "A remains"
+        );
+    }
+
+    #[test]
+    fn characters_without_glyphs_are_skipped_and_reported() {
+        let mut e = text_editor();
+        e.pointer_down((5, 5));
+        e.type_text("a\u{1F600}b\t漢");
+        assert!(e.status().contains("Skipped 3"), "{}", e.status());
+        e.type_text("\nc");
+        let Some(Preview::Text { text, .. }) = e.preview() else {
+            panic!()
+        };
+        assert_eq!(text, "ab\nc", "newline is kept");
+        e.type_text("x");
+        e.cancel_text();
+        e.type_text("ignored when not editing");
+        assert!(!e.is_editing_text());
+    }
+
+    #[test]
+    fn text_needs_a_visible_target_like_any_painting() {
+        let mut e = text_editor();
+        let layer = e.target().unwrap();
+        e.request(
+            62,
+            Action::SetVisible {
+                layer,
+                visible: false,
+            },
+        );
+        e.run_pending();
+        e.pointer_down((5, 5));
+        assert!(!e.is_editing_text() && e.status().contains("hidden"));
     }
 
     #[test]

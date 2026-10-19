@@ -454,15 +454,22 @@ impl App {
     fn handle_global_input(&mut self, ui: &mut egui::Ui) {
         let ctx = ui.ctx().clone();
         let events = ui.input(|i| i.events.clone());
+        let text_focus = self.editor.is_editing_text() && !ctx.egui_wants_keyboard_input();
         for event in events {
             match event {
                 egui::Event::Key {
                     key,
                     pressed: true,
-                    repeat: false,
+                    repeat,
                     modifiers,
                     ..
                 } => match key {
+                    // Holding Backspace or Enter repeats while typing; one-shot commands do not.
+                    egui::Key::Enter if text_focus && !modifiers.command => {
+                        self.editor.type_text("\n")
+                    }
+                    egui::Key::Backspace if text_focus => self.editor.backspace(),
+                    _ if repeat => {}
                     egui::Key::Z if modifiers.command && modifiers.shift => {
                         self.request(&ctx, code::REDO, Action::Redo)
                     }
@@ -473,11 +480,20 @@ impl App {
                         self.request(&ctx, code::REDO, Action::Redo)
                     }
                     egui::Key::S if modifiers.command => self.save_requested(&ctx),
-                    egui::Key::Escape => self.editor.cancel_gesture(),
+                    egui::Key::Enter if modifiers.command => self.editor.commit_text(),
+                    egui::Key::Escape => {
+                        self.editor.cancel_gesture();
+                        self.editor.cancel_text();
+                    }
                     _ => {}
                 },
                 // Focus loss ends an unfinished gesture without publishing it.
-                egui::Event::WindowFocused(false) => self.editor.cancel_gesture(),
+                egui::Event::WindowFocused(false) => {
+                    self.editor.cancel_gesture();
+                    self.editor.commit_text();
+                }
+                // Typed characters go to the text being edited unless a text field has the keyboard.
+                egui::Event::Text(typed) if text_focus => self.editor.type_text(&typed),
                 _ => {}
             }
         }
@@ -569,8 +585,7 @@ impl App {
                     .selectable_label(self.editor.tool == tool, tool.name())
                     .clicked()
                 {
-                    self.editor.cancel_gesture();
-                    self.editor.tool = tool;
+                    self.editor.select_tool(tool);
                 }
             }
         });
@@ -613,6 +628,18 @@ impl App {
                     self.editor.secondary = Rgba([r, g, b, a]);
                 }
             }
+        }
+        if tool == Tool::Text {
+            ui.horizontal(|ui| {
+                let label = ui.label("Text size");
+                ui.add(
+                    egui::DragValue::new(&mut self.editor.options.text_scale)
+                        .range(1..=16)
+                        .suffix("×"),
+                )
+                .labelled_by(label.id);
+            });
+            ui.label("Click the canvas, type, then click elsewhere or press Ctrl+Enter.");
         }
         if tool == Tool::Fill {
             ui.horizontal(|ui| {
@@ -1011,6 +1038,46 @@ impl App {
                 }
             }
             Some(Preview::Marquee { from, to }) => ants(box_of(from, to)),
+            Some(Preview::Text {
+                at,
+                text,
+                scale,
+                color: c,
+            }) => {
+                let canvas = paintcraft_types::Rect::new(
+                    i64::MIN / 4,
+                    i64::MIN / 4,
+                    i64::MAX / 2,
+                    i64::MAX / 2,
+                )
+                .expect("a huge clip");
+                if let Ok(spans) =
+                    paintcraft_core::font::layout(&text, at, i64::from(scale), &canvas)
+                {
+                    for s in spans {
+                        painter.rect_filled(
+                            Rect::from_min_max(screen((s.x0, s.y)), screen((s.x1 + 1, s.y + 1))),
+                            0.0,
+                            color(c),
+                        );
+                    }
+                }
+                // A caret after the last typed character, and a frame around the box.
+                let lines: Vec<&str> = text.split('\n').collect();
+                let cols = lines.last().map_or(0, |l| l.chars().count()) as i64;
+                let (cx, cy) = (
+                    at.0 + cols * 8 * i64::from(scale),
+                    at.1 + (lines.len() as i64 - 1) * 8 * i64::from(scale),
+                );
+                painter.rect_filled(
+                    Rect::from_min_max(
+                        screen((cx, cy)),
+                        screen((cx + 1, cy + 8 * i64::from(scale))),
+                    ),
+                    0.0,
+                    Color32::from_rgb(0, 95, 184),
+                );
+            }
             None => {}
         }
     }
