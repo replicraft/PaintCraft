@@ -8,20 +8,18 @@ license-file.workspace = true
 publish.workspace = true
 
 [dependencies]
-paintcraft-history.workspace = true
-
 paintcraft-commands.workspace = true
-
+paintcraft-core.workspace = true
 paintcraft-document.workspace = true
-
+paintcraft-history.workspace = true
 paintcraft-raster.workspace = true
 
-paintcraft-core.workspace = true
 uuid.workspace = true
 
 [dev-dependencies]
-sha2.workspace = true
 paintcraft-render.workspace = true
+
+sha2.workspace = true
 
 [lints]
 workspace = true

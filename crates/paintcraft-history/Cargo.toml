@@ -8,9 +8,9 @@ license-file.workspace = true
 publish.workspace = true
 
 [dependencies]
-paintcraft-core.workspace = true
-paintcraft-raster.workspace = true
 paintcraft-document.workspace = true
+paintcraft-raster.workspace = true
+
 uuid.workspace = true
 
 [lints]

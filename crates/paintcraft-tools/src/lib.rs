@@ -346,9 +346,7 @@ impl ToolState {
         self.gesture = None;
     }
     pub fn pointer_up(&mut self) -> Option<(u64, Action)> {
-        let Some(g) = self.gesture.take() else {
-            return None;
-        };
+        let g = self.gesture.take()?;
         let (first, last) = (
             g.points[0],
             *g.points.last().expect("a gesture has a point"),

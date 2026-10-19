@@ -12,11 +12,11 @@ default = []
 dialogs = ["dep:rfd", "dep:raw-window-handle", "dep:pollster"]
 
 [dependencies]
-rfd = { workspace = true, optional = true }
-raw-window-handle = { workspace = true, optional = true }
-pollster = { workspace = true, optional = true }
 paintcraft-core.workspace = true
 
+pollster = { workspace = true, optional = true }
+raw-window-handle = { workspace = true, optional = true }
+rfd = { workspace = true, optional = true }
 sha2.workspace = true
 uuid.workspace = true
 

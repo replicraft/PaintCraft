@@ -9,6 +9,7 @@ publish.workspace = true
 
 [dependencies]
 paintcraft-core.workspace = true
+
 font8x8.workspace = true
 
 [lints]

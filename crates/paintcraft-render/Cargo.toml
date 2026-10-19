@@ -12,14 +12,16 @@ default = []
 gpu = ["dep:wgpu"]
 
 [dependencies]
-wgpu = { workspace = true, optional = true }
 paintcraft-core.workspace = true
-paintcraft-raster.workspace = true
 paintcraft-document.workspace = true
 
+wgpu = { workspace = true, optional = true }
+
 [dev-dependencies]
-pollster.workspace = true
 paintcraft-editor.workspace = true
+paintcraft-raster.workspace = true
+
+pollster.workspace = true
 
 [lints]
 workspace = true
