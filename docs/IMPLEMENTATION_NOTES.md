@@ -147,7 +147,7 @@ SAVE-01. Repeated layout passes cannot submit duplicate saves. Close requests dr
 accepted writes, and failures keep the window open for a new explicit decision.
 The deterministic headless UI harness retains its synchronous adapter; native queue
 integration has separate tests. Open-to-save conflict fingerprints,
-restart-persistent receipt reconciliation and BF07 performance qualification remain pending.
+full fault/platform qualification and BF07 performance evidence remain pending.
 
 The platform save outcome now retains private attempt evidence for bounded local-Unix
 reinspection (FILE-02/03). `Outcome::reconcile` revises the same operation ID without
@@ -158,8 +158,7 @@ opened file and parent, then checks the descriptor, namespace, content and revis
 changes across those barriers remain unconfirmed. Receipt source/sequence/binding
 stamps remain caller-owned. Failure injection covers both barriers, late replacement,
 late edits/deletion and alias changes. This is not a portable exclusion mechanism or
-filesystem qualification; other platform identity adapters and resumed destination
-reconciliation after restart remain pending.
+filesystem qualification; other platform identity adapters remain pending.
 
 The native desktop retains up to 16 incomplete save attempts, including known
 pre-replacement failures and worker failures, with the exact immutable document each
@@ -203,9 +202,33 @@ covered. Successful saves, successful current-process reconciliation and explici
 forget/discard retire the old snapshots on the same FIFO. Failed capture retains RAM
 work and refuses replacement; close warns if no confirmed restart copy is available.
 The original configured retention root stays pinned across later owner initialization
-failures. Resuming destination inspection after restart, richer diagnostics/repair for
-incomplete stores, an explicit degraded save policy when the configured retention store
-is unavailable, BF07 measurements and the full platform/fault matrix remain pending.
+failures. Richer diagnostics/repair for incomplete stores, an explicit degraded save
+policy when the configured retention store is unavailable, BF07 measurements and the
+full platform/fault matrix remain pending.
+
+Restarted destination inspection now uses a versioned, path-free evidence record.
+Readers retain v1 compatibility; v2 adds original/staged fingerprints, positive syscall
+evidence and bounded diagnostic provenance. A parented native picker reacquires the
+user-selected destination. Each admitted inspection takes an exact source claim,
+validates its hash/semantic identities and captured byte count, validates the stored
+receipt/evidence, then checks the selected resolved namespace against the captured ID.
+No diagnostic path grants filesystem authority. This parser/claim workload uses the
+same exclusive provisional 1 GiB I/O estimate as native restore. Inspection or explicit
+durability confirmation revises the same historical receipt and persists v2 metadata
+under the claim. The source snapshot remains available for recovery. Prepared unknown
+attempts cannot acquire positive replacement evidence merely from matching bytes.
+Legacy records without evidence retain their weaker available observations.
+
+Resumed completions have their own typed UI result and never enter live save adoption
+or replace the current session receipt. Tests cover dirty/current-state and path-field
+preservation, original receipt identity, picker cancellation, stale scopes/sessions,
+source lock/hash changes, alias changes, legacy upgrade, bounded repeated inspection
+and real egui confirmation controls. Ask Later suppresses late presentation while
+accepted I/O drains. Synchronous discard also uses the offered snapshot's actual
+namespace. Already confirmed or never-attempted saved receipts are not incomplete
+attempts eligible for reconciliation; their document snapshots remain recoverable.
+Native file-picker interaction and target/filesystem qualification remain distinct
+from headless widget, service and process-exit evidence.
 
 ## Native render preparation
 

@@ -21,6 +21,10 @@ impl App {
         let Some(completion) = self.dialogs.as_mut().and_then(NativeDialogs::poll) else {
             return;
         };
+        if completion.kind == Kind::InspectRecovery {
+            self.recovered_destination_selected(completion.path);
+            return;
+        }
         let Some(path) = completion.path else {
             return;
         };
@@ -29,6 +33,7 @@ impl App {
             Kind::Open => self.open_selected(path),
             Kind::SaveAs => self.save_selected(ctx, path),
             Kind::Export => self.export_selected(path),
+            Kind::InspectRecovery => unreachable!("inspection completion handled separately"),
         }
     }
 

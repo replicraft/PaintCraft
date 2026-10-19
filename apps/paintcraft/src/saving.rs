@@ -3,6 +3,7 @@
 mod attempts;
 mod persistence;
 pub(super) mod restoring;
+mod resumed;
 use super::*;
 use paintcraft_core::types::{Error, ErrorCode, Result, json::Value};
 use paintcraft_formats::recovery::{Checkpoint, RecoveryToken};
@@ -24,6 +25,7 @@ enum PendingKind {
     Reconcile {
         sequence: u64,
     },
+    Resumed(Box<resumed::Request>),
     Checkpoint {
         session: Uuid,
         token: RecoveryToken,
@@ -50,6 +52,7 @@ enum Completion {
     File(save::Outcome),
     RetainedFile(Box<persistence::FileResult>),
     Reconciled(save::Reconciliation),
+    Resumed(paintcraft_formats::save_recovery::reconciliation::ReconciledSavedAttempt),
     Checkpoint(Checkpoint),
     Started {
         report: Option<paintcraft_formats::recovery::ScanReport>,
@@ -72,6 +75,7 @@ pub(super) struct NativeSaving {
     attempts: Vec<attempts::Attempt>,
     retention_directory: Option<PathBuf>,
     retired_saves: Vec<Arc<paintcraft_formats::save_recovery::SavedAttempt>>,
+    inspection: resumed::State,
     active_restore: Option<restoring::Control>,
     restore_intent: Option<restoring::Intent>,
 }
@@ -117,12 +121,14 @@ impl NativeSaving {
             attempts: Vec::new(),
             retention_directory: None,
             retired_saves: Vec::new(),
+            inspection: resumed::State::default(),
             active_restore: None,
             restore_intent: None,
         })
     }
     pub(super) fn new_session(&mut self) {
         self.cancel_restore();
+        self.cancel_inspection();
         self.session = Uuid::new_v4();
         self.generation = 0;
         self.adopted_sequence = 0;
@@ -365,6 +371,7 @@ impl App {
                 PendingKind::Reconcile { sequence } => {
                     self.complete_reconciliation(sequence, result)
                 }
+                PendingKind::Resumed(request) => self.complete_resumed_inspection(*request, result),
                 PendingKind::Checkpoint {
                     session,
                     token,

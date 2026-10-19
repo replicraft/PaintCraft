@@ -8,6 +8,7 @@ use std::{
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Kind {
     Open,
+    InspectRecovery,
     SaveAs,
     Export,
 }
@@ -61,6 +62,9 @@ impl NativeDialogs {
                     "Images and PaintCraft documents",
                     &["pcnd", "png", "bmp", "jpg", "jpeg"],
                 ),
+            Kind::InspectRecovery => dialog
+                .set_title("Locate the destination of an incomplete save")
+                .add_filter("PaintCraft document", &["pcnd"]),
             Kind::SaveAs => dialog
                 .set_title("Save PaintCraft document")
                 .add_filter("PaintCraft document", &["pcnd"]),
@@ -74,7 +78,7 @@ impl NativeDialogs {
         let sender = self.sender.clone();
         std::thread::spawn(move || {
             let file = pollster::block_on(async {
-                if kind == Kind::Open {
+                if matches!(kind, Kind::Open | Kind::InspectRecovery) {
                     dialog.pick_file().await
                 } else {
                     dialog.save_file().await
@@ -83,7 +87,7 @@ impl NativeDialogs {
             let mut path = file.map(|f| f.path().to_path_buf());
             if let Some(path) = &mut path
                 && path.extension().is_none()
-                && kind != Kind::Open
+                && !matches!(kind, Kind::Open | Kind::InspectRecovery)
             {
                 path.set_extension(if kind == Kind::SaveAs { "pcnd" } else { "png" });
             }

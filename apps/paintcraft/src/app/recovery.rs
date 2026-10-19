@@ -140,6 +140,7 @@ impl App {
                 ui.label(format!(
                     "PaintCraft found unsaved work from an earlier session: {name}."
                 ));
+                self.recovered_inspection_controls(ui, &item);
                 let restoring = self
                     .saving
                     .as_ref()
@@ -167,7 +168,8 @@ impl App {
                                     .set_status(format!("Cannot discard recovery: {error}")),
                             }
                         } else {
-                            match Recovery::discard(dir, item.session) {
+                            let source = item.checkpoint.parent().unwrap_or(dir);
+                            match Recovery::discard(source, item.session) {
                                 Ok(()) => {
                                     self.recoverable.remove(0);
                                 }
@@ -180,6 +182,7 @@ impl App {
                     if ui.button("Ask later").clicked() {
                         if let Some(saving) = &mut self.saving {
                             saving.cancel_restore();
+                            saving.cancel_inspection();
                         }
                         self.recoverable.clear();
                     }

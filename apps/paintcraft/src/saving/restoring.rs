@@ -205,7 +205,7 @@ impl NativeSaving {
         Ok(())
     }
     pub(crate) fn offer_busy(&self, offer: &Found) -> bool {
-        self.restoring() || self.pending.iter().any(|p| matches!(p.kind, PendingKind::OfferDiscard { session, .. } if session == offer.session))
+        self.inspection_busy(offer) || self.restoring() || self.pending.iter().any(|p| matches!(p.kind, PendingKind::OfferDiscard { session, .. } if session == offer.session))
     }
     fn dispose_claim(&mut self, claim: Box<ClaimedRecovery>) -> Result<()> {
         let context = self.context.clone();
@@ -346,7 +346,9 @@ impl App {
             }
             return;
         }
-        let ClaimedRecovery { document, lease } = *claim;
+        let ClaimedRecovery {
+            document, lease, ..
+        } = *claim;
         self.publish_editor(Editor::recovered_document(document));
         self.recovery_source = Some(Handoff::new(lease));
         self.bound = None;
