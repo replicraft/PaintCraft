@@ -14,6 +14,9 @@ sha2 = "0.11.1"
 uuid = { version = "1.28.0", features = ["v4"] }
 crc32fast = "1.5.2"
 png = "0.18.1"
+zune-jpeg = "0.5.15"
+zune-core = "0.5.3"
+jpeg-encoder = "0.7.1"
 
 [lints]
 workspace = true
