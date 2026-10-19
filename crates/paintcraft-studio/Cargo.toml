@@ -1,0 +1,17 @@
+[package]
+name = "paintcraft-studio"
+description = "PaintCraft Studio menus, toolbars and floating workspace windows"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license-file.workspace = true
+publish.workspace = true
+
+[dependencies]
+paintcraft-core.workspace = true
+paintcraft-tools.workspace = true
+paintcraft-ui.workspace = true
+egui.workspace = true
+
+[lints]
+workspace = true

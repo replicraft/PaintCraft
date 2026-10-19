@@ -26,6 +26,7 @@ paintcraft-formats = { path = "crates/paintcraft-formats" }
 paintcraft-platform = { path = "crates/paintcraft-platform" }
 paintcraft-ui = { path = "crates/paintcraft-ui" }
 paintcraft-classic = { path = "crates/paintcraft-classic" }
+paintcraft-studio = { path = "crates/paintcraft-studio" }
 
 # Command-line interface.
 clap = { version = "4.6.7", features = ["derive"] }

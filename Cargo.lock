@@ -2320,6 +2320,7 @@ dependencies = [
  "paintcraft-raster",
  "paintcraft-render",
  "paintcraft-runtime",
+ "paintcraft-studio",
  "paintcraft-tools",
  "paintcraft-ui",
  "sha2",
@@ -2467,6 +2468,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "paintcraft-studio"
+version = "0.1.0"
+dependencies = [
+ "egui",
+ "paintcraft-core",
+ "paintcraft-tools",
+ "paintcraft-ui",
+]
+
+[[package]]
 name = "paintcraft-tools"
 version = "0.1.0"
 dependencies = [
@@ -2481,6 +2492,7 @@ version = "0.1.0"
 dependencies = [
  "egui",
  "paintcraft-core",
+ "paintcraft-tools",
 ]
 
 [[package]]
