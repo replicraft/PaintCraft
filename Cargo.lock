@@ -195,7 +195,6 @@ dependencies = [
  "paintcraft-types",
  "png",
  "sha2",
- "uuid",
 ]
 
 [[package]]

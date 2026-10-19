@@ -16,7 +16,6 @@ paintcraft-types = { path = "../../crates/paintcraft-types" }
 paintcraft-core = { path = "../../crates/paintcraft-core" }
 paintcraft-formats = { path = "../../crates/paintcraft-formats" }
 sha2 = "0.11.1"
-uuid = { version = "1.28.0", features = ["v4"] }
 
 [lints]
 workspace = true

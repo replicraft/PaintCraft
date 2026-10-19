@@ -15,7 +15,7 @@ use sha2::{Digest, Sha256};
 
 use crate::args::Args;
 use crate::report::{envelope, error_value, json_line};
-use crate::save::{self, Context, Outcome};
+use paintcraft_formats::save::{self, Context, Outcome};
 
 const INPUT_MAX: u64 = 1 << 30;
 const OPERATIONS_MAX: u64 = 64 << 20;

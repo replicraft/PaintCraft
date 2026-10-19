@@ -4,7 +4,6 @@
 mod args;
 mod commands;
 mod report;
-mod save;
 
 use std::io::Write as _;
 use std::process::ExitCode;

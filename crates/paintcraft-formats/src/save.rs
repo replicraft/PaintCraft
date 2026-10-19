@@ -33,6 +33,7 @@ impl Replacement {
 }
 
 /// What the caller says about the operation being recorded.
+#[derive(Debug)]
 pub struct Context<'a> {
     pub operation: &'static str,
     pub source_state: Uuid,

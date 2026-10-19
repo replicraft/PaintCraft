@@ -11,7 +11,7 @@ publish.workspace = true
 paintcraft-types = { path = "../paintcraft-types" }
 paintcraft-core = { path = "../paintcraft-core" }
 sha2 = "0.11.1"
-uuid = "1.28.0"
+uuid = { version = "1.28.0", features = ["v4"] }
 crc32fast = "1.5.2"
 png = "0.18.1"
 
