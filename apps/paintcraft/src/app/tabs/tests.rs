@@ -47,6 +47,8 @@ fn five_documents_keep_their_editors_history_bindings_and_zoom_across_modes() {
         paint(&mut app, i + 1);
         app.zoom = (1u32 << i) as f32;
         app.bound = Some(PathBuf::from(format!("doc-{i}.pcnd")));
+        app.editor
+            .acknowledge_saved_state(app.editor.document().state_id);
         documents.push((
             app.active_tab_id(),
             app.editor.document_snapshot(),
@@ -66,6 +68,12 @@ fn five_documents_keep_their_editors_history_bindings_and_zoom_across_modes() {
     );
     app.choose_experience(Experience::Classic);
     app.choose_variant(ClassicVariant::V11);
+    assert_eq!(app.document_count(), 1);
+    assert_ne!(
+        app.editor.document().document_id,
+        documents[0].1.document_id
+    );
+    app.choose_experience(Experience::Studio);
     for (id, doc, ticket, zoom, bound) in &documents {
         app.activate_tab(*id, &ctx);
         assert!(app.editor.document().same_semantics(doc));

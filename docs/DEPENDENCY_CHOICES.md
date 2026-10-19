@@ -41,12 +41,14 @@ A correct integrated baseline is not a measured performance or release qualifica
 | GPU | wgpu + WGSL | Integer compositor integrated; Metal parity tested; async transfer/device-loss work pending |
 | CLI | Clap | Integrated, command modules and end-to-end tests |
 | File dialogs | rfd | Integrated for Open, Save As and Export |
+| macOS menus | muda 0.21.2, default features disabled | Optional platform menus feature; desktop action routing and guarded Quit, no CLI dependency |
+| Installed fonts | fontdb 0.24.0, std/fs only | Optional native platform fonts feature; background family enumeration for the Classic text UI prototype, no shaping/rasterizer adoption |
 | Standard image codecs | image | Integrated baseline, 0.25.10 with only PNG/BMP/JPEG; strict admission and loss reporting remain in PaintCraft |
 | Snapshot publication | Per-document coordinator; ArcSwap candidate | Synchronous atomic session baseline; concurrent publication study pending |
 | Native container | ZIP64 reader/writer; raw and Zstd blocks | Current canonical ZIP subset is bounded and stored-only; extension must preserve v1 fixtures |
 | Storage compression | Raw/LZ4/Zstd comparison | Raw COW tile baseline; measured compression/compaction pending |
 | Color management | Evaluate moxcms/LittleCMS | Profiles currently reported as discarded; color-managed pipeline pending |
-| Text | Evaluate parley or cosmic-text plus rasterizer | Bitmap text baseline only; system fonts, shaping and IME pending |
+| Text | Evaluate parley or cosmic-text plus rasterizer | Installed family enumeration and text toolbar prototype integrated; document text remains the bitmap baseline, shaping and IME pending |
 | Wasm effects | wasmi conformance baseline; Wasmtime throughput candidate | Not implemented; core wasm32 ABI is the first SDK target |
 | Statistical benchmarks | Criterion or Divan, selected at first comparison | Not yet selected |
 | Process benchmarks | Hyperfine | Installed developer tool; application decision runs not yet recorded |

@@ -62,3 +62,51 @@ native palette values and color-processing parity remain unqualified.
 The full ribbon, brush media gallery, clipboard,
 selection variants, transforms and resize handles remain active development
 work. This frontend is not yet a finished reproduction of Windows Paint.
+
+## UI and theme pass (2026-10-19)
+
+UI fidelity and themes take priority over additional editing operations. The latest
+user direction permits explicit UI prototypes during this pass. The v11 ribbon
+now has compact Image/Tools groups, a two-row shapes gallery, circular color wells,
+a three-row palette, Settings gear and a collapsible Layers panel. Crop, transforms,
+color picker and unsupported shapes are disabled previews. Resize handles are
+visual markers; View → Canvas size remains the working resize path.
+
+Settings provides Light, Dark and System appearance, with live theme preview,
+Apply/Cancel, interface/version selection and canvas defaults. Both frontends use
+the selected theme and bundled Selawik. Cancel restores the previous theme;
+preferences do not alter document history. Existing settings files default to
+System when the optional appearance field is absent.
+
+Classic and Studio own separate canvas layout modules, scroll IDs and document
+workspaces. Switching requires saving every changed document; the transition
+offers Save and Cancel, with no discard option. Save cancellation/failure keeps
+the current interface. The other frontend has its own documents, histories and
+view states, restored when switching back during the same application session.
+The shared host still owns low-level pixel rendering and input translation into
+the common editor engine. Saving and recovery cleanup finish before parking a
+workspace; switching never converts or flattens its documents.
+
+On macOS, `muda` supplies the application, File, Edit, View and Window menus.
+Native semantic actions route through the same validated outbox as the ribbon.
+Quit uses the existing save/discard/cancel close guard. Command-comma opens
+Settings; Studio layer visibility uses Shift-Command-comma on macOS to avoid the
+collision. Native file dialogs continue to use `rfd`.
+
+### Text settings reference
+
+`mspaint-text-settings.png` was inspected on 2026-10-19. It shows family/size,
+bold/italic/underline/strikeout, left/center/right alignment and background fill.
+The Classic Text toolbar now presents these controls. `fontdb` discovers family
+names from installed system/user font directories on a background thread; the
+searchable picker also includes bundled Selawik. Family names are deduplicated
+without loading every font into egui. Discovery is native-only; headless tests
+use the deterministic bundled family.
+
+**Text styling is currently a UI prototype.** Changing these preferences does not
+change the bitmap text renderer. Settings → Text preferences includes an explicitly
+labelled prototype for keeping text editable until save. The preference persists,
+but it does not yet create editable text objects or rasterize them on save.
+That implementation needs styled text objects, font-face resolution/shaping,
+editable overlays, undo/redo and an atomic save-time rasterization policy that
+preserves live edits on failed/cancelled saves. It follows the UI/theme pass.

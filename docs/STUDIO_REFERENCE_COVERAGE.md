@@ -27,6 +27,7 @@ Paths below are relative to `docs/temp/paint-references/photos/`.
 | `im1age.png` | Modern Paint File menu, including import, project save and OS integrations |
 | `imag1e.png` | Modern Paint Edit menu and copy-visible-layers action |
 | `ima2ge.png` | Modern Paint View menu, toolbar behavior, rulers/grid and fullscreen |
+| `mspaint-text-settings.png` | Additional Classic text toolbar: family/size, B/I/U/S, alignment, background fill; inspected 2026-10-19 |
 | `im2age.png` | Scrolled modern Paint shapes gallery |
 
 The version string in `im5age.png` establishes the visible Paint.NET build.
@@ -45,14 +46,16 @@ independent behavioral reference evidence.
 |---|---|---|
 | Shared engine and CLI | partially working | Typed atomic edits, PCND round trips, CPU/GPU composition and batch-v1 oracle work; richer operations remain in the main roadmap |
 | Studio workspace | partially working | Separate frontend, toolbar/options, floating Tools/Colors/History/Layers and centered canvas; reference spacing, theme and several tools remain |
-| Document switching/close | working | Independent sessions, histories, view/tool state, bindings, owner-routed native saves/recovery and save/discard/cancel close; text tabs rather than reference thumbnails |
+| Document switching/close | working | Independent frontend document workspaces with save-gated switching; sessions, histories, view/tool state, owner-routed saves/recovery and save/discard/cancel document close; text tabs rather than reference thumbnails |
 | History | working | Recorded labels, undo/redo and guarded direct navigation; branching/spill is separate work |
 | File workflows | partially working | New/Open/Save/Save As/Export and native dialogs work; shared metadata and menu/shortcut dispatch cover existing operations; Save All, recent files, printing and acquisition remain |
 | Colors and layers | partially working | Primary/secondary swatches, swap, wheel, palette and More RGBA/hex controls work; layer selection/visibility/rename/opacity/reorder/add/delete/duplicate and staged properties work; custom palettes, thumbnails, merge/transforms and broader blend modes remain |
 | View menu | partially working | Zoom in/out, actual size, fit window/selection and a display-only pixel grid work; rulers, units, pan tools and overscroll remain |
-| Settings | partially working | Experience/version persistence works; utility-window persistence and reference settings pages remain |
+| Settings | partially working | Light/Dark/System with live preview and Apply/Cancel, experience/version and canvas defaults; text prototype preference; utility-window persistence and remaining reference pages pending |
 | Selection/clipboard/image/adjustments/effects | partially working | Rectangle selection and existing drawing tools work; clipboard, transforms, adjustment/effect registries and preview lifecycles remain |
 | Classic v11 fidelity | in progress | Current frontend priority; subpixel brush input and percentage zoom controls work; staged RGB/HSL color picker and persistent custom palettes work; full ribbon and remaining editing workflows remain |
+
+Current user priority is UI/theme fidelity, permitting explicitly labelled or disabled prototypes before further editing features. See [Classic UI scope](CLASSIC.md).
 
 Finish one functional slice at a time. Shared action descriptors and menu/shortcut equivalence now cover existing
 operations, respecting text/IME and modal ownership. Subsequent slices add missing

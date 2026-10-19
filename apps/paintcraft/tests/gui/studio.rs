@@ -24,7 +24,11 @@ fn studio_remembers_the_experience_without_showing_the_classic_picker() {
     let before = h.state().editor().document_snapshot();
     let target = h.state().editor().target();
     let undo = h.state().editor().undo_depth();
-    h.get_by_label("Classic").click();
+    let path = dir.join("studio.pcnd");
+    h.state_mut().set_path_text(path.to_str().unwrap());
+    h.get_by_label("Save").click();
+    h.run();
+    switch_interface(&mut h, "Classic interface");
     h.run();
     assert!(
         h.state().picker_open(),
@@ -32,7 +36,7 @@ fn studio_remembers_the_experience_without_showing_the_classic_picker() {
     );
     h.get_by_label("Continue").click();
     h.run();
-    h.get_by_label("Studio").click();
+    switch_interface(&mut h, "Studio interface");
     h.run();
     assert!(h.state().editor().document().same_semantics(&before));
     assert_eq!(h.state().editor().target(), target);

@@ -170,7 +170,7 @@ impl App {
         self.finish_save();
     }
 
-    fn reset_tab_presentation(&mut self) {
+    pub(super) fn reset_tab_presentation(&mut self) {
         if let Some((_, handle)) = self.pending_frame.take()
             && let Some(renderer) = &self.renderer
         {
@@ -426,5 +426,34 @@ impl App {
                 self.pump_recovery_handoff();
             }
         }
+    }
+}
+
+/// A frontend's document workspace. Only clean, idle sessions can be parked.
+#[derive(Debug)]
+pub(super) struct WorkspaceDocuments {
+    active: DocumentState,
+    tabs: Vec<Tab>,
+    active_tab: usize,
+    next_tab_number: u64,
+}
+impl WorkspaceDocuments {
+    pub(super) fn new(size: (u32, u32), recovery: bool) -> Self {
+        Self {
+            active: DocumentState::new(
+                Editor::new_document(size.0, size.1).expect("validated default size"),
+                recovery,
+            ),
+            tabs: vec![Tab::initial()],
+            active_tab: 0,
+            next_tab_number: 1,
+        }
+    }
+    pub(super) fn swap(&mut self, app: &mut App) {
+        self.active.swap(app);
+        std::mem::swap(&mut self.tabs, &mut app.tabs);
+        std::mem::swap(&mut self.active_tab, &mut app.active_tab);
+        std::mem::swap(&mut self.next_tab_number, &mut app.next_tab_number);
+        app.reset_tab_presentation();
     }
 }

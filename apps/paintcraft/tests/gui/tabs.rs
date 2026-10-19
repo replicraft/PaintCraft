@@ -89,7 +89,7 @@ fn failed_save_and_close_keeps_the_document_open() {
 }
 
 #[test]
-fn five_documents_remain_reachable_through_classic_and_studio() {
+fn studio_documents_remain_in_their_own_workspace_after_switching() {
     let (mut h, dir) = studio_harness(true);
     let mut snapshots = Vec::new();
     for i in 0..5 {
@@ -103,22 +103,29 @@ fn five_documents_remain_reachable_through_classic_and_studio() {
             (240.0, 10.0 + 10.0 * i as f32),
         );
         snapshots.push(h.state().editor().document_snapshot());
+        h.state_mut()
+            .set_path_text(dir.join(format!("studio-{i}.pcnd")).to_str().unwrap());
+        h.get_by_label("Save").click();
+        h.run();
     }
-    h.get_by_label("Classic").click();
+    switch_interface(&mut h, "Classic interface");
     h.run();
     h.get_by_label("Continue").click();
     h.run();
-    for (i, snapshot) in snapshots.iter().enumerate() {
-        h.get_by_label(&format!("Document {}: Untitled {} *", i + 1, i + 1))
-            .click();
-        h.run();
-        assert!(h.state().editor().document().same_semantics(snapshot));
-    }
-    h.get_by_label("Studio").click();
+    assert_eq!(
+        h.state().document_count(),
+        1,
+        "Classic starts with its own canvas"
+    );
+    assert_ne!(
+        h.state().editor().document().document_id,
+        snapshots[0].document_id
+    );
+    switch_interface(&mut h, "Studio interface");
     h.run();
     assert_eq!(h.state().document_count(), 5);
     for (i, snapshot) in snapshots.iter().enumerate() {
-        h.get_by_label(&format!("Document {}: Untitled {} *", i + 1, i + 1))
+        h.get_by_label(&format!("Document {}: studio-{i}.pcnd", i + 1))
             .click();
         h.run();
         assert!(h.state().editor().document().same_semantics(snapshot));
