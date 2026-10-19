@@ -1,4 +1,5 @@
 //! Studio presentation. Actions are executed by the application shell.
+mod colors;
 mod history;
 mod properties;
 pub use properties::{LayerProperties, PropertiesResponse, layer_properties_dialog};
@@ -17,6 +18,8 @@ pub struct Workspace {
     pub colors: bool,
     pub layers: bool,
     pub history: bool,
+    pub edit_secondary: bool,
+    pub more_colors: bool,
 }
 
 impl Default for Workspace {
@@ -26,6 +29,8 @@ impl Default for Workspace {
             colors: true,
             layers: true,
             history: true,
+            edit_secondary: false,
+            more_colors: false,
         }
     }
 }

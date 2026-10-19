@@ -13,7 +13,7 @@ separately in the dependency choices and is not bundled yet.
   scroll positions and native-file bindings. New/Open/recovery preserve other tabs.
   Close supports save, discard and cancel; closing the last tab leaves an empty workspace.
 - Movable Tools and Colors windows, with real tool selection, primary/secondary
-  colors, palette, brush size/tip, shape style, fill tolerance and bitmap text size.
+  colors, color wheel, swap, palette, expanded RGBA/hex controls, brush size/tip, shape style, fill tolerance and bitmap text size.
 - A movable/resizable Layers window using the existing add, select, visibility,
   rename, opacity, reorder, duplicate and delete operations. Window menu toggles restore panels.
 - A movable History window with recorded action labels, current/redo rows, direct
@@ -185,3 +185,34 @@ cargo test -p paintcraft --test gui properties::render_layer_properties_for_revi
 Its output is `/tmp/paintcraft-layer-properties.png`. The supplied reference shows
 the Layer Properties menu entry and F4 shortcut, but not the dialog contents;
 this dialog is a functional native baseline, not an asserted reference capture.
+
+## Colors window
+
+Studio now has primary/secondary selection, swapping, a hue/saturation wheel,
+preset colors and More/Less controls for exact byte RGBA and `#RRGGBBAA` input.
+Left-click edits the selected swatch; right-click on the wheel or palette selects
+and edits secondary. Wheel edits preserve the target swatch's alpha and choose
+full brightness; byte channels/hex provide darker colors. Arrow keys on a focused
+wheel adjust hue and saturation. This is the current native wheel policy using
+ecolor's HSV conversion, not independently verified Paint.NET color semantics.
+
+RGBA and hex controls retain hidden RGB at alpha zero. Incomplete/invalid hex text
+stays local, leaves the color unchanged and resets on focus loss; its UI draft is
+scoped to the document and swatch. Swap runs once per activation even when egui
+repeats layout. Colors remain per-document tool preferences; changing them does
+not publish document changes, affect dirty state or add history. Actual strokes
+still commit through the shared editor. More/Less and selected-swatch state last
+for the running workspace; palette customization and restart persistence remain.
+
+Tests cover straight-RGBA fidelity, invalid hex input, wheel geometry, primary and
+secondary ownership/alpha, no painting through the window, tab independence and
+chosen-color stroke/undo behavior. An ignored native-GPU review capture is:
+
+```sh
+cargo test -p paintcraft --test gui colors::render_studio_colors_for_review -- --ignored
+```
+
+It writes `/tmp/paintcraft-studio-colors.png`. The wheel and expanded controls
+address the Colors window in `im5age.png`; panel styling/spacing and advanced
+control layout still differ. This does not qualify reference or color-managed
+rendering parity. Right-button canvas drawing remains separate tool-input work.
