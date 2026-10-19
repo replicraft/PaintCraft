@@ -145,7 +145,7 @@ pub fn chrome(
                 }
             }
             ui.separator();
-            if ui.button("Change Paint version…").clicked() {
+            if ui.button("Change Classic skin…").clicked() {
                 actions.push(Action::Interface);
                 ui.close();
             }

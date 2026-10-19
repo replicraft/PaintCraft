@@ -102,7 +102,7 @@ impl Action {
                 },
                 None,
             ),
-            Self::Interface => ("Change Paint version…", None),
+            Self::Interface => ("Change Classic skin…", None),
             Self::Settings => (
                 "Settings…",
                 cfg!(target_os = "macos").then_some((Key::Comma, false)),

@@ -30,9 +30,13 @@ preferences leaves the current document and history untouched.
 **View → Canvas size…** stages a top-left resize with Apply/Cancel, one undo step
 and preserved off-canvas content. See [the canvas-size policy](CANVAS_SIZES.md).
 
+The desktop starts at **1200 × 850 logical pixels**, providing more room for the
+ribbon and the default canvas. Smaller windows and larger canvases still scroll.
+There is currently no dedicated Clear Canvas action.
+
 ## Current behavior
 
-Classic has separate v7/v10/v11 presentation presets, SVG tool icons, centered
+Classic has separate v7/v10/v11 skins, SVG tool icons, centered
 small canvases, native file dialogs, layer editing, typed edits and undo/redo.
 The status bar provides percentage entry, 12.5–1000% presets, a zoom slider,
 fit-to-window and zoom buttons. Invalid percentage drafts are discarded on
@@ -76,7 +80,7 @@ popups expose their reference entries with execution disabled. Resize handles ar
 visual markers; View → Canvas size remains the working resize path.
 
 Settings provides Light, Dark and System appearance, with live theme preview,
-Apply/Cancel, interface/version selection and canvas defaults. Both frontends use
+Apply/Cancel, interface/skin selection and canvas defaults. Both frontends use
 the selected theme and bundled Selawik. Cancel restores the previous theme;
 preferences do not alter document history. Existing settings files default to
 System when the optional appearance field is absent.
@@ -120,7 +124,7 @@ currently committed to pixels when placed, with one undo step.
 ## Interaction refinements
 
 The Interface button beside Settings switches between independent frontends and
-exposes Classic's version picker. Ctrl/Cmd + wheel zooms over the canvas without
+exposes Classic's skin picker. Ctrl/Cmd + wheel zooms over the canvas without
 scaling application chrome. Pencil, brush, eraser and outlined shapes have a
 size slider plus exact pixel entry. Tool size is captured at gesture start.
 

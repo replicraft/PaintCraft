@@ -148,12 +148,14 @@ impl App {
         };
         let ctx = ui.ctx().clone();
         let mut done = false;
-        egui::Window::new("Choose your Paint")
+        egui::Window::new("Choose your Classic skin")
             .collapsible(false)
             .resizable(false)
             .anchor(egui::Align2::CENTER_CENTER, Vec2::ZERO)
             .show(&ctx, |ui| {
-                ui.label("Pick the look you know. You can change it later from Interface.");
+                ui.label(
+                    "Choose a Paint skin. Change it later from the changer button or Settings.",
+                );
                 ui.horizontal(|ui| {
                     for v in ClassicVariant::ALL {
                         let (rect, response) =

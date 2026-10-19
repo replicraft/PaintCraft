@@ -135,7 +135,7 @@ pub fn interface_changer(ui: &mut egui::Ui, context: crate::actions::Context) ->
         }
         if context.frontend == crate::actions::Frontend::Classic {
             ui.separator();
-            if ui.button("Change Paint version…").clicked() {
+            if ui.button("Change Classic skin…").clicked() {
                 actions.push(Action::Interface);
                 ui.close();
             }

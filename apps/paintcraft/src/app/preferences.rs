@@ -95,6 +95,7 @@ fn appearance(ui: &mut egui::Ui, values: &mut Settings) {
     }
     if values.experience == Experience::Classic {
         ui.add_space(10.0);
+        ui.strong("Classic skin");
         let mut variant = values.classic_variant.unwrap_or(ClassicVariant::DEFAULT);
         for v in ClassicVariant::ALL {
             if ui.radio_value(&mut variant, v, v.name()).changed() {

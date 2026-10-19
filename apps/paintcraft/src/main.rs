@@ -16,7 +16,7 @@ fn main() -> eframe::Result {
         renderer: eframe::Renderer::Wgpu,
         viewport: eframe::egui::ViewportBuilder::default()
             .with_title("PaintCraft")
-            .with_inner_size([960.0, 720.0]),
+            .with_inner_size([1200.0, 850.0]),
         ..Default::default()
     };
     eframe::run_native(
