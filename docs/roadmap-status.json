@@ -149,9 +149,11 @@
         "docs/RECOVERY_FORMAT.md",
         "crates/paintcraft-formats/src/recovery/lease.rs",
         "apps/paintcraft/src/saving/restoring.rs",
-        "apps/paintcraft/src/saving/restoring/tests.rs"
+        "apps/paintcraft/src/saving/restoring/tests.rs",
+        "crates/paintcraft-platform/src/save/reconciliation.rs",
+        "crates/paintcraft-platform/src/save/reconciliation/tests.rs"
       ],
-      "remaining_or_scope": "Streaming native saves, bounded Tokio FIFO, stale binding/session guards and captured-state acknowledgement pass; checksummed recovery segments and two retained heads pass; native background checkpoints/cleanup and publication fences pass; native startup, claimed restore and handoff pass; uncertain-write reconciliation, benchmark evidence and full fault/platform matrix remain.",
+      "remaining_or_scope": "Streaming native saves, bounded Tokio FIFO, stale binding/session guards and captured-state acknowledgement pass; checksummed recovery, publication fences and claimed restore pass; local-Unix incomplete-attempt reinspection and explicit persistence barriers pass; desktop/restart reconciliation, benchmark evidence and full fault/platform matrix remain.",
       "acceptance": "SAVE-01\u201309 failure injection including disk full/slow sink and stale Save As completion."
     },
     {
@@ -458,9 +460,11 @@
       "status": "partial",
       "evidence": [
         "crates/paintcraft-platform/src/save.rs",
-        "apps/paintcraft/src/lib.rs"
+        "apps/paintcraft/src/lib.rs",
+        "crates/paintcraft-platform/src/save/reconciliation.rs",
+        "crates/paintcraft-platform/src/save/reconciliation/tests.rs"
       ],
-      "remaining_or_scope": "Stable receipt IDs, real queue sequences, binding generations and captured-state acknowledgement pass; local symlink/parent aliases and encoding-time fingerprints pass; open-to-save conflict guards, reconciliation and filesystem qualification remain.",
+      "remaining_or_scope": "Stable receipt IDs, queue sequences, binding generations and captured-state acknowledgement pass; alias and encoding-time guards pass; local-Unix reconciliation preserves operation identity without repeating replacement; desktop integration, restart retention, open-to-save conflict guards and filesystem qualification remain.",
       "acceptance": "FILE-01..10; injected failures on both sides of replace/barrier; no false aborted receipt after a known side effect; native alias and filesystem qualification."
     },
     {

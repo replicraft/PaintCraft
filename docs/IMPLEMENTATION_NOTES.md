@@ -149,6 +149,18 @@ The deterministic headless UI harness retains its synchronous adapter; native qu
 integration has separate tests. Open-to-save conflict fingerprints,
 full receipt reconciliation and BF07 performance qualification remain pending.
 
+The platform save outcome now retains private attempt evidence for bounded local-Unix
+reinspection (FILE-02/03). `Outcome::reconcile` revises the same operation ID without
+encoding or replacing again. Inspection distinguishes staged/original/third-party,
+missing and unreadable content. Matching hashes alone never acknowledge a syscall
+without positive replacement evidence. Explicit durability confirmation syncs the
+opened file and parent, then checks the descriptor, namespace, content and revision;
+changes across those barriers remain unconfirmed. Receipt source/sequence/binding
+stamps remain caller-owned. Failure injection covers both barriers, late replacement,
+late edits/deletion and alias changes. This is not a portable exclusion mechanism or
+filesystem qualification; other platform identity adapters, desktop reconciliation
+controls and restart-persistent uncertain-attempt retention remain pending.
+
 ## Native render preparation
 
 The native shell submits immutable document snapshots to one dedicated Rayon worker

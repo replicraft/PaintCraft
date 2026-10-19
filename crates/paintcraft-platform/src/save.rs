@@ -3,6 +3,9 @@
 //! as a `paintcraft.file-operation/v1` receipt; a failure after the replace
 //! request is never described as "nothing changed".
 
+mod reconciliation;
+pub use reconciliation::{Observation, ReconcileMode, Reconciliation};
+
 use std::fs::{self, File, OpenOptions};
 use std::io::{Read as _, Write};
 use std::path::{Path, PathBuf};
@@ -42,10 +45,12 @@ pub struct Context<'a> {
     pub destination: &'a Path,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Outcome {
     operation_id: Uuid,
     destination_id: Option<String>,
+    attempt: Option<Attempt>,
+    reconciliation_notes: Option<usize>,
     pub replacement: Replacement,
     pub durable: bool,
     pub staged_sha256: Option<String>,
@@ -182,7 +187,15 @@ fn resolve_destination(path: &Path) -> std::io::Result<PathBuf> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Clone, Debug)]
+struct Attempt {
+    destination: PathBuf,
+    original: Option<Fingerprint>,
+    staged: Fingerprint,
+    replacement_acknowledged: bool,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
 struct Fingerprint {
     bytes: u64,
     hash: String,
@@ -239,6 +252,8 @@ pub fn not_attempted(reason: &Error) -> Outcome {
     Outcome {
         operation_id: Uuid::new_v4(),
         destination_id: None,
+        attempt: None,
+        reconciliation_notes: None,
         replacement: Replacement::NotAttempted,
         durable: false,
         staged_sha256: None,
@@ -305,7 +320,11 @@ impl Write for StagingWriter {
 /// Read no more than the expected length plus one, even if an external writer
 /// extends the file concurrently. No second archive-sized allocation is retained.
 fn file_hash(path: &Path, expected_bytes: u64) -> std::io::Result<String> {
-    let mut input = File::open(path)?.take(expected_bytes.saturating_add(1));
+    hash_reader(File::open(path)?, expected_bytes)
+}
+
+fn hash_reader(input: impl std::io::Read, expected_bytes: u64) -> std::io::Result<String> {
+    let mut input = input.take(expected_bytes.saturating_add(1));
     let mut hash = Sha256::new();
     let mut buffer = [0; 64 * 1024];
     let mut total = 0;
@@ -336,6 +355,8 @@ fn save_impl(
     let mut out = Outcome {
         operation_id: Uuid::new_v4(),
         destination_id: None,
+        attempt: None,
+        reconciliation_notes: None,
         replacement: Replacement::NotReplaced,
         durable: false,
         staged_sha256: None,
@@ -399,6 +420,15 @@ fn save_impl(
         }
     };
     out.staged_sha256 = Some(staged_sha256.clone());
+    out.attempt = Some(Attempt {
+        destination: resolved.clone(),
+        original: expected.clone(),
+        staged: Fingerprint {
+            bytes: byte_count,
+            hash: staged_sha256.clone(),
+        },
+        replacement_acknowledged: false,
+    });
     if let Err(error) = barrier(Phase::Replace) {
         out.reasons
             .push(format!("before replacement failed: {}", error.kind()));
@@ -440,6 +470,10 @@ fn save_impl(
             .push(format!("replacement failed: {}", error.kind()));
         return out;
     }
+    out.attempt
+        .as_mut()
+        .expect("staged attempt")
+        .replacement_acknowledged = true;
     out.replacement = Replacement::Replaced;
     if !overwrite
         && let Err(error) = barrier(Phase::TemporaryCleanup).and_then(|()| fs::remove_file(&tmp))
