@@ -13,8 +13,9 @@ not implicit requirements to enable accounts or external services.
 
 Current user priority: finish PaintCraft Classic, guided by the expanded Windows 11
 reference photos and [Classic coverage](CLASSIC.md). Studio remains available on
-the shared editor. RetroPaint's
-selected UI font is W95FA; Retro implementation remains deferred.
+the shared editor. [Retro](RETRO.md) remains deferred, with W95FA selected as its
+default UI font and planned skins for older Microsoft Paint versions and
+Deluxe Paint II Enhanced 2.0.
 
 [Dependency choices](DEPENDENCY_CHOICES.md) records the selected libraries and their
 actual consumers. The current batch-v1 wire policy and canonical PCND fixture remain
@@ -44,7 +45,7 @@ unchanged by dependency and crate refactors.
 | T20 | M3 | Codec breadth | not-started | Per-backend/variant write+read evidence, metadata/index and worker failures; no Rust-only delays. |
 | T21 | M3 | Performance decision experiments | not-started | Raw benchmark artifacts; select thresholds/index/atlas layout; no claims from theoretical speed. |
 | T22 | M4 | Browser conformance | not-started | Native-equivalent fixtures, interruption tests and unsupported-capability reports. |
-| T23 | M4 | RetroPaint and historical formats | not-started | Era-specific fixtures and explicit additional capabilities without changed default muscle memory. |
+| T23 | M4 | RetroPaint and historical formats | not-started | Historical Paint and Deluxe Paint II Enhanced 2.0 skins; era-specific fixtures and explicit additional capabilities without changed default muscle memory. |
 | T24 | M4 | Compact PCND container study | not-started | Benchmark justification, corruption tests and old-v1 corpus preserved. |
 | T25 | M5 | Mobile adaptation | not-started | Device execution, orientation/background/quota/thermal evidence; not cross-compile-only. |
 | T26 | M5 | Optional AI and MCP | not-started | Consent/provider/model boundaries and stale-result/undo safety; no mandatory account. |
