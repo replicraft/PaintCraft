@@ -9,6 +9,7 @@ publish.workspace = true
 
 [dependencies]
 paintcraft-core.workspace = true
+paintcraft-tools.workspace = true
 
 egui.workspace = true
 

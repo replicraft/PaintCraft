@@ -1,7 +1,7 @@
 //! Classic presentation emits actions; editor and platform services own effects.
 use egui::{Color32, Vec2};
 use paintcraft_core::types::Rgba;
-use paintcraft_tools::{ShapeStyle, Tool, ToolOptions};
+use paintcraft_tools::Tool;
 use paintcraft_ui::widgets::{Icon, icon_button};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -38,45 +38,8 @@ impl ClassicVariant {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
-pub struct Controls {
-    pub tool: Tool,
-    pub options: ToolOptions,
-    pub primary: Rgba,
-    pub secondary: Rgba,
-}
-#[derive(Clone, Copy, Debug)]
-pub enum Action {
-    New,
-    Open,
-    Save,
-    SaveAs,
-    Export,
-    Undo,
-    Redo,
-    Interface,
-    SelectTool(Tool),
-    SelectAll,
-    Deselect,
-}
-
-impl Action {
-    pub fn activation_code(self) -> u64 {
-        match self {
-            Self::New => 1000,
-            Self::Open => 1001,
-            Self::Save => 1002,
-            Self::SaveAs => 1003,
-            Self::Export => 1004,
-            Self::Undo => 1005,
-            Self::Redo => 1006,
-            Self::Interface => 1007,
-            Self::SelectAll => 1008,
-            Self::Deselect => 1009,
-            Self::SelectTool(tool) => 1100 + tool as u64,
-        }
-    }
-}
+pub use paintcraft_ui::chrome::{Action, Controls};
+use paintcraft_ui::chrome::{color_edit, options, tool_button};
 
 pub fn chrome(ui: &mut egui::Ui, variant: ClassicVariant, state: &mut Controls) -> Vec<Action> {
     let mut actions = Vec::new();
@@ -151,7 +114,7 @@ pub fn chrome(ui: &mut egui::Ui, variant: ClassicVariant, state: &mut Controls) 
         .show(ui, |ui| {
             ui.horizontal_top(|ui| {
                 ribbon_group(ui, "Selection", |ui| {
-                    if tool_button(ui, state, Tool::Select) {
+                    if tool_button(ui, state, Tool::Select, true) {
                         actions.push(Action::SelectTool(Tool::Select));
                     }
                 });
@@ -171,7 +134,7 @@ pub fn chrome(ui: &mut egui::Ui, variant: ClassicVariant, state: &mut Controls) 
                             .into_iter()
                             .enumerate()
                             {
-                                if tool_button(ui, state, tool) {
+                                if tool_button(ui, state, tool, true) {
                                     actions.push(Action::SelectTool(tool));
                                 }
                                 if i % 3 == 2 {
@@ -184,7 +147,7 @@ pub fn chrome(ui: &mut egui::Ui, variant: ClassicVariant, state: &mut Controls) 
                 ribbon_group(ui, "Shapes", |ui| {
                     ui.horizontal(|ui| {
                         for tool in [Tool::Line, Tool::Rect, Tool::Ellipse] {
-                            if tool_button(ui, state, tool) {
+                            if tool_button(ui, state, tool, true) {
                                 actions.push(Action::SelectTool(tool));
                             }
                         }
@@ -247,59 +210,7 @@ pub fn chrome(ui: &mut egui::Ui, variant: ClassicVariant, state: &mut Controls) 
             });
         });
     ui.separator();
-    ui.horizontal_wrapped(|ui| {
-        if matches!(
-            state.tool,
-            Tool::Brush | Tool::Eraser | Tool::Line | Tool::Rect | Tool::Ellipse
-        ) {
-            let label = ui.label("Size");
-            ui.add(
-                egui::DragValue::new(&mut state.options.size)
-                    .range(1..=1024)
-                    .suffix(" px"),
-            )
-            .labelled_by(label.id);
-        }
-        if state.tool == Tool::Brush {
-            ui.selectable_value(&mut state.options.round, true, "Round");
-            ui.selectable_value(&mut state.options.round, false, "Square");
-        }
-        if matches!(state.tool, Tool::Rect | Tool::Ellipse) {
-            for (style, label) in [
-                (ShapeStyle::Outline, "Outline"),
-                (ShapeStyle::Filled, "Filled"),
-                (ShapeStyle::Both, "Both"),
-            ] {
-                ui.selectable_value(&mut state.options.style, style, label);
-            }
-        }
-        if state.tool == Tool::Fill {
-            let label = ui.label("Tolerance");
-            ui.add(egui::DragValue::new(&mut state.options.tolerance).range(0..=255))
-                .labelled_by(label.id);
-        }
-        if state.tool == Tool::Text {
-            let label = ui.label("Text size");
-            ui.add(
-                egui::DragValue::new(&mut state.options.text_scale)
-                    .range(1..=16)
-                    .suffix("×"),
-            )
-            .labelled_by(label.id);
-            ui.label("Ctrl+Enter to place · Escape to cancel");
-        }
-        if state.tool == Tool::Select {
-            if ui.button("Select all").clicked() {
-                actions.push(Action::SelectAll);
-            }
-            if ui.button("Deselect").clicked() {
-                actions.push(Action::Deselect);
-            }
-        }
-        if matches!(state.tool, Tool::Pencil) {
-            ui.weak("Pencil · 1 pixel");
-        }
-    });
+    options(ui, state, &mut actions);
     actions
 }
 fn ribbon_group(ui: &mut egui::Ui, label: &str, contents: impl FnOnce(&mut egui::Ui)) {
@@ -317,34 +228,6 @@ fn ribbon_group(ui: &mut egui::Ui, label: &str, contents: impl FnOnce(&mut egui:
             },
         );
     });
-}
-fn tool_button(ui: &mut egui::Ui, state: &mut Controls, tool: Tool) -> bool {
-    let icon = match tool {
-        Tool::Pencil => Icon::Pencil,
-        Tool::Brush => Icon::Brush,
-        Tool::Eraser => Icon::Eraser,
-        Tool::Fill => Icon::Fill,
-        Tool::Line => Icon::Line,
-        Tool::Rect => Icon::Rectangle,
-        Tool::Ellipse => Icon::Ellipse,
-        Tool::Select => Icon::Select,
-        Tool::Text => Icon::Text,
-    };
-    if icon_button(ui, tool.name(), icon, state.tool == tool, true).clicked() {
-        state.tool = tool;
-        true
-    } else {
-        false
-    }
-}
-fn color_edit(ui: &mut egui::Ui, label: &str, value: &mut Rgba) {
-    let mut color = Color32::from_rgba_unmultiplied(value.0[0], value.0[1], value.0[2], value.0[3]);
-    let response = ui.color_edit_button_srgba(&mut color);
-    response
-        .widget_info(|| egui::WidgetInfo::labeled(egui::Role::ColorWell, ui.is_enabled(), label));
-    if response.changed() {
-        *value = Rgba(color.to_srgba_unmultiplied());
-    }
 }
 const PALETTE: [[u8; 3]; 28] = [
     [0, 0, 0],
