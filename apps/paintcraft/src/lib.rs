@@ -52,6 +52,7 @@ const DEFAULT_SIZE: (u32, u32) = (320, 320);
 enum Confirm {
     DiscardForNew,
     DiscardForOpen(PathBuf),
+    DiscardForRecovery(Found),
     ReplaceFile(PathBuf),
     QuitUnsaved,
     /// Export to a flat image, naming what it would lose and whether it replaces a file.
@@ -104,6 +105,9 @@ pub struct App {
     exit_after_frames: Option<u64>,
     recovery_dir: Option<PathBuf>,
     recoverable: Vec<Found>,
+    recovery_scope: Uuid,
+    recovery_needs_scan: bool,
+    recovery_needs_init: bool,
     autosave_every: Duration,
     last_autosave: f64,
     allow_close: bool,
@@ -217,6 +221,9 @@ impl App {
             exit_after_frames: None,
             recovery_dir: None,
             recoverable: Vec::new(),
+            recovery_scope: Uuid::new_v4(),
+            recovery_needs_scan: false,
+            recovery_needs_init: false,
             autosave_every: Duration::from_secs(5),
             last_autosave: 0.0,
             allow_close: false,
@@ -239,30 +246,70 @@ impl App {
     /// Protect work with crash-recovery checkpoints in `dir`, and offer whatever an
     /// earlier crashed session left behind.
     pub fn with_recovery(mut self, dir: PathBuf) -> App {
-        let report = Recovery::scan_report(&dir);
-        self.recoverable = report.found;
-        if !report.issues.is_empty() {
-            self.editor.set_status(
-                report
-                    .issues
-                    .into_iter()
-                    .take(3)
-                    .collect::<Vec<_>>()
-                    .join("; "),
-            );
+        // This is startup configuration, not a live store-migration API. Retain
+        // the active owner until a separately implemented durable handoff exists.
+        if self.editor.recovery_handle().is_some() {
+            if self.recovery_dir.as_ref() != Some(&dir) {
+                self.editor.set_status("The recovery folder cannot be changed while it is active. Existing recovery data has been retained.");
+            }
+            return self;
+        }
+        self.recovery_scope = Uuid::new_v4();
+        self.recoverable.clear();
+        if self.saving.is_some() {
+            self.recovery_needs_scan = true;
+        } else {
+            let report = Recovery::scan_report(&dir);
+            self.recoverable = report.found;
+            if !report.issues.is_empty() {
+                self.editor.set_status(
+                    report
+                        .issues
+                        .into_iter()
+                        .take(3)
+                        .collect::<Vec<_>>()
+                        .join("; "),
+                );
+            }
         }
         self.recovery_dir = Some(dir);
+        self.recovery_needs_init = true;
         self.attach_recovery();
         self
     }
 
     fn attach_recovery(&mut self) {
-        if let Some(dir) = &self.recovery_dir {
+        let Some(dir) = &self.recovery_dir else {
+            return;
+        };
+        if let Some(saving) = &mut self.saving {
+            match saving.initialize_recovery(
+                self.recovery_scope,
+                dir.clone(),
+                self.recovery_needs_scan,
+            ) {
+                Ok(()) => {
+                    self.recovery_needs_init = false;
+                    self.editor.set_status("Checking crash recovery…");
+                }
+                Err(error) if error.code == paintcraft_core::types::ErrorCode::ResourceLimit => {
+                    self.recovery_needs_init = true;
+                    self.editor
+                        .set_status("Waiting for recovery initialization capacity…");
+                }
+                Err(error) => {
+                    self.recovery_needs_init = false;
+                    self.editor
+                        .set_status(format!("Crash recovery unavailable: {error}"));
+                }
+            }
+        } else {
+            self.recovery_needs_init = false;
             match Recovery::start(dir) {
-                Ok(r) => self.editor.attach_recovery(r),
-                Err(e) => self
+                Ok(recovery) => self.editor.attach_recovery(recovery),
+                Err(error) => self
                     .editor
-                    .set_status(format!("Crash recovery unavailable: {e}")),
+                    .set_status(format!("Crash recovery unavailable: {error}")),
             }
         }
     }
@@ -394,6 +441,7 @@ impl App {
         self.texture_key = None;
         self.texture = None;
         self.rendered.clear();
+        self.recovery_needs_init = self.recovery_dir.is_some();
         self.attach_recovery();
         Ok(())
     }
@@ -957,7 +1005,9 @@ impl App {
         };
         let ctx = ui.ctx().clone();
         let (title, text, go) = match &confirm {
-            Confirm::DiscardForNew | Confirm::DiscardForOpen(_) => (
+            Confirm::DiscardForNew
+            | Confirm::DiscardForOpen(_)
+            | Confirm::DiscardForRecovery(_) => (
                 "Discard changes?",
                 "The current document has unsaved changes.".to_owned(),
                 "Continue",
@@ -1010,6 +1060,7 @@ impl App {
                                     self.editor.set_status(format!("Cannot open: {e}"));
                                 }
                             }
+                            Confirm::DiscardForRecovery(item) => self.do_recover(item),
                             Confirm::ReplaceFile(p) => self.do_save(&ctx, p),
                             Confirm::QuitUnsaved => {
                                 self.allow_close = true;
@@ -1029,6 +1080,24 @@ impl App {
                     }
                 });
             });
+    }
+
+    fn recover_requested(&mut self, item: Found) {
+        self.editor.commit_text();
+        self.editor.run_pending();
+        if self.editor.is_dirty() {
+            self.confirm = Some(Confirm::DiscardForRecovery(item));
+        } else {
+            self.do_recover(item);
+        }
+    }
+    fn do_recover(&mut self, item: Found) {
+        match self.recover_found(&item) {
+            Ok(()) => self
+                .recoverable
+                .retain(|found| found.session != item.session),
+            Err(error) => self.editor.set_status(format!("Cannot recover: {error}")),
+        }
     }
 
     /// Offer work left behind by a crashed session.
@@ -1074,15 +1143,11 @@ impl App {
                     "PaintCraft found unsaved work from an earlier session: {name}."
                 ));
                 ui.horizontal(|ui| {
-                    if ui.button("Recover").clicked() {
-                        match self.recover_found(&item) {
-                            Ok(()) => {
-                                self.recoverable.remove(0);
-                            }
-                            Err(error) => {
-                                self.editor.set_status(format!("Cannot recover: {error}"))
-                            }
-                        }
+                    if ui
+                        .add_enabled(self.confirm.is_none(), egui::Button::new("Recover"))
+                        .clicked()
+                    {
+                        self.recover_requested(item.clone());
                     }
                     if ui.button("Discard").clicked()
                         && let Some(dir) = &self.recovery_dir
@@ -1455,6 +1520,9 @@ impl App {
         }
         self.finish_save();
         self.poll_native_saves(&ctx);
+        if self.recovery_needs_init && !self.close_after_saves && !self.allow_close {
+            ctx.request_repaint_after(Duration::from_millis(250));
+        }
         let now = ctx.input(|i| i.time);
         if now - self.last_autosave >= self.autosave_every.as_secs_f64()
             && !self.allow_close

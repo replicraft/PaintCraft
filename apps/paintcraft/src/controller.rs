@@ -110,7 +110,10 @@ impl Editor {
 
     /// Start protecting this editor's work with crash-recovery checkpoints.
     pub fn attach_recovery(&mut self, recovery: Recovery) {
-        self.recovery = Some(Arc::new(recovery));
+        self.attach_shared_recovery(Arc::new(recovery));
+    }
+    pub(crate) fn attach_shared_recovery(&mut self, recovery: Arc<Recovery>) {
+        self.recovery = Some(recovery);
         self.checkpointed = None;
         self.checkpoint_info = None;
     }

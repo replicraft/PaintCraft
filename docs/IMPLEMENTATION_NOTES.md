@@ -105,8 +105,14 @@ not wait for disk work; cleanup precedes the next episode. Stale callbacks canno
 reinstate cleared checkpoint status. One checkpoint per current owner is admitted at
 a time. Queue exhaustion refuses document replacement before changing its recovery
 fence or editor. Tests cover queued work, edits during checkpoints, save/cleanup races,
-and clean close after undo. Initialization, orphan discovery/restore and the initial
-recovery handoff still perform foreground I/O and remain to be moved.
+and clean close after undo. Native startup now submits recovery discovery and owner
+initialization after the window/services are created. Results are checked against the
+current editor and startup configuration; unused owners are retired on the I/O queue.
+An editor replacement during exclusive discovery retries initialization after capacity
+is available. Startup configuration can supersede pending requests; changing an already
+active store is explicitly refused until durable migration is implemented. Recovery
+requires discard confirmation before replacing current unsaved work. Restore decoding
+and the initial recovery handoff still have foreground paths and remain to be moved.
 
 ## Ordered native saves
 
@@ -126,7 +132,7 @@ cannot retarget a later choice (SAVE-02/FILE-04). Same-destination FIFO tests co
 SAVE-01. Repeated layout passes cannot submit duplicate saves. Close requests drain
 accepted writes, and failures keep the window open for a new explicit decision.
 The deterministic headless UI harness retains its synchronous adapter; native queue
-integration has separate tests. Startup/restore I/O, open-to-save conflict fingerprints,
+integration has separate tests. Restore I/O, open-to-save conflict fingerprints,
 full receipt reconciliation and BF07 performance qualification remain pending.
 
 ## Native render preparation
@@ -252,8 +258,8 @@ Definitions (integer-exact, so any implementation can reproduce them):
 - **Classic variants.** v7, v10 and v11 share initial ribbon/control primitives and version styling;
   they are not captured reproductions. No fidelity claim of any kind is made.
 - **Foreground file work.** Native periodic checkpoints and cleanup use the I/O worker.
-  Startup discovery, recovery initialization and handoff, and open/import/export still
-  have foreground paths. The deterministic harness uses synchronous checkpoint services.
+  Recovery restore/handoff and open/import/export still have foreground paths.
+  Native startup discovery and initialization use the admitted I/O queue. The deterministic harness uses synchronous checkpoint services.
 - **Windows.** Durability confirmation syncs the destination directory, which Windows does
   not allow by opening a directory, so a save there would report "not confirmed" (exit 6)
   until a platform adapter exists. CI covers Linux and macOS only.
@@ -280,5 +286,5 @@ Native input and presentation spike (T02), reference capture (T03) and therefore
 Paint/Paint.NET behavioral parity, selections beyond one rectangle (no move, transform,
 invert or free-form), scalable or system fonts, clipboard, zoom to fit, layer groups,
 layer blend modes, other formats (GIF, TIFF, WebP, PCX, `.pdn`, `.paint`), Wasm effects,
-Zstd blocks, background startup/restore services, `paintcraft-web`, and everything in milestones M3
+Zstd blocks, background restore services, `paintcraft-web`, and everything in milestones M3
 onward.

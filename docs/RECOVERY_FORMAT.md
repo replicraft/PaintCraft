@@ -79,6 +79,9 @@ Malformed legacy data is retained with a diagnostic. New checkpoints use the jou
 The protocol has local macOS filesystem tests for ordering, injected interruption,
 corruption, tails, GC, locks and discard. This is not power-loss, Windows, network-filesystem
 or release qualification. Native periodic checkpoints and cleanup use the bounded
-save FIFO; stale completions cannot advance the active session. Initialization,
-discovery/restore and the first recovery handoff retain foreground paths. The deterministic
-UI harness retains synchronous checkpoint services. Benchmark evidence remains pending.
+save FIFO; stale completions cannot advance the active session. Native startup queues
+discovery and initialization after window creation, using editor/configuration fences
+and retrying unadmitted initialization when capacity returns. Unused owners are retired
+through the same queue. Active-store directory migration is not yet offered; existing
+protection is retained. Restore decoding and the first recovery handoff retain foreground
+paths. The deterministic UI harness retains synchronous checkpoint services. Benchmark evidence remains pending.

@@ -148,7 +148,7 @@
         "crates/paintcraft-runtime/src/io.rs",
         "docs/RECOVERY_FORMAT.md"
       ],
-      "remaining_or_scope": "Streaming native saves, bounded Tokio FIFO, stale binding/session guards and captured-state acknowledgement pass; checksummed recovery segments and two retained heads pass; native background checkpoints/cleanup and publication fences pass; startup/restore I/O, reconciliation and full fault/platform matrix remain.",
+      "remaining_or_scope": "Streaming native saves, bounded Tokio FIFO, stale binding/session guards and captured-state acknowledgement pass; checksummed recovery segments and two retained heads pass; native background checkpoints/cleanup and publication fences pass; native startup discovery/initialization pass; restore I/O, reconciliation and full fault/platform matrix remain.",
       "acceptance": "SAVE-01\u201309 failure injection including disk full/slow sink and stale Save As completion."
     },
     {

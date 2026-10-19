@@ -1005,3 +1005,41 @@ fn classic_tool_actions_survive_multiple_layout_passes_without_repeating_a_shape
     assert_eq!(publications(&h), before + 1);
     assert_eq!(top_pixel(&h, 15, 15).a(), 255);
 }
+
+#[test]
+fn recovery_offer_asks_before_replacing_edits_made_in_the_current_window() {
+    use paintcraft_formats::recovery::Recovery;
+    let dir = scratch("recover-over-edits");
+    let original = paintcraft_document::new_document(
+        4,
+        4,
+        Some(Rgba([7, 8, 9, 255])),
+        73,
+        paintcraft_document::POLICY,
+    )
+    .unwrap();
+    {
+        let owner = Recovery::start(&dir).unwrap();
+        owner.checkpoint_document(&original, None).unwrap();
+    }
+    let mut h = harness_with(app_with_recovery(&dir), 1.0, false);
+    with_layer(&mut h);
+    let current = h.state().editor().document_snapshot();
+    h.get_by_label("Recover").click();
+    h.run();
+    h.get_by_label("Cancel").click();
+    h.run();
+    assert!(h.state().editor().document().same_semantics(&current));
+    assert_eq!(
+        Recovery::scan(&dir).len(),
+        1,
+        "cancellation retains the orphan"
+    );
+    h.get_by_label("Recover").click();
+    h.run();
+    h.get_by_label("Continue").click();
+    h.run();
+    assert!(h.state().editor().document().same_semantics(&original));
+    drop(h);
+    std::fs::remove_dir_all(dir).unwrap();
+}

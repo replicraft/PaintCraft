@@ -21,6 +21,10 @@ enum PendingKind {
         token: RecoveryToken,
         key: (Uuid, u64),
     },
+    Initialize {
+        session: Uuid,
+        scope: Uuid,
+    },
     Cleanup,
 }
 #[derive(Debug)]
@@ -32,6 +36,10 @@ struct Pending {
 enum Completion {
     File(save::Outcome),
     Checkpoint(Checkpoint),
+    Started {
+        report: Option<paintcraft_formats::recovery::ScanReport>,
+        recovery: Result<Arc<Recovery>>,
+    },
     Cleanup,
 }
 #[derive(Debug)]
@@ -176,6 +184,62 @@ impl NativeSaving {
         });
         Ok(true)
     }
+    fn poll_completion(&mut self) -> Option<(Ticket, PendingKind, Result<Completion>)> {
+        let (ticket, result) = self.io.poll()?;
+        let index = self
+            .pending
+            .iter()
+            .position(|p| p.ticket == ticket)
+            .expect("admitted I/O job");
+        Some((ticket, self.pending.remove(index).kind, result))
+    }
+    pub(super) fn initialize_recovery(
+        &mut self,
+        scope: Uuid,
+        directory: PathBuf,
+        discover: bool,
+    ) -> Result<()> {
+        if self.pending.iter().any(|p| matches!(p.kind, PendingKind::Initialize { session, scope: pending_scope } if session == self.session && scope == pending_scope)) { return Ok(()); }
+        // Discovery runs the native parser. This exclusive estimate prevents other
+        // I/O payload jobs from overlapping it; it is not an RSS qualification.
+        let charge = if discover { 1 << 30 } else { 64 * 1024 };
+        let context = self.context.clone();
+        let ticket = self.io.submit(
+            charge,
+            move || {
+                let report = discover.then(|| Recovery::scan_report(&directory));
+                let recovery = Recovery::start(&directory).map(Arc::new);
+                Ok(Completion::Started { report, recovery })
+            },
+            move || context.request_repaint(),
+        )?;
+        self.pending.push(Pending {
+            ticket,
+            kind: PendingKind::Initialize {
+                session: self.session,
+                scope,
+            },
+        });
+        Ok(())
+    }
+    fn retire_recovery(&mut self, recovery: Arc<Recovery>) -> Result<()> {
+        self.io.admit(1, 64 * 1024)?;
+        let token = recovery.invalidate()?;
+        let context = self.context.clone();
+        let ticket = self.io.submit(
+            64 * 1024,
+            move || {
+                recovery.clear_at(token)?;
+                Ok(Completion::Cleanup)
+            },
+            move || context.request_repaint(),
+        )?;
+        self.pending.push(Pending {
+            ticket,
+            kind: PendingKind::Cleanup,
+        });
+        Ok(())
+    }
     pub(super) fn clear_recovery(&mut self, editor: &mut Editor) -> Result<()> {
         let Some(recovery) = editor.recovery_handle() else {
             editor.forget_checkpoint();
@@ -237,17 +301,14 @@ impl App {
         }
     }
     pub(super) fn poll_native_saves(&mut self, ctx: &egui::Context) {
-        let Some(saving) = &mut self.saving else {
+        if self.saving.is_none() {
             return;
-        };
-        while let Some((ticket, result)) = saving.io.poll() {
-            let index = saving
-                .pending
-                .iter()
-                .position(|p| p.ticket == ticket)
-                .expect("admitted I/O job");
-            let pending = saving.pending.remove(index);
-            match pending.kind {
+        }
+        while let Some((ticket, kind, result)) =
+            self.saving.as_mut().and_then(NativeSaving::poll_completion)
+        {
+            let saving = self.saving.as_mut().expect("native I/O");
+            match kind {
                 PendingKind::Save(request) => {
                     let outcome = match result {
                         Ok(Completion::File(outcome)) => outcome,
@@ -333,6 +394,61 @@ impl App {
                         _ => unreachable!("typed checkpoint completion"),
                     }
                 }
+                PendingKind::Initialize { session, scope } => match result {
+                    Ok(Completion::Started { report, recovery }) => {
+                        if scope == self.recovery_scope {
+                            if let Some(report) = report
+                                && self.recovery_needs_scan
+                            {
+                                self.recovery_needs_scan = false;
+                                self.recoverable = report.found;
+                                if !report.issues.is_empty() {
+                                    self.editor.set_status(
+                                        report
+                                            .issues
+                                            .into_iter()
+                                            .take(3)
+                                            .collect::<Vec<_>>()
+                                            .join("; "),
+                                    );
+                                }
+                            }
+                            if session == saving.session {
+                                match recovery {
+                                    Ok(recovery) if self.editor.recovery_handle().is_none() => {
+                                        self.editor.attach_shared_recovery(recovery);
+                                        if self.editor.status() == "Checking crash recovery…" {
+                                            self.editor.set_status("Crash recovery ready");
+                                        }
+                                    }
+                                    Ok(recovery) => {
+                                        if let Err(error) = saving.retire_recovery(recovery) {
+                                            self.editor.set_status(format!(
+                                                "Unused recovery cleanup failed: {error}"
+                                            ));
+                                            saving.failed = true;
+                                        }
+                                    }
+                                    Err(error) => self
+                                        .editor
+                                        .set_status(format!("Crash recovery unavailable: {error}")),
+                                }
+                                continue;
+                            }
+                        }
+                        if let Ok(recovery) = recovery
+                            && let Err(error) = saving.retire_recovery(recovery)
+                        {
+                            self.editor
+                                .set_status(format!("Unused recovery cleanup failed: {error}"));
+                            saving.failed = true;
+                        }
+                    }
+                    Err(error) => self
+                        .editor
+                        .set_status(format!("Recovery initialization failed: {error}")),
+                    _ => unreachable!("typed initialization completion"),
+                },
                 PendingKind::Cleanup => match result {
                     Ok(Completion::Cleanup) => {}
                     Err(error) if error.code == ErrorCode::OperationCancelled => {}
@@ -345,6 +461,7 @@ impl App {
                 },
             }
         }
+        let saving = self.saving.as_mut().expect("native I/O");
         if self.close_after_saves && !saving.pending() {
             self.close_after_saves = false;
             if saving.failed {
@@ -366,6 +483,9 @@ impl App {
                 ctx.send_viewport_cmd(egui::ViewportCommand::Close);
             }
         }
+        if self.recovery_needs_init && !self.close_after_saves && !self.allow_close {
+            self.attach_recovery();
+        }
     }
 }
 #[cfg(test)]
@@ -380,6 +500,11 @@ mod tests {
     fn app() -> App {
         let mut app = App::new(None);
         app.saving = Some(NativeSaving::new(egui::Context::default()).unwrap());
+        app
+    }
+    fn recovery_app(directory: PathBuf) -> App {
+        let mut app = app().with_recovery(directory);
+        drain(&mut app);
         app
     }
     fn drain(app: &mut App) {
@@ -548,7 +673,7 @@ mod tests {
         let ticket = saving
             .io
             .submit(
-                1,
+                0,
                 move || {
                     hold.recv().unwrap();
                     Ok(Completion::Cleanup)
@@ -572,7 +697,7 @@ mod tests {
     #[test]
     fn background_checkpoint_captures_a_without_blocking_edits_to_b() {
         let dir = scratch();
-        let mut app = app().with_recovery(dir.clone());
+        let mut app = recovery_app(dir.clone());
         app.editor.request(1, Action::AddLayer);
         app.editor.run_pending();
         let a = app.editor.document_snapshot();
@@ -609,7 +734,7 @@ mod tests {
     #[test]
     fn checkpoint_clear_and_new_checkpoint_are_fenced_and_ordered() {
         let dir = scratch();
-        let mut app = app().with_recovery(dir.clone());
+        let mut app = recovery_app(dir.clone());
         app.editor.request(1, Action::AddLayer);
         app.editor.run_pending();
         let release = pause_queue(&mut app);
@@ -647,7 +772,7 @@ mod tests {
     #[test]
     fn replacing_editor_does_not_wait_for_old_checkpoint_or_resurrect_it() {
         let dir = scratch();
-        let mut app = app().with_recovery(dir.clone());
+        let mut app = recovery_app(dir.clone());
         app.editor.request(1, Action::AddLayer);
         app.editor.run_pending();
         let release = pause_queue(&mut app);
@@ -665,7 +790,7 @@ mod tests {
     #[test]
     fn full_queue_refuses_document_replacement_before_invalidating_recovery() {
         let dir = scratch();
-        let mut app = app().with_recovery(dir.clone());
+        let mut app = recovery_app(dir.clone());
         app.editor.request(1, Action::AddLayer);
         app.editor.run_pending();
         let token = app.editor.recovery_handle().unwrap().token();
@@ -696,7 +821,7 @@ mod tests {
         let dir = scratch();
         let recovery_dir = dir.join("recovery");
         let path = dir.join("saved.pcnd");
-        let mut app = app().with_recovery(recovery_dir.clone());
+        let mut app = recovery_app(recovery_dir.clone());
         app.editor.request(1, Action::AddLayer);
         app.editor.run_pending();
         let expected = app.editor.document_snapshot();
@@ -721,7 +846,7 @@ mod tests {
     #[test]
     fn undo_to_saved_state_closes_after_clearing_a_newer_recovery_snapshot() {
         let dir = scratch();
-        let mut app = app().with_recovery(dir.clone());
+        let mut app = recovery_app(dir.clone());
         // The initial state is clean. B is checkpointed, then undo returns to A.
         app.editor.request(1, Action::AddLayer);
         app.editor.run_pending();
@@ -741,6 +866,129 @@ mod tests {
             "undone edits must not reappear after clean exit"
         );
         std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn startup_discovery_and_initialization_leave_the_editor_responsive() {
+        let dir = scratch();
+        let mut app = app();
+        let release = pause_queue(&mut app);
+        app = app.with_recovery(dir.clone());
+        assert!(app.editor.recovery_handle().is_none());
+        assert_eq!(
+            std::fs::read_dir(&dir).unwrap().count(),
+            0,
+            "configuration must not create files on the UI path"
+        );
+        app.editor.request(1, Action::AddLayer);
+        app.editor.run_pending();
+        let key = app.editor.render_key();
+        release.send(()).unwrap();
+        drain(&mut app);
+        assert!(app.editor.recovery_handle().is_some());
+        assert_eq!(
+            app.editor.render_key(),
+            key,
+            "initialization must not replace edits made while scanning"
+        );
+        assert!(!app.recovery_needs_scan && !app.recovery_needs_init);
+        drop(app);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+    #[test]
+    fn stale_startup_owner_is_retired_and_the_new_editor_gets_its_own_owner() {
+        let dir = scratch();
+        let mut app = app();
+        let release = pause_queue(&mut app);
+        app = app.with_recovery(dir.clone());
+        app.install(Editor::new_document(64, 64).unwrap()).unwrap();
+        assert!(
+            app.recovery_needs_init,
+            "exclusive discovery retains its admission until consumed"
+        );
+        release.send(()).unwrap();
+        drain(&mut app);
+        assert!(app.editor.recovery_handle().is_some());
+        assert_eq!(app.editor.document().canvas, (64, 64));
+        assert!(!app.recovery_needs_init);
+        drop(app);
+        assert_eq!(
+            std::fs::read_dir(&dir).unwrap().count(),
+            0,
+            "stale empty owners must be cleaned up"
+        );
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+    fn make_orphan(directory: &Path) -> Uuid {
+        let recovery = Recovery::start(directory).unwrap();
+        recovery
+            .checkpoint_document(Editor::new_document(4, 4).unwrap().document(), None)
+            .unwrap();
+        recovery.session()
+    }
+    #[test]
+    fn discovery_results_follow_the_current_directory_configuration() {
+        let a = scratch();
+        let b = scratch();
+        let a_id = make_orphan(&a);
+        let b_id = make_orphan(&b);
+        let mut app = app();
+        let release = pause_queue(&mut app);
+        app = app.with_recovery(a.clone()).with_recovery(b.clone());
+        release.send(()).unwrap();
+        drain(&mut app);
+        assert_eq!(app.recoverable.len(), 1);
+        assert_eq!(app.recoverable[0].session, b_id);
+        assert_ne!(app.recoverable[0].session, a_id);
+        assert_eq!(
+            Recovery::scan(&a).len(),
+            1,
+            "other directory's orphan is preserved"
+        );
+        drop(app);
+        std::fs::remove_dir_all(a).unwrap();
+        std::fs::remove_dir_all(b).unwrap();
+    }
+    #[test]
+    fn recovery_initialization_failure_does_not_stop_the_editor_or_invent_protection() {
+        let dir = scratch();
+        let blocked = dir.join("not-a-directory");
+        std::fs::write(&blocked, b"blocked").unwrap();
+        let mut app = app().with_recovery(blocked);
+        drain(&mut app);
+        assert!(app.editor.recovery_handle().is_none());
+        assert!(!app.recovery_needs_init);
+        assert!(app.editor.status().contains("Crash recovery unavailable"));
+        app.editor.request(1, Action::AddLayer);
+        assert_eq!(app.editor.run_pending(), 1);
+        drop(app);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn startup_configuration_does_not_silently_migrate_an_active_store() {
+        let a = scratch();
+        let b = scratch();
+        let mut app = recovery_app(a.clone());
+        let token = app.editor.recovery_handle().unwrap().token();
+        app.editor.request(1, Action::AddLayer);
+        app.editor.run_pending();
+        assert!(checkpoint(&mut app));
+        drain(&mut app);
+        app = app.with_recovery(b.clone());
+        assert_eq!(app.recovery_dir.as_deref(), Some(a.as_path()));
+        assert!(app.editor.recovery_handle().unwrap().is_current(token));
+        assert!(app.editor.has_checkpoint());
+        assert!(
+            app.editor
+                .status()
+                .contains("Existing recovery data has been retained")
+        );
+        assert_eq!(std::fs::read_dir(&b).unwrap().count(), 0);
+        drop(app);
+        assert_eq!(Recovery::scan(&a).len(), 1);
+        std::fs::remove_dir_all(a).unwrap();
+        std::fs::remove_dir_all(b).unwrap();
     }
 
     #[test]
