@@ -163,3 +163,20 @@ entries from `ima1111ge.png`, alongside the working rectangular/select-all/desel
 operations. Clicking an unavailable choice leaves the popup open; Escape or an
 outside click dismisses it. This follows the user's UI-first priority and does
 not establish native operation parity.
+
+## Workspace View controls
+
+View → Status bar now changes the actual bottom panel and gives the canvas the
+released space. Its optional `classic_status_bar` settings-v3 field defaults to
+true for older files and survives restart. This Classic preference does not hide
+Studio's independent status presentation or change document pixels/history.
+
+View → Full screen and F11 issue the same native viewport command; Escape exits
+when no pending text or drawing gesture owns cancellation. The window's reported
+fullscreen state updates the menu, and fullscreen is not persisted as a document
+or user preference. macOS muda exposes both commands through the same action
+outbox, with checked/enabled state revalidated on each pass. Tests verify viewport
+commands and cancellation priority; native startup validates menu accelerator
+construction. OS fullscreen transitions across supported targets still require
+platform qualification. Rulers, automatic toolbar hiding and Thumbnail remain
+unimplemented.

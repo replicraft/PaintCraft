@@ -13,6 +13,7 @@ fn actions() -> Vec<Chrome> {
         .chain(
             paintcraft_ui::actions::VIEW
                 .iter()
+                .chain(paintcraft_ui::actions::WORKSPACE_VIEW)
                 .copied()
                 .map(Chrome::View),
         )
@@ -36,6 +37,7 @@ fn shortcut(action: Chrome) -> Option<&'static str> {
         Chrome::View(ViewAction::ActualSize) => "meta+Digit0",
         Chrome::View(ViewAction::FitWindow) => "meta+KeyB",
         Chrome::View(ViewAction::FitSelection) => "meta+shift+KeyB",
+        Chrome::View(ViewAction::FullScreen) => "F11",
         _ => return None,
     })
 }
@@ -64,6 +66,7 @@ impl App {
                     "View",
                     paintcraft_ui::actions::VIEW
                         .iter()
+                        .chain(paintcraft_ui::actions::WORKSPACE_VIEW)
                         .copied()
                         .map(Chrome::View)
                         .collect(),

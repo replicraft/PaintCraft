@@ -31,6 +31,8 @@ impl App {
             zoom: self.zoom,
             pixel_grid: self.pixel_grid,
             can_fit_selection: matches!(self.editor.selection(), Selection::Rect(_)),
+            status_bar: self.settings.classic_status_bar,
+            fullscreen: self.fullscreen,
             blocked: self.switching.is_some()
                 || self.closing_workspace
                 || self.close_after_saves

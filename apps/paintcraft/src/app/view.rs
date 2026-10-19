@@ -80,6 +80,22 @@ impl App {
     }
 
     pub(super) fn dispatch_view_action(&mut self, ctx: &egui::Context, action: ViewAction) {
+        match action {
+            ViewAction::StatusBar => {
+                self.settings.classic_status_bar = !self.settings.classic_status_bar;
+                self.persist_settings();
+                ctx.request_repaint();
+                return;
+            }
+            ViewAction::FullScreen => {
+                self.editor.cancel_gesture();
+                self.fullscreen = !self.fullscreen;
+                ctx.send_viewport_cmd(egui::ViewportCommand::Fullscreen(self.fullscreen));
+                ctx.request_repaint();
+                return;
+            }
+            _ => {}
+        }
         if self.document_count() == 0 {
             return;
         }
@@ -125,7 +141,9 @@ impl App {
                 );
                 return;
             }
-            ViewAction::PixelGrid => unreachable!(),
+            ViewAction::PixelGrid | ViewAction::StatusBar | ViewAction::FullScreen => {
+                unreachable!()
+            }
         };
         self.set_zoom(ctx, zoom, center);
     }

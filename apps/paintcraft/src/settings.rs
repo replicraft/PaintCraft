@@ -24,7 +24,7 @@ pub enum Experience {
     Studio,
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Settings {
     pub experience: Experience,
     pub appearance: Appearance,
@@ -33,6 +33,21 @@ pub struct Settings {
     pub classic_variant: Option<ClassicVariant>,
     pub canvas: CanvasDefaults,
     pub custom_colors: paintcraft_classic::CustomColors,
+    pub classic_status_bar: bool,
+}
+
+impl Default for Settings {
+    fn default() -> Self {
+        Self {
+            experience: Experience::default(),
+            appearance: Appearance::default(),
+            text: Default::default(),
+            classic_variant: None,
+            canvas: Default::default(),
+            custom_colors: Default::default(),
+            classic_status_bar: true,
+        }
+    }
 }
 
 /// What loading found, so the application can explain a fallback.
@@ -106,6 +121,11 @@ fn parse(bytes: &[u8]) -> Result<Settings, String> {
     };
     Ok(Settings {
         appearance,
+        classic_status_bar: match v.get("classic_status_bar") {
+            None => true,
+            Some(Value::Bool(value)) => *value,
+            Some(_) => return Err("invalid Classic status bar preference".into()),
+        },
         text: text::parse(v.get("text"))?,
         custom_colors: colors::parse(v.get("custom_colors"))?,
         canvas,
@@ -155,6 +175,7 @@ impl Settings {
             ("canvas", self.canvas.value()),
             ("custom_colors", colors::value(&self.custom_colors)),
             ("appearance", Value::str(self.appearance.id())),
+            ("classic_status_bar", Value::Bool(self.classic_status_bar)),
             ("text", text::value(&self.text)),
             (
                 "experience",
@@ -288,5 +309,15 @@ mod tests {
             assert_eq!(Settings::load(&dir).1, Loaded::Ok);
             fs::remove_dir_all(dir).unwrap();
         }
+    }
+    #[test]
+    fn status_bar_defaults_on_for_old_settings_and_rejects_wrong_types() {
+        assert!(
+            parse(br#"{"schema":"paintcraft.settings/v2","experience":"classic"}"#)
+                .unwrap()
+                .classic_status_bar
+        );
+        assert!(!parse(br#"{"schema":"paintcraft.settings/v2","experience":"classic","classic_status_bar":false}"#).unwrap().classic_status_bar);
+        assert!(parse(br#"{"schema":"paintcraft.settings/v2","experience":"classic","classic_status_bar":"false"}"#).is_err());
     }
 }

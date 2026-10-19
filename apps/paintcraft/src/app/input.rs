@@ -40,6 +40,14 @@ impl App {
                         self.editor.commit_text();
                     }
                     egui::Key::Escape => {
+                        if self.fullscreen && !text_focus && !self.editor.gesture_in_progress() {
+                            self.dispatch_chrome(
+                                &ctx,
+                                vec![paintcraft_ui::actions::Action::View(
+                                    paintcraft_ui::actions::ViewAction::FullScreen,
+                                )],
+                            );
+                        }
                         self.editor.cancel_gesture();
                         self.editor.cancel_text();
                     }

@@ -127,6 +127,8 @@ mod tests {
             zoom: 1.0,
             pixel_grid: false,
             can_fit_selection: false,
+            status_bar: true,
+            fullscreen: false,
         };
         assert!(Action::Layer(LayerAction::MoveTop).enabled(context));
         assert!(!Action::Layer(LayerAction::MoveBottom).enabled(context));

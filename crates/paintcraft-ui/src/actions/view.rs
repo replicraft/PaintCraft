@@ -12,12 +12,16 @@ pub enum ViewAction {
     FitSelection,
     ActualSize,
     PixelGrid,
+    StatusBar,
+    FullScreen,
     Double,
     Quadruple,
     Octuple,
     /// Hundredths of one percent; 10000 is actual size.
     SetZoom(u32),
 }
+
+pub const WORKSPACE_VIEW: &[ViewAction] = &[ViewAction::StatusBar, ViewAction::FullScreen];
 
 pub const VIEW: &[ViewAction] = &[
     ViewAction::ZoomIn,
@@ -40,6 +44,8 @@ impl ViewAction {
             ),
             Self::ActualSize => ("Actual size", Some((Key::Num0, Modifiers::COMMAND))),
             Self::PixelGrid => ("Pixel grid", None),
+            Self::StatusBar => ("Status bar", None),
+            Self::FullScreen => ("Full screen", Some((Key::F11, Modifiers::NONE))),
             Self::Double => ("200%", None),
             Self::Quadruple => ("400%", None),
             Self::Octuple => ("800%", None),
@@ -55,6 +61,9 @@ impl ViewAction {
         }
     }
     pub(super) fn enabled(self, ctx: Context) -> bool {
+        if matches!(self, Self::StatusBar | Self::FullScreen) {
+            return true;
+        }
         ctx.document_open
             && match self {
                 Self::ZoomIn => ctx.zoom < ZOOM_MAX,
@@ -72,6 +81,8 @@ impl ViewAction {
             Self::FitSelection => 1303,
             Self::ActualSize => 1304,
             Self::PixelGrid => 1305,
+            Self::StatusBar => 1310,
+            Self::FullScreen => 1311,
             Self::Double => 1306,
             Self::Quadruple => 1307,
             Self::Octuple => 1308,
@@ -81,6 +92,8 @@ impl ViewAction {
     pub(super) fn checked(self, ctx: Context) -> Option<bool> {
         match self {
             Self::PixelGrid => Some(ctx.pixel_grid),
+            Self::StatusBar => Some(ctx.status_bar),
+            Self::FullScreen => Some(ctx.fullscreen),
             _ => None,
         }
     }
@@ -118,7 +131,33 @@ mod tests {
             zoom: ZOOM_MAX,
             pixel_grid: true,
             can_fit_selection: false,
+            status_bar: true,
+            fullscreen: false,
         };
+        assert_eq!(
+            Action::from_shortcut(Key::F11, Modifiers::NONE),
+            Some(Action::View(ViewAction::FullScreen))
+        );
+        assert_eq!(Action::from_shortcut(Key::F11, Modifiers::SHIFT), None);
+        assert!(Action::View(ViewAction::FullScreen).enabled(Context {
+            document_open: false,
+            ..ctx
+        }));
+        assert!(!Action::View(ViewAction::StatusBar).enabled(ctx));
+        let classic = Context {
+            frontend: Frontend::Classic,
+            document_open: false,
+            ..ctx
+        };
+        assert!(Action::View(ViewAction::StatusBar).enabled(classic));
+        assert_eq!(
+            Action::View(ViewAction::StatusBar).checked(classic),
+            Some(true)
+        );
+        assert!(!Action::View(ViewAction::FullScreen).enabled(Context {
+            blocked: true,
+            ..classic
+        }));
         assert!(!Action::View(ViewAction::ZoomIn).enabled(ctx));
         assert!(!Action::View(ViewAction::FitSelection).enabled(ctx));
         assert_eq!(Action::View(ViewAction::PixelGrid).checked(ctx), Some(true));

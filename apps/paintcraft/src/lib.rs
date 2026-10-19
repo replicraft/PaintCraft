@@ -30,6 +30,8 @@ mod recovery;
 mod rendering;
 mod saving;
 pub mod settings;
+#[path = "app/status.rs"]
+mod status;
 #[path = "app/switching.rs"]
 mod switching;
 #[path = "app/tabs.rs"]
@@ -170,6 +172,7 @@ pub struct App {
     rendered: Vec<u8>,
     zoom: f32,
     pixel_grid: bool,
+    fullscreen: bool,
     pending_center: Option<(f32, f32)>,
     path_text: String,
     /// The file this document was opened from or last saved to.
@@ -262,6 +265,7 @@ impl App {
             rendered: Vec::new(),
             zoom: 1.0,
             pixel_grid: false,
+            fullscreen: false,
             pending_center: None,
             path_text,
             bound: None,

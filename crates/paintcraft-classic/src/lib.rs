@@ -111,6 +111,15 @@ pub fn chrome(
                 actions.push(Action::View(paintcraft_ui::actions::ViewAction::PixelGrid));
                 ui.close();
             }
+            for &action in paintcraft_ui::actions::WORKSPACE_VIEW {
+                if action == paintcraft_ui::actions::ViewAction::FullScreen {
+                    ui.separator();
+                }
+                if paintcraft_ui::actions::menu_item(ui, Action::View(action), context) {
+                    actions.push(Action::View(action));
+                    ui.close();
+                }
+            }
             ui.separator();
             for action in [Action::CanvasSize, Action::CanvasDefaults] {
                 if paintcraft_ui::actions::menu_item(ui, action, context) {

@@ -28,6 +28,8 @@ impl Action {
                 ViewAction::FitWindow | ViewAction::FitSelection => Icon::FitWindow,
                 ViewAction::ActualSize => Icon::ActualSize,
                 ViewAction::PixelGrid => Icon::PixelGrid,
+                ViewAction::StatusBar => return None,
+                ViewAction::FullScreen => Icon::Resize,
                 ViewAction::Double
                 | ViewAction::Quadruple
                 | ViewAction::Octuple

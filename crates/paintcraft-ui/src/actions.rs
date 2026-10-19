@@ -4,7 +4,7 @@ use paintcraft_tools::Tool;
 mod layers;
 mod view;
 pub use layers::{LAYERS, LayerAction};
-pub use view::{VIEW, ViewAction, ZOOM_MAX, ZOOM_MIN};
+pub use view::{VIEW, ViewAction, WORKSPACE_VIEW, ZOOM_MAX, ZOOM_MIN};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Action {
@@ -51,6 +51,8 @@ pub struct Context {
     pub zoom: f32,
     pub pixel_grid: bool,
     pub can_fit_selection: bool,
+    pub status_bar: bool,
+    pub fullscreen: bool,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -128,6 +130,7 @@ impl Action {
 
     pub fn available(self, frontend: Frontend) -> bool {
         match self {
+            Self::View(ViewAction::StatusBar) => frontend == Frontend::Classic,
             Self::Interface
             | Self::CanvasSize
             | Self::CanvasDefaults
@@ -171,6 +174,9 @@ impl Action {
     /// Exact logical-key/modifier matching prevents Save As from falling through
     /// to Save and avoids treating AltGr combinations as application commands.
     pub fn from_shortcut(key: Key, modifiers: Modifiers) -> Option<Self> {
+        if key == Key::F11 && modifiers.matches_exact(Modifiers::NONE) {
+            return Some(Self::View(ViewAction::FullScreen));
+        }
         if matches!(key, Key::Plus | Key::Equals) && modifiers.command && !modifiers.alt {
             return Some(Self::View(ViewAction::ZoomIn));
         }
@@ -311,6 +317,8 @@ mod tests {
             zoom: 1.0,
             pixel_grid: false,
             can_fit_selection: false,
+            status_bar: true,
+            fullscreen: false,
         };
         let ids: std::collections::HashSet<_> = FILE
             .iter()
