@@ -5,7 +5,7 @@
 //! Snapshots share unchanged tiles by `Arc`, so a history entry costs only the
 //! tiles an edit actually rewrote. Bounded eviction is a later task.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 use std::sync::Arc;
 
 use paintcraft_types::json::Value;
@@ -16,6 +16,9 @@ use crate::commands::Batch;
 use crate::document::{Document, POLICY};
 use crate::execute::{STAGED_PIXELS_MAX, Selection, execute_with_budget};
 use crate::ids::deterministic_id;
+
+/// Default memory the session may hold across all of its snapshots (1 GiB).
+pub const DEFAULT_HISTORY_BYTES: u64 = 1 << 30;
 
 /// `paintcraft.result/v1`.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -87,6 +90,9 @@ pub struct Session {
     cursor: usize,
     saved_state: Uuid,
     staged_pixels: u64,
+    history_budget: u64,
+    trimmed_total: u64,
+    last_trimmed: usize,
 }
 
 impl Session {
@@ -105,7 +111,57 @@ impl Session {
             epoch: 0,
             cursor: 0,
             staged_pixels: STAGED_PIXELS_MAX,
+            history_budget: DEFAULT_HISTORY_BYTES,
+            trimmed_total: 0,
+            last_trimmed: 0,
         }
+    }
+
+    /// Cap the memory held by the document and every retained snapshot. When a
+    /// commit exceeds it, the oldest undo steps are dropped (never the newest).
+    pub fn set_history_budget(&mut self, bytes: u64) {
+        self.history_budget = bytes;
+    }
+
+    /// Bytes of pixel tiles held by the document and all snapshots, counting a
+    /// tile shared by several snapshots once.
+    pub fn resident_bytes(&self) -> u64 {
+        let mut seen = HashSet::new();
+        for e in &self.entries {
+            for l in e.doc.layers.values() {
+                seen.extend(l.raster.tile_identities());
+            }
+        }
+        for l in self.doc.layers.values() {
+            seen.extend(l.raster.tile_identities());
+        }
+        seen.len() as u64 * crate::raster::RasterLayer::TILE_BYTES as u64
+    }
+
+    /// Undo steps available right now.
+    pub fn undo_depth(&self) -> usize {
+        self.cursor
+    }
+
+    /// Oldest undo steps dropped by the most recent commit to honour the budget.
+    pub fn last_trimmed(&self) -> usize {
+        self.last_trimmed
+    }
+
+    /// Undo steps dropped over the life of the session.
+    pub fn trimmed_total(&self) -> u64 {
+        self.trimmed_total
+    }
+
+    fn enforce_history_budget(&mut self) {
+        self.last_trimmed = 0;
+        // Always keep the newest edit undoable.
+        while self.cursor > 1 && self.resident_bytes() > self.history_budget {
+            self.entries.remove(0);
+            self.cursor -= 1;
+            self.last_trimmed += 1;
+        }
+        self.trimmed_total += self.last_trimmed as u64;
     }
 
     /// Lower the per-batch staging budget (resource-exhaustion testing, constrained hosts).
@@ -189,6 +245,7 @@ impl Session {
         self.doc = doc;
         self.selection = staged.selection;
         self.epoch += 1;
+        self.enforce_history_budget();
         Ok(Receipt {
             committed: true,
             state_id: self.doc.state_id,
@@ -357,6 +414,59 @@ mod tests {
 
     fn doc_before_root_state(s: &Session) -> Uuid {
         s.entries[0].doc.state_id
+    }
+
+    #[test]
+    fn a_memory_budget_drops_only_the_oldest_undo_steps_and_says_so() {
+        // Ten tiles side by side; every edit rewrites a different tile.
+        let mut s = Session::new(new_document(2560, 256, None, 0, POLICY).unwrap());
+        let r = s.apply_json(&batch(&s, r##"[{"op":"layer.add","ref":"l","name":"L","width":2560,"height":256,"origin":{"x":0,"y":0},"default_pixel":"#00000000"}]"##)).unwrap();
+        let layer = r.aliases["l"];
+        let tile = crate::raster::RasterLayer::TILE_BYTES as u64;
+        s.set_history_budget(14 * tile);
+        let mut states = vec![s.ticket().state_id];
+        for i in 0..60i64 {
+            let x = (i % 10) * 256 + 5;
+            s.apply_json(&batch(&s, &format!(r##"[{{"op":"raster.fill_rect","layer_ref":{{"id":"{layer}"}},"rect":{{"x":{x},"y":{},"width":1,"height":1}},"color":"#000000FF","mode":"replace"}}]"##, i / 10))).unwrap();
+            states.push(s.ticket().state_id);
+            assert!(
+                s.resident_bytes() <= 14 * tile || s.undo_depth() <= 1,
+                "edit {i}: {} bytes, depth {}",
+                s.resident_bytes(),
+                s.undo_depth()
+            );
+        }
+        assert!(
+            s.trimmed_total() > 0 && s.undo_depth() < 60,
+            "history is bounded"
+        );
+        assert!(s.undo_depth() >= 1);
+        // Everything still reachable is exact: walking back restores the recorded states in order.
+        let depth = s.undo_depth();
+        for k in 0..depth {
+            let want = states[states.len() - 2 - k];
+            assert_eq!(s.undo().unwrap().state_id, want, "undo step {k}");
+        }
+        assert!(s.undo().is_none(), "nothing older is retained");
+        // The current document was never touched by trimming.
+        while s.redo().is_some() {}
+        assert_eq!(s.ticket().state_id, *states.last().unwrap());
+    }
+
+    #[test]
+    fn the_newest_edit_stays_undoable_whatever_the_budget() {
+        let mut s = session();
+        s.set_history_budget(0);
+        s.apply_json(&batch(&s, &format!("[{ADD}]"))).unwrap();
+        let layer = s.document().roots[1];
+        s.apply_json(&batch(&s, &format!("[{}]", fill(layer, 0, "#000000FF"))))
+            .unwrap();
+        assert_eq!(s.undo_depth(), 1);
+        assert!(s.undo().is_some());
+        assert_eq!(
+            s.document().layers[&layer].raster.get(0, 0),
+            Rgba::TRANSPARENT
+        );
     }
 
     #[test]

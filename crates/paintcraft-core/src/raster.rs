@@ -180,6 +180,15 @@ impl RasterLayer {
         Rect::from_origin_size(0, 0, self.width, self.height).expect("layers are non-empty")
     }
 
+    /// Identity of every resident tile (the address of its shared buffer), for
+    /// counting memory that several snapshots share exactly once.
+    pub fn tile_identities(&self) -> impl Iterator<Item = usize> + '_ {
+        self.tiles.values().map(|t| Arc::as_ptr(t) as usize)
+    }
+
+    /// Bytes held by one resident tile.
+    pub const TILE_BYTES: usize = TILE_PIXELS * 4;
+
     pub fn resident_tiles(&self) -> usize {
         self.tiles.len()
     }

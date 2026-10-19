@@ -287,6 +287,15 @@ impl Editor {
         }
     }
 
+    /// Cap the memory held by the document and its undo history.
+    pub fn set_history_budget(&mut self, bytes: u64) {
+        self.session.set_history_budget(bytes);
+    }
+
+    pub fn undo_depth(&self) -> usize {
+        self.session.undo_depth()
+    }
+
     /// The user chose to throw this work away: its checkpoint must not come back.
     pub fn discard_checkpoint(&mut self) {
         if let Some(r) = &self.recovery {
@@ -697,6 +706,13 @@ impl Editor {
         match Batch::from_value(&batch).and_then(|b| self.session.apply(&b)) {
             Ok(r) => {
                 self.status = done.to_owned();
+                if self.session.last_trimmed() > 0 {
+                    // History is only ever shortened openly, never silently.
+                    self.status += &format!(
+                        " — the {} oldest undo step(s) were dropped to stay within the memory budget",
+                        self.session.last_trimmed()
+                    );
+                }
                 Some(r)
             }
             Err(e) => {
@@ -1214,6 +1230,21 @@ mod tests {
             "no stale files"
         );
         std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn trimming_history_is_reported_to_the_user() {
+        let mut e = editor();
+        e.tool = Tool::Brush;
+        e.options.size = 1;
+        e.set_history_budget(3 * paintcraft_core::raster::RasterLayer::TILE_BYTES as u64);
+        let mut said = false;
+        for i in 0..30 {
+            stroke(&mut e, &[(10 + i, 10), (10 + i, 11)]);
+            said |= e.status().contains("oldest undo step");
+        }
+        assert!(said, "the status must mention dropped history");
+        assert!(e.undo_depth() >= 1 && e.undo_depth() < 31);
     }
 
     #[test]
