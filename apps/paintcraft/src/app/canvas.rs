@@ -179,7 +179,7 @@ impl App {
         }
         let color = |c: Rgba| Color32::from_rgba_unmultiplied(c.0[0], c.0[1], c.0[2], c.0[3]);
         match self.editor.preview() {
-            Some(Preview::Path { .. }) => {} // Rendered through the same staged pixels as publication.
+            Some(Preview::Path(_)) => {} // Rendered through the same staged pixels as publication.
             Some(Preview::Shape {
                 tool,
                 from,

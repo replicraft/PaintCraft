@@ -58,3 +58,62 @@ fn cancelled_preview_never_publishes() {
     assert!(editor.preview_batch().is_none());
     assert!(editor.document().same_semantics(&before));
 }
+
+#[test]
+fn zero_opacity_and_transparent_paint_do_not_erase_or_create_history() {
+    for tool in [Tool::Brush, Tool::Pencil] {
+        let mut editor = Editor::new_document(16, 16).unwrap();
+        editor.select_tool(tool);
+        editor.options.brush_opacity = 0;
+        if tool == Tool::Pencil {
+            editor.color = Rgba([12, 34, 56, 0]);
+        }
+        let before = editor.document_snapshot();
+        let key = editor.render_key();
+        let depth = editor.undo_depth();
+        editor.pointer_down((4, 4));
+        editor.pointer_move((10, 10));
+        let batch = editor.preview_batch().unwrap().unwrap();
+        let preview =
+            paintcraft_editor::execute::execute(editor.document(), editor.selection(), &batch)
+                .unwrap()
+                .doc;
+        assert!(preview.same_semantics(&before));
+        editor.pointer_up();
+        editor.run_pending();
+        assert!(editor.document().same_semantics(&before));
+        assert_eq!(editor.render_key(), key);
+        assert_eq!(editor.undo_depth(), depth);
+        assert!(!editor.is_dirty());
+    }
+}
+
+#[test]
+fn repeated_segments_cap_opacity_and_cancellation_keeps_the_original() {
+    let mut editor = Editor::new_document(32, 32).unwrap();
+    editor.request(1, Action::AddLayer);
+    editor.run_pending();
+    editor.select_tool(Tool::Brush);
+    editor.options.size = 5;
+    editor.options.brush_opacity = 50;
+    editor.color = Rgba([12, 34, 56, 128]);
+    let layer = editor.target().unwrap();
+    let before = editor.document_snapshot();
+    editor.pointer_down((5, 5));
+    editor.pointer_move((25, 25));
+    editor.pointer_move((5, 5));
+    let staged = paintcraft_editor::execute::execute(
+        editor.document(),
+        editor.selection(),
+        &editor.preview_batch().unwrap().unwrap(),
+    )
+    .unwrap()
+    .doc;
+    assert_eq!(
+        staged.layers[&layer].raster.get(10, 10),
+        Rgba([12, 34, 56, 64])
+    );
+    assert!((0..32).all(|y| (0..32).all(|x| staged.layers[&layer].raster.get(x, y).a() <= 64)));
+    editor.cancel_gesture();
+    assert!(editor.document().same_semantics(&before));
+}

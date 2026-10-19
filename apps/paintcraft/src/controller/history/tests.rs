@@ -9,14 +9,15 @@ fn pending_edit_makes_a_queued_history_click_stale_instead_of_erasing_new_work()
     let layer = editor.target().unwrap();
     editor.request(
         2,
-        Action::Stroke {
+        Action::Stroke(paintcraft_tools::Stroke {
+            mode: paintcraft_tools::BlendMode::SourceOver,
             point_scale: 1,
             layer,
             points: vec![(3, 3)],
             color: Rgba([0, 0, 0, 255]),
             size: 1,
             round: false,
-        },
+        }),
     );
     editor.request(
         3,

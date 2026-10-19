@@ -41,6 +41,27 @@ overlapping segments. These are provisional admission limits. Long desktop
 gestures still split at the batch operation point limit; overlapping chunk
 joints can deposit twice for translucent colours, as with integer brushes.
 
+## Brush opacity and explicit paint mode
+
+The shared Brush options include integer opacity from 0 to 100 percent, initially
+100. It is captured at pointer-down with the color, size, tip, button and layer.
+The effective source alpha is `(color_alpha * min(percent, 100) + 50) / 100`.
+Coverage then scales this alpha, and layer opacity remains a separate compositor
+input. Changing the preference adds no document history. Each document tab retains
+its own tool options.
+
+Preview and release share one captured `Stroke`, including an explicit mode.
+Brush and Pencil use source-over; zero-opacity Brush and alpha-zero Pencil strokes
+leave pixels, StateId, dirty state and history unchanged. Eraser uses replace
+explicitly. Alpha zero alone no longer selects erasing behavior. CLI operations
+retain their explicit `mode` contract.
+
+Within a single operation the swept geometry is unioned before blending, so
+retracing cannot exceed the selected opacity. The previously documented long-path
+chunk-boundary limitation still applies. Tests cover captured secondary color,
+partial antialias coverage, preview/release identity, no-op gestures, cancellation,
+undo/redo and native-document round trips.
+
 ## Preview and publication
 
 Path previews and released strokes use the same command builder, private staged

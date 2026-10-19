@@ -10,14 +10,15 @@ fn paint(app: &mut App, x: i64) {
     let layer = app.editor.target().unwrap();
     app.editor.request(
         100 + x as u64,
-        Action::Stroke {
+        Action::Stroke(paintcraft_tools::Stroke {
+            mode: paintcraft_tools::BlendMode::SourceOver,
             point_scale: 1,
             layer,
             points: vec![(x, 5)],
             color: Rgba([10, 20, 30, 255]),
             size: 1,
             round: false,
-        },
+        }),
     );
     app.editor.run_pending();
 }

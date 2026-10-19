@@ -393,14 +393,7 @@ impl Editor {
     fn execute(&mut self, action: Action) {
         match action {
             Action::ResizeCanvas { width, height } => self.resize_canvas(width, height),
-            Action::Stroke {
-                layer,
-                points,
-                point_scale,
-                color,
-                size,
-                round,
-            } => self.stroke(layer, &points, color, size, round, point_scale),
+            Action::Stroke(stroke) => self.stroke(&stroke),
             Action::Fill {
                 layer,
                 at,

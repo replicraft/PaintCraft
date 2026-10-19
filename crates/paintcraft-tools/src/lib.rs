@@ -1,5 +1,6 @@
 //! Tool state machines produce intentions; the application publishes them.
 use paintcraft_core::types::Rgba;
+pub use paintcraft_core::types::policy::BlendMode;
 pub use paintcraft_input::PointerButton;
 use uuid::Uuid;
 const POINTS_PER_OP: usize = 65_536;
@@ -69,6 +70,8 @@ pub struct ToolOptions {
     /// Brush, eraser and outline thickness in pixels (1..=1024). The pencil is always 1.
     pub size: u32,
     pub round: bool,
+    /// Capped Brush opacity in percent, 0..=100; captured at pointer-down.
+    pub brush_opacity: u8,
     pub style: ShapeStyle,
     /// Fill tolerance, 0..=255 per channel.
     pub tolerance: u8,
@@ -81,6 +84,7 @@ impl Default for ToolOptions {
         ToolOptions {
             size: 4,
             round: true,
+            brush_opacity: 100,
             style: ShapeStyle::Outline,
             tolerance: 0,
             text_scale: 2,
@@ -88,16 +92,21 @@ impl Default for ToolOptions {
     }
 }
 
+/// Captured stroke geometry and explicit paint mode, shared by preview and release.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Stroke {
+    pub layer: Uuid,
+    pub points: Vec<(i64, i64)>,
+    pub point_scale: u32,
+    pub color: Rgba,
+    pub size: u32,
+    pub round: bool,
+    pub mode: BlendMode,
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum Action {
-    Stroke {
-        layer: Uuid,
-        points: Vec<(i64, i64)>,
-        point_scale: u32,
-        color: Rgba,
-        size: u32,
-        round: bool,
-    },
+    Stroke(Stroke),
     Fill {
         layer: Uuid,
         at: (i64, i64),
@@ -171,13 +180,7 @@ pub enum Action {
 /// What the UI should draw for an unpublished gesture.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Preview {
-    Path {
-        points: Vec<(i64, i64)>,
-        point_scale: u32,
-        size: u32,
-        round: bool,
-        color: Rgba,
-    },
+    Path(Stroke),
     Shape {
         tool: Tool,
         from: (i64, i64),
@@ -344,14 +347,16 @@ impl ToolState {
         );
         Some(match g.tool {
             Tool::Pencil | Tool::Brush | Tool::Eraser => {
-                let (size, round, color) = Self::brush_of(g);
-                Preview::Path {
+                let (size, round, color, mode) = Self::brush_of(g);
+                Preview::Path(Stroke {
+                    layer: g.layer,
+                    mode,
                     points: g.points.clone(),
                     point_scale: g.point_scale,
                     size,
                     round,
                     color,
-                }
+                })
             }
             Tool::Fill | Tool::Text => return None,
             Tool::Select => Preview::Marquee {
@@ -371,11 +376,22 @@ impl ToolState {
         })
     }
 
-    fn brush_of(g: &Gesture) -> (u32, bool, Rgba) {
+    fn brush_of(g: &Gesture) -> (u32, bool, Rgba, BlendMode) {
         match g.tool {
-            Tool::Pencil => (1, false, g.color),
-            Tool::Eraser => (g.options.size, false, Rgba::TRANSPARENT),
-            _ => (g.options.size, g.options.round, g.color),
+            Tool::Pencil => (1, false, g.color, BlendMode::SourceOver),
+            Tool::Eraser => (g.options.size, false, Rgba::TRANSPARENT, BlendMode::Replace),
+            _ => {
+                let mut color = g.color;
+                color.0[3] = ((u16::from(color.a()) * u16::from(g.options.brush_opacity.min(100))
+                    + 50)
+                    / 100) as u8;
+                (
+                    g.options.size,
+                    g.options.round,
+                    color,
+                    BlendMode::SourceOver,
+                )
+            }
         }
     }
 
@@ -439,15 +455,16 @@ impl ToolState {
         );
         let action = match g.tool {
             Tool::Pencil | Tool::Brush | Tool::Eraser => {
-                let (size, round, color) = Self::brush_of(&g);
-                Action::Stroke {
+                let (size, round, color, mode) = Self::brush_of(&g);
+                Action::Stroke(Stroke {
+                    mode,
                     layer: g.layer,
                     points: g.points,
                     point_scale: g.point_scale,
                     color,
                     size,
                     round,
-                }
+                })
             }
             Tool::Text => return None,
             Tool::Fill => Action::Fill {

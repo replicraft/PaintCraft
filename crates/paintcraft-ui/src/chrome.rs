@@ -31,6 +31,11 @@ pub fn options(ui: &mut egui::Ui, state: &mut Controls, actions: &mut Vec<Action
         if state.tool == Tool::Brush {
             ui.selectable_value(&mut state.options.round, true, "Round");
             ui.selectable_value(&mut state.options.round, false, "Square");
+            ui.add(
+                egui::Slider::new(&mut state.options.brush_opacity, 0..=100)
+                    .text("Brush opacity")
+                    .suffix("%"),
+            );
         }
         if matches!(state.tool, Tool::Rect | Tool::Ellipse) {
             for (style, label) in [

@@ -1,6 +1,7 @@
 //! Brush command construction shared by preview and publication.
 
 use super::*;
+use paintcraft_tools::{BlendMode, Stroke};
 
 #[cfg(test)]
 #[path = "strokes/tests.rs"]
@@ -9,17 +10,9 @@ mod tests;
 impl Editor {
     /// Staged gesture commands; applying them never publishes or adds history.
     pub fn preview_batch(&self) -> Option<Result<Batch>> {
-        let Preview::Path {
-            points,
-            point_scale,
-            size,
-            round,
-            color,
-        } = self.preview()?
-        else {
+        let Preview::Path(stroke) = self.preview()? else {
             return None;
         };
-        let layer = self.target?;
         Some(Batch::from_value(&Value::object([
             ("schema", Value::str("paintcraft.batch/v2")),
             ("atomic", Value::Bool(true)),
@@ -37,44 +30,32 @@ impl Editor {
                     ),
                 ]),
             ),
-            (
-                "operations",
-                Value::Array(stroke_operations(
-                    layer,
-                    &points,
-                    color,
-                    size,
-                    round,
-                    point_scale,
-                )),
-            ),
+            ("operations", Value::Array(stroke_operations(&stroke))),
         ])))
     }
 
-    pub(super) fn stroke(
-        &mut self,
-        layer: Uuid,
-        points: &[(i64, i64)],
-        color: Rgba,
-        size: u32,
-        round: bool,
-        point_scale: u32,
-    ) {
+    pub(super) fn stroke(&mut self, stroke: &Stroke) {
         self.draw(
-            stroke_operations(layer, points, color, size, round, point_scale),
-            if color.a() == 0 { "Erase" } else { "Stroke" },
+            stroke_operations(stroke),
+            if stroke.mode == BlendMode::Replace {
+                "Erase"
+            } else {
+                "Stroke"
+            },
         );
     }
 }
 
-fn stroke_operations(
-    layer: Uuid,
-    points: &[(i64, i64)],
-    color: Rgba,
-    size: u32,
-    round: bool,
-    point_scale: u32,
-) -> Vec<Value> {
+fn stroke_operations(stroke: &Stroke) -> Vec<Value> {
+    let Stroke {
+        layer,
+        points,
+        color,
+        size,
+        round,
+        point_scale,
+        mode,
+    } = stroke;
     if points.is_empty() {
         return Vec::new();
     }
@@ -87,7 +68,7 @@ fn stroke_operations(
         let end = (start + POINTS_PER_OP).min(points.len());
         ops.push(Value::object([
             ("op", Value::str("raster.stroke_path")),
-            ("layer_ref", layer_ref(layer)),
+            ("layer_ref", layer_ref(*layer)),
             (
                 "points",
                 Value::Array(points[start..end].iter().map(|p| point(*p)).collect()),
@@ -95,17 +76,16 @@ fn stroke_operations(
             ("color", Value::str(color.to_hex())),
             (
                 "mode",
-                Value::str(if color.a() == 0 {
-                    "replace"
-                } else {
-                    "source-over"
+                Value::str(match mode {
+                    BlendMode::Replace => "replace",
+                    BlendMode::SourceOver => "source-over",
                 }),
             ),
-            ("size", Value::Int(i64::from(size))),
-            ("point_scale", Value::Int(i64::from(point_scale))),
+            ("size", Value::Int(i64::from(*size))),
+            ("point_scale", Value::Int(i64::from(*point_scale))),
             (
                 "brush",
-                Value::str(if round { "smooth-round" } else { "square" }),
+                Value::str(if *round { "smooth-round" } else { "square" }),
             ),
         ]));
         if end == points.len() {

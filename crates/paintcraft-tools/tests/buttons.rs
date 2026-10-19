@@ -11,15 +11,17 @@ fn secondary_color_is_captured_without_changing_preferences_and_requires_its_own
     t.secondary = Rgba([66, 55, 44, 255]);
     assert!(matches!(
         t.preview(),
-        Some(Preview::Path {
+        Some(Preview::Path(paintcraft_tools::Stroke {
             point_scale: 1,
             color: Rgba([12, 34, 56, 93]),
             ..
-        })
+        }))
     ));
     assert!(t.pointer_up().is_none());
     assert!(t.gesture_in_progress());
-    let (_, Action::Stroke { color, .. }) = t.pointer_up_button(Button::Secondary).unwrap() else {
+    let (_, Action::Stroke(paintcraft_tools::Stroke { color, .. })) =
+        t.pointer_up_button(Button::Secondary).unwrap()
+    else {
         panic!("stroke");
     };
     assert_eq!(color, Rgba([12, 34, 56, 93]));

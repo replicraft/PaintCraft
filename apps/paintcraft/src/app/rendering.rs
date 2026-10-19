@@ -43,7 +43,7 @@ impl App {
         let preview = self
             .editor
             .preview()
-            .filter(|p| matches!(p, Preview::Path { .. }));
+            .filter(|p| matches!(p, Preview::Path(_)));
         if self.rendered_preview != preview {
             self.rendered_preview = preview;
             self.preview_revision = self
