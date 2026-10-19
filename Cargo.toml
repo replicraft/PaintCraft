@@ -38,7 +38,9 @@ egui_kittest = "0.37.0"
 # Bundled SVG UI assets; path/gradient rendering without font or raster-image loading.
 resvg = { version = "0.48.1", default-features = false }
 
-# Native file dialogs.
+# Native menus, installed-font catalog and file dialogs.
+muda = { version = "0.21.2", default-features = false }
+fontdb = { version = "0.24.0", default-features = false, features = ["std", "fs"] }
 rfd = "0.17.2"
 raw-window-handle = "0.6.2"
 

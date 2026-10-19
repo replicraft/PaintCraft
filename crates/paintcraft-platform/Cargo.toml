@@ -9,16 +9,22 @@ publish.workspace = true
 
 [features]
 default = []
+menus = ["dep:muda"]
+fonts = ["dep:fontdb"]
 dialogs = ["dep:rfd", "dep:raw-window-handle", "dep:pollster"]
 
 [dependencies]
 paintcraft-core.workspace = true
+fontdb = { workspace = true, optional = true }
 
 pollster = { workspace = true, optional = true }
 raw-window-handle = { workspace = true, optional = true }
 rfd = { workspace = true, optional = true }
 sha2.workspace = true
 uuid.workspace = true
+
+[target.'cfg(target_os = "macos")'.dependencies]
+muda = { workspace = true, optional = true }
 
 [lints]
 workspace = true
