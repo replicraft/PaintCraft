@@ -8,10 +8,10 @@ license-file.workspace = true
 publish.workspace = true
 
 [dependencies]
-font8x8 = "0.3.1"
-paintcraft-types = { path = "../paintcraft-types" }
-sha2 = "0.11.1"
-uuid = { version = "1.28.0", features = ["v5"] }
+font8x8.workspace = true
+paintcraft-types.workspace = true
+sha2.workspace = true
+uuid.workspace = true
 
 [lints]
 workspace = true

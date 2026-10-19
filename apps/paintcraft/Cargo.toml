@@ -15,16 +15,16 @@ name = "paintcraft"
 path = "src/main.rs"
 
 [dependencies]
-paintcraft-types = { path = "../../crates/paintcraft-types" }
-paintcraft-core = { path = "../../crates/paintcraft-core" }
-paintcraft-formats = { path = "../../crates/paintcraft-formats" }
-paintcraft-ui = { path = "../../crates/paintcraft-ui" }
-eframe = "0.37.0"
-uuid = "1.28.0"
-sha2 = "0.11.1"
+paintcraft-types.workspace = true
+paintcraft-core.workspace = true
+paintcraft-formats.workspace = true
+paintcraft-ui.workspace = true
+eframe.workspace = true
+uuid.workspace = true
+sha2.workspace = true
 
 [dev-dependencies]
-egui_kittest = "0.37.0"
+egui_kittest.workspace = true
 
 [lints]
 workspace = true

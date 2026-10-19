@@ -15,7 +15,7 @@ Paint v7/v10/v11 or Paint.NET behavior or UI fidelity has been verified.
 cargo test --workspace          # unit, conformance and end-to-end CLI tests
 cargo clippy --workspace --all-targets
 cargo run -p paintcraft-cli -- --help
-cargo run -p paintcraft --release -- [file.pcnd]   # the desktop editor
+cargo run --release -- [file.pcnd]   # the desktop editor
 ```
 
 The toolchain is pinned in `rust-toolchain.toml`.

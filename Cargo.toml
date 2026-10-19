@@ -1,13 +1,40 @@
 [workspace]
 resolver = "3"
 members = ["crates/*", "apps/*"]
+default-members = ["apps/paintcraft"]
 
 [workspace.package]
-version = "0.0.0"
+version = "0.1.0"
 edition = "2024"
 rust-version = "1.99"
 license-file = "LICENSE"
 publish = false
+
+[workspace.dependencies]
+# PaintCraft engine and application contracts.
+paintcraft-types = { path = "crates/paintcraft-types" }
+paintcraft-core = { path = "crates/paintcraft-core" }
+paintcraft-formats = { path = "crates/paintcraft-formats" }
+paintcraft-ui = { path = "crates/paintcraft-ui" }
+
+# Command-line interface.
+clap = { version = "4.6.7", features = ["derive"] }
+
+# Desktop presentation and GUI verification.
+eframe = { version = "0.37.0", default-features = false, features = ["default_fonts", "wgpu", "wayland", "x11", "accesskit"] }
+egui_kittest = "0.37.0"
+
+# Identity, integrity and text rasterization.
+uuid = { version = "1.28.0", features = ["v4", "v5"] }
+sha2 = "0.11.1"
+crc32fast = "1.5.2"
+font8x8 = "0.3.1"
+
+# Image codecs.
+png = "0.18.1"
+zune-jpeg = "0.5.15"
+zune-core = "0.5.3"
+jpeg-encoder = "0.7.1"
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

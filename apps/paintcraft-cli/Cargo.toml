@@ -12,13 +12,13 @@ name = "paintcraft-cli"
 path = "src/main.rs"
 
 [dependencies]
-paintcraft-types = { path = "../../crates/paintcraft-types" }
-paintcraft-core = { path = "../../crates/paintcraft-core" }
-paintcraft-formats = { path = "../../crates/paintcraft-formats" }
-sha2 = "0.11.1"
+paintcraft-types.workspace = true
+paintcraft-core.workspace = true
+paintcraft-formats.workspace = true
+sha2.workspace = true
 
 [lints]
 workspace = true
 
 [dev-dependencies]
-png = "0.18.1"
+png.workspace = true
