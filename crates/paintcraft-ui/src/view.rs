@@ -3,6 +3,10 @@
 //! At `zoom == 1` one document pixel covers exactly one physical screen pixel,
 //! whatever the display scale (`pixels_per_point`).
 
+use paintcraft_core::types::coordinates::{
+    Affine, Displacement, DocumentSpace, Point, ScreenSpace,
+};
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct View {
     /// Top-left of the canvas in screen points.
@@ -10,14 +14,28 @@ pub struct View {
     /// Whole-number magnification; 1 is actual pixels.
     pub zoom: u32,
     pub pixels_per_point: f32,
+    mapping: Option<Affine<DocumentSpace, ScreenSpace>>,
+    inverse: Option<Affine<ScreenSpace, DocumentSpace>>,
 }
 
 impl View {
     pub fn new(origin: (f32, f32), zoom: u32, pixels_per_point: f32) -> View {
+        let zoom = zoom.max(1);
+        let pixels_per_point = if pixels_per_point.is_finite() && pixels_per_point > 0.0 {
+            pixels_per_point
+        } else {
+            1.0
+        };
+        let scale = f64::from(zoom) / f64::from(pixels_per_point);
+        let mapping = Displacement::new(f64::from(origin.0), f64::from(origin.1))
+            .and_then(|offset| Affine::scale_and_translation([scale, scale], offset));
+        let inverse = mapping.and_then(|transform| transform.inverse(0.0));
         View {
             origin,
-            zoom: zoom.max(1),
-            pixels_per_point: pixels_per_point.max(f32::MIN_POSITIVE),
+            zoom,
+            pixels_per_point,
+            mapping,
+            inverse,
         }
     }
 
@@ -37,18 +55,21 @@ impl View {
     /// The document pixel under a screen point; may lie outside the canvas.
     /// Non-finite input maps to `None`.
     pub fn to_doc(&self, point: (f32, f32)) -> Option<(i64, i64)> {
-        let s = self.points_per_pixel();
-        let (x, y) = ((point.0 - self.origin.0) / s, (point.1 - self.origin.1) / s);
-        (x.is_finite() && y.is_finite() && x.abs() < 1e12 && y.abs() < 1e12)
-            .then(|| (x.floor() as i64, y.floor() as i64))
+        let (x, y) = self
+            .inverse?
+            .transform_point(Point::new(f64::from(point.0), f64::from(point.1))?)?
+            .coordinates();
+        (x.abs() < 1e12 && y.abs() < 1e12).then(|| (x.floor() as i64, y.floor() as i64))
     }
 
     pub fn to_screen(&self, doc: (i64, i64)) -> (f32, f32) {
-        let s = self.points_per_pixel();
-        (
-            self.origin.0 + doc.0 as f32 * s,
-            self.origin.1 + doc.1 as f32 * s,
-        )
+        let result = self
+            .mapping
+            .and_then(|mapping| mapping.transform_point(Point::new(doc.0 as f64, doc.1 as f64)?));
+        result.map_or((f32::NAN, f32::NAN), |point| {
+            let (x, y) = point.coordinates();
+            (x as f32, y as f32)
+        })
     }
 }
 

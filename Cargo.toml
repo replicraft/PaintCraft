@@ -40,6 +40,9 @@ raw-window-handle = "0.6.2"
 wgpu = { version = "30.0.1", default-features = false, features = ["std", "parking_lot", "metal", "dx12", "vulkan", "gles", "wgsl"] }
 pollster = "0.4.0"
 
+# Continuous geometry behind PaintCraft-owned coordinate spaces.
+glam = { version = "0.34.1", default-features = false, features = ["std", "f64"] }
+
 # Identity, integrity and text rasterization.
 uuid = { version = "1.28.0", features = ["v4", "v5"] }
 sha2 = "0.11.1"

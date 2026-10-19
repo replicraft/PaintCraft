@@ -13,7 +13,7 @@ A correct integrated baseline is not a measured performance or release qualifica
 
 | Library | Direction | Actual or intended consumer | Benchmark | Application state |
 |---|---|---|---|---|
-| `glam` | selected-on-use | Typed viewport and affine transforms in core/UI | BF01 | Not directly adopted; activate with its consumer |
+| `glam` | selected-on-use | Typed viewport and affine transforms in core/UI | BF01 | Integrated baseline, 0.34.1 with std/f64; inverse, composition, rebase and actual-pixel tests; benchmark pending |
 | `wide` | preferred-on-use | Exact pixel kernels in raster/render | BF02 | Not directly adopted; activate with its consumer |
 | `zerocopy` | selective-on-use | Bounded fixed-layout BMP header admission | BF03 | Integrated baseline, 0.8.63 with derive; header size/offset and malformed-input tests; benchmark pending |
 | `bytemuck` | selected-on-use | Explicit GPU staging layouts in render | BF04 | Not directly adopted; activate with its consumer |

@@ -11,3 +11,5 @@ pub use pixel::Rgba;
 
 pub mod ids;
 pub mod policy;
+
+pub mod coordinates;
