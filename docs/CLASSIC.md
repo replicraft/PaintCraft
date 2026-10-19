@@ -32,7 +32,14 @@ and preserved off-canvas content. See [the canvas-size policy](CANVAS_SIZES.md).
 
 The desktop starts at **1200 × 850 logical pixels**, providing more room for the
 ribbon and the default canvas. Smaller windows and larger canvases still scroll.
-There is currently no dedicated Clear Canvas action.
+**Clear Canvas** is available beside Undo/Redo and in Edit. It replaces every
+layer (including hidden and off-canvas content) with a single sparse Background
+layer in the canvas color, defaulting to white. Selection does not limit clearing.
+One Undo restores the prior layers, pixels and selection; canvas dimensions, title
+and file association are retained. Repeating it on an already blank background
+does not dirty the image. Studio exposes the Edit action with a transparent
+background. Clearing is an explicit PaintCraft command, not a historical parity
+claim.
 
 ## Current behavior
 

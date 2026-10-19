@@ -162,6 +162,11 @@ pub enum Op {
         width: u32,
         height: u32,
     },
+    /// v2: replace all layers with one full-canvas background; clear selection.
+    CanvasClear {
+        alias: String,
+        color: Rgba,
+    },
     CanvasResize {
         width: u32,
         height: u32,
@@ -252,7 +257,8 @@ fn op(v: &Value, version: u8) -> Result<Op> {
     if version < 2
         && matches!(
             name,
-            "layer.expand"
+            "canvas.clear"
+                | "layer.expand"
                 | "raster.stroke_path"
                 | "raster.flood_fill"
                 | "raster.shape"
@@ -447,6 +453,13 @@ fn op(v: &Value, version: u8) -> Result<Op> {
                 layer: layer_ref(&o["layer_ref"])?,
                 width: int_in(&o["width"], 1, SIZE_MAX, "width")? as u32,
                 height: int_in(&o["height"], 1, SIZE_MAX, "height")? as u32,
+            }
+        }
+        "canvas.clear" => {
+            let o = obj(v, &["op", "ref", "color"], &[])?;
+            Op::CanvasClear {
+                alias: alias(&o["ref"])?,
+                color: color(&o["color"])?,
             }
         }
         "canvas.resize" => {

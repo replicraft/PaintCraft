@@ -21,6 +21,7 @@ impl Action {
                 return None;
             }
             Self::CanvasSize => Icon::CanvasSize,
+            Self::ClearCanvas => Icon::Eraser,
             Self::EditColors | Self::EditSecondaryColors => Icon::ColorBalance,
             Self::View(action) => match action {
                 ViewAction::ZoomIn => Icon::ZoomIn,

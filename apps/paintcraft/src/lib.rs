@@ -91,6 +91,7 @@ mod code {
     pub const MOVE: u64 = 12;
     pub const HISTORY: u64 = 13;
     pub const CANVAS_SIZE: u64 = 14;
+    pub const CLEAR_CANVAS: u64 = 15;
 }
 
 const DEFAULT_SIZE: (u32, u32) = settings::DEFAULT_SIZE;

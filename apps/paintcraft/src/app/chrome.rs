@@ -169,6 +169,13 @@ impl App {
                 Chrome::EditColors | Chrome::EditSecondaryColors => {
                     self.begin_color_dialog(ctx, action == Chrome::EditSecondaryColors)
                 }
+                Chrome::ClearCanvas => {
+                    let color = match self.experience() {
+                        Experience::Classic => self.editor.canvas_color(),
+                        Experience::Studio => Rgba::TRANSPARENT,
+                    };
+                    self.request(ctx, code::CLEAR_CANVAS, Action::ClearCanvas { color });
+                }
                 Chrome::CanvasSize | Chrome::CanvasDefaults => {
                     self.begin_canvas_dialog(ctx, action == Chrome::CanvasDefaults)
                 }

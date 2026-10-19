@@ -199,3 +199,6 @@ mod workspace_view;
 
 #[path = "gui/rulers.rs"]
 mod rulers;
+
+#[path = "gui/clear_canvas.rs"]
+mod clear_canvas;

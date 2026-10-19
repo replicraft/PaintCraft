@@ -87,15 +87,7 @@ impl App {
                             // Classic restores the solid canvas ground; Studio removes
                             // pixels. Capture this policy with the rest of the gesture.
                             self.editor.options.eraser_color = match self.experience() {
-                                Experience::Classic => self
-                                    .editor
-                                    .document()
-                                    .roots
-                                    .iter()
-                                    .filter_map(|id| self.editor.document().layers.get(id))
-                                    .map(|layer| layer.raster.default_pixel())
-                                    .find(|color| color.a() == 255)
-                                    .unwrap_or(Rgba([255, 255, 255, 255])),
+                                Experience::Classic => self.editor.canvas_color(),
                                 Experience::Studio => Rgba::TRANSPARENT,
                             };
                             self.editor.pointer_down_subpixel(d, button);

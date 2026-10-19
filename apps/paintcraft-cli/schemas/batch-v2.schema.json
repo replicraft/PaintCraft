@@ -27,6 +27,16 @@
           {
             "type": "object",
             "properties": {
+              "op": {"const": "canvas.clear"},
+              "ref": {"type": "string", "pattern": "^[a-z][a-z0-9_-]{0,63}$"},
+              "color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{8}$"}
+            },
+            "required": ["op", "ref", "color"],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
               "op": {"const": "layer.add"},
               "ref": {"type": "string", "pattern": "^[a-z][a-z0-9_-]{0,63}$"},
               "name": {"type": "string", "maxLength": 1024},

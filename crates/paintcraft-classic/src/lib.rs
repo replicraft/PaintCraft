@@ -158,6 +158,7 @@ pub fn chrome(
             (Icon::Export, Action::Export),
             (Icon::Undo, Action::Undo),
             (Icon::Redo, Action::Redo),
+            (Icon::Eraser, Action::ClearCanvas),
         ] {
             if paintcraft_ui::actions::toolbar_button(ui, action, icon, context) {
                 actions.push(action);

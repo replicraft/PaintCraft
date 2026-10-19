@@ -143,6 +143,10 @@ pub enum Action {
     Select {
         corners: Option<((i64, i64), (i64, i64))>,
     },
+    /// Replace all layers with one blank background, independent of selection.
+    ClearCanvas {
+        color: Rgba,
+    },
     ResizeCanvas {
         width: u32,
         height: u32,

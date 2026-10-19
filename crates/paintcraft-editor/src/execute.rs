@@ -1,6 +1,7 @@
 //! Staged execution of a batch against a private copy of the document.
 //! Nothing here publishes; the session installs the result atomically.
 
+mod canvas;
 mod layers;
 mod mask;
 
@@ -203,6 +204,7 @@ impl Stage<'_> {
 
     fn run(&mut self, index: usize, op: &Op) -> Result<()> {
         match op {
+            Op::CanvasClear { alias, color } => self.clear_canvas(index, alias, *color)?,
             Op::LayerAdd {
                 alias,
                 name,

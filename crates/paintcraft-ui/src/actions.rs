@@ -19,6 +19,7 @@ pub enum Action {
     Settings,
     ChooseFrontend(Frontend),
     CanvasSize,
+    ClearCanvas,
     CanvasDefaults,
     EditColors,
     EditSecondaryColors,
@@ -76,6 +77,7 @@ pub const EDIT: &[Action] = &[
     Action::Redo,
     Action::SelectAll,
     Action::Deselect,
+    Action::ClearCanvas,
 ];
 
 impl Action {
@@ -108,6 +110,7 @@ impl Action {
                 cfg!(target_os = "macos").then_some((Key::Comma, false)),
             ),
             Self::CanvasSize => ("Canvas size…", None),
+            Self::ClearCanvas => ("Clear Canvas", None),
             Self::CanvasDefaults => ("Default canvas size…", None),
             Self::EditColors => ("Edit colors…", None),
             Self::EditSecondaryColors => ("Edit secondary color…", None),
@@ -242,6 +245,7 @@ impl Action {
             Self::Deselect => 1009,
             Self::Close => 1010,
             Self::CanvasSize => 1011,
+            Self::ClearCanvas => 1018,
             Self::Settings => 1015,
             Self::ChooseFrontend(frontend) => 1016 + frontend as u64,
             Self::CanvasDefaults => 1012,
@@ -321,6 +325,11 @@ pub fn toolbar_button(
             )
         },
     );
+    let tooltip = if action == Action::ClearCanvas {
+        "Clear Canvas — replace all layers with a blank background. Undo restores them.".to_owned()
+    } else {
+        tooltip
+    };
     ui.add_enabled_ui(action.enabled(ctx), |ui| {
         crate::widgets::icon_button_with_tooltip(
             ui,

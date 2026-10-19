@@ -272,7 +272,7 @@ remain T16 work. Current-app GPU previews can be exported with the ignored
 |---|---|---|
 | Engine (T01, T04–T07) | Sparse RGBA8 layers (256×256 copy-on-write tiles, exact default pixel, hidden RGB preserved), immutable documents, deterministic UUIDv5 identifiers, atomic staged batches, semantic no-ops, linear recorded undo/redo | unit tests; 21 conformance vectors from the Python oracle |
 | Native format (T08, T29) | Canonical PCND v1 writer (byte-identical to the specimen) and bounded reader; unknown version, schema, feature, encoding or group is `capability.unsupported`, never editable | `pcnd.rs` tests, vector digests |
-| Batch v2 | v1 plus `raster.stroke_path`, `raster.flood_fill`, `raster.shape`, `raster.text`, `layer.reorder`, `layer.duplicate` (see below) | behavior tests, JSON-Schema grammar cases |
+| Batch v2 | v1 plus `raster.stroke_path`, `raster.flood_fill`, `raster.shape`, `raster.text`, `layer.reorder`, `layer.duplicate`, `canvas.clear` (see below) | behavior tests, JSON-Schema grammar cases |
 | Image formats | PNG, BMP, JPEG import and export with named, acknowledged losses (flatten, hidden RGB, lossy JPEG, discarded alpha) | `image.rs`, `export.rs`, CLI tests |
 | Safe save and recovery (T10) | Streaming staging → atomic replace → bounded read-back; ordered native queue and file receipts; autosave checkpoints with per-session locks; recover, discard or ask later | platform `save.rs`, format `recovery.rs`, GUI tests |
 | Bounded history (T11) | Memory budget over all retained snapshots (shared tiles counted once); only the oldest undo steps are dropped, the newest edit stays undoable, the user is told | `session.rs`, editor tests |
@@ -312,6 +312,8 @@ cross-checked against the parser on independent validator verdicts
 (`conformance/grammar-v2.cases`), and Rust tests whose expected pictures and bytes were
 derived by hand from the geometry definitions. Rust-generated golden vectors for v2 would
 only prove stability, not correctness.
+
+Canvas clearing is specified in [Canvas dimensions](CANVAS_SIZES.md#clear-canvas).
 
 Geometry definitions (the historical integer operations remain exact):
 

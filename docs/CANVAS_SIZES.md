@@ -38,3 +38,32 @@ an existing file retains its dimensions. Successful New/Canvas size actions reco
 their size; failed and cancelled resizes do not. Undo/redo changes the document;
 it does not undo user preferences or the recorded last size. Studio's default
 remains 320 × 320. Preferences never flatten or otherwise edit an open document.
+
+## Clear Canvas
+
+The additive batch-v2 operation `canvas.clear` requires a fresh batch alias `ref`
+and an exact RGBA8 `color` (`#RRGGBBAA`). Batch v1 rejects it. It replaces every
+layer, including hidden layers and off-canvas pixels, with one visible,
+full-opacity `Background` layer at (0, 0), sized to the canvas. Its sparse default
+is the supplied color, including any hidden RGB. Canvas dimensions, document
+identity, title and file association do not change. Selection becomes inactive.
+
+The new layer uses the standard deterministic layer ID inputs (base state, batch
+digest and operation index). Earlier aliases to removed layers become invalid;
+`ref` resolves to the background for later operations in the same batch. Duplicate
+aliases and later-operation failures roll back the entire batch. Clearing uses one
+operation regardless of layer count, allocates no pixel tiles, and works with a
+zero staged-pixel budget. This is a correctness baseline, not a latency benchmark.
+
+If the document is already a single matching Background with no resident tiles,
+the layer ID is retained. With inactive selection this is a no-op: no new history,
+publication or dirty state. As with other no-op batches, its receipt has no aliases;
+within the batch the declared alias still resolves. A changed selection alone is
+recorded without making saved image content dirty. Other clears record one
+**Clear Canvas** history entry; Undo restores the complete snapshot and selection.
+
+Classic chooses its opaque canvas ground, falling back to white; Studio chooses
+transparent black. Pending text is committed before the clear, so Undo can restore
+it; an unfinished pointer gesture is cancelled. The new background becomes the
+editing target only after successful execution. These are explicit PaintCraft
+semantics, not a claim of reference application parity.

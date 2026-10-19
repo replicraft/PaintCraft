@@ -6,6 +6,8 @@ use paintcraft_document::{POLICY, new_document};
 use paintcraft_editor::session::{Receipt, Session};
 use uuid::Uuid;
 
+#[path = "batch_v2/clear.rs"]
+mod clear;
 #[path = "batch_v2/expansion.rs"]
 mod expansion;
 #[path = "batch_v2/layers.rs"]
