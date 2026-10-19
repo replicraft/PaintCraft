@@ -24,6 +24,6 @@ fn main() -> eframe::Result {
     eframe::run_native(
         "PaintCraft",
         options,
-        Box::new(move |cc| Ok(Box::new(app.with_gpu(cc)))),
+        Box::new(move |cc| Ok(Box::new(app.with_native_services(cc)))),
     )
 }

@@ -46,6 +46,7 @@ pub struct Editor {
     status: String,
     recovery: Option<Recovery>,
     checkpointed: Option<(Uuid, u64)>,
+    save_outcome: Option<bool>,
 }
 
 fn layer_ref(id: Uuid) -> Value {
@@ -89,6 +90,7 @@ impl Editor {
             status: String::new(),
             recovery: None,
             checkpointed: None,
+            save_outcome: None,
         }
     }
 
@@ -196,6 +198,14 @@ impl Editor {
 
     pub fn set_path(&mut self, path: PathBuf) {
         self.path = Some(path);
+    }
+
+    pub(crate) fn restore_path(&mut self, path: Option<PathBuf>) {
+        self.path = path;
+    }
+
+    pub(crate) fn take_save_outcome(&mut self) -> Option<bool> {
+        self.save_outcome.take()
     }
 
     pub fn target(&self) -> Option<Uuid> {
@@ -628,6 +638,7 @@ impl Editor {
     }
 
     fn save(&mut self) {
+        self.save_outcome = Some(false);
         let Some(path) = self.path.clone() else {
             self.status = "Choose a file name before saving".into();
             return;
@@ -641,6 +652,7 @@ impl Editor {
         };
         let outcome = save::save(&path, &bytes, true);
         if outcome.is_success() {
+            self.save_outcome = Some(true);
             self.session.mark_saved();
             // The file now holds everything; the checkpoint is obsolete.
             if let Some(r) = &self.recovery {
@@ -652,6 +664,18 @@ impl Editor {
             // Dirty state stays: an unconfirmed or unknown save is not a clean document.
             self.status = format!("Not saved safely: {}", outcome.reasons.join("; "));
         }
+    }
+}
+
+impl std::ops::Deref for Editor {
+    type Target = ToolState;
+    fn deref(&self) -> &ToolState {
+        &self.tools
+    }
+}
+impl std::ops::DerefMut for Editor {
+    fn deref_mut(&mut self) -> &mut ToolState {
+        &mut self.tools
     }
 }
 
@@ -1290,17 +1314,5 @@ mod tests {
     #[test]
     fn opening_a_bad_file_fails_without_a_panic() {
         assert!(Editor::open(Path::new("/definitely/not/here.pcnd")).is_err());
-    }
-}
-
-impl std::ops::Deref for Editor {
-    type Target = ToolState;
-    fn deref(&self) -> &ToolState {
-        &self.tools
-    }
-}
-impl std::ops::DerefMut for Editor {
-    fn deref_mut(&mut self) -> &mut ToolState {
-        &mut self.tools
     }
 }

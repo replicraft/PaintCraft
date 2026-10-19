@@ -21,7 +21,9 @@ use paintcraft_formats::export::{self, KNOWN_LOSSES};
 use paintcraft_formats::image::{self, ImageFormat};
 use paintcraft_formats::recovery::{Found, Recovery};
 use paintcraft_formats::save;
-use paintcraft_render::{gpu::GpuRenderer, render_flat};
+use paintcraft_platform::dialogs::{Kind, NativeDialogs};
+use paintcraft_render::gpu::GpuRenderer;
+use paintcraft_render::render_flat;
 use paintcraft_ui::view::View;
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
@@ -70,6 +72,7 @@ impl std::fmt::Debug for App {
 pub struct App {
     editor: Editor,
     gpu: Option<GpuRenderer>,
+    dialogs: Option<NativeDialogs>,
     texture: Option<egui::TextureHandle>,
     texture_key: Option<(Uuid, u64)>,
     /// Straight RGBA8 flat render of what the texture shows.
@@ -78,6 +81,7 @@ pub struct App {
     path_text: String,
     /// The file this document was opened from or last saved to.
     bound: Option<PathBuf>,
+    pending_save: Option<(PathBuf, Option<PathBuf>)>,
     confirm: Option<Confirm>,
     canvas_rect: Option<Rect>,
     hover_doc: Option<(i64, i64)>,
@@ -110,7 +114,9 @@ fn token(ctx: &egui::Context, code: u64) -> u64 {
 }
 
 impl App {
-    pub fn with_gpu(mut self, cc: &eframe::CreationContext<'_>) -> Self {
+    /// Connect native services only for a real desktop window; harnesses stay deterministic.
+    pub fn with_native_services(mut self, cc: &eframe::CreationContext<'_>) -> Self {
+        self.dialogs = Some(NativeDialogs::new(cc));
         if let Some(state) = &cc.wgpu_render_state {
             match GpuRenderer::new(state.device.clone(), state.queue.clone()) {
                 Ok(gpu) => {
@@ -122,6 +128,34 @@ impl App {
         }
         self
     }
+    fn request_dialog(&mut self, ctx: &egui::Context, kind: Kind) {
+        self.editor.cancel_gesture();
+        self.editor.commit_text();
+        let suggested = if kind == Kind::Export {
+            PathBuf::from("untitled.png")
+        } else {
+            PathBuf::from(&self.path_text)
+        };
+        if let Some(dialogs) = &mut self.dialogs {
+            let ctx = ctx.clone();
+            dialogs.request(kind, Some(&suggested), move || ctx.request_repaint());
+        }
+    }
+    fn poll_dialog(&mut self, ctx: &egui::Context) {
+        let Some(completion) = self.dialogs.as_mut().and_then(NativeDialogs::poll) else {
+            return;
+        };
+        let Some(path) = completion.path else {
+            return;
+        };
+        self.path_text = path.to_string_lossy().into_owned();
+        match completion.kind {
+            Kind::Open => self.open_selected(path),
+            Kind::SaveAs => self.save_selected(ctx, path),
+            Kind::Export => self.export_selected(path),
+        }
+    }
+
     pub fn new(path: Option<PathBuf>) -> App {
         let path_text = path.as_deref().map_or_else(
             || "untitled.pcnd".to_owned(),
@@ -131,12 +165,14 @@ impl App {
             editor: Editor::new_document(DEFAULT_SIZE.0, DEFAULT_SIZE.1)
                 .expect("default size is valid"),
             gpu: None,
+            dialogs: None,
             texture: None,
             texture_key: None,
             rendered: Vec::new(),
             zoom: 1,
             path_text,
             bound: None,
+            pending_save: None,
             confirm: None,
             canvas_rect: None,
             hover_doc: None,
@@ -371,8 +407,14 @@ impl App {
         Ok(())
     }
 
-    fn open_requested(&mut self) {
-        let path = PathBuf::from(self.path_text.trim());
+    fn open_requested(&mut self, ctx: &egui::Context) {
+        if self.dialogs.is_some() {
+            self.request_dialog(ctx, Kind::Open);
+        } else {
+            self.open_selected(PathBuf::from(self.path_text.trim()));
+        }
+    }
+    fn open_selected(&mut self, path: PathBuf) {
         if self.editor.is_dirty() {
             self.confirm = Some(Confirm::DiscardForOpen(path));
         } else if let Err(e) = self.open_path(&path) {
@@ -382,8 +424,14 @@ impl App {
 
     /// Plan an export to the format named by the file extension; losses and
     /// replacement are confirmed before anything is written.
-    fn export_requested(&mut self) {
-        let path = PathBuf::from(self.path_text.trim());
+    fn export_requested(&mut self, ctx: &egui::Context) {
+        if self.dialogs.is_some() {
+            self.request_dialog(ctx, Kind::Export);
+        } else {
+            self.export_selected(PathBuf::from(self.path_text.trim()));
+        }
+    }
+    fn export_selected(&mut self, path: PathBuf) {
         let Some(format) = ImageFormat::from_extension(&path) else {
             self.editor
                 .set_status("Name the file .png, .bmp or .jpg to export");
@@ -540,7 +588,17 @@ impl App {
     }
 
     fn save_requested(&mut self, ctx: &egui::Context) {
-        let path = PathBuf::from(self.path_text.trim());
+        if self.dialogs.is_some() && self.bound.is_none() {
+            self.request_dialog(ctx, Kind::SaveAs);
+            return;
+        }
+        let path = self
+            .bound
+            .clone()
+            .unwrap_or_else(|| PathBuf::from(self.path_text.trim()));
+        self.save_selected(ctx, path);
+    }
+    fn save_selected(&mut self, ctx: &egui::Context, path: PathBuf) {
         if path.as_os_str().is_empty() {
             return;
         }
@@ -552,9 +610,25 @@ impl App {
     }
 
     fn do_save(&mut self, ctx: &egui::Context, path: PathBuf) {
+        let previous = self.editor.path().map(Path::to_path_buf);
         self.editor.set_path(path.clone());
         self.request(ctx, code::SAVE, Action::Save);
-        self.bound = Some(path);
+        self.pending_save = Some((path, previous));
+    }
+
+    fn finish_save(&mut self) {
+        let Some(success) = self.editor.take_save_outcome() else {
+            return;
+        };
+        let Some((path, previous)) = self.pending_save.take() else {
+            return;
+        };
+        if success {
+            self.path_text = path.to_string_lossy().into_owned();
+            self.bound = Some(path);
+        } else {
+            self.editor.restore_path(previous);
+        }
     }
 
     fn toolbar(&mut self, ui: &mut egui::Ui) {
@@ -580,17 +654,17 @@ impl App {
                 self.save_requested(&ctx);
             }
             if ui.button("Open").clicked() {
-                self.open_requested();
+                self.open_requested(&ctx);
             }
             if ui.button("Export").clicked() {
-                self.export_requested();
+                self.export_requested(&ctx);
             }
             if ui.button("Interface").clicked() {
                 self.picking = Some(self.variant());
             }
-            let file_label = ui.label("File");
-            ui.add(egui::TextEdit::singleline(&mut self.path_text))
-                .labelled_by(file_label.id);
+            if ui.button("Save as").clicked() {
+                self.request_dialog(&ctx, Kind::SaveAs);
+            }
             ui.separator();
             let c = self.editor.color.0;
             let mut color = Color32::from_rgba_unmultiplied(c[0], c[1], c[2], c[3]);
@@ -1036,7 +1110,8 @@ impl App {
                                 if let Some(d) = view.to_doc((pos.x, pos.y)) {
                                     self.editor.pointer_move(d);
                                 }
-                                self.editor.pointer_up();
+                                self.editor
+                                    .pointer_event(paintcraft_input::PointerEvent::Up);
                             }
                             _ => {}
                         }
@@ -1208,7 +1283,14 @@ impl App {
         let ctx = ui.ctx().clone();
         let first_pass = ctx.current_pass_index() == 0;
         if first_pass {
-            self.handle_global_input(ui);
+            self.poll_dialog(&ctx);
+            if !self.dialogs.as_ref().is_some_and(NativeDialogs::pending) {
+                self.handle_global_input(ui);
+            }
+        }
+        if self.dialogs.as_ref().is_some_and(NativeDialogs::pending) {
+            ctx.request_repaint_after(Duration::from_millis(50));
+            ui.disable();
         }
         self.apply_style(&ctx);
         self.sync_texture(&ctx);
@@ -1234,7 +1316,8 @@ impl App {
             self.tool_panel(ui);
             self.layer_panel(ui);
         });
-        egui::CentralPanel::default().show(ui, |ui| self.canvas(ui, first_pass));
+        let accept_input = first_pass && !self.dialogs.as_ref().is_some_and(NativeDialogs::pending);
+        egui::CentralPanel::default().show(ui, |ui| self.canvas(ui, accept_input));
         self.picker_dialog(ui);
         self.recovery_dialog(ui);
         self.confirm_dialog(ui);
@@ -1250,6 +1333,7 @@ impl App {
             ctx.request_repaint();
             self.sync_texture(&ctx);
         }
+        self.finish_save();
         let now = ctx.input(|i| i.time);
         if now - self.last_autosave >= self.autosave_every.as_secs_f64() {
             self.last_autosave = now;
@@ -1330,4 +1414,49 @@ fn draw_variant_thumbnail(p: &egui::Painter, rect: Rect, v: ClassicVariant, sele
         canvas,
     );
     p.rect_stroke(rect, round, stroke, egui::StrokeKind::Inside);
+}
+
+#[cfg(test)]
+mod save_binding_tests {
+    use super::*;
+
+    #[test]
+    fn failed_save_as_keeps_the_previous_document_binding() {
+        let dir = std::env::temp_dir().join(format!("paintcraft-save-binding-{}", Uuid::new_v4()));
+        let old = dir.join("original.pcnd");
+        let mut app = App::new(None);
+        app.bound = Some(old.clone());
+        app.editor.set_path(old.clone());
+        app.editor.request(123, Action::AddLayer);
+        app.editor.run_pending();
+        let destination = dir.join("missing/new.pcnd");
+        app.save_selected(&egui::Context::default(), destination.clone());
+        app.editor.run_pending();
+        app.finish_save();
+        assert_eq!(app.bound.as_deref(), Some(old.as_path()));
+        assert_eq!(app.editor.path(), Some(old.as_path()));
+        assert!(app.editor.is_dirty());
+        assert!(!destination.exists());
+    }
+
+    #[test]
+    fn successful_save_as_binds_only_after_the_file_is_confirmed() {
+        let dir = std::env::temp_dir().join(format!("paintcraft-save-binding-{}", Uuid::new_v4()));
+        std::fs::create_dir(&dir).unwrap();
+        let path = dir.join("saved.pcnd");
+        let mut app = App::new(None);
+        app.save_selected(&egui::Context::default(), path.clone());
+        assert!(app.bound.is_none());
+        app.editor.run_pending();
+        app.finish_save();
+        assert_eq!(app.bound.as_deref(), Some(path.as_path()));
+        assert!(!app.editor.is_dirty());
+        assert!(
+            Editor::open(&path)
+                .unwrap()
+                .document()
+                .same_semantics(app.editor.document())
+        );
+        std::fs::remove_dir_all(dir).unwrap();
+    }
 }
