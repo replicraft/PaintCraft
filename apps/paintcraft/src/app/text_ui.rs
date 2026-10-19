@@ -7,7 +7,7 @@ pub(crate) struct FontState {
     pub families: Vec<String>,
     pub search: String,
     changed: bool,
-    pending: Option<std::sync::mpsc::Receiver<FontCatalog>>,
+    pending: Option<std::sync::mpsc::Receiver<(FontCatalog, text::TextRenderer)>>,
 }
 
 impl Default for FontState {
@@ -28,7 +28,11 @@ impl App {
         match std::thread::Builder::new()
             .name("paintcraft-font-catalog".into())
             .spawn(move || {
-                let _ = sender.send(FontCatalog::system());
+                let renderer = text::TextRenderer::system();
+                let catalog = FontCatalog {
+                    families: renderer.families(),
+                };
+                let _ = sender.send((catalog, renderer));
                 wake.request_repaint();
             }) {
             Ok(_) => self.fonts.pending = Some(receiver),
@@ -44,7 +48,12 @@ impl App {
             .pending
             .as_ref()
             .map(|pending| pending.try_recv());
-        if let Some(Ok(catalog)) = result {
+        if let Some(Ok((catalog, renderer))) = result {
+            if let Ok(mut current) = self.text_renderer.lock() {
+                *current = renderer;
+            }
+            self.texture_key = None;
+            self.preview_revision += 1;
             self.fonts.pending = None;
             self.fonts.families = catalog.families;
             if !self.fonts.families.iter().any(|name| name == "Selawik") {

@@ -59,6 +59,10 @@ pub fn floating_controls(
         .default_width(310.0)
         .max_width(340.0)
         .default_pos(egui::pos2(12.0, 500.0))
+        .constrain_to(egui::Rect::from_min_max(
+            egui::pos2(ctx.viewport_rect().left(), workspace.canvas_top),
+            ctx.viewport_rect().max,
+        ))
         .show(ctx, |ui| {
             ui.push_id(state_id, |ui| {
                 ui.set_width(310.0);
@@ -69,9 +73,18 @@ pub fn floating_controls(
     actions
 }
 
-pub fn layers_window(ctx: &egui::Context, open: &mut bool, contents: impl FnOnce(&mut egui::Ui)) {
+pub fn layers_window(
+    ctx: &egui::Context,
+    open: &mut bool,
+    top: f32,
+    contents: impl FnOnce(&mut egui::Ui),
+) {
     egui::Window::new("Layers")
         .id(egui::Id::unique("studio-layers"))
+        .constrain_to(egui::Rect::from_min_max(
+            egui::pos2(ctx.viewport_rect().left(), top),
+            ctx.viewport_rect().max,
+        ))
         .open(open)
         .default_width(240.0)
         .default_pos(egui::pos2(

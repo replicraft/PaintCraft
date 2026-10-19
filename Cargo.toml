@@ -40,7 +40,7 @@ resvg = { version = "0.48.1", default-features = false }
 
 # Native menus, installed-font catalog and file dialogs.
 muda = { version = "0.21.2", default-features = false }
-fontdb = { version = "0.24.0", default-features = false, features = ["std", "fs"] }
+fontdb = { version = "0.23.0", default-features = false, features = ["std", "fs"] }
 rfd = "0.17.2"
 raw-window-handle = "0.6.2"
 
@@ -63,6 +63,8 @@ uuid = { version = "1.28.0", features = ["v4", "v5"] }
 sha2 = "0.11.1"
 crc32fast = "1.5.2"
 font8x8 = "0.3.1"
+# Desktop document shaping and grayscale glyph rasterization; legacy bitmap commands remain stable.
+cosmic-text = { version = "0.19.0", default-features = false, features = ["std", "swash", "shape-run-cache"] }
 
 # Standard image codecs and bounded binary header views.
 image = { version = "0.25.10", default-features = false, features = ["png", "bmp", "jpeg"] }

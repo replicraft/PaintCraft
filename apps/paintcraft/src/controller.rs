@@ -16,6 +16,8 @@ mod layers;
 mod pointer;
 #[path = "controller/strokes.rs"]
 mod strokes;
+#[path = "controller/text.rs"]
+mod text;
 
 use std::{
     path::{Path, PathBuf},
@@ -54,6 +56,7 @@ pub struct LayerRow {
 pub struct Editor {
     session: Session,
     tools: ToolState,
+    text_renderer: Option<crate::text::Shared>,
     target: Option<Uuid>,
     outbox: Outbox<Action>,
     path: Option<PathBuf>,
@@ -108,6 +111,7 @@ impl Editor {
         Editor {
             session: Session::new(doc),
             tools: ToolState::default(),
+            text_renderer: None,
             target,
             outbox: Outbox::default(),
             path,
@@ -449,12 +453,18 @@ impl Editor {
                 self.draw(vec![op], tool.name());
             }
             Action::Text {
+                style,
+                background,
                 layer,
                 at,
                 text,
                 scale,
                 color,
             } => {
+                if let Some(style) = style {
+                    self.draw_font_text(layer, at, &text, &style, color, background);
+                    return;
+                }
                 let op = Value::object([
                     ("op", Value::str("raster.text")),
                     ("layer_ref", layer_ref(layer)),

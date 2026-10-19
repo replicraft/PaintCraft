@@ -9,6 +9,7 @@ impl App {
         self.context = ctx.clone();
         let first_pass = ctx.current_pass_index() == 0;
         if first_pass {
+            self.editor.set_text_style(self.settings.text.clone());
             self.poll_fonts();
             #[cfg(target_os = "macos")]
             self.poll_native_menu(&ctx);

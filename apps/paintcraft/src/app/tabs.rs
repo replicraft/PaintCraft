@@ -322,7 +322,10 @@ impl App {
             )
         })?;
         let id = Uuid::new_v4();
-        let mut state = DocumentState::new(editor, self.recovery_dir.is_some());
+        let mut state = DocumentState::new(
+            editor.with_text_renderer(self.text_renderer.clone()),
+            self.recovery_dir.is_some(),
+        );
         if self.tabs.is_empty() {
             if let Some(saving) = &mut self.saving {
                 saving.cancel_restore();
@@ -451,6 +454,7 @@ impl WorkspaceDocuments {
     }
     pub(super) fn swap(&mut self, app: &mut App) {
         self.active.swap(app);
+        app.editor.text_renderer_connect(app.text_renderer.clone());
         std::mem::swap(&mut self.tabs, &mut app.tabs);
         std::mem::swap(&mut self.active_tab, &mut app.active_tab);
         std::mem::swap(&mut self.next_tab_number, &mut app.next_tab_number);

@@ -25,16 +25,20 @@ pub fn options(ui: &mut egui::Ui, state: &mut Controls, actions: &mut Vec<Action
             } else {
                 &mut state.options.size
             };
-            ui.add(
+            let slider = ui.add(
                 egui::Slider::new(size, 1..=64)
-                    .text("Tool size")
+                    .text("Size")
                     .suffix(" px")
                     .show_value(false)
                     .clamping(egui::SliderClamping::Edits),
             );
-            let label = ui.label("Size");
-            ui.add(egui::DragValue::new(size).range(1..=1024).suffix(" px"))
-                .labelled_by(label.id);
+            slider.widget_info(|| {
+                egui::WidgetInfo::labeled(egui::Role::Slider, ui.is_enabled(), "Tool size")
+            });
+            let value = ui.add(egui::DragValue::new(size).range(1..=1024).suffix(" px"));
+            value.widget_info(|| {
+                egui::WidgetInfo::labeled(egui::Role::SpinButton, ui.is_enabled(), "Size")
+            });
         }
         if state.tool == Tool::Brush {
             ui.selectable_value(&mut state.options.round, true, "Round");
@@ -60,14 +64,7 @@ pub fn options(ui: &mut egui::Ui, state: &mut Controls, actions: &mut Vec<Action
                 .labelled_by(label.id);
         }
         if state.tool == Tool::Text {
-            let label = ui.label("Text size");
-            ui.add(
-                egui::DragValue::new(&mut state.options.text_scale)
-                    .range(1..=16)
-                    .suffix("×"),
-            )
-            .labelled_by(label.id);
-            ui.label("Ctrl+Enter to place · Escape to cancel");
+            ui.label("Command/Ctrl+Enter to place · Escape to cancel");
         }
         if state.tool == Tool::Select {
             if ui.button("Select all").clicked() {

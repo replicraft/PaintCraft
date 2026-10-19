@@ -59,7 +59,7 @@ impl App {
                         && !modifiers.alt
                     {
                         let units = match unit {
-                            egui::MouseWheelUnit::Point => delta.y / 120.0,
+                            egui::MouseWheelUnit::Point => delta.y / 40.0,
                             egui::MouseWheelUnit::Line => delta.y,
                             egui::MouseWheelUnit::Page => delta.y * 3.0,
                         };

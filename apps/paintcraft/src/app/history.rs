@@ -23,6 +23,7 @@ impl App {
             &rows,
             view.trimmed_total,
             enabled,
+            self.studio.canvas_top,
         ) {
             let entry = &view.entries[index];
             self.request(

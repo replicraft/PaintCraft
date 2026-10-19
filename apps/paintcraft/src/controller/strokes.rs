@@ -10,8 +10,30 @@ mod tests;
 impl Editor {
     /// Staged gesture commands; applying them never publishes or adds history.
     pub fn preview_batch(&self) -> Option<Result<Batch>> {
-        let Preview::Path(stroke) = self.preview()? else {
-            return None;
+        let operations = match self.preview()? {
+            Preview::Path(stroke) => stroke_operations(&stroke),
+            Preview::Text {
+                style: Some(style),
+                at,
+                text,
+                color,
+                background,
+                ..
+            } if !text.is_empty() => {
+                match self.font_text_operations(
+                    self.text_layer()?,
+                    at,
+                    &text,
+                    &style,
+                    color,
+                    background,
+                ) {
+                    Ok(ops) if !ops.is_empty() => ops,
+                    Ok(_) => return None,
+                    Err(error) => return Some(Err(error)),
+                }
+            }
+            _ => return None,
         };
         Some(Batch::from_value(&Value::object([
             ("schema", Value::str("paintcraft.batch/v2")),
@@ -30,7 +52,7 @@ impl Editor {
                     ),
                 ]),
             ),
-            ("operations", Value::Array(stroke_operations(&stroke))),
+            ("operations", Value::Array(operations)),
         ])))
     }
 

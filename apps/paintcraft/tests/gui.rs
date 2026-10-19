@@ -167,3 +167,6 @@ fn switch_interface(h: &mut Harness<App>, label: &str) {
 
 #[path = "gui/interactions.rs"]
 mod interactions;
+
+#[path = "gui/font_text.rs"]
+mod font_text;

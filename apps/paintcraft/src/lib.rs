@@ -35,6 +35,7 @@ mod tabs;
 #[cfg(test)]
 #[path = "app/tests.rs"]
 mod tests;
+mod text;
 #[path = "app/text_ui.rs"]
 mod text_ui;
 #[path = "app/view.rs"]
@@ -137,6 +138,7 @@ pub struct App {
     #[cfg(target_os = "macos")]
     native_menu: Option<paintcraft_platform::native_menu::NativeMenu>,
     fonts: text_ui::FontState,
+    text_renderer: text::Shared,
     context: egui::Context,
     ime_composing: bool,
     editor: Editor,
@@ -222,14 +224,17 @@ impl App {
             || "untitled.pcnd".to_owned(),
             |p| p.to_string_lossy().into_owned(),
         );
+        let text_renderer = Arc::new(std::sync::Mutex::new(text::TextRenderer::bundled()));
         let mut app = App {
             #[cfg(target_os = "macos")]
             native_menu: None,
             fonts: Default::default(),
+            text_renderer: text_renderer.clone(),
             context: Default::default(),
             ime_composing: false,
             editor: Editor::new_document(DEFAULT_SIZE.0, DEFAULT_SIZE.1)
-                .expect("default size is valid"),
+                .expect("default size is valid")
+                .with_text_renderer(text_renderer),
             tabs: vec![tabs::Tab::initial()],
             active_tab: 0,
             next_tab_number: 1,

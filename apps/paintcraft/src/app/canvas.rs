@@ -249,6 +249,31 @@ impl App {
             }
             Some(Preview::Marquee { from, to }) => ants(box_of(from, to)),
             Some(Preview::Text {
+                style: Some(style),
+                at,
+                ref text,
+                ..
+            }) => {
+                if let Ok(mask) = self.editor.font_text_mask(text, &style, at) {
+                    let (x, y, height) = mask.caret;
+                    painter.line_segment(
+                        [screen((x, y)), screen((x, y + height))],
+                        egui::Stroke::new(
+                            1.0 / ppp,
+                            painter
+                                .ctx()
+                                .style_of(painter.ctx().theme())
+                                .visuals
+                                .selection
+                                .stroke
+                                .color,
+                        ),
+                    );
+                }
+            }
+            Some(Preview::Text {
+                style: None,
+                background: _,
                 at,
                 text,
                 scale,

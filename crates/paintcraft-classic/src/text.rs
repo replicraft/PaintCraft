@@ -1,41 +1,5 @@
-//! Reference-driven text toolbar prototype, separate from raster text policy.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub enum TextAlignment {
-    #[default]
-    Left,
-    Center,
-    Right,
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct TextOptions {
-    pub family: String,
-    pub points: u16,
-    pub bold: bool,
-    pub italic: bool,
-    pub underline: bool,
-    pub strikeout: bool,
-    pub alignment: TextAlignment,
-    pub background_fill: bool,
-    pub editable_until_save: bool,
-}
-
-impl Default for TextOptions {
-    fn default() -> Self {
-        Self {
-            family: "Selawik".into(),
-            points: 11,
-            bold: false,
-            italic: false,
-            underline: false,
-            strikeout: false,
-            alignment: TextAlignment::Left,
-            background_fill: false,
-            editable_until_save: false,
-        }
-    }
-}
-
+//! Font and text appearance controls.
+pub use paintcraft_core::types::text::{TextAlignment, TextOptions};
 pub fn text_options(
     ui: &mut egui::Ui,
     options: &mut TextOptions,
@@ -78,7 +42,7 @@ pub fn text_options(
                 }
                 ui.separator();
                 ui.checkbox(&mut options.background_fill,"Background fill");
-                ui.weak("Preview").on_hover_text("Text styling and editable-until-save are UI prototypes. They do not change the current bitmap text renderer.");
+                ui.weak("Antialiased").on_hover_text("Cosmic Text shapes the selected font; Swash produces grayscale coverage at document resolution.");
             });
         });
     });

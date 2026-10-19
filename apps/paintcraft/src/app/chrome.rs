@@ -90,8 +90,9 @@ impl App {
             })
             .inner;
         self.apply_chrome(&ctx, controls, actions);
-        if self.experience() == Experience::Classic && self.editor.tool == Tool::Text {
+        if self.editor.tool == Tool::Text {
             self.classic_text_options(ui);
+            self.editor.set_text_style(self.settings.text.clone());
         }
     }
 
@@ -194,7 +195,7 @@ impl App {
         );
         self.apply_chrome(ctx, controls, actions);
         let mut open = self.studio.layers;
-        paintcraft_studio::layers_window(ctx, &mut open, |ui| {
+        paintcraft_studio::layers_window(ctx, &mut open, self.studio.canvas_top, |ui| {
             if self.closing_workspace {
                 ui.disable();
             }

@@ -1,6 +1,6 @@
 //! Tool state machines produce intentions; the application publishes them.
-use paintcraft_core::types::Rgba;
 pub use paintcraft_core::types::policy::BlendMode;
+use paintcraft_core::types::{Rgba, text::TextOptions};
 pub use paintcraft_input::PointerButton;
 use uuid::Uuid;
 const POINTS_PER_OP: usize = 65_536;
@@ -125,6 +125,8 @@ pub enum Action {
         fill: Option<Rgba>,
     },
     Text {
+        style: Option<TextOptions>,
+        background: Rgba,
         layer: Uuid,
         at: (i64, i64),
         text: String,
@@ -196,6 +198,8 @@ pub enum Preview {
         to: (i64, i64),
     },
     Text {
+        style: Option<TextOptions>,
+        background: Rgba,
         at: (i64, i64),
         text: String,
         scale: u32,
@@ -206,6 +210,8 @@ pub enum Preview {
 /// Text being typed; it becomes one transaction when committed.
 #[derive(Debug)]
 struct TextEdit {
+    style: Option<TextOptions>,
+    background: Rgba,
     token: u64,
     layer: Uuid,
     at: (i64, i64),
@@ -229,6 +235,7 @@ struct Gesture {
 
 #[derive(Debug)]
 pub struct ToolState {
+    pub text_style: Option<TextOptions>,
     pub color: Rgba,
     pub secondary: Rgba,
     pub tool: Tool,
@@ -240,6 +247,7 @@ pub struct ToolState {
 impl Default for ToolState {
     fn default() -> Self {
         Self {
+            text_style: None,
             color: Rgba([0, 0, 0, 255]),
             secondary: Rgba([255; 4]),
             tool: Tool::Pencil,
@@ -251,9 +259,19 @@ impl Default for ToolState {
     }
 }
 impl ToolState {
+    pub fn set_text_style(&mut self, style: TextOptions) {
+        self.text_style = Some(style.clone());
+        if let Some(text) = &mut self.text {
+            text.style = Some(style);
+            text.color = self.color;
+            text.background = self.secondary;
+        }
+    }
     pub fn begin_text(&mut self, layer: Uuid, at: (i64, i64)) {
         self.next_gesture += 1;
         self.text = Some(TextEdit {
+            style: self.text_style.clone(),
+            background: self.secondary,
             token: self.next_gesture,
             layer,
             at,
@@ -313,6 +331,13 @@ impl ToolState {
         }
     }
 
+    pub fn preview_token(&self) -> Option<u64> {
+        self.gesture
+            .as_ref()
+            .map(|g| g.token)
+            .or_else(|| self.text.as_ref().map(|t| t.token))
+    }
+
     pub fn gesture_token(&self) -> Option<u64> {
         self.gesture.as_ref().map(|g| g.token)
     }
@@ -322,6 +347,10 @@ impl ToolState {
     }
     pub fn gesture_in_progress(&self) -> bool {
         self.gesture.is_some()
+    }
+
+    pub fn text_layer(&self) -> Option<Uuid> {
+        self.text.as_ref().map(|text| text.layer)
     }
 
     pub fn is_editing_text(&self) -> bool {
@@ -341,6 +370,8 @@ impl ToolState {
     pub fn preview(&self) -> Option<Preview> {
         if let Some(t) = &self.text {
             return Some(Preview::Text {
+                style: t.style.clone(),
+                background: t.background,
                 at: t.at,
                 text: t.text.clone(),
                 scale: t.scale,
@@ -509,6 +540,8 @@ impl ToolState {
             return Some((
                 t.token,
                 Action::Text {
+                    style: t.style,
+                    background: t.background,
                     layer: t.layer,
                     at: t.at,
                     text: t.text,
@@ -523,7 +556,11 @@ impl ToolState {
         let Some(t) = &mut self.text else { return 0 };
         let mut skipped = 0;
         for c in typed.chars() {
-            if !paintcraft_raster::font::supported(c) {
+            if !(if t.style.is_some() {
+                c == '\n' || !c.is_control()
+            } else {
+                paintcraft_raster::font::supported(c)
+            }) {
                 skipped += 1;
             } else if t.text.chars().count() < paintcraft_raster::font::TEXT_CHARS_MAX {
                 t.text.push(c);

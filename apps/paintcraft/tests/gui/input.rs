@@ -377,13 +377,14 @@ fn typing_text_on_the_canvas_places_one_undoable_text_object() {
         before + 1,
         "one transaction for the whole text"
     );
-    // 'H' row 0 is 0x33 = bits 0,1,4,5; at scale 2 from x = 20 that is x 20..=23 and 28..=31.
-    let lit: Vec<bool> = (20..32).map(|x| top_pixel(&h, x, 30).a() == 255).collect();
-    assert_eq!(
-        lit,
-        [
-            true, true, true, true, false, false, false, false, true, true, true, true
-        ]
+    let alpha: Vec<_> = (30..90)
+        .flat_map(|y| (20..80).map(move |x| (x, y)))
+        .map(|(x, y)| top_pixel(&h, x, y).a())
+        .collect();
+    assert!(alpha.iter().any(|&a| a > 0));
+    assert!(
+        alpha.iter().any(|&a| a > 0 && a < 255),
+        "document text stores antialiased glyph coverage"
     );
     h.get_by_label("Undo").click();
     h.run();

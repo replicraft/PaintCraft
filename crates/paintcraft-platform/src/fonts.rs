@@ -11,7 +11,7 @@ impl FontCatalog {
         Self::from_database(&database)
     }
 
-    fn from_database(database: &fontdb::Database) -> Self {
+    pub fn from_database(database: &fontdb::Database) -> Self {
         let mut names = std::collections::BTreeMap::new();
         for face in database.faces() {
             if let Some((name, _)) = face.families.first()

@@ -43,7 +43,7 @@ impl App {
     }
 
     pub(super) fn sync_texture(&mut self, ctx: &egui::Context) {
-        let owner = self.editor.gesture_token();
+        let owner = self.editor.preview_token();
         if owner != self.preview_gesture {
             self.preview_start_revision = self.preview_revision + 1;
             self.preview_gesture = owner;
@@ -51,7 +51,7 @@ impl App {
         let preview = self
             .editor
             .preview()
-            .filter(|p| matches!(p, Preview::Path(_)));
+            .filter(|p| matches!(p, Preview::Path(_) | Preview::Text { style: Some(_), .. }));
         if self.rendered_preview != preview {
             self.rendered_preview = preview;
             self.preview_revision = self

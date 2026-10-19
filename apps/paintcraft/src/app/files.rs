@@ -99,6 +99,7 @@ impl App {
     }
 
     pub(super) fn publish_editor(&mut self, editor: Editor) {
+        let editor = editor.with_text_renderer(self.text_renderer.clone());
         if let Some((_, handle)) = self.pending_frame.take()
             && let Some(renderer) = &self.renderer
         {
