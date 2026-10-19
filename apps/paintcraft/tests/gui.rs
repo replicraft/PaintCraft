@@ -440,3 +440,78 @@ fn gui_and_core_produce_identical_pixels_for_the_same_stroke() {
         );
     }
 }
+
+fn drag(h: &mut Harness<App>, a: (f32, f32), b: (f32, f32)) {
+    let (pa, pb) = (at(h, a.0, a.1), at(h, b.0, b.1));
+    h.input_mut().events.extend([
+        Event::PointerMoved(pa),
+        press(pa),
+        Event::PointerMoved(pb),
+        release(pb),
+    ]);
+    h.step();
+    h.run();
+}
+
+#[test]
+fn choosing_a_tool_and_dragging_makes_one_shape_transaction() {
+    let mut h = harness();
+    with_layer(&mut h);
+    h.get_by_label("Rectangle").click();
+    h.run();
+    h.get_by_label("Filled").click();
+    h.run();
+    let before = publications(&h);
+    drag(&mut h, (20.0, 30.0), (60.0, 50.0));
+    assert_eq!(publications(&h), before + 1);
+    assert_eq!(top_pixel(&h, 20, 30), Rgba([0, 0, 0, 255]));
+    assert_eq!(top_pixel(&h, 60, 50), Rgba([0, 0, 0, 255]));
+    assert_eq!(top_pixel(&h, 61, 50).a(), 0);
+    assert_eq!(
+        h.state().rendered()[(40 * 320 + 40) * 4 + 3],
+        255,
+        "the display shows the shape"
+    );
+}
+
+#[test]
+fn fill_and_eraser_work_from_the_palette() {
+    let mut h = harness();
+    with_layer(&mut h);
+    h.get_by_label("Fill").click();
+    h.run();
+    let before = publications(&h);
+    drag(&mut h, (5.0, 5.0), (5.0, 5.0));
+    assert_eq!(publications(&h), before + 1);
+    assert_eq!(top_pixel(&h, 300, 300), Rgba([0, 0, 0, 255]));
+    h.get_by_label("Eraser").click();
+    h.run();
+    drag(&mut h, (100.0, 100.0), (120.0, 100.0));
+    assert_eq!(top_pixel(&h, 110, 100), Rgba::TRANSPARENT);
+    assert_eq!(top_pixel(&h, 110, 120).a(), 255);
+}
+
+#[test]
+fn selection_restricts_painting_until_it_is_removed_from_the_palette() {
+    let mut h = harness();
+    with_layer(&mut h);
+    h.get_by_label("Select").click();
+    h.run();
+    drag(&mut h, (50.0, 50.0), (80.0, 80.0));
+    h.get_by_label("Pencil").click();
+    h.run();
+    drag(&mut h, (10.0, 60.0), (70.0, 60.0));
+    assert_eq!(
+        (top_pixel(&h, 20, 60).a(), top_pixel(&h, 60, 60).a()),
+        (0, 255),
+        "only inside the selection"
+    );
+    h.get_by_label("Select").click();
+    h.run();
+    h.get_by_label("Deselect").click();
+    h.run();
+    h.get_by_label("Pencil").click();
+    h.run();
+    drag(&mut h, (10.0, 70.0), (70.0, 70.0));
+    assert_eq!(top_pixel(&h, 20, 70).a(), 255);
+}

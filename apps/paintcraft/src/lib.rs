@@ -9,9 +9,10 @@
 use std::path::PathBuf;
 
 use eframe::egui::{self, Color32, Pos2, Rect, Sense, Vec2};
+use paintcraft_core::execute::Selection;
 use paintcraft_core::render::render_flat;
 use paintcraft_types::Rgba;
-use paintcraft_ui::editor::{Action, Editor};
+use paintcraft_ui::editor::{Action, Editor, Preview, ShapeStyle, Tool};
 use paintcraft_ui::view::View;
 use uuid::Uuid;
 
@@ -22,6 +23,8 @@ mod code {
     pub const REDO: u64 = 4;
     pub const SAVE: u64 = 5;
     pub const VISIBLE: u64 = 6;
+    pub const SELECT_ALL: u64 = 7;
+    pub const DESELECT: u64 = 8;
 }
 
 const DEFAULT_SIZE: (u32, u32) = (320, 320);
@@ -264,6 +267,82 @@ impl App {
         }
     }
 
+    fn tool_panel(&mut self, ui: &mut egui::Ui) {
+        let ctx = ui.ctx().clone();
+        ui.heading("Tools");
+        ui.horizontal_wrapped(|ui| {
+            for tool in Tool::ALL {
+                if ui
+                    .selectable_label(self.editor.tool == tool, tool.name())
+                    .clicked()
+                {
+                    self.editor.cancel_gesture();
+                    self.editor.tool = tool;
+                }
+            }
+        });
+        let tool = self.editor.tool;
+        if matches!(
+            tool,
+            Tool::Brush | Tool::Eraser | Tool::Line | Tool::Rect | Tool::Ellipse
+        ) {
+            ui.horizontal(|ui| {
+                let label = ui.label("Size");
+                ui.add(egui::DragValue::new(&mut self.editor.options.size).range(1..=1024))
+                    .labelled_by(label.id);
+            });
+        }
+        if tool == Tool::Brush {
+            ui.horizontal(|ui| {
+                ui.selectable_value(&mut self.editor.options.round, true, "Round");
+                ui.selectable_value(&mut self.editor.options.round, false, "Square");
+            });
+        }
+        if matches!(tool, Tool::Rect | Tool::Ellipse) {
+            ui.horizontal(|ui| {
+                ui.selectable_value(
+                    &mut self.editor.options.style,
+                    ShapeStyle::Outline,
+                    "Outline",
+                );
+                ui.selectable_value(&mut self.editor.options.style, ShapeStyle::Filled, "Filled");
+                ui.selectable_value(&mut self.editor.options.style, ShapeStyle::Both, "Both");
+            });
+            if self.editor.options.style == ShapeStyle::Both {
+                let c = self.editor.secondary.0;
+                let mut color = Color32::from_rgba_unmultiplied(c[0], c[1], c[2], c[3]);
+                let swatch = ui.color_edit_button_srgba(&mut color);
+                swatch.widget_info(|| {
+                    egui::WidgetInfo::labeled(egui::Role::ColorWell, true, "Fill color")
+                });
+                if swatch.changed() {
+                    let [r, g, b, a] = color.to_srgba_unmultiplied();
+                    self.editor.secondary = Rgba([r, g, b, a]);
+                }
+            }
+        }
+        if tool == Tool::Fill {
+            ui.horizontal(|ui| {
+                let label = ui.label("Tolerance");
+                ui.add(egui::DragValue::new(&mut self.editor.options.tolerance).range(0..=255))
+                    .labelled_by(label.id);
+            });
+        }
+        if tool == Tool::Select {
+            let (w, h) = self.editor.document().canvas;
+            ui.horizontal(|ui| {
+                if ui.button("Select all").clicked() {
+                    let corners = Some(((0, 0), (i64::from(w) - 1, i64::from(h) - 1)));
+                    self.request(&ctx, code::SELECT_ALL, Action::Select { corners });
+                }
+                if ui.button("Deselect").clicked() {
+                    self.request(&ctx, code::DESELECT, Action::Select { corners: None });
+                }
+            });
+        }
+        ui.separator();
+    }
+
     fn layer_panel(&mut self, ui: &mut egui::Ui) {
         let ctx = ui.ctx().clone();
         ui.heading("Layers");
@@ -436,28 +515,124 @@ impl App {
                     }
                 }
 
-                // Live overlay of the unpublished stroke.
-                let pts: Vec<Pos2> = self
-                    .editor
-                    .gesture_points()
+                self.draw_overlays(&painter, &view, ppp);
+            });
+    }
+
+    /// Display-only feedback: the committed selection and the unpublished gesture.
+    fn draw_overlays(&self, painter: &egui::Painter, view: &View, ppp: f32) {
+        let screen = |p: (i64, i64)| {
+            let s = view.to_screen(p);
+            Pos2::new(s.0, s.1)
+        };
+        let px = view.points_per_pixel();
+        let box_of = |a: (i64, i64), b: (i64, i64)| {
+            Rect::from_min_max(
+                screen((a.0.min(b.0), a.1.min(b.1))),
+                screen((a.0.max(b.0) + 1, a.1.max(b.1) + 1)),
+            )
+        };
+        let ants = |r: Rect| {
+            painter.rect_stroke(
+                r,
+                0.0,
+                egui::Stroke::new(1.0 / ppp, Color32::BLACK),
+                egui::StrokeKind::Outside,
+            );
+            painter.rect_stroke(
+                r.expand(1.0 / ppp),
+                0.0,
+                egui::Stroke::new(1.0 / ppp, Color32::WHITE),
+                egui::StrokeKind::Outside,
+            );
+        };
+        if let Selection::Rect(r) = self.editor.selection() {
+            ants(box_of((r.x0, r.y0), (r.x1 - 1, r.y1 - 1)));
+        }
+        let color = |c: Rgba| Color32::from_rgba_unmultiplied(c.0[0], c.0[1], c.0[2], c.0[3]);
+        match self.editor.preview() {
+            Some(Preview::Path {
+                points,
+                size,
+                round,
+                color: c,
+            }) => {
+                // Erasing previews as a pale outline; the real pixels change on release.
+                let shade = if c.a() == 0 {
+                    Color32::from_rgba_unmultiplied(255, 255, 255, 160)
+                } else {
+                    color(c)
+                };
+                let width = (size as f32 * px).max(1.0 / ppp);
+                let centres: Vec<Pos2> = points
                     .iter()
-                    .map(|p| {
-                        let s = view.to_screen(*p);
-                        let half = view.points_per_pixel() / 2.0;
-                        Pos2::new(s.0 + half, s.1 + half)
-                    })
+                    .map(|p| screen(*p) + Vec2::splat(px / 2.0))
                     .collect();
-                if pts.len() > 1 {
-                    let c = self.editor.color.0;
+                if centres.len() > 1 {
                     painter.add(egui::Shape::line(
-                        pts,
-                        egui::Stroke::new(
-                            view.points_per_pixel().max(1.0 / ppp),
-                            Color32::from_rgba_unmultiplied(c[0], c[1], c[2], c[3]),
-                        ),
+                        centres.clone(),
+                        egui::Stroke::new(width, shade),
                     ));
                 }
-            });
+                for c in centres {
+                    if round {
+                        painter.circle_filled(c, width / 2.0, shade);
+                    } else {
+                        painter.rect_filled(
+                            Rect::from_center_size(c, Vec2::splat(width)),
+                            0.0,
+                            shade,
+                        );
+                    }
+                }
+            }
+            Some(Preview::Shape {
+                tool,
+                from,
+                to,
+                stroke,
+                fill,
+            }) => {
+                let r = box_of(from, to);
+                let line = stroke.map(|(c, size)| {
+                    egui::Stroke::new((size as f32 * px).max(1.0 / ppp), color(c))
+                });
+                match tool {
+                    Tool::Line => {
+                        if let Some(l) = line {
+                            let half = Vec2::splat(px / 2.0);
+                            painter.line_segment([screen(from) + half, screen(to) + half], l);
+                        }
+                    }
+                    Tool::Rect => {
+                        if let Some(f) = fill {
+                            painter.rect_filled(r, 0.0, color(f));
+                        }
+                        if let Some(l) = line {
+                            painter.rect_stroke(r, 0.0, l, egui::StrokeKind::Inside);
+                        }
+                    }
+                    _ => {
+                        if let Some(f) = fill {
+                            painter.add(egui::epaint::EllipseShape::filled(
+                                r.center(),
+                                r.size() / 2.0,
+                                color(f),
+                            ));
+                        }
+                        if let Some(l) = line {
+                            painter.add(egui::epaint::EllipseShape::stroke(
+                                r.center(),
+                                r.size() / 2.0,
+                                l,
+                            ));
+                        }
+                    }
+                }
+            }
+            Some(Preview::Marquee { from, to }) => ants(box_of(from, to)),
+            None => {}
+        }
     }
 
     /// Lay out one pass of the whole window.
@@ -486,7 +661,10 @@ impl App {
                 }
             });
         });
-        egui::Panel::left("layers").show(ui, |ui| self.layer_panel(ui));
+        egui::Panel::left("layers").show(ui, |ui| {
+            self.tool_panel(ui);
+            self.layer_panel(ui);
+        });
         egui::CentralPanel::default().show(ui, |ui| self.canvas(ui, first_pass));
         self.confirm_dialog(ui);
         if self.editor.run_pending() > 0 {
