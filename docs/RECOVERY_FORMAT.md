@@ -64,6 +64,13 @@ completed edits may begin a new episode after successful cleanup. Only canonical
 filenames, including authorized safe-save staging filenames, are removed; unrelated
 files and other sessions are retained.
 
+A recovery offer records the exact snapshot SHA-256 and document/state IDs. Claiming
+it checks its owned filename, acquires its existing orphan lock, rejects a durable
+discard marker, and rechecks content and semantic identity. The claim holds that lock
+through preparation and exposes a scoped discard capability. Cancelling releases the
+lock without deleting the source. These are cooperative local-filesystem checks, not
+OS confinement or exclusion of arbitrary external writers ignoring the lock.
+
 Provisional limits are 1 GiB per snapshot, 128 KiB per record, 32 KiB for the original
 path display string, 4 GiB retained snapshot payloads per writer, 64 retained/tail
 segments, 256 owned files per session, and 100,000 directory entries per scan. Payloads

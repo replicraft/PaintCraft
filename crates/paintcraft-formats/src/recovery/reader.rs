@@ -117,6 +117,9 @@ fn found_commit(dir: &Path, session: Uuid, commit: &Commit) -> Result<Found> {
         original: commit.original.clone(),
         modified,
         sequence: commit.sequence,
+        document_id: commit.document,
+        state_id: commit.state,
+        sha256: commit.sha256.clone(),
     })
 }
 fn scan_session(dir: &Path, session: Uuid, issues: &mut Vec<String>) -> Result<Option<Found>> {
@@ -182,7 +185,8 @@ fn scan_session(dir: &Path, session: Uuid, issues: &mut Vec<String>) -> Result<O
     // admitted and semantically validated, rather than trusted because of a suffix.
     let legacy = dir.join(format!("{session}.pcnd"));
     if fs::symlink_metadata(&legacy).is_ok() {
-        crate::pcnd::read(&read_bounded(&legacy, SNAPSHOT_BYTES_MAX)?)?;
+        let bytes = read_bounded(&legacy, SNAPSHOT_BYTES_MAX)?;
+        let document = crate::pcnd::read(&bytes)?;
         let original = read_bounded(&dir.join(format!("{session}.json")), RECORD_MAX)
             .ok()
             .and_then(|b| json::parse(&b).ok())
@@ -195,6 +199,9 @@ fn scan_session(dir: &Path, session: Uuid, issues: &mut Vec<String>) -> Result<O
                 .and_then(|m| m.modified())
                 .unwrap_or(SystemTime::UNIX_EPOCH),
             sequence: 0,
+            document_id: document.document_id,
+            state_id: document.state_id,
+            sha256: hash(&bytes),
         }));
     }
     Ok(None)

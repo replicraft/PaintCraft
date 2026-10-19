@@ -425,3 +425,66 @@ fn invalidation_during_encoding_stops_old_publication_before_the_head() {
         fs::remove_dir_all(dir).unwrap();
     }
 }
+
+#[test]
+fn a_claim_keeps_the_source_locked_until_handoff_or_cancellation() {
+    let dir = scratch();
+    let owner = Recovery::start(&dir).unwrap();
+    owner.checkpoint_document(&document(1), None).unwrap();
+    drop(owner);
+    let found = only(&dir);
+    let claimed = Recovery::claim(&found).unwrap();
+    assert!(claimed.document.same_semantics(&document(1)));
+    assert!(Recovery::scan(&dir).is_empty());
+    assert!(Recovery::claim(&found).is_err());
+    assert!(Recovery::discard(&dir, found.session).is_err());
+    drop(claimed);
+    assert!(
+        found.checkpoint.exists(),
+        "cancelling a claim keeps the original checkpoint"
+    );
+    let claimed = Recovery::claim(&found).unwrap();
+    claimed.lease.discard().unwrap();
+    assert!(!found.checkpoint.exists());
+    fs::remove_dir_all(dir).unwrap();
+}
+
+#[test]
+fn a_claim_rejects_changed_content_or_a_durable_discard_after_the_offer() {
+    let dir = scratch();
+    let owner = Recovery::start(&dir).unwrap();
+    owner.checkpoint_document(&document(1), None).unwrap();
+    drop(owner);
+    let found = only(&dir);
+    let original = fs::read(&found.checkpoint).unwrap();
+    fs::write(&found.checkpoint, crate::pcnd::write(&document(2)).unwrap()).unwrap();
+    assert_eq!(
+        Recovery::claim(&found).unwrap_err().code,
+        ErrorCode::ConflictStaleBase
+    );
+    fs::write(&found.checkpoint, original).unwrap();
+    fs::write(tombstone(&dir, found.session), cleared_bytes(found.session)).unwrap();
+    assert_eq!(
+        Recovery::claim(&found).unwrap_err().code,
+        ErrorCode::ConflictStaleBase
+    );
+    fs::remove_dir_all(dir).unwrap();
+}
+
+#[test]
+fn a_claim_cannot_relabel_an_arbitrary_file_as_a_recovery_payload() {
+    let dir = scratch();
+    let owner = Recovery::start(&dir).unwrap();
+    owner.checkpoint_document(&document(1), None).unwrap();
+    drop(owner);
+    let mut found = only(&dir);
+    let unrelated = dir.join("unrelated.pcnd");
+    fs::copy(&found.checkpoint, &unrelated).unwrap();
+    found.checkpoint = unrelated.clone();
+    assert_eq!(
+        Recovery::claim(&found).unwrap_err().code,
+        ErrorCode::TargetInvalid
+    );
+    assert!(unrelated.exists());
+    fs::remove_dir_all(dir).unwrap();
+}

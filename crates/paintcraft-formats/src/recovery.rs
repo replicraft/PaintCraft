@@ -3,12 +3,14 @@
 //! A head anchors a full semantic snapshot; only contiguous backed tail records
 //! may advance it. Recovery restores content, not the entire undo history.
 mod journal;
+mod lease;
 mod reader;
 use crate::save;
 use journal::{
     Commit, Head, RECORD_MAX, SNAPSHOT_BYTES_MAX, TAIL_RECORDS_MAX, commit_path, hash, head_path,
     payload_path, read_bounded,
 };
+pub use lease::{ClaimedRecovery, RecoveryLease};
 use paintcraft_core::types::{
     Error, ErrorCode, Result,
     json::{self, Value},
@@ -79,6 +81,9 @@ pub struct Found {
     pub modified: SystemTime,
     /// Zero denotes a validated legacy standalone checkpoint.
     pub sequence: u64,
+    pub document_id: Uuid,
+    pub state_id: Uuid,
+    pub sha256: String,
 }
 /// Owner-scoped publication fence. A coordinator invalidates first, then queues
 /// cleanup before admitting work under the returned token.
@@ -498,18 +503,7 @@ impl Recovery {
     }
     /// Refuse to remove a live session's store.
     pub fn discard(dir: &Path, session: Uuid) -> Result<()> {
-        let path = dir.join(format!("{session}.lock"));
-        let lock = OpenOptions::new()
-            .read(true)
-            .write(true)
-            .open(&path)
-            .map_err(|e| storage("cannot open recovery lock for discard", &e))?;
-        lock.try_lock()
-            .map_err(|_| Error::new(ErrorCode::StorageFailed, "recovery session is still live"))?;
-        clear_owned(dir, session)?;
-        remove_if_present(&tombstone(dir, session))?;
-        remove_if_present(&path)?;
-        sync_directory(dir)
+        RecoveryLease::acquire(dir, session)?.discard()
     }
 }
 fn clear_owned(dir: &Path, session: Uuid) -> Result<()> {
