@@ -92,10 +92,7 @@ pub fn tool_button(ui: &mut egui::Ui, state: &mut Controls, tool: Tool, large: b
         Tool::Select => Icon::Select,
         Tool::Text => Icon::Text,
     };
-    if icon_button(ui, tool.name(), icon, state.tool == tool, large)
-        .on_hover_text(tool.name())
-        .clicked()
-    {
+    if icon_button(ui, tool.name(), icon, state.tool == tool, large).clicked() {
         state.tool = tool;
         true
     } else {

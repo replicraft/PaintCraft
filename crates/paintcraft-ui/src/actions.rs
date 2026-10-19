@@ -254,8 +254,14 @@ pub fn toolbar_button(
         },
     );
     ui.add_enabled_ui(action.enabled(ctx), |ui| {
-        crate::widgets::icon_button(ui, label, icon, action.checked(ctx).unwrap_or(false), false)
-            .on_hover_text(tooltip)
+        crate::widgets::icon_button_with_tooltip(
+            ui,
+            label,
+            icon,
+            action.checked(ctx).unwrap_or(false),
+            false,
+            tooltip,
+        )
     })
     .inner
     .clicked()

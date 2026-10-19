@@ -4,6 +4,18 @@ use egui::{Rect, Response, Sense, Stroke, StrokeKind, Ui, Vec2};
 pub use crate::icons::Icon;
 
 pub fn icon_button(ui: &mut Ui, label: &str, icon: Icon, selected: bool, large: bool) -> Response {
+    icon_button_with_tooltip(ui, label, icon, selected, large, label)
+}
+
+/// Use one tooltip when an action has shortcut or explanatory text.
+pub fn icon_button_with_tooltip(
+    ui: &mut Ui,
+    label: &str,
+    icon: Icon,
+    selected: bool,
+    large: bool,
+    tooltip: impl Into<egui::WidgetText>,
+) -> Response {
     let size = if large {
         Vec2::new(64.0, 54.0)
     } else {
@@ -56,5 +68,5 @@ pub fn icon_button(ui: &mut Ui, label: &str, icon: Icon, selected: bool, large: 
             ink,
         );
     }
-    response.on_hover_text(label)
+    response.on_hover_text(tooltip)
 }

@@ -172,3 +172,6 @@ mod interactions;
 
 #[path = "gui/font_text.rs"]
 mod font_text;
+
+#[path = "gui/ui_hover.rs"]
+mod ui_hover;
