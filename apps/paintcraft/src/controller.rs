@@ -69,7 +69,16 @@ fn point(p: (i64, i64)) -> Value {
 impl Editor {
     /// A new white document with one `Background` layer as the editing target.
     pub fn new_document(width: u32, height: u32) -> Result<Editor> {
-        let doc = new_document(width, height, Some(Rgba([255, 255, 255, 255])), 0, POLICY)?;
+        // Native New creates an independent document. The CLI retains its explicit
+        // deterministic seed contract; desktop sessions use a fresh valid seed.
+        let seed = (Uuid::new_v4().as_u128() as u64) & 9_007_199_254_740_991;
+        let doc = new_document(
+            width,
+            height,
+            Some(Rgba([255, 255, 255, 255])),
+            seed,
+            POLICY,
+        )?;
         let mut e = Editor::with_document(doc, None);
         e.status = format!("New {width}×{height} document");
         Ok(e)
@@ -678,6 +687,9 @@ impl Editor {
 
     pub(crate) fn acknowledge_saved_state(&mut self, state: Uuid) {
         self.session.mark_saved_state(state);
+    }
+    pub(crate) fn invalidate_saved_state(&mut self) {
+        self.session.mark_unsaved();
     }
 
     fn save(&mut self) {

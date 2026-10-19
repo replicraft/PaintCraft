@@ -74,10 +74,10 @@ fn new_document_asks_before_discarding_unsaved_work() {
     h.get_by_label("Continue").click();
     h.run();
     assert_eq!(h.state().editor().layers().len(), 1);
-    assert_eq!(
+    assert_ne!(
         h.state().editor().document().document_id,
         id,
-        "same deterministic parameters give the same identity"
+        "native New creates an independent document identity"
     );
 }
 
