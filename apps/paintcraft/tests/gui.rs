@@ -127,5 +127,7 @@ mod colors;
 mod layers;
 #[path = "gui/properties.rs"]
 mod properties;
+#[path = "gui/secondary.rs"]
+mod secondary;
 #[path = "gui/shortcuts.rs"]
 mod shortcuts;

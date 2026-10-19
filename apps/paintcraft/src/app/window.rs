@@ -102,7 +102,12 @@ impl App {
             // Save diagnostics remain reachable even when the Layers window is hidden.
             egui::Panel::bottom("studio-save-status").show(ui, |ui| self.incomplete_save_panel(ui));
         }
-        let accept_input = first_pass && !self.dialogs.as_ref().is_some_and(NativeDialogs::pending);
+        if self.action_context().blocked {
+            // A modal may consume the eventual release. Retire the gesture now
+            // so it cannot resume or publish after the dialog is dismissed.
+            self.editor.cancel_gesture();
+        }
+        let accept_input = first_pass && !self.action_context().blocked;
         egui::CentralPanel::default()
             .frame(
                 egui::Frame::new()

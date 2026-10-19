@@ -37,15 +37,26 @@ impl App {
                         match event {
                             egui::Event::PointerButton {
                                 pos,
-                                button: egui::PointerButton::Primary,
+                                button,
                                 pressed: true,
                                 ..
                             } => {
+                                let button = match button {
+                                    egui::PointerButton::Primary => {
+                                        paintcraft_input::PointerButton::Primary
+                                    }
+                                    egui::PointerButton::Secondary
+                                        if self.experience() == Experience::Studio =>
+                                    {
+                                        paintcraft_input::PointerButton::Secondary
+                                    }
+                                    _ => continue,
+                                };
                                 if (rect.contains(pos)
                                     && ui.ctx().layer_id_at(pos) == Some(painter.layer_id()))
                                     && let Some(d) = view.to_doc((pos.x, pos.y))
                                 {
-                                    self.editor.pointer_down(d);
+                                    self.editor.pointer_down_button(d, button);
                                 }
                             }
                             egui::Event::PointerMoved(pos) => {
@@ -55,15 +66,28 @@ impl App {
                             }
                             egui::Event::PointerButton {
                                 pos,
-                                button: egui::PointerButton::Primary,
+                                button,
                                 pressed: false,
                                 ..
                             } => {
+                                let button = match button {
+                                    egui::PointerButton::Primary => {
+                                        paintcraft_input::PointerButton::Primary
+                                    }
+                                    egui::PointerButton::Secondary
+                                        if self.experience() == Experience::Studio =>
+                                    {
+                                        paintcraft_input::PointerButton::Secondary
+                                    }
+                                    _ => continue,
+                                };
+                                if self.editor.gesture_button() != Some(button) {
+                                    continue;
+                                }
                                 if let Some(d) = view.to_doc((pos.x, pos.y)) {
                                     self.editor.pointer_move(d);
                                 }
-                                self.editor
-                                    .pointer_event(paintcraft_input::PointerEvent::Up);
+                                self.editor.pointer_up_button(button);
                             }
                             _ => {}
                         }

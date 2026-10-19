@@ -215,4 +215,17 @@ cargo test -p paintcraft --test gui colors::render_studio_colors_for_review -- -
 It writes `/tmp/paintcraft-studio-colors.png`. The wheel and expanded controls
 address the Colors window in `im5age.png`; panel styling/spacing and advanced
 control layout still differ. This does not qualify reference or color-managed
-rendering parity. Right-button canvas drawing remains separate tool-input work.
+rendering parity. Right-button canvas drawing now works for the supported paint tools described below.
+
+## Secondary-color canvas gestures
+
+Studio Pencil, Brush, Fill, Line, Rectangle and Ellipse use secondary color when
+started with the right button. Both-style shapes reverse outline and fill colors.
+The swatches themselves stay unchanged. Gesture colors and options are captured
+at pointer-down; unrelated button releases cannot publish the gesture. The same
+staged brush path is used before and after publication, and a completed gesture
+adds one undo entry. Escape, document switching and modal entry cancel safely.
+
+See [pointer ownership](INPUT_GESTURES.md) for normalized input APIs, tests and
+limits. Secondary selection, text and eraser behavior and Classic button policies
+remain separate compatibility work; this is not full Paint.NET tool parity.
