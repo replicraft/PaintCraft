@@ -1,4 +1,5 @@
 pub mod controller;
+mod saving;
 pub mod settings;
 // The PaintCraft desktop UI. All decisions live in `paintcraft-ui`; this file
 // turns egui input into editor calls and editor state into pixels.
@@ -94,6 +95,9 @@ pub struct App {
     /// The file this document was opened from or last saved to.
     bound: Option<PathBuf>,
     pending_save: Option<(PathBuf, Option<PathBuf>)>,
+    saving: Option<saving::NativeSaving>,
+    save_activation: Option<u64>,
+    close_after_saves: bool,
     confirm: Option<Confirm>,
     canvas_rect: Option<Rect>,
     hover_doc: Option<(i64, i64)>,
@@ -129,6 +133,12 @@ impl App {
     /// Connect native services only for a real desktop window; harnesses stay deterministic.
     pub fn with_native_services(mut self, cc: &eframe::CreationContext<'_>) -> Self {
         self.dialogs = Some(NativeDialogs::new(cc));
+        match saving::NativeSaving::new() {
+            Ok(saving) => self.saving = Some(saving),
+            Err(error) => self
+                .editor
+                .set_status(format!("Background saving unavailable: {error}")),
+        }
         if let Some(state) = &cc.wgpu_render_state {
             match GpuRenderer::new(state.device.clone(), state.queue.clone()) {
                 Ok(gpu) => {
@@ -198,6 +208,9 @@ impl App {
             path_text,
             bound: None,
             pending_save: None,
+            saving: None,
+            save_activation: None,
+            close_after_saves: false,
             confirm: None,
             canvas_rect: None,
             hover_doc: None,
@@ -359,6 +372,9 @@ impl App {
             renderer.cancel(handle);
         }
         self.editor.discard_checkpoint();
+        if let Some(saving) = &mut self.saving {
+            saving.new_session();
+        }
         self.editor = editor;
         self.texture_key = None;
         self.texture = None;
@@ -692,6 +708,22 @@ impl App {
     }
 
     fn do_save(&mut self, ctx: &egui::Context, path: PathBuf) {
+        if let Some(saving) = &mut self.saving {
+            let activation = token(ctx, code::SAVE);
+            if self.save_activation == Some(activation) {
+                return;
+            }
+            self.save_activation = Some(activation);
+            self.editor.cancel_gesture();
+            self.editor.commit_text();
+            self.editor.run_pending();
+            let result = saving.submit(&self.editor, path, self.bound.as_deref(), ctx.clone());
+            self.editor.set_status(match result {
+                Ok(()) => "Saving captured document…".into(),
+                Err(error) => format!("Save not queued: {error}"),
+            });
+            return;
+        }
         let previous = self.editor.path().map(Path::to_path_buf);
         self.editor.set_path(path.clone());
         self.request(ctx, code::SAVE, Action::Save);
@@ -918,12 +950,15 @@ impl App {
                 ),
                 "Continue",
             ),
-            Confirm::QuitUnsaved => (
-                "Quit without saving?",
-                "There are unsaved changes. A recovery copy is kept and offered next time."
-                    .to_owned(),
-                "Quit anyway",
-            ),
+            Confirm::QuitUnsaved => {
+                let incomplete = self
+                    .saving
+                    .as_ref()
+                    .is_some_and(saving::NativeSaving::failed);
+                (if incomplete { "Quit with an incomplete save?" } else { "Quit without saving?" },
+                if incomplete { "A requested save failed or is unconfirmed. Available recovery data will be kept." }
+                else { "There are unsaved changes. Available recovery data will be kept." }.to_owned(), "Quit anyway")
+            }
             Confirm::Export {
                 path,
                 format,
@@ -958,7 +993,7 @@ impl App {
                             Confirm::ReplaceFile(p) => self.do_save(&ctx, p),
                             Confirm::QuitUnsaved => {
                                 self.allow_close = true;
-                                ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                                self.close_after_requested_saves(&ctx);
                             }
                             Confirm::Export {
                                 path,
@@ -1335,19 +1370,29 @@ impl App {
         self.picker_dialog(ui);
         self.recovery_dialog(ui);
         self.confirm_dialog(ui);
-        if first_pass
-            && ctx.input(|i| i.viewport().close_requested())
-            && self.editor.is_dirty()
-            && !self.allow_close
-        {
-            ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
-            self.confirm = Some(Confirm::QuitUnsaved);
+        if first_pass && ctx.input(|i| i.viewport().close_requested()) {
+            if self.saving.as_ref().is_some_and(|s| s.pending()) {
+                ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
+                self.close_after_saves = true;
+                self.editor
+                    .set_status("Waiting for requested saves before closing…");
+            } else if (self.editor.is_dirty()
+                || self
+                    .saving
+                    .as_ref()
+                    .is_some_and(saving::NativeSaving::failed))
+                && !self.allow_close
+            {
+                ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
+                self.confirm = Some(Confirm::QuitUnsaved);
+            }
         }
         if self.editor.run_pending() > 0 {
             ctx.request_repaint();
             self.sync_texture(&ctx);
         }
         self.finish_save();
+        self.poll_native_saves(&ctx);
         let now = ctx.input(|i| i.time);
         if now - self.last_autosave >= self.autosave_every.as_secs_f64() {
             self.last_autosave = now;
@@ -1360,7 +1405,7 @@ impl App {
             // egui repaints only on events; a smoke run must keep frames coming.
             ctx.request_repaint();
             if ctx.cumulative_frame_nr() >= n {
-                ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                self.close_after_requested_saves(&ctx);
             }
         }
     }

@@ -641,6 +641,14 @@ impl Editor {
         }
     }
 
+    pub(crate) fn acknowledge_saved_state(&mut self, state: Uuid) {
+        self.session.mark_saved_state(state);
+        // Keep protection for newer edits made while this snapshot was saving.
+        if !self.is_dirty() {
+            self.discard_checkpoint();
+        }
+    }
+
     fn save(&mut self) {
         self.save_outcome = Some(false);
         let Some(path) = self.path.clone() else {

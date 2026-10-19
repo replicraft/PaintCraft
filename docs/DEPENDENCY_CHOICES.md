@@ -19,7 +19,7 @@ A correct integrated baseline is not a measured performance or release qualifica
 | `bytemuck` | selected-on-use | Explicit GPU staging layouts in render | BF04 | Integrated baseline, 1.25.2 with derive; WGSL offsets/endian checks and Metal parity pass; benchmark pending |
 | `tess2-rust` | evaluate | Complex path fills; compare Lyon | BF05 | Not directly adopted; activate with its consumer |
 | `rayon` | selected-on-use | Bounded native render preparation pool | BF06 | Integrated baseline, 1.12.0; queue/byte admission, cancellation and panic tests; performance/fairness qualification pending |
-| `tokio` | preferred-on-use | Native background save/recovery and service coordination | BF07 | Not directly adopted; activate with its consumer |
+| `tokio` | preferred-on-use | Native ordered save coordinator | BF07 | Integrated baseline, 1.53.3 with rt/sync behind native-io; bounded FIFO, completion retention, panic and shutdown tests; recovery integration and benchmark pending |
 | `moka` | selective-on-use | Discardable derived CPU cache with independent memory accounting | BF08 | Not directly adopted; activate with its consumer |
 | `fst` | deferred | Large immutable asset catalog, when one exists | BF09 | Not directly adopted; activate with its consumer |
 | `smallvec` | selective-on-use | Short dirty-region and dependency lists | BF10 | Not directly adopted; activate with its consumer |

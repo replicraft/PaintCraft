@@ -143,7 +143,7 @@
         "crates/paintcraft-formats/src/recovery.rs",
         "crates/paintcraft-platform/src/save.rs"
       ],
-      "remaining_or_scope": "Streaming staged saves, bounded read-back and injected phase failures pass; ordered asynchronous queues and stale-completion guards remain.",
+      "remaining_or_scope": "Streaming native saves, bounded Tokio FIFO, stale binding/session guards and captured-state acknowledgement pass; ordered recovery journal and full fault/platform matrix remain.",
       "acceptance": "SAVE-01\u201309 failure injection including disk full/slow sink and stale Save As completion."
     },
     {
@@ -449,7 +449,7 @@
         "crates/paintcraft-platform/src/save.rs",
         "apps/paintcraft/src/lib.rs"
       ],
-      "remaining_or_scope": "Receipts and confirmed Save As binding exist; concurrent generations, failure matrix and filesystem qualification remain.",
+      "remaining_or_scope": "Stable receipt IDs, real queue sequences, binding generations and captured-state acknowledgement pass; alias/fingerprint guards, reconciliation and filesystem qualification remain.",
       "acceptance": "FILE-01..10; injected failures on both sides of replace/barrier; no false aborted receipt after a known side effect; native alias and filesystem qualification."
     },
     {

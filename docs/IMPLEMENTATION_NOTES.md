@@ -47,7 +47,7 @@ cannot publish partial files. Receipt IDs are stable, and coordinators can stamp
 save sequence and binding generation. Injected phase failures distinguish known
 replacement from confirmed durability. Temporary-link cleanup follows the successful
 create boundary. Ambiguous replace errors retain staging and prohibit automatic retry.
-This does not yet provide ordered background saves or external-writer exclusion.
+Ordering is supplied by the native coordinator below; external-writer exclusion remains pending.
 
 ## GPU compositor and native dialogs
 
@@ -72,6 +72,25 @@ binding outcomes. Interactive native-dialog behavior still needs manual checks o
 A short native desktop run with GPU/native services initialized and temporary settings
 opened and exited cleanly on macOS.
 
+## Ordered native saves
+
+The desktop enables Tokio 1.53.3 (`rt`, `sync`) only at the native I/O consumer.
+One current-thread coordinator admits at most four jobs and one blocking I/O worker;
+a global FIFO serializes every accepted save, including path aliases. Other destinations
+also wait in this initial baseline. A provisional 1 GiB charge covers independently
+retained snapshot payloads and encoder estimates; it is not a measured RSS bound.
+Completions remain charged until consumed. No accepted write is cancelled on shutdown.
+
+The app captures immutable document state and adopts confirmed completion only for the
+current session and requested binding generation. Saving A while editing B records A;
+B remains dirty and undoing to A becomes clean (SAVE-04). Stale Save As completions
+cannot retarget a later choice (SAVE-02/FILE-04). Same-destination FIFO tests cover
+SAVE-01. Repeated layout passes cannot submit duplicate saves. Close requests drain
+accepted writes, and failures keep the window open for a new explicit decision.
+The deterministic headless UI harness retains its synchronous adapter; native queue
+integration has separate tests. Async recovery checkpoints, external fingerprint guards,
+full receipt reconciliation and BF07 performance qualification remain pending.
+
 ## Native render preparation
 
 The native shell submits immutable document snapshots to one dedicated Rayon worker
@@ -89,7 +108,7 @@ Panics become failed preparations; stale callbacks/results are discarded. Tests 
 reservation lifetime, slot reuse/ownership, cancellation and late render completion.
 
 This is an admitted render-worker baseline, not the complete T13 priority scheduler or
-a physical-memory/performance qualification. Background saves, process-wide service
+a physical-memory/performance qualification. Background recovery, process-wide service
 coordination, GPU device epochs and measured fairness remain pending.
 
 ## Classic presentation
@@ -116,7 +135,7 @@ remain T16 work. Current-app GPU previews can be exported with the ignored
 | Native format (T08, T29) | Canonical PCND v1 writer (byte-identical to the specimen) and bounded reader; unknown version, schema, feature, encoding or group is `capability.unsupported`, never editable | `pcnd.rs` tests, vector digests |
 | Batch v2 | v1 plus `raster.stroke_path`, `raster.flood_fill`, `raster.shape`, `raster.text`, `layer.reorder` (see below) | behavior tests, JSON-Schema grammar cases |
 | Image formats | PNG, BMP, JPEG import and export with named, acknowledged losses (flatten, hidden RGB, lossy JPEG, discarded alpha) | `image.rs`, `export.rs`, CLI tests |
-| Safe save and recovery (T10) | Stage → atomic replace → read-back; a file-operation receipt; autosave checkpoints with per-session locks; recover, discard or ask later; a clean save or exit leaves nothing behind | platform `save.rs`, format `recovery.rs`, GUI tests |
+| Safe save and recovery (T10) | Streaming staging → atomic replace → bounded read-back; ordered native queue and file receipts; autosave checkpoints with per-session locks; recover, discard or ask later | platform `save.rs`, format `recovery.rs`, GUI tests |
 | Bounded history (T11) | Memory budget over all retained snapshots (shared tiles counted once); only the oldest undo steps are dropped, the newest edit stays undoable, the user is told | `session.rs`, editor tests |
 | CLI (T08, T33, T34) | `new`, `inspect`, `schema batch|batch-v2`, `capabilities`, `apply` (hash-guarded), `import`, `render` | 11 end-to-end tests of the real binary; output validates against the pack's schemas |
 | Editor (T09, T14 subset) | Pencil, brush (round/square), eraser, flood fill, line, rectangle, ellipse (outline/filled/both), rectangle select, bitmap text; layers: add, show/hide, move, delete, rename, opacity; undo/redo; one gesture or text object is one transaction | desktop controller tests; headless egui tests |
@@ -222,5 +241,5 @@ Native input and presentation spike (T02), reference capture (T03) and therefore
 Paint/Paint.NET behavioral parity, selections beyond one rectangle (no move, transform,
 invert or free-form), scalable or system fonts, clipboard, zoom to fit, layer groups,
 layer blend modes, other formats (GIF, TIFF, WebP, PCX, `.pdn`, `.paint`), Wasm effects,
-Zstd blocks, a background save worker, `paintcraft-web`, and everything in milestones M3
+Zstd blocks, background recovery scheduling, `paintcraft-web`, and everything in milestones M3
 onward.

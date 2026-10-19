@@ -24,7 +24,7 @@ paintcraft-formats.workspace = true
 paintcraft-input.workspace = true
 paintcraft-platform = { workspace = true, features = ["dialogs"] }
 paintcraft-raster.workspace = true
-paintcraft-runtime.workspace = true
+paintcraft-runtime = { workspace = true, features = ["native-io"] }
 paintcraft-render = { workspace = true, features = ["gpu"] }
 paintcraft-tools.workspace = true
 paintcraft-ui.workspace = true
