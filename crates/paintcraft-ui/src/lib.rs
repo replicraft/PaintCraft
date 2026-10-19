@@ -2,6 +2,7 @@
 pub mod actions;
 pub mod chrome;
 pub mod fonts;
+pub mod icons;
 pub mod outbox;
 pub mod view;
 pub mod widgets;

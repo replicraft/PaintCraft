@@ -180,7 +180,13 @@ impl Action {
 
 pub fn menu_item(ui: &mut egui::Ui, action: Action, ctx: Context) -> bool {
     let descriptor = action.descriptor();
-    let mut button = egui::Button::new(descriptor.label);
+    let mut button = match action.icon(ctx) {
+        Some(icon) => egui::Button::image_and_text(
+            crate::icons::image(ui.ctx(), icon, 16.0),
+            descriptor.label,
+        ),
+        None => egui::Button::new(descriptor.label),
+    };
     if let Some(shortcut) = descriptor.shortcut {
         button = button.shortcut_text(ui.ctx().format_shortcut(&shortcut));
     }

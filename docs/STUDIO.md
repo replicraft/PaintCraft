@@ -260,3 +260,13 @@ scrolled canvas accepting clicks on the menu bar outside its visible clip.
 The ignored native-GPU review test `view::render_studio_pixel_grid_for_review`
 writes `/tmp/paintcraft-studio-pixel-grid.png`. These controls address `5image.png`;
 visual and behavioral reference qualification remains incomplete.
+
+## Shared SVG icons
+
+Classic and Studio now use individual SVG adaptations of the supplied generated
+icon sheet for tools, file/history controls and implemented menu actions. All 68
+source glyphs have named standalone vector files and a local review gallery in
+[the icon assets](../crates/paintcraft-ui/assets/icons/README.md). No raster image
+is embedded in an SVG. Unimplemented tool/effect icons do not create placeholder
+commands. The SVG renderer caches derived textures at the display's density;
+accessible labels, action identities and selected/disabled behavior remain shared.

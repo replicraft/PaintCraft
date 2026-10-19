@@ -12,6 +12,7 @@ paintcraft-core.workspace = true
 paintcraft-tools.workspace = true
 
 egui.workspace = true
+resvg.workspace = true
 
 [lints]
 workspace = true

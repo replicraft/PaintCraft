@@ -33,6 +33,10 @@ semantics or an independently executable behavioral oracle. The modern Paint
 build number is not visible. Pinned executable captures and platform-specific
 behavior remain unqualified.
 
+The separately supplied generated icon sheet has been adapted into 68 standalone
+SVGs shared by Classic and Studio. See [the icon gallery and provenance](../crates/paintcraft-ui/assets/icons/README.md). It supplies project artwork, not
+independent behavioral reference evidence.
+
 ## Current coverage and next slices
 
 | Scope | Status | Working behavior / remaining scope |
