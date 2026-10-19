@@ -1,0 +1,15 @@
+   Compiling paintcraft-render v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-render)
+    Finished `bench` profile [optimized + debuginfo] target(s) in 1.11s
+     Running benches/composite.rs (target/release/deps/composite-b15f2fd606721fff)
+Timer precision: 41 ns
+composite         fastest       │ slowest       │ median        │ mean          │ samples │ iters
+╰─ baseline                     │               │               │               │         │
+   ├─ clipped100  33.58 µs      │ 487.7 µs      │ 297.1 µs      │ 301.2 µs      │ 30      │ 30
+   ├─ dense5      22.2 ms       │ 63.84 ms      │ 22.57 ms      │ 26.22 ms      │ 30      │ 30
+   ├─ opaque1     4.958 ms      │ 48.94 ms      │ 7.085 ms      │ 10.02 ms      │ 30      │ 30
+   ├─ sparse1     2.095 ms      │ 5.184 ms      │ 2.348 ms      │ 2.529 ms      │ 30      │ 30
+   ├─ sparse5     9.368 ms      │ 18.34 ms      │ 9.749 ms      │ 10.8 ms       │ 30      │ 30
+   ├─ sparse20    36.42 ms      │ 55.51 ms      │ 37.19 ms      │ 38.03 ms      │ 30      │ 30
+   ├─ sparse100   182.6 ms      │ 258 ms        │ 183.9 ms      │ 187 ms        │ 30      │ 30
+   ╰─ tiny        1.114 µs      │ 1.197 µs      │ 1.145 µs      │ 1.143 µs      │ 30      │ 120
+

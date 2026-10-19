@@ -1,0 +1,44 @@
+[
+  {
+    "id": "BF29",
+    "title": "Dirty regions and composite caches",
+    "choice": "render-cache",
+    "activation_tasks": [
+      "T12",
+      "T21"
+    ],
+    "status": "awaiting-relevant-workload",
+    "tier": "both",
+    "hyperfine_required": true,
+    "hyperfine_role": "decision",
+    "adapter_path": null,
+    "result_artifacts": [],
+    "variants": [
+      "correct full-region baseline",
+      "dirty rectangles",
+      "tile/dependency-aware caches"
+    ],
+    "workloads": [
+      "small local edit in many layers",
+      "opacity/reorder/groups when supported",
+      "zoomed-out composition, halo filters and resource invalidation"
+    ],
+    "correctness_gates": [
+      "ordered compositing and full oracle output",
+      "downsample/composite order respected",
+      "late cache result cannot publish obsolete preview"
+    ],
+    "supplementary_metrics": [
+      "recomputed pixels/tiles",
+      "frame/commit latency",
+      "cache/metadata bytes"
+    ],
+    "invalid_comparisons": [
+      "approximated lower-quality output as exact",
+      "cache key missing policy/resource identity",
+      "ignoring maintenance cost"
+    ],
+    "decision_rule": "Qualify cache policies only where correctness and total workload costs improve.",
+    "protocol": "docs/development/HYPERFINE_PROTOCOL.md"
+  }
+]

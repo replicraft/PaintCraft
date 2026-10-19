@@ -19,10 +19,15 @@ bytemuck = { workspace = true, optional = true }
 wgpu = { workspace = true, optional = true }
 
 [dev-dependencies]
+divan.workspace = true
 paintcraft-editor.workspace = true
 paintcraft-raster.workspace = true
 
 pollster.workspace = true
+
+[[bench]]
+name = "composite"
+harness = false
 
 [lints]
 workspace = true
