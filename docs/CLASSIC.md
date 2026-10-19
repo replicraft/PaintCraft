@@ -70,9 +70,9 @@ work. This frontend is not yet a finished reproduction of Windows Paint.
 
 UI fidelity and themes take priority over additional editing operations. The latest
 user direction permits explicit UI prototypes during this pass. The v11 ribbon
-now has compact Image/Tools groups, a two-row shapes gallery, circular color wells,
-a three-row palette, Settings gear and a collapsible Layers panel. Crop, transforms,
-color picker and unsupported shapes are disabled previews. Resize handles are
+now has compact Image/Tools groups, a scrollable shapes gallery, circular color wells,
+a three-row palette, Settings gear and a collapsible Layers panel. Crop, color picker and unsupported shapes are disabled previews; transform
+popups expose their reference entries with execution disabled. Resize handles are
 visual markers; View → Canvas size remains the working resize path.
 
 Settings provides Light, Dark and System appearance, with live theme preview,
@@ -143,3 +143,23 @@ remains disabled. The Brushes popup selects the working round/square tips and
 shows their current selection. Shape Outline and Fill popups select the supported
 solid/no-paint combinations. Textured brushes, extra shape implementations and
 other reference menu commands remain incomplete; this is not full menu parity.
+
+## Brush and Image popup reference pass
+
+The nine-entry brush list follows `i11mage.png`: Brush, Calligraphy brush,
+Calligraphy pen, Airbrush, Oil brush, Crayon, Marker, Natural pencil and Watercolor
+brush. Original, deterministic sample illustrations distinguish the entries.
+Only Brush currently selects a supported native-style tip; the other eight media
+are disabled and explain their availability on hover. Square brush remains a
+working PaintCraft extension below a separator. The gallery fits available screen
+height and scrolls on smaller windows. These decorations are not previews of
+implemented document stroke algorithms.
+
+Rotate exposes right/left 90°, 180° and custom entries from `imag111e.png`. Flip
+exposes vertical then horizontal from `im111age.png`. These are presentation
+prototypes: every transform entry remains disabled and cannot create history or
+alter pixels. Selection also exposes disabled invert, transparency and delete
+entries from `ima1111ge.png`, alongside the working rectangular/select-all/deselect
+operations. Clicking an unavailable choice leaves the popup open; Escape or an
+outside click dismisses it. This follows the user's UI-first priority and does
+not establish native operation parity.

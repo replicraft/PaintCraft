@@ -119,6 +119,21 @@ fn render_classic_dropdowns_and_cursor_for_review() {
         h.run();
         h.get_by_label("Tool size").set_value_accesskit(32.0);
         h.run();
+        for (menu, filename) in [
+            ("Rotate", "rotate"),
+            ("Flip", "flip"),
+            ("Selection options", "selection"),
+        ] {
+            h.get_by_role_and_label(eframe::egui::Role::Button, menu)
+                .click();
+            h.run();
+            h.render()
+                .unwrap()
+                .save(output.join(format!("{name}-{filename}.png")))
+                .unwrap();
+            h.key_press(Key::Escape);
+            h.run();
+        }
         // egui_kittest's synthetic arrow ignores platform CursorIcon::None.
         h.set_render_cursor(false);
         h.event(Event::PointerMoved(at(&h, 100.0, 100.0)));
@@ -130,4 +145,93 @@ fn render_classic_dropdowns_and_cursor_for_review() {
         drop(h);
         std::fs::remove_dir_all(dir).unwrap();
     }
+}
+
+#[test]
+fn media_gallery_preserves_unavailable_presets_and_has_reachable_working_tips() {
+    let mut h = harness();
+    let base = h.state().editor().document_snapshot();
+    h.get_by_role_and_label(eframe::egui::Role::Button, "Brushes")
+        .click();
+    h.run();
+    for label in [
+        "Calligraphy brush",
+        "Calligraphy pen",
+        "Airbrush",
+        "Oil brush",
+        "Crayon",
+        "Marker",
+        "Natural pencil",
+        "Watercolor brush",
+    ] {
+        assert!(h.get_by_label(label).accesskit_node().is_disabled());
+    }
+    h.get_by_label("Calligraphy brush").click();
+    h.run();
+    assert_eq!(h.state().editor().tool, paintcraft_tools::Tool::Pencil);
+    assert!(h.query_by_label("Watercolor brush").is_some());
+    h.get_by_label("Square brush").scroll_to_me();
+    h.run();
+    h.get_by_label("Square brush").click();
+    h.run();
+    assert_eq!(h.state().editor().tool, paintcraft_tools::Tool::Brush);
+    assert!(!h.state().editor().options.round);
+    h.get_by_role_and_label(eframe::egui::Role::Button, "Brushes")
+        .click();
+    h.run();
+    h.get_by_label("Round brush").scroll_to_me();
+    h.run();
+    h.get_by_label("Round brush").click();
+    h.run();
+    assert!(h.state().editor().options.round);
+    assert!(h.state().editor().document().same_semantics(&base));
+}
+
+#[test]
+fn image_menus_show_reference_entries_without_executing_unavailable_operations() {
+    let mut h = harness_with(App::new(None), 1.0, true);
+    let base = h.state().editor().document_snapshot();
+    for (menu, entries) in [
+        (
+            "Rotate",
+            vec![
+                "Rotate right 90°",
+                "Rotate left 90°",
+                "Rotate 180°",
+                "Rotate custom",
+            ],
+        ),
+        ("Flip", vec!["Flip vertical", "Flip horizontal"]),
+    ] {
+        h.get_by_role_and_label(eframe::egui::Role::Button, menu)
+            .click();
+        h.run();
+        for entry in &entries {
+            assert!(h.get_by_label(entry).accesskit_node().is_disabled());
+        }
+        h.get_by_label(entries[0]).click();
+        h.run();
+        assert!(h.query_by_label(entries[0]).is_some());
+        assert!(h.state().editor().document().same_semantics(&base));
+        h.key_press(Key::Escape);
+        h.run();
+        assert!(h.query_by_label(entries[0]).is_none());
+    }
+}
+
+#[test]
+fn brush_gallery_scrolls_lower_choices_into_a_short_window() {
+    let mut h = harness();
+    h.set_size(Vec2::new(1100.0, 500.0));
+    h.run();
+    h.get_by_role_and_label(eframe::egui::Role::Button, "Brushes")
+        .click();
+    h.run();
+    h.get_by_label("Square brush").scroll_to_me();
+    h.run();
+    assert!(h.get_by_label("Square brush").rect().max.y <= 500.0);
+    h.get_by_label("Square brush").click();
+    h.run();
+    assert_eq!(h.state().editor().tool, paintcraft_tools::Tool::Brush);
+    assert!(!h.state().editor().options.round);
 }

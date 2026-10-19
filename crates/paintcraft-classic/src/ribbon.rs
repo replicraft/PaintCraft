@@ -41,8 +41,8 @@ pub(super) fn ribbon(
                                 actions.push(Action::CanvasSize);
                             }
                             ui.end_row();
-                            prototype(ui, "Rotate", Icon::RotateClockwise);
-                            prototype(ui, "Flip", Icon::FlipHorizontal);
+                            super::image_menus::rotate(ui);
+                            super::image_menus::flip(ui);
                         });
                 });
                 ui.separator();

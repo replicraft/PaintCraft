@@ -1,6 +1,8 @@
 //! Classic presentation emits actions; editor and platform services own effects.
+mod brush_gallery;
 pub mod canvas;
 mod dropdowns;
+mod image_menus;
 mod palette;
 mod ribbon;
 #[derive(Debug, Default)]
