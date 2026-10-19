@@ -121,6 +121,8 @@ mod studio;
 #[path = "gui/tabs.rs"]
 mod tabs;
 
+#[path = "gui/centering.rs"]
+mod centering;
 #[path = "gui/colors.rs"]
 mod colors;
 #[path = "gui/layers.rs"]

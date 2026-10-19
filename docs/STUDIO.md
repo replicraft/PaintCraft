@@ -18,7 +18,7 @@ separately in the dependency choices and is not bundled yet.
   rename, opacity, reorder, duplicate and delete operations. Window menu toggles restore panels.
 - A movable History window with recorded action labels, current/redo rows, direct
   snapshot navigation and an explicit notice when older entries were trimmed.
-- Centered canvas when the viewport is larger than the document; scrolling and
+- Centered canvas in both Studio and Classic when the viewport is larger than the document; scrolling and
   actual-pixel zoom retain the common mapping.
 - Shared staged brush previews, CPU/wgpu composition, transactions and undo/redo.
   Open, Save As and Export retain the native file-dialog and preservation paths.

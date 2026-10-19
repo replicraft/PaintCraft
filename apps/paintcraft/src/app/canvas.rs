@@ -13,17 +13,14 @@ impl App {
             .auto_shrink([false, false])
             .show(ui, |ui| {
                 let canvas_size = Vec2::new(size.0, size.1);
-                let (response, painter) = if self.experience() == Experience::Studio {
-                    let inset = (ui.available_size() - canvas_size) * 0.5;
-                    ui.add_space(inset.y.max(0.0));
-                    ui.horizontal(|ui| {
+                let inset = (ui.available_size() - canvas_size) * 0.5;
+                ui.add_space(inset.y.max(0.0));
+                let (response, painter) = ui
+                    .horizontal(|ui| {
                         ui.add_space(inset.x.max(0.0));
                         ui.allocate_painter(canvas_size, Sense::click_and_drag())
                     })
-                    .inner
-                } else {
-                    ui.allocate_painter(canvas_size, Sense::click_and_drag())
-                };
+                    .inner;
                 let rect = response.rect;
                 self.canvas_rect = Some(rect);
                 let visible_canvas = rect.intersect(painter.clip_rect());

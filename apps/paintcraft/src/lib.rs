@@ -273,6 +273,10 @@ impl App {
     }
 
     /// Where the canvas was drawn last frame, in screen points.
+    pub fn canvas_viewport(&self) -> Option<Rect> {
+        self.canvas_viewport
+    }
+
     pub fn canvas_rect(&self) -> Option<Rect> {
         self.canvas_rect
     }
