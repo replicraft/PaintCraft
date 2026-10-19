@@ -5,4 +5,5 @@
 
 pub mod editor;
 pub mod outbox;
+pub mod settings;
 pub mod view;
