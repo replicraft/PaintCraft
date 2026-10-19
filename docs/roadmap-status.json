@@ -92,9 +92,10 @@
       ],
       "status": "partial",
       "evidence": [
-        "crates/paintcraft-history/src/lib.rs"
+        "crates/paintcraft-history/src/lib.rs",
+        "crates/paintcraft-editor/tests/history_navigation.rs"
       ],
-      "remaining_or_scope": "Recorded linear undo/redo exists; branching nodes and randomized navigation evidence remain.",
+      "remaining_or_scope": "Recorded linear undo/redo, labels and guarded jumps pass seeded navigation tests; branching nodes, spill and metadata admission remain.",
       "acceptance": "Undo/redo randomized state equality; STATE-04/05/06; removed executor does not block redo."
     },
     {
@@ -303,7 +304,7 @@
       ],
       "status": "partial",
       "evidence": ["crates/paintcraft-studio/src/lib.rs", "apps/paintcraft/tests/gui/studio.rs", "docs/STUDIO.md"],
-      "remaining_or_scope": "Separate Studio toolbar and floating Tools/Colors/Layers work on the shared editor; tabs, history window, image operations, effects, PDN and reference parity remain.",
+      "remaining_or_scope": "Studio toolbar, floating Tools/Colors/Layers and guarded recorded History navigation work on the shared editor; tabs, image operations, effects, PDN and reference parity remain.",
       "acceptance": "Release only named tested tranches; high-depth/groups not misrepresented as source features."
     },
     {

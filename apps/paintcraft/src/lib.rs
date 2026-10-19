@@ -7,6 +7,8 @@ mod chrome;
 pub mod controller;
 #[path = "app/files.rs"]
 mod files;
+#[path = "app/history.rs"]
+mod history;
 #[path = "app/input.rs"]
 mod input;
 #[path = "app/recovery.rs"]
@@ -63,6 +65,7 @@ mod code {
     pub const OPACITY: u64 = 10;
     pub const DELETE: u64 = 11;
     pub const MOVE: u64 = 12;
+    pub const HISTORY: u64 = 13;
 }
 
 const DEFAULT_SIZE: (u32, u32) = (320, 320);

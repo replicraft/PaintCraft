@@ -27,7 +27,7 @@ unchanged by dependency and crate refactors.
 | T04 | M1 | Raster domains and blob leases | partial | Sparse COW tiles and admission work; logical blob handles, resident leases and full residency accounting remain. |
 | T05 | M1 | Immutable document and split identity | partial | Flat immutable snapshots and split state/history identity exist; full session identity and richer nodes remain. |
 | T06 | M1 | Atomic batch and operation oracle | implemented | Batch v1 oracle vectors, atomic failure and no-op behavior pass; v2 remains an independently documented extension. |
-| T07 | M1 | Recorded history navigation | partial | Recorded linear undo/redo exists; branching nodes and randomized navigation evidence remain. |
+| T07 | M1 | Recorded history navigation | partial | Recorded linear undo/redo, labels and guarded jumps pass seeded navigation tests; branching nodes, spill and metadata admission remain. |
 | T08 | M1 | PCND and headless round trip | partial | Canonical PCND and CLI round trips pass; full native subset/hostile-archive scope remains. |
 | T09 | M1 | First complete editor slice | partial | Complete pencil/session/display/save slice passes; native input qualification depends on T02. |
 | T10 | M2 | Ordered save and recovery journal | partial | Streaming native saves, bounded FIFO, captured-state guards and claimed recovery pass; write-ahead snapshots/receipts survive process exit; restarted destination inspection and explicit durability confirmation retain historical identity without adopting current state; degraded-store policy, benchmarks and full fault/platform matrix remain. |
@@ -39,7 +39,7 @@ unchanged by dependency and crate refactors.
 | T16 | M3 | Classic historical parity | not-started | Per-operation evidence records; original menu/eraser/canvas/tool lifecycles and allowed OS differences. |
 | T17 | M3 | PDN and PAINT compatibility | not-started | Read/write/metadata tested independently; malicious parsing bounds; no .NET deserialization/runtime. Fresh creation and source-preserving rewrite qualify independently; retain source bindings across repeated saves. |
 | T18 | M3 | Wasm effect SDK for contributors | not-started | ABI range/trap/halo/mask tests; one complete external-author workflow before SDK stabilization. |
-| T19 | M3 | Studio parity tranches | partial | Separate Studio toolbar and floating Tools/Colors/Layers work on the shared editor; tabs, history window, image operations, effects, PDN and reference parity remain. |
+| T19 | M3 | Studio parity tranches | partial | Studio toolbar, floating Tools/Colors/Layers and guarded recorded History navigation work on the shared editor; tabs, image operations, effects, PDN and reference parity remain. |
 | T20 | M3 | Codec breadth | not-started | Per-backend/variant write+read evidence, metadata/index and worker failures; no Rust-only delays. |
 | T21 | M3 | Performance decision experiments | not-started | Raw benchmark artifacts; select thresholds/index/atlas layout; no claims from theoretical speed. |
 | T22 | M4 | Browser conformance | not-started | Native-equivalent fixtures, interruption tests and unsupported-capability reports. |

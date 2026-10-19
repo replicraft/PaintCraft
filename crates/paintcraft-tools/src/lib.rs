@@ -134,6 +134,12 @@ pub enum Action {
     },
     Undo,
     Redo,
+    NavigateHistory {
+        owner: Uuid,
+        state_id: Uuid,
+        epoch: u64,
+        history_id: Option<Uuid>,
+    },
     Save,
 }
 

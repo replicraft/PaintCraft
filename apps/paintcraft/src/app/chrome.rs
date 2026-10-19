@@ -92,6 +92,7 @@ impl App {
         let mut open = self.studio.layers;
         paintcraft_studio::layers_window(ctx, &mut open, |ui| self.layer_panel(ui));
         self.studio.layers = open;
+        self.studio_history(ctx);
     }
 
     pub(super) fn layer_panel(&mut self, ui: &mut egui::Ui) {

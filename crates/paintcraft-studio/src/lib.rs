@@ -1,7 +1,9 @@
 //! Studio presentation. Actions are executed by the application shell.
+mod history;
 mod toolbar;
 mod windows;
 
+pub use history::{HistoryRow, history_window};
 pub use toolbar::toolbar;
 pub use windows::{floating_controls, layers_window};
 
@@ -10,6 +12,7 @@ pub struct Workspace {
     pub tools: bool,
     pub colors: bool,
     pub layers: bool,
+    pub history: bool,
 }
 
 impl Default for Workspace {
@@ -18,6 +21,7 @@ impl Default for Workspace {
             tools: true,
             colors: true,
             layers: true,
+            history: true,
         }
     }
 }

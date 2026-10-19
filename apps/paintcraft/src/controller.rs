@@ -6,6 +6,8 @@
 //! progress, so a cancelled or interrupted gesture changes nothing and a stroke
 //! is one undo step. Commands reach the session only through the [`Outbox`].
 
+#[path = "controller/history.rs"]
+mod history;
 #[path = "controller/strokes.rs"]
 mod strokes;
 
@@ -582,6 +584,12 @@ impl Editor {
                 };
                 self.retarget();
             }
+            Action::NavigateHistory {
+                owner,
+                state_id,
+                epoch,
+                history_id,
+            } => self.navigate_history(owner, state_id, epoch, history_id),
             Action::Save => self.save(),
         }
     }

@@ -36,6 +36,7 @@ pub fn toolbar(ui: &mut egui::Ui, state: &mut Controls, workspace: &mut Workspac
             ui.checkbox(&mut workspace.tools, "Tools");
             ui.checkbox(&mut workspace.colors, "Colors");
             ui.checkbox(&mut workspace.layers, "Layers");
+            ui.checkbox(&mut workspace.history, "History");
         });
     });
     ui.horizontal(|ui| {

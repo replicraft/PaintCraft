@@ -128,3 +128,59 @@ fn render_studio_workspace_for_review() {
         .unwrap();
     std::fs::remove_dir_all(dir).unwrap();
 }
+
+#[test]
+fn history_rows_jump_to_recorded_pixels_and_keep_redo_available() {
+    let (mut h, dir) = studio_harness(true);
+    with_layer(&mut h);
+    drag(&mut h, (180.0, 10.0), (240.0, 10.0));
+    let first = h.state().editor().document_snapshot();
+    drag(&mut h, (180.0, 30.0), (240.0, 30.0));
+    let second = h.state().editor().document_snapshot();
+    let before = publications(&h);
+    h.get_by_label("History 2: Add layer").click();
+    h.run();
+    assert_eq!(
+        publications(&h),
+        before + 1,
+        "a jump restores once even across two layout passes"
+    );
+    assert_eq!(top_pixel(&h, 200, 10), Rgba::TRANSPARENT);
+    assert_eq!(top_pixel(&h, 200, 30), Rgba::TRANSPARENT);
+    h.get_by_label("History 3: Pencil (redo)").click();
+    h.run();
+    assert!(h.state().editor().document().same_semantics(&first));
+    h.get_by_label("History 4: Pencil (redo)").click();
+    h.run();
+    assert!(h.state().editor().document().same_semantics(&second));
+    h.get_by_label("Undo").click();
+    h.run();
+    assert!(h.state().editor().document().same_semantics(&first));
+    std::fs::remove_dir_all(dir).unwrap();
+}
+
+#[test]
+fn history_window_does_not_create_entries_and_can_be_reopened() {
+    let (mut h, dir) = studio_harness(false);
+    with_layer(&mut h);
+    let before = h.state().editor().history_view();
+    h.get_by_label("Window").click();
+    h.run();
+    h.get_by_role_and_label(eframe::egui::Role::CheckBox, "History")
+        .click();
+    h.run();
+    h.key_press(Key::Escape);
+    h.run();
+    assert!(h.query_by_label("History 2: Add layer").is_none());
+    h.get_by_label("Window").click();
+    h.run();
+    h.get_by_role_and_label(eframe::egui::Role::CheckBox, "History")
+        .click();
+    h.run();
+    h.key_press(Key::Escape);
+    h.run();
+    assert!(h.query_by_label("History 2: Add layer").is_some());
+    assert_eq!(h.state().editor().history_view().entries, before.entries);
+    assert_eq!(publications(&h), before.ticket.base.publication_epoch);
+    std::fs::remove_dir_all(dir).unwrap();
+}
