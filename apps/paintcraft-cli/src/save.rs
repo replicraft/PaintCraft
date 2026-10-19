@@ -57,11 +57,15 @@ impl Outcome {
     }
 
     pub fn receipt(&self, ctx: &Context<'_>) -> Value {
-        let acknowledged = self.replacement == Replacement::Replaced && self.durable;
-        let retry = match (self.replacement, self.durable) {
-            (Replacement::NotAttempted | Replacement::NotReplaced, _) => "allowed-new-request",
-            (Replacement::Unknown, _) | (Replacement::Replaced, false) => "inspect",
-            (Replacement::Replaced, true) => "no-automatic-retry",
+        // Only a durable save or save-as clears the associated native state; an export never does.
+        let acknowledged = self.replacement == Replacement::Replaced
+            && self.durable
+            && matches!(ctx.operation, "save" | "save-as");
+        // A known replacement is never blindly repeated, durable or not.
+        let retry = match self.replacement {
+            Replacement::NotAttempted | Replacement::NotReplaced => "allowed-new-request",
+            Replacement::Unknown => "inspect",
+            Replacement::Replaced => "no-automatic-retry",
         };
         let text = |s: &String| Value::str(s);
         Value::object([

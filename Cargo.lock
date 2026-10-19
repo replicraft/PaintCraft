@@ -193,6 +193,7 @@ dependencies = [
  "paintcraft-core",
  "paintcraft-formats",
  "paintcraft-types",
+ "png",
  "sha2",
  "uuid",
 ]
