@@ -117,3 +117,33 @@ fn repeated_segments_cap_opacity_and_cancellation_keeps_the_original() {
     editor.cancel_gesture();
     assert!(editor.document().same_semantics(&before));
 }
+
+#[test]
+#[ignore = "manual CPU preview profile; prints timings rather than asserting a hardware threshold"]
+fn profile_round_brush_preview() {
+    let mut e = Editor::new_document(1000, 486).unwrap();
+    e.select_tool(Tool::Brush);
+    e.options.size = 32;
+    for count in [100, 1000, 4000] {
+        e.cancel_gesture();
+        e.pointer_down((20, 100));
+        for i in 1..count {
+            e.pointer_move((
+                20 + (i % 900),
+                100 + ((i as f64 * 0.02).sin() * 50.0) as i64,
+            ));
+        }
+        let start = std::time::Instant::now();
+        let batch = e.preview_batch().unwrap().unwrap();
+        let staged =
+            paintcraft_editor::execute::execute(e.document(), e.selection(), &batch).unwrap();
+        let raster = start.elapsed();
+        let render = std::time::Instant::now();
+        let _ = paintcraft_render::render_flat(&staged.doc).unwrap();
+        eprintln!(
+            "{count} samples: stage={:.2}ms CPU composite={:.2}ms",
+            raster.as_secs_f64() * 1000.0,
+            render.elapsed().as_secs_f64() * 1000.0
+        );
+    }
+}

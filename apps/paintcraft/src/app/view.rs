@@ -55,17 +55,15 @@ impl App {
                         modifiers,
                         ..
                     } = event
+                        && (modifiers.ctrl || modifiers.command || modifiers.mac_cmd)
+                        && !modifiers.alt
                     {
-                        if (modifiers.ctrl || modifiers.command || modifiers.mac_cmd)
-                            && !modifiers.alt
-                        {
-                            let units = match unit {
-                                egui::MouseWheelUnit::Point => delta.y / 120.0,
-                                egui::MouseWheelUnit::Line => delta.y,
-                                egui::MouseWheelUnit::Page => delta.y * 3.0,
-                            };
-                            return units.is_finite().then_some(units);
-                        }
+                        let units = match unit {
+                            egui::MouseWheelUnit::Point => delta.y / 120.0,
+                            egui::MouseWheelUnit::Line => delta.y,
+                            egui::MouseWheelUnit::Page => delta.y * 3.0,
+                        };
+                        return units.is_finite().then_some(units);
                     }
                     None
                 })

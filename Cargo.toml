@@ -79,3 +79,16 @@ all = { level = "warn", priority = -1 }
 
 [profile.release]
 debug = "line-tables-only"
+
+# Keep raster/compositor hot loops responsive under the default desktop dev run.
+# Debug information, overflow checks and desktop/controller debuggability remain enabled.
+[profile.dev.package.paintcraft-raster]
+opt-level = 2
+[profile.dev.package.paintcraft-render]
+opt-level = 2
+[profile.dev.package.paintcraft-editor]
+opt-level = 2
+[profile.dev.package.paintcraft-document]
+opt-level = 2
+[profile.dev.package.paintcraft-core]
+opt-level = 2

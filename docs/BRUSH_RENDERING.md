@@ -78,3 +78,22 @@ and composition synchronously and compare the displayed preview to release bytes
 
 The canvas retains nearest-neighbour display for zoomed pixel inspection. Antialias
 coverage is stored in document pixels, so it persists on release and image export.
+
+## Preview scheduling and development builds
+
+Pointer movement now coalesces behind one in-flight render instead of cancelling
+it on every event. An intermediate frame may publish only within the same live
+gesture and document publication. Cancelled/restarted gestures and committed
+changes retire those frames. The worker then renders the latest captured samples.
+A barrier-based test checks progress and final pixel equality.
+
+The default desktop dev profile optimizes core pixel arithmetic, raster, document,
+editor and compositor hot loops at level 2, retaining debug information, overflow
+checks and the desktop controller's ordinary debug build. A manual CPU-only test
+is available with `cargo test -p paintcraft --lib profile_round_brush_preview -- --ignored --nocapture`.
+On this development machine, one 1000×486 / 32 px / 1000-sample run changed from
+133.24 ms staging + 90.93 ms composition to 10.64 ms + 2.56 ms after the profile
+change. At 4000 samples the corresponding result was 488.92 + 89.71 ms versus
+35.10 + 2.40 ms. These are local diagnostic samples, not full-window frame latency
+or the roadmap's statistical benchmark qualification. Native GPU rendering still
+uses the existing readback path; incremental tile uploads remain future work.
