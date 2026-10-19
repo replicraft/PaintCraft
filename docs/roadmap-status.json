@@ -449,7 +449,7 @@
         "crates/paintcraft-platform/src/save.rs",
         "apps/paintcraft/src/lib.rs"
       ],
-      "remaining_or_scope": "Stable receipt IDs, real queue sequences, binding generations and captured-state acknowledgement pass; alias/fingerprint guards, reconciliation and filesystem qualification remain.",
+      "remaining_or_scope": "Stable receipt IDs, real queue sequences, binding generations and captured-state acknowledgement pass; local symlink/parent aliases and encoding-time fingerprints pass; open-to-save conflict guards, reconciliation and filesystem qualification remain.",
       "acceptance": "FILE-01..10; injected failures on both sides of replace/barrier; no false aborted receipt after a known side effect; native alias and filesystem qualification."
     },
     {

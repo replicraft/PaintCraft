@@ -45,6 +45,7 @@ pub struct Context<'a> {
 #[derive(Debug)]
 pub struct Outcome {
     operation_id: Uuid,
+    destination_id: Option<String>,
     pub replacement: Replacement,
     pub durable: bool,
     pub staged_sha256: Option<String>,
@@ -91,7 +92,11 @@ impl Outcome {
             ),
             (
                 "destination_id",
-                Value::str(destination_id(ctx.destination)),
+                Value::str(
+                    self.destination_id
+                        .clone()
+                        .unwrap_or_else(|| destination_id(ctx.destination)),
+                ),
             ),
             ("save_sequence", Value::str(sequence.to_string())),
             (
@@ -143,11 +148,62 @@ impl Outcome {
 
 /// A stable, path-free identifier for a destination.
 pub fn destination_id(path: &Path) -> String {
-    let abs = std::path::absolute(path).unwrap_or_else(|_| path.to_path_buf());
+    let resolved = resolve_destination(path)
+        .unwrap_or_else(|_| std::path::absolute(path).unwrap_or_else(|_| path.to_path_buf()));
+    path_id(&resolved)
+}
+
+fn path_id(path: &Path) -> String {
     format!(
         "dest:{}",
-        &hex(&Sha256::digest(abs.to_string_lossy().as_bytes()))[..32]
+        &hex(&Sha256::digest(path.as_os_str().as_encoded_bytes()))[..32]
     )
+}
+
+/// Capture a replacement namespace. Follow an existing symlink and resolve parent
+/// aliases for a new file. Dangling symlinks are rejected rather than overwritten.
+fn resolve_destination(path: &Path) -> std::io::Result<PathBuf> {
+    match fs::canonicalize(path) {
+        Ok(resolved) => Ok(resolved),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            if fs::symlink_metadata(path).is_ok_and(|m| m.file_type().is_symlink()) {
+                return Err(error);
+            }
+            let parent = path
+                .parent()
+                .filter(|p| !p.as_os_str().is_empty())
+                .unwrap_or_else(|| Path::new("."));
+            let name = path
+                .file_name()
+                .ok_or_else(|| std::io::Error::from(std::io::ErrorKind::InvalidInput))?;
+            Ok(fs::canonicalize(parent)?.join(name))
+        }
+        Err(error) => Err(error),
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+struct Fingerprint {
+    bytes: u64,
+    hash: String,
+}
+fn fingerprint(path: &Path, limit: u64) -> std::io::Result<Option<Fingerprint>> {
+    match fs::metadata(path) {
+        Ok(metadata) => {
+            if !metadata.is_file() {
+                return Err(std::io::Error::from(std::io::ErrorKind::InvalidInput));
+            }
+            if metadata.len() > limit {
+                return Err(std::io::Error::from(std::io::ErrorKind::FileTooLarge));
+            }
+            Ok(Some(Fingerprint {
+                bytes: metadata.len(),
+                hash: file_hash(path, metadata.len())?,
+            }))
+        }
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
+        Err(error) => Err(error),
+    }
 }
 
 /// Refuse before doing any work when the destination exists and replacement was
@@ -182,6 +238,7 @@ fn staging_path(dest: &Path) -> PathBuf {
 pub fn not_attempted(reason: &Error) -> Outcome {
     Outcome {
         operation_id: Uuid::new_v4(),
+        destination_id: None,
         replacement: Replacement::NotAttempted,
         durable: false,
         staged_sha256: None,
@@ -217,6 +274,7 @@ enum Phase {
     Encode,
     StageSync,
     Replace,
+    TemporaryCleanup,
     ReadBack,
     DirectorySync,
 }
@@ -277,12 +335,27 @@ fn save_impl(
 ) -> Outcome {
     let mut out = Outcome {
         operation_id: Uuid::new_v4(),
+        destination_id: None,
         replacement: Replacement::NotReplaced,
         durable: false,
         staged_sha256: None,
         observed_sha256: None,
         reasons: Vec::new(),
     };
+    let prepared_destination = resolve_destination(dest).and_then(|resolved| {
+        let expected = fingerprint(&resolved, STAGED_FILE_BYTES_MAX)?;
+        Ok((resolved, expected))
+    });
+    let (resolved, expected) = match prepared_destination {
+        Ok(prepared) => prepared,
+        Err(error) => {
+            out.reasons
+                .push(format!("destination admission failed: {}", error.kind()));
+            return out;
+        }
+    };
+    let dest = resolved.as_path();
+    out.destination_id = Some(path_id(dest));
     let tmp = staging_path(dest);
     let staged = (|| -> Result<(String, u64), Error> {
         let file = OpenOptions::new()
@@ -332,6 +405,22 @@ fn save_impl(
         let _ = fs::remove_file(&tmp);
         return out;
     }
+    // This catches changes during encoding. It is best effort: portable rename
+    // cannot provide atomic content compare-and-swap against external writers.
+    match fingerprint(dest, STAGED_FILE_BYTES_MAX) {
+        Ok(observed) if observed == expected => {}
+        observed => {
+            out.reasons.push(match observed {
+                Ok(_) => "destination changed while encoding; inspect or choose Save As".into(),
+                Err(error) => format!(
+                    "destination could not be checked before replacement: {}",
+                    error.kind()
+                ),
+            });
+            let _ = fs::remove_file(&tmp);
+            return out;
+        }
+    }
     // Hard linking is atomic create-if-absent. Link success is the replacement
     // boundary; a subsequent temporary-link cleanup failure cannot undo it.
     let placed = if overwrite {
@@ -352,7 +441,9 @@ fn save_impl(
         return out;
     }
     out.replacement = Replacement::Replaced;
-    if !overwrite && let Err(error) = fs::remove_file(&tmp) {
+    if !overwrite
+        && let Err(error) = barrier(Phase::TemporaryCleanup).and_then(|()| fs::remove_file(&tmp))
+    {
         out.reasons
             .push(format!("temporary link cleanup failed: {}", error.kind()));
     }
@@ -551,6 +642,132 @@ mod tests {
         );
         assert_eq!(out.replacement, Replacement::NotReplaced);
         assert_eq!(fs::read(&dest).unwrap(), b"original");
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn failed_temporary_link_cleanup_cannot_report_non_replacement() {
+        let dir = scratch("link-cleanup");
+        let dest = dir.join("a.pcnd");
+        let out = save_impl(
+            &dest,
+            false,
+            1024,
+            |sink| sink.write_all(b"new").map_err(io_error),
+            |phase| {
+                if phase == Phase::TemporaryCleanup {
+                    Err(std::io::Error::from(std::io::ErrorKind::PermissionDenied))
+                } else {
+                    Ok(())
+                }
+            },
+        );
+        assert_eq!(out.replacement, Replacement::Replaced);
+        assert!(
+            out.is_success(),
+            "replacement and durability are independent of temporary-link cleanup"
+        );
+        assert_eq!(fs::read(&dest).unwrap(), b"new");
+        assert!(out.reasons.iter().any(|r| r.contains("cleanup failed")));
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn external_changes_during_encoding_are_not_overwritten() {
+        let dir = scratch("fingerprint");
+        for existed in [false, true] {
+            let dest = dir.join(if existed { "existing.pcnd" } else { "new.pcnd" });
+            if existed {
+                fs::write(&dest, b"original").unwrap();
+            }
+            let out = save_with(&dest, true, 1024, |sink| {
+                sink.write_all(b"ours").map_err(io_error)?;
+                fs::write(&dest, b"external").map_err(io_error)
+            });
+            assert_eq!(out.replacement, Replacement::NotReplaced);
+            assert_eq!(fs::read(&dest).unwrap(), b"external");
+            assert!(
+                out.reasons
+                    .iter()
+                    .any(|r| r.contains("changed while encoding"))
+            );
+        }
+        assert_eq!(
+            fs::read_dir(&dir).unwrap().count(),
+            2,
+            "failed requests remove staging"
+        );
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn symlink_destinations_follow_captured_target_and_receipts_keep_its_identity() {
+        use std::os::unix::fs::symlink;
+        let dir = scratch("alias");
+        let dest = dir.join("actual.pcnd");
+        let alias = dir.join("alias.pcnd");
+        fs::write(&dest, b"original").unwrap();
+        symlink(&dest, &alias).unwrap();
+        assert_eq!(destination_id(&alias), destination_id(&dest));
+        let captured_id = destination_id(&dest);
+        let out = save(&alias, b"new", true);
+        assert!(out.is_success(), "{:?}", out.reasons);
+        assert_eq!(fs::read(&dest).unwrap(), b"new");
+        assert!(
+            fs::symlink_metadata(&alias)
+                .unwrap()
+                .file_type()
+                .is_symlink()
+        );
+        let other = dir.join("other.pcnd");
+        fs::write(&other, b"other").unwrap();
+        fs::remove_file(&alias).unwrap();
+        symlink(&other, &alias).unwrap();
+        let receipt = out.receipt(&Context {
+            operation: "save",
+            source_state: Uuid::new_v4(),
+            source_sha256: None,
+            losses_acknowledged: vec![],
+            destination: &alias,
+        });
+        assert_eq!(
+            receipt.get("destination_id").and_then(Value::as_str),
+            Some(captured_id.as_str())
+        );
+        let dangling = dir.join("dangling.pcnd");
+        symlink(dir.join("absent.pcnd"), &dangling).unwrap();
+        assert_eq!(
+            save(&dangling, b"new", true).replacement,
+            Replacement::NotReplaced
+        );
+        assert!(
+            fs::symlink_metadata(&dangling)
+                .unwrap()
+                .file_type()
+                .is_symlink()
+        );
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn parent_aliases_share_namespace_but_hardlinks_are_separate_replacement_paths() {
+        use std::os::unix::fs::symlink;
+        let dir = scratch("parent-alias");
+        let actual = dir.join("actual");
+        fs::create_dir(&actual).unwrap();
+        symlink(&actual, dir.join("alias")).unwrap();
+        let direct = actual.join("new.pcnd");
+        let alias = dir.join("alias/new.pcnd");
+        assert_eq!(destination_id(&direct), destination_id(&alias));
+        assert!(save(&alias, b"original", false).is_success());
+        let hardlink = actual.join("hardlink.pcnd");
+        fs::hard_link(&direct, &hardlink).unwrap();
+        assert_ne!(destination_id(&direct), destination_id(&hardlink));
+        assert!(save(&hardlink, b"replacement", true).is_success());
+        assert_eq!(fs::read(&direct).unwrap(), b"original");
+        assert_eq!(fs::read(&hardlink).unwrap(), b"replacement");
         fs::remove_dir_all(dir).unwrap();
     }
 

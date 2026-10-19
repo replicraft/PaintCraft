@@ -47,7 +47,15 @@ cannot publish partial files. Receipt IDs are stable, and coordinators can stamp
 save sequence and binding generation. Injected phase failures distinguish known
 replacement from confirmed durability. Temporary-link cleanup follows the successful
 create boundary. Ambiguous replace errors retain staging and prohibit automatic retry.
-Ordering is supplied by the native coordinator below; external-writer exclusion remains pending.
+Ordering is supplied by the native coordinator below. Existing symlinks resolve to their
+captured target; new paths resolve their parent aliases. Dangling symlinks are rejected.
+Atomic replacement uses the selected namespace, so replacing a hardlink does not rewrite
+other hardlinks. Receipts retain the destination identity captured before encoding.
+Content fingerprints before and after encoding detect external changes during encoding;
+a changed destination is left untouched by this attempt. This is a best-effort check,
+with a race between verification and replacement. Open-to-save/queued-request baseline
+fingerprints, cooperative locking and Windows/network qualification remain pending.
+Alias and concurrent-change tests ran on the local macOS filesystem (FILE-07 partial).
 
 ## GPU compositor and native dialogs
 
