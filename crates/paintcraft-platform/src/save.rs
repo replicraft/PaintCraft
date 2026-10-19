@@ -299,6 +299,19 @@ pub fn save_with(
     save_impl(dest, overwrite, byte_limit, encode, |_| Ok(()))
 }
 
+/// Persist coordinator-owned evidence after staging validation and before any
+/// user-visible replacement. A failed preparation leaves the destination intact.
+/// The destination fingerprint is rechecked after this callback returns.
+pub fn save_with_preparation(
+    dest: &Path,
+    overwrite: bool,
+    byte_limit: u64,
+    encode: impl FnOnce(&mut dyn Write) -> Result<(), Error>,
+    prepare: impl FnOnce(&Outcome) -> Result<(), Error>,
+) -> Outcome {
+    save_prepared_impl(dest, overwrite, byte_limit, encode, |_| Ok(()), prepare)
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Phase {
     Encode,
@@ -365,7 +378,18 @@ fn save_impl(
     overwrite: bool,
     byte_limit: u64,
     encode: impl FnOnce(&mut dyn Write) -> Result<(), Error>,
+    barrier: impl FnMut(Phase) -> std::io::Result<()>,
+) -> Outcome {
+    save_prepared_impl(dest, overwrite, byte_limit, encode, barrier, |_| Ok(()))
+}
+
+fn save_prepared_impl(
+    dest: &Path,
+    overwrite: bool,
+    byte_limit: u64,
+    encode: impl FnOnce(&mut dyn Write) -> Result<(), Error>,
     mut barrier: impl FnMut(Phase) -> std::io::Result<()>,
+    prepare: impl FnOnce(&Outcome) -> Result<(), Error>,
 ) -> Outcome {
     let mut out = Outcome {
         operation_id: Uuid::new_v4(),
@@ -444,6 +468,12 @@ fn save_impl(
         },
         replacement_acknowledged: false,
     });
+    if let Err(error) = prepare(&out) {
+        out.reasons
+            .push(format!("pre-replacement retention failed: {error}"));
+        let _ = fs::remove_file(&tmp);
+        return out;
+    }
     if let Err(error) = barrier(Phase::Replace) {
         out.reasons
             .push(format!("before replacement failed: {}", error.kind()));

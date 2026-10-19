@@ -359,3 +359,24 @@ fn directories_and_receipt_shape() {
     assert!(destination_id(&dest).starts_with("dest:") && !destination_id(&dest).contains('/'));
     fs::remove_dir_all(dir).unwrap();
 }
+
+#[test]
+fn destination_fingerprint_is_rechecked_after_write_ahead_preparation() {
+    let dir = scratch("preparation-fingerprint");
+    let path = dir.join("a.pcnd");
+    fs::write(&path, b"old").unwrap();
+    let out = save_with_preparation(
+        &path,
+        true,
+        1024,
+        |sink| sink.write_all(b"ours").map_err(io_error),
+        |prepared| {
+            assert!(prepared.staged_sha256.is_some());
+            assert_eq!(prepared.replacement, Replacement::NotReplaced);
+            fs::write(&path, b"external").map_err(io_error)
+        },
+    );
+    assert_eq!(out.replacement, Replacement::NotReplaced);
+    assert_eq!(fs::read(&path).unwrap(), b"external");
+    fs::remove_dir_all(dir).unwrap();
+}

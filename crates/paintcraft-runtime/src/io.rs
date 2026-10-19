@@ -110,6 +110,15 @@ impl<T: Send + 'static> OrderedIo<T> {
         work: impl FnOnce() -> Result<T> + Send + 'static,
         wake: impl FnOnce() + Send + 'static,
     ) -> Result<Ticket> {
+        self.submit_with_ticket(bytes, move |_| work(), wake)
+    }
+    /// Supply the admitted identity before work starts, including to durable journals.
+    pub fn submit_with_ticket(
+        &mut self,
+        bytes: u64,
+        work: impl FnOnce(Ticket) -> Result<T> + Send + 'static,
+        wake: impl FnOnce() + Send + 'static,
+    ) -> Result<Ticket> {
         self.admit(1, bytes)?;
         let sequence = self.next_sequence;
         self.next_sequence = sequence
@@ -121,7 +130,7 @@ impl<T: Send + 'static> OrderedIo<T> {
         };
         let request = Request {
             ticket,
-            work: Box::new(work),
+            work: Box::new(move || work(ticket)),
             wake: Box::new(wake),
         };
         self.requests
@@ -253,5 +262,24 @@ mod tests {
         .unwrap();
         drop(io);
         received.recv_timeout(Duration::from_secs(5)).unwrap();
+    }
+    #[test]
+    fn durable_work_receives_the_admitted_ticket_before_execution() {
+        let mut io = OrderedIo::new(Limits {
+            pending_jobs: 1,
+            retained_bytes: 1024,
+        })
+        .unwrap();
+        let (done, wake) = mpsc::channel();
+        let accepted = io
+            .submit_with_ticket(100, Ok, move || {
+                done.send(()).unwrap();
+            })
+            .unwrap();
+        wake.recv_timeout(Duration::from_secs(5)).unwrap();
+        let (delivered, result) = io.poll().unwrap();
+        assert_eq!(delivered, accepted);
+        assert_eq!(result.unwrap(), accepted);
+        assert_eq!(io.retained_bytes(), 0);
     }
 }
