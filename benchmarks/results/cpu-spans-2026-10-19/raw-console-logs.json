@@ -1,0 +1,17 @@
+[
+  {
+    "original": "divan.txt",
+    "archive": "divan.txt.gz",
+    "uncompressed_sha256": "dd89d4fa31992940b2413489af4e4086a327e85b1e113ad8aa3a4169723540fc"
+  },
+  {
+    "original": "exploratory-baseline.txt",
+    "archive": "exploratory-baseline.txt.gz",
+    "uncompressed_sha256": "c634d06c677b61d73c244785d49cea6469089b07110451c7d5fbc49d732c50c1"
+  },
+  {
+    "original": "exploratory-drop-excluded.txt",
+    "archive": "exploratory-drop-excluded.txt.gz",
+    "uncompressed_sha256": "71cd24a3d301614939ca2816d5fb555b3aefa7d8c5a6948d38a8269f95f3f564"
+  }
+]

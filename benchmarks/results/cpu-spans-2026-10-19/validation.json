@@ -1,0 +1,26 @@
+{
+  "workspace": "493 passed, 20 explicitly ignored",
+  "gpu": "1 real Metal adapter test passed; no skip",
+  "formatting": "cargo fmt --all -- --check passed",
+  "file_lengths": "all authored text files within 800 lines; raw generated exports archived losslessly",
+  "logs": [
+    {
+      "command": "CARGO_INCREMENTAL=0 cargo test --workspace",
+      "log": "workspace-tests.log.gz",
+      "uncompressed_sha256": "9fccbf7a43f9cf786364cc2fbe709063dc4b9861781c4313011e39aa39d63887",
+      "result": "passed"
+    },
+    {
+      "command": "CARGO_INCREMENTAL=0 cargo clippy --workspace --all-targets -- -D warnings",
+      "log": "clippy.log.gz",
+      "uncompressed_sha256": "bc787bcb228103aa3d7d6cf7cb8578ba51db7ae8b1972fc6dba9bbc74f2c4bc1",
+      "result": "passed"
+    },
+    {
+      "command": "CARGO_INCREMENTAL=0 PAINTCRAFT_REQUIRE_GPU=1 cargo test -p paintcraft-render --features gpu --test gpu -- --nocapture",
+      "log": "gpu.log.gz",
+      "uncompressed_sha256": "4fa55690dac469f23f240676c7a59b28c473d110a3bf36cdd8cdca274efe3f5d",
+      "result": "passed"
+    }
+  ]
+}

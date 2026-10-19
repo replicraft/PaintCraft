@@ -29,3 +29,12 @@ Application runs require at least 20 repetitions and 3 warmups, with three
 independent sessions including reverse order before a selection decision. Record
 optimized binary, lockfile and generator identities and all applicable memory
 metrics. A single machine cannot qualify all supported CPU/GPU targets.
+
+The first [CPU span decision](results/cpu-spans-2026-10-19/DECISION.md) retains
+three native process sessions for each case. To reproduce, build the example and
+run `python3 benchmarks/tools/run_composite.py --output /tmp/new-comparison --execute`.
+Use a new output directory; existing evidence is never overwritten. Derive CSV
+metrics with `tools/summarize_composite.py`. Stored session archives preserve the
+original unmodified Hyperfine JSON, Markdown, execution records and resource logs.
+For example, `tar -xOf <session.tar.gz> <session>/hyperfine.md` reads a table without
+extracting files. Archive compression does not change the original timing bytes.

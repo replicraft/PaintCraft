@@ -11,6 +11,7 @@ pub const CASES: &[&str] = &[
     "sparse20",
     "sparse100",
     "dense5",
+    "uniform5",
     "clipped100",
 ];
 
@@ -19,7 +20,7 @@ pub fn fixture(case: &str) -> Document {
     assert!(CASES.contains(&case));
     let side = if case == "tiny" { 16 } else { 1024 };
     let count = match case {
-        "sparse5" | "dense5" => 5,
+        "sparse5" | "dense5" | "uniform5" => 5,
         "sparse20" => 20,
         "sparse100" | "clipped100" => 100,
         _ => 1,
@@ -30,7 +31,7 @@ pub fn fixture(case: &str) -> Document {
     let mut adm = Admission::new(1 << 28);
     for n in 0..count {
         let id = paintcraft_core::types::ids::deterministic_id(&["bench", &n.to_string()]);
-        let default = if case == "dense5" {
+        let default = if case == "uniform5" {
             Rgba([31 + n as u8 * 17, 125, 204, 87 + n as u8 * 23])
         } else if case == "opaque1" {
             Rgba([21, 65, 170, 255])
@@ -38,6 +39,19 @@ pub fn fixture(case: &str) -> Document {
             Rgba([45, 89, 123, 0]) // Deliberately nonzero hidden RGB.
         };
         let mut raster = RasterLayer::new(side, side, default);
+        if case == "dense5" {
+            let pixels: Vec<u8> = (0..side * side)
+                .flat_map(|p| {
+                    [
+                        p as u8,
+                        (p / side) as u8,
+                        (p.wrapping_mul(17) + n) as u8,
+                        [0, 1, 64, 128, 254, 255][p as usize % 6],
+                    ]
+                })
+                .collect();
+            raster = RasterLayer::from_rgba(side, side, default, &pixels, &mut adm).unwrap();
+        }
         if case != "opaque1" {
             let x = i64::from((n * 31) % (side - 7));
             let y = i64::from((n * 47) % (side - 7));

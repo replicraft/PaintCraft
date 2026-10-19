@@ -47,3 +47,24 @@ Dirty-region/prefix caches, viewport-only composition, parallel partitions,
 SIMD, mipmaps, GPU residency/crossover and adaptive compressed disk-backed history
 remain required subsequent slices. Neither this audit nor a renderer benchmark
 completes those gates.
+
+## First slice delivered
+
+The borrowed-span CPU compositor is implemented with independent all-alpha/opacity
+checks, COW/edge/hidden-RGB tests and an on-disk editing/save/export workflow.
+493 workspace tests, strict Clippy and a required real Metal adapter parity test
+passed. The final dense render allocation remains; one 4 KiB scratch-row allocation
+is removed at 1024-pixel width. No source tiles are copied for reading.
+
+[The local decision and raw evidence](../benchmarks/results/cpu-spans-2026-10-19/DECISION.md)
+record Divan and three Hyperfine sessions per workload. Sparse process medians
+improve 5.5–11.3×; the implicit opaque-background case improves 15.6×. Dense
+mixed-alpha composition is inconclusive (about 1.4% slower by pooled process
+median). These are full CPU composition results on an M1 Pro, not GPU, frame-tail,
+reference application parity or large-document residency qualification.
+
+Next priority is regional composition and dependency-aware reuse for localized
+edits, followed by bounded parallel partition experiments. These must retain the
+committed cache across preview cancellation and validate structural/opacity/offset
+changes. Full history tiering and broader format work remain in the user's backend
+request and the original roadmap; this milestone does not reduce that scope.

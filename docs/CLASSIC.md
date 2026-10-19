@@ -1,6 +1,7 @@
 # PaintCraft Classic
 
-Classic is the current frontend priority. The additional Windows 11 Paint photos
+Classic is the frontend fidelity target; shared backend work is the current
+implementation priority. The additional Windows 11 Paint photos
 in `docs/temp/paint-references/photos/` guide this work. Studio remains available.
 
 ## New reference observations

@@ -194,9 +194,11 @@
       ],
       "status": "partial",
       "evidence": [
-        "crates/services/paintcraft-render/src/lib.rs"
+        "crates/services/paintcraft-render/src/lib.rs",
+        "docs/CPU_COMPOSITOR.md",
+        "benchmarks/results/cpu-spans-2026-10-19/DECISION.md"
       ],
-      "remaining_or_scope": "Ordered scalar and GPU flat composition exist; ROI effects, dirty-prefix cache and group plans remain.",
+      "remaining_or_scope": "Ordered CPU/GPU flat composition and exact borrowed CPU sparse row spans exist; local Divan/Hyperfine comparison is recorded; ROI effects, dirty-prefix cache, parallel/multiresolution rendering and group plans remain.",
       "acceptance": "ROI-01\u201307 and RENDER-01\u201306; no tile seams or reordered group output."
     },
     {
@@ -564,9 +566,11 @@
       "status": "in-progress",
       "evidence": [
         "docs/DEPENDENCY_CHOICES.md",
-        "docs/ROADMAP_STATUS.md"
+        "docs/ROADMAP_STATUS.md",
+        "benchmarks/README.md",
+        "benchmarks/results/cpu-spans-2026-10-19/DECISION.md"
       ],
-      "remaining_or_scope": "Live dependency/task ledgers are established; comparative benchmark evidence is still pending.",
+      "remaining_or_scope": "Live dependency/task ledgers and first BF29 CPU compositor measurements exist; other relevant library/workload comparisons and cross-platform qualification remain.",
       "acceptance": "An adoption record points to real scope, tests and excluded future detail; plan-only tooling makes no repository changes; real comparisons use actual optimized code/fixtures, keep correctness/build/fixture/raw evidence and record selection/tie/rejection honestly; smoke/model results never qualify application choices."
     }
   ]

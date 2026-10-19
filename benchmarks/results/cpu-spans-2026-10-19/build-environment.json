@@ -1,0 +1,14 @@
+{
+  "overrides": {
+    "RUSTFLAGS": null,
+    "CARGO_ENCODED_RUSTFLAGS": null,
+    "CARGO_BUILD_TARGET": null,
+    "CARGO_PROFILE_RELEASE_OPT_LEVEL": null,
+    "CARGO_PROFILE_RELEASE_LTO": null,
+    "CARGO_PROFILE_RELEASE_CODEGEN_UNITS": null,
+    "CARGO_PROFILE_RELEASE_DEBUG": null,
+    "RUSTC_WRAPPER": null
+  },
+  "root_manifest_sha256": "40877b9a05f577a7b6c48eb1b429ceac794699201fa15370e0b66dc214f1da10",
+  "note": "No new target-specific flags requested; exact binary hashes accompany each timed run."
+}

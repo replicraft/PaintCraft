@@ -12,13 +12,18 @@ fn main() {
 fn baseline(bencher: divan::Bencher, case: &str) {
     let doc = support::fixture(case);
     support::verify(&doc);
-    bencher
-        .bench_local(|| support::reference::reference(divan::black_box(&doc), || Ok(())).unwrap());
+    bencher.bench_local(|| {
+        divan::black_box_drop(
+            support::reference::reference(divan::black_box(&doc), || Ok(())).unwrap(),
+        );
+    });
 }
 
 #[divan::bench(args = support::CASES)]
 fn production(bencher: divan::Bencher, case: &str) {
     let doc = support::fixture(case);
     support::verify(&doc);
-    bencher.bench_local(|| paintcraft_render::render_flat(divan::black_box(&doc)).unwrap());
+    bencher.bench_local(|| {
+        divan::black_box_drop(paintcraft_render::render_flat(divan::black_box(&doc)).unwrap());
+    });
 }

@@ -11,9 +11,10 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
-Current user priority: finish PaintCraft Classic, guided by the expanded Windows 11
-reference photos and [Classic coverage](CLASSIC.md). Studio remains available on
-the shared editor. [Retro](RETRO.md) remains deferred, with W95FA selected as its
+Current user priority: shared backend correctness, performance and reliability;
+see the [backend audit and progress](BACKEND_PROGRESS.md). Classic toolbar/UI work
+is deferred during this tranche. [Classic coverage](CLASSIC.md) retains the frontend
+fidelity target, and Studio remains available on the shared editor. [Retro](RETRO.md) remains deferred, with W95FA selected as its
 default UI font and planned skins for older Microsoft Paint versions and
 Deluxe Paint II Enhanced 2.0.
 
@@ -34,7 +35,7 @@ unchanged by dependency and crate refactors.
 | T09 | M1 | First complete editor slice | partial | Complete pencil/session/display/save slice passes; native input qualification depends on T02. |
 | T10 | M2 | Ordered save and recovery journal | partial | Streaming native saves, bounded FIFO, captured-state guards and claimed recovery pass; write-ahead snapshots/receipts survive process exit; restarted destination inspection and explicit durability confirmation retain historical identity without adopting current state; degraded-store policy, benchmarks and full fault/platform matrix remain. |
 | T11 | M2 | Bounded history and store GC | partial | Shared snapshot retention is bounded; leases, segment GC, compaction and physical resource evidence remain. |
-| T12 | M2 | Ordered renderer and region effects | partial | Ordered scalar and GPU flat composition exist; ROI effects, dirty-prefix cache and group plans remain. |
+| T12 | M2 | Ordered renderer and region effects | partial | Ordered CPU/GPU flat composition and exact borrowed CPU sparse row spans exist; local Divan/Hyperfine comparison is recorded; ROI effects, dirty-prefix cache, parallel/multiresolution rendering and group plans remain. |
 | T13 | M2 | Scheduler and GPU preparation | partial | Bounded Rayon preparation, owner-scoped handles, cancellation and stale-result tests exist; priorities, async I/O, device epochs and physical budget/fairness evidence remain. |
 | T14 | M2 | Tool completeness tranche | partial | Antialiased round brushes and identical staged path previews, Studio primary/secondary paint gestures with button ownership, fill, shapes, rectangle selection and font text with Cosmic Text/Swash masks work; complete selections, secondary eraser/text policies, editable text objects and IME remain. |
 | T15 | M2 | Classic v11 usable preview | partial | Classic menus, grouped tools, vector widgets, palette, right layers and persistent choice exist; brush/transform popup presentation and disabled-state tests follow supplied photos; pixel rulers, Gridlines routing, status visibility and fullscreen commands have application tests; execution of extra brush media/transforms, reference fidelity, preserving-target flow and complete M2 prerequisites remain. |
@@ -59,4 +60,4 @@ unchanged by dependency and crate refactors.
 | T34 | M1 | Hash-guarded one-shot automation | partial | Immutable read and pre-parse hash guard exist; complete cancellation/retry lifecycle cases remain. |
 | T35 | RELEASE | Profile-scoped release qualification | not-started | QUAL-01..10; synthetic or missing oracle cannot promote a release; foreign fresh/preserving support qualified separately; relevant backend changes invalidate scope. |
 | T36 | M3 | Bounded shared-component extraction review | not-started | REUSE-01..06; independent product policies/versions and CLI dependency graph; no generic Craft runtime, foreign UI, P2P or database engine requirement. |
-| T37 | M0 | Scoped adoption and benchmark evidence workflow | in-progress | Live dependency/task ledgers are established; comparative benchmark evidence is still pending. |
+| T37 | M0 | Scoped adoption and benchmark evidence workflow | in-progress | Live dependency/task ledgers and first BF29 CPU compositor measurements exist; other relevant library/workload comparisons and cross-platform qualification remain. |

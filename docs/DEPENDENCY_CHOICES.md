@@ -51,7 +51,7 @@ A correct integrated baseline is not a measured performance or release qualifica
 | Document text | Cosmic Text 0.19.0 + Swash 0.2.10 | std/swash/shape-run-cache, default features and fontconfig disabled; HarfRust shaping, fontdb fallback, hinted grayscale masks; atomic preview/publication; legacy bitmap commands remain stable. [Comparison](TEXT_RENDERING.md) |
 | Wasm effects | wasmi conformance baseline; Wasmtime throughput candidate | Not implemented; core wasm32 ABI is the first SDK target |
 | Statistical benchmarks | Divan 0.1.21 (development only) | Parameterized CPU compositor baseline/contender and allocation profiling; Criterion remains an alternative. See [backend audit](BACKEND_PROGRESS.md) |
-| Process benchmarks | Hyperfine | Installed developer tool; application decision runs not yet recorded |
+| Process benchmarks | Hyperfine 2.0.0 | Three native sessions per CPU span workload, with raw exports and allocation/RSS evidence; [local decision](../benchmarks/results/cpu-spans-2026-10-19/DECISION.md). Other cases remain pending |
 
 ## Admission and evidence
 
