@@ -3,6 +3,7 @@
 //! as a `paintcraft.file-operation/v1` receipt; a failure after the replace
 //! request is never described as "nothing changed".
 
+mod evidence;
 mod reconciliation;
 pub use reconciliation::{Observation, ReconcileMode, Reconciliation};
 
