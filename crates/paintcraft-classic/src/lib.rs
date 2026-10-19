@@ -70,6 +70,7 @@ pub fn chrome(
     let mut actions = Vec::new();
     egui::MenuBar::new().ui(ui, |ui| {
         ui.menu_button("File", |ui| {
+            menu_layout(ui, variant);
             for &action in paintcraft_ui::actions::FILE {
                 if matches!(action, Action::Save | Action::Close) {
                     ui.separator();
@@ -81,6 +82,7 @@ pub fn chrome(
             }
         });
         ui.menu_button("Edit", |ui| {
+            menu_layout(ui, variant);
             for &action in paintcraft_ui::actions::EDIT {
                 if action == Action::SelectAll {
                     ui.separator();
@@ -92,6 +94,7 @@ pub fn chrome(
             }
         });
         ui.menu_button("View", |ui| {
+            menu_layout(ui, variant);
             ui.menu_button("Zoom", |ui| {
                 for &action in paintcraft_ui::actions::VIEW {
                     if action == paintcraft_ui::actions::ViewAction::PixelGrid {
@@ -376,4 +379,11 @@ pub fn apply_style_for_theme(ctx: &egui::Context, v: ClassicVariant, theme: egui
             style.visuals.panel_fill = Color32::from_rgb(233, 238, 247);
         }
     });
+}
+
+fn menu_layout(ui: &mut egui::Ui, variant: ClassicVariant) {
+    if variant == ClassicVariant::V11 {
+        ui.set_min_width(240.0);
+        ui.spacing_mut().interact_size.y = 30.0;
+    }
 }

@@ -180,3 +180,10 @@ commands and cancellation priority; native startup validates menu accelerator
 construction. OS fullscreen transitions across supported targets still require
 platform qualification. Rulers, automatic toolbar hiding and Thumbnail remain
 unimplemented.
+
+Checkable menu rows now reserve a left indicator column and draw a checkmark,
+with normal hover styling instead of a permanently filled selection background.
+Accessible labels, shortcuts and toggled state remain attached to the same button.
+Classic v11 File/Edit/View menus use a 240-point minimum width and 30-point row
+height; v7/v10 retain their existing density. This is presentation work guided by
+the supplied View menu photo, not a claim of exact cross-DPI native geometry.

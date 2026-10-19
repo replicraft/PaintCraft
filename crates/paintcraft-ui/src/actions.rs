@@ -224,20 +224,52 @@ impl Action {
 
 pub fn menu_item(ui: &mut egui::Ui, action: Action, ctx: Context) -> bool {
     let descriptor = action.descriptor();
-    let mut button = match action.icon(ctx) {
-        Some(icon) => egui::Button::image_and_text(
-            crate::icons::image(ui.ctx(), icon, 16.0),
-            descriptor.label,
-        ),
-        None => egui::Button::new(descriptor.label),
+    let checked = action.checked(ctx);
+    // Checkable menu rows reserve an indicator column; their selected state is
+    // announced to accessibility without painting a permanently selected button.
+    let title = if checked.is_some() {
+        format!("       {}", descriptor.label)
+    } else {
+        descriptor.label.to_owned()
     };
-    if let Some(shortcut) = descriptor.shortcut {
-        button = button.shortcut_text(ui.ctx().format_shortcut(&shortcut));
+    let mut button = match (checked, action.icon(ctx)) {
+        (None, Some(icon)) => {
+            egui::Button::image_and_text(crate::icons::image(ui.ctx(), icon, 16.0), title)
+        }
+        _ => egui::Button::new(title),
+    };
+    let shortcut = descriptor
+        .shortcut
+        .map(|shortcut| ui.ctx().format_shortcut(&shortcut));
+    if let Some(shortcut) = &shortcut {
+        button = button.shortcut_text(shortcut);
     }
-    if let Some(checked) = action.checked(ctx) {
-        button = button.selected(checked);
+    let enabled = action.enabled(ctx) && ui.is_enabled();
+    let response = ui.add_enabled(enabled, button);
+    if let Some(checked) = checked {
+        let label = shortcut.map_or_else(
+            || descriptor.label.to_owned(),
+            |shortcut| format!("{} {shortcut}", descriptor.label),
+        );
+        response.widget_info(|| {
+            egui::WidgetInfo::selected(egui::Role::Button, enabled, checked, &label)
+        });
+        if checked {
+            let center = response.rect.left_center();
+            let ink = if enabled {
+                ui.visuals().text_color()
+            } else {
+                ui.visuals().weak_text_color()
+            };
+            let stroke = egui::Stroke::new(1.5, ink);
+            let a = center + egui::vec2(4.0, 0.0);
+            let b = center + egui::vec2(7.0, 3.0);
+            let c = center + egui::vec2(13.0, -4.0);
+            ui.painter().line_segment([a, b], stroke);
+            ui.painter().line_segment([b, c], stroke);
+        }
     }
-    ui.add_enabled(action.enabled(ctx), button).clicked()
+    response.clicked()
 }
 
 /// Icon controls use the same enabled state, label and shortcut as menus.
