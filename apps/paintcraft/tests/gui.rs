@@ -135,3 +135,6 @@ mod secondary;
 mod shortcuts;
 #[path = "gui/view.rs"]
 mod view;
+
+#[path = "gui/classic_brush.rs"]
+mod classic_brush;

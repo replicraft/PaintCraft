@@ -11,6 +11,7 @@ impl Editor {
     pub fn preview_batch(&self) -> Option<Result<Batch>> {
         let Preview::Path {
             points,
+            point_scale,
             size,
             round,
             color,
@@ -38,7 +39,14 @@ impl Editor {
             ),
             (
                 "operations",
-                Value::Array(stroke_operations(layer, &points, color, size, round)),
+                Value::Array(stroke_operations(
+                    layer,
+                    &points,
+                    color,
+                    size,
+                    round,
+                    point_scale,
+                )),
             ),
         ])))
     }
@@ -50,9 +58,10 @@ impl Editor {
         color: Rgba,
         size: u32,
         round: bool,
+        point_scale: u32,
     ) {
         self.draw(
-            stroke_operations(layer, points, color, size, round),
+            stroke_operations(layer, points, color, size, round, point_scale),
             if color.a() == 0 { "Erase" } else { "Stroke" },
         );
     }
@@ -64,6 +73,7 @@ fn stroke_operations(
     color: Rgba,
     size: u32,
     round: bool,
+    point_scale: u32,
 ) -> Vec<Value> {
     if points.is_empty() {
         return Vec::new();
@@ -92,6 +102,7 @@ fn stroke_operations(
                 }),
             ),
             ("size", Value::Int(i64::from(size))),
+            ("point_scale", Value::Int(i64::from(point_scale))),
             (
                 "brush",
                 Value::str(if round { "smooth-round" } else { "square" }),

@@ -53,14 +53,14 @@ impl App {
                                 };
                                 if (visible_canvas.contains(pos)
                                     && ui.ctx().layer_id_at(pos) == Some(painter.layer_id()))
-                                    && let Some(d) = view.to_doc((pos.x, pos.y))
+                                    && let Some(d) = view.to_doc_subpixel((pos.x, pos.y))
                                 {
-                                    self.editor.pointer_down_button(d, button);
+                                    self.editor.pointer_down_subpixel(d, button);
                                 }
                             }
                             egui::Event::PointerMoved(pos) => {
-                                if let Some(d) = view.to_doc((pos.x, pos.y)) {
-                                    self.editor.pointer_move(d);
+                                if let Some(d) = view.to_doc_subpixel((pos.x, pos.y)) {
+                                    self.editor.pointer_move_subpixel(d);
                                 }
                             }
                             egui::Event::PointerButton {
@@ -83,8 +83,8 @@ impl App {
                                 if self.editor.gesture_button() != Some(button) {
                                     continue;
                                 }
-                                if let Some(d) = view.to_doc((pos.x, pos.y)) {
-                                    self.editor.pointer_move(d);
+                                if let Some(d) = view.to_doc_subpixel((pos.x, pos.y)) {
+                                    self.editor.pointer_move_subpixel(d);
                                 }
                                 self.editor.pointer_up_button(button);
                             }

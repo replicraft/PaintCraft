@@ -353,16 +353,37 @@ impl Stage<'_> {
                 size,
                 round,
                 smooth,
+                point_scale,
             } => {
+                if !matches!(point_scale, 1 | 256) || (*point_scale != 1 && !smooth) {
+                    return Err(Error::new(
+                        ErrorCode::InputSchema,
+                        "invalid stroke point scale",
+                    ));
+                }
                 let id = self.resolve(layer)?;
                 if *smooth {
-                    self.charge_stroke(points, *size)?;
+                    let integer_points: Vec<_> = points
+                        .iter()
+                        .map(|&(x, y)| {
+                            (
+                                x.div_euclid(i64::from(*point_scale)),
+                                y.div_euclid(i64::from(*point_scale)),
+                            )
+                        })
+                        .collect();
+                    self.charge_stroke(&integer_points, *size)?;
                     let Some(area) = self.editable(&self.doc.layers[&id]) else {
                         return Ok(());
                     };
                     // Coverage scales source alpha once; all overlapping geometry
                     // was unioned by the rasterizer before any pixel is blended.
-                    for run in paintcraft_raster::smooth::round_path(points, *size, &area)? {
+                    for run in paintcraft_raster::smooth::round_path_scaled(
+                        points,
+                        *size,
+                        &area,
+                        *point_scale,
+                    )? {
                         if *mode == Mode::Replace && run.samples < 16 {
                             let l = self.doc.layers.get_mut(&id).expect("resolved");
                             for x in run.x0..=run.x1 {

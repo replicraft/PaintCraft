@@ -99,3 +99,64 @@ fn excessive_geometry_is_rejected() {
     );
     assert!(round_path(&[(i64::MIN, 0)], 4, &clip).is_err());
 }
+
+#[test]
+fn subpixel_capsules_match_an_independent_distance_oracle() {
+    let clip = Rect::new(-3, -3, 15, 15).unwrap();
+    let points = [(320, 192), (1680, 1488), (320, 192)];
+    let mut actual = BTreeMap::new();
+    for run in round_path_scaled(&points, 3, &clip, 256).unwrap() {
+        for x in run.x0..=run.x1 {
+            assert!(actual.insert((x, run.y), run.samples).is_none());
+        }
+    }
+    for y in clip.y0..clip.y1 {
+        for x in clip.x0..clip.x1 {
+            let mut expected = 0;
+            for sy in 0..4 {
+                for sx in 0..4 {
+                    let p = (
+                        x as f64 + (sx as f64 + 0.5) / 4.0,
+                        y as f64 + (sy as f64 + 0.5) / 4.0,
+                    );
+                    let a = (1.25, 0.75);
+                    let b = (6.5625, 5.8125);
+                    let d = (b.0 - a.0, b.1 - a.1);
+                    let t = (((p.0 - a.0) * d.0 + (p.1 - a.1) * d.1) / (d.0 * d.0 + d.1 * d.1))
+                        .clamp(0.0, 1.0);
+                    if (p.0 - a.0 - t * d.0).powi(2) + (p.1 - a.1 - t * d.1).powi(2) <= 2.25 {
+                        expected += 1;
+                    }
+                }
+            }
+            assert_eq!(
+                actual.get(&(x, y)).copied().unwrap_or(0),
+                expected,
+                "at {x},{y}"
+            );
+        }
+    }
+    // Integer centers still produce exactly the historical smooth-round pixels.
+    let integer = [(1, 2), (6, 7)];
+    let fixed: Vec<_> = integer
+        .iter()
+        .map(|&(x, y)| (x * 256 + 128, y * 256 + 128))
+        .collect();
+    assert_eq!(
+        round_path(&integer, 4, &clip).unwrap(),
+        round_path_scaled(&fixed, 4, &clip, 256).unwrap()
+    );
+    let delta = 100_000_000_000_000;
+    let translated: Vec<_> = fixed
+        .iter()
+        .map(|&(x, y)| (x + delta * 256, y + delta * 256))
+        .collect();
+    let mut runs =
+        round_path_scaled(&translated, 4, &clip.translated(delta, delta).unwrap(), 256).unwrap();
+    for run in &mut runs {
+        run.x0 -= delta;
+        run.x1 -= delta;
+        run.y -= delta;
+    }
+    assert_eq!(runs, round_path(&integer, 4, &clip).unwrap());
+}

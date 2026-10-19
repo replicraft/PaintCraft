@@ -7,6 +7,21 @@ impl Editor {
         self.pointer_down_button(point, PointerButton::Primary);
     }
     pub fn pointer_down_button(&mut self, point: (i64, i64), button: PointerButton) {
+        self.begin_pointer(point, button, None);
+    }
+    pub fn pointer_down_subpixel(&mut self, at: (i64, i64), button: PointerButton) {
+        self.begin_pointer(
+            (at.0.div_euclid(256), at.1.div_euclid(256)),
+            button,
+            Some(at),
+        );
+    }
+    fn begin_pointer(
+        &mut self,
+        point: (i64, i64),
+        button: PointerButton,
+        precise: Option<(i64, i64)>,
+    ) {
         if self.tools.gesture_in_progress() || !self.tool.supports_button(button) {
             return;
         }
@@ -32,12 +47,17 @@ impl Editor {
             self.status =
                 "Type your text; click elsewhere or press Ctrl+Enter to place it, Escape to cancel"
                     .into();
+        } else if let Some(at) = precise {
+            self.tools.pointer_down_subpixel(layer, at, button);
         } else {
             self.tools.pointer_down_button(layer, point, button);
         }
     }
     pub fn pointer_move(&mut self, point: (i64, i64)) {
         self.tools.pointer_move(point);
+    }
+    pub fn pointer_move_subpixel(&mut self, point: (i64, i64)) {
+        self.tools.pointer_move_subpixel(point);
     }
     pub fn pointer_up(&mut self) {
         self.pointer_up_button(PointerButton::Primary);

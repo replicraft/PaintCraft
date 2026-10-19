@@ -12,6 +12,8 @@ use uuid::Uuid;
 use paintcraft_core::types::ids::parse_uuid;
 use paintcraft_core::types::policy::{COORD_ABS_MAX, hex};
 
+mod stroke;
+
 const SIZE_MAX: i64 = 1_048_576;
 const MAX_OPERATIONS: usize = 1024;
 const MAX_POINTS: usize = 65_536;
@@ -112,6 +114,8 @@ pub enum Op {
         size: u32,
         round: bool,
         smooth: bool,
+        /// 1: integer pixel centers; 256: fixed-point document coordinates.
+        point_scale: u32,
     },
     /// v2: 4-connected fill from a seed pixel.
     FloodFill {
@@ -248,40 +252,7 @@ fn op(v: &Value, version: u8) -> Result<Op> {
         )));
     }
     Ok(match name {
-        "raster.stroke_path" => {
-            let o = obj(
-                v,
-                &[
-                    "op",
-                    "layer_ref",
-                    "points",
-                    "color",
-                    "mode",
-                    "size",
-                    "brush",
-                ],
-                &[],
-            )?;
-            let pts = o["points"]
-                .as_array()
-                .ok_or_else(|| bad("points must be an array"))?;
-            if pts.is_empty() || pts.len() > MAX_POINTS {
-                return Err(bad("points must contain 1..=65536 items"));
-            }
-            Op::StrokePath {
-                layer: layer_ref(&o["layer_ref"])?,
-                points: pts.iter().map(point).collect::<Result<_>>()?,
-                color: color(&o["color"])?,
-                mode: mode(&o["mode"])?,
-                size: int_in(&o["size"], 1, BRUSH_SIZE_MAX, "size")? as u32,
-                round: match o["brush"].as_str() {
-                    Some("round" | "smooth-round") => true,
-                    Some("square") => false,
-                    _ => return Err(bad("brush must be round, square or smooth-round")),
-                },
-                smooth: o["brush"].as_str() == Some("smooth-round"),
-            }
-        }
+        "raster.stroke_path" => stroke::parse(v)?,
         "raster.flood_fill" => {
             let o = obj(
                 v,

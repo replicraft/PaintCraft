@@ -12,6 +12,7 @@ fn secondary_color_is_captured_without_changing_preferences_and_requires_its_own
     assert!(matches!(
         t.preview(),
         Some(Preview::Path {
+            point_scale: 1,
             color: Rgba([12, 34, 56, 93]),
             ..
         })

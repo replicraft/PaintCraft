@@ -60,6 +60,16 @@ impl View {
         )
     }
 
+    /// Document-space position quantized to 1/256 pixel for round brush input.
+    pub fn to_doc_subpixel(&self, point: (f32, f32)) -> Option<(i64, i64)> {
+        let (x, y) = self
+            .inverse?
+            .transform_point(Point::new(f64::from(point.0), f64::from(point.1))?)?
+            .coordinates();
+        (x.abs() < 1e12 && y.abs() < 1e12)
+            .then(|| ((x * 256.0).floor() as i64, (y * 256.0).floor() as i64))
+    }
+
     /// The document pixel under a screen point; may lie outside the canvas.
     /// Non-finite input maps to `None`.
     pub fn to_doc(&self, point: (f32, f32)) -> Option<(i64, i64)> {

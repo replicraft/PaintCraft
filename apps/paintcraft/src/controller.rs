@@ -393,10 +393,11 @@ impl Editor {
             Action::Stroke {
                 layer,
                 points,
+                point_scale,
                 color,
                 size,
                 round,
-            } => self.stroke(layer, &points, color, size, round),
+            } => self.stroke(layer, &points, color, size, round, point_scale),
             Action::Fill {
                 layer,
                 at,

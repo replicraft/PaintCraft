@@ -87,3 +87,41 @@ fn smooth_work_limits_reject_the_entire_batch() {
     assert_eq!(s.ticket(), ticket);
     assert_eq!(s.document().layers[&id].raster.get(3, 3), Rgba::TRANSPARENT);
 }
+
+#[test]
+fn fixed_point_brushes_validate_scale_and_keep_undo_and_clipping() {
+    let (mut s, id) = session(12, 12);
+    let before = s.document().clone();
+    let op = stroke(
+        id,
+        r#"[{"x":1088,"y":1216},{"x":1728,"y":1600}]"#,
+        "#20408080",
+        3,
+        "smooth-round",
+    );
+    let fixed = op.replace("\"size\":3", "\"size\":3,\"point_scale\":256");
+    run(&mut s, 2, &format!("[{fixed}]")).unwrap();
+    let after = s.document().clone();
+    assert!(s.document().layers[&id].raster.get(4, 4).a() > 0);
+    for y in 0..12 {
+        for x in 0..12 {
+            assert!(s.document().layers[&id].raster.get(x, y).a() <= 128);
+        }
+    }
+    s.undo().unwrap();
+    assert!(s.document().same_semantics(&before));
+    s.redo().unwrap();
+    assert!(s.document().same_semantics(&after));
+    for invalid in [
+        fixed.replace("256", "128"),
+        fixed.replace("smooth-round", "square"),
+        fixed.replace("1088", "9223372036854775807"),
+    ] {
+        let ticket = s.ticket();
+        assert_eq!(
+            run(&mut s, 2, &format!("[{invalid}]")).unwrap_err().code,
+            ErrorCode::InputSchema
+        );
+        assert_eq!(s.ticket(), ticket);
+    }
+}

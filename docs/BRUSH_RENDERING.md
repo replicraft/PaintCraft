@@ -8,8 +8,15 @@ no claim of parity with a captured Windows Paint build or measured performance.
 
 ## Coverage contract
 
-Points identify pixel centres `(x + 0.5, y + 0.5)`, for odd and even sizes.
-Consecutive centres form straight segments swept by a disk of radius `size / 2`.
+Integer points identify pixel centres `(x + 0.5, y + 0.5)`, for odd and even sizes.
+The additive v2 `point_scale: 256` option records exact document positions in
+1/256-pixel units for `smooth-round` only, without a center offset. Omitted
+`point_scale` and an explicit value of 1 retain historical integer semantics.
+Desktop round brush input preserves subpixel movement at every canvas zoom and
+display scale. Pencil, square brushes, eraser, shapes and selections retain
+integer pixel input. Invalid scales and out-of-range fixed-point coordinates
+are rejected before publication.
+Consecutive positions form straight segments swept by a disk of radius `size / 2`.
 A one-point gesture is a disk. Caps and joins are round. No spline is applied.
 Every pixel has 16 sample positions on a regular 4×4 grid, at offsets
 `(i + 0.5) / 4` in each axis. Samples inside any segment capsule are covered.

@@ -26,13 +26,26 @@ pub struct CoverageSpan {
 /// Pixel centres are `(x + .5, y + .5)` for both odd and even widths.
 /// Returns disjoint, sorted runs, clipped in document coordinates.
 pub fn round_path(points: &[(i64, i64)], size: u32, clip: &Rect) -> Result<Vec<CoverageSpan>> {
+    round_path_scaled(points, size, clip, 1)
+}
+
+/// Fixed-point input uses exact document positions in 1/256 pixel units.
+/// Unlike integer input, no half-pixel center offset is added.
+pub fn round_path_scaled(
+    points: &[(i64, i64)],
+    size: u32,
+    clip: &Rect,
+    point_scale: u32,
+) -> Result<Vec<CoverageSpan>> {
     let bound = paintcraft_core::types::policy::COORD_ABS_MAX as u64;
-    if !(1..=1024).contains(&size)
+    if !matches!(point_scale, 1 | 256)
+        || !(1..=1024).contains(&size)
         || points.is_empty()
         || points.len() > 65_536
-        || points
-            .iter()
-            .any(|&(x, y)| x.unsigned_abs() > bound || y.unsigned_abs() > bound)
+        || points.iter().any(|&(x, y)| {
+            x.unsigned_abs() > bound * u64::from(point_scale)
+                || y.unsigned_abs() > bound * u64::from(point_scale)
+        })
         || [clip.x0, clip.x1, clip.y0, clip.y1]
             .iter()
             .any(|v| v.unsigned_abs() > bound)
@@ -48,9 +61,16 @@ pub fn round_path(points: &[(i64, i64)], size: u32, clip: &Rect) -> Result<Vec<C
     // Rebase in integer space before converting to floating point. A translated
     // layer near the coordinate limit must retain the same subpixel coverage.
     let origin = (clip.x0, clip.y0);
+    let scale = i64::from(point_scale);
+    let offset = if point_scale == 1 { 0.5 } else { 0.0 };
     let local: Vec<_> = points
         .iter()
-        .map(|&(x, y)| (x - origin.0, y - origin.1))
+        .map(|&(x, y)| {
+            (
+                (x - origin.0 * scale) as f64 / scale as f64 + offset,
+                (y - origin.1 * scale) as f64 / scale as f64 + offset,
+            )
+        })
         .collect();
     let clip = Rect {
         x0: 0,
@@ -67,13 +87,11 @@ pub fn round_path(points: &[(i64, i64)], size: u32, clip: &Rect) -> Result<Vec<C
     Ok(runs)
 }
 
-fn rasterize(points: &[(i64, i64)], size: u32, clip: &Rect) -> Result<Vec<CoverageSpan>> {
+fn rasterize(points: &[(f64, f64)], size: u32, clip: &Rect) -> Result<Vec<CoverageSpan>> {
     let mut rows: BTreeMap<i64, Vec<(i64, i64)>> = BTreeMap::new();
     let mut charged = 0;
     let radius = f64::from(size) / 2.0;
-    let mut segment = |a: (i64, i64), b: (i64, i64)| -> Result<()> {
-        let a = (a.0 as f64 + 0.5, a.1 as f64 + 0.5);
-        let b = (b.0 as f64 + 0.5, b.1 as f64 + 0.5);
+    let mut segment = |a: (f64, f64), b: (f64, f64)| -> Result<()> {
         let (dx, dy) = (b.0 - a.0, b.1 - a.1);
         let length = dx.hypot(dy);
         let (nx, ny) = if length == 0.0 {

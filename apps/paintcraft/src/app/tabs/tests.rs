@@ -11,6 +11,7 @@ fn paint(app: &mut App, x: i64) {
     app.editor.request(
         100 + x as u64,
         Action::Stroke {
+            point_scale: 1,
             layer,
             points: vec![(x, 5)],
             color: Rgba([10, 20, 30, 255]),

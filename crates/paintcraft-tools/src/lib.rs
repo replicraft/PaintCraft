@@ -93,6 +93,7 @@ pub enum Action {
     Stroke {
         layer: Uuid,
         points: Vec<(i64, i64)>,
+        point_scale: u32,
         color: Rgba,
         size: u32,
         round: bool,
@@ -168,6 +169,7 @@ pub enum Action {
 pub enum Preview {
     Path {
         points: Vec<(i64, i64)>,
+        point_scale: u32,
         size: u32,
         round: bool,
         color: Rgba,
@@ -212,6 +214,7 @@ struct Gesture {
     fill: Rgba,
     options: ToolOptions,
     points: Vec<(i64, i64)>,
+    point_scale: u32,
 }
 
 #[derive(Debug)]
@@ -274,8 +277,32 @@ impl ToolState {
             fill,
             options: self.options,
             points: vec![at],
+            point_scale: 1,
         });
     }
+    /// Round brushes retain fixed-point positions; other tools stay pixel exact.
+    pub fn pointer_down_subpixel(&mut self, layer: Uuid, at: (i64, i64), button: PointerButton) {
+        if self.gesture.is_some() {
+            return;
+        }
+        self.pointer_down_button(layer, (at.0.div_euclid(256), at.1.div_euclid(256)), button);
+        if let Some(g) = &mut self.gesture
+            && g.tool == Tool::Brush
+            && g.options.round
+        {
+            g.point_scale = 256;
+            g.points[0] = at;
+        }
+    }
+
+    pub fn pointer_move_subpixel(&mut self, at: (i64, i64)) {
+        if self.gesture.as_ref().is_some_and(|g| g.point_scale == 256) {
+            self.append_point(at);
+        } else {
+            self.append_point((at.0.div_euclid(256), at.1.div_euclid(256)));
+        }
+    }
+
     pub fn gesture_button(&self) -> Option<PointerButton> {
         self.gesture.as_ref().map(|g| g.button)
     }
@@ -316,6 +343,7 @@ impl ToolState {
                 let (size, round, color) = Self::brush_of(g);
                 Preview::Path {
                     points: g.points.clone(),
+                    point_scale: g.point_scale,
                     size,
                     round,
                     color,
@@ -363,6 +391,15 @@ impl ToolState {
     }
 
     pub fn pointer_move(&mut self, doc_point: (i64, i64)) {
+        let point = if self.gesture.as_ref().is_some_and(|g| g.point_scale == 256) {
+            (doc_point.0 * 256 + 128, doc_point.1 * 256 + 128)
+        } else {
+            doc_point
+        };
+        self.append_point(point);
+    }
+
+    fn append_point(&mut self, doc_point: (i64, i64)) {
         let Some(g) = &mut self.gesture else { return };
         match g.tool {
             Tool::Pencil | Tool::Brush | Tool::Eraser => {
@@ -402,6 +439,7 @@ impl ToolState {
                 Action::Stroke {
                     layer: g.layer,
                     points: g.points,
+                    point_scale: g.point_scale,
                     color,
                     size,
                     round,

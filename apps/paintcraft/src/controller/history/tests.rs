@@ -10,6 +10,7 @@ fn pending_edit_makes_a_queued_history_click_stale_instead_of_erasing_new_work()
     editor.request(
         2,
         Action::Stroke {
+            point_scale: 1,
             layer,
             points: vec![(3, 3)],
             color: Rgba([0, 0, 0, 255]),
