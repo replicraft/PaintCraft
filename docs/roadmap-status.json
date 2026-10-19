@@ -301,9 +301,9 @@
         "T14",
         "T17"
       ],
-      "status": "not-started",
-      "evidence": [],
-      "remaining_or_scope": "Release only named tested tranches; high-depth/groups not misrepresented as source features.",
+      "status": "partial",
+      "evidence": ["crates/paintcraft-studio/src/lib.rs", "apps/paintcraft/tests/gui/studio.rs", "docs/STUDIO.md"],
+      "remaining_or_scope": "Separate Studio toolbar and floating Tools/Colors/Layers work on the shared editor; tabs, history window, image operations, effects, PDN and reference parity remain.",
       "acceptance": "Release only named tested tranches; high-depth/groups not misrepresented as source features."
     },
     {

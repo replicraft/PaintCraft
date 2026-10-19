@@ -3,6 +3,10 @@
 A faithful Paint.NET / MS Paint reimplementation in Rust.
 
 **Status: usable preview of the editor (roadmap milestone M2, minus reference parity).**
+
+Studio is now the development focus. Select **Studio** in the application header
+for its compact toolbar and floating Tools, Colors and Layers windows. The choice
+is remembered. See [Studio progress and next steps](docs/STUDIO.md).
 Version **0.1.0** has a CPU editing engine, an exact-integer GPU compositor, a native
 `.pcnd` document format, PNG/BMP/JPEG import and
 export, a headless CLI and a desktop editor with pencil, brush, eraser, fill, shapes,
@@ -55,6 +59,7 @@ PAINTCRAFT_REQUIRE_GPU=1 cargo test -p paintcraft-render --features gpu --test g
 | `crates/paintcraft-platform` | Filesystem save adapters and optional native `rfd` dialogs |
 | `crates/paintcraft-ui` | Shared vector widgets, view transforms and action outbox |
 | `crates/paintcraft-classic` | Classic menus, grouped tool ribbon, palette and presentation variants |
+| `crates/paintcraft-studio` | Studio toolbar, tool options and floating Tools/Colors/Layers windows |
 | `apps/paintcraft` | Desktop controller, settings and egui application (wgpu) |
 | `apps/paintcraft-cli` | Headless Clap CLI; each command lives in `src/commands/` |
 | `conformance/` | Vendored batch v1 conformance vectors and the canonical specimen |

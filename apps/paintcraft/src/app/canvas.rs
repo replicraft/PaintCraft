@@ -10,8 +10,18 @@ impl App {
         egui::ScrollArea::both()
             .auto_shrink([false, false])
             .show(ui, |ui| {
-                let (response, painter) =
-                    ui.allocate_painter(Vec2::new(size.0, size.1), Sense::click_and_drag());
+                let canvas_size = Vec2::new(size.0, size.1);
+                let (response, painter) = if self.experience() == Experience::Studio {
+                    let inset = (ui.available_size() - canvas_size) * 0.5;
+                    ui.add_space(inset.y.max(0.0));
+                    ui.horizontal(|ui| {
+                        ui.add_space(inset.x.max(0.0));
+                        ui.allocate_painter(canvas_size, Sense::click_and_drag())
+                    })
+                    .inner
+                } else {
+                    ui.allocate_painter(canvas_size, Sense::click_and_drag())
+                };
                 let rect = response.rect;
                 self.canvas_rect = Some(rect);
                 let view = View::new((rect.min.x, rect.min.y), self.zoom, ppp);
@@ -30,7 +40,8 @@ impl App {
                                 pressed: true,
                                 ..
                             } => {
-                                if (response.hovered() || rect.contains(pos))
+                                if (rect.contains(pos)
+                                    && ui.ctx().layer_id_at(pos) == Some(painter.layer_id()))
                                     && let Some(d) = view.to_doc((pos.x, pos.y))
                                 {
                                     self.editor.pointer_down(d);

@@ -39,7 +39,7 @@ unchanged by dependency and crate refactors.
 | T16 | M3 | Classic historical parity | not-started | Per-operation evidence records; original menu/eraser/canvas/tool lifecycles and allowed OS differences. |
 | T17 | M3 | PDN and PAINT compatibility | not-started | Read/write/metadata tested independently; malicious parsing bounds; no .NET deserialization/runtime. Fresh creation and source-preserving rewrite qualify independently; retain source bindings across repeated saves. |
 | T18 | M3 | Wasm effect SDK for contributors | not-started | ABI range/trap/halo/mask tests; one complete external-author workflow before SDK stabilization. |
-| T19 | M3 | Studio parity tranches | not-started | Release only named tested tranches; high-depth/groups not misrepresented as source features. |
+| T19 | M3 | Studio parity tranches | partial | Separate Studio toolbar and floating Tools/Colors/Layers work on the shared editor; tabs, history window, image operations, effects, PDN and reference parity remain. |
 | T20 | M3 | Codec breadth | not-started | Per-backend/variant write+read evidence, metadata/index and worker failures; no Rust-only delays. |
 | T21 | M3 | Performance decision experiments | not-started | Raw benchmark artifacts; select thresholds/index/atlas layout; no claims from theoretical speed. |
 | T22 | M4 | Browser conformance | not-started | Native-equivalent fixtures, interruption tests and unsupported-capability reports. |

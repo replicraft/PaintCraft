@@ -13,10 +13,9 @@ impl App {
                 "Settings were unusable ({reason}){kept}; using defaults"
             ));
         }
-        self.picking = settings
-            .classic_variant
-            .is_none()
-            .then_some(ClassicVariant::DEFAULT);
+        self.picking = (settings.experience == Experience::Classic
+            && settings.classic_variant.is_none())
+        .then_some(ClassicVariant::DEFAULT);
         self.settings = settings;
         self.settings_dir = Some(dir);
         self
@@ -27,6 +26,32 @@ impl App {
         self.settings
             .classic_variant
             .unwrap_or(ClassicVariant::DEFAULT)
+    }
+
+    pub fn experience(&self) -> Experience {
+        self.settings.experience
+    }
+
+    pub(super) fn choose_experience(&mut self, experience: Experience) {
+        if self.settings.experience == experience {
+            return;
+        }
+        self.editor.cancel_gesture();
+        self.editor.commit_text();
+        self.settings.experience = experience;
+        self.picking = (experience == Experience::Classic
+            && self.settings.classic_variant.is_none())
+        .then_some(ClassicVariant::DEFAULT);
+        self.persist_settings();
+    }
+
+    fn persist_settings(&mut self) {
+        if let Some(dir) = &self.settings_dir
+            && let Err(e) = self.settings.save(dir)
+        {
+            self.editor
+                .set_status(format!("Could not save the interface choice: {e}"));
+        }
     }
 
     pub fn picker_open(&self) -> bool {
@@ -48,14 +73,23 @@ impl App {
     /// reproductions of the original applications.
     pub(super) fn apply_style(&mut self, ctx: &egui::Context) {
         let v = self.variant();
-        if self.applied_variant == Some(v) {
+        let experience = self.experience();
+        if self.applied_variant == Some((experience, v)) {
             return;
         }
         if self.applied_variant.is_none() {
             paintcraft_ui::fonts::install(ctx);
         }
-        paintcraft_classic::apply_style(ctx, v);
-        self.applied_variant = Some(v);
+        let style = egui::Style {
+            visuals: egui::Visuals::light(),
+            ..Default::default()
+        };
+        ctx.set_style_of(egui::Theme::Light, style);
+        match experience {
+            Experience::Classic => paintcraft_classic::apply_style(ctx, v),
+            Experience::Studio => paintcraft_studio::apply_style(ctx),
+        }
+        self.applied_variant = Some((experience, v));
     }
 
     /// First-visit picker, also reachable later from the toolbar.

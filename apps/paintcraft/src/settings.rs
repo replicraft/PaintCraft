@@ -1,4 +1,4 @@
-//! User settings: the saved Classic variant, kept in a small versioned JSON file.
+//! User settings: active experience and Classic variant in a versioned JSON file.
 //!
 //! A damaged or unfamiliar settings file never costs the user anything: it is
 //! moved aside (not deleted), defaults are used, and the reason is reported.
@@ -11,8 +11,16 @@ use paintcraft_platform::save;
 
 pub use paintcraft_classic::ClassicVariant;
 
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum Experience {
+    #[default]
+    Classic,
+    Studio,
+}
+
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Settings {
+    pub experience: Experience,
     /// `None` until the first-visit picker has been answered.
     pub classic_variant: Option<ClassicVariant>,
 }
@@ -58,7 +66,11 @@ fn file(dir: &Path) -> PathBuf {
 
 fn parse(bytes: &[u8]) -> Result<Settings, String> {
     let v = json::parse(bytes).map_err(|e| e.to_string())?;
-    if v.get("schema").and_then(Value::as_str) != Some("paintcraft.settings/v1") {
+    let version = v.get("schema").and_then(Value::as_str);
+    if !matches!(
+        version,
+        Some("paintcraft.settings/v1" | "paintcraft.settings/v2")
+    ) {
         return Err("unrecognized settings version".into());
     }
     let classic_variant = match v.get("classic_variant") {
@@ -66,7 +78,16 @@ fn parse(bytes: &[u8]) -> Result<Settings, String> {
         Some(Value::Str(s)) => Some(ClassicVariant::from_id(s).ok_or("unknown Classic variant")?),
         Some(_) => return Err("classic_variant has the wrong type".into()),
     };
-    Ok(Settings { classic_variant })
+    let experience = match (version, v.get("experience").and_then(Value::as_str)) {
+        (Some("paintcraft.settings/v1"), _) => Experience::Classic,
+        (_, Some("classic")) => Experience::Classic,
+        (_, Some("studio")) => Experience::Studio,
+        _ => return Err("unknown interface experience".into()),
+    };
+    Ok(Settings {
+        classic_variant,
+        experience,
+    })
 }
 
 impl Settings {
@@ -103,7 +124,14 @@ impl Settings {
         fs::create_dir_all(dir)
             .map_err(|e| format!("cannot create the settings folder: {}", e.kind()))?;
         let v = Value::object([
-            ("schema", Value::str("paintcraft.settings/v1")),
+            ("schema", Value::str("paintcraft.settings/v2")),
+            (
+                "experience",
+                Value::str(match self.experience {
+                    Experience::Classic => "classic",
+                    Experience::Studio => "studio",
+                }),
+            ),
             (
                 "classic_variant",
                 self.classic_variant
@@ -142,11 +170,32 @@ mod tests {
     }
 
     #[test]
+    fn v1_settings_migrate_without_losing_the_classic_choice() {
+        let s = parse(br#"{"schema":"paintcraft.settings/v1","classic_variant":"v10"}"#).unwrap();
+        assert_eq!(s.experience, Experience::Classic);
+        assert_eq!(s.classic_variant, Some(ClassicVariant::V10));
+    }
+
+    #[test]
+    fn studio_roundtrips_before_classic_has_ever_been_entered() {
+        let dir = scratch("studio");
+        let s = Settings {
+            experience: Experience::Studio,
+            classic_variant: None,
+        };
+        s.save(&dir).unwrap();
+        assert_eq!(Settings::load(&dir), (s, Loaded::Ok));
+        fs::remove_dir_all(dir).unwrap();
+        assert!(parse(br#"{"schema":"paintcraft.settings/v2","experience":"unknown"}"#).is_err());
+    }
+
+    #[test]
     fn the_choice_round_trips_for_every_variant() {
         let dir = scratch("roundtrip");
         for v in ClassicVariant::ALL {
             Settings {
                 classic_variant: Some(v),
+                ..Default::default()
             }
             .save(&dir)
             .unwrap();
@@ -154,7 +203,8 @@ mod tests {
                 Settings::load(&dir),
                 (
                     Settings {
-                        classic_variant: Some(v)
+                        classic_variant: Some(v),
+                        ..Default::default()
                     },
                     Loaded::Ok
                 )
@@ -198,6 +248,7 @@ mod tests {
             // A fresh save then works and does not disturb the preserved copy.
             Settings {
                 classic_variant: Some(ClassicVariant::V7),
+                ..Default::default()
             }
             .save(&dir)
             .unwrap();

@@ -5,19 +5,45 @@ use super::*;
 impl App {
     pub(super) fn toolbar(&mut self, ui: &mut egui::Ui) {
         let ctx = ui.ctx().clone();
-        let mut controls = paintcraft_classic::Controls {
+        ui.horizontal(|ui| {
+            ui.strong("PaintCraft");
+            for (experience, label) in [
+                (Experience::Classic, "Classic"),
+                (Experience::Studio, "Studio"),
+            ] {
+                if ui
+                    .selectable_label(self.experience() == experience, label)
+                    .clicked()
+                {
+                    self.choose_experience(experience);
+                }
+            }
+        });
+        let mut controls = paintcraft_ui::chrome::Controls {
             tool: self.editor.tool,
             options: self.editor.options,
             primary: self.editor.color,
             secondary: self.editor.secondary,
         };
-        let actions = paintcraft_classic::chrome(ui, self.variant(), &mut controls);
+        let actions = match self.experience() {
+            Experience::Classic => paintcraft_classic::chrome(ui, self.variant(), &mut controls),
+            Experience::Studio => paintcraft_studio::toolbar(ui, &mut controls, &mut self.studio),
+        };
+        self.apply_chrome(&ctx, controls, actions);
+    }
+
+    fn apply_chrome(
+        &mut self,
+        ctx: &egui::Context,
+        controls: paintcraft_ui::chrome::Controls,
+        actions: Vec<paintcraft_ui::chrome::Action>,
+    ) {
         for action in actions {
             self.chrome_outbox
-                .push(token(&ctx, action.activation_code()), action);
+                .push(token(ctx, action.activation_code()), action);
         }
         for action in self.chrome_outbox.drain() {
-            use paintcraft_classic::Action as Chrome;
+            use paintcraft_ui::chrome::Action as Chrome;
             match action {
                 Chrome::New => {
                     if self.editor.is_dirty() {
@@ -26,18 +52,18 @@ impl App {
                         self.new_document();
                     }
                 }
-                Chrome::Open => self.open_requested(&ctx),
-                Chrome::Save => self.save_requested(&ctx),
-                Chrome::SaveAs => self.request_dialog(&ctx, Kind::SaveAs),
-                Chrome::Export => self.export_requested(&ctx),
-                Chrome::Undo => self.request(&ctx, code::UNDO, Action::Undo),
-                Chrome::Redo => self.request(&ctx, code::REDO, Action::Redo),
+                Chrome::Open => self.open_requested(ctx),
+                Chrome::Save => self.save_requested(ctx),
+                Chrome::SaveAs => self.request_dialog(ctx, Kind::SaveAs),
+                Chrome::Export => self.export_requested(ctx),
+                Chrome::Undo => self.request(ctx, code::UNDO, Action::Undo),
+                Chrome::Redo => self.request(ctx, code::REDO, Action::Redo),
                 Chrome::Interface => self.picking = Some(self.variant()),
                 Chrome::SelectTool(tool) => self.editor.select_tool(tool),
                 Chrome::SelectAll => {
                     let (w, h) = self.editor.document().canvas;
                     self.request(
-                        &ctx,
+                        ctx,
                         code::SELECT_ALL,
                         Action::Select {
                             corners: Some(((0, 0), (i64::from(w) - 1, i64::from(h) - 1))),
@@ -45,13 +71,27 @@ impl App {
                     );
                 }
                 Chrome::Deselect => {
-                    self.request(&ctx, code::DESELECT, Action::Select { corners: None })
+                    self.request(ctx, code::DESELECT, Action::Select { corners: None })
                 }
             }
         }
         self.editor.options = controls.options;
         self.editor.color = controls.primary;
         self.editor.secondary = controls.secondary;
+    }
+
+    pub(super) fn studio_windows(&mut self, ctx: &egui::Context) {
+        let mut controls = paintcraft_ui::chrome::Controls {
+            tool: self.editor.tool,
+            options: self.editor.options,
+            primary: self.editor.color,
+            secondary: self.editor.secondary,
+        };
+        let actions = paintcraft_studio::floating_controls(ctx, &mut controls, &mut self.studio);
+        self.apply_chrome(ctx, controls, actions);
+        let mut open = self.studio.layers;
+        paintcraft_studio::layers_window(ctx, &mut open, |ui| self.layer_panel(ui));
+        self.studio.layers = open;
     }
 
     pub(super) fn layer_panel(&mut self, ui: &mut egui::Ui) {

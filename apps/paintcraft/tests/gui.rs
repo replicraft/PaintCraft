@@ -115,3 +115,5 @@ mod chrome;
 mod files_and_recovery;
 #[path = "gui/input.rs"]
 mod input;
+#[path = "gui/studio.rs"]
+mod studio;

@@ -33,7 +33,7 @@ A correct integrated baseline is not a measured performance or release qualifica
 
 | Area | Choice | Application state |
 |---|---|---|
-| UI | egui | Integrated through eframe; Classic ribbon/vector widgets exist; reference fidelity and Studio remain pending |
+| UI | egui | Integrated through eframe; Classic ribbon/vector widgets and separate Studio toolbar/floating windows exist; reference fidelity and further Studio features remain pending |
 | UI font | Selawik | Unmodified Microsoft 1.01 Regular font embedded with OFL 1.1 notice; document text remains the bitmap baseline |
 | Retro UI font | [W95FA by MadeByArne](https://www.dafont.com/w95fa.font) | User-selected for RetroPaint; author listing identifies SIL Open Font License and commercial use. Not bundled yet; preserve the font archive's license and provenance when adopted |
 | Native shell | Compare eframe with direct egui-winit/egui-wgpu | eframe remains provisional pending T02 hardware/IME traces |

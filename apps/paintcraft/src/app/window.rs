@@ -61,20 +61,36 @@ impl App {
                 });
             });
         });
-        egui::Panel::right("layers")
-            .default_size(220.0)
-            .show(ui, |ui| {
-                self.layer_panel(ui);
-                self.incomplete_save_panel(ui);
-            });
+        if self.experience() == Experience::Classic {
+            egui::Panel::right("layers")
+                .default_size(220.0)
+                .show(ui, |ui| {
+                    self.layer_panel(ui);
+                    self.incomplete_save_panel(ui);
+                });
+        } else if self
+            .saving
+            .as_ref()
+            .is_some_and(saving::NativeSaving::failed)
+        {
+            // Save diagnostics remain reachable even when the Layers window is hidden.
+            egui::Panel::bottom("studio-save-status").show(ui, |ui| self.incomplete_save_panel(ui));
+        }
         let accept_input = first_pass && !self.dialogs.as_ref().is_some_and(NativeDialogs::pending);
         egui::CentralPanel::default()
             .frame(
                 egui::Frame::new()
-                    .fill(Color32::from_rgb(220, 225, 232))
+                    .fill(if self.experience() == Experience::Studio {
+                        Color32::from_rgb(191, 195, 200)
+                    } else {
+                        Color32::from_rgb(220, 225, 232)
+                    })
                     .inner_margin(20),
             )
             .show(ui, |ui| self.canvas(ui, accept_input));
+        if self.experience() == Experience::Studio {
+            self.studio_windows(&ctx);
+        }
         self.picker_dialog(ui);
         self.recovery_dialog(ui);
         self.confirm_dialog(ui);

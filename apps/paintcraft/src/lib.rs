@@ -34,7 +34,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use crate::controller::{Action, Editor, Preview, Tool};
-use crate::settings::{ClassicVariant, Loaded, Settings};
+use crate::settings::{ClassicVariant, Experience, Loaded, Settings};
 use eframe::egui::{self, Color32, Pos2, Rect, Sense, Vec2};
 use paintcraft_core::types::Rgba;
 use paintcraft_document::{hex, import_image};
@@ -105,7 +105,8 @@ type RenderKey = (Uuid, u64, u64);
 
 pub struct App {
     editor: Editor,
-    chrome_outbox: paintcraft_ui::outbox::Outbox<paintcraft_classic::Action>,
+    chrome_outbox: paintcraft_ui::outbox::Outbox<paintcraft_ui::chrome::Action>,
+    studio: paintcraft_studio::Workspace,
     gpu: Option<Arc<GpuRenderer>>,
     renderer: Option<Executor<RenderedFrame>>,
     pending_frame: Option<(RenderKey, JobHandle)>,
@@ -141,7 +142,7 @@ pub struct App {
     settings: Settings,
     /// The variant highlighted in the first-visit picker.
     picking: Option<ClassicVariant>,
-    applied_variant: Option<ClassicVariant>,
+    applied_variant: Option<(Experience, ClassicVariant)>,
     /// Edit buffers for the selected layer's name and opacity, committed on release.
     name_edit: Option<(Uuid, String)>,
     opacity_edit: Option<(Uuid, u8)>,
@@ -169,6 +170,7 @@ impl App {
             editor: Editor::new_document(DEFAULT_SIZE.0, DEFAULT_SIZE.1)
                 .expect("default size is valid"),
             chrome_outbox: Default::default(),
+            studio: Default::default(),
             gpu: None,
             renderer: None,
             pending_frame: None,

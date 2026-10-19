@@ -41,7 +41,8 @@ fn first_visit_shows_the_picker_with_v11_selected_and_remembers_the_choice() {
         Settings::load(&dir),
         (
             Settings {
-                classic_variant: Some(ClassicVariant::V7)
+                classic_variant: Some(ClassicVariant::V7),
+                ..Default::default()
             },
             Loaded::Ok
         )
@@ -84,6 +85,7 @@ fn every_variant_renders_a_usable_window_with_the_same_controls() {
         let dir = scratch("variant");
         Settings {
             classic_variant: Some(v),
+            ..Default::default()
         }
         .save(&dir)
         .unwrap();
@@ -194,6 +196,7 @@ fn export_classic_ui_previews() {
         let settings = scratch("preview-settings");
         Settings {
             classic_variant: Some(variant),
+            ..Default::default()
         }
         .save(&settings)
         .unwrap();

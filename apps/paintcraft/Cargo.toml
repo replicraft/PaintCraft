@@ -16,6 +16,7 @@ path = "src/main.rs"
 
 [dependencies]
 paintcraft-classic.workspace = true
+paintcraft-studio.workspace = true
 paintcraft-commands.workspace = true
 paintcraft-core.workspace = true
 paintcraft-document.workspace = true
