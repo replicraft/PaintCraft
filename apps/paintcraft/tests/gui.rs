@@ -382,3 +382,61 @@ fn new_document_asks_before_discarding_unsaved_work() {
         "same deterministic parameters give the same identity"
     );
 }
+
+#[test]
+fn gui_and_core_produce_identical_pixels_for_the_same_stroke() {
+    use paintcraft_core::commands::Batch;
+    use paintcraft_core::document::{POLICY, new_document};
+    use paintcraft_core::render::render_flat;
+    use paintcraft_core::session::Session;
+
+    let mut h = harness();
+    with_layer(&mut h);
+    // Across both tile edges: x = 127/128 and x = 255/256.
+    let pts = [(100.0f32, 10.0f32), (300.0, 200.0), (120.0, 300.0)];
+    let first = at(&h, pts[0].0, pts[0].1);
+    h.input_mut()
+        .events
+        .extend([Event::PointerMoved(first), press(first)]);
+    for p in &pts[1..] {
+        let moved = Event::PointerMoved(at(&h, p.0, p.1));
+        h.input_mut().events.push(moved);
+    }
+    let last = at(&h, pts[2].0, pts[2].1);
+    h.input_mut().events.push(release(last));
+    h.step();
+    h.run();
+
+    // The same intent applied to the engine directly, with no GUI involved.
+    let mut core =
+        Session::new(new_document(320, 320, Some(Rgba([255, 255, 255, 255])), 0, POLICY).unwrap());
+    let run = |s: &mut Session, ops: &str| {
+        let t = s.ticket();
+        let text = format!(
+            r#"{{"schema":"paintcraft.batch/v1","atomic":true,"policy":"{POLICY}","base":{{"state_id":"{}","publication_epoch":"{}"}},"operations":{ops}}}"#,
+            t.state_id, t.publication_epoch
+        );
+        s.apply(&Batch::from_json(text.as_bytes()).unwrap())
+            .unwrap()
+    };
+    let layer = run(&mut core, r##"[{"op":"layer.add","ref":"l","name":"Layer 2","width":320,"height":320,"origin":{"x":0,"y":0},"default_pixel":"#00000000"}]"##).aliases["l"];
+    run(
+        &mut core,
+        &format!(
+            r##"[{{"op":"raster.pencil_path","layer_ref":{{"id":"{layer}"}},"points":[{{"x":100,"y":10}},{{"x":300,"y":200}},{{"x":120,"y":300}}],"color":"#000000FF","mode":"source-over"}}]"##
+        ),
+    );
+    assert_eq!(
+        h.state().rendered(),
+        render_flat(core.document()).unwrap(),
+        "GUI and core agree byte for byte"
+    );
+    assert_eq!(publications(&h), core.ticket().publication_epoch);
+    for (x, y) in [(127, 36), (128, 37), (255, 157), (256, 158)] {
+        assert_eq!(
+            top_pixel(&h, x, y),
+            Rgba([0, 0, 0, 255]),
+            "({x},{y}) on the tile edges"
+        );
+    }
+}
