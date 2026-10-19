@@ -88,7 +88,7 @@ pub(super) fn label(batch: &Batch) -> Label {
         }
         Op::SelectionSetRect { .. } | Op::SelectionClear => Label::Selection,
         Op::Shape { .. } => Label::Shape,
-        Op::Text { .. } => Label::Text,
+        Op::Text { .. } | Op::MaskSpans { .. } => Label::Text,
         Op::CanvasResize { .. } | Op::LayerExpand { .. } => Label::ResizeCanvas,
     }
 }

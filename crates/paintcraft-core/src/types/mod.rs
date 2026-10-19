@@ -13,3 +13,5 @@ pub mod ids;
 pub mod policy;
 
 pub mod coordinates;
+
+pub mod text;

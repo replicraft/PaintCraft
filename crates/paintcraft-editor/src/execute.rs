@@ -2,6 +2,7 @@
 //! Nothing here publishes; the session installs the result atomically.
 
 mod layers;
+mod mask;
 
 use std::collections::{BTreeMap, HashMap};
 
@@ -495,6 +496,11 @@ impl Stage<'_> {
                     )?;
                 }
             }
+            Op::MaskSpans {
+                layer,
+                color,
+                spans,
+            } => self.paint_mask(layer, *color, spans)?,
             Op::Text {
                 layer,
                 at,

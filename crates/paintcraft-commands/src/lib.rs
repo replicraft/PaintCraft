@@ -12,6 +12,8 @@ use uuid::Uuid;
 use paintcraft_core::types::ids::parse_uuid;
 use paintcraft_core::types::policy::{COORD_ABS_MAX, hex};
 
+mod mask;
+pub use mask::validate_mask_spans;
 mod stroke;
 
 const SIZE_MAX: i64 = 1_048_576;
@@ -140,6 +142,12 @@ pub enum Op {
         layer: LayerRef,
         to_index: usize,
     },
+    /// v2: resolved grayscale text/paint coverage; no machine-dependent fonts.
+    MaskSpans {
+        layer: LayerRef,
+        color: Rgba,
+        spans: Vec<paintcraft_core::types::text::MaskSpan>,
+    },
     /// v2: text in the built-in bitmap font, laid out from its top-left corner.
     Text {
         layer: LayerRef,
@@ -249,6 +257,7 @@ fn op(v: &Value, version: u8) -> Result<Op> {
                 | "raster.flood_fill"
                 | "raster.shape"
                 | "raster.text"
+                | "raster.mask_spans"
                 | "layer.reorder"
                 | "layer.duplicate"
         )
@@ -259,6 +268,7 @@ fn op(v: &Value, version: u8) -> Result<Op> {
     }
     Ok(match name {
         "raster.stroke_path" => stroke::parse(v)?,
+        "raster.mask_spans" => mask::parse(v)?,
         "raster.flood_fill" => {
             let o = obj(
                 v,
