@@ -469,10 +469,10 @@ mod tests {
         e.request(2, Action::Undo);
         e.run_pending();
         assert_eq!(pixel(&e, layer, 127, 10), Rgba::TRANSPARENT);
-        assert_ne!(
+        assert_eq!(
             e.document().state_id,
             before,
-            "undo restored the post-AddLayer state, not the start"
+            "one undo step removes the whole stroke"
         );
         e.request(3, Action::Redo);
         e.run_pending();
