@@ -46,11 +46,11 @@ sha2 = "0.11.1"
 crc32fast = "1.5.2"
 font8x8 = "0.3.1"
 
-# Image codecs.
+# Standard image codecs and bounded binary header views.
+image = { version = "0.25.10", default-features = false, features = ["png", "bmp", "jpeg"] }
+zerocopy = { version = "0.8.63", features = ["derive"] }
+# Independent PNG fixture generation in tests.
 png = "0.18.1"
-zune-jpeg = "0.5.15"
-zune-core = "0.5.3"
-jpeg-encoder = "0.7.1"
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

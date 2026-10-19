@@ -15,14 +15,13 @@ paintcraft-raster.workspace = true
 paintcraft-render.workspace = true
 
 crc32fast.workspace = true
-jpeg-encoder.workspace = true
-png.workspace = true
+image.workspace = true
+zerocopy.workspace = true
 sha2.workspace = true
 uuid.workspace = true
-zune-core.workspace = true
-zune-jpeg.workspace = true
 
 [dev-dependencies]
+png.workspace = true
 paintcraft-commands.workspace = true
 paintcraft-editor.workspace = true
 

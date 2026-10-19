@@ -15,7 +15,7 @@ A correct integrated baseline is not a measured performance or release qualifica
 |---|---|---|---|---|
 | `glam` | selected-on-use | Typed viewport and affine transforms in core/UI | BF01 | Not directly adopted; activate with its consumer |
 | `wide` | preferred-on-use | Exact pixel kernels in raster/render | BF02 | Not directly adopted; activate with its consumer |
-| `zerocopy` | selective-on-use | Bounded fixed-layout format headers | BF03 | Not directly adopted; activate with its consumer |
+| `zerocopy` | selective-on-use | Bounded fixed-layout BMP header admission | BF03 | Integrated baseline, 0.8.63 with derive; header size/offset and malformed-input tests; benchmark pending |
 | `bytemuck` | selected-on-use | Explicit GPU staging layouts in render | BF04 | Not directly adopted; activate with its consumer |
 | `tess2-rust` | evaluate | Complex path fills; compare Lyon | BF05 | Not directly adopted; activate with its consumer |
 | `rayon` | selected-on-use | Runtime-admitted CPU rendering/effects | BF06 | Not directly adopted; activate with its consumer |
@@ -38,7 +38,7 @@ A correct integrated baseline is not a measured performance or release qualifica
 | GPU | wgpu + WGSL | Integer compositor integrated; Metal parity tested; async transfer/device-loss work pending |
 | CLI | Clap | Integrated, command modules and end-to-end tests |
 | File dialogs | rfd | Integrated for Open, Save As and Export |
-| Standard image codecs | image | Consolidation is the active codec task; specialized backends need a demonstrated gap |
+| Standard image codecs | image | Integrated baseline, 0.25.10 with only PNG/BMP/JPEG; strict admission and loss reporting remain in PaintCraft |
 | Snapshot publication | Per-document coordinator; ArcSwap candidate | Synchronous atomic session baseline; concurrent publication study pending |
 | Native container | ZIP64 reader/writer; raw and Zstd blocks | Current canonical ZIP subset is bounded and stored-only; extension must preserve v1 fixtures |
 | Storage compression | Raw/LZ4/Zstd comparison | Raw COW tile baseline; measured compression/compaction pending |

@@ -17,6 +17,19 @@ shell owns the editor controller and settings. Filesystem save adapters belong t
 Version 0.1.0 and dependency declarations are inherited from the root workspace. The
 desktop is the default member. The CLI uses Clap and separate command modules.
 
+## Standard image codec adapter
+
+PNG, BMP and JPEG use `image` with only their format features enabled. The direct
+zune/jpeg encoder dependencies and custom BMP pixel codec have been removed. `png`
+remains a developer dependency for independent fixture generation. Zerocopy provides
+a 54-byte little-endian BMP header view; dimensions, offsets, declared palettes and
+supported masks still require semantic admission before `image` decodes pixels.
+
+Tests preserve hidden RGB/alpha and the existing high-byte 16-to-8 conversion policy.
+JPEG output explicitly composites alpha over white. ICC/EXIF loss is reported, and
+CLI import loss codes can be acknowledged separately from export loss codes. These
+are capability/correctness choices; BF03/BF25 comparative performance remains pending.
+
 ## GPU compositor and native dialogs
 
 The desktop shares eframe's wgpu device with an ordered compute compositor. WGSL uses

@@ -777,3 +777,54 @@ fn apply_runs_a_v2_batch_with_strokes_fill_shapes_and_text() {
     );
     assert!(!Path::new(&s.path("v1.pcnd")).exists());
 }
+
+#[test]
+fn import_loss_codes_can_be_acknowledged_without_weakening_export_validation() {
+    let scratch = Scratch::new("import-depth-loss");
+    let input = scratch.path("deep.png");
+    let output = scratch.path("deep.pcnd");
+    let mut bytes = Vec::new();
+    let mut encoder = png::Encoder::new(&mut bytes, 1, 1);
+    encoder.set_color(png::ColorType::Rgba);
+    encoder.set_depth(png::BitDepth::Sixteen);
+    encoder
+        .write_header()
+        .unwrap()
+        .write_image_data(&[0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xff, 0xff])
+        .unwrap();
+    fs::write(&input, bytes).unwrap();
+    let rejected = run(&["import", &input, "-o", &output, "--json"]);
+    assert_eq!(rejected.code, 3);
+    assert!(!Path::new(&output).exists());
+    let accepted = run(&[
+        "import",
+        &input,
+        "-o",
+        &output,
+        "--allow-loss",
+        "depth-16-reduced-to-8",
+        "--json",
+    ]);
+    assert_eq!(accepted.code, 0, "{}", accepted.stderr);
+    assert_eq!(
+        accepted
+            .json()
+            .get("file")
+            .unwrap()
+            .get("losses_acknowledged")
+            .unwrap(),
+        &Value::Array(vec![Value::str("depth-16-reduced-to-8")])
+    );
+    assert_eq!(
+        run(&[
+            "render",
+            &output,
+            "-o",
+            &scratch.path("out.png"),
+            "--allow-loss",
+            "depth-16-reduced-to-8"
+        ])
+        .code,
+        2
+    );
+}

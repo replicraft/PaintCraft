@@ -191,6 +191,10 @@ struct LossOptions {
 }
 impl LossOptions {
     fn allowed(&self) -> Result<Vec<String>> {
+        self.allowed_for(&export::KNOWN_LOSSES)
+    }
+
+    fn allowed_for(&self, known: &[&str]) -> Result<Vec<String>> {
         if self.on_loss.as_deref().is_some_and(|v| v != "error") {
             return Err(Error::new(
                 ErrorCode::InputSchema,
@@ -202,7 +206,12 @@ impl LossOptions {
             .as_deref()
             .map(|v| v.split(',').map(str::to_owned).collect())
             .unwrap_or_default();
-        export::check_loss_codes(&allowed)?;
+        if let Some(code) = allowed.iter().find(|code| !known.contains(&code.as_str())) {
+            return Err(Error::new(
+                ErrorCode::InputSchema,
+                format!("unknown loss code {code:?}; known: {}", known.join(", ")),
+            ));
+        }
         Ok(allowed)
     }
 }

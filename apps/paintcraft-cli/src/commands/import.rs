@@ -15,7 +15,7 @@ pub fn run(a: Options, json: bool) -> Reply {
         (|| {
             let input = &a.input;
             let dest = a.output.output.as_path();
-            let allowed = a.losses.allowed()?;
+            let allowed = a.losses.allowed_for(&image::KNOWN_IMPORT_LOSSES)?;
             save::preflight(dest, a.output.overwrite)?;
             let (bytes, sha) = read_bounded(input, INPUT_MAX, "input")?;
             let img = image::decode(&bytes)?;

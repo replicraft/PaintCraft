@@ -1,27 +1,11 @@
 //! PNG output of the flat render: 8-bit straight RGBA, no ancillary metadata.
 
-use paintcraft_core::types::{Error, ErrorCode, Result};
+#[cfg(test)]
+use paintcraft_core::types::ErrorCode;
+use paintcraft_core::types::Result;
 
 pub fn encode_rgba8(width: u32, height: u32, rgba: &[u8]) -> Result<Vec<u8>> {
-    let expected = u64::from(width) * u64::from(height) * 4;
-    if rgba.len() as u64 != expected {
-        return Err(Error::new(
-            ErrorCode::InvariantViolation,
-            "pixel buffer does not match the image size",
-        ));
-    }
-    let fail = |e: ::png::EncodingError| {
-        Error::new(ErrorCode::CodecFailed, format!("PNG encoding failed: {e}"))
-    };
-    let mut out = Vec::new();
-    let mut enc = ::png::Encoder::new(&mut out, width, height);
-    enc.set_color(::png::ColorType::Rgba);
-    enc.set_depth(::png::BitDepth::Eight);
-    enc.write_header()
-        .map_err(fail)?
-        .write_image_data(rgba)
-        .map_err(fail)?;
-    Ok(out)
+    crate::image::encode(crate::image::ImageFormat::Png, width, height, rgba, 90)
 }
 
 #[cfg(test)]

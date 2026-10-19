@@ -6,11 +6,21 @@
 //! an unsupported BMP variant is refused, and JPEG output (lossy, no alpha) is
 //! reported as a loss the caller must acknowledge.
 
+use ::image::{DynamicImage, ImageDecoder, ImageEncoder};
 use paintcraft_core::types::{Error, ErrorCode, Result};
+use std::io::Cursor;
 
 /// Untrusted-decode pixel budget (the pack's soft limit).
 pub const DECODE_PIXELS_MAX: u64 = 268_435_456;
 const SIDE_MAX: u32 = 1_048_576;
+
+/// Source information the current RGBA8 import cannot retain.
+pub const KNOWN_IMPORT_LOSSES: [&str; 4] = [
+    "depth-16-reduced-to-8",
+    "icc-profile-ignored",
+    "exif-metadata-ignored",
+    "animation-first-frame-only",
+];
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ImageFormat {
@@ -98,12 +108,110 @@ fn check_size(w: u64, h: u64) -> Result<()> {
     Ok(())
 }
 
+fn image_error(error: ::image::ImageError) -> Error {
+    match error {
+        ::image::ImageError::Limits(_) => Error::new(ErrorCode::ResourceLimit, error.to_string()),
+        ::image::ImageError::Unsupported(_) => unsupported(error.to_string()),
+        _ => codec(error.to_string()),
+    }
+}
+
+fn decode_limits() -> ::image::Limits {
+    let mut limits = ::image::Limits::default();
+    limits.max_image_width = Some(SIDE_MAX);
+    limits.max_image_height = Some(SIDE_MAX);
+    limits.max_alloc = Some(DECODE_PIXELS_MAX * 8);
+    limits
+}
+
 pub fn decode(bytes: &[u8]) -> Result<Decoded> {
-    match ImageFormat::sniff(bytes) {
-        Some(ImageFormat::Png) => decode_png(bytes),
-        Some(ImageFormat::Bmp) => decode_bmp(bytes),
-        Some(ImageFormat::Jpeg) => decode_jpeg(bytes),
-        None => Err(codec("not a PNG, BMP or JPEG image")),
+    let format = ImageFormat::sniff(bytes).ok_or_else(|| codec("not a PNG, BMP or JPEG image"))?;
+    if bytes.len() as u64 > 1 << 30 {
+        return Err(Error::new(
+            ErrorCode::ResourceLimit,
+            "encoded image exceeds the input budget",
+        ));
+    }
+    if format == ImageFormat::Png {
+        let decoder =
+            ::image::codecs::png::PngDecoder::with_limits(Cursor::new(bytes), decode_limits())
+                .map_err(image_error)?;
+        let losses = if decoder.is_apng().map_err(image_error)? {
+            vec!["animation-first-frame-only".to_owned()]
+        } else {
+            Vec::new()
+        };
+        return decode_pixels(decoder, format, losses);
+    }
+    if format == ImageFormat::Bmp {
+        admit_bmp(bytes)?;
+    }
+    let mut reader = ::image::ImageReader::with_format(Cursor::new(bytes), external_format(format));
+    reader.limits(decode_limits());
+    decode_pixels(
+        reader.into_decoder().map_err(image_error)?,
+        format,
+        Vec::new(),
+    )
+}
+
+fn decode_pixels(
+    decoder: impl ImageDecoder,
+    format: ImageFormat,
+    mut losses: Vec<String>,
+) -> Result<Decoded> {
+    let mut decoder = decoder;
+    let (width, height) = decoder.dimensions();
+    check_size(u64::from(width), u64::from(height))?;
+    if decoder.total_bytes() > DECODE_PIXELS_MAX * 8 {
+        return Err(Error::new(
+            ErrorCode::ResourceLimit,
+            "decoded image exceeds the byte budget",
+        ));
+    }
+    let depth16 = matches!(
+        decoder.color_type(),
+        ::image::ColorType::L16
+            | ::image::ColorType::La16
+            | ::image::ColorType::Rgb16
+            | ::image::ColorType::Rgba16
+    );
+    if depth16 {
+        losses.insert(0, "depth-16-reduced-to-8".to_owned());
+    }
+    if decoder.icc_profile().map_err(image_error)?.is_some() {
+        losses.push("icc-profile-ignored".to_owned());
+    }
+    if decoder.exif_metadata().map_err(image_error)?.is_some() {
+        losses.push("exif-metadata-ignored".to_owned());
+    }
+    let image = DynamicImage::from_decoder(decoder).map_err(image_error)?;
+    // Preserve the established STRIP_16 policy: retain high bytes rather than
+    // silently adopting a different 16-to-8 rounding rule from a generic conversion.
+    let rgba = if depth16 {
+        image
+            .into_rgba16()
+            .into_raw()
+            .into_iter()
+            .map(|v| (v >> 8) as u8)
+            .collect()
+    } else {
+        image.into_rgba8().into_raw()
+    };
+    Ok(Decoded {
+        format,
+        width,
+        height,
+        rgba,
+        losses,
+    })
+}
+
+fn external_format(format: ImageFormat) -> ::image::ImageFormat {
+    match format {
+        ImageFormat::Png => ::image::ImageFormat::Png,
+        ImageFormat::Bmp => ::image::ImageFormat::Bmp,
+        ImageFormat::Jpeg => ::image::ImageFormat::Jpeg,
     }
 }
 
@@ -120,287 +228,142 @@ pub fn encode(
             "pixel buffer does not match the image size",
         ));
     }
-    match format {
-        ImageFormat::Png => crate::png::encode_rgba8(width, height, rgba),
-        ImageFormat::Bmp => Ok(encode_bmp(width, height, rgba)),
-        ImageFormat::Jpeg => encode_jpeg(width, height, rgba, jpeg_quality),
-    }
-}
-
-// ---------------------------------------------------------------- PNG
-
-fn decode_png(bytes: &[u8]) -> Result<Decoded> {
-    let fail = |e: png::DecodingError| codec(format!("PNG: {e}"));
-    let mut decoder = png::Decoder::new(std::io::Cursor::new(bytes));
-    decoder.set_transformations(png::Transformations::EXPAND | png::Transformations::STRIP_16);
-    let mut reader = decoder.read_info().map_err(fail)?;
-    let (width, height) = {
-        let info = reader.info();
-        (info.width, info.height)
-    };
     check_size(u64::from(width), u64::from(height))?;
-    let mut losses = Vec::new();
-    {
-        let info = reader.info();
-        if info.bit_depth == png::BitDepth::Sixteen {
-            losses.push("depth-16-reduced-to-8".to_owned());
+    let mut out = Vec::new();
+    match format {
+        ImageFormat::Png => ::image::codecs::png::PngEncoder::new(&mut out)
+            .write_image(rgba, width, height, ::image::ExtendedColorType::Rgba8)
+            .map_err(image_error)?,
+        ImageFormat::Bmp => ::image::codecs::bmp::BmpEncoder::new(&mut out)
+            .encode(rgba, width, height, ::image::ExtendedColorType::Rgba8)
+            .map_err(image_error)?,
+        ImageFormat::Jpeg => {
+            if width > u32::from(u16::MAX) || height > u32::from(u16::MAX) {
+                return Err(unsupported("JPEG supports at most 65535 pixels per side"));
+            }
+            let rgb: Vec<u8> = rgba
+                .as_chunks::<4>()
+                .0
+                .iter()
+                .flat_map(|px| {
+                    let a = u32::from(px[3]);
+                    [px[0], px[1], px[2]]
+                        .map(|c| ((u32::from(c) * a + 255 * (255 - a) + 127) / 255) as u8)
+                })
+                .collect();
+            ::image::codecs::jpeg::JpegEncoder::new_with_quality(
+                &mut out,
+                jpeg_quality.clamp(1, 100),
+            )
+            .encode(&rgb, width, height, ::image::ExtendedColorType::Rgb8)
+            .map_err(image_error)?;
         }
-        if info.icc_profile.is_some() {
-            losses.push("icc-profile-ignored".to_owned());
-        }
-        if info.animation_control.is_some() {
-            losses.push("animation-first-frame-only".to_owned());
-        }
     }
-    let size = reader
-        .output_buffer_size()
-        .ok_or_else(|| codec("PNG output size overflows"))?;
-    if size as u64 > DECODE_PIXELS_MAX * 8 {
-        return Err(Error::new(
-            ErrorCode::ResourceLimit,
-            "image exceeds the decode budget",
-        ));
-    }
-    let mut buf = vec![0u8; size];
-    let frame = reader.next_frame(&mut buf).map_err(fail)?;
-    let px = &buf[..frame.buffer_size()];
-    let n = (width as usize) * (height as usize);
-    let mut rgba = Vec::with_capacity(n * 4);
-    match frame.color_type {
-        png::ColorType::Rgba => rgba.extend_from_slice(px),
-        png::ColorType::Rgb => px
-            .as_chunks::<3>()
-            .0
-            .iter()
-            .for_each(|c| rgba.extend_from_slice(&[c[0], c[1], c[2], 255])),
-        png::ColorType::GrayscaleAlpha => px
-            .as_chunks::<2>()
-            .0
-            .iter()
-            .for_each(|c| rgba.extend_from_slice(&[c[0], c[0], c[0], c[1]])),
-        png::ColorType::Grayscale => px
-            .iter()
-            .for_each(|g| rgba.extend_from_slice(&[*g, *g, *g, 255])),
-        png::ColorType::Indexed => return Err(codec("palette was not expanded")),
-    }
-    if rgba.len() != n * 4 {
-        return Err(codec("PNG pixel data has the wrong size"));
-    }
-    Ok(Decoded {
-        format: ImageFormat::Png,
-        width,
-        height,
-        rgba,
-        losses,
-    })
+    Ok(out)
 }
 
-// ---------------------------------------------------------------- BMP
-
-fn le16(b: &[u8], at: usize) -> Result<u16> {
-    b.get(at..at + 2)
-        .map(|s| u16::from_le_bytes([s[0], s[1]]))
-        .ok_or_else(|| codec("truncated BMP"))
+// Image handles pixel decoding; PaintCraft retains strict admission for its
+// declared BMP subset. A valid byte representation alone does not admit a file.
+use zerocopy::byteorder::{I32, LE, U16, U32};
+use zerocopy::{FromBytes, Immutable, KnownLayout, Unaligned};
+#[derive(Debug, FromBytes, Immutable, KnownLayout, Unaligned)]
+#[repr(C)]
+struct BmpHeader {
+    signature: [u8; 2],
+    file_size: U32<LE>,
+    reserved: [u8; 4],
+    offset: U32<LE>,
+    dib: U32<LE>,
+    width: I32<LE>,
+    height: I32<LE>,
+    planes: U16<LE>,
+    bpp: U16<LE>,
+    compression: U32<LE>,
+    image_size: U32<LE>,
+    x_resolution: I32<LE>,
+    y_resolution: I32<LE>,
+    palette_count: U32<LE>,
+    important: U32<LE>,
 }
-
-fn le32(b: &[u8], at: usize) -> Result<u32> {
-    b.get(at..at + 4)
-        .map(|s| u32::from_le_bytes([s[0], s[1], s[2], s[3]]))
-        .ok_or_else(|| codec("truncated BMP"))
+fn le32(bytes: &[u8], offset: usize) -> Result<u32> {
+    let value = bytes
+        .get(offset..offset + 4)
+        .ok_or_else(|| codec("truncated BMP header"))?;
+    Ok(u32::from_le_bytes(
+        value.try_into().expect("four checked bytes"),
+    ))
 }
-
-fn decode_bmp(b: &[u8]) -> Result<Decoded> {
-    let data_offset = le32(b, 10)? as usize;
-    let dib = le32(b, 14)?;
+fn admit_bmp(bytes: &[u8]) -> Result<()> {
+    let (header, _) =
+        BmpHeader::read_from_prefix(bytes).map_err(|_| codec("truncated BMP header"))?;
+    let (dib, w, h, bpp, compression) = (
+        header.dib.get(),
+        header.width.get(),
+        header.height.get(),
+        header.bpp.get(),
+        header.compression.get(),
+    );
     if !matches!(dib, 40 | 108 | 124) {
-        return Err(unsupported(format!(
-            "BMP header size {dib} is not supported (40, 108 or 124)"
-        )));
+        return Err(unsupported("unsupported BMP header version"));
     }
-    let (w, h_raw) = (le32(b, 18)? as i32, le32(b, 22)? as i32);
-    let (planes, bpp, compression) = (le16(b, 26)?, le16(b, 28)?, le32(b, 30)?);
-    if planes != 1 || w <= 0 || h_raw == i32::MIN || h_raw == 0 {
+    if header.planes.get() != 1 || w <= 0 || h == 0 || h == i32::MIN {
         return Err(codec("invalid BMP dimensions"));
     }
-    let (width, height, top_down) = (w as u32, h_raw.unsigned_abs(), h_raw < 0);
+    let (width, height) = (w as u32, h.unsigned_abs());
     check_size(u64::from(width), u64::from(height))?;
     if !matches!(bpp, 1 | 4 | 8 | 24 | 32) {
-        return Err(unsupported(format!(
-            "BMP with {bpp} bits per pixel is not supported"
-        )));
+        return Err(unsupported("unsupported BMP bit depth"));
     }
-    // Masks: only the standard BGRA layout is understood for bit-field files.
-    let mut alpha_mask = 0u32;
-    match compression {
-        0 => {}
+    let masks_size = match compression {
+        0 => 0,
         3 if bpp == 32 => {
-            let (r, g, bl) = (le32(b, 54)?, le32(b, 58)?, le32(b, 62)?);
-            alpha_mask = if dib >= 108 { le32(b, 66)? } else { 0 };
-            if (r, g, bl) != (0x00FF_0000, 0x0000_FF00, 0x0000_00FF)
-                || !(alpha_mask == 0 || alpha_mask == 0xFF00_0000)
-            {
-                return Err(unsupported(
-                    "BMP bit-field masks other than BGRA8888 are not supported",
-                ));
+            let masks = (le32(bytes, 54)?, le32(bytes, 58)?, le32(bytes, 62)?);
+            let alpha = if dib >= 108 { le32(bytes, 66)? } else { 0 };
+            if masks != (0x00ff0000, 0x0000ff00, 0x000000ff) || !matches!(alpha, 0 | 0xff000000) {
+                return Err(unsupported("unsupported BMP channel masks"));
+            }
+            if dib == 40 { 12 } else { 0 }
+        }
+        _ => return Err(unsupported("unsupported BMP compression")),
+    };
+    let stride = (u64::from(width) * u64::from(bpp)).div_ceil(32) * 4;
+    let offset = u64::from(header.offset.get());
+    let palette = if bpp <= 8 {
+        let count = header.palette_count.get();
+        if count == 0 { 1u32 << bpp } else { count }
+    } else {
+        0
+    };
+    if palette > 1u32 << bpp.min(8) {
+        return Err(codec("BMP palette exceeds its domain"));
+    }
+    let metadata_end = 14 + u64::from(dib) + masks_size + u64::from(palette) * 4;
+    if offset < metadata_end
+        || offset
+            .checked_add(stride * u64::from(height))
+            .is_none_or(|end| end > bytes.len() as u64)
+    {
+        return Err(codec("BMP pixel data overlaps metadata or is truncated"));
+    }
+    // image fills undeclared palette entries with black; our strict import
+    // contract rejects references outside the declared palette instead.
+    if bpp <= 8 {
+        for row in bytes[offset as usize..][..(stride * u64::from(height)) as usize]
+            .chunks_exact(stride as usize)
+        {
+            for x in 0..width as usize {
+                let index = match bpp {
+                    8 => u32::from(row[x]),
+                    4 => u32::from((row[x / 2] >> (if x % 2 == 0 { 4 } else { 0 })) & 15),
+                    _ => u32::from((row[x / 8] >> (7 - x % 8)) & 1),
+                };
+                if index >= palette {
+                    return Err(codec("BMP palette index out of range"));
+                }
             }
         }
-        _ => {
-            return Err(unsupported(format!(
-                "BMP compression {compression} is not supported"
-            )));
-        }
     }
-    let stride = (u64::from(width) * u64::from(bpp)).div_ceil(32) * 4;
-    let need = stride
-        .checked_mul(u64::from(height))
-        .ok_or_else(|| codec("BMP size overflows"))?;
-    if (data_offset as u64)
-        .checked_add(need)
-        .is_none_or(|end| end > b.len() as u64)
-    {
-        return Err(codec("BMP pixel data is truncated"));
-    }
-    let mut palette = Vec::new();
-    if bpp <= 8 {
-        let used = le32(b, 46)? as usize;
-        let count = if used == 0 {
-            1usize << bpp
-        } else {
-            used.min(1 << bpp)
-        };
-        let start = 14 + dib as usize;
-        for i in 0..count {
-            let e = b
-                .get(start + i * 4..start + i * 4 + 4)
-                .ok_or_else(|| codec("truncated BMP palette"))?;
-            palette.push([e[2], e[1], e[0], 255]);
-        }
-    }
-    let mut rgba = vec![0u8; width as usize * height as usize * 4];
-    for row in 0..height as usize {
-        let src_row = if top_down {
-            row
-        } else {
-            height as usize - 1 - row
-        };
-        let line = &b[data_offset + src_row * stride as usize..][..stride as usize];
-        let dst = &mut rgba[row * width as usize * 4..][..width as usize * 4];
-        for (x, out) in dst.as_chunks_mut::<4>().0.iter_mut().enumerate() {
-            *out = match bpp {
-                24 => [line[x * 3 + 2], line[x * 3 + 1], line[x * 3], 255],
-                32 => [
-                    line[x * 4 + 2],
-                    line[x * 4 + 1],
-                    line[x * 4],
-                    if alpha_mask != 0 {
-                        line[x * 4 + 3]
-                    } else {
-                        255
-                    },
-                ],
-                8 => *palette
-                    .get(line[x] as usize)
-                    .ok_or_else(|| codec("BMP palette index out of range"))?,
-                4 => *palette
-                    .get(((line[x / 2] >> (if x % 2 == 0 { 4 } else { 0 })) & 15) as usize)
-                    .ok_or_else(|| codec("BMP palette index out of range"))?,
-                _ => *palette
-                    .get(((line[x / 8] >> (7 - x % 8)) & 1) as usize)
-                    .ok_or_else(|| codec("BMP palette index out of range"))?,
-            };
-        }
-    }
-    Ok(Decoded {
-        format: ImageFormat::Bmp,
-        width,
-        height,
-        rgba,
-        losses: Vec::new(),
-    })
-}
-
-/// 32-bit BGRA with a V4 header and explicit masks, bottom-up.
-fn encode_bmp(width: u32, height: u32, rgba: &[u8]) -> Vec<u8> {
-    let pixels = width as usize * height as usize * 4;
-    let offset = 14 + 108;
-    let mut out = Vec::with_capacity(offset + pixels);
-    out.extend_from_slice(b"BM");
-    out.extend_from_slice(&((offset + pixels) as u32).to_le_bytes());
-    out.extend_from_slice(&[0; 4]);
-    out.extend_from_slice(&(offset as u32).to_le_bytes());
-    out.extend_from_slice(&108u32.to_le_bytes());
-    out.extend_from_slice(&(width as i32).to_le_bytes());
-    out.extend_from_slice(&(height as i32).to_le_bytes());
-    out.extend_from_slice(&1u16.to_le_bytes());
-    out.extend_from_slice(&32u16.to_le_bytes());
-    out.extend_from_slice(&3u32.to_le_bytes()); // BI_BITFIELDS
-    out.extend_from_slice(&(pixels as u32).to_le_bytes());
-    out.extend_from_slice(&[0; 16]); // resolution, palette counts
-    for mask in [0x00FF_0000u32, 0x0000_FF00, 0x0000_00FF, 0xFF00_0000] {
-        out.extend_from_slice(&mask.to_le_bytes());
-    }
-    out.extend_from_slice(&0x7352_4742u32.to_le_bytes()); // LCS_sRGB
-    out.extend_from_slice(&[0; 48]); // endpoints and gamma
-    for row in (0..height as usize).rev() {
-        for px in rgba[row * width as usize * 4..][..width as usize * 4]
-            .as_chunks::<4>()
-            .0
-        {
-            out.extend_from_slice(&[px[2], px[1], px[0], px[3]]);
-        }
-    }
-    out
-}
-
-// ---------------------------------------------------------------- JPEG
-
-fn decode_jpeg(bytes: &[u8]) -> Result<Decoded> {
-    use zune_core::bytestream::ZCursor;
-    use zune_core::colorspace::ColorSpace;
-    use zune_core::options::DecoderOptions;
-    let options = DecoderOptions::default()
-        .jpeg_set_out_colorspace(ColorSpace::RGBA)
-        .set_max_width(SIDE_MAX as usize)
-        .set_max_height(SIDE_MAX as usize)
-        .set_strict_mode(false);
-    let mut d = zune_jpeg::JpegDecoder::new_with_options(ZCursor::new(bytes), options);
-    d.decode_headers()
-        .map_err(|e| codec(format!("JPEG: {e:?}")))?;
-    let info = d.info().ok_or_else(|| codec("JPEG has no header"))?;
-    check_size(u64::from(info.width), u64::from(info.height))?;
-    let rgba = d.decode().map_err(|e| codec(format!("JPEG: {e:?}")))?;
-    if rgba.len() as u64 != u64::from(info.width) * u64::from(info.height) * 4 {
-        return Err(codec("JPEG decoded to an unexpected size"));
-    }
-    Ok(Decoded {
-        format: ImageFormat::Jpeg,
-        width: u32::from(info.width),
-        height: u32::from(info.height),
-        rgba,
-        losses: Vec::new(),
-    })
-}
-
-/// JPEG has no alpha: pixels are composited over white first.
-fn encode_jpeg(width: u32, height: u32, rgba: &[u8], quality: u8) -> Result<Vec<u8>> {
-    let (w, h) = (u16::try_from(width), u16::try_from(height));
-    let (Ok(w), Ok(h)) = (w, h) else {
-        return Err(unsupported("JPEG supports at most 65535 pixels per side"));
-    };
-    let mut rgb = Vec::with_capacity(rgba.len() / 4 * 3);
-    for px in rgba.as_chunks::<4>().0 {
-        let a = u32::from(px[3]);
-        rgb.extend(
-            px[..3]
-                .iter()
-                .map(|c| ((u32::from(*c) * a + 255 * (255 - a) + 127) / 255) as u8),
-        );
-    }
-    let mut out = Vec::new();
-    jpeg_encoder::Encoder::new(&mut out, quality.clamp(1, 100))
-        .encode(&rgb, w, h, jpeg_encoder::ColorType::Rgb)
-        .map_err(|e| codec(format!("JPEG encoding failed: {e}")))?;
-    Ok(out)
+    Ok(())
 }
 
 #[cfg(test)]
@@ -651,5 +614,48 @@ mod tests {
                 &bytes[..bytes.len().min(8)]
             );
         }
+    }
+    #[test]
+    fn depth_reduction_keeps_high_bytes_and_header_views_are_exact() {
+        assert_eq!(std::mem::size_of::<BmpHeader>(), 54);
+        let mut bytes = Vec::new();
+        let mut encoder = png::Encoder::new(&mut bytes, 2, 1);
+        encoder.set_color(png::ColorType::Rgba);
+        encoder.set_depth(png::BitDepth::Sixteen);
+        encoder
+            .write_header()
+            .unwrap()
+            .write_image_data(&[
+                0, 255, 1, 0, 127, 255, 255, 255, 255, 0, 128, 0, 1, 255, 0, 0,
+            ])
+            .unwrap();
+        let result = decode(&bytes).unwrap();
+        assert_eq!(result.rgba, [0, 1, 127, 255, 255, 128, 1, 0]);
+        assert_eq!(result.losses, ["depth-16-reduced-to-8"]);
+    }
+
+    #[test]
+    fn jpeg_discarded_metadata_is_reported() {
+        let mut bytes = Vec::new();
+        let mut encoder = ::image::codecs::jpeg::JpegEncoder::new(&mut bytes);
+        encoder.set_icc_profile(vec![1, 2, 3, 4]).unwrap();
+        encoder
+            .set_exif_metadata(b"II*\0\x08\0\0\0\0\0\0\0\0\0".to_vec())
+            .unwrap();
+        encoder
+            .encode(&[10, 20, 30], 1, 1, ::image::ExtendedColorType::Rgb8)
+            .unwrap();
+        let result = decode(&bytes).unwrap();
+        assert_eq!(
+            result.losses,
+            ["icc-profile-ignored", "exif-metadata-ignored"]
+        );
+    }
+
+    #[test]
+    fn bmp_pixel_offset_cannot_overlap_its_header() {
+        let mut bytes = bmp(24, 1, 1, 0, &[], &[1, 2, 3, 0]);
+        bytes[10..14].copy_from_slice(&14u32.to_le_bytes());
+        assert_eq!(decode(&bytes).unwrap_err().code, ErrorCode::CodecFailed);
     }
 }
