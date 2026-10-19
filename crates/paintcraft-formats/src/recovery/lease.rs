@@ -12,6 +12,8 @@ pub struct RecoveryLease {
 pub struct ClaimedRecovery {
     pub document: Document,
     pub lease: RecoveryLease,
+    /// Length of the exact bounded payload verified during the claim.
+    pub snapshot_bytes: u64,
 }
 impl RecoveryLease {
     pub(super) fn acquire(directory: &Path, session: Uuid) -> Result<Self> {
@@ -95,6 +97,10 @@ impl Recovery {
                 "recovery identity changed after it was offered",
             ));
         }
-        Ok(ClaimedRecovery { document, lease })
+        Ok(ClaimedRecovery {
+            document,
+            lease,
+            snapshot_bytes: bytes.len() as u64,
+        })
     }
 }

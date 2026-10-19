@@ -25,7 +25,6 @@ fn process_exit_after_replacement_preserves_unknown_receipt_and_source_independe
         "{}",
         String::from_utf8_lossy(&status.stderr)
     );
-    fs::remove_file(root.join("original.pcnd")).unwrap();
     let found = Recovery::scan(&root);
     assert_eq!(found.len(), 1);
     let evidence = read_record(&found[0]).unwrap();
@@ -41,6 +40,25 @@ fn process_exit_after_replacement_preserves_unknown_receipt_and_source_independe
             .get("acknowledged_state_id"),
         Some(&Value::Null)
     );
+    let checked = paintcraft_formats::save_recovery::reconciliation::reconcile(
+        &found[0],
+        &root.join("original.pcnd"),
+        save::ReconcileMode::ConfirmDurability,
+    )
+    .unwrap();
+    assert_eq!(
+        checked.receipt.get("operation_id"),
+        evidence.get("receipt").unwrap().get("operation_id")
+    );
+    assert_eq!(
+        checked.receipt.get("replacement"),
+        Some(&Value::str("unknown"))
+    );
+    assert_eq!(
+        checked.receipt.get("acknowledged_state_id"),
+        Some(&Value::Null)
+    );
+    fs::remove_file(root.join("original.pcnd")).unwrap();
     let claim = Recovery::claim(&found[0]).unwrap();
     assert_eq!(claim.document.canvas, (4, 3));
     claim.lease.discard().unwrap();

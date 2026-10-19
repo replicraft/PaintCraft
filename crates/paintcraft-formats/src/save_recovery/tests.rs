@@ -1,12 +1,12 @@
 use super::*;
 use crate::{pcnd, recovery::Recovery};
 
-fn scratch() -> PathBuf {
+pub(super) fn scratch() -> PathBuf {
     let path = std::env::temp_dir().join(format!("paintcraft-save-journal-{}", Uuid::new_v4()));
     fs::create_dir(&path).unwrap();
     fs::canonicalize(path).unwrap()
 }
-fn stamp() -> Stamp {
+pub(super) fn stamp() -> Stamp {
     Stamp {
         session: Uuid::new_v4(),
         sequence: 7,
@@ -14,7 +14,7 @@ fn stamp() -> Stamp {
         operation: "save-as",
     }
 }
-fn document() -> Document {
+pub(super) fn document() -> Document {
     paintcraft_document::new_document(4, 3, None, 0, paintcraft_document::POLICY).unwrap()
 }
 

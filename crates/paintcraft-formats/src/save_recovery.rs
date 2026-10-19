@@ -1,6 +1,8 @@
 //! Write-ahead snapshots and diagnostic receipts for native saves. Recovery
 //! admission and checksummed payloads are shared with the normal recovery store.
 //! Receipts read from disk never authorize replacement or a new session binding.
+pub mod reconciliation;
+
 use crate::{
     recovery::{Found, Recovery},
     save,
@@ -151,27 +153,18 @@ impl SavedAttempt {
             ("operation", Value::str(self.stamp.operation)),
             ("phase", Value::str(phase)),
             ("receipt", receipt),
+            (
+                "evidence",
+                outcome.map_or(Value::Null, save::Outcome::reconciliation_evidence),
+            ),
         ]);
-        let bytes = json::canonical(&Value::object([
-            ("schema", Value::str("paintcraft.saved-attempt/v1")),
-            ("sha256", Value::str(hash(&json::canonical(&body)))),
-            ("body", body),
-        ]));
-        if bytes.len() as u64 > RECORD_MAX {
-            return Err(limited("saved-attempt record exceeds its limit"));
-        }
-        let written = save::save(&record_path(&self.directory, self.session()), &bytes, true);
-        if !written.is_success() {
-            return Err(Error::new(
-                ErrorCode::StorageFailed,
-                format!(
-                    "saved-attempt evidence was not durable: {}",
-                    written.reasons.join("; ")
-                ),
-            ));
-        }
-        Ok(())
+        reconciliation::write_record(&self.directory, self.session(), &body)
     }
+}
+
+/// Layout hint for recovery presentation; this does not acquire a source claim.
+pub fn is_saved_attempt(root: &Path, found: &Found) -> bool {
+    found.checkpoint.parent() == Some(root.join(DIRECTORY).as_path())
 }
 
 /// Diagnostic evidence only. Call while holding the recovery source claim when
@@ -199,9 +192,12 @@ pub fn read_record(found: &Found) -> Result<Value> {
     let body = value
         .get("body")
         .ok_or_else(|| invalid("missing saved-attempt body"))?;
-    if value.get("schema").and_then(Value::as_str) != Some("paintcraft.saved-attempt/v1")
-        || value.get("sha256").and_then(Value::as_str)
-            != Some(hash(&json::canonical(body)).as_str())
+    let version = value.get("schema").and_then(Value::as_str);
+    if !matches!(
+        version,
+        Some("paintcraft.saved-attempt/v1" | "paintcraft.saved-attempt/v2")
+    ) || value.get("sha256").and_then(Value::as_str)
+        != Some(hash(&json::canonical(body)).as_str())
         || body.get("owner").and_then(Value::as_str) != Some(found.session.to_string().as_str())
         || body.get("source_state_id").and_then(Value::as_str)
             != Some(found.state_id.to_string().as_str())
@@ -210,7 +206,7 @@ pub fn read_record(found: &Found) -> Result<Value> {
     {
         return Err(invalid("saved-attempt evidence identity/checksum mismatch"));
     }
-    validate_body(body)?;
+    validate_body(body, version == Some("paintcraft.saved-attempt/v2"))?;
     Ok(body.clone())
 }
 
@@ -223,21 +219,22 @@ fn object(value: &Value, keys: &[&str]) -> Result<()> {
     }
     Ok(())
 }
-fn validate_body(body: &Value) -> Result<()> {
-    object(
-        body,
-        &[
-            "owner",
-            "editor_session",
-            "document_id",
-            "source_state_id",
-            "save_sequence",
-            "binding_generation",
-            "operation",
-            "phase",
-            "receipt",
-        ],
-    )?;
+fn validate_body(body: &Value, evidence: bool) -> Result<()> {
+    let mut keys = vec![
+        "owner",
+        "editor_session",
+        "document_id",
+        "source_state_id",
+        "save_sequence",
+        "binding_generation",
+        "operation",
+        "phase",
+        "receipt",
+    ];
+    if evidence {
+        keys.push("evidence");
+    }
+    object(body, &keys)?;
     for key in ["owner", "editor_session", "document_id", "source_state_id"] {
         let raw = body
             .get(key)
@@ -291,6 +288,14 @@ fn validate_body(body: &Value) -> Result<()> {
             .ok_or_else(|| invalid("missing operation identity"))?;
         if !Uuid::parse_str(id).is_ok_and(|uuid| uuid.to_string() == id) {
             return Err(invalid("invalid operation identity"));
+        }
+        if evidence && phase == Some("prepared") {
+            let evidence = body.get("evidence").expect("checked field");
+            if evidence.get("replacement_acknowledged") != Some(&Value::Bool(false)) {
+                return Err(invalid(
+                    "prepared evidence cannot acknowledge a replacement",
+                ));
+            }
         }
         if phase == Some("prepared")
             && (receipt.get("replacement") != Some(&Value::str("unknown"))

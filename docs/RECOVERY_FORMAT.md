@@ -117,12 +117,17 @@ under its durable discard marker. The snapshot survives removal of the original 
 Restoring it creates unsaved, unbound work and confirms new protection before retiring
 the source. Stored receipts never grant write or binding authority in a new session.
 
-The private `paintcraft.saved-attempt/v1` envelope contains `schema`, `body`, and the
-SHA-256 of canonical body JSON. Body fields are owner UUID, editor session UUID, document
-UUID, source StateId, decimal save sequence/binding generation, native save operation,
-phase, and optional `paintcraft.file-operation/v1` receipt. Identity, field, checksum,
-phase and stamp validation are bounded to 256 KiB; malformed evidence is retained.
-Receipt damage does not invalidate an independently validated semantic snapshot.
+New records use the private `paintcraft.saved-attempt/v2` envelope: `schema`, `body`,
+and the SHA-256 of canonical body JSON. Body fields are owner UUID, editor session UUID,
+document UUID, source StateId, decimal save sequence/binding generation, native save
+operation, phase, optional `paintcraft.file-operation/v1` receipt, and optional
+`paintcraft.save-evidence/v1` evidence. Evidence records original/staged byte counts and
+SHA-256 values, positive replacement acknowledgement, operation/destination IDs and
+the original diagnostic count. It contains no path. Identity, field, checksum, phase and
+stamp validation are bounded to 256 KiB; malformed evidence is retained. Checksums are
+integrity checks, not authentication or OS authority. Receipt damage does not invalidate
+an independently validated semantic snapshot. V1 records remain readable; inspection
+upgrades them conservatively without inventing unavailable fingerprints or acknowledgements.
 
 Phases are `capturing` (before snapshot publication), `captured` (complete snapshot),
 `prepared` (staging validated, receipt persisted before user-visible replacement), and
@@ -130,10 +135,25 @@ Phases are `capturing` (before snapshot publication), `captured` (complete snaps
 records explicitly have unknown replacement, unconfirmed durability and no
 acknowledgement: a process can exit on either side of replacement before recording its
 final result. Finished records preserve the real outcome and original operation ID,
-sequence and binding generation. A later in-process reconciliation can persist a revised
-finished receipt for that same attempt without repeating replacement. Restarted UI
-currently offers document recovery; destination reconciliation from persisted evidence
-remains a separate pending tranche.
+sequence and binding generation. In-process and restarted reconciliation can persist a
+revised finished receipt for the same attempt without repeating replacement. Resumed
+inspection requires an explicit caller/user-selected destination, an exact claimed
+snapshot, matching snapshot hash/length, and matching resolved destination ID. Stored
+paths never supply this capability. Native users reacquire the file through the parented
+file picker; confirmation revalidates the selected namespace and source claim.
+
+Inspection distinguishes captured/original/third-party, missing and unreadable content.
+A matching hash cannot turn a prepared unknown attempt into positive replacement
+evidence or a durability acknowledgement. Explicit confirmation runs file/directory
+barriers only when positive replacement evidence exists, then checks identity, revision
+and content again. The same operation/source/sequence/binding identity is retained and
+repeated inspection diagnostics stay bounded. Resumed outcomes are isolated from live
+editor receipts: they cannot clean or retarget the current document. Cancellation,
+configuration/session changes and hidden offers suppress stale UI results. Inspection
+retains the recovery snapshot even after a confirmed historical save. Already-confirmed
+or never-attempted receipts remain recovery artifacts rather than incomplete attempts
+eligible for this reconciliation path. These local-Unix semantics are not platform or
+power-loss qualification.
 
 Admission uses one cooperative `.admission.lock`, a 64-owner limit, 1,024-entry cap
 (with file slots reserved for new publication), and a conservative 4 GiB disk policy
