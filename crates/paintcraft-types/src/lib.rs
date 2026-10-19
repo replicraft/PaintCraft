@@ -2,6 +2,7 @@
 
 pub mod error;
 pub mod geometry;
+pub mod json;
 pub mod pixel;
 
 pub use error::{Error, ErrorCode, Result};
