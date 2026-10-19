@@ -5,6 +5,41 @@ control under `docs/temp/`), where this implementation deliberately differs, and
 is still provisional. "Verified" means covered by tests in this repository; it never
 means native-hardware, GPU, platform-compatibility or original-application evidence.
 
+## Workspace boundaries
+
+`paintcraft-core` is the shared foundation, exposing `paintcraft_core::types`; it has
+no document, raster or session dependencies. The former session/execution core is
+`paintcraft-editor`. Raster storage, document semantics, command parsing, history,
+rendering, normalized input and tool state machines have separate crates. The desktop
+shell owns the editor controller and settings. Filesystem save adapters belong to
+`paintcraft-platform`; formats retain a save API re-export for their callers.
+
+Version 0.1.0 and dependency declarations are inherited from the root workspace. The
+desktop is the default member. The CLI uses Clap and separate command modules.
+
+## GPU compositor and native dialogs
+
+The desktop shares eframe's wgpu device with an ordered compute compositor. WGSL uses
+the scalar policy's exact integer source-over and layer-opacity rounding. A required-GPU
+test passed on the development machine's Apple M1 Pro Metal adapter: layer order,
+visibility, opacity, negative/off-canvas offsets, tile boundaries, workgroup tails and
+transparent source samples produced byte-identical results to the CPU compositor.
+Other adapters/backends are not qualified by that result.
+
+The initial compositor materializes clipped layer samples, dispatches layers in order,
+then reads the composite back for the existing egui texture path. Readback is synchronous;
+there is no performance or zero-copy claim. Device buffer/dispatch limits are checked
+before allocating, and unsupported documents fall back to CPU rendering. GPU and dialog
+features remain optional for headless consumers.
+
+Open, Save As and Export use parented native `rfd` dialogs. Their completion is polled
+by the application, and cancellation returns without file operations. Save reuses the
+bound native document path. Save As updates the binding only after the save is confirmed;
+a failed save preserves the previous binding and dirty state. Automated tests cover both
+binding outcomes. Interactive native-dialog behavior still needs manual checks on each OS.
+A short native desktop run with GPU/native services initialized and temporary settings
+opened and exited cleanly on macOS.
+
 ## Implemented
 
 | Area | What | Evidence |
@@ -13,10 +48,10 @@ means native-hardware, GPU, platform-compatibility or original-application evide
 | Native format (T08, T29) | Canonical PCND v1 writer (byte-identical to the specimen) and bounded reader; unknown version, schema, feature, encoding or group is `capability.unsupported`, never editable | `pcnd.rs` tests, vector digests |
 | Batch v2 | v1 plus `raster.stroke_path`, `raster.flood_fill`, `raster.shape`, `raster.text`, `layer.reorder` (see below) | behavior tests, JSON-Schema grammar cases |
 | Image formats | PNG, BMP, JPEG import and export with named, acknowledged losses (flatten, hidden RGB, lossy JPEG, discarded alpha) | `image.rs`, `export.rs`, CLI tests |
-| Safe save and recovery (T10) | Stage → atomic replace → read-back; a file-operation receipt; autosave checkpoints with per-session locks; recover, discard or ask later; a clean save or exit leaves nothing behind | `save.rs`, `recovery.rs`, GUI tests |
+| Safe save and recovery (T10) | Stage → atomic replace → read-back; a file-operation receipt; autosave checkpoints with per-session locks; recover, discard or ask later; a clean save or exit leaves nothing behind | platform `save.rs`, format `recovery.rs`, GUI tests |
 | Bounded history (T11) | Memory budget over all retained snapshots (shared tiles counted once); only the oldest undo steps are dropped, the newest edit stays undoable, the user is told | `session.rs`, editor tests |
 | CLI (T08, T33, T34) | `new`, `inspect`, `schema batch|batch-v2`, `capabilities`, `apply` (hash-guarded), `import`, `render` | 11 end-to-end tests of the real binary; output validates against the pack's schemas |
-| Editor (T09, T14 subset) | Pencil, brush (round/square), eraser, flood fill, line, rectangle, ellipse (outline/filled/both), rectangle select, bitmap text; layers: add, show/hide, move, delete, rename, opacity; undo/redo; one gesture or text object is one transaction | `paintcraft-ui` tests; 28 headless egui tests |
+| Editor (T09, T14 subset) | Pencil, brush (round/square), eraser, flood fill, line, rectangle, ellipse (outline/filled/both), rectangle select, bitmap text; layers: add, show/hide, move, delete, rename, opacity; undo/redo; one gesture or text object is one transaction | desktop controller tests; 28 headless egui tests |
 | Presentation (T15 subset) | First-visit Classic picker (v11 preselected), remembered choice, Interface button, damaged settings kept aside | GUI tests |
 
 Native evidence is limited to repeated runs of the real wgpu window, which opened, drew
@@ -33,7 +68,7 @@ composite equals the engine's render byte for byte. The harness' accessibility c
 unlabeled and ambiguously labelled widgets, now fixed.
 
 Not shown: real mouse, pen or touch hardware, timestamps and coalesced samples, IME, DPI
-changes while running, GPU output correctness, window or compositor behavior on platforms
+changes while running, final GPU presentation correctness, window or compositor behavior on platforms
 other than the macOS machine used. The native input spike (T02) has not been done:
 `eframe` is used by default and is provisional.
 
@@ -109,7 +144,7 @@ controlled environment, no comparison. Real measurements follow the benchmark pr
 
 Tile edge 256, a `HashMap` tile index (BF16, BF17), whole-snapshot history sharing tiles by
 `Arc` and counted by unique tiles on every commit (BF18, T11), a scalar per-pixel
-source-over (BF02), a full-document re-render and texture upload after every publication
+source-over (BF02), a full-document composite and texture upload after every publication
 (BF29), `eframe` as the window shell (BF22). Do not describe any of these as measured or
 optimal.
 
