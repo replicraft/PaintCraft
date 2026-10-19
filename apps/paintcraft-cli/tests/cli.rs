@@ -614,6 +614,13 @@ fn import_and_export_cover_png_bmp_and_jpeg_with_explicit_losses() {
             .get("width"),
         Some(&Value::Int(8))
     );
+    let again = s.path("again.pcnd");
+    assert_eq!(run(&["import", &out_png, "-o", &again]).code, 0);
+    assert_eq!(
+        fs::read(&again).unwrap(),
+        first,
+        "the same file imports to the same bytes"
+    );
     assert_eq!(
         run(&["import", &out_bmp, "-o", &back, "--overwrite"]).code,
         0
