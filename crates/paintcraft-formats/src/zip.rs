@@ -25,7 +25,15 @@ fn u32le(b: &[u8], at: usize) -> Option<u32> {
 }
 
 /// Canonical archive. `members` must already be in byte-wise name order.
+///
+/// Panics if the archive would need ZIP64 (65,535 members or 4 GiB): the container
+/// budgets keep real documents far below that, so reaching it is a caller bug.
 pub fn write_stored(members: &[(String, Vec<u8>)]) -> Vec<u8> {
+    let payload: usize = members.iter().map(|(n, d)| d.len() + n.len() + 100).sum();
+    assert!(
+        members.len() < 0xFFFF && payload < 0xFFFF_0000,
+        "archive exceeds the non-ZIP64 limits"
+    );
     let mut out = Vec::new();
     let mut central = Vec::new();
     for (name, data) in members {
