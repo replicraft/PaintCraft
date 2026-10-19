@@ -8,6 +8,8 @@
 
 #[path = "controller/history.rs"]
 mod history;
+#[path = "controller/layers.rs"]
+mod layers;
 #[path = "controller/strokes.rs"]
 mod strokes;
 
@@ -535,6 +537,7 @@ impl Editor {
                 self.commit(vec![op], "Selection changed");
             }
             Action::AddLayer => self.add_layer(),
+            Action::DuplicateLayer { layer } => self.duplicate_layer(layer),
             Action::DeleteLayer { layer } => {
                 let op = Value::object([
                     ("op", Value::str("layer.delete")),
@@ -663,28 +666,6 @@ impl Editor {
             && !r.committed
         {
             self.status = format!("{name} changed nothing");
-        }
-    }
-
-    fn add_layer(&mut self) {
-        let doc = self.document();
-        let (w, h) = doc.canvas;
-        let name = format!("Layer {}", doc.roots.len() + 1);
-        let op = Value::object([
-            ("op", Value::str("layer.add")),
-            ("ref", Value::str("layer")),
-            ("name", Value::str(&name)),
-            ("width", Value::Int(i64::from(w))),
-            ("height", Value::Int(i64::from(h))),
-            (
-                "origin",
-                Value::object([("x", Value::Int(0)), ("y", Value::Int(0))]),
-            ),
-            ("default_pixel", Value::str("#00000000")),
-        ]);
-        if let Some(r) = self.commit(vec![op], &format!("Added {name}")) {
-            // The new layer becomes the target only after a successful commit.
-            self.target = r.aliases.get("layer").copied().or(self.target);
         }
     }
 

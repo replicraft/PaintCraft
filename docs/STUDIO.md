@@ -8,14 +8,14 @@ separately in the dependency choices and is not bundled yet.
 
 ## Implemented presentation slice
 
-- Compact File/Edit/Window menus, file and undo/redo toolbar, and tool options.
+- Compact File/Edit/Layers/Window menus, file and undo/redo toolbar, and tool options.
 - Document tabs with independent editors, histories, targets, tools, colors, zoom,
   scroll positions and native-file bindings. New/Open/recovery preserve other tabs.
   Close supports save, discard and cancel; closing the last tab leaves an empty workspace.
 - Movable Tools and Colors windows, with real tool selection, primary/secondary
   colors, palette, brush size/tip, shape style, fill tolerance and bitmap text size.
 - A movable/resizable Layers window using the existing add, select, visibility,
-  rename, opacity, reorder and delete operations. Window menu toggles restore panels.
+  rename, opacity, reorder, duplicate and delete operations. Window menu toggles restore panels.
 - A movable History window with recorded action labels, current/redo rows, direct
   snapshot navigation and an explicit notice when older entries were trimmed.
 - Centered canvas when the viewport is larger than the document; scrolling and
@@ -138,3 +138,22 @@ and CLI; native document-window actions have no headless equivalent.
 Save All, recent files, printing, acquisition and the remaining editing commands
 are not registered as working controls yet. The registry is a first slice for
 existing actions, not a claim of complete menu or CLI coverage.
+
+## Layer workflows
+
+The Studio Layers menu exposes working add, delete, duplicate, visibility,
+navigation and stack-move actions through the shared action registry. Its labels,
+shortcuts and boundary states follow the supplied `ima5ge5.png` reference where
+implemented. Navigation selects a persistent layer ID without adding history;
+stack moves retain that identity and add one recorded transaction. Duplication
+selects the new copy only after a successful commit, preserves hidden/off-canvas
+content and retains independent copy-on-write pixels. It appears in both the menu
+and floating Layers window. The CLI can invoke the same native operation through
+`apply` with a batch-v2 `layer.duplicate` description.
+
+Executable UI tests cover menu and shortcut dispatch, one-entry undo/redo,
+independent pixels, hidden copied layers, stable targeting on reorder and the
+empty layer stack. The engine tests cover complete storage semantics and failure
+rollback; these are not independent Paint.NET reference results. Layers remain a
+partial menu: merge down, import, transforms and the properties dialog are deferred.
+The floating window still lacks layer thumbnails and reference-matched controls.

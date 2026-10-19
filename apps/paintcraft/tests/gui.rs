@@ -121,5 +121,7 @@ mod studio;
 #[path = "gui/tabs.rs"]
 mod tabs;
 
+#[path = "gui/layers.rs"]
+mod layers;
 #[path = "gui/shortcuts.rs"]
 mod shortcuts;

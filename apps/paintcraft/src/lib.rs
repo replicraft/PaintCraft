@@ -11,6 +11,8 @@ mod files;
 mod history;
 #[path = "app/input.rs"]
 mod input;
+#[path = "app/layers.rs"]
+mod layers;
 #[path = "app/recovery.rs"]
 mod recovery;
 #[path = "app/rendering.rs"]

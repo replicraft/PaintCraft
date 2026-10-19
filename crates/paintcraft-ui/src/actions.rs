@@ -1,6 +1,8 @@
 //! Semantic action metadata shared by menus, toolbars and keyboard dispatch.
 use egui::{Key, KeyboardShortcut, Modifiers};
 use paintcraft_tools::Tool;
+mod layers;
+pub use layers::{LAYERS, LayerAction};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Action {
@@ -16,6 +18,7 @@ pub enum Action {
     SelectAll,
     Deselect,
     Close,
+    Layer(LayerAction),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -33,6 +36,9 @@ pub struct Context {
     pub selection_active: bool,
     pub tool: Tool,
     pub blocked: bool,
+    pub layer_index: Option<usize>,
+    pub layer_count: usize,
+    pub layer_visible: bool,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -59,7 +65,11 @@ pub const EDIT: &[Action] = &[
 
 impl Action {
     pub fn descriptor(self) -> Descriptor {
+        if let Self::Layer(action) = self {
+            return action.descriptor();
+        }
         let (label, key) = match self {
+            Self::Layer(_) => unreachable!(),
             Self::New => ("New", Some((Key::N, false))),
             Self::Open => ("Open…", Some((Key::O, false))),
             Self::Save => ("Save", Some((Key::S, false))),
@@ -87,7 +97,11 @@ impl Action {
     }
 
     pub fn available(self, frontend: Frontend) -> bool {
-        !matches!(self, Self::Interface) || frontend == Frontend::Classic
+        match self {
+            Self::Interface => frontend == Frontend::Classic,
+            Self::Layer(_) => frontend == Frontend::Studio,
+            _ => true,
+        }
     }
 
     pub fn enabled(self, ctx: Context) -> bool {
@@ -95,6 +109,7 @@ impl Action {
             return false;
         }
         match self {
+            Self::Layer(action) => action.enabled(ctx),
             Self::New | Self::Open | Self::Interface => true,
             Self::Undo => ctx.document_open && ctx.can_undo,
             Self::Redo => ctx.document_open && ctx.can_redo,
@@ -105,6 +120,7 @@ impl Action {
 
     pub fn checked(self, ctx: Context) -> Option<bool> {
         match self {
+            Self::Layer(LayerAction::ToggleVisibility) => Some(ctx.layer_visible),
             Self::SelectTool(tool) => Some(ctx.document_open && tool == ctx.tool),
             _ => None,
         }
@@ -113,21 +129,23 @@ impl Action {
     /// Exact logical-key/modifier matching prevents Save As from falling through
     /// to Save and avoids treating AltGr combinations as application commands.
     pub fn from_shortcut(key: Key, modifiers: Modifiers) -> Option<Self> {
-        if !modifiers.command || modifiers.alt {
-            return None;
-        }
-        if key == Key::Z && modifiers.shift {
+        if key == Key::Z && modifiers.matches_exact(Modifiers::COMMAND | Modifiers::SHIFT) {
             return Some(Self::Redo);
         }
-        FILE.iter().chain(EDIT).copied().find(|a| {
-            a.descriptor()
-                .shortcut
-                .is_some_and(|s| s.logical_key == key && s.modifiers.shift == modifiers.shift)
-        })
+        FILE.iter()
+            .chain(EDIT)
+            .copied()
+            .chain(LAYERS.iter().copied().map(Self::Layer))
+            .find(|a| {
+                a.descriptor()
+                    .shortcut
+                    .is_some_and(|s| s.logical_key == key && modifiers.matches_exact(s.modifiers))
+            })
     }
 
     pub fn activation_code(self) -> u64 {
         match self {
+            Self::Layer(action) => 1200 + action as u64,
             Self::New => 1000,
             Self::Open => 1001,
             Self::Save => 1002,
@@ -221,6 +239,9 @@ mod tests {
             selection_active: true,
             tool: Tool::Brush,
             blocked: false,
+            layer_index: None,
+            layer_count: 0,
+            layer_visible: false,
         };
         let ids: std::collections::HashSet<_> = FILE
             .iter()

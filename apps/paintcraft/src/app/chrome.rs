@@ -6,6 +6,15 @@ impl App {
     pub(super) fn action_context(&self) -> paintcraft_ui::actions::Context {
         use paintcraft_ui::actions::{Context, Frontend};
         let pending_text = self.editor.is_editing_text();
+        let layer_index = self
+            .editor
+            .target()
+            .and_then(|id| self.editor.document().roots.iter().position(|r| *r == id));
+        let layer_visible = self
+            .editor
+            .target()
+            .and_then(|id| self.editor.document().layer(&id))
+            .is_some_and(|l| l.visible);
         Context {
             frontend: match self.experience() {
                 Experience::Classic => Frontend::Classic,
@@ -16,6 +25,9 @@ impl App {
             can_redo: self.editor.redo_depth() > 0 && !pending_text,
             selection_active: self.editor.selection() != Selection::Inactive,
             tool: self.editor.tool,
+            layer_index,
+            layer_count: self.editor.document().roots.len(),
+            layer_visible,
             blocked: self.closing_workspace
                 || self.close_after_saves
                 || self.confirm.is_some()
@@ -115,6 +127,7 @@ impl App {
                 Chrome::Export => self.export_requested(ctx),
                 Chrome::Undo => self.request(ctx, code::UNDO, Action::Undo),
                 Chrome::Redo => self.request(ctx, code::REDO, Action::Redo),
+                Chrome::Layer(action) => self.dispatch_layer_action(ctx, action),
                 Chrome::Close => self.request_close_tab(self.active_tab_id(), ctx),
                 Chrome::Interface => self.picking = Some(self.variant()),
                 Chrome::SelectTool(tool) => self.editor.select_tool(tool),
@@ -268,7 +281,7 @@ impl App {
             }
         });
 
-        ui.horizontal(|ui| {
+        ui.horizontal_wrapped(|ui| {
             if ui
                 .add_enabled(index < top, egui::Button::new("Move up"))
                 .clicked()
@@ -293,6 +306,24 @@ impl App {
                         layer: t,
                         to_index: index - 1,
                     },
+                );
+            }
+            if self.experience() == Experience::Studio
+                && ui
+                    .add_enabled(
+                        paintcraft_ui::actions::Action::Layer(
+                            paintcraft_ui::actions::LayerAction::Duplicate,
+                        )
+                        .enabled(self.action_context()),
+                        egui::Button::new("Duplicate layer"),
+                    )
+                    .clicked()
+            {
+                self.dispatch_chrome(
+                    &ctx,
+                    vec![paintcraft_ui::actions::Action::Layer(
+                        paintcraft_ui::actions::LayerAction::Duplicate,
+                    )],
                 );
             }
             if ui.button("Delete layer").clicked() {

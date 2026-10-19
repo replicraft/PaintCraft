@@ -112,6 +112,9 @@ pub enum Action {
         corners: Option<((i64, i64), (i64, i64))>,
     },
     AddLayer,
+    DuplicateLayer {
+        layer: Uuid,
+    },
     DeleteLayer {
         layer: Uuid,
     },

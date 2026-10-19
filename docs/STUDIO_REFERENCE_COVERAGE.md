@@ -42,7 +42,7 @@ behavior remain unqualified.
 | Document switching/close | working | Independent sessions, histories, view/tool state, bindings, owner-routed native saves/recovery and save/discard/cancel close; text tabs rather than reference thumbnails |
 | History | working | Recorded labels, undo/redo and guarded direct navigation; branching/spill is separate work |
 | File workflows | partially working | New/Open/Save/Save As/Export and native dialogs work; shared metadata and menu/shortcut dispatch cover existing operations; Save All, recent files, printing and acquisition remain |
-| Colors and layers | partially working | Primary/secondary palette, layer selection/visibility/rename/opacity/reorder/add/delete work; wheel, More controls, thumbnails, duplicate/merge and properties dialog remain |
+| Colors and layers | partially working | Primary/secondary palette, layer selection/visibility/rename/opacity/reorder/add/delete/duplicate work, with a functional partial Layers menu; wheel, More controls, thumbnails, merge/transforms and properties dialog remain |
 | Settings | partially working | Experience/version persistence works; utility-window persistence and reference settings pages remain |
 | Selection/clipboard/image/adjustments/effects | partially working | Rectangle selection and existing drawing tools work; clipboard, transforms, adjustment/effect registries and preview lifecycles remain |
 | Classic v11 fidelity | deferred | Existing separate Classic frontend retained; reference-driven expansion follows Studio coverage |

@@ -27,6 +27,17 @@ pub fn toolbar(
                 }
             }
         });
+        ui.menu_button("Layers", |ui| {
+            for (index, &action) in actions::LAYERS.iter().enumerate() {
+                if matches!(index, 3 | 4 | 8) {
+                    ui.separator();
+                }
+                if actions::menu_item(ui, Action::Layer(action), context) {
+                    actions.push(Action::Layer(action));
+                    ui.close();
+                }
+            }
+        });
         ui.menu_button("Window", |ui| {
             ui.checkbox(&mut workspace.tools, "Tools");
             ui.checkbox(&mut workspace.colors, "Colors");
