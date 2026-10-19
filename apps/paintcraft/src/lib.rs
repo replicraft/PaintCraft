@@ -133,7 +133,7 @@ impl App {
     /// Connect native services only for a real desktop window; harnesses stay deterministic.
     pub fn with_native_services(mut self, cc: &eframe::CreationContext<'_>) -> Self {
         self.dialogs = Some(NativeDialogs::new(cc));
-        match saving::NativeSaving::new() {
+        match saving::NativeSaving::new(cc.egui_ctx.clone()) {
             Ok(saving) => self.saving = Some(saving),
             Err(error) => self
                 .editor
@@ -376,13 +376,17 @@ impl App {
     }
 
     /// Swap in a new editor; its predecessor's work was already saved or deliberately discarded.
-    fn install(&mut self, editor: Editor) {
+    fn install(&mut self, editor: Editor) -> paintcraft_core::types::Result<()> {
+        if let Some(saving) = &mut self.saving {
+            saving.clear_recovery(&mut self.editor)?;
+        } else {
+            self.editor.discard_checkpoint()?;
+        }
         if let Some((_, handle)) = self.pending_frame.take()
             && let Some(renderer) = &self.renderer
         {
             renderer.cancel(handle);
         }
-        let previous_cleanup = self.editor.discard_checkpoint();
         if let Some(saving) = &mut self.saving {
             saving.new_session();
         }
@@ -391,10 +395,7 @@ impl App {
         self.texture = None;
         self.rendered.clear();
         self.attach_recovery();
-        if let Err(error) = previous_cleanup {
-            self.editor
-                .set_status(format!("Previous recovery cleanup failed: {error}"));
-        }
+        Ok(())
     }
 
     /// Open a `.pcnd` document or import a PNG, BMP or JPEG picture.
@@ -432,7 +433,7 @@ impl App {
                 format!("Opened {}", path.display()),
             )
         };
-        self.install(editor);
+        self.install(editor)?;
         self.bound = bound;
         self.editor.set_status(note);
         Ok(())
@@ -813,8 +814,12 @@ impl App {
 
     fn new_document(&mut self) {
         if let Ok(e) = Editor::new_document(DEFAULT_SIZE.0, DEFAULT_SIZE.1) {
-            self.install(e);
-            self.bound = None;
+            match self.install(e) {
+                Ok(()) => self.bound = None,
+                Err(error) => self
+                    .editor
+                    .set_status(format!("Cannot replace document: {error}")),
+            }
         }
     }
 
@@ -971,7 +976,7 @@ impl App {
                     .as_ref()
                     .is_some_and(saving::NativeSaving::failed);
                 (if incomplete { "Quit with an incomplete save?" } else { "Quit without saving?" },
-                if incomplete { "A requested save failed or is unconfirmed. Available recovery data will be kept." }
+                if incomplete { "A requested save or recovery operation failed or is unconfirmed. Available recovery data will be kept." }
                 else { "There are unsaved changes. Available recovery data will be kept." }.to_owned(), "Quit anyway")
             }
             Confirm::Export {
@@ -1029,7 +1034,7 @@ impl App {
     /// Offer work left behind by a crashed session.
     fn recover_found(&mut self, item: &Found) -> paintcraft_core::types::Result<()> {
         let editor = Editor::recover(&item.checkpoint)?;
-        self.install(editor);
+        self.install(editor)?;
         self.bound = None;
         if let Some(original) = &item.original {
             self.path_text.clone_from(original);
@@ -1430,6 +1435,9 @@ impl App {
                 self.close_after_saves = true;
                 self.editor
                     .set_status("Waiting for requested saves before closing…");
+            } else if !self.editor.is_dirty() && self.editor.checkpoint_info().is_some() {
+                ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
+                self.close_after_requested_saves(&ctx);
             } else if (self.editor.is_dirty()
                 || self
                     .saving
@@ -1448,9 +1456,24 @@ impl App {
         self.finish_save();
         self.poll_native_saves(&ctx);
         let now = ctx.input(|i| i.time);
-        if now - self.last_autosave >= self.autosave_every.as_secs_f64() {
+        if now - self.last_autosave >= self.autosave_every.as_secs_f64()
+            && !self.allow_close
+            && !self.close_after_saves
+        {
             self.last_autosave = now;
-            self.editor.autosave();
+            if let Some(saving) = &mut self.saving {
+                let result = if !self.editor.is_dirty() && self.editor.checkpoint_info().is_some() {
+                    saving.clear_recovery(&mut self.editor).map(|()| false)
+                } else {
+                    saving.checkpoint(&self.editor)
+                };
+                if let Err(error) = result {
+                    self.editor
+                        .set_status(format!("Autosave not queued: {error}"));
+                }
+            } else {
+                self.editor.autosave();
+            }
         }
         if self.editor.is_dirty() {
             ctx.request_repaint_after(self.autosave_every.max(Duration::from_millis(250)));

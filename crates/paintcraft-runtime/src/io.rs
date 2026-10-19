@@ -91,21 +91,26 @@ impl<T: Send + 'static> OrderedIo<T> {
             worker: Some(worker),
         })
     }
-    pub fn submit(
-        &mut self,
-        bytes: u64,
-        work: impl FnOnce() -> Result<T> + Send + 'static,
-        wake: impl FnOnce() + Send + 'static,
-    ) -> Result<Ticket> {
-        if self.pending.len() >= self.limits.pending_jobs
+    pub fn admit(&self, jobs: usize, bytes: u64) -> Result<()> {
+        if jobs > self.limits.pending_jobs.saturating_sub(self.pending.len())
             || bytes
                 > self
                     .limits
                     .retained_bytes
                     .saturating_sub(self.retained_bytes)
         {
-            return Err(unavailable("native I/O admission exhausted"));
+            Err(unavailable("native I/O admission exhausted"))
+        } else {
+            Ok(())
         }
+    }
+    pub fn submit(
+        &mut self,
+        bytes: u64,
+        work: impl FnOnce() -> Result<T> + Send + 'static,
+        wake: impl FnOnce() + Send + 'static,
+    ) -> Result<Ticket> {
+        self.admit(1, bytes)?;
         let sequence = self.next_sequence;
         self.next_sequence = sequence
             .checked_add(1)

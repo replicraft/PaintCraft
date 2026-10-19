@@ -1,12 +1,12 @@
-//! Native file coordinator. Encoding receives immutable content and a bounded
-//! staging sink. A single FIFO also serializes spelling/symlink aliases of paths.
+//! Native I/O coordinator. Saves, periodic checkpoints and recovery cleanup share
+//! one bounded FIFO. Only the UI coordinator adopts results into editor state.
 use super::*;
 use paintcraft_core::types::{Error, ErrorCode, Result, json::Value};
+use paintcraft_formats::recovery::{Checkpoint, RecoveryToken};
 use paintcraft_runtime::io::{Limits, OrderedIo, Ticket};
 
 #[derive(Debug)]
-struct Pending {
-    ticket: Ticket,
+struct SaveRequest {
     session: Uuid,
     generation: u64,
     source: Uuid,
@@ -14,21 +14,68 @@ struct Pending {
     operation: &'static str,
 }
 #[derive(Debug)]
+enum PendingKind {
+    Save(SaveRequest),
+    Checkpoint {
+        session: Uuid,
+        token: RecoveryToken,
+        key: (Uuid, u64),
+    },
+    Cleanup,
+}
+#[derive(Debug)]
+struct Pending {
+    ticket: Ticket,
+    kind: PendingKind,
+}
+#[derive(Debug)]
+enum Completion {
+    File(save::Outcome),
+    Checkpoint(Checkpoint),
+    Cleanup,
+}
+#[derive(Debug)]
 pub(super) struct NativeSaving {
-    io: OrderedIo<save::Outcome>,
+    io: OrderedIo<Completion>,
+    context: egui::Context,
     session: Uuid,
     generation: u64,
     pending: Vec<Pending>,
     failed: bool,
     last_receipt: Option<Value>,
 }
+fn snapshot_charge(document: &paintcraft_document::Document) -> Result<u64> {
+    // Provisional independent snapshot payload charge, not allocator/RSS accounting.
+    document
+        .layers
+        .values()
+        .try_fold(
+            (64u64 << 20) + document.title.as_ref().map_or(0, |s| s.len() as u64),
+            |bytes, layer| {
+                bytes
+                    .checked_add(
+                        (layer.raster.resident_tiles() as u64).checked_mul(
+                            paintcraft_raster::RasterLayer::TILE_BYTES as u64 + 8192,
+                        )?,
+                    )?
+                    .checked_add(layer.name.len() as u64 + 4096)
+            },
+        )
+        .ok_or_else(|| {
+            Error::new(
+                ErrorCode::ResourceLimit,
+                "I/O snapshot retention charge overflows",
+            )
+        })
+}
 impl NativeSaving {
-    pub(super) fn new() -> Result<Self> {
+    pub(super) fn new(context: egui::Context) -> Result<Self> {
         Ok(Self {
             io: OrderedIo::new(Limits {
                 pending_jobs: 4,
                 retained_bytes: 1 << 30,
             })?,
+            context,
             session: Uuid::new_v4(),
             generation: 0,
             pending: Vec::new(),
@@ -70,33 +117,17 @@ impl NativeSaving {
         };
         let document = editor.document_snapshot();
         let source = document.state_id;
-        // Provisional conservative payload charge, independently charged per snapshot.
-        // 64 MiB reserves encoder chunk, metadata and directory scratch. This does not
-        // claim allocator/RSS accounting or substitute for the future residency service.
-        let charge =
-            document
-                .layers
-                .values()
-                .try_fold(64u64 << 20, |bytes, layer| {
-                    bytes
-                        .checked_add((layer.raster.resident_tiles() as u64).checked_mul(
-                            paintcraft_raster::RasterLayer::TILE_BYTES as u64 + 8192,
-                        )?)?
-                        .checked_add(layer.name.len() as u64 + 4096)
-                })
-                .ok_or_else(|| {
-                    Error::new(ErrorCode::ResourceLimit, "save retention charge overflows")
-                })?;
+        let charge = snapshot_charge(&document)?;
         let destination = path.clone();
         let ticket = self.io.submit(
             charge,
             move || {
-                Ok(save::save_with(
+                Ok(Completion::File(save::save_with(
                     &destination,
                     true,
                     save::STAGED_FILE_BYTES_MAX,
                     |sink| paintcraft_formats::pcnd::write_to(&document, sink),
-                ))
+                )))
             },
             move || ctx.request_repaint(),
         )?;
@@ -106,26 +137,105 @@ impl NativeSaving {
         }
         self.pending.push(Pending {
             ticket,
-            session: self.session,
-            generation,
-            source,
-            path,
-            operation,
+            kind: PendingKind::Save(SaveRequest {
+                session: self.session,
+                generation,
+                source,
+                path,
+                operation,
+            }),
         });
+        Ok(())
+    }
+    pub(super) fn checkpoint(&mut self, editor: &Editor) -> Result<bool> {
+        let Some((key, recovery)) = editor.recovery_candidate() else {
+            return Ok(false);
+        };
+        let token = recovery.token();
+        if self.pending.iter().any(|pending| matches!(pending.kind, PendingKind::Checkpoint { token: existing, .. } if existing == token)) { return Ok(false); }
+        let document = editor.document_snapshot();
+        let charge = snapshot_charge(&document)?;
+        let original = editor.path().map(Path::to_owned);
+        let context = self.context.clone();
+        let ticket = self.io.submit(
+            charge,
+            move || {
+                recovery
+                    .checkpoint_document_at(token, &document, original.as_deref())
+                    .map(Completion::Checkpoint)
+            },
+            move || context.request_repaint(),
+        )?;
+        self.pending.push(Pending {
+            ticket,
+            kind: PendingKind::Checkpoint {
+                session: self.session,
+                token,
+                key,
+            },
+        });
+        Ok(true)
+    }
+    pub(super) fn clear_recovery(&mut self, editor: &mut Editor) -> Result<()> {
+        let Some(recovery) = editor.recovery_handle() else {
+            editor.forget_checkpoint();
+            return Ok(());
+        };
+        // Capacity is checked before invalidation, so an admission failure leaves
+        // existing recovery work and the current editor intact.
+        self.io.admit(1, 64 * 1024)?;
+        let token = recovery.invalidate()?;
+        let context = self.context.clone();
+        let ticket = self.io.submit(
+            64 * 1024,
+            move || {
+                recovery.clear_at(token)?;
+                Ok(Completion::Cleanup)
+            },
+            move || context.request_repaint(),
+        )?;
+        self.pending.push(Pending {
+            ticket,
+            kind: PendingKind::Cleanup,
+        });
+        editor.forget_checkpoint();
         Ok(())
     }
 }
 impl App {
+    pub(super) fn clean_recovery_before_close(&mut self) -> Result<bool> {
+        if self.editor.is_dirty() || self.editor.checkpoint_info().is_none() {
+            return Ok(false);
+        }
+        if let Some(saving) = &mut self.saving {
+            saving.clear_recovery(&mut self.editor)?;
+            Ok(true)
+        } else {
+            self.editor.discard_checkpoint()?;
+            Ok(false)
+        }
+    }
+
     pub(super) fn close_after_requested_saves(&mut self, ctx: &egui::Context) {
         if self.saving.as_ref().is_some_and(NativeSaving::pending) {
             self.close_after_saves = true;
             self.editor
-                .set_status("Waiting for requested saves before closing…");
-        } else {
+                .set_status("Waiting for requested saves and recovery before closing…");
+        } else if self.allow_close {
             ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+        } else {
+            match self.clean_recovery_before_close() {
+                Ok(true) => self.close_after_saves = true,
+                Ok(false) => ctx.send_viewport_cmd(egui::ViewportCommand::Close),
+                Err(error) => {
+                    self.allow_close = false;
+                    self.editor
+                        .set_status(format!("Recovery cleanup before close failed: {error}"));
+                    self.confirm = Some(Confirm::QuitUnsaved);
+                }
+            }
         }
     }
-
     pub(super) fn poll_native_saves(&mut self, ctx: &egui::Context) {
         let Some(saving) = &mut self.saving else {
             return;
@@ -135,68 +245,121 @@ impl App {
                 .pending
                 .iter()
                 .position(|p| p.ticket == ticket)
-                .expect("admitted save");
+                .expect("admitted I/O job");
             let pending = saving.pending.remove(index);
-            let current =
-                pending.session == saving.session && pending.generation == saving.generation;
-            match result {
-                Ok(outcome) => {
+            match pending.kind {
+                PendingKind::Save(request) => {
+                    let outcome = match result {
+                        Ok(Completion::File(outcome)) => outcome,
+                        Err(error) => {
+                            saving.failed = true;
+                            self.editor.set_status(format!(
+                                "Save outcome unconfirmed for {}: {error}",
+                                request.path.display()
+                            ));
+                            continue;
+                        }
+                        _ => unreachable!("typed save completion"),
+                    };
                     let success = outcome.is_success();
                     saving.failed |= !success;
                     saving.last_receipt = Some(outcome.receipt_stamped(
                         &save::Context {
-                            operation: pending.operation,
-                            source_state: pending.source,
+                            operation: request.operation,
+                            source_state: request.source,
                             source_sha256: None,
                             losses_acknowledged: vec![],
-                            destination: &pending.path,
+                            destination: &request.path,
                         },
                         ticket.sequence(),
-                        pending.generation,
+                        request.generation,
                     ));
-                    if current && success {
-                        self.editor.set_path(pending.path.clone());
-                        self.path_text = pending.path.to_string_lossy().into_owned();
-                        self.bound = Some(pending.path.clone());
-                        let cleanup = self.editor.acknowledge_saved_state(pending.source);
+                    if request.session == saving.session
+                        && request.generation == saving.generation
+                        && success
+                    {
+                        self.editor.set_path(request.path.clone());
+                        self.path_text = request.path.to_string_lossy().into_owned();
+                        self.bound = Some(request.path.clone());
+                        self.editor.acknowledge_saved_state(request.source);
                         self.editor.set_status(format!(
                             "Saved {}{}",
-                            pending.path.display(),
+                            request.path.display(),
                             if self.editor.is_dirty() {
                                 "; newer edits remain unsaved"
                             } else {
                                 ""
                             }
                         ));
-                        if let Err(error) = cleanup {
+                        if !self.editor.is_dirty()
+                            && let Err(error) = saving.clear_recovery(&mut self.editor)
+                        {
                             self.editor.set_status(format!(
-                                "Saved {}; recovery cleanup failed: {error}",
-                                pending.path.display()
+                                "Saved {}; recovery cleanup not queued: {error}",
+                                request.path.display()
                             ));
                         }
                     }
                     if !success {
                         self.editor.set_status(format!(
                             "{} was not saved safely: {}",
-                            pending.path.display(),
+                            request.path.display(),
                             outcome.reasons.join("; ")
                         ));
                     }
                 }
-                Err(error) => {
-                    saving.failed = true;
-                    self.editor.set_status(format!(
-                        "Save outcome unconfirmed for {}: {error}",
-                        pending.path.display()
-                    ));
+                PendingKind::Checkpoint {
+                    session,
+                    token,
+                    key,
+                } => {
+                    if session != saving.session
+                        || self
+                            .editor
+                            .recovery_handle()
+                            .is_none_or(|r| !r.is_current(token))
+                    {
+                        continue;
+                    }
+                    match result {
+                        Ok(Completion::Checkpoint(info)) => {
+                            self.editor.accept_checkpoint(token, key, info)
+                        }
+                        Err(error) if error.code == ErrorCode::OperationCancelled => {}
+                        Err(error) => {
+                            saving.failed = true;
+                            self.editor.set_status(format!("Autosave failed: {error}"));
+                        }
+                        _ => unreachable!("typed checkpoint completion"),
+                    }
                 }
+                PendingKind::Cleanup => match result {
+                    Ok(Completion::Cleanup) => {}
+                    Err(error) if error.code == ErrorCode::OperationCancelled => {}
+                    Err(error) => {
+                        saving.failed = true;
+                        self.editor
+                            .set_status(format!("Recovery cleanup failed: {error}"));
+                    }
+                    _ => unreachable!("typed cleanup completion"),
+                },
             }
         }
         if self.close_after_saves && !saving.pending() {
             self.close_after_saves = false;
             if saving.failed {
                 self.allow_close = false;
-                self.editor.set_status("A requested save failed or remains unconfirmed. Review the document before closing.");
+                self.editor.set_status("A requested save or recovery operation failed or remains unconfirmed. Review the document before closing.");
+            } else if !self.editor.is_dirty() && self.editor.checkpoint_info().is_some() {
+                match saving.clear_recovery(&mut self.editor) {
+                    Ok(()) => self.close_after_saves = true,
+                    Err(error) => {
+                        saving.failed = true;
+                        self.allow_close = false;
+                        self.editor
+                            .set_status(format!("Recovery cleanup before close failed: {error}"));
+                    }
+                }
             } else if self.editor.is_dirty() && !self.allow_close {
                 self.confirm = Some(Confirm::QuitUnsaved);
             } else {
@@ -205,7 +368,6 @@ impl App {
         }
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -217,7 +379,7 @@ mod tests {
     }
     fn app() -> App {
         let mut app = App::new(None);
-        app.saving = Some(NativeSaving::new().unwrap());
+        app.saving = Some(NativeSaving::new(egui::Context::default()).unwrap());
         app
     }
     fn drain(app: &mut App) {
@@ -257,7 +419,11 @@ mod tests {
                 1,
                 move || {
                     hold.recv().unwrap();
-                    Ok(save::save(&dir.join("barrier"), b"barrier", false))
+                    Ok(Completion::File(save::save(
+                        &dir.join("barrier"),
+                        b"barrier",
+                        false,
+                    )))
                 },
                 || {},
             )
@@ -339,7 +505,7 @@ mod tests {
         let dir = scratch();
         let mut app = app();
         submit(&mut app, dir.join("old-session.pcnd"));
-        app.install(Editor::new_document(64, 64).unwrap());
+        app.install(Editor::new_document(64, 64).unwrap()).unwrap();
         app.editor.request(1, Action::AddLayer);
         app.editor.run_pending();
         drain(&mut app);
@@ -372,6 +538,207 @@ mod tests {
             app.editor
                 .status()
                 .contains("failed or remains unconfirmed")
+        );
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    fn pause_queue(app: &mut App) -> mpsc::Sender<()> {
+        let (release, hold) = mpsc::channel();
+        let saving = app.saving.as_mut().unwrap();
+        let ticket = saving
+            .io
+            .submit(
+                1,
+                move || {
+                    hold.recv().unwrap();
+                    Ok(Completion::Cleanup)
+                },
+                || {},
+            )
+            .unwrap();
+        saving.pending.push(Pending {
+            ticket,
+            kind: PendingKind::Cleanup,
+        });
+        release
+    }
+    fn checkpoint(app: &mut App) -> bool {
+        app.saving
+            .as_mut()
+            .unwrap()
+            .checkpoint(&app.editor)
+            .unwrap()
+    }
+    #[test]
+    fn background_checkpoint_captures_a_without_blocking_edits_to_b() {
+        let dir = scratch();
+        let mut app = app().with_recovery(dir.clone());
+        app.editor.request(1, Action::AddLayer);
+        app.editor.run_pending();
+        let a = app.editor.document_snapshot();
+        let release = pause_queue(&mut app);
+        assert!(checkpoint(&mut app));
+        assert!(
+            !app.editor.has_checkpoint(),
+            "submission is not a durable checkpoint"
+        );
+        app.editor.request(2, Action::AddLayer);
+        app.editor.run_pending();
+        assert!(
+            !checkpoint(&mut app),
+            "only one current-owner checkpoint is admitted at once"
+        );
+        release.send(()).unwrap();
+        drain(&mut app);
+        assert_eq!(app.editor.checkpoint_info().unwrap().state_id, a.state_id);
+        assert_ne!(app.editor.document().state_id, a.state_id);
+        let b = app.editor.document_snapshot();
+        assert!(checkpoint(&mut app));
+        drain(&mut app);
+        assert_eq!(app.editor.checkpoint_info().unwrap().state_id, b.state_id);
+        drop(app);
+        let found = Recovery::scan(&dir);
+        assert_eq!(found.len(), 1);
+        assert!(
+            Recovery::read_checkpoint(&found[0].checkpoint)
+                .unwrap()
+                .same_semantics(&b)
+        );
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+    #[test]
+    fn checkpoint_clear_and_new_checkpoint_are_fenced_and_ordered() {
+        let dir = scratch();
+        let mut app = app().with_recovery(dir.clone());
+        app.editor.request(1, Action::AddLayer);
+        app.editor.run_pending();
+        let release = pause_queue(&mut app);
+        assert!(checkpoint(&mut app));
+        app.saving
+            .as_mut()
+            .unwrap()
+            .clear_recovery(&mut app.editor)
+            .unwrap();
+        app.editor.request(2, Action::AddLayer);
+        app.editor.run_pending();
+        let expected = app.editor.document_snapshot();
+        assert!(checkpoint(&mut app));
+        release.send(()).unwrap();
+        drain(&mut app);
+        assert_eq!(
+            app.editor.checkpoint_info().unwrap().sequence,
+            1,
+            "old queued checkpoint was superseded before publication"
+        );
+        assert_eq!(
+            app.editor.checkpoint_info().unwrap().state_id,
+            expected.state_id
+        );
+        drop(app);
+        let found = Recovery::scan(&dir);
+        assert_eq!(found.len(), 1);
+        assert!(
+            Recovery::read_checkpoint(&found[0].checkpoint)
+                .unwrap()
+                .same_semantics(&expected)
+        );
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+    #[test]
+    fn replacing_editor_does_not_wait_for_old_checkpoint_or_resurrect_it() {
+        let dir = scratch();
+        let mut app = app().with_recovery(dir.clone());
+        app.editor.request(1, Action::AddLayer);
+        app.editor.run_pending();
+        let release = pause_queue(&mut app);
+        assert!(checkpoint(&mut app));
+        let installed = app.install(Editor::new_document(64, 64).unwrap());
+        release.send(()).unwrap();
+        installed.unwrap();
+        assert_eq!(app.editor.document().canvas, (64, 64));
+        drain(&mut app);
+        assert!(app.editor.checkpoint_info().is_none());
+        drop(app);
+        assert!(Recovery::scan(&dir).is_empty());
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+    #[test]
+    fn full_queue_refuses_document_replacement_before_invalidating_recovery() {
+        let dir = scratch();
+        let mut app = app().with_recovery(dir.clone());
+        app.editor.request(1, Action::AddLayer);
+        app.editor.run_pending();
+        let token = app.editor.recovery_handle().unwrap().token();
+        let key = app.editor.render_key();
+        let release = pause_queue(&mut app);
+        for _ in 0..3 {
+            let saving = app.saving.as_mut().unwrap();
+            let ticket = saving
+                .io
+                .submit(1, || Ok(Completion::Cleanup), || {})
+                .unwrap();
+            saving.pending.push(Pending {
+                ticket,
+                kind: PendingKind::Cleanup,
+            });
+        }
+        let refused = app.install(Editor::new_document(64, 64).unwrap());
+        release.send(()).unwrap();
+        assert_eq!(refused.unwrap_err().code, ErrorCode::ResourceLimit);
+        assert_eq!(app.editor.render_key(), key);
+        assert!(app.editor.recovery_handle().unwrap().is_current(token));
+        drain(&mut app);
+        drop(app);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+    #[test]
+    fn clean_save_drains_recovery_cleanup_without_adopting_a_stale_checkpoint() {
+        let dir = scratch();
+        let recovery_dir = dir.join("recovery");
+        let path = dir.join("saved.pcnd");
+        let mut app = app().with_recovery(recovery_dir.clone());
+        app.editor.request(1, Action::AddLayer);
+        app.editor.run_pending();
+        let expected = app.editor.document_snapshot();
+        let release = pause_queue(&mut app);
+        submit(&mut app, path.clone());
+        assert!(checkpoint(&mut app));
+        release.send(()).unwrap();
+        drain(&mut app);
+        assert!(!app.editor.is_dirty());
+        assert!(app.editor.checkpoint_info().is_none());
+        assert!(
+            Editor::open(&path)
+                .unwrap()
+                .document()
+                .same_semantics(&expected)
+        );
+        drop(app);
+        assert!(Recovery::scan(&recovery_dir).is_empty());
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn undo_to_saved_state_closes_after_clearing_a_newer_recovery_snapshot() {
+        let dir = scratch();
+        let mut app = app().with_recovery(dir.clone());
+        // The initial state is clean. B is checkpointed, then undo returns to A.
+        app.editor.request(1, Action::AddLayer);
+        app.editor.run_pending();
+        assert!(checkpoint(&mut app));
+        drain(&mut app);
+        assert!(app.editor.checkpoint_info().is_some());
+        app.editor.request(2, Action::Undo);
+        app.editor.run_pending();
+        assert!(!app.editor.is_dirty());
+        app.close_after_requested_saves(&egui::Context::default());
+        assert!(app.close_after_saves);
+        drain(&mut app);
+        assert!(app.editor.checkpoint_info().is_none());
+        drop(app);
+        assert!(
+            Recovery::scan(&dir).is_empty(),
+            "undone edits must not reappear after clean exit"
         );
         std::fs::remove_dir_all(dir).unwrap();
     }

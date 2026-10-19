@@ -78,5 +78,7 @@ Validated legacy `<session>.pcnd` / `<session>.json` checkpoints remain recovera
 Malformed legacy data is retained with a diagnostic. New checkpoints use the journal.
 The protocol has local macOS filesystem tests for ordering, injected interruption,
 corruption, tails, GC, locks and discard. This is not power-loss, Windows, network-filesystem
-or release qualification. Native autosave scheduling is still synchronous until its
-ordered background integration is completed; benchmark evidence remains pending.
+or release qualification. Native periodic checkpoints and cleanup use the bounded
+save FIFO; stale completions cannot advance the active session. Initialization,
+discovery/restore and the first recovery handoff retain foreground paths. The deterministic
+UI harness retains synchronous checkpoint services. Benchmark evidence remains pending.

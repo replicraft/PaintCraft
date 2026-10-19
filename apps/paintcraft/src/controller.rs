@@ -6,7 +6,10 @@
 //! progress, so a cancelled or interrupted gesture changes nothing and a stroke
 //! is one undo step. Commands reach the session only through the [`Outbox`].
 
-use std::path::{Path, PathBuf};
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 use paintcraft_commands::Batch;
 use paintcraft_core::types::json::Value;
@@ -14,7 +17,7 @@ use paintcraft_core::types::{Result, Rgba};
 use paintcraft_document::{Document, POLICY, new_document};
 use paintcraft_editor::execute::Selection;
 use paintcraft_editor::session::Session;
-use paintcraft_formats::recovery::{Checkpoint, Recovery};
+use paintcraft_formats::recovery::{Checkpoint, Recovery, RecoveryToken};
 use paintcraft_formats::{pcnd, save};
 use uuid::Uuid;
 
@@ -44,7 +47,7 @@ pub struct Editor {
     outbox: Outbox<Action>,
     path: Option<PathBuf>,
     status: String,
-    recovery: Option<Recovery>,
+    recovery: Option<Arc<Recovery>>,
     checkpointed: Option<(Uuid, u64)>,
     checkpoint_info: Option<Checkpoint>,
     save_outcome: Option<bool>,
@@ -107,7 +110,7 @@ impl Editor {
 
     /// Start protecting this editor's work with crash-recovery checkpoints.
     pub fn attach_recovery(&mut self, recovery: Recovery) {
-        self.recovery = Some(recovery);
+        self.recovery = Some(Arc::new(recovery));
         self.checkpointed = None;
         self.checkpoint_info = None;
     }
@@ -116,7 +119,15 @@ impl Editor {
     /// Skipped while a gesture is in progress. Returns whether one was written.
     pub fn autosave(&mut self) -> bool {
         let key = self.render_key();
-        if self.tools.gesture_in_progress() || !self.is_dirty() || self.checkpointed == Some(key) {
+        if !self.is_dirty() {
+            if self.checkpoint_info.is_some()
+                && let Err(error) = self.discard_checkpoint()
+            {
+                self.status = format!("Recovery cleanup failed: {error}");
+            }
+            return false;
+        }
+        if self.tools.gesture_in_progress() || self.checkpointed == Some(key) {
             return false;
         }
         let Some(recovery) = &self.recovery else {
@@ -138,6 +149,41 @@ impl Editor {
                 false
             }
         }
+    }
+
+    pub(crate) fn recovery_handle(&self) -> Option<Arc<Recovery>> {
+        self.recovery.clone()
+    }
+    pub(crate) fn recovery_candidate(&self) -> Option<((Uuid, u64), Arc<Recovery>)> {
+        let key = self.render_key();
+        if self.tools.gesture_in_progress() || !self.is_dirty() || self.checkpointed == Some(key) {
+            return None;
+        }
+        Some((key, self.recovery_handle()?))
+    }
+    pub(crate) fn accept_checkpoint(
+        &mut self,
+        token: RecoveryToken,
+        key: (Uuid, u64),
+        info: Checkpoint,
+    ) {
+        if self
+            .recovery
+            .as_ref()
+            .is_none_or(|recovery| !recovery.is_current(token))
+            || info.state_id != key.0
+        {
+            return;
+        }
+        self.checkpointed = Some(key);
+        if !info.warnings.is_empty() {
+            self.status = format!("Recovery checkpoint saved; {}", info.warnings.join("; "));
+        }
+        self.checkpoint_info = Some(info);
+    }
+    pub(crate) fn forget_checkpoint(&mut self) {
+        self.checkpointed = None;
+        self.checkpoint_info = None;
     }
 
     /// Cap the memory held by the document and its undo history.
@@ -648,13 +694,8 @@ impl Editor {
         }
     }
 
-    pub(crate) fn acknowledge_saved_state(&mut self, state: Uuid) -> Result<()> {
+    pub(crate) fn acknowledge_saved_state(&mut self, state: Uuid) {
         self.session.mark_saved_state(state);
-        // Keep protection for newer edits made while this snapshot was saving.
-        if !self.is_dirty() {
-            self.discard_checkpoint()?;
-        }
-        Ok(())
     }
 
     fn save(&mut self) {
