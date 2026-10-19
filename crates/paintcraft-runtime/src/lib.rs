@@ -1,5 +1,8 @@
 //! Bounded workers prepare results; only the caller may publish them.
 //! Reservations remain charged until completion is consumed, including cancellation.
+#[cfg(feature = "native-io")]
+pub mod io;
+
 use paintcraft_core::types::{Error, ErrorCode, Result};
 use slotmap::{SlotMap, new_key_type};
 use std::{

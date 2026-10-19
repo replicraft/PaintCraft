@@ -47,6 +47,8 @@ pollster = "0.4.0"
 # Admitted native CPU workers and transient handles.
 rayon = "1.12.0"
 slotmap = "1.1.1"
+# Native ordered I/O coordination; no async runtime in CPU-only consumers.
+tokio = { version = "1.53.3", default-features = false, features = ["rt", "sync"] }
 
 # Continuous geometry behind PaintCraft-owned coordinate spaces.
 glam = { version = "0.34.1", default-features = false, features = ["std", "f64"] }
