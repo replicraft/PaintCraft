@@ -109,6 +109,50 @@ impl RasterLayer {
         }
     }
 
+    /// A layer whose samples are `rgba` (row-major, `width*height*4` bytes).
+    /// Tiles that equal the default are not allocated.
+    pub fn from_rgba(
+        width: u32,
+        height: u32,
+        default: Rgba,
+        rgba: &[u8],
+        adm: &mut Admission,
+    ) -> Result<RasterLayer> {
+        if rgba.len() as u64 != u64::from(width) * u64::from(height) * 4 {
+            return Err(Error::new(
+                ErrorCode::InvariantViolation,
+                "pixel buffer does not match the layer size",
+            ));
+        }
+        let mut layer = RasterLayer::new(width, height, default);
+        let edge = TILE_EDGE as usize;
+        for ty in 0..height.div_ceil(TILE_EDGE) {
+            for tx in 0..width.div_ceil(TILE_EDGE) {
+                let (x0, y0) = (tx as usize * edge, ty as usize * edge);
+                let (w, h) = (
+                    (width as usize - x0).min(edge),
+                    (height as usize - y0).min(edge),
+                );
+                let uniform = (0..h).all(|y| {
+                    rgba[((y0 + y) * width as usize + x0) * 4..][..w * 4]
+                        .as_chunks::<4>()
+                        .0
+                        .iter()
+                        .all(|p| *p == default.0)
+                });
+                if uniform {
+                    continue;
+                }
+                let mut data = Vec::with_capacity(w * h * 4);
+                for y in 0..h {
+                    data.extend_from_slice(&rgba[((y0 + y) * width as usize + x0) * 4..][..w * 4]);
+                }
+                layer.set_block(tx, ty, &data, adm)?;
+            }
+        }
+        Ok(layer)
+    }
+
     pub fn width(&self) -> u32 {
         self.width
     }
@@ -473,6 +517,26 @@ mod tests {
             .fill_rect(&l.bounds(), RED, BlendMode::Replace, &mut a)
             .unwrap_err();
         assert_eq!(e.code, ErrorCode::ResourceLimit);
+    }
+
+    #[test]
+    fn from_rgba_matches_pixel_by_pixel_construction_and_skips_default_tiles() {
+        let (w, h) = (300u32, 270u32);
+        let mut px = vec![0u8; (w * h * 4) as usize];
+        for (x, y) in [(0usize, 0usize), (299, 269), (256, 3), (3, 256)] {
+            px[(y * w as usize + x) * 4..][..4].copy_from_slice(&[x as u8, y as u8, 7, 255]);
+        }
+        px[(10 * w as usize + 10) * 4..][..3].copy_from_slice(&[9, 9, 9]); // hidden RGB, alpha 0
+        let mut a = adm();
+        let l = RasterLayer::from_rgba(w, h, Rgba::TRANSPARENT, &px, &mut a).unwrap();
+        let mut rows = Vec::new();
+        l.for_each_row(|r| rows.extend_from_slice(r));
+        assert_eq!(rows, px);
+        assert_eq!(l.resident_tiles(), 4);
+        let blank =
+            RasterLayer::from_rgba(w, h, Rgba::TRANSPARENT, &vec![0; px.len()], &mut a).unwrap();
+        assert_eq!(blank.resident_tiles(), 0);
+        assert!(RasterLayer::from_rgba(w, h, Rgba::TRANSPARENT, &px[1..], &mut a).is_err());
     }
 
     #[test]

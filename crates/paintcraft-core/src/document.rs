@@ -141,6 +141,38 @@ pub fn new_document(
     })
 }
 
+/// A document holding one imported picture: the canvas is the picture's size and
+/// a single `Image` layer carries every sample exactly (hidden RGB included).
+/// `source_sha256` is the digest of the file imported, so the same file always
+/// yields the same identifiers.
+pub fn import_image(width: u32, height: u32, rgba: &[u8], source_sha256: &str) -> Result<Document> {
+    if !(1..=CANVAS_SIDE_MAX).contains(&width) || !(1..=CANVAS_SIDE_MAX).contains(&height) {
+        return Err(Error::new(
+            ErrorCode::InputSchema,
+            "image dimensions out of range",
+        ));
+    }
+    let mut adm = crate::raster::Admission::new(crate::execute::STAGED_PIXELS_MAX);
+    let raster = RasterLayer::from_rgba(width, height, Rgba::TRANSPARENT, rgba, &mut adm)?;
+    let id = deterministic_id(&["layer", "import", source_sha256]);
+    let layer = Layer {
+        id,
+        name: "Image".to_owned(),
+        origin: (0, 0),
+        visible: true,
+        opacity: 255,
+        raster,
+    };
+    Ok(Document {
+        document_id: deterministic_id(&["document", "import", source_sha256]),
+        state_id: deterministic_id(&["state", "import", source_sha256]),
+        canvas: (width, height),
+        roots: vec![id],
+        layers: HashMap::from([(id, layer)]),
+        title: None,
+    })
+}
+
 pub fn hex(bytes: &[u8]) -> String {
     use std::fmt::Write as _;
     bytes
@@ -207,6 +239,30 @@ mod tests {
             new_document(5, 4, None, 0, POLICY).unwrap().document_id,
             a.document_id
         );
+    }
+
+    #[test]
+    fn imported_pictures_keep_every_sample_and_have_stable_identity() {
+        let px: Vec<u8> = (0..6 * 4u8).collect();
+        let a = import_image(3, 2, &px, &"a".repeat(64)).unwrap();
+        let b = import_image(3, 2, &px, &"a".repeat(64)).unwrap();
+        assert_eq!(
+            (a.document_id, a.state_id, &a.roots),
+            (b.document_id, b.state_id, &b.roots)
+        );
+        assert_ne!(
+            import_image(3, 2, &px, &"b".repeat(64))
+                .unwrap()
+                .document_id,
+            a.document_id
+        );
+        let mut rows = Vec::new();
+        a.layers[&a.roots[0]]
+            .raster
+            .for_each_row(|r| rows.extend_from_slice(r));
+        assert_eq!(rows, px);
+        assert_eq!(a.canvas, (3, 2));
+        assert!(import_image(3, 2, &px[1..], "x").is_err());
     }
 
     #[test]
