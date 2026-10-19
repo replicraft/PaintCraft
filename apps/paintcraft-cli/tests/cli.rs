@@ -513,6 +513,8 @@ fn schema_capabilities_and_usage() {
         text(&schema.json(), &["$id"]),
         "urn:paintcraft:schema:batch-v1"
     );
+    let v2 = run(&["schema", "batch-v2"]);
+    assert_eq!(text(&v2.json(), &["$id"]), "urn:paintcraft:schema:batch-v2");
     assert_eq!(run(&["schema", "result"]).code, 2);
     let caps = run(&["capabilities", "--json"]).json();
     let rows = caps.get("capabilities").unwrap().as_array().unwrap();

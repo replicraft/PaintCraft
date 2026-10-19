@@ -20,6 +20,7 @@ use paintcraft_formats::save::{self, Context, Outcome};
 const INPUT_MAX: u64 = 1 << 30;
 const OPERATIONS_MAX: u64 = 64 << 20;
 const BATCH_SCHEMA: &str = include_str!("../schemas/batch.schema.json");
+const BATCH_V2_SCHEMA: &str = include_str!("../schemas/batch-v2.schema.json");
 
 pub struct Reply {
     pub stdout: Vec<u8>,
@@ -483,14 +484,18 @@ pub fn schema(raw: &[String]) -> Reply {
         true,
         (|| {
             let a = Args::parse(raw, &[], &["json"])?;
-            if a.exactly(1, "`schema batch`")?[0] != "batch" {
-                return Err(Error::new(
-                    ErrorCode::InputSchema,
-                    "only `schema batch` exists",
-                ));
-            }
+            let text = match a.exactly(1, "`schema batch` or `schema batch-v2`")?[0].as_str() {
+                "batch" => BATCH_SCHEMA,
+                "batch-v2" => BATCH_V2_SCHEMA,
+                _ => {
+                    return Err(Error::new(
+                        ErrorCode::InputSchema,
+                        "only `schema batch` and `schema batch-v2` exist",
+                    ));
+                }
+            };
             Ok((
-                paintcraft_types::json::parse(BATCH_SCHEMA.as_bytes())
+                paintcraft_types::json::parse(text.as_bytes())
                     .expect("embedded schema is valid JSON"),
                 String::new(),
             ))

@@ -15,6 +15,7 @@ use crate::ids::parse_uuid;
 const SIZE_MAX: i64 = 1_048_576;
 const MAX_OPERATIONS: usize = 1024;
 const MAX_POINTS: usize = 65_536;
+pub const BRUSH_SIZE_MAX: i64 = 1024;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum LayerRef {
@@ -54,6 +55,13 @@ impl Anchor {
 
 pub use crate::raster::BlendMode as Mode;
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ShapeKind {
+    Line,
+    Rect,
+    Ellipse,
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Op {
     LayerAdd {
@@ -89,6 +97,33 @@ pub enum Op {
         rect: Rect,
     },
     SelectionClear,
+    /// v2: a brush stroke of `size` pixels along a path, blended once per pixel.
+    StrokePath {
+        layer: LayerRef,
+        points: Vec<(i64, i64)>,
+        color: Rgba,
+        mode: Mode,
+        size: u32,
+        round: bool,
+    },
+    /// v2: 4-connected fill from a seed pixel.
+    FloodFill {
+        layer: LayerRef,
+        at: (i64, i64),
+        color: Rgba,
+        mode: Mode,
+        tolerance: u8,
+    },
+    /// v2: line, rectangle or ellipse between two corner pixels (inclusive).
+    Shape {
+        layer: LayerRef,
+        kind: ShapeKind,
+        from: (i64, i64),
+        to: (i64, i64),
+        stroke: Option<(Rgba, u32)>,
+        fill: Option<Rgba>,
+        mode: Mode,
+    },
     CanvasResize {
         width: u32,
         height: u32,
@@ -98,6 +133,8 @@ pub enum Op {
 
 #[derive(Clone, Debug)]
 pub struct Batch {
+    /// 1 or 2; version 2 adds the brush, fill and shape operations.
+    pub version: u8,
     pub policy: String,
     pub base_state: Uuid,
     pub base_epoch: u64,
@@ -123,9 +160,15 @@ impl Batch {
             &["schema", "atomic", "policy", "base", "operations"],
             &["seed"],
         )?;
-        if top["schema"].as_str() != Some("paintcraft.batch/v1") {
-            return Err(bad("schema must be paintcraft.batch/v1"));
-        }
+        let version = match top["schema"].as_str() {
+            Some("paintcraft.batch/v1") => 1,
+            Some("paintcraft.batch/v2") => 2,
+            _ => {
+                return Err(bad(
+                    "schema must be paintcraft.batch/v1 or paintcraft.batch/v2",
+                ));
+            }
+        };
         if top["atomic"].as_bool() != Some(true) {
             return Err(bad("atomic must be true"));
         }
@@ -146,9 +189,13 @@ impl Batch {
         if ops.is_empty() || ops.len() > MAX_OPERATIONS {
             return Err(bad("operations must contain 1..=1024 items"));
         }
-        let operations = ops.iter().map(op).collect::<Result<Vec<_>>>()?;
+        let operations = ops
+            .iter()
+            .map(|o| op(o, version))
+            .collect::<Result<Vec<_>>>()?;
         let digest = hex(&Sha256::digest(json::canonical(v)));
         Ok(Batch {
+            version,
             policy,
             base_state,
             base_epoch,
@@ -159,12 +206,107 @@ impl Batch {
     }
 }
 
-fn op(v: &Value) -> Result<Op> {
+fn op(v: &Value, version: u8) -> Result<Op> {
     let name = v
         .get("op")
         .and_then(Value::as_str)
         .ok_or_else(|| bad("operation needs an op name"))?;
+    if version < 2
+        && matches!(
+            name,
+            "raster.stroke_path" | "raster.flood_fill" | "raster.shape"
+        )
+    {
+        return Err(bad(format!(
+            "operation {name:?} requires paintcraft.batch/v2"
+        )));
+    }
     Ok(match name {
+        "raster.stroke_path" => {
+            let o = obj(
+                v,
+                &[
+                    "op",
+                    "layer_ref",
+                    "points",
+                    "color",
+                    "mode",
+                    "size",
+                    "brush",
+                ],
+                &[],
+            )?;
+            let pts = o["points"]
+                .as_array()
+                .ok_or_else(|| bad("points must be an array"))?;
+            if pts.is_empty() || pts.len() > MAX_POINTS {
+                return Err(bad("points must contain 1..=65536 items"));
+            }
+            Op::StrokePath {
+                layer: layer_ref(&o["layer_ref"])?,
+                points: pts.iter().map(point).collect::<Result<_>>()?,
+                color: color(&o["color"])?,
+                mode: mode(&o["mode"])?,
+                size: int_in(&o["size"], 1, BRUSH_SIZE_MAX, "size")? as u32,
+                round: match o["brush"].as_str() {
+                    Some("round") => true,
+                    Some("square") => false,
+                    _ => return Err(bad("brush must be round or square")),
+                },
+            }
+        }
+        "raster.flood_fill" => {
+            let o = obj(
+                v,
+                &["op", "layer_ref", "at", "color", "mode", "tolerance"],
+                &[],
+            )?;
+            Op::FloodFill {
+                layer: layer_ref(&o["layer_ref"])?,
+                at: point(&o["at"])?,
+                color: color(&o["color"])?,
+                mode: mode(&o["mode"])?,
+                tolerance: int_in(&o["tolerance"], 0, 255, "tolerance")? as u8,
+            }
+        }
+        "raster.shape" => {
+            let o = obj(
+                v,
+                &["op", "layer_ref", "kind", "from", "to", "mode"],
+                &["stroke", "fill"],
+            )?;
+            let stroke = o
+                .get("stroke")
+                .map(|s| {
+                    let s = obj(s, &["color", "size"], &[])?;
+                    Ok((
+                        color(&s["color"])?,
+                        int_in(&s["size"], 1, BRUSH_SIZE_MAX, "stroke size")? as u32,
+                    ))
+                })
+                .transpose()?;
+            let fill = o.get("fill").map(color).transpose()?;
+            if stroke.is_none() && fill.is_none() {
+                return Err(bad("a shape needs a stroke, a fill or both"));
+            }
+            if o["kind"].as_str() == Some("line") && stroke.is_none() {
+                return Err(bad("a line needs a stroke"));
+            }
+            Op::Shape {
+                layer: layer_ref(&o["layer_ref"])?,
+                kind: match o["kind"].as_str() {
+                    Some("line") => ShapeKind::Line,
+                    Some("rect") => ShapeKind::Rect,
+                    Some("ellipse") => ShapeKind::Ellipse,
+                    _ => return Err(bad("kind must be line, rect or ellipse")),
+                },
+                from: point(&o["from"])?,
+                to: point(&o["to"])?,
+                stroke,
+                fill,
+                mode: mode(&o["mode"])?,
+            }
+        }
         "layer.add" => {
             let o = obj(
                 v,

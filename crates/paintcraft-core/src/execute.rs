@@ -3,17 +3,21 @@
 
 use std::collections::{BTreeMap, HashMap};
 
-use paintcraft_types::{Error, ErrorCode, Rect, Result};
+use paintcraft_types::{Error, ErrorCode, Rect, Result, Rgba};
 use uuid::Uuid;
 
-use crate::commands::{Batch, LayerRef, Mode, Op};
+use crate::commands::{Batch, LayerRef, Mode, Op, ShapeKind};
 use crate::document::{COORD_ABS_MAX, Document, LAYER_COUNT_MAX, Layer};
+use crate::flood;
 use crate::ids::deterministic_id;
 use crate::raster::{Admission, RasterLayer};
+use crate::shape::{self, Figure, Span, SpanSet};
 
 /// Emitted-pixel and segment budgets for all pencil operations in one batch.
 pub const PENCIL_PIXELS_MAX: i128 = 16_777_216;
 pub const PENCIL_SEGMENTS_MAX: i128 = 1_048_576;
+/// Stamp rows (path pixels × brush diameter) per batch for all brush strokes.
+pub const STROKE_ROWS_MAX: i128 = 16_777_216;
 /// Staged pixel storage per batch (the untrusted-decode soft limit).
 pub const STAGED_PIXELS_MAX: u64 = 268_435_456;
 
@@ -64,6 +68,7 @@ pub fn execute_with_budget(
         adm: Admission::new(staged_pixels),
         pencil_pixels: 0,
         pencil_segments: 0,
+        stroke_rows: 0,
         base_state: base.state_id.to_string(),
         digest: &batch.digest,
     };
@@ -99,6 +104,7 @@ struct Stage<'a> {
     adm: Admission,
     pencil_pixels: i128,
     pencil_segments: i128,
+    stroke_rows: i128,
     base_state: String,
     digest: &'a str,
 }
@@ -125,6 +131,76 @@ impl Stage<'_> {
     fn editable(&self, layer: &Layer) -> Option<Rect> {
         self.selection
             .clip(self.doc.canvas_rect().intersect(&layer.extent()))
+    }
+
+    /// Paint absolute-coordinate spans of `id`, one blend per covered pixel.
+    fn paint_spans(&mut self, id: Uuid, spans: &[Span], color: Rgba, mode: Mode) -> Result<()> {
+        if mode == Mode::SourceOver && color.a() == 0 {
+            return Ok(());
+        }
+        let l = self.doc.layers.get_mut(&id).expect("resolved");
+        let (ox, oy) = l.origin;
+        for s in spans {
+            let r = Rect {
+                x0: s.x0 - ox,
+                x1: s.x1 + 1 - ox,
+                y0: s.y - oy,
+                y1: s.y + 1 - oy,
+            };
+            l.raster.fill_rect(&r, color, mode, &mut self.adm)?;
+        }
+        Ok(())
+    }
+
+    /// A brush stroke along `points`: charge the budgets, then stamp, merge and paint.
+    fn stroke(
+        &mut self,
+        id: Uuid,
+        points: &[(i64, i64)],
+        size: u32,
+        round: bool,
+        color: Rgba,
+        mode: Mode,
+    ) -> Result<()> {
+        let length: i128 = points
+            .windows(2)
+            .map(|w| i128::from((w[1].0 - w[0].0).abs().max((w[1].1 - w[0].1).abs())))
+            .sum();
+        self.pencil_pixels += 1 + length;
+        self.pencil_segments += (points.len() as i128 - 1).max(1);
+        self.stroke_rows += (1 + length) * i128::from(size);
+        if self.pencil_pixels > PENCIL_PIXELS_MAX
+            || self.pencil_segments > PENCIL_SEGMENTS_MAX
+            || self.stroke_rows > STROKE_ROWS_MAX
+        {
+            return Err(Error::new(
+                ErrorCode::ResourceLimit,
+                "stroke work budget exceeded",
+            ));
+        }
+        let Some(clip) = self.editable(&self.doc.layers[&id]) else {
+            return Ok(());
+        };
+        let n = i64::from(size);
+        let reach = Rect {
+            x0: clip.x0 - n,
+            y0: clip.y0 - n,
+            x1: clip.x1 + n,
+            y1: clip.y1 + n,
+        };
+        let mut set = SpanSet::default();
+        let segments: Vec<((i64, i64), (i64, i64))> = if points.len() == 1 {
+            vec![(points[0], points[0])]
+        } else {
+            points.windows(2).map(|w| (w[0], w[1])).collect()
+        };
+        for (k, (a, b)) in segments.into_iter().enumerate() {
+            walk_clipped(a, b, Some(reach), k > 0, |x, y| {
+                set.add_stamp(x, y, n, round, &clip);
+                Ok(())
+            })?;
+        }
+        self.paint_spans(id, &set.into_spans(), color, mode)
     }
 
     fn run(&mut self, index: usize, op: &Op) -> Result<()> {
@@ -258,6 +334,86 @@ impl Stage<'_> {
                     })?;
                 }
             }
+            Op::StrokePath {
+                layer,
+                points,
+                color,
+                mode,
+                size,
+                round,
+            } => {
+                let id = self.resolve(layer)?;
+                self.stroke(id, points, *size, *round, *color, *mode)?;
+            }
+            Op::FloodFill {
+                layer,
+                at,
+                color,
+                mode,
+                tolerance,
+            } => {
+                let id = self.resolve(layer)?;
+                let l = &self.doc.layers[&id];
+                let Some(area) = self.editable(l) else {
+                    return Ok(());
+                };
+                let (ox, oy) = l.origin;
+                let local = area
+                    .translated(-ox, -oy)
+                    .expect("area lies inside the layer");
+                let spans = flood::region(&l.raster, (at.0 - ox, at.1 - oy), &local, *tolerance)?;
+                let absolute: Vec<Span> = spans
+                    .iter()
+                    .map(|s| Span {
+                        y: s.y + oy,
+                        x0: s.x0 + ox,
+                        x1: s.x1 + ox,
+                    })
+                    .collect();
+                self.paint_spans(id, &absolute, *color, *mode)?;
+            }
+            Op::Shape {
+                layer,
+                kind,
+                from,
+                to,
+                stroke,
+                fill,
+                mode,
+            } => {
+                let id = self.resolve(layer)?;
+                if *kind == ShapeKind::Line {
+                    let (color, size) = stroke.expect("validated at parse time");
+                    return self.stroke(id, &[*from, *to], size, true, color, *mode);
+                }
+                let Some(clip) = self.editable(&self.doc.layers[&id]) else {
+                    return Ok(());
+                };
+                let (x0, y0, x1, y1) = (
+                    from.0.min(to.0),
+                    from.1.min(to.1),
+                    from.0.max(to.0),
+                    from.1.max(to.1),
+                );
+                let bbox = Rect::new(x0, y0, x1 - x0 + 1, y1 - y0 + 1)
+                    .ok_or_else(|| Error::new(ErrorCode::InputSchema, "shape box overflows"))?;
+                let fig = if *kind == ShapeKind::Rect {
+                    Figure::Rect
+                } else {
+                    Figure::Ellipse
+                };
+                if let Some(c) = fill {
+                    self.paint_spans(id, &shape::filled(fig, &bbox, &clip), *c, *mode)?;
+                }
+                if let Some((c, size)) = stroke {
+                    self.paint_spans(
+                        id,
+                        &shape::outline(fig, &bbox, i64::from(*size), &clip),
+                        *c,
+                        *mode,
+                    )?;
+                }
+            }
             Op::SelectionSetRect { rect } => {
                 self.selection = match self.doc.canvas_rect().intersect(rect) {
                     Some(r) => Selection::Rect(r),
@@ -354,6 +510,7 @@ mod tests {
 
     fn batch_of(operations: Vec<Op>) -> Batch {
         Batch {
+            version: 1,
             policy: POLICY.into(),
             base_state: uuid::Uuid::nil(),
             base_epoch: 0,

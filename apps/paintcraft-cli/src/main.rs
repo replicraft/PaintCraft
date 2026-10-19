@@ -15,7 +15,7 @@ paintcraft-cli <command> [options]
 
   new --width W --height H -o OUT.pcnd [--background '#RRGGBBAA'] [--policy ID] [--seed N] [--overwrite] [--json]
   inspect FILE.pcnd [--expect-input-sha256 HEX] [--json]
-  schema batch [--json]
+  schema batch|batch-v2 [--json]
   capabilities [--json]
   apply FILE.pcnd --operations BATCH.json -o OUT.pcnd [--expect-input-sha256 HEX] [--overwrite] [--json]
   render FILE.pcnd -o OUT.png [--expect-input-sha256 HEX] [--on-loss error] [--allow-loss flatten] [--overwrite] [--json]
