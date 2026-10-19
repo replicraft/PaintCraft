@@ -43,6 +43,11 @@ impl App {
     }
 
     pub(super) fn sync_texture(&mut self, ctx: &egui::Context) {
+        let owner = self.editor.gesture_token();
+        if owner != self.preview_gesture {
+            self.preview_start_revision = self.preview_revision + 1;
+            self.preview_gesture = owner;
+        }
         let preview = self
             .editor
             .preview()
@@ -56,7 +61,10 @@ impl App {
         }
         let key = self.presentation_key();
         while let Some((handle, result)) = self.renderer.as_mut().and_then(Executor::poll) {
-            let expected = self.pending_frame == Some((key, handle));
+            let expected = self
+                .pending_frame
+                .filter(|(_, pending)| *pending == handle)
+                .map(|(key, _)| key);
             if self
                 .pending_frame
                 .is_some_and(|(_, pending)| pending == handle)
@@ -64,15 +72,15 @@ impl App {
                 self.pending_frame = None;
             }
             match result {
-                Ok(frame) if expected && frame.key == key => {
+                Ok(frame) if expected == Some(frame.key) && self.accept_render_key(frame.key) => {
                     if let Some(reason) = frame.fallback {
                         self.gpu = None;
                         self.editor.set_status(reason);
                     }
-                    self.install_render(ctx, key, Ok(frame.pixels));
+                    self.install_render(ctx, frame.key, Ok(frame.pixels));
                 }
                 Err(error)
-                    if expected
+                    if expected.is_some_and(|key| self.accept_render_key(key))
                         && error.code != paintcraft_core::types::ErrorCode::OperationCancelled =>
                 {
                     self.install_render(ctx, key, Err(error))
@@ -83,9 +91,12 @@ impl App {
         if self.texture_key == Some(key) {
             return;
         }
+        let keep_preview = self.pending_frame.is_some_and(|(pending_key, _)| {
+            self.accept_render_key(pending_key) && self.rendered_preview.is_some()
+        });
         if let Some(renderer) = &mut self.renderer {
             if let Some((pending_key, handle)) = self.pending_frame {
-                if pending_key == key {
+                if pending_key == key || keep_preview {
                     ctx.request_repaint_after(Duration::from_millis(16));
                     return;
                 }
@@ -163,13 +174,25 @@ impl App {
         self.install_render(ctx, key, pixels);
     }
 
+    /// In-flight progress may be shown only within the same live gesture. A
+    /// cancelled/restarted gesture or a publication retires all older previews.
+    fn accept_render_key(&self, key: RenderKey) -> bool {
+        let current = self.presentation_key();
+        key == current
+            || (self.rendered_preview.is_some()
+                && key.0 == current.0
+                && key.1 == current.1
+                && key.2 >= self.preview_start_revision
+                && key.2 < current.2)
+    }
+
     pub(super) fn install_render(
         &mut self,
         ctx: &egui::Context,
         key: RenderKey,
         pixels: paintcraft_core::types::Result<Vec<u8>>,
     ) {
-        if key != self.presentation_key() {
+        if !self.accept_render_key(key) {
             return;
         }
         let doc = self.editor.document();
@@ -201,5 +224,64 @@ impl App {
             }
         }
         self.texture_key = Some(key);
+    }
+}
+
+#[cfg(test)]
+mod scheduling_tests {
+    use super::*;
+    #[test]
+    fn moving_brush_preserves_inflight_progress_and_then_renders_the_latest_samples() {
+        let mut app = App::new(None);
+        let ctx = egui::Context::default();
+        app.editor.select_tool(Tool::Brush);
+        app.editor.pointer_down((10, 10));
+        app.sync_texture(&ctx);
+        let old = app.presentation_key();
+        let pixels = app.rendered.clone();
+        let (send, wait) = std::sync::mpsc::channel();
+        let mut worker = Executor::new(WorkerLimits {
+            workers: 1,
+            pending_jobs: 2,
+            transient_bytes: 512 << 20,
+        })
+        .unwrap();
+        let handle = worker
+            .submit(
+                1024,
+                move |_| {
+                    wait.recv().unwrap();
+                    Ok(RenderedFrame {
+                        key: old,
+                        pixels,
+                        fallback: None,
+                    })
+                },
+                || {},
+            )
+            .unwrap();
+        app.renderer = Some(worker);
+        app.pending_frame = Some((old, handle));
+        app.texture_key = None;
+        for i in 1..40 {
+            app.editor.pointer_move((10 + i, 10));
+            app.sync_texture(&ctx);
+            assert_eq!(app.pending_frame, Some((old, handle)));
+        }
+        send.send(()).unwrap();
+        let current = app.presentation_key();
+        let deadline = std::time::Instant::now() + Duration::from_secs(10);
+        while app.texture_key != Some(current) {
+            assert!(std::time::Instant::now() < deadline);
+            app.sync_texture(&ctx);
+            std::thread::yield_now();
+        }
+        let staged = paintcraft_editor::execute::execute(
+            app.editor.document(),
+            app.editor.selection(),
+            &app.editor.preview_batch().unwrap().unwrap(),
+        )
+        .unwrap();
+        assert_eq!(app.rendered, render_flat(&staged.doc).unwrap());
     }
 }
