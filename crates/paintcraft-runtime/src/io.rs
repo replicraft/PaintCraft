@@ -128,7 +128,14 @@ impl<T: Send + 'static> OrderedIo<T> {
             .as_ref()
             .expect("live queue")
             .try_send(request)
-            .map_err(|_| unavailable("native I/O queue unavailable"))?;
+            .map_err(|error| match error {
+                tokio::sync::mpsc::error::TrySendError::Full(_) => {
+                    unavailable("native I/O queue unavailable")
+                }
+                tokio::sync::mpsc::error::TrySendError::Closed(_) => {
+                    Error::new(ErrorCode::StorageFailed, "native I/O service stopped")
+                }
+            })?;
         self.pending.insert(ticket, bytes);
         self.retained_bytes += bytes;
         Ok(ticket)

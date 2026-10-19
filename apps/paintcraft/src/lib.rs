@@ -108,6 +108,7 @@ pub struct App {
     recovery_scope: Uuid,
     recovery_needs_scan: bool,
     recovery_needs_init: bool,
+    recovery_source: Option<saving::restoring::Handoff>,
     autosave_every: Duration,
     last_autosave: f64,
     allow_close: bool,
@@ -224,6 +225,7 @@ impl App {
             recovery_scope: Uuid::new_v4(),
             recovery_needs_scan: false,
             recovery_needs_init: false,
+            recovery_source: None,
             autosave_every: Duration::from_secs(5),
             last_autosave: 0.0,
             allow_close: false,
@@ -423,12 +425,29 @@ impl App {
     }
 
     /// Swap in a new editor; its predecessor's work was already saved or deliberately discarded.
-    fn install(&mut self, editor: Editor) -> paintcraft_core::types::Result<()> {
+    fn prepare_editor_replacement(&mut self) -> paintcraft_core::types::Result<()> {
         if let Some(saving) = &mut self.saving {
+            let controls = usize::from(self.editor.recovery_handle().is_some())
+                + usize::from(self.recovery_source.is_some());
+            saving.reserve_controls(controls)?;
             saving.clear_recovery(&mut self.editor)?;
+            if let Some(source) = self.recovery_source.take() {
+                saving.discard_source(source)?;
+            }
         } else {
             self.editor.discard_checkpoint()?;
+            if let Some(source) = self.recovery_source.take() {
+                source.discard()?;
+            }
         }
+        Ok(())
+    }
+    fn install(&mut self, editor: Editor) -> paintcraft_core::types::Result<()> {
+        self.prepare_editor_replacement()?;
+        self.publish_editor(editor);
+        Ok(())
+    }
+    fn publish_editor(&mut self, editor: Editor) {
         if let Some((_, handle)) = self.pending_frame.take()
             && let Some(renderer) = &self.renderer
         {
@@ -443,7 +462,6 @@ impl App {
         self.rendered.clear();
         self.recovery_needs_init = self.recovery_dir.is_some();
         self.attach_recovery();
-        Ok(())
     }
 
     /// Open a `.pcnd` document or import a PNG, BMP or JPEG picture.
@@ -804,6 +822,8 @@ impl App {
         if success {
             self.path_text = path.to_string_lossy().into_owned();
             self.bound = Some(path);
+            self.protect_recovery_source();
+            self.pump_recovery_handoff();
         } else {
             self.editor.restore_path(previous);
         }
@@ -1092,32 +1112,37 @@ impl App {
         }
     }
     fn do_recover(&mut self, item: Found) {
-        match self.recover_found(&item) {
-            Ok(()) => self
-                .recoverable
-                .retain(|found| found.session != item.session),
-            Err(error) => self.editor.set_status(format!("Cannot recover: {error}")),
+        self.editor.cancel_gesture();
+        self.editor.commit_text();
+        self.editor.run_pending();
+        let drafts = saving::restoring::Drafts::capture(self);
+        if let Some(saving) = &mut self.saving {
+            match saving.request_restore(&self.editor, self.recovery_scope, item, drafts) {
+                Ok(()) => self.editor.set_status("Preparing recovered document…"),
+                Err(error) => self.editor.set_status(format!("Cannot recover: {error}")),
+            }
+        } else {
+            match self.recover_found(&item) {
+                Ok(()) => self
+                    .recoverable
+                    .retain(|found| found.session != item.session),
+                Err(error) => self.editor.set_status(format!("Cannot recover: {error}")),
+            }
         }
     }
 
-    /// Offer work left behind by a crashed session.
     fn recover_found(&mut self, item: &Found) -> paintcraft_core::types::Result<()> {
-        let editor = Editor::recover(&item.checkpoint)?;
-        self.install(editor)?;
+        let claimed = Recovery::claim(item)?;
+        self.prepare_editor_replacement()?;
+        self.publish_editor(Editor::recovered_document(claimed.document));
+        self.recovery_source = Some(saving::restoring::Handoff::new(claimed.lease));
         self.bound = None;
         if let Some(original) = &item.original {
             self.path_text.clone_from(original);
         }
-        // A recovered document must acquire its own durable protection before
-        // deleting the orphan that supplied its only persisted content.
         if self.editor.autosave() {
-            if let Some(dir) = &self.recovery_dir
-                && let Err(error) = Recovery::discard(dir, item.session)
-            {
-                self.editor.set_status(format!(
-                    "Recovered; previous recovery cleanup failed: {error}"
-                ));
-            }
+            self.protect_recovery_source();
+            self.pump_recovery_handoff();
         } else {
             self.editor.set_status("Recovered; the original recovery copy is retained because a new checkpoint could not be confirmed.");
         }
@@ -1142,26 +1167,47 @@ impl App {
                 ui.label(format!(
                     "PaintCraft found unsaved work from an earlier session: {name}."
                 ));
+                let restoring = self
+                    .saving
+                    .as_ref()
+                    .is_some_and(|saving| saving.offer_busy(&item));
                 ui.horizontal(|ui| {
                     if ui
-                        .add_enabled(self.confirm.is_none(), egui::Button::new("Recover"))
+                        .add_enabled(
+                            self.confirm.is_none() && !restoring,
+                            egui::Button::new("Recover"),
+                        )
                         .clicked()
                     {
                         self.recover_requested(item.clone());
                     }
-                    if ui.button("Discard").clicked()
+                    if ui
+                        .add_enabled(!restoring, egui::Button::new("Discard"))
+                        .clicked()
                         && let Some(dir) = &self.recovery_dir
                     {
-                        match Recovery::discard(dir, item.session) {
-                            Ok(()) => {
-                                self.recoverable.remove(0);
+                        if let Some(saving) = &mut self.saving {
+                            match saving.discard_offer(self.recovery_scope, &item) {
+                                Ok(()) => self.editor.set_status("Discarding recovery copy…"),
+                                Err(error) => self
+                                    .editor
+                                    .set_status(format!("Cannot discard recovery: {error}")),
                             }
-                            Err(error) => self
-                                .editor
-                                .set_status(format!("Cannot discard recovery: {error}")),
+                        } else {
+                            match Recovery::discard(dir, item.session) {
+                                Ok(()) => {
+                                    self.recoverable.remove(0);
+                                }
+                                Err(error) => self
+                                    .editor
+                                    .set_status(format!("Cannot discard recovery: {error}")),
+                            }
                         }
                     }
                     if ui.button("Ask later").clicked() {
+                        if let Some(saving) = &mut self.saving {
+                            saving.cancel_restore();
+                        }
                         self.recoverable.clear();
                     }
                 });
@@ -1495,6 +1541,9 @@ impl App {
         self.recovery_dialog(ui);
         self.confirm_dialog(ui);
         if first_pass && ctx.input(|i| i.viewport().close_requested()) {
+            if let Some(saving) = &mut self.saving {
+                saving.cancel_restore();
+            }
             if self.saving.as_ref().is_some_and(|s| s.pending()) {
                 ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
                 self.close_after_saves = true;
@@ -1539,8 +1588,9 @@ impl App {
                     self.editor
                         .set_status(format!("Autosave not queued: {error}"));
                 }
-            } else {
-                self.editor.autosave();
+            } else if self.editor.autosave() {
+                self.protect_recovery_source();
+                self.pump_recovery_handoff();
             }
         }
         if self.editor.is_dirty() {

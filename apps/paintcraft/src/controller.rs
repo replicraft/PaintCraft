@@ -102,10 +102,16 @@ impl Editor {
     /// Open work recovered from a checkpoint. It counts as unsaved, and it is not
     /// bound to any file until the user saves it.
     pub fn recover(checkpoint: &Path) -> Result<Editor> {
-        let mut e = Editor::with_document(Recovery::read_checkpoint(checkpoint)?, None);
-        e.session.mark_unsaved();
-        e.status = "Recovered unsaved work".into();
-        Ok(e)
+        Ok(Self::recovered_document(Recovery::read_checkpoint(
+            checkpoint,
+        )?))
+    }
+
+    pub(crate) fn recovered_document(document: Document) -> Self {
+        let mut editor = Self::with_document(document, None);
+        editor.session.mark_unsaved();
+        editor.status = "Recovered unsaved work".into();
+        editor
     }
 
     /// Start protecting this editor's work with crash-recovery checkpoints.

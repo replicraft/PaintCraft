@@ -146,9 +146,12 @@
         "crates/paintcraft-formats/src/recovery/tests.rs",
         "apps/paintcraft/src/saving.rs",
         "crates/paintcraft-runtime/src/io.rs",
-        "docs/RECOVERY_FORMAT.md"
+        "docs/RECOVERY_FORMAT.md",
+        "crates/paintcraft-formats/src/recovery/lease.rs",
+        "apps/paintcraft/src/saving/restoring.rs",
+        "apps/paintcraft/src/saving/restoring/tests.rs"
       ],
-      "remaining_or_scope": "Streaming native saves, bounded Tokio FIFO, stale binding/session guards and captured-state acknowledgement pass; checksummed recovery segments and two retained heads pass; native background checkpoints/cleanup and publication fences pass; native startup discovery/initialization pass; restore I/O, reconciliation and full fault/platform matrix remain.",
+      "remaining_or_scope": "Streaming native saves, bounded Tokio FIFO, stale binding/session guards and captured-state acknowledgement pass; checksummed recovery segments and two retained heads pass; native background checkpoints/cleanup and publication fences pass; native startup, claimed restore and handoff pass; uncertain-write reconciliation, benchmark evidence and full fault/platform matrix remain.",
       "acceptance": "SAVE-01\u201309 failure injection including disk full/slow sink and stale Save As completion."
     },
     {
@@ -436,9 +439,12 @@
         "T05",
         "T07"
       ],
-      "status": "not-started",
-      "evidence": [],
-      "remaining_or_scope": "RES-01..09; replaced/deleted source path cannot change pending output; missing final input fails; native DPI/clock transitions get real tests.",
+      "status": "partial",
+      "evidence": [
+        "crates/paintcraft-formats/src/recovery/lease.rs",
+        "apps/paintcraft/src/saving/restoring/tests.rs"
+      ],
+      "remaining_or_scope": "Native recovery verifies exact input digest/IDs and retains decoded state under a source claim; general resource snapshots, source bindings, fonts/profiles and DPI/clock cases remain.",
       "acceptance": "RES-01..09; replaced/deleted source path cannot change pending output; missing final input fails; native DPI/clock transitions get real tests."
     },
     {

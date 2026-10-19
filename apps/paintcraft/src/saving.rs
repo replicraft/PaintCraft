@@ -1,5 +1,6 @@
 //! Native I/O coordinator. Saves, periodic checkpoints and recovery cleanup share
 //! one bounded FIFO. Only the UI coordinator adopts results into editor state.
+pub(super) mod restoring;
 use super::*;
 use paintcraft_core::types::{Error, ErrorCode, Result, json::Value};
 use paintcraft_formats::recovery::{Checkpoint, RecoveryToken};
@@ -25,6 +26,11 @@ enum PendingKind {
         session: Uuid,
         scope: Uuid,
     },
+    Restore(Box<restoring::Request>),
+    OfferDiscard {
+        scope: Uuid,
+        session: Uuid,
+    },
     Cleanup,
 }
 #[derive(Debug)]
@@ -40,6 +46,7 @@ enum Completion {
         report: Option<paintcraft_formats::recovery::ScanReport>,
         recovery: Result<Arc<Recovery>>,
     },
+    Claimed(Box<paintcraft_formats::recovery::ClaimedRecovery>),
     Cleanup,
 }
 #[derive(Debug)]
@@ -51,6 +58,8 @@ pub(super) struct NativeSaving {
     pending: Vec<Pending>,
     failed: bool,
     last_receipt: Option<Value>,
+    active_restore: Option<restoring::Control>,
+    restore_intent: Option<restoring::Intent>,
 }
 fn snapshot_charge(document: &paintcraft_document::Document) -> Result<u64> {
     // Provisional independent snapshot payload charge, not allocator/RSS accounting.
@@ -89,9 +98,12 @@ impl NativeSaving {
             pending: Vec::new(),
             failed: false,
             last_receipt: None,
+            active_restore: None,
+            restore_intent: None,
         })
     }
     pub(super) fn new_session(&mut self) {
+        self.cancel_restore();
         self.session = Uuid::new_v4();
         self.generation = 0;
     }
@@ -281,6 +293,9 @@ impl App {
     }
 
     pub(super) fn close_after_requested_saves(&mut self, ctx: &egui::Context) {
+        if let Some(saving) = &mut self.saving {
+            saving.cancel_restore();
+        }
         if self.saving.as_ref().is_some_and(NativeSaving::pending) {
             self.close_after_saves = true;
             self.editor
@@ -343,6 +358,9 @@ impl App {
                         self.path_text = request.path.to_string_lossy().into_owned();
                         self.bound = Some(request.path.clone());
                         self.editor.acknowledge_saved_state(request.source);
+                        if let Some(source) = &mut self.recovery_source {
+                            source.protect();
+                        }
                         self.editor.set_status(format!(
                             "Saved {}{}",
                             request.path.display(),
@@ -384,7 +402,10 @@ impl App {
                     }
                     match result {
                         Ok(Completion::Checkpoint(info)) => {
-                            self.editor.accept_checkpoint(token, key, info)
+                            self.editor.accept_checkpoint(token, key, info);
+                            if let Some(source) = &mut self.recovery_source {
+                                source.protect();
+                            }
                         }
                         Err(error) if error.code == ErrorCode::OperationCancelled => {}
                         Err(error) => {
@@ -449,6 +470,23 @@ impl App {
                         .set_status(format!("Recovery initialization failed: {error}")),
                     _ => unreachable!("typed initialization completion"),
                 },
+                PendingKind::Restore(request) => self.apply_claimed_recovery(*request, result),
+                PendingKind::OfferDiscard { scope, session } => match result {
+                    Ok(Completion::Cleanup) => {
+                        if scope == self.recovery_scope {
+                            self.recoverable.retain(|offer| offer.session != session);
+                            if self.editor.status() == "Discarding recovery copy…" {
+                                self.editor.set_status("Recovery copy discarded");
+                            }
+                        }
+                    }
+                    Err(error) => {
+                        saving.failed = true;
+                        self.editor
+                            .set_status(format!("Cannot discard recovery: {error}"));
+                    }
+                    _ => unreachable!("typed orphan discard completion"),
+                },
                 PendingKind::Cleanup => match result {
                     Ok(Completion::Cleanup) => {}
                     Err(error) if error.code == ErrorCode::OperationCancelled => {}
@@ -483,8 +521,12 @@ impl App {
                 ctx.send_viewport_cmd(egui::ViewportCommand::Close);
             }
         }
-        if self.recovery_needs_init && !self.close_after_saves && !self.allow_close {
-            self.attach_recovery();
+        if !self.close_after_saves && !self.allow_close {
+            if self.recovery_needs_init {
+                self.attach_recovery();
+            }
+            self.pump_restore();
+            self.pump_recovery_handoff();
         }
     }
 }

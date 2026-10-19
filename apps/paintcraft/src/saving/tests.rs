@@ -1,21 +1,21 @@
 use super::*;
 use std::{sync::mpsc, time::Instant};
-fn scratch() -> PathBuf {
+pub(super) fn scratch() -> PathBuf {
     let path = std::env::temp_dir().join(format!("paintcraft-ordered-save-{}", Uuid::new_v4()));
     std::fs::create_dir(&path).unwrap();
     path
 }
-fn app() -> App {
+pub(super) fn app() -> App {
     let mut app = App::new(None);
     app.saving = Some(NativeSaving::new(egui::Context::default()).unwrap());
     app
 }
-fn recovery_app(directory: PathBuf) -> App {
+pub(super) fn recovery_app(directory: PathBuf) -> App {
     let mut app = app().with_recovery(directory);
     drain(&mut app);
     app
 }
-fn drain(app: &mut App) {
+pub(super) fn drain(app: &mut App) {
     let deadline = Instant::now() + Duration::from_secs(10);
     while app.saving.as_ref().unwrap().pending() {
         app.poll_native_saves(&egui::Context::default());
@@ -175,7 +175,7 @@ fn closing_waits_for_accepted_saves_and_failure_keeps_the_window_open() {
     std::fs::remove_dir_all(dir).unwrap();
 }
 
-fn pause_queue(app: &mut App) -> mpsc::Sender<()> {
+pub(super) fn pause_queue(app: &mut App) -> mpsc::Sender<()> {
     let (release, hold) = mpsc::channel();
     let saving = app.saving.as_mut().unwrap();
     let ticket = saving

@@ -111,8 +111,17 @@ current editor and startup configuration; unused owners are retired on the I/O q
 An editor replacement during exclusive discovery retries initialization after capacity
 is available. Startup configuration can supersede pending requests; changing an already
 active store is explicitly refused until durable migration is implemented. Recovery
-requires discard confirmation before replacing current unsaved work. Restore decoding
-and the initial recovery handoff still have foreground paths and remain to be moved.
+requires discard confirmation before replacing current unsaved work.
+
+Native restore reads and first protective checkpoints now use the same I/O service.
+A claim verifies the offered input digest/IDs and holds its orphan lock through
+preparation and handoff. One bounded restore intent waits for capacity without another
+click. Publication checks the session, StateId/epoch, binding generation, configuration,
+tool drafts and layer edit buffers. Superseded data is disposed on the worker. A failed
+new recovery store retains the original claim; a confirmed checkpoint or explicit
+native save can finish the handoff. Exports do not release this native protection.
+Tests cover deferred publication, cancellation, ABA, deleted/changed sources, newer
+Save As choices and unavailable storage. Explicit orphan discard is also queued.
 
 ## Ordered native saves
 
@@ -132,7 +141,7 @@ cannot retarget a later choice (SAVE-02/FILE-04). Same-destination FIFO tests co
 SAVE-01. Repeated layout passes cannot submit duplicate saves. Close requests drain
 accepted writes, and failures keep the window open for a new explicit decision.
 The deterministic headless UI harness retains its synchronous adapter; native queue
-integration has separate tests. Restore I/O, open-to-save conflict fingerprints,
+integration has separate tests. Open-to-save conflict fingerprints,
 full receipt reconciliation and BF07 performance qualification remain pending.
 
 ## Native render preparation
@@ -258,8 +267,8 @@ Definitions (integer-exact, so any implementation can reproduce them):
 - **Classic variants.** v7, v10 and v11 share initial ribbon/control primitives and version styling;
   they are not captured reproductions. No fidelity claim of any kind is made.
 - **Foreground file work.** Native periodic checkpoints and cleanup use the I/O worker.
-  Recovery restore/handoff and open/import/export still have foreground paths.
-  Native startup discovery and initialization use the admitted I/O queue. The deterministic harness uses synchronous checkpoint services.
+  Open/import/export still have foreground paths. Native recovery discovery,
+  initialization, restore, handoff and cleanup use the admitted I/O queue. The deterministic harness uses synchronous checkpoint services.
 - **Windows.** Durability confirmation syncs the destination directory, which Windows does
   not allow by opening a directory, so a save there would report "not confirmed" (exit 6)
   until a platform adapter exists. CI covers Linux and macOS only.
@@ -286,5 +295,5 @@ Native input and presentation spike (T02), reference capture (T03) and therefore
 Paint/Paint.NET behavioral parity, selections beyond one rectangle (no move, transform,
 invert or free-form), scalable or system fonts, clipboard, zoom to fit, layer groups,
 layer blend modes, other formats (GIF, TIFF, WebP, PCX, `.pdn`, `.paint`), Wasm effects,
-Zstd blocks, background restore services, `paintcraft-web`, and everything in milestones M3
+Zstd blocks, `paintcraft-web`, and everything in milestones M3
 onward.

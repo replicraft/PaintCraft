@@ -78,8 +78,10 @@ use the native parser's document/raster admission limits too. These are resource
 not measured memory or performance qualifications. Process-wide disk admission remains
 pending. Both recovery reading and the desktop restore path use bounded reads. The status tooltip
 reports the last confirmed generation/time and whether it contains the current state.
-A restored document is checkpointed under its new session before its old orphan is
-discarded. Failed handoff retains the original copy.
+A confirmed checkpoint or explicit native save protects the restored document before
+its old orphan is discarded. A failed handoff retains the original copy under its
+claim; an unavailable recovery store does not prevent loading the document or saving
+it explicitly elsewhere.
 
 Validated legacy `<session>.pcnd` / `<session>.json` checkpoints remain recoverable.
 Malformed legacy data is retained with a diagnostic. New checkpoints use the journal.
@@ -90,5 +92,15 @@ save FIFO; stale completions cannot advance the active session. Native startup q
 discovery and initialization after window creation, using editor/configuration fences
 and retrying unadmitted initialization when capacity returns. Unused owners are retired
 through the same queue. Active-store directory migration is not yet offered; existing
-protection is retained. Restore decoding and the first recovery handoff retain foreground
-paths. The deterministic UI harness retains synchronous checkpoint services. Benchmark evidence remains pending.
+protection is retained. Native restore decoding, initial checkpoints, source retirement
+and explicit orphan discard use the same admitted I/O service. The deterministic UI
+harness retains synchronous checkpoint services. Benchmark evidence remains pending.
+
+Native restore keeps one bounded pending intent when read admission is unavailable.
+Publication checks the editor session, StateId/epoch, binding generation, recovery
+configuration, outstanding tool input and layer edit drafts. Ask Later or close can
+cancel preparation; in-flight reads are not preempted, and rejected decoded data is
+disposed on the worker. A completed claim becomes the current editor's handoff source.
+Its lock remains held until a checkpoint/save is confirmed or the user explicitly
+discards that document. Tests cover changed/deleted sources, edits/ABA during reads,
+new Save As choices, cancellation, unavailable replacement storage and deferred handoff.
