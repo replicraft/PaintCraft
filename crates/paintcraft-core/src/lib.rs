@@ -2,5 +2,6 @@
 
 pub mod commands;
 pub mod document;
+pub mod execute;
 pub mod ids;
 pub mod raster;

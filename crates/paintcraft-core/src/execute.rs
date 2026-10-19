@@ -1,0 +1,403 @@
+//! Staged execution of a batch against a private copy of the document.
+//! Nothing here publishes; the session installs the result atomically.
+
+use std::collections::{BTreeMap, HashMap};
+
+use paintcraft_types::{Error, ErrorCode, Rect, Result};
+use uuid::Uuid;
+
+use crate::commands::{Batch, LayerRef, Mode, Op};
+use crate::document::{COORD_ABS_MAX, Document, LAYER_COUNT_MAX, Layer};
+use crate::ids::deterministic_id;
+use crate::raster::{Admission, RasterLayer};
+
+/// Emitted-pixel and segment budgets for all pencil operations in one batch.
+pub const PENCIL_PIXELS_MAX: i128 = 16_777_216;
+pub const PENCIL_SEGMENTS_MAX: i128 = 1_048_576;
+/// Staged pixel storage per batch (the untrusted-decode soft limit).
+pub const STAGED_PIXELS_MAX: u64 = 268_435_456;
+
+/// The session's selection projection.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Selection {
+    /// No restriction on editing.
+    Inactive,
+    /// An active selection that covers nothing.
+    Empty,
+    /// Binary coverage over a half-open document rectangle.
+    Rect(Rect),
+}
+
+impl Selection {
+    fn clip(self, area: Option<Rect>) -> Option<Rect> {
+        match self {
+            Selection::Inactive => area,
+            Selection::Empty => None,
+            Selection::Rect(r) => area.and_then(|a| a.intersect(&r)),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct Staged {
+    pub doc: Document,
+    pub selection: Selection,
+    /// Layers created by the batch that still exist.
+    pub aliases: BTreeMap<String, Uuid>,
+}
+
+pub fn execute(base: &Document, selection: Selection, batch: &Batch) -> Result<Staged> {
+    let mut s = Stage {
+        doc: base.clone(),
+        selection,
+        aliases: HashMap::new(),
+        adm: Admission::new(STAGED_PIXELS_MAX),
+        pencil_pixels: 0,
+        pencil_segments: 0,
+        base_state: base.state_id.to_string(),
+        digest: &batch.digest,
+    };
+    for (index, op) in batch.operations.iter().enumerate() {
+        s.run(index, op).map_err(|e| {
+            if e.operation_index.is_some() {
+                e
+            } else {
+                e.at(index)
+            }
+        })?;
+    }
+    let aliases = s
+        .aliases
+        .into_iter()
+        .filter_map(|(a, id)| {
+            id.filter(|id| s.doc.layers.contains_key(id))
+                .map(|id| (a, id))
+        })
+        .collect();
+    Ok(Staged {
+        doc: s.doc,
+        selection: s.selection,
+        aliases,
+    })
+}
+
+struct Stage<'a> {
+    doc: Document,
+    selection: Selection,
+    /// Every alias ever declared in this batch; `None` once its layer is deleted.
+    aliases: HashMap<String, Option<Uuid>>,
+    adm: Admission,
+    pencil_pixels: i128,
+    pencil_segments: i128,
+    base_state: String,
+    digest: &'a str,
+}
+
+impl Stage<'_> {
+    fn resolve(&self, r: &LayerRef) -> Result<Uuid> {
+        match r {
+            LayerRef::Alias(a) => match self.aliases.get(a) {
+                Some(Some(id)) => Ok(*id),
+                _ => Err(Error::new(
+                    ErrorCode::ReferenceUnknownAlias,
+                    format!("unknown alias {a:?}"),
+                )),
+            },
+            LayerRef::Id(id) if self.doc.layers.contains_key(id) => Ok(*id),
+            LayerRef::Id(_) => Err(Error::new(
+                ErrorCode::ReferenceUnknownId,
+                "unknown layer id",
+            )),
+        }
+    }
+
+    /// Document-space area an edit of `layer` may touch: canvas ∩ layer ∩ selection.
+    fn editable(&self, layer: &Layer) -> Option<Rect> {
+        self.selection
+            .clip(self.doc.canvas_rect().intersect(&layer.extent()))
+    }
+
+    fn run(&mut self, index: usize, op: &Op) -> Result<()> {
+        match op {
+            Op::LayerAdd {
+                alias,
+                name,
+                width,
+                height,
+                origin,
+                default,
+            } => {
+                if self.aliases.contains_key(alias) {
+                    return Err(Error::new(
+                        ErrorCode::InputSchema,
+                        format!("duplicate alias {alias:?}"),
+                    ));
+                }
+                if self.doc.layers.len() >= LAYER_COUNT_MAX {
+                    return Err(Error::new(
+                        ErrorCode::ResourceLimit,
+                        "layer count budget exceeded",
+                    ));
+                }
+                let id = deterministic_id(&[
+                    "layer",
+                    &self.base_state,
+                    self.digest,
+                    &index.to_string(),
+                    "0",
+                ]);
+                if self.doc.layers.contains_key(&id) {
+                    return Err(Error::new(
+                        ErrorCode::InvariantViolation,
+                        "deterministic identifier collision",
+                    ));
+                }
+                let layer = Layer {
+                    id,
+                    name: name.clone(),
+                    origin: *origin,
+                    visible: true,
+                    opacity: 255,
+                    raster: RasterLayer::new(*width, *height, *default),
+                };
+                self.doc.layers.insert(id, layer);
+                self.doc.roots.push(id);
+                self.aliases.insert(alias.clone(), Some(id));
+            }
+            Op::LayerDelete { layer } => {
+                let id = self.resolve(layer)?;
+                self.doc.layers.remove(&id);
+                self.doc.roots.retain(|r| *r != id);
+                for target in self.aliases.values_mut().filter(|t| **t == Some(id)) {
+                    *target = None;
+                }
+            }
+            Op::LayerSetProperties {
+                layer,
+                name,
+                visible,
+                opacity,
+            } => {
+                let id = self.resolve(layer)?;
+                let l = self.doc.layers.get_mut(&id).expect("resolved");
+                if let Some(n) = name {
+                    l.name.clone_from(n);
+                }
+                if let Some(v) = visible {
+                    l.visible = *v;
+                }
+                if let Some(o) = opacity {
+                    l.opacity = *o;
+                }
+            }
+            Op::FillRect {
+                layer,
+                rect,
+                color,
+                mode,
+            } => {
+                let id = self.resolve(layer)?;
+                let l = &self.doc.layers[&id];
+                let Some(area) = self.editable(l).and_then(|a| a.intersect(rect)) else {
+                    return Ok(());
+                };
+                if *mode == Mode::SourceOver && color.a() == 0 {
+                    return Ok(());
+                }
+                let (ox, oy) = l.origin;
+                let local = area
+                    .translated(-ox, -oy)
+                    .expect("area lies inside the layer");
+                let l = self.doc.layers.get_mut(&id).expect("resolved");
+                l.raster.fill_rect(&local, *color, *mode, &mut self.adm)?;
+            }
+            Op::PencilPath {
+                layer,
+                points,
+                color,
+                mode,
+            } => {
+                let id = self.resolve(layer)?;
+                let length: i128 = points
+                    .windows(2)
+                    .map(|w| i128::from((w[1].0 - w[0].0).abs().max((w[1].1 - w[0].1).abs())))
+                    .sum();
+                self.pencil_pixels += 1 + length;
+                self.pencil_segments += (points.len() as i128 - 1).max(1);
+                if self.pencil_pixels > PENCIL_PIXELS_MAX
+                    || self.pencil_segments > PENCIL_SEGMENTS_MAX
+                {
+                    return Err(Error::new(
+                        ErrorCode::ResourceLimit,
+                        "pencil path work budget exceeded",
+                    ));
+                }
+                let clip = self.editable(&self.doc.layers[&id]);
+                let (ox, oy) = self.doc.layers[&id].origin;
+                let l = self.doc.layers.get_mut(&id).expect("resolved");
+                let segments: Vec<((i64, i64), (i64, i64))> = if points.len() == 1 {
+                    vec![(points[0], points[0])]
+                } else {
+                    points.windows(2).map(|w| (w[0], w[1])).collect()
+                };
+                for (n, (a, b)) in segments.into_iter().enumerate() {
+                    // A shared polyline joint is emitted once: later segments skip their first pixel.
+                    walk_clipped(a, b, clip, n > 0, |x, y| {
+                        l.raster
+                            .blend_pixel(x - ox, y - oy, *color, *mode, &mut self.adm)
+                    })?;
+                }
+            }
+            Op::SelectionSetRect { rect } => {
+                self.selection = match self.doc.canvas_rect().intersect(rect) {
+                    Some(r) => Selection::Rect(r),
+                    None => Selection::Empty,
+                };
+            }
+            Op::SelectionClear => self.selection = Selection::Inactive,
+            Op::CanvasResize {
+                width,
+                height,
+                anchor,
+            } => {
+                let (ax, ay) = anchor.halves();
+                let dx = ((i64::from(*width) - i64::from(self.doc.canvas.0)) * ax).div_euclid(2);
+                let dy = ((i64::from(*height) - i64::from(self.doc.canvas.1)) * ay).div_euclid(2);
+                for l in self.doc.layers.values_mut() {
+                    let (x, y) = (l.origin.0 + dx, l.origin.1 + dy);
+                    if x.abs() > COORD_ABS_MAX || y.abs() > COORD_ABS_MAX {
+                        return Err(Error::new(
+                            ErrorCode::ResourceLimit,
+                            "translated layer origin exceeds coordinate budget",
+                        ));
+                    }
+                    l.origin = (x, y);
+                }
+                self.doc.canvas = (*width, *height);
+                if let Selection::Rect(r) = self.selection {
+                    self.selection = match r
+                        .translated(dx, dy)
+                        .and_then(|t| t.intersect(&self.doc.canvas_rect()))
+                    {
+                        Some(t) => Selection::Rect(t),
+                        None => Selection::Empty,
+                    };
+                }
+            }
+        }
+        Ok(())
+    }
+}
+
+/// The symmetric all-octant Bresenham recurrence, yielding only pixels inside
+/// `clip`. The walk is monotonic, so it stops once the remainder cannot re-enter
+/// the clip box. Every visited pixel is exactly one the unclipped walk emits.
+fn walk_clipped(
+    a: (i64, i64),
+    b: (i64, i64),
+    clip: Option<Rect>,
+    skip_first: bool,
+    mut emit: impl FnMut(i64, i64) -> Result<()>,
+) -> Result<()> {
+    let Some(clip) = clip else { return Ok(()) };
+    let (mut x, mut y) = a;
+    let (x1, y1) = b;
+    let dx = (x1 - x).abs();
+    let sx = if x < x1 { 1 } else { -1 };
+    let dy = -(y1 - y).abs();
+    let sy = if y < y1 { 1 } else { -1 };
+    let mut err = dx + dy;
+    let mut first = true;
+    loop {
+        if x.min(x1) >= clip.x1
+            || x.max(x1) < clip.x0
+            || y.min(y1) >= clip.y1
+            || y.max(y1) < clip.y0
+        {
+            return Ok(());
+        }
+        if !(first && skip_first) && clip.contains(x, y) {
+            emit(x, y)?;
+        }
+        first = false;
+        if (x, y) == (x1, y1) {
+            return Ok(());
+        }
+        let e2 = 2 * err;
+        if e2 >= dy {
+            err += dy;
+            x += sx;
+        }
+        if e2 <= dx {
+            err += dx;
+            y += sy;
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn full_walk(a: (i64, i64), b: (i64, i64)) -> Vec<(i64, i64)> {
+        let mut out = Vec::new();
+        walk_clipped(a, b, Rect::new(-1000, -1000, 2000, 2000), false, |x, y| {
+            out.push((x, y));
+            Ok(())
+        })
+        .unwrap();
+        out
+    }
+
+    #[test]
+    fn bresenham_covers_endpoints_in_every_octant() {
+        for end in [
+            (6, 4),
+            (5, 6),
+            (2, 6),
+            (0, 5),
+            (0, 2),
+            (1, 0),
+            (4, 0),
+            (6, 1),
+            (3, 3),
+        ] {
+            let w = full_walk((3, 3), end);
+            assert_eq!(w.first(), Some(&(3, 3)));
+            assert_eq!(w.last(), Some(&end));
+            assert_eq!(w.len() as i64, 1 + (end.0 - 3).abs().max((end.1 - 3).abs()));
+        }
+        assert_eq!(full_walk((2, 2), (2, 2)), [(2, 2)]);
+    }
+
+    #[test]
+    fn clipped_walk_equals_the_filtered_full_walk() {
+        // Deterministic LCG; avoids a dev-dependency for randomness.
+        let mut s = 0x2545_F491_4F6C_DD1Du64;
+        let mut next = |m: i64| {
+            s = s
+                .wrapping_mul(6364136223846793005)
+                .wrapping_add(1442695040888963407);
+            ((s >> 33) as i64 % (2 * m + 1)) - m
+        };
+        for _ in 0..5000 {
+            let (a, b) = ((next(15), next(15)), (next(15), next(15)));
+            let c0 = (next(8), next(8));
+            let clip = Rect::new(c0.0, c0.1, 1 + next(5).abs() + 3, 1 + next(5).abs() + 3).unwrap();
+            for skip in [false, true] {
+                let want: Vec<_> = full_walk(a, b)
+                    .into_iter()
+                    .skip(usize::from(skip))
+                    .filter(|&(x, y)| clip.contains(x, y))
+                    .collect();
+                let mut got = Vec::new();
+                walk_clipped(a, b, Some(clip), skip, |x, y| {
+                    got.push((x, y));
+                    Ok(())
+                })
+                .unwrap();
+                assert_eq!(got, want, "{a:?}->{b:?} clip {clip:?} skip {skip}");
+            }
+        }
+    }
+}
