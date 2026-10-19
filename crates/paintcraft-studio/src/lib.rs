@@ -1,7 +1,9 @@
 //! Studio presentation. Actions are executed by the application shell.
 mod history;
+mod tabs;
 mod toolbar;
 mod windows;
+pub use tabs::{DocumentTab, TabAction, document_tabs};
 
 pub use history::{HistoryRow, history_window};
 pub use toolbar::toolbar;

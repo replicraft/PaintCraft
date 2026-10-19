@@ -1,7 +1,7 @@
 use super::*;
 use paintcraft::settings::{Experience, Settings};
 
-fn studio_harness(two_passes: bool) -> (Harness<'static, App>, PathBuf) {
+pub(super) fn studio_harness(two_passes: bool) -> (Harness<'static, App>, PathBuf) {
     let dir = scratch(&format!("studio-{}", uuid::Uuid::new_v4()));
     Settings {
         experience: Experience::Studio,

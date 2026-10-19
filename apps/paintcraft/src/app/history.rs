@@ -3,7 +3,7 @@ use super::*;
 
 impl App {
     pub(super) fn studio_history(&mut self, ctx: &egui::Context) {
-        if !self.studio.history {
+        if !self.studio.history || self.document_count() == 0 {
             return;
         }
         let view = self.editor.history_view();

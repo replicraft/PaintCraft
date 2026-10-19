@@ -117,3 +117,6 @@ mod files_and_recovery;
 mod input;
 #[path = "gui/studio.rs"]
 mod studio;
+
+#[path = "gui/tabs.rs"]
+mod tabs;

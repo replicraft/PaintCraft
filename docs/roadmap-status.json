@@ -304,7 +304,7 @@
       ],
       "status": "partial",
       "evidence": ["crates/paintcraft-studio/src/lib.rs", "apps/paintcraft/tests/gui/studio.rs", "docs/STUDIO.md"],
-      "remaining_or_scope": "Studio toolbar, floating Tools/Colors/Layers and guarded recorded History navigation work on the shared editor; tabs, image operations, effects, PDN and reference parity remain.",
+      "remaining_or_scope": "Studio toolbar, floating Tools/Colors/Layers, guarded History navigation and independent document tabs with owner-routed save/recovery and close handling work; shared action coverage, image operations, effects, PDN and reference parity remain.",
       "acceptance": "Release only named tested tranches; high-depth/groups not misrepresented as source features."
     },
     {

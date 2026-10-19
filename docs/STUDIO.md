@@ -9,6 +9,9 @@ separately in the dependency choices and is not bundled yet.
 ## Implemented presentation slice
 
 - Compact File/Edit/Window menus, file and undo/redo toolbar, and tool options.
+- Document tabs with independent editors, histories, targets, tools, colors, zoom,
+  scroll positions and native-file bindings. New/Open/recovery preserve other tabs.
+  Close supports save, discard and cancel; closing the last tab leaves an empty workspace.
 - Movable Tools and Colors windows, with real tool selection, primary/secondary
   colors, palette, brush size/tip, shape style, fill tolerance and bitmap text size.
 - A movable/resizable Layers window using the existing add, select, visibility,
@@ -35,8 +38,8 @@ for the running session, not across restarts.
 
 ## Next Studio work
 
-1. Multiple document tabs with independent editor sessions, bindings, dirty state,
-   recovery ownership and close/save handling.
+1. Shared action descriptors and menu/shortcut equivalence, then the remaining
+   Studio menus and workflows described in the supplied reference plan.
 2. Expand history storage and metadata admission, then qualified branching/spill
    behavior; the recorded History window is implemented on the current linear store.
 3. Image/layer editing operations and richer selection interactions through typed
@@ -44,8 +47,8 @@ for the running session, not across restarts.
 4. Region-aware adjustments/effects, followed by qualified GPU implementations.
 5. Shaped system-font text and IME interactions; broader codecs and PDN compatibility.
 
-This slice is not Paint.NET parity or a completed T19/M3 gate. There is one active
-document; no document tabs, effects UI or PDN importer is advertised.
+This slice is not Paint.NET parity or a completed T19/M3 gate. Document tabs are
+working; thumbnail navigation, Save All, effects UI and PDN import remain deferred.
 Reference-build captures, the remaining engine prerequisites and native qualification
 remain separate acceptance work. Tests cover saved experience migration, preservation
 on switching, floating-window input ownership, brush undo/redo, multipass action
@@ -80,3 +83,36 @@ entries; metadata admission and large-history performance remain unqualified.
 Existing linear redo truncation and automatic memory-budget trimming are unchanged;
 branching and disk spill remain roadmap work. History survives interface switching,
 but is not yet persisted across process restart.
+
+## Document ownership and native I/O
+
+Each open document owns its editor and native save-adoption context. One bounded
+native I/O queue remains shared by the window: saves to the same destination stay
+FIFO, and completions acknowledge only the originating document. Background
+checkpoints run for inactive documents too; admission pressure retries rather than
+starving later tabs. Recovery offers are workspace-wide. Restoring one creates a
+new Studio tab and preserves the existing source-retention handoff.
+
+Native pickers retain their originating tab. Open reuses an already bound document
+when its path resolves to that same file. Saving over another open document's
+known destination asks for confirmation; a confirmed replacement invalidates the
+other version's saved marker when its contents differ. Path comparison is a best-
+effort local canonical-path check, not a universal file-identity or external-write
+conflict protocol.
+
+Closing waits for that document's pending I/O. Save-and-close captures its identity
+and state; cancellation, failure, or newer edits keep it open. Workspace close
+checks inactive documents as well. These tests cover in-process owner routing,
+FIFO replacement, modal ownership, checkpoint backpressure, independent histories,
+empty workspaces and save/close failures. The 64-document cap is provisional;
+large-workspace memory and platform fault qualification remain open. Tab layout,
+viewport state and history are not restored across process restart.
+
+The native GPU review test for tabs writes `/tmp/paintcraft-studio-tabs.png`:
+
+```sh
+cargo test -p paintcraft --test gui tabs::render_document_tabs_for_review -- --ignored
+```
+
+See [reference coverage](STUDIO_REFERENCE_COVERAGE.md) for the supplied screenshot
+inventory and the next functional slices.

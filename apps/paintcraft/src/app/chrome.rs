@@ -25,10 +25,22 @@ impl App {
             primary: self.editor.color,
             secondary: self.editor.secondary,
         };
-        let actions = match self.experience() {
-            Experience::Classic => paintcraft_classic::chrome(ui, self.variant(), &mut controls),
-            Experience::Studio => paintcraft_studio::toolbar(ui, &mut controls, &mut self.studio),
-        };
+        let document_open = self.document_count() > 0;
+        let actions = ui
+            .push_id(("document-chrome", self.active_tab_id()), |ui| {
+                match self.experience() {
+                    Experience::Classic => {
+                        paintcraft_classic::chrome(ui, self.variant(), &mut controls)
+                    }
+                    Experience::Studio => paintcraft_studio::toolbar(
+                        ui,
+                        &mut controls,
+                        &mut self.studio,
+                        document_open,
+                    ),
+                }
+            })
+            .inner;
         self.apply_chrome(&ctx, controls, actions);
     }
 
@@ -38,6 +50,11 @@ impl App {
         controls: paintcraft_ui::chrome::Controls,
         actions: Vec<paintcraft_ui::chrome::Action>,
     ) {
+        // Controls belong to the document that produced this frame. An action
+        // below may activate another document with its own tool preferences.
+        self.editor.options = controls.options;
+        self.editor.color = controls.primary;
+        self.editor.secondary = controls.secondary;
         for action in actions {
             self.chrome_outbox
                 .push(token(ctx, action.activation_code()), action);
@@ -46,7 +63,7 @@ impl App {
             use paintcraft_ui::chrome::Action as Chrome;
             match action {
                 Chrome::New => {
-                    if self.editor.is_dirty() {
+                    if self.experience() == Experience::Classic && self.editor.is_dirty() {
                         self.confirm = Some(Confirm::DiscardForNew);
                     } else {
                         self.new_document();
@@ -75,9 +92,6 @@ impl App {
                 }
             }
         }
-        self.editor.options = controls.options;
-        self.editor.color = controls.primary;
-        self.editor.secondary = controls.secondary;
     }
 
     pub(super) fn studio_windows(&mut self, ctx: &egui::Context) {
@@ -87,16 +101,39 @@ impl App {
             primary: self.editor.color,
             secondary: self.editor.secondary,
         };
-        let actions = paintcraft_studio::floating_controls(ctx, &mut controls, &mut self.studio);
+        let enabled = self.document_count() > 0 && !self.closing_workspace;
+        let state_id = egui::Id::unique(("document-controls", self.active_tab_id()));
+        let actions = paintcraft_studio::floating_controls(
+            ctx,
+            &mut controls,
+            &mut self.studio,
+            enabled,
+            state_id,
+        );
         self.apply_chrome(ctx, controls, actions);
         let mut open = self.studio.layers;
-        paintcraft_studio::layers_window(ctx, &mut open, |ui| self.layer_panel(ui));
+        paintcraft_studio::layers_window(ctx, &mut open, |ui| {
+            if self.closing_workspace {
+                ui.disable();
+            }
+            self.layer_panel(ui)
+        });
         self.studio.layers = open;
         self.studio_history(ctx);
     }
 
     pub(super) fn layer_panel(&mut self, ui: &mut egui::Ui) {
+        ui.push_id(("document-layers", self.active_tab_id()), |ui| {
+            self.layer_controls(ui)
+        });
+    }
+
+    fn layer_controls(&mut self, ui: &mut egui::Ui) {
         let ctx = ui.ctx().clone();
+        if self.document_count() == 0 {
+            ui.label("No document open");
+            return;
+        }
         ui.horizontal(|ui| {
             ui.heading("Layers");
             if ui.button("Add layer").clicked() {
@@ -250,6 +287,11 @@ impl App {
                 ),
                 "Continue",
             ),
+            Confirm::ReplaceSharedFile(p) => (
+                "Replace a shared file?",
+                format!("Another open document uses {}. Saving here can replace its saved contents.",p.display()),
+                "Continue",
+            ),
             Confirm::QuitUnsaved => {
                 let incomplete = self
                     .saving
@@ -281,46 +323,71 @@ impl App {
                 ("Export", t, "Export now")
             }
         };
-        egui::Window::new(title)
-            .collapsible(false)
-            .resizable(false)
-            .anchor(egui::Align2::CENTER_CENTER, Vec2::ZERO)
-            .show(&ctx, |ui| {
-                ui.label(text);
-                ui.horizontal(|ui| {
-                    if ui.button(go).clicked() {
-                        match confirm {
-                            Confirm::DiscardForNew => self.new_document(),
-                            Confirm::DiscardForOpen(p) => {
-                                if let Err(e) = self.open_path(&p) {
-                                    self.editor.set_status(format!("Cannot open: {e}"));
-                                }
+        egui::Modal::new(egui::Id::unique(("confirmation", title))).show(&ctx, |ui| {
+            ui.heading(title);
+            ui.label(text);
+            ui.horizontal(|ui| {
+                if ui.button(go).clicked() {
+                    match confirm {
+                        Confirm::DiscardForNew => self.new_document(),
+                        Confirm::DiscardForOpen(p) => {
+                            if let Err(e) = self.open_path(&p) {
+                                self.editor.set_status(format!("Cannot open: {e}"));
                             }
-                            Confirm::DiscardForRecovery(item) => self.do_recover(item),
-                            Confirm::DiscardForSaveSnapshot(sequence) => {
-                                self.open_saved_snapshot(sequence)
-                            }
-                            Confirm::ForgetSaveSnapshot(sequence) => {
-                                self.forget_incomplete_save(sequence)
-                            }
-                            Confirm::ReplaceFile(p) => self.do_save(&ctx, p),
-                            Confirm::QuitUnsaved => {
-                                self.allow_close = true;
-                                self.close_after_requested_saves(&ctx);
-                            }
-                            Confirm::Export {
-                                path,
-                                format,
-                                losses,
-                                ..
-                            } => self.do_export(&path, format, &losses),
                         }
-                        self.confirm = None;
+                        Confirm::DiscardForRecovery(item) => self.do_recover(item),
+                        Confirm::DiscardForSaveSnapshot(sequence) => {
+                            self.open_saved_snapshot(sequence)
+                        }
+                        Confirm::ForgetSaveSnapshot(sequence) => {
+                            self.forget_incomplete_save(sequence)
+                        }
+                        Confirm::ReplaceFile(p) | Confirm::ReplaceSharedFile(p) => {
+                            self.do_save(&ctx, p)
+                        }
+                        Confirm::QuitUnsaved => {
+                            self.allow_close = true;
+                            self.close_after_requested_saves(&ctx);
+                        }
+                        Confirm::Export {
+                            path,
+                            format,
+                            losses,
+                            ..
+                        } => self.do_export(&path, format, &losses),
                     }
-                    if ui.button("Cancel").clicked() {
-                        self.confirm = None;
-                    }
-                });
+                    self.confirm = None;
+                }
+                if ui.button("Cancel").clicked() {
+                    self.confirm = None;
+                }
             });
+        });
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn new_document_keeps_its_own_colors_instead_of_outgoing_controls() {
+        let mut app = App::new(None);
+        app.settings.experience = Experience::Studio;
+        let ctx = egui::Context::default();
+        let outgoing = app.active_tab_id();
+        let controls = paintcraft_ui::chrome::Controls {
+            tool: app.editor.tool,
+            options: app.editor.options,
+            primary: Rgba([12, 34, 56, 255]),
+            secondary: Rgba([65, 43, 21, 255]),
+        };
+        let default_colors = (app.editor.color, app.editor.secondary);
+        app.apply_chrome(&ctx, controls, vec![paintcraft_ui::chrome::Action::New]);
+        assert_eq!(app.document_count(), 2);
+        assert_eq!((app.editor.color, app.editor.secondary), default_colors);
+        app.activate_tab(outgoing, &ctx);
+        assert_eq!(app.editor.color, Rgba([12, 34, 56, 255]));
+        assert_eq!(app.editor.secondary, Rgba([65, 43, 21, 255]));
     }
 }

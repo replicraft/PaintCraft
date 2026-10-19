@@ -59,7 +59,7 @@ PAINTCRAFT_REQUIRE_GPU=1 cargo test -p paintcraft-render --features gpu --test g
 | `crates/paintcraft-platform` | Filesystem save adapters and optional native `rfd` dialogs |
 | `crates/paintcraft-ui` | Shared vector widgets, view transforms and action outbox |
 | `crates/paintcraft-classic` | Classic menus, grouped tool ribbon, palette and presentation variants |
-| `crates/paintcraft-studio` | Studio toolbar, tool options and floating Tools/Colors/Layers/History windows |
+| `crates/paintcraft-studio` | Studio document tabs, toolbar, tool options and floating Tools/Colors/Layers/History windows |
 | `apps/paintcraft` | Desktop controller, settings and egui application (wgpu) |
 | `apps/paintcraft-cli` | Headless Clap CLI; each command lives in `src/commands/` |
 | `conformance/` | Vendored batch v1 conformance vectors and the canonical specimen |

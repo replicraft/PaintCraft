@@ -2,7 +2,12 @@ use crate::Workspace;
 use paintcraft_ui::chrome::{Action, Controls, options};
 use paintcraft_ui::widgets::{Icon, icon_button};
 
-pub fn toolbar(ui: &mut egui::Ui, state: &mut Controls, workspace: &mut Workspace) -> Vec<Action> {
+pub fn toolbar(
+    ui: &mut egui::Ui,
+    state: &mut Controls,
+    workspace: &mut Workspace,
+    document_open: bool,
+) -> Vec<Action> {
     let mut actions = Vec::new();
     egui::MenuBar::new().ui(ui, |ui| {
         ui.menu_button("File", |ui| {
@@ -13,7 +18,13 @@ pub fn toolbar(ui: &mut egui::Ui, state: &mut Controls, workspace: &mut Workspac
                 ("Save as…", Action::SaveAs),
                 ("Export…", Action::Export),
             ] {
-                if ui.button(label).clicked() {
+                if ui
+                    .add_enabled(
+                        document_open || matches!(action, Action::New | Action::Open),
+                        egui::Button::new(label),
+                    )
+                    .clicked()
+                {
                     actions.push(action);
                     ui.close();
                 }
@@ -26,7 +37,13 @@ pub fn toolbar(ui: &mut egui::Ui, state: &mut Controls, workspace: &mut Workspac
                 ("Select all", Action::SelectAll),
                 ("Deselect", Action::Deselect),
             ] {
-                if ui.button(label).clicked() {
+                if ui
+                    .add_enabled(
+                        document_open || matches!(action, Action::New | Action::Open),
+                        egui::Button::new(label),
+                    )
+                    .clicked()
+                {
                     actions.push(action);
                     ui.close();
                 }
@@ -48,7 +65,14 @@ pub fn toolbar(ui: &mut egui::Ui, state: &mut Controls, workspace: &mut Workspac
             ("Undo", Icon::Undo, Action::Undo),
             ("Redo", Icon::Redo, Action::Redo),
         ] {
-            if icon_button(ui, label, icon, false, false).clicked() {
+            if ui
+                .add_enabled_ui(
+                    document_open || matches!(action, Action::New | Action::Open),
+                    |ui| icon_button(ui, label, icon, false, false),
+                )
+                .inner
+                .clicked()
+            {
                 actions.push(action);
             }
         }
@@ -56,6 +80,6 @@ pub fn toolbar(ui: &mut egui::Ui, state: &mut Controls, workspace: &mut Workspac
         ui.label(state.tool.name());
     });
     ui.separator();
-    options(ui, state, &mut actions);
+    ui.add_enabled_ui(document_open, |ui| options(ui, state, &mut actions));
     actions
 }
