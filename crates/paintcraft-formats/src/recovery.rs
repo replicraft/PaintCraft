@@ -17,7 +17,10 @@ use paintcraft_document::Document;
 use std::{
     fs::{self, File, OpenOptions},
     path::{Path, PathBuf},
-    sync::Mutex,
+    sync::{
+        Mutex,
+        atomic::{AtomicU64, Ordering},
+    },
     time::SystemTime,
 };
 use uuid::Uuid;
@@ -59,13 +62,13 @@ struct JournalState {
     orphans: Vec<(Uuid, u64)>,
     blocked: bool,
     cleared: bool,
-    epoch: u64,
 }
 #[derive(Debug)]
 pub struct Recovery {
     dir: PathBuf,
     session: Uuid,
     state: Mutex<JournalState>,
+    epoch: AtomicU64,
     _lock: File,
 }
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -77,6 +80,14 @@ pub struct Found {
     /// Zero denotes a validated legacy standalone checkpoint.
     pub sequence: u64,
 }
+/// Owner-scoped publication fence. A coordinator invalidates first, then queues
+/// cleanup before admitting work under the returned token.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct RecoveryToken {
+    session: Uuid,
+    epoch: u64,
+}
+
 #[derive(Clone, Debug)]
 pub struct Checkpoint {
     pub sequence: u64,
@@ -213,12 +224,45 @@ impl Recovery {
             dir: dir.to_owned(),
             session,
             state: Mutex::new(JournalState::default()),
+            epoch: AtomicU64::new(0),
             _lock: lock,
         })
     }
     pub fn session(&self) -> Uuid {
         self.session
     }
+    pub fn token(&self) -> RecoveryToken {
+        RecoveryToken {
+            session: self.session,
+            epoch: self.epoch.load(Ordering::Acquire),
+        }
+    }
+    pub fn is_current(&self, token: RecoveryToken) -> bool {
+        token.session == self.session && token.epoch == self.epoch.load(Ordering::Acquire)
+    }
+    pub fn invalidate(&self) -> Result<RecoveryToken> {
+        let previous = self
+            .epoch
+            .try_update(Ordering::AcqRel, Ordering::Acquire, |value| {
+                value.checked_add(1)
+            })
+            .map_err(|_| Error::new(ErrorCode::ResourceLimit, "recovery epoch exhausted"))?;
+        Ok(RecoveryToken {
+            session: self.session,
+            epoch: previous + 1,
+        })
+    }
+    fn check_token(&self, token: RecoveryToken) -> Result<()> {
+        if self.is_current(token) {
+            Ok(())
+        } else {
+            Err(Error::new(
+                ErrorCode::OperationCancelled,
+                "recovery publication was superseded",
+            ))
+        }
+    }
+
     /// Compatibility entry point. Validate untrusted bytes using native admission.
     pub fn checkpoint(&self, bytes: &[u8], original: Option<&Path>) -> Result<()> {
         if bytes.len() as u64 > SNAPSHOT_BYTES_MAX {
@@ -239,18 +283,38 @@ impl Recovery {
         document: &Document,
         original: Option<&Path>,
     ) -> Result<Checkpoint> {
-        self.checkpoint_impl(document, original, |_| Ok(()))
+        self.checkpoint_document_at(self.token(), document, original)
     }
+    pub fn checkpoint_document_at(
+        &self,
+        token: RecoveryToken,
+        document: &Document,
+        original: Option<&Path>,
+    ) -> Result<Checkpoint> {
+        self.checkpoint_at_impl(token, document, original, |_| Ok(()))
+    }
+    #[cfg(test)]
     fn checkpoint_impl(
         &self,
         document: &Document,
         original: Option<&Path>,
+        barrier: impl FnMut(Phase) -> Result<()>,
+    ) -> Result<Checkpoint> {
+        self.checkpoint_at_impl(self.token(), document, original, barrier)
+    }
+    fn checkpoint_at_impl(
+        &self,
+        token: RecoveryToken,
+        document: &Document,
+        original: Option<&Path>,
         mut barrier: impl FnMut(Phase) -> Result<()>,
     ) -> Result<Checkpoint> {
+        self.check_token(token)?;
         let mut state = self
             .state
             .lock()
             .map_err(|_| Error::new(ErrorCode::StorageFailed, "recovery coordinator poisoned"))?;
+        self.check_token(token)?;
         if state.blocked {
             return Err(Error::new(
                 ErrorCode::StorageFailed,
@@ -292,6 +356,7 @@ impl Recovery {
         let payload = Uuid::new_v4();
         let path = payload_path(&self.dir, self.session, payload);
         barrier(Phase::BeforePayload)?;
+        self.check_token(token)?;
         let mut encoding_error = None;
         let written = save::save_with(&path, false, remaining, |sink| {
             crate::pcnd::write_to(document, sink).inspect_err(|e| encoding_error = Some(e.clone()))
@@ -312,6 +377,7 @@ impl Recovery {
             .len();
         state.orphans.push((payload, bytes));
         barrier(Phase::AfterPayload)?;
+        self.check_token(token)?;
         let commit = Commit {
             sequence,
             previous: state.previous.clone(),
@@ -342,6 +408,7 @@ impl Recovery {
         state.sequence = sequence;
         state.previous = Some(hash(&record));
         barrier(Phase::AfterCommit)?;
+        self.check_token(token)?;
         let head = Head {
             sequence,
             commit_sha256: hash(&record),
@@ -402,22 +469,23 @@ impl Recovery {
     }
     /// Record discard durably before cleanup so an interrupted cleanup cannot revive it.
     pub fn clear(&self) -> Result<()> {
+        self.clear_at(self.invalidate()?)
+    }
+    /// Called in the same FIFO before work using this token. Stale cleanup cannot
+    /// remove a newer episode. Invalidation itself never waits for filesystem work.
+    pub fn clear_at(&self, token: RecoveryToken) -> Result<()> {
+        self.check_token(token)?;
         let mut state = self
             .state
             .lock()
             .map_err(|_| Error::new(ErrorCode::StorageFailed, "recovery coordinator poisoned"))?;
-        state.epoch = state
-            .epoch
-            .checked_add(1)
-            .ok_or_else(|| Error::new(ErrorCode::ResourceLimit, "recovery epoch exhausted"))?;
+        self.check_token(token)?;
         if let Err(error) = clear_owned(&self.dir, self.session) {
             state.blocked = true;
             return Err(error);
         }
-        let epoch = state.epoch;
         *state = JournalState {
             cleared: true,
-            epoch,
             ..Default::default()
         };
         Ok(())

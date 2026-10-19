@@ -355,3 +355,73 @@ fn recovery_payloads_cannot_follow_symlinks_outside_the_store() {
     fs::remove_dir_all(dir).unwrap();
     fs::remove_dir_all(outside).unwrap();
 }
+
+#[test]
+fn publication_fences_reject_old_jobs_and_cross_owner_tokens() {
+    let dir = scratch();
+    let recovery = Recovery::start(&dir).unwrap();
+    let other = Recovery::start(&dir).unwrap();
+    let old = recovery.token();
+    recovery
+        .checkpoint_document_at(old, &document(1), None)
+        .unwrap();
+    let current = recovery.invalidate().unwrap();
+    recovery.clear_at(current).unwrap();
+    assert_eq!(
+        recovery
+            .checkpoint_document_at(old, &document(2), None)
+            .unwrap_err()
+            .code,
+        ErrorCode::OperationCancelled
+    );
+    assert_eq!(
+        other
+            .checkpoint_document_at(current, &document(2), None)
+            .unwrap_err()
+            .code,
+        ErrorCode::OperationCancelled
+    );
+    recovery
+        .checkpoint_document_at(current, &document(3), None)
+        .unwrap();
+    assert_eq!(
+        recovery.clear_at(old).unwrap_err().code,
+        ErrorCode::OperationCancelled
+    );
+    drop(recovery);
+    assert!(
+        Recovery::read_checkpoint(&only(&dir).checkpoint)
+            .unwrap()
+            .same_semantics(&document(3))
+    );
+    drop(other);
+    fs::remove_dir_all(dir).unwrap();
+}
+
+#[test]
+fn invalidation_during_encoding_stops_old_publication_before_the_head() {
+    for phase in [
+        Phase::BeforePayload,
+        Phase::AfterPayload,
+        Phase::AfterCommit,
+    ] {
+        let dir = scratch();
+        let recovery = Recovery::start(&dir).unwrap();
+        recovery.checkpoint_document(&document(1), None).unwrap();
+        let old = recovery.token();
+        let result = recovery.checkpoint_at_impl(old, &document(2), None, |at| {
+            if at == phase {
+                recovery.invalidate().unwrap();
+            }
+            Ok(())
+        });
+        assert_eq!(result.unwrap_err().code, ErrorCode::OperationCancelled);
+        recovery.clear_at(recovery.token()).unwrap();
+        drop(recovery);
+        assert!(
+            Recovery::scan(&dir).is_empty(),
+            "late work cannot resurrect cleared data"
+        );
+        fs::remove_dir_all(dir).unwrap();
+    }
+}

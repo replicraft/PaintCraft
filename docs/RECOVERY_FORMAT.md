@@ -51,6 +51,13 @@ A missing/corrupt latest payload falls back to the preceding retained checkpoint
 With no valid head, the journal can be reconstructed only from sequence 1. Files whose
 validity cannot be established are retained and reported.
 
+Background jobs carry an owner-scoped `RecoveryToken`. Invalidation advances a checked
+atomic epoch without waiting on filesystem work. Checkpoint publication checks that
+token at admission and before commit/head publication. The coordinator queues cleanup
+under the new token before admitting a new episode; superseded checkpoint and cleanup
+jobs cannot recreate or remove the newer episode. Backend serialization keeps in-flight
+old publication ahead of accepted cleanup even if invalidation occurs during a file write.
+
 Discard durably publishes the session-specific marker before deleting its files. A
 scanner finishes interrupted discard rather than reviving old segments. Subsequent
 completed edits may begin a new episode after successful cleanup. Only canonical owned
