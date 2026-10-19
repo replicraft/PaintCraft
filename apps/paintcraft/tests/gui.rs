@@ -7,7 +7,7 @@ use std::path::PathBuf;
 
 use eframe::egui::{Event, Key, Modifiers, PointerButton, Pos2, Vec2};
 use egui_kittest::Harness;
-use egui_kittest::kittest::Queryable;
+use egui_kittest::kittest::{NodeT, Queryable};
 use paintcraft::App;
 use paintcraft_types::Rgba;
 
@@ -860,4 +860,59 @@ fn escape_discards_text_and_keyboard_focus_in_a_field_keeps_typing_out_of_the_ca
     h.run();
     assert_eq!(publications(&h), before);
     assert!(!h.state().editor().is_editing_text());
+}
+
+#[test]
+fn layers_can_be_moved_deleted_and_restored_from_the_panel() {
+    let mut h = harness();
+    with_layer(&mut h);
+    let ids = || h.state().editor().document().roots.clone();
+    let [bottom, top] = <[uuid::Uuid; 2]>::try_from(ids()).unwrap();
+    let before = publications(&h);
+    h.get_by_label("Move down").click();
+    h.run();
+    assert_eq!(h.state().editor().document().roots, [top, bottom]);
+    assert_eq!(publications(&h), before + 1);
+    assert!(
+        h.get_by_label("Move down").accesskit_node().is_disabled(),
+        "already at the bottom"
+    );
+    h.get_by_label("Delete layer").click();
+    h.run();
+    assert_eq!(
+        h.state().editor().document().roots,
+        [bottom],
+        "the target (top) layer was deleted"
+    );
+    assert_eq!(
+        h.state().editor().target(),
+        Some(bottom),
+        "the target moved to a layer that exists"
+    );
+    h.get_by_label("Undo").click();
+    h.run();
+    assert_eq!(h.state().editor().document().roots, [top, bottom]);
+}
+
+#[test]
+fn renaming_and_opacity_apply_once_on_commit_not_per_keystroke() {
+    let mut h = harness();
+    with_layer(&mut h);
+    let layer = h.state().editor().target().unwrap();
+    let before = publications(&h);
+    let field = h.get_by_label("Layer name");
+    field.focus();
+    h.run();
+    h.key_combination_modifiers(Modifiers::COMMAND, &[Key::A]);
+    h.run();
+    h.get_by_label("Layer name").type_text("Sky");
+    h.run();
+    assert_eq!(publications(&h), before, "typing alone publishes nothing");
+    h.key_press(Key::Enter);
+    h.run();
+    assert_eq!(
+        h.state().editor().layer_properties(layer).map(|p| p.0),
+        Some("Sky".to_owned())
+    );
+    assert_eq!(publications(&h), before + 1);
 }

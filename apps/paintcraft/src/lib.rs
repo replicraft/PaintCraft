@@ -33,6 +33,10 @@ mod code {
     pub const VISIBLE: u64 = 6;
     pub const SELECT_ALL: u64 = 7;
     pub const DESELECT: u64 = 8;
+    pub const RENAME: u64 = 9;
+    pub const OPACITY: u64 = 10;
+    pub const DELETE: u64 = 11;
+    pub const MOVE: u64 = 12;
 }
 
 const DEFAULT_SIZE: (u32, u32) = (320, 320);
@@ -85,6 +89,9 @@ pub struct App {
     /// The variant highlighted in the first-visit picker.
     picking: Option<ClassicVariant>,
     applied_variant: Option<ClassicVariant>,
+    /// Edit buffers for the selected layer's name and opacity, committed on release.
+    name_edit: Option<(Uuid, String)>,
+    opacity_edit: Option<(Uuid, u8)>,
 }
 
 fn token(ctx: &egui::Context, code: u64) -> u64 {
@@ -127,6 +134,8 @@ impl App {
             settings: Settings::default(),
             picking: None,
             applied_variant: None,
+            name_edit: None,
+            opacity_edit: None,
         };
         if let Some(p) = path.filter(|p| p.exists())
             && let Err(e) = app.open_path(&p)
@@ -697,12 +706,93 @@ impl App {
             });
         }
         ui.separator();
-        ui.label(
-            match target.and_then(|t| self.editor.document().layers.get(&t)) {
-                Some(l) => format!("Drawing on: {}", l.name),
-                None => "Drawing on: (no layer)".to_owned(),
-            },
-        );
+        let Some(t) = target else {
+            ui.label("Drawing on: (no layer)");
+            return;
+        };
+        let Some((name, opacity, index)) = self.editor.layer_properties(t) else {
+            return;
+        };
+        ui.label(format!("Drawing on: {name}"));
+        let top = self.editor.document().roots.len() - 1;
+
+        // Name: edited locally, applied when the field loses focus.
+        let buf = match &mut self.name_edit {
+            Some(b) if b.0 == t => b,
+            other => other.insert((t, name.clone())),
+        };
+        ui.horizontal(|ui| {
+            let label = ui.label("Layer name");
+            let r = ui
+                .add(egui::TextEdit::singleline(&mut buf.1))
+                .labelled_by(label.id);
+            if r.lost_focus() {
+                if buf.1 != name {
+                    let rename = Action::Rename {
+                        layer: t,
+                        name: buf.1.clone(),
+                    };
+                    self.editor.request(token(&ctx, code::RENAME), rename);
+                }
+            } else if !r.has_focus() {
+                buf.1.clone_from(&name);
+            }
+        });
+
+        // Opacity: a drag is one transaction, applied on release.
+        let obuf = match &mut self.opacity_edit {
+            Some(b) if b.0 == t => b,
+            other => other.insert((t, opacity)),
+        };
+        ui.horizontal(|ui| {
+            let label = ui.label("Opacity");
+            let r = ui
+                .add(egui::DragValue::new(&mut obuf.1).range(0..=255))
+                .labelled_by(label.id);
+            if r.drag_stopped() || r.lost_focus() {
+                if obuf.1 != opacity {
+                    let set = Action::SetOpacity {
+                        layer: t,
+                        opacity: obuf.1,
+                    };
+                    self.editor.request(token(&ctx, code::OPACITY), set);
+                }
+            } else if !r.dragged() && !r.has_focus() {
+                obuf.1 = opacity;
+            }
+        });
+
+        ui.horizontal(|ui| {
+            if ui
+                .add_enabled(index < top, egui::Button::new("Move up"))
+                .clicked()
+            {
+                self.request(
+                    &ctx,
+                    code::MOVE,
+                    Action::MoveLayer {
+                        layer: t,
+                        to_index: index + 1,
+                    },
+                );
+            }
+            if ui
+                .add_enabled(index > 0, egui::Button::new("Move down"))
+                .clicked()
+            {
+                self.request(
+                    &ctx,
+                    code::MOVE,
+                    Action::MoveLayer {
+                        layer: t,
+                        to_index: index - 1,
+                    },
+                );
+            }
+            if ui.button("Delete layer").clicked() {
+                self.request(&ctx, code::DELETE, Action::DeleteLayer { layer: t });
+            }
+        });
     }
 
     fn confirm_dialog(&mut self, ui: &mut egui::Ui) {

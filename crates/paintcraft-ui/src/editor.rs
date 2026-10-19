@@ -134,6 +134,22 @@ pub enum Action {
         corners: Option<((i64, i64), (i64, i64))>,
     },
     AddLayer,
+    DeleteLayer {
+        layer: Uuid,
+    },
+    /// Move within the stack; index 0 is the bottom layer.
+    MoveLayer {
+        layer: Uuid,
+        to_index: usize,
+    },
+    Rename {
+        layer: Uuid,
+        name: String,
+    },
+    SetOpacity {
+        layer: Uuid,
+        opacity: u8,
+    },
     SetVisible {
         layer: Uuid,
         visible: bool,
@@ -392,6 +408,17 @@ impl Editor {
             self.target = Some(id);
         }
         ok
+    }
+
+    /// The properties of one layer, for the layer editor.
+    pub fn layer_properties(&self, id: Uuid) -> Option<(String, u8, usize)> {
+        let doc = self.document();
+        let l = doc.layers.get(&id)?;
+        Some((
+            l.name.clone(),
+            l.opacity,
+            doc.roots.iter().position(|r| *r == id)?,
+        ))
     }
 
     pub fn layers(&self) -> Vec<LayerRow> {
@@ -795,6 +822,38 @@ impl Editor {
                 self.commit(vec![op], "Selection changed");
             }
             Action::AddLayer => self.add_layer(),
+            Action::DeleteLayer { layer } => {
+                let op = Value::object([
+                    ("op", Value::str("layer.delete")),
+                    ("layer_ref", layer_ref(layer)),
+                ]);
+                self.draw(vec![op], "Layer deleted");
+                self.retarget();
+            }
+            Action::MoveLayer { layer, to_index } => {
+                let op = Value::object([
+                    ("op", Value::str("layer.reorder")),
+                    ("layer_ref", layer_ref(layer)),
+                    ("to_index", Value::Int(to_index as i64)),
+                ]);
+                self.draw(vec![op], "Layer moved");
+            }
+            Action::Rename { layer, name } => {
+                let op = Value::object([
+                    ("op", Value::str("layer.set_properties")),
+                    ("layer_ref", layer_ref(layer)),
+                    ("name", Value::str(name)),
+                ]);
+                self.draw(vec![op], "Layer renamed");
+            }
+            Action::SetOpacity { layer, opacity } => {
+                let op = Value::object([
+                    ("op", Value::str("layer.set_properties")),
+                    ("layer_ref", layer_ref(layer)),
+                    ("opacity_u8", Value::Int(i64::from(opacity))),
+                ]);
+                self.draw(vec![op], "Layer opacity changed");
+            }
             Action::SetVisible { layer, visible } => {
                 let op = Value::object([
                     ("op", Value::str("layer.set_properties")),
@@ -1517,6 +1576,95 @@ mod tests {
         e.run_pending();
         e.pointer_down((5, 5));
         assert!(!e.is_editing_text() && e.status().contains("hidden"));
+    }
+
+    #[test]
+    fn layer_management_actions_are_single_undoable_transactions() {
+        let mut e = editor();
+        let bottom = e.document().roots[0];
+        let top = e.target().unwrap();
+        assert_eq!(e.layer_properties(top).map(|p| p.2), Some(1));
+        let mut n = 100;
+        let mut act = |e: &mut Editor, a: Action| {
+            n += 1;
+            e.request(n, a);
+            e.run_pending()
+        };
+        assert_eq!(
+            act(
+                &mut e,
+                Action::MoveLayer {
+                    layer: top,
+                    to_index: 0
+                }
+            ),
+            1
+        );
+        assert_eq!(e.document().roots, [top, bottom]);
+        assert_eq!(
+            act(
+                &mut e,
+                Action::MoveLayer {
+                    layer: top,
+                    to_index: 0
+                }
+            ),
+            0,
+            "already there"
+        );
+        assert_eq!(
+            act(
+                &mut e,
+                Action::Rename {
+                    layer: top,
+                    name: "Sky".into()
+                }
+            ),
+            1
+        );
+        assert_eq!(
+            act(
+                &mut e,
+                Action::Rename {
+                    layer: top,
+                    name: "Sky".into()
+                }
+            ),
+            0,
+            "same name changes nothing"
+        );
+        assert_eq!(
+            act(
+                &mut e,
+                Action::SetOpacity {
+                    layer: top,
+                    opacity: 128
+                }
+            ),
+            1
+        );
+        assert_eq!(e.layer_properties(top), Some(("Sky".into(), 128, 0)));
+        // Deleting the target moves the target to a layer that exists; undo brings the layer back intact.
+        assert_eq!(act(&mut e, Action::DeleteLayer { layer: top }), 1);
+        assert_eq!(e.target(), Some(bottom));
+        assert!(e.layer_properties(top).is_none());
+        assert_eq!(act(&mut e, Action::Undo), 1);
+        assert_eq!(e.layer_properties(top), Some(("Sky".into(), 128, 0)));
+        // Acting on a layer that no longer exists fails cleanly.
+        act(&mut e, Action::DeleteLayer { layer: bottom });
+        let epoch = e.publications();
+        assert_eq!(
+            act(
+                &mut e,
+                Action::Rename {
+                    layer: bottom,
+                    name: "x".into()
+                }
+            ),
+            0
+        );
+        assert_eq!(e.publications(), epoch);
+        assert!(e.status().contains("failed"), "{}", e.status());
     }
 
     #[test]
