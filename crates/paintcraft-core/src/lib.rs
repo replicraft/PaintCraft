@@ -5,4 +5,5 @@ pub mod document;
 pub mod execute;
 pub mod ids;
 pub mod raster;
+pub mod render;
 pub mod session;

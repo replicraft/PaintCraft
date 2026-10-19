@@ -225,19 +225,37 @@ impl RasterLayer {
         Ok(())
     }
 
+    /// Copy the samples of layer-local row `ly`, columns `[x0, x0 + out.len()/4)`,
+    /// into `out`. The span must lie inside the layer.
+    pub fn read_span(&self, ly: i64, x0: i64, out: &mut [u8]) {
+        let (ty, y) = tile_split(ly);
+        let mut x = x0;
+        let mut rest = &mut *out;
+        while !rest.is_empty() {
+            let (tx, lx) = tile_split(x);
+            let n = ((TILE_EDGE - lx) as usize).min(rest.len() / 4);
+            let (head, tail) = std::mem::take(&mut rest).split_at_mut(n * 4);
+            match self.tiles.get(&TileCoord { tx, ty }) {
+                Some(t) => {
+                    let start = ((y * TILE_EDGE + lx) * 4) as usize;
+                    head.copy_from_slice(&t.0[start..start + n * 4]);
+                }
+                None => head
+                    .as_chunks_mut::<4>()
+                    .0
+                    .iter_mut()
+                    .for_each(|px| *px = self.default.0),
+            }
+            rest = tail;
+            x += n as i64;
+        }
+    }
+
     /// Every stored sample, row-major and tightly packed, one row per call.
     pub fn for_each_row(&self, mut sink: impl FnMut(&[u8])) {
         let mut row = vec![0u8; self.width as usize * 4];
         for y in 0..i64::from(self.height) {
-            let (ty, ly) = tile_split(y);
-            for (x, out) in row.as_chunks_mut::<4>().0.iter_mut().enumerate() {
-                let (tx, lx) = tile_split(x as i64);
-                let px = self
-                    .tiles
-                    .get(&TileCoord { tx, ty })
-                    .map_or(self.default, |t| t.at(lx, ly));
-                *out = px.0;
-            }
+            self.read_span(y, 0, &mut row);
             sink(&row);
         }
     }
@@ -345,6 +363,27 @@ mod tests {
             samples,
             [255, 0, 0, 0, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255]
         );
+    }
+
+    #[test]
+    fn read_span_crosses_tiles_and_matches_get() {
+        let mut a = adm();
+        let mut l = RasterLayer::new(600, 2, Rgba([1, 1, 1, 1]));
+        l.fill_rect(
+            &Rect::new(250, 1, 12, 1).unwrap(),
+            RED,
+            BlendMode::Replace,
+            &mut a,
+        )
+        .unwrap();
+        let mut buf = vec![0u8; 20 * 4];
+        l.read_span(1, 245, &mut buf);
+        for (i, px) in buf.as_chunks::<4>().0.iter().enumerate() {
+            assert_eq!(Rgba(*px), l.get(245 + i as i64, 1), "x = {}", 245 + i);
+        }
+        let mut whole = Vec::new();
+        l.for_each_row(|r| whole.extend_from_slice(r));
+        assert_eq!(whole.len(), 600 * 2 * 4);
     }
 
     #[test]
