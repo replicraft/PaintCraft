@@ -104,3 +104,44 @@ disposed on the worker. A completed claim becomes the current editor's handoff s
 Its lock remains held until a checkpoint/save is confirmed or the user explicitly
 discards that document. Tests cover changed/deleted sources, edits/ABA during reads,
 new Save As choices, cancellation, unavailable replacement storage and deferred handoff.
+
+
+## Captured native save attempts
+
+`saved-attempts/` is the only child namespace included in general recovery discovery.
+Each captured native save has an independent ordinary recovery owner, immutable PCND
+snapshot, commit/head, and `<owner>.save.json`. Active owner locks suppress offers;
+source claims protect orphaned snapshots during restore. The additional `save.json`
+filename and its safe-save staging names belong to that same owner and are reclaimed
+under its durable discard marker. The snapshot survives removal of the original file.
+Restoring it creates unsaved, unbound work and confirms new protection before retiring
+the source. Stored receipts never grant write or binding authority in a new session.
+
+The private `paintcraft.saved-attempt/v1` envelope contains `schema`, `body`, and the
+SHA-256 of canonical body JSON. Body fields are owner UUID, editor session UUID, document
+UUID, source StateId, decimal save sequence/binding generation, native save operation,
+phase, and optional `paintcraft.file-operation/v1` receipt. Identity, field, checksum,
+phase and stamp validation are bounded to 256 KiB; malformed evidence is retained.
+Receipt damage does not invalidate an independently validated semantic snapshot.
+
+Phases are `capturing` (before snapshot publication), `captured` (complete snapshot),
+`prepared` (staging validated, receipt persisted before user-visible replacement), and
+`finished` (observed save outcome). Capturing/captured records have no receipt. Prepared
+records explicitly have unknown replacement, unconfirmed durability and no
+acknowledgement: a process can exit on either side of replacement before recording its
+final result. Finished records preserve the real outcome and original operation ID,
+sequence and binding generation. A later in-process reconciliation can persist a revised
+finished receipt for that same attempt without repeating replacement. Restarted UI
+currently offers document recovery; destination reconciliation from persisted evidence
+remains a separate pending tranche.
+
+Admission uses one cooperative `.admission.lock`, a 64-owner limit, 1,024-entry cap
+(with file slots reserved for new publication), and a conservative 4 GiB disk policy
+that reserves a whole maximum 1 GiB snapshot plus 64 MiB metadata slack before starting.
+Unrelated and corrupt files consume admission rather than being deleted automatically.
+Scanning this fixed namespace is separately capped at 1,024 entries. These bounds do
+not qualify physical disk/RSS behavior, external writers, network filesystems or power
+loss. If configured retention cannot be established, the native save is not attempted
+and its captured document remains available in memory; the UI distinguishes confirmed
+restart copies from volatile work. Successful saves or explicit forget requests enqueue
+retirement through the same native FIFO, preserving failed cleanup for inspection.

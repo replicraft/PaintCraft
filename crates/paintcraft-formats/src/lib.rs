@@ -5,5 +5,6 @@ pub mod image;
 pub mod pcnd;
 pub mod png;
 pub mod recovery;
+pub mod save_recovery;
 pub use paintcraft_platform::save;
 pub mod zip;

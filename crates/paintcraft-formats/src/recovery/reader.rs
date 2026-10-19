@@ -2,12 +2,15 @@
 use super::*;
 
 pub(super) fn scan_report(dir: &Path) -> ScanReport {
+    scan_bounded(dir, 100_000)
+}
+pub(super) fn scan_bounded(dir: &Path, entry_limit: usize) -> ScanReport {
     let mut report = ScanReport::default();
     let Ok(entries) = fs::read_dir(dir) else {
         return report;
     };
     for (count, entry) in entries.enumerate() {
-        if count >= 100_000 {
+        if count >= entry_limit {
             report.issues.push(
                 "Recovery directory scan limit reached; remaining entries were retained".into(),
             );

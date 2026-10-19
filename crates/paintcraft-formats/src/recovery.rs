@@ -114,6 +114,35 @@ enum Phase {
     BeforeGc,
 }
 
+/// Publish newly created directory entries from the leaf through the first
+/// existing parent. Later payload barriers may rely on this namespace surviving.
+pub(crate) fn ensure_directory(dir: &Path) -> Result<()> {
+    let mut missing = Vec::new();
+    for ancestor in dir.ancestors().filter(|p| !p.as_os_str().is_empty()) {
+        match fs::metadata(ancestor) {
+            Ok(metadata) if metadata.is_dir() => break,
+            Ok(_) => {
+                return Err(Error::new(
+                    ErrorCode::StorageFailed,
+                    "recovery parent is not a directory",
+                ));
+            }
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => missing.push(ancestor),
+            Err(error) => return Err(storage("cannot inspect recovery parent", &error)),
+        }
+    }
+    fs::create_dir_all(dir).map_err(|e| storage("cannot create recovery directory", &e))?;
+    for created in missing {
+        sync_directory(created)?;
+        let parent = created
+            .parent()
+            .filter(|p| !p.as_os_str().is_empty())
+            .unwrap_or_else(|| Path::new("."));
+        sync_directory(parent)?;
+    }
+    Ok(())
+}
+
 fn sync_directory(dir: &Path) -> Result<()> {
     File::open(dir)
         .and_then(|f| f.sync_all())
@@ -154,7 +183,7 @@ fn owned(name: &str, session: Uuid) -> bool {
     };
     if matches!(
         suffix,
-        "lock" | "json" | "pcnd" | "cleared" | "head-0.json" | "head-1.json"
+        "lock" | "json" | "pcnd" | "cleared" | "head-0.json" | "head-1.json" | "save.json"
     ) {
         return true;
     }
@@ -210,7 +239,7 @@ fn remove_if_present(path: &Path) -> Result<()> {
 }
 impl Recovery {
     pub fn start(dir: &Path) -> Result<Self> {
-        fs::create_dir_all(dir).map_err(|e| storage("cannot create recovery directory", &e))?;
+        ensure_directory(dir)?;
         let session = Uuid::new_v4();
         let lock = OpenOptions::new()
             .read(true)
@@ -499,7 +528,25 @@ impl Recovery {
         Self::scan_report(dir).found
     }
     pub fn scan_report(dir: &Path) -> ScanReport {
-        reader::scan_report(dir)
+        let mut report = reader::scan_report(dir);
+        let saves = dir.join(crate::save_recovery::DIRECTORY);
+        match fs::symlink_metadata(&saves) {
+            Ok(metadata) if metadata.is_dir() && !metadata.file_type().is_symlink() => {
+                let extra = reader::scan_bounded(&saves, crate::save_recovery::FILES_MAX);
+                report.found.extend(extra.found);
+                report.issues.extend(extra.issues);
+            }
+            Ok(_) => report
+                .issues
+                .push("Invalid saved-attempt recovery directory was retained".into()),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+            Err(error) => report.issues.push(format!(
+                "Cannot inspect saved-attempt recovery: {}",
+                error.kind()
+            )),
+        }
+        report.found.sort_by_key(|found| found.modified);
+        report
     }
     /// Refuse to remove a live session's store.
     pub fn discard(dir: &Path, session: Uuid) -> Result<()> {
