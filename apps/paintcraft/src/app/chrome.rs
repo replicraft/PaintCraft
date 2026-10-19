@@ -326,6 +326,15 @@ impl App {
                     )],
                 );
             }
+            if self.experience() == Experience::Studio && ui.button("Layer properties…").clicked()
+            {
+                self.dispatch_chrome(
+                    &ctx,
+                    vec![paintcraft_ui::actions::Action::Layer(
+                        paintcraft_ui::actions::LayerAction::Properties,
+                    )],
+                );
+            }
             if ui.button("Delete layer").clicked() {
                 self.request(&ctx, code::DELETE, Action::DeleteLayer { layer: t });
             }
@@ -337,7 +346,12 @@ impl App {
             return;
         };
         let ctx = ui.ctx().clone();
+        if let Confirm::LayerProperties(draft) = confirm {
+            self.layer_properties_dialog(&ctx, draft);
+            return;
+        }
         let (title, text, go) = match &confirm {
+            Confirm::LayerProperties(_) => unreachable!("properties handled above"),
             Confirm::DiscardForNew
             | Confirm::DiscardForOpen(_)
             | Confirm::DiscardForRecovery(_)
@@ -401,6 +415,7 @@ impl App {
             ui.horizontal(|ui| {
                 if ui.button(go).clicked() {
                     match confirm {
+                        Confirm::LayerProperties(_) => unreachable!("properties handled above"),
                         Confirm::DiscardForNew => self.new_document(),
                         Confirm::DiscardForOpen(p) => {
                             if let Err(e) = self.open_path(&p) {

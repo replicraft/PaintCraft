@@ -1,5 +1,7 @@
 //! Studio presentation. Actions are executed by the application shell.
 mod history;
+mod properties;
+pub use properties::{LayerProperties, PropertiesResponse, layer_properties_dialog};
 mod tabs;
 mod toolbar;
 mod windows;

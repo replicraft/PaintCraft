@@ -15,6 +15,7 @@ pub enum LayerAction {
     MoveUp,
     MoveDown,
     MoveBottom,
+    Properties,
 }
 
 pub const LAYERS: &[LayerAction] = &[
@@ -30,11 +31,13 @@ pub const LAYERS: &[LayerAction] = &[
     LayerAction::MoveUp,
     LayerAction::MoveDown,
     LayerAction::MoveBottom,
+    LayerAction::Properties,
 ];
 
 impl LayerAction {
     pub(super) fn descriptor(self) -> Descriptor {
         let (label, shortcut) = match self {
+            Self::Properties => ("Layer properties…", Some((Key::F4, Modifiers::NONE))),
             Self::Add => (
                 "Add new layer",
                 Some((Key::N, Modifiers::COMMAND | Modifiers::SHIFT)),

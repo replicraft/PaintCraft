@@ -76,6 +76,7 @@ const DEFAULT_SIZE: (u32, u32) = (320, 320);
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum Confirm {
+    LayerProperties(layers::PropertiesDraft),
     DiscardForNew,
     DiscardForOpen(PathBuf),
     DiscardForRecovery(Found),

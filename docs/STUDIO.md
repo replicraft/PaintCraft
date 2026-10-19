@@ -142,7 +142,7 @@ existing actions, not a claim of complete menu or CLI coverage.
 ## Layer workflows
 
 The Studio Layers menu exposes working add, delete, duplicate, visibility,
-navigation and stack-move actions through the shared action registry. Its labels,
+navigation, stack moves and a Layer Properties dialog through the shared action registry. Its labels,
 shortcuts and boundary states follow the supplied `ima5ge5.png` reference where
 implemented. Navigation selects a persistent layer ID without adding history;
 stack moves retain that identity and add one recorded transaction. Duplication
@@ -155,5 +155,33 @@ Executable UI tests cover menu and shortcut dispatch, one-entry undo/redo,
 independent pixels, hidden copied layers, stable targeting on reorder and the
 empty layer stack. The engine tests cover complete storage semantics and failure
 rollback; these are not independent Paint.NET reference results. Layers remain a
-partial menu: merge down, import, transforms and the properties dialog are deferred.
+partial menu: merge down, import and transforms are deferred.
 The floating window still lacks layer thumbnails and reference-matched controls.
+
+### Staged Layer Properties
+
+F4, the Layers menu and the floating Layers window open the same modal dialog.
+Name, visibility and opacity are staged locally. Apply submits one
+`layer.set_properties` transaction, producing one history entry when values change;
+applying unchanged values adds no history. Cancel, Escape and outside dismissal
+publish nothing. Names use the existing 1024-character command limit.
+
+The dialog captures the active tab, persistent layer ID and publication revision.
+It rejects stale/foreign ownership before applying, and the existing modal guard
+blocks document switching, canvas input, shortcuts, and workspace close while it
+is open. Native save completion may still acknowledge its captured document;
+dialog Apply creates a later revision. No live document preview is advertised.
+The current engine supports the dialog's name/visibility/opacity fields; blend
+mode selection remains deferred with broader layer/compositor support.
+
+UI tests exercise staged multi-field edits, single-entry undo/redo, PCND save/reopen,
+Cancel/Escape, unchanged Apply and invalid names. Unit coverage rejects stale
+revisions and foreign tab ownership. The ignored native-GPU review test is:
+
+```sh
+cargo test -p paintcraft --test gui properties::render_layer_properties_for_review -- --ignored
+```
+
+Its output is `/tmp/paintcraft-layer-properties.png`. The supplied reference shows
+the Layer Properties menu entry and F4 shortcut, but not the dialog contents;
+this dialog is a functional native baseline, not an asserted reference capture.

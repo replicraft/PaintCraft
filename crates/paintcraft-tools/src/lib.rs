@@ -123,6 +123,12 @@ pub enum Action {
         layer: Uuid,
         to_index: usize,
     },
+    SetLayerProperties {
+        layer: Uuid,
+        name: String,
+        visible: bool,
+        opacity: u8,
+    },
     Rename {
         layer: Uuid,
         name: String,

@@ -29,7 +29,7 @@ pub fn toolbar(
         });
         ui.menu_button("Layers", |ui| {
             for (index, &action) in actions::LAYERS.iter().enumerate() {
-                if matches!(index, 3 | 4 | 8) {
+                if matches!(index, 3 | 4 | 8 | 12) {
                     ui.separator();
                 }
                 if actions::menu_item(ui, Action::Layer(action), context) {

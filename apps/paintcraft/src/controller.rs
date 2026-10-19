@@ -554,6 +554,21 @@ impl Editor {
                 ]);
                 self.draw(vec![op], "Layer moved");
             }
+            Action::SetLayerProperties {
+                layer,
+                name,
+                visible,
+                opacity,
+            } => {
+                let op = Value::object([
+                    ("op", Value::str("layer.set_properties")),
+                    ("layer_ref", layer_ref(layer)),
+                    ("name", Value::str(name)),
+                    ("visible", Value::Bool(visible)),
+                    ("opacity_u8", Value::Int(i64::from(opacity))),
+                ]);
+                self.draw(vec![op], "Layer properties changed");
+            }
             Action::Rename { layer, name } => {
                 let op = Value::object([
                     ("op", Value::str("layer.set_properties")),

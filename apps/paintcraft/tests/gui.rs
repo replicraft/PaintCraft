@@ -123,5 +123,7 @@ mod tabs;
 
 #[path = "gui/layers.rs"]
 mod layers;
+#[path = "gui/properties.rs"]
+mod properties;
 #[path = "gui/shortcuts.rs"]
 mod shortcuts;
