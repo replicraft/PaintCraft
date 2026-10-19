@@ -141,7 +141,12 @@
       "status": "partial",
       "evidence": [
         "crates/paintcraft-formats/src/recovery.rs",
-        "crates/paintcraft-platform/src/save.rs"
+        "crates/paintcraft-platform/src/save.rs",
+        "crates/paintcraft-formats/src/recovery/reader.rs",
+        "crates/paintcraft-formats/src/recovery/tests.rs",
+        "apps/paintcraft/src/saving.rs",
+        "crates/paintcraft-runtime/src/io.rs",
+        "docs/RECOVERY_FORMAT.md"
       ],
       "remaining_or_scope": "Streaming native saves, bounded Tokio FIFO, stale binding/session guards and captured-state acknowledgement pass; checksummed recovery segments and two retained heads pass; background recovery, reconciliation and full fault/platform matrix remain.",
       "acceptance": "SAVE-01\u201309 failure injection including disk full/slow sink and stale Save As completion."

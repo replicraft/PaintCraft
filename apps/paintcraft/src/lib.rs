@@ -239,7 +239,18 @@ impl App {
     /// Protect work with crash-recovery checkpoints in `dir`, and offer whatever an
     /// earlier crashed session left behind.
     pub fn with_recovery(mut self, dir: PathBuf) -> App {
-        self.recoverable = Recovery::scan(&dir);
+        let report = Recovery::scan_report(&dir);
+        self.recoverable = report.found;
+        if !report.issues.is_empty() {
+            self.editor.set_status(
+                report
+                    .issues
+                    .into_iter()
+                    .take(3)
+                    .collect::<Vec<_>>()
+                    .join("; "),
+            );
+        }
         self.recovery_dir = Some(dir);
         self.attach_recovery();
         self
@@ -371,7 +382,7 @@ impl App {
         {
             renderer.cancel(handle);
         }
-        self.editor.discard_checkpoint();
+        let previous_cleanup = self.editor.discard_checkpoint();
         if let Some(saving) = &mut self.saving {
             saving.new_session();
         }
@@ -380,6 +391,10 @@ impl App {
         self.texture = None;
         self.rendered.clear();
         self.attach_recovery();
+        if let Err(error) = previous_cleanup {
+            self.editor
+                .set_status(format!("Previous recovery cleanup failed: {error}"));
+        }
     }
 
     /// Open a `.pcnd` document or import a PNG, BMP or JPEG picture.
@@ -1012,6 +1027,29 @@ impl App {
     }
 
     /// Offer work left behind by a crashed session.
+    fn recover_found(&mut self, item: &Found) -> paintcraft_core::types::Result<()> {
+        let editor = Editor::recover(&item.checkpoint)?;
+        self.install(editor);
+        self.bound = None;
+        if let Some(original) = &item.original {
+            self.path_text.clone_from(original);
+        }
+        // A recovered document must acquire its own durable protection before
+        // deleting the orphan that supplied its only persisted content.
+        if self.editor.autosave() {
+            if let Some(dir) = &self.recovery_dir
+                && let Err(error) = Recovery::discard(dir, item.session)
+            {
+                self.editor.set_status(format!(
+                    "Recovered; previous recovery cleanup failed: {error}"
+                ));
+            }
+        } else {
+            self.editor.set_status("Recovered; the original recovery copy is retained because a new checkpoint could not be confirmed.");
+        }
+        Ok(())
+    }
+
     fn recovery_dialog(&mut self, ui: &mut egui::Ui) {
         if self.recoverable.is_empty() {
             return;
@@ -1032,26 +1070,26 @@ impl App {
                 ));
                 ui.horizontal(|ui| {
                     if ui.button("Recover").clicked() {
-                        match Editor::recover(&item.checkpoint) {
-                            Ok(e) => {
-                                self.install(e);
-                                self.bound = None;
-                                if let Some(o) = &item.original {
-                                    self.path_text.clone_from(o);
-                                }
-                                if let Some(dir) = &self.recovery_dir {
-                                    Recovery::discard(dir, item.session);
-                                }
+                        match self.recover_found(&item) {
+                            Ok(()) => {
                                 self.recoverable.remove(0);
                             }
-                            Err(e) => self.editor.set_status(format!("Cannot recover: {e}")),
+                            Err(error) => {
+                                self.editor.set_status(format!("Cannot recover: {error}"))
+                            }
                         }
                     }
-                    if ui.button("Discard").clicked() {
-                        if let Some(dir) = &self.recovery_dir {
-                            Recovery::discard(dir, item.session);
+                    if ui.button("Discard").clicked()
+                        && let Some(dir) = &self.recovery_dir
+                    {
+                        match Recovery::discard(dir, item.session) {
+                            Ok(()) => {
+                                self.recoverable.remove(0);
+                            }
+                            Err(error) => self
+                                .editor
+                                .set_status(format!("Cannot discard recovery: {error}")),
                         }
-                        self.recoverable.remove(0);
                     }
                     if ui.button("Ask later").clicked() {
                         self.recoverable.clear();
@@ -1340,7 +1378,23 @@ impl App {
                         ""
                     }
                 );
-                ui.add(egui::Label::new(status).truncate());
+                let response = ui.add(egui::Label::new(status).truncate());
+                if let Some(info) = self.editor.checkpoint_info() {
+                    let when = info.completed.elapsed().map_or_else(
+                        |_| "at a recorded earlier time".to_owned(),
+                        |elapsed| format!("{} seconds ago", elapsed.as_secs()),
+                    );
+                    response.on_hover_text(format!(
+                        "Recovery checkpoint {} confirmed {}. {}",
+                        info.sequence,
+                        when,
+                        if info.state_id == self.editor.document().state_id {
+                            "This checkpoint contains the current document."
+                        } else {
+                            "Newer edits are not in this checkpoint yet."
+                        }
+                    ));
+                }
                 if let Some((x, y)) = self.hover_doc {
                     ui.separator();
                     ui.label(format!("{x}, {y}"));
@@ -1577,5 +1631,68 @@ mod render_worker_tests {
                 .all(|pixel| pixel == &[255; 4])
         );
         assert_eq!(app.renderer.as_ref().unwrap().reserved_bytes(), 0);
+    }
+}
+
+#[cfg(test)]
+mod recovery_handoff_tests {
+    use super::*;
+    fn orphan(dir: &Path) -> Found {
+        let recovery = Recovery::start(dir).unwrap();
+        let doc = paintcraft_document::new_document(
+            12,
+            12,
+            Some(Rgba([17, 22, 33, 255])),
+            47,
+            paintcraft_document::POLICY,
+        )
+        .unwrap();
+        recovery.checkpoint_document(&doc, None).unwrap();
+        drop(recovery);
+        Recovery::scan(dir).into_iter().next().unwrap()
+    }
+    #[test]
+    fn restored_work_is_checkpointed_before_the_old_orphan_is_discarded() {
+        let dir =
+            std::env::temp_dir().join(format!("paintcraft-recovery-handoff-{}", Uuid::new_v4()));
+        let old = orphan(&dir);
+        let mut app = App::new(None).with_recovery(dir.clone());
+        app.recover_found(&old).unwrap();
+        assert!(!old.checkpoint.exists());
+        assert!(app.editor.is_dirty());
+        assert!(app.editor.has_checkpoint());
+        let expected = app.editor.document_snapshot();
+        drop(app); // crash immediately after handoff, before the periodic timer
+        let found = Recovery::scan(&dir);
+        assert_eq!(found.len(), 1);
+        assert!(
+            Recovery::read_checkpoint(&found[0].checkpoint)
+                .unwrap()
+                .same_semantics(&expected)
+        );
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+    #[test]
+    fn failed_new_recovery_store_preserves_the_original_orphan() {
+        let dir = std::env::temp_dir().join(format!(
+            "paintcraft-recovery-handoff-failed-{}",
+            Uuid::new_v4()
+        ));
+        let old = orphan(&dir);
+        let mut app = App::new(None).with_recovery(dir.clone());
+        let blocked = dir.join("not-a-directory");
+        std::fs::write(&blocked, b"block new recovery creation").unwrap();
+        app.recovery_dir = Some(blocked);
+        app.recover_found(&old).unwrap();
+        assert!(app.editor.is_dirty());
+        assert!(old.checkpoint.exists());
+        assert!(
+            app.editor
+                .status()
+                .contains("original recovery copy is retained")
+        );
+        drop(app);
+        assert_eq!(Recovery::scan(&dir).len(), 1);
+        std::fs::remove_dir_all(dir).unwrap();
     }
 }

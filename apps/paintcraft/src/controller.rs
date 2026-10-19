@@ -14,7 +14,7 @@ use paintcraft_core::types::{Result, Rgba};
 use paintcraft_document::{Document, POLICY, new_document};
 use paintcraft_editor::execute::Selection;
 use paintcraft_editor::session::Session;
-use paintcraft_formats::recovery::Recovery;
+use paintcraft_formats::recovery::{Checkpoint, Recovery};
 use paintcraft_formats::{pcnd, save};
 use uuid::Uuid;
 
@@ -46,6 +46,7 @@ pub struct Editor {
     status: String,
     recovery: Option<Recovery>,
     checkpointed: Option<(Uuid, u64)>,
+    checkpoint_info: Option<Checkpoint>,
     save_outcome: Option<bool>,
 }
 
@@ -90,6 +91,7 @@ impl Editor {
             status: String::new(),
             recovery: None,
             checkpointed: None,
+            checkpoint_info: None,
             save_outcome: None,
         }
     }
@@ -97,13 +99,7 @@ impl Editor {
     /// Open work recovered from a checkpoint. It counts as unsaved, and it is not
     /// bound to any file until the user saves it.
     pub fn recover(checkpoint: &Path) -> Result<Editor> {
-        let bytes = std::fs::read(checkpoint).map_err(|e| {
-            paintcraft_core::types::Error::new(
-                paintcraft_core::types::ErrorCode::StorageFailed,
-                format!("cannot read the checkpoint: {}", e.kind()),
-            )
-        })?;
-        let mut e = Editor::with_document(pcnd::read(&bytes)?, None);
+        let mut e = Editor::with_document(Recovery::read_checkpoint(checkpoint)?, None);
         e.session.mark_unsaved();
         e.status = "Recovered unsaved work".into();
         Ok(e)
@@ -113,6 +109,7 @@ impl Editor {
     pub fn attach_recovery(&mut self, recovery: Recovery) {
         self.recovery = Some(recovery);
         self.checkpointed = None;
+        self.checkpoint_info = None;
     }
 
     /// Write a checkpoint if there is unsaved work newer than the last one.
@@ -125,11 +122,15 @@ impl Editor {
         let Some(recovery) = &self.recovery else {
             return false;
         };
-        let result = pcnd::write(self.session.document())
-            .and_then(|bytes| recovery.checkpoint(&bytes, self.path.as_deref()));
+        let result = recovery.checkpoint_document(self.session.document(), self.path.as_deref());
         match result {
-            Ok(()) => {
+            Ok(info) => {
                 self.checkpointed = Some(key);
+                if !info.warnings.is_empty() {
+                    self.status =
+                        format!("Recovery checkpoint saved; {}", info.warnings.join("; "));
+                }
+                self.checkpoint_info = Some(info);
                 true
             }
             Err(e) => {
@@ -149,20 +150,26 @@ impl Editor {
     }
 
     /// The user chose to throw this work away: its checkpoint must not come back.
-    pub fn discard_checkpoint(&mut self) {
-        if let Some(r) = &self.recovery {
-            r.clear();
-        }
+    pub fn discard_checkpoint(&mut self) -> Result<()> {
+        self.checkpoint_info = None;
         self.checkpointed = None;
+        if let Some(r) = &self.recovery {
+            r.clear()?;
+        }
+        Ok(())
     }
 
     pub fn set_status(&mut self, status: impl Into<String>) {
         self.status = status.into();
     }
 
-    /// Whether a checkpoint of the current work exists (the document is dirty and was checkpointed).
+    /// Whether unsaved work has a confirmed recovery checkpoint; later edits may be newer.
     pub fn has_checkpoint(&self) -> bool {
         self.checkpointed.is_some() && self.is_dirty()
+    }
+
+    pub fn checkpoint_info(&self) -> Option<&Checkpoint> {
+        self.checkpoint_info.as_ref()
     }
 
     pub fn document_snapshot(&self) -> std::sync::Arc<Document> {
@@ -641,12 +648,13 @@ impl Editor {
         }
     }
 
-    pub(crate) fn acknowledge_saved_state(&mut self, state: Uuid) {
+    pub(crate) fn acknowledge_saved_state(&mut self, state: Uuid) -> Result<()> {
         self.session.mark_saved_state(state);
         // Keep protection for newer edits made while this snapshot was saving.
         if !self.is_dirty() {
-            self.discard_checkpoint();
+            self.discard_checkpoint()?;
         }
+        Ok(())
     }
 
     fn save(&mut self) {
@@ -661,12 +669,10 @@ impl Editor {
         if outcome.is_success() {
             self.save_outcome = Some(true);
             self.session.mark_saved();
-            // The file now holds everything; the checkpoint is obsolete.
-            if let Some(r) = &self.recovery {
-                r.clear();
-            }
-            self.checkpointed = None;
-            self.status = format!("Saved {}", path.display());
+            self.status = match self.discard_checkpoint() {
+                Ok(()) => format!("Saved {}", path.display()),
+                Err(error) => format!("Saved {}; recovery cleanup failed: {error}", path.display()),
+            };
         } else {
             // Dirty state stays: an unconfirmed or unknown save is not a clean document.
             self.status = format!("Not saved safely: {}", outcome.reasons.join("; "));
@@ -1071,7 +1077,7 @@ mod tests {
         assert!(back.document().same_semantics(&want));
         assert_eq!(back.document().layers[&layer].raster.get(3, 3).a(), 255);
         assert!(back.is_dirty(), "recovered work is unsaved");
-        Recovery::discard(&dir, found[0].session);
+        Recovery::discard(&dir, found[0].session).unwrap();
         std::fs::remove_dir_all(dir).unwrap();
     }
 

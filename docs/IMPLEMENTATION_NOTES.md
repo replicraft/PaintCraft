@@ -93,7 +93,12 @@ interrupted discard and GC tests pass on the local macOS filesystem (SAVE-07/08)
 Durable discard markers prevent cleanup interruptions from reviving old data. GC
 failure does not negate an already durable checkpoint. Disk/record limits are
 provisional; power-loss, platform, process-wide admission and performance qualification
-remain pending. Ordered background autosave integration remains separate work.
+remain pending. The desktop streams typed snapshots into this store, reports scan/cleanup failures,
+and shows the last confirmed checkpoint generation/time and freshness in the status
+tooltip. Recovery handoff durably protects the restored document before discarding its
+original orphan; a failed handoff keeps the old copy. Tests cover an immediate second
+crash and an unavailable new store. Ordered background autosave integration remains
+separate work.
 
 ## Ordered native saves
 

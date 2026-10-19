@@ -325,3 +325,33 @@ fn missing_directory_and_empty_orphan_locks_are_handled_without_inventing_recove
     assert!(Recovery::scan(&dir.join("missing")).is_empty());
     fs::remove_dir_all(dir).unwrap();
 }
+
+#[cfg(unix)]
+#[test]
+fn recovery_payloads_cannot_follow_symlinks_outside_the_store() {
+    use std::os::unix::fs::symlink;
+    let dir = scratch();
+    let outside = scratch();
+    let recovery = Recovery::start(&dir).unwrap();
+    recovery.checkpoint_document(&document(1), None).unwrap();
+    let session = recovery.session();
+    let (record, _) = load_commit(&dir, session, 1).unwrap();
+    let payload = payload_path(&dir, session, record.payload);
+    let target = outside.join("unrelated.pcnd");
+    fs::copy(&payload, &target).unwrap();
+    let original = fs::read(&target).unwrap();
+    fs::remove_file(&payload).unwrap();
+    symlink(&target, &payload).unwrap();
+    drop(recovery);
+    let report = Recovery::scan_report(&dir);
+    assert!(report.found.is_empty());
+    assert!(!report.issues.is_empty());
+    Recovery::discard(&dir, session).unwrap();
+    assert_eq!(
+        fs::read(&target).unwrap(),
+        original,
+        "discard removes only the owned symlink"
+    );
+    fs::remove_dir_all(dir).unwrap();
+    fs::remove_dir_all(outside).unwrap();
+}

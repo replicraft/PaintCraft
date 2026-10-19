@@ -62,7 +62,10 @@ path display string, 4 GiB retained snapshot payloads per writer, 64 retained/ta
 segments, 256 owned files per session, and 100,000 directory entries per scan. Payloads
 use the native parser's document/raster admission limits too. These are resource limits,
 not measured memory or performance qualifications. Process-wide disk admission remains
-pending. Both recovery reading and the desktop restore path use bounded reads.
+pending. Both recovery reading and the desktop restore path use bounded reads. The status tooltip
+reports the last confirmed generation/time and whether it contains the current state.
+A restored document is checkpointed under its new session before its old orphan is
+discarded. Failed handoff retains the original copy.
 
 Validated legacy `<session>.pcnd` / `<session>.json` checkpoints remain recoverable.
 Malformed legacy data is retained with a diagnostic. New checkpoints use the journal.

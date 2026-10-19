@@ -158,7 +158,7 @@ impl App {
                         self.editor.set_path(pending.path.clone());
                         self.path_text = pending.path.to_string_lossy().into_owned();
                         self.bound = Some(pending.path.clone());
-                        self.editor.acknowledge_saved_state(pending.source);
+                        let cleanup = self.editor.acknowledge_saved_state(pending.source);
                         self.editor.set_status(format!(
                             "Saved {}{}",
                             pending.path.display(),
@@ -168,6 +168,12 @@ impl App {
                                 ""
                             }
                         ));
+                        if let Err(error) = cleanup {
+                            self.editor.set_status(format!(
+                                "Saved {}; recovery cleanup failed: {error}",
+                                pending.path.display()
+                            ));
+                        }
                     }
                     if !success {
                         self.editor.set_status(format!(

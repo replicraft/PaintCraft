@@ -37,11 +37,25 @@ pub(super) fn scan_report(dir: &Path) -> ScanReport {
                 .push("Invalid recovery lock file was retained".into());
             continue;
         }
-        let Ok(lock) = OpenOptions::new().read(true).write(true).open(&path) else {
-            continue;
+        let lock = match OpenOptions::new().read(true).write(true).open(&path) {
+            Ok(lock) => lock,
+            Err(error) => {
+                report.issues.push(format!(
+                    "Cannot open recovery lock for {session}: {}; data retained",
+                    error.kind()
+                ));
+                continue;
+            }
         };
-        if lock.try_lock().is_err() {
-            continue;
+        match lock.try_lock() {
+            Ok(()) => {}
+            Err(std::fs::TryLockError::WouldBlock) => continue,
+            Err(error) => {
+                report.issues.push(format!(
+                    "Cannot acquire recovery lock for {session}: {error}; data retained"
+                ));
+                continue;
+            }
         }
         let marker = tombstone(dir, session);
         if marker.exists() {
