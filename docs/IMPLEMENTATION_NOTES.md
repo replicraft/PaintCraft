@@ -123,6 +123,11 @@ native save can finish the handoff. Exports do not release this native protectio
 Tests cover deferred publication, cancellation, ABA, deleted/changed sources, newer
 Save As choices and unavailable storage. Explicit orphan discard is also queued.
 
+A session records the acknowledged saved state as an optional UUID. Absence is distinct
+from every admitted StateId, including the all-zero UUID. A regression test restores
+such a snapshot through the native I/O lifecycle and verifies that it remains dirty,
+receives its own checkpoint, and retires the old source only after protection.
+
 ## Ordered native saves
 
 The desktop enables Tokio 1.53.3 (`rt`, `sync`) only at the native I/O consumer.

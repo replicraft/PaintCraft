@@ -80,7 +80,7 @@ pub struct Session {
     selection: Selection,
     epoch: u64,
     history: History,
-    saved_state: Uuid,
+    saved_state: Option<Uuid>,
     staged_pixels: u64,
 }
 
@@ -89,7 +89,7 @@ impl Session {
     pub fn new(doc: Document) -> Session {
         let doc = Arc::new(doc);
         Session {
-            saved_state: doc.state_id,
+            saved_state: Some(doc.state_id),
             history: History::new(Snapshot {
                 document: Arc::clone(&doc),
                 selection: Selection::Inactive,
@@ -147,12 +147,12 @@ impl Session {
 
     /// Native dirty state: the current content differs from the last saved content.
     pub fn is_dirty(&self) -> bool {
-        self.doc.state_id != self.saved_state
+        Some(self.doc.state_id) != self.saved_state
     }
 
     /// The document has changes no file contains (for example, recovered work).
     pub fn mark_unsaved(&mut self) {
-        self.saved_state = Uuid::nil();
+        self.saved_state = None;
     }
 
     pub fn mark_saved(&mut self) {
@@ -161,7 +161,7 @@ impl Session {
 
     /// A confirmed save acknowledges its captured state, even if editing advanced.
     pub fn mark_saved_state(&mut self, state: Uuid) {
-        self.saved_state = state;
+        self.saved_state = Some(state);
     }
 
     /// Parse and execute a batch. Errors never change the session.

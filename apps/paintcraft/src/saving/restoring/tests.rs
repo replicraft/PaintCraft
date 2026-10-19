@@ -375,3 +375,32 @@ fn layer_name_and_opacity_drafts_are_not_lost_to_a_prepared_restore() {
         std::fs::remove_dir_all(dir).unwrap();
     }
 }
+
+#[test]
+fn a_recovered_zero_state_uuid_is_unsaved_and_gets_a_protective_checkpoint() {
+    let dir = scratch();
+    let owner = Recovery::start(&dir).unwrap();
+    let mut document = Editor::new_document(7, 5).unwrap().document().clone();
+    document.state_id = Uuid::nil(); // Valid on-disk UUID, not an absence marker.
+    owner.checkpoint_document(&document, None).unwrap();
+    drop(owner);
+    let offered = Recovery::scan(&dir).into_iter().next().unwrap();
+    let mut app = recovery_app(dir.clone());
+    app.do_recover(offered.clone());
+    drain(&mut app);
+    assert_eq!(app.editor.document().state_id, Uuid::nil());
+    assert!(
+        app.editor.is_dirty(),
+        "recovered work has no native save regardless of UUID value"
+    );
+    assert!(app.editor.has_checkpoint());
+    assert!(
+        !offered.checkpoint.exists(),
+        "handoff retires the old source only after protection"
+    );
+    drop(app);
+    let found = Recovery::scan(&dir);
+    assert_eq!(found.len(), 1);
+    assert_eq!(found[0].state_id, Uuid::nil());
+    std::fs::remove_dir_all(dir).unwrap();
+}
