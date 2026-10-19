@@ -305,7 +305,7 @@ fn parse_manifest(bytes: &[u8]) -> Result<Manifest> {
         required_features.push(f.to_owned());
     }
     Ok(Manifest {
-        container_version: range(&m["container_version"], 0, 65_535, "container_version")?,
+        container_version: range(&m["container_version"], 1, 65_535, "container_version")?,
         document_schema: text(&m["document_schema"], "document_schema")?.to_owned(),
         required_features,
         document_sha256: sha_hex(&m["document_sha256"], "document_sha256")?,
