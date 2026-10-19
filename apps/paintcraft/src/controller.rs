@@ -10,6 +10,8 @@
 mod history;
 #[path = "controller/layers.rs"]
 mod layers;
+#[path = "controller/pointer.rs"]
+mod pointer;
 #[path = "controller/strokes.rs"]
 mod strokes;
 
@@ -365,57 +367,6 @@ impl Editor {
     pub fn gesture_points(&self) -> &[(i64, i64)] {
         self.tools.gesture_points()
     }
-    pub fn pointer_down(&mut self, point: (i64, i64)) {
-        if self.tools.gesture_in_progress() {
-            return;
-        }
-        self.commit_text();
-        let layer = match (
-            self.tool,
-            self.target
-                .filter(|id| self.document().layers.contains_key(id)),
-        ) {
-            (Tool::Select, t) => t.unwrap_or_else(Uuid::nil),
-            (_, Some(layer)) => layer,
-            (_, None) => {
-                self.status = "No editing target: add or choose a layer".into();
-                return;
-            }
-        };
-        if self.tool != Tool::Select && !self.document().layers[&layer].visible {
-            self.status = "The target layer is hidden; show it or choose another layer".into();
-            return;
-        }
-        if self.tool == Tool::Text {
-            self.tools.begin_text(layer, point);
-            self.status =
-                "Type your text; click elsewhere or press Ctrl+Enter to place it, Escape to cancel"
-                    .into();
-        } else {
-            self.tools.pointer_down(layer, point);
-        }
-    }
-    pub fn pointer_move(&mut self, point: (i64, i64)) {
-        self.tools.pointer_move(point);
-    }
-    pub fn pointer_up(&mut self) {
-        if let Some((token, action)) = self.tools.pointer_up() {
-            self.outbox.push(token, action);
-        }
-    }
-    pub fn cancel_gesture(&mut self) {
-        self.tools.cancel_gesture();
-    }
-    pub fn pointer_event(&mut self, event: paintcraft_input::PointerEvent) {
-        use paintcraft_input::PointerEvent;
-        match event {
-            PointerEvent::Down { at } => self.pointer_down(at),
-            PointerEvent::Move { at } => self.pointer_move(at),
-            PointerEvent::Up => self.pointer_up(),
-            PointerEvent::Cancel => self.cancel_gesture(),
-        }
-    }
-
     // ---- commands ---------------------------------------------------------------
 
     /// Queue a command for one user activation. `token` must be stable across

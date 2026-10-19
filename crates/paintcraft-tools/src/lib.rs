@@ -1,5 +1,6 @@
 //! Tool state machines produce intentions; the application publishes them.
 use paintcraft_core::types::Rgba;
+pub use paintcraft_input::PointerButton;
 use uuid::Uuid;
 const POINTS_PER_OP: usize = 65_536;
 const OPS_PER_BATCH: usize = 1024;
@@ -26,6 +27,16 @@ pub enum Tool {
 }
 
 impl Tool {
+    /// Native Studio color gestures. Other secondary-button tool policies remain
+    /// unavailable until their distinct selection/text/eraser semantics exist.
+    pub fn supports_button(self, button: PointerButton) -> bool {
+        button == PointerButton::Primary
+            || matches!(
+                self,
+                Self::Pencil | Self::Brush | Self::Fill | Self::Line | Self::Rect | Self::Ellipse
+            )
+    }
+
     pub const ALL: [Tool; 9] = [
         Tool::Pencil,
         Tool::Brush,
@@ -193,6 +204,7 @@ struct TextEdit {
 
 #[derive(Debug)]
 struct Gesture {
+    button: PointerButton,
     token: u64,
     layer: Uuid,
     tool: Tool,
@@ -241,19 +253,31 @@ impl ToolState {
         });
     }
     pub fn pointer_down(&mut self, layer: Uuid, at: (i64, i64)) {
-        if self.gesture.is_some() {
+        self.pointer_down_button(layer, at, PointerButton::Primary);
+    }
+    pub fn pointer_down_button(&mut self, layer: Uuid, at: (i64, i64), button: PointerButton) {
+        if self.gesture.is_some() || !self.tool.supports_button(button) {
             return;
         }
         self.next_gesture += 1;
+        let (color, fill) = if button == PointerButton::Primary {
+            (self.color, self.secondary)
+        } else {
+            (self.secondary, self.color)
+        };
         self.gesture = Some(Gesture {
+            button,
             token: self.next_gesture,
             layer,
             tool: self.tool,
-            color: self.color,
-            fill: self.secondary,
+            color,
+            fill,
             options: self.options,
             points: vec![at],
         });
+    }
+    pub fn gesture_button(&self) -> Option<PointerButton> {
+        self.gesture.as_ref().map(|g| g.button)
     }
     pub fn gesture_in_progress(&self) -> bool {
         self.gesture.is_some()
@@ -361,6 +385,12 @@ impl ToolState {
         self.gesture = None;
     }
     pub fn pointer_up(&mut self) -> Option<(u64, Action)> {
+        self.pointer_up_button(PointerButton::Primary)
+    }
+    pub fn pointer_up_button(&mut self, button: PointerButton) -> Option<(u64, Action)> {
+        if self.gesture_button() != Some(button) {
+            return None;
+        }
         let g = self.gesture.take()?;
         let (first, last) = (
             g.points[0],

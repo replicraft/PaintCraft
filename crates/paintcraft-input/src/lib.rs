@@ -1,8 +1,26 @@
 //! Frontend-independent input, after viewport-to-document mapping.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PointerButton {
+    Primary,
+    Secondary,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PointerEvent {
-    Down { at: (i64, i64) },
-    Move { at: (i64, i64) },
+    /// Legacy primary-button event.
+    Down {
+        at: (i64, i64),
+    },
+    ButtonDown {
+        at: (i64, i64),
+        button: PointerButton,
+    },
+    ButtonUp {
+        button: PointerButton,
+    },
+    Move {
+        at: (i64, i64),
+    },
     Up,
     Cancel,
 }
