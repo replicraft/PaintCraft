@@ -9,6 +9,9 @@ impl App {
         self.context = ctx.clone();
         let first_pass = ctx.current_pass_index() == 0;
         if first_pass {
+            self.poll_fonts();
+            #[cfg(target_os = "macos")]
+            self.poll_native_menu(&ctx);
             self.poll_dialog(&ctx);
             if !self.closing_workspace
                 && self.confirm.is_none()
@@ -18,7 +21,8 @@ impl App {
                 self.handle_global_input(ui);
             }
         }
-        if self.closing_workspace
+        if self.switching.is_some()
+            || self.closing_workspace
             || self.confirm.is_some()
             || self.tab_closing.is_some()
             || self.dialogs.as_ref().is_some_and(NativeDialogs::pending)
@@ -111,7 +115,7 @@ impl App {
                 });
             });
         });
-        if self.experience() == Experience::Classic {
+        if self.experience() == Experience::Classic && self.classic.layers {
             egui::Panel::right("layers")
                 .default_size(220.0)
                 .show(ui, |ui| {
@@ -124,7 +128,9 @@ impl App {
             .is_some_and(saving::NativeSaving::failed)
         {
             // Save diagnostics remain reachable even when the Layers window is hidden.
-            egui::Panel::bottom("studio-save-status").show(ui, |ui| self.incomplete_save_panel(ui));
+            egui::Panel::right("workspace-save-status")
+                .default_size(320.0)
+                .show(ui, |ui| self.incomplete_save_panel(ui));
         }
         if self.action_context().blocked {
             // A modal may consume the eventual release. Retire the gesture now
@@ -135,11 +141,7 @@ impl App {
         egui::CentralPanel::default()
             .frame(
                 egui::Frame::new()
-                    .fill(if self.experience() == Experience::Studio {
-                        Color32::from_rgb(191, 195, 200)
-                    } else {
-                        Color32::from_rgb(220, 225, 232)
-                    })
+                    .fill(paintcraft_ui::theme::workspace(ctx.theme()))
                     .inner_margin(20),
             )
             .show(ui, |ui| {
@@ -199,6 +201,9 @@ impl App {
         self.finish_save();
         self.poll_native_saves(&ctx);
         self.pump_tab_close(&ctx);
+        if first_pass {
+            self.pump_interface_switch(&ctx);
+        }
         if self.recovery_needs_init && !self.close_after_saves && !self.allow_close {
             ctx.request_repaint_after(Duration::from_millis(250));
         }

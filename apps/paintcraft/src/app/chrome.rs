@@ -31,7 +31,8 @@ impl App {
             zoom: self.zoom,
             pixel_grid: self.pixel_grid,
             can_fit_selection: matches!(self.editor.selection(), Selection::Rect(_)),
-            blocked: self.closing_workspace
+            blocked: self.switching.is_some()
+                || self.closing_workspace
                 || self.close_after_saves
                 || self.confirm.is_some()
                 || self.tab_closing.is_some()
@@ -41,20 +42,24 @@ impl App {
 
     pub(super) fn toolbar(&mut self, ui: &mut egui::Ui) {
         let ctx = ui.ctx().clone();
-        ui.horizontal(|ui| {
-            ui.strong("PaintCraft");
-            for (experience, label) in [
-                (Experience::Classic, "Classic"),
-                (Experience::Studio, "Studio"),
-            ] {
-                if ui
-                    .selectable_label(self.experience() == experience, label)
+        if self.experience() == Experience::Studio {
+            ui.horizontal(|ui| {
+                ui.strong("PaintCraft Studio");
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    if paintcraft_ui::widgets::icon_button(
+                        ui,
+                        "Settings…",
+                        paintcraft_ui::icons::Icon::Settings,
+                        false,
+                        false,
+                    )
                     .clicked()
-                {
-                    self.choose_experience(experience);
-                }
-            }
-        });
+                    {
+                        self.dispatch_chrome(&ctx, vec![paintcraft_ui::actions::Action::Settings]);
+                    }
+                });
+            });
+        }
         let mut controls = paintcraft_ui::chrome::Controls {
             tool: self.editor.tool,
             options: self.editor.options,
@@ -69,6 +74,7 @@ impl App {
                         ui,
                         self.variant(),
                         &mut controls,
+                        &mut self.classic,
                         action_context,
                     ),
                     Experience::Studio => paintcraft_studio::toolbar(
@@ -81,6 +87,9 @@ impl App {
             })
             .inner;
         self.apply_chrome(&ctx, controls, actions);
+        if self.experience() == Experience::Classic && self.editor.tool == Tool::Text {
+            self.classic_text_options(ui);
+        }
     }
 
     fn apply_chrome(
@@ -133,6 +142,7 @@ impl App {
                 Chrome::View(action) => self.dispatch_view_action(ctx, action),
                 Chrome::Layer(action) => self.dispatch_layer_action(ctx, action),
                 Chrome::Close => self.request_close_tab(self.active_tab_id(), ctx),
+                Chrome::Settings => self.open_settings(ctx),
                 Chrome::Interface => self.picking = Some(self.variant()),
                 Chrome::SelectTool(tool) => self.editor.select_tool(tool),
                 Chrome::SelectAll => {
@@ -352,10 +362,18 @@ impl App {
     }
 
     pub(super) fn confirm_dialog(&mut self, ui: &mut egui::Ui) {
+        if let Some(Confirm::SwitchInterface(target)) = self.confirm.clone() {
+            self.interface_switch_dialog(ui.ctx(), target);
+            return;
+        }
         let Some(confirm) = self.confirm.clone() else {
             return;
         };
         let ctx = ui.ctx().clone();
+        if let Confirm::Settings(draft) = confirm {
+            self.settings_dialog(&ctx, draft);
+            return;
+        }
         if let Confirm::Colors(draft) = confirm {
             self.classic_color_dialog(&ctx, draft);
             return;
@@ -369,7 +387,7 @@ impl App {
             return;
         }
         let (title, text, go) = match &confirm {
-            Confirm::Colors(_) | Confirm::Canvas(_) | Confirm::LayerProperties(_) => unreachable!("properties handled above"),
+            Confirm::Settings(_) | Confirm::SwitchInterface(_) | Confirm::Colors(_) | Confirm::Canvas(_) | Confirm::LayerProperties(_) => unreachable!("properties handled above"),
             Confirm::DiscardForNew
             | Confirm::DiscardForOpen(_)
             | Confirm::DiscardForRecovery(_)
@@ -433,7 +451,11 @@ impl App {
             ui.horizontal(|ui| {
                 if ui.button(go).clicked() {
                     match confirm {
-                        Confirm::Colors(_) | Confirm::Canvas(_) | Confirm::LayerProperties(_) => {
+                        Confirm::Settings(_)
+                        | Confirm::SwitchInterface(_)
+                        | Confirm::Colors(_)
+                        | Confirm::Canvas(_)
+                        | Confirm::LayerProperties(_) => {
                             unreachable!("properties handled above")
                         }
                         Confirm::DiscardForNew => self.new_document(),

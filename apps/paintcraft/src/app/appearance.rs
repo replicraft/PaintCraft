@@ -50,8 +50,33 @@ impl App {
         if self.settings.experience == experience {
             return;
         }
-        self.editor.cancel_gesture();
-        self.editor.commit_text();
+        let ctx = self.context.clone();
+        self.resolve_tab_input(&ctx);
+        if self.any_dirty_documents()
+            || self
+                .saving
+                .as_ref()
+                .is_some_and(|s| s.pending() || s.failed())
+        {
+            self.confirm = Some(Confirm::SwitchInterface(experience));
+        } else {
+            self.begin_interface_switch(experience, &ctx);
+        }
+    }
+
+    pub(super) fn adopt_experience(&mut self, experience: Experience) {
+        let size = match experience {
+            Experience::Classic => self.settings.canvas.new_size(),
+            Experience::Studio => STUDIO_SIZE,
+        };
+        let mut parked = self.other_workspace.take().unwrap_or_else(|| {
+            Box::new(tabs::WorkspaceDocuments::new(
+                size,
+                self.recovery_dir.is_some(),
+            ))
+        });
+        parked.swap(self);
+        self.other_workspace = Some(parked);
         self.settings.experience = experience;
         self.picking = (experience == Experience::Classic
             && self.settings.classic_variant.is_none())
@@ -88,23 +113,29 @@ impl App {
     pub(super) fn apply_style(&mut self, ctx: &egui::Context) {
         let v = self.variant();
         let experience = self.experience();
-        if self.applied_variant == Some((experience, v)) {
+        let appearance = match &self.confirm {
+            Some(Confirm::Settings(draft)) => draft.values.appearance,
+            _ => self.settings.appearance,
+        };
+        let theme = appearance.resolve(ctx.system_theme());
+        if self.applied_variant == Some((experience, v, appearance, theme)) {
             return;
         }
         if self.applied_variant.is_none() {
             paintcraft_ui::fonts::install(ctx);
         }
         ctx.options_mut(|options| options.zoom_with_keyboard = false);
-        let style = egui::Style {
-            visuals: egui::Visuals::light(),
-            ..Default::default()
-        };
-        ctx.set_style_of(egui::Theme::Light, style);
+        paintcraft_ui::theme::apply(ctx, theme);
         match experience {
-            Experience::Classic => paintcraft_classic::apply_style(ctx, v),
-            Experience::Studio => paintcraft_studio::apply_style(ctx),
+            Experience::Classic => paintcraft_classic::apply_style_for_theme(ctx, v, theme),
+            Experience::Studio => paintcraft_studio::apply_style_for_theme(ctx, theme),
         }
-        self.applied_variant = Some((experience, v));
+        ctx.send_viewport_cmd(egui::ViewportCommand::SetTheme(match appearance {
+            settings::Appearance::System => egui::viewport::SystemTheme::SystemDefault,
+            settings::Appearance::Light => egui::viewport::SystemTheme::Light,
+            settings::Appearance::Dark => egui::viewport::SystemTheme::Dark,
+        }));
+        self.applied_variant = Some((experience, v, appearance, theme));
     }
 
     /// First-visit picker, also reachable later from the toolbar.

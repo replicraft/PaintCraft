@@ -26,15 +26,15 @@ fn first_visit_shows_the_picker_with_v11_selected_and_remembers_the_choice() {
     assert!(!h.state().picker_open());
     drop(h);
 
-    // Changing it later goes through the Interface button.
+    // Changing it later goes through Settings.
     let mut h = harness_with(App::new(None).with_settings(dir.clone()), 1.0, false);
-    h.get_by_label("Interface").click();
+    h.get_by_label("Settings…").click();
     h.run();
-    assert!(h.state().picker_open());
+    assert!(!h.state().picker_open());
     h.get_by_role_and_label(eframe::egui::Role::RadioButton, "Paint v7")
         .click();
     h.run();
-    h.get_by_label("Continue").click();
+    h.get_by_label("Apply").click();
     h.run();
     assert_eq!(h.state().variant(), ClassicVariant::V7);
     assert_eq!(

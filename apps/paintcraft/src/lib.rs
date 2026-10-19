@@ -17,17 +17,26 @@ mod history;
 mod input;
 #[path = "app/layers.rs"]
 mod layers;
+#[cfg(target_os = "macos")]
+#[path = "app/native_menu.rs"]
+mod native_menu;
+#[path = "app/preferences.rs"]
+mod preferences;
 #[path = "app/recovery.rs"]
 mod recovery;
 #[path = "app/rendering.rs"]
 mod rendering;
 mod saving;
 pub mod settings;
+#[path = "app/switching.rs"]
+mod switching;
 #[path = "app/tabs.rs"]
 mod tabs;
 #[cfg(test)]
 #[path = "app/tests.rs"]
 mod tests;
+#[path = "app/text_ui.rs"]
+mod text_ui;
 #[path = "app/view.rs"]
 mod view;
 #[path = "app/window.rs"]
@@ -84,6 +93,8 @@ const STUDIO_SIZE: (u32, u32) = (320, 320);
 
 #[derive(Clone, Debug, PartialEq)]
 enum Confirm {
+    Settings(preferences::SettingsDraft),
+    SwitchInterface(Experience),
     Colors(colors::ColorDraft),
     Canvas(canvas_settings::CanvasDraft),
     LayerProperties(layers::PropertiesDraft),
@@ -123,6 +134,9 @@ struct RenderedFrame {
 type RenderKey = (Uuid, u64, u64);
 
 pub struct App {
+    #[cfg(target_os = "macos")]
+    native_menu: Option<paintcraft_platform::native_menu::NativeMenu>,
+    fonts: text_ui::FontState,
     context: egui::Context,
     ime_composing: bool,
     editor: Editor,
@@ -133,7 +147,10 @@ pub struct App {
     tab_close_wait: Option<Uuid>,
     tab_save_close: Option<(Uuid, Uuid)>,
     chrome_outbox: paintcraft_ui::outbox::Outbox<paintcraft_ui::chrome::Action>,
+    classic: paintcraft_classic::Workspace,
     studio: paintcraft_studio::Workspace,
+    other_workspace: Option<Box<tabs::WorkspaceDocuments>>,
+    switching: Option<switching::Switch>,
     gpu: Option<Arc<GpuRenderer>>,
     renderer: Option<Executor<RenderedFrame>>,
     pending_frame: Option<(RenderKey, JobHandle)>,
@@ -174,7 +191,12 @@ pub struct App {
     settings: Settings,
     /// The variant highlighted in the first-visit picker.
     picking: Option<ClassicVariant>,
-    applied_variant: Option<(Experience, ClassicVariant)>,
+    applied_variant: Option<(
+        Experience,
+        ClassicVariant,
+        settings::Appearance,
+        egui::Theme,
+    )>,
     /// Edit buffers for the selected layer's name and opacity, committed on release.
     name_edit: Option<(Uuid, String)>,
     opacity_edit: Option<(Uuid, u8)>,
@@ -199,6 +221,9 @@ impl App {
             |p| p.to_string_lossy().into_owned(),
         );
         let mut app = App {
+            #[cfg(target_os = "macos")]
+            native_menu: None,
+            fonts: Default::default(),
             context: Default::default(),
             ime_composing: false,
             editor: Editor::new_document(DEFAULT_SIZE.0, DEFAULT_SIZE.1)
@@ -210,7 +235,10 @@ impl App {
             tab_close_wait: None,
             tab_save_close: None,
             chrome_outbox: Default::default(),
+            classic: Default::default(),
             studio: Default::default(),
+            other_workspace: None,
+            switching: None,
             gpu: None,
             renderer: None,
             pending_frame: None,

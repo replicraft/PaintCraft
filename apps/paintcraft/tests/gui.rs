@@ -65,6 +65,11 @@ fn top_pixel(h: &Harness<App>, x: i64, y: i64) -> Rgba {
 
 /// Click "Add layer" so drawing happens on a fresh transparent layer.
 fn with_layer(h: &mut Harness<App>) {
+    if h.query_by_label("Add layer").is_none() {
+        h.get_by_role_and_label(eframe::egui::Role::Button, "Layers")
+            .click();
+        h.run();
+    }
     h.get_by_label("Add layer").click();
     h.run();
 }
@@ -147,3 +152,15 @@ mod canvas_settings;
 
 #[path = "gui/classic_colors.rs"]
 mod classic_colors;
+
+#[path = "gui/appearance.rs"]
+mod appearance;
+
+fn switch_interface(h: &mut Harness<App>, label: &str) {
+    h.get_by_label("Settings…").click();
+    h.run();
+    h.get_by_label(label).click();
+    h.run();
+    h.get_by_label("Apply").click();
+    h.run();
+}

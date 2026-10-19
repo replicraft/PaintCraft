@@ -73,7 +73,14 @@ fn layer_shortcuts_navigate_without_history_then_toggle_duplicate_and_reorder() 
     h.run();
     assert_eq!(h.state().editor().target(), Some(bottom));
     assert_eq!(publications(&h), before);
-    h.event(key(Key::Comma, Modifiers::COMMAND));
+    h.event(key(
+        Key::Comma,
+        if cfg!(target_os = "macos") {
+            Modifiers::COMMAND | Modifiers::SHIFT
+        } else {
+            Modifiers::COMMAND
+        },
+    ));
     h.run();
     assert!(!h.state().editor().document().layers[&bottom].visible);
     menu_action(&mut h, "Move layer to top");

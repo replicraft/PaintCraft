@@ -8,143 +8,166 @@ impl App {
         let ppp = ui.ctx().pixels_per_point();
         let (w, h) = self.editor.document().canvas;
         let size = View::with_scale((0.0, 0.0), self.zoom, ppp).canvas_size(w, h);
-        egui::ScrollArea::both()
-            .id_salt(("document-canvas", self.active_tab_id()))
-            .auto_shrink([false, false])
-            .show(ui, |ui| {
-                let canvas_size = Vec2::new(size.0, size.1);
-                let inset = (ui.available_size() - canvas_size) * 0.5;
-                ui.add_space(inset.y.max(0.0));
-                let (response, painter) = ui
-                    .horizontal(|ui| {
-                        ui.add_space(inset.x.max(0.0));
-                        ui.allocate_painter(canvas_size, Sense::click_and_drag())
-                    })
-                    .inner;
-                let rect = response.rect;
-                self.canvas_rect = Some(rect);
-                let visible_canvas = rect.intersect(painter.clip_rect());
-                let view = View::with_scale((rect.min.x, rect.min.y), self.zoom, ppp);
-                self.hover_doc = ui
-                    .input(|i| i.pointer.hover_pos())
-                    .filter(|p| visible_canvas.contains(*p))
-                    .and_then(|p| view.to_doc((p.x, p.y)));
+        let id = egui::Id::unique(self.active_tab_id());
+        let canvas_size = Vec2::new(size.0, size.1);
+        match self.experience() {
+            Experience::Classic => {
+                paintcraft_classic::canvas::canvas(ui, id, canvas_size, |ui, response, painter| {
+                    self.paint_canvas(ui, response, painter, first_pass)
+                })
+            }
+            Experience::Studio => {
+                paintcraft_studio::canvas::canvas(ui, id, canvas_size, |ui, response, painter| {
+                    self.paint_canvas(ui, response, painter, first_pass)
+                })
+            }
+        }
+    }
 
-                if first_pass {
-                    let events = ui.input(|i| i.events.clone());
-                    for event in events {
-                        match event {
-                            egui::Event::PointerButton {
-                                pos,
-                                button,
-                                pressed: true,
-                                ..
-                            } => {
-                                let button = match button {
-                                    egui::PointerButton::Primary => {
-                                        paintcraft_input::PointerButton::Primary
-                                    }
-                                    egui::PointerButton::Secondary
-                                        if self.experience() == Experience::Studio =>
-                                    {
-                                        paintcraft_input::PointerButton::Secondary
-                                    }
-                                    _ => continue,
-                                };
-                                if (visible_canvas.contains(pos)
-                                    && ui.ctx().layer_id_at(pos) == Some(painter.layer_id()))
-                                    && let Some(d) = view.to_doc_subpixel((pos.x, pos.y))
-                                {
-                                    self.editor.pointer_down_subpixel(d, button);
-                                }
+    fn paint_canvas(
+        &mut self,
+        ui: &mut egui::Ui,
+        response: egui::Response,
+        painter: egui::Painter,
+        first_pass: bool,
+    ) {
+        // Disabled chrome must not tint texture vertices: the modal owns the scrim.
+        let painter = egui::Painter::new(ui.ctx().clone(), painter.layer_id(), painter.clip_rect());
+        let ppp = ui.ctx().pixels_per_point();
+        let rect = response.rect;
+        self.canvas_rect = Some(rect);
+        let visible_canvas = rect.intersect(painter.clip_rect());
+        let view = View::with_scale((rect.min.x, rect.min.y), self.zoom, ppp);
+        self.hover_doc = ui
+            .input(|i| i.pointer.hover_pos())
+            .filter(|p| visible_canvas.contains(*p))
+            .and_then(|p| view.to_doc((p.x, p.y)));
+
+        if first_pass {
+            let events = ui.input(|i| i.events.clone());
+            for event in events {
+                match event {
+                    egui::Event::PointerButton {
+                        pos,
+                        button,
+                        pressed: true,
+                        ..
+                    } => {
+                        let button = match button {
+                            egui::PointerButton::Primary => {
+                                paintcraft_input::PointerButton::Primary
                             }
-                            egui::Event::PointerMoved(pos) => {
-                                if let Some(d) = view.to_doc_subpixel((pos.x, pos.y)) {
-                                    self.editor.pointer_move_subpixel(d);
-                                }
+                            egui::PointerButton::Secondary
+                                if self.experience() == Experience::Studio =>
+                            {
+                                paintcraft_input::PointerButton::Secondary
                             }
-                            egui::Event::PointerButton {
-                                pos,
-                                button,
-                                pressed: false,
-                                ..
-                            } => {
-                                let button = match button {
-                                    egui::PointerButton::Primary => {
-                                        paintcraft_input::PointerButton::Primary
-                                    }
-                                    egui::PointerButton::Secondary
-                                        if self.experience() == Experience::Studio =>
-                                    {
-                                        paintcraft_input::PointerButton::Secondary
-                                    }
-                                    _ => continue,
-                                };
-                                if self.editor.gesture_button() != Some(button) {
-                                    continue;
-                                }
-                                if let Some(d) = view.to_doc_subpixel((pos.x, pos.y)) {
-                                    self.editor.pointer_move_subpixel(d);
-                                }
-                                self.editor.pointer_up_button(button);
-                            }
-                            _ => {}
+                            _ => continue,
+                        };
+                        if (visible_canvas.contains(pos)
+                            && ui.ctx().layer_id_at(pos) == Some(painter.layer_id()))
+                            && let Some(d) = view.to_doc_subpixel((pos.x, pos.y))
+                        {
+                            self.editor.pointer_down_subpixel(d, button);
                         }
                     }
-                }
-
-                self.sync_texture(ui.ctx());
-
-                // Transparency checkerboard, then the composite. Display only: the document is untouched.
-                painter.rect_filled(rect, 0.0, Color32::from_gray(200));
-                let cell = 8.0 / ppp;
-                let visible = painter.clip_rect().intersect(rect);
-                let (mut y, mut row) = (
-                    rect.min.y + ((visible.min.y - rect.min.y) / cell).floor() * cell,
-                    ((visible.min.y - rect.min.y) / cell).floor() as i64,
-                );
-                while y < visible.max.y {
-                    let (mut x, mut col) = (
-                        rect.min.x + ((visible.min.x - rect.min.x) / cell).floor() * cell,
-                        ((visible.min.x - rect.min.x) / cell).floor() as i64,
-                    );
-                    while x < visible.max.x {
-                        if (row + col) % 2 == 0 {
-                            painter.rect_filled(
-                                Rect::from_min_size(Pos2::new(x, y), Vec2::splat(cell))
-                                    .intersect(rect),
-                                0.0,
-                                Color32::from_gray(235),
-                            );
+                    egui::Event::PointerMoved(pos) => {
+                        if let Some(d) = view.to_doc_subpixel((pos.x, pos.y)) {
+                            self.editor.pointer_move_subpixel(d);
                         }
-                        x += cell;
-                        col += 1;
                     }
-                    y += cell;
-                    row += 1;
+                    egui::Event::PointerButton {
+                        pos,
+                        button,
+                        pressed: false,
+                        ..
+                    } => {
+                        let button = match button {
+                            egui::PointerButton::Primary => {
+                                paintcraft_input::PointerButton::Primary
+                            }
+                            egui::PointerButton::Secondary
+                                if self.experience() == Experience::Studio =>
+                            {
+                                paintcraft_input::PointerButton::Secondary
+                            }
+                            _ => continue,
+                        };
+                        if self.editor.gesture_button() != Some(button) {
+                            continue;
+                        }
+                        if let Some(d) = view.to_doc_subpixel((pos.x, pos.y)) {
+                            self.editor.pointer_move_subpixel(d);
+                        }
+                        self.editor.pointer_up_button(button);
+                    }
+                    _ => {}
                 }
-                if let Some(t) = &self.texture {
-                    painter.image(
-                        t.id(),
-                        rect,
-                        Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)),
-                        Color32::WHITE,
-                    );
-                }
+            }
+        }
 
-                if self.pixel_grid {
-                    self.draw_pixel_grid(&painter, rect, &view);
-                }
-                self.draw_overlays(&painter, &view, ppp);
-                if let Some((x, y)) = self.pending_center.take() {
-                    let center = rect.min
-                        + Vec2::new(x * view.points_per_pixel(), y * view.points_per_pixel());
-                    ui.scroll_to_rect(
-                        Rect::from_center_size(center, Vec2::ZERO),
-                        Some(egui::Align::Center),
+        self.sync_texture(ui.ctx());
+
+        // Transparency checkerboard, then the composite. Display only: the document is untouched.
+        painter.rect_filled(
+            rect,
+            0.0,
+            if ui.visuals().dark_mode {
+                Color32::from_gray(85)
+            } else {
+                Color32::from_gray(200)
+            },
+        );
+        let cell = 8.0 / ppp;
+        let visible = painter.clip_rect().intersect(rect);
+        let (mut y, mut row) = (
+            rect.min.y + ((visible.min.y - rect.min.y) / cell).floor() * cell,
+            ((visible.min.y - rect.min.y) / cell).floor() as i64,
+        );
+        while y < visible.max.y {
+            let (mut x, mut col) = (
+                rect.min.x + ((visible.min.x - rect.min.x) / cell).floor() * cell,
+                ((visible.min.x - rect.min.x) / cell).floor() as i64,
+            );
+            while x < visible.max.x {
+                if (row + col) % 2 == 0 {
+                    painter.rect_filled(
+                        Rect::from_min_size(Pos2::new(x, y), Vec2::splat(cell)).intersect(rect),
+                        0.0,
+                        if ui.visuals().dark_mode {
+                            Color32::from_gray(105)
+                        } else {
+                            Color32::from_gray(235)
+                        },
                     );
                 }
-            });
+                x += cell;
+                col += 1;
+            }
+            y += cell;
+            row += 1;
+        }
+        if let Some(t) = &self.texture {
+            painter.image(
+                t.id(),
+                rect,
+                Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)),
+                Color32::WHITE,
+            );
+        }
+
+        if self.pixel_grid {
+            self.draw_pixel_grid(&painter, rect, &view);
+        }
+        self.draw_overlays(&painter, &view, ppp);
+        if let Some((x, y)) = self.pending_center.take() {
+            let center =
+                rect.min + Vec2::new(x * view.points_per_pixel(), y * view.points_per_pixel());
+            ui.scroll_to_rect(
+                Rect::from_center_size(center, Vec2::ZERO),
+                Some(egui::Align::Center),
+            );
+        }
     }
 
     /// Display-only feedback: the committed selection and the unpublished gesture.

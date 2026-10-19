@@ -93,7 +93,7 @@ fn a_drag_spread_over_many_frames_is_still_one_transaction() {
 fn a_frame_laid_out_twice_does_not_double_anything() {
     let mut h = harness_with(App::new(None), 1.0, true);
     let layers = h.state().editor().layers().len();
-    h.get_by_label("Add layer").click();
+    with_layer(&mut h);
     h.run();
     assert_eq!(
         h.state().editor().layers().len(),

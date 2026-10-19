@@ -11,6 +11,9 @@ impl App {
     /// Connect native services only for a real desktop window; harnesses stay deterministic.
     pub fn with_native_services(mut self, cc: &eframe::CreationContext<'_>) -> Self {
         self.dialogs = Some(NativeDialogs::new(cc));
+        self.initialize_fonts(&cc.egui_ctx);
+        #[cfg(target_os = "macos")]
+        self.initialize_native_menu(&cc.egui_ctx);
         match saving::NativeSaving::new(cc.egui_ctx.clone()) {
             Ok(saving) => self.saving = Some(saving),
             Err(error) => self

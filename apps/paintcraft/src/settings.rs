@@ -5,6 +5,7 @@
 
 mod canvas;
 mod colors;
+mod text;
 pub use canvas::{CanvasDefaults, DEFAULT_SIZE, SIZE_MAX};
 
 use std::fs;
@@ -14,6 +15,7 @@ use paintcraft_core::types::json::{self, Value};
 use paintcraft_platform::save;
 
 pub use paintcraft_classic::ClassicVariant;
+pub use paintcraft_ui::theme::Appearance;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum Experience {
@@ -25,6 +27,8 @@ pub enum Experience {
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Settings {
     pub experience: Experience,
+    pub appearance: Appearance,
+    pub text: paintcraft_classic::TextOptions,
     /// `None` until the first-visit picker has been answered.
     pub classic_variant: Option<ClassicVariant>,
     pub canvas: CanvasDefaults,
@@ -95,7 +99,14 @@ fn parse(bytes: &[u8]) -> Result<Settings, String> {
     } else {
         CanvasDefaults::default()
     };
+    let appearance = match v.get("appearance") {
+        None => Appearance::System,
+        Some(Value::Str(id)) => Appearance::parse(id).ok_or("unknown appearance")?,
+        Some(_) => return Err("invalid appearance".into()),
+    };
     Ok(Settings {
+        appearance,
+        text: text::parse(v.get("text"))?,
         custom_colors: colors::parse(v.get("custom_colors"))?,
         canvas,
         classic_variant,
@@ -135,6 +146,7 @@ impl Settings {
 
     pub fn save(&self, dir: &Path) -> Result<(), String> {
         CanvasDefaults::parse(&self.canvas.value())?;
+        text::parse(Some(&text::value(&self.text)))?;
         colors::parse(Some(&colors::value(&self.custom_colors)))?;
         fs::create_dir_all(dir)
             .map_err(|e| format!("cannot create the settings folder: {}", e.kind()))?;
@@ -142,6 +154,8 @@ impl Settings {
             ("schema", Value::str("paintcraft.settings/v3")),
             ("canvas", self.canvas.value()),
             ("custom_colors", colors::value(&self.custom_colors)),
+            ("appearance", Value::str(self.appearance.id())),
+            ("text", text::value(&self.text)),
             (
                 "experience",
                 Value::str(match self.experience {

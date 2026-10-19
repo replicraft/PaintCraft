@@ -434,7 +434,7 @@ impl App {
                 ui.label("Captured snapshots are kept for incomplete saves. Inspection does not repeat a save.");
                 egui::ScrollArea::vertical()
                     .id_salt("incomplete-save-list")
-                    .max_height(300.0)
+                    .max_height(ui.available_height())
                     .show(ui, |ui| {
                         for attempt in &saving.attempts {
                             ui.push_id(attempt.ticket.sequence(), |ui| {
