@@ -686,3 +686,94 @@ fn import_and_export_cover_png_bmp_and_jpeg_with_explicit_losses() {
         "existing output is protected"
     );
 }
+
+#[test]
+fn apply_runs_a_v2_batch_with_strokes_fill_shapes_and_text() {
+    let s = Scratch::new("v2");
+    let (base, ops, out, png_path) = (
+        s.path("base.pcnd"),
+        s.path("ops.json"),
+        s.path("out.pcnd"),
+        s.path("o.png"),
+    );
+    run(&[
+        "new",
+        "--width",
+        "64",
+        "--height",
+        "32",
+        "--background",
+        "#FFFFFFFF",
+        "-o",
+        &base,
+    ]);
+    let ins = run(&["inspect", &base, "--json"]).json();
+    let state = text(&ins, &["ticket", "state_id"]).to_owned();
+    let layer = ins
+        .get("document")
+        .unwrap()
+        .get("layers")
+        .unwrap()
+        .as_array()
+        .unwrap()[0]
+        .get("id")
+        .unwrap()
+        .as_str()
+        .unwrap()
+        .to_owned();
+    let l = format!(r#"{{"id":"{layer}"}}"#);
+    fs::write(
+        &ops,
+        format!(
+            r##"{{"schema":"paintcraft.batch/v2","atomic":true,"policy":"paintcraft.core/default-v1","base":{{"state_id":"{state}","publication_epoch":"0"}},"operations":[
+              {{"op":"raster.shape","layer_ref":{l},"kind":"rect","from":{{"x":2,"y":2}},"to":{{"x":20,"y":12}},"fill":"#FF0000FF","stroke":{{"color":"#000000FF","size":1}},"mode":"replace"}},
+              {{"op":"raster.stroke_path","layer_ref":{l},"points":[{{"x":0,"y":30}},{{"x":63,"y":30}}],"color":"#0000FFFF","mode":"replace","size":3,"brush":"round"}},
+              {{"op":"raster.flood_fill","layer_ref":{l},"at":{{"x":40,"y":5}},"color":"#00FF00FF","mode":"replace","tolerance":0}},
+              {{"op":"raster.text","layer_ref":{l},"at":{{"x":24,"y":14}},"text":"Hi","scale":1,"color":"#000000FF","mode":"replace"}}]}}"##
+        ),
+    )
+    .unwrap();
+    let r = run(&["apply", &base, "--operations", &ops, "-o", &out, "--json"]);
+    assert_eq!(r.code, 0, "{} {}", r.stderr, r.stdout);
+    assert_eq!(
+        r.json().get("engine").unwrap().get("committed"),
+        Some(&Value::Bool(true))
+    );
+    assert_eq!(run(&["render", &out, "-o", &png_path]).code, 0);
+    let (w, h, px) = decode_png(&png_path);
+    assert_eq!((w, h), (64, 32));
+    let at = |x: usize, y: usize| px[(y * 64 + x) * 4..][..4].to_vec();
+    assert_eq!(at(10, 7), [255, 0, 0, 255], "rectangle fill");
+    assert_eq!(at(2, 2), [0, 0, 0, 255], "rectangle outline");
+    assert_eq!(at(30, 30), [0, 0, 255, 255], "brush stroke");
+    assert_eq!(
+        at(60, 5),
+        [0, 255, 0, 255],
+        "flood fill of the white background"
+    );
+    assert_eq!(
+        at(10, 22),
+        [0, 255, 0, 255],
+        "fill reached below the shapes"
+    );
+    assert_eq!(at(30, 25), [0, 255, 0, 255], "fill stops at the stroke");
+    assert_eq!(at(24, 14)[..3], [0, 0, 0], "text pixel");
+    // The same batch against a v1 schema string is refused, atomically.
+    let v1 = fs::read_to_string(&ops)
+        .unwrap()
+        .replace("batch/v2", "batch/v1");
+    fs::write(&ops, v1).unwrap();
+    assert_eq!(
+        run(&[
+            "apply",
+            &base,
+            "--operations",
+            &ops,
+            "-o",
+            &s.path("v1.pcnd")
+        ])
+        .code,
+        2
+    );
+    assert!(!Path::new(&s.path("v1.pcnd")).exists());
+}

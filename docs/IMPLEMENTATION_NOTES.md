@@ -15,7 +15,7 @@ means native-hardware, GPU, platform-compatibility or original-application evide
 | Image formats | PNG, BMP, JPEG import and export with named, acknowledged losses (flatten, hidden RGB, lossy JPEG, discarded alpha) | `image.rs`, `export.rs`, CLI tests |
 | Safe save and recovery (T10) | Stage → atomic replace → read-back; a file-operation receipt; autosave checkpoints with per-session locks; recover, discard or ask later; a clean save or exit leaves nothing behind | `save.rs`, `recovery.rs`, GUI tests |
 | Bounded history (T11) | Memory budget over all retained snapshots (shared tiles counted once); only the oldest undo steps are dropped, the newest edit stays undoable, the user is told | `session.rs`, editor tests |
-| CLI (T08, T33, T34) | `new`, `inspect`, `schema batch|batch-v2`, `capabilities`, `apply` (hash-guarded), `import`, `render` | 10 end-to-end tests of the real binary; output validates against the pack's schemas |
+| CLI (T08, T33, T34) | `new`, `inspect`, `schema batch|batch-v2`, `capabilities`, `apply` (hash-guarded), `import`, `render` | 11 end-to-end tests of the real binary; output validates against the pack's schemas |
 | Editor (T09, T14 subset) | Pencil, brush (round/square), eraser, flood fill, line, rectangle, ellipse (outline/filled/both), rectangle select, bitmap text; layers: add, show/hide, move, delete, rename, opacity; undo/redo; one gesture or text object is one transaction | `paintcraft-ui` tests; 28 headless egui tests |
 | Presentation (T15 subset) | First-visit Classic picker (v11 preselected), remembered choice, Interface button, damaged settings kept aside | GUI tests |
 
@@ -96,6 +96,14 @@ Definitions (integer-exact, so any implementation can reproduce them):
 - **Windows.** Durability confirmation syncs the destination directory, which Windows does
   not allow by opening a directory, so a save there would report "not confirmed" (exit 6)
   until a platform adapter exists. CI covers Linux and macOS only.
+
+## Scale observation (not a benchmark)
+
+One run on the development machine: on a 4096×4096 document, a batch with a large
+ellipse, a thick translucent stroke, a flood fill and 16× text applied in about 0.45 s at
+about 350 MB peak memory (the document is about 64 MB resident, and staging shares tiles by
+copy-on-write); exporting that document to PNG took about 0.4 s. No repetition, no
+controlled environment, no comparison. Real measurements follow the benchmark protocol.
 
 ## Provisional baselines (no benchmark has been run)
 
