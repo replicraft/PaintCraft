@@ -7,3 +7,4 @@ pub mod ids;
 pub mod raster;
 pub mod render;
 pub mod session;
+pub mod shape;
