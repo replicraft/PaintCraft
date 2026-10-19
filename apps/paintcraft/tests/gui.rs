@@ -334,7 +334,7 @@ fn ctrl_s_saves_safely_and_clears_the_unsaved_marker() {
         "{}",
         h.state().editor().status()
     );
-    let reopened = paintcraft_ui::editor::Editor::open(&file).unwrap();
+    let reopened = paintcraft::controller::Editor::open(&file).unwrap();
     assert!(
         reopened
             .document()

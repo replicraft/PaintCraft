@@ -1,14 +1,16 @@
-//! The PaintCraft desktop UI. All decisions live in `paintcraft-ui`; this file
-//! turns egui input into editor calls and editor state into pixels.
-//!
-//! Input is read once per frame, in the first layout pass only, so a frame that
-//! egui lays out twice cannot press, draw or release twice. Buttons and
-//! shortcuts push tokenized actions into the editor's outbox, which runs each
-//! activation once.
+pub mod controller;
+// The PaintCraft desktop UI. All decisions live in `paintcraft-ui`; this file
+// turns egui input into editor calls and editor state into pixels.
+//
+// Input is read once per frame, in the first layout pass only, so a frame that
+// egui lays out twice cannot press, draw or release twice. Buttons and
+// shortcuts push tokenized actions into the editor's outbox, which runs each
+// activation once.
 
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
+use crate::controller::{Action, Editor, Preview, ShapeStyle, Tool};
 use eframe::egui::{self, Color32, Pos2, Rect, Sense, Vec2};
 use paintcraft_core::execute::Selection;
 use paintcraft_document::{hex, import_image};
@@ -18,7 +20,6 @@ use paintcraft_formats::recovery::{Found, Recovery};
 use paintcraft_formats::save;
 use paintcraft_render::render_flat;
 use paintcraft_types::Rgba;
-use paintcraft_ui::editor::{Action, Editor, Preview, ShapeStyle, Tool};
 use paintcraft_ui::settings::{ClassicVariant, Loaded, Settings};
 use paintcraft_ui::view::View;
 use sha2::{Digest, Sha256};

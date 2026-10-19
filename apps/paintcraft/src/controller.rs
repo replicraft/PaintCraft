@@ -18,196 +18,15 @@ use paintcraft_types::json::Value;
 use paintcraft_types::{Result, Rgba};
 use uuid::Uuid;
 
-use crate::outbox::{Outbox, Token};
+use paintcraft_ui::outbox::{Outbox, Token};
 
 /// Points per `raster.pencil_path` operation (the schema maximum).
 const POINTS_PER_OP: usize = 65_536;
 /// Operations per batch (the schema maximum); longer gestures are cut off.
 const OPS_PER_BATCH: usize = 1024;
 
-/// How a shape is painted.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum ShapeStyle {
-    Outline,
-    Filled,
-    /// Outline in the primary colour over a fill in the secondary colour.
-    Both,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Tool {
-    Pencil,
-    Brush,
-    Eraser,
-    Fill,
-    Line,
-    Rect,
-    Ellipse,
-    Select,
-    Text,
-}
-
-impl Tool {
-    pub const ALL: [Tool; 9] = [
-        Tool::Pencil,
-        Tool::Brush,
-        Tool::Eraser,
-        Tool::Fill,
-        Tool::Line,
-        Tool::Rect,
-        Tool::Ellipse,
-        Tool::Select,
-        Tool::Text,
-    ];
-
-    pub fn name(self) -> &'static str {
-        match self {
-            Tool::Pencil => "Pencil",
-            Tool::Brush => "Brush",
-            Tool::Eraser => "Eraser",
-            Tool::Fill => "Fill",
-            Tool::Line => "Line",
-            Tool::Rect => "Rectangle",
-            Tool::Ellipse => "Ellipse",
-            Tool::Select => "Select",
-            Tool::Text => "Text",
-        }
-    }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct ToolOptions {
-    /// Brush, eraser and outline thickness in pixels (1..=1024). The pencil is always 1.
-    pub size: u32,
-    pub round: bool,
-    pub style: ShapeStyle,
-    /// Fill tolerance, 0..=255 per channel.
-    pub tolerance: u8,
-    /// Text size as a whole-number multiple of the 8-pixel font (1..=16).
-    pub text_scale: u32,
-}
-
-impl Default for ToolOptions {
-    fn default() -> Self {
-        ToolOptions {
-            size: 4,
-            round: true,
-            style: ShapeStyle::Outline,
-            tolerance: 0,
-            text_scale: 2,
-        }
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum Action {
-    Stroke {
-        layer: Uuid,
-        points: Vec<(i64, i64)>,
-        color: Rgba,
-        size: u32,
-        round: bool,
-    },
-    Fill {
-        layer: Uuid,
-        at: (i64, i64),
-        color: Rgba,
-        tolerance: u8,
-    },
-    Shape {
-        layer: Uuid,
-        tool: Tool,
-        from: (i64, i64),
-        to: (i64, i64),
-        stroke: Option<(Rgba, u32)>,
-        fill: Option<Rgba>,
-    },
-    Text {
-        layer: Uuid,
-        at: (i64, i64),
-        text: String,
-        scale: u32,
-        color: Rgba,
-    },
-    /// Rectangle in document pixels (inclusive corners), or `None` to deselect.
-    Select {
-        corners: Option<((i64, i64), (i64, i64))>,
-    },
-    AddLayer,
-    DeleteLayer {
-        layer: Uuid,
-    },
-    /// Move within the stack; index 0 is the bottom layer.
-    MoveLayer {
-        layer: Uuid,
-        to_index: usize,
-    },
-    Rename {
-        layer: Uuid,
-        name: String,
-    },
-    SetOpacity {
-        layer: Uuid,
-        opacity: u8,
-    },
-    SetVisible {
-        layer: Uuid,
-        visible: bool,
-    },
-    Undo,
-    Redo,
-    Save,
-}
-
-/// What the UI should draw for an unpublished gesture.
-#[derive(Clone, Debug, PartialEq)]
-pub enum Preview {
-    Path {
-        points: Vec<(i64, i64)>,
-        size: u32,
-        round: bool,
-        color: Rgba,
-    },
-    Shape {
-        tool: Tool,
-        from: (i64, i64),
-        to: (i64, i64),
-        stroke: Option<(Rgba, u32)>,
-        fill: Option<Rgba>,
-    },
-    Marquee {
-        from: (i64, i64),
-        to: (i64, i64),
-    },
-    Text {
-        at: (i64, i64),
-        text: String,
-        scale: u32,
-        color: Rgba,
-    },
-}
-
-/// Text being typed; it becomes one transaction when committed.
-#[derive(Debug)]
-struct TextEdit {
-    token: Token,
-    layer: Uuid,
-    at: (i64, i64),
-    text: String,
-    scale: u32,
-    color: Rgba,
-}
-
-#[derive(Debug)]
-struct Gesture {
-    token: Token,
-    layer: Uuid,
-    tool: Tool,
-    color: Rgba,
-    fill: Rgba,
-    options: ToolOptions,
-    points: Vec<(i64, i64)>,
-}
+use paintcraft_tools::ToolState;
+pub use paintcraft_tools::{Action, Preview, ShapeStyle, Tool, ToolOptions};
 
 /// A layer row for the layer list, topmost first.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -220,25 +39,14 @@ pub struct LayerRow {
 #[derive(Debug)]
 pub struct Editor {
     session: Session,
-    pub color: Rgba,
-    /// Fill colour for shapes drawn with `ShapeStyle::Both`.
-    pub secondary: Rgba,
-    pub tool: Tool,
-    pub options: ToolOptions,
+    tools: ToolState,
     target: Option<Uuid>,
-    gesture: Option<Gesture>,
-    text: Option<TextEdit>,
     outbox: Outbox<Action>,
-    next_gesture: Token,
     path: Option<PathBuf>,
     status: String,
     recovery: Option<Recovery>,
     checkpointed: Option<(Uuid, u64)>,
 }
-
-/// Gesture tokens live in their own half of the token space so they can never
-/// collide with the tokens the application derives for button activations.
-const GESTURE_TOKEN_BASE: Token = 1 << 63;
 
 fn layer_ref(id: Uuid) -> Value {
     Value::object([("id", Value::str(id.to_string()))])
@@ -274,15 +82,9 @@ impl Editor {
         let target = doc.roots.last().copied();
         Editor {
             session: Session::new(doc),
-            color: Rgba([0, 0, 0, 255]),
-            secondary: Rgba([255, 255, 255, 255]),
-            tool: Tool::Pencil,
-            options: ToolOptions::default(),
+            tools: ToolState::default(),
             target,
-            gesture: None,
-            text: None,
             outbox: Outbox::default(),
-            next_gesture: GESTURE_TOKEN_BASE,
             path,
             status: String::new(),
             recovery: None,
@@ -315,7 +117,7 @@ impl Editor {
     /// Skipped while a gesture is in progress. Returns whether one was written.
     pub fn autosave(&mut self) -> bool {
         let key = self.render_key();
-        if self.gesture.is_some() || !self.is_dirty() || self.checkpointed == Some(key) {
+        if self.tools.gesture_in_progress() || !self.is_dirty() || self.checkpointed == Some(key) {
             return false;
         }
         let Some(recovery) = &self.recovery else {
@@ -435,177 +237,44 @@ impl Editor {
     }
 
     pub fn gesture_in_progress(&self) -> bool {
-        self.gesture.is_some()
+        self.tools.gesture_in_progress()
     }
-
-    // ---- text -------------------------------------------------------------------
-
-    fn begin_text(&mut self, at: (i64, i64)) {
-        self.commit_text();
-        let Some(layer) = self
-            .target
-            .filter(|id| self.document().layers.contains_key(id))
-        else {
-            self.status = "No editing target: add or choose a layer".into();
-            return;
-        };
-        if !self.document().layers[&layer].visible {
-            self.status = "The target layer is hidden; show it or choose another layer".into();
-            return;
-        }
-        self.next_gesture += 1;
-        let scale = self
-            .options
-            .text_scale
-            .clamp(1, paintcraft_raster::font::SCALE_MAX as u32);
-        self.text = Some(TextEdit {
-            token: self.next_gesture,
-            layer,
-            at,
-            text: String::new(),
-            scale,
-            color: self.color,
-        });
-        self.status =
-            "Type your text; click elsewhere or press Ctrl+Enter to place it, Escape to cancel"
-                .into();
-    }
-
     pub fn is_editing_text(&self) -> bool {
-        self.text.is_some()
+        self.tools.is_editing_text()
     }
-
-    /// Type into the text being edited. Characters the built-in font cannot draw
-    /// are skipped, and the user is told.
     pub fn type_text(&mut self, typed: &str) {
-        let Some(t) = &mut self.text else { return };
-        let mut skipped = 0;
-        for c in typed.chars() {
-            if !paintcraft_raster::font::supported(c) {
-                skipped += 1;
-            } else if t.text.chars().count() < paintcraft_raster::font::TEXT_CHARS_MAX {
-                t.text.push(c);
-            }
-        }
+        let skipped = self.tools.type_text(typed);
         if skipped > 0 {
             self.status = format!("Skipped {skipped} character(s) the built-in font cannot draw");
         }
     }
-
     pub fn backspace(&mut self) {
-        if let Some(t) = &mut self.text {
-            t.text.pop();
-        }
+        self.tools.backspace();
     }
-
-    /// Place the typed text as one transaction. Empty text places nothing.
     pub fn commit_text(&mut self) {
-        if let Some(t) = self.text.take()
-            && !t.text.is_empty()
-        {
-            self.outbox.push(
-                t.token,
-                Action::Text {
-                    layer: t.layer,
-                    at: t.at,
-                    text: t.text,
-                    scale: t.scale,
-                    color: t.color,
-                },
-            );
+        if let Some((token, action)) = self.tools.commit_text() {
+            self.outbox.push(token, action);
         }
     }
-
     pub fn cancel_text(&mut self) {
-        self.text = None;
+        self.tools.cancel_text();
     }
-
-    /// Switch tools. Text in progress is placed, a half-drawn gesture is dropped.
     pub fn select_tool(&mut self, tool: Tool) {
         self.commit_text();
         self.cancel_gesture();
-        self.tool = tool;
+        self.tools.tool = tool;
     }
-
-    /// What to draw for the unpublished gesture, if any.
     pub fn preview(&self) -> Option<Preview> {
-        if let Some(t) = &self.text {
-            return Some(Preview::Text {
-                at: t.at,
-                text: t.text.clone(),
-                scale: t.scale,
-                color: t.color,
-            });
-        }
-        let g = self.gesture.as_ref()?;
-        let (first, last) = (
-            g.points[0],
-            *g.points.last().expect("a gesture has a point"),
-        );
-        Some(match g.tool {
-            Tool::Pencil | Tool::Brush | Tool::Eraser => {
-                let (size, round, color) = Self::brush_of(g);
-                Preview::Path {
-                    points: g.points.clone(),
-                    size,
-                    round,
-                    color,
-                }
-            }
-            Tool::Fill | Tool::Text => return None,
-            Tool::Select => Preview::Marquee {
-                from: first,
-                to: last,
-            },
-            Tool::Line | Tool::Rect | Tool::Ellipse => {
-                let (stroke, fill) = Self::shape_paint(g);
-                Preview::Shape {
-                    tool: g.tool,
-                    from: first,
-                    to: last,
-                    stroke,
-                    fill,
-                }
-            }
-        })
+        self.tools.preview()
     }
-
-    fn brush_of(g: &Gesture) -> (u32, bool, Rgba) {
-        match g.tool {
-            Tool::Pencil => (1, false, g.color),
-            Tool::Eraser => (g.options.size, false, Rgba::TRANSPARENT),
-            _ => (g.options.size, g.options.round, g.color),
-        }
-    }
-
-    fn shape_paint(g: &Gesture) -> (Option<(Rgba, u32)>, Option<Rgba>) {
-        let stroke = (g.options.style != ShapeStyle::Filled || g.tool == Tool::Line)
-            .then_some((g.color, g.options.size));
-        let fill = match (g.tool, g.options.style) {
-            (Tool::Line, _) | (_, ShapeStyle::Outline) => None,
-            (_, ShapeStyle::Filled) => Some(g.color),
-            (_, ShapeStyle::Both) => Some(g.fill),
-        };
-        (stroke, fill)
-    }
-
-    /// Points of a freehand gesture, for tests and simple overlays.
     pub fn gesture_points(&self) -> &[(i64, i64)] {
-        self.gesture.as_ref().map_or(&[], |g| &g.points)
+        self.tools.gesture_points()
     }
-
-    // ---- pointer input ----------------------------------------------------------
-
-    pub fn pointer_down(&mut self, doc_point: (i64, i64)) {
-        if self.tool == Tool::Text {
-            self.begin_text(doc_point);
+    pub fn pointer_down(&mut self, point: (i64, i64)) {
+        if self.tools.gesture_in_progress() {
             return;
         }
         self.commit_text();
-        if self.gesture.is_some() {
-            return; // a gesture already owns the pointer
-        }
-        // Selecting does not touch pixels, so it needs no target; everything else does.
         let layer = match (
             self.tool,
             self.target
@@ -622,83 +291,34 @@ impl Editor {
             self.status = "The target layer is hidden; show it or choose another layer".into();
             return;
         }
-        self.next_gesture += 1;
-        self.gesture = Some(Gesture {
-            token: self.next_gesture,
-            layer,
-            tool: self.tool,
-            color: self.color,
-            fill: self.secondary,
-            options: self.options,
-            points: vec![doc_point],
-        });
-    }
-
-    pub fn pointer_move(&mut self, doc_point: (i64, i64)) {
-        let Some(g) = &mut self.gesture else { return };
-        match g.tool {
-            Tool::Pencil | Tool::Brush | Tool::Eraser => {
-                if g.points.last() != Some(&doc_point)
-                    && g.points.len() < POINTS_PER_OP * OPS_PER_BATCH
-                {
-                    g.points.push(doc_point);
-                }
-            }
-            // Fill acts where the button went down; shapes and selections only need both ends.
-            Tool::Fill | Tool::Text => {}
-            _ => {
-                g.points.truncate(1);
-                g.points.push(doc_point);
-            }
+        if self.tool == Tool::Text {
+            self.tools.begin_text(layer, point);
+            self.status =
+                "Type your text; click elsewhere or press Ctrl+Enter to place it, Escape to cancel"
+                    .into();
+        } else {
+            self.tools.pointer_down(layer, point);
         }
     }
-
-    /// Finish the gesture: queue exactly one action. A second call does nothing.
-    pub fn pointer_up(&mut self) {
-        let Some(g) = self.gesture.take() else { return };
-        let (first, last) = (
-            g.points[0],
-            *g.points.last().expect("a gesture has a point"),
-        );
-        let action = match g.tool {
-            Tool::Pencil | Tool::Brush | Tool::Eraser => {
-                let (size, round, color) = Self::brush_of(&g);
-                Action::Stroke {
-                    layer: g.layer,
-                    points: g.points,
-                    color,
-                    size,
-                    round,
-                }
-            }
-            Tool::Text => return,
-            Tool::Fill => Action::Fill {
-                layer: g.layer,
-                at: first,
-                color: g.color,
-                tolerance: g.options.tolerance,
-            },
-            Tool::Select => Action::Select {
-                corners: Some((first, last)),
-            },
-            Tool::Line | Tool::Rect | Tool::Ellipse => {
-                let (stroke, fill) = Self::shape_paint(&g);
-                Action::Shape {
-                    layer: g.layer,
-                    tool: g.tool,
-                    from: first,
-                    to: last,
-                    stroke,
-                    fill,
-                }
-            }
-        };
-        self.outbox.push(g.token, action);
+    pub fn pointer_move(&mut self, point: (i64, i64)) {
+        self.tools.pointer_move(point);
     }
-
-    /// Escape, focus loss, device removal or a modal dialog: drop the gesture unpublished.
+    pub fn pointer_up(&mut self) {
+        if let Some((token, action)) = self.tools.pointer_up() {
+            self.outbox.push(token, action);
+        }
+    }
     pub fn cancel_gesture(&mut self) {
-        self.gesture = None;
+        self.tools.cancel_gesture();
+    }
+    pub fn pointer_event(&mut self, event: paintcraft_input::PointerEvent) {
+        use paintcraft_input::PointerEvent;
+        match event {
+            PointerEvent::Down { at } => self.pointer_down(at),
+            PointerEvent::Move { at } => self.pointer_move(at),
+            PointerEvent::Up => self.pointer_up(),
+            PointerEvent::Cancel => self.cancel_gesture(),
+        }
     }
 
     // ---- commands ---------------------------------------------------------------
@@ -1670,5 +1290,17 @@ mod tests {
     #[test]
     fn opening_a_bad_file_fails_without_a_panic() {
         assert!(Editor::open(Path::new("/definitely/not/here.pcnd")).is_err());
+    }
+}
+
+impl std::ops::Deref for Editor {
+    type Target = ToolState;
+    fn deref(&self) -> &ToolState {
+        &self.tools
+    }
+}
+impl std::ops::DerefMut for Editor {
+    fn deref_mut(&mut self) -> &mut ToolState {
+        &mut self.tools
     }
 }
