@@ -11,6 +11,10 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Current user priority: PaintCraft Studio (T19), beginning with its separate
+presentation and functional floating windows on the shared editor. RetroPaint's
+selected UI font is W95FA; Retro implementation remains deferred.
+
 [Dependency choices](DEPENDENCY_CHOICES.md) records the selected libraries and their
 actual consumers. The current batch-v1 wire policy and canonical PCND fixture remain
 unchanged by dependency and crate refactors.
