@@ -166,4 +166,26 @@ mod tests {
             ..ctx
         }));
     }
+    #[test]
+    fn grid_alias_and_accelerator_belong_to_classic() {
+        let action = Action::View(ViewAction::PixelGrid);
+        assert_eq!(action.descriptor_for(Frontend::Classic).label, "Gridlines");
+        assert_eq!(action.descriptor_for(Frontend::Studio).label, "Pixel grid");
+        assert_eq!(
+            Action::from_shortcut_for(Frontend::Classic, Key::G, Modifiers::COMMAND),
+            Some(action)
+        );
+        assert_eq!(
+            Action::from_shortcut_for(Frontend::Studio, Key::G, Modifiers::COMMAND),
+            None
+        );
+        assert_eq!(
+            Action::from_shortcut_for(
+                Frontend::Classic,
+                Key::G,
+                Modifiers::COMMAND | Modifiers::SHIFT
+            ),
+            None
+        );
+    }
 }

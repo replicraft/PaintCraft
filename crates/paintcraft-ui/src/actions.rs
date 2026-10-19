@@ -128,6 +128,35 @@ impl Action {
         }
     }
 
+    /// Frontends may expose a shared operation under their reference UI name.
+    pub fn descriptor_for(self, frontend: Frontend) -> Descriptor {
+        let mut descriptor = self.descriptor();
+        if frontend == Frontend::Classic && self == Self::View(ViewAction::PixelGrid) {
+            descriptor.label = "Gridlines";
+            descriptor.shortcut = Some(KeyboardShortcut::new(Modifiers::COMMAND, Key::G));
+        }
+        descriptor
+    }
+
+    pub fn from_shortcut_for(frontend: Frontend, key: Key, modifiers: Modifiers) -> Option<Self> {
+        VIEW.iter()
+            .chain(WORKSPACE_VIEW)
+            .copied()
+            .map(Self::View)
+            .filter(|action| action.available(frontend))
+            .find(|action| {
+                action
+                    .descriptor_for(frontend)
+                    .shortcut
+                    .is_some_and(|shortcut| {
+                        shortcut.logical_key == key && modifiers.matches_exact(shortcut.modifiers)
+                    })
+            })
+            .or_else(|| {
+                Self::from_shortcut(key, modifiers).filter(|action| action.available(frontend))
+            })
+    }
+
     pub fn available(self, frontend: Frontend) -> bool {
         match self {
             Self::View(ViewAction::StatusBar) => frontend == Frontend::Classic,
@@ -223,7 +252,7 @@ impl Action {
 }
 
 pub fn menu_item(ui: &mut egui::Ui, action: Action, ctx: Context) -> bool {
-    let descriptor = action.descriptor();
+    let descriptor = action.descriptor_for(ctx.frontend);
     let checked = action.checked(ctx);
     // Checkable menu rows reserve an indicator column; their selected state is
     // announced to accessibility without painting a permanently selected button.
@@ -279,7 +308,7 @@ pub fn toolbar_button(
     icon: crate::widgets::Icon,
     ctx: Context,
 ) -> bool {
-    let descriptor = action.descriptor();
+    let descriptor = action.descriptor_for(ctx.frontend);
     let label = descriptor.label.trim_end_matches('…');
     let tooltip = descriptor.shortcut.map_or_else(
         || descriptor.label.to_owned(),

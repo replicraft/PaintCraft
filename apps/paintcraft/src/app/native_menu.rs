@@ -1,7 +1,7 @@
 //! Native menus route into the same action outbox as the frontend UI.
 use super::*;
 use paintcraft_platform::native_menu::{Entry, NativeMenu, Section};
-use paintcraft_ui::actions::{Action as Chrome, ViewAction};
+use paintcraft_ui::actions::{Action as Chrome, Frontend, ViewAction};
 
 const QUIT: u64 = 9000;
 
@@ -21,7 +21,7 @@ fn actions() -> Vec<Chrome> {
         .collect()
 }
 
-fn shortcut(action: Chrome) -> Option<&'static str> {
+fn shortcut(action: Chrome, frontend: Frontend) -> Option<&'static str> {
     Some(match action {
         Chrome::New => "meta+KeyN",
         Chrome::Open => "meta+KeyO",
@@ -38,6 +38,7 @@ fn shortcut(action: Chrome) -> Option<&'static str> {
         Chrome::View(ViewAction::FitWindow) => "meta+KeyB",
         Chrome::View(ViewAction::FitSelection) => "meta+shift+KeyB",
         Chrome::View(ViewAction::FullScreen) => "F11",
+        Chrome::View(ViewAction::PixelGrid) if frontend == Frontend::Classic => "meta+KeyG",
         _ => return None,
     })
 }
@@ -51,8 +52,8 @@ impl App {
                 .into_iter()
                 .map(|action| Entry {
                     id: action.activation_code(),
-                    text: action.descriptor().label.into(),
-                    shortcut: shortcut(action),
+                    text: action.descriptor_for(context.frontend).label.into(),
+                    shortcut: shortcut(action, context.frontend),
                     checked: action.checked(context),
                 })
                 .collect(),
@@ -86,12 +87,20 @@ impl App {
     }
 
     pub(super) fn poll_native_menu(&mut self, ctx: &egui::Context) {
-        let Some(menu) = &self.native_menu else {
+        let context = self.action_context();
+        let Some(menu) = &mut self.native_menu else {
             return;
         };
-        let context = self.action_context();
         let text_focus = ctx.egui_wants_keyboard_input();
         for action in actions() {
+            if let Err(error) = menu.update_presentation(
+                action.activation_code(),
+                action.descriptor_for(context.frontend).label,
+                shortcut(action, context.frontend),
+            ) {
+                self.editor
+                    .set_status(format!("Native menu update failed: {error}"));
+            }
             menu.update(
                 action.activation_code(),
                 action.enabled(context)

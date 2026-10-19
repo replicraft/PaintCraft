@@ -149,3 +149,36 @@ fn render_classic_workspace_view_for_review() {
         std::fs::remove_dir_all(dir).unwrap();
     }
 }
+
+#[test]
+fn classic_gridlines_menu_and_shortcut_share_state_without_changing_document() {
+    let mut h = harness_with(App::new(None), 1.0, true);
+    let base = h.state().editor().document_snapshot();
+    view_menu(&mut h);
+    assert!(h.query_by_label_contains("Gridlines").is_some());
+    assert!(h.query_by_label("Pixel grid").is_none());
+    h.get_by_label_contains("Gridlines").click();
+    h.run();
+    view_menu(&mut h);
+    assert_eq!(
+        h.get_by_label_contains("Gridlines")
+            .accesskit_node()
+            .toggled(),
+        Some(eframe::egui::accesskit::Toggled::True)
+    );
+    h.key_press(Key::Escape);
+    h.run();
+    h.input_mut().events.extend([
+        key(Key::G, Modifiers::COMMAND),
+        key_up(Key::G, Modifiers::COMMAND),
+    ]);
+    h.run();
+    view_menu(&mut h);
+    assert_eq!(
+        h.get_by_label_contains("Gridlines")
+            .accesskit_node()
+            .toggled(),
+        Some(eframe::egui::accesskit::Toggled::False)
+    );
+    assert!(h.state().editor().document().same_semantics(&base));
+}

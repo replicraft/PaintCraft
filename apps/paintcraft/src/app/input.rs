@@ -52,9 +52,11 @@ impl App {
                         self.editor.cancel_text();
                     }
                     _ => {
-                        if let Some(action) =
-                            paintcraft_ui::actions::Action::from_shortcut(key, modifiers)
-                        {
+                        if let Some(action) = paintcraft_ui::actions::Action::from_shortcut_for(
+                            self.action_context().frontend,
+                            key,
+                            modifiers,
+                        ) {
                             self.dispatch_chrome(&ctx, vec![action]);
                         }
                     }

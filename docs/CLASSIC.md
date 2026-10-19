@@ -187,3 +187,10 @@ Accessible labels, shortcuts and toggled state remain attached to the same butto
 Classic v11 File/Edit/View menus use a 240-point minimum width and 30-point row
 height; v7/v10 retain their existing density. This is presentation work guided by
 the supplied View menu photo, not a claim of exact cross-DPI native geometry.
+
+Classic's shared pixel-grid action is presented as **Gridlines** with Ctrl/Cmd+G.
+Studio retains **Pixel grid** and does not inherit that accelerator. Action labels
+and shortcuts resolve against the active frontend; macOS menu text and accelerator
+registrations are reconciled on frontend changes, including removing Classic-only
+bindings when entering Studio. Gridlines remain a per-document display option and
+never alter saved pixels or history.

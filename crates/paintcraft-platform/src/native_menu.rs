@@ -27,6 +27,7 @@ pub struct NativeMenu {
     menu: Menu,
     items: HashMap<u64, Item>,
     events: mpsc::Receiver<u64>,
+    presentation: HashMap<u64, (String, Option<&'static str>)>,
 }
 
 impl std::fmt::Debug for NativeMenu {
@@ -123,11 +124,48 @@ impl NativeMenu {
             menu,
             items,
             events,
+            presentation: HashMap::new(),
         })
     }
 
     pub fn poll(&self) -> Vec<u64> {
         self.events.try_iter().collect()
+    }
+
+    /// Reconcile frontend labels/accelerators on the main thread. Unchanged
+    /// entries do not touch AppKit or register their accelerator again.
+    pub fn update_presentation(
+        &mut self,
+        id: u64,
+        text: &str,
+        shortcut: Option<&'static str>,
+    ) -> Result<(), String> {
+        if self
+            .presentation
+            .get(&id)
+            .is_some_and(|(old_text, old_shortcut)| old_text == text && *old_shortcut == shortcut)
+        {
+            return Ok(());
+        }
+        let accelerator = shortcut
+            .map(str::parse::<Accelerator>)
+            .transpose()
+            .map_err(|e| e.to_string())?;
+        match self.items.get(&id) {
+            Some(Item::Normal(item)) => {
+                item.set_accelerator(accelerator)
+                    .map_err(|e| e.to_string())?;
+                item.set_text(text);
+            }
+            Some(Item::Check(item)) => {
+                item.set_accelerator(accelerator)
+                    .map_err(|e| e.to_string())?;
+                item.set_text(text);
+            }
+            None => return Err(format!("Unknown native menu action {id}")),
+        }
+        self.presentation.insert(id, (text.to_owned(), shortcut));
+        Ok(())
     }
 
     pub fn update(&self, id: u64, enabled: bool, checked: Option<bool>) {
