@@ -49,6 +49,36 @@
           {
             "type": "object",
             "properties": {
+              "op": {"const": "layer.duplicate"},
+              "ref": {"type": "string", "pattern": "^[a-z][a-z0-9_-]{0,63}$"},
+              "name": {"type": "string", "maxLength": 1024},
+              "layer_ref": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ref": {"type": "string", "pattern": "^[a-z][a-z0-9_-]{0,63}$"}
+                    },
+                    "required": ["ref"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {"type": "string", "format": "uuid"}
+                    },
+                    "required": ["id"],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": ["op", "layer_ref", "ref", "name"],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
               "op": {"const": "layer.delete"},
               "layer_ref": {
                 "oneOf": [

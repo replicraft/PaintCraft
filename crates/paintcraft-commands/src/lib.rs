@@ -72,6 +72,12 @@ pub enum Op {
         origin: (i64, i64),
         default: Rgba,
     },
+    /// v2: complete independent copy immediately above the source.
+    LayerDuplicate {
+        layer: LayerRef,
+        alias: String,
+        name: String,
+    },
     LayerDelete {
         layer: LayerRef,
     },
@@ -234,6 +240,7 @@ fn op(v: &Value, version: u8) -> Result<Op> {
                 | "raster.shape"
                 | "raster.text"
                 | "layer.reorder"
+                | "layer.duplicate"
         )
     {
         return Err(bad(format!(
@@ -381,6 +388,14 @@ fn op(v: &Value, version: u8) -> Result<Op> {
                 height: int_in(&o["height"], 1, SIZE_MAX, "height")? as u32,
                 origin: point(&o["origin"])?,
                 default: color(&o["default_pixel"])?,
+            }
+        }
+        "layer.duplicate" => {
+            let o = obj(v, &["op", "layer_ref", "ref", "name"], &[])?;
+            Op::LayerDuplicate {
+                layer: layer_ref(&o["layer_ref"])?,
+                alias: alias(&o["ref"])?,
+                name: name_str(&o["name"])?,
             }
         }
         "layer.delete" => {

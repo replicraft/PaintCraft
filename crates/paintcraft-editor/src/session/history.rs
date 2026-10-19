@@ -58,6 +58,7 @@ pub(super) fn label(batch: &Batch) -> Label {
     }
     match &batch.operations[0] {
         Op::LayerAdd { .. } => Label::AddLayer,
+        Op::LayerDuplicate { .. } => Label::DuplicateLayer,
         Op::LayerDelete { .. } => Label::DeleteLayer,
         Op::LayerSetProperties { .. } => Label::LayerProperties,
         Op::LayerReorder { .. } => Label::ReorderLayer,

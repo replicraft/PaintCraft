@@ -1,6 +1,8 @@
 //! Staged execution of a batch against a private copy of the document.
 //! Nothing here publishes; the session installs the result atomically.
 
+mod layers;
+
 use std::collections::{BTreeMap, HashMap};
 
 use paintcraft_core::types::{Error, ErrorCode, Rect, Result, Rgba};
@@ -244,6 +246,9 @@ impl Stage<'_> {
                 self.doc.layers.insert(id, layer);
                 self.doc.roots.push(id);
                 self.aliases.insert(alias.clone(), Some(id));
+            }
+            Op::LayerDuplicate { layer, alias, name } => {
+                self.duplicate_layer(index, layer, alias, name)?;
             }
             Op::LayerDelete { layer } => {
                 let id = self.resolve(layer)?;

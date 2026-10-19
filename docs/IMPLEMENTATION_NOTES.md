@@ -272,7 +272,7 @@ remain T16 work. Current-app GPU previews can be exported with the ignored
 |---|---|---|
 | Engine (T01, T04–T07) | Sparse RGBA8 layers (256×256 copy-on-write tiles, exact default pixel, hidden RGB preserved), immutable documents, deterministic UUIDv5 identifiers, atomic staged batches, semantic no-ops, linear recorded undo/redo | unit tests; 21 conformance vectors from the Python oracle |
 | Native format (T08, T29) | Canonical PCND v1 writer (byte-identical to the specimen) and bounded reader; unknown version, schema, feature, encoding or group is `capability.unsupported`, never editable | `pcnd.rs` tests, vector digests |
-| Batch v2 | v1 plus `raster.stroke_path`, `raster.flood_fill`, `raster.shape`, `raster.text`, `layer.reorder` (see below) | behavior tests, JSON-Schema grammar cases |
+| Batch v2 | v1 plus `raster.stroke_path`, `raster.flood_fill`, `raster.shape`, `raster.text`, `layer.reorder`, `layer.duplicate` (see below) | behavior tests, JSON-Schema grammar cases |
 | Image formats | PNG, BMP, JPEG import and export with named, acknowledged losses (flatten, hidden RGB, lossy JPEG, discarded alpha) | `image.rs`, `export.rs`, CLI tests |
 | Safe save and recovery (T10) | Streaming staging → atomic replace → bounded read-back; ordered native queue and file receipts; autosave checkpoints with per-session locks; recover, discard or ask later | platform `save.rs`, format `recovery.rs`, GUI tests |
 | Bounded history (T11) | Memory budget over all retained snapshots (shared tiles counted once); only the oldest undo steps are dropped, the newest edit stays undoable, the user is told | `session.rs`, editor tests |
@@ -387,3 +387,20 @@ invert or free-form), scalable or system fonts, clipboard, zoom to fit, layer gr
 layer blend modes, other formats (GIF, TIFF, WebP, PCX, `.pdn`, `.paint`), Wasm effects,
 Zstd blocks, `paintcraft-web`, and everything in milestones M3
 onward.
+
+### Layer duplication (batch v2)
+
+`layer.duplicate` requires `layer_ref`, a new batch alias `ref`, and `name`.
+It creates a new deterministic layer identity immediately above the source and
+preserves the complete raster extent, origin, default pixel, hidden RGB, opacity
+and visibility. Selection and canvas clipping do not restrict structural copying.
+Its alias can be used by later operations in the same batch. Alias reuse, missing
+sources and layer-count exhaustion fail atomically; later operation failures roll
+back the copy too. Existing v1 operations and their canonical fixture are unchanged.
+
+The implementation shares immutable tile storage with copy-on-write isolation;
+it does not allocate a rendered image or flatten off-canvas content. Layer-count
+admission still applies; broader metadata residency accounting remains T04/T11 work.
+Tests inspect hidden/off-canvas samples, identity/order, tile sharing, independent
+writes, failure rollback and exact recorded undo/redo. This is a defined native
+operation, not yet independently verified Paint.NET duplicate-layer semantics.

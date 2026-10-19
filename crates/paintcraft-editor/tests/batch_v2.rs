@@ -6,6 +6,8 @@ use paintcraft_document::{POLICY, new_document};
 use paintcraft_editor::session::{Receipt, Session};
 use uuid::Uuid;
 
+#[path = "batch_v2/layers.rs"]
+mod layers;
 #[path = "batch_v2/smooth.rs"]
 mod smooth;
 

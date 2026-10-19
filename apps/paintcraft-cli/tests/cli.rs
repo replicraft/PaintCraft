@@ -96,3 +96,5 @@ fn decode_png(path: &str) -> (u32, u32, Vec<u8>) {
 mod editing;
 #[path = "cli/formats_and_receipts.rs"]
 mod formats_and_receipts;
+#[path = "cli/layers.rs"]
+mod layers;
