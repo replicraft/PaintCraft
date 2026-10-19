@@ -12,8 +12,8 @@ use crate::shape::Span;
 
 /// Pixels per glyph cell at scale 1.
 pub const CELL: i64 = 8;
-pub const SCALE_MAX: i64 = 16;
-pub const TEXT_CHARS_MAX: usize = 1024;
+pub use paintcraft_types::policy::SCALE_MAX;
+pub use paintcraft_types::policy::TEXT_CHARS_MAX;
 
 /// Row bitmaps, least significant bit leftmost. Control characters other than
 /// newline, and the DEL range, have no glyph.

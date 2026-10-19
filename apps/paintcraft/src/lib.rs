@@ -10,13 +10,13 @@ use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 use eframe::egui::{self, Color32, Pos2, Rect, Sense, Vec2};
-use paintcraft_core::document::{hex, import_image};
 use paintcraft_core::execute::Selection;
-use paintcraft_core::render::render_flat;
+use paintcraft_document::{hex, import_image};
 use paintcraft_formats::export::{self, KNOWN_LOSSES};
 use paintcraft_formats::image::{self, ImageFormat};
 use paintcraft_formats::recovery::{Found, Recovery};
 use paintcraft_formats::save;
+use paintcraft_render::render_flat;
 use paintcraft_types::Rgba;
 use paintcraft_ui::editor::{Action, Editor, Preview, ShapeStyle, Tool};
 use paintcraft_ui::settings::{ClassicVariant, Loaded, Settings};
@@ -1142,7 +1142,7 @@ impl App {
                 )
                 .expect("a huge clip");
                 if let Ok(spans) =
-                    paintcraft_core::font::layout(&text, at, i64::from(scale), &canvas)
+                    paintcraft_raster::font::layout(&text, at, i64::from(scale), &canvas)
                 {
                     for s in spans {
                         painter.rect_filled(

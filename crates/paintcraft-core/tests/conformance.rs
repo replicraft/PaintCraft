@@ -5,11 +5,11 @@
 use std::fs;
 use std::path::PathBuf;
 
-use paintcraft_core::commands::Batch;
-use paintcraft_core::document::{Document, hex, new_document};
+use paintcraft_commands::Batch;
 use paintcraft_core::execute::Selection;
-use paintcraft_core::render::render_flat;
 use paintcraft_core::session::Session;
+use paintcraft_document::{Document, hex, new_document};
+use paintcraft_render::render_flat;
 use paintcraft_types::json::{self, Value};
 use paintcraft_types::{Error, Rgba};
 use sha2::{Digest, Sha256};

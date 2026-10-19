@@ -6,12 +6,12 @@ use std::collections::{BTreeMap, HashMap};
 use paintcraft_types::{Error, ErrorCode, Rect, Result, Rgba};
 use uuid::Uuid;
 
-use crate::commands::{Batch, LayerRef, Mode, Op, ShapeKind};
-use crate::document::{COORD_ABS_MAX, Document, LAYER_COUNT_MAX, Layer};
-use crate::flood;
-use crate::ids::deterministic_id;
-use crate::raster::{Admission, RasterLayer};
-use crate::shape::{self, Figure, Span, SpanSet};
+use paintcraft_commands::{Batch, LayerRef, Mode, Op, ShapeKind};
+use paintcraft_document::{COORD_ABS_MAX, Document, LAYER_COUNT_MAX, Layer};
+use paintcraft_raster::flood;
+use paintcraft_raster::shape::{self, Figure, Span, SpanSet};
+use paintcraft_raster::{Admission, RasterLayer};
+use paintcraft_types::ids::deterministic_id;
 
 /// Emitted-pixel and segment budgets for all pencil operations in one batch.
 pub const PENCIL_PIXELS_MAX: i128 = 16_777_216;
@@ -19,29 +19,17 @@ pub const PENCIL_SEGMENTS_MAX: i128 = 1_048_576;
 /// Stamp rows (path pixels × brush diameter) per batch for all brush strokes.
 pub const STROKE_ROWS_MAX: i128 = 16_777_216;
 /// Staged pixel storage per batch (the untrusted-decode soft limit).
-pub const STAGED_PIXELS_MAX: u64 = 268_435_456;
+pub use paintcraft_types::policy::STAGED_PIXELS_MAX;
 
-/// The session's selection projection.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Selection {
-    /// No restriction on editing.
-    Inactive,
-    /// An active selection that covers nothing.
-    Empty,
-    /// Binary coverage over a half-open document rectangle.
-    Rect(Rect),
-}
+pub use paintcraft_raster::Selection;
 
-impl Selection {
-    fn clip(self, area: Option<Rect>) -> Option<Rect> {
-        match self {
-            Selection::Inactive => area,
-            Selection::Empty => None,
-            Selection::Rect(r) => area.and_then(|a| a.intersect(&r)),
-        }
+fn clip(selection: Selection, area: Option<Rect>) -> Option<Rect> {
+    match selection {
+        Selection::Inactive => area,
+        Selection::Empty => None,
+        Selection::Rect(r) => area.and_then(|a| a.intersect(&r)),
     }
 }
-
 #[derive(Debug)]
 pub struct Staged {
     pub doc: Document,
@@ -129,8 +117,10 @@ impl Stage<'_> {
 
     /// Document-space area an edit of `layer` may touch: canvas ∩ layer ∩ selection.
     fn editable(&self, layer: &Layer) -> Option<Rect> {
-        self.selection
-            .clip(self.doc.canvas_rect().intersect(&layer.extent()))
+        clip(
+            self.selection,
+            self.doc.canvas_rect().intersect(&layer.extent()),
+        )
     }
 
     /// Paint absolute-coordinate spans of `id`, one blend per covered pixel.
@@ -437,8 +427,8 @@ impl Stage<'_> {
                 let Some(clip) = self.editable(&self.doc.layers[&id]) else {
                     return Ok(());
                 };
-                let spans =
-                    crate::font::layout(text, *at, i64::from(*scale), &clip).map_err(|c| {
+                let spans = paintcraft_raster::font::layout(text, *at, i64::from(*scale), &clip)
+                    .map_err(|c| {
                         Error::new(
                             ErrorCode::CapabilityUnsupported,
                             format!(
@@ -539,8 +529,8 @@ fn walk_clipped(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::commands::Mode;
-    use crate::document::{POLICY, new_document};
+    use paintcraft_commands::Mode;
+    use paintcraft_document::{POLICY, new_document};
     use paintcraft_types::Rgba;
 
     fn batch_of(operations: Vec<Op>) -> Batch {

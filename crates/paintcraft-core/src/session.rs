@@ -3,22 +3,22 @@
 //! changes nothing. Undo and redo restore recorded snapshots; no algorithm runs.
 //!
 //! Snapshots share unchanged tiles by `Arc`, so a history entry costs only the
-//! tiles an edit actually rewrote. Bounded eviction is a later task.
+//! tiles an edit actually rewrote. History retention is bounded by its configured memory budget.
 
-use std::collections::{BTreeMap, HashSet};
+use std::collections::BTreeMap;
 use std::sync::Arc;
 
 use paintcraft_types::json::Value;
 use paintcraft_types::{Error, ErrorCode, Result};
 use uuid::Uuid;
 
-use crate::commands::Batch;
-use crate::document::{Document, POLICY};
 use crate::execute::{STAGED_PIXELS_MAX, Selection, execute_with_budget};
-use crate::ids::deterministic_id;
+use paintcraft_commands::Batch;
+use paintcraft_document::{Document, POLICY};
+use paintcraft_types::ids::deterministic_id;
 
-/// Default memory the session may hold across all of its snapshots (1 GiB).
-pub const DEFAULT_HISTORY_BYTES: u64 = 1 << 30;
+pub use paintcraft_history::DEFAULT_HISTORY_BYTES;
+use paintcraft_history::{History, Snapshot};
 
 /// `paintcraft.result/v1`.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -75,24 +75,13 @@ pub struct Ticket {
 }
 
 #[derive(Debug)]
-struct Entry {
-    doc: Arc<Document>,
-    selection: Selection,
-    history_id: Option<Uuid>,
-}
-
-#[derive(Debug)]
 pub struct Session {
     doc: Arc<Document>,
     selection: Selection,
     epoch: u64,
-    entries: Vec<Entry>,
-    cursor: usize,
+    history: History,
     saved_state: Uuid,
     staged_pixels: u64,
-    history_budget: u64,
-    trimmed_total: u64,
-    last_trimmed: usize,
 }
 
 impl Session {
@@ -101,67 +90,34 @@ impl Session {
         let doc = Arc::new(doc);
         Session {
             saved_state: doc.state_id,
-            entries: vec![Entry {
-                doc: Arc::clone(&doc),
+            history: History::new(Snapshot {
+                document: Arc::clone(&doc),
                 selection: Selection::Inactive,
                 history_id: None,
-            }],
+            }),
             doc,
             selection: Selection::Inactive,
             epoch: 0,
-            cursor: 0,
             staged_pixels: STAGED_PIXELS_MAX,
-            history_budget: DEFAULT_HISTORY_BYTES,
-            trimmed_total: 0,
-            last_trimmed: 0,
         }
     }
 
     /// Cap the memory held by the document and every retained snapshot. When a
     /// commit exceeds it, the oldest undo steps are dropped (never the newest).
     pub fn set_history_budget(&mut self, bytes: u64) {
-        self.history_budget = bytes;
+        self.history.set_budget(bytes);
     }
-
-    /// Bytes of pixel tiles held by the document and all snapshots, counting a
-    /// tile shared by several snapshots once.
     pub fn resident_bytes(&self) -> u64 {
-        let mut seen = HashSet::new();
-        for e in &self.entries {
-            for l in e.doc.layers.values() {
-                seen.extend(l.raster.tile_identities());
-            }
-        }
-        for l in self.doc.layers.values() {
-            seen.extend(l.raster.tile_identities());
-        }
-        seen.len() as u64 * crate::raster::RasterLayer::TILE_BYTES as u64
+        self.history.resident_bytes()
     }
-
-    /// Undo steps available right now.
     pub fn undo_depth(&self) -> usize {
-        self.cursor
+        self.history.undo_depth()
     }
-
-    /// Oldest undo steps dropped by the most recent commit to honour the budget.
     pub fn last_trimmed(&self) -> usize {
-        self.last_trimmed
+        self.history.last_trimmed()
     }
-
-    /// Undo steps dropped over the life of the session.
     pub fn trimmed_total(&self) -> u64 {
-        self.trimmed_total
-    }
-
-    fn enforce_history_budget(&mut self) {
-        self.last_trimmed = 0;
-        // Always keep the newest edit undoable.
-        while self.cursor > 1 && self.resident_bytes() > self.history_budget {
-            self.entries.remove(0);
-            self.cursor -= 1;
-            self.last_trimmed += 1;
-        }
-        self.trimmed_total += self.last_trimmed as u64;
+        self.history.trimmed_total()
     }
 
     /// Lower the per-batch staging budget (resource-exhaustion testing, constrained hosts).
@@ -235,17 +191,14 @@ impl Session {
             deterministic_id(&["history", &base, &self.epoch.to_string(), &batch.digest]);
         let doc = Arc::new(staged.doc);
         // The single publication point: document, selection, history and epoch together.
-        self.entries.truncate(self.cursor + 1);
-        self.entries.push(Entry {
-            doc: Arc::clone(&doc),
+        self.history.record(Snapshot {
+            document: Arc::clone(&doc),
             selection: staged.selection,
             history_id: Some(history_id),
         });
-        self.cursor += 1;
         self.doc = doc;
         self.selection = staged.selection;
         self.epoch += 1;
-        self.enforce_history_budget();
         Ok(Receipt {
             committed: true,
             state_id: self.doc.state_id,
@@ -256,23 +209,21 @@ impl Session {
     }
 
     pub fn undo(&mut self) -> Option<Navigation> {
-        self.cursor.checked_sub(1).map(|t| self.navigate(t))
+        let snapshot = self.history.undo()?;
+        Some(self.navigate(snapshot))
     }
-
     pub fn redo(&mut self) -> Option<Navigation> {
-        (self.cursor + 1 < self.entries.len()).then(|| self.navigate(self.cursor + 1))
+        let snapshot = self.history.redo()?;
+        Some(self.navigate(snapshot))
     }
-
-    fn navigate(&mut self, target: usize) -> Navigation {
-        let e = &self.entries[target];
-        self.doc = Arc::clone(&e.doc);
-        self.selection = e.selection;
-        self.cursor = target;
+    fn navigate(&mut self, snapshot: Snapshot) -> Navigation {
+        self.doc = snapshot.document;
+        self.selection = snapshot.selection;
         self.epoch += 1;
         Navigation {
             state_id: self.doc.state_id,
             publication_epoch: self.epoch,
-            history_id: e.history_id,
+            history_id: snapshot.history_id,
         }
     }
 }
@@ -280,7 +231,7 @@ impl Session {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::document::new_document;
+    use paintcraft_document::new_document;
     use paintcraft_types::Rgba;
 
     fn batch(s: &Session, ops: &str) -> Vec<u8> {
@@ -413,7 +364,7 @@ mod tests {
     }
 
     fn doc_before_root_state(s: &Session) -> Uuid {
-        s.entries[0].doc.state_id
+        s.history.first().document.state_id
     }
 
     #[test]
@@ -422,7 +373,7 @@ mod tests {
         let mut s = Session::new(new_document(2560, 256, None, 0, POLICY).unwrap());
         let r = s.apply_json(&batch(&s, r##"[{"op":"layer.add","ref":"l","name":"L","width":2560,"height":256,"origin":{"x":0,"y":0},"default_pixel":"#00000000"}]"##)).unwrap();
         let layer = r.aliases["l"];
-        let tile = crate::raster::RasterLayer::TILE_BYTES as u64;
+        let tile = paintcraft_raster::RasterLayer::TILE_BYTES as u64;
         s.set_history_budget(14 * tile);
         let mut states = vec![s.ticket().state_id];
         for i in 0..60i64 {

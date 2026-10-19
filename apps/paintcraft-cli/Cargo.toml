@@ -12,6 +12,11 @@ name = "paintcraft-cli"
 path = "src/main.rs"
 
 [dependencies]
+paintcraft-raster.workspace = true
+paintcraft-document.workspace = true
+paintcraft-commands.workspace = true
+paintcraft-render.workspace = true
+
 clap.workspace = true
 paintcraft-types.workspace = true
 paintcraft-core.workspace = true

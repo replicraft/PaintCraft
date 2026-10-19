@@ -15,6 +15,11 @@ name = "paintcraft"
 path = "src/main.rs"
 
 [dependencies]
+paintcraft-raster.workspace = true
+paintcraft-document.workspace = true
+paintcraft-commands.workspace = true
+paintcraft-render.workspace = true
+
 paintcraft-types.workspace = true
 paintcraft-core.workspace = true
 paintcraft-formats.workspace = true

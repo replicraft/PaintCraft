@@ -1,8 +1,8 @@
 //! Batch v2 operations: brush strokes, flood fill and shapes. Expected pictures
 //! are derived by hand from the geometry definitions, not copied from output.
 
-use paintcraft_core::document::{POLICY, new_document};
 use paintcraft_core::session::{Receipt, Session};
+use paintcraft_document::{POLICY, new_document};
 use paintcraft_types::{Error, ErrorCode, Rgba};
 use uuid::Uuid;
 
@@ -371,7 +371,7 @@ fn undo_restores_the_exact_state_after_every_v2_operation() {
 
 #[test]
 fn parser_agrees_with_the_v2_json_schema_on_every_grammar_case() {
-    use paintcraft_core::commands::Batch;
+    use paintcraft_commands::Batch;
     use paintcraft_types::json::{self, Value};
     let path =
         std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../conformance/grammar-v2.cases");
@@ -534,8 +534,7 @@ fn reordering_layers_changes_the_stack_and_the_render() {
     let (red, green, blue) = (r.aliases["red"], r.aliases["green"], r.aliases["blue"]);
     let top = |s: &Session| s.document().roots.clone();
     assert_eq!(top(&s), [red, green, blue]);
-    let image =
-        |s: &Session| paintcraft_core::render::render_flat(s.document()).unwrap()[..4].to_vec();
+    let image = |s: &Session| paintcraft_render::render_flat(s.document()).unwrap()[..4].to_vec();
     assert_eq!(image(&s), [0, 0, 255, 255]);
     let move_to = |s: &mut Session, id: Uuid, i: usize| {
         run(

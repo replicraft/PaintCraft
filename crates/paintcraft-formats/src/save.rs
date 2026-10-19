@@ -7,7 +7,7 @@ use std::fs::{self, File, OpenOptions};
 use std::io::Write as _;
 use std::path::{Path, PathBuf};
 
-use paintcraft_core::document::hex;
+use paintcraft_document::hex;
 use paintcraft_types::json::Value;
 use paintcraft_types::{Error, ErrorCode};
 use sha2::{Digest, Sha256};

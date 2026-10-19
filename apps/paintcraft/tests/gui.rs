@@ -396,10 +396,10 @@ fn new_document_asks_before_discarding_unsaved_work() {
 
 #[test]
 fn gui_and_core_produce_identical_pixels_for_the_same_stroke() {
-    use paintcraft_core::commands::Batch;
-    use paintcraft_core::document::{POLICY, new_document};
-    use paintcraft_core::render::render_flat;
+    use paintcraft_commands::Batch;
     use paintcraft_core::session::Session;
+    use paintcraft_document::{POLICY, new_document};
+    use paintcraft_render::render_flat;
 
     let mut h = harness();
     with_layer(&mut h);

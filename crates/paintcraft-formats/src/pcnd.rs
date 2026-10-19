@@ -4,10 +4,10 @@
 
 use std::collections::{HashMap, HashSet};
 
-use paintcraft_core::document::{COORD_ABS_MAX, Document, LAYER_COUNT_MAX, Layer, POLICY, hex};
 use paintcraft_core::execute::STAGED_PIXELS_MAX;
-use paintcraft_core::ids::parse_uuid;
-use paintcraft_core::raster::{Admission, RasterLayer, TILE_EDGE};
+use paintcraft_document::{COORD_ABS_MAX, Document, LAYER_COUNT_MAX, Layer, POLICY, hex};
+use paintcraft_raster::{Admission, RasterLayer, TILE_EDGE};
+use paintcraft_types::ids::parse_uuid;
 use paintcraft_types::json::{self, Value};
 use paintcraft_types::{Error, ErrorCode, Result, Rgba};
 use sha2::{Digest, Sha256};
@@ -609,8 +609,8 @@ pub fn read(bytes: &[u8]) -> Result<Document> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use paintcraft_core::document::new_document;
     use paintcraft_core::session::Session;
+    use paintcraft_document::new_document;
     use std::path::PathBuf;
 
     fn specimen() -> Vec<u8> {

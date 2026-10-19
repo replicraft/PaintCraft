@@ -1,0 +1,15 @@
+[package]
+name = "paintcraft-raster"
+description = "Sparse copy-on-write tiles, selection coverage and exact scalar kernels"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license-file.workspace = true
+publish.workspace = true
+
+[dependencies]
+paintcraft-types.workspace = true
+font8x8.workspace = true
+
+[lints]
+workspace = true

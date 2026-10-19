@@ -8,13 +8,13 @@ use paintcraft_types::{Error, ErrorCode, Rect, Result, Rgba};
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
-use crate::ids::deterministic_id;
-use crate::raster::RasterLayer;
+use paintcraft_raster::RasterLayer;
+use paintcraft_types::ids::deterministic_id;
 
-pub const POLICY: &str = "paintcraft.core/default-v1";
-pub const CANVAS_SIDE_MAX: u32 = 1_048_576;
-pub const COORD_ABS_MAX: i64 = 140_737_488_355_327;
-pub const LAYER_COUNT_MAX: usize = 100_000;
+pub use paintcraft_types::policy::CANVAS_SIDE_MAX;
+pub use paintcraft_types::policy::COORD_ABS_MAX;
+pub use paintcraft_types::policy::LAYER_COUNT_MAX;
+pub use paintcraft_types::policy::POLICY;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Layer {
@@ -152,7 +152,7 @@ pub fn import_image(width: u32, height: u32, rgba: &[u8], source_sha256: &str) -
             "image dimensions out of range",
         ));
     }
-    let mut adm = crate::raster::Admission::new(crate::execute::STAGED_PIXELS_MAX);
+    let mut adm = paintcraft_raster::Admission::new(paintcraft_types::policy::STAGED_PIXELS_MAX);
     let raster = RasterLayer::from_rgba(width, height, Rgba::TRANSPARENT, rgba, &mut adm)?;
     let id = deterministic_id(&["layer", "import", source_sha256]);
     let layer = Layer {
@@ -173,15 +173,7 @@ pub fn import_image(width: u32, height: u32, rgba: &[u8], source_sha256: &str) -
     })
 }
 
-pub fn hex(bytes: &[u8]) -> String {
-    use std::fmt::Write as _;
-    bytes
-        .iter()
-        .fold(String::with_capacity(bytes.len() * 2), |mut s, b| {
-            let _ = write!(s, "{b:02x}");
-            s
-        })
-}
+pub use paintcraft_types::policy::hex;
 
 #[cfg(test)]
 mod tests {

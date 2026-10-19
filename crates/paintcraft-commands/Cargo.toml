@@ -1,0 +1,16 @@
+[package]
+name = "paintcraft-commands"
+description = "Typed batch intent, structural validation and automation schemas"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license-file.workspace = true
+publish.workspace = true
+
+[dependencies]
+paintcraft-types.workspace = true
+sha2.workspace = true
+uuid.workspace = true
+
+[lints]
+workspace = true

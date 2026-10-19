@@ -5,8 +5,8 @@ use std::fs::File;
 use std::io::Read as _;
 use std::path::{Path, PathBuf};
 
-use paintcraft_core::document::{Document, POLICY, hex, import_image, new_document};
 use paintcraft_core::session::Session;
+use paintcraft_document::{Document, POLICY, hex, import_image, new_document};
 use paintcraft_formats::image::{self, ImageFormat};
 use paintcraft_formats::{export, pcnd};
 use paintcraft_types::json::Value;

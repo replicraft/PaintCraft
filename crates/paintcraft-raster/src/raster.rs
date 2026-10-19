@@ -27,18 +27,12 @@ pub struct TileCoord {
     pub ty: i64,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum BlendMode {
-    Replace,
-    SourceOver,
-}
+pub use paintcraft_types::policy::BlendMode;
 
-impl BlendMode {
-    fn apply(self, src: Rgba, dst: Rgba) -> Rgba {
-        match self {
-            BlendMode::Replace => src,
-            BlendMode::SourceOver => src.source_over(dst),
-        }
+fn blend(mode: BlendMode, src: Rgba, dst: Rgba) -> Rgba {
+    match mode {
+        BlendMode::Replace => src,
+        BlendMode::SourceOver => src.source_over(dst),
     }
 }
 
@@ -238,11 +232,11 @@ impl RasterLayer {
         }
         let ((tx, x), (ty, y)) = (tile_split(lx), tile_split(ly));
         let c = TileCoord { tx, ty };
-        if !self.tiles.contains_key(&c) && mode.apply(src, self.default) == self.default {
+        if !self.tiles.contains_key(&c) && blend(mode, src, self.default) == self.default {
             return Ok(());
         }
         let tile = self.tile_mut(c, adm)?;
-        let new = mode.apply(src, tile.at(x, y));
+        let new = blend(mode, src, tile.at(x, y));
         tile.put(x, y, new);
         Ok(())
     }
@@ -264,7 +258,7 @@ impl RasterLayer {
         for ty in ty0..=ty1 {
             for tx in tx0..=tx1 {
                 let c = TileCoord { tx, ty };
-                if !self.tiles.contains_key(&c) && mode.apply(src, self.default) == self.default {
+                if !self.tiles.contains_key(&c) && blend(mode, src, self.default) == self.default {
                     continue;
                 }
                 let part = Rect {
@@ -279,7 +273,7 @@ impl RasterLayer {
                 for y in part.y0..part.y1 {
                     for x in part.x0..part.x1 {
                         let (lx, ly) = (x.rem_euclid(edge) as u32, y.rem_euclid(edge) as u32);
-                        let new = mode.apply(src, tile.at(lx, ly));
+                        let new = blend(mode, src, tile.at(lx, ly));
                         tile.put(lx, ly, new);
                     }
                 }

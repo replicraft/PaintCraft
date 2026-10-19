@@ -1,12 +1,6 @@
-//! The engine behind every PaintCraft frontend. CPU-only; no windowing, GPU or I/O.
-
-pub mod commands;
-pub mod document;
+//! Editor sessions and atomic transaction preparation/publication.
 pub mod execute;
-pub mod flood;
-pub mod font;
-pub mod ids;
-pub mod raster;
-pub mod render;
 pub mod session;
-pub mod shape;
+
+/// Stable editor IDs, geometry, pixels, errors and policy descriptors.
+pub use paintcraft_types as types;

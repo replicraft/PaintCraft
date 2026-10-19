@@ -5,9 +5,9 @@
 use std::fs;
 use std::path::PathBuf;
 
-use paintcraft_core::commands::Batch;
-use paintcraft_core::document::{hex, new_document};
+use paintcraft_commands::Batch;
 use paintcraft_core::session::Session;
+use paintcraft_document::{hex, new_document};
 use paintcraft_formats::pcnd;
 use paintcraft_types::Rgba;
 use paintcraft_types::json::{self, Value};

@@ -7,7 +7,7 @@
 
 use paintcraft_types::{Error, ErrorCode, Result, Rgba};
 
-use crate::document::Document;
+use paintcraft_document::Document;
 
 /// Largest canvas this renderer will materialize (provisional admission limit).
 pub const RENDER_PIXELS_MAX: u64 = 67_108_864;
@@ -56,8 +56,8 @@ pub fn render_flat(doc: &Document) -> Result<Vec<u8>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::document::{POLICY, new_document};
-    use crate::session::Session;
+    use paintcraft_core::session::Session;
+    use paintcraft_document::{POLICY, new_document};
 
     fn run(s: &mut Session, ops: &str) {
         let t = s.ticket();

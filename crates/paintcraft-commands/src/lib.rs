@@ -9,8 +9,8 @@ use paintcraft_types::{Error, ErrorCode, Rect, Result, Rgba};
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
-use crate::document::{COORD_ABS_MAX, hex};
-use crate::ids::parse_uuid;
+use paintcraft_types::ids::parse_uuid;
+use paintcraft_types::policy::{COORD_ABS_MAX, hex};
 
 const SIZE_MAX: i64 = 1_048_576;
 const MAX_OPERATIONS: usize = 1024;
@@ -53,7 +53,7 @@ impl Anchor {
     }
 }
 
-pub use crate::raster::BlendMode as Mode;
+pub use paintcraft_types::policy::BlendMode as Mode;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ShapeKind {
@@ -339,14 +339,14 @@ fn op(v: &Value, version: u8) -> Result<Op> {
                 &[],
             )?;
             let text = string(&o["text"], "text")?;
-            if text.is_empty() || text.chars().count() > crate::font::TEXT_CHARS_MAX {
+            if text.is_empty() || text.chars().count() > paintcraft_types::policy::TEXT_CHARS_MAX {
                 return Err(bad("text must contain 1..=1024 characters"));
             }
             Op::Text {
                 layer: layer_ref(&o["layer_ref"])?,
                 at: point(&o["at"])?,
                 text,
-                scale: int_in(&o["scale"], 1, crate::font::SCALE_MAX, "scale")? as u32,
+                scale: int_in(&o["scale"], 1, paintcraft_types::policy::SCALE_MAX, "scale")? as u32,
                 color: color(&o["color"])?,
                 mode: mode(&o["mode"])?,
             }

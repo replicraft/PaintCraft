@@ -8,10 +8,10 @@
 
 use std::path::{Path, PathBuf};
 
-use paintcraft_core::commands::Batch;
-use paintcraft_core::document::{Document, POLICY, new_document};
+use paintcraft_commands::Batch;
 use paintcraft_core::execute::Selection;
 use paintcraft_core::session::Session;
+use paintcraft_document::{Document, POLICY, new_document};
 use paintcraft_formats::recovery::Recovery;
 use paintcraft_formats::{pcnd, save};
 use paintcraft_types::json::Value;
@@ -457,7 +457,7 @@ impl Editor {
         let scale = self
             .options
             .text_scale
-            .clamp(1, paintcraft_core::font::SCALE_MAX as u32);
+            .clamp(1, paintcraft_raster::font::SCALE_MAX as u32);
         self.text = Some(TextEdit {
             token: self.next_gesture,
             layer,
@@ -481,9 +481,9 @@ impl Editor {
         let Some(t) = &mut self.text else { return };
         let mut skipped = 0;
         for c in typed.chars() {
-            if !paintcraft_core::font::supported(c) {
+            if !paintcraft_raster::font::supported(c) {
                 skipped += 1;
-            } else if t.text.chars().count() < paintcraft_core::font::TEXT_CHARS_MAX {
+            } else if t.text.chars().count() < paintcraft_raster::font::TEXT_CHARS_MAX {
                 t.text.push(c);
             }
         }
@@ -1382,7 +1382,7 @@ mod tests {
     fn selecting_needs_no_target_layer_but_painting_does() {
         // A document with no layers at all.
         let mut e = Editor::with_document(
-            paintcraft_core::document::new_document(32, 32, None, 0, POLICY).unwrap(),
+            paintcraft_document::new_document(32, 32, None, 0, POLICY).unwrap(),
             None,
         );
         e.tool = Tool::Select;
@@ -1453,7 +1453,7 @@ mod tests {
         let mut e = editor();
         e.tool = Tool::Brush;
         e.options.size = 1;
-        e.set_history_budget(3 * paintcraft_core::raster::RasterLayer::TILE_BYTES as u64);
+        e.set_history_budget(3 * paintcraft_raster::RasterLayer::TILE_BYTES as u64);
         let mut said = false;
         for i in 0..30 {
             stroke(&mut e, &[(10 + i, 10), (10 + i, 11)]);

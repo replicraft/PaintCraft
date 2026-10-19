@@ -2305,7 +2305,7 @@ dependencies = [
 name = "paintcraft-core"
 version = "0.1.0"
 dependencies = [
- "font8x8",
+ "paintcraft-raster",
  "paintcraft-types",
  "sha2",
  "uuid",
@@ -2327,8 +2327,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "paintcraft-raster"
+version = "0.1.0"
+dependencies = [
+ "font8x8",
+ "paintcraft-types",
+]
+
+[[package]]
 name = "paintcraft-types"
 version = "0.1.0"
+dependencies = [
+ "uuid",
+]
 
 [[package]]
 name = "paintcraft-ui"
