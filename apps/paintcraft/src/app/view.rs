@@ -46,6 +46,7 @@ impl App {
             ViewAction::Double => 2.0,
             ViewAction::Quadruple => 4.0,
             ViewAction::Octuple => 8.0,
+            ViewAction::SetZoom(value) => value as f32 / 10000.0,
             ViewAction::FitWindow | ViewAction::FitSelection => {
                 let Some(viewport) = self.canvas_viewport else {
                     return;

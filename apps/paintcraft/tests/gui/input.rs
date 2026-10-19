@@ -194,7 +194,9 @@ fn canvas_pixels_are_actual_pixels_at_any_display_scale() {
         );
     }
     let mut h = harness();
-    h.get_by_label("4×").click();
+    h.get_by_label("Zoom presets").click();
+    h.run();
+    h.get_by_label("400%").click();
     h.run();
     assert_eq!(h.state().canvas_rect().unwrap().width(), 1280.0);
 }
@@ -203,17 +205,19 @@ fn canvas_pixels_are_actual_pixels_at_any_display_scale() {
 fn zoomed_clicks_hit_the_right_document_pixel() {
     let mut h = harness();
     with_layer(&mut h);
-    h.get_by_label("4×").click();
+    h.get_by_label("Zoom presets").click();
+    h.run();
+    h.get_by_label("400%").click();
     h.run();
     let origin = h.state().canvas_rect().unwrap().min;
-    let p = origin + Vec2::new(4.0 * 9.0 + 1.0, 4.0 * 3.0 + 2.0);
+    let p = origin + Vec2::new(4.0 * 160.0 + 1.0, 4.0 * 160.0 + 2.0);
     h.input_mut()
         .events
         .extend([Event::PointerMoved(p), press(p), release(p)]);
     h.step();
     h.run();
-    assert_eq!(top_pixel(&h, 9, 3).a(), 255);
-    assert_eq!(top_pixel(&h, 10, 3).a(), 0);
+    assert_eq!(top_pixel(&h, 160, 160).a(), 255);
+    assert_eq!(top_pixel(&h, 161, 160).a(), 0);
 }
 
 #[test]

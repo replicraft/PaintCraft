@@ -1,4 +1,4 @@
-//! Studio viewport actions do not publish document mutations.
+//! Document viewport actions do not publish document mutations.
 use super::*;
 
 pub const ZOOM_MIN: f32 = 1.0 / 65536.0;
@@ -15,6 +15,8 @@ pub enum ViewAction {
     Double,
     Quadruple,
     Octuple,
+    /// Hundredths of one percent; 10000 is actual size.
+    SetZoom(u32),
 }
 
 pub const VIEW: &[ViewAction] = &[
@@ -41,6 +43,7 @@ impl ViewAction {
             Self::Double => ("200%", None),
             Self::Quadruple => ("400%", None),
             Self::Octuple => ("800%", None),
+            Self::SetZoom(_) => ("Zoom", None),
         };
         Descriptor {
             action: Action::View(self),
@@ -57,8 +60,23 @@ impl ViewAction {
                 Self::ZoomIn => ctx.zoom < ZOOM_MAX,
                 Self::ZoomOut => ctx.zoom > ZOOM_MIN,
                 Self::FitSelection => ctx.can_fit_selection,
+                Self::SetZoom(value) => value > 0 && value <= (ZOOM_MAX * 10000.0) as u32,
                 _ => true,
             }
+    }
+    pub(super) fn activation_code(self) -> u64 {
+        match self {
+            Self::ZoomIn => 1300,
+            Self::ZoomOut => 1301,
+            Self::FitWindow => 1302,
+            Self::FitSelection => 1303,
+            Self::ActualSize => 1304,
+            Self::PixelGrid => 1305,
+            Self::Double => 1306,
+            Self::Quadruple => 1307,
+            Self::Octuple => 1308,
+            Self::SetZoom(_) => 1309,
+        }
     }
     pub(super) fn checked(self, ctx: Context) -> Option<bool> {
         match self {

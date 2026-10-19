@@ -20,7 +20,10 @@ impl Action {
                 ViewAction::FitWindow | ViewAction::FitSelection => Icon::FitWindow,
                 ViewAction::ActualSize => Icon::ActualSize,
                 ViewAction::PixelGrid => Icon::PixelGrid,
-                ViewAction::Double | ViewAction::Quadruple | ViewAction::Octuple => Icon::ZoomIn,
+                ViewAction::Double
+                | ViewAction::Quadruple
+                | ViewAction::Octuple
+                | ViewAction::SetZoom(_) => Icon::ZoomIn,
             },
             Self::Layer(action) => match action {
                 LayerAction::Add => Icon::AddLayer,

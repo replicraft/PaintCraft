@@ -108,7 +108,7 @@ impl Action {
     pub fn available(self, frontend: Frontend) -> bool {
         match self {
             Self::Interface => frontend == Frontend::Classic,
-            Self::Layer(_) | Self::View(_) => frontend == Frontend::Studio,
+            Self::Layer(_) => frontend == Frontend::Studio,
             _ => true,
         }
     }
@@ -161,7 +161,7 @@ impl Action {
     pub fn activation_code(self) -> u64 {
         match self {
             Self::Layer(action) => 1200 + action as u64,
-            Self::View(action) => 1300 + action as u64,
+            Self::View(action) => action.activation_code(),
             Self::New => 1000,
             Self::Open => 1001,
             Self::Save => 1002,

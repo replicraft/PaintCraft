@@ -79,13 +79,21 @@ impl App {
                     if self.document_count() == 0 {
                         return;
                     }
-                    for (zoom, action) in [
-                        (8.0, paintcraft_ui::actions::ViewAction::Octuple),
-                        (4.0, paintcraft_ui::actions::ViewAction::Quadruple),
-                        (2.0, paintcraft_ui::actions::ViewAction::Double),
-                        (1.0, paintcraft_ui::actions::ViewAction::ActualSize),
-                    ] {
-                        if self.experience() == Experience::Studio {
+                    if self.experience() == Experience::Classic {
+                        let context = self.action_context();
+                        let actions = paintcraft_classic::zoom_controls(
+                            ui,
+                            context,
+                            egui::Id::unique(self.active_tab_id()),
+                        );
+                        self.dispatch_chrome(&ctx, actions);
+                    } else {
+                        for (zoom, action) in [
+                            (8.0, paintcraft_ui::actions::ViewAction::Octuple),
+                            (4.0, paintcraft_ui::actions::ViewAction::Quadruple),
+                            (2.0, paintcraft_ui::actions::ViewAction::Double),
+                            (1.0, paintcraft_ui::actions::ViewAction::ActualSize),
+                        ] {
                             if ui
                                 .selectable_label(self.zoom == zoom, format!("{zoom}×"))
                                 .clicked()
@@ -95,11 +103,7 @@ impl App {
                                     vec![paintcraft_ui::actions::Action::View(action)],
                                 );
                             }
-                        } else {
-                            ui.selectable_value(&mut self.zoom, zoom, format!("{zoom}×"));
                         }
-                    }
-                    if self.experience() == Experience::Studio {
                         ui.label(format!("{:.2}%", self.zoom * 100.0));
                     }
                     let (width, height) = self.editor.document().canvas;

@@ -1,7 +1,9 @@
 # Studio reference coverage
 
 The user-supplied `docs/temp/paint-references/PLAN.md` guides the next UI slices.
-All 15 supplied images were inspected on 2026-10-19. The pack stays in its
+The original 15 supplied images were inspected on 2026-10-19.
+Seven additional Classic photos were inspected later that day; see
+[the Classic inventory and current priority](CLASSIC.md). The pack stays in its
 reference directory; this inventory records relevant observations and implemented
 coverage, rather than copying the specification or proprietary artwork.
 
@@ -50,7 +52,7 @@ independent behavioral reference evidence.
 | View menu | partially working | Zoom in/out, actual size, fit window/selection and a display-only pixel grid work; rulers, units, pan tools and overscroll remain |
 | Settings | partially working | Experience/version persistence works; utility-window persistence and reference settings pages remain |
 | Selection/clipboard/image/adjustments/effects | partially working | Rectangle selection and existing drawing tools work; clipboard, transforms, adjustment/effect registries and preview lifecycles remain |
-| Classic v11 fidelity | deferred | Existing separate Classic frontend retained; reference-driven expansion follows Studio coverage |
+| Classic v11 fidelity | in progress | Current frontend priority; subpixel brush input and percentage zoom controls work; full ribbon, colors dialog and remaining editing workflows remain |
 
 Finish one functional slice at a time. Shared action descriptors and menu/shortcut equivalence now cover existing
 operations, respecting text/IME and modal ownership. Subsequent slices add missing

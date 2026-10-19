@@ -138,3 +138,6 @@ mod view;
 
 #[path = "gui/classic_brush.rs"]
 mod classic_brush;
+
+#[path = "gui/classic_zoom.rs"]
+mod classic_zoom;

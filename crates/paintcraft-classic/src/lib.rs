@@ -1,4 +1,7 @@
 //! Classic presentation emits actions; editor and platform services own effects.
+mod zoom;
+pub use zoom::zoom_controls;
+
 use egui::{Color32, Vec2};
 use paintcraft_core::types::Rgba;
 use paintcraft_tools::Tool;
@@ -66,6 +69,13 @@ pub fn chrome(
             }
         });
         ui.menu_button("View", |ui| {
+            for &action in paintcraft_ui::actions::VIEW {
+                if paintcraft_ui::actions::menu_item(ui, Action::View(action), context) {
+                    actions.push(Action::View(action));
+                    ui.close();
+                }
+            }
+            ui.separator();
             if ui.button("Change Paint version…").clicked() {
                 actions.push(Action::Interface);
                 ui.close();
