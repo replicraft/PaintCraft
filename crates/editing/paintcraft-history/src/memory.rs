@@ -1,0 +1,85 @@
+use super::*;
+use std::{collections::HashSet, mem::size_of};
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct MemoryUsage {
+    pub decoded_bytes: u64,
+    /// Known decoded allocations held beyond hot entries/raw payloads. This can
+    /// include the active restored document and external render/save readers.
+    pub leased_decoded_bytes: u64,
+    pub encoded_bytes: u64,
+    /// Conservative container/string/control-block weight, not allocator RSS.
+    pub metadata_weight: u64,
+    pub packed_entries: usize,
+    pub logical_payloads: usize,
+}
+impl MemoryUsage {
+    pub fn retained_weight(self) -> u64 {
+        self.decoded_bytes - self.leased_decoded_bytes + self.encoded_bytes + self.metadata_weight
+    }
+    pub fn known_weight(self) -> u64 {
+        self.decoded_bytes + self.encoded_bytes + self.metadata_weight
+    }
+}
+impl History {
+    pub fn memory_usage(&self) -> MemoryUsage {
+        let mut owned: HashSet<TileVersion> = HashSet::new();
+        let mut decoded: HashSet<TileVersion> = HashSet::new();
+        let mut docs = HashSet::new();
+        let mut blobs = HashSet::new();
+        let mut usage = MemoryUsage {
+            metadata_weight: (self.entries.capacity() * size_of::<Entry>()
+                + self.memo.capacity()
+                    * (size_of::<(TileVersion, std::sync::Weak<archive::Blob>)>() + 160))
+                as u64,
+            ..Default::default()
+        };
+        for entry in &self.entries {
+            match &entry.storage {
+                Storage::Hot(s) => {
+                    if docs.insert(Arc::as_ptr(&s.document)) {
+                        usage.metadata_weight += archive::document_metadata(&s.document) as u64;
+                    }
+                    owned.extend(
+                        s.document
+                            .layers
+                            .values()
+                            .flat_map(|l| l.raster.tile_leases().map(|(_, t)| t.version())),
+                    );
+                }
+                Storage::Cold(s) => {
+                    usage.packed_entries += 1;
+                    if let Some(doc) = s.decoded_document()
+                        && docs.insert(Arc::as_ptr(&doc))
+                    {
+                        usage.metadata_weight += archive::document_metadata(&doc) as u64;
+                    }
+                    usage.metadata_weight += s.metadata_weight() as u64;
+                    for blob in s.blobs() {
+                        if blobs.insert(Arc::as_ptr(blob)) {
+                            usage.logical_payloads += 1;
+                            usage.encoded_bytes += blob.encoded_bytes() as u64;
+                            usage.metadata_weight +=
+                                (archive::blob_weight(blob) - blob.encoded_bytes()) as u64;
+                            if blob.owns_decoded() {
+                                owned.insert(blob.source());
+                            }
+                            decoded.insert(blob.source());
+                        }
+                    }
+                }
+            }
+        }
+        decoded.extend(self.memo.keys().cloned());
+        usage.metadata_weight += owned.len() as u64 * 128;
+        decoded.extend(owned.iter().cloned());
+        for version in decoded {
+            let bytes = version.resident_bytes() as u64;
+            usage.decoded_bytes += bytes;
+            if !owned.contains(&version) {
+                usage.leased_decoded_bytes += bytes;
+            }
+        }
+        usage
+    }
+}

@@ -1,7 +1,7 @@
 //! Recorded history restores snapshots without re-executing edits.
 use paintcraft_document::Document;
 use paintcraft_raster::{RasterLayer, Selection};
-use std::{collections::HashSet, sync::Arc};
+use std::sync::Arc;
 use uuid::Uuid;
 
 pub const DEFAULT_HISTORY_BYTES: u64 = 1 << 30;
@@ -52,10 +52,48 @@ impl Label {
     }
 }
 
-#[derive(Debug)]
+mod archive;
+mod memory;
+pub use memory::MemoryUsage;
+use paintcraft_core::types::{Error, Result};
+use paintcraft_raster::TileVersion;
+
+#[derive(Clone, Debug)]
+enum Storage {
+    Hot(Snapshot),
+    Cold(Arc<archive::Packed>),
+}
+#[derive(Clone, Debug)]
 struct Entry {
-    snapshot: Snapshot,
+    storage: Storage,
     label: Label,
+}
+impl Entry {
+    fn state_id(&self) -> Uuid {
+        match &self.storage {
+            Storage::Hot(s) => s.document.state_id,
+            Storage::Cold(s) => s.state_id,
+        }
+    }
+    fn history_id(&self) -> Option<Uuid> {
+        match &self.storage {
+            Storage::Hot(s) => s.history_id,
+            Storage::Cold(s) => s.history_id,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Packing {
+    Shared,
+    Adaptive,
+}
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Compaction {
+    pub packed_entries: usize,
+    pub decoded_before: u64,
+    pub decoded_after: u64,
+    pub encoded_bytes: u64,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -81,31 +119,39 @@ pub struct History {
     budget: u64,
     trimmed_total: u64,
     last_trimmed: usize,
+    memo: archive::Memo,
+    packing: Packing,
+    restore_pixels: u64,
+    last_packing_error: Option<Error>,
 }
 impl History {
     pub fn new(initial: Snapshot) -> Self {
         Self {
             entries: vec![Entry {
-                snapshot: initial,
+                storage: Storage::Hot(initial),
                 label: Label::Initial,
             }],
             cursor: 0,
             budget: DEFAULT_HISTORY_BYTES,
             trimmed_total: 0,
             last_trimmed: 0,
+            memo: archive::Memo::new(),
+            packing: Packing::Adaptive,
+            restore_pixels: 268_435_456,
+            last_packing_error: None,
         }
     }
     pub fn set_budget(&mut self, bytes: u64) {
         self.budget = bytes;
     }
+    pub fn set_packing(&mut self, packing: Packing) {
+        self.packing = packing;
+    }
+    pub fn set_restore_budget(&mut self, pixels: u64) {
+        self.restore_pixels = pixels;
+    }
     pub fn resident_bytes(&self) -> u64 {
-        let mut seen = HashSet::new();
-        for e in &self.entries {
-            for l in e.snapshot.document.layers.values() {
-                seen.extend(l.raster.tile_identities());
-            }
-        }
-        seen.len() as u64 * RasterLayer::TILE_BYTES as u64
+        self.memory_usage().decoded_bytes
     }
     pub fn undo_depth(&self) -> usize {
         self.cursor
@@ -119,55 +165,209 @@ impl History {
     pub fn trimmed_total(&self) -> u64 {
         self.trimmed_total
     }
-    pub fn first(&self) -> &Snapshot {
-        &self.entries[0].snapshot
+    pub fn first_state_id(&self) -> Uuid {
+        self.entries[0].state_id()
     }
-    pub fn record(&mut self, snapshot: Snapshot) {
-        self.record_labeled(snapshot, Label::Edit);
+    pub fn last_packing_error(&self) -> Option<&Error> {
+        self.last_packing_error.as_ref()
     }
-    pub fn record_labeled(&mut self, snapshot: Snapshot, label: Label) {
+    fn reclaim_tables(&mut self) {
+        self.memo.retain(|key, _| key.resident_bytes() != 0);
+        if self.memo.capacity() > 16 && self.memo.len().saturating_mul(4) < self.memo.capacity() {
+            let mut small = archive::Memo::new();
+            if small.try_reserve(self.memo.len()).is_ok() {
+                small.extend(std::mem::take(&mut self.memo));
+                self.memo = small;
+            }
+        }
+        if self.entries.capacity() > 16
+            && self.entries.len().saturating_mul(4) < self.entries.capacity()
+        {
+            let mut small = Vec::new();
+            if small.try_reserve_exact(self.entries.len()).is_ok() {
+                small.append(&mut self.entries);
+                self.entries = small;
+            }
+        }
+    }
+    pub fn record(&mut self, snapshot: Snapshot) -> Result<()> {
+        self.record_labeled(snapshot, Label::Edit)
+    }
+    pub fn record_labeled(&mut self, snapshot: Snapshot, label: Label) -> Result<()> {
+        let previous_snapshot = self.restore(self.cursor)?;
+        self.entries.try_reserve(1).map_err(|_| {
+            paintcraft_core::types::Error::new(
+                paintcraft_core::types::ErrorCode::ResourceLimit,
+                "cannot reserve recorded history entry",
+            )
+        })?;
+        let docs =
+            std::iter::once(&previous_snapshot.document).chain(std::iter::once(&snapshot.document));
+        let count = docs
+            .clone()
+            .flat_map(|doc| doc.layers.values())
+            .map(|l| l.raster.resident_tiles())
+            .sum();
+        self.memo.try_reserve(count).map_err(|_| {
+            paintcraft_core::types::Error::new(
+                paintcraft_core::types::ErrorCode::ResourceLimit,
+                "cannot track history decoded versions",
+            )
+        })?;
+        for doc in docs {
+            for layer in doc.layers.values() {
+                for (_, lease) in layer.raster.tile_leases() {
+                    self.memo.entry(lease.version()).or_default();
+                }
+            }
+        }
+        self.entries[self.cursor].storage = Storage::Hot(previous_snapshot);
         self.entries.truncate(self.cursor + 1);
-        self.entries.push(Entry { snapshot, label });
+        self.entries.push(Entry {
+            storage: Storage::Hot(snapshot),
+            label,
+        });
         self.cursor += 1;
+        self.reclaim_tables();
         self.last_trimmed = 0;
-        while self.cursor > 1 && self.resident_bytes() > self.budget {
+        self.last_packing_error = None;
+        if self.packing == Packing::Adaptive
+            && self.budget != 0
+            && self.memory_usage().retained_weight() > self.budget
+        {
+            let temporary = self.budget.min(64 << 20) as usize;
+            if let Err(error) = self.compact_limited(2, temporary, 64, 64, || Ok(())) {
+                self.last_packing_error = Some(error);
+            }
+        }
+        while self.cursor > 1 && self.memory_usage().retained_weight() > self.budget {
             self.entries.remove(0);
             self.cursor -= 1;
             self.last_trimmed += 1;
         }
+        // Weak metadata tracks readers even after logical branch/retention removal.
+        self.reclaim_tables();
         self.trimmed_total += self.last_trimmed as u64;
+        Ok(())
     }
-    pub fn undo(&mut self) -> Option<Snapshot> {
-        self.cursor = self.cursor.checked_sub(1)?;
-        Some(self.entries[self.cursor].snapshot.clone())
+    /// Prepare all cold records before replacing any entry. Cancellation/admission
+    /// failure leaves the recorded timeline, cursor and published document intact.
+    pub fn compact(
+        &mut self,
+        keep_hot: usize,
+        temporary_bytes: usize,
+        check: impl Fn() -> Result<()>,
+    ) -> Result<Compaction> {
+        self.compact_limited(keep_hot, temporary_bytes, usize::MAX, usize::MAX, check)
     }
-    pub fn redo(&mut self) -> Option<Snapshot> {
-        if self.cursor + 1 >= self.entries.len() {
-            return None;
+    // Automatic pressure work scans at most 64 new source tiles and prepares
+    // at most 64 complete cold entries per publication. Larger snapshots remain
+    // shared rather than causing unbounded synchronous pixel scans.
+    fn compact_limited(
+        &mut self,
+        keep_hot: usize,
+        temporary_bytes: usize,
+        max_entries: usize,
+        max_sources: usize,
+        check: impl Fn() -> Result<()>,
+    ) -> Result<Compaction> {
+        check()?;
+        let before = self.memory_usage().decoded_bytes;
+        let mut budget = temporary_bytes;
+        let mut memo = archive::clone_memo(&self.memo, &mut budget)?;
+        let entry_bytes = self.entries.len() * std::mem::size_of::<Entry>();
+        if entry_bytes > budget {
+            return Err(paintcraft_core::types::Error::new(
+                paintcraft_core::types::ErrorCode::ResourceLimit,
+                "history entry admission exceeded",
+            ));
         }
-        self.cursor += 1;
-        Some(self.entries[self.cursor].snapshot.clone())
+        budget -= entry_bytes;
+        let mut entries = Vec::new();
+        entries.try_reserve_exact(self.entries.len()).map_err(|_| {
+            paintcraft_core::types::Error::new(
+                paintcraft_core::types::ErrorCode::ResourceLimit,
+                "cannot stage history entries",
+            )
+        })?;
+        entries.extend(self.entries.iter().cloned());
+        let end = entries.len().saturating_sub(keep_hot.max(1));
+        let mut count = 0;
+        let mut visited = 0;
+        let mut sources_left = max_sources;
+        for (i, entry) in entries.iter_mut().enumerate().take(end) {
+            check()?;
+            if i == self.cursor {
+                continue;
+            }
+            if let Storage::Hot(snapshot) = &entry.storage {
+                if visited >= max_entries {
+                    break;
+                }
+                visited += 1;
+                let Some(needed) = archive::needed_sources(snapshot, &memo, sources_left, &check)?
+                else {
+                    continue;
+                };
+                sources_left -= needed;
+                let packed = archive::Packed::build(snapshot, &mut memo, &mut budget, &check)?;
+                entry.storage = Storage::Cold(Arc::new(packed));
+                count += 1;
+            }
+        }
+        check()?;
+        self.entries = entries;
+        self.memo = memo;
+        let usage = self.memory_usage();
+        Ok(Compaction {
+            packed_entries: count,
+            decoded_before: before,
+            decoded_after: usage.decoded_bytes,
+            encoded_bytes: usage.encoded_bytes,
+        })
     }
-
+    fn restore(&mut self, index: usize) -> Result<Snapshot> {
+        match &self.entries[index].storage {
+            Storage::Hot(snapshot) => Ok(snapshot.clone()),
+            Storage::Cold(packed) => packed.restore(self.restore_pixels, &mut self.memo),
+        }
+    }
+    pub fn undo(&mut self) -> Result<Option<Snapshot>> {
+        let Some(index) = self.cursor.checked_sub(1) else {
+            return Ok(None);
+        };
+        let snapshot = self.restore(index)?;
+        self.cursor = index;
+        self.reclaim_tables();
+        Ok(Some(snapshot))
+    }
+    pub fn redo(&mut self) -> Result<Option<Snapshot>> {
+        let index = self.cursor + 1;
+        if index >= self.entries.len() {
+            return Ok(None);
+        }
+        let snapshot = self.restore(index)?;
+        self.cursor = index;
+        self.reclaim_tables();
+        Ok(Some(snapshot))
+    }
     pub fn entries(&self) -> impl ExactSizeIterator<Item = EntryInfo> + '_ {
         self.entries.iter().enumerate().map(|(i, e)| EntryInfo {
-            history_id: e.snapshot.history_id,
-            state_id: e.snapshot.document.state_id,
+            history_id: e.history_id(),
+            state_id: e.state_id(),
             label: e.label,
             current: i == self.cursor,
             redo: i > self.cursor,
         })
     }
-
-    /// Resolve a retained stable history identity; `bool` distinguishes a no-op.
-    /// Missing/trimmed identities leave the cursor unchanged.
-    pub fn seek(&mut self, id: Option<Uuid>) -> Option<(Snapshot, bool)> {
-        let index = self
-            .entries
-            .iter()
-            .position(|e| e.snapshot.history_id == id)?;
+    pub fn seek(&mut self, id: Option<Uuid>) -> Result<Option<(Snapshot, bool)>> {
+        let Some(index) = self.entries.iter().position(|e| e.history_id() == id) else {
+            return Ok(None);
+        };
+        let snapshot = self.restore(index)?;
         let changed = index != self.cursor;
         self.cursor = index;
-        Some((self.entries[index].snapshot.clone(), changed))
+        self.reclaim_tables();
+        Ok(Some((snapshot, changed)))
     }
 }
