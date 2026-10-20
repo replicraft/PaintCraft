@@ -1,4 +1,4 @@
-//! Leaf types shared by every PaintCraft crate. No other PaintCraft dependencies or I/O.
+//! Leaf types shared by every PaintCraft crate. No other PaintCraft dependencies or I/O implementations.
 
 pub mod error;
 pub mod geometry;
@@ -15,3 +15,5 @@ pub mod policy;
 pub mod coordinates;
 
 pub mod text;
+
+pub mod storage;
