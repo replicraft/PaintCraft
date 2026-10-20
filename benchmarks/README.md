@@ -38,3 +38,23 @@ metrics with `tools/summarize_composite.py`. Stored session archives preserve th
 original unmodified Hyperfine JSON, Markdown, execution records and resource logs.
 For example, `tar -xOf <session.tar.gz> <session>/hyperfine.md` reads a table without
 extracting files. Archive compression does not change the original timing bytes.
+
+The regional cache replay uses the same runner and manifests, with `--suite cache`:
+
+```sh
+cargo build --release -p paintcraft-render --example cache_replay
+target/release/examples/cache_replay verify
+cargo bench -p paintcraft-render --bench cache_replay -- --sample-count 100
+python3 -B benchmarks/tools/run_composite.py --suite cache --output /tmp/new-cache-comparison --execute
+```
+
+This suite compares full regional composition with 64/128/256-pixel output caches
+and lower-layer prefix reuse. Every timed step admits an atomic transaction,
+retains recorded history, renders exact output and drops the result. The first
+render/cache preparation is inside the process lifetime but outside Divan's steady
+edit section. Sparse 1/5/20/100 layers, five dense layers, top-layer global opacity
+changes and a cropped viewport are distinct cases. Cache limits, history limits
+and fixtures are identical for all granularity contenders. This does not measure
+GPU dispatch or actual input-to-display latency. Raw process RSS includes the
+fixture, history, returned output and persistent caches; cache weights are a
+separate explicit accounting contract. See [the regional cache contract](../docs/REGIONAL_COMPOSITOR.md).

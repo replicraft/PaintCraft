@@ -29,5 +29,9 @@ pollster.workspace = true
 name = "composite"
 harness = false
 
+[[bench]]
+name = "cache_replay"
+harness = false
+
 [lints]
 workspace = true
