@@ -74,6 +74,10 @@ tokio = { version = "1.53.3", default-features = false, features = ["rt", "sync"
 # Continuous geometry behind PaintCraft-owned coordinate spaces.
 glam = { version = "0.34.1", default-features = false, features = ["std", "f64"] }
 
+# Independent history compression candidates; no frames/dictionaries or codec workers.
+lz4_flex = { version = "0.14.0", default-features = false, features = ["safe-encode", "safe-decode", "checked-decode"] }
+zstd = { version = "0.14.3", default-features = false }
+
 # Identity, integrity and text rasterization.
 uuid = { version = "1.28.0", features = ["v4", "v5"] }
 sha2 = "0.11.1"

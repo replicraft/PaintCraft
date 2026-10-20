@@ -9,11 +9,11 @@ use std::{
     mem::size_of,
     sync::{Mutex, Weak},
 };
-mod payload;
+pub(crate) mod payload;
 pub(crate) use payload::Blob;
 
 pub(crate) type Memo = HashMap<TileVersion, Weak<Blob>>;
-fn limit(message: &str) -> Error {
+pub(crate) fn limit(message: &str) -> Error {
     Error::new(ErrorCode::ResourceLimit, message)
 }
 #[derive(Debug)]
@@ -46,6 +46,7 @@ impl Packed {
         memo: &mut Memo,
         budget: &mut usize,
         check: &impl Fn() -> Result<()>,
+        encoder: &mut compression::Encoder,
     ) -> Result<Self> {
         let doc = &snapshot.document;
         // Conservative metadata admission before copying variable-sized structures.
@@ -92,6 +93,7 @@ impl Packed {
                         layer.raster.default_pixel(),
                         budget,
                         check,
+                        encoder,
                     )?);
                     memo.try_reserve(1)
                         .map_err(|_| limit("cannot allocate history version index"))?;
@@ -260,6 +262,10 @@ pub(crate) fn needed_sources(
         }
     }
     Ok(Some(seen.len()))
+}
+
+pub(crate) fn corrupt() -> Error {
+    payload::corrupt()
 }
 
 #[cfg(test)]

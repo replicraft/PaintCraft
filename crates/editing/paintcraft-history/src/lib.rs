@@ -53,6 +53,8 @@ impl Label {
 }
 
 mod archive;
+mod compression;
+pub use compression::Compression;
 mod memory;
 pub use memory::MemoryUsage;
 use paintcraft_core::types::{Error, Result};
@@ -94,6 +96,8 @@ pub struct Compaction {
     pub decoded_before: u64,
     pub decoded_after: u64,
     pub encoded_bytes: u64,
+    pub codec_workspace_peak: u64,
+    pub codec_scratch_bytes: u64,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -121,6 +125,7 @@ pub struct History {
     last_trimmed: usize,
     memo: archive::Memo,
     packing: Packing,
+    compression: Compression,
     restore_pixels: u64,
     last_packing_error: Option<Error>,
 }
@@ -137,6 +142,7 @@ impl History {
             last_trimmed: 0,
             memo: archive::Memo::new(),
             packing: Packing::Adaptive,
+            compression: Compression::None,
             restore_pixels: 268_435_456,
             last_packing_error: None,
         }
@@ -146,6 +152,9 @@ impl History {
     }
     pub fn set_packing(&mut self, packing: Packing) {
         self.packing = packing;
+    }
+    pub fn set_compression(&mut self, compression: Compression) {
+        self.compression = compression;
     }
     pub fn set_restore_budget(&mut self, pixels: u64) {
         self.restore_pixels = pixels;
@@ -292,6 +301,7 @@ impl History {
         })?;
         entries.extend(self.entries.iter().cloned());
         let end = entries.len().saturating_sub(keep_hot.max(1));
+        let mut encoder = compression::Encoder::new(self.compression);
         let mut count = 0;
         let mut visited = 0;
         let mut sources_left = max_sources;
@@ -310,7 +320,8 @@ impl History {
                     continue;
                 };
                 sources_left -= needed;
-                let packed = archive::Packed::build(snapshot, &mut memo, &mut budget, &check)?;
+                let packed =
+                    archive::Packed::build(snapshot, &mut memo, &mut budget, &check, &mut encoder)?;
                 entry.storage = Storage::Cold(Arc::new(packed));
                 count += 1;
             }
@@ -324,6 +335,8 @@ impl History {
             decoded_before: before,
             decoded_after: usage.decoded_bytes,
             encoded_bytes: usage.encoded_bytes,
+            codec_workspace_peak: encoder.workspace_peak as u64,
+            codec_scratch_bytes: encoder.scratch_bytes() as u64,
         })
     }
     fn restore(&mut self, index: usize) -> Result<Snapshot> {

@@ -8,6 +8,8 @@ pub struct MemoryUsage {
     /// include the active restored document and external render/save readers.
     pub leased_decoded_bytes: u64,
     pub encoded_bytes: u64,
+    pub compressed_bytes: u64,
+    pub compressed_payloads: usize,
     /// Conservative container/string/control-block weight, not allocator RSS.
     pub metadata_weight: u64,
     pub packed_entries: usize,
@@ -59,6 +61,9 @@ impl History {
                         if blobs.insert(Arc::as_ptr(blob)) {
                             usage.logical_payloads += 1;
                             usage.encoded_bytes += blob.encoded_bytes() as u64;
+                            let compressed = blob.compressed_bytes();
+                            usage.compressed_bytes += compressed as u64;
+                            usage.compressed_payloads += usize::from(compressed != 0);
                             usage.metadata_weight +=
                                 (archive::blob_weight(blob) - blob.encoded_bytes()) as u64;
                             if blob.owns_decoded() {

@@ -8,6 +8,10 @@ const ROW_BYTES: usize = EDGE * 4;
 enum Payload {
     Shared(TileLease),
     Solid(Rgba),
+    Compressed {
+        codec: Compression,
+        bytes: Box<[u8]>,
+    },
     Patch {
         default: Rgba,
         rect: (u16, u16, u16, u16),
@@ -26,6 +30,7 @@ impl Blob {
         default: Rgba,
         budget: &mut usize,
         check: &impl Fn() -> Result<()>,
+        encoder: &mut compression::Encoder,
     ) -> Result<Self> {
         let data = lease.bytes();
         let crc = crc32fast::hash(data);
@@ -46,27 +51,36 @@ impl Blob {
                 }
             }
             let bytes = (x1 - x0) * (y1 - y0) * 4;
-            // Whole high-entropy tiles retain their existing immutable allocation.
-            if bytes + 32 >= RasterLayer::TILE_BYTES {
-                Payload::Shared(lease.clone())
+            if let Some(bytes) =
+                encoder.encode(data, bytes.min(RasterLayer::TILE_BYTES), budget, check)?
+            {
+                Payload::Compressed {
+                    codec: encoder.policy(),
+                    bytes,
+                }
             } else {
-                if bytes > *budget {
-                    return Err(limit("history patch admission exceeded"));
-                }
-                let mut out = Vec::new();
-                out.try_reserve_exact(bytes)
-                    .map_err(|_| limit("cannot allocate history patch"))?;
-                if out.capacity() > *budget {
-                    return Err(limit("history patch capacity exceeded"));
-                }
-                *budget -= out.capacity();
-                for y in y0..y1 {
-                    out.extend_from_slice(&data[(y * EDGE + x0) * 4..(y * EDGE + x1) * 4]);
-                }
-                Payload::Patch {
-                    default,
-                    rect: (x0 as u16, y0 as u16, (x1 - x0) as u16, (y1 - y0) as u16),
-                    bytes: out.into_boxed_slice(),
+                // Whole high-entropy tiles retain their existing immutable allocation.
+                if bytes + 32 >= RasterLayer::TILE_BYTES {
+                    Payload::Shared(lease.clone())
+                } else {
+                    if bytes > *budget {
+                        return Err(limit("history patch admission exceeded"));
+                    }
+                    let mut out = Vec::new();
+                    out.try_reserve_exact(bytes)
+                        .map_err(|_| limit("cannot allocate history patch"))?;
+                    if out.capacity() > *budget {
+                        return Err(limit("history patch capacity exceeded"));
+                    }
+                    *budget -= out.capacity();
+                    for y in y0..y1 {
+                        out.extend_from_slice(&data[(y * EDGE + x0) * 4..(y * EDGE + x1) * 4]);
+                    }
+                    Payload::Patch {
+                        default,
+                        rect: (x0 as u16, y0 as u16, (x1 - x0) as u16, (y1 - y0) as u16),
+                        bytes: out.into_boxed_slice(),
+                    }
                 }
             }
         };
@@ -83,7 +97,14 @@ impl Blob {
         match &self.payload {
             Payload::Shared(_) => 0,
             Payload::Solid(_) => 0,
-            Payload::Patch { bytes, .. } => bytes.len(),
+            Payload::Patch { bytes, .. } | Payload::Compressed { bytes, .. } => bytes.len(),
+        }
+    }
+    pub fn compressed_bytes(&self) -> usize {
+        if let Payload::Compressed { bytes, .. } = &self.payload {
+            bytes.len()
+        } else {
+            0
         }
     }
     pub fn source(&self) -> TileVersion {
@@ -99,6 +120,7 @@ impl Blob {
         let (default, patch) = match &self.payload {
             Payload::Shared(lease) => return Ok(lease.clone()),
             Payload::Solid(color) => (*color, None),
+            Payload::Compressed { .. } => (Rgba::TRANSPARENT, None),
             Payload::Patch {
                 default,
                 rect,
@@ -106,6 +128,9 @@ impl Blob {
             } => (*default, Some((rect, bytes))),
         };
         let tile = TileLease::materialize(default, adm, |out| {
+            if let Payload::Compressed { codec, bytes } = &self.payload {
+                compression::decode(*codec, bytes, out)?;
+            }
             if let Some((&(x, y, w, h), bytes)) = patch {
                 let (x, y, w, h) = (
                     usize::from(x),
@@ -130,7 +155,7 @@ impl Blob {
         Ok(tile)
     }
 }
-fn corrupt() -> Error {
+pub(super) fn corrupt() -> Error {
     Error::new(
         ErrorCode::CodecFailed,
         "recorded history tile failed integrity validation",
@@ -141,6 +166,14 @@ fn corrupt() -> Error {
 pub(super) fn corrupt_patch_for_test(blob: &mut Blob) {
     let Payload::Patch { bytes, .. } = &mut blob.payload else {
         panic!("expected patch");
+    };
+    bytes[0] ^= 1;
+}
+
+#[cfg(test)]
+pub(crate) fn corrupt_compressed_for_test(blob: &mut Blob) {
+    let Payload::Compressed { bytes, .. } = &mut blob.payload else {
+        panic!("expected compressed tile");
     };
     bytes[0] ^= 1;
 }
