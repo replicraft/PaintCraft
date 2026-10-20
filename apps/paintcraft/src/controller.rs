@@ -108,8 +108,16 @@ impl Editor {
     /// An editor over an existing document, optionally bound to a file.
     pub fn with_document(doc: Document, path: Option<PathBuf>) -> Editor {
         let target = doc.roots.last().copied();
+        let mut session = Session::new(doc);
+        if let Ok(store) = paintcraft_platform::spill::NativeSpillStore::new(
+            &std::env::temp_dir().join("paintcraft-history"),
+            8 << 30,
+            4 << 20,
+        ) {
+            session.set_history_spill_store(Arc::new(store));
+        }
         Editor {
-            session: Session::new(doc),
+            session,
             tools: ToolState::default(),
             text_renderer: None,
             target,

@@ -9,7 +9,7 @@ pub struct HistoryTicket {
     pub base: Ticket,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct HistoryView {
     pub ticket: HistoryTicket,
     pub entries: Vec<EntryInfo>,

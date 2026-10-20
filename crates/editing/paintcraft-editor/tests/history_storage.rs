@@ -130,6 +130,7 @@ fn failed_restore_or_cancelled_compaction_never_moves_publication_or_history_cur
 fn adaptive_pressure_retains_more_exact_history_and_shared_policy_keeps_explicit_trimming() {
     for packing in [Packing::Shared, Packing::Adaptive] {
         let mut s = session();
+        s.set_history_retention(paintcraft_history::Retention::TrimOldest);
         s.set_history_packing(packing);
         s.set_history_budget((4 * RasterLayer::TILE_BYTES) as u64);
         for n in 0..40 {
@@ -271,6 +272,7 @@ fn explicit_retention_trim_reclaims_grown_reference_tables_as_well_as_payloads()
         paint(&mut s, n);
     }
     let before = s.history_memory();
+    s.set_history_retention(paintcraft_history::Retention::TrimOldest);
     s.set_history_budget(0);
     paint(&mut s, 80);
     let after = s.history_memory();

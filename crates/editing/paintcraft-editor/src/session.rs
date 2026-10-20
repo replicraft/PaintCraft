@@ -19,6 +19,7 @@ use paintcraft_document::{Document, POLICY};
 
 pub use paintcraft_history::{
     Compression as HistoryCompression, DEFAULT_HISTORY_BYTES, Packing as HistoryPacking,
+    Retention as HistoryRetention,
 };
 use paintcraft_history::{History, Snapshot};
 
@@ -133,6 +134,26 @@ impl Session {
 
     pub fn history_memory(&self) -> paintcraft_history::MemoryUsage {
         self.history.memory_usage()
+    }
+    pub fn set_history_retention(&mut self, retention: HistoryRetention) {
+        self.history.set_retention(retention);
+    }
+    pub fn history_spill_usage(&self) -> Option<paintcraft_core::types::storage::SpillUsage> {
+        self.history.spill_usage()
+    }
+    pub fn set_history_spill_store(
+        &mut self,
+        store: Arc<dyn paintcraft_core::types::storage::SpillStore>,
+    ) {
+        self.history.set_spill_store(store);
+    }
+    pub fn spill_history(
+        &mut self,
+        temporary_bytes: usize,
+        max_payloads: usize,
+        check: impl Fn() -> Result<()>,
+    ) -> Result<paintcraft_history::SpillReport> {
+        self.history.spill(temporary_bytes, max_payloads, check)
     }
     pub fn set_history_packing(&mut self, packing: HistoryPacking) {
         self.history.set_packing(packing);
@@ -449,6 +470,7 @@ mod tests {
         let r = s.apply_json(&batch(&s, r##"[{"op":"layer.add","ref":"l","name":"L","width":2560,"height":256,"origin":{"x":0,"y":0},"default_pixel":"#00000000"}]"##)).unwrap();
         let layer = r.aliases["l"];
         let tile = paintcraft_raster::RasterLayer::TILE_BYTES as u64;
+        s.set_history_retention(HistoryRetention::TrimOldest);
         s.set_history_packing(paintcraft_history::Packing::Shared);
         s.set_history_budget(14 * tile);
         let mut states = vec![s.ticket().state_id];
@@ -483,6 +505,7 @@ mod tests {
     #[test]
     fn the_newest_edit_stays_undoable_whatever_the_budget() {
         let mut s = session();
+        s.set_history_retention(HistoryRetention::TrimOldest);
         s.set_history_budget(0);
         s.apply_json(&batch(&s, &format!("[{ADD}]"))).unwrap();
         let layer = s.document().roots[1];

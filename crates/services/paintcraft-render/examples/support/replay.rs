@@ -54,7 +54,9 @@ impl Replay {
             ),
         };
         let mut session = Session::new(doc);
-        session.set_history_budget(32 << 20);
+        // Dense fixtures already exceed the former soft 32 MiB floor. Retain the
+        // complete required timeline under the preserving history policy.
+        session.set_history_budget(768 << 20);
         let mut replay = Self {
             session,
             cache,

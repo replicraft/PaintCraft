@@ -133,6 +133,7 @@ fn trimmed_or_replaced_redo_targets_are_rejected_without_a_partial_navigation() 
         ErrorCode::ReferenceUnknownId
     );
     assert_eq!(s.ticket(), before);
+    s.set_history_retention(paintcraft_history::Retention::TrimOldest);
     s.set_history_budget(0);
     paint(&mut s, id, 3);
     let trimmed = s.history_view();

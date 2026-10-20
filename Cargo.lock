@@ -2700,6 +2700,7 @@ dependencies = [
  "paintcraft-core",
  "paintcraft-document",
  "paintcraft-history",
+ "paintcraft-platform",
  "paintcraft-raster",
  "paintcraft-render",
  "sha2",

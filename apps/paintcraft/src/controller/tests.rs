@@ -416,6 +416,8 @@ fn trimming_history_is_reported_to_the_user() {
         .set_history_packing(paintcraft_editor::session::HistoryPacking::Shared);
     e.tool = Tool::Brush;
     e.options.size = 1;
+    e.session
+        .set_history_retention(paintcraft_editor::session::HistoryRetention::TrimOldest);
     e.set_history_budget(3 * paintcraft_raster::RasterLayer::TILE_BYTES as u64);
     let mut said = false;
     for i in 0..30 {
