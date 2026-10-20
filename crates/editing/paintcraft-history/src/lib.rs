@@ -56,9 +56,11 @@ mod archive;
 mod compression;
 pub use compression::Compression;
 mod memory;
+mod spill;
 pub use memory::MemoryUsage;
 use paintcraft_core::types::{Error, Result};
 use paintcraft_raster::TileVersion;
+pub use spill::{Retention, SpillReport};
 
 #[derive(Clone, Debug)]
 enum Storage {
@@ -125,7 +127,10 @@ pub struct History {
     last_trimmed: usize,
     memo: archive::Memo,
     packing: Packing,
+    retention: Retention,
     compression: Compression,
+    spill_store: Option<Arc<dyn paintcraft_core::types::storage::SpillStore>>,
+    last_cleanup_error: Option<Error>,
     restore_pixels: u64,
     last_packing_error: Option<Error>,
 }
@@ -142,13 +147,19 @@ impl History {
             last_trimmed: 0,
             memo: archive::Memo::new(),
             packing: Packing::Adaptive,
+            retention: Retention::Preserve,
             compression: Compression::None,
+            spill_store: None,
+            last_cleanup_error: None,
             restore_pixels: 268_435_456,
             last_packing_error: None,
         }
     }
     pub fn set_budget(&mut self, bytes: u64) {
         self.budget = bytes;
+    }
+    pub fn set_retention(&mut self, retention: Retention) {
+        self.retention = retention;
     }
     pub fn set_packing(&mut self, packing: Packing) {
         self.packing = packing;
@@ -203,6 +214,15 @@ impl History {
         self.record_labeled(snapshot, Label::Edit)
     }
     pub fn record_labeled(&mut self, snapshot: Snapshot, label: Label) -> Result<()> {
+        if self.retention == Retention::TrimOldest {
+            return self.record_in_place(snapshot, label);
+        }
+        let mut staged = self.fork_for_record()?;
+        staged.record_in_place(snapshot, label)?;
+        *self = staged;
+        Ok(())
+    }
+    fn record_in_place(&mut self, snapshot: Snapshot, label: Label) -> Result<()> {
         let previous_snapshot = self.restore(self.cursor)?;
         self.entries.try_reserve(1).map_err(|_| {
             paintcraft_core::types::Error::new(
@@ -244,12 +264,31 @@ impl History {
             && self.budget != 0
             && self.memory_usage().retained_weight() > self.budget
         {
-            let temporary = self.budget.min(64 << 20) as usize;
+            let temporary = if self.spill_store.is_some() {
+                64 << 20
+            } else {
+                self.budget.min(64 << 20) as usize
+            };
             if let Err(error) = self.compact_limited(2, temporary, 64, 64, || Ok(())) {
                 self.last_packing_error = Some(error);
             }
         }
-        while self.cursor > 1 && self.memory_usage().retained_weight() > self.budget {
+        if self.retention == Retention::Preserve
+            && self.memory_usage().retained_weight() > self.budget
+        {
+            if self.spill_store.is_some() {
+                self.spill(64 << 20, 64, || Ok(()))?;
+            }
+            if self.memory_usage().retained_weight() > self.budget {
+                return Err(archive::limit(
+                    "cannot preserve undo history within its allowance; save and reopen, increase the allowance, or explicitly choose trimming",
+                ));
+            }
+        }
+        while self.retention == Retention::TrimOldest
+            && self.cursor > 1
+            && self.memory_usage().retained_weight() > self.budget
+        {
             self.entries.remove(0);
             self.cursor -= 1;
             self.last_trimmed += 1;

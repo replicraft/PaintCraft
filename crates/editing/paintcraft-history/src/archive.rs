@@ -28,7 +28,7 @@ pub(crate) struct Packed {
     pub history_id: Option<Uuid>,
     decoded_doc: Mutex<Weak<Document>>,
 }
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct SavedLayer {
     id: Uuid,
     name: String,
@@ -41,6 +41,66 @@ struct SavedLayer {
     tiles: Vec<(TileCoord, Arc<Blob>)>,
 }
 impl Packed {
+    pub fn spilled(
+        &self,
+        replacements: &mut HashMap<usize, Arc<Blob>>,
+        store: &dyn paintcraft_core::types::storage::SpillStore,
+        budget: &mut usize,
+        remaining: &mut usize,
+        check: &impl Fn() -> Result<()>,
+    ) -> Result<Option<Self>> {
+        if !self.blobs().any(|b| {
+            replacements.contains_key(&(Arc::as_ptr(b) as usize))
+                || (*remaining != 0 && b.spillable())
+        }) {
+            return Ok(None);
+        }
+        let weight = self.metadata_weight();
+        if weight > *budget {
+            return Err(limit("history spill metadata admission exceeded"));
+        }
+        *budget -= weight;
+        let mut layers = self.layers.clone();
+        for layer in &mut layers {
+            for (_, blob) in &mut layer.tiles {
+                check()?;
+                let key = Arc::as_ptr(blob) as usize;
+                if let Some(replacement) = replacements.get(&key) {
+                    *blob = replacement.clone();
+                } else if *remaining != 0 && blob.spillable() {
+                    let charge = blob_weight(blob) + 256;
+                    if charge > *budget {
+                        return Err(limit("history spill reference admission exceeded"));
+                    }
+                    *budget -= charge;
+                    replacements
+                        .try_reserve(1)
+                        .map_err(|_| limit("cannot track history spill payload"))?;
+                    let replacement = Arc::new(blob.spilled(store)?);
+                    check()?;
+                    replacements.insert(key, replacement.clone());
+                    *blob = replacement;
+                    *remaining -= 1;
+                }
+            }
+        }
+        Ok(Some(Self {
+            document_id: self.document_id,
+            state_id: self.state_id,
+            canvas: self.canvas,
+            roots: self.roots.clone(),
+            layers,
+            title: self.title.clone(),
+            selection: self.selection,
+            history_id: self.history_id,
+            decoded_doc: Mutex::new(
+                self.decoded_doc
+                    .lock()
+                    .unwrap_or_else(|e| e.into_inner())
+                    .clone(),
+            ),
+        }))
+    }
     pub fn build(
         snapshot: &Snapshot,
         memo: &mut Memo,
@@ -236,7 +296,11 @@ pub(crate) fn clone_memo(memo: &Memo, budget: &mut usize) -> Result<Memo> {
 }
 
 pub(crate) fn blob_weight(blob: &Blob) -> usize {
-    size_of::<Blob>() + 32 + 128 + blob.encoded_bytes()
+    size_of::<Blob>()
+        + 32
+        + 128
+        + blob.encoded_bytes()
+        + if blob.disk_bytes() != 0 { 256 } else { 0 }
 }
 
 pub(crate) fn needed_sources(

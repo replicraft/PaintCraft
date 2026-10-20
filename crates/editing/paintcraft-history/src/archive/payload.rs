@@ -6,6 +6,10 @@ const ROW_BYTES: usize = EDGE * 4;
 
 #[derive(Debug)]
 enum Payload {
+    Disk {
+        layout: Layout,
+        data: Arc<dyn paintcraft_core::types::storage::SpillBlob>,
+    },
     Shared(TileLease),
     Solid(Rgba),
     Compressed {
@@ -18,6 +22,17 @@ enum Payload {
         bytes: Box<[u8]>,
     },
 }
+
+#[derive(Clone, Copy, Debug)]
+enum Layout {
+    Raw,
+    Patch {
+        default: Rgba,
+        rect: (u16, u16, u16, u16),
+    },
+    Compressed(Compression),
+}
+
 #[derive(Debug)]
 pub(crate) struct Blob {
     payload: Payload,
@@ -95,7 +110,7 @@ impl Blob {
     }
     pub fn encoded_bytes(&self) -> usize {
         match &self.payload {
-            Payload::Shared(_) => 0,
+            Payload::Shared(_) | Payload::Disk { .. } => 0,
             Payload::Solid(_) => 0,
             Payload::Patch { bytes, .. } | Payload::Compressed { bytes, .. } => bytes.len(),
         }
@@ -106,6 +121,43 @@ impl Blob {
         } else {
             0
         }
+    }
+    pub fn disk_bytes(&self) -> usize {
+        if let Payload::Disk { data, .. } = &self.payload {
+            data.byte_len()
+        } else {
+            0
+        }
+    }
+    pub fn spillable(&self) -> bool {
+        !matches!(self.payload, Payload::Disk { .. } | Payload::Solid(_))
+    }
+    pub fn spilled(&self, store: &dyn paintcraft_core::types::storage::SpillStore) -> Result<Self> {
+        let (layout, bytes) = match &self.payload {
+            Payload::Shared(tile) => (Layout::Raw, tile.bytes()),
+            Payload::Patch {
+                default,
+                rect,
+                bytes,
+            } => (
+                Layout::Patch {
+                    default: *default,
+                    rect: *rect,
+                },
+                bytes.as_ref(),
+            ),
+            Payload::Compressed { codec, bytes } => (Layout::Compressed(*codec), bytes.as_ref()),
+            _ => return Err(corrupt()),
+        };
+        let data = store.write(bytes)?;
+        if data.byte_len() != bytes.len() {
+            return Err(corrupt());
+        }
+        Ok(Self {
+            payload: Payload::Disk { layout, data },
+            crc: self.crc,
+            decoded: Mutex::new(self.source()),
+        })
     }
     pub fn source(&self) -> TileVersion {
         self.decoded
@@ -119,6 +171,13 @@ impl Blob {
         }
         let (default, patch) = match &self.payload {
             Payload::Shared(lease) => return Ok(lease.clone()),
+            Payload::Disk { layout, .. } => (
+                match layout {
+                    Layout::Patch { default, .. } => *default,
+                    _ => Rgba::TRANSPARENT,
+                },
+                None,
+            ),
             Payload::Solid(color) => (*color, None),
             Payload::Compressed { .. } => (Rgba::TRANSPARENT, None),
             Payload::Patch {
@@ -128,23 +187,35 @@ impl Blob {
             } => (*default, Some((rect, bytes))),
         };
         let tile = TileLease::materialize(default, adm, |out| {
+            if let Payload::Disk { layout, data } = &self.payload {
+                if matches!(layout, Layout::Raw) {
+                    if data.byte_len() != out.len() {
+                        return Err(corrupt());
+                    }
+                    data.read_into(out)?;
+                } else {
+                    let len = data.byte_len();
+                    if len == 0 || len > RasterLayer::TILE_BYTES {
+                        return Err(corrupt());
+                    }
+                    let mut bytes = Vec::new();
+                    bytes
+                        .try_reserve_exact(len)
+                        .map_err(|_| limit("cannot read history extent"))?;
+                    bytes.resize(len, 0);
+                    data.read_into(&mut bytes)?;
+                    match layout {
+                        Layout::Compressed(codec) => compression::decode(*codec, &bytes, out)?,
+                        Layout::Patch { rect, .. } => copy_patch(*rect, &bytes, out)?,
+                        Layout::Raw => unreachable!(),
+                    }
+                }
+            }
             if let Payload::Compressed { codec, bytes } = &self.payload {
                 compression::decode(*codec, bytes, out)?;
             }
             if let Some((&(x, y, w, h), bytes)) = patch {
-                let (x, y, w, h) = (
-                    usize::from(x),
-                    usize::from(y),
-                    usize::from(w),
-                    usize::from(h),
-                );
-                if w == 0 || h == 0 || x + w > EDGE || y + h > EDGE || bytes.len() != w * h * 4 {
-                    return Err(corrupt());
-                }
-                for row in 0..h {
-                    out[((y + row) * EDGE + x) * 4..((y + row) * EDGE + x + w) * 4]
-                        .copy_from_slice(&bytes[row * w * 4..(row + 1) * w * 4]);
-                }
+                copy_patch((x, y, w, h), bytes, out)?;
             }
             if crc32fast::hash(out) != self.crc {
                 return Err(corrupt());
@@ -154,6 +225,22 @@ impl Blob {
         *self.decoded.lock().unwrap_or_else(|p| p.into_inner()) = tile.version();
         Ok(tile)
     }
+}
+fn copy_patch((x, y, w, h): (u16, u16, u16, u16), bytes: &[u8], out: &mut [u8]) -> Result<()> {
+    let (x, y, w, h) = (
+        usize::from(x),
+        usize::from(y),
+        usize::from(w),
+        usize::from(h),
+    );
+    if w == 0 || h == 0 || x + w > EDGE || y + h > EDGE || bytes.len() != w * h * 4 {
+        return Err(corrupt());
+    }
+    for row in 0..h {
+        out[((y + row) * EDGE + x) * 4..((y + row) * EDGE + x + w) * 4]
+            .copy_from_slice(&bytes[row * w * 4..(row + 1) * w * 4]);
+    }
+    Ok(())
 }
 pub(super) fn corrupt() -> Error {
     Error::new(
