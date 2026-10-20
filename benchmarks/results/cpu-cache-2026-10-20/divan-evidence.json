@@ -1,0 +1,102 @@
+{
+  "command": [
+    "cargo",
+    "bench",
+    "-p",
+    "paintcraft-render",
+    "--bench",
+    "cache_replay",
+    "--",
+    "--sample-count",
+    "100"
+  ],
+  "artifacts": [
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/Cargo.lock",
+      "sha256": "fe21990e937001b56750b3141815cc15eac5f16f4c56ebad0a93ee3c13f899b0",
+      "role": "lockfile"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-render/examples/support/mod.rs",
+      "sha256": "bc02c818744ce26e5d4be7c107f096677a31db074ee4c5dad862dbfd03e9ee3f",
+      "role": "generator"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-render/examples/support/reference.rs",
+      "sha256": "4c8af35200987a5a3b6a020138e076b13c74386875e9845ae3cf94d12ff69f28",
+      "role": "driver"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-render/examples/composite.rs",
+      "sha256": "4b6feb800854c4241b36f64fdaf2f829e624efcf4f5ac65f9eeb1ac9b397bbe1",
+      "role": "driver"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-render/src/lib.rs",
+      "sha256": "ecf8e4d0748ef6f84163b5a4cad0946910f4aa980b223666004cbdb4ae6d307f",
+      "role": "other"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/foundation/paintcraft-raster/src/raster.rs",
+      "sha256": "9804e2abd72c19df56d32b4c2f62cf7fa1e862033fbf974910cd0f8d06d4fe61",
+      "role": "other"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/foundation/paintcraft-raster/src/raster/rows.rs",
+      "sha256": "3e97e8de59dbe466d9b445affa3556b077f3cac495e4286bf66b1e0c0899735d",
+      "role": "other"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/foundation/paintcraft-core/src/types/pixel.rs",
+      "sha256": "6159da1ff92ff921693b55b0a6a38391753e11d38533c5188203b3f1392201db",
+      "role": "other"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-render/examples/cache_replay.rs",
+      "sha256": "ae6415cb9ee8dc45a0abe1437e95fa0b3b407965da4ccada5a0a7ad691f0f46a",
+      "role": "driver"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-render/examples/support/replay.rs",
+      "sha256": "17f3eba4e9b3683b0a41769d7ef09a9870b67d9a72af2ccb634fb35d2f1131c7",
+      "role": "driver"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-render/src/cache.rs",
+      "sha256": "daeef712f232da2273235302234573f84729b6c07864bba298eea16ed023e10a",
+      "role": "other"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-render/src/cache/key.rs",
+      "sha256": "b725a85255f1124c993a3bd86b27895c95cf080f18ea7371487afae72a738505",
+      "role": "other"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-render/src/cache/prefix.rs",
+      "sha256": "17f6a895c867076852b20ad6463111f4f8bc43bcd9764d632d97fe1c4cb62fed",
+      "role": "other"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-render/src/cache/storage.rs",
+      "sha256": "11fdc65f0ae3d8c24747979884a285fceb17d2d706b695faa36b03c0f1a752b1",
+      "role": "other"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/foundation/paintcraft-raster/src/raster/versions.rs",
+      "sha256": "9907b8babd241e7844bd3d8414faf7837d0919df7ccb9c173b2fdfb7644ccb03",
+      "role": "other"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/target/release/deps/cache_replay-6a01e8352f3299cb",
+      "sha256": "ff1d6e1b0947a6dedc09cc8f3e2dcd472d7ecb039203648842930ba65b95adcc",
+      "role": "binary"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-render/benches/cache_replay.rs",
+      "sha256": "b4c08bc8a39b20a08489bc401f47732040b12635a1bb9d8675f16125d48fa224",
+      "role": "driver"
+    }
+  ],
+  "completion": "all 32 cases, 100 samples each; allocation profiling and output destruction included",
+  "limits": "One local steady-state session; not interactive p99 or cross-host qualification"
+}

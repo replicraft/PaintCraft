@@ -196,9 +196,12 @@
       "evidence": [
         "crates/services/paintcraft-render/src/lib.rs",
         "docs/CPU_COMPOSITOR.md",
-        "benchmarks/results/cpu-spans-2026-10-19/DECISION.md"
+        "benchmarks/results/cpu-spans-2026-10-19/DECISION.md",
+        "crates/services/paintcraft-render/src/cache.rs",
+        "docs/REGIONAL_COMPOSITOR.md",
+        "benchmarks/results/cpu-cache-2026-10-20/DECISION.md"
       ],
-      "remaining_or_scope": "Ordered CPU/GPU flat composition and exact borrowed CPU sparse row spans exist; local Divan/Hyperfine comparison is recorded; ROI effects, dirty-prefix cache, parallel/multiresolution rendering and group plans remain.",
+      "remaining_or_scope": "Ordered CPU/GPU flat composition, exact regional CPU output and bounded output/lower-prefix caches exist with local replay measurements; CPU fallback reuses tiles across edits/previews. Finer dirty rectangles, ROI effects, parallel/multiresolution rendering, persistent GPU residency and group plans remain.",
       "acceptance": "ROI-01\u201307 and RENDER-01\u201306; no tile seams or reordered group output."
     },
     {
@@ -307,7 +310,11 @@
         "T17"
       ],
       "status": "partial",
-      "evidence": ["crates/presentation/paintcraft-studio/src/lib.rs", "apps/paintcraft/tests/gui/studio.rs", "docs/STUDIO.md"],
+      "evidence": [
+        "crates/presentation/paintcraft-studio/src/lib.rs",
+        "apps/paintcraft/tests/gui/studio.rs",
+        "docs/STUDIO.md"
+      ],
       "remaining_or_scope": "Studio toolbar, floating Tools/Colors/Layers, guarded History navigation and independent document tabs with owner-routed save/recovery and close handling work; shared descriptors and menu/shortcut dispatch cover existing actions; full action coverage, image operations, effects, PDN and reference parity remain.",
       "acceptance": "Release only named tested tranches; high-depth/groups not misrepresented as source features."
     },
@@ -568,9 +575,10 @@
         "docs/DEPENDENCY_CHOICES.md",
         "docs/ROADMAP_STATUS.md",
         "benchmarks/README.md",
-        "benchmarks/results/cpu-spans-2026-10-19/DECISION.md"
+        "benchmarks/results/cpu-spans-2026-10-19/DECISION.md",
+        "benchmarks/results/cpu-cache-2026-10-20/DECISION.md"
       ],
-      "remaining_or_scope": "Live dependency/task ledgers and first BF29 CPU compositor measurements exist; other relevant library/workload comparisons and cross-platform qualification remain.",
+      "remaining_or_scope": "Live dependency/task ledgers, BF29 full compositor and regional cache transaction replay measurements exist; other relevant library/workload comparisons and cross-platform qualification remain.",
       "acceptance": "An adoption record points to real scope, tests and excluded future detail; plan-only tooling makes no repository changes; real comparisons use actual optimized code/fixtures, keep correctness/build/fixture/raw evidence and record selection/tie/rejection honestly; smoke/model results never qualify application choices."
     }
   ]

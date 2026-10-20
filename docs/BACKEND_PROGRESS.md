@@ -68,3 +68,32 @@ edits, followed by bounded parallel partition experiments. These must retain the
 committed cache across preview cancellation and validate structural/opacity/offset
 changes. Full history tiering and broader format work remain in the user's backend
 request and the original roadmap; this milestone does not reduce that scope.
+
+## Second slice: exact regions and bounded composite reuse
+
+`render_region` now allocates only the requested native-resolution rectangle.
+The output cache stores aligned 64/128/256-grid candidates and an exact ordered
+prefix below the uppermost relevant layer. Weak immutable source versions detect
+changes without pixel hashes or strong references that pin decoded source tiles.
+Committed and preview caches have separate byte/entry budgets, so preview
+cancellation preserves committed entries. Source storage remains sparse COW.
+
+The desktop CPU fallback now retains this cache across jobs; GPU-first dispatch
+and stale document/epoch/gesture rejection are unchanged. Single relevant layers
+and tiny outputs bypass caching. A small stroke in the tested 1024² layered image
+recomposes 65,536 pixels, with the lower stack reused, instead of recompositing all
+1,048,576 pixels. Invalidation currently follows changed storage tile versions;
+smaller output tiles do not yet produce finer brush dirty rectangles.
+
+505 workspace tests pass (20 explicitly ignored), strict workspace/all-target
+Clippy passes, and required native Metal parity passes. New coverage includes
+partial/huge-canvas regions, source version lifetime, exact prefix rounding,
+property/structure changes, undo/redo, budget eviction and preview cancellation.
+The stale-worker test's artificial 8 MiB budget now includes the new cache/key
+allowance; its stale-presentation and released-reservation assertions remain.
+
+See [the implementation contract](REGIONAL_COMPOSITOR.md) and
+[the measured cache decision](../benchmarks/results/cpu-cache-2026-10-20/DECISION.md)
+for timing, memory and limitations. CPU frames still assemble and upload the full
+dense image. Parallel partitions, finer operation invalidation, GPU residency,
+mipmaps and history compression/spill remain incomplete; T12 stays partial.

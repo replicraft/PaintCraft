@@ -6,7 +6,8 @@ The active T12/BF29 slice removes per-layer scratch-row copying from full CPU
 composition. Authoritative storage remains sparse COW 256×256 tiles. Committed
 document pixels, history, layer order and preview publication rules do not change.
 The public full-render API still returns one owned dense RGBA8 canvas buffer;
-this is not yet a regional renderer, shared whole-image surface or dirty cache.
+this first slice did not introduce a regional renderer or cache. The subsequent
+[regional compositor](REGIONAL_COMPOSITOR.md) adds those APIs and CPU fallback reuse.
 
 `RasterLayer::row_spans(y, x, pixels)` validates the complete unsigned layer-local
 range before returning an allocation-free iterator. Resident segments borrow
@@ -24,7 +25,7 @@ alpha dispatch, borrowing their source bytes rather than copying a temporary row
 Cancellation remains checked before allocation and on each intersecting layer row.
 No partial output is returned after cancellation.
 
-No expensive hashes, persistent cache or new resident representation are added.
+This row-span slice adds no expensive hashes, persistent cache or new resident representation.
 Profile transforms, groups, masks and effects are absent from the current flat
 document model; this path does not claim correctness for their future policies.
 Display overlays remain separate, and staged brush/text previews are composed
@@ -68,9 +69,10 @@ scope rather than rewriting raw execution status into a release claim.
 
 ## Remaining backend work
 
-Full output allocation and full-frame desktop/GPU recomposition remain. Dirty
-regions, dependency-aware prefix caches, multiresolution display, bounded parallel
-partitions, SIMD comparisons and persistent GPU resources need their own exact
-tests and relevant benchmarks. History compression/spill/reclamation and further
+Full output allocation and full-frame GPU recomposition remain. Regional CPU
+composition and bounded output/lower-prefix reuse are covered separately in
+[the regional compositor contract](REGIONAL_COMPOSITOR.md). Finer dirty rectangles,
+multiresolution display, bounded parallel partitions, SIMD comparisons and
+persistent GPU resources still need exact tests and relevant benchmarks. History compression/spill/reclamation and further
 file interoperability also remain. The current canvas admission ceiling is a
 policy bound, not proof that an arbitrary allocation fits available system RAM.
