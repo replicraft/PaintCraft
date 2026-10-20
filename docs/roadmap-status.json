@@ -185,9 +185,12 @@
       "evidence": [
         "crates/editing/paintcraft-history/src/lib.rs",
         "docs/HISTORY_STORAGE.md",
-        "crates/editing/paintcraft-editor/tests/history_storage.rs"
+        "crates/editing/paintcraft-editor/tests/history_storage.rs",
+        "crates/editing/paintcraft-history/src/compression.rs",
+        "crates/editing/paintcraft-history/src/compression/tests.rs",
+        "benchmarks/results/history-codecs-2026-10-20/DECISION.md"
       ],
-      "remaining_or_scope": "Cold solid/default-relative tile records release decoded allocations, track reader leases and bound pressure packing; LZ4/Zstd comparisons, disk segments/GC, physical admission and interactive latency qualification remain.",
+      "remaining_or_scope": "Independent solid/patch/LZ4/Zstd payloads release decoded allocations, track leases and preserve atomic restore, with local equal-timeline CPU/RSS/phase evidence. Natural/mask/depth corpora, disk spill/segment GC, physical admission and interactive interference remain.",
       "acceptance": "MEM-01\u201307 under artificial low budget; actual allocator/RSS evidence, not counters alone."
     },
     {

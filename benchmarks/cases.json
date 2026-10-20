@@ -141,12 +141,14 @@
       "T11",
       "T24"
     ],
-    "status": "awaiting-relevant-workload",
+    "status": "locally-measured-partial",
     "tier": "both",
     "hyperfine_required": true,
     "hyperfine_role": "decision",
     "adapter_path": "crates/editing/paintcraft-editor/examples/history_codecs.rs",
-    "result_artifacts": [],
+    "result_artifacts": [
+      "benchmarks/results/history-codecs-2026-10-20/DECISION.md"
+    ],
     "variants": [
       "raw",
       "LZ4 candidate",

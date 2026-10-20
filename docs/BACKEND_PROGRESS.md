@@ -162,3 +162,26 @@ Full-extent noise does not save memory and costs roughly twice as much time.
 Checkpoint tails and immediate reader-release RSS are reported separately. No
 universal interval, historical accounting-regression or interactive latency claim
 is made. Release CLI PCND creation and matching serial/four-worker exports pass.
+
+## Fifth slice: independent LZ4/Zstd history blocks
+
+Explicit history compression policies now compare LZ4 and Zstd levels 1/3 with
+the raw/solid/default-relative records. Only a smaller encoded representation is
+retained. Restores use an admitted fixed-size tile, exact-frame validation and CRC;
+no decoded source stays strongly pinned by a compressed record. One scratch buffer
+and codec context are reused per compaction. Conservative native headroom and
+observed context sizes remain distinct from physical allocator enforcement.
+
+531 workspace tests (20 ignored), strict Clippy and native Metal parity pass.
+New cases cover compressed source release, full RGBA navigation, native frame
+bounds/truncation/trailing data, corruption, insufficient staging/restoration,
+solid/raw/small-patch fallback and cancellation before/after codec execution.
+The default remains raw/patch until the comparative evidence supports a choice;
+no disk spilling, background priority or complete physical-budget claim is made.
+
+The [codec decision](../benchmarks/results/history-codecs-2026-10-20/DECISION.md)
+retains 1,800 process measurements, 1,200 internal samples and 30 phase traces.
+LZ4 lowers structured256 median peak RSS from 66.6 to 48.5 MiB but increases the
+complete lifecycle from 62.8 to 87.8 ms. Zstd stores fewer bytes but costs much more
+CPU and does not yield the lowest RSS. High-entropy controls retain raw allocations
+and expose failed-compression overhead. No codec is selected globally.

@@ -58,7 +58,7 @@ The release benchmark compares equal complete timelines using shared COW and
 32/64/128-edit packing checkpoints, including destruction and correctness checks.
 Explicit checkpoints in that experiment differ from automatic pressure policy.
 
-This implements part of T04/T07/T11 and BF18. A global logical tile store, LZ4/Zstd
+This implements part of T04/T07/T11 and BF18. A global logical tile store, natural/mask/depth codec
 comparisons, differences against previous tile versions for photographic edits,
 disk spill and segment GC, background priority work, branching history graphs,
 process-wide physical admission and interactive latency qualification remain.
@@ -108,3 +108,8 @@ encoding. Disk spill, masks/higher-depth codecs and previous-version deltas rema
 
 API references: [LZ4 block slices](https://docs.rs/lz4_flex/0.14.0/lz4_flex/block/index.html)
 and [Zstd bulk buffers](https://docs.rs/zstd/0.14.3/zstd/bulk/index.html).
+
+Local [codec measurements](../benchmarks/results/history-codecs-2026-10-20/DECISION.md)
+retain 1,800 process runs, 1,200 internal samples and separate phase traces. LZ4
+reduces structured-tile peak RSS at higher CPU cost; Zstd improves stored ratio
+without delivering the best process result. The default remains raw/patch.
