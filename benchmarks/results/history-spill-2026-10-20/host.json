@@ -1,0 +1,8 @@
+{
+  "source_revision": "e74bdb74693538e521553886ec1a79ee3ee53fb8",
+  "worktree_status": "",
+  "rustc": "rustc 1.99.0 (b940084d7 2026-09-28)\nbinary: rustc\ncommit-hash: b940084d7eb6a299eb4bfeb8e34901bc051e7ac4\ncommit-date: 2026-09-28\nhost: aarch64-apple-darwin\nrelease: 1.99.0\nLLVM version: 23.1.1",
+  "platform": "macOS-14.7.2-arm64-arm-64bit-Mach-O",
+  "logical_cpus": 10,
+  "limitations": "One developer host, no power/thermal/affinity control; RSS is process-wide. All variants retain identical required history, use a 768 MiB retention allowance, and finish full recorded undo/redo; no interactive latency qualification."
+}

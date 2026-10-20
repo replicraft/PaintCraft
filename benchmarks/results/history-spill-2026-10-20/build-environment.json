@@ -1,0 +1,55 @@
+{
+  "tested_source_revision": "e74bdb74693538e521553886ec1a79ee3ee53fb8",
+  "runtime_artifacts_match_all_configs": true,
+  "criterion_binary_sha256": "a0b12d1378cd484a19c69fbed4831197ea965306aa1240e19e69020be23d375c",
+  "additional_artifacts": [
+    {
+      "path": "Cargo.toml",
+      "sha256": "aee92b45b611337fb628d1e798d0ae3c396b312394fdee7a7ffa8bca5e586534"
+    },
+    {
+      "path": "Cargo.lock",
+      "sha256": "b3866c2cf55c8a79cf75ca2cc013b1968d06704be1434f478ba4d27372ce1205"
+    },
+    {
+      "path": "crates/editing/paintcraft-editor/benches/history_spill.rs",
+      "sha256": "0fc00c1f603cdc4325824e36eca89e14dbf26d6268a663d21554ddcd250e1abd"
+    },
+    {
+      "path": "benchmarks/tools/run_history.py",
+      "sha256": "01c3e96a7e4e11b1ed8c8c00a644d49e0b879874a8b418fd44b38b97454a3868"
+    },
+    {
+      "path": "benchmarks/tools/run_partition_samples.py",
+      "sha256": "7f25a6c07b0b1bce6a8eb8faa57662fa1170afb7f35b50818320cdf69aa2f41f"
+    },
+    {
+      "path": "benchmarks/tools/summarize_history.py",
+      "sha256": "8b48f6525a71a047c069ec183f17e803c4742606b833db890f3200ba25e8bbd3"
+    },
+    {
+      "path": "benchmarks/tools/summarize_composite.py",
+      "sha256": "c700290b69f7f597b0ea94783cda15da3e80d5028cec20778591c4438c257cb1"
+    }
+  ],
+  "compiler_environment": {
+    "RUSTFLAGS": null,
+    "CARGO_ENCODED_RUSTFLAGS": null,
+    "CC": null,
+    "CFLAGS": null,
+    "CXX": null,
+    "CXXFLAGS": null
+  },
+  "validation": {
+    "workspace_passed": 550,
+    "workspace_failed": 0,
+    "workspace_explicitly_ignored": 20,
+    "strict_clippy": "passed",
+    "required_metal_parity": "passed, Apple M1 Pro",
+    "criterion_samples": 800,
+    "hyperfine_measurements": 1200,
+    "separate_traces": 20,
+    "release_cli_smoke": "passed"
+  },
+  "filesystem_boundary": "OS temporary directory; buffered filesystem I/O with segment rotation/final sync_all before publication; no device/page-cache flush or power-loss qualification"
+}

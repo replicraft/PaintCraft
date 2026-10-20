@@ -41,22 +41,24 @@ def main():
             text = files[stem.name + ".txt"].decode()
             workspace = re.search(r"codec_workspace_peak=(\d+) codec_scratch_bytes=(\d+)", text)
             rss = re.search(r"rss_before_release_kib=(?:Some\((\d+)\)|None) rss_after_release_kib=(?:Some\((\d+)\)|None)", text)
+            store=re.search(r"store_before_release=Some\(SpillUsage \{ ([^}]+) \}\) store_after_release=Some\(SpillUsage \{ ([^}]+) \}\)",text)
             for stage in ["before_release", "after_release"]:
                 match = re.search(stage + r"=MemoryUsage \{ ([^}]+) \}", text)
                 assert match, stem
                 counters = ast.literal_eval("{" + re.sub(r"(\w+):", r'"\1":', match[1]) + "}")
+                storage = ast.literal_eval("{" + re.sub(r"(\w+):", r'"\1":', store[1 if stage == "before_release" else 2]) + "}") if store else {}
                 decoded, leased, encoded, metadata = [counters[key] for key in
                     ["decoded_bytes", "leased_decoded_bytes", "encoded_bytes", "metadata_weight"]]
                 ownership.append([case, variant, stage, decoded, leased, encoded, metadata,
                                   decoded + encoded + metadata, counters["packed_entries"], counters["logical_payloads"],
                                   counters.get("compressed_bytes", 0), counters.get("compressed_payloads", 0),
                                   int(workspace[1]) if workspace else 0, int(workspace[2]) if workspace else 0,
-                                  rss[1 if stage == "before_release" else 2] if rss else None, counters.get("disk_bytes",0),counters.get("disk_payloads",0)])
+                                  rss[1 if stage == "before_release" else 2] if rss else None, counters.get("disk_bytes",0),counters.get("disk_payloads",0),storage.get("reserved_bytes",0),storage.get("segments",0),storage.get("cleanup_failures",0)])
     for name, header, rows in [
         ("phase-summary.csv", ["case", "variant", "phase", "events", "median_ms", "p95_ms", "p99_ms", "max_ms"], phases),
         ("ownership-summary.csv", ["case", "variant", "stage", "decoded_bytes", "leased_decoded_bytes", "encoded_bytes",
                                    "metadata_weight", "known_weight", "packed_entries", "logical_payloads",
-                                   "compressed_bytes", "compressed_payloads", "codec_workspace_peak", "codec_scratch_bytes", "current_rss_kib", "disk_bytes", "disk_payloads"], ownership),
+                                   "compressed_bytes", "compressed_payloads", "codec_workspace_peak", "codec_scratch_bytes", "current_rss_kib", "disk_bytes", "disk_payloads", "store_reserved_bytes", "store_segments", "store_cleanup_failures"], ownership),
     ]:
         with (args.directory.parent / name).open("w") as output:
             writer = csv.writer(output, lineterminator="\n")

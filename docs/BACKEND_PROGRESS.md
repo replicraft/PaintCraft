@@ -191,3 +191,40 @@ tile failed restoration. Failed restores now reclaim those private aliases while
 leaving cursor/document authority unchanged. A 128-retry regression passes; the
 workspace now passes 532 tests (20 ignored) and strict Clippy. The codec measurements
 remain explicitly frozen to 417c0ed, before this correctness follow-up.
+
+## Sixth slice: preserving publication and native leased history segments
+
+Core defines opaque immutable byte storage; platform implements private locked
+append segments and history prepares replacement payload references. The default
+retention policy now preserves existing undo: memory/storage exhaustion rejects a
+new edit before publishing its document, cursor, selection, epoch or redo removal.
+Explicit TrimOldest retains the counted legacy policy. Desktop editors receive a
+per-session native store; startup cleans only marked, unlocked abandoned sessions.
+
+Writes are provisional until checked segment-rotation/final synchronization passes.
+Cancellation is checked after that barrier. A closed dirty segment remains part of
+the barrier, protecting concurrent preparers. Failed partial writes/rollback do not
+reuse the writer; required leases survive, and uncertain/dead lengths stay charged.
+Whole-segment GC preserves live extents and retries failed deletion. Session history
+is not restart-persistent; durable document recovery keeps its separate authority.
+
+550 workspace tests (20 ignored), strict Clippy, required Metal parity and release
+CLI save/export pass. Native tests exercise actual file/lock/read/GC behavior and a
+killed child process; fault cases cover partial disk-full, rollback/sync failures,
+closed provisional barriers, quota, permissions, missing/short/corrupt segments and
+readers outliving stores. Editor tests verify full raw/codec navigation, rejected
+edits retaining redo, cancellation after write/sync and cleanup of unpublished data.
+
+The [spill decision](../benchmarks/results/history-spill-2026-10-20/DECISION.md)
+retains 1,200 process runs, 800 internal samples and 20 separate traces. Disk lowers
+structured raw-history median peak RSS from 67.1 to 52.4 MiB at about 5x lifecycle
+time; short noisy history shows almost no RSS improvement despite releasing decoded
+allocations. A checkpoint reaches 159 ms in a separate trace. Internal samples have
+substantial variability; no universal ranking or interactive tail guarantee follows.
+The interrupted per-extent-sync pilot remains archived and explicitly excluded.
+
+Incremental preparation of snapshots with more than 64 new sources, global logical
+tile authority/physical admission, background priorities, efficient relocation,
+photographic deltas, natural/mask/depth qualification and branching history remain.
+The default is preserving, but those limits can still reject a large edit despite
+available disk. See [the exact contract and limits](HISTORY_SPILL.md).

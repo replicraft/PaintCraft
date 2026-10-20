@@ -113,3 +113,9 @@ queue-inclusive interactive latency, shared process/disk admission, segment
 relocation/GC efficiency, global logical tile authority, restart-persistent branch
 history, higher-depth/mask data and photographic before/after deltas remain.
 See [history ownership](HISTORY_STORAGE.md) for the warm/raw/codec contracts.
+
+Local [spill measurements](../benchmarks/results/history-spill-2026-10-20/DECISION.md)
+retain 1,200 process measurements, 800 internal samples and separate phase traces.
+They include real storage synchronization and destruction, with every required
+history state retained. Results show material I/O costs and workload-dependent
+peak RSS; short noise histories do not establish a peak-RSS improvement.

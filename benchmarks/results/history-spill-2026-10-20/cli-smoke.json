@@ -1,0 +1,32 @@
+{
+  "result": "release CLI PCND save and serial/four-worker PNG bytes match",
+  "commands": [
+    [
+      "new",
+      "--width",
+      "64",
+      "--height",
+      "32",
+      "--background",
+      "#FFFFFFFF",
+      "--output",
+      "/tmp/paintcraft-spill-cli-smoke-2026-10-20/source.pcnd"
+    ],
+    [
+      "render",
+      "/tmp/paintcraft-spill-cli-smoke-2026-10-20/source.pcnd",
+      "--output",
+      "/tmp/paintcraft-spill-cli-smoke-2026-10-20/serial.png"
+    ],
+    [
+      "render",
+      "/tmp/paintcraft-spill-cli-smoke-2026-10-20/source.pcnd",
+      "--render-workers",
+      "4",
+      "--output",
+      "/tmp/paintcraft-spill-cli-smoke-2026-10-20/parallel.png"
+    ]
+  ],
+  "png_sha256": "814d6895ff1f9a891e99ac088478c1b1fe4108f60501233d041ebd5802db791d",
+  "binary_sha256": "0358dc6dea4417114b827a50b8deb7a717d576739d4e58152b0a8a78fa973cb9"
+}
