@@ -185,3 +185,9 @@ LZ4 lowers structured256 median peak RSS from 66.6 to 48.5 MiB but increases the
 complete lifecycle from 62.8 to 87.8 ms. Zstd stores fewer bytes but costs much more
 CPU and does not yield the lowest RSS. High-entropy controls retain raw allocations
 and expose failed-compression overhead. No codec is selected globally.
+
+A follow-up failure audit reproduced dead weak aliases accumulating after a later
+tile failed restoration. Failed restores now reclaim those private aliases while
+leaving cursor/document authority unchanged. A 128-retry regression passes; the
+workspace now passes 532 tests (20 ignored) and strict Clippy. The codec measurements
+remain explicitly frozen to 417c0ed, before this correctness follow-up.

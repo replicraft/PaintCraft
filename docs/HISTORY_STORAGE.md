@@ -113,3 +113,8 @@ Local [codec measurements](../benchmarks/results/history-codecs-2026-10-20/DECIS
 retain 1,800 process runs, 1,200 internal samples and separate phase traces. LZ4
 reduces structured-tile peak RSS at higher CPU cost; Zstd improves stored ratio
 without delivering the best process result. The default remains raw/patch.
+
+Failed restoration also reclaims dead weak aliases registered by earlier tiles
+in the private target. A 128-retry corrupted two-tile regression verifies that
+these retries neither accumulate aliases nor publish a new cursor/state. Live
+reader identities remain retained by the ordinary liveness check.

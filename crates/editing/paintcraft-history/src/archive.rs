@@ -339,4 +339,69 @@ mod tests {
             current
         );
     }
+    #[test]
+    fn repeated_partial_restore_failure_reclaims_dead_aliases_without_moving_history() {
+        let mut doc = paintcraft_document::new_document(
+            512,
+            256,
+            Some(Rgba::TRANSPARENT),
+            42,
+            paintcraft_document::POLICY,
+        )
+        .unwrap();
+        let id = doc.roots[0];
+        let raster = &mut doc.layers.get_mut(&id).unwrap().raster;
+        let mut adm = Admission::new(2 * 65536);
+        for x in [3, 259] {
+            raster
+                .blend_pixel(
+                    x,
+                    4,
+                    Rgba([7, 8, 9, 10]),
+                    paintcraft_raster::BlendMode::Replace,
+                    &mut adm,
+                )
+                .unwrap();
+        }
+        let mut current = doc.clone();
+        current.layers.get_mut(&id).unwrap().raster = RasterLayer::new(512, 256, Rgba::TRANSPARENT);
+        current.state_id = Uuid::new_v4();
+        let current_id = current.state_id;
+        let mut history = History::new(Snapshot {
+            document: Arc::new(doc),
+            selection: Selection::Inactive,
+            history_id: None,
+        });
+        history
+            .record(Snapshot {
+                document: Arc::new(current),
+                selection: Selection::Inactive,
+                history_id: Some(Uuid::new_v4()),
+            })
+            .unwrap();
+        history.compact(1, 1 << 20, || Ok(())).unwrap();
+        history.memo.clear();
+        let Storage::Cold(packed) = &mut history.entries[0].storage else {
+            panic!("expected packed state");
+        };
+        let packed = Arc::get_mut(packed).unwrap();
+        assert!(packed.blobs().all(|b| b.source().resident_bytes() == 0));
+        // The first tile decodes and registers an alias; the second then fails.
+        let blob = Arc::get_mut(&mut packed.layers[0].tiles[1].1).unwrap();
+        payload::corrupt_patch_for_test(blob);
+        for _ in 0..128 {
+            assert_eq!(history.undo().unwrap_err().code, ErrorCode::CodecFailed);
+            assert!(
+                history.memo.is_empty(),
+                "failed private decodes must not accumulate aliases"
+            );
+            assert_eq!(history.undo_depth(), 1);
+            assert_eq!(history.redo_depth(), 0);
+            assert_eq!(
+                history.entries().find(|e| e.current).unwrap().state_id,
+                current_id
+            );
+            assert_eq!(history.memory_usage().decoded_bytes, 0);
+        }
+    }
 }

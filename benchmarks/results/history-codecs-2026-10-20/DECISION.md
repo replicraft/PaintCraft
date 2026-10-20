@@ -108,3 +108,14 @@ lifecycle comparisons do not qualify a global allocator, pressure-triggered tail
 latency, queue interference, natural photographs, u8 masks, higher-depth samples,
 disk spill, previous-version deltas, background work, GPU memory or file codecs.
 The codecs are real independent stored blocks, not effect replay or delta chains.
+
+## Frozen source boundary and later correctness fix
+
+The timings and archived 531-test qualification use source `417c0ed`, as recorded
+in every config and `build-environment.json`. A subsequent failure-path regression
+found dead weak aliases surviving partial multi-tile restoration failures. The
+follow-up reclaims those aliases after failure and adds a 128-retry regression;
+532 workspace tests and strict Clippy pass after that fix. Tables were not silently
+rerun or relabeled as exact timings of the changed source. The failure cleanup is
+outside this experiment's successful recorded replays; its performance is not
+qualified by these samples. Raw evidence and original source hashes are preserved.

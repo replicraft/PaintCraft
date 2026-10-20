@@ -340,10 +340,17 @@ impl History {
         })
     }
     fn restore(&mut self, index: usize) -> Result<Snapshot> {
-        match &self.entries[index].storage {
+        let result = match &self.entries[index].storage {
             Storage::Hot(snapshot) => Ok(snapshot.clone()),
             Storage::Cold(packed) => packed.restore(self.restore_pixels, &mut self.memo),
+        };
+        if result.is_err() {
+            // A later tile can fail after earlier private decodes registered
+            // aliases. Their leases have now dropped: retries must not retain
+            // one dead identity per successful partial decode.
+            self.reclaim_tables();
         }
+        result
     }
     pub fn undo(&mut self) -> Result<Option<Snapshot>> {
         let Some(index) = self.cursor.checked_sub(1) else {
