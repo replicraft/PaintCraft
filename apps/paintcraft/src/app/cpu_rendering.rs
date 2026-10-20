@@ -1,5 +1,5 @@
 //! CPU fallback owns derived caches; authoritative documents stay immutable.
-use paintcraft_core::types::{Error, ErrorCode, Result};
+use paintcraft_core::types::Result;
 use paintcraft_document::Document;
 use paintcraft_render::{
     cache::{CacheLimits, CompositeCache, Domain},
@@ -35,12 +35,14 @@ impl CpuRenderer {
         check()?;
         // Only the derived cache is locked. Native execution has one admitted
         // render worker; the UI never takes this lock while that worker is active.
-        let mut guard = self.0.lock().map_err(|_| {
-            Error::new(
-                ErrorCode::InvariantViolation,
-                "CPU render cache lock poisoned",
-            )
-        })?;
+        let mut guard = self.0.lock().unwrap_or_else(|poisoned| {
+            // A worker panic may leave derived entries inconsistent. Retire all
+            // of them and keep ordinary CPU rendering available on later frames.
+            let mut guard = poisoned.into_inner();
+            *guard = None;
+            self.0.clear_poison();
+            guard
+        });
         check()?;
         let Some(cache) = guard.as_mut() else {
             return render_cancellable(doc, check);
@@ -151,5 +153,38 @@ mod tests {
         app.editor.run_pending();
         app.sync_texture(&ctx);
         assert_eq!(app.rendered, committed);
+    }
+}
+
+#[cfg(test)]
+mod recovery_tests {
+    use super::*;
+    #[test]
+    fn poisoned_derived_cache_is_retired_without_poisoning_future_cpu_frames() {
+        let renderer = CpuRenderer::new();
+        let failed = renderer.clone();
+        assert!(
+            std::thread::spawn(move || {
+                let _guard = failed.0.lock().unwrap();
+                panic!("injected derived-cache worker failure");
+            })
+            .join()
+            .is_err()
+        );
+        let doc = paintcraft_document::new_document(
+            17,
+            19,
+            Some(paintcraft_core::types::Rgba([12, 34, 56, 255])),
+            0,
+            paintcraft_document::POLICY,
+        )
+        .unwrap();
+        for _ in 0..2 {
+            assert_eq!(
+                renderer.render(&doc, false, || Ok(())).unwrap(),
+                [12, 34, 56, 255].repeat(17 * 19)
+            );
+        }
+        assert!(renderer.0.lock().unwrap().is_none());
     }
 }
