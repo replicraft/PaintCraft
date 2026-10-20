@@ -11,10 +11,19 @@ pub const CASES: &[&str] = &[
     "noise128",
     "metadata1000",
 ];
+pub const CODEC_CASES: &[&str] = &[
+    "sparse256",
+    "sparse1000",
+    "held1000",
+    "noise128",
+    "structured256",
+    "metadata1000",
+];
+pub const CODEC_VARIANTS: &[&str] = &["shared", "raw", "lz4", "zstd1", "zstd3"];
 pub const VARIANTS: &[&str] = &["shared", "pack32", "pack64", "pack128"];
 pub fn count(case: &str) -> usize {
     match case {
-        "sparse256" => 256,
+        "sparse256" | "structured256" => 256,
         "noise128" => 128,
         _ => 1000,
     }
@@ -30,6 +39,8 @@ pub struct Outcome {
     pub before_release: MemoryUsage,
     pub after_release: MemoryUsage,
     pub events: Vec<Event>,
+    pub codec_workspace_peak: u64,
+    pub codec_scratch_bytes: u64,
     pub rss_before_release_kib: Option<u64>,
     pub rss_after_release_kib: Option<u64>,
 }
@@ -66,6 +77,14 @@ pub fn fixture(case: &str) -> Session {
             })
             .collect();
         paintcraft_document::import_image(256, 256, &pixels, "recorded-history-noise").unwrap()
+    } else if case == "structured256" {
+        let pixels: Vec<u8> = (0..65536)
+            .flat_map(|i| {
+                let (x, y) = ((i % 256) as u8, (i / 256) as u8);
+                [x / 8, y / 8, (x / 16) ^ (y / 16), (x % 4) * 85]
+            })
+            .collect();
+        paintcraft_document::import_image(256, 256, &pixels, "recorded-history-structured").unwrap()
     } else {
         new_document(257, 259, Some(Rgba([37, 19, 83, 0])), 42, POLICY).unwrap()
     };
@@ -113,14 +132,50 @@ fn event(events: &mut Vec<Event>, trace: bool, phase: &'static str, index: usize
 pub fn run(case: &str, variant: &str, trace: bool) -> Outcome {
     assert!(CASES.contains(&case));
     assert!(VARIANTS.contains(&variant));
-    let n = count(case);
     let interval = match variant {
         "pack32" => 32,
         "pack128" => 128,
         "pack64" => 64,
         _ => usize::MAX,
     };
+    run_mode(
+        case,
+        variant,
+        trace,
+        interval,
+        paintcraft_history::Compression::None,
+    )
+}
+pub fn run_codec(case: &str, variant: &str, trace: bool) -> Outcome {
+    use paintcraft_history::Compression;
+    assert!(CODEC_CASES.contains(&case));
+    assert!(CODEC_VARIANTS.contains(&variant));
+    let policy = match variant {
+        "lz4" => Compression::Lz4,
+        "zstd1" => Compression::Zstd1,
+        "zstd3" => Compression::Zstd3,
+        _ => Compression::None,
+    };
+    let interval = if variant == "shared" { usize::MAX } else { 64 };
+    run_mode(case, variant, trace, interval, policy)
+}
+fn run_mode(
+    case: &str,
+    variant: &str,
+    trace: bool,
+    interval: usize,
+    policy: paintcraft_history::Compression,
+) -> Outcome {
+    let n = count(case);
     let mut s = fixture(case);
+    s.set_history_compression(policy);
+    let mut codec_workspace_peak = 0;
+    let mut codec_scratch_bytes = 0;
+    let mut compact = |s: &mut Session| {
+        let stats = s.compact_history(2, 16 << 20, || Ok(())).unwrap();
+        codec_workspace_peak = codec_workspace_peak.max(stats.codec_workspace_peak);
+        codec_scratch_bytes = codec_scratch_bytes.max(stats.codec_scratch_bytes);
+    };
     let baseline_depth = s.undo_depth();
     let mut expected = Vec::with_capacity(n + 1);
     expected.push(fingerprint(&s));
@@ -136,14 +191,14 @@ pub fn run(case: &str, variant: &str, trace: bool) -> Outcome {
         }
         if (i + 1).is_multiple_of(interval) {
             let start = Instant::now();
-            s.compact_history(2, 16 << 20, || Ok(())).unwrap();
+            compact(&mut s);
             event(&mut events, trace, "compact", i, start);
         }
         event(&mut events, trace, "edit-cycle", i, start);
     }
     if variant != "shared" {
         let start = Instant::now();
-        s.compact_history(2, 16 << 20, || Ok(())).unwrap();
+        compact(&mut s);
         event(&mut events, trace, "compact", n, start);
     }
     assert_eq!(s.trimmed_total(), 0);
@@ -155,7 +210,7 @@ pub fn run(case: &str, variant: &str, trace: bool) -> Outcome {
     event(&mut events, trace, "release-readers", 0, start);
     if variant != "shared" {
         let start = Instant::now();
-        s.compact_history(2, 16 << 20, || Ok(())).unwrap();
+        compact(&mut s);
         event(&mut events, trace, "reclaim", 0, start);
     }
     let rss_after_release_kib = if trace { rss_kib() } else { None };
@@ -194,6 +249,8 @@ pub fn run(case: &str, variant: &str, trace: bool) -> Outcome {
         before_release,
         after_release,
         events,
+        codec_workspace_peak,
+        codec_scratch_bytes,
         rss_before_release_kib,
         rss_after_release_kib,
     }

@@ -132,5 +132,47 @@
     ],
     "decision_rule": "Adopt the lowest total cost subject to exact restore and bounded ownership, with measured thresholds.",
     "protocol": "docs/development/HYPERFINE_PROTOCOL.md"
+  },
+  {
+    "id": "BF19",
+    "title": "History/block compression",
+    "choice": "compression",
+    "activation_tasks": [
+      "T11",
+      "T24"
+    ],
+    "status": "awaiting-relevant-workload",
+    "tier": "both",
+    "hyperfine_required": true,
+    "hyperfine_role": "decision",
+    "adapter_path": "crates/editing/paintcraft-editor/examples/history_codecs.rs",
+    "result_artifacts": [],
+    "variants": [
+      "raw",
+      "LZ4 candidate",
+      "Zstd levels chosen for same mode"
+    ],
+    "workloads": [
+      "uniform, natural and high-entropy RGBA tiles",
+      "u8 masks and implemented higher-depth data",
+      "hot undo and cold spill; many small versus batched blocks"
+    ],
+    "correctness_gates": [
+      "exact decode and checksums",
+      "budgeted scratch and worker count",
+      "corruption/failure leaves authority intact"
+    ],
+    "supplementary_metrics": [
+      "compress/decompress time",
+      "ratio and real retained memory",
+      "undo latency/CPU contention"
+    ],
+    "invalid_comparisons": [
+      "free compression worker budget",
+      "counting compressed copy while raw stays pinned",
+      "network samples not present in actual corpus"
+    ],
+    "decision_rule": "Choose hot/cold policies by ratio and latency; raw is valid for incompressible content.",
+    "protocol": "docs/development/HYPERFINE_PROTOCOL.md"
   }
 ]

@@ -1,4 +1,5 @@
 #[path = "support/history.rs"]
+#[allow(dead_code)] // Shared replay helper has several benchmark consumers.
 mod replay;
 use replay::{CASES, VARIANTS};
 fn main() {

@@ -27,5 +27,9 @@ sha2.workspace = true
 name = "history"
 harness = false
 
+[[bench]]
+name = "history_codecs"
+harness = false
+
 [lints]
 workspace = true

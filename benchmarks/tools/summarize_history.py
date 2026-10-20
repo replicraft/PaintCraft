@@ -6,7 +6,7 @@ import re
 import statistics
 from pathlib import Path
 
-from run_history import CASES, VARIANTS
+from run_history import CASES, VARIANTS, CODEC_CASES, CODEC_VARIANTS
 
 
 def percentile(values, fraction):
@@ -20,11 +20,14 @@ def percentile(values, fraction):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("directory", type=Path)
+    parser.add_argument("--suite", choices=["ownership", "codecs"], default="ownership")
     args = parser.parse_args()
+    cases = CODEC_CASES if args.suite == "codecs" else CASES
+    variants = CODEC_VARIANTS if args.suite == "codecs" else VARIANTS
     phases = []
     ownership = []
-    for case in CASES:
-        for variant in VARIANTS:
+    for case in cases:
+        for variant in variants:
             stem = args.directory / f"{case}-{variant}"
             grouped = {}
             with stem.with_suffix(".csv").open() as source:

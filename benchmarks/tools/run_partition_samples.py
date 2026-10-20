@@ -13,7 +13,7 @@ from run_hyperfine import run_logged, write_json
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--suite", choices=["partitions", "history"], default="partitions")
+    parser.add_argument("--suite", choices=["partitions", "history", "codecs"], default="partitions")
     parser.add_argument("--configs", type=Path, required=True)
     parser.add_argument("--binary", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
@@ -21,16 +21,17 @@ def main():
     parser.add_argument("--execute", action="store_true")
     args = parser.parse_args()
     binary = args.binary.resolve()
-    history = args.suite == "history"
+    history = args.suite in ["history", "codecs"]
+    codecs = args.suite == "codecs"
     if history:
-        from run_history import CASES
-        cases = list(CASES)
+        from run_history import CASES, CODEC_CASES
+        cases = list(CODEC_CASES if codecs else CASES)
     else:
         cases = list(PARALLEL_ITERATIONS)
     config_path = args.configs / ("sparse256-config.json" if history else "tiny-config.json")
     prototype = json.loads(config_path.read_text())
-    assert prototype["case_id"] == ("BF18" if history else "BF06")
-    group = "recorded-history" if history else "partitions"
+    assert prototype["case_id"] == ("BF19" if codecs else "BF18" if history else "BF06")
+    group = "history-codecs" if codecs else "recorded-history" if history else "partitions"
     samples = 20 if history else 100
     variants = [row["id"] for row in prototype["variants"]]
     if args.order == "reverse":
