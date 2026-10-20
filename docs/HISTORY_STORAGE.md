@@ -68,3 +68,43 @@ Local [history measurements](../benchmarks/results/history-packing-2026-10-20/DE
 retain 1,200 whole-process runs, 800 internal samples and separate phase traces.
 Sparse history uses less peak RSS at higher lifecycle/checkpoint cost; full-extent
 noise gains no memory. Reader allocation release does not force immediate RSS return.
+
+## Independent compressed blocks
+
+`Session::set_history_compression` selects `None`, `Lz4`, `Zstd1` or `Zstd3` for
+newly prepared payloads. Existing recorded payloads retain their encoding. The
+default stays `None`; changing this preference neither edits document content nor
+silently recompresses old records. Solid payloads bypass codecs. Other tiles are
+encoded as independent full 256² RGBA8 blocks and retained only if smaller than
+the existing default-relative rectangle or raw allocation. No dictionary, prior
+version or effect replay is needed to decode a block. Incompressible tiles keep
+shared raw storage. `compressed_bytes` is a subset of `encoded_bytes`.
+
+LZ4 uses `lz4_flex`'s safe, checked slice APIs without framing or allocation features.
+Zstd uses the C-backed `zstd` block API at fixed levels 1/3, a maximum window log of
+18 and no codec worker feature. Restore requires one exact frame with the expected
+content size and consumes the whole frame before CRC verification. Truncation,
+trailing bytes, concatenated frames, wrong content size and corrupt output fail.
+Both decoders write into an admitted, fixed-size tile; there is no header-sized
+output allocation. Checksums provide integrity checks, not authentication.
+
+A compaction operation reuses one output scratch buffer and codec context across
+its prepared tiles. Scratch and retained bytes use fallible reservation. Before
+codec construction, staging reserves conservative headroom (16 KiB for LZ4's stack
+table, 8 MiB for Zstd's native context) plus the codec output bound. Zstd context
+size is observed after each block and rejected if larger than the reservation.
+`Compaction` reports peak observed workspace and scratch capacity separately.
+The native allocator is not intercepted: this headroom reservation and post-check
+are not a hard physical admission guarantee. Restoration also uses transient
+native decoder state outside decoded pixel accounting. Process resource counters
+must qualify that cost; a global native allocator/store budget remains pending.
+
+Cancellation is checked before codec work and after each bounded block. A codec
+call cannot be interrupted midway. Preparation failure/cancellation never publishes
+a partly replaced timeline. The pressure work limit on new source tiles still
+applies. Recorded tests cover source release, exact hidden RGBA, small/raw/solid
+fallbacks, insufficient staging/restoration, corruption and cancellation after
+encoding. Disk spill, masks/higher-depth codecs and previous-version deltas remain.
+
+API references: [LZ4 block slices](https://docs.rs/lz4_flex/0.14.0/lz4_flex/block/index.html)
+and [Zstd bulk buffers](https://docs.rs/zstd/0.14.3/zstd/bulk/index.html).

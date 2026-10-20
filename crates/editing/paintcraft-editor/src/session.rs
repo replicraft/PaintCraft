@@ -17,7 +17,9 @@ use paintcraft_commands::Batch;
 use paintcraft_core::types::ids::deterministic_id;
 use paintcraft_document::{Document, POLICY};
 
-pub use paintcraft_history::{DEFAULT_HISTORY_BYTES, Packing as HistoryPacking};
+pub use paintcraft_history::{
+    Compression as HistoryCompression, DEFAULT_HISTORY_BYTES, Packing as HistoryPacking,
+};
 use paintcraft_history::{History, Snapshot};
 
 mod history;
@@ -134,6 +136,9 @@ impl Session {
     }
     pub fn set_history_packing(&mut self, packing: HistoryPacking) {
         self.history.set_packing(packing);
+    }
+    pub fn set_history_compression(&mut self, compression: HistoryCompression) {
+        self.history.set_compression(compression);
     }
     pub fn set_history_restore_budget(&mut self, pixels: u64) {
         self.history.set_restore_budget(pixels);

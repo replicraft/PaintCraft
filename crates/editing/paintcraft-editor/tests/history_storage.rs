@@ -296,3 +296,71 @@ fn branching_from_a_cold_state_keeps_the_previous_published_state_hot_and_undoab
     assert_eq!(s.undo().unwrap().unwrap().state_id, previous);
     verify(&s, 5);
 }
+
+#[test]
+fn compressed_recorded_timelines_release_tiles_and_keep_navigation_atomic() {
+    use paintcraft_history::Compression;
+    let initial: Vec<u8> = (0..65536)
+        .flat_map(|i| {
+            let (x, y) = ((i % 256) as u8, (i / 256) as u8);
+            [x / 8, y / 8, (x / 16) ^ (y / 16), (x % 4) * 85]
+        })
+        .collect();
+    for codec in [Compression::Lz4, Compression::Zstd1, Compression::Zstd3] {
+        let doc =
+            paintcraft_document::import_image(256, 256, &initial, "codec-history-fixture").unwrap();
+        let mut s = Session::new(doc);
+        s.set_history_packing(Packing::Shared);
+        s.set_history_compression(codec);
+        let mut states = vec![s.ticket().state_id];
+        for n in 0..10 {
+            paint(&mut s, n);
+            states.push(s.ticket().state_id);
+        }
+        let ticket = s.ticket();
+        assert_eq!(
+            s.compact_history(1, 1024, || Ok(())).unwrap_err().code,
+            ErrorCode::ResourceLimit
+        );
+        assert_eq!(s.ticket(), ticket);
+        assert_eq!(s.undo_depth(), 10);
+        let stats = s.compact_history(1, 16 << 20, || Ok(())).unwrap();
+        assert!(stats.codec_scratch_bytes > 0);
+        assert!(stats.codec_workspace_peak > 0);
+        assert_eq!(
+            s.history_memory().decoded_bytes,
+            RasterLayer::TILE_BYTES as u64
+        );
+        assert_eq!(s.history_memory().compressed_payloads, 10);
+        assert!(s.history_memory().compressed_bytes > 0);
+        s.set_history_restore_budget(0);
+        assert_eq!(s.undo().unwrap_err().code, ErrorCode::ResourceLimit);
+        assert_eq!(s.ticket(), ticket);
+        assert_eq!(s.undo_depth(), 10);
+        s.set_history_restore_budget(65536);
+        let verify = |s: &Session, count: usize| {
+            assert_eq!(s.ticket().state_id, states[count]);
+            let mut expected = initial.clone();
+            for n in 0..count {
+                let offset = ((5 + n / 120) * 256 + 3 + n % 120) * 4;
+                expected[offset..offset + 4].copy_from_slice(&[23, 88, 156, 204]);
+            }
+            let doc = s.document();
+            let tile = doc.layers[&doc.roots[0]]
+                .raster
+                .tile_leases()
+                .next()
+                .unwrap()
+                .1;
+            assert_eq!(tile.bytes(), expected);
+        };
+        for count in (0..10).rev() {
+            s.undo().unwrap().unwrap();
+            verify(&s, count);
+        }
+        for count in 1..=10 {
+            s.redo().unwrap().unwrap();
+            verify(&s, count);
+        }
+    }
+}
