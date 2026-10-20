@@ -48,9 +48,11 @@
       ],
       "status": "partial",
       "evidence": [
-        "crates/foundation/paintcraft-raster/src/raster.rs"
+        "crates/foundation/paintcraft-raster/src/raster.rs",
+        "docs/HISTORY_STORAGE.md",
+        "crates/editing/paintcraft-editor/tests/history_storage.rs"
       ],
-      "remaining_or_scope": "Sparse COW tiles and admission work; logical blob handles, resident leases and full residency accounting remain.",
+      "remaining_or_scope": "Sparse COW tiles, immutable reader leases and admitted atomic COW work; global logical blob authority and process-wide residency accounting remain.",
       "acceptance": "MEM-03/04; hidden RGB; negative boundaries; checked sizes; explicit resource errors."
     },
     {
@@ -93,9 +95,11 @@
       "status": "partial",
       "evidence": [
         "crates/editing/paintcraft-history/src/lib.rs",
-        "crates/editing/paintcraft-editor/tests/history_navigation.rs"
+        "crates/editing/paintcraft-editor/tests/history_navigation.rs",
+        "docs/HISTORY_STORAGE.md",
+        "crates/editing/paintcraft-editor/tests/history_storage.rs"
       ],
-      "remaining_or_scope": "Recorded linear undo/redo, labels and guarded jumps pass seeded navigation tests; branching nodes, spill and metadata admission remain.",
+      "remaining_or_scope": "Recorded hot/cold linear undo/redo, labels and atomic fallible navigation preserve state IDs and pixels; branching graphs, spill and full metadata admission remain.",
       "acceptance": "Undo/redo randomized state equality; STATE-04/05/06; removed executor does not block redo."
     },
     {
@@ -179,9 +183,11 @@
       ],
       "status": "partial",
       "evidence": [
-        "crates/editing/paintcraft-history/src/lib.rs"
+        "crates/editing/paintcraft-history/src/lib.rs",
+        "docs/HISTORY_STORAGE.md",
+        "crates/editing/paintcraft-editor/tests/history_storage.rs"
       ],
-      "remaining_or_scope": "Shared snapshot retention is bounded; leases, segment GC, compaction and physical resource evidence remain.",
+      "remaining_or_scope": "Cold solid/default-relative tile records release decoded allocations, track reader leases and bound pressure packing; LZ4/Zstd comparisons, disk segments/GC, physical admission and interactive latency qualification remain.",
       "acceptance": "MEM-01\u201307 under artificial low budget; actual allocator/RSS evidence, not counters alone."
     },
     {

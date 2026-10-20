@@ -127,3 +127,29 @@ The desktop cache/GPU path keeps its existing dispatch; bulk pool throughput doe
 not prove interactive responsiveness or scheduling priority. Global CPU/resource
 coordination, parallel cache misses, finer invalidation, history compression/spill
 and remaining format/roadmap work are still required.
+
+## Fourth slice: recorded cold history and decoded ownership
+
+Older history states can now hold immutable metadata plus shared independent tile
+records. Solid and sparse default-relative payloads release decoded tile Vecs;
+full-extent tiles retain their original raw allocation. Weak decoded caches and
+explicit reader leases keep restoration reusable without pinning packed pixels.
+CRC checks guard reconstructed payloads. See [the ownership and failure
+contract](HISTORY_STORAGE.md) for exact semantics and budget limitations.
+
+Undo/redo/seek prepare the recorded target before publishing its cursor/document/
+epoch. Failed restoration is visible to the UI and retryable. Editing after a cold
+restore keeps the preceding state hot. Automatic pressure work caps new tile scans
+and complete packed entries before ordinary retention trimming; the two-state floor
+and reader-held bytes make retention a soft policy, not a physical-memory cap.
+
+523 workspace tests (20 ignored), strict all-target Clippy and real Metal parity
+pass. Tests exercise decoded release with live readers, full recorded navigation,
+metadata/selection/off-canvas/hidden RGB, checksum corruption, cancellation,
+admission failures, raw fallback, bounded work, table shrinking and epoch overflow.
+The release harness compares identical timelines at explicit cold-age checkpoints;
+these checkpoints are distinct from the automatic pressure trigger.
+
+Global logical tile authority, previous-version photographic deltas, LZ4/Zstd,
+disk spill/segment GC, background priorities, history branches and interactive
+latency/resource qualification remain. T04/T07/T11 remain partial.

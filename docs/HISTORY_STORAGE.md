@@ -1,0 +1,65 @@
+# Recorded history storage
+
+History keeps recent immutable snapshots hot and can replace older snapshots with
+recorded metadata and independent tile payloads. Restoring a state never replays a
+brush, command, effect, or plugin. Document/state/history IDs, layer order and
+properties, selection, off-canvas layer pixels, hidden RGB and finite tile padding
+are preserved. Navigation prepares the complete target before changing the cursor,
+editor document or epoch. Failed admission or checksum validation leaves publication
+unchanged. Editing after a cold restore promotes the preceding state to hot storage.
+
+## Payload ownership
+
+Each distinct immutable tile version has one shared payload while referenced by
+packed entries. A solid tile stores its RGBA value inline. A sparse tile stores the
+bounding rectangle of pixels different from its layer default, including all four
+channels. Reconstruction fills the default and copies the rectangle. This is an
+independent recorded representation, not a chain of differences against earlier
+states. A full-extent tile retains its original immutable allocation rather than
+creating a second raw copy. CRC32 validates reconstructed bytes before use.
+
+Packed records cache decoded tiles and documents through weak references. They do
+not pin the decoded allocation of solid or patch payloads. A render/save reader can
+retain an immutable lease while history changes. Raster mutation atomically retires
+weak identities or performs an admitted fallible copy when a strong reader exists;
+weak-reader upgrades cannot bypass pixel allocation admission.
+
+`MemoryUsage` reports decoded Vec capacities, encoded heap payloads, a conservative
+metadata weight, and decoded bytes leased beyond hot/raw-owned records. The latter
+includes active restored documents and external readers. Retention weight excludes
+those separately leased pixels; known weight includes them. These values describe
+tracked ownership, not allocator fragmentation, process RSS, GPU memory or a global
+physical-memory limit. Reference tables shrink after large retention/branch removal.
+
+## Pressure, admission and failures
+
+Adaptive packing runs under retention pressure before dropping old history. Each
+automatic publication considers at most 64 entries and 64 new tile payloads, with a
+staging allowance capped at 64 MiB and the configured history allowance. Snapshots
+exceeding this work limit remain shared. This bounds newly scanned pixel payloads;
+it does not establish an interactive latency bound for metadata traversal/accounting.
+Manual compaction also accepts cancellation and a staging allowance. Prepared
+entries publish together; cancellation/admission failure leaves the timeline intact.
+
+The latest two states form a retention floor. Live readers and this floor can exceed
+the allowance. The policy is therefore a soft retention budget. Failed automatic
+packing is recorded diagnostically and can be followed by ordinary retention
+trimming. Undo/redo/seek can fail if decoded restoration exceeds its pixel allowance;
+the UI reports that error rather than treating it as an empty undo stack. A caller
+can raise the allowance and retry the same recorded transition.
+
+## Qualification and remaining work
+
+Tests cover actual decoded-allocation release, retained reader leases, exact full
+undo/redo, failed/cancelled preparation and restoration, corrupt payload rejection,
+metadata/selection/off-canvas preservation, raw fallback, bounded pressure work,
+reference-table reclamation, branching after a cold restore and epoch exhaustion.
+The release benchmark compares equal complete timelines using shared COW and
+32/64/128-edit packing checkpoints, including destruction and correctness checks.
+Explicit checkpoints in that experiment differ from automatic pressure policy.
+
+This implements part of T04/T07/T11 and BF18. A global logical tile store, LZ4/Zstd
+comparisons, differences against previous tile versions for photographic edits,
+disk spill and segment GC, background priority work, branching history graphs,
+process-wide physical admission and interactive latency qualification remain.
+The timeline still truncates redo when a new edit branches from an older state.

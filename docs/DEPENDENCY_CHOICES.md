@@ -46,7 +46,7 @@ A correct integrated baseline is not a measured performance or release qualifica
 | Standard image codecs | image | Integrated baseline, 0.25.10 with only PNG/BMP/JPEG; strict admission and loss reporting remain in PaintCraft |
 | Snapshot publication | Per-document coordinator; ArcSwap candidate | Synchronous atomic session baseline; concurrent publication study pending |
 | Native container | ZIP64 reader/writer; raw and Zstd blocks | Current canonical ZIP subset is bounded and stored-only; extension must preserve v1 fixtures |
-| Storage compression | Raw/LZ4/Zstd comparison | Raw COW tile baseline; measured compression/compaction pending |
+| Storage compression | Raw/LZ4/Zstd comparison | Shared raw, inline solid and independent default-relative patch history records integrated with crc32fast validation; raw/LZ4/Zstd comparison and disk tiers remain pending (see HISTORY_STORAGE.md) |
 | Color management | Evaluate moxcms/LittleCMS | Profiles currently reported as discarded; color-managed pipeline pending |
 | Document text | Cosmic Text 0.19.0 + Swash 0.2.10 | std/swash/shape-run-cache, default features and fontconfig disabled; HarfRust shaping, fontdb fallback, hinted grayscale masks; atomic preview/publication; legacy bitmap commands remain stable. [Comparison](TEXT_RENDERING.md) |
 | Wasm effects | wasmi conformance baseline; Wasmtime throughput candidate | Not implemented; core wasm32 ABI is the first SDK target |
