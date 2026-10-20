@@ -14,6 +14,8 @@ use paintcraft_core::types::{Error, ErrorCode, Rect, Result, Rgba};
 
 mod rows;
 pub use rows::RowSpan;
+mod leases;
+pub use leases::TileLease;
 mod versions;
 pub use versions::TileVersion;
 
@@ -67,12 +69,20 @@ impl Admission {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 struct Tile(Vec<u8>);
 
 impl Tile {
-    fn filled(px: Rgba) -> Tile {
-        Tile(px.0.iter().copied().cycle().take(TILE_PIXELS * 4).collect())
+    fn filled(px: Rgba) -> Result<Tile> {
+        let mut bytes = Vec::new();
+        bytes
+            .try_reserve_exact(TILE_PIXELS * 4)
+            .map_err(|_| Error::new(ErrorCode::ResourceLimit, "cannot allocate raster tile"))?;
+        bytes.resize(TILE_PIXELS * 4, 0);
+        if px != Rgba::TRANSPARENT {
+            bytes.as_chunks_mut::<4>().0.fill(px.0);
+        }
+        Ok(Tile(bytes))
     }
 
     fn is_uniform(&self, px: Rgba) -> bool {
@@ -223,20 +233,52 @@ impl RasterLayer {
             .map_or(self.default, |t| t.at(x, y))
     }
 
-    fn tile_mut(&mut self, c: TileCoord, adm: &mut Admission) -> Result<&mut Tile> {
+    fn with_tile_mut<R>(
+        &mut self,
+        c: TileCoord,
+        adm: &mut Admission,
+        write: impl FnOnce(&mut Tile) -> R,
+    ) -> Result<R> {
         use std::collections::hash_map::Entry;
+        if self.tiles.len() == self.tiles.capacity() {
+            self.tiles.try_reserve(1).map_err(|_| {
+                Error::new(ErrorCode::ResourceLimit, "cannot allocate raster index")
+            })?;
+        }
         let default = self.default;
         match self.tiles.entry(c) {
-            Entry::Occupied(e) => {
-                let arc = e.into_mut();
-                if Arc::strong_count(arc) > 1 {
-                    adm.charge_tile()?; // copy-on-write allocates
+            Entry::Occupied(entry) => {
+                let arc = entry.into_mut();
+                if let Some(tile) = Arc::get_mut(arc) {
+                    return Ok(write(tile));
                 }
-                Ok(Arc::make_mut(arc))
+                {
+                    // try_unwrap atomically arbitrates weak-reader upgrades. A
+                    // successful transfer moves the existing Vec without copying;
+                    // a racing/live reader requires admitted, fallible COW.
+                    let original = std::mem::replace(arc, Arc::new(Tile(Vec::new())));
+                    match Arc::try_unwrap(original) {
+                        Ok(tile) => *arc = Arc::new(tile),
+                        Err(original) => {
+                            *arc = original;
+                            adm.charge_tile()?;
+                            let mut bytes = Vec::new();
+                            bytes.try_reserve_exact(TILE_PIXELS * 4).map_err(|_| {
+                                Error::new(ErrorCode::ResourceLimit, "cannot copy raster tile")
+                            })?;
+                            bytes.extend_from_slice(&arc.0);
+                            *arc = Arc::new(Tile(bytes));
+                        }
+                    }
+                }
+                Ok(write(Arc::get_mut(arc).expect("private admitted tile")))
             }
-            Entry::Vacant(e) => {
+            Entry::Vacant(entry) => {
                 adm.charge_tile()?;
-                Ok(Arc::make_mut(e.insert(Arc::new(Tile::filled(default)))))
+                let tile = Tile::filled(default)?;
+                Ok(write(
+                    Arc::get_mut(entry.insert(Arc::new(tile))).expect("new private tile"),
+                ))
             }
         }
     }
@@ -259,10 +301,10 @@ impl RasterLayer {
         if !self.tiles.contains_key(&c) && blend(mode, src, self.default) == self.default {
             return Ok(());
         }
-        let tile = self.tile_mut(c, adm)?;
-        let new = blend(mode, src, tile.at(x, y));
-        tile.put(x, y, new);
-        Ok(())
+        self.with_tile_mut(c, adm, |tile| {
+            let new = blend(mode, src, tile.at(x, y));
+            tile.put(x, y, new);
+        })
     }
 
     /// Blend `src` over every pixel of `area` (layer-local, clipped to bounds).
@@ -293,14 +335,15 @@ impl RasterLayer {
                 }
                 .intersect(&area)
                 .expect("tile range comes from the area");
-                let tile = self.tile_mut(c, adm)?;
-                for y in part.y0..part.y1 {
-                    for x in part.x0..part.x1 {
-                        let (lx, ly) = (x.rem_euclid(edge) as u32, y.rem_euclid(edge) as u32);
-                        let new = blend(mode, src, tile.at(lx, ly));
-                        tile.put(lx, ly, new);
+                self.with_tile_mut(c, adm, |tile| {
+                    for y in part.y0..part.y1 {
+                        for x in part.x0..part.x1 {
+                            let (lx, ly) = (x.rem_euclid(edge) as u32, y.rem_euclid(edge) as u32);
+                            let new = blend(mode, src, tile.at(lx, ly));
+                            tile.put(lx, ly, new);
+                        }
                     }
-                }
+                })?;
             }
         }
         Ok(())
@@ -382,18 +425,19 @@ impl RasterLayer {
         if data.len() != (w * h * 4) as usize {
             return Err(bad("block length does not match its extent"));
         }
-        let tile = self.tile_mut(
+        self.with_tile_mut(
             TileCoord {
                 tx: i64::from(bx),
                 ty: i64::from(by),
             },
             adm,
-        )?;
-        for y in 0..h {
-            let (s, d) = ((y * w * 4) as usize, (y * TILE_EDGE * 4) as usize);
-            tile.0[d..d + (w * 4) as usize].copy_from_slice(&data[s..s + (w * 4) as usize]);
-        }
-        Ok(())
+            |tile| {
+                for y in 0..h {
+                    let (s, d) = ((y * w * 4) as usize, (y * TILE_EDGE * 4) as usize);
+                    tile.0[d..d + (w * 4) as usize].copy_from_slice(&data[s..s + (w * 4) as usize]);
+                }
+            },
+        )
     }
 }
 

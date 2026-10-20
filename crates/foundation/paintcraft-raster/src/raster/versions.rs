@@ -6,7 +6,7 @@ use std::{
 };
 
 #[derive(Clone, Debug)]
-pub struct TileVersion(Weak<Tile>);
+pub struct TileVersion(pub(super) Weak<Tile>);
 
 impl PartialEq for TileVersion {
     fn eq(&self, other: &Self) -> bool {
@@ -24,7 +24,7 @@ impl RasterLayer {
     /// Resident version identities intersecting a checked layer-local rectangle,
     /// in row-major tile order. Missing tiles are covered by the layer default.
     /// Keys cannot be reused for different allocations while a weak token exists.
-    /// Arc::make_mut also detaches weak references before in-place mutation.
+    /// Admitted COW atomically retires weak identities before unshared mutation.
     pub fn tile_versions(
         &self,
         area: Rect,
@@ -75,7 +75,7 @@ mod tests {
             .next()
             .unwrap()
             .1;
-        // One strong owner plus weak keys: mutation detaches the weak reference,
+        // One strong owner plus weak keys: ownership transfer retires the weak reference,
         // reusing the Vec allocation without copying/charging another pixel tile.
         raster
             .blend_pixel(
