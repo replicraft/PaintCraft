@@ -77,3 +77,15 @@ Divan targets retain allocation profiling. Divan 0.1.21 lacks raw sample export,
 so prior Divan tables do not fulfill that part of the protocol. See the
 [active protocol](../docs/development/HYPERFINE_PROTOCOL.md) and
 [Criterion's raw output documentation](https://bheisler.github.io/criterion.rs/book/user_guide/csv_output.html).
+
+The reverse statistical order can reuse the exact prebuilt Criterion binary:
+
+```sh
+python3 -B benchmarks/tools/run_partition_samples.py --configs <parallel-run-dir> --binary <prebuilt-bench-path> --output <new-sample-dir> --order reverse --execute
+```
+
+The default is plan-only. This uses exact-filtered Criterion invocations in
+reverse parameter order, checks 100 JSON/CSV samples each, records command order
+and binary identity, and retains failed output. Run it after other measurements
+finish to avoid overlapping benchmarks. The first forward session and the reverse
+session retain the same source/binary; no rebuild is needed to reverse order.
