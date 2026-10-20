@@ -17,9 +17,15 @@ paintcraft-raster.workspace = true
 uuid.workspace = true
 
 [dev-dependencies]
+criterion.workspace = true
+crc32fast.workspace = true
 paintcraft-render.workspace = true
 
 sha2.workspace = true
+
+[[bench]]
+name = "history"
+harness = false
 
 [lints]
 workspace = true

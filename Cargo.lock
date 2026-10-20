@@ -2688,6 +2688,8 @@ dependencies = [
 name = "paintcraft-editor"
 version = "0.1.0"
 dependencies = [
+ "crc32fast",
+ "criterion",
  "paintcraft-commands",
  "paintcraft-core",
  "paintcraft-document",
@@ -2721,6 +2723,8 @@ dependencies = [
 name = "paintcraft-history"
 version = "0.1.0"
 dependencies = [
+ "crc32fast",
+ "paintcraft-core",
  "paintcraft-document",
  "paintcraft-raster",
  "uuid",

@@ -36,7 +36,7 @@ def main():
         assert execution["execution_status"] == "completed", path
         assert execution["artifacts_before"] == execution["artifacts_after"], path
         config = json.loads(files["config.json"])
-        case = config["workload"]["id"].removeprefix("cpu-spans-").removeprefix("cpu-cache-").removeprefix("cpu-parallel-")
+        case = config["workload"]["id"].removeprefix("cpu-spans-").removeprefix("cpu-cache-").removeprefix("cpu-parallel-").removeprefix("history-")
         iterations = config["workload"]["work_units"]
         raw = json.loads(files["hyperfine.json"])
         assert raw["schema_version"] == 2, "Review changed Hyperfine export schema explicitly"

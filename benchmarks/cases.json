@@ -88,5 +88,47 @@
     ],
     "decision_rule": "Use Rayon where it improves qualified tile workloads; retain direct execution for tiny jobs and a bounded scheduler above all pools.",
     "protocol": "docs/development/HYPERFINE_PROTOCOL.md"
+  },
+  {
+    "id": "BF18",
+    "title": "Recorded history payload strategy",
+    "choice": "history-payload",
+    "activation_tasks": [
+      "T07",
+      "T11"
+    ],
+    "status": "awaiting-relevant-workload",
+    "tier": "both",
+    "hyperfine_required": true,
+    "hyperfine_role": "decision",
+    "adapter_path": "crates/editing/paintcraft-editor/examples/history.rs",
+    "result_artifacts": [],
+    "variants": [
+      "whole-tile COW references",
+      "before/after region patches",
+      "adaptive patch/tile cost model"
+    ],
+    "workloads": [
+      "tiny rectangle and diagonal sparse stroke",
+      "full-layer filter and structural edits",
+      "long undo/redo chains and held snapshots"
+    ],
+    "correctness_gates": [
+      "bit-exact undo/redo including hidden RGB",
+      "no effect replay",
+      "bounded patch depth and recoverable references"
+    ],
+    "supplementary_metrics": [
+      "raw/compressed/logical/resident bytes",
+      "restore p95",
+      "capture and GC time"
+    ],
+    "invalid_comparisons": [
+      "patch payload only, ignoring pinned base tiles",
+      "timing redo by recomputing effect",
+      "unbounded patch chains"
+    ],
+    "decision_rule": "Adopt the lowest total cost subject to exact restore and bounded ownership, with measured thresholds.",
+    "protocol": "docs/development/HYPERFINE_PROTOCOL.md"
   }
 ]
