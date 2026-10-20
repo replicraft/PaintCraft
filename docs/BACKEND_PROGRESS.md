@@ -97,3 +97,33 @@ See [the implementation contract](REGIONAL_COMPOSITOR.md) and
 for timing, memory and limitations. CPU frames still assemble and upload the full
 dense image. Parallel partitions, finer operation invalidation, GPU residency,
 mipmaps and history compression/spill remain incomplete; T12 stays partial.
+
+## Third slice: bounded CPU band/tile partitions and CLI export
+
+The renderer now accepts a caller-owned Rayon pool, using disjoint horizontal
+bands or safe borrowed tile-row views. Tile view metadata has its own checked
+capacity budget; no second dense output or document-global lock is introduced.
+Cancellation discards private output after active jobs join. Same-pool nested
+execution is tested. The CLI's explicit `render --render-workers 1..64` uses
+64-row bands for parallel exports and retains serial rendering by default.
+An export renderer callback preserves loss acknowledgement and validates complete
+output before encoding/writing; unknown loss codes now fail before renderer work.
+
+510 workspace tests, strict all-target Clippy, formatting, file lengths and real
+Metal parity pass. New integration tests independently decode layered PCND exports
+at 1/2/4 workers, check a hand-calculated pixel, and reject invalid worker counts
+before writing. Region, metadata budget, cancellation and COW identity tests apply.
+
+The evidence audit found Divan 0.1.21 has no raw internal-sample CLI export. Keep
+its existing allocation summaries and archived Hyperfine process evidence, but do
+not call the raw-sample gate complete. Criterion 0.8.2 is added only for statistical
+benchmark consumers with raw JSON/CSV; optional parallel analysis/plotting are off.
+A follow-up must add raw in-process samples for the older span/cache choices too.
+This is an explicit remaining gate rather than a rewritten historical artifact.
+
+See [the partition contract](PARALLEL_COMPOSITOR.md) and
+[BF06 measurements](../benchmarks/results/cpu-parallel-2026-10-20/DECISION.md).
+The desktop cache/GPU path keeps its existing dispatch; bulk pool throughput does
+not prove interactive responsiveness or scheduling priority. Global CPU/resource
+coordination, parallel cache misses, finer invalidation, history compression/spill
+and remaining format/roadmap work are still required.

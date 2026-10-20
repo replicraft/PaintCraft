@@ -1,0 +1,28 @@
+Render a document to an image
+
+Usage: paintcraft-cli render [OPTIONS] --output <FILE> <INPUT>
+
+Arguments:
+  <INPUT>  
+
+Options:
+      --expect-input-sha256 <EXPECT_INPUT_SHA256>
+          
+      --json
+          Print machine-readable JSON results
+      --format <FORMAT>
+          [possible values: png, bmp, jpeg, jpg]
+      --quality <QUALITY>
+          [default: 90]
+      --render-workers <RENDER_WORKERS>
+          CPU render workers (one preserves the serial reference path) [default: 1]
+      --on-loss <ON_LOSS>
+          [possible values: error]
+      --allow-loss <CODES>
+          
+  -o, --output <FILE>
+          
+      --overwrite
+          
+  -h, --help
+          Print help

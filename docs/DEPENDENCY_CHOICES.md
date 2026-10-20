@@ -18,9 +18,9 @@ A correct integrated baseline is not a measured performance or release qualifica
 | `zerocopy` | selective-on-use | Bounded fixed-layout BMP header admission | BF03 | Integrated baseline, 0.8.63 with derive; header size/offset and malformed-input tests; benchmark pending |
 | `bytemuck` | selected-on-use | Explicit GPU staging layouts in render | BF04 | Integrated baseline, 1.25.2 with derive; WGSL offsets/endian checks and Metal parity pass; benchmark pending |
 | `tess2-rust` | evaluate | Complex path fills; compare Lyon | BF05 | Not directly adopted; activate with its consumer |
-| `rayon` | selected-on-use | Bounded native render preparation pool | BF06 | Integrated baseline, 1.12.0; queue/byte admission, cancellation and panic tests; performance/fairness qualification pending |
+| `rayon` | selected-on-use | Bounded native preparation and explicit CLI CPU export pools | BF06 | 1.12.0; disjoint bands/tile views and 1/2/4-worker bulk comparisons exist; queue/byte admission, cancellation, nested execution and panic tests pass. Interactive fairness and process-wide budget qualification remain |
 | `tokio` | preferred-on-use | Native save/recovery lifecycle | BF07 | Integrated baseline, 1.53.3 with rt/sync behind native-io; bounded FIFO, completion retention, panic and shutdown tests; recovery publication fences and native race tests pass; startup, restore and claimed-source handoff integrated; benchmark pending |
-| `moka` | selective-on-use | Discardable derived CPU cache with independent memory accounting | BF08 | Not directly adopted; activate with its consumer |
+| `moka` | selective-on-use | Discardable derived CPU cache with independent memory accounting | BF08 | Not adopted; the current bounded compositor cache uses a small Vec/LRU table. A Moka comparison and accounting/lease evaluation remain pending |
 | `fst` | deferred | Large immutable asset catalog, when one exists | BF09 | Not directly adopted; activate with its consumer |
 | `smallvec` | selective-on-use | Short dirty-region and dependency lists | BF10 | Not directly adopted; activate with its consumer |
 | `bitvec` | selective-on-use | Finite binary selection/dirty coverage | BF11 | Not directly adopted; activate with its consumer |
@@ -50,8 +50,8 @@ A correct integrated baseline is not a measured performance or release qualifica
 | Color management | Evaluate moxcms/LittleCMS | Profiles currently reported as discarded; color-managed pipeline pending |
 | Document text | Cosmic Text 0.19.0 + Swash 0.2.10 | std/swash/shape-run-cache, default features and fontconfig disabled; HarfRust shaping, fontdb fallback, hinted grayscale masks; atomic preview/publication; legacy bitmap commands remain stable. [Comparison](TEXT_RENDERING.md) |
 | Wasm effects | wasmi conformance baseline; Wasmtime throughput candidate | Not implemented; core wasm32 ABI is the first SDK target |
-| Statistical benchmarks | Divan 0.1.21 (development only) | Parameterized CPU compositor and atomic edit/cache replay with allocation profiling; Criterion remains an alternative. See [backend audit](BACKEND_PROGRESS.md) |
-| Process benchmarks | Hyperfine 2.0.0 | Three native sessions per CPU span and regional-cache workload, with raw exports and RSS evidence; [span decision](../benchmarks/results/cpu-spans-2026-10-19/DECISION.md), [cache decision](../benchmarks/results/cpu-cache-2026-10-20/DECISION.md). Other cases remain pending |
+| Statistical benchmarks | Divan 0.1.21 and Criterion 0.8.2 (development only) | Divan retains allocation summaries; Criterion adds raw per-sample JSON/CSV for bounded CPU partitions with optional parallel analysis disabled. Earlier Divan-only raw-sample gates remain pending. See [parallel renderer](PARALLEL_COMPOSITOR.md) |
+| Process benchmarks | Hyperfine 2.0.0 | Three native sessions per CPU span, cache and partition workload, with raw exports and RSS evidence; [span decision](../benchmarks/results/cpu-spans-2026-10-19/DECISION.md), [cache decision](../benchmarks/results/cpu-cache-2026-10-20/DECISION.md), [partition decision](../benchmarks/results/cpu-parallel-2026-10-20/DECISION.md). Other cases remain pending |
 
 ## Admission and evidence
 

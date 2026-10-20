@@ -1,0 +1,45 @@
+{
+  "source_revision": "1d87c2349cbb9411c8a060fdb92c287d4c55a87c",
+  "command": [
+    "target/release/deps/partitioned-9d1c572d9a17040f",
+    "--bench"
+  ],
+  "env": {
+    "CRITERION_HOME": "/tmp/paintcraft-cpu-partitions-2026-10-20"
+  },
+  "configuration": "Criterion 0.8.2; 100 flat samples, 1 s warmup, 2 s measurement; default bootstrap; optional Rayon analysis/plotting disabled; seven variants x seven fixtures",
+  "artifacts": [
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/target/release/deps/partitioned-9d1c572d9a17040f",
+      "sha256": "d48a15d96f698201338850e8cb1d622de7a3e5a309a1b067f65d808d83e77674"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/Cargo.lock",
+      "sha256": "566b82614f6e3c01aa1438f3fe582c2fdb0f230882e809670eeb6d1626a21da3"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-render/benches/partitioned.rs",
+      "sha256": "610bca46c652d5aad04cada6d5a033cc2dd9a534e28bbb0f8a0317b96363d8eb"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-render/examples/support/partitioned.rs",
+      "sha256": "969258d266f29d5913a64991bf7b0dce877007a7800cdff92601d8accc725714"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-render/examples/support/mod.rs",
+      "sha256": "bc02c818744ce26e5d4be7c107f096677a31db074ee4c5dad862dbfd03e9ee3f"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-render/src/lib.rs",
+      "sha256": "f7eb2c40587076189f724d184c601580372e0da4c8916090bc63716ebabf90e7"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-render/src/parallel.rs",
+      "sha256": "1d21e4f90fb482bd28cf6ceb591c9435015371e953061b3d6c16582d0c30fe91"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-render/src/parallel/tiles.rs",
+      "sha256": "6d21ba0193719287121db570fa8747a76492fbaadd9d6286406a68a2922bef86"
+    }
+  ]
+}

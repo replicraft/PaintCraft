@@ -1,0 +1,167 @@
+{
+  "schema": "paintcraft.hyperfine-run/1",
+  "mode": "application",
+  "case_id": "BF06",
+  "task_id": "T12",
+  "relevance": "Exact scalar composition versus bounded caller-owned Rayon pools; disjoint row bands or borrowed tile views, no cache.",
+  "cwd": "/Users/dielpi/Desktop/replicraft/PaintCraft",
+  "workload": {
+    "id": "cpu-parallel-sparse5",
+    "mode": "batch",
+    "work_units": 128,
+    "seed": 42,
+    "cache_state": "new process, warm OS inputs; fixture built once per process",
+    "completion": "all exact full renders and output drops finished; fixture setup/drop included"
+  },
+  "build": {
+    "source_revision": "1d87c2349cbb9411c8a060fdb92c287d4c55a87c plus contender files identified by artifact hashes",
+    "profile": "release",
+    "target": "aarch64-apple-darwin",
+    "compiler": "rustc 1.99.0 (b940084d7 2026-09-28)",
+    "flags": "Cargo release defaults, opt-level 3, debug line tables, CARGO_INCREMENTAL=0",
+    "environment_notes": "Single developer machine; no controlled power/thermal state, CPU affinity or cross-ISA qualification. RSS is process-wide, not decoded-tile residency."
+  },
+  "runs": 20,
+  "warmup": 3,
+  "timeout_seconds": 600,
+  "env": {},
+  "artifacts": [
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/target/release/examples/partitioned",
+      "sha256": "8546ed2bf12804f4ac431d833aee952ba85547257de9f41c16b8c5b441debbeb",
+      "role": "binary"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/Cargo.lock",
+      "sha256": "566b82614f6e3c01aa1438f3fe582c2fdb0f230882e809670eeb6d1626a21da3",
+      "role": "lockfile"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-render/examples/support/mod.rs",
+      "sha256": "bc02c818744ce26e5d4be7c107f096677a31db074ee4c5dad862dbfd03e9ee3f",
+      "role": "generator"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-render/examples/support/reference.rs",
+      "sha256": "4c8af35200987a5a3b6a020138e076b13c74386875e9845ae3cf94d12ff69f28",
+      "role": "driver"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-render/examples/composite.rs",
+      "sha256": "4b6feb800854c4241b36f64fdaf2f829e624efcf4f5ac65f9eeb1ac9b397bbe1",
+      "role": "driver"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-render/src/lib.rs",
+      "sha256": "f7eb2c40587076189f724d184c601580372e0da4c8916090bc63716ebabf90e7",
+      "role": "other"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/foundation/paintcraft-raster/src/raster.rs",
+      "sha256": "9804e2abd72c19df56d32b4c2f62cf7fa1e862033fbf974910cd0f8d06d4fe61",
+      "role": "other"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/foundation/paintcraft-raster/src/raster/rows.rs",
+      "sha256": "3e97e8de59dbe466d9b445affa3556b077f3cac495e4286bf66b1e0c0899735d",
+      "role": "other"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/foundation/paintcraft-core/src/types/pixel.rs",
+      "sha256": "6159da1ff92ff921693b55b0a6a38391753e11d38533c5188203b3f1392201db",
+      "role": "other"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-render/examples/partitioned.rs",
+      "sha256": "3bf2c525c50a9bfd272a1828553ef31b5d192820c2ba49c2649a0a966e404395",
+      "role": "driver"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-render/examples/support/partitioned.rs",
+      "sha256": "969258d266f29d5913a64991bf7b0dce877007a7800cdff92601d8accc725714",
+      "role": "driver"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-render/src/parallel.rs",
+      "sha256": "1d21e4f90fb482bd28cf6ceb591c9435015371e953061b3d6c16582d0c30fe91",
+      "role": "other"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-render/src/parallel/tiles.rs",
+      "sha256": "6d21ba0193719287121db570fa8747a76492fbaadd9d6286406a68a2922bef86",
+      "role": "other"
+    }
+  ],
+  "correctness_commands": [
+    [
+      "/Users/dielpi/Desktop/replicraft/PaintCraft/target/release/examples/partitioned",
+      "verify",
+      "sparse5"
+    ]
+  ],
+  "variants": [
+    {
+      "id": "serial",
+      "argv": [
+        "/Users/dielpi/Desktop/replicraft/PaintCraft/target/release/examples/partitioned",
+        "serial",
+        "sparse5",
+        "128"
+      ]
+    },
+    {
+      "id": "bands64-t1",
+      "argv": [
+        "/Users/dielpi/Desktop/replicraft/PaintCraft/target/release/examples/partitioned",
+        "bands64-t1",
+        "sparse5",
+        "128"
+      ]
+    },
+    {
+      "id": "bands64-t2",
+      "argv": [
+        "/Users/dielpi/Desktop/replicraft/PaintCraft/target/release/examples/partitioned",
+        "bands64-t2",
+        "sparse5",
+        "128"
+      ]
+    },
+    {
+      "id": "bands64-t4",
+      "argv": [
+        "/Users/dielpi/Desktop/replicraft/PaintCraft/target/release/examples/partitioned",
+        "bands64-t4",
+        "sparse5",
+        "128"
+      ]
+    },
+    {
+      "id": "bands256-t4",
+      "argv": [
+        "/Users/dielpi/Desktop/replicraft/PaintCraft/target/release/examples/partitioned",
+        "bands256-t4",
+        "sparse5",
+        "128"
+      ]
+    },
+    {
+      "id": "tiles64-t4",
+      "argv": [
+        "/Users/dielpi/Desktop/replicraft/PaintCraft/target/release/examples/partitioned",
+        "tiles64-t4",
+        "sparse5",
+        "128"
+      ]
+    },
+    {
+      "id": "tiles256-t4",
+      "argv": [
+        "/Users/dielpi/Desktop/replicraft/PaintCraft/target/release/examples/partitioned",
+        "tiles256-t4",
+        "sparse5",
+        "128"
+      ]
+    }
+  ]
+}

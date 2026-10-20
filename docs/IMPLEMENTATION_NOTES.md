@@ -5,6 +5,10 @@ control under `docs/temp/`), where this implementation deliberately differs, and
 is still provisional. "Verified" means covered by tests in this repository; it never
 means native-hardware, GPU, platform-compatibility or original-application evidence.
 
+Current task/capability status is maintained in [the roadmap ledger](ROADMAP_STATUS.md)
+and [backend progress](BACKEND_PROGRESS.md). The earlier differences, unqualified
+baselines and backlog below are historical notes, not the current capability inventory.
+
 ## Workspace boundaries
 
 `paintcraft-core` is the shared foundation, exposing `paintcraft_core::types`; it has
@@ -246,6 +250,11 @@ work already submitted to the GPU is not preempted. Workers do not mutate editor
 Panics become failed preparations; stale callbacks/results are discarded. Tests cover
 reservation lifetime, slot reuse/ownership, cancellation and late render completion.
 
+Current CPU fallback also retains bounded committed/preview composite caches. CLI
+exports offer explicit caller-owned CPU worker limits and exact row-band composition;
+see [regional reuse](REGIONAL_COMPOSITOR.md) and [CPU partitions](PARALLEL_COMPOSITOR.md)
+for their measured scope and remaining gates.
+
 This is an admitted render-worker baseline, not the complete T13 priority scheduler or
 a physical-memory/performance qualification. Background recovery, process-wide service
 coordination, GPU device epochs and measured fairness remain pending.
@@ -337,7 +346,7 @@ Geometry definitions (the historical integer operations remain exact):
 - **Budgets** (provisional): stroke work (path pixels × brush diameter) 16,777,216 rows per
   batch, flood area 67,108,864 pixels, text up to 1,024 characters.
 
-## Deliberate differences and choices
+## Earlier differences and choices
 
 - **Own JSON and ZIP code.** `serde_json` accepts duplicate keys and cannot give the
   required UTF-16 canonical key order. A small strict parser and a stored-only ZIP
@@ -375,7 +384,7 @@ about 350 MB peak memory (the document is about 64 MB resident, and staging shar
 copy-on-write); exporting that document to PNG took about 0.4 s. No repetition, no
 controlled environment, no comparison. Real measurements follow the benchmark protocol.
 
-## Provisional baselines (no benchmark has been run)
+## Earlier unqualified baselines
 
 Tile edge 256, a `HashMap` tile index (BF16, BF17), whole-snapshot history sharing tiles by
 `Arc` and counted by unique tiles on every commit (BF18, T11), a scalar per-pixel
@@ -383,7 +392,7 @@ source-over (BF02), a full-document composite and texture upload after every pub
 (BF29), `eframe` as the window shell (BF22). Do not describe any of these as measured or
 optimal.
 
-## Not started
+## Earlier backlog (superseded by the roadmap ledger)
 
 Native input and presentation spike (T02), reference capture (T03) and therefore any
 Paint/Paint.NET behavioral parity, selections beyond one rectangle (no move, transform,

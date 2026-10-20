@@ -1,0 +1,10 @@
+image v0.25.10
+├── image feature "bmp"
+│   └── paintcraft-formats v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-formats)
+│       └── paintcraft-formats feature "default"
+│           └── paintcraft-cli v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/apps/paintcraft-cli)
+│               └── paintcraft-cli feature "default" (command-line)
+├── image feature "jpeg"
+│   └── paintcraft-formats v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-formats) (*)
+└── image feature "png"
+    └── paintcraft-formats v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-formats) (*)

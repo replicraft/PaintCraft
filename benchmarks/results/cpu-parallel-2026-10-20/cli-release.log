@@ -1,0 +1,17 @@
+   Compiling paintcraft-core v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/crates/foundation/paintcraft-core)
+   Compiling zerocopy v0.8.63
+   Compiling moxcms v0.8.1
+   Compiling bytemuck v1.25.2
+   Compiling clap_builder v4.6.7
+   Compiling paintcraft-raster v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/crates/foundation/paintcraft-raster)
+   Compiling paintcraft-platform v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-platform)
+   Compiling paintcraft-commands v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/crates/editing/paintcraft-commands)
+   Compiling paintcraft-document v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/crates/foundation/paintcraft-document)
+   Compiling paintcraft-render v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-render)
+   Compiling paintcraft-history v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/crates/editing/paintcraft-history)
+   Compiling paintcraft-editor v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/crates/editing/paintcraft-editor)
+   Compiling clap v4.6.7
+   Compiling image v0.25.10
+   Compiling paintcraft-formats v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-formats)
+   Compiling paintcraft-cli v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/apps/paintcraft-cli)
+    Finished `release` profile [optimized + debuginfo] target(s) in 10.82s

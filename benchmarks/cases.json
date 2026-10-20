@@ -53,12 +53,14 @@
       "T13",
       "T21"
     ],
-    "status": "awaiting-relevant-workload",
+    "status": "locally-measured-partial",
     "tier": "both",
     "hyperfine_required": true,
     "hyperfine_role": "decision",
     "adapter_path": "crates/services/paintcraft-render/examples/partitioned.rs",
-    "result_artifacts": [],
+    "result_artifacts": [
+      "benchmarks/results/cpu-parallel-2026-10-20/DECISION.md"
+    ],
     "variants": [
       "sequential admitted tile loop",
       "bounded dedicated workers",

@@ -60,7 +60,7 @@ members with `workspace = true`. Application entry points stay in `apps/`.
 | `crates/editing/paintcraft-history` | Recorded snapshots, undo/redo navigation and bounded retention |
 | `crates/editing/paintcraft-editor` | Editor sessions, transaction preparation and atomic publication |
 | `crates/editing/paintcraft-tools` | Tool state machines, options, previews and editing intentions |
-| `crates/services/paintcraft-render` | Scalar reference compositor and optional wgpu compute compositor |
+| `crates/services/paintcraft-render` | Exact regional/cached CPU compositor, bounded CPU partitions and optional wgpu compute compositor |
 | `crates/services/paintcraft-runtime` | Bounded native workers, cancellation and transient job handles |
 | `crates/services/paintcraft-formats` | Canonical PCND reader/writer, PNG/BMP/JPEG codecs, flat export and recovery checkpoints |
 | `crates/services/paintcraft-platform` | Filesystem save adapters and optional native `rfd` dialogs |
@@ -79,6 +79,7 @@ paintcraft-cli inspect blank.pcnd --json          # prints the ticket a batch mu
 paintcraft-cli apply blank.pcnd --operations edits.json -o edited.pcnd \
     --expect-input-sha256 <sha256 from inspect>
 paintcraft-cli render edited.pcnd -o preview.png      # or .bmp / .jpg; losses need --allow-loss
+paintcraft-cli render edited.pcnd -o parallel.png --render-workers 4 # explicit CPU worker budget
 paintcraft-cli import photo.jpg -o photo.pcnd
 ```
 
@@ -87,3 +88,7 @@ result and the file-replacement receipt reported separately.
 
 See [docs/IMPLEMENTATION_NOTES.md](docs/IMPLEMENTATION_NOTES.md) for what is implemented,
 what is deliberately provisional and what is not started. The licence is in `LICENSE`.
+
+CPU exports default to one worker. `--render-workers` accepts 1..64 and uses one
+bounded pool; small/cheap images can be faster serially. See the
+[CPU partition contract and measurements](docs/PARALLEL_COMPOSITOR.md).
