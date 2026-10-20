@@ -10,6 +10,8 @@ use paintcraft_core::types::{Error, ErrorCode, Rect, Result, Rgba};
 use paintcraft_document::Document;
 use paintcraft_raster::RowSpan;
 
+pub mod parallel;
+
 pub mod cache;
 
 /// Largest canvas this renderer will materialize (provisional admission limit).
@@ -93,43 +95,54 @@ pub(crate) fn compose_roots_into(
         };
         for y in area.y0..area.y1 {
             check()?;
-            let mut row = &mut out
+            let row = &mut out
                 [((y - region.y0) as usize * width + (area.x0 - region.x0) as usize) * 4..]
                 [..area.width() as usize * 4];
-            for span in layer.raster.row_spans(
-                (y - layer.origin.1) as u32,
-                (area.x0 - layer.origin.0) as u32,
-                area.width() as u32,
-            )? {
-                let (dst, rest) = row.split_at_mut(span.pixel_count() * 4);
-                row = rest;
-                match span {
-                    RowSpan::Uniform { color, .. } => {
-                        let color = color.with_opacity(layer.opacity);
-                        match color.a() {
-                            0 => {}
-                            255 => dst.as_chunks_mut::<4>().0.fill(color.0),
-                            _ => {
-                                for pixel in dst.as_chunks_mut::<4>().0 {
-                                    *pixel = color.source_over(Rgba(*pixel)).0;
-                                }
-                            }
+            compose_row(layer, y, area.x0, row)?;
+        }
+    }
+    Ok(())
+}
+
+// The caller intersects the row with the layer extent before borrowing it.
+pub(crate) fn compose_row(
+    layer: &paintcraft_document::Layer,
+    y: i64,
+    x: i64,
+    mut row: &mut [u8],
+) -> Result<()> {
+    for span in layer.raster.row_spans(
+        (y - layer.origin.1) as u32,
+        (x - layer.origin.0) as u32,
+        (row.len() / 4) as u32,
+    )? {
+        let (dst, rest) = row.split_at_mut(span.pixel_count() * 4);
+        row = rest;
+        match span {
+            RowSpan::Uniform { color, .. } => {
+                let color = color.with_opacity(layer.opacity);
+                match color.a() {
+                    0 => {}
+                    255 => dst.as_chunks_mut::<4>().0.fill(color.0),
+                    _ => {
+                        for pixel in dst.as_chunks_mut::<4>().0 {
+                            *pixel = color.source_over(Rgba(*pixel)).0;
                         }
                     }
-                    RowSpan::Pixels(src) => {
-                        for (dst, src) in dst
-                            .as_chunks_mut::<4>()
-                            .0
-                            .iter_mut()
-                            .zip(src.as_chunks::<4>().0)
-                        {
-                            let color = Rgba(*src).with_opacity(layer.opacity);
-                            match color.a() {
-                                0 => {}
-                                255 => *dst = color.0,
-                                _ => *dst = color.source_over(Rgba(*dst)).0,
-                            }
-                        }
+                }
+            }
+            RowSpan::Pixels(src) => {
+                for (dst, src) in dst
+                    .as_chunks_mut::<4>()
+                    .0
+                    .iter_mut()
+                    .zip(src.as_chunks::<4>().0)
+                {
+                    let color = Rgba(*src).with_opacity(layer.opacity);
+                    match color.a() {
+                        0 => {}
+                        255 => *dst = color.0,
+                        _ => *dst = color.source_over(Rgba(*dst)).0,
                     }
                 }
             }

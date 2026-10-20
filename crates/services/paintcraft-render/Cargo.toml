@@ -15,12 +15,14 @@ gpu = ["dep:wgpu", "dep:bytemuck"]
 paintcraft-core.workspace = true
 paintcraft-document.workspace = true
 paintcraft-raster.workspace = true
+rayon.workspace = true
 
 bytemuck = { workspace = true, optional = true }
 wgpu = { workspace = true, optional = true }
 
 [dev-dependencies]
 divan.workspace = true
+criterion.workspace = true
 paintcraft-editor.workspace = true
 
 pollster.workspace = true
@@ -31,6 +33,10 @@ harness = false
 
 [[bench]]
 name = "cache_replay"
+harness = false
+
+[[bench]]
+name = "partitioned"
 harness = false
 
 [lints]
