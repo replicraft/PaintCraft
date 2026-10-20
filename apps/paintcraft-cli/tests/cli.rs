@@ -98,3 +98,5 @@ mod editing;
 mod formats_and_receipts;
 #[path = "cli/layers.rs"]
 mod layers;
+#[path = "cli/parallel.rs"]
+mod parallel;

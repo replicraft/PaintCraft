@@ -9,6 +9,9 @@ pub struct Options {
     format: Option<String>,
     #[arg(long, default_value_t = 90, value_parser = clap::value_parser!(u8).range(1..=100))]
     quality: u8,
+    /// CPU render workers (one preserves the serial reference path).
+    #[arg(long, default_value_t = 1, value_parser = clap::value_parser!(u16).range(1..=64))]
+    render_workers: u16,
     #[command(flatten)]
     losses: LossOptions,
     #[command(flatten)]
@@ -56,7 +59,30 @@ pub fn run(a: Options, json: bool) -> Reply {
             guard(a.expect_input_sha256.as_deref(), &sha)?;
             let doc = pcnd::read(&bytes)?;
             // Missing acknowledgements fail here, before anything is written.
-            let flat = export::export_flat(&doc, format, quality, &allowed)?;
+            let flat = if a.render_workers == 1 {
+                export::export_flat(&doc, format, quality, &allowed)?
+            } else {
+                let pool = rayon::ThreadPoolBuilder::new()
+                    .num_threads(usize::from(a.render_workers))
+                    .thread_name(|i| format!("paintcraft-export-{i}"))
+                    .build()
+                    .map_err(|e| {
+                        Error::new(
+                            ErrorCode::ResourceLimit,
+                            format!("cannot create export workers: {e}"),
+                        )
+                    })?;
+                export::export_flat_with(&doc, format, quality, &allowed, |doc| {
+                    paintcraft_render::parallel::render_in_pool(
+                        &pool,
+                        doc,
+                        doc.canvas_rect(),
+                        paintcraft_render::parallel::Partition::Bands { rows: 64 },
+                        0,
+                        || Ok(()),
+                    )
+                })?
+            };
             let ctx = Context {
                 operation: "export",
                 source_state: doc.state_id,

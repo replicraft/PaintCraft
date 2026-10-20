@@ -39,7 +39,26 @@ pub fn export_flat(
     jpeg_quality: u8,
     allowed: &[String],
 ) -> Result<FlatExport> {
-    let rgba = render_flat(doc)?;
+    export_flat_with(doc, format, jpeg_quality, allowed, render_flat)
+}
+
+/// Export through a caller-owned exact default-v1 renderer, preserving all loss
+/// checks. This supports bounded CPU pools without owning application scheduling.
+pub fn export_flat_with(
+    doc: &Document,
+    format: ImageFormat,
+    jpeg_quality: u8,
+    allowed: &[String],
+    render: impl FnOnce(&Document) -> Result<Vec<u8>>,
+) -> Result<FlatExport> {
+    check_loss_codes(allowed)?;
+    let rgba = render(doc)?;
+    if rgba.len() as u128 != u128::from(doc.canvas.0) * u128::from(doc.canvas.1) * 4 {
+        return Err(Error::new(
+            ErrorCode::InvariantViolation,
+            "export renderer returned an invalid pixel buffer",
+        ));
+    }
     let transparent = rgba.as_chunks::<4>().0.iter().any(|p| p[3] != 255);
     let mut losses: Vec<String> = Vec::new();
     if doc.roots.len() > 1 {
