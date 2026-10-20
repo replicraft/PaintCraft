@@ -63,3 +63,8 @@ comparisons, differences against previous tile versions for photographic edits,
 disk spill and segment GC, background priority work, branching history graphs,
 process-wide physical admission and interactive latency qualification remain.
 The timeline still truncates redo when a new edit branches from an older state.
+
+Local [history measurements](../benchmarks/results/history-packing-2026-10-20/DECISION.md)
+retain 1,200 whole-process runs, 800 internal samples and separate phase traces.
+Sparse history uses less peak RSS at higher lifecycle/checkpoint cost; full-extent
+noise gains no memory. Reader allocation release does not force immediate RSS return.

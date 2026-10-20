@@ -1,0 +1,126 @@
+{
+  "schema": "paintcraft.hyperfine-run/1",
+  "mode": "application",
+  "case_id": "BF18",
+  "task_id": "T07",
+  "relevance": "Recorded shared COW history versus bounded default-relative independent patches at explicit cold-age checkpoints; equal complete retained timelines.",
+  "cwd": "/Users/dielpi/Desktop/replicraft/PaintCraft",
+  "workload": {
+    "id": "history-noise128",
+    "mode": "batch",
+    "work_units": 384,
+    "seed": 42,
+    "cache_state": "new process/session; 768 MiB retention, 16 MiB compaction staging, two hot states; held case pins every eighth committed snapshot until release phase",
+    "completion": "all commits, source CRC captures, held-reader release, exact recorded undo/redo validation, and document/history/output destruction complete"
+  },
+  "build": {
+    "source_revision": "297448d31d7e68f4e9cd5bf6f6498d1e8954610b with exact source/binary artifact hashes",
+    "profile": "release",
+    "target": "aarch64-apple-darwin",
+    "compiler": "rustc 1.99.0 (b940084d7 2026-09-28)",
+    "flags": "Cargo release defaults, opt-level 3, line tables; CARGO_INCREMENTAL=0",
+    "environment_notes": "One developer host, no power/thermal/affinity control; RSS is process-wide. All variants retain identical required history, use a 768 MiB retention allowance, and finish full recorded undo/redo; no interactive latency qualification."
+  },
+  "runs": 20,
+  "warmup": 3,
+  "timeout_seconds": 900,
+  "env": {},
+  "artifacts": [
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/target/release/examples/history",
+      "sha256": "957475a5cfb604df0b50eff9f5b3a4abf203264b2d50afe1f851b4dfaea215a1",
+      "role": "binary"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/Cargo.lock",
+      "sha256": "aa271f877243c14bb1263e453471a96fbe29e2c6733d53466837867d32a06f34",
+      "role": "lockfile"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/editing/paintcraft-editor/examples/support/history.rs",
+      "sha256": "e921eb6141f1ba099a2ffea2017693030956074b29a77bd74ff518725cb02221",
+      "role": "generator"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/editing/paintcraft-editor/examples/history.rs",
+      "sha256": "5921568735f8a3efca7632be2bfb7cf58d67906f34be90672e6d727b7323aa23",
+      "role": "driver"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/editing/paintcraft-editor/src/session.rs",
+      "sha256": "4ad6f78a7a308009a51699767c808a56cf643f79977ecee5ba1618eac298c599",
+      "role": "other"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/foundation/paintcraft-raster/src/raster.rs",
+      "sha256": "f98881f424442ad60a4c2feea0294b761fb9c423a7f34d7c45049c4c2a42e042",
+      "role": "other"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/foundation/paintcraft-raster/src/raster/leases.rs",
+      "sha256": "5d34aa138fa5bb348bb5d7b29f15b1555e5303a73a9edbd41eb6fcd05668b414",
+      "role": "other"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/editing/paintcraft-history/src/archive/payload.rs",
+      "sha256": "70adcab97d0d4ab243476808b3fe317e840cf6246f26320cc22ffbf5a2b9b623",
+      "role": "other"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/editing/paintcraft-history/src/archive.rs",
+      "sha256": "079fd385bc712d53236dc0016b6d7457b71c21b18f2d25a265fade3cb75fd785",
+      "role": "other"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/editing/paintcraft-history/src/lib.rs",
+      "sha256": "b0e1de0fc6951541758fb48e6f2cf6d74d57af2c4ac5b9b8506f6c87a3a9ecec",
+      "role": "other"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/editing/paintcraft-history/src/memory.rs",
+      "sha256": "b3b2c33314bbf24d2fa22aa00ddea7592eeccdbdf9c563481ba747ff2d4e932c",
+      "role": "other"
+    }
+  ],
+  "correctness_commands": [
+    [
+      "/Users/dielpi/Desktop/replicraft/PaintCraft/target/release/examples/history",
+      "verify",
+      "noise128"
+    ]
+  ],
+  "variants": [
+    {
+      "id": "shared",
+      "argv": [
+        "/Users/dielpi/Desktop/replicraft/PaintCraft/target/release/examples/history",
+        "shared",
+        "noise128"
+      ]
+    },
+    {
+      "id": "pack32",
+      "argv": [
+        "/Users/dielpi/Desktop/replicraft/PaintCraft/target/release/examples/history",
+        "pack32",
+        "noise128"
+      ]
+    },
+    {
+      "id": "pack64",
+      "argv": [
+        "/Users/dielpi/Desktop/replicraft/PaintCraft/target/release/examples/history",
+        "pack64",
+        "noise128"
+      ]
+    },
+    {
+      "id": "pack128",
+      "argv": [
+        "/Users/dielpi/Desktop/replicraft/PaintCraft/target/release/examples/history",
+        "pack128",
+        "noise128"
+      ]
+    }
+  ]
+}

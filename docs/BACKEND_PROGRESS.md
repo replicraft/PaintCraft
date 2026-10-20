@@ -153,3 +153,12 @@ these checkpoints are distinct from the automatic pressure trigger.
 Global logical tile authority, previous-version photographic deltas, LZ4/Zstd,
 disk spill/segment GC, background priorities, history branches and interactive
 latency/resource qualification remain. T04/T07/T11 remain partial.
+
+The [local history decision](../benchmarks/results/history-packing-2026-10-20/DECISION.md)
+retains 1,200 process measurements, 800 forward/reverse internal samples and 20
+separate phase traces. Sparse 1,000-edit/32-checkpoint history lowers median peak
+RSS from 253.5 to 57.2 MiB while increasing complete lifecycle time by about 50%.
+Full-extent noise does not save memory and costs roughly twice as much time.
+Checkpoint tails and immediate reader-release RSS are reported separately. No
+universal interval, historical accounting-regression or interactive latency claim
+is made. Release CLI PCND creation and matching serial/four-worker exports pass.

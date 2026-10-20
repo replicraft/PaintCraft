@@ -97,12 +97,14 @@
       "T07",
       "T11"
     ],
-    "status": "awaiting-relevant-workload",
+    "status": "locally-measured-partial",
     "tier": "both",
     "hyperfine_required": true,
     "hyperfine_role": "decision",
     "adapter_path": "crates/editing/paintcraft-editor/examples/history.rs",
-    "result_artifacts": [],
+    "result_artifacts": [
+      "benchmarks/results/history-packing-2026-10-20/DECISION.md"
+    ],
     "variants": [
       "whole-tile COW references",
       "before/after region patches",
