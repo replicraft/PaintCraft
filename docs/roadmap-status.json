@@ -188,9 +188,12 @@
         "crates/editing/paintcraft-editor/tests/history_storage.rs",
         "crates/editing/paintcraft-history/src/compression.rs",
         "crates/editing/paintcraft-history/src/compression/tests.rs",
-        "benchmarks/results/history-codecs-2026-10-20/DECISION.md"
+        "benchmarks/results/history-codecs-2026-10-20/DECISION.md",
+        "docs/HISTORY_SPILL.md",
+        "crates/editing/paintcraft-editor/tests/history_spill.rs",
+        "crates/services/paintcraft-platform/src/spill/tests.rs"
       ],
-      "remaining_or_scope": "Independent solid/patch/LZ4/Zstd payloads release decoded allocations, track leases and preserve atomic restore, with local equal-timeline CPU/RSS/phase evidence. Natural/mask/depth corpora, disk spill/segment GC, physical admission and interactive interference remain.",
+      "remaining_or_scope": "Preserving atomic history admission, raw/patch/LZ4/Zstd payloads and native leased append segments work with disk/cancel/corruption/kill tests; trimming is explicit. Global physical admission, segment relocation/GC efficiency, background interference and broader corpus qualification remain.",
       "acceptance": "MEM-01\u201307 under artificial low budget; actual allocator/RSS evidence, not counters alone."
     },
     {

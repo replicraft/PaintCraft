@@ -41,11 +41,13 @@ it does not establish an interactive latency bound for metadata traversal/accoun
 Manual compaction also accepts cancellation and a staging allowance. Prepared
 entries publish together; cancellation/admission failure leaves the timeline intact.
 
-The latest two states form a retention floor. Live readers and this floor can exceed
-the allowance. The policy is therefore a soft retention budget. Failed automatic
-packing is recorded diagnostically and can be followed by ordinary retention
-trimming. Undo/redo/seek can fail if decoded restoration exceeds its pixel allowance;
-the UI reports that error rather than treating it as an empty undo stack. A caller
+Recent states remain hot. With default `Retention::Preserve`, a new edit that
+cannot fit retained ownership is rejected before publication; it never opts into
+history deletion. Explicit `TrimOldest` keeps the former two-state floor and soft
+trimming policy. Reader-held bytes cannot be forced free under either policy.
+Failed automatic packing is recorded diagnostically; preserving admission can try
+native spill and otherwise reject the edit. Undo/redo/seek can fail if decoded
+restoration exceeds its pixel allowance. The UI reports that error, and callers
 can raise the allowance and retry the same recorded transition.
 
 ## Qualification and remaining work
@@ -118,3 +120,8 @@ Failed restoration also reclaims dead weak aliases registered by earlier tiles
 in the private target. A 128-retry corrupted two-tile regression verifies that
 these retries neither accumulate aliases nor publish a new cursor/state. Live
 reader identities remain retained by the ordinary liveness check.
+
+Native [session spill and preserving exhaustion](HISTORY_SPILL.md) now extend this
+ownership model. Preserving rejection is the default; the former soft trimming
+behavior is available only through explicit `Retention::TrimOldest`. Historical
+benchmark artifacts retain their original source/policy boundaries.

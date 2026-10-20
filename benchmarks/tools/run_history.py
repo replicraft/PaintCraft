@@ -14,18 +14,22 @@ CASES={"sparse256":256,"sparse1000":1000,"held1000":1000,"noise128":128,"metadat
 VARIANTS=["shared","pack32","pack64","pack128"]
 CODEC_CASES={**CASES,"structured256":256}
 CODEC_VARIANTS=["shared","raw","lz4","zstd1","zstd3"]
+SPILL_CASES={k:CASES[k] for k in ["sparse256","held1000","noise128","metadata1000"]}
+SPILL_CASES["structured256"]=256
+SPILL_VARIANTS=["heap","disk","heap-lz4","disk-lz4"]
 
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--suite",choices=["ownership","codecs"],default="ownership")
+    parser.add_argument("--suite",choices=["ownership","codecs","spill"],default="ownership")
     parser.add_argument("--output",type=Path,required=True)
     parser.add_argument("--execute",action="store_true")
     args=parser.parse_args();root=args.output.resolve();root.mkdir(parents=True,exist_ok=False)
+    spill=args.suite=="spill"
     codecs=args.suite=="codecs"
-    cases=CODEC_CASES if codecs else CASES
-    variants=CODEC_VARIANTS if codecs else VARIANTS
-    driver="history_codecs" if codecs else "history"
+    cases=SPILL_CASES if spill else CODEC_CASES if codecs else CASES
+    variants=SPILL_VARIANTS if spill else CODEC_VARIANTS if codecs else VARIANTS
+    driver="history_spill" if spill else "history_codecs" if codecs else "history"
     binary=ROOT/f"target/release/examples/{driver}"
     paths=[(binary,"binary"),(ROOT/"Cargo.lock","lockfile"),
            (ROOT/"crates/editing/paintcraft-editor/examples/support/history.rs","generator"),
@@ -34,6 +38,8 @@ def main():
            (ROOT/"crates/foundation/paintcraft-raster/src/raster.rs","other"),
            (ROOT/"crates/foundation/paintcraft-raster/src/raster/leases.rs","other")]
     paths.extend((p,"other") for p in sorted((ROOT/"crates/editing/paintcraft-history/src").rglob("*.rs")))
+    if spill:
+        paths.extend((ROOT/p,"other") for p in ["Cargo.toml","crates/editing/paintcraft-editor/Cargo.toml","crates/editing/paintcraft-history/Cargo.toml","crates/services/paintcraft-platform/Cargo.toml","crates/foundation/paintcraft-core/src/types/storage.rs","crates/services/paintcraft-platform/src/lib.rs","crates/services/paintcraft-platform/src/spill.rs"])
     artifacts=[{"path":str(p),"sha256":sha256(p),"role":role}for p,role in paths]
     host={"source_revision":output(["git","rev-parse","HEAD"]),"worktree_status":output(["git","status","--porcelain"]),
           "rustc":output(["rustc","-Vv"]),"platform":platform.platform(),"logical_cpus":os.cpu_count(),
@@ -41,10 +47,10 @@ def main():
     (root/"host.json").write_text(json.dumps(host,indent=2)+"\n")
     configs={}
     for case,count in cases.items():
-        config={"schema":"paintcraft.hyperfine-run/1","mode":"application","case_id":"BF19" if codecs else "BF18","task_id":"T11" if codecs else "T07",
-                "relevance":"Raw/shared versus LZ4 and Zstd levels 1/3 at equal 64-edit checkpoints; same retained timeline, fixed block sizes and single-threaded codec contexts." if codecs else "Recorded shared COW history versus bounded default-relative independent patches at explicit cold-age checkpoints; equal complete retained timelines.",
+        config={"schema":"paintcraft.hyperfine-run/1","mode":"application","case_id":"BF19" if codecs or spill else "BF18","task_id":"T11" if codecs or spill else "T07",
+                "relevance":"Heap versus native append segments, raw and LZ4, equal 64-edit checkpoints; full timeline, fixed byte and worker budgets, actual sync/read/GC and store destruction." if spill else "Raw/shared versus LZ4 and Zstd levels 1/3 at equal 64-edit checkpoints; same retained timeline, fixed block sizes and single-threaded codec contexts." if codecs else "Recorded shared COW history versus bounded default-relative independent patches at explicit cold-age checkpoints; equal complete retained timelines.",
                 "cwd":str(ROOT),"workload":{"id":f"history-{case}","mode":"batch","work_units":count*3+(3 if case=="metadata1000" else 0),"seed":42,
-                "cache_state":"new process/session; 768 MiB retention, 16 MiB compaction staging, two hot states; held case pins every eighth committed snapshot until release phase",
+                "cache_state":"new process/session; 768 MiB retention, 16 MiB compaction staging, two hot states; spill suite creates a 256 MiB store with 4 MiB segment targets in the OS temporary filesystem for every strategy; page cache is not flushed; held case pins every eighth committed snapshot until release phase",
                 "completion":"all commits, source CRC captures, held-reader release, exact recorded undo/redo validation, and document/history/output destruction complete"},
                 "build":{"source_revision":host["source_revision"]+" with exact source/binary artifact hashes","profile":"release",
                 "target":host["rustc"].split("host: ",1)[1].splitlines()[0],"compiler":output(["rustc","-V"]),

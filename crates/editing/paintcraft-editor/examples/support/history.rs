@@ -19,6 +19,14 @@ pub const CODEC_CASES: &[&str] = &[
     "structured256",
     "metadata1000",
 ];
+pub const SPILL_CASES: &[&str] = &[
+    "sparse256",
+    "held1000",
+    "noise128",
+    "structured256",
+    "metadata1000",
+];
+pub const SPILL_VARIANTS: &[&str] = &["heap", "disk", "heap-lz4", "disk-lz4"];
 pub const CODEC_VARIANTS: &[&str] = &["shared", "raw", "lz4", "zstd1", "zstd3"];
 pub const VARIANTS: &[&str] = &["shared", "pack32", "pack64", "pack128"];
 pub fn count(case: &str) -> usize {
@@ -41,6 +49,8 @@ pub struct Outcome {
     pub events: Vec<Event>,
     pub codec_workspace_peak: u64,
     pub codec_scratch_bytes: u64,
+    pub store_before_release: Option<paintcraft_core::types::storage::SpillUsage>,
+    pub store_after_release: Option<paintcraft_core::types::storage::SpillUsage>,
     pub rss_before_release_kib: Option<u64>,
     pub rss_after_release_kib: Option<u64>,
 }
@@ -144,6 +154,7 @@ pub fn run(case: &str, variant: &str, trace: bool) -> Outcome {
         trace,
         interval,
         paintcraft_history::Compression::None,
+        None,
     )
 }
 pub fn run_codec(case: &str, variant: &str, trace: bool) -> Outcome {
@@ -157,7 +168,24 @@ pub fn run_codec(case: &str, variant: &str, trace: bool) -> Outcome {
         _ => Compression::None,
     };
     let interval = if variant == "shared" { usize::MAX } else { 64 };
-    run_mode(case, variant, trace, interval, policy)
+    run_mode(case, variant, trace, interval, policy, None)
+}
+pub fn run_spill(case: &str, variant: &str, trace: bool) -> Outcome {
+    assert!(SPILL_CASES.contains(&case));
+    assert!(SPILL_VARIANTS.contains(&variant));
+    let policy = if variant.ends_with("lz4") {
+        paintcraft_history::Compression::Lz4
+    } else {
+        paintcraft_history::Compression::None
+    };
+    run_mode(
+        case,
+        variant,
+        trace,
+        64,
+        policy,
+        Some(variant.starts_with("disk")),
+    )
 }
 fn run_mode(
     case: &str,
@@ -165,9 +193,24 @@ fn run_mode(
     trace: bool,
     interval: usize,
     policy: paintcraft_history::Compression,
+    disk: Option<bool>,
 ) -> Outcome {
     let n = count(case);
     let mut s = fixture(case);
+    let store = disk.map(|_| {
+        Arc::new(
+            paintcraft_platform::spill::NativeSpillStore::new(
+                &std::env::temp_dir().join("paintcraft-history-bench"),
+                256 << 20,
+                4 << 20,
+            )
+            .unwrap(),
+        )
+    });
+    let store_directory = store.as_ref().map(|store| store.directory().to_owned());
+    if let Some(store) = &store {
+        s.set_history_spill_store(store.clone());
+    }
     s.set_history_compression(policy);
     let mut codec_workspace_peak = 0;
     let mut codec_scratch_bytes = 0;
@@ -175,6 +218,9 @@ fn run_mode(
         let stats = s.compact_history(2, 16 << 20, || Ok(())).unwrap();
         codec_workspace_peak = codec_workspace_peak.max(stats.codec_workspace_peak);
         codec_scratch_bytes = codec_scratch_bytes.max(stats.codec_scratch_bytes);
+        if disk == Some(true) {
+            s.spill_history(16 << 20, 64, || Ok(())).unwrap();
+        }
     };
     let baseline_depth = s.undo_depth();
     let mut expected = Vec::with_capacity(n + 1);
@@ -204,6 +250,7 @@ fn run_mode(
     assert_eq!(s.trimmed_total(), 0);
     assert_eq!(s.undo_depth(), baseline_depth + n);
     let before_release = s.history_memory();
+    let store_before_release = s.history_spill_usage();
     let rss_before_release_kib = if trace { rss_kib() } else { None };
     let start = Instant::now();
     drop(held);
@@ -215,6 +262,7 @@ fn run_mode(
     }
     let rss_after_release_kib = if trace { rss_kib() } else { None };
     let after_release = s.history_memory();
+    let store_after_release = s.history_spill_usage();
     for (i, want) in expected[..n].iter().enumerate().rev() {
         let start = Instant::now();
         s.undo().unwrap().unwrap();
@@ -245,12 +293,20 @@ fn run_mode(
     let start = Instant::now();
     drop(std::hint::black_box(s));
     event(&mut events, trace, "drop-history", 0, start);
+    if let Some(store) = store {
+        use paintcraft_core::types::storage::SpillStore;
+        assert_eq!(store.collect_garbage().unwrap().reserved_bytes, 0);
+        drop(store);
+        assert!(!store_directory.unwrap().exists());
+    }
     Outcome {
         before_release,
         after_release,
         events,
         codec_workspace_peak,
         codec_scratch_bytes,
+        store_before_release,
+        store_after_release,
         rss_before_release_kib,
         rss_after_release_kib,
     }
