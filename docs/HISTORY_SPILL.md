@@ -66,7 +66,11 @@ meet its allowance. A filesystem setup failure therefore does not enable trimmin
 Each extent has an eight-byte format marker, little-endian body length, SHA-256
 body digest and at most 262,144 body bytes. The opaque handle retains the expected
 length/digest and its segment lease. Appends serialize within a store. A complete
-header/body write and `File::sync_all` must succeed before a handle is returned.
+header/body write returns a provisional handle. Dirty segments synchronize when
+they rotate and at a checked `SpillStore::flush` barrier before history publication.
+Cancellation is checked again after that barrier. Dirty state follows the segment,
+so closing a writer during another caller's preparation cannot bypass a later
+barrier. Direct store clients must flush successfully before publishing handles.
 This is session storage, not a file-operation durability receipt or power-loss
 qualification. Headers and descriptors do not make restart-persistent undo available.
 
@@ -94,7 +98,8 @@ durable document recovery uses the existing separate checkpoint/journal pipeline
 Native tests cover append/read checksums, quota rejection, concurrent readers,
 corrupt/truncated/missing data, leases outliving stores, live-lock protection,
 process kill/orphan cleanup, permission errors, deletion retries, a disk-full fault
-after writing a partial record, and failed truncation rollback. Permission checks
+after writing a partial record, failed truncation rollback, failed synchronization,
+and the barrier on a closed provisional segment. Permission checks
 report when a privileged host bypasses Unix permissions; non-Unix platforms need
 their own native qualification.
 

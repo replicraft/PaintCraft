@@ -16,8 +16,11 @@ pub trait SpillBlob: Debug + Send + Sync {
     fn read_into(&self, destination: &mut [u8]) -> Result<()>;
 }
 pub trait SpillStore: Debug + Send + Sync {
-    /// Publish a complete immutable extent or fail without invalidating old leases.
+    /// Prepare a complete immutable extent without invalidating old leases.
+    /// Call `flush` successfully before publishing any returned handle.
     fn write(&self, bytes: &[u8]) -> Result<Arc<dyn SpillBlob>>;
+    /// Complete the storage barrier for prepared extents, or fail before publication.
+    fn flush(&self) -> Result<()>;
     /// Close the current append segment and reclaim segments without any leases.
     fn collect_garbage(&self) -> Result<SpillUsage>;
     fn usage(&self) -> SpillUsage;

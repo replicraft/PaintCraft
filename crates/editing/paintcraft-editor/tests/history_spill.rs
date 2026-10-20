@@ -201,6 +201,8 @@ fn every_payload_policy_spills_in_bounded_batches_and_restores_exact_recorded_re
 struct Failing {
     native: Arc<NativeSpillStore>,
     remaining: AtomicUsize,
+    fail_flush: std::sync::atomic::AtomicBool,
+    flushes: AtomicUsize,
 }
 impl SpillStore for Failing {
     fn write(&self, b: &[u8]) -> paintcraft_core::types::Result<Arc<dyn SpillBlob>> {
@@ -216,6 +218,17 @@ impl SpillStore for Failing {
         }
         self.native.write(b)
     }
+    fn flush(&self) -> paintcraft_core::types::Result<()> {
+        if self.fail_flush.swap(false, Ordering::SeqCst) {
+            return Err(Error::new(
+                ErrorCode::StorageFailed,
+                "injected sync failure",
+            ));
+        }
+        self.native.flush()?;
+        self.flushes.fetch_add(1, Ordering::SeqCst);
+        Ok(())
+    }
     fn collect_garbage(&self) -> paintcraft_core::types::Result<SpillUsage> {
         self.native.collect_garbage()
     }
@@ -229,6 +242,8 @@ fn failed_or_cancelled_spill_does_not_replace_any_entry_and_reclaims_provisional
     let failing = Arc::new(Failing {
         native: native.clone(),
         remaining: AtomicUsize::new(2),
+        fail_flush: std::sync::atomic::AtomicBool::new(false),
+        flushes: AtomicUsize::new(0),
     });
     let mut s = session(true);
     for n in 0..10 {
@@ -261,6 +276,30 @@ fn failed_or_cancelled_spill_does_not_replace_any_entry_and_reclaims_provisional
     assert_eq!(s.history_view(), view);
     assert_eq!(s.history_memory(), memory);
     assert_eq!(native.usage().reserved_bytes, 0);
+    failing.fail_flush.store(true, Ordering::SeqCst);
+    assert_eq!(
+        s.spill_history(16 << 20, 64, || Ok(())).unwrap_err().code,
+        ErrorCode::StorageFailed
+    );
+    assert_eq!(s.history_view(), view);
+    assert_eq!(s.history_memory(), memory);
+    assert_eq!(native.usage().reserved_bytes, 0);
+    assert_eq!(
+        s.spill_history(16 << 20, 64, || {
+            if failing.flushes.load(Ordering::SeqCst) != 0 {
+                Err(Error::new(ErrorCode::OperationCancelled, "after sync"))
+            } else {
+                Ok(())
+            }
+        })
+        .unwrap_err()
+        .code,
+        ErrorCode::OperationCancelled
+    );
+    assert_eq!(s.history_view(), view);
+    assert_eq!(s.history_memory(), memory);
+    assert_eq!(native.usage().reserved_bytes, 0);
+    failing.remaining.store(100, Ordering::SeqCst);
     s.spill_history(16 << 20, 64, || Ok(())).unwrap();
     s.undo().unwrap().unwrap();
     verify(&s, true, 9);

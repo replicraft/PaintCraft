@@ -120,6 +120,8 @@ impl History {
             }
         }
         check()?;
+        store.flush()?;
+        check()?;
         self.entries = entries;
         self.memo = memo;
         let usage = self.memory_usage();

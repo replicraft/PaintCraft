@@ -4,6 +4,16 @@ mod replay;
 use replay::{SPILL_CASES as CASES, SPILL_VARIANTS as VARIANTS};
 fn main() {
     let args: Vec<_> = std::env::args().skip(1).collect();
+    if args.first().is_some_and(|s| s == "cleanup") {
+        println!(
+            "Removed {} abandoned benchmark stores",
+            paintcraft_platform::spill::remove_abandoned(
+                &std::env::temp_dir().join("paintcraft-history-bench")
+            )
+            .unwrap()
+        );
+        return;
+    }
     if args.first().is_some_and(|s| s == "verify") {
         let cases = args
             .get(1)

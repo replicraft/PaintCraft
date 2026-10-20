@@ -60,6 +60,9 @@ def main():
                 "variants":[{"id":v,"argv":[str(binary),v,case]}for v in variants]}
         validate_config(config);path=root/f"{case}-config.json";path.write_text(json.dumps(config,indent=2)+"\n");configs[case]=(config,path)
     if not args.execute:print(f"Prepared {root}; no benchmark executed");return
+    if spill:
+        with (root/"abandoned-cleanup.txt").open("w") as log:
+            subprocess.run([str(binary),"cleanup"],cwd=ROOT,stdout=log,stderr=log,check=True,timeout=120)
     flags=["-l"]if platform.system()=="Darwin"else["-v"]
     for case in cases:
         with (root/f"calibration-{case}.txt").open("w")as log:

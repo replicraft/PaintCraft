@@ -75,6 +75,7 @@ impl Drop for Owner {
 }
 #[derive(Debug)]
 struct Segment {
+    dirty: std::sync::atomic::AtomicBool,
     path: PathBuf,
     owner: Arc<Owner>,
 }
@@ -149,6 +150,8 @@ pub struct NativeSpillStore {
     fail_body: std::sync::atomic::AtomicBool,
     #[cfg(test)]
     fail_rollback: std::sync::atomic::AtomicBool,
+    #[cfg(test)]
+    fail_flush: std::sync::atomic::AtomicBool,
 }
 impl NativeSpillStore {
     pub fn new(parent: &Path, quota: u64, segment_target: u64) -> Result<Self> {
@@ -178,6 +181,8 @@ impl NativeSpillStore {
                 fail_body: std::sync::atomic::AtomicBool::new(false),
                 #[cfg(test)]
                 fail_rollback: std::sync::atomic::AtomicBool::new(false),
+                #[cfg(test)]
+                fail_flush: std::sync::atomic::AtomicBool::new(false),
             })
         })();
         if result.is_err() {
@@ -187,6 +192,33 @@ impl NativeSpillStore {
     }
     pub fn directory(&self) -> &Path {
         &self.owner.path
+    }
+    fn flush_active(&self, active: &mut Option<Appender>) -> Result<()> {
+        let Some(app) = active.as_mut() else {
+            return Ok(());
+        };
+        if !app.segment.dirty.load(std::sync::atomic::Ordering::Acquire) {
+            return Ok(());
+        }
+        #[cfg(test)]
+        let fail = self
+            .fail_flush
+            .swap(false, std::sync::atomic::Ordering::SeqCst);
+        #[cfg(not(test))]
+        let fail = false;
+        let result = if fail {
+            Err(std::io::ErrorKind::StorageFull.into())
+        } else {
+            app.file.sync_all()
+        };
+        if let Err(error) = result {
+            drop(active.take());
+            return Err(storage(error));
+        }
+        app.segment
+            .dirty
+            .store(false, std::sync::atomic::Ordering::Release);
+        Ok(())
     }
     fn appender(&self) -> Result<Appender> {
         let path = self.owner.path.join(format!("{}.segment", Uuid::new_v4()));
@@ -198,6 +230,7 @@ impl NativeSpillStore {
         r.files.try_reserve(1).map_err(|_| limit())?;
         let file = private_file(&path).map_err(storage)?;
         let segment = Arc::new(Segment {
+            dirty: std::sync::atomic::AtomicBool::new(false),
             path: path.clone(),
             owner: self.owner.clone(),
         });
@@ -229,6 +262,7 @@ impl SpillStore for NativeSpillStore {
             .as_ref()
             .is_some_and(|a| a.length != 0 && a.length.saturating_add(total) > self.segment_target)
         {
+            self.flush_active(&mut guard)?;
             drop(guard.take());
         }
         if guard.is_none() {
@@ -249,7 +283,10 @@ impl SpillStore for NativeSpillStore {
         }
         let offset = app.length;
         let digest: [u8; 32] = Sha256::digest(bytes).into();
-        let result = (|| {
+        app.segment
+            .dirty
+            .store(true, std::sync::atomic::Ordering::Release);
+        let result: std::io::Result<()> = (|| {
             app.file.seek(SeekFrom::Start(offset))?;
             app.file.write_all(MAGIC)?;
             app.file.write_all(&(bytes.len() as u64).to_le_bytes())?;
@@ -262,7 +299,7 @@ impl SpillStore for NativeSpillStore {
                 return Err(std::io::ErrorKind::StorageFull.into());
             }
             app.file.write_all(bytes)?;
-            app.file.sync_all()
+            Ok(())
         })();
         if let Err(error) = result {
             #[cfg(test)]
@@ -290,6 +327,61 @@ impl SpillStore for NativeSpillStore {
             length: bytes.len(),
             digest,
         }))
+    }
+    fn flush(&self) -> Result<()> {
+        let mut active = self.active.lock().unwrap_or_else(|e| e.into_inner());
+        // A collector can close an uncommitted append file while another caller
+        // still owns provisional extents. Track dirty segments beyond the writer.
+        // Keep upgraded leases until after releasing the registry lock.
+        let mut segments = Vec::new();
+        {
+            let r = self
+                .owner
+                .registry
+                .lock()
+                .unwrap_or_else(|e| e.into_inner());
+            segments
+                .try_reserve_exact(r.files.len())
+                .map_err(|_| limit())?;
+            for record in r.files.values() {
+                if let Some(segment) = record.lease.upgrade() {
+                    segments.push(segment);
+                }
+            }
+        }
+        for segment in segments {
+            if !segment.dirty.load(std::sync::atomic::Ordering::Acquire) {
+                continue;
+            }
+            #[cfg(test)]
+            let fail = self
+                .fail_flush
+                .swap(false, std::sync::atomic::Ordering::SeqCst);
+            #[cfg(not(test))]
+            let fail = false;
+            let result = if fail {
+                Err(std::io::ErrorKind::StorageFull.into())
+            } else if let Some(app) = active
+                .as_ref()
+                .filter(|a| Arc::ptr_eq(&a.segment, &segment))
+            {
+                app.file.sync_all()
+            } else {
+                File::options()
+                    .read(true)
+                    .write(true)
+                    .open(&segment.path)
+                    .and_then(|f| f.sync_all())
+            };
+            if let Err(error) = result {
+                drop(active.take());
+                return Err(storage(error));
+            }
+            segment
+                .dirty
+                .store(false, std::sync::atomic::Ordering::Release);
+        }
+        Ok(())
     }
     fn collect_garbage(&self) -> Result<SpillUsage> {
         drop(self.active.lock().unwrap_or_else(|e| e.into_inner()).take());

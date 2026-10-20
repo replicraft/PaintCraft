@@ -9,6 +9,7 @@ fn append_extents_are_checked_and_live_leases_prevent_gc_and_abandoned_cleanup()
     let (parent, store) = store(1 << 20, 1024);
     let a = store.write(&[1; 100]).unwrap();
     let b = store.write(&[2; 100]).unwrap();
+    store.flush().unwrap();
     assert_eq!(store.usage().segments, 1);
     assert_eq!(store.collect_garbage().unwrap().reserved_bytes, 296);
     assert_eq!(remove_abandoned(&parent).unwrap(), 0);
@@ -199,6 +200,7 @@ fn crash_child() {
     };
     let store = NativeSpillStore::new(Path::new(&parent), 1 << 20, 1024).unwrap();
     let lease = store.write(&[9; 100]).unwrap();
+    store.flush().unwrap();
     fs::write(Path::new(&parent).join("ready"), b"ready").unwrap();
     loop {
         std::hint::black_box(&lease);
@@ -212,6 +214,7 @@ fn partial_disk_full_and_failed_rollback_preserve_previously_published_extents()
     for rollback_fails in [false, true] {
         let (parent, store) = store(1 << 20, 1024);
         let a = store.write(&[3; 100]).unwrap();
+        store.flush().unwrap();
         store.fail_body.store(true, Ordering::SeqCst);
         store.fail_rollback.store(rollback_fails, Ordering::SeqCst);
         let error = store.write(&[4; 100]).unwrap_err();
@@ -248,6 +251,47 @@ fn failed_gc_keeps_quota_reserved_until_the_file_can_be_removed() {
         assert!(store.collect_garbage().is_err());
     }
     fs::set_permissions(store.directory(), fs::Permissions::from_mode(0o700)).unwrap();
+    assert_eq!(store.collect_garbage().unwrap().reserved_bytes, 0);
+    drop(store);
+    fs::remove_dir_all(parent).unwrap();
+}
+
+#[test]
+fn synchronization_failure_does_not_invalidate_an_earlier_published_prefix() {
+    use std::sync::atomic::Ordering;
+    let (parent, store) = store(1 << 20, 1024);
+    let a = store.write(&[3; 100]).unwrap();
+    store.flush().unwrap();
+    let b = store.write(&[4; 100]).unwrap();
+    store.fail_flush.store(true, Ordering::SeqCst);
+    assert_eq!(store.flush().unwrap_err().code, ErrorCode::StorageFailed);
+    let mut out = [0; 100];
+    a.read_into(&mut out).unwrap();
+    assert_eq!(out, [3; 100]);
+    drop(b);
+    let c = store.write(&[5; 100]).unwrap();
+    store.flush().unwrap();
+    c.read_into(&mut out).unwrap();
+    assert_eq!(out, [5; 100]);
+    drop((a, c));
+    assert_eq!(store.collect_garbage().unwrap().reserved_bytes, 0);
+    drop(store);
+    fs::remove_dir_all(parent).unwrap();
+}
+
+#[test]
+fn a_closed_provisional_segment_still_requires_the_publication_barrier() {
+    use std::sync::atomic::Ordering;
+    let (parent, store) = store(1 << 20, 1024);
+    let a = store.write(&[3; 100]).unwrap();
+    store.collect_garbage().unwrap();
+    store.fail_flush.store(true, Ordering::SeqCst);
+    assert_eq!(store.flush().unwrap_err().code, ErrorCode::StorageFailed);
+    store.flush().unwrap();
+    let mut out = [0; 100];
+    a.read_into(&mut out).unwrap();
+    assert_eq!(out, [3; 100]);
+    drop(a);
     assert_eq!(store.collect_garbage().unwrap().reserved_bytes, 0);
     drop(store);
     fs::remove_dir_all(parent).unwrap();
