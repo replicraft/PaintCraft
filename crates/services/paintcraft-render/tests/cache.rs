@@ -211,3 +211,56 @@ fn tiny_budgets_eviction_and_partial_viewports_remain_bounded_and_exact() {
         .is_err()
     );
 }
+
+#[test]
+fn changed_lower_layers_invalidate_prefixes_and_empty_plans_do_no_composition_work() {
+    let mut s =
+        Session::new(new_document(65, 63, Some(Rgba([11, 81, 143, 91])), 7, POLICY).unwrap());
+    run(
+        &mut s,
+        r##"[{"op":"layer.add","ref":"middle","name":"Middle","width":65,"height":63,"origin":{"x":0,"y":0},"default_pixel":"#9A431D57"},{"op":"layer.add","ref":"top","name":"Top","width":65,"height":63,"origin":{"x":0,"y":0},"default_pixel":"#2C61E38B"}]"##,
+    );
+    let region = s.document().canvas_rect();
+    let mut cache = cache(128, 1 << 20);
+    let render = cache
+        .render(s.document(), region, Domain::Committed, || Ok(()))
+        .unwrap();
+    let expected = Rgba([44, 97, 227, 139])
+        .source_over(Rgba([154, 67, 29, 87]).source_over(Rgba([11, 81, 143, 91])));
+    assert_eq!(render.pixels, expected.0.repeat(65 * 63));
+    let bottom = s.document().roots[0];
+    run(
+        &mut s,
+        &format!(
+            r#"[{{"op":"layer.set_properties","layer_ref":{{"id":"{bottom}"}},"opacity_u8":73}}]"#
+        ),
+    );
+    let changed = cache
+        .render(s.document(), region, Domain::Committed, || Ok(()))
+        .unwrap();
+    assert_eq!(changed.stats.prefix_hits, 0);
+    assert_eq!(changed.pixels, render_flat(s.document()).unwrap());
+    stroke(&mut s, 2, 3);
+    let changed = cache
+        .render(s.document(), region, Domain::Committed, || Ok(()))
+        .unwrap();
+    assert_eq!(changed.stats.prefix_hits, 1);
+    assert_eq!(changed.pixels, render_flat(s.document()).unwrap());
+    let ops = s
+        .document()
+        .roots
+        .iter()
+        .map(|id| {
+            format!(
+                r#"{{"op":"layer.set_properties","layer_ref":{{"id":"{id}"}},"visible":false}}"#
+            )
+        })
+        .collect::<Vec<_>>()
+        .join(",");
+    run(&mut s, &format!("[{ops}]"));
+    let empty = cache
+        .render(s.document(), region, Domain::Committed, || Ok(()))
+        .unwrap();
+    assert_eq!(empty.pixels, vec![0; 65 * 63 * 4]);
+    assert_eq!(empty.stats.recomposed_pixels, 0);
+}
