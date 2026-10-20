@@ -17,7 +17,7 @@ ITERATIONS = {
 }
 
 CACHE_ITERATIONS = {"sparse1": 256, "sparse5": 128, "sparse20": 64, "sparse100": 16,
-                    "dense5": 16, "global5": 16, "viewport100": 64}
+                    "dense5": 16, "global5": 16, "global-bottom5": 16, "viewport100": 64}
 
 
 def output(argv):
@@ -29,9 +29,14 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--execute", action="store_true")
     parser.add_argument("--suite", choices=["spans", "cache"], default="spans")
+    parser.add_argument("--case", action="append", dest="cases", help="Run only named cases; repeat to select several")
     args = parser.parse_args()
     cache = args.suite == "cache"
     iterations_by_case = CACHE_ITERATIONS if cache else ITERATIONS
+    if args.cases:
+        if not set(args.cases) <= iterations_by_case.keys():
+            parser.error("unknown case for selected suite")
+        iterations_by_case = {case: n for case, n in iterations_by_case.items() if case in args.cases}
     variants = ["full", "tile64", "tile128", "tile256"] if cache else ["baseline", "production"]
     prefix = "cpu-cache" if cache else "cpu-spans"
     relevance = ("Exact regional tile and ordered lower-prefix caching versus full regional rendering; admitted transactions and recorded history included." if cache else

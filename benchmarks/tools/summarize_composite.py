@@ -21,10 +21,10 @@ def read_run(path):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("root", type=Path)
+    parser.add_argument("root", type=Path, nargs="+")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
-    paths = sorted(p for p in args.root.glob("session-*") if p.is_dir() or p.name.endswith(".tar.gz"))
+    paths = sorted(p for root in args.root for p in root.glob("session-*") if p.is_dir() or p.name.endswith(".tar.gz"))
     grouped = {}
     for path in paths:
         files = read_run(path)
@@ -47,8 +47,8 @@ def main():
             assert data["iterations"] == iterations
             data["sessions"] += 1
             data["measurements"].extend(variant["measurements"])
-    fields = ["case", "variant", "sessions", "runs", "renders_per_process", "median_process_ms", "mean_process_ms",
-              "stddev_process_ms", "min_process_ms", "max_process_ms", "amortized_frames_per_second",
+    fields = ["case", "variant", "sessions", "runs", "work_units_per_process", "median_process_ms", "mean_process_ms",
+              "stddev_process_ms", "min_process_ms", "max_process_ms", "work_units_per_second",
               "median_peak_rss_MiB", "max_peak_rss_MiB", "median_cpu_ms", "median_cpu_cycles", "median_instructions"]
     with args.output.open("w") as output:
         writer = csv.DictWriter(output, fieldnames=fields, lineterminator="\n")
@@ -60,10 +60,10 @@ def main():
             wall = values("time_wall_clock")
             rss = values("memory_peak_resident")
             writer.writerow({
-                "case": case, "variant": variant, "sessions": 3, "runs": len(wall), "renders_per_process": data["iterations"],
+                "case": case, "variant": variant, "sessions": 3, "runs": len(wall), "work_units_per_process": data["iterations"],
                 "median_process_ms": statistics.median(wall)*1000, "mean_process_ms": statistics.mean(wall)*1000,
                 "stddev_process_ms": statistics.stdev(wall)*1000, "min_process_ms": min(wall)*1000,
-                "max_process_ms": max(wall)*1000, "amortized_frames_per_second": data["iterations"]/statistics.median(wall),
+                "max_process_ms": max(wall)*1000, "work_units_per_second": data["iterations"]/statistics.median(wall),
                 "median_peak_rss_MiB": statistics.median(rss)/1048576, "max_peak_rss_MiB": max(rss)/1048576,
                 "median_cpu_ms": statistics.median(values("time_cpu"))*1000,
                 "median_cpu_cycles": statistics.median(values("cpu_cycles")), "median_instructions": statistics.median(values("instructions")),

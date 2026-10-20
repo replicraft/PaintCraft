@@ -15,6 +15,7 @@ pub const CASES: &[&str] = &[
     "sparse100",
     "dense5",
     "global5",
+    "global-bottom5",
     "viewport100",
 ];
 pub const VARIANTS: &[&str] = &["full", "tile64", "tile128", "tile256"];
@@ -31,7 +32,7 @@ impl Replay {
         assert!(CASES.contains(&case));
         assert!(VARIANTS.contains(&variant));
         let doc = fixture(match case {
-            "global5" => "uniform5",
+            "global5" | "global-bottom5" => "uniform5",
             "viewport100" => "sparse100",
             other => other,
         });
@@ -86,8 +87,12 @@ impl Replay {
         let n = self.next;
         self.next += 1;
         let ticket = self.session.ticket();
-        let layer = self.session.document().roots.last().unwrap();
-        let operation = if self.case == "global5" {
+        let layer = if self.case == "global-bottom5" {
+            self.session.document().roots.first().unwrap()
+        } else {
+            self.session.document().roots.last().unwrap()
+        };
+        let operation = if self.case.starts_with("global") {
             format!(
                 r#"{{"op":"layer.set_properties","layer_ref":{{"id":"{layer}"}},"opacity_u8":{}}}"#,
                 if n.is_multiple_of(2) { 73 } else { 255 }

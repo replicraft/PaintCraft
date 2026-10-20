@@ -52,8 +52,10 @@ This suite compares full regional composition with 64/128/256-pixel output cache
 and lower-layer prefix reuse. Every timed step admits an atomic transaction,
 retains recorded history, renders exact output and drops the result. The first
 render/cache preparation is inside the process lifetime but outside Divan's steady
-edit section. Sparse 1/5/20/100 layers, five dense layers, top-layer global opacity
-changes and a cropped viewport are distinct cases. Cache limits, history limits
+edit section. Sparse 1/5/20/100 layers, five dense layers, top- and bottom-layer global opacity
+changes and a cropped viewport are distinct cases. Use `--case global-bottom5`
+to run the invalidated-prefix control separately; repeated `--case` arguments
+select multiple cases. Cache limits, history limits
 and fixtures are identical for all granularity contenders. This does not measure
 GPU dispatch or actual input-to-display latency. Raw process RSS includes the
 fixture, history, returned output and persistent caches; cache weights are a
