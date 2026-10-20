@@ -13,7 +13,7 @@ from run_hyperfine import run_logged, write_json
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--suite", choices=["partitions", "history", "codecs", "spill"], default="partitions")
+    parser.add_argument("--suite", choices=["partitions", "history", "codecs", "spill", "large"], default="partitions")
     parser.add_argument("--configs", type=Path, required=True)
     parser.add_argument("--binary", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
@@ -21,18 +21,19 @@ def main():
     parser.add_argument("--execute", action="store_true")
     args = parser.parse_args()
     binary = args.binary.resolve()
-    history = args.suite in ["history", "codecs", "spill"]
-    spill = args.suite == "spill"
+    history = args.suite in ["history", "codecs", "spill", "large"]
+    large = args.suite == "large"
+    spill = args.suite in ["spill", "large"]
     codecs = args.suite == "codecs"
     if history:
-        from run_history import CASES, CODEC_CASES, SPILL_CASES
-        cases = list(SPILL_CASES if spill else CODEC_CASES if codecs else CASES)
+        from run_history import CASES, CODEC_CASES, SPILL_CASES, LARGE_CASES
+        cases = list(LARGE_CASES if large else SPILL_CASES if spill else CODEC_CASES if codecs else CASES)
     else:
         cases = list(PARALLEL_ITERATIONS)
-    config_path = args.configs / ("sparse256-config.json" if history else "tiny-config.json")
+    config_path = args.configs / ("large65-config.json" if large else "sparse256-config.json" if history else "tiny-config.json")
     prototype = json.loads(config_path.read_text())
     assert prototype["case_id"] == ("BF19" if codecs or spill else "BF18" if history else "BF06")
-    group = "history-spill" if spill else "history-codecs" if codecs else "recorded-history" if history else "partitions"
+    group = "history-large" if large else "history-spill" if spill else "history-codecs" if codecs else "recorded-history" if history else "partitions"
     samples = 20 if history else 100
     variants = [row["id"] for row in prototype["variants"]]
     if args.order == "reverse":

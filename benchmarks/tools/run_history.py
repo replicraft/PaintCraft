@@ -17,22 +17,25 @@ CODEC_VARIANTS=["shared","raw","lz4","zstd1","zstd3"]
 SPILL_CASES={k:CASES[k] for k in ["sparse256","held1000","noise128","metadata1000"]}
 SPILL_CASES["structured256"]=256
 SPILL_VARIANTS=["heap","disk","heap-lz4","disk-lz4"]
+LARGE_CASES={"large65":32,"large130":32,"large260":32}
+LARGE_VARIANTS=["automatic","explicit"]
 
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--suite",choices=["ownership","codecs","spill"],default="ownership")
+    parser.add_argument("--suite",choices=["ownership","codecs","spill","large"],default="ownership")
     parser.add_argument("--output",type=Path,required=True)
     parser.add_argument("--execute",action="store_true")
     args=parser.parse_args();root=args.output.resolve();root.mkdir(parents=True,exist_ok=False)
-    spill=args.suite=="spill"
+    large=args.suite=="large"
+    spill=args.suite in ["spill","large"]
     codecs=args.suite=="codecs"
-    cases=SPILL_CASES if spill else CODEC_CASES if codecs else CASES
-    variants=SPILL_VARIANTS if spill else CODEC_VARIANTS if codecs else VARIANTS
-    driver="history_spill" if spill else "history_codecs" if codecs else "history"
+    cases=LARGE_CASES if large else SPILL_CASES if spill else CODEC_CASES if codecs else CASES
+    variants=LARGE_VARIANTS if large else SPILL_VARIANTS if spill else CODEC_VARIANTS if codecs else VARIANTS
+    driver="large_history" if large else "history_spill" if spill else "history_codecs" if codecs else "history"
     binary=ROOT/f"target/release/examples/{driver}"
     paths=[(binary,"binary"),(ROOT/"Cargo.lock","lockfile"),
-           (ROOT/"crates/editing/paintcraft-editor/examples/support/history.rs","generator"),
+           (ROOT/f"crates/editing/paintcraft-editor/examples/support/{'large_history' if large else 'history'}.rs","generator"),
            (ROOT/f"crates/editing/paintcraft-editor/examples/{driver}.rs","driver"),
            (ROOT/"crates/editing/paintcraft-editor/src/session.rs","other"),
            (ROOT/"crates/foundation/paintcraft-raster/src/raster.rs","other"),
@@ -43,14 +46,14 @@ def main():
     artifacts=[{"path":str(p),"sha256":sha256(p),"role":role}for p,role in paths]
     host={"source_revision":output(["git","rev-parse","HEAD"]),"worktree_status":output(["git","status","--porcelain"]),
           "rustc":output(["rustc","-Vv"]),"platform":platform.platform(),"logical_cpus":os.cpu_count(),
-          "limitations":"One developer host, no power/thermal/affinity control; RSS is process-wide. All variants retain identical required history, use a 768 MiB retention allowance, and finish full recorded undo/redo; no interactive latency qualification."}
+          "limitations":"One developer host, no power/thermal/affinity control; RSS is process-wide. All variants retain identical required history and finish full recorded undo/redo; no interactive latency qualification. " + ("Each large-case strategy has (tile count + 4) * 262144 retained bytes, 64 MiB staging and a 128 MiB store." if large else "768 MiB retention allowance.")}
     (root/"host.json").write_text(json.dumps(host,indent=2)+"\n")
     configs={}
     for case,count in cases.items():
         config={"schema":"paintcraft.hyperfine-run/1","mode":"application","case_id":"BF19" if codecs or spill else "BF18","task_id":"T11" if codecs or spill else "T07",
-                "relevance":"Heap versus native append segments, raw and LZ4, equal 64-edit checkpoints; full timeline, fixed byte and worker budgets, actual sync/read/GC and store destruction." if spill else "Raw/shared versus LZ4 and Zstd levels 1/3 at equal 64-edit checkpoints; same retained timeline, fixed block sizes and single-threaded codec contexts." if codecs else "Recorded shared COW history versus bounded default-relative independent patches at explicit cold-age checkpoints; equal complete retained timelines.",
+                "relevance":"Automatic pressure versus explicit full preparation after each edit; identical low retention allowance and complete recorded timeline. Full preflight verifies every byte CRC; timed replays verify changed bytes independently and unchanged identities, with full byte checks at both ends." if large else "Heap versus native append segments, raw and LZ4, equal 64-edit checkpoints; full timeline, fixed byte and worker budgets, actual sync/read/GC and store destruction." if spill else "Raw/shared versus LZ4 and Zstd levels 1/3 at equal 64-edit checkpoints; same retained timeline, fixed block sizes and single-threaded codec contexts." if codecs else "Recorded shared COW history versus bounded default-relative independent patches at explicit cold-age checkpoints; equal complete retained timelines.",
                 "cwd":str(ROOT),"workload":{"id":f"history-{case}","mode":"batch","work_units":count*3+(3 if case=="metadata1000" else 0),"seed":42,
-                "cache_state":"new process/session; 768 MiB retention, 16 MiB compaction staging, two hot states; spill suite creates a 256 MiB store with 4 MiB segment targets in the OS temporary filesystem for every strategy; page cache is not flushed; held case pins every eighth committed snapshot until release phase",
+                "cache_state":f"new process/session; {(int(case.removeprefix('large'))+4)*262144} retained bytes, 64 MiB staging, 128 MiB native store, 4 MiB targets; automatic pressure versus explicit full scan/spill after each edit; OS page cache not flushed" if large else "new process/session; 768 MiB retention, 16 MiB compaction staging, two hot states; spill suite creates a 256 MiB store with 4 MiB segment targets in the OS temporary filesystem for every strategy; page cache is not flushed; held case pins every eighth committed snapshot until release phase",
                 "completion":"all commits, source CRC captures, held-reader release, exact recorded undo/redo validation, and document/history/output destruction complete"},
                 "build":{"source_revision":host["source_revision"]+" with exact source/binary artifact hashes","profile":"release",
                 "target":host["rustc"].split("host: ",1)[1].splitlines()[0],"compiler":output(["rustc","-V"]),

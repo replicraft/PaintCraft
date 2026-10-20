@@ -34,14 +34,19 @@ physical-memory limit. Reference tables shrink after large retention/branch remo
 ## Pressure, admission and failures
 
 Adaptive packing runs under retention pressure before dropping old history. Each
-automatic publication considers at most 64 entries and 64 new tile payloads, with a
-staging allowance capped at 64 MiB and the configured history allowance. Snapshots
-exceeding this work limit remain shared. This bounds newly scanned pixel payloads;
+automatic preparation batch considers at most 64 entries and classifies 64 new tile payloads, with a
+separate 64 MiB staging allowance for preserving publication (the explicit trimming
+policy keeps its smaller allowance cap). Larger
+snapshots register remaining immutable raw sources without scanning their pixels.
+Later transfer/refinement batches classify those sources; uniform records stay
+inline and checksums exist before encoded/disk records publish. This bounds newly
+classified pixel payloads per batch;
 it does not establish an interactive latency bound for metadata traversal/accounting.
 Manual compaction also accepts cancellation and a staging allowance. Prepared
 entries publish together; cancellation/admission failure leaves the timeline intact.
 
-Recent states remain hot. With default `Retention::Preserve`, a new edit that
+Recent states stay hot when they fit. Pressure can cool the preceding state while
+keeping the new current state hot. With default `Retention::Preserve`, a new edit that
 cannot fit retained ownership is rejected before publication; it never opts into
 history deletion. Explicit `TrimOldest` keeps the former two-state floor and soft
 trimming policy. Reader-held bytes cannot be forced free under either policy.

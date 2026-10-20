@@ -26,10 +26,16 @@ Recording currently clones history reference tables into a private publication
 candidate. It does not copy all pixel data, but metadata work grows with timeline
 length. This cost, and the 64 MiB publication staging allowance, require qualification;
 the change is not claimed to be an O(1) history graph or a global allocator limit.
-Automatic cold preparation still skips a snapshot requiring more than 64 new tile
-scans; an edit can consequently be rejected despite free disk space. Manual
-compaction can prepare larger snapshots. Incremental logical-store preparation
-and background continuation are still needed for full large-document admission.
+Automatic preparation registers complete large snapshots while classifying at
+most 64 new tile sources per batch. Other sources retain immutable raw leases
+without a pixel scan. Transfers finish classification in further batches, keeping
+uniform data inline and applying the configured codec before writing a payload.
+Raw sources still owned by hot documents are skipped during automatic transfer;
+manual explicit spill retains its full-transfer semantics. Pressure relief repeats
+while it makes progress, and can cool the previous state if two hot states cannot
+fit. The current state remains hot. All of this work stays in the unpublished
+candidate; a failure in a later batch discards every earlier provisional result.
+These are bounded batches, not a bound on synchronous time for the whole edit.
 
 ## Recorded payloads
 
@@ -119,3 +125,10 @@ retain 1,200 process measurements, 800 internal samples and separate phase trace
 They include real storage synchronization and destruction, with every required
 history state retained. Results show material I/O costs and workload-dependent
 peak RSS; short noise histories do not establish a peak-RSS improvement.
+
+Large-snapshot regressions cover 130-tile shared bases, a full-surface replacement
+requiring more than two transfer batches, later-batch failure preserving redo,
+hidden-RGB uniform records without disk, and warm codec completion without disk.
+A preparation test registers 80 sources while scanning 64 and deferring 16; raw
+leases remain authoritative until classified. CRC validation is mandatory for
+encoded and disk-backed records.
