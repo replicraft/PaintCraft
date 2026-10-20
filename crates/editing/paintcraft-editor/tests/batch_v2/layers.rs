@@ -66,9 +66,9 @@ fn duplicate_preserves_complete_layer_and_shares_tiles_without_pixel_admission()
         paintcraft_history::Label::DuplicateLayer
     );
     let duplicated = s.snapshot();
-    s.undo().unwrap();
+    s.undo().unwrap().unwrap();
     assert!(s.document().same_semantics(&before));
-    s.redo().unwrap();
+    s.redo().unwrap().unwrap();
     assert!(s.document().same_semantics(&duplicated));
 }
 
@@ -91,9 +91,9 @@ fn duplicate_is_inserted_above_source_and_copy_writes_are_independent() {
         s.document().layers[&copy].raster.get(0, 0),
         Rgba([255, 0, 0, 255])
     );
-    s.undo().unwrap();
+    s.undo().unwrap().unwrap();
     assert_eq!(s.document().roots, vec![source, top]);
-    s.redo().unwrap();
+    s.redo().unwrap().unwrap();
     assert_eq!(
         s.document().layers[&copy].raster.get(0, 0),
         Rgba([255, 0, 0, 255])

@@ -25,7 +25,7 @@ fn layer_expansion_shares_tiles_preserves_padding_and_rolls_back_atomically() {
     assert_eq!(raster.get(259, 256), Rgba::TRANSPARENT);
     assert_eq!(raster.get(258, 257), Rgba::TRANSPARENT);
     assert_eq!((raster.width(), raster.height()), (300, 300));
-    s.undo().unwrap();
+    s.undo().unwrap().unwrap();
     assert!(s.document().same_semantics(&before));
     let ticket = s.ticket();
     let invalid = expand.replace("300", "1");

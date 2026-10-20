@@ -122,7 +122,7 @@ fn trimmed_or_replaced_redo_targets_are_rejected_without_a_partial_navigation() 
     let id = add(&mut s);
     paint(&mut s, id, 0);
     let old_tip = s.history_view().entries.last().unwrap().history_id;
-    s.undo().unwrap();
+    s.undo().unwrap().unwrap();
     paint(&mut s, id, 2);
     let current = s.history_view();
     let before = s.ticket();

@@ -60,12 +60,12 @@ fn local_edit_recomposes_one_storage_tile_while_reusing_the_rest_and_restores_un
             .render(s.document(), region, Domain::Committed, || Ok(()))
             .unwrap();
         assert_eq!(hit.stats.recomposed_pixels, 0);
-        s.undo().unwrap();
+        s.undo().unwrap().unwrap();
         let undone = cache
             .render(s.document(), region, Domain::Committed, || Ok(()))
             .unwrap();
         assert_eq!(undone.pixels, render_flat(&before).unwrap());
-        s.redo().unwrap();
+        s.redo().unwrap().unwrap();
         assert_eq!(
             cache
                 .render(s.document(), region, Domain::Committed, || Ok(()))

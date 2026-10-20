@@ -157,9 +157,9 @@ fn every_vector_replays() {
                 }
                 action @ ("undo" | "redo") => {
                     let nav = if action == "undo" {
-                        session.undo()
+                        session.undo().unwrap()
                     } else {
-                        session.redo()
+                        session.redo().unwrap()
                     };
                     let got = nav.map_or(Value::object([("available", Value::Bool(false))]), |n| {
                         Value::object([

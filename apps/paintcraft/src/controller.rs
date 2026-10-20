@@ -557,19 +557,19 @@ impl Editor {
             }
             Action::Undo => {
                 self.cancel_gesture();
-                self.status = if self.session.undo().is_some() {
-                    "Undo".into()
-                } else {
-                    "Nothing to undo".into()
+                self.status = match self.session.undo() {
+                    Ok(Some(_)) => "Undo".into(),
+                    Ok(None) => "Nothing to undo".into(),
+                    Err(error) => format!("Cannot undo: {error}"),
                 };
                 self.retarget();
             }
             Action::Redo => {
                 self.cancel_gesture();
-                self.status = if self.session.redo().is_some() {
-                    "Redo".into()
-                } else {
-                    "Nothing to redo".into()
+                self.status = match self.session.redo() {
+                    Ok(Some(_)) => "Redo".into(),
+                    Ok(None) => "Nothing to redo".into(),
+                    Err(error) => format!("Cannot redo: {error}"),
                 };
                 self.retarget();
             }
@@ -621,7 +621,7 @@ impl Editor {
                 if self.session.last_trimmed() > 0 {
                     // History is only ever shortened openly, never silently.
                     self.status += &format!(
-                        " — the {} oldest undo step(s) were dropped to stay within the memory budget",
+                        " — the {} oldest undo step(s) were dropped under the history memory policy",
                         self.session.last_trimmed()
                     );
                 }

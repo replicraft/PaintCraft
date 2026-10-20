@@ -55,10 +55,10 @@ fn canonical_pcnd_digests_match_and_round_trip() {
                         .and_then(|b| session.apply(&b));
                 }
                 "undo" => {
-                    session.undo();
+                    session.undo().unwrap();
                 }
                 "redo" => {
-                    session.redo();
+                    session.redo().unwrap();
                 }
                 "mark-saved" => session.mark_saved(),
                 "check" => {

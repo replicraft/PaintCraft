@@ -42,13 +42,27 @@ impl Session {
                 "History view is no longer current",
             ));
         }
-        let (snapshot, changed) = self.history.seek(target).ok_or_else(|| {
+        let entry = self
+            .history
+            .entries()
+            .find(|entry| entry.history_id == target)
+            .ok_or_else(|| {
+                Error::new(
+                    ErrorCode::ReferenceUnknownId,
+                    "History entry is no longer retained",
+                )
+            })?;
+        if entry.current {
+            return Ok(None);
+        }
+        let next_epoch = self.next_epoch()?;
+        let (snapshot, changed) = self.history.seek(target)?.ok_or_else(|| {
             Error::new(
                 ErrorCode::ReferenceUnknownId,
                 "History entry is no longer retained",
             )
         })?;
-        Ok(changed.then(|| self.navigate(snapshot)))
+        Ok(changed.then(|| self.navigate(snapshot, next_epoch)))
     }
 }
 

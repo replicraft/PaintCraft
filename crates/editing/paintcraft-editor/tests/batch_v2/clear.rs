@@ -85,6 +85,6 @@ fn clear_handles_more_layers_than_the_batch_operation_limit() {
             .resident_tiles(),
         0
     );
-    s.undo().unwrap();
+    s.undo().unwrap().unwrap();
     assert!(s.document().same_semantics(&before));
 }

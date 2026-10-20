@@ -62,9 +62,9 @@ fn layered_edit_history_native_reopen_and_independent_png_decode_agree() {
     ];
     assert_eq!(render_flat(s.document()).unwrap(), expected);
     let after = s.snapshot();
-    s.undo().unwrap();
+    s.undo().unwrap().unwrap();
     assert!(s.document().same_semantics(&before));
-    s.redo().unwrap();
+    s.redo().unwrap().unwrap();
     assert!(s.document().same_semantics(&after));
     let bytes = pcnd::write(s.document()).unwrap();
     let dir = std::env::temp_dir().join(format!(

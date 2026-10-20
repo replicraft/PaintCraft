@@ -17,7 +17,7 @@ use paintcraft_commands::Batch;
 use paintcraft_core::types::ids::deterministic_id;
 use paintcraft_document::{Document, POLICY};
 
-pub use paintcraft_history::DEFAULT_HISTORY_BYTES;
+pub use paintcraft_history::{DEFAULT_HISTORY_BYTES, Packing as HistoryPacking};
 use paintcraft_history::{History, Snapshot};
 
 mod history;
@@ -107,8 +107,9 @@ impl Session {
         }
     }
 
-    /// Cap the memory held by the document and every retained snapshot. When a
-    /// commit exceeds it, the oldest undo steps are dropped (never the newest).
+    /// Set history-owned retention weight. Under pressure, pack older states
+    /// before dropping oldest entries. The newest two states remain undoable;
+    /// active/read-only leases are reported separately and cannot be forcibly freed.
     pub fn set_history_budget(&mut self, bytes: u64) {
         self.history.set_budget(bytes);
     }
@@ -126,6 +127,24 @@ impl Session {
     }
     pub fn trimmed_total(&self) -> u64 {
         self.history.trimmed_total()
+    }
+
+    pub fn history_memory(&self) -> paintcraft_history::MemoryUsage {
+        self.history.memory_usage()
+    }
+    pub fn set_history_packing(&mut self, packing: HistoryPacking) {
+        self.history.set_packing(packing);
+    }
+    pub fn set_history_restore_budget(&mut self, pixels: u64) {
+        self.history.set_restore_budget(pixels);
+    }
+    pub fn compact_history(
+        &mut self,
+        keep_hot: usize,
+        temporary_bytes: usize,
+        check: impl Fn() -> Result<()>,
+    ) -> Result<paintcraft_history::Compaction> {
+        self.history.compact(keep_hot, temporary_bytes, check)
     }
 
     /// Lower the per-batch staging budget (resource-exhaustion testing, constrained hosts).
@@ -201,6 +220,7 @@ impl Session {
                 aliases: BTreeMap::new(),
             });
         }
+        let next_epoch = self.next_epoch()?;
         let base = self.doc.state_id.to_string();
         if content_changed {
             staged.doc.state_id = deterministic_id(&["state", &base, &batch.digest]);
@@ -216,10 +236,10 @@ impl Session {
                 history_id: Some(history_id),
             },
             history::label(batch),
-        );
+        )?;
         self.doc = doc;
         self.selection = staged.selection;
-        self.epoch += 1;
+        self.epoch = next_epoch;
         Ok(Receipt {
             committed: true,
             state_id: self.doc.state_id,
@@ -229,18 +249,31 @@ impl Session {
         })
     }
 
-    pub fn undo(&mut self) -> Option<Navigation> {
+    pub fn undo(&mut self) -> Result<Option<Navigation>> {
+        if self.history.undo_depth() == 0 {
+            return Ok(None);
+        }
+        let next_epoch = self.next_epoch()?;
         let snapshot = self.history.undo()?;
-        Some(self.navigate(snapshot))
+        Ok(snapshot.map(|snapshot| self.navigate(snapshot, next_epoch)))
     }
-    pub fn redo(&mut self) -> Option<Navigation> {
+    pub fn redo(&mut self) -> Result<Option<Navigation>> {
+        if self.history.redo_depth() == 0 {
+            return Ok(None);
+        }
+        let next_epoch = self.next_epoch()?;
         let snapshot = self.history.redo()?;
-        Some(self.navigate(snapshot))
+        Ok(snapshot.map(|snapshot| self.navigate(snapshot, next_epoch)))
     }
-    fn navigate(&mut self, snapshot: Snapshot) -> Navigation {
+    pub(super) fn next_epoch(&self) -> Result<u64> {
+        self.epoch
+            .checked_add(1)
+            .ok_or_else(|| Error::new(ErrorCode::ResourceLimit, "publication epoch exhausted"))
+    }
+    fn navigate(&mut self, snapshot: Snapshot, next_epoch: u64) -> Navigation {
         self.doc = snapshot.document;
         self.selection = snapshot.selection;
-        self.epoch += 1;
+        self.epoch = next_epoch;
         Navigation {
             state_id: self.doc.state_id,
             publication_epoch: self.epoch,
@@ -329,9 +362,9 @@ mod tests {
             .unwrap();
         s.mark_saved_state(saved);
         assert!(s.is_dirty());
-        s.undo().unwrap();
+        s.undo().unwrap().unwrap();
         assert!(!s.is_dirty());
-        s.redo().unwrap();
+        s.redo().unwrap().unwrap();
         assert!(s.is_dirty());
     }
 
@@ -345,7 +378,7 @@ mod tests {
         s.apply_json(&batch(&s, &format!("[{}]", fill(layer, 0, "#000000FF"))))
             .unwrap();
         assert!(s.is_dirty());
-        let n = s.undo().unwrap();
+        let n = s.undo().unwrap().unwrap();
         assert_eq!((n.state_id, n.publication_epoch), (saved, 3));
         assert!(
             !s.is_dirty(),
@@ -360,16 +393,16 @@ mod tests {
             s.apply(&stale).unwrap_err().code,
             ErrorCode::ConflictStaleBase
         );
-        assert!(s.redo().is_some());
-        s.undo().unwrap();
+        assert!(s.redo().unwrap().is_some());
+        s.undo().unwrap().unwrap();
         s.apply_json(&batch(&s, &format!("[{}]", fill(layer, 1, "#0000FFFF"))))
             .unwrap();
         assert!(
-            s.redo().is_none(),
+            s.redo().unwrap().is_none(),
             "editing after undo cuts the redo branch"
         );
         // Walk all the way back; the root has no history id.
-        while s.undo().is_some() {}
+        while s.undo().unwrap().is_some() {}
         assert_eq!(s.document().layers.len(), 1);
     }
 
@@ -387,11 +420,11 @@ mod tests {
         assert_eq!(s.ticket(), ticket);
         assert!(s.document().same_semantics(&doc_before));
         assert_eq!(
-            s.undo().map(|n| n.state_id),
+            s.undo().unwrap().map(|n| n.state_id),
             Some(doc_before_root_state(&s)),
             "no history entry was added"
         );
-        s.redo();
+        s.redo().unwrap();
         s.set_staged_pixel_budget(STAGED_PIXELS_MAX);
         assert!(
             s.apply_json(&batch(&s, &format!("[{}]", fill(layer, 0, "#000000FF"))))
@@ -401,7 +434,7 @@ mod tests {
     }
 
     fn doc_before_root_state(s: &Session) -> Uuid {
-        s.history.first().document.state_id
+        s.history.first_state_id()
     }
 
     #[test]
@@ -411,6 +444,7 @@ mod tests {
         let r = s.apply_json(&batch(&s, r##"[{"op":"layer.add","ref":"l","name":"L","width":2560,"height":256,"origin":{"x":0,"y":0},"default_pixel":"#00000000"}]"##)).unwrap();
         let layer = r.aliases["l"];
         let tile = paintcraft_raster::RasterLayer::TILE_BYTES as u64;
+        s.set_history_packing(paintcraft_history::Packing::Shared);
         s.set_history_budget(14 * tile);
         let mut states = vec![s.ticket().state_id];
         for i in 0..60i64 {
@@ -433,11 +467,11 @@ mod tests {
         let depth = s.undo_depth();
         for k in 0..depth {
             let want = states[states.len() - 2 - k];
-            assert_eq!(s.undo().unwrap().state_id, want, "undo step {k}");
+            assert_eq!(s.undo().unwrap().unwrap().state_id, want, "undo step {k}");
         }
-        assert!(s.undo().is_none(), "nothing older is retained");
+        assert!(s.undo().unwrap().is_none(), "nothing older is retained");
         // The current document was never touched by trimming.
-        while s.redo().is_some() {}
+        while s.redo().unwrap().is_some() {}
         assert_eq!(s.ticket().state_id, *states.last().unwrap());
     }
 
@@ -450,7 +484,7 @@ mod tests {
         s.apply_json(&batch(&s, &format!("[{}]", fill(layer, 0, "#000000FF"))))
             .unwrap();
         assert_eq!(s.undo_depth(), 1);
-        assert!(s.undo().is_some());
+        assert!(s.undo().unwrap().is_some());
         assert_eq!(
             s.document().layers[&layer].raster.get(0, 0),
             Rgba::TRANSPARENT
@@ -472,5 +506,55 @@ mod tests {
             )
             .unwrap_err();
         assert_eq!(e.code, ErrorCode::ConflictStaleBase);
+    }
+    #[test]
+    fn exhausted_publication_epoch_never_changes_document_or_history_and_allows_noops() {
+        let mut s = session();
+        s.apply_json(&batch(&s, &format!("[{ADD}]"))).unwrap();
+        s.epoch = u64::MAX;
+        let before = s.ticket();
+        let entries = s.history_view().entries;
+        let doc = s.snapshot();
+        assert_eq!(
+            s.apply_json(&batch(&s, &format!("[{ADD}]")))
+                .unwrap_err()
+                .code,
+            ErrorCode::ResourceLimit
+        );
+        assert_eq!(s.undo().unwrap_err().code, ErrorCode::ResourceLimit);
+        let view = s.history_view();
+        assert_eq!(
+            s.navigate_history(view.ticket, view.entries[0].history_id)
+                .unwrap_err()
+                .code,
+            ErrorCode::ResourceLimit
+        );
+        let current = view
+            .entries
+            .iter()
+            .find(|entry| entry.current)
+            .unwrap()
+            .history_id;
+        assert!(s.navigate_history(view.ticket, current).unwrap().is_none());
+        assert!(s.redo().unwrap().is_none());
+        assert_eq!(s.ticket(), before);
+        assert_eq!(s.history_view().entries, entries);
+        assert!(Arc::ptr_eq(&s.snapshot(), &doc));
+        s.epoch = 1;
+        s.undo().unwrap().unwrap();
+        s.epoch = u64::MAX;
+        let before = s.ticket();
+        let entries = s.history_view().entries;
+        assert_eq!(s.redo().unwrap_err().code, ErrorCode::ResourceLimit);
+        let background = s.document().roots[0];
+        let receipt = s
+            .apply_json(&batch(
+                &s,
+                &format!("[{}]", fill(background, 0, "#FFFFFFFF")),
+            ))
+            .unwrap();
+        assert!(!receipt.committed);
+        assert_eq!(s.ticket(), before);
+        assert_eq!(s.history_view().entries, entries);
     }
 }

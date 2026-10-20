@@ -372,7 +372,7 @@ fn undo_restores_the_exact_state_after_every_v2_operation() {
         assert!(run(&mut s, 2, &format!("[{op}]")).unwrap().committed);
     }
     for _ in &ops {
-        s.undo().unwrap();
+        s.undo().unwrap().unwrap();
     }
     assert_eq!(s.ticket().state_id, before);
     assert_eq!(picture(&s, id), vec!["........"; 8]);
@@ -569,7 +569,7 @@ fn reordering_layers_changes_the_stack_and_the_render() {
         (e.code, e.operation_index),
         (ErrorCode::InputSchema, Some(0))
     );
-    s.undo().unwrap();
+    s.undo().unwrap().unwrap();
     assert_eq!(
         top(&s),
         [green, blue, red],

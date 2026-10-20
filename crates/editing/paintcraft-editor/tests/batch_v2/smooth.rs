@@ -39,7 +39,7 @@ fn antialiased_strokes_clip_and_apply_alpha_once() {
         }
     }
     assert!(partial);
-    s.undo().unwrap();
+    s.undo().unwrap().unwrap();
     assert!(s.document().same_semantics(&before));
 }
 
@@ -108,9 +108,9 @@ fn fixed_point_brushes_validate_scale_and_keep_undo_and_clipping() {
             assert!(s.document().layers[&id].raster.get(x, y).a() <= 128);
         }
     }
-    s.undo().unwrap();
+    s.undo().unwrap().unwrap();
     assert!(s.document().same_semantics(&before));
-    s.redo().unwrap();
+    s.redo().unwrap().unwrap();
     assert!(s.document().same_semantics(&after));
     for invalid in [
         fixed.replace("256", "128"),

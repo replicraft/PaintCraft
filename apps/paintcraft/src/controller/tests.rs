@@ -412,6 +412,8 @@ fn a_confirmed_save_removes_the_checkpoint_and_clean_exit_leaves_nothing() {
 #[test]
 fn trimming_history_is_reported_to_the_user() {
     let mut e = editor();
+    e.session
+        .set_history_packing(paintcraft_editor::session::HistoryPacking::Shared);
     e.tool = Tool::Brush;
     e.options.size = 1;
     e.set_history_budget(3 * paintcraft_raster::RasterLayer::TILE_BYTES as u64);
@@ -631,4 +633,23 @@ fn layer_management_actions_are_single_undoable_transactions() {
 #[test]
 fn opening_a_bad_file_fails_without_a_panic() {
     assert!(Editor::open(Path::new("/definitely/not/here.pcnd")).is_err());
+}
+
+#[test]
+fn cold_history_admission_failure_is_reported_without_publishing_an_undo() {
+    let mut e = editor();
+    e.tool = Tool::Brush;
+    e.options.size = 1;
+    for i in 0..4 {
+        stroke(&mut e, &[(10 + i, 10), (10 + i, 11)]);
+    }
+    e.session.compact_history(1, 2 << 20, || Ok(())).unwrap();
+    e.session.set_history_restore_budget(0);
+    let ticket = e.session.ticket();
+    let depth = e.session.undo_depth();
+    e.request(77123, Action::Undo);
+    e.run_pending();
+    assert!(e.status().starts_with("Cannot undo:"), "{}", e.status());
+    assert_eq!(e.session.ticket(), ticket);
+    assert_eq!(e.session.undo_depth(), depth);
 }
