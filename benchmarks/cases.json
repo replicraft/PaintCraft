@@ -43,5 +43,48 @@
     ],
     "decision_rule": "Qualify cache policies only where correctness and total workload costs improve.",
     "protocol": "docs/development/HYPERFINE_PROTOCOL.md"
+  },
+  {
+    "id": "BF06",
+    "title": "CPU worker-pool execution",
+    "choice": "rayon",
+    "activation_tasks": [
+      "T12",
+      "T13",
+      "T21"
+    ],
+    "status": "awaiting-relevant-workload",
+    "tier": "both",
+    "hyperfine_required": true,
+    "hyperfine_role": "decision",
+    "adapter_path": "crates/services/paintcraft-render/examples/partitioned.rs",
+    "result_artifacts": [],
+    "variants": [
+      "sequential admitted tile loop",
+      "bounded dedicated workers",
+      "Rayon pool under the same PaintCraft scheduler/budget"
+    ],
+    "workloads": [
+      "1, 8 and many independent output tiles; small and expensive kernels",
+      "thread caps 1/2/4 and available admitted cores",
+      "sustained interactive samples while effects, history compression and a threaded codec run"
+    ],
+    "correctness_gates": [
+      "identical ordered output and no lost samples",
+      "same total process concurrency budget including codec threads",
+      "cancellation/drain/shutdown and nested joins are live"
+    ],
+    "supplementary_metrics": [
+      "throughput plus queue-inclusive event p50/p95/p99",
+      "CPU time, queue length and cancellation age",
+      "peak threads and retained memory"
+    ],
+    "invalid_comparisons": [
+      "Rayon full-core run versus deliberately starved baseline",
+      "only idle bulk throughput, no interactive interference",
+      "claiming work stealing implements task priorities"
+    ],
+    "decision_rule": "Use Rayon where it improves qualified tile workloads; retain direct execution for tiny jobs and a bounded scheduler above all pools.",
+    "protocol": "docs/development/HYPERFINE_PROTOCOL.md"
   }
 ]

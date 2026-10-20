@@ -19,6 +19,9 @@ ITERATIONS = {
 CACHE_ITERATIONS = {"sparse1": 256, "sparse5": 128, "sparse20": 64, "sparse100": 16,
                     "dense5": 16, "global5": 16, "global-bottom5": 16, "viewport100": 64}
 
+PARALLEL_ITERATIONS = {"tiny": 4096, "opaque1": 256, "sparse5": 128, "sparse20": 64,
+                       "sparse100": 16, "dense5": 16, "clipped100": 256}
+
 
 def output(argv):
     return subprocess.check_output(argv, cwd=ROOT, text=True).strip()
@@ -28,22 +31,28 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--execute", action="store_true")
-    parser.add_argument("--suite", choices=["spans", "cache"], default="spans")
+    parser.add_argument("--suite", choices=["spans", "cache", "parallel"], default="spans")
     parser.add_argument("--case", action="append", dest="cases", help="Run only named cases; repeat to select several")
     args = parser.parse_args()
     cache = args.suite == "cache"
-    iterations_by_case = CACHE_ITERATIONS if cache else ITERATIONS
+    parallel = args.suite == "parallel"
+    iterations_by_case = {"spans": ITERATIONS, "cache": CACHE_ITERATIONS, "parallel": PARALLEL_ITERATIONS}[args.suite]
     if args.cases:
         if not set(args.cases) <= iterations_by_case.keys():
             parser.error("unknown case for selected suite")
         iterations_by_case = {case: n for case, n in iterations_by_case.items() if case in args.cases}
     variants = ["full", "tile64", "tile128", "tile256"] if cache else ["baseline", "production"]
-    prefix = "cpu-cache" if cache else "cpu-spans"
+    if parallel:
+        variants = ["serial", "bands64-t1", "bands64-t2", "bands64-t4", "bands256-t4", "tiles64-t4", "tiles256-t4"]
+    prefix = {"spans": "cpu-spans", "cache": "cpu-cache", "parallel": "cpu-parallel"}[args.suite]
     relevance = ("Exact regional tile and ordered lower-prefix caching versus full regional rendering; admitted transactions and recorded history included." if cache else
                  "CPU full-composite borrowed sparse rows versus frozen scalar row-copy baseline; no cache/dirty-region qualification.")
+    if parallel:
+        relevance = "Exact scalar composition versus bounded caller-owned Rayon pools; disjoint row bands or borrowed tile views, no cache."
     destination = args.output.resolve()
     destination.mkdir(parents=True, exist_ok=False)
-    binary = ROOT / ("target/release/examples/cache_replay" if cache else "target/release/examples/composite")
+    driver = {"spans": "composite", "cache": "cache_replay", "parallel": "partitioned"}[args.suite]
+    binary = ROOT / f"target/release/examples/{driver}"
     files = [
         (binary, "binary"), (ROOT / "Cargo.lock", "lockfile"),
         (ROOT / "crates/services/paintcraft-render/examples/support/mod.rs", "generator"),
@@ -59,6 +68,10 @@ def main():
         files.extend((path, "driver") for path in [render / "examples/cache_replay.rs", render / "examples/support/replay.rs"])
         files.extend((path, "other") for path in [render / "src/cache.rs", *sorted((render / "src/cache").glob("*.rs")),
                      ROOT / "crates/foundation/paintcraft-raster/src/raster/versions.rs"])
+    if parallel:
+        render = ROOT / "crates/services/paintcraft-render"
+        files.extend((path, "driver") for path in [render / "examples/partitioned.rs", render / "examples/support/partitioned.rs"])
+        files.extend((path, "other") for path in [render / "src/parallel.rs", *sorted((render / "src/parallel").glob("*.rs"))])
     artifacts = [{"path": str(path), "sha256": sha256(path), "role": role} for path, role in files]
     host = {
         "platform": platform.platform(), "logical_cpus": os.cpu_count(),
@@ -72,7 +85,7 @@ def main():
     for case, iterations in iterations_by_case.items():
         config = {
             "schema": "paintcraft.hyperfine-run/1", "mode": "application",
-            "case_id": "BF29", "task_id": "T12",
+            "case_id": "BF06" if parallel else "BF29", "task_id": "T12",
             "relevance": relevance,
             "cwd": str(ROOT),
             "workload": {"id": f"{prefix}-{case}", "mode": "batch", "work_units": iterations,
@@ -83,7 +96,7 @@ def main():
                       "flags": "Cargo release defaults, opt-level 3, debug line tables, CARGO_INCREMENTAL=0",
                       "environment_notes": host["limitations"]},
             "runs": 20, "warmup": 3, "timeout_seconds": 600, "env": {},
-            "artifacts": artifacts, "correctness_commands": [[str(binary), "verify"]],
+            "artifacts": artifacts, "correctness_commands": [[str(binary), "verify", case]] if parallel else [[str(binary), "verify"]],
             "variants": [{"id": variant, "argv": [str(binary), variant, case, str(iterations)]}
                          for variant in variants],
         }
@@ -96,9 +109,11 @@ def main():
         return
     resource_flags = ["-l"] if platform.system() == "Darwin" else ["-v"]
     for case in iterations_by_case:
-        with (destination / f"calibration-{case}.txt").open("w") as log:
-            subprocess.run(["/usr/bin/time", *resource_flags, str(binary), variants[-1], case, "0"],
-                           cwd=ROOT, stdout=log, stderr=log, check=True, timeout=600)
+        for variant in variants if parallel else [variants[-1]]:
+            name = f"calibration-{case}-{variant}.txt" if parallel else f"calibration-{case}.txt"
+            with (destination / name).open("w") as log:
+                subprocess.run(["/usr/bin/time", *resource_flags, str(binary), variant, case, "0"],
+                               cwd=ROOT, stdout=log, stderr=log, check=True, timeout=600)
     for session, reverse in [(1, False), (2, True), (3, False)]:
         for case, (config, path) in configs.items():
             run = destination / f"session-{session}-{case}"

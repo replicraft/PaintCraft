@@ -60,3 +60,20 @@ and fixtures are identical for all granularity contenders. This does not measure
 GPU dispatch or actual input-to-display latency. Raw process RSS includes the
 fixture, history, returned output and persistent caches; cache weights are a
 separate explicit accounting contract. See [the regional cache contract](../docs/REGIONAL_COMPOSITOR.md).
+
+
+The bounded CPU partition comparison uses `--suite parallel` and BF06. Build
+`--example partitioned` first; the same runner records serial, 1/2/4-worker row
+bands and four-worker borrowed tile views. Each process checks live output probes
+in addition to independent scalar preflight. All candidates render identical
+RGBA8, and output destruction is included. Zero-work calibration is retained for
+each candidate, including its own thread-pool setup/teardown.
+
+`cargo bench -p paintcraft-render --bench partitioned` uses Criterion 0.8.2,
+100 flat samples, 1-second warmup and 2-second measurement per case. Set a new
+`CRITERION_HOME` to preserve raw sample/CSV output. Criterion's optional Rayon
+analysis and plotting features are disabled. It is development-only; the existing
+Divan targets retain allocation profiling. Divan 0.1.21 lacks raw sample export,
+so prior Divan tables do not fulfill that part of the protocol. See the
+[active protocol](../docs/development/HYPERFINE_PROTOCOL.md) and
+[Criterion's raw output documentation](https://bheisler.github.io/criterion.rs/book/user_guide/csv_output.html).
