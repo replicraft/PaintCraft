@@ -115,7 +115,8 @@ mod render_worker_tests {
         let mut executor = Executor::new(WorkerLimits {
             workers: 1,
             pending_jobs: 2,
-            transient_bytes: 8 << 20,
+            // Include the CPU cache/key allowance as production admission does.
+            transient_bytes: (8 << 20) + cpu_rendering::ADMISSION_BYTES,
         })
         .unwrap();
         let old = app.presentation_key();

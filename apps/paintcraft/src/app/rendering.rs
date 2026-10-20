@@ -113,8 +113,11 @@ impl App {
                 .sum::<u64>();
             let reservation = u64::from(doc.canvas.0) * u64::from(doc.canvas.1) * 16
                 + tiles * paintcraft_raster::RasterLayer::TILE_BYTES as u64
-                + if batch.is_some() { 256 << 20 } else { 0 };
+                + if batch.is_some() { 256 << 20 } else { 0 }
+                + cpu_rendering::ADMISSION_BYTES;
             let gpu = self.gpu.clone();
+            let cpu = self.cpu_renderer.clone();
+            let is_preview = batch.is_some();
             let wake = ctx.clone();
             match renderer.submit(
                 reservation,
@@ -134,16 +137,13 @@ impl App {
                             Err(error) => {
                                 cancel.check()?;
                                 (
-                                    paintcraft_render::render_cancellable(doc, || cancel.check())?,
+                                    cpu.render(doc, is_preview, || cancel.check())?,
                                     Some(format!("Using CPU rendering: {error}")),
                                 )
                             }
                         }
                     } else {
-                        (
-                            paintcraft_render::render_cancellable(doc, || cancel.check())?,
-                            None,
-                        )
+                        (cpu.render(doc, is_preview, || cancel.check())?, None)
                     };
                     Ok(RenderedFrame {
                         key,
@@ -167,9 +167,11 @@ impl App {
                     self.editor.selection(),
                     &batch,
                 )
-                .and_then(|staged| render_flat(&staged.doc))
+                .and_then(|staged| self.cpu_renderer.render(&staged.doc, true, || Ok(())))
             }),
-            None => render_flat(self.editor.document()),
+            None => self
+                .cpu_renderer
+                .render(self.editor.document(), false, || Ok(())),
         };
         self.install_render(ctx, key, pixels);
     }

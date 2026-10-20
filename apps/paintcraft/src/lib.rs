@@ -9,6 +9,8 @@ mod chrome;
 #[path = "app/colors.rs"]
 mod colors;
 pub mod controller;
+#[path = "app/cpu_rendering.rs"]
+mod cpu_rendering;
 #[path = "app/cursor.rs"]
 mod cursor;
 #[path = "app/files.rs"]
@@ -71,6 +73,7 @@ use paintcraft_formats::recovery::{Found, Recovery};
 use paintcraft_formats::save;
 use paintcraft_platform::dialogs::{Kind, NativeDialogs};
 use paintcraft_render::gpu::GpuRenderer;
+#[cfg(test)]
 use paintcraft_render::render_flat;
 use paintcraft_ui::view::View;
 use sha2::{Digest, Sha256};
@@ -160,6 +163,7 @@ pub struct App {
     switching: Option<switching::Switch>,
     gpu: Option<Arc<GpuRenderer>>,
     renderer: Option<Executor<RenderedFrame>>,
+    cpu_renderer: cpu_rendering::CpuRenderer,
     pending_frame: Option<(RenderKey, JobHandle)>,
     dialogs: Option<NativeDialogs>,
     dialog_owner: Option<Uuid>,
@@ -254,6 +258,7 @@ impl App {
             switching: None,
             gpu: None,
             renderer: None,
+            cpu_renderer: cpu_rendering::CpuRenderer::new(),
             pending_frame: None,
             dialogs: None,
             dialog_owner: None,
