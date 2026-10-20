@@ -36,10 +36,21 @@ enum Layout {
 #[derive(Debug)]
 pub(crate) struct Blob {
     payload: Payload,
-    crc: u32,
+    crc: Option<u32>,
     decoded: Mutex<TileVersion>,
 }
 impl Blob {
+    /// Registration needs no pixel scan. Immutable raw ownership remains the
+    /// authority until a checksum is computed when transferring to disk.
+    pub fn deferred(lease: TileLease) -> Self {
+        let decoded = Mutex::new(lease.version());
+        Self {
+            payload: Payload::Shared(lease),
+            crc: None,
+            decoded,
+        }
+    }
+
     pub fn pack(
         lease: TileLease,
         default: Rgba,
@@ -101,7 +112,7 @@ impl Blob {
         };
         Ok(Self {
             payload,
-            crc,
+            crc: Some(crc),
             decoded: Mutex::new(lease.version()),
         })
     }
@@ -132,6 +143,33 @@ impl Blob {
     pub fn spillable(&self) -> bool {
         !matches!(self.payload, Payload::Disk { .. } | Payload::Solid(_))
     }
+    pub fn needs_scan(&self) -> bool {
+        self.crc.is_none()
+    }
+    pub fn transferred(
+        &self,
+        default: Rgba,
+        store: Option<&dyn paintcraft_core::types::storage::SpillStore>,
+        budget: &mut usize,
+        encoder: &mut compression::Encoder,
+        check: &impl Fn() -> Result<()>,
+    ) -> Result<Self> {
+        if self.needs_scan() {
+            let Payload::Shared(tile) = &self.payload else {
+                return Err(corrupt());
+            };
+            let prepared = Self::pack(tile.clone(), default, budget, check, encoder)?;
+            if !prepared.spillable() {
+                return Ok(prepared);
+            }
+            match store {
+                Some(store) => prepared.spilled(store),
+                None => Ok(prepared),
+            }
+        } else {
+            self.spilled(store.ok_or_else(corrupt)?)
+        }
+    }
     pub fn spilled(&self, store: &dyn paintcraft_core::types::storage::SpillStore) -> Result<Self> {
         let (layout, bytes) = match &self.payload {
             Payload::Shared(tile) => (Layout::Raw, tile.bytes()),
@@ -155,7 +193,7 @@ impl Blob {
         }
         Ok(Self {
             payload: Payload::Disk { layout, data },
-            crc: self.crc,
+            crc: Some(self.crc.unwrap_or_else(|| crc32fast::hash(bytes))),
             decoded: Mutex::new(self.source()),
         })
     }
@@ -217,7 +255,7 @@ impl Blob {
             if let Some((&(x, y, w, h), bytes)) = patch {
                 copy_patch((x, y, w, h), bytes, out)?;
             }
-            if crc32fast::hash(out) != self.crc {
+            if Some(crc32fast::hash(out)) != self.crc {
                 return Err(corrupt());
             }
             Ok(())

@@ -73,7 +73,13 @@ impl History {
                 "history has no spill store",
             )
         })?;
-        let result = self.prepare_spill(store.as_ref(), temporary_bytes, max_payloads, &check);
+        let result = self.prepare_transfer(
+            Some(store.as_ref()),
+            temporary_bytes,
+            max_payloads,
+            &check,
+            false,
+        );
         // Failed preparation has dropped every unpublished extent by this point.
         self.last_cleanup_error = store.collect_garbage().err();
         result.map(|mut report| {
@@ -81,12 +87,39 @@ impl History {
             report
         })
     }
-    fn prepare_spill(
+    pub(super) fn spill_unpinned(
         &mut self,
-        store: &dyn SpillStore,
+        temporary_bytes: usize,
+        max_payloads: usize,
+    ) -> Result<SpillReport> {
+        let store = self.spill_store.clone().expect("checked spill store");
+        let result = self.prepare_transfer(
+            Some(store.as_ref()),
+            temporary_bytes,
+            max_payloads,
+            &|| Ok(()),
+            true,
+        );
+        self.last_cleanup_error = store.collect_garbage().err();
+        result.map(|mut report| {
+            report.store = store.usage();
+            report
+        })
+    }
+    pub(super) fn refine_deferred(
+        &mut self,
+        temporary_bytes: usize,
+        max_payloads: usize,
+    ) -> Result<SpillReport> {
+        self.prepare_transfer(None, temporary_bytes, max_payloads, &|| Ok(()), true)
+    }
+    fn prepare_transfer(
+        &mut self,
+        store: Option<&dyn SpillStore>,
         temporary_bytes: usize,
         max_payloads: usize,
         check: &impl Fn() -> Result<()>,
+        exclude_hot: bool,
     ) -> Result<SpillReport> {
         check()?;
         let before = self.memory_usage().decoded_bytes;
@@ -97,6 +130,30 @@ impl History {
             return Err(archive::limit("history spill entry admission exceeded"));
         }
         budget -= charge;
+        let mut pinned = std::collections::HashSet::new();
+        if exclude_hot {
+            for entry in &self.entries {
+                if let Storage::Hot(snapshot) = &entry.storage {
+                    for layer in snapshot.document.layers.values() {
+                        for (_, lease) in layer.raster.tile_leases() {
+                            let version = lease.version();
+                            if !pinned.contains(&version) {
+                                if budget < 128 {
+                                    return Err(archive::limit(
+                                        "history hot identity admission exceeded",
+                                    ));
+                                }
+                                budget -= 128;
+                                pinned.try_reserve(1).map_err(|_| {
+                                    archive::limit("cannot track hot history tiles")
+                                })?;
+                                pinned.insert(version);
+                            }
+                        }
+                    }
+                }
+            }
+        }
         let mut entries = Vec::new();
         entries
             .try_reserve_exact(self.entries.len())
@@ -104,12 +161,22 @@ impl History {
         entries.extend(self.entries.iter().cloned());
         let mut replacements = std::collections::HashMap::new();
         let mut remaining = max_payloads;
-        for entry in &mut entries {
-            if let Storage::Cold(packed) = &entry.storage
-                && let Some(packed) =
-                    packed.spilled(&mut replacements, store, &mut budget, &mut remaining, check)?
-            {
-                entry.storage = Storage::Cold(Arc::new(packed));
+        let mut encoder = compression::Encoder::new(self.compression);
+        {
+            let mut work = archive::Transfer {
+                replacements: &mut replacements,
+                store,
+                budget: &mut budget,
+                remaining: &mut remaining,
+                pinned: &pinned,
+                encoder: &mut encoder,
+            };
+            for entry in &mut entries {
+                if let Storage::Cold(packed) = &entry.storage
+                    && let Some(packed) = packed.transferred(&mut work, check)?
+                {
+                    entry.storage = Storage::Cold(Arc::new(packed));
+                }
             }
         }
         for target in memo.values_mut() {
@@ -120,7 +187,9 @@ impl History {
             }
         }
         check()?;
-        store.flush()?;
+        if let Some(store) = store {
+            store.flush()?;
+        }
         check()?;
         self.entries = entries;
         self.memo = memo;
@@ -130,7 +199,7 @@ impl History {
             decoded_before: before,
             decoded_after: usage.decoded_bytes,
             disk_bytes: usage.disk_bytes,
-            store: store.usage(),
+            store: store.map(|s| s.usage()).unwrap_or_default(),
         })
     }
 }

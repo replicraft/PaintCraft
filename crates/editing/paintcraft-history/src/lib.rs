@@ -56,6 +56,7 @@ mod archive;
 mod compression;
 pub use compression::Compression;
 mod memory;
+mod pressure;
 mod spill;
 pub use memory::MemoryUsage;
 use paintcraft_core::types::{Error, Result};
@@ -95,6 +96,8 @@ pub enum Packing {
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Compaction {
     pub packed_entries: usize,
+    pub scanned_sources: usize,
+    pub deferred_sources: usize,
     pub decoded_before: u64,
     pub decoded_after: u64,
     pub encoded_bytes: u64,
@@ -260,29 +263,15 @@ impl History {
         self.reclaim_tables();
         self.last_trimmed = 0;
         self.last_packing_error = None;
-        if self.packing == Packing::Adaptive
+        if self.retention == Retention::Preserve {
+            self.relieve_pressure()?;
+        } else if self.packing == Packing::Adaptive
             && self.budget != 0
             && self.memory_usage().retained_weight() > self.budget
         {
-            let temporary = if self.spill_store.is_some() {
-                64 << 20
-            } else {
-                self.budget.min(64 << 20) as usize
-            };
+            let temporary = self.budget.min(64 << 20) as usize;
             if let Err(error) = self.compact_limited(2, temporary, 64, 64, || Ok(())) {
                 self.last_packing_error = Some(error);
-            }
-        }
-        if self.retention == Retention::Preserve
-            && self.memory_usage().retained_weight() > self.budget
-        {
-            if self.spill_store.is_some() {
-                self.spill(64 << 20, 64, || Ok(()))?;
-            }
-            if self.memory_usage().retained_weight() > self.budget {
-                return Err(archive::limit(
-                    "cannot preserve undo history within its allowance; save and reopen, increase the allowance, or explicitly choose trimming",
-                ));
             }
         }
         while self.retention == Retention::TrimOldest
@@ -309,8 +298,8 @@ impl History {
         self.compact_limited(keep_hot, temporary_bytes, usize::MAX, usize::MAX, check)
     }
     // Automatic pressure work scans at most 64 new source tiles and prepares
-    // at most 64 complete cold entries per publication. Larger snapshots remain
-    // shared rather than causing unbounded synchronous pixel scans.
+    // at most 64 complete cold entries per preparation. Other sources register
+    // immutable raw leases without scanning their pixels.
     fn compact_limited(
         &mut self,
         keep_hot: usize,
@@ -344,6 +333,7 @@ impl History {
         let mut count = 0;
         let mut visited = 0;
         let mut sources_left = max_sources;
+        let mut deferred = 0;
         for (i, entry) in entries.iter_mut().enumerate().take(end) {
             check()?;
             if i == self.cursor {
@@ -354,13 +344,15 @@ impl History {
                     break;
                 }
                 visited += 1;
-                let Some(needed) = archive::needed_sources(snapshot, &memo, sources_left, &check)?
-                else {
-                    continue;
-                };
-                sources_left -= needed;
-                let packed =
-                    archive::Packed::build(snapshot, &mut memo, &mut budget, &check, &mut encoder)?;
+                let packed = archive::Packed::build(
+                    snapshot,
+                    &mut memo,
+                    &mut budget,
+                    &check,
+                    &mut encoder,
+                    &mut sources_left,
+                    &mut deferred,
+                )?;
                 entry.storage = Storage::Cold(Arc::new(packed));
                 count += 1;
             }
@@ -371,6 +363,8 @@ impl History {
         let usage = self.memory_usage();
         Ok(Compaction {
             packed_entries: count,
+            scanned_sources: max_sources - sources_left,
+            deferred_sources: deferred,
             decoded_before: before,
             decoded_after: usage.decoded_bytes,
             encoded_bytes: usage.encoded_bytes,

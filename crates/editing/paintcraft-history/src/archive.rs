@@ -40,47 +40,67 @@ struct SavedLayer {
     default: Rgba,
     tiles: Vec<(TileCoord, Arc<Blob>)>,
 }
+pub(crate) struct Transfer<'a> {
+    pub replacements: &'a mut HashMap<usize, Arc<Blob>>,
+    pub store: Option<&'a dyn paintcraft_core::types::storage::SpillStore>,
+    pub budget: &'a mut usize,
+    pub remaining: &'a mut usize,
+    pub pinned: &'a std::collections::HashSet<TileVersion>,
+    pub encoder: &'a mut compression::Encoder,
+}
+impl Transfer<'_> {
+    fn eligible(&self, blob: &Blob) -> bool {
+        (if self.store.is_some() {
+            blob.spillable()
+        } else {
+            blob.needs_scan()
+        }) && !(blob.owns_decoded() && self.pinned.contains(&blob.source()))
+    }
+}
 impl Packed {
-    pub fn spilled(
+    pub fn transferred(
         &self,
-        replacements: &mut HashMap<usize, Arc<Blob>>,
-        store: &dyn paintcraft_core::types::storage::SpillStore,
-        budget: &mut usize,
-        remaining: &mut usize,
+        work: &mut Transfer<'_>,
         check: &impl Fn() -> Result<()>,
     ) -> Result<Option<Self>> {
         if !self.blobs().any(|b| {
-            replacements.contains_key(&(Arc::as_ptr(b) as usize))
-                || (*remaining != 0 && b.spillable())
+            work.replacements.contains_key(&(Arc::as_ptr(b) as usize))
+                || (*work.remaining != 0 && work.eligible(b))
         }) {
             return Ok(None);
         }
         let weight = self.metadata_weight();
-        if weight > *budget {
-            return Err(limit("history spill metadata admission exceeded"));
+        if weight > *work.budget {
+            return Err(limit("history transfer metadata admission exceeded"));
         }
-        *budget -= weight;
+        *work.budget -= weight;
         let mut layers = self.layers.clone();
         for layer in &mut layers {
             for (_, blob) in &mut layer.tiles {
                 check()?;
                 let key = Arc::as_ptr(blob) as usize;
-                if let Some(replacement) = replacements.get(&key) {
+                if let Some(replacement) = work.replacements.get(&key) {
                     *blob = replacement.clone();
-                } else if *remaining != 0 && blob.spillable() {
+                } else if *work.remaining != 0 && work.eligible(blob) {
                     let charge = blob_weight(blob) + 256;
-                    if charge > *budget {
-                        return Err(limit("history spill reference admission exceeded"));
+                    if charge > *work.budget {
+                        return Err(limit("history transfer reference admission exceeded"));
                     }
-                    *budget -= charge;
-                    replacements
+                    *work.budget -= charge;
+                    work.replacements
                         .try_reserve(1)
-                        .map_err(|_| limit("cannot track history spill payload"))?;
-                    let replacement = Arc::new(blob.spilled(store)?);
+                        .map_err(|_| limit("cannot track history transfer payload"))?;
+                    let replacement = Arc::new(blob.transferred(
+                        layer.default,
+                        work.store,
+                        work.budget,
+                        work.encoder,
+                        check,
+                    )?);
                     check()?;
-                    replacements.insert(key, replacement.clone());
+                    work.replacements.insert(key, replacement.clone());
                     *blob = replacement;
-                    *remaining -= 1;
+                    *work.remaining -= 1;
                 }
             }
         }
@@ -107,6 +127,8 @@ impl Packed {
         budget: &mut usize,
         check: &impl Fn() -> Result<()>,
         encoder: &mut compression::Encoder,
+        sources_left: &mut usize,
+        deferred: &mut usize,
     ) -> Result<Self> {
         let doc = &snapshot.document;
         // Conservative metadata admission before copying variable-sized structures.
@@ -148,13 +170,13 @@ impl Packed {
                         return Err(limit("history payload metadata exceeded"));
                     }
                     *budget -= charge;
-                    let blob = Arc::new(Blob::pack(
-                        lease,
-                        layer.raster.default_pixel(),
-                        budget,
-                        check,
-                        encoder,
-                    )?);
+                    let blob = Arc::new(if *sources_left == 0 {
+                        *deferred += 1;
+                        Blob::deferred(lease)
+                    } else {
+                        *sources_left -= 1;
+                        Blob::pack(lease, layer.raster.default_pixel(), budget, check, encoder)?
+                    });
                     memo.try_reserve(1)
                         .map_err(|_| limit("cannot allocate history version index"))?;
                     memo.insert(version, Arc::downgrade(&blob));
@@ -301,31 +323,6 @@ pub(crate) fn blob_weight(blob: &Blob) -> usize {
         + 128
         + blob.encoded_bytes()
         + if blob.disk_bytes() != 0 { 256 } else { 0 }
-}
-
-pub(crate) fn needed_sources(
-    snapshot: &Snapshot,
-    memo: &Memo,
-    limit: usize,
-    check: &impl Fn() -> Result<()>,
-) -> Result<Option<usize>> {
-    let mut seen = std::collections::HashSet::new();
-    for layer in snapshot.document.layers.values() {
-        check()?;
-        for (_, lease) in layer.raster.tile_leases() {
-            check()?;
-            let version = lease.version();
-            if memo.get(&version).and_then(Weak::upgrade).is_none() {
-                seen.try_reserve(1)
-                    .map_err(|_| self::limit("cannot plan history source work"))?;
-                seen.insert(version);
-                if seen.len() > limit {
-                    return Ok(None);
-                }
-            }
-        }
-    }
-    Ok(Some(seen.len()))
 }
 
 pub(crate) fn corrupt() -> Error {
