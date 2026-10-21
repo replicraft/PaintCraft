@@ -183,6 +183,7 @@ impl PaintPlan {
                     x1: (coord.tx + 1) * edge,
                     y1: (coord.ty + 1) * edge,
                 };
+                let revision = super::regions::next_revision();
                 layer.with_tile_mut(coord, admission, |tile| {
                     for index in writes {
                         check()?;
@@ -194,6 +195,11 @@ impl PaintPlan {
                         else {
                             continue;
                         };
+                        tile.mark_region(
+                            area.translated(-tile_area.x0, -tile_area.y0)
+                                .expect("tile-local paint"),
+                            revision,
+                        );
                         for y in area.y0..area.y1 {
                             if (y - area.y0) % 64 == 0 {
                                 check()?;

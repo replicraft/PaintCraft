@@ -18,6 +18,7 @@ impl TileLease {
         write: impl FnOnce(&mut [u8]) -> Result<()>,
     ) -> Result<Self> {
         let mut tile = Tile::filled(default, adm)?;
+        tile.mark_all();
         write(&mut tile.pixels)?;
         Ok(Self(Arc::new(tile)))
     }
@@ -80,6 +81,7 @@ impl RasterLayer {
     pub fn metadata_weight(&self) -> usize {
         std::mem::size_of::<Self>()
             + self.tiles.capacity() * (std::mem::size_of::<(TileCoord, Arc<Tile>)>() + 32)
+            + self.tiles.len() * std::mem::size_of::<Tile>()
     }
 }
 

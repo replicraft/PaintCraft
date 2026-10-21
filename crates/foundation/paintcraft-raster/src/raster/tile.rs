@@ -44,6 +44,8 @@ impl Drop for Allocation {
 pub(super) struct Tile {
     pub(super) pixels: Vec<u8>,
     _residency: Option<Allocation>,
+    pub(super) initial: Rgba,
+    pub(super) regions: [u64; regions::REGIONS_PER_TILE],
 }
 impl Tile {
     /// Empty ownership-transfer sentinel; never exposed as a resident tile.
@@ -51,6 +53,8 @@ impl Tile {
         Self {
             pixels: Vec::new(),
             _residency: None,
+            initial: Rgba::TRANSPARENT,
+            regions: [0; regions::REGIONS_PER_TILE],
         }
     }
     fn allocate(adm: &mut Admission) -> Result<(Vec<u8>, Allocation)> {
@@ -99,6 +103,8 @@ impl Tile {
         Ok(Self {
             pixels: bytes,
             _residency: Some(lease),
+            initial: px,
+            regions: [0; regions::REGIONS_PER_TILE],
         })
     }
     pub(super) fn copied(source: &Self, adm: &mut Admission) -> Result<Self> {
@@ -107,6 +113,8 @@ impl Tile {
         Ok(Self {
             pixels: bytes,
             _residency: Some(lease),
+            initial: source.initial,
+            regions: source.regions,
         })
     }
     pub(super) fn is_uniform(&self, px: Rgba) -> bool {

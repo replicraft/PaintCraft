@@ -22,6 +22,8 @@ mod rows;
 pub use rows::RowSpan;
 mod leases;
 pub use leases::TileLease;
+mod regions;
+pub use regions::{REGION_EDGE, RegionCoord, RegionVersion};
 mod versions;
 pub use versions::TileVersion;
 
@@ -383,7 +385,18 @@ impl RasterLayer {
         }
         self.with_tile_mut(c, adm, |tile| {
             let new = blend(mode, src, tile.at(x, y));
-            tile.put(x, y, new);
+            if new != tile.at(x, y) {
+                tile.mark_region(
+                    Rect {
+                        x0: i64::from(x),
+                        y0: i64::from(y),
+                        x1: i64::from(x) + 1,
+                        y1: i64::from(y) + 1,
+                    },
+                    regions::next_revision(),
+                );
+                tile.put(x, y, new);
+            }
         })
     }
 
@@ -416,6 +429,11 @@ impl RasterLayer {
                 .intersect(&area)
                 .expect("tile range comes from the area");
                 self.with_tile_mut(c, adm, |tile| {
+                    tile.mark_region(
+                        part.translated(-tx * edge, -ty * edge)
+                            .expect("tile-local intersection"),
+                        regions::next_revision(),
+                    );
                     for y in part.y0..part.y1 {
                         for x in part.x0..part.x1 {
                             let (lx, ly) = (x.rem_euclid(edge) as u32, y.rem_euclid(edge) as u32);
@@ -512,6 +530,7 @@ impl RasterLayer {
             },
             adm,
             |tile| {
+                tile.mark_all();
                 for y in 0..h {
                     let (s, d) = ((y * w * 4) as usize, (y * TILE_EDGE * 4) as usize);
                     tile.pixels[d..d + (w * 4) as usize]
