@@ -285,3 +285,60 @@ fn synchronous_controllers_still_accept_two_gestures_before_draining_the_outbox(
     assert_eq!(layer.raster.get(1, 1), Rgba([0, 0, 0, 255]));
     assert_eq!(layer.raster.get(6, 6), Rgba([0, 0, 0, 255]));
 }
+
+#[test]
+fn retained_font_text_keeps_its_captured_layer_after_text_entry_and_target_selection_change() {
+    let service = Service::new(egui::Context::default()).unwrap();
+    let renderer = Arc::new(Mutex::new(crate::text::TextRenderer::bundled()));
+    let mut editor = Editor::new_document(128, 80)
+        .unwrap()
+        .with_text_renderer(renderer);
+    let background = editor.target().unwrap();
+    editor.request(1, Action::AddLayer);
+    editor.run_pending();
+    let text_layer = editor.target().unwrap();
+    editor.connect_editing(service.clone());
+    let release = service.pause();
+    editor.select_tool(Tool::Text);
+    editor.color = Rgba([30, 90, 180, 128]);
+    editor.pointer_down((8, 8));
+    editor.type_text("Hello Ω");
+    let batch = editor.preview_batch().unwrap().unwrap();
+    let staged =
+        paintcraft_editor::execute::execute(editor.document(), editor.selection(), &batch).unwrap();
+    let expected = paintcraft_render::render_flat(&staged.doc).unwrap();
+    assert!(
+        expected
+            .as_chunks::<4>()
+            .0
+            .iter()
+            .any(|pixel| *pixel != [255; 4])
+    );
+    editor.commit_text();
+    assert!(!editor.is_editing_text());
+    assert!(editor.set_target(background));
+    editor.run_pending();
+    assert!(matches!(editor.preview(), Some(Preview::Text { layer, .. }) if layer == text_layer));
+    let retained = editor
+        .preview_batch()
+        .expect("retained text still has a captured layer")
+        .unwrap();
+    let staged =
+        paintcraft_editor::execute::execute(editor.document(), editor.selection(), &retained)
+            .unwrap();
+    assert_eq!(
+        paintcraft_render::render_flat(&staged.doc).unwrap(),
+        expected
+    );
+    release.send(()).unwrap();
+    until(|| {
+        editor.run_pending();
+        !editor.has_pending_edits()
+    });
+    assert_eq!(editor.target(), Some(background));
+    assert_eq!(
+        paintcraft_render::render_flat(editor.document()).unwrap(),
+        expected
+    );
+    assert_eq!(editor.publications(), 2);
+}

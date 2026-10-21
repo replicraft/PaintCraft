@@ -283,6 +283,7 @@ pub(super) fn preview(action: &Action) -> Option<Preview> {
             fill: *fill,
         }),
         Action::Text {
+            layer,
             style,
             background,
             at,
@@ -291,6 +292,7 @@ pub(super) fn preview(action: &Action) -> Option<Preview> {
             color,
             ..
         } => Some(Preview::Text {
+            layer: *layer,
             style: style.clone(),
             background: *background,
             at: *at,

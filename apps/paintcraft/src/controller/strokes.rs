@@ -14,6 +14,7 @@ impl Editor {
             Preview::Path(stroke) => stroke_operations(&stroke),
             Preview::Paths(strokes) => strokes.iter().flat_map(stroke_operations).collect(),
             Preview::Text {
+                layer,
                 style: Some(style),
                 at,
                 text,
@@ -21,14 +22,7 @@ impl Editor {
                 background,
                 ..
             } if !text.is_empty() => {
-                match self.font_text_operations(
-                    self.text_layer()?,
-                    at,
-                    &text,
-                    &style,
-                    color,
-                    background,
-                ) {
+                match self.font_text_operations(layer, at, &text, &style, color, background) {
                     Ok(ops) if !ops.is_empty() => ops,
                     Ok(_) => return None,
                     Err(error) => return Some(Err(error)),

@@ -302,6 +302,7 @@ impl App {
                 }
             }
             Some(Preview::Text {
+                layer: _,
                 style: None,
                 background: _,
                 at,

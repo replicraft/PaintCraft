@@ -211,6 +211,7 @@ pub enum Preview {
         to: (i64, i64),
     },
     Text {
+        layer: Uuid,
         style: Option<TextOptions>,
         background: Rgba,
         at: (i64, i64),
@@ -391,6 +392,7 @@ impl ToolState {
     pub fn preview(&self) -> Option<Preview> {
         if let Some(t) = &self.text {
             return Some(Preview::Text {
+                layer: t.layer,
                 style: t.style.clone(),
                 background: t.background,
                 at: t.at,
