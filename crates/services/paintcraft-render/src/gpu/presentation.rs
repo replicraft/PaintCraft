@@ -2,6 +2,7 @@
 use super::*;
 #[derive(Debug)]
 pub struct GpuTextureFrame {
+    region: Rect,
     texture: wgpu::Texture,
     view: wgpu::TextureView,
     device: wgpu::Device,
@@ -10,6 +11,10 @@ pub struct GpuTextureFrame {
     pub stats: GpuRenderStats,
 }
 impl GpuTextureFrame {
+    /// Half-open document-space bounds represented by this texture.
+    pub fn region(&self) -> Rect {
+        self.region
+    }
     pub fn size(&self) -> [u32; 2] {
         [self.texture.width(), self.texture.height()]
     }
@@ -83,6 +88,15 @@ impl GpuRenderer {
         doc: &Document,
         caller_check: impl Fn() -> Result<()>,
     ) -> Result<GpuTextureFrame> {
+        self.render_region_texture(doc, doc.canvas_rect(), caller_check)
+    }
+    /// Completed display texture covering only the requested document region.
+    pub fn render_region_texture(
+        &self,
+        doc: &Document,
+        region: Rect,
+        caller_check: impl Fn() -> Result<()>,
+    ) -> Result<GpuTextureFrame> {
         let mut cache = self.sources.lock().unwrap_or_else(|poisoned| {
             let mut cache = poisoned.into_inner();
             cache.clear();
@@ -98,7 +112,8 @@ impl GpuRenderer {
             let Some(pipeline) = &self.presentation else {
                 return Err(unavailable("GPU display textures unsupported"));
             };
-            let (width, height) = doc.canvas;
+            crate::region_bytes(doc, region)?;
+            let (width, height) = (region.width() as u32, region.height() as u32);
             if width > self.device.limits().max_texture_dimension_2d
                 || height > self.device.limits().max_texture_dimension_2d
             {
@@ -107,7 +122,7 @@ impl GpuRenderer {
                     "canvas exceeds GPU display texture limits",
                 ));
             }
-            let (output, mut stats) = self.compose(doc, &check, &mut cache)?;
+            let (output, mut stats) = self.compose(doc, region, &check, &mut cache)?;
             check()?;
             let texture = self.device.create_texture(&wgpu::TextureDescriptor {
                 label: Some("PaintCraft native display"),
@@ -158,6 +173,7 @@ impl GpuRenderer {
             check()?;
             stats.retained = cache.usage();
             Ok(GpuTextureFrame {
+                region,
                 texture,
                 view,
                 device: self.device.clone(),

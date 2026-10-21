@@ -653,3 +653,6 @@ fn display_texture_cancellation_and_device_loss_preserve_host_pixels_and_retire_
         Rgba([31, 63, 127, 128])
     );
 }
+
+#[path = "gpu/regions.rs"]
+mod regions;

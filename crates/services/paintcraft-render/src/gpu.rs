@@ -11,7 +11,7 @@ pub use presentation::GpuTextureFrame;
 use sources::SourceCache;
 pub use sources::{GpuFrame, GpuRenderStats, SourceCacheLimits, SourceCacheUsage};
 
-use paintcraft_core::types::{Error, ErrorCode, Result};
+use paintcraft_core::types::{Error, ErrorCode, Rect, Result};
 use paintcraft_document::Document;
 use std::{
     sync::{Mutex, mpsc},
@@ -150,6 +150,17 @@ impl GpuRenderer {
         doc: &Document,
         caller_check: impl Fn() -> Result<()>,
     ) -> Result<GpuFrame> {
+        self.render_region_with_stats(doc, doc.canvas_rect(), caller_check)
+    }
+    /// Exact straight-alpha output for a nonempty region inside the canvas.
+    /// Source residency remains keyed in document coordinates; output is tightly
+    /// packed from the requested region's origin.
+    pub fn render_region_with_stats(
+        &self,
+        doc: &Document,
+        region: Rect,
+        caller_check: impl Fn() -> Result<()>,
+    ) -> Result<GpuFrame> {
         let mut cache = self.sources.lock().unwrap_or_else(|poisoned| {
             let mut cache = poisoned.into_inner();
             cache.clear();
@@ -160,7 +171,7 @@ impl GpuRenderer {
             caller_check()?;
             self.epoch.check()
         };
-        let result = self.render_inner(doc, &check, &mut cache);
+        let result = self.render_inner(doc, region, &check, &mut cache);
         if result.is_err() {
             cache.clear();
         }
@@ -179,11 +190,12 @@ impl GpuRenderer {
     fn render_inner(
         &self,
         doc: &Document,
+        region: Rect,
         check: &impl Fn() -> Result<()>,
         cache: &mut SourceCache,
     ) -> Result<GpuFrame> {
-        let (output, mut stats) = self.compose(doc, check, cache)?;
-        let size = u64::from(doc.canvas.0) * u64::from(doc.canvas.1) * 4;
+        let (output, mut stats) = self.compose(doc, region, check, cache)?;
+        let size = crate::region_bytes(doc, region)? as u64;
         check()?;
         let readback = self.device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("PaintCraft composite readback"),
@@ -206,13 +218,15 @@ impl GpuRenderer {
     fn compose(
         &self,
         doc: &Document,
+        region: Rect,
         check: &impl Fn() -> Result<()>,
         cache: &mut SourceCache,
     ) -> Result<(wgpu::Buffer, GpuRenderStats)> {
         cache.begin_frame();
         let mut stats = GpuRenderStats::default();
         check()?;
-        let (w, h) = doc.canvas;
+        crate::region_bytes(doc, region)?;
+        let (w, h) = (region.width() as u32, region.height() as u32);
         let pixels = u64::from(w) * u64::from(h);
         let size = pixels * 4;
         let limits = self.device.limits();
@@ -234,7 +248,7 @@ impl GpuRenderer {
             usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
             mapped_at_creation: false,
         });
-        let canvas = doc.canvas_rect();
+        let canvas = region;
         for layer in doc.layers_in_order() {
             check()?;
             if !layer.visible
@@ -259,7 +273,7 @@ impl GpuRenderer {
                 &mut stats,
             )?;
             let params = LayerParams::new(
-                [area.x0 as u32, area.y0 as u32],
+                [(area.x0 - region.x0) as u32, (area.y0 - region.y0) as u32],
                 [width, height],
                 w,
                 layer.opacity,
