@@ -121,6 +121,7 @@ impl Editor {
             .extend(self.outbox.drain().into_iter().map(Queued::Edit));
         let id = Uuid::new_v4();
         self.actions.push_back(Queued::FileBarrier(id));
+        self.preview_queue_revision.advance();
         id
     }
     pub(crate) fn file_barrier_ready(&self, id: Uuid) -> bool {
@@ -129,6 +130,7 @@ impl Editor {
     pub(crate) fn release_file_barrier(&mut self, id: Uuid) {
         if self.file_barrier == Some(id) {
             self.file_barrier = None;
+            self.preview_queue_revision.advance();
         }
     }
     pub(crate) fn at_file_barrier(&self) -> bool {
@@ -265,6 +267,7 @@ impl Editor {
             return;
         };
         let pending = self.pending_edit.take().expect("pending edit");
+        self.preview_queue_revision.advance();
         self.publication_preview = None;
         let result = match result {
             Ok(Completion::Edit(prepared)) => self

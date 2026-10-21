@@ -231,7 +231,11 @@ impl App {
             ants(box_of((r.x0, r.y0), (r.x1 - 1, r.y1 - 1)));
         }
         let color = |c: Rgba| Color32::from_rgba_unmultiplied(c.0[0], c.0[1], c.0[2], c.0[3]);
-        match self.editor.preview() {
+        let snapshot = self.editor.preview_snapshot();
+        let overlay = snapshot
+            .as_deref()
+            .filter(|preview| !matches!(preview, Preview::Path(_) | Preview::Paths(_)));
+        match overlay.cloned() {
             Some(Preview::Path(_) | Preview::Paths(_)) => {} // Rendered through the same staged pixels as publication.
             Some(Preview::Shape {
                 tool,

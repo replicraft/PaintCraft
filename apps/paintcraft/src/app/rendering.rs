@@ -44,27 +44,33 @@ impl App {
     }
 
     pub(super) fn sync_texture(&mut self, ctx: &egui::Context) {
-        let preview = self.editor.preview().filter(|p| {
+        let preview = self.editor.preview_snapshot().filter(|p| {
             matches!(
-                p,
+                p.as_ref(),
                 Preview::Path(_) | Preview::Paths(_) | Preview::Text { style: Some(_), .. }
             )
         });
         let owner = preview.as_ref().map(|_| self.editor.preview_owner());
         let owner_changed = owner != self.preview_gesture;
-        if owner_changed || self.rendered_preview.as_deref() != preview.as_ref() {
+        let same_snapshot = match (&self.rendered_preview, &preview) {
+            (Some(old), Some(new)) => Arc::ptr_eq(old, new),
+            (None, None) => true,
+            _ => false,
+        };
+        if owner_changed || (!same_snapshot && self.rendered_preview != preview) {
             let revision = self
                 .preview_revision
                 .checked_add(1)
                 .expect("preview revision exhausted");
-            if owner_changed || !extends_preview(self.rendered_preview.as_deref(), preview.as_ref())
+            if owner_changed
+                || !extends_preview(self.rendered_preview.as_deref(), preview.as_deref())
             {
                 self.preview_start_revision = revision;
             }
             self.preview_gesture = owner;
-            self.rendered_preview = preview.map(Arc::new);
             self.preview_revision = revision;
         }
+        self.rendered_preview = preview;
         let key = self.presentation_key();
         while let Some((handle, result)) = self.renderer.as_mut().and_then(Executor::poll) {
             let expected = self
@@ -356,6 +362,34 @@ mod scheduling_tests {
         )
         .unwrap();
         assert_eq!(app.rendered, render_flat(&staged.doc).unwrap());
+    }
+    #[test]
+    fn idle_repaints_reuse_the_owned_preview_even_after_an_equal_value_refresh() {
+        let mut app = App::new(None);
+        let ctx = egui::Context::default();
+        app.editor.pointer_down((1, 1));
+        app.editor.pointer_move((2, 1));
+        app.sync_texture(&ctx);
+        let first = app.rendered_preview.clone().unwrap();
+        let revision = app.preview_revision;
+        app.sync_texture(&ctx);
+        assert!(Arc::ptr_eq(&first, app.rendered_preview.as_ref().unwrap()));
+        assert_eq!(app.preview_revision, revision);
+        // This changes the source stamp, but the gesture captured its own tool.
+        app.editor.tool = Tool::Brush;
+        app.sync_texture(&ctx);
+        let refreshed = app.rendered_preview.clone().unwrap();
+        assert_eq!(first, refreshed);
+        assert_eq!(app.preview_revision, revision);
+        app.sync_texture(&ctx);
+        assert!(Arc::ptr_eq(
+            &refreshed,
+            app.rendered_preview.as_ref().unwrap()
+        ));
+        app.editor.pointer_move((3, 1));
+        app.sync_texture(&ctx);
+        assert!(app.preview_revision > revision);
+        assert_ne!(first, app.rendered_preview.clone().unwrap());
     }
     #[test]
     fn native_preview_capture_and_caret_lookup_do_not_wait_for_a_busy_font_rasterizer() {

@@ -18,6 +18,8 @@ mod layers;
 mod paint_queue;
 #[path = "controller/pointer.rs"]
 mod pointer;
+#[path = "controller/preview_cache.rs"]
+mod preview_cache;
 #[path = "controller/strokes.rs"]
 mod strokes;
 #[path = "controller/text.rs"]
@@ -71,6 +73,8 @@ pub struct Editor {
     pending_edit: Option<background::Pending>,
     publication_preview: Option<Preview>,
     preview_lineage: Uuid,
+    preview_queue_revision: paintcraft_tools::PreviewRevision,
+    preview_cache: preview_cache::Cache,
     path: Option<PathBuf>,
     status: String,
     recovery: Option<Arc<Recovery>>,
@@ -140,6 +144,8 @@ impl Editor {
             pending_edit: None,
             publication_preview: None,
             preview_lineage: Uuid::new_v4(),
+            preview_queue_revision: Default::default(),
+            preview_cache: Default::default(),
             path,
             status: String::new(),
             recovery: None,
@@ -388,8 +394,10 @@ impl Editor {
         self.tools.backspace();
     }
     pub fn commit_text(&mut self) {
-        if let Some((token, action)) = self.tools.commit_text() {
-            self.outbox.push(token, action);
+        if let Some((token, action)) = self.tools.commit_text()
+            && self.outbox.push(token, action)
+        {
+            self.preview_queue_revision.advance();
         }
     }
     pub fn cancel_text(&mut self) {
@@ -400,7 +408,7 @@ impl Editor {
         self.cancel_gesture();
         self.tools.tool = tool;
     }
-    pub fn preview(&self) -> Option<Preview> {
+    fn collect_preview(&self) -> Option<Preview> {
         self.paint_preview().or_else(|| {
             if self.editing.is_some() && self.painting_blocked() {
                 self.publication_preview.clone()
@@ -431,7 +439,11 @@ impl Editor {
         if !matches!(action, Action::Text { .. }) {
             self.commit_text();
         }
-        self.outbox.push(token, action)
+        let accepted = self.outbox.push(token, action);
+        if accepted {
+            self.preview_queue_revision.advance();
+        }
+        accepted
     }
 
     /// Consume completions and execute queued activations in arrival order.
@@ -439,6 +451,9 @@ impl Editor {
     pub fn run_pending(&mut self) -> u64 {
         let before = self.publications();
         self.poll_edit();
+        if !self.outbox.is_empty() {
+            self.preview_queue_revision.advance();
+        }
         self.actions.extend(
             self.outbox
                 .drain()
@@ -452,6 +467,7 @@ impl Editor {
             if let Some(background::Queued::FileBarrier(_)) = self.actions.front() {
                 if let Some(background::Queued::FileBarrier(id)) = self.actions.pop_front() {
                     self.file_barrier = Some(id);
+                    self.preview_queue_revision.advance();
                 }
                 break;
             }
@@ -466,12 +482,16 @@ impl Editor {
                             background::Queued::Edit(action) => background::preview(action),
                             _ => None,
                         });
+                    if self.publication_preview.is_some() {
+                        self.preview_queue_revision.advance();
+                    }
                 }
                 break;
             }
             let Some(background::Queued::Edit(action)) = self.actions.pop_front() else {
                 break;
             };
+            self.preview_queue_revision.advance();
             self.publication_preview = self
                 .editing
                 .as_ref()
