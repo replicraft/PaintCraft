@@ -101,3 +101,44 @@ fn concurrent_final_reader_release_and_reservation_drop_preserve_exact_accountin
         assert!(budget.reserve(100).is_ok());
     }
 }
+
+#[test]
+fn capacity_preflight_does_not_transfer_bytes_or_create_activity() {
+    let budget = SharedBudget::new(16);
+    let reservation = budget.reserve_capacity(16).unwrap();
+    let activity = budget.activity();
+    reservation.ensure_capacity(16).unwrap();
+    assert_eq!(reservation.available(), 16);
+    let held = reservation.reserve(4).unwrap();
+    let error = reservation.ensure_capacity(13).unwrap_err();
+    assert_eq!(error.allocation_denial().unwrap().required_bytes(), 17);
+    assert_eq!(reservation.available(), 12);
+    assert_eq!(budget.activity(), activity);
+    drop(held);
+    assert_eq!(budget.activity(), activity); // Recycling is not globally free capacity.
+    drop(reservation);
+    assert!(budget.activity() > activity);
+}
+#[test]
+fn allocation_denial_activity_detects_equal_counter_replacement_but_not_denial_feedback() {
+    let budget = SharedBudget::new(16);
+    let held = budget.reserve(16).unwrap();
+    let error = budget.reserve(8).unwrap_err();
+    let denial = error.allocation_denial().unwrap();
+    let usage = budget.usage();
+    let activity = budget.activity();
+    let watch = budget.watch(1, || {}).unwrap();
+    watch.wait_for_capacity(Some(denial));
+    assert!(budget.reserve(8).is_err());
+    drop(budget.reserve(0).unwrap());
+    assert_eq!(budget.activity(), activity);
+    assert!(!denial.activity_changed());
+    drop(held);
+    let replaced = budget.reserve(16).unwrap();
+    assert_eq!(budget.usage(), usage);
+    assert!(denial.activity_changed());
+    budget.0.lock().unwrap().activity = u64::MAX;
+    let error = budget.reserve(8).unwrap_err();
+    assert!(error.allocation_denial().unwrap().activity_changed()); // Saturation stays conservative.
+    drop(replaced);
+}

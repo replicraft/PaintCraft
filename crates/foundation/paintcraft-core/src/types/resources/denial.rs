@@ -10,11 +10,14 @@ pub struct AllocationDenial {
     budget: SharedBudget,
     class: AllocationClass,
     required: u64,
+    observed_activity: u64,
 }
 impl AllocationDenial {
     pub(crate) fn new(budget: SharedBudget, required: u64) -> Self {
+        let observed_activity = budget.activity();
         Self {
             budget,
+            observed_activity,
             class: AllocationClass::SharedBudget,
             required,
         }
@@ -29,6 +32,14 @@ impl AllocationDenial {
     /// Atomically admit this known requirement in its original realm.
     pub fn reserve_capacity(&self) -> Result<BudgetReservation> {
         self.budget.reserve_capacity(self.required)
+    }
+    pub fn budget(&self) -> SharedBudget {
+        self.budget.clone()
+    }
+    /// Repricing hint; denial/notification alone does not manufacture activity.
+    pub fn activity_changed(&self) -> bool {
+        let current = self.budget.activity();
+        current == u64::MAX || current != self.observed_activity
     }
     pub fn class(&self) -> AllocationClass {
         self.class

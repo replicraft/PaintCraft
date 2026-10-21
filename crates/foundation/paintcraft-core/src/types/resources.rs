@@ -20,6 +20,7 @@ struct State {
     limit: u64,
     reserved: u64,
     peak: u64,
+    activity: u64,
     observers: watch::Registrations,
 }
 #[derive(Clone, Debug)]
@@ -30,6 +31,7 @@ impl SharedBudget {
             limit,
             reserved: 0,
             peak: 0,
+            activity: 0,
             observers: Vec::new(),
         })))
     }
@@ -40,6 +42,14 @@ impl SharedBudget {
             reserved: state.reserved,
             peak: state.peak,
         }
+    }
+    /// Advisory activity stamp for successful nonzero admission/release only.
+    /// At saturation, consumers must conservatively treat the realm as changed.
+    pub fn activity(&self) -> u64 {
+        self.0
+            .lock()
+            .unwrap_or_else(|error| error.into_inner())
+            .activity
     }
     pub fn can_reserve(&self, bytes: u64) -> bool {
         let usage = self.usage();
@@ -70,6 +80,9 @@ impl SharedBudget {
             return Err(Error::denied(self.clone(), bytes));
         };
         state.reserved = reserved;
+        if bytes != 0 {
+            state.activity = state.activity.saturating_add(1);
+        }
         state.peak = state.peak.max(reserved);
         let wakes = watch::collect(&mut state, before, false, false);
         drop(state);
@@ -80,6 +93,9 @@ impl SharedBudget {
         let mut state = self.0.lock().unwrap_or_else(|error| error.into_inner());
         let before = state.limit - state.reserved;
         state.reserved -= bytes;
+        if bytes != 0 {
+            state.activity = state.activity.saturating_add(1);
+        }
         let wakes = watch::collect(&mut state, before, false, bytes != 0);
         drop(state);
         watch::notify(wakes);
