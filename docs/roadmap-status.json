@@ -287,9 +287,11 @@
         "benchmarks/results/cpu-parallel-2026-10-20/DECISION.md",
         "docs/REGIONAL_INVALIDATION.md",
         "benchmarks/results/regional-patches-2026-10-21/DECISION.md",
-        "benchmarks/results/regional-patches-app-2026-10-21/DECISION.md"
+        "benchmarks/results/regional-patches-app-2026-10-21/DECISION.md",
+        "docs/GPU_SOURCES.md",
+        "benchmarks/results/gpu-sources-2026-10-21/DECISION.md"
       ],
-      "remaining_or_scope": "Ordered CPU/GPU flat composition, exact regional CPU output, bounded output/lower-prefix caches and caller-owned CPU band/tile partitions exist with local measurements; CLI exports accept explicit worker limits. Derived 64-pixel identities preserve untouched COW cells and patch complete cached output tiles without changing storage granularity. Finer operation rectangles, ROI effects, parallel cache-miss integration, multiresolution rendering, persistent GPU residency and group plans remain.",
+      "remaining_or_scope": "Ordered CPU/GPU flat composition, exact regional CPU output, bounded output/lower-prefix caches and caller-owned CPU band/tile partitions exist with local measurements; CLI exports accept explicit worker limits. Derived 64-pixel identities preserve untouched COW cells and patch complete cached output tiles without changing storage granularity. Finer operation rectangles, ROI effects, parallel cache-miss integration, multiresolution rendering, sparse GPU tile/output residency and group plans remain. GPU composition now retains bounded clipped layer sources and uploads only changed row strips; full output/readback and GPU crossover qualification remain.",
       "acceptance": "ROI-01\u201307 and RENDER-01\u201306; no tile seams or reordered group output."
     },
     {
@@ -349,9 +351,11 @@
         "crates/foundation/paintcraft-raster/src/smooth/tests.rs",
         "docs/INCREMENTAL_COVERAGE.md",
         "benchmarks/results/preview-geometry-2026-10-21/DECISION.md",
-        "apps/paintcraft/src/app/cpu_rendering/geometry_tests.rs"
+        "apps/paintcraft/src/app/cpu_rendering/geometry_tests.rs",
+        "docs/GPU_SOURCES.md",
+        "benchmarks/results/gpu-sources-2026-10-21/DECISION.md"
       ],
-      "remaining_or_scope": "Shared native render/edit workers prepare validated stroke/text plans from immutable previews. Revision-keyed weak snapshots avoid recollecting unchanged repaints; queued edits, file barriers and completion invalidate inputs. Guarded no-op results and compatible progress have tests. Preview-capture process costs are locally measured; changing-input cost is inconclusive. Device epochs reject replaced/retired GPU completions; Metal destruction and fresh-device host-history reconstruction pass. Native edit/render pools share declared-byte admission with worker/result guards surviving executor drop. Footprint-aware render retries and shared demand guide decoded pressure maintenance. Initial worker-admission races retain captured batch/tool/navigation tasks; decoded-failed edits and recorded navigation retry reserved known capacity under owner/base guards. History navigation plans fresh missing sets and reprices stale cache-dependent demand. Ordered paint plans admit operation tiles and replay contiguous rows; scoped measurements retain diagonal non-win controls. Native window-device recovery, priorities, physical/all-service budgets, changed-preview costs and native latency/interference qualification remain. Detached execution now checks cancellation between commands and within smooth coverage and planned paint indexing/preparation/replay; wall-clock cancellation tails and other kernels remain unqualified. Desktop preview staging now reuses one bounded-charge incremental sample union, scans appended capsules and routes worker cancellation into execution; measured growing/retrace CPU replay gains retain tiny non-win controls. Full incremental staging and native latency remain unqualified.",
+      "remaining_or_scope": "Shared native render/edit workers prepare validated stroke/text plans from immutable previews. Revision-keyed weak snapshots avoid recollecting unchanged repaints; queued edits, file barriers and completion invalidate inputs. Guarded no-op results and compatible progress have tests. Preview-capture process costs are locally measured; changing-input cost is inconclusive. Device epochs reject replaced/retired GPU completions; Metal destruction and fresh-device host-history reconstruction pass. Native edit/render pools share declared-byte admission with worker/result guards surviving executor drop. Footprint-aware render retries and shared demand guide decoded pressure maintenance. Initial worker-admission races retain captured batch/tool/navigation tasks; decoded-failed edits and recorded navigation retry reserved known capacity under owner/base guards. History navigation plans fresh missing sets and reprices stale cache-dependent demand. Ordered paint plans admit operation tiles and replay contiguous rows; scoped measurements retain diagonal non-win controls. Native window-device recovery, priorities, physical/all-service budgets, changed-preview costs and native latency/interference qualification remain. Detached execution now checks cancellation between commands and within smooth coverage and planned paint indexing/preparation/replay; wall-clock cancellation tails and other kernels remain unqualified. Desktop preview staging now reuses one bounded-charge incremental sample union, scans appended capsules and routes worker cancellation into execution; measured growing/retrace CPU replay gains retain tiny non-win controls. Full incremental staging and native latency remain unqualified. Bounded device-local source views now reuse unchanged uploads, stream protected-frame overflow and retire partial transfers on cancellation/epoch failure. Native admission reads immutable cache allowances; sparse GPU atlas/output residency and asynchronous transfers remain.",
       "acceptance": "SCHED-01\u201306 and GPU-01\u201306; no late mutation/device-loss data loss."
     },
     {
@@ -490,9 +494,11 @@
         "benchmarks/results/regional-patches-2026-10-21/DECISION.md",
         "benchmarks/results/regional-patches-app-2026-10-21/DECISION.md",
         "benchmarks/results/cpu-parallel-2026-10-20/DECISION.md",
-        "docs/development/HYPERFINE_PROTOCOL.md"
+        "docs/development/HYPERFINE_PROTOCOL.md",
+        "docs/GPU_SOURCES.md",
+        "benchmarks/results/gpu-sources-2026-10-21/DECISION.md"
       ],
-      "remaining_or_scope": "Local CPU partition/cache/region-granularity experiments retain raw statistical/process samples and desktop CPU consumer confirmation. General dispatch thresholds, spatial-index choices, GPU atlas layouts, other adoption experiments and cross-platform/native latency qualification remain.",
+      "remaining_or_scope": "Local CPU partition/cache/region-granularity experiments retain raw statistical/process samples and desktop CPU consumer confirmation. General dispatch thresholds, spatial-index choices, GPU atlas layouts, other adoption experiments and cross-platform/native latency qualification remain. Streamed/resident real-GPU preview experiments include completed readback and an over-entry-limit working set; they do not establish CPU/GPU crossover or atlas choices.",
       "acceptance": "Raw benchmark artifacts; select thresholds/index/atlas layout; no claims from theoretical speed."
     },
     {
@@ -742,9 +748,11 @@
         "apps/paintcraft/src/app/cpu_rendering/geometry_tests.rs",
         "docs/REGIONAL_INVALIDATION.md",
         "benchmarks/results/regional-patches-2026-10-21/DECISION.md",
-        "benchmarks/results/regional-patches-app-2026-10-21/DECISION.md"
+        "benchmarks/results/regional-patches-app-2026-10-21/DECISION.md",
+        "docs/GPU_SOURCES.md",
+        "benchmarks/results/gpu-sources-2026-10-21/DECISION.md"
       ],
-      "remaining_or_scope": "Dependency/task ledgers and source-scoped CPU/history/painting experiments retain raw statistical/process evidence and integrated CLI/desktop CPU confirmation. Region-grid and preview comparisons retain slow controls, memory costs, host drift and failed builds explicitly. Prior Divan-only raw-sample gates, other adoption comparisons and cross-platform/native input/display qualification remain.",
+      "remaining_or_scope": "Dependency/task ledgers and source-scoped CPU/history/painting experiments retain raw statistical/process evidence and integrated CLI/desktop CPU confirmation. Region-grid and preview comparisons retain slow controls, memory costs, host drift and failed builds explicitly. Prior Divan-only raw-sample gates, other adoption comparisons and cross-platform/native input/display qualification remain. GPU source-reuse evidence retains raw Criterion/process samples, staged-byte counters, over-limit behavior and a flagged timed outlier without promoting native latency claims.",
       "acceptance": "An adoption record points to real scope, tests and excluded future detail; plan-only tooling makes no repository changes; real comparisons use actual optimized code/fixtures, keep correctness/build/fixture/raw evidence and record selection/tie/rejection honestly; smoke/model results never qualify application choices."
     }
   ]

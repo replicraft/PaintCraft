@@ -127,3 +127,14 @@ accepts `PAINTCRAFT_GEOMETRY_BASE=sparse1|sparse5|dense5` and
 `PAINTCRAFT_GEOMETRY_COMPOSITOR=full|regional`; keep geometry caching enabled for
 both when isolating the compositor. See [consumer confirmation](results/regional-patches-app-2026-10-21/DECISION.md)
 for exact commands, retained host drift/memory costs and native latency limits.
+
+
+Resident GPU sources use the same optimized desktop preview driver with
+`PAINTCRAFT_GEOMETRY_GPU=streamed|resident`, `BASE=sparse1|dense5|dense65`,
+`CASE=growing` and `VARIANT=cached` (all names carry the `PAINTCRAFT_GEOMETRY_`
+prefix). `VARIANT=gpu-criterion` retains 20 flat complete-sequence samples per GPU
+mode, while `VARIANT=verify` checks complete pixels/source preservation on a required
+real adapter. [The record](results/gpu-sources-2026-10-21/DECISION.md) includes
+completion/readback, cold setup/teardown, source-stage bytes, over-entry-limit
+behavior and retained timing variability. It does not qualify CPU/GPU crossover,
+sparse atlas layout or native input/display latency.

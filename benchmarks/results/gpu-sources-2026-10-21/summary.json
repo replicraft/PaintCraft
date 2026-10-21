@@ -1,0 +1,115 @@
+[
+  {
+    "case": "sparse1",
+    "session_median_ms": {
+      "streamed": [
+        97.08575,
+        92.83320850000001,
+        88.6985625
+      ],
+      "resident": [
+        92.22989550000001,
+        91.03477100000002,
+        85.439333
+      ]
+    },
+    "session_ratios": [
+      1.0526494633185397,
+      1.0197555008953665,
+      1.0381467104852047
+    ],
+    "reported_rss_median_mib": {
+      "streamed": 27.3671875,
+      "resident": 26.8359375
+    },
+    "reported_rss_max_mib": {
+      "streamed": 32.234375,
+      "resident": 30.90625
+    },
+    "growing_sequence_source_bytes": {
+      "streamed": 16777216,
+      "resident": 8650752
+    }
+  },
+  {
+    "case": "dense5",
+    "session_median_ms": {
+      "streamed": [
+        185.44877100000002,
+        170.075083,
+        161.28004150000004
+      ],
+      "resident": [
+        176.6543955,
+        142.73472900000002,
+        145.658521
+      ]
+    },
+    "session_ratios": [
+      1.0497829418572266,
+      1.1915466137186557,
+      1.1072475567701257
+    ],
+    "reported_rss_median_mib": {
+      "streamed": 31.7421875,
+      "resident": 30.296875
+    },
+    "reported_rss_max_mib": {
+      "streamed": 35.59375,
+      "resident": 36.203125
+    },
+    "growing_sequence_source_bytes": {
+      "streamed": 83886080,
+      "resident": 10747904
+    }
+  },
+  {
+    "case": "dense65",
+    "session_median_ms": {
+      "streamed": [
+        1462.8863955,
+        1221.719,
+        1335.6026665
+      ],
+      "resident": [
+        1425.5750835000001,
+        1026.0976455,
+        853.902688
+      ]
+    },
+    "session_ratios": [
+      1.0261728143482944,
+      1.1906459442314352,
+      1.5641157772066878
+    ],
+    "reported_rss_median_mib": {
+      "streamed": 64.8359375,
+      "resident": 61.84375
+    },
+    "reported_rss_max_mib": {
+      "streamed": 67.828125,
+      "resident": 64.8125
+    },
+    "growing_sequence_source_bytes": {
+      "streamed": 1090519040,
+      "resident": 50331648
+    }
+  },
+  {
+    "case": "calibration",
+    "session_median_ms": {
+      "calibration": [
+        12.6724995,
+        11.802958,
+        12.363395500000001
+      ]
+    },
+    "session_ratios": [],
+    "reported_rss_median_mib": {
+      "calibration": 7.328125
+    },
+    "reported_rss_max_mib": {
+      "calibration": 7.46875
+    }
+  }
+]

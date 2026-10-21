@@ -470,3 +470,46 @@ Exact operation rectangles, effect halos/groups/profiles, parallel cache misses,
 multiresolution, GPU texture validity/residency, globally dirty cost routing,
 all-service physical admission, scheduling and native latency/interference remain.
 T12/T21/T37 stay partial/in progress; the full roadmap remains active.
+
+
+## Twenty-ninth slice: bounded resident GPU source views
+
+The integer GPU compositor now retains clipped dense layer-source buffers keyed by
+document/layer identity, geometry/defaults and 64-pixel region versions. Unchanged
+sources upload nothing; changed source bands coalesce into contiguous full-width
+strips copied in the same encoder as ordered composition. Empty transparent implicit
+layers skip upload/dispatch. Default retained bounds are 64 MiB of buffer sizes,
+4 MiB of metadata charge and 64 views. Current-frame sources are protected; overflow
+streams instead of cycling out the entire working set. These are provisional guards,
+not sparse atlas or physical GPU/RSS admission. Keys pin no decoded host tiles.
+
+Source identities advance only after completed layer work and epoch/cancellation
+checks. Unsubmitted encoders discard incomplete copies; errors/cancellation retire
+all source entries and poisoned locks recover cold. Native declaration adds 76 MiB
+for buffer capacity and old/new/strip metadata; its UI query is immutable and cannot
+wait on the GPU mutex. Host-backed document/history/save semantics stay unchanged.
+See [the source contract](GPU_SOURCES.md).
+
+735 workspace tests pass (22 explicit ignores), strict workspace/all-target Clippy,
+formatting/file limits, release desktop/CLI builds, nine required real Metal checks
+and an isolated 30-frame native smoke. Required tests cover exact parity, clipping,
+hidden RGB, unchanged/partial uploads, scope separation, overflow/streaming, decoded
+lease release, every observed cancellation boundary, poisoning and device recovery.
+A test-only follow-up additionally exercises cross-frame eviction after a source
+becomes invisible; production and benchmark driver remain frozen for timing evidence.
+
+[Actual desktop GPU preview measurements](../benchmarks/results/gpu-sources-2026-10-21/DECISION.md)
+retain 120 Criterion samples and 420 Hyperfine observations with full-frame/source
+pre/postflights and frozen source/shader/executable hashes. Across 32-frame sequences,
+source staging falls from 16 to 8.25 MiB (one layer), 80 to 10.25 MiB (dense5), and
+1040 to 48 MiB (dense65). Complete-process ratios are only 1.02–1.05x, 1.05–1.19x
+and 1.03–1.56x, respectively, with substantial host/GPU variation. A flagged first
+timed 2.474-second run is retained. Calibration is not subtracted; adapter/pipeline
+construction, raster staging, all dispatch completion, readback and teardown stay
+included. RSS maxima do not improve universally, and no bus-traffic or native
+latency conclusion follows from source-byte counters.
+
+GPU composition still allocates/computes/reads back full output; sparse GPU working
+tiles, atlas/output residency, asynchronous/region transfers, CPU/GPU dispatch
+thresholds, physical all-service admission and native device/window recovery and
+input/display tails remain. T12/T13/T21/T37 remain partial or in progress.

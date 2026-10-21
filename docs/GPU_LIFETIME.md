@@ -41,7 +41,9 @@ promise instantaneous failure detection or input/display latency.
 
 ## Executed checks
 
-618 workspace tests pass, with 21 explicit ignores. Strict workspace/all-target
+The original epoch-only validation recorded 618 passing workspace tests with 21
+explicit ignores. The later [source-residency contract](GPU_SOURCES.md) records
+the expanded GPU path and current validation evidence. Strict workspace/all-target
 Clippy, formatting, file limits, release desktop/CLI builds and an isolated
 30-frame native-window smoke pass. The opt-in required GPU run is:
 
@@ -73,9 +75,11 @@ Fresh-device compositor reconstruction is tested headlessly; automatic eframe
 window/surface/device recreation is not implemented. CPU composition still needs
 a working presentation device to upload/display pixels in the native window.
 
-Persistent GPU tile residency, asynchronous transfer/readback services, physical
-GPU memory admission, device-aware capability generations and GPU committed-edit
-chains remain incomplete. Current GPU work stages layers and reads back a full
-frame. No throughput, memory reclamation or native tail-latency improvement is
+Bounded device-local clipped layer buffers now reuse unchanged sources and update
+changed row strips; errors/cancellation retire cached sources and fresh devices
+start empty. Persistent sparse GPU working tiles/atlas layouts, asynchronous
+transfer/readback services, physical GPU memory admission, device-aware capability
+generations and GPU committed-edit chains remain incomplete. GPU work still
+composes and reads back a complete frame. No throughput, memory reclamation or native tail-latency improvement is
 claimed by this correctness change. T13 and GPU-01..06 release qualification remain
 partial; see [the roadmap ledger](ROADMAP_STATUS.md).

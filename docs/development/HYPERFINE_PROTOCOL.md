@@ -1,6 +1,7 @@
 # Active backend measurement protocol
 
-This scoped owner applies to implemented compositor/cache/CPU partition workloads.
+This scoped owner applies to implemented compositor/cache/CPU partition workloads
+and bounded GPU source-reuse comparisons.
 It adopts the relevant rules from the reference pack's benchmark protocol without
 importing its unimplemented modules or dormant benchmark cases. The active case
 registry is `benchmarks/cases.json`; drivers and execution artifacts live under
@@ -62,3 +63,12 @@ rerun dormant future cases for unrelated edits. Full BF06 still needs interactiv
 interference/cancellation-age evidence; current CPU partition measurements qualify
 only the recorded bulk workloads. The original roadmap remains authoritative for
 those unfinished gates.
+
+
+GPU source comparisons execute actual device work through the desktop preview
+consumer and include ordered layer waits, full readback, setup and teardown.
+Required GPU preflights must fail if no adapter is available; a skipped device test
+cannot qualify the choice. Record source-stage bytes separately from bus traffic
+or physical GPU memory. Retained budgets, eviction/streaming controls and real
+cancellation/device tests accompany timings. This source-residency experiment does
+not choose CPU/GPU operation thresholds or a sparse atlas layout.

@@ -182,5 +182,51 @@
     ],
     "decision_rule": "Choose hot/cold policies by ratio and latency; raw is valid for incompressible content.",
     "protocol": "docs/development/HYPERFINE_PROTOCOL.md"
+  },
+  {
+    "id": "BF21",
+    "title": "CPU/GPU operation crossover",
+    "choice": "cpu-gpu",
+    "activation_tasks": [
+      "T12",
+      "T13",
+      "T21"
+    ],
+    "status": "locally-measured-partial",
+    "tier": "both",
+    "hyperfine_required": true,
+    "hyperfine_role": "decision",
+    "adapter_path": "apps/paintcraft/src/app/cpu_rendering/geometry_benchmark.rs",
+    "result_artifacts": [
+      "benchmarks/results/gpu-sources-2026-10-21/DECISION.md"
+    ],
+    "variants": [
+      "scalar/SIMD CPU",
+      "GPU with cold resources",
+      "GPU with valid resident resources"
+    ],
+    "workloads": [
+      "small adjustments and large blur/resample",
+      "vary dirty region not only canvas size",
+      "multiple accepted strokes with bounded readback/commit queue"
+    ],
+    "correctness_gates": [
+      "same policy/tolerance and final pixels",
+      "readback completed before claimed commit",
+      "cancellation/device loss handled"
+    ],
+    "supplementary_metrics": [
+      "upload/dispatch/readback/commit times",
+      "preview latency and pending age",
+      "RSS/VRAM and energy where measurable"
+    ],
+    "invalid_comparisons": [
+      "timing CPU complete versus GPU submitted",
+      "hiding transfer costs",
+      "committing GPU-only pixels"
+    ],
+    "decision_rule": "Derive workload-specific thresholds; resident and cold paths are different policies with identical semantics.",
+    "protocol": "docs/development/HYPERFINE_PROTOCOL.md",
+    "remaining_scope": "Only streamed/resident GPU preview composition is compared here. CPU/GPU crossover thresholds, effect kernels, energy and native input/display traces remain unqualified."
   }
 ]
