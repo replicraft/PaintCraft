@@ -27,8 +27,17 @@ pub struct JobHandle {
     key: JobKey,
 }
 #[derive(Clone, Debug)]
-pub struct Cancellation(Arc<AtomicBool>);
+pub struct Cancellation(
+    Arc<AtomicBool>,
+    paintcraft_core::types::resources::WeakResourceLease,
+);
 impl Cancellation {
+    /// Retain this admitted charge for external work that can outlive the task.
+    /// Token clones alone do not extend the reservation.
+    pub fn resource_lease(&self) -> Option<paintcraft_core::types::resources::ResourceLease> {
+        self.1.upgrade()
+    }
+
     pub fn check(&self) -> Result<()> {
         if self.0.load(Ordering::Acquire) {
             Err(Error::new(
@@ -42,7 +51,6 @@ impl Cancellation {
 }
 #[derive(Debug)]
 struct Reservation<T> {
-    bytes: u64,
     cancellation: Cancellation,
     ready: Option<Result<T>>,
     abandoned: bool,
@@ -60,7 +68,7 @@ pub struct Executor<T> {
     pool: rayon::ThreadPool,
     limits: Limits,
     jobs: SlotMap<JobKey, Reservation<T>>,
-    reserved: u64,
+    local_budget: SharedBudget,
     budget: SharedBudget,
     sender: mpsc::Sender<(JobKey, Result<T>, admission::Lease)>,
     receiver: mpsc::Receiver<(JobKey, Result<T>, admission::Lease)>,
@@ -93,7 +101,7 @@ impl<T: Send + 'static> Executor<T> {
             pool,
             limits,
             jobs: SlotMap::with_key(),
-            reserved: 0,
+            local_budget: SharedBudget::new(limits.transient_bytes),
             budget,
             sender,
             receiver,
@@ -103,7 +111,7 @@ impl<T: Send + 'static> Executor<T> {
         self.jobs.len()
     }
     pub fn reserved_bytes(&self) -> u64 {
-        self.reserved
+        self.local_budget.usage().reserved
     }
     /// Whether a request can ever fit, independent of current contention.
     pub fn request_fits(&self, bytes: u64) -> bool {
@@ -112,10 +120,7 @@ impl<T: Send + 'static> Executor<T> {
     /// A readiness hint only; submission atomically reserves the shared bytes.
     pub fn can_submit(&self, bytes: u64) -> bool {
         self.jobs.len() < self.limits.pending_jobs
-            && self
-                .reserved
-                .checked_add(bytes)
-                .is_some_and(|total| total <= self.limits.transient_bytes)
+            && self.local_budget.can_reserve(bytes)
             && self.budget.can_reserve(bytes)
     }
     pub fn submit(
@@ -150,8 +155,7 @@ impl<T: Send + 'static> Executor<T> {
             .expect("cancel validated handle");
         job.abandoned = true;
         if job.ready.is_some() {
-            let job = self.jobs.remove(handle.key).expect("live job");
-            self.reserved -= job.bytes;
+            self.jobs.remove(handle.key).expect("live job");
         }
         true
     }
@@ -166,8 +170,7 @@ impl<T: Send + 'static> Executor<T> {
         while let Ok((key, result, _lease)) = self.receiver.try_recv() {
             if let Some(job) = self.jobs.get_mut(key) {
                 if job.abandoned {
-                    let job = self.jobs.remove(key).expect("live job");
-                    self.reserved -= job.bytes;
+                    self.jobs.remove(key).expect("live job");
                 } else {
                     job.ready = Some(result);
                 }
@@ -178,7 +181,6 @@ impl<T: Send + 'static> Executor<T> {
     fn take_ready(&mut self, key: JobKey) -> Option<Result<T>> {
         self.jobs.get(key)?.ready.as_ref()?;
         let job = self.jobs.remove(key)?;
-        self.reserved -= job.bytes;
         Some(
             job.cancellation
                 .check()
@@ -386,3 +388,6 @@ mod admission_tests;
 
 #[cfg(test)]
 mod submission_tests;
+
+#[cfg(test)]
+mod resource_tests;

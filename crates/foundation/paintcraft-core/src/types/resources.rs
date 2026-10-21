@@ -124,6 +124,27 @@ impl Drop for Charge {
 pub struct BudgetLease {
     _charge: Arc<Charge>,
 }
+/// Shared ownership of a single or paired resource declaration.
+#[derive(Clone, Debug)]
+pub struct ResourceLease(Arc<(BudgetLease, Option<BudgetLease>)>);
+impl ResourceLease {
+    pub fn new(lease: BudgetLease) -> Self {
+        Self(Arc::new((lease, None)))
+    }
+    pub fn pair(first: BudgetLease, second: BudgetLease) -> Self {
+        Self(Arc::new((first, Some(second))))
+    }
+    pub fn downgrade(&self) -> WeakResourceLease {
+        WeakResourceLease(Arc::downgrade(&self.0))
+    }
+}
+#[derive(Clone, Debug)]
+pub struct WeakResourceLease(std::sync::Weak<(BudgetLease, Option<BudgetLease>)>);
+impl WeakResourceLease {
+    pub fn upgrade(&self) -> Option<ResourceLease> {
+        self.0.upgrade().map(ResourceLease)
+    }
+}
 
 #[cfg(test)]
 #[path = "resources/tests.rs"]

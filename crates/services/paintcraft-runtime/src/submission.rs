@@ -26,14 +26,20 @@ impl<T: Send + 'static> Executor<T> {
         F: FnOnce(Cancellation) -> Result<T> + Send + 'static,
         W: FnOnce() + Send + 'static,
     {
-        let Some(reserved) = self.reserved.checked_add(bytes) else {
+        if self
+            .local_budget
+            .usage()
+            .reserved
+            .checked_add(bytes)
+            .is_none()
+        {
             return Err(RejectedSubmission {
                 error: Error::new(ErrorCode::ResourceLimit, "worker reservation overflows"),
                 task,
                 wake,
             });
-        };
-        if self.jobs.len() >= self.limits.pending_jobs || reserved > self.limits.transient_bytes {
+        }
+        if self.jobs.len() >= self.limits.pending_jobs || !self.local_budget.can_reserve(bytes) {
             return Err(RejectedSubmission {
                 error: Error::new(
                     ErrorCode::ResourceLimit,
@@ -43,19 +49,22 @@ impl<T: Send + 'static> Executor<T> {
                 wake,
             });
         }
+        let local = match self.local_budget.reserve(bytes) {
+            Ok(lease) => lease,
+            Err(error) => return Err(RejectedSubmission { error, task, wake }),
+        };
         let lease = match self.budget.reserve(bytes) {
             Ok(lease) => lease,
             Err(error) => return Err(RejectedSubmission { error, task, wake }),
         };
-        let cancellation = Cancellation(Arc::new(AtomicBool::new(false)));
+        let lease = admission::Lease::pair(local, lease);
+        let cancellation = Cancellation(Arc::new(AtomicBool::new(false)), lease.downgrade());
         let key = self.jobs.insert(Reservation {
-            bytes,
             cancellation: cancellation.clone(),
             ready: None,
             abandoned: false,
             _lease: lease.clone(),
         });
-        self.reserved = reserved;
         let sender = self.sender.clone();
         self.pool.spawn(move || {
             let result = catch_unwind(AssertUnwindSafe(|| {
