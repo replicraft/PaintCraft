@@ -76,8 +76,9 @@ bytes. An existing explicit reservation is checked without silent expansion. The
 actual tile allocations consume staged pixels and transfer the reservation's bytes.
 Failed preflight returns the full known demand before allocating a tile prefix.
 
-Recorded history uses this path with a pinned unique-blob plan. General batch
-commands still require whole-request planning. Reservation transfer/recycling
+Recorded history uses this path with a pinned unique-blob plan. Painting uses [scoped operation plans](PAINT_PLANNING.md) that preserve cumulative
+batch demand while returning unused operation capacity. General batches still
+require whole-request planning. Reservation transfer/recycling
 retains the ownership contract in [ordered retries](EDIT_ADMISSION.md).
 
 ## Failed-attempt demand

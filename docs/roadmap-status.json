@@ -212,6 +212,11 @@
       ],
       "status": "partial",
       "evidence": [
+        "benchmarks/results/paint-plan-cli-cpu-2026-10-21/DECISION.md",
+        "benchmarks/results/paint-plan-rows-2026-10-20/DECISION.md",
+        "crates/editing/paintcraft-editor/tests/paint_admission.rs",
+        "crates/foundation/paintcraft-raster/tests/paint_plan.rs",
+        "docs/PAINT_PLANNING.md",
         "crates/editing/paintcraft-history/src/archive/restoration.rs",
         "apps/paintcraft/src/controller/retry/navigation_tests.rs",
         "crates/editing/paintcraft-editor/tests/reserved_navigation.rs",
@@ -258,7 +263,7 @@
         "apps/paintcraft/src/app/editing.rs",
         "apps/paintcraft/src/app/editing/tests.rs"
       ],
-      "remaining_or_scope": "Preserving history handles large snapshots through bounded classification/transfer. Native guarded storage maintenance reclaims eligible inactive-owner history without content/cursor/save changes and yields to queued foreground edits. Shared byte-budget notifications and known render demand coordinate native consumers across contexts; footprint-aware retries preserve fixed-limit failures. Accepted decoded-failed edits retain FIFO/file barriers and can reclaim their own history before a reserved retry. Initial worker-admission races retain captured tasks and FIFO order. Decoded navigation now retains guarded FIFO requests and retries with reserved capacity; cleanup completion is consumed only in the coordinator poll phase. History plans reserve full missing sets and waiting navigation reprices after activity or periodic fallback. General batch/effect planning, other resource retry lifecycles, native multi-window qualification, all-service budgets, relocation and native latency qualification remain.",
+      "remaining_or_scope": "Preserving history handles large snapshots through bounded classification/transfer. Native guarded storage maintenance reclaims eligible inactive-owner history without content/cursor/save changes and yields to queued foreground edits. Shared byte-budget notifications and known render demand coordinate native consumers across contexts; footprint-aware retries preserve fixed-limit failures. Accepted decoded-failed edits retain FIFO/file barriers and can reclaim their own history before a reserved retry. Initial worker-admission races retain captured tasks and FIFO order. Decoded navigation now retains guarded FIFO requests and retries with reserved capacity; cleanup completion is consumed only in the coordinator poll phase. History plans reserve full missing sets and waiting navigation reprices after activity or periodic fallback. Ordered paint operations now reserve touched-tile capacity before writes. Whole-batch/effect planning, other resource retry lifecycles, native multi-window qualification, all-service budgets, relocation and native latency qualification remain.",
       "acceptance": "MEM-01\u201307 under artificial low budget; actual allocator/RSS evidence, not counters alone."
     },
     {
@@ -294,6 +299,11 @@
       ],
       "status": "partial",
       "evidence": [
+        "benchmarks/results/paint-plan-cli-cpu-2026-10-21/DECISION.md",
+        "benchmarks/results/paint-plan-rows-2026-10-20/DECISION.md",
+        "crates/editing/paintcraft-editor/tests/paint_admission.rs",
+        "crates/foundation/paintcraft-raster/tests/paint_plan.rs",
+        "docs/PAINT_PLANNING.md",
         "docs/BUDGET_NOTIFICATIONS.md",
         "crates/editing/paintcraft-history/src/archive/restoration.rs",
         "apps/paintcraft/src/controller/retry/navigation_tests.rs",
@@ -334,7 +344,7 @@
         "crates/editing/paintcraft-editor/src/session/preparation.rs",
         "crates/editing/paintcraft-editor/tests/preparation.rs"
       ],
-      "remaining_or_scope": "Shared native render/edit workers prepare validated stroke/text plans from immutable previews. Revision-keyed weak snapshots avoid recollecting unchanged repaints; queued edits, file barriers and completion invalidate inputs. Guarded no-op results and compatible progress have tests. Preview-capture process costs are locally measured; changing-input cost is inconclusive. Device epochs reject replaced/retired GPU completions; Metal destruction and fresh-device host-history reconstruction pass. Native edit/render pools share declared-byte admission with worker/result guards surviving executor drop. Footprint-aware render retries and shared demand guide decoded pressure maintenance. Initial worker-admission races retain captured batch/tool/navigation tasks; decoded-failed edits and recorded navigation retry reserved known capacity under owner/base guards. History navigation plans fresh missing sets and reprices stale cache-dependent demand. Native window-device recovery, priorities, physical/all-service budgets, changed-preview costs and native latency/interference qualification remain.",
+      "remaining_or_scope": "Shared native render/edit workers prepare validated stroke/text plans from immutable previews. Revision-keyed weak snapshots avoid recollecting unchanged repaints; queued edits, file barriers and completion invalidate inputs. Guarded no-op results and compatible progress have tests. Preview-capture process costs are locally measured; changing-input cost is inconclusive. Device epochs reject replaced/retired GPU completions; Metal destruction and fresh-device host-history reconstruction pass. Native edit/render pools share declared-byte admission with worker/result guards surviving executor drop. Footprint-aware render retries and shared demand guide decoded pressure maintenance. Initial worker-admission races retain captured batch/tool/navigation tasks; decoded-failed edits and recorded navigation retry reserved known capacity under owner/base guards. History navigation plans fresh missing sets and reprices stale cache-dependent demand. Ordered paint plans admit operation tiles and replay contiguous rows; scoped measurements retain diagonal non-win controls. Native window-device recovery, priorities, physical/all-service budgets, changed-preview costs and native latency/interference qualification remain.",
       "acceptance": "SCHED-01\u201306 and GPU-01\u201306; no late mutation/device-loss data loss."
     },
     {
@@ -348,6 +358,11 @@
       ],
       "status": "partial",
       "evidence": [
+        "benchmarks/results/paint-plan-cli-cpu-2026-10-21/DECISION.md",
+        "benchmarks/results/paint-plan-rows-2026-10-20/DECISION.md",
+        "crates/editing/paintcraft-editor/tests/paint_admission.rs",
+        "crates/foundation/paintcraft-raster/tests/paint_plan.rs",
+        "docs/PAINT_PLANNING.md",
         "crates/editing/paintcraft-tools/src/lib.rs",
         "apps/paintcraft/src/controller.rs",
         "crates/foundation/paintcraft-raster/src/smooth.rs",
@@ -360,7 +375,7 @@
         "apps/paintcraft/src/app/editing/tests.rs",
         "docs/DESKTOP_EDITING.md"
       ],
-      "remaining_or_scope": "Antialiased brushes, bounded queued paint with ordered compound previews, Studio primary/secondary gestures, fill, shapes, rectangle selection and captured-layer Cosmic Text/Swash previews work. Complete selections, secondary eraser/text policies, editable text objects, IME and native sustained-input latency qualification remain.",
+      "remaining_or_scope": "Antialiased brushes, bounded queued paint with ordered compound previews, Studio primary/secondary gestures, fill, shapes, rectangle selection and captured-layer Cosmic Text/Swash previews work. Ordered operation plans share exact coverage and upfront tile admission across painting families. Complete selections, secondary eraser/text policies, editable text objects, IME and native sustained-input latency qualification remain.",
       "acceptance": "Tool-specific lifecycle fixtures, masked edges, focus cancel, text IME smoke cases."
     },
     {
@@ -694,6 +709,11 @@
       "depends_on": [],
       "status": "in-progress",
       "evidence": [
+        "benchmarks/results/paint-plan-cli-cpu-2026-10-21/DECISION.md",
+        "benchmarks/results/paint-plan-rows-2026-10-20/DECISION.md",
+        "crates/editing/paintcraft-editor/tests/paint_admission.rs",
+        "crates/foundation/paintcraft-raster/tests/paint_plan.rs",
+        "docs/PAINT_PLANNING.md",
         "docs/DEPENDENCY_CHOICES.md",
         "docs/ROADMAP_STATUS.md",
         "benchmarks/README.md",
@@ -702,7 +722,7 @@
         "docs/development/HYPERFINE_PROTOCOL.md",
         "benchmarks/results/cpu-parallel-2026-10-20/DECISION.md"
       ],
-      "remaining_or_scope": "Dependency/task ledgers, BF29 process evidence and BF06 raw Criterion/process measurements exist; prior Divan-only raw-sample gates, other relevant comparisons and cross-platform/interactive qualification remain.",
+      "remaining_or_scope": "Dependency/task ledgers, BF29 process evidence and BF06 raw Criterion/process measurements exist; paint-plan comparisons add Criterion raw samples and matched baseline/current CPU-only CLI apply confirmation with complete canonical-output equality, three process sessions and resource observations; superseded/slow controls and the excluded mixed-build pilot are preserved; prior Divan-only raw-sample gates, other relevant comparisons and cross-platform/interactive qualification remain.",
       "acceptance": "An adoption record points to real scope, tests and excluded future detail; plan-only tooling makes no repository changes; real comparisons use actual optimized code/fixtures, keep correctness/build/fixture/raw evidence and record selection/tie/rejection honestly; smoke/model results never qualify application choices."
     }
   ]
