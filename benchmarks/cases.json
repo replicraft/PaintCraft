@@ -17,7 +17,8 @@
       "benchmarks/results/cpu-cache-2026-10-20/DECISION.md",
       "benchmarks/results/preview-reuse-2026-10-20-measured/DECISION.md",
       "benchmarks/results/regional-patches-2026-10-21/DECISION.md",
-      "benchmarks/results/regional-patches-app-2026-10-21/DECISION.md"
+      "benchmarks/results/regional-patches-app-2026-10-21/DECISION.md",
+      "benchmarks/results/native-viewport-2026-10-21/DECISION.md"
     ],
     "variants": [
       "correct full-region baseline",
@@ -199,7 +200,8 @@
     "adapter_path": "apps/paintcraft/src/app/cpu_rendering/geometry_benchmark.rs",
     "result_artifacts": [
       "benchmarks/results/gpu-sources-2026-10-21/DECISION.md",
-      "benchmarks/results/direct-display-2026-10-21/DECISION.md"
+      "benchmarks/results/direct-display-2026-10-21/DECISION.md",
+      "benchmarks/results/native-viewport-2026-10-21/DECISION.md"
     ],
     "variants": [
       "scalar/SIMD CPU",

@@ -148,3 +148,18 @@ Direct native texture readiness uses the optimized desktop lib test
 readback/ColorImage/backend upload with completed texture conversion/native
 registration, retains mixed/tied controls and separates this boundary from OS
 input/display latency. The first failed preflight is preserved separately.
+
+Native viewport texture readiness uses the optimized desktop lib test
+`gpu_display::region_benchmark::native_viewport_process` and the committed runner:
+
+```sh
+CARGO_BUILD_JOBS=2 CARGO_INCREMENTAL=0 cargo test -p paintcraft --lib --release --no-run --message-format=json
+python3 benchmarks/tools/run_native_viewport.py --binary <reported-lib-test-executable> --output <new-result-directory>
+```
+
+[The decision](results/native-viewport-2026-10-21/DECISION.md) retains stationary,
+panning and full-canvas controls, exact independent visible pixels, native App
+acceptance, completed GPU work and three process sessions with raw statistical
+samples. The full-output control remains mixed/tied; cropped work reductions do not
+imply proportional latency gains. OS presentation and large zoomed-out mipmap
+behavior remain separate qualification work.

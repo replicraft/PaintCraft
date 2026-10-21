@@ -557,3 +557,47 @@ memory claim follows. CPU/GPU dispatch thresholds, output pooling, viewport and
 multiresolution surfaces, sparse GPU working tiles, asynchronous services, native
 device recreation and all-service admission remain. T12/T13/T21/T37 stay partial;
 the full roadmap remains active.
+
+## Thirty-first slice: exact native viewport composition and presentation
+
+Classic and Studio now request only the visible integral document region, using
+floor/ceil coverage at fractional DPI/zoom. Rendering starts after canvas layout,
+so the first display does not request a full-canvas output. CPU composition uses
+existing exact regional APIs/cache; GPU ordered composition keeps world-space
+source-cache identities and rebases output indices. Full render/export APIs remain
+complete. GPU textures carry their own document bounds. See
+[viewport rendering](VIEWPORT_RENDERING.md).
+
+Frame keys now include the region. Old preview progress cannot cross viewport
+changes, and accepted textures remain positioned at their own document bounds
+while replacement work runs. Native origin/dimension/epoch checks precede
+registration; CPU fallback uses the same region. Worker output admission follows
+requested area, without claiming full-preview or physical GPU memory bounds.
+CPU upload checks backend texture limits and can recover after a smaller request.
+A test exposed the former oversized-texture assertion; failed validation is retained.
+
+747 workspace tests pass (24 explicit ignores), strict workspace/all-target Clippy,
+formatting/file limits and release desktop/CLI builds. Thirteen required renderer
+Metal tests pass, including clipped offset/opacity/order parity, warm cache reuse,
+odd strides, invalid/cancelled requests, a small region of a full-render-rejected
+16384-square canvas and subsequent full exports. Native registration/draw tests
+pass (3), including exact actual egui framebuffer parity for cropped/full images.
+Two desktop regional tests run on required Metal. GUI tests exercise huge-canvas
+regional buffers across DPI/zoom/multipass changes without editing the document;
+a separate CPU test verifies safe backend-limit failure/recovery. A 30-frame release
+native window smoke exits zero with an empty log.
+
+[Measured completed texture readiness](../benchmarks/results/native-viewport-2026-10-21/DECISION.md)
+retains 120 Criterion samples and 420 Hyperfine observations. The fixed 128×96 view
+has process baseline/contender ratios 1.06–1.07x and the panning view 1.07–1.11x;
+the whole-canvas control is mixed/tied (0.98–1.07x). Cropped output pixel counts are
+10.67x lower; source upload counts also fall, while cold setup and synchronous work
+limit timing gains. All controls, slow observations, memory measurements, calibration,
+raw exports and development failures remain visible. Source and executable hashes
+match the frozen reproduction commit. This is texture readiness on one Metal host,
+not OS input/display latency, cross-platform conformance or physical memory admission.
+
+Multiresolution/tiled display, reusable outputs, sparse GPU working tiles, asynchronous
+transfers, full incremental operation staging, device recreation, priority/fairness
+and native latency/interference remain. Zoomed-out oversized source regions still
+need multiresolution output. T12/T13/T21/T37 remain partial/in progress.

@@ -1,0 +1,9 @@
+   Compiling paintcraft v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/apps/paintcraft)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 7.45s
+     Running tests/gui.rs (target/debug/deps/gui-e19e7390dae15c96)
+
+running 1 test
+test view::large_canvas_renders_only_visible_pixels_at_each_dpi_and_zoom ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 119 filtered out; finished in 2.89s
+

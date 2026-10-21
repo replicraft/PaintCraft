@@ -69,10 +69,12 @@ scope rather than rewriting raw execution status into a release claim.
 
 ## Remaining backend work
 
-Full output allocation and full-frame GPU recomposition remain. Regional CPU
-composition and bounded output/lower-prefix reuse are covered separately in
-[the regional compositor contract](REGIONAL_COMPOSITOR.md). Finer dirty rectangles,
-multiresolution display, bounded parallel partitions, SIMD comparisons and
-persistent GPU resources still need exact tests and relevant benchmarks. History compression/spill/reclamation and further
-file interoperability also remain. The current canvas admission ceiling is a
-policy bound, not proof that an arbitrary allocation fits available system RAM.
+Desktop CPU/GPU presentation now requests exact [viewport regions](VIEWPORT_RENDERING.md),
+while export APIs retain complete requested output. Regional CPU composition and
+bounded output/lower-prefix reuse are covered separately in
+[the regional compositor contract](REGIONAL_COMPOSITOR.md). Finer operation damage,
+multiresolution/tiled output, GPU output reuse, parallel cache-miss integration,
+SIMD comparisons and all-service memory/latency qualification remain. History and
+file interoperability have their own partial implementations and remaining gates;
+see [the current roadmap ledger](ROADMAP_STATUS.md). Admission ceilings are policy
+bounds, not proof that arbitrary allocations fit system RAM.

@@ -79,7 +79,8 @@ Bounded device-local clipped layer buffers now reuse unchanged sources and updat
 changed row strips; errors/cancellation retire cached sources and fresh devices
 start empty. Persistent sparse GPU working tiles/atlas layouts, asynchronous
 transfer/readback services, physical GPU memory admission, device-aware capability
-generations and GPU committed-edit chains remain incomplete. GPU work still composes a complete frame. Native presentation now consumes a
+generations and GPU committed-edit chains remain incomplete. GPU work still composes each requested region in full; desktop requests now follow
+[visible viewport bounds](VIEWPORT_RENDERING.md). Native presentation now consumes a
 [completed display texture](GPU_DISPLAY.md); explicit readback remains available. No throughput, memory reclamation or native tail-latency improvement is
 claimed by this correctness change. T13 and GPU-01..06 release qualification remain
 partial; see [the roadmap ledger](ROADMAP_STATUS.md).

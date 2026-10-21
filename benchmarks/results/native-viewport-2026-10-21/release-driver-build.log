@@ -1,0 +1,7 @@
+   Compiling paintcraft-ui v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/crates/presentation/paintcraft-ui)
+   Compiling paintcraft-render v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-render)
+   Compiling paintcraft-formats v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-formats)
+   Compiling paintcraft-classic v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/crates/presentation/paintcraft-classic)
+   Compiling paintcraft-studio v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/crates/presentation/paintcraft-studio)
+   Compiling paintcraft v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/apps/paintcraft)
+    Finished `release` profile [optimized + debuginfo] target(s) in 35.71s
