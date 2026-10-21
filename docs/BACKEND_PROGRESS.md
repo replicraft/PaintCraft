@@ -356,3 +356,38 @@ These are correctness/integration checks, not native p95/p99/max input, allocato
 RSS or GPU residency measurements. Preview/batch construction still makes copies
 and involves UI work; global admission, preview allocation reduction, broader tool
 input and native interference/latency qualification remain. T14 stays partial.
+
+## Eleventh slice: worker-side preview/tool preparation and compatible progress
+
+Render requests now share immutable preview snapshots instead of recollecting a
+second path copy and expanding/validating batches during submission. Native render
+workers prepare point/span values, canonical batches and font masks before private
+execution/composition. Native editing workers use the same builder for stroke and
+styled-text commands, so release dispatch also avoids this work. Typed validation
+and the existing long-path chunk/joint semantics remain in place.
+
+Empty tool output has an explicit guarded no-change preparation result rather
+than a fabricated wire batch. It preserves document, epoch, cursor, redo and save
+acknowledgements. Empty text can still prepare caret geometry. Native caret lookup
+uses only an available cached mask, and completed font discovery remains retained
+until it can activate without waiting for a worker-held cache.
+
+Progressive render acceptance now requires an unchanged owner and an input extension.
+Deletion, style/replacement changes, cancelled/retried plans, failed preparation and
+font activation retire incompatible work; identical-value retries get a new lineage.
+Useful in-flight brush/text extension remains supported. Already displayed pixels
+can remain until a replacement finishes; this is not instantaneous display latency.
+
+606 workspace tests pass (20 explicit ignores), plus strict workspace/all-target
+Clippy, formatting and the 800-line limit. Release desktop/CLI builds pass. Required
+Metal parity passes on Apple M1 Pro; the native window exits cleanly after 30 frames
+with isolated settings/recovery. New regressions cover frozen preview inputs and
+stale tickets, mid-preparation cancellation, font-cache acquisition held across UI
+submission, worker-only text masks, deferred discovery activation, empty caret/no-op
+results, preserved redo/save state, deletion and identical-value cancel/retry. These
+are correctness/worker-integration checks, not native latency or RSS measurements.
+
+UI snapshot gathering/comparison still copies point data, history capture still
+copies metadata, and other command construction, font-catalog activation and data
+destruction retain UI costs. Global physical admission, device epochs, priority/fair
+scheduling and native p95/p99/max/interference qualification remain. T13 stays partial.

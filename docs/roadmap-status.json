@@ -253,9 +253,15 @@
         "apps/paintcraft/src/controller/background.rs",
         "apps/paintcraft/src/controller/background/tests.rs",
         "apps/paintcraft/src/app/editing.rs",
-        "apps/paintcraft/src/app/editing/tests.rs"
+        "apps/paintcraft/src/app/editing/tests.rs",
+        "apps/paintcraft/src/controller/strokes.rs",
+        "apps/paintcraft/src/controller/strokes/preparation_tests.rs",
+        "apps/paintcraft/src/app/rendering.rs",
+        "apps/paintcraft/src/app/text_ui.rs",
+        "crates/editing/paintcraft-editor/src/session/preparation.rs",
+        "crates/editing/paintcraft-editor/tests/preparation.rs"
       ],
-      "remaining_or_scope": "A shared bounded desktop edit worker and render/export pools support targeted owner completions, cancellation, ordered file captures and stale-result rejection. Priorities, cross-platform I/O qualification, device epochs, interactive interference and process-wide physical budget/fairness evidence remain.",
+      "remaining_or_scope": "Shared native render/edit workers prepare validated stroke/text plans from immutable preview snapshots. Targeted completions, guarded no-op results, append-compatible preview progress and ordered file captures have tests. Priorities, device epochs, global physical budgets, snapshot-copy costs and native latency/interference qualification remain.",
       "acceptance": "SCHED-01\u201306 and GPU-01\u201306; no late mutation/device-loss data loss."
     },
     {
