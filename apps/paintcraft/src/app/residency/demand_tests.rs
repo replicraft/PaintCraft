@@ -181,5 +181,14 @@ fn actual_cross_context_history_reclamation_resumes_an_accepted_edit_in_the_same
         0
     );
     drop((owner, requester));
+    // Executor teardown requests cancellation; a running maintenance task keeps
+    // its snapshot leases until it actually completes and drops its result.
+    while tiles.usage().reserved != 0 {
+        assert!(
+            Instant::now() < deadline,
+            "abandoned maintenance retained tile leases"
+        );
+        std::thread::yield_now();
+    }
     assert_eq!(tiles.usage().reserved, 0);
 }
