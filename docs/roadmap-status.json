@@ -48,11 +48,16 @@
       ],
       "status": "partial",
       "evidence": [
+        "docs/RASTER_RESIDENCY.md",
+        "crates/foundation/paintcraft-core/src/types/resources.rs",
+        "crates/foundation/paintcraft-raster/src/raster/tile.rs",
+        "crates/foundation/paintcraft-raster/tests/residency.rs",
+        "crates/editing/paintcraft-editor/tests/residency.rs",
         "crates/foundation/paintcraft-raster/src/raster.rs",
         "docs/HISTORY_STORAGE.md",
         "crates/editing/paintcraft-editor/tests/history_storage.rs"
       ],
-      "remaining_or_scope": "Sparse COW tiles, immutable reader leases and admitted atomic COW work; global logical blob authority and process-wide residency accounting remain.",
+      "remaining_or_scope": "Sparse COW tiles retain byte leases through documents/history/readers; default decoded payload admission is process-shared at 2 GiB with atomic exhaustion tests. Logical blob authority, cross-session pressure, adaptive metadata/allocation budgets and RSS qualification remain.",
       "acceptance": "MEM-03/04; hidden RGB; negative boundaries; checked sizes; explicit resource errors."
     },
     {
@@ -188,6 +193,11 @@
       ],
       "status": "partial",
       "evidence": [
+        "docs/RASTER_RESIDENCY.md",
+        "crates/foundation/paintcraft-core/src/types/resources.rs",
+        "crates/foundation/paintcraft-raster/src/raster/tile.rs",
+        "crates/foundation/paintcraft-raster/tests/residency.rs",
+        "crates/editing/paintcraft-editor/tests/residency.rs",
         "crates/editing/paintcraft-history/src/lib.rs",
         "docs/HISTORY_STORAGE.md",
         "crates/editing/paintcraft-editor/tests/history_storage.rs",
@@ -209,7 +219,7 @@
         "apps/paintcraft/src/app/editing.rs",
         "apps/paintcraft/src/app/editing/tests.rs"
       ],
-      "remaining_or_scope": "Preserving history handles large snapshots through bounded classification and selective transfer batches. Native edits/navigation use a shared worker with owner/epoch/policy guards and ordered save/export barriers. Global physical admission, background priorities, segment relocation and broader corpus/input-latency qualification remain.",
+      "remaining_or_scope": "Preserving history handles large snapshots through bounded classification and selective transfer batches. Native edits/navigation use a shared worker with owner/epoch/policy guards and ordered save/export barriers. Owned decoded tile capacity is now shared across normal edit/import/restore paths. Adaptive all-service admission, cross-session pressure, background priorities, segment relocation and broader corpus/input-latency qualification remain.",
       "acceptance": "MEM-01\u201307 under artificial low budget; actual allocator/RSS evidence, not counters alone."
     },
     {

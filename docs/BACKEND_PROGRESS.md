@@ -485,3 +485,28 @@ allocation bounds, thread priorities, fairness, reclamation or latency. No new
 dependency or performance improvement is claimed. Persistent physical ownership,
 all-service admission and native pressure/interference qualification remain;
 T13 stays partial.
+
+
+## Sixteenth slice: ownership-based decoded tile residency
+
+Every decoded tile now owns a shared byte lease until its Vec payload and final
+reader are released. Standard native/headless admissions use one default 2 GiB
+payload realm, covering fresh tiles, COW, imports, previews and cold restoration.
+Weak cache/history tokens do not retain capacity. The byte primitive moves to
+core types for actual raster/runtime consumers; runtime exports remain compatible.
+Private execution also accepts an explicit admission realm. Pixel and wire policy
+remain unchanged.
+
+633 workspace tests pass (21 explicit ignores), plus strict workspace/all-target
+Clippy, formatting/file limits and release desktop/CLI builds. New regressions
+cover reader-pinned capacity, failed COW, unshared weak-token transfer, decode and
+partial-import rollback, racing allocations, shared defaults and atomic failure at
+the second batch operation. A real history compaction/reader/undo/redo case checks
+exact live payload counters and independent pixels. Metal parity/lifetime tests and
+a 30-frame isolated native smoke pass.
+
+[The residency contract](RASTER_RESIDENCY.md) distinguishes payload ownership from
+worker declarations and process RSS. The fixed ceiling is a provisional guardrail;
+metadata, codec/encoded/output/GPU buffers, adaptive admission and cross-tab pressure
+handling remain. No allocation-throughput or RSS improvement is inferred from the
+correctness checks. T04/T11/T13 remain partial.

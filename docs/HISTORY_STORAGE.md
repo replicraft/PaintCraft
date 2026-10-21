@@ -155,3 +155,15 @@ sessions, edit/undo ABA, policy changes, no-ops, save acknowledgements and cance
 after a native multi-batch spill barrier with exact redo retention and quota cleanup.
 Navigation tests cover worker undo/redo/seek, stale and cancelled publication, save
 acknowledgement, and every cancellation boundary of a two-tile cold restoration.
+
+
+## Decoded residency ownership
+
+Raw tile allocations now retain [residency leases](RASTER_RESIDENCY.md) through
+recorded history, active documents and external readers. Compaction only returns
+payload capacity once every strong decoded owner has released it. Cold undo
+materialization reserves capacity again; weak decoded aliases do not pin it.
+Default edit/import/restore admissions share a provisional 2 GiB decoded payload
+realm. This excludes encoded/native buffers and metadata, and is separate from
+history retention and worker declarations. Cross-session pressure coordination,
+adaptive physical budgets and residency/RSS qualification remain incomplete.

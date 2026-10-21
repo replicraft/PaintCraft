@@ -6,6 +6,10 @@ different result types. `Executor::with_budget` uses this authority in addition 
 its local queue and byte limits. `Executor::new` retains an independent authority
 with the pool's existing local byte ceiling.
 
+The primitive now lives in `paintcraft_core::types::resources`; runtime retains
+its public exports. [Decoded tile ownership](RASTER_RESIDENCY.md) uses the same
+primitive in a separate payload realm.
+
 This is scheduling admission for caller-supplied charges. It is not allocator
 interception, decoded-tile residency, an exact estimate of task allocations, a GPU
 memory limit or a process RSS ceiling.
