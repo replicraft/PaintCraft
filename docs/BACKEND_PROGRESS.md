@@ -731,3 +731,44 @@ Single-layer source bypass, sparse GPU working sets/output caches, asynchronous
 services, native device reconstruction, global physical budgets, full incremental
 staging, pressure/interference/tails and reference parity remain. T12/T13/T21/T37
 remain partial/in progress; this baseline does not complete the roadmap.
+
+## Thirty-fifth slice: bounded regional GPU source working sets
+
+The source cache can retain multiple exact clipped views of a compatible layer
+under its existing 64 MiB/4 MiB/64-entry limits. Views patch changed rows independently;
+layer-scope changes retire incompatible sources. Request protection now spans the
+whole scaled display request, so over-cap working sets keep early sources and stream
+overflow rather than resetting eviction protection at each internal native block.
+No source view aliases authoritative pixels or an independently owned display frame.
+No dependency, atlas, asynchronous service or physical budget is added. See
+[source ownership and bounds](GPU_SOURCES.md).
+
+[The native comparison](../benchmarks/results/gpu-region-sources-2026-10-21/DECISION.md)
+retains 320 raw statistical samples and 1,020 process observations across both
+tile edges. In the dense five-layer edge-64 sequence, source staging falls from
+20 MiB to 3.375 MiB and logical source creations from 320 to 40, retaining 2.5 MiB
+instead of 0.3125 MiB. Edge 32 exceeds the entry cap and preserves its first 64
+views while streaming overflow. Native composition and completion waits are unchanged.
+
+Timing is mixed and statistical samples mostly tie. Dense edge-64 process ratios
+are 0.971/1.063/1.405 across sessions, but controls with identical source work also
+swing substantially. Sparse edge-64 shows a 1.733 ratio in one session despite
+identical one-view source work. All calibration, slow observations, raw exports,
+source/binary identities and RSS remain retained. The original single-view policy
+stays default; callers explicitly opt into regional retention through the renderer
+builder. No general throughput improvement or desktop dispatch threshold is claimed.
+
+772 workspace tests pass (25 explicit ignores), 23 required Metal renderer tests
+and 220 required-GPU desktop library tests pass, with strict workspace/all-target
+Clippy, format/file limits and release desktop/CLI builds. New tests verify a full
+40-view hit set, one-row-band patch, opacity/order reuse, moved-layer invalidation,
+three-entry overflow, cancellation checkpoints and old-frame ownership. Native
+benchmark oracles execute actual registration with both policies and independently
+check every required pixel. Isolated 30-frame release startup smokes cover the
+existing default/experimental render settings; they do not enable regional retention
+or qualify native input/display latency.
+
+Per-layer submission/completion is the next GPU measurement target. Sparse
+GPU atlases, bounded dispatch/transfer services, device reconstruction, physical
+budgets, fairness, native tails and broader feature/reference work remain open.
+T12/T13/T21/T37 remain partial/in progress; the full roadmap stays active.

@@ -1,0 +1,15 @@
+{
+  "source_commit": "be6ab2a0f01c5c95fdb8190b7a64d8e140b89313",
+  "all_final_sources_match_measured_commit": true,
+  "workspace_passed": 772,
+  "workspace_ignored": 25,
+  "workspace_suites": 65,
+  "required_metal_renderer_tests": 23,
+  "required_gpu_desktop_library_tests": 220,
+  "strict_workspace_all_targets_clippy": true,
+  "release_desktop_and_cli_builds": true,
+  "format_file_limits_and_diff_checks": true,
+  "default_source_policy": "single view per layer",
+  "regional_policy": "explicit with_region_source_cache(true)",
+  "scope": "Same frozen source and benchmark executable; no default activation or throughput claim."
+}

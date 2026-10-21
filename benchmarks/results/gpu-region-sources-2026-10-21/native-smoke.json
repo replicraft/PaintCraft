@@ -1,0 +1,18 @@
+[
+  {
+    "directory": "/var/folders/k_/xqf_xh_1491ffqbnfjtfkbr40000gn/T/paintcraft-regional-sources-smoke-dicgbo8d",
+    "frames": 30,
+    "gpu_scaled_option": false,
+    "exit_code": 0,
+    "log_bytes": 0,
+    "scope": "Native startup/presentation. Regional sources are an explicit host API tested in Metal and native benchmark drivers; this smoke does not enable regional retention."
+  },
+  {
+    "directory": "/var/folders/k_/xqf_xh_1491ffqbnfjtfkbr40000gn/T/paintcraft-regional-sources-smoke-e3o6kw9q",
+    "frames": 30,
+    "gpu_scaled_option": true,
+    "exit_code": 0,
+    "log_bytes": 0,
+    "scope": "Native startup/presentation. Regional sources are an explicit host API tested in Metal and native benchmark drivers; this smoke does not enable regional retention."
+  }
+]

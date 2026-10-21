@@ -4,8 +4,8 @@ The ordered integer compositor now retains bounded, clipped, dense layer-source
 buffers on its own device. Authoritative sparse host tiles, recorded history,
 Session publication and saves remain independent. This is a first layer-view
 residency implementation, not a GPU tile atlas or GPU-authoritative editing store.
-Output composition still covers the complete canvas. Explicit readback covers the
-complete canvas; native windows now use [completed display textures](GPU_DISPLAY.md)
+Output composition still covers the complete requested region. Explicit readback
+covers that region; native windows use [completed display textures](GPU_DISPLAY.md)
 without normal host readback/re-upload.
 
 ## Identity and updates
@@ -61,7 +61,10 @@ through the whole frame and stream overflow without repeatedly evicting that wor
 set. Completion checks, cancellation retirement and independently owned display
 textures follow the same rules in either policy. This is bounded region-view
 retention, not a sparse tile atlas, asynchronous transfer or physical GPU admission.
-The original single-view policy remains the default pending native comparisons.
+The original single-view policy remains the default after
+[native comparisons](../benchmarks/results/gpu-region-sources-2026-10-21/DECISION.md)
+confirmed allocation/upload reductions but mixed process timing and mostly tied
+statistical samples. This is an explicit host option, not automatic native dispatch.
 
 Calls sharing a renderer serialize source updates through a derived-cache mutex.
 Cancellation callbacks must not reenter render/cache queries on the same renderer.
