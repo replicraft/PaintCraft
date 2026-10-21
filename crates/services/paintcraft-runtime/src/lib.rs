@@ -36,9 +36,11 @@ impl Cancellation {
     }
 }
 #[derive(Debug)]
-struct Reservation {
+struct Reservation<T> {
     bytes: u64,
     cancellation: Cancellation,
+    ready: Option<Result<T>>,
+    abandoned: bool,
 }
 #[derive(Clone, Copy, Debug)]
 pub struct Limits {
@@ -51,7 +53,7 @@ pub struct Executor<T> {
     owner: Uuid,
     pool: rayon::ThreadPool,
     limits: Limits,
-    jobs: SlotMap<JobKey, Reservation>,
+    jobs: SlotMap<JobKey, Reservation<T>>,
     reserved: u64,
     sender: mpsc::Sender<(JobKey, Result<T>)>,
     receiver: mpsc::Receiver<(JobKey, Result<T>)>,
@@ -111,6 +113,8 @@ impl<T: Send + 'static> Executor<T> {
         let key = self.jobs.insert(Reservation {
             bytes,
             cancellation: cancellation.clone(),
+            ready: None,
+            abandoned: false,
         });
         self.reserved = reserved;
         let sender = self.sender.clone();
@@ -145,11 +149,72 @@ impl<T: Send + 'static> Executor<T> {
         job.cancellation.0.store(true, Ordering::Release);
         true
     }
+    /// Cancel a result whose consumer has gone away. Its reservation remains
+    /// charged until worker completion is drained by a poll operation.
+    pub fn abandon(&mut self, handle: JobHandle) -> bool {
+        if !self.cancel(handle) {
+            return false;
+        }
+        let job = self
+            .jobs
+            .get_mut(handle.key)
+            .expect("cancel validated handle");
+        job.abandoned = true;
+        if job.ready.is_some() {
+            let job = self.jobs.remove(handle.key).expect("live job");
+            self.reserved -= job.bytes;
+        }
+        true
+    }
+
+    /// Drain notifications and release abandoned completions. Results belonging
+    /// to live consumers remain available and retain their reservations.
+    pub fn reap_abandoned(&mut self) {
+        self.receive_ready();
+    }
+
+    fn receive_ready(&mut self) {
+        while let Ok((key, result)) = self.receiver.try_recv() {
+            if let Some(job) = self.jobs.get_mut(key) {
+                if job.abandoned {
+                    let job = self.jobs.remove(key).expect("live job");
+                    self.reserved -= job.bytes;
+                } else {
+                    job.ready = Some(result);
+                }
+            }
+        }
+    }
+
+    fn take_ready(&mut self, key: JobKey) -> Option<Result<T>> {
+        self.jobs.get(key)?.ready.as_ref()?;
+        let job = self.jobs.remove(key)?;
+        self.reserved -= job.bytes;
+        Some(
+            job.cancellation
+                .check()
+                .and(job.ready.expect("completed job")),
+        )
+    }
+
+    /// Poll one consumer without consuming another consumer's result. Other
+    /// completed results remain charged until their owners consume or abandon them.
+    pub fn poll_for(&mut self, handle: JobHandle) -> Option<Result<T>> {
+        if handle.owner != self.owner {
+            return None;
+        }
+        self.receive_ready();
+        self.take_ready(handle.key)
+    }
+
     pub fn poll(&mut self) -> Option<(JobHandle, Result<T>)> {
-        let (key, result) = self.receiver.try_recv().ok()?;
-        let reservation = self.jobs.remove(key)?;
-        self.reserved -= reservation.bytes;
-        let result = reservation.cancellation.check().and(result);
+        self.receive_ready();
+        let key = self
+            .jobs
+            .iter()
+            .find(|(_, job)| job.ready.is_some())
+            .map(|(key, _)| key)?;
+        let result = self.take_ready(key)?;
         Some((
             JobHandle {
                 owner: self.owner,
@@ -244,5 +309,84 @@ mod tests {
         assert_eq!(executor.reserved_bytes(), 0);
         executor.submit(32, |_| Ok(42), || {}).unwrap();
         assert_eq!(completion(&mut executor).1.unwrap(), 42);
+    }
+    #[test]
+    fn targeted_consumers_retain_other_completed_results_and_their_reservations() {
+        let mut executor = executor();
+        let (finished, wait_finished) = mpsc::sync_channel(2);
+        let first_wake = finished.clone();
+        let first = executor
+            .submit(16, |_| Ok(11), move || first_wake.send(()).unwrap())
+            .unwrap();
+        let second = executor
+            .submit(16, |_| Ok(22), move || finished.send(()).unwrap())
+            .unwrap();
+        for _ in 0..2 {
+            wait_finished.recv_timeout(Duration::from_secs(5)).unwrap();
+        }
+        assert_eq!(executor.poll_for(second).unwrap().unwrap(), 22);
+        assert_eq!(executor.reserved_bytes(), 16);
+        assert_eq!(executor.pending(), 1);
+        assert!(executor.submit(17, |_| Ok(0), || {}).is_err());
+        assert!(executor.cancel(first));
+        assert_eq!(
+            executor.poll_for(first).unwrap().unwrap_err().code,
+            ErrorCode::OperationCancelled
+        );
+        assert_eq!(executor.reserved_bytes(), 0);
+        assert!(executor.poll_for(second).is_none());
+    }
+
+    #[test]
+    fn abandoning_running_work_releases_admission_only_after_actual_completion() {
+        let mut executor = executor();
+        let (started, wait_started) = mpsc::sync_channel(1);
+        let (release, wait_release) = mpsc::sync_channel(1);
+        let (finished, wait_finished) = mpsc::sync_channel(1);
+        let handle = executor
+            .submit(
+                32,
+                move |_| {
+                    started.send(()).unwrap();
+                    wait_release.recv().unwrap();
+                    Ok(7)
+                },
+                move || finished.send(()).unwrap(),
+            )
+            .unwrap();
+        wait_started.recv_timeout(Duration::from_secs(5)).unwrap();
+        assert!(executor.abandon(handle));
+        assert_eq!(executor.reserved_bytes(), 32);
+        assert!(executor.submit(1, |_| Ok(0), || {}).is_err());
+        assert!(executor.poll().is_none());
+        release.send(()).unwrap();
+        wait_finished.recv_timeout(Duration::from_secs(5)).unwrap();
+        assert!(executor.poll().is_none());
+        assert_eq!(executor.reserved_bytes(), 0);
+        assert!(!executor.abandon(handle));
+        executor.submit(32, |_| Ok(9), || {}).unwrap();
+        assert_eq!(completion(&mut executor).1.unwrap(), 9);
+    }
+    #[test]
+    fn abandonment_of_buffered_results_and_foreign_handles_preserves_other_owners() {
+        let mut executor = executor();
+        let mut foreign = super::Executor::<u64>::new(Limits {
+            workers: 1,
+            pending_jobs: 1,
+            transient_bytes: 32,
+        })
+        .unwrap();
+        let (finished, wait_finished) = mpsc::sync_channel(1);
+        let handle = executor
+            .submit(32, |_| Ok(17), move || finished.send(()).unwrap())
+            .unwrap();
+        wait_finished.recv_timeout(Duration::from_secs(5)).unwrap();
+        executor.reap_abandoned();
+        assert_eq!(executor.reserved_bytes(), 32);
+        assert!(foreign.poll_for(handle).is_none());
+        assert!(!foreign.abandon(handle));
+        assert!(executor.abandon(handle));
+        assert_eq!(executor.reserved_bytes(), 0);
+        assert!(executor.poll_for(handle).is_none());
     }
 }
