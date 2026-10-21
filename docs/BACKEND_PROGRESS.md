@@ -726,3 +726,40 @@ metadata/codec/output/GPU admission, priority/fairness and native latency/physic
 pressure qualification remain incomplete. Known-prefix demand may grow on later
 operations. Reader-pinned capacity can require cancellation. T07/T11/T13 remain
 partial; no throughput, RSS or tail-latency gain is inferred from these checks.
+
+
+## Twenty-fourth slice: planned history decode admission and demand repricing
+
+Cold restoration now captures a cancellable unique-blob plan, pins reusable tile
+leases and reserves the complete missing-tile set before decoding. A last external
+reader cannot invalidate planned reuse; duplicate references share one allocation.
+Fixed restore allowances are validated before decoded admission without double
+charging staged pixels. Explicit reservations are checked rather than expanded.
+Failed full-set admission allocates no missing-tile prefix. Codec/cancellation
+failures still roll back private materialization and dead weak aliases.
+
+Native navigation plans on its worker for every attempt instead of reserving an
+outdated learned prefix. Waiting requests reprice after decoded budget activity;
+release/reallocation to identical counters is detected. Denials, notification
+feedback, zero charges and pool-internal recycling do not manufacture activity.
+A provisional five-second fallback catches other-realm cache warming. Saturated
+activity stamps conservatively request a recheck. Queue/owner/save guards remain.
+
+704 workspace tests pass (21 explicit ignores), strict workspace/all-target Clippy,
+formatting/file limits, release desktop/CLI builds, three required Apple M1 Pro
+Metal checks and an isolated 30-frame native smoke.
+
+Two core regressions verify nontransferring capacity checks and activity semantics,
+including identical-counter replacement and saturation. A raster regression checks
+full-set admission, staged accounting and strict explicit reservations. Two history
+regressions check shared identity/hidden RGBA and reader-drop reuse pinning. An
+editor regression denies a cold plan in a fresh realm and verifies no prefix
+reservation high-water increase. A native regression warms a target in another realm
+and restores it while the original realm remains full, using activity and periodic
+rechecks; unchanged-denial polls do not submit new work.
+
+General batch/effect planning, bounded plan/command/index metadata, logical current-
+document eviction, all-service physical budgets, scheduling fairness and measured
+native pressure/latency remain open. Concurrent warming may make a plan conservative
+until its next recheck. Planning metadata can fail before decoded admission; these
+are correctness/admission checks, not throughput/RSS claims. T07/T11/T13 stay partial.

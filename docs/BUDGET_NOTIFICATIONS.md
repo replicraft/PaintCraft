@@ -75,6 +75,19 @@ consuming its result does not return its bytes or announce a release. Actual
 consumption/discard and final decoded-reader release can return capacity, wake
 other contexts, and allow those consumers to retry admission under fresh guards.
 
+## Activity hints for repricing
+
+`SharedBudget::activity` advances for successful nonzero admission and shared
+capacity release, independently of the visible usage values. Denials, observer
+notifications, zero-byte leases and pool-internal recycling do not advance it.
+A denial retains an observed stamp; its change check is advisory and conservative
+at saturation. This distinguishes resource activity from repeated self-denial wakes
+and detects a release/reallocation that returns to the same usage values.
+
+Native waiting navigation uses this hint to replan cache-dependent demand on its
+worker. A five-second fallback catches cache warming in other realms without an
+activity event here. It is a provisional progress policy, not a latency guarantee.
+
 ## Native wiring and checks
 
 Real native service initialization installs tile and worker subscriptions. The

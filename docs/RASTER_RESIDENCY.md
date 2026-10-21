@@ -68,6 +68,18 @@ planning and adaptive all-service pressure remain incomplete. Readers can pin
 capacity indefinitely; a waiting edit can be explicitly cancelled.
 Published state and undo remain intact.
 
+## Known tile plans
+
+`Admission::reserve_tiles` validates a known fresh-tile count against remaining
+staged pixels without consuming that allowance twice, then reserves its payload
+bytes. An existing explicit reservation is checked without silent expansion. The
+actual tile allocations consume staged pixels and transfer the reservation's bytes.
+Failed preflight returns the full known demand before allocating a tile prefix.
+
+Recorded history uses this path with a pinned unique-blob plan. General batch
+commands still require whole-request planning. Reservation transfer/recycling
+retains the ownership contract in [ordered retries](EDIT_ADMISSION.md).
+
 ## Failed-attempt demand
 
 Decoded-budget failures retain a typed allocation diagnostic with the exact realm.
