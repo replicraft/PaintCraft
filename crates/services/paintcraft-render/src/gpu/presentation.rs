@@ -87,6 +87,30 @@ impl GpuTextureFrame {
     }
 }
 impl GpuRenderer {
+    pub(super) fn display_texture(
+        &self,
+        width: u32,
+        height: u32,
+    ) -> (wgpu::Texture, wgpu::TextureView) {
+        let texture = self.device.create_texture(&wgpu::TextureDescriptor {
+            label: Some("PaintCraft native display"),
+            size: wgpu::Extent3d {
+                width,
+                height,
+                depth_or_array_layers: 1,
+            },
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: wgpu::TextureFormat::Rgba8Unorm,
+            usage: wgpu::TextureUsages::STORAGE_BINDING
+                | wgpu::TextureUsages::TEXTURE_BINDING
+                | wgpu::TextureUsages::COPY_SRC,
+            view_formats: &[],
+        });
+        let view = texture.create_view(&Default::default());
+        (texture, view)
+    }
     /// Render directly to a completed Rgba8Unorm egui-compatible texture. It
     /// carries its originating epoch; consumers must also validate document keys.
     pub fn render_texture(
@@ -129,25 +153,14 @@ impl GpuRenderer {
                 ));
             }
             cache.begin_frame();
+            if self.single_layer_display
+                && let Some(layer) = single::eligible(doc, region, &check)?
+            {
+                return self.render_single_layer(doc, layer, region, &check, &mut cache);
+            }
             let (mut output, mut stats) = self.compose(doc, region, &check, &mut cache)?;
             check()?;
-            let texture = self.device.create_texture(&wgpu::TextureDescriptor {
-                label: Some("PaintCraft native display"),
-                size: wgpu::Extent3d {
-                    width,
-                    height,
-                    depth_or_array_layers: 1,
-                },
-                mip_level_count: 1,
-                sample_count: 1,
-                dimension: wgpu::TextureDimension::D2,
-                format: wgpu::TextureFormat::Rgba8Unorm,
-                usage: wgpu::TextureUsages::STORAGE_BINDING
-                    | wgpu::TextureUsages::TEXTURE_BINDING
-                    | wgpu::TextureUsages::COPY_SRC,
-                view_formats: &[],
-            });
-            let view = texture.create_view(&Default::default());
+            let (texture, view) = self.display_texture(width, height);
             let bindings = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
                 label: Some("PaintCraft native display conversion"),
                 layout: &pipeline.get_bind_group_layout(0),

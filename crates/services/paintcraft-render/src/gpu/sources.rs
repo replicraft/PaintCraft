@@ -29,6 +29,8 @@ pub struct SourceCacheUsage {
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct GpuRenderStats {
     pub composition_submissions: u64,
+    /// Completed level-zero displays that bypassed the intermediate composite.
+    pub single_layer_displays: u64,
     pub max_submission_layers: u32,
     pub max_submission_source_bytes: u64,
     pub max_submission_metadata_bytes: u64,

@@ -18,6 +18,7 @@ mod presentation;
 pub use output::DEFAULT_OUTPUT_POOL_BYTES;
 mod readback;
 mod scaled;
+mod single;
 mod sources;
 pub use epoch::DeviceEpoch;
 pub use presentation::GpuTextureFrame;
@@ -64,6 +65,8 @@ pub struct GpuRenderer {
     pipeline: wgpu::ComputePipeline,
     presentation: Option<wgpu::ComputePipeline>,
     scaled: OnceLock<scaled::Pipelines>,
+    single: OnceLock<wgpu::ComputePipeline>,
+    single_layer_display: bool,
     scaled_edge: u32,
     submission_batching: bool,
     epoch: DeviceEpoch,
@@ -156,6 +159,8 @@ impl GpuRenderer {
             pipeline,
             presentation,
             scaled: OnceLock::new(),
+            single: OnceLock::new(),
+            single_layer_display: false,
             scaled_edge: 32,
             submission_batching: false,
             epoch,
@@ -186,6 +191,13 @@ impl GpuRenderer {
         let cache = self.sources.get_mut().unwrap_or_else(|p| p.into_inner());
         cache.clear();
         cache.region_views = enabled;
+        self
+    }
+
+    /// Present one fully covering flat layer directly from cached source samples.
+    /// Experimental until native comparisons qualify the dispatch policy.
+    pub fn with_single_layer_display(mut self, enabled: bool) -> Self {
+        self.single_layer_display = enabled;
         self
     }
 
@@ -301,15 +313,7 @@ impl GpuRenderer {
             stats,
         })
     }
-    fn compose(
-        &self,
-        doc: &Document,
-        region: Rect,
-        check: &impl Fn() -> Result<()>,
-        cache: &mut SourceCache,
-    ) -> Result<(output::Output<'_>, GpuRenderStats)> {
-        let mut stats = GpuRenderStats::default();
-        check()?;
+    fn checked_region_size(&self, doc: &Document, region: Rect) -> Result<u64> {
         crate::region_bytes(doc, region)?;
         let (w, h) = (region.width() as u32, region.height() as u32);
         let pixels = u64::from(w) * u64::from(h);
@@ -326,6 +330,19 @@ impl GpuRenderer {
                 "canvas exceeds GPU compositor limits",
             ));
         }
+        Ok(size)
+    }
+    fn compose(
+        &self,
+        doc: &Document,
+        region: Rect,
+        check: &impl Fn() -> Result<()>,
+        cache: &mut SourceCache,
+    ) -> Result<(output::Output<'_>, GpuRenderStats)> {
+        let mut stats = GpuRenderStats::default();
+        check()?;
+        let size = self.checked_region_size(doc, region)?;
+        let w = region.width() as u32;
         // Fresh buffers are zero-initialized by wgpu. Reused buffers are cleared
         // in the first contributing layer's encoder, before any source-over reads.
         let output = self.acquire_output(size);

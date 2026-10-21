@@ -668,3 +668,6 @@ mod source_views;
 
 #[path = "gpu/batches.rs"]
 mod batches;
+
+#[path = "gpu/single.rs"]
+mod single;
