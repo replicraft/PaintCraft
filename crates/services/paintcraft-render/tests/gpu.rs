@@ -348,6 +348,23 @@ fn source_cache_limits_stream_oversized_layers_and_evict_without_pixel_changes()
             assert!(frame.stats.retained.metadata_bytes <= limits.metadata_bytes);
             assert!(frame.stats.retained.buffers <= limits.entries);
         }
+        if limits.entries == 1 {
+            // A new frame may evict the formerly used source when it becomes
+            // invisible, rather than keeping that slot pinned indefinitely.
+            let first = doc.roots[0];
+            doc.layers.get_mut(&first).unwrap().visible = false;
+            let replacement = gpu.render_with_stats(&doc, || Ok(())).unwrap();
+            assert_eq!(replacement.pixels, render_flat(&doc).unwrap());
+            assert_eq!(replacement.stats.source_allocations, 1);
+            assert_eq!(replacement.stats.retained.buffers, 1);
+            let hit = gpu.render_with_stats(&doc, || Ok(())).unwrap();
+            assert_eq!(hit.stats.source_hits, 1);
+            assert_eq!(hit.stats.uploaded_bytes, 0);
+            doc.layers.get_mut(&first).unwrap().visible = true;
+            let returned = gpu.render_with_stats(&doc, || Ok(())).unwrap();
+            assert_eq!(returned.pixels, expected);
+            assert_eq!(returned.stats.source_allocations, 2);
+        }
     }
 }
 
