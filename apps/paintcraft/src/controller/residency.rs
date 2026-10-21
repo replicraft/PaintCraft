@@ -8,7 +8,8 @@ impl Editor {
         self.maintenance.is_some()
     }
     pub(crate) fn start_residency_maintenance(&mut self) -> bool {
-        self.poll_residency_maintenance();
+        // Completion consumption belongs to the coordinator's poll phase, so
+        // a finished step cannot disappear between its yield decision and start.
         if self.maintenance.is_some()
             || self.pending_edit.is_some()
             || self.waiting_dispatch.is_some()
@@ -116,5 +117,33 @@ mod tests {
         assert_eq!(editor.history_view(), view);
         assert!(!editor.is_dirty());
         assert!(!editor.start_residency_maintenance());
+    }
+}
+
+#[cfg(test)]
+mod completion_tests {
+    use super::*;
+    #[test]
+    fn starting_again_cannot_consume_an_unread_completion_behind_the_coordinators_yield_decision() {
+        let ctx = eframe::egui::Context::default();
+        for _ in 0..3 {
+            let mut output = ctx.run_ui(Default::default(), |_| {});
+            output.textures_delta.clear();
+        }
+        let (done, wait) = std::sync::mpsc::sync_channel(1);
+        ctx.set_request_repaint_callback(move |_| {
+            let _ = done.try_send(());
+        });
+        let service = background::Service::new(ctx).unwrap();
+        let mut editor = Editor::new_document(8, 8).unwrap();
+        editor.connect_editing(service);
+        let ticket = editor.render_key();
+        assert!(editor.start_residency_maintenance());
+        wait.recv_timeout(Duration::from_secs(5)).unwrap(); // Runtime wakes after sending its result.
+        assert!(!editor.start_residency_maintenance());
+        assert!(editor.has_pending_maintenance()); // Only explicit polling may consume it.
+        assert_eq!(editor.render_key(), ticket);
+        assert!(editor.poll_residency_maintenance());
+        assert!(!editor.has_pending_maintenance());
     }
 }
