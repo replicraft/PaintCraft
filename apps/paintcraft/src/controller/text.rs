@@ -77,6 +77,21 @@ impl Editor {
         color: Rgba,
         background: Rgba,
     ) {
+        if self.editing.is_some() {
+            self.start_tool_plan(
+                Preview::Text {
+                    layer,
+                    style: Some(style.clone()),
+                    background,
+                    at,
+                    text: text.into(),
+                    scale: 1,
+                    color,
+                },
+                "Text",
+            );
+            return;
+        }
         match self.font_text_operations(layer, at, text, style, color, background) {
             Ok(ops) if !ops.is_empty() => self.draw(ops, "Text"),
             Ok(_) => {}

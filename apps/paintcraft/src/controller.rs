@@ -1,8 +1,8 @@
 //! The editor controller: one pencil, an explicit editing target, undo/redo and
-//! safe save, all expressed as batch v1 transactions against a [`Session`].
+//! safe save, expressed as typed batch transactions against a [`Session`].
 //!
 //! A gesture (pointer down, moves, up) is collected locally and committed as
-//! exactly one transaction on release. Nothing is published while it is in
+//! exactly one transaction queued on release. Nothing is published while it is in
 //! progress, so a cancelled or interrupted gesture changes nothing and a stroke
 //! is one undo step. Commands reach the session only through the [`Outbox`].
 
@@ -70,6 +70,7 @@ pub struct Editor {
     editing: Option<background::Service>,
     pending_edit: Option<background::Pending>,
     publication_preview: Option<Preview>,
+    preview_lineage: Uuid,
     path: Option<PathBuf>,
     status: String,
     recovery: Option<Arc<Recovery>>,
@@ -138,6 +139,7 @@ impl Editor {
             editing: None,
             pending_edit: None,
             publication_preview: None,
+            preview_lineage: Uuid::new_v4(),
             path,
             status: String::new(),
             recovery: None,

@@ -342,3 +342,84 @@ fn retained_font_text_keeps_its_captured_layer_after_text_entry_and_target_selec
     );
     assert_eq!(editor.publications(), 2);
 }
+
+#[test]
+fn styled_text_command_submission_does_not_wait_for_worker_font_rasterization() {
+    use std::sync::atomic::{AtomicBool, Ordering};
+    let service = Service::new(egui::Context::default()).unwrap();
+    let fonts = Arc::new(Mutex::new(crate::text::TextRenderer::bundled()));
+    let mut editor = Editor::new_document(128, 80)
+        .unwrap()
+        .with_text_renderer(fonts.clone());
+    editor.connect_editing(service);
+    editor.select_tool(Tool::Text);
+    editor.pointer_down((8, 8));
+    editor.type_text("Hello Ω");
+    let (started, wait_started) = mpsc::sync_channel(1);
+    let (release, wait_release) = mpsc::channel();
+    let forced = Arc::new(AtomicBool::new(false));
+    let timed_out = forced.clone();
+    let holder = std::thread::spawn(move || {
+        let _guard = fonts.lock().unwrap();
+        started.send(()).unwrap();
+        if wait_release.recv_timeout(Duration::from_secs(8)).is_err() {
+            timed_out.store(true, Ordering::SeqCst);
+        }
+    });
+    wait_started.recv_timeout(Duration::from_secs(5)).unwrap();
+    editor.commit_text();
+    assert_eq!(editor.run_pending(), 0);
+    assert!(editor.pending_edit.is_some());
+    assert!(
+        !forced.load(Ordering::SeqCst),
+        "command dispatch waited for font work"
+    );
+    release.send(()).unwrap();
+    holder.join().unwrap();
+    until(|| {
+        editor.run_pending();
+        !editor.has_pending_edits()
+    });
+    assert_eq!(editor.publications(), 1);
+    assert!(
+        paintcraft_render::render_flat(editor.document())
+            .unwrap()
+            .as_chunks::<4>()
+            .0
+            .iter()
+            .any(|pixel| *pixel != [255; 4])
+    );
+}
+
+#[test]
+fn whitespace_text_finishes_as_a_guarded_noop_and_preserves_the_redo_branch() {
+    let service = Service::new(egui::Context::default()).unwrap();
+    let fonts = Arc::new(Mutex::new(crate::text::TextRenderer::bundled()));
+    let mut editor = Editor::new_document(128, 80)
+        .unwrap()
+        .with_text_renderer(fonts);
+    editor.connect_editing(service);
+    editor.request(1, Action::AddLayer);
+    until(|| {
+        editor.run_pending();
+        !editor.has_pending_edits()
+    });
+    editor.request(2, Action::Undo);
+    until(|| {
+        editor.run_pending();
+        !editor.has_pending_edits()
+    });
+    let before = editor.history_view();
+    editor.select_tool(Tool::Text);
+    editor.pointer_down((8, 8));
+    editor.type_text("   ");
+    editor.commit_text();
+    until(|| {
+        editor.run_pending();
+        !editor.has_pending_edits()
+    });
+    assert_eq!(editor.history_view(), before);
+    assert_eq!(editor.redo_depth(), 1);
+    assert!(!editor.is_dirty());
+    assert!(editor.status().contains("changed nothing"));
+}

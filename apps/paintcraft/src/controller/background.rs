@@ -137,6 +137,9 @@ impl Editor {
     pub(crate) fn can_capture_file(&self) -> bool {
         self.file_barrier.is_some() || !self.has_pending_edits()
     }
+    pub(crate) fn preview_owner(&self) -> (Uuid, Option<u64>) {
+        (self.preview_lineage, self.preview_token())
+    }
     pub fn preview_token(&self) -> Option<u64> {
         self.tools.preview_token().or_else(|| {
             self.publication_preview
@@ -147,6 +150,7 @@ impl Editor {
     /// Escape cancels private work; the worker's reservation remains charged
     /// until completion. Already published edits are never undone implicitly.
     pub fn cancel_pending_edits(&mut self) {
+        self.preview_lineage = Uuid::new_v4();
         self.actions
             .retain(|action| matches!(action, Queued::FileBarrier(_)));
         self.outbox.drain();
@@ -177,6 +181,30 @@ impl Editor {
                     done.to_owned(),
                     "",
                     target_alias,
+                )
+        });
+        self.install_pending(result);
+    }
+    /// Build the validated stroke/text command and history privately, rather
+    /// than expanding pointer/glyph data into JSON values during UI dispatch.
+    pub(super) fn start_tool_plan(&mut self, preview: Preview, done: &str) {
+        let plan = self.prepare_preview(Some(preview));
+        let result = self.session.preparation().and_then(|preparation| {
+            self.editing
+                .as_ref()
+                .expect("background editing enabled")
+                .submit(
+                    move |cancellation| {
+                        let check = || cancellation.check();
+                        let prepared = match plan.build(check)? {
+                            Some(batch) => preparation.apply(&batch, check)?,
+                            None => preparation.no_change(check)?,
+                        };
+                        Ok(Completion::Edit(prepared))
+                    },
+                    done.into(),
+                    "",
+                    None,
                 )
         });
         self.install_pending(result);
@@ -219,7 +247,10 @@ impl Editor {
                 self.status = format!("{}…", pending.done);
                 self.pending_edit = Some(pending);
             }
-            Err(error) => self.status = format!("Edit not prepared: {error}"),
+            Err(error) => {
+                self.preview_lineage = Uuid::new_v4();
+                self.status = format!("Edit not prepared: {error}");
+            }
         }
     }
     pub(super) fn poll_edit(&mut self) {
@@ -256,6 +287,7 @@ impl Editor {
             Err(error) => Err(error),
         };
         if let Err(error) = result {
+            self.preview_lineage = Uuid::new_v4();
             self.status = if error.code == ErrorCode::OperationCancelled {
                 "Edit cancelled".into()
             } else {

@@ -71,7 +71,7 @@ impl Editor {
             self.target = receipt.aliases.get(alias).copied().or(self.target);
         }
         self.retarget();
-        if self.session.last_trimmed() > 0 {
+        if receipt.committed && self.session.last_trimmed() > 0 {
             self.status += &format!(
                 " — the {} oldest undo step(s) were dropped under the history memory policy",
                 self.session.last_trimmed()

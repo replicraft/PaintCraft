@@ -111,3 +111,36 @@ fn text_capture_does_not_rasterize_until_the_owned_request_runs_on_a_worker() {
     );
     assert_eq!(editor.publications(), 0);
 }
+
+#[test]
+fn an_empty_text_preview_prepares_caret_geometry_without_creating_an_edit_batch() {
+    let fonts = Arc::new(Mutex::new(crate::text::TextRenderer::bundled()));
+    let mut editor = Editor::new_document(128, 80)
+        .unwrap()
+        .with_text_renderer(fonts);
+    editor.select_tool(Tool::Text);
+    editor.pointer_down((8, 8));
+    let Some(Preview::Text {
+        style: Some(style), ..
+    }) = editor.preview()
+    else {
+        panic!("styled text");
+    };
+    assert!(editor.cached_font_text_mask("", &style, (8, 8)).is_none());
+    let request = editor.prepare_preview(editor.preview());
+    assert!(
+        std::thread::spawn(move || request.build(|| Ok(())).unwrap())
+            .join()
+            .unwrap()
+            .is_none()
+    );
+    assert!(
+        editor
+            .cached_font_text_mask("", &style, (8, 8))
+            .unwrap()
+            .caret
+            .2
+            > 0
+    );
+    assert_eq!(editor.publications(), 0);
+}

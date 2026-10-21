@@ -84,6 +84,7 @@ impl App {
         *current = renderer;
         self.texture_key = None;
         self.preview_revision += 1;
+        self.preview_start_revision = self.preview_revision;
         self.fonts.families = catalog.families;
         if !self.fonts.families.iter().any(|name| name == "Selawik") {
             self.fonts.families.push("Selawik".into());

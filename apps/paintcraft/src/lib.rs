@@ -175,7 +175,7 @@ pub struct App {
     texture_key: Option<RenderKey>,
     rendered_preview: Option<Arc<Preview>>,
     preview_revision: u64,
-    preview_gesture: Option<u64>,
+    preview_gesture: Option<(Uuid, Option<u64>)>,
     preview_start_revision: u64,
     /// Straight RGBA8 flat render of what the texture shows.
     rendered: Vec<u8>,

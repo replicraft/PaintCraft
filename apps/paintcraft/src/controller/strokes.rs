@@ -31,6 +31,17 @@ impl Editor {
     }
 
     pub(super) fn stroke(&mut self, stroke: &Stroke) {
+        if self.editing.is_some() {
+            self.start_tool_plan(
+                Preview::Path(stroke.clone()),
+                if stroke.mode == BlendMode::Replace {
+                    "Erase"
+                } else {
+                    "Stroke"
+                },
+            );
+            return;
+        }
         let operations = match stroke_operations(stroke, &|| Ok(())) {
             Ok(operations) => operations,
             Err(error) => {
@@ -120,7 +131,11 @@ pub(crate) struct PreviewPreparation {
 }
 impl PreviewPreparation {
     pub(crate) fn possible_preview(&self) -> bool {
-        self.preview.is_some()
+        match self.preview.as_deref() {
+            Some(Preview::Text { text, .. }) if text.is_empty() => false,
+            Some(_) => true,
+            None => false,
+        }
     }
     pub(crate) fn build(self, check: impl Fn() -> Result<()>) -> Result<Option<Batch>> {
         check()?;
@@ -142,7 +157,10 @@ impl PreviewPreparation {
                 color,
                 background,
                 ..
-            }) if !text.is_empty() => {
+            }) => {
+                if text.is_empty() && self.fonts.is_none() {
+                    return Ok(None);
+                }
                 use paintcraft_core::types::{Error, ErrorCode};
                 let fonts = self.fonts.ok_or_else(|| {
                     Error::new(

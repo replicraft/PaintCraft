@@ -44,23 +44,26 @@ impl App {
     }
 
     pub(super) fn sync_texture(&mut self, ctx: &egui::Context) {
-        let owner = self.editor.preview_token();
-        if owner != self.preview_gesture {
-            self.preview_start_revision = self.preview_revision + 1;
-            self.preview_gesture = owner;
-        }
         let preview = self.editor.preview().filter(|p| {
             matches!(
                 p,
                 Preview::Path(_) | Preview::Paths(_) | Preview::Text { style: Some(_), .. }
             )
         });
-        if self.rendered_preview.as_deref() != preview.as_ref() {
-            self.rendered_preview = preview.map(Arc::new);
-            self.preview_revision = self
+        let owner = preview.as_ref().map(|_| self.editor.preview_owner());
+        let owner_changed = owner != self.preview_gesture;
+        if owner_changed || self.rendered_preview.as_deref() != preview.as_ref() {
+            let revision = self
                 .preview_revision
                 .checked_add(1)
                 .expect("preview revision exhausted");
+            if owner_changed || !extends_preview(self.rendered_preview.as_deref(), preview.as_ref())
+            {
+                self.preview_start_revision = revision;
+            }
+            self.preview_gesture = owner;
+            self.rendered_preview = preview.map(Arc::new);
+            self.preview_revision = revision;
         }
         let key = self.presentation_key();
         while let Some((handle, result)) = self.renderer.as_mut().and_then(Executor::poll) {
@@ -239,6 +242,64 @@ impl App {
     }
 }
 
+// Only logical input extensions may reuse an older in-flight preview. Removal,
+// replacement, style changes and cancelled/retried plans retire the old result.
+fn extends_preview(previous: Option<&Preview>, next: Option<&Preview>) -> bool {
+    fn paths(preview: &Preview) -> Option<&[paintcraft_tools::Stroke]> {
+        match preview {
+            Preview::Path(path) => Some(std::slice::from_ref(path)),
+            Preview::Paths(paths) => Some(paths),
+            _ => None,
+        }
+    }
+    let (Some(previous), Some(next)) = (previous, next) else {
+        return false;
+    };
+    if let (Some(previous), Some(next)) = (paths(previous), paths(next)) {
+        let Some(last) = previous.last() else {
+            return false;
+        };
+        if next.len() < previous.len()
+            || previous[..previous.len() - 1] != next[..previous.len() - 1]
+        {
+            return false;
+        }
+        let tail = &next[previous.len() - 1];
+        return last.layer == tail.layer
+            && last.point_scale == tail.point_scale
+            && last.color == tail.color
+            && last.size == tail.size
+            && last.round == tail.round
+            && last.mode == tail.mode
+            && tail.points.starts_with(&last.points);
+    }
+    match (previous, next) {
+        (
+            Preview::Text {
+                layer: a,
+                style: sa,
+                background: ba,
+                at: pa,
+                text: ta,
+                scale: za,
+                color: ca,
+            },
+            Preview::Text {
+                layer: b,
+                style: sb,
+                background: bb,
+                at: pb,
+                text: tb,
+                scale: zb,
+                color: cb,
+            },
+        ) => {
+            a == b && sa == sb && ba == bb && pa == pb && za == zb && ca == cb && tb.starts_with(ta)
+        }
+        _ => false,
+    }
+}
+
 #[cfg(test)]
 mod scheduling_tests {
     use super::*;
@@ -360,5 +421,108 @@ mod scheduling_tests {
         .unwrap();
         assert_eq!(app.rendered, render_flat(&staged.doc).unwrap());
         assert_eq!(app.editor.publications(), 0);
+    }
+    fn delayed_frame(
+        app: &mut App,
+        pixels: Vec<u8>,
+    ) -> (RenderKey, JobHandle, std::sync::mpsc::Sender<()>) {
+        let old = app.presentation_key();
+        let (release, wait) = std::sync::mpsc::channel();
+        let (started, wait_started) = std::sync::mpsc::sync_channel(1);
+        let mut renderer = Executor::new(WorkerLimits {
+            workers: 1,
+            pending_jobs: 2,
+            transient_bytes: 1 << 30,
+        })
+        .unwrap();
+        let handle = renderer
+            .submit(
+                1024,
+                move |_| {
+                    started.send(()).unwrap();
+                    wait.recv_timeout(Duration::from_secs(10)).unwrap();
+                    Ok(RenderedFrame {
+                        key: old,
+                        pixels,
+                        fallback: None,
+                    })
+                },
+                || {},
+            )
+            .unwrap();
+        wait_started.recv_timeout(Duration::from_secs(5)).unwrap();
+        app.renderer = Some(renderer);
+        app.pending_frame = Some((old, handle));
+        app.texture_key = None;
+        (old, handle, release)
+    }
+    fn finish_current(app: &mut App, ctx: &egui::Context) {
+        let deadline = std::time::Instant::now() + Duration::from_secs(10);
+        let current = app.presentation_key();
+        while app.texture_key != Some(current) {
+            assert!(std::time::Instant::now() < deadline);
+            app.sync_texture(ctx);
+            std::thread::yield_now();
+        }
+    }
+    #[test]
+    fn deleting_text_retires_inflight_longer_text_instead_of_treating_it_as_progress() {
+        let ctx = egui::Context::default();
+        let mut app = App::new(None);
+        app.editor.select_tool(Tool::Text);
+        app.editor.pointer_down((8, 8));
+        app.editor.type_text("Hello Ω");
+        app.sync_texture(&ctx);
+        let pixels = app.rendered.clone();
+        let (old, handle, release) = delayed_frame(&mut app, pixels);
+        app.editor.backspace();
+        app.sync_texture(&ctx);
+        assert!(!app.accept_render_key(old));
+        assert_ne!(app.pending_frame, Some((old, handle)));
+        release.send(()).unwrap();
+        finish_current(&mut app, &ctx);
+        let staged = paintcraft_editor::execute::execute(
+            app.editor.document(),
+            app.editor.selection(),
+            &app.editor.preview_batch().unwrap().unwrap(),
+        )
+        .unwrap();
+        assert_eq!(app.rendered, render_flat(&staged.doc).unwrap());
+    }
+    #[test]
+    fn cancelling_and_retrying_identical_queued_paint_retires_the_old_owner_even_with_equal_pixels()
+    {
+        let ctx = egui::Context::default();
+        let mut app = App::new(None);
+        app.initialize_editing(ctx.clone());
+        let gate = app.editing.as_ref().unwrap().pause();
+        let stroke = paintcraft_tools::Stroke {
+            layer: app.editor.target().unwrap(),
+            points: vec![(3, 3)],
+            point_scale: 1,
+            color: Rgba([255, 0, 0, 128]),
+            size: 1,
+            round: false,
+            mode: paintcraft_tools::BlendMode::SourceOver,
+        };
+        app.editor.request(101, Action::Stroke(stroke.clone()));
+        app.editor.run_pending();
+        app.sync_texture(&ctx);
+        let pixels = app.rendered.clone();
+        let (old, handle, release) = delayed_frame(&mut app, pixels);
+        app.editor.cancel_pending_edits();
+        app.editor.request(102, Action::Stroke(stroke));
+        app.editor.run_pending();
+        app.sync_texture(&ctx);
+        assert!(!app.accept_render_key(old));
+        assert_ne!(app.pending_frame, Some((old, handle)));
+        release.send(()).unwrap();
+        finish_current(&mut app, &ctx);
+        assert_eq!(
+            &app.rendered[(3 * 1000 + 3) * 4..][..4],
+            &[255, 127, 127, 255]
+        );
+        app.editor.cancel_pending_edits();
+        gate.send(()).unwrap();
     }
 }
