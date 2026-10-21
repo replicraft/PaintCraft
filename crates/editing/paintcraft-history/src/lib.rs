@@ -459,3 +459,6 @@ impl History {
         Ok(Some((snapshot, changed)))
     }
 }
+
+mod residency;
+pub use residency::ResidencyMaintenance;

@@ -5,8 +5,8 @@ use super::*;
 /// Send this value to a bounded worker, then return its prepared result.
 #[derive(Debug)]
 pub struct Preparation {
-    base: Ticket,
-    session: Session,
+    pub(super) base: Ticket,
+    pub(super) session: Session,
 }
 
 /// A fully prepared edit, including admitted history and flushed spill extents.
@@ -82,7 +82,7 @@ impl Session {
         Ok(prepared.navigation)
     }
 
-    fn validate_preparation(&self, base: Ticket, source: &Session) -> Result<()> {
+    pub(super) fn validate_preparation(&self, base: Ticket, source: &Session) -> Result<()> {
         if source.owner != self.owner
             || base != self.ticket()
             || !Arc::ptr_eq(&source.preparation_policy, &self.preparation_policy)

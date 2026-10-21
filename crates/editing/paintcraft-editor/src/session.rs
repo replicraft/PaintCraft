@@ -25,8 +25,10 @@ use paintcraft_history::{History, Snapshot};
 
 mod history;
 mod preparation;
+mod residency;
 pub use history::{HistoryTicket, HistoryView};
 pub use preparation::{Preparation, PreparedEdit, PreparedNavigation};
+pub use residency::PreparedHistoryMaintenance;
 
 /// `paintcraft.result/v1`.
 #[derive(Clone, Debug, PartialEq, Eq)]
