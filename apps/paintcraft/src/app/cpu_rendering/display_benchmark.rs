@@ -53,9 +53,13 @@ fn filter_pixels(native: &[u8], request: DisplayRequest) -> Vec<u8> {
 fn replay(case: &str, mode: &str, verify: bool) {
     let edge = if mode.starts_with("gpu64") { 64 } else { 32 };
     let gpu_mode = mode.starts_with("gpu");
-    let (target, gpu) =
-        gpu_display::tests::target_with_scaled_cache(0, edge, mode.ends_with("regions"))
-            .expect("real GPU required for completed display readiness");
+    let (target, gpu) = gpu_display::tests::target_with_submission_policy(
+        0,
+        edge,
+        mode.contains("regions"),
+        mode.ends_with("batch"),
+    )
+    .expect("real GPU required for completed display readiness");
     if verify {
         eprintln!("adapter={:?}", target.adapter_info());
     }
@@ -67,6 +71,8 @@ fn replay(case: &str, mode: &str, verify: bool) {
     let (editor, level) = match case {
         "tiny" => (Editor::new_document(32, 32).unwrap(), 1),
         "dense" => (super::geometry_benchmark::fixture_for_base("dense5"), 1),
+        "layers20" => (super::geometry_benchmark::fixture_for_base("dense20"), 1),
+        "layers100" => (super::geometry_benchmark::fixture_for_base("dense100"), 1),
         "large" | "uniform" => (Editor::new_document(4096, 2160).unwrap(), 2),
         _ => panic!("unknown multires case"),
     };
@@ -102,6 +108,10 @@ fn replay(case: &str, mode: &str, verify: bool) {
     let mut uniform_pixels = 0u64;
     let mut source_allocations = 0u64;
     let mut source_hits = 0u64;
+    let mut submissions = 0u64;
+    let mut max_layers = 0u32;
+    let mut max_sources = 0u64;
+    let mut max_keys = 0u64;
     for frame in 0..8 {
         let staged;
         let batch;
@@ -156,6 +166,10 @@ fn replay(case: &str, mode: &str, verify: bool) {
         let key = app.presentation_key();
         if gpu_mode {
             let texture = gpu.render_display_texture(doc, request, || Ok(())).unwrap();
+            submissions += texture.stats.composition_submissions;
+            max_layers = max_layers.max(texture.stats.max_submission_layers);
+            max_sources = max_sources.max(texture.stats.max_submission_source_bytes);
+            max_keys = max_keys.max(texture.stats.max_submission_metadata_bytes);
             uploads += texture.stats.uploaded_bytes;
             native_pixels += texture.stats.scaled_native_pixels;
             uniform_pixels += texture.stats.scaled_uniform_pixels;
@@ -220,6 +234,9 @@ fn replay(case: &str, mode: &str, verify: bool) {
         assert_eq!(app.editor.render_key(), ticket);
     }
     eprintln!(
+        "composition_submissions={submissions} max_submission_layers={max_layers} max_submission_source_bytes={max_sources} max_submission_key_bytes={max_keys}"
+    );
+    eprintln!(
         "gpu_upload_bytes={uploads} gpu_native_pixels={native_pixels} gpu_uniform_pixels={uniform_pixels} gpu_source_allocations={source_allocations} gpu_source_hits={source_hits} gpu_cache={:?}",
         gpu.source_cache_usage()
     );
@@ -251,6 +268,30 @@ fn replay(case: &str, mode: &str, verify: bool) {
 fn native_multires_process() {
     let case = std::env::var("PAINTCRAFT_VIEWPORT_CASE").unwrap_or_else(|_| "dense".into());
     match std::env::var("PAINTCRAFT_VIEWPORT_VARIANT").as_deref() {
+        Ok("batches-verify") => {
+            for mode in ["gpu64", "gpu64batch", "gpu64regions", "gpu64regionsbatch"] {
+                replay(&case, mode, true);
+            }
+        }
+        Ok("gpu64batch") => replay(&case, "gpu64batch", false),
+        Ok("gpu64regionsbatch") => replay(&case, "gpu64regionsbatch", false),
+        Ok("batches-criterion") => {
+            use criterion::{BenchmarkId, Criterion, SamplingMode};
+            let mut c = Criterion::default()
+                .sample_size(20)
+                .warm_up_time(Duration::from_millis(300))
+                .measurement_time(Duration::from_secs(1))
+                .without_plots();
+            let mut group = c.benchmark_group(format!("native_gpu_batches/{case}"));
+            group.sampling_mode(SamplingMode::Flat);
+            for mode in ["gpu64", "gpu64batch", "gpu64regions", "gpu64regionsbatch"] {
+                group.bench_function(BenchmarkId::from_parameter(mode), |b| {
+                    b.iter(|| replay(&case, mode, false))
+                });
+            }
+            group.finish();
+            c.final_summary();
+        }
         Ok("regions-verify") => {
             for mode in ["gpu32", "gpu32regions", "gpu64", "gpu64regions"] {
                 replay(&case, mode, true);

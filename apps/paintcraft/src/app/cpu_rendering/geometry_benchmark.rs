@@ -148,7 +148,10 @@ pub(crate) fn fixture_for_base(base: &str) -> Editor {
     if base == "sparse1" {
         return Editor::new_document(512, 256).unwrap();
     }
-    assert!(matches!(base, "sparse5" | "dense5" | "dense65"));
+    assert!(matches!(
+        base,
+        "sparse5" | "dense5" | "dense20" | "dense65" | "dense100"
+    ));
     use paintcraft_core::types::Rgba;
     use paintcraft_raster::{Admission, RasterLayer};
     let mut doc = paintcraft_document::new_document(
@@ -161,7 +164,12 @@ pub(crate) fn fixture_for_base(base: &str) -> Editor {
     .unwrap();
     doc.layers.clear();
     doc.roots.clear();
-    let count = if base == "dense65" { 65u32 } else { 5 };
+    let count = match base {
+        "dense20" => 20u32,
+        "dense65" => 65,
+        "dense100" => 100,
+        _ => 5,
+    };
     let mut admission = Admission::new(u64::from(count) * 4 * 65536);
     for n in 0..count {
         let id =
