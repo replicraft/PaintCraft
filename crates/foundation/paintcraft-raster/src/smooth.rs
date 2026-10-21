@@ -11,6 +11,9 @@ const SCALE: i64 = 4;
 /// Provisional bound on generated scan rows, including overlapping segments.
 pub const SCAN_ROWS_MAX: usize = 1_048_576;
 
+mod cache;
+pub use cache::PathCache;
+
 #[cfg(test)]
 mod tests;
 
@@ -49,24 +52,7 @@ pub fn round_path_scaled_checked(
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Vec<CoverageSpan>> {
     check()?;
-    let bound = paintcraft_core::types::policy::COORD_ABS_MAX as u64;
-    if !matches!(point_scale, 1 | 256)
-        || !(1..=1024).contains(&size)
-        || points.is_empty()
-        || points.len() > 65_536
-        || points.iter().any(|&(x, y)| {
-            x.unsigned_abs() > bound * u64::from(point_scale)
-                || y.unsigned_abs() > bound * u64::from(point_scale)
-        })
-        || [clip.x0, clip.x1, clip.y0, clip.y1]
-            .iter()
-            .any(|v| v.unsigned_abs() > bound)
-    {
-        return Err(Error::new(
-            ErrorCode::InputSchema,
-            "invalid smooth brush geometry",
-        ));
-    }
+    validate(points, size, clip, point_scale)?;
     if clip.x0 >= clip.x1 || clip.y0 >= clip.y1 {
         return Ok(Vec::new());
     }
@@ -100,85 +86,130 @@ pub fn round_path_scaled_checked(
     Ok(runs)
 }
 
+fn validate(points: &[(i64, i64)], size: u32, clip: &Rect, point_scale: u32) -> Result<()> {
+    let bound = paintcraft_core::types::policy::COORD_ABS_MAX as u64;
+    if !matches!(point_scale, 1 | 256)
+        || !(1..=1024).contains(&size)
+        || points.is_empty()
+        || points.len() > 65_536
+        || points.iter().any(|&(x, y)| {
+            x.unsigned_abs() > bound * u64::from(point_scale)
+                || y.unsigned_abs() > bound * u64::from(point_scale)
+        })
+        || [clip.x0, clip.x1, clip.y0, clip.y1]
+            .iter()
+            .any(|v| v.unsigned_abs() > bound)
+    {
+        return Err(Error::new(
+            ErrorCode::InputSchema,
+            "invalid smooth brush geometry",
+        ));
+    }
+    Ok(())
+}
+
 fn rasterize(
     points: &[(f64, f64)],
     size: u32,
     clip: &Rect,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Vec<CoverageSpan>> {
-    let mut rows: BTreeMap<i64, Vec<(i64, i64)>> = BTreeMap::new();
+    let mut rows = BTreeMap::new();
     let mut charged = 0;
-    let radius = f64::from(size) / 2.0;
-    let mut segment = |a: (f64, f64), b: (f64, f64)| -> Result<()> {
-        check()?;
-        let (dx, dy) = (b.0 - a.0, b.1 - a.1);
-        let length = dx.hypot(dy);
-        let (nx, ny) = if length == 0.0 {
-            (0.0, 0.0)
-        } else {
-            (-dy / length * radius, dx / length * radius)
-        };
-        let quad = [
-            (a.0 + nx, a.1 + ny),
-            (b.0 + nx, b.1 + ny),
-            (b.0 - nx, b.1 - ny),
-            (a.0 - nx, a.1 - ny),
-        ];
-        let first = (((a.1.min(b.1) - radius) * 4.0).floor() as i64).max(clip.y0 * SCALE);
-        let last = (((a.1.max(b.1) + radius) * 4.0).ceil() as i64).min(clip.y1 * SCALE);
-        charged += (last - first).max(0) as usize;
-        if charged > SCAN_ROWS_MAX {
-            return Err(Error::new(
-                ErrorCode::ResourceLimit,
-                "smooth brush scan-row budget exceeded",
-            ));
-        }
-        for y in first..last {
-            if (y - first) % 64 == 0 {
-                check()?;
-            }
-            let sy = (y as f64 + 0.5) / 4.0;
-            let (mut left, mut right) = (f64::INFINITY, f64::NEG_INFINITY);
-            // A capsule is the union of its endpoint disks and connecting quad.
-            for c in [a, b] {
-                let q = radius * radius - (sy - c.1).powi(2);
-                if q >= 0.0 {
-                    let half = q.sqrt();
-                    left = left.min(c.0 - half);
-                    right = right.max(c.0 + half);
-                }
-            }
-            if length != 0.0 {
-                for i in 0..4 {
-                    let (p, q) = (quad[i], quad[(i + 1) % 4]);
-                    if p.1 != q.1 && sy >= p.1.min(q.1) && sy <= p.1.max(q.1) {
-                        let x = p.0 + (sy - p.1) / (q.1 - p.1) * (q.0 - p.0);
-                        left = left.min(x);
-                        right = right.max(x);
-                    }
-                }
-            }
-            if left <= right {
-                let lo = ((left * 4.0 - 0.5).ceil() as i64).max(clip.x0 * SCALE);
-                let hi = ((right * 4.0 - 0.5).floor() as i64).min(clip.x1 * SCALE - 1);
-                if lo <= hi {
-                    rows.entry(y).or_default().push((lo, hi));
-                }
-            }
-        }
-        Ok(())
-    };
     if points.len() == 1 {
-        segment(points[0], points[0])?;
+        scan_segment(
+            points[0],
+            points[0],
+            size,
+            clip,
+            &mut rows,
+            &mut charged,
+            check,
+        )?;
     }
     for w in points.windows(2) {
-        segment(w[0], w[1])?;
+        scan_segment(w[0], w[1], size, clip, &mut rows, &mut charged, check)?;
     }
+    resolve_rows(&mut rows, check)
+}
 
+fn scan_segment(
+    a: (f64, f64),
+    b: (f64, f64),
+    size: u32,
+    clip: &Rect,
+    rows: &mut BTreeMap<i64, Vec<(i64, i64)>>,
+    charged: &mut usize,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<()> {
+    let radius = f64::from(size) / 2.0;
+    check()?;
+    let (dx, dy) = (b.0 - a.0, b.1 - a.1);
+    let length = dx.hypot(dy);
+    let (nx, ny) = if length == 0.0 {
+        (0.0, 0.0)
+    } else {
+        (-dy / length * radius, dx / length * radius)
+    };
+    let quad = [
+        (a.0 + nx, a.1 + ny),
+        (b.0 + nx, b.1 + ny),
+        (b.0 - nx, b.1 - ny),
+        (a.0 - nx, a.1 - ny),
+    ];
+    let first = (((a.1.min(b.1) - radius) * 4.0).floor() as i64).max(clip.y0 * SCALE);
+    let last = (((a.1.max(b.1) + radius) * 4.0).ceil() as i64).min(clip.y1 * SCALE);
+    *charged += (last - first).max(0) as usize;
+    if *charged > SCAN_ROWS_MAX {
+        return Err(Error::new(
+            ErrorCode::ResourceLimit,
+            "smooth brush scan-row budget exceeded",
+        ));
+    }
+    for y in first..last {
+        if (y - first) % 64 == 0 {
+            check()?;
+        }
+        let sy = (y as f64 + 0.5) / 4.0;
+        let (mut left, mut right) = (f64::INFINITY, f64::NEG_INFINITY);
+        // A capsule is the union of its endpoint disks and connecting quad.
+        for c in [a, b] {
+            let q = radius * radius - (sy - c.1).powi(2);
+            if q >= 0.0 {
+                let half = q.sqrt();
+                left = left.min(c.0 - half);
+                right = right.max(c.0 + half);
+            }
+        }
+        if length != 0.0 {
+            for i in 0..4 {
+                let (p, q) = (quad[i], quad[(i + 1) % 4]);
+                if p.1 != q.1 && sy >= p.1.min(q.1) && sy <= p.1.max(q.1) {
+                    let x = p.0 + (sy - p.1) / (q.1 - p.1) * (q.0 - p.0);
+                    left = left.min(x);
+                    right = right.max(x);
+                }
+            }
+        }
+        if left <= right {
+            let lo = ((left * 4.0 - 0.5).ceil() as i64).max(clip.x0 * SCALE);
+            let hi = ((right * 4.0 - 0.5).floor() as i64).min(clip.x1 * SCALE - 1);
+            if lo <= hi {
+                rows.entry(y).or_default().push((lo, hi));
+            }
+        }
+    }
+    Ok(())
+}
+
+fn resolve_rows(
+    rows: &mut BTreeMap<i64, Vec<(i64, i64)>>,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Vec<CoverageSpan>> {
     let mut out = Vec::new();
     let mut events: BTreeMap<i64, i32> = BTreeMap::new();
     let mut pixel_y = None;
-    for (row_index, (y, mut runs)) in rows.into_iter().enumerate() {
+    for (row_index, (&y, runs)) in rows.iter_mut().enumerate() {
         if row_index % 64 == 0 {
             check()?;
         }
@@ -192,12 +223,16 @@ fn rasterize(
         }
         runs.sort_unstable();
         let mut merged: Option<(i64, i64)> = None;
-        for (lo, hi) in runs {
+        let mut retained = 0;
+        for index in 0..runs.len() {
+            let (lo, hi) = runs[index];
             if let Some((a, b)) = merged {
                 if lo <= b + 1 {
                     merged = Some((a, b.max(hi)));
                 } else {
                     add_samples(a, b, &mut events);
+                    runs[retained] = (a, b);
+                    retained += 1;
                     merged = Some((lo, hi));
                 }
             } else {
@@ -206,7 +241,10 @@ fn rasterize(
         }
         if let Some((a, b)) = merged {
             add_samples(a, b, &mut events);
+            runs[retained] = (a, b);
+            retained += 1;
         }
+        runs.truncate(retained);
     }
     if let Some(y) = pixel_y {
         resolve(y, &events, &mut out);

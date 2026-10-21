@@ -191,3 +191,155 @@ fn cancellation_interrupts_scan_rows_and_union_without_changing_successful_cover
         assert_eq!(seen.get(), stop);
     }
 }
+
+#[test]
+fn cached_extensions_match_full_sample_unions_for_retraces_clipping_and_policy_changes() {
+    let mut cache = PathCache::default();
+    let path = [(0, 0), (4, 3), (-4, 3), (4, -3), (4, -3), (0, 0), (2, 1)];
+    for scale in [1, 256] {
+        for size in 1..=7 {
+            for origin in [0, 100_000_000_000_000] {
+                let clip = Rect::new(origin - 3, origin - 3, 7, 7).unwrap();
+                let fixed: Vec<_> = path
+                    .iter()
+                    .map(|&(x, y)| {
+                        (
+                            (x + origin) * i64::from(scale),
+                            (y + origin) * i64::from(scale),
+                        )
+                    })
+                    .collect();
+                for n in 1..=fixed.len() {
+                    let expected = round_path_scaled(&fixed[..n], size, &clip, scale).unwrap();
+                    let got = cache
+                        .round_path_scaled(&fixed[..n], size, &clip, scale, &|| Ok(()))
+                        .unwrap();
+                    assert_eq!(got, expected, "size {size}, scale {scale}, prefix {n}");
+                    assert_eq!(
+                        cache
+                            .round_path_scaled(&fixed[..n], size, &clip, scale, &|| Ok(()))
+                            .unwrap(),
+                        expected
+                    );
+                }
+                // Truncation and a changed interior point must rebuild even with the same tail.
+                for changed in [
+                    vec![fixed[0]],
+                    vec![fixed[0], fixed[3], *fixed.last().unwrap()],
+                ] {
+                    assert_eq!(
+                        cache
+                            .round_path_scaled(&changed, size, &clip, scale, &|| Ok(()))
+                            .unwrap(),
+                        round_path_scaled(&changed, size, &clip, scale).unwrap()
+                    );
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn cancelled_cache_extensions_retire_partial_unions_and_rebuild_exactly() {
+    use std::cell::Cell;
+    let clip = Rect::new(-8, -8, 32, 32).unwrap();
+    let points = [(0, 0), (12, 12), (0, 12)];
+    let mut cache = PathCache::default();
+    let calls = Cell::new(0);
+    cache
+        .round_path_scaled(&points[..1], 7, &clip, 1, &|| Ok(()))
+        .unwrap();
+    let expected = cache
+        .round_path_scaled(&points, 7, &clip, 1, &|| {
+            calls.set(calls.get() + 1);
+            Ok(())
+        })
+        .unwrap();
+    for stop in 1..=calls.get() {
+        cache.clear();
+        cache
+            .round_path_scaled(&points[..1], 7, &clip, 1, &|| Ok(()))
+            .unwrap();
+        let seen = Cell::new(0);
+        let error = cache
+            .round_path_scaled(&points, 7, &clip, 1, &|| {
+                seen.set(seen.get() + 1);
+                if seen.get() == stop {
+                    Err(Error::new(
+                        ErrorCode::OperationCancelled,
+                        "cancel extension",
+                    ))
+                } else {
+                    Ok(())
+                }
+            })
+            .unwrap_err();
+        assert_eq!(error.code, ErrorCode::OperationCancelled);
+        assert_eq!(cache.metadata_charge(), 0);
+        assert_eq!(
+            cache
+                .round_path_scaled(&points, 7, &clip, 1, &|| Ok(()))
+                .unwrap(),
+            expected
+        );
+    }
+    let mut disabled = PathCache::new(0);
+    assert_eq!(
+        disabled
+            .round_path_scaled(&points, 7, &clip, 1, &|| Ok(()))
+            .unwrap(),
+        expected
+    );
+    assert_eq!(disabled.metadata_charge(), 0);
+    assert!(
+        cache
+            .round_path_scaled(&[(i64::MIN, 0)], 7, &clip, 1, &|| Ok(()))
+            .is_err()
+    );
+    assert_eq!(cache.metadata_charge(), 0);
+}
+
+#[test]
+fn incremental_and_full_paths_enforce_the_same_scan_budget_after_a_single_point() {
+    let clip = Rect::new(0, 0, 1, 1024).unwrap();
+    let points = vec![(0, 512); 258];
+    let mut cache = PathCache::default();
+    cache
+        .round_path_scaled(&points[..1], 1024, &clip, 1, &|| Ok(()))
+        .unwrap();
+    for n in [2, 256, 257, 258] {
+        let expected = round_path_scaled(&points[..n], 1024, &clip, 1);
+        let actual = cache.round_path_scaled(&points[..n], 1024, &clip, 1, &|| Ok(()));
+        match (actual, expected) {
+            (Ok(a), Ok(b)) => assert_eq!(a, b),
+            (Err(a), Err(b)) => assert_eq!(a.code, b.code),
+            _ => panic!("cache changed work-budget result for {n} points"),
+        }
+    }
+}
+
+#[test]
+fn extending_a_cached_path_does_not_rescan_the_old_segments() {
+    use std::cell::Cell;
+    let clip = Rect::new(0, 0, 512, 128).unwrap();
+    let points: Vec<_> = (0..256).map(|x| (x, 32 + x % 16)).collect();
+    let mut cache = PathCache::default();
+    cache
+        .round_path_scaled(&points[..255], 16, &clip, 1, &|| Ok(()))
+        .unwrap();
+    let incremental_checks = Cell::new(0);
+    let full_checks = Cell::new(0);
+    let actual = cache
+        .round_path_scaled(&points, 16, &clip, 1, &|| {
+            incremental_checks.set(incremental_checks.get() + 1);
+            Ok(())
+        })
+        .unwrap();
+    let expected = round_path_scaled_checked(&points, 16, &clip, 1, &|| {
+        full_checks.set(full_checks.get() + 1);
+        Ok(())
+    })
+    .unwrap();
+    assert_eq!(actual, expected);
+    assert!(full_checks.get() > incremental_checks.get() + 250);
+}
