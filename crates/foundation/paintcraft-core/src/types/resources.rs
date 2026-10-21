@@ -4,6 +4,8 @@ use super::{Error, ErrorCode, Result};
 use std::sync::{Arc, Mutex};
 mod watch;
 pub use watch::{BudgetPressure, BudgetWatch};
+mod reservation;
+pub use reservation::BudgetReservation;
 mod denial;
 pub use denial::{AllocationClass, AllocationDenial};
 
@@ -44,6 +46,16 @@ impl SharedBudget {
         bytes <= usage.limit - usage.reserved
     }
     pub fn reserve(&self, bytes: u64) -> Result<BudgetLease> {
+        self.admit(bytes)?;
+        Ok(BudgetLease {
+            _charge: Arc::new(Charge {
+                budget: self.clone(),
+                bytes,
+                reservation: None,
+            }),
+        })
+    }
+    fn admit(&self, bytes: u64) -> Result<()> {
         let mut state = self.0.lock().unwrap_or_else(|error| error.into_inner());
         let before = state.limit - state.reserved;
         let reserved = state
@@ -59,35 +71,36 @@ impl SharedBudget {
         };
         state.reserved = reserved;
         state.peak = state.peak.max(reserved);
-        let lease = BudgetLease {
-            _charge: Arc::new(Charge {
-                budget: self.clone(),
-                bytes,
-            }),
-        };
         let wakes = watch::collect(&mut state, before, false, false);
         drop(state);
         watch::notify(wakes);
-        Ok(lease)
+        Ok(())
+    }
+    fn release(&self, bytes: u64) {
+        let mut state = self.0.lock().unwrap_or_else(|error| error.into_inner());
+        let before = state.limit - state.reserved;
+        state.reserved -= bytes;
+        let wakes = watch::collect(&mut state, before, false, bytes != 0);
+        drop(state);
+        watch::notify(wakes);
     }
 }
 #[derive(Debug)]
 struct Charge {
     budget: SharedBudget,
     bytes: u64,
+    reservation: Option<std::sync::Weak<reservation::Reserved>>,
 }
 impl Drop for Charge {
     fn drop(&mut self) {
-        let mut state = self
-            .budget
-            .0
-            .lock()
-            .unwrap_or_else(|error| error.into_inner());
-        let before = state.limit - state.reserved;
-        state.reserved -= self.bytes;
-        let wakes = watch::collect(&mut state, before, false, self.bytes != 0);
-        drop(state);
-        watch::notify(wakes);
+        if let Some(reservation) = self.reservation.as_ref().and_then(std::sync::Weak::upgrade) {
+            *reservation
+                .available
+                .lock()
+                .unwrap_or_else(|error| error.into_inner()) += self.bytes;
+        } else {
+            self.budget.release(self.bytes);
+        }
     }
 }
 #[must_use = "retain the lease until the charged resource has been released"]
@@ -103,3 +116,7 @@ mod tests;
 #[cfg(test)]
 #[path = "resources/demand_tests.rs"]
 mod demand_tests;
+
+#[cfg(test)]
+#[path = "resources/reservation_tests.rs"]
+mod reservation_tests;

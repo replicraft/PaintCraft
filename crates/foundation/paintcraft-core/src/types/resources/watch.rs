@@ -42,9 +42,16 @@ impl BudgetWatch {
     /// Publish one known feasible demand in this exact realm, or clear it.
     /// Demand is bounded by the existing weak watcher registration and owns no bytes.
     pub fn wait_for_capacity(&self, denial: Option<&AllocationDenial>) {
-        let requested = denial
+        self.wait_for_capacities(denial);
+    }
+    /// Combine one consumer's pending demands without allocating another registration.
+    pub fn wait_for_capacities<'a>(&self, denials: impl IntoIterator<Item = &'a AllocationDenial>) {
+        let requested = denials
+            .into_iter()
             .filter(|denial| denial.is_for(&self.0.budget) && denial.is_possible())
-            .map_or(0, AllocationDenial::required_bytes);
+            .map(AllocationDenial::required_bytes)
+            .max()
+            .unwrap_or(0);
         if self.0.requested.swap(requested, Ordering::AcqRel) == requested {
             return;
         }

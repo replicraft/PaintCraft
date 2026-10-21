@@ -26,6 +26,10 @@ impl AllocationDenial {
     pub(super) fn is_for(&self, budget: &SharedBudget) -> bool {
         std::sync::Arc::ptr_eq(&self.budget.0, &budget.0)
     }
+    /// Atomically admit this known requirement in its original realm.
+    pub fn reserve_capacity(&self) -> Result<BudgetReservation> {
+        self.budget.reserve_capacity(self.required)
+    }
     pub fn class(&self) -> AllocationClass {
         self.class
     }
