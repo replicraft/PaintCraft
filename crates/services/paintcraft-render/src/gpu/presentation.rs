@@ -122,7 +122,7 @@ impl GpuRenderer {
                     "canvas exceeds GPU display texture limits",
                 ));
             }
-            let (output, mut stats) = self.compose(doc, region, &check, &mut cache)?;
+            let (mut output, mut stats) = self.compose(doc, region, &check, &mut cache)?;
             check()?;
             let texture = self.device.create_texture(&wgpu::TextureDescriptor {
                 label: Some("PaintCraft native display"),
@@ -171,6 +171,9 @@ impl GpuRenderer {
                 })
                 .map_err(|e| unavailable(format!("GPU display conversion failed: {e}")))?;
             check()?;
+            output.completed();
+            drop(output);
+            stats.retained_output_bytes = self.output_pool_usage();
             stats.retained = cache.usage();
             Ok(GpuTextureFrame {
                 region,
@@ -183,7 +186,8 @@ impl GpuRenderer {
             })
         })();
         if result.is_err() {
-            cache.clear()
+            cache.clear();
+            self.clear_output_pool();
         }
         result
     }

@@ -3,7 +3,9 @@
 //! This first backend reads back straight RGBA8 for the shared display/export
 //! boundary. It is a correctness baseline, not a zero-copy or performance claim.
 mod epoch;
+mod output;
 mod presentation;
+pub use output::DEFAULT_OUTPUT_POOL_BYTES;
 mod readback;
 mod sources;
 pub use epoch::DeviceEpoch;
@@ -50,6 +52,8 @@ pub struct GpuRenderer {
     epoch: DeviceEpoch,
     sources: Mutex<SourceCache>,
     source_admission_bytes: u64,
+    output: Mutex<output::Pool>,
+    output_admission_bytes: u64,
 }
 fn unavailable(message: impl Into<String>) -> Error {
     Error::new(ErrorCode::CapabilityUnsupported, message)
@@ -77,6 +81,17 @@ impl GpuRenderer {
         queue: wgpu::Queue,
         epoch: DeviceEpoch,
         limits: SourceCacheLimits,
+    ) -> Result<Self> {
+        Self::with_working_cache_limits(device, queue, epoch, limits, DEFAULT_OUTPUT_POOL_BYTES)
+    }
+    /// Output retention is bounded independently from source residency. Zero disables
+    /// reuse; active buffers still follow ordinary output admission and completion.
+    pub fn with_working_cache_limits(
+        device: wgpu::Device,
+        queue: wgpu::Queue,
+        epoch: DeviceEpoch,
+        limits: SourceCacheLimits,
+        output_pool_bytes: u64,
     ) -> Result<Self> {
         epoch.check()?;
         if device.limits().max_storage_buffers_per_shader_stage < 2
@@ -124,6 +139,8 @@ impl GpuRenderer {
             presentation,
             epoch,
             sources: Mutex::new(SourceCache::new(limits)?),
+            output: Mutex::new(output::Pool::new(output_pool_bytes)),
+            output_admission_bytes: output_pool_bytes,
             source_admission_bytes: limits
                 .buffer_bytes
                 .saturating_add((limits.metadata_bytes as u64).saturating_mul(3)),
@@ -174,6 +191,7 @@ impl GpuRenderer {
         let result = self.render_inner(doc, region, &check, &mut cache);
         if result.is_err() {
             cache.clear();
+            self.clear_output_pool();
         }
         result
     }
@@ -194,7 +212,7 @@ impl GpuRenderer {
         check: &impl Fn() -> Result<()>,
         cache: &mut SourceCache,
     ) -> Result<GpuFrame> {
-        let (output, mut stats) = self.compose(doc, region, check, cache)?;
+        let (mut output, mut stats) = self.compose(doc, region, check, cache)?;
         let size = crate::region_bytes(doc, region)? as u64;
         check()?;
         let readback = self.device.create_buffer(&wgpu::BufferDescriptor {
@@ -209,6 +227,9 @@ impl GpuRenderer {
         let submission = self.queue.submit([encoder.finish()]);
         let bytes = readback::copy_mapped(&self.device, &readback, submission, check)?;
         check()?;
+        output.completed();
+        drop(output);
+        stats.retained_output_bytes = self.output_pool_usage();
         stats.retained = cache.usage();
         Ok(GpuFrame {
             pixels: bytes,
@@ -221,7 +242,7 @@ impl GpuRenderer {
         region: Rect,
         check: &impl Fn() -> Result<()>,
         cache: &mut SourceCache,
-    ) -> Result<(wgpu::Buffer, GpuRenderStats)> {
+    ) -> Result<(output::Output<'_>, GpuRenderStats)> {
         cache.begin_frame();
         let mut stats = GpuRenderStats::default();
         check()?;
@@ -241,13 +262,13 @@ impl GpuRenderer {
                 "canvas exceeds GPU compositor limits",
             ));
         }
-        // wgpu guarantees fresh buffer contents are zero-initialized.
-        let output = self.device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("PaintCraft composite"),
-            size,
-            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
-            mapped_at_creation: false,
-        });
+        // Fresh buffers are zero-initialized by wgpu. Reused buffers are cleared
+        // in the first contributing layer's encoder, before any source-over reads.
+        let output = self.acquire_output(size);
+        stats.output_allocations = u64::from(!output.reused);
+        stats.output_reuses = u64::from(output.reused);
+        stats.output_cleared_bytes = if output.reused { size } else { 0 };
+        let mut clear_pending = output.reused;
         let canvas = region;
         for layer in doc.layers_in_order() {
             check()?;
@@ -263,6 +284,10 @@ impl GpuRenderer {
             let width = area.width() as u32;
             let height = area.height() as u32;
             let mut encoder = self.device.create_command_encoder(&Default::default());
+            if clear_pending {
+                encoder.clear_buffer(&output, 0, Some(size));
+                clear_pending = false;
+            }
             let source = cache.prepare(
                 &self.device,
                 &mut encoder,
@@ -321,6 +346,18 @@ impl GpuRenderer {
                 .map_err(|e| unavailable(format!("GPU layer failed: {e}")))?;
             check()?;
             cache.completed(source);
+        }
+        if clear_pending {
+            let mut encoder = self.device.create_command_encoder(&Default::default());
+            encoder.clear_buffer(&output, 0, Some(size));
+            check()?;
+            let submission = self.queue.submit([encoder.finish()]);
+            self.device
+                .poll(wgpu::PollType::Wait {
+                    submission_index: Some(submission),
+                    timeout: Some(Duration::from_secs(30)),
+                })
+                .map_err(|e| unavailable(format!("GPU output clear failed: {e}")))?;
         }
         check()?;
         Ok((output, stats))

@@ -656,3 +656,6 @@ fn display_texture_cancellation_and_device_loss_preserve_host_pixels_and_retire_
 
 #[path = "gpu/regions.rs"]
 mod regions;
+
+#[path = "gpu/output_pool.rs"]
+mod output_pool;

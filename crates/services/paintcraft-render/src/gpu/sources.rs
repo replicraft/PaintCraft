@@ -29,6 +29,10 @@ pub struct SourceCacheUsage {
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct GpuRenderStats {
     pub uploaded_bytes: u64,
+    pub output_allocations: u64,
+    pub output_reuses: u64,
+    pub output_cleared_bytes: u64,
+    pub retained_output_bytes: u64,
     pub upload_strips: u64,
     pub source_hits: u64,
     pub patched_sources: u64,
