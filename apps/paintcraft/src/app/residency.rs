@@ -32,10 +32,11 @@ impl App {
         });
         Ok(())
     }
-    pub(super) fn retry_reclaimed_render(&mut self, usage: BudgetUsage) {
+    pub(super) fn retry_reclaimed_render(&mut self) {
         if self
             .render_residency_retry
-            .is_some_and(|(key, used)| self.texture_key == Some(key) && usage.reserved < used)
+            .as_ref()
+            .is_some_and(|(key, denial)| self.texture_key == Some(*key) && denial.can_retry())
         {
             self.texture_key = None;
             self.render_residency_retry = None;
@@ -234,33 +235,80 @@ mod tests {
         let mut app = App::new(None);
         let ctx = egui::Context::default();
         let key = app.presentation_key();
-        app.install_render(
-            &ctx,
-            key,
-            Err(paintcraft_core::types::Error::new(
-                paintcraft_core::types::ErrorCode::ResourceLimit,
-                "injected memory pressure",
-            )),
-        );
+        let bytes = paintcraft_raster::RasterLayer::TILE_BYTES as u64;
+        let budget = SharedBudget::new(2 * bytes);
+        let held = budget.reserve(bytes).unwrap();
+        let mut admission =
+            paintcraft_raster::Admission::with_residency(2 * 65_536, budget.clone());
+        let candidate = paintcraft_raster::TileLease::materialize(
+            Rgba::TRANSPARENT,
+            &mut admission,
+            |_| Ok(()),
+        )
+        .unwrap();
+        let error = paintcraft_raster::TileLease::materialize(
+            Rgba::TRANSPARENT,
+            &mut admission,
+            |_| Ok(()),
+        )
+        .unwrap_err();
+        drop(candidate); // Rollback alone leaves room for only one of two required tiles.
+        app.install_render(&ctx, key, Err(error));
         assert_eq!(app.texture_key, Some(key));
-        // Inject two counter observations; no allocation/RSS result is inferred.
-        app.render_residency_retry = Some((key, 512));
-        app.retry_reclaimed_render(BudgetUsage {
-            limit: 1024,
-            reserved: 512,
-            peak: 512,
-        });
+        app.retry_reclaimed_render();
         assert_eq!(app.texture_key, Some(key));
-        app.retry_reclaimed_render(BudgetUsage {
-            limit: 1024,
-            reserved: 256,
-            peak: 512,
-        });
+        drop(held);
+        app.retry_reclaimed_render();
         assert!(app.texture_key.is_none());
         app.sync_texture(&ctx);
         assert_eq!(app.texture_key, Some(key));
         assert_eq!(app.rendered, render_flat(app.editor.document()).unwrap());
         assert!(app.render_residency_retry.is_none());
+    }
+    #[test]
+    fn reclamation_before_error_delivery_is_observed_without_a_second_capacity_drop() {
+        use paintcraft_core::types::resources::AllocationClass;
+        let mut app = App::new(None);
+        let ctx = egui::Context::default();
+        let key = app.presentation_key();
+        let budget = SharedBudget::new(32);
+        let held = budget.reserve(32).unwrap();
+        let error = budget
+            .reserve(16)
+            .unwrap_err()
+            .with_allocation_requirement(AllocationClass::DecodedTiles, 16);
+        drop(held); // A different owner releases capacity before the UI sees failure.
+        app.install_render(&ctx, key, Err(error));
+        assert_eq!(app.texture_key, Some(key));
+        app.retry_reclaimed_render();
+        assert!(app.texture_key.is_none());
+        app.sync_texture(&ctx);
+        assert_eq!(app.texture_key, Some(key));
+        assert_eq!(app.rendered, render_flat(app.editor.document()).unwrap());
+    }
+    #[test]
+    fn unclassified_and_impossible_limits_do_not_create_reclamation_retry_loops() {
+        use paintcraft_core::types::{Error, ErrorCode, resources::AllocationClass};
+        let mut app = App::new(None);
+        let ctx = egui::Context::default();
+        let key = app.presentation_key();
+        app.install_render(
+            &ctx,
+            key,
+            Err(Error::new(ErrorCode::ResourceLimit, "fixed work allowance")),
+        );
+        assert!(app.render_residency_retry.is_none());
+        app.retry_reclaimed_render();
+        assert_eq!(app.texture_key, Some(key));
+        let budget = SharedBudget::new(1);
+        let impossible = budget
+            .reserve(2)
+            .unwrap_err()
+            .with_allocation_requirement(AllocationClass::DecodedTiles, 2);
+        app.install_render(&ctx, key, Err(impossible));
+        assert!(app.render_residency_retry.is_none());
+        app.retry_reclaimed_render();
+        assert_eq!(app.texture_key, Some(key));
     }
 }
 

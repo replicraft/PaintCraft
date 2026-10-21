@@ -100,7 +100,14 @@ fn waiting_resource_failure_receives_releases_above_the_pressure_threshold() {
     let mut app = App::new(None);
     app.connect_budget_wakes(&ctx, tiles.clone()).unwrap();
     let held = tiles.reserve(1 << 20).unwrap();
-    app.render_residency_retry = Some((app.presentation_key(), 1 << 20));
+    let error = tiles
+        .reserve(4 << 20)
+        .unwrap_err()
+        .with_allocation_requirement(
+            paintcraft_core::types::resources::AllocationClass::DecodedTiles,
+            4 << 20,
+        );
+    app.install_render(&ctx, app.presentation_key(), Err(error));
     app.poll_residency_pressure(&ctx);
     advance(&ctx);
     let before = count.load(Ordering::Acquire);

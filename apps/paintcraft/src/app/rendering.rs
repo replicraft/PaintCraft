@@ -99,7 +99,7 @@ impl App {
         }
         self.rendered_preview = preview;
         let key = self.presentation_key();
-        self.retry_reclaimed_render(paintcraft_raster::Admission::new(0).residency_usage());
+        self.retry_reclaimed_render();
         while let Some((handle, result)) = self.renderer.as_mut().and_then(Executor::poll) {
             let expected = self
                 .pending_frame
@@ -270,23 +270,26 @@ impl App {
         if !self.accept_render_key(key) {
             return;
         }
-        if let Some(wakes) = &self.budget_wakes {
-            wakes.wait_for_release(pixels.as_ref().err().is_some_and(|error| {
-                error.code == paintcraft_core::types::ErrorCode::ResourceLimit
-            }));
-        }
         self.render_residency_retry = pixels
             .as_ref()
             .err()
-            .filter(|error| error.code == paintcraft_core::types::ErrorCode::ResourceLimit)
-            .map(|_| {
-                (
-                    key,
-                    paintcraft_raster::Admission::new(0)
-                        .residency_usage()
-                        .reserved,
-                )
-            });
+            .and_then(|error| error.allocation_denial())
+            .filter(|denial| {
+                denial.class() == paintcraft_core::types::resources::AllocationClass::DecodedTiles
+                    && denial.is_possible()
+            })
+            .cloned()
+            .map(|denial| (key, denial));
+        if let Some(wakes) = &self.budget_wakes {
+            wakes.wait_for_release(self.render_residency_retry.is_some());
+        }
+        if self
+            .render_residency_retry
+            .as_ref()
+            .is_some_and(|(_, denial)| denial.can_retry())
+        {
+            ctx.request_repaint();
+        }
         let doc = self.editor.document();
         match pixels {
             Ok(px) if px.len() as u64 == u64::from(doc.canvas.0) * u64::from(doc.canvas.1) * 4 => {
