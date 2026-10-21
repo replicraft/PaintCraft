@@ -17,3 +17,5 @@ pub mod coordinates;
 pub mod text;
 
 pub mod storage;
+
+pub mod resources;
