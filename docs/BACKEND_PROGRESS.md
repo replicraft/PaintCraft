@@ -510,3 +510,28 @@ worker declarations and process RSS. The fixed ceiling is a provisional guardrai
 metadata, codec/encoded/output/GPU buffers, adaptive admission and cross-tab pressure
 handling remain. No allocation-throughput or RSS improvement is inferred from the
 correctness checks. T04/T11/T13 remain partial.
+
+
+## Seventeenth slice: guarded owner pressure maintenance
+
+Detached preparation can now pack/refine/spill a bounded preserving history step
+and return a typed storage-maintenance result. Owner publication changes no content
+revision, cursor, redo or saved acknowledgement, but retires older private storage
+preparations. Required spill barriers and cancellation complete before publication.
+Native pressure coordination polls inactive tabs and parked frontend workspaces
+first; clean maintenance stays separate from edits and yields to queued foreground
+work. Resource-failed render keys retry when tile residency drops.
+
+641 workspace tests pass (21 explicit ignores), strict workspace/all-target Clippy,
+formatting/file limits, release desktop/CLI builds, three required Metal checks and
+an isolated 30-frame native smoke. New regressions cover delayed ownership release,
+identity/save preservation, all observed cancellation boundaries, failed durability,
+staleness, clean/no-progress behavior, inactive/parked ownership, foreground yielding
+and unchanged-key render retry. Pressure telemetry is scaled/injected in coordinator
+tests; there is no native 2 GiB exhaustion or event/frame latency qualification.
+
+[The pressure contract](HISTORY_PRESSURE.md) records provisional 64 MiB headroom,
+64-item work batches and retry timing. Request-sized admission, content retry,
+cross-window signaling, pinned current/read data, all-service physical budgets and
+native pressure/interference/tail-latency evidence remain. T04/T11/T13 stay partial;
+no throughput or RSS improvement is inferred from these correctness checks.

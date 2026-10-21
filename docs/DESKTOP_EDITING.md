@@ -57,6 +57,16 @@ Retired/replaced devices cannot install late success/fallback frames. Loss wakes
 the UI and schedules host-backed CPU recomposition; automatic recovery of a lost
 native window/presentation device remains unimplemented.
 
+## History pressure maintenance
+
+[Guarded storage maintenance](HISTORY_PRESSURE.md) runs on the shared editing worker
+when the default tile realm needs headroom. Inactive tabs and parked frontend
+workspaces are polled without activation. Storage publication changes no content
+revision, undo position or saved acknowledgement, and cannot make a clean document
+dirty. Completed work yields to queued foreground edits. Failed resource renders
+retry after the observed decoded capacity falls. Full scheduler priorities,
+request-sized reservation and native pressure/latency qualification remain.
+
 ## Render preparation and progress
 
 The UI captures a preview snapshot only when its tool/queue/document inputs change

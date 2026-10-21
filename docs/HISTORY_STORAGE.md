@@ -165,5 +165,7 @@ payload capacity once every strong decoded owner has released it. Cold undo
 materialization reserves capacity again; weak decoded aliases do not pin it.
 Default edit/import/restore admissions share a provisional 2 GiB decoded payload
 realm. This excludes encoded/native buffers and metadata, and is separate from
-history retention and worker declarations. Cross-session pressure coordination,
+history retention and worker declarations. Native [guarded pressure maintenance](HISTORY_PRESSURE.md)
+now visits inactive tabs and parked frontend workspaces without changing logical
+history or dirty state. Request-sized admission, cross-window notification,
 adaptive physical budgets and residency/RSS qualification remain incomplete.
