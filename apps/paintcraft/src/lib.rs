@@ -13,6 +13,8 @@ pub mod controller;
 mod cpu_rendering;
 #[path = "app/cursor.rs"]
 mod cursor;
+#[path = "app/editing.rs"]
+mod editing;
 #[path = "app/files.rs"]
 mod files;
 #[path = "app/history.rs"]
@@ -95,6 +97,7 @@ mod code {
     pub const HISTORY: u64 = 13;
     pub const CANVAS_SIZE: u64 = 14;
     pub const CLEAR_CANVAS: u64 = 15;
+    pub const EXPORT: u64 = 16;
 }
 
 const DEFAULT_SIZE: (u32, u32) = settings::DEFAULT_SIZE;
@@ -163,6 +166,7 @@ pub struct App {
     switching: Option<switching::Switch>,
     gpu: Option<Arc<GpuRenderer>>,
     renderer: Option<Executor<RenderedFrame>>,
+    editing: Option<controller::background::Service>,
     cpu_renderer: cpu_rendering::CpuRenderer,
     pending_frame: Option<(RenderKey, JobHandle)>,
     dialogs: Option<NativeDialogs>,
@@ -183,9 +187,11 @@ pub struct App {
     /// The file this document was opened from or last saved to.
     bound: Option<PathBuf>,
     pending_save: Option<(PathBuf, Option<PathBuf>)>,
+    deferred_files: std::collections::VecDeque<editing::DeferredFile>,
     saving: Option<saving::NativeSaving>,
     save_activation: Option<u64>,
     close_after_saves: bool,
+    close_after_edits: bool,
     closing_workspace: bool,
     confirm: Option<Confirm>,
     canvas_rect: Option<Rect>,
@@ -258,6 +264,7 @@ impl App {
             switching: None,
             gpu: None,
             renderer: None,
+            editing: None,
             cpu_renderer: cpu_rendering::CpuRenderer::new(),
             pending_frame: None,
             dialogs: None,
@@ -276,9 +283,11 @@ impl App {
             path_text,
             bound: None,
             pending_save: None,
+            deferred_files: Default::default(),
             saving: None,
             save_activation: None,
             close_after_saves: false,
+            close_after_edits: false,
             closing_workspace: false,
             confirm: None,
             canvas_rect: None,

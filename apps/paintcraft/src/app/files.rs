@@ -72,6 +72,12 @@ impl App {
 
     /// Swap in a new editor; its predecessor's work was already saved or deliberately discarded.
     pub(super) fn prepare_editor_replacement(&mut self) -> paintcraft_core::types::Result<()> {
+        if !self.deferred_files.is_empty() {
+            return Err(paintcraft_core::types::Error::new(
+                paintcraft_core::types::ErrorCode::ResourceLimit,
+                "finish queued file requests before replacing this document",
+            ));
+        }
         if let Some(saving) = &mut self.saving {
             let controls = usize::from(self.editor.recovery_handle().is_some())
                 + usize::from(self.recovery_source.is_some());
@@ -99,7 +105,10 @@ impl App {
     }
 
     pub(super) fn publish_editor(&mut self, editor: Editor) {
-        let editor = editor.with_text_renderer(self.text_renderer.clone());
+        let mut editor = editor.with_text_renderer(self.text_renderer.clone());
+        if let Some(service) = &self.editing {
+            editor.connect_editing(service.clone());
+        }
         if let Some((_, handle)) = self.pending_frame.take()
             && let Some(renderer) = &self.renderer
         {
@@ -200,6 +209,19 @@ impl App {
     }
 
     pub(super) fn export_selected(&mut self, path: PathBuf) {
+        self.editor.commit_text();
+        self.editor.run_pending();
+        if self.editing.is_some() {
+            self.defer_file(
+                editing::FileRequest::Export(path),
+                token(&self.context, code::EXPORT),
+            );
+            return;
+        }
+        self.plan_export(path);
+    }
+
+    pub(super) fn plan_export(&mut self, path: PathBuf) {
         let Some(format) = ImageFormat::from_extension(&path) else {
             self.editor
                 .set_status("Name the file .png, .bmp or .jpg to export");
@@ -267,15 +289,31 @@ impl App {
     }
 
     pub(super) fn do_save(&mut self, ctx: &egui::Context, path: PathBuf) {
+        self.editor.cancel_gesture();
+        self.editor.commit_text();
+        self.editor.run_pending();
+        if self.editing.is_some() {
+            self.defer_file(editing::FileRequest::Save(path), token(ctx, code::SAVE));
+            return;
+        }
+        self.capture_save(ctx, path);
+    }
+
+    pub(super) fn capture_save(&mut self, ctx: &egui::Context, path: PathBuf) {
+        if let Some((id, source)) = &mut self.tab_save_close
+            && self
+                .tabs
+                .get(self.active_tab)
+                .is_some_and(|tab| tab.id == *id)
+        {
+            *source = self.editor.document().state_id;
+        }
+        let activation = token(ctx, code::SAVE);
+        if self.save_activation == Some(activation) {
+            return;
+        }
+        self.save_activation = Some(activation);
         if let Some(saving) = &mut self.saving {
-            let activation = token(ctx, code::SAVE);
-            if self.save_activation == Some(activation) {
-                return;
-            }
-            self.save_activation = Some(activation);
-            self.editor.cancel_gesture();
-            self.editor.commit_text();
-            self.editor.run_pending();
             let result = saving.submit(&self.editor, path, self.bound.as_deref(), ctx.clone());
             self.editor.set_status(match result {
                 Ok(()) => "Saving captured document…".into(),
@@ -285,8 +323,13 @@ impl App {
         }
         let previous = self.editor.path().map(Path::to_path_buf);
         self.editor.set_path(path.clone());
-        self.request(ctx, code::SAVE, Action::Save);
         self.pending_save = Some((path, previous));
+        if self.editor.at_file_barrier() {
+            self.editor.save_captured();
+            self.finish_save();
+        } else {
+            self.request(ctx, code::SAVE, Action::Save);
+        }
     }
 
     pub(super) fn finish_save(&mut self) {

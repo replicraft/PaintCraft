@@ -6,6 +6,7 @@ impl App {
         self.saving
             .as_ref()
             .is_some_and(|s| s.pending_for_tab(self, id))
+            || self.tab_edit_pending(id)
     }
 
     pub(crate) fn request_close_tab(&mut self, id: Uuid, ctx: &egui::Context) {
@@ -64,6 +65,7 @@ impl App {
             self.bound = None;
             self.path_text = "untitled.pcnd".into();
             self.pending_save = None;
+            self.deferred_files.clear();
             self.name_edit = None;
             self.opacity_edit = None;
             self.recovery_needs_init = false;
@@ -112,6 +114,11 @@ impl App {
     }
 
     pub(crate) fn request_workspace_close(&mut self, ctx: &egui::Context) {
+        if self.any_pending_edits() || self.any_deferred_files() {
+            self.close_after_edits = true;
+            ctx.request_repaint();
+            return;
+        }
         self.closing_workspace = true;
         ctx.send_viewport_cmd(egui::ViewportCommand::Close);
     }

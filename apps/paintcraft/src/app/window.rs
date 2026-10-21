@@ -9,6 +9,7 @@ impl App {
         self.context = ctx.clone();
         let first_pass = ctx.current_pass_index() == 0;
         if first_pass {
+            self.poll_edits(&ctx);
             if let Some(fullscreen) = ctx.input(|i| i.viewport().fullscreen) {
                 self.fullscreen = fullscreen;
             }
@@ -27,6 +28,7 @@ impl App {
         }
         if self.switching.is_some()
             || self.closing_workspace
+            || self.close_after_edits
             || self.confirm.is_some()
             || self.tab_closing.is_some()
             || self.dialogs.as_ref().is_some_and(NativeDialogs::pending)
@@ -72,7 +74,8 @@ impl App {
             // so it cannot resume or publish after the dialog is dismissed.
             self.editor.cancel_gesture();
         }
-        let accept_input = first_pass && !self.action_context().blocked;
+        let accept_input =
+            first_pass && !self.action_context().blocked && !self.editor.has_pending_edits();
         egui::CentralPanel::default()
             .frame(
                 egui::Frame::new()
@@ -110,7 +113,12 @@ impl App {
             if let Some(saving) = &mut self.saving {
                 saving.cancel_restore();
             }
-            if self.saving.as_ref().is_some_and(|s| s.pending()) {
+            if self.any_pending_edits() || self.any_deferred_files() {
+                ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
+                self.close_after_edits = true;
+                self.editor
+                    .set_status("Waiting for requested edits before closing…");
+            } else if self.saving.as_ref().is_some_and(|s| s.pending()) {
                 ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
                 self.close_after_saves = true;
                 self.editor
@@ -133,6 +141,7 @@ impl App {
             ctx.request_repaint();
             self.sync_texture(&ctx);
         }
+        self.poll_edits(&ctx);
         self.finish_save();
         self.poll_native_saves(&ctx);
         self.pump_tab_close(&ctx);

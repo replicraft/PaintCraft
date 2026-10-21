@@ -47,7 +47,9 @@ impl App {
     }
 
     pub(super) fn pump_interface_switch(&mut self, ctx: &egui::Context) {
-        if self.confirm.is_some()
+        if self.any_pending_edits()
+            || self.any_deferred_files()
+            || self.confirm.is_some()
             || self.dialogs.as_ref().is_some_and(NativeDialogs::pending)
             || self
                 .saving

@@ -15,7 +15,7 @@ pub(super) const MAX_TABS: usize = 64;
 pub(super) struct Tab {
     pub id: Uuid,
     pub number: u64,
-    state: Option<DocumentState>,
+    pub(super) state: Option<DocumentState>,
 }
 
 impl Tab {
@@ -29,8 +29,8 @@ impl Tab {
 }
 
 #[derive(Debug)]
-struct DocumentState {
-    editor: Editor,
+pub(super) struct DocumentState {
+    pub(super) editor: Editor,
     session: SessionState,
     zoom: f32,
     pixel_grid: bool,
@@ -38,6 +38,7 @@ struct DocumentState {
     path_text: String,
     bound: Option<PathBuf>,
     pending_save: Option<(PathBuf, Option<PathBuf>)>,
+    pub(super) deferred_files: std::collections::VecDeque<editing::DeferredFile>,
     save_activation: Option<u64>,
     recovery_needs_init: bool,
     recovery_source: Option<saving::restoring::Handoff>,
@@ -57,6 +58,7 @@ impl DocumentState {
             path_text: "untitled.pcnd".into(),
             bound: None,
             pending_save: None,
+            deferred_files: Default::default(),
             save_activation: None,
             recovery_needs_init: recovery,
             recovery_source: None,
@@ -68,12 +70,16 @@ impl DocumentState {
 
     fn swap(&mut self, app: &mut App) {
         std::mem::swap(&mut self.editor, &mut app.editor);
+        if let Some(service) = &app.editing {
+            app.editor.connect_editing(service.clone());
+        }
         std::mem::swap(&mut self.zoom, &mut app.zoom);
         std::mem::swap(&mut self.pixel_grid, &mut app.pixel_grid);
         std::mem::swap(&mut self.pending_center, &mut app.pending_center);
         std::mem::swap(&mut self.path_text, &mut app.path_text);
         std::mem::swap(&mut self.bound, &mut app.bound);
         std::mem::swap(&mut self.pending_save, &mut app.pending_save);
+        std::mem::swap(&mut self.deferred_files, &mut app.deferred_files);
         std::mem::swap(&mut self.save_activation, &mut app.save_activation);
         std::mem::swap(&mut self.recovery_needs_init, &mut app.recovery_needs_init);
         std::mem::swap(&mut self.recovery_source, &mut app.recovery_source);
@@ -455,6 +461,9 @@ impl WorkspaceDocuments {
     pub(super) fn swap(&mut self, app: &mut App) {
         self.active.swap(app);
         app.editor.text_renderer_connect(app.text_renderer.clone());
+        if let Some(service) = &app.editing {
+            app.editor.connect_editing(service.clone());
+        }
         std::mem::swap(&mut self.tabs, &mut app.tabs);
         std::mem::swap(&mut self.active_tab, &mut app.active_tab);
         std::mem::swap(&mut self.next_tab_number, &mut app.next_tab_number);

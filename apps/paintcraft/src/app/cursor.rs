@@ -17,6 +17,10 @@ impl App {
         }) else {
             return;
         };
+        if self.editing.is_some() && self.editor.has_pending_edits() {
+            ui.ctx().set_cursor_icon(egui::CursorIcon::Progress);
+            return;
+        }
         ui.ctx().set_cursor_icon(match self.editor.tool {
             Tool::Eraser => egui::CursorIcon::None,
             Tool::Text => egui::CursorIcon::Text,

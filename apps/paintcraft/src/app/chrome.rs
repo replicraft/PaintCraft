@@ -21,8 +21,11 @@ impl App {
                 Experience::Studio => Frontend::Studio,
             },
             document_open: self.document_count() > 0,
-            can_undo: self.editor.undo_depth() > 0 || pending_text,
-            can_redo: self.editor.redo_depth() > 0 && !pending_text,
+            can_undo: self.editor.undo_depth() > 0
+                || pending_text
+                || self.editor.has_pending_edits(),
+            can_redo: (self.editor.redo_depth() > 0 || self.editor.has_pending_edits())
+                && !pending_text,
             selection_active: self.editor.selection() != Selection::Inactive,
             tool: self.editor.tool,
             layer_index,
@@ -37,6 +40,8 @@ impl App {
             blocked: self.switching.is_some()
                 || self.closing_workspace
                 || self.close_after_saves
+                || self.close_after_edits
+                || !self.deferred_files.is_empty()
                 || self.confirm.is_some()
                 || self.tab_closing.is_some()
                 || self.dialogs.as_ref().is_some_and(NativeDialogs::pending),

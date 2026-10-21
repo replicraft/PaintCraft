@@ -147,6 +147,12 @@ impl NativeSaving {
         bound: Option<&Path>,
         ctx: egui::Context,
     ) -> Result<()> {
+        if !editor.can_capture_file() {
+            return Err(Error::new(
+                ErrorCode::ConflictStaleBase,
+                "finish pending edits before capturing a save",
+            ));
+        }
         let operation = if bound == Some(path.as_path()) {
             "save"
         } else {
@@ -335,6 +341,12 @@ impl App {
     }
 
     pub(super) fn close_after_requested_saves(&mut self, ctx: &egui::Context) {
+        if self.any_pending_edits() || self.any_deferred_files() {
+            self.close_after_edits = true;
+            self.editor
+                .set_status("Waiting for requested edits and files before closing…");
+            return;
+        }
         if let Some(saving) = &mut self.saving {
             saving.cancel_restore();
         }
@@ -493,8 +505,9 @@ impl App {
             .as_mut()
             .expect("native I/O")
             .pump_retired_saves();
+        let edits_pending = self.any_pending_edits() || self.any_deferred_files();
         let saving = self.saving.as_mut().expect("native I/O");
-        if self.close_after_saves && !saving.pending() {
+        if self.close_after_saves && !saving.pending() && !edits_pending {
             self.close_after_saves = false;
             if saving.failed() {
                 self.allow_close = false;

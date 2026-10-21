@@ -1,0 +1,246 @@
+use super::*;
+use std::time::Instant;
+const BLACK: Rgba = Rgba([0, 0, 0, 255]);
+const RED: Rgba = Rgba([255, 0, 0, 255]);
+fn app(native_save: bool) -> (App, egui::Context) {
+    let context = egui::Context::default();
+    let mut app = App::new(None);
+    app.context = context.clone();
+    app.initialize_editing(context.clone());
+    if native_save {
+        app.saving = Some(saving::NativeSaving::new(context.clone()).unwrap());
+    }
+    (app, context)
+}
+fn directory() -> PathBuf {
+    let path =
+        std::env::temp_dir().join(format!("paintcraft-editing-coordinator-{}", Uuid::new_v4()));
+    std::fs::create_dir(&path).unwrap();
+    std::fs::canonicalize(path).unwrap()
+}
+fn pump(app: &mut App, context: &egui::Context, mut done: impl FnMut(&App) -> bool) {
+    let deadline = Instant::now() + Duration::from_secs(15);
+    loop {
+        app.poll_edits(context);
+        app.poll_native_saves(context);
+        app.pump_tab_close(context);
+        app.pump_interface_switch(context);
+        if done(app) {
+            break;
+        }
+        assert!(Instant::now() < deadline, "coordinator stalled: {app:?}");
+        std::thread::yield_now();
+    }
+}
+fn idle(app: &App) -> bool {
+    !app.any_pending_edits()
+        && !app.any_deferred_files()
+        && !app
+            .saving
+            .as_ref()
+            .is_some_and(saving::NativeSaving::pending)
+}
+fn color(doc: &paintcraft_document::Document) -> Rgba {
+    doc.layers[&doc.roots[0]].raster.default_pixel()
+}
+#[test]
+fn save_captures_preceding_edit_while_later_edit_stays_dirty_for_native_and_fallback_io() {
+    for native_save in [false, true] {
+        let root = directory();
+        let path = root.join("captured.pcnd");
+        let (mut app, context) = app(native_save);
+        let release = app.editing.as_ref().unwrap().pause();
+        app.editor.request(1, Action::ClearCanvas { color: BLACK });
+        app.do_save(&context, path.clone());
+        assert_eq!(app.deferred_files.len(), 1);
+        app.editor.request(2, Action::ClearCanvas { color: RED });
+        assert!(!path.exists());
+        release.send(()).unwrap();
+        pump(&mut app, &context, idle);
+        assert_eq!(color(Editor::open(&path).unwrap().document()), BLACK);
+        assert_eq!(color(app.editor.document()), RED);
+        assert!(app.editor.is_dirty());
+        assert_eq!(app.bound.as_deref(), Some(path.as_path()));
+        app.editor.request(3, Action::Undo);
+        pump(&mut app, &context, idle);
+        assert_eq!(color(app.editor.document()), BLACK);
+        assert!(
+            !app.editor.is_dirty(),
+            "save acknowledgement survived later preparation"
+        );
+        drop(app);
+        std::fs::remove_dir_all(root).unwrap();
+    }
+}
+#[test]
+fn inactive_tabs_receive_their_own_worker_results_and_save_captures() {
+    let root = directory();
+    let first_path = root.join("first.pcnd");
+    let second_path = root.join("second.pcnd");
+    let (mut app, context) = app(true);
+    app.settings.experience = Experience::Studio;
+    let first = app.active_tab_id();
+    let release = app.editing.as_ref().unwrap().pause();
+    app.editor.request(1, Action::ClearCanvas { color: BLACK });
+    app.do_save(&context, first_path.clone());
+    app.new_document();
+    let second = app.active_tab_id();
+    assert_ne!(first, second);
+    app.editor.request(1, Action::ClearCanvas { color: RED });
+    app.do_save(&context, second_path.clone());
+    assert!(app.any_deferred_files());
+    release.send(()).unwrap();
+    pump(&mut app, &context, idle);
+    assert_eq!(app.active_tab_id(), second);
+    assert_eq!(color(app.editor.document()), RED);
+    assert!(!app.editor.is_dirty());
+    app.activate_tab(first, &context);
+    assert_eq!(color(app.editor.document()), BLACK);
+    assert!(!app.editor.is_dirty());
+    assert_eq!(color(Editor::open(&first_path).unwrap().document()), BLACK);
+    assert_eq!(color(Editor::open(&second_path).unwrap().document()), RED);
+    drop(app);
+    std::fs::remove_dir_all(root).unwrap();
+}
+#[test]
+fn tab_and_window_close_wait_for_the_pending_edit_before_presenting_unsaved_work() {
+    for window in [false, true] {
+        let (mut app, context) = app(true);
+        let id = app.active_tab_id();
+        let release = app.editing.as_ref().unwrap().pause();
+        app.editor.request(1, Action::ClearCanvas { color: BLACK });
+        if window {
+            app.close_after_requested_saves(&context);
+        } else {
+            app.request_close_tab(id, &context);
+        }
+        assert!(app.confirm.is_none() && app.tab_closing.is_none());
+        assert!(!app.closing_workspace);
+        release.send(()).unwrap();
+        pump(&mut app, &context, |app| {
+            if window {
+                app.confirm == Some(Confirm::QuitUnsaved)
+            } else {
+                app.tab_closing == Some(id)
+            }
+        });
+        assert_eq!(color(app.editor.document()), BLACK);
+        assert_eq!(app.document_count(), 1);
+        assert!(!app.closing_workspace);
+    }
+}
+#[test]
+fn interface_save_gate_waits_for_editing_and_saves_the_completed_revision() {
+    let root = directory();
+    let path = root.join("classic.pcnd");
+    let (mut app, context) = app(true);
+    app.path_text = path.to_string_lossy().into_owned();
+    let release = app.editing.as_ref().unwrap().pause();
+    app.editor.request(1, Action::ClearCanvas { color: BLACK });
+    app.begin_interface_switch(Experience::Studio, &context);
+    assert_eq!(app.experience(), Experience::Classic);
+    assert!(!path.exists());
+    release.send(()).unwrap();
+    pump(&mut app, &context, |app| {
+        app.experience() == Experience::Studio && idle(app)
+    });
+    assert_eq!(color(Editor::open(&path).unwrap().document()), BLACK);
+    assert!(!app.editor.is_dirty());
+    app.choose_experience(Experience::Classic);
+    pump(&mut app, &context, |app| {
+        app.experience() == Experience::Classic && idle(app)
+    });
+    assert_eq!(color(app.editor.document()), BLACK);
+    assert!(!app.editor.is_dirty());
+    drop(app);
+    std::fs::remove_dir_all(root).unwrap();
+}
+#[test]
+fn export_confirmation_holds_its_revision_until_later_edits_can_resume() {
+    let root = directory();
+    let path = root.join("captured.png");
+    let (mut app, context) = app(true);
+    let release = app.editing.as_ref().unwrap().pause();
+    app.editor.request(1, Action::ClearCanvas { color: BLACK });
+    app.export_selected(path.clone());
+    app.editor.request(2, Action::ClearCanvas { color: RED });
+    release.send(()).unwrap();
+    pump(&mut app, &context, |app| {
+        matches!(app.confirm, Some(Confirm::Export { .. }))
+    });
+    assert_eq!(color(app.editor.document()), BLACK);
+    let Some(Confirm::Export { format, losses, .. }) = app.confirm.take() else {
+        panic!("export confirmation");
+    };
+    app.do_export(&path, format, &losses);
+    pump(&mut app, &context, idle);
+    assert_eq!(color(app.editor.document()), RED);
+    let decoded = image::decode(&std::fs::read(&path).unwrap()).unwrap();
+    assert!(
+        decoded
+            .rgba
+            .as_chunks::<4>()
+            .0
+            .iter()
+            .all(|pixel| *pixel == BLACK.0)
+    );
+    drop(app);
+    std::fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
+fn real_two_pass_ui_routes_a_gesture_once_and_pumps_its_background_publication() {
+    use eframe::egui::{Event, Modifiers, PointerButton, Vec2};
+    use egui_kittest::Harness;
+    let mut harness = Harness::builder()
+        .with_size(Vec2::new(1200.0, 900.0))
+        .build_ui_state(
+            |ui, app: &mut App| {
+                if app.editing.is_none() {
+                    app.initialize_editing(ui.ctx().clone());
+                }
+                app.ui(ui);
+                if ui.ctx().current_pass_index() == 0 {
+                    ui.ctx()
+                        .request_discard("exercise two native editing layout passes");
+                }
+            },
+            App::new(None),
+        );
+    harness.run();
+    let release = harness.state().editing.as_ref().unwrap().pause();
+    harness.state_mut().editor.tool = Tool::Pencil;
+    let point = harness.state().canvas_rect().unwrap().min + Vec2::new(30.5, 40.5);
+    harness.input_mut().events.extend([
+        Event::PointerMoved(point),
+        Event::PointerButton {
+            pos: point,
+            button: PointerButton::Primary,
+            pressed: true,
+            modifiers: Modifiers::NONE,
+        },
+        Event::PointerButton {
+            pos: point,
+            button: PointerButton::Primary,
+            pressed: false,
+            modifiers: Modifiers::NONE,
+        },
+    ]);
+    harness.step();
+    assert_eq!(harness.state().editor.publications(), 0);
+    assert!(harness.state().editor.has_pending_edits());
+    assert!(harness.state().editor.preview().is_some());
+    release.send(()).unwrap();
+    let deadline = Instant::now() + Duration::from_secs(10);
+    while harness.state().editor.has_pending_edits() {
+        assert!(Instant::now() < deadline);
+        harness.step();
+        std::thread::yield_now();
+    }
+    harness.run_steps(3);
+    let app = harness.state();
+    assert_eq!(app.editor.publications(), 1);
+    let doc = app.editor.document();
+    assert_eq!(doc.layers[&doc.roots[0]].raster.get(30, 40), BLACK);
+    assert_eq!(&app.rendered()[(40 * 1000 + 30) * 4..][..4], &BLACK.0);
+}
