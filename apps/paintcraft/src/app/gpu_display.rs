@@ -52,11 +52,10 @@ impl App {
         }
         let result = (|| {
             let size = frame.size();
-            let doc = self.editor.document();
-            if size != [doc.canvas.0, doc.canvas.1] {
+            if frame.region() != key.3 || size != [key.3.width() as u32, key.3.height() as u32] {
                 return Err(paintcraft_core::types::Error::new(
                     paintcraft_core::types::ErrorCode::InvariantViolation,
-                    "GPU display dimensions differ from canvas",
+                    "GPU display bounds differ from requested region",
                 ));
             }
             self.gpu_target
@@ -92,9 +91,9 @@ impl App {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
-    pub(super) fn target() -> Option<(Target, Arc<GpuRenderer>)> {
+    pub(crate) fn target() -> Option<(Target, Arc<GpuRenderer>)> {
         use eframe::wgpu;
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle());
         let adapter = match pollster::block_on(instance.request_adapter(&Default::default())) {
@@ -235,6 +234,14 @@ mod pixel_tests {
     use super::*;
     #[test]
     fn native_and_managed_images_draw_identical_pixels_in_the_actual_egui_renderer() {
+        for region in [
+            paintcraft_core::types::Rect::new(0, 0, 32, 32).unwrap(),
+            paintcraft_core::types::Rect::new(5, 3, 23, 29).unwrap(),
+        ] {
+            compare_region(region);
+        }
+    }
+    fn compare_region(region: paintcraft_core::types::Rect) {
         use eframe::wgpu;
         let Some((target, gpu)) = super::tests::target() else {
             return;
@@ -268,7 +275,7 @@ mod pixel_tests {
         )
         .unwrap();
         let native = target
-            .install(gpu.render_texture(&doc, || Ok(())).unwrap())
+            .install(gpu.render_region_texture(&doc, region, || Ok(())).unwrap())
             .unwrap();
         let straight = paintcraft_render::render_flat(&doc).unwrap();
         let managed = ctx.load_texture(
@@ -294,14 +301,23 @@ mod pixel_tests {
                 let uv = egui::Rect::from_min_max(egui::Pos2::ZERO, egui::pos2(1.0, 1.0));
                 painter.image(
                     native.id,
-                    egui::Rect::from_min_size(egui::Pos2::ZERO, egui::vec2(32.0, 32.0)),
+                    egui::Rect::from_min_size(
+                        egui::pos2(region.x0 as f32, region.y0 as f32),
+                        egui::vec2(region.width() as f32, region.height() as f32),
+                    ),
                     uv,
                     egui::Color32::WHITE,
                 );
                 painter.image(
                     managed.id(),
-                    egui::Rect::from_min_size(egui::pos2(32.0, 0.0), egui::vec2(32.0, 32.0)),
-                    uv,
+                    egui::Rect::from_min_size(
+                        egui::pos2(32.0 + region.x0 as f32, region.y0 as f32),
+                        egui::vec2(region.width() as f32, region.height() as f32),
+                    ),
+                    egui::Rect::from_min_max(
+                        egui::pos2(region.x0 as f32 / 32.0, region.y0 as f32 / 32.0),
+                        egui::pos2(region.x1 as f32 / 32.0, region.y1 as f32 / 32.0),
+                    ),
                     egui::Color32::WHITE,
                 );
             },
@@ -421,3 +437,7 @@ mod pixel_tests {
 #[cfg(test)]
 #[path = "gpu_display/benchmark.rs"]
 mod benchmark;
+
+#[cfg(test)]
+#[path = "gpu_display/region_benchmark.rs"]
+mod region_benchmark;

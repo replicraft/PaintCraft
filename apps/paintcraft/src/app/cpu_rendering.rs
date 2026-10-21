@@ -3,7 +3,7 @@ use paintcraft_core::types::Result;
 use paintcraft_document::Document;
 use paintcraft_render::{
     cache::{CacheLimits, CompositeCache, Domain},
-    render_cancellable,
+    render_region_cancellable,
 };
 use std::sync::{Arc, Mutex};
 
@@ -63,9 +63,20 @@ impl CpuRenderer {
         self.1.lock().unwrap_or_else(|p| p.into_inner()).clear();
     }
 
+    #[cfg(test)]
     pub fn render(
         &self,
         doc: &Document,
+        preview: bool,
+        check: impl Fn() -> Result<()>,
+    ) -> Result<Vec<u8>> {
+        self.render_region(doc, doc.canvas_rect(), preview, check)
+    }
+
+    pub fn render_region(
+        &self,
+        doc: &Document,
+        region: paintcraft_core::types::Rect,
         preview: bool,
         check: impl Fn() -> Result<()>,
     ) -> Result<Vec<u8>> {
@@ -85,7 +96,7 @@ impl CpuRenderer {
         });
         check()?;
         let Some(cache) = guard.as_mut() else {
-            return render_cancellable(doc, check);
+            return render_region_cancellable(doc, region, check);
         };
         if !preview {
             cache.clear_preview();
@@ -94,20 +105,18 @@ impl CpuRenderer {
         // Tiny outputs also avoid the cache's bounded table/key overhead.
         if doc
             .layers_in_order()
-            .filter(|l| {
-                l.visible && l.opacity != 0 && doc.canvas_rect().intersect(&l.extent()).is_some()
-            })
+            .filter(|l| l.visible && l.opacity != 0 && region.intersect(&l.extent()).is_some())
             .take(2)
             .count()
             < 2
-            || doc.canvas_rect().area() < 65536
+            || region.area() < 65536
         {
-            return render_cancellable(doc, check);
+            return render_region_cancellable(doc, region, check);
         }
         cache
             .render(
                 doc,
-                doc.canvas_rect(),
+                region,
                 if preview {
                     Domain::Preview
                 } else {

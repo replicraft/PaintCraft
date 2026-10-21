@@ -149,7 +149,7 @@ struct RenderedFrame {
     device_epoch: Option<paintcraft_render::gpu::DeviceEpoch>,
 }
 
-type RenderKey = (Uuid, u64, u64);
+type RenderKey = (Uuid, u64, u64, paintcraft_core::types::Rect);
 
 pub struct App {
     #[cfg(target_os = "macos")]
@@ -183,6 +183,7 @@ pub struct App {
     gpu_target: Option<gpu_display::Target>,
     gpu_texture: Option<gpu_display::Texture>,
     texture_key: Option<RenderKey>,
+    render_region: Option<paintcraft_core::types::Rect>,
     render_residency_retry: Option<(
         RenderKey,
         paintcraft_core::types::resources::AllocationDenial,
@@ -289,6 +290,7 @@ impl App {
             gpu_target: None,
             gpu_texture: None,
             texture_key: None,
+            render_region: None,
             render_residency_retry: None,
             rendered_preview: None,
             preview_revision: 0,
@@ -366,7 +368,14 @@ impl App {
         self.canvas_rect
     }
 
-    /// Last CPU-backed display (straight RGBA8). Empty for direct native GPU display.
+    /// Document-space bounds of the last installed display, including native GPU output.
+    pub fn rendered_region(&self) -> Option<paintcraft_core::types::Rect> {
+        self.texture_key
+            .filter(|_| self.texture.is_some() || self.gpu_texture.is_some())
+            .map(|key| key.3)
+    }
+
+    /// Last CPU-backed region (tightly packed straight RGBA8). Empty for native GPU display.
     pub fn rendered(&self) -> &[u8] {
         &self.rendered
     }

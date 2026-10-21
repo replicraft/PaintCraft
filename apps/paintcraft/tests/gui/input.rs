@@ -15,7 +15,7 @@ fn one_click_is_one_transaction_and_the_texture_shows_it() {
     assert_eq!(publications(&h), before + 1, "exactly one transaction");
     assert_eq!(top_pixel(&h, 10, 20), Rgba([0, 0, 0, 255]));
     assert_eq!(top_pixel(&h, 11, 20), Rgba::TRANSPARENT);
-    let shown = &h.state().rendered()[(20 * 1000 + 10) * 4..][..4];
+    let shown = displayed_pixel(&h, 10, 20);
     assert_eq!(
         shown,
         [0, 0, 0, 255],
@@ -225,7 +225,7 @@ fn gui_and_core_produce_identical_pixels_for_the_same_stroke() {
     use paintcraft_commands::Batch;
     use paintcraft_document::{POLICY, new_document};
     use paintcraft_editor::session::Session;
-    use paintcraft_render::render_flat;
+    use paintcraft_render::render_region;
 
     let mut h = harness();
     with_layer(&mut h);
@@ -265,7 +265,7 @@ fn gui_and_core_produce_identical_pixels_for_the_same_stroke() {
     );
     assert_eq!(
         h.state().rendered(),
-        render_flat(core.document()).unwrap(),
+        render_region(core.document(), h.state().rendered_region().unwrap()).unwrap(),
         "GUI and core agree byte for byte"
     );
     assert_eq!(publications(&h), core.ticket().publication_epoch);
@@ -293,7 +293,7 @@ fn choosing_a_tool_and_dragging_makes_one_shape_transaction() {
     assert_eq!(top_pixel(&h, 60, 50), Rgba([0, 0, 0, 255]));
     assert_eq!(top_pixel(&h, 61, 50).a(), 0);
     assert_eq!(
-        h.state().rendered()[(40 * 1000 + 40) * 4 + 3],
+        displayed_pixel(&h, 40, 40)[3],
         255,
         "the display shows the shape"
     );

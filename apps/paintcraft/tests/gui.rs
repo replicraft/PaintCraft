@@ -36,6 +36,13 @@ fn at(h: &Harness<App>, x: f32, y: f32) -> Pos2 {
     h.state().canvas_rect().expect("canvas drawn").min + Vec2::new(x + 0.5, y + 0.5)
 }
 
+fn displayed_pixel(h: &Harness<App>, x: i64, y: i64) -> [u8; 4] {
+    let region = h.state().rendered_region().unwrap();
+    assert!(region.contains(x, y));
+    let index = ((y - region.y0) * region.width() + x - region.x0) as usize * 4;
+    h.state().rendered()[index..index + 4].try_into().unwrap()
+}
+
 fn press(pos: Pos2) -> Event {
     Event::PointerButton {
         pos,

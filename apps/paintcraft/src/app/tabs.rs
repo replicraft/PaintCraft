@@ -190,6 +190,7 @@ impl App {
         self.texture = None;
         self.gpu_texture = None;
         self.texture_key = None;
+        self.render_region = None;
         self.rendered.clear();
         self.canvas_rect = None;
         self.hover_doc = None;

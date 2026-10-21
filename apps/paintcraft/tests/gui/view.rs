@@ -15,7 +15,7 @@ fn view_action(h: &mut Harness<App>, label: &str) {
 fn zoom_shortcuts_menu_and_status_presets_share_mapping_without_history_changes() {
     let (mut h, dir) = studio_harness(true);
     let before = publications(&h);
-    let rendered = h.state().rendered().to_vec();
+    let rendered = paintcraft_render::render_flat(h.state().editor().document()).unwrap();
     h.event(key(Key::Minus, Modifiers::COMMAND));
     h.run();
     assert_eq!(h.state().canvas_rect().unwrap().width(), 160.0);
@@ -28,7 +28,15 @@ fn zoom_shortcuts_menu_and_status_presets_share_mapping_without_history_changes(
     h.run();
     assert_eq!(h.state().canvas_rect().unwrap().width(), 1280.0);
     view_action(&mut h, "Pixel grid");
-    assert_eq!(h.state().rendered(), rendered);
+    assert!(paintcraft_render::render_flat(h.state().editor().document()).unwrap() == rendered);
+    assert!(
+        h.state().rendered()
+            == paintcraft_render::render_region(
+                h.state().editor().document(),
+                h.state().rendered_region().unwrap()
+            )
+            .unwrap()
+    );
     h.event(key(Key::Num0, Modifiers::COMMAND));
     h.run();
     assert_eq!(h.state().canvas_rect().unwrap().width(), 320.0);
@@ -128,4 +136,79 @@ fn render_studio_pixel_grid_for_review() {
         .save("/tmp/paintcraft-studio-pixel-grid.png")
         .unwrap();
     std::fs::remove_dir_all(dir).unwrap();
+}
+
+#[test]
+fn large_canvas_renders_only_visible_pixels_at_each_dpi_and_zoom() {
+    use paintcraft_formats::pcnd;
+    for ppp in [1.0, 1.5, 2.0] {
+        let dir = scratch("viewport-large");
+        std::fs::create_dir_all(&dir).unwrap();
+        paintcraft::settings::Settings {
+            experience: paintcraft::settings::Experience::Studio,
+            ..Default::default()
+        }
+        .save(&dir)
+        .unwrap();
+        let file = dir.join("large.pcnd");
+        let doc = paintcraft_document::new_document(
+            16384,
+            16384,
+            Some(Rgba([17, 53, 91, 127])),
+            0,
+            paintcraft_document::POLICY,
+        )
+        .unwrap();
+        std::fs::write(&file, pcnd::write(&doc).unwrap()).unwrap();
+        // Native backends report their device limit. The default headless egui
+        // limit is only 2048, below this test's 2200 physical-pixel viewport.
+        let mut h = Harness::builder()
+            .with_size(Vec2::new(1100.0, 900.0))
+            .with_pixels_per_point(ppp)
+            .build_ui_state(
+                |ui, app: &mut App| {
+                    ui.ctx().input_mut(|input| input.max_texture_side = 8192);
+                    app.ui(ui);
+                    if ui.ctx().current_pass_index() == 0 {
+                        ui.ctx().request_discard("viewport test: second pass");
+                    }
+                },
+                App::new(Some(file)).with_settings(dir.clone()),
+            );
+        h.run();
+        let before = publications(&h);
+        for step in 0..3 {
+            let region = h.state().rendered_region().unwrap();
+            assert!(region.area() < 4_000_000);
+            assert_eq!(h.state().rendered().len(), region.area() as usize * 4);
+            assert!(
+                h.state().rendered()
+                    == paintcraft_render::render_region(h.state().editor().document(), region)
+                        .unwrap()
+            );
+            let rect = h.state().canvas_rect().unwrap();
+            let visible = rect.intersect(h.state().canvas_viewport().unwrap());
+            let view = paintcraft_ui::view::View::with_scale(
+                (rect.min.x, rect.min.y),
+                2.0_f32.powi(step),
+                ppp,
+            );
+            assert_eq!(
+                Some(region),
+                view.visible_region(
+                    (visible.min.x, visible.min.y),
+                    (visible.max.x, visible.max.y),
+                    (16384, 16384)
+                )
+            );
+            h.event(key(Key::Plus, Modifiers::COMMAND | Modifiers::SHIFT));
+            h.run();
+            h.event(key_up(Key::Plus, Modifiers::COMMAND | Modifiers::SHIFT));
+            h.run();
+        }
+        assert_eq!(publications(&h), before);
+        assert!(!h.state().editor().is_dirty());
+        drop(h);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
 }

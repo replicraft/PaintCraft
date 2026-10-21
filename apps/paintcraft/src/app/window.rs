@@ -37,9 +37,6 @@ impl App {
             ui.disable();
         }
         self.apply_style(&ctx);
-        if self.document_count() > 0 {
-            self.sync_texture(&ctx);
-        }
         egui::Panel::top("toolbar").show(ui, |ui| self.toolbar(ui));
         if self.experience() == Experience::Studio || self.document_count() > 1 {
             egui::Panel::top("documents").show(ui, |ui| {
@@ -139,7 +136,9 @@ impl App {
         }
         if self.editor.run_pending() > 0 {
             ctx.request_repaint();
-            self.sync_texture(&ctx);
+            if self.render_region.is_some() {
+                self.sync_texture(&ctx);
+            }
         }
         self.poll_edits(&ctx);
         self.finish_save();

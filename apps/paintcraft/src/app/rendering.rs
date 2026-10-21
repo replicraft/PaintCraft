@@ -5,7 +5,14 @@ use super::*;
 impl App {
     pub(super) fn presentation_key(&self) -> RenderKey {
         let (state, epoch) = self.editor.render_key();
-        (state, epoch, self.preview_revision)
+        (
+            state,
+            epoch,
+            self.preview_revision,
+            self.render_region
+                .and_then(|region| region.intersect(&self.editor.document().canvas_rect()))
+                .unwrap_or_else(|| self.editor.document().canvas_rect()),
+        )
     }
 
     /// Connect native services only for a real desktop window; harnesses stay deterministic.
@@ -166,7 +173,7 @@ impl App {
                 .values()
                 .map(|layer| layer.raster.resident_tiles() as u64)
                 .sum::<u64>();
-            let reservation = u64::from(doc.canvas.0) * u64::from(doc.canvas.1) * 16
+            let reservation = key.3.area() as u64 * 16
                 + tiles * paintcraft_raster::RasterLayer::TILE_BYTES as u64
                 + if preparation.possible_preview() {
                     256 << 20
@@ -201,25 +208,29 @@ impl App {
                     let device_epoch = gpu.as_ref().map(|gpu| gpu.epoch());
                     let (pixels, gpu_texture, fallback) = if let Some(gpu) = gpu {
                         let result = if native_display {
-                            gpu.render_texture(doc, || cancel.check())
+                            gpu.render_region_texture(doc, key.3, || cancel.check())
                                 .map(|texture| (Vec::new(), Some(texture)))
                         } else {
-                            gpu.render_cancellable(doc, || cancel.check())
-                                .map(|pixels| (pixels, None))
+                            gpu.render_region_with_stats(doc, key.3, || cancel.check())
+                                .map(|frame| (frame.pixels, None))
                         };
                         match result {
                             Ok((pixels, texture)) => (pixels, texture, None),
                             Err(error) => {
                                 cancel.check()?;
                                 (
-                                    cpu.render(doc, is_preview, || cancel.check())?,
+                                    cpu.render_region(doc, key.3, is_preview, || cancel.check())?,
                                     None,
                                     Some(format!("Using CPU rendering: {error}")),
                                 )
                             }
                         }
                     } else {
-                        (cpu.render(doc, is_preview, || cancel.check())?, None, None)
+                        (
+                            cpu.render_region(doc, key.3, is_preview, || cancel.check())?,
+                            None,
+                            None,
+                        )
                     };
                     Ok(RenderedFrame {
                         key,
@@ -254,10 +265,14 @@ impl App {
                         &batch,
                         &|| Ok(()),
                     )
-                    .and_then(|staged| self.cpu_renderer.render(&staged.doc, true, || Ok(()))),
-                None => self
-                    .cpu_renderer
-                    .render(self.editor.document(), false, || Ok(())),
+                    .and_then(|staged| {
+                        self.cpu_renderer
+                            .render_region(&staged.doc, key.3, true, || Ok(()))
+                    }),
+                None => {
+                    self.cpu_renderer
+                        .render_region(self.editor.document(), key.3, false, || Ok(()))
+                }
             });
         self.install_render(ctx, key, pixels);
     }
@@ -284,6 +299,7 @@ impl App {
             || (self.rendered_preview.is_some()
                 && key.0 == current.0
                 && key.1 == current.1
+                && key.3 == current.3
                 && key.2 >= self.preview_start_revision
                 && key.2 < current.2)
     }
@@ -319,11 +335,20 @@ impl App {
             ctx.request_repaint();
         }
         self.gpu_texture = None;
-        let doc = self.editor.document();
+        let region = key.3;
         match pixels {
-            Ok(px) if px.len() as u64 == u64::from(doc.canvas.0) * u64::from(doc.canvas.1) * 4 => {
+            Ok(px) if px.len() as u64 == region.area() as u64 * 4 => {
+                let limit = ctx.input(|input| input.max_texture_side) as i64;
+                if region.width() > limit || region.height() > limit {
+                    self.texture = None;
+                    self.rendered.clear();
+                    self.editor
+                        .set_status("Cannot render: region exceeds display texture limits");
+                    self.texture_key = Some(key);
+                    return;
+                }
                 let image = egui::ColorImage::from_rgba_unmultiplied(
-                    [doc.canvas.0 as usize, doc.canvas.1 as usize],
+                    [region.width() as usize, region.height() as usize],
                     &px,
                 );
                 match &mut self.texture {
@@ -671,3 +696,7 @@ mod scheduling_tests {
 #[cfg(test)]
 #[path = "rendering/device_tests.rs"]
 mod device_tests;
+
+#[cfg(test)]
+#[path = "rendering/region_tests.rs"]
+mod region_tests;

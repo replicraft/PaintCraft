@@ -56,7 +56,9 @@ fn regional_gpu_output_rebases_offsets_and_preserves_source_scope() {
             [region.width() as u32, region.height() as u32]
         );
         let premultiplied: Vec<_> = expected
-            .chunks_exact(4)
+            .as_chunks::<4>()
+            .0
+            .iter()
             .flat_map(|p| {
                 let a = u32::from(p[3]);
                 [

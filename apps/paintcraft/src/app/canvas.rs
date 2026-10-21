@@ -135,7 +135,14 @@ impl App {
 
         // Shift may change without a pointer event. Apply it before preview or release.
         self.editor.constrain_shape(ui.input(|i| i.modifiers.shift));
-        self.sync_texture(ui.ctx());
+        if let Some(region) = view.visible_region(
+            (visible_canvas.min.x, visible_canvas.min.y),
+            (visible_canvas.max.x, visible_canvas.max.y),
+            self.editor.document().canvas,
+        ) {
+            self.render_region = Some(region);
+            self.sync_texture(ui.ctx());
+        }
 
         // Transparency checkerboard, then the composite. Display only: the document is untouched.
         painter.rect_filled(
@@ -184,7 +191,12 @@ impl App {
         {
             painter.image(
                 id,
-                rect,
+                self.texture_key.map_or(rect, |key| {
+                    let region = key.3;
+                    let min = view.to_screen((region.x0, region.y0));
+                    let max = view.to_screen((region.x1, region.y1));
+                    Rect::from_min_max(Pos2::new(min.0, min.1), Pos2::new(max.0, max.1))
+                }),
                 Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)),
                 Color32::WHITE,
             );

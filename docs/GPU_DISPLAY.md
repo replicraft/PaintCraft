@@ -20,7 +20,7 @@ A texture frame owns its texture/view and originating device/queue/DeviceEpoch.
 Conversion submission completes and cancellation/epoch checks pass before the
 frame returns. Native worker results carry the existing document/preview key and
 attempted epoch. The UI rejects stale handles/keys/devices before registration and
-rechecks target epoch and canvas dimensions. Only the UI registers an accepted view
+rechecks target epoch and requested region/dimensions. Only the UI registers an accepted view
 with egui's renderer using nearest sampling. Workers never lock that renderer.
 
 The accepted registration owns the frame. Replacement, CPU fallback, document/tab
@@ -38,8 +38,9 @@ host bytes must request an explicit readback; it is not silently performed per f
 ## Memory and failure scope
 
 Source reuse retains its separate bounded [layer-view cache](GPU_SOURCES.md).
-Each direct frame still allocates a complete composite buffer and display texture;
-there is no output pool, mipmap, viewport tile or region-only display update yet.
+Each direct frame allocates a requested-region composite buffer and display texture;
+[viewport presentation](VIEWPORT_RENDERING.md) clips native requests to visible bounds.
+There is no output pool, mipmap or tiled display output yet.
 The accepted UI surface and unread worker result have independent lifetimes.
 Declared worker accounting does not establish process-wide physical GPU/driver
 memory bounds. GPU submission waits remain synchronous on the admitted worker;

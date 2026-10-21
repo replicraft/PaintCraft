@@ -80,6 +80,35 @@ impl View {
         (x.abs() < 1e12 && y.abs() < 1e12).then(|| (x.floor() as i64, y.floor() as i64))
     }
 
+    /// Smallest integral document region covering the clipped screen rectangle.
+    /// Half-open bounds use floor at the leading edge and ceil at the trailing
+    /// edge so fractional DPI/zoom never drops a partially visible pixel.
+    pub fn visible_region(
+        &self,
+        min: (f32, f32),
+        max: (f32, f32),
+        canvas: (u32, u32),
+    ) -> Option<paintcraft_core::types::Rect> {
+        if ![min.0, min.1, max.0, max.1].iter().all(|v| v.is_finite())
+            || min.0 >= max.0
+            || min.1 >= max.1
+        {
+            return None;
+        }
+        let inverse = self.inverse?;
+        let (x0, y0) = inverse
+            .transform_point(Point::new(f64::from(min.0), f64::from(min.1))?)?
+            .coordinates();
+        let (x1, y1) = inverse
+            .transform_point(Point::new(f64::from(max.0), f64::from(max.1))?)?
+            .coordinates();
+        let x0 = x0.floor().clamp(0.0, f64::from(canvas.0)) as i64;
+        let y0 = y0.floor().clamp(0.0, f64::from(canvas.1)) as i64;
+        let x1 = x1.ceil().clamp(0.0, f64::from(canvas.0)) as i64;
+        let y1 = y1.ceil().clamp(0.0, f64::from(canvas.1)) as i64;
+        paintcraft_core::types::Rect::new(x0, y0, x1 - x0, y1 - y0)
+    }
+
     pub fn to_screen(&self, doc: (i64, i64)) -> (f32, f32) {
         let result = self
             .mapping
@@ -144,6 +173,46 @@ mod fractional_tests {
         }
         for invalid in [0.0, -1.0, f32::NAN, f32::INFINITY] {
             assert_eq!(View::with_scale((0.0, 0.0), invalid, 1.0).zoom, 1.0);
+        }
+    }
+}
+
+#[cfg(test)]
+mod region_tests {
+    use super::*;
+    use paintcraft_core::types::Rect;
+
+    #[test]
+    fn visible_region_covers_fractional_edges_and_clips_to_canvas() {
+        for ppp in [1.0, 1.5, 2.0] {
+            for zoom in [0.125, 0.5, 1.25, 8.0] {
+                let view = View::with_scale((-20.0, 13.0), zoom, ppp);
+                let px = view.points_per_pixel();
+                let min = (-20.0 + 17.25 * px, 13.0 + 9.25 * px);
+                let max = (-20.0 + 31.75 * px, 13.0 + 20.75 * px);
+                assert_eq!(
+                    view.visible_region(min, max, (100, 80)),
+                    Rect::new(17, 9, 15, 12)
+                );
+                assert_eq!(
+                    view.visible_region((-100.0, -100.0), (10000.0, 10000.0), (100, 80)),
+                    Rect::new(0, 0, 100, 80)
+                );
+            }
+        }
+        let view = View::new((0.0, 0.0), 1, 1.0);
+        assert_eq!(
+            view.visible_region((2.0, 3.0), (5.0, 7.0), (100, 80)),
+            Rect::new(2, 3, 3, 4)
+        );
+        for (min, max) in [
+            ((3.0, 3.0), (3.0, 4.0)),
+            ((-10.0, -10.0), (-1.0, -1.0)),
+            ((110.0, 90.0), (120.0, 100.0)),
+            ((f32::NAN, 0.0), (5.0, 5.0)),
+            ((0.0, 0.0), (f32::INFINITY, 5.0)),
+        ] {
+            assert_eq!(view.visible_region(min, max, (100, 80)), None);
         }
     }
 }
