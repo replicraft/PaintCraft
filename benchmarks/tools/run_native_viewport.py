@@ -13,6 +13,7 @@ import subprocess
 from pathlib import Path
 
 parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("--suite", choices=["viewport", "output-pool"], default="viewport")
 parser.add_argument("--binary", required=True, type=Path)
 parser.add_argument("--output", required=True, type=Path)
 args = parser.parse_args()
@@ -21,8 +22,12 @@ binary = args.binary.resolve()
 out = args.output.resolve()
 out.mkdir(parents=True, exist_ok=False)
 test = "gpu_display::region_benchmark::native_viewport_process"
-cases = ["all", "quarter", "pan"]
-modes = ["full", "region"]
+pool_suite = args.suite == "output-pool"
+cases = ["quarter", "large", "resize"] if pool_suite else ["all", "quarter", "pan"]
+modes = ["unpooled", "pooled"] if pool_suite else ["full", "region"]
+verify_variant = "pool-verify" if pool_suite else "verify"
+criterion_variant = "pool-criterion" if pool_suite else "criterion"
+criterion_prefix = "native_output_pool" if pool_suite else "native_viewport"
 
 
 def sha(path):
@@ -45,10 +50,11 @@ manifest = {
     "rustc": subprocess.check_output(["rustc", "-Vv"], text=True),
     "hyperfine": subprocess.check_output(["hyperfine", "--version"], text=True).strip(),
     "build": "CARGO_BUILD_JOBS=2 CARGO_INCREMENTAL=0 cargo test -p paintcraft --lib --release --no-run --message-format=json",
-    "cases": cases, "variants": modes, "canvas": [512, 256],
-    "base": "dense5", "frames": 16, "new_points_per_frame": 8,
+    "suite": args.suite, "cases": cases, "variants": modes,
+    "canvas": {"quarter": [512, 256], "large": [4096, 2160], "resize": [4096, 2160]} if pool_suite else [512, 256],
+    "base": "dense5 for quarter; single sparse implicit white layer for large/resize" if pool_suite else "dense5", "frames": 16, "new_points_per_frame": 8,
     "warmups": 3, "runs": 20, "sessions": 3,
-    "scope": "Actual desktop preview staging, completed GPU composition/display conversion and App native texture acceptance. Required visible pixels equal full output cropped to requested bounds. Cold fixture/device/renderer construction and teardown included. Not OS presentation or event latency.",
+    "scope": "Completed compositor-buffer pool versus fresh allocation" if pool_suite else "Actual desktop preview staging, completed GPU composition/display conversion and App native texture acceptance. Required visible pixels equal full output cropped to requested bounds. Cold fixture/device/renderer construction and teardown included. Not OS presentation or event latency.",
     "environment": "Local macOS arm64 developer host; adapter/limits in correctness logs. No affinity, power, thermal or background-load controls. No intentionally concurrent builds, tests or other measurements. Process startup calibration retained, never subtracted.",
 }
 (out / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
@@ -64,7 +70,7 @@ def env_for(case, variant):
 def verify(case, label):
     with (out / f"correctness-{label}-{case}.log").open("w") as log:
         subprocess.run([str(binary), "--exact", test, "--ignored", "--nocapture"],
-                       env=env_for(case, "verify"), stdout=log, stderr=subprocess.STDOUT,
+                       env=env_for(case, verify_variant), stdout=log, stderr=subprocess.STDOUT,
                        check=True)
 
 
@@ -79,11 +85,11 @@ for case in cases:
 for case in cases:
     with (out / f"criterion-{case}.log").open("w") as log:
         subprocess.run([str(binary), "--exact", test, "--ignored", "--nocapture"],
-                       env=env_for(case, "criterion"), stdout=log,
+                       env=env_for(case, criterion_variant), stdout=log,
                        stderr=subprocess.STDOUT, check=True)
     print("Criterion", case, "complete", flush=True)
 for path in (root / "target/criterion").rglob("*.json"):
-    if any(p.startswith("native_viewport") for p in path.parts) and path.parent.name == "new":
+    if any(p.startswith(criterion_prefix) for p in path.parts) and path.parent.name == "new":
         dest = out / "criterion" / path.relative_to(root / "target/criterion")
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy(path, dest)

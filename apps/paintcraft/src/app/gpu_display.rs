@@ -94,6 +94,9 @@ impl App {
 pub(crate) mod tests {
     use super::*;
     pub(crate) fn target() -> Option<(Target, Arc<GpuRenderer>)> {
+        target_with_output_pool(paintcraft_render::gpu::DEFAULT_OUTPUT_POOL_BYTES)
+    }
+    pub(crate) fn target_with_output_pool(bytes: u64) -> Option<(Target, Arc<GpuRenderer>)> {
         use eframe::wgpu;
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle());
         let adapter = match pollster::block_on(instance.request_adapter(&Default::default())) {
@@ -108,7 +111,19 @@ pub(crate) mod tests {
         };
         let (device, queue) =
             pollster::block_on(adapter.request_device(&Default::default())).unwrap();
-        let gpu = Arc::new(GpuRenderer::new(device.clone(), queue.clone()).unwrap());
+        let epoch = DeviceEpoch::default();
+        let lost = epoch.clone();
+        device.set_device_lost_callback(move |_, _| lost.retire());
+        let gpu = Arc::new(
+            GpuRenderer::with_working_cache_limits(
+                device.clone(),
+                queue.clone(),
+                epoch,
+                paintcraft_render::gpu::SourceCacheLimits::default(),
+                bytes,
+            )
+            .unwrap(),
+        );
         let renderer = eframe::egui_wgpu::Renderer::new(
             &device,
             wgpu::TextureFormat::Rgba8Unorm,
@@ -243,7 +258,7 @@ mod pixel_tests {
     }
     fn compare_region(region: paintcraft_core::types::Rect) {
         use eframe::wgpu;
-        let Some((target, gpu)) = super::tests::target() else {
+        let Some((target, gpu)) = super::tests::target_with_output_pool(64 << 20) else {
             return;
         };
         let ctx = egui::Context::default();
@@ -277,6 +292,15 @@ mod pixel_tests {
         let native = target
             .install(gpu.render_region_texture(&doc, region, || Ok(())).unwrap())
             .unwrap();
+        // Recycle the private compositor buffer before drawing the still-live
+        // registered texture. Its immutable display pixels must remain unchanged.
+        let empty = paintcraft_document::new_document(32, 32, None, 0, paintcraft_document::POLICY)
+            .unwrap();
+        let recycled = gpu
+            .render_region_texture(&empty, region, || Ok(()))
+            .unwrap();
+        assert_eq!(recycled.stats.output_reuses, 1);
+        drop(recycled);
         let straight = paintcraft_render::render_flat(&doc).unwrap();
         let managed = ctx.load_texture(
             "cpu-reference",

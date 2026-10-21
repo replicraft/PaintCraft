@@ -181,11 +181,10 @@ impl App {
                     0
                 }
                 + cpu_rendering::ADMISSION_BYTES;
-            let reservation = reservation.saturating_add(
-                self.gpu
-                    .as_ref()
-                    .map_or(0, |gpu| gpu.source_cache_admission_bytes()),
-            );
+            let reservation = reservation.saturating_add(self.gpu.as_ref().map_or(0, |gpu| {
+                gpu.source_cache_admission_bytes()
+                    .saturating_add(gpu.output_pool_admission_bytes())
+            }));
             let native_display = self.gpu_target.is_some();
             let gpu = self.gpu.clone();
             let cpu = self.cpu_renderer.clone();
