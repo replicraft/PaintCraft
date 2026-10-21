@@ -97,6 +97,24 @@ impl Session {
 }
 
 impl Preparation {
+    /// Finish a tool preparation that produced no operations (for example,
+    /// fully clipped text). Publication still checks the captured owner/base/policy.
+    pub fn no_change(self, check: impl Fn() -> Result<()>) -> Result<PreparedEdit> {
+        check()?;
+        let receipt = Receipt {
+            committed: false,
+            state_id: self.base.state_id,
+            publication_epoch: self.base.publication_epoch,
+            history_id: None,
+            aliases: BTreeMap::new(),
+        };
+        Ok(PreparedEdit {
+            base: self.base,
+            session: self.session,
+            receipt,
+        })
+    }
+
     /// Execute privately and check cancellation around command execution and
     /// throughout history classification and spill batches. Individual command
     /// kernels and filesystem calls are not preemptible.

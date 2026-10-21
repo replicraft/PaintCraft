@@ -167,3 +167,46 @@ fn no_op_result_does_not_replace_history_or_advance_epoch() {
 
 #[path = "preparation/navigation.rs"]
 mod navigation;
+
+#[test]
+fn explicit_empty_preparation_preserves_redo_and_later_save_acknowledgements() {
+    let mut s = session();
+    s.apply(&edit(&s, "#000000FF")).unwrap();
+    s.undo().unwrap().unwrap();
+    let original = s.snapshot();
+    let view = s.history_view();
+    let work = s.preparation().unwrap();
+    s.mark_saved();
+    let prepared = std::thread::spawn(move || work.no_change(|| Ok(())).unwrap())
+        .join()
+        .unwrap();
+    let receipt = s.publish_prepared(prepared, || Ok(())).unwrap();
+    assert!(!receipt.committed && receipt.history_id.is_none() && receipt.aliases.is_empty());
+    assert!(Arc::ptr_eq(&s.snapshot(), &original));
+    assert_eq!(s.history_view(), view);
+    assert!(!s.is_dirty());
+    assert_eq!(s.redo_depth(), 1);
+    s.redo().unwrap().unwrap();
+    assert!(s.is_dirty());
+}
+
+#[test]
+fn explicit_empty_preparation_obeys_cancellation_and_stale_publication_guards() {
+    let mut s = session();
+    assert_eq!(
+        s.preparation()
+            .unwrap()
+            .no_change(cancelled)
+            .unwrap_err()
+            .code,
+        ErrorCode::OperationCancelled
+    );
+    let prepared = s.preparation().unwrap().no_change(|| Ok(())).unwrap();
+    s.apply(&edit(&s, "#000000FF")).unwrap();
+    let view = s.history_view();
+    assert_eq!(
+        s.publish_prepared(prepared, || Ok(())).unwrap_err().code,
+        ErrorCode::ConflictStaleBase
+    );
+    assert_eq!(s.history_view(), view);
+}
