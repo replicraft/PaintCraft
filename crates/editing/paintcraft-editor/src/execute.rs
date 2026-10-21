@@ -2,6 +2,7 @@
 //! Nothing here publishes; the session installs the result atomically.
 
 mod canvas;
+mod fill;
 mod layers;
 mod mask;
 mod paint;
@@ -14,7 +15,6 @@ use uuid::Uuid;
 use paintcraft_commands::{Batch, LayerRef, Mode, Op, ShapeKind};
 use paintcraft_core::types::ids::deterministic_id;
 use paintcraft_document::{COORD_ABS_MAX, Document, LAYER_COUNT_MAX, Layer};
-use paintcraft_raster::flood;
 use paintcraft_raster::shape::{self, Figure, Span, SpanSet};
 use paintcraft_raster::{Admission, PaintPlan, RasterLayer};
 
@@ -68,7 +68,8 @@ pub fn execute_with_admission(
     execute_with_admission_checked(base, selection, batch, admission, &|| Ok(()))
 }
 
-/// Execute privately with cancellation between operations and inside planned painting.
+/// Execute privately with cancellation between operations, flood classification
+/// and planned painting.
 pub fn execute_with_admission_checked(
     base: &Document,
     selection: Selection,
@@ -473,27 +474,7 @@ impl Stage<'_> {
                 color,
                 mode,
                 tolerance,
-            } => {
-                let id = self.resolve(layer)?;
-                let l = &self.doc.layers[&id];
-                let Some(area) = self.editable(l) else {
-                    return Ok(());
-                };
-                let (ox, oy) = l.origin;
-                let local = area
-                    .translated(-ox, -oy)
-                    .expect("area lies inside the layer");
-                let spans = flood::region(&l.raster, (at.0 - ox, at.1 - oy), &local, *tolerance)?;
-                let absolute: Vec<Span> = spans
-                    .iter()
-                    .map(|s| Span {
-                        y: s.y + oy,
-                        x0: s.x0 + ox,
-                        x1: s.x1 + ox,
-                    })
-                    .collect();
-                self.paint_spans(id, &absolute, *color, *mode)?;
-            }
+            } => self.flood_fill(layer, *at, *color, *mode, *tolerance)?,
             Op::Shape {
                 layer,
                 kind,

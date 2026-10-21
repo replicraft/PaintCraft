@@ -122,7 +122,7 @@ impl Preparation {
     }
 
     /// Execute privately and check cancellation around command execution and
-    /// throughout history classification and spill batches. Smooth coverage and planned
+    /// throughout history classification and spill batches. Smooth coverage, flood classification and planned
     /// paint replay yield cooperatively; other command kernels and filesystem calls
     /// are not preemptible.
     pub fn apply(self, batch: &Batch, check: impl Fn() -> Result<()>) -> Result<PreparedEdit> {
