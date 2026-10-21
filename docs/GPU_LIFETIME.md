@@ -21,8 +21,12 @@ history or mutate documents from the callback.
 Rendering checks cancellation and the epoch at entry, between stages, while gathering
 source rows, before submissions, after layer completion, before readback access
 and after copying the final host result. Calls already executing and submitted GPU
-work cannot be preempted. Existing worker reservations remain charged until actual
-completion is consumed; cancellation does not imply immediate resource release.
+work cannot be preempted. Successful waits retain worker declarations through
+completion/result consumption; cancellation does not imply immediate resource release.
+Failed completion/mapping now [quarantines the shared epoch](GPU_COMPLETION.md)
+before returning an error. A timed-out wait cannot prove the GPU stopped; physical
+outstanding-work accounting after that error remains unqualified. Retirement blocks
+future PaintCraft use without claiming driver reclamation or native device recovery.
 
 ## Desktop completion boundary
 

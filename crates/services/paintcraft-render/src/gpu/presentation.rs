@@ -71,7 +71,8 @@ impl GpuTextureFrame {
         );
         check()?;
         let submission = self.queue.submit([encoder.finish()]);
-        let padded = super::readback::copy_mapped(&self.device, &readback, submission, &check)?;
+        let padded =
+            super::readback::copy_mapped(&self.device, &self.epoch, &readback, submission, &check)?;
         let mut pixels = crate::output_buffer(width as usize * height as usize * 4)?;
         for (source, target) in padded
             .chunks_exact(stride as usize)
@@ -169,12 +170,7 @@ impl GpuRenderer {
             }
             check()?;
             let submission = self.queue.submit([encoder.finish()]);
-            self.device
-                .poll(wgpu::PollType::Wait {
-                    submission_index: Some(submission),
-                    timeout: Some(Duration::from_secs(30)),
-                })
-                .map_err(|e| unavailable(format!("GPU display conversion failed: {e}")))?;
+            completion::wait(&self.device, &self.epoch, submission)?;
             check()?;
             output.completed();
             drop(output);

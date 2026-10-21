@@ -241,12 +241,7 @@ impl GpuRenderer {
                 let mut encoder = self.device.create_command_encoder(&Default::default());
                 encoder.clear_buffer(&accumulator, 0, None);
                 let submission = self.queue.submit([encoder.finish()]);
-                self.device
-                    .poll(wgpu::PollType::Wait {
-                        submission_index: Some(submission),
-                        timeout: Some(Duration::from_secs(30)),
-                    })
-                    .map_err(|error| unavailable(format!("GPU scaled clear failed: {error}")))?;
+                completion::wait(&self.device, &self.epoch, submission)?;
                 let [w, h] = [
                     (tile.rect.width() as u32).div_ceil(request.step()),
                     (tile.rect.height() as u32).div_ceil(request.step()),
@@ -367,12 +362,7 @@ impl GpuRenderer {
         }
         check()?;
         let submission = self.queue.submit([encoder.finish()]);
-        self.device
-            .poll(wgpu::PollType::Wait {
-                submission_index: Some(submission),
-                timeout: Some(Duration::from_secs(30)),
-            })
-            .map_err(|e| unavailable(format!("GPU scaled operation failed: {e}")))?;
+        completion::wait(&self.device, &self.epoch, submission)?;
         check()
     }
 }

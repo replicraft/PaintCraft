@@ -77,13 +77,7 @@ impl<'a> Batch<'a> {
             .max(self.key_bytes as u64);
         // Cancellation cannot abandon submitted resource ownership. Always observe
         // completion before checking it again, even when the consumer became stale.
-        self.gpu
-            .device
-            .poll(wgpu::PollType::Wait {
-                submission_index: Some(submission),
-                timeout: Some(Duration::from_secs(30)),
-            })
-            .map_err(|e| unavailable(format!("GPU layer batch failed: {e}")))?;
+        completion::wait(&self.gpu.device, &self.gpu.epoch, submission)?;
         check()?;
         for source in self.pending.drain(..) {
             cache.completed(source);

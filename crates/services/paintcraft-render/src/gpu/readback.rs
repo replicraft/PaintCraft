@@ -8,6 +8,7 @@ impl Drop for Unmap<'_> {
 }
 pub(super) fn copy_mapped(
     device: &wgpu::Device,
+    epoch: &DeviceEpoch,
     buffer: &wgpu::Buffer,
     submission: wgpu::SubmissionIndex,
     check: &impl Fn() -> Result<()>,
@@ -19,20 +20,15 @@ pub(super) fn copy_mapped(
         .map_async(wgpu::MapMode::Read, move |result| {
             let _ = send.send(result);
         });
-    device
-        .poll(wgpu::PollType::Wait {
-            submission_index: Some(submission),
-            timeout: Some(Duration::from_secs(30)),
-        })
-        .map_err(|e| unavailable(format!("GPU submission failed: {e}")))?;
+    completion::wait(device, epoch, submission)?;
     recv.recv_timeout(Duration::from_secs(30))
-        .map_err(|e| unavailable(format!("GPU readback timed out: {e}")))?
-        .map_err(|e| unavailable(format!("GPU readback failed: {e}")))?;
+        .map_err(|e| completion::failed(epoch, "GPU readback callback failed", e))?
+        .map_err(|e| completion::failed(epoch, "GPU readback failed", e))?;
     check()?;
     let mapped = buffer
         .slice(..)
         .get_mapped_range()
-        .map_err(|e| unavailable(format!("GPU mapping failed: {e}")))?;
+        .map_err(|e| completion::failed(epoch, "GPU mapping failed", e))?;
     let mut bytes = Vec::new();
     bytes.try_reserve_exact(mapped.len()).map_err(|_| {
         Error::new(

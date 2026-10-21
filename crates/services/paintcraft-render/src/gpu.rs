@@ -3,6 +3,7 @@
 //! This first backend reads back straight RGBA8 for the shared display/export
 //! boundary. It is a correctness baseline, not a zero-copy or performance claim.
 mod batch;
+mod completion;
 mod epoch;
 mod output;
 mod presentation;
@@ -277,7 +278,7 @@ impl GpuRenderer {
         encoder.copy_buffer_to_buffer(&output, 0, &readback, 0, size);
         check()?;
         let submission = self.queue.submit([encoder.finish()]);
-        let bytes = readback::copy_mapped(&self.device, &readback, submission, check)?;
+        let bytes = readback::copy_mapped(&self.device, &self.epoch, &readback, submission, check)?;
         check()?;
         output.completed();
         drop(output);
@@ -390,12 +391,7 @@ impl GpuRenderer {
             check()?;
             let submission = self.queue.submit([encoder.finish()]);
             stats.composition_submissions += 1;
-            self.device
-                .poll(wgpu::PollType::Wait {
-                    submission_index: Some(submission),
-                    timeout: Some(Duration::from_secs(30)),
-                })
-                .map_err(|e| unavailable(format!("GPU output clear failed: {e}")))?;
+            completion::wait(&self.device, &self.epoch, submission)?;
         }
         check()?;
         Ok((output, stats))
