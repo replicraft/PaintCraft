@@ -38,7 +38,7 @@ A correct integrated baseline is not a measured performance or release qualifica
 | Retro UI font | [W95FA by MadeByArne](https://www.dafont.com/w95fa.font) | User-selected for RetroPaint; author listing identifies SIL Open Font License and commercial use. Not bundled yet; preserve the font archive's license and provenance when adopted |
 | SVG UI assets | resvg 0.48.1, default features disabled | Shared UI renders the user-supplied generated icon sheet as 68 bundled SVG adaptations; per-context density cache and all-icon render tests; SVG document import remains deferred |
 | Native shell | Compare eframe with direct egui-winit/egui-wgpu | eframe remains provisional pending T02 hardware/IME traces |
-| GPU | wgpu + WGSL | Integer compositor integrated; Metal parity tested; async transfer/device-loss work pending |
+| GPU | wgpu + WGSL | Integer compositor and device epochs integrated; Metal parity, explicit destruction and fresh-device host-history reconstruction tested; async transfer, residency and automatic native-window device recovery pending |
 | CLI | Clap | Integrated, command modules and end-to-end tests |
 | File dialogs | rfd | Integrated for Open, Save As and Export |
 | macOS menus | muda 0.21.2, default features disabled | Optional platform menus feature; desktop action routing and guarded Quit, no CLI dependency |

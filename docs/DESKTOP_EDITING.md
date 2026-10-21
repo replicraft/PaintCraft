@@ -52,6 +52,11 @@ Dropping a controller abandons its pending job. The runtime cancels it and retai
 admission until actual completion; polling reclaims abandoned results even when
 no documents remain open.
 
+GPU completions also require the active [device lifetime](GPU_LIFETIME.md).
+Retired/replaced devices cannot install late success/fallback frames. Loss wakes
+the UI and schedules host-backed CPU recomposition; automatic recovery of a lost
+native window/presentation device remains unimplemented.
+
 ## Render preparation and progress
 
 The UI captures a preview snapshot only when its tool/queue/document inputs change

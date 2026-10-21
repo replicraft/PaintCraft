@@ -437,3 +437,26 @@ runs. It adds no shipping dependency or public API. 613 workspace tests pass wit
 limit pass. Changed previews, history metadata capture, global physical admission,
 priorities, device epochs and sustained native interaction remain. T13/T37 stay
 partial; the broader roadmap is not complete.
+
+
+## Fourteenth slice: GPU lifetime guards and host reconstruction
+
+GPU renderers now carry an irreversible process-local device epoch. Loss callbacks
+retire that epoch; hosts can preserve their own callback through `with_epoch`.
+Desktop callbacks request repaint without mutating editing state. Native frame
+acceptance checks device identity as well as job/document/preview freshness,
+including CPU fallback results. Backend replacement cancels outstanding work and
+invalidates its handle, retaining the published host document and history.
+
+618 workspace tests pass (21 explicit ignores), plus strict workspace/all-target
+Clippy, formatting, file limits and release desktop/CLI builds. Three required Metal
+tests pass on M1 Pro: exact parity, explicit device destruction with fresh-device
+host-history reconstruction, and host callback ownership/loss during staging.
+Desktop regressions reject unrelated-epoch success and fallback and preserve host
+state while replacing an admitted backend. A 30-frame isolated native smoke passes.
+
+[The lifetime contract](GPU_LIFETIME.md) distinguishes these checks from unexpected
+driver/device loss and full native-window recovery. Automatic eframe window/device
+recreation, persistent GPU residency, transfer services, physical budgets and
+performance/latency qualification remain. This slice adds no dependency or GPU
+performance claim; T13 remains partial.
