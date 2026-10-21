@@ -4,11 +4,17 @@ use crate::{Editor, Tool};
 use std::{hint::black_box, time::Duration};
 
 fn replay(case: &str, cached: bool, verify: bool) -> u64 {
+    let mode = std::env::var("PAINTCRAFT_GEOMETRY_GPU").ok();
+    replay_with_gpu(case, cached, verify, mode.as_deref())
+}
+fn replay_with_gpu(case: &str, cached: bool, verify: bool, mode: Option<&str>) -> u64 {
     let mut editor = fixture();
     editor.select_tool(Tool::Brush);
     editor.options.size = 16;
     editor.color = paintcraft_core::types::Rgba([17, 88, 156, 128]);
     let original = verify.then(|| paintcraft_render::render_flat(editor.document()).unwrap());
+    let gpu = gpu_fixture(mode);
+    let mut uploaded_bytes = 0u64;
     let renderer = CpuRenderer::new();
     if std::env::var("PAINTCRAFT_GEOMETRY_COMPOSITOR").as_deref() == Ok("full") {
         *renderer.0.lock().unwrap() = None;
@@ -43,7 +49,13 @@ fn replay(case: &str, cached: bool, verify: bool) -> u64 {
             )
             .unwrap()
         };
-        let pixels = renderer.render(&staged.doc, true, || Ok(())).unwrap();
+        let pixels = if let Some(gpu) = &gpu {
+            let frame = gpu.render_with_stats(&staged.doc, || Ok(())).unwrap();
+            uploaded_bytes += frame.stats.uploaded_bytes;
+            frame.pixels
+        } else {
+            renderer.render(&staged.doc, true, || Ok(())).unwrap()
+        };
         if verify {
             let reference =
                 paintcraft_editor::execute::execute(doc, editor.selection(), &batch).unwrap();
@@ -61,6 +73,9 @@ fn replay(case: &str, cached: bool, verify: bool) -> u64 {
             paintcraft_render::render_flat(editor.document()).unwrap(),
             original
         );
+    }
+    if gpu.is_some() {
+        eprintln!("gpu_source_upload_bytes={uploaded_bytes}");
     }
     black_box(digest)
 }
@@ -83,6 +98,24 @@ fn preview_geometry_process() {
         }
         Ok("baseline") => {
             black_box(replay(&case, false, false));
+        }
+        Ok("gpu-criterion") => {
+            use criterion::{BenchmarkId, Criterion, SamplingMode};
+            let base = std::env::var("PAINTCRAFT_GEOMETRY_BASE").unwrap();
+            let mut c = Criterion::default()
+                .sample_size(20)
+                .warm_up_time(Duration::from_millis(300))
+                .measurement_time(Duration::from_secs(1))
+                .without_plots();
+            let mut group = c.benchmark_group(format!("gpu_sources/{base}"));
+            group.sampling_mode(SamplingMode::Flat);
+            for mode in ["streamed", "resident"] {
+                group.bench_function(BenchmarkId::from_parameter(mode), |b| {
+                    b.iter(|| black_box(replay_with_gpu(&case, true, false, Some(mode))))
+                });
+            }
+            group.finish();
+            c.final_summary();
         }
         Ok("criterion") => {
             use criterion::{BenchmarkId, Criterion};
@@ -112,7 +145,7 @@ fn fixture() -> Editor {
     if base == "sparse1" {
         return Editor::new_document(512, 256).unwrap();
     }
-    assert!(matches!(base.as_str(), "sparse5" | "dense5"));
+    assert!(matches!(base.as_str(), "sparse5" | "dense5" | "dense65"));
     use paintcraft_core::types::Rgba;
     use paintcraft_raster::{Admission, RasterLayer};
     let mut doc = paintcraft_document::new_document(
@@ -125,8 +158,9 @@ fn fixture() -> Editor {
     .unwrap();
     doc.layers.clear();
     doc.roots.clear();
-    let mut admission = Admission::new(20 * 65536);
-    for n in 0..5 {
+    let count = if base == "dense65" { 65u32 } else { 5 };
+    let mut admission = Admission::new(u64::from(count) * 4 * 65536);
+    for n in 0..count {
         let id =
             paintcraft_core::types::ids::deterministic_id(&["desktop-regional", &n.to_string()]);
         let default = if n == 0 {
@@ -134,7 +168,7 @@ fn fixture() -> Editor {
         } else {
             Rgba([31, 63, 127, 0])
         };
-        let raster = if base == "dense5" {
+        let raster = if base.starts_with("dense") {
             let pixels: Vec<_> = (0u32..512 * 256)
                 .flat_map(|p| {
                     [
@@ -163,4 +197,28 @@ fn fixture() -> Editor {
         );
     }
     Editor::with_document(doc, None)
+}
+
+fn gpu_fixture(mode: Option<&str>) -> Option<paintcraft_render::gpu::GpuRenderer> {
+    use paintcraft_render::gpu::{DeviceEpoch, GpuRenderer, SourceCacheLimits};
+    let mode = mode?;
+    assert!(matches!(mode, "streamed" | "resident"));
+    let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle());
+    let adapter = pollster::block_on(instance.request_adapter(&Default::default()))
+        .expect("GPU benchmark requires an adapter");
+    eprintln!("GPU preview adapter: {:?}", adapter.get_info());
+    let (device, queue) = pollster::block_on(adapter.request_device(&Default::default())).unwrap();
+    let epoch = DeviceEpoch::default();
+    let lost = epoch.clone();
+    device.set_device_lost_callback(move |_, _| lost.retire());
+    let limits = if mode == "resident" {
+        SourceCacheLimits::default()
+    } else {
+        SourceCacheLimits {
+            buffer_bytes: 0,
+            metadata_bytes: 0,
+            entries: 0,
+        }
+    };
+    Some(GpuRenderer::with_source_cache(device, queue, epoch, limits).unwrap())
 }

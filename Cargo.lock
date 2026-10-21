@@ -2635,8 +2635,10 @@ dependencies = [
  "paintcraft-studio",
  "paintcraft-tools",
  "paintcraft-ui",
+ "pollster 0.4.0",
  "sha2",
  "uuid",
+ "wgpu",
 ]
 
 [[package]]
