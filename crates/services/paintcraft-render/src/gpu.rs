@@ -3,11 +3,17 @@
 //! This first backend reads back straight RGBA8 for the shared display/export
 //! boundary. It is a correctness baseline, not a zero-copy or performance claim.
 mod epoch;
+mod sources;
 pub use epoch::DeviceEpoch;
+use sources::SourceCache;
+pub use sources::{GpuFrame, GpuRenderStats, SourceCacheLimits, SourceCacheUsage};
 
 use paintcraft_core::types::{Error, ErrorCode, Result};
 use paintcraft_document::Document;
-use std::{sync::mpsc, time::Duration};
+use std::{
+    sync::{Mutex, mpsc},
+    time::Duration,
+};
 use wgpu::util::DeviceExt as _;
 
 /// Explicit WGSL `Params` layout; all integer fields are staged as little endian.
@@ -38,6 +44,8 @@ pub struct GpuRenderer {
     queue: wgpu::Queue,
     pipeline: wgpu::ComputePipeline,
     epoch: DeviceEpoch,
+    sources: Mutex<SourceCache>,
+    source_admission_bytes: u64,
 }
 fn unavailable(message: impl Into<String>) -> Error {
     Error::new(ErrorCode::CapabilityUnsupported, message)
@@ -57,6 +65,14 @@ impl GpuRenderer {
         device: wgpu::Device,
         queue: wgpu::Queue,
         epoch: DeviceEpoch,
+    ) -> Result<Self> {
+        Self::with_source_cache(device, queue, epoch, SourceCacheLimits::default())
+    }
+    pub fn with_source_cache(
+        device: wgpu::Device,
+        queue: wgpu::Queue,
+        epoch: DeviceEpoch,
+        limits: SourceCacheLimits,
     ) -> Result<Self> {
         epoch.check()?;
         if device.limits().max_storage_buffers_per_shader_stage < 2
@@ -84,6 +100,10 @@ impl GpuRenderer {
             queue,
             pipeline,
             epoch,
+            sources: Mutex::new(SourceCache::new(limits)?),
+            source_admission_bytes: limits
+                .buffer_bytes
+                .saturating_add((limits.metadata_bytes as u64).saturating_mul(3)),
         })
     }
     pub fn epoch(&self) -> DeviceEpoch {
@@ -97,10 +117,50 @@ impl GpuRenderer {
         doc: &Document,
         caller_check: impl Fn() -> Result<()>,
     ) -> Result<Vec<u8>> {
+        self.render_with_stats(doc, caller_check)
+            .map(|frame| frame.pixels)
+    }
+    /// Calls sharing a renderer serialize its derived source views. Cancellation
+    /// callbacks must not reenter this renderer's render/cache methods.
+    pub fn render_with_stats(
+        &self,
+        doc: &Document,
+        caller_check: impl Fn() -> Result<()>,
+    ) -> Result<GpuFrame> {
+        let mut cache = self.sources.lock().unwrap_or_else(|poisoned| {
+            let mut cache = poisoned.into_inner();
+            cache.clear();
+            self.sources.clear_poison();
+            cache
+        });
         let check = || {
             caller_check()?;
             self.epoch.check()
         };
+        let result = self.render_inner(doc, &check, &mut cache);
+        if result.is_err() {
+            cache.clear();
+        }
+        result
+    }
+    pub fn source_cache_usage(&self) -> SourceCacheUsage {
+        self.sources
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .usage()
+    }
+    /// Conservative native worker declaration, not physical GPU allocation/RSS.
+    pub fn source_cache_admission_bytes(&self) -> u64 {
+        self.source_admission_bytes
+    }
+    fn render_inner(
+        &self,
+        doc: &Document,
+        check: &impl Fn() -> Result<()>,
+        cache: &mut SourceCache,
+    ) -> Result<GpuFrame> {
+        cache.begin_frame();
+        let mut stats = GpuRenderStats::default();
         check()?;
         let (w, h) = doc.canvas;
         let pixels = u64::from(w) * u64::from(h);
@@ -127,7 +187,10 @@ impl GpuRenderer {
         let canvas = doc.canvas_rect();
         for layer in doc.layers_in_order() {
             check()?;
-            if !layer.visible || layer.opacity == 0 {
+            if !layer.visible
+                || layer.opacity == 0
+                || (layer.raster.resident_tiles() == 0 && layer.raster.default_pixel().a() == 0)
+            {
                 continue;
             }
             let Some(area) = canvas.intersect(&layer.extent()) else {
@@ -135,24 +198,16 @@ impl GpuRenderer {
             };
             let width = area.width() as u32;
             let height = area.height() as u32;
-            let mut bytes = vec![0; width as usize * height as usize * 4];
-            for (row, y) in bytes
-                .chunks_exact_mut(width as usize * 4)
-                .zip(area.y0..area.y1)
-            {
-                check()?;
-                layer
-                    .raster
-                    .read_span(y - layer.origin.1, area.x0 - layer.origin.0, row);
-            }
-            check()?;
-            let source = self
-                .device
-                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("PaintCraft layer samples"),
-                    contents: &bytes,
-                    usage: wgpu::BufferUsages::STORAGE,
-                });
+            let mut encoder = self.device.create_command_encoder(&Default::default());
+            let source = cache.prepare(
+                &self.device,
+                &mut encoder,
+                doc,
+                layer,
+                area,
+                check,
+                &mut stats,
+            )?;
             let params = LayerParams::new(
                 [area.x0 as u32, area.y0 as u32],
                 [width, height],
@@ -172,7 +227,7 @@ impl GpuRenderer {
                 entries: &[
                     wgpu::BindGroupEntry {
                         binding: 0,
-                        resource: source.as_entire_binding(),
+                        resource: source.buffer.as_entire_binding(),
                     },
                     wgpu::BindGroupEntry {
                         binding: 1,
@@ -184,7 +239,6 @@ impl GpuRenderer {
                     },
                 ],
             });
-            let mut encoder = self.device.create_command_encoder(&Default::default());
             {
                 let mut pass = encoder.begin_compute_pass(&Default::default());
                 pass.set_pipeline(&self.pipeline);
@@ -202,6 +256,7 @@ impl GpuRenderer {
                 })
                 .map_err(|e| unavailable(format!("GPU layer failed: {e}")))?;
             check()?;
+            cache.completed(source);
         }
         check()?;
         let readback = self.device.create_buffer(&wgpu::BufferDescriptor {
@@ -237,7 +292,11 @@ impl GpuRenderer {
             .to_vec();
         readback.unmap();
         check()?;
-        Ok(bytes)
+        stats.retained = cache.usage();
+        Ok(GpuFrame {
+            pixels: bytes,
+            stats,
+        })
     }
 }
 
