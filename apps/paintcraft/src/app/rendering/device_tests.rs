@@ -28,6 +28,7 @@ fn a_late_gpu_success_or_fallback_cannot_install_after_backend_replacement() {
                         pixels: vec![0; expected.len()],
                         fallback,
                         device_epoch: Some(old),
+                        gpu_texture: None,
                     })
                 },
                 move || {
@@ -83,6 +84,7 @@ fn replacing_a_backend_cancels_admitted_work_and_preserves_host_document() {
                     pixels: vec![0; length],
                     fallback: None,
                     device_epoch: None,
+                    gpu_texture: None,
                 })
             },
             || {},

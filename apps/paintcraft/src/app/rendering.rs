@@ -38,9 +38,11 @@ impl App {
                 lost.retire();
                 wake.request_repaint();
             });
-            match GpuRenderer::with_epoch(state.device.clone(), state.queue.clone(), epoch) {
+            match GpuRenderer::with_epoch(state.device.clone(), state.queue.clone(), epoch.clone())
+            {
                 Ok(gpu) => {
                     self.replace_gpu(Some(Arc::new(gpu)));
+                    self.gpu_target = Some(gpu_display::Target::new(state.clone(), epoch));
                 }
                 Err(e) => self.editor.set_status(format!("Using CPU rendering: {e}")),
             }
@@ -126,7 +128,11 @@ impl App {
                         self.replace_gpu(None);
                         self.editor.set_status(reason);
                     }
-                    self.install_render(ctx, frame.key, Ok(frame.pixels));
+                    if let Some(texture) = frame.gpu_texture {
+                        self.install_gpu_texture(ctx, frame.key, texture);
+                    } else {
+                        self.install_render(ctx, frame.key, Ok(frame.pixels));
+                    }
                 }
                 Err(error)
                     if expected.is_some_and(|key| self.accept_render_key(key))
@@ -173,6 +179,7 @@ impl App {
                     .as_ref()
                     .map_or(0, |gpu| gpu.source_cache_admission_bytes()),
             );
+            let native_display = self.gpu_target.is_some();
             let gpu = self.gpu.clone();
             let cpu = self.cpu_renderer.clone();
             let wake = ctx.clone();
@@ -192,23 +199,32 @@ impl App {
                     };
                     cancel.check()?;
                     let device_epoch = gpu.as_ref().map(|gpu| gpu.epoch());
-                    let (pixels, fallback) = if let Some(gpu) = gpu {
-                        match gpu.render_cancellable(doc, || cancel.check()) {
-                            Ok(pixels) => (pixels, None),
+                    let (pixels, gpu_texture, fallback) = if let Some(gpu) = gpu {
+                        let result = if native_display {
+                            gpu.render_texture(doc, || cancel.check())
+                                .map(|texture| (Vec::new(), Some(texture)))
+                        } else {
+                            gpu.render_cancellable(doc, || cancel.check())
+                                .map(|pixels| (pixels, None))
+                        };
+                        match result {
+                            Ok((pixels, texture)) => (pixels, texture, None),
                             Err(error) => {
                                 cancel.check()?;
                                 (
                                     cpu.render(doc, is_preview, || cancel.check())?,
+                                    None,
                                     Some(format!("Using CPU rendering: {error}")),
                                 )
                             }
                         }
                     } else {
-                        (cpu.render(doc, is_preview, || cancel.check())?, None)
+                        (cpu.render(doc, is_preview, || cancel.check())?, None, None)
                     };
                     Ok(RenderedFrame {
                         key,
                         pixels,
+                        gpu_texture,
                         fallback,
                         device_epoch,
                     })
@@ -254,13 +270,15 @@ impl App {
         {
             renderer.cancel(handle);
         }
+        self.gpu_texture = None;
+        self.gpu_target = None;
         self.gpu = gpu;
         self.texture_key = None;
     }
 
     /// In-flight progress may be shown only within the same live gesture. A
     /// cancelled/restarted gesture or a publication retires all older previews.
-    fn accept_render_key(&self, key: RenderKey) -> bool {
+    pub(super) fn accept_render_key(&self, key: RenderKey) -> bool {
         let current = self.presentation_key();
         key == current
             || (self.rendered_preview.is_some()
@@ -300,6 +318,7 @@ impl App {
         {
             ctx.request_repaint();
         }
+        self.gpu_texture = None;
         let doc = self.editor.document();
         match pixels {
             Ok(px) if px.len() as u64 == u64::from(doc.canvas.0) * u64::from(doc.canvas.1) * 4 => {
@@ -419,6 +438,7 @@ mod scheduling_tests {
                         pixels,
                         fallback: None,
                         device_epoch: None,
+                        gpu_texture: None,
                     })
                 },
                 || {},
@@ -565,6 +585,7 @@ mod scheduling_tests {
                         pixels,
                         fallback: None,
                         device_epoch: None,
+                        gpu_texture: None,
                     })
                 },
                 || {},

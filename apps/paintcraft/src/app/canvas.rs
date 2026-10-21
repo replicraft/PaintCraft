@@ -176,9 +176,14 @@ impl App {
             y += cell;
             row += 1;
         }
-        if let Some(t) = &self.texture {
+        if let Some(id) = self
+            .gpu_texture
+            .as_ref()
+            .map(|texture| texture.id)
+            .or_else(|| self.texture.as_ref().map(egui::TextureHandle::id))
+        {
             painter.image(
-                t.id(),
+                id,
                 rect,
                 Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)),
                 Color32::WHITE,

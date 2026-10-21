@@ -77,6 +77,7 @@ mod render_worker_tests {
                         pixels: vec![0; DEFAULT_SIZE.0 as usize * DEFAULT_SIZE.1 as usize * 4],
                         fallback: None,
                         device_epoch: None,
+                        gpu_texture: None,
                     })
                 },
                 || {},
@@ -134,6 +135,7 @@ mod render_worker_tests {
                         pixels: vec![0; DEFAULT_SIZE.0 as usize * DEFAULT_SIZE.1 as usize * 4],
                         fallback: None,
                         device_epoch: None,
+                        gpu_texture: None,
                     })
                 },
                 || {},

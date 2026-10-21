@@ -188,6 +188,7 @@ impl App {
             .expect("preview revision exhausted");
         self.rendered_preview = None;
         self.texture = None;
+        self.gpu_texture = None;
         self.texture_key = None;
         self.rendered.clear();
         self.canvas_rect = None;

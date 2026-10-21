@@ -17,6 +17,8 @@ mod cursor;
 mod editing;
 #[path = "app/files.rs"]
 mod files;
+#[path = "app/gpu_display.rs"]
+mod gpu_display;
 #[path = "app/history.rs"]
 mod history;
 #[path = "app/input.rs"]
@@ -142,6 +144,7 @@ impl std::fmt::Debug for App {
 struct RenderedFrame {
     key: RenderKey,
     pixels: Vec<u8>,
+    gpu_texture: Option<paintcraft_render::gpu::GpuTextureFrame>,
     fallback: Option<String>,
     device_epoch: Option<paintcraft_render::gpu::DeviceEpoch>,
 }
@@ -177,6 +180,8 @@ pub struct App {
     dialogs: Option<NativeDialogs>,
     dialog_owner: Option<Uuid>,
     texture: Option<egui::TextureHandle>,
+    gpu_target: Option<gpu_display::Target>,
+    gpu_texture: Option<gpu_display::Texture>,
     texture_key: Option<RenderKey>,
     render_residency_retry: Option<(
         RenderKey,
@@ -186,7 +191,7 @@ pub struct App {
     preview_revision: u64,
     preview_gesture: Option<(Uuid, Option<u64>)>,
     preview_start_revision: u64,
-    /// Straight RGBA8 flat render of what the texture shows.
+    /// CPU-backed flat display; native GPU surfaces deliberately have no host copy.
     rendered: Vec<u8>,
     zoom: f32,
     pixel_grid: bool,
@@ -281,6 +286,8 @@ impl App {
             dialogs: None,
             dialog_owner: None,
             texture: None,
+            gpu_target: None,
+            gpu_texture: None,
             texture_key: None,
             render_residency_retry: None,
             rendered_preview: None,
@@ -359,7 +366,7 @@ impl App {
         self.canvas_rect
     }
 
-    /// The flat render currently shown (straight RGBA8, row-major).
+    /// Last CPU-backed display (straight RGBA8). Empty for direct native GPU display.
     pub fn rendered(&self) -> &[u8] {
         &self.rendered
     }

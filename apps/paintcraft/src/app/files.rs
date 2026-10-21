@@ -120,6 +120,7 @@ impl App {
         self.editor = editor;
         self.texture_key = None;
         self.texture = None;
+        self.gpu_texture = None;
         self.rendered.clear();
         self.recovery_needs_init = self.recovery_dir.is_some();
         self.attach_recovery();
