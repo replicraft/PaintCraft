@@ -1,0 +1,12 @@
+Benchmark 1: /usr/bin/env PAINTCRAFT_GEOMETRY_VARIANT=cached PAINTCRAFT_GEOMETRY_CASE=growing PAINTCRAFT_GEOMETRY_BASE=sparse1 PAINTCRAFT_GEOMETRY_COMPOSITOR=full /Users/dielpi/Desktop/replicraft/PaintCraft/target/release/deps/paintcraft-f824b331897e58e1 --exact cpu_rendering::geometry_benchmark::preview_geometry_process --ignored (20 runs)
+                mean     ±       σ          min     …     max
+  Wall Time     49.0 ms  ±    25.4 ms      35.0 ms  …   139.7 ms
+  Memory        15.7 MiB ±     2.3 MiB     11.3 MiB …    20.6 MiB
+ 
+  Warning: The first benchmarking run for this command was significantly slower than the rest (64.6 ms). This could be caused by (filesystem) caches that were not filled until after the first run. You are already using the '--warmup' option which helps to fill these caches before the actual benchmark. You can either try to increase the warmup count further or re-run this benchmark on a quiet system in case it was a random outlier. Alternatively, consider using the '--prepare' option to clear the caches before each timing run.
+ 
+Benchmark 2: /usr/bin/env PAINTCRAFT_GEOMETRY_VARIANT=cached PAINTCRAFT_GEOMETRY_CASE=growing PAINTCRAFT_GEOMETRY_BASE=sparse1 PAINTCRAFT_GEOMETRY_COMPOSITOR=regional /Users/dielpi/Desktop/replicraft/PaintCraft/target/release/deps/paintcraft-f824b331897e58e1 --exact cpu_rendering::geometry_benchmark::preview_geometry_process --ignored (20 runs)
+                mean     ±       σ          min     …     max
+  Wall Time     36.6 ms  ±     1.1 ms      34.6 ms  …    39.2 ms           -25.4%
+  Memory        15.6 MiB ±     1.9 MiB     12.0 MiB …    18.3 MiB           -1.2%
+ 

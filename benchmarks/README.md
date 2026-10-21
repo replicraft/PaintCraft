@@ -116,3 +116,14 @@ Editor batch construction, checked preview staging and desktop CPU composition.
 [The decision and reproduction record](results/preview-geometry-2026-10-21/DECISION.md)
 retain tiny non-win controls and distinguish these complete-frame sequences from
 native OS input/display latency.
+
+
+Regional output patching compares the existing `cache_replay` example at full,
+tile64, tile128 and tile256 configurations. The `regional_reuse` Criterion target
+adds raw 20-sample complete construction/eight-edit/teardown sequences. The
+[compositor record](results/regional-patches-2026-10-21/DECISION.md) retains global,
+single-layer, viewport and cold controls. The desktop preview driver additionally
+accepts `PAINTCRAFT_GEOMETRY_BASE=sparse1|sparse5|dense5` and
+`PAINTCRAFT_GEOMETRY_COMPOSITOR=full|regional`; keep geometry caching enabled for
+both when isolating the compositor. See [consumer confirmation](results/regional-patches-app-2026-10-21/DECISION.md)
+for exact commands, retained host drift/memory costs and native latency limits.

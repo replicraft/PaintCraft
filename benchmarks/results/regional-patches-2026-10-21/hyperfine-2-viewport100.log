@@ -1,0 +1,20 @@
+Benchmark 1: /Users/dielpi/Desktop/replicraft/PaintCraft/target/release/examples/cache_replay tile256 viewport100 8 (20 runs)
+                mean     ±       σ          min     …     max
+  Wall Time     20.2 ms  ±     5.3 ms      14.1 ms  …    32.7 ms
+  Memory        34.2 MiB ±     1.4 MiB     32.8 MiB …    36.7 MiB
+ 
+Benchmark 2: /Users/dielpi/Desktop/replicraft/PaintCraft/target/release/examples/cache_replay tile128 viewport100 8 (20 runs)
+                mean     ±       σ          min     …     max
+  Wall Time     20.6 ms  ±     3.8 ms      16.0 ms  …    29.4 ms            +2.3%
+  Memory        33.1 MiB ±     0.8 MiB     32.1 MiB …    35.2 MiB           -3.2%
+ 
+Benchmark 3: /Users/dielpi/Desktop/replicraft/PaintCraft/target/release/examples/cache_replay tile64 viewport100 8 (20 runs)
+                mean     ±       σ          min     …     max
+  Wall Time     25.6 ms  ±     4.5 ms      20.1 ms  …    39.3 ms           +27.2%
+  Memory        33.5 MiB ±     1.0 MiB     32.5 MiB …    35.5 MiB           -1.9%
+ 
+Benchmark 4: /Users/dielpi/Desktop/replicraft/PaintCraft/target/release/examples/cache_replay full viewport100 8 (20 runs)
+                mean     ±       σ          min     …     max
+  Wall Time     27.2 ms  ±     8.3 ms      21.5 ms  …    58.9 ms           +34.7%  (1.3x slower)
+  Memory        30.8 MiB ±     0.8 MiB     30.0 MiB …    32.7 MiB           -9.9%
+ 

@@ -1,0 +1,103 @@
+[
+  {
+    "case": "sparse1",
+    "session_median_ms": {
+      "full": [
+        34.736646,
+        34.646,
+        36.734458499999995
+      ],
+      "regional": [
+        34.532458000000005,
+        34.7895625,
+        36.585063
+      ]
+    },
+    "session_ratios": [
+      1.0059129298007108,
+      0.9958734031219851,
+      1.0040835108033024
+    ],
+    "reported_rss_median_mib": {
+      "full": 14.921875,
+      "regional": 14.828125
+    },
+    "reported_rss_max_mib": {
+      "full": 20.5625,
+      "regional": 18.3125
+    }
+  },
+  {
+    "case": "sparse5",
+    "session_median_ms": {
+      "full": [
+        46.709458500000004,
+        47.062416500000005,
+        49.277187
+      ],
+      "regional": [
+        39.6726255,
+        40.2770625,
+        59.936457999999995
+      ]
+    },
+    "session_ratios": [
+      1.177372505885702,
+      1.1684669531200296,
+      0.8221571418184238
+    ],
+    "reported_rss_median_mib": {
+      "full": 15.4453125,
+      "regional": 18.9140625
+    },
+    "reported_rss_max_mib": {
+      "full": 20.65625,
+      "regional": 27.3125
+    }
+  },
+  {
+    "case": "dense5",
+    "session_median_ms": {
+      "full": [
+        117.26972900000001,
+        120.29635400000001,
+        125.144146
+      ],
+      "regional": [
+        62.1505835,
+        66.90750000000001,
+        81.433229
+      ]
+    },
+    "session_ratios": [
+      1.8868644893736195,
+      1.7979502148488582,
+      1.536770032783546
+    ],
+    "reported_rss_median_mib": {
+      "full": 22.0,
+      "regional": 24.1796875
+    },
+    "reported_rss_max_mib": {
+      "full": 25.15625,
+      "regional": 29.3125
+    }
+  },
+  {
+    "case": "calibration",
+    "session_median_ms": {
+      "calibration": [
+        10.894875000000003,
+        12.563958,
+        14.724521000000001
+      ]
+    },
+    "session_ratios": [],
+    "reported_rss_median_mib": {
+      "calibration": 7.2421875
+    },
+    "reported_rss_max_mib": {
+      "calibration": 7.453125
+    }
+  }
+]

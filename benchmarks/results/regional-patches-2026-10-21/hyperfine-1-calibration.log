@@ -1,0 +1,22 @@
+Benchmark 1: /Users/dielpi/Desktop/replicraft/PaintCraft/target/release/examples/cache_replay full sparse5 0 (20 runs)
+                mean     ±       σ          min     …     max
+  Wall Time      2.7 ms  ±     0.1 ms       2.4 ms  …     2.8 ms
+  Memory         6.7 MiB ±     0.0 MiB      6.7 MiB …     6.8 MiB
+ 
+Benchmark 2: /Users/dielpi/Desktop/replicraft/PaintCraft/target/release/examples/cache_replay tile64 sparse5 0 (20 runs)
+                mean     ±       σ          min     …     max
+  Wall Time      7.7 ms  ±     0.5 ms       7.1 ms  …     9.0 ms          +184.2%  (2.8x slower)
+  Memory        15.3 MiB ±     0.1 MiB     15.2 MiB …    15.5 MiB         +128.6%  (2.3x more)
+ 
+Benchmark 3: /Users/dielpi/Desktop/replicraft/PaintCraft/target/release/examples/cache_replay tile128 sparse5 0 (20 runs)
+                mean     ±       σ          min     …     max
+  Wall Time      6.0 ms  ±     1.3 ms       5.1 ms  …     9.9 ms          +122.5%  (2.2x slower)
+  Memory        14.9 MiB ±     0.1 MiB     14.8 MiB …    15.0 MiB         +122.4%  (2.2x more)
+ 
+  Warning: The first benchmarking run for this command was significantly slower than the rest (9.9 ms). This could be caused by (filesystem) caches that were not filled until after the first run. You are already using the '--warmup' option which helps to fill these caches before the actual benchmark. You can either try to increase the warmup count further or re-run this benchmark on a quiet system in case it was a random outlier. Alternatively, consider using the '--prepare' option to clear the caches before each timing run.
+ 
+Benchmark 4: /Users/dielpi/Desktop/replicraft/PaintCraft/target/release/examples/cache_replay tile256 sparse5 0 (20 runs)
+                mean     ±       σ          min     …     max
+  Wall Time      5.3 ms  ±     1.1 ms       4.4 ms  …     9.1 ms           +98.3%  (2.0x slower)
+  Memory        14.9 MiB ±     0.1 MiB     14.8 MiB …    15.2 MiB         +121.9%  (2.2x more)
+ 

@@ -15,7 +15,9 @@
     "result_artifacts": [
       "benchmarks/results/cpu-spans-2026-10-19/DECISION.md",
       "benchmarks/results/cpu-cache-2026-10-20/DECISION.md",
-      "benchmarks/results/preview-reuse-2026-10-20-measured/DECISION.md"
+      "benchmarks/results/preview-reuse-2026-10-20-measured/DECISION.md",
+      "benchmarks/results/regional-patches-2026-10-21/DECISION.md",
+      "benchmarks/results/regional-patches-app-2026-10-21/DECISION.md"
     ],
     "variants": [
       "correct full-region baseline",

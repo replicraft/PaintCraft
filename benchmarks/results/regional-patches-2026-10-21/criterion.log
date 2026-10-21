@@ -1,0 +1,168 @@
+Benchmarking regional_reuse/sparse1/full
+Benchmarking regional_reuse/sparse1/full: Warming up for 300.00 ms
+Benchmarking regional_reuse/sparse1/full: Collecting 20 samples in estimated 1.0627 s (280 iterations)
+Benchmarking regional_reuse/sparse1/full: Analyzing
+regional_reuse/sparse1/full
+                        time:   [3.5496 ms 3.6737 ms 3.8120 ms]
+Benchmarking regional_reuse/sparse1/tile64
+Benchmarking regional_reuse/sparse1/tile64: Warming up for 300.00 ms
+Benchmarking regional_reuse/sparse1/tile64: Collecting 20 samples in estimated 1.1030 s (160 iterations)
+Benchmarking regional_reuse/sparse1/tile64: Analyzing
+regional_reuse/sparse1/tile64
+                        time:   [8.4095 ms 9.4710 ms 10.560 ms]
+Benchmarking regional_reuse/sparse1/tile128
+Benchmarking regional_reuse/sparse1/tile128: Warming up for 300.00 ms
+Benchmarking regional_reuse/sparse1/tile128: Collecting 20 samples in estimated 1.1921 s (120 iterations)
+Benchmarking regional_reuse/sparse1/tile128: Analyzing
+regional_reuse/sparse1/tile128
+                        time:   [7.0063 ms 8.0583 ms 9.3506 ms]
+Found 2 outliers among 20 measurements (10.00%)
+  1 (5.00%) high mild
+  1 (5.00%) high severe
+Benchmarking regional_reuse/sparse1/tile256
+Benchmarking regional_reuse/sparse1/tile256: Warming up for 300.00 ms
+Benchmarking regional_reuse/sparse1/tile256: Collecting 20 samples in estimated 1.1320 s (140 iterations)
+Benchmarking regional_reuse/sparse1/tile256: Analyzing
+regional_reuse/sparse1/tile256
+                        time:   [6.4480 ms 7.2806 ms 8.1851 ms]
+Benchmarking regional_reuse/sparse5/full
+Benchmarking regional_reuse/sparse5/full: Warming up for 300.00 ms
+Benchmarking regional_reuse/sparse5/full: Collecting 20 samples in estimated 1.1703 s (100 iterations)
+Benchmarking regional_reuse/sparse5/full: Analyzing
+regional_reuse/sparse5/full
+                        time:   [12.518 ms 13.186 ms 13.885 ms]
+Found 1 outliers among 20 measurements (5.00%)
+  1 (5.00%) high mild
+Benchmarking regional_reuse/sparse5/tile64
+Benchmarking regional_reuse/sparse5/tile64: Warming up for 300.00 ms
+Benchmarking regional_reuse/sparse5/tile64: Collecting 20 samples in estimated 1.3817 s (60 iterations)
+Benchmarking regional_reuse/sparse5/tile64: Analyzing
+regional_reuse/sparse5/tile64
+                        time:   [20.079 ms 22.632 ms 25.914 ms]
+Found 1 outliers among 20 measurements (5.00%)
+  1 (5.00%) high severe
+Benchmarking regional_reuse/sparse5/tile128
+Benchmarking regional_reuse/sparse5/tile128: Warming up for 300.00 ms
+Benchmarking regional_reuse/sparse5/tile128: Collecting 20 samples in estimated 1.1516 s (80 iterations)
+Benchmarking regional_reuse/sparse5/tile128: Analyzing
+regional_reuse/sparse5/tile128
+                        time:   [11.370 ms 12.048 ms 12.728 ms]
+Benchmarking regional_reuse/sparse5/tile256
+Benchmarking regional_reuse/sparse5/tile256: Warming up for 300.00 ms
+Benchmarking regional_reuse/sparse5/tile256: Collecting 20 samples in estimated 1.0928 s (100 iterations)
+Benchmarking regional_reuse/sparse5/tile256: Analyzing
+regional_reuse/sparse5/tile256
+                        time:   [8.1904 ms 8.7432 ms 9.3718 ms]
+Found 1 outliers among 20 measurements (5.00%)
+  1 (5.00%) high mild
+Benchmarking regional_reuse/dense5/full
+Benchmarking regional_reuse/dense5/full: Warming up for 300.00 ms
+
+Warning: Unable to complete 20 samples in 1.0s. You may wish to increase target time to 4.3s, or reduce sample count to 10.
+Benchmarking regional_reuse/dense5/full: Collecting 20 samples in estimated 4.2604 s (20 iterations)
+Benchmarking regional_reuse/dense5/full: Analyzing
+regional_reuse/dense5/full
+                        time:   [246.97 ms 266.70 ms 286.49 ms]
+Benchmarking regional_reuse/dense5/tile64
+Benchmarking regional_reuse/dense5/tile64: Warming up for 300.00 ms
+
+Warning: Unable to complete 20 samples in 1.0s. You may wish to increase target time to 1.2s, or reduce sample count to 10.
+Benchmarking regional_reuse/dense5/tile64: Collecting 20 samples in estimated 1.2466 s (20 iterations)
+Benchmarking regional_reuse/dense5/tile64: Analyzing
+regional_reuse/dense5/tile64
+                        time:   [62.804 ms 72.092 ms 84.152 ms]
+Found 2 outliers among 20 measurements (10.00%)
+  1 (5.00%) high mild
+  1 (5.00%) high severe
+Benchmarking regional_reuse/dense5/tile128
+Benchmarking regional_reuse/dense5/tile128: Warming up for 300.00 ms
+
+Warning: Unable to complete 20 samples in 1.0s. You may wish to increase target time to 1.2s, or reduce sample count to 10.
+Benchmarking regional_reuse/dense5/tile128: Collecting 20 samples in estimated 1.1959 s (20 iterations)
+Benchmarking regional_reuse/dense5/tile128: Analyzing
+regional_reuse/dense5/tile128
+                        time:   [56.807 ms 68.998 ms 83.854 ms]
+Found 3 outliers among 20 measurements (15.00%)
+  3 (15.00%) high severe
+Benchmarking regional_reuse/dense5/tile256
+Benchmarking regional_reuse/dense5/tile256: Warming up for 300.00 ms
+
+Warning: Unable to complete 20 samples in 1.0s. You may wish to increase target time to 1.1s, or reduce sample count to 10.
+Benchmarking regional_reuse/dense5/tile256: Collecting 20 samples in estimated 1.0857 s (20 iterations)
+Benchmarking regional_reuse/dense5/tile256: Analyzing
+regional_reuse/dense5/tile256
+                        time:   [59.261 ms 65.157 ms 71.639 ms]
+Found 1 outliers among 20 measurements (5.00%)
+  1 (5.00%) high mild
+Benchmarking regional_reuse/global-bottom5/full
+Benchmarking regional_reuse/global-bottom5/full: Warming up for 300.00 ms
+
+Warning: Unable to complete 20 samples in 1.0s. You may wish to increase target time to 3.6s, or reduce sample count to 10.
+Benchmarking regional_reuse/global-bottom5/full: Collecting 20 samples in estimated 3.5695 s (20 iterations)
+Benchmarking regional_reuse/global-bottom5/full: Analyzing
+regional_reuse/global-bottom5/full
+                        time:   [190.54 ms 201.08 ms 214.04 ms]
+Found 1 outliers among 20 measurements (5.00%)
+  1 (5.00%) high severe
+Benchmarking regional_reuse/global-bottom5/tile64
+Benchmarking regional_reuse/global-bottom5/tile64: Warming up for 300.00 ms
+
+Warning: Unable to complete 20 samples in 1.0s. You may wish to increase target time to 5.0s, or reduce sample count to 10.
+Benchmarking regional_reuse/global-bottom5/tile64: Collecting 20 samples in estimated 4.9884 s (20 iterations)
+Benchmarking regional_reuse/global-bottom5/tile64: Analyzing
+regional_reuse/global-bottom5/tile64
+                        time:   [212.37 ms 224.19 ms 237.82 ms]
+Found 3 outliers among 20 measurements (15.00%)
+  3 (15.00%) high mild
+Benchmarking regional_reuse/global-bottom5/tile128
+Benchmarking regional_reuse/global-bottom5/tile128: Warming up for 300.00 ms
+
+Warning: Unable to complete 20 samples in 1.0s. You may wish to increase target time to 3.5s, or reduce sample count to 10.
+Benchmarking regional_reuse/global-bottom5/tile128: Collecting 20 samples in estimated 3.4757 s (20 iterations)
+Benchmarking regional_reuse/global-bottom5/tile128: Analyzing
+regional_reuse/global-bottom5/tile128
+                        time:   [173.15 ms 175.13 ms 177.35 ms]
+Found 1 outliers among 20 measurements (5.00%)
+  1 (5.00%) high mild
+Benchmarking regional_reuse/global-bottom5/tile256
+Benchmarking regional_reuse/global-bottom5/tile256: Warming up for 300.00 ms
+
+Warning: Unable to complete 20 samples in 1.0s. You may wish to increase target time to 3.7s, or reduce sample count to 10.
+Benchmarking regional_reuse/global-bottom5/tile256: Collecting 20 samples in estimated 3.6897 s (20 iterations)
+Benchmarking regional_reuse/global-bottom5/tile256: Analyzing
+regional_reuse/global-bottom5/tile256
+                        time:   [177.30 ms 191.76 ms 215.10 ms]
+Found 2 outliers among 20 measurements (10.00%)
+  1 (5.00%) high mild
+  1 (5.00%) high severe
+Benchmarking regional_reuse/viewport100/full
+Benchmarking regional_reuse/viewport100/full: Warming up for 300.00 ms
+Benchmarking regional_reuse/viewport100/full: Collecting 20 samples in estimated 1.2043 s (60 iterations)
+Benchmarking regional_reuse/viewport100/full: Analyzing
+regional_reuse/viewport100/full
+                        time:   [18.814 ms 19.249 ms 19.668 ms]
+Found 4 outliers among 20 measurements (20.00%)
+  1 (5.00%) low severe
+  1 (5.00%) low mild
+  2 (10.00%) high mild
+Benchmarking regional_reuse/viewport100/tile64
+Benchmarking regional_reuse/viewport100/tile64: Warming up for 300.00 ms
+Benchmarking regional_reuse/viewport100/tile64: Collecting 20 samples in estimated 1.1191 s (60 iterations)
+Benchmarking regional_reuse/viewport100/tile64: Analyzing
+regional_reuse/viewport100/tile64
+                        time:   [16.639 ms 17.352 ms 18.236 ms]
+Found 2 outliers among 20 measurements (10.00%)
+  2 (10.00%) high severe
+Benchmarking regional_reuse/viewport100/tile128
+Benchmarking regional_reuse/viewport100/tile128: Warming up for 300.00 ms
+Benchmarking regional_reuse/viewport100/tile128: Collecting 20 samples in estimated 1.0934 s (80 iterations)
+Benchmarking regional_reuse/viewport100/tile128: Analyzing
+regional_reuse/viewport100/tile128
+                        time:   [12.477 ms 12.781 ms 13.088 ms]
+Benchmarking regional_reuse/viewport100/tile256
+Benchmarking regional_reuse/viewport100/tile256: Warming up for 300.00 ms
+Benchmarking regional_reuse/viewport100/tile256: Collecting 20 samples in estimated 1.1079 s (80 iterations)
+Benchmarking regional_reuse/viewport100/tile256: Analyzing
+regional_reuse/viewport100/tile256
+                        time:   [11.899 ms 12.405 ms 12.914 ms]
+

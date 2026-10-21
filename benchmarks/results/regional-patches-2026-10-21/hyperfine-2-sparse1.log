@@ -1,0 +1,20 @@
+Benchmark 1: /Users/dielpi/Desktop/replicraft/PaintCraft/target/release/examples/cache_replay tile256 sparse1 8 (20 runs)
+                mean     ±       σ          min     …     max
+  Wall Time      6.9 ms  ±     0.6 ms       6.2 ms  …     8.1 ms
+  Memory        14.1 MiB ±     2.2 MiB     12.1 MiB …    16.8 MiB
+ 
+Benchmark 2: /Users/dielpi/Desktop/replicraft/PaintCraft/target/release/examples/cache_replay tile128 sparse1 8 (20 runs)
+                mean     ±       σ          min     …     max
+  Wall Time      7.3 ms  ±     0.5 ms       6.1 ms  …     8.5 ms            +5.3%
+  Memory        15.5 MiB ±     2.5 MiB     11.9 MiB …    20.4 MiB           +9.7%
+ 
+Benchmark 3: /Users/dielpi/Desktop/replicraft/PaintCraft/target/release/examples/cache_replay tile64 sparse1 8 (20 runs)
+                mean     ±       σ          min     …     max
+  Wall Time      8.8 ms  ±     1.6 ms       7.1 ms  …    14.5 ms           +26.8%
+  Memory        15.7 MiB ±     3.0 MiB     11.9 MiB …    24.3 MiB          +10.9%
+ 
+Benchmark 4: /Users/dielpi/Desktop/replicraft/PaintCraft/target/release/examples/cache_replay full sparse1 8 (20 runs)
+                mean     ±       σ          min     …     max
+  Wall Time      6.0 ms  ±     1.1 ms       4.9 ms  …     8.5 ms           -13.6%
+  Memory        10.7 MiB ±     4.0 MiB      7.8 MiB …    20.0 MiB          -24.4%
+ 

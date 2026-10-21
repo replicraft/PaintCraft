@@ -284,9 +284,12 @@
         "benchmarks/results/cpu-cache-2026-10-20/DECISION.md",
         "crates/services/paintcraft-render/src/parallel.rs",
         "docs/PARALLEL_COMPOSITOR.md",
-        "benchmarks/results/cpu-parallel-2026-10-20/DECISION.md"
+        "benchmarks/results/cpu-parallel-2026-10-20/DECISION.md",
+        "docs/REGIONAL_INVALIDATION.md",
+        "benchmarks/results/regional-patches-2026-10-21/DECISION.md",
+        "benchmarks/results/regional-patches-app-2026-10-21/DECISION.md"
       ],
-      "remaining_or_scope": "Ordered CPU/GPU flat composition, exact regional CPU output, bounded output/lower-prefix caches and caller-owned CPU band/tile partitions exist with local measurements; CLI exports accept explicit worker limits. Finer dirty rectangles, ROI effects, parallel cache-miss integration, multiresolution rendering, persistent GPU residency and group plans remain.",
+      "remaining_or_scope": "Ordered CPU/GPU flat composition, exact regional CPU output, bounded output/lower-prefix caches and caller-owned CPU band/tile partitions exist with local measurements; CLI exports accept explicit worker limits. Derived 64-pixel identities preserve untouched COW cells and patch complete cached output tiles without changing storage granularity. Finer operation rectangles, ROI effects, parallel cache-miss integration, multiresolution rendering, persistent GPU residency and group plans remain.",
       "acceptance": "ROI-01\u201307 and RENDER-01\u201306; no tile seams or reordered group output."
     },
     {
@@ -482,9 +485,14 @@
       "depends_on": [
         "T13"
       ],
-      "status": "not-started",
-      "evidence": [],
-      "remaining_or_scope": "Raw benchmark artifacts; select thresholds/index/atlas layout; no claims from theoretical speed.",
+      "status": "partial",
+      "evidence": [
+        "benchmarks/results/regional-patches-2026-10-21/DECISION.md",
+        "benchmarks/results/regional-patches-app-2026-10-21/DECISION.md",
+        "benchmarks/results/cpu-parallel-2026-10-20/DECISION.md",
+        "docs/development/HYPERFINE_PROTOCOL.md"
+      ],
+      "remaining_or_scope": "Local CPU partition/cache/region-granularity experiments retain raw statistical/process samples and desktop CPU consumer confirmation. General dispatch thresholds, spatial-index choices, GPU atlas layouts, other adoption experiments and cross-platform/native latency qualification remain.",
       "acceptance": "Raw benchmark artifacts; select thresholds/index/atlas layout; no claims from theoretical speed."
     },
     {
@@ -731,9 +739,12 @@
         "benchmarks/results/cpu-parallel-2026-10-20/DECISION.md",
         "docs/INCREMENTAL_COVERAGE.md",
         "benchmarks/results/preview-geometry-2026-10-21/DECISION.md",
-        "apps/paintcraft/src/app/cpu_rendering/geometry_tests.rs"
+        "apps/paintcraft/src/app/cpu_rendering/geometry_tests.rs",
+        "docs/REGIONAL_INVALIDATION.md",
+        "benchmarks/results/regional-patches-2026-10-21/DECISION.md",
+        "benchmarks/results/regional-patches-app-2026-10-21/DECISION.md"
       ],
-      "remaining_or_scope": "Dependency/task ledgers, BF29 process evidence and BF06 raw Criterion/process measurements exist; paint-plan comparisons add Criterion raw samples and matched baseline/current CPU-only CLI apply confirmation with complete canonical-output equality, three process sessions and resource observations; superseded/slow controls and the excluded mixed-build pilot are preserved; prior Divan-only raw-sample gates, other relevant comparisons and cross-platform/interactive qualification remain. Desktop preview staging now reuses one bounded-charge incremental sample union, scans appended capsules and routes worker cancellation into execution; measured growing/retrace CPU replay gains retain tiny non-win controls. Full incremental staging and native latency remain unqualified.",
+      "remaining_or_scope": "Dependency/task ledgers and source-scoped CPU/history/painting experiments retain raw statistical/process evidence and integrated CLI/desktop CPU confirmation. Region-grid and preview comparisons retain slow controls, memory costs, host drift and failed builds explicitly. Prior Divan-only raw-sample gates, other adoption comparisons and cross-platform/native input/display qualification remain.",
       "acceptance": "An adoption record points to real scope, tests and excluded future detail; plan-only tooling makes no repository changes; real comparisons use actual optimized code/fixtures, keep correctness/build/fixture/raw evidence and record selection/tie/rejection honestly; smoke/model results never qualify application choices."
     }
   ]

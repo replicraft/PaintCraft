@@ -421,3 +421,52 @@ Command/prefix validation, whole-union resolution, raster replay, compound-prefi
 reuse, finer dirty regions, GPU residency, scheduling priority and measured native
 input/display tails remain. T13/T14/T37 remain partial or in progress. Earlier
 benchmarks stay tied to their frozen source; no broad performance completion claim.
+
+
+## Twenty-eighth slice: regional dependency identities and cached output patches
+
+Raster tiles retain sixteen process-local 64-pixel region stamps and their initial
+uniform RGBA. COW preserves untouched identities; pixel/rectangle/planned writes
+retire intersecting regions, while raw import/materialization retires every region.
+Installed leases retain actual initial colors independently of destination defaults.
+Monotonic revision exhaustion disables cache eligibility rather than wrapping.
+Tokens pin neither pixels nor weak control blocks; resident Tile structs now enter
+the conservative raster metadata weight. Pixel/state/wire semantics stay unchanged.
+
+Matching ordered layer geometry/policies can reuse a complete output tile and
+privately recompose only changed, nonoverlapping 64-pixel output cells. Translated
+source damage is conservatively unioned. Structural/global changes keep full/prefix
+routing, preview partitions stay separate and cancelled patches install no partial
+image/key. A local pixel can now recompose 4096 rather than 65536 pixels within the
+same 256-pixel output tile. See [the invalidation contract](REGIONAL_INVALIDATION.md).
+
+727 workspace tests pass (22 explicit ignores), strict workspace/all-target Clippy,
+formatting/file limits, release desktop/CLI builds, three required real Metal checks
+and a 30-frame isolated native smoke. Tests cover default/COW and installed identities,
+imports/restoration, saturation/concurrent uniqueness, unpinned decoded capacity,
+unaligned origins/31–1024 grids, overlaps, cancellation and undo/redo. An initial
+workspace/example/bench build exhausted disk before timing; generated debug objects
+and incremental caches were reclaimed, two-job builds passed, and failed build logs
+are retained separately from timing evidence.
+
+[Current compositor measurements](../benchmarks/results/regional-patches-2026-10-21/DECISION.md)
+retain 400 Criterion samples and 1440 Hyperfine observations, including cold/zero-edit
+controls. Keep 256-pixel output tiles: 64 increases lookup overhead; 128/256 are close
+or mixed in dense/viewport cases. Current tile256 versus full composition ratios are
+1.09–1.20x for sparse5, 4.37–4.64x for dense5 and 1.09–1.49x for viewport100. Single
+sparse-layer caching regresses; global-bottom results reverse sign and drift sharply
+in session 3. All samples remain and calibration is never subtracted. These are
+current configuration comparisons, not an isolated old/new patch speedup claim.
+
+[Desktop consumer confirmation](../benchmarks/results/regional-patches-app-2026-10-21/DECISION.md)
+adds 420 process observations over actual preview batches, checked staging and CPU
+composition. Dense5 improves 1.54–1.89x; the single-layer bypass is a tie. Sparse5
+improves in two sessions and regresses in the third. Cached sparse/dense runs have
+higher RSS, so no general memory gain is claimed. Full-frame/source pre/postflights
+and source/executable identities accompany both records. No OS input/display or GPU
+latency is inferred; desktop output tiles and existing single-layer policy stay put.
+
+Exact operation rectangles, effect halos/groups/profiles, parallel cache misses,
+multiresolution, GPU texture validity/residency, globally dirty cost routing,
+all-service physical admission, scheduling and native latency/interference remain.
+T12/T21/T37 stay partial/in progress; the full roadmap remains active.

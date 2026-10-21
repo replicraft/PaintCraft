@@ -31,12 +31,15 @@ regions survive atomic publication and undo/redo. Existing desktop freshness gua
 still decide whether a completed frame may be presented. Selection/tool overlays
 are not cached. Raster previews are composed from their private staged document.
 
-`RasterLayer::tile_versions` uses weak Arc identities. Keys neither hash pixels
-nor retain strong source tile snapshots. Weak control blocks prevent address reuse
-from masquerading as the same tile. COW writes and even unshared `Arc::make_mut`
-writes detach the identity. Weak keys can keep control blocks alive, but not the
-decoded tile Vec. This does not replace the still-missing logical tile store and
-resident lease authority.
+Raster dependency keys now use derived 64-pixel region identities rather than
+whole-tile weak identities. Untouched cells survive COW and missing/default cells
+carry exact initial RGBA; keys retain neither pixels nor weak control blocks.
+Known writes retire only their intersecting cells; raw materialization retires all.
+Whole-tile weak identities remain the history/lease interface. See
+[regional invalidation](REGIONAL_INVALIDATION.md) for mutation and saturation rules.
+An outdated full cached tile can be copied privately and patched only in changed
+cells when ordered layer geometry/policies match. Structural/global changes keep
+ordinary prefix/full routing. This remains separate from logical blob residency.
 
 Committed and preview partitions have independent byte and entry limits. Preview
 lookups may reuse committed results, but preview misses never evict committed
@@ -48,17 +51,18 @@ partial frame. Caller-owned output buffers cannot pin cache entries.
 ## Accounting and observable work
 
 Budgets include cached pixel Vec capacities, entry table/key Vec capacities, and
-a conservative 128-byte charge per weak identity, including duplicates. This is
+region identity vectors. Tokens have no weak control-block charge. This is
 an admission weight, not allocator overhead, actual source residency or process
 RSS. Allocation failures return errors or bypass caching when the key cannot fit.
 The returned dense region, current tile scratch and source/history ownership are
 outside this persistent cache budget. Every caller still owns its output Vec.
 
-`RenderStats` reports full cache hits, lower-prefix hits, recomposed output tile
-count/pixels and requested output pixels. A single-pixel change currently replaces
-a source storage tile, so it invalidates 65,536 output pixels at all measured
-64/128/256 composite granularities. The smaller grids do not yet provide finer
-stroke-level invalidation. There is no mipmap/GPU texture validity here.
+`RenderStats` reports full cache hits, lower-prefix hits, patched output tiles,
+recomposed output tile count/pixels and requested output pixels. A single-pixel
+change can now recompose 4096 pixels even inside a 256-pixel output tile. Unaligned
+layer offsets can conservatively expand damage to multiple output cells. Whole
+output is still assembled for each request. There is no mipmap/GPU texture validity
+here, and this is not per-pixel invalidation or effect-halo propagation.
 
 ## Application integration
 
@@ -76,8 +80,8 @@ than one storage tile also bypass caching conservatively; a tiny-image crossover
 is not qualified. Cache construction failure retains ordinary CPU composition.
 A poisoned derived-cache mutex retires all entries and resumes uncached CPU
 composition; an injected worker-panic test verifies subsequent frames recover.
-Native job admission includes 20 MiB for persistent caches and up to 32 MiB
-for simultaneous full/prefix key construction, in addition to its existing
+Native job admission includes 20 MiB for persistent caches, 8 MiB for retained
+smooth-path geometry and up to 32 MiB for simultaneous full/prefix key construction, in addition to its existing
 output/staging allowances. A unified process-wide residency authority remains
 future work.
 
@@ -115,3 +119,10 @@ prefixes/groups, parallel tiles/bands, single-surface borrowing, mipmaps, persis
 GPU residency and viewport texture updates remain incomplete. Preview path replay,
 history compression/spill and broader interoperability still need their own
 correctness and resource/performance qualification.
+
+
+The original 2026-10-20 comparison remains frozen to whole-tile identities.
+[Regional patch measurements](../benchmarks/results/regional-patches-2026-10-21/DECISION.md)
+compare current 64/128/256 output grids and full composition separately. Changes
+to source-region identities and patch routing do not retroactively qualify the
+older timings. Both documents retain their local host/workload limitations.
