@@ -3,7 +3,7 @@
 use super::{Error, ErrorCode, Result};
 use std::sync::{Arc, Mutex};
 mod watch;
-pub use watch::BudgetWatch;
+pub use watch::{BudgetPressure, BudgetWatch};
 mod denial;
 pub use denial::{AllocationClass, AllocationDenial};
 
@@ -99,3 +99,7 @@ pub struct BudgetLease {
 #[cfg(test)]
 #[path = "resources/tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "resources/demand_tests.rs"]
+mod demand_tests;

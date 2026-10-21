@@ -23,6 +23,9 @@ impl AllocationDenial {
         self.class = class;
         self.required = self.required.max(required);
     }
+    pub(super) fn is_for(&self, budget: &SharedBudget) -> bool {
+        std::sync::Arc::ptr_eq(&self.budget.0, &budget.0)
+    }
     pub fn class(&self) -> AllocationClass {
         self.class
     }
