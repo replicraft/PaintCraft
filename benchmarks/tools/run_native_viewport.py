@@ -13,7 +13,7 @@ import subprocess
 from pathlib import Path
 
 parser = argparse.ArgumentParser(description=__doc__)
-parser.add_argument("--suite", choices=["viewport", "output-pool", "multires"], default="viewport")
+parser.add_argument("--suite", choices=["viewport", "output-pool", "multires", "gpu-scaled"], default="viewport")
 parser.add_argument("--binary", required=True, type=Path)
 parser.add_argument("--output", required=True, type=Path)
 args = parser.parse_args()
@@ -22,14 +22,15 @@ binary = args.binary.resolve()
 out = args.output.resolve()
 out.mkdir(parents=True, exist_ok=False)
 pool_suite = args.suite == "output-pool"
-multires_suite = args.suite == "multires"
+gpu_scaled_suite = args.suite == "gpu-scaled"
+multires_suite = args.suite in ["multires", "gpu-scaled"]
 if multires_suite:
     test = "cpu_rendering::display_benchmark::native_multires_process"
-    cases = ["tiny", "dense", "large"]
-    modes = ["full", "bounded", "cached"]
-    verify_variant = "verify"
-    criterion_variant = "criterion"
-    criterion_prefix = "native_multires"
+    cases = ["tiny", "dense", "large", "uniform"] if gpu_scaled_suite else ["tiny", "dense", "large"]
+    modes = ["cpu", "gpu32", "gpu64"] if gpu_scaled_suite else ["full", "bounded", "cached"]
+    verify_variant = "gpu-verify" if gpu_scaled_suite else "verify"
+    criterion_variant = "gpu-criterion" if gpu_scaled_suite else "criterion"
+    criterion_prefix = "native_gpu_scaled" if gpu_scaled_suite else "native_multires"
 else:
     test = "gpu_display::region_benchmark::native_viewport_process"
     cases = ["quarter", "large", "resize"] if pool_suite else ["all", "quarter", "pan"]
@@ -54,7 +55,7 @@ listing = subprocess.check_output([str(binary), "--list"], text=True)
 assert f"{test}: test" in listing.splitlines(), "exact benchmark test missing from executable"
 manifest = {
     "exact_test": test,
-    "baseline": "existing native-resolution CpuRenderer/cache followed by independent box filter" if multires_suite else None,
+    "baseline": "actual cached CPU multiresolution path and completed managed upload" if gpu_scaled_suite else "existing native-resolution CpuRenderer/cache followed by independent box filter" if multires_suite else None,
     "utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
     "platform": platform.platform(), "processor": platform.processor(),
     "source_commit": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
@@ -64,11 +65,12 @@ manifest = {
     "hyperfine": subprocess.check_output(["hyperfine", "--version"], text=True).strip(),
     "build": "CARGO_BUILD_JOBS=2 CARGO_INCREMENTAL=0 cargo test -p paintcraft --lib --release --no-run --message-format=json",
     "suite": args.suite, "cases": cases, "variants": modes,
-    "canvas": {"tiny": [32,32], "dense": [512,256], "large": [4096,2160]} if multires_suite else {"quarter": [512, 256], "large": [4096, 2160], "resize": [4096, 2160]} if pool_suite else [512, 256],
+    "canvas": {"tiny": [32,32], "dense": [512,256], "large": [4096,2160], "uniform": [4096,2160]} if multires_suite else {"quarter": [512, 256], "large": [4096, 2160], "resize": [4096, 2160]} if pool_suite else [512, 256],
     "base": "dense five layers for dense; sparse implicit white for tiny/large" if multires_suite else "dense5 for quarter; single sparse implicit white layer for large/resize" if pool_suite else "dense5", "frames": 8 if multires_suite else 16, "new_points_per_frame": 8,
     "warmups": 3, "runs": 20, "sessions": 3,
-    "sampling_levels": {"tiny":1,"dense":1,"large":2} if multires_suite else None,
-    "scope": "Full-native-ROI composite/box-filter baseline versus bounded and cached exact CPU display production, native App ColorImage acceptance and completed egui managed-texture upload. Cold device/renderer/font/document setup and teardown included. Not GPU scaled composition, OS presentation or event latency." if multires_suite else "Completed compositor-buffer pool versus fresh allocation" if pool_suite else "Actual desktop preview staging, completed GPU composition/display conversion and App native texture acceptance. Required visible pixels equal full output cropped to requested bounds. Cold fixture/device/renderer construction and teardown included. Not OS presentation or event latency.",
+    "sampling_levels": {"tiny":1,"dense":1,"large":2,"uniform":2} if multires_suite else None,
+    "uniform_workload": "Eight real typed opacity edits (128..135), no raster changes; other cases grow eight-point brush input each frame." if gpu_scaled_suite else None,
+    "scope": "Cached exact CPU scaled display/managed upload versus GPU native-block/wide-sum display/native registration at 32 and 64 output-tile edges. Completed GPU work and cold setup/teardown included; independent full-native/filter verification; no OS latency or global physical-budget qualification." if gpu_scaled_suite else "Full-native-ROI composite/box-filter baseline versus bounded and cached exact CPU display production, native App ColorImage acceptance and completed egui managed-texture upload. Cold device/renderer/font/document setup and teardown included. Not GPU scaled composition, OS presentation or event latency." if multires_suite else "Completed compositor-buffer pool versus fresh allocation" if pool_suite else "Actual desktop preview staging, completed GPU composition/display conversion and App native texture acceptance. Required visible pixels equal full output cropped to requested bounds. Cold fixture/device/renderer construction and teardown included. Not OS presentation or event latency.",
     "environment": "Local macOS arm64 developer host; adapter/limits in correctness logs. No affinity, power, thermal or background-load controls. No intentionally concurrent builds, tests or other measurements. Process startup calibration retained, never subtracted.",
 }
 (out / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
