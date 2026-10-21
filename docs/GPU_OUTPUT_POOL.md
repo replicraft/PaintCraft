@@ -3,7 +3,10 @@
 GPU composition can retain one completed private straight-RGBA8 storage buffer for
 a later request. Retention is bounded independently of source-cache residency and
 configurable through `GpuRenderer::with_working_cache_limits`; zero disables it.
-The current 64 MiB candidate cap holds at most one buffer, not a preallocated arena.
+The measured 64 MiB candidate cap holds at most one buffer, not a preallocated arena.
+Fresh allocation remains the default (`DEFAULT_OUTPUT_POOL_BYTES == 0`): the native
+comparison has small-view regressions and mixed 4K evidence. A host must explicitly
+configure a nonzero cap to use retention. See [the decision](../benchmarks/results/output-pool-2026-10-21/DECISION.md).
 Requests larger than the cap stream without retaining their output. A retained
 buffer may serve a smaller request; the larger capacity remains charged/reported.
 Changing a region's origin does not invalidate scratch because no content is reused.
@@ -48,7 +51,7 @@ Accounting every service/metadata allocation, pressure-driven GPU eviction and n
 latency/interference qualification remain open. No physical-memory or throughput
 claim follows from enabling reuse.
 
-## Checks and pending qualification
+## Checks and qualification scope
 
 Metal regressions compare exact pixels across changing colors, source identities,
 transparent/empty output, smaller/larger regions and warm reuse. They retain multiple

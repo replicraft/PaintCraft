@@ -2,7 +2,9 @@
 use super::*;
 use std::ops::Deref;
 
-pub const DEFAULT_OUTPUT_POOL_BYTES: u64 = 64 << 20;
+// Native process evidence does not support globally enabling retention. Hosts
+// may opt in explicitly; see docs/GPU_OUTPUT_POOL.md and its decision record.
+pub const DEFAULT_OUTPUT_POOL_BYTES: u64 = 0;
 
 #[derive(Debug)]
 pub(super) struct Pool {
