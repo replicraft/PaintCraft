@@ -8,7 +8,8 @@
 
 use std::collections::HashMap;
 
-use paintcraft_core::types::Rect;
+use paintcraft_core::types::{Error, ErrorCode, Rect, Result};
+mod ellipse;
 
 /// Inclusive horizontal run on absolute row `y`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -24,30 +25,8 @@ pub enum Figure {
     Ellipse,
 }
 
-fn isqrt(n: i128) -> i128 {
-    if n < 2 {
-        return n.max(0);
-    }
-    let mut x = (n as f64).sqrt() as i128;
-    while x * x > n {
-        x -= 1;
-    }
-    while (x + 1) * (x + 1) <= n {
-        x += 1;
-    }
-    x
-}
-
-/// Inclusive local column range of the filled ellipse on local row `py`.
 fn ellipse_row(w: i64, h: i64, py: i64) -> Option<(i64, i64)> {
-    let (w, h, u0) = (i128::from(w), i128::from(h), i128::from(2 * py + 1 - h));
-    let q = w * w * h * h - u0 * u0 * w * w;
-    if q < 0 {
-        return None;
-    }
-    let m = isqrt(q / (h * h));
-    let (lo, hi) = ((w - m).div_euclid(2), (w - 1 + m).div_euclid(2));
-    (lo <= hi).then_some((lo as i64, hi as i64))
+    ellipse::row(w, h, py)
 }
 
 /// Filled figure inside `bbox`, local row range of box row `py` (inclusive).
@@ -61,49 +40,83 @@ fn row_range(fig: Figure, w: i64, h: i64, py: i64) -> Option<(i64, i64)> {
     }
 }
 
-fn clip_span(y: i64, x0: i64, x1: i64, clip: &Rect, out: &mut Vec<Span>) {
+fn clip_span(
+    y: i64,
+    x0: i64,
+    x1: i64,
+    clip: &Rect,
+    emit: &mut impl FnMut(Span) -> Result<()>,
+) -> Result<()> {
     let (x0, x1) = (x0.max(clip.x0), x1.min(clip.x1 - 1));
     if x0 <= x1 && (clip.y0..clip.y1).contains(&y) {
-        out.push(Span { y, x0, x1 });
+        emit(Span { y, x0, x1 })?;
     }
+    Ok(())
+}
+fn dimensions(bbox: &Rect) -> Result<(i64, i64)> {
+    let extent = |a: i64, b: i64| {
+        b.checked_sub(a).filter(|n| *n > 0).ok_or_else(|| {
+            Error::new(
+                ErrorCode::ResourceLimit,
+                "shape extent exceeds numeric limits",
+            )
+        })
+    };
+    Ok((extent(bbox.x0, bbox.x1)?, extent(bbox.y0, bbox.y1)?))
 }
 
-/// Spans of the filled figure in `bbox`, clipped to `clip`.
-pub fn filled(fig: Figure, bbox: &Rect, clip: &Rect) -> Vec<Span> {
-    let mut out = Vec::new();
-    let Some(rows) = Rect::new(bbox.x0, bbox.y0, bbox.width(), bbox.height()).and_then(|b| {
-        b.intersect(&Rect {
-            x0: i64::MIN / 4,
-            x1: i64::MAX / 4,
-            y0: clip.y0,
-            y1: clip.y1,
-        })
-    }) else {
-        return out;
+/// Stream exact clipped fill spans into a fallible sink. Checks cancellation for
+/// every row; no geometry/output vector is retained by the visitor.
+pub fn visit_filled(
+    fig: Figure,
+    bbox: &Rect,
+    clip: &Rect,
+    check: &dyn Fn() -> Result<()>,
+    mut emit: impl FnMut(Span) -> Result<()>,
+) -> Result<()> {
+    check()?;
+    let (w, h) = dimensions(bbox)?;
+    let Some(rows) = bbox.intersect(clip) else {
+        return Ok(());
     };
     for y in rows.y0..rows.y1 {
-        if let Some((a, b)) = row_range(fig, bbox.width(), bbox.height(), y - bbox.y0) {
-            clip_span(y, bbox.x0 + a, bbox.x0 + b, clip, &mut out);
+        check()?;
+        if let Some((a, b)) = row_range(fig, w, h, y - bbox.y0) {
+            clip_span(y, bbox.x0 + a, bbox.x0 + b, clip, &mut emit)?;
         }
     }
-    out
+    check()
 }
-
-/// Spans of the outline of thickness `t ≥ 1`: the figure minus the same figure
-/// shrunk by `t` on every side. When nothing remains inside, the outline is solid.
-pub fn outline(fig: Figure, bbox: &Rect, t: i64, clip: &Rect) -> Vec<Span> {
-    let (w, h) = (bbox.width(), bbox.height());
-    let inner = (w > 2 * t && h > 2 * t).then(|| (w - 2 * t, h - 2 * t));
-    let mut out = Vec::new();
-    let Some(rows) = bbox.intersect(&Rect {
-        x0: i64::MIN / 4,
-        x1: i64::MAX / 4,
-        y0: clip.y0,
-        y1: clip.y1,
-    }) else {
-        return out;
+/// Stream the exact outline (outer figure minus the inset figure). A zero
+/// thickness emits nothing; negative thickness is invalid.
+pub fn visit_outline(
+    fig: Figure,
+    bbox: &Rect,
+    t: i64,
+    clip: &Rect,
+    check: &dyn Fn() -> Result<()>,
+    mut emit: impl FnMut(Span) -> Result<()>,
+) -> Result<()> {
+    check()?;
+    if t < 0 {
+        return Err(Error::new(
+            ErrorCode::InputSchema,
+            "negative outline thickness",
+        ));
+    }
+    let (w, h) = dimensions(bbox)?;
+    let twice = 2 * i128::from(t);
+    let inner = (i128::from(w) > twice && i128::from(h) > twice).then(|| {
+        (
+            (i128::from(w) - twice) as i64,
+            (i128::from(h) - twice) as i64,
+        )
+    });
+    let Some(rows) = bbox.intersect(clip) else {
+        return Ok(());
     };
     for y in rows.y0..rows.y1 {
+        check()?;
         let py = y - bbox.y0;
         let Some((a, b)) = row_range(fig, w, h, py) else {
             continue;
@@ -111,14 +124,41 @@ pub fn outline(fig: Figure, bbox: &Rect, t: i64, clip: &Rect) -> Vec<Span> {
         let hole = inner
             .and_then(|(iw, ih)| row_range(fig, iw, ih, py - t))
             .map(|(c, d)| (c + t, d + t));
-        match hole {
-            Some((c, d)) => {
-                clip_span(y, bbox.x0 + a, bbox.x0 + c - 1, clip, &mut out);
-                clip_span(y, bbox.x0 + d + 1, bbox.x0 + b, clip, &mut out);
+        if let Some((c, d)) = hole {
+            // Test empty local pieces before adding the world origin. This also
+            // avoids constructing x0-1 at i64::MIN for an empty left piece.
+            if a < c {
+                clip_span(y, bbox.x0 + a, bbox.x0 + b.min(c - 1), clip, &mut emit)?;
             }
-            None => clip_span(y, bbox.x0 + a, bbox.x0 + b, clip, &mut out),
+            if d < b {
+                clip_span(y, bbox.x0 + a.max(d + 1), bbox.x0 + b, clip, &mut emit)?;
+            }
+        } else {
+            clip_span(y, bbox.x0 + a, bbox.x0 + b, clip, &mut emit)?;
         }
     }
+    check()
+}
+
+/// Collect fill spans for callers that own their geometry allocation policy.
+pub fn filled(fig: Figure, bbox: &Rect, clip: &Rect) -> Vec<Span> {
+    let mut out = Vec::new();
+    visit_filled(fig, bbox, clip, &|| Ok(()), |span| {
+        out.push(span);
+        Ok(())
+    })
+    .expect("valid shape bounds");
+    out
+}
+/// Collect outline spans of nonnegative thickness. For fallible allocation and
+/// cooperative work, prefer visit_outline with an admitted sink.
+pub fn outline(fig: Figure, bbox: &Rect, t: i64, clip: &Rect) -> Vec<Span> {
+    let mut out = Vec::new();
+    visit_outline(fig, bbox, t, clip, &|| Ok(()), |span| {
+        out.push(span);
+        Ok(())
+    })
+    .expect("valid shape bounds and thickness");
     out
 }
 
