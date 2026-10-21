@@ -1,0 +1,114 @@
+use paintcraft_commands::{Batch, LayerRef, Mode, Op, ShapeKind};
+use paintcraft_core::types::{Rect, Rgba, resources::SharedBudget, text::MaskSpan};
+use paintcraft_document::{POLICY, new_document};
+use paintcraft_editor::execute::{Selection, execute_with_admission};
+use paintcraft_raster::{Admission, RasterLayer};
+const BYTES: u64 = RasterLayer::TILE_BYTES as u64;
+#[test]
+fn painting_families_admit_their_operation_before_allocating_a_tile_prefix() {
+    let doc = new_document(300, 16, Some(Rgba([255; 4])), 0, POLICY).unwrap();
+    let id = doc.roots[0];
+    let layer = LayerRef::Id(id);
+    let color = Rgba([1, 2, 3, 255]);
+    let mut operations = vec![
+        Op::FillRect {
+            layer: layer.clone(),
+            rect: Rect::new(0, 0, 300, 16).unwrap(),
+            color,
+            mode: Mode::Replace,
+        },
+        Op::PencilPath {
+            layer: layer.clone(),
+            points: vec![(0, 8), (299, 8)],
+            color,
+            mode: Mode::Replace,
+        },
+        Op::FloodFill {
+            layer: layer.clone(),
+            at: (0, 0),
+            color,
+            mode: Mode::Replace,
+            tolerance: 0,
+        },
+        Op::Shape {
+            layer: layer.clone(),
+            kind: ShapeKind::Rect,
+            from: (0, 0),
+            to: (299, 15),
+            fill: Some(color),
+            stroke: Some((Rgba([17, 88, 156, 255]), 1)),
+            mode: Mode::SourceOver,
+        },
+        Op::MaskSpans {
+            layer: layer.clone(),
+            color,
+            spans: vec![MaskSpan {
+                y: 8,
+                x0: 0,
+                x1: 299,
+                coverage: 128,
+            }],
+        },
+        Op::Text {
+            layer: layer.clone(),
+            at: (250, 0),
+            text: "AAAA".into(),
+            scale: 1,
+            color,
+            mode: Mode::Replace,
+        },
+    ];
+    for smooth in [false, true] {
+        operations.push(Op::StrokePath {
+            layer: layer.clone(),
+            points: vec![(1, 8), (298, 8)],
+            color,
+            mode: Mode::Replace,
+            size: 5,
+            round: true,
+            smooth,
+            point_scale: 1,
+        });
+    }
+    for op in operations {
+        let batch = Batch {
+            version: 2,
+            policy: POLICY.into(),
+            base_state: doc.state_id,
+            base_epoch: 0,
+            seed: None,
+            digest: "0".repeat(64),
+            operations: vec![op],
+        };
+        let budget = SharedBudget::new(2 * BYTES);
+        let blocker = budget.reserve(BYTES).unwrap();
+        let error = execute_with_admission(
+            &doc,
+            Selection::Inactive,
+            &batch,
+            Admission::with_residency(2 * 65_536, budget.clone()),
+        )
+        .unwrap_err();
+        assert_eq!(error.operation_index, Some(0));
+        assert_eq!(
+            error.allocation_denial().unwrap().required_bytes(),
+            2 * BYTES,
+            "{:?}",
+            batch.operations[0]
+        );
+        assert_eq!(budget.usage().peak, BYTES); // The first raster tile was never admitted.
+        assert_eq!(doc.layers[&id].raster.resident_tiles(), 0);
+        drop(blocker);
+        let staged = execute_with_admission(
+            &doc,
+            Selection::Inactive,
+            &batch,
+            Admission::with_residency(2 * 65_536, budget.clone()),
+        )
+        .unwrap();
+        assert_eq!(staged.doc.layers[&id].raster.resident_tiles(), 2);
+        assert_eq!(budget.usage().reserved, 2 * BYTES);
+        drop(staged);
+        assert_eq!(budget.usage().reserved, 0);
+    }
+}

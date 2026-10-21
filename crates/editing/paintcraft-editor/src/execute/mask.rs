@@ -20,6 +20,7 @@ impl Stage<'_> {
             ));
         }
         let id = self.resolve(layer)?;
+        let mut plan = PaintPlan::default();
         if let Some(clip) = self.editable(&self.doc.layers[&id]) {
             for span in spans {
                 if span.y < clip.y0 || span.y >= clip.y1 {
@@ -32,10 +33,16 @@ impl Stage<'_> {
                 }
                 let mut pixel = color;
                 pixel.0[3] = ((u16::from(color.a()) * u16::from(span.coverage) + 127) / 255) as u8;
-                self.paint_spans(id, &[Span { y: span.y, x0, x1 }], pixel, Mode::SourceOver)?;
+                self.add_paint_spans(
+                    id,
+                    &[Span { y: span.y, x0, x1 }],
+                    pixel,
+                    Mode::SourceOver,
+                    &mut plan,
+                )?;
             }
         }
-        Ok(())
+        self.apply_paint(id, &plan)
     }
 }
 

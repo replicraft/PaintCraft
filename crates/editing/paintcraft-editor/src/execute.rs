@@ -4,6 +4,7 @@
 mod canvas;
 mod layers;
 mod mask;
+mod paint;
 
 use std::collections::{BTreeMap, HashMap};
 
@@ -15,7 +16,7 @@ use paintcraft_core::types::ids::deterministic_id;
 use paintcraft_document::{COORD_ABS_MAX, Document, LAYER_COUNT_MAX, Layer};
 use paintcraft_raster::flood;
 use paintcraft_raster::shape::{self, Figure, Span, SpanSet};
-use paintcraft_raster::{Admission, RasterLayer};
+use paintcraft_raster::{Admission, PaintPlan, RasterLayer};
 
 /// Emitted-pixel and segment budgets for all pencil operations in one batch.
 pub const PENCIL_PIXELS_MAX: i128 = 16_777_216;
@@ -140,21 +141,9 @@ impl Stage<'_> {
 
     /// Paint absolute-coordinate spans of `id`, one blend per covered pixel.
     fn paint_spans(&mut self, id: Uuid, spans: &[Span], color: Rgba, mode: Mode) -> Result<()> {
-        if mode == Mode::SourceOver && color.a() == 0 {
-            return Ok(());
-        }
-        let l = self.doc.layers.get_mut(&id).expect("resolved");
-        let (ox, oy) = l.origin;
-        for s in spans {
-            let r = Rect {
-                x0: s.x0 - ox,
-                x1: s.x1 + 1 - ox,
-                y0: s.y - oy,
-                y1: s.y + 1 - oy,
-            };
-            l.raster.fill_rect(&r, color, mode, &mut self.adm)?;
-        }
-        Ok(())
+        let mut plan = PaintPlan::default();
+        self.add_paint_spans(id, spans, color, mode, &mut plan)?;
+        self.apply_paint(id, &plan)
     }
 
     fn charge_stroke(&mut self, points: &[(i64, i64)], size: u32) -> Result<()> {
@@ -319,8 +308,9 @@ impl Stage<'_> {
                 let local = area
                     .translated(-ox, -oy)
                     .expect("area lies inside the layer");
-                let l = self.doc.layers.get_mut(&id).expect("resolved");
-                l.raster.fill_rect(&local, *color, *mode, &mut self.adm)?;
+                let mut plan = PaintPlan::default();
+                plan.rect(local, *color, *mode)?;
+                self.apply_paint(id, &plan)?;
             }
             Op::PencilPath {
                 layer,
@@ -345,7 +335,7 @@ impl Stage<'_> {
                 }
                 let clip = self.editable(&self.doc.layers[&id]);
                 let (ox, oy) = self.doc.layers[&id].origin;
-                let l = self.doc.layers.get_mut(&id).expect("resolved");
+                let mut plan = PaintPlan::default();
                 let segments: Vec<((i64, i64), (i64, i64))> = if points.len() == 1 {
                     vec![(points[0], points[0])]
                 } else {
@@ -354,10 +344,19 @@ impl Stage<'_> {
                 for (n, (a, b)) in segments.into_iter().enumerate() {
                     // A shared polyline joint is emitted once: later segments skip their first pixel.
                     walk_clipped(a, b, clip, n > 0, |x, y| {
-                        l.raster
-                            .blend_pixel(x - ox, y - oy, *color, *mode, &mut self.adm)
+                        plan.rect(
+                            Rect {
+                                x0: x - ox,
+                                x1: x - ox + 1,
+                                y0: y - oy,
+                                y1: y - oy + 1,
+                            },
+                            *color,
+                            *mode,
+                        )
                     })?;
                 }
+                self.apply_paint(id, &plan)?;
             }
             Op::StrokePath {
                 layer,
@@ -390,8 +389,9 @@ impl Stage<'_> {
                     let Some(area) = self.editable(&self.doc.layers[&id]) else {
                         return Ok(());
                     };
-                    // Coverage scales source alpha once; all overlapping geometry
-                    // was unioned by the rasterizer before any pixel is blended.
+                    // Rasterization unions overlapping geometry before coverage is applied.
+                    let mut plan = PaintPlan::default();
+                    let (ox, oy) = self.doc.layers[&id].origin;
                     for run in paintcraft_raster::smooth::round_path_scaled(
                         points,
                         *size,
@@ -399,43 +399,34 @@ impl Stage<'_> {
                         *point_scale,
                     )? {
                         if *mode == Mode::Replace && run.samples < 16 {
-                            let l = self.doc.layers.get_mut(&id).expect("resolved");
-                            for x in run.x0..=run.x1 {
-                                let (lx, ly) = (x - l.origin.0, run.y - l.origin.1);
-                                let dst = l.raster.get(lx, ly);
-                                let mut mixed = *color;
-                                for (out, (&src, &dst)) in
-                                    mixed.0.iter_mut().zip(color.0.iter().zip(dst.0.iter()))
-                                {
-                                    *out = ((u16::from(src) * u16::from(run.samples)
-                                        + u16::from(dst) * u16::from(16 - run.samples)
-                                        + 8)
-                                        / 16) as u8;
-                                }
-                                l.raster.blend_pixel(
-                                    lx,
-                                    ly,
-                                    mixed,
-                                    Mode::Replace,
-                                    &mut self.adm,
-                                )?;
-                            }
-                            continue;
+                            plan.coverage_rect(
+                                Rect {
+                                    x0: run.x0 - ox,
+                                    x1: run.x1 + 1 - ox,
+                                    y0: run.y - oy,
+                                    y1: run.y + 1 - oy,
+                                },
+                                *color,
+                                run.samples,
+                            )?;
+                        } else {
+                            let mut covered = *color;
+                            covered.0[3] =
+                                ((u16::from(color.a()) * u16::from(run.samples) + 8) / 16) as u8;
+                            self.add_paint_spans(
+                                id,
+                                &[Span {
+                                    y: run.y,
+                                    x0: run.x0,
+                                    x1: run.x1,
+                                }],
+                                covered,
+                                *mode,
+                                &mut plan,
+                            )?;
                         }
-                        let mut covered = *color;
-                        covered.0[3] =
-                            ((u16::from(color.a()) * u16::from(run.samples) + 8) / 16) as u8;
-                        self.paint_spans(
-                            id,
-                            &[Span {
-                                y: run.y,
-                                x0: run.x0,
-                                x1: run.x1,
-                            }],
-                            covered,
-                            *mode,
-                        )?;
                     }
+                    self.apply_paint(id, &plan)?;
                 } else {
                     self.stroke(id, points, *size, *round, *color, *mode)?;
                 }
@@ -497,17 +488,26 @@ impl Stage<'_> {
                 } else {
                     Figure::Ellipse
                 };
+                let mut plan = PaintPlan::default();
                 if let Some(c) = fill {
-                    self.paint_spans(id, &shape::filled(fig, &bbox, &clip), *c, *mode)?;
+                    self.add_paint_spans(
+                        id,
+                        &shape::filled(fig, &bbox, &clip),
+                        *c,
+                        *mode,
+                        &mut plan,
+                    )?;
                 }
                 if let Some((c, size)) = stroke {
-                    self.paint_spans(
+                    self.add_paint_spans(
                         id,
                         &shape::outline(fig, &bbox, i64::from(*size), &clip),
                         *c,
                         *mode,
+                        &mut plan,
                     )?;
                 }
+                self.apply_paint(id, &plan)?;
             }
             Op::MaskSpans {
                 layer,
