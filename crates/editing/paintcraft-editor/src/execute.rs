@@ -171,7 +171,7 @@ impl Stage<'_> {
 
     /// Paint absolute-coordinate spans of `id`, one blend per covered pixel.
     fn paint_spans(&mut self, id: Uuid, spans: &[Span], color: Rgba, mode: Mode) -> Result<()> {
-        let mut plan = PaintPlan::default();
+        let mut plan = self.adm.paint_plan();
         self.add_paint_spans(id, spans, color, mode, &mut plan)?;
         self.apply_paint(id, &plan)
     }
@@ -338,7 +338,7 @@ impl Stage<'_> {
                 let local = area
                     .translated(-ox, -oy)
                     .expect("area lies inside the layer");
-                let mut plan = PaintPlan::default();
+                let mut plan = self.adm.paint_plan();
                 plan.rect(local, *color, *mode)?;
                 self.apply_paint(id, &plan)?;
             }
@@ -365,7 +365,7 @@ impl Stage<'_> {
                 }
                 let clip = self.editable(&self.doc.layers[&id]);
                 let (ox, oy) = self.doc.layers[&id].origin;
-                let mut plan = PaintPlan::default();
+                let mut plan = self.adm.paint_plan();
                 let segments: Vec<((i64, i64), (i64, i64))> = if points.len() == 1 {
                     vec![(points[0], points[0])]
                 } else {
@@ -420,7 +420,7 @@ impl Stage<'_> {
                         return Ok(());
                     };
                     // Rasterization unions overlapping geometry before coverage is applied.
-                    let mut plan = PaintPlan::default();
+                    let mut plan = self.adm.paint_plan();
                     let (ox, oy) = self.doc.layers[&id].origin;
                     let coverage = if let Some(cache) = self.geometry.as_deref_mut() {
                         cache.round_path_scaled(points, *size, &area, *point_scale, self.check)?
@@ -524,7 +524,7 @@ impl Stage<'_> {
                 } else {
                     Figure::Ellipse
                 };
-                let mut plan = PaintPlan::default();
+                let mut plan = self.adm.paint_plan();
                 if let Some(c) = fill {
                     self.add_paint_spans(
                         id,

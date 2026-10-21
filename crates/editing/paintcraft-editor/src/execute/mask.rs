@@ -20,7 +20,7 @@ impl Stage<'_> {
             ));
         }
         let id = self.resolve(layer)?;
-        let mut plan = PaintPlan::default();
+        let mut plan = self.adm.paint_plan();
         if let Some(clip) = self.editable(&self.doc.layers[&id]) {
             for span in spans {
                 if span.y < clip.y0 || span.y >= clip.y1 {
