@@ -196,3 +196,55 @@ fn impossible_decoded_and_fixed_restore_limits_fail_without_registering_a_wait()
         assert_eq!(editor.history_view(), view);
     }
 }
+
+#[test]
+fn waiting_navigation_reprices_warmed_targets_without_requiring_its_old_free_capacity() {
+    for periodic in [false, true] {
+        let (mut editor, budget, target) = fixture();
+        let blocker = budget.reserve(2 * BYTES).unwrap();
+        seek(&mut editor, target);
+        wait(&mut editor);
+        let probe = editor.waiting_edit.as_ref().unwrap().last_probe;
+        for _ in 0..4 {
+            editor.run_pending();
+            assert!(editor.pending_edit.is_none());
+            assert_eq!(editor.waiting_edit.as_ref().unwrap().last_probe, probe);
+        }
+        // A separate admitted reader warms the same recorded target in another realm.
+        let reader_budget = SharedBudget::new(2 * BYTES);
+        let reader = editor
+            .session
+            .preparation()
+            .unwrap()
+            .navigate_history_with_admission(
+                editor.session.history_ticket(),
+                target,
+                Admission::with_residency(u64::MAX, reader_budget.clone()),
+                || Ok(()),
+            )
+            .unwrap();
+        assert!(!editor.allocation_wait().unwrap().can_retry());
+        let blocker = if periodic {
+            editor.waiting_edit.as_mut().unwrap().last_probe =
+                Instant::now() - Duration::from_secs(6);
+            blocker
+        } else {
+            let usage = budget.usage();
+            drop(blocker);
+            let blocker = budget.reserve(2 * BYTES).unwrap();
+            assert_eq!(budget.usage(), usage); // Counters alone cannot detect this change.
+            assert!(editor.allocation_wait().unwrap().activity_changed());
+            blocker
+        };
+        finish(&mut editor);
+        assert_eq!(editor.publications(), 4);
+        assert!(editor.allocation_wait().is_none());
+        let raster = &editor.document().layers[&editor.target().unwrap()].raster;
+        for x in 0..257 {
+            assert_eq!(raster.get(x, 0), Rgba([0, 0, 0, 255]));
+        }
+        assert_eq!(budget.usage().reserved, 4 * BYTES); // No extra bytes needed in the original realm.
+        assert_eq!(reader_budget.usage().reserved, 2 * BYTES);
+        drop((reader, blocker));
+    }
+}

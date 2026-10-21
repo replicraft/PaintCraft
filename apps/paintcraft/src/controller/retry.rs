@@ -23,6 +23,7 @@ pub(super) struct Deferred {
 pub(super) struct Waiting {
     pub(super) deferred: Deferred,
     pub(super) done: String,
+    pub(super) last_probe: std::time::Instant,
     pub(super) empty: &'static str,
     pub(super) target_alias: Option<&'static str>,
 }
@@ -106,12 +107,22 @@ impl Editor {
         let Some(service) = self.editing.clone().filter(|service| service.available()) else {
             return;
         };
-        if !waiting.deferred.denial.can_retry() {
+        let navigation = matches!(waiting.deferred.request, Request::Navigation(_));
+        let reprice = navigation
+            && (waiting.deferred.denial.activity_changed()
+                || waiting.last_probe.elapsed() >= std::time::Duration::from_secs(5));
+        if !waiting.deferred.denial.can_retry() && !reprice {
             return;
         }
-        // Acquire before capture/dispatch. A race retains the command for another wake.
-        let Ok(reservation) = waiting.deferred.denial.reserve_capacity() else {
-            return;
+        let admission = if navigation {
+            // The worker pins current reusable versions and reserves the entire
+            // missing set, rather than trusting the previous attempt's demand.
+            Admission::with_residency(u64::MAX, waiting.deferred.denial.budget())
+        } else {
+            let Ok(reservation) = waiting.deferred.denial.reserve_capacity() else {
+                return;
+            };
+            Admission::with_reserved_residency(u64::MAX, reservation)
         };
         let preparation = match self.session.preparation() {
             Ok(preparation) => preparation,
@@ -125,7 +136,6 @@ impl Editor {
             }
         };
         let request = waiting.deferred.request.clone();
-        let admission = Admission::with_reserved_residency(u64::MAX, reservation);
         let result = service.submit(
             move |cancellation| {
                 let check = || cancellation.check();

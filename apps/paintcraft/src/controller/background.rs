@@ -346,6 +346,7 @@ impl Editor {
                     deferred: *deferred,
                     done: pending.done.clone(),
                     empty: pending.empty,
+                    last_probe: std::time::Instant::now(),
                     target_alias: pending.target_alias,
                 });
                 return;
