@@ -1,6 +1,8 @@
 //! Tool state machines produce intentions; the application publishes them.
 mod geometry;
 mod path_admission;
+mod preview_revision;
+pub use preview_revision::PreviewRevision;
 
 pub use paintcraft_core::types::policy::BlendMode;
 use paintcraft_core::types::{Rgba, text::TextOptions};
@@ -258,6 +260,7 @@ pub struct ToolState {
     gesture: Option<Gesture>,
     text: Option<TextEdit>,
     next_gesture: u64,
+    preview_revision: PreviewRevision,
 }
 impl Default for ToolState {
     fn default() -> Self {
@@ -270,16 +273,27 @@ impl Default for ToolState {
             gesture: None,
             text: None,
             next_gesture: 1 << 63,
+            preview_revision: PreviewRevision::default(),
         }
     }
 }
 impl ToolState {
+    pub fn preview_revision(&self) -> PreviewRevision {
+        self.preview_revision
+    }
     pub fn set_text_style(&mut self, style: TextOptions) {
-        self.text_style = Some(style.clone());
-        if let Some(text) = &mut self.text {
+        if self.text_style.as_ref() != Some(&style) {
+            self.text_style = Some(style.clone());
+        }
+        if let Some(text) = &mut self.text
+            && (text.style.as_ref() != Some(&style)
+                || text.color != self.color
+                || text.background != self.secondary)
+        {
             text.style = Some(style);
             text.color = self.color;
             text.background = self.secondary;
+            self.preview_revision.advance();
         }
     }
     pub fn begin_text(&mut self, layer: Uuid, at: (i64, i64)) {
@@ -297,6 +311,7 @@ impl ToolState {
                 .clamp(1, paintcraft_core::types::policy::SCALE_MAX as u32),
             color: self.color,
         });
+        self.preview_revision.advance();
     }
     pub fn pointer_down(&mut self, layer: Uuid, at: (i64, i64)) {
         self.pointer_down_button(layer, at, PointerButton::Primary);
@@ -323,6 +338,7 @@ impl ToolState {
             point_scale: 1,
             constrain_shape: false,
         });
+        self.preview_revision.advance();
     }
     /// Round brushes retain fixed-point positions; other tools stay pixel exact.
     pub fn pointer_down_subpixel(&mut self, layer: Uuid, at: (i64, i64), button: PointerButton) {
@@ -380,13 +396,17 @@ impl ToolState {
     }
 
     pub fn backspace(&mut self) {
-        if let Some(t) = &mut self.text {
-            t.text.pop();
+        if let Some(t) = &mut self.text
+            && t.text.pop().is_some()
+        {
+            self.preview_revision.advance();
         }
     }
 
     pub fn cancel_text(&mut self) {
-        self.text = None;
+        if self.text.take().is_some() {
+            self.preview_revision.advance();
+        }
     }
 
     pub fn preview(&self) -> Option<Preview> {
@@ -476,8 +496,11 @@ impl ToolState {
 
     /// Live modifier: retain raw pointer geometry so releasing Shift restores it.
     pub fn constrain_shape(&mut self, enabled: bool) {
-        if let Some(g) = &mut self.gesture {
+        if let Some(g) = &mut self.gesture
+            && g.constrain_shape != enabled
+        {
             g.constrain_shape = enabled;
+            self.preview_revision.advance();
         }
     }
 
@@ -502,19 +525,25 @@ impl ToolState {
                     && g.points.len() < POINTS_PER_OP * OPS_PER_BATCH
                 {
                     g.points.push(doc_point);
+                    self.preview_revision.advance();
                 }
             }
             // Fill acts where the button went down; shapes and selections only need both ends.
             Tool::Fill | Tool::Text => {}
             _ => {
-                g.points.truncate(1);
-                g.points.push(doc_point);
+                if g.points.last() != Some(&doc_point) {
+                    g.points.truncate(1);
+                    g.points.push(doc_point);
+                    self.preview_revision.advance();
+                }
             }
         }
     }
 
     pub fn cancel_gesture(&mut self) {
-        self.gesture = None;
+        if self.gesture.take().is_some() {
+            self.preview_revision.advance();
+        }
     }
     pub fn pointer_up(&mut self) -> Option<(u64, Action)> {
         self.pointer_up_button(PointerButton::Primary)
@@ -524,6 +553,7 @@ impl ToolState {
             return None;
         }
         let g = self.gesture.take()?;
+        self.preview_revision.advance();
         let (first, last) = geometry::endpoints(g.tool, &g.points, g.constrain_shape);
         let action = match g.tool {
             Tool::Pencil | Tool::Brush | Tool::Eraser => {
@@ -563,9 +593,11 @@ impl ToolState {
         Some((g.token, action))
     }
     pub fn commit_text(&mut self) -> Option<(u64, Action)> {
-        if let Some(t) = self.text.take()
-            && !t.text.is_empty()
-        {
+        if let Some(t) = self.text.take() {
+            self.preview_revision.advance();
+            if t.text.is_empty() {
+                return None;
+            }
             return Some((
                 t.token,
                 Action::Text {
@@ -584,6 +616,8 @@ impl ToolState {
     pub fn type_text(&mut self, typed: &str) -> usize {
         let Some(t) = &mut self.text else { return 0 };
         let mut skipped = 0;
+        let previous_len = t.text.len();
+        let mut count = t.text.chars().count();
         for c in typed.chars() {
             if !(if t.style.is_some() {
                 c == '\n' || !c.is_control()
@@ -591,9 +625,13 @@ impl ToolState {
                 paintcraft_raster::font::supported(c)
             }) {
                 skipped += 1;
-            } else if t.text.chars().count() < paintcraft_raster::font::TEXT_CHARS_MAX {
+            } else if count < paintcraft_raster::font::TEXT_CHARS_MAX {
                 t.text.push(c);
+                count += 1;
             }
+        }
+        if t.text.len() != previous_len {
+            self.preview_revision.advance();
         }
         skipped
     }
