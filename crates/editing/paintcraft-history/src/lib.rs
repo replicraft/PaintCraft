@@ -1,6 +1,6 @@
 //! Recorded history restores snapshots without re-executing edits.
 use paintcraft_document::Document;
-use paintcraft_raster::{RasterLayer, Selection};
+use paintcraft_raster::{Admission, RasterLayer, Selection};
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -387,11 +387,20 @@ impl History {
         })
     }
     fn restore(&mut self, index: usize, check: &impl Fn() -> Result<()>) -> Result<Snapshot> {
+        self.restore_with_admission(index, Admission::new(self.restore_pixels), check)
+    }
+    fn restore_with_admission(
+        &mut self,
+        index: usize,
+        admission: Admission,
+        check: &impl Fn() -> Result<()>,
+    ) -> Result<Snapshot> {
         check()?;
+        let mut admission = admission.constrain_pixels(self.restore_pixels);
         let result = (|| {
             let snapshot = match &self.entries[index].storage {
                 Storage::Hot(snapshot) => Ok(snapshot.clone()),
-                Storage::Cold(packed) => packed.restore(self.restore_pixels, &mut self.memo, check),
+                Storage::Cold(packed) => packed.restore(&mut admission, &mut self.memo, check),
             }?;
             check()?;
             Ok(snapshot)
@@ -408,11 +417,18 @@ impl History {
         self.undo_checked(|| Ok(()))
     }
     pub fn undo_checked(&mut self, check: impl Fn() -> Result<()>) -> Result<Option<Snapshot>> {
+        self.undo_with_admission(Admission::new(self.restore_pixels), check)
+    }
+    pub fn undo_with_admission(
+        &mut self,
+        admission: Admission,
+        check: impl Fn() -> Result<()>,
+    ) -> Result<Option<Snapshot>> {
         check()?;
         let Some(index) = self.cursor.checked_sub(1) else {
             return Ok(None);
         };
-        let snapshot = self.restore(index, &check)?;
+        let snapshot = self.restore_with_admission(index, admission, &check)?;
         self.cursor = index;
         self.reclaim_tables();
         Ok(Some(snapshot))
@@ -421,12 +437,19 @@ impl History {
         self.redo_checked(|| Ok(()))
     }
     pub fn redo_checked(&mut self, check: impl Fn() -> Result<()>) -> Result<Option<Snapshot>> {
+        self.redo_with_admission(Admission::new(self.restore_pixels), check)
+    }
+    pub fn redo_with_admission(
+        &mut self,
+        admission: Admission,
+        check: impl Fn() -> Result<()>,
+    ) -> Result<Option<Snapshot>> {
         check()?;
         let index = self.cursor + 1;
         if index >= self.entries.len() {
             return Ok(None);
         }
-        let snapshot = self.restore(index, &check)?;
+        let snapshot = self.restore_with_admission(index, admission, &check)?;
         self.cursor = index;
         self.reclaim_tables();
         Ok(Some(snapshot))
@@ -448,11 +471,19 @@ impl History {
         id: Option<Uuid>,
         check: impl Fn() -> Result<()>,
     ) -> Result<Option<(Snapshot, bool)>> {
+        self.seek_with_admission(id, Admission::new(self.restore_pixels), check)
+    }
+    pub fn seek_with_admission(
+        &mut self,
+        id: Option<Uuid>,
+        admission: Admission,
+        check: impl Fn() -> Result<()>,
+    ) -> Result<Option<(Snapshot, bool)>> {
         check()?;
         let Some(index) = self.entries.iter().position(|e| e.history_id() == id) else {
             return Ok(None);
         };
-        let snapshot = self.restore(index, &check)?;
+        let snapshot = self.restore_with_admission(index, admission, &check)?;
         let changed = index != self.cursor;
         self.cursor = index;
         self.reclaim_tables();

@@ -210,7 +210,7 @@ impl Packed {
     }
     pub fn restore(
         &self,
-        pixels: u64,
+        admission: &mut Admission,
         memo: &mut Memo,
         check: &impl Fn() -> Result<()>,
     ) -> Result<Snapshot> {
@@ -224,7 +224,6 @@ impl Packed {
         }
         memo.try_reserve(self.layers.iter().map(|layer| layer.tiles.len()).sum())
             .map_err(|_| limit("cannot track restored decoded versions"))?;
-        let mut admission = Admission::new(pixels);
         let mut layers = HashMap::new();
         layers
             .try_reserve(self.layers.len())
@@ -233,7 +232,7 @@ impl Packed {
             let mut raster = RasterLayer::new(layer.width, layer.height, layer.default);
             for (coord, blob) in &layer.tiles {
                 check()?;
-                let lease = blob.restore(&mut admission)?;
+                let lease = blob.restore(admission)?;
                 memo.insert(lease.version(), Arc::downgrade(blob));
                 raster.install_tile(*coord, lease)?;
             }
