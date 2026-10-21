@@ -244,3 +244,98 @@ fn real_two_pass_ui_routes_a_gesture_once_and_pumps_its_background_publication()
     assert_eq!(doc.layers[&doc.roots[0]].raster.get(30, 40), BLACK);
     assert_eq!(&app.rendered()[(40 * 1000 + 30) * 4..][..4], &BLACK.0);
 }
+
+#[test]
+fn coalesced_translucent_gestures_keep_their_complete_preview_and_publish_once_per_gesture() {
+    use eframe::egui::{Event, Modifiers, PointerButton, Vec2};
+    use egui_kittest::Harness;
+    let mut harness = Harness::builder()
+        .with_size(Vec2::new(1200.0, 900.0))
+        .build_ui_state(
+            |ui, app: &mut App| {
+                if app.editing.is_none() {
+                    app.initialize_editing(ui.ctx().clone());
+                }
+                app.ui(ui);
+                if ui.ctx().current_pass_index() == 0 {
+                    ui.ctx()
+                        .request_discard("coalesced paint queue in two passes");
+                }
+            },
+            App::new(None),
+        );
+    harness.run();
+    let release = harness.state().editing.as_ref().unwrap().pause();
+    harness.state_mut().editor.tool = Tool::Pencil;
+    harness.state_mut().editor.color = Rgba([0, 0, 0, 64]);
+    let point = harness.state().canvas_rect().unwrap().min + Vec2::new(30.5, 40.5);
+    for _ in 0..3 {
+        harness.input_mut().events.extend([
+            Event::PointerMoved(point),
+            Event::PointerButton {
+                pos: point,
+                button: PointerButton::Primary,
+                pressed: true,
+                modifiers: Modifiers::NONE,
+            },
+            Event::PointerButton {
+                pos: point,
+                button: PointerButton::Primary,
+                pressed: false,
+                modifiers: Modifiers::NONE,
+            },
+        ]);
+    }
+    harness.step();
+    assert_eq!(harness.state().editor.publications(), 0);
+    assert!(
+        matches!(harness.state().editor.preview(), Some(Preview::Paths(paths)) if paths.len()==3)
+    );
+    let mut expected = [107, 107, 107, 255];
+    let offset = (40 * 1000 + 30) * 4;
+    assert_eq!(&harness.state().rendered()[offset..offset + 4], &expected);
+    // Keep drawing in later frames while the earlier released strokes still
+    // wait. Move/release must continue reaching the admitted live gesture.
+    harness.event(Event::PointerButton {
+        pos: point,
+        button: PointerButton::Primary,
+        pressed: true,
+        modifiers: Modifiers::NONE,
+    });
+    harness.step();
+    assert!(harness.state().editor.gesture_in_progress());
+    let next = point + Vec2::new(1.0, 0.0);
+    harness.event(Event::PointerMoved(next));
+    harness.step();
+    harness.event(Event::PointerButton {
+        pos: next,
+        button: PointerButton::Primary,
+        pressed: false,
+        modifiers: Modifiers::NONE,
+    });
+    harness.step();
+    assert!(!harness.state().editor.gesture_in_progress());
+    assert!(
+        matches!(harness.state().editor.preview(), Some(Preview::Paths(paths)) if paths.len()==4)
+    );
+    expected = [80, 80, 80, 255];
+    assert_eq!(&harness.state().rendered()[offset..offset + 4], &expected);
+    assert_eq!(
+        &harness.state().rendered()[offset + 4..offset + 8],
+        &[191, 191, 191, 255]
+    );
+    release.send(()).unwrap();
+    let deadline = Instant::now() + Duration::from_secs(10);
+    while harness.state().editor.has_pending_edits() {
+        assert!(Instant::now() < deadline);
+        harness.step();
+        std::thread::yield_now();
+    }
+    harness.run_steps(3);
+    let app = harness.state();
+    assert_eq!(app.editor.publications(), 4);
+    let doc = app.editor.document();
+    assert_eq!(doc.layers[&doc.roots[0]].raster.get(30, 40).0, expected);
+    assert_eq!(&app.rendered()[offset..offset + 4], &expected);
+    assert_eq!(app.editor.undo_depth(), 4);
+}

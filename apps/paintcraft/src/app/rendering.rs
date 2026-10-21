@@ -49,10 +49,12 @@ impl App {
             self.preview_start_revision = self.preview_revision + 1;
             self.preview_gesture = owner;
         }
-        let preview = self
-            .editor
-            .preview()
-            .filter(|p| matches!(p, Preview::Path(_) | Preview::Text { style: Some(_), .. }));
+        let preview = self.editor.preview().filter(|p| {
+            matches!(
+                p,
+                Preview::Path(_) | Preview::Paths(_) | Preview::Text { style: Some(_), .. }
+            )
+        });
         if self.rendered_preview != preview {
             self.rendered_preview = preview;
             self.preview_revision = self

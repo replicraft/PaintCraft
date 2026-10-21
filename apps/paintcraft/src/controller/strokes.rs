@@ -12,6 +12,7 @@ impl Editor {
     pub fn preview_batch(&self) -> Option<Result<Batch>> {
         let operations = match self.preview()? {
             Preview::Path(stroke) => stroke_operations(&stroke),
+            Preview::Paths(strokes) => strokes.iter().flat_map(stroke_operations).collect(),
             Preview::Text {
                 style: Some(style),
                 at,

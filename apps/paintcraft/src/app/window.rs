@@ -75,7 +75,7 @@ impl App {
             self.editor.cancel_gesture();
         }
         let accept_input =
-            first_pass && !self.action_context().blocked && !self.editor.has_pending_edits();
+            first_pass && !self.action_context().blocked && !self.editor.painting_blocked();
         egui::CentralPanel::default()
             .frame(
                 egui::Frame::new()

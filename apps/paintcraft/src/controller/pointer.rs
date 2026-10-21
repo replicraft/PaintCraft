@@ -22,7 +22,7 @@ impl Editor {
         button: PointerButton,
         precise: Option<(i64, i64)>,
     ) {
-        if self.gesture_blocked()
+        if self.painting_blocked()
             || self.tools.gesture_in_progress()
             || !self.tool.supports_button(button)
         {
@@ -57,17 +57,17 @@ impl Editor {
         }
     }
     pub fn pointer_move(&mut self, point: (i64, i64)) {
-        self.tools.pointer_move(point);
+        self.move_paint_pointer(point, false);
     }
     pub fn pointer_move_subpixel(&mut self, point: (i64, i64)) {
-        self.tools.pointer_move_subpixel(point);
+        self.move_paint_pointer(point, true);
     }
     pub fn pointer_up(&mut self) {
         self.pointer_up_button(PointerButton::Primary);
     }
     pub fn pointer_up_button(&mut self, button: PointerButton) {
         if let Some((token, action)) = self.tools.pointer_up_button(button) {
-            self.outbox.push(token, action);
+            self.request(token, action);
         }
     }
     pub fn cancel_gesture(&mut self) {

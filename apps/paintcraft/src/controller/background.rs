@@ -137,10 +137,6 @@ impl Editor {
     pub(crate) fn can_capture_file(&self) -> bool {
         self.file_barrier.is_some() || !self.has_pending_edits()
     }
-    pub(super) fn gesture_blocked(&self) -> bool {
-        self.editing.is_some()
-            && (self.has_pending_edits() || self.file_barrier.is_some() || !self.actions.is_empty())
-    }
     pub fn preview_token(&self) -> Option<u64> {
         self.tools.preview_token().or_else(|| {
             self.publication_preview

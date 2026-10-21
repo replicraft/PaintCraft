@@ -17,7 +17,7 @@ impl App {
         }) else {
             return;
         };
-        if self.editing.is_some() && self.editor.has_pending_edits() {
+        if self.editor.painting_blocked() {
             ui.ctx().set_cursor_icon(egui::CursorIcon::Progress);
             return;
         }

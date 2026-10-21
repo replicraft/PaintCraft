@@ -14,6 +14,8 @@ mod canvas;
 mod history;
 #[path = "controller/layers.rs"]
 mod layers;
+#[path = "controller/paint_queue.rs"]
+mod paint_queue;
 #[path = "controller/pointer.rs"]
 mod pointer;
 #[path = "controller/strokes.rs"]
@@ -397,9 +399,15 @@ impl Editor {
         self.tools.tool = tool;
     }
     pub fn preview(&self) -> Option<Preview> {
-        self.tools
-            .preview()
-            .or_else(|| self.publication_preview.clone())
+        self.paint_preview().or_else(|| {
+            if self.editing.is_some() && self.painting_blocked() {
+                self.publication_preview.clone()
+            } else {
+                self.tools
+                    .preview()
+                    .or_else(|| self.publication_preview.clone())
+            }
+        })
     }
     pub fn gesture_points(&self) -> &[(i64, i64)] {
         self.tools.gesture_points()
@@ -409,6 +417,14 @@ impl Editor {
     /// Queue a command for one user activation. `token` must be stable across
     /// layout passes of the same activation and different between activations.
     pub fn request(&mut self, token: Token, action: Action) -> bool {
+        if self.outbox.has_seen(token) {
+            return false;
+        }
+        if let Action::Stroke(stroke) = &action
+            && !self.admit_paint(stroke)
+        {
+            return false;
+        }
         // Typed text is part of the document the user is about to undo, save or change.
         if !matches!(action, Action::Text { .. }) {
             self.commit_text();
