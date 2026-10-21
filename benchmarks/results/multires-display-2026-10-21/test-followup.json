@@ -1,0 +1,17 @@
+{
+  "source_commit": "6200cd2ad259ce9e87ef0b13c10f553856d9a764",
+  "production_and_benchmark_sources_unchanged": true,
+  "changed_test_paths": [
+    "crates/services/paintcraft-render/tests/display.rs"
+  ],
+  "current_test_sha256": {
+    "crates/services/paintcraft-render/tests/display.rs": "4b002ba4a7759d296c61f4abd6f4f72de6d2352eec970c3c324b21cd9b5c0531"
+  },
+  "workspace": {
+    "passed": 762,
+    "failed": 0,
+    "ignored": 25,
+    "suites": 65
+  },
+  "measured_binary_still_matches": true
+}

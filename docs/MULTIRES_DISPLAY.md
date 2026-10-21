@@ -93,3 +93,8 @@ forced layout passes and partial-edge mesh footprints/clipping. Native completed
 managed-upload comparisons evaluate full-source materialization, bounded reduction
 and cache reuse with independent pixel/source guards. These do not establish Windows
 reference conformance, physical-device changes or OS event/display latency.
+
+[The measured decision](../benchmarks/results/multires-display-2026-10-21/DECISION.md)
+retains an existing cached full-resolution control, tiny ties, dense cache tradeoffs,
+the sparse-4K process improvement, raw data and the distinction from GPU scaled
+composition or historical/native input-display qualification.

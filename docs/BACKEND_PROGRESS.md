@@ -639,3 +639,54 @@ and final zero-default policy have separate source/validation records; a final
 physical budgets/pressure eviction, texture reuse ownership, multiresolution/tiled
 output, asynchronous transfers and device recovery remain. T12/T13/T21/T37 remain
 partial/in progress; this experiment does not complete the roadmap.
+
+## Thirty-third slice: bounded composite-before-filter CPU display
+
+Zoomed-out Classic/Studio canvases now use exact ordered native composition followed
+by alpha-weighted encoded-sRGB box sampling. A validated request aligns source bounds
+to a global power-of-two grid, normalizes partial canvas-edge boxes over actual pixels
+and keeps their full texel footprint clipped to the canvas. Native-resolution display,
+exports, sampled-composite tools and authoritative hidden RGB remain unchanged. See
+[the scoped display contract](MULTIRES_DISPLAY.md); historical Paint sampling is not
+qualified by this provisional filter.
+
+Conservative raster metadata proofs avoid scanning uniform source pixels, including
+COW/installed initial colors that differ from the layer default. Unknown regions split
+into at most 256-square native blocks and bounded accumulators. Coarse output keys
+include level and ordered source dependencies; committed/preview partitions remain
+separate and large keys bypass before huge virtual-grid enumeration. A million-square
+implicit canvas produces a 1024-square display; changing one black 256-square tile
+visits at most 65,536 native pixels with independently verified weighted output.
+
+Native frame freshness includes level, worker output declaration uses coarse dimensions
+and an added 15 MiB cache/key/reduction allowance, and the painter preserves partial-edge
+footprints. Scaled frames currently use the CPU oracle/managed upload while leaving the
+GPU available for level zero. This is not GPU scaled composition or all-service physical
+admission. Native GPU multiresolution, tiled presentation and hierarchical refinement
+remain open.
+
+762 workspace tests pass (25 explicit ignores), strict workspace/all-target Clippy,
+format/file limits and release desktop/CLI builds. Sixteen required Metal renderer
+tests and three native registration/draw tests remain green. An admitted native worker
+handles reduced million-square output without disabling its GPU. GUI tests fit/restore
+large documents without source/history changes, force layout passes and verify actual
+partial-edge mesh footprints/clipping. Independent tests cover offset/alpha/order,
+compose-before-filter counterexamples, level/preview isolation, cancellation, poisoned
+cache fallback and unaligned dense recursive splits. The latter test-only follow-up
+is recorded separately from the frozen measured source. A 30-frame default native
+window smoke exits zero with no log; giant live OS input/display tails remain unqualified.
+
+[Completed native managed-upload evidence](../benchmarks/results/multires-display-2026-10-21/DECISION.md)
+retains 180 Criterion samples and 600 Hyperfine observations, including the existing
+cached native-resolution compositor before filtering. Sparse 4K process ratios are
+3.12–3.20x; tiny controls are tied (1.00–1.02x), and dense input is mixed/tied against
+that established cache (0.99–1.09x). Coarse caching improves dense input over uncached
+reduction by 1.29–1.36x, while adding approximately 0–6% to the large uncached case.
+The 4K process RSS medians fall from roughly 77 MiB to 43–45 MiB, without promoting
+physical GPU or universal memory claims. Raw samples, calibration, slow controls,
+source/executable hashes, development failures and scope limits remain retained.
+
+Optimal level/layout/dispatch policies, parallel cache misses, dense giant data,
+GPU scaled pipelines, asynchronous services, device recreation, global physical
+budgets, full incremental staging, native pressure/interference/tails and reference
+parity remain. T12/T13/T21/T37 stay partial/in progress; the roadmap remains active.

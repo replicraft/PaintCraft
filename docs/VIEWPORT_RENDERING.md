@@ -12,8 +12,8 @@ knows the viewport; there is no initial pre-layout full-canvas request.
 ## Frame identity and positioning
 
 The native presentation key includes state identity, publication epoch, preview
-revision and exact document-space region. An older preview may make progress only
-within the same live gesture and the same region. Changing the viewport cancels
+revision, exact document-space region and sampling level. An older preview may make progress only
+within the same live gesture, region and sampling level. Changing the viewport cancels
 obsolete work through the existing admitted worker. A completion must still match
 its job handle, current document/preview/region and device epoch before installation.
 A GPU texture additionally carries its own region; equal dimensions at a different
@@ -28,9 +28,10 @@ clipboard consumers use authoritative documents and their complete requested
 output, independently of display textures.
 
 `App::rendered_region()` reports installed display bounds. `App::rendered()` is a
-tightly packed straight RGBA8 buffer for those bounds on CPU-backed displays; it
-is empty for direct native GPU display. Consumers must use the region's width and
-origin when indexing this buffer. A failed display has no installed region.
+tightly packed straight RGBA8 buffer on CPU-backed displays and is empty for
+direct native GPU display. `rendered_size()` supplies its actual dimensions and
+`rendered_sample_step()` the source-pixel span of each texel. Source bounds alone
+are insufficient to index a coarse buffer. A failed display has no installed region.
 
 ## Backend and resource boundaries
 
@@ -42,14 +43,16 @@ buffer and completed premultiplied display texture. Explicit
 [private output retention](GPU_OUTPUT_POOL.md) can reuse compositor capacity;
 fresh allocation remains the measured default. Full GPU APIs delegate to the
 same path with the full canvas. Native worker output declaration uses requested
-area; existing source/preview/cache allowances remain. No physical GPU/RSS budget
+output dimensions, including coarse sampling; existing source/preview/cache allowances remain. No physical GPU/RSS budget
 or whole-preview staging bound follows from this declaration.
 
 CPU upload validates the backend's maximum texture side before constructing an
 egui texture. GPU output validates device limits. Requests exceeding these limits
-fail truthfully and can recover after a smaller request. Multiresolution output,
-tiled display textures, display-texture pooling and asynchronous GPU transfers remain open;
-a zoomed-out viewport covering a huge source region still needs that work. Preview
+fail truthfully and can recover after a smaller request. The
+[bounded CPU multiresolution path](MULTIRES_DISPLAY.md) now filters zoomed-out
+views before upload; it does not materialize the whole native-resolution source.
+GPU multiresolution, tiled display textures, display-texture pooling and asynchronous
+GPU transfers remain open. Exact-pixel hardware limits retain truthful failure. Preview
 commands still stage the complete operation, including offscreen edits, so this is
 regional composition/presentation rather than full incremental edit execution.
 

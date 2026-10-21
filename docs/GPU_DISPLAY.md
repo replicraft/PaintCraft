@@ -1,11 +1,13 @@
 # Completed native GPU display textures
 
-Native windows now consume a completed GPU texture directly. The renderer first
+Native-resolution windows consume a completed GPU texture directly. The renderer first
 computes the existing exact straight RGBA8 composite, then a compute pass produces
 an Rgba8Unorm texture using the selected egui/ecolor 0.37 encoded-sRGB integer
 premultiplication rule. Every output channel is an exact eight-bit result. This
 avoids normal native-frame host readback, CPU ColorImage conversion and re-upload.
 It does not make the GPU authoritative for document edits, history or saves.
+[Zoomed-out display](MULTIRES_DISPLAY.md) currently uses the exact CPU box-sampling
+oracle and managed upload; the GPU remains available for native-resolution frames.
 
 `render`/`render_cancellable` still return straight RGBA8 for readback consumers.
 Their mapped-copy allocation is now fallible, and a scope guard unmaps on success,
@@ -18,7 +20,7 @@ padding before returning. CPU/export numerical policy is unchanged.
 
 A texture frame owns its texture/view and originating device/queue/DeviceEpoch.
 Conversion submission completes and cancellation/epoch checks pass before the
-frame returns. Native worker results carry the existing document/preview key and
+frame returns. Native worker results carry the document/preview/region/sampling-level key and
 attempted epoch. The UI rejects stale handles/keys/devices before registration and
 rechecks target epoch and requested region/dimensions. Only the UI registers an accepted view
 with egui's renderer using nearest sampling. Workers never lock that renderer.

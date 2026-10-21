@@ -72,8 +72,9 @@ scope rather than rewriting raw execution status into a release claim.
 Desktop CPU/GPU presentation now requests exact [viewport regions](VIEWPORT_RENDERING.md),
 while export APIs retain complete requested output. Regional CPU composition and
 bounded output/lower-prefix reuse are covered separately in
-[the regional compositor contract](REGIONAL_COMPOSITOR.md). Finer operation damage,
-multiresolution/tiled output, GPU output reuse, parallel cache-miss integration,
+[the regional compositor contract](REGIONAL_COMPOSITOR.md). A bounded [CPU box-sampling display](MULTIRES_DISPLAY.md) now handles zoomed-out
+regions without full native surfaces. Finer operation damage,
+GPU multiresolution/tiled output, GPU output reuse, parallel cache-miss integration,
 SIMD comparisons and all-service memory/latency qualification remain. History and
 file interoperability have their own partial implementations and remaining gates;
 see [the current roadmap ledger](ROADMAP_STATUS.md). Admission ceilings are policy

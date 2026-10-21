@@ -1,0 +1,371 @@
+{
+  "tiny": [
+    {
+      "session": 1,
+      "variants": {
+        "full": {
+          "runs": 20,
+          "median_ms": 60.026604000000006,
+          "min_ms": 52.10345900000001,
+          "max_ms": 68.966834,
+          "rss_median_mib": 21.1328125,
+          "rss_max_mib": 22.28125
+        },
+        "bounded": {
+          "runs": 20,
+          "median_ms": 65.007146,
+          "min_ms": 53.628583,
+          "max_ms": 78.65079200000001,
+          "rss_median_mib": 21.7890625,
+          "rss_max_mib": 22.546875
+        },
+        "cached": {
+          "runs": 20,
+          "median_ms": 60.009875,
+          "min_ms": 56.054875,
+          "max_ms": 74.316333,
+          "rss_median_mib": 21.5390625,
+          "rss_max_mib": 22.484375
+        }
+      },
+      "full_over_cached": 1.0002787707856415,
+      "bounded_over_cached": 1.0832741444637237
+    },
+    {
+      "session": 2,
+      "variants": {
+        "cached": {
+          "runs": 20,
+          "median_ms": 58.098687500000004,
+          "min_ms": 51.525833,
+          "max_ms": 64.065458,
+          "rss_median_mib": 21.3359375,
+          "rss_max_mib": 22.734375
+        },
+        "bounded": {
+          "runs": 20,
+          "median_ms": 58.527687500000006,
+          "min_ms": 52.25537500000001,
+          "max_ms": 68.005459,
+          "rss_median_mib": 20.984375,
+          "rss_max_mib": 22.046875
+        },
+        "full": {
+          "runs": 20,
+          "median_ms": 59.4352085,
+          "min_ms": 53.48312500000001,
+          "max_ms": 69.102042,
+          "rss_median_mib": 20.90625,
+          "rss_max_mib": 21.515625
+        }
+      },
+      "full_over_cached": 1.0230043234625568,
+      "bounded_over_cached": 1.0073839878052322
+    },
+    {
+      "session": 3,
+      "variants": {
+        "full": {
+          "runs": 20,
+          "median_ms": 58.88570800000001,
+          "min_ms": 54.519416,
+          "max_ms": 64.41358300000002,
+          "rss_median_mib": 20.953125,
+          "rss_max_mib": 21.921875
+        },
+        "bounded": {
+          "runs": 20,
+          "median_ms": 58.437896,
+          "min_ms": 50.707584,
+          "max_ms": 65.35625,
+          "rss_median_mib": 21.1328125,
+          "rss_max_mib": 21.984375
+        },
+        "cached": {
+          "runs": 20,
+          "median_ms": 57.453146000000004,
+          "min_ms": 52.50620800000001,
+          "max_ms": 62.691041000000006,
+          "rss_median_mib": 21.0859375,
+          "rss_max_mib": 22.140625
+        }
+      },
+      "full_over_cached": 1.0249344396214615,
+      "bounded_over_cached": 1.0171400535664312
+    }
+  ],
+  "dense": [
+    {
+      "session": 1,
+      "variants": {
+        "full": {
+          "runs": 20,
+          "median_ms": 72.98810399999999,
+          "min_ms": 64.27250000000001,
+          "max_ms": 83.111583,
+          "rss_median_mib": 28.3046875,
+          "rss_max_mib": 30.390625
+        },
+        "bounded": {
+          "runs": 20,
+          "median_ms": 95.2776045,
+          "min_ms": 88.72075,
+          "max_ms": 106.56750000000001,
+          "rss_median_mib": 25.8125,
+          "rss_max_mib": 26.859375
+        },
+        "cached": {
+          "runs": 20,
+          "median_ms": 73.616396,
+          "min_ms": 64.528125,
+          "max_ms": 87.71433300000001,
+          "rss_median_mib": 25.8125,
+          "rss_max_mib": 27.421875
+        }
+      },
+      "full_over_cached": 0.9914653251973922,
+      "bounded_over_cached": 1.2942443487725208
+    },
+    {
+      "session": 2,
+      "variants": {
+        "cached": {
+          "runs": 20,
+          "median_ms": 70.809229,
+          "min_ms": 63.1395,
+          "max_ms": 82.653417,
+          "rss_median_mib": 25.984375,
+          "rss_max_mib": 27.1875
+        },
+        "bounded": {
+          "runs": 20,
+          "median_ms": 95.956104,
+          "min_ms": 87.395542,
+          "max_ms": 107.79387500000001,
+          "rss_median_mib": 25.8359375,
+          "rss_max_mib": 27.265625
+        },
+        "full": {
+          "runs": 20,
+          "median_ms": 77.0920205,
+          "min_ms": 67.97512499999999,
+          "max_ms": 104.980667,
+          "rss_median_mib": 29.40625,
+          "rss_max_mib": 31.78125
+        }
+      },
+      "full_over_cached": 1.0887284269116955,
+      "bounded_over_cached": 1.3551355572590684
+    },
+    {
+      "session": 3,
+      "variants": {
+        "full": {
+          "runs": 20,
+          "median_ms": 73.3149165,
+          "min_ms": 69.354708,
+          "max_ms": 83.544042,
+          "rss_median_mib": 28.296875,
+          "rss_max_mib": 30.46875
+        },
+        "bounded": {
+          "runs": 20,
+          "median_ms": 96.46939600000002,
+          "min_ms": 90.540333,
+          "max_ms": 101.60595800000002,
+          "rss_median_mib": 25.8125,
+          "rss_max_mib": 27.125
+        },
+        "cached": {
+          "runs": 20,
+          "median_ms": 71.72433350000001,
+          "min_ms": 67.68175,
+          "max_ms": 81.62208400000002,
+          "rss_median_mib": 25.6484375,
+          "rss_max_mib": 27.28125
+        }
+      },
+      "full_over_cached": 1.022176337128319,
+      "bounded_over_cached": 1.3450023345284903
+    }
+  ],
+  "large": [
+    {
+      "session": 1,
+      "variants": {
+        "full": {
+          "runs": 20,
+          "median_ms": 254.3808125,
+          "min_ms": 247.569375,
+          "max_ms": 283.265292,
+          "rss_median_mib": 77.0234375,
+          "rss_max_mib": 82.1875
+        },
+        "bounded": {
+          "runs": 20,
+          "median_ms": 80.19360450000002,
+          "min_ms": 65.160375,
+          "max_ms": 88.366667,
+          "rss_median_mib": 42.4453125,
+          "rss_max_mib": 50.09375
+        },
+        "cached": {
+          "runs": 20,
+          "median_ms": 80.294083,
+          "min_ms": 74.83070800000002,
+          "max_ms": 90.22904100000001,
+          "rss_median_mib": 42.7109375,
+          "rss_max_mib": 50.03125
+        }
+      },
+      "full_over_cached": 3.168114050197198,
+      "bounded_over_cached": 0.9987486188739464
+    },
+    {
+      "session": 2,
+      "variants": {
+        "cached": {
+          "runs": 20,
+          "median_ms": 79.05079149999999,
+          "min_ms": 74.92470900000001,
+          "max_ms": 88.23958300000001,
+          "rss_median_mib": 44.5546875,
+          "rss_max_mib": 51.234375
+        },
+        "bounded": {
+          "runs": 20,
+          "median_ms": 76.455583,
+          "min_ms": 72.232292,
+          "max_ms": 83.687875,
+          "rss_median_mib": 42.5234375,
+          "rss_max_mib": 51.28125
+        },
+        "full": {
+          "runs": 20,
+          "median_ms": 252.96664600000003,
+          "min_ms": 245.42475000000002,
+          "max_ms": 348.158,
+          "rss_median_mib": 76.6171875,
+          "rss_max_mib": 82.75
+        }
+      },
+      "full_over_cached": 3.2000520323695945,
+      "bounded_over_cached": 0.9671703666622998
+    },
+    {
+      "session": 3,
+      "variants": {
+        "full": {
+          "runs": 20,
+          "median_ms": 257.293104,
+          "min_ms": 246.30679200000003,
+          "max_ms": 278.89666600000004,
+          "rss_median_mib": 76.75,
+          "rss_max_mib": 81.671875
+        },
+        "bounded": {
+          "runs": 20,
+          "median_ms": 77.786521,
+          "min_ms": 70.659834,
+          "max_ms": 87.58083300000001,
+          "rss_median_mib": 44.5234375,
+          "rss_max_mib": 52.0
+        },
+        "cached": {
+          "runs": 20,
+          "median_ms": 82.50027100000001,
+          "min_ms": 74.55458300000001,
+          "max_ms": 91.210041,
+          "rss_median_mib": 43.390625,
+          "rss_max_mib": 51.5
+        }
+      },
+      "full_over_cached": 3.1186940464716777,
+      "bounded_over_cached": 0.9428638240473172
+    }
+  ],
+  "calibration": [
+    {
+      "session": 1,
+      "variants": {
+        "calibration": {
+          "runs": 20,
+          "median_ms": 13.214792,
+          "min_ms": 11.399875,
+          "max_ms": 20.897416000000003,
+          "rss_median_mib": 7.3984375,
+          "rss_max_mib": 7.546875
+        }
+      }
+    },
+    {
+      "session": 2,
+      "variants": {
+        "calibration": {
+          "runs": 20,
+          "median_ms": 13.408750000000001,
+          "min_ms": 11.110167,
+          "max_ms": 19.141042,
+          "rss_median_mib": 7.4375,
+          "rss_max_mib": 7.53125
+        }
+      }
+    },
+    {
+      "session": 3,
+      "variants": {
+        "calibration": {
+          "runs": 20,
+          "median_ms": 13.227042,
+          "min_ms": 11.170708000000001,
+          "max_ms": 19.355125,
+          "rss_median_mib": 7.375,
+          "rss_max_mib": 7.484375
+        }
+      }
+    }
+  ],
+  "tiny_criterion": {
+    "full": {
+      "mean_ms": 39.70387915,
+      "raw_samples": 20
+    },
+    "bounded": {
+      "mean_ms": 20.9228722,
+      "raw_samples": 20
+    },
+    "cached": {
+      "mean_ms": 17.936582599999998,
+      "raw_samples": 20
+    }
+  },
+  "dense_criterion": {
+    "full": {
+      "mean_ms": 30.528942649999998,
+      "raw_samples": 20
+    },
+    "bounded": {
+      "mean_ms": 56.96531445,
+      "raw_samples": 20
+    },
+    "cached": {
+      "mean_ms": 26.68004275,
+      "raw_samples": 20
+    }
+  },
+  "large_criterion": {
+    "full": {
+      "mean_ms": 199.90186045,
+      "raw_samples": 20
+    },
+    "bounded": {
+      "mean_ms": 37.8046031,
+      "raw_samples": 20
+    },
+    "cached": {
+      "mean_ms": 38.191452075,
+      "raw_samples": 20
+    }
+  },
+  "total_process_observations": 600
+}

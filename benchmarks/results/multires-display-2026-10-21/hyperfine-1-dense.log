@@ -1,0 +1,15 @@
+Benchmark 1: /usr/bin/env PAINTCRAFT_GEOMETRY_BASE=dense5 PAINTCRAFT_REQUIRE_GPU=1 PAINTCRAFT_VIEWPORT_CASE=dense PAINTCRAFT_VIEWPORT_VARIANT=full /Users/dielpi/Desktop/replicraft/PaintCraft/target/release/deps/paintcraft-30d295483bc0fb78 --exact cpu_rendering::display_benchmark::native_multires_process --ignored (20 runs)
+                mean     ±       σ          min     …     max
+  Wall Time     72.8 ms  ±     5.0 ms      64.3 ms  …    83.1 ms
+  Memory        28.4 MiB ±     1.1 MiB     27.0 MiB …    30.4 MiB
+ 
+Benchmark 2: /usr/bin/env PAINTCRAFT_GEOMETRY_BASE=dense5 PAINTCRAFT_REQUIRE_GPU=1 PAINTCRAFT_VIEWPORT_CASE=dense PAINTCRAFT_VIEWPORT_VARIANT=bounded /Users/dielpi/Desktop/replicraft/PaintCraft/target/release/deps/paintcraft-30d295483bc0fb78 --exact cpu_rendering::display_benchmark::native_multires_process --ignored (20 runs)
+                mean     ±       σ          min     …     max
+  Wall Time     95.5 ms  ±     4.8 ms      88.7 ms  …   106.6 ms           +31.2%  (1.3x slower)
+  Memory        25.8 MiB ±     0.5 MiB     25.1 MiB …    26.9 MiB           -9.1%
+ 
+Benchmark 3: /usr/bin/env PAINTCRAFT_GEOMETRY_BASE=dense5 PAINTCRAFT_REQUIRE_GPU=1 PAINTCRAFT_VIEWPORT_CASE=dense PAINTCRAFT_VIEWPORT_VARIANT=cached /Users/dielpi/Desktop/replicraft/PaintCraft/target/release/deps/paintcraft-30d295483bc0fb78 --exact cpu_rendering::display_benchmark::native_multires_process --ignored (20 runs)
+                mean     ±       σ          min     …     max
+  Wall Time     73.8 ms  ±     6.2 ms      64.5 ms  …    87.7 ms            +1.5%
+  Memory        25.7 MiB ±     0.9 MiB     23.9 MiB …    27.4 MiB           -9.3%
+ 

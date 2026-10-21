@@ -1,0 +1,3 @@
+    Blocking waiting for file lock on build directory
+    Checking paintcraft-render v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-render)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 10.14s

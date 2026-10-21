@@ -1,0 +1,7 @@
+{
+  "directory": "/var/folders/k_/xqf_xh_1491ffqbnfjtfkbr40000gn/T/paintcraft-multires-native-29fptc2h",
+  "frames": 30,
+  "exit_code": 0,
+  "log_bytes": 0,
+  "scope": "native default-window startup/presentation; giant zoom/edge routing covered separately in GUI/worker tests"
+}

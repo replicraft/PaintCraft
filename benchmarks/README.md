@@ -170,3 +170,11 @@ alternating-size cases, with the same raw statistical/process and independent
 pixel gates. [The decision](results/output-pool-2026-10-21/DECISION.md) rejects global
 enablement: fewer logical buffer creations did not establish a general native gain.
 Fresh allocation stays the default; display textures are never recycled by this pool.
+
+`--suite multires` compares the existing cached full-native ROI plus direct box
+filter against bounded and cached CPU box sampling, actual App acceptance and
+completed native managed-texture upload. The exact test is
+`cpu_rendering::display_benchmark::native_multires_process`. See
+[the source-scoped decision](results/multires-display-2026-10-21/DECISION.md) for tiny
+controls, dense cache costs, the sparse-4K gain, raw 180 statistical samples/600 process
+observations, and the distinction from GPU scaled composition or OS frame latency.
