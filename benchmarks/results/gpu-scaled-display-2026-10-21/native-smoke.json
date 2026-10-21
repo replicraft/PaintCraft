@@ -1,0 +1,18 @@
+[
+  {
+    "directory": "/var/folders/k_/xqf_xh_1491ffqbnfjtfkbr40000gn/T/paintcraft-gpu-scaled-smoke-_amlgv4f",
+    "frames": 30,
+    "gpu_scaled_option": false,
+    "exit_code": 0,
+    "log_bytes": 0,
+    "scope": "Native startup/presentation at default zoom; scaled output is separately exercised in worker/framebuffer tests."
+  },
+  {
+    "directory": "/var/folders/k_/xqf_xh_1491ffqbnfjtfkbr40000gn/T/paintcraft-gpu-scaled-smoke-mkntbyfi",
+    "frames": 30,
+    "gpu_scaled_option": true,
+    "exit_code": 0,
+    "log_bytes": 0,
+    "scope": "Native startup/presentation at default zoom; scaled output is separately exercised in worker/framebuffer tests."
+  }
+]

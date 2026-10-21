@@ -1,0 +1,207 @@
+{
+  "hyperfine-1-dense.log": {
+    "original_sha256": "9151ad3da809f494bee93d0457b31895b56a4808a2b0d6eea1ae6815ac9fe9f5",
+    "lines": 15,
+    "reason": "preserve exact tool whitespace in compressed artifact"
+  },
+  "odd-dimensions-metal.log": {
+    "original_sha256": "f36e8dd15511efebae93dc4117a13ec7cc5c7fa9e8f0b0f87c539ad6bbcd98d8",
+    "lines": 18,
+    "reason": "preserve exact tool whitespace in compressed artifact"
+  },
+  "hyperfine-1-large.log": {
+    "original_sha256": "39cdf2a7f63ecdbbd1ddb8fd3ee87ae585f6b2f1b9d00e2aab0b10d68a4166ee",
+    "lines": 15,
+    "reason": "preserve exact tool whitespace in compressed artifact"
+  },
+  "correctness-after-2-uniform.log": {
+    "original_sha256": "a1f9e725e70a3a407f8084ebbbb066acb1de1a6efede37dab61cdfce9b0fe723",
+    "lines": 15,
+    "reason": "preserve exact tool whitespace in compressed artifact"
+  },
+  "correctness-after-3-dense.log": {
+    "original_sha256": "429e25209434319ab73c83c266ebe4eae879bf257beb6163b24a9a1ac421eddf",
+    "lines": 15,
+    "reason": "preserve exact tool whitespace in compressed artifact"
+  },
+  "criterion-tiny.log": {
+    "original_sha256": "a2289c3ca6623d228853144bafb99a21e3edec2c09d4cb778bd9004e183a744b",
+    "lines": 384,
+    "reason": "preserve exact tool whitespace in compressed artifact"
+  },
+  "hyperfine-1-tiny.log": {
+    "original_sha256": "58d0ddff9673d3b5d4bbc7de31fb1abc165a5e7f7c22271fba63776aeb96a3e8",
+    "lines": 15,
+    "reason": "preserve exact tool whitespace in compressed artifact"
+  },
+  "correctness-after-3-large.log": {
+    "original_sha256": "ef3348d9637e7fefee4a28405fee1aeb807239974bc4000ffbd0b748b4b914d4",
+    "lines": 15,
+    "reason": "preserve exact tool whitespace in compressed artifact"
+  },
+  "development-zero-tests.log": {
+    "original_sha256": "3c2ea5dfc005ba3b993a0ffe718994ad8ada942ead9f349e2314ffe58a2aac9b",
+    "lines": 8,
+    "reason": "preserve exact tool whitespace in compressed artifact"
+  },
+  "correctness-before-dense.log": {
+    "original_sha256": "68a0a0bc317dd2b19325fc4c7b8c8fec43e0bc508329269ec1b4459cd73a468e",
+    "lines": 15,
+    "reason": "preserve exact tool whitespace in compressed artifact"
+  },
+  "correctness-before-large.log": {
+    "original_sha256": "ef3348d9637e7fefee4a28405fee1aeb807239974bc4000ffbd0b748b4b914d4",
+    "lines": 15,
+    "reason": "preserve exact tool whitespace in compressed artifact"
+  },
+  "correctness-after-1-uniform.log": {
+    "original_sha256": "5cef412d79c0d5550c166fcceba3c303233ccbee81732cf1d9216c8ac1587e0e",
+    "lines": 15,
+    "reason": "preserve exact tool whitespace in compressed artifact"
+  },
+  "hyperfine-3-uniform.log": {
+    "original_sha256": "07a174807915f06b914270ed41138db87f6a670247375f1999f20da95dcdb74b",
+    "lines": 15,
+    "reason": "preserve exact tool whitespace in compressed artifact"
+  },
+  "renderer-metal.log": {
+    "original_sha256": "1d9c9ed438f91f28465b416511f255c5edb1e8c3e6b7d2ac69f599a8d6f48155",
+    "lines": 27,
+    "reason": "preserve exact tool whitespace in compressed artifact"
+  },
+  "workspace.log": {
+    "original_sha256": "a70aea375068ca6a9f0107ac75200f822a823c1a31267763efb111a0ad164966",
+    "lines": 328,
+    "reason": "preserve exact tool whitespace in compressed artifact"
+  },
+  "hyperfine-1-calibration.log": {
+    "original_sha256": "612898a8cde75c7c2af1f5207cefe91306fa8f5972f8037bc28de99fb45d426b",
+    "lines": 5,
+    "reason": "preserve exact tool whitespace in compressed artifact"
+  },
+  "correctness-after-3-tiny.log": {
+    "original_sha256": "95ce46fc398b42493ff748a47f987f1c3297b61c7aad936db3eabbffe218e8be",
+    "lines": 15,
+    "reason": "preserve exact tool whitespace in compressed artifact"
+  },
+  "correctness-after-2-tiny.log": {
+    "original_sha256": "2faadea1f943fd3901be7a08b40c57c5eae037fab773ef77a9e15d5723544ba8",
+    "lines": 15,
+    "reason": "preserve exact tool whitespace in compressed artifact"
+  },
+  "criterion-large.log": {
+    "original_sha256": "dec42511000ab397712a9fa90741fd5dbc9ba3a1629913a1ce8ba6c01fa9948c",
+    "lines": 233,
+    "reason": "preserve exact tool whitespace in compressed artifact"
+  },
+  "correctness-after-2-dense.log": {
+    "original_sha256": "e1a66adede4fd90efa8c9d101f0901e0e3cd522e1bedc65eeb6753133bc776dd",
+    "lines": 15,
+    "reason": "preserve exact tool whitespace in compressed artifact"
+  },
+  "criterion-dense.log": {
+    "original_sha256": "66307c05ac7c2cb71fea976bf155425ecf162ea08e63d7f2e175e0cd780b9a0c",
+    "lines": 231,
+    "reason": "preserve exact tool whitespace in compressed artifact"
+  },
+  "correctness-after-2-large.log": {
+    "original_sha256": "1270a34acac440d4e1bfb44a79641cbf50e87caf4c05f59620868ebb56b3cdd2",
+    "lines": 15,
+    "reason": "preserve exact tool whitespace in compressed artifact"
+  },
+  "criterion-uniform.log": {
+    "original_sha256": "982ad300f2d9125a76ecd4a3a4637a3e3dc7d4d16a3271b8f35a2537f7657f97",
+    "lines": 362,
+    "reason": "preserve exact tool whitespace in compressed artifact"
+  },
+  "hyperfine-3-large.log": {
+    "original_sha256": "cb2ba414ed6dc53e43d4388ef1435e9ca1890d476e9c73165e0a5b68e08c4e66",
+    "lines": 15,
+    "reason": "preserve exact tool whitespace in compressed artifact"
+  },
+  "hyperfine-3-tiny.log": {
+    "original_sha256": "f1f65873c634b3bcbac460843fa5a182c2b97b122323f794151c01624f6a4d94",
+    "lines": 15,
+    "reason": "preserve exact tool whitespace in compressed artifact"
+  },
+  "hyperfine-2-tiny.log": {
+    "original_sha256": "af9d0e7ced704d769e487af682fff5bd4945120b57e78b0d8f380061ae92c47e",
+    "lines": 15,
+    "reason": "preserve exact tool whitespace in compressed artifact"
+  },
+  "hyperfine-3-dense.log": {
+    "original_sha256": "1d2d0e572ee2de76a64ea9f0da23076d4270470dc384d4624cd13042708f3027",
+    "lines": 15,
+    "reason": "preserve exact tool whitespace in compressed artifact"
+  },
+  "correctness-before-tiny.log": {
+    "original_sha256": "303db8217c3d3c8812aa626ab75c50c8cfc1e2886f2958639247362fd9813b9c",
+    "lines": 15,
+    "reason": "preserve exact tool whitespace in compressed artifact"
+  },
+  "hyperfine-1-uniform.log": {
+    "original_sha256": "787a03fb674b2949922e34c4a8594dd1f54ce29eb7a59289afac2e6f999cbef9",
+    "lines": 17,
+    "reason": "preserve exact tool whitespace in compressed artifact"
+  },
+  "correctness-after-3-uniform.log": {
+    "original_sha256": "a1f9e725e70a3a407f8084ebbbb066acb1de1a6efede37dab61cdfce9b0fe723",
+    "lines": 15,
+    "reason": "preserve exact tool whitespace in compressed artifact"
+  },
+  "correctness-before-uniform.log": {
+    "original_sha256": "9551c9c839a84926616135901f625ab80133ee529b0a3f8668d0ad9459768f6b",
+    "lines": 15,
+    "reason": "preserve exact tool whitespace in compressed artifact"
+  },
+  "hyperfine-3-calibration.log": {
+    "original_sha256": "1f2e2def5d4247b9ed07a51684631eeaedaeab935eef8dcb0b3e47602f678060",
+    "lines": 5,
+    "reason": "preserve exact tool whitespace in compressed artifact"
+  },
+  "correctness-after-1-large.log": {
+    "original_sha256": "e725ff5ce0deb0b54155b647317f4a4dfe8e84e74106dc4155e5846516dbbd07",
+    "lines": 15,
+    "reason": "preserve exact tool whitespace in compressed artifact"
+  },
+  "correctness-after-1-dense.log": {
+    "original_sha256": "3bb491a6ba4d7432b249c7e010459255c91e3aebb1372f21701c544b8c76d207",
+    "lines": 15,
+    "reason": "preserve exact tool whitespace in compressed artifact"
+  },
+  "correctness-after-1-tiny.log": {
+    "original_sha256": "2faadea1f943fd3901be7a08b40c57c5eae037fab773ef77a9e15d5723544ba8",
+    "lines": 15,
+    "reason": "preserve exact tool whitespace in compressed artifact"
+  },
+  "hyperfine-2-calibration.log": {
+    "original_sha256": "e52f9948f7f37606f59dc5a94a4b6fede7431b865493c8f650434d817e0a18a6",
+    "lines": 5,
+    "reason": "preserve exact tool whitespace in compressed artifact"
+  },
+  "hyperfine-2-large.log": {
+    "original_sha256": "a5fa42bbbd24f8f3b969c9fbbadc28ad1fac6efaad1f645f1d3ad030af06e69c",
+    "lines": 15,
+    "reason": "preserve exact tool whitespace in compressed artifact"
+  },
+  "hyperfine-2-dense.log": {
+    "original_sha256": "025c2d1a97b7f6110bdea30cd22602267204ae2f1dc3d4f6e183926fcc5c2c77",
+    "lines": 15,
+    "reason": "preserve exact tool whitespace in compressed artifact"
+  },
+  "desktop-metal.log": {
+    "original_sha256": "e42b32519d4f7188adceac318572ef36309a90d9ade4ac820771869406c2c13a",
+    "lines": 235,
+    "reason": "preserve exact tool whitespace in compressed artifact"
+  },
+  "hyperfine-2-uniform.log": {
+    "original_sha256": "90b16d43c9e5b468a89df54125ac410e73fe12d9cee108f41fb35fd815eeb3b3",
+    "lines": 15,
+    "reason": "preserve exact tool whitespace in compressed artifact"
+  },
+  "development-zero-tests-ignored.log": {
+    "original_sha256": "49fbbde3a9ae9515c3d48f2e4d4265cb7521227774bdf84b4118944fe891730d",
+    "lines": 7,
+    "reason": "preserve exact tool whitespace in compressed artifact"
+  }
+}

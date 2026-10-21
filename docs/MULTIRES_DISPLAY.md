@@ -71,8 +71,9 @@ Declared bytes and local cache weights do not qualify all-service physical memor
 
 Scaled frames currently use this CPU oracle and the ordinary managed-texture upload.
 The native GPU remains available for level-zero rendering; a zoomed-out CPU frame
-does not disable it or claim GPU scaled composition. Native GPU multiresolution,
-tiled presentation, asynchronous transfers, physical pressure-driven eviction and
+does not disable it. [Exact GPU scaled display](GPU_SCALED_DISPLAY.md) is available
+through explicit native experimentation; measured regressions reject automatic
+global enablement. Tiled presentation, asynchronous transfers, physical pressure-driven eviction and
 native input/display tail qualification remain open. Final exports/clipboard and
 sampled-composite tools use authoritative native-resolution document semantics;
 large exports retain their explicit existing limits instead of exporting display LOD.

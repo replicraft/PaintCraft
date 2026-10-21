@@ -41,8 +41,12 @@ Real egui framebuffer comparisons cover native and scaled textures. Hardware tes
 require the renderer's `gpu` feature and `PAINTCRAFT_REQUIRE_GPU=1`; a zero-test run
 or unavailable adapter is not evidence of GPU correctness.
 
-Performance qualification is pending. The native benchmark driver compares the
+[The native comparison](../benchmarks/results/gpu-scaled-display-2026-10-21/DECISION.md)
+retains raw statistical/process results. The native benchmark driver compares the
 actual cached CPU scaled path with completed managed upload against both GPU tile
 edges with completed native registration. Tiny, dense multilayer, sparse 4K brush
 and uniform 4K opacity-edit controls are included. This implementation alone does
-not establish a CPU/GPU crossover or a preferred desktop tile policy.
+not establish a general CPU/GPU crossover. CPU scaling remains automatic; explicit
+`PAINTCRAFT_GPU_SCALED=1` native experimentation uses 64-sample output tiles, with
+CPU fallback on ordinary scaled-resource failures. Native-resolution GPU display
+remains enabled regardless of the option.

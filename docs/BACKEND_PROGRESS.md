@@ -690,3 +690,44 @@ Optimal level/layout/dispatch policies, parallel cache misses, dense giant data,
 GPU scaled pipelines, asynchronous services, device recreation, global physical
 budgets, full incremental staging, native pressure/interference/tails and reference
 parity remain. T12/T13/T21/T37 stay partial/in progress; the roadmap remains active.
+
+## Thirty-fourth slice: exact bounded GPU scaled display and measured dispatch
+
+GPU display now composes bounded native blocks before exact box reduction using
+portable pairs of u32 words for wide sums and division. Metadata-proven uniform
+composites avoid native expansion; unknown blocks preserve ordered layer rounding.
+Both 32- and 64-sample output tiles produce identical pixels. Textures retain
+independent ownership through later scratch reuse; cancellation, epoch and storage
+limits cannot publish partial frames. Native acceptance checks sampling level,
+bounds, dimensions and identity. Ordinary scaled-resource failures use uploadable
+CPU pixels while retaining a working native-resolution GPU. See
+[the implementation contract](GPU_SCALED_DISPLAY.md).
+
+[Completed native evidence](../benchmarks/results/gpu-scaled-display-2026-10-21/DECISION.md)
+retains 240 statistical samples and 780 process observations. GPU64 process ratios
+(CPU/GPU) are 0.43–0.86 for tiny, 0.29–0.36 for dense multilayer, 0.95–1.03 for sparse
+4K brush and 1.20–1.36 for uniform 4K opacity edits. Allocation reductions do not
+remove repeated native submissions or changed-view source retirement. All slow
+controls, calibration, memory data and source/binary identities remain. The CPU
+scaled path stays automatic; `PAINTCRAFT_GPU_SCALED=1` enables explicit native
+experimentation with 64-sample tiles. Native-resolution GPU display stays enabled.
+No general crossover, historical sampling parity or OS latency claim follows.
+
+769 workspace tests pass (25 explicit ignores), all 220 desktop library tests pass
+with required real GPU availability, and all 20 renderer Metal tests pass. Oracles
+cover both tile edges, 164 analytic trillion-pixel composites including odd canvas
+dimensions, dense wide carries, cancellation and old-frame ownership. Actual egui
+framebuffer tests cover native/scaled output and partial edges; native workers test
+both default/experimental giant views and constrained-device CPU fallback. Two
+development commands omitted the GPU feature and executed zero tests; they are
+retained and excluded from validation. The corrected invocations execute real tests.
+Strict workspace/all-target Clippy, formatting/file limits and release desktop/CLI
+builds pass. Isolated 30-frame release windows exit zero with empty logs under both
+default and experimental settings; these startup smokes do not qualify scaled OS
+interaction latency. Final-policy source identities and validation remain separate
+from the frozen measured executable.
+
+Single-layer source bypass, sparse GPU working sets/output caches, asynchronous
+services, native device reconstruction, global physical budgets, full incremental
+staging, pressure/interference/tails and reference parity remain. T12/T13/T21/T37
+remain partial/in progress; this baseline does not complete the roadmap.
