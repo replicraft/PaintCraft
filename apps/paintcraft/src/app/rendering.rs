@@ -248,20 +248,30 @@ impl App {
                             None,
                         )
                     } else if let Some(gpu) = gpu {
-                        let result = if native_display {
-                            let request =
-                                paintcraft_render::display::DisplayRequest::new(doc, key.3, key.4)?;
-                            gpu.render_display_texture(doc, request, || cancel.check())
-                                .map(|texture| (Vec::new(), Some(texture)))
-                        } else if key.4 == 0 {
-                            gpu.render_region_with_stats(doc, key.3, || cancel.check())
-                                .map(|frame| (frame.pixels, None))
-                        } else {
-                            // A headless readback consumer still requires straight
-                            // pixels, not lossy unpremultiplication of display bytes.
-                            cpu.render_display(doc, key.3, key.4, is_preview, || cancel.check())
-                                .map(|pixels| (pixels, None))
+                        let render = || {
+                            if native_display {
+                                let request = paintcraft_render::display::DisplayRequest::new(
+                                    doc, key.3, key.4,
+                                )?;
+                                gpu.render_display_texture(doc, request, || cancel.check())
+                                    .map(|texture| (Vec::new(), Some(texture)))
+                            } else if key.4 == 0 {
+                                gpu.render_region_with_stats(doc, key.3, || cancel.check())
+                                    .map(|frame| (frame.pixels, None))
+                            } else {
+                                // A headless readback consumer still requires straight
+                                // pixels, not lossy unpremultiplication of display bytes.
+                                cpu.render_display(doc, key.3, key.4, is_preview, || cancel.check())
+                                    .map(|pixels| (pixels, None))
+                            }
                         };
+                        let lease = cancel.resource_lease().ok_or_else(|| {
+                            paintcraft_core::types::Error::new(
+                                paintcraft_core::types::ErrorCode::InvariantViolation,
+                                "render job lost its admission charge",
+                            )
+                        })?;
+                        let result = paintcraft_render::gpu::with_admission(lease, render);
                         match result {
                             Ok((pixels, texture)) => (pixels, texture, None),
                             Err(error) => {
