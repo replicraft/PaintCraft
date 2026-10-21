@@ -116,25 +116,27 @@ pub(crate) mod tests {
     ) -> Option<(Target, Arc<GpuRenderer>)> {
         target_with_limits(bytes, edge, None)
     }
-    pub(crate) fn target_with_scaled_cache(
-        bytes: u64,
-        edge: u32,
-        region_views: bool,
-    ) -> Option<(Target, Arc<GpuRenderer>)> {
-        target_with_options(bytes, edge, None, region_views)
-    }
     pub(crate) fn target_with_limits(
         bytes: u64,
         edge: u32,
         limits: Option<eframe::wgpu::Limits>,
     ) -> Option<(Target, Arc<GpuRenderer>)> {
-        target_with_options(bytes, edge, limits, false)
+        target_with_options(bytes, edge, limits, false, false)
+    }
+    pub(crate) fn target_with_submission_policy(
+        bytes: u64,
+        edge: u32,
+        region_views: bool,
+        batching: bool,
+    ) -> Option<(Target, Arc<GpuRenderer>)> {
+        target_with_options(bytes, edge, None, region_views, batching)
     }
     fn target_with_options(
         bytes: u64,
         edge: u32,
         limits: Option<eframe::wgpu::Limits>,
         region_views: bool,
+        batching: bool,
     ) -> Option<(Target, Arc<GpuRenderer>)> {
         use eframe::wgpu;
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle());
@@ -167,7 +169,8 @@ pub(crate) mod tests {
             .unwrap()
             .with_scaled_tile_edge(edge)
             .unwrap()
-            .with_region_source_cache(region_views),
+            .with_region_source_cache(region_views)
+            .with_submission_batching(batching),
         );
         let renderer = eframe::egui_wgpu::Renderer::new(
             &device,
@@ -299,13 +302,17 @@ mod pixel_tests {
             paintcraft_core::types::Rect::new(5, 3, 23, 29).unwrap(),
         ] {
             for level in [0, 1, 2, 3] {
-                compare_region(region, level);
+                for batching in [false, true] {
+                    compare_region(region, level, batching);
+                }
             }
         }
     }
-    fn compare_region(region: paintcraft_core::types::Rect, level: u8) {
+    fn compare_region(region: paintcraft_core::types::Rect, level: u8, batching: bool) {
         use eframe::wgpu;
-        let Some((target, gpu)) = super::tests::target_with_output_pool(64 << 20) else {
+        let Some((target, gpu)) =
+            super::tests::target_with_submission_policy(64 << 20, 32, false, batching)
+        else {
             return;
         };
         let ctx = egui::Context::default();

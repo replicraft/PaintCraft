@@ -236,3 +236,53 @@ fn a_gpu_texture_with_matching_dimensions_but_wrong_sampling_level_is_rejected()
     assert!(app.gpu_texture.is_none());
     assert!(app.gpu.is_none());
 }
+
+#[test]
+fn admitted_batched_multilayer_worker_installs_exact_native_scaled_output() {
+    let Some((target, gpu)) = gpu_display::tests::target_with_submission_policy(0, 64, false, true)
+    else {
+        return;
+    };
+    let mut app = App::new(None);
+    app.editor = cpu_rendering::geometry_benchmark::fixture_for_base("dense20");
+    app.render_level = 1;
+    app.gpu_scaled_display = true;
+    app.gpu = Some(gpu.clone());
+    app.gpu_target = Some(target);
+    app.renderer = Some(
+        Executor::new(WorkerLimits {
+            workers: 1,
+            pending_jobs: 2,
+            transient_bytes: 1 << 30,
+        })
+        .unwrap(),
+    );
+    let ctx = egui::Context::default();
+    let key = app.presentation_key();
+    let request = DisplayRequest::new(app.editor.document(), key.3, key.4).unwrap();
+    let straight = render_display_cancellable(app.editor.document(), request, || Ok(()))
+        .unwrap()
+        .pixels;
+    let expected: Vec<_> = egui::ColorImage::from_rgba_unmultiplied(
+        [request.size()[0] as usize, request.size()[1] as usize],
+        &straight,
+    )
+    .pixels
+    .iter()
+    .flat_map(|p| p.to_array())
+    .collect();
+    assert_eq!(gpu.submission_admission_bytes(), 4 << 20);
+    let deadline = std::time::Instant::now() + Duration::from_secs(10);
+    while app.texture_key != Some(key) {
+        assert!(std::time::Instant::now() < deadline);
+        app.sync_texture(&ctx);
+        std::thread::yield_now();
+    }
+    let frame = app.gpu_texture.as_ref().unwrap().frame();
+    assert_eq!(frame.stats.composition_submissions, 16);
+    assert_eq!(frame.stats.max_submission_layers, 16);
+    assert_eq!(frame.stats.max_submission_source_bytes, 1 << 20);
+    assert_eq!(frame.readback(|| Ok(())).unwrap(), expected);
+    assert!(app.rendered.is_empty());
+    assert_eq!(app.editor.publications(), 0);
+}

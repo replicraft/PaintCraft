@@ -206,6 +206,7 @@ impl App {
             let reservation = reservation.saturating_add(self.gpu.as_ref().map_or(0, |gpu| {
                 gpu.source_cache_admission_bytes()
                     .saturating_add(gpu.output_pool_admission_bytes())
+                    .saturating_add(gpu.submission_admission_bytes())
                     .saturating_add(if key.4 != 0 {
                         gpu.scaled_scratch_admission_bytes()
                     } else {
