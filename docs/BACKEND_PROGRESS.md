@@ -550,3 +550,38 @@ outstanding-driver lease, repair a hung driver or recreate the native presentati
 device. Those accounting/recovery limits are now explicit in the lifetime owner.
 Physical budgets, asynchronous services, native recovery/tails and broader features
 remain. T12/T13/T37 stay partial/in progress; the full roadmap remains active.
+
+## Thirty-eighth slice: admitted ownership through unobserved GPU work
+
+Runtime now pairs pool-local and shared byte leases behind one explicit resource
+group. Cancellation tokens observe it weakly, so ordinary clones do not pin completed
+jobs. `resource_lease()` lets actual external work retain both counters beyond task
+completion/result consumption or executor Drop. A pool with no pending handles can
+still report reserved bytes, and cannot exceed its local limit through premature
+result consumption. Original retained rejection and overflow diagnostics remain.
+
+Native render workers attach that group to synchronous PaintCraft GPU calls on
+their worker thread. Every submission captures scope ownership before dispatch.
+Successful waits clear the extra reference without a callback. Failure or unwind
+instead transfers ownership to queue completion observation. Nested scopes retain
+all enclosing charges and restore on error/panic, with a 16-scope bound. Ending
+the queue context releases callback ownership without a permanent cycle. Returned
+completed frames do not pin a task charge. See [the ownership contract](GPU_JOB_ADMISSION.md).
+No dependency, wire-policy change or throughput improvement is introduced.
+
+788 workspace tests pass (25 explicit ignores), with all 27 required Metal
+integration tests and 16 renderer unit tests, 222 required-GPU desktop tests,
+strict workspace/all-target Clippy, format/file limits and release desktop/CLI
+builds. Default/regional-batching 30-frame native startup smokes exit zero with empty
+logs. Real Metal tests cover failed invalid-index waits, unwind after submission,
+nested charges, explicit completion observation and queue teardown. Runtime tests
+verify both limits after result consumption, executor Drop/cancellation and cheap
+token release. A development run caught a changed overflow diagnostic; it was
+restored before the passing full validation, and the failed log remains retained.
+
+This closes declared native rendering ownership after an unobserved wait, rather
+than claiming the device stopped at timeout. Callbacks still need polling or context
+teardown; scopes neither propagate to spawned tasks nor intercept raw wgpu calls.
+Physical driver allocation/reclamation, global all-service budgets, asynchronous
+completion progress, scheduling fairness, native device recovery/tails and broader
+features remain. T12/T13/T37 stay partial/in progress; the full roadmap is active.

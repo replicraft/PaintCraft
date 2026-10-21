@@ -40,6 +40,10 @@ callbacks can run on a GPU polling thread while derived-resource locks are held.
 
 ## Verification and remaining scope
 
+[The validation record](validation/gpu-job-admission-2026-10-21/validation.json)
+pins committed source, commands, compressed logs and release hashes, including the
+preserved overflow-diagnostic development failure.
+
 Runtime tests verify that an explicitly retained group keeps both limits after
 result consumption, survives cancellation/executor Drop, and releases on final
 ownership Drop. Cancellation tokens alone do not pin resources. Existing overflow
@@ -52,7 +56,8 @@ Successful render/readback does not pin returned frames. Nesting-limit failure
 restores the next request's scope and all declared counters. Existing required-GPU
 desktop tests exercise the actual admitted worker integration.
 
-This closes declared in-flight admission ownership for native PaintCraft rendering;
-it is not an allocator/RSS ceiling, all-service physical GPU budget or priority
+This closes declared in-flight admission ownership for native compositor jobs;
+GUI presentation and persistent textures/caches remain separate resource classes.
+It is not an allocator/RSS ceiling, all-service physical GPU budget or priority
 scheduler. Physical hangs/reset, native device recreation, other adapters and
 input/display latency remain unqualified. No throughput improvement is claimed.

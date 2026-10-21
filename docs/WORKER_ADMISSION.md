@@ -36,9 +36,12 @@ fails and destroys the result/guard. Queued completion messages also own guards,
 so dropping the executor's job slots cannot expose their bytes prematurely. The
 wake notification runs after the computation has completed.
 
-Polling transfers a result to the caller and releases its transient job charge.
+Polling transfers a result to the caller and releases its ordinary job ownership.
+An explicitly retained [external GPU completion lease](GPU_JOB_ADMISSION.md) can
+keep both pool-local and shared bytes reserved after that boundary. Cancellation
+tokens observe that lease weakly; only `resource_lease()` extends ownership.
 Persistent ownership after that boundary belongs to document/history/cache
-services; it is not tracked by this in-flight authority. No decoded allocation
+services, while unobserved admitted GPU work remains in-flight. No decoded allocation
 reclamation claim follows from a reduced reservation counter.
 
 ## Retained rejection

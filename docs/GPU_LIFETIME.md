@@ -24,7 +24,8 @@ and after copying the final host result. Calls already executing and submitted G
 work cannot be preempted. Successful waits retain worker declarations through
 completion/result consumption; cancellation does not imply immediate resource release.
 Failed completion/mapping now [quarantines the shared epoch](GPU_COMPLETION.md)
-before returning an error. A timed-out wait cannot prove the GPU stopped; physical
+before returning an error. [Admitted GPU scopes](GPU_JOB_ADMISSION.md) keep both local
+and shared declarations alive through unobserved work's completion callback. A timed-out wait cannot prove the GPU stopped; physical
 outstanding-work accounting after that error remains unqualified. Retirement blocks
 future PaintCraft use without claiming driver reclamation or native device recovery.
 

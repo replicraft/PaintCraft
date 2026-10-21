@@ -49,9 +49,10 @@ actual managed-texture upload using the still-working presentation device. This
 tests coordinator routing, not physical adapter removal or automatic native recovery.
 
 A failed wait is not proof that submitted GPU work stopped. Quarantine prevents
-new PaintCraft submissions but does not establish physical resource reclamation or
-transfer an ended worker's declared charge to an outstanding-driver lease. Timeout
+new PaintCraft submissions. Native workers now [retain their paired admission](GPU_JOB_ADMISSION.md)
+through unobserved submissions' completion callbacks, including after task consumption
+or executor Drop. This preserves declared ownership without proving physical reclamation. Timeout
 retirement is policy-tested, not tested by deliberately hanging hardware. Outstanding
-work accounting, unexpected driver reset, native device reconstruction, all-service
+physical accounting, unexpected driver reset, native device reconstruction, all-service
 physical budgets and input/display tail latency remain open. No performance gain
 is claimed; the successful numerical path and rendering defaults are unchanged.

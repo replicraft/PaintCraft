@@ -1,0 +1,18 @@
+[
+  {
+    "directory": "/var/folders/k_/xqf_xh_1491ffqbnfjtfkbr40000gn/T/paintcraft-gpu-admission-smoke-csvsznoj",
+    "frames": 30,
+    "requested_policy": "default",
+    "exit_code": 0,
+    "log_bytes": 0,
+    "scope": "Native startup/presentation; resource retention and failure observation tested separately."
+  },
+  {
+    "directory": "/var/folders/k_/xqf_xh_1491ffqbnfjtfkbr40000gn/T/paintcraft-gpu-admission-smoke-p7b8i01z",
+    "frames": 30,
+    "requested_policy": "regions",
+    "exit_code": 0,
+    "log_bytes": 0,
+    "scope": "Native startup/presentation; resource retention and failure observation tested separately."
+  }
+]
