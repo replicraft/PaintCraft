@@ -51,7 +51,8 @@ tests coordinator routing, not physical adapter removal or automatic native reco
 A failed wait is not proof that submitted GPU work stopped. Quarantine prevents
 new PaintCraft submissions. Native workers now [retain their paired admission](GPU_JOB_ADMISSION.md)
 through unobserved submissions' completion callbacks, including after task consumption
-or executor Drop. This preserves declared ownership without proving physical reclamation. Timeout
+or executor Drop. A [window-owned observer](GPU_COMPLETION_PROGRESS.md) now polls
+those callbacks independently of compositor use and canvas repaints. This preserves declared ownership without proving physical reclamation. Timeout
 retirement is policy-tested, not tested by deliberately hanging hardware. Outstanding
 physical accounting, unexpected driver reset, native device reconstruction, all-service
 physical budgets and input/display tail latency remain open. No performance gain

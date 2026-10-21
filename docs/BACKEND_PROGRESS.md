@@ -585,3 +585,39 @@ teardown; scopes neither propagate to spawned tasks nor intercept raw wgpu calls
 Physical driver allocation/reclamation, global all-service budgets, asynchronous
 completion progress, scheduling fairness, native device recovery/tails and broader
 features remain. T12/T13/T37 stay partial/in progress; the full roadmap is active.
+
+## Thirty-ninth slice: completion progress independent of repaints
+
+Native windows now own a bounded completion observer independently of their active
+compositor. Successful waits retain the direct-release path. Unobserved submissions
+wake the worker, which requests nonblocking polling outside its status lock and
+sleeps between attempts; idle observers do not poll. Compositor retirement and CPU
+fallback keep the native observer alive. Final-owner Drop signals shutdown without
+joining the UI thread. Callback links are weak, avoiding context/observer cycles.
+See [the completion-progress contract](GPU_COMPLETION_PROGRESS.md).
+
+A new mismatch test exposed equal wgpu queue IDs across independent instances.
+Submissions now carry a private renderer identity shared with returned frames;
+only a matching observer tracks them. Nested scopes search outward for a match.
+This conservatively requires separate observers for separately built renderers.
+Real Metal tests cover failed invalid-index waits with nested charges, unwind,
+zero idle/successful polling, mismatched instances, worker shutdown and pending
+callback teardown. The failure test retires and drops the compositor while keeping
+a queue handle alive, excluding teardown as a substitute for completion observation.
+Native admitted-worker tests use the observer and native fallback preserves it.
+
+795 workspace tests pass (25 explicit ignores), with all 27 required Metal
+integration tests, 23 renderer unit tests and 222 required-GPU desktop tests.
+Strict workspace/all-target Clippy, format/file-length checks and release desktop/CLI
+builds pass. Default/regional-batching 30-frame native startup checks exit zero
+with empty logs; these do not qualify OS input/display tails. The
+[validation record](validation/gpu-completion-progress-2026-10-21/validation.json)
+pins source, commands, compressed logs and release executable hashes.
+
+This is declared admission progress, not asynchronous rendering, a physical-memory
+ceiling, protection against a stalled opaque driver call or device reconstruction.
+Observer startup/poll failure preserves callback ownership and requires external
+observation or teardown. The 16-worker bound is a service policy, not a measured
+optimum. No throughput gain or new rendering default is claimed. Physical budgets,
+priority/fairness, asynchronous transfers, native recovery/tails and broader feature
+work remain. T12/T13/T37 stay partial/in progress; the full roadmap remains active.

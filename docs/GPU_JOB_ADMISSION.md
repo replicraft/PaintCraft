@@ -16,8 +16,8 @@ limits therefore remain effective while external work owns a charge. A pool can
 have zero pending job handles and still report nonzero `reserved_bytes()`.
 
 `paintcraft_render::gpu::with_admission` scopes that ownership to synchronous
-PaintCraft GPU calls on the current thread. Native workers establish the scope
-inside their task, covering composition, scaled display and straight readback.
+PaintCraft GPU calls on the current thread. Native workers use `with_admission_progress` with a
+[window-owned observer](GPU_COMPLETION_PROGRESS.md) inside their task, covering composition, scaled display and straight readback.
 Scopes restore on normal return, error and unwind. Nested scopes retain every
 enclosing charge, with at most 16 nested scopes. They do not propagate to spawned
 threads/tasks or intercept arbitrary raw wgpu calls; those owners must explicitly
@@ -32,7 +32,9 @@ Returned completed textures do not retain the task charge just because they rema
 readable; persistent texture/cache ownership is a separate resource class.
 
 Callbacks need a queue submission or device/instance polling to make progress.
-Charges can remain reserved while a retired queue is not polled. Ending the queue
+Native window observers poll deferred completion without depending on repaints,
+including after compositor retirement. Plain scopes, unmatched observers and
+observer failures can still retain charges until external polling or teardown. Ending the queue
 context releases its callback ownership; this is not proof that opaque driver
 allocations were physically reclaimed. Callbacks release ownership only. Budget
 observers must enqueue nonblocking wakeups rather than reenter GPU rendering;
