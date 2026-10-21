@@ -11,6 +11,7 @@ impl Editor {
         self.poll_residency_maintenance();
         if self.maintenance.is_some()
             || self.pending_edit.is_some()
+            || self.waiting_dispatch.is_some()
             || self.file_barrier.is_some()
             || (self.waiting_edit.is_none()
                 && self

@@ -46,7 +46,9 @@ pub(super) fn prepare_batch(
 }
 impl Editor {
     pub(super) fn has_inflight_edit(&self) -> bool {
-        self.pending_edit.is_some() || self.waiting_edit.is_some()
+        self.pending_edit.is_some()
+            || self.waiting_edit.is_some()
+            || self.waiting_dispatch.is_some()
     }
     pub(crate) fn allocation_wait(&self) -> Option<&AllocationDenial> {
         self.waiting_edit

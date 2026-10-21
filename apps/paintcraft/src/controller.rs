@@ -10,6 +10,8 @@
 pub(crate) mod background;
 #[path = "controller/canvas.rs"]
 mod canvas;
+#[path = "controller/dispatch.rs"]
+mod dispatch;
 #[path = "controller/history.rs"]
 mod history;
 #[path = "controller/layers.rs"]
@@ -75,6 +77,7 @@ pub struct Editor {
     file_barrier: Option<Uuid>,
     editing: Option<background::Service>,
     pending_edit: Option<background::Pending>,
+    waiting_dispatch: Option<dispatch::Waiting>,
     waiting_edit: Option<retry::Waiting>,
     maintenance: Option<background::Pending>,
     residency_attempt: Option<((Uuid, u64), std::time::Instant)>,
@@ -149,6 +152,7 @@ impl Editor {
             file_barrier: None,
             editing: None,
             pending_edit: None,
+            waiting_dispatch: None,
             waiting_edit: None,
             maintenance: None,
             residency_attempt: None,
@@ -465,8 +469,9 @@ impl Editor {
         }
         let before = self.publications();
         self.poll_edit();
+        self.retry_waiting_dispatch();
         self.retry_waiting_edit();
-        if self.waiting_edit.is_some() {
+        if self.waiting_edit.is_some() || self.waiting_dispatch.is_some() {
             return self.publications() - before;
         }
         if !self.outbox.is_empty() {
@@ -481,7 +486,7 @@ impl Editor {
         if self.file_barrier.is_some() {
             return self.publications() - before;
         }
-        while self.pending_edit.is_none() {
+        while !self.has_inflight_edit() {
             if let Some(background::Queued::FileBarrier(_)) = self.actions.front() {
                 if let Some(background::Queued::FileBarrier(id)) = self.actions.pop_front() {
                     self.file_barrier = Some(id);
@@ -515,7 +520,7 @@ impl Editor {
                 .as_ref()
                 .and_then(|_| background::preview(&action));
             self.execute(action);
-            if self.pending_edit.is_none() {
+            if !self.has_inflight_edit() {
                 self.publication_preview = None;
             }
         }

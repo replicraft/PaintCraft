@@ -122,10 +122,32 @@ impl Service {
         empty: &'static str,
         target_alias: Option<&'static str>,
     ) -> Result<Pending> {
+        self.submit_retained(Box::new(task), done, empty, target_alias)
+            .map_err(|rejected| rejected.error)
+    }
+    pub(super) fn submit_retained(
+        &self,
+        task: dispatch::Task,
+        done: String,
+        empty: &'static str,
+        target_alias: Option<&'static str>,
+    ) -> std::result::Result<Pending, dispatch::Rejected> {
         let context = self.context.clone();
-        let handle = self
-            .lock()?
-            .submit(PREPARATION_CHARGE, task, move || context.request_repaint())?;
+        let mut executor = match self.lock() {
+            Ok(executor) => executor,
+            Err(error) => return Err(dispatch::Rejected { error, task }),
+        };
+        let handle = match executor
+            .submit_retained(PREPARATION_CHARGE, task, move || context.request_repaint())
+        {
+            Ok(handle) => handle,
+            Err(rejected) => {
+                return Err(dispatch::Rejected {
+                    error: rejected.error,
+                    task: rejected.task,
+                });
+            }
+        };
         Ok(Pending {
             service: self.clone(),
             handle,
@@ -202,7 +224,9 @@ impl Editor {
             }
             self.status = "Cancelling edit…".into();
         }
-        if self.waiting_edit.take().is_some() && self.pending_edit.is_none() {
+        let waiting = self.waiting_edit.take().is_some();
+        let dispatch = self.waiting_dispatch.take().is_some();
+        if (waiting || dispatch) && self.pending_edit.is_none() {
             self.status = "Edit cancelled".into();
         }
         self.publication_preview = None;
@@ -219,31 +243,23 @@ impl Editor {
             .expect("editing service")
             .residency
             .clone();
-        let result = self.session.preparation().and_then(|preparation| {
-            self.editing
-                .as_ref()
-                .expect("background editing enabled")
-                .submit(
-                    move |cancellation| {
-                        retry::prepare_batch(
-                            preparation,
-                            Arc::new(batch),
-                            paintcraft_raster::Admission::with_residency(
-                                paintcraft_editor::execute::STAGED_PIXELS_MAX,
-                                residency,
-                            ),
-                            || cancellation.check(),
-                        )
-                    },
-                    done.to_owned(),
-                    "",
-                    target_alias,
+        let task = self.session.preparation().map(|preparation| {
+            Box::new(move |cancellation: Cancellation| {
+                retry::prepare_batch(
+                    preparation,
+                    Arc::new(batch),
+                    paintcraft_raster::Admission::with_residency(
+                        paintcraft_editor::execute::STAGED_PIXELS_MAX,
+                        residency,
+                    ),
+                    || cancellation.check(),
                 )
+            }) as dispatch::Task
         });
-        self.install_pending(result);
+        self.dispatch_initial(task, done.to_owned(), "", target_alias);
     }
-    /// Build the validated stroke/text command and history privately, rather
-    /// than expanding pointer/glyph data into JSON values during UI dispatch.
+    /// Build tool/font commands on the admitted worker, retaining the captured plan
+    /// unchanged if shared worker capacity disappears before submission.
     pub(super) fn start_tool_plan(&mut self, preview: Preview, done: &str) {
         let plan = self.prepare_preview(Some(preview));
         let residency = self
@@ -252,65 +268,53 @@ impl Editor {
             .expect("editing service")
             .residency
             .clone();
-        let result = self.session.preparation().and_then(|preparation| {
-            self.editing
-                .as_ref()
-                .expect("background editing enabled")
-                .submit(
-                    move |cancellation| {
-                        let check = || cancellation.check();
-                        match plan.build(check)? {
-                            Some(batch) => retry::prepare_batch(
-                                preparation,
-                                Arc::new(batch),
-                                paintcraft_raster::Admission::with_residency(
-                                    paintcraft_editor::execute::STAGED_PIXELS_MAX,
-                                    residency,
-                                ),
-                                check,
-                            ),
-                            None => preparation.no_change(check).map(Completion::Edit),
-                        }
-                    },
-                    done.into(),
-                    "",
-                    None,
-                )
+        let task = self.session.preparation().map(|preparation| {
+            Box::new(move |cancellation: Cancellation| {
+                let check = || cancellation.check();
+                match plan.build(check)? {
+                    Some(batch) => retry::prepare_batch(
+                        preparation,
+                        Arc::new(batch),
+                        paintcraft_raster::Admission::with_residency(
+                            paintcraft_editor::execute::STAGED_PIXELS_MAX,
+                            residency,
+                        ),
+                        check,
+                    ),
+                    None => preparation.no_change(check).map(Completion::Edit),
+                }
+            }) as dispatch::Task
         });
-        self.install_pending(result);
+        self.dispatch_initial(task, done.into(), "", None);
     }
     /// Returns false only for controllers intentionally using synchronous mode.
     pub(super) fn start_navigation(&mut self, request: NavigationRequest) -> bool {
-        let Some(service) = self.editing.clone() else {
+        if self.editing.is_none() {
             return false;
-        };
+        }
         self.cancel_gesture();
         let (done, empty) = match request {
             NavigationRequest::Undo => ("Undo", "Nothing to undo"),
             NavigationRequest::Redo => ("Redo", "Nothing to redo"),
             NavigationRequest::Seek { .. } => ("History restored", "History unchanged"),
         };
-        let result = self.session.preparation().and_then(|preparation| {
-            service.submit(
-                move |cancellation| {
-                    let check = || cancellation.check();
-                    match request {
-                        NavigationRequest::Undo => preparation.undo(check),
-                        NavigationRequest::Redo => preparation.redo(check),
-                        NavigationRequest::Seek { ticket, history_id } => {
-                            preparation.navigate_history(ticket, history_id, check)
-                        }
+        let task = self.session.preparation().map(|preparation| {
+            Box::new(move |cancellation: Cancellation| {
+                let check = || cancellation.check();
+                match request {
+                    NavigationRequest::Undo => preparation.undo(check),
+                    NavigationRequest::Redo => preparation.redo(check),
+                    NavigationRequest::Seek { ticket, history_id } => {
+                        preparation.navigate_history(ticket, history_id, check)
                     }
-                    .map(Completion::Navigation)
-                },
-                done.into(),
-                empty,
-                None,
-            )
+                }
+                .map(Completion::Navigation)
+            }) as dispatch::Task
         });
-        self.install_pending(result);
+        self.dispatch_initial(task, done.into(), empty, None);
         true
     }
+    #[cfg(test)]
     fn install_pending(&mut self, result: Result<Pending>) {
         match result {
             Ok(pending) => {
