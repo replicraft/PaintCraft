@@ -19,6 +19,7 @@ use tile::Tile;
 use paintcraft_core::types::{Error, ErrorCode, Rect, Result, Rgba};
 
 mod rows;
+mod uniform;
 pub use rows::RowSpan;
 mod leases;
 pub use leases::TileLease;
