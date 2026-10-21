@@ -515,3 +515,38 @@ slow controls, calibration, memory and interrupted evidence separately.
 Asynchronous transfers/completion, sparse GPU atlases, native device reconstruction,
 physical budgets, scheduling fairness, native pressure/tails and broader tool,
 format, frontend and reference work remain. T12/T13/T21/T37 remain partial/in progress.
+
+## Thirty-seventh slice: completion failure quarantine
+
+All GPU completion waits now share a failure boundary. Poll timeout/invalid-index
+errors and readback callback/mapping failures retire the shared device epoch before
+returning an error. A successful wait followed by cancellation still leaves the
+device usable. Render entry-point errors clear source/pool retention; independently
+retained frame failures invalidate logical use immediately, with renderer-held
+storage cleared on its next rejected request or Drop. Old frames and later calls
+cannot use that lifetime. No numerical policy, command wire data or dependency
+changes. See [the completion contract](GPU_COMPLETION.md).
+
+A real Metal test passes a second device's invalid submission index to the shared
+wait boundary, verifying actual poll failure without depending on a loss callback.
+It checks old-frame rejection, source/private-pool cleanup on the next request,
+unchanged CPU pixels and fresh-device reconstruction. Pure policy tests cover
+timeout and callback timeout/disconnection without claiming a physically hung GPU.
+A native-renderer test retires an epoch after registration, verifies unchanged
+editor publication identity and exact CPU output, then completes managed upload on
+the still-working presentation device. Existing real-GPU cancellation/retry tests
+remain green.
+
+780 workspace tests pass (25 explicit ignores), the 27 required Metal integration
+tests plus 11 renderer unit tests pass, and all 222 required-GPU desktop library
+tests pass. Strict workspace/all-target Clippy, format/file limits, release desktop
+and CLI builds and default/experimental 30-frame native startup smokes pass.
+No performance experiment is warranted for this error-path correctness fix, and
+no throughput gain is claimed.
+
+A failed wait does not prove submitted work stopped. Quarantine prevents further
+PaintCraft submissions; it does not transfer an ended worker charge into a physical
+outstanding-driver lease, repair a hung driver or recreate the native presentation
+device. Those accounting/recovery limits are now explicit in the lifetime owner.
+Physical budgets, asynchronous services, native recovery/tails and broader features
+remain. T12/T13/T37 stay partial/in progress; the full roadmap remains active.

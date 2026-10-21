@@ -1,0 +1,18 @@
+[
+  {
+    "directory": "/var/folders/k_/xqf_xh_1491ffqbnfjtfkbr40000gn/T/paintcraft-completion-smoke-mg215v72",
+    "requested_batch_policy": "unset",
+    "frames": 30,
+    "exit_code": 0,
+    "log_bytes": 0,
+    "scope": "Native startup/presentation only; completion failure and exact pixels tested separately."
+  },
+  {
+    "directory": "/var/folders/k_/xqf_xh_1491ffqbnfjtfkbr40000gn/T/paintcraft-completion-smoke-hnbz78rh",
+    "requested_batch_policy": "regions",
+    "frames": 30,
+    "exit_code": 0,
+    "log_bytes": 0,
+    "scope": "Native startup/presentation only; completion failure and exact pixels tested separately."
+  }
+]

@@ -31,6 +31,9 @@ repair a hung driver.
 
 ## Executed evidence and limits
 
+[The validation record](validation/gpu-completion-2026-10-21/validation.json) pins
+the committed source, commands, exact compressed logs and release executable hashes.
+
 A real Metal test obtains an invalid submission index from a second device and
 uses it in the shared wait boundary. Unlike explicit destruction, this exercises
 an actual poll error without relying on a device-lost callback. It verifies epoch
