@@ -89,6 +89,38 @@ impl Admission {
             allocation_scope: Some(Arc::new(std::sync::Mutex::new(tile::Scope::default()))),
         }
     }
+    /// Reserve a complete known set of fresh tile allocations before materialization.
+    /// This validates but does not consume the cumulative staged-pixel allowance.
+    /// Existing explicit reservations are checked rather than silently expanded.
+    pub fn reserve_tiles(&mut self, tiles: u64) -> Result<()> {
+        let pixels = tiles
+            .checked_mul(TILE_PIXELS as u64)
+            .ok_or_else(|| Error::new(ErrorCode::ResourceLimit, "tile plan overflow"))?;
+        if pixels > self.remaining_pixels {
+            return Err(Error::new(
+                ErrorCode::ResourceLimit,
+                "staged pixel budget exceeded",
+            ));
+        }
+        let bytes = pixels
+            .checked_mul(4)
+            .ok_or_else(|| Error::new(ErrorCode::ResourceLimit, "tile plan byte overflow"))?;
+        let result = if let Some(reservation) = &self.reservation {
+            reservation.ensure_capacity(bytes)
+        } else if bytes == 0 {
+            Ok(())
+        } else {
+            self.residency
+                .reserve_capacity(bytes)
+                .map(|reservation| self.reservation = Some(reservation))
+        };
+        result.map_err(|error| {
+            error.with_allocation_requirement(
+                paintcraft_core::types::resources::AllocationClass::DecodedTiles,
+                bytes,
+            )
+        })
+    }
     /// Restrict an explicit admission to the session's configured staged allowance.
     pub fn constrain_pixels(mut self, limit_pixels: u64) -> Self {
         self.remaining_pixels = self.remaining_pixels.min(limit_pixels);

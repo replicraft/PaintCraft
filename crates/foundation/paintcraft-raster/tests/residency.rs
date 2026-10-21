@@ -327,3 +327,27 @@ fn reservation_exhaustion_is_atomic_and_failed_materialization_returns_capacity(
     drop(tile);
     assert_eq!(budget.usage().reserved, 0);
 }
+
+#[test]
+fn full_tile_plan_admits_once_without_double_charging_staged_pixels_or_expanding_explicit_pools() {
+    let budget = SharedBudget::new(3 * BYTES);
+    let blocker = budget.reserve(BYTES).unwrap();
+    let mut admission = Admission::with_residency(2 * 65_536, budget.clone());
+    admission.reserve_tiles(2).unwrap();
+    assert_eq!(budget.usage().reserved, 3 * BYTES);
+    assert!(budget.reserve(1).is_err());
+    let a = TileLease::materialize(Rgba::TRANSPARENT, &mut admission, |_| Ok(())).unwrap();
+    let b = TileLease::materialize(Rgba::TRANSPARENT, &mut admission, |_| Ok(())).unwrap();
+    let error = admission.reserve_tiles(1).unwrap_err();
+    assert!(error.allocation_denial().is_none()); // Cumulative staged cap still applies.
+    drop((a, b, admission, blocker));
+    assert_eq!(budget.usage().reserved, 0);
+    let mut admission =
+        Admission::with_reserved_residency(2 * 65_536, budget.reserve_capacity(BYTES).unwrap());
+    let error = admission.reserve_tiles(2).unwrap_err();
+    assert_eq!(
+        error.allocation_denial().unwrap().required_bytes(),
+        2 * BYTES
+    );
+    assert_eq!(budget.usage().reserved, BYTES);
+}
