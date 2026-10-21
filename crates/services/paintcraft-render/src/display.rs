@@ -87,9 +87,9 @@ pub struct DisplayFrame {
     pub stats: DisplayStats,
 }
 #[derive(Clone, Copy, Default)]
-struct Sum([u64; 4]);
+pub(crate) struct Sum(pub(crate) [u64; 4]);
 impl Sum {
-    fn add(&mut self, color: Rgba, count: u64) {
+    pub(crate) fn add(&mut self, color: Rgba, count: u64) {
         let alpha = u64::from(color.a()) * count;
         for (sum, color) in self.0[..3].iter_mut().zip(color.0) {
             *sum += u64::from(color) * alpha;
@@ -113,7 +113,11 @@ impl Sum {
 
 /// No layer is downsampled separately: this proves the complete ordered composite
 /// uniform, or requests ordinary exact native composition for the unknown region.
-fn uniform(doc: &Document, rect: Rect, check: &dyn Fn() -> Result<()>) -> Result<Option<Rgba>> {
+pub(crate) fn uniform(
+    doc: &Document,
+    rect: Rect,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Option<Rgba>> {
     let mut color = Rgba::TRANSPARENT;
     for layer in doc.layers_in_order() {
         check()?;

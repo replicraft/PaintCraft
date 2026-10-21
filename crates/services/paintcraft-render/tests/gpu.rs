@@ -659,3 +659,6 @@ mod regions;
 
 #[path = "gpu/output_pool.rs"]
 mod output_pool;
+
+#[path = "gpu/scaled.rs"]
+mod scaled;

@@ -7,6 +7,7 @@ mod output;
 mod presentation;
 pub use output::DEFAULT_OUTPUT_POOL_BYTES;
 mod readback;
+mod scaled;
 mod sources;
 pub use epoch::DeviceEpoch;
 pub use presentation::GpuTextureFrame;
@@ -16,7 +17,7 @@ pub use sources::{GpuFrame, GpuRenderStats, SourceCacheLimits, SourceCacheUsage}
 use paintcraft_core::types::{Error, ErrorCode, Rect, Result};
 use paintcraft_document::Document;
 use std::{
-    sync::{Mutex, mpsc},
+    sync::{Mutex, OnceLock, mpsc},
     time::Duration,
 };
 use wgpu::util::DeviceExt as _;
@@ -49,6 +50,8 @@ pub struct GpuRenderer {
     queue: wgpu::Queue,
     pipeline: wgpu::ComputePipeline,
     presentation: Option<wgpu::ComputePipeline>,
+    scaled: OnceLock<scaled::Pipelines>,
+    scaled_edge: u32,
     epoch: DeviceEpoch,
     sources: Mutex<SourceCache>,
     source_admission_bytes: u64,
@@ -137,6 +140,8 @@ impl GpuRenderer {
             queue,
             pipeline,
             presentation,
+            scaled: OnceLock::new(),
+            scaled_edge: 32,
             epoch,
             sources: Mutex::new(SourceCache::new(limits)?),
             output: Mutex::new(output::Pool::new(output_pool_bytes)),
@@ -146,6 +151,25 @@ impl GpuRenderer {
                 .saturating_add((limits.metadata_bytes as u64).saturating_mul(3)),
         })
     }
+    /// Internal output tiling changes work/residency, never the sampling grid or pixels.
+    /// Both bounded configurations are exercised by native adoption comparisons.
+    pub fn with_scaled_tile_edge(mut self, edge: u32) -> Result<Self> {
+        if !matches!(edge, 32 | 64) {
+            return Err(Error::new(
+                ErrorCode::InputSchema,
+                "scaled tile edge must be 32 or 64",
+            ));
+        }
+        self.scaled_edge = edge;
+        Ok(self)
+    }
+
+    /// Bounded native block, wide accumulators/words and transfer bookkeeping.
+    /// Per-output tile plans are covered by the caller's output-area declaration.
+    pub fn scaled_scratch_admission_bytes(&self) -> u64 {
+        2 << 20
+    }
+
     pub fn epoch(&self) -> DeviceEpoch {
         self.epoch.clone()
     }

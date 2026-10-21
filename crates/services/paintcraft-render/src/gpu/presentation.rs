@@ -2,18 +2,22 @@
 use super::*;
 #[derive(Debug)]
 pub struct GpuTextureFrame {
-    region: Rect,
-    texture: wgpu::Texture,
-    view: wgpu::TextureView,
-    device: wgpu::Device,
-    queue: wgpu::Queue,
-    epoch: DeviceEpoch,
+    pub(super) region: Rect,
+    pub(super) level: u8,
+    pub(super) texture: wgpu::Texture,
+    pub(super) view: wgpu::TextureView,
+    pub(super) device: wgpu::Device,
+    pub(super) queue: wgpu::Queue,
+    pub(super) epoch: DeviceEpoch,
     pub stats: GpuRenderStats,
 }
 impl GpuTextureFrame {
     /// Half-open document-space bounds represented by this texture.
     pub fn region(&self) -> Rect {
         self.region
+    }
+    pub fn level(&self) -> u8 {
+        self.level
     }
     pub fn size(&self) -> [u32; 2] {
         [self.texture.width(), self.texture.height()]
@@ -177,6 +181,7 @@ impl GpuRenderer {
             stats.retained = cache.usage();
             Ok(GpuTextureFrame {
                 region,
+                level: 0,
                 texture,
                 view,
                 device: self.device.clone(),
