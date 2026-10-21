@@ -1,0 +1,22 @@
+{
+  "utc": "2026-10-21T15:05:36.992783+00:00",
+  "platform": "macOS-14.7.2-arm64-arm-64bit-Mach-O",
+  "binaries": {
+    "planned_commit": "f23e5c3",
+    "planned_sha256": "6dd640a7082a2b0f89395716d0792e85e92b7da5242d6ec93c1cc8402ecde624",
+    "baseline_commit": "d479023",
+    "baseline_sha256": "50f335030544cd4f93bf137d1c338eb0a2d180fbbe6968ad461a0fa57ff7eb5f",
+    "build_modes": {
+      "baseline": "cargo build --release --locked -p paintcraft-cli",
+      "planned": "cargo build --release --locked -p paintcraft-cli; workspace entrypoint mtimes refreshed; contents unchanged"
+    }
+  },
+  "input_sha256": "3a9fadd2b402440be058dfd0324299c7f031d510596f9f18dbf8da604ff746ec",
+  "rustc": "rustc 1.99.0 (b940084d7 2026-09-28)\nbinary: rustc\ncommit-hash: b940084d7eb6a299eb4bfeb8e34901bc051e7ac4\ncommit-date: 2026-09-28\nhost: aarch64-apple-darwin\nrelease: 1.99.0\nLLVM version: 23.1.1\n",
+  "hyperfine": "hyperfine 2.0.0",
+  "warmups": 3,
+  "runs": 20,
+  "sessions": 3,
+  "operations_per_batch": 100,
+  "scope": "Matched CPU-only real CLI apply: acquire/hash PCND, parse/validate atomic batch, execute, history publication, native encode/atomic replacement. Baseline d479023 versus planned f23e5c3; no GUI latency claim."
+}

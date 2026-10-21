@@ -1,0 +1,73 @@
+Benchmarking paint_plan/horizontal_pencil/incremental
+Benchmarking paint_plan/horizontal_pencil/incremental: Warming up for 300.00 ms
+Benchmarking paint_plan/horizontal_pencil/incremental: Collecting 20 samples in estimated 1.0046 s (13k iterations)
+Benchmarking paint_plan/horizontal_pencil/incremental: Analyzing
+paint_plan/horizontal_pencil/incremental
+                        time:   [76.410 µs 77.812 µs 79.059 µs]
+                        change: [+0.6616% +2.5837% +4.5642%] (p = 0.01 < 0.05)
+                        Change within noise threshold.
+Benchmarking paint_plan/horizontal_pencil/planned
+Benchmarking paint_plan/horizontal_pencil/planned: Warming up for 300.00 ms
+Benchmarking paint_plan/horizontal_pencil/planned: Collecting 20 samples in estimated 1.0071 s (22k iterations)
+Benchmarking paint_plan/horizontal_pencil/planned: Analyzing
+paint_plan/horizontal_pencil/planned
+                        time:   [39.717 µs 42.016 µs 44.100 µs]
+                        change: [+2.4695% +7.5775% +11.717%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 1 outliers among 20 measurements (5.00%)
+  1 (5.00%) low mild
+Benchmarking paint_plan/diagonal_pencil/incremental
+Benchmarking paint_plan/diagonal_pencil/incremental: Warming up for 300.00 ms
+Benchmarking paint_plan/diagonal_pencil/incremental: Collecting 20 samples in estimated 1.0127 s (9240 iterations)
+Benchmarking paint_plan/diagonal_pencil/incremental: Analyzing
+paint_plan/diagonal_pencil/incremental
+                        time:   [69.151 µs 74.027 µs 78.937 µs]
+                        change: [+0.9285% +6.6180% +12.681%] (p = 0.05 > 0.05)
+                        No change in performance detected.
+Benchmarking paint_plan/diagonal_pencil/planned
+Benchmarking paint_plan/diagonal_pencil/planned: Warming up for 300.00 ms
+Benchmarking paint_plan/diagonal_pencil/planned: Collecting 20 samples in estimated 1.0141 s (13k iterations)
+Benchmarking paint_plan/diagonal_pencil/planned: Analyzing
+paint_plan/diagonal_pencil/planned
+                        time:   [73.807 µs 75.808 µs 78.229 µs]
+                        change: [−4.2722% +1.6010% +7.7623%] (p = 0.61 > 0.05)
+                        No change in performance detected.
+Benchmarking paint_plan/brush_runs/incremental
+Benchmarking paint_plan/brush_runs/incremental: Warming up for 300.00 ms
+Benchmarking paint_plan/brush_runs/incremental: Collecting 20 samples in estimated 1.0097 s (6090 iterations)
+Benchmarking paint_plan/brush_runs/incremental: Analyzing
+paint_plan/brush_runs/incremental
+                        time:   [154.79 µs 161.40 µs 171.64 µs]
+                        change: [+4.5329% +8.7316% +13.165%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 1 outliers among 20 measurements (5.00%)
+  1 (5.00%) high severe
+Benchmarking paint_plan/brush_runs/planned
+Benchmarking paint_plan/brush_runs/planned: Warming up for 300.00 ms
+Benchmarking paint_plan/brush_runs/planned: Collecting 20 samples in estimated 1.0073 s (5670 iterations)
+Benchmarking paint_plan/brush_runs/planned: Analyzing
+paint_plan/brush_runs/planned
+                        time:   [172.02 µs 174.68 µs 177.96 µs]
+                        change: [+6.2441% +8.4225% +10.570%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Benchmarking paint_plan/partial_eraser_runs/incremental
+Benchmarking paint_plan/partial_eraser_runs/incremental: Warming up for 300.00 ms
+Benchmarking paint_plan/partial_eraser_runs/incremental: Collecting 20 samples in estimated 1.4120 s (630 iterations)
+Benchmarking paint_plan/partial_eraser_runs/incremental: Analyzing
+paint_plan/partial_eraser_runs/incremental
+                        time:   [2.2400 ms 2.2492 ms 2.2595 ms]
+                        change: [−0.0269% +1.0465% +2.0638%] (p = 0.06 > 0.05)
+                        No change in performance detected.
+Found 1 outliers among 20 measurements (5.00%)
+  1 (5.00%) high mild
+Benchmarking paint_plan/partial_eraser_runs/planned
+Benchmarking paint_plan/partial_eraser_runs/planned: Warming up for 300.00 ms
+Benchmarking paint_plan/partial_eraser_runs/planned: Collecting 20 samples in estimated 1.0095 s (8190 iterations)
+Benchmarking paint_plan/partial_eraser_runs/planned: Analyzing
+paint_plan/partial_eraser_runs/planned
+                        time:   [124.42 µs 129.31 µs 139.24 µs]
+                        change: [+4.5818% +8.7087% +14.376%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 1 outliers among 20 measurements (5.00%)
+  1 (5.00%) high severe
+

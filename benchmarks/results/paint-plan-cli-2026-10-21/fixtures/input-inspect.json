@@ -1,0 +1,49 @@
+{
+  "assessment": {
+    "assessment_only": true,
+    "capability_generation": "0",
+    "container_version": 1,
+    "document_schema": "paintcraft.document/v1",
+    "migration_id": null,
+    "mode": "editable",
+    "profile": "paintcraft.native/zip1-document1",
+    "reasons": [],
+    "required_features": [
+      "raster.rgba8",
+      "canvas.finite",
+      "layers.flat"
+    ],
+    "schema": "paintcraft.open-assessment/v1",
+    "source_sha256": "3a9fadd2b402440be058dfd0324299c7f031d510596f9f18dbf8da604ff746ec"
+  },
+  "document": {
+    "canvas": {
+      "height": 1000,
+      "width": 1000
+    },
+    "document_id": "9b741aad-fc30-52ad-b4ed-fa92f5cf6249",
+    "layers": [
+      {
+        "default_pixel": "#25135300",
+        "height": 1000,
+        "id": "732d846b-f60b-5fcc-930c-f5942e42c5b8",
+        "name": "Background",
+        "opacity_u8": 255,
+        "origin": {
+          "x": 0,
+          "y": 0
+        },
+        "visible": true,
+        "width": 1000
+      }
+    ],
+    "policy": "paintcraft.core/default-v1",
+    "state_id": "72ad6851-9dab-5c63-b7fe-bcce769197b6"
+  },
+  "input_sha256": "3a9fadd2b402440be058dfd0324299c7f031d510596f9f18dbf8da604ff746ec",
+  "schema": "paintcraft.inspect/v1",
+  "ticket": {
+    "publication_epoch": "0",
+    "state_id": "72ad6851-9dab-5c63-b7fe-bcce769197b6"
+  }
+}

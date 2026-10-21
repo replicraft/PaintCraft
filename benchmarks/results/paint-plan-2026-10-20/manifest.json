@@ -1,0 +1,29 @@
+{
+  "utc": "2026-10-21T05:37:41.817121+00:00",
+  "platform": "macOS-14.7.2-arm64-arm-64bit-Mach-O",
+  "head_before_commits": "d4790232c8a5ba423256e4267938d5f1d2de3215",
+  "rustc": "rustc 1.99.0 (b940084d7 2026-09-28)\nbinary: rustc\ncommit-hash: b940084d7eb6a299eb4bfeb8e34901bc051e7ac4\ncommit-date: 2026-09-28\nhost: aarch64-apple-darwin\nrelease: 1.99.0\nLLVM version: 23.1.1\n",
+  "hyperfine": "hyperfine 2.0.0",
+  "binary": "/Users/dielpi/Desktop/replicraft/PaintCraft/target/release/deps/paint_plan-ec446c91a0e3c090",
+  "binary_sha256": "c45e12388e4b0e3b52ab5e865e2dc22b2e5f0bd14e499e54ad22a151b54bcddc",
+  "sources_sha256": {
+    "Cargo.toml": "aee92b45b611337fb628d1e798d0ae3c396b312394fdee7a7ffa8bca5e586534",
+    "Cargo.lock": "d4b25b53e492659fba9b5de31acad248121c4ef55b3b5347d33b5af3a63ecc6b",
+    "crates/foundation/paintcraft-raster/Cargo.toml": "8d2d365dec9d5a96aa5a5b8a1acda34986fd6a677d4e579cf3ec5d69d2c7837d",
+    "crates/foundation/paintcraft-raster/src/raster.rs": "8d1e2e7c79b523f5d289aca7d6c5a4c2483e3848e598ccb7435c940d21f4b482",
+    "crates/foundation/paintcraft-raster/src/raster/paint.rs": "2c11aa52fb17697b233050b7712e901af3b71dca4316c3240aa8c6812c7036e3",
+    "crates/foundation/paintcraft-raster/src/raster/tile.rs": "3f7857663414eb6c9d061bc06ed1bc01949c313f8505944aad5cebd471b8cd71",
+    "crates/foundation/paintcraft-raster/benches/paint_plan.rs": "95de299489def46bbc61c99d951cf7ff9e805bb010f14763b4c4dc59c180bb34"
+  },
+  "scope": "Same-source direct incremental raster APIs versus PaintPlan, including descriptor construction, allocation, replay and destruction; not a parent desktop binary or input latency.",
+  "source_overrides": {
+    "crates/foundation/paintcraft-raster/src/raster/paint.rs": "prototype/paint.rs"
+  },
+  "outcome": "Superseded prototype: retains slower diagonal-pencil results; see the grouped-lookup follow-up. No measurements excluded.",
+  "cpu_brand": {
+    "exit_code": 1,
+    "stdout": "",
+    "stderr": "sysctl: sysctl fmt -1 1024 1: Operation not permitted"
+  },
+  "reproduction_base_commit": "f23e5c36eef66981f1f71bbc26e36f9c12d833f7"
+}

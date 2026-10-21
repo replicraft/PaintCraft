@@ -1,0 +1,10 @@
+Benchmark 1: /private/tmp/paintcraft-cli-plans-t_3_z33d/incremental-cli --json apply /private/tmp/paintcraft-cli-plans-t_3_z33d/input.pcnd --operations /private/tmp/paintcraft-cli-plans-t_3_z33d/smooth_eraser.json --output /private/tmp/paintcraft-cli-plans-t_3_z33d/incremental-smooth_eraser.pcnd --overwrite --expect-input-sha256 3a9fadd2b402440be058dfd0324299c7f031d510596f9f18dbf8da604ff746ec (20 runs)
+                mean     ±       σ          min     …     max
+  Wall Time     38.2 ms  ±     1.7 ms      35.0 ms  …    41.7 ms
+  Memory         8.2 MiB ±     0.1 MiB      8.0 MiB …     8.6 MiB
+ 
+Benchmark 2: /private/tmp/paintcraft-cli-plans-t_3_z33d/planned-cli --json apply /private/tmp/paintcraft-cli-plans-t_3_z33d/input.pcnd --operations /private/tmp/paintcraft-cli-plans-t_3_z33d/smooth_eraser.json --output /private/tmp/paintcraft-cli-plans-t_3_z33d/planned-smooth_eraser.pcnd --overwrite --expect-input-sha256 3a9fadd2b402440be058dfd0324299c7f031d510596f9f18dbf8da604ff746ec (20 runs)
+                mean     ±       σ          min     …     max
+  Wall Time     22.7 ms  ±     0.7 ms      21.7 ms  …    23.9 ms           -40.5%  (1.7x faster)
+  Memory         8.1 MiB ±     0.1 MiB      8.0 MiB …     8.4 MiB           -0.9%
+ 

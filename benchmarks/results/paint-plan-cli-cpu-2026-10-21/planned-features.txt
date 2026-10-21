@@ -1,0 +1,7 @@
+paintcraft-render v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-render)
+└── paintcraft-render feature "default"
+    ├── paintcraft-cli v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/apps/paintcraft-cli)
+    │   └── paintcraft-cli feature "default" (command-line)
+    └── paintcraft-formats v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-formats)
+        └── paintcraft-formats feature "default"
+            └── paintcraft-cli v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/apps/paintcraft-cli) (*)

@@ -1,0 +1,10 @@
+Benchmark 1: /private/tmp/paintcraft-cli-plans-t_3_z33d/incremental-cli --json apply /private/tmp/paintcraft-cli-plans-t_3_z33d/input.pcnd --operations /private/tmp/paintcraft-cli-plans-t_3_z33d/diagonal_pencil.json --output /private/tmp/paintcraft-cli-plans-t_3_z33d/incremental-diagonal_pencil.pcnd --overwrite --expect-input-sha256 3a9fadd2b402440be058dfd0324299c7f031d510596f9f18dbf8da604ff746ec (20 runs)
+                mean     ±       σ          min     …     max
+  Wall Time     28.5 ms  ±     1.7 ms      26.9 ms  …    33.8 ms
+  Memory         9.0 MiB ±     0.2 MiB      8.7 MiB …     9.5 MiB
+ 
+Benchmark 2: /private/tmp/paintcraft-cli-plans-t_3_z33d/planned-cli --json apply /private/tmp/paintcraft-cli-plans-t_3_z33d/input.pcnd --operations /private/tmp/paintcraft-cli-plans-t_3_z33d/diagonal_pencil.json --output /private/tmp/paintcraft-cli-plans-t_3_z33d/planned-diagonal_pencil.pcnd --overwrite --expect-input-sha256 3a9fadd2b402440be058dfd0324299c7f031d510596f9f18dbf8da604ff746ec (20 runs)
+                mean     ±       σ          min     …     max
+  Wall Time     29.6 ms  ±     1.9 ms      27.3 ms  …    35.3 ms            +3.9%
+  Memory         9.4 MiB ±     0.4 MiB      8.5 MiB …    10.1 MiB           +4.4%
+ 

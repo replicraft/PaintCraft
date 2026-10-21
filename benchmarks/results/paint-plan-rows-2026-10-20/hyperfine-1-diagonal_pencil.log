@@ -1,0 +1,10 @@
+Benchmark 1: /Users/dielpi/Desktop/replicraft/PaintCraft/target/release/deps/paint_plan-ec446c91a0e3c090 process diagonal_pencil incremental (20 runs)
+                mean     ±       σ          min     …     max
+  Wall Time     12.7 ms  ±     0.5 ms      11.8 ms  …    13.5 ms
+  Memory         6.3 MiB ±     1.0 MiB      4.7 MiB …     8.3 MiB
+ 
+Benchmark 2: /Users/dielpi/Desktop/replicraft/PaintCraft/target/release/deps/paint_plan-ec446c91a0e3c090 process diagonal_pencil planned (20 runs)
+                mean     ±       σ          min     …     max
+  Wall Time     12.6 ms  ±     0.6 ms      11.7 ms  …    13.8 ms            -0.3%
+  Memory         6.6 MiB ±     1.6 MiB      5.0 MiB …    10.3 MiB           +5.5%
+ 

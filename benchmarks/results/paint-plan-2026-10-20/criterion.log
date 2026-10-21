@@ -1,0 +1,59 @@
+Benchmarking paint_plan/horizontal_pencil/incremental
+Benchmarking paint_plan/horizontal_pencil/incremental: Warming up for 300.00 ms
+Benchmarking paint_plan/horizontal_pencil/incremental: Collecting 20 samples in estimated 1.0012 s (14k iterations)
+Benchmarking paint_plan/horizontal_pencil/incremental: Analyzing
+paint_plan/horizontal_pencil/incremental
+                        time:   [73.897 µs 74.795 µs 75.783 µs]
+Found 1 outliers among 20 measurements (5.00%)
+  1 (5.00%) high mild
+Benchmarking paint_plan/horizontal_pencil/planned
+Benchmarking paint_plan/horizontal_pencil/planned: Warming up for 300.00 ms
+Benchmarking paint_plan/horizontal_pencil/planned: Collecting 20 samples in estimated 1.0074 s (26k iterations)
+Benchmarking paint_plan/horizontal_pencil/planned: Analyzing
+paint_plan/horizontal_pencil/planned
+                        time:   [39.062 µs 39.929 µs 40.911 µs]
+Benchmarking paint_plan/diagonal_pencil/incremental
+Benchmarking paint_plan/diagonal_pencil/incremental: Warming up for 300.00 ms
+Benchmarking paint_plan/diagonal_pencil/incremental: Collecting 20 samples in estimated 1.0016 s (14k iterations)
+Benchmarking paint_plan/diagonal_pencil/incremental: Analyzing
+paint_plan/diagonal_pencil/incremental
+                        time:   [67.432 µs 68.657 µs 69.858 µs]
+Found 2 outliers among 20 measurements (10.00%)
+  2 (10.00%) low mild
+Benchmarking paint_plan/diagonal_pencil/planned
+Benchmarking paint_plan/diagonal_pencil/planned: Warming up for 300.00 ms
+Benchmarking paint_plan/diagonal_pencil/planned: Collecting 20 samples in estimated 1.0018 s (13k iterations)
+Benchmarking paint_plan/diagonal_pencil/planned: Analyzing
+paint_plan/diagonal_pencil/planned
+                        time:   [72.141 µs 77.984 µs 84.202 µs]
+Benchmarking paint_plan/brush_runs/incremental
+Benchmarking paint_plan/brush_runs/incremental: Warming up for 300.00 ms
+Benchmarking paint_plan/brush_runs/incremental: Collecting 20 samples in estimated 1.0068 s (6510 iterations)
+Benchmarking paint_plan/brush_runs/incremental: Analyzing
+paint_plan/brush_runs/incremental
+                        time:   [151.25 µs 154.89 µs 157.67 µs]
+Benchmarking paint_plan/brush_runs/planned
+Benchmarking paint_plan/brush_runs/planned: Warming up for 300.00 ms
+Benchmarking paint_plan/brush_runs/planned: Collecting 20 samples in estimated 1.0102 s (5880 iterations)
+Benchmarking paint_plan/brush_runs/planned: Analyzing
+paint_plan/brush_runs/planned
+                        time:   [161.40 µs 165.97 µs 169.82 µs]
+Benchmarking paint_plan/partial_eraser_runs/incremental
+Benchmarking paint_plan/partial_eraser_runs/incremental: Warming up for 300.00 ms
+Benchmarking paint_plan/partial_eraser_runs/incremental: Collecting 20 samples in estimated 1.4024 s (630 iterations)
+Benchmarking paint_plan/partial_eraser_runs/incremental: Analyzing
+paint_plan/partial_eraser_runs/incremental
+                        time:   [2.2330 ms 2.2603 ms 2.3005 ms]
+Found 1 outliers among 20 measurements (5.00%)
+  1 (5.00%) high severe
+Benchmarking paint_plan/partial_eraser_runs/planned
+Benchmarking paint_plan/partial_eraser_runs/planned: Warming up for 300.00 ms
+Benchmarking paint_plan/partial_eraser_runs/planned: Collecting 20 samples in estimated 1.0117 s (8610 iterations)
+Benchmarking paint_plan/partial_eraser_runs/planned: Analyzing
+paint_plan/partial_eraser_runs/planned
+                        time:   [116.86 µs 119.50 µs 123.85 µs]
+Found 3 outliers among 20 measurements (15.00%)
+  1 (5.00%) low severe
+  1 (5.00%) high mild
+  1 (5.00%) high severe
+

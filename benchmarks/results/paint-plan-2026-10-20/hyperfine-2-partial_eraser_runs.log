@@ -1,0 +1,10 @@
+Benchmark 1: /Users/dielpi/Desktop/replicraft/PaintCraft/target/release/deps/paint_plan-ec446c91a0e3c090 process partial_eraser_runs planned (20 runs)
+                mean     ±       σ          min     …     max
+  Wall Time     18.1 ms  ±     3.0 ms      16.3 ms  …    27.2 ms
+  Memory         7.3 MiB ±     2.3 MiB      3.7 MiB …    12.4 MiB
+ 
+Benchmark 2: /Users/dielpi/Desktop/replicraft/PaintCraft/target/release/deps/paint_plan-ec446c91a0e3c090 process partial_eraser_runs incremental (20 runs)
+                mean     ±       σ          min     …     max
+  Wall Time    227.7 ms  ±     1.5 ms     225.1 ms  …   231.9 ms         +1155.3%  (12.6x slower)
+  Memory        10.3 MiB ±     0.8 MiB      9.0 MiB …    12.0 MiB          +42.6%  (1.4x more)
+ 

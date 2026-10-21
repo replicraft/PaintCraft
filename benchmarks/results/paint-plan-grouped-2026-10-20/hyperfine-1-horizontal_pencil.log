@@ -1,0 +1,10 @@
+Benchmark 1: /Users/dielpi/Desktop/replicraft/PaintCraft/target/release/deps/paint_plan-ec446c91a0e3c090 process horizontal_pencil incremental (20 runs)
+                mean     ±       σ          min     …     max
+  Wall Time     13.1 ms  ±     0.7 ms      12.2 ms  …    14.8 ms
+  Memory         6.3 MiB ±     1.1 MiB      4.5 MiB …     8.3 MiB
+ 
+Benchmark 2: /Users/dielpi/Desktop/replicraft/PaintCraft/target/release/deps/paint_plan-ec446c91a0e3c090 process horizontal_pencil planned (20 runs)
+                mean     ±       σ          min     …     max
+  Wall Time      9.0 ms  ±     0.6 ms       8.0 ms  …     9.9 ms           -31.2%  (1.5x faster)
+  Memory         5.3 MiB ±     1.2 MiB      3.7 MiB …     7.8 MiB          -16.1%
+ 

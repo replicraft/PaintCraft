@@ -1,0 +1,10 @@
+Benchmark 1: /Users/dielpi/Desktop/replicraft/PaintCraft/target/release/deps/paint_plan-ec446c91a0e3c090 process brush_runs incremental (20 runs)
+                mean     ±       σ          min     …     max
+  Wall Time     21.0 ms  ±     0.7 ms      20.0 ms  …    22.0 ms
+  Memory         6.4 MiB ±     1.0 MiB      4.7 MiB …     8.0 MiB
+ 
+Benchmark 2: /Users/dielpi/Desktop/replicraft/PaintCraft/target/release/deps/paint_plan-ec446c91a0e3c090 process brush_runs planned (20 runs)
+                mean     ±       σ          min     …     max
+  Wall Time     23.7 ms  ±     4.9 ms      21.2 ms  …    44.5 ms           +13.0%
+  Memory         6.9 MiB ±     1.9 MiB      4.8 MiB …    12.5 MiB           +8.0%
+ 

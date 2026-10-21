@@ -1,0 +1,62 @@
+{
+  "hyperfine-3-smooth_brush.json": {
+    "original_export_sha256": "f9bf016b239c1a3312a8c39fcdaacfd93d330900229d385e9e10fe4af6a987b4",
+    "compact_sha256": "7ff8f9980d41eeb405aaa375f99cec242986e82dd70c6087e92f6555fe8aa07d",
+    "raw_gzip": "raw_exports/hyperfine-3-smooth_brush.json.gz"
+  },
+  "hyperfine-2-smooth_eraser.json": {
+    "original_export_sha256": "33db4de9d755e448cf09c0d85d64e5157007884c929e7f9831623fdb6dee29b4",
+    "compact_sha256": "927e018174f6cbbd2a4c1b8fa82377b752d9543fb9efe54fa0098f2c5c83a465",
+    "raw_gzip": "raw_exports/hyperfine-2-smooth_eraser.json.gz"
+  },
+  "hyperfine-2-smooth_brush.json": {
+    "original_export_sha256": "c8007d0595fc2f4f2564535cbb085a0e17bb440c9527177da21595b76da1f48e",
+    "compact_sha256": "f942750bca9767bac46dfab36e3ea6a038e06a3eadeb0870ef7643041f0b7052",
+    "raw_gzip": "raw_exports/hyperfine-2-smooth_brush.json.gz"
+  },
+  "hyperfine-3-diagonal_pencil.json": {
+    "original_export_sha256": "334b8dfd78a12ef51a39e3919cbf858fb950986bc52b3cda716ca6e362b1303f",
+    "compact_sha256": "3dea0908e00a9bfa25249176ac109749ef68f86e1ca3f6697b9fec2f07647992",
+    "raw_gzip": "raw_exports/hyperfine-3-diagonal_pencil.json.gz"
+  },
+  "hyperfine-1-smooth_eraser.json": {
+    "original_export_sha256": "c36f0bff954145edb5abbbc391040586592b931f46c8ee691c0f02a88413e80e",
+    "compact_sha256": "d442af00793c3fe1e78ceb96d107eab17eb1686bf6d3f42ecf6bcfcf633bc2af",
+    "raw_gzip": "raw_exports/hyperfine-1-smooth_eraser.json.gz"
+  },
+  "hyperfine-1-smooth_brush.json": {
+    "original_export_sha256": "5dee531959050530b0d2d1a0f27e24dd746c848d9f828ed1cdc9d0671b24200b",
+    "compact_sha256": "c5d472ab613418ea0d01d9661b91ecd6bac253271e5b48d8bcb84d0cbcd7dbd6",
+    "raw_gzip": "raw_exports/hyperfine-1-smooth_brush.json.gz"
+  },
+  "hyperfine-2-diagonal_pencil.json": {
+    "original_export_sha256": "c645ce5ef8d3670537c139810a93ad537139d5883a54698a35f1b96604186cc6",
+    "compact_sha256": "ee46877ff2432725296c51c0ec3c2af212f1151d5656ffd1568cd6aac3b5900c",
+    "raw_gzip": "raw_exports/hyperfine-2-diagonal_pencil.json.gz"
+  },
+  "hyperfine-1-horizontal_pencil.json": {
+    "original_export_sha256": "a9d73cbca0c11b78cda331f527c7ac504dde4fa2ba9141f62b0f26a3588aca9c",
+    "compact_sha256": "741804c031af14d5084763d4a4d3e810f91ed8e1c1d688ac695e09f7c5d0fd17",
+    "raw_gzip": "raw_exports/hyperfine-1-horizontal_pencil.json.gz"
+  },
+  "hyperfine-1-diagonal_pencil.json": {
+    "original_export_sha256": "f0f8baf6600a6bf491f65ea257f32b97bf579ff0720720cdd02b8507bd4fd6c0",
+    "compact_sha256": "c4a4772399c23099f1ec0b7758ae38e1e233f40a6aa113b78f41133369b90944",
+    "raw_gzip": "raw_exports/hyperfine-1-diagonal_pencil.json.gz"
+  },
+  "hyperfine-2-horizontal_pencil.json": {
+    "original_export_sha256": "0063518dff1ac125d6da1b6ccc6971b6c9d0ad8c10ade66c73ced928044fb881",
+    "compact_sha256": "a76c4c536c3f2a0aa819ba5e85d3ba3453b17f68e22dcf3bde51f8adac23a4b5",
+    "raw_gzip": "raw_exports/hyperfine-2-horizontal_pencil.json.gz"
+  },
+  "hyperfine-3-horizontal_pencil.json": {
+    "original_export_sha256": "97c13a3e7ae44d5a3b6c9963277870974bb5fb5dbd763a532a8bf205ad3cf1fc",
+    "compact_sha256": "6790af19098ade8b8cc352c792169d4773aa2c0991da5327bf89a22db2122889",
+    "raw_gzip": "raw_exports/hyperfine-3-horizontal_pencil.json.gz"
+  },
+  "hyperfine-3-smooth_eraser.json": {
+    "original_export_sha256": "3b73791ba5a16424f36883a27e4d7682737bf5b463357e983954a35c35598a99",
+    "compact_sha256": "d571051e697c464ddc15d03344c36e01cf88842be32cf5b2d78990a158f1f147",
+    "raw_gzip": "raw_exports/hyperfine-3-smooth_eraser.json.gz"
+  }
+}

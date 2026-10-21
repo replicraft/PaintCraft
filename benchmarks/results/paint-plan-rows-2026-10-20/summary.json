@@ -1,0 +1,130 @@
+[
+  {
+    "case": "horizontal_pencil",
+    "criterion_median_us": {
+      "incremental": 77.33867827868852,
+      "planned": 45.53821604567308
+    },
+    "process_session_median_ms": {
+      "incremental": [
+        13.379770500000003,
+        12.672834000000002,
+        12.736562
+      ],
+      "planned": [
+        8.773958,
+        8.979833000000001,
+        8.734563000000001
+      ]
+    },
+    "process_ratios": [
+      1.5249412522831773,
+      1.4112549754544432,
+      1.4581796479114064
+    ],
+    "reported_rss_median_mib": {
+      "incremental": 5.796875,
+      "planned": 4.9609375
+    },
+    "reported_rss_max_mib": {
+      "incremental": 10.140625,
+      "planned": 9.109375
+    }
+  },
+  {
+    "case": "diagonal_pencil",
+    "criterion_median_us": {
+      "incremental": 72.3794881840796,
+      "planned": 78.48855661764706
+    },
+    "process_session_median_ms": {
+      "incremental": [
+        12.650645500000001,
+        12.659999500000001,
+        12.776479
+      ],
+      "planned": [
+        12.562583000000002,
+        12.632083,
+        13.309521000000002
+      ]
+    },
+    "process_ratios": [
+      1.007009903934565,
+      1.0022099680630663,
+      0.9599503242828948
+    ],
+    "reported_rss_median_mib": {
+      "incremental": 5.875,
+      "planned": 6.421875
+    },
+    "reported_rss_max_mib": {
+      "incremental": 10.171875,
+      "planned": 13.453125
+    }
+  },
+  {
+    "case": "brush_runs",
+    "criterion_median_us": {
+      "incremental": 166.54191369047618,
+      "planned": 143.11910686274507
+    },
+    "process_session_median_ms": {
+      "incremental": [
+        21.1810625,
+        21.914396000000004,
+        20.988958000000004
+      ],
+      "planned": [
+        18.472750500000004,
+        19.296249500000002,
+        18.235395500000003
+      ]
+    },
+    "process_ratios": [
+      1.146611193606496,
+      1.1356816255925797,
+      1.1510009749994181
+    ],
+    "reported_rss_median_mib": {
+      "incremental": 7.8671875,
+      "planned": 7.28125
+    },
+    "reported_rss_max_mib": {
+      "incremental": 10.640625,
+      "planned": 10.140625
+    }
+  },
+  {
+    "case": "partial_eraser_runs",
+    "criterion_median_us": {
+      "incremental": 2298.3249666666666,
+      "planned": 53.84866695011338
+    },
+    "process_session_median_ms": {
+      "incremental": [
+        229.29741650000003,
+        229.8899585,
+        229.119521
+      ],
+      "planned": [
+        9.132292,
+        9.3039795,
+        8.4396665
+      ]
+    },
+    "process_ratios": [
+      25.108419277438788,
+      24.708777410784275,
+      27.147935407163306
+    ],
+    "reported_rss_median_mib": {
+      "incremental": 11.109375,
+      "planned": 4.8046875
+    },
+    "reported_rss_max_mib": {
+      "incremental": 14.296875,
+      "planned": 8.046875
+    }
+  }
+]

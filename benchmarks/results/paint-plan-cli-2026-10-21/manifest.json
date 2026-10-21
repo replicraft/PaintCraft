@@ -1,0 +1,20 @@
+{
+  "utc": "2026-10-21T14:56:30.130974+00:00",
+  "platform": "macOS-14.7.2-arm64-arm-64bit-Mach-O",
+  "binaries": {
+    "planned_commit": "f23e5c3",
+    "planned_sha256": "559b9b096416fd5001d22a46473ae67b74ee77f9d246ed985b6da6b1fbdbd6e3",
+    "baseline_commit": "d479023",
+    "baseline_sha256": "50f335030544cd4f93bf137d1c338eb0a2d180fbbe6968ad461a0fa57ff7eb5f"
+  },
+  "input_sha256": "3a9fadd2b402440be058dfd0324299c7f031d510596f9f18dbf8da604ff746ec",
+  "rustc": "rustc 1.99.0 (b940084d7 2026-09-28)\nbinary: rustc\ncommit-hash: b940084d7eb6a299eb4bfeb8e34901bc051e7ac4\ncommit-date: 2026-09-28\nhost: aarch64-apple-darwin\nrelease: 1.99.0\nLLVM version: 23.1.1\n",
+  "hyperfine": "hyperfine 2.0.0",
+  "warmups": 3,
+  "runs": 20,
+  "sessions": 3,
+  "operations_per_batch": 100,
+  "source_overrides": {},
+  "scope": "Real CLI apply: acquire/hash PCND, parse/validate atomic batch, execute, admit history, encode and atomically replace canonical output. Baseline d479023 versus planned f23e5c3. No GUI latency claim.",
+  "outcome": "EXCLUDED FROM ADOPTION: planned CLI was frozen from desktop+CLI feature-unified build, baseline from CLI-only build. Canonical outputs matched, but build modes were not aligned. A subsequent cached CLI-only build reused the baseline artifact; current CLI is being rebuilt from refreshed source entrypoints."
+}
