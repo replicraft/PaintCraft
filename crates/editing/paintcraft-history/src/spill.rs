@@ -15,7 +15,10 @@ pub struct SpillReport {
     pub store: SpillUsage,
 }
 impl History {
-    pub(super) fn fork_for_record(&self) -> Result<Self> {
+    /// Fallibly copy timeline metadata, sharing immutable documents and payloads.
+    /// The 64 MiB metadata staging allowance does not reserve decoded pixels.
+    /// Mutations of the returned history do not replace this timeline.
+    pub fn try_fork(&self) -> Result<Self> {
         let mut budget = 64 << 20;
         let memo = archive::clone_memo(&self.memo, &mut budget)?;
         let count = self
@@ -91,13 +94,14 @@ impl History {
         &mut self,
         temporary_bytes: usize,
         max_payloads: usize,
+        check: &impl Fn() -> Result<()>,
     ) -> Result<SpillReport> {
         let store = self.spill_store.clone().expect("checked spill store");
         let result = self.prepare_transfer(
             Some(store.as_ref()),
             temporary_bytes,
             max_payloads,
-            &|| Ok(()),
+            check,
             true,
         );
         self.last_cleanup_error = store.collect_garbage().err();
@@ -110,8 +114,9 @@ impl History {
         &mut self,
         temporary_bytes: usize,
         max_payloads: usize,
+        check: &impl Fn() -> Result<()>,
     ) -> Result<SpillReport> {
-        self.prepare_transfer(None, temporary_bytes, max_payloads, &|| Ok(()), true)
+        self.prepare_transfer(None, temporary_bytes, max_payloads, check, true)
     }
     fn prepare_transfer(
         &mut self,
@@ -133,9 +138,11 @@ impl History {
         let mut pinned = std::collections::HashSet::new();
         if exclude_hot {
             for entry in &self.entries {
+                check()?;
                 if let Storage::Hot(snapshot) = &entry.storage {
                     for layer in snapshot.document.layers.values() {
                         for (_, lease) in layer.raster.tile_leases() {
+                            check()?;
                             let version = lease.version();
                             if !pinned.contains(&version) {
                                 if budget < 128 {

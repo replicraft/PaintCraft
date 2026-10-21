@@ -33,13 +33,16 @@ fn scene() -> (Session, Vec<u8>) {
         pixels,
     )
 }
-fn apply(s: &mut Session, op: String) -> paintcraft_core::types::Result<()> {
+fn batch(s: &Session, op: String) -> paintcraft_commands::Batch {
     let t = s.ticket();
     let json = format!(
         r#"{{"schema":"paintcraft.batch/v2","atomic":true,"policy":"{POLICY}","base":{{"state_id":"{}","publication_epoch":"{}"}},"operations":[{op}]}}"#,
         t.state_id, t.publication_epoch
     );
-    assert!(s.apply_json(json.as_bytes())?.committed);
+    paintcraft_commands::Batch::from_json(json.as_bytes()).unwrap()
+}
+fn apply(s: &mut Session, op: String) -> paintcraft_core::types::Result<()> {
+    assert!(s.apply(&batch(s, op))?.committed);
     Ok(())
 }
 fn dot(s: &mut Session, n: usize) {
@@ -256,4 +259,54 @@ fn deferred_structured_tiles_can_finish_warm_compression_without_a_disk_store() 
     verify(&s, &initial, 0, false);
     s.redo().unwrap().unwrap();
     verify(&s, &initial, 0, true);
+}
+
+#[test]
+fn cancelled_worker_after_first_spill_barrier_releases_private_extents_and_keeps_redo() {
+    let (parent, store) = store(usize::MAX);
+    let (mut s, initial) = scene();
+    dot(&mut s, 0);
+    let redo = s.ticket().state_id;
+    s.undo().unwrap().unwrap();
+    s.set_history_spill_store(store.clone());
+    s.set_history_budget((TILES + 1) as u64 * RasterLayer::TILE_BYTES as u64);
+    let view = s.history_view();
+    let doc = s.snapshot();
+    let id = s.document().roots[0];
+    let batch = batch(
+        &s,
+        format!(
+            r##"{{"op":"raster.fill_rect","layer_ref":{{"id":"{id}"}},"rect":{{"x":0,"y":0,"width":{WIDTH},"height":256}},"color":"#FFFFFFFF","mode":"replace"}}"##
+        ),
+    );
+    let work = s.preparation().unwrap();
+    let observed = store.clone();
+    let error = std::thread::spawn(move || {
+        work.apply(&batch, || {
+            if observed.writes.load(Ordering::SeqCst) >= 64
+                && observed.barriers.load(Ordering::SeqCst) > 0
+            {
+                Err(Error::new(
+                    ErrorCode::OperationCancelled,
+                    "cancel after first flush",
+                ))
+            } else {
+                Ok(())
+            }
+        })
+        .unwrap_err()
+    })
+    .join()
+    .unwrap();
+    assert_eq!(error.code, ErrorCode::OperationCancelled);
+    assert_eq!(store.writes.load(Ordering::SeqCst), 64);
+    assert!(store.barriers.load(Ordering::SeqCst) > 0);
+    assert_eq!(s.history_view(), view);
+    assert!(Arc::ptr_eq(&doc, &s.snapshot()));
+    assert_eq!(store.collect_garbage().unwrap().reserved_bytes, 0);
+    verify(&s, &initial, 0, false);
+    assert_eq!(s.redo().unwrap().unwrap().state_id, redo);
+    verify(&s, &initial, 1, false);
+    drop((s, doc, store));
+    std::fs::remove_dir_all(parent).unwrap();
 }

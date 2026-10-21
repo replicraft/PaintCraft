@@ -131,3 +131,22 @@ Native [session spill and preserving exhaustion](HISTORY_SPILL.md) now extend th
 ownership model. Preserving rejection is the default; the former soft trimming
 behavior is available only through explicit `Retention::TrimOldest`. Historical
 benchmark artifacts retain their original source/policy boundaries.
+
+## Detached edit preparation
+
+`Session::preparation` fallibly captures timeline metadata and shares immutable
+payloads. `Preparation::apply` can execute on a bounded worker; the published session
+retains its document, selection, epoch, history cursor and redo until the owner
+calls `publish_prepared`. That call rejects another session, an advanced epoch,
+a changed history/staging policy, or cancellation. A save acknowledged while work
+was preparing is preserved independently. Dropped results release private payload
+leases, including provisional native extents.
+
+Cancellation is checked around command execution and during history classification,
+transfer and required synchronization. Individual command kernels and filesystem
+calls are not preemptible. Timeline capture still copies metadata synchronously;
+this API alone does not move desktop command dispatch to workers or establish a
+process-wide physical-memory or interactive-latency bound. Navigation remains a
+separate synchronous API. Tests include real worker transfer, same-content foreign
+sessions, edit/undo ABA, policy changes, no-ops, save acknowledgements and cancellation
+after a native multi-batch spill barrier with exact redo retention and quota cleanup.

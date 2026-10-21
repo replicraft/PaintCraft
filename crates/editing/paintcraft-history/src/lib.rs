@@ -217,15 +217,29 @@ impl History {
         self.record_labeled(snapshot, Label::Edit)
     }
     pub fn record_labeled(&mut self, snapshot: Snapshot, label: Label) -> Result<()> {
-        if self.retention == Retention::TrimOldest {
-            return self.record_in_place(snapshot, label);
-        }
-        let mut staged = self.fork_for_record()?;
-        staged.record_in_place(snapshot, label)?;
+        self.record_labeled_checked(snapshot, label, || Ok(()))
+    }
+    /// Cancellation and failed storage preparation leave this timeline intact.
+    pub fn record_labeled_checked(
+        &mut self,
+        snapshot: Snapshot,
+        label: Label,
+        check: impl Fn() -> Result<()>,
+    ) -> Result<()> {
+        check()?;
+        let mut staged = self.try_fork()?;
+        staged.record_in_place(snapshot, label, &check)?;
+        check()?;
         *self = staged;
         Ok(())
     }
-    fn record_in_place(&mut self, snapshot: Snapshot, label: Label) -> Result<()> {
+    fn record_in_place(
+        &mut self,
+        snapshot: Snapshot,
+        label: Label,
+        check: &impl Fn() -> Result<()>,
+    ) -> Result<()> {
+        check()?;
         let previous_snapshot = self.restore(self.cursor)?;
         self.entries.try_reserve(1).map_err(|_| {
             paintcraft_core::types::Error::new(
@@ -264,13 +278,13 @@ impl History {
         self.last_trimmed = 0;
         self.last_packing_error = None;
         if self.retention == Retention::Preserve {
-            self.relieve_pressure()?;
+            self.relieve_pressure(check)?;
         } else if self.packing == Packing::Adaptive
             && self.budget != 0
             && self.memory_usage().retained_weight() > self.budget
         {
             let temporary = self.budget.min(64 << 20) as usize;
-            if let Err(error) = self.compact_limited(2, temporary, 64, 64, || Ok(())) {
+            if let Err(error) = self.compact_limited(2, temporary, 64, 64, check) {
                 self.last_packing_error = Some(error);
             }
         }

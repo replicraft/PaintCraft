@@ -2,20 +2,26 @@ use super::*;
 impl History {
     /// Each batch bounds pixel scans and writes, while the complete candidate
     /// remains private. This synchronous continuation is not a latency bound.
-    pub(super) fn relieve_pressure(&mut self) -> Result<()> {
+    pub(super) fn relieve_pressure(&mut self, check: &impl Fn() -> Result<()>) -> Result<()> {
         let mut keep_hot = 2;
         while self.memory_usage().retained_weight() > self.budget {
+            check()?;
             let mut packed = 0;
             if self.packing == Packing::Adaptive && self.budget != 0 {
-                match self.compact_limited(keep_hot, 64 << 20, 64, 64, || Ok(())) {
+                match self.compact_limited(keep_hot, 64 << 20, 64, 64, check) {
                     Ok(report) => packed = report.packed_entries,
+                    Err(error)
+                        if error.code == paintcraft_core::types::ErrorCode::OperationCancelled =>
+                    {
+                        return Err(error);
+                    }
                     Err(error) => self.last_packing_error = Some(error),
                 }
             }
             let spilled = if self.spill_store.is_some() {
-                self.spill_unpinned(64 << 20, 64)?.payloads
+                self.spill_unpinned(64 << 20, 64, check)?.payloads
             } else {
-                self.refine_deferred(64 << 20, 64)?.payloads
+                self.refine_deferred(64 << 20, 64, check)?.payloads
             };
             if self.memory_usage().retained_weight() <= self.budget {
                 break;

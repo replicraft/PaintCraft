@@ -24,7 +24,9 @@ pub use paintcraft_history::{
 use paintcraft_history::{History, Snapshot};
 
 mod history;
+mod preparation;
 pub use history::{HistoryTicket, HistoryView};
+pub use preparation::{Preparation, PreparedEdit};
 
 /// `paintcraft.result/v1`.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -89,6 +91,7 @@ pub struct Session {
     history: History,
     saved_state: Option<Uuid>,
     staged_pixels: u64,
+    preparation_policy: Arc<()>,
 }
 
 impl Session {
@@ -107,6 +110,7 @@ impl Session {
             selection: Selection::Inactive,
             epoch: 0,
             staged_pixels: STAGED_PIXELS_MAX,
+            preparation_policy: Arc::new(()),
         }
     }
 
@@ -114,6 +118,7 @@ impl Session {
     /// before dropping oldest entries. The newest two states remain undoable;
     /// active/read-only leases are reported separately and cannot be forcibly freed.
     pub fn set_history_budget(&mut self, bytes: u64) {
+        self.preparation_policy = Arc::new(());
         self.history.set_budget(bytes);
     }
     pub fn resident_bytes(&self) -> u64 {
@@ -136,6 +141,7 @@ impl Session {
         self.history.memory_usage()
     }
     pub fn set_history_retention(&mut self, retention: HistoryRetention) {
+        self.preparation_policy = Arc::new(());
         self.history.set_retention(retention);
     }
     pub fn history_spill_usage(&self) -> Option<paintcraft_core::types::storage::SpillUsage> {
@@ -145,6 +151,7 @@ impl Session {
         &mut self,
         store: Arc<dyn paintcraft_core::types::storage::SpillStore>,
     ) {
+        self.preparation_policy = Arc::new(());
         self.history.set_spill_store(store);
     }
     pub fn spill_history(
@@ -153,15 +160,19 @@ impl Session {
         max_payloads: usize,
         check: impl Fn() -> Result<()>,
     ) -> Result<paintcraft_history::SpillReport> {
+        self.preparation_policy = Arc::new(());
         self.history.spill(temporary_bytes, max_payloads, check)
     }
     pub fn set_history_packing(&mut self, packing: HistoryPacking) {
+        self.preparation_policy = Arc::new(());
         self.history.set_packing(packing);
     }
     pub fn set_history_compression(&mut self, compression: HistoryCompression) {
+        self.preparation_policy = Arc::new(());
         self.history.set_compression(compression);
     }
     pub fn set_history_restore_budget(&mut self, pixels: u64) {
+        self.preparation_policy = Arc::new(());
         self.history.set_restore_budget(pixels);
     }
     pub fn compact_history(
@@ -170,11 +181,13 @@ impl Session {
         temporary_bytes: usize,
         check: impl Fn() -> Result<()>,
     ) -> Result<paintcraft_history::Compaction> {
+        self.preparation_policy = Arc::new(());
         self.history.compact(keep_hot, temporary_bytes, check)
     }
 
     /// Lower the per-batch staging budget (resource-exhaustion testing, constrained hosts).
     pub fn set_staged_pixel_budget(&mut self, pixels: u64) {
+        self.preparation_policy = Arc::new(());
         self.staged_pixels = pixels;
     }
 
@@ -223,6 +236,11 @@ impl Session {
     }
 
     pub fn apply(&mut self, batch: &Batch) -> Result<Receipt> {
+        self.apply_checked(batch, || Ok(()))
+    }
+
+    fn apply_checked(&mut self, batch: &Batch, check: impl Fn() -> Result<()>) -> Result<Receipt> {
+        check()?;
         if batch.policy != POLICY {
             return Err(Error::new(
                 ErrorCode::PolicyUnknown,
@@ -236,6 +254,7 @@ impl Session {
             ));
         }
         let mut staged = execute_with_budget(&self.doc, self.selection, batch, self.staged_pixels)?;
+        check()?;
         let content_changed = !staged.doc.same_semantics(&self.doc);
         if !content_changed && staged.selection == self.selection {
             return Ok(Receipt {
@@ -255,13 +274,14 @@ impl Session {
             deterministic_id(&["history", &base, &self.epoch.to_string(), &batch.digest]);
         let doc = Arc::new(staged.doc);
         // The single publication point: document, selection, history and epoch together.
-        self.history.record_labeled(
+        self.history.record_labeled_checked(
             Snapshot {
                 document: Arc::clone(&doc),
                 selection: staged.selection,
                 history_id: Some(history_id),
             },
             history::label(batch),
+            check,
         )?;
         self.doc = doc;
         self.selection = staged.selection;
