@@ -31,6 +31,25 @@ Temporary tiles can recycle capacity, while the separate cumulative staged-pixel
 limit continues to apply. Tile leases follow COW/read/history ownership as before.
 Unused capacity returns when the attempt ends; retained tiles remain charged.
 
+## Initial worker admission
+
+The native worker readiness check is advisory. If another pool takes shared
+capacity before submission, the runtime returns the original task intact. The
+controller retains its captured batch/tool plan/navigation preparation, description
+and target-alias handling, without moving later actions or file barriers ahead.
+No job handle or worker byte charge exists until actual admission succeeds.
+
+Each controller has at most one such captured initial task. It remains pending/
+dirty and participates in preview/painting limits. Escape or controller destruction
+drops it without executing it. A changed owner/base cancels it instead of capturing
+a replacement base; a changed resource policy still fails normal publication guards.
+Own history maintenance waits while that captured preparation is retained. After
+submission, normal worker cancellation, result ownership and publication apply.
+
+This retains existing resource references, not a complete frozen font/profile
+snapshot. Captured private metadata and decoded readers may stay pinned while the
+task waits; their all-service admission and scheduling fairness remain open.
+
 ## Retry and publication
 
 The first native edit still allocates incrementally. Worker-side stroke/text plan
@@ -61,9 +80,10 @@ queued; that boundary still captures only after the edit succeeds or is cancelle
 
 ## Limits and evidence
 
-This covers decoded failures during successfully submitted native batch edits.
-Initial worker-submission races, history navigation/restoration and other service
-failures do not yet have the complete retained retry lifecycle. Full first-attempt
+Initial native batch/tool/navigation submission races now retain their tasks.
+Decoded-capacity retries cover successfully submitted native batch edits. Decoded
+history restoration and other service failures do not yet have this complete
+retained retry lifecycle. Full first-attempt
 request planning, global scheduling fairness and starvation policy remain open.
 Current documents/readers can pin all available capacity, so waiting may require
 explicit cancellation until logical eviction is implemented.

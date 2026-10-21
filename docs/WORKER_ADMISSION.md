@@ -41,6 +41,19 @@ Persistent ownership after that boundary belongs to document/history/cache
 services; it is not tracked by this in-flight authority. No decoded allocation
 reclamation claim follows from a reduced reservation counter.
 
+## Retained rejection
+
+`Executor::submit_retained` returns a `RejectedSubmission` containing the error and
+both original closures if local/shared admission or counter overflow rejects work.
+It executes neither closure, creates no handle and acquires no partial reservation.
+The caller may retry the same task/callback or discard them explicitly. Their
+captures remain owned by that returned value. Ordinary `submit` keeps its existing
+error-only interface and discard behavior through this same admission path.
+
+The successful path preserves cancellation, targeted completion ownership and
+unread-result charges. A readiness hint remains advisory; retained rejection does
+not grant a permit or guarantee priority for a later retry.
+
 ## Native integration
 
 Real desktop edit and render pools share a process-local authority with a
@@ -53,9 +66,13 @@ requirement or an available-memory-derived physical budget.
 
 The controller checks readiness before dequeuing an edit. Observable contention
 keeps its completed strokes and ordered file markers queued. `can_submit` is a
-readiness hint, not a reservation; a submission losing a race still returns a
-truthful resource error without publishing. Atomic admission prevents overcharge
-but does not implement fair reservation/retry ordering across UI contexts.
+readiness hint, not a reservation. A captured initial batch/tool/navigation task
+that loses admission is retained at its FIFO position. It owns no worker charge
+until actual submission succeeds. Success executes that exact captured task;
+Escape, controller destruction or a changed owner/base discards it. Its captured
+preparation may pin document/history payloads while waiting, so own storage
+maintenance does not invalidate it. This retains work across the race but does
+not implement fair ordering across contexts or bound all retained metadata.
 
 Rendering distinguishes requests that cannot fit any configured ceiling from
 feasible requests blocked by current jobs. The latter retain current pixels and

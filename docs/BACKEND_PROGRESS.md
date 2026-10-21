@@ -654,3 +654,35 @@ metadata, codec/output/GPU resources and physical/RSS admission remain outside t
 reservation. Current readers can pin capacity indefinitely; fairness, native memory
 pressure and queue-inclusive input latency remain unqualified. No throughput or RSS
 gain is claimed. T04/T11/T13 remain partial.
+
+
+## Twenty-second slice: lossless initial worker-admission rejection
+
+The runtime offers retained submission: admission failure returns the original task
+and wake closures without executing either or inserting/charging a job. Ordinary
+submission keeps its existing error-only interface. Successful work keeps the same
+cancellation, targeted completion and unread-result reservation lifecycle.
+
+Native initial batches, captured tool plans and history navigation now retain their
+task when shared worker capacity disappears between readiness and submission. They
+remain pending at the same FIFO position, including previews, alias routing and file
+boundaries. No worker charge exists before actual admission. Escape, controller drop
+or a changed owner/base discards the unexecuted task; later commands cannot pass it.
+Own storage maintenance waits rather than invalidating its captured preparation.
+Decoded-failure retry remains the separate reserved-capacity path.
+
+687 workspace tests pass (21 explicit ignores), strict workspace/all-target Clippy,
+formatting/file limits, release desktop/CLI builds, three required Apple M1 Pro
+Metal checks and an isolated 30-frame native smoke.
+
+Three runtime regressions force a shared-capacity race, local rejection/capture
+ownership and overflow/impossible requests, then reuse the original closures. Five
+controller regressions cover alias/FIFO publication, retained tool previews, Escape/
+drop, navigation ordering/cancellation and stale-base refusal. They use real worker
+and shared byte admission without allocating the declared GiB charge physically.
+
+Retained preparation can pin decoded/history readers and copies metadata before
+submission. That metadata, other resource classes, full frozen resources, first-
+attempt whole-request planning, decoded history-navigation retry, scheduling fairness
+and native latency/physical-pressure qualification remain incomplete. No throughput,
+RSS or tail-latency gain is inferred. T11/T13 stay partial.

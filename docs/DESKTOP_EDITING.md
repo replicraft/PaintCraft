@@ -16,7 +16,10 @@ execution, automatic history packing/spill and cold restoration run on the worke
 Other small command descriptions still construct their batches during UI dispatch. Only the originating
 controller consumes its job handle and publishes against the captured session,
 epoch and resource policy. Other tabs cannot consume its completion. Runtime
-reservations remain charged while results await consumption.
+reservations remain charged while results await consumption. Initial shared-worker
+admission races retain the exact captured task at its FIFO position, with no job
+charge until submission succeeds; cancellation/stale ownership discards it. Own
+storage maintenance waits while that captured preparation is retained.
 
 Document, selection, history and epoch change at the editor publication point.
 New-layer aliases and target repair apply after successful publication. A failed,
