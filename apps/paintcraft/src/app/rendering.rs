@@ -11,6 +11,14 @@ impl App {
     /// Connect native services only for a real desktop window; harnesses stay deterministic.
     pub fn with_native_services(mut self, cc: &eframe::CreationContext<'_>) -> Self {
         self.worker_budget = editing::native_worker_budget();
+        if let Err(error) = self.connect_budget_wakes(
+            &cc.egui_ctx,
+            paintcraft_raster::Admission::new(0).residency_budget(),
+        ) {
+            self.editor.set_status(format!(
+                "Memory pressure notifications unavailable: {error}"
+            ));
+        }
         self.dialogs = Some(NativeDialogs::new(cc));
         self.initialize_editing(cc.egui_ctx.clone());
         self.initialize_fonts(&cc.egui_ctx);
@@ -261,6 +269,11 @@ impl App {
     ) {
         if !self.accept_render_key(key) {
             return;
+        }
+        if let Some(wakes) = &self.budget_wakes {
+            wakes.wait_for_release(pixels.as_ref().err().is_some_and(|error| {
+                error.code == paintcraft_core::types::ErrorCode::ResourceLimit
+            }));
         }
         self.render_residency_retry = pixels
             .as_ref()

@@ -75,6 +75,10 @@ impl Admission {
         }
     }
 
+    /// Share this allocation realm with a resource coordinator or wake observer.
+    pub fn residency_budget(&self) -> SharedBudget {
+        self.residency.clone()
+    }
     /// Live counters for this allocation realm; not allocator/RSS measurements.
     pub fn residency_usage(&self) -> paintcraft_core::types::resources::BudgetUsage {
         self.residency.usage()

@@ -1,7 +1,37 @@
 //! Pressure maintenance visits inactive owners before the visible document.
 use super::*;
-use paintcraft_core::types::resources::BudgetUsage;
+use paintcraft_core::types::resources::{BudgetUsage, BudgetWatch, SharedBudget};
+#[derive(Debug)]
+pub(super) struct BudgetWakes {
+    tiles: BudgetWatch,
+    workers: BudgetWatch,
+}
+impl BudgetWakes {
+    pub(super) fn wait_for_release(&self, waiting: bool) {
+        self.tiles.wait_for_release(waiting);
+    }
+}
 impl App {
+    pub(super) fn connect_budget_wakes(
+        &mut self,
+        ctx: &egui::Context,
+        tiles: SharedBudget,
+    ) -> paintcraft_core::types::Result<()> {
+        let wake = ctx.clone();
+        let tile_watch = tiles
+            .watch((64 << 20).min(tiles.usage().limit / 4).max(1), move || {
+                wake.request_repaint()
+            })?;
+        let wake = ctx.clone();
+        let worker_watch = self
+            .worker_budget
+            .watch(2 << 30, move || wake.request_repaint())?;
+        self.budget_wakes = Some(BudgetWakes {
+            tiles: tile_watch,
+            workers: worker_watch,
+        });
+        Ok(())
+    }
     pub(super) fn retry_reclaimed_render(&mut self, usage: BudgetUsage) {
         if self
             .render_residency_retry
@@ -12,7 +42,17 @@ impl App {
         }
     }
     pub(super) fn poll_residency_pressure(&mut self, ctx: &egui::Context) {
-        self.poll_residency_usage(ctx, paintcraft_raster::Admission::new(0).residency_usage());
+        let usage = if let Some(wakes) = &self.budget_wakes {
+            wakes.wait_for_release(
+                self.render_residency_retry.is_some() || self.any_pending_edits(),
+            );
+            let usage = wakes.tiles.observe();
+            wakes.workers.observe();
+            usage
+        } else {
+            paintcraft_raster::Admission::new(0).residency_usage()
+        };
+        self.poll_residency_usage(ctx, usage);
     }
     pub(super) fn poll_residency_usage(&mut self, ctx: &egui::Context, usage: BudgetUsage) {
         let Some(service) = self.editing.clone() else {
@@ -223,3 +263,7 @@ mod tests {
         assert!(app.render_residency_retry.is_none());
     }
 }
+
+#[cfg(test)]
+#[path = "residency/wake_tests.rs"]
+mod wake_tests;
