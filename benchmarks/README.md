@@ -163,3 +163,10 @@ acceptance, completed GPU work and three process sessions with raw statistical
 samples. The full-output control remains mixed/tied; cropped work reductions do not
 imply proportional latency gains. OS presentation and large zoomed-out mipmap
 behavior remain separate qualification work.
+
+The same native runner accepts `--suite output-pool` for explicit fresh versus
+64 MiB completed compositor-buffer retention. It records small, 4096×2160 and
+alternating-size cases, with the same raw statistical/process and independent
+pixel gates. [The decision](results/output-pool-2026-10-21/DECISION.md) rejects global
+enablement: fewer logical buffer creations did not establish a general native gain.
+Fresh allocation stays the default; display textures are never recycled by this pool.

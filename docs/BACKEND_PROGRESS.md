@@ -601,3 +601,41 @@ Multiresolution/tiled display, reusable outputs, sparse GPU working tiles, async
 transfers, full incremental operation staging, device recreation, priority/fairness
 and native latency/interference remain. Zoomed-out oversized source regions still
 need multiresolution output. T12/T13/T21/T37 remain partial/in progress.
+
+## Thirty-second slice: completed private GPU compositor buffer retention
+
+An explicit per-renderer output pool can retain one completed private compositor
+buffer under a configurable byte cap. A fresh buffer uses wgpu zero initialization;
+reuse clears exactly the requested logical output before blending, including empty
+or fully clipped compositions. Only observed readback/conversion completion permits
+recycling. Failure/cancellation/unwind does not recycle private submitted work, and
+ordinary errors retire idle caches. Smaller requests may reuse larger capacity;
+oversized requests stream. Native admission can read an immutable retention allowance
+without GPU locks. See [the ownership contract](GPU_OUTPUT_POOL.md).
+
+Display textures remain separately owned. Their public views can be cloned, so frame
+Drop alone cannot prove they are safe to overwrite. This pool does not recycle them.
+Metal tests keep older textures live across scratch reuse/idle eviction, validate
+exact transparency, sizes, disabled/over-cap behavior, cancellation checkpoints,
+retry and retired epochs. Actual egui framebuffer tests draw an old registered view
+after later composites reuse scratch; CPU pixels remain exact. No document/history
+references or authoritative edits are retained in the pool.
+
+[The completed native experiment](../benchmarks/results/output-pool-2026-10-21/DECISION.md)
+retains 120 Criterion samples and 420 process observations for small, 4096×2160 and
+alternating-size views. Logical compositor buffer creations fall from 16 to one per
+sequence, but small-view process ratios are 0.88–0.97x (pooled slower), 4K is mixed
+at 0.75–1.07x, and alternating views show 1.04–1.22x process ratios while Criterion
+regresses. Large host variation and slow observations remain unexcluded. Alternating
+views end small but retain 33.75 MiB; peak RSS is not proof of physical reclamation.
+The default is therefore fresh allocation (zero retention). Hosts can opt into a
+nonzero cap; no universal performance gain or dispatch threshold is claimed.
+
+750 workspace tests pass (24 explicit ignores), strict workspace/all-target Clippy,
+format/file limits and release desktop/CLI builds. Sixteen required Metal renderer
+tests and three real native registration/draw tests pass. The measured candidate
+and final zero-default policy have separate source/validation records; a final
+30-frame release window smoke exits zero with no log output. Native GUI stress,
+physical budgets/pressure eviction, texture reuse ownership, multiresolution/tiled
+output, asynchronous transfers and device recovery remain. T12/T13/T21/T37 remain
+partial/in progress; this experiment does not complete the roadmap.

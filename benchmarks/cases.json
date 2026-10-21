@@ -201,7 +201,8 @@
     "result_artifacts": [
       "benchmarks/results/gpu-sources-2026-10-21/DECISION.md",
       "benchmarks/results/direct-display-2026-10-21/DECISION.md",
-      "benchmarks/results/native-viewport-2026-10-21/DECISION.md"
+      "benchmarks/results/native-viewport-2026-10-21/DECISION.md",
+      "benchmarks/results/output-pool-2026-10-21/DECISION.md"
     ],
     "variants": [
       "scalar/SIMD CPU",

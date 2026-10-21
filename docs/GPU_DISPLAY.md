@@ -38,9 +38,11 @@ host bytes must request an explicit readback; it is not silently performed per f
 ## Memory and failure scope
 
 Source reuse retains its separate bounded [layer-view cache](GPU_SOURCES.md).
-Each direct frame allocates a requested-region composite buffer and display texture;
+By default each direct frame allocates a requested-region composite buffer and display texture;
+[explicit compositor-buffer retention](GPU_OUTPUT_POOL.md) can reuse completed private
+scratch independently of public display textures;
 [viewport presentation](VIEWPORT_RENDERING.md) clips native requests to visible bounds.
-There is no output pool, mipmap or tiled display output yet.
+Display-texture pooling, mipmaps and tiled display output remain open.
 The accepted UI surface and unread worker result have independent lifetimes.
 Declared worker accounting does not establish process-wide physical GPU/driver
 memory bounds. GPU submission waits remain synchronous on the admitted worker;

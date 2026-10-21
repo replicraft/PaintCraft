@@ -37,8 +37,10 @@ origin when indexing this buffer. A failed display has no installed region.
 The CPU path uses the existing exact regional compositor/cache. Cache dependency
 identities and preview/committed partitions are unchanged. GPU composition clips
 ordered layers against the region, preserves world-space source-cache identities,
-and rebases only output indices. It allocates a region-sized straight composite
-buffer and completed premultiplied display texture. Full GPU APIs delegate to the
+and rebases only output indices. It uses a requested-region straight composite
+buffer and completed premultiplied display texture. Explicit
+[private output retention](GPU_OUTPUT_POOL.md) can reuse compositor capacity;
+fresh allocation remains the measured default. Full GPU APIs delegate to the
 same path with the full canvas. Native worker output declaration uses requested
 area; existing source/preview/cache allowances remain. No physical GPU/RSS budget
 or whole-preview staging bound follows from this declaration.
@@ -46,7 +48,7 @@ or whole-preview staging bound follows from this declaration.
 CPU upload validates the backend's maximum texture side before constructing an
 egui texture. GPU output validates device limits. Requests exceeding these limits
 fail truthfully and can recover after a smaller request. Multiresolution output,
-tiled display textures, output pooling and asynchronous GPU transfers remain open;
+tiled display textures, display-texture pooling and asynchronous GPU transfers remain open;
 a zoomed-out viewport covering a huge source region still needs that work. Preview
 commands still stage the complete operation, including offscreen edits, so this is
 regional composition/presentation rather than full incremental edit execution.
