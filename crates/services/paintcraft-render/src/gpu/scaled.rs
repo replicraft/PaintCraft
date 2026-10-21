@@ -240,8 +240,8 @@ impl GpuRenderer {
                 check()?;
                 let mut encoder = self.device.create_command_encoder(&Default::default());
                 encoder.clear_buffer(&accumulator, 0, None);
-                let submission = self.queue.submit([encoder.finish()]);
-                completion::wait(&self.device, &self.epoch, submission)?;
+                let submission = admission::submit(&self.queue, encoder);
+                submission.wait(&self.device, &self.epoch)?;
                 let [w, h] = [
                     (tile.rect.width() as u32).div_ceil(request.step()),
                     (tile.rect.height() as u32).div_ceil(request.step()),
@@ -361,8 +361,8 @@ impl GpuRenderer {
             );
         }
         check()?;
-        let submission = self.queue.submit([encoder.finish()]);
-        completion::wait(&self.device, &self.epoch, submission)?;
+        let submission = admission::submit(&self.queue, encoder);
+        submission.wait(&self.device, &self.epoch)?;
         check()
     }
 }

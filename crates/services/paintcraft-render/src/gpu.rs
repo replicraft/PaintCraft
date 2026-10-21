@@ -2,6 +2,10 @@
 //!
 //! This first backend reads back straight RGBA8 for the shared display/export
 //! boundary. It is a correctness baseline, not a zero-copy or performance claim.
+mod admission;
+#[cfg(test)]
+mod admission_tests;
+pub use admission::with_admission;
 mod batch;
 mod completion;
 mod epoch;
@@ -277,7 +281,7 @@ impl GpuRenderer {
         let mut encoder = self.device.create_command_encoder(&Default::default());
         encoder.copy_buffer_to_buffer(&output, 0, &readback, 0, size);
         check()?;
-        let submission = self.queue.submit([encoder.finish()]);
+        let submission = admission::submit(&self.queue, encoder);
         let bytes = readback::copy_mapped(&self.device, &self.epoch, &readback, submission, check)?;
         check()?;
         output.completed();
@@ -389,9 +393,9 @@ impl GpuRenderer {
             let mut encoder = self.device.create_command_encoder(&Default::default());
             encoder.clear_buffer(&output, 0, Some(size));
             check()?;
-            let submission = self.queue.submit([encoder.finish()]);
+            let submission = admission::submit(&self.queue, encoder);
             stats.composition_submissions += 1;
-            completion::wait(&self.device, &self.epoch, submission)?;
+            submission.wait(&self.device, &self.epoch)?;
         }
         check()?;
         Ok((output, stats))

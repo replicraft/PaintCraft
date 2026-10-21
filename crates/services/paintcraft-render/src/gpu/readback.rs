@@ -10,7 +10,7 @@ pub(super) fn copy_mapped(
     device: &wgpu::Device,
     epoch: &DeviceEpoch,
     buffer: &wgpu::Buffer,
-    submission: wgpu::SubmissionIndex,
+    submission: admission::Submission,
     check: &impl Fn() -> Result<()>,
 ) -> Result<Vec<u8>> {
     let _unmap = Unmap(buffer);
@@ -20,7 +20,7 @@ pub(super) fn copy_mapped(
         .map_async(wgpu::MapMode::Read, move |result| {
             let _ = send.send(result);
         });
-    completion::wait(device, epoch, submission)?;
+    submission.wait(device, epoch)?;
     recv.recv_timeout(Duration::from_secs(30))
         .map_err(|e| completion::failed(epoch, "GPU readback callback failed", e))?
         .map_err(|e| completion::failed(epoch, "GPU readback failed", e))?;

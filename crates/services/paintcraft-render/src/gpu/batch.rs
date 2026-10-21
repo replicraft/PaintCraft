@@ -67,7 +67,7 @@ impl<'a> Batch<'a> {
             return Ok(());
         };
         check()?;
-        let submission = self.gpu.queue.submit([encoder.finish()]);
+        let submission = admission::submit(&self.gpu.queue, encoder);
         stats.composition_submissions += 1;
         stats.max_submission_layers = stats.max_submission_layers.max(self.pending.len() as u32);
         stats.max_submission_source_bytes =
@@ -77,7 +77,7 @@ impl<'a> Batch<'a> {
             .max(self.key_bytes as u64);
         // Cancellation cannot abandon submitted resource ownership. Always observe
         // completion before checking it again, even when the consumer became stale.
-        completion::wait(&self.gpu.device, &self.gpu.epoch, submission)?;
+        submission.wait(&self.gpu.device, &self.gpu.epoch)?;
         check()?;
         for source in self.pending.drain(..) {
             cache.completed(source);

@@ -70,7 +70,7 @@ impl GpuTextureFrame {
             },
         );
         check()?;
-        let submission = self.queue.submit([encoder.finish()]);
+        let submission = admission::submit(&self.queue, encoder);
         let padded =
             super::readback::copy_mapped(&self.device, &self.epoch, &readback, submission, &check)?;
         let mut pixels = crate::output_buffer(width as usize * height as usize * 4)?;
@@ -169,8 +169,8 @@ impl GpuRenderer {
                 pass.dispatch_workgroups(width.div_ceil(8), height.div_ceil(8), 1);
             }
             check()?;
-            let submission = self.queue.submit([encoder.finish()]);
-            completion::wait(&self.device, &self.epoch, submission)?;
+            let submission = admission::submit(&self.queue, encoder);
+            submission.wait(&self.device, &self.epoch)?;
             check()?;
             output.completed();
             drop(output);
