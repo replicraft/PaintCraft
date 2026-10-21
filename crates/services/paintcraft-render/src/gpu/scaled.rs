@@ -407,6 +407,19 @@ impl Reduction<'_> {
         } else if rect.width() <= 256 && rect.height() <= 256 {
             let gpu = self.gpu;
             let (mut output, part) = gpu.compose(self.doc, rect, &|| (self.check)(), self.cache)?;
+            self.stats.composition_submissions += part.composition_submissions;
+            self.stats.max_submission_layers = self
+                .stats
+                .max_submission_layers
+                .max(part.max_submission_layers);
+            self.stats.max_submission_source_bytes = self
+                .stats
+                .max_submission_source_bytes
+                .max(part.max_submission_source_bytes);
+            self.stats.max_submission_metadata_bytes = self
+                .stats
+                .max_submission_metadata_bytes
+                .max(part.max_submission_metadata_bytes);
             self.stats.uploaded_bytes += part.uploaded_bytes;
             self.stats.upload_strips += part.upload_strips;
             self.stats.source_hits += part.source_hits;

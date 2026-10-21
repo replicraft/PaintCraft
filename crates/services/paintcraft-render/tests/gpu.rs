@@ -665,3 +665,6 @@ mod scaled;
 
 #[path = "gpu/source_views.rs"]
 mod source_views;
+
+#[path = "gpu/batches.rs"]
+mod batches;

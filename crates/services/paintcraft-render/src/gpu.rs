@@ -2,6 +2,7 @@
 //!
 //! This first backend reads back straight RGBA8 for the shared display/export
 //! boundary. It is a correctness baseline, not a zero-copy or performance claim.
+mod batch;
 mod epoch;
 mod output;
 mod presentation;
@@ -52,6 +53,7 @@ pub struct GpuRenderer {
     presentation: Option<wgpu::ComputePipeline>,
     scaled: OnceLock<scaled::Pipelines>,
     scaled_edge: u32,
+    submission_batching: bool,
     epoch: DeviceEpoch,
     sources: Mutex<SourceCache>,
     source_admission_bytes: u64,
@@ -142,6 +144,7 @@ impl GpuRenderer {
             presentation,
             scaled: OnceLock::new(),
             scaled_edge: 32,
+            submission_batching: false,
             epoch,
             sources: Mutex::new(SourceCache::new(limits)?),
             output: Mutex::new(output::Pool::new(output_pool_bytes)),
@@ -171,6 +174,21 @@ impl GpuRenderer {
         cache.clear();
         cache.region_views = enabled;
         self
+    }
+
+    /// Group ordered layer dispatches within bounded source/metadata windows.
+    /// Disabled by default until completed native comparisons select a policy.
+    pub fn with_submission_batching(mut self, enabled: bool) -> Self {
+        self.submission_batching = enabled;
+        self
+    }
+    /// Additional declared pending-source/key allowance; not physical driver memory.
+    pub fn submission_admission_bytes(&self) -> u64 {
+        if self.submission_batching {
+            batch::ADMISSION_BYTES
+        } else {
+            0
+        }
     }
 
     /// Bounded native block, wide accumulators/words and transfer bookkeeping.
@@ -302,6 +320,7 @@ impl GpuRenderer {
         stats.output_reuses = u64::from(output.reused);
         stats.output_cleared_bytes = if output.reused { size } else { 0 };
         let mut clear_pending = output.reused;
+        let mut batch = batch::Batch::new(self);
         let canvas = region;
         for layer in doc.layers_in_order() {
             check()?;
@@ -316,20 +335,14 @@ impl GpuRenderer {
             };
             let width = area.width() as u32;
             let height = area.height() as u32;
-            let mut encoder = self.device.create_command_encoder(&Default::default());
+            batch.before(area.area() as u64 * 4, cache, check, &mut stats)?;
+            let encoder = batch.encoder();
             if clear_pending {
                 encoder.clear_buffer(&output, 0, Some(size));
                 clear_pending = false;
             }
-            let source = cache.prepare(
-                &self.device,
-                &mut encoder,
-                doc,
-                layer,
-                area,
-                check,
-                &mut stats,
-            )?;
+            let source =
+                cache.prepare(&self.device, encoder, doc, layer, area, check, &mut stats)?;
             let params = LayerParams::new(
                 [(area.x0 - region.x0) as u32, (area.y0 - region.y0) as u32],
                 [width, height],
@@ -368,23 +381,15 @@ impl GpuRenderer {
                 pass.dispatch_workgroups(width.div_ceil(8), height.div_ceil(8), 1);
             }
             check()?;
-            let submission = self.queue.submit([encoder.finish()]);
-            // Finish one bounded layer before admitting another source buffer.
-            // Submitted GPU work cannot be cancelled; its reservation stays live.
-            self.device
-                .poll(wgpu::PollType::Wait {
-                    submission_index: Some(submission),
-                    timeout: Some(Duration::from_secs(30)),
-                })
-                .map_err(|e| unavailable(format!("GPU layer failed: {e}")))?;
-            check()?;
-            cache.completed(source);
+            batch.push(source)?;
         }
+        batch.finish(cache, check, &mut stats)?;
         if clear_pending {
             let mut encoder = self.device.create_command_encoder(&Default::default());
             encoder.clear_buffer(&output, 0, Some(size));
             check()?;
             let submission = self.queue.submit([encoder.finish()]);
+            stats.composition_submissions += 1;
             self.device
                 .poll(wgpu::PollType::Wait {
                     submission_index: Some(submission),

@@ -28,6 +28,10 @@ pub struct SourceCacheUsage {
 }
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct GpuRenderStats {
+    pub composition_submissions: u64,
+    pub max_submission_layers: u32,
+    pub max_submission_source_bytes: u64,
+    pub max_submission_metadata_bytes: u64,
     pub uploaded_bytes: u64,
     pub scaled_native_pixels: u64,
     pub scaled_uniform_pixels: u64,
@@ -160,6 +164,11 @@ pub(super) struct Prepared {
     pub buffer: wgpu::Buffer,
     key: Option<Key>,
 }
+impl Prepared {
+    pub fn metadata_bytes(&self) -> usize {
+        self.key.as_ref().map_or(0, Key::weight)
+    }
+}
 impl SourceCache {
     pub fn new(limits: SourceCacheLimits) -> Result<Self> {
         if limits.entries > 4096 {
@@ -247,6 +256,7 @@ impl SourceCache {
             && let Some(entry) = self.entries.iter_mut().find(|e| e.key.same_view(new_key))
             && let Some(strips) = new_key.changed_strips(&entry.key)
         {
+            entry.used_this_frame = true;
             let buffer = entry.buffer.clone();
             if strips.is_empty() {
                 stats.source_hits += 1;
