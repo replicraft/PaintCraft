@@ -280,6 +280,7 @@ impl App {
             })
             .cloned()
             .map(|denial| (key, denial));
+        self.update_render_capacity_interest();
         if let Some(wakes) = &self.budget_wakes {
             wakes.wait_for_release(self.render_residency_retry.is_some());
         }

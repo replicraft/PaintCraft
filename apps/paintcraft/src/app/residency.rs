@@ -41,25 +41,41 @@ impl App {
             self.texture_key = None;
             self.render_residency_retry = None;
         }
+        self.update_render_capacity_interest();
+    }
+    pub(super) fn update_render_capacity_interest(&self) {
+        if let Some(wakes) = &self.budget_wakes {
+            let denial = self
+                .render_residency_retry
+                .as_ref()
+                .filter(|(key, _)| *key == self.presentation_key())
+                .map(|(_, denial)| denial);
+            wakes.tiles.wait_for_capacity(denial);
+        }
     }
     pub(super) fn poll_residency_pressure(&mut self, ctx: &egui::Context) {
-        let usage = if let Some(wakes) = &self.budget_wakes {
+        self.update_render_capacity_interest();
+        let (usage, requested) = if let Some(wakes) = &self.budget_wakes {
             wakes.wait_for_release(
                 self.render_residency_retry.is_some() || self.any_pending_edits(),
             );
-            let usage = wakes.tiles.observe();
+            let pressure = wakes.tiles.observe_pressure();
             wakes.workers.observe();
-            usage
+            (pressure.usage, pressure.requested_capacity)
         } else {
-            paintcraft_raster::Admission::new(0).residency_usage()
+            (paintcraft_raster::Admission::new(0).residency_usage(), 0)
         };
-        self.poll_residency_usage(ctx, usage);
+        self.poll_residency_demand(ctx, usage, requested);
     }
+    #[cfg(test)]
     pub(super) fn poll_residency_usage(&mut self, ctx: &egui::Context, usage: BudgetUsage) {
+        self.poll_residency_demand(ctx, usage, 0);
+    }
+    fn poll_residency_demand(&mut self, ctx: &egui::Context, usage: BudgetUsage, requested: u64) {
         let Some(service) = self.editing.clone() else {
             return;
         };
-        let target = (64 << 20).min(usage.limit / 4);
+        let target = (64 << 20).min(usage.limit / 4).max(requested);
         let pressure = usage.limit.saturating_sub(usage.reserved) < target;
         let mut pending = false;
         let foreground = self.any_pending_edits();
@@ -98,12 +114,12 @@ impl App {
 mod tests {
     use super::*;
     use std::time::Instant;
-    fn paint(editor: &mut Editor, x: i64) {
+    pub(super) fn paint(editor: &mut Editor, x: i64) {
         editor.pointer_down((x, 1));
         editor.pointer_up();
         editor.run_pending();
     }
-    fn version(editor: &Editor) -> paintcraft_raster::TileVersion {
+    pub(super) fn version(editor: &Editor) -> paintcraft_raster::TileVersion {
         editor.document().layers[&editor.target().unwrap()]
             .raster
             .tile_leases()
@@ -119,7 +135,7 @@ mod tests {
             peak: 1 << 20,
         }
     }
-    fn pump(app: &mut App, ctx: &egui::Context, mut done: impl FnMut(&App) -> bool) {
+    pub(super) fn pump(app: &mut App, ctx: &egui::Context, mut done: impl FnMut(&App) -> bool) {
         let deadline = Instant::now() + Duration::from_secs(15);
         loop {
             app.poll_edits(ctx);
@@ -315,3 +331,7 @@ mod tests {
 #[cfg(test)]
 #[path = "residency/wake_tests.rs"]
 mod wake_tests;
+
+#[cfg(test)]
+#[path = "residency/demand_tests.rs"]
+mod demand_tests;
