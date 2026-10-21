@@ -5,7 +5,11 @@
 mod admission;
 #[cfg(test)]
 mod admission_tests;
-pub use admission::with_admission;
+pub use admission::{with_admission, with_admission_progress};
+mod progress;
+#[cfg(test)]
+mod progress_tests;
+pub use progress::{CompletionDriver, CompletionProgress};
 mod batch;
 mod completion;
 mod epoch;
@@ -54,6 +58,9 @@ impl LayerParams {
 pub struct GpuRenderer {
     device: wgpu::Device,
     queue: wgpu::Queue,
+    // wgpu queue equality may alias IDs from independent instances.
+    // Frames retain this private identity after the compositor is retired.
+    submission_identity: std::sync::Arc<()>,
     pipeline: wgpu::ComputePipeline,
     presentation: Option<wgpu::ComputePipeline>,
     scaled: OnceLock<scaled::Pipelines>,
@@ -145,6 +152,7 @@ impl GpuRenderer {
         Ok(Self {
             device,
             queue,
+            submission_identity: std::sync::Arc::new(()),
             pipeline,
             presentation,
             scaled: OnceLock::new(),
@@ -281,7 +289,7 @@ impl GpuRenderer {
         let mut encoder = self.device.create_command_encoder(&Default::default());
         encoder.copy_buffer_to_buffer(&output, 0, &readback, 0, size);
         check()?;
-        let submission = admission::submit(&self.queue, encoder);
+        let submission = admission::submit(&self.queue, &self.submission_identity, encoder);
         let bytes = readback::copy_mapped(&self.device, &self.epoch, &readback, submission, check)?;
         check()?;
         output.completed();
@@ -393,7 +401,7 @@ impl GpuRenderer {
             let mut encoder = self.device.create_command_encoder(&Default::default());
             encoder.clear_buffer(&output, 0, Some(size));
             check()?;
-            let submission = admission::submit(&self.queue, encoder);
+            let submission = admission::submit(&self.queue, &self.submission_identity, encoder);
             stats.composition_submissions += 1;
             submission.wait(&self.device, &self.epoch)?;
         }

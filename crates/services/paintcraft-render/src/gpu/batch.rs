@@ -67,7 +67,7 @@ impl<'a> Batch<'a> {
             return Ok(());
         };
         check()?;
-        let submission = admission::submit(&self.gpu.queue, encoder);
+        let submission = admission::submit(&self.gpu.queue, &self.gpu.submission_identity, encoder);
         stats.composition_submissions += 1;
         stats.max_submission_layers = stats.max_submission_layers.max(self.pending.len() as u32);
         stats.max_submission_source_bytes =

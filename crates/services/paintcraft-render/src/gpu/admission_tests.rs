@@ -2,7 +2,7 @@ use super::*;
 use admission::{ACTIVE, submit};
 use paintcraft_core::types::resources::{ResourceLease, SharedBudget};
 
-fn device() -> Option<(wgpu::Device, wgpu::Queue)> {
+pub(super) fn device() -> Option<(wgpu::Device, wgpu::Queue)> {
     let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle());
     let adapter = match pollster::block_on(instance.request_adapter(&Default::default())) {
         Ok(adapter) => adapter,
@@ -34,7 +34,11 @@ fn failed_wait_keeps_nested_charges_until_real_queue_completion_is_observed() {
     let epoch = DeviceEpoch::default();
     let result = with_admission(ResourceLease::new(outer.reserve(64).unwrap()), || {
         with_admission(ResourceLease::new(inner.reserve(32).unwrap()), || {
-            let mut submitted = submit(&queue, device.create_command_encoder(&Default::default()));
+            let mut submitted = submit(
+                &queue,
+                &std::sync::Arc::new(()),
+                device.create_command_encoder(&Default::default()),
+            );
             submitted.index = Some(invalid);
             submitted.wait(&device, &epoch)
         })
@@ -64,7 +68,11 @@ fn unwind_restores_scope_but_retains_submitted_resources_until_completion() {
         with_admission(
             ResourceLease::new(budget.reserve(64).unwrap()),
             || -> Result<()> {
-                let _submitted = submit(&queue, device.create_command_encoder(&Default::default()));
+                let _submitted = submit(
+                    &queue,
+                    &std::sync::Arc::new(()),
+                    device.create_command_encoder(&Default::default()),
+                );
                 panic!("unwind after submission");
             },
         )
@@ -121,7 +129,11 @@ fn ending_the_queue_context_does_not_leave_a_permanent_admission_cycle() {
     };
     let budget = SharedBudget::new(64);
     with_admission(ResourceLease::new(budget.reserve(64).unwrap()), || {
-        let _unobserved = submit(&queue, device.create_command_encoder(&Default::default()));
+        let _unobserved = submit(
+            &queue,
+            &std::sync::Arc::new(()),
+            device.create_command_encoder(&Default::default()),
+        );
         Ok(())
     })
     .unwrap();

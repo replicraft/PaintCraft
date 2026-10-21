@@ -8,6 +8,7 @@ pub struct GpuTextureFrame {
     pub(super) view: wgpu::TextureView,
     pub(super) device: wgpu::Device,
     pub(super) queue: wgpu::Queue,
+    pub(super) submission_identity: std::sync::Arc<()>,
     pub(super) epoch: DeviceEpoch,
     pub stats: GpuRenderStats,
 }
@@ -70,7 +71,7 @@ impl GpuTextureFrame {
             },
         );
         check()?;
-        let submission = admission::submit(&self.queue, encoder);
+        let submission = admission::submit(&self.queue, &self.submission_identity, encoder);
         let padded =
             super::readback::copy_mapped(&self.device, &self.epoch, &readback, submission, &check)?;
         let mut pixels = crate::output_buffer(width as usize * height as usize * 4)?;
@@ -169,7 +170,7 @@ impl GpuRenderer {
                 pass.dispatch_workgroups(width.div_ceil(8), height.div_ceil(8), 1);
             }
             check()?;
-            let submission = admission::submit(&self.queue, encoder);
+            let submission = admission::submit(&self.queue, &self.submission_identity, encoder);
             submission.wait(&self.device, &self.epoch)?;
             check()?;
             output.completed();
@@ -183,6 +184,7 @@ impl GpuRenderer {
                 view,
                 device: self.device.clone(),
                 queue: self.queue.clone(),
+                submission_identity: self.submission_identity.clone(),
                 epoch: self.epoch.clone(),
                 stats,
             })

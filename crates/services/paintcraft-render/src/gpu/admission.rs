@@ -8,6 +8,7 @@ pub(super) struct Scope {
     _lease: ResourceLease,
     _parent: Option<Arc<Scope>>,
     depth: usize,
+    progress: Option<std::sync::Weak<progress::State>>,
 }
 thread_local! {
     pub(super) static ACTIVE: RefCell<Option<Arc<Scope>>> = const { RefCell::new(None) };
@@ -24,6 +25,21 @@ impl Drop for Restore {
 /// Scopes restore on error/unwind, do not propagate to spawned tasks and nest at
 /// most 16 deep. Nested submissions retain every enclosing charge via the chain.
 pub fn with_admission<T>(lease: ResourceLease, work: impl FnOnce() -> Result<T>) -> Result<T> {
+    scoped(lease, None, work)
+}
+/// Observe deferred completion on a matching device even when its canvas is idle.
+pub fn with_admission_progress<T>(
+    lease: ResourceLease,
+    driver: &CompletionDriver,
+    work: impl FnOnce() -> Result<T>,
+) -> Result<T> {
+    scoped(lease, Some(driver.weak()), work)
+}
+fn scoped<T>(
+    lease: ResourceLease,
+    progress: Option<std::sync::Weak<progress::State>>,
+    work: impl FnOnce() -> Result<T>,
+) -> Result<T> {
     let parent = ACTIVE.with(|active| active.borrow().clone());
     let depth = parent.as_ref().map_or(1, |scope| scope.depth + 1);
     if depth > 16 {
@@ -36,6 +52,7 @@ pub fn with_admission<T>(lease: ResourceLease, work: impl FnOnce() -> Result<T>)
         _lease: lease,
         _parent: parent.clone(),
         depth,
+        progress,
     });
     ACTIVE.with(|active| *active.borrow_mut() = Some(scope));
     let _restore = Restore(parent);
@@ -45,6 +62,7 @@ pub fn with_admission<T>(lease: ResourceLease, work: impl FnOnce() -> Result<T>)
 pub(super) struct Submission {
     pub index: Option<wgpu::SubmissionIndex>,
     queue: wgpu::Queue,
+    identity: Arc<()>,
     owner: Option<Arc<Scope>>,
 }
 impl Submission {
@@ -61,16 +79,35 @@ impl Submission {
 impl Drop for Submission {
     fn drop(&mut self) {
         if let Some(owner) = self.owner.take() {
-            self.queue.on_submitted_work_done(move || drop(owner));
+            let mut node = Some(owner.as_ref());
+            let mut ticket = None;
+            while let Some(scope) = node {
+                if let Some(state) = scope.progress.as_ref().and_then(std::sync::Weak::upgrade) {
+                    ticket = state.track(&self.identity);
+                    if ticket.is_some() {
+                        break;
+                    }
+                }
+                node = scope._parent.as_deref();
+            }
+            self.queue.on_submitted_work_done(move || {
+                drop(owner);
+                drop(ticket);
+            });
         }
     }
 }
-pub(super) fn submit(queue: &wgpu::Queue, encoder: wgpu::CommandEncoder) -> Submission {
+pub(super) fn submit(
+    queue: &wgpu::Queue,
+    identity: &Arc<()>,
+    encoder: wgpu::CommandEncoder,
+) -> Submission {
     let owner = ACTIVE.with(|active| active.borrow().clone());
     // Install ownership before submit too: an unwind after dispatch must retain it.
     let mut submission = Submission {
         index: None,
         queue: queue.clone(),
+        identity: identity.clone(),
         owner,
     };
     submission.index = Some(queue.submit([encoder.finish()]));

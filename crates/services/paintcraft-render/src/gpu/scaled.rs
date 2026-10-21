@@ -240,7 +240,7 @@ impl GpuRenderer {
                 check()?;
                 let mut encoder = self.device.create_command_encoder(&Default::default());
                 encoder.clear_buffer(&accumulator, 0, None);
-                let submission = admission::submit(&self.queue, encoder);
+                let submission = admission::submit(&self.queue, &self.submission_identity, encoder);
                 submission.wait(&self.device, &self.epoch)?;
                 let [w, h] = [
                     (tile.rect.width() as u32).div_ceil(request.step()),
@@ -311,6 +311,7 @@ impl GpuRenderer {
             view,
             device: self.device.clone(),
             queue: self.queue.clone(),
+            submission_identity: self.submission_identity.clone(),
             epoch: self.epoch.clone(),
             stats,
         })
@@ -361,7 +362,7 @@ impl GpuRenderer {
             );
         }
         check()?;
-        let submission = admission::submit(&self.queue, encoder);
+        let submission = admission::submit(&self.queue, &self.submission_identity, encoder);
         submission.wait(&self.device, &self.epoch)?;
         check()
     }
