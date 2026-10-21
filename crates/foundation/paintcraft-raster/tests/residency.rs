@@ -208,3 +208,69 @@ fn independent_default_admissions_observe_the_same_process_tile_realm() {
     drop(tile);
     assert_eq!(second.residency_usage().reserved, 0);
 }
+
+#[test]
+fn denied_partial_attempt_requires_its_whole_known_footprint_not_just_one_more_tile() {
+    use paintcraft_core::types::resources::AllocationClass;
+    let budget = SharedBudget::new(2 * BYTES);
+    let blocker = budget.reserve(BYTES).unwrap();
+    let mut scope = admission(&budget, 2);
+    let mut layer = RasterLayer::new(512, 1, Rgba::TRANSPARENT);
+    layer
+        .blend_pixel(0, 0, ink(), BlendMode::Replace, &mut scope)
+        .unwrap();
+    let error = layer
+        .blend_pixel(256, 0, ink(), BlendMode::Replace, &mut scope)
+        .unwrap_err();
+    let denial = error.allocation_denial().unwrap();
+    assert_eq!(denial.class(), AllocationClass::DecodedTiles);
+    assert_eq!(denial.required_bytes(), 2 * BYTES);
+    drop(layer);
+    assert_eq!(budget.usage().reserved, BYTES);
+    assert!(
+        !denial.can_retry(),
+        "rolling back one's own partial work must not trigger the same failing attempt"
+    );
+    drop(blocker);
+    assert!(denial.can_retry());
+}
+#[test]
+fn released_temporaries_do_not_inflate_the_attempt_requirement_and_earlier_peak_is_retained() {
+    let budget = SharedBudget::new(3 * BYTES);
+    let mut scope = admission(&budget, 8);
+    let first = TileLease::materialize(ink(), &mut scope, |_| Ok(())).unwrap();
+    let second = TileLease::materialize(ink(), &mut scope, |_| Ok(())).unwrap();
+    drop(first);
+    drop(second);
+    let a = budget.reserve(2 * BYTES).unwrap();
+    let b = budget.reserve(BYTES).unwrap();
+    let error = TileLease::materialize(ink(), &mut scope, |_| Ok(())).unwrap_err();
+    let denial = error.allocation_denial().unwrap();
+    assert_eq!(denial.required_bytes(), 2 * BYTES);
+    assert!(denial.is_possible());
+    drop(b);
+    assert!(
+        !denial.can_retry(),
+        "retry must fit the earlier two-tile peak"
+    );
+    drop(a);
+    assert!(denial.can_retry());
+    // A fresh attempt can actually repeat the known peak under the same realm.
+    let mut retry = admission(&budget, 2);
+    let first = TileLease::materialize(ink(), &mut retry, |_| Ok(())).unwrap();
+    let second = TileLease::materialize(ink(), &mut retry, |_| Ok(())).unwrap();
+    drop(first);
+    drop(second);
+    assert_eq!(budget.usage().reserved, 0);
+}
+#[test]
+fn fixed_staging_limits_are_not_misclassified_as_reclaimable_tile_pressure() {
+    let budget = SharedBudget::new(BYTES);
+    let mut layer = RasterLayer::new(256, 256, Rgba::TRANSPARENT);
+    let error = layer
+        .blend_pixel(0, 0, ink(), BlendMode::Replace, &mut admission(&budget, 0))
+        .unwrap_err();
+    assert_eq!(error.code, ErrorCode::ResourceLimit);
+    assert!(error.allocation_denial().is_none());
+    assert_eq!(budget.usage().reserved, 0);
+}

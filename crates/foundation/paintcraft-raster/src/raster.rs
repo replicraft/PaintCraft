@@ -54,6 +54,7 @@ fn blend(mode: BlendMode, src: Rgba, dst: Rgba) -> Rgba {
 pub struct Admission {
     remaining_pixels: u64,
     residency: SharedBudget,
+    allocation_scope: Option<Arc<std::sync::Mutex<tile::Scope>>>,
 }
 
 impl Admission {
@@ -72,6 +73,7 @@ impl Admission {
         Self {
             remaining_pixels: limit_pixels,
             residency,
+            allocation_scope: None,
         }
     }
 

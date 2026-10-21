@@ -22,7 +22,22 @@ fn residency_exhaustion_rolls_back_the_whole_private_batch_and_reclaims_earlier_
     assert_eq!(budget.usage().reserved, 0);
     assert_eq!(doc.layers[&id].raster.resident_tiles(), 0);
     assert_eq!(doc.layers[&id].raster.get(0, 0), Rgba([255; 4]));
+    let denial = error.allocation_denial().unwrap();
+    assert_eq!(denial.required_bytes(), 2 * bytes);
+    assert!(!denial.is_possible());
     let enough = SharedBudget::new(2 * bytes);
+    let blocker = enough.reserve(bytes).unwrap();
+    let transient = execute_with_admission(
+        &doc,
+        Selection::Inactive,
+        &batch,
+        Admission::with_residency(2 * 65_536, enough.clone()),
+    )
+    .unwrap_err();
+    assert_eq!(transient.operation_index, Some(1));
+    assert!(!transient.allocation_denial().unwrap().can_retry());
+    drop(blocker);
+    assert!(transient.allocation_denial().unwrap().can_retry());
     let staged = execute_with_admission(
         &doc,
         Selection::Inactive,
