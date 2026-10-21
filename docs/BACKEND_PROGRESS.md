@@ -460,3 +460,28 @@ driver/device loss and full native-window recovery. Automatic eframe window/devi
 recreation, persistent GPU residency, transfer services, physical budgets and
 performance/latency qualification remain. This slice adds no dependency or GPU
 performance claim; T13 remains partial.
+
+
+## Fifteenth slice: shared in-flight worker admission
+
+Native edit/render pools now use one process-local declared-byte authority while
+retaining local queue/byte caps. Runtime submission reserves atomically, and shared
+lease guards keep a running worker or unread result charged after executor drop.
+The controller holds observable contention in its edit queue; rendering retries a
+feasible contended request instead of caching an error. Failed admission never
+publishes a partial transaction.
+
+625 workspace tests pass (21 explicit ignores), plus strict workspace/all-target
+Clippy, formatting/file limits and release desktop/CLI builds. Runtime tests cover
+heterogeneous and racing pools, overflow, local rejection, cancelled/panicking workers,
+executor drop and output destruction ordering. The desktop contention regression
+retains a completed stroke through worker completion and unread-result admission,
+then checks one publication and exact displayed pixels. Required Metal lifetime/
+parity checks and a 30-frame isolated native smoke pass.
+
+[The admission contract](WORKER_ADMISSION.md) explicitly limits the 3 GiB ceiling
+to declared in-flight charges. This does not establish global decoded/native/GPU
+allocation bounds, thread priorities, fairness, reclamation or latency. No new
+dependency or performance improvement is claimed. Persistent physical ownership,
+all-service admission and native pressure/interference qualification remain;
+T13 stays partial.

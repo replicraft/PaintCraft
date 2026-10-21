@@ -132,6 +132,12 @@ publication and checks the final document and displayed pixel exactly once. A
 second two-pass case delivers three coalesced strokes plus a live gesture across
 later frames, verifying ordered translucent preview/final pixels and undo depth.
 
+Native edit/render pools now share a [declared-byte authority](WORKER_ADMISSION.md).
+Its 3 GiB process ceiling covers in-flight charges, including results left unread
+and workers surviving a dropped executor. Observable contention holds queued edits
+and retries feasible frames. Physical allocations and persistent residency remain
+outside this authority.
+
 The fixed 2 GiB preparation charge is provisional scheduling admission, not a
 physical allocation reservation or process RSS bound. Changed/expired preview
 snapshot gathering/comparison, detached-history metadata, non-tool command construction, font-catalog

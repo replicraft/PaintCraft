@@ -254,6 +254,10 @@
         "crates/services/paintcraft-render/src/gpu/epoch.rs",
         "crates/services/paintcraft-render/tests/gpu.rs",
         "apps/paintcraft/src/app/rendering/device_tests.rs",
+        "docs/WORKER_ADMISSION.md",
+        "crates/services/paintcraft-runtime/src/admission.rs",
+        "crates/services/paintcraft-runtime/src/admission/tests.rs",
+        "apps/paintcraft/src/app/editing/admission_tests.rs",
         "docs/DESKTOP_EDITING.md",
         "apps/paintcraft/src/controller/background.rs",
         "apps/paintcraft/src/controller/background/tests.rs",
@@ -269,7 +273,7 @@
         "crates/editing/paintcraft-editor/src/session/preparation.rs",
         "crates/editing/paintcraft-editor/tests/preparation.rs"
       ],
-      "remaining_or_scope": "Shared native render/edit workers prepare validated stroke/text plans from immutable previews. Revision-keyed weak snapshots avoid recollecting unchanged repaints; queued edits, file barriers and completion invalidate inputs. Guarded no-op results and compatible progress have tests. Preview-capture process costs are locally measured; changing-input cost is inconclusive. Device epochs reject replaced/retired GPU completions; Metal destruction and fresh-device host-history reconstruction pass. Native window-device recovery, priorities, global physical budgets, changed-preview costs and native latency/interference qualification remain.",
+      "remaining_or_scope": "Shared native render/edit workers prepare validated stroke/text plans from immutable previews. Revision-keyed weak snapshots avoid recollecting unchanged repaints; queued edits, file barriers and completion invalidate inputs. Guarded no-op results and compatible progress have tests. Preview-capture process costs are locally measured; changing-input cost is inconclusive. Device epochs reject replaced/retired GPU completions; Metal destruction and fresh-device host-history reconstruction pass. Native edit/render pools share declared-byte admission with worker/result guards surviving executor drop. Native window-device recovery, priorities, physical/all-service budgets, changed-preview costs and native latency/interference qualification remain.",
       "acceptance": "SCHED-01\u201306 and GPU-01\u201306; no late mutation/device-loss data loss."
     },
     {
