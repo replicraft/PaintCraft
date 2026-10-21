@@ -1,0 +1,4 @@
+    Blocking waiting for file lock on build directory
+   Compiling paintcraft v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/apps/paintcraft)
+   Compiling paintcraft-cli v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/apps/paintcraft-cli)
+    Finished `release` profile [optimized + debuginfo] target(s) in 1m 08s

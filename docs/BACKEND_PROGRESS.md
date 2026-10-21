@@ -513,3 +513,47 @@ GPU composition still allocates/computes/reads back full output; sparse GPU work
 tiles, atlas/output residency, asynchronous/region transfers, CPU/GPU dispatch
 thresholds, physical all-service admission and native device/window recovery and
 input/display tails remain. T12/T13/T21/T37 remain partial or in progress.
+
+
+## Thirtieth slice: completed GPU display surfaces and native registration
+
+Native windows now register a completed GPU texture directly instead of reading
+straight pixels back, constructing a CPU ColorImage and re-uploading every frame.
+The new conversion shader matches selected egui/ecolor 0.37 integer premultiplication
+exactly in Rgba8Unorm. Host document/history/save semantics and straight render/export
+APIs stay independent. Readback copying is fallible and unmaps through a scope guard.
+Explicit texture readback removes padded rows and returns display-premultiplied bytes.
+
+Accepted frames own texture/device/epoch; the UI validates job/document/preview keys,
+canvas size and target epoch before registration. Rejected results register nothing.
+Replacement, CPU fallback, document/tab reset, backend replacement and drop free old
+IDs. Workers never lock egui's renderer. Headless harnesses remain CPU-backed;
+App::rendered() is explicitly empty for direct native surfaces. See [the display
+contract](GPU_DISPLAY.md). Output pooling and region/mipmap presentation remain open.
+
+740 workspace tests pass (23 explicit ignores), strict workspace/all-target Clippy,
+formatting/file limits and release desktop/CLI builds. Eleven required renderer GPU
+tests and three real native registration/draw tests pass on Metal, including every
+color/alpha pair, odd clipped extents, cancellation, device/stale epoch rejection,
+CPU fallback and actual egui native/managed pixel equality. A 30-frame release window
+smoke exits zero with an empty log. A parallel suite exposed an existing test's
+synchronous-drop assumption: abandoned maintenance may still own a tile until actual
+completion. The assertion now waits for observed release; no production lifecycle
+changed. This correction has its own commit.
+
+[Actual texture-readiness evidence](../benchmarks/results/direct-display-2026-10-21/DECISION.md)
+retains 120 Criterion samples and 420 Hyperfine observations. Both complete GPU work;
+the control also completes CPU conversion/backend upload. Across sessions, sparse1
+ratios are 1.05–1.13x, dense5 is mixed (0.99–1.25x), and dense65 is effectively a tie
+(1.00–1.03x). Large host/GPU variability and statistical/process discrepancies stay
+visible; cold device/renderer/font/fixture setup and teardown remain included and
+calibration is not subtracted. Process RSS is lower in these fixtures but does not
+qualify physical GPU budgets. Pixel/source pre/postflights and frozen source/shader/
+executable identities accompany all runs. The failed zero-size font-atlas preflight
+collected no timings and remains archived with its prototype source.
+
+No OS swap/input/frame-tail, Windows reference, universal throughput or physical
+memory claim follows. CPU/GPU dispatch thresholds, output pooling, viewport and
+multiresolution surfaces, sparse GPU working tiles, asynchronous services, native
+device recreation and all-service admission remain. T12/T13/T21/T37 stay partial;
+the full roadmap remains active.

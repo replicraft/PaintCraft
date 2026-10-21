@@ -1,0 +1,34 @@
+   Compiling paintcraft-render v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-render)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 7.80s
+     Running tests/gpu.rs (target/debug/deps/gpu-1834df45e46d13a5)
+
+running 11 tests
+GPU parity adapter: AdapterInfo { name: "Apple M1 Pro", vendor: 0, device: 0, device_type: IntegratedGpu, device_pci_bus_id: "", driver: "", driver_info: "", backend: Metal, subgroup_min_size: 4, subgroup_max_size: 64, transient_saves_memory: Some(true), limit_bucket: None }
+GPU parity adapter: AdapterInfo { name: "Apple M1 Pro", vendor: 0, device: 0, device_type: IntegratedGpu, device_pci_bus_id: "", driver: "", driver_info: "", backend: Metal, subgroup_min_size: 4, subgroup_max_size: 64, transient_saves_memory: Some(true), limit_bucket: None }
+GPU parity adapter: AdapterInfo { name: "Apple M1 Pro", vendor: 0, device: 0, device_type: IntegratedGpu, device_pci_bus_id: "", driver: "", driver_info: "", backend: Metal, subgroup_min_size: 4, subgroup_max_size: 64, transient_saves_memory: Some(true), limit_bucket: None }
+GPU parity adapter: AdapterInfo { name: "Apple M1 Pro", vendor: 0, device: 0, device_type: IntegratedGpu, device_pci_bus_id: "", driver: "", driver_info: "", backend: Metal, subgroup_min_size: 4, subgroup_max_size: 64, transient_saves_memory: Some(true), limit_bucket: None }
+GPU parity adapter: AdapterInfo { name: "Apple M1 Pro", vendor: 0, device: 0, device_type: IntegratedGpu, device_pci_bus_id: "", driver: "", driver_info: "", backend: Metal, subgroup_min_size: 4, subgroup_max_size: 64, transient_saves_memory: Some(true), limit_bucket: None }
+GPU parity adapter: AdapterInfo { name: "Apple M1 Pro", vendor: 0, device: 0, device_type: IntegratedGpu, device_pci_bus_id: "", driver: "", driver_info: "", backend: Metal, subgroup_min_size: 4, subgroup_max_size: 64, transient_saves_memory: Some(true), limit_bucket: None }
+GPU parity adapter: AdapterInfo { name: "Apple M1 Pro", vendor: 0, device: 0, device_type: IntegratedGpu, device_pci_bus_id: "", driver: "", driver_info: "", backend: Metal, subgroup_min_size: 4, subgroup_max_size: 64, transient_saves_memory: Some(true), limit_bucket: None }
+GPU parity adapter: AdapterInfo { name: "Apple M1 Pro", vendor: 0, device: 0, device_type: IntegratedGpu, device_pci_bus_id: "", driver: "", driver_info: "", backend: Metal, subgroup_min_size: 4, subgroup_max_size: 64, transient_saves_memory: Some(true), limit_bucket: None }
+GPU parity adapter: AdapterInfo { name: "Apple M1 Pro", vendor: 0, device: 0, device_type: IntegratedGpu, device_pci_bus_id: "", driver: "", driver_info: "", backend: Metal, subgroup_min_size: 4, subgroup_max_size: 64, transient_saves_memory: Some(true), limit_bucket: None }
+GPU parity adapter: AdapterInfo { name: "Apple M1 Pro", vendor: 0, device: 0, device_type: IntegratedGpu, device_pci_bus_id: "", driver: "", driver_info: "", backend: Metal, subgroup_min_size: 4, subgroup_max_size: 64, transient_saves_memory: Some(true), limit_bucket: None }
+test host_callback_survives_construction_and_loss_during_staging_rejects_output ... ok
+
+thread 'poisoned_gpu_source_state_is_discarded_and_admission_queries_do_not_lock' (10307616) panicked at crates/services/paintcraft-render/tests/gpu.rs:475:17:
+injected pre-submission GPU cache panic
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+GPU parity adapter: AdapterInfo { name: "Apple M1 Pro", vendor: 0, device: 0, device_type: IntegratedGpu, device_pci_bus_id: "", driver: "", driver_info: "", backend: Metal, subgroup_min_size: 4, subgroup_max_size: 64, transient_saves_memory: Some(true), limit_bucket: None }
+test resident_gpu_views_do_not_retain_decoded_source_tiles ... ok
+test poisoned_gpu_source_state_is_discarded_and_admission_queries_do_not_lock ... ok
+test empty_transparent_layers_skip_uploads_without_losing_revealed_source_changes ... ok
+test destroyed_device_cannot_render_and_fresh_device_restores_committed_host_history ... ok
+test display_texture_matches_integer_premultiplication_for_every_color_alpha_pair ... ok
+test resident_sources_skip_unchanged_uploads_and_patch_clipped_row_strips ... ok
+test gpu_matches_scalar_for_order_opacity_offsets_tiles_and_hidden_rgb ... ok
+test source_cache_limits_stream_oversized_layers_and_evict_without_pixel_changes ... ok
+test display_texture_cancellation_and_device_loss_preserve_host_pixels_and_retire_frames ... ok
+test cancellation_at_each_resident_update_boundary_retires_partial_views_and_recovers ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.51s
+

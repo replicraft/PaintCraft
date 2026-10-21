@@ -1,0 +1,22 @@
+
+running 1 test
+Display adapter: AdapterInfo { name: "Apple M1 Pro", vendor: 0, device: 0, device_type: IntegratedGpu, device_pci_bus_id: "", driver: "", driver_info: "", backend: Metal, subgroup_min_size: 4, subgroup_max_size: 64, transient_saves_memory: Some(true), limit_bucket: None }
+
+thread 'gpu_display::benchmark::native_display_process' (10407656) panicked at /Users/dielpi/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wgpu-30.0.1/src/backend/wgpu_core.rs:1637:26:
+wgpu error: Validation Error
+
+Caused by:
+  In Device::create_texture, label = 'egui_texid_Managed(0)'
+    Dimension X is zero
+
+
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test gpu_display::benchmark::native_display_process ... FAILED
+
+failures:
+
+failures:
+    gpu_display::benchmark::native_display_process
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 216 filtered out; finished in 0.28s
+

@@ -1,0 +1,10 @@
+Benchmark 1: /usr/bin/env PAINTCRAFT_DISPLAY_VARIANT=readback PAINTCRAFT_GEOMETRY_BASE=sparse1 /Users/dielpi/Desktop/replicraft/PaintCraft/target/release/deps/paintcraft-30d295483bc0fb78 --exact gpu_display::benchmark::native_display_process --ignored (20 runs)
+                mean     ±       σ          min     …     max
+  Wall Time    112.9 ms  ±     4.5 ms     108.0 ms  …   127.9 ms
+  Memory        34.0 MiB ±     1.3 MiB     30.6 MiB …    36.3 MiB
+ 
+Benchmark 2: /usr/bin/env PAINTCRAFT_DISPLAY_VARIANT=texture PAINTCRAFT_GEOMETRY_BASE=sparse1 /Users/dielpi/Desktop/replicraft/PaintCraft/target/release/deps/paintcraft-30d295483bc0fb78 --exact gpu_display::benchmark::native_display_process --ignored (20 runs)
+                mean     ±       σ          min     …     max
+  Wall Time    104.5 ms  ±     9.4 ms      90.6 ms  …   127.4 ms            -7.5%
+  Memory        29.1 MiB ±     1.2 MiB     26.6 MiB …    31.2 MiB          -14.4%
+ 

@@ -138,3 +138,13 @@ real adapter. [The record](results/gpu-sources-2026-10-21/DECISION.md) includes
 completion/readback, cold setup/teardown, source-stage bytes, over-entry-limit
 behavior and retained timing variability. It does not qualify CPU/GPU crossover,
 sparse atlas layout or native input/display latency.
+
+
+Direct native texture readiness uses the optimized desktop lib test
+`gpu_display::benchmark::native_display_process`. Set
+`PAINTCRAFT_GEOMETRY_BASE=sparse1|dense5|dense65` and
+`PAINTCRAFT_DISPLAY_VARIANT=readback|texture|verify|criterion|calibration`.
+[The record](results/direct-display-2026-10-21/DECISION.md) compares completed
+readback/ColorImage/backend upload with completed texture conversion/native
+registration, retains mixed/tied controls and separates this boundary from OS
+input/display latency. The first failed preflight is preserved separately.

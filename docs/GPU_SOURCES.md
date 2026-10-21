@@ -4,7 +4,9 @@ The ordered integer compositor now retains bounded, clipped, dense layer-source
 buffers on its own device. Authoritative sparse host tiles, recorded history,
 Session publication and saves remain independent. This is a first layer-view
 residency implementation, not a GPU tile atlas or GPU-authoritative editing store.
-Output composition and host readback still cover the complete requested canvas.
+Output composition still covers the complete canvas. Explicit readback covers the
+complete canvas; native windows now use [completed display textures](GPU_DISPLAY.md)
+without normal host readback/re-upload.
 
 ## Identity and updates
 
@@ -75,7 +77,7 @@ teardown with source retention enabled/disabled. It retains raw statistical/proc
 samples and an over-entry-limit workload. No zero-copy display or input/frame-tail
 claim follows from those complete-work observations.
 
-Persistent sparse GPU working tiles/atlas layout, region-only output/readback,
+Persistent sparse GPU working tiles/atlas layout, pooled/region-only output/readback,
 asynchronous transfer services, CPU/GPU cost dispatch, device-wide physical budgets,
 GPU committed-edit chains, automatic native device recreation, other adapters and
 native queue/input/display latency remain open. T12/T13/T21/T37 remain partial.

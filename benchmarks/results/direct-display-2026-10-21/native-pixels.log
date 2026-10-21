@@ -1,0 +1,11 @@
+   Compiling paintcraft v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/apps/paintcraft)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 9.55s
+     Running unittests src/lib.rs (target/debug/deps/paintcraft-a7681709a4b8a35d)
+
+running 3 tests
+test gpu_display::pixel_tests::native_and_managed_images_draw_identical_pixels_in_the_actual_egui_renderer ... ok
+test gpu_display::tests::stale_keys_and_backend_replacement_cannot_retain_native_registrations ... ok
+test gpu_display::tests::native_display_matches_egui_conversion_and_releases_registration_on_cpu_fallback ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 213 filtered out; finished in 0.25s
+

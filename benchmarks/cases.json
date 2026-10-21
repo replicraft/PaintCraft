@@ -198,7 +198,8 @@
     "hyperfine_role": "decision",
     "adapter_path": "apps/paintcraft/src/app/cpu_rendering/geometry_benchmark.rs",
     "result_artifacts": [
-      "benchmarks/results/gpu-sources-2026-10-21/DECISION.md"
+      "benchmarks/results/gpu-sources-2026-10-21/DECISION.md",
+      "benchmarks/results/direct-display-2026-10-21/DECISION.md"
     ],
     "variants": [
       "scalar/SIMD CPU",
@@ -227,6 +228,6 @@
     ],
     "decision_rule": "Derive workload-specific thresholds; resident and cold paths are different policies with identical semantics.",
     "protocol": "docs/development/HYPERFINE_PROTOCOL.md",
-    "remaining_scope": "Only streamed/resident GPU preview composition is compared here. CPU/GPU crossover thresholds, effect kernels, energy and native input/display traces remain unqualified."
+    "remaining_scope": "Streamed/resident source reuse and completed native texture readiness are locally compared. CPU/GPU crossover thresholds, effect kernels, energy and native OS input/display traces remain unqualified."
   }
 ]
