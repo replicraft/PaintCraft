@@ -22,6 +22,8 @@ mod pointer;
 mod preview_cache;
 #[path = "controller/residency.rs"]
 mod residency;
+#[path = "controller/retry.rs"]
+mod retry;
 #[path = "controller/strokes.rs"]
 mod strokes;
 #[path = "controller/text.rs"]
@@ -73,6 +75,7 @@ pub struct Editor {
     file_barrier: Option<Uuid>,
     editing: Option<background::Service>,
     pending_edit: Option<background::Pending>,
+    waiting_edit: Option<retry::Waiting>,
     maintenance: Option<background::Pending>,
     residency_attempt: Option<((Uuid, u64), std::time::Instant)>,
     publication_preview: Option<Preview>,
@@ -146,6 +149,7 @@ impl Editor {
             file_barrier: None,
             editing: None,
             pending_edit: None,
+            waiting_edit: None,
             maintenance: None,
             residency_attempt: None,
             publication_preview: None,
@@ -461,6 +465,10 @@ impl Editor {
         }
         let before = self.publications();
         self.poll_edit();
+        self.retry_waiting_edit();
+        if self.waiting_edit.is_some() {
+            return self.publications() - before;
+        }
         if !self.outbox.is_empty() {
             self.preview_queue_revision.advance();
         }

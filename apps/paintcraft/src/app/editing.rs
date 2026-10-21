@@ -132,6 +132,7 @@ impl App {
             self.finish_save();
         }
         self.swap_tab_state(original);
+        self.update_capacity_interest();
         if self.any_pending_edits() || self.any_deferred_files() {
             ctx.request_repaint_after(Duration::from_millis(16));
         } else if self.close_after_edits {

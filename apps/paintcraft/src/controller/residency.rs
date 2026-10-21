@@ -12,10 +12,11 @@ impl Editor {
         if self.maintenance.is_some()
             || self.pending_edit.is_some()
             || self.file_barrier.is_some()
-            || self
-                .actions
-                .iter()
-                .any(|action| matches!(action, background::Queued::FileBarrier(_)))
+            || (self.waiting_edit.is_none()
+                && self
+                    .actions
+                    .iter()
+                    .any(|action| matches!(action, background::Queued::FileBarrier(_))))
             || self.residency_attempt.is_some_and(|(ticket, at)| {
                 ticket == self.render_key() && at.elapsed() < Duration::from_secs(5)
             })

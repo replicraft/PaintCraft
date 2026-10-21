@@ -34,7 +34,7 @@ impl Editor {
     }
     fn paint_load(&self) -> Load {
         let mut load = Load::default();
-        if self.pending_edit.is_some()
+        if self.has_inflight_edit()
             && let Some(Preview::Path(stroke)) = &self.publication_preview
         {
             load.add(stroke);
@@ -101,7 +101,7 @@ impl Editor {
             return false;
         }
         if self.file_barrier.is_some()
-            || (self.pending_edit.is_some()
+            || (self.has_inflight_edit()
                 && !matches!(self.publication_preview, Some(Preview::Path(_))))
             || self
                 .actions
@@ -134,7 +134,7 @@ impl Editor {
             return None;
         }
         let mut paths = Vec::new();
-        if self.pending_edit.is_some() {
+        if self.has_inflight_edit() {
             if let Some(Preview::Path(stroke)) = &self.publication_preview {
                 paths.push(stroke.clone());
             } else {

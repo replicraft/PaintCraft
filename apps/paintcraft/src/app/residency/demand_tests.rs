@@ -1,5 +1,6 @@
 use super::*;
 use paintcraft_core::types::resources::AllocationClass;
+use std::time::Instant;
 
 #[test]
 fn another_contexts_demand_reclaims_history_above_static_headroom_without_switching() {
@@ -102,4 +103,83 @@ fn changed_document_or_foreign_allocation_realm_cannot_leave_shared_pressure_int
         0
     );
     drop((blocker, held));
+}
+
+#[test]
+fn actual_cross_context_history_reclamation_resumes_an_accepted_edit_in_the_same_tile_realm() {
+    let bytes = paintcraft_raster::RasterLayer::TILE_BYTES as u64;
+    let tiles = SharedBudget::new(4 * bytes);
+    let owner_ctx = egui::Context::default();
+    let request_ctx = egui::Context::default();
+    let mut owner = App::new(None);
+    let mut requester = App::new(None);
+    owner.editor = Editor::new_document(257, 1).unwrap();
+    requester.editor = Editor::new_document(257, 1).unwrap();
+    for (app, ctx) in [(&mut owner, &owner_ctx), (&mut requester, &request_ctx)] {
+        let service =
+            crate::controller::background::Service::with_residency(ctx.clone(), tiles.clone())
+                .unwrap();
+        app.editor.connect_editing(service.clone());
+        app.editing = Some(service);
+        app.connect_budget_wakes(ctx, tiles.clone()).unwrap();
+    }
+    let deadline = Instant::now() + Duration::from_secs(10);
+    for x in 0..3 {
+        owner.editor.pointer_down((x, 0));
+        owner.editor.pointer_up();
+        while owner.editor.has_pending_edits() {
+            assert!(Instant::now() < deadline);
+            owner.editor.run_pending();
+            std::thread::yield_now();
+        }
+    }
+    assert_eq!(tiles.usage().reserved, 3 * bytes);
+    let history = owner.editor.history_view();
+    let ticket = owner.editor.render_key();
+    requester.editor.pointer_down((0, 0));
+    requester.editor.pointer_move((256, 0));
+    requester.editor.pointer_up();
+    while requester.editor.allocation_wait().is_none() {
+        assert!(Instant::now() < deadline);
+        requester.editor.run_pending();
+        std::thread::yield_now();
+    }
+    requester.update_capacity_interest();
+    assert_eq!(
+        owner
+            .budget_wakes
+            .as_ref()
+            .unwrap()
+            .tiles
+            .observe_pressure()
+            .requested_capacity,
+        2 * bytes
+    );
+    while requester.editor.has_pending_edits() {
+        assert!(Instant::now() < deadline);
+        owner.poll_edits(&owner_ctx);
+        requester.poll_edits(&request_ctx);
+        assert!(tiles.usage().reserved <= 4 * bytes);
+        std::thread::yield_now();
+    }
+    assert_eq!(requester.editor.publications(), 1);
+    assert_eq!(owner.editor.history_view(), history);
+    assert_eq!(owner.editor.render_key(), ticket);
+    assert_eq!(tiles.usage().reserved, 3 * bytes);
+    let raster = &requester.editor.document().layers[&requester.editor.target().unwrap()].raster;
+    for x in 0..257 {
+        assert_eq!(raster.get(x, 0), Rgba([0, 0, 0, 255]));
+    }
+    assert_eq!(
+        owner
+            .budget_wakes
+            .as_ref()
+            .unwrap()
+            .tiles
+            .observe_pressure()
+            .requested_capacity,
+        0
+    );
+    drop((owner, requester));
+    assert_eq!(tiles.usage().reserved, 0);
 }

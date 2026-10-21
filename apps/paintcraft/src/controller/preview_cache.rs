@@ -27,7 +27,7 @@ impl Editor {
             lineage: self.preview_lineage,
             tool: self.tools.tool,
             native: self.editing.is_some(),
-            pending: self.pending_edit.is_some(),
+            pending: self.has_inflight_edit(),
         };
         if let Ok(cache) = self.preview_cache.0.lock()
             && let Some((cached_stamp, preview)) = cache.as_ref()

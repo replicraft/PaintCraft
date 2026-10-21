@@ -12,6 +12,7 @@ const PREPARATION_CHARGE: u64 = 2 << 30;
 #[derive(Debug)]
 pub(super) enum Completion {
     Edit(PreparedEdit),
+    Deferred(Box<retry::Deferred>),
     Navigation(PreparedNavigation),
     Maintenance(paintcraft_editor::session::PreparedHistoryMaintenance),
 }
@@ -19,6 +20,7 @@ pub(super) enum Completion {
 pub(crate) struct Service {
     executor: Arc<Mutex<Executor<Completion>>>,
     context: egui::Context,
+    pub(super) residency: paintcraft_runtime::SharedBudget,
 }
 #[derive(Debug)]
 pub(super) struct Pending {
@@ -60,6 +62,15 @@ impl Service {
             paintcraft_runtime::SharedBudget::new(PREPARATION_CHARGE),
         )
     }
+    #[cfg(test)]
+    pub(crate) fn with_residency(
+        context: egui::Context,
+        residency: paintcraft_runtime::SharedBudget,
+    ) -> Result<Self> {
+        let mut service = Self::new(context)?;
+        service.residency = residency;
+        Ok(service)
+    }
     pub(crate) fn with_budget(
         context: egui::Context,
         budget: paintcraft_runtime::SharedBudget,
@@ -80,6 +91,7 @@ impl Service {
                 budget,
             )?)),
             context,
+            residency: paintcraft_raster::Admission::new(0).residency_budget(),
         })
     }
     fn lock(&self) -> Result<std::sync::MutexGuard<'_, Executor<Completion>>> {
@@ -135,7 +147,7 @@ impl Editor {
     }
     /// Includes commands waiting behind an earlier transaction or another tab.
     pub fn has_pending_edits(&self) -> bool {
-        self.pending_edit.is_some()
+        self.has_inflight_edit()
             || self
                 .actions
                 .iter()
@@ -190,6 +202,9 @@ impl Editor {
             }
             self.status = "Cancelling edit…".into();
         }
+        if self.waiting_edit.take().is_some() && self.pending_edit.is_none() {
+            self.status = "Edit cancelled".into();
+        }
         self.publication_preview = None;
     }
     pub(super) fn start_edit(
@@ -198,15 +213,27 @@ impl Editor {
         done: &str,
         target_alias: Option<&'static str>,
     ) {
+        let residency = self
+            .editing
+            .as_ref()
+            .expect("editing service")
+            .residency
+            .clone();
         let result = self.session.preparation().and_then(|preparation| {
             self.editing
                 .as_ref()
                 .expect("background editing enabled")
                 .submit(
                     move |cancellation| {
-                        preparation
-                            .apply(&batch, || cancellation.check())
-                            .map(Completion::Edit)
+                        retry::prepare_batch(
+                            preparation,
+                            Arc::new(batch),
+                            paintcraft_raster::Admission::with_residency(
+                                paintcraft_editor::execute::STAGED_PIXELS_MAX,
+                                residency,
+                            ),
+                            || cancellation.check(),
+                        )
                     },
                     done.to_owned(),
                     "",
@@ -219,6 +246,12 @@ impl Editor {
     /// than expanding pointer/glyph data into JSON values during UI dispatch.
     pub(super) fn start_tool_plan(&mut self, preview: Preview, done: &str) {
         let plan = self.prepare_preview(Some(preview));
+        let residency = self
+            .editing
+            .as_ref()
+            .expect("editing service")
+            .residency
+            .clone();
         let result = self.session.preparation().and_then(|preparation| {
             self.editing
                 .as_ref()
@@ -226,11 +259,18 @@ impl Editor {
                 .submit(
                     move |cancellation| {
                         let check = || cancellation.check();
-                        let prepared = match plan.build(check)? {
-                            Some(batch) => preparation.apply(&batch, check)?,
-                            None => preparation.no_change(check)?,
-                        };
-                        Ok(Completion::Edit(prepared))
+                        match plan.build(check)? {
+                            Some(batch) => retry::prepare_batch(
+                                preparation,
+                                Arc::new(batch),
+                                paintcraft_raster::Admission::with_residency(
+                                    paintcraft_editor::execute::STAGED_PIXELS_MAX,
+                                    residency,
+                                ),
+                                check,
+                            ),
+                            None => preparation.no_change(check).map(Completion::Edit),
+                        }
                     },
                     done.into(),
                     "",
@@ -292,6 +332,18 @@ impl Editor {
             return;
         };
         let pending = self.pending_edit.take().expect("pending edit");
+        let result = match result {
+            Ok(Completion::Deferred(deferred)) => {
+                self.status = "Waiting for decoded tile capacity; Escape cancels the edit".into();
+                self.waiting_edit = Some(retry::Waiting {
+                    deferred: *deferred,
+                    done: pending.done.clone(),
+                    target_alias: pending.target_alias,
+                });
+                return;
+            }
+            result => result,
+        };
         self.preview_queue_revision.advance();
         self.publication_preview = None;
         let result = match result {
@@ -312,6 +364,7 @@ impl Editor {
                     };
                     self.retarget();
                 }),
+            Ok(Completion::Deferred(_)) => unreachable!("deferred edits were retained above"),
             Ok(Completion::Maintenance(_)) => Err(Error::new(
                 ErrorCode::InvariantViolation,
                 "maintenance result routed to edit consumer",

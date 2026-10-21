@@ -41,20 +41,40 @@ impl App {
             self.texture_key = None;
             self.render_residency_retry = None;
         }
-        self.update_render_capacity_interest();
+        self.update_capacity_interest();
     }
-    pub(super) fn update_render_capacity_interest(&self) {
+    pub(super) fn update_capacity_interest(&self) {
         if let Some(wakes) = &self.budget_wakes {
-            let denial = self
+            let render = self
                 .render_residency_retry
                 .as_ref()
                 .filter(|(key, _)| *key == self.presentation_key())
                 .map(|(_, denial)| denial);
-            wakes.tiles.wait_for_capacity(denial);
+            let editors = std::iter::once(&self.editor)
+                .chain(
+                    self.tabs
+                        .iter()
+                        .filter_map(|tab| tab.state.as_ref())
+                        .map(|state| &state.editor),
+                )
+                .chain(self.other_workspace.iter().flat_map(|workspace| {
+                    std::iter::once(&workspace.active.editor).chain(
+                        workspace
+                            .tabs
+                            .iter()
+                            .filter_map(|tab| tab.state.as_ref())
+                            .map(|state| &state.editor),
+                    )
+                }));
+            wakes.tiles.wait_for_capacities(
+                render
+                    .into_iter()
+                    .chain(editors.filter_map(Editor::allocation_wait)),
+            );
         }
     }
     pub(super) fn poll_residency_pressure(&mut self, ctx: &egui::Context) {
-        self.update_render_capacity_interest();
+        self.update_capacity_interest();
         let (usage, requested) = if let Some(wakes) = &self.budget_wakes {
             wakes.wait_for_release(
                 self.render_residency_retry.is_some() || self.any_pending_edits(),
