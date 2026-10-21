@@ -33,8 +33,9 @@ physical-memory limit. Reference tables shrink after large retention/branch remo
 
 ## Pressure, admission and failures
 
-Adaptive packing runs under retention pressure before dropping old history. Each
-automatic preparation batch considers at most 64 entries and classifies 64 new tile payloads, with a
+Adaptive packing runs under pressure before rejecting an edit or applying explicit
+trimming. Each automatic preparation batch considers at most 64 entries and
+classifies 64 new tile payloads, with a
 separate 64 MiB staging allowance for preserving publication (the explicit trimming
 policy keeps its smaller allowance cap). Larger
 snapshots register remaining immutable raw sources without scanning their pixels.

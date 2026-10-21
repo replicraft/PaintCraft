@@ -228,3 +228,34 @@ tile authority/physical admission, background priorities, efficient relocation,
 photographic deltas, natural/mask/depth qualification and branching history remain.
 The default is preserving, but those limits can still reject a large edit despite
 available disk. See [the exact contract and limits](HISTORY_SPILL.md).
+
+## Seventh slice: large-snapshot preparation and pressure continuation
+
+Automatic pressure no longer skips snapshots requiring more than 64 new sources.
+It registers immutable raw leases without scanning the remaining pixels, then
+refines/transfers those sources across batches. Deferred uniform data becomes
+inline and the configured codec can finish warm preparation without disk. Raw
+sources still owned by hot documents are excluded from automatic transfer; manual
+complete transfer semantics remain unchanged. If necessary, pressure can cool the
+previous state while retaining the new current state hot. Every result remains
+in the private candidate until the whole admission succeeds.
+
+556 workspace tests (20 ignored), strict Clippy, real Metal parity and release CLI
+save/export pass. Regressions cover 130-tile bases, full replacement across more
+than two transfer batches, later-batch failure retaining document/redo and reclaiming
+provisional files, hidden-RGB uniform refinement and warm codec completion without
+disk. A unit case registers 80 sources with exactly 64 scanned and 16 deferred.
+
+The [large-history decision](../benchmarks/results/history-large-2026-10-20/DECISION.md)
+retains 360 process runs, 240 internal samples and six independent phase traces.
+On 65/130/260-tile shared bases, automatic lifecycle medians are 2.1–2.2x faster
+than the explicit full-scan/spill strategy under identical allowances and full
+retained timelines. Peak RSS is similar/slightly higher. Automatic avoids spilling
+the unchanged hot base; it does not improve every percentile. The timed boundary
+checks changed bytes independently and unchanged identities, with full byte
+preflight and endpoint CRCs; it does not pin source leases in fingerprints.
+
+This is synchronous continuation, not an interactive time bound. Global logical
+tile authority/physical admission, background jobs, metadata scaling, photographic
+deltas, masks/depth, segment relocation and persistent branches remain. A current
+raw document exceeding its allowance can still reject an edit. T11 stays partial.

@@ -148,7 +148,8 @@
     "adapter_path": "crates/editing/paintcraft-editor/examples/history_spill.rs",
     "result_artifacts": [
       "benchmarks/results/history-codecs-2026-10-20/DECISION.md",
-      "benchmarks/results/history-spill-2026-10-20/DECISION.md"
+      "benchmarks/results/history-spill-2026-10-20/DECISION.md",
+      "benchmarks/results/history-large-2026-10-20/DECISION.md"
     ],
     "variants": [
       "raw",

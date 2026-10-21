@@ -192,9 +192,11 @@
         "docs/HISTORY_SPILL.md",
         "crates/editing/paintcraft-editor/tests/history_spill.rs",
         "crates/services/paintcraft-platform/src/spill/tests.rs",
-        "benchmarks/results/history-spill-2026-10-20/DECISION.md"
+        "benchmarks/results/history-spill-2026-10-20/DECISION.md",
+        "crates/editing/paintcraft-editor/tests/large_history.rs",
+        "benchmarks/results/history-large-2026-10-20/DECISION.md"
       ],
-      "remaining_or_scope": "Preserving atomic history admission, raw/patch/LZ4/Zstd payloads and native leased append segments work with disk/cancel/corruption/kill tests; trimming is explicit. Global physical admission, segment relocation/GC efficiency, background interference and broader corpus qualification remain.",
+      "remaining_or_scope": "Preserving history handles large snapshots through bounded classification and selective transfer batches, with uniform/warm-codec refinement and later-batch rollback tests. Global physical admission, background scheduling, segment relocation and broader corpus/latency qualification remain.",
       "acceptance": "MEM-01\u201307 under artificial low budget; actual allocator/RSS evidence, not counters alone."
     },
     {

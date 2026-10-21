@@ -132,3 +132,8 @@ hidden-RGB uniform records without disk, and warm codec completion without disk.
 A preparation test registers 80 sources while scanning 64 and deferring 16; raw
 leases remain authoritative until classified. CRC validation is mandatory for
 encoded and disk-backed records.
+
+The [large-snapshot comparison](../benchmarks/results/history-large-2026-10-20/DECISION.md)
+retains 360 process runs, 240 internal samples and six phase traces at identical
+allowances. Automatic preparation reduces work versus explicit full preparation
+for shared bases; it does not establish lower RSS or uniformly better latency.

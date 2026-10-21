@@ -1,0 +1,3 @@
+   Compiling paintcraft-editor v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/crates/editing/paintcraft-editor)
+    Finished `bench` profile [optimized + debuginfo] target(s) in 1.14s
+  Executable benches/large_history.rs (target/release/deps/large_history-7e9f8a4be410d2d2)
