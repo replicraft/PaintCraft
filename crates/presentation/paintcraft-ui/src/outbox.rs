@@ -52,6 +52,16 @@ impl<A> Outbox<A> {
         self.pending.drain(..).map(|(_, a)| a).collect()
     }
 
+    /// Whether this activation is still in the deduplication window.
+    pub fn has_seen(&self, token: Token) -> bool {
+        self.seen.contains(&token)
+    }
+
+    /// Inspect accepted activations in arrival order without consuming them.
+    pub fn pending(&self) -> impl ExactSizeIterator<Item = &A> {
+        self.pending.iter().map(|(_, action)| action)
+    }
+
     pub fn is_empty(&self) -> bool {
         self.pending.is_empty()
     }

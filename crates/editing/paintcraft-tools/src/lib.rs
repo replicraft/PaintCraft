@@ -1,5 +1,6 @@
 //! Tool state machines produce intentions; the application publishes them.
 mod geometry;
+mod path_admission;
 
 pub use paintcraft_core::types::policy::BlendMode;
 use paintcraft_core::types::{Rgba, text::TextOptions};
@@ -196,6 +197,8 @@ pub enum Action {
 #[derive(Clone, Debug, PartialEq)]
 pub enum Preview {
     Path(Stroke),
+    /// Ordered unpublished strokes against one committed base.
+    Paths(Vec<Stroke>),
     Shape {
         tool: Tool,
         from: (i64, i64),
@@ -357,6 +360,12 @@ impl ToolState {
     pub fn gesture_button(&self) -> Option<PointerButton> {
         self.gesture.as_ref().map(|g| g.button)
     }
+    pub fn gesture_is_path(&self) -> bool {
+        self.gesture
+            .as_ref()
+            .is_some_and(|g| matches!(g.tool, Tool::Pencil | Tool::Brush | Tool::Eraser))
+    }
+
     pub fn gesture_in_progress(&self) -> bool {
         self.gesture.is_some()
     }
