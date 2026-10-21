@@ -274,9 +274,14 @@
         "crates/foundation/paintcraft-raster/src/smooth.rs",
         "docs/BRUSH_RENDERING.md",
         "docs/TEXT_RENDERING.md",
-        "apps/paintcraft/src/text.rs"
+        "apps/paintcraft/src/text.rs",
+        "apps/paintcraft/src/controller/paint_queue.rs",
+        "apps/paintcraft/src/controller/paint_queue/tests.rs",
+        "crates/editing/paintcraft-tools/src/path_admission.rs",
+        "apps/paintcraft/src/app/editing/tests.rs",
+        "docs/DESKTOP_EDITING.md"
       ],
-      "remaining_or_scope": "Antialiased round brushes and identical staged path previews, Studio primary/secondary paint gestures with button ownership, fill, shapes, rectangle selection and font text with Cosmic Text/Swash masks work; complete selections, secondary eraser/text policies, editable text objects and IME remain.",
+      "remaining_or_scope": "Antialiased brushes, bounded queued paint with ordered compound previews, Studio primary/secondary gestures, fill, shapes, rectangle selection and captured-layer Cosmic Text/Swash previews work. Complete selections, secondary eraser/text policies, editable text objects, IME and native sustained-input latency qualification remain.",
       "acceptance": "Tool-specific lifecycle fixtures, masked edges, focus cancel, text IME smoke cases."
     },
     {

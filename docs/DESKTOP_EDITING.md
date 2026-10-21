@@ -20,10 +20,28 @@ reservations remain charged while results await consumption.
 Document, selection, history and epoch change at the editor publication point.
 New-layer aliases and target repair apply after successful publication. A failed,
 cancelled or stale result leaves the published state intact. Released stroke,
-shape and text previews remain available until their transaction finishes. Native
-canvas input waits while its current transaction is pending and shows a progress
-cursor; this is presently a single-gesture publication policy, not a qualification
-of uninterrupted drawing throughput. Queued menu commands still execute in order.
+shape and text previews remain available until their transaction finishes. Text
+previews retain their captured layer independently of live text entry or the current
+editing target. Queued menu commands still execute in order.
+
+Pencil, brush and eraser gestures may continue while earlier paint-only strokes
+prepare. A compound preview applies the in-flight stroke, accepted queue prefix
+and live gesture exactly once in FIFO order against the published base. When a
+stroke publishes, it leaves that prefix and the preview rebases on the new document.
+Each changed stroke remains its own transaction and undo step. Other pending
+commands, including structural edits, selection, fill/text and history navigation,
+and file barriers pause additional painting with a progress cursor. Speculation
+never crosses their layout/publication boundary.
+
+Native painting admits at most 32 pending/live strokes, 262,144 points and 524,288
+slots in their captured point vectors. Admission includes queued, in-flight and
+live paths. Vector growth prepares a fallible replacement before changing the
+captured prefix and checks actual Vec capacity against the remaining allowance.
+Excess movement reports its limit while preserving the prefix for release; full
+queues pause new gestures. Duplicate activation tokens do not become new admissions.
+Fixed-point conversion failure preserves the live brush and allows valid movement
+to continue. Preview and command copies are additional allocations outside these
+logical input counters; they do not establish a process-wide physical-memory bound.
 
 Escape cancels private preparation and queued editing activations, preserving
 already published work and file-request barriers. Cancellation checks reach
@@ -60,17 +78,24 @@ fallback while respecting the same barrier and captured-state acknowledgement.
 Runtime tests exercise targeted consumption, reservation retention, foreign and
 expired handles, cancellation and abandoned consumers. Controller tests cover
 FIFO activation, alias/target publication, stale history clicks, preview retention,
-cancellation, competing publication and file barriers. Application tests reopen real
-PCND files to verify preceding/later-edit boundaries with native and fallback I/O,
+cancellation, competing publication and file barriers. Paint regressions verify
+identical translucent strokes, a live stroke spanning an earlier native spill and
+publication, capacity/point rejection preserving prefixes and fixed-point failures.
+Application tests reopen real PCND files to verify preceding/later-edit boundaries
+with native and fallback I/O,
 route inactive-tab captures, wait through close/switch gates, and decode an export
 held at its confirmed revision. A real egui two-pass input test pumps background
-publication and checks the final document and displayed pixel exactly once.
+publication and checks the final document and displayed pixel exactly once. A
+second two-pass case delivers three coalesced strokes plus a live gesture across
+later frames, verifying ordered translucent preview/final pixels and undo depth.
 
 The fixed 2 GiB preparation charge is provisional scheduling admission, not a
 physical allocation reservation or process RSS bound. Captured timeline metadata,
 command/batch construction, font masks, publication and destruction still involve
 the UI thread. Flat export planning/encoding/writing keeps its existing synchronous
-path. Activation payloads have no global byte admission policy yet. Priority/fair
-scheduling, process-wide memory accounting, finer cancellation and native
+path. Non-paint activation payloads have no global byte admission policy yet. Input
+counters and fallible vector admission do not cover allocator overhead, preview
+copies, native codec state or all other sessions. Priority/fair scheduling,
+process-wide memory accounting, finer cancellation and native
 queue-inclusive input/p95/p99/max latency qualification remain. No performance
 improvement is inferred from the correctness tests or the startup smoke.

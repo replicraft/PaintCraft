@@ -319,3 +319,40 @@ charge is provisional; global physical memory, command-payload admission,
 priority/fair scheduling and queue-inclusive p95/p99/max input latency remain.
 See [the desktop ordering contract and limits](DESKTOP_EDITING.md). T07/T11/T13 stay
 partial and historical benchmark source boundaries remain unchanged.
+
+## Tenth slice: bounded sustained paint input and complete queued previews
+
+Native pencil, brush and eraser gestures can now continue while earlier paint-only
+strokes prepare. The preview contains each in-flight, queued and live path once in
+FIFO order, then rebases when a preceding stroke publishes. Separate changed
+strokes remain separate undo steps, including identical translucent paths. Other
+commands and file boundaries pause new painting; previews exclude their later and
+unfinished gestures from a capture.
+
+Logical native input admission caps pending/live painting at 32 strokes, 262,144
+points and 524,288 captured point-vector slots. Live vector growth prepares a
+fallible replacement before changing the captured prefix; actual capacity is
+checked against the remaining allowance. Rejection leaves the prefix releasable,
+and fixed-point conversion failure permits subsequent valid movement. Known
+activation tokens are deduplicated before another admission attempt. These counters
+do not cover preview/command copies or constitute a process-wide physical budget.
+
+A separate fix gives retained text previews their captured layer, so committing
+text entry or changing the selected target cannot retire or redirect the preview.
+Raster text still commits pixels; editable text objects remain pending.
+
+594 workspace tests pass (20 explicit ignores), strict workspace/all-target Clippy,
+formatting and the 800-line limit pass, and release desktop/CLI builds succeed.
+Actual Metal parity passes on Apple M1 Pro; an isolated native window starts and
+exits cleanly after 30 frames. New tests check independent translucent pixel values,
+undo/redo, a live stroke spanning an earlier actual native spill barrier/publication,
+structural/file boundaries, point/capacity rejection and recoverable coordinates.
+Real egui two-pass input delivers three coalesced strokes and a fourth gesture over
+later frames while the worker is held, then verifies the complete preview, final
+pixels and four undo steps. Bundled Selawik text retains its preview on the original
+layer across text-entry retirement and target changes.
+
+These are correctness/integration checks, not native p95/p99/max input, allocator
+RSS or GPU residency measurements. Preview/batch construction still makes copies
+and involves UI work; global admission, preview allocation reduction, broader tool
+input and native interference/latency qualification remain. T14 stays partial.
