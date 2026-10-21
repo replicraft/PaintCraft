@@ -72,3 +72,8 @@ compare actual desktop staging, GPU work and UI registration against completed
 straight readback/ColorImage conversion/backend upload. Both include cold setup and
 teardown. OS input/display traces, compositor swap/presentation, GPU timestamps,
 window/device recreation and broad adapter qualification remain separate gates.
+
+Native-resolution requests can explicitly opt into a
+[direct single-layer conversion](GPU_SINGLE_LAYER.md). Eligible views reuse the
+existing cached source and avoid the intermediate composite; public display
+textures remain independently owned and straight exports retain the original path.

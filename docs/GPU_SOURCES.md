@@ -102,3 +102,8 @@ Persistent sparse GPU working tiles/atlas layout, pooled/region-only output/read
 asynchronous transfer services, CPU/GPU cost dispatch, device-wide physical budgets,
 GPU committed-edit chains, automatic native device recreation, other adapters and
 native queue/input/display latency remain open. T12/T13/T21/T37 remain partial.
+
+The [single-layer display path](GPU_SINGLE_LAYER.md) can read a prepared source
+directly into a new native texture. It uses the same key, bounded retention, patch
+and completion-publication rules; source buffers are never exposed as mutable
+committed pixels or retained public display textures.

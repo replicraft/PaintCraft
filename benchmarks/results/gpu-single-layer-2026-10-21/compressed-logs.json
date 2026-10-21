@@ -1,0 +1,322 @@
+{
+  "correctness-after-1-dense.log": {
+    "sha256": "c72c966ddceedb65ef45f2f75d5108694a40ea5a7c0a07144a5c3a2e45154698",
+    "lines": 10,
+    "bytes": 899
+  },
+  "correctness-after-1-large.log": {
+    "sha256": "690e9a0d8c152d0afb4309a61e74f5191b77a658b702118d8ec1fdc9ffd25fed",
+    "lines": 10,
+    "bytes": 899
+  },
+  "correctness-after-1-multiple.log": {
+    "sha256": "27cffb859156e9f4aa4ce31dcd1148ac9cd3216839f25458227592f1d7958673",
+    "lines": 10,
+    "bytes": 901
+  },
+  "correctness-after-1-opacity.log": {
+    "sha256": "db17640a55b62d16017685f37a3e8d6d3d28f53a54391aa8c945ec4e2a39b9f5",
+    "lines": 10,
+    "bytes": 897
+  },
+  "correctness-after-1-partial.log": {
+    "sha256": "e795f03b9c5f96bb40372b4c9e2a07ed4865ac986c3839633f1eb42f05d2a58f",
+    "lines": 10,
+    "bytes": 899
+  },
+  "correctness-after-1-tiny.log": {
+    "sha256": "63e12ae7335eadca2a947ca503d29805748eea4b561a64e497d42966759f8e38",
+    "lines": 10,
+    "bytes": 895
+  },
+  "correctness-after-2-dense.log": {
+    "sha256": "e2c69958f588db47092dda92f30f5bfe4b34d773b4c91389aa5efdfd3a07444f",
+    "lines": 10,
+    "bytes": 899
+  },
+  "correctness-after-2-large.log": {
+    "sha256": "5603c016fcac2945663aff7f90e855501bcde864f2dda3542ad94883a341020c",
+    "lines": 10,
+    "bytes": 899
+  },
+  "correctness-after-2-multiple.log": {
+    "sha256": "0f0a6f7a04e226c5980645b446ba22c83f0a151368a5a5f88f288c0d41da642a",
+    "lines": 10,
+    "bytes": 901
+  },
+  "correctness-after-2-opacity.log": {
+    "sha256": "e7ee61317bc75f04593e8713cae1b5ef4ae6c416437326c66a47cb810a0f9db4",
+    "lines": 10,
+    "bytes": 897
+  },
+  "correctness-after-2-partial.log": {
+    "sha256": "7e4b79f01f47d2b05401fef8be0c33f32ce2cfcb5e5c6033fe6bd925b57b83ba",
+    "lines": 10,
+    "bytes": 899
+  },
+  "correctness-after-2-tiny.log": {
+    "sha256": "af613e91da0d1347517ebcb8f2bf66557816165998f0d75c5850accc1019da32",
+    "lines": 10,
+    "bytes": 895
+  },
+  "correctness-after-3-dense.log": {
+    "sha256": "e2c69958f588db47092dda92f30f5bfe4b34d773b4c91389aa5efdfd3a07444f",
+    "lines": 10,
+    "bytes": 899
+  },
+  "correctness-after-3-large.log": {
+    "sha256": "21fb45618c475676f646fd750620182fc7e64b33c9a6195c60fc06585bc69eb8",
+    "lines": 10,
+    "bytes": 899
+  },
+  "correctness-after-3-multiple.log": {
+    "sha256": "669b84a3335cd6265e0f4b7fc5a31afefb83de357a679cb3d07305152ed7e565",
+    "lines": 10,
+    "bytes": 901
+  },
+  "correctness-after-3-opacity.log": {
+    "sha256": "40c4e0905f20c0c691a5e620a3d1e6315e733a41fce93db53ddcf2fe1b695fa7",
+    "lines": 10,
+    "bytes": 897
+  },
+  "correctness-after-3-partial.log": {
+    "sha256": "7e4b79f01f47d2b05401fef8be0c33f32ce2cfcb5e5c6033fe6bd925b57b83ba",
+    "lines": 10,
+    "bytes": 899
+  },
+  "correctness-after-3-tiny.log": {
+    "sha256": "47a78f313b8d7fde5883eda01e9357f6263653f6c2bc939960516b9d1823a3df",
+    "lines": 10,
+    "bytes": 895
+  },
+  "correctness-before-dense.log": {
+    "sha256": "e2c69958f588db47092dda92f30f5bfe4b34d773b4c91389aa5efdfd3a07444f",
+    "lines": 10,
+    "bytes": 899
+  },
+  "correctness-before-large.log": {
+    "sha256": "302cb5b9fb86df81c007e8981f6835d34bee5cf45f0d49d948cbc68c34617fc4",
+    "lines": 10,
+    "bytes": 899
+  },
+  "correctness-before-multiple.log": {
+    "sha256": "a65f02a6f0760b2c7b4d13f5798a1b72a78d82ec6e0753708fb8917b8eeed51e",
+    "lines": 10,
+    "bytes": 901
+  },
+  "correctness-before-opacity.log": {
+    "sha256": "40c4e0905f20c0c691a5e620a3d1e6315e733a41fce93db53ddcf2fe1b695fa7",
+    "lines": 10,
+    "bytes": 897
+  },
+  "correctness-before-partial.log": {
+    "sha256": "e795f03b9c5f96bb40372b4c9e2a07ed4865ac986c3839633f1eb42f05d2a58f",
+    "lines": 10,
+    "bytes": 899
+  },
+  "correctness-before-tiny.log": {
+    "sha256": "834c219f3a76c1b7837f9f95d53b21cd9bf43c524b6b0204cbbaf42015872bb8",
+    "lines": 10,
+    "bytes": 895
+  },
+  "criterion-dense.log": {
+    "sha256": "c9801a343da5da8636ea9f930093b738d3bd205ed7eae2fc04454927ade7dcd7",
+    "lines": 133,
+    "bytes": 11317
+  },
+  "criterion-large.log": {
+    "sha256": "0be825e47d52101bbefe12b32e8e2dbdcb4391691eb0cc490ab06583585b60c7",
+    "lines": 131,
+    "bytes": 11252
+  },
+  "criterion-multiple.log": {
+    "sha256": "1b45aebc023b5c9e16ab5e5fcef69c1c04658420d963658acb4a217f2f5671b1",
+    "lines": 79,
+    "bytes": 6376
+  },
+  "criterion-opacity.log": {
+    "sha256": "6141296052a5ab7f7e1cf07581d9664eefeea5673c355c4f8e40b5e284e3904b",
+    "lines": 152,
+    "bytes": 13023
+  },
+  "criterion-partial.log": {
+    "sha256": "1911740430118103fadcd495fc253818ab32a03b4eb9ddc177fb453ffa0cff7e",
+    "lines": 129,
+    "bytes": 11199
+  },
+  "criterion-tiny.log": {
+    "sha256": "da83f78e1874d2e10d0c3a4610f8709ea15c9d90f7e6f58b011eb40fc53dd5a7",
+    "lines": 188,
+    "bytes": 16139
+  },
+  "execution.log": {
+    "sha256": "e07d36ee86315728dda4861f1cf0232433d0b1dfbbd82a97b5bb298146494c16",
+    "lines": 31,
+    "bytes": 845
+  },
+  "hyperfine-1-calibration.log": {
+    "sha256": "2fa3840eee3fe641b3841f3937e6f2f1650e9c2417a27c39790a1985fa0914bc",
+    "lines": 5,
+    "bytes": 544
+  },
+  "hyperfine-1-dense.log": {
+    "sha256": "91aeb8dc6205556ecf7f8d887eb20dec418dee7648f96229a8eeb953712af39e",
+    "lines": 10,
+    "bytes": 1100
+  },
+  "hyperfine-1-large.log": {
+    "sha256": "6959f86b6ac0aa1bbd8477014f0c94f93e726240edb78c949d89f693dcec8bf4",
+    "lines": 10,
+    "bytes": 1100
+  },
+  "hyperfine-1-multiple.log": {
+    "sha256": "40f7b8f097e8235b19df022c2f34c5096c1744d9cd95f0c9b0703b6c23722a26",
+    "lines": 10,
+    "bytes": 1121
+  },
+  "hyperfine-1-opacity.log": {
+    "sha256": "d7a42c8d68081b41702baad8630bfcc952b35e7ede386fae9e3847131cd77373",
+    "lines": 12,
+    "bytes": 1639
+  },
+  "hyperfine-1-partial.log": {
+    "sha256": "3b5759d9eedc6bedc5f9a31844e3dc90156f224b0dcdf217e1a4e8980172afd6",
+    "lines": 10,
+    "bytes": 1104
+  },
+  "hyperfine-1-tiny.log": {
+    "sha256": "88a6255eaf6cc42aa55918a5939f8ac3e68905d1e3881a2ab2aa599e0185ea09",
+    "lines": 10,
+    "bytes": 1098
+  },
+  "hyperfine-2-calibration.log": {
+    "sha256": "6072db0ba2a7c09fa8b445718d0183006bd8fbe980cbf75d5e49e1f4ed6e266b",
+    "lines": 5,
+    "bytes": 544
+  },
+  "hyperfine-2-dense.log": {
+    "sha256": "a6cad001855011f63bbbfbccfd82e28692d014e9ce9ebd4cdde435c69b93b045",
+    "lines": 10,
+    "bytes": 1100
+  },
+  "hyperfine-2-large.log": {
+    "sha256": "7b969588c6b84189d06ec4828a446cd394eacb4b025be8ffe1a5d2921a27ec6c",
+    "lines": 10,
+    "bytes": 1100
+  },
+  "hyperfine-2-multiple.log": {
+    "sha256": "fa4c3645ea567c32be47e60400889e0f5735c982fecce819277bf40c19600714",
+    "lines": 10,
+    "bytes": 1106
+  },
+  "hyperfine-2-opacity.log": {
+    "sha256": "9bf6246a1cd0428423d84a649f79d25a70a3c3a099c56d86752d3c60cc226cff",
+    "lines": 10,
+    "bytes": 1104
+  },
+  "hyperfine-2-partial.log": {
+    "sha256": "f83a99ce960fcdf95f5d257d0b355a49bd3941ba802c9f930a3e0732cbad0c70",
+    "lines": 10,
+    "bytes": 1104
+  },
+  "hyperfine-2-tiny.log": {
+    "sha256": "ccc67b73878722866019cf25c7da99c282311ce22c32c79391cb80f0af7e5d07",
+    "lines": 10,
+    "bytes": 1098
+  },
+  "hyperfine-3-calibration.log": {
+    "sha256": "7e4b19cc8ab15e7c649b561903040bd52711429beeb56a09aef7098b19ac4651",
+    "lines": 5,
+    "bytes": 544
+  },
+  "hyperfine-3-dense.log": {
+    "sha256": "ac95484731a68442c94a19e483a85a4fbda6dc2d72225a44d184d49c4392f49b",
+    "lines": 10,
+    "bytes": 1100
+  },
+  "hyperfine-3-large.log": {
+    "sha256": "65321bcf61e2d92c633365fecee5929168c9fb09d2de64243ab86da6261a0ec0",
+    "lines": 10,
+    "bytes": 1100
+  },
+  "hyperfine-3-multiple.log": {
+    "sha256": "a42307a5c5e18b69219c6acd51f56d95275560e25aa408e6541ef08402a2326e",
+    "lines": 10,
+    "bytes": 1121
+  },
+  "hyperfine-3-opacity.log": {
+    "sha256": "f9a4536aec84a9f4e7fa9c8d316fd9e04b90e18d074917985937bc8a4be29495",
+    "lines": 10,
+    "bytes": 1104
+  },
+  "hyperfine-3-partial.log": {
+    "sha256": "bbcfb9211d723025cacada96c7ce5285be2ab308bc82dc14c75c4d02cff6c97b",
+    "lines": 10,
+    "bytes": 1104
+  },
+  "hyperfine-3-tiny.log": {
+    "sha256": "5cbb9df12e5620cd8235b160419d15091045043d62af77d91f3c38d729d9c9b7",
+    "lines": 10,
+    "bytes": 1098
+  },
+  "memory-dense-ordered.log": {
+    "sha256": "9d477836df0708e91df9d8e42bb577af90b5d8a106a14f6baff9e2da627a44f7",
+    "lines": 25,
+    "bytes": 1055
+  },
+  "memory-dense-single.log": {
+    "sha256": "a371215e44fcccc2dda93d5b01591883a393c131035a2162b9a4fe781a4db27d",
+    "lines": 25,
+    "bytes": 1055
+  },
+  "memory-large-ordered.log": {
+    "sha256": "c1db4f65cd05d76ce66889bca2bb7e878d38974818aa32fe0da10b7a773ab5fb",
+    "lines": 25,
+    "bytes": 1055
+  },
+  "memory-large-single.log": {
+    "sha256": "c0efaa4a8f2ee35fa6237030f40149e5b6fc90cdef2914f6c9f74d828a7245e3",
+    "lines": 25,
+    "bytes": 1055
+  },
+  "memory-multiple-ordered.log": {
+    "sha256": "86b76af027b5343fa5d36fee9852653f4a02ccd2fda5b61bab41f4cea5d90d10",
+    "lines": 25,
+    "bytes": 1056
+  },
+  "memory-multiple-single.log": {
+    "sha256": "1beb1325f4c5c36521785ded0dfc4822a1a71dc6be72035bd958ec7791c2bff7",
+    "lines": 25,
+    "bytes": 1056
+  },
+  "memory-opacity-ordered.log": {
+    "sha256": "f659240cba37566fec525752105999263f9db11066408d3e67ceb8f650b513b2",
+    "lines": 25,
+    "bytes": 1054
+  },
+  "memory-opacity-single.log": {
+    "sha256": "5f25698f5fc789ad0ea08c5bfe8df16ae59206c467a5cd8f246a7db44e570429",
+    "lines": 25,
+    "bytes": 1054
+  },
+  "memory-partial-ordered.log": {
+    "sha256": "5cf6c576e0ccf4cd2202f1964d63a2706f03af46140d0acc95de59e0e38f9d06",
+    "lines": 25,
+    "bytes": 1055
+  },
+  "memory-partial-single.log": {
+    "sha256": "151b58c28327720ef91eb4dfb15469fce08b7dfbd63c9fa9c161b204b1ac9e5e",
+    "lines": 25,
+    "bytes": 1055
+  },
+  "memory-tiny-ordered.log": {
+    "sha256": "e9f986df55b57a71ed8c2a31986a9d3171ae0d744655141bb244f634991596eb",
+    "lines": 25,
+    "bytes": 1053
+  },
+  "memory-tiny-single.log": {
+    "sha256": "f827bae21c9ca430847867bf458bbe71ffc08d3232dc955f7a05a3235d3791f1",
+    "lines": 25,
+    "bytes": 1053
+  }
+}

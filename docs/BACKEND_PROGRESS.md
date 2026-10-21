@@ -621,3 +621,45 @@ observation or teardown. The 16-worker bound is a service policy, not a measured
 optimum. No throughput gain or new rendering default is claimed. Physical budgets,
 priority/fairness, asynchronous transfers, native recovery/tails and broader feature
 work remain. T12/T13/T37 stay partial/in progress; the full roadmap remains active.
+
+## Fortieth slice: direct native single-layer display
+
+An explicit renderer/native option now converts a fully covering single raster
+source directly into a new native display texture. It uses the existing bounded
+source cache and exact default-v1 opacity/encoded-sRGB premultiplication, avoiding
+the intermediate compositor buffer and its completion boundary. Multiple potential
+contributors or partial coverage fall back to the original ordered compositor.
+Returned textures remain independently owned; patches to later source views cannot
+change old frames. Straight exports and scaled display paths are unchanged. No
+new dependency, writable document alias or reduction in conservative admission is
+introduced. See [the direct-display contract](GPU_SINGLE_LAYER.md).
+
+Required Metal tests exhaust all 65,536 alpha/opacity pairs against direct integer
+expectations, then cover sparse hidden RGB, offsets/odd regions, source hits/patches,
+streaming, cancellation checkpoints, epoch rejection and old-frame ownership. The
+actual egui framebuffer and admitted native worker match independent CPU output.
+801 workspace tests pass (26 explicit ignores), including all 31 required Metal
+integration tests, 23 renderer unit tests and 224 required-GPU desktop tests.
+Strict workspace/all-target Clippy, formatting/file limits, release desktop/CLI and
+optimized benchmark builds pass. Three isolated 30-frame native startup checks
+cover default, direct single-layer and combined regional-batching options, with
+zero exits and empty logs. [Source-pinned validation](validation/gpu-single-layer-2026-10-21/validation.json)
+retains commands/logs and corrected development compile diagnostics.
+
+[The native comparison](../benchmarks/results/gpu-single-layer-2026-10-21/DECISION.md)
+retains 240 raw statistical samples and 780 process observations over six cases,
+including independent per-pixel pre/postflights, reverse order, calibration, RSS
+and fallback controls. Eligible frames remove eight intermediate allocations and
+eight compositor submissions, with identical source uploads. Tiny/dense statistical
+means favor the contender; large-view process ratios include a 0.966 regression.
+Fallback controls vary substantially despite unchanged work, including disagreement
+between the five-layer statistical regression and process apparent gains. No slow
+observation is excluded. Hyperfine 2.0 exports remain byte-preserved; summary
+analysis uses their actual schema-v2 measurements instead of older `times` fields.
+
+Library/native defaults remain ordered. `PAINTCRAFT_GPU_SINGLE_LAYER=1` enables the
+tested exact implementation as an explicit experiment, without claiming a general
+throughput/RSS win or an inferred size threshold. Sparse GPU working sets, CPU shared
+surface bypass, asynchronous services, physical budgets, native device recovery,
+input/display tails and broader feature work remain. T12/T13/T21/T37 remain partial
+or in progress; the full roadmap stays active.

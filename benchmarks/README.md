@@ -178,3 +178,12 @@ completed native managed-texture upload. The exact test is
 [the source-scoped decision](results/multires-display-2026-10-21/DECISION.md) for tiny
 controls, dense cache costs, the sparse-4K gain, raw 180 statistical samples/600 process
 observations, and the distinction from GPU scaled composition or OS frame latency.
+
+The `single-layer` suite compares direct cached-source native display with the
+existing ordered intermediate compositor. Build the optimized desktop library test
+executable as above, then run `run_native_viewport.py --suite single-layer --binary
+<executable> --output <new-dir>`. It checks actual App registration and independent
+command/scalar pixels before timing. Six cases retain cold setup/teardown, raw
+Criterion samples, three process sessions, calibration and process RSS, including
+multiple-layer and partial-coverage fallback controls. See
+[the complete decision](results/gpu-single-layer-2026-10-21/DECISION.md).
