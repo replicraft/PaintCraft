@@ -22,7 +22,10 @@ impl Editor {
         button: PointerButton,
         precise: Option<(i64, i64)>,
     ) {
-        if self.tools.gesture_in_progress() || !self.tool.supports_button(button) {
+        if self.gesture_blocked()
+            || self.tools.gesture_in_progress()
+            || !self.tool.supports_button(button)
+        {
             return;
         }
         self.commit_text();

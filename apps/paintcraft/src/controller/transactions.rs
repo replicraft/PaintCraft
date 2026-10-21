@@ -1,0 +1,90 @@
+//! Build typed batches and keep publication-dependent feedback together.
+use super::*;
+
+impl Editor {
+    pub(super) fn commit(
+        &mut self,
+        operations: Vec<Value>,
+        done: &str,
+    ) -> Option<paintcraft_editor::session::Receipt> {
+        self.commit_target(operations, done, None)
+    }
+
+    pub(super) fn commit_target(
+        &mut self,
+        operations: Vec<Value>,
+        done: &str,
+        target_alias: Option<&'static str>,
+    ) -> Option<paintcraft_editor::session::Receipt> {
+        let t = self.session.ticket();
+        let batch = Value::object([
+            ("schema", Value::str("paintcraft.batch/v2")),
+            ("atomic", Value::Bool(true)),
+            ("policy", Value::str(POLICY)),
+            (
+                "base",
+                Value::object([
+                    ("state_id", Value::str(t.state_id.to_string())),
+                    (
+                        "publication_epoch",
+                        Value::str(t.publication_epoch.to_string()),
+                    ),
+                ]),
+            ),
+            ("operations", Value::Array(operations)),
+        ]);
+        let batch = match Batch::from_value(&batch) {
+            Ok(batch) => batch,
+            Err(error) => {
+                self.status = format!("Edit failed: {error}");
+                return None;
+            }
+        };
+        if self.editing.is_some() {
+            self.start_edit(batch, done, target_alias);
+            return None;
+        }
+        match self.session.apply(&batch) {
+            Ok(r) => {
+                self.accept_edit(&r, done, target_alias);
+                Some(r)
+            }
+            Err(e) => {
+                self.status = format!("Edit failed: {e}");
+                None
+            }
+        }
+    }
+
+    pub(super) fn accept_edit(
+        &mut self,
+        receipt: &paintcraft_editor::session::Receipt,
+        done: &str,
+        target_alias: Option<&str>,
+    ) {
+        self.status = if receipt.committed {
+            done.to_owned()
+        } else {
+            format!("{done} changed nothing")
+        };
+        if let Some(alias) = target_alias {
+            self.target = receipt.aliases.get(alias).copied().or(self.target);
+        }
+        self.retarget();
+        if self.session.last_trimmed() > 0 {
+            self.status += &format!(
+                " — the {} oldest undo step(s) were dropped under the history memory policy",
+                self.session.last_trimmed()
+            );
+        }
+    }
+
+    /// Commit drawing operations; a batch that changes nothing is reported as such.
+    pub(super) fn draw(&mut self, ops: Vec<Value>, name: &str) {
+        if let Some(r) = self.commit(ops, name)
+            && !r.committed
+        {
+            self.status = format!("{name} changed nothing");
+        }
+    }
+}

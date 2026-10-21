@@ -22,7 +22,11 @@ impl Editor {
             ("ref", Value::str("background")),
             ("color", Value::str(color.to_hex())),
         ])];
-        if let Some(receipt) = self.commit(ops, "Canvas cleared — Undo restores all layers") {
+        if let Some(receipt) = self.commit_target(
+            ops,
+            "Canvas cleared — Undo restores all layers",
+            Some("background"),
+        ) {
             self.target = receipt.aliases.get("background").copied().or(self.target);
         }
     }

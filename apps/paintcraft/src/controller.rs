@@ -6,6 +6,8 @@
 //! progress, so a cancelled or interrupted gesture changes nothing and a stroke
 //! is one undo step. Commands reach the session only through the [`Outbox`].
 
+#[path = "controller/background.rs"]
+pub(crate) mod background;
 #[path = "controller/canvas.rs"]
 mod canvas;
 #[path = "controller/history.rs"]
@@ -18,6 +20,8 @@ mod pointer;
 mod strokes;
 #[path = "controller/text.rs"]
 mod text;
+#[path = "controller/transactions.rs"]
+mod transactions;
 
 use std::{
     path::{Path, PathBuf},
@@ -59,6 +63,11 @@ pub struct Editor {
     text_renderer: Option<crate::text::Shared>,
     target: Option<Uuid>,
     outbox: Outbox<Action>,
+    actions: std::collections::VecDeque<background::Queued>,
+    file_barrier: Option<Uuid>,
+    editing: Option<background::Service>,
+    pending_edit: Option<background::Pending>,
+    publication_preview: Option<Preview>,
     path: Option<PathBuf>,
     status: String,
     recovery: Option<Arc<Recovery>>,
@@ -122,6 +131,11 @@ impl Editor {
             text_renderer: None,
             target,
             outbox: Outbox::default(),
+            actions: Default::default(),
+            file_barrier: None,
+            editing: None,
+            pending_edit: None,
+            publication_preview: None,
             path,
             status: String::new(),
             recovery: None,
@@ -168,7 +182,10 @@ impl Editor {
             }
             return false;
         }
-        if self.tools.gesture_in_progress() || self.checkpointed == Some(key) {
+        if self.has_pending_edits()
+            || self.tools.gesture_in_progress()
+            || self.checkpointed == Some(key)
+        {
             return false;
         }
         let Some(recovery) = &self.recovery else {
@@ -197,7 +214,11 @@ impl Editor {
     }
     pub(crate) fn recovery_candidate(&self) -> Option<((Uuid, u64), Arc<Recovery>)> {
         let key = self.render_key();
-        if self.tools.gesture_in_progress() || !self.is_dirty() || self.checkpointed == Some(key) {
+        if self.has_pending_edits()
+            || self.tools.gesture_in_progress()
+            || !self.is_dirty()
+            || self.checkpointed == Some(key)
+        {
             return None;
         }
         Some((key, self.recovery_handle()?))
@@ -275,7 +296,7 @@ impl Editor {
     }
 
     pub fn is_dirty(&self) -> bool {
-        self.session.is_dirty()
+        self.session.is_dirty() || self.has_pending_edits()
     }
 
     /// Number of publications so far (commits, undo and redo each count).
@@ -376,7 +397,9 @@ impl Editor {
         self.tools.tool = tool;
     }
     pub fn preview(&self) -> Option<Preview> {
-        self.tools.preview()
+        self.tools
+            .preview()
+            .or_else(|| self.publication_preview.clone())
     }
     pub fn gesture_points(&self) -> &[(i64, i64)] {
         self.tools.gesture_points()
@@ -393,11 +416,52 @@ impl Editor {
         self.outbox.push(token, action)
     }
 
-    /// Execute everything queued, once. Returns how many publications resulted.
+    /// Consume completions and execute queued activations in arrival order.
+    /// Native editors prepare one transaction at a time on the shared worker.
     pub fn run_pending(&mut self) -> u64 {
         let before = self.publications();
-        for action in self.outbox.drain() {
+        self.poll_edit();
+        self.actions.extend(
+            self.outbox
+                .drain()
+                .into_iter()
+                .map(background::Queued::Edit),
+        );
+        if self.file_barrier.is_some() {
+            return self.publications() - before;
+        }
+        while self.pending_edit.is_none() {
+            if let Some(background::Queued::FileBarrier(_)) = self.actions.front() {
+                if let Some(background::Queued::FileBarrier(id)) = self.actions.pop_front() {
+                    self.file_barrier = Some(id);
+                }
+                break;
+            }
+            if self
+                .editing
+                .as_ref()
+                .is_some_and(|service| !service.available())
+            {
+                if self.publication_preview.is_none() {
+                    self.publication_preview =
+                        self.actions.front().and_then(|action| match action {
+                            background::Queued::Edit(action) => background::preview(action),
+                            _ => None,
+                        });
+                }
+                break;
+            }
+            let Some(background::Queued::Edit(action)) = self.actions.pop_front() else {
+                break;
+            };
+            self.publication_preview = self
+                .editing
+                .as_ref()
+                .and_then(|_| background::preview(&action));
             self.execute(action);
+            if self.pending_edit.is_none() {
+                self.publication_preview = None;
+            }
         }
         self.publications() - before
     }
@@ -565,6 +629,9 @@ impl Editor {
             }
             Action::Undo => {
                 self.cancel_gesture();
+                if self.start_navigation(background::NavigationRequest::Undo) {
+                    return;
+                }
                 self.status = match self.session.undo() {
                     Ok(Some(_)) => "Undo".into(),
                     Ok(None) => "Nothing to undo".into(),
@@ -574,6 +641,9 @@ impl Editor {
             }
             Action::Redo => {
                 self.cancel_gesture();
+                if self.start_navigation(background::NavigationRequest::Redo) {
+                    return;
+                }
                 self.status = match self.session.redo() {
                     Ok(Some(_)) => "Redo".into(),
                     Ok(None) => "Nothing to redo".into(),
@@ -601,61 +671,17 @@ impl Editor {
         }
     }
 
-    fn commit(
-        &mut self,
-        operations: Vec<Value>,
-        done: &str,
-    ) -> Option<paintcraft_editor::session::Receipt> {
-        let t = self.session.ticket();
-        let batch = Value::object([
-            ("schema", Value::str("paintcraft.batch/v2")),
-            ("atomic", Value::Bool(true)),
-            ("policy", Value::str(POLICY)),
-            (
-                "base",
-                Value::object([
-                    ("state_id", Value::str(t.state_id.to_string())),
-                    (
-                        "publication_epoch",
-                        Value::str(t.publication_epoch.to_string()),
-                    ),
-                ]),
-            ),
-            ("operations", Value::Array(operations)),
-        ]);
-        match Batch::from_value(&batch).and_then(|b| self.session.apply(&b)) {
-            Ok(r) => {
-                self.status = done.to_owned();
-                if self.session.last_trimmed() > 0 {
-                    // History is only ever shortened openly, never silently.
-                    self.status += &format!(
-                        " — the {} oldest undo step(s) were dropped under the history memory policy",
-                        self.session.last_trimmed()
-                    );
-                }
-                Some(r)
-            }
-            Err(e) => {
-                self.status = format!("Edit failed: {e}");
-                None
-            }
-        }
-    }
-
-    /// Commit drawing operations; a batch that changes nothing is reported as such.
-    fn draw(&mut self, ops: Vec<Value>, name: &str) {
-        if let Some(r) = self.commit(ops, name)
-            && !r.committed
-        {
-            self.status = format!("{name} changed nothing");
-        }
-    }
-
     pub(crate) fn acknowledge_saved_state(&mut self, state: Uuid) {
         self.session.mark_saved_state(state);
     }
     pub(crate) fn invalidate_saved_state(&mut self) {
         self.session.mark_unsaved();
+    }
+
+    pub(crate) fn save_captured(&mut self) {
+        if self.can_capture_file() {
+            self.save();
+        }
     }
 
     fn save(&mut self) {

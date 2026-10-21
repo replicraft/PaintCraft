@@ -18,7 +18,7 @@ impl Editor {
             ),
             ("default_pixel", Value::str("#00000000")),
         ]);
-        if let Some(r) = self.commit(vec![op], &format!("Added {name}")) {
+        if let Some(r) = self.commit_target(vec![op], &format!("Added {name}"), Some("layer")) {
             // The new layer becomes the target only after a successful commit.
             self.target = r.aliases.get("layer").copied().or(self.target);
         }
@@ -40,7 +40,7 @@ impl Editor {
             ("name", Value::str(name)),
         ]);
         self.cancel_gesture();
-        if let Some(receipt) = self.commit(vec![op], "Layer duplicated") {
+        if let Some(receipt) = self.commit_target(vec![op], "Layer duplicated", Some("copy")) {
             self.target = receipt.aliases.get("copy").copied().or(self.target);
         }
     }

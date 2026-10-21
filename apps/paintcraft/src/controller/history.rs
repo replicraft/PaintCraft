@@ -18,6 +18,18 @@ impl Editor {
         epoch: u64,
         history_id: Option<Uuid>,
     ) {
+        if self.start_navigation(background::NavigationRequest::Seek {
+            ticket: HistoryTicket {
+                owner,
+                base: Ticket {
+                    state_id,
+                    publication_epoch: epoch,
+                },
+            },
+            history_id,
+        }) {
+            return;
+        }
         match self.session.navigate_history(
             HistoryTicket {
                 owner,
