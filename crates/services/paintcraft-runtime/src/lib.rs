@@ -1,5 +1,8 @@
 //! Bounded workers prepare results; only the caller may publish them.
 //! Reservations remain charged until completion is consumed, including cancellation.
+mod admission;
+pub use admission::{BudgetUsage, SharedBudget};
+
 #[cfg(feature = "native-io")]
 pub mod io;
 
@@ -41,6 +44,7 @@ struct Reservation<T> {
     cancellation: Cancellation,
     ready: Option<Result<T>>,
     abandoned: bool,
+    _lease: admission::Lease,
 }
 #[derive(Clone, Copy, Debug)]
 pub struct Limits {
@@ -55,11 +59,16 @@ pub struct Executor<T> {
     limits: Limits,
     jobs: SlotMap<JobKey, Reservation<T>>,
     reserved: u64,
-    sender: mpsc::Sender<(JobKey, Result<T>)>,
-    receiver: mpsc::Receiver<(JobKey, Result<T>)>,
+    budget: SharedBudget,
+    sender: mpsc::Sender<(JobKey, Result<T>, admission::Lease)>,
+    receiver: mpsc::Receiver<(JobKey, Result<T>, admission::Lease)>,
 }
 impl<T: Send + 'static> Executor<T> {
     pub fn new(limits: Limits) -> Result<Self> {
+        Self::with_budget(limits, SharedBudget::new(limits.transient_bytes))
+    }
+    /// Share byte admission across pools while retaining each pool's local cap.
+    pub fn with_budget(limits: Limits, budget: SharedBudget) -> Result<Self> {
         if limits.workers == 0 || limits.pending_jobs == 0 || limits.transient_bytes == 0 {
             return Err(Error::new(
                 ErrorCode::InputSchema,
@@ -83,6 +92,7 @@ impl<T: Send + 'static> Executor<T> {
             limits,
             jobs: SlotMap::with_key(),
             reserved: 0,
+            budget,
             sender,
             receiver,
         })
@@ -92,6 +102,19 @@ impl<T: Send + 'static> Executor<T> {
     }
     pub fn reserved_bytes(&self) -> u64 {
         self.reserved
+    }
+    /// Whether a request can ever fit, independent of current contention.
+    pub fn request_fits(&self, bytes: u64) -> bool {
+        bytes <= self.limits.transient_bytes && bytes <= self.budget.usage().limit
+    }
+    /// A readiness hint only; submission atomically reserves the shared bytes.
+    pub fn can_submit(&self, bytes: u64) -> bool {
+        self.jobs.len() < self.limits.pending_jobs
+            && self
+                .reserved
+                .checked_add(bytes)
+                .is_some_and(|total| total <= self.limits.transient_bytes)
+            && self.budget.can_reserve(bytes)
     }
     pub fn submit(
         &mut self,
@@ -109,12 +132,14 @@ impl<T: Send + 'static> Executor<T> {
                 "worker queue or memory budget is full",
             ));
         }
+        let lease = self.budget.reserve(bytes)?;
         let cancellation = Cancellation(Arc::new(AtomicBool::new(false)));
         let key = self.jobs.insert(Reservation {
             bytes,
             cancellation: cancellation.clone(),
             ready: None,
             abandoned: false,
+            _lease: lease.clone(),
         });
         self.reserved = reserved;
         let sender = self.sender.clone();
@@ -131,7 +156,7 @@ impl<T: Send + 'static> Executor<T> {
                     "worker panicked before publication",
                 ))
             });
-            let _ = sender.send((key, result));
+            let _ = sender.send((key, result, lease));
             let _ = catch_unwind(AssertUnwindSafe(wake));
         });
         Ok(JobHandle {
@@ -174,7 +199,7 @@ impl<T: Send + 'static> Executor<T> {
     }
 
     fn receive_ready(&mut self) {
-        while let Ok((key, result)) = self.receiver.try_recv() {
+        while let Ok((key, result, _lease)) = self.receiver.try_recv() {
             if let Some(job) = self.jobs.get_mut(key) {
                 if job.abandoned {
                     let job = self.jobs.remove(key).expect("live job");
@@ -390,3 +415,7 @@ mod tests {
         assert!(executor.poll_for(handle).is_none());
     }
 }
+
+#[cfg(test)]
+#[path = "admission/tests.rs"]
+mod admission_tests;
