@@ -46,6 +46,8 @@ impl App {
                 .editor
                 .set_status(format!("Background saving unavailable: {error}")),
         }
+        self.gpu_scaled_display =
+            std::env::var("PAINTCRAFT_GPU_SCALED").is_ok_and(|value| value == "1");
         if let Some(state) = &cc.wgpu_render_state {
             let epoch = paintcraft_render::gpu::DeviceEpoch::default();
             let lost = epoch.clone();
@@ -55,6 +57,7 @@ impl App {
                 wake.request_repaint();
             });
             match GpuRenderer::with_epoch(state.device.clone(), state.queue.clone(), epoch.clone())
+                .and_then(|gpu| gpu.with_scaled_tile_edge(64))
             {
                 Ok(gpu) => {
                     self.replace_gpu(Some(Arc::new(gpu)));
@@ -210,6 +213,7 @@ impl App {
                     })
             }));
             let native_display = self.gpu_target.is_some();
+            let gpu_scaled_display = self.gpu_scaled_display;
             let gpu = self.gpu.clone();
             let cpu = self.cpu_renderer.clone();
             let wake = ctx.clone();
@@ -229,7 +233,13 @@ impl App {
                     };
                     cancel.check()?;
                     let device_epoch = gpu.as_ref().map(|gpu| gpu.epoch());
-                    let (pixels, gpu_texture, fallback) = if let Some(gpu) = gpu {
+                    let (pixels, gpu_texture, fallback) = if key.4 != 0 && !gpu_scaled_display {
+                        (
+                            cpu.render_display(doc, key.3, key.4, is_preview, || cancel.check())?,
+                            None,
+                            None,
+                        )
+                    } else if let Some(gpu) = gpu {
                         let result = if native_display {
                             let request =
                                 paintcraft_render::display::DisplayRequest::new(doc, key.3, key.4)?;

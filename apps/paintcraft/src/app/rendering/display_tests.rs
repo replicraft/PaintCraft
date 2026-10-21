@@ -75,6 +75,11 @@ fn poisoned_display_cache_falls_back_to_bounded_exact_filtering() {
 
 #[test]
 fn admitted_giant_display_uses_reduced_output_without_disabling_the_native_gpu() {
+    for gpu_scaled in [false, true] {
+        admitted_giant_display(gpu_scaled);
+    }
+}
+fn admitted_giant_display(gpu_scaled: bool) {
     let Some((target, gpu)) = gpu_display::tests::target() else {
         return;
     };
@@ -99,6 +104,7 @@ fn admitted_giant_display_uses_reduced_output_without_disabling_the_native_gpu()
         .unwrap(),
     );
     app.render_level = 10;
+    app.gpu_scaled_display = gpu_scaled;
     let ctx = egui::Context::default();
     let key = app.presentation_key();
     let deadline = std::time::Instant::now() + Duration::from_secs(10);
@@ -108,19 +114,24 @@ fn admitted_giant_display_uses_reduced_output_without_disabling_the_native_gpu()
         std::thread::yield_now();
     }
     assert_eq!(app.rendered_size(), Some([1024, 1024]));
-    assert!(app.rendered.is_empty());
-    assert_eq!(
-        app.gpu_texture
-            .as_ref()
-            .unwrap()
-            .frame()
-            .readback(|| Ok(()))
-            .unwrap(),
-        vec![255; 1024 * 1024 * 4]
-    );
+    if gpu_scaled {
+        assert!(app.rendered.is_empty());
+        assert_eq!(
+            app.gpu_texture
+                .as_ref()
+                .unwrap()
+                .frame()
+                .readback(|| Ok(()))
+                .unwrap(),
+            vec![255; 1024 * 1024 * 4]
+        );
+    } else {
+        assert_eq!(app.rendered, vec![255; 1024 * 1024 * 4]);
+        assert!(app.gpu_texture.is_none());
+    }
     assert!(app.gpu_target.is_some());
     assert!(Arc::ptr_eq(app.gpu.as_ref().unwrap(), &gpu));
-    assert!(app.gpu_texture.is_some());
+    assert_eq!(app.gpu_texture.is_some(), gpu_scaled);
     assert_eq!(app.editor.publications(), 0);
 }
 
@@ -168,6 +179,7 @@ fn scaled_storage_limit_falls_back_to_uploadable_cpu_pixels_and_keeps_native_gpu
     app.gpu = Some(gpu.clone());
     app.gpu_target = Some(target.clone());
     app.render_level = 1;
+    app.gpu_scaled_display = true;
     app.renderer = Some(
         Executor::new(WorkerLimits {
             workers: 1,
