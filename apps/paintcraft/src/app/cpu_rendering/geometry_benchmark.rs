@@ -140,7 +140,7 @@ fn preview_geometry_process() {
     }
 }
 
-fn fixture() -> Editor {
+pub(crate) fn fixture() -> Editor {
     let base = std::env::var("PAINTCRAFT_GEOMETRY_BASE").unwrap_or_else(|_| "sparse1".into());
     if base == "sparse1" {
         return Editor::new_document(512, 256).unwrap();

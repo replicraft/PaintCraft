@@ -235,4 +235,4 @@ mod geometry_tests;
 
 #[cfg(test)]
 #[path = "cpu_rendering/geometry_benchmark.rs"]
-mod geometry_benchmark;
+pub(crate) mod geometry_benchmark;
