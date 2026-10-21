@@ -498,7 +498,11 @@ impl Stage<'_> {
                     from.0.max(to.0),
                     from.1.max(to.1),
                 );
-                let bbox = Rect::new(x0, y0, x1 - x0 + 1, y1 - y0 + 1)
+                let width = x1.checked_sub(x0).and_then(|n| n.checked_add(1));
+                let height = y1.checked_sub(y0).and_then(|n| n.checked_add(1));
+                let bbox = width
+                    .zip(height)
+                    .and_then(|(w, h)| Rect::new(x0, y0, w, h))
                     .ok_or_else(|| Error::new(ErrorCode::InputSchema, "shape box overflows"))?;
                 let fig = if *kind == ShapeKind::Rect {
                     Figure::Rect
@@ -507,21 +511,18 @@ impl Stage<'_> {
                 };
                 let mut plan = self.adm.paint_plan();
                 if let Some(c) = fill {
-                    self.add_paint_spans(
-                        id,
-                        &shape::filled(fig, &bbox, &clip),
-                        *c,
-                        *mode,
-                        &mut plan,
-                    )?;
+                    shape::visit_filled(fig, &bbox, &clip, self.check, |span| {
+                        self.add_paint_spans(id, &[span], *c, *mode, &mut plan)
+                    })?;
                 }
                 if let Some((c, size)) = stroke {
-                    self.add_paint_spans(
-                        id,
-                        &shape::outline(fig, &bbox, i64::from(*size), &clip),
-                        *c,
-                        *mode,
-                        &mut plan,
+                    shape::visit_outline(
+                        fig,
+                        &bbox,
+                        i64::from(*size),
+                        &clip,
+                        self.check,
+                        |span| self.add_paint_spans(id, &[span], *c, *mode, &mut plan),
                     )?;
                 }
                 self.apply_paint(id, &plan)?;
