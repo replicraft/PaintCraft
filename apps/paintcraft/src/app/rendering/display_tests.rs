@@ -292,3 +292,48 @@ fn admitted_batched_multilayer_worker(regions: bool) {
     assert!(app.rendered.is_empty());
     assert_eq!(app.editor.publications(), 0);
 }
+
+#[test]
+fn retired_completion_epoch_releases_native_registration_and_preserves_host_state() {
+    let Some((target, gpu)) = gpu_display::tests::target() else {
+        return;
+    };
+    let ctx = egui::Context::default();
+    let mut initial = ctx.run_ui(Default::default(), |ui| {
+        ui.label("retired epoch upload");
+    });
+    gpu_display::benchmark::upload(&target, &mut initial.textures_delta);
+    let mut app = App::new(None);
+    app.editor = Editor::new_document(17, 13).unwrap();
+    app.editor.request(
+        1,
+        Action::SetOpacity {
+            layer: app.editor.document().roots[0],
+            opacity: 137,
+        },
+    );
+    app.editor.run_pending();
+    let ticket = app.editor.render_key();
+    let publications = app.editor.publications();
+    let expected = paintcraft_render::render_flat(app.editor.document()).unwrap();
+    app.gpu = Some(gpu.clone());
+    app.gpu_target = Some(target.clone());
+    let key = app.presentation_key();
+    app.install_gpu_texture(
+        &ctx,
+        key,
+        gpu.render_texture(app.editor.document(), || Ok(()))
+            .unwrap(),
+    );
+    assert!(app.gpu_texture.is_some());
+    gpu.epoch().retire();
+    app.sync_texture(&ctx);
+    assert!(app.gpu.is_none());
+    assert!(app.gpu_texture.is_none());
+    assert!(app.texture.is_some());
+    assert_eq!(app.rendered, expected);
+    assert_eq!(app.editor.render_key(), ticket);
+    assert_eq!(app.editor.publications(), publications);
+    let mut delta = ctx.tex_manager().write().take_delta();
+    gpu_display::benchmark::upload(&target, &mut delta);
+}
