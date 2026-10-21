@@ -135,8 +135,11 @@ path. Non-paint activation payloads have no global byte admission policy yet. In
 counters and fallible vector admission do not cover allocator overhead, preview
 copies, native codec state or all other sessions. Priority/fair scheduling,
 process-wide memory accounting, finer cancellation and native
-queue-inclusive input/p95/p99/max latency qualification remain. No performance
-improvement is inferred from the correctness tests or the startup smoke. Native
+queue-inclusive input/p95/p99/max latency qualification remain. The
+[preview capture experiment](../benchmarks/results/preview-reuse-2026-10-20-measured/DECISION.md)
+measures complete process costs for unchanged and changing paths; its changing
+control is inconclusive. No native frame-latency improvement is inferred from
+those measurements, correctness tests or the startup smoke. Native
 stroke/text preparation uses workers, but changed/expired UI snapshots still
 copy and compare point data and font-catalog replacement can destroy derived data on the UI
 thread. Those remaining costs need allocation/latency measurement.

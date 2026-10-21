@@ -418,3 +418,22 @@ Added regressions cover immutable old snapshots after growth, idle reuse,
 expired cache reconstruction, text and shape updates, rejected moves, matching
 button release, queued paint, ordered file barriers, cancellation, completion and
 an equal-value source refresh. T13 remains partial.
+
+
+## Thirteenth slice: measure preview snapshot reuse
+
+The [local process decision](../benchmarks/results/preview-reuse-2026-10-20-measured/DECISION.md)
+compares real controller capture with frozen collect/compare behavior using short,
+long, queued and changing paths. Three Hyperfine sessions per case retain 60 raw
+samples per variant, setup/destruction, correctness preflights, resource logs and
+artifact identities. Unchanged process medians improve 1.35×, 2.40× and 3.17× on this
+M1 Pro. Changing-input medians are a tie; the cached changing maximum is slower and
+remains in the data. RSS results describe complete benchmark processes, not global
+editor residency. No native input/frame latency or GPU performance is qualified.
+
+The process-only driver is compiled only into library tests and ignored in normal
+runs. It adds no shipping dependency or public API. 613 workspace tests pass with
+21 explicit ignores. Strict desktop/all-target Clippy, formatting and the 800-line
+limit pass. Changed previews, history metadata capture, global physical admission,
+priorities, device epochs and sustained native interaction remain. T13/T37 stay
+partial; the broader roadmap is not complete.

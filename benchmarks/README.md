@@ -89,3 +89,19 @@ reverse parameter order, checks 100 JSON/CSV samples each, records command order
 and binary identity, and retains failed output. Run it after other measurements
 finish to avoid overlapping benchmarks. The first forward session and the reverse
 session retain the same source/binary; no rebuild is needed to reverse order.
+
+
+The desktop preview snapshot process comparison uses the production controller and
+an opt-in library test driver. Build with `cargo test --release -p paintcraft --lib
+--no-run --message-format=json`, select that artifact's `executable`, then run:
+
+```sh
+python3 -B benchmarks/tools/run_preview.py --binary <prebuilt-test-executable> --output <new-dir> --execute
+python3 -B benchmarks/tools/summarize_composite.py <new-dir> --output <new-dir>/summary.csv
+```
+
+Only the named ignored driver executes. Preflights compare captured paths and
+cancellation before each session. Three forward/reverse sessions compare unchanged
+short/long/queued previews and a changing-input control, including setup and
+cleanup. See the [local decision](results/preview-reuse-2026-10-20-measured/DECISION.md).
+This measures preview collection/comparison, not native brush/frame latency.

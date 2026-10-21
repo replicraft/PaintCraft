@@ -1,0 +1,135 @@
+{
+  "schema": "paintcraft.hyperfine-run/1",
+  "mode": "application",
+  "case_id": "BF29",
+  "task_id": "T12",
+  "relevance": "Derived preview snapshot reuse versus repeated collect/compare; native source functions without window rendering. No compositor throughput or frame latency claim.",
+  "cwd": "/Users/dielpi/Desktop/replicraft/PaintCraft",
+  "workload": {
+    "id": "preview-queue",
+    "mode": "batch",
+    "work_units": 128,
+    "seed": 0,
+    "cache_state": "fresh process; deterministic path fixture plus one initial snapshot; no raster or GPU execution",
+    "completion": "all capture/comparison iterations plus snapshot/gesture/editor/pool destruction completed; setup and test harness included"
+  },
+  "build": {
+    "source_revision": "8a7d1fd401837c57a5b2780b4f109df370baba05 with artifact hashes",
+    "profile": "release",
+    "target": "aarch64-apple-darwin",
+    "compiler": "rustc 1.99.0 (b940084d7 2026-09-28)",
+    "flags": "Cargo release defaults, opt-level 3, CARGO_INCREMENTAL=0; library test binary",
+    "environment_notes": "One developer machine, uncontrolled power/thermal state and affinity; process RSS includes fixture and native pool; no input/frame/GPU latency qualification."
+  },
+  "runs": 20,
+  "warmup": 3,
+  "timeout_seconds": 120,
+  "env": {},
+  "artifacts": [
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/target/release/deps/paintcraft-2bd121416b3185f6",
+      "sha256": "f5d14e479c2124d989c0b63c67d0ecc83dcf094761c114d6c5364d32e1922c01",
+      "role": "binary"
+    },
+    {
+      "path": "/usr/bin/env",
+      "sha256": "9ce3d530d5b0f46f99281985750289665a6b7ef8d4e1071f99d31801fdcb854a",
+      "role": "binary"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/Cargo.lock",
+      "sha256": "b3866c2cf55c8a79cf75ca2cc013b1968d06704be1434f478ba4d27372ce1205",
+      "role": "lockfile"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/apps/paintcraft/src/controller/preview_cache/benchmark.rs",
+      "sha256": "4f272139806339c49fdc96aca63fb63369490b0cbac98fab12d1a3a9b58ffce1",
+      "role": "generator"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/benchmarks/tools/run_preview.py",
+      "sha256": "86fdc30b2f2e3f2ab19aeb22d14e70f29c75dba7288655bf9099004d8d994d06",
+      "role": "driver"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/apps/paintcraft/src/controller.rs",
+      "sha256": "dca4690ed968c60a1842cd325fdc25af8cd23ece0609a199e3af99f1a5e04bcd",
+      "role": "other"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/apps/paintcraft/src/controller/preview_cache.rs",
+      "sha256": "864b32548e0cf354f6ecefe066aa58719110d49a13e4b5d1886a3bec2adbf57b",
+      "role": "other"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/apps/paintcraft/src/controller/paint_queue.rs",
+      "sha256": "3005cafbc564c7316cf65dfb5f771e9891b7ab090a28a8d93fc547ddce54b201",
+      "role": "other"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/apps/paintcraft/src/controller/background.rs",
+      "sha256": "0a786b3d7c728a1205664d3d8ea07977a526d9ac0a7498b74e8fbdc7035b9eb3",
+      "role": "other"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/apps/paintcraft/src/app/rendering.rs",
+      "sha256": "6a4746379660a4355fc7d3027b9767b97e23411d56b3c9e0e6377dc391d6d6cf",
+      "role": "other"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/editing/paintcraft-tools/src/lib.rs",
+      "sha256": "5482e932b5ac787f4991a570902f831889608adac677d324d21e720925abde95",
+      "role": "other"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/editing/paintcraft-tools/src/path_admission.rs",
+      "sha256": "74ae0bc24a7d46f97de5eccf7b8bd060d89a4a6e6cd80d5f9075aca1c69e3546",
+      "role": "other"
+    },
+    {
+      "path": "/Users/dielpi/Desktop/replicraft/PaintCraft/crates/editing/paintcraft-tools/src/preview_revision.rs",
+      "sha256": "e35ee5f8776eab0ea1657152a6b49117e5543fcc1cddd9991b93b02559729bbc",
+      "role": "other"
+    }
+  ],
+  "correctness_commands": [
+    [
+      "/usr/bin/env",
+      "PAINTCRAFT_PREVIEW_CASE=queue",
+      "PAINTCRAFT_PREVIEW_VARIANT=verify",
+      "/Users/dielpi/Desktop/replicraft/PaintCraft/target/release/deps/paintcraft-2bd121416b3185f6",
+      "--ignored",
+      "--exact",
+      "controller::preview_cache::benchmark::preview_capture_process",
+      "--nocapture"
+    ]
+  ],
+  "variants": [
+    {
+      "id": "baseline",
+      "argv": [
+        "/usr/bin/env",
+        "PAINTCRAFT_PREVIEW_CASE=queue",
+        "PAINTCRAFT_PREVIEW_VARIANT=baseline",
+        "/Users/dielpi/Desktop/replicraft/PaintCraft/target/release/deps/paintcraft-2bd121416b3185f6",
+        "--ignored",
+        "--exact",
+        "controller::preview_cache::benchmark::preview_capture_process",
+        "--nocapture"
+      ]
+    },
+    {
+      "id": "cached",
+      "argv": [
+        "/usr/bin/env",
+        "PAINTCRAFT_PREVIEW_CASE=queue",
+        "PAINTCRAFT_PREVIEW_VARIANT=cached",
+        "/Users/dielpi/Desktop/replicraft/PaintCraft/target/release/deps/paintcraft-2bd121416b3185f6",
+        "--ignored",
+        "--exact",
+        "controller::preview_cache::benchmark::preview_capture_process",
+        "--nocapture"
+      ]
+    }
+  ]
+}

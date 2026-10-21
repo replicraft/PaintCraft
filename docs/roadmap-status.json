@@ -249,6 +249,7 @@
         "crates/services/paintcraft-runtime/src/lib.rs",
         "apps/paintcraft-cli/src/commands/render.rs",
         "crates/services/paintcraft-render/tests/parallel.rs",
+        "benchmarks/results/preview-reuse-2026-10-20-measured/DECISION.md",
         "docs/DESKTOP_EDITING.md",
         "apps/paintcraft/src/controller/background.rs",
         "apps/paintcraft/src/controller/background/tests.rs",
@@ -264,7 +265,7 @@
         "crates/editing/paintcraft-editor/src/session/preparation.rs",
         "crates/editing/paintcraft-editor/tests/preparation.rs"
       ],
-      "remaining_or_scope": "Shared native render/edit workers prepare validated stroke/text plans from immutable previews. Revision-keyed weak snapshots avoid recollecting unchanged repaints; queued edits, file barriers and completion invalidate inputs. Guarded no-op results and compatible progress have tests. Priorities, device epochs, global physical budgets, changed-preview copy costs and native latency/interference qualification remain.",
+      "remaining_or_scope": "Shared native render/edit workers prepare validated stroke/text plans from immutable previews. Revision-keyed weak snapshots avoid recollecting unchanged repaints; queued edits, file barriers and completion invalidate inputs. Guarded no-op results and compatible progress have tests. Preview-capture process costs are locally measured; changing-input cost is inconclusive. Priorities, device epochs, global physical budgets, changed-preview copy costs and native latency/interference qualification remain.",
       "acceptance": "SCHED-01\u201306 and GPU-01\u201306; no late mutation/device-loss data loss."
     },
     {

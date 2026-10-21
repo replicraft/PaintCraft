@@ -1,0 +1,13 @@
+Traceback (most recent call last):
+  File "/Users/dielpi/Desktop/replicraft/PaintCraft/benchmarks/tools/run_preview.py", line 94, in <module>
+    main()
+    ~~~~^^
+  File "/Users/dielpi/Desktop/replicraft/PaintCraft/benchmarks/tools/run_preview.py", line 85, in main
+    subprocess.run(["/usr/bin/time", *resource_flags, *command(case, variant)],
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                   cwd=ROOT, stdout=log, stderr=log, check=True, timeout=120)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/subprocess.py", line 577, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['/usr/bin/time', '-l', '/usr/bin/env', 'PAINTCRAFT_PREVIEW_CASE=short', 'PAINTCRAFT_PREVIEW_VARIANT=baseline', '/Users/dielpi/Desktop/replicraft/PaintCraft/target/release/deps/paintcraft-2bd121416b3185f6', '--ignored', '--exact', 'controller::preview_cache::benchmark::preview_capture_process', '--nocapture']' returned non-zero exit status 1.

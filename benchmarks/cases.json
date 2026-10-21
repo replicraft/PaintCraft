@@ -14,7 +14,8 @@
     "adapter_path": "crates/services/paintcraft-render/examples/cache_replay.rs",
     "result_artifacts": [
       "benchmarks/results/cpu-spans-2026-10-19/DECISION.md",
-      "benchmarks/results/cpu-cache-2026-10-20/DECISION.md"
+      "benchmarks/results/cpu-cache-2026-10-20/DECISION.md",
+      "benchmarks/results/preview-reuse-2026-10-20-measured/DECISION.md"
     ],
     "variants": [
       "correct full-region baseline",
