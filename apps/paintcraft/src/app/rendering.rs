@@ -141,7 +141,16 @@ impl App {
                                 .is_none_or(|epoch| epoch.is_current())) =>
                 {
                     if let Some(reason) = frame.fallback {
-                        self.replace_gpu(None);
+                        // A scaled-path failure need not retire a working native-
+                        // resolution backend. A lost device always retires it.
+                        if frame.key.4 == 0
+                            || frame
+                                .device_epoch
+                                .as_ref()
+                                .is_none_or(|epoch| !epoch.is_current())
+                        {
+                            self.replace_gpu(None);
+                        }
                         self.editor.set_status(reason);
                     }
                     if let Some(texture) = frame.gpu_texture {
@@ -194,6 +203,11 @@ impl App {
             let reservation = reservation.saturating_add(self.gpu.as_ref().map_or(0, |gpu| {
                 gpu.source_cache_admission_bytes()
                     .saturating_add(gpu.output_pool_admission_bytes())
+                    .saturating_add(if key.4 != 0 {
+                        gpu.scaled_scratch_admission_bytes()
+                    } else {
+                        0
+                    })
             }));
             let native_display = self.gpu_target.is_some();
             let gpu = self.gpu.clone();
@@ -215,36 +229,41 @@ impl App {
                     };
                     cancel.check()?;
                     let device_epoch = gpu.as_ref().map(|gpu| gpu.epoch());
-                    let (pixels, gpu_texture, fallback) = if key.4 != 0 {
-                        // The CPU reference performs ordered composition before box
-                        // filtering. Keep the GPU available for native-resolution work.
-                        (
-                            cpu.render_display(doc, key.3, key.4, is_preview, || cancel.check())?,
-                            None,
-                            None,
-                        )
-                    } else if let Some(gpu) = gpu {
+                    let (pixels, gpu_texture, fallback) = if let Some(gpu) = gpu {
                         let result = if native_display {
-                            gpu.render_region_texture(doc, key.3, || cancel.check())
+                            let request =
+                                paintcraft_render::display::DisplayRequest::new(doc, key.3, key.4)?;
+                            gpu.render_display_texture(doc, request, || cancel.check())
                                 .map(|texture| (Vec::new(), Some(texture)))
-                        } else {
+                        } else if key.4 == 0 {
                             gpu.render_region_with_stats(doc, key.3, || cancel.check())
                                 .map(|frame| (frame.pixels, None))
+                        } else {
+                            // A headless readback consumer still requires straight
+                            // pixels, not lossy unpremultiplication of display bytes.
+                            cpu.render_display(doc, key.3, key.4, is_preview, || cancel.check())
+                                .map(|pixels| (pixels, None))
                         };
                         match result {
                             Ok((pixels, texture)) => (pixels, texture, None),
                             Err(error) => {
                                 cancel.check()?;
                                 (
-                                    cpu.render_region(doc, key.3, is_preview, || cancel.check())?,
+                                    cpu.render_display(doc, key.3, key.4, is_preview, || {
+                                        cancel.check()
+                                    })?,
                                     None,
-                                    Some(format!("Using CPU rendering: {error}")),
+                                    Some(if key.4 == 0 {
+                                        format!("Using CPU rendering: {error}")
+                                    } else {
+                                        format!("Scaled display used CPU: {error}")
+                                    }),
                                 )
                             }
                         }
                     } else {
                         (
-                            cpu.render_region(doc, key.3, is_preview, || cancel.check())?,
+                            cpu.render_display(doc, key.3, key.4, is_preview, || cancel.check())?,
                             None,
                             None,
                         )

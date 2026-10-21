@@ -108,9 +108,119 @@ fn admitted_giant_display_uses_reduced_output_without_disabling_the_native_gpu()
         std::thread::yield_now();
     }
     assert_eq!(app.rendered_size(), Some([1024, 1024]));
-    assert_eq!(app.rendered, vec![255; 1024 * 1024 * 4]);
+    assert!(app.rendered.is_empty());
+    assert_eq!(
+        app.gpu_texture
+            .as_ref()
+            .unwrap()
+            .frame()
+            .readback(|| Ok(()))
+            .unwrap(),
+        vec![255; 1024 * 1024 * 4]
+    );
     assert!(app.gpu_target.is_some());
     assert!(Arc::ptr_eq(app.gpu.as_ref().unwrap(), &gpu));
-    assert!(app.gpu_texture.is_none());
+    assert!(app.gpu_texture.is_some());
     assert_eq!(app.editor.publications(), 0);
+}
+
+#[test]
+fn scaled_storage_limit_falls_back_to_uploadable_cpu_pixels_and_keeps_native_gpu_working() {
+    let limits = eframe::wgpu::Limits {
+        max_storage_buffer_binding_size: 16384,
+        ..Default::default()
+    };
+    let Some((target, gpu)) = gpu_display::tests::target_with_limits(0, 32, Some(limits)) else {
+        return;
+    };
+    let ctx = egui::Context::default();
+    let mut initial = ctx.run_ui(Default::default(), |ui| {
+        ui.label("fallback upload initialization");
+    });
+    gpu_display::benchmark::upload(&target, &mut initial.textures_delta);
+    let mut doc = paintcraft_document::new_document(
+        129,
+        65,
+        Some(Rgba([255; 4])),
+        0,
+        paintcraft_document::POLICY,
+    )
+    .unwrap();
+    let id = doc.roots[0];
+    doc.layers
+        .get_mut(&id)
+        .unwrap()
+        .raster
+        .blend_pixel(
+            7,
+            9,
+            Rgba([0, 0, 0, 255]),
+            paintcraft_raster::BlendMode::Replace,
+            &mut paintcraft_raster::Admission::new(65536),
+        )
+        .unwrap();
+    let request = DisplayRequest::new(&doc, doc.canvas_rect(), 1).unwrap();
+    let expected = render_display_cancellable(&doc, request, || Ok(()))
+        .unwrap()
+        .pixels;
+    let mut app = App::new(None);
+    app.editor = Editor::with_document(doc, None);
+    app.gpu = Some(gpu.clone());
+    app.gpu_target = Some(target.clone());
+    app.render_level = 1;
+    app.renderer = Some(
+        Executor::new(WorkerLimits {
+            workers: 1,
+            pending_jobs: 2,
+            transient_bytes: 1 << 30,
+        })
+        .unwrap(),
+    );
+    let key = app.presentation_key();
+    let deadline = std::time::Instant::now() + Duration::from_secs(10);
+    while app.texture_key != Some(key) {
+        assert!(std::time::Instant::now() < deadline);
+        app.sync_texture(&ctx);
+        std::thread::yield_now();
+    }
+    assert!(app.gpu_texture.is_none());
+    assert!(app.texture.is_some());
+    assert_eq!(app.rendered, expected);
+    assert!(Arc::ptr_eq(app.gpu.as_ref().unwrap(), &gpu));
+    assert!(app.gpu_target.is_some());
+    let mut delta = ctx.tex_manager().write().take_delta();
+    gpu_display::benchmark::upload(&target, &mut delta);
+    app.render_region = paintcraft_core::types::Rect::new(1, 1, 17, 19);
+    app.render_level = 0;
+    let key = app.presentation_key();
+    while app.texture_key != Some(key) {
+        assert!(std::time::Instant::now() < deadline);
+        app.sync_texture(&ctx);
+        std::thread::yield_now();
+    }
+    assert!(app.gpu_texture.is_some());
+    assert!(app.rendered.is_empty());
+    let mut delta = ctx.tex_manager().write().take_delta();
+    gpu_display::benchmark::upload(&target, &mut delta);
+}
+
+#[test]
+fn a_gpu_texture_with_matching_dimensions_but_wrong_sampling_level_is_rejected() {
+    let Some((target, gpu)) = gpu_display::tests::target() else {
+        return;
+    };
+    let mut app = App::new(None);
+    app.editor = Editor::new_document(1, 1).unwrap();
+    app.render_level = 2;
+    app.gpu = Some(gpu.clone());
+    app.gpu_target = Some(target);
+    let key = app.presentation_key();
+    let frame = gpu
+        .render_texture(app.editor.document(), || Ok(()))
+        .unwrap();
+    assert_eq!(frame.size(), App::display_size(key));
+    assert_ne!(frame.level(), key.4);
+    app.install_gpu_texture(&egui::Context::default(), key, frame);
+    assert!(app.gpu_texture.is_none());
+    assert!(app.gpu.is_none());
 }

@@ -11,6 +11,12 @@ pub(super) struct Texture {
     renderer: Arc<eframe::egui::mutex::RwLock<eframe::egui_wgpu::Renderer>>,
     _frame: GpuTextureFrame,
 }
+#[cfg(test)]
+impl Texture {
+    pub(crate) fn frame(&self) -> &GpuTextureFrame {
+        &self._frame
+    }
+}
 impl Drop for Texture {
     fn drop(&mut self) {
         self.renderer.write().free_texture(&self.id);
@@ -56,7 +62,8 @@ impl App {
         }
         let result = (|| {
             let size = frame.size();
-            if key.4 != 0 || frame.region() != key.3 || size != Self::display_size(key) {
+            if frame.level() != key.4 || frame.region() != key.3 || size != Self::display_size(key)
+            {
                 return Err(paintcraft_core::types::Error::new(
                     paintcraft_core::types::ErrorCode::InvariantViolation,
                     "GPU display bounds differ from requested region",
@@ -101,6 +108,19 @@ pub(crate) mod tests {
         target_with_output_pool(paintcraft_render::gpu::DEFAULT_OUTPUT_POOL_BYTES)
     }
     pub(crate) fn target_with_output_pool(bytes: u64) -> Option<(Target, Arc<GpuRenderer>)> {
+        target_with_scaled_edge(bytes, 32)
+    }
+    pub(crate) fn target_with_scaled_edge(
+        bytes: u64,
+        edge: u32,
+    ) -> Option<(Target, Arc<GpuRenderer>)> {
+        target_with_limits(bytes, edge, None)
+    }
+    pub(crate) fn target_with_limits(
+        bytes: u64,
+        edge: u32,
+        limits: Option<eframe::wgpu::Limits>,
+    ) -> Option<(Target, Arc<GpuRenderer>)> {
         use eframe::wgpu;
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle());
         let adapter = match pollster::block_on(instance.request_adapter(&Default::default())) {
@@ -113,8 +133,11 @@ pub(crate) mod tests {
                 return None;
             }
         };
-        let (device, queue) =
-            pollster::block_on(adapter.request_device(&Default::default())).unwrap();
+        let (device, queue) = pollster::block_on(adapter.request_device(&wgpu::DeviceDescriptor {
+            required_limits: limits.unwrap_or_default(),
+            ..Default::default()
+        }))
+        .unwrap();
         let epoch = DeviceEpoch::default();
         let lost = epoch.clone();
         device.set_device_lost_callback(move |_, _| lost.retire());
@@ -126,6 +149,8 @@ pub(crate) mod tests {
                 paintcraft_render::gpu::SourceCacheLimits::default(),
                 bytes,
             )
+            .unwrap()
+            .with_scaled_tile_edge(edge)
             .unwrap(),
         );
         let renderer = eframe::egui_wgpu::Renderer::new(
@@ -257,10 +282,12 @@ mod pixel_tests {
             paintcraft_core::types::Rect::new(0, 0, 32, 32).unwrap(),
             paintcraft_core::types::Rect::new(5, 3, 23, 29).unwrap(),
         ] {
-            compare_region(region);
+            for level in [0, 1, 2, 3] {
+                compare_region(region, level);
+            }
         }
     }
-    fn compare_region(region: paintcraft_core::types::Rect) {
+    fn compare_region(region: paintcraft_core::types::Rect, level: u8) {
         use eframe::wgpu;
         let Some((target, gpu)) = super::tests::target_with_output_pool(64 << 20) else {
             return;
@@ -277,8 +304,8 @@ mod pixel_tests {
             })
             .collect();
         let mut doc = paintcraft_document::new_document(
-            32,
-            32,
+            31,
+            29,
             Some(Rgba::TRANSPARENT),
             0,
             paintcraft_document::POLICY,
@@ -293,24 +320,40 @@ mod pixel_tests {
             &mut paintcraft_raster::Admission::new(65536),
         )
         .unwrap();
+        let request = paintcraft_render::display::DisplayRequest::new(
+            &doc,
+            region.intersect(&doc.canvas_rect()).unwrap(),
+            level,
+        )
+        .unwrap();
         let native = target
-            .install(gpu.render_region_texture(&doc, region, || Ok(())).unwrap())
+            .install(
+                gpu.render_display_texture(&doc, request, || Ok(()))
+                    .unwrap(),
+            )
             .unwrap();
-        // Recycle the private compositor buffer before drawing the still-live
-        // registered texture. Its immutable display pixels must remain unchanged.
-        let empty = paintcraft_document::new_document(32, 32, None, 0, paintcraft_document::POLICY)
+        // Later reuse of native scratch cannot overwrite this scaled/native image.
+        let empty = paintcraft_document::new_document(31, 29, None, 0, paintcraft_document::POLICY)
             .unwrap();
         let recycled = gpu
-            .render_region_texture(&empty, region, || Ok(()))
+            .render_region_texture(&empty, request.region(), || Ok(()))
             .unwrap();
         assert_eq!(recycled.stats.output_reuses, 1);
         drop(recycled);
-        let straight = paintcraft_render::render_flat(&doc).unwrap();
+        let straight =
+            paintcraft_render::display::render_display_cancellable(&doc, request, || Ok(()))
+                .unwrap()
+                .pixels;
+        let size = request.size();
         let managed = ctx.load_texture(
             "cpu-reference",
-            egui::ColorImage::from_rgba_unmultiplied([32, 32], &straight),
+            egui::ColorImage::from_rgba_unmultiplied(
+                [size[0] as usize, size[1] as usize],
+                &straight,
+            ),
             egui::TextureOptions::NEAREST,
         );
+        let footprint = request.footprint();
         let mut output = ctx.run_ui(
             egui::RawInput {
                 screen_rect: Some(egui::Rect::from_min_size(
@@ -327,27 +370,27 @@ mod pixel_tests {
                     egui::Color32::from_rgb(37, 19, 83),
                 );
                 let uv = egui::Rect::from_min_max(egui::Pos2::ZERO, egui::pos2(1.0, 1.0));
-                painter.image(
-                    native.id,
-                    egui::Rect::from_min_size(
-                        egui::pos2(region.x0 as f32, region.y0 as f32),
-                        egui::vec2(region.width() as f32, region.height() as f32),
-                    ),
-                    uv,
-                    egui::Color32::WHITE,
+                let image = egui::Rect::from_min_size(
+                    egui::pos2(footprint.x0 as f32, footprint.y0 as f32),
+                    egui::vec2(footprint.width() as f32, footprint.height() as f32),
                 );
-                painter.image(
-                    managed.id(),
-                    egui::Rect::from_min_size(
-                        egui::pos2(32.0 + region.x0 as f32, region.y0 as f32),
-                        egui::vec2(region.width() as f32, region.height() as f32),
-                    ),
-                    egui::Rect::from_min_max(
-                        egui::pos2(region.x0 as f32 / 32.0, region.y0 as f32 / 32.0),
-                        egui::pos2(region.x1 as f32 / 32.0, region.y1 as f32 / 32.0),
-                    ),
-                    egui::Color32::WHITE,
-                );
+                painter
+                    .with_clip_rect(egui::Rect::from_min_size(
+                        egui::Pos2::ZERO,
+                        egui::vec2(31.0, 29.0),
+                    ))
+                    .image(native.id, image, uv, egui::Color32::WHITE);
+                painter
+                    .with_clip_rect(egui::Rect::from_min_size(
+                        egui::pos2(32.0, 0.0),
+                        egui::vec2(31.0, 29.0),
+                    ))
+                    .image(
+                        managed.id(),
+                        image.translate(egui::vec2(32.0, 0.0)),
+                        uv,
+                        egui::Color32::WHITE,
+                    );
             },
         );
         let jobs = ctx.tessellate(output.shapes, output.pixels_per_point);
@@ -455,7 +498,7 @@ mod pixel_tests {
             assert_eq!(&row[..128], &row[128..]);
         }
         assert!(bytes.iter().any(|&b| b != 0));
-        let changed = (31 * 64 + 7) * 4;
+        let changed = (19 * 64 + 7) * 4;
         assert_ne!(&bytes[changed..changed + 4], &bytes[..4]);
         drop(bytes);
         buffer.unmap();
