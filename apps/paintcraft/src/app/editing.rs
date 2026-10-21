@@ -16,7 +16,7 @@ pub(super) struct DeferredFile {
 
 impl App {
     pub(super) fn initialize_editing(&mut self, context: egui::Context) {
-        match controller::background::Service::new(context) {
+        match controller::background::Service::with_budget(context, self.worker_budget.clone()) {
             Ok(service) => {
                 self.editor.connect_editing(service.clone());
                 self.editing = Some(service);
@@ -143,3 +143,17 @@ impl App {
 #[cfg(test)]
 #[path = "editing/tests.rs"]
 mod tests;
+
+/// Provisional process-wide declared in-flight byte ceiling for native edit/render
+/// pools. Harnesses use independent budgets; this is not a physical RSS limit.
+pub(super) fn native_worker_budget() -> paintcraft_runtime::SharedBudget {
+    static BUDGET: std::sync::OnceLock<paintcraft_runtime::SharedBudget> =
+        std::sync::OnceLock::new();
+    BUDGET
+        .get_or_init(|| paintcraft_runtime::SharedBudget::new(3 << 30))
+        .clone()
+}
+
+#[cfg(test)]
+#[path = "editing/admission_tests.rs"]
+mod admission_tests;

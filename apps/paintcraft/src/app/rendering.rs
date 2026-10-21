@@ -10,6 +10,7 @@ impl App {
 
     /// Connect native services only for a real desktop window; harnesses stay deterministic.
     pub fn with_native_services(mut self, cc: &eframe::CreationContext<'_>) -> Self {
+        self.worker_budget = editing::native_worker_budget();
         self.dialogs = Some(NativeDialogs::new(cc));
         self.initialize_editing(cc.egui_ctx.clone());
         self.initialize_fonts(&cc.egui_ctx);
@@ -36,11 +37,14 @@ impl App {
                 Err(e) => self.editor.set_status(format!("Using CPU rendering: {e}")),
             }
         }
-        match Executor::new(WorkerLimits {
-            workers: 1,
-            pending_jobs: 2,
-            transient_bytes: 1 << 30,
-        }) {
+        match Executor::with_budget(
+            WorkerLimits {
+                workers: 1,
+                pending_jobs: 2,
+                transient_bytes: 1 << 30,
+            },
+            self.worker_budget.clone(),
+        ) {
             Ok(renderer) => self.renderer = Some(renderer),
             Err(error) => self
                 .editor
@@ -197,6 +201,9 @@ impl App {
                 move || wake.request_repaint(),
             ) {
                 Ok(handle) => self.pending_frame = Some((key, handle)),
+                Err(error)
+                    if error.code == paintcraft_core::types::ErrorCode::ResourceLimit
+                        && renderer.request_fits(reservation) => {} // Shared contention: retry, retain current pixels.
                 Err(error) if renderer.pending() == 0 => self.install_render(ctx, key, Err(error)),
                 Err(_) => {} // Retry after already-admitted work releases its reservation.
             }

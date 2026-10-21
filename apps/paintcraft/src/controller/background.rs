@@ -44,13 +44,32 @@ pub(super) enum NavigationRequest {
     },
 }
 impl Service {
+    #[cfg(test)]
     pub(crate) fn new(context: egui::Context) -> Result<Self> {
+        Self::with_budget(
+            context,
+            paintcraft_runtime::SharedBudget::new(PREPARATION_CHARGE),
+        )
+    }
+    pub(crate) fn with_budget(
+        context: egui::Context,
+        budget: paintcraft_runtime::SharedBudget,
+    ) -> Result<Self> {
+        if budget.usage().limit < PREPARATION_CHARGE {
+            return Err(Error::new(
+                ErrorCode::InputSchema,
+                "worker budget cannot fit edit preparation",
+            ));
+        }
         Ok(Self {
-            executor: Arc::new(Mutex::new(Executor::new(Limits {
-                workers: 1,
-                pending_jobs: 1,
-                transient_bytes: PREPARATION_CHARGE,
-            })?)),
+            executor: Arc::new(Mutex::new(Executor::with_budget(
+                Limits {
+                    workers: 1,
+                    pending_jobs: 1,
+                    transient_bytes: PREPARATION_CHARGE,
+                },
+                budget,
+            )?)),
             context,
         })
     }
@@ -71,7 +90,7 @@ impl Service {
         self.lock()
             .map(|mut executor| {
                 executor.reap_abandoned();
-                executor.pending() == 0
+                executor.can_submit(PREPARATION_CHARGE)
             })
             .unwrap_or(true) // Admission will report the error, rather than stall forever.
     }
