@@ -13,7 +13,7 @@ import subprocess
 from pathlib import Path
 
 parser = argparse.ArgumentParser(description=__doc__)
-parser.add_argument("--suite", choices=["viewport", "output-pool", "multires", "gpu-scaled", "gpu-regions", "gpu-batches"], default="viewport")
+parser.add_argument("--suite", choices=["viewport", "output-pool", "multires", "gpu-scaled", "gpu-regions", "gpu-batches", "single-layer"], default="viewport")
 parser.add_argument("--binary", required=True, type=Path)
 parser.add_argument("--output", required=True, type=Path)
 args = parser.parse_args()
@@ -21,12 +21,20 @@ root = Path.cwd()
 binary = args.binary.resolve()
 out = args.output.resolve()
 out.mkdir(parents=True, exist_ok=False)
+single_suite = args.suite == "single-layer"
 pool_suite = args.suite == "output-pool"
 batch_suite = args.suite == "gpu-batches"
 region_suite = args.suite == "gpu-regions"
 gpu_scaled_suite = args.suite in ["gpu-scaled", "gpu-regions", "gpu-batches"]
 multires_suite = args.suite in ["multires", "gpu-scaled", "gpu-regions", "gpu-batches"]
-if multires_suite:
+if single_suite:
+    test = "gpu_display::single_benchmark::native_single_layer_process"
+    cases = ["tiny", "dense", "large", "opacity", "multiple", "partial"]
+    modes = ["ordered", "single"]
+    verify_variant = "verify"
+    criterion_variant = "criterion"
+    criterion_prefix = "native_single_layer"
+elif multires_suite:
     test = "cpu_rendering::display_benchmark::native_multires_process"
     cases = ["tiny", "dense", "layers20", "layers100", "large", "uniform"] if batch_suite else ["tiny", "dense", "large", "uniform"] if gpu_scaled_suite else ["tiny", "dense", "large"]
     modes = ["gpu64", "gpu64batch", "gpu64regions", "gpu64regionsbatch"] if batch_suite else ["gpu32", "gpu32regions", "gpu64", "gpu64regions"] if region_suite else ["cpu", "gpu32", "gpu64"] if gpu_scaled_suite else ["full", "bounded", "cached"]
@@ -77,6 +85,18 @@ manifest = {
     "scope": "Exact completed native scaled displays with serial versus bounded (16 layers, 1 MiB source window, 1 MiB pending-key threshold) ordered submission, with single-view and regional source retention. Includes 1/5/20/100-layer inputs, cold setup and teardown; not asynchronous completion, OS latency or physical admission." if batch_suite else "Completed native GPU display with single-view versus bounded multiple-region source retention at both output-tile edges. Same exact pixel requirements, setup, teardown and GPU completion waits. Not asynchronous transfer, an atlas, physical GPU budgeting or OS latency." if region_suite else "Cached exact CPU scaled display/managed upload versus GPU native-block/wide-sum display/native registration at 32 and 64 output-tile edges. Completed GPU work and cold setup/teardown included; independent full-native/filter verification; no OS latency or global physical-budget qualification." if gpu_scaled_suite else "Full-native-ROI composite/box-filter baseline versus bounded and cached exact CPU display production, native App ColorImage acceptance and completed egui managed-texture upload. Cold device/renderer/font/document setup and teardown included. Not GPU scaled composition, OS presentation or event latency." if multires_suite else "Completed compositor-buffer pool versus fresh allocation" if pool_suite else "Actual desktop preview staging, completed GPU composition/display conversion and App native texture acceptance. Required visible pixels equal full output cropped to requested bounds. Cold fixture/device/renderer construction and teardown included. Not OS presentation or event latency.",
     "environment": "Local macOS arm64 developer host; adapter/limits in correctness logs. No affinity, power, thermal or background-load controls. No intentionally concurrent builds, tests or other measurements. Process startup calibration retained, never subtracted.",
 }
+if single_suite:
+    manifest.update(
+        baseline="existing completed native ordered compositor, then display conversion",
+        canvas={"tiny":[32,32], "dense":[512,256], "large":[4096,2160],
+                "opacity":[512,256], "multiple":[512,256], "partial":[512,256]},
+        region="full canvas except large, which requests a 1024x768 native viewport",
+        base="one dense layer for dense/partial; five dense layers for multiple; sparse white otherwise",
+        frames=8, layers={"tiny":1,"dense":1,"large":1,"opacity":1,"multiple":5,"partial":1},
+        uniform_workload="opacity performs eight real layer-opacity commands; other cases stage growing brush previews",
+        scope="Completed native-resolution textures and actual App registration. Direct source-to-display versus the existing intermediate compositor; both use identical source retention. Cold device/pipeline/fixture setup and teardown included. No OS input/display latency or physical GPU budget claim.",
+        memory="Untimed /usr/bin/time -l runs per case/variant; RSS is process-wide, not opaque GPU allocation accounting.",
+    )
 (out / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
 
 
@@ -104,6 +124,14 @@ def identities():
 for case in cases:
     verify(case, "before")
     print("preflight", case, "complete", flush=True)
+if single_suite:
+    for case in cases:
+        for variant in modes:
+            with (out / f"memory-{case}-{variant}.log").open("w") as log:
+                subprocess.run(["/usr/bin/time", "-l", str(binary), "--exact", test,
+                                "--ignored", "--nocapture"], env=env_for(case, variant),
+                               stdout=log, stderr=subprocess.STDOUT, check=True)
+
 for case in cases:
     with (out / f"criterion-{case}.log").open("w") as log:
         subprocess.run([str(binary), "--exact", test, "--ignored", "--nocapture"],

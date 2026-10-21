@@ -65,6 +65,9 @@ impl App {
                         "1" | "regions"
                     ))
                     .with_region_source_cache(submission_policy == "regions")
+                    .with_single_layer_display(
+                        std::env::var("PAINTCRAFT_GPU_SINGLE_LAYER").is_ok_and(|v| v == "1"),
+                    )
                 }) {
                 Ok(gpu) => {
                     self.gpu_completion = match paintcraft_render::gpu::CompletionDriver::new(&gpu)

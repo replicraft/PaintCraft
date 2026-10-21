@@ -344,3 +344,51 @@ fn retired_completion_epoch_releases_native_registration_and_preserves_host_stat
     let mut delta = ctx.tex_manager().write().take_delta();
     gpu_display::benchmark::upload(&target, &mut delta);
 }
+
+#[test]
+fn admitted_single_layer_worker_installs_exact_native_texture_without_composite_scratch() {
+    let Some((target, gpu)) = gpu_display::tests::target_with_single_layer(0, true) else {
+        return;
+    };
+    let mut app = App::new(None);
+    app.editor = Editor::new_document(257, 137).unwrap();
+    app.editor.color = Rgba([17, 88, 156, 128]);
+    app.editor.select_tool(Tool::Brush);
+    app.editor.pointer_down((8, 8));
+    app.editor.pointer_move((73, 61));
+    let batch = app.editor.preview_batch().unwrap().unwrap();
+    let oracle =
+        paintcraft_editor::execute::execute(app.editor.document(), app.editor.selection(), &batch)
+            .unwrap();
+    let straight = paintcraft_render::render_flat(&oracle.doc).unwrap();
+    let expected: Vec<_> = egui::ColorImage::from_rgba_unmultiplied([257, 137], &straight)
+        .pixels
+        .iter()
+        .flat_map(|p| p.to_array())
+        .collect();
+    app.gpu_completion = Some(paintcraft_render::gpu::CompletionDriver::new(&gpu).unwrap());
+    app.gpu = Some(gpu);
+    app.gpu_target = Some(target);
+    app.renderer = Some(
+        Executor::new(WorkerLimits {
+            workers: 1,
+            pending_jobs: 2,
+            transient_bytes: 1 << 30,
+        })
+        .unwrap(),
+    );
+    let ctx = egui::Context::default();
+    let deadline = std::time::Instant::now() + Duration::from_secs(10);
+    while app.gpu_texture.is_none() {
+        assert!(std::time::Instant::now() < deadline);
+        app.sync_texture(&ctx);
+        std::thread::yield_now();
+    }
+    let frame = app.gpu_texture.as_ref().unwrap().frame();
+    assert_eq!(frame.stats.single_layer_displays, 1);
+    assert_eq!(frame.stats.output_allocations, 0);
+    assert_eq!(frame.stats.composition_submissions, 0);
+    assert_eq!(frame.readback(|| Ok(())).unwrap(), expected);
+    assert_eq!(app.renderer.as_ref().unwrap().reserved_bytes(), 0);
+    assert_eq!(app.editor.publications(), 0);
+}

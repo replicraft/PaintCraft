@@ -121,7 +121,7 @@ pub(crate) mod tests {
         edge: u32,
         limits: Option<eframe::wgpu::Limits>,
     ) -> Option<(Target, Arc<GpuRenderer>)> {
-        target_with_options(bytes, edge, limits, false, false)
+        target_with_options(bytes, edge, limits, false, false, false)
     }
     pub(crate) fn target_with_submission_policy(
         bytes: u64,
@@ -129,7 +129,13 @@ pub(crate) mod tests {
         region_views: bool,
         batching: bool,
     ) -> Option<(Target, Arc<GpuRenderer>)> {
-        target_with_options(bytes, edge, None, region_views, batching)
+        target_with_options(bytes, edge, None, region_views, batching, false)
+    }
+    pub(crate) fn target_with_single_layer(
+        bytes: u64,
+        enabled: bool,
+    ) -> Option<(Target, Arc<GpuRenderer>)> {
+        target_with_options(bytes, 32, None, false, false, enabled)
     }
     fn target_with_options(
         bytes: u64,
@@ -137,6 +143,7 @@ pub(crate) mod tests {
         limits: Option<eframe::wgpu::Limits>,
         region_views: bool,
         batching: bool,
+        single: bool,
     ) -> Option<(Target, Arc<GpuRenderer>)> {
         use eframe::wgpu;
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle());
@@ -170,7 +177,8 @@ pub(crate) mod tests {
             .with_scaled_tile_edge(edge)
             .unwrap()
             .with_region_source_cache(region_views)
-            .with_submission_batching(batching),
+            .with_submission_batching(batching)
+            .with_single_layer_display(single),
         );
         let renderer = eframe::egui_wgpu::Renderer::new(
             &device,
@@ -303,16 +311,32 @@ mod pixel_tests {
         ] {
             for level in [0, 1, 2, 3] {
                 for batching in [false, true] {
-                    compare_region(region, level, batching);
+                    compare_region(region, level, batching, false);
                 }
             }
         }
     }
-    fn compare_region(region: paintcraft_core::types::Rect, level: u8, batching: bool) {
+    #[test]
+    fn single_layer_native_texture_matches_actual_egui_framebuffer() {
+        for region in [
+            paintcraft_core::types::Rect::new(0, 0, 31, 29).unwrap(),
+            paintcraft_core::types::Rect::new(5, 3, 23, 25).unwrap(),
+        ] {
+            compare_region(region, 0, false, true);
+        }
+    }
+    fn compare_region(
+        region: paintcraft_core::types::Rect,
+        level: u8,
+        batching: bool,
+        single: bool,
+    ) {
         use eframe::wgpu;
-        let Some((target, gpu)) =
+        let Some((target, gpu)) = (if single {
+            super::tests::target_with_single_layer(64 << 20, true)
+        } else {
             super::tests::target_with_submission_policy(64 << 20, 32, false, batching)
-        else {
+        }) else {
             return;
         };
         let ctx = egui::Context::default();
@@ -343,6 +367,9 @@ mod pixel_tests {
             &mut paintcraft_raster::Admission::new(65536),
         )
         .unwrap();
+        if single {
+            doc.layers.get_mut(&id).unwrap().opacity = 137;
+        }
         let request = paintcraft_render::display::DisplayRequest::new(
             &doc,
             region.intersect(&doc.canvas_rect()).unwrap(),
@@ -361,7 +388,7 @@ mod pixel_tests {
         let recycled = gpu
             .render_region_texture(&empty, request.region(), || Ok(()))
             .unwrap();
-        assert_eq!(recycled.stats.output_reuses, 1);
+        assert_eq!(recycled.stats.output_reuses, u64::from(!single));
         drop(recycled);
         let straight =
             paintcraft_render::display::render_display_cancellable(&doc, request, || Ok(()))
@@ -535,3 +562,7 @@ pub(crate) mod benchmark;
 #[cfg(test)]
 #[path = "gpu_display/region_benchmark.rs"]
 mod region_benchmark;
+
+#[cfg(test)]
+#[path = "gpu_display/single_benchmark.rs"]
+mod single_benchmark;
