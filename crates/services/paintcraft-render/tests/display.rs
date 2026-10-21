@@ -283,3 +283,53 @@ fn cancelled_reduction_never_returns_partial_pixels_and_retry_is_exact() {
         ErrorCode::InputSchema
     );
 }
+
+#[test]
+fn dense_reduction_across_unaligned_recursive_splits_matches_the_full_pixel_oracle() {
+    let mut doc = new_document(519, 301, None, 0, POLICY).unwrap();
+    let mut admission = Admission::new(12 * 65536);
+    for n in 0..2u32 {
+        let bytes: Vec<_> = (0..523 * 307u32)
+            .flat_map(|p| {
+                [
+                    (p * 17 + n) as u8,
+                    (p / 523 * 29) as u8,
+                    (p * 11 + n * 71) as u8,
+                    [0, 1, 97, 254, 255][p as usize % 5],
+                ]
+            })
+            .collect();
+        let id = deterministic_id(&["display-split", &n.to_string()]);
+        doc.roots.push(id);
+        doc.layers.insert(
+            id,
+            Layer {
+                id,
+                name: "recursive split".into(),
+                origin: (-7 + i64::from(n) * 11, 5 - i64::from(n) * 9),
+                visible: true,
+                opacity: 173 + n as u8 * 31,
+                raster: RasterLayer::from_rgba(523, 307, Rgba::TRANSPARENT, &bytes, &mut admission)
+                    .unwrap(),
+            },
+        );
+    }
+    let mut cache = cache();
+    for level in [3, 5, 8] {
+        let request =
+            DisplayRequest::new(&doc, Rect::new(17, 13, 501, 287).unwrap(), level).unwrap();
+        let expected = reference(&doc, request);
+        let frame = cache
+            .render(&doc, request, Domain::Committed, || Ok(()))
+            .unwrap();
+        assert!(frame.stats.native_pixels > 0);
+        assert!(frame.pixels == expected, "cold recursive level {level}");
+        assert!(
+            cache
+                .render(&doc, request, Domain::Committed, || Ok(()))
+                .unwrap()
+                .pixels
+                == expected
+        );
+    }
+}
