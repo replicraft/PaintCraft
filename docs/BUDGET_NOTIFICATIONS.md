@@ -28,6 +28,29 @@ reclamation cannot make those requests fit. `wait_for_release(true)` additionall
 wakes for releases above the threshold when a consumer is waiting for capacity.
 Zero-byte releases do not manufacture an availability event.
 
+## Shared known demand
+
+`BudgetWatch::wait_for_capacity` publishes one feasible allocation-denial demand
+for that exact realm. Foreign realms and requests above the ceiling clear the
+interest rather than triggering reclamation. No bytes are reserved. Demand lives
+in the existing bounded weak registration; clearing interest or dropping the watch
+removes it, even while an already collected wake temporarily retains the observer.
+
+`observe_pressure()` acknowledges notifications and returns live usage plus the
+maximum known demand across consumers. Concurrent requests are not summed: the
+hint seeks enough headroom for a single attempt, without promising that multiple
+attempts can proceed together. Explicit demand changes wake subscribers. Dropping
+a watcher clears its demand immediately; existing pressure polls observe that
+withdrawal without requiring a shutdown callback. Entry/release
+notifications use the larger of static headroom and shared demand, including
+releases above the original threshold. Unchanged interest does not generate wakes.
+New subscribers observe existing demand too.
+
+Snapshot collection and fanout remain bounded to 64 registrations. Observer and
+callback-capture destruction stay outside the counter mutex. The pressure sample
+is advisory and may be superseded by concurrent allocations or demand changes;
+actual allocation still reserves under the normal ownership rules.
+
 ## Dispatch and ownership
 
 The budget counter mutex is released before invoking callbacks AND before dropping
@@ -54,6 +77,10 @@ Real native service initialization installs tile and worker subscriptions. The
 tile threshold matches the pressure coordinator; worker headroom matches the
 largest standard 2 GiB preparation charge. Polling acknowledges both observers.
 Resource-failed rendering and pending edits enable additional tile-release wakes.
+A current render's feasible decoded denial also publishes its known footprint.
+Every subscribed context uses shared demand when deciding whether to run its own
+history maintenance. Success, stale document/preview identity and watcher shutdown
+remove that demand. A render failure from another realm cannot pressure this one.
 The existing periodic pressure polling remains as a fallback; a registration
 failure is reported rather than silently claiming idle notification support.
 

@@ -581,3 +581,35 @@ The known requirement describes an already observed serial prefix, not future
 operations or an upfront reservation. Request-sized admission, content retry,
 demand-aware pressure coordination, logical blob authority, all-service budgets
 and native latency/interference qualification remain. T04/T11/T13 stay partial.
+
+
+## Twentieth slice: shared known-demand pressure coordination
+
+A budget watcher can publish one feasible known allocation demand for its exact
+realm. Demand is weakly owned and bounded by the existing 64 registrations; it
+reserves no bytes. Pressure observations take the maximum live demand rather than
+summing concurrent attempts. Explicit changes wake consumers, and entry/release
+notifications include this larger threshold. Unchanged interest stays silent.
+Dropped watchers clear demand even if a collected callback retains their observer.
+Counter/observer snapshots and callback destruction retain outside-lock guarantees.
+
+Native render failures publish their decoded demand. Every subscribed context can
+then reclaim its own eligible recorded history above the baseline free-space
+threshold. Success, a changed document/preview key or shutdown removes interest;
+foreign allocation realms cannot trigger that budget's maintenance. Existing
+owner/publication/foreground-yield guards remain unchanged.
+
+662 workspace tests pass (21 explicit ignores), strict workspace/all-target Clippy,
+formatting/file limits, release desktop/CLI builds, three required Apple M1 Pro
+Metal checks and an isolated 30-frame native smoke. Three core regressions cover
+maximum/exact-realm demand, withdrawal/unregister, concurrent ownership and wakes
+above static headroom. Two desktop regressions cover independent-context history
+maintenance and stale/foreign interest. Counters are scaled/injected; history work,
+publication and reader release are real. These are not native exhaustion or latency
+measurements, and the additional observer scans have not been benchmark-qualified.
+
+Known-prefix demand remains advisory. Future operations may need more; racing
+consumers still reserve normally. Request-sized pre-reservation, automatic retry
+of accepted content edits, current-document blob eviction, all-service physical
+budgets, fairness and native pressure/interference qualification remain. T04/T11/T13
+stay partial; no throughput, RSS or tail-latency improvement is claimed.

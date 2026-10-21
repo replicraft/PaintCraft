@@ -34,7 +34,9 @@ counts storage work; it is not a promise that those readers have freed bytes.
 
 The App polls the process-default tile realm. Below 64 MiB of free payload capacity
 (the smaller of 64 MiB and a quarter of the observed ceiling), it visits parked
-frontend workspaces and inactive tabs before the visible editor. It polls every
+frontend workspaces and inactive tabs before the visible editor. A subscribed
+render's known feasible footprint can raise this target across frontend contexts,
+so free space above the baseline does not suppress necessary preserving work. It polls every
 maintenance owner without activating that tab or frontend. Only the existing
 shared worker slot is used, with the existing declared-byte admission ceiling.
 
