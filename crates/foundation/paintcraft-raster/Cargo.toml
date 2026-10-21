@@ -14,3 +14,10 @@ font8x8.workspace = true
 
 [lints]
 workspace = true
+
+[dev-dependencies]
+criterion.workspace = true
+
+[[bench]]
+name = "paint_plan"
+harness = false

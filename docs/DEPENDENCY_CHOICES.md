@@ -50,7 +50,7 @@ A correct integrated baseline is not a measured performance or release qualifica
 | Color management | Evaluate moxcms/LittleCMS | Profiles currently reported as discarded; color-managed pipeline pending |
 | Document text | Cosmic Text 0.19.0 + Swash 0.2.10 | std/swash/shape-run-cache, default features and fontconfig disabled; HarfRust shaping, fontdb fallback, hinted grayscale masks; atomic preview/publication; legacy bitmap commands remain stable. [Comparison](TEXT_RENDERING.md) |
 | Wasm effects | wasmi conformance baseline; Wasmtime throughput candidate | Not implemented; core wasm32 ABI is the first SDK target |
-| Statistical benchmarks | Divan 0.1.21 and Criterion 0.8.2 (development only) | Divan retains allocation summaries; Criterion adds raw per-sample JSON/CSV for bounded CPU partitions and recorded history with optional parallel analysis disabled. Earlier Divan-only raw-sample gates remain pending. See [parallel renderer](PARALLEL_COMPOSITOR.md) |
+| Statistical benchmarks | Divan 0.1.21 and Criterion 0.8.2 (development only) | Divan retains allocation summaries; Criterion adds raw per-sample JSON/CSV for bounded CPU partitions, recorded history and raster paint-plan replay with optional parallel analysis disabled. Earlier Divan-only raw-sample gates remain pending. See [parallel renderer](PARALLEL_COMPOSITOR.md) |
 | Process benchmarks | Hyperfine 2.0.0 | Three native sessions per CPU span, cache and partition workload, with raw exports and RSS evidence; [span decision](../benchmarks/results/cpu-spans-2026-10-19/DECISION.md), [cache decision](../benchmarks/results/cpu-cache-2026-10-20/DECISION.md), [partition decision](../benchmarks/results/cpu-parallel-2026-10-20/DECISION.md). Other cases remain pending |
 
 ## Admission and evidence

@@ -2761,6 +2761,7 @@ dependencies = [
 name = "paintcraft-raster"
 version = "0.1.0"
 dependencies = [
+ "criterion",
  "font8x8",
  "paintcraft-core",
 ]
