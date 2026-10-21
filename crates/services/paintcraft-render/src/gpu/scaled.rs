@@ -126,6 +126,7 @@ impl GpuRenderer {
         cache: &mut SourceCache,
     ) -> Result<GpuTextureFrame> {
         check()?;
+        cache.begin_frame();
         if self.presentation.is_none() {
             return Err(unavailable("GPU display textures unsupported"));
         }

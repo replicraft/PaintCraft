@@ -662,3 +662,6 @@ mod output_pool;
 
 #[path = "gpu/scaled.rs"]
 mod scaled;
+
+#[path = "gpu/source_views.rs"]
+mod source_views;

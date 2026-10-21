@@ -126,6 +126,7 @@ impl GpuRenderer {
                     "canvas exceeds GPU display texture limits",
                 ));
             }
+            cache.begin_frame();
             let (mut output, mut stats) = self.compose(doc, region, &check, &mut cache)?;
             check()?;
             let texture = self.device.create_texture(&wgpu::TextureDescriptor {

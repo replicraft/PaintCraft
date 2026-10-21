@@ -59,14 +59,15 @@ struct Key {
     versions: Vec<(RegionCoord, RegionVersion)>,
 }
 impl Key {
-    fn same_view(&self, other: &Self) -> bool {
+    fn same_layer(&self, other: &Self) -> bool {
         self.doc == other.doc
             && self.layer == other.layer
             && self.origin == other.origin
             && self.extent == other.extent
             && self.default == other.default
-            && self.area == other.area
-            && self.local == other.local
+    }
+    fn same_view(&self, other: &Self) -> bool {
+        self.same_layer(other) && self.area == other.area && self.local == other.local
     }
     fn weight(&self) -> usize {
         self.versions.capacity() * size_of::<(RegionCoord, RegionVersion)>()
@@ -152,6 +153,7 @@ pub(super) struct SourceCache {
     pub limits: SourceCacheLimits,
     entries: Vec<Entry>,
     clock: u64,
+    pub region_views: bool,
 }
 #[derive(Debug)]
 pub(super) struct Prepared {
@@ -186,6 +188,7 @@ impl SourceCache {
             limits,
             entries,
             clock: 0,
+            region_views: false,
         })
     }
     pub fn clear(&mut self) {
@@ -265,10 +268,16 @@ impl SourceCache {
             }
             return Ok(Prepared { buffer, key });
         }
-        // Changed view/scope cannot alias an old source. Retire old handles before
-        // allocating a replacement; pending command encoders own their own references.
+        // Optional regional retention keeps independent views of a compatible layer.
+        // A changed layer scope always retires old handles before replacement;
+        // pending encoders retain their own references.
         self.entries.retain(|e| {
-            e.key.doc != *doc.document_id.as_bytes() || e.key.layer != *layer.id.as_bytes()
+            e.key.doc != *doc.document_id.as_bytes()
+                || e.key.layer != *layer.id.as_bytes()
+                || (self.region_views
+                    && e.key.origin == layer.origin
+                    && e.key.extent == (layer.raster.width(), layer.raster.height())
+                    && e.key.default == layer.raster.default_pixel())
         });
         if let Some(weight) = key.as_ref().map(Key::weight) {
             while self.entries.len() == self.entries.capacity()

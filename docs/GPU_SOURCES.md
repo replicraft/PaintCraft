@@ -47,6 +47,22 @@ rather than evicting the entire just-used working set. Unused older views are LR
 victims. This favors earlier dispatched views under sustained overload, not fairness
 or an optimal active-layer policy.
 
+`GpuRenderer::with_region_source_cache(true)` can retain multiple independently
+keyed clipped views of one layer under the same existing byte/metadata/entry caps.
+Different view bounds never alias a buffer. A changed layer origin, extent or
+default retires that layer's old scope; opacity/order changes still reuse raw bytes.
+Matching views patch their own changed rows, so overlapping retained views acquire
+their new identities independently when next requested. Enabling or disabling the
+policy clears retained derived sources and changes no document pixels.
+
+Frame protection begins at a public native/readback/scaled request boundary, rather
+than at each internal native block. Scaled requests therefore preserve early sources
+through the whole frame and stream overflow without repeatedly evicting that working
+set. Completion checks, cancellation retirement and independently owned display
+textures follow the same rules in either policy. This is bounded region-view
+retention, not a sparse tile atlas, asynchronous transfer or physical GPU admission.
+The original single-view policy remains the default pending native comparisons.
+
 Calls sharing a renderer serialize source updates through a derived-cache mutex.
 Cancellation callbacks must not reenter render/cache queries on the same renderer.
 The native UI never takes this mutex: its admission query reads an immutable field.

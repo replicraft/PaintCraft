@@ -164,6 +164,15 @@ impl GpuRenderer {
         Ok(self)
     }
 
+    /// Retain multiple bounded region views per layer instead of replacing its
+    /// previous view. This changes residency only; source identities stay exact.
+    pub fn with_region_source_cache(mut self, enabled: bool) -> Self {
+        let cache = self.sources.get_mut().unwrap_or_else(|p| p.into_inner());
+        cache.clear();
+        cache.region_views = enabled;
+        self
+    }
+
     /// Bounded native block, wide accumulators/words and transfer bookkeeping.
     /// Per-output tile plans are covered by the caller's output-area declaration.
     pub fn scaled_scratch_admission_bytes(&self) -> u64 {
@@ -236,6 +245,7 @@ impl GpuRenderer {
         check: &impl Fn() -> Result<()>,
         cache: &mut SourceCache,
     ) -> Result<GpuFrame> {
+        cache.begin_frame();
         let (mut output, mut stats) = self.compose(doc, region, check, cache)?;
         let size = crate::region_bytes(doc, region)? as u64;
         check()?;
@@ -267,7 +277,6 @@ impl GpuRenderer {
         check: &impl Fn() -> Result<()>,
         cache: &mut SourceCache,
     ) -> Result<(output::Output<'_>, GpuRenderStats)> {
-        cache.begin_frame();
         let mut stats = GpuRenderStats::default();
         check()?;
         crate::region_bytes(doc, region)?;
