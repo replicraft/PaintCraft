@@ -13,7 +13,7 @@ import subprocess
 from pathlib import Path
 
 parser = argparse.ArgumentParser(description=__doc__)
-parser.add_argument("--suite", choices=["viewport", "output-pool"], default="viewport")
+parser.add_argument("--suite", choices=["viewport", "output-pool", "multires"], default="viewport")
 parser.add_argument("--binary", required=True, type=Path)
 parser.add_argument("--output", required=True, type=Path)
 args = parser.parse_args()
@@ -21,13 +21,22 @@ root = Path.cwd()
 binary = args.binary.resolve()
 out = args.output.resolve()
 out.mkdir(parents=True, exist_ok=False)
-test = "gpu_display::region_benchmark::native_viewport_process"
 pool_suite = args.suite == "output-pool"
-cases = ["quarter", "large", "resize"] if pool_suite else ["all", "quarter", "pan"]
-modes = ["unpooled", "pooled"] if pool_suite else ["full", "region"]
-verify_variant = "pool-verify" if pool_suite else "verify"
-criterion_variant = "pool-criterion" if pool_suite else "criterion"
-criterion_prefix = "native_output_pool" if pool_suite else "native_viewport"
+multires_suite = args.suite == "multires"
+if multires_suite:
+    test = "cpu_rendering::display_benchmark::native_multires_process"
+    cases = ["tiny", "dense", "large"]
+    modes = ["full", "bounded", "cached"]
+    verify_variant = "verify"
+    criterion_variant = "criterion"
+    criterion_prefix = "native_multires"
+else:
+    test = "gpu_display::region_benchmark::native_viewport_process"
+    cases = ["quarter", "large", "resize"] if pool_suite else ["all", "quarter", "pan"]
+    modes = ["unpooled", "pooled"] if pool_suite else ["full", "region"]
+    verify_variant = "pool-verify" if pool_suite else "verify"
+    criterion_variant = "pool-criterion" if pool_suite else "criterion"
+    criterion_prefix = "native_output_pool" if pool_suite else "native_viewport"
 
 
 def sha(path):
@@ -41,7 +50,11 @@ sources = sorted({
     *Path("crates").rglob("Cargo.toml"), *Path("apps").rglob("*.rs"),
     *Path("apps").rglob("Cargo.toml"),
 })
+listing = subprocess.check_output([str(binary), "--list"], text=True)
+assert f"{test}: test" in listing.splitlines(), "exact benchmark test missing from executable"
 manifest = {
+    "exact_test": test,
+    "baseline": "existing native-resolution CpuRenderer/cache followed by independent box filter" if multires_suite else None,
     "utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
     "platform": platform.platform(), "processor": platform.processor(),
     "source_commit": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
@@ -51,10 +64,11 @@ manifest = {
     "hyperfine": subprocess.check_output(["hyperfine", "--version"], text=True).strip(),
     "build": "CARGO_BUILD_JOBS=2 CARGO_INCREMENTAL=0 cargo test -p paintcraft --lib --release --no-run --message-format=json",
     "suite": args.suite, "cases": cases, "variants": modes,
-    "canvas": {"quarter": [512, 256], "large": [4096, 2160], "resize": [4096, 2160]} if pool_suite else [512, 256],
-    "base": "dense5 for quarter; single sparse implicit white layer for large/resize" if pool_suite else "dense5", "frames": 16, "new_points_per_frame": 8,
+    "canvas": {"tiny": [32,32], "dense": [512,256], "large": [4096,2160]} if multires_suite else {"quarter": [512, 256], "large": [4096, 2160], "resize": [4096, 2160]} if pool_suite else [512, 256],
+    "base": "dense five layers for dense; sparse implicit white for tiny/large" if multires_suite else "dense5 for quarter; single sparse implicit white layer for large/resize" if pool_suite else "dense5", "frames": 8 if multires_suite else 16, "new_points_per_frame": 8,
     "warmups": 3, "runs": 20, "sessions": 3,
-    "scope": "Completed compositor-buffer pool versus fresh allocation" if pool_suite else "Actual desktop preview staging, completed GPU composition/display conversion and App native texture acceptance. Required visible pixels equal full output cropped to requested bounds. Cold fixture/device/renderer construction and teardown included. Not OS presentation or event latency.",
+    "sampling_levels": {"tiny":1,"dense":1,"large":2} if multires_suite else None,
+    "scope": "Full-native-ROI composite/box-filter baseline versus bounded and cached exact CPU display production, native App ColorImage acceptance and completed egui managed-texture upload. Cold device/renderer/font/document setup and teardown included. Not GPU scaled composition, OS presentation or event latency." if multires_suite else "Completed compositor-buffer pool versus fresh allocation" if pool_suite else "Actual desktop preview staging, completed GPU composition/display conversion and App native texture acceptance. Required visible pixels equal full output cropped to requested bounds. Cold fixture/device/renderer construction and teardown included. Not OS presentation or event latency.",
     "environment": "Local macOS arm64 developer host; adapter/limits in correctness logs. No affinity, power, thermal or background-load controls. No intentionally concurrent builds, tests or other measurements. Process startup calibration retained, never subtracted.",
 }
 (out / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
@@ -72,6 +86,8 @@ def verify(case, label):
         subprocess.run([str(binary), "--exact", test, "--ignored", "--nocapture"],
                        env=env_for(case, verify_variant), stdout=log, stderr=subprocess.STDOUT,
                        check=True)
+    result = (out / f"correctness-{label}-{case}.log").read_text()
+    assert "running 1 test" in result and "1 passed; 0 failed;" in result, "oracle test did not execute exactly once"
 
 
 def identities():

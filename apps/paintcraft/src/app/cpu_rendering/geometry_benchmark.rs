@@ -142,10 +142,13 @@ fn preview_geometry_process() {
 
 pub(crate) fn fixture() -> Editor {
     let base = std::env::var("PAINTCRAFT_GEOMETRY_BASE").unwrap_or_else(|_| "sparse1".into());
+    fixture_for_base(&base)
+}
+pub(crate) fn fixture_for_base(base: &str) -> Editor {
     if base == "sparse1" {
         return Editor::new_document(512, 256).unwrap();
     }
-    assert!(matches!(base.as_str(), "sparse5" | "dense5" | "dense65"));
+    assert!(matches!(base, "sparse5" | "dense5" | "dense65"));
     use paintcraft_core::types::Rgba;
     use paintcraft_raster::{Admission, RasterLayer};
     let mut doc = paintcraft_document::new_document(

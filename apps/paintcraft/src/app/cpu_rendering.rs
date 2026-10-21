@@ -299,3 +299,6 @@ mod geometry_tests;
 #[path = "cpu_rendering/geometry_benchmark.rs"]
 pub(crate) mod geometry_benchmark;
 
+#[cfg(test)]
+#[path = "cpu_rendering/display_benchmark.rs"]
+mod display_benchmark;

@@ -17,6 +17,10 @@ impl Drop for Texture {
     }
 }
 impl Target {
+    #[cfg(test)]
+    pub(crate) fn adapter_info(&self) -> eframe::wgpu::AdapterInfo {
+        self.state.adapter.get_info()
+    }
     pub fn new(state: eframe::egui_wgpu::RenderState, epoch: DeviceEpoch) -> Self {
         Self { state, epoch }
     }
@@ -460,7 +464,7 @@ mod pixel_tests {
 
 #[cfg(test)]
 #[path = "gpu_display/benchmark.rs"]
-mod benchmark;
+pub(crate) mod benchmark;
 
 #[cfg(test)]
 #[path = "gpu_display/region_benchmark.rs"]

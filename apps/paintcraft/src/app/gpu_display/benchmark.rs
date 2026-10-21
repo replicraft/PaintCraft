@@ -113,7 +113,7 @@ fn native_display_process() {
     }
 }
 
-fn upload(target: &Target, delta: &mut egui::TexturesDelta) {
+pub(crate) fn upload(target: &Target, delta: &mut egui::TexturesDelta) {
     {
         let mut renderer = target.state.renderer.write();
         for (id, images) in &delta.set {
