@@ -36,6 +36,7 @@ sha2.workspace = true
 uuid.workspace = true
 
 [dev-dependencies]
+criterion.workspace = true
 egui_kittest = { workspace = true, features = ["wgpu"] }
 
 [lints]

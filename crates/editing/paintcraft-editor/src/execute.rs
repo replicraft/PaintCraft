@@ -76,6 +76,19 @@ pub fn execute_with_admission_checked(
     admission: Admission,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Staged> {
+    execute_with_geometry_cache(base, selection, batch, admission, None, check)
+}
+
+/// Optional disposable smooth-path geometry reuse for growing previews. Cached
+/// sample unions contain no document pixels and cannot change the command result.
+pub fn execute_with_geometry_cache(
+    base: &Document,
+    selection: Selection,
+    batch: &Batch,
+    admission: Admission,
+    geometry: Option<&mut paintcraft_raster::smooth::PathCache>,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Staged> {
     check()?;
     let mut s = Stage {
         doc: base.clone(),
@@ -88,6 +101,7 @@ pub fn execute_with_admission_checked(
         base_state: base.state_id.to_string(),
         digest: &batch.digest,
         check,
+        geometry,
     };
     for (index, op) in batch.operations.iter().enumerate() {
         check().and_then(|()| s.run(index, op)).map_err(|e| {
@@ -126,6 +140,7 @@ struct Stage<'a> {
     base_state: String,
     digest: &'a str,
     check: &'a dyn Fn() -> Result<()>,
+    geometry: Option<&'a mut paintcraft_raster::smooth::PathCache>,
 }
 
 impl Stage<'_> {
@@ -407,13 +422,18 @@ impl Stage<'_> {
                     // Rasterization unions overlapping geometry before coverage is applied.
                     let mut plan = PaintPlan::default();
                     let (ox, oy) = self.doc.layers[&id].origin;
-                    for run in paintcraft_raster::smooth::round_path_scaled_checked(
-                        points,
-                        *size,
-                        &area,
-                        *point_scale,
-                        self.check,
-                    )? {
+                    let coverage = if let Some(cache) = self.geometry.as_deref_mut() {
+                        cache.round_path_scaled(points, *size, &area, *point_scale, self.check)?
+                    } else {
+                        paintcraft_raster::smooth::round_path_scaled_checked(
+                            points,
+                            *size,
+                            &area,
+                            *point_scale,
+                            self.check,
+                        )?
+                    };
+                    for run in coverage {
                         if *mode == Mode::Replace && run.samples < 16 {
                             plan.coverage_rect(
                                 Rect {

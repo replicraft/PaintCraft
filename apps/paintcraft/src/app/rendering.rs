@@ -179,9 +179,10 @@ impl App {
                     let is_preview = batch.is_some();
                     let staged;
                     let doc = if let Some(batch) = batch {
-                        staged = paintcraft_editor::execute::execute(&doc, selection, &batch)?.doc;
+                        staged = cpu.stage(&doc, selection, &batch, &|| cancel.check())?.doc;
                         &staged
                     } else {
+                        cpu.clear_geometry();
                         doc.as_ref()
                     };
                     cancel.check()?;
@@ -224,12 +225,15 @@ impl App {
             .capture_preview(self.rendered_preview.clone())
             .build(|| Ok(()))
             .and_then(|batch| match batch {
-                Some(batch) => paintcraft_editor::execute::execute(
-                    self.editor.document(),
-                    self.editor.selection(),
-                    &batch,
-                )
-                .and_then(|staged| self.cpu_renderer.render(&staged.doc, true, || Ok(()))),
+                Some(batch) => self
+                    .cpu_renderer
+                    .stage(
+                        self.editor.document(),
+                        self.editor.selection(),
+                        &batch,
+                        &|| Ok(()),
+                    )
+                    .and_then(|staged| self.cpu_renderer.render(&staged.doc, true, || Ok(()))),
                 None => self
                     .cpu_renderer
                     .render(self.editor.document(), false, || Ok(())),

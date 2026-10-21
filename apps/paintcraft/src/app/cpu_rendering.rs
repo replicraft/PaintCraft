@@ -9,21 +9,58 @@ use std::sync::{Arc, Mutex};
 
 // Measured candidates and the selection are recorded in docs/REGIONAL_COMPOSITOR.md.
 // Persistent cache plus simultaneous full/prefix key construction allowances.
-pub(super) const ADMISSION_BYTES: u64 = (20 + 2 * 16) << 20;
+pub(super) const ADMISSION_BYTES: u64 = (20 + 2 * 16 + 8) << 20;
 
 #[derive(Clone)]
-pub(super) struct CpuRenderer(Arc<Mutex<Option<CompositeCache>>>);
+pub(super) struct CpuRenderer(
+    Arc<Mutex<Option<CompositeCache>>>,
+    Arc<Mutex<paintcraft_raster::smooth::PathCache>>,
+);
 impl CpuRenderer {
     pub fn new() -> Self {
-        Self(Arc::new(Mutex::new(
-            CompositeCache::new(CacheLimits {
-                tile_edge: 256,
-                committed_bytes: 16 << 20,
-                preview_bytes: 4 << 20,
-                entries_per_domain: 512,
-            })
-            .ok(),
-        )))
+        Self(
+            Arc::new(Mutex::new(
+                CompositeCache::new(CacheLimits {
+                    tile_edge: 256,
+                    committed_bytes: 16 << 20,
+                    preview_bytes: 4 << 20,
+                    entries_per_domain: 512,
+                })
+                .ok(),
+            )),
+            Arc::new(Mutex::new(paintcraft_raster::smooth::PathCache::default())),
+        )
+    }
+
+    /// The native renderer owns this disposable geometry cache for both CPU and GPU
+    /// previews. The single admitted render worker serializes access; the UI does
+    /// not take this lock while native rendering is active.
+    pub fn stage(
+        &self,
+        doc: &Document,
+        selection: paintcraft_raster::Selection,
+        batch: &paintcraft_commands::Batch,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<paintcraft_editor::execute::Staged> {
+        check()?;
+        let mut geometry = self.1.lock().unwrap_or_else(|poisoned| {
+            let mut cache = poisoned.into_inner();
+            cache.clear();
+            self.1.clear_poison();
+            cache
+        });
+        paintcraft_editor::execute::execute_with_geometry_cache(
+            doc,
+            selection,
+            batch,
+            paintcraft_raster::Admission::new(paintcraft_core::types::policy::STAGED_PIXELS_MAX),
+            Some(&mut geometry),
+            check,
+        )
+    }
+
+    pub fn clear_geometry(&self) {
+        self.1.lock().unwrap_or_else(|p| p.into_inner()).clear();
     }
 
     pub fn render(
@@ -33,6 +70,9 @@ impl CpuRenderer {
         check: impl Fn() -> Result<()>,
     ) -> Result<Vec<u8>> {
         check()?;
+        if !preview {
+            self.clear_geometry();
+        }
         // Only the derived cache is locked. Native execution has one admitted
         // render worker; the UI never takes this lock while that worker is active.
         let mut guard = self.0.lock().unwrap_or_else(|poisoned| {
@@ -188,3 +228,11 @@ mod recovery_tests {
         assert!(renderer.0.lock().unwrap().is_none());
     }
 }
+
+#[cfg(test)]
+#[path = "cpu_rendering/geometry_tests.rs"]
+mod geometry_tests;
+
+#[cfg(test)]
+#[path = "cpu_rendering/geometry_benchmark.rs"]
+mod geometry_benchmark;

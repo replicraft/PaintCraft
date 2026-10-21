@@ -184,3 +184,61 @@ fn cancelled_smooth_preparation_preserves_owner_and_releases_decoded_capacity() 
         assert_eq!(budget.usage().reserved, 0);
     }
 }
+
+#[test]
+fn incremental_preview_geometry_never_reuses_blended_pixels_or_skips_current_selection() {
+    use paintcraft_editor::execute::{execute, execute_with_geometry_cache};
+    use paintcraft_raster::{Selection, smooth::PathCache};
+    let mut doc = new_document(32, 32, Some(Rgba([200, 100, 50, 127])), 0, POLICY).unwrap();
+    let id = doc.roots[0];
+    doc.layers.get_mut(&id).unwrap().origin = (-2, 1);
+    let points = [(0, 3), (15, 19), (0, 3), (7, 20)];
+    let mut cache = PathCache::default();
+    for mode in [Mode::SourceOver, Mode::Replace] {
+        for selection in [
+            Selection::Inactive,
+            Selection::Rect(Rect::new(2, 3, 9, 13).unwrap()),
+            Selection::Empty,
+        ] {
+            for n in 1..=points.len() {
+                let batch = Batch {
+                    version: 2,
+                    policy: POLICY.into(),
+                    base_state: doc.state_id,
+                    base_epoch: 0,
+                    seed: None,
+                    digest: "0".repeat(64),
+                    operations: vec![Op::StrokePath {
+                        layer: LayerRef::Id(id),
+                        points: points[..n].to_vec(),
+                        color: Rgba([17, 88, 156, 128]),
+                        mode,
+                        size: 5,
+                        round: true,
+                        smooth: true,
+                        point_scale: 1,
+                    }],
+                };
+                let actual = execute_with_geometry_cache(
+                    &doc,
+                    selection,
+                    &batch,
+                    Admission::new(65_536),
+                    Some(&mut cache),
+                    &|| Ok(()),
+                )
+                .unwrap();
+                let expected = execute(&doc, selection, &batch).unwrap();
+                for y in 0..32 {
+                    for x in 0..32 {
+                        assert_eq!(
+                            actual.doc.layers[&id].raster.get(x, y),
+                            expected.doc.layers[&id].raster.get(x, y)
+                        );
+                    }
+                }
+                assert_eq!(doc.layers[&id].raster.get(4, 4), Rgba([200, 100, 50, 127]));
+            }
+        }
+    }
+}
