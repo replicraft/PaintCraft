@@ -93,6 +93,7 @@ fn admitted_giant_display(gpu_scaled: bool) {
     )
     .unwrap();
     app.editor = Editor::with_document(doc, None);
+    app.gpu_completion = Some(paintcraft_render::gpu::CompletionDriver::new(&gpu).unwrap());
     app.gpu = Some(gpu.clone());
     app.gpu_target = Some(target);
     app.renderer = Some(
@@ -176,6 +177,7 @@ fn scaled_storage_limit_falls_back_to_uploadable_cpu_pixels_and_keeps_native_gpu
         .pixels;
     let mut app = App::new(None);
     app.editor = Editor::with_document(doc, None);
+    app.gpu_completion = Some(paintcraft_render::gpu::CompletionDriver::new(&gpu).unwrap());
     app.gpu = Some(gpu.clone());
     app.gpu_target = Some(target.clone());
     app.render_level = 1;
@@ -224,6 +226,7 @@ fn a_gpu_texture_with_matching_dimensions_but_wrong_sampling_level_is_rejected()
     let mut app = App::new(None);
     app.editor = Editor::new_document(1, 1).unwrap();
     app.render_level = 2;
+    app.gpu_completion = Some(paintcraft_render::gpu::CompletionDriver::new(&gpu).unwrap());
     app.gpu = Some(gpu.clone());
     app.gpu_target = Some(target);
     let key = app.presentation_key();
@@ -253,6 +256,7 @@ fn admitted_batched_multilayer_worker(regions: bool) {
     app.editor = cpu_rendering::geometry_benchmark::fixture_for_base("dense20");
     app.render_level = 1;
     app.gpu_scaled_display = true;
+    app.gpu_completion = Some(paintcraft_render::gpu::CompletionDriver::new(&gpu).unwrap());
     app.gpu = Some(gpu.clone());
     app.gpu_target = Some(target);
     app.renderer = Some(
@@ -316,6 +320,7 @@ fn retired_completion_epoch_releases_native_registration_and_preserves_host_stat
     let ticket = app.editor.render_key();
     let publications = app.editor.publications();
     let expected = paintcraft_render::render_flat(app.editor.document()).unwrap();
+    app.gpu_completion = Some(paintcraft_render::gpu::CompletionDriver::new(&gpu).unwrap());
     app.gpu = Some(gpu.clone());
     app.gpu_target = Some(target.clone());
     let key = app.presentation_key();
@@ -328,6 +333,8 @@ fn retired_completion_epoch_releases_native_registration_and_preserves_host_stat
     assert!(app.gpu_texture.is_some());
     gpu.epoch().retire();
     app.sync_texture(&ctx);
+    assert!(app.gpu_completion.is_some());
+    assert!(!app.gpu_completion.as_ref().unwrap().progress().closed);
     assert!(app.gpu.is_none());
     assert!(app.gpu_texture.is_none());
     assert!(app.texture.is_some());

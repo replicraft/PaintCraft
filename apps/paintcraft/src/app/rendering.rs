@@ -67,6 +67,16 @@ impl App {
                     .with_region_source_cache(submission_policy == "regions")
                 }) {
                 Ok(gpu) => {
+                    self.gpu_completion = match paintcraft_render::gpu::CompletionDriver::new(&gpu)
+                    {
+                        Ok(driver) => Some(driver),
+                        Err(error) => {
+                            self.editor.set_status(format!(
+                                "GPU completion observation unavailable: {error}"
+                            ));
+                            None
+                        }
+                    };
                     self.replace_gpu(Some(Arc::new(gpu)));
                     self.gpu_target = Some(gpu_display::Target::new(state.clone(), epoch));
                 }
@@ -223,6 +233,7 @@ impl App {
             let native_display = self.gpu_target.is_some();
             let gpu_scaled_display = self.gpu_scaled_display;
             let gpu = self.gpu.clone();
+            let completion = self.gpu_completion.clone();
             let cpu = self.cpu_renderer.clone();
             let wake = ctx.clone();
             match renderer.submit(
@@ -271,7 +282,11 @@ impl App {
                                 "render job lost its admission charge",
                             )
                         })?;
-                        let result = paintcraft_render::gpu::with_admission(lease, render);
+                        let result = if let Some(driver) = completion.as_ref() {
+                            paintcraft_render::gpu::with_admission_progress(lease, driver, render)
+                        } else {
+                            paintcraft_render::gpu::with_admission(lease, render)
+                        };
                         match result {
                             Ok((pixels, texture)) => (pixels, texture, None),
                             Err(error) => {
