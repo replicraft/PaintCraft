@@ -22,10 +22,16 @@ impl App {
                 .set_status(format!("Background saving unavailable: {error}")),
         }
         if let Some(state) = &cc.wgpu_render_state {
-            match GpuRenderer::new(state.device.clone(), state.queue.clone()) {
+            let epoch = paintcraft_render::gpu::DeviceEpoch::default();
+            let lost = epoch.clone();
+            let wake = cc.egui_ctx.clone();
+            state.device.set_device_lost_callback(move |_, _| {
+                lost.retire();
+                wake.request_repaint();
+            });
+            match GpuRenderer::with_epoch(state.device.clone(), state.queue.clone(), epoch) {
                 Ok(gpu) => {
-                    self.gpu = Some(Arc::new(gpu));
-                    self.texture_key = None;
+                    self.replace_gpu(Some(Arc::new(gpu)));
                 }
                 Err(e) => self.editor.set_status(format!("Using CPU rendering: {e}")),
             }
@@ -44,6 +50,15 @@ impl App {
     }
 
     pub(super) fn sync_texture(&mut self, ctx: &egui::Context) {
+        if self
+            .gpu
+            .as_ref()
+            .is_some_and(|gpu| !gpu.epoch().is_current())
+        {
+            self.replace_gpu(None);
+            self.editor
+                .set_status("GPU device lost; rebuilding canvas with CPU rendering");
+        }
         let preview = self.editor.preview_snapshot().filter(|p| {
             matches!(
                 p.as_ref(),
@@ -84,9 +99,18 @@ impl App {
                 self.pending_frame = None;
             }
             match result {
-                Ok(frame) if expected == Some(frame.key) && self.accept_render_key(frame.key) => {
+                Ok(frame)
+                    if expected == Some(frame.key)
+                        && self.accept_render_key(frame.key)
+                        && frame.device_epoch == self.gpu.as_ref().map(|gpu| gpu.epoch())
+                        && (frame.fallback.is_some()
+                            || frame
+                                .device_epoch
+                                .as_ref()
+                                .is_none_or(|epoch| epoch.is_current())) =>
+                {
                     if let Some(reason) = frame.fallback {
-                        self.gpu = None;
+                        self.replace_gpu(None);
                         self.editor.set_status(reason);
                     }
                     self.install_render(ctx, frame.key, Ok(frame.pixels));
@@ -148,6 +172,7 @@ impl App {
                         doc.as_ref()
                     };
                     cancel.check()?;
+                    let device_epoch = gpu.as_ref().map(|gpu| gpu.epoch());
                     let (pixels, fallback) = if let Some(gpu) = gpu {
                         match gpu.render_cancellable(doc, || cancel.check()) {
                             Ok(pixels) => (pixels, None),
@@ -166,6 +191,7 @@ impl App {
                         key,
                         pixels,
                         fallback,
+                        device_epoch,
                     })
                 },
                 move || wake.request_repaint(),
@@ -193,6 +219,18 @@ impl App {
                     .render(self.editor.document(), false, || Ok(())),
             });
         self.install_render(ctx, key, pixels);
+    }
+
+    /// Replacing a backend invalidates outstanding frames even if document and
+    /// preview keys are identical. Host pixels/history remain authoritative.
+    pub(super) fn replace_gpu(&mut self, gpu: Option<Arc<GpuRenderer>>) {
+        if let Some((_, handle)) = self.pending_frame.take()
+            && let Some(renderer) = &self.renderer
+        {
+            renderer.cancel(handle);
+        }
+        self.gpu = gpu;
+        self.texture_key = None;
     }
 
     /// In-flight progress may be shown only within the same live gesture. A
@@ -334,6 +372,7 @@ mod scheduling_tests {
                         key: old,
                         pixels,
                         fallback: None,
+                        device_epoch: None,
                     })
                 },
                 || {},
@@ -479,6 +518,7 @@ mod scheduling_tests {
                         key: old,
                         pixels,
                         fallback: None,
+                        device_epoch: None,
                     })
                 },
                 || {},
@@ -560,3 +600,7 @@ mod scheduling_tests {
         gate.send(()).unwrap();
     }
 }
+
+#[cfg(test)]
+#[path = "rendering/device_tests.rs"]
+mod device_tests;

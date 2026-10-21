@@ -141,6 +141,7 @@ struct RenderedFrame {
     key: RenderKey,
     pixels: Vec<u8>,
     fallback: Option<String>,
+    device_epoch: Option<paintcraft_render::gpu::DeviceEpoch>,
 }
 
 type RenderKey = (Uuid, u64, u64);
