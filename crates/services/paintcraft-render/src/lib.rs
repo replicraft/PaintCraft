@@ -13,6 +13,7 @@ use paintcraft_raster::RowSpan;
 pub mod parallel;
 
 pub mod cache;
+pub mod display;
 
 /// Largest canvas this renderer will materialize (provisional admission limit).
 pub const RENDER_PIXELS_MAX: u64 = 67_108_864;
@@ -31,7 +32,7 @@ pub fn render_region(doc: &Document, region: Rect) -> Result<Vec<u8>> {
     render_region_cancellable(doc, region, || Ok(()))
 }
 
-pub(crate) fn region_bytes(doc: &Document, region: Rect) -> Result<usize> {
+pub(crate) fn validate_region(doc: &Document, region: Rect) -> Result<()> {
     if region.x0 < 0
         || region.y0 < 0
         || region.x1 <= region.x0
@@ -44,6 +45,11 @@ pub(crate) fn region_bytes(doc: &Document, region: Rect) -> Result<usize> {
             "render region must be nonempty and inside the canvas",
         ));
     }
+    Ok(())
+}
+
+pub(crate) fn region_bytes(doc: &Document, region: Rect) -> Result<usize> {
+    validate_region(doc, region)?;
     let pixels = region.area();
     if pixels > u128::from(RENDER_PIXELS_MAX) {
         return Err(Error::new(

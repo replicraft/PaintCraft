@@ -14,7 +14,7 @@ impl Entry {
     }
 }
 #[derive(Debug)]
-pub(super) struct Partition {
+pub(crate) struct Partition {
     entries: Vec<Entry>,
     budget: usize,
     clock: u64,
@@ -76,11 +76,9 @@ impl Partition {
         }
         // A coordinate has one current full version and one prefix per domain. Previously returned
         // output buffers are independent and cannot pin these cache Vecs.
-        if let Some(i) = self
-            .entries
-            .iter()
-            .position(|e| e.key.rect == entry.key.rect && e.prefix == prefix)
-        {
+        if let Some(i) = self.entries.iter().position(|e| {
+            e.key.rect == entry.key.rect && e.key.level == entry.key.level && e.prefix == prefix
+        }) {
             self.entries.swap_remove(i);
         }
         while self.entries.len() == self.entries.capacity()

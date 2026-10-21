@@ -13,9 +13,10 @@ struct LayerKey {
     versions: Vec<(RegionCoord, RegionVersion)>,
 }
 #[derive(Debug, PartialEq, Eq)]
-pub(super) struct Key {
+pub(crate) struct Key {
     doc: [u8; 16],
     pub rect: Rect,
+    pub level: u8,
     layers: Vec<LayerKey>,
 }
 impl Key {
@@ -48,6 +49,7 @@ impl Key {
         let mut key = Self {
             doc: *doc.document_id.as_bytes(),
             rect,
+            level: 0,
             layers: Vec::new(),
         };
         if key.layers.try_reserve_exact(count).is_err() {
@@ -101,7 +103,8 @@ impl Key {
     /// Conservative 64-pixel output cells affected by changed source cells. Layer
     /// geometry/policies must match; structural changes require ordinary composition.
     pub(super) fn changed_regions(&self, previous: &Self) -> Option<Vec<Rect>> {
-        if self.doc != previous.doc
+        if self.level != previous.level
+            || self.doc != previous.doc
             || self.rect != previous.rect
             || self.layers.len() != previous.layers.len()
         {

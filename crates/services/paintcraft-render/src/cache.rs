@@ -3,9 +3,9 @@ use crate::{output_buffer, region_bytes, render_region_cancellable};
 use paintcraft_core::types::{Error, ErrorCode, Rect, Result};
 use paintcraft_document::Document;
 
-mod key;
+pub(crate) mod key;
 mod prefix;
-mod storage;
+pub(crate) mod storage;
 use key::Key;
 use storage::Partition;
 
