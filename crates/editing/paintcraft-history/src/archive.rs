@@ -10,6 +10,7 @@ use std::{
     sync::{Mutex, Weak},
 };
 pub(crate) mod payload;
+mod restoration;
 pub(crate) use payload::Blob;
 
 pub(crate) type Memo = HashMap<TileVersion, Weak<Blob>>;
@@ -222,7 +223,8 @@ impl Packed {
                 history_id: self.history_id,
             });
         }
-        memo.try_reserve(self.layers.iter().map(|layer| layer.tiles.len()).sum())
+        let mut plan = restoration::Plan::capture(self, admission, check)?;
+        memo.try_reserve(plan.len())
             .map_err(|_| limit("cannot track restored decoded versions"))?;
         let mut layers = HashMap::new();
         layers
@@ -232,7 +234,7 @@ impl Packed {
             let mut raster = RasterLayer::new(layer.width, layer.height, layer.default);
             for (coord, blob) in &layer.tiles {
                 check()?;
-                let lease = blob.restore(admission)?;
+                let lease = plan.tile(blob, admission)?;
                 memo.insert(lease.version(), Arc::downgrade(blob));
                 raster.install_tile(*coord, lease)?;
             }

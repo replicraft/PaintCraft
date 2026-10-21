@@ -47,7 +47,8 @@ fn reserved(budget: &SharedBudget, tiles: u64) -> Admission {
     Admission::with_reserved_residency(u64::MAX, budget.reserve_capacity(tiles * BYTES).unwrap())
 }
 #[test]
-fn partial_cold_seek_rolls_back_then_reserved_retry_restores_exact_recorded_pixels_and_identity() {
+fn cold_seek_admission_failure_preserves_owner_then_reserved_retry_restores_recorded_pixels_and_identity()
+ {
     let (mut owner, budget, target, state) = fixture();
     let before = owner.snapshot();
     let view = owner.history_view();
@@ -191,7 +192,8 @@ fn reserved_restoration_preserves_fixed_restore_limits_and_cancelled_or_stale_pu
     assert!(Arc::ptr_eq(&before, &owner.snapshot()));
 }
 #[test]
-fn cancellation_after_a_partial_decode_returns_capacity_and_keeps_cursor_redo_and_saved_state() {
+fn cancellation_during_planned_restoration_returns_capacity_and_keeps_cursor_redo_and_saved_state()
+{
     let (owner, budget, target, _) = fixture();
     let before = owner.snapshot();
     let view = owner.history_view();
@@ -206,7 +208,7 @@ fn cancellation_after_a_partial_decode_returns_capacity_and_keeps_cursor_redo_an
                 if budget.usage().reserved > 2 * BYTES {
                     Err(Error::new(
                         ErrorCode::OperationCancelled,
-                        "after first decode",
+                        "after decoded admission",
                     ))
                 } else {
                     Ok(())
@@ -219,4 +221,30 @@ fn cancellation_after_a_partial_decode_returns_capacity_and_keeps_cursor_redo_an
     assert_eq!(owner.history_view(), view);
     assert!(Arc::ptr_eq(&before, &owner.snapshot()));
     assert!(!owner.is_dirty());
+}
+
+#[test]
+fn a_cold_plan_denial_allocates_no_prefix_and_reports_the_full_missing_set() {
+    let (owner, _, target, _) = fixture();
+    let budget = SharedBudget::new(2 * BYTES);
+    let blocker = budget.reserve(BYTES).unwrap();
+    let before = owner.history_view();
+    let error = owner
+        .preparation()
+        .unwrap()
+        .navigate_history_with_admission(
+            owner.history_ticket(),
+            target,
+            Admission::with_residency(u64::MAX, budget.clone()),
+            || Ok(()),
+        )
+        .unwrap_err();
+    assert_eq!(
+        error.allocation_denial().unwrap().required_bytes(),
+        2 * BYTES
+    );
+    assert_eq!(budget.usage().reserved, BYTES);
+    assert_eq!(budget.usage().peak, BYTES); // Even the first missing tile was not allocated.
+    assert_eq!(owner.history_view(), before);
+    drop(blocker);
 }

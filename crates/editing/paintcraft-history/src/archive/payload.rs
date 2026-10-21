@@ -203,8 +203,14 @@ impl Blob {
             .unwrap_or_else(|p| p.into_inner())
             .clone()
     }
+    pub(super) fn resident(&self) -> Option<TileLease> {
+        self.source().try_lease().or_else(|| match &self.payload {
+            Payload::Shared(lease) => Some(lease.clone()),
+            _ => None,
+        })
+    }
     pub fn restore(&self, adm: &mut Admission) -> Result<TileLease> {
-        if let Some(lease) = self.source().try_lease() {
+        if let Some(lease) = self.resident() {
             return Ok(lease);
         }
         let (default, patch) = match &self.payload {
