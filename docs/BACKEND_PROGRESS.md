@@ -663,3 +663,37 @@ throughput/RSS win or an inferred size threshold. Sparse GPU working sets, CPU s
 surface bypass, asynchronous services, physical budgets, native device recovery,
 input/display tails and broader feature work remain. T12/T13/T21/T37 remain partial
 or in progress; the full roadmap stays active.
+
+## Forty-first slice: bounded paint-plan metadata
+
+Paint plans now bound descriptor capacities, usable tile-index payload and per-tile
+write-index capacities independently of decoded tiles. The default is a provisional
+64 MiB per plan, configurable by SDK callers through raster admission or explicit
+plan construction. All editor painting families use the admission's plan factory;
+replay enforces the smaller plan/admission allowance. Repeated coordinates reuse
+buckets, compatible adjacent writes still coalesce, and default/no-op missing tiles
+do not require speculative table growth. No new dependency or numerical/wire
+policy is introduced. See [the metadata contract](PAINT_METADATA.md).
+
+Metadata exhaustion returns a fixed resource error without decoded denial context,
+so freeing history cannot trigger an inappropriate retry. Index failures precede
+that operation's decoded materialization/replay. A later operation can still fail
+after an earlier private prefix; Session discards the whole attempt and preserves
+owner pixels, ticket and history. This closes a prerequisite for retaining compound
+plans rather than claiming whole-batch preflight. Aggregate batch/service admission,
+input/geometry/font storage, hash controls and allocator/transient/RSS overhead remain
+outside the per-plan payload cap. The 64 MiB policy is not a benchmark-selected optimum,
+and no throughput or memory-reclamation gain is claimed. Prior timing records stay
+frozen to their original source; new guard overhead remains unqualified.
+
+Six new tests cover descriptor limits/coalescing, repeated overlapping writes with
+one tile, table/vector exhaustion before any decoded prefix, tight-boundary reuse,
+all eight painting families and late-ellipse rollback after a successful private
+fill. 807 workspace tests pass (26 explicit ignores) across 67 suites; strict
+workspace/all-target Clippy and release desktop/CLI builds pass. All 31 required Metal integration tests, 23 renderer unit tests and 224 required-GPU
+desktop tests pass. Default/direct-single-layer 30-frame native startup checks exit
+zero with empty logs. The [validation record](validation/paint-metadata-2026-10-21/validation.json)
+pins source, commands, compressed logs and release hashes for this correctness milestone.
+Whole-batch/effect planning, coordinated physical budgets, scheduling, asynchronous
+GPU work, native recovery/latency and broader feature work remain. T04/T11/T14/T37
+remain partial/in progress; the full roadmap stays active.

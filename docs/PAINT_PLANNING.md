@@ -45,8 +45,11 @@ partially painted; Session discards it and never publishes that partial result.
 Smooth coverage separately checks segment/scan/union work. These boundaries
 do not establish a wall-clock latency bound or make allocator/codec calls preemptible.
 
-Descriptor/index/command metadata is not fully covered by the decoded payload realm;
-work limits and early fresh-tile checks do not constitute all-service/RSS admission.
+Descriptor and replay-index payload capacities now have an independent
+[per-plan metadata bound](PAINT_METADATA.md), propagated from raster admission into
+every editor painting family. Command/input/geometry buffers and global metadata
+coordination remain outside it; work limits and early fresh-tile checks do not
+constitute all-service/RSS admission.
 
 ## Verification and measured scope
 
@@ -66,8 +69,9 @@ are same-source synthetic replay comparisons, not native input/display latency o
 parent desktop benchmarks. The separate [matched CLI comparison](../benchmarks/results/paint-plan-cli-cpu-2026-10-21/DECISION.md)
 checks baseline/current CPU-only apply commands and byte-identical canonical output:
 horizontal pencil improves 1.12–1.20x, smooth brush 1.07–1.10x and smooth eraser
-1.66–1.73x; diagonal remains a tie/slight regression. Full-batch planning, bounded descriptor/index metadata,
+1.66–1.73x; diagonal remains a tie/slight regression. Full-batch planning, coordinated metadata admission,
 priority/fairness and long-session physical-pressure qualification remain open.
 
 The timings above are frozen to f23e5c3, before cooperative paint cancellation.
-They do not qualify the overhead or latency of the later cancellation checks.
+They do not qualify the overhead or latency of the later cancellation checks
+or per-plan metadata guards.

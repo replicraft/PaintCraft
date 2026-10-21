@@ -142,3 +142,9 @@ Native tests cover preview/FIFO/save ordering, Escape, stale-base refusal, perma
 limits, own-history cleanup and shared-worker interference. An independent-context
 test uses one real four-tile realm: eligible history release enables the other
 context's accepted two-tile stroke, without altering the history owner's ticket.
+
+Paint descriptor/replay-index capacity now has a separate
+[fixed per-plan metadata allowance](PAINT_METADATA.md). Every painting family
+constructs its plan from the admitted policy. Metadata exhaustion carries no
+decoded denial and is not a history-pressure retry. This bounds a prerequisite
+for compound planning without claiming complete first-attempt batch reservation.
