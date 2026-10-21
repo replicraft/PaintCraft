@@ -259,3 +259,28 @@ This is synchronous continuation, not an interactive time bound. Global logical
 tile authority/physical admission, background jobs, metadata scaling, photographic
 deltas, masks/depth, segment relocation and persistent branches remain. A current
 raw document exceeding its allowance can still reject an edit. T11 stays partial.
+
+## Eighth slice: detached edit and navigation preparation
+
+An editor can capture a private timeline, prepare an edit or recorded history
+transition on a worker, and publish the result only against its original session,
+epoch and resource policy. Capturing shares immutable pixels and fallibly copies
+metadata; preparation includes the required history admission and spill barriers.
+Save acknowledgements remain independent of pending preparation. Stale, foreign,
+cancelled and dropped results leave live publication unchanged and release their
+private payload leases.
+
+Cancellation now reaches automatic pressure batches and individual cold-restore
+tile boundaries. Individual command kernels and filesystem calls remain
+non-preemptible. This API does not yet move desktop dispatch to workers, bound
+whole-process physical memory, or qualify interactive latency. Scheduling and the
+save/switch/close ordering of the desktop consumer remain next work; T11 stays partial.
+
+567 workspace tests pass (20 explicit ignores), along with strict workspace/all-target
+Clippy, formatting, the 800-line limit and actual Metal parity on Apple M1 Pro.
+New regressions cover worker transfer, edit/undo ABA, identical-content foreign
+sessions, policy invalidation, no-ops, saves during preparation, cancellation after
+a native spill barrier preserving exact redo/quota, detached undo/redo/seek and
+cancellation at every boundary of a materialized two-tile cold restoration.
+Previous benchmark results remain frozen to their recorded source revisions;
+these correctness checks establish no new performance result.

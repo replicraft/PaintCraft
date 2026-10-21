@@ -36,6 +36,15 @@ impl Session {
         ticket: HistoryTicket,
         target: Option<Uuid>,
     ) -> Result<Option<Navigation>> {
+        self.navigate_history_checked(ticket, target, || Ok(()))
+    }
+    pub(super) fn navigate_history_checked(
+        &mut self,
+        ticket: HistoryTicket,
+        target: Option<Uuid>,
+        check: impl Fn() -> Result<()>,
+    ) -> Result<Option<Navigation>> {
+        check()?;
         if ticket.owner != self.owner || ticket.base != self.ticket() {
             return Err(Error::new(
                 ErrorCode::ConflictStaleBase,
@@ -56,7 +65,7 @@ impl Session {
             return Ok(None);
         }
         let next_epoch = self.next_epoch()?;
-        let (snapshot, changed) = self.history.seek(target)?.ok_or_else(|| {
+        let (snapshot, changed) = self.history.seek_checked(target, check)?.ok_or_else(|| {
             Error::new(
                 ErrorCode::ReferenceUnknownId,
                 "History entry is no longer retained",

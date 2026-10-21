@@ -208,7 +208,13 @@ impl Packed {
             decoded_doc: Mutex::new(Arc::downgrade(&snapshot.document)),
         })
     }
-    pub fn restore(&self, pixels: u64, memo: &mut Memo) -> Result<Snapshot> {
+    pub fn restore(
+        &self,
+        pixels: u64,
+        memo: &mut Memo,
+        check: &impl Fn() -> Result<()>,
+    ) -> Result<Snapshot> {
+        check()?;
         if let Some(document) = self.decoded_document() {
             return Ok(Snapshot {
                 document,
@@ -226,6 +232,7 @@ impl Packed {
         for layer in &self.layers {
             let mut raster = RasterLayer::new(layer.width, layer.height, layer.default);
             for (coord, blob) in &layer.tiles {
+                check()?;
                 let lease = blob.restore(&mut admission)?;
                 memo.insert(lease.version(), Arc::downgrade(blob));
                 raster.install_tile(*coord, lease)?;
@@ -250,6 +257,7 @@ impl Packed {
             layers,
             title: self.title.clone(),
         });
+        check()?;
         *self.decoded_doc.lock().unwrap_or_else(|p| p.into_inner()) = Arc::downgrade(&document);
         Ok(Snapshot {
             document,

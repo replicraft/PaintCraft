@@ -18,6 +18,14 @@ pub struct PreparedEdit {
     receipt: Receipt,
 }
 
+/// A restored private history target, ready for guarded owner publication.
+#[derive(Debug)]
+pub struct PreparedNavigation {
+    base: Ticket,
+    session: Session,
+    navigation: Option<Navigation>,
+}
+
 impl Session {
     /// Capture a detached timeline. This only copies metadata (fallibly, under
     /// the history staging allowance); pixel execution and pressure work happen
@@ -47,18 +55,7 @@ impl Session {
         check: impl Fn() -> Result<()>,
     ) -> Result<Receipt> {
         check()?;
-        if prepared.session.owner != self.owner
-            || prepared.base != self.ticket()
-            || !Arc::ptr_eq(
-                &prepared.session.preparation_policy,
-                &self.preparation_policy,
-            )
-        {
-            return Err(Error::new(
-                ErrorCode::ConflictStaleBase,
-                "Prepared edit no longer matches the session or its resource policy",
-            ));
-        }
+        self.validate_preparation(prepared.base, &prepared.session)?;
         if prepared.receipt.committed {
             self.doc = prepared.session.doc;
             self.selection = prepared.session.selection;
@@ -66,6 +63,36 @@ impl Session {
             self.history = prepared.session.history;
         }
         Ok(prepared.receipt)
+    }
+
+    /// Publish a restored history target under the same guard as an edit.
+    pub fn publish_navigation(
+        &mut self,
+        prepared: PreparedNavigation,
+        check: impl Fn() -> Result<()>,
+    ) -> Result<Option<Navigation>> {
+        check()?;
+        self.validate_preparation(prepared.base, &prepared.session)?;
+        if prepared.navigation.is_some() {
+            self.doc = prepared.session.doc;
+            self.selection = prepared.session.selection;
+            self.epoch = prepared.session.epoch;
+            self.history = prepared.session.history;
+        }
+        Ok(prepared.navigation)
+    }
+
+    fn validate_preparation(&self, base: Ticket, source: &Session) -> Result<()> {
+        if source.owner != self.owner
+            || base != self.ticket()
+            || !Arc::ptr_eq(&source.preparation_policy, &self.preparation_policy)
+        {
+            return Err(Error::new(
+                ErrorCode::ConflictStaleBase,
+                "Prepared transaction no longer matches the session or its resource policy",
+            ));
+        }
+        Ok(())
     }
 }
 
@@ -80,6 +107,43 @@ impl Preparation {
             base: self.base,
             session: self.session,
             receipt,
+        })
+    }
+}
+
+impl Preparation {
+    pub fn undo(mut self, check: impl Fn() -> Result<()>) -> Result<PreparedNavigation> {
+        let navigation = self.session.undo_checked(&check)?;
+        self.navigation(navigation, check)
+    }
+
+    pub fn redo(mut self, check: impl Fn() -> Result<()>) -> Result<PreparedNavigation> {
+        let navigation = self.session.redo_checked(&check)?;
+        self.navigation(navigation, check)
+    }
+
+    pub fn navigate_history(
+        mut self,
+        ticket: HistoryTicket,
+        target: Option<Uuid>,
+        check: impl Fn() -> Result<()>,
+    ) -> Result<PreparedNavigation> {
+        let navigation = self
+            .session
+            .navigate_history_checked(ticket, target, &check)?;
+        self.navigation(navigation, check)
+    }
+
+    fn navigation(
+        self,
+        navigation: Option<Navigation>,
+        check: impl Fn() -> Result<()>,
+    ) -> Result<PreparedNavigation> {
+        check()?;
+        Ok(PreparedNavigation {
+            base: self.base,
+            session: self.session,
+            navigation,
         })
     }
 }

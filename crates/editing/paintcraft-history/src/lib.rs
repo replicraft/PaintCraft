@@ -240,7 +240,7 @@ impl History {
         check: &impl Fn() -> Result<()>,
     ) -> Result<()> {
         check()?;
-        let previous_snapshot = self.restore(self.cursor)?;
+        let previous_snapshot = self.restore(self.cursor, check)?;
         self.entries.try_reserve(1).map_err(|_| {
             paintcraft_core::types::Error::new(
                 paintcraft_core::types::ErrorCode::ResourceLimit,
@@ -386,11 +386,16 @@ impl History {
             codec_scratch_bytes: encoder.scratch_bytes() as u64,
         })
     }
-    fn restore(&mut self, index: usize) -> Result<Snapshot> {
-        let result = match &self.entries[index].storage {
-            Storage::Hot(snapshot) => Ok(snapshot.clone()),
-            Storage::Cold(packed) => packed.restore(self.restore_pixels, &mut self.memo),
-        };
+    fn restore(&mut self, index: usize, check: &impl Fn() -> Result<()>) -> Result<Snapshot> {
+        check()?;
+        let result = (|| {
+            let snapshot = match &self.entries[index].storage {
+                Storage::Hot(snapshot) => Ok(snapshot.clone()),
+                Storage::Cold(packed) => packed.restore(self.restore_pixels, &mut self.memo, check),
+            }?;
+            check()?;
+            Ok(snapshot)
+        })();
         if result.is_err() {
             // A later tile can fail after earlier private decodes registered
             // aliases. Their leases have now dropped: retries must not retain
@@ -400,20 +405,28 @@ impl History {
         result
     }
     pub fn undo(&mut self) -> Result<Option<Snapshot>> {
+        self.undo_checked(|| Ok(()))
+    }
+    pub fn undo_checked(&mut self, check: impl Fn() -> Result<()>) -> Result<Option<Snapshot>> {
+        check()?;
         let Some(index) = self.cursor.checked_sub(1) else {
             return Ok(None);
         };
-        let snapshot = self.restore(index)?;
+        let snapshot = self.restore(index, &check)?;
         self.cursor = index;
         self.reclaim_tables();
         Ok(Some(snapshot))
     }
     pub fn redo(&mut self) -> Result<Option<Snapshot>> {
+        self.redo_checked(|| Ok(()))
+    }
+    pub fn redo_checked(&mut self, check: impl Fn() -> Result<()>) -> Result<Option<Snapshot>> {
+        check()?;
         let index = self.cursor + 1;
         if index >= self.entries.len() {
             return Ok(None);
         }
-        let snapshot = self.restore(index)?;
+        let snapshot = self.restore(index, &check)?;
         self.cursor = index;
         self.reclaim_tables();
         Ok(Some(snapshot))
@@ -428,10 +441,18 @@ impl History {
         })
     }
     pub fn seek(&mut self, id: Option<Uuid>) -> Result<Option<(Snapshot, bool)>> {
+        self.seek_checked(id, || Ok(()))
+    }
+    pub fn seek_checked(
+        &mut self,
+        id: Option<Uuid>,
+        check: impl Fn() -> Result<()>,
+    ) -> Result<Option<(Snapshot, bool)>> {
+        check()?;
         let Some(index) = self.entries.iter().position(|e| e.history_id() == id) else {
             return Ok(None);
         };
-        let snapshot = self.restore(index)?;
+        let snapshot = self.restore(index, &check)?;
         let changed = index != self.cursor;
         self.cursor = index;
         self.reclaim_tables();

@@ -194,9 +194,12 @@
         "crates/services/paintcraft-platform/src/spill/tests.rs",
         "benchmarks/results/history-spill-2026-10-20/DECISION.md",
         "crates/editing/paintcraft-editor/tests/large_history.rs",
-        "benchmarks/results/history-large-2026-10-20/DECISION.md"
+        "benchmarks/results/history-large-2026-10-20/DECISION.md",
+        "crates/editing/paintcraft-editor/src/session/preparation.rs",
+        "crates/editing/paintcraft-editor/tests/preparation.rs",
+        "crates/editing/paintcraft-editor/tests/preparation/navigation.rs"
       ],
-      "remaining_or_scope": "Preserving history handles large snapshots through bounded classification and selective transfer batches, with uniform/warm-codec refinement and later-batch rollback tests. Global physical admission, background scheduling, segment relocation and broader corpus/latency qualification remain.",
+      "remaining_or_scope": "Preserving history handles large snapshots through bounded classification and selective transfer batches. Detached edit/navigation preparation has cancellation, owner/epoch/policy publication guards and rollback tests. Desktop worker dispatch, global physical admission, background priorities, segment relocation and broader corpus/latency qualification remain.",
       "acceptance": "MEM-01\u201307 under artificial low budget; actual allocator/RSS evidence, not counters alone."
     },
     {

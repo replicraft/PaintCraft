@@ -164,3 +164,6 @@ fn no_op_result_does_not_replace_history_or_advance_epoch() {
     assert!(Arc::ptr_eq(&s.snapshot(), &doc));
     assert_eq!(s.history_view(), view);
 }
+
+#[path = "preparation/navigation.rs"]
+mod navigation;

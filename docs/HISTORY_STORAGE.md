@@ -68,7 +68,7 @@ Explicit checkpoints in that experiment differ from automatic pressure policy.
 
 This implements part of T04/T07/T11 and BF18. A global logical tile store, natural/mask/depth codec
 comparisons, differences against previous tile versions for photographic edits,
-disk spill and segment GC, background priority work, branching history graphs,
+segment relocation, background priority work, branching history graphs,
 process-wide physical admission and interactive latency qualification remain.
 The timeline still truncates redo when a new edit branches from an older state.
 
@@ -145,8 +145,12 @@ leases, including provisional native extents.
 Cancellation is checked around command execution and during history classification,
 transfer and required synchronization. Individual command kernels and filesystem
 calls are not preemptible. Timeline capture still copies metadata synchronously;
-this API alone does not move desktop command dispatch to workers or establish a
-process-wide physical-memory or interactive-latency bound. Navigation remains a
-separate synchronous API. Tests include real worker transfer, same-content foreign
+these APIs alone do not move desktop command dispatch to workers or establish a
+process-wide physical-memory or interactive-latency bound. `Preparation::undo`,
+`redo` and `navigate_history` restore private targets; `publish_navigation` applies
+the same guard. Cold restoration checks cancellation between tiles and before
+changing the private cursor. Tests include real worker transfer, same-content foreign
 sessions, edit/undo ABA, policy changes, no-ops, save acknowledgements and cancellation
 after a native multi-batch spill barrier with exact redo retention and quota cleanup.
+Navigation tests cover worker undo/redo/seek, stale and cancelled publication, save
+acknowledgement, and every cancellation boundary of a two-tile cold restoration.

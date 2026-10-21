@@ -26,7 +26,7 @@ use paintcraft_history::{History, Snapshot};
 mod history;
 mod preparation;
 pub use history::{HistoryTicket, HistoryView};
-pub use preparation::{Preparation, PreparedEdit};
+pub use preparation::{Preparation, PreparedEdit, PreparedNavigation};
 
 /// `paintcraft.result/v1`.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -114,9 +114,9 @@ impl Session {
         }
     }
 
-    /// Set history-owned retention weight. Under pressure, pack older states
-    /// before dropping oldest entries. The newest two states remain undoable;
-    /// active/read-only leases are reported separately and cannot be forcibly freed.
+    /// Set history-owned retention weight. Preserving history packs/spills older
+    /// states or rejects admission; only explicit TrimOldest drops entries.
+    /// Reader leases are reported separately and cannot be forcibly freed.
     pub fn set_history_budget(&mut self, bytes: u64) {
         self.preparation_policy = Arc::new(());
         self.history.set_budget(bytes);
@@ -296,19 +296,27 @@ impl Session {
     }
 
     pub fn undo(&mut self) -> Result<Option<Navigation>> {
+        self.undo_checked(|| Ok(()))
+    }
+    fn undo_checked(&mut self, check: impl Fn() -> Result<()>) -> Result<Option<Navigation>> {
+        check()?;
         if self.history.undo_depth() == 0 {
             return Ok(None);
         }
         let next_epoch = self.next_epoch()?;
-        let snapshot = self.history.undo()?;
+        let snapshot = self.history.undo_checked(check)?;
         Ok(snapshot.map(|snapshot| self.navigate(snapshot, next_epoch)))
     }
     pub fn redo(&mut self) -> Result<Option<Navigation>> {
+        self.redo_checked(|| Ok(()))
+    }
+    fn redo_checked(&mut self, check: impl Fn() -> Result<()>) -> Result<Option<Navigation>> {
+        check()?;
         if self.history.redo_depth() == 0 {
             return Ok(None);
         }
         let next_epoch = self.next_epoch()?;
-        let snapshot = self.history.redo()?;
+        let snapshot = self.history.redo_checked(check)?;
         Ok(snapshot.map(|snapshot| self.navigate(snapshot, next_epoch)))
     }
     pub(super) fn next_epoch(&self) -> Result<u64> {
