@@ -7,7 +7,7 @@
 //! (new tile or copy-on-write copy) is charged to an [`Admission`] so exhaustion
 //! is an explicit `resource.limit` error rather than an abort.
 
-use paintcraft_core::types::resources::SharedBudget;
+use paintcraft_core::types::resources::{BudgetReservation, SharedBudget};
 use std::collections::HashMap;
 use std::sync::{Arc, OnceLock};
 
@@ -54,6 +54,7 @@ fn blend(mode: BlendMode, src: Rgba, dst: Rgba) -> Rgba {
 pub struct Admission {
     remaining_pixels: u64,
     residency: SharedBudget,
+    reservation: Option<BudgetReservation>,
     allocation_scope: Option<Arc<std::sync::Mutex<tile::Scope>>>,
 }
 
@@ -73,10 +74,26 @@ impl Admission {
         Self {
             remaining_pixels: limit_pixels,
             residency,
+            reservation: None,
             allocation_scope: None,
         }
     }
 
+    /// Consume a caller's upfront decoded reservation. No tile can borrow beyond it.
+    /// Cloned admissions share the same reservation and allocation gauge.
+    pub fn with_reserved_residency(limit_pixels: u64, reservation: BudgetReservation) -> Self {
+        Self {
+            remaining_pixels: limit_pixels,
+            residency: reservation.budget(),
+            reservation: Some(reservation),
+            allocation_scope: Some(Arc::new(std::sync::Mutex::new(tile::Scope::default()))),
+        }
+    }
+    /// Restrict an explicit admission to the session's configured staged allowance.
+    pub fn constrain_pixels(mut self, limit_pixels: u64) -> Self {
+        self.remaining_pixels = self.remaining_pixels.min(limit_pixels);
+        self
+    }
     /// Share this allocation realm with a resource coordinator or wake observer.
     pub fn residency_budget(&self) -> SharedBudget {
         self.residency.clone()

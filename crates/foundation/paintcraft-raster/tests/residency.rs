@@ -274,3 +274,56 @@ fn fixed_staging_limits_are_not_misclassified_as_reclaimable_tile_pressure() {
     assert!(error.allocation_denial().is_none());
     assert_eq!(budget.usage().reserved, 0);
 }
+
+#[test]
+fn reserved_tiles_recycle_scratch_without_reentering_shared_admission_and_release_unused_bytes() {
+    let budget = SharedBudget::new(3 * BYTES);
+    let reservation = budget.reserve_capacity(2 * BYTES).unwrap();
+    let competing = budget.reserve(BYTES).unwrap();
+    let mut admission = Admission::with_reserved_residency(4 * 65_536, reservation);
+    let first = TileLease::materialize(Rgba([1, 2, 3, 4]), &mut admission, |_| Ok(())).unwrap();
+    let scratch = TileLease::materialize(Rgba::TRANSPARENT, &mut admission, |_| Ok(())).unwrap();
+    assert!(budget.reserve(1).is_err());
+    drop(scratch);
+    let scratch = TileLease::materialize(Rgba::TRANSPARENT, &mut admission, |_| Ok(())).unwrap();
+    drop(scratch);
+    assert_eq!(budget.usage().reserved, 3 * BYTES);
+    drop(admission);
+    assert_eq!(budget.usage().reserved, 2 * BYTES);
+    let restored = first.clone();
+    drop(first);
+    assert_eq!(budget.usage().reserved, 2 * BYTES);
+    drop(restored);
+    assert_eq!(budget.usage().reserved, BYTES);
+    drop(competing);
+    assert_eq!(budget.usage().reserved, 0);
+}
+
+#[test]
+fn reservation_exhaustion_is_atomic_and_failed_materialization_returns_capacity() {
+    let budget = SharedBudget::new(4 * BYTES);
+    let reservation = budget.reserve_capacity(BYTES).unwrap();
+    let mut admission = Admission::with_reserved_residency(4 * 65_536, reservation.clone());
+    let first = TileLease::materialize(Rgba::TRANSPARENT, &mut admission, |_| Ok(())).unwrap();
+    let error = TileLease::materialize(Rgba::TRANSPARENT, &mut admission, |_| Ok(())).unwrap_err();
+    assert_eq!(
+        error.allocation_denial().unwrap().required_bytes(),
+        2 * BYTES
+    );
+    assert_eq!(budget.usage().reserved, BYTES); // Free global bytes cannot bypass the pool.
+    drop(first);
+    let error = TileLease::materialize(Rgba::TRANSPARENT, &mut admission, |_| {
+        Err(paintcraft_core::types::Error::new(
+            ErrorCode::OperationCancelled,
+            "injected",
+        ))
+    })
+    .unwrap_err();
+    assert_eq!(error.code, ErrorCode::OperationCancelled);
+    assert_eq!(reservation.available(), BYTES);
+    let tile = TileLease::materialize(Rgba::TRANSPARENT, &mut admission, |_| Ok(())).unwrap();
+    drop((reservation, admission));
+    assert_eq!(budget.usage().reserved, BYTES);
+    drop(tile);
+    assert_eq!(budget.usage().reserved, 0);
+}

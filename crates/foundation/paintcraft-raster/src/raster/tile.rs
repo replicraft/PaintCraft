@@ -55,26 +55,24 @@ impl Tile {
     }
     fn allocate(adm: &mut Admission) -> Result<(Vec<u8>, Allocation)> {
         adm.charge_tile()?;
-        let lease = adm
-            .residency
-            .reserve(RasterLayer::TILE_BYTES as u64)
-            .map_err(|error| {
-                let required = if let Some(scope) = &adm.allocation_scope {
-                    let state = scope.lock().unwrap_or_else(|error| error.into_inner());
-                    let Some(next) = state.live.checked_add(RasterLayer::TILE_BYTES as u64) else {
-                        return Error::new(
-                            ErrorCode::ResourceLimit,
-                            "tile attempt footprint overflow",
-                        );
-                    };
-                    next.max(state.peak)
-                } else {
-                    RasterLayer::TILE_BYTES as u64
+        let lease = match &adm.reservation {
+            Some(reservation) => reservation.reserve(RasterLayer::TILE_BYTES as u64),
+            None => adm.residency.reserve(RasterLayer::TILE_BYTES as u64),
+        }
+        .map_err(|error| {
+            let required = if let Some(scope) = &adm.allocation_scope {
+                let state = scope.lock().unwrap_or_else(|error| error.into_inner());
+                let Some(next) = state.live.checked_add(RasterLayer::TILE_BYTES as u64) else {
+                    return Error::new(ErrorCode::ResourceLimit, "tile attempt footprint overflow");
                 };
-                error
-                    .with_message("decoded tile residency limit exceeded")
-                    .with_allocation_requirement(AllocationClass::DecodedTiles, required)
-            })?;
+                next.max(state.peak)
+            } else {
+                RasterLayer::TILE_BYTES as u64
+            };
+            error
+                .with_message("decoded tile residency limit exceeded")
+                .with_allocation_requirement(AllocationClass::DecodedTiles, required)
+        })?;
         let scope = adm
             .allocation_scope
             .get_or_insert_with(|| Arc::new(Mutex::new(Scope::default())))
