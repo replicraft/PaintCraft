@@ -46,7 +46,9 @@ priority or a preemptible latency deadline.
 
 No-progress/failure gets a five-second per-ticket retry backoff. A changed logical
 revision can try sooner. The event loop requests the next wake while pressure
-persists. These thresholds are provisional engineering choices; native pressure,
+persists. [Shared budget notifications](BUDGET_NOTIFICATIONS.md) also wake native
+contexts on pressure/reclamation across App owners; each context still polls and
+publishes its own state. These thresholds are provisional engineering choices; native pressure,
 interference and tail-latency measurements have not qualified them.
 
 An installed render error caused by `resource.limit` records observed tile
@@ -78,7 +80,7 @@ in a native window or measure actual input-to-display latency under pressure.
 Capture still copies history metadata on the UI thread. A new edit can need more
 capacity than a single maintenance step releases, and a racing allocation can
 still fail truthfully without publication. Request-sized pre-reservation, automatic
-retry policy for failed content edits, cross-window pressure notification and
+retry policy for failed content edits, native multi-window wake qualification and
 all-service fairness remain incomplete.
 
 Current documents, explicit readers and detached preparations may legitimately pin

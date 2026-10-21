@@ -535,3 +535,27 @@ tests; there is no native 2 GiB exhaustion or event/frame latency qualification.
 cross-window signaling, pinned current/read data, all-service physical budgets and
 native pressure/interference/tail-latency evidence remain. T04/T11/T13 stay partial;
 no throughput or RSS improvement is inferred from these correctness checks.
+
+
+## Eighteenth slice: bounded budget wake subscriptions
+
+Byte budgets now offer weak, bounded, coalesced wake subscriptions. Pressure entry,
+feasible denial and relevant releases notify consumers outside the counter mutex;
+callback/capture destruction also occurs after unlocking. Unregistration, callback
+panics and concurrent release events retain counter ownership guarantees. Native
+contexts subscribe to shared tile and worker realms so another owner's pressure
+or returned capacity can trigger a fresh local poll.
+
+650 workspace tests pass (21 explicit ignores), plus strict workspace/all-target
+Clippy, formatting/file limits, release desktop/CLI builds, three required Metal
+checks and a 30-frame isolated native startup/shutdown smoke. Six core regressions
+cover coalescing, denial, initial pressure, weak/bounded fanout, callback reentrancy/
+panics and concurrent unregister/release. Three independent-context regressions
+check wake routing without edits, unread-result retention and above-threshold
+release interest. These use real counters/egui callbacks, not multiple OS windows.
+
+[The notification contract](BUDGET_NOTIFICATIONS.md) records the 64-registration
+bound, wake-only callback rule and remaining qualification. Request-sized admission,
+content retry, native multi-window/suspension behavior, all-service physical budgets,
+fairness and measured callback/input/frame latency remain. No throughput or RSS
+gain follows from these correctness checks. T04/T11/T13 stay partial.

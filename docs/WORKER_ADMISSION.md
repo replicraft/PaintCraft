@@ -16,6 +16,9 @@ memory limit or a process RSS ceiling.
 
 ## Ownership and release
 
+Native consumers can [subscribe to coalesced budget wakes](BUDGET_NOTIFICATIONS.md)
+without changing admission or result ownership.
+
 A successful submission reserves shared bytes atomically. Overflow, local queue
 exhaustion or shared exhaustion returns `resource.limit` before a job is inserted.
 Failure does not change another pool's charge. `usage()` exposes the ceiling,

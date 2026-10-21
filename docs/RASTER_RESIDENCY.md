@@ -58,8 +58,9 @@ The default 2 GiB ceiling is a provisional engineering guardrail, not an
 available-memory-derived startup setting or reference-application limit. Current
 history pressure also has a [native owner coordinator](HISTORY_PRESSURE.md) that
 prepares preserving storage work across inactive tabs and parked frontend
-workspaces. Request-sized reservation, cross-window notifications and adaptive
-all-service pressure remain incomplete. A new edit can still receive
+workspaces. [Budget notifications](BUDGET_NOTIFICATIONS.md) wake native resource
+consumers across contexts. Request-sized reservation, native multi-window wake
+qualification and adaptive all-service pressure remain incomplete. A new edit can still receive
 `resource.limit` when readers pin capacity or a step cannot free enough.
 Published state and undo remain intact.
 
