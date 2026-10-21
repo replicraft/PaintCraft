@@ -54,11 +54,12 @@ impl ErrorCode {
 }
 
 /// A pre-publication failure. `message` is diagnostic and never part of conformance.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug)]
 pub struct Error {
     pub code: ErrorCode,
     pub message: String,
     pub operation_index: Option<usize>,
+    allocation: Option<super::resources::AllocationDenial>,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -69,14 +70,51 @@ impl Error {
             code,
             message: message.into(),
             operation_index: None,
+            allocation: None,
         }
     }
 
+    /// Internal admission context; excluded from error/v1 serialization/equality.
+    pub fn allocation_denial(&self) -> Option<&super::resources::AllocationDenial> {
+        if self.code == ErrorCode::ResourceLimit {
+            self.allocation.as_ref()
+        } else {
+            None
+        }
+    }
+    pub(super) fn denied(budget: super::resources::SharedBudget, bytes: u64) -> Self {
+        let mut error = Self::new(ErrorCode::ResourceLimit, "shared byte budget is full");
+        error.allocation = Some(super::resources::AllocationDenial::new(budget, bytes));
+        error
+    }
+    pub fn with_message(mut self, message: impl Into<String>) -> Self {
+        self.message = message.into();
+        self
+    }
+    pub fn with_allocation_requirement(
+        mut self,
+        class: super::resources::AllocationClass,
+        bytes: u64,
+    ) -> Self {
+        if let Some(denial) = &mut self.allocation {
+            denial.require(class, bytes);
+        }
+        self
+    }
     pub fn at(mut self, operation_index: usize) -> Self {
         self.operation_index = Some(operation_index);
         self
     }
 }
+
+impl PartialEq for Error {
+    fn eq(&self, other: &Self) -> bool {
+        self.code == other.code
+            && self.message == other.message
+            && self.operation_index == other.operation_index
+    }
+}
+impl Eq for Error {}
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

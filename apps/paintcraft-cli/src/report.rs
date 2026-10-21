@@ -38,3 +38,31 @@ pub fn json_line(v: &Value) -> Vec<u8> {
     b.push(b'\n');
     b
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use paintcraft_core::types::{
+        ErrorCode,
+        resources::{AllocationClass, SharedBudget},
+    };
+    #[test]
+    fn allocation_diagnostics_do_not_change_error_v1_fields_or_canonical_bytes() {
+        let budget = SharedBudget::new(0);
+        let error = budget
+            .reserve(1)
+            .unwrap_err()
+            .with_allocation_requirement(AllocationClass::DecodedTiles, 2)
+            .at(4);
+        assert!(error.allocation_denial().is_some());
+        let old = Error::new(ErrorCode::ResourceLimit, "shared byte budget is full").at(4);
+        assert_eq!(
+            json_line(&error_value(&error)),
+            json_line(&error_value(&old))
+        );
+        let Value::Object(fields) = error_value(&error) else {
+            panic!("error object")
+        };
+        assert_eq!(fields.len(), 5);
+    }
+}

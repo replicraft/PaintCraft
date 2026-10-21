@@ -188,3 +188,26 @@ fn unregistering_during_a_wake_releases_callback_captures_after_unlocked_dispatc
     joined(producer);
     assert_eq!(dropped.load(Ordering::Acquire), 1);
 }
+
+#[test]
+fn denial_context_is_live_does_not_pin_capacity_and_preserves_legacy_error_equality() {
+    let budget = SharedBudget::new(16);
+    let held = budget.reserve(16).unwrap();
+    let error = budget.reserve(8).unwrap_err().at(3);
+    let legacy = Error::new(ErrorCode::ResourceLimit, "shared byte budget is full").at(3);
+    assert_eq!(error, legacy);
+    let mut redirected = error.clone();
+    redirected.code = ErrorCode::CodecFailed;
+    assert!(redirected.allocation_denial().is_none());
+    assert_eq!(error.to_string(), legacy.to_string());
+    let denial = error.allocation_denial().unwrap();
+    assert_eq!(denial.class(), AllocationClass::SharedBudget);
+    assert_eq!(denial.required_bytes(), 8);
+    assert!(!denial.can_retry());
+    drop(held);
+    assert_eq!(budget.usage().reserved, 0);
+    assert!(denial.can_retry());
+    let impossible = budget.reserve(17).unwrap_err();
+    assert!(!impossible.allocation_denial().unwrap().is_possible());
+    assert!(!impossible.allocation_denial().unwrap().can_retry());
+}

@@ -4,6 +4,8 @@ use super::{Error, ErrorCode, Result};
 use std::sync::{Arc, Mutex};
 mod watch;
 pub use watch::BudgetWatch;
+mod denial;
+pub use denial::{AllocationClass, AllocationDenial};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct BudgetUsage {
@@ -53,10 +55,7 @@ impl SharedBudget {
             let wakes = watch::collect(&mut state, before, feasible, false);
             drop(state);
             watch::notify(wakes);
-            return Err(Error::new(
-                ErrorCode::ResourceLimit,
-                "shared byte budget is full",
-            ));
+            return Err(Error::denied(self.clone(), bytes));
         };
         state.reserved = reserved;
         state.peak = state.peak.max(reserved);
