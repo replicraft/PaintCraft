@@ -6,19 +6,7 @@ use paintcraft_render::{gpu::GpuRenderer, render_flat};
 
 #[test]
 fn gpu_matches_scalar_for_order_opacity_offsets_tiles_and_hidden_rgb() {
-    let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle());
-    let adapter = match pollster::block_on(instance.request_adapter(&Default::default())) {
-        Ok(a) => a,
-        Err(e) => {
-            assert!(
-                std::env::var_os("PAINTCRAFT_REQUIRE_GPU").is_none(),
-                "GPU required: {e}"
-            );
-            eprintln!("GPU unavailable; parity test skipped: {e}");
-            return;
-        }
-    };
-    eprintln!("GPU parity adapter: {:?}", adapter.get_info());
+    let Some(adapter) = adapter() else { return };
     let (device, queue) = pollster::block_on(adapter.request_device(&Default::default())).unwrap();
     let gpu = GpuRenderer::new(device, queue).unwrap();
     let mut doc = new_document(263, 19, None, 0, POLICY).unwrap();
@@ -115,4 +103,113 @@ fn parity(gpu: &GpuRenderer, doc: &Document) {
         render_flat(doc).unwrap(),
         "GPU must exactly preserve integer compositing policy"
     );
+}
+
+fn adapter() -> Option<wgpu::Adapter> {
+    let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle());
+    let adapter = match pollster::block_on(instance.request_adapter(&Default::default())) {
+        Ok(a) => a,
+        Err(e) => {
+            assert!(
+                std::env::var_os("PAINTCRAFT_REQUIRE_GPU").is_none(),
+                "GPU required: {e}"
+            );
+            eprintln!("GPU unavailable; parity test skipped: {e}");
+            return None;
+        }
+    };
+    eprintln!("GPU parity adapter: {:?}", adapter.get_info());
+    Some(adapter)
+}
+
+#[test]
+fn destroyed_device_cannot_render_and_fresh_device_restores_committed_host_history() {
+    use paintcraft_core::types::ErrorCode;
+    use paintcraft_editor::session::Session;
+    let Some(adapter) = adapter() else { return };
+    let (device, queue) = pollster::block_on(adapter.request_device(&Default::default())).unwrap();
+    let gpu = GpuRenderer::new(device.clone(), queue).unwrap();
+    let epoch = gpu.epoch();
+    let mut session = Session::new(new_document(8, 8, Some(Rgba([255; 4])), 0, POLICY).unwrap());
+    let ticket = session.ticket();
+    let id = session.document().roots[0];
+    let batch = format!(
+        r##"{{"schema":"paintcraft.batch/v2","atomic":true,"policy":"{POLICY}","base":{{"state_id":"{}","publication_epoch":"{}"}},"operations":[{{"op":"raster.fill_rect","layer_ref":{{"id":"{id}"}},"rect":{{"x":0,"y":0,"width":8,"height":8}},"color":"#17589CCC","mode":"replace"}}]}}"##,
+        ticket.state_id, ticket.publication_epoch
+    );
+    assert!(session.apply_json(batch.as_bytes()).unwrap().committed);
+    let committed = session.snapshot();
+    let committed_ticket = session.ticket();
+    let expected = [23, 88, 156, 204].repeat(64);
+    assert_eq!(gpu.render(&committed).unwrap(), expected);
+    device.destroy();
+    let _ = device.poll(wgpu::PollType::Poll);
+    assert!(
+        !epoch.is_current(),
+        "actual device destruction must retire callback epoch"
+    );
+    assert_eq!(
+        gpu.render(&committed).unwrap_err().code,
+        ErrorCode::CapabilityUnsupported
+    );
+    assert_eq!(session.ticket(), committed_ticket);
+    assert!(std::sync::Arc::ptr_eq(&committed, &session.snapshot()));
+    let (device, queue) = pollster::block_on(adapter.request_device(&Default::default())).unwrap();
+    let replacement = GpuRenderer::new(device, queue).unwrap();
+    assert_ne!(replacement.epoch(), epoch);
+    assert_eq!(replacement.render(session.document()).unwrap(), expected);
+    session.undo().unwrap().unwrap();
+    assert_eq!(
+        replacement.render(session.document()).unwrap(),
+        vec![255; 8 * 8 * 4]
+    );
+    session.redo().unwrap().unwrap();
+    assert_eq!(replacement.render(session.document()).unwrap(), expected);
+}
+
+#[test]
+fn host_callback_survives_construction_and_loss_during_staging_rejects_output() {
+    use paintcraft_core::types::{Error, ErrorCode};
+    use paintcraft_render::gpu::DeviceEpoch;
+    use std::sync::{
+        Arc,
+        atomic::{AtomicBool, AtomicUsize, Ordering},
+    };
+    let Some(adapter) = adapter() else { return };
+    let (device, queue) = pollster::block_on(adapter.request_device(&Default::default())).unwrap();
+    let epoch = DeviceEpoch::default();
+    let lost = epoch.clone();
+    let observed = Arc::new(AtomicBool::new(false));
+    let notified = observed.clone();
+    device.set_device_lost_callback(move |_, _| {
+        lost.retire();
+        notified.store(true, Ordering::Release);
+    });
+    let gpu = GpuRenderer::with_epoch(device.clone(), queue, epoch.clone()).unwrap();
+    let doc = new_document(16, 16, Some(Rgba([255; 4])), 0, POLICY).unwrap();
+    let error = gpu
+        .render_cancellable(&doc, || {
+            Err(Error::new(
+                ErrorCode::OperationCancelled,
+                "cancelled by owner",
+            ))
+        })
+        .unwrap_err();
+    assert_eq!(error.code, ErrorCode::OperationCancelled);
+    assert!(epoch.is_current());
+    assert_eq!(gpu.render(&doc).unwrap(), vec![255; 16 * 16 * 4]);
+    let calls = AtomicUsize::new(0);
+    let error = gpu
+        .render_cancellable(&doc, || {
+            if calls.fetch_add(1, Ordering::Relaxed) == 2 {
+                device.destroy();
+                let _ = device.poll(wgpu::PollType::Poll);
+            }
+            Ok(())
+        })
+        .unwrap_err();
+    assert_eq!(error.code, ErrorCode::CapabilityUnsupported);
+    assert!(observed.load(Ordering::Acquire));
+    assert!(!epoch.is_current());
+    assert_eq!(render_flat(&doc).unwrap(), vec![255; 16 * 16 * 4]);
 }

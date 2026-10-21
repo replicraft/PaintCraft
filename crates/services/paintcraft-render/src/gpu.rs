@@ -2,6 +2,9 @@
 //!
 //! This first backend reads back straight RGBA8 for the shared display/export
 //! boundary. It is a correctness baseline, not a zero-copy or performance claim.
+mod epoch;
+pub use epoch::DeviceEpoch;
+
 use paintcraft_core::types::{Error, ErrorCode, Result};
 use paintcraft_document::Document;
 use std::{sync::mpsc, time::Duration};
@@ -34,13 +37,28 @@ pub struct GpuRenderer {
     device: wgpu::Device,
     queue: wgpu::Queue,
     pipeline: wgpu::ComputePipeline,
+    epoch: DeviceEpoch,
 }
 fn unavailable(message: impl Into<String>) -> Error {
     Error::new(ErrorCode::CapabilityUnsupported, message)
 }
 impl GpuRenderer {
-    /// Share the desktop device rather than creating a second GPU context.
+    /// Install this device's loss callback and share its context. Owners with an
+    /// existing callback must use `with_epoch` and retire that epoch themselves.
     pub fn new(device: wgpu::Device, queue: wgpu::Queue) -> Result<Self> {
+        let epoch = DeviceEpoch::default();
+        let lost = epoch.clone();
+        device.set_device_lost_callback(move |_, _| lost.retire());
+        Self::with_epoch(device, queue, epoch)
+    }
+    /// Integrate with a host-owned loss callback without replacing it. Use one
+    /// epoch per device lifetime; retire it before reset and never reuse it.
+    pub fn with_epoch(
+        device: wgpu::Device,
+        queue: wgpu::Queue,
+        epoch: DeviceEpoch,
+    ) -> Result<Self> {
+        epoch.check()?;
         if device.limits().max_storage_buffers_per_shader_stage < 2
             || device.limits().max_compute_invocations_per_workgroup < 64
         {
@@ -60,11 +78,16 @@ impl GpuRenderer {
             compilation_options: Default::default(),
             cache: None,
         });
+        epoch.check()?;
         Ok(Self {
             device,
             queue,
             pipeline,
+            epoch,
         })
+    }
+    pub fn epoch(&self) -> DeviceEpoch {
+        self.epoch.clone()
     }
     pub fn render(&self, doc: &Document) -> Result<Vec<u8>> {
         self.render_cancellable(doc, || Ok(()))
@@ -72,8 +95,12 @@ impl GpuRenderer {
     pub fn render_cancellable(
         &self,
         doc: &Document,
-        check: impl Fn() -> Result<()>,
+        caller_check: impl Fn() -> Result<()>,
     ) -> Result<Vec<u8>> {
+        let check = || {
+            caller_check()?;
+            self.epoch.check()
+        };
         check()?;
         let (w, h) = doc.canvas;
         let pixels = u64::from(w) * u64::from(h);
@@ -113,10 +140,12 @@ impl GpuRenderer {
                 .chunks_exact_mut(width as usize * 4)
                 .zip(area.y0..area.y1)
             {
+                check()?;
                 layer
                     .raster
                     .read_span(y - layer.origin.1, area.x0 - layer.origin.0, row);
             }
+            check()?;
             let source = self
                 .device
                 .create_buffer_init(&wgpu::util::BufferInitDescriptor {
@@ -162,6 +191,7 @@ impl GpuRenderer {
                 pass.set_bind_group(0, &bindings, &[]);
                 pass.dispatch_workgroups(width.div_ceil(8), height.div_ceil(8), 1);
             }
+            check()?;
             let submission = self.queue.submit([encoder.finish()]);
             // Finish one bounded layer before admitting another source buffer.
             // Submitted GPU work cannot be cancelled; its reservation stays live.
@@ -173,6 +203,7 @@ impl GpuRenderer {
                 .map_err(|e| unavailable(format!("GPU layer failed: {e}")))?;
             check()?;
         }
+        check()?;
         let readback = self.device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("PaintCraft composite readback"),
             size,
@@ -181,6 +212,7 @@ impl GpuRenderer {
         });
         let mut encoder = self.device.create_command_encoder(&Default::default());
         encoder.copy_buffer_to_buffer(&output, 0, &readback, 0, size);
+        check()?;
         let submission = self.queue.submit([encoder.finish()]);
         let (send, recv) = mpsc::sync_channel(1);
         readback
@@ -197,12 +229,14 @@ impl GpuRenderer {
         recv.recv_timeout(Duration::from_secs(30))
             .map_err(|e| unavailable(format!("GPU readback timed out: {e}")))?
             .map_err(|e| unavailable(format!("GPU readback failed: {e}")))?;
+        check()?;
         let bytes = readback
             .slice(..)
             .get_mapped_range()
             .map_err(|e| unavailable(format!("GPU mapping failed: {e}")))?
             .to_vec();
         readback.unmap();
+        check()?;
         Ok(bytes)
     }
 }
