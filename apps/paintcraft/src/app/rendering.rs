@@ -91,6 +91,7 @@ impl App {
         }
         self.rendered_preview = preview;
         let key = self.presentation_key();
+        self.retry_reclaimed_render(paintcraft_raster::Admission::new(0).residency_usage());
         while let Some((handle, result)) = self.renderer.as_mut().and_then(Executor::poll) {
             let expected = self
                 .pending_frame
@@ -261,6 +262,18 @@ impl App {
         if !self.accept_render_key(key) {
             return;
         }
+        self.render_residency_retry = pixels
+            .as_ref()
+            .err()
+            .filter(|error| error.code == paintcraft_core::types::ErrorCode::ResourceLimit)
+            .map(|_| {
+                (
+                    key,
+                    paintcraft_raster::Admission::new(0)
+                        .residency_usage()
+                        .reserved,
+                )
+            });
         let doc = self.editor.document();
         match pixels {
             Ok(px) if px.len() as u64 == u64::from(doc.canvas.0) * u64::from(doc.canvas.1) * 4 => {

@@ -82,6 +82,7 @@ impl App {
     /// Poll every document, including inactive tabs. Targeted runtime polling
     /// keeps results and admission charged to their originating controller.
     pub(super) fn poll_edits(&mut self, ctx: &egui::Context) {
+        self.poll_residency_pressure(ctx);
         let Some(service) = &self.editing else {
             return;
         };

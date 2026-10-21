@@ -20,6 +20,8 @@ mod paint_queue;
 mod pointer;
 #[path = "controller/preview_cache.rs"]
 mod preview_cache;
+#[path = "controller/residency.rs"]
+mod residency;
 #[path = "controller/strokes.rs"]
 mod strokes;
 #[path = "controller/text.rs"]
@@ -71,6 +73,8 @@ pub struct Editor {
     file_barrier: Option<Uuid>,
     editing: Option<background::Service>,
     pending_edit: Option<background::Pending>,
+    maintenance: Option<background::Pending>,
+    residency_attempt: Option<((Uuid, u64), std::time::Instant)>,
     publication_preview: Option<Preview>,
     preview_lineage: Uuid,
     preview_queue_revision: paintcraft_tools::PreviewRevision,
@@ -142,6 +146,8 @@ impl Editor {
             file_barrier: None,
             editing: None,
             pending_edit: None,
+            maintenance: None,
+            residency_attempt: None,
             publication_preview: None,
             preview_lineage: Uuid::new_v4(),
             preview_queue_revision: Default::default(),
@@ -449,6 +455,10 @@ impl Editor {
     /// Consume completions and execute queued activations in arrival order.
     /// Native editors prepare one transaction at a time on the shared worker.
     pub fn run_pending(&mut self) -> u64 {
+        self.poll_residency_maintenance();
+        if self.maintenance.is_some() {
+            return 0;
+        }
         let before = self.publications();
         self.poll_edit();
         if !self.outbox.is_empty() {

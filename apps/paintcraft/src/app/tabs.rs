@@ -441,8 +441,8 @@ impl App {
 /// A frontend's document workspace. Only clean, idle sessions can be parked.
 #[derive(Debug)]
 pub(super) struct WorkspaceDocuments {
-    active: DocumentState,
-    tabs: Vec<Tab>,
+    pub(super) active: DocumentState,
+    pub(super) tabs: Vec<Tab>,
     active_tab: usize,
     next_tab_number: u64,
 }

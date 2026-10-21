@@ -10,9 +10,10 @@ use std::sync::Mutex;
 // admits one transaction across all documents, including unconsumed results.
 const PREPARATION_CHARGE: u64 = 2 << 30;
 #[derive(Debug)]
-enum Completion {
+pub(super) enum Completion {
     Edit(PreparedEdit),
     Navigation(PreparedNavigation),
+    Maintenance(paintcraft_editor::session::PreparedHistoryMaintenance),
 }
 #[derive(Clone, Debug)]
 pub(crate) struct Service {
@@ -26,6 +27,14 @@ pub(super) struct Pending {
     done: String,
     empty: &'static str,
     target_alias: Option<&'static str>,
+}
+impl Pending {
+    pub(super) fn poll(&self) -> Option<Result<Completion>> {
+        match self.service.lock() {
+            Ok(mut executor) => executor.poll_for(self.handle),
+            Err(error) => Some(Err(error)),
+        }
+    }
 }
 impl Drop for Pending {
     fn drop(&mut self) {
@@ -94,7 +103,7 @@ impl Service {
             })
             .unwrap_or(true) // Admission will report the error, rather than stall forever.
     }
-    fn submit(
+    pub(super) fn submit(
         &self,
         task: impl FnOnce(Cancellation) -> Result<Completion> + Send + 'static,
         done: String,
@@ -278,10 +287,7 @@ impl Editor {
         let Some(pending) = &self.pending_edit else {
             return;
         };
-        let result = match pending.service.lock() {
-            Ok(mut executor) => executor.poll_for(pending.handle),
-            Err(error) => Some(Err(error)),
-        };
+        let result = pending.poll();
         let Some(result) = result else {
             return;
         };
@@ -306,6 +312,10 @@ impl Editor {
                     };
                     self.retarget();
                 }),
+            Ok(Completion::Maintenance(_)) => Err(Error::new(
+                ErrorCode::InvariantViolation,
+                "maintenance result routed to edit consumer",
+            )),
             Err(error) => Err(error),
         };
         if let Err(error) = result {

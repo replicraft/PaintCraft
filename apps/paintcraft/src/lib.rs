@@ -32,6 +32,8 @@ mod preferences;
 mod recovery;
 #[path = "app/rendering.rs"]
 mod rendering;
+#[path = "app/residency.rs"]
+mod residency;
 mod saving;
 pub mod settings;
 #[path = "app/status.rs"]
@@ -175,6 +177,7 @@ pub struct App {
     dialog_owner: Option<Uuid>,
     texture: Option<egui::TextureHandle>,
     texture_key: Option<RenderKey>,
+    render_residency_retry: Option<(RenderKey, u64)>,
     rendered_preview: Option<Arc<Preview>>,
     preview_revision: u64,
     preview_gesture: Option<(Uuid, Option<u64>)>,
@@ -274,6 +277,7 @@ impl App {
             dialog_owner: None,
             texture: None,
             texture_key: None,
+            render_residency_retry: None,
             rendered_preview: None,
             preview_revision: 0,
             preview_gesture: None,
