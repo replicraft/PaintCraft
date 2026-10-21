@@ -354,3 +354,31 @@ Neither comparison qualifies native input/display tails or general RSS reduction
 formatting/file limits, release desktop/CLI builds, three required Metal checks
 and a 30-frame isolated native smoke. No production source changed after these
 checks; the CLI-only confirmation rebuilt matching features from frozen commits.
+
+
+## Twenty-sixth slice: cooperative geometry and paint cancellation
+
+Detached Session execution now passes its cancellation predicate into command
+execution, smooth coverage and operation-plan replay. Execution checks between
+operations. Coverage checks between segments and every 64 scan/union rows; paint
+plans check descriptor/tile indexing, buffer preparation and each write, with
+checks every 64 rows inside writes. Existing noncancellable raster entry points
+remain wrappers. Pixel equations, coverage ordering and publication stay unchanged.
+
+Cancellation may leave a low-level caller's private raster partially painted;
+Session discards it, returns unused reservations and releases private tile leases.
+Raster tests cancel at every observed geometry/replay boundary and preserve the
+base and zero residual decoded charge. An editor test checks cancellation during
+preparation against unchanged owner snapshot, ticket and history. Successful
+geometry still matches the independent sample-distance oracle.
+
+713 workspace tests pass (21 explicit ignores), strict workspace/all-target Clippy,
+formatting/file limits, release desktop/CLI builds, three required real Metal checks
+and a 30-frame isolated native smoke (exit zero, empty log).
+
+These are cooperative work boundaries, not measured response-time guarantees.
+Row sorting, individual row kernels, other geometry/command paths and codec/OS calls
+remain nonpreemptible. Incremental stroke coverage, scheduling priorities and native
+input/cancellation tail measurements remain. Earlier timing decisions stay frozen
+to their recorded revisions and do not qualify this callback overhead. T13/T14 stay
+partial; this does not complete the performance roadmap.

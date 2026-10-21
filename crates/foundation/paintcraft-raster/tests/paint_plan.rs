@@ -165,3 +165,48 @@ fn oversized_sparse_plans_stop_at_the_staged_limit_without_reserving_payload() {
     assert_eq!(budget.usage().reserved, 0);
     assert_eq!(budget.activity(), 0);
 }
+
+#[test]
+fn cancellation_at_each_replay_boundary_releases_private_tiles_and_reservations() {
+    use paintcraft_core::types::{Error, ErrorCode, resources::SharedBudget};
+    use std::cell::Cell;
+    let budget = SharedBudget::new(8 * RasterLayer::TILE_BYTES as u64);
+    let base = RasterLayer::new(300, 300, Rgba([31, 63, 127, 0]));
+    let mut plan = PaintPlan::default();
+    plan.rect(
+        rect(0, 0, 300, 300),
+        Rgba([17, 88, 156, 128]),
+        BlendMode::SourceOver,
+    )
+    .unwrap();
+    let calls = Cell::new(0);
+    let mut successful = base.clone();
+    plan.apply_checked(&mut successful, &mut Admission::new(4 * 65_536), &|| {
+        calls.set(calls.get() + 1);
+        Ok(())
+    })
+    .unwrap();
+    assert!(calls.get() > 20);
+    for stop in 1..=calls.get() {
+        let seen = Cell::new(0);
+        let mut private = base.clone();
+        let mut admission = Admission::with_residency(4 * 65_536, budget.clone());
+        let error = plan
+            .apply_checked(&mut private, &mut admission, &|| {
+                seen.set(seen.get() + 1);
+                if seen.get() == stop {
+                    Err(Error::new(ErrorCode::OperationCancelled, "cancel replay"))
+                } else {
+                    Ok(())
+                }
+            })
+            .unwrap_err();
+        assert_eq!(error.code, ErrorCode::OperationCancelled);
+        assert_eq!(seen.get(), stop);
+        drop(private);
+        drop(admission);
+        assert_eq!(budget.usage().reserved, 0);
+        assert_eq!(base.get(0, 0), Rgba([31, 63, 127, 0]));
+        assert_eq!(base.resident_tiles(), 0);
+    }
+}

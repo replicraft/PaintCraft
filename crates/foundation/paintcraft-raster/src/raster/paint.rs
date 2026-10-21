@@ -99,12 +99,24 @@ impl PaintPlan {
     /// Apply to private raster staging. Quota admission precedes tile allocation/writes;
     /// allocator/index failures retain the caller-managed staging contract.
     pub fn apply(&self, layer: &mut RasterLayer, admission: &mut Admission) -> Result<()> {
+        self.apply_checked(layer, admission, &|| Ok(()))
+    }
+    /// Cancellable private replay. Cancellation can leave private staging partially
+    /// painted; the transaction owner must discard it rather than publish it.
+    pub fn apply_checked(
+        &self,
+        layer: &mut RasterLayer,
+        admission: &mut Admission,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<()> {
+        check()?;
         if self.writes.is_empty() {
             return Ok(());
         }
         let mut tiles: HashMap<TileCoord, Vec<usize>> = HashMap::new();
         let mut needed = 0u64;
         for (index, write) in self.writes.iter().enumerate() {
+            check()?;
             let Some(area) = write.area.intersect(&layer.bounds()) else {
                 continue;
             };
@@ -118,6 +130,7 @@ impl PaintPlan {
             }
             for ty in area.y0 / i64::from(TILE_EDGE)..=(area.y1 - 1) / i64::from(TILE_EDGE) {
                 for tx in area.x0 / i64::from(TILE_EDGE)..=(area.x1 - 1) / i64::from(TILE_EDGE) {
+                    check()?;
                     let coord = TileCoord { tx, ty };
                     if tiles.len() == tiles.capacity() {
                         tiles.try_reserve(1).map_err(|_| {
@@ -157,11 +170,13 @@ impl PaintPlan {
                 Error::new(ErrorCode::ResourceLimit, "cannot prepare paint tile index")
             })?;
             for coord in tiles.keys() {
+                check()?;
                 layer.with_tile_mut(*coord, admission, |_| ())?;
             }
             let bounds = layer.bounds();
             let edge = i64::from(TILE_EDGE);
             for (coord, writes) in tiles {
+                check()?;
                 let tile_area = Rect {
                     x0: coord.tx * edge,
                     y0: coord.ty * edge,
@@ -170,6 +185,7 @@ impl PaintPlan {
                 };
                 layer.with_tile_mut(coord, admission, |tile| {
                     for index in writes {
+                        check()?;
                         let write = self.writes[index];
                         let Some(area) = write
                             .area
@@ -179,6 +195,9 @@ impl PaintPlan {
                             continue;
                         };
                         for y in area.y0..area.y1 {
+                            if (y - area.y0) % 64 == 0 {
+                                check()?;
+                            }
                             let start = (((y - tile_area.y0) as usize * TILE_EDGE as usize)
                                 + (area.x0 - tile_area.x0) as usize)
                                 * 4;
@@ -186,8 +205,10 @@ impl PaintPlan {
                             write.row(&mut tile.pixels[start..end]);
                         }
                     }
-                })?;
+                    Ok::<(), Error>(())
+                })??;
             }
+            check()?;
             Ok(())
         })
     }

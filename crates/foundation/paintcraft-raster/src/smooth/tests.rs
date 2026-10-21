@@ -160,3 +160,34 @@ fn subpixel_capsules_match_an_independent_distance_oracle() {
     }
     assert_eq!(runs, round_path(&integer, 4, &clip).unwrap());
 }
+
+#[test]
+fn cancellation_interrupts_scan_rows_and_union_without_changing_successful_coverage() {
+    use std::cell::Cell;
+    let clip = Rect::new(0, 0, 512, 512).unwrap();
+    let points = [(8, 8), (500, 500), (8, 500)];
+    let expected = round_path_scaled(&points, 32, &clip, 1).unwrap();
+    let calls = Cell::new(0);
+    let actual = round_path_scaled_checked(&points, 32, &clip, 1, &|| {
+        calls.set(calls.get() + 1);
+        Ok(())
+    })
+    .unwrap();
+    assert_eq!(actual, expected);
+    assert!(calls.get() > 40);
+    // Exercise every check boundary, including segment scans and union resolution.
+    for stop in 1..=calls.get() {
+        let seen = Cell::new(0);
+        let error = round_path_scaled_checked(&points, 32, &clip, 1, &|| {
+            seen.set(seen.get() + 1);
+            if seen.get() == stop {
+                Err(Error::new(ErrorCode::OperationCancelled, "cancel geometry"))
+            } else {
+                Ok(())
+            }
+        })
+        .unwrap_err();
+        assert_eq!(error.code, ErrorCode::OperationCancelled);
+        assert_eq!(seen.get(), stop);
+    }
+}

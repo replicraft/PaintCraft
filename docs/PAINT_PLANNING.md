@@ -39,6 +39,12 @@ rollback. Published document/history changes retain the Session atomic boundary.
 Quota denial precedes this operation's tile allocation/pixel writes. Descriptor,
 index and allocator failures use fallible construction, but low-level callers still
 own private staging/rollback. PaintPlan is not a new standalone transaction API.
+Cancellable replay checks descriptor/tile indexing, tile preparation and writes,
+including every 64 rows within a write. Cancellation can leave private staging
+partially painted; Session discards it and never publishes that partial result.
+Smooth coverage separately checks segment/scan/union work. These boundaries
+do not establish a wall-clock latency bound or make allocator/codec calls preemptible.
+
 Descriptor/index/command metadata is not fully covered by the decoded payload realm;
 work limits and early fresh-tile checks do not constitute all-service/RSS admission.
 
@@ -62,3 +68,6 @@ checks baseline/current CPU-only apply commands and byte-identical canonical out
 horizontal pencil improves 1.12–1.20x, smooth brush 1.07–1.10x and smooth eraser
 1.66–1.73x; diagonal remains a tie/slight regression. Full-batch planning, bounded descriptor/index metadata,
 priority/fairness and long-session physical-pressure qualification remain open.
+
+The timings above are frozen to f23e5c3, before cooperative paint cancellation.
+They do not qualify the overhead or latency of the later cancellation checks.

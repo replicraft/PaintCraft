@@ -50,7 +50,12 @@ logical input counters; they do not establish a process-wide physical-memory bou
 Escape cancels private preparation and queued editing activations, preserving
 already published work and file-request barriers. Cancellation checks reach
 history source classification, transfer, synchronization and tile restoration.
-Individual command kernels, codec calls and filesystem calls are not preemptible.
+Smooth-brush coverage checks cancellation between segments, every 64 scanned
+subpixel rows and every 64 union rows. Planned painting checks descriptor/tile
+indexing, tile preparation and replay, including every 64 rows of each write.
+These are cooperative work boundaries, not a measured wall-clock latency bound;
+individual row kernels, row sorting, other command kernels, codec calls and
+filesystem calls are not preemptible.
 Dropping a controller abandons its pending job. The runtime cancels it and retains
 admission until actual completion; polling reclaims abandoned results even when
 no documents remain open.

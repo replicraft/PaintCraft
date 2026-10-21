@@ -28,9 +28,10 @@ impl Stage<'_> {
         Ok(())
     }
     pub(super) fn apply_paint(&mut self, id: Uuid, plan: &PaintPlan) -> Result<()> {
-        plan.apply(
+        plan.apply_checked(
             &mut self.doc.layers.get_mut(&id).expect("resolved").raster,
             &mut self.adm,
+            self.check,
         )
     }
 }

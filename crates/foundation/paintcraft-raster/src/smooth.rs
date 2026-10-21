@@ -37,6 +37,18 @@ pub fn round_path_scaled(
     clip: &Rect,
     point_scale: u32,
 ) -> Result<Vec<CoverageSpan>> {
+    round_path_scaled_checked(points, size, clip, point_scale, &|| Ok(()))
+}
+
+/// As [`round_path_scaled`], with cooperative cancellation during geometry and row work.
+pub fn round_path_scaled_checked(
+    points: &[(i64, i64)],
+    size: u32,
+    clip: &Rect,
+    point_scale: u32,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Vec<CoverageSpan>> {
+    check()?;
     let bound = paintcraft_core::types::policy::COORD_ABS_MAX as u64;
     if !matches!(point_scale, 1 | 256)
         || !(1..=1024).contains(&size)
@@ -78,7 +90,8 @@ pub fn round_path_scaled(
         x1: clip.width(),
         y1: clip.height(),
     };
-    let mut runs = rasterize(&local, size, &clip)?;
+    check()?;
+    let mut runs = rasterize(&local, size, &clip, check)?;
     for run in &mut runs {
         run.x0 += origin.0;
         run.x1 += origin.0;
@@ -87,11 +100,17 @@ pub fn round_path_scaled(
     Ok(runs)
 }
 
-fn rasterize(points: &[(f64, f64)], size: u32, clip: &Rect) -> Result<Vec<CoverageSpan>> {
+fn rasterize(
+    points: &[(f64, f64)],
+    size: u32,
+    clip: &Rect,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Vec<CoverageSpan>> {
     let mut rows: BTreeMap<i64, Vec<(i64, i64)>> = BTreeMap::new();
     let mut charged = 0;
     let radius = f64::from(size) / 2.0;
     let mut segment = |a: (f64, f64), b: (f64, f64)| -> Result<()> {
+        check()?;
         let (dx, dy) = (b.0 - a.0, b.1 - a.1);
         let length = dx.hypot(dy);
         let (nx, ny) = if length == 0.0 {
@@ -115,6 +134,9 @@ fn rasterize(points: &[(f64, f64)], size: u32, clip: &Rect) -> Result<Vec<Covera
             ));
         }
         for y in first..last {
+            if (y - first) % 64 == 0 {
+                check()?;
+            }
             let sy = (y as f64 + 0.5) / 4.0;
             let (mut left, mut right) = (f64::INFINITY, f64::NEG_INFINITY);
             // A capsule is the union of its endpoint disks and connecting quad.
@@ -156,7 +178,10 @@ fn rasterize(points: &[(f64, f64)], size: u32, clip: &Rect) -> Result<Vec<Covera
     let mut out = Vec::new();
     let mut events: BTreeMap<i64, i32> = BTreeMap::new();
     let mut pixel_y = None;
-    for (y, mut runs) in rows {
+    for (row_index, (y, mut runs)) in rows.into_iter().enumerate() {
+        if row_index % 64 == 0 {
+            check()?;
+        }
         let py = y.div_euclid(SCALE);
         if pixel_y != Some(py) {
             if let Some(prev) = pixel_y {
@@ -186,6 +211,7 @@ fn rasterize(points: &[(f64, f64)], size: u32, clip: &Rect) -> Result<Vec<Covera
     if let Some(y) = pixel_y {
         resolve(y, &events, &mut out);
     }
+    check()?;
     Ok(out)
 }
 

@@ -65,6 +65,18 @@ pub fn execute_with_admission(
     batch: &Batch,
     admission: Admission,
 ) -> Result<Staged> {
+    execute_with_admission_checked(base, selection, batch, admission, &|| Ok(()))
+}
+
+/// Execute privately with cancellation between operations and inside planned painting.
+pub fn execute_with_admission_checked(
+    base: &Document,
+    selection: Selection,
+    batch: &Batch,
+    admission: Admission,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Staged> {
+    check()?;
     let mut s = Stage {
         doc: base.clone(),
         selection,
@@ -75,9 +87,10 @@ pub fn execute_with_admission(
         stroke_rows: 0,
         base_state: base.state_id.to_string(),
         digest: &batch.digest,
+        check,
     };
     for (index, op) in batch.operations.iter().enumerate() {
-        s.run(index, op).map_err(|e| {
+        check().and_then(|()| s.run(index, op)).map_err(|e| {
             if e.operation_index.is_some() {
                 e
             } else {
@@ -85,6 +98,7 @@ pub fn execute_with_admission(
             }
         })?;
     }
+    check()?;
     let aliases = s
         .aliases
         .into_iter()
@@ -111,6 +125,7 @@ struct Stage<'a> {
     stroke_rows: i128,
     base_state: String,
     digest: &'a str,
+    check: &'a dyn Fn() -> Result<()>,
 }
 
 impl Stage<'_> {
@@ -392,11 +407,12 @@ impl Stage<'_> {
                     // Rasterization unions overlapping geometry before coverage is applied.
                     let mut plan = PaintPlan::default();
                     let (ox, oy) = self.doc.layers[&id].origin;
-                    for run in paintcraft_raster::smooth::round_path_scaled(
+                    for run in paintcraft_raster::smooth::round_path_scaled_checked(
                         points,
                         *size,
                         &area,
                         *point_scale,
+                        self.check,
                     )? {
                         if *mode == Mode::Replace && run.samples < 16 {
                             plan.coverage_rect(

@@ -12,7 +12,7 @@ use paintcraft_core::types::json::Value;
 use paintcraft_core::types::{Error, ErrorCode, Result};
 use uuid::Uuid;
 
-use crate::execute::{STAGED_PIXELS_MAX, Selection, execute_with_admission};
+use crate::execute::{STAGED_PIXELS_MAX, Selection, execute_with_admission_checked};
 use paintcraft_commands::Batch;
 use paintcraft_core::types::ids::deterministic_id;
 use paintcraft_document::{Document, POLICY};
@@ -264,11 +264,12 @@ impl Session {
                 "The current publication differs from the requested base.",
             ));
         }
-        let mut staged = execute_with_admission(
+        let mut staged = execute_with_admission_checked(
             &self.doc,
             self.selection,
             batch,
             admission.constrain_pixels(self.staged_pixels),
+            &check,
         )?;
         check()?;
         let content_changed = !staged.doc.same_semantics(&self.doc);

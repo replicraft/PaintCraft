@@ -122,8 +122,9 @@ impl Preparation {
     }
 
     /// Execute privately and check cancellation around command execution and
-    /// throughout history classification and spill batches. Individual command
-    /// kernels and filesystem calls are not preemptible.
+    /// throughout history classification and spill batches. Smooth coverage and planned
+    /// paint replay yield cooperatively; other command kernels and filesystem calls
+    /// are not preemptible.
     pub fn apply(self, batch: &Batch, check: impl Fn() -> Result<()>) -> Result<PreparedEdit> {
         let admission = Admission::new(self.session.staged_pixels);
         self.apply_with_admission(batch, admission, check)

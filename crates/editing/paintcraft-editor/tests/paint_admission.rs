@@ -112,3 +112,75 @@ fn painting_families_admit_their_operation_before_allocating_a_tile_prefix() {
         assert_eq!(budget.usage().reserved, 0);
     }
 }
+
+#[test]
+fn cancelled_smooth_preparation_preserves_owner_and_releases_decoded_capacity() {
+    use paintcraft_core::types::{Error, ErrorCode};
+    use paintcraft_editor::session::Session;
+    use std::{cell::Cell, sync::Arc};
+    let doc = new_document(300, 300, Some(Rgba([31, 63, 127, 0])), 0, POLICY).unwrap();
+    let session = Session::new(doc);
+    let snapshot = session.snapshot();
+    let history = session.history_view();
+    let ticket = session.ticket();
+    let batch = Batch {
+        version: 2,
+        policy: POLICY.into(),
+        base_state: snapshot.state_id,
+        base_epoch: 0,
+        seed: None,
+        digest: "0".repeat(64),
+        operations: vec![Op::StrokePath {
+            layer: LayerRef::Id(snapshot.roots[0]),
+            points: vec![(8, 8), (290, 290)],
+            color: Rgba([17, 88, 156, 128]),
+            mode: Mode::SourceOver,
+            size: 32,
+            round: true,
+            smooth: true,
+            point_scale: 1,
+        }],
+    };
+    let budget = SharedBudget::new(4 * BYTES);
+    let calls = Cell::new(0);
+    let success = session
+        .preparation()
+        .unwrap()
+        .apply_with_admission(
+            &batch,
+            Admission::with_residency(4 * 65_536, budget.clone()),
+            || {
+                calls.set(calls.get() + 1);
+                Ok(())
+            },
+        )
+        .unwrap();
+    drop(success);
+    assert_eq!(budget.usage().reserved, 0);
+    // Check throughout geometry, descriptors, tile allocation/replay and history.
+    for stop in [5, 10, 20, 40, calls.get()] {
+        assert!(stop <= calls.get());
+        let seen = Cell::new(0);
+        let result = session.preparation().unwrap().apply_with_admission(
+            &batch,
+            Admission::with_residency(4 * 65_536, budget.clone()),
+            || {
+                seen.set(seen.get() + 1);
+                if seen.get() == stop {
+                    Err(Error::new(
+                        ErrorCode::OperationCancelled,
+                        "cancel smooth edit",
+                    ))
+                } else {
+                    Ok(())
+                }
+            },
+        );
+        assert_eq!(result.unwrap_err().code, ErrorCode::OperationCancelled);
+        assert_eq!(seen.get(), stop);
+        assert!(Arc::ptr_eq(&snapshot, &session.snapshot()));
+        assert_eq!(session.ticket(), ticket);
+        assert_eq!(session.history_view(), history);
+        assert_eq!(budget.usage().reserved, 0);
+    }
+}
