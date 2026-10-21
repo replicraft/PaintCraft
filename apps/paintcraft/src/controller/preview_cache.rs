@@ -53,3 +53,7 @@ impl Editor {
 #[cfg(test)]
 #[path = "preview_cache/tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "preview_cache/benchmark.rs"]
+mod benchmark;
