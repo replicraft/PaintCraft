@@ -1,7 +1,9 @@
 //! Bounded workers prepare results; only the caller may publish them.
 //! Reservations remain charged until completion is consumed, including cancellation.
 mod admission;
+mod submission;
 pub use admission::{BudgetUsage, SharedBudget};
+pub use submission::RejectedSubmission;
 
 #[cfg(feature = "native-io")]
 pub mod io;
@@ -122,48 +124,10 @@ impl<T: Send + 'static> Executor<T> {
         task: impl FnOnce(Cancellation) -> Result<T> + Send + 'static,
         wake: impl FnOnce() + Send + 'static,
     ) -> Result<JobHandle> {
-        let reserved = self
-            .reserved
-            .checked_add(bytes)
-            .ok_or_else(|| Error::new(ErrorCode::ResourceLimit, "worker reservation overflows"))?;
-        if self.jobs.len() >= self.limits.pending_jobs || reserved > self.limits.transient_bytes {
-            return Err(Error::new(
-                ErrorCode::ResourceLimit,
-                "worker queue or memory budget is full",
-            ));
-        }
-        let lease = self.budget.reserve(bytes)?;
-        let cancellation = Cancellation(Arc::new(AtomicBool::new(false)));
-        let key = self.jobs.insert(Reservation {
-            bytes,
-            cancellation: cancellation.clone(),
-            ready: None,
-            abandoned: false,
-            _lease: lease.clone(),
-        });
-        self.reserved = reserved;
-        let sender = self.sender.clone();
-        self.pool.spawn(move || {
-            let result = catch_unwind(AssertUnwindSafe(|| {
-                cancellation.check()?;
-                let result = task(cancellation.clone());
-                cancellation.check()?;
-                result
-            }))
-            .unwrap_or_else(|_| {
-                Err(Error::new(
-                    ErrorCode::InvariantViolation,
-                    "worker panicked before publication",
-                ))
-            });
-            let _ = sender.send((key, result, lease));
-            let _ = catch_unwind(AssertUnwindSafe(wake));
-        });
-        Ok(JobHandle {
-            owner: self.owner,
-            key,
-        })
+        self.submit_retained(bytes, task, wake)
+            .map_err(|rejected| rejected.error)
     }
+
     pub fn cancel(&self, handle: JobHandle) -> bool {
         if handle.owner != self.owner {
             return false;
@@ -419,3 +383,6 @@ mod tests {
 #[cfg(test)]
 #[path = "admission/tests.rs"]
 mod admission_tests;
+
+#[cfg(test)]
+mod submission_tests;
