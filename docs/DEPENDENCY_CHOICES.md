@@ -18,7 +18,7 @@ A correct integrated baseline is not a measured performance or release qualifica
 | `zerocopy` | selective-on-use | Bounded fixed-layout BMP header admission | BF03 | Integrated baseline, 0.8.63 with derive; header size/offset and malformed-input tests; benchmark pending |
 | `bytemuck` | selected-on-use | Explicit GPU staging layouts in render | BF04 | Integrated baseline, 1.25.2 with derive; WGSL offsets/endian checks and Metal parity pass; benchmark pending |
 | `tess2-rust` | evaluate | Complex path fills; compare Lyon | BF05 | Not directly adopted; activate with its consumer |
-| `rayon` | selected-on-use | Bounded native preparation and explicit CLI CPU export pools | BF06 | 1.12.0; disjoint bands/tile views and 1/2/4-worker bulk comparisons exist; queue/byte admission, cancellation, nested execution and panic tests pass. Interactive fairness and process-wide budget qualification remain |
+| `rayon` | selected-on-use | Shared native editing preparation and explicit CLI CPU export pools | BF06 | 1.12.0; disjoint bands/tile views and 1/2/4-worker bulk comparisons exist; queue/byte admission, targeted completion retention, cancellation, abandoned consumers, nested execution and panic tests pass. Native save/export barriers have application tests. Interactive fairness and process-wide budget qualification remain |
 | `tokio` | preferred-on-use | Native save/recovery lifecycle | BF07 | Integrated baseline, 1.53.3 with rt/sync behind native-io; bounded FIFO, completion retention, panic and shutdown tests; recovery publication fences and native race tests pass; startup, restore and claimed-source handoff integrated; benchmark pending |
 | `moka` | selective-on-use | Discardable derived CPU cache with independent memory accounting | BF08 | Not adopted; the current bounded compositor cache uses a small Vec/LRU table. A Moka comparison and accounting/lease evaluation remain pending |
 | `fst` | deferred | Large immutable asset catalog, when one exists | BF09 | Not directly adopted; activate with its consumer |
@@ -26,7 +26,7 @@ A correct integrated baseline is not a measured performance or release qualifica
 | `bitvec` | selective-on-use | Finite binary selection/dirty coverage | BF11 | Not directly adopted; activate with its consumer |
 | `arrayvec` | selective-on-use | Scratch collections with a proven bound | BF12 | Not directly adopted; activate with its consumer |
 | `dashmap` | evaluate | Narrow concurrent immutable-resource registry, if justified | BF13 | Not directly adopted; activate with its consumer |
-| `slotmap` | selected-on-use | Runtime render-job handles with a separate owner UUID | BF14 | Integrated baseline, 1.1.1; cross-owner/stale-handle and slot-reuse tests; benchmark pending |
+| `slotmap` | selected-on-use | Runtime edit/render job handles with a separate owner UUID | BF14 | Integrated baseline, 1.1.1; cross-owner/stale-handle and slot-reuse tests; benchmark pending |
 | `indexmap` | selective-on-use | Ordered presets, effect parameters and command metadata | BF15 | Not directly adopted; activate with its consumer |
 
 ## Other product and runtime selections

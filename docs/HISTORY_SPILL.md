@@ -114,7 +114,8 @@ check live reader release, reject an edit without losing redo, retry with a usab
 store, bound manual spill batches, cancel after an actual write, reclaim provisional
 segments and preserve tickets/cursors when a required segment disappears.
 
-The implementation remains synchronous and session-scoped. Background priorities,
+Storage operations remain synchronous and session-scoped; the
+[native editor](DESKTOP_EDITING.md) now prepares them on its shared worker. Background priorities,
 queue-inclusive interactive latency, shared process/disk admission, segment
 relocation/GC efficiency, global logical tile authority, restart-persistent branch
 history, higher-depth/mask data and photographic before/after deltas remain.

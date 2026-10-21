@@ -145,8 +145,9 @@ leases, including provisional native extents.
 Cancellation is checked around command execution and during history classification,
 transfer and required synchronization. Individual command kernels and filesystem
 calls are not preemptible. Timeline capture still copies metadata synchronously;
-these APIs alone do not move desktop command dispatch to workers or establish a
-process-wide physical-memory or interactive-latency bound. `Preparation::undo`,
+the APIs establish no process-wide physical-memory or interactive-latency bound.
+The [native desktop consumer](DESKTOP_EDITING.md) now dispatches edits and recorded
+navigation through one shared worker, with ordered file-capture barriers. `Preparation::undo`,
 `redo` and `navigate_history` restore private targets; `publish_navigation` applies
 the same guard. Cold restoration checks cancellation between tiles and before
 changing the private cursor. Tests include real worker transfer, same-content foreign

@@ -284,3 +284,38 @@ a native spill barrier preserving exact redo/quota, detached undo/redo/seek and
 cancellation at every boundary of a materialized two-tile cold restoration.
 Previous benchmark results remain frozen to their recorded source revisions;
 these correctness checks establish no new performance result.
+
+## Ninth slice: native desktop preparation and ordered file captures
+
+Real desktop windows now connect every document and frontend workspace to one
+shared bounded editing worker. Edits and undo/redo/history restoration prepare
+privately, and only their originating controller publishes them. Runtime targeted
+polling retains another owner's completion and reservation; cancelled/abandoned
+consumers release admission only after actual completion. Released previews stay
+visible, and layer aliases/target repair follow successful publication.
+
+Document-owned file barriers order saves and export confirmation between earlier
+and later activations. Native save I/O captures the exact revision and may finish
+while later edits prepare; its acknowledgement keeps those later edits dirty.
+Inactive tabs receive their own results. Close and interface-switch gates wait for
+editing/file requests before testing dirty state. Export confirmation holds its
+revision until it finishes; synchronous fallback saves preserve the same boundary.
+
+584 workspace tests pass (20 explicit ignores), plus strict workspace/all-target
+Clippy, formatting and the 800-line limit. New controller/application regressions
+exercise shared admission, stale/cancelled/dropped work, aliases and target removal,
+stale queued history clicks, retained previews, real PCND captures across later
+edits and inactive tabs, close/switch gates, decoded export pixels and a real egui
+two-pass gesture/publication/display cycle. Actual Metal parity passes on Apple M1
+Pro. Release desktop/CLI builds pass; the native window exits cleanly after 30
+frames with isolated settings/recovery, and release PCND save/reopen produces
+byte-identical serial/four-worker PNG exports.
+
+This is correctness and integration evidence, not an interactive performance
+measurement. Native canvas input presently waits for its current publication with
+a progress cursor. Metadata capture, command/font-mask construction, publication,
+destruction and flat export still involve synchronous UI work. The preparation
+charge is provisional; global physical memory, command-payload admission,
+priority/fair scheduling and queue-inclusive p95/p99/max input latency remain.
+See [the desktop ordering contract and limits](DESKTOP_EDITING.md). T07/T11/T13 stay
+partial and historical benchmark source boundaries remain unchanged.

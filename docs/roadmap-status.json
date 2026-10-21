@@ -97,9 +97,14 @@
         "crates/editing/paintcraft-history/src/lib.rs",
         "crates/editing/paintcraft-editor/tests/history_navigation.rs",
         "docs/HISTORY_STORAGE.md",
-        "crates/editing/paintcraft-editor/tests/history_storage.rs"
+        "crates/editing/paintcraft-editor/tests/history_storage.rs",
+        "docs/DESKTOP_EDITING.md",
+        "apps/paintcraft/src/controller/background.rs",
+        "apps/paintcraft/src/controller/background/tests.rs",
+        "apps/paintcraft/src/app/editing.rs",
+        "apps/paintcraft/src/app/editing/tests.rs"
       ],
-      "remaining_or_scope": "Recorded hot/cold linear undo/redo, labels and atomic fallible navigation preserve state IDs and pixels; branching graphs, spill and full metadata admission remain.",
+      "remaining_or_scope": "Recorded hot/cold linear undo/redo and guarded worker restoration preserve IDs and pixels, including leased disk payloads. Branching graphs, process-wide residency and full metadata admission remain.",
       "acceptance": "Undo/redo randomized state equality; STATE-04/05/06; removed executor does not block redo."
     },
     {
@@ -197,9 +202,14 @@
         "benchmarks/results/history-large-2026-10-20/DECISION.md",
         "crates/editing/paintcraft-editor/src/session/preparation.rs",
         "crates/editing/paintcraft-editor/tests/preparation.rs",
-        "crates/editing/paintcraft-editor/tests/preparation/navigation.rs"
+        "crates/editing/paintcraft-editor/tests/preparation/navigation.rs",
+        "docs/DESKTOP_EDITING.md",
+        "apps/paintcraft/src/controller/background.rs",
+        "apps/paintcraft/src/controller/background/tests.rs",
+        "apps/paintcraft/src/app/editing.rs",
+        "apps/paintcraft/src/app/editing/tests.rs"
       ],
-      "remaining_or_scope": "Preserving history handles large snapshots through bounded classification and selective transfer batches. Detached edit/navigation preparation has cancellation, owner/epoch/policy publication guards and rollback tests. Desktop worker dispatch, global physical admission, background priorities, segment relocation and broader corpus/latency qualification remain.",
+      "remaining_or_scope": "Preserving history handles large snapshots through bounded classification and selective transfer batches. Native edits/navigation use a shared worker with owner/epoch/policy guards and ordered save/export barriers. Global physical admission, background priorities, segment relocation and broader corpus/input-latency qualification remain.",
       "acceptance": "MEM-01\u201307 under artificial low budget; actual allocator/RSS evidence, not counters alone."
     },
     {
@@ -238,9 +248,14 @@
         "crates/services/paintcraft-render/src/gpu.rs",
         "crates/services/paintcraft-runtime/src/lib.rs",
         "apps/paintcraft-cli/src/commands/render.rs",
-        "crates/services/paintcraft-render/tests/parallel.rs"
+        "crates/services/paintcraft-render/tests/parallel.rs",
+        "docs/DESKTOP_EDITING.md",
+        "apps/paintcraft/src/controller/background.rs",
+        "apps/paintcraft/src/controller/background/tests.rs",
+        "apps/paintcraft/src/app/editing.rs",
+        "apps/paintcraft/src/app/editing/tests.rs"
       ],
-      "remaining_or_scope": "Bounded Rayon preparation/export pools, disjoint CPU partitions, owner-scoped handles, cancellation and stale-result tests exist; priorities, async I/O qualification, device epochs, interactive interference and process-wide physical budget/fairness evidence remain.",
+      "remaining_or_scope": "A shared bounded desktop edit worker and render/export pools support targeted owner completions, cancellation, ordered file captures and stale-result rejection. Priorities, cross-platform I/O qualification, device epochs, interactive interference and process-wide physical budget/fairness evidence remain.",
       "acceptance": "SCHED-01\u201306 and GPU-01\u201306; no late mutation/device-loss data loss."
     },
     {
