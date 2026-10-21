@@ -15,9 +15,7 @@
       "id": "T02",
       "milestone": "M0",
       "title": "Native input and presentation spike",
-      "depends_on": [
-        "T01"
-      ],
+      "depends_on": ["T01"],
       "status": "partial",
       "evidence": ["apps/paintcraft/tests/gui.rs"],
       "remaining_or_scope": "Actual-pixel and multipass tests exist; direct-shell comparison, native pen/IME traces and hardware changes remain.",
@@ -37,11 +35,10 @@
       "id": "T04",
       "milestone": "M1",
       "title": "Raster domains and blob leases",
-      "depends_on": [
-        "T01"
-      ],
+      "depends_on": ["T01"],
       "status": "partial",
       "evidence": [
+        "docs/FLOOD_PREPARATION.md",
         "docs/PAINT_METADATA.md",
         "apps/paintcraft/src/controller/retry/tests.rs",
         "crates/editing/paintcraft-editor/tests/reserved_preparation.rs",
@@ -66,16 +63,14 @@
         "docs/HISTORY_STORAGE.md",
         "crates/editing/paintcraft-editor/tests/history_storage.rs"
       ],
-      "remaining_or_scope": "Sparse COW tiles retain byte leases through documents/history/readers; default decoded payload admission is process-shared at 2 GiB. Guarded native maintenance visits inactive tabs/parked frontends. Coalesced budget wakes and known render demand reach native contexts; footprint-aware retries preserve fixed-limit failures. Explicit reservations transfer into independently owned tile leases; accepted decoded-failed edits reserve known capacity on retry. Logical blob authority, first-attempt whole-request planning/native multi-window pressure qualification, adaptive metadata/allocation budgets and RSS qualification remain. Paint descriptor and replay-index payload capacities now have a configurable fixed per-plan bound, separate from decoded residency. Global metadata, allocator/hash overhead and aggregate compound admission remain open.",
+      "remaining_or_scope": "Sparse COW tiles retain byte leases through documents/history/readers; default decoded payload admission is process-shared at 2 GiB. Guarded native maintenance visits inactive tabs/parked frontends. Coalesced budget wakes and known render demand reach native contexts; footprint-aware retries preserve fixed-limit failures. Explicit reservations transfer into independently owned tile leases; accepted decoded-failed edits reserve known capacity on retry. Logical blob authority, first-attempt whole-request planning/native multi-window pressure qualification, adaptive metadata/allocation budgets and RSS qualification remain. Paint descriptor and replay-index payload capacities now have a configurable fixed per-plan bound, separate from decoded residency. Global metadata, allocator/hash overhead and aggregate compound admission remain open. Flood classification now bounds bitmap/frontier/output capacities under a separate configurable per-call scratch policy with fallible growth. Aggregate batch/service leases, allocator/transient/RSS accounting and other geometry remain open.",
       "acceptance": "MEM-03/04; hidden RGB; negative boundaries; checked sizes; explicit resource errors."
     },
     {
       "id": "T05",
       "milestone": "M1",
       "title": "Immutable document and split identity",
-      "depends_on": [
-        "T04"
-      ],
+      "depends_on": ["T04"],
       "status": "partial",
       "evidence": ["crates/foundation/paintcraft-document/src/lib.rs", "crates/editing/paintcraft-editor/src/session.rs"],
       "remaining_or_scope": "Flat immutable snapshots and split state/history identity exist; full session identity and richer nodes remain.",
@@ -85,9 +80,7 @@
       "id": "T06",
       "milestone": "M1",
       "title": "Atomic batch and operation oracle",
-      "depends_on": [
-        "T05"
-      ],
+      "depends_on": ["T05"],
       "status": "implemented",
       "evidence": ["crates/editing/paintcraft-editor/tests/conformance.rs", "crates/editing/paintcraft-commands/src/lib.rs"],
       "remaining_or_scope": "Batch v1 oracle vectors, atomic failure and no-op behavior pass; v2 remains an independently documented extension.",
@@ -97,9 +90,7 @@
       "id": "T07",
       "milestone": "M1",
       "title": "Recorded history navigation",
-      "depends_on": [
-        "T06"
-      ],
+      "depends_on": ["T06"],
       "status": "partial",
       "evidence": [
         "docs/BUDGET_NOTIFICATIONS.md",
@@ -124,11 +115,7 @@
       "id": "T08",
       "milestone": "M1",
       "title": "PCND and headless round trip",
-      "depends_on": [
-        "T07",
-        "T29",
-        "T34"
-      ],
+      "depends_on": ["T07", "T29", "T34"],
       "status": "partial",
       "evidence": ["crates/services/paintcraft-formats/tests/conformance.rs", "apps/paintcraft-cli/tests/cli.rs"],
       "remaining_or_scope": "Canonical PCND and CLI round trips pass; full native subset/hostile-archive scope remains.",
@@ -138,11 +125,7 @@
       "id": "T09",
       "milestone": "M1",
       "title": "First complete editor slice",
-      "depends_on": [
-        "T02",
-        "T07",
-        "T08"
-      ],
+      "depends_on": ["T02", "T07", "T08"],
       "status": "partial",
       "evidence": ["apps/paintcraft/tests/gui.rs"],
       "remaining_or_scope": "Complete pencil/session/display/save slice passes; native input qualification depends on T02.",
@@ -152,10 +135,7 @@
       "id": "T10",
       "milestone": "M2",
       "title": "Ordered save and recovery journal",
-      "depends_on": [
-        "T09",
-        "T32"
-      ],
+      "depends_on": ["T09", "T32"],
       "status": "partial",
       "evidence": [
         "crates/services/paintcraft-formats/src/recovery.rs",
@@ -191,9 +171,7 @@
       "id": "T11",
       "milestone": "M2",
       "title": "Bounded history and store GC",
-      "depends_on": [
-        "T07"
-      ],
+      "depends_on": ["T07"],
       "status": "partial",
       "evidence": [
         "docs/PAINT_METADATA.md",
@@ -255,10 +233,7 @@
       "id": "T12",
       "milestone": "M2",
       "title": "Ordered renderer and region effects",
-      "depends_on": [
-        "T05",
-        "T09"
-      ],
+      "depends_on": ["T05", "T09"],
       "status": "partial",
       "evidence": [
         "docs/GPU_SINGLE_LAYER.md",
@@ -300,12 +275,10 @@
       "id": "T13",
       "milestone": "M2",
       "title": "Scheduler and GPU preparation",
-      "depends_on": [
-        "T12",
-        "T11"
-      ],
+      "depends_on": ["T12", "T11"],
       "status": "partial",
       "evidence": [
+        "docs/FLOOD_PREPARATION.md",
         "docs/GPU_SINGLE_LAYER.md",
         "docs/GPU_COMPLETION_PROGRESS.md",
         "docs/GPU_JOB_ADMISSION.md",
@@ -374,20 +347,17 @@
         "docs/MULTIRES_DISPLAY.md",
         "benchmarks/results/multires-display-2026-10-21/DECISION.md"
       ],
-      "remaining_or_scope": "Shared native render/edit workers prepare validated stroke/text plans from immutable previews. Revision-keyed weak snapshots avoid recollecting unchanged repaints; queued edits, file barriers and completion invalidate inputs. Guarded no-op results and compatible progress have tests. Preview-capture process costs are locally measured; changing-input cost is inconclusive. Device epochs reject replaced/retired GPU completions; Metal destruction and fresh-device host-history reconstruction pass. Native edit/render pools share declared-byte admission with worker/result guards surviving executor drop. Footprint-aware render retries and shared demand guide decoded pressure maintenance. Initial worker-admission races retain captured batch/tool/navigation tasks; decoded-failed edits and recorded navigation retry reserved known capacity under owner/base guards. History navigation plans fresh missing sets and reprices stale cache-dependent demand. Ordered paint plans admit operation tiles and replay contiguous rows; scoped measurements retain diagonal non-win controls. Native window-device recovery, priorities, physical/all-service budgets, changed-preview costs and native latency/interference qualification remain. Detached execution now checks cancellation between commands and within smooth coverage and planned paint indexing/preparation/replay; wall-clock cancellation tails and other kernels remain unqualified. Desktop preview staging now reuses one bounded-charge incremental sample union, scans appended capsules and routes worker cancellation into execution; measured growing/retrace CPU replay gains retain tiny non-win controls. Full incremental staging and native latency remain unqualified. Bounded device-local source views now reuse unchanged uploads, stream protected-frame overflow and retire partial transfers on cancellation/epoch failure. Native admission reads immutable cache allowances; sparse GPU atlas/output residency and asynchronous transfers remain. Native texture registration validates document/preview/device identity on the UI, retires old IDs on fallback/switch/drop and avoids normal host readback/re-upload. Display-texture pooling and native event/display tails remain unqualified. Native output admission now follows requested viewport area; stale region completions cannot replace a panned view and CPU fallback preserves region bounds. Full operation staging and native latency remain unqualified. Configurable compositor scratch retention has completion/cancellation guards and native allowance accounting; default retention is zero following the measured decision. Physical pressure-driven GPU eviction remains open. Scaled display jobs now declare coarse output dimensions plus bounded cache/key/reduction scratch, include sampling level in freshness and preserve the native GPU while using the CPU reference. Hardware tests admit million-square reduced output; Physical/latency qualification remains. Completed GPU scaled preparation and real native fallback now include sampling-level checks, bounded scratch declarations and old-frame ownership. Explicit GPU scaling uses 64-sample tiles; default CPU scaling avoids measured regressions. Physical budgets, asynchronous completion and native device reconstruction remain. GPU source eviction protection now spans complete display requests rather than resetting for each internal block. Over-cap requests preserve early views and stream overflow; per-layer completion waits and physical GPU admission remain unchanged. Native admission includes an immutable extra 4 MiB pending-resource allowance when batching is explicitly enabled. Cache identities publish after successful batch completion; cancellation drops unsubmitted work and cannot publish partial frames. This is synchronous bounded batching, not asynchronous transfers or physical GPU/RSS admission. Completion failures now quarantine the shared lifetime instead of leaving an uncertain device eligible for later submissions. Actual Metal invalid-submission failure and native CPU fallback preserve host state. Timeout policy is tested without hanging hardware; physical outstanding-work leases and automatic native device reconstruction remain open. Explicit resource leases now keep both pool-local and shared declared bytes alive after result consumption, cancellation or executor Drop. Native GPU failure/unwind transfers scope ownership to queue completion observation; ending the queue context releases callback ownership. Cancellation-token clones observe leases weakly. Window-owned completion observers now provide pending-only polling independently of repaints and compositor retirement. Private renderer/frame identities prevent cross-instance queue-ID aliasing; weak callback links and nonjoining shutdown avoid context cycles. Observer startup/poll failure degrades to external observation, preserving charges. Physical driver accounting, asynchronous transfers and native device recreation remain open. Optional direct single-layer presentation shares existing source/completion ownership and conservative admission, without exposing mutable cached sources as returned frames. Native worker and actual egui framebuffer parity pass; physical allocation and input/display tails remain unqualified.",
+      "remaining_or_scope": "Shared native render/edit workers prepare validated stroke/text plans from immutable previews. Revision-keyed weak snapshots avoid recollecting unchanged repaints; queued edits, file barriers and completion invalidate inputs. Guarded no-op results and compatible progress have tests. Preview-capture process costs are locally measured; changing-input cost is inconclusive. Device epochs reject replaced/retired GPU completions; Metal destruction and fresh-device host-history reconstruction pass. Native edit/render pools share declared-byte admission with worker/result guards surviving executor drop. Footprint-aware render retries and shared demand guide decoded pressure maintenance. Initial worker-admission races retain captured batch/tool/navigation tasks; decoded-failed edits and recorded navigation retry reserved known capacity under owner/base guards. History navigation plans fresh missing sets and reprices stale cache-dependent demand. Ordered paint plans admit operation tiles and replay contiguous rows; scoped measurements retain diagonal non-win controls. Native window-device recovery, priorities, physical/all-service budgets, changed-preview costs and native latency/interference qualification remain. Detached execution now checks cancellation between commands and within smooth coverage and planned paint indexing/preparation/replay; wall-clock cancellation tails and other kernels remain unqualified. Desktop preview staging now reuses one bounded-charge incremental sample union, scans appended capsules and routes worker cancellation into execution; measured growing/retrace CPU replay gains retain tiny non-win controls. Full incremental staging and native latency remain unqualified. Bounded device-local source views now reuse unchanged uploads, stream protected-frame overflow and retire partial transfers on cancellation/epoch failure. Native admission reads immutable cache allowances; sparse GPU atlas/output residency and asynchronous transfers remain. Native texture registration validates document/preview/device identity on the UI, retires old IDs on fallback/switch/drop and avoids normal host readback/re-upload. Display-texture pooling and native event/display tails remain unqualified. Native output admission now follows requested viewport area; stale region completions cannot replace a panned view and CPU fallback preserves region bounds. Full operation staging and native latency remain unqualified. Configurable compositor scratch retention has completion/cancellation guards and native allowance accounting; default retention is zero following the measured decision. Physical pressure-driven GPU eviction remains open. Scaled display jobs now declare coarse output dimensions plus bounded cache/key/reduction scratch, include sampling level in freshness and preserve the native GPU while using the CPU reference. Hardware tests admit million-square reduced output; Physical/latency qualification remains. Completed GPU scaled preparation and real native fallback now include sampling-level checks, bounded scratch declarations and old-frame ownership. Explicit GPU scaling uses 64-sample tiles; default CPU scaling avoids measured regressions. Physical budgets, asynchronous completion and native device reconstruction remain. GPU source eviction protection now spans complete display requests rather than resetting for each internal block. Over-cap requests preserve early views and stream overflow; per-layer completion waits and physical GPU admission remain unchanged. Native admission includes an immutable extra 4 MiB pending-resource allowance when batching is explicitly enabled. Cache identities publish after successful batch completion; cancellation drops unsubmitted work and cannot publish partial frames. This is synchronous bounded batching, not asynchronous transfers or physical GPU/RSS admission. Completion failures now quarantine the shared lifetime instead of leaving an uncertain device eligible for later submissions. Actual Metal invalid-submission failure and native CPU fallback preserve host state. Timeout policy is tested without hanging hardware; physical outstanding-work leases and automatic native device reconstruction remain open. Explicit resource leases now keep both pool-local and shared declared bytes alive after result consumption, cancellation or executor Drop. Native GPU failure/unwind transfers scope ownership to queue completion observation; ending the queue context releases callback ownership. Cancellation-token clones observe leases weakly. Window-owned completion observers now provide pending-only polling independently of repaints and compositor retirement. Private renderer/frame identities prevent cross-instance queue-ID aliasing; weak callback links and nonjoining shutdown avoid context cycles. Observer startup/poll failure degrades to external observation, preserving charges. Physical driver accounting, asynchronous transfers and native device recreation remain open. Optional direct single-layer presentation shares existing source/completion ownership and conservative admission, without exposing mutable cached sources as returned frames. Native worker and actual egui framebuffer parity pass; physical allocation and input/display tails remain unqualified. Flood classification now yields during bitmap initialization, wide-row scanning/marking and frontier processing, with the real worker token and fixed scratch policy. Independent oracles and private-prefix cancellation/rollback pass; callback work counts do not qualify native wall-clock cancellation tails.",
       "acceptance": "SCHED-01\u201306 and GPU-01\u201306; no late mutation/device-loss data loss."
     },
     {
       "id": "T14",
       "milestone": "M2",
       "title": "Tool completeness tranche",
-      "depends_on": [
-        "T09",
-        "T12",
-        "T31"
-      ],
+      "depends_on": ["T09", "T12", "T31"],
       "status": "partial",
       "evidence": [
+        "docs/FLOOD_PREPARATION.md",
         "docs/PAINT_METADATA.md",
         "benchmarks/results/paint-plan-cli-cpu-2026-10-21/DECISION.md",
         "benchmarks/results/paint-plan-rows-2026-10-20/DECISION.md",
@@ -410,17 +380,14 @@
         "benchmarks/results/preview-geometry-2026-10-21/DECISION.md",
         "apps/paintcraft/src/app/cpu_rendering/geometry_tests.rs"
       ],
-      "remaining_or_scope": "Antialiased brushes, bounded queued paint with ordered compound previews, Studio primary/secondary gestures, fill, shapes, rectangle selection and captured-layer Cosmic Text/Swash previews work. Ordered operation plans share exact coverage and upfront tile admission across painting families. Complete selections, secondary eraser/text policies, editable text objects, IME and native sustained-input latency qualification remain. Detached execution now checks cancellation between commands and within smooth coverage and planned paint indexing/preparation/replay; wall-clock cancellation tails and other kernels remain unqualified. Desktop preview staging now reuses one bounded-charge incremental sample union, scans appended capsules and routes worker cancellation into execution; measured growing/retrace CPU replay gains retain tiny non-win controls. Full incremental staging and native latency remain unqualified. Every painting family now constructs plans from the admitted metadata policy; descriptor/index failures discard private prefixes without changing owner/history state. Input/geometry buffers, aggregate batch metadata and native latency remain outside this per-plan guard.",
+      "remaining_or_scope": "Antialiased brushes, bounded queued paint with ordered compound previews, Studio primary/secondary gestures, fill, shapes, rectangle selection and captured-layer Cosmic Text/Swash previews work. Ordered operation plans share exact coverage and upfront tile admission across painting families. Complete selections, secondary eraser/text policies, editable text objects, IME and native sustained-input latency qualification remain. Detached execution now checks cancellation between commands and within smooth coverage and planned paint indexing/preparation/replay; wall-clock cancellation tails and other kernels remain unqualified. Desktop preview staging now reuses one bounded-charge incremental sample union, scans appended capsules and routes worker cancellation into execution; measured growing/retrace CPU replay gains retain tiny non-win controls. Full incremental staging and native latency remain unqualified. Every painting family now constructs plans from the admitted metadata policy; descriptor/index failures discard private prefixes without changing owner/history state. Input/geometry buffers, aggregate batch metadata and native latency remain outside this per-plan guard. Flood preparation now preserves prior staged walls and local selection/origin semantics while cooperating with cancellation and bounded scratch growth. It compiles local spans directly, without the duplicate coordinate-conversion vector. Complete batch planning, other kernels and native latency remain open.",
       "acceptance": "Tool-specific lifecycle fixtures, masked edges, focus cancel, text IME smoke cases."
     },
     {
       "id": "T15",
       "milestone": "M2",
       "title": "Classic v11 usable preview",
-      "depends_on": [
-        "T10",
-        "T14"
-      ],
+      "depends_on": ["T10", "T14"],
       "status": "partial",
       "evidence": [
         "apps/paintcraft/src/settings.rs",
@@ -435,10 +402,7 @@
       "id": "T16",
       "milestone": "M3",
       "title": "Classic historical parity",
-      "depends_on": [
-        "T03",
-        "T15"
-      ],
+      "depends_on": ["T03", "T15"],
       "status": "not-started",
       "evidence": [],
       "remaining_or_scope": "Per-operation evidence records; original menu/eraser/canvas/tool lifecycles and allowed OS differences.",
@@ -448,11 +412,7 @@
       "id": "T17",
       "milestone": "M3",
       "title": "PDN and PAINT compatibility",
-      "depends_on": [
-        "T03",
-        "T08",
-        "T30"
-      ],
+      "depends_on": ["T03", "T08", "T30"],
       "status": "not-started",
       "evidence": [],
       "remaining_or_scope": "Read/write/metadata tested independently; malicious parsing bounds; no .NET deserialization/runtime. Fresh creation and source-preserving rewrite qualify independently; retain source bindings across repeated saves.",
@@ -462,11 +422,7 @@
       "id": "T18",
       "milestone": "M3",
       "title": "Wasm effect SDK for contributors",
-      "depends_on": [
-        "T06",
-        "T12",
-        "T33"
-      ],
+      "depends_on": ["T06", "T12", "T33"],
       "status": "not-started",
       "evidence": [],
       "remaining_or_scope": "ABI range/trap/halo/mask tests; one complete external-author workflow before SDK stabilization.",
@@ -476,11 +432,7 @@
       "id": "T19",
       "milestone": "M3",
       "title": "Studio parity tranches",
-      "depends_on": [
-        "T12",
-        "T14",
-        "T17"
-      ],
+      "depends_on": ["T12", "T14", "T17"],
       "status": "partial",
       "evidence": ["crates/presentation/paintcraft-studio/src/lib.rs", "apps/paintcraft/tests/gui/studio.rs", "docs/STUDIO.md"],
       "remaining_or_scope": "Studio toolbar, floating Tools/Colors/Layers, guarded History navigation and independent document tabs with owner-routed save/recovery and close handling work; shared descriptors and menu/shortcut dispatch cover existing actions; full action coverage, image operations, effects, PDN and reference parity remain.",
@@ -490,9 +442,7 @@
       "id": "T20",
       "milestone": "M3",
       "title": "Codec breadth",
-      "depends_on": [
-        "T08"
-      ],
+      "depends_on": ["T08"],
       "status": "not-started",
       "evidence": [],
       "remaining_or_scope": "Per-backend/variant write+read evidence, metadata/index and worker failures; no Rust-only delays.",
@@ -502,9 +452,7 @@
       "id": "T21",
       "milestone": "M3",
       "title": "Performance decision experiments",
-      "depends_on": [
-        "T13"
-      ],
+      "depends_on": ["T13"],
       "status": "partial",
       "evidence": [
         "benchmarks/results/gpu-single-layer-2026-10-21/DECISION.md",
@@ -535,10 +483,7 @@
       "id": "T22",
       "milestone": "M4",
       "title": "Browser conformance",
-      "depends_on": [
-        "T15",
-        "T18"
-      ],
+      "depends_on": ["T15", "T18"],
       "status": "not-started",
       "evidence": [],
       "remaining_or_scope": "Native-equivalent fixtures, interruption tests and unsupported-capability reports.",
@@ -548,9 +493,7 @@
       "id": "T23",
       "milestone": "M4",
       "title": "RetroPaint and historical formats",
-      "depends_on": [
-        "T16"
-      ],
+      "depends_on": ["T16"],
       "status": "not-started",
       "evidence": [],
       "remaining_or_scope": "Historical Paint and Deluxe Paint II Enhanced 2.0 skins; era-specific fixtures and explicit additional capabilities without changed default muscle memory. See docs/RETRO.md.",
@@ -560,10 +503,7 @@
       "id": "T24",
       "milestone": "M4",
       "title": "Compact PCND container study",
-      "depends_on": [
-        "T11",
-        "T21"
-      ],
+      "depends_on": ["T11", "T21"],
       "status": "not-started",
       "evidence": [],
       "remaining_or_scope": "Benchmark justification, corruption tests and old-v1 corpus preserved.",
@@ -573,10 +513,7 @@
       "id": "T25",
       "milestone": "M5",
       "title": "Mobile adaptation",
-      "depends_on": [
-        "T19",
-        "T22"
-      ],
+      "depends_on": ["T19", "T22"],
       "status": "not-started",
       "evidence": [],
       "remaining_or_scope": "Device execution, orientation/background/quota/thermal evidence; not cross-compile-only.",
@@ -586,10 +523,7 @@
       "id": "T26",
       "milestone": "M5",
       "title": "Optional AI and MCP",
-      "depends_on": [
-        "T18",
-        "T19"
-      ],
+      "depends_on": ["T18", "T19"],
       "status": "not-started",
       "evidence": [],
       "remaining_or_scope": "Consent/provider/model boundaries and stale-result/undo safety; no mandatory account.",
@@ -624,10 +558,7 @@
       "id": "T29",
       "milestone": "M1",
       "title": "Version-aware document admission",
-      "depends_on": [
-        "T01",
-        "T04"
-      ],
+      "depends_on": ["T01", "T04"],
       "status": "partial",
       "evidence": ["crates/services/paintcraft-formats/src/pcnd.rs"],
       "remaining_or_scope": "Exact v1 admission and unsupported rejection exist; all VER cases and future preview modes remain unqualified.",
@@ -637,11 +568,7 @@
       "id": "T30",
       "milestone": "M3",
       "title": "Foreign-source lineage and preservation planner",
-      "depends_on": [
-        "T03",
-        "T08",
-        "T31"
-      ],
+      "depends_on": ["T03", "T08", "T31"],
       "status": "not-started",
       "evidence": [],
       "remaining_or_scope": "PRES-01..10; preserved opaque bytes AND relationships; dependent/unknown edit refusal; alternating original-consumer edits and source-removal recovery.",
@@ -651,10 +578,7 @@
       "id": "T31",
       "milestone": "M2",
       "title": "Frozen resource snapshots",
-      "depends_on": [
-        "T05",
-        "T07"
-      ],
+      "depends_on": ["T05", "T07"],
       "status": "partial",
       "evidence": ["crates/services/paintcraft-formats/src/recovery/lease.rs", "apps/paintcraft/src/saving/restoring/tests.rs"],
       "remaining_or_scope": "Native recovery verifies exact input digest/IDs and retains decoded state under a source claim; general resource snapshots, source bindings, fonts/profiles and DPI/clock cases remain.",
@@ -664,10 +588,7 @@
       "id": "T32",
       "milestone": "M2",
       "title": "Truthful file receipts and save associations",
-      "depends_on": [
-        "T07",
-        "T08"
-      ],
+      "depends_on": ["T07", "T08"],
       "status": "partial",
       "evidence": [
         "crates/services/paintcraft-platform/src/save.rs",
@@ -695,10 +616,7 @@
       "id": "T33",
       "milestone": "M1",
       "title": "Capability discovery and admission checks",
-      "depends_on": [
-        "T01",
-        "T06"
-      ],
+      "depends_on": ["T01", "T06"],
       "status": "partial",
       "evidence": ["apps/paintcraft-cli/src/commands/capabilities.rs"],
       "remaining_or_scope": "Truthful CLI manifest exists; shared generation-aware GUI/worker capability service remains.",
@@ -708,10 +626,7 @@
       "id": "T34",
       "milestone": "M1",
       "title": "Hash-guarded one-shot automation",
-      "depends_on": [
-        "T06",
-        "T29"
-      ],
+      "depends_on": ["T06", "T29"],
       "status": "partial",
       "evidence": ["apps/paintcraft-cli/src/commands/mod.rs", "apps/paintcraft-cli/tests/cli.rs"],
       "remaining_or_scope": "Immutable read and pre-parse hash guard exist; complete cancellation/retry lifecycle cases remain.",
@@ -721,11 +636,7 @@
       "id": "T35",
       "milestone": "RELEASE",
       "title": "Profile-scoped release qualification",
-      "depends_on": [
-        "T10",
-        "T15",
-        "T33"
-      ],
+      "depends_on": ["T10", "T15", "T33"],
       "status": "not-started",
       "evidence": [],
       "remaining_or_scope": "QUAL-01..10; synthetic or missing oracle cannot promote a release; foreign fresh/preserving support qualified separately; relevant backend changes invalidate scope.",
@@ -735,10 +646,7 @@
       "id": "T36",
       "milestone": "M3",
       "title": "Bounded shared-component extraction review",
-      "depends_on": [
-        "T17",
-        "T18"
-      ],
+      "depends_on": ["T17", "T18"],
       "status": "not-started",
       "evidence": [],
       "remaining_or_scope": "REUSE-01..06; independent product policies/versions and CLI dependency graph; no generic Craft runtime, foreign UI, P2P or database engine requirement.",
@@ -751,6 +659,7 @@
       "depends_on": [],
       "status": "in-progress",
       "evidence": [
+        "docs/FLOOD_PREPARATION.md",
         "docs/PAINT_METADATA.md",
         "benchmarks/results/gpu-single-layer-2026-10-21/DECISION.md",
         "docs/GPU_COMPLETION_PROGRESS.md",
@@ -790,7 +699,7 @@
         "docs/MULTIRES_DISPLAY.md",
         "benchmarks/results/multires-display-2026-10-21/DECISION.md"
       ],
-      "remaining_or_scope": "Dependency/task ledgers and source-scoped CPU/history/painting experiments retain raw statistical/process evidence and integrated CLI/desktop CPU confirmation. Region-grid and preview comparisons retain slow controls, memory costs, host drift and failed builds explicitly. Prior Divan-only raw-sample gates, other adoption comparisons and cross-platform/native input/display qualification remain. GPU source-reuse evidence retains raw Criterion/process samples, staged-byte counters, over-limit behavior and a flagged timed outlier without promoting native latency claims. Viewport evidence retains 120 raw Criterion samples, 420 process observations, whole-canvas controls, source/work counters and failed development validation. Completed scratch-pool comparison preserves another 120 raw statistical samples and 420 process observations, including resize retention costs and the negative default-policy decision. Multiresolution evidence retains 180 statistical samples and 600 process observations, exact compose-before-filter pixels, source/binary identities and a test-only recursive-boundary follow-up; no missing-work or failed baseline is timed as a win. GPU scaled evidence retains source/binary identity, all raw samples, independent exact required output, process calibration, slow controls and the final CPU-default policy separately from measured candidate source. Regional-source evidence preserves complete raw exports, 23 required Metal regressions, native acceptance oracles, calibration and slow controls. The measured source policy remains explicitly configurable without a general acceleration claim. Batching evidence separates frozen measured source from final native-option integration, retains all slow controls and interrupted exports, verifies source/binary hashes, and records disk headroom after dev-only Cargo cleanup. No partial export or missing variant is promoted into a completed result. Completion quarantine is a correctness change with explicit failure-policy tests, a real invalid-wait Metal case, required-GPU desktop routing and full workspace validation. It makes no performance or physical-reclamation claim. Admission-lifetime validation includes real Metal failed waits, unwind, nested charges and queue teardown, plus runtime local/shared limit retention and cheap-token release. An existing overflow rejection diagnostic was restored after a development test caught its regression. This is declared ownership correctness without a throughput/RSS claim. Completion-progress tests verify deferred release without caller polling, idle/successful zero-poll behavior, cross-instance identity isolation and owner/context teardown on Metal. The first mismatch test exposed queue equality aliasing; private renderer/frame identity fixes it. No throughput or physical-reclamation claim follows. Single-layer adoption pins committed source/binary, exhaustive alpha/opacity and independent native framebuffer/worker oracles, raw statistical/process samples, calibrated setup costs, RSS and negative controls. Hyperfine schema-v2 analysis preserves original exports; mixed evidence rejects global activation. Corrected development compile diagnostics remain archived. Paint metadata is a correctness safety baseline: capacity-weighted descriptors, usable index payload and replay vectors are bounded per plan, with no physical RSS or throughput claim. Tests cover repeated writes, table growth, all eight painting families and late compound rollback; historical timing records do not qualify new guard overhead.",
+      "remaining_or_scope": "Dependency/task ledgers and source-scoped CPU/history/painting experiments retain raw statistical/process evidence and integrated CLI/desktop CPU confirmation. Region-grid and preview comparisons retain slow controls, memory costs, host drift and failed builds explicitly. Prior Divan-only raw-sample gates, other adoption comparisons and cross-platform/native input/display qualification remain. GPU source-reuse evidence retains raw Criterion/process samples, staged-byte counters, over-limit behavior and a flagged timed outlier without promoting native latency claims. Viewport evidence retains 120 raw Criterion samples, 420 process observations, whole-canvas controls, source/work counters and failed development validation. Completed scratch-pool comparison preserves another 120 raw statistical samples and 420 process observations, including resize retention costs and the negative default-policy decision. Multiresolution evidence retains 180 statistical samples and 600 process observations, exact compose-before-filter pixels, source/binary identities and a test-only recursive-boundary follow-up; no missing-work or failed baseline is timed as a win. GPU scaled evidence retains source/binary identity, all raw samples, independent exact required output, process calibration, slow controls and the final CPU-default policy separately from measured candidate source. Regional-source evidence preserves complete raw exports, 23 required Metal regressions, native acceptance oracles, calibration and slow controls. The measured source policy remains explicitly configurable without a general acceleration claim. Batching evidence separates frozen measured source from final native-option integration, retains all slow controls and interrupted exports, verifies source/binary hashes, and records disk headroom after dev-only Cargo cleanup. No partial export or missing variant is promoted into a completed result. Completion quarantine is a correctness change with explicit failure-policy tests, a real invalid-wait Metal case, required-GPU desktop routing and full workspace validation. It makes no performance or physical-reclamation claim. Admission-lifetime validation includes real Metal failed waits, unwind, nested charges and queue teardown, plus runtime local/shared limit retention and cheap-token release. An existing overflow rejection diagnostic was restored after a development test caught its regression. This is declared ownership correctness without a throughput/RSS claim. Completion-progress tests verify deferred release without caller polling, idle/successful zero-poll behavior, cross-instance identity isolation and owner/context teardown on Metal. The first mismatch test exposed queue equality aliasing; private renderer/frame identity fixes it. No throughput or physical-reclamation claim follows. Single-layer adoption pins committed source/binary, exhaustive alpha/opacity and independent native framebuffer/worker oracles, raw statistical/process samples, calibrated setup costs, RSS and negative controls. Hyperfine schema-v2 analysis preserves original exports; mixed evidence rejects global activation. Corrected development compile diagnostics remain archived. Paint metadata is a correctness safety baseline: capacity-weighted descriptors, usable index payload and replay vectors are bounded per plan, with no physical RSS or throughput claim. Tests cover repeated writes, table growth, all eight painting families and late compound rollback; historical timing records do not qualify new guard overhead. Flood safety validation compares 36,864 binary-image/seed/clip/tolerance cases with independent BFS, injects cancellation at every observed wide-row checkpoint and during bitmap initialization, tests scratch denials/signed endpoints and preserves owner/history after a private prefix. Safety limits and intervals are provisional, without throughput, RSS or wall-clock claims.",
       "acceptance": "An adoption record points to real scope, tests and excluded future detail; plan-only tooling makes no repository changes; real comparisons use actual optimized code/fixtures, keep correctness/build/fixture/raw evidence and record selection/tie/rejection honestly; smoke/model results never qualify application choices."
     }
   ]

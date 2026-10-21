@@ -148,3 +148,9 @@ Paint descriptor/replay-index capacity now has a separate
 constructs its plan from the admitted policy. Metadata exhaustion carries no
 decoded denial and is not a history-pressure retry. This bounds a prerequisite
 for compound planning without claiming complete first-attempt batch reservation.
+
+[Flood preparation](FLOOD_PREPARATION.md) now receives the worker cancellation
+callback and a separate per-call scratch limit from raster admission. Fixed scratch
+errors carry no decoded denial; cancellation or exhaustion after a private prefix
+discards that attempt without advancing owner/history state. Native wall-clock
+cancellation tails and full-batch resource planning remain unqualified.

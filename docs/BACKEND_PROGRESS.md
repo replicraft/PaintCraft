@@ -697,3 +697,38 @@ pins source, commands, compressed logs and release hashes for this correctness m
 Whole-batch/effect planning, coordinated physical budgets, scheduling, asynchronous
 GPU work, native recovery/latency and broader feature work remain. T04/T11/T14/T37
 remain partial/in progress; the full roadmap stays active.
+
+## Forty-second slice: cancellable bounded flood classification
+
+Flood fill now checks the worker token during bitmap initialization, frontier
+processing and wide-row expansion/marking/neighbor scans, including single-span
+regions. Bitmap, retained frontier and output-span capacities share a configurable
+64 MiB per-call baseline with fallible growth. The old public region API delegates
+to the checked path. Signed clips are area-validated in wide arithmetic and neighbor
+steps cannot overflow at signed endpoints. The editor propagates raster admission's
+scratch policy and compiles already-clipped local spans directly, removing the
+infallible duplicate document-coordinate conversion vector. No dependency,
+command schema, numerical policy or publication path changes. See
+[the flood preparation contract](FLOOD_PREPARATION.md).
+
+An independent BFS checks all 512 binary 3×3 images over every seed, two clips and
+four tolerances: 36,864 cases, including hidden RGB/alpha. Tests cancel every observed
+checkpoint in a wide one-row fill, cancel large bitmap initialization, bound
+bitmap/frontier/output growth and reject overflowing clip areas. Editor regressions
+observe earlier staged walls, preserve negative origins/selections, propagate fixed
+scratch limits through clones and discard a private prefix on classification
+cancellation or quota failure. Fixed scratch errors carry no decoded denial and
+cannot manufacture a history-pressure retry.
+
+815 workspace tests pass (26 explicit ignores) across 69 suites, with strict
+workspace/all-target Clippy and release desktop/CLI builds. All 31 required Metal integration tests, 23 renderer unit tests and 224 required-GPU
+desktop tests pass. Default/direct-single-layer 30-frame native startup checks exit
+zero with empty logs. The [validation record](validation/flood-preparation-2026-10-21/validation.json)
+pins source, commands, compressed logs and release hashes for this correctness milestone. The 1,024-step
+check interval and 64 MiB allowance are safety baselines, not measured optima or
+wall-clock response guarantees. Returned spans and later plan construction can
+still overlap under separate allowances. Aggregate batch/service leases, allocator/
+transient/RSS limits, other command kernels, whole-batch planning, native cancellation/
+display tails, GPU recovery and broader feature work remain. No throughput, RSS or
+native latency improvement is claimed. T04/T13/T14/T37 remain partial/in progress;
+the full roadmap stays active.

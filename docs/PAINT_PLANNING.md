@@ -75,3 +75,9 @@ priority/fairness and long-session physical-pressure qualification remain open.
 The timings above are frozen to f23e5c3, before cooperative paint cancellation.
 They do not qualify the overhead or latency of the later cancellation checks
 or per-plan metadata guards.
+
+[Flood classification](FLOOD_PREPARATION.md) now yields cooperatively and uses
+fallible capacity-bounded bitmap/frontier/output storage. The editor compiles its
+clipped local spans directly, preserving earlier private edits without a duplicate
+coordinate-conversion vector. This remains sequential data-dependent preparation,
+not an upfront whole-batch plan or aggregate scratch reservation.
