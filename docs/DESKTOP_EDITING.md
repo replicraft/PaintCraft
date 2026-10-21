@@ -68,8 +68,9 @@ workspaces are polled without activation. Storage publication changes no content
 revision, undo position or saved acknowledgement, and cannot make a clean document
 dirty. Completed work yields to queued foreground edits. Failed decoded renders
 retry when their known footprint fits. [Accepted edit retries](EDIT_ADMISSION.md)
-retain captured batches and FIFO barriers, reserve known decoded capacity before
-restarting, and permit own-history maintenance while waiting. Full first-attempt
+retain captured batches or recorded undo/redo/seek requests and FIFO barriers,
+reserve known decoded capacity before restarting, and permit own-history maintenance
+while waiting. Full first-attempt
 request planning, scheduler priorities and native pressure/latency qualification
 remain.
 

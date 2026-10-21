@@ -1,7 +1,7 @@
-# Decoded capacity reservations and accepted-edit retries
+# Decoded capacity reservations and ordered retries
 
-Native edits that fail a feasible decoded-tile allocation retain their captured
-validated batch at the front of their owner's editing queue. They do not publish
+Native edits and history navigation that fail a feasible decoded-tile allocation
+retain their captured request at the front of their owner's editing queue. They do not publish
 partial pixels, drop history or allow a save boundary to pass them. Their preview,
 painting queue accounting and dirty/pending status remain active. Escape cancels
 the waiting edit and later editing activations while preserving file barriers.
@@ -52,7 +52,7 @@ task waits; their all-service admission and scheduling fairness remain open.
 
 ## Retry and publication
 
-The first native edit still allocates incrementally. Worker-side stroke/text plan
+The first native edit/restoration still allocates incrementally. Worker-side stroke/text plan
 construction produces its batch once. If execution reports a feasible decoded
 denial, the result retains that batch and the captured owner/base ticket; it does
 not retain a private document/history fork. Tool plans and font masks are not
@@ -78,14 +78,38 @@ across renders and editors guides preserving maintenance in subscribed contexts.
 A waiting owner may maintain its own history even when a later file boundary is
 queued; that boundary still captures only after the edit succeeds or is cancelled.
 
+## Recorded history restoration
+
+`History::{undo,redo,seek}_with_admission` and matching detached `Preparation`
+methods accept the caller's decoded realm/reservation. The history's configured
+cumulative restore-pixel budget still constrains explicit admission. Hot snapshots,
+weakly reusable decoded documents and tile versions can be reused without allocating
+new bytes; a fully resident target can succeed with zero fresh capacity.
+
+Cold restoration materializes into that same admission. A later tile failure drops
+the private prefix and prunes dead weak aliases. The owner retains its document,
+cursor, redo and saved acknowledgement. Native deferred requests keep Undo/Redo or
+the exact guarded seek target, without holding a private history fork while waiting.
+They publish known demand through the existing observer, reserve before restarting,
+and use a fresh guarded preparation after preserving maintenance. Original success/
+empty-status handling and target repair remain attached to the request. No recorded
+edit is replayed to restore pixels.
+
+Partial decode/cancellation and rejected publication release their private decoded
+leases and unused capacity. A changed base cancels rather than rebases navigation.
+Impossible decoded footprints and fixed restore limits remain terminal. Codec,
+checksum, source I/O and other unclassified failures retain their truthful errors.
+
 ## Limits and evidence
 
 Initial native batch/tool/navigation submission races now retain their tasks.
-Decoded-capacity retries cover successfully submitted native batch edits. Decoded
-history restoration and other service failures do not yet have this complete
-retained retry lifecycle. Full first-attempt
+Decoded-capacity retries cover successfully submitted native batch edits and
+recorded undo/redo/seek restoration. Other service failures do not yet have this
+complete retained retry lifecycle. Full first-attempt
 request planning, global scheduling fairness and starvation policy remain open.
-Current documents/readers can pin all available capacity, so waiting may require
+Known prefix demand can be conservative if other readers warm shared caches;
+complete planning/repricing is not implemented. Current documents/readers can
+pin all available capacity, so waiting may require
 explicit cancellation until logical eviction is implemented.
 
 Reserved decoded bytes do not include retained command/preview vectors, fonts,

@@ -113,6 +113,9 @@
       ],
       "status": "partial",
       "evidence": [
+        "docs/EDIT_ADMISSION.md",
+        "apps/paintcraft/src/controller/retry/navigation_tests.rs",
+        "crates/editing/paintcraft-editor/tests/reserved_navigation.rs",
         "crates/editing/paintcraft-history/src/lib.rs",
         "crates/editing/paintcraft-editor/tests/history_navigation.rs",
         "docs/HISTORY_STORAGE.md",
@@ -123,7 +126,7 @@
         "apps/paintcraft/src/app/editing.rs",
         "apps/paintcraft/src/app/editing/tests.rs"
       ],
-      "remaining_or_scope": "Recorded hot/cold linear undo/redo and guarded worker restoration preserve IDs and pixels, including leased disk payloads. Branching graphs, process-wide residency and full metadata admission remain.",
+      "remaining_or_scope": "Recorded hot/cold linear undo/redo and guarded worker restoration preserve IDs and pixels, including leased disk payloads. Recorded restoration accepts explicit decoded reservations; feasible native undo/redo/seek failures retain guarded FIFO requests. Branching graphs, process-wide residency and full metadata admission remain.",
       "acceptance": "Undo/redo randomized state equality; STATE-04/05/06; removed executor does not block redo."
     },
     {
@@ -207,6 +210,8 @@
       ],
       "status": "partial",
       "evidence": [
+        "apps/paintcraft/src/controller/retry/navigation_tests.rs",
+        "crates/editing/paintcraft-editor/tests/reserved_navigation.rs",
         "docs/WORKER_ADMISSION.md",
         "apps/paintcraft/src/controller/dispatch/tests.rs",
         "crates/services/paintcraft-runtime/src/submission_tests.rs",
@@ -250,7 +255,7 @@
         "apps/paintcraft/src/app/editing.rs",
         "apps/paintcraft/src/app/editing/tests.rs"
       ],
-      "remaining_or_scope": "Preserving history handles large snapshots through bounded classification/transfer. Native guarded storage maintenance reclaims eligible inactive-owner history without content/cursor/save changes and yields to queued foreground edits. Shared byte-budget notifications and known render demand coordinate native consumers across contexts; footprint-aware retries preserve fixed-limit failures. Accepted decoded-failed edits retain FIFO/file barriers and can reclaim their own history before a reserved retry. Initial worker-admission races retain captured tasks and FIFO order. First-attempt whole-request planning, decoded navigation/other resource retry lifecycles, native multi-window qualification, all-service budgets, relocation and native latency qualification remain.",
+      "remaining_or_scope": "Preserving history handles large snapshots through bounded classification/transfer. Native guarded storage maintenance reclaims eligible inactive-owner history without content/cursor/save changes and yields to queued foreground edits. Shared byte-budget notifications and known render demand coordinate native consumers across contexts; footprint-aware retries preserve fixed-limit failures. Accepted decoded-failed edits retain FIFO/file barriers and can reclaim their own history before a reserved retry. Initial worker-admission races retain captured tasks and FIFO order. Decoded navigation now retains guarded FIFO requests and retries with reserved capacity; cleanup completion is consumed only in the coordinator poll phase. First-attempt whole-request planning, other resource retry lifecycles, native multi-window qualification, all-service budgets, relocation and native latency qualification remain.",
       "acceptance": "MEM-01\u201307 under artificial low budget; actual allocator/RSS evidence, not counters alone."
     },
     {
@@ -286,6 +291,8 @@
       ],
       "status": "partial",
       "evidence": [
+        "apps/paintcraft/src/controller/retry/navigation_tests.rs",
+        "crates/editing/paintcraft-editor/tests/reserved_navigation.rs",
         "apps/paintcraft/src/controller/dispatch/tests.rs",
         "crates/services/paintcraft-runtime/src/submission_tests.rs",
         "apps/paintcraft/src/controller/retry/tests.rs",
@@ -322,7 +329,7 @@
         "crates/editing/paintcraft-editor/src/session/preparation.rs",
         "crates/editing/paintcraft-editor/tests/preparation.rs"
       ],
-      "remaining_or_scope": "Shared native render/edit workers prepare validated stroke/text plans from immutable previews. Revision-keyed weak snapshots avoid recollecting unchanged repaints; queued edits, file barriers and completion invalidate inputs. Guarded no-op results and compatible progress have tests. Preview-capture process costs are locally measured; changing-input cost is inconclusive. Device epochs reject replaced/retired GPU completions; Metal destruction and fresh-device host-history reconstruction pass. Native edit/render pools share declared-byte admission with worker/result guards surviving executor drop. Footprint-aware render retries and shared demand guide decoded pressure maintenance. Initial worker-admission races retain captured batch/tool/navigation tasks; decoded-failed edits retry reserved known capacity under owner/base guards. Native window-device recovery, priorities, physical/all-service budgets, changed-preview costs and native latency/interference qualification remain.",
+      "remaining_or_scope": "Shared native render/edit workers prepare validated stroke/text plans from immutable previews. Revision-keyed weak snapshots avoid recollecting unchanged repaints; queued edits, file barriers and completion invalidate inputs. Guarded no-op results and compatible progress have tests. Preview-capture process costs are locally measured; changing-input cost is inconclusive. Device epochs reject replaced/retired GPU completions; Metal destruction and fresh-device host-history reconstruction pass. Native edit/render pools share declared-byte admission with worker/result guards surviving executor drop. Footprint-aware render retries and shared demand guide decoded pressure maintenance. Initial worker-admission races retain captured batch/tool/navigation tasks; decoded-failed edits and recorded navigation retry reserved known capacity under owner/base guards. Native window-device recovery, priorities, physical/all-service budgets, changed-preview costs and native latency/interference qualification remain.",
       "acceptance": "SCHED-01\u201306 and GPU-01\u201306; no late mutation/device-loss data loss."
     },
     {

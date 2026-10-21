@@ -44,7 +44,10 @@ Maintenance has a separate controller slot and never makes a clean document dirt
 Completed input remains queued while that owner's storage step finishes. A completed
 maintenance step yields the shared worker to already queued foreground edits before
 another step starts. This is a local admission-order rule, not general scheduler
-priority or a preemptible latency deadline.
+priority or a preemptible latency deadline. Each owner completion is consumed only
+in the explicit poll phase. Starting a step cannot consume another completion
+between the coordinator's yield decision and admission; a completed unread step
+must first be reported to that coordinator.
 
 No-progress/failure gets a five-second per-ticket retry backoff. A changed logical
 revision can try sooner. The event loop requests the next wake while pressure
@@ -87,7 +90,7 @@ Capture still copies history metadata on the UI thread. A new edit can need more
 capacity than a single maintenance step releases. [Accepted decoded edit retries](EDIT_ADMISSION.md)
 retain their FIFO position and reserve the known footprint before resubmission;
 a racing admission keeps the command waiting. A waiting owner can maintain its
-history despite a later queued file boundary. Whole-request planning, non-edit
+history despite a later queued file boundary. Whole-request planning, other service
 retry lifecycles, native multi-window wake qualification and all-service fairness
 remain incomplete.
 

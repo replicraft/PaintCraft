@@ -686,3 +686,43 @@ submission. That metadata, other resource classes, full frozen resources, first-
 attempt whole-request planning, decoded history-navigation retry, scheduling fairness
 and native latency/physical-pressure qualification remain incomplete. No throughput,
 RSS or tail-latency gain is inferred. T11/T13 stay partial.
+
+
+## Twenty-third slice: admitted history restoration and ordered navigation retries
+
+Recorded undo/redo/seek restoration accepts explicit decoded admission all the way
+through packed snapshots to tile materialization. Configured cumulative restore
+limits still apply. Hot/weakly resident versions can reuse existing allocations,
+including successful fully resident navigation with zero fresh capacity. Failed
+partial decodes release private tiles and retire dead weak aliases without moving
+cursor, redo, content or saved acknowledgement.
+
+Native deferred requests now retain batch edits or exact recorded navigation intent.
+Feasible decoded failure returns the request without a private history fork; the
+owner waits in FIFO order and reserves known capacity before fresh preparation.
+Seek tickets, owner/base checks, cancellation, status and target repair remain intact.
+Permanent restore/work caps and impossible decoded demands do not register a wait.
+Recorded restoration never replays the original editing commands.
+
+A controller test exposed a separate double-poll race: a maintenance completion
+could arrive between the coordinator's poll and start, then be consumed implicitly
+inside start and immediately replaced by another cleanup despite queued paint.
+Start now leaves completion consumption to the explicit coordinator poll, so the
+yield decision observes every completed step.
+
+697 workspace tests pass (21 explicit ignores), strict workspace/all-target Clippy,
+formatting/file limits, release desktop/CLI builds, three required Apple M1 Pro
+Metal checks and an isolated 30-frame native smoke.
+
+Four editor regressions cover cold partial-decode rollback and reserved retry,
+independent pixels/state/history identity, undo/redo reuse, fixed restore policy,
+cancellation during decoding, and cancelled/stale publication. Five native
+regressions cover cold seek/save FIFO ordering, Escape, stale bases, cold Undo and
+Redo, and permanent limits. A completion-ready test verifies that starting again
+cannot consume an unread maintenance result behind the coordinator's yield decision.
+
+First-attempt full-request planning, logical current-document eviction, encoded/
+metadata/codec/output/GPU admission, priority/fairness and native latency/physical-
+pressure qualification remain incomplete. Known-prefix demand may grow on later
+operations. Reader-pinned capacity can require cancellation. T07/T11/T13 remain
+partial; no throughput, RSS or tail-latency gain is inferred from these checks.
