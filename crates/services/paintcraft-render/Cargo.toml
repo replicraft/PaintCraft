@@ -41,3 +41,7 @@ harness = false
 
 [lints]
 workspace = true
+
+[[bench]]
+name = "regional_reuse"
+harness = false

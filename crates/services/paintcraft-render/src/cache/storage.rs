@@ -104,3 +104,27 @@ impl Partition {
         self.entries.clear();
     }
 }
+
+impl Partition {
+    /// A returned patch starts from independently owned complete output. Incomplete
+    /// recomposition never mutates the stored frame or its dependency key.
+    pub(super) fn patch_source(&mut self, key: &Key) -> Result<Option<(Vec<Rect>, Vec<u8>)>> {
+        let Some((index, regions)) = self
+            .entries
+            .iter()
+            .enumerate()
+            .filter(|(_, e)| !e.prefix)
+            .find_map(|(index, e)| key.changed_regions(&e.key).map(|r| (index, r)))
+        else {
+            return Ok(None);
+        };
+        // A global change has no reusable output pixels; ordinary prefix routing wins.
+        if regions.iter().map(Rect::area).sum::<u128>() >= key.rect.area() {
+            return Ok(None);
+        }
+        let source = self.touch(index);
+        let mut pixels = output_buffer(source.len())?;
+        pixels.copy_from_slice(source);
+        Ok(Some((regions, pixels)))
+    }
+}

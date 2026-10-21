@@ -30,7 +30,7 @@ fn stroke(s: &mut Session, x: u32, y: u32) {
 }
 
 #[test]
-fn local_edit_recomposes_one_storage_tile_while_reusing_the_rest_and_restores_undo() {
+fn local_edit_recomposes_one_output_tile_while_reusing_the_rest_and_restores_undo() {
     for edge in [64, 128, 256] {
         let mut s =
             Session::new(new_document(1024, 1024, Some(Rgba([255; 4])), 1, POLICY).unwrap());
@@ -49,9 +49,10 @@ fn local_edit_recomposes_one_storage_tile_while_reusing_the_rest_and_restores_un
             .render(s.document(), region, Domain::Committed, || Ok(()))
             .unwrap();
         assert_eq!(image.pixels, render_flat(s.document()).unwrap());
-        assert_eq!(image.stats.recomposed_pixels, 65536);
-        assert_eq!(image.stats.prefix_hits, image.stats.recomposed_tiles);
-        assert_eq!(image.stats.recomposed_tiles, u64::from(256 / edge).pow(2));
+        assert_eq!(image.stats.recomposed_pixels, 64 * 64);
+        assert_eq!(image.stats.prefix_hits, u64::from(edge == 64));
+        assert_eq!(image.stats.patched_tiles, u64::from(edge != 64));
+        assert_eq!(image.stats.recomposed_tiles, 1);
         assert_eq!(
             image.stats.cache_hits,
             u64::from(1024 / edge).pow(2) - image.stats.recomposed_tiles
@@ -149,7 +150,7 @@ fn previews_and_cancellation_preserve_the_committed_cache_and_never_return_parti
             || Ok(()),
         )
         .unwrap();
-    assert_eq!(preview.stats.recomposed_pixels, 65536);
+    assert_eq!(preview.stats.recomposed_pixels, 64 * 64);
     assert_eq!(cache.usage(Domain::Committed), usage);
     cache.clear_preview();
     assert_eq!(cache.usage(Domain::Preview).pixel_bytes, 0);
@@ -244,7 +245,8 @@ fn changed_lower_layers_invalidate_prefixes_and_empty_plans_do_no_composition_wo
     let changed = cache
         .render(s.document(), region, Domain::Committed, || Ok(()))
         .unwrap();
-    assert_eq!(changed.stats.prefix_hits, 1);
+    assert_eq!(changed.stats.prefix_hits, 0);
+    assert_eq!(changed.stats.patched_tiles, 1);
     assert_eq!(changed.pixels, render_flat(s.document()).unwrap());
     let ops = s
         .document()
@@ -263,4 +265,142 @@ fn changed_lower_layers_invalidate_prefixes_and_empty_plans_do_no_composition_wo
         .unwrap();
     assert_eq!(empty.pixels, vec![0; 65 * 63 * 4]);
     assert_eq!(empty.stats.recomposed_pixels, 0);
+}
+
+#[test]
+fn localized_versions_cover_crossing_writes_offset_layers_and_cancelled_private_previews() {
+    use paintcraft_raster::{Admission, BlendMode};
+    let mut doc = new_document(512, 256, Some(Rgba([11, 22, 33, 127])), 1, POLICY).unwrap();
+    let id = doc.roots[0];
+    doc.layers.get_mut(&id).unwrap().origin = (-3, 5);
+    let mut cache = cache(64, 16 << 20);
+    let region = doc.canvas_rect();
+    cache
+        .render(&doc, region, Domain::Committed, || Ok(()))
+        .unwrap();
+    let before = doc.clone();
+    let mut adm = Admission::new(4 * 65536);
+    doc.layers
+        .get_mut(&id)
+        .unwrap()
+        .raster
+        .fill_rect(
+            &Rect::new(62, 61, 5, 7).unwrap(),
+            Rgba([17, 88, 156, 128]),
+            BlendMode::SourceOver,
+            &mut adm,
+        )
+        .unwrap();
+    let frame = cache
+        .render(&doc, region, Domain::Committed, || Ok(()))
+        .unwrap();
+    assert_eq!(frame.pixels, render_flat(&doc).unwrap());
+    assert!(frame.stats.recomposed_pixels < 65536);
+    assert!(frame.stats.cache_hits > 0);
+    let mut private = doc.clone();
+    private
+        .layers
+        .get_mut(&id)
+        .unwrap()
+        .raster
+        .blend_pixel(190, 180, Rgba([4, 5, 6, 0]), BlendMode::Replace, &mut adm)
+        .unwrap();
+    let cancelled = cache.render(&private, region, Domain::Preview, || {
+        Err(Error::new(ErrorCode::OperationCancelled, "cancel preview"))
+    });
+    assert_eq!(cancelled.unwrap_err().code, ErrorCode::OperationCancelled);
+    assert_eq!(
+        cache
+            .render(&doc, region, Domain::Committed, || Ok(()))
+            .unwrap()
+            .stats
+            .recomposed_pixels,
+        0
+    );
+    assert_eq!(
+        cache
+            .render(&before, region, Domain::Committed, || Ok(()))
+            .unwrap()
+            .pixels,
+        render_flat(&before).unwrap()
+    );
+}
+
+#[test]
+fn patched_output_matches_scalar_for_unaligned_grids_overlaps_and_cancellation() {
+    use paintcraft_raster::{Admission, BlendMode, RasterLayer};
+    for edge in [31, 64, 97, 128, 256, 1024] {
+        let mut doc = new_document(259, 137, Some(Rgba([11, 22, 33, 127])), 1, POLICY).unwrap();
+        let id = doc.roots[0];
+        doc.layers.get_mut(&id).unwrap().origin = (-3, 5);
+        doc.layers.get_mut(&id).unwrap().raster =
+            RasterLayer::new(300, 150, Rgba([31, 63, 127, 0]));
+        let region = doc.canvas_rect();
+        let mut cache = cache(edge, 16 << 20);
+        cache
+            .render(&doc, region, Domain::Committed, || Ok(()))
+            .unwrap();
+        let mut adm = Admission::new(32 * 65536);
+        for i in 0..12 {
+            let previous = doc.clone();
+            let area = Rect::new((i * 37) % 270, (i * 17) % 125, 3 + i % 5, 2 + i % 7).unwrap();
+            doc.layers
+                .get_mut(&id)
+                .unwrap()
+                .raster
+                .fill_rect(
+                    &area,
+                    Rgba([17, 88, i as u8, 128]),
+                    BlendMode::Replace,
+                    &mut adm,
+                )
+                .unwrap();
+            assert_eq!(
+                cache
+                    .render(&doc, region, Domain::Committed, || Ok(()))
+                    .unwrap()
+                    .pixels,
+                render_flat(&doc).unwrap(),
+                "edge {edge}, step {i}"
+            );
+            assert_eq!(
+                cache
+                    .render(&previous, region, Domain::Preview, || Ok(()))
+                    .unwrap()
+                    .pixels,
+                render_flat(&previous).unwrap()
+            );
+        }
+        // Cancel after patch work starts; the stored prior image remains a full hit.
+        let previous = doc.clone();
+        doc.layers
+            .get_mut(&id)
+            .unwrap()
+            .raster
+            .fill_rect(
+                &Rect::new(60, 60, 80, 70).unwrap(),
+                Rgba([99; 4]),
+                BlendMode::Replace,
+                &mut adm,
+            )
+            .unwrap();
+        let seen = std::cell::Cell::new(0);
+        let result = cache.render(&doc, region, Domain::Preview, || {
+            seen.set(seen.get() + 1);
+            if seen.get() == 9 {
+                Err(Error::new(
+                    ErrorCode::OperationCancelled,
+                    "cancel partial patch",
+                ))
+            } else {
+                Ok(())
+            }
+        });
+        assert_eq!(result.unwrap_err().code, ErrorCode::OperationCancelled);
+        let frame = cache
+            .render(&previous, region, Domain::Committed, || Ok(()))
+            .unwrap();
+        assert_eq!(frame.stats.recomposed_pixels, 0);
+        assert_eq!(frame.pixels, render_flat(&previous).unwrap());
+    }
 }

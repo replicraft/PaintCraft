@@ -27,6 +27,8 @@ pub enum Domain {
 pub struct RenderStats {
     pub cache_hits: u64,
     pub prefix_hits: u64,
+    /// Tiles retaining unaffected output and recomposing only changed dependency cells.
+    pub patched_tiles: u64,
     pub recomposed_tiles: u64,
     pub recomposed_pixels: u64,
     pub output_pixels: u64,
@@ -154,19 +156,48 @@ impl CompositeCache {
                     stats.cache_hits += 1;
                     continue;
                 }
-                let source = self.render_miss(
-                    doc,
-                    rect,
-                    domain,
-                    key_budget,
-                    key.is_some(),
-                    &check,
-                    &mut stats,
-                )?;
+                let patch = if let Some(key) = key.as_ref() {
+                    let committed = if domain == Domain::Preview {
+                        self.committed.patch_source(key)?
+                    } else {
+                        None
+                    };
+                    if committed.is_some() {
+                        committed
+                    } else {
+                        match domain {
+                            Domain::Committed => self.committed.patch_source(key)?,
+                            Domain::Preview => self.preview.patch_source(key)?,
+                        }
+                    }
+                } else {
+                    None
+                };
+                let source = if let Some((regions, mut source)) = patch {
+                    for dirty in regions {
+                        check()?;
+                        let changed = render_region_cancellable(doc, dirty, &check)?;
+                        copy_tile(&mut source, rect, dirty, &changed);
+                        stats.recomposed_pixels += dirty.area() as u64;
+                    }
+                    stats.patched_tiles += 1;
+                    source
+                } else {
+                    let source = self.render_miss(
+                        doc,
+                        rect,
+                        domain,
+                        key_budget,
+                        key.is_some(),
+                        &check,
+                        &mut stats,
+                    )?;
+                    stats.recomposed_pixels += rect.area() as u64;
+                    source
+                };
                 check()?;
                 copy_tile(&mut pixels, region, rect, &source);
                 stats.recomposed_tiles += 1;
-                stats.recomposed_pixels += rect.area() as u64;
                 if let Some(key) = key {
                     let partition = match domain {
                         Domain::Committed => &mut self.committed,

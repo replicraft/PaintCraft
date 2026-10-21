@@ -1,12 +1,8 @@
 use super::*;
 use paintcraft_core::types::Rgba;
-use paintcraft_raster::{TileCoord, TileVersion};
+use paintcraft_raster::{RegionCoord, RegionVersion};
 use std::mem::size_of;
 
-// Weak keys retain Arc control blocks after their decoded Vecs are freed. Charge
-// 128 bytes per key conservatively (including duplicate keys to the same block).
-// This is an admission weight, not a claim about allocator/RSS measurements.
-const WEAK_CHARGE: usize = 128;
 #[derive(Debug, PartialEq, Eq)]
 struct LayerKey {
     id: [u8; 16],
@@ -14,7 +10,7 @@ struct LayerKey {
     size: (u32, u32),
     opacity: u8,
     default: Rgba,
-    versions: Vec<(TileCoord, TileVersion)>,
+    versions: Vec<(RegionCoord, RegionVersion)>,
 }
 #[derive(Debug, PartialEq, Eq)]
 pub(super) struct Key {
@@ -28,10 +24,7 @@ impl Key {
             + self
                 .layers
                 .iter()
-                .map(|l| {
-                    l.versions.capacity() * size_of::<(TileCoord, TileVersion)>()
-                        + l.versions.len() * WEAK_CHARGE
-                })
+                .map(|l| l.versions.capacity() * size_of::<(RegionCoord, RegionVersion)>())
                 .sum::<usize>()
     }
 
@@ -71,25 +64,24 @@ impl Key {
                 .translated(-layer.origin.0, -layer.origin.1)
                 .expect("admitted origin");
             let mut versions = Vec::new();
-            for version in layer.raster.tile_versions(local)? {
+            let Some(region_versions) = layer.raster.region_versions(local)? else {
+                return Ok(None);
+            };
+            for version in region_versions {
                 if versions.len() == versions.capacity() {
                     let grow = versions.capacity().max(4);
-                    let extra = grow * size_of::<(TileCoord, TileVersion)>();
+                    let extra = grow * size_of::<(RegionCoord, RegionVersion)>();
                     if extra > budget.saturating_sub(charge)
                         || versions.try_reserve_exact(grow).is_err()
                     {
                         return Ok(None);
                     }
-                    charge += versions.capacity() * size_of::<(TileCoord, TileVersion)>()
-                        - (versions.len() * size_of::<(TileCoord, TileVersion)>());
+                    charge += versions.capacity() * size_of::<(RegionCoord, RegionVersion)>()
+                        - (versions.len() * size_of::<(RegionCoord, RegionVersion)>());
                     if charge > budget {
                         return Ok(None);
                     }
                 }
-                if WEAK_CHARGE > budget.saturating_sub(charge) {
-                    return Ok(None);
-                }
-                charge += WEAK_CHARGE;
                 versions.push(version);
             }
             key.layers.push(LayerKey {
@@ -102,5 +94,73 @@ impl Key {
             });
         }
         Ok(Some(key))
+    }
+}
+
+impl Key {
+    /// Conservative 64-pixel output cells affected by changed source cells. Layer
+    /// geometry/policies must match; structural changes require ordinary composition.
+    pub(super) fn changed_regions(&self, previous: &Self) -> Option<Vec<Rect>> {
+        if self.doc != previous.doc
+            || self.rect != previous.rect
+            || self.layers.len() != previous.layers.len()
+        {
+            return None;
+        }
+        let edge = i64::from(paintcraft_raster::REGION_EDGE);
+        let columns = (self.rect.width() as usize).div_ceil(edge as usize);
+        let mut changed = [false; 256]; // At most 16x16 cells in a 1024-pixel output tile.
+        for (new, old) in self.layers.iter().zip(&previous.layers) {
+            if new.id != old.id
+                || new.origin != old.origin
+                || new.size != old.size
+                || new.opacity != old.opacity
+                || new.default != old.default
+                || new.versions.len() != old.versions.len()
+            {
+                return None;
+            }
+            for ((coord, version), (old_coord, old_version)) in
+                new.versions.iter().zip(&old.versions)
+            {
+                if coord != old_coord {
+                    return None;
+                }
+                if version == old_version {
+                    continue;
+                }
+                let source = Rect {
+                    x0: coord.rx * edge + new.origin.0,
+                    y0: coord.ry * edge + new.origin.1,
+                    x1: (coord.rx + 1) * edge + new.origin.0,
+                    y1: (coord.ry + 1) * edge + new.origin.1,
+                };
+                let Some(area) = source.intersect(&self.rect) else {
+                    continue;
+                };
+                for y in (area.y0 - self.rect.y0) / edge..=(area.y1 - 1 - self.rect.y0) / edge {
+                    for x in (area.x0 - self.rect.x0) / edge..=(area.x1 - 1 - self.rect.x0) / edge {
+                        changed[y as usize * columns + x as usize] = true;
+                    }
+                }
+            }
+        }
+        let mut regions = Vec::new();
+        regions
+            .try_reserve_exact(changed.iter().filter(|&&v| v).count())
+            .ok()?;
+        for (index, dirty) in changed.into_iter().enumerate() {
+            if dirty {
+                let x = self.rect.x0 + (index % columns) as i64 * edge;
+                let y = self.rect.y0 + (index / columns) as i64 * edge;
+                regions.push(Rect {
+                    x0: x,
+                    y0: y,
+                    x1: (x + edge).min(self.rect.x1),
+                    y1: (y + edge).min(self.rect.y1),
+                });
+            }
+        }
+        Some(regions)
     }
 }
