@@ -12,10 +12,11 @@ use paintcraft_core::types::json::Value;
 use paintcraft_core::types::{Error, ErrorCode, Result};
 use uuid::Uuid;
 
-use crate::execute::{STAGED_PIXELS_MAX, Selection, execute_with_budget};
+use crate::execute::{STAGED_PIXELS_MAX, Selection, execute_with_admission};
 use paintcraft_commands::Batch;
 use paintcraft_core::types::ids::deterministic_id;
 use paintcraft_document::{Document, POLICY};
+use paintcraft_raster::Admission;
 
 pub use paintcraft_history::{
     Compression as HistoryCompression, DEFAULT_HISTORY_BYTES, Packing as HistoryPacking,
@@ -242,6 +243,14 @@ impl Session {
     }
 
     fn apply_checked(&mut self, batch: &Batch, check: impl Fn() -> Result<()>) -> Result<Receipt> {
+        self.apply_checked_with_admission(batch, Admission::new(self.staged_pixels), check)
+    }
+    fn apply_checked_with_admission(
+        &mut self,
+        batch: &Batch,
+        admission: Admission,
+        check: impl Fn() -> Result<()>,
+    ) -> Result<Receipt> {
         check()?;
         if batch.policy != POLICY {
             return Err(Error::new(
@@ -255,7 +264,12 @@ impl Session {
                 "The current publication differs from the requested base.",
             ));
         }
-        let mut staged = execute_with_budget(&self.doc, self.selection, batch, self.staged_pixels)?;
+        let mut staged = execute_with_admission(
+            &self.doc,
+            self.selection,
+            batch,
+            admission.constrain_pixels(self.staged_pixels),
+        )?;
         check()?;
         let content_changed = !staged.doc.same_semantics(&self.doc);
         if !content_changed && staged.selection == self.selection {

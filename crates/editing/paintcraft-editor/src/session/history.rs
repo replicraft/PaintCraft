@@ -17,13 +17,17 @@ pub struct HistoryView {
 }
 
 impl Session {
+    /// Cheap owner/base guard without collecting history entry metadata.
+    pub fn history_ticket(&self) -> HistoryTicket {
+        HistoryTicket {
+            owner: self.owner,
+            base: self.ticket(),
+        }
+    }
     /// Metadata only: does not clone documents, retain tiles, or modify history.
     pub fn history_view(&self) -> HistoryView {
         HistoryView {
-            ticket: HistoryTicket {
-                owner: self.owner,
-                base: self.ticket(),
-            },
+            ticket: self.history_ticket(),
             entries: self.history.entries().collect(),
             trimmed_total: self.history.trimmed_total(),
         }

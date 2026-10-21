@@ -97,6 +97,12 @@ impl Session {
 }
 
 impl Preparation {
+    pub fn history_ticket(&self) -> HistoryTicket {
+        HistoryTicket {
+            owner: self.session.owner,
+            base: self.base,
+        }
+    }
     /// Finish a tool preparation that produced no operations (for example,
     /// fully clipped text). Publication still checks the captured owner/base/policy.
     pub fn no_change(self, check: impl Fn() -> Result<()>) -> Result<PreparedEdit> {
@@ -118,8 +124,23 @@ impl Preparation {
     /// Execute privately and check cancellation around command execution and
     /// throughout history classification and spill batches. Individual command
     /// kernels and filesystem calls are not preemptible.
-    pub fn apply(mut self, batch: &Batch, check: impl Fn() -> Result<()>) -> Result<PreparedEdit> {
-        let receipt = self.session.apply_checked(batch, &check)?;
+    pub fn apply(self, batch: &Batch, check: impl Fn() -> Result<()>) -> Result<PreparedEdit> {
+        let admission = Admission::new(self.session.staged_pixels);
+        self.apply_with_admission(batch, admission, check)
+    }
+
+    /// Execute with caller-admitted decoded capacity while preserving the session's
+    /// staged limit, cancellation, history and owner publication guards.
+    /// History decode/codec resources retain their separate admission policies.
+    pub fn apply_with_admission(
+        mut self,
+        batch: &Batch,
+        admission: Admission,
+        check: impl Fn() -> Result<()>,
+    ) -> Result<PreparedEdit> {
+        let receipt = self
+            .session
+            .apply_checked_with_admission(batch, admission, &check)?;
         check()?;
         Ok(PreparedEdit {
             base: self.base,
