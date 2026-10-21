@@ -391,3 +391,30 @@ UI snapshot gathering/comparison still copies point data, history capture still
 copies metadata, and other command construction, font-catalog activation and data
 destruction retain UI costs. Global physical admission, device epochs, priority/fair
 scheduling and native p95/p99/max/interference qualification remain. T13 stays partial.
+
+
+## Twelfth slice: reuse unchanged desktop preview snapshots
+
+Tool state now supplies process-local preview revisions, including captured path,
+shape constraint, text content/style, release and cancellation changes. Repeated
+points, rejected path growth and unchanged text styling keep their revision. The
+desktop caches immutable previews by these inputs, queue revision, document epoch
+and cancellation lineage. Accepted commands, file barriers and consumed worker
+results invalidate queue inputs. Public future tool settings do not mutate a live
+captured gesture.
+
+Rendering reuses an unchanged snapshot by pointer identity; overlays skip path
+cloning. Equal-value input refreshes replace the owned snapshot without inventing
+a render revision. The cache itself holds weak references, so it cannot retain
+large point buffers in inactive editors once render consumers release them.
+Changed or expired snapshots still collect point data and may compare paths on
+the UI thread. This does not establish a latency improvement or physical memory
+bound; allocation and native latency qualification remain.
+
+613 workspace tests pass (20 explicit ignores), with strict workspace/all-target
+Clippy, formatting and the 800-line limit. Release desktop/CLI builds, required
+Metal parity on Apple M1 Pro and an isolated 30-frame native-window smoke pass.
+Added regressions cover immutable old snapshots after growth, idle reuse,
+expired cache reconstruction, text and shape updates, rejected moves, matching
+button release, queued paint, ordered file barriers, cancellation, completion and
+an equal-value source refresh. T13 remains partial.

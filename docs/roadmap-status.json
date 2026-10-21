@@ -256,12 +256,15 @@
         "apps/paintcraft/src/app/editing/tests.rs",
         "apps/paintcraft/src/controller/strokes.rs",
         "apps/paintcraft/src/controller/strokes/preparation_tests.rs",
+        "apps/paintcraft/src/controller/preview_cache.rs",
+        "apps/paintcraft/src/controller/preview_cache/tests.rs",
+        "crates/editing/paintcraft-tools/tests/preview_revision.rs",
         "apps/paintcraft/src/app/rendering.rs",
         "apps/paintcraft/src/app/text_ui.rs",
         "crates/editing/paintcraft-editor/src/session/preparation.rs",
         "crates/editing/paintcraft-editor/tests/preparation.rs"
       ],
-      "remaining_or_scope": "Shared native render/edit workers prepare validated stroke/text plans from immutable preview snapshots. Targeted completions, guarded no-op results, append-compatible preview progress and ordered file captures have tests. Priorities, device epochs, global physical budgets, snapshot-copy costs and native latency/interference qualification remain.",
+      "remaining_or_scope": "Shared native render/edit workers prepare validated stroke/text plans from immutable previews. Revision-keyed weak snapshots avoid recollecting unchanged repaints; queued edits, file barriers and completion invalidate inputs. Guarded no-op results and compatible progress have tests. Priorities, device epochs, global physical budgets, changed-preview copy costs and native latency/interference qualification remain.",
       "acceptance": "SCHED-01\u201306 and GPU-01\u201306; no late mutation/device-loss data loss."
     },
     {

@@ -54,8 +54,16 @@ no documents remain open.
 
 ## Render preparation and progress
 
-The UI captures and compares a preview snapshot. The render request shares that
-immutable snapshot by `Arc`; submitting it does not collect another path copy,
+The UI captures a preview snapshot only when its tool/queue/document inputs change
+or its previous weak cache entry expires. Tool revisions track captured gesture,
+shape constraint and text mutations; accepted commands, file barriers and worker
+completions invalidate queued snapshots. The cache holds only weak references and
+cannot retain point buffers after consumers release them. Rendering and overlays
+reuse the same immutable `Arc`; unchanged repaints compare pointer identity instead
+of copying or scanning path points. Equal-value refreshes still retain the new
+snapshot so subsequent repaints can reuse it.
+
+The render request shares that snapshot; submitting it does not collect another path copy,
 expand point/span JSON values, validate/hash a batch or rasterize a font. The render
 worker performs that preparation, then applies the batch to its captured document
 and composites it. Synchronous harnesses use the same builder. Stroke chunk/joint
@@ -120,8 +128,8 @@ second two-pass case delivers three coalesced strokes plus a live gesture across
 later frames, verifying ordered translucent preview/final pixels and undo depth.
 
 The fixed 2 GiB preparation charge is provisional scheduling admission, not a
-physical allocation reservation or process RSS bound. Capturing/comparing preview
-snapshots, detached-history metadata, non-tool command construction, font-catalog
+physical allocation reservation or process RSS bound. Changed/expired preview
+snapshot gathering/comparison, detached-history metadata, non-tool command construction, font-catalog
 activation, publication and destruction still involve the UI thread. Flat export planning/encoding/writing keeps its existing synchronous
 path. Non-paint activation payloads have no global byte admission policy yet. Input
 counters and fallible vector admission do not cover allocator overhead, preview
@@ -129,6 +137,6 @@ copies, native codec state or all other sessions. Priority/fair scheduling,
 process-wide memory accounting, finer cancellation and native
 queue-inclusive input/p95/p99/max latency qualification remain. No performance
 improvement is inferred from the correctness tests or the startup smoke. Native
-stroke/text preparation uses workers, but UI snapshot gathering/comparison still
-copies point data and font-catalog replacement can destroy derived data on the UI
+stroke/text preparation uses workers, but changed/expired UI snapshots still
+copy and compare point data and font-catalog replacement can destroy derived data on the UI
 thread. Those remaining costs need allocation/latency measurement.
