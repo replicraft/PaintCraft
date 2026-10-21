@@ -51,10 +51,11 @@ fn filter_pixels(native: &[u8], request: DisplayRequest) -> Vec<u8> {
     output
 }
 fn replay(case: &str, mode: &str, verify: bool) {
-    let edge = if mode == "gpu64" { 64 } else { 32 };
-    let gpu_mode = matches!(mode, "gpu32" | "gpu64");
-    let (target, gpu) = gpu_display::tests::target_with_scaled_edge(0, edge)
-        .expect("real GPU required for completed display readiness");
+    let edge = if mode.starts_with("gpu64") { 64 } else { 32 };
+    let gpu_mode = mode.starts_with("gpu");
+    let (target, gpu) =
+        gpu_display::tests::target_with_scaled_cache(0, edge, mode.ends_with("regions"))
+            .expect("real GPU required for completed display readiness");
     if verify {
         eprintln!("adapter={:?}", target.adapter_info());
     }
@@ -250,6 +251,30 @@ fn replay(case: &str, mode: &str, verify: bool) {
 fn native_multires_process() {
     let case = std::env::var("PAINTCRAFT_VIEWPORT_CASE").unwrap_or_else(|_| "dense".into());
     match std::env::var("PAINTCRAFT_VIEWPORT_VARIANT").as_deref() {
+        Ok("regions-verify") => {
+            for mode in ["gpu32", "gpu32regions", "gpu64", "gpu64regions"] {
+                replay(&case, mode, true);
+            }
+        }
+        Ok("gpu32regions") => replay(&case, "gpu32regions", false),
+        Ok("gpu64regions") => replay(&case, "gpu64regions", false),
+        Ok("regions-criterion") => {
+            use criterion::{BenchmarkId, Criterion, SamplingMode};
+            let mut c = Criterion::default()
+                .sample_size(20)
+                .warm_up_time(Duration::from_millis(300))
+                .measurement_time(Duration::from_secs(1))
+                .without_plots();
+            let mut group = c.benchmark_group(format!("native_gpu_regions/{case}"));
+            group.sampling_mode(SamplingMode::Flat);
+            for mode in ["gpu32", "gpu32regions", "gpu64", "gpu64regions"] {
+                group.bench_function(BenchmarkId::from_parameter(mode), |b| {
+                    b.iter(|| replay(&case, mode, false))
+                });
+            }
+            group.finish();
+            c.final_summary();
+        }
         Ok("gpu-verify") => {
             for mode in ["cpu", "gpu32", "gpu64"] {
                 replay(&case, mode, true);

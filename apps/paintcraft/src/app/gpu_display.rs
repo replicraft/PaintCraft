@@ -116,10 +116,25 @@ pub(crate) mod tests {
     ) -> Option<(Target, Arc<GpuRenderer>)> {
         target_with_limits(bytes, edge, None)
     }
+    pub(crate) fn target_with_scaled_cache(
+        bytes: u64,
+        edge: u32,
+        region_views: bool,
+    ) -> Option<(Target, Arc<GpuRenderer>)> {
+        target_with_options(bytes, edge, None, region_views)
+    }
     pub(crate) fn target_with_limits(
         bytes: u64,
         edge: u32,
         limits: Option<eframe::wgpu::Limits>,
+    ) -> Option<(Target, Arc<GpuRenderer>)> {
+        target_with_options(bytes, edge, limits, false)
+    }
+    fn target_with_options(
+        bytes: u64,
+        edge: u32,
+        limits: Option<eframe::wgpu::Limits>,
+        region_views: bool,
     ) -> Option<(Target, Arc<GpuRenderer>)> {
         use eframe::wgpu;
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle());
@@ -151,7 +166,8 @@ pub(crate) mod tests {
             )
             .unwrap()
             .with_scaled_tile_edge(edge)
-            .unwrap(),
+            .unwrap()
+            .with_region_source_cache(region_views),
         );
         let renderer = eframe::egui_wgpu::Renderer::new(
             &device,
