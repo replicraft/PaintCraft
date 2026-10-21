@@ -3,8 +3,11 @@
 //! This first backend reads back straight RGBA8 for the shared display/export
 //! boundary. It is a correctness baseline, not a zero-copy or performance claim.
 mod epoch;
+mod presentation;
+mod readback;
 mod sources;
 pub use epoch::DeviceEpoch;
+pub use presentation::GpuTextureFrame;
 use sources::SourceCache;
 pub use sources::{GpuFrame, GpuRenderStats, SourceCacheLimits, SourceCacheUsage};
 
@@ -43,6 +46,7 @@ pub struct GpuRenderer {
     device: wgpu::Device,
     queue: wgpu::Queue,
     pipeline: wgpu::ComputePipeline,
+    presentation: Option<wgpu::ComputePipeline>,
     epoch: DeviceEpoch,
     sources: Mutex<SourceCache>,
     source_admission_bytes: u64,
@@ -94,11 +98,30 @@ impl GpuRenderer {
             compilation_options: Default::default(),
             cache: None,
         });
+        let presentation = if device.limits().max_storage_textures_per_shader_stage > 0 {
+            let module = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+                label: Some("PaintCraft exact egui display conversion"),
+                source: wgpu::ShaderSource::Wgsl(include_str!("present.wgsl").into()),
+            });
+            Some(
+                device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+                    label: Some("PaintCraft GPU display surface"),
+                    layout: None,
+                    module: &module,
+                    entry_point: Some("main"),
+                    compilation_options: Default::default(),
+                    cache: None,
+                }),
+            )
+        } else {
+            None
+        };
         epoch.check()?;
         Ok(Self {
             device,
             queue,
             pipeline,
+            presentation,
             epoch,
             sources: Mutex::new(SourceCache::new(limits)?),
             source_admission_bytes: limits
@@ -159,6 +182,33 @@ impl GpuRenderer {
         check: &impl Fn() -> Result<()>,
         cache: &mut SourceCache,
     ) -> Result<GpuFrame> {
+        let (output, mut stats) = self.compose(doc, check, cache)?;
+        let size = u64::from(doc.canvas.0) * u64::from(doc.canvas.1) * 4;
+        check()?;
+        let readback = self.device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("PaintCraft composite readback"),
+            size,
+            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
+            mapped_at_creation: false,
+        });
+        let mut encoder = self.device.create_command_encoder(&Default::default());
+        encoder.copy_buffer_to_buffer(&output, 0, &readback, 0, size);
+        check()?;
+        let submission = self.queue.submit([encoder.finish()]);
+        let bytes = readback::copy_mapped(&self.device, &readback, submission, check)?;
+        check()?;
+        stats.retained = cache.usage();
+        Ok(GpuFrame {
+            pixels: bytes,
+            stats,
+        })
+    }
+    fn compose(
+        &self,
+        doc: &Document,
+        check: &impl Fn() -> Result<()>,
+        cache: &mut SourceCache,
+    ) -> Result<(wgpu::Buffer, GpuRenderStats)> {
         cache.begin_frame();
         let mut stats = GpuRenderStats::default();
         check()?;
@@ -259,44 +309,7 @@ impl GpuRenderer {
             cache.completed(source);
         }
         check()?;
-        let readback = self.device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("PaintCraft composite readback"),
-            size,
-            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
-            mapped_at_creation: false,
-        });
-        let mut encoder = self.device.create_command_encoder(&Default::default());
-        encoder.copy_buffer_to_buffer(&output, 0, &readback, 0, size);
-        check()?;
-        let submission = self.queue.submit([encoder.finish()]);
-        let (send, recv) = mpsc::sync_channel(1);
-        readback
-            .slice(..)
-            .map_async(wgpu::MapMode::Read, move |result| {
-                let _ = send.send(result);
-            });
-        self.device
-            .poll(wgpu::PollType::Wait {
-                submission_index: Some(submission),
-                timeout: Some(Duration::from_secs(30)),
-            })
-            .map_err(|e| unavailable(format!("GPU submission failed: {e}")))?;
-        recv.recv_timeout(Duration::from_secs(30))
-            .map_err(|e| unavailable(format!("GPU readback timed out: {e}")))?
-            .map_err(|e| unavailable(format!("GPU readback failed: {e}")))?;
-        check()?;
-        let bytes = readback
-            .slice(..)
-            .get_mapped_range()
-            .map_err(|e| unavailable(format!("GPU mapping failed: {e}")))?
-            .to_vec();
-        readback.unmap();
-        check()?;
-        stats.retained = cache.usage();
-        Ok(GpuFrame {
-            pixels: bytes,
-            stats,
-        })
+        Ok((output, stats))
     }
 }
 

@@ -518,3 +518,138 @@ fn empty_transparent_layers_skip_uploads_without_losing_revealed_source_changes(
         .unwrap();
     parity(&gpu, &doc);
 }
+
+#[test]
+fn display_texture_matches_integer_premultiplication_for_every_color_alpha_pair() {
+    let Some(adapter) = adapter() else { return };
+    let (device, queue) = pollster::block_on(adapter.request_device(&Default::default())).unwrap();
+    let gpu = GpuRenderer::new(device, queue).unwrap();
+    let data: Vec<u8> = (0u16..256)
+        .flat_map(|alpha| {
+            (0u16..256).flat_map(move |color| {
+                [
+                    color as u8,
+                    (255 - color) as u8,
+                    (color as u8) ^ 0x5a,
+                    alpha as u8,
+                ]
+            })
+        })
+        .collect();
+    let mut doc = new_document(256, 256, Some(Rgba::TRANSPARENT), 0, POLICY).unwrap();
+    let id = doc.roots[0];
+    doc.layers.get_mut(&id).unwrap().raster = RasterLayer::from_rgba(
+        256,
+        256,
+        Rgba::TRANSPARENT,
+        &data,
+        &mut Admission::new(65536),
+    )
+    .unwrap();
+    let frame = gpu.render_texture(&doc, || Ok(())).unwrap();
+    assert_eq!(frame.size(), [256, 256]);
+    assert_eq!(frame.epoch(), gpu.epoch());
+    let expected: Vec<u8> = data
+        .as_chunks::<4>()
+        .0
+        .iter()
+        .flat_map(|p| {
+            [
+                ((u16::from(p[0]) * u16::from(p[3]) + 127) / 255) as u8,
+                ((u16::from(p[1]) * u16::from(p[3]) + 127) / 255) as u8,
+                ((u16::from(p[2]) * u16::from(p[3]) + 127) / 255) as u8,
+                p[3],
+            ]
+        })
+        .collect();
+    assert_eq!(frame.readback(|| Ok(())).unwrap(), expected);
+    // Texture readback has padded GPU rows; odd clipped extents must remove padding.
+    doc.canvas = (263, 19);
+    doc.layers.get_mut(&id).unwrap().origin = (-3, -1);
+    let frame = gpu.render_texture(&doc, || Ok(())).unwrap();
+    let expected: Vec<u8> = render_flat(&doc)
+        .unwrap()
+        .as_chunks::<4>()
+        .0
+        .iter()
+        .flat_map(|p| {
+            [
+                ((u16::from(p[0]) * u16::from(p[3]) + 127) / 255) as u8,
+                ((u16::from(p[1]) * u16::from(p[3]) + 127) / 255) as u8,
+                ((u16::from(p[2]) * u16::from(p[3]) + 127) / 255) as u8,
+                p[3],
+            ]
+        })
+        .collect();
+    assert_eq!(frame.readback(|| Ok(())).unwrap(), expected);
+}
+
+#[test]
+fn display_texture_cancellation_and_device_loss_preserve_host_pixels_and_retire_frames() {
+    use paintcraft_core::types::{Error, ErrorCode};
+    use std::cell::Cell;
+    let Some(adapter) = adapter() else { return };
+    let (device, queue) = pollster::block_on(adapter.request_device(&Default::default())).unwrap();
+    let gpu = GpuRenderer::new(device.clone(), queue).unwrap();
+    let doc = new_document(19, 17, Some(Rgba([31, 63, 127, 128])), 0, POLICY).unwrap();
+    let calls = Cell::new(0);
+    let frame = gpu
+        .render_texture(&doc, || {
+            calls.set(calls.get() + 1);
+            Ok(())
+        })
+        .unwrap();
+    let expected = frame.readback(|| Ok(())).unwrap();
+    assert_eq!(expected, [16, 32, 64, 128].repeat(19 * 17));
+    // Cover all observed cold composition/presentation checks; failed work cannot
+    // poison the next presentation or turn a display frame into a document edit.
+    for stop in 1..=calls.get() {
+        let seen = Cell::new(0);
+        // A failed attempt clears source data; force a cold source for each count.
+        let _ = gpu.render_texture(&doc, || {
+            Err(Error::new(ErrorCode::OperationCancelled, "clear source"))
+        });
+        let error = gpu
+            .render_texture(&doc, || {
+                seen.set(seen.get() + 1);
+                if seen.get() == stop {
+                    Err(Error::new(ErrorCode::OperationCancelled, "cancel display"))
+                } else {
+                    Ok(())
+                }
+            })
+            .unwrap_err();
+        assert_eq!(error.code, ErrorCode::OperationCancelled);
+        assert_eq!(
+            gpu.render_texture(&doc, || Ok(()))
+                .unwrap()
+                .readback(|| Ok(()))
+                .unwrap(),
+            expected
+        );
+    }
+    let error = frame
+        .readback(|| {
+            Err(Error::new(
+                ErrorCode::OperationCancelled,
+                "cancel display readback",
+            ))
+        })
+        .unwrap_err();
+    assert_eq!(error.code, ErrorCode::OperationCancelled);
+    assert_eq!(frame.readback(|| Ok(())).unwrap(), expected);
+    device.destroy();
+    let _ = device.poll(wgpu::PollType::Poll);
+    assert_eq!(
+        frame.readback(|| Ok(())).unwrap_err().code,
+        ErrorCode::CapabilityUnsupported
+    );
+    assert_eq!(
+        gpu.render_texture(&doc, || Ok(())).unwrap_err().code,
+        ErrorCode::CapabilityUnsupported
+    );
+    assert_eq!(
+        doc.layers[&doc.roots[0]].raster.default_pixel(),
+        Rgba([31, 63, 127, 128])
+    );
+}
