@@ -20,7 +20,10 @@ required. Canvas-edge boxes count only actual canvas pixels. Source scratch cann
 be recycled before its dependent accumulation completes. Previously returned frame
 textures remain independently readable after later renders or idle-cache eviction.
 
-The current implementation waits for each dependent submission. It does not claim
+The current implementation waits for each dependent submission. Optional
+[bounded layer batches](GPU_BATCHING.md) reduce compositor submissions while
+preserving native ordering and completion before reduction. They add an immutable
+pending-resource allowance to native worker admission. This does not claim
 asynchronous scheduling, tiled texture presentation, output-cache reuse or physical
 GPU memory admission. The immutable 2 MiB scratch allowance describes bounded
 working declarations; callers must separately charge coarse output plans and source

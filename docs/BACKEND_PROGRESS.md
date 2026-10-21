@@ -470,3 +470,48 @@ Per-layer submission/completion is the next GPU measurement target. Sparse
 GPU atlases, bounded dispatch/transfer services, device reconstruction, physical
 budgets, fairness, native tails and broader feature/reference work remain open.
 T12/T13/T21/T37 remain partial/in progress; the full roadmap stays active.
+
+## Thirty-sixth slice: bounded ordered GPU submissions
+
+Consecutive layer dispatches can now share an encoder under 16-layer and normally
+1 MiB source windows. One larger source runs alone; pending keys flush at 1 MiB
+plus at most one admitted key. Separate compute passes preserve exact original
+layer order/opacity rounding before reduction. Cached sources are protected during
+preparation, with new identities published only after successful completion and
+fresh cancellation/device checks. Unsubmitted work can be dropped; old display
+frames stay independently owned. The native worker adds an immutable 4 MiB pending
+allowance without GPU locks. This is not physical driver/RSS admission. See
+[the batching contract](GPU_BATCHING.md); no new dependency is introduced.
+
+[Completed native evidence](../benchmarks/results/gpu-submission-batches-2026-10-21-rerun/DECISION.md)
+retains 480 statistical samples and 1,500 process observations across single-layer,
+5/20/100-layer, sparse 4K and uniform controls under both source policies. Compositor
+submissions fall from 320 to 64 (five layers), 1,280 to 128 (twenty) and 6,400 to
+448 (one hundred), with identical source work inside each policy pair. Single-view
+twenty-layer process ratios are 1.80–2.37 and hundred-layer 2.03–2.21; regional
+ratios are 1.52–1.77 and 2.17–2.40. Five-layer timing is mixed, with regressions
+retained. Twenty-layer RSS rises from roughly 36–37 to 52–54 MiB single-view, and
+hundred-layer from 77–78 to 96–97 MiB. No global throughput, physical-memory,
+CPU/GPU crossover or OS event/display-tail claim follows.
+
+Serial single-view rendering stays default. Native experiments can explicitly set
+`PAINTCRAFT_GPU_BATCHING=1` or `=regions`; zoomed-out GPU display still independently
+requires `PAINTCRAFT_GPU_SCALED=1`. Exact native/readback/scaled output shares the
+same compositor. The measured implementation passes 777 workspace tests (25 explicit
+ignores), all 27 required Metal renderer tests and strict all-target Clippy. Final
+native-option integration separately passes 221 required-GPU desktop tests,
+strict workspace/all-target Clippy, release desktop/CLI builds and isolated
+30-frame startup smokes for default/batching/regional-batching settings. Pixel
+oracles cover layer/byte bounds, solitary oversized sources, cache overflow,
+cancellation checkpoints, epoch retirement and actual native framebuffer output.
+
+The first attempt's terminal ENOSPC export failure remains archived with 480 raw
+statistical samples and 300 raw process observations; the missing fourth variant
+is not invented from its printed summary. Only generated dev-profile artifacts
+were reclaimed, preserving frozen release/source hashes. The complete retry records
+approximately 15.59 GiB minimum sampled free space and retains all raw samples,
+slow controls, calibration, memory and interrupted evidence separately.
+
+Asynchronous transfers/completion, sparse GPU atlases, native device reconstruction,
+physical budgets, scheduling fairness, native pressure/tails and broader tool,
+format, frontend and reference work remain. T12/T13/T21/T37 remain partial/in progress.

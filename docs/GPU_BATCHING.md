@@ -5,7 +5,16 @@ in one encoder. Separate compute passes preserve exact integer layer-opacity and
 source-over rounding in original document order. Layers are not mathematically
 regrouped or downsampled independently. Native readback, native display and scaled
 display use the same compositor. The original one-layer submission policy remains
-default until the completed native experiment selects a policy.
+default after the [native comparison](../benchmarks/results/gpu-submission-batches-2026-10-21-rerun/DECISION.md)
+confirmed multilayer gains, mixed five-layer controls and higher process RSS.
+
+Native experiments can set `PAINTCRAFT_GPU_BATCHING=1` for batching with the
+original source policy, or `PAINTCRAFT_GPU_BATCHING=regions` for batching plus
+bounded regional sources. Unset/unrecognized values leave serial single-view
+rendering enabled. Positive sampling levels still require the independent
+`PAINTCRAFT_GPU_SCALED=1` option; otherwise the automatic CPU scaled path remains.
+These explicit options do not promise a speedup for every image or qualify a
+general CPU/GPU dispatch threshold.
 
 ## Bounds and ownership
 

@@ -1,0 +1,20 @@
+{
+  "terminal_exit_code": 1,
+  "error": "Hyperfine returned No space left on device (os error 28) while updating the first 100-layer export.",
+  "completed_process_cases": [
+    "tiny",
+    "dense",
+    "layers20"
+  ],
+  "partial_process_case": "layers100",
+  "partial_export_variants": 3,
+  "raw_partial_observations": 60,
+  "missing_variant_raw_data": "gpu64regionsbatch; printed summary only",
+  "criterion_cases": 6,
+  "raw_statistical_samples": 480,
+  "scope": "Interrupted attempt retained; not a complete three-session process experiment.",
+  "recovery": "Removed only Cargo dev-profile generated artifacts after dry run; frozen release executable and all input hashes verified unchanged.",
+  "free_bytes_after_cleanup": 19334983680,
+  "completed_process_observations": 240,
+  "total_raw_process_observations": 300
+}

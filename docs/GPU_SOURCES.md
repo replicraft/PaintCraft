@@ -30,8 +30,10 @@ hidden RGB remains untouched in authoritative storage and never leaks into outpu
 Update staging buffers use COPY_SRC, resident sources use STORAGE|COPY_DST, and
 copies and ordered composition share one command encoder. Nothing is scheduled
 through pending Queue::write_buffer calls. Dropping an unsubmitted encoder discards
-partial transfers. Submitted layers retain the existing completion wait; cache
-identities update only after completion and cancellation/epoch checks. Any ordinary
+partial transfers. Submitted work retains completion waits, with optional
+[bounded ordered batches](GPU_BATCHING.md). Cached hits are protected during
+preparation; their new identities publish only after completed layer/batch work
+and cancellation/epoch checks. Any ordinary
 render error or cancellation clears all source entries. A poisoned source mutex
 retires derived state before reuse. No GPU cache event commits or saves an edit.
 
