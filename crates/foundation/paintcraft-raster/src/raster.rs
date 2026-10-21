@@ -11,6 +11,8 @@ use paintcraft_core::types::resources::{BudgetReservation, SharedBudget};
 use std::collections::HashMap;
 use std::sync::{Arc, OnceLock};
 
+mod paint;
+pub use paint::PaintPlan;
 mod tile;
 use tile::Tile;
 
@@ -93,18 +95,7 @@ impl Admission {
     /// This validates but does not consume the cumulative staged-pixel allowance.
     /// Existing explicit reservations are checked rather than silently expanded.
     pub fn reserve_tiles(&mut self, tiles: u64) -> Result<()> {
-        let pixels = tiles
-            .checked_mul(TILE_PIXELS as u64)
-            .ok_or_else(|| Error::new(ErrorCode::ResourceLimit, "tile plan overflow"))?;
-        if pixels > self.remaining_pixels {
-            return Err(Error::new(
-                ErrorCode::ResourceLimit,
-                "staged pixel budget exceeded",
-            ));
-        }
-        let bytes = pixels
-            .checked_mul(4)
-            .ok_or_else(|| Error::new(ErrorCode::ResourceLimit, "tile plan byte overflow"))?;
+        let bytes = self.planned_bytes(tiles)?;
         let result = if let Some(reservation) = &self.reservation {
             reservation.ensure_capacity(bytes)
         } else if bytes == 0 {
@@ -120,6 +111,54 @@ impl Admission {
                 bytes,
             )
         })
+    }
+    fn planned_bytes(&self, tiles: u64) -> Result<u64> {
+        let pixels = tiles
+            .checked_mul(TILE_PIXELS as u64)
+            .ok_or_else(|| Error::new(ErrorCode::ResourceLimit, "tile plan overflow"))?;
+        if pixels > self.remaining_pixels {
+            return Err(Error::new(
+                ErrorCode::ResourceLimit,
+                "staged pixel budget exceeded",
+            ));
+        }
+        pixels
+            .checked_mul(4)
+            .ok_or_else(|| Error::new(ErrorCode::ResourceLimit, "tile plan byte overflow"))
+    }
+    fn with_tile_plan<T>(
+        &mut self,
+        tiles: u64,
+        run: impl FnOnce(&mut Self) -> Result<T>,
+    ) -> Result<T> {
+        if tiles != 0 && self.allocation_scope.is_none() {
+            self.allocation_scope = Some(Arc::new(std::sync::Mutex::new(tile::Scope::default())));
+        }
+        let mut operation = self.clone();
+        if let Err(error) = operation.reserve_tiles(tiles) {
+            let mut required = tiles
+                .checked_mul(RasterLayer::TILE_BYTES as u64)
+                .ok_or_else(|| {
+                    Error::new(ErrorCode::ResourceLimit, "paint plan footprint overflow")
+                })?;
+            if let Some(scope) = &self.allocation_scope {
+                let scope = scope.lock().unwrap_or_else(|error| error.into_inner());
+                required = scope
+                    .live
+                    .checked_add(required)
+                    .ok_or_else(|| {
+                        Error::new(ErrorCode::ResourceLimit, "paint attempt footprint overflow")
+                    })?
+                    .max(scope.peak);
+            }
+            return Err(error.with_allocation_requirement(
+                paintcraft_core::types::resources::AllocationClass::DecodedTiles,
+                required,
+            ));
+        }
+        let result = run(&mut operation);
+        self.remaining_pixels = operation.remaining_pixels;
+        result
     }
     /// Restrict an explicit admission to the session's configured staged allowance.
     pub fn constrain_pixels(mut self, limit_pixels: u64) -> Self {
@@ -287,7 +326,7 @@ impl RasterLayer {
         write: impl FnOnce(&mut Tile) -> R,
     ) -> Result<R> {
         use std::collections::hash_map::Entry;
-        if self.tiles.len() == self.tiles.capacity() {
+        if self.tiles.len() == self.tiles.capacity() && !self.tiles.contains_key(&c) {
             self.tiles.try_reserve(1).map_err(|_| {
                 Error::new(ErrorCode::ResourceLimit, "cannot allocate raster index")
             })?;

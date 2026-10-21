@@ -4,8 +4,8 @@ use paintcraft_core::types::resources::{AllocationClass, BudgetLease};
 use std::sync::Mutex;
 #[derive(Debug, Default)]
 pub(super) struct Scope {
-    live: u64,
-    peak: u64,
+    pub(super) live: u64,
+    pub(super) peak: u64,
 }
 #[derive(Debug)]
 struct Allocation {
