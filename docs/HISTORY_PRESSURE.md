@@ -51,10 +51,14 @@ contexts on pressure/reclamation across App owners; each context still polls and
 publishes its own state. These thresholds are provisional engineering choices; native pressure,
 interference and tail-latency measurements have not qualified them.
 
-An installed render error caused by `resource.limit` records observed tile
-residency. A later lower counter invalidates that failed render key so the same
-document can render again without another edit. Successful renders clear the retry
-marker. This prevents reclaimed capacity from leaving a cached failed canvas.
+An installed render error retries only when its typed diagnostic identifies a
+feasible decoded-tile denial. It retains the exact allocation realm and the known
+attempt footprint. Readiness compares currently free capacity against that demand,
+including reclamation before the UI receives the error. Partial-attempt rollback
+alone does not qualify when the next attempt still needs more space. Fixed staged
+or work limits and footprints above the realm ceiling do not create retry markers.
+Successful renders clear the marker. This is advisory retry readiness, not a
+reservation or a whole-operation allocation plan.
 
 ## Executed checks
 

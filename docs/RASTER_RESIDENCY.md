@@ -64,6 +64,23 @@ qualification and adaptive all-service pressure remain incomplete. A new edit ca
 `resource.limit` when readers pin capacity or a step cannot free enough.
 Published state and undo remain intact.
 
+## Failed-attempt demand
+
+Decoded-budget failures retain a typed allocation diagnostic with the exact realm.
+Each Admission lazily creates an allocation gauge shared by its clones and tiles.
+The requirement is the greater of its prior peak live bytes and live bytes plus
+the denied tile. Dropping unpublished tiles reduces live ownership without erasing
+the observed peak. Pixel storage is freed and the gauge retired before capacity
+is returned; budget wake callbacks run outside the gauge lock.
+
+The native fresh serial attempt uses this diagnostic to avoid retrying a partial
+prefix with insufficient space. It can observe capacity returned before error
+delivery. The requirement covers only the observed attempt prefix: later operations
+may demand more, and reused or independently cloned scopes are not a general
+whole-request planner. Fixed staged caps and native allocator failures carry no
+decoded-reclamation readiness. Wire error/v1 fields, equality and pixel policy are
+unchanged. These metadata/counter costs have not been benchmark-qualified.
+
 ## Executed checks and limits
 
 641 workspace tests pass, with 21 explicit ignores. Strict workspace/all-target

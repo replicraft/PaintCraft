@@ -559,3 +559,25 @@ bound, wake-only callback rule and remaining qualification. Request-sized admiss
 content retry, native multi-window/suspension behavior, all-service physical budgets,
 fairness and measured callback/input/frame latency remain. No throughput or RSS
 gain follows from these correctness checks. T04/T11/T13 stay partial.
+
+
+## Nineteenth slice: footprint-aware decoded allocation retries
+
+Resource errors now retain internal typed realm/demand context without changing
+error/v1 bytes, display or legacy equality. Raster admissions track live and peak
+ownership for their attempt, so partial rollback cannot suggest that a single free
+tile is enough to rerun a larger known prefix. Native render retries require a
+feasible decoded demand and enough currently free capacity in that exact realm;
+reclamation before error delivery is observed too. Fixed work/staged limits and
+impossible footprints do not create release-driven retry loops.
+
+657 workspace tests pass (21 explicit ignores), strict workspace/all-target Clippy,
+formatting/file limits, release desktop/CLI builds, three required Metal checks and
+a 30-frame isolated native smoke. Regressions cover live/peak demand, rollback,
+actual atomic batch retry after external release, legacy wire errors and native
+same-key rendering. These are correctness checks, not timing/RSS evidence.
+
+The known requirement describes an already observed serial prefix, not future
+operations or an upfront reservation. Request-sized admission, content retry,
+demand-aware pressure coordination, logical blob authority, all-service budgets
+and native latency/interference qualification remain. T04/T11/T13 stay partial.
