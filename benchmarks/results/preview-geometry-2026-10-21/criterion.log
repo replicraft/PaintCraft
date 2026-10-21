@@ -1,0 +1,55 @@
+
+running 1 test
+Benchmarking preview_geometry/tiny/baseline
+Benchmarking preview_geometry/tiny/baseline: Warming up for 300.00 ms
+Benchmarking preview_geometry/tiny/baseline: Collecting 20 samples in estimated 1.2339 s (100 iterations)
+Benchmarking preview_geometry/tiny/baseline: Analyzing
+preview_geometry/tiny/baseline
+                        time:   [8.1045 ms 9.5853 ms 11.188 ms]
+Benchmarking preview_geometry/tiny/cached
+Benchmarking preview_geometry/tiny/cached: Warming up for 300.00 ms
+
+Warning: Unable to complete 20 samples in 1.0s. You may wish to increase target time to 1.3s, enable flat sampling, or reduce sample count to 10.
+Benchmarking preview_geometry/tiny/cached: Collecting 20 samples in estimated 1.2595 s (210 iterations)
+Benchmarking preview_geometry/tiny/cached: Analyzing
+preview_geometry/tiny/cached
+                        time:   [5.8969 ms 6.0077 ms 6.1623 ms]
+Found 1 outliers among 20 measurements (5.00%)
+  1 (5.00%) high severe
+
+Benchmarking preview_geometry/growing/baseline
+Benchmarking preview_geometry/growing/baseline: Warming up for 300.00 ms
+Benchmarking preview_geometry/growing/baseline: Collecting 20 samples in estimated 1.8593 s (40 iterations)
+Benchmarking preview_geometry/growing/baseline: Analyzing
+preview_geometry/growing/baseline
+                        time:   [45.129 ms 45.931 ms 46.957 ms]
+Found 2 outliers among 20 measurements (10.00%)
+  2 (10.00%) high severe
+Benchmarking preview_geometry/growing/cached
+Benchmarking preview_geometry/growing/cached: Warming up for 300.00 ms
+Benchmarking preview_geometry/growing/cached: Collecting 20 samples in estimated 1.2559 s (40 iterations)
+Benchmarking preview_geometry/growing/cached: Analyzing
+preview_geometry/growing/cached
+                        time:   [22.028 ms 23.571 ms 26.345 ms]
+Found 1 outliers among 20 measurements (5.00%)
+  1 (5.00%) high severe
+
+Benchmarking preview_geometry/retrace/baseline
+Benchmarking preview_geometry/retrace/baseline: Warming up for 300.00 ms
+Benchmarking preview_geometry/retrace/baseline: Collecting 20 samples in estimated 1.4138 s (40 iterations)
+Benchmarking preview_geometry/retrace/baseline: Analyzing
+preview_geometry/retrace/baseline
+                        time:   [33.915 ms 34.332 ms 34.848 ms]
+Found 1 outliers among 20 measurements (5.00%)
+  1 (5.00%) high severe
+Benchmarking preview_geometry/retrace/cached
+Benchmarking preview_geometry/retrace/cached: Warming up for 300.00 ms
+Benchmarking preview_geometry/retrace/cached: Collecting 20 samples in estimated 1.1559 s (80 iterations)
+Benchmarking preview_geometry/retrace/cached: Analyzing
+preview_geometry/retrace/cached
+                        time:   [13.887 ms 14.038 ms 14.185 ms]
+
+test cpu_rendering::geometry_benchmark::preview_geometry_process ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 212 filtered out; finished in 10.42s
+

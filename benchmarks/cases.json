@@ -60,7 +60,8 @@
     "hyperfine_role": "decision",
     "adapter_path": "crates/services/paintcraft-render/examples/partitioned.rs",
     "result_artifacts": [
-      "benchmarks/results/cpu-parallel-2026-10-20/DECISION.md"
+      "benchmarks/results/cpu-parallel-2026-10-20/DECISION.md",
+      "benchmarks/results/preview-geometry-2026-10-21/DECISION.md"
     ],
     "variants": [
       "sequential admitted tile loop",

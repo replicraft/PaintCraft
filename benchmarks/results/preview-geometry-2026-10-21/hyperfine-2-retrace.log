@@ -1,0 +1,10 @@
+Benchmark 1: /usr/bin/env PAINTCRAFT_GEOMETRY_CASE=retrace PAINTCRAFT_GEOMETRY_VARIANT=cached /Users/dielpi/Desktop/replicraft/PaintCraft/target/release/deps/paintcraft-f824b331897e58e1 --exact cpu_rendering::geometry_benchmark::preview_geometry_process --ignored (20 runs)
+                mean     ±       σ          min     …     max
+  Wall Time     28.4 ms  ±     5.4 ms      24.6 ms  …    49.5 ms
+  Memory        11.3 MiB ±     1.7 MiB      9.5 MiB …    17.3 MiB
+ 
+Benchmark 2: /usr/bin/env PAINTCRAFT_GEOMETRY_CASE=retrace PAINTCRAFT_GEOMETRY_VARIANT=baseline /Users/dielpi/Desktop/replicraft/PaintCraft/target/release/deps/paintcraft-f824b331897e58e1 --exact cpu_rendering::geometry_benchmark::preview_geometry_process --ignored (20 runs)
+                mean     ±       σ          min     …     max
+  Wall Time     46.5 ms  ±     1.4 ms      43.8 ms  …    50.5 ms           +63.4%  (1.6x slower)
+  Memory        14.7 MiB ±     1.6 MiB     11.9 MiB …    17.9 MiB          +30.5%  (1.3x more)
+ 

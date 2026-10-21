@@ -382,3 +382,42 @@ remain nonpreemptible. Incremental stroke coverage, scheduling priorities and na
 input/cancellation tail measurements remain. Earlier timing decisions stay frozen
 to their recorded revisions and do not qualify this callback overhead. T13/T14 stay
 partial; this does not complete the performance roadmap.
+
+
+## Twenty-seventh slice: incremental sample-union preview geometry
+
+The desktop render worker now retains one disposable smooth-path geometry entry
+for CPU and GPU preview staging. Exact prefix/style/clip matches scan only appended
+capsules, normalize retained sample intervals and resolve full coverage against
+current private source pixels. It never blends a suffix onto already blended
+preview pixels. Changed prefixes/policies rebuild, cancellation/errors retire partial
+unions, poison clears derived state, and committed rendering releases the entry.
+The provisional retained metadata charge is 8 MiB; transient work and physical/RSS
+bounds remain separate. Single-point-to-segment transitions retain the original
+scan-row limit. Compound previews can churn this single entry.
+
+The worker also passes its cancellation predicate through preview command execution;
+previously it called the compatibility noncancellable entry point. Session commits
+remain independent of this derived geometry and retain atomic publication/history.
+See [the coverage contract](INCREMENTAL_COVERAGE.md).
+
+720 workspace tests pass (22 explicit ignores, including the new measurement driver),
+strict workspace/all-target Clippy, formatting/file limits, release desktop/CLI builds,
+three required real Metal checks and a 30-frame isolated native smoke. New tests
+cover exact growing prefixes/retraces, subpixel/clipped/translated policy changes,
+retention disablement, cancellation at each extension boundary, budget equivalence,
+no old-segment rescanning, current selection/origin/opacity, cache retirement and poison.
+
+[The desktop replay decision](../benchmarks/results/preview-geometry-2026-10-21/DECISION.md)
+retains 120 Criterion samples, 360 comparison process runs, 60 calibration runs,
+full-frame pre/postflight checks, frozen source/binary identities and process RSS.
+Across three sessions, growing previews improve 1.63–1.71x and retraces 1.62–1.75x;
+tiny process cases are 1–3% slower and stay non-win controls despite their noisy
+statistical improvement. Cold setup/teardown and complete CPU frames are included;
+empty process medians are 11.33–12.49 ms and are not subtracted. This is application
+method replay, not OS input/display or GPU transfer latency or a parent-source claim.
+
+Command/prefix validation, whole-union resolution, raster replay, compound-prefix
+reuse, finer dirty regions, GPU residency, scheduling priority and measured native
+input/display tails remain. T13/T14/T37 remain partial or in progress. Earlier
+benchmarks stay tied to their frozen source; no broad performance completion claim.

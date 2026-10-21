@@ -105,3 +105,14 @@ cancellation before each session. Three forward/reverse sessions compare unchang
 short/long/queued previews and a changing-input control, including setup and
 cleanup. See the [local decision](results/preview-reuse-2026-10-20-measured/DECISION.md).
 This measures preview collection/comparison, not native brush/frame latency.
+
+
+Growing smooth-path coverage uses the optimized desktop lib test driver
+`cpu_rendering::geometry_benchmark::preview_geometry_process`. Build the desktop
+lib test in release, then set `PAINTCRAFT_GEOMETRY_VARIANT` to `verify`, `criterion`,
+`baseline`, `cached` or `calibration` and run that exact ignored test. Process
+fixtures use `PAINTCRAFT_GEOMETRY_CASE=tiny|growing|retrace`. The driver runs actual
+Editor batch construction, checked preview staging and desktop CPU composition.
+[The decision and reproduction record](results/preview-geometry-2026-10-21/DECISION.md)
+retain tiny non-win controls and distinguish these complete-frame sequences from
+native OS input/display latency.

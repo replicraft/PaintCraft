@@ -343,9 +343,12 @@
         "apps/paintcraft/src/app/text_ui.rs",
         "crates/editing/paintcraft-editor/src/session/preparation.rs",
         "crates/editing/paintcraft-editor/tests/preparation.rs",
-        "crates/foundation/paintcraft-raster/src/smooth/tests.rs"
+        "crates/foundation/paintcraft-raster/src/smooth/tests.rs",
+        "docs/INCREMENTAL_COVERAGE.md",
+        "benchmarks/results/preview-geometry-2026-10-21/DECISION.md",
+        "apps/paintcraft/src/app/cpu_rendering/geometry_tests.rs"
       ],
-      "remaining_or_scope": "Shared native render/edit workers prepare validated stroke/text plans from immutable previews. Revision-keyed weak snapshots avoid recollecting unchanged repaints; queued edits, file barriers and completion invalidate inputs. Guarded no-op results and compatible progress have tests. Preview-capture process costs are locally measured; changing-input cost is inconclusive. Device epochs reject replaced/retired GPU completions; Metal destruction and fresh-device host-history reconstruction pass. Native edit/render pools share declared-byte admission with worker/result guards surviving executor drop. Footprint-aware render retries and shared demand guide decoded pressure maintenance. Initial worker-admission races retain captured batch/tool/navigation tasks; decoded-failed edits and recorded navigation retry reserved known capacity under owner/base guards. History navigation plans fresh missing sets and reprices stale cache-dependent demand. Ordered paint plans admit operation tiles and replay contiguous rows; scoped measurements retain diagonal non-win controls. Native window-device recovery, priorities, physical/all-service budgets, changed-preview costs and native latency/interference qualification remain. Detached execution now checks cancellation between commands and within smooth coverage and planned paint indexing/preparation/replay; wall-clock cancellation tails and other kernels remain unqualified.",
+      "remaining_or_scope": "Shared native render/edit workers prepare validated stroke/text plans from immutable previews. Revision-keyed weak snapshots avoid recollecting unchanged repaints; queued edits, file barriers and completion invalidate inputs. Guarded no-op results and compatible progress have tests. Preview-capture process costs are locally measured; changing-input cost is inconclusive. Device epochs reject replaced/retired GPU completions; Metal destruction and fresh-device host-history reconstruction pass. Native edit/render pools share declared-byte admission with worker/result guards surviving executor drop. Footprint-aware render retries and shared demand guide decoded pressure maintenance. Initial worker-admission races retain captured batch/tool/navigation tasks; decoded-failed edits and recorded navigation retry reserved known capacity under owner/base guards. History navigation plans fresh missing sets and reprices stale cache-dependent demand. Ordered paint plans admit operation tiles and replay contiguous rows; scoped measurements retain diagonal non-win controls. Native window-device recovery, priorities, physical/all-service budgets, changed-preview costs and native latency/interference qualification remain. Detached execution now checks cancellation between commands and within smooth coverage and planned paint indexing/preparation/replay; wall-clock cancellation tails and other kernels remain unqualified. Desktop preview staging now reuses one bounded-charge incremental sample union, scans appended capsules and routes worker cancellation into execution; measured growing/retrace CPU replay gains retain tiny non-win controls. Full incremental staging and native latency remain unqualified.",
       "acceptance": "SCHED-01\u201306 and GPU-01\u201306; no late mutation/device-loss data loss."
     },
     {
@@ -375,9 +378,12 @@
         "crates/editing/paintcraft-tools/src/path_admission.rs",
         "apps/paintcraft/src/app/editing/tests.rs",
         "docs/DESKTOP_EDITING.md",
-        "crates/foundation/paintcraft-raster/src/smooth/tests.rs"
+        "crates/foundation/paintcraft-raster/src/smooth/tests.rs",
+        "docs/INCREMENTAL_COVERAGE.md",
+        "benchmarks/results/preview-geometry-2026-10-21/DECISION.md",
+        "apps/paintcraft/src/app/cpu_rendering/geometry_tests.rs"
       ],
-      "remaining_or_scope": "Antialiased brushes, bounded queued paint with ordered compound previews, Studio primary/secondary gestures, fill, shapes, rectangle selection and captured-layer Cosmic Text/Swash previews work. Ordered operation plans share exact coverage and upfront tile admission across painting families. Complete selections, secondary eraser/text policies, editable text objects, IME and native sustained-input latency qualification remain. Detached execution now checks cancellation between commands and within smooth coverage and planned paint indexing/preparation/replay; wall-clock cancellation tails and other kernels remain unqualified.",
+      "remaining_or_scope": "Antialiased brushes, bounded queued paint with ordered compound previews, Studio primary/secondary gestures, fill, shapes, rectangle selection and captured-layer Cosmic Text/Swash previews work. Ordered operation plans share exact coverage and upfront tile admission across painting families. Complete selections, secondary eraser/text policies, editable text objects, IME and native sustained-input latency qualification remain. Detached execution now checks cancellation between commands and within smooth coverage and planned paint indexing/preparation/replay; wall-clock cancellation tails and other kernels remain unqualified. Desktop preview staging now reuses one bounded-charge incremental sample union, scans appended capsules and routes worker cancellation into execution; measured growing/retrace CPU replay gains retain tiny non-win controls. Full incremental staging and native latency remain unqualified.",
       "acceptance": "Tool-specific lifecycle fixtures, masked edges, focus cancel, text IME smoke cases."
     },
     {
@@ -722,9 +728,12 @@
         "benchmarks/results/cpu-spans-2026-10-19/DECISION.md",
         "benchmarks/results/cpu-cache-2026-10-20/DECISION.md",
         "docs/development/HYPERFINE_PROTOCOL.md",
-        "benchmarks/results/cpu-parallel-2026-10-20/DECISION.md"
+        "benchmarks/results/cpu-parallel-2026-10-20/DECISION.md",
+        "docs/INCREMENTAL_COVERAGE.md",
+        "benchmarks/results/preview-geometry-2026-10-21/DECISION.md",
+        "apps/paintcraft/src/app/cpu_rendering/geometry_tests.rs"
       ],
-      "remaining_or_scope": "Dependency/task ledgers, BF29 process evidence and BF06 raw Criterion/process measurements exist; paint-plan comparisons add Criterion raw samples and matched baseline/current CPU-only CLI apply confirmation with complete canonical-output equality, three process sessions and resource observations; superseded/slow controls and the excluded mixed-build pilot are preserved; prior Divan-only raw-sample gates, other relevant comparisons and cross-platform/interactive qualification remain.",
+      "remaining_or_scope": "Dependency/task ledgers, BF29 process evidence and BF06 raw Criterion/process measurements exist; paint-plan comparisons add Criterion raw samples and matched baseline/current CPU-only CLI apply confirmation with complete canonical-output equality, three process sessions and resource observations; superseded/slow controls and the excluded mixed-build pilot are preserved; prior Divan-only raw-sample gates, other relevant comparisons and cross-platform/interactive qualification remain. Desktop preview staging now reuses one bounded-charge incremental sample union, scans appended capsules and routes worker cancellation into execution; measured growing/retrace CPU replay gains retain tiny non-win controls. Full incremental staging and native latency remain unqualified.",
       "acceptance": "An adoption record points to real scope, tests and excluded future detail; plan-only tooling makes no repository changes; real comparisons use actual optimized code/fixtures, keep correctness/build/fixture/raw evidence and record selection/tie/rejection honestly; smoke/model results never qualify application choices."
     }
   ]

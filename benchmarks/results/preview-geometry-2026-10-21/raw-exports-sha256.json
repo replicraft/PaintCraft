@@ -1,0 +1,62 @@
+{
+  "hyperfine-2-retrace.json": {
+    "original_export_sha256": "9205979d904481913147d8815aa1fd98b6b517164e263f958a82cf8b10e54050",
+    "compact_sha256": "5a99506526c85803c62b7ec00b799f0709e7e89c5eefb3168de9fff0a5091ae6",
+    "raw_gzip": "raw_exports/hyperfine-2-retrace.json.gz"
+  },
+  "hyperfine-1-calibration.json": {
+    "original_export_sha256": "d3500c62c442dd95bb3ef545fb779cda4efc4cf364cbb3935c008c5535ca4d88",
+    "compact_sha256": "cad0bd1ef86b20f13af716da56e41aac9b62b771e923b2e15670868807834a08",
+    "raw_gzip": "raw_exports/hyperfine-1-calibration.json.gz"
+  },
+  "hyperfine-3-retrace.json": {
+    "original_export_sha256": "9c25de889fb6d27eb70e12df0ee665f0c54470f0f69e7b866bc9ce1ed5c6839f",
+    "compact_sha256": "8a79c299489f4c44b0e46d97a1014fbc33472318e178ee9ae21c8b07389399c8",
+    "raw_gzip": "raw_exports/hyperfine-3-retrace.json.gz"
+  },
+  "hyperfine-2-growing.json": {
+    "original_export_sha256": "d9d2778115bc03553f8954a72abdd202c270f558e61142b792a79cf909dcce1a",
+    "compact_sha256": "6c93ee92e1333d6d9f93388af5266b62c57f0de4a2e51fd38e30151ff4a51ea3",
+    "raw_gzip": "raw_exports/hyperfine-2-growing.json.gz"
+  },
+  "hyperfine-1-tiny.json": {
+    "original_export_sha256": "20ab900d8f923a6a05ec7acbbbbea7d0e596abc7b6d260cd2fd246e6b833a0f1",
+    "compact_sha256": "6283fe2baa148f9c52a2f80360dea648ae6af1f88261d70e04e6208f76dd1d7a",
+    "raw_gzip": "raw_exports/hyperfine-1-tiny.json.gz"
+  },
+  "hyperfine-3-growing.json": {
+    "original_export_sha256": "1d9aab7e7c88ef6958390ba54a3c5960bd7378748488d1646d859523cb70baf3",
+    "compact_sha256": "a947e943897f469d61ef19d389857cffb4ca2527e727c2fafc005fae5a27d189",
+    "raw_gzip": "raw_exports/hyperfine-3-growing.json.gz"
+  },
+  "hyperfine-3-calibration.json": {
+    "original_export_sha256": "78fb666daccd08230a8863b945375fe088889fd09c1616e58e8da5f064f7acfc",
+    "compact_sha256": "b2e9905df90c8d624e86e6f30d8d5c3a97bd24a1363026eb41ec04b1db124f2b",
+    "raw_gzip": "raw_exports/hyperfine-3-calibration.json.gz"
+  },
+  "hyperfine-1-growing.json": {
+    "original_export_sha256": "a3d9f41a7471d9d1d7b12f2f5812444032e8e4e1b3e27ff3d4865d9a00cf3e36",
+    "compact_sha256": "76b9e2d92e57334c4cc31dee91603558ecf02aa8982a49f59ea76e3d5cebdcc2",
+    "raw_gzip": "raw_exports/hyperfine-1-growing.json.gz"
+  },
+  "hyperfine-2-tiny.json": {
+    "original_export_sha256": "23564b9aa66e99395fce756666abdcaaf1fd803a6d453b0c399fce12646babc9",
+    "compact_sha256": "d6cdde3036a2fed87e2576e9ea599e4c293827f31710c824a7e2e9f78d6c1de6",
+    "raw_gzip": "raw_exports/hyperfine-2-tiny.json.gz"
+  },
+  "hyperfine-2-calibration.json": {
+    "original_export_sha256": "c71e6615c75eabc6f853318c14b4590b7a5b4c026dc9a721ca0f96fa11a4b069",
+    "compact_sha256": "7309ffecf4def6ebeb5bb712edd7a4ab89fb128cf2e7fe249a6f6596076f0029",
+    "raw_gzip": "raw_exports/hyperfine-2-calibration.json.gz"
+  },
+  "hyperfine-1-retrace.json": {
+    "original_export_sha256": "0faa0f9f5252aa791254de5f9dce8edd13cee5289baaf43d3aa28e0acd496689",
+    "compact_sha256": "44376ef7b31fe003ebdb5cabc5249a21c21a762ac92d49b97a406f5593730e11",
+    "raw_gzip": "raw_exports/hyperfine-1-retrace.json.gz"
+  },
+  "hyperfine-3-tiny.json": {
+    "original_export_sha256": "d45dc16191af0560bb9971a7f087ee747c403dddd4190b2036e8190871eddc6b",
+    "compact_sha256": "f6bc21df4e86ccc83864a99e38e71838eaa1c987c9e862bf4269a898ded61de4",
+    "raw_gzip": "raw_exports/hyperfine-3-tiny.json.gz"
+  }
+}

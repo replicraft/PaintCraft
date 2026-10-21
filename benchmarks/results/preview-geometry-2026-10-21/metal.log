@@ -1,0 +1,15 @@
+    Blocking waiting for file lock on build directory
+   Compiling paintcraft-render v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-render)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 6.96s
+     Running tests/gpu.rs (target/debug/deps/gpu-1834df45e46d13a5)
+
+running 3 tests
+GPU parity adapter: AdapterInfo { name: "Apple M1 Pro", vendor: 0, device: 0, device_type: IntegratedGpu, device_pci_bus_id: "", driver: "", driver_info: "", backend: Metal, subgroup_min_size: 4, subgroup_max_size: 64, transient_saves_memory: Some(true), limit_bucket: None }
+GPU parity adapter: AdapterInfo { name: "Apple M1 Pro", vendor: 0, device: 0, device_type: IntegratedGpu, device_pci_bus_id: "", driver: "", driver_info: "", backend: Metal, subgroup_min_size: 4, subgroup_max_size: 64, transient_saves_memory: Some(truetest gpu_matches_scalar_for_order_opacity_offsets_tiles_and_hidden_rgb ... ok), limit_bucket: 
+None }
+GPU parity adapter: AdapterInfo { name: "Apple M1 Protest host_callback_survives_construction_and_loss_during_staging_rejects_output ... ok", vendor: 0, 
+device: 0, device_type: IntegratedGpu, device_pci_bus_id: "", driver: "", driver_info: "", backend: Metal, subgroup_min_size: 4, subgroup_max_size: 64, transient_saves_memory: Some(true), limit_bucket: None }
+test destroyed_device_cannot_render_and_fresh_device_restores_committed_host_history ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.49s
+
