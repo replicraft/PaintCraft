@@ -4,11 +4,15 @@ use crate::{Editor, Tool};
 use std::{hint::black_box, time::Duration};
 
 fn replay(case: &str, cached: bool, verify: bool) -> u64 {
-    let mut editor = Editor::new_document(512, 256).unwrap();
+    let mut editor = fixture();
     editor.select_tool(Tool::Brush);
     editor.options.size = 16;
     editor.color = paintcraft_core::types::Rgba([17, 88, 156, 128]);
+    let original = verify.then(|| paintcraft_render::render_flat(editor.document()).unwrap());
     let renderer = CpuRenderer::new();
+    if std::env::var("PAINTCRAFT_GEOMETRY_COMPOSITOR").as_deref() == Ok("full") {
+        *renderer.0.lock().unwrap() = None;
+    }
     editor.pointer_down((8, 64));
     let (frames, step): (i64, i64) = if case == "tiny" { (4, 1) } else { (32, 16) };
     let mut digest = 0u64;
@@ -47,11 +51,16 @@ fn replay(case: &str, cached: bool, verify: bool) -> u64 {
                 pixels,
                 paintcraft_render::render_flat(&reference.doc).unwrap()
             );
-            assert_eq!(doc.layers[&doc.roots[0]].raster.resident_tiles(), 0);
         }
         // Consume the completed frame; all outputs and caches are destroyed in scope.
         digest = digest.wrapping_add(u64::from(pixels[(64 * 512 + 8) * 4]));
         black_box(&pixels);
+    }
+    if let Some(original) = original {
+        assert_eq!(
+            paintcraft_render::render_flat(editor.document()).unwrap(),
+            original
+        );
     }
     black_box(digest)
 }
@@ -96,4 +105,62 @@ fn preview_geometry_process() {
         }
         _ => panic!("specify PAINTCRAFT_GEOMETRY_VARIANT"),
     }
+}
+
+fn fixture() -> Editor {
+    let base = std::env::var("PAINTCRAFT_GEOMETRY_BASE").unwrap_or_else(|_| "sparse1".into());
+    if base == "sparse1" {
+        return Editor::new_document(512, 256).unwrap();
+    }
+    assert!(matches!(base.as_str(), "sparse5" | "dense5"));
+    use paintcraft_core::types::Rgba;
+    use paintcraft_raster::{Admission, RasterLayer};
+    let mut doc = paintcraft_document::new_document(
+        512,
+        256,
+        Some(Rgba([255; 4])),
+        42,
+        paintcraft_document::POLICY,
+    )
+    .unwrap();
+    doc.layers.clear();
+    doc.roots.clear();
+    let mut admission = Admission::new(20 * 65536);
+    for n in 0..5 {
+        let id =
+            paintcraft_core::types::ids::deterministic_id(&["desktop-regional", &n.to_string()]);
+        let default = if n == 0 {
+            Rgba([255; 4])
+        } else {
+            Rgba([31, 63, 127, 0])
+        };
+        let raster = if base == "dense5" {
+            let pixels: Vec<_> = (0u32..512 * 256)
+                .flat_map(|p| {
+                    [
+                        p as u8,
+                        (p / 512) as u8,
+                        (p.wrapping_mul(17) + n) as u8,
+                        [0, 1, 64, 128, 254, 255][p as usize % 6],
+                    ]
+                })
+                .collect();
+            RasterLayer::from_rgba(512, 256, default, &pixels, &mut admission).unwrap()
+        } else {
+            RasterLayer::new(512, 256, default)
+        };
+        doc.roots.push(id);
+        doc.layers.insert(
+            id,
+            paintcraft_document::Layer {
+                id,
+                name: format!("Layer {n}"),
+                origin: (0, 0),
+                visible: true,
+                opacity: 173,
+                raster,
+            },
+        );
+    }
+    Editor::with_document(doc, None)
 }
