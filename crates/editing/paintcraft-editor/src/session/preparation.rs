@@ -151,25 +151,46 @@ impl Preparation {
 }
 
 impl Preparation {
-    pub fn undo(mut self, check: impl Fn() -> Result<()>) -> Result<PreparedNavigation> {
-        let navigation = self.session.undo_checked(&check)?;
-        self.navigation(navigation, check)
+    pub fn undo(self, check: impl Fn() -> Result<()>) -> Result<PreparedNavigation> {
+        self.undo_with_admission(Admission::new(u64::MAX), check)
     }
-
-    pub fn redo(mut self, check: impl Fn() -> Result<()>) -> Result<PreparedNavigation> {
-        let navigation = self.session.redo_checked(&check)?;
-        self.navigation(navigation, check)
-    }
-
-    pub fn navigate_history(
+    pub fn undo_with_admission(
         mut self,
+        admission: Admission,
+        check: impl Fn() -> Result<()>,
+    ) -> Result<PreparedNavigation> {
+        let navigation = self.session.undo_with_admission(admission, &check)?;
+        self.navigation(navigation, check)
+    }
+    pub fn redo(self, check: impl Fn() -> Result<()>) -> Result<PreparedNavigation> {
+        self.redo_with_admission(Admission::new(u64::MAX), check)
+    }
+    pub fn redo_with_admission(
+        mut self,
+        admission: Admission,
+        check: impl Fn() -> Result<()>,
+    ) -> Result<PreparedNavigation> {
+        let navigation = self.session.redo_with_admission(admission, &check)?;
+        self.navigation(navigation, check)
+    }
+    pub fn navigate_history(
+        self,
         ticket: HistoryTicket,
         target: Option<Uuid>,
         check: impl Fn() -> Result<()>,
     ) -> Result<PreparedNavigation> {
+        self.navigate_history_with_admission(ticket, target, Admission::new(u64::MAX), check)
+    }
+    pub fn navigate_history_with_admission(
+        mut self,
+        ticket: HistoryTicket,
+        target: Option<Uuid>,
+        admission: Admission,
+        check: impl Fn() -> Result<()>,
+    ) -> Result<PreparedNavigation> {
         let navigation = self
             .session
-            .navigate_history_checked(ticket, target, &check)?;
+            .navigate_history_with_admission(ticket, target, admission, &check)?;
         self.navigation(navigation, check)
     }
 

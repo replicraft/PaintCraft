@@ -48,6 +48,15 @@ impl Session {
         target: Option<Uuid>,
         check: impl Fn() -> Result<()>,
     ) -> Result<Option<Navigation>> {
+        self.navigate_history_with_admission(ticket, target, Admission::new(u64::MAX), check)
+    }
+    pub(super) fn navigate_history_with_admission(
+        &mut self,
+        ticket: HistoryTicket,
+        target: Option<Uuid>,
+        admission: Admission,
+        check: impl Fn() -> Result<()>,
+    ) -> Result<Option<Navigation>> {
         check()?;
         if ticket.owner != self.owner || ticket.base != self.ticket() {
             return Err(Error::new(
@@ -69,12 +78,15 @@ impl Session {
             return Ok(None);
         }
         let next_epoch = self.next_epoch()?;
-        let (snapshot, changed) = self.history.seek_checked(target, check)?.ok_or_else(|| {
-            Error::new(
-                ErrorCode::ReferenceUnknownId,
-                "History entry is no longer retained",
-            )
-        })?;
+        let (snapshot, changed) = self
+            .history
+            .seek_with_admission(target, admission, check)?
+            .ok_or_else(|| {
+                Error::new(
+                    ErrorCode::ReferenceUnknownId,
+                    "History entry is no longer retained",
+                )
+            })?;
         Ok(changed.then(|| self.navigate(snapshot, next_epoch)))
     }
 }

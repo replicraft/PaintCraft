@@ -315,24 +315,38 @@ impl Session {
         self.undo_checked(|| Ok(()))
     }
     fn undo_checked(&mut self, check: impl Fn() -> Result<()>) -> Result<Option<Navigation>> {
+        self.undo_with_admission(Admission::new(u64::MAX), check)
+    }
+    fn undo_with_admission(
+        &mut self,
+        admission: Admission,
+        check: impl Fn() -> Result<()>,
+    ) -> Result<Option<Navigation>> {
         check()?;
         if self.history.undo_depth() == 0 {
             return Ok(None);
         }
         let next_epoch = self.next_epoch()?;
-        let snapshot = self.history.undo_checked(check)?;
+        let snapshot = self.history.undo_with_admission(admission, check)?;
         Ok(snapshot.map(|snapshot| self.navigate(snapshot, next_epoch)))
     }
     pub fn redo(&mut self) -> Result<Option<Navigation>> {
         self.redo_checked(|| Ok(()))
     }
     fn redo_checked(&mut self, check: impl Fn() -> Result<()>) -> Result<Option<Navigation>> {
+        self.redo_with_admission(Admission::new(u64::MAX), check)
+    }
+    fn redo_with_admission(
+        &mut self,
+        admission: Admission,
+        check: impl Fn() -> Result<()>,
+    ) -> Result<Option<Navigation>> {
         check()?;
         if self.history.redo_depth() == 0 {
             return Ok(None);
         }
         let next_epoch = self.next_epoch()?;
-        let snapshot = self.history.redo_checked(check)?;
+        let snapshot = self.history.redo_with_admission(admission, check)?;
         Ok(snapshot.map(|snapshot| self.navigate(snapshot, next_epoch)))
     }
     pub(super) fn next_epoch(&self) -> Result<u64> {
