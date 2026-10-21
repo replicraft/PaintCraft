@@ -35,6 +35,19 @@ impl Editor {
             })?
             .rasterize(text, style, at, self.document().canvas_rect())
     }
+    pub(crate) fn cached_font_text_mask(
+        &self,
+        text: &str,
+        style: &TextOptions,
+        at: (i64, i64),
+    ) -> Option<Arc<crate::text::TextMask>> {
+        self.text_renderer.as_ref()?.try_lock().ok()?.cached(
+            text,
+            style,
+            at,
+            self.document().canvas_rect(),
+        )
+    }
     pub(super) fn font_text_operations(
         &self,
         layer: Uuid,
@@ -45,44 +58,15 @@ impl Editor {
         background: Rgba,
     ) -> Result<Vec<Value>> {
         let mask = self.font_text_mask(text, style, at)?;
-        let mut ops = Vec::new();
-        if style.background_fill
-            && let Some(rect) = mask
-                .bounds
-                .and_then(|rect| rect.intersect(&self.document().canvas_rect()))
-        {
-            ops.push(Value::object([
-                ("op", Value::str("raster.fill_rect")),
-                ("layer_ref", layer_ref(layer)),
-                ("rect", rect_value(rect)),
-                ("color", Value::str(background.to_hex())),
-                ("mode", Value::str("source-over")),
-            ]));
-        }
-        if !mask.spans.is_empty() {
-            ops.push(Value::object([
-                ("op", Value::str("raster.mask_spans")),
-                ("layer_ref", layer_ref(layer)),
-                ("color", Value::str(color.to_hex())),
-                (
-                    "spans",
-                    Value::Array(
-                        mask.spans
-                            .iter()
-                            .map(|s| {
-                                Value::Array(vec![
-                                    Value::Int(s.x0),
-                                    Value::Int(s.y),
-                                    Value::Int(s.x1),
-                                    Value::Int(i64::from(s.coverage)),
-                                ])
-                            })
-                            .collect(),
-                    ),
-                ),
-            ]));
-        }
-        Ok(ops)
+        text_operations(
+            &mask,
+            self.document().canvas_rect(),
+            layer,
+            style,
+            color,
+            background,
+            &|| Ok(()),
+        )
     }
     pub(super) fn draw_font_text(
         &mut self,
@@ -100,6 +84,58 @@ impl Editor {
         }
     }
 }
+pub(super) fn text_operations(
+    mask: &crate::text::TextMask,
+    canvas: Rect,
+    layer: Uuid,
+    style: &TextOptions,
+    color: Rgba,
+    background: Rgba,
+    check: &impl Fn() -> Result<()>,
+) -> Result<Vec<Value>> {
+    let mut ops = Vec::new();
+    if style.background_fill
+        && let Some(rect) = mask.bounds.and_then(|rect| rect.intersect(&canvas))
+    {
+        ops.push(Value::object([
+            ("op", Value::str("raster.fill_rect")),
+            ("layer_ref", layer_ref(layer)),
+            ("rect", rect_value(rect)),
+            ("color", Value::str(background.to_hex())),
+            ("mode", Value::str("source-over")),
+        ]));
+    }
+    check()?;
+    if !mask.spans.is_empty() {
+        ops.push(Value::object([
+            ("op", Value::str("raster.mask_spans")),
+            ("layer_ref", layer_ref(layer)),
+            ("color", Value::str(color.to_hex())),
+            (
+                "spans",
+                Value::Array(
+                    mask.spans
+                        .iter()
+                        .enumerate()
+                        .map(|(index, s)| {
+                            if index % 256 == 0 {
+                                check()?;
+                            }
+                            Ok(Value::Array(vec![
+                                Value::Int(s.x0),
+                                Value::Int(s.y),
+                                Value::Int(s.x1),
+                                Value::Int(i64::from(s.coverage)),
+                            ]))
+                        })
+                        .collect::<Result<Vec<_>>>()?,
+                ),
+            ),
+        ]));
+    }
+    Ok(ops)
+}
+
 fn rect_value(r: Rect) -> Value {
     Value::object([
         ("x", Value::Int(r.x0)),

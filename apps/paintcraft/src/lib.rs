@@ -173,7 +173,7 @@ pub struct App {
     dialog_owner: Option<Uuid>,
     texture: Option<egui::TextureHandle>,
     texture_key: Option<RenderKey>,
-    rendered_preview: Option<Preview>,
+    rendered_preview: Option<Arc<Preview>>,
     preview_revision: u64,
     preview_gesture: Option<u64>,
     preview_start_revision: u64,

@@ -71,6 +71,21 @@ impl TextRenderer {
     pub fn families(&self) -> Vec<String> {
         paintcraft_platform::fonts::FontCatalog::from_database(self.fonts.db()).families
     }
+    /// Read only an already prepared mask; never shape or allocate a new key.
+    pub fn cached(
+        &self,
+        text: &str,
+        style: &TextOptions,
+        at: (i64, i64),
+        clip: Rect,
+    ) -> Option<Arc<TextMask>> {
+        let (previous, mask) = self.last.as_ref()?;
+        (previous.text == text
+            && previous.style == *style
+            && previous.at == at
+            && previous.clip == clip)
+            .then(|| mask.clone())
+    }
     pub fn rasterize(
         &mut self,
         text: &str,

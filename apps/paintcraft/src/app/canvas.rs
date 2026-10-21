@@ -284,7 +284,12 @@ impl App {
                 ref text,
                 ..
             }) => {
-                if let Ok(mask) = self.editor.font_text_mask(text, &style, at) {
+                let mask = if self.renderer.is_some() {
+                    self.editor.cached_font_text_mask(text, &style, at)
+                } else {
+                    self.editor.font_text_mask(text, &style, at).ok()
+                };
+                if let Some(mask) = mask {
                     let (x, y, height) = mask.caret;
                     painter.line_segment(
                         [screen((x, y)), screen((x, y + height))],
