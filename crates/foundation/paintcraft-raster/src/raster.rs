@@ -12,7 +12,7 @@ use std::collections::HashMap;
 use std::sync::{Arc, OnceLock};
 
 mod paint;
-pub use paint::PaintPlan;
+pub use paint::{DEFAULT_PAINT_METADATA_BYTES, PaintPlan};
 mod tile;
 use tile::Tile;
 
@@ -58,6 +58,7 @@ fn blend(mode: BlendMode, src: Rgba, dst: Rgba) -> Rgba {
 #[derive(Clone, Debug)]
 pub struct Admission {
     remaining_pixels: u64,
+    paint_metadata_limit: usize,
     residency: SharedBudget,
     reservation: Option<BudgetReservation>,
     allocation_scope: Option<Arc<std::sync::Mutex<tile::Scope>>>,
@@ -78,6 +79,7 @@ impl Admission {
     pub fn with_residency(limit_pixels: u64, residency: SharedBudget) -> Self {
         Self {
             remaining_pixels: limit_pixels,
+            paint_metadata_limit: DEFAULT_PAINT_METADATA_BYTES,
             residency,
             reservation: None,
             allocation_scope: None,
@@ -89,10 +91,20 @@ impl Admission {
     pub fn with_reserved_residency(limit_pixels: u64, reservation: BudgetReservation) -> Self {
         Self {
             remaining_pixels: limit_pixels,
+            paint_metadata_limit: DEFAULT_PAINT_METADATA_BYTES,
             residency: reservation.budget(),
             reservation: Some(reservation),
             allocation_scope: Some(Arc::new(std::sync::Mutex::new(tile::Scope::default()))),
         }
+    }
+    /// Set an independent fixed per-plan metadata allowance. This does not add
+    /// retryable decoded demand or alter the cumulative staged-pixel policy.
+    pub fn with_paint_metadata_limit(mut self, bytes: usize) -> Self {
+        self.paint_metadata_limit = bytes;
+        self
+    }
+    pub fn paint_plan(&self) -> PaintPlan {
+        PaintPlan::with_metadata_limit(self.paint_metadata_limit)
     }
     /// Reserve a complete known set of fresh tile allocations before materialization.
     /// This validates but does not consume the cumulative staged-pixel allowance.

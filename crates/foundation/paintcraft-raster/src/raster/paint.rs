@@ -1,6 +1,10 @@
 //! Ordered paint descriptors with operation-wide tile admission.
 use super::*;
 use std::collections::hash_map::Entry;
+mod metadata;
+
+/// Provisional per-plan metadata safety policy, excluding allocator/hash overhead.
+pub const DEFAULT_PAINT_METADATA_BYTES: usize = 64 << 20;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 struct Write {
     area: Rect,
@@ -44,11 +48,28 @@ impl Write {
     }
 }
 /// Ordered clipped rectangles/runs; overlapping writes retain their original order.
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct PaintPlan {
     writes: Vec<Write>,
+    metadata_limit: usize,
+}
+impl Default for PaintPlan {
+    fn default() -> Self {
+        Self::with_metadata_limit(DEFAULT_PAINT_METADATA_BYTES)
+    }
 }
 impl PaintPlan {
+    /// Limit retained descriptors plus temporary tile-index payload capacities.
+    /// This is a fixed per-plan policy, not decoded residency or process RSS.
+    pub fn with_metadata_limit(bytes: usize) -> Self {
+        Self {
+            writes: Vec::new(),
+            metadata_limit: bytes,
+        }
+    }
+    pub fn descriptor_bytes(&self) -> usize {
+        self.writes.capacity() * std::mem::size_of::<Write>()
+    }
     pub fn rect(&mut self, area: Rect, color: Rgba, mode: BlendMode) -> Result<()> {
         self.push(Write {
             area,
@@ -87,12 +108,8 @@ impl PaintPlan {
             previous.area.x1 = write.area.x1;
             return Ok(());
         }
-        self.writes.try_reserve(1).map_err(|_| {
-            Error::new(
-                ErrorCode::ResourceLimit,
-                "cannot allocate paint descriptors",
-            )
-        })?;
+        metadata::Metadata::new(self.descriptor_bytes(), self.metadata_limit)?
+            .vector(&mut self.writes)?;
         self.writes.push(write);
         Ok(())
     }
@@ -113,6 +130,10 @@ impl PaintPlan {
         if self.writes.is_empty() {
             return Ok(());
         }
+        let mut metadata = metadata::Metadata::new(
+            self.descriptor_bytes(),
+            self.metadata_limit.min(admission.paint_metadata_limit),
+        )?;
         let mut tiles: HashMap<TileCoord, Vec<usize>> = HashMap::new();
         let mut needed = 0u64;
         for (index, write) in self.writes.iter().enumerate() {
@@ -132,10 +153,13 @@ impl PaintPlan {
                 for tx in area.x0 / i64::from(TILE_EDGE)..=(area.x1 - 1) / i64::from(TILE_EDGE) {
                     check()?;
                     let coord = TileCoord { tx, ty };
-                    if tiles.len() == tiles.capacity() {
-                        tiles.try_reserve(1).map_err(|_| {
-                            Error::new(ErrorCode::ResourceLimit, "cannot allocate paint tile plan")
-                        })?;
+                    if tiles.len() == tiles.capacity() && !tiles.contains_key(&coord) {
+                        if !layer.tiles.contains_key(&coord)
+                            && write.pixel(layer.default) == layer.default
+                        {
+                            continue;
+                        }
+                        metadata.table(&mut tiles)?;
                     }
                     let writes = match tiles.entry(coord) {
                         Entry::Occupied(entry) => entry.into_mut(),
@@ -154,9 +178,7 @@ impl PaintPlan {
                             entry.insert(Vec::new())
                         }
                     };
-                    writes.try_reserve(1).map_err(|_| {
-                        Error::new(ErrorCode::ResourceLimit, "cannot index paint writes")
-                    })?;
+                    metadata.vector(writes)?;
                     writes.push(index);
                 }
             }
