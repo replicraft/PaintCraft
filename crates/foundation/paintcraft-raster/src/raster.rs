@@ -59,6 +59,7 @@ fn blend(mode: BlendMode, src: Rgba, dst: Rgba) -> Rgba {
 pub struct Admission {
     remaining_pixels: u64,
     paint_metadata_limit: usize,
+    flood_scratch_limit: usize,
     residency: SharedBudget,
     reservation: Option<BudgetReservation>,
     allocation_scope: Option<Arc<std::sync::Mutex<tile::Scope>>>,
@@ -80,6 +81,7 @@ impl Admission {
         Self {
             remaining_pixels: limit_pixels,
             paint_metadata_limit: DEFAULT_PAINT_METADATA_BYTES,
+            flood_scratch_limit: crate::flood::DEFAULT_FLOOD_SCRATCH_BYTES,
             residency,
             reservation: None,
             allocation_scope: None,
@@ -92,6 +94,7 @@ impl Admission {
         Self {
             remaining_pixels: limit_pixels,
             paint_metadata_limit: DEFAULT_PAINT_METADATA_BYTES,
+            flood_scratch_limit: crate::flood::DEFAULT_FLOOD_SCRATCH_BYTES,
             residency: reservation.budget(),
             reservation: Some(reservation),
             allocation_scope: Some(Arc::new(std::sync::Mutex::new(tile::Scope::default()))),
@@ -102,6 +105,14 @@ impl Admission {
     pub fn with_paint_metadata_limit(mut self, bytes: usize) -> Self {
         self.paint_metadata_limit = bytes;
         self
+    }
+    /// Configure bitmap/frontier/output capacity for each flood classification.
+    pub fn with_flood_scratch_limit(mut self, bytes: usize) -> Self {
+        self.flood_scratch_limit = bytes;
+        self
+    }
+    pub fn flood_scratch_limit(&self) -> usize {
+        self.flood_scratch_limit
     }
     pub fn paint_plan(&self) -> PaintPlan {
         PaintPlan::with_metadata_limit(self.paint_metadata_limit)

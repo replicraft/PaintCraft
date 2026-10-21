@@ -9,6 +9,10 @@ use paintcraft_core::types::{Error, ErrorCode, Rect, Result, Rgba};
 
 use crate::raster::RasterLayer;
 use crate::shape::Span;
+mod scratch;
+
+/// Provisional bitmap/frontier/output capacity bound, not allocator/RSS accounting.
+pub const DEFAULT_FLOOD_SCRATCH_BYTES: usize = 64 << 20;
 
 /// Largest area a fill may examine (bounds its visited bitmap).
 pub const FLOOD_AREA_MAX: u128 = 67_108_864;
@@ -27,54 +31,107 @@ pub fn region(
     clip: &Rect,
     tolerance: u8,
 ) -> Result<Vec<Span>> {
+    region_checked(layer, seed, clip, tolerance, &|| Ok(()))
+}
+
+/// Cooperative classification. Errors never return a partial region.
+pub fn region_checked(
+    layer: &RasterLayer,
+    seed: (i64, i64),
+    clip: &Rect,
+    tolerance: u8,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Vec<Span>> {
+    region_with_scratch_limit_checked(
+        layer,
+        seed,
+        clip,
+        tolerance,
+        DEFAULT_FLOOD_SCRATCH_BYTES,
+        check,
+    )
+}
+
+/// Bound the sum of bitmap, retained frontier and returned-span capacities.
+/// Fixed scratch exhaustion has no retryable decoded-tile allocation context.
+pub fn region_with_scratch_limit_checked(
+    layer: &RasterLayer,
+    seed: (i64, i64),
+    clip: &Rect,
+    tolerance: u8,
+    scratch_bytes: usize,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Vec<Span>> {
+    check()?;
     if !clip.contains(seed.0, seed.1) {
         return Ok(Vec::new());
     }
-    if clip.area() > FLOOD_AREA_MAX {
+    // Public rectangles can span more than i64::MAX; reject area before narrowing.
+    let width = i128::from(clip.x1) - i128::from(clip.x0);
+    let height = i128::from(clip.y1) - i128::from(clip.y0);
+    let area = width as u128 * height as u128;
+    if area > FLOOD_AREA_MAX {
         return Err(Error::new(
             ErrorCode::ResourceLimit,
             "fill area exceeds the flood-fill limit",
         ));
     }
-    let (w, h) = (clip.width() as usize, clip.height() as usize);
-    let mut seen = vec![0u64; (w * h).div_ceil(64)];
+    let w = usize::try_from(width)
+        .map_err(|_| Error::new(ErrorCode::ResourceLimit, "flood width overflows"))?;
+    let pixels = usize::try_from(area)
+        .map_err(|_| Error::new(ErrorCode::ResourceLimit, "flood area overflows"))?;
+    let mut scratch = scratch::Scratch::new(scratch_bytes);
+    let mut seen = scratch.bitmap(pixels.div_ceil(64), check)?;
+    let mut work = scratch::Work::new(check);
     let idx = |x: i64, y: i64| (y - clip.y0) as usize * w + (x - clip.x0) as usize;
     let is_seen = |seen: &[u64], x, y| seen[idx(x, y) / 64] >> (idx(x, y) % 64) & 1 == 1;
     let target = layer.get(seed.0, seed.1);
     let matches = |x: i64, y: i64| near(layer.get(x, y), target, tolerance);
-
     let mut out = Vec::new();
-    let mut stack = vec![seed];
+    let mut stack = Vec::new();
+    scratch.push(&mut stack, seed, check)?;
     while let Some((x, y)) = stack.pop() {
+        check()?;
         if is_seen(&seen, x, y) || !matches(x, y) {
             continue;
         }
         let (mut l, mut r) = (x, x);
-        while l > clip.x0 && !is_seen(&seen, l - 1, y) && matches(l - 1, y) {
+        while l > clip.x0 {
+            work.step()?;
+            if is_seen(&seen, l - 1, y) || !matches(l - 1, y) {
+                break;
+            }
             l -= 1;
         }
-        while r < clip.x1 - 1 && !is_seen(&seen, r + 1, y) && matches(r + 1, y) {
+        while r < clip.x1 - 1 {
+            work.step()?;
+            if is_seen(&seen, r + 1, y) || !matches(r + 1, y) {
+                break;
+            }
             r += 1;
         }
         for xi in l..=r {
+            work.step()?;
             let i = idx(xi, y);
             seen[i / 64] |= 1 << (i % 64);
         }
-        out.push(Span { y, x0: l, x1: r });
-        for ny in [y - 1, y + 1] {
+        scratch.push(&mut out, Span { y, x0: l, x1: r }, check)?;
+        for ny in [y.checked_sub(1), y.checked_add(1)].into_iter().flatten() {
             if !(clip.y0..clip.y1).contains(&ny) {
                 continue;
             }
             let mut inside_run = false;
             for xi in l..=r {
+                work.step()?;
                 let ok = !is_seen(&seen, xi, ny) && matches(xi, ny);
                 if ok && !inside_run {
-                    stack.push((xi, ny));
+                    scratch.push(&mut stack, (xi, ny), check)?;
                 }
                 inside_run = ok;
             }
         }
     }
+    check()?;
     Ok(out)
 }
 
