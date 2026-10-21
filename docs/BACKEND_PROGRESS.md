@@ -732,3 +732,39 @@ transient/RSS limits, other command kernels, whole-batch planning, native cancel
 display tails, GPU recovery and broader feature work remain. No throughput, RSS or
 native latency improvement is claimed. T04/T13/T14/T37 remain partial/in progress;
 the full roadmap stays active.
+
+## Forty-third slice: streamed shapes and exact large ellipses
+
+Rectangle/ellipse preparation now streams clipped spans directly into the admitted
+paint plan, checking cancellation before each row and propagating sink failures.
+Fill and outline retain their shared plan and original ordering; no intermediate
+geometry Vec is needed in the editor. Checked endpoint differences build the
+inclusive box safely. Existing collection APIs remain for callers that own their
+allocation policy. Line/unsmoothed brush unions and font geometry retain their
+other paths. See [the shape preparation contract](SHAPE_PREPARATION.md).
+
+Large legal ellipses previously overflowed intermediate products even for tiny
+clipped canvases. Ordinary rows now use checked u128 products; wider rows compare
+exact u256 high/low products and use at most 63 bisections. No floating quotient,
+approximate pixels, new dependency or public big-integer type is introduced.
+Outline insets and empty local pieces avoid signed endpoint overflow. Existing
+default-v1 centre/inset semantics remain unchanged.
+
+Independent tests cover 2,880 small shape/clip/thickness combinations, exact large
+centres and independently located edges, schoolbook u32 product oracles, signed
+endpoints, row cancellation and immediate sink failure. Editor tests commit an
+ellipse at the admitted coordinate limit, undo/redo exact recorded pixels and
+cancel rectangle/ellipse preparation after a private prefix without owner/history
+changes. 822 workspace tests pass (26 explicit ignores) across 71 suites; strict
+workspace/all-target Clippy and release desktop/CLI builds pass. Targeted optimized geometry/history tests also pass, along with all 31 required
+Metal integration tests, 23 renderer unit tests and 224 required-GPU desktop tests.
+Default/direct-single-layer 30-frame native startup checks exit zero with empty logs.
+The [validation record](validation/shape-preparation-2026-10-21/validation.json)
+pins source, commands, compressed logs and release hashes for this correctness milestone. A test-oracle index-type compile diagnostic is retained;
+its usize annotation is corrected in the validated source.
+
+The wider numeric path and callbacks are correct baselines, without a throughput,
+RSS or native latency claim. Historical timings remain scoped to their frozen
+source. Other geometry kernels, whole-batch planning, aggregate budgets, native
+cancellation/display tails, GPU recovery and broader features remain. T04/T13/T14/T37
+remain partial/in progress; the full roadmap stays active.

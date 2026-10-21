@@ -81,3 +81,9 @@ fallible capacity-bounded bitmap/frontier/output storage. The editor compiles it
 clipped local spans directly, preserving earlier private edits without a duplicate
 coordinate-conversion vector. This remains sequential data-dependent preparation,
 not an upfront whole-batch plan or aggregate scratch reservation.
+
+[Rectangle/ellipse preparation](SHAPE_PREPARATION.md) now streams exact clipped
+spans into the admitted plan, with row cancellation and checked large-coordinate
+arithmetic. Fill/outline keep one shared operation plan. This does not add checked
+preparation to unsmoothed stroke unions or built-in font geometry, nor does it
+reserve the whole batch upfront.

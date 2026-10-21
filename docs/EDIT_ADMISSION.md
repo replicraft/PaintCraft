@@ -154,3 +154,9 @@ callback and a separate per-call scratch limit from raster admission. Fixed scra
 errors carry no decoded denial; cancellation or exhaustion after a private prefix
 discards that attempt without advancing owner/history state. Native wall-clock
 cancellation tails and full-batch resource planning remain unqualified.
+
+[Shape visitors](SHAPE_PREPARATION.md) now feed rectangle/ellipse descriptors
+directly into the admitted plan and check cancellation during row preparation. A
+failed sink or cancelled outline cannot publish a preceding fill/private batch
+prefix. Large clipped ellipses retain exact arithmetic rather than overflowing
+before tile admission; aggregate geometry/whole-batch policies remain separate.
