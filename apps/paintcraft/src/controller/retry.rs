@@ -8,9 +8,14 @@ use paintcraft_core::types::{
 use paintcraft_editor::session::{HistoryTicket, Preparation};
 use paintcraft_raster::Admission;
 
+#[derive(Clone, Debug)]
+enum Request {
+    Edit(Arc<Batch>),
+    Navigation(background::NavigationRequest),
+}
 #[derive(Debug)]
 pub(super) struct Deferred {
-    batch: Arc<Batch>,
+    request: Request,
     base: HistoryTicket,
     denial: AllocationDenial,
 }
@@ -18,6 +23,7 @@ pub(super) struct Deferred {
 pub(super) struct Waiting {
     pub(super) deferred: Deferred,
     pub(super) done: String,
+    pub(super) empty: &'static str,
     pub(super) target_alias: Option<&'static str>,
 }
 pub(super) fn prepare_batch(
@@ -27,15 +33,43 @@ pub(super) fn prepare_batch(
     check: impl Fn() -> Result<()>,
 ) -> Result<Completion> {
     let base = preparation.history_ticket();
-    match preparation.apply_with_admission(&batch, admission, &check) {
-        Ok(prepared) => Ok(Completion::Edit(prepared)),
+    let result = preparation
+        .apply_with_admission(&batch, admission, &check)
+        .map(Completion::Edit);
+    defer_failure(base, Request::Edit(batch), result, check)
+}
+pub(super) fn prepare_navigation(
+    preparation: Preparation,
+    request: background::NavigationRequest,
+    admission: Admission,
+    check: impl Fn() -> Result<()>,
+) -> Result<Completion> {
+    let base = preparation.history_ticket();
+    let result = match request {
+        background::NavigationRequest::Undo => preparation.undo_with_admission(admission, &check),
+        background::NavigationRequest::Redo => preparation.redo_with_admission(admission, &check),
+        background::NavigationRequest::Seek { ticket, history_id } => {
+            preparation.navigate_history_with_admission(ticket, history_id, admission, &check)
+        }
+    }
+    .map(Completion::Navigation);
+    defer_failure(base, Request::Navigation(request), result, check)
+}
+fn defer_failure(
+    base: HistoryTicket,
+    request: Request,
+    result: Result<Completion>,
+    check: impl Fn() -> Result<()>,
+) -> Result<Completion> {
+    match result {
+        Ok(completion) => Ok(completion),
         Err(error) => {
             check()?;
             match error.allocation_denial().filter(|denial| {
                 denial.class() == AllocationClass::DecodedTiles && denial.is_possible()
             }) {
                 Some(denial) => Ok(Completion::Deferred(Box::new(Deferred {
-                    batch,
+                    request,
                     base,
                     denial: denial.clone(),
                 }))),
@@ -44,6 +78,7 @@ pub(super) fn prepare_batch(
         }
     }
 }
+
 impl Editor {
     pub(super) fn has_inflight_edit(&self) -> bool {
         self.pending_edit.is_some()
@@ -89,17 +124,20 @@ impl Editor {
                 return;
             }
         };
-        let batch = waiting.deferred.batch.clone();
-        let admission = Admission::with_reserved_residency(
-            paintcraft_editor::execute::STAGED_PIXELS_MAX,
-            reservation,
-        );
+        let request = waiting.deferred.request.clone();
+        let admission = Admission::with_reserved_residency(u64::MAX, reservation);
         let result = service.submit(
             move |cancellation| {
-                prepare_batch(preparation, batch, admission, || cancellation.check())
+                let check = || cancellation.check();
+                match request {
+                    Request::Edit(batch) => prepare_batch(preparation, batch, admission, check),
+                    Request::Navigation(request) => {
+                        prepare_navigation(preparation, request, admission, check)
+                    }
+                }
             },
             waiting.done.clone(),
-            "",
+            waiting.empty,
             waiting.target_alias,
         );
         match result {
@@ -123,3 +161,7 @@ impl Editor {
 #[cfg(test)]
 #[path = "retry/tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "retry/navigation_tests.rs"]
+mod navigation_tests;

@@ -298,17 +298,20 @@ impl Editor {
             NavigationRequest::Redo => ("Redo", "Nothing to redo"),
             NavigationRequest::Seek { .. } => ("History restored", "History unchanged"),
         };
+        let residency = self
+            .editing
+            .as_ref()
+            .expect("editing service")
+            .residency
+            .clone();
         let task = self.session.preparation().map(|preparation| {
             Box::new(move |cancellation: Cancellation| {
-                let check = || cancellation.check();
-                match request {
-                    NavigationRequest::Undo => preparation.undo(check),
-                    NavigationRequest::Redo => preparation.redo(check),
-                    NavigationRequest::Seek { ticket, history_id } => {
-                        preparation.navigate_history(ticket, history_id, check)
-                    }
-                }
-                .map(Completion::Navigation)
+                retry::prepare_navigation(
+                    preparation,
+                    request,
+                    paintcraft_raster::Admission::with_residency(u64::MAX, residency),
+                    || cancellation.check(),
+                )
             }) as dispatch::Task
         });
         self.dispatch_initial(task, done.into(), empty, None);
@@ -342,6 +345,7 @@ impl Editor {
                 self.waiting_edit = Some(retry::Waiting {
                     deferred: *deferred,
                     done: pending.done.clone(),
+                    empty: pending.empty,
                     target_alias: pending.target_alias,
                 });
                 return;
