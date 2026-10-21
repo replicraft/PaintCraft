@@ -63,9 +63,12 @@ native window/presentation device remains unimplemented.
 when the default tile realm needs headroom. Inactive tabs and parked frontend
 workspaces are polled without activation. Storage publication changes no content
 revision, undo position or saved acknowledgement, and cannot make a clean document
-dirty. Completed work yields to queued foreground edits. Failed resource renders
-retry after the observed decoded capacity falls. Full scheduler priorities,
-request-sized reservation and native pressure/latency qualification remain.
+dirty. Completed work yields to queued foreground edits. Failed decoded renders
+retry when their known footprint fits. [Accepted edit retries](EDIT_ADMISSION.md)
+retain captured batches and FIFO barriers, reserve known decoded capacity before
+restarting, and permit own-history maintenance while waiting. Full first-attempt
+request planning, scheduler priorities and native pressure/latency qualification
+remain.
 
 ## Render preparation and progress
 

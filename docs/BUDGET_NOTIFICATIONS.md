@@ -36,6 +36,10 @@ interest rather than triggering reclamation. No bytes are reserved. Demand lives
 in the existing bounded weak registration; clearing interest or dropping the watch
 removes it, even while an already collected wake temporarily retains the observer.
 
+`wait_for_capacities` combines a context's render and editor demands into that
+same registration without allocating a watch for each tab. Editor demands retain
+their own owner/base guards and clear on success, cancellation or stale ownership.
+
 `observe_pressure()` acknowledges notifications and returns live usage plus the
 maximum known demand across consumers. Concurrent requests are not summed: the
 hint seeks enough headroom for a single attempt, without promising that multiple
@@ -77,7 +81,7 @@ Real native service initialization installs tile and worker subscriptions. The
 tile threshold matches the pressure coordinator; worker headroom matches the
 largest standard 2 GiB preparation charge. Polling acknowledges both observers.
 Resource-failed rendering and pending edits enable additional tile-release wakes.
-A current render's feasible decoded denial also publishes its known footprint.
+A current render or waiting edit's feasible decoded denial publishes its known footprint.
 Every subscribed context uses shared demand when deciding whether to run its own
 history maintenance. Success, stale document/preview identity and watcher shutdown
 remove that demand. A render failure from another realm cannot pressure this one.

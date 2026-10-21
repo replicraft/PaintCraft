@@ -48,6 +48,10 @@
       ],
       "status": "partial",
       "evidence": [
+        "apps/paintcraft/src/controller/retry/tests.rs",
+        "crates/editing/paintcraft-editor/tests/reserved_preparation.rs",
+        "crates/foundation/paintcraft-core/src/types/resources/reservation_tests.rs",
+        "docs/EDIT_ADMISSION.md",
         "apps/paintcraft/src/app/residency/demand_tests.rs",
         "crates/foundation/paintcraft-core/src/types/resources/demand_tests.rs",
         "docs/BUDGET_NOTIFICATIONS.md",
@@ -67,7 +71,7 @@
         "docs/HISTORY_STORAGE.md",
         "crates/editing/paintcraft-editor/tests/history_storage.rs"
       ],
-      "remaining_or_scope": "Sparse COW tiles retain byte leases through documents/history/readers; default decoded payload admission is process-shared at 2 GiB. Guarded native maintenance visits inactive tabs/parked frontends. Coalesced budget wakes and known render demand reach native contexts; footprint-aware retries preserve fixed-limit failures. Logical blob authority, request-sized/native multi-window pressure qualification, adaptive metadata/allocation budgets and RSS qualification remain.",
+      "remaining_or_scope": "Sparse COW tiles retain byte leases through documents/history/readers; default decoded payload admission is process-shared at 2 GiB. Guarded native maintenance visits inactive tabs/parked frontends. Coalesced budget wakes and known render demand reach native contexts; footprint-aware retries preserve fixed-limit failures. Explicit reservations transfer into independently owned tile leases; accepted decoded-failed edits reserve known capacity on retry. Logical blob authority, first-attempt whole-request planning/native multi-window pressure qualification, adaptive metadata/allocation budgets and RSS qualification remain.",
       "acceptance": "MEM-03/04; hidden RGB; negative boundaries; checked sizes; explicit resource errors."
     },
     {
@@ -203,6 +207,10 @@
       ],
       "status": "partial",
       "evidence": [
+        "apps/paintcraft/src/controller/retry/tests.rs",
+        "crates/editing/paintcraft-editor/tests/reserved_preparation.rs",
+        "crates/foundation/paintcraft-core/src/types/resources/reservation_tests.rs",
+        "docs/EDIT_ADMISSION.md",
         "apps/paintcraft/src/app/residency/demand_tests.rs",
         "crates/foundation/paintcraft-core/src/types/resources/demand_tests.rs",
         "docs/BUDGET_NOTIFICATIONS.md",
@@ -239,7 +247,7 @@
         "apps/paintcraft/src/app/editing.rs",
         "apps/paintcraft/src/app/editing/tests.rs"
       ],
-      "remaining_or_scope": "Preserving history handles large snapshots through bounded classification/transfer. Native guarded storage maintenance reclaims eligible inactive-owner history without content/cursor/save changes and yields to queued foreground edits. Shared byte-budget notifications and known render demand coordinate native consumers across contexts; footprint-aware retries preserve fixed-limit failures. Request-sized admission, content retry, native multi-window qualification, all-service budgets, relocation and native latency qualification remain.",
+      "remaining_or_scope": "Preserving history handles large snapshots through bounded classification/transfer. Native guarded storage maintenance reclaims eligible inactive-owner history without content/cursor/save changes and yields to queued foreground edits. Shared byte-budget notifications and known render demand coordinate native consumers across contexts; footprint-aware retries preserve fixed-limit failures. Accepted decoded-failed edits retain FIFO/file barriers and can reclaim their own history before a reserved retry. First-attempt whole-request planning, other retry lifecycles, native multi-window qualification, all-service budgets, relocation and native latency qualification remain.",
       "acceptance": "MEM-01\u201307 under artificial low budget; actual allocator/RSS evidence, not counters alone."
     },
     {
@@ -275,6 +283,10 @@
       ],
       "status": "partial",
       "evidence": [
+        "apps/paintcraft/src/controller/retry/tests.rs",
+        "crates/editing/paintcraft-editor/tests/reserved_preparation.rs",
+        "crates/foundation/paintcraft-core/src/types/resources/reservation_tests.rs",
+        "docs/EDIT_ADMISSION.md",
         "apps/paintcraft/src/app/residency/demand_tests.rs",
         "crates/foundation/paintcraft-core/src/types/resources/demand_tests.rs",
         "crates/services/paintcraft-render/src/gpu.rs",
@@ -305,7 +317,7 @@
         "crates/editing/paintcraft-editor/src/session/preparation.rs",
         "crates/editing/paintcraft-editor/tests/preparation.rs"
       ],
-      "remaining_or_scope": "Shared native render/edit workers prepare validated stroke/text plans from immutable previews. Revision-keyed weak snapshots avoid recollecting unchanged repaints; queued edits, file barriers and completion invalidate inputs. Guarded no-op results and compatible progress have tests. Preview-capture process costs are locally measured; changing-input cost is inconclusive. Device epochs reject replaced/retired GPU completions; Metal destruction and fresh-device host-history reconstruction pass. Native edit/render pools share declared-byte admission with worker/result guards surviving executor drop. Footprint-aware render retries and shared demand guide decoded pressure maintenance. Native window-device recovery, priorities, physical/all-service budgets, changed-preview costs and native latency/interference qualification remain.",
+      "remaining_or_scope": "Shared native render/edit workers prepare validated stroke/text plans from immutable previews. Revision-keyed weak snapshots avoid recollecting unchanged repaints; queued edits, file barriers and completion invalidate inputs. Guarded no-op results and compatible progress have tests. Preview-capture process costs are locally measured; changing-input cost is inconclusive. Device epochs reject replaced/retired GPU completions; Metal destruction and fresh-device host-history reconstruction pass. Native edit/render pools share declared-byte admission with worker/result guards surviving executor drop. Footprint-aware render retries and shared demand guide decoded pressure maintenance. Decoded-failed native edits retain captured batches and retry with reserved known capacity under owner/base guards. Native window-device recovery, priorities, physical/all-service budgets, changed-preview costs and native latency/interference qualification remain.",
       "acceptance": "SCHED-01\u201306 and GPU-01\u201306; no late mutation/device-loss data loss."
     },
     {

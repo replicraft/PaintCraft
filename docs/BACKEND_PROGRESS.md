@@ -613,3 +613,44 @@ consumers still reserve normally. Request-sized pre-reservation, automatic retry
 of accepted content edits, current-document blob eviction, all-service physical
 budgets, fairness and native pressure/interference qualification remain. T04/T11/T13
 stay partial; no throughput, RSS or tail-latency improvement is claimed.
+
+
+## Twenty-first slice: reserved decoded attempts and accepted-edit retries
+
+Shared capacity can now be reserved upfront and transferred into individual leases.
+A live reservation recycles temporary resource releases; its final owner returns
+unused capacity, while surviving tiles remain independently charged. Raster attempts
+use this allowance without borrowing extra free bytes, and retain cumulative staged
+limits. Detached edit preparation accepts an explicit admission while keeping all
+history/cancellation/publication guards. Cheap owner/base tickets avoid collecting
+history metadata for retry checks.
+
+Successfully submitted native edits retain their validated batches after feasible
+decoded failures. They keep their preview, queue accounting, dirty state and FIFO
+position ahead of later file boundaries. Readiness atomically reserves the known
+footprint before fresh preparation; worker-admission interference retains the command
+and releases unused capacity. Escape cancels waiting/later editing activations;
+a changed owner/base refuses rebasing. Permanent staged/work limits and impossible
+requirements remain terminal. Waiting owners can reclaim eligible own history even
+with a later file boundary queued. Render and tab/workspace edit demands share one
+bounded observer per context.
+
+679 workspace tests pass (21 explicit ignores), strict workspace/all-target Clippy,
+formatting/file limits, release desktop/CLI builds, three required Apple M1 Pro
+Metal checks and an isolated 30-frame native smoke. Four core tests cover transfer,
+recycling, clone/final-reader lifetimes, release wakes and concurrent reservation
+teardown. Two raster and four editor regressions verify exact counters, scratch
+reuse, rollback, staged policy, independent pixels/receipts, cancellation and stale
+publication. Six controller regressions cover accepted command ordering, preview,
+Escape, permanent limits, own-history cleanup and shared-worker interference. A
+cross-context integration uses one actual four-tile realm and verifies that eligible
+history reclamation enables the other editor's accepted two-tile stroke without
+changing the history owner's ticket/entries. See [the admission contract](EDIT_ADMISSION.md).
+
+The first attempt still allocates incrementally; a retry reserves only its learned
+prefix demand, which may grow. Initial worker-submission races, navigation and other
+services do not yet have the full retained retry lifecycle. Command/preview vectors,
+metadata, codec/output/GPU resources and physical/RSS admission remain outside this
+reservation. Current readers can pin capacity indefinitely; fairness, native memory
+pressure and queue-inclusive input latency remain unqualified. No throughput or RSS
+gain is claimed. T04/T11/T13 remain partial.

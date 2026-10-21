@@ -16,7 +16,8 @@ summed into a process RSS estimate.
 ## Allocation and ownership
 
 Before allocating a tile, raster checks the staged-pixel allowance and reserves
-one full tile's payload bytes. Allocation is fallible; Vec capacity must exactly
+one full tile's payload bytes, or transfers them from a caller's already admitted
+[capacity reservation](EDIT_ADMISSION.md). Allocation is fallible; Vec capacity must exactly
 match the charged payload size before the tile is retained. Failed allocation or
 initialization drops its candidate and returns the lease. Actual allocator padding,
 Arc/control-block metadata and temporary buffers are outside this payload count.
@@ -47,7 +48,9 @@ transaction API.
 `Admission::with_residency` supports a caller-supplied realm in addition to its
 staged-pixel allowance. `execute_with_admission` runs the same private transaction
 implementation under that explicit policy. `residency_usage` reports live reserved
-payload bytes, their ceiling and a reservation high-water mark.
+payload/reserved-headroom bytes, their ceiling and a reservation high-water mark.
+Explicit reservations include unused admitted headroom until their final owner
+drops; surviving tile leases retain only their actual payload charges.
 
 An explicit realm is separate from the process default. A host choosing multiple
 realms must coordinate their aggregate policy. This API does not migrate existing
@@ -59,9 +62,10 @@ available-memory-derived startup setting or reference-application limit. Current
 history pressure also has a [native owner coordinator](HISTORY_PRESSURE.md) that
 prepares preserving storage work across inactive tabs and parked frontend
 workspaces. [Budget notifications](BUDGET_NOTIFICATIONS.md) wake native resource
-consumers across contexts. Request-sized reservation, native multi-window wake
-qualification and adaptive all-service pressure remain incomplete. A new edit can still receive
-`resource.limit` when readers pin capacity or a step cannot free enough.
+consumers across contexts. Known-demand edit retries can reserve capacity before
+restarting. Native multi-window wake qualification, first-attempt whole-request
+planning and adaptive all-service pressure remain incomplete. Readers can pin
+capacity indefinitely; a waiting edit can be explicitly cancelled.
 Published state and undo remain intact.
 
 ## Failed-attempt demand

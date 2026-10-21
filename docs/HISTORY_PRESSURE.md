@@ -84,10 +84,12 @@ in a native window or measure actual input-to-display latency under pressure.
 ## Remaining scope
 
 Capture still copies history metadata on the UI thread. A new edit can need more
-capacity than a single maintenance step releases, and a racing allocation can
-still fail truthfully without publication. Request-sized pre-reservation, automatic
-retry policy for failed content edits, native multi-window wake qualification and
-all-service fairness remain incomplete.
+capacity than a single maintenance step releases. [Accepted decoded edit retries](EDIT_ADMISSION.md)
+retain their FIFO position and reserve the known footprint before resubmission;
+a racing admission keeps the command waiting. A waiting owner can maintain its
+history despite a later queued file boundary. Whole-request planning, non-edit
+retry lifecycles, native multi-window wake qualification and all-service fairness
+remain incomplete.
 
 Current documents, explicit readers and detached preparations may legitimately pin
 all decoded capacity. This coordinator cannot evict those allocations. Logical
