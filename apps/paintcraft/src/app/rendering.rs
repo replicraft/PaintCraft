@@ -12,7 +12,16 @@ impl App {
             self.render_region
                 .and_then(|region| region.intersect(&self.editor.document().canvas_rect()))
                 .unwrap_or_else(|| self.editor.document().canvas_rect()),
+            self.render_level,
         )
+    }
+
+    pub(super) fn display_size(key: RenderKey) -> [u32; 2] {
+        let step = 1u32 << key.4;
+        [
+            (key.3.width() as u32).div_ceil(step),
+            (key.3.height() as u32).div_ceil(step),
+        ]
     }
 
     /// Connect native services only for a real desktop window; harnesses stay deterministic.
@@ -173,7 +182,8 @@ impl App {
                 .values()
                 .map(|layer| layer.raster.resident_tiles() as u64)
                 .sum::<u64>();
-            let reservation = key.3.area() as u64 * 16
+            let output_size = Self::display_size(key);
+            let reservation = u64::from(output_size[0]) * u64::from(output_size[1]) * 16
                 + tiles * paintcraft_raster::RasterLayer::TILE_BYTES as u64
                 + if preparation.possible_preview() {
                     256 << 20
@@ -205,7 +215,15 @@ impl App {
                     };
                     cancel.check()?;
                     let device_epoch = gpu.as_ref().map(|gpu| gpu.epoch());
-                    let (pixels, gpu_texture, fallback) = if let Some(gpu) = gpu {
+                    let (pixels, gpu_texture, fallback) = if key.4 != 0 {
+                        // The CPU reference performs ordered composition before box
+                        // filtering. Keep the GPU available for native-resolution work.
+                        (
+                            cpu.render_display(doc, key.3, key.4, is_preview, || cancel.check())?,
+                            None,
+                            None,
+                        )
+                    } else if let Some(gpu) = gpu {
                         let result = if native_display {
                             gpu.render_region_texture(doc, key.3, || cancel.check())
                                 .map(|texture| (Vec::new(), Some(texture)))
@@ -266,12 +284,15 @@ impl App {
                     )
                     .and_then(|staged| {
                         self.cpu_renderer
-                            .render_region(&staged.doc, key.3, true, || Ok(()))
+                            .render_display(&staged.doc, key.3, key.4, true, || Ok(()))
                     }),
-                None => {
-                    self.cpu_renderer
-                        .render_region(self.editor.document(), key.3, false, || Ok(()))
-                }
+                None => self.cpu_renderer.render_display(
+                    self.editor.document(),
+                    key.3,
+                    key.4,
+                    false,
+                    || Ok(()),
+                ),
             });
         self.install_render(ctx, key, pixels);
     }
@@ -299,6 +320,7 @@ impl App {
                 && key.0 == current.0
                 && key.1 == current.1
                 && key.3 == current.3
+                && key.4 == current.4
                 && key.2 >= self.preview_start_revision
                 && key.2 < current.2)
     }
@@ -334,11 +356,11 @@ impl App {
             ctx.request_repaint();
         }
         self.gpu_texture = None;
-        let region = key.3;
+        let [width, height] = Self::display_size(key);
         match pixels {
-            Ok(px) if px.len() as u64 == region.area() as u64 * 4 => {
-                let limit = ctx.input(|input| input.max_texture_side) as i64;
-                if region.width() > limit || region.height() > limit {
+            Ok(px) if px.len() as u64 == u64::from(width) * u64::from(height) * 4 => {
+                let limit = ctx.input(|input| input.max_texture_side) as u32;
+                if width > limit || height > limit {
                     self.texture = None;
                     self.rendered.clear();
                     self.editor
@@ -347,7 +369,7 @@ impl App {
                     return;
                 }
                 let image = egui::ColorImage::from_rgba_unmultiplied(
-                    [region.width() as usize, region.height() as usize],
+                    [width as usize, height as usize],
                     &px,
                 );
                 match &mut self.texture {
@@ -699,3 +721,7 @@ mod device_tests;
 #[cfg(test)]
 #[path = "rendering/region_tests.rs"]
 mod region_tests;
+
+#[cfg(test)]
+#[path = "rendering/display_tests.rs"]
+mod display_tests;

@@ -39,7 +39,9 @@ fn at(h: &Harness<App>, x: f32, y: f32) -> Pos2 {
 fn displayed_pixel(h: &Harness<App>, x: i64, y: i64) -> [u8; 4] {
     let region = h.state().rendered_region().unwrap();
     assert!(region.contains(x, y));
-    let index = ((y - region.y0) * region.width() + x - region.x0) as usize * 4;
+    let step = i64::from(h.state().rendered_sample_step().unwrap());
+    let width = h.state().rendered_size().unwrap()[0] as i64;
+    let index = (((y - region.y0) / step) * width + (x - region.x0) / step) as usize * 4;
     h.state().rendered()[index..index + 4].try_into().unwrap()
 }
 

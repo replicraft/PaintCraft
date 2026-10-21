@@ -9,12 +9,13 @@ use std::sync::{Arc, Mutex};
 
 // Measured candidates and the selection are recorded in docs/REGIONAL_COMPOSITOR.md.
 // Persistent cache plus simultaneous full/prefix key construction allowances.
-pub(super) const ADMISSION_BYTES: u64 = (20 + 2 * 16 + 8) << 20;
+pub(super) const ADMISSION_BYTES: u64 = (20 + 2 * 16 + 8 + 15) << 20;
 
 #[derive(Clone)]
 pub(super) struct CpuRenderer(
     Arc<Mutex<Option<CompositeCache>>>,
     Arc<Mutex<paintcraft_raster::smooth::PathCache>>,
+    pub(super) Arc<Mutex<Option<paintcraft_render::display::DisplayCache>>>,
 );
 impl CpuRenderer {
     pub fn new() -> Self {
@@ -29,6 +30,15 @@ impl CpuRenderer {
                 .ok(),
             )),
             Arc::new(Mutex::new(paintcraft_raster::smooth::PathCache::default())),
+            Arc::new(Mutex::new(
+                paintcraft_render::display::DisplayCache::new(CacheLimits {
+                    tile_edge: 32,
+                    committed_bytes: 4 << 20,
+                    preview_bytes: 1 << 20,
+                    entries_per_domain: 128,
+                })
+                .ok(),
+            )),
         )
     }
 
@@ -61,6 +71,49 @@ impl CpuRenderer {
 
     pub fn clear_geometry(&self) {
         self.1.lock().unwrap_or_else(|p| p.into_inner()).clear();
+    }
+
+    pub fn render_display(
+        &self,
+        doc: &Document,
+        region: paintcraft_core::types::Rect,
+        level: u8,
+        preview: bool,
+        check: impl Fn() -> Result<()>,
+    ) -> Result<Vec<u8>> {
+        if level == 0 {
+            return self.render_region(doc, region, preview, check);
+        }
+        check()?;
+        if !preview {
+            self.clear_geometry();
+        }
+        let request = paintcraft_render::display::DisplayRequest::new(doc, region, level)?;
+        let mut guard = self.2.lock().unwrap_or_else(|poisoned| {
+            let mut guard = poisoned.into_inner();
+            *guard = None;
+            self.2.clear_poison();
+            guard
+        });
+        let Some(cache) = guard.as_mut() else {
+            return paintcraft_render::display::render_display_cancellable(doc, request, check)
+                .map(|frame| frame.pixels);
+        };
+        if !preview {
+            cache.clear_preview();
+        }
+        cache
+            .render(
+                doc,
+                request,
+                if preview {
+                    Domain::Preview
+                } else {
+                    Domain::Committed
+                },
+                check,
+            )
+            .map(|frame| frame.pixels)
     }
 
     #[cfg(test)]
@@ -245,3 +298,4 @@ mod geometry_tests;
 #[cfg(test)]
 #[path = "cpu_rendering/geometry_benchmark.rs"]
 pub(crate) mod geometry_benchmark;
+

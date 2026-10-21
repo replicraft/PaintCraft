@@ -52,7 +52,7 @@ impl App {
         }
         let result = (|| {
             let size = frame.size();
-            if frame.region() != key.3 || size != [key.3.width() as u32, key.3.height() as u32] {
+            if key.4 != 0 || frame.region() != key.3 || size != Self::display_size(key) {
                 return Err(paintcraft_core::types::Error::new(
                     paintcraft_core::types::ErrorCode::InvariantViolation,
                     "GPU display bounds differ from requested region",

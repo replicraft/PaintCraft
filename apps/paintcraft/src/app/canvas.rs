@@ -140,8 +140,21 @@ impl App {
             (visible_canvas.max.x, visible_canvas.max.y),
             self.editor.document().canvas,
         ) {
-            self.render_region = Some(region);
-            self.sync_texture(ui.ctx());
+            let level = (-self.zoom.log2()).floor().clamp(0.0, 20.0) as u8;
+            match paintcraft_render::display::DisplayRequest::new(
+                self.editor.document(),
+                region,
+                level,
+            ) {
+                Ok(request) => {
+                    self.render_region = Some(request.region());
+                    self.render_level = request.level();
+                    self.sync_texture(ui.ctx());
+                }
+                Err(error) => self
+                    .editor
+                    .set_status(format!("Cannot render viewport: {error}")),
+            }
         }
 
         // Transparency checkerboard, then the composite. Display only: the document is untouched.
@@ -189,17 +202,24 @@ impl App {
             .map(|texture| texture.id)
             .or_else(|| self.texture.as_ref().map(egui::TextureHandle::id))
         {
-            painter.image(
-                id,
-                self.texture_key.map_or(rect, |key| {
-                    let region = key.3;
-                    let min = view.to_screen((region.x0, region.y0));
-                    let max = view.to_screen((region.x1, region.y1));
-                    Rect::from_min_max(Pos2::new(min.0, min.1), Pos2::new(max.0, max.1))
-                }),
-                Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)),
-                Color32::WHITE,
-            );
+            painter
+                .with_clip_rect(painter.clip_rect().intersect(rect))
+                .image(
+                    id,
+                    self.texture_key.map_or(rect, |key| {
+                        let region = key.3;
+                        let min = view.to_screen((region.x0, region.y0));
+                        let [w, h] = Self::display_size(key);
+                        let step = 1i64 << key.4;
+                        let max = view.to_screen((
+                            region.x0 + i64::from(w) * step,
+                            region.y0 + i64::from(h) * step,
+                        ));
+                        Rect::from_min_max(Pos2::new(min.0, min.1), Pos2::new(max.0, max.1))
+                    }),
+                    Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)),
+                    Color32::WHITE,
+                );
         }
 
         if self.pixel_grid {

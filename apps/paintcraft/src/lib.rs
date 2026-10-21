@@ -149,7 +149,7 @@ struct RenderedFrame {
     device_epoch: Option<paintcraft_render::gpu::DeviceEpoch>,
 }
 
-type RenderKey = (Uuid, u64, u64, paintcraft_core::types::Rect);
+type RenderKey = (Uuid, u64, u64, paintcraft_core::types::Rect, u8);
 
 pub struct App {
     #[cfg(target_os = "macos")]
@@ -184,6 +184,7 @@ pub struct App {
     gpu_texture: Option<gpu_display::Texture>,
     texture_key: Option<RenderKey>,
     render_region: Option<paintcraft_core::types::Rect>,
+    render_level: u8,
     render_residency_retry: Option<(
         RenderKey,
         paintcraft_core::types::resources::AllocationDenial,
@@ -291,6 +292,7 @@ impl App {
             gpu_texture: None,
             texture_key: None,
             render_region: None,
+            render_level: 0,
             render_residency_retry: None,
             rendered_preview: None,
             preview_revision: 0,
@@ -375,7 +377,19 @@ impl App {
             .map(|key| key.3)
     }
 
-    /// Last CPU-backed region (tightly packed straight RGBA8). Empty for native GPU display.
+    /// Tightly packed display dimensions; they may be smaller than source bounds.
+    pub fn rendered_size(&self) -> Option<[u32; 2]> {
+        self.rendered_region()
+            .map(|_| Self::display_size(self.texture_key.unwrap()))
+    }
+
+    /// Document pixels covered by one display texel on the global sampling grid.
+    pub fn rendered_sample_step(&self) -> Option<u32> {
+        self.rendered_region()
+            .map(|_| 1 << self.texture_key.unwrap().4)
+    }
+
+    /// Last CPU-backed display (straight RGBA8). Empty for native GPU display.
     pub fn rendered(&self) -> &[u8] {
         &self.rendered
     }

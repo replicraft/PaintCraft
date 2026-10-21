@@ -120,6 +120,7 @@ impl App {
         self.editor = editor;
         self.texture_key = None;
         self.render_region = None;
+        self.render_level = 0;
         self.texture = None;
         self.gpu_texture = None;
         self.rendered.clear();
