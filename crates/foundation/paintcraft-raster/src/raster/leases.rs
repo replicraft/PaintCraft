@@ -5,7 +5,7 @@ use super::*;
 pub struct TileLease(Arc<Tile>);
 impl TileLease {
     pub fn bytes(&self) -> &[u8] {
-        &self.0.0
+        &self.0.pixels
     }
     pub fn version(&self) -> TileVersion {
         TileVersion(Arc::downgrade(&self.0))
@@ -17,9 +17,8 @@ impl TileLease {
         adm: &mut Admission,
         write: impl FnOnce(&mut [u8]) -> Result<()>,
     ) -> Result<Self> {
-        adm.charge_tile()?;
-        let mut tile = Tile::filled(default)?;
-        write(&mut tile.0)?;
+        let mut tile = Tile::filled(default, adm)?;
+        write(&mut tile.pixels)?;
         Ok(Self(Arc::new(tile)))
     }
 }
@@ -29,7 +28,7 @@ impl TileVersion {
     }
     /// Actual decoded Vec capacity while this source allocation is still alive.
     pub fn resident_bytes(&self) -> usize {
-        self.0.upgrade().map_or(0, |t| t.0.capacity())
+        self.0.upgrade().map_or(0, |t| t.pixels.capacity())
     }
 }
 impl RasterLayer {

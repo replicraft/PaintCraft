@@ -1,0 +1,210 @@
+use paintcraft_core::types::{Error, ErrorCode, Rgba, resources::SharedBudget};
+use paintcraft_raster::{Admission, BlendMode, RasterLayer, TileLease};
+const BYTES: u64 = RasterLayer::TILE_BYTES as u64;
+fn admission(budget: &SharedBudget, tiles: u64) -> Admission {
+    Admission::with_residency(tiles * 65_536, budget.clone())
+}
+fn ink() -> Rgba {
+    Rgba([13, 29, 41, 0])
+}
+
+#[test]
+fn readers_keep_decoded_bytes_charged_and_weak_keys_do_not() {
+    let budget = SharedBudget::new(BYTES);
+    let mut raster = RasterLayer::new(256, 256, Rgba::TRANSPARENT);
+    raster
+        .blend_pixel(0, 0, ink(), BlendMode::Replace, &mut admission(&budget, 1))
+        .unwrap();
+    let snapshot = raster.clone();
+    let reader = raster.tile_leases().next().unwrap().1;
+    let version = reader.version();
+    assert_eq!(budget.usage().reserved, BYTES);
+    let error = raster
+        .blend_pixel(
+            0,
+            0,
+            Rgba([255; 4]),
+            BlendMode::Replace,
+            &mut admission(&budget, 1),
+        )
+        .unwrap_err();
+    assert_eq!(error.code, ErrorCode::ResourceLimit);
+    assert_eq!(raster.get(0, 0), ink());
+    assert_eq!(budget.usage().reserved, BYTES);
+    drop(snapshot);
+    assert!(
+        raster
+            .blend_pixel(
+                0,
+                0,
+                Rgba([255; 4]),
+                BlendMode::Replace,
+                &mut admission(&budget, 1)
+            )
+            .is_err()
+    );
+    drop(reader);
+    // Only a weak cache key remains: move ownership, don't allocate/copy pixels.
+    raster
+        .blend_pixel(
+            0,
+            0,
+            Rgba([255; 4]),
+            BlendMode::Replace,
+            &mut admission(&budget, 0),
+        )
+        .unwrap();
+    assert_eq!(budget.usage().reserved, BYTES);
+    assert_eq!(version.resident_bytes(), 0);
+    drop(raster);
+    assert_eq!(budget.usage().reserved, 0);
+    assert!(version.try_lease().is_none());
+}
+#[test]
+fn each_cow_allocation_is_charged_once_until_its_final_owner_drops() {
+    let budget = SharedBudget::new(2 * BYTES);
+    let mut old = RasterLayer::new(256, 256, Rgba::TRANSPARENT);
+    old.blend_pixel(0, 0, ink(), BlendMode::Replace, &mut admission(&budget, 1))
+        .unwrap();
+    let mut edited = old.clone();
+    let reader = old.tile_leases().next().unwrap().1;
+    edited
+        .blend_pixel(
+            0,
+            0,
+            Rgba([255; 4]),
+            BlendMode::Replace,
+            &mut admission(&budget, 1),
+        )
+        .unwrap();
+    assert_eq!(budget.usage().reserved, 2 * BYTES);
+    assert_eq!(old.get(0, 0), ink());
+    assert_eq!(edited.get(0, 0), Rgba([255; 4]));
+    drop(old);
+    assert_eq!(budget.usage().reserved, 2 * BYTES);
+    drop(edited);
+    assert_eq!(budget.usage().reserved, BYTES);
+    drop(reader);
+    assert_eq!(budget.usage().reserved, 0);
+}
+#[test]
+fn failed_materialization_returns_all_owned_bytes_and_never_exposes_partial_pixels() {
+    let budget = SharedBudget::new(BYTES);
+    let error = TileLease::materialize(Rgba::TRANSPARENT, &mut admission(&budget, 1), |data| {
+        data[..4].copy_from_slice(&ink().0);
+        Err(Error::new(
+            ErrorCode::CodecFailed,
+            "injected decode failure",
+        ))
+    })
+    .unwrap_err();
+    assert_eq!(error.code, ErrorCode::CodecFailed);
+    assert_eq!(budget.usage().reserved, 0);
+    assert_eq!(budget.usage().peak, BYTES);
+    let denied = SharedBudget::new(0);
+    assert!(
+        TileLease::materialize(Rgba::TRANSPARENT, &mut admission(&denied, 1), |_| panic!(
+            "denied allocation must not invoke writer"
+        ))
+        .is_err()
+    );
+    assert_eq!(denied.usage().reserved, 0);
+    assert!(
+        TileLease::materialize(Rgba::TRANSPARENT, &mut admission(&budget, 0), |_| panic!(
+            "staged denial must not invoke writer"
+        ))
+        .is_err()
+    );
+    assert_eq!(budget.usage().reserved, 0);
+}
+#[test]
+fn partial_import_failure_releases_previously_materialized_edge_tiles() {
+    let mut bytes = vec![0; 257 * 4];
+    bytes[..4].copy_from_slice(&ink().0);
+    bytes[256 * 4..].copy_from_slice(&ink().0);
+    let budget = SharedBudget::new(BYTES);
+    assert_eq!(
+        RasterLayer::from_rgba(
+            257,
+            1,
+            Rgba::TRANSPARENT,
+            &bytes,
+            &mut admission(&budget, 2)
+        )
+        .unwrap_err()
+        .code,
+        ErrorCode::ResourceLimit
+    );
+    assert_eq!(budget.usage().reserved, 0);
+    let enough = SharedBudget::new(2 * BYTES);
+    let layer = RasterLayer::from_rgba(
+        257,
+        1,
+        Rgba::TRANSPARENT,
+        &bytes,
+        &mut admission(&enough, 2),
+    )
+    .unwrap();
+    assert_eq!(enough.usage().reserved, 2 * BYTES);
+    assert_eq!(layer.get(0, 0), ink());
+    assert_eq!(layer.get(256, 0), ink());
+    drop(layer);
+    assert_eq!(enough.usage().reserved, 0);
+}
+#[test]
+fn racing_allocators_cannot_claim_the_same_resident_capacity() {
+    use std::sync::{
+        Barrier,
+        atomic::{AtomicUsize, Ordering},
+    };
+    let budget = SharedBudget::new(2 * BYTES);
+    let start = Barrier::new(9);
+    let allocated = Barrier::new(9);
+    let release = Barrier::new(9);
+    let successes = AtomicUsize::new(0);
+    std::thread::scope(|scope| {
+        for _ in 0..8 {
+            let budget = budget.clone();
+            let (start, allocated, release, successes) = (&start, &allocated, &release, &successes);
+            scope.spawn(move || {
+                start.wait();
+                let tile =
+                    TileLease::materialize(ink(), &mut admission(&budget, 1), |_| Ok(())).ok();
+                if tile.is_some() {
+                    successes.fetch_add(1, Ordering::AcqRel);
+                }
+                allocated.wait();
+                release.wait();
+                drop(tile);
+            });
+        }
+        start.wait();
+        allocated.wait();
+        let count = successes.load(Ordering::Acquire);
+        let used = budget.usage().reserved;
+        release.wait();
+        assert_eq!(count, 2);
+        assert_eq!(used, 2 * BYTES);
+    });
+    assert_eq!(budget.usage().reserved, 0);
+    assert_eq!(budget.usage().peak, 2 * BYTES);
+}
+
+#[test]
+fn independent_default_admissions_observe_the_same_process_tile_realm() {
+    let mut first = Admission::new(65_536);
+    let second = Admission::new(65_536);
+    assert_eq!(
+        first.residency_usage().limit,
+        paintcraft_raster::DEFAULT_RESIDENT_TILE_BYTES
+    );
+    // Other tests in this integration binary use explicit, isolated realms.
+    assert_eq!(second.residency_usage().reserved, 0);
+    let tile = TileLease::materialize(ink(), &mut first, |_| Ok(())).unwrap();
+    assert_eq!(second.residency_usage().reserved, BYTES);
+    assert_eq!(first.residency_usage(), second.residency_usage());
+    drop(first);
+    assert_eq!(second.residency_usage().reserved, BYTES);
+    drop(tile);
+    assert_eq!(second.residency_usage().reserved, 0);
+}

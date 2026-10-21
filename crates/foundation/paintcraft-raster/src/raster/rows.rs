@@ -47,7 +47,7 @@ impl RasterLayer {
             let span = match self.tiles.get(&coord) {
                 Some(tile) => {
                     let start = ((y % TILE_EDGE) * TILE_EDGE + lx) as usize * 4;
-                    RowSpan::Pixels(&tile.0[start..start + n as usize * 4])
+                    RowSpan::Pixels(&tile.pixels[start..start + n as usize * 4])
                 }
                 None => RowSpan::Uniform {
                     color: self.default,

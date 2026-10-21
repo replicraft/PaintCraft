@@ -7,8 +7,12 @@
 //! (new tile or copy-on-write copy) is charged to an [`Admission`] so exhaustion
 //! is an explicit `resource.limit` error rather than an abort.
 
+use paintcraft_core::types::resources::SharedBudget;
 use std::collections::HashMap;
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock};
+
+mod tile;
+use tile::Tile;
 
 use paintcraft_core::types::{Error, ErrorCode, Rect, Result, Rgba};
 
@@ -20,6 +24,8 @@ mod versions;
 pub use versions::TileVersion;
 
 pub const TILE_EDGE: u32 = 256;
+/// Default process-wide decoded tile payload capacity; excludes other resources.
+pub const DEFAULT_RESIDENT_TILE_BYTES: u64 = 2 << 30;
 const TILE_PIXELS: usize = (TILE_EDGE as usize) * (TILE_EDGE as usize);
 
 /// Euclidean split of a signed coordinate into (tile index, offset in tile).
@@ -47,15 +53,32 @@ fn blend(mode: BlendMode, src: Rgba, dst: Rgba) -> Rgba {
 #[derive(Clone, Debug)]
 pub struct Admission {
     remaining_pixels: u64,
+    residency: SharedBudget,
 }
 
 impl Admission {
     pub fn new(limit_pixels: u64) -> Self {
+        static DEFAULT: OnceLock<SharedBudget> = OnceLock::new();
+        Self::with_residency(
+            limit_pixels,
+            DEFAULT
+                .get_or_init(|| SharedBudget::new(DEFAULT_RESIDENT_TILE_BYTES))
+                .clone(),
+        )
+    }
+    /// Explicit allocation realm, for callers with a separate admitted policy.
+    /// Every normal `new` admission shares the process-default tile realm.
+    pub fn with_residency(limit_pixels: u64, residency: SharedBudget) -> Self {
         Self {
             remaining_pixels: limit_pixels,
+            residency,
         }
     }
 
+    /// Live counters for this allocation realm; not allocator/RSS measurements.
+    pub fn residency_usage(&self) -> paintcraft_core::types::resources::BudgetUsage {
+        self.residency.usage()
+    }
     fn charge_tile(&mut self) -> Result<()> {
         let cost = TILE_PIXELS as u64;
         if self.remaining_pixels < cost {
@@ -66,37 +89,6 @@ impl Admission {
         }
         self.remaining_pixels -= cost;
         Ok(())
-    }
-}
-
-#[derive(Debug)]
-struct Tile(Vec<u8>);
-
-impl Tile {
-    fn filled(px: Rgba) -> Result<Tile> {
-        let mut bytes = Vec::new();
-        bytes
-            .try_reserve_exact(TILE_PIXELS * 4)
-            .map_err(|_| Error::new(ErrorCode::ResourceLimit, "cannot allocate raster tile"))?;
-        bytes.resize(TILE_PIXELS * 4, 0);
-        if px != Rgba::TRANSPARENT {
-            bytes.as_chunks_mut::<4>().0.fill(px.0);
-        }
-        Ok(Tile(bytes))
-    }
-
-    fn is_uniform(&self, px: Rgba) -> bool {
-        self.0.as_chunks::<4>().0.iter().all(|c| *c == px.0)
-    }
-
-    fn at(&self, x: u32, y: u32) -> Rgba {
-        let i = ((y * TILE_EDGE + x) * 4) as usize;
-        Rgba([self.0[i], self.0[i + 1], self.0[i + 2], self.0[i + 3]])
-    }
-
-    fn put(&mut self, x: u32, y: u32, px: Rgba) {
-        let i = ((y * TILE_EDGE + x) * 4) as usize;
-        self.0[i..i + 4].copy_from_slice(&px.0);
     }
 }
 
@@ -169,7 +161,7 @@ impl RasterLayer {
             || self
                 .tiles
                 .values()
-                .any(|t| t.0.as_chunks::<4>().0.iter().any(|p| hidden(p)))
+                .any(|t| t.pixels.as_chunks::<4>().0.iter().any(|p| hidden(p)))
     }
 
     pub fn width(&self) -> u32 {
@@ -256,26 +248,20 @@ impl RasterLayer {
                     // try_unwrap atomically arbitrates weak-reader upgrades. A
                     // successful transfer moves the existing Vec without copying;
                     // a racing/live reader requires admitted, fallible COW.
-                    let original = std::mem::replace(arc, Arc::new(Tile(Vec::new())));
+                    let original = std::mem::replace(arc, Arc::new(Tile::empty()));
                     match Arc::try_unwrap(original) {
                         Ok(tile) => *arc = Arc::new(tile),
                         Err(original) => {
                             *arc = original;
-                            adm.charge_tile()?;
-                            let mut bytes = Vec::new();
-                            bytes.try_reserve_exact(TILE_PIXELS * 4).map_err(|_| {
-                                Error::new(ErrorCode::ResourceLimit, "cannot copy raster tile")
-                            })?;
-                            bytes.extend_from_slice(&arc.0);
-                            *arc = Arc::new(Tile(bytes));
+                            let tile = Tile::copied(arc, adm)?;
+                            *arc = Arc::new(tile);
                         }
                     }
                 }
                 Ok(write(Arc::get_mut(arc).expect("private admitted tile")))
             }
             Entry::Vacant(entry) => {
-                adm.charge_tile()?;
-                let tile = Tile::filled(default)?;
+                let tile = Tile::filled(default, adm)?;
                 Ok(write(
                     Arc::get_mut(entry.insert(Arc::new(tile))).expect("new private tile"),
                 ))
@@ -362,7 +348,7 @@ impl RasterLayer {
             match self.tiles.get(&TileCoord { tx, ty }) {
                 Some(t) => {
                     let start = ((y * TILE_EDGE + lx) * 4) as usize;
-                    head.copy_from_slice(&t.0[start..start + n * 4]);
+                    head.copy_from_slice(&t.pixels[start..start + n * 4]);
                 }
                 None => head
                     .as_chunks_mut::<4>()
@@ -406,7 +392,7 @@ impl RasterLayer {
                 let mut data = Vec::with_capacity((w * h * 4) as usize);
                 for y in 0..h {
                     let start = (y * TILE_EDGE * 4) as usize;
-                    data.extend_from_slice(&tile.0[start..start + (w * 4) as usize]);
+                    data.extend_from_slice(&tile.pixels[start..start + (w * 4) as usize]);
                 }
                 (bx, by, w, h, data)
             })
@@ -434,7 +420,8 @@ impl RasterLayer {
             |tile| {
                 for y in 0..h {
                     let (s, d) = ((y * w * 4) as usize, (y * TILE_EDGE * 4) as usize);
-                    tile.0[d..d + (w * 4) as usize].copy_from_slice(&data[s..s + (w * 4) as usize]);
+                    tile.pixels[d..d + (w * 4) as usize]
+                        .copy_from_slice(&data[s..s + (w * 4) as usize]);
                 }
             },
         )
@@ -449,7 +436,7 @@ impl PartialEq for RasterLayer {
         }
         let covers = |a: &RasterLayer, b: &RasterLayer| {
             a.tiles.iter().all(|(c, t)| match b.tiles.get(c) {
-                Some(u) => Arc::ptr_eq(t, u) || t.0 == u.0,
+                Some(u) => Arc::ptr_eq(t, u) || t.pixels == u.pixels,
                 None => t.is_uniform(a.default),
             })
         };
