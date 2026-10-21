@@ -239,7 +239,13 @@ fn a_gpu_texture_with_matching_dimensions_but_wrong_sampling_level_is_rejected()
 
 #[test]
 fn admitted_batched_multilayer_worker_installs_exact_native_scaled_output() {
-    let Some((target, gpu)) = gpu_display::tests::target_with_submission_policy(0, 64, false, true)
+    for regions in [false, true] {
+        admitted_batched_multilayer_worker(regions);
+    }
+}
+fn admitted_batched_multilayer_worker(regions: bool) {
+    let Some((target, gpu)) =
+        gpu_display::tests::target_with_submission_policy(0, 64, regions, true)
     else {
         return;
     };

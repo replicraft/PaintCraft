@@ -48,6 +48,7 @@ impl App {
         }
         self.gpu_scaled_display =
             std::env::var("PAINTCRAFT_GPU_SCALED").is_ok_and(|value| value == "1");
+        let submission_policy = std::env::var("PAINTCRAFT_GPU_BATCHING").unwrap_or_default();
         if let Some(state) = &cc.wgpu_render_state {
             let epoch = paintcraft_render::gpu::DeviceEpoch::default();
             let lost = epoch.clone();
@@ -58,7 +59,13 @@ impl App {
             });
             match GpuRenderer::with_epoch(state.device.clone(), state.queue.clone(), epoch.clone())
                 .and_then(|gpu| gpu.with_scaled_tile_edge(64))
-            {
+                .map(|gpu| {
+                    gpu.with_submission_batching(matches!(
+                        submission_policy.as_str(),
+                        "1" | "regions"
+                    ))
+                    .with_region_source_cache(submission_policy == "regions")
+                }) {
                 Ok(gpu) => {
                     self.replace_gpu(Some(Arc::new(gpu)));
                     self.gpu_target = Some(gpu_display::Target::new(state.clone(), epoch));
