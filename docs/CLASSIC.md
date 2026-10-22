@@ -549,3 +549,16 @@ name. The existing first UI pass separately publishes Untitled - PaintCraft or
 the bound filename as the window title. This avoids capturing a document title
 as the app-menu name and requires an app restart. Native appearance is unverified
 under the no-window testing restriction; no application windows were launched.
+
+The Selection popup now uses a dedicated presentation module with aligned
+40-point rows, 22-point icons, right-aligned shortcut hints and an accent marker
+for the selected rectangular mode. Reference choices keep their ordering; the
+working Deselect extension follows them. A height-bounded scroll area keeps lower
+actions reachable on short windows. Free-form, invert, transparent selection and
+selected-pixel deletion each remain disabled with one availability explanation.
+All 144 window-free UI tests and strict workspace Clippy pass; see
+[the Selection-menu record](validation/selection-menu-headless-2026-10-22/validation.json).
+Checks cover light/dark at scales 1/2, down to 360x360, with repeated layout passes.
+Working Select all/Deselect publish once each; preview clicks preserve document,
+tool and history. No selection kernel or native/rendered parity is claimed, and
+no application windows or screenshot previews were launched.

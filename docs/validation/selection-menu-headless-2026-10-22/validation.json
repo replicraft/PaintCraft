@@ -1,0 +1,25 @@
+{
+  "source_commit": "b993276f430897883f850eb1f9f074009f4d132a",
+  "references": [
+    "docs/temp/paint-references/photos/ima1111ge.png",
+    "docs/temp/paint-references/PLAN.md"
+  ],
+  "mode": "Window-free egui and lint checks only; no native-window, desktop, file-dialog or rendered-preview launches.",
+  "gui": {
+    "passed": 144,
+    "failed": 0,
+    "ignored": 17
+  },
+  "focused_gui": {
+    "passed": 1,
+    "scope": "Seven aligned 40-point rows, selected rectangular-mode marker, disabled availability tooltips, safe preview clicks, real Select all and Deselect publications exactly once, and unchanged document pixels. Tests use configured v11 at 1360x900 scales 1 and 2, 360x360 scale 1 and 480x360 scale 2, light/dark and forced repeated layout."
+  },
+  "clippy": "workspace all-targets with -D warnings passed",
+  "scope": "Selection presentation lives in its own module, with 22-point icons, a shared label column, right-aligned shortcut hints and a selected-mode accent marker. Reference choice ordering is retained; Deselect is a separate working PaintCraft extension below the reference choices. The menu scrolls to keep lower rows reachable on short windows.",
+  "limits": "No new selection kernel is implemented. Free-form, invert, transparent-selection and selected-pixel deletion remain explicitly disabled with one explanatory tooltip each. Rectangular selection and shared Select all/Deselect retain existing host/engine behavior. Native/rendered reference parity remains unverified.",
+  "sha256": {
+    "gui.log.gz": "111880f5382219e21a95232642a839edaee0c45519b1a0edac84b1d1e2405cff",
+    "focused-gui.log.gz": "edc522c32ec645ee4b7d9d01a924f557d845a1bc4bc7c0bb04b20a9d611ea306",
+    "clippy.log.gz": "32f5964c167c1b4d87fc20926b4f82167789101d3f2af0cd5403fb5039d1ffd1"
+  }
+}
