@@ -1,7 +1,8 @@
 //! Application settings with reversible theme preview and explicit adoption.
 use super::*;
+use paintcraft_ui::icons::Icon;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 enum Page {
     Appearance,
     Canvas,
@@ -26,34 +27,80 @@ impl App {
     pub(super) fn settings_dialog(&mut self, ctx: &egui::Context, mut draft: SettingsDraft) {
         let mut apply = false;
         let mut cancel = false;
+        let room = ctx.content_rect().size() - egui::vec2(48.0, 64.0);
+        let width = room.x.clamp(240.0, 720.0);
+        let height = room.y.clamp(180.0, 520.0);
         let response = egui::Modal::new(egui::Id::unique("application-settings")).show(ctx, |ui| {
-            ui.set_width(640.0);
-            ui.set_height(365.0);
+            ui.set_width(width);
+            ui.set_max_height(height);
+            ui.spacing_mut().interact_size.y = 36.0;
+            ui.spacing_mut().icon_width = 22.0;
+            for style in [egui::TextStyle::Body, egui::TextStyle::Button] {
+                ui.style_mut()
+                    .text_styles
+                    .insert(style, egui::FontId::proportional(15.0));
+            }
             ui.heading("Settings");
             ui.add_space(10.0);
-            ui.horizontal_top(|ui| {
-                ui.allocate_ui_with_layout(egui::vec2(150.0,260.0), egui::Layout::top_down(egui::Align::Min), |ui| {
-                    for (page,label) in [(Page::Appearance,"Appearance"),(Page::Canvas,"Canvas"),(Page::Text,"Text preferences")] {
-                        ui.selectable_value(&mut draft.page,page,label);
-                    }
-                });
+            let mut body_height = (height - 104.0).max(60.0);
+            if width < 560.0 {
+                let tabs = ui.horizontal_wrapped(|ui| navigation(ui, &mut draft.page, false));
                 ui.separator();
-                ui.vertical(|ui| match draft.page {
-                    Page::Appearance => appearance(ui,&mut draft.values),
-                    Page::Canvas => canvas(ui,&mut draft.values.canvas),
-                    Page::Text => {
-                        ui.strong("Text editing");
-                        ui.label(format!("{} available font families",self.fonts.families.len()));
-                        ui.checkbox(&mut draft.values.text.editable_until_save,"Keep text editable until save (prototype)");
-                        ui.weak("Prototype preference only. Editable text objects and save-time rasterization are not implemented yet.");
-                    }
-                });
-            });
+                body_height = (body_height - tabs.response.rect.height() - 12.0).max(60.0);
+                content(
+                    ui,
+                    &mut draft,
+                    self.fonts.families.len(),
+                    width,
+                    body_height,
+                );
+            } else {
+                ui.allocate_ui_with_layout(
+                    egui::vec2(width, body_height),
+                    egui::Layout::left_to_right(egui::Align::Min),
+                    |ui| {
+                        ui.allocate_ui_with_layout(
+                            egui::vec2(164.0, body_height),
+                            egui::Layout::top_down(egui::Align::Min),
+                            |ui| {
+                                navigation(ui, &mut draft.page, true);
+                            },
+                        );
+                        ui.separator();
+                        let content_width = ui.available_width();
+                        content(
+                            ui,
+                            &mut draft,
+                            self.fonts.families.len(),
+                            content_width,
+                            body_height,
+                        );
+                    },
+                );
+            }
+            ui.add_space(10.0);
             ui.separator();
-            ui.horizontal(|ui| {
-                apply = ui.button("Apply").clicked();
-                cancel = ui.button("Cancel").clicked();
-            });
+            ui.allocate_ui_with_layout(
+                egui::vec2(width, 36.0),
+                egui::Layout::right_to_left(egui::Align::Center),
+                |ui| {
+                    cancel = ui
+                        .add(egui::Button::new("Cancel").min_size(egui::vec2(96.0, 36.0)))
+                        .clicked();
+                    let ink = if ui.visuals().dark_mode {
+                        Color32::from_gray(16)
+                    } else {
+                        Color32::WHITE
+                    };
+                    apply = ui
+                        .add(
+                            egui::Button::new(egui::RichText::new("Apply").color(ink))
+                                .fill(ui.visuals().selection.stroke.color)
+                                .min_size(egui::vec2(96.0, 36.0)),
+                        )
+                        .clicked();
+                },
+            );
         });
         if ctx.current_pass_index() != 0 {
             return;
@@ -75,59 +122,131 @@ impl App {
     }
 }
 
-fn appearance(ui: &mut egui::Ui, values: &mut Settings) {
-    ui.strong("App theme");
-    for (value, label) in [
-        (settings::Appearance::System, "Use system setting"),
-        (settings::Appearance::Light, "Light"),
-        (settings::Appearance::Dark, "Dark"),
+fn navigation(ui: &mut egui::Ui, current: &mut Page, sidebar: bool) {
+    for (page, label, icon) in [
+        (Page::Appearance, "Appearance", Icon::Settings),
+        (Page::Canvas, "Canvas", Icon::CanvasSize),
+        (Page::Text, "Text preferences", Icon::Text),
     ] {
-        ui.radio_value(&mut values.appearance, value, label);
-    }
-    ui.add_space(18.0);
-    ui.strong("Interface");
-    ui.weak("Each interface has a separate workspace. Save or discard changes before switching.");
-    for (value, label) in [
-        (Experience::Classic, "Classic interface"),
-        (Experience::Studio, "Studio interface"),
-    ] {
-        ui.radio_value(&mut values.experience, value, label);
-    }
-    if values.experience == Experience::Classic {
-        ui.add_space(10.0);
-        ui.strong("Classic skin");
-        let mut variant = values.classic_variant.unwrap_or(ClassicVariant::DEFAULT);
-        for v in ClassicVariant::ALL {
-            if ui.radio_value(&mut variant, v, v.name()).changed() {
-                values.classic_variant = Some(variant);
-            }
+        let mut button =
+            egui::Button::image_and_text(paintcraft_ui::icons::image(ui.ctx(), icon, 18.0), label)
+                .selected(*current == page)
+                .frame(*current == page);
+        if sidebar {
+            button = button.min_size(egui::vec2(156.0, 36.0));
+        }
+        if ui.add(button).clicked() {
+            *current = page;
         }
     }
 }
 
-fn canvas(ui: &mut egui::Ui, values: &mut settings::CanvasDefaults) {
-    ui.strong("New Classic canvas");
-    for (label, value) in [
-        ("Default width", &mut values.configured.0),
-        ("Default height", &mut values.configured.1),
-    ] {
-        ui.horizontal(|ui| {
-            let caption = ui.label(label);
-            ui.add(
-                egui::DragValue::new(value)
-                    .range(1..=settings::SIZE_MAX)
-                    .suffix(" px"),
-            )
-            .labelled_by(caption.id);
+fn content(ui: &mut egui::Ui, draft: &mut SettingsDraft, fonts: usize, width: f32, height: f32) {
+    ui.allocate_ui_with_layout(egui::vec2(width, height), egui::Layout::top_down(egui::Align::Min), |ui| {
+        ui.set_width(width);
+        egui::ScrollArea::vertical().id_salt(("settings-page", draft.page))
+            .max_height(height).auto_shrink([false, false]).show(ui, |ui| {
+                match draft.page {
+                    Page::Appearance => appearance(ui, &mut draft.values),
+                    Page::Canvas => canvas(ui, &mut draft.values.canvas),
+                    Page::Text => card(ui, "Text editing", |ui| {
+                        ui.label(format!("{fonts} available font families"));
+                        ui.checkbox(&mut draft.values.text.editable_until_save,
+                            "Keep text editable until save (prototype)");
+                        ui.weak("Prototype preference only. Text is rasterized when placed; editable text objects and save-time rasterization are not available yet.");
+                    }),
+                }
+            });
+    });
+}
+
+fn card(ui: &mut egui::Ui, heading: &str, contents: impl FnOnce(&mut egui::Ui)) {
+    let fill = if ui.visuals().dark_mode {
+        Color32::from_gray(47)
+    } else {
+        Color32::WHITE
+    };
+    egui::Frame::new()
+        .fill(fill)
+        .corner_radius(6)
+        .stroke(ui.visuals().widgets.noninteractive.bg_stroke)
+        .inner_margin(12)
+        .show(ui, |ui| {
+            ui.set_min_width(ui.available_width().max(0.0));
+            ui.strong(heading);
+            ui.add_space(6.0);
+            contents(ui);
+        });
+    ui.add_space(10.0);
+}
+
+fn appearance(ui: &mut egui::Ui, values: &mut Settings) {
+    card(ui, "App theme", |ui| {
+        ui.weak("Preview the theme now. Apply saves your choice; Cancel restores it.");
+        ui.horizontal_wrapped(|ui| {
+            for (value, label) in [
+                (settings::Appearance::System, "Use system setting"),
+                (settings::Appearance::Light, "Light"),
+                (settings::Appearance::Dark, "Dark"),
+            ] {
+                ui.radio_value(&mut values.appearance, value, label);
+            }
+        });
+    });
+    card(ui, "Interface", |ui| {
+        ui.weak(
+            "Each interface has a separate workspace. Save or discard changes before switching.",
+        );
+        ui.horizontal_wrapped(|ui| {
+            for (value, label) in [
+                (Experience::Classic, "Classic interface"),
+                (Experience::Studio, "Studio interface"),
+            ] {
+                ui.radio_value(&mut values.experience, value, label);
+            }
+        });
+    });
+    if values.experience == Experience::Classic {
+        card(ui, "Classic skin", |ui| {
+            let mut variant = values.classic_variant.unwrap_or(ClassicVariant::DEFAULT);
+            ui.horizontal_wrapped(|ui| {
+                for v in ClassicVariant::ALL {
+                    if ui.radio_value(&mut variant, v, v.name()).changed() {
+                        values.classic_variant = Some(variant);
+                    }
+                }
+            });
         });
     }
-    ui.radio_value(&mut values.remember_last, true, "Remember last canvas size");
-    ui.radio_value(
-        &mut values.remember_last,
-        false,
-        "Use configured default size",
-    );
-    if let Some((w, h)) = values.last {
-        ui.weak(format!("Last canvas: {w} × {h} pixels"));
-    }
+}
+
+fn canvas(ui: &mut egui::Ui, values: &mut settings::CanvasDefaults) {
+    card(ui, "New Classic canvas", |ui| {
+        ui.weak("These defaults apply to new documents, leaving the current image unchanged.");
+        for (label, value) in [
+            ("Default width", &mut values.configured.0),
+            ("Default height", &mut values.configured.1),
+        ] {
+            ui.horizontal(|ui| {
+                let caption = ui.label(label);
+                ui.add(
+                    egui::DragValue::new(value)
+                        .range(1..=settings::SIZE_MAX)
+                        .suffix(" px"),
+                )
+                .labelled_by(caption.id);
+            });
+        }
+    });
+    card(ui, "Canvas size on startup", |ui| {
+        ui.radio_value(&mut values.remember_last, true, "Remember last canvas size");
+        ui.radio_value(
+            &mut values.remember_last,
+            false,
+            "Use configured default size",
+        );
+        if let Some((w, h)) = values.last {
+            ui.weak(format!("Last canvas: {w} × {h} pixels"));
+        }
+    });
 }

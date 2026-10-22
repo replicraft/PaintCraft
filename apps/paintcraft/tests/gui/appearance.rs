@@ -173,3 +173,144 @@ fn interface_switch_requires_saving_and_restores_completely_separate_documents()
     assert!(!h.state().editor().is_dirty());
     std::fs::remove_dir_all(dir).unwrap();
 }
+
+#[test]
+fn settings_pages_fit_small_windows_and_cancel_keeps_drafts_out_of_preferences_and_history() {
+    use eframe::egui::Role;
+    for (size, ppp) in [
+        (Vec2::new(1360.0, 900.0), 1.0),
+        (Vec2::new(700.0, 500.0), 1.0),
+        (Vec2::new(480.0, 500.0), 2.0),
+        (Vec2::new(480.0, 360.0), 1.0),
+    ] {
+        let dir = scratch("responsive-settings");
+        Settings {
+            appearance: Appearance::Light,
+            classic_variant: Some(ClassicVariant::V11),
+            ..Default::default()
+        }
+        .save(&dir)
+        .unwrap();
+        let mut h = Harness::builder()
+            .with_size(size)
+            .with_pixels_per_point(ppp)
+            .build_ui_state(
+                |ui, app: &mut App| {
+                    app.ui(ui);
+                    if ui.ctx().current_pass_index() == 0 {
+                        ui.ctx().request_discard("test: repeated settings layout");
+                    }
+                },
+                App::new(None).with_settings(dir.clone()),
+            );
+        h.run();
+        let saved = std::fs::read(dir.join("settings.json")).unwrap();
+        let document = h.state().editor().document_snapshot();
+        let ticket = h.state().editor().history_view().ticket;
+        h.get_by_label("Settings…").click();
+        h.run();
+        let footer = h.get_by_label("Apply").rect();
+        h.run_steps(8);
+        assert_eq!(
+            h.get_by_label("Apply").rect(),
+            footer,
+            "settings must settle: {size:?}"
+        );
+        for page in ["Canvas", "Text preferences", "Appearance"] {
+            h.get_by_role_and_label(Role::Button, page).click();
+            h.run();
+            for label in [
+                "Appearance",
+                "Canvas",
+                "Text preferences",
+                "Apply",
+                "Cancel",
+            ] {
+                let rect = h.get_by_role_and_label(Role::Button, label).rect();
+                assert!(
+                    rect.min.x >= 0.0
+                        && rect.min.y >= 0.0
+                        && rect.max.x <= size.x
+                        && rect.max.y <= size.y,
+                    "{label}: {rect:?} outside {size:?}"
+                );
+            }
+            assert_eq!(
+                h.get_by_label("Apply").rect(),
+                footer,
+                "footer stays fixed across pages"
+            );
+        }
+        h.get_by_label("Dark").scroll_to_me();
+        h.run();
+        h.get_by_label("Dark").click();
+        h.run();
+        assert_eq!(h.ctx.theme(), eframe::egui::Theme::Dark);
+        h.get_by_role_and_label(Role::Button, "Canvas").click();
+        h.run();
+        h.get_by_role_and_label(Role::SpinButton, "Default width")
+            .set_value_accesskit(777.0);
+        h.run();
+        h.get_by_label("Use configured default size").scroll_to_me();
+        h.run();
+        h.get_by_label("Use configured default size").click();
+        h.run();
+        h.get_by_label("Cancel").click();
+        h.run();
+        assert_eq!(h.ctx.theme(), eframe::egui::Theme::Light);
+        assert_eq!(std::fs::read(dir.join("settings.json")).unwrap(), saved);
+        assert!(h.state().editor().document().same_semantics(&document));
+        assert_eq!(h.state().editor().history_view().ticket, ticket);
+        drop(h);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+}
+
+#[test]
+fn narrow_settings_apply_persists_theme_and_canvas_defaults_without_resizing_the_open_image() {
+    use eframe::egui::Role;
+    let dir = scratch("narrow-settings-apply");
+    Settings {
+        classic_variant: Some(ClassicVariant::V11),
+        ..Default::default()
+    }
+    .save(&dir)
+    .unwrap();
+    let mut h = Harness::builder()
+        .with_size(Vec2::new(480.0, 500.0))
+        .build_ui_state(
+            |ui, app: &mut App| app.ui(ui),
+            App::new(None).with_settings(dir.clone()),
+        );
+    h.run();
+    let document = h.state().editor().document_snapshot();
+    h.get_by_label("Settings…").click();
+    h.run();
+    h.get_by_label("Dark").click();
+    h.run();
+    h.get_by_role_and_label(Role::Button, "Canvas").click();
+    h.run();
+    h.get_by_role_and_label(Role::SpinButton, "Default width")
+        .set_value_accesskit(777.0);
+    h.run();
+    h.get_by_label("Use configured default size").scroll_to_me();
+    h.run();
+    h.get_by_label("Use configured default size").click();
+    h.run();
+    h.get_by_label("Apply").click();
+    h.run();
+    let saved = Settings::load(&dir).0;
+    assert_eq!(saved.appearance, Appearance::Dark);
+    assert_eq!(saved.canvas.new_size(), (777, 486));
+    assert!(h.state().editor().document().same_semantics(&document));
+    assert_eq!(
+        App::new(None)
+            .with_settings(dir.clone())
+            .editor()
+            .document()
+            .canvas,
+        (777, 486)
+    );
+    drop(h);
+    std::fs::remove_dir_all(dir).unwrap();
+}
