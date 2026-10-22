@@ -21,6 +21,7 @@ pub(crate) struct Service {
     executor: Arc<Mutex<Executor<Completion>>>,
     context: egui::Context,
     pub(super) residency: paintcraft_runtime::SharedBudget,
+    pub(super) metadata: paintcraft_runtime::SharedBudget,
 }
 #[derive(Debug)]
 pub(super) struct Pending {
@@ -92,7 +93,20 @@ impl Service {
             )?)),
             context,
             residency: paintcraft_raster::Admission::new(0).residency_budget(),
+            metadata: paintcraft_raster::Admission::new(0).paint_metadata_budget(),
         })
+    }
+    pub(crate) fn metadata_budget(&self) -> paintcraft_runtime::SharedBudget {
+        self.metadata.clone()
+    }
+    #[cfg(test)]
+    pub(crate) fn with_metadata(mut self, budget: paintcraft_runtime::SharedBudget) -> Self {
+        self.metadata = budget;
+        self
+    }
+    pub(super) fn admission(&self, limit: u64) -> paintcraft_raster::Admission {
+        paintcraft_raster::Admission::with_residency(limit, self.residency.clone())
+            .with_paint_metadata_budget(self.metadata.clone())
     }
     fn lock(&self) -> Result<std::sync::MutexGuard<'_, Executor<Completion>>> {
         self.executor.lock().map_err(|_| {
@@ -237,23 +251,16 @@ impl Editor {
         done: &str,
         target_alias: Option<&'static str>,
     ) {
-        let residency = self
+        let admission = self
             .editing
             .as_ref()
             .expect("editing service")
-            .residency
-            .clone();
+            .admission(u64::MAX);
         let task = self.session.preparation().map(|preparation| {
             Box::new(move |cancellation: Cancellation| {
-                retry::prepare_batch(
-                    preparation,
-                    Arc::new(batch),
-                    paintcraft_raster::Admission::with_residency(
-                        paintcraft_editor::execute::STAGED_PIXELS_MAX,
-                        residency,
-                    ),
-                    || cancellation.check(),
-                )
+                retry::prepare_batch(preparation, Arc::new(batch), admission, || {
+                    cancellation.check()
+                })
             }) as dispatch::Task
         });
         self.dispatch_initial(task, done.to_owned(), "", target_alias);
@@ -262,25 +269,18 @@ impl Editor {
     /// unchanged if shared worker capacity disappears before submission.
     pub(super) fn start_tool_plan(&mut self, preview: Preview, done: &str) {
         let plan = self.prepare_preview(Some(preview));
-        let residency = self
+        let admission = self
             .editing
             .as_ref()
             .expect("editing service")
-            .residency
-            .clone();
+            .admission(u64::MAX);
         let task = self.session.preparation().map(|preparation| {
             Box::new(move |cancellation: Cancellation| {
                 let check = || cancellation.check();
                 match plan.build(check)? {
-                    Some(batch) => retry::prepare_batch(
-                        preparation,
-                        Arc::new(batch),
-                        paintcraft_raster::Admission::with_residency(
-                            paintcraft_editor::execute::STAGED_PIXELS_MAX,
-                            residency,
-                        ),
-                        check,
-                    ),
+                    Some(batch) => {
+                        retry::prepare_batch(preparation, Arc::new(batch), admission, check)
+                    }
                     None => preparation.no_change(check).map(Completion::Edit),
                 }
             }) as dispatch::Task
@@ -298,20 +298,14 @@ impl Editor {
             NavigationRequest::Redo => ("Redo", "Nothing to redo"),
             NavigationRequest::Seek { .. } => ("History restored", "History unchanged"),
         };
-        let residency = self
+        let admission = self
             .editing
             .as_ref()
             .expect("editing service")
-            .residency
-            .clone();
+            .admission(u64::MAX);
         let task = self.session.preparation().map(|preparation| {
             Box::new(move |cancellation: Cancellation| {
-                retry::prepare_navigation(
-                    preparation,
-                    request,
-                    paintcraft_raster::Admission::with_residency(u64::MAX, residency),
-                    || cancellation.check(),
-                )
+                retry::prepare_navigation(preparation, request, admission, || cancellation.check())
             }) as dispatch::Task
         });
         self.dispatch_initial(task, done.into(), empty, None);
@@ -341,7 +335,7 @@ impl Editor {
         let pending = self.pending_edit.take().expect("pending edit");
         let result = match result {
             Ok(Completion::Deferred(deferred)) => {
-                self.status = "Waiting for decoded tile capacity; Escape cancels the edit".into();
+                self.status = "Waiting for memory capacity; Escape cancels the edit".into();
                 self.waiting_edit = Some(retry::Waiting {
                     deferred: *deferred,
                     done: pending.done.clone(),

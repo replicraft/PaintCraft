@@ -13,11 +13,29 @@ enum Request {
     Edit(Arc<Batch>),
     Navigation(background::NavigationRequest),
 }
+#[derive(Clone, Debug)]
+struct Realms {
+    tiles: paintcraft_core::types::resources::SharedBudget,
+    metadata: paintcraft_core::types::resources::SharedBudget,
+}
+impl Realms {
+    fn capture(admission: &Admission) -> Self {
+        Self {
+            tiles: admission.residency_budget(),
+            metadata: admission.paint_metadata_budget(),
+        }
+    }
+    fn admission(&self) -> Admission {
+        Admission::with_residency(u64::MAX, self.tiles.clone())
+            .with_paint_metadata_budget(self.metadata.clone())
+    }
+}
 #[derive(Debug)]
 pub(super) struct Deferred {
     request: Request,
     base: HistoryTicket,
     denial: AllocationDenial,
+    realms: Realms,
 }
 #[derive(Debug)]
 pub(super) struct Waiting {
@@ -34,10 +52,11 @@ pub(super) fn prepare_batch(
     check: impl Fn() -> Result<()>,
 ) -> Result<Completion> {
     let base = preparation.history_ticket();
+    let realms = Realms::capture(&admission);
     let result = preparation
         .apply_with_admission(&batch, admission, &check)
         .map(Completion::Edit);
-    defer_failure(base, Request::Edit(batch), result, check)
+    defer_failure(base, Request::Edit(batch), result, realms, check)
 }
 pub(super) fn prepare_navigation(
     preparation: Preparation,
@@ -46,6 +65,7 @@ pub(super) fn prepare_navigation(
     check: impl Fn() -> Result<()>,
 ) -> Result<Completion> {
     let base = preparation.history_ticket();
+    let realms = Realms::capture(&admission);
     let result = match request {
         background::NavigationRequest::Undo => preparation.undo_with_admission(admission, &check),
         background::NavigationRequest::Redo => preparation.redo_with_admission(admission, &check),
@@ -54,12 +74,13 @@ pub(super) fn prepare_navigation(
         }
     }
     .map(Completion::Navigation);
-    defer_failure(base, Request::Navigation(request), result, check)
+    defer_failure(base, Request::Navigation(request), result, realms, check)
 }
 fn defer_failure(
     base: HistoryTicket,
     request: Request,
     result: Result<Completion>,
+    realms: Realms,
     check: impl Fn() -> Result<()>,
 ) -> Result<Completion> {
     match result {
@@ -67,12 +88,16 @@ fn defer_failure(
         Err(error) => {
             check()?;
             match error.allocation_denial().filter(|denial| {
-                denial.class() == AllocationClass::DecodedTiles && denial.is_possible()
+                matches!(
+                    denial.class(),
+                    AllocationClass::DecodedTiles | AllocationClass::PaintMetadata
+                ) && denial.is_possible()
             }) {
                 Some(denial) => Ok(Completion::Deferred(Box::new(Deferred {
                     request,
                     base,
                     denial: denial.clone(),
+                    realms,
                 }))),
                 None => Err(error),
             }
@@ -91,6 +116,14 @@ impl Editor {
             .as_ref()
             .filter(|waiting| waiting.deferred.base == self.session.history_ticket())
             .map(|waiting| &waiting.deferred.denial)
+            .filter(|denial| denial.class() == AllocationClass::DecodedTiles)
+    }
+    pub(crate) fn metadata_wait(&self) -> Option<&AllocationDenial> {
+        self.waiting_edit
+            .as_ref()
+            .filter(|waiting| waiting.deferred.base == self.session.history_ticket())
+            .map(|waiting| &waiting.deferred.denial)
+            .filter(|denial| denial.class() == AllocationClass::PaintMetadata)
     }
     pub(super) fn retry_waiting_edit(&mut self) {
         let Some(waiting) = &self.waiting_edit else {
@@ -108,13 +141,20 @@ impl Editor {
             return;
         };
         let navigation = matches!(waiting.deferred.request, Request::Navigation(_));
-        let reprice = navigation
-            && (waiting.deferred.denial.activity_changed()
-                || waiting.last_probe.elapsed() >= std::time::Duration::from_secs(5));
+        let metadata = waiting.deferred.denial.class() == AllocationClass::PaintMetadata;
+        let reprice = (metadata
+            && waiting.last_probe.elapsed() >= std::time::Duration::from_secs(5))
+            || (!metadata && navigation)
+                && (waiting.deferred.denial.activity_changed()
+                    || waiting.last_probe.elapsed() >= std::time::Duration::from_secs(5));
         if !waiting.deferred.denial.can_retry() && !reprice {
             return;
         }
-        let admission = if navigation {
+        let admission = if metadata {
+            // Scoped metadata demand is a known peak, not an upfront reservation.
+            // A racing consumer can defer again without losing the captured FIFO item.
+            waiting.deferred.realms.admission()
+        } else if navigation {
             // The worker pins current reusable versions and reserves the entire
             // missing set, rather than trusting the previous attempt's demand.
             Admission::with_residency(u64::MAX, waiting.deferred.denial.budget())
@@ -123,7 +163,8 @@ impl Editor {
                 return;
             };
             Admission::with_reserved_residency(u64::MAX, reservation)
-        };
+        }
+        .with_paint_metadata_budget(waiting.deferred.realms.metadata.clone());
         let preparation = match self.session.preparation() {
             Ok(preparation) => preparation,
             Err(error) => {
@@ -154,7 +195,7 @@ impl Editor {
             Ok(pending) => {
                 self.waiting_edit = None;
                 self.pending_edit = Some(pending);
-                self.status = "Retrying edit with reserved tile capacity…".into();
+                self.status = "Retrying edit after memory capacity became available…".into();
             }
             Err(error) if error.code == ErrorCode::ResourceLimit => {} // Retain across worker-admission races.
             Err(error) => {
@@ -175,3 +216,7 @@ mod tests;
 #[cfg(test)]
 #[path = "retry/navigation_tests.rs"]
 mod navigation_tests;
+
+#[cfg(test)]
+#[path = "retry/metadata_tests.rs"]
+mod metadata_tests;

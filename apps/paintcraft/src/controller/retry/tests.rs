@@ -5,7 +5,7 @@ use std::time::{Duration, Instant};
 const BYTES: u64 = RasterLayer::TILE_BYTES as u64;
 #[test]
 fn metadata_denial_does_not_enter_decoded_history_pressure_retry() {
-    let (editor, _, _) = setup(2);
+    let (mut editor, _, _) = setup(2);
     let base = editor.session.preparation().unwrap().history_ticket();
     let budget = SharedBudget::new(1);
     let blocker = budget.reserve(1).unwrap();
@@ -15,24 +15,32 @@ fn metadata_denial_does_not_enter_decoded_history_pressure_retry() {
         base,
         Request::Navigation(background::NavigationRequest::Undo),
         Err(error),
+        Realms::capture(&Admission::new(0).with_paint_metadata_budget(budget.clone())),
         || Ok(()),
     );
-    let error = result.unwrap_err();
-    assert_eq!(
-        error.allocation_denial().unwrap().class(),
-        AllocationClass::PaintMetadata
-    );
+    let Completion::Deferred(deferred) = result.unwrap() else {
+        panic!("metadata request must wait");
+    };
+    assert_eq!(deferred.denial.class(), AllocationClass::PaintMetadata);
+    editor.waiting_edit = Some(Waiting {
+        deferred: *deferred,
+        done: String::new(),
+        empty: "",
+        last_probe: Instant::now(),
+        target_alias: None,
+    });
     assert!(editor.allocation_wait().is_none());
+    assert!(editor.metadata_wait().is_some());
     drop(blocker);
 }
-fn until(mut condition: impl FnMut() -> bool) {
+pub(super) fn until(mut condition: impl FnMut() -> bool) {
     let deadline = Instant::now() + Duration::from_secs(10);
     while !condition() {
         assert!(Instant::now() < deadline, "edit retry stalled");
         std::thread::yield_now();
     }
 }
-fn setup(tiles: u64) -> (Editor, background::Service, SharedBudget) {
+pub(super) fn setup(tiles: u64) -> (Editor, background::Service, SharedBudget) {
     let budget = SharedBudget::new(tiles * BYTES);
     let mut service = background::Service::new(eframe::egui::Context::default()).unwrap();
     service.residency = budget.clone();
@@ -40,7 +48,7 @@ fn setup(tiles: u64) -> (Editor, background::Service, SharedBudget) {
     editor.connect_editing(service.clone());
     (editor, service, budget)
 }
-fn stroke(editor: &mut Editor) {
+pub(super) fn stroke(editor: &mut Editor) {
     editor.pointer_down((0, 0));
     editor.pointer_move((256, 0));
     editor.pointer_up();

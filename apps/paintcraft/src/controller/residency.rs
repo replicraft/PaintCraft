@@ -14,7 +14,7 @@ impl Editor {
             || self.pending_edit.is_some()
             || self.waiting_dispatch.is_some()
             || self.file_barrier.is_some()
-            || (self.waiting_edit.is_none()
+            || (self.allocation_wait().is_none()
                 && self
                     .actions
                     .iter()
