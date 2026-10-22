@@ -95,6 +95,35 @@ impl PaintSnapshot {
             .checked_mul(size_of::<(TileCoord, Arc<Tile>)>())
             .ok_or_else(metadata::exhausted)?;
         let charge = node_charge(admission, extra)?;
+        Self::owned(source, charge, check)
+    }
+    /// Fallibly copy only sparse source metadata under admission, retaining the
+    /// original immutable pixel buffers. The borrowed source is unchanged on error.
+    pub fn capture(
+        source: &RasterLayer,
+        admission: &Admission,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<Self> {
+        check()?;
+        if source.width == 0 || source.height == 0 {
+            return Err(Error::new(ErrorCode::InputSchema, "empty paint source"));
+        }
+        let mut charge = node_charge(admission, 0)?;
+        let mut captured = RasterLayer::new(source.width, source.height, source.default);
+        let mut metadata =
+            metadata::Metadata::new(size_of::<Node>(), admission.paint_metadata_limit)?;
+        for (&coord, tile) in &source.tiles {
+            check()?;
+            metadata.table(&mut captured.tiles, &mut charge)?;
+            captured.tiles.insert(coord, tile.clone());
+        }
+        Self::owned(captured, charge, check)
+    }
+    fn owned(
+        source: RasterLayer,
+        charge: BudgetAccount,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<Self> {
         let bounds = source.bounds();
         let default = source.default;
         let has_tiles = !source.tiles.is_empty();

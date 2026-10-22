@@ -75,15 +75,15 @@ impl Metadata {
             }
         }
     }
-    pub fn table(
+    pub fn table<T>(
         &mut self,
-        tiles: &mut HashMap<TileCoord, Vec<usize>>,
+        tiles: &mut HashMap<TileCoord, T>,
         charge: &mut BudgetAccount,
     ) -> Result<()> {
         if tiles.len() < tiles.capacity() {
             return Ok(());
         }
-        let width = size_of::<(TileCoord, Vec<usize>)>();
+        let width = size_of::<(TileCoord, T)>();
         self.check(width)?;
         let old = tiles.capacity();
         let before = charge.bytes();

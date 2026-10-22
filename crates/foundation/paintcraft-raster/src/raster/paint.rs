@@ -7,7 +7,9 @@ mod metadata;
 mod projection;
 mod writes;
 pub use lineage::{PaintOverlay, PaintReader, PaintSnapshot};
+mod simulation;
 pub use projection::PaintProjection;
+pub use simulation::{SimulatedLayer, TileFootprint, TilePlanner};
 
 /// Provisional per-plan metadata safety policy, excluding allocator/hash overhead.
 pub const DEFAULT_PAINT_METADATA_BYTES: usize = 64 << 20;
@@ -87,6 +89,9 @@ impl PaintPlan {
     }
     pub fn descriptor_bytes(&self) -> usize {
         self.writes.capacity() * std::mem::size_of::<Write>()
+    }
+    pub fn is_empty(&self) -> bool {
+        self.writes.is_empty()
     }
     pub fn rect(&mut self, area: Rect, color: Rgba, mode: BlendMode) -> Result<()> {
         self.push(Write {

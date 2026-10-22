@@ -396,6 +396,85 @@ fn known_reserved_capacity_covers_source_nodes_programs_and_reader_scratch() {
 }
 
 #[test]
+fn fallible_source_capture_admits_metadata_before_copying_sparse_ownership() {
+    use paintcraft_core::types::resources::AllocationClass;
+    let decoded = SharedBudget::new(2 * RasterLayer::TILE_BYTES as u64);
+    let mut raster = RasterLayer::new(257, 1, Rgba::TRANSPARENT);
+    let mut pixels = Admission::with_residency(2 * 65_536, decoded.clone());
+    for x in [0, 256] {
+        raster
+            .blend_pixel(x, 0, Rgba([255; 4]), BlendMode::Replace, &mut pixels)
+            .unwrap();
+    }
+    let metadata = SharedBudget::new(1 << 20);
+    let adm = admission(&metadata);
+    let snapshot = PaintSnapshot::capture(&raster, &adm, &|| Ok(())).unwrap();
+    assert_eq!(decoded.usage().reserved, 2 * RasterLayer::TILE_BYTES as u64);
+    assert_eq!(
+        snapshot
+            .reader(&adm, &|| Ok(()))
+            .unwrap()
+            .read_checked(256, 0, &|| Ok(()))
+            .unwrap(),
+        Rgba([255; 4])
+    );
+    drop(snapshot);
+    assert_eq!(metadata.usage().reserved, 0);
+    let empty =
+        PaintSnapshot::new(RasterLayer::new(1, 1, Rgba::TRANSPARENT), &adm, &|| Ok(())).unwrap();
+    let header = empty.metadata_bytes() as u64;
+    drop(empty);
+    let blocked = SharedBudget::new(header + 1);
+    let error = PaintSnapshot::capture(&raster, &admission(&blocked), &|| Ok(())).unwrap_err();
+    assert_eq!(
+        error.allocation_denial().unwrap().class(),
+        AllocationClass::PaintMetadata
+    );
+    assert_eq!(blocked.usage().reserved, 0);
+    assert_eq!(raster.get(256, 0), Rgba([255; 4]));
+}
+
+#[test]
+fn cancelled_sparse_capture_releases_copied_arcs_and_keeps_the_borrowed_source_private() {
+    let decoded = SharedBudget::new(2 * RasterLayer::TILE_BYTES as u64);
+    let mut raster = RasterLayer::new(257, 1, Rgba::TRANSPARENT);
+    let mut pixels = Admission::with_residency(2 * 65_536, decoded.clone());
+    for x in [0, 256] {
+        raster
+            .blend_pixel(x, 0, Rgba([255; 4]), BlendMode::Replace, &mut pixels)
+            .unwrap();
+    }
+    let metadata = SharedBudget::new(1 << 20);
+    let adm = admission(&metadata);
+    let calls = Cell::new(0);
+    let error = PaintSnapshot::capture(&raster, &adm, &|| {
+        calls.set(calls.get() + 1);
+        if calls.get() == 3 {
+            Err(cancelled())
+        } else {
+            Ok(())
+        }
+    })
+    .unwrap_err();
+    assert_eq!(error.code, ErrorCode::OperationCancelled);
+    assert_eq!(metadata.usage().reserved, 0);
+    // A leaked captured Arc would require COW and fail this zero-allocation edit.
+    let mut no_allocations = Admission::with_residency(0, decoded.clone());
+    for x in [0, 256] {
+        raster
+            .blend_pixel(
+                x,
+                0,
+                Rgba([13, 29, 47, 0]),
+                BlendMode::Replace,
+                &mut no_allocations,
+            )
+            .unwrap();
+    }
+    assert_eq!(decoded.usage().reserved, 2 * RasterLayer::TILE_BYTES as u64);
+}
+
+#[test]
 fn every_observed_append_reader_and_read_checkpoint_can_cancel_without_changing_ancestors() {
     for operation in 0..3 {
         let metadata = SharedBudget::new(1 << 20);

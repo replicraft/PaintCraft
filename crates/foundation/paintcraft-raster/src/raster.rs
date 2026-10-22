@@ -8,7 +8,7 @@
 //! is an explicit `resource.limit` error rather than an abort.
 
 use paintcraft_core::types::resources::{
-    AllocationClass, BudgetReservation, BudgetScope, SharedBudget,
+    AllocationClass, BudgetAccount, BudgetReservation, BudgetScope, SharedBudget,
 };
 use std::collections::HashMap;
 use std::sync::{Arc, OnceLock};
@@ -16,7 +16,7 @@ use std::sync::{Arc, OnceLock};
 mod paint;
 pub use paint::{
     DEFAULT_PAINT_METADATA_BYTES, DEFAULT_RESIDENT_PAINT_METADATA_BYTES, PaintOverlay, PaintPlan,
-    PaintProjection, PaintReader, PaintSnapshot,
+    PaintProjection, PaintReader, PaintSnapshot, SimulatedLayer, TileFootprint, TilePlanner,
 };
 mod tile;
 use tile::Tile;
@@ -133,6 +133,13 @@ impl Admission {
     }
     pub fn paint_metadata_budget(&self) -> SharedBudget {
         self.paint_metadata_scope.budget()
+    }
+    pub fn paint_metadata_limit(&self) -> usize {
+        self.paint_metadata_limit
+    }
+    /// Own one independently resizable preparation-metadata declaration.
+    pub fn paint_metadata_account(&self) -> BudgetAccount {
+        self.paint_metadata_scope.account()
     }
     /// Configure bitmap/frontier/output capacity for each flood classification.
     pub fn with_flood_scratch_limit(mut self, bytes: usize) -> Self {
