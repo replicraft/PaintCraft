@@ -1,0 +1,37 @@
+{
+  "source_commit": "6d09401a4d51c9b973e019102371a474065ba38b",
+  "references": [
+    "docs/temp/paint-references/photos/im1age.png",
+    "docs/temp/paint-references/photos/imag1e.png"
+  ],
+  "gui": {
+    "passed": 116,
+    "failed": 0,
+    "ignored": 17
+  },
+  "shared_actions_tests": {
+    "passed": 6
+  },
+  "focused_gui": {
+    "passed": 3,
+    "scope": "disabled menu/submenu previews preserve documents/history; Exit requests close and unsaved work can cancel; short-window scrolling at display scale 2"
+  },
+  "workspace_clippy": "all-targets with -D warnings passed",
+  "review": "Eight real-GPU menu scenes exported. Dark File and Save as, light Edit and Print inspected visually.",
+  "limits": "Clipboard, recent files, print, import-to-canvas/acquisition, sharing, desktop background and image properties remain unavailable. Picture export uses the existing PNG/BMP/JPEG chooser, rather than distinct format actions. Existing Undo/Redo/selection/Clear Canvas and Close are PaintCraft extensions. Native menu routing compiles and shares Exit; no native-window smoke run was performed for this pass.",
+  "sha256": {
+    "focused-gui.log.gz": "4e1663bbc2f4d07398b6d06bacd346573118604583852bd23d1f233bb4f9f260",
+    "classic-light-print.png": "a02ef22dac0b17340b4597dd24b4b905721ac2844de159f1db1ef4283f5f1875",
+    "classic-dark-file.png": "85b1ae5d455e7a8a44084988f7dbd3f678c88e1eddda00f4084ef4a9158f7ed8",
+    "classic-dark-print.png": "be31d0cea9c526c83d5679b9dcc62072feafb445deccb3ef4099b916819c2cd3",
+    "classic-light-save-as.png": "696d0b4c1e95f3c9afe805c24e428c1b39eb5fea894645ce2d0c87baa8a12ada",
+    "classic-light-file.png": "c09cf9925f0caabb4e5395004f968b9dd04be898f657dc9b76738cd8aced2648",
+    "clippy.log.gz": "cd7a8473171a45d2083e554bcce27e09327e1109f289b54096348e33d60e8f17",
+    "actions.log.gz": "9bc07d191f7285dabe0c824ab6c21e2dff50901a7c8561a833766a6efab79d72",
+    "gui.log.gz": "3f72220de77741a9156b64db13f2bb4e3589b56147784406157cc600a5cac2de",
+    "previews.log.gz": "29041c02abaab1bc36cfc42bbc4e46526a35291a3936d3f200b93135c0fcc289",
+    "classic-dark-save-as.png": "b6bebfaabbeb3c6077d5a5ee07536a74266236f487a24a1838d7ac43a8696317",
+    "classic-dark-edit.png": "3ad772311510696a679ffce6c836dd136a5b1fe36caed26b73c3a2f349bcb8c0",
+    "classic-light-edit.png": "feb8ff0ae4e8436a349e2e722492d86c90ff7972f0e488636b2a93040396f90a"
+  }
+}

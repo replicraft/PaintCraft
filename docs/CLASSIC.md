@@ -314,3 +314,18 @@ pass; light/dark Selawik captures and source-pinned logs are in the
 [text toolbar validation record](validation/classic-text-toolbar-2026-10-22/validation.json).
 This presentation work does not qualify native text raster parity or complete
 editable text objects and IME.
+
+Classic v11 File/Edit now follow the supplied `im1age.png` and `imag1e.png`
+structure: File exposes import/recent, Save as and Print submenus, Save as project,
+sharing/background/property previews and Exit. Picture export uses the existing
+PNG/BMP/JPEG path; project saving retains the native Save As action. Exit and the
+macOS Quit event share the action outbox and existing unsaved-window close guard.
+File scrolls in short windows; its height also overrides the popup's initial
+estimate so lower rows remain clickable. Edit presents disabled Cut, Copy, Paste
+and Copy visible layers previews above existing working PaintCraft commands.
+Unavailable entries explain their state; this does not implement clipboard,
+printing, acquisition, recent files, sharing, desktop background or image
+properties. Historical Classic skins retain their existing menu layout.
+116 GUI tests, six shared action tests and strict workspace Clippy pass;
+[light/dark captures and source-pinned logs](validation/classic-file-edit-2026-10-22/validation.json)
+record the scope and remaining reference differences.
