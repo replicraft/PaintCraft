@@ -1,6 +1,7 @@
 //! Shared application widgets, view mapping and exactly-once action delivery.
 pub mod actions;
 pub mod chrome;
+pub mod confirmation;
 pub mod fonts;
 pub mod icons;
 pub mod outbox;

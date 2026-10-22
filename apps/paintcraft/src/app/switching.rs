@@ -11,23 +11,31 @@ pub(super) struct Switch {
 
 impl App {
     pub(super) fn interface_switch_dialog(&mut self, ctx: &egui::Context, target: Experience) {
-        let response=egui::Modal::new(egui::Id::unique("switch-interface-save")).show(ctx,|ui| {
-            ui.heading("Save before switching interfaces");
-            ui.label("Classic and Studio have separate document workspaces. Save changed documents, or discard them and switch.");
-            ui.horizontal(|ui| {
-                if ui.button("Save and switch").clicked() && ctx.current_pass_index()==0 {
-                    self.confirm=None;
-                    self.begin_interface_switch(target,ctx);
-                }
-                if ui.button("Discard and switch").clicked() && ctx.current_pass_index()==0 {
-                    self.confirm=None;
-                    self.start_interface_switch(target,true,ctx);
-                }
-                if ui.button("Cancel").clicked() && ctx.current_pass_index()==0 {self.confirm=None;}
-            });
-        });
-        if response.should_close() && ctx.current_pass_index() == 0 {
-            self.confirm = None;
+        use paintcraft_ui::confirmation::{Choice, Prompt};
+        let choice = paintcraft_ui::confirmation::show(
+            ctx,
+            egui::Id::unique("switch-interface-save"),
+            Prompt {
+                title: "Save before switching interfaces",
+                message: "Classic and Studio have separate document workspaces. Save changed documents, or discard them and switch.",
+                accept: "Save and switch",
+                discard: Some("Discard and switch"),
+            },
+        );
+        if ctx.current_pass_index() != 0 {
+            return;
+        }
+        match choice {
+            Some(Choice::Accept) => {
+                self.confirm = None;
+                self.begin_interface_switch(target, ctx);
+            }
+            Some(Choice::Discard) => {
+                self.confirm = None;
+                self.start_interface_switch(target, true, ctx);
+            }
+            Some(Choice::Cancel) => self.confirm = None,
+            None => {}
         }
     }
 

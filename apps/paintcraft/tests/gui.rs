@@ -141,6 +141,8 @@ mod centering;
 mod classic_layers;
 #[path = "gui/colors.rs"]
 mod colors;
+#[path = "gui/confirmations.rs"]
+mod confirmations;
 #[path = "gui/layers.rs"]
 mod layers;
 #[path = "gui/properties.rs"]

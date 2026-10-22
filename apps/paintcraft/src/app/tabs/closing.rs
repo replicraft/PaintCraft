@@ -92,25 +92,34 @@ impl App {
             self.tab_closing = None;
             return;
         }
-        egui::Modal::new(egui::Id::unique("close-document-confirmation")).show(ctx, |ui| {
-            ui.heading("Save changes before closing this document?");
-            ui.label("This document has unsaved changes.");
-            ui.horizontal(|ui| {
-                if ui.button("Save and close").clicked() {
-                    self.tab_closing = None;
-                    self.resolve_tab_input(ctx);
-                    self.tab_save_close = Some((id, self.editor.document().state_id));
-                    self.save_requested(ctx);
-                }
-                if ui.button("Don't save").clicked() {
-                    self.tab_closing = None;
-                    self.try_close_tab(id, ctx);
-                }
-                if ui.button("Cancel").clicked() {
-                    self.tab_closing = None;
-                }
-            });
-        });
+        use paintcraft_ui::confirmation::{Choice, Prompt};
+        let choice = paintcraft_ui::confirmation::show(
+            ctx,
+            egui::Id::unique("close-document-confirmation"),
+            Prompt {
+                title: "Save changes before closing this document?",
+                message: "This document has unsaved changes.",
+                accept: "Save and close",
+                discard: Some("Don't save"),
+            },
+        );
+        if ctx.current_pass_index() != 0 {
+            return;
+        }
+        match choice {
+            Some(Choice::Accept) => {
+                self.tab_closing = None;
+                self.resolve_tab_input(ctx);
+                self.tab_save_close = Some((id, self.editor.document().state_id));
+                self.save_requested(ctx);
+            }
+            Some(Choice::Discard) => {
+                self.tab_closing = None;
+                self.try_close_tab(id, ctx);
+            }
+            Some(Choice::Cancel) => self.tab_closing = None,
+            None => {}
+        }
     }
 
     pub(crate) fn request_workspace_close(&mut self, ctx: &egui::Context) {

@@ -312,53 +312,59 @@ impl App {
                 ("Export", t, "Export now")
             }
         };
-        egui::Modal::new(egui::Id::unique(("confirmation", title))).show(&ctx, |ui| {
-            ui.heading(title);
-            ui.label(text);
-            ui.horizontal(|ui| {
-                if ui.button(go).clicked() {
-                    match confirm {
-                        Confirm::Settings(_)
-                        | Confirm::SwitchInterface(_)
-                        | Confirm::Colors(_)
-                        | Confirm::Canvas(_)
-                        | Confirm::LayerProperties(_) => {
-                            unreachable!("properties handled above")
-                        }
-                        Confirm::DiscardForNew => self.new_document(),
-                        Confirm::DiscardForOpen(p) => {
-                            if let Err(e) = self.open_path(&p) {
-                                self.editor.set_status(format!("Cannot open: {e}"));
-                            }
-                        }
-                        Confirm::DiscardForRecovery(item) => self.do_recover(item),
-                        Confirm::DiscardForSaveSnapshot(sequence) => {
-                            self.open_saved_snapshot(sequence)
-                        }
-                        Confirm::ForgetSaveSnapshot(sequence) => {
-                            self.forget_incomplete_save(sequence)
-                        }
-                        Confirm::ReplaceFile(p) | Confirm::ReplaceSharedFile(p) => {
-                            self.do_save(&ctx, p)
-                        }
-                        Confirm::QuitUnsaved => {
-                            self.allow_close = true;
-                            self.close_after_requested_saves(&ctx);
-                        }
-                        Confirm::Export {
-                            path,
-                            format,
-                            losses,
-                            ..
-                        } => self.do_export(&path, format, &losses),
+        use paintcraft_ui::confirmation::{Choice, Prompt};
+        let choice = paintcraft_ui::confirmation::show(
+            &ctx,
+            egui::Id::unique(("confirmation", title)),
+            Prompt {
+                title,
+                message: &text,
+                accept: go,
+                discard: None,
+            },
+        );
+        if ctx.current_pass_index() != 0 {
+            return;
+        }
+        match choice {
+            Some(Choice::Accept) => {
+                match confirm {
+                    Confirm::Settings(_)
+                    | Confirm::SwitchInterface(_)
+                    | Confirm::Colors(_)
+                    | Confirm::Canvas(_)
+                    | Confirm::LayerProperties(_) => {
+                        unreachable!("properties handled above")
                     }
-                    self.confirm = None;
+                    Confirm::DiscardForNew => self.new_document(),
+                    Confirm::DiscardForOpen(p) => {
+                        if let Err(e) = self.open_path(&p) {
+                            self.editor.set_status(format!("Cannot open: {e}"));
+                        }
+                    }
+                    Confirm::DiscardForRecovery(item) => self.do_recover(item),
+                    Confirm::DiscardForSaveSnapshot(sequence) => self.open_saved_snapshot(sequence),
+                    Confirm::ForgetSaveSnapshot(sequence) => self.forget_incomplete_save(sequence),
+                    Confirm::ReplaceFile(p) | Confirm::ReplaceSharedFile(p) => {
+                        self.do_save(&ctx, p)
+                    }
+                    Confirm::QuitUnsaved => {
+                        self.allow_close = true;
+                        self.close_after_requested_saves(&ctx);
+                    }
+                    Confirm::Export {
+                        path,
+                        format,
+                        losses,
+                        ..
+                    } => self.do_export(&path, format, &losses),
                 }
-                if ui.button("Cancel").clicked() {
-                    self.confirm = None;
-                }
-            });
-        });
+                self.confirm = None;
+            }
+            Some(Choice::Cancel) => self.confirm = None,
+            Some(Choice::Discard) => unreachable!("this prompt has no discard action"),
+            None => {}
+        }
     }
 }
 
