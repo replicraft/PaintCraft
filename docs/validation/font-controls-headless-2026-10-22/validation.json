@@ -1,0 +1,22 @@
+{
+  "source_commit": "a05cb298e64785cf82d283f02a7676fe489428db",
+  "reference": "docs/temp/paint-references/photos/mspaint-text-settings.png",
+  "mode": "Window-free egui and lint checks only. No desktop, native-window, file-dialog or screenshot-preview launches.",
+  "gui": {
+    "passed": 140,
+    "failed": 0,
+    "ignored": 17
+  },
+  "focused_gui": {
+    "passed": 4,
+    "ignored": 1,
+    "scope": "Pinned search and visible-only family rows using a synthetic 1000-family catalog at 480x500/scale 1 and 360x360/scale 2. Search remains in place during wheel scrolling, clicking search keeps the popup open, long names stay within the 220-point selector, filtering resets list offset, selection closes the popup and opening focuses search. Existing font/size preference checks remain passing. Actual App tests show plain text and Escape in font, size and File popups preserve the pending canvas text, document snapshot and history across repeated layout passes."
+  },
+  "clippy": "workspace all-targets with -D warnings passed",
+  "limits": "The photo establishes toolbar controls and arrangement; search/catalog interaction is PaintCraft UI policy, not pinned native behavior. Font and point-size presentation now have separate modules. Existing font discovery, shaping/rasterization and text publication policy are unchanged. Virtualization is structurally checked, not a measured latency claim. Native installed-font and rendered visual parity remain unqualified in this pass.",
+  "sha256": {
+    "gui.log.gz": "6ca1483c77ca23aca4a41797030881f0778bdfe85b98c0cb09aef50c4405cd2d",
+    "focused-gui.log.gz": "2428f9b551d41f3a3328a7ac99f834eaab8eabf4d17507e1f070f8498e2e8b0c",
+    "clippy.log.gz": "327462fef2fdd9400693940934f27564681edcc9586e178e12121963ba29aac9"
+  }
+}

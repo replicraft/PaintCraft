@@ -477,3 +477,19 @@ Tests cover 1360x900 through 360x360, light/dark themes and scales 1 and 2, incl
 stationary zoom controls and current-frame pointer feedback. All 89 assets pass
 vector/transparency checks. Native/rendered parity and latency remain unqualified;
 no application windows or screenshot previews were launched.
+
+The text family popup now keeps a focused search field above an independently
+scrollable family list. Only visible rows are created; filtering resets list
+position, long names stay within the selector width, and selecting a family
+explicitly closes the popup. Search clicks keep it open. Font and point-size
+presentation live in separate modules; size popups cap their height relative to
+the viewport, and text-style buttons now provide inactive hover feedback.
+Popup ownership also fixes a discovered input issue: plain text and Escape in
+open popups no longer alter or discard the pending canvas text.
+140 window-free UI tests and strict workspace Clippy pass; see
+[the font-control record](validation/font-controls-headless-2026-10-22/validation.json).
+A synthetic 1,000-family catalog checks scrolling/filtering/selection at 480x500
+and 360x360, scales 1 and 2. Actual application tests cover draft preservation in
+font, size and File popups. Font discovery, rasterization and publication policy
+are unchanged. Search interaction is PaintCraft policy, not native-parity or
+measured-latency evidence; no application windows or screenshot previews ran.
