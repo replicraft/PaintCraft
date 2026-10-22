@@ -404,15 +404,15 @@ impl App {
             .err()
             .and_then(|error| error.allocation_denial())
             .filter(|denial| {
-                denial.class() == paintcraft_core::types::resources::AllocationClass::DecodedTiles
-                    && denial.is_possible()
+                matches!(
+                    denial.class(),
+                    paintcraft_core::types::resources::AllocationClass::DecodedTiles
+                        | paintcraft_core::types::resources::AllocationClass::PaintMetadata
+                ) && denial.is_possible()
             })
             .cloned()
             .map(|denial| (key, denial));
         self.update_capacity_interest();
-        if let Some(wakes) = &self.budget_wakes {
-            wakes.wait_for_release(self.render_residency_retry.is_some());
-        }
         if self
             .render_residency_retry
             .as_ref()

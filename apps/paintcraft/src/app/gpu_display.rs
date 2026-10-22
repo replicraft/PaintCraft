@@ -86,9 +86,6 @@ impl App {
                 self.rendered.clear();
                 self.render_residency_retry = None;
                 self.update_capacity_interest();
-                if let Some(wakes) = &self.budget_wakes {
-                    wakes.wait_for_release(false);
-                }
                 self.texture_key = Some(key);
             }
             Err(error) => {

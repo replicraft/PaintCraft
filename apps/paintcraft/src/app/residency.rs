@@ -1,21 +1,30 @@
 //! Pressure maintenance visits inactive owners before the visible document.
 use super::*;
-use paintcraft_core::types::resources::{BudgetUsage, BudgetWatch, SharedBudget};
+use paintcraft_core::types::resources::{AllocationClass, BudgetUsage, BudgetWatch, SharedBudget};
 #[derive(Debug)]
 pub(super) struct BudgetWakes {
     tiles: BudgetWatch,
     workers: BudgetWatch,
-}
-impl BudgetWakes {
-    pub(super) fn wait_for_release(&self, waiting: bool) {
-        self.tiles.wait_for_release(waiting);
-    }
+    metadata: BudgetWatch,
 }
 impl App {
     pub(super) fn connect_budget_wakes(
         &mut self,
         ctx: &egui::Context,
         tiles: SharedBudget,
+    ) -> paintcraft_core::types::Result<()> {
+        let metadata = self
+            .editing
+            .as_ref()
+            .map(|service| service.metadata_budget())
+            .unwrap_or_else(|| paintcraft_raster::Admission::new(0).paint_metadata_budget());
+        self.connect_budget_wakes_with_metadata(ctx, tiles, metadata)
+    }
+    pub(super) fn connect_budget_wakes_with_metadata(
+        &mut self,
+        ctx: &egui::Context,
+        tiles: SharedBudget,
+        metadata: SharedBudget,
     ) -> paintcraft_core::types::Result<()> {
         let wake = ctx.clone();
         let tile_watch = tiles
@@ -26,9 +35,15 @@ impl App {
         let worker_watch = self
             .worker_budget
             .watch(2 << 30, move || wake.request_repaint())?;
+        let wake = ctx.clone();
+        let metadata_watch = metadata.watch(
+            (64 << 20).min(metadata.usage().limit / 4).max(1),
+            move || wake.request_repaint(),
+        )?;
         self.budget_wakes = Some(BudgetWakes {
             tiles: tile_watch,
             workers: worker_watch,
+            metadata: metadata_watch,
         });
         Ok(())
     }
@@ -66,21 +81,38 @@ impl App {
                             .map(|state| &state.editor),
                     )
                 }));
+            wakes.tiles.wait_for_release(
+                render.is_some_and(|denial| denial.class() == AllocationClass::DecodedTiles)
+                    || editors
+                        .clone()
+                        .filter_map(Editor::allocation_wait)
+                        .next()
+                        .is_some(),
+            );
             wakes.tiles.wait_for_capacities(
                 render
                     .into_iter()
-                    .chain(editors.filter_map(Editor::allocation_wait)),
+                    .filter(|denial| denial.class() == AllocationClass::DecodedTiles)
+                    .chain(editors.clone().filter_map(Editor::allocation_wait)),
+            );
+            wakes.metadata.wait_for_capacities(
+                render
+                    .into_iter()
+                    .filter(|denial| denial.class() == AllocationClass::PaintMetadata)
+                    .chain(editors.clone().filter_map(Editor::metadata_wait)),
+            );
+            wakes.metadata.wait_for_release(
+                render.is_some_and(|denial| denial.class() == AllocationClass::PaintMetadata)
+                    || editors.filter_map(Editor::metadata_wait).next().is_some(),
             );
         }
     }
     pub(super) fn poll_residency_pressure(&mut self, ctx: &egui::Context) {
         self.update_capacity_interest();
         let (usage, requested) = if let Some(wakes) = &self.budget_wakes {
-            wakes.wait_for_release(
-                self.render_residency_retry.is_some() || self.any_pending_edits(),
-            );
             let pressure = wakes.tiles.observe_pressure();
             wakes.workers.observe();
+            wakes.metadata.observe_pressure();
             (pressure.usage, pressure.requested_capacity)
         } else {
             (paintcraft_raster::Admission::new(0).residency_usage(), 0)
@@ -355,3 +387,7 @@ mod wake_tests;
 #[cfg(test)]
 #[path = "residency/demand_tests.rs"]
 mod demand_tests;
+
+#[cfg(test)]
+#[path = "residency/metadata_tests.rs"]
+mod metadata_tests;
