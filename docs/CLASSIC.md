@@ -291,3 +291,14 @@ or complete Windows Paint reference parity.
 
 Current brush views: [dark](validation/classic-tool-panels-2026-10-22/classic-v11-dark-brush.png)
 and [light](validation/classic-tool-panels-2026-10-22/classic-v11-light-brush.png).
+
+Classic ribbon follow-up (2026-10-22): new documents use `Untitled - PaintCraft`
+in the native title, while bound documents use their filename. Layers now has
+one bottom caption and a centered icon button. The Image group includes the
+missing Remove background preview. The scrollable shape gallery adds polygons,
+directional arrows, four/six-point stars and callouts as individual SVGs.
+Unimplemented operations remain disabled; this does not complete shape semantics
+or background removal. Compact grid columns keep Layers reachable at narrower
+window sizes. 111 GUI tests, the title regression, vector rendering checks and
+strict workspace Clippy pass. Light/dark review images and logs are in
+[the ribbon validation record](validation/classic-ribbon-2026-10-22/validation.json).

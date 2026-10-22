@@ -1,0 +1,25 @@
+{
+  "source_commit": "134bab207205d8c1533f4bca48e92e8c40f0979b",
+  "gui": {
+    "passed": 111,
+    "failed": 0,
+    "ignored": 16
+  },
+  "icon_tests": {
+    "passed": 3,
+    "ignored": 1
+  },
+  "title_test": "passed",
+  "workspace_clippy": "passed with -D warnings",
+  "review": "Eight GPU-rendered light/dark scenes exported; two workspace scenes retained and visually reviewed. These captures omit the native OS title bar.",
+  "limits": "Additional shapes and Remove background are disabled UI previews; only the existing line, rectangle and ellipse tools execute. No native window smoke run was performed for this ribbon pass.",
+  "sha256": {
+    "classic-v11-dark-workspace.png": "fafb5a03e6aab6b965e00bd66a9acf2e652b3969765cb4e3dfe82a537a0d9b6a",
+    "clippy.log.gz": "f61a5df91de3941dcacc45a6d4f3cb41b468648957cb73caa241ca7c8991d1e5",
+    "classic-v11-light-workspace.png": "0d7fb4d69c65d1ec83f456b1142aa9d2b21c95cff5bba6a2f1bc336f18ae994d",
+    "icons.log.gz": "f18b2be3ad87d5650b3224285269d3d8705c6155c6e1e264ae712cc2b2c287b9",
+    "title.log.gz": "711c6a2789157549b4735ad98149c33ec299653189efa7a32259039485ffec0f",
+    "gui.log.gz": "0b4269a8e3b64d3b65b09abd542b796ef80d917bb043a910fcfb170f94288c38",
+    "previews.log.gz": "971fc4553096c3162db1cb15c752de078b45d0e02082dbc793fac39d09a088c9"
+  }
+}
