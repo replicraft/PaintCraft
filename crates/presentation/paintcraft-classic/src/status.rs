@@ -115,7 +115,11 @@ fn metrics(ui: &mut egui::Ui, status: &Status<'_>, width: f32) {
                         ui.add_space(4.0);
                         ui.add(paintcraft_ui::icons::image(ui.ctx(), icon, 16.0));
                         let text = value.as_deref().unwrap_or("");
-                        ui.add(egui::Label::new(text).truncate());
+                        ui.add(
+                            egui::Label::new(text)
+                                .truncate()
+                                .show_tooltip_when_elided(false),
+                        );
                     },
                 );
                 if index < 2 {
@@ -149,8 +153,12 @@ fn message(ui: &mut egui::Ui, status: &Status<'_>, width: f32) {
                 tip.push('\n');
                 tip.push_str(recovery);
             }
-            ui.add(egui::Label::new(status.message).truncate())
-                .on_hover_text(tip);
+            ui.add(
+                egui::Label::new(status.message)
+                    .truncate()
+                    .show_tooltip_when_elided(false),
+            )
+            .on_hover_text(tip);
         },
     );
 }

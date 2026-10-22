@@ -259,3 +259,6 @@ mod canvas_handles;
 
 #[path = "gui/compact_chrome.rs"]
 mod compact_chrome;
+
+#[path = "gui/status_tooltips.rs"]
+mod status_tooltips;
