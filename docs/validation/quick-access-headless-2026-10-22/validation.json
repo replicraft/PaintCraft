@@ -1,0 +1,29 @@
+{
+  "source_commit": "45676ed4aba556dd7496f0f2d7e9c5f8c66b9901",
+  "reference": "docs/temp/paint-references/photos/image.png",
+  "mode": "Window-free egui, CPU icon rasterization and lint checks only. No desktop, native-window or screenshot-preview launches.",
+  "gui": {
+    "passed": 135,
+    "failed": 0,
+    "ignored": 17
+  },
+  "focused_gui": {
+    "passed": 4,
+    "ignored": 1,
+    "scope": "Classic v11 Save/Share/Undo/Redo order with the requested Clear Canvas extension; New/Open/Export absent from the quick bar and available through File. Disabled Share shows one explanatory tooltip and changes no document/history. Repeated layout passes and double display scale. Existing headless import/export/New and remembered-canvas tests now use the File menu and pass."
+  },
+  "icon_unit": {
+    "passed": 3,
+    "ignored": 1,
+    "scope": "All 87 registered icons parse and rasterize with transparency at 24/64/128 pixels; bounded cache and density selection pass. Original Share icon has null sheet coordinates and regeneration is byte-identical."
+  },
+  "clippy": "workspace all-targets with -D warnings passed",
+  "limits": "System sharing remains an explicitly disabled preview. Clear Canvas is a requested PaintCraft extension to the reference bar. Classic v7/v10 and Studio retain their existing action bars. Source image establishes visible structure, not native/runtime parity. No rendered/native visual qualification under the user restriction.",
+  "sha256": {
+    "gui.log.gz": "456494969179a5c26c2fc19b934963b18fd260f9c02ddf4e7d011be1d174885c",
+    "focused-gui.log.gz": "bfa6058714e4447f8fcf25390da18b6c67176b9b5e5e41bdc5996e379abfee29",
+    "icon-unit.log.gz": "d83e4098c95e5fdf6b5c85bc98640c2a25ed00dcf5790eb9349f72beada0f283",
+    "clippy.log.gz": "6a5a3e53baa58260ef0a3913f7e2cfeee4001d209d07007ad59122a181da4982",
+    "regeneration.json": "d55991c7d3e6afe16a4f78416d2a931380d1be44f131fadf3d97e635e133229a"
+  }
+}
