@@ -54,11 +54,11 @@ fn classic_menus_switch_on_hover_and_zoom_submenu_closes_on_escape() {
     h.get_by_role_and_label(eframe::egui::Role::Button, "File")
         .click();
     h.run();
-    assert!(h.query_by_label_contains("Save as…").is_some());
+    assert!(h.query_by_label_contains("Save as project").is_some());
     h.get_by_role_and_label(eframe::egui::Role::Button, "View")
         .hover();
     h.run();
-    assert!(h.query_by_label_contains("Save as…").is_none());
+    assert!(h.query_by_label_contains("Save as project").is_none());
     h.get_by_role_and_label(eframe::egui::Role::Button, "View")
         .get_by_label("Zoom")
         .hover();

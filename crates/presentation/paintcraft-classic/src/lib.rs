@@ -7,6 +7,7 @@ pub mod tool_controls;
 pub use rulers::RULER_SIZE;
 mod dropdowns;
 mod image_menus;
+mod menus;
 mod palette;
 mod ribbon;
 #[derive(Debug, Default)]
@@ -90,6 +91,10 @@ pub fn chrome(
     egui::MenuBar::new().ui(ui, |ui| {
         ui.menu_button("File", |ui| {
             menu_layout(ui, variant);
+            if variant == ClassicVariant::V11 {
+                menus::file(ui, context, &mut actions);
+                return;
+            }
             for &action in paintcraft_ui::actions::FILE {
                 if matches!(action, Action::Save | Action::Close) {
                     ui.separator();
@@ -102,6 +107,10 @@ pub fn chrome(
         });
         ui.menu_button("Edit", |ui| {
             menu_layout(ui, variant);
+            if variant == ClassicVariant::V11 {
+                menus::edit(ui, context, &mut actions);
+                return;
+            }
             for &action in paintcraft_ui::actions::EDIT {
                 if action == Action::SelectAll {
                     ui.separator();

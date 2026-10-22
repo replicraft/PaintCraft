@@ -211,3 +211,6 @@ mod rulers;
 
 #[path = "gui/clear_canvas.rs"]
 mod clear_canvas;
+
+#[path = "gui/classic_menus.rs"]
+mod classic_menus;
