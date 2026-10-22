@@ -202,3 +202,30 @@ fn cancellation_during_descriptor_copy_releases_the_private_copy_and_program_ind
     drop(snapshot);
     assert_eq!(budget.usage().reserved, 0);
 }
+
+#[test]
+#[cfg(target_pointer_width = "64")]
+fn copying_a_clamped_program_preserves_capacity_instead_of_exhausting_the_local_quota() {
+    let budget = SharedBudget::new(10000);
+    let bounds = Rect::new(0, 0, 8, 8).unwrap();
+    let mut program = PaintPlan::with_metadata_budget(800, budget.clone())
+        .into_projection_checked(bounds, &|| Ok(()))
+        .unwrap();
+    for _ in 0..10 {
+        program = program.append_checked(plan(&budget), &|| Ok(())).unwrap();
+    }
+    let p = program.into_plan();
+    let bytes = p.descriptor_bytes();
+    let snapshot = p.clone();
+    let program = p.into_projection_checked(bounds, &|| Ok(())).unwrap();
+    let mut small = PaintPlan::with_metadata_budget(40, budget.clone());
+    small
+        .rect(rect(0), Rgba([1; 4]), BlendMode::Replace)
+        .unwrap();
+    let combined = program.append_checked(small, &|| Ok(())).unwrap();
+    assert!(combined.metadata_bytes() <= 800);
+    assert_eq!(snapshot.descriptor_bytes(), bytes);
+    drop(combined);
+    drop(snapshot);
+    assert_eq!(budget.usage().reserved, 0);
+}

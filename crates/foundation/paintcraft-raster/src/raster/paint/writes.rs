@@ -23,13 +23,27 @@ impl Writes {
     }
     fn copy_checked(&self, limit: usize, check: &dyn Fn() -> Result<()>) -> Result<Self> {
         let mut copy = Self::new(self.charge.budget());
-        let mut metadata = metadata::Metadata::new(0, limit)?;
+        let bytes = self
+            .values
+            .capacity()
+            .checked_mul(std::mem::size_of::<Write>())
+            .ok_or_else(metadata::exhausted)?;
+        metadata::Metadata::new(bytes, limit)?;
+        copy.charge.resize(bytes as u64)?;
+        copy.values
+            .try_reserve_exact(self.values.capacity())
+            .map_err(|_| Error::new(ErrorCode::ResourceLimit, "cannot copy paint descriptors"))?;
+        let actual = copy
+            .values
+            .capacity()
+            .checked_mul(std::mem::size_of::<Write>())
+            .ok_or_else(metadata::exhausted)?;
+        copy.charge.resize(actual as u64)?;
+        metadata::Metadata::new(actual, limit)?;
         for chunk in self.values.chunks(1024) {
             check()?;
-            for &write in chunk {
-                metadata.vector(&mut copy.values, &mut copy.charge)?;
-                copy.values.push(write);
-            }
+            // Capacity was admitted above; this cannot allocate.
+            copy.values.extend_from_slice(chunk);
         }
         check()?;
         Ok(copy)
