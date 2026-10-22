@@ -17,6 +17,29 @@ impl Drop for Reserved {
         self.budget.release(unused);
     }
 }
+impl Reserved {
+    fn check_available(&self, available: u64, bytes: u64) -> Result<()> {
+        if bytes > available {
+            let required = (self.capacity - available)
+                .checked_add(bytes)
+                .ok_or_else(|| {
+                    Error::new(ErrorCode::ResourceLimit, "reservation demand overflow")
+                })?;
+            return Err(Error::denied(self.budget.clone(), required)
+                .with_message("operation reservation exhausted"));
+        }
+        Ok(())
+    }
+    pub(super) fn take(&self, bytes: u64) -> Result<()> {
+        let mut available = self.available.lock().unwrap_or_else(|e| e.into_inner());
+        self.check_available(*available, bytes)?;
+        *available -= bytes;
+        Ok(())
+    }
+    pub(super) fn recycle(&self, bytes: u64) {
+        *self.available.lock().unwrap_or_else(|e| e.into_inner()) += bytes;
+    }
+}
 /// A bounded reservation for one attempt. Clones share the same remaining capacity.
 /// Unused bytes return when the last reservation owner drops; surviving leases
 /// retain only their own bytes. A live reservation recycles its released leases.
@@ -33,6 +56,9 @@ impl SharedBudget {
     }
 }
 impl BudgetReservation {
+    pub(super) fn downgrade(&self) -> std::sync::Weak<Reserved> {
+        Arc::downgrade(&self.0)
+    }
     pub fn budget(&self) -> SharedBudget {
         self.0.budget.clone()
     }
@@ -48,30 +74,12 @@ impl BudgetReservation {
     }
     /// Advisory validation without allocating a lease or transferring bytes.
     pub fn ensure_capacity(&self, bytes: u64) -> Result<()> {
-        self.check_available(self.available(), bytes)
-    }
-    fn check_available(&self, available: u64, bytes: u64) -> Result<()> {
-        if bytes > available {
-            let required = (self.0.capacity - available)
-                .checked_add(bytes)
-                .ok_or_else(|| {
-                    Error::new(ErrorCode::ResourceLimit, "reservation demand overflow")
-                })?;
-            return Err(Error::denied(self.0.budget.clone(), required)
-                .with_message("operation reservation exhausted"));
-        }
-        Ok(())
+        self.0.check_available(self.available(), bytes)
     }
     /// Transfer reserved bytes, without competing for the shared realm again.
     /// A request beyond this reservation never borrows unreserved capacity.
     pub fn reserve(&self, bytes: u64) -> Result<BudgetLease> {
-        let mut available = self
-            .0
-            .available
-            .lock()
-            .unwrap_or_else(|error| error.into_inner());
-        self.check_available(*available, bytes)?;
-        *available -= bytes;
+        self.0.take(bytes)?;
         Ok(BudgetLease {
             _charge: Arc::new(Charge {
                 budget: self.0.budget.clone(),

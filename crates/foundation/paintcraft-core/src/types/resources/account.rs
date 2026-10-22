@@ -9,6 +9,7 @@ pub struct BudgetAccount {
     class: AllocationClass,
     bytes: u64,
     scope: Option<Arc<Mutex<ScopeFootprint>>>,
+    reservation: Option<std::sync::Weak<reservation::Reserved>>,
 }
 /// Attempt-local declarations, including the largest observed pending request.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -17,12 +18,14 @@ pub struct ScopeFootprint {
     pub peak: u64,
 }
 /// Clone this factory to group independently owned accounts in one attempt.
-/// The scope owns no capacity; each account still releases independently.
+/// Ordinary scopes own no capacity. Reserved scopes retain unused capacity until
+/// their last factory drops; surviving accounts retain only their own bytes.
 #[derive(Clone, Debug)]
 pub struct BudgetScope {
     budget: SharedBudget,
     class: AllocationClass,
     state: Arc<Mutex<ScopeFootprint>>,
+    reservation: Option<BudgetReservation>,
 }
 impl BudgetScope {
     pub fn account(&self) -> BudgetAccount {
@@ -31,6 +34,7 @@ impl BudgetScope {
             class: self.class,
             bytes: 0,
             scope: Some(self.state.clone()),
+            reservation: self.reservation.as_ref().map(BudgetReservation::downgrade),
         }
     }
     pub fn budget(&self) -> SharedBudget {
@@ -46,6 +50,7 @@ impl SharedBudget {
             budget: self.clone(),
             class,
             state: Arc::new(Mutex::new(ScopeFootprint::default())),
+            reservation: None,
         }
     }
     pub fn account(&self, class: AllocationClass) -> BudgetAccount {
@@ -54,6 +59,20 @@ impl SharedBudget {
             class,
             bytes: 0,
             scope: None,
+            reservation: None,
+        }
+    }
+}
+impl BudgetReservation {
+    /// Transfer capacity into resizable, independently owned declarations. While
+    /// a factory survives, accounts cannot borrow beyond the reservation. Account
+    /// shrink/drop recycles capacity; after factories drop, it releases globally.
+    pub fn scope(self, class: AllocationClass) -> BudgetScope {
+        BudgetScope {
+            budget: self.budget(),
+            class,
+            state: Arc::new(Mutex::new(ScopeFootprint::default())),
+            reservation: Some(self),
         }
     }
 }
@@ -71,6 +90,7 @@ impl BudgetAccount {
             class: self.class,
             bytes: 0,
             scope: self.scope.clone(),
+            reservation: self.reservation.clone(),
         }
     }
     /// Grow atomically before allocating, or shrink after freeing storage. A
@@ -93,7 +113,11 @@ impl BudgetAccount {
             };
             // No scope lock survives budget callbacks. Failure rolls back the
             // pending live declaration, while preserving its known demand peak.
-            if let Err(error) = self.budget.admit(delta) {
+            let result = match self.reservation.as_ref().and_then(std::sync::Weak::upgrade) {
+                Some(reservation) => reservation.take(delta),
+                None => self.budget.admit(delta),
+            };
+            if let Err(error) = result {
                 self.release_scope(delta);
                 return Err(error.with_allocation_requirement(self.class, required));
             }
@@ -102,7 +126,7 @@ impl BudgetAccount {
             let released = self.bytes - bytes;
             self.bytes = bytes;
             self.release_scope(released);
-            self.budget.release(released);
+            self.release_capacity(released);
         }
         Ok(())
     }
@@ -111,15 +135,26 @@ impl BudgetAccount {
             scope.lock().unwrap_or_else(|e| e.into_inner()).live -= bytes;
         }
     }
+    fn release_capacity(&self, bytes: u64) {
+        if let Some(reservation) = self.reservation.as_ref().and_then(std::sync::Weak::upgrade) {
+            reservation.recycle(bytes);
+        } else {
+            self.budget.release(bytes);
+        }
+    }
 }
 impl Drop for BudgetAccount {
     fn drop(&mut self) {
         if self.bytes != 0 {
             self.release_scope(self.bytes);
-            self.budget.release(self.bytes);
+            self.release_capacity(self.bytes);
         }
     }
 }
+
+#[cfg(test)]
+#[path = "reserved_account_tests.rs"]
+mod reserved_account_tests;
 
 #[cfg(test)]
 mod tests {

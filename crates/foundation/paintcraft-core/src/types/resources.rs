@@ -112,10 +112,7 @@ struct Charge {
 impl Drop for Charge {
     fn drop(&mut self) {
         if let Some(reservation) = self.reservation.as_ref().and_then(std::sync::Weak::upgrade) {
-            *reservation
-                .available
-                .lock()
-                .unwrap_or_else(|error| error.into_inner()) += self.bytes;
+            reservation.recycle(self.bytes);
         } else {
             self.budget.release(self.bytes);
         }
