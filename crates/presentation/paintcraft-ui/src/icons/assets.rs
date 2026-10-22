@@ -75,6 +75,8 @@ pub enum Icon {
     MoveLayerDown,
     RotateClockwise,
     RotateCounterclockwise,
+    Rotate180,
+    RotateCustom,
     FlipHorizontal,
     FlipVertical,
     Brightness,
@@ -92,7 +94,7 @@ pub enum Icon {
 }
 
 impl Icon {
-    pub const ALL: [Self; 84] = [
+    pub const ALL: [Self; 86] = [
         Self::Polygon,
         Self::RightTriangle,
         Self::Diamond,
@@ -167,6 +169,8 @@ impl Icon {
         Self::MoveLayerDown,
         Self::RotateClockwise,
         Self::RotateCounterclockwise,
+        Self::Rotate180,
+        Self::RotateCustom,
         Self::FlipHorizontal,
         Self::FlipVertical,
         Self::Brightness,
@@ -255,6 +259,8 @@ impl Icon {
             Self::MoveLayerDown => "move-layer-down",
             Self::RotateClockwise => "rotate-clockwise",
             Self::RotateCounterclockwise => "rotate-counterclockwise",
+            Self::Rotate180 => "rotate-180",
+            Self::RotateCustom => "rotate-custom",
             Self::FlipHorizontal => "flip-horizontal",
             Self::FlipVertical => "flip-vertical",
             Self::Brightness => "brightness",
@@ -353,6 +359,8 @@ impl Icon {
             Self::RotateCounterclockwise => {
                 include_bytes!("../../assets/icons/rotate-counterclockwise.svg")
             }
+            Self::Rotate180 => include_bytes!("../../assets/icons/rotate-180.svg"),
+            Self::RotateCustom => include_bytes!("../../assets/icons/rotate-custom.svg"),
             Self::FlipHorizontal => include_bytes!("../../assets/icons/flip-horizontal.svg"),
             Self::FlipVertical => include_bytes!("../../assets/icons/flip-vertical.svg"),
             Self::Brightness => include_bytes!("../../assets/icons/brightness.svg"),

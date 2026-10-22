@@ -162,6 +162,16 @@ add('cloud-callout', path('M13 42C0 39 1 25 12 22C8 9 26 3 34 13C45 3 61 14 54 2
 add('four-point-star', path(star(4, 9)))
 add('six-point-star', path(star(6, 15)))
 add('remove-background', rect(5, 7, 54, 50, 'url(#paper)') + line('M7 22H57M7 39H57M22 9V55M40 9V55', '#8293a8', 2) + path('M24 40L43 16L58 29L39 53H28Z', 'url(#red)') + path('M24 40L35 49L39 53H28Z', 'url(#paper)'))
+# Original Classic transform choices, distinct from the 90-degree arrows.
+add('rotate-180',
+    path('M15 6H42L51 58H24Z', 'url(#paper)')
+    + path('M15 6L51 58H24Z', 'url(#blue)')
+    + line('M15 6L51 58', '#61788d', 2))
+add('rotate-custom',
+    line('M10 30A22 22 0 1 1 43 50', '#128ff5', 5)
+    + path('M42 39L40 57L57 50Z', 'url(#blue)')
+    + line('M31 46V29L40 17', '#61788d', 3)
+    + circle(31, 29, 4, 'url(#paper)'))
 OUT.mkdir(parents=True,exist_ok=True)
 manifest=[]
 for i,(name,body) in enumerate(icons):

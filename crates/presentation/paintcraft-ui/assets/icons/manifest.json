@@ -572,5 +572,19 @@
     "source_row": null,
     "source_column": null,
     "file": "remove-background.svg"
+  },
+  {
+    "name": "rotate-180",
+    "label": "Rotate 180",
+    "source_row": null,
+    "source_column": null,
+    "file": "rotate-180.svg"
+  },
+  {
+    "name": "rotate-custom",
+    "label": "Rotate Custom",
+    "source_row": null,
+    "source_column": null,
+    "file": "rotate-custom.svg"
   }
 ]
