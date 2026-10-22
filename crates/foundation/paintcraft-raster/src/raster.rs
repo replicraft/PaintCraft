@@ -123,6 +123,13 @@ impl Admission {
         self.paint_metadata_scope = budget.scope(AllocationClass::PaintMetadata);
         self
     }
+    /// Transfer known metadata capacity into this preparation attempt. Factories
+    /// retain unused capacity, while surviving storage retains only its own bytes.
+    /// Growth beyond the live reservation is rejected rather than borrowing.
+    pub fn with_reserved_paint_metadata(mut self, reservation: BudgetReservation) -> Self {
+        self.paint_metadata_scope = reservation.scope(AllocationClass::PaintMetadata);
+        self
+    }
     pub fn paint_metadata_budget(&self) -> SharedBudget {
         self.paint_metadata_scope.budget()
     }
