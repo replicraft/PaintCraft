@@ -3,6 +3,28 @@ use paintcraft_core::types::resources::SharedBudget;
 use paintcraft_raster::RasterLayer;
 use std::time::{Duration, Instant};
 const BYTES: u64 = RasterLayer::TILE_BYTES as u64;
+#[test]
+fn metadata_denial_does_not_enter_decoded_history_pressure_retry() {
+    let (editor, _, _) = setup(2);
+    let base = editor.session.preparation().unwrap().history_ticket();
+    let budget = SharedBudget::new(1);
+    let blocker = budget.reserve(1).unwrap();
+    let mut account = budget.account(AllocationClass::PaintMetadata);
+    let error = account.resize(1).unwrap_err();
+    let result = defer_failure(
+        base,
+        Request::Navigation(background::NavigationRequest::Undo),
+        Err(error),
+        || Ok(()),
+    );
+    let error = result.unwrap_err();
+    assert_eq!(
+        error.allocation_denial().unwrap().class(),
+        AllocationClass::PaintMetadata
+    );
+    assert!(editor.allocation_wait().is_none());
+    drop(blocker);
+}
 fn until(mut condition: impl FnMut() -> bool) {
     let deadline = Instant::now() + Duration::from_secs(10);
     while !condition() {
