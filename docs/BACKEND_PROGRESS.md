@@ -775,5 +775,9 @@ raster and 119 optimized editor tests, and release benchmark/CPU CLI builds.
 A final test-only duplicate/flood addition then passes in the nine-case batch suite
 in debug/release and strict Clippy; production code is unchanged.
 Before/shared repeated and varied-miss preflights match canonical/library output.
-Matched timing, mixed-source optimization, aggregate/physical admission and native
-latency remain open. No dependency, wire/file policy or rendering default changes.
+The [matched follow-up](../benchmarks/results/plan-sharing-2026-10-22/DECISION.md)
+retains 480 statistical samples and 3,120 original process observations. Diagonal
+library RSS and wall time improve, but mixed sessions, large slow control tails
+and startup drift preclude a general speed claim. Mixed-source optimization,
+aggregate/physical admission and native latency remain open. No dependency,
+wire/file policy or rendering default changes.

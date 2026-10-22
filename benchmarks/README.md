@@ -297,3 +297,12 @@ including calibrations. The [completed decision](results/batch-preparation-2026-
 retains exact semantic/canonical comparisons, original schema-v2 exports, declared
 resource counters and substantial diagonal/mixed regressions. Whole-batch admission
 is a correctness baseline; performance and native latency remain separate work.
+
+The descriptor-sharing follow-up uses `python3 -B benchmarks/tools/run_plan_sharing.py`
+with the original batch manifest and source-pinned candidate artifact identities.
+Default mode writes nothing; `--preflight-only --execute` checks outputs without
+timing. A fresh `--output` with `--execute` compares frozen before/shared planned
+binaries on seven repeated cases and five changing-color miss controls, retaining
+480 statistical samples and 3,120 process observations.
+[The decision](results/plan-sharing-2026-10-22/DECISION.md) selects bounded retained
+memory while preserving mixed wall/CPU/RSS, large slow tails and calibration drift.

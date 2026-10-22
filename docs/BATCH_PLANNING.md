@@ -110,4 +110,5 @@ records executed checks and preserves development failures.
 
 [Exact descriptor sharing](PAINT_PLAN_SHARING.md) now reduces retained payload for
 repeated equal plans without merging operations. Original timing evidence remains
-pinned to its pre-sharing source; the follow-up's wall-time qualification is separate.
+pinned to its pre-sharing source. The [matched follow-up](../benchmarks/results/plan-sharing-2026-10-22/DECISION.md)
+retains memory benefits, mixed timings and slow controls separately.

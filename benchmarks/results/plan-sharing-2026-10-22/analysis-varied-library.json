@@ -1,0 +1,427 @@
+[
+  {
+    "dataset": "varied",
+    "kind": "library",
+    "case": "horizontal_pencil",
+    "sessions": [
+      {
+        "session": 1,
+        "results": {
+          "before": {
+            "mean_ms": 10.44149585,
+            "median_ms": 9.9624585,
+            "min_ms": 9.1905,
+            "max_ms": 18.580708,
+            "mean_cpu_ms": 9.395199999999999,
+            "median_rss_mib": 3.296875,
+            "mean_cycles": 29636818.7,
+            "mean_instructions": 150707318.4
+          },
+          "shared": {
+            "mean_ms": 10.15752105,
+            "median_ms": 9.898542,
+            "min_ms": 9.559791,
+            "max_ms": 13.352125000000001,
+            "mean_cpu_ms": 9.264899999999999,
+            "median_rss_mib": 4.2578125,
+            "mean_cycles": 29383188.95,
+            "mean_instructions": 150870453.3
+          }
+        },
+        "shared_wall_change_pct": -2.7196754572286763
+      },
+      {
+        "session": 2,
+        "results": {
+          "shared": {
+            "mean_ms": 17.661723000000002,
+            "median_ms": 11.038083499999999,
+            "min_ms": 9.375833,
+            "max_ms": 48.887167000000005,
+            "mean_cpu_ms": 10.0612,
+            "median_rss_mib": 4.3046875,
+            "mean_cycles": 30673891.15,
+            "mean_instructions": 151185274.15
+          },
+          "before": {
+            "mean_ms": 10.03029385,
+            "median_ms": 10.097875000000002,
+            "min_ms": 9.516917,
+            "max_ms": 10.517542,
+            "mean_cpu_ms": 9.3111,
+            "median_rss_mib": 4.25,
+            "mean_cycles": 29528853.85,
+            "mean_instructions": 150715322
+          }
+        },
+        "shared_wall_change_pct": 76.08380436431584
+      },
+      {
+        "session": 3,
+        "results": {
+          "before": {
+            "mean_ms": 9.7982165,
+            "median_ms": 9.799041500000001,
+            "min_ms": 9.055,
+            "max_ms": 10.278916,
+            "mean_cpu_ms": 9.16165,
+            "median_rss_mib": 4.2421875,
+            "mean_cycles": 28992817.5,
+            "mean_instructions": 150768999.2
+          },
+          "shared": {
+            "mean_ms": 9.7808354,
+            "median_ms": 9.748521500000003,
+            "min_ms": 9.466084000000002,
+            "max_ms": 10.640166,
+            "mean_cpu_ms": 9.033349999999999,
+            "median_rss_mib": 4.234375,
+            "mean_cycles": 28707062.15,
+            "mean_instructions": 150754571.95
+          }
+        },
+        "shared_wall_change_pct": -0.17739044651646774
+      }
+    ]
+  },
+  {
+    "dataset": "varied",
+    "kind": "library",
+    "case": "diagonal_pencil",
+    "sessions": [
+      {
+        "session": 1,
+        "results": {
+          "before": {
+            "mean_ms": 58.1991584,
+            "median_ms": 57.2917085,
+            "min_ms": 55.576666,
+            "max_ms": 71.24808300000001,
+            "mean_cpu_ms": 55.91065,
+            "median_rss_mib": 22.921875,
+            "mean_cycles": 177263480.85,
+            "mean_instructions": 782948977.85
+          },
+          "shared": {
+            "mean_ms": 60.3569375,
+            "median_ms": 59.564125000000004,
+            "min_ms": 56.173,
+            "max_ms": 70.673416,
+            "mean_cpu_ms": 57.37585,
+            "median_rss_mib": 21.8359375,
+            "mean_cycles": 180718057.35,
+            "mean_instructions": 782917734.3
+          }
+        },
+        "shared_wall_change_pct": 3.7075778401634008
+      },
+      {
+        "session": 2,
+        "results": {
+          "shared": {
+            "mean_ms": 58.175654200000004,
+            "median_ms": 57.697479,
+            "min_ms": 56.362916000000006,
+            "max_ms": 64.578625,
+            "mean_cpu_ms": 56.2924,
+            "median_rss_mib": 20.09375,
+            "mean_cycles": 178367213.05,
+            "mean_instructions": 781978964.7
+          },
+          "before": {
+            "mean_ms": 59.86293130000001,
+            "median_ms": 58.07227100000001,
+            "min_ms": 56.114333,
+            "max_ms": 71.90616700000001,
+            "mean_cpu_ms": 56.789,
+            "median_rss_mib": 20.296875,
+            "mean_cycles": 179708221.65,
+            "mean_instructions": 782426836.65
+          }
+        },
+        "shared_wall_change_pct": -2.818567456284926
+      },
+      {
+        "session": 3,
+        "results": {
+          "before": {
+            "mean_ms": 57.32528335000001,
+            "median_ms": 57.186646,
+            "min_ms": 55.569917000000004,
+            "max_ms": 59.32666600000001,
+            "mean_cpu_ms": 55.865399999999994,
+            "median_rss_mib": 20.984375,
+            "mean_cycles": 178185952.2,
+            "mean_instructions": 783160152.55
+          },
+          "shared": {
+            "mean_ms": 57.561958350000005,
+            "median_ms": 57.205125,
+            "min_ms": 55.723708,
+            "max_ms": 61.80654100000001,
+            "mean_cpu_ms": 55.8345,
+            "median_rss_mib": 20.8984375,
+            "mean_cycles": 178004933.95,
+            "mean_instructions": 782583110.95
+          }
+        },
+        "shared_wall_change_pct": 0.41286320131201926
+      }
+    ]
+  },
+  {
+    "dataset": "varied",
+    "kind": "library",
+    "case": "smooth_brush",
+    "sessions": [
+      {
+        "session": 1,
+        "results": {
+          "before": {
+            "mean_ms": 68.3790812,
+            "median_ms": 67.9649375,
+            "min_ms": 66.614458,
+            "max_ms": 70.710917,
+            "mean_cpu_ms": 67.2696,
+            "median_rss_mib": 6.3359375,
+            "mean_cycles": 214501715.4,
+            "mean_instructions": 969408704.2
+          },
+          "shared": {
+            "mean_ms": 68.03160425,
+            "median_ms": 67.83095850000001,
+            "min_ms": 67.320375,
+            "max_ms": 71.559875,
+            "mean_cpu_ms": 66.81439999999999,
+            "median_rss_mib": 6.4375,
+            "mean_cycles": 213342458.35,
+            "mean_instructions": 969476314.65
+          }
+        },
+        "shared_wall_change_pct": -0.5081626484328972
+      },
+      {
+        "session": 2,
+        "results": {
+          "shared": {
+            "mean_ms": 72.93287085,
+            "median_ms": 69.2738755,
+            "min_ms": 67.726542,
+            "max_ms": 96.08116600000001,
+            "mean_cpu_ms": 69.01165,
+            "median_rss_mib": 6.5859375,
+            "mean_cycles": 217161643.1,
+            "mean_instructions": 970334027.8
+          },
+          "before": {
+            "mean_ms": 71.14687295,
+            "median_ms": 69.1072915,
+            "min_ms": 68.059083,
+            "max_ms": 91.19525,
+            "mean_cpu_ms": 68.77065,
+            "median_rss_mib": 6.96875,
+            "mean_cycles": 215320139.65,
+            "mean_instructions": 970238316.2
+          }
+        },
+        "shared_wall_change_pct": 2.5102971162979326
+      },
+      {
+        "session": 3,
+        "results": {
+          "before": {
+            "mean_ms": 68.25706050000001,
+            "median_ms": 68.061688,
+            "min_ms": 66.731542,
+            "max_ms": 70.466375,
+            "mean_cpu_ms": 66.9761,
+            "median_rss_mib": 6.3046875,
+            "mean_cycles": 213203945.85,
+            "mean_instructions": 969120875.95
+          },
+          "shared": {
+            "mean_ms": 67.49838550000001,
+            "median_ms": 67.3750835,
+            "min_ms": 66.49266700000001,
+            "max_ms": 68.78300000000002,
+            "mean_cpu_ms": 66.39874999999999,
+            "median_rss_mib": 6.3984375,
+            "mean_cycles": 211925012.7,
+            "mean_instructions": 969451916.95
+          }
+        },
+        "shared_wall_change_pct": -1.1114967366635975
+      }
+    ]
+  },
+  {
+    "dataset": "varied",
+    "kind": "library",
+    "case": "smooth_eraser",
+    "sessions": [
+      {
+        "session": 1,
+        "results": {
+          "before": {
+            "mean_ms": 21.88603545,
+            "median_ms": 21.9296875,
+            "min_ms": 21.214125,
+            "max_ms": 22.704208,
+            "mean_cpu_ms": 20.943099999999998,
+            "median_rss_mib": 6.1015625,
+            "mean_cycles": 66434083.05,
+            "mean_instructions": 299362420.15
+          },
+          "shared": {
+            "mean_ms": 21.5937501,
+            "median_ms": 21.3315625,
+            "min_ms": 20.872292,
+            "max_ms": 23.088209000000003,
+            "mean_cpu_ms": 20.67045,
+            "median_rss_mib": 6.0625,
+            "mean_cycles": 65823298.3,
+            "mean_instructions": 299150754.55
+          }
+        },
+        "shared_wall_change_pct": -1.3354878761287936
+      },
+      {
+        "session": 2,
+        "results": {
+          "shared": {
+            "mean_ms": 21.826618800000002,
+            "median_ms": 21.706562500000004,
+            "min_ms": 20.968459000000003,
+            "max_ms": 23.400667,
+            "mean_cpu_ms": 20.9165,
+            "median_rss_mib": 6.234375,
+            "mean_cycles": 66503096,
+            "mean_instructions": 299331742.75
+          },
+          "before": {
+            "mean_ms": 21.47861255,
+            "median_ms": 21.256604000000003,
+            "min_ms": 20.830292,
+            "max_ms": 22.884959,
+            "mean_cpu_ms": 20.53075,
+            "median_rss_mib": 5.109375,
+            "mean_cycles": 65736037.25,
+            "mean_instructions": 299121917
+          }
+        },
+        "shared_wall_change_pct": 1.6202454846181435
+      },
+      {
+        "session": 3,
+        "results": {
+          "before": {
+            "mean_ms": 21.190574950000002,
+            "median_ms": 21.162333,
+            "min_ms": 20.626917000000002,
+            "max_ms": 22.221625000000003,
+            "mean_cpu_ms": 20.43985,
+            "median_rss_mib": 6.0546875,
+            "mean_cycles": 65345516.5,
+            "mean_instructions": 299111660.6
+          },
+          "shared": {
+            "mean_ms": 21.149202350000003,
+            "median_ms": 20.978396000000004,
+            "min_ms": 20.512917,
+            "max_ms": 22.96975,
+            "mean_cpu_ms": 20.3222,
+            "median_rss_mib": 5.125,
+            "mean_cycles": 65025713.6,
+            "mean_instructions": 298952349.2
+          }
+        },
+        "shared_wall_change_pct": -0.19524057321530508
+      }
+    ]
+  },
+  {
+    "dataset": "varied",
+    "kind": "library",
+    "case": "dense",
+    "sessions": [
+      {
+        "session": 1,
+        "results": {
+          "before": {
+            "mean_ms": 13.195112600000002,
+            "median_ms": 11.721896000000001,
+            "min_ms": 10.95625,
+            "max_ms": 24.572875,
+            "mean_cpu_ms": 11.2463,
+            "median_rss_mib": 11.5859375,
+            "mean_cycles": 34784516,
+            "mean_instructions": 158467029.1
+          },
+          "shared": {
+            "mean_ms": 11.55395,
+            "median_ms": 11.464208500000002,
+            "min_ms": 11.119875,
+            "max_ms": 12.759375000000002,
+            "mean_cpu_ms": 10.6691,
+            "median_rss_mib": 11.4140625,
+            "mean_cycles": 33749437.8,
+            "mean_instructions": 158052763.15
+          }
+        },
+        "shared_wall_change_pct": -12.437655136038783
+      },
+      {
+        "session": 2,
+        "results": {
+          "shared": {
+            "mean_ms": 11.5975917,
+            "median_ms": 11.635979500000001,
+            "min_ms": 10.972541000000001,
+            "max_ms": 12.816042000000001,
+            "mean_cpu_ms": 10.6718,
+            "median_rss_mib": 12.0078125,
+            "mean_cycles": 33871354.95,
+            "mean_instructions": 158514829.1
+          },
+          "before": {
+            "mean_ms": 11.321783300000002,
+            "median_ms": 11.1596255,
+            "min_ms": 10.749959,
+            "max_ms": 13.410459000000001,
+            "mean_cpu_ms": 10.33285,
+            "median_rss_mib": 11.25,
+            "mean_cycles": 32973902.15,
+            "mean_instructions": 158214570.6
+          }
+        },
+        "shared_wall_change_pct": 2.436086195007814
+      },
+      {
+        "session": 3,
+        "results": {
+          "before": {
+            "mean_ms": 11.245843950000001,
+            "median_ms": 11.093104499999999,
+            "min_ms": 10.700292000000001,
+            "max_ms": 13.19475,
+            "mean_cpu_ms": 10.371649999999999,
+            "median_rss_mib": 11.203125,
+            "mean_cycles": 32887442.1,
+            "mean_instructions": 158145623.45
+          },
+          "shared": {
+            "mean_ms": 11.053552150000002,
+            "median_ms": 10.974583,
+            "min_ms": 10.634959,
+            "max_ms": 11.730542,
+            "mean_cpu_ms": 10.2821,
+            "median_rss_mib": 11.21875,
+            "mean_cycles": 32802924.2,
+            "mean_instructions": 158025606.45
+          }
+        },
+        "shared_wall_change_pct": -1.709892124192236
+      }
+    ]
+  }
+]
