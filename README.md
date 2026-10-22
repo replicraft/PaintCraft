@@ -17,7 +17,7 @@ Paint v7/v10/v11 or Paint.NET behavior or UI fidelity has been verified.
 ## Build and test
 
 ```sh
-python3 scripts/check_file_lengths.py # repository text files: at most 800 lines
+python3 scripts/check_file_lengths.py # source code files: at most 800 lines
 cargo test --workspace          # unit, conformance and end-to-end CLI tests
 cargo clippy --workspace --all-targets
 cargo run -p paintcraft-cli -- --help

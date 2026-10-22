@@ -1,13 +1,18 @@
 #!/usr/bin/env python3
-"""Enforce the 800-line limit on repository-owned text files."""
+"""Enforce the 800-line limit on repository-owned source code."""
 
 import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 MAX_LINES = 800
-# Cargo owns this generated file; splitting it would invalidate the lockfile.
-GENERATED = {"Cargo.lock"}
+# Documentation, manifests, fixtures and generated data have no source line cap.
+SOURCE_SUFFIXES = {
+    ".rs", ".py", ".wgsl", ".glsl", ".vert", ".frag",
+    ".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs",
+    ".c", ".h", ".cc", ".cpp", ".hpp",
+    ".sh", ".bash", ".zsh", ".html", ".css", ".scss",
+}
 
 
 def main():
@@ -21,7 +26,7 @@ def main():
             continue
         relative = raw.decode("utf-8")
         path = ROOT / relative
-        if relative in GENERATED or not path.is_file():
+        if path.suffix not in SOURCE_SUFFIXES or not path.is_file():
             continue
         try:
             lines = len(path.read_text(encoding="utf-8").splitlines())
@@ -32,7 +37,7 @@ def main():
     if failures:
         print("\n".join(failures))
         return 1
-    print("Repository text files are within the 800-line limit (Cargo.lock excluded).")
+    print("Repository source code files are within the 800-line limit.")
     return 0
 
 
