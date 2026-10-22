@@ -562,3 +562,16 @@ Checks cover light/dark at scales 1/2, down to 360x360, with repeated layout pas
 Working Select all/Deselect publish once each; preview clicks preserve document,
 tool and history. No selection kernel or native/rendered parity is claimed, and
 no application windows or screenshot previews were launched.
+
+The status zoom popup now uses 40-point rows and 15-point labels in a narrow
+scrollable list, following the supplied upper/lower preset references. Viewport
+height bounds the popup, and the active preset has an accent outline and matching
+accessible selected state. Percentages retain up to two fractional digits while
+omitting trailing zeros: 73%, 1000% and 12.5% display consistently after typing
+or selecting a preset. The fourteen presets and shared zoom actions are unchanged.
+All 145 window-free UI tests and strict workspace Clippy pass; see
+[the zoom-popup record](validation/zoom-popup-headless-2026-10-22/validation.json).
+Checks cover both list endpoints, selected outlines, typed values, fit/shortcuts
+and safe Escape dismissal, with document/history preservation, light/dark at
+scales 1/2 and windows down to 360x360. Native/rendered parity remains unverified;
+no application windows or screenshot previews were launched.

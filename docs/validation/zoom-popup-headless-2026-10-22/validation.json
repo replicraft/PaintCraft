@@ -1,0 +1,25 @@
+{
+  "source_commit": "eca47c1b1e4a0b9f67d03fde8433c4a33fd58068",
+  "references": [
+    "docs/temp/paint-references/photos/im1a1111ge.png",
+    "docs/temp/paint-references/photos/imag111111e.png"
+  ],
+  "mode": "Window-free egui and lint checks only; no desktop/native-window, file-dialog or rendered-preview launches.",
+  "gui": {
+    "passed": 145,
+    "failed": 0,
+    "ignored": 17
+  },
+  "focused_gui": {
+    "passed": 2,
+    "scope": "All fourteen presets retain descending order in 40-point rows. Endpoint scrolling, selection metadata/outline, percentage display, click-to-close and Escape preserve document/history. Cases include light/dark at 1360x900 scales 1 and 2, 360x360 scale 1 and 480x360 scale 2 with repeated layout. Existing typed-percent, invalid-input, fit and shortcut checks pass."
+  },
+  "clippy": "workspace all-targets with -D warnings passed",
+  "scope": "Zoom preset rows now use 15-point labels, a 100-point minimum width, inactive hover feedback and selected outlines. Popup height is bounded by viewport height and rows scroll. Percentage text retains up to two fractional digits while omitting trailing zeroes, including 73%, 1000% and 12.5%. Existing zoom action and coordinate mapping semantics remain unchanged.",
+  "limits": "This qualifies headless geometry/interaction only, not native/rendered visual parity or input latency. No brush, document, renderer or zoom-range policy changed.",
+  "sha256": {
+    "gui.log.gz": "934855b8ba8c202a6442910015dc86643c65bdfc6feb2b55c701632dedc95ee5",
+    "focused-gui.log.gz": "4792f2a7942cd48c102718fcac3517710395fcc795f04b34bdec2c352b0238b3",
+    "clippy.log.gz": "64cbdc518d8acb889ff00e36f3b9bfb42ef8a27d68eb57e991ee19eab55de777"
+  }
+}
