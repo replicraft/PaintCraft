@@ -42,62 +42,35 @@ impl App {
                 .set_status("Canvas size was not applied: the source document changed.");
             return;
         }
-        let defaults = matches!(draft, CanvasDraft::Defaults(_));
-        let title = if defaults {
-            "Default canvas size"
-        } else {
-            "Canvas size"
+        use paintcraft_classic::canvas_size::{CanvasResponse, CanvasSize, StartupSize};
+        let mut view = match &draft {
+            CanvasDraft::Defaults(prefs) => CanvasSize {
+                size: prefs.configured,
+                startup: Some(StartupSize {
+                    remember_last: prefs.remember_last,
+                    last: prefs.last,
+                }),
+            },
+            CanvasDraft::Resize { size, .. } => CanvasSize {
+                size: *size,
+                startup: None,
+            },
         };
-        let mut apply = false;
-        let mut cancel = false;
-        let response = egui::Modal::new(egui::Id::unique(title)).show(ctx, |ui| {
-            ui.heading(title);
-            let size = match &mut draft {
-                CanvasDraft::Defaults(prefs) => &mut prefs.configured,
-                CanvasDraft::Resize { size, .. } => size,
-            };
-            for (label, value) in [("Width", &mut size.0), ("Height", &mut size.1)] {
-                ui.horizontal(|ui| {
-                    let caption = ui.label(label);
-                    ui.add(
-                        egui::DragValue::new(value)
-                            .range(1..=settings::SIZE_MAX)
-                            .suffix(" px"),
-                    )
-                    .labelled_by(caption.id);
-                });
-            }
-            if let CanvasDraft::Defaults(prefs) = &mut draft {
-                ui.radio_value(&mut prefs.remember_last, true, "Remember last canvas size");
-                ui.radio_value(
-                    &mut prefs.remember_last,
-                    false,
-                    "Use configured default size",
-                );
-                if let Some((w, h)) = prefs.last {
-                    ui.weak(format!("Last canvas: {w} × {h} pixels"));
-                }
-                ui.weak("Applies to new Classic documents. The current image stays as it is.");
-            } else {
-                ui.weak("Keep the top-left corner. Content outside the canvas is preserved.");
-            }
-            ui.horizontal(|ui| {
-                let size = match &draft {
-                    CanvasDraft::Defaults(prefs) => prefs.configured,
-                    CanvasDraft::Resize { size, .. } => *size,
-                };
-                let valid = (1..=settings::SIZE_MAX).contains(&size.0)
-                    && (1..=settings::SIZE_MAX).contains(&size.1);
-                apply = ui.add_enabled(valid, egui::Button::new("Apply")).clicked();
-                cancel = ui.button("Cancel").clicked();
-            });
-        });
+        let response =
+            paintcraft_classic::canvas_size::canvas_size_dialog(ctx, &mut view, settings::SIZE_MAX);
         if ctx.current_pass_index() != 0 {
             return;
         }
-        if cancel || response.should_close() {
+        match &mut draft {
+            CanvasDraft::Defaults(prefs) => {
+                prefs.configured = view.size;
+                prefs.remember_last = view.startup.expect("default-size policy").remember_last;
+            }
+            CanvasDraft::Resize { size, .. } => *size = view.size,
+        }
+        if response == CanvasResponse::Cancel {
             self.confirm = None;
-        } else if apply {
+        } else if response == CanvasResponse::Apply {
             self.confirm = None;
             match draft {
                 CanvasDraft::Defaults(prefs) => {

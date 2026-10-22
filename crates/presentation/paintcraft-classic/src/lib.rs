@@ -1,6 +1,7 @@
 //! Classic presentation emits actions; editor and platform services own effects.
 mod brush_gallery;
 pub mod canvas;
+pub mod canvas_size;
 mod ruler_axis;
 mod rulers;
 pub mod tool_controls;
