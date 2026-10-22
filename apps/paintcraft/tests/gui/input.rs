@@ -207,7 +207,7 @@ fn zoomed_clicks_hit_the_right_document_pixel() {
     with_layer(&mut h);
     // Establish a document-centered view before magnifying. The floating tool
     // rail deliberately reserves space in this narrow, layer-panel workspace.
-    h.get_by_label("Zoom to fit").click();
+    h.get_by_label("Zoom to window").click();
     h.run();
     h.get_by_label("Zoom presets").click();
     h.run();

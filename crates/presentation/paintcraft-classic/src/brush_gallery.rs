@@ -67,8 +67,18 @@ fn row(
         enabled,
         egui::Button::new(" ")
             .selected(selected)
+            .frame_when_inactive(selected)
+            .frame(true)
             .min_size(Vec2::new(280.0, 44.0)),
     );
+    if selected {
+        ui.painter().rect_stroke(
+            response.rect.shrink(0.5),
+            4,
+            ui.visuals().selection.stroke,
+            egui::StrokeKind::Inside,
+        );
+    }
     response.widget_info(|| {
         egui::WidgetInfo::selected(
             egui::Role::Button,

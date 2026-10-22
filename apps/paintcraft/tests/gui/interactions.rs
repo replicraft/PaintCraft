@@ -137,7 +137,7 @@ fn classic_tool_panels_fit_short_windows_and_zoom_fit_keeps_the_canvas_clear() {
                 .right()
                 + 6.0
     );
-    h.get_by_label("Zoom to fit").click();
+    h.get_by_label("Zoom to window").click();
     h.run();
     let canvas = h.state().canvas_rect().unwrap();
     let opacity = h

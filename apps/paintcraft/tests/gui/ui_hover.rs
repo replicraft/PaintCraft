@@ -110,6 +110,10 @@ fn classic_ribbon_dropdowns_are_compact_and_show_one_tooltip_at_each_display_sca
                 "Color picker",
                 "Picking colors from the canvas is not available yet.",
             ),
+            (
+                "Magnifier",
+                "The magnifier tool is not available yet. Use the status bar or the View menu's Zoom controls to change magnification.",
+            ),
         ] {
             let button = h.get_by_role_and_label(Role::Button, label);
             assert!(button.accesskit_node().is_disabled());

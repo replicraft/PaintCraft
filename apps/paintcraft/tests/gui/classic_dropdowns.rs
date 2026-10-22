@@ -179,6 +179,10 @@ fn media_gallery_preserves_unavailable_presets_and_has_reachable_working_tips() 
     h.get_by_role_and_label(eframe::egui::Role::Button, "Brushes")
         .click();
     h.run();
+    assert_eq!(
+        h.get_by_label("Square brush").accesskit_node().toggled(),
+        Some(eframe::egui::accesskit::Toggled::True)
+    );
     h.get_by_label("Round brush").scroll_to_me();
     h.run();
     h.get_by_label("Round brush").click();
@@ -345,11 +349,13 @@ fn brush_gallery_scrolls_lower_choices_into_a_short_window() {
 fn classic_image_and_shape_previews_are_present_without_enabling_unimplemented_edits() {
     let mut h = harness();
     let before = h.state().editor().document_snapshot();
+    let canvas = h.state().canvas_rect();
     for label in [
         "Crop",
         "Resize and skew",
         "Remove background",
         "Color picker",
+        "Magnifier",
     ] {
         assert!(
             h.get_by_label(label).accesskit_node().is_disabled(),
@@ -357,6 +363,11 @@ fn classic_image_and_shape_previews_are_present_without_enabling_unimplemented_e
         );
         h.get_by_label(label).click();
         h.run();
+        assert_eq!(
+            h.state().canvas_rect(),
+            canvas,
+            "{label} must not invoke fit-to-window or change the view"
+        );
         assert!(
             h.query_by_label("Apply").is_none(),
             "{label} must not open a different operation's dialog"

@@ -59,13 +59,8 @@ pub(super) fn ribbon(
                             }
                             prototype(ui, "Color picker", Icon::Eyedropper,
                                 "Picking colors from the canvas is not available yet.");
-                            if icon_button(ui, "Zoom to fit", Icon::FitWindow, false, false)
-                                .clicked()
-                            {
-                                actions.push(Action::View(
-                                    paintcraft_ui::actions::ViewAction::FitWindow,
-                                ));
-                            }
+                            prototype(ui, "Magnifier", Icon::ZoomIn,
+                                "The magnifier tool is not available yet. Use the status bar or the View menu's Zoom controls to change magnification.");
                         });
                 });
                 ui.separator();
