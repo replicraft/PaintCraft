@@ -1,0 +1,21 @@
+{
+  "source_commit": "d9d0565c17d53b700e12aec8d24ec67be5278a3c",
+  "references": [
+    "docs/temp/paint-references/photos/image.png",
+    "docs/temp/paint-references/photos/im1age.png"
+  ],
+  "mode": "Window-free egui and lint checks only; no native-window, desktop, file-dialog or rendered-preview launches.",
+  "gui": {
+    "passed": 148,
+    "failed": 0,
+    "ignored": 17
+  },
+  "clippy": "workspace all-targets with -D warnings passed",
+  "scope": "Classic presents eight white, outlined 5-point marker previews outside the image with 7-point hover regions that touch its edge. All preview controls are disabled and named accessibly. Hover shows a not-allowed cursor and one explanation pointing to View Canvas size. A nonallocating child UI preserves canvas layout. Studio keeps its independent presentation.",
+  "checks": "New headless checks at scale 1/light and scale 2/dark inspect all eight positions, painted marker size/color, disabled metadata, hover cursor and single tooltip. Preview clicks preserve canvas bounds, document pixels, ticket and gesture state. Repeated frames preserve layout. Painting the first document pixel still publishes once. Studio has no Classic handle controls. Existing real canvas-size persistence/undo tests remain passing in the full suite.",
+  "limits": "Handle dragging is not implemented and no native/rendered parity or latency claim is made. View Canvas size remains the working bounds-editing operation. UI dimensions are egui points, scaled with display density.",
+  "sha256": {
+    "gui.log.gz": "8b97d76cdaca055bb14677e61f4ea900969ef4512c86d08a1d1ac30cae081951",
+    "clippy.log.gz": "86e86b79d74311a2adc6cb5009d83e5f9813b7ffd0f6dbf9a4c3e4ebefbbf089"
+  }
+}

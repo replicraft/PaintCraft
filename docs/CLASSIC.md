@@ -590,3 +590,17 @@ Checks cover bounds, scrolling, stable footers, cancellation bytes, acceptance a
 restart at scales 1/2 in both themes down to 360x360. The chooser remains modeless;
 its schematics are not native captures. Window-close dismissal is implemented but
 not separately tested. No application windows or screenshot previews were launched.
+
+Classic canvas handle previews now cover all eight edge/corner positions with
+white outlined markers outside the image. Their hover targets touch the edge
+without consuming ordinary first-pixel painting. Each is accessibly disabled,
+shows a not-allowed cursor and provides one explanation directing users to the
+working View → Canvas size command. They remain previews, not drag-resize controls.
+The overlay uses a nonallocating child UI so it does not shift canvas layout;
+Studio keeps its independent canvas presentation.
+All 148 window-free UI tests and strict workspace Clippy pass; see
+[the canvas-handle record](validation/canvas-handles-headless-2026-10-22/validation.json).
+Checks inspect all marker positions, size/color, hover/click safety and stationary
+layout in both themes at scales 1/2. First-pixel painting still publishes once.
+Native/rendered parity remains unverified and no application windows or screenshot
+previews were launched.
