@@ -99,6 +99,7 @@ pub fn chrome(
             .insert(egui::TextStyle::Small, egui::FontId::proportional(12.0));
         ui.spacing_mut().interact_size.y = 32.0;
     }
+    let compact = variant == ClassicVariant::V11 && ui.available_width() < 600.0;
     let menu = egui::MenuBar::new().ui(ui, |ui| {
         ui.menu_button("File", |ui| {
             menu_layout(ui, variant);
@@ -142,8 +143,10 @@ pub fn chrome(
             menu_layout(ui, variant);
             menus::view(ui, variant, context, &mut actions);
         });
-        ui.separator();
-        quick_access::show(ui, variant, context, &mut actions);
+        if !compact {
+            ui.separator();
+            quick_access::show(ui, variant, context, &mut actions);
+        }
         if variant != ClassicVariant::V11
             && ui.button("Layers").clicked()
             && ui.ctx().current_pass_index() == 0
@@ -159,9 +162,18 @@ pub fn chrome(
             actions.extend(paintcraft_ui::chrome::interface_changer(ui, context));
         });
     });
+    let mut menu_bounds = menu.response.rect;
+    if compact {
+        // Quick actions stay visible with the menus even when the ribbon hides.
+        // Keep Settings and the changer together without overlapping this row.
+        let quick = egui::MenuBar::new().ui(ui, |ui| {
+            quick_access::show(ui, variant, context, &mut actions);
+        });
+        menu_bounds = menu_bounds.union(quick.response.rect);
+    }
     if !workspace
         .toolbar
-        .update(ui, menu.response.rect, context.auto_hide_toolbar)
+        .update(ui, menu_bounds, context.auto_hide_toolbar)
     {
         ui.separator();
         return actions;

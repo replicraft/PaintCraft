@@ -256,3 +256,6 @@ mod skin_picker;
 
 #[path = "gui/canvas_handles.rs"]
 mod canvas_handles;
+
+#[path = "gui/compact_chrome.rs"]
+mod compact_chrome;
