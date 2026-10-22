@@ -175,16 +175,16 @@ pub(super) fn ribbon(
                 group(ui, "Layers", |ui| {
                     let response = ui
                         .allocate_ui_with_layout(
-                            Vec2::new(56.0, 54.0),
+                            Vec2::new(64.0, 64.0),
                             egui::Layout::top_down(egui::Align::Center),
                             |ui| {
                                 let response = ui.add(
                                     egui::Button::image(paintcraft_ui::icons::image(
                                         ui.ctx(),
                                         Icon::Layers,
-                                        40.0,
+                                        52.0,
                                     ))
-                                    .min_size(Vec2::new(56.0, 54.0))
+                                    .min_size(Vec2::new(64.0, 64.0))
                                     .selected(workspace.layers)
                                     .frame(workspace.layers),
                                 );
