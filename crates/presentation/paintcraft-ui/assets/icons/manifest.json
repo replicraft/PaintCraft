@@ -600,5 +600,12 @@
     "source_row": null,
     "source_column": null,
     "file": "edit-colors.svg"
+  },
+  {
+    "name": "pointer",
+    "label": "Pointer",
+    "source_row": null,
+    "source_column": null,
+    "file": "pointer.svg"
   }
 ]

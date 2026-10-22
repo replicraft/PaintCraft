@@ -89,6 +89,7 @@ pub enum Icon {
     Levels,
     ColorBalance,
     EditColors,
+    Pointer,
     /// Existing selection and export widget names retain their action contracts.
     Select,
     Export,
@@ -96,7 +97,7 @@ pub enum Icon {
 }
 
 impl Icon {
-    pub const ALL: [Self; 88] = [
+    pub const ALL: [Self; 89] = [
         Self::Polygon,
         Self::RightTriangle,
         Self::Diamond,
@@ -184,6 +185,7 @@ impl Icon {
         Self::Sharpen,
         Self::Levels,
         Self::EditColors,
+        Self::Pointer,
         Self::ColorBalance,
     ];
 
@@ -277,6 +279,7 @@ impl Icon {
             Self::Levels => "levels",
             Self::ColorBalance => "color-balance",
             Self::EditColors => "edit-colors",
+            Self::Pointer => "pointer",
             Self::Select => "rectangle-select",
             Self::Export => "save-as",
             Self::Fill => "bucket",
@@ -379,6 +382,7 @@ impl Icon {
             Self::Levels => include_bytes!("../../assets/icons/levels.svg"),
             Self::ColorBalance => include_bytes!("../../assets/icons/color-balance.svg"),
             Self::EditColors => include_bytes!("../../assets/icons/edit-colors.svg"),
+            Self::Pointer => include_bytes!("../../assets/icons/pointer.svg"),
             Self::Select => Self::RectangleSelect.svg(),
             Self::Export => Self::SaveAs.svg(),
             Self::Fill => Self::Bucket.svg(),

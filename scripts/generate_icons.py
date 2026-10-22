@@ -189,6 +189,8 @@ add('edit-colors', ''.join(segments)
     + circle(29, 35, 26, 'url(#wheel-center)', 'stroke="none"')
     + circle(51, 13, 10, 'url(#paper)', 'stroke="#61788d" stroke-width="2"')
     + line('M46 13H56M51 8V18', '#128ff5', 2))
+add('pointer', path('M13 4L13 52L25 41L35 61L46 55L36 35H56Z', 'url(#paper)')
+    + line('M19 17L19 38', '#59ceff', 2))
 OUT.mkdir(parents=True,exist_ok=True)
 manifest=[]
 for i,(name,body) in enumerate(icons):
