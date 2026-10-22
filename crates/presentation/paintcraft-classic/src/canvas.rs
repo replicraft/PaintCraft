@@ -27,22 +27,7 @@ fn content<R>(
             };
             ui.painter().add(shadow.as_shape(rect, 0));
             let output = paint(ui, response, painter);
-            let stroke =
-                egui::Stroke::new(1.0, ui.visuals().widgets.noninteractive.bg_stroke.color);
-            for point in [
-                rect.right_center(),
-                rect.center_bottom(),
-                rect.right_bottom(),
-            ] {
-                let handle = egui::Rect::from_center_size(point, egui::vec2(5.0, 5.0));
-                ui.painter().rect(
-                    handle,
-                    0.0,
-                    ui.visuals().window_fill(),
-                    stroke,
-                    egui::StrokeKind::Inside,
-                );
-            }
+            super::canvas_handles::show(ui, rect);
             output
         })
         .inner

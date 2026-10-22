@@ -253,3 +253,6 @@ mod selection_menu;
 
 #[path = "gui/skin_picker.rs"]
 mod skin_picker;
+
+#[path = "gui/canvas_handles.rs"]
+mod canvas_handles;
