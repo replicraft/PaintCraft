@@ -18,8 +18,9 @@ capacity before dispatch. [Complete built-in batch preparation](BATCH_PLANNING.m
 now validates structural/logical plans and reserves the new decoded peak before
 replay. Its [matched measurements](../benchmarks/results/batch-preparation-2026-10-22/DECISION.md)
 retain substantial diagonal/mixed regressions and increased metadata/RSS.
-Joint multi-resource reservations, performance optimization and native latency
-remain open.
+Exact [descriptor sharing](PAINT_PLAN_SHARING.md) reduces repeated-plan declared
+payload; before/shared timing is pending. Joint multi-resource reservations,
+remaining performance optimization and native latency remain open.
 
 [Source-bound logical lineage](PAINT_LINEAGE.md) now preserves immutable branch
 inputs and expansion/default proofs. Its library comparison retains mixed results;

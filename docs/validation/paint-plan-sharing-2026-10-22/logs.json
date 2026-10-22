@@ -1,0 +1,77 @@
+[
+  {
+    "file": "batches.log.gz",
+    "original_sha256": "9c326a59075204358071ced94f53aba3d846d1f782c605fcca509d5ccf06ab61",
+    "archive_sha256": "51ab390ee17318c3fd1d2c34a5efc025d2c6ee90ebd0ac8759e4da9aac92fe08"
+  },
+  {
+    "file": "bench-build.log.gz",
+    "original_sha256": "5c0ddb34e3d4aa3dd71f05697edf92b14aed331085626f4abb05497e18db9acc",
+    "archive_sha256": "0a2559a88d127daac46b5937688fd0feb7c044b8a4175adaa299781e4b1fab9e"
+  },
+  {
+    "file": "cli-cpu.log.gz",
+    "original_sha256": "c6c4f7e9485bda715fe1582b0c5c8f4f0664a628726c72676a55dbcedb3ee8ed",
+    "archive_sha256": "6412f4ff8c524d63d60babc5629ff5da343974633b6331c57673feee48ef8f92"
+  },
+  {
+    "file": "clippy.log.gz",
+    "original_sha256": "b24925850fbeb79980691498d8cd6ce9ef13cd6f4ad00fbb5aa7842dfb40278e",
+    "archive_sha256": "b1f90891086d69500d6bebeb4c943a1d63b28ddc648cea387463bd6ab117506e"
+  },
+  {
+    "file": "equality.log.gz",
+    "original_sha256": "412a6722338204eee8fdd2a91c9d5703d8effc262226cc498780339397ebdb93",
+    "archive_sha256": "51d0f2b46114f6cc0ad061127f43512d59f354c2a3f9c415adad5fc51d1c5495"
+  },
+  {
+    "file": "final-batches.log.gz",
+    "original_sha256": "a1a710a8d7fc0c7d128738f38b0f4304b7c041b362d4758ad1fa1710d65207db",
+    "archive_sha256": "2da9ec2bfce6a1b86d93001cbea16f79f5117cd8d12e11b6af35acc833be1c5a"
+  },
+  {
+    "file": "final-clippy.log.gz",
+    "original_sha256": "98aec6018598a6f7d9fcc88e7b684face61de76f99f8af8de0c110377521e08e",
+    "archive_sha256": "f029eb40131eaaf0cc57f3f9bf364720b39676df2f3b7e2e56a193f39a5d0d06"
+  },
+  {
+    "file": "final-release-batches.log.gz",
+    "original_sha256": "be08de05d6475cb8d07d14f2a29ae2df7f6eb0f76c5467853ceff1e134eb312c",
+    "archive_sha256": "12ae416a1b3ce0e5761992b7beab00a001ebc0492437a37d2990c92f4552475c"
+  },
+  {
+    "file": "guarded-preflight.log.gz",
+    "original_sha256": "bd286d033eaf15e9b5bb91539493a34bd15fa52043460e438ffb8b3de3aa09b6",
+    "archive_sha256": "9743890cb66dd0fa24d8ea3c7d72ae3fe63059da5e125a5adc8e1d69cfdb18d9"
+  },
+  {
+    "file": "initial.log.gz",
+    "original_sha256": "c9618cbea5c3244bb807648a13a2869fa29a914015741d488e008c5595b1be75",
+    "archive_sha256": "46df35a84a441922533430acf7d1bbab4a9beca423c3594ed185911f3cb58dc8"
+  },
+  {
+    "file": "preflight.log.gz",
+    "original_sha256": "bd286d033eaf15e9b5bb91539493a34bd15fa52043460e438ffb8b3de3aa09b6",
+    "archive_sha256": "9743890cb66dd0fa24d8ea3c7d72ae3fe63059da5e125a5adc8e1d69cfdb18d9"
+  },
+  {
+    "file": "release-editor.log.gz",
+    "original_sha256": "b84dfee99c67654941f1f18ff5f9a276b707235dd65f0657e3dd36dc99b86a9a",
+    "archive_sha256": "a8adf45a89e5734c1cb0b325d87857b84f95f3396fc6b2f47f9a09c4349d2b82"
+  },
+  {
+    "file": "release-raster.log.gz",
+    "original_sha256": "a6b3074453e469bd62554c812109dc5431d6c7ed4ad888afc0a0aff023922874",
+    "archive_sha256": "0cb7e13d33591c1996ea1bca4641588e3a52f4dcc33ccbeee5bc4a8b8b834478"
+  },
+  {
+    "file": "verify.log.gz",
+    "original_sha256": "45a5c780b9311b4f9421677f2445770351bca53f2f3b212afd2e1180eafbb1ef",
+    "archive_sha256": "2eb85e3dc2b8fb8fe037fca4f1b034223f4dc8851b0deb8522f609a840ed8ea5"
+  },
+  {
+    "file": "workspace.log.gz",
+    "original_sha256": "a92285e9aade12663e1a6a07d8c21428c1377ffa58621bc063567ea8cc8d1948",
+    "archive_sha256": "f447a3e714bad554b0eeb005480c7844c1517ffca7c3661cc3ea685a7b740021"
+  }
+]

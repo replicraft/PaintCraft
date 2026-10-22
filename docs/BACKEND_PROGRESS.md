@@ -754,3 +754,26 @@ previous sequential-preparation scope. Joint service/geometry/font/history/GPU
 budgets, physical accounting, scheduling fairness, native latency, future command
 families and the broader roadmap remain open. No dependency, wire/file policy or
 rendering default changes.
+
+
+## Fifty-third slice: shared immutable batch descriptors
+
+The compiler now shares exact consecutive descriptor payloads while retaining
+every original operation, blend, source update and replay record. Comparison
+checks coverage/color/policy/order in cancellable chunks and uses the same
+admission realm. Larger previous capacities are not imported.
+[The contract](PAINT_PLAN_SHARING.md) records the limits and resource evidence.
+
+The original release fixtures keep exact semantic hashes and decoded peaks.
+Repeated-diagonal declared metadata peak drops from 4,111,632 to 97,552 bytes;
+smooth brush/eraser drop from 265,488 to 14,608 bytes. Mixed lineage and default
+controls are unchanged. These counters do not establish RSS or timing improvements.
+
+[Validation](validation/paint-plan-sharing-2026-10-22/validation.json) retains 911
+workspace passes (26 ignores, 84 suites), strict all-target Clippy, 124 optimized
+raster and 119 optimized editor tests, and release benchmark/CPU CLI builds.
+A final test-only duplicate/flood addition then passes in the nine-case batch suite
+in debug/release and strict Clippy; production code is unchanged.
+Before/shared repeated and varied-miss preflights match canonical/library output.
+Matched timing, mixed-source optimization, aggregate/physical admission and native
+latency remain open. No dependency, wire/file policy or rendering default changes.

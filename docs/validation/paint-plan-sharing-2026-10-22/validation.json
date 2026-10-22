@@ -1,0 +1,112 @@
+{
+  "production_source_commit": "40be7e6763f2b56241992841cba96b6ac492936d",
+  "sources": {
+    "file": "sources.json",
+    "sha256": "b0c9476ee255173a78eb67128eca1fe0fe4760fc33d5324a53865c3ec440cf38"
+  },
+  "checks": {
+    "workspace": {
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--quiet"
+      ],
+      "exit_code": 0,
+      "tests": {
+        "passed": 911,
+        "ignored": 26,
+        "suites": 84
+      }
+    },
+    "clippy": {
+      "command": [
+        "cargo",
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0
+    },
+    "release-raster": {
+      "command": [
+        "cargo",
+        "test",
+        "--release",
+        "-p",
+        "paintcraft-raster",
+        "--lib",
+        "--tests"
+      ],
+      "exit_code": 0,
+      "tests": {
+        "passed": 124,
+        "ignored": 0,
+        "suites": 16
+      }
+    },
+    "release-editor": {
+      "command": [
+        "cargo",
+        "test",
+        "--release",
+        "-p",
+        "paintcraft-editor",
+        "--lib",
+        "--tests"
+      ],
+      "exit_code": 0,
+      "tests": {
+        "passed": 119,
+        "ignored": 0,
+        "suites": 20
+      }
+    },
+    "bench-build": {
+      "command": [
+        "cargo",
+        "bench",
+        "-p",
+        "paintcraft-editor",
+        "--bench",
+        "batch_preparation",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "exit_code": 0
+    },
+    "cli-cpu": {
+      "command": [
+        "cargo",
+        "build",
+        "--release",
+        "--locked",
+        "-p",
+        "paintcraft-cli"
+      ],
+      "exit_code": 0
+    }
+  },
+  "environment": {
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_INCREMENTAL": "0",
+    "PAINTCRAFT_REQUIRE_GPU": "1"
+  },
+  "final_test_only_addition": {
+    "note": "After the complete suite, one further test was added to batch_planning.rs for shared descriptors across frozen duplicate/flood inputs. The resulting nine-case batch suite passes in debug and release; all-target strict Clippy passes again. Production source is unchanged. The complete workspace suite was not rerun for this test-only addition.",
+    "logs": [
+      "final-batches.log.gz",
+      "final-release-batches.log.gz",
+      "final-clippy.log.gz"
+    ]
+  },
+  "artifacts": "artifacts.json",
+  "logs": "logs.json",
+  "resource_check": "verify.log.gz",
+  "timings": "No timings are performed by these verification/preflight checks. Matched before/shared timing remains a separate experiment.",
+  "benchmark_preflight": "Both original repeated cases and varied descriptor miss controls match before/shared outputs and raw PCND/library semantic hashes. Preflight logs are functional evidence only.",
+  "build_cache_cleanup": "Removed only generated target/debug/incremental files while incremental compilation was disabled; no source or benchmark evidence was removed."
+}

@@ -1,0 +1,11 @@
+{
+  "library": {
+    "path": "/tmp/paintcraft-plan-sharing-library-9bb63cfc36c4",
+    "sha256": "9bb63cfc36c48817758ab9405d1695fac5af055195287271f8fb54d63bc47e31"
+  },
+  "cli": {
+    "path": "/tmp/paintcraft-plan-sharing-cli-e504956a2188",
+    "sha256": "e504956a2188e2cbbd12de80b8da3a2567f97aed4474196b6daee1837f4401f7"
+  },
+  "production_source_commit": "40be7e6763f2b56241992841cba96b6ac492936d"
+}

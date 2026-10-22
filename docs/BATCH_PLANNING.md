@@ -107,3 +107,7 @@ outputs and decoded peaks match, but diagonal and mixed-source batches regress
 substantially and retain more metadata. This is a correctness adoption; reducing
 those costs is separate performance work. [Source-pinned validation](validation/batch-preparation-2026-10-22/validation.json)
 records executed checks and preserves development failures.
+
+[Exact descriptor sharing](PAINT_PLAN_SHARING.md) now reduces retained payload for
+repeated equal plans without merging operations. Original timing evidence remains
+pinned to its pre-sharing source; the follow-up's wall-time qualification is separate.
