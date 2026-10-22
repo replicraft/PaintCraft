@@ -7,6 +7,7 @@ pub mod tool_controls;
 pub use rulers::RULER_SIZE;
 mod dropdowns;
 mod image_menus;
+pub mod layers;
 mod menus;
 mod toolbar_visibility;
 pub use toolbar_visibility::ToolbarVisibility;

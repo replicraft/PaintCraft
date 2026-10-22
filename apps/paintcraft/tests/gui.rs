@@ -137,6 +137,8 @@ mod tabs;
 
 #[path = "gui/centering.rs"]
 mod centering;
+#[path = "gui/classic_layers.rs"]
+mod classic_layers;
 #[path = "gui/colors.rs"]
 mod colors;
 #[path = "gui/layers.rs"]

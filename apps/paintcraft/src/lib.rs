@@ -23,6 +23,8 @@ mod gpu_display;
 mod history;
 #[path = "app/input.rs"]
 mod input;
+#[path = "app/layer_panel.rs"]
+mod layer_panel;
 #[path = "app/layers.rs"]
 mod layers;
 #[cfg(target_os = "macos")]
