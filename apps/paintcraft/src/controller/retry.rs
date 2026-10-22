@@ -29,6 +29,15 @@ impl Realms {
         Admission::with_residency(u64::MAX, self.tiles.clone())
             .with_paint_metadata_budget(self.metadata.clone())
     }
+    fn metadata_retry(&self, denial: &AllocationDenial, reprice: bool) -> Option<Admission> {
+        match denial.reserve_capacity() {
+            Ok(reservation) => Some(self.admission().with_reserved_paint_metadata(reservation)),
+            // A bounded periodic live probe can discover changed demand. It owns
+            // no reservation and cannot turn its own cleanup into an eager loop.
+            Err(_) if reprice => Some(self.admission()),
+            Err(_) => None,
+        }
+    }
 }
 #[derive(Debug)]
 pub(super) struct Deferred {
@@ -151,20 +160,26 @@ impl Editor {
             return;
         }
         let admission = if metadata {
-            // Scoped metadata demand is a known peak, not an upfront reservation.
-            // A racing consumer can defer again without losing the captured FIFO item.
-            waiting.deferred.realms.admission()
+            let Some(admission) = waiting
+                .deferred
+                .realms
+                .metadata_retry(&waiting.deferred.denial, reprice)
+            else {
+                return;
+            };
+            admission
         } else if navigation {
             // The worker pins current reusable versions and reserves the entire
             // missing set, rather than trusting the previous attempt's demand.
             Admission::with_residency(u64::MAX, waiting.deferred.denial.budget())
+                .with_paint_metadata_budget(waiting.deferred.realms.metadata.clone())
         } else {
             let Ok(reservation) = waiting.deferred.denial.reserve_capacity() else {
                 return;
             };
             Admission::with_reserved_residency(u64::MAX, reservation)
-        }
-        .with_paint_metadata_budget(waiting.deferred.realms.metadata.clone());
+                .with_paint_metadata_budget(waiting.deferred.realms.metadata.clone())
+        };
         let preparation = match self.session.preparation() {
             Ok(preparation) => preparation,
             Err(error) => {

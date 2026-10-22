@@ -173,3 +173,99 @@ fn retry_preserves_both_original_realms_across_worker_service_replacement() {
     assert_ne!(tiles.usage().reserved, 0);
     assert_eq!(metadata.usage().reserved, 0);
 }
+
+#[test]
+fn known_metadata_retry_capacity_survives_competing_admission_until_preparation_finishes() {
+    let (mut editor, _, metadata) = fixture(4096);
+    let blocker = metadata.reserve(4096).unwrap();
+    stroke(&mut editor);
+    wait(&mut editor);
+    let waiting = editor.waiting_edit.take().unwrap();
+    let Request::Edit(batch) = &waiting.deferred.request else {
+        panic!("expected edit")
+    };
+    // Discover this captured request's complete metadata peak in an independent
+    // realm, without publishing or retaining its prepared result.
+    let probe = SharedBudget::new(1 << 20);
+    let result = prepare_batch(
+        editor.session.preparation().unwrap(),
+        batch.clone(),
+        Admission::with_residency(u64::MAX, waiting.deferred.realms.tiles.clone())
+            .with_paint_metadata_budget(probe.clone()),
+        || Ok(()),
+    )
+    .unwrap();
+    assert!(matches!(result, Completion::Edit(_)));
+    drop(result);
+    assert_eq!(probe.usage().reserved, 0);
+    let required = probe.usage().peak;
+    let mut account = metadata.account(AllocationClass::PaintMetadata);
+    let error = account.resize(required).unwrap_err();
+    let denial = error.allocation_denial().unwrap();
+    drop(blocker);
+    let admission = waiting
+        .deferred
+        .realms
+        .metadata_retry(denial, false)
+        .unwrap();
+    assert_eq!(metadata.usage().reserved, required);
+    let competitor = metadata.reserve(4096 - required).unwrap();
+    assert!(!metadata.can_reserve(1));
+    let result = prepare_batch(
+        editor.session.preparation().unwrap(),
+        batch.clone(),
+        admission,
+        || Ok(()),
+    )
+    .unwrap();
+    assert!(matches!(result, Completion::Edit(_)));
+    assert_eq!(editor.publications(), 0);
+    assert_eq!(metadata.usage().reserved, 4096 - required);
+    drop(result);
+    drop(competitor);
+    assert_eq!(metadata.usage().reserved, 0);
+}
+
+#[test]
+fn larger_discovered_demand_releases_the_old_reservation_and_retains_the_original_request() {
+    let (mut editor, tiles, metadata) = fixture(512);
+    let blocker = metadata.reserve(400).unwrap();
+    let before = editor.document_snapshot();
+    stroke(&mut editor);
+    wait(&mut editor);
+    let mut waiting = editor.waiting_edit.take().unwrap();
+    let first = waiting.deferred.denial.required_bytes();
+    drop(blocker);
+    let admission = waiting
+        .deferred
+        .realms
+        .metadata_retry(&waiting.deferred.denial, false)
+        .unwrap();
+    let Request::Edit(batch) = &waiting.deferred.request else {
+        panic!("expected edit")
+    };
+    let result = prepare_batch(
+        editor.session.preparation().unwrap(),
+        batch.clone(),
+        admission,
+        || Ok(()),
+    )
+    .unwrap();
+    let Completion::Deferred(next) = result else {
+        panic!("index needs more than descriptors")
+    };
+    assert!(next.denial.required_bytes() > first);
+    assert_eq!(next.base, waiting.deferred.base);
+    let Request::Edit(next_batch) = &next.request else {
+        panic!("expected edit")
+    };
+    assert!(Arc::ptr_eq(next_batch, batch));
+    assert_eq!(metadata.usage().reserved, 0);
+    assert_eq!(tiles.usage().reserved, 0);
+    assert!(Arc::ptr_eq(&before, &editor.document_snapshot()));
+    waiting.deferred = *next;
+    editor.waiting_edit = Some(waiting);
+    finish(&mut editor);
+    assert_eq!(editor.publications(), 1);
+    assert_eq!(metadata.usage().reserved, 0);
+}
