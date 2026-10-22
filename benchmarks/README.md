@@ -237,3 +237,21 @@ all-pixel and canonical flood-region checks surround the sessions. The
 [combined-program decision](results/paint-program-2026-10-22/DECISION.md) keeps no-op
 controls and per-session RSS separate from declared retained payload. It does not
 qualify native whole-batch integration or physical/service memory ceilings.
+
+
+Shared paint-metadata ownership overhead uses frozen library and CPU-only CLI
+baselines captured before editing, and separately frozen charged artifacts:
+
+```sh
+python3 -B benchmarks/tools/run_shared_metadata.py --baseline-cli <baseline-cli-manifest.json> --candidate-cli <frozen-cpu-cli> --baseline-library <baseline-library-manifest.json> --candidate-library <frozen-library-bench> --output <new-dir> --execute
+```
+
+Without `--execute` this writes nothing. Both CLIs must have identical CPU-only
+feature trees; baseline manifests retain source identities and artifact hashes.
+The [decision record](results/shared-paint-metadata-2026-10-22/DECISION.md) retains
+480 statistical samples and the original 1,200 process observations, then separately
+labels another 240 focused eraser/calibration observations prompted by a broad
+slow session. Every original sample remains. Exact canonical PCND/member and
+library pixel/region checks surround sessions. Shared admission is a safety
+baseline; neither small gains nor noisy regressions qualify native event latency,
+a physical memory ceiling or complete metadata retry/batch planning.

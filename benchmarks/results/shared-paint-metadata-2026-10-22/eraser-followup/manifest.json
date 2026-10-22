@@ -1,0 +1,21 @@
+{
+  "purpose": "Investigate broad session-2 eraser slowdown without discarding original observations. Frozen binaries/source and fixture unchanged; no builds/tests or intentional concurrent measurements.",
+  "parent_manifest_sha256": "68548002b425ce9e768d5eaea20556bf9e7975d006c183a9f1f3c0a6368a8430",
+  "script_sha256": "4cb23f8e4a0b8e5b60214838b7944cef7a35b09fa4d4f6d39cbe90034bf4f8a2",
+  "runs": 20,
+  "warmups": 3,
+  "orders": [
+    [
+      "charged",
+      "baseline"
+    ],
+    [
+      "baseline",
+      "charged"
+    ],
+    [
+      "charged",
+      "baseline"
+    ]
+  ]
+}

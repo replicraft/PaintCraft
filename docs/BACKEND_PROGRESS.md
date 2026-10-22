@@ -518,3 +518,52 @@ The editor remains sequential. Cross-layer/program ownership, duplication/deleti
 expansion lineage, contextual uniform proofs, aggregate scratch/service leases,
 decoded peak planning and guarded batch replay/error attribution remain. T04/T11/
 T13/T21/T37 stay partial/in progress; the full roadmap remains active.
+
+
+## Forty-eighth slice: shared owned paint metadata admission
+
+Paint descriptors and indices now use the existing SharedBudget authority in a
+provisional 256 MiB process-default realm, separate from decoded tiles and fixed
+per-plan/program policies. A unique resizable BudgetAccount admits growth atomically
+and releases after storage drops; index guards survive replay/projection ownership.
+PaintPlan clone shares immutable descriptors and one charge. Mutation makes a
+fallible separately admitted copy, preserving exact capacity rather than requesting
+unnecessary amortized spare capacity. Custom admission realms propagate through
+all existing editor paint factories. See [the shared metadata contract](SHARED_PAINT_METADATA.md).
+
+Thirteen new tests cover account resize/contention/reentrant release order, shared
+clones and COW denial, index construction/recovery/cancellation, cross-realm append,
+clamped-capacity copies, cloned admissions, private-prefix editor rollback under
+metadata interference and native retry isolation. A fixed local quota carries no
+allocation denial; shared pressure identifies PaintMetadata and cannot trigger
+decoded-history reclamation. Per-account demand remains advisory, without complete
+attempt pricing or native metadata waiting/repricing. Minimum growth is admitted
+before allocation and actual usable capacity validated; rejected private growth
+frees storage before releasing its declaration. Allocator/hash/Arc controls and
+transient reallocations remain outside retained payload accounting.
+
+859 workspace tests pass (26 explicit ignores) across 79 suites. Strict all-target
+Clippy, 37 optimized core tests, 25 optimized raster ownership/program/projection/
+replay tests, the optimized editor interference regression, release desktop/CLI
+builds, 23 renderer unit tests, 31 required Metal integration tests and 225
+required-GPU desktop tests pass. Default/single-layer 30-frame native startup checks
+exit zero with empty logs. The [validation record](validation/shared-paint-metadata-2026-10-22/validation.json)
+pins final source, commands, exact compressed logs and release hashes. The specific
+clamped-capacity regression is native 64-bit; other target qualification is separate.
+
+The [matched overhead comparison](../benchmarks/results/shared-paint-metadata-2026-10-22/DECISION.md)
+retains 480 statistical samples and 1,200 original Hyperfine observations with
+identical CPU-only CLI feature graphs and canonical outputs. Most CLI cases are
+near tied/mixed, but original eraser session 2 retains 48.9% mean overhead, a broad
+median slowdown and a 115.28 ms charged maximum. Three separately labeled focused
+follow-ups add 240 observations, with +4.75%, -3.87% and -0.32% mean changes. The
+large slowdown did not repeat; its cause remains unproven and no original sample
+is removed. Combined tiny has 8–22% process overhead; other apparent gains and tier
+disagreements do not establish a general speedup. All 1,440 process observations,
+calibration, per-session RSS and negative controls remain. Shared accounting is a
+correctness baseline, not a throughput optimization or measured capacity optimum.
+
+The editor remains sequential. Full batch/source-lineage planning, metadata
+waiting/fairness, aggregate geometry/font/flood scratch, allocator/physical pressure,
+native input/display/cancellation tails and broader feature work remain. No roadmap
+gate is promoted by declared ownership or isolated measurements.

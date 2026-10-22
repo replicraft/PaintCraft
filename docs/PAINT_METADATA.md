@@ -82,3 +82,10 @@ Aggregate program ownership and upfront whole-batch reservation remain open.
 capacity-accounted tile index, including incoming descriptor storage during
 transfer. A read reaches its preceding source once. This is a per-program bound;
 complete batch/source-lineage integration and shared service admission remain open.
+
+
+Paint descriptors and indices now have [shared ownership-based admission](SHARED_PAINT_METADATA.md)
+in addition to their fixed per-plan/program policy. Plan clones share charged
+immutable storage; mutation copies under admission. Metadata denials carry their
+own class and never enter decoded-history reclamation. Full-attempt metadata
+waiting and aggregate geometry/service/physical budgets remain open.

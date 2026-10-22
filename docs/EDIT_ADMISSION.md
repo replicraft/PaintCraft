@@ -172,3 +172,10 @@ Built-in text now [streams into admitted plans](TEXT_PREPARATION.md), and resolv
 mask validation/accounting/clipping observe cancellation even offscreen. This
 removes an editor geometry collector without extending per-plan limits into a
 whole-batch, installed-font or physical-memory guarantee.
+
+
+Paint descriptors and indices now have [shared ownership-based admission](SHARED_PAINT_METADATA.md)
+in addition to their fixed per-plan/program policy. Plan clones share charged
+immutable storage; mutation copies under admission. Metadata denials carry their
+own class and never enter decoded-history reclamation. Full-attempt metadata
+waiting and aggregate geometry/service/physical budgets remain open.

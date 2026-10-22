@@ -1,0 +1,24 @@
+from pathlib import Path
+import json,subprocess,shlex,gzip,hashlib,zipfile
+root=Path('benchmarks/results/shared-paint-metadata-2026-10-22').resolve();out=root/'eraser-followup';out.mkdir(exist_ok=False)
+script=Path(__file__).read_bytes();(out/'run.py').write_bytes(script)
+parent=json.loads((root/'manifest.json').read_text());binaries=parent['binaries']['cli'];fixture=root/'fixtures';results=root/'correctness'
+manifest={'purpose':'Investigate broad session-2 eraser slowdown without discarding original observations. Frozen binaries/source and fixture unchanged; no builds/tests or intentional concurrent measurements.','parent_manifest_sha256':hashlib.sha256((root/'manifest.json').read_bytes()).hexdigest(),'script_sha256':hashlib.sha256(script).hexdigest(),'runs':20,'warmups':3,'orders':[['charged','baseline'],['baseline','charged'],['charged','baseline']]}
+(out/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
+expected=json.loads((root/'correctness.json').read_text())['before']['cli']['smooth_eraser'];input_sha=parent['fixture_sha256']['fixtures/input.pcnd']
+commands={mode:[entry['path'],'--json','apply',str(fixture/'input.pcnd'),'--operations',str(fixture/'smooth_eraser.json'),'--output',str(results/(mode+'-smooth_eraser.pcnd')),'--overwrite','--expect-input-sha256',input_sha] for mode,entry in binaries.items()}
+def verify(label):
+ for mode,entry in binaries.items():
+  assert hashlib.sha256(Path(entry['path']).read_bytes()).hexdigest()==entry['sha256']
+  with (out/f'correctness-{label}-{mode}.log').open('wb') as log:subprocess.run(commands[mode],stdout=log,stderr=subprocess.STDOUT,check=True)
+  assert hashlib.sha256((results/(mode+'-smooth_eraser.pcnd')).read_bytes()).hexdigest()==expected
+ with zipfile.ZipFile(results/'baseline-smooth_eraser.pcnd') as a,zipfile.ZipFile(results/'charged-smooth_eraser.pcnd') as b:
+  assert a.namelist()==b.namelist() and all(a.read(n)==b.read(n) for n in a.namelist())
+verify('before')
+for index,order in enumerate(manifest['orders'],1):
+ for kind in ('workload','calibration'):
+  cmd=commands if kind=='workload' else {mode:[entry['path'],'--version'] for mode,entry in binaries.items()}
+  p=out/f'hyperfine-{index}-{kind}.json'
+  with p.with_suffix('.log').open('wb') as log:subprocess.run(['hyperfine','--shell=none','--warmup','3','--runs','20','--export-json',str(p),*[shlex.join(cmd[mode]) for mode in order]],stdout=log,stderr=subprocess.STDOUT,check=True)
+  raw=p.read_bytes();data=json.loads(raw);assert all(len(r['measurements'])==20 and all(x['exit_code']==0 for x in r['measurements']) for r in data['results']);compact=(json.dumps(data,separators=(',',':'))+'\n').encode();p.with_suffix('.json.gz').write_bytes(gzip.compress(raw,mtime=0));p.write_bytes(compact);p.with_suffix('.identity.json').write_text(json.dumps({'original_sha256':hashlib.sha256(raw).hexdigest(),'compact_sha256':hashlib.sha256(compact).hexdigest(),'equal_json_values':json.loads(raw)==json.loads(compact)},indent=2)+'\n')
+ verify('after-'+str(index));print('eraser followup',index,'complete',flush=True)
