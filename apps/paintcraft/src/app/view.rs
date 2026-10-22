@@ -81,6 +81,13 @@ impl App {
 
     pub(super) fn dispatch_view_action(&mut self, ctx: &egui::Context, action: ViewAction) {
         match action {
+            ViewAction::AlwaysShowToolbar | ViewAction::AutoHideToolbar => {
+                self.editor.cancel_gesture();
+                self.settings.classic_toolbar_auto_hide = action == ViewAction::AutoHideToolbar;
+                self.persist_settings();
+                ctx.request_repaint();
+                return;
+            }
             ViewAction::Rulers => {
                 self.editor.cancel_gesture();
                 self.settings.classic_rulers = !self.settings.classic_rulers;
@@ -160,7 +167,9 @@ impl App {
             ViewAction::PixelGrid
             | ViewAction::StatusBar
             | ViewAction::FullScreen
-            | ViewAction::Rulers => {
+            | ViewAction::Rulers
+            | ViewAction::AlwaysShowToolbar
+            | ViewAction::AutoHideToolbar => {
                 unreachable!()
             }
         };

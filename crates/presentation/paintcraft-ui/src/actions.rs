@@ -56,6 +56,7 @@ pub struct Context {
     pub status_bar: bool,
     pub rulers: bool,
     pub fullscreen: bool,
+    pub auto_hide_toolbar: bool,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -165,7 +166,12 @@ impl Action {
 
     pub fn available(self, frontend: Frontend) -> bool {
         match self {
-            Self::View(ViewAction::StatusBar | ViewAction::Rulers) => frontend == Frontend::Classic,
+            Self::View(
+                ViewAction::StatusBar
+                | ViewAction::Rulers
+                | ViewAction::AlwaysShowToolbar
+                | ViewAction::AutoHideToolbar,
+            ) => frontend == Frontend::Classic,
             Self::Interface
             | Self::CanvasSize
             | Self::CanvasDefaults
@@ -408,6 +414,7 @@ mod tests {
             status_bar: true,
             rulers: false,
             fullscreen: false,
+            auto_hide_toolbar: false,
         };
         let ids: std::collections::HashSet<_> = FILE
             .iter()

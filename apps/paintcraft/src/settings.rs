@@ -35,6 +35,7 @@ pub struct Settings {
     pub custom_colors: paintcraft_classic::CustomColors,
     pub classic_status_bar: bool,
     pub classic_rulers: bool,
+    pub classic_toolbar_auto_hide: bool,
 }
 
 impl Default for Settings {
@@ -48,6 +49,7 @@ impl Default for Settings {
             custom_colors: Default::default(),
             classic_status_bar: true,
             classic_rulers: false,
+            classic_toolbar_auto_hide: false,
         }
     }
 }
@@ -123,6 +125,11 @@ fn parse(bytes: &[u8]) -> Result<Settings, String> {
     };
     Ok(Settings {
         appearance,
+        classic_toolbar_auto_hide: match v.get("classic_toolbar_auto_hide") {
+            None => false,
+            Some(Value::Bool(value)) => *value,
+            Some(_) => return Err("invalid Classic toolbar preference".into()),
+        },
         classic_rulers: match v.get("classic_rulers") {
             None => false,
             Some(Value::Bool(value)) => *value,
@@ -184,6 +191,10 @@ impl Settings {
             ("appearance", Value::str(self.appearance.id())),
             ("classic_status_bar", Value::Bool(self.classic_status_bar)),
             ("classic_rulers", Value::Bool(self.classic_rulers)),
+            (
+                "classic_toolbar_auto_hide",
+                Value::Bool(self.classic_toolbar_auto_hide),
+            ),
             ("text", text::value(&self.text)),
             (
                 "experience",
@@ -337,5 +348,23 @@ mod tests {
         );
         assert!(parse(br#"{"schema":"paintcraft.settings/v2","experience":"classic","classic_rulers":true}"#).unwrap().classic_rulers);
         assert!(parse(br#"{"schema":"paintcraft.settings/v2","experience":"classic","classic_rulers":"true"}"#).is_err());
+    }
+    #[test]
+    fn toolbar_visibility_defaults_validate_and_round_trip() {
+        assert!(
+            !parse(br#"{"schema":"paintcraft.settings/v1"}"#)
+                .unwrap()
+                .classic_toolbar_auto_hide
+        );
+        assert!(parse(br#"{"schema":"paintcraft.settings/v2","experience":"classic","classic_toolbar_auto_hide":true}"#).unwrap().classic_toolbar_auto_hide);
+        assert!(parse(br#"{"schema":"paintcraft.settings/v2","experience":"classic","classic_toolbar_auto_hide":"true"}"#).is_err());
+        let dir = scratch("toolbar-visibility");
+        let settings = Settings {
+            classic_toolbar_auto_hide: true,
+            ..Default::default()
+        };
+        settings.save(&dir).unwrap();
+        assert_eq!(Settings::load(&dir), (settings, Loaded::Ok));
+        fs::remove_dir_all(dir).unwrap();
     }
 }

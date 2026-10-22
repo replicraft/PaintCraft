@@ -29,7 +29,9 @@ impl Action {
                 ViewAction::FitWindow | ViewAction::FitSelection => Icon::FitWindow,
                 ViewAction::ActualSize => Icon::ActualSize,
                 ViewAction::PixelGrid => Icon::PixelGrid,
-                ViewAction::StatusBar => return None,
+                ViewAction::StatusBar
+                | ViewAction::AlwaysShowToolbar
+                | ViewAction::AutoHideToolbar => return None,
                 ViewAction::Rulers => Icon::Rulers,
                 ViewAction::FullScreen => Icon::Resize,
                 ViewAction::Double

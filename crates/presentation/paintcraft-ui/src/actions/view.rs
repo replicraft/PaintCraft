@@ -13,6 +13,8 @@ pub enum ViewAction {
     ActualSize,
     PixelGrid,
     StatusBar,
+    AlwaysShowToolbar,
+    AutoHideToolbar,
     Rulers,
     FullScreen,
     Double,
@@ -25,6 +27,8 @@ pub enum ViewAction {
 pub const WORKSPACE_VIEW: &[ViewAction] = &[
     ViewAction::Rulers,
     ViewAction::StatusBar,
+    ViewAction::AlwaysShowToolbar,
+    ViewAction::AutoHideToolbar,
     ViewAction::FullScreen,
 ];
 
@@ -50,6 +54,8 @@ impl ViewAction {
             Self::ActualSize => ("Actual size", Some((Key::Num0, Modifiers::COMMAND))),
             Self::PixelGrid => ("Pixel grid", None),
             Self::StatusBar => ("Status bar", None),
+            Self::AlwaysShowToolbar => ("Always show toolbar", None),
+            Self::AutoHideToolbar => ("Automatically hide toolbar", None),
             Self::Rulers => ("Rulers", Some((Key::R, Modifiers::COMMAND))),
             Self::FullScreen => ("Full screen", Some((Key::F11, Modifiers::NONE))),
             Self::Double => ("200%", None),
@@ -67,7 +73,14 @@ impl ViewAction {
         }
     }
     pub(super) fn enabled(self, ctx: Context) -> bool {
-        if matches!(self, Self::StatusBar | Self::FullScreen | Self::Rulers) {
+        if matches!(
+            self,
+            Self::StatusBar
+                | Self::FullScreen
+                | Self::Rulers
+                | Self::AlwaysShowToolbar
+                | Self::AutoHideToolbar
+        ) {
             return true;
         }
         ctx.document_open
@@ -88,6 +101,8 @@ impl ViewAction {
             Self::ActualSize => 1304,
             Self::PixelGrid => 1305,
             Self::StatusBar => 1310,
+            Self::AlwaysShowToolbar => 1313,
+            Self::AutoHideToolbar => 1314,
             Self::Rulers => 1312,
             Self::FullScreen => 1311,
             Self::Double => 1306,
@@ -100,6 +115,8 @@ impl ViewAction {
         match self {
             Self::PixelGrid => Some(ctx.pixel_grid),
             Self::StatusBar => Some(ctx.status_bar),
+            Self::AlwaysShowToolbar => Some(!ctx.auto_hide_toolbar),
+            Self::AutoHideToolbar => Some(ctx.auto_hide_toolbar),
             Self::Rulers => Some(ctx.rulers),
             Self::FullScreen => Some(ctx.fullscreen),
             _ => None,
@@ -142,6 +159,7 @@ mod tests {
             status_bar: true,
             rulers: false,
             fullscreen: false,
+            auto_hide_toolbar: false,
         };
         assert_eq!(
             Action::from_shortcut(Key::F11, Modifiers::NONE),
@@ -158,6 +176,23 @@ mod tests {
             document_open: false,
             ..ctx
         };
+        let show = Action::View(ViewAction::AlwaysShowToolbar);
+        let hide = Action::View(ViewAction::AutoHideToolbar);
+        assert!(!show.enabled(ctx) && !hide.enabled(ctx));
+        assert_eq!(show.checked(classic), Some(true));
+        assert_eq!(hide.checked(classic), Some(false));
+        let hidden = Context {
+            auto_hide_toolbar: true,
+            ..classic
+        };
+        assert!(hide.enabled(hidden) && show.enabled(hidden));
+        assert_eq!(show.checked(hidden), Some(false));
+        assert_eq!(hide.checked(hidden), Some(true));
+        assert!(!hide.enabled(Context {
+            blocked: true,
+            ..hidden
+        }));
+        assert_ne!(hide.activation_code(), show.activation_code());
         assert!(Action::View(ViewAction::StatusBar).enabled(classic));
         assert_eq!(
             Action::View(ViewAction::StatusBar).checked(classic),
