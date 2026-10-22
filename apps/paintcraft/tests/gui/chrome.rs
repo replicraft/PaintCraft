@@ -229,3 +229,80 @@ fn export_classic_ui_previews() {
         std::fs::remove_dir_all(settings).unwrap();
     }
 }
+
+#[test]
+#[ignore = "requires a real GPU; writes Classic light/dark visual review captures"]
+fn export_classic_theme_previews() {
+    use paintcraft::settings::{Appearance, ClassicVariant, Settings};
+    let output = std::env::var_os("PAINTCRAFT_PREVIEW_DIR")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| std::env::temp_dir().join("paintcraft-classic-themes"));
+    std::fs::create_dir_all(&output).unwrap();
+    for (name, appearance) in [("light", Appearance::Light), ("dark", Appearance::Dark)] {
+        for scene in ["workspace", "view", "settings"] {
+            let settings = scratch("theme-preview-settings");
+            Settings {
+                classic_variant: Some(ClassicVariant::V11),
+                appearance,
+                ..Default::default()
+            }
+            .save(&settings)
+            .unwrap();
+            let mut h = Harness::builder()
+                .with_size(Vec2::new(1440.0, 900.0))
+                .build_ui_state(
+                    |ui, app: &mut App| app.ui(ui),
+                    App::new(None).with_settings(settings.clone()),
+                );
+            h.run();
+            match scene {
+                "view" => {
+                    h.get_by_label("View").click();
+                    h.run();
+                }
+                "settings" => {
+                    h.get_by_label("Settings…").click();
+                    h.run();
+                }
+                _ => {}
+            }
+            h.render()
+                .unwrap()
+                .save(output.join(format!("classic-v11-{name}-{scene}.png")))
+                .unwrap();
+            drop(h);
+            std::fs::remove_dir_all(settings).unwrap();
+        }
+    }
+}
+
+#[test]
+fn classic_palette_uses_persisted_custom_slots_without_changing_document_history() {
+    use paintcraft::settings::{ClassicVariant, Settings};
+    let dir = scratch("classic-custom-palette");
+    let color = Rgba([17, 93, 157, 255]);
+    let mut settings = Settings {
+        classic_variant: Some(ClassicVariant::V11),
+        ..Default::default()
+    };
+    settings.custom_colors[0] = Some(color);
+    settings.save(&dir).unwrap();
+    let mut h = harness_with(App::new(None).with_settings(dir.clone()), 1.0, true);
+    let before = publications(&h);
+    let snapshot = h.state().editor().document_snapshot();
+    h.get_by_label("Palette custom color 1").click();
+    h.run();
+    assert_eq!(h.state().editor().color, color);
+    h.get_by_label("Palette custom color 1").click_secondary();
+    h.run();
+    assert_eq!(h.state().editor().secondary, color);
+    assert_eq!(publications(&h), before);
+    assert!(h.state().editor().document().same_semantics(&snapshot));
+    h.get_by_label("Palette custom color 2").click();
+    h.run();
+    assert!(h.query_by_label("Edit colors").is_some());
+    assert!(h.query_by_label("Cancel").is_some());
+    assert_eq!(Settings::load(&dir).0.custom_colors[0], Some(color));
+    drop(h);
+    std::fs::remove_dir_all(dir).unwrap();
+}

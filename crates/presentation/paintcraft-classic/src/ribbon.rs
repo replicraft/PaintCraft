@@ -1,7 +1,6 @@
 //! Windows 11 ribbon geometry. Unimplemented controls are disabled prototypes.
-use super::{Action, Controls, PALETTE, Workspace};
+use super::{Action, Controls, Workspace};
 use egui::{Color32, Vec2};
-use paintcraft_core::types::Rgba;
 use paintcraft_tools::Tool;
 use paintcraft_ui::{
     actions::Context,
@@ -153,7 +152,9 @@ pub(super) fn ribbon(
                     });
                 });
                 ui.separator();
-                group(ui, "Colors", |ui| colors(ui, state, context, actions));
+                group(ui, "Colors", |ui| {
+                    colors(ui, state, &workspace.custom_colors, context, actions)
+                });
                 ui.separator();
                 group(ui, "Layers", |ui| {
                     if icon_button(ui, "Layers", Icon::Layers, workspace.layers, true).clicked()
@@ -223,7 +224,13 @@ fn compact_icon(ui: &mut egui::Ui, label: &str, icon: Icon, selected: bool) -> e
     response.on_hover_text(label)
 }
 
-fn colors(ui: &mut egui::Ui, state: &mut Controls, context: Context, actions: &mut Vec<Action>) {
+fn colors(
+    ui: &mut egui::Ui,
+    state: &mut Controls,
+    custom: &super::CustomColors,
+    context: Context,
+    actions: &mut Vec<Action>,
+) {
     ui.horizontal(|ui| {
         ui.vertical(|ui| {
             for (label, color, action) in [
@@ -254,42 +261,7 @@ fn colors(ui: &mut egui::Ui, state: &mut Controls, context: Context, actions: &m
                 }
             }
         });
-        egui::Grid::new("windows11-palette")
-            .num_columns(10)
-            .min_col_width(0.0)
-            .spacing(Vec2::new(4.0, 3.0))
-            .show(ui, |ui| {
-                for (i, rgb) in PALETTE.into_iter().enumerate() {
-                    let (rect, response) =
-                        ui.allocate_exact_size(Vec2::splat(17.0), egui::Sense::click());
-                    ui.painter().circle_filled(
-                        rect.center(),
-                        7.5,
-                        Color32::from_rgb(rgb[0], rgb[1], rgb[2]),
-                    );
-                    if response.hovered() || response.has_focus() {
-                        ui.painter().circle_stroke(
-                            rect.center(),
-                            8.5,
-                            egui::Stroke::new(1.0, ui.visuals().selection.stroke.color),
-                        );
-                    }
-                    let label = format!("Color #{:02X}{:02X}{:02X}", rgb[0], rgb[1], rgb[2]);
-                    response.widget_info(|| {
-                        egui::WidgetInfo::labeled(egui::Role::Button, ui.is_enabled(), &label)
-                    });
-                    if response.clicked() {
-                        state.primary = Rgba([rgb[0], rgb[1], rgb[2], 255]);
-                    }
-                    if response.secondary_clicked() {
-                        state.secondary = Rgba([rgb[0], rgb[1], rgb[2], 255]);
-                    }
-                    response.on_hover_text(super::palette::tooltip(i, rgb));
-                    if i % 10 == 9 {
-                        ui.end_row();
-                    }
-                }
-            });
+        super::palette::swatches(ui, state, custom, context, actions);
         if icon_button(ui, "Edit colors…", Icon::ColorBalance, false, false).clicked() {
             actions.push(Action::EditColors);
         }

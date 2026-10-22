@@ -78,6 +78,7 @@ impl App {
             secondary: self.editor.secondary,
         };
         let action_context = self.action_context();
+        self.classic.custom_colors = self.settings.custom_colors;
         let actions = ui
             .push_id(("document-chrome", self.active_tab_id()), |ui| {
                 match self.experience() {

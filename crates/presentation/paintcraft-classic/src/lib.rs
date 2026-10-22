@@ -11,6 +11,8 @@ mod ribbon;
 #[derive(Debug, Default)]
 pub struct Workspace {
     pub layers: bool,
+    /// Current persisted custom colors supplied by the desktop host.
+    pub custom_colors: CustomColors,
 }
 mod text;
 pub use text::{TextAlignment, TextOptions, text_options};
