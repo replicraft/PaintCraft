@@ -493,3 +493,15 @@ and 360x360, scales 1 and 2. Actual application tests cover draft preservation i
 font, size and File popups. Font discovery, rasterization and publication policy
 are unchanged. Search interaction is PaintCraft policy, not native-parity or
 measured-latency evidence; no application windows or screenshot previews ran.
+
+The Image resize icon no longer opens the canvas-bounds dialog: changing bounds
+is not image resampling. Resize and skew is an explicitly disabled preview until
+its own image operation exists; View → Canvas size retains the real undoable
+bounds operation. Crop, Resize and skew, Remove background and Color picker now
+each provide one disabled-hover explanation. The resize explanation points to the
+separate View command for users who want to change canvas bounds.
+All 140 window-free UI tests and strict workspace Clippy pass; see
+[the image-availability record](validation/image-availability-headless-2026-10-22/validation.json).
+Checks cover disabled clicks opening no alternate dialog, one tooltip at scales
+1 and 2, ribbon visibility, and the existing canvas-size persistence/undo path.
+No image transform is claimed and no native windows or screenshot previews ran.

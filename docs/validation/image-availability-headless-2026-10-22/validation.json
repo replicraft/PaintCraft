@@ -1,0 +1,24 @@
+{
+  "source_commit": "4efbd851e377ec6c988b0c3557ac8e9fde7699a5",
+  "references": [
+    "docs/temp/paint-references/photos/image.png",
+    "docs/temp/paint-references/PLAN.md"
+  ],
+  "mode": "Window-free egui and lint checks only. No desktop, native-window, file-dialog or screenshot-preview launches.",
+  "gui": {
+    "passed": 140,
+    "failed": 0,
+    "ignored": 17
+  },
+  "hover_gui": {
+    "passed": 3,
+    "scope": "Updated existing hover checks verify one explanatory tooltip for disabled Crop, Resize and skew, Remove background and Color picker controls at display scales 1 and 2. Existing color-well and dropdown hover cases remain passing."
+  },
+  "clippy": "workspace all-targets with -D warnings passed",
+  "limits": "The Image resize icon no longer substitutes canvas-bounds editing for image-content resizing. Resize/skew stays an explicitly disabled preview until the correct operation exists; View > Canvas size retains the real undoable bounds operation. Full GUI checks cover disabled clicks opening no alternate dialog, default-window visibility, existing canvas-size persistence/undo and document preservation. This is capability/presentation correctness, not completion of transforms or native/rendered parity.",
+  "sha256": {
+    "gui.log.gz": "c57afe2eb8821133c6d408137f238ee50d02f636334fd2f508286343e0658542",
+    "hover-gui.log.gz": "4afa44b835c647047764361c306a20a14c8829225330572440841f124d5749fb",
+    "clippy.log.gz": "6b20184f60d7efecdcd9d231ca1a0dddfe9aa35e3a938f648eb2fede4197c661"
+  }
+}
