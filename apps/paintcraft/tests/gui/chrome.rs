@@ -236,6 +236,7 @@ fn classic_ribbon_tools_are_visible_and_activate_at_the_default_window_size() {
         "Select",
         "Palette custom color 10",
         "Remove background",
+        "Resize and skew",
     ] {
         let rect = h.get_by_label(label).rect();
         assert!(

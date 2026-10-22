@@ -96,6 +96,31 @@ fn classic_ribbon_dropdowns_are_compact_and_show_one_tooltip_at_each_display_sca
             style.interaction.show_tooltips_only_when_still = false;
         });
         let before = h.state().editor().document_snapshot();
+        for (label, tooltip) in [
+            ("Crop", "Cropping is not available yet."),
+            (
+                "Resize and skew",
+                "Image resizing and skewing are not available yet. Canvas size is available in View.",
+            ),
+            (
+                "Remove background",
+                "Background removal is not available yet.",
+            ),
+            (
+                "Color picker",
+                "Picking colors from the canvas is not available yet.",
+            ),
+        ] {
+            let button = h.get_by_role_and_label(Role::Button, label);
+            assert!(button.accesskit_node().is_disabled());
+            button.hover();
+            h.run();
+            assert_eq!(
+                h.query_all_by_role_and_label(Role::Label, tooltip).count(),
+                1,
+                "{label} needs one availability tooltip"
+            );
+        }
         for label in ["Selection options", "Brushes"] {
             let button = h.get_by_role_and_label(Role::Button, label);
             assert!(

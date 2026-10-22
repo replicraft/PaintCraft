@@ -33,15 +33,13 @@ pub(super) fn ribbon(
                     egui::Grid::new("image-ribbon")
                         .spacing(Vec2::splat(1.0))
                         .show(ui, |ui| {
-                            prototype(ui, "Crop", Icon::Crop);
+                            prototype(ui, "Crop", Icon::Crop, "Cropping is not available yet.");
                             super::image_menus::rotate(ui);
-                            if icon_button(ui, "Resize canvas", Icon::Resize, false, false)
-                                .clicked()
-                            {
-                                actions.push(Action::CanvasSize);
-                            }
+                            prototype(ui, "Resize and skew", Icon::Resize,
+                                "Image resizing and skewing are not available yet. Canvas size is available in View.");
                             ui.end_row();
-                            prototype(ui, "Remove background", Icon::RemoveBackground);
+                            prototype(ui, "Remove background", Icon::RemoveBackground,
+                                "Background removal is not available yet.");
                             super::image_menus::flip(ui);
                         });
                 });
@@ -59,7 +57,8 @@ pub(super) fn ribbon(
                             if tool_button(ui, state, Tool::Eraser, false) {
                                 actions.push(Action::SelectTool(Tool::Eraser));
                             }
-                            prototype(ui, "Color picker", Icon::Eyedropper);
+                            prototype(ui, "Color picker", Icon::Eyedropper,
+                                "Picking colors from the canvas is not available yet.");
                             if icon_button(ui, "Zoom to fit", Icon::FitWindow, false, false)
                                 .clicked()
                             {
@@ -240,17 +239,10 @@ fn group(ui: &mut egui::Ui, label: &str, contents: impl FnOnce(&mut egui::Ui)) {
     });
 }
 
-fn prototype(ui: &mut egui::Ui, label: &str, icon: Icon) {
-    ui.add_enabled_ui(false, |ui| {
-        paintcraft_ui::widgets::icon_button_with_tooltip(
-            ui,
-            label,
-            icon,
-            false,
-            false,
-            format!("UI preview · {label} is not implemented"),
-        )
-    });
+fn prototype(ui: &mut egui::Ui, label: &str, icon: Icon, help: &str) {
+    ui.add_enabled_ui(false, |ui| icon_button(ui, label, icon, false, false))
+        .inner
+        .on_disabled_hover_text(help);
 }
 
 fn compact_icon(ui: &mut egui::Ui, label: &str, icon: Icon, selected: bool) -> egui::Response {

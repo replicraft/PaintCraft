@@ -345,11 +345,23 @@ fn brush_gallery_scrolls_lower_choices_into_a_short_window() {
 fn classic_image_and_shape_previews_are_present_without_enabling_unimplemented_edits() {
     let mut h = harness();
     let before = h.state().editor().document_snapshot();
-    assert!(
-        h.get_by_label("Remove background")
-            .accesskit_node()
-            .is_disabled()
-    );
+    for label in [
+        "Crop",
+        "Resize and skew",
+        "Remove background",
+        "Color picker",
+    ] {
+        assert!(
+            h.get_by_label(label).accesskit_node().is_disabled(),
+            "{label}"
+        );
+        h.get_by_label(label).click();
+        h.run();
+        assert!(
+            h.query_by_label("Apply").is_none(),
+            "{label} must not open a different operation's dialog"
+        );
+    }
     for label in [
         "polygon",
         "right-triangle",
