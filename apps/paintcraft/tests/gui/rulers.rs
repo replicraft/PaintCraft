@@ -81,6 +81,8 @@ fn toggling_rulers_preserves_scrolled_document_origin_and_pixels() {
     .unwrap();
     let mut h = harness_with(App::new(Some(path)), 1.0, true);
     let base = h.state().editor().document_snapshot();
+    let initial_offset =
+        h.state().canvas_viewport().unwrap().min - h.state().canvas_rect().unwrap().min;
     let pointer = h.state().canvas_viewport().unwrap().center();
     h.input_mut().events.extend([
         Event::PointerMoved(pointer),
@@ -94,7 +96,9 @@ fn toggling_rulers_preserves_scrolled_document_origin_and_pixels() {
     ]);
     h.run();
     let offset = h.state().canvas_viewport().unwrap().min - h.state().canvas_rect().unwrap().min;
-    assert!(offset.x > 100.0 && offset.y > 100.0);
+    // Account for the stable tool-rail inset: verify real scroll displacement,
+    // then preserve the resulting document origin when rulers are toggled.
+    assert!(offset.x - initial_offset.x > 100.0 && offset.y - initial_offset.y > 100.0);
     toggle(&mut h);
     let ruled = h.state().canvas_viewport().unwrap().min - h.state().canvas_rect().unwrap().min;
     assert!(

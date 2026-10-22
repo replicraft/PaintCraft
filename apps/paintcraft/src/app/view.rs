@@ -133,8 +133,17 @@ impl App {
                 } else {
                     self.editor.document().canvas_rect()
                 };
+                // Keep fitted content centered in the complete viewport while
+                // leaving room for Classic's floating controls on its left.
+                let clearance = if self.experience() == Experience::Classic
+                    && self.variant() == ClassicVariant::V11
+                {
+                    2.0 * paintcraft_classic::tool_controls::CANVAS_CLEARANCE
+                } else {
+                    0.0
+                };
                 let zoom = fit_scale(
-                    viewport.size() - Vec2::splat(24.0),
+                    viewport.size() - Vec2::new(clearance + 24.0, 24.0),
                     Vec2::new((area.x1 - area.x0) as f32, (area.y1 - area.y0) as f32),
                     ppp,
                 );

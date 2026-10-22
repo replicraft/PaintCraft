@@ -9,6 +9,27 @@ impl App {
             viewport.min =
                 (viewport.min + Vec2::splat(paintcraft_classic::RULER_SIZE)).min(viewport.max);
         }
+        let mut options = self.editor.options;
+        let controls =
+            if self.experience() == Experience::Classic && self.variant() == ClassicVariant::V11 {
+                paintcraft_classic::tool_controls::show(
+                    ui,
+                    egui::Id::unique(self.active_tab_id()),
+                    viewport,
+                    self.editor.tool,
+                    &mut options,
+                    !self.action_context().blocked,
+                )
+            } else {
+                None
+            };
+        self.editor.options = options;
+        let left_clearance =
+            if self.experience() == Experience::Classic && self.variant() == ClassicVariant::V11 {
+                paintcraft_classic::tool_controls::CANVAS_CLEARANCE
+            } else {
+                0.0
+            };
         self.canvas_viewport = Some(viewport);
         let ppp = ui.ctx().pixels_per_point();
         let (w, h) = self.editor.document().canvas;
@@ -22,17 +43,24 @@ impl App {
                     id,
                     canvas_size,
                     (w, h),
-                    |ui, response, painter| self.paint_canvas(ui, response, painter, first_pass),
+                    left_clearance,
+                    |ui, response, painter| {
+                        self.paint_canvas(ui, response, painter, first_pass, controls)
+                    },
                 )
             }
-            Experience::Classic => {
-                paintcraft_classic::canvas::canvas(ui, id, canvas_size, |ui, response, painter| {
-                    self.paint_canvas(ui, response, painter, first_pass)
-                })
-            }
+            Experience::Classic => paintcraft_classic::canvas::canvas(
+                ui,
+                id,
+                canvas_size,
+                left_clearance,
+                |ui, response, painter| {
+                    self.paint_canvas(ui, response, painter, first_pass, controls)
+                },
+            ),
             Experience::Studio => {
                 paintcraft_studio::canvas::canvas(ui, id, canvas_size, |ui, response, painter| {
-                    self.paint_canvas(ui, response, painter, first_pass)
+                    self.paint_canvas(ui, response, painter, first_pass, controls)
                 })
             }
         }
@@ -44,6 +72,7 @@ impl App {
         response: egui::Response,
         painter: egui::Painter,
         first_pass: bool,
+        controls: Option<egui::Rect>,
     ) {
         // Disabled chrome must not tint texture vertices: the modal owns the scrim.
         let painter = egui::Painter::new(ui.ctx().clone(), painter.layer_id(), painter.clip_rect());
@@ -56,7 +85,7 @@ impl App {
         let view = View::with_scale((rect.min.x, rect.min.y), self.zoom, ppp);
         self.hover_doc = ui
             .input(|i| i.pointer.hover_pos())
-            .filter(|p| visible_canvas.contains(*p))
+            .filter(|p| visible_canvas.contains(*p) && controls.is_none_or(|r| !r.contains(*p)))
             .and_then(|p| view.to_doc((p.x, p.y)));
 
         if first_pass {
@@ -81,6 +110,7 @@ impl App {
                             _ => continue,
                         };
                         if (visible_canvas.contains(pos)
+                            && controls.is_none_or(|r| !r.contains(pos))
                             && ui.ctx().layer_id_at(pos) == Some(painter.layer_id()))
                             && let Some(d) = view.to_doc_subpixel((pos.x, pos.y))
                         {

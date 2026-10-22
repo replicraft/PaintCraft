@@ -3,6 +3,7 @@ fn content<R>(
     ui: &mut egui::Ui,
     id: egui::Id,
     size: egui::Vec2,
+    left_clearance: f32,
     paint: impl FnOnce(&mut egui::Ui, egui::Response, egui::Painter) -> R,
 ) -> R {
     egui::ScrollArea::both()
@@ -13,7 +14,7 @@ fn content<R>(
             ui.add_space(inset.y.max(0.0));
             let (response, painter) = ui
                 .horizontal(|ui| {
-                    ui.add_space(inset.x.max(0.0));
+                    ui.add_space(inset.x.max(left_clearance).max(0.0));
                     ui.allocate_painter(size, egui::Sense::click_and_drag())
                 })
                 .inner;
@@ -52,6 +53,7 @@ pub fn canvas<R>(
     ui: &mut egui::Ui,
     id: egui::Id,
     size: egui::Vec2,
+    left_clearance: f32,
     paint: impl FnOnce(&mut egui::Ui, egui::Response, egui::Painter) -> R,
 ) -> R {
     let viewport = ui.available_rect_before_wrap();
@@ -59,7 +61,7 @@ pub fn canvas<R>(
         egui::UiBuilder::new()
             .scope_id(id.with("classic-canvas-presentation"))
             .max_rect(viewport),
-        |ui| content(ui, id, size, paint),
+        |ui| content(ui, id, size, left_clearance, paint),
     )
     .inner
 }
@@ -69,6 +71,7 @@ pub fn ruled_canvas<R>(
     id: egui::Id,
     size: egui::Vec2,
     extent: (u32, u32),
+    left_clearance: f32,
     paint: impl FnOnce(&mut egui::Ui, egui::Response, egui::Painter) -> R,
 ) -> R {
     let viewport = ui.available_rect_before_wrap();
@@ -82,7 +85,7 @@ pub fn ruled_canvas<R>(
                 .scope_id(id.with("classic-canvas-presentation"))
                 .max_rect(body),
             |ui| {
-                content(ui, id, size, |ui, response, painter| {
+                content(ui, id, size, left_clearance, |ui, response, painter| {
                     let rect = response.rect;
                     (paint(ui, response, painter), rect)
                 })

@@ -83,3 +83,87 @@ fn changer_is_next_to_settings_and_discard_drops_changed_documents_before_switch
         "discarded documents do not return with unsaved pixels"
     );
 }
+
+#[test]
+fn classic_floating_size_and_opacity_are_vertical_and_pointer_drags_do_not_paint() {
+    let mut h = classic();
+    with_layer(&mut h);
+    h.get_by_label("Brush").click();
+    h.run();
+    let snapshot = h.state().editor().document_snapshot();
+    let before = publications(&h);
+    for label in ["Tool size", "Brush opacity"] {
+        let rect = h
+            .get_by_role_and_label(eframe::egui::Role::Slider, label)
+            .rect();
+        assert!(rect.height() > rect.width() * 3.0, "{label}: {rect:?}");
+        let start = rect.center_bottom() - Vec2::new(0.0, rect.height() * 0.2);
+        let end = rect.center_top() + Vec2::new(0.0, rect.height() * 0.2);
+        h.input_mut().events.extend([
+            Event::PointerMoved(start),
+            press(start),
+            Event::PointerMoved(end),
+        ]);
+        h.run();
+        h.event(release(end));
+        h.run();
+        assert_eq!(
+            publications(&h),
+            before,
+            "{label} must not start a canvas gesture"
+        );
+        assert!(h.state().editor().document().same_semantics(&snapshot));
+        assert!(!h.state().editor().has_pending_edits());
+    }
+    assert!(h.state().editor().options.size > 4);
+    assert!(h.state().editor().options.brush_opacity < 100);
+}
+
+#[test]
+fn classic_tool_panels_fit_short_windows_and_zoom_fit_keeps_the_canvas_clear() {
+    let mut h = classic();
+    h.get_by_label("Brush").click();
+    h.run();
+    let before_size_change = h.state().canvas_rect().unwrap();
+    h.get_by_role_and_label(eframe::egui::Role::SpinButton, "Size")
+        .set_value_accesskit(1024.0);
+    h.run();
+    assert_eq!(h.state().editor().options.size, 1024);
+    assert_eq!(h.state().canvas_rect().unwrap(), before_size_change);
+    assert!(
+        before_size_change.left()
+            > h.get_by_role_and_label(eframe::egui::Role::SpinButton, "Opacity")
+                .rect()
+                .right()
+                + 6.0
+    );
+    h.get_by_label("Zoom to fit").click();
+    h.run();
+    let canvas = h.state().canvas_rect().unwrap();
+    let opacity = h
+        .get_by_role_and_label(eframe::egui::Role::Slider, "Brush opacity")
+        .rect();
+    assert!(canvas.left() > opacity.right());
+    assert!(
+        canvas.left()
+            > h.get_by_role_and_label(eframe::egui::Role::SpinButton, "Opacity")
+                .rect()
+                .right()
+                + 6.0
+    );
+    assert!(
+        canvas.right() <= 1100.0 && canvas.bottom() < 880.0,
+        "{canvas:?}"
+    );
+    h.set_size(Vec2::new(1100.0, 500.0));
+    h.run();
+    for label in ["Tool size", "Brush opacity"] {
+        let rect = h
+            .get_by_role_and_label(eframe::egui::Role::Slider, label)
+            .rect();
+        assert!(
+            rect.top() >= 0.0 && rect.bottom() < 470.0,
+            "{label}: {rect:?}"
+        );
+    }
+}

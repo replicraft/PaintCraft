@@ -167,7 +167,7 @@ pub(super) fn ribbon(
             });
         });
     ui.separator();
-    if state.tool != Tool::Text {
+    if state.tool != Tool::Text && !super::tool_controls::supports(state.tool) {
         ui.allocate_ui_with_layout(
             Vec2::new(ui.available_width(), 40.0),
             egui::Layout::top_down(egui::Align::Min),

@@ -3,6 +3,7 @@ mod brush_gallery;
 pub mod canvas;
 mod ruler_axis;
 mod rulers;
+pub mod tool_controls;
 pub use rulers::RULER_SIZE;
 mod dropdowns;
 mod image_menus;

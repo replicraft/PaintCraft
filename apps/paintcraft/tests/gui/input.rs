@@ -205,12 +205,17 @@ fn canvas_pixels_are_actual_pixels_at_any_display_scale() {
 fn zoomed_clicks_hit_the_right_document_pixel() {
     let mut h = harness();
     with_layer(&mut h);
+    // Establish a document-centered view before magnifying. The floating tool
+    // rail deliberately reserves space in this narrow, layer-panel workspace.
+    h.get_by_label("Zoom to fit").click();
+    h.run();
     h.get_by_label("Zoom presets").click();
     h.run();
     h.get_by_label("400%").click();
     h.run();
     let origin = h.state().canvas_rect().unwrap().min;
     let p = origin + Vec2::new(4.0 * 500.0 + 1.0, 4.0 * 243.0 + 2.0);
+    assert!(h.state().canvas_viewport().unwrap().contains(p));
     h.input_mut()
         .events
         .extend([Event::PointerMoved(p), press(p), release(p)]);
