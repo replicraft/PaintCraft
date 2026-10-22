@@ -302,3 +302,15 @@ or background removal. Compact grid columns keep Layers reachable at narrower
 window sizes. 111 GUI tests, the title regression, vector rendering checks and
 strict workspace Clippy pass. Light/dark review images and logs are in
 [the ribbon validation record](validation/classic-ribbon-2026-10-22/validation.json).
+
+The text toolbar now follows `photos/mspaint-text-settings.png` with a 220-point
+font selector, editable size field and scrollable size presets, larger style
+buttons, outlined selected formatting/alignment controls and an explicit
+Background fill checkbox. Tooltips describe the controls; renderer library names
+are no longer displayed in the toolbar. Font search reports an empty result
+without changing the chosen family. Preset/custom sizes and formatting persist
+without creating document history. 113 GUI tests and strict workspace Clippy
+pass; light/dark Selawik captures and source-pinned logs are in the
+[text toolbar validation record](validation/classic-text-toolbar-2026-10-22/validation.json).
+This presentation work does not qualify native text raster parity or complete
+editable text objects and IME.

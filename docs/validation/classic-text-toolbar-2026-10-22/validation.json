@@ -1,0 +1,24 @@
+{
+  "source_commit": "a9f044850f06268675e12adc8776af8836135320",
+  "reference": "docs/temp/paint-references/photos/mspaint-text-settings.png",
+  "gui": {
+    "passed": 113,
+    "failed": 0,
+    "ignored": 16
+  },
+  "focused_gui": {
+    "passed": 2,
+    "scope": "preset and custom sizes, persistence, unchanged document/history, font search, light/dark and display scales 1 and 2 with repeated layout passes"
+  },
+  "clippy": "workspace all-targets with -D warnings passed",
+  "gpu_review": "Real Selawik text rendered in light/dark; both toolbar captures visually inspected. One ignored export test passed.",
+  "limits": "No reference pixel/raster parity qualification or native-window startup run. Editable text until save and IME remain separate roadmap work.",
+  "sha256": {
+    "classic-dark-font-text.png": "66001b05ad670443cbdb9da0f4321a94aef8e301c51d2e91d4362e26978055c8",
+    "focused-gui.log.gz": "1b51f3900a55b15db263900a5de6d4556453bdbe72ea51740e2b838817e69caa",
+    "clippy.log.gz": "b1ec5cbebc9f3c89906e908073121501f91f6b09876d325d437828a83a067a38",
+    "gui.log.gz": "e8164ff295c35f45a7c47a3e618550c5123481869cdc1ecdd82f7aeb19ca63f9",
+    "previews.log.gz": "b9f697ae043f297dd67a15e300f09447a4b6a595956d355a2716b572905a4743",
+    "classic-light-font-text.png": "c79f6915fd5955a26c9214c84588873fea96a806cc8f271ac30c80db28317710"
+  }
+}
