@@ -168,6 +168,7 @@ fn classic_ribbon_tools_are_visible_and_activate_at_the_default_window_size() {
         "Rectangle",
         "Select",
         "Palette custom color 10",
+        "Remove background",
     ] {
         let rect = h.get_by_label(label).rect();
         assert!(
@@ -179,6 +180,13 @@ fn classic_ribbon_tools_are_visible_and_activate_at_the_default_window_size() {
             "{label} must be in the ribbon above the canvas"
         );
     }
+    assert!(
+        h.get_by_role_and_label(eframe::egui::Role::Button, "Layers")
+            .rect()
+            .max
+            .x
+            <= 1360.0
+    );
     h.get_by_label("Fill").click();
     h.run();
     assert_eq!(h.state().editor().tool, paintcraft::controller::Tool::Fill);

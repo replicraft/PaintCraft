@@ -34,13 +34,14 @@ pub(super) fn ribbon(
                         .spacing(Vec2::splat(1.0))
                         .show(ui, |ui| {
                             prototype(ui, "Crop", Icon::Crop);
+                            super::image_menus::rotate(ui);
                             if icon_button(ui, "Resize canvas", Icon::Resize, false, false)
                                 .clicked()
                             {
                                 actions.push(Action::CanvasSize);
                             }
                             ui.end_row();
-                            super::image_menus::rotate(ui);
+                            prototype(ui, "Remove background", Icon::RemoveBackground);
                             super::image_menus::flip(ui);
                         });
                 });
@@ -91,6 +92,7 @@ pub(super) fn ribbon(
                                     .show(ui, |ui| {
                                         egui::Grid::new("windows11-shapes")
                                             .min_row_height(24.0)
+                                            .min_col_width(24.0)
                                             .spacing(Vec2::ZERO)
                                             .show(ui, |ui| {
                                                 for (i, icon) in [
@@ -99,10 +101,23 @@ pub(super) fn ribbon(
                                                     Icon::Ellipse,
                                                     Icon::Rectangle,
                                                     Icon::RoundedRectangle,
+                                                    Icon::Polygon,
                                                     Icon::Triangle,
+                                                    Icon::RightTriangle,
+                                                    Icon::Diamond,
+                                                    Icon::Pentagon,
                                                     Icon::Hexagon,
+                                                    Icon::RightArrow,
+                                                    Icon::LeftArrow,
+                                                    Icon::UpArrow,
+                                                    Icon::DownArrow,
+                                                    Icon::FourPointStar,
                                                     Icon::Star,
+                                                    Icon::SixPointStar,
+                                                    Icon::RectangularCallout,
+                                                    Icon::RoundedSpeechBubble,
                                                     Icon::SpeechBubble,
+                                                    Icon::CloudCallout,
                                                     Icon::Heart,
                                                     Icon::Lightning,
                                                     Icon::Burst,
@@ -158,9 +173,14 @@ pub(super) fn ribbon(
                 });
                 ui.separator();
                 group(ui, "Layers", |ui| {
-                    if icon_button(ui, "Layers", Icon::Layers, workspace.layers, true).clicked()
-                        && ui.ctx().current_pass_index() == 0
-                    {
+                    let response = ui
+                        .allocate_ui_with_layout(
+                            Vec2::new(56.0, 54.0),
+                            egui::Layout::top_down(egui::Align::Center),
+                            |ui| icon_button(ui, "Layers", Icon::Layers, workspace.layers, false),
+                        )
+                        .inner;
+                    if response.clicked() && ui.ctx().current_pass_index() == 0 {
                         workspace.layers = !workspace.layers;
                     }
                 });
@@ -217,7 +237,7 @@ fn compact_icon(ui: &mut egui::Ui, label: &str, icon: Icon, selected: bool) -> e
         .scope(|ui| {
             // Compact shape cells keep three visible rows even when the main
             // toolbar uses larger Windows-style interaction targets.
-            ui.spacing_mut().interact_size.y = 24.0;
+            ui.spacing_mut().interact_size = Vec2::splat(24.0);
             ui.add(
                 egui::Button::new(paintcraft_ui::icons::image(ui.ctx(), icon, 19.0))
                     .selected(selected)

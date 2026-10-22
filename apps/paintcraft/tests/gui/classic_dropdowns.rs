@@ -235,3 +235,37 @@ fn brush_gallery_scrolls_lower_choices_into_a_short_window() {
     assert_eq!(h.state().editor().tool, paintcraft_tools::Tool::Brush);
     assert!(!h.state().editor().options.round);
 }
+
+#[test]
+fn classic_image_and_shape_previews_are_present_without_enabling_unimplemented_edits() {
+    let mut h = harness();
+    let before = h.state().editor().document_snapshot();
+    assert!(
+        h.get_by_label("Remove background")
+            .accesskit_node()
+            .is_disabled()
+    );
+    for label in [
+        "polygon",
+        "right-triangle",
+        "diamond",
+        "pentagon",
+        "right-arrow",
+        "left-arrow",
+        "up-arrow",
+        "down-arrow",
+        "four-point-star",
+        "six-point-star",
+        "rectangular-callout",
+        "rounded-speech-bubble",
+        "cloud-callout",
+    ] {
+        h.get_by_label(label).scroll_to_me();
+        h.run();
+        assert!(
+            h.get_by_label(label).accesskit_node().is_disabled(),
+            "{label}"
+        );
+    }
+    assert!(h.state().editor().document().same_semantics(&before));
+}
