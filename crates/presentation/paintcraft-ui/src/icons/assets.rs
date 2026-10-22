@@ -1,6 +1,19 @@
 //! Named assets adapted from the user-supplied generated icon sheet.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Icon {
+    Polygon,
+    RightTriangle,
+    Diamond,
+    Pentagon,
+    RightArrow,
+    LeftArrow,
+    UpArrow,
+    DownArrow,
+    RectangularCallout,
+    CloudCallout,
+    FourPointStar,
+    SixPointStar,
+    RemoveBackground,
     Settings,
     Layers,
     New,
@@ -79,7 +92,20 @@ pub enum Icon {
 }
 
 impl Icon {
-    pub const ALL: [Self; 71] = [
+    pub const ALL: [Self; 84] = [
+        Self::Polygon,
+        Self::RightTriangle,
+        Self::Diamond,
+        Self::Pentagon,
+        Self::RightArrow,
+        Self::LeftArrow,
+        Self::UpArrow,
+        Self::DownArrow,
+        Self::RectangularCallout,
+        Self::CloudCallout,
+        Self::FourPointStar,
+        Self::SixPointStar,
+        Self::RemoveBackground,
         Self::Settings,
         Self::Layers,
         Self::New,
@@ -155,6 +181,19 @@ impl Icon {
 
     pub fn name(self) -> &'static str {
         match self {
+            Self::Polygon => "polygon",
+            Self::RightTriangle => "right-triangle",
+            Self::Diamond => "diamond",
+            Self::Pentagon => "pentagon",
+            Self::RightArrow => "right-arrow",
+            Self::LeftArrow => "left-arrow",
+            Self::UpArrow => "up-arrow",
+            Self::DownArrow => "down-arrow",
+            Self::RectangularCallout => "rectangular-callout",
+            Self::CloudCallout => "cloud-callout",
+            Self::FourPointStar => "four-point-star",
+            Self::SixPointStar => "six-point-star",
+            Self::RemoveBackground => "remove-background",
             Self::Settings => "settings",
             Self::Layers => "layers",
             Self::New => "new",
@@ -234,6 +273,21 @@ impl Icon {
 
     pub fn svg(self) -> &'static [u8] {
         match self {
+            Self::Polygon => include_bytes!("../../assets/icons/polygon.svg"),
+            Self::RightTriangle => include_bytes!("../../assets/icons/right-triangle.svg"),
+            Self::Diamond => include_bytes!("../../assets/icons/diamond.svg"),
+            Self::Pentagon => include_bytes!("../../assets/icons/pentagon.svg"),
+            Self::RightArrow => include_bytes!("../../assets/icons/right-arrow.svg"),
+            Self::LeftArrow => include_bytes!("../../assets/icons/left-arrow.svg"),
+            Self::UpArrow => include_bytes!("../../assets/icons/up-arrow.svg"),
+            Self::DownArrow => include_bytes!("../../assets/icons/down-arrow.svg"),
+            Self::RectangularCallout => {
+                include_bytes!("../../assets/icons/rectangular-callout.svg")
+            }
+            Self::CloudCallout => include_bytes!("../../assets/icons/cloud-callout.svg"),
+            Self::FourPointStar => include_bytes!("../../assets/icons/four-point-star.svg"),
+            Self::SixPointStar => include_bytes!("../../assets/icons/six-point-star.svg"),
+            Self::RemoveBackground => include_bytes!("../../assets/icons/remove-background.svg"),
             Self::Settings => include_bytes!("../../assets/icons/settings.svg"),
             Self::Layers => include_bytes!("../../assets/icons/layers.svg"),
             Self::New => include_bytes!("../../assets/icons/new.svg"),

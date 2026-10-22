@@ -481,5 +481,96 @@
     "source_row": null,
     "source_column": null,
     "file": "clear-canvas.svg"
+  },
+  {
+    "name": "polygon",
+    "label": "Polygon",
+    "source_row": null,
+    "source_column": null,
+    "file": "polygon.svg"
+  },
+  {
+    "name": "right-triangle",
+    "label": "Right Triangle",
+    "source_row": null,
+    "source_column": null,
+    "file": "right-triangle.svg"
+  },
+  {
+    "name": "diamond",
+    "label": "Diamond",
+    "source_row": null,
+    "source_column": null,
+    "file": "diamond.svg"
+  },
+  {
+    "name": "pentagon",
+    "label": "Pentagon",
+    "source_row": null,
+    "source_column": null,
+    "file": "pentagon.svg"
+  },
+  {
+    "name": "right-arrow",
+    "label": "Right Arrow",
+    "source_row": null,
+    "source_column": null,
+    "file": "right-arrow.svg"
+  },
+  {
+    "name": "left-arrow",
+    "label": "Left Arrow",
+    "source_row": null,
+    "source_column": null,
+    "file": "left-arrow.svg"
+  },
+  {
+    "name": "up-arrow",
+    "label": "Up Arrow",
+    "source_row": null,
+    "source_column": null,
+    "file": "up-arrow.svg"
+  },
+  {
+    "name": "down-arrow",
+    "label": "Down Arrow",
+    "source_row": null,
+    "source_column": null,
+    "file": "down-arrow.svg"
+  },
+  {
+    "name": "rectangular-callout",
+    "label": "Rectangular Callout",
+    "source_row": null,
+    "source_column": null,
+    "file": "rectangular-callout.svg"
+  },
+  {
+    "name": "cloud-callout",
+    "label": "Cloud Callout",
+    "source_row": null,
+    "source_column": null,
+    "file": "cloud-callout.svg"
+  },
+  {
+    "name": "four-point-star",
+    "label": "Four Point Star",
+    "source_row": null,
+    "source_column": null,
+    "file": "four-point-star.svg"
+  },
+  {
+    "name": "six-point-star",
+    "label": "Six Point Star",
+    "source_row": null,
+    "source_column": null,
+    "file": "six-point-star.svg"
+  },
+  {
+    "name": "remove-background",
+    "label": "Remove Background",
+    "source_row": null,
+    "source_column": null,
+    "file": "remove-background.svg"
   }
 ]

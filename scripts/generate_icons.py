@@ -147,6 +147,21 @@ add('clear-canvas',
     + path('M19 39L36 47L30 59Q13 61 5 50L15 39Z', 'url(#gold)')
     + line('M19 44L12 53M25 47L20 57M31 49L27 58', '#bd7a15', 2)
     + line('M43 54H55M48 47H59', '#71c8ff', 2))
+
+# Original Classic gallery additions; these have no source-sheet coordinates.
+add('polygon', path('M7 13H32L24 30H56L43 55H7Z'))
+add('right-triangle', path('M8 7L57 56H8Z'))
+add('diamond', path('M32 4L60 32L32 60L4 32Z'))
+add('pentagon', path('M32 4L60 25L49 58H15L4 25Z'))
+add('right-arrow', path('M5 21H34V7L60 32L34 57V43H5Z'))
+add('left-arrow', path('M59 21H30V7L4 32L30 57V43H59Z'))
+add('up-arrow', path('M21 59V30H7L32 4L57 30H43V59Z'))
+add('down-arrow', path('M21 5V34H7L32 60L57 34H43V5Z'))
+add('rectangular-callout', path('M5 8H59V46H31L17 60V46H5Z'))
+add('cloud-callout', path('M13 42C0 39 1 25 12 22C8 9 26 3 34 13C45 3 61 14 54 26C68 37 50 54 39 45C31 54 17 52 13 42Z'))
+add('four-point-star', path(star(4, 9)))
+add('six-point-star', path(star(6, 15)))
+add('remove-background', rect(5, 7, 54, 50, 'url(#paper)') + line('M7 22H57M7 39H57M22 9V55M40 9V55', '#8293a8', 2) + path('M24 40L43 16L58 29L39 53H28Z', 'url(#red)') + path('M24 40L35 49L39 53H28Z', 'url(#paper)'))
 OUT.mkdir(parents=True,exist_ok=True)
 manifest=[]
 for i,(name,body) in enumerate(icons):
@@ -155,5 +170,5 @@ for i,(name,body) in enumerate(icons):
     (OUT/f'{name}.svg').write_text(svg)
     manifest.append({'name':name,'label':label,'source_row':i//12+1 if i<68 else None,'source_column':i%12+1 if i<68 else None,'file':f'{name}.svg'})
 (OUT/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
-(OUT/'gallery.html').write_text('<!doctype html><html lang="en"><meta charset="utf-8"><title>PaintCraft vector icon gallery</title><style>body{font:14px system-ui;background:#eceff3;color:#172332;margin:32px}main{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px}figure{margin:0;padding:12px;text-align:center;background:white;border-radius:8px}img{width:64px;height:64px}figcaption{margin-top:8px}</style><h1>PaintCraft vector icons</h1><p>68 individual SVG adaptations of the user-supplied generated sheet, plus an original Clear Canvas broom.</p><main>'+''.join(f'<figure><img src="{r["file"]}" alt="{r["label"]}"><figcaption>{r["label"]}</figcaption></figure>' for r in manifest)+'</main></html>\n')
+(OUT/'gallery.html').write_text('<!doctype html><html lang="en"><meta charset="utf-8"><title>PaintCraft vector icon gallery</title><style>body{font:14px system-ui;background:#eceff3;color:#172332;margin:32px}main{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px}figure{margin:0;padding:12px;text-align:center;background:white;border-radius:8px}img{width:64px;height:64px}figcaption{margin-top:8px}</style><h1>PaintCraft vector icons</h1><p>68 individual SVG adaptations of the user-supplied generated sheet, plus original PaintCraft action and Classic gallery icons.</p><main>'+''.join(f'<figure><img src="{r["file"]}" alt="{r["label"]}"><figcaption>{r["label"]}</figcaption></figure>' for r in manifest)+'</main></html>\n')
 print(f'Wrote {len(icons)} vector icons, manifest and gallery to {OUT}')
