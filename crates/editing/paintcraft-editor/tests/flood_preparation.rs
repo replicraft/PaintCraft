@@ -41,9 +41,26 @@ fn compound(doc: &Document) -> Batch {
     )
 }
 #[test]
-fn cancelling_classification_after_private_prefix_preserves_owner_and_releases_its_tiles() {
+fn cancelling_classification_after_logical_prefix_preserves_owner_without_decoded_allocation() {
     let doc = new_document(8192, 1, Some(Rgba([31, 63, 127, 0])), 0, POLICY).unwrap();
     let batch = compound(&doc);
+    // Calibrate the complete one-command lifecycle; a further 1024 checks in
+    // this wide data-dependent batch occur inside the second command's preparation.
+    let prefix_calls = Cell::new(0);
+    let mut prefix = batch.clone();
+    prefix.operations.truncate(1);
+    paintcraft_editor::execute::execute_with_admission_checked(
+        &doc,
+        Selection::Inactive,
+        &prefix,
+        Admission::new(32 * 65_536),
+        &|| {
+            prefix_calls.set(prefix_calls.get() + 1);
+            Ok(())
+        },
+    )
+    .unwrap();
+    let stop = prefix_calls.get() + 1024;
     let session = Session::new(doc);
     let snapshot = session.snapshot();
     let ticket = session.ticket();
@@ -57,9 +74,9 @@ fn cancelling_classification_after_private_prefix_preserves_owner_and_releases_i
             &batch,
             Admission::with_residency(32 * 65_536, budget.clone()),
             || {
-                if budget.usage().reserved != 0 {
+                {
                     seen.set(seen.get() + 1);
-                    if seen.get() == 8 {
+                    if seen.get() == stop {
                         return Err(Error::new(
                             ErrorCode::OperationCancelled,
                             "cancel flood classification",
@@ -72,7 +89,7 @@ fn cancelling_classification_after_private_prefix_preserves_owner_and_releases_i
         .unwrap_err();
     assert_eq!(error.code, ErrorCode::OperationCancelled);
     assert_eq!(error.operation_index, Some(1));
-    assert_eq!(budget.usage().peak, BYTES);
+    assert_eq!(budget.usage().peak, 0);
     assert_eq!(budget.usage().reserved, 0);
     assert_eq!(session.ticket(), ticket);
     assert_eq!(session.history_view(), history);
@@ -97,7 +114,7 @@ fn scratch_policy_survives_admission_clone_and_is_not_a_decoded_retry() {
     assert_eq!(error.operation_index, Some(1));
     assert_eq!(error.message, "flood-fill scratch budget exceeded");
     assert!(error.allocation_denial().is_none());
-    assert_eq!(budget.usage().peak, BYTES);
+    assert_eq!(budget.usage().peak, 0);
     assert_eq!(budget.usage().reserved, 0);
     assert_eq!(session.ticket(), ticket);
     assert_eq!(session.history_view(), history);

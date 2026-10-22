@@ -145,7 +145,7 @@ fn late_metadata_failure_releases_private_prefix_and_preserves_session_history()
     assert_eq!(error.operation_index, Some(1));
     assert_eq!(error.message, "paint plan metadata budget exceeded");
     assert!(error.allocation_denial().is_none());
-    assert_eq!(budget.usage().peak, BYTES);
+    assert_eq!(budget.usage().peak, 0);
     assert_eq!(budget.usage().reserved, 0);
     assert_eq!(session.ticket(), ticket);
     assert!(std::sync::Arc::ptr_eq(&session.snapshot(), &snapshot));

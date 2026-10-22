@@ -54,6 +54,9 @@ impl Stage<'_> {
         self.doc.layers.insert(id, copy);
         self.doc.roots.insert(position + 1, id);
         self.aliases.insert(alias.to_owned(), Some(id));
+        if let Some(planning) = &mut self.planning {
+            planning.duplicate(source, id, &self.adm, self.check)?;
+        }
         Ok(())
     }
 }

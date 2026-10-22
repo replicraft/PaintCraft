@@ -23,8 +23,8 @@ fn finish(editor: &mut Editor) {
 
 #[test]
 fn metadata_wait_keeps_preview_fifo_and_file_barriers_then_publishes_once() {
-    let (mut editor, tiles, metadata) = fixture(512);
-    let blocker = metadata.reserve(400).unwrap();
+    let (mut editor, tiles, metadata) = fixture(16 << 10);
+    let blocker = metadata.reserve((16 << 10) - 112).unwrap();
     let before = editor.document_snapshot();
     stroke(&mut editor);
     let preview = editor.preview();
@@ -42,7 +42,7 @@ fn metadata_wait_keeps_preview_fifo_and_file_barriers_then_publishes_once() {
     assert_eq!(editor.preview(), preview);
     assert!(Arc::ptr_eq(&before, &editor.document_snapshot()));
     assert_eq!(tiles.usage().reserved, 0);
-    assert_eq!(metadata.usage().reserved, 400);
+    assert_eq!(metadata.usage().reserved, (16 << 10) - 112);
     let activity = metadata.activity();
     let probe = editor.waiting_edit.as_ref().unwrap().last_probe;
     for _ in 0..4 {
@@ -78,8 +78,8 @@ fn metadata_wait_keeps_preview_fifo_and_file_barriers_then_publishes_once() {
 }
 #[test]
 fn escape_retires_metadata_wait_and_later_edits_without_crossing_the_file_boundary() {
-    let (mut editor, _, metadata) = fixture(512);
-    let blocker = metadata.reserve(400).unwrap();
+    let (mut editor, _, metadata) = fixture(16 << 10);
+    let blocker = metadata.reserve((16 << 10) - 112).unwrap();
     let before = editor.document_snapshot();
     stroke(&mut editor);
     editor.run_pending();
@@ -106,8 +106,8 @@ fn escape_retires_metadata_wait_and_later_edits_without_crossing_the_file_bounda
 }
 #[test]
 fn stale_metadata_request_is_never_rebased_onto_a_competing_publication() {
-    let (mut editor, _, metadata) = fixture(512);
-    let blocker = metadata.reserve(400).unwrap();
+    let (mut editor, _, metadata) = fixture(16 << 10);
+    let blocker = metadata.reserve((16 << 10) - 112).unwrap();
     stroke(&mut editor);
     wait(&mut editor);
     let t = editor.session.ticket();
@@ -134,8 +134,8 @@ fn impossible_metadata_demand_is_terminal_and_never_registers_a_wait() {
 }
 #[test]
 fn periodic_metadata_repricing_does_not_spin_on_its_own_allocation_cleanup() {
-    let (mut editor, _, metadata) = fixture(512);
-    let blocker = metadata.reserve(400).unwrap();
+    let (mut editor, _, metadata) = fixture(16 << 10);
+    let blocker = metadata.reserve((16 << 10) - 112).unwrap();
     stroke(&mut editor);
     wait(&mut editor);
     editor.waiting_edit.as_mut().unwrap().last_probe = Instant::now() - Duration::from_secs(6);
@@ -156,8 +156,8 @@ fn periodic_metadata_repricing_does_not_spin_on_its_own_allocation_cleanup() {
 }
 #[test]
 fn retry_preserves_both_original_realms_across_worker_service_replacement() {
-    let (mut editor, tiles, metadata) = fixture(512);
-    let blocker = metadata.reserve(400).unwrap();
+    let (mut editor, tiles, metadata) = fixture(16 << 10);
+    let blocker = metadata.reserve((16 << 10) - 112).unwrap();
     stroke(&mut editor);
     wait(&mut editor);
     let foreign = SharedBudget::new(0);
@@ -228,8 +228,8 @@ fn known_metadata_retry_capacity_survives_competing_admission_until_preparation_
 
 #[test]
 fn larger_discovered_demand_releases_the_old_reservation_and_retains_the_original_request() {
-    let (mut editor, tiles, metadata) = fixture(512);
-    let blocker = metadata.reserve(400).unwrap();
+    let (mut editor, tiles, metadata) = fixture(16 << 10);
+    let blocker = metadata.reserve((16 << 10) - 112).unwrap();
     let before = editor.document_snapshot();
     stroke(&mut editor);
     wait(&mut editor);

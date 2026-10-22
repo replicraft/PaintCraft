@@ -7,6 +7,7 @@ mod layers;
 mod mask;
 mod paint;
 mod path;
+mod planning;
 use path::walk_clipped;
 
 use std::collections::{BTreeMap, HashMap};
@@ -97,6 +98,8 @@ pub fn execute_with_geometry_cache(
         doc: base.clone(),
         selection,
         aliases: HashMap::new(),
+        planning: Some(planning::Compiler::new(&admission)),
+        operation: 0,
         adm: admission,
         pencil_pixels: 0,
         pencil_segments: 0,
@@ -107,6 +110,7 @@ pub fn execute_with_geometry_cache(
         geometry,
     };
     for (index, op) in batch.operations.iter().enumerate() {
+        s.operation = index;
         check().and_then(|()| s.run(index, op)).map_err(|e| {
             if e.operation_index.is_some() {
                 e
@@ -114,6 +118,51 @@ pub fn execute_with_geometry_cache(
                 e.at(index)
             }
         })?;
+    }
+    check()?;
+    let (paints, footprint) = s.planning.take().expect("compiler stage").finish();
+    // Logical source captures and simulated versions have dropped. Only original
+    // compiled descriptors survive; reserve the complete new decoded peak once.
+    s.adm
+        .reserve_tiles(footprint.peak)
+        .map_err(|e| e.at(footprint.peak_operation))?;
+    s.doc = base.clone();
+    s.selection = selection;
+    s.aliases.clear();
+    s.geometry = None;
+    let (_charge, values) = paints.into_parts();
+    let mut paints = values.into_iter().peekable();
+    for (index, op) in batch.operations.iter().enumerate() {
+        check().map_err(|e| {
+            if e.operation_index.is_some() {
+                e
+            } else {
+                e.at(index)
+            }
+        })?;
+        let result = if planning::is_paint(op) {
+            if paints.peek().is_some_and(|paint| paint.operation == index) {
+                let paint = paints.next().expect("peeked paint");
+                s.apply_paint(paint.layer, &paint.plan)
+            } else {
+                Ok(())
+            }
+        } else {
+            s.run(index, op)
+        };
+        result.map_err(|e| {
+            if e.operation_index.is_some() {
+                e
+            } else {
+                e.at(index)
+            }
+        })?;
+    }
+    if paints.next().is_some() {
+        return Err(Error::new(
+            ErrorCode::InvariantViolation,
+            "compiled paint was not replayed",
+        ));
     }
     check()?;
     let aliases = s
@@ -144,6 +193,8 @@ struct Stage<'a> {
     digest: &'a str,
     check: &'a dyn Fn() -> Result<()>,
     geometry: Option<&'a mut paintcraft_raster::smooth::PathCache>,
+    planning: Option<planning::Compiler>,
+    operation: usize,
 }
 
 impl Stage<'_> {
@@ -276,6 +327,9 @@ impl Stage<'_> {
             }
             Op::LayerDelete { layer } => {
                 let id = self.resolve(layer)?;
+                if let Some(planning) = &mut self.planning {
+                    planning.remove(id);
+                }
                 self.doc.layers.remove(&id);
                 self.doc.roots.retain(|r| *r != id);
                 for target in self.aliases.values_mut().filter(|t| **t == Some(id)) {
@@ -548,6 +602,9 @@ impl Stage<'_> {
                     .expect("resolved")
                     .raster
                     .expand_to(*width, *height)?;
+                if let Some(planning) = &mut self.planning {
+                    planning.expand(id, *width, *height, &self.adm, self.check)?;
+                }
             }
             Op::CanvasResize {
                 width,

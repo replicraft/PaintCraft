@@ -18,14 +18,26 @@ impl Stage<'_> {
         let local = area
             .translated(-ox, -oy)
             .expect("area lies inside the layer");
-        let spans = paintcraft_raster::flood::region_with_scratch_limit_checked(
-            &layer.raster,
-            (at.0 - ox, at.1 - oy),
-            &local,
-            tolerance,
-            self.adm.flood_scratch_limit(),
-            self.check,
-        )?;
+        let spans = if let Some(planning) = &mut self.planning {
+            planning.flood(
+                id,
+                &layer.raster,
+                (at.0 - ox, at.1 - oy),
+                local,
+                tolerance,
+                &self.adm,
+                self.check,
+            )?
+        } else {
+            paintcraft_raster::flood::region_with_scratch_limit_checked(
+                &layer.raster,
+                (at.0 - ox, at.1 - oy),
+                &local,
+                tolerance,
+                self.adm.flood_scratch_limit(),
+                self.check,
+            )?
+        };
         if mode == Mode::SourceOver && color.a() == 0 {
             return Ok(());
         }

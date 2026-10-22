@@ -56,7 +56,7 @@ fn enormous_admitted_ellipse_commits_exact_clipped_pixels_and_recorded_history()
     }
 }
 #[test]
-fn cancelled_shape_rows_discard_earlier_private_edits_and_keep_owner_history() {
+fn cancelled_shape_rows_discard_logical_prefix_before_decoded_admission() {
     for kind in [ShapeKind::Rect, ShapeKind::Ellipse] {
         let doc = new_document(300, 300, Some(Rgba([31, 63, 127, 0])), 0, POLICY).unwrap();
         let id = doc.roots[0];
@@ -80,6 +80,21 @@ fn cancelled_shape_rows_discard_earlier_private_edits_and_keep_owner_history() {
                 },
             ],
         );
+        let prefix_calls = Cell::new(0);
+        let mut prefix = batch.clone();
+        prefix.operations.truncate(1);
+        paintcraft_editor::execute::execute_with_admission_checked(
+            &doc,
+            paintcraft_editor::execute::Selection::Inactive,
+            &prefix,
+            Admission::new(4 * 65_536),
+            &|| {
+                prefix_calls.set(prefix_calls.get() + 1);
+                Ok(())
+            },
+        )
+        .unwrap();
+        let stop = prefix_calls.get() + 64;
         let session = Session::new(doc);
         let before = session.snapshot();
         let ticket = session.ticket();
@@ -94,9 +109,9 @@ fn cancelled_shape_rows_discard_earlier_private_edits_and_keep_owner_history() {
                 &batch,
                 Admission::with_residency(4 * 65_536, budget.clone()),
                 || {
-                    if budget.usage().reserved != 0 {
+                    {
                         seen.set(seen.get() + 1);
-                        if seen.get() == 8 {
+                        if seen.get() == stop {
                             return Err(Error::new(
                                 ErrorCode::OperationCancelled,
                                 "cancel streamed shape",
@@ -109,7 +124,7 @@ fn cancelled_shape_rows_discard_earlier_private_edits_and_keep_owner_history() {
             .unwrap_err();
         assert_eq!(error.code, ErrorCode::OperationCancelled);
         assert_eq!(error.operation_index, Some(1));
-        assert_eq!(budget.usage().peak, bytes);
+        assert_eq!(budget.usage().peak, 0);
         assert_eq!(budget.usage().reserved, 0);
         assert_eq!(session.ticket(), ticket);
         assert_eq!(session.history_view(), history);

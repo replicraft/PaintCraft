@@ -154,7 +154,7 @@ fn streamed_text_metadata_denial_and_unsupported_glyph_keep_owner_history() {
         assert_eq!(error.code, expected);
         assert_eq!(error.operation_index, Some(1));
         assert!(error.allocation_denial().is_none());
-        assert_eq!(budget.usage().peak, BYTES);
+        assert_eq!(budget.usage().peak, 0);
         assert_eq!(budget.usage().reserved, 0);
         assert_eq!(session.ticket(), ticket);
         assert_eq!(session.history_view(), history);

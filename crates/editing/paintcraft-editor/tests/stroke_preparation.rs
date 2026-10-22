@@ -95,7 +95,7 @@ fn fixed_stroke_limit_discards_private_prefix_without_a_decoded_retry() {
     assert_eq!(error.code, ErrorCode::ResourceLimit);
     assert_eq!(error.operation_index, Some(1));
     assert!(error.allocation_denial().is_none());
-    assert_eq!(budget.usage().peak, bytes);
+    assert_eq!(budget.usage().peak, 0);
     assert_eq!(budget.usage().reserved, 0);
     assert_eq!(session.ticket(), ticket);
     assert_eq!(session.history_view(), history);

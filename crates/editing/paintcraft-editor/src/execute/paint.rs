@@ -28,6 +28,16 @@ impl Stage<'_> {
         Ok(())
     }
     pub(super) fn apply_paint(&mut self, id: Uuid, plan: &PaintPlan) -> Result<()> {
+        if let Some(planning) = &mut self.planning {
+            return planning.paint(
+                id,
+                &self.doc.layers[&id].raster,
+                plan,
+                self.operation,
+                &self.adm,
+                self.check,
+            );
+        }
         plan.apply_checked(
             &mut self.doc.layers.get_mut(&id).expect("resolved").raster,
             &mut self.adm,

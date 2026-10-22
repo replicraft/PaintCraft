@@ -33,21 +33,26 @@ fn metadata_interference_after_a_private_edit_preserves_owner_and_releases_all_a
     let ticket = session.ticket();
     let history = session.history_view();
     let decoded = SharedBudget::new(2 * RasterLayer::TILE_BYTES as u64);
-    let metadata = SharedBudget::new(1000);
-    let blocker = RefCell::new(None);
+    let metadata = SharedBudget::new(1 << 20);
+    let reservation = decoded
+        .reserve_capacity(2 * RasterLayer::TILE_BYTES as u64)
+        .unwrap();
+    let probe = reservation.clone();
+    let blockers = RefCell::new(Vec::new());
     let error = session
         .preparation()
         .unwrap()
         .apply_with_admission(
             &batch,
-            Admission::with_residency(2 * 65_536, decoded.clone())
+            Admission::with_reserved_residency(2 * 65_536, reservation)
                 .with_paint_metadata_budget(metadata.clone()),
             || {
-                if decoded.usage().reserved != 0
-                    && metadata.usage().reserved == 0
-                    && blocker.borrow().is_none()
-                {
-                    *blocker.borrow_mut() = Some(metadata.reserve(1000).unwrap());
+                if probe.available() < probe.capacity() {
+                    let usage = metadata.usage();
+                    let free = usage.limit - usage.reserved;
+                    if free != 0 {
+                        blockers.borrow_mut().push(metadata.reserve(free).unwrap());
+                    }
                 }
                 Ok(())
             },
@@ -58,11 +63,13 @@ fn metadata_interference_after_a_private_edit_preserves_owner_and_releases_all_a
         error.allocation_denial().unwrap().class(),
         AllocationClass::PaintMetadata
     );
+    assert_eq!(probe.available(), probe.capacity());
+    drop(probe);
     assert_eq!(decoded.usage().reserved, 0);
-    assert_eq!(metadata.usage().reserved, 1000);
+    assert!(metadata.usage().reserved > 0);
     assert_eq!(session.ticket(), ticket);
     assert_eq!(session.history_view(), history);
     assert!(Arc::ptr_eq(&snapshot, &session.snapshot()));
-    drop(blocker);
+    drop(blockers);
     assert_eq!(metadata.usage().reserved, 0);
 }

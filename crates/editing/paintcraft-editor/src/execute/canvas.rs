@@ -16,7 +16,10 @@ impl Stage<'_> {
                     && layer.raster.width() == width
                     && layer.raster.height() == height
                     && layer.raster.default_pixel() == color
-                    && layer.raster.resident_tiles() == 0
+                    && self.planning.as_ref().map_or_else(
+                        || layer.raster.resident_tiles(),
+                        |p| p.resident_tiles(layer.id, &layer.raster),
+                    ) == 0
             });
         if already_clear {
             self.aliases
@@ -34,6 +37,9 @@ impl Stage<'_> {
                     ErrorCode::InvariantViolation,
                     "deterministic identifier collision",
                 ));
+            }
+            if let Some(planning) = &mut self.planning {
+                planning.clear();
             }
             self.doc.layers.clear();
             self.doc.roots.clear();
