@@ -24,6 +24,31 @@ def sha(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
+def semantics(path):
+    """Independent v1 raw-block reconstruction for required fixture/output pixels."""
+    with zipfile.ZipFile(path) as archive:
+        doc = json.loads(archive.read('document.json'))
+        indexed = {layer['id']: layer for layer in doc['layers']}; layers = []
+        for key in doc['roots']:
+            layer = indexed[key]; width = layer['width']; height = layer['height']
+            pixels = bytearray(bytes.fromhex(layer['default_pixel'][1:]) * width * height)
+            for block in layer['blocks']:
+                assert block['encoding'] == 'raw'
+                data = archive.read(block['entry'])[block['offset']:block['offset']+block['stored_bytes']]
+                assert hashlib.sha256(data).hexdigest() == block['sha256']
+                x = block['block_x'] * 256; y = block['block_y'] * 256
+                w = min(256, width-x); h = min(256, height-y)
+                assert len(data) == w*h*4
+                for row in range(h):
+                    offset = ((y+row)*width+x)*4
+                    pixels[offset:offset+w*4] = data[row*w*4:(row+1)*w*4]
+            layers.append({'id': key, 'name': layer['name'], 'origin': [layer['origin']['x'], layer['origin']['y']],
+                           'visible': layer['visible'], 'opacity': layer['opacity_u8'], 'width': width, 'height': height,
+                           'default_pixel': layer['default_pixel'], 'pixels_sha256': hashlib.sha256(pixels).hexdigest()})
+        return {'document_id': doc['document_id'], 'canvas': [doc['canvas']['width'], doc['canvas']['height']],
+                'title': doc['metadata'].get('title'), 'layers': layers}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for key in ['baseline-cli', 'candidate-cli', 'library', 'output']:
@@ -62,6 +87,7 @@ def main():
     (fixtures / 'dense.png').write_bytes(png)
     (fixtures / 'dense.sha256').write_text(sha(fixtures / 'dense.png') + '\n')
     command('fixture-import', [str(binaries['sequential']), '--json', 'import', str(fixtures / 'dense.png'), '--output', str(fixtures / 'dense.pcnd')])
+    assert semantics(fixtures / 'dense.pcnd')['layers'][0]['pixels_sha256'] == sha(fixtures / 'dense.rgba')
     def document(name):
         with zipfile.ZipFile(fixtures / name) as archive:
             return json.loads(archive.read('document.json'))
@@ -110,13 +136,23 @@ def main():
     checks = {}
     def verify(label):
         identities(); raw = subprocess.check_output([str(library), 'verify'], env=environment, stderr=subprocess.STDOUT)
-        (out / ('library-' + label + '.log')).write_bytes(raw); record = {'library': hashlib.sha256(raw).hexdigest(), 'cli': {}}
+        (out / ('library-' + label + '.log')).write_bytes(raw); record = {'library': hashlib.sha256(raw).hexdigest(), 'cli': {}, 'semantics': {}}
+        expected = {}
+        for line in raw.decode().splitlines():
+            words = line.split()
+            if words and words[0] in CASES:
+                checksum = words[2].removeprefix('sha256=')
+                assert expected.setdefault(words[0], checksum) == checksum
+        assert set(expected) == set(CASES)
         for case in CASES:
             for mode in binaries: command('cli-' + label + '-' + case + '-' + mode, commands[case][mode])
             a = results / ('sequential-' + case + '.pcnd'); b = results / ('planned-' + case + '.pcnd'); assert a.read_bytes() == b.read_bytes()
             with zipfile.ZipFile(a) as x, zipfile.ZipFile(b) as y:
                 assert x.namelist() == y.namelist() and all(x.read(name) == y.read(name) for name in x.namelist())
             record['cli'][case] = sha(a)
+            summary = json.dumps(semantics(a), sort_keys=True, separators=(',', ':'), ensure_ascii=False).encode()
+            record['semantics'][case] = hashlib.sha256(summary).hexdigest()
+            assert record['semantics'][case] == expected[case]
         checks[label] = record; assert all(value == record for value in checks.values())
         (out / 'correctness.json').write_text(json.dumps(checks, indent=2) + '\n')
     verify('before')

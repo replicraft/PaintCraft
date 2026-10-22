@@ -4,7 +4,11 @@
 mod sequential;
 use criterion::{BenchmarkId, Criterion, SamplingMode};
 use paintcraft_commands::Batch;
-use paintcraft_core::types::{Rgba, resources::SharedBudget};
+use paintcraft_core::types::{
+    Rgba,
+    json::{Value, canonical},
+    resources::SharedBudget,
+};
 use paintcraft_document::{Document, POLICY, hex, import_image, new_document};
 use paintcraft_editor::execute::{self, Selection};
 use paintcraft_raster::Admission;
@@ -114,32 +118,49 @@ fn run(case: &Case, mode: Mode) -> Output {
     }
 }
 fn digest(doc: &Document) -> String {
-    let mut hash = Sha256::new();
-    hash.update(format!(
-        "{} {} {:?} {:?}",
-        doc.document_id, doc.state_id, doc.canvas, doc.title
-    ));
+    // Persisted semantics excludes publication StateId; CLI archives separately
+    // verify that identity. This same canonical summary is checked against PCND.
+    let mut layers = Vec::new();
     for layer in doc.layers_in_order() {
-        hash.update(format!(
-            "{} {} {:?} {} {} {} {} {:?}",
-            layer.id,
-            layer.name,
-            layer.origin,
-            layer.visible,
-            layer.opacity,
-            layer.raster.width(),
-            layer.raster.height(),
-            layer.raster.default_pixel()
-        ));
+        let mut pixels = Sha256::new();
         let mut row = vec![0u8; layer.raster.width() as usize * 4];
         for y in 0..i64::from(layer.raster.height()) {
             for (x, pixel) in row.as_chunks_mut::<4>().0.iter_mut().enumerate() {
                 pixel.copy_from_slice(&layer.raster.get(x as i64, y).0);
             }
-            hash.update(&row);
+            pixels.update(&row);
         }
+        layers.push(Value::object([
+            ("id", Value::str(layer.id.to_string())),
+            ("name", Value::str(&layer.name)),
+            (
+                "origin",
+                Value::Array(vec![Value::Int(layer.origin.0), Value::Int(layer.origin.1)]),
+            ),
+            ("visible", Value::Bool(layer.visible)),
+            ("opacity", Value::Int(i64::from(layer.opacity))),
+            ("width", Value::Int(i64::from(layer.raster.width()))),
+            ("height", Value::Int(i64::from(layer.raster.height()))),
+            (
+                "default_pixel",
+                Value::str(layer.raster.default_pixel().to_hex()),
+            ),
+            ("pixels_sha256", Value::str(hex(&pixels.finalize()))),
+        ]));
     }
-    hex(&hash.finalize())
+    let value = Value::object([
+        ("document_id", Value::str(doc.document_id.to_string())),
+        (
+            "canvas",
+            Value::Array(vec![
+                Value::Int(i64::from(doc.canvas.0)),
+                Value::Int(i64::from(doc.canvas.1)),
+            ]),
+        ),
+        ("title", doc.title.as_ref().map_or(Value::Null, Value::str)),
+        ("layers", Value::Array(layers)),
+    ]);
+    hex(&Sha256::digest(canonical(&value)))
 }
 fn verify(cases: &[Case]) {
     for case in cases {
