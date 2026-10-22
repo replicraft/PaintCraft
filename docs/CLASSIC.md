@@ -461,3 +461,19 @@ Primary/secondary choices and custom RGB tooltips are checked at scales 1 and 2
 without document/history changes. All 88 assets pass vector/transparency checks
 and regeneration is byte-identical. Native names, processing and rendered visual
 parity remain unqualified; no application windows or screenshot previews ran.
+
+Classic v11 now owns its status presentation: stable cursor-position, selection-size
+and canvas-size fields with SVG indicators, a bounded status-message area and
+right-aligned zoom controls. Narrow windows put zoom on a second row. The host
+reserves the space before canvas layout and draws status contents afterward,
+showing current-frame coordinates without an extra repaint request. Messages
+and recovery-checkpoint details remain available. Real selection dimensions use
+the editor's half-open bounds; view changes add no document history. Zoom input
+and icons now share a vertically aligned control region. Studio and Classic
+v7/v10 retain their existing status layouts.
+138 window-free UI tests, three icon checks and strict workspace Clippy pass; see
+[the Classic status record](validation/classic-status-headless-2026-10-22/validation.json).
+Tests cover 1360x900 through 360x360, light/dark themes and scales 1 and 2, including
+stationary zoom controls and current-frame pointer feedback. All 89 assets pass
+vector/transparency checks. Native/rendered parity and latency remain unqualified;
+no application windows or screenshot previews were launched.
