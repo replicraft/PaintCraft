@@ -593,5 +593,12 @@
     "source_row": null,
     "source_column": null,
     "file": "share.svg"
+  },
+  {
+    "name": "edit-colors",
+    "label": "Edit Colors",
+    "source_row": null,
+    "source_column": null,
+    "file": "edit-colors.svg"
   }
 ]

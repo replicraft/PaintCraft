@@ -22,7 +22,7 @@ impl Action {
             }
             Self::CanvasSize => Icon::CanvasSize,
             Self::ClearCanvas => Icon::ClearCanvas,
-            Self::EditColors | Self::EditSecondaryColors => Icon::ColorBalance,
+            Self::EditColors | Self::EditSecondaryColors => Icon::EditColors,
             Self::View(action) => match action {
                 ViewAction::ZoomIn => Icon::ZoomIn,
                 ViewAction::ZoomOut => Icon::ZoomOut,

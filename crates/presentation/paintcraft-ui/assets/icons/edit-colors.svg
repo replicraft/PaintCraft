@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+<title>Edit Colors</title>
+<defs>
+<linearGradient id="blue" x2="0" y2="1"><stop stop-color="#59ceff"/><stop offset=".48" stop-color="#128ff5"/><stop offset="1" stop-color="#075eb9"/></linearGradient>
+<linearGradient id="gold" x2="0" y2="1"><stop stop-color="#fff49c"/><stop offset=".45" stop-color="#ffd345"/><stop offset="1" stop-color="#e89308"/></linearGradient>
+<linearGradient id="paper" x2="0" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#cbd8e8"/></linearGradient>
+<linearGradient id="slate" x2="0" y2="1"><stop stop-color="#747f8f"/><stop offset="1" stop-color="#242e3c"/></linearGradient>
+<linearGradient id="red" x2="0" y2="1"><stop stop-color="#ff7a95"/><stop offset="1" stop-color="#e7274e"/></linearGradient>
+<linearGradient id="green" x2="0" y2="1"><stop stop-color="#b2f795"/><stop offset="1" stop-color="#27942e"/></linearGradient>
+</defs>
+<g stroke="#101d2b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+<path d="M29 35L55.000 35.000A26 26 0 0 1 51.517 48.000Z" fill="#ff0000" stroke="none"/><path d="M29 35L51.517 48.000A26 26 0 0 1 42.000 57.517Z" fill="#ff8000" stroke="none"/><path d="M29 35L42.000 57.517A26 26 0 0 1 29.000 61.000Z" fill="#ffff00" stroke="none"/><path d="M29 35L29.000 61.000A26 26 0 0 1 16.000 57.517Z" fill="#80ff00" stroke="none"/><path d="M29 35L16.000 57.517A26 26 0 0 1 6.483 48.000Z" fill="#00ff00" stroke="none"/><path d="M29 35L6.483 48.000A26 26 0 0 1 3.000 35.000Z" fill="#00ff80" stroke="none"/><path d="M29 35L3.000 35.000A26 26 0 0 1 6.483 22.000Z" fill="#00ffff" stroke="none"/><path d="M29 35L6.483 22.000A26 26 0 0 1 16.000 12.483Z" fill="#0080ff" stroke="none"/><path d="M29 35L16.000 12.483A26 26 0 0 1 29.000 9.000Z" fill="#0000ff" stroke="none"/><path d="M29 35L29.000 9.000A26 26 0 0 1 42.000 12.483Z" fill="#8000ff" stroke="none"/><path d="M29 35L42.000 12.483A26 26 0 0 1 51.517 22.000Z" fill="#ff00ff" stroke="none"/><path d="M29 35L51.517 22.000A26 26 0 0 1 55.000 35.000Z" fill="#ff0080" stroke="none"/><defs><radialGradient id="wheel-center"><stop stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs><circle cx="29" cy="35" r="26" fill="url(#wheel-center)" stroke="none"/><circle cx="51" cy="13" r="10" fill="url(#paper)" stroke="#61788d" stroke-width="2"/><path d="M46 13H56M51 8V18" fill="none" stroke="#128ff5" stroke-width="2" />
+</g>
+</svg>

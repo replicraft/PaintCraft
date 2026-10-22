@@ -3,6 +3,7 @@
 from pathlib import Path
 import json
 import math
+import colorsys
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / 'crates/presentation/paintcraft-ui/assets/icons'
@@ -175,6 +176,19 @@ add('rotate-custom',
 add('share',
     line('M7 33V57H51V46', '#61788d', 5)
     + path('M34 5L60 25L34 44V32Q19 30 10 47Q6 17 34 18Z', 'url(#blue)'))
+# Color wheel with an add badge for the color editor, not the balance adjustment.
+segments = []
+for i in range(12):
+    a, b = (i * math.tau / 12, (i + 1) * math.tau / 12)
+    x0, y0 = 29 + 26 * math.cos(a), 35 + 26 * math.sin(a)
+    x1, y1 = 29 + 26 * math.cos(b), 35 + 26 * math.sin(b)
+    rgb = tuple(round(c * 255) for c in colorsys.hsv_to_rgb(i / 12, 1, 1))
+    segments.append(path(f'M29 35L{x0:.3f} {y0:.3f}A26 26 0 0 1 {x1:.3f} {y1:.3f}Z', '#%02x%02x%02x' % rgb, 'stroke="none"'))
+add('edit-colors', ''.join(segments)
+    + '<defs><radialGradient id="wheel-center"><stop stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs>'
+    + circle(29, 35, 26, 'url(#wheel-center)', 'stroke="none"')
+    + circle(51, 13, 10, 'url(#paper)', 'stroke="#61788d" stroke-width="2"')
+    + line('M46 13H56M51 8V18', '#128ff5', 2))
 OUT.mkdir(parents=True,exist_ok=True)
 manifest=[]
 for i,(name,body) in enumerate(icons):
