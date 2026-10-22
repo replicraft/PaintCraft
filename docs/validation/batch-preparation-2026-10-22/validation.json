@@ -1,0 +1,182 @@
+{
+  "production_validation_commit": "f2833983b2aa9086c2745a1b5c3fa54282ae78d3",
+  "measured_source_commit": "4fbabe33e603ebbc8cf63d4156272623a0c14c9f",
+  "source_identities": {
+    "file": "source-identities.json",
+    "sha256": "eb01a50e1b31b9d312781f231b6165a3caf045c147d2120381dbab0b5a743c1c",
+    "count": 424
+  },
+  "environment": {
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_INCREMENTAL": "0",
+    "PAINTCRAFT_REQUIRE_GPU": "1"
+  },
+  "checks": {
+    "workspace": {
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--quiet"
+      ],
+      "exit_code": 0,
+      "tests": {
+        "passed": 908,
+        "ignored": 26,
+        "suites": 83
+      }
+    },
+    "clippy": {
+      "command": [
+        "cargo",
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0
+    },
+    "release-raster": {
+      "command": [
+        "cargo",
+        "test",
+        "--release",
+        "-p",
+        "paintcraft-raster",
+        "--lib",
+        "--tests"
+      ],
+      "exit_code": 0,
+      "tests": {
+        "passed": 122,
+        "ignored": 0,
+        "suites": 15
+      }
+    },
+    "release-editor": {
+      "command": [
+        "cargo",
+        "test",
+        "--release",
+        "-p",
+        "paintcraft-editor",
+        "--lib",
+        "--tests"
+      ],
+      "exit_code": 0,
+      "tests": {
+        "passed": 118,
+        "ignored": 0,
+        "suites": 20
+      }
+    },
+    "gpu": {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "paintcraft-render",
+        "--features",
+        "gpu",
+        "--lib",
+        "--test",
+        "gpu"
+      ],
+      "exit_code": 0,
+      "tests": {
+        "passed": 54,
+        "ignored": 0,
+        "suites": 2
+      }
+    },
+    "desktop": {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "paintcraft",
+        "--lib"
+      ],
+      "exit_code": 0,
+      "tests": {
+        "passed": 236,
+        "ignored": 8,
+        "suites": 1
+      }
+    },
+    "bench-build": {
+      "command": [
+        "cargo",
+        "bench",
+        "-p",
+        "paintcraft-editor",
+        "--bench",
+        "batch_preparation",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "exit_code": 0
+    },
+    "cli-cpu": {
+      "command": [
+        "cargo",
+        "build",
+        "--release",
+        "--locked",
+        "-p",
+        "paintcraft-cli"
+      ],
+      "exit_code": 0
+    },
+    "release": {
+      "command": [
+        "cargo",
+        "build",
+        "--release",
+        "-p",
+        "paintcraft",
+        "-p",
+        "paintcraft-cli"
+      ],
+      "exit_code": 0
+    }
+  },
+  "benchmark_only_followup": {
+    "changed_paths": [
+      "benchmarks/tools/run_batch_preparation.py",
+      "crates/editing/paintcraft-editor/benches/batch_preparation.rs"
+    ],
+    "checks": [
+      "semantic-clippy.log.gz",
+      "bench-build.log.gz"
+    ],
+    "note": "Only the benchmark driver and independent semantic verifier changed after production validation. Strict all-target Clippy and benchmark build were rerun; production tests were not repeated for this tooling-only delta."
+  },
+  "startup": {
+    "default": {
+      "exit_code": 0,
+      "frames": 30,
+      "log_bytes": 0,
+      "isolated_root": "/var/folders/k_/xqf_xh_1491ffqbnfjtfkbr40000gn/T/paintcraft-batch-smoke-52cwnxz0",
+      "environment": {}
+    },
+    "single": {
+      "exit_code": 0,
+      "frames": 30,
+      "log_bytes": 0,
+      "isolated_root": "/var/folders/k_/xqf_xh_1491ffqbnfjtfkbr40000gn/T/paintcraft-batch-smoke-d2j8cqdj",
+      "environment": {
+        "PAINTCRAFT_GPU_SINGLE_LAYER": "1"
+      }
+    }
+  },
+  "logs": "log-identities.json",
+  "development_evidence": "All original failed compilation/test/lint diagnostics are retained and labeled by their log names. before-read-elision logs qualify the earlier source only; final non-prefixed production checks qualify the read-elision source.",
+  "measurement": "../../../benchmarks/results/batch-preparation-2026-10-22/DECISION.md",
+  "release_artifact_sha256": {
+    "target/release/paintcraft": "f6771f00afcd59f40d101bb654a6b0f7ac7b4316d90bea7af45fe5b187cd4ac7",
+    "target/release/paintcraft-cli": "bd33154a9c5597af1ecc40b001ad8595df75cb7db57dc99647da7090b298eb26"
+  }
+}

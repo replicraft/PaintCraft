@@ -283,3 +283,17 @@ sessions. The [decision](results/paint-lineage-2026-10-22/DECISION.md) retains n
 gains, tiny/wall overhead, source/reader payload costs and slow controls separately.
 These flat library cases do not qualify complete batch integration or branching-
 chain/native event latency.
+
+## Complete editor batch preparation
+
+Build the real-library driver with `cargo bench -p paintcraft-editor --bench
+batch_preparation --no-run --message-format=json`. Freeze parent/current CPU-only
+CLI artifacts and their source/feature identities before a combined desktop build.
+`benchmarks/tools/run_batch_preparation.py --help` documents the artifact-manifest
+arguments; default mode prints the plan without timing, and `--preflight-only
+--execute` verifies fixtures and exact outputs. A fresh output directory and
+`--execute` run seven cases, 280 statistical samples and 1,860 process observations,
+including calibrations. The [completed decision](results/batch-preparation-2026-10-22/DECISION.md)
+retains exact semantic/canonical comparisons, original schema-v2 exports, declared
+resource counters and substantial diagonal/mixed regressions. Whole-batch admission
+is a correctness baseline; performance and native latency remain separate work.

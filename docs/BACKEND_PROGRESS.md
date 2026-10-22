@@ -705,3 +705,52 @@ and decoded peak/cumulative simulation, source guards and operation attribution.
 Joint resource reservations, aggregate geometry/font/flood/service budgets, physical
 accounting, scheduling fairness, native latency and the broader roadmap remain open.
 No dependency, wire/file policy or rendering default changes.
+
+
+## Fifty-second slice: complete built-in batch preparation
+
+The editor compiles all current built-in commands against a structural shadow
+document before allocating decoded output. Ordered plans carry resolved layer
+identity and original operation attribution. Flood reads source-bound logical
+paint, including frozen duplicate branches and pre-expansion bounds. Write-only
+batches omit logical source views. See [the batch contract](BATCH_PLANNING.md).
+
+A cancellable sparse tile-ownership model tracks input COW, private reuse, shared
+duplicates, expansion and deletion. It separately prices live/peak output versions
+and cumulative allocation work. The editor releases source/model storage, reserves
+the complete known new decoded peak once and replays original plans/structural
+operations from the captured base. Decoded quota denial therefore allocates no
+private pixel prefix. Ordinary replay allocation/metadata failures and caller
+interference still roll back private work; recorded history and publication remain
+owner guarded. This is not a joint metadata or physical-memory reservation.
+
+Source-pinned differential checks cover every painting family and 64 mixed
+structural sequences. New tests exercise model ownership, fallible source capture,
+zero-prefix quota denial, recycled peak versus cumulative limits, every observed
+cancellation checkpoint and write-only logical-view elision. Native retry tests
+retain distinct metadata/decoded policies and real replay interference checks.
+
+908 workspace tests pass (26 explicit ignores, 83 suites). Strict all-target
+Clippy, 122 optimized raster tests, 118 optimized editor tests, 54 required-Metal
+renderer tests, 236 required-GPU desktop tests (eight ignores), release builds
+and default/single-layer isolated 30-frame startup checks pass.
+[Validation](validation/batch-preparation-2026-10-22/validation.json) pins production
+source and logs. A later benchmark-only semantic verifier change reran Clippy and
+benchmark compilation. Original development failures and earlier validation remain.
+
+The [completed comparison](../benchmarks/results/batch-preparation-2026-10-22/DECISION.md)
+retains 280 statistical samples and 1,860 original process observations. Exact
+library/CLI semantics, complete canonical archives, decoded peaks and matched
+CPU-only feature graphs pass. Diagonal library execution is about 1.56x slower
+statistically and 56.2–68.1% slower in processes; mixed lineage is about 3.38x
+slower statistically and 154.6–227.3% slower in processes. Diagonal metadata peak
+rises from 49,432 to 4,111,632 bytes, with increased process RSS. Small/no-op/dense
+controls, overlapping eraser intervals, startup drift, CPU costs and tails remain.
+No performance improvement is claimed. Retained geometry, redundant preparation
+and source-reading costs require further optimization without relaxing guarantees.
+
+Complete preparation now applies to the current built-in grammar, replacing the
+previous sequential-preparation scope. Joint service/geometry/font/history/GPU
+budgets, physical accounting, scheduling fairness, native latency, future command
+families and the broader roadmap remain open. No dependency, wire/file policy or
+rendering default changes.

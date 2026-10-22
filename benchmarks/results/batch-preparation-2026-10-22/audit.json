@@ -1,0 +1,20 @@
+{
+  "measured_source_commit": "4fbabe33e603ebbc8cf63d4156272623a0c14c9f",
+  "verified_source_files": 424,
+  "verified_fixtures": 12,
+  "verified_frozen_binaries": 3,
+  "exact_output_checkpoints": [
+    "before",
+    "after-1",
+    "after-2",
+    "after-3"
+  ],
+  "counts": {
+    "statistical_samples": 280,
+    "process_observations": 1860,
+    "workload_observations": 1680,
+    "calibration_observations": 180
+  },
+  "source_verification": "git show of measured commit; subsequent broom icon commit is outside the timed source",
+  "compressed_artifacts": "compressed-artifacts.json"
+}
