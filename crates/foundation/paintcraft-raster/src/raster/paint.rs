@@ -93,6 +93,30 @@ impl PaintPlan {
     pub fn is_empty(&self) -> bool {
         self.writes.is_empty()
     }
+    /// Compare exact ordered descriptors, including coverage and blend policy.
+    /// This is source-independent equality, not a proof of equal output pixels.
+    /// Sharing equal plans must still replay each operation in its original order.
+    pub fn same_writes_checked(
+        &self,
+        other: &Self,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<bool> {
+        check()?;
+        if Arc::ptr_eq(&self.writes, &other.writes) {
+            return Ok(true);
+        }
+        if self.writes.len() != other.writes.len() {
+            return Ok(false);
+        }
+        for (a, b) in self.writes.chunks(1024).zip(other.writes.chunks(1024)) {
+            check()?;
+            if a != b {
+                return Ok(false);
+            }
+        }
+        check()?;
+        Ok(true)
+    }
     pub fn rect(&mut self, area: Rect, color: Rgba, mode: BlendMode) -> Result<()> {
         self.push(Write {
             area,

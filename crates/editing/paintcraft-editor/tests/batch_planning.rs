@@ -469,3 +469,96 @@ fn write_only_batches_need_no_logical_pixel_views_but_preserve_the_same_output()
     );
     assert_eq!(decoded_peak, 0);
 }
+
+#[test]
+fn repeated_translucent_diagonals_keep_each_blend_with_bounded_descriptor_retention() {
+    let doc = new_document(257, 257, Some(Rgba([255; 4])), 0, POLICY).unwrap();
+    let op = Op::PencilPath {
+        layer: LayerRef::Id(doc.roots[0]),
+        points: vec![(0, 0), (256, 256)],
+        color: Rgba([17, 88, 156, 19]),
+        mode: Mode::SourceOver,
+    };
+    let run = |ops: Vec<Op>, limit| {
+        let metadata = SharedBudget::new(limit);
+        let decoded = SharedBudget::new(4 * BYTES);
+        let result = execute_with_admission(
+            &doc,
+            Selection::Inactive,
+            &batch(&doc, ops),
+            Admission::with_residency(4 * 65_536, decoded.clone())
+                .with_paint_metadata_budget(metadata.clone()),
+        )
+        .unwrap();
+        assert_eq!(metadata.usage().reserved, 0);
+        (result, metadata.usage().peak)
+    };
+    let (once, one_peak) = run(vec![op.clone()], 1 << 20);
+    let repeated = vec![op.clone(); 100];
+    let (many, many_peak) = run(repeated.clone(), 8 * one_peak);
+    assert!(many_peak <= 8 * one_peak);
+    assert!(!once.doc.same_semantics(&many.doc));
+    let expected = sequential::execute_with_admission(
+        &doc,
+        Selection::Inactive,
+        &batch(&doc, repeated),
+        Admission::with_residency(4 * 65_536, SharedBudget::new(4 * BYTES)),
+    )
+    .unwrap();
+    assert!(many.doc.same_semantics(&expected.doc));
+    assert_eq!(many.aliases, expected.aliases);
+    assert_eq!(many.selection, expected.selection);
+    // A clipped command between equal source-independent plans must retain its
+    // own geometry, and returning to the earlier clip cannot reuse that plan.
+    compare(
+        &doc,
+        vec![
+            op.clone(),
+            Op::SelectionSetRect {
+                rect: rect(0, 0, 16, 16),
+            },
+            op.clone(),
+            Op::SelectionClear,
+            op,
+        ],
+    );
+}
+
+#[test]
+fn equal_paint_storage_keeps_frozen_duplicate_sources_and_repeated_flood_inputs_distinct() {
+    let doc = new_document(32, 32, Some(Rgba([255; 4])), 0, POLICY).unwrap();
+    let root = LayerRef::Id(doc.roots[0]);
+    let stroke = Op::PencilPath {
+        layer: root.clone(),
+        points: vec![(0, 0), (31, 31)],
+        color: Rgba([17, 88, 156, 91]),
+        mode: Mode::SourceOver,
+    };
+    compare(
+        &doc,
+        vec![
+            stroke.clone(),
+            Op::LayerDuplicate {
+                layer: root.clone(),
+                alias: "captured".into(),
+                name: "Captured".into(),
+            },
+            stroke.clone(),
+            stroke,
+            Op::FloodFill {
+                layer: LayerRef::Alias("captured".into()),
+                at: (0, 0),
+                color: Rgba([211, 33, 74, 255]),
+                mode: Mode::Replace,
+                tolerance: 0,
+            },
+            Op::FloodFill {
+                layer: root,
+                at: (0, 0),
+                color: Rgba([46, 199, 8, 128]),
+                mode: Mode::SourceOver,
+                tolerance: 0,
+            },
+        ],
+    );
+}

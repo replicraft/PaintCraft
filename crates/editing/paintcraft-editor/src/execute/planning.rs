@@ -85,17 +85,29 @@ impl Compiler {
         if !logical.tiles.apply_checked(plan, operation, check)? {
             return Ok(());
         }
+        // Share only immutable descriptor storage. Keep every replay record and
+        // source-program append: equal translucent operations must blend again.
+        // All plans in this compiler use the same admission realm/policy. Avoid
+        // replacing a smaller freshly compiled payload with a larger capacity.
+        let retained = if let Some(previous) = self.paints.values.last()
+            && previous.plan.descriptor_bytes() <= plan.descriptor_bytes()
+            && previous.plan.same_writes_checked(plan, check)?
+        {
+            previous.plan.clone()
+        } else {
+            plan.clone()
+        };
         if self.needs_pixels && logical.pixels.is_none() {
             logical.pixels =
                 Some(PaintSnapshot::capture(source, admission, check)?.fork(admission, check)?);
         }
         if let Some(pixels) = logical.pixels.take() {
-            logical.pixels = Some(pixels.append_checked(plan.clone(), check)?);
+            logical.pixels = Some(pixels.append_checked(retained.clone(), check)?);
         }
         self.paints.push(Paint {
             operation,
             layer: id,
-            plan: plan.clone(),
+            plan: retained,
         })
     }
     #[allow(clippy::too_many_arguments)]
