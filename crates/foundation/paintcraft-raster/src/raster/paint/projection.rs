@@ -8,6 +8,7 @@ use super::*;
 pub struct PaintProjection {
     plan: PaintPlan,
     bounds: Rect,
+    coverage: Option<Rect>,
     tiles: HashMap<TileCoord, Vec<usize>>,
     bytes: usize,
     index_charge: paintcraft_core::types::resources::BudgetAccount,
@@ -56,9 +57,18 @@ impl PaintPlan {
             &mut ReadTarget(bounds),
             check,
         )?;
+        let mut coverage = None;
+        for writes in self.writes.chunks(1024) {
+            check()?;
+            for write in writes {
+                extend_coverage(&mut coverage, write.area, bounds);
+            }
+        }
+        check()?;
         Ok(PaintProjection {
             plan: self,
             bounds,
+            coverage,
             tiles: prepared.tiles,
             bytes: prepared.bytes,
             index_charge: prepared.charge,
@@ -120,6 +130,9 @@ impl PaintProjection {
                 target,
                 check,
             )?;
+            // Include even contextually omitted writes: a conservative envelope
+            // may miss an optimization, but can never hide an indexed write.
+            extend_coverage(&mut self.coverage, write.area, self.bounds);
         }
         self.bytes = metadata.used - input_bytes;
         check()?;
@@ -160,10 +173,12 @@ impl PaintProjection {
             return Ok(Rgba::TRANSPARENT);
         }
         let mut pixel = source(x, y)?;
-        if let Some(writes) = self.tiles.get(&TileCoord {
-            tx: x / i64::from(TILE_EDGE),
-            ty: y / i64::from(TILE_EDGE),
-        }) {
+        if self.coverage.is_some_and(|area| area.contains(x, y))
+            && let Some(writes) = self.tiles.get(&TileCoord {
+                tx: x / i64::from(TILE_EDGE),
+                ty: y / i64::from(TILE_EDGE),
+            })
+        {
             for (work, &index) in writes.iter().enumerate() {
                 if work.is_multiple_of(1024) {
                     check()?;
@@ -176,5 +191,18 @@ impl PaintProjection {
         }
         check()?;
         Ok(pixel)
+    }
+}
+
+// Coordinates have already been clipped to finite layer-local bounds. Min/max
+// union needs no width arithmetic, including at the largest supported extent.
+fn extend_coverage(coverage: &mut Option<Rect>, area: Rect, bounds: Rect) {
+    if let Some(area) = area.intersect(&bounds) {
+        *coverage = Some(coverage.map_or(area, |old| Rect {
+            x0: old.x0.min(area.x0),
+            y0: old.y0.min(area.y0),
+            x1: old.x1.max(area.x1),
+            y1: old.y1.max(area.y1),
+        }));
     }
 }

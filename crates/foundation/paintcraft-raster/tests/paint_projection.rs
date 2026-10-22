@@ -224,12 +224,16 @@ fn long_noncovering_descriptor_lists_cancel_and_source_errors_propagate() {
         plan.rect(rect(1, 1, 1, 1), Rgba([1; 4]), BlendMode::SourceOver)
             .unwrap();
     }
+    // Keep the read inside the conservative envelope but outside every actual
+    // write, so the long-list cancellation contract still exercises the scan.
+    plan.rect(rect(3, 3, 1, 1), Rgba([2; 4]), BlendMode::Replace)
+        .unwrap();
     let projection = plan
         .into_projection_checked(rect(0, 0, 8, 8), &|| Ok(()))
         .unwrap();
     let calls = Cell::new(0);
     projection
-        .read_checked(0, 0, |_, _| Ok(Rgba([7, 8, 9, 0])), &|| {
+        .read_checked(2, 2, |_, _| Ok(Rgba([7, 8, 9, 0])), &|| {
             calls.set(calls.get() + 1);
             Ok(())
         })
@@ -238,7 +242,7 @@ fn long_noncovering_descriptor_lists_cancel_and_source_errors_propagate() {
     for at in 1..=calls.get() {
         let seen = Cell::new(0);
         let error = projection
-            .read_checked(0, 0, |_, _| Ok(Rgba([7, 8, 9, 0])), &|| {
+            .read_checked(2, 2, |_, _| Ok(Rgba([7, 8, 9, 0])), &|| {
                 seen.set(seen.get() + 1);
                 if seen.get() == at {
                     Err(cancel())
@@ -252,8 +256,8 @@ fn long_noncovering_descriptor_lists_cancel_and_source_errors_propagate() {
     }
     let error = projection
         .read_checked(
-            0,
-            0,
+            2,
+            2,
             |_, _| Err(Error::new(ErrorCode::ConflictStaleBase, "source retired")),
             &|| Ok(()),
         )
