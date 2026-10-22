@@ -139,13 +139,21 @@ add('levels',rect(5,43,7,17)+rect(13,35,7,25)+rect(21,22,7,38)+rect(29,10,7,50)+
 add('color-balance',group(rgb_circles(),'rotate(15 32 32)'))
 
 assert len(icons)==68
+# Original PaintCraft action icon, separate from the supplied 68-icon sheet.
+add('clear-canvas',
+    path('M28 35L49 7Q52 3 56 6Q60 9 57 13L35 41Z', 'url(#blue)')
+    + line('M34 31L52 8', '#a4e6ff', 2)
+    + path('M19 34L32 29L42 38L37 49Z', 'url(#slate)')
+    + path('M19 39L36 47L30 59Q13 61 5 50L15 39Z', 'url(#gold)')
+    + line('M19 44L12 53M25 47L20 57M31 49L27 58', '#bd7a15', 2)
+    + line('M43 54H55M48 47H59', '#71c8ff', 2))
 OUT.mkdir(parents=True,exist_ok=True)
 manifest=[]
 for i,(name,body) in enumerate(icons):
     label=name.replace('-',' ').title()
     svg=f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">\n<title>{label}</title>\n{DEFS}\n<g stroke="#101d2b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">\n{body}\n</g>\n</svg>\n'
     (OUT/f'{name}.svg').write_text(svg)
-    manifest.append({'name':name,'label':label,'source_row':i//12+1,'source_column':i%12+1,'file':f'{name}.svg'})
+    manifest.append({'name':name,'label':label,'source_row':i//12+1 if i<68 else None,'source_column':i%12+1 if i<68 else None,'file':f'{name}.svg'})
 (OUT/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
-(OUT/'gallery.html').write_text('<!doctype html><html lang="en"><meta charset="utf-8"><title>PaintCraft vector icon gallery</title><style>body{font:14px system-ui;background:#eceff3;color:#172332;margin:32px}main{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px}figure{margin:0;padding:12px;text-align:center;background:white;border-radius:8px}img{width:64px;height:64px}figcaption{margin-top:8px}</style><h1>PaintCraft vector icons</h1><p>68 individual SVG adaptations of the user-supplied generated sheet.</p><main>'+''.join(f'<figure><img src="{r["file"]}" alt="{r["label"]}"><figcaption>{r["label"]}</figcaption></figure>' for r in manifest)+'</main></html>\n')
+(OUT/'gallery.html').write_text('<!doctype html><html lang="en"><meta charset="utf-8"><title>PaintCraft vector icon gallery</title><style>body{font:14px system-ui;background:#eceff3;color:#172332;margin:32px}main{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px}figure{margin:0;padding:12px;text-align:center;background:white;border-radius:8px}img{width:64px;height:64px}figcaption{margin-top:8px}</style><h1>PaintCraft vector icons</h1><p>68 individual SVG adaptations of the user-supplied generated sheet, plus an original Clear Canvas broom.</p><main>'+''.join(f'<figure><img src="{r["file"]}" alt="{r["label"]}"><figcaption>{r["label"]}</figcaption></figure>' for r in manifest)+'</main></html>\n')
 print(f'Wrote {len(icons)} vector icons, manifest and gallery to {OUT}')

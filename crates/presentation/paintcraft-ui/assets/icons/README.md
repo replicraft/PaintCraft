@@ -13,7 +13,8 @@ of the sheet's visible glyphs. The source sheet is reference material; these SVG
 and their generator are project assets under the repository license.
 
 [gallery.html](gallery.html) displays the full set. [manifest.json](manifest.json)
-maps each individual file to its source row and column. Regenerate the SVGs,
+maps sheet adaptations to their source row and column. The original Clear Canvas
+broom uses null source coordinates and is generated alongside the sheet icons. Regenerate the SVGs,
 manifest and gallery with `python3 scripts/generate_icons.py` from the repository
 root. The named Rust asset mapping lives in `src/icons/assets.rs`.
 

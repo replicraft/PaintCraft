@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+<title>Clear Canvas</title>
+<defs>
+<linearGradient id="blue" x2="0" y2="1"><stop stop-color="#59ceff"/><stop offset=".48" stop-color="#128ff5"/><stop offset="1" stop-color="#075eb9"/></linearGradient>
+<linearGradient id="gold" x2="0" y2="1"><stop stop-color="#fff49c"/><stop offset=".45" stop-color="#ffd345"/><stop offset="1" stop-color="#e89308"/></linearGradient>
+<linearGradient id="paper" x2="0" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#cbd8e8"/></linearGradient>
+<linearGradient id="slate" x2="0" y2="1"><stop stop-color="#747f8f"/><stop offset="1" stop-color="#242e3c"/></linearGradient>
+<linearGradient id="red" x2="0" y2="1"><stop stop-color="#ff7a95"/><stop offset="1" stop-color="#e7274e"/></linearGradient>
+<linearGradient id="green" x2="0" y2="1"><stop stop-color="#b2f795"/><stop offset="1" stop-color="#27942e"/></linearGradient>
+</defs>
+<g stroke="#101d2b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+<path d="M28 35L49 7Q52 3 56 6Q60 9 57 13L35 41Z" fill="url(#blue)" /><path d="M34 31L52 8" fill="none" stroke="#a4e6ff" stroke-width="2" /><path d="M19 34L32 29L42 38L37 49Z" fill="url(#slate)" /><path d="M19 39L36 47L30 59Q13 61 5 50L15 39Z" fill="url(#gold)" /><path d="M19 44L12 53M25 47L20 57M31 49L27 58" fill="none" stroke="#bd7a15" stroke-width="2" /><path d="M43 54H55M48 47H59" fill="none" stroke="#71c8ff" stroke-width="2" />
+</g>
+</svg>

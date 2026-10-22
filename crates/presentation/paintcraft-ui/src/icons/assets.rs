@@ -32,6 +32,7 @@ pub enum Icon {
     Brush,
     Spray,
     Eraser,
+    ClearCanvas,
     Bucket,
     Eyedropper,
     CloneStamp,
@@ -78,7 +79,7 @@ pub enum Icon {
 }
 
 impl Icon {
-    pub const ALL: [Self; 70] = [
+    pub const ALL: [Self; 71] = [
         Self::Settings,
         Self::Layers,
         Self::New,
@@ -110,6 +111,7 @@ impl Icon {
         Self::Brush,
         Self::Spray,
         Self::Eraser,
+        Self::ClearCanvas,
         Self::Bucket,
         Self::Eyedropper,
         Self::CloneStamp,
@@ -184,6 +186,7 @@ impl Icon {
             Self::Brush => "brush",
             Self::Spray => "spray",
             Self::Eraser => "eraser",
+            Self::ClearCanvas => "clear-canvas",
             Self::Bucket => "bucket",
             Self::Eyedropper => "eyedropper",
             Self::CloneStamp => "clone-stamp",
@@ -262,6 +265,7 @@ impl Icon {
             Self::Brush => include_bytes!("../../assets/icons/brush.svg"),
             Self::Spray => include_bytes!("../../assets/icons/spray.svg"),
             Self::Eraser => include_bytes!("../../assets/icons/eraser.svg"),
+            Self::ClearCanvas => include_bytes!("../../assets/icons/clear-canvas.svg"),
             Self::Bucket => include_bytes!("../../assets/icons/bucket.svg"),
             Self::Eyedropper => include_bytes!("../../assets/icons/eyedropper.svg"),
             Self::CloneStamp => include_bytes!("../../assets/icons/clone-stamp.svg"),

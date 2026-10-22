@@ -474,5 +474,12 @@
     "source_row": 6,
     "source_column": 8,
     "file": "color-balance.svg"
+  },
+  {
+    "name": "clear-canvas",
+    "label": "Clear Canvas",
+    "source_row": null,
+    "source_column": null,
+    "file": "clear-canvas.svg"
   }
 ]
