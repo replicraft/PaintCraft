@@ -9,10 +9,10 @@ RGB, finite-edge defaults and selection/origin handling stay unchanged.
 
 The editor compiles fills, pencil paths, smooth and unsmoothed strokes, shape
 fill/outline, masks, built-in text and flood regions into this shared representation.
-Fill and outline share one operation plan. Flood classification still examines the
-original private raster before compiling its paint descriptors. Earlier operations
-in a batch are executed sequentially, so later flood/selection/structural commands
-see the appropriate private state. This is not an upfront plan for the whole batch.
+Fill and outline share one operation plan. [Complete built-in batch preparation](BATCH_PLANNING.md)
+now compiles the structural/logical sequence before decoded replay. Flood reads
+source-bound earlier paint and captured duplicate/expansion lineage. A tile model
+prices the complete new decoded peak, followed by ordered replay and publication.
 
 ## Admission and ownership
 
@@ -79,14 +79,13 @@ or per-plan metadata guards.
 [Flood classification](FLOOD_PREPARATION.md) now yields cooperatively and uses
 fallible capacity-bounded bitmap/frontier/output storage. The editor compiles its
 clipped local spans directly, preserving earlier private edits without a duplicate
-coordinate-conversion vector. This remains sequential data-dependent preparation,
-not an upfront whole-batch plan or aggregate scratch reservation.
+coordinate-conversion vector. Complete batch compilation now reads logical prior
+paint; aggregate scratch reservation remains separate.
 
 [Rectangle/ellipse preparation](SHAPE_PREPARATION.md) now streams exact clipped
 spans into the admitted plan, with row cancellation and checked large-coordinate
-arithmetic. Fill/outline keep one shared operation plan. This does not add checked
-preparation to unsmoothed stroke unions or built-in font geometry, nor does it
-reserve the whole batch upfront.
+arithmetic. Fill/outline keep one shared operation plan. Later stroke/text
+preparation and complete built-in batch compilation are described below.
 
 [Pencil/stroke preparation](STROKE_PREPARATION.md) now checks invisible path work
 and vertex accounting, traverses borrowed segments, and uses a capacity-bounded
@@ -104,10 +103,12 @@ whole-batch, installed-font or physical-memory guarantee.
 [Read-only paint projections](PAINT_PROJECTION.md) now provide exact logical
 pixels for data-dependent preparation without decoded replay. Ordinary painting
 shares the bounded index builder, and flood accepts fallible immutable sources.
-Aggregate program ownership and upfront whole-batch reservation remain open.
+Source-bound programs now participate in complete built-in batch preparation.
+Joint program/geometry/service reservation remains open.
 
 
 [Combined logical programs](PAINT_PROGRAM.md) now append ordered plans under one
 capacity-accounted tile index, including incoming descriptor storage during
 transfer. A read reaches its preceding source once. This is a per-program bound;
-complete batch/source-lineage integration and shared service admission remain open.
+complete built-in batch/source-lineage integration is now implemented, while
+shared service and physical admission remain open.

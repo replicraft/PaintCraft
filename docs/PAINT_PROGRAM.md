@@ -47,10 +47,9 @@ retains materialized, chained and combined paths with required pixel/region
 preflights, raw statistical/process samples, calibration and no-op controls.
 It measures current real library preparation, not native editor or file workflows.
 
-The editor still executes sequentially. Complete batch integration needs bounded
-ownership across layers/programs, duplication/deletion/expansion lineage, contextual
-uniform/no-op proofs, aggregate geometry/font/flood scratch, decoded peak planning,
-source guards and appropriate operation-error attribution before publication.
+The editor now uses [complete built-in batch preparation](BATCH_PLANNING.md),
+including structural/source lineage, tile-ownership simulation, decoded peaks and
+operation attribution. Aggregate geometry/font/flood/service reservation remains open.
 Per-program bounds and work-count checks do not establish physical ceilings or
 native input/display/cancellation tails. No dependency or wire/file policy changes.
 
@@ -59,8 +58,9 @@ Paint descriptors and indices now have [shared ownership-based admission](SHARED
 in addition to their fixed per-plan/program policy. Plan clones share charged
 immutable storage; mutation copies under admission. Metadata denials carry their
 own class and never enter decoded-history reclamation. [Native waiting and reserved known metadata
-capacity](RESERVED_PAINT_METADATA.md) preserve the captured request; complete batch
-planning and aggregate geometry/service/physical budgets remain open.
+capacity](RESERVED_PAINT_METADATA.md) preserve the captured request. Complete
+built-in batch planning is integrated; aggregate geometry/service/physical budgets
+remain open.
 
 
 [Source-bound lineage](PAINT_LINEAGE.md) now captures immutable input pixels,

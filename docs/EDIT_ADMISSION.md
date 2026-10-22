@@ -53,8 +53,10 @@ task waits; their all-service admission and scheduling fairness remain open.
 ## Retry and publication
 
 Native batch execution now [plans painting operations](PAINT_PLANNING.md) before
-materializing their touched tiles; the complete batch still executes sequentially. Worker-side stroke/text plan
-construction produces its batch once. If execution reports a feasible decoded
+materializing their touched tiles. [Complete built-in batch preparation](BATCH_PLANNING.md)
+now validates structural/logical plans and reserves the known new decoded peak
+before ordered replay. Worker-side stroke/text plan construction produces its
+batch once. If execution reports a feasible decoded
 denial, the result retains that batch and the captured owner/base ticket; it does
 not retain a private document/history fork. Tool plans and font masks are not
 rebuilt from changed UI state when retrying.

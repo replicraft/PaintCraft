@@ -7,9 +7,10 @@ branch cannot rewrite a sibling or an earlier snapshot. Expansion reveals the
 captured implicit default outside the old bounds; earlier out-of-bounds descriptors
 cannot become visible later.
 
-This is a preparation primitive for whole-batch compilation. The editor still
-executes batches sequentially. It does not yet simulate complete tile ownership,
-reserve a complete batch peak, or integrate structural commands and error attribution.
+The editor now integrates this primitive into [complete built-in batch preparation](BATCH_PLANNING.md):
+structural/logical compilation, tile-ownership simulation and decoded-peak
+reservation precede ordered replay. Joint metadata/service/physical admission
+and native latency remain separate qualification work.
 
 ## Source proofs and reads
 
