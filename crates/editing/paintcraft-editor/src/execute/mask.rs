@@ -8,11 +8,13 @@ impl Stage<'_> {
         color: Rgba,
         spans: &[MaskSpan],
     ) -> Result<()> {
-        paintcraft_commands::validate_mask_spans(spans)?;
-        self.pencil_pixels += spans
-            .iter()
-            .map(|s| i128::from(s.x1 - s.x0 + 1))
-            .sum::<i128>();
+        paintcraft_commands::validate_mask_spans_checked(spans, self.check)?;
+        for (index, span) in spans.iter().enumerate() {
+            if index.is_multiple_of(1024) {
+                (self.check)()?;
+            }
+            self.pencil_pixels += i128::from(span.x1) - i128::from(span.x0) + 1;
+        }
         if self.pencil_pixels > PENCIL_PIXELS_MAX {
             return Err(Error::new(
                 ErrorCode::ResourceLimit,
@@ -22,7 +24,10 @@ impl Stage<'_> {
         let id = self.resolve(layer)?;
         let mut plan = self.adm.paint_plan();
         if let Some(clip) = self.editable(&self.doc.layers[&id]) {
-            for span in spans {
+            for (index, span) in spans.iter().enumerate() {
+                if index.is_multiple_of(1024) {
+                    (self.check)()?;
+                }
                 if span.y < clip.y0 || span.y >= clip.y1 {
                     continue;
                 }

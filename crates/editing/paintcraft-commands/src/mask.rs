@@ -3,12 +3,25 @@ use super::*;
 use paintcraft_core::types::text::MaskSpan;
 
 pub fn validate_mask_spans(spans: &[MaskSpan]) -> Result<()> {
+    validate_mask_spans_checked(spans, &|| Ok(()))
+}
+
+/// Validate resolved coverage with cooperative checks, including offscreen rows.
+/// The parser uses the same policy without a cancellation token.
+pub fn validate_mask_spans_checked(
+    spans: &[MaskSpan],
+    check: &dyn Fn() -> Result<()>,
+) -> Result<()> {
+    check()?;
     if spans.is_empty() || spans.len() > 262_144 {
         return Err(bad("mask needs 1..=262144 spans"));
     }
     let mut previous: Option<MaskSpan> = None;
     let mut pixels = 0i128;
-    for &span in spans {
+    for (index, &span) in spans.iter().enumerate() {
+        if index.is_multiple_of(1024) {
+            check()?;
+        }
         if span.x0.unsigned_abs() > COORD_ABS_MAX as u64
             || span.x1.unsigned_abs() > COORD_ABS_MAX as u64
             || span.y.unsigned_abs() > COORD_ABS_MAX as u64
@@ -26,7 +39,7 @@ pub fn validate_mask_spans(spans: &[MaskSpan]) -> Result<()> {
         }
         previous = Some(span);
     }
-    Ok(())
+    check()
 }
 
 pub(super) fn parse(v: &Value) -> Result<Op> {
@@ -64,6 +77,38 @@ pub(super) fn parse(v: &Value) -> Result<Op> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn resolved_mask_validation_cooperates_at_every_observed_checkpoint() {
+        use std::cell::Cell;
+        let spans: Vec<_> = (0..4096)
+            .map(|y| MaskSpan {
+                y,
+                x0: 0,
+                x1: 0,
+                coverage: 255,
+            })
+            .collect();
+        let total = Cell::new(0);
+        validate_mask_spans_checked(&spans, &|| {
+            total.set(total.get() + 1);
+            Ok(())
+        })
+        .unwrap();
+        for cancel in 1..=total.get() {
+            let calls = Cell::new(0);
+            let error = validate_mask_spans_checked(&spans, &|| {
+                calls.set(calls.get() + 1);
+                if calls.get() == cancel {
+                    Err(Error::new(ErrorCode::OperationCancelled, "cancel mask"))
+                } else {
+                    Ok(())
+                }
+            })
+            .unwrap_err();
+            assert_eq!(error.code, ErrorCode::OperationCancelled);
+            assert_eq!(calls.get(), cancel);
+        }
+    }
     #[test]
     fn masks_reject_overlap_unsorted_rows_overflow_and_unbounded_work() {
         let span = MaskSpan {

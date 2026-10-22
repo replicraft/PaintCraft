@@ -172,13 +172,6 @@ impl Stage<'_> {
         )
     }
 
-    /// Paint absolute-coordinate spans of `id`, one blend per covered pixel.
-    fn paint_spans(&mut self, id: Uuid, spans: &[Span], color: Rgba, mode: Mode) -> Result<()> {
-        let mut plan = self.adm.paint_plan();
-        self.add_paint_spans(id, spans, color, mode, &mut plan)?;
-        self.apply_paint(id, &plan)
-    }
-
     fn charge_stroke(&mut self, points: &[(i64, i64)], size: u32, scale: u32) -> Result<()> {
         let length = path::length_scaled(points, scale, self.check)?;
         self.pencil_pixels += 1 + length;
@@ -525,17 +518,16 @@ impl Stage<'_> {
                 let Some(clip) = self.editable(&self.doc.layers[&id]) else {
                     return Ok(());
                 };
-                let spans = paintcraft_raster::font::layout(text, *at, i64::from(*scale), &clip)
-                    .map_err(|c| {
-                        Error::new(
-                            ErrorCode::CapabilityUnsupported,
-                            format!(
-                                "character U+{:04X} has no glyph in the built-in font",
-                                c as u32
-                            ),
-                        )
-                    })?;
-                self.paint_spans(id, &spans, *color, *mode)?;
+                let mut plan = self.adm.paint_plan();
+                paintcraft_raster::font::visit_layout(
+                    text,
+                    *at,
+                    i64::from(*scale),
+                    &clip,
+                    self.check,
+                    |span| self.add_paint_spans(id, &[span], *color, *mode, &mut plan),
+                )?;
+                self.apply_paint(id, &plan)?;
             }
             Op::SelectionSetRect { rect } => {
                 self.selection = match self.doc.canvas_rect().intersect(rect) {

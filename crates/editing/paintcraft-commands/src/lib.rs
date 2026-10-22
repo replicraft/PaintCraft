@@ -13,7 +13,7 @@ use paintcraft_core::types::ids::parse_uuid;
 use paintcraft_core::types::policy::{COORD_ABS_MAX, hex};
 
 mod mask;
-pub use mask::validate_mask_spans;
+pub use mask::{validate_mask_spans, validate_mask_spans_checked};
 mod stroke;
 
 const SIZE_MAX: i64 = 1_048_576;
