@@ -177,7 +177,27 @@ pub(super) fn ribbon(
                         .allocate_ui_with_layout(
                             Vec2::new(56.0, 54.0),
                             egui::Layout::top_down(egui::Align::Center),
-                            |ui| icon_button(ui, "Layers", Icon::Layers, workspace.layers, false),
+                            |ui| {
+                                let response = ui.add(
+                                    egui::Button::image(paintcraft_ui::icons::image(
+                                        ui.ctx(),
+                                        Icon::Layers,
+                                        40.0,
+                                    ))
+                                    .min_size(Vec2::new(56.0, 54.0))
+                                    .selected(workspace.layers)
+                                    .frame(workspace.layers),
+                                );
+                                response.widget_info(|| {
+                                    egui::WidgetInfo::selected(
+                                        egui::Role::Button,
+                                        ui.is_enabled(),
+                                        workspace.layers,
+                                        "Layers",
+                                    )
+                                });
+                                response.on_hover_text("Layers")
+                            },
                         )
                         .inner;
                     if response.clicked() && ui.ctx().current_pass_index() == 0 {
