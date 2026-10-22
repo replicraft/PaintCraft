@@ -374,19 +374,19 @@ fn classic_image_and_shape_previews_are_present_without_enabling_unimplemented_e
         );
     }
     for label in [
-        "polygon",
-        "right-triangle",
-        "diamond",
-        "pentagon",
-        "right-arrow",
-        "left-arrow",
-        "up-arrow",
-        "down-arrow",
-        "four-point-star",
-        "six-point-star",
-        "rectangular-callout",
-        "rounded-speech-bubble",
-        "cloud-callout",
+        "Polygon",
+        "Right triangle",
+        "Diamond",
+        "Pentagon",
+        "Right arrow",
+        "Left arrow",
+        "Up arrow",
+        "Down arrow",
+        "Four-point star",
+        "Six-point star",
+        "Rectangular callout",
+        "Oval callout",
+        "Cloud callout",
     ] {
         h.get_by_label(label).scroll_to_me();
         h.run();

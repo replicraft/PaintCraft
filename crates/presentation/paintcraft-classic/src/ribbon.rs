@@ -73,91 +73,7 @@ pub(super) fn ribbon(
                 ui.separator();
                 group(ui, "Shapes", |ui| {
                     ui.horizontal_top(|ui| {
-                        egui::Frame::new()
-                            .stroke(ui.visuals().widgets.noninteractive.bg_stroke)
-                            .corner_radius(4)
-                            .inner_margin(2)
-                            .show(ui, |ui| {
-                                ui.spacing_mut().button_padding = Vec2::splat(2.0);
-                                egui::ScrollArea::vertical()
-                                    .id_salt("classic-shapes-gallery")
-                                    .max_height(78.0)
-                                    .max_width(132.0)
-                                    .show(ui, |ui| {
-                                        egui::Grid::new("windows11-shapes")
-                                            .min_row_height(24.0)
-                                            .min_col_width(24.0)
-                                            .spacing(Vec2::ZERO)
-                                            .show(ui, |ui| {
-                                                for (i, icon) in [
-                                                    Icon::Line,
-                                                    Icon::Curve,
-                                                    Icon::Ellipse,
-                                                    Icon::Rectangle,
-                                                    Icon::RoundedRectangle,
-                                                    Icon::Polygon,
-                                                    Icon::Triangle,
-                                                    Icon::RightTriangle,
-                                                    Icon::Diamond,
-                                                    Icon::Pentagon,
-                                                    Icon::Hexagon,
-                                                    Icon::RightArrow,
-                                                    Icon::LeftArrow,
-                                                    Icon::UpArrow,
-                                                    Icon::DownArrow,
-                                                    Icon::FourPointStar,
-                                                    Icon::Star,
-                                                    Icon::SixPointStar,
-                                                    Icon::RectangularCallout,
-                                                    Icon::RoundedSpeechBubble,
-                                                    Icon::SpeechBubble,
-                                                    Icon::CloudCallout,
-                                                    Icon::Heart,
-                                                    Icon::Lightning,
-                                                    Icon::Burst,
-                                                ]
-                                                .into_iter()
-                                                .enumerate()
-                                                {
-                                                    let tool = match icon {
-                                                        Icon::Line => Some(Tool::Line),
-                                                        Icon::Ellipse => Some(Tool::Ellipse),
-                                                        Icon::Rectangle => Some(Tool::Rect),
-                                                        _ => None,
-                                                    };
-                                                    if let Some(tool) = tool {
-                                                        if compact_icon(
-                                                            ui,
-                                                            tool.name(),
-                                                            icon,
-                                                            state.tool == tool,
-                                                        )
-                                                        .clicked()
-                                                        {
-                                                            state.tool = tool;
-                                                            actions.push(Action::SelectTool(tool));
-                                                        }
-                                                    } else {
-                                                        ui.add_enabled_ui(false, |ui| {
-                                                            compact_icon(
-                                                                ui,
-                                                                icon.name(),
-                                                                icon,
-                                                                false,
-                                                            )
-                                                        })
-                                                        .inner
-                                                        .on_disabled_hover_text(
-                                                            "UI preview · shape not implemented",
-                                                        );
-                                                    }
-                                                    if i % 5 == 4 {
-                                                        ui.end_row();
-                                                    }
-                                                }
-                                            });
-                                    });
-                            });
+                        super::shapes::gallery(ui, state, actions);
                         ui.vertical(|ui| super::dropdowns::shape_paint(ui, state));
                     });
                 });
@@ -238,24 +154,4 @@ fn prototype(ui: &mut egui::Ui, label: &str, icon: Icon, help: &str) {
     ui.add_enabled_ui(false, |ui| icon_button(ui, label, icon, false, false))
         .inner
         .on_disabled_hover_text(help);
-}
-
-fn compact_icon(ui: &mut egui::Ui, label: &str, icon: Icon, selected: bool) -> egui::Response {
-    let response = ui
-        .scope(|ui| {
-            // Compact shape cells keep three visible rows even when the main
-            // toolbar uses larger Windows-style interaction targets.
-            ui.spacing_mut().interact_size = Vec2::splat(24.0);
-            ui.add(
-                egui::Button::new(paintcraft_ui::icons::image(ui.ctx(), icon, 19.0))
-                    .selected(selected)
-                    .min_size(Vec2::splat(24.0))
-                    .frame(selected),
-            )
-        })
-        .inner;
-    response.widget_info(|| {
-        egui::WidgetInfo::selected(egui::Role::Button, ui.is_enabled(), selected, label)
-    });
-    response.on_hover_text(label)
 }
