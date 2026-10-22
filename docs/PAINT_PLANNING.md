@@ -93,3 +93,9 @@ and vertex accounting, traverses borrowed segments, and uses a capacity-bounded
 cancellable unsmoothed union before compiling paint descriptors. Fixed geometry
 limits do not become decoded-capacity retries. Aggregate batch/service admission
 and native wall-clock tails remain unqualified.
+
+
+Built-in text now [streams into admitted plans](TEXT_PREPARATION.md), and resolved
+mask validation/accounting/clipping observe cancellation even offscreen. This
+removes an editor geometry collector without extending per-plan limits into a
+whole-batch, installed-font or physical-memory guarantee.

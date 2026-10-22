@@ -388,3 +388,41 @@ Reducing checked-union overhead, whole-batch/effect planning, aggregate service
 budgets, other geometry/font kernels, physical pressure, asynchronous GPU services,
 native device reconstruction/latency and broader feature work remain. T04/T13/T14/
 T21/T37 remain partial/in progress; no roadmap gate is promoted.
+
+
+## Forty-fifth slice: streamed text and cancellable resolved masks
+
+Built-in bitmap text now streams clipped glyph spans into the existing bounded
+paint plan. The visitor checks characters, glyph rows and emissions, including
+newlines/offscreen glyphs; i128 origin/cell arithmetic narrows only clipped spans.
+The admitted whole-pixel font, scale, character limits and emission order remain
+unchanged. Legacy collectors remain for callers with their own allocation policy.
+Resolved grayscale mask validation now has a checked counterpart; editor pixel
+accounting and clipping also check bounded chunks, including offscreen spans.
+No dependency, font choice, wire format or publication policy changes. See
+[the text preparation contract](TEXT_PREPARATION.md).
+
+Six new tests compare independent glyph-bit pixels and legacy span order over
+scales/clips/origins, cancel every observed visitor/validator checkpoint, reject
+unsupported offscreen glyphs, handle signed origins and stop on the first sink
+failure. Editor tests cancel text and late mask traversals after private prefixes;
+fixed metadata exhaustion and unsupported glyphs retain owner ticket/history and
+release decoded leases. This completes another preparation prerequisite for
+compound planning, not whole-batch reservation itself.
+
+The frontend installed-font Cosmic Text/Swash path remains distinct: editable
+objects, shaping/font-loading cancellation, IME, aggregate font/input memory and
+native antialiasing/reference fidelity are not completed here. Callback intervals
+and streamed geometry are correctness baselines, without measured throughput,
+RSS or native input/display/cancellation-tail claims. Earlier timings remain scoped
+to their frozen sources. Whole-batch/effect planning, aggregate resource budgets,
+scheduling, asynchronous GPU services, device reconstruction and broader features
+remain; T04/T13/T14/T37 stay partial/in progress.
+
+
+835 workspace tests pass (26 explicit ignores) across 75 suites. Strict all-target
+Clippy, optimized raster/editor text regressions, release desktop/CLI builds,
+23 renderer unit tests, 31 required Metal integration tests and 224 required-GPU
+desktop tests pass. Default/single-layer 30-frame native startup checks exit zero
+with empty logs. The [validation record](validation/text-preparation-2026-10-21/validation.json)
+pins committed source, commands, exact compressed logs and release hashes.
