@@ -172,3 +172,156 @@ fn render_classic_edit_colors_for_review() {
         .unwrap();
     std::fs::remove_dir_all(dir).unwrap();
 }
+
+#[test]
+fn responsive_color_dialog_keeps_controls_and_footer_reachable_and_cancel_discards_drafts() {
+    use eframe::egui::Role;
+    use paintcraft::settings::Appearance;
+    for (size, ppp, appearance) in [
+        (Vec2::new(1360.0, 900.0), 1.0, Appearance::Light),
+        (Vec2::new(800.0, 600.0), 1.0, Appearance::Dark),
+        (Vec2::new(480.0, 500.0), 2.0, Appearance::Light),
+        (Vec2::new(360.0, 500.0), 1.0, Appearance::Dark),
+        (Vec2::new(480.0, 360.0), 1.0, Appearance::Dark),
+    ] {
+        let dir = scratch("responsive-colors");
+        Settings {
+            appearance,
+            classic_variant: Some(ClassicVariant::V11),
+            ..Default::default()
+        }
+        .save(&dir)
+        .unwrap();
+        let mut h = Harness::builder()
+            .with_size(size)
+            .with_pixels_per_point(ppp)
+            .build_ui_state(
+                |ui, app: &mut App| {
+                    app.ui(ui);
+                    if ui.ctx().current_pass_index() == 0 {
+                        ui.ctx()
+                            .request_discard("test: repeated color-dialog layout");
+                    }
+                },
+                App::new(None).with_settings(dir.clone()),
+            );
+        h.run();
+        let saved = std::fs::read(dir.join("settings.json")).unwrap();
+        let snapshot = h.state().editor().document_snapshot();
+        let ticket = h.state().editor().history_view().ticket;
+        h.get_by_label("Edit colors…").scroll_to_me();
+        h.run();
+        h.get_by_label("Edit colors…").click();
+        h.run();
+        let footer = h.get_by_label("OK").rect();
+        h.run_steps(8);
+        assert_eq!(
+            h.get_by_label("OK").rect(),
+            footer,
+            "dialog must settle at {size:?}"
+        );
+        for label in ["OK", "Cancel"] {
+            let rect = h.get_by_label(label).rect();
+            assert!(
+                rect.min.x >= 0.0
+                    && rect.min.y >= 0.0
+                    && rect.max.x <= size.x
+                    && rect.max.y <= size.y,
+                "{label}: {rect:?} outside {size:?}"
+            );
+        }
+        for label in [
+            "Hue and saturation",
+            "Brightness",
+            "Hex RGB",
+            "Red",
+            "Custom color 28",
+        ] {
+            let role = match label {
+                "Hue and saturation" => Role::ColorWell,
+                "Brightness" => Role::Slider,
+                "Hex RGB" => Role::TextInput,
+                "Red" => Role::SpinButton,
+                _ => Role::Button,
+            };
+            h.get_by_role_and_label(role, label).scroll_to_me();
+            h.run();
+            let rect = h.get_by_role_and_label(role, label).rect();
+            assert!(
+                rect.min.x >= 0.0 && rect.max.x <= size.x,
+                "{label}: {rect:?}"
+            );
+            assert!(
+                rect.max.y >= 0.0 && rect.min.y < footer.min.y,
+                "{label} must scroll above the footer"
+            );
+            assert_eq!(h.get_by_label("OK").rect(), footer);
+        }
+        h.get_by_label("Hex RGB").scroll_to_me();
+        h.run();
+        hex(&mut h, "#2080FF");
+        h.get_by_label("Custom color 28").scroll_to_me();
+        h.run();
+        h.get_by_label("Custom color 28").click();
+        h.run();
+        h.get_by_label("Add custom color").scroll_to_me();
+        h.run();
+        h.get_by_label("Add custom color").click();
+        h.run();
+        h.get_by_label("Cancel").click();
+        h.run();
+        assert_eq!(h.state().editor().color, Rgba([0, 0, 0, 255]));
+        assert_eq!(std::fs::read(dir.join("settings.json")).unwrap(), saved);
+        assert!(h.state().editor().document().same_semantics(&snapshot));
+        assert_eq!(h.state().editor().history_view().ticket, ticket);
+        drop(h);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+}
+
+#[test]
+fn narrow_color_dialog_accepts_rgb_and_custom_palette_changes_without_document_history() {
+    let dir = scratch("narrow-color-accept");
+    Settings {
+        classic_variant: Some(ClassicVariant::V11),
+        ..Default::default()
+    }
+    .save(&dir)
+    .unwrap();
+    let mut h = Harness::builder()
+        .with_size(Vec2::new(480.0, 500.0))
+        .build_ui_state(
+            |ui, app: &mut App| app.ui(ui),
+            App::new(None).with_settings(dir.clone()),
+        );
+    h.run();
+    let snapshot = h.state().editor().document_snapshot();
+    let ticket = h.state().editor().history_view().ticket;
+    h.get_by_label("Edit colors…").scroll_to_me();
+    h.run();
+    h.get_by_label("Edit colors…").click();
+    h.run();
+    h.get_by_label("Hex RGB").scroll_to_me();
+    h.run();
+    hex(&mut h, "#2080FF");
+    h.get_by_label("Custom color 28").scroll_to_me();
+    h.run();
+    h.get_by_label("Custom color 28").click();
+    h.run();
+    h.get_by_label("Add custom color").scroll_to_me();
+    h.run();
+    h.get_by_label("Add custom color").click();
+    h.run();
+    h.get_by_label("OK").click();
+    h.run();
+    assert_eq!(h.state().editor().color, Rgba([32, 128, 255, 255]));
+    assert_eq!(
+        Settings::load(&dir).0.custom_colors[27],
+        Some(Rgba([32, 128, 255, 255]))
+    );
+    assert!(h.state().editor().document().same_semantics(&snapshot));
+    assert_eq!(h.state().editor().history_view().ticket, ticket);
+    assert!(!h.state().editor().is_dirty());
+    drop(h);
+    std::fs::remove_dir_all(dir).unwrap();
+}

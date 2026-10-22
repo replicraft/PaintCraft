@@ -1,4 +1,6 @@
 //! Staged Classic color picker. The host adopts the result only on OK.
+mod dialog;
+pub use dialog::edit_colors_dialog;
 mod fields;
 mod picker;
 use egui::{Color32, Vec2, ecolor::Hsva};
@@ -73,97 +75,12 @@ impl ColorEditor {
     }
 }
 
-pub fn edit_colors_dialog(ctx: &egui::Context, editor: &mut ColorEditor) -> ColorResponse {
-    let mut result = ColorResponse::Pending;
-    let modal = egui::Modal::new(egui::Id::unique("classic-edit-colors")).show(ctx, |ui| {
-        ui.set_width(620.0);
-        ui.heading("Edit colors");
-        ui.add_space(12.0);
-        egui::ScrollArea::vertical()
-            .max_height((ctx.viewport_rect().height() - 160.0).max(160.0))
-            .show(ui, |ui| {
-                ui.horizontal_top(|ui| {
-                    picker::square(ui, editor);
-                    let (rect, _) =
-                        ui.allocate_exact_size(Vec2::new(36.0, 220.0), egui::Sense::hover());
-                    ui.painter().rect_filled(
-                        rect,
-                        4.0,
-                        Color32::from_rgb(editor.color.0[0], editor.color.0[1], editor.color.0[2]),
-                    );
-                    picker::brightness(ui, editor);
-                    ui.add_space(8.0);
-                    ui.vertical(|ui| fields::controls(ui, editor));
-                });
-                ui.add_space(18.0);
-                ui.horizontal_top(|ui| {
-                    ui.vertical(|ui| {
-                        ui.label("Basic colors");
-                        palette(ui, editor);
-                    });
-                    ui.add_space(16.0);
-                    ui.vertical(|ui| {
-                        ui.horizontal(|ui| {
-                            ui.label("Custom colors");
-                            let add = ui.add_enabled(editor.valid(), egui::Button::new("+"));
-                            add.widget_info(|| {
-                                egui::WidgetInfo::labeled(
-                                    egui::Role::Button,
-                                    ui.is_enabled() && editor.valid(),
-                                    "Add custom color",
-                                )
-                            });
-                            if add
-                                .on_hover_text("Add current color to the selected custom slot")
-                                .clicked()
-                                && ui.ctx().current_pass_index() == 0
-                            {
-                                let mut color = editor.color;
-                                color.0[3] = 255;
-                                editor.custom[editor.selected_slot] = Some(color);
-                                editor.selected_slot = editor
-                                    .custom
-                                    .iter()
-                                    .position(Option::is_none)
-                                    .unwrap_or((editor.selected_slot + 1) % CUSTOM_COLOR_COUNT);
-                            }
-                        });
-                        custom_palette(ui, editor);
-                    });
-                });
-            });
-        ui.add_space(12.0);
-        ui.separator();
-        ui.horizontal(|ui| {
-            if ui
-                .add_enabled(
-                    editor.valid(),
-                    egui::Button::new("OK").min_size(Vec2::new(295.0, 30.0)),
-                )
-                .clicked()
-            {
-                result = ColorResponse::Accept;
-            }
-            if ui
-                .add_sized([295.0, 30.0], egui::Button::new("Cancel"))
-                .clicked()
-            {
-                result = ColorResponse::Cancel;
-            }
-        });
-    });
-    if modal.should_close() {
-        result = ColorResponse::Cancel;
-    }
-    result
-}
-
 fn swatch(ui: &mut egui::Ui, color: Option<Rgba>, label: &str, selected: bool) -> egui::Response {
     let (rect, response) = ui.allocate_exact_size(Vec2::splat(23.0), egui::Sense::click());
     let stroke = egui::Stroke::new(
         if selected { 2.0 } else { 1.0 },
         if selected {
-            ui.visuals().selection.bg_fill
+            ui.visuals().selection.stroke.color
         } else {
             ui.visuals().widgets.noninteractive.bg_stroke.color
         },
@@ -175,14 +92,23 @@ fn swatch(ui: &mut egui::Ui, color: Option<Rgba>, label: &str, selected: bool) -
             Color32::from_rgb(color.0[0], color.0[1], color.0[2]),
         );
     }
-    ui.painter().circle_stroke(rect.center(), 9.0, stroke);
+    if color.is_none() && !selected {
+        let points: [egui::Pos2; 33] = std::array::from_fn(|i| {
+            let angle = i as f32 * std::f32::consts::TAU / 32.0;
+            rect.center() + Vec2::angled(angle) * 9.0
+        });
+        ui.painter()
+            .extend(egui::Shape::dashed_line(&points, stroke, 3.0, 2.0));
+    } else {
+        ui.painter().circle_stroke(rect.center(), 9.0, stroke);
+    }
     response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, ui.is_enabled(), label));
     response.on_hover_text(label)
 }
 
-fn palette(ui: &mut egui::Ui, editor: &mut ColorEditor) {
+fn palette(ui: &mut egui::Ui, editor: &mut ColorEditor, columns: usize) {
     egui::Grid::new("classic-basic-colors")
-        .num_columns(12)
+        .num_columns(columns)
         .min_col_width(0.0)
         .spacing(Vec2::splat(2.0))
         .show(ui, |ui| {
@@ -198,7 +124,7 @@ fn palette(ui: &mut egui::Ui, editor: &mut ColorEditor) {
                 {
                     editor.set_rgb(rgb);
                 }
-                if i % 12 == 11 {
+                if i % columns == columns - 1 {
                     ui.end_row();
                 }
             }

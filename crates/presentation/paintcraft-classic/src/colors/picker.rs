@@ -5,9 +5,8 @@ fn color(h: f32, s: f32, v: f32) -> Color32 {
     Color32::from_rgb(rgba[0], rgba[1], rgba[2])
 }
 
-pub(super) fn square(ui: &mut egui::Ui, editor: &mut ColorEditor) {
-    let (rect, response) =
-        ui.allocate_exact_size(Vec2::splat(220.0), egui::Sense::click_and_drag());
+pub(super) fn square(ui: &mut egui::Ui, editor: &mut ColorEditor, side: f32) {
+    let (rect, response) = ui.allocate_exact_size(Vec2::splat(side), egui::Sense::click_and_drag());
     response.widget_info(|| {
         egui::WidgetInfo::labeled(egui::Role::ColorWell, ui.is_enabled(), "Hue and saturation")
     });
@@ -59,9 +58,9 @@ pub(super) fn square(ui: &mut egui::Ui, editor: &mut ColorEditor) {
         .circle_stroke(marker, 3.0, egui::Stroke::new(1.0, Color32::WHITE));
 }
 
-pub(super) fn brightness(ui: &mut egui::Ui, editor: &mut ColorEditor) {
+pub(super) fn brightness(ui: &mut egui::Ui, editor: &mut ColorEditor, height: f32) {
     let (rect, response) =
-        ui.allocate_exact_size(Vec2::new(24.0, 220.0), egui::Sense::click_and_drag());
+        ui.allocate_exact_size(Vec2::new(24.0, height), egui::Sense::click_and_drag());
     response.widget_info(|| {
         egui::WidgetInfo::slider(ui.is_enabled(), editor.hsv.v.into(), "Brightness")
     });

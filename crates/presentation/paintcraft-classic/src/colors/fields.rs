@@ -12,12 +12,18 @@ pub(super) fn parse_hex(text: &str) -> Option<[u8; 3]> {
     ])
 }
 
-pub(super) fn controls(ui: &mut egui::Ui, editor: &mut ColorEditor) {
-    ui.set_width(180.0);
-    let caption = ui.label("Hex RGB");
-    let response = ui
-        .add(egui::TextEdit::singleline(&mut editor.hex).desired_width(160.0))
-        .labelled_by(caption.id);
+pub(super) fn controls(ui: &mut egui::Ui, editor: &mut ColorEditor, width: f32) {
+    ui.set_width(width);
+    let field_width = (width - 100.0).clamp(100.0, 180.0);
+    let response = ui.add(
+        egui::TextEdit::singleline(&mut editor.hex)
+            .desired_width(field_width)
+            .margin(Vec2::new(8.0, 8.0))
+            .hint_text("#RRGGBB"),
+    );
+    response.widget_info(|| {
+        egui::WidgetInfo::labeled(egui::Role::TextInput, ui.is_enabled(), "Hex RGB")
+    });
     if response.changed()
         && let Some(rgb) = parse_hex(&editor.hex)
     {
@@ -25,11 +31,13 @@ pub(super) fn controls(ui: &mut egui::Ui, editor: &mut ColorEditor) {
         editor.set_rgb(rgb);
         editor.hex = text;
     }
+    response.on_hover_text("Hex RGB");
     if !editor.valid() {
         ui.weak("Enter six hex digits, such as #2080FF.");
     }
     ui.add_space(8.0);
     let model = egui::ComboBox::from_id_salt("classic-color-model")
+        .width(field_width)
         .selected_text(match editor.mode {
             NumericMode::Rgb => "RGB",
             NumericMode::Hsl => "HSL",
@@ -41,6 +49,7 @@ pub(super) fn controls(ui: &mut egui::Ui, editor: &mut ColorEditor) {
     model.response.widget_info(|| {
         egui::WidgetInfo::labeled(egui::Role::ComboBox, ui.is_enabled(), "Color model")
     });
+    model.response.on_hover_text("Color model");
     ui.add_space(8.0);
     match editor.mode {
         NumericMode::Rgb => {
@@ -48,11 +57,12 @@ pub(super) fn controls(ui: &mut egui::Ui, editor: &mut ColorEditor) {
             let mut changed = false;
             for (i, label) in ["Red", "Green", "Blue"].into_iter().enumerate() {
                 ui.horizontal(|ui| {
+                    let value = ui.add_sized(
+                        [field_width, 36.0],
+                        egui::DragValue::new(&mut rgb[i]).range(0..=255),
+                    );
                     let caption = ui.label(label);
-                    changed |= ui
-                        .add(egui::DragValue::new(&mut rgb[i]).range(0..=255))
-                        .labelled_by(caption.id)
-                        .changed();
+                    changed |= value.labelled_by(caption.id).changed();
                 });
             }
             if changed {
@@ -68,15 +78,14 @@ pub(super) fn controls(ui: &mut egui::Ui, editor: &mut ColorEditor) {
                 (2, "Lightness", 100.0),
             ] {
                 ui.horizontal(|ui| {
+                    let value = ui.add_sized(
+                        [field_width, 36.0],
+                        egui::DragValue::new(&mut hsl[i])
+                            .speed(0.5)
+                            .range(0.0..=max),
+                    );
                     let caption = ui.label(label);
-                    changed |= ui
-                        .add(
-                            egui::DragValue::new(&mut hsl[i])
-                                .speed(0.5)
-                                .range(0.0..=max),
-                        )
-                        .labelled_by(caption.id)
-                        .changed();
+                    changed |= value.labelled_by(caption.id).changed();
                 });
             }
             if changed {
