@@ -230,3 +230,14 @@ mod recovery_handoff_tests {
         std::fs::remove_dir_all(dir).unwrap();
     }
 }
+
+#[test]
+fn window_title_uses_the_bound_document_name_and_ignores_draft_destinations() {
+    let mut app = App::new(None);
+    app.set_path_text("draft.pcnd");
+    assert_eq!(app.document_window_title(), "Untitled - PaintCraft");
+    app.editor.set_path(PathBuf::from("/tmp/Flowers.pcnd"));
+    assert_eq!(app.document_window_title(), "Flowers.pcnd - PaintCraft");
+    app.set_path_text("another-destination.pcnd");
+    assert_eq!(app.document_window_title(), "Flowers.pcnd - PaintCraft");
+}

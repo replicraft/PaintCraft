@@ -3,12 +3,27 @@
 use super::*;
 
 impl App {
+    pub(super) fn document_window_title(&self) -> String {
+        let name = self
+            .editor
+            .path()
+            .and_then(Path::file_name)
+            .map(|name| name.to_string_lossy())
+            .unwrap_or_else(|| "Untitled".into());
+        format!("{name} - PaintCraft")
+    }
+
     /// Lay out one pass of the whole window.
     pub fn ui(&mut self, ui: &mut egui::Ui) {
         let ctx = ui.ctx().clone();
         self.context = ctx.clone();
         let first_pass = ctx.current_pass_index() == 0;
         if first_pass {
+            let title = self.document_window_title();
+            if title != self.window_title {
+                ctx.send_viewport_cmd(egui::ViewportCommand::Title(title.clone()));
+                self.window_title = title;
+            }
             self.poll_edits(&ctx);
             if let Some(fullscreen) = ctx.input(|i| i.viewport().fullscreen) {
                 self.fullscreen = fullscreen;

@@ -202,6 +202,7 @@ pub struct App {
     fullscreen: bool,
     pending_center: Option<(f32, f32)>,
     path_text: String,
+    window_title: String,
     /// The file this document was opened from or last saved to.
     bound: Option<PathBuf>,
     pending_save: Option<(PathBuf, Option<PathBuf>)>,
@@ -308,6 +309,7 @@ impl App {
             fullscreen: false,
             pending_center: None,
             path_text,
+            window_title: String::new(),
             bound: None,
             pending_save: None,
             deferred_files: Default::default(),
