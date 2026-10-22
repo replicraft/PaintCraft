@@ -505,3 +505,17 @@ All 140 window-free UI tests and strict workspace Clippy pass; see
 Checks cover disabled clicks opening no alternate dialog, one tooltip at scales
 1 and 2, ribbon visibility, and the existing canvas-size persistence/undo path.
 No image transform is claimed and no native windows or screenshot previews ran.
+
+The Tools group now presents an explicit Magnifier preview rather than using
+fit-to-window as a substitute for the missing tool. It stays disabled and points
+to working status-bar/View zoom controls. Existing fit workflows now exercise
+the status-bar action; disabled previews preserve the canvas view as well as
+document pixels. Brush-gallery rows use inactive frameless styling, hover
+feedback and a selected-tip outline. Round/Square behavior and unavailable media
+remain unchanged; the samples remain original UI illustrations.
+All 140 window-free UI tests and strict workspace Clippy pass; see
+[the Tools/gallery record](validation/tools-gallery-headless-2026-10-22/validation.json).
+The checks include single availability tooltips at scales 1 and 2, selected-tip
+metadata, real fit/pixel mapping and document/view preservation. No magnifier or
+additional media implementation is claimed. No native windows or rendered
+previews ran; reference/native parity remains unqualified.

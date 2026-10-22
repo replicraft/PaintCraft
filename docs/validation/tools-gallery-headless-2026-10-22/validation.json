@@ -1,0 +1,25 @@
+{
+  "source_commit": "20e7e28d34fa2f15970d765f07b6c755913c2e51",
+  "references": [
+    "docs/temp/paint-references/photos/image.png",
+    "docs/temp/paint-references/photos/i11mage.png",
+    "docs/temp/paint-references/PLAN.md"
+  ],
+  "mode": "Window-free egui and lint checks only. No desktop, native-window, file-dialog or screenshot-preview launches.",
+  "gui": {
+    "passed": 140,
+    "failed": 0,
+    "ignored": 17
+  },
+  "hover_gui": {
+    "passed": 3,
+    "scope": "Existing color-well, dropdown and availability hover checks pass, including one Magnifier explanation at display scales 1 and 2. Menu-path wording uses supported plain text."
+  },
+  "clippy": "workspace all-targets with -D warnings passed",
+  "limits": "The Tools Magnifier preview no longer substitutes fit-to-window for an interactive magnifier. The status/View fit operation remains working and is exercised by existing zoom/pixel-mapping and tool-panel tests. Disabled clicks preserve the canvas view and document. Brush gallery rows now stay frameless while inactive, show hover feedback and outline the selected working tip; existing Round/Square selections and unavailable media remain unchanged. Samples are UI illustrations, not document rasterization evidence. Magnifier/media execution and native/rendered parity remain open.",
+  "sha256": {
+    "gui.log.gz": "faab4b2ed3954b7d9cf5a7ab851d53b42589aae066c5fe348389985717099b37",
+    "hover-gui.log.gz": "73c392eb49860b47f10e432a5b4b29358ac3470e1f99afe499685236b69a5acc",
+    "clippy.log.gz": "80eeedb8294ab04475ec5de6be730ab156c6f79183869e48989c65a6bb3bce2b"
+  }
+}
