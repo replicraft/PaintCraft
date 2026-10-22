@@ -99,10 +99,17 @@ fn exhausted_staging_aborts_with_a_resource_error() {
 
 fn full_walk(a: (i64, i64), b: (i64, i64)) -> Vec<(i64, i64)> {
     let mut out = Vec::new();
-    walk_clipped(a, b, Rect::new(-1000, -1000, 2000, 2000), false, |x, y| {
-        out.push((x, y));
-        Ok(())
-    })
+    walk_clipped(
+        a,
+        b,
+        Rect::new(-1000, -1000, 2000, 2000),
+        false,
+        &|| Ok(()),
+        |x, y| {
+            out.push((x, y));
+            Ok(())
+        },
+    )
     .unwrap();
     out
 }
@@ -149,7 +156,7 @@ fn clipped_walk_equals_the_filtered_full_walk() {
                 .filter(|&(x, y)| clip.contains(x, y))
                 .collect();
             let mut got = Vec::new();
-            walk_clipped(a, b, Some(clip), skip, |x, y| {
+            walk_clipped(a, b, Some(clip), skip, &|| Ok(()), |x, y| {
                 got.push((x, y));
                 Ok(())
             })

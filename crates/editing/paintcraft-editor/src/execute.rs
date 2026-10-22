@@ -6,6 +6,8 @@ mod fill;
 mod layers;
 mod mask;
 mod paint;
+mod path;
+use path::walk_clipped;
 
 use std::collections::{BTreeMap, HashMap};
 
@@ -15,7 +17,7 @@ use uuid::Uuid;
 use paintcraft_commands::{Batch, LayerRef, Mode, Op, ShapeKind};
 use paintcraft_core::types::ids::deterministic_id;
 use paintcraft_document::{COORD_ABS_MAX, Document, LAYER_COUNT_MAX, Layer};
-use paintcraft_raster::shape::{self, Figure, Span, SpanSet};
+use paintcraft_raster::shape::{self, CheckedSpanSet, Figure, Span};
 use paintcraft_raster::{Admission, PaintPlan, RasterLayer};
 
 /// Emitted-pixel and segment budgets for all pencil operations in one batch.
@@ -177,11 +179,8 @@ impl Stage<'_> {
         self.apply_paint(id, &plan)
     }
 
-    fn charge_stroke(&mut self, points: &[(i64, i64)], size: u32) -> Result<()> {
-        let length: i128 = points
-            .windows(2)
-            .map(|w| i128::from((w[1].0 - w[0].0).abs().max((w[1].1 - w[0].1).abs())))
-            .sum();
+    fn charge_stroke(&mut self, points: &[(i64, i64)], size: u32, scale: u32) -> Result<()> {
+        let length = path::length_scaled(points, scale, self.check)?;
         self.pencil_pixels += 1 + length;
         self.pencil_segments += (points.len() as i128 - 1).max(1);
         self.stroke_rows += (1 + length) * i128::from(size);
@@ -207,7 +206,7 @@ impl Stage<'_> {
         color: Rgba,
         mode: Mode,
     ) -> Result<()> {
-        self.charge_stroke(points, size)?;
+        self.charge_stroke(points, size, 1)?;
         let Some(clip) = self.editable(&self.doc.layers[&id]) else {
             return Ok(());
         };
@@ -218,19 +217,17 @@ impl Stage<'_> {
             x1: clip.x1 + n,
             y1: clip.y1 + n,
         };
-        let mut set = SpanSet::default();
-        let segments: Vec<((i64, i64), (i64, i64))> = if points.len() == 1 {
-            vec![(points[0], points[0])]
-        } else {
-            points.windows(2).map(|w| (w[0], w[1])).collect()
-        };
-        for (k, (a, b)) in segments.into_iter().enumerate() {
-            walk_clipped(a, b, Some(reach), k > 0, |x, y| {
-                set.add_stamp(x, y, n, round, &clip);
-                Ok(())
+        let mut set = CheckedSpanSet::with_scratch_limit(self.adm.stroke_scratch_limit());
+        for (k, (a, b)) in path::segments(points).enumerate() {
+            walk_clipped(a, b, Some(reach), k > 0, self.check, |x, y| {
+                set.add_stamp(x, y, n, round, &clip, self.check)
             })?;
         }
-        self.paint_spans(id, &set.into_spans(), color, mode)
+        let mut plan = self.adm.paint_plan();
+        set.visit_spans(self.check, |span| {
+            self.add_paint_spans(id, &[span], color, mode, &mut plan)
+        })?;
+        self.apply_paint(id, &plan)
     }
 
     fn run(&mut self, index: usize, op: &Op) -> Result<()> {
@@ -350,10 +347,7 @@ impl Stage<'_> {
                 mode,
             } => {
                 let id = self.resolve(layer)?;
-                let length: i128 = points
-                    .windows(2)
-                    .map(|w| i128::from((w[1].0 - w[0].0).abs().max((w[1].1 - w[0].1).abs())))
-                    .sum();
+                let length = path::length(points, self.check)?;
                 self.pencil_pixels += 1 + length;
                 self.pencil_segments += (points.len() as i128 - 1).max(1);
                 if self.pencil_pixels > PENCIL_PIXELS_MAX
@@ -367,14 +361,9 @@ impl Stage<'_> {
                 let clip = self.editable(&self.doc.layers[&id]);
                 let (ox, oy) = self.doc.layers[&id].origin;
                 let mut plan = self.adm.paint_plan();
-                let segments: Vec<((i64, i64), (i64, i64))> = if points.len() == 1 {
-                    vec![(points[0], points[0])]
-                } else {
-                    points.windows(2).map(|w| (w[0], w[1])).collect()
-                };
-                for (n, (a, b)) in segments.into_iter().enumerate() {
+                for (n, (a, b)) in path::segments(points).enumerate() {
                     // A shared polyline joint is emitted once: later segments skip their first pixel.
-                    walk_clipped(a, b, clip, n > 0, |x, y| {
+                    walk_clipped(a, b, clip, n > 0, self.check, |x, y| {
                         plan.rect(
                             Rect {
                                 x0: x - ox,
@@ -407,16 +396,7 @@ impl Stage<'_> {
                 }
                 let id = self.resolve(layer)?;
                 if *smooth {
-                    let integer_points: Vec<_> = points
-                        .iter()
-                        .map(|&(x, y)| {
-                            (
-                                x.div_euclid(i64::from(*point_scale)),
-                                y.div_euclid(i64::from(*point_scale)),
-                            )
-                        })
-                        .collect();
-                    self.charge_stroke(&integer_points, *size)?;
+                    self.charge_stroke(points, *size, *point_scale)?;
                     let Some(area) = self.editable(&self.doc.layers[&id]) else {
                         return Ok(());
                     };
@@ -435,6 +415,7 @@ impl Stage<'_> {
                         )?
                     };
                     for run in coverage {
+                        (self.check)()?;
                         if *mode == Mode::Replace && run.samples < 16 {
                             plan.coverage_rect(
                                 Rect {
@@ -607,52 +588,6 @@ impl Stage<'_> {
             }
         }
         Ok(())
-    }
-}
-
-/// The symmetric all-octant Bresenham recurrence, yielding only pixels inside
-/// `clip`. The walk is monotonic, so it stops once the remainder cannot re-enter
-/// the clip box. Every visited pixel is exactly one the unclipped walk emits.
-fn walk_clipped(
-    a: (i64, i64),
-    b: (i64, i64),
-    clip: Option<Rect>,
-    skip_first: bool,
-    mut emit: impl FnMut(i64, i64) -> Result<()>,
-) -> Result<()> {
-    let Some(clip) = clip else { return Ok(()) };
-    let (mut x, mut y) = a;
-    let (x1, y1) = b;
-    let dx = (x1 - x).abs();
-    let sx = if x < x1 { 1 } else { -1 };
-    let dy = -(y1 - y).abs();
-    let sy = if y < y1 { 1 } else { -1 };
-    let mut err = dx + dy;
-    let mut first = true;
-    loop {
-        if x.min(x1) >= clip.x1
-            || x.max(x1) < clip.x0
-            || y.min(y1) >= clip.y1
-            || y.max(y1) < clip.y0
-        {
-            return Ok(());
-        }
-        if !(first && skip_first) && clip.contains(x, y) {
-            emit(x, y)?;
-        }
-        first = false;
-        if (x, y) == (x1, y1) {
-            return Ok(());
-        }
-        let e2 = 2 * err;
-        if e2 >= dy {
-            err += dy;
-            x += sx;
-        }
-        if e2 <= dx {
-            err += dx;
-            y += sy;
-        }
     }
 }
 
