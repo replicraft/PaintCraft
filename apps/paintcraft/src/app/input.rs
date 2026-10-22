@@ -16,9 +16,12 @@ impl App {
         self.handle_canvas_wheel(ui);
         let events = ui.input(|i| i.events.clone());
         let widget_focus = ctx.egui_wants_keyboard_input();
+        let popup_open = egui::Popup::is_any_open(&ctx);
         for event in events {
-            let text_focus =
-                self.document_count() > 0 && self.editor.is_editing_text() && !widget_focus;
+            let text_focus = self.document_count() > 0
+                && self.editor.is_editing_text()
+                && !widget_focus
+                && !popup_open;
             match event {
                 egui::Event::Ime(egui::ImeEvent::Preedit { text, .. }) => {
                     self.ime_composing = !text.is_empty();
@@ -39,6 +42,9 @@ impl App {
                     egui::Key::Enter if modifiers.command && text_focus => {
                         self.editor.commit_text();
                     }
+                    // Popup dismissal takes precedence over cancelling a canvas
+                    // draft or leaving fullscreen, even if egui released focus.
+                    egui::Key::Escape if popup_open => {}
                     egui::Key::Escape => {
                         if self.fullscreen && !text_focus && !self.editor.gesture_in_progress() {
                             self.dispatch_chrome(

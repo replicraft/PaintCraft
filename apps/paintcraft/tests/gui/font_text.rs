@@ -135,3 +135,57 @@ fn classic_font_search_reports_no_matches_and_does_not_change_the_selected_font(
     drop(h);
     std::fs::remove_dir_all(dir).unwrap();
 }
+
+#[test]
+fn text_and_escape_in_popups_leave_unpublished_canvas_text_intact() {
+    let mut h = harness_with(App::new(None), 1.0, true);
+    h.get_by_label("Text").click();
+    h.run();
+    drag(&mut h, (50.0, 50.0), (50.0, 50.0));
+    h.event(Event::Text("Keep me".into()));
+    h.run();
+    let snapshot = h.state().editor().document_snapshot();
+    let ticket = h.state().editor().history_view().ticket;
+    assert!(
+        h.state().editor().is_editing_text(),
+        "canvas typing should create a draft"
+    );
+    let text = |h: &Harness<App>| match h.state().editor().preview() {
+        Some(paintcraft_tools::Preview::Text { text, .. }) => text,
+        other => panic!("expected text preview, got {other:?}"),
+    };
+    assert_eq!(text(&h), "Keep me");
+    for popup in ["Font family", "Font size presets", "File"] {
+        h.get_by_label(popup).click();
+        h.run();
+        assert!(eframe::egui::Popup::is_any_open(&h.ctx));
+        h.event(Event::Text("no-matching-family-90871".into()));
+        h.run();
+        if popup == "Font family" {
+            assert!(h.query_by_label("No matching fonts").is_some());
+        }
+        assert!(
+            h.state().editor().is_editing_text(),
+            "{popup} typing must keep the canvas draft"
+        );
+        assert_eq!(
+            text(&h),
+            "Keep me",
+            "{popup} cannot type into the canvas draft"
+        );
+        h.key_press(Key::Escape);
+        h.run();
+        assert!(!eframe::egui::Popup::is_any_open(&h.ctx));
+        assert!(
+            h.state().editor().is_editing_text(),
+            "{popup} Escape must keep the canvas draft"
+        );
+        assert_eq!(
+            text(&h),
+            "Keep me",
+            "Escape closes {popup} without discarding text"
+        );
+    }
+    assert!(h.state().editor().document().same_semantics(&snapshot));
+    assert_eq!(h.state().editor().history_view().ticket, ticket);
+}
