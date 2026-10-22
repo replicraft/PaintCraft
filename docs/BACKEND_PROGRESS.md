@@ -477,3 +477,44 @@ fall to zero for the projected path, while retained map/descriptor payload remai
 this is not an aggregate physical-memory claim. Sequential editor replay stays.
 The next program implementation must avoid repeated per-pixel source-chain lookups
 and preserve context-specific no-op proofs, then qualify integrated batch behavior.
+
+
+## Forty-seventh slice: one bounded combined logical paint program
+
+Logical projections can now consume and append further ordered PaintPlans using
+one incremental tile index. A read reaches its preceding source once and applies
+that tile's descriptors in original numerical order. The receiver's fixed metadata
+policy counts all retained descriptor/map/write-index capacities plus the incoming
+descriptor allocation until its transfer iterator drops. Growth is fallible and
+checks actual capacities. Append consumes both inputs, so failure cannot expose a
+partially updated program. No decoded pixels are requested or owned by append.
+See [the combined-program contract](PAINT_PROGRAM.md).
+
+Five new tests cover 64 ordered source-over/partial-coverage operations, exact
+recovered replay and one source read; aggregate and incoming-transfer denials;
+cancellation at every observed append checkpoint; zero-prefix two-operation replay
+quota failure; and independent BFS over 18,432 small combined image/seed/tolerance
+cases. The complete recovered paint plan admits its known tile set before decoded
+allocation. This per-program preparation does not front-load an editor batch.
+
+846 workspace tests pass (26 explicit ignores) across 77 suites. Strict all-target
+Clippy, 21 optimized program/projection/replay/flood tests, release desktop/CLI
+builds, 23 renderer unit tests, 31 required Metal integration tests and 224
+required-GPU desktop tests pass. Default/single-layer 30-frame native startup
+checks exit zero with empty logs. The [validation record](validation/paint-program-2026-10-22/validation.json)
+pins production/final measured source, exact compressed logs and release hashes.
+
+The [three-way real-library comparison](../benchmarks/results/paint-program-2026-10-22/DECISION.md)
+retains 240 raw statistical samples and 780 Hyperfine observations, including 60
+calibration observations, all exit zero. Exact all-pixel and canonical region
+pre/postflights surround three ordered process sessions. For 64 plans, combined is
+13.94–15.58x faster than chained and 1.38–1.57x faster than materialized preparation;
+retained declared metadata falls from 19,968 to 3,192 bytes. Tiny gains retain
+one-plan drift controls. Wall statistical/process disagreement and an approximately
+4.4x no-op regression reject a global editor activation. Per-session RSS remains
+separate from declared payload; no native latency or physical-memory claim follows.
+
+The editor remains sequential. Cross-layer/program ownership, duplication/deletion/
+expansion lineage, contextual uniform proofs, aggregate scratch/service leases,
+decoded peak planning and guarded batch replay/error attribution remain. T04/T11/
+T13/T21/T37 stay partial/in progress; the full roadmap remains active.

@@ -76,3 +76,9 @@ The current executor still builds and releases one operation plan at a time.
 pixels for data-dependent preparation without decoded replay. Ordinary painting
 shares the bounded index builder, and flood accepts fallible immutable sources.
 Aggregate program ownership and upfront whole-batch reservation remain open.
+
+
+[Combined logical programs](PAINT_PROGRAM.md) now append ordered plans under one
+capacity-accounted tile index, including incoming descriptor storage during
+transfer. A read reaches its preceding source once. This is a per-program bound;
+complete batch/source-lineage integration and shared service admission remain open.

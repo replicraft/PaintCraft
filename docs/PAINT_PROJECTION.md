@@ -71,3 +71,9 @@ program, layer duplication/deletion/expansion lineage, aggregate metadata and
 scratch leases, conservative/exact decoded peak planning, effects and upfront
 whole-batch reservation/publication integration remain required. A read projection
 alone does not satisfy those gates. No dependency or wire/file policy changes.
+
+
+[Combined logical programs](PAINT_PROGRAM.md) now append ordered plans under one
+capacity-accounted tile index, including incoming descriptor storage during
+transfer. A read reaches its preceding source once. This is a per-program bound;
+complete batch/source-lineage integration and shared service admission remain open.

@@ -219,9 +219,21 @@ python3 -B benchmarks/tools/run_paint_projection.py --binary <frozen-prebuilt-be
 Copy the optimized artifact outside Cargo's output directory before timing. Without
 `--execute` the runner prints a plan and writes nothing. It verifies every required
 pixel and exact region before Criterion and after each Hyperfine session, pins
-source/binary identity and retains 160 statistical samples plus 540 process
-observations (including calibration). No builds/tests should overlap timing.
-The [local decision](results/paint-projection-2026-10-21/DECISION.md) records tiny,
+source/binary identity. No builds/tests should overlap timing. The original
+two-way run at its pinned revision retains 160 statistical samples plus 540
+process observations (including calibration). Its
+[local decision](results/paint-projection-2026-10-21/DECISION.md) records tiny,
 wall, overlapping-plan and default/no-op controls. These exercise real library
 preparation/destruction, not native editor interaction, file IO or whole-batch
 reservation integration.
+
+
+The combined-program follow-up uses the same `paint_projection` benchmark/runner
+at its recorded source revision, adding a `combined` variant to materialized and
+chained views. It retains 240 Criterion samples and 780 Hyperfine observations
+(720 workloads plus 60 calibration). Build and freeze the matching optimized
+driver before running; do not use a newer runner with an older driver. Exact
+all-pixel and canonical flood-region checks surround the sessions. The
+[combined-program decision](results/paint-program-2026-10-22/DECISION.md) keeps no-op
+controls and per-session RSS separate from declared retained payload. It does not
+qualify native whole-batch integration or physical/service memory ceilings.
