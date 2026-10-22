@@ -1,0 +1,22 @@
+{
+  "source_commit": "b402ad859801cd06aa4105117df9716def4dc99a",
+  "mode": "Window-free egui harness only. No application, native-dialog, GPU-preview or native-window launches.",
+  "gui": {
+    "passed": 117,
+    "failed": 0,
+    "ignored": 17
+  },
+  "focused": {
+    "dropdowns_passed": 7,
+    "hover_passed": 2
+  },
+  "workspace_clippy": "all-targets with -D warnings passed",
+  "scope": "Compact icon triggers for shape outline/fill; smaller Selection/Brush dropdown arrows; readable popup choices; one tooltip per trigger at display scales 1 and 2 with repeated layout passes. Existing shape publication, brush selection and popup dismissal regressions pass.",
+  "limits": "Rendered/native visual comparison is intentionally deferred until the user permits windowed testing. Prior captures do not show these changes.",
+  "sha256": {
+    "clippy.log.gz": "5c8328e991a2e232f5e4adb6103d30d8d307faf9a36cd8798130f0de04d09f26",
+    "gui.log.gz": "8dad65eb5519e8047e6344ee7037b2744b7b044a82e3e95691702c88f3a41bfa",
+    "hover.log.gz": "4a39e1f3ac892d1b1579de939ef5324b3e9fa75cbe04309a60f73000f9598c0b",
+    "dropdowns.log.gz": "25bb9941bb4bbc746e1eb97b1145344bcb5d48b62e204cf2f90ab9470feacbf6"
+  }
+}

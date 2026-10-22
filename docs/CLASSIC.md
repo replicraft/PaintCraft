@@ -329,3 +329,12 @@ properties. Historical Classic skins retain their existing menu layout.
 116 GUI tests, six shared action tests and strict workspace Clippy pass;
 [light/dark captures and source-pinned logs](validation/classic-file-edit-2026-10-22/validation.json)
 record the scope and remaining reference differences.
+
+Classic ribbon dropdowns now use compact icon triggers for shape outline/fill
+and shorter, unframed Selection/Brush arrows. Selection and shape popup choices
+use readable 15-point labels and 32-point rows; each trigger provides one tooltip.
+117 window-free egui tests and strict workspace Clippy pass, including tooltip
+and hit-target checks at display scales 1 and 2. The user has requested no testing
+that opens application windows until explicitly permitted, so this pass has no
+new rendered/native visual evidence. Source-pinned logs and limits are in the
+[headless dropdown validation record](validation/classic-dropdowns-headless-2026-10-22/validation.json).
