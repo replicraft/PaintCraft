@@ -613,3 +613,45 @@ Whole-batch/source-lineage planning, atomic metadata reservations, aggregate
 geometry/font/flood/service budgets, physical memory accounting, cross-window
 fairness and sustained native input/display/cancellation tails remain open.
 T04/T11/T13/T14 remain partial; no wire/file policy or dependency changes.
+
+
+## Fiftieth slice: reserved metadata retry admission
+
+A BudgetReservation can now transfer its capacity into a resizable BudgetScope.
+Descriptor/index accounts atomically consume that capacity and recycle freed
+bytes while reservation owners survive. Accounts hold weak reservation links;
+a retained plan/projection does not pin unused attempt capacity after its factories
+and other reservation owners drop. Surviving storage keeps only its own charge,
+and subsequent growth uses ordinary shared admission. Lease and account consumers
+share one capacity counter. No lock crosses a global callback.
+
+Native metadata retries now reserve known demand before worker dispatch. Existing
+FIFO/preview/file barriers and original realms survive. Another consumer cannot
+take reserved capacity; a larger discovered demand releases the old attempt and
+re-defers the same captured request. A bounded periodic live probe can still
+reprice stale demand when the old requirement cannot be reserved. Fixed/impossible
+limits remain terminal. See [the ownership contract](RESERVED_PAINT_METADATA.md).
+
+Six core regressions cover strict bounds, transfer/recycling, sibling and lease
+competition, callback reentrancy, concurrent contention and final owner teardown.
+Three raster regressions cover fully occupied global headroom, insufficient
+reservation before decoded allocation, projection retention/recovery and cancelled
+factory reuse. Two native regressions execute captured preparation under competing
+admission and preserve request/base identity through a larger-demand retry.
+
+883 workspace tests pass (26 explicit ignores) across 80 suites. Strict all-target
+Clippy, 46 optimized core tests, 29 optimized raster tests, 23 renderer unit and
+31 required Metal integration tests, 236 required-GPU desktop tests (eight explicit
+ignores), release desktop/CLI builds and isolated default/single-layer 30-frame
+startup checks pass. [Source-pinned validation](validation/reserved-paint-metadata-2026-10-22/validation.json)
+retains exact logs/hashes. The initial sandbox run exposed no Metal adapter; its
+eleven GPU-dependent failures remain alongside the successful native rerun. A
+development callback test's missing release-interest/rearm setup is corrected
+and its original failed log preserved.
+
+This is declared ownership correctness. Earlier scope timing remains pinned to
+its measured source and does not qualify this change's overhead or native latency.
+Whole-batch/source-lineage planning and contextual no-op proofs, joint tile/metadata
+reservations, aggregate geometry/font/flood/service budgets, physical accounting,
+scheduling fairness and native input/display/cancellation tails remain open.
+No roadmap gate, file/wire policy or rendering default changes.

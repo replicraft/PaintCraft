@@ -5,7 +5,8 @@ Each independently owned descriptor/index account contributes live declarations;
 failed pending growth contributes to the largest observed demand peak. Denial
 therefore includes the attempt's known prefix and pending allocation, rather than
 only the last failed vector. Release reduces live, while retaining the observed
-peak. Factory clones own no capacity and accounts still release independently.
+peak. Ordinary factory clones own no capacity and accounts release independently;
+[reserved factories](RESERVED_PAINT_METADATA.md) retain their unused capacity.
 
 Scope locks are released before shared-budget callbacks. Concurrent pending
 requests can conservatively increase the known peak; live observations include
@@ -24,12 +25,13 @@ Escape removes the waiting activation and later queued edits; stale bases discar
 the request instead of rebasing it. Fixed quota errors and observed requirements
 above the hard realm capacity remain terminal atomic failures.
 
-Metadata retries use live shared admission, not a reserved-capacity guarantee. A
-racing consumer can defer them again without losing the request. Known headroom
-allows prompt retry; a provisional five-second periodic probe can reprice stale
-information. Failed-attempt cleanup alone cannot spin a known unmet request. The
-existing decoded path keeps its reservation/navigation policies. The editor still
-executes the actual batch sequentially.
+The original implementation measured below used live shared admission. Current
+native retries [reserve their known metadata requirement](RESERVED_PAINT_METADATA.md)
+before dispatch. A larger discovered requirement can defer the same request again;
+a provisional five-second live probe can reprice stale information when the old
+requirement cannot be reserved. Failed-attempt cleanup alone cannot spin a known
+unmet request. The decoded path keeps its reservation/navigation policies. The
+editor still executes the actual batch sequentially.
 
 ## Separate wake and reclamation paths
 
@@ -59,7 +61,7 @@ uses frozen pre-scope/current CPU-only CLI and library binaries with identical
 required output. Unit pumping deadlines and wake counts do not qualify native
 input/display/cancellation latency or cross-window fairness.
 
-Complete batch/source-lineage planning, atomic metadata reservations, aggregate
+Complete batch/source-lineage planning, joint multi-resource reservations, aggregate
 geometry/font/flood budgets, physical memory accounting, native pen/IME/device
 qualification and the broader feature roadmap remain open. No wire/file policy or
 new dependency is introduced.

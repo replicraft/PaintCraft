@@ -58,5 +58,6 @@ native input/display/cancellation tails. No dependency or wire/file policy chang
 Paint descriptors and indices now have [shared ownership-based admission](SHARED_PAINT_METADATA.md)
 in addition to their fixed per-plan/program policy. Plan clones share charged
 immutable storage; mutation copies under admission. Metadata denials carry their
-own class and never enter decoded-history reclamation. Full-attempt metadata
-waiting and aggregate geometry/service/physical budgets remain open.
+own class and never enter decoded-history reclamation. [Native waiting and reserved known metadata
+capacity](RESERVED_PAINT_METADATA.md) preserve the captured request; complete batch
+planning and aggregate geometry/service/physical budgets remain open.

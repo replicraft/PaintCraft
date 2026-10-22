@@ -67,7 +67,7 @@ identity, exact canonical output and raw samples. Shared accounting is a correct
 baseline; its overhead and negative controls are reported rather than described
 as a throughput win. The default allowance is provisional, not a measured optimum.
 
-Complete batch/source-lineage planning, metadata waiting/fairness, aggregate
+Complete batch/source-lineage planning, joint admission/fairness, aggregate
 geometry/font/flood scratch, allocator/physical budgets, native latency and broader
 roadmap work remain. The editor still executes batches sequentially.
 
@@ -75,5 +75,6 @@ roadmap work remain. The editor still executes batches sequentially.
 [Scoped metadata demand and native waiting](METADATA_WAITING.md) now retain
 metadata-blocked edits with their original realms, FIFO position and file barriers.
 Distinct metadata watches do not request decoded history reclamation. The known
-attempt peak supports repricing; upfront batch planning and atomic metadata
-reservations remain separate work.
+attempt peak supports repricing; [known metadata capacity is reserved](RESERVED_PAINT_METADATA.md)
+before retry dispatch. Upfront batch planning and joint resource reservations
+remain separate work.

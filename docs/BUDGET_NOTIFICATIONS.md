@@ -121,8 +121,9 @@ window scheduling guarantees or a global priority/fairness service. Real multipl
 native windows, minimized/suspended windows, event loss, callback overhead, memory
 pressure and queue-inclusive p95/p99/max interaction still need qualification.
 
-Notifications cover only the subscribed declared-job and decoded-payload realms.
-Codec, encoded, metadata, output, GPU and process RSS accounting remain incomplete.
+Notifications cover subscribed declared-job, decoded-payload and paint-metadata
+realms. Codec, encoded, aggregate metadata, output, GPU and process RSS accounting
+remain incomplete.
 A wake grants no resource, bypasses no publication guard and forces no pinned
 reader to release its allocation. No throughput, RSS or latency improvement is
 inferred from these correctness checks. T04/T11/T13 remain partial.
@@ -131,5 +132,6 @@ inferred from these correctness checks. T04/T11/T13 remain partial.
 [Scoped metadata demand and native waiting](METADATA_WAITING.md) now retain
 metadata-blocked edits with their original realms, FIFO position and file barriers.
 Distinct metadata watches do not request decoded history reclamation. The known
-attempt peak supports repricing; upfront batch planning and atomic metadata
-reservations remain separate work.
+attempt peak supports repricing; [known metadata capacity is reserved](RESERVED_PAINT_METADATA.md)
+before retry dispatch. Upfront batch planning and joint resource reservations
+remain separate work.
