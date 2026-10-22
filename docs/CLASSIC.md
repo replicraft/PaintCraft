@@ -364,3 +364,16 @@ establishes the choices, but pinned Windows runtime/visual parity is unqualified
 124 window-free GUI tests, preference/action checks and strict Clippy pass; see
 [the toolbar visibility record](validation/toolbar-visibility-headless-2026-10-22/validation.json).
 No application windows or rendered/native previews were launched.
+
+Edit colors now adapts its width, picker/brightness dimensions and palette columns
+to the window. Wide layouts keep the picker and numeric fields side by side;
+narrow layouts stack them inside a scrollable body. OK/Cancel remain outside that
+body and stay fixed while editing or scrolling. Numeric values precede their
+channel labels, with larger inputs, an accented OK button, a bordered color
+preview, stronger selected-slot outlines and dashed empty custom slots. The dialog
+presentation lives separately in `colors/dialog.rs`; color conversion policy is
+unchanged. Tests cover 1360x900 through 360x500/480x360 and display scales 1 and 2.
+126 window-free UI tests, two color-conversion tests and strict workspace Clippy
+pass; [source-pinned headless results](validation/responsive-colors-headless-2026-10-22/validation.json)
+record acceptance/cancellation and palette persistence without document mutations.
+Rendered/native visual comparison remains deferred until the user permits it.

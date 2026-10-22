@@ -1,0 +1,53 @@
+{
+  "source_commit": "97bbe16d8a405e56c65405da0acfde05c7a73ac2",
+  "reference": "docs/temp/paint-references/photos/11111imagekr.png",
+  "mode": "Window-free egui and unit/lint checks only. No desktop, native-window or screenshot-preview launches.",
+  "gui": {
+    "passed": 126,
+    "failed": 0,
+    "ignored": 17
+  },
+  "focused_gui": {
+    "passed": 5,
+    "sizes_and_scales": [
+      [
+        1360,
+        900,
+        1
+      ],
+      [
+        800,
+        600,
+        1
+      ],
+      [
+        480,
+        500,
+        2
+      ],
+      [
+        360,
+        500,
+        1
+      ],
+      [
+        480,
+        360,
+        1
+      ]
+    ],
+    "scope": "Stable reachable OK/Cancel, scrollable picker/numeric/custom controls, staged cancellation, custom palette acceptance/persistence without document/history mutation; existing RGB/HSL, invalid hex and secondary-color checks retained."
+  },
+  "color_unit": {
+    "passed": 2,
+    "scope": "RGB/HSL byte-channel round trips, alpha preservation and chromatic intent at black"
+  },
+  "clippy": "workspace all-targets with -D warnings passed",
+  "limits": "No rendered/native visual qualification under the user restriction. Basic palette values and native color-processing parity remain unqualified; this pass changes presentation, not the conversion policy.",
+  "sha256": {
+    "color-unit.log.gz": "623bfbcd453401114c2490366f5ff6ef45a13967def3b98997e95d7fb4724aa6",
+    "focused-gui.log.gz": "7c442e92e55656000126939a96c04ec6348e8293446d5783c3792f1120fba72d",
+    "clippy.log.gz": "a2bad23594ce5414b7f8a51ea4fa47dc0189502f16b0fa611bc7555acdfd9efe",
+    "gui.log.gz": "2b0dccc9a3772dd5dfdee849e1389362960d516f4cee2a5c81f217bffce49cc6"
+  }
+}
