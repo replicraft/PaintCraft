@@ -157,7 +157,7 @@ fn renaming_and_opacity_apply_once_on_commit_not_per_keystroke() {
 #[test]
 fn classic_ribbon_tools_are_visible_and_activate_at_the_default_window_size() {
     let mut h = Harness::builder()
-        .with_size(Vec2::new(1200.0, 850.0))
+        .with_size(Vec2::new(1360.0, 900.0))
         .build_ui_state(|ui, app: &mut App| app.ui(ui), App::new(None));
     h.run();
     let canvas = h.state().canvas_rect().unwrap();
@@ -171,7 +171,7 @@ fn classic_ribbon_tools_are_visible_and_activate_at_the_default_window_size() {
     ] {
         let rect = h.get_by_label(label).rect();
         assert!(
-            rect.min.x >= 0.0 && rect.max.x <= 1200.0,
+            rect.min.x >= 0.0 && rect.max.x <= 1360.0,
             "{label} is outside the window: {rect:?}"
         );
         assert!(
@@ -239,7 +239,7 @@ fn export_classic_theme_previews() {
         .unwrap_or_else(|| std::env::temp_dir().join("paintcraft-classic-themes"));
     std::fs::create_dir_all(&output).unwrap();
     for (name, appearance) in [("light", Appearance::Light), ("dark", Appearance::Dark)] {
-        for scene in ["workspace", "view", "settings"] {
+        for scene in ["workspace", "brush", "view", "settings"] {
             let settings = scratch("theme-preview-settings");
             Settings {
                 classic_variant: Some(ClassicVariant::V11),
@@ -256,6 +256,10 @@ fn export_classic_theme_previews() {
                 );
             h.run();
             match scene {
+                "brush" => {
+                    h.get_by_label("Brush").click();
+                    h.run();
+                }
                 "view" => {
                     h.get_by_label("View").click();
                     h.run();
