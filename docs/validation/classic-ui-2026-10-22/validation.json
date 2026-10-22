@@ -1,0 +1,304 @@
+{
+  "source_commit": "d584add09207c878f3af3f2bdf87d80b73aeb6bf",
+  "environment": {
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_INCREMENTAL": "0",
+    "PAINTCRAFT_REQUIRE_GPU": "1"
+  },
+  "final_checks": {
+    "gui": {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "paintcraft",
+        "--test",
+        "gui"
+      ],
+      "passed": 108,
+      "ignored": 16,
+      "log": "gui-verified.log.gz"
+    },
+    "clippy": {
+      "command": [
+        "cargo",
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "log": "clippy-verified.log.gz"
+    },
+    "previews": {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "paintcraft",
+        "--test",
+        "gui",
+        "export_classic_theme_previews",
+        "--",
+        "--ignored"
+      ],
+      "passed": 1,
+      "log": "preview-verified.log.gz"
+    }
+  },
+  "images": [
+    {
+      "file": "classic-v11-dark-settings.png",
+      "sha256": "5930f42e6e4b9495c097ac6ec27246da1a007c6b09c462f73388e68f8233327d",
+      "size": [
+        1440,
+        900
+      ]
+    },
+    {
+      "file": "classic-v11-dark-view.png",
+      "sha256": "404b89554996d86b989e02593e3f1a983a30d4b820920718111767bc361ffb13",
+      "size": [
+        1440,
+        900
+      ]
+    },
+    {
+      "file": "classic-v11-dark-workspace.png",
+      "sha256": "478ab3cc48ceb47340d96f85b3623e8983c28d94a166be0dec0c7f5116f41790",
+      "size": [
+        1440,
+        900
+      ]
+    },
+    {
+      "file": "classic-v11-light-settings.png",
+      "sha256": "24762e799a1bae93a56b3e098d1b83aee762abc55514b19d303f67a45210c66a",
+      "size": [
+        1440,
+        900
+      ]
+    },
+    {
+      "file": "classic-v11-light-view.png",
+      "sha256": "60bfe0b1a9128ccd21173163a1a3de5c2476c5f970027aa9ef6e141556457137",
+      "size": [
+        1440,
+        900
+      ]
+    },
+    {
+      "file": "classic-v11-light-workspace.png",
+      "sha256": "0d73a1c26eea7db8e5adc282902fe0c562f8d342dcfb081d2297702ee2fe419a",
+      "size": [
+        1440,
+        900
+      ]
+    }
+  ],
+  "logs": [
+    {
+      "file": "after-retry.log.gz",
+      "original_sha256": "68b864dc4b328c489ffb0b556787ce0362fbd9a5af8ad5293b1df029721d575f",
+      "archive_sha256": "913d79f725d6b99a21152e10a488b8fa7c86461f779e9819052da6a41a339636"
+    },
+    {
+      "file": "after.log.gz",
+      "original_sha256": "a8ea5ad51d966eaf92e9b5702e6d3f1fd79df99f3bcd122b733bac7bfc239d3a",
+      "archive_sha256": "45b061bdeb8398e11acd643f68fa5d6e2cc5032918780b3d5f182a909edd92c3"
+    },
+    {
+      "file": "before.log.gz",
+      "original_sha256": "3d38e6a82eb4f59d125655e2b23e7639ffe6aa4dd88e5c6d17412a61bd3a8dcf",
+      "archive_sha256": "394ca582565ec90c32a36642631ade1b558381a9544536f032e1e160d6698a59"
+    },
+    {
+      "file": "brush-tests.log.gz",
+      "original_sha256": "fb47479a1d4b2e54528578567ebfe00dc26e0fecf33a66d62e2b04299eb3d579",
+      "archive_sha256": "73722144b953f66e34b6b4a6af3341225f4a9bae7280f07ecb7ac9079096af5d"
+    },
+    {
+      "file": "canvas-clippy.log.gz",
+      "original_sha256": "56324f94a4e2f65cfd21d83aa250f4a5c83be37bb7fc8086f3d6ca591c983ac3",
+      "archive_sha256": "d36919150874014dddef13ef063aa83ecc6b11c7ac40c1bae763fef4c8971abf"
+    },
+    {
+      "file": "canvas-native.log.gz",
+      "original_sha256": "ffbb6244d14b45e58d8ad6c85551fc7ec2f6f28d1912e7d922be9fe634e99f71",
+      "archive_sha256": "514b009f403588e1aecfb9489f4c1ec6ccc0086e50ea0b5b799d0618b3e3e0a5"
+    },
+    {
+      "file": "canvas-workspace.log.gz",
+      "original_sha256": "22a5d73bd4efae375d729a79c2b797f5ec1de995ff2c3d2ff5890749079135fa",
+      "archive_sha256": "33d433e93c6f5cae629d3c5a72a465d11a91329117186a323a6474ee42c1d8cb"
+    },
+    {
+      "file": "centering-tests.log.gz",
+      "original_sha256": "7d34a1e27b3b85b16a645d6cb8cfdbcf1efd10805bfcb3c686b98f5cc6230c17",
+      "archive_sha256": "3234e64bc58a9b080fa6bd6a1e31970a5111b0a045a558a94115612b55534d5d"
+    },
+    {
+      "file": "check.log.gz",
+      "original_sha256": "b66cf2e1ca842e759ccc456e06727386e7d227dbe58d69d3b6d2546a71cf9e99",
+      "archive_sha256": "0a285892437ae1115bd3700c61206c03c04495e9c577e05d284a2d6206dcd929"
+    },
+    {
+      "file": "clippy-polished.log.gz",
+      "original_sha256": "e04b0a7228b9dc649c6ae020f3a7cbd2a4728f6aa59e02cd828b2c52c120b7c2",
+      "archive_sha256": "5e5c24c23376c6b9a72b5a6286a605b97416def866e8c0d68865361464d4ae73"
+    },
+    {
+      "file": "clippy-verified.log.gz",
+      "original_sha256": "d21792902e85846200dbe2088b1454caef8f9467564d8be12074ea26eb38efa7",
+      "archive_sha256": "8c7ae2715b784ab4c6f2476863c5e35f8e6c7c35c8764da2b7b7081c72361cf8"
+    },
+    {
+      "file": "clippy.log.gz",
+      "original_sha256": "b36e02c7809fbdf2010460f098d23770b1aebda2e5509d3ab0d3e935c30529cc",
+      "archive_sha256": "910ba4d868eeb3427137d7c20030ce7ebde7e45b0c8935689b938476e08c66a1"
+    },
+    {
+      "file": "colors-check.log.gz",
+      "original_sha256": "5084053e0a19d39204d2cad087c90f97a2928756d3ab1e6ed5c6294320df5239",
+      "archive_sha256": "c58cabf394478d465580a94e66473fd22cc4b3443eb0f4393867b0610a5f618f"
+    },
+    {
+      "file": "colors-clippy.log.gz",
+      "original_sha256": "5537ba66608cd6a87b1cae3469a30bb8277f2e6d7ce0eb07f8ad62974fd0c48d",
+      "archive_sha256": "a21cae32e9a0e552e43d318d78dd752cef043b687b9b2702b8d30d7da683585a"
+    },
+    {
+      "file": "colors-native.log.gz",
+      "original_sha256": "35fadf3b0c77169c0472db922a60cd2de6b9200dfe7f29b2d31e845ecf2ad370",
+      "archive_sha256": "042238f1469cee88fca2d29804839cd01852dbf6b4f08f8f54adb56ed5e60932"
+    },
+    {
+      "file": "colors-opacity-clippy.log.gz",
+      "original_sha256": "10958b9034a8f81b651b383ae9cadb715ffdb19d66bf49434c4dbb33f583ab8d",
+      "archive_sha256": "44df046ac942d753543cc3d8c4e3a47583252eed7db8a7fde48e903101af8c48"
+    },
+    {
+      "file": "colors-opacity-workspace.log.gz",
+      "original_sha256": "15c3a08f6f9928972125e7c621d71756ef0fbabd4f9ebb98dcb3f5ec8918deb2",
+      "archive_sha256": "7ca4eaf06ae920eb7e37540e8ccf134661350e136c82dbac73ae0de52a5a1b00"
+    },
+    {
+      "file": "colors-specific.log.gz",
+      "original_sha256": "6d6a0e29200b0c0d331dcf55dc451002fe78d19a7cc14063cbc5b6fcdc976885",
+      "archive_sha256": "26a4d4ca897e8d60485d16c5a3abe5bdfb59b7697b6641c28fa40a800d882046"
+    },
+    {
+      "file": "colors-tests.log.gz",
+      "original_sha256": "0fb09b6d5bff14d7566baeea3480b8922b4d70c13fcc17223a654513ef591e1d",
+      "archive_sha256": "0cce1d07e4567a63e270748af26bfc86e687b5b37823643717e962ba4feb4aa3"
+    },
+    {
+      "file": "final-preview-polished.log.gz",
+      "original_sha256": "4a7bf1ad98412c8e979855736585d445ec300333c6b9cf4da1fa41e68a317d2e",
+      "archive_sha256": "5ff4fcb80d21dfb868bf72d8467e23feac89f4ed63ba226e5a1b0d4b34fffc56"
+    },
+    {
+      "file": "final-preview-rows.log.gz",
+      "original_sha256": "c095f786c2a80d1c8f076fdccaa6a5236f69a9397a2b97bd576cbd62b096092b",
+      "archive_sha256": "7a2368315a58e454daaaaff4ced197ee9afcf560dbd33fdc15644792eec68328"
+    },
+    {
+      "file": "final-preview.log.gz",
+      "original_sha256": "8f839538d7a6852be92f0735d4822fd3cb68fadf1124c33d30f03de1e51dc935",
+      "archive_sha256": "fea8a876c1b9526e6c2ac99d44c79ea72161895c31099bca50612d2dc3c1b555"
+    },
+    {
+      "file": "final-tests.log.gz",
+      "original_sha256": "cab68bebcdfcc411b4a2e22b9baa4e33a864cde1c109ed10514480c4ba9280ff",
+      "archive_sha256": "917d25d491d4a56f13790b986bfb00087bff99042eeb7509f7994039314abd82"
+    },
+    {
+      "file": "gui-final.log.gz",
+      "original_sha256": "75156bee20d3401ddff0061a591c9184705b46160085428d799a1ab331258347",
+      "archive_sha256": "c2b74d0580a2156ecb9de2c71ef71138c312e140097091d12f0dec935d7876e8"
+    },
+    {
+      "file": "gui-polished.log.gz",
+      "original_sha256": "f3b19fd7381100e31e4a5f90a5b87f070390c1df4a3ee6ed7c44a0843f63639d",
+      "archive_sha256": "72594c605f8277196badf48ff10145d78074128869ee0d2a1e02648dcb7fd0d6"
+    },
+    {
+      "file": "gui-verified.log.gz",
+      "original_sha256": "b6eeeb6dd271870721f510054d3f2dcdb1415b8d4d9f0f3893ccafcd79c45398",
+      "archive_sha256": "46111187d8c28e7796a6ec22a946a68c5272b91ea7c216aee645a3670c578cfe"
+    },
+    {
+      "file": "gui.log.gz",
+      "original_sha256": "101f6ba126a2212e999c469dab65fcecb66ed099fa2fa040ee624146ff3c019e",
+      "archive_sha256": "5dbb6cfdcae7f0dab9138b6ecd33c18950ff30058b31dd14573230e4a656bb36"
+    },
+    {
+      "file": "palette-check.log.gz",
+      "original_sha256": "8a36d4824ecab0e23d14654a2a5019db2c868ea4f3a992eda2938be8b0903ce9",
+      "archive_sha256": "b21de4d7fe4bd4e68000e54b1f97bb7023cb777a9e7f7476bf8182e9310b5f9c"
+    },
+    {
+      "file": "palette-final.log.gz",
+      "original_sha256": "83482bc5911c245a75e36690e274cfb8ae0d746c9c67694565d2678501a4dcbb",
+      "archive_sha256": "59b6859d11eb1cbfbf2c567429818bbe9cab7fc84c7903311e5bd05c8740a9a5"
+    },
+    {
+      "file": "palette-test.log.gz",
+      "original_sha256": "cfb32aa945bfcaf99c2703369de6b648c1f05abe7a997d91ad2f067aafe0a91b",
+      "archive_sha256": "96dd25b6862b16266f81c75e9038fde8d7f3d13f73be9ee6085648c37a8f0449"
+    },
+    {
+      "file": "preview-verified.log.gz",
+      "original_sha256": "7b0eca88765f31414e259e23e22f001fe182045e220db946030e387bc47a05f4",
+      "archive_sha256": "2709a9bb88d6de4b2504d54a98d5fe4aa07c396d34fed84100f2b53cc3db7f07"
+    },
+    {
+      "file": "shapes.log.gz",
+      "original_sha256": "6534f4f8bc7393ab5d4efa6a849150fd8249dd8ba76de36c0348d453097782c7",
+      "archive_sha256": "36eac27cc48a77f50263155c4dabfd176022a814ffd485e03c484b15ea08da45"
+    },
+    {
+      "file": "size-smoke.log.gz",
+      "original_sha256": "97d34e2f0c3cd5f795ee301d7d5b4badd7546e2f2441189dcfd4d7544ea0d0d3",
+      "archive_sha256": "12482b01f54f8339cc0a98fcf814ff034c443a143762db09c65b11f47c19e031"
+    },
+    {
+      "file": "tests.log.gz",
+      "original_sha256": "605c6efb05fa93570f476fe057bf0521af5df2f44f8fb7a80c05412e62912daa",
+      "archive_sha256": "eac67dc5d38804c9e19de1cc47072366a2e95cf9dc2f45fa759fbf9b3aae5f07"
+    },
+    {
+      "file": "workspace-tests.log.gz",
+      "original_sha256": "f306284e748c6cb0e72e085be592763bb7e518efa84948abe2a47dd573341ae1",
+      "archive_sha256": "0a3849115dcbeb21d1520247e8064199bc0d95f7e57496ce22aa4baddbcab68c"
+    },
+    {
+      "file": "zoom-clippy.log.gz",
+      "original_sha256": "0918708145562dae82a1023eb90faffbb76b178f4545d2030cbd657d63cf0cd6",
+      "archive_sha256": "b64f6e88f769b6709513f1b6994f039270d9a5e33c5c5589b853c94bf8119d84"
+    },
+    {
+      "file": "zoom-native.log.gz",
+      "original_sha256": "c465fc2c4d272021e307d30b9d26f47ea1764f26fb36f5e8e6684d80ad848b6b",
+      "archive_sha256": "43d59417e46aef553698544f63f4c0ea72d2f7afc5233f553d797b96574e30e4"
+    },
+    {
+      "file": "zoom-specific.log.gz",
+      "original_sha256": "f08b7f1f779edc81a666cac23b3d9f45c8135af82f45faa2e313757166e5f9a8",
+      "archive_sha256": "3d6afd5a56f2d4e6051ce75bae63b12716511d5e030af79a46f79a5d3c463925"
+    },
+    {
+      "file": "zoom-tests.log.gz",
+      "original_sha256": "952d8c5a865928e7893656b14951ed2633078bb8dff44c33d6d73bc8c5dfe87d",
+      "archive_sha256": "a5e8fc205800a689e76cf316ac05920ffcb74679f2da3f2f927ba2cd9b71d23f"
+    }
+  ],
+  "scope": "Actual egui GPU-rendered 1440x900 light/dark workspace, View popup and Settings scenes. The runtime default-window regression uses 1200x850. These are current application previews, not original-app reference captures, native OS-window execution, IME/pen evidence or completed reference parity.",
+  "development_notes": [
+    "Initial custom-palette modal assertion expected a Window role; corrected to actual modal heading/Cancel controls.",
+    "Initial GUI default-window test referenced a removed tertiary fixed color and obsolete 960x720 size; updated to custom slot 10 and actual desktop default.",
+    "Initial revised preview failed to link with ENOSPC; only generated release build artifacts were cleared, preserving source, frozen performance binaries and raw evidence. Retry and final render pass."
+  ]
+}

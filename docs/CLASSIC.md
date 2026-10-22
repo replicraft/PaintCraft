@@ -83,7 +83,7 @@ work. This frontend is not yet a finished reproduction of Windows Paint.
 UI fidelity and themes take priority over additional editing operations. The latest
 user direction permits explicit UI prototypes during this pass. The v11 ribbon
 now has compact Image/Tools groups, a scrollable shapes gallery, circular color wells,
-a three-row palette, Settings gear and a collapsible Layers panel. Crop, color picker and unsupported shapes are disabled previews; transform
+two preset-color rows and ten custom-color slots, Settings gear and a collapsible Layers panel. Crop, color picker and unsupported shapes are disabled previews; transform
 popups expose their reference entries with execution disabled. Resize handles are
 visual markers; View → Canvas size remains the working resize path.
 
@@ -228,3 +228,32 @@ and cancellation. `crates/presentation/paintcraft-classic/src/ruler_axis.rs` che
 zoom and 1×/1.5×/2× mapping, visible intervals and integer deep-zoom ticks. GPU
 captures review both themes at 1× and 2×. These checks support this application
 behavior, not historical Paint parity or platform input qualification.
+
+
+## Palette and readability pass (2026-10-22)
+
+Classic v11 now shows the reference arrangement of 20 named preset colors and ten
+custom slots. Saved custom colors appear in the ribbon, with primary/secondary
+selection on left/right click; an empty slot opens the working color editor.
+The dialog retains the full saved custom palette. Color choices leave document
+pixels/history unchanged. Earlier historical skins retain their fixed palette.
+
+Classic v11 chrome uses larger Selawik body/button text, readable group captions,
+larger color wells and an accent outline around the primary color. Main toolbar
+interaction targets grow without expanding the compact shape cells. Ribbon
+captions align and the shape gallery exposes its three rows. These metrics are
+scoped to Classic; Studio and historical skins retain their presentation settings.
+
+The visual-review helper exports light/dark workspace, View-menu and Settings
+frames at 1440×900 with real egui GPU rendering. These are generated application
+previews, not original-app reference captures or OS window/pen/IME qualification.
+The default-window regression uses the actual 1200×850 desktop size.
+
+UI fidelity remains in progress: remaining dropdowns, native-style tool controls,
+more exact spacing and unsupported editing operations retain their separate scope.
+
+[UI validation and review frames](validation/classic-ui-2026-10-22/validation.json)
+record 108 passing GUI tests (16 explicit ignores), strict all-target Clippy,
+and six real-GPU light/dark scenes. Current [dark](validation/classic-ui-2026-10-22/classic-v11-dark-workspace.png)
+and [light](validation/classic-ui-2026-10-22/classic-v11-light-workspace.png)
+workspace previews are included for visual review.
