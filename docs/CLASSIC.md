@@ -1,7 +1,6 @@
 # PaintCraft Classic
 
-Classic is the frontend fidelity target; shared backend work is the current
-implementation priority. The additional Windows 11 Paint photos
+Classic UI fidelity and themes are the current implementation priority. The additional Windows 11 Paint photos
 in `docs/temp/paint-references/photos/` guide this work. Studio remains available.
 
 ## New reference observations
@@ -31,7 +30,7 @@ preferences leaves the current document and history untouched.
 **View → Canvas size…** stages a top-left resize with Apply/Cancel, one undo step
 and preserved off-canvas content. See [the canvas-size policy](CANVAS_SIZES.md).
 
-The desktop starts at **1200 × 850 logical pixels**, providing more room for the
+The desktop starts at **1360 × 900 logical pixels**, providing more room for the
 ribbon and the default canvas. Smaller windows and larger canvases still scroll.
 **Clear Canvas** is available beside Undo/Redo and in Edit. It replaces every
 layer (including hidden and off-canvas content) with a single sparse Background
@@ -416,3 +415,16 @@ covers both dialogs down to 360x500/480x360 in light/dark themes and scales 1 an
 Staged edits/cancellation preserve exact preference bytes and document history;
 Apply produces one undoable resize and updates the remembered size. Native visual
 comparison remains deferred; no application windows or screenshot previews ran.
+
+Rotate/Flip popups now use frameless ribbon triggers, 40-point rows, 22-point
+images, 15-point text and screen-bounded scrolling. The half-turn and custom-angle
+entries use distinct original SVGs rather than reusing quarter-turn arrows. Their
+source-sheet coordinates are null; all 86 registered assets pass vector,
+transparency, cache and density checks, and regeneration is byte-identical.
+Transform execution remains disabled. A separate headless geometry check confirms
+the existing Layers icon draws at 52 points in both open/closed states and display
+scales 1 and 2; the suspected font-height cap did not affect that path.
+134 window-free UI tests, three icon tests and strict workspace Clippy pass; see
+[the image-menu record](validation/image-menus-headless-2026-10-22/validation.json).
+The supplied Rotate/Flip photos guide layout; native/rendered parity remains
+unqualified and no application windows or screenshot previews were launched.

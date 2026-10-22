@@ -1,0 +1,44 @@
+{
+  "source_commit": "0821f378649c9f41e5da35a15871fd8ebe1f0437",
+  "references": [
+    "docs/temp/paint-references/photos/imag111e.png",
+    "docs/temp/paint-references/photos/im111age.png"
+  ],
+  "mode": "Window-free egui, CPU icon rasterization and lint checks only. No desktop, native-window or screenshot-preview launches.",
+  "gui": {
+    "passed": 134,
+    "failed": 0,
+    "ignored": 17
+  },
+  "focused_gui": {
+    "passed": 1,
+    "sizes_and_scales": [
+      [
+        1360,
+        900,
+        1
+      ],
+      [
+        360,
+        360,
+        2
+      ]
+    ],
+    "scope": "Rotate/Flip rows stay reachable with 40-point targets and actual 22-point image geometry; one trigger/disabled tooltip, disabled choices keep the popup open, Escape closes it. Document/history and preference bytes remain unchanged across repeated layout passes."
+  },
+  "layers_icon_geometry": "Full GUI suite includes a window-free shape-output check proving the existing 52-point Layers image size in open/closed states at display scales 1 and 2. No Layers size or implementation change in this pass; the suspected font-height cap was disproved for this path.",
+  "icon_unit": {
+    "passed": 3,
+    "ignored": 1,
+    "scope": "All 86 registered icons parse and rasterize with transparency at 24/64/128 pixels; bounded cache and density selection pass. New rotation assets regenerate byte-identically and have null source-sheet coordinates."
+  },
+  "clippy": "workspace all-targets with -D warnings passed",
+  "limits": "Transform commands remain explicitly unavailable UI previews. Supplied photos establish labels, ordering and visual layout, not pixel/runtime parity. No rendered/native visual qualification under the user restriction.",
+  "sha256": {
+    "gui.log.gz": "7be77cc79a38f074a01172dbe68c25dba47caa7bf84d81112d8c785a2eeeee1c",
+    "focused-gui.log.gz": "f121fd7d220e280b5a0421f37198f317e79ac0379ff3c813277c580f024c60ea",
+    "icon-unit.log.gz": "21acb3da88ebc234cbca825d7939a969227549e28c4306105c12edbeae7b9d45",
+    "clippy.log.gz": "0095c7d66de1870330363e00a73bf365dfe51f0c0b268cbfdce402bf37ca84d4",
+    "regeneration.json": "71a084187c7af61e311d82a88857c645e4b50833408220619fae2f6ecaaad42b"
+  }
+}
