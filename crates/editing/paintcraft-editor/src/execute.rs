@@ -98,7 +98,7 @@ pub fn execute_with_geometry_cache(
         doc: base.clone(),
         selection,
         aliases: HashMap::new(),
-        planning: Some(planning::Compiler::new(&admission)),
+        planning: Some(planning::Compiler::new(&admission, batch, check)?),
         operation: 0,
         adm: admission,
         pencil_pixels: 0,

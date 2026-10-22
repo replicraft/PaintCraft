@@ -20,14 +20,28 @@ pub(super) struct Compiler {
     layers: Store<(Uuid, Logical)>,
     paints: Store<Paint>,
     planner: Option<TilePlanner>,
+    needs_pixels: bool,
 }
 impl Compiler {
-    pub fn new(admission: &Admission) -> Self {
-        Self {
+    pub fn new(
+        admission: &Admission,
+        batch: &Batch,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<Self> {
+        let mut needs_pixels = false;
+        for operations in batch.operations.chunks(1024) {
+            check()?;
+            if operations.iter().any(|op| kind(op) == Kind::ReadWrite) {
+                needs_pixels = true;
+                break;
+            }
+        }
+        Ok(Self {
             layers: Store::new(admission),
             paints: Store::new(admission),
             planner: None,
-        }
+            needs_pixels,
+        })
     }
     fn position(&self, id: Uuid) -> Option<usize> {
         self.layers.values.iter().position(|(key, _)| *key == id)
@@ -71,17 +85,13 @@ impl Compiler {
         if !logical.tiles.apply_checked(plan, operation, check)? {
             return Ok(());
         }
-        if logical.pixels.is_none() {
+        if self.needs_pixels && logical.pixels.is_none() {
             logical.pixels =
                 Some(PaintSnapshot::capture(source, admission, check)?.fork(admission, check)?);
         }
-        logical.pixels = Some(
-            logical
-                .pixels
-                .take()
-                .expect("active logical branch")
-                .append_checked(plan.clone(), check)?,
-        );
+        if let Some(pixels) = logical.pixels.take() {
+            logical.pixels = Some(pixels.append_checked(plan.clone(), check)?);
+        }
         self.paints.push(Paint {
             operation,
             layer: id,
@@ -99,6 +109,12 @@ impl Compiler {
         admission: &Admission,
         check: &dyn Fn() -> Result<()>,
     ) -> Result<Vec<Span>> {
+        if !self.needs_pixels {
+            return Err(Error::new(
+                ErrorCode::InvariantViolation,
+                "source read absent from batch dependency plan",
+            ));
+        }
         let index = self.ensure(id, source, admission, check)?;
         let Some(pixels) = self.layers.values[index].1.pixels.as_ref() else {
             return paintcraft_raster::flood::region_with_scratch_limit_checked(
@@ -185,15 +201,21 @@ impl Compiler {
         (self.paints, footprint)
     }
 }
-pub(super) fn is_paint(op: &Op) -> bool {
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Kind {
+    Structural,
+    Write,
+    ReadWrite,
+}
+fn kind(op: &Op) -> Kind {
     match op {
         Op::FillRect { .. }
         | Op::PencilPath { .. }
         | Op::StrokePath { .. }
-        | Op::FloodFill { .. }
         | Op::Shape { .. }
         | Op::MaskSpans { .. }
-        | Op::Text { .. } => true,
+        | Op::Text { .. } => Kind::Write,
+        Op::FloodFill { .. } => Kind::ReadWrite,
         Op::LayerAdd { .. }
         | Op::LayerDuplicate { .. }
         | Op::LayerDelete { .. }
@@ -203,6 +225,9 @@ pub(super) fn is_paint(op: &Op) -> bool {
         | Op::CanvasClear { .. }
         | Op::CanvasResize { .. }
         | Op::SelectionSetRect { .. }
-        | Op::SelectionClear => false,
+        | Op::SelectionClear => Kind::Structural,
     }
+}
+pub(super) fn is_paint(op: &Op) -> bool {
+    kind(op) != Kind::Structural
 }

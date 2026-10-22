@@ -418,3 +418,54 @@ fn cancelling_every_observed_compilation_reservation_and_replay_checkpoint_keeps
         assert!(Arc::ptr_eq(&before, &session.snapshot()));
     }
 }
+
+#[test]
+fn write_only_batches_need_no_logical_pixel_views_but_preserve_the_same_output() {
+    use paintcraft_core::types::resources::AllocationClass;
+    let doc = new_document(8, 4, Some(Rgba([13, 29, 47, 0])), 0, POLICY).unwrap();
+    let id = LayerRef::Id(doc.roots[0]);
+    let writes = batch(
+        &doc,
+        (0..100)
+            .map(|i| Op::FillRect {
+                layer: id.clone(),
+                rect: rect(0, 0, 4, 4),
+                color: Rgba([i, 88, 156, 128]),
+                mode: Mode::SourceOver,
+            })
+            .collect(),
+    );
+    let mut reads = writes.clone();
+    reads.operations.push(Op::FloodFill {
+        layer: id,
+        at: (-1, -1),
+        color: Rgba([255; 4]),
+        mode: Mode::Replace,
+        tolerance: 0,
+    });
+    let run = |batch: &Batch, limit: u64| {
+        let metadata = SharedBudget::new(limit);
+        let decoded = SharedBudget::new(2 * BYTES);
+        let out = execute_with_admission(
+            &doc,
+            Selection::Inactive,
+            batch,
+            Admission::with_residency(2 * 65_536, decoded.clone())
+                .with_paint_metadata_budget(metadata.clone()),
+        );
+        assert_eq!(metadata.usage().reserved, 0);
+        (out, metadata.usage().peak, decoded.usage().peak)
+    };
+    let (a, needed, _) = run(&writes, 1 << 20);
+    let (b, with_views, _) = run(&reads, 1 << 20);
+    assert!(a.unwrap().doc.same_semantics(&b.unwrap().doc));
+    assert!(needed < with_views);
+    assert!(run(&writes, needed).0.is_ok());
+    let (denied, _, decoded_peak) = run(&reads, needed);
+    let error = denied.unwrap_err();
+    assert_eq!(
+        error.allocation_denial().unwrap().class(),
+        AllocationClass::PaintMetadata
+    );
+    assert_eq!(decoded_peak, 0);
+}
