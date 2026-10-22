@@ -1,0 +1,22 @@
+{
+  "pencil": {
+    "archive_sha256": "5dada5ea4e27e85668edeb76db57562052acd8764ab282acc9884b45ea64320d",
+    "byte_identical": true
+  },
+  "square": {
+    "archive_sha256": "4777a06e00fd5e8f06bc899c777254f1a88a4d42a78342689951fa633e479286",
+    "byte_identical": true
+  },
+  "round": {
+    "archive_sha256": "e94f38bcc42e897c04939dc6e4a3db8d59ec05526d7ab2b0647f09e74731172c",
+    "byte_identical": true
+  },
+  "retrace": {
+    "archive_sha256": "1b963e591a0c22ba694c6291e34192a04d8ed8c02c03ca5037176105de009c64",
+    "byte_identical": true
+  },
+  "smooth-control": {
+    "archive_sha256": "aa72050750c8b0e3f06980d782e9c32a885ff4c573f3aea5e2b551a7951d8ea8",
+    "byte_identical": true
+  }
+}

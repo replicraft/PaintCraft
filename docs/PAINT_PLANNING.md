@@ -87,3 +87,9 @@ spans into the admitted plan, with row cancellation and checked large-coordinate
 arithmetic. Fill/outline keep one shared operation plan. This does not add checked
 preparation to unsmoothed stroke unions or built-in font geometry, nor does it
 reserve the whole batch upfront.
+
+[Pencil/stroke preparation](STROKE_PREPARATION.md) now checks invisible path work
+and vertex accounting, traverses borrowed segments, and uses a capacity-bounded
+cancellable unsmoothed union before compiling paint descriptors. Fixed geometry
+limits do not become decoded-capacity retries. Aggregate batch/service admission
+and native wall-clock tails remain unqualified.

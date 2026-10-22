@@ -160,3 +160,9 @@ directly into the admitted plan and check cancellation during row preparation. A
 failed sink or cancelled outline cannot publish a preceding fill/private batch
 prefix. Large clipped ellipses retain exact arithmetic rather than overflowing
 before tile admission; aggregate geometry/whole-batch policies remain separate.
+
+[Pencil/stroke preparation](STROKE_PREPARATION.md) now checks invisible path work
+and vertex accounting, traverses borrowed segments, and uses a capacity-bounded
+cancellable unsmoothed union before compiling paint descriptors. Fixed geometry
+limits do not become decoded-capacity retries. Aggregate batch/service admission
+and native wall-clock tails remain unqualified.

@@ -187,3 +187,22 @@ command/scalar pixels before timing. Six cases retain cold setup/teardown, raw
 Criterion samples, three process sessions, calibration and process RSS, including
 multiple-layer and partial-coverage fallback controls. See
 [the complete decision](results/gpu-single-layer-2026-10-21/DECISION.md).
+
+
+The bounded stroke-preparation comparison uses a frozen CPU-only baseline CLI,
+its source/hash manifest and feature tree, a separately built CPU-only candidate,
+and the `paintcraft-raster` `stroke_union` optimized Criterion executable:
+
+```sh
+python3 -B benchmarks/tools/run_stroke_preparation.py --baseline <baseline-manifest.json> --baseline-features <baseline-features.log> --candidate <prebuilt-cli> --kernel <prebuilt-bench> --output <new-dir> --execute
+```
+
+Without `--execute` this prints a plan and writes nothing. Capture the baseline
+before editing source, build both CLIs with `cargo build --release --locked -p
+paintcraft-cli`, and keep the candidate executable outside Cargo's output path.
+The runner requires identical CPU-only feature trees and verifies artifact hashes
+and exact canonical PCND/member output before and after its sessions. Do not run
+builds/tests alongside timing. The [local decision](results/stroke-preparation-2026-10-21/DECISION.md)
+retains all 160 statistical samples and 720 process observations, including slower
+checked unions, calibration and variable controls. It qualifies preparation costs,
+not native input/display or cancellation wall-clock latency.
