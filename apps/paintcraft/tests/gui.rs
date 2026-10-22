@@ -262,3 +262,6 @@ mod compact_chrome;
 
 #[path = "gui/status_tooltips.rs"]
 mod status_tooltips;
+
+#[path = "gui/color_model.rs"]
+mod color_model;

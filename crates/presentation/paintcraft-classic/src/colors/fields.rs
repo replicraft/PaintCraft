@@ -38,13 +38,35 @@ pub(super) fn controls(ui: &mut egui::Ui, editor: &mut ColorEditor, width: f32) 
     ui.add_space(8.0);
     let model = egui::ComboBox::from_id_salt("classic-color-model")
         .width(field_width)
+        .height(100.0)
         .selected_text(match editor.mode {
             NumericMode::Rgb => "RGB",
             NumericMode::Hsl => "HSL",
         })
         .show_ui(ui, |ui| {
-            ui.selectable_value(&mut editor.mode, NumericMode::Rgb, "RGB");
-            ui.selectable_value(&mut editor.mode, NumericMode::Hsl, "HSL");
+            ui.spacing_mut().item_spacing.y = 0.0;
+            for (mode, label) in [(NumericMode::Rgb, "RGB"), (NumericMode::Hsl, "HSL")] {
+                let selected = editor.mode == mode;
+                let response = ui.add(
+                    egui::Button::new(label)
+                        .selected(selected)
+                        .frame_when_inactive(selected)
+                        .frame(true)
+                        .min_size(Vec2::new(field_width, 40.0)),
+                );
+                if selected {
+                    ui.painter().rect_stroke(
+                        response.rect.shrink(0.5),
+                        4,
+                        ui.visuals().selection.stroke,
+                        egui::StrokeKind::Inside,
+                    );
+                }
+                if response.clicked() {
+                    editor.mode = mode;
+                    ui.close();
+                }
+            }
         });
     model.response.widget_info(|| {
         egui::WidgetInfo::labeled(egui::Role::ComboBox, ui.is_enabled(), "Color model")
