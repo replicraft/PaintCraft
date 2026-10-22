@@ -12,7 +12,9 @@ use std::collections::HashMap;
 use std::sync::{Arc, OnceLock};
 
 mod paint;
-pub use paint::{DEFAULT_PAINT_METADATA_BYTES, PaintPlan, PaintProjection};
+pub use paint::{
+    DEFAULT_PAINT_METADATA_BYTES, DEFAULT_RESIDENT_PAINT_METADATA_BYTES, PaintPlan, PaintProjection,
+};
 mod tile;
 use tile::Tile;
 
@@ -59,6 +61,7 @@ fn blend(mode: BlendMode, src: Rgba, dst: Rgba) -> Rgba {
 pub struct Admission {
     remaining_pixels: u64,
     paint_metadata_limit: usize,
+    paint_metadata_budget: SharedBudget,
     flood_scratch_limit: usize,
     stroke_scratch_limit: usize,
     residency: SharedBudget,
@@ -82,6 +85,7 @@ impl Admission {
         Self {
             remaining_pixels: limit_pixels,
             paint_metadata_limit: DEFAULT_PAINT_METADATA_BYTES,
+            paint_metadata_budget: paint::default_metadata_budget(),
             flood_scratch_limit: crate::flood::DEFAULT_FLOOD_SCRATCH_BYTES,
             stroke_scratch_limit: crate::shape::DEFAULT_STROKE_SCRATCH_BYTES,
             residency,
@@ -96,6 +100,7 @@ impl Admission {
         Self {
             remaining_pixels: limit_pixels,
             paint_metadata_limit: DEFAULT_PAINT_METADATA_BYTES,
+            paint_metadata_budget: paint::default_metadata_budget(),
             flood_scratch_limit: crate::flood::DEFAULT_FLOOD_SCRATCH_BYTES,
             stroke_scratch_limit: crate::shape::DEFAULT_STROKE_SCRATCH_BYTES,
             residency: reservation.budget(),
@@ -107,6 +112,11 @@ impl Admission {
     /// retryable decoded demand or alter the cumulative staged-pixel policy.
     pub fn with_paint_metadata_limit(mut self, bytes: usize) -> Self {
         self.paint_metadata_limit = bytes;
+        self
+    }
+    /// Share descriptor and index payload admission independently of decoded tiles.
+    pub fn with_paint_metadata_budget(mut self, budget: SharedBudget) -> Self {
+        self.paint_metadata_budget = budget;
         self
     }
     /// Configure bitmap/frontier/output capacity for each flood classification.
@@ -125,7 +135,10 @@ impl Admission {
         self.stroke_scratch_limit
     }
     pub fn paint_plan(&self) -> PaintPlan {
-        PaintPlan::with_metadata_limit(self.paint_metadata_limit)
+        PaintPlan::with_metadata_budget(
+            self.paint_metadata_limit,
+            self.paint_metadata_budget.clone(),
+        )
     }
     /// Reserve a complete known set of fresh tile allocations before materialization.
     /// This validates but does not consume the cumulative staged-pixel allowance.

@@ -1,9 +1,11 @@
 //! One ordered tile index for replay and read-only transaction projection.
 use super::*;
+use paintcraft_core::types::resources::{AllocationClass, BudgetAccount};
 
 pub(super) struct Index {
     pub tiles: HashMap<TileCoord, Vec<usize>>,
     pub bytes: usize,
+    pub charge: BudgetAccount,
 }
 
 pub(super) trait Target {
@@ -55,20 +57,32 @@ impl PaintPlan {
     pub(super) fn index_checked(
         &self,
         limit: usize,
+        budget: SharedBudget,
         target: &mut impl Target,
         check: &dyn Fn() -> Result<()>,
     ) -> Result<Index> {
         check()?;
         let mut metadata =
             metadata::Metadata::new(self.descriptor_bytes(), self.metadata_limit.min(limit))?;
+        let mut charge = budget.account(AllocationClass::PaintMetadata);
+        // Reverse local drop order frees storage before notifying charge release.
         let mut tiles: HashMap<TileCoord, Vec<usize>> = HashMap::new();
         for (index, &write) in self.writes.iter().enumerate() {
-            append_write_checked(index, write, &mut tiles, &mut metadata, target, check)?;
+            append_write_checked(
+                index,
+                write,
+                &mut tiles,
+                &mut metadata,
+                &mut charge,
+                target,
+                check,
+            )?;
         }
         check()?;
         Ok(Index {
             tiles,
             bytes: metadata.used,
+            charge,
         })
     }
 }
@@ -79,6 +93,7 @@ pub(super) fn append_write_checked(
     write: Write,
     tiles: &mut HashMap<TileCoord, Vec<usize>>,
     metadata: &mut metadata::Metadata,
+    charge: &mut BudgetAccount,
     target: &mut impl Target,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<()> {
@@ -97,7 +112,7 @@ pub(super) fn append_write_checked(
                 if target.skip_missing(coord, write) {
                     continue;
                 }
-                metadata.table(tiles)?;
+                metadata.table(tiles, charge)?;
             }
             let writes = match tiles.entry(coord) {
                 Entry::Occupied(entry) => entry.into_mut(),
@@ -109,7 +124,7 @@ pub(super) fn append_write_checked(
                     entry.insert(Vec::new())
                 }
             };
-            metadata.vector(writes)?;
+            metadata.vector(writes, charge)?;
             writes.push(index);
         }
     }

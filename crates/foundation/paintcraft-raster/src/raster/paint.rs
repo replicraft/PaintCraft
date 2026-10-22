@@ -4,10 +4,16 @@ use std::collections::hash_map::Entry;
 mod index;
 mod metadata;
 mod projection;
+mod writes;
 pub use projection::PaintProjection;
 
 /// Provisional per-plan metadata safety policy, excluding allocator/hash overhead.
 pub const DEFAULT_PAINT_METADATA_BYTES: usize = 64 << 20;
+/// Provisional shared capacity for paint descriptors and replay/projection indices.
+pub const DEFAULT_RESIDENT_PAINT_METADATA_BYTES: u64 = 256 << 20;
+pub(super) fn default_metadata_budget() -> SharedBudget {
+    metadata::default_budget()
+}
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 struct Write {
     area: Rect,
@@ -53,7 +59,7 @@ impl Write {
 /// Ordered clipped rectangles/runs; overlapping writes retain their original order.
 #[derive(Clone, Debug)]
 pub struct PaintPlan {
-    writes: Vec<Write>,
+    writes: Arc<writes::Writes>,
     metadata_limit: usize,
 }
 impl Default for PaintPlan {
@@ -65,8 +71,12 @@ impl PaintPlan {
     /// Limit retained descriptors plus temporary tile-index payload capacities.
     /// This is a fixed per-plan policy, not decoded residency or process RSS.
     pub fn with_metadata_limit(bytes: usize) -> Self {
+        Self::with_metadata_budget(bytes, metadata::default_budget())
+    }
+    /// Independent shared metadata realm; the fixed per-plan policy still applies.
+    pub fn with_metadata_budget(bytes: usize, budget: SharedBudget) -> Self {
         Self {
-            writes: Vec::new(),
+            writes: Arc::new(writes::Writes::new(budget)),
             metadata_limit: bytes,
         }
     }
@@ -100,7 +110,9 @@ impl PaintPlan {
         if write.area.x0 >= write.area.x1 || write.area.y0 >= write.area.y1 {
             return Ok(());
         }
-        if let Some(previous) = self.writes.last_mut()
+        let limit = self.metadata_limit;
+        let writes = self.unique_writes(&|| Ok(()))?;
+        if let Some(previous) = writes.values.last_mut()
             && previous.color == write.color
             && previous.mode == write.mode
             && previous.samples == write.samples
@@ -111,9 +123,9 @@ impl PaintPlan {
             previous.area.x1 = write.area.x1;
             return Ok(());
         }
-        metadata::Metadata::new(self.descriptor_bytes(), self.metadata_limit)?
-            .vector(&mut self.writes)?;
-        self.writes.push(write);
+        metadata::Metadata::new(writes.capacity() * std::mem::size_of::<Write>(), limit)?
+            .vector(&mut writes.values, &mut writes.charge)?;
+        writes.values.push(write);
         Ok(())
     }
     /// Apply to private raster staging. Quota admission precedes tile allocation/writes;
@@ -133,13 +145,18 @@ impl PaintPlan {
         if self.writes.is_empty() {
             return Ok(());
         }
-        let (tiles, needed) = {
+        let (mut prepared, needed) = {
             let mut target = index::RasterTarget::new(layer, admission);
-            let prepared =
-                self.index_checked(admission.paint_metadata_limit, &mut target, check)?;
-            (prepared.tiles, target.needed)
+            let prepared = self.index_checked(
+                admission.paint_metadata_limit,
+                admission.paint_metadata_budget.clone(),
+                &mut target,
+                check,
+            )?;
+            (prepared, target.needed)
         };
         admission.with_tile_plan(needed, |admission| {
+            let tiles = &mut prepared.tiles;
             let missing = tiles
                 .keys()
                 .filter(|coord| !layer.tiles.contains_key(coord))
@@ -153,7 +170,7 @@ impl PaintPlan {
             }
             let bounds = layer.bounds();
             let edge = i64::from(TILE_EDGE);
-            for (coord, writes) in tiles {
+            for (coord, writes) in std::mem::take(tiles) {
                 check()?;
                 let tile_area = Rect {
                     x0: coord.tx * edge,

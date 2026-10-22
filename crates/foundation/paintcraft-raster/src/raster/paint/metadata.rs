@@ -1,9 +1,15 @@
-//! Bounds declared vector capacities and index payload, not allocator/RSS overhead.
+//! Capacity payload admission, excluding allocator/hash controls and transient reallocations.
 use super::*;
+use paintcraft_core::types::resources::BudgetAccount;
 use std::mem::size_of;
 
+pub(super) fn default_budget() -> SharedBudget {
+    static DEFAULT: OnceLock<SharedBudget> = OnceLock::new();
+    DEFAULT
+        .get_or_init(|| SharedBudget::new(DEFAULT_RESIDENT_PAINT_METADATA_BYTES))
+        .clone()
+}
 pub(super) fn exhausted() -> Error {
-    // Fixed policy failure, deliberately without a retryable decoded allocation denial.
     Error::new(
         ErrorCode::ResourceLimit,
         "paint plan metadata budget exceeded",
@@ -26,7 +32,7 @@ impl Metadata {
             Ok(())
         }
     }
-    pub fn vector<T>(&mut self, values: &mut Vec<T>) -> Result<()> {
+    pub fn vector<T>(&mut self, values: &mut Vec<T>, charge: &mut BudgetAccount) -> Result<()> {
         if values.len() < values.capacity() {
             return Ok(());
         }
@@ -35,36 +41,79 @@ impl Metadata {
         if available == 0 {
             return Err(exhausted());
         }
-        // Keep amortized growth, but clamp it to the remaining declared allowance.
         let extra = values.capacity().max(4).min(available);
         let old = values.capacity();
-        values
-            .try_reserve_exact(extra)
-            .map_err(|_| Error::new(ErrorCode::ResourceLimit, "cannot allocate paint metadata"))?;
-        let bytes = (values.capacity() - old)
+        let before = charge.bytes();
+        let predicted = extra.checked_mul(width).ok_or_else(exhausted)? as u64;
+        charge.resize(before.checked_add(predicted).ok_or_else(exhausted)?)?;
+        if values.try_reserve_exact(extra).is_err() {
+            charge.resize(before)?;
+            return Err(Error::new(
+                ErrorCode::ResourceLimit,
+                "cannot allocate paint metadata",
+            ));
+        }
+        let actual = (values.capacity() - old)
             .checked_mul(width)
-            .ok_or_else(exhausted)?;
-        self.check(bytes)?;
-        self.used += bytes;
-        Ok(())
+            .ok_or_else(exhausted);
+        let result = actual.and_then(|bytes| {
+            charge.resize(before.checked_add(bytes as u64).ok_or_else(exhausted)?)?;
+            self.check(bytes)?;
+            Ok(bytes)
+        });
+        match result {
+            Ok(bytes) => {
+                self.used += bytes;
+                Ok(())
+            }
+            Err(error) => {
+                // A returned capacity may exceed the request. A failed builder
+                // must not retain uncharged storage; free it before notifying release.
+                drop(std::mem::take(values));
+                charge.resize(before - old as u64 * width as u64)?;
+                Err(error)
+            }
+        }
     }
-    pub fn table(&mut self, tiles: &mut HashMap<TileCoord, Vec<usize>>) -> Result<()> {
+    pub fn table(
+        &mut self,
+        tiles: &mut HashMap<TileCoord, Vec<usize>>,
+        charge: &mut BudgetAccount,
+    ) -> Result<()> {
         if tiles.len() < tiles.capacity() {
             return Ok(());
         }
         let width = size_of::<(TileCoord, Vec<usize>)>();
         self.check(width)?;
         let old = tiles.capacity();
-        tiles
-            .try_reserve(1)
-            .map_err(|_| Error::new(ErrorCode::ResourceLimit, "cannot allocate paint tile plan"))?;
-        // std exposes usable capacity, not allocator bucket layout. Account that
-        // payload exactly; hash controls/allocator overhead remain outside this cap.
-        let bytes = (tiles.capacity() - old)
+        let before = charge.bytes();
+        charge.resize(before.checked_add(width as u64).ok_or_else(exhausted)?)?;
+        if tiles.try_reserve(1).is_err() {
+            charge.resize(before)?;
+            return Err(Error::new(
+                ErrorCode::ResourceLimit,
+                "cannot allocate paint tile plan",
+            ));
+        }
+        let actual = (tiles.capacity() - old)
             .checked_mul(width)
-            .ok_or_else(exhausted)?;
-        self.check(bytes)?;
-        self.used += bytes;
-        Ok(())
+            .ok_or_else(exhausted);
+        let result = actual.and_then(|bytes| {
+            charge.resize(before.checked_add(bytes as u64).ok_or_else(exhausted)?)?;
+            self.check(bytes)?;
+            Ok(bytes)
+        });
+        match result {
+            Ok(bytes) => {
+                self.used += bytes;
+                Ok(())
+            }
+            Err(error) => {
+                // This account owns the map and all of its index vectors.
+                drop(std::mem::take(tiles));
+                charge.resize(0)?;
+                Err(error)
+            }
+        }
     }
 }

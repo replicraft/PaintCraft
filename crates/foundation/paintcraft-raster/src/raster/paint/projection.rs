@@ -10,6 +10,7 @@ pub struct PaintProjection {
     bounds: Rect,
     tiles: HashMap<TileCoord, Vec<usize>>,
     bytes: usize,
+    index_charge: paintcraft_core::types::resources::BudgetAccount,
 }
 struct ReadTarget(Rect);
 impl index::Target for ReadTarget {
@@ -49,12 +50,18 @@ impl PaintPlan {
                 "projection needs layer-local bounds",
             ));
         }
-        let prepared = self.index_checked(self.metadata_limit, &mut ReadTarget(bounds), check)?;
+        let prepared = self.index_checked(
+            self.metadata_limit,
+            self.writes.charge.budget(),
+            &mut ReadTarget(bounds),
+            check,
+        )?;
         Ok(PaintProjection {
             plan: self,
             bounds,
             tiles: prepared.tiles,
             bytes: prepared.bytes,
+            index_charge: prepared.charge,
         })
     }
 }
@@ -71,23 +78,36 @@ impl PaintProjection {
     ) -> Result<Self> {
         check()?;
         let input_bytes = incoming.descriptor_bytes();
+        metadata::Metadata::new(
+            self.bytes
+                .checked_add(input_bytes)
+                .ok_or_else(metadata::exhausted)?,
+            self.plan.metadata_limit,
+        )?;
+        if !incoming.writes.is_empty() {
+            let old = self.plan.descriptor_bytes();
+            self.plan.unique_writes(check)?;
+            self.bytes = self.bytes - old + self.plan.descriptor_bytes();
+        }
         let used = self
             .bytes
             .checked_add(input_bytes)
             .ok_or_else(metadata::exhausted)?;
         let mut metadata = metadata::Metadata::new(used, self.plan.metadata_limit)?;
-        // IntoIter retains its entire allocation until the transfer finishes;
-        // charge capacity, not the number of descriptors remaining in the loop.
-        for write in incoming.writes {
+        // The incoming storage owner survives the complete transfer, including
+        // when another plan shares it. Count capacity, not remaining descriptors.
+        for write in incoming.writes.iter().copied() {
             check()?;
-            metadata.vector(&mut self.plan.writes)?;
             let index = self.plan.writes.len();
-            self.plan.writes.push(write);
+            let writes = Arc::get_mut(&mut self.plan.writes).expect("private program descriptors");
+            metadata.vector(&mut writes.values, &mut writes.charge)?;
+            writes.values.push(write);
             index::append_write_checked(
                 index,
                 write,
                 &mut self.tiles,
                 &mut metadata,
+                &mut self.index_charge,
                 &mut ReadTarget(self.bounds),
                 check,
             )?;
