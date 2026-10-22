@@ -27,6 +27,7 @@ pub enum Action {
     SelectAll,
     Deselect,
     Close,
+    Exit,
     Layer(LayerAction),
     View(ViewAction),
 }
@@ -118,6 +119,7 @@ impl Action {
             Self::SelectAll => ("Select all", Some((Key::A, false))),
             Self::Deselect => ("Deselect", Some((Key::D, false))),
             Self::Close => ("Close", Some((Key::W, false))),
+            Self::Exit => ("Exit", None),
         };
         Descriptor {
             action: self,
@@ -182,6 +184,7 @@ impl Action {
             Self::Layer(action) => action.enabled(ctx),
             Self::View(action) => action.enabled(ctx),
             Self::New
+            | Self::Exit
             | Self::Open
             | Self::Interface
             | Self::CanvasDefaults
@@ -244,6 +247,7 @@ impl Action {
             Self::SelectAll => 1008,
             Self::Deselect => 1009,
             Self::Close => 1010,
+            Self::Exit => 1019,
             Self::CanvasSize => 1011,
             Self::ClearCanvas => 1018,
             Self::Settings => 1015,
@@ -257,7 +261,20 @@ impl Action {
 }
 
 pub fn menu_item(ui: &mut egui::Ui, action: Action, ctx: Context) -> bool {
-    let descriptor = action.descriptor_for(ctx.frontend);
+    menu_item_with_label(ui, action, ctx, action.descriptor_for(ctx.frontend).label)
+}
+
+/// Frontend-specific wording retains the action's identity, shortcut and gates.
+pub fn menu_item_with_label(
+    ui: &mut egui::Ui,
+    action: Action,
+    ctx: Context,
+    label: &'static str,
+) -> bool {
+    let descriptor = Descriptor {
+        label,
+        ..action.descriptor_for(ctx.frontend)
+    };
     let checked = action.checked(ctx);
     // Checkable menu rows reserve an indicator column; their selected state is
     // announced to accessibility without painting a permanently selected button.
@@ -398,6 +415,15 @@ mod tests {
             .map(|a| a.activation_code())
             .collect();
         assert_eq!(ids.len(), FILE.len() + EDIT.len());
+        assert!(!ids.contains(&Action::Exit.activation_code()));
+        assert!(
+            Action::Exit.enabled(context),
+            "Exit remains available without a document"
+        );
+        assert!(!Action::Exit.enabled(Context {
+            blocked: true,
+            ..context
+        }));
         assert!(Action::New.enabled(context));
         assert!(Action::Open.enabled(context));
         assert!(!Action::Save.enabled(context));

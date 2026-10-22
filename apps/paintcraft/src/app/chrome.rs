@@ -155,6 +155,7 @@ impl App {
                 Chrome::View(action) => self.dispatch_view_action(ctx, action),
                 Chrome::Layer(action) => self.dispatch_layer_action(ctx, action),
                 Chrome::Close => self.request_close_tab(self.active_tab_id(), ctx),
+                Chrome::Exit => ctx.send_viewport_cmd(egui::ViewportCommand::Close),
                 Chrome::Settings => self.open_settings(ctx),
                 Chrome::ChooseFrontend(frontend) => self.choose_experience(match frontend {
                     paintcraft_ui::actions::Frontend::Classic => Experience::Classic,

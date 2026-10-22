@@ -10,7 +10,7 @@ impl Action {
             Self::Open => Icon::Open,
             Self::Save => Icon::Save,
             Self::SaveAs | Self::Export => Icon::SaveAs,
-            Self::Close => Icon::Close,
+            Self::Close | Self::Exit => Icon::Close,
             Self::Undo => Icon::Undo,
             Self::Redo => Icon::Redo,
             Self::SelectAll | Self::Deselect => Icon::RectangleSelect,

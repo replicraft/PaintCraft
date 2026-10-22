@@ -115,7 +115,7 @@ impl App {
         for event in events {
             if event == QUIT {
                 if !self.action_context().blocked {
-                    ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                    self.dispatch_chrome(ctx, vec![Chrome::Exit]);
                 }
             } else if let Some(action) = actions()
                 .into_iter()
