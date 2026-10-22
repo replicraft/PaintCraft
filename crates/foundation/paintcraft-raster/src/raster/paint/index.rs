@@ -1,6 +1,6 @@
 //! One ordered tile index for replay and read-only transaction projection.
 use super::*;
-use paintcraft_core::types::resources::{AllocationClass, BudgetAccount};
+use paintcraft_core::types::resources::BudgetAccount;
 
 pub(super) struct Index {
     pub tiles: HashMap<TileCoord, Vec<usize>>,
@@ -57,14 +57,13 @@ impl PaintPlan {
     pub(super) fn index_checked(
         &self,
         limit: usize,
-        budget: SharedBudget,
+        mut charge: BudgetAccount,
         target: &mut impl Target,
         check: &dyn Fn() -> Result<()>,
     ) -> Result<Index> {
         check()?;
         let mut metadata =
             metadata::Metadata::new(self.descriptor_bytes(), self.metadata_limit.min(limit))?;
-        let mut charge = budget.account(AllocationClass::PaintMetadata);
         // Reverse local drop order frees storage before notifying charge release.
         let mut tiles: HashMap<TileCoord, Vec<usize>> = HashMap::new();
         for (index, &write) in self.writes.iter().enumerate() {

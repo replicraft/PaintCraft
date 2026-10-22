@@ -75,8 +75,11 @@ impl PaintPlan {
     }
     /// Independent shared metadata realm; the fixed per-plan policy still applies.
     pub fn with_metadata_budget(bytes: usize, budget: SharedBudget) -> Self {
+        Self::with_metadata_scope(bytes, budget.scope(AllocationClass::PaintMetadata))
+    }
+    pub(super) fn with_metadata_scope(bytes: usize, scope: BudgetScope) -> Self {
         Self {
-            writes: Arc::new(writes::Writes::new(budget)),
+            writes: Arc::new(writes::Writes::new(scope)),
             metadata_limit: bytes,
         }
     }
@@ -149,7 +152,7 @@ impl PaintPlan {
             let mut target = index::RasterTarget::new(layer, admission);
             let prepared = self.index_checked(
                 admission.paint_metadata_limit,
-                admission.paint_metadata_budget.clone(),
+                admission.paint_metadata_scope.account(),
                 &mut target,
                 check,
             )?;

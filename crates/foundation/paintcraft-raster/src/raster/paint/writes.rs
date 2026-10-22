@@ -1,6 +1,6 @@
 //! Shared immutable descriptor storage; writes acquire independent charged copies.
 use super::*;
-use paintcraft_core::types::resources::{AllocationClass, BudgetAccount};
+use paintcraft_core::types::resources::{BudgetAccount, BudgetScope};
 
 #[derive(Debug)]
 pub(super) struct Writes {
@@ -15,14 +15,17 @@ impl std::ops::Deref for Writes {
     }
 }
 impl Writes {
-    pub fn new(budget: SharedBudget) -> Self {
+    pub fn new(scope: BudgetScope) -> Self {
         Self {
             values: Vec::new(),
-            charge: budget.account(AllocationClass::PaintMetadata),
+            charge: scope.account(),
         }
     }
     fn copy_checked(&self, limit: usize, check: &dyn Fn() -> Result<()>) -> Result<Self> {
-        let mut copy = Self::new(self.charge.budget());
+        let mut copy = Self {
+            values: Vec::new(),
+            charge: self.charge.sibling(),
+        };
         let bytes = self
             .values
             .capacity()

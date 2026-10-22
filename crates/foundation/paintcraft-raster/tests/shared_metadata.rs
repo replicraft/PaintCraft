@@ -229,3 +229,32 @@ fn copying_a_clamped_program_preserves_capacity_instead_of_exhausting_the_local_
     drop(snapshot);
     assert_eq!(budget.usage().reserved, 0);
 }
+
+#[test]
+fn admission_denial_includes_descriptors_and_pending_index_growth_in_its_attempt_demand() {
+    let probe = plan(&SharedBudget::new(10000))
+        .into_projection_checked(Rect::new(0, 0, 8, 8).unwrap(), &|| Ok(()))
+        .unwrap();
+    let required = probe.metadata_bytes() as u64;
+    drop(probe);
+    let metadata = SharedBudget::new(512);
+    let blocker = metadata.reserve(512 - required + 12).unwrap();
+    let mut admission = Admission::new(65_536).with_paint_metadata_budget(metadata.clone());
+    let mut p = admission.paint_plan();
+    p.rect(rect(0), Rgba([1; 4]), BlendMode::Replace).unwrap();
+    let mut raster = RasterLayer::new(8, 8, Rgba::TRANSPARENT);
+    let error = p.apply(&mut raster, &mut admission).unwrap_err();
+    let denial = error.allocation_denial().unwrap();
+    assert_eq!(denial.class(), AllocationClass::PaintMetadata);
+    assert_eq!(denial.required_bytes(), required);
+    assert!(!denial.can_retry());
+    assert_eq!(raster.resident_tiles(), 0);
+    drop(p);
+    assert!(
+        !denial.can_retry(),
+        "headroom below the known attempt cannot trigger a retry"
+    );
+    drop(blocker);
+    assert!(denial.can_retry());
+    assert_eq!(metadata.usage().reserved, 0);
+}

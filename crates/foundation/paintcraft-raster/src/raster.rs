@@ -7,7 +7,9 @@
 //! (new tile or copy-on-write copy) is charged to an [`Admission`] so exhaustion
 //! is an explicit `resource.limit` error rather than an abort.
 
-use paintcraft_core::types::resources::{BudgetReservation, SharedBudget};
+use paintcraft_core::types::resources::{
+    AllocationClass, BudgetReservation, BudgetScope, SharedBudget,
+};
 use std::collections::HashMap;
 use std::sync::{Arc, OnceLock};
 
@@ -61,7 +63,7 @@ fn blend(mode: BlendMode, src: Rgba, dst: Rgba) -> Rgba {
 pub struct Admission {
     remaining_pixels: u64,
     paint_metadata_limit: usize,
-    paint_metadata_budget: SharedBudget,
+    paint_metadata_scope: BudgetScope,
     flood_scratch_limit: usize,
     stroke_scratch_limit: usize,
     residency: SharedBudget,
@@ -85,7 +87,8 @@ impl Admission {
         Self {
             remaining_pixels: limit_pixels,
             paint_metadata_limit: DEFAULT_PAINT_METADATA_BYTES,
-            paint_metadata_budget: paint::default_metadata_budget(),
+            paint_metadata_scope: paint::default_metadata_budget()
+                .scope(AllocationClass::PaintMetadata),
             flood_scratch_limit: crate::flood::DEFAULT_FLOOD_SCRATCH_BYTES,
             stroke_scratch_limit: crate::shape::DEFAULT_STROKE_SCRATCH_BYTES,
             residency,
@@ -100,7 +103,8 @@ impl Admission {
         Self {
             remaining_pixels: limit_pixels,
             paint_metadata_limit: DEFAULT_PAINT_METADATA_BYTES,
-            paint_metadata_budget: paint::default_metadata_budget(),
+            paint_metadata_scope: paint::default_metadata_budget()
+                .scope(AllocationClass::PaintMetadata),
             flood_scratch_limit: crate::flood::DEFAULT_FLOOD_SCRATCH_BYTES,
             stroke_scratch_limit: crate::shape::DEFAULT_STROKE_SCRATCH_BYTES,
             residency: reservation.budget(),
@@ -116,8 +120,11 @@ impl Admission {
     }
     /// Share descriptor and index payload admission independently of decoded tiles.
     pub fn with_paint_metadata_budget(mut self, budget: SharedBudget) -> Self {
-        self.paint_metadata_budget = budget;
+        self.paint_metadata_scope = budget.scope(AllocationClass::PaintMetadata);
         self
+    }
+    pub fn paint_metadata_budget(&self) -> SharedBudget {
+        self.paint_metadata_scope.budget()
     }
     /// Configure bitmap/frontier/output capacity for each flood classification.
     pub fn with_flood_scratch_limit(mut self, bytes: usize) -> Self {
@@ -135,10 +142,7 @@ impl Admission {
         self.stroke_scratch_limit
     }
     pub fn paint_plan(&self) -> PaintPlan {
-        PaintPlan::with_metadata_budget(
-            self.paint_metadata_limit,
-            self.paint_metadata_budget.clone(),
-        )
+        PaintPlan::with_metadata_scope(self.paint_metadata_limit, self.paint_metadata_scope.clone())
     }
     /// Reserve a complete known set of fresh tile allocations before materialization.
     /// This validates but does not consume the cumulative staged-pixel allowance.

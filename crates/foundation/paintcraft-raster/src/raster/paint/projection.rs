@@ -52,7 +52,7 @@ impl PaintPlan {
         }
         let prepared = self.index_checked(
             self.metadata_limit,
-            self.writes.charge.budget(),
+            self.writes.charge.sibling(),
             &mut ReadTarget(bounds),
             check,
         )?;
