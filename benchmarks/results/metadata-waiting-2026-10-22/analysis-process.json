@@ -1,0 +1,722 @@
+[
+  {
+    "kind": "cli",
+    "case": "horizontal_pencil",
+    "sessions": [
+      {
+        "session": 1,
+        "results": {
+          "baseline": {
+            "mean_ms": 21.33033525,
+            "median_ms": 21.425125,
+            "min_ms": 18.686500000000002,
+            "max_ms": 24.763167000000003,
+            "mean_cpu_ms": 9.735199999999999,
+            "median_rss_mib": 8.1015625
+          },
+          "charged": {
+            "mean_ms": 20.568999950000002,
+            "median_ms": 20.571812,
+            "min_ms": 18.862333000000003,
+            "max_ms": 22.080834,
+            "mean_cpu_ms": 9.0855,
+            "median_rss_mib": 8.09375
+          }
+        },
+        "charged_time_change_pct": -3.5692608253777847
+      },
+      {
+        "session": 2,
+        "results": {
+          "charged": {
+            "mean_ms": 21.7447124,
+            "median_ms": 21.665395500000002,
+            "min_ms": 19.898208,
+            "max_ms": 26.546209,
+            "mean_cpu_ms": 9.49465,
+            "median_rss_mib": 8.15625
+          },
+          "baseline": {
+            "mean_ms": 20.833864600000002,
+            "median_ms": 20.935687,
+            "min_ms": 18.793667,
+            "max_ms": 23.144833,
+            "mean_cpu_ms": 9.2181,
+            "median_rss_mib": 8.015625
+          }
+        },
+        "charged_time_change_pct": 4.3719579515746565
+      },
+      {
+        "session": 3,
+        "results": {
+          "baseline": {
+            "mean_ms": 22.45366465,
+            "median_ms": 22.456833500000002,
+            "min_ms": 19.78075,
+            "max_ms": 29.453792000000004,
+            "mean_cpu_ms": 10.00785,
+            "median_rss_mib": 8.1953125
+          },
+          "charged": {
+            "mean_ms": 22.1651124,
+            "median_ms": 21.994437500000004,
+            "min_ms": 19.834208000000004,
+            "max_ms": 27.488500000000002,
+            "mean_cpu_ms": 9.8301,
+            "median_rss_mib": 8.171875
+          }
+        },
+        "charged_time_change_pct": -1.2851009155870674
+      }
+    ]
+  },
+  {
+    "kind": "cli",
+    "case": "diagonal_pencil",
+    "sessions": [
+      {
+        "session": 1,
+        "results": {
+          "baseline": {
+            "mean_ms": 29.369775,
+            "median_ms": 29.107937,
+            "min_ms": 27.741834000000004,
+            "max_ms": 31.93075,
+            "mean_cpu_ms": 17.0049,
+            "median_rss_mib": 9.1015625
+          },
+          "charged": {
+            "mean_ms": 30.564962450000003,
+            "median_ms": 29.740104000000002,
+            "min_ms": 28.69125,
+            "max_ms": 43.376833000000005,
+            "mean_cpu_ms": 17.39085,
+            "median_rss_mib": 9.234375
+          }
+        },
+        "charged_time_change_pct": 4.069447076118227
+      },
+      {
+        "session": 2,
+        "results": {
+          "charged": {
+            "mean_ms": 29.05996245,
+            "median_ms": 28.9184165,
+            "min_ms": 27.715625,
+            "max_ms": 34.675417,
+            "mean_cpu_ms": 16.8553,
+            "median_rss_mib": 9.0546875
+          },
+          "baseline": {
+            "mean_ms": 29.616018800000003,
+            "median_ms": 29.784146,
+            "min_ms": 27.848000000000003,
+            "max_ms": 34.112458000000004,
+            "mean_cpu_ms": 17.22605,
+            "median_rss_mib": 9.203125
+          }
+        },
+        "charged_time_change_pct": -1.8775526641683582
+      },
+      {
+        "session": 3,
+        "results": {
+          "baseline": {
+            "mean_ms": 30.554141650000002,
+            "median_ms": 30.8790415,
+            "min_ms": 28.927333000000004,
+            "max_ms": 31.912459000000005,
+            "mean_cpu_ms": 17.3812,
+            "median_rss_mib": 9.359375
+          },
+          "charged": {
+            "mean_ms": 31.042958400000003,
+            "median_ms": 30.182187499999998,
+            "min_ms": 28.879625,
+            "max_ms": 39.935208,
+            "mean_cpu_ms": 17.8308,
+            "median_rss_mib": 9.3515625
+          }
+        },
+        "charged_time_change_pct": 1.5998379388281858
+      }
+    ]
+  },
+  {
+    "kind": "cli",
+    "case": "smooth_brush",
+    "sessions": [
+      {
+        "session": 1,
+        "results": {
+          "baseline": {
+            "mean_ms": 32.76309795,
+            "median_ms": 32.5838335,
+            "min_ms": 29.748792,
+            "max_ms": 38.73500000000001,
+            "mean_cpu_ms": 20.588449999999998,
+            "median_rss_mib": 8.28125
+          },
+          "charged": {
+            "mean_ms": 32.7718812,
+            "median_ms": 32.7430835,
+            "min_ms": 30.926541,
+            "max_ms": 34.87054200000001,
+            "mean_cpu_ms": 20.53305,
+            "median_rss_mib": 8.265625
+          }
+        },
+        "charged_time_change_pct": 0.026808362302621624
+      },
+      {
+        "session": 2,
+        "results": {
+          "charged": {
+            "mean_ms": 32.75247095,
+            "median_ms": 32.5329165,
+            "min_ms": 31.731792000000002,
+            "max_ms": 37.598833000000006,
+            "mean_cpu_ms": 20.448999999999998,
+            "median_rss_mib": 8.2890625
+          },
+          "baseline": {
+            "mean_ms": 31.764158300000002,
+            "median_ms": 31.930291500000003,
+            "min_ms": 29.907000000000004,
+            "max_ms": 33.763417000000004,
+            "mean_cpu_ms": 20.0585,
+            "median_rss_mib": 8.1328125
+          }
+        },
+        "charged_time_change_pct": 3.1114082755342443
+      },
+      {
+        "session": 3,
+        "results": {
+          "baseline": {
+            "mean_ms": 35.153898000000005,
+            "median_ms": 33.593646,
+            "min_ms": 30.700666000000002,
+            "max_ms": 59.21595800000001,
+            "mean_cpu_ms": 21.088649999999998,
+            "median_rss_mib": 8.359375
+          },
+          "charged": {
+            "mean_ms": 33.206041750000004,
+            "median_ms": 32.89227100000001,
+            "min_ms": 31.699917000000003,
+            "max_ms": 35.435917,
+            "mean_cpu_ms": 20.8399,
+            "median_rss_mib": 8.328125
+          }
+        },
+        "charged_time_change_pct": -5.540939585135051
+      }
+    ]
+  },
+  {
+    "kind": "cli",
+    "case": "smooth_eraser",
+    "sessions": [
+      {
+        "session": 1,
+        "results": {
+          "baseline": {
+            "mean_ms": 39.333808250000004,
+            "median_ms": 30.133916500000005,
+            "min_ms": 21.788541000000002,
+            "max_ms": 120.797458,
+            "mean_cpu_ms": 13.53135,
+            "median_rss_mib": 8.3671875
+          },
+          "charged": {
+            "mean_ms": 23.911123000000003,
+            "median_ms": 23.5924585,
+            "min_ms": 21.852417000000003,
+            "max_ms": 28.374458,
+            "mean_cpu_ms": 11.254249999999999,
+            "median_rss_mib": 8.2109375
+          }
+        },
+        "charged_time_change_pct": -39.20974331286623
+      },
+      {
+        "session": 2,
+        "results": {
+          "charged": {
+            "mean_ms": 23.357302150000002,
+            "median_ms": 23.359354000000003,
+            "min_ms": 21.8,
+            "max_ms": 27.55975,
+            "mean_cpu_ms": 11.28595,
+            "median_rss_mib": 8.1484375
+          },
+          "baseline": {
+            "mean_ms": 23.064462350000003,
+            "median_ms": 23.190833,
+            "min_ms": 20.898042000000004,
+            "max_ms": 24.579166000000004,
+            "mean_cpu_ms": 11.040899999999999,
+            "median_rss_mib": 8.15625
+          }
+        },
+        "charged_time_change_pct": 1.2696580373571908
+      },
+      {
+        "session": 3,
+        "results": {
+          "baseline": {
+            "mean_ms": 23.622712500000002,
+            "median_ms": 23.7967085,
+            "min_ms": 21.805750000000003,
+            "max_ms": 26.550875,
+            "mean_cpu_ms": 11.46595,
+            "median_rss_mib": 8.2109375
+          },
+          "charged": {
+            "mean_ms": 24.072449900000002,
+            "median_ms": 24.170437500000006,
+            "min_ms": 22.758084,
+            "max_ms": 25.498417000000003,
+            "mean_cpu_ms": 11.478499999999999,
+            "median_rss_mib": 8.21875
+          }
+        },
+        "charged_time_change_pct": 1.903834709921659
+      }
+    ]
+  },
+  {
+    "kind": "cli",
+    "case": "calibration",
+    "sessions": [
+      {
+        "session": 1,
+        "results": {
+          "baseline": {
+            "mean_ms": 1.20425425,
+            "median_ms": 1.183792,
+            "min_ms": 1.1356670000000002,
+            "max_ms": 1.343,
+            "mean_cpu_ms": 0.85695,
+            "median_rss_mib": 1.6875
+          },
+          "charged": {
+            "mean_ms": 1.3234125,
+            "median_ms": 1.270854,
+            "min_ms": 1.163084,
+            "max_ms": 1.679834,
+            "mean_cpu_ms": 0.9290499999999999,
+            "median_rss_mib": 1.75
+          }
+        },
+        "charged_time_change_pct": 9.894775127428467
+      },
+      {
+        "session": 2,
+        "results": {
+          "charged": {
+            "mean_ms": 1.4604396000000002,
+            "median_ms": 1.4982710000000001,
+            "min_ms": 1.165458,
+            "max_ms": 1.8545,
+            "mean_cpu_ms": 1.0567499999999999,
+            "median_rss_mib": 1.75
+          },
+          "baseline": {
+            "mean_ms": 1.4038293000000002,
+            "median_ms": 1.4225835,
+            "min_ms": 1.19975,
+            "max_ms": 1.74825,
+            "mean_cpu_ms": 1.02095,
+            "median_rss_mib": 1.6875
+          }
+        },
+        "charged_time_change_pct": 4.032562933399375
+      },
+      {
+        "session": 3,
+        "results": {
+          "baseline": {
+            "mean_ms": 1.4301105500000002,
+            "median_ms": 1.4014585000000002,
+            "min_ms": 1.2271250000000002,
+            "max_ms": 1.9551250000000002,
+            "mean_cpu_ms": 1.03785,
+            "median_rss_mib": 1.6875
+          },
+          "charged": {
+            "mean_ms": 1.45819995,
+            "median_ms": 1.3791455000000001,
+            "min_ms": 1.172792,
+            "max_ms": 2.4715420000000003,
+            "mean_cpu_ms": 1.0479,
+            "median_rss_mib": 1.75
+          }
+        },
+        "charged_time_change_pct": 1.9641418630188978
+      }
+    ]
+  },
+  {
+    "kind": "library",
+    "case": "tiny",
+    "sessions": [
+      {
+        "session": 1,
+        "results": {
+          "baseline": {
+            "mean_ms": 54.19472925,
+            "median_ms": 53.84266650000001,
+            "min_ms": 52.805584,
+            "max_ms": 58.012750000000004,
+            "mean_cpu_ms": 53.1067,
+            "median_rss_mib": 1.515625
+          },
+          "charged": {
+            "mean_ms": 57.311379050000006,
+            "median_ms": 56.843520500000004,
+            "min_ms": 55.627,
+            "max_ms": 60.576667,
+            "mean_cpu_ms": 56.11785,
+            "median_rss_mib": 1.515625
+          }
+        },
+        "charged_time_change_pct": 5.750835631308204
+      },
+      {
+        "session": 2,
+        "results": {
+          "charged": {
+            "mean_ms": 63.825048,
+            "median_ms": 58.5567085,
+            "min_ms": 56.726333000000004,
+            "max_ms": 128.21312500000002,
+            "mean_cpu_ms": 57.9329,
+            "median_rss_mib": 1.5625
+          },
+          "baseline": {
+            "mean_ms": 77.30238535000001,
+            "median_ms": 54.952833,
+            "min_ms": 53.203833,
+            "max_ms": 356.464292,
+            "mean_cpu_ms": 54.727999999999994,
+            "median_rss_mib": 1.515625
+          }
+        },
+        "charged_time_change_pct": -17.434568531073158
+      },
+      {
+        "session": 3,
+        "results": {
+          "baseline": {
+            "mean_ms": 63.8922291,
+            "median_ms": 54.66927100000001,
+            "min_ms": 53.508375,
+            "max_ms": 224.08016700000002,
+            "mean_cpu_ms": 54.68785,
+            "median_rss_mib": 1.484375
+          },
+          "charged": {
+            "mean_ms": 58.0301271,
+            "median_ms": 57.362916500000004,
+            "min_ms": 56.698458,
+            "max_ms": 65.11775,
+            "mean_cpu_ms": 56.4681,
+            "median_rss_mib": 1.53125
+          }
+        },
+        "charged_time_change_pct": -9.174984317459034
+      }
+    ]
+  },
+  {
+    "kind": "library",
+    "case": "wall",
+    "sessions": [
+      {
+        "session": 1,
+        "results": {
+          "baseline": {
+            "mean_ms": 181.19898545,
+            "median_ms": 176.1488955,
+            "min_ms": 173.32033300000003,
+            "max_ms": 247.196834,
+            "mean_cpu_ms": 175.7159,
+            "median_rss_mib": 1.734375
+          },
+          "charged": {
+            "mean_ms": 177.26469585,
+            "median_ms": 177.3856665,
+            "min_ms": 174.627167,
+            "max_ms": 183.145375,
+            "mean_cpu_ms": 175.9483,
+            "median_rss_mib": 1.625
+          }
+        },
+        "charged_time_change_pct": -2.171253658087191
+      },
+      {
+        "session": 2,
+        "results": {
+          "charged": {
+            "mean_ms": 178.25950215,
+            "median_ms": 178.4204585,
+            "min_ms": 176.88175,
+            "max_ms": 179.429958,
+            "mean_cpu_ms": 176.2379,
+            "median_rss_mib": 1.734375
+          },
+          "baseline": {
+            "mean_ms": 175.15802285,
+            "median_ms": 175.0534585,
+            "min_ms": 173.180416,
+            "max_ms": 179.58525,
+            "mean_cpu_ms": 173.00415,
+            "median_rss_mib": 1.671875
+          }
+        },
+        "charged_time_change_pct": 1.7706749879541572
+      },
+      {
+        "session": 3,
+        "results": {
+          "baseline": {
+            "mean_ms": 177.4138772,
+            "median_ms": 176.025729,
+            "min_ms": 172.97595900000002,
+            "max_ms": 193.408041,
+            "mean_cpu_ms": 174.23884999999999,
+            "median_rss_mib": 1.71875
+          },
+          "charged": {
+            "mean_ms": 181.26185220000002,
+            "median_ms": 177.54897950000003,
+            "min_ms": 176.20825000000002,
+            "max_ms": 240.599209,
+            "mean_cpu_ms": 176.96615,
+            "median_rss_mib": 1.75
+          }
+        },
+        "charged_time_change_pct": 2.1689255996937495
+      }
+    ]
+  },
+  {
+    "kind": "library",
+    "case": "overlap",
+    "sessions": [
+      {
+        "session": 1,
+        "results": {
+          "baseline": {
+            "mean_ms": 55.081202100000006,
+            "median_ms": 54.872875,
+            "min_ms": 54.01775000000001,
+            "max_ms": 59.388333,
+            "mean_cpu_ms": 54.00214999999999,
+            "median_rss_mib": 1.5703125
+          },
+          "charged": {
+            "mean_ms": 57.376037350000004,
+            "median_ms": 55.91027050000001,
+            "min_ms": 54.74016700000001,
+            "max_ms": 77.133875,
+            "mean_cpu_ms": 55.43465,
+            "median_rss_mib": 1.65625
+          }
+        },
+        "charged_time_change_pct": 4.1662766288828035
+      },
+      {
+        "session": 2,
+        "results": {
+          "charged": {
+            "mean_ms": 56.78329170000001,
+            "median_ms": 56.7201465,
+            "min_ms": 55.35895800000001,
+            "max_ms": 59.714417000000005,
+            "mean_cpu_ms": 55.60565,
+            "median_rss_mib": 1.7421875
+          },
+          "baseline": {
+            "mean_ms": 55.90351265,
+            "median_ms": 55.540042,
+            "min_ms": 54.505,
+            "max_ms": 62.794292,
+            "mean_cpu_ms": 54.3266,
+            "median_rss_mib": 1.6875
+          }
+        },
+        "charged_time_change_pct": 1.5737455631958497
+      },
+      {
+        "session": 3,
+        "results": {
+          "baseline": {
+            "mean_ms": 56.11600835,
+            "median_ms": 55.731104,
+            "min_ms": 54.975458,
+            "max_ms": 60.153000000000006,
+            "mean_cpu_ms": 54.81185,
+            "median_rss_mib": 1.6640625
+          },
+          "charged": {
+            "mean_ms": 56.5179084,
+            "median_ms": 56.535667000000004,
+            "min_ms": 55.703333,
+            "max_ms": 57.097209,
+            "mean_cpu_ms": 55.38115,
+            "median_rss_mib": 1.734375
+          }
+        },
+        "charged_time_change_pct": 0.716195007124032
+      }
+    ]
+  },
+  {
+    "kind": "library",
+    "case": "default-control",
+    "sessions": [
+      {
+        "session": 1,
+        "results": {
+          "baseline": {
+            "mean_ms": 243.12507710000003,
+            "median_ms": 233.618854,
+            "min_ms": 225.242375,
+            "max_ms": 426.10058300000003,
+            "mean_cpu_ms": 233.79915,
+            "median_rss_mib": 1.671875
+          },
+          "charged": {
+            "mean_ms": 230.78900205000002,
+            "median_ms": 230.49622900000003,
+            "min_ms": 224.48208300000002,
+            "max_ms": 239.67404200000001,
+            "mean_cpu_ms": 228.86515,
+            "median_rss_mib": 1.703125
+          }
+        },
+        "charged_time_change_pct": -5.073962421789191
+      },
+      {
+        "session": 2,
+        "results": {
+          "charged": {
+            "mean_ms": 229.9916063,
+            "median_ms": 230.1900205,
+            "min_ms": 223.980333,
+            "max_ms": 235.116542,
+            "mean_cpu_ms": 227.53029999999998,
+            "median_rss_mib": 1.75
+          },
+          "baseline": {
+            "mean_ms": 238.3560688,
+            "median_ms": 233.16056250000003,
+            "min_ms": 225.80233300000003,
+            "max_ms": 304.763084,
+            "mean_cpu_ms": 231.31609999999998,
+            "median_rss_mib": 1.734375
+          }
+        },
+        "charged_time_change_pct": -3.509229927356483
+      },
+      {
+        "session": 3,
+        "results": {
+          "baseline": {
+            "mean_ms": 242.94149985,
+            "median_ms": 231.533271,
+            "min_ms": 225.237291,
+            "max_ms": 434.30958400000003,
+            "mean_cpu_ms": 230.8604,
+            "median_rss_mib": 1.734375
+          },
+          "charged": {
+            "mean_ms": 229.65914370000002,
+            "median_ms": 229.18625000000003,
+            "min_ms": 223.888708,
+            "max_ms": 237.40158300000002,
+            "mean_cpu_ms": 227.2363,
+            "median_rss_mib": 1.75
+          }
+        },
+        "charged_time_change_pct": -5.467306391950721
+      }
+    ]
+  },
+  {
+    "kind": "library",
+    "case": "calibration",
+    "sessions": [
+      {
+        "session": 1,
+        "results": {
+          "baseline": {
+            "mean_ms": 1.36886675,
+            "median_ms": 1.3946040000000002,
+            "min_ms": 1.173917,
+            "max_ms": 1.7070840000000003,
+            "mean_cpu_ms": 0.9814499999999999,
+            "median_rss_mib": 1.1875
+          },
+          "charged": {
+            "mean_ms": 1.33957075,
+            "median_ms": 1.2676455,
+            "min_ms": 1.127167,
+            "max_ms": 1.8295830000000002,
+            "mean_cpu_ms": 0.9957499999999999,
+            "median_rss_mib": 1.171875
+          }
+        },
+        "charged_time_change_pct": -2.1401644827737987
+      },
+      {
+        "session": 2,
+        "results": {
+          "charged": {
+            "mean_ms": 1.45981865,
+            "median_ms": 1.466042,
+            "min_ms": 1.245125,
+            "max_ms": 1.786208,
+            "mean_cpu_ms": 1.05025,
+            "median_rss_mib": 1.171875
+          },
+          "baseline": {
+            "mean_ms": 1.4056938,
+            "median_ms": 1.4007915,
+            "min_ms": 1.201625,
+            "max_ms": 1.6255000000000002,
+            "mean_cpu_ms": 1.01665,
+            "median_rss_mib": 1.1875
+          }
+        },
+        "charged_time_change_pct": 3.8504011328782894
+      },
+      {
+        "session": 3,
+        "results": {
+          "baseline": {
+            "mean_ms": 1.4764374500000002,
+            "median_ms": 1.4746040000000002,
+            "min_ms": 1.245,
+            "max_ms": 1.7613750000000001,
+            "mean_cpu_ms": 1.06435,
+            "median_rss_mib": 1.1875
+          },
+          "charged": {
+            "mean_ms": 1.4212540500000002,
+            "median_ms": 1.407791,
+            "min_ms": 1.2367920000000001,
+            "max_ms": 1.681416,
+            "mean_cpu_ms": 1.03415,
+            "median_rss_mib": 1.171875
+          }
+        },
+        "charged_time_change_pct": -3.7376050031784236
+      }
+    ]
+  }
+]

@@ -126,3 +126,10 @@ Codec, encoded, metadata, output, GPU and process RSS accounting remain incomple
 A wake grants no resource, bypasses no publication guard and forces no pinned
 reader to release its allocation. No throughput, RSS or latency improvement is
 inferred from these correctness checks. T04/T11/T13 remain partial.
+
+
+[Scoped metadata demand and native waiting](METADATA_WAITING.md) now retain
+metadata-blocked edits with their original realms, FIFO position and file barriers.
+Distinct metadata watches do not request decoded history reclamation. The known
+attempt peak supports repricing; upfront batch planning and atomic metadata
+reservations remain separate work.

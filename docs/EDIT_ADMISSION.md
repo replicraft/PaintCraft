@@ -179,3 +179,10 @@ in addition to their fixed per-plan/program policy. Plan clones share charged
 immutable storage; mutation copies under admission. Metadata denials carry their
 own class and never enter decoded-history reclamation. Full-attempt metadata
 waiting and aggregate geometry/service/physical budgets remain open.
+
+
+[Scoped metadata demand and native waiting](METADATA_WAITING.md) now retain
+metadata-blocked edits with their original realms, FIFO position and file barriers.
+Distinct metadata watches do not request decoded history reclamation. The known
+attempt peak supports repricing; upfront batch planning and atomic metadata
+reservations remain separate work.

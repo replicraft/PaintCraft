@@ -567,3 +567,49 @@ The editor remains sequential. Full batch/source-lineage planning, metadata
 waiting/fairness, aggregate geometry/font/flood scratch, allocator/physical pressure,
 native input/display/cancellation tails and broader feature work remain. No roadmap
 gate is promoted by declared ownership or isolated measurements.
+
+
+## Forty-ninth slice: scoped metadata demand and native waiting
+
+A paint preparation attempt now shares live-plus-pending metadata demand across
+its independently owned descriptor/index accounts. A failed growth reports the
+known attempt peak, and clones of the factory retain no capacity. Scope locks
+are released before budget callbacks; releasing one owner does not pin the others.
+This is observed demand rather than an upfront full-batch or physical-memory plan.
+
+Feasible native metadata failures now retain the original captured edit/navigation
+request, FIFO position, preview, base ticket and file barriers. Fresh retries keep
+both original resource realms across service replacement. Escape and stale bases
+retire the request; impossible/fixed limits remain terminal atomic failures. There
+is no metadata reservation guarantee: another consumer may consume headroom and
+defer the same request again. A provisional periodic probe can reprice demand,
+while failed-attempt cleanup alone cannot spin a known unmet request.
+
+Metadata and decoded watchers now update independently. Metadata-only demand wakes
+edit/render consumers without advertising decoded pressure or bypassing a file
+barrier to reclaim resident history. Rendering retries preserve current view and
+preview identity. The coordinator owns release-interest updates, so successful
+GPU presentation cannot clear another consumer's wait. See the
+[contract](METADATA_WAITING.md) and
+[source-pinned validation](validation/metadata-waiting-2026-10-22/validation.json).
+
+872 workspace tests pass (26 explicit ignores), including thirteen new regressions;
+40 optimized core and 26 optimized raster tests pass. Required Metal validation
+passes 23 renderer unit and 31 integration tests, and required-GPU desktop validation
+passes 234 tests (eight explicit ignores). Strict workspace/all-target Clippy,
+release desktop/CLI builds and isolated default/single-layer 30-frame native
+startup smokes pass. Initial visibility errors and an unused-mut warning remain
+archived separately from final successful validation.
+
+The [matched overhead comparison](../benchmarks/results/metadata-waiting-2026-10-22/DECISION.md)
+retains 480 statistical samples and 1,200 original process observations, exact
+canonical/library outputs and unchanged CPU-only dependency graphs. Projected
+tiny is about 7% slower statistically; tiny process medians are slower in all
+sessions. Mixed CLI controls, a slow original eraser baseline and long library
+baseline/candidate observations remain. Scope ownership/waiting is a correctness
+adoption, not a general speedup or native event-latency claim.
+
+Whole-batch/source-lineage planning, atomic metadata reservations, aggregate
+geometry/font/flood/service budgets, physical memory accounting, cross-window
+fairness and sustained native input/display/cancellation tails remain open.
+T04/T11/T13/T14 remain partial; no wire/file policy or dependency changes.

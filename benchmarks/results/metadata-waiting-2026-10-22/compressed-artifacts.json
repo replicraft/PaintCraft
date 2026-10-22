@@ -1,0 +1,412 @@
+{
+  "cli-after-1-diagonal_pencil-baseline.log": {
+    "sha256": "61882d1f499eebe504e014b72602235d9f81eae918397da41b718d2e452b512c",
+    "bytes": 1114,
+    "archive": "cli-after-1-diagonal_pencil-baseline.log.gz"
+  },
+  "cli-after-1-diagonal_pencil-charged.log": {
+    "sha256": "34d3fe9e170092ddbfabb889bdb2404fa39dfb76a0e291ed610afc9f234c778c",
+    "bytes": 1114,
+    "archive": "cli-after-1-diagonal_pencil-charged.log.gz"
+  },
+  "cli-after-1-horizontal_pencil-baseline.log": {
+    "sha256": "646bf97db66f5e8d98661326d6b28af0be971ffb70efa776a4e0db6fb9c6cd32",
+    "bytes": 1114,
+    "archive": "cli-after-1-horizontal_pencil-baseline.log.gz"
+  },
+  "cli-after-1-horizontal_pencil-charged.log": {
+    "sha256": "6348ad50098e77a7aeb9cca70482a77abbf11ff22454aca04290515b2ca2841d",
+    "bytes": 1114,
+    "archive": "cli-after-1-horizontal_pencil-charged.log.gz"
+  },
+  "cli-after-1-smooth_brush-baseline.log": {
+    "sha256": "144f5b9c491dcb66c0b8f3a4eb29f4b55c8f85297406ebe2bb1015c4570187ea",
+    "bytes": 1114,
+    "archive": "cli-after-1-smooth_brush-baseline.log.gz"
+  },
+  "cli-after-1-smooth_brush-charged.log": {
+    "sha256": "4d613fcc768b5dda5c4fa30fe448b7c99e53eb2cbcee6e97b6e215ef3dfb117f",
+    "bytes": 1114,
+    "archive": "cli-after-1-smooth_brush-charged.log.gz"
+  },
+  "cli-after-1-smooth_eraser-baseline.log": {
+    "sha256": "72dca4b7942a676c4a11310981a66eadd72098b453cc0a480b9a91a0a0a4ed06",
+    "bytes": 1114,
+    "archive": "cli-after-1-smooth_eraser-baseline.log.gz"
+  },
+  "cli-after-1-smooth_eraser-charged.log": {
+    "sha256": "3b08062d49f697a8ca46a0e115793f62f7c70cf56a3fbea0855a054bf11a4309",
+    "bytes": 1114,
+    "archive": "cli-after-1-smooth_eraser-charged.log.gz"
+  },
+  "cli-after-2-diagonal_pencil-baseline.log": {
+    "sha256": "f6596f5f99bc28c26e41235a652bb8ab71372b1127fed72b0d5bb0bc2b35415c",
+    "bytes": 1114,
+    "archive": "cli-after-2-diagonal_pencil-baseline.log.gz"
+  },
+  "cli-after-2-diagonal_pencil-charged.log": {
+    "sha256": "e17b5d260412b5b0c4cf9a8f0ab521f5546c2bb195b4c4ca5683430f09f0a3e8",
+    "bytes": 1114,
+    "archive": "cli-after-2-diagonal_pencil-charged.log.gz"
+  },
+  "cli-after-2-horizontal_pencil-baseline.log": {
+    "sha256": "c8de77114df61624e1a704fe9aa2eba4710bd4a999cff012b059d8217cccde3e",
+    "bytes": 1114,
+    "archive": "cli-after-2-horizontal_pencil-baseline.log.gz"
+  },
+  "cli-after-2-horizontal_pencil-charged.log": {
+    "sha256": "d873b55ec2a3cdd5d004c4220b95b2bcbbb9ec384772d0af82c84abe504f8a6d",
+    "bytes": 1114,
+    "archive": "cli-after-2-horizontal_pencil-charged.log.gz"
+  },
+  "cli-after-2-smooth_brush-baseline.log": {
+    "sha256": "384f2f32371c377e6d8bc684fd74a273e370c226448a589ae0c8dd2326112295",
+    "bytes": 1114,
+    "archive": "cli-after-2-smooth_brush-baseline.log.gz"
+  },
+  "cli-after-2-smooth_brush-charged.log": {
+    "sha256": "259dba78c40c641269228251fdc42a9981c904e168913542ba8aa4c658a65ab7",
+    "bytes": 1114,
+    "archive": "cli-after-2-smooth_brush-charged.log.gz"
+  },
+  "cli-after-2-smooth_eraser-baseline.log": {
+    "sha256": "6f34cb3d981a0deb2db028ef37dbf487199d8f44e930b8cd15440f7265bcef06",
+    "bytes": 1114,
+    "archive": "cli-after-2-smooth_eraser-baseline.log.gz"
+  },
+  "cli-after-2-smooth_eraser-charged.log": {
+    "sha256": "9d5f9cb3f102fad0c7c4d506168c248f27b9e350aea0d31220b26ba7c7b5af49",
+    "bytes": 1114,
+    "archive": "cli-after-2-smooth_eraser-charged.log.gz"
+  },
+  "cli-after-3-diagonal_pencil-baseline.log": {
+    "sha256": "de478e0a73aaa161033853a3f17935bf84e40f3663bc9d8c404a4fd978d13b38",
+    "bytes": 1114,
+    "archive": "cli-after-3-diagonal_pencil-baseline.log.gz"
+  },
+  "cli-after-3-diagonal_pencil-charged.log": {
+    "sha256": "aa6f4618c20dccbb3376717aacc28e65c7a10244d6ede66a0c0d525ace701d2e",
+    "bytes": 1114,
+    "archive": "cli-after-3-diagonal_pencil-charged.log.gz"
+  },
+  "cli-after-3-horizontal_pencil-baseline.log": {
+    "sha256": "6bc6caa4242bdd78aa160f2199ad528b612bfc547e2d170bdb94935c7c9c6b34",
+    "bytes": 1114,
+    "archive": "cli-after-3-horizontal_pencil-baseline.log.gz"
+  },
+  "cli-after-3-horizontal_pencil-charged.log": {
+    "sha256": "33e8cb2bba8d6e611d0624e5e481a0788eb6c4780629ec05b31674daa1e36d6e",
+    "bytes": 1114,
+    "archive": "cli-after-3-horizontal_pencil-charged.log.gz"
+  },
+  "cli-after-3-smooth_brush-baseline.log": {
+    "sha256": "1b1185943da0ff1fb739fa7f3065ec74cf1cab76cb9111b4fcdbcb696522c8e2",
+    "bytes": 1114,
+    "archive": "cli-after-3-smooth_brush-baseline.log.gz"
+  },
+  "cli-after-3-smooth_brush-charged.log": {
+    "sha256": "3d8d84f028db3f801caf9fd78878de5692276c4a4928ebabe69fe7ab3568d211",
+    "bytes": 1114,
+    "archive": "cli-after-3-smooth_brush-charged.log.gz"
+  },
+  "cli-after-3-smooth_eraser-baseline.log": {
+    "sha256": "e42c5729bae0db24b7ea62c1e429bcbd88c65119ff33f54d52d1ae182d06e0af",
+    "bytes": 1114,
+    "archive": "cli-after-3-smooth_eraser-baseline.log.gz"
+  },
+  "cli-after-3-smooth_eraser-charged.log": {
+    "sha256": "ded368b8f0c0ea70f11ad420c463ab8046075de43c3d39ecf18f560c444e0a0e",
+    "bytes": 1114,
+    "archive": "cli-after-3-smooth_eraser-charged.log.gz"
+  },
+  "cli-before-diagonal_pencil-baseline.log": {
+    "sha256": "a80478336dc4de0446db5231446838f6e171e1561d56715dc5f12125bea6faf8",
+    "bytes": 1114,
+    "archive": "cli-before-diagonal_pencil-baseline.log.gz"
+  },
+  "cli-before-diagonal_pencil-charged.log": {
+    "sha256": "5b2cb87e13e788b883111056065ccef890dba611a7235c233199da85e3bf2274",
+    "bytes": 1114,
+    "archive": "cli-before-diagonal_pencil-charged.log.gz"
+  },
+  "cli-before-horizontal_pencil-baseline.log": {
+    "sha256": "b54459ba5461105c3550ee8700829f17b8d2cff2eb155a804b6c514e0095032e",
+    "bytes": 1114,
+    "archive": "cli-before-horizontal_pencil-baseline.log.gz"
+  },
+  "cli-before-horizontal_pencil-charged.log": {
+    "sha256": "55e77a0064e44c6053f65ea2aeb11ad96f8246f125d28fc0666f7db8d265bfa9",
+    "bytes": 1114,
+    "archive": "cli-before-horizontal_pencil-charged.log.gz"
+  },
+  "cli-before-smooth_brush-baseline.log": {
+    "sha256": "9355cff0b70f6cea97538831cb295a9b1b4e5bd17aefc6e8037922c7a3779703",
+    "bytes": 1114,
+    "archive": "cli-before-smooth_brush-baseline.log.gz"
+  },
+  "cli-before-smooth_brush-charged.log": {
+    "sha256": "64fc77de1344fdae864043d4b13f4312678b0d1d174bbdf72d25668f8b12b110",
+    "bytes": 1114,
+    "archive": "cli-before-smooth_brush-charged.log.gz"
+  },
+  "cli-before-smooth_eraser-baseline.log": {
+    "sha256": "f69ea95d156c2fc353d724acb622c64e7e5820c3a8632faeed6a411c6e7afeb1",
+    "bytes": 1114,
+    "archive": "cli-before-smooth_eraser-baseline.log.gz"
+  },
+  "cli-before-smooth_eraser-charged.log": {
+    "sha256": "b6d3f09ed2d82588fd5a802dd436ab58779bd924f4b862fef85864eb5b4eb49d",
+    "bytes": 1114,
+    "archive": "cli-before-smooth_eraser-charged.log.gz"
+  },
+  "cli-features.log": {
+    "sha256": "d3f68b2695d7228ec60ff99dce6554b72f60ef24989291669a4cf4be1163ad83",
+    "bytes": 26559,
+    "archive": "cli-features.log.gz"
+  },
+  "correctness/baseline-diagonal_pencil.pcnd": {
+    "sha256": "fd10608bce3f55deaf6e4b2f1fb8678938b1bb7b3d116457898dff3e5e8ea97d",
+    "bytes": 1766309,
+    "archive": "correctness/baseline-diagonal_pencil.pcnd.gz"
+  },
+  "correctness/baseline-horizontal_pencil.pcnd": {
+    "sha256": "5dada5ea4e27e85668edeb76db57562052acd8764ab282acc9884b45ea64320d",
+    "bytes": 1026086,
+    "archive": "correctness/baseline-horizontal_pencil.pcnd.gz"
+  },
+  "correctness/baseline-smooth_brush.pcnd": {
+    "sha256": "aa72050750c8b0e3f06980d782e9c32a885ff4c573f3aea5e2b551a7951d8ea8",
+    "bytes": 1026086,
+    "archive": "correctness/baseline-smooth_brush.pcnd.gz"
+  },
+  "correctness/baseline-smooth_eraser.pcnd": {
+    "sha256": "bd5e629797fbdda63ede3fb2b20f019b5c41fadf743cb15aa20302e4ba73c942",
+    "bytes": 1026086,
+    "archive": "correctness/baseline-smooth_eraser.pcnd.gz"
+  },
+  "correctness/charged-diagonal_pencil.pcnd": {
+    "sha256": "fd10608bce3f55deaf6e4b2f1fb8678938b1bb7b3d116457898dff3e5e8ea97d",
+    "bytes": 1766309,
+    "archive": "correctness/charged-diagonal_pencil.pcnd.gz"
+  },
+  "correctness/charged-horizontal_pencil.pcnd": {
+    "sha256": "5dada5ea4e27e85668edeb76db57562052acd8764ab282acc9884b45ea64320d",
+    "bytes": 1026086,
+    "archive": "correctness/charged-horizontal_pencil.pcnd.gz"
+  },
+  "correctness/charged-smooth_brush.pcnd": {
+    "sha256": "aa72050750c8b0e3f06980d782e9c32a885ff4c573f3aea5e2b551a7951d8ea8",
+    "bytes": 1026086,
+    "archive": "correctness/charged-smooth_brush.pcnd.gz"
+  },
+  "correctness/charged-smooth_eraser.pcnd": {
+    "sha256": "bd5e629797fbdda63ede3fb2b20f019b5c41fadf743cb15aa20302e4ba73c942",
+    "bytes": 1026086,
+    "archive": "correctness/charged-smooth_eraser.pcnd.gz"
+  },
+  "criterion-baseline.log": {
+    "sha256": "3ee7805cc41ae492b8dd4a41bf6027a6adfced7408498fc7b1d0b50cc1b16f35",
+    "bytes": 6493,
+    "archive": "criterion-baseline.log.gz"
+  },
+  "criterion-charged.log": {
+    "sha256": "8c25e1c6d0d6024d8a999f386707a6823064ea14430bffb4612c9b3234501420",
+    "bytes": 6398,
+    "archive": "criterion-charged.log.gz"
+  },
+  "fixtures/input.pcnd": {
+    "sha256": "3a9fadd2b402440be058dfd0324299c7f031d510596f9f18dbf8da604ff746ec",
+    "bytes": 1026086,
+    "archive": "fixtures/input.pcnd.gz"
+  },
+  "hyperfine-1-cli-calibration.log": {
+    "sha256": "4a354ee1c1b3e35f57806c99da1e6ba3e53d86cbcf420af130f3937533b2e17f",
+    "bytes": 627,
+    "archive": "hyperfine-1-cli-calibration.log.gz"
+  },
+  "hyperfine-1-cli-diagonal_pencil.log": {
+    "sha256": "c548687c36387abc11259bfe4d4006272acb3a0bdcf45f02296e5a6a40500df8",
+    "bytes": 1604,
+    "archive": "hyperfine-1-cli-diagonal_pencil.log.gz"
+  },
+  "hyperfine-1-cli-horizontal_pencil.log": {
+    "sha256": "2ab38e524908e0a286d47172d0cf2e12256e2eb972ffd134d375c97e26339dc0",
+    "bytes": 1612,
+    "archive": "hyperfine-1-cli-horizontal_pencil.log.gz"
+  },
+  "hyperfine-1-cli-smooth_brush.log": {
+    "sha256": "0cff74a97c621eaf600d079840511a77bc7f0c24a884d9b2aa9ff402d60782b4",
+    "bytes": 1592,
+    "archive": "hyperfine-1-cli-smooth_brush.log.gz"
+  },
+  "hyperfine-1-cli-smooth_eraser.log": {
+    "sha256": "fa5a623b78c2af6c34dad5a5b27bd28f58fd91da93e9a82c08b165865d9805d7",
+    "bytes": 1611,
+    "archive": "hyperfine-1-cli-smooth_eraser.log.gz"
+  },
+  "hyperfine-1-library-calibration.log": {
+    "sha256": "2ef50053960cbf2b24166b1ab161329cf24f2894848adbf022ef78912fa2d03e",
+    "bytes": 633,
+    "archive": "hyperfine-1-library-calibration.log.gz"
+  },
+  "hyperfine-1-library-default-control.log": {
+    "sha256": "b0b50492071bdf65b18f032b3a2e3874d424c97c37f66793d93f9ebe0f106d00",
+    "bytes": 675,
+    "archive": "hyperfine-1-library-default-control.log.gz"
+  },
+  "hyperfine-1-library-overlap.log": {
+    "sha256": "15c3598b4c28a6fbe319a9e82491de1bd3a817f8127ff1f5129f64e3aeed248c",
+    "bytes": 659,
+    "archive": "hyperfine-1-library-overlap.log.gz"
+  },
+  "hyperfine-1-library-tiny.log": {
+    "sha256": "71b0fb3326d29f9afe29b4d9f3b8e7a9512d7f8cb0c60e7040a7ecf38350bb34",
+    "bytes": 653,
+    "archive": "hyperfine-1-library-tiny.log.gz"
+  },
+  "hyperfine-1-library-wall.log": {
+    "sha256": "38057e88e5dee3bc9b7b1764a0c4bb56ccdb6cdf2c443b50a210efc98161c898",
+    "bytes": 653,
+    "archive": "hyperfine-1-library-wall.log.gz"
+  },
+  "hyperfine-2-cli-calibration.log": {
+    "sha256": "de96e17b54c04224634625607bc6cd587c0cc24453361b7a8ee5c6c0eae02a2d",
+    "bytes": 627,
+    "archive": "hyperfine-2-cli-calibration.log.gz"
+  },
+  "hyperfine-2-cli-diagonal_pencil.log": {
+    "sha256": "186ae80571dc305245d302f224da5bfc8471305810eb71fe18000a5f15dcd992",
+    "bytes": 1604,
+    "archive": "hyperfine-2-cli-diagonal_pencil.log.gz"
+  },
+  "hyperfine-2-cli-horizontal_pencil.log": {
+    "sha256": "30776baba7bd0ac40b83dfe3ce933b8a3d79f1c4c8b5bbb04f71f3117234976a",
+    "bytes": 1612,
+    "archive": "hyperfine-2-cli-horizontal_pencil.log.gz"
+  },
+  "hyperfine-2-cli-smooth_brush.log": {
+    "sha256": "19456e2c1b2387b740a83e887e227ba5184fc3ac4b7de4a1a4cf4251a54d431a",
+    "bytes": 1592,
+    "archive": "hyperfine-2-cli-smooth_brush.log.gz"
+  },
+  "hyperfine-2-cli-smooth_eraser.log": {
+    "sha256": "bc208851c07ffb96c01d9a3158aa75dce16b24ea883a23da8410e62497955e51",
+    "bytes": 1596,
+    "archive": "hyperfine-2-cli-smooth_eraser.log.gz"
+  },
+  "hyperfine-2-library-calibration.log": {
+    "sha256": "2e625956de62a3465ed1e5950643b4db3c6dd825b1cfc2127ec51aa2bc9bd92a",
+    "bytes": 633,
+    "archive": "hyperfine-2-library-calibration.log.gz"
+  },
+  "hyperfine-2-library-default-control.log": {
+    "sha256": "5c47216bda076ffb0ebfbf5edfd4d234919b3f0c3baed73a8859bbd391a2adc1",
+    "bytes": 675,
+    "archive": "hyperfine-2-library-default-control.log.gz"
+  },
+  "hyperfine-2-library-overlap.log": {
+    "sha256": "1721a416bc061bf38f099bfaedcf4311513ec9915d1cc1f13a9b30519dd3cb7e",
+    "bytes": 659,
+    "archive": "hyperfine-2-library-overlap.log.gz"
+  },
+  "hyperfine-2-library-tiny.log": {
+    "sha256": "979c2b92c47e5e119d4094aa411571e39793b7ca8c9b1b6e6e58142d4c77eb37",
+    "bytes": 653,
+    "archive": "hyperfine-2-library-tiny.log.gz"
+  },
+  "hyperfine-2-library-wall.log": {
+    "sha256": "a6e69dc0a33d9c1e6c581256c0fb539cf0dbd20aa3fb5d1013cf3b08ac7dcaa9",
+    "bytes": 653,
+    "archive": "hyperfine-2-library-wall.log.gz"
+  },
+  "hyperfine-3-cli-calibration.log": {
+    "sha256": "de286a53194c55df263c07099953f8845a61a413c68c0a7cb022f15789423b7c",
+    "bytes": 627,
+    "archive": "hyperfine-3-cli-calibration.log.gz"
+  },
+  "hyperfine-3-cli-diagonal_pencil.log": {
+    "sha256": "373a853845cb0007629776a690c240b37f309c6e62b759bdc9e68ef26ef50ca3",
+    "bytes": 1604,
+    "archive": "hyperfine-3-cli-diagonal_pencil.log.gz"
+  },
+  "hyperfine-3-cli-horizontal_pencil.log": {
+    "sha256": "d07e00ba091cdf221b1039fd33e5feceea45750e323418aa0211c0548a029daf",
+    "bytes": 1612,
+    "archive": "hyperfine-3-cli-horizontal_pencil.log.gz"
+  },
+  "hyperfine-3-cli-smooth_brush.log": {
+    "sha256": "943fe4c215d05fb70328dae1f96b9860aac4d905f42a02b0db0407d5178477fc",
+    "bytes": 1592,
+    "archive": "hyperfine-3-cli-smooth_brush.log.gz"
+  },
+  "hyperfine-3-cli-smooth_eraser.log": {
+    "sha256": "060303ca3d9074b4c75b6c72bf591741f53f3d7a3558760dc4cb24c6696c7a4f",
+    "bytes": 1596,
+    "archive": "hyperfine-3-cli-smooth_eraser.log.gz"
+  },
+  "hyperfine-3-library-calibration.log": {
+    "sha256": "8397724a536b6c368200b79573be068ccfa3b6e5e0df8ccaf15c0b3ea66f9d87",
+    "bytes": 633,
+    "archive": "hyperfine-3-library-calibration.log.gz"
+  },
+  "hyperfine-3-library-default-control.log": {
+    "sha256": "7266587c69345d8a7a82bad05d7669a96c6bd5b9bdef64a73ed5c2190e38a75a",
+    "bytes": 675,
+    "archive": "hyperfine-3-library-default-control.log.gz"
+  },
+  "hyperfine-3-library-overlap.log": {
+    "sha256": "e6d18c5706a7cb62320db775a4ed7f95cd2c1ae555f8fb08cffc3cc4a08b9c0d",
+    "bytes": 659,
+    "archive": "hyperfine-3-library-overlap.log.gz"
+  },
+  "hyperfine-3-library-tiny.log": {
+    "sha256": "0e63a972337ae4d10d219d5ca2f1b1c1a4c59087395ed4a7a6bf68faad1209bd",
+    "bytes": 653,
+    "archive": "hyperfine-3-library-tiny.log.gz"
+  },
+  "hyperfine-3-library-wall.log": {
+    "sha256": "fee33fba11d100a582e60b3f4f5d97527a6452e073edd7e9adc3c140a279bb55",
+    "bytes": 653,
+    "archive": "hyperfine-3-library-wall.log.gz"
+  },
+  "library-after-1-baseline.log": {
+    "sha256": "c89a19d184c3fc3d82581a0f6a6feda00053d9608000dace1166c6c4bc51b442",
+    "bytes": 1101,
+    "archive": "library-after-1-baseline.log.gz"
+  },
+  "library-after-1-charged.log": {
+    "sha256": "c89a19d184c3fc3d82581a0f6a6feda00053d9608000dace1166c6c4bc51b442",
+    "bytes": 1101,
+    "archive": "library-after-1-charged.log.gz"
+  },
+  "library-after-2-baseline.log": {
+    "sha256": "c89a19d184c3fc3d82581a0f6a6feda00053d9608000dace1166c6c4bc51b442",
+    "bytes": 1101,
+    "archive": "library-after-2-baseline.log.gz"
+  },
+  "library-after-2-charged.log": {
+    "sha256": "c89a19d184c3fc3d82581a0f6a6feda00053d9608000dace1166c6c4bc51b442",
+    "bytes": 1101,
+    "archive": "library-after-2-charged.log.gz"
+  },
+  "library-after-3-baseline.log": {
+    "sha256": "c89a19d184c3fc3d82581a0f6a6feda00053d9608000dace1166c6c4bc51b442",
+    "bytes": 1101,
+    "archive": "library-after-3-baseline.log.gz"
+  },
+  "library-after-3-charged.log": {
+    "sha256": "c89a19d184c3fc3d82581a0f6a6feda00053d9608000dace1166c6c4bc51b442",
+    "bytes": 1101,
+    "archive": "library-after-3-charged.log.gz"
+  },
+  "library-before-baseline.log": {
+    "sha256": "c89a19d184c3fc3d82581a0f6a6feda00053d9608000dace1166c6c4bc51b442",
+    "bytes": 1101,
+    "archive": "library-before-baseline.log.gz"
+  },
+  "library-before-charged.log": {
+    "sha256": "c89a19d184c3fc3d82581a0f6a6feda00053d9608000dace1166c6c4bc51b442",
+    "bytes": 1101,
+    "archive": "library-before-charged.log.gz"
+  }
+}

@@ -11,6 +11,11 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+The latest native metadata-waiting implementation and its validation are recorded in
+[scoped metadata demand](METADATA_WAITING.md); its [matched overhead comparison](../benchmarks/results/metadata-waiting-2026-10-22/DECISION.md)
+retains mixed results and slow controls. Complete batch planning and atomic metadata reservations
+remain open.
+
 Current user priority: shared backend correctness, performance and reliability;
 see the [backend audit and progress](BACKEND_PROGRESS.md). Classic toolbar/UI work
 is deferred during this tranche. [Classic coverage](CLASSIC.md) retains the frontend

@@ -1,0 +1,50 @@
+{
+  "before": {
+    "cli": {
+      "horizontal_pencil": "5dada5ea4e27e85668edeb76db57562052acd8764ab282acc9884b45ea64320d",
+      "diagonal_pencil": "fd10608bce3f55deaf6e4b2f1fb8678938b1bb7b3d116457898dff3e5e8ea97d",
+      "smooth_brush": "aa72050750c8b0e3f06980d782e9c32a885ff4c573f3aea5e2b551a7951d8ea8",
+      "smooth_eraser": "bd5e629797fbdda63ede3fb2b20f019b5c41fadf743cb15aa20302e4ba73c942"
+    },
+    "library": {
+      "baseline": "c89a19d184c3fc3d82581a0f6a6feda00053d9608000dace1166c6c4bc51b442",
+      "charged": "c89a19d184c3fc3d82581a0f6a6feda00053d9608000dace1166c6c4bc51b442"
+    }
+  },
+  "after-1": {
+    "cli": {
+      "horizontal_pencil": "5dada5ea4e27e85668edeb76db57562052acd8764ab282acc9884b45ea64320d",
+      "diagonal_pencil": "fd10608bce3f55deaf6e4b2f1fb8678938b1bb7b3d116457898dff3e5e8ea97d",
+      "smooth_brush": "aa72050750c8b0e3f06980d782e9c32a885ff4c573f3aea5e2b551a7951d8ea8",
+      "smooth_eraser": "bd5e629797fbdda63ede3fb2b20f019b5c41fadf743cb15aa20302e4ba73c942"
+    },
+    "library": {
+      "baseline": "c89a19d184c3fc3d82581a0f6a6feda00053d9608000dace1166c6c4bc51b442",
+      "charged": "c89a19d184c3fc3d82581a0f6a6feda00053d9608000dace1166c6c4bc51b442"
+    }
+  },
+  "after-2": {
+    "cli": {
+      "horizontal_pencil": "5dada5ea4e27e85668edeb76db57562052acd8764ab282acc9884b45ea64320d",
+      "diagonal_pencil": "fd10608bce3f55deaf6e4b2f1fb8678938b1bb7b3d116457898dff3e5e8ea97d",
+      "smooth_brush": "aa72050750c8b0e3f06980d782e9c32a885ff4c573f3aea5e2b551a7951d8ea8",
+      "smooth_eraser": "bd5e629797fbdda63ede3fb2b20f019b5c41fadf743cb15aa20302e4ba73c942"
+    },
+    "library": {
+      "baseline": "c89a19d184c3fc3d82581a0f6a6feda00053d9608000dace1166c6c4bc51b442",
+      "charged": "c89a19d184c3fc3d82581a0f6a6feda00053d9608000dace1166c6c4bc51b442"
+    }
+  },
+  "after-3": {
+    "cli": {
+      "horizontal_pencil": "5dada5ea4e27e85668edeb76db57562052acd8764ab282acc9884b45ea64320d",
+      "diagonal_pencil": "fd10608bce3f55deaf6e4b2f1fb8678938b1bb7b3d116457898dff3e5e8ea97d",
+      "smooth_brush": "aa72050750c8b0e3f06980d782e9c32a885ff4c573f3aea5e2b551a7951d8ea8",
+      "smooth_eraser": "bd5e629797fbdda63ede3fb2b20f019b5c41fadf743cb15aa20302e4ba73c942"
+    },
+    "library": {
+      "baseline": "c89a19d184c3fc3d82581a0f6a6feda00053d9608000dace1166c6c4bc51b442",
+      "charged": "c89a19d184c3fc3d82581a0f6a6feda00053d9608000dace1166c6c4bc51b442"
+    }
+  }
+}

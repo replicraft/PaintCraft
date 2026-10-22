@@ -70,3 +70,10 @@ as a throughput win. The default allowance is provisional, not a measured optimu
 Complete batch/source-lineage planning, metadata waiting/fairness, aggregate
 geometry/font/flood scratch, allocator/physical budgets, native latency and broader
 roadmap work remain. The editor still executes batches sequentially.
+
+
+[Scoped metadata demand and native waiting](METADATA_WAITING.md) now retain
+metadata-blocked edits with their original realms, FIFO position and file barriers.
+Distinct metadata watches do not request decoded history reclamation. The known
+attempt peak supports repricing; upfront batch planning and atomic metadata
+reservations remain separate work.

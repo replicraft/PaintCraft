@@ -255,3 +255,13 @@ slow session. Every original sample remains. Exact canonical PCND/member and
 library pixel/region checks surround sessions. Shared admission is a safety
 baseline; neither small gains nor noisy regressions qualify native event latency,
 a physical memory ceiling or complete metadata retry/batch planning.
+
+
+The same frozen-artifact runner qualifies normal-path attempt-scope overhead in
+[metadata waiting](results/metadata-waiting-2026-10-22/DECISION.md): 480 statistical
+samples and 1,200 original process observations. Both baseline and candidate have
+shared paint metadata ownership; only the candidate adds scoped demand/native
+waiting. CPU timing does not exercise native waiting. Exact canonical/library
+outputs, startup calibration, slow controls and original schema-v2 exports remain
+retained. Separate source-pinned tests verify native FIFO/file barriers and class-
+specific wakes. Atomic metadata reservations and native latency remain unqualified.
