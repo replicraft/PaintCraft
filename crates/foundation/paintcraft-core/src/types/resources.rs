@@ -8,6 +8,8 @@ mod reservation;
 pub use reservation::BudgetReservation;
 mod denial;
 pub use denial::{AllocationClass, AllocationDenial};
+mod account;
+pub use account::BudgetAccount;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct BudgetUsage {

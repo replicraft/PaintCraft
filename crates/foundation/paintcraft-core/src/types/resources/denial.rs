@@ -4,6 +4,7 @@ use super::*;
 pub enum AllocationClass {
     SharedBudget,
     DecodedTiles,
+    PaintMetadata,
 }
 #[derive(Clone, Debug)]
 pub struct AllocationDenial {
