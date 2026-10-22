@@ -350,3 +350,17 @@ Canvas defaults apply to new documents without resizing the open image.
 [headless settings record](validation/responsive-settings-headless-2026-10-22/validation.json)
 contains source-pinned logs. Native/rendered visual review remains intentionally
 deferred under the user's no-window-testing instruction.
+
+The View menu now implements mutually exclusive **Always show toolbar** and
+**Automatically hide toolbar** choices. The default remains always shown; the
+auto-hide preference persists and older settings default to false. Auto-hide
+reclaims the ribbon/options layout space and reveals it on menu/toolbar hover.
+Pointer down/release frames, open popups and focused text input hold the layout;
+the visibility decision is fixed across all layout passes in a frame so release
+cannot move a gesture's canvas mapping. Font/options rows share the hover region.
+Studio retains its own toolbar presentation. View now scrolls on short displays,
+while Thumbnail is an explicitly disabled preview. The supplied View screenshot
+establishes the choices, but pinned Windows runtime/visual parity is unqualified.
+124 window-free GUI tests, preference/action checks and strict Clippy pass; see
+[the toolbar visibility record](validation/toolbar-visibility-headless-2026-10-22/validation.json).
+No application windows or rendered/native previews were launched.

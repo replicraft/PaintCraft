@@ -1,0 +1,31 @@
+{
+  "source_commit": "8e30b739a0e5089a3f8909e2d3e5434713b75bcd",
+  "reference": "docs/temp/paint-references/photos/ima2ge.png",
+  "mode": "Window-free egui harness and unit/lint checks only; no desktop, native-menu/window or preview launches.",
+  "gui": {
+    "passed": 124,
+    "failed": 0,
+    "ignored": 17
+  },
+  "focused_gui": {
+    "passed": 5,
+    "scope": "exclusive checked modes, preference persistence/restart, viewport reclamation, hover reveal, no document/history mutation, pressed/released coalesced gesture mapping at display scales 1 and 2 with repeated layout passes, text-preset popup retention, Studio isolation, short-display View menu scrolling"
+  },
+  "settings_unit": {
+    "passed": 1,
+    "scope": "old optional default, boolean validation and persisted true round trip"
+  },
+  "shared_action_tests": {
+    "passed": 6,
+    "scope": "existing action checks plus Classic-only toolbar availability, no-document support, blocked state, checked-state exclusivity and unique activation codes"
+  },
+  "clippy": "workspace all-targets with -D warnings passed",
+  "limits": "The screenshot establishes menu labels and choices, not runtime hover behavior. PaintCraft currently reclaims toolbar layout space, reveals on menu/toolbar hover and holds layout through pointer/focus/popup interaction; pinned Windows behavioral and native visual parity are unqualified. Thumbnail remains a disabled preview.",
+  "sha256": {
+    "focused-gui.log.gz": "24da626d1585a161980fb986ca2aa1d460d0a9f00f2454832094f0beb0fb853f",
+    "clippy.log.gz": "8c7ae2715b784ab4c6f2476863c5e35f8e6c7c35c8764da2b7b7081c72361cf8",
+    "settings.log.gz": "77586928960df7e0fa4a8b6f2af8b74b9528600479a1190e9cae3931b5e630af",
+    "actions.log.gz": "cd620405a95029edb2d4906d9a91d7257a74872e59c8c3d70b046cde90cf52e1",
+    "gui.log.gz": "0261bc137b95092675e495f3dbcfb40cb1eb9efeaa6c2412ae3170027534c792"
+  }
+}
