@@ -4,6 +4,7 @@ pub mod canvas;
 pub mod canvas_size;
 mod ruler_axis;
 mod rulers;
+pub mod status;
 pub mod tool_controls;
 pub use rulers::RULER_SIZE;
 mod dropdowns;

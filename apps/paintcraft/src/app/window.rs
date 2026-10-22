@@ -61,9 +61,12 @@ impl App {
                 self.document_tab_bar(ui, first_pass);
             });
         }
-        if self.experience() == Experience::Studio || self.settings.classic_status_bar {
-            self.status_bar(ui);
-        }
+        let classic_status =
+            if self.experience() == Experience::Studio || self.settings.classic_status_bar {
+                self.status_bar(ui)
+            } else {
+                None
+            };
         if self.experience() == Experience::Classic && self.classic.layers {
             egui::Panel::right("layers")
                 .default_size(220.0)
@@ -103,6 +106,9 @@ impl App {
                     });
                 }
             });
+        if let Some(rect) = classic_status {
+            self.classic_status_contents(ui, rect);
+        }
         if self.experience() == Experience::Studio {
             self.studio_windows(&ctx);
         }

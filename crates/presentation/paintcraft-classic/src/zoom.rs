@@ -18,7 +18,7 @@ pub fn zoom_controls(ui: &mut egui::Ui, context: Context, state_id: egui::Id) ->
     let mut actions = Vec::new();
     ui.push_id(("classic-zoom", state_id), |ui| {
         ui.allocate_ui_with_layout(
-            egui::vec2(340.0, ui.spacing().interact_size.y),
+            egui::vec2(340.0, ui.spacing().interact_size.y.max(30.0)),
             egui::Layout::left_to_right(egui::Align::Center),
             |ui| {
                 ui.spacing_mut().slider_width = 100.0;
