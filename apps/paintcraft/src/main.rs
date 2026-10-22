@@ -17,9 +17,9 @@ fn main() -> eframe::Result {
     }
     let options = eframe::NativeOptions {
         renderer: eframe::Renderer::Wgpu,
-        viewport: eframe::egui::ViewportBuilder::default()
-            .with_title("Untitled - PaintCraft")
-            .with_inner_size([1360.0, 900.0]),
+        // eframe also uses the launch title for the macOS application menu.
+        // Keep its default (the app name); App::ui publishes document window titles.
+        viewport: eframe::egui::ViewportBuilder::default().with_inner_size([1360.0, 900.0]),
         ..Default::default()
     };
     eframe::run_native(
