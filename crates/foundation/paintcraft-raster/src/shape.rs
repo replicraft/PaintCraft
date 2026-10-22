@@ -9,7 +9,10 @@
 use std::collections::HashMap;
 
 use paintcraft_core::types::{Error, ErrorCode, Rect, Result};
+mod checked;
 mod ellipse;
+mod stroke_budget;
+pub use checked::{CheckedSpanSet, DEFAULT_STROKE_SCRATCH_BYTES};
 
 /// Inclusive horizontal run on absolute row `y`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
