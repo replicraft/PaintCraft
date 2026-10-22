@@ -214,3 +214,6 @@ mod clear_canvas;
 
 #[path = "gui/classic_menus.rs"]
 mod classic_menus;
+
+#[path = "gui/toolbar_visibility.rs"]
+mod toolbar_visibility;

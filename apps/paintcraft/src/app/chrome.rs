@@ -37,6 +37,7 @@ impl App {
             status_bar: self.settings.classic_status_bar,
             rulers: self.settings.classic_rulers,
             fullscreen: self.fullscreen,
+            auto_hide_toolbar: self.settings.classic_toolbar_auto_hide,
             blocked: self.switching.is_some()
                 || self.closing_workspace
                 || self.close_after_saves
@@ -99,9 +100,14 @@ impl App {
             })
             .inner;
         self.apply_chrome(&ctx, controls, actions);
-        if self.editor.tool == Tool::Text {
+        if self.editor.tool == Tool::Text
+            && (self.experience() == Experience::Studio || self.classic.toolbar.visible())
+        {
             self.classic_text_options(ui);
             self.editor.set_text_style(self.settings.text.clone());
+        }
+        if self.experience() == Experience::Classic {
+            self.classic.toolbar.remember_bounds(ui.min_rect());
         }
     }
 

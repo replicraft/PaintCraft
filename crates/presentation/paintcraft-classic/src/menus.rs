@@ -1,4 +1,5 @@
 //! Windows 11 File/Edit presentation; unavailable reference operations stay disabled.
+use super::ClassicVariant;
 use egui::{Button, Key, KeyboardShortcut, Modifiers, Ui};
 use paintcraft_ui::{
     actions::{Action, Context},
@@ -175,4 +176,83 @@ fn unavailable(
     let response = ui.add_enabled(false, button);
     response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, false, label));
     response.on_disabled_hover_text(help);
+}
+
+/// Visibility choices add rows, so retain access to lower view commands on
+/// short displays instead of relying on the popup's initial size estimate.
+pub(super) fn view(
+    ui: &mut Ui,
+    variant: ClassicVariant,
+    context: Context,
+    actions: &mut Vec<Action>,
+) {
+    if variant == ClassicVariant::V11 {
+        layout(ui);
+    }
+    let height = (ui.ctx().content_rect().bottom() - ui.cursor().min.y - 16.0).clamp(80.0, 640.0);
+    ui.set_max_height(height);
+    egui::ScrollArea::vertical()
+        .id_salt("classic-view-menu")
+        .max_height(height)
+        .show(ui, |ui| {
+            ui.menu_button("Zoom", |ui| {
+                for &action in paintcraft_ui::actions::VIEW {
+                    if action == paintcraft_ui::actions::ViewAction::PixelGrid {
+                        continue;
+                    }
+                    if paintcraft_ui::actions::menu_item(ui, Action::View(action), context) {
+                        actions.push(Action::View(action));
+                        ui.close();
+                    }
+                }
+            });
+            if paintcraft_ui::actions::menu_item(
+                ui,
+                Action::View(paintcraft_ui::actions::ViewAction::Rulers),
+                context,
+            ) {
+                actions.push(Action::View(paintcraft_ui::actions::ViewAction::Rulers));
+                ui.close();
+            }
+            if paintcraft_ui::actions::menu_item(
+                ui,
+                Action::View(paintcraft_ui::actions::ViewAction::PixelGrid),
+                context,
+            ) {
+                actions.push(Action::View(paintcraft_ui::actions::ViewAction::PixelGrid));
+                ui.close();
+            }
+            for &action in paintcraft_ui::actions::WORKSPACE_VIEW {
+                if action == paintcraft_ui::actions::ViewAction::Rulers {
+                    continue;
+                }
+                if matches!(
+                    action,
+                    paintcraft_ui::actions::ViewAction::FullScreen
+                        | paintcraft_ui::actions::ViewAction::AlwaysShowToolbar
+                ) {
+                    ui.separator();
+                }
+                if paintcraft_ui::actions::menu_item(ui, Action::View(action), context) {
+                    actions.push(Action::View(action));
+                    ui.close();
+                }
+            }
+            if variant == ClassicVariant::V11 {
+                ui.add_enabled(false, egui::Button::new("Thumbnail"))
+                    .on_disabled_hover_text("The thumbnail window is not available yet.");
+            }
+            ui.separator();
+            for action in [Action::CanvasSize, Action::CanvasDefaults] {
+                if paintcraft_ui::actions::menu_item(ui, action, context) {
+                    actions.push(action);
+                    ui.close();
+                }
+            }
+            ui.separator();
+            if ui.button("Change Classic skin…").clicked() {
+                actions.push(Action::Interface);
+                ui.close();
+            }
+        });
 }

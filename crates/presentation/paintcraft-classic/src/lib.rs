@@ -8,11 +8,14 @@ pub use rulers::RULER_SIZE;
 mod dropdowns;
 mod image_menus;
 mod menus;
+mod toolbar_visibility;
+pub use toolbar_visibility::ToolbarVisibility;
 mod palette;
 mod ribbon;
 #[derive(Debug, Default)]
 pub struct Workspace {
     pub layers: bool,
+    pub toolbar: ToolbarVisibility,
     /// Current persisted custom colors supplied by the desktop host.
     pub custom_colors: CustomColors,
 }
@@ -88,7 +91,7 @@ pub fn chrome(
             .insert(egui::TextStyle::Small, egui::FontId::proportional(12.0));
         ui.spacing_mut().interact_size.y = 32.0;
     }
-    egui::MenuBar::new().ui(ui, |ui| {
+    let menu = egui::MenuBar::new().ui(ui, |ui| {
         ui.menu_button("File", |ui| {
             menu_layout(ui, variant);
             if variant == ClassicVariant::V11 {
@@ -123,57 +126,7 @@ pub fn chrome(
         });
         ui.menu_button("View", |ui| {
             menu_layout(ui, variant);
-            ui.menu_button("Zoom", |ui| {
-                for &action in paintcraft_ui::actions::VIEW {
-                    if action == paintcraft_ui::actions::ViewAction::PixelGrid {
-                        continue;
-                    }
-                    if paintcraft_ui::actions::menu_item(ui, Action::View(action), context) {
-                        actions.push(Action::View(action));
-                        ui.close();
-                    }
-                }
-            });
-            if paintcraft_ui::actions::menu_item(
-                ui,
-                Action::View(paintcraft_ui::actions::ViewAction::Rulers),
-                context,
-            ) {
-                actions.push(Action::View(paintcraft_ui::actions::ViewAction::Rulers));
-                ui.close();
-            }
-            if paintcraft_ui::actions::menu_item(
-                ui,
-                Action::View(paintcraft_ui::actions::ViewAction::PixelGrid),
-                context,
-            ) {
-                actions.push(Action::View(paintcraft_ui::actions::ViewAction::PixelGrid));
-                ui.close();
-            }
-            for &action in paintcraft_ui::actions::WORKSPACE_VIEW {
-                if action == paintcraft_ui::actions::ViewAction::Rulers {
-                    continue;
-                }
-                if action == paintcraft_ui::actions::ViewAction::FullScreen {
-                    ui.separator();
-                }
-                if paintcraft_ui::actions::menu_item(ui, Action::View(action), context) {
-                    actions.push(Action::View(action));
-                    ui.close();
-                }
-            }
-            ui.separator();
-            for action in [Action::CanvasSize, Action::CanvasDefaults] {
-                if paintcraft_ui::actions::menu_item(ui, action, context) {
-                    actions.push(action);
-                    ui.close();
-                }
-            }
-            ui.separator();
-            if ui.button("Change Classic skin…").clicked() {
-                actions.push(Action::Interface);
-                ui.close();
-            }
+            menus::view(ui, variant, context, &mut actions);
         });
         ui.separator();
         for (icon, action) in [
@@ -204,6 +157,13 @@ pub fn chrome(
             actions.extend(paintcraft_ui::chrome::interface_changer(ui, context));
         });
     });
+    if !workspace
+        .toolbar
+        .update(ui, menu.response.rect, context.auto_hide_toolbar)
+    {
+        ui.separator();
+        return actions;
+    }
     if variant != ClassicVariant::V11 {
         ui.horizontal(|ui| {
             ui.label(
