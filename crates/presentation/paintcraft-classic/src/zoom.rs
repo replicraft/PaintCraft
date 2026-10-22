@@ -14,6 +14,11 @@ fn percent(text: &str) -> Option<u32> {
     (value.is_finite() && (12.5..=1000.0).contains(&value)).then(|| (value * 100.0).round() as u32)
 }
 
+fn percentage_text(zoom: f32) -> String {
+    let text = format!("{:.2}", zoom * 100.0);
+    format!("{}%", text.trim_end_matches('0').trim_end_matches('.'))
+}
+
 pub fn zoom_controls(ui: &mut egui::Ui, context: Context, state_id: egui::Id) -> Vec<Action> {
     let mut actions = Vec::new();
     ui.push_id(("classic-zoom", state_id), |ui| {
@@ -37,13 +42,13 @@ pub fn zoom_controls(ui: &mut egui::Ui, context: Context, state_id: egui::Id) ->
                     .unwrap_or_else(|| Draft {
                         source: context.zoom,
                         dirty: false,
-                        text: format!("{}%", context.zoom * 100.0),
+                        text: percentage_text(context.zoom),
                     });
                 if draft.source != context.zoom {
                     draft = Draft {
                         source: context.zoom,
                         dirty: false,
-                        text: format!("{:.2}%", context.zoom * 100.0),
+                        text: percentage_text(context.zoom),
                     };
                 }
                 let response = ui.add_enabled(
@@ -67,27 +72,41 @@ pub fn zoom_controls(ui: &mut egui::Ui, context: Context, state_id: egui::Id) ->
                         response.surrender_focus();
                     }
                     draft.dirty = false;
-                    draft.text = format!("{:.2}%", context.zoom * 100.0);
+                    draft.text = percentage_text(context.zoom);
                 }
                 ui.ctx().data_mut(|d| d.insert_temp(id, draft));
                 let menu = egui::ComboBox::from_id_salt("zoom-presets")
                     .selected_text("")
                     .width(12.0)
-                    .height(460.0)
+                    .height((ui.ctx().content_rect().height() - 96.0).clamp(80.0, 420.0))
                     .show_ui(ui, |ui| {
-                        ui.spacing_mut().item_spacing.y = 1.0;
-                        ui.spacing_mut().button_padding.y = 2.0;
+                        ui.set_min_width(100.0);
+                        ui.spacing_mut().item_spacing.y = 0.0;
+                        for style in [egui::TextStyle::Body, egui::TextStyle::Button] {
+                            ui.style_mut()
+                                .text_styles
+                                .insert(style, egui::FontId::proportional(15.0));
+                        }
                         for value in [
                             100000, 90000, 80000, 70000, 60000, 50000, 40000, 30000, 20000, 10000,
                             7500, 5000, 2500, 1250,
                         ] {
-                            if ui
-                                .selectable_label(
-                                    (context.zoom * 10000.0 - value as f32).abs() < 0.5,
-                                    format!("{}%", value as f32 / 100.0),
-                                )
-                                .clicked()
-                            {
+                            let selected = (context.zoom * 10000.0 - value as f32).abs() < 0.5;
+                            let response = ui.add(
+                                egui::Button::new(percentage_text(value as f32 / 10000.0))
+                                    .selected(selected)
+                                    .frame_when_inactive(selected)
+                                    .min_size(egui::vec2(100.0, 40.0)),
+                            );
+                            if selected {
+                                ui.painter().rect_stroke(
+                                    response.rect.shrink(0.5),
+                                    4,
+                                    ui.visuals().selection.stroke,
+                                    egui::StrokeKind::Inside,
+                                );
+                            }
+                            if response.clicked() {
                                 actions.push(Action::View(ViewAction::SetZoom(value)));
                                 ui.close();
                             }
