@@ -32,6 +32,23 @@ fn harness() -> Harness<'static, App> {
     harness_with(App::new(None), 1.0, false)
 }
 
+/// Classic v11 keeps New/Open and picture export in its File menu.
+fn classic_file_action(h: &mut Harness<App>, label: &str) {
+    let role = eframe::egui::Role::Button;
+    h.get_by_role_and_label(role, "File").click();
+    h.run();
+    if label == "Picture…" {
+        h.get_by_role_and_label(role, "File")
+            .get_by_label("Save as")
+            .hover();
+        h.run();
+    }
+    h.get_by_role_and_label(role, "File")
+        .get_by_label_contains(label)
+        .click();
+    h.run();
+}
+
 fn at(h: &Harness<App>, x: f32, y: f32) -> Pos2 {
     h.state().canvas_rect().expect("canvas drawn").min + Vec2::new(x + 0.5, y + 0.5)
 }

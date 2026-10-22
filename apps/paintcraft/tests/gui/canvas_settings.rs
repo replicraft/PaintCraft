@@ -199,8 +199,7 @@ fn classic_defaults_and_remembered_canvas_size_survive_restart_without_editing_t
     h.run();
     assert!(h.state().editor().document().same_semantics(&original));
     assert_eq!(Settings::load(&dir).0.canvas.last, Some((900, 700)));
-    h.get_by_label("New").click();
-    h.run();
+    classic_file_action(&mut h, "New");
     assert_eq!(h.state().editor().document().canvas, (900, 700));
     let new_snapshot = h.state().editor().document_snapshot();
     dialog(&mut h, "Default canvas size…");

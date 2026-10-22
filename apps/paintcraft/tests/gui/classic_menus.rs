@@ -7,6 +7,56 @@ fn file(h: &mut Harness<App>) {
 }
 
 #[test]
+fn classic_quick_access_follows_the_reference_and_keeps_file_actions_in_the_menu() {
+    let mut h = harness_with(App::new(None), 2.0, true);
+    h.ctx.style_mut_of(h.ctx.theme(), |style| {
+        style.interaction.tooltip_delay = 0.0;
+        style.interaction.show_tooltips_only_when_still = false;
+    });
+    let snapshot = h.state().editor().document_snapshot();
+    let ticket = h.state().editor().history_view().ticket;
+    let mut previous_right = 0.0;
+    for label in ["Save", "Share", "Undo", "Redo", "Clear Canvas"] {
+        let button = h.get_by_role_and_label(Role::Button, label);
+        assert!(
+            button.rect().left() > previous_right,
+            "{label} must follow the preceding quick action"
+        );
+        previous_right = button.rect().right();
+    }
+    for label in ["New", "Open", "Export"] {
+        assert!(h.query_by_label(label).is_none());
+    }
+    assert!(
+        h.get_by_role_and_label(Role::Button, "Share")
+            .accesskit_node()
+            .is_disabled()
+    );
+    h.get_by_role_and_label(Role::Button, "Share").hover();
+    h.run();
+    assert_eq!(
+        h.query_all_by_role_and_label(Role::Label, "System sharing is not available yet.")
+            .count(),
+        1
+    );
+    h.get_by_role_and_label(Role::Button, "Share").click();
+    h.run();
+    assert!(h.state().editor().document().same_semantics(&snapshot));
+    assert_eq!(h.state().editor().history_view().ticket, ticket);
+    file(&mut h);
+    for label in ["New", "Open"] {
+        assert!(
+            !h.get_by_role_and_label(Role::Button, "File")
+                .get_by_label_contains(label)
+                .accesskit_node()
+                .is_disabled()
+        );
+    }
+    h.key_press(Key::Escape);
+    h.run();
+}
+
+#[test]
 fn classic_file_and_edit_reference_previews_are_disabled_without_changing_documents() {
     let mut h = harness_with(App::new(None), 1.0, true);
     let before = h.state().editor().document_snapshot();
@@ -19,7 +69,10 @@ fn classic_file_and_edit_reference_previews_are_disabled_without_changing_docume
         "Image properties",
     ] {
         assert!(
-            h.get_by_label(label).accesskit_node().is_disabled(),
+            h.get_by_role_and_label(Role::Button, "File")
+                .get_by_label(label)
+                .accesskit_node()
+                .is_disabled(),
             "{label}"
         );
     }

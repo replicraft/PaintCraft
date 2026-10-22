@@ -60,8 +60,7 @@ fn new_document_asks_before_discarding_unsaved_work() {
     let mut h = harness();
     with_layer(&mut h);
     let id = h.state().editor().document().document_id;
-    h.get_by_label("New").click();
-    h.run();
+    classic_file_action(&mut h, "New");
     h.get_by_label("Cancel").click();
     h.run();
     assert_eq!(
@@ -69,8 +68,7 @@ fn new_document_asks_before_discarding_unsaved_work() {
         2,
         "cancelled: nothing discarded"
     );
-    h.get_by_label("New").click();
-    h.run();
+    classic_file_action(&mut h, "New");
     h.get_by_label("Continue").click();
     h.run();
     assert_eq!(h.state().editor().layers().len(), 1);
@@ -205,8 +203,7 @@ fn opening_a_picture_imports_it_and_exporting_names_the_losses() {
     std::fs::write(&src, encode(ImageFormat::Png, 16, 8, &px, 90).unwrap()).unwrap();
     let mut h = harness();
     h.state_mut().set_path_text(&src.to_string_lossy());
-    h.get_by_label("Open").click();
-    h.run();
+    classic_file_action(&mut h, "Open");
     // The new document has no unsaved work yet, so there is nothing to discard... except the fresh one's layer.
     if h.query_by_label("Continue").is_some() {
         h.get_by_label("Continue").click();
@@ -223,14 +220,12 @@ fn opening_a_picture_imports_it_and_exporting_names_the_losses() {
     // JPEG export of this picture is lossy: the dialog says so and only then writes.
     let out = dir.join("out.jpg");
     h.state_mut().set_path_text(&out.to_string_lossy());
-    h.get_by_label("Export").click();
-    h.run();
+    classic_file_action(&mut h, "Picture…");
     assert!(!out.exists(), "nothing is written before confirmation");
     h.get_by_label("Cancel").click();
     h.run();
     assert!(!out.exists());
-    h.get_by_label("Export").click();
-    h.run();
+    classic_file_action(&mut h, "Picture…");
     h.get_by_label_contains("lossy-jpeg");
     h.get_by_label("Export now").click();
     h.run();
@@ -239,8 +234,7 @@ fn opening_a_picture_imports_it_and_exporting_names_the_losses() {
     assert_eq!((back.width, back.height), (16, 8));
 
     h.state_mut().set_path_text("noextension");
-    h.get_by_label("Export").click();
-    h.run();
+    classic_file_action(&mut h, "Picture…");
     assert!(h.state().editor().status().contains(".png"));
     std::fs::remove_dir_all(dir).unwrap();
 }

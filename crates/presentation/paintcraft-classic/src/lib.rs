@@ -13,6 +13,7 @@ mod menus;
 mod toolbar_visibility;
 pub use toolbar_visibility::ToolbarVisibility;
 mod palette;
+mod quick_access;
 mod ribbon;
 #[derive(Debug, Default)]
 pub struct Workspace {
@@ -137,19 +138,7 @@ pub fn chrome(
             menus::view(ui, variant, context, &mut actions);
         });
         ui.separator();
-        for (icon, action) in [
-            (Icon::New, Action::New),
-            (Icon::Open, Action::Open),
-            (Icon::Save, Action::Save),
-            (Icon::Export, Action::Export),
-            (Icon::Undo, Action::Undo),
-            (Icon::Redo, Action::Redo),
-            (Icon::ClearCanvas, Action::ClearCanvas),
-        ] {
-            if paintcraft_ui::actions::toolbar_button(ui, action, icon, context) {
-                actions.push(action);
-            }
-        }
+        quick_access::show(ui, variant, context, &mut actions);
         if variant != ClassicVariant::V11
             && ui.button("Layers").clicked()
             && ui.ctx().current_pass_index() == 0

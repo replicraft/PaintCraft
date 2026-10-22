@@ -78,7 +78,7 @@ pub(super) fn file(ui: &mut Ui, context: Context, actions: &mut Vec<Action>) {
             unavailable(
                 ui,
                 "Share",
-                Icon::Export,
+                Icon::Share,
                 None,
                 "System sharing is not available yet.",
             );
