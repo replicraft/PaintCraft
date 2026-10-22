@@ -32,7 +32,8 @@ fn menu(ui: &mut egui::Ui, label: &str, icon: Icon, entries: &[(&str, Icon)]) {
     let (response, _) = egui::containers::menu::MenuButton::from_button(
         egui::Button::new("     ")
             .min_size(Vec2::new(46.0, 30.0))
-            .frame(false),
+            .frame_when_inactive(false)
+            .frame(true),
     )
     .config(
         egui::containers::menu::MenuConfig::new()
@@ -67,7 +68,7 @@ fn menu(ui: &mut egui::Ui, label: &str, icon: Icon, entries: &[(&str, Icon)]) {
                 }
             });
     });
-    response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, ui.is_enabled(), label));
+    super::dropdowns::open_state(ui, &response, label);
     paintcraft_ui::icons::paint(
         ui.painter(),
         Rect::from_center_size(

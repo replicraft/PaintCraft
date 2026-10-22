@@ -74,10 +74,10 @@ pub(super) fn brushes(ui: &mut egui::Ui, state: &mut Controls, actions: &mut Vec
 pub(super) fn shape_paint(ui: &mut egui::Ui, state: &mut Controls) {
     ui.add_enabled_ui(matches!(state.tool, Tool::Rect | Tool::Ellipse), |ui| {
         dropdown(ui, "Shape outline", Some(Icon::Pencil), |ui| {
-            popup_style(ui, 200.0);
+            popup_style(ui, 220.0);
             let outlined = state.options.style != ShapeStyle::Filled;
             for (solid, label) in [(false, "No outline"), (true, "Solid outline")] {
-                if ui.selectable_label(outlined == solid, label).clicked() {
+                if shape_choice(ui, label, outlined == solid).clicked() {
                     state.options.style = match (solid, state.options.style) {
                         (false, _) => ShapeStyle::Filled,
                         (true, ShapeStyle::Filled) => ShapeStyle::Both,
@@ -88,10 +88,10 @@ pub(super) fn shape_paint(ui: &mut egui::Ui, state: &mut Controls) {
             }
         });
         dropdown(ui, "Shape fill", Some(Icon::Bucket), |ui| {
-            popup_style(ui, 200.0);
+            popup_style(ui, 220.0);
             let filled = state.options.style != ShapeStyle::Outline;
             for (solid, label) in [(false, "No fill"), (true, "Solid fill")] {
-                if ui.selectable_label(filled == solid, label).clicked() {
+                if shape_choice(ui, label, filled == solid).clicked() {
                     state.options.style = match (solid, state.options.style) {
                         (false, _) => ShapeStyle::Outline,
                         (true, ShapeStyle::Outline) => ShapeStyle::Both,
@@ -118,12 +118,15 @@ fn dropdown(
                     "   ",
                 )
                 .min_size(Vec2::new(54.0, 32.0))
-                .frame(false)
+                .frame_when_inactive(false)
+                .frame(true)
             } else {
                 ui.spacing_mut().interact_size.y = 20.0;
+                ui.spacing_mut().button_padding.y = 0.0;
                 egui::Button::new(" ")
                     .min_size(Vec2::new(64.0, 20.0))
-                    .frame(false)
+                    .frame_when_inactive(false)
+                    .frame(true)
             };
             egui::containers::menu::MenuButton::from_button(button)
                 .config(
@@ -153,13 +156,48 @@ fn dropdown(
         [center + Vec2::new(0.0, 1.5), center + Vec2::new(3.0, -1.5)],
         stroke,
     );
-    response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, ui.is_enabled(), label));
+    open_state(ui, &response, label);
     if ui.is_enabled() {
         response.on_hover_text(label)
     } else {
         response
             .on_disabled_hover_text("Select a rectangle or ellipse to change its outline and fill")
     }
+}
+
+/// MenuButton does not mark its trigger selected while its popup is open.
+/// Keep the open state visible after the pointer moves into the menu.
+pub(super) fn open_state(ui: &egui::Ui, response: &egui::Response, label: &str) {
+    let open = egui::Popup::is_id_open(ui.ctx(), egui::Popup::menu(response).get_id());
+    if open && ui.is_enabled() {
+        selected_outline(ui, response.rect);
+    }
+    response.widget_info(|| {
+        egui::WidgetInfo::selected(egui::Role::Button, ui.is_enabled(), open, label)
+    });
+}
+
+fn shape_choice(ui: &mut egui::Ui, label: &str, selected: bool) -> egui::Response {
+    let response = ui.add(
+        egui::Button::new(label)
+            .selected(selected)
+            .frame_when_inactive(selected)
+            .frame(true)
+            .min_size(Vec2::new(220.0, 40.0)),
+    );
+    if selected {
+        selected_outline(ui, response.rect);
+    }
+    response
+}
+
+fn selected_outline(ui: &egui::Ui, rect: egui::Rect) {
+    ui.painter().rect_stroke(
+        rect.shrink(0.5),
+        4,
+        ui.visuals().selection.stroke,
+        egui::StrokeKind::Inside,
+    );
 }
 
 fn popup_style(ui: &mut egui::Ui, width: f32) {
