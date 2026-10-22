@@ -10,8 +10,8 @@ pub(super) fn rotate(ui: &mut egui::Ui) {
         &[
             ("Rotate right 90°", Icon::RotateClockwise),
             ("Rotate left 90°", Icon::RotateCounterclockwise),
-            ("Rotate 180°", Icon::RotateClockwise),
-            ("Rotate custom", Icon::RotateCounterclockwise),
+            ("Rotate 180°", Icon::Rotate180),
+            ("Rotate custom", Icon::RotateCustom),
         ],
     );
 }
@@ -30,24 +30,42 @@ pub(super) fn flip(ui: &mut egui::Ui) {
 
 fn menu(ui: &mut egui::Ui, label: &str, icon: Icon, entries: &[(&str, Icon)]) {
     let (response, _) = egui::containers::menu::MenuButton::from_button(
-        egui::Button::new("     ").min_size(Vec2::new(46.0, 30.0)),
+        egui::Button::new("     ")
+            .min_size(Vec2::new(46.0, 30.0))
+            .frame(false),
     )
     .config(
         egui::containers::menu::MenuConfig::new()
             .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside),
     )
     .ui(ui, |ui| {
-        for &(name, icon) in entries {
-            ui.add_enabled(
-                false,
-                egui::Button::image_and_text(
-                    paintcraft_ui::icons::image(ui.ctx(), icon, 18.0),
-                    name,
-                )
-                .min_size(Vec2::new(200.0, 32.0)),
-            )
-            .on_disabled_hover_text("This image transformation is not available yet.");
+        ui.set_min_width(220.0);
+        ui.spacing_mut().interact_size.y = 40.0;
+        for style in [egui::TextStyle::Body, egui::TextStyle::Button] {
+            ui.style_mut()
+                .text_styles
+                .insert(style, egui::FontId::proportional(15.0));
         }
+        let height =
+            (ui.ctx().content_rect().bottom() - ui.cursor().min.y - 12.0).clamp(40.0, 480.0);
+        ui.set_max_height(height);
+        egui::ScrollArea::vertical()
+            .id_salt(("image-transform-menu", label))
+            .max_height(height)
+            .auto_shrink([false, true])
+            .show(ui, |ui| {
+                for &(name, icon) in entries {
+                    ui.add_enabled(
+                        false,
+                        egui::Button::new((
+                            paintcraft_ui::icons::image(ui.ctx(), icon, 22.0),
+                            name,
+                        ))
+                        .min_size(Vec2::new(220.0, 40.0)),
+                    )
+                    .on_disabled_hover_text("This image transformation is not available yet.");
+                }
+            });
     });
     response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, ui.is_enabled(), label));
     paintcraft_ui::icons::paint(

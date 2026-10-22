@@ -155,6 +155,40 @@ fn renaming_and_opacity_apply_once_on_commit_not_per_keystroke() {
 }
 
 #[test]
+fn classic_layers_icon_keeps_its_full_size_at_each_display_scale() {
+    use eframe::egui::{Role, epaint::Shape};
+    for ppp in [1.0, 2.0] {
+        let mut h = Harness::builder()
+            .with_size(Vec2::new(1360.0, 900.0))
+            .with_pixels_per_point(ppp)
+            .build_ui_state(|ui, app: &mut App| app.ui(ui), App::new(None));
+        h.run();
+        for open in [false, true] {
+            if open {
+                h.get_by_role_and_label(Role::Button, "Layers").click();
+                h.run();
+            }
+            let button = h.get_by_role_and_label(Role::Button, "Layers").rect();
+            let images: Vec<_> = h
+                .output()
+                .shapes
+                .iter()
+                .filter_map(|shape| {
+                    let Shape::Rect(rect) = &shape.shape else {
+                        return None;
+                    };
+                    (rect.brush.is_some() && button.contains_rect(rect.rect)).then_some(rect.rect)
+                })
+                .collect();
+            assert!(
+                images.iter().any(|image| image.size() == Vec2::splat(52.0)),
+                "Layers must draw a 52-point image at scale {ppp}, open={open}: {images:?}"
+            );
+        }
+    }
+}
+
+#[test]
 fn classic_ribbon_tools_are_visible_and_activate_at_the_default_window_size() {
     let mut h = Harness::builder()
         .with_size(Vec2::new(1360.0, 900.0))

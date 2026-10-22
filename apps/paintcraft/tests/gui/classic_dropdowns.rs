@@ -220,6 +220,111 @@ fn image_menus_show_reference_entries_without_executing_unavailable_operations()
 }
 
 #[test]
+fn image_transform_popups_keep_rows_icons_and_single_tooltips_reachable_on_short_displays() {
+    use eframe::egui::{Role, epaint::Shape};
+    use paintcraft::settings::{Appearance, ClassicVariant, Settings};
+    for (size, ppp, appearance) in [
+        (Vec2::new(1360.0, 900.0), 1.0, Appearance::Light),
+        (Vec2::new(360.0, 360.0), 2.0, Appearance::Dark),
+    ] {
+        let dir = scratch("image-menu-layout");
+        Settings {
+            appearance,
+            classic_variant: Some(ClassicVariant::V11),
+            ..Default::default()
+        }
+        .save(&dir)
+        .unwrap();
+        let mut h = Harness::builder()
+            .with_size(size)
+            .with_pixels_per_point(ppp)
+            .build_ui_state(
+                |ui, app: &mut App| {
+                    app.ui(ui);
+                    if ui.ctx().current_pass_index() == 0 {
+                        ui.ctx().request_discard("test: repeated image-menu layout");
+                    }
+                },
+                App::new(None).with_settings(dir.clone()),
+            );
+        h.run();
+        h.ctx.style_mut_of(h.ctx.theme(), |style| {
+            style.interaction.tooltip_delay = 0.0;
+            style.interaction.show_tooltips_only_when_still = false;
+        });
+        let snapshot = h.state().editor().document_snapshot();
+        let ticket = h.state().editor().history_view().ticket;
+        let saved = std::fs::read(dir.join("settings.json")).unwrap();
+        for (menu, entries) in [
+            (
+                "Rotate",
+                vec![
+                    "Rotate right 90°",
+                    "Rotate left 90°",
+                    "Rotate 180°",
+                    "Rotate custom",
+                ],
+            ),
+            ("Flip", vec!["Flip vertical", "Flip horizontal"]),
+        ] {
+            h.get_by_role_and_label(Role::Button, menu).hover();
+            h.run();
+            assert_eq!(h.query_all_by_role_and_label(Role::Label, menu).count(), 1);
+            h.get_by_role_and_label(Role::Button, menu).click();
+            h.run();
+            for entry in &entries {
+                h.get_by_label(entry).scroll_to_me();
+                h.run();
+                let row = h.get_by_label(entry).rect();
+                assert!(
+                    row.height() >= 40.0
+                        && row.min.x >= 0.0
+                        && row.min.y >= 0.0
+                        && row.max.x <= size.x
+                        && row.max.y <= size.y,
+                    "{entry}: {row:?} outside {size:?}"
+                );
+                assert!(h.get_by_label(entry).accesskit_node().is_disabled());
+                assert!(
+                    h.output().shapes.iter().any(|shape| {
+                        let Shape::Rect(icon) = &shape.shape else {
+                            return false;
+                        };
+                        icon.brush.is_some()
+                            && row.contains_rect(icon.rect)
+                            && icon.rect.size() == Vec2::splat(22.0)
+                    }),
+                    "{entry} must draw its full 22-point icon"
+                );
+            }
+            h.get_by_label(entries.last().unwrap()).hover();
+            h.run();
+            assert_eq!(
+                h.query_all_by_role_and_label(
+                    Role::Label,
+                    "This image transformation is not available yet."
+                )
+                .count(),
+                1
+            );
+            h.get_by_label(entries.last().unwrap()).click();
+            h.run();
+            assert!(
+                h.query_by_label(entries[0]).is_some(),
+                "a disabled entry keeps the popup open"
+            );
+            h.key_press(Key::Escape);
+            h.run();
+            assert!(h.query_by_label(entries[0]).is_none());
+        }
+        assert!(h.state().editor().document().same_semantics(&snapshot));
+        assert_eq!(h.state().editor().history_view().ticket, ticket);
+        assert_eq!(std::fs::read(dir.join("settings.json")).unwrap(), saved);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+}
+
+#[test]
 fn brush_gallery_scrolls_lower_choices_into_a_short_window() {
     let mut h = harness();
     h.set_size(Vec2::new(1100.0, 500.0));
