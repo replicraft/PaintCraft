@@ -1,6 +1,6 @@
 //! Windows 11 ribbon geometry. Unimplemented controls are disabled prototypes.
 use super::{Action, Controls, Workspace};
-use egui::{Color32, Vec2};
+use egui::Vec2;
 use paintcraft_tools::Tool;
 use paintcraft_ui::{
     actions::Context,
@@ -169,7 +169,7 @@ pub(super) fn ribbon(
                 });
                 ui.separator();
                 group(ui, "Colors", |ui| {
-                    colors(ui, state, &workspace.custom_colors, context, actions)
+                    super::palette::colors(ui, state, &workspace.custom_colors, context, actions)
                 });
                 ui.separator();
                 group(ui, "Layers", |ui| {
@@ -271,55 +271,4 @@ fn compact_icon(ui: &mut egui::Ui, label: &str, icon: Icon, selected: bool) -> e
         egui::WidgetInfo::selected(egui::Role::Button, ui.is_enabled(), selected, label)
     });
     response.on_hover_text(label)
-}
-
-fn colors(
-    ui: &mut egui::Ui,
-    state: &mut Controls,
-    custom: &super::CustomColors,
-    context: Context,
-    actions: &mut Vec<Action>,
-) {
-    ui.horizontal(|ui| {
-        ui.vertical(|ui| {
-            for (label, color, action) in [
-                ("Pencil color", state.primary, Action::EditColors),
-                ("Fill color", state.secondary, Action::EditSecondaryColors),
-            ] {
-                let (rect, response) =
-                    ui.allocate_exact_size(Vec2::splat(32.0), egui::Sense::click());
-                ui.painter().circle_stroke(
-                    rect.center(),
-                    14.0,
-                    egui::Stroke::new(
-                        1.0,
-                        if label == "Pencil color" {
-                            ui.visuals().selection.stroke.color
-                        } else {
-                            ui.visuals().widgets.noninteractive.fg_stroke.color
-                        },
-                    ),
-                );
-                ui.painter().circle_filled(
-                    rect.center(),
-                    11.0,
-                    Color32::from_rgb(color.0[0], color.0[1], color.0[2]),
-                );
-                response.widget_info(|| {
-                    egui::WidgetInfo::labeled(
-                        egui::Role::ColorWell,
-                        ui.is_enabled() && action.enabled(context),
-                        label,
-                    )
-                });
-                if response.on_hover_text(label).clicked() && action.enabled(context) {
-                    actions.push(action);
-                }
-            }
-        });
-        super::palette::swatches(ui, state, custom, context, actions);
-        if icon_button(ui, "Edit colors…", Icon::ColorBalance, false, false).clicked() {
-            actions.push(Action::EditColors);
-        }
-    });
 }

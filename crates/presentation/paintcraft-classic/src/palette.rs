@@ -1,4 +1,8 @@
 //! Paint-style names for the fixed palette; extra swatches have descriptive names.
+use super::{Action, Controls, CustomColors, Rgba};
+use egui::{Color32, Vec2};
+use paintcraft_ui::{actions::Context, icons::Icon, widgets::icon_button};
+
 const NAMES: [&str; 28] = [
     "Black",
     "Gray",
@@ -36,7 +40,99 @@ pub(super) fn tooltip(index: usize, rgb: [u8; 3]) -> String {
     )
 }
 
-pub(super) fn swatches(
+pub(super) fn colors(
+    ui: &mut egui::Ui,
+    state: &mut Controls,
+    custom: &CustomColors,
+    context: Context,
+    actions: &mut Vec<Action>,
+) {
+    ui.horizontal(|ui| {
+        wells(ui, state, context, actions);
+        swatches(ui, state, custom, context, actions);
+        if ui
+            .add_enabled_ui(Action::EditColors.enabled(context), |ui| {
+                icon_button(ui, "Edit colors…", Icon::EditColors, false, false)
+            })
+            .inner
+            .clicked()
+        {
+            actions.push(Action::EditColors);
+        }
+    });
+}
+
+fn wells(ui: &mut egui::Ui, state: &Controls, context: Context, actions: &mut Vec<Action>) {
+    ui.allocate_ui_with_layout(
+        Vec2::new(40.0, 78.0),
+        egui::Layout::top_down(egui::Align::Center),
+        |ui| {
+            ui.spacing_mut().item_spacing.y = 6.0;
+            for (label, color, action, size, inner) in [
+                (
+                    "Pencil color",
+                    state.primary,
+                    Action::EditColors,
+                    40.0,
+                    15.0,
+                ),
+                (
+                    "Fill color",
+                    state.secondary,
+                    Action::EditSecondaryColors,
+                    32.0,
+                    13.0,
+                ),
+            ] {
+                let response = ui
+                    .add_enabled_ui(action.enabled(context), |ui| {
+                        let (rect, response) =
+                            ui.allocate_exact_size(Vec2::splat(size), egui::Sense::click());
+                        let accent = action == Action::EditColors
+                            || response.hovered()
+                            || response.has_focus();
+                        let border = if accent {
+                            ui.visuals().selection.stroke.color
+                        } else {
+                            ui.visuals().widgets.noninteractive.fg_stroke.color
+                        };
+                        ui.painter().circle_stroke(
+                            rect.center(),
+                            size * 0.5 - 1.0,
+                            egui::Stroke::new(1.0, border),
+                        );
+                        ui.painter().circle_filled(
+                            rect.center(),
+                            inner,
+                            Color32::from_rgb(color.0[0], color.0[1], color.0[2]),
+                        );
+                        response.widget_info(|| {
+                            egui::WidgetInfo::labeled(egui::Role::ColorWell, ui.is_enabled(), label)
+                        });
+                        response.on_hover_text(well_tooltip(label, color))
+                    })
+                    .inner;
+                if response.clicked() {
+                    actions.push(action);
+                }
+            }
+        },
+    );
+}
+
+fn well_tooltip(label: &str, color: Rgba) -> String {
+    let rgb = [color.0[0], color.0[1], color.0[2]];
+    let name = super::PALETTE
+        .iter()
+        .position(|value| *value == rgb)
+        .map_or("Custom color", |index| NAMES[index]);
+    format!(
+        "{label}\n{name}\n#{:02X}{:02X}{:02X}",
+        rgb[0], rgb[1], rgb[2]
+    )
+}
+
+fn swatches(
     ui: &mut egui::Ui,
     state: &mut super::Controls,
     custom: &super::CustomColors,
