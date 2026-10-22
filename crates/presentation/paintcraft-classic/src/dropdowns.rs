@@ -11,9 +11,8 @@ pub(super) fn selection(
     context: Context,
     actions: &mut Vec<Action>,
 ) {
-    dropdown(ui, "Selection options", "", |ui| {
-        ui.set_min_width(240.0);
-        ui.spacing_mut().interact_size.y = 30.0;
+    dropdown(ui, "Selection options", None, |ui| {
+        popup_style(ui, 240.0);
         let rectangle = ui.add(
             egui::Button::image_and_text(
                 paintcraft_ui::icons::image(ui.ctx(), Icon::RectangleSelect, 18.0),
@@ -67,14 +66,15 @@ pub(super) fn selection(
 }
 
 pub(super) fn brushes(ui: &mut egui::Ui, state: &mut Controls, actions: &mut Vec<Action>) {
-    dropdown(ui, "Brushes", "", |ui| {
+    dropdown(ui, "Brushes", None, |ui| {
         super::brush_gallery::gallery(ui, state, actions);
     });
 }
 
 pub(super) fn shape_paint(ui: &mut egui::Ui, state: &mut Controls) {
     ui.add_enabled_ui(matches!(state.tool, Tool::Rect | Tool::Ellipse), |ui| {
-        dropdown(ui, "Shape outline", "Outline", |ui| {
+        dropdown(ui, "Shape outline", Some(Icon::Pencil), |ui| {
+            popup_style(ui, 200.0);
             let outlined = state.options.style != ShapeStyle::Filled;
             for (solid, label) in [(false, "No outline"), (true, "Solid outline")] {
                 if ui.selectable_label(outlined == solid, label).clicked() {
@@ -87,7 +87,8 @@ pub(super) fn shape_paint(ui: &mut egui::Ui, state: &mut Controls) {
                 }
             }
         });
-        dropdown(ui, "Shape fill", "Fill", |ui| {
+        dropdown(ui, "Shape fill", Some(Icon::Bucket), |ui| {
+            popup_style(ui, 200.0);
             let filled = state.options.style != ShapeStyle::Outline;
             for (solid, label) in [(false, "No fill"), (true, "Solid fill")] {
                 if ui.selectable_label(filled == solid, label).clicked() {
@@ -106,12 +107,24 @@ pub(super) fn shape_paint(ui: &mut egui::Ui, state: &mut Controls) {
 fn dropdown(
     ui: &mut egui::Ui,
     label: &str,
-    text: &str,
+    icon: Option<Icon>,
     contents: impl FnOnce(&mut egui::Ui),
 ) -> egui::Response {
     let response = ui
         .push_id(label, |ui| {
-            let button = egui::Button::new(format!("{text}    ")).min_size(Vec2::new(64.0, 18.0));
+            let button = if let Some(icon) = icon {
+                egui::Button::image_and_text(
+                    paintcraft_ui::icons::image(ui.ctx(), icon, 20.0),
+                    "   ",
+                )
+                .min_size(Vec2::new(54.0, 32.0))
+                .frame(false)
+            } else {
+                ui.spacing_mut().interact_size.y = 20.0;
+                egui::Button::new(" ")
+                    .min_size(Vec2::new(64.0, 20.0))
+                    .frame(false)
+            };
             egui::containers::menu::MenuButton::from_button(button)
                 .config(
                     egui::containers::menu::MenuConfig::new()
@@ -121,12 +134,17 @@ fn dropdown(
                 .0
         })
         .inner;
-    let center = if text.is_empty() {
+    let center = if icon.is_none() {
         response.rect.center()
     } else {
         response.rect.right_center() - Vec2::new(9.0, 0.0)
     };
-    let stroke = egui::Stroke::new(1.0, ui.visuals().text_color());
+    let ink = if ui.is_enabled() {
+        ui.visuals().text_color()
+    } else {
+        ui.visuals().weak_text_color()
+    };
+    let stroke = egui::Stroke::new(1.0, ink);
     ui.painter().line_segment(
         [center + Vec2::new(-3.0, -1.5), center + Vec2::new(0.0, 1.5)],
         stroke,
@@ -136,5 +154,20 @@ fn dropdown(
         stroke,
     );
     response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, ui.is_enabled(), label));
-    response
+    if ui.is_enabled() {
+        response.on_hover_text(label)
+    } else {
+        response
+            .on_disabled_hover_text("Select a rectangle or ellipse to change its outline and fill")
+    }
+}
+
+fn popup_style(ui: &mut egui::Ui, width: f32) {
+    ui.set_min_width(width);
+    ui.spacing_mut().interact_size.y = 32.0;
+    for style in [egui::TextStyle::Body, egui::TextStyle::Button] {
+        ui.style_mut()
+            .text_styles
+            .insert(style, egui::FontId::proportional(15.0));
+    }
 }
