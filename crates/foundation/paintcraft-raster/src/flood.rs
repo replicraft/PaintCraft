@@ -62,6 +62,27 @@ pub fn region_with_scratch_limit_checked(
     scratch_bytes: usize,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Vec<Span>> {
+    region_from_source_checked(
+        |x, y| Ok(layer.get(x, y)),
+        seed,
+        clip,
+        tolerance,
+        scratch_bytes,
+        check,
+    )
+}
+
+/// Classify immutable logical pixels, including earlier planned paint, without
+/// requiring decoded raster materialization. Source errors discard the region.
+/// Scratch/check policies are identical to [`region_with_scratch_limit_checked`].
+pub fn region_from_source_checked(
+    read: impl Fn(i64, i64) -> Result<Rgba>,
+    seed: (i64, i64),
+    clip: &Rect,
+    tolerance: u8,
+    scratch_bytes: usize,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Vec<Span>> {
     check()?;
     if !clip.contains(seed.0, seed.1) {
         return Ok(Vec::new());
@@ -85,27 +106,27 @@ pub fn region_with_scratch_limit_checked(
     let mut work = scratch::Work::new(check);
     let idx = |x: i64, y: i64| (y - clip.y0) as usize * w + (x - clip.x0) as usize;
     let is_seen = |seen: &[u64], x, y| seen[idx(x, y) / 64] >> (idx(x, y) % 64) & 1 == 1;
-    let target = layer.get(seed.0, seed.1);
-    let matches = |x: i64, y: i64| near(layer.get(x, y), target, tolerance);
+    let target = read(seed.0, seed.1)?;
+    let matches = |x: i64, y: i64| read(x, y).map(|pixel| near(pixel, target, tolerance));
     let mut out = Vec::new();
     let mut stack = Vec::new();
     scratch.push(&mut stack, seed, check)?;
     while let Some((x, y)) = stack.pop() {
         check()?;
-        if is_seen(&seen, x, y) || !matches(x, y) {
+        if is_seen(&seen, x, y) || !matches(x, y)? {
             continue;
         }
         let (mut l, mut r) = (x, x);
         while l > clip.x0 {
             work.step()?;
-            if is_seen(&seen, l - 1, y) || !matches(l - 1, y) {
+            if is_seen(&seen, l - 1, y) || !matches(l - 1, y)? {
                 break;
             }
             l -= 1;
         }
         while r < clip.x1 - 1 {
             work.step()?;
-            if is_seen(&seen, r + 1, y) || !matches(r + 1, y) {
+            if is_seen(&seen, r + 1, y) || !matches(r + 1, y)? {
                 break;
             }
             r += 1;
@@ -123,7 +144,7 @@ pub fn region_with_scratch_limit_checked(
             let mut inside_run = false;
             for xi in l..=r {
                 work.step()?;
-                let ok = !is_seen(&seen, xi, ny) && matches(xi, ny);
+                let ok = !is_seen(&seen, xi, ny) && matches(xi, ny)?;
                 if ok && !inside_run {
                     scratch.push(&mut stack, (xi, ny), check)?;
                 }

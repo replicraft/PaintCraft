@@ -1,7 +1,10 @@
 //! Ordered paint descriptors with operation-wide tile admission.
 use super::*;
 use std::collections::hash_map::Entry;
+mod index;
 mod metadata;
+mod projection;
+pub use projection::PaintProjection;
 
 /// Provisional per-plan metadata safety policy, excluding allocator/hash overhead.
 pub const DEFAULT_PAINT_METADATA_BYTES: usize = 64 << 20;
@@ -130,59 +133,12 @@ impl PaintPlan {
         if self.writes.is_empty() {
             return Ok(());
         }
-        let mut metadata = metadata::Metadata::new(
-            self.descriptor_bytes(),
-            self.metadata_limit.min(admission.paint_metadata_limit),
-        )?;
-        let mut tiles: HashMap<TileCoord, Vec<usize>> = HashMap::new();
-        let mut needed = 0u64;
-        for (index, write) in self.writes.iter().enumerate() {
-            check()?;
-            let Some(area) = write.area.intersect(&layer.bounds()) else {
-                continue;
-            };
-            if tiles.is_empty()
-                && layer.tiles.is_empty()
-                && write.mode == BlendMode::Replace
-                && write.samples == 16
-                && write.color == layer.default
-            {
-                continue;
-            }
-            for ty in area.y0 / i64::from(TILE_EDGE)..=(area.y1 - 1) / i64::from(TILE_EDGE) {
-                for tx in area.x0 / i64::from(TILE_EDGE)..=(area.x1 - 1) / i64::from(TILE_EDGE) {
-                    check()?;
-                    let coord = TileCoord { tx, ty };
-                    if tiles.len() == tiles.capacity() && !tiles.contains_key(&coord) {
-                        if !layer.tiles.contains_key(&coord)
-                            && write.pixel(layer.default) == layer.default
-                        {
-                            continue;
-                        }
-                        metadata.table(&mut tiles)?;
-                    }
-                    let writes = match tiles.entry(coord) {
-                        Entry::Occupied(entry) => entry.into_mut(),
-                        Entry::Vacant(entry) => {
-                            if !layer.tiles.contains_key(&coord)
-                                && write.pixel(layer.default) == layer.default
-                            {
-                                continue;
-                            }
-                            if !layer.private_tile(coord) {
-                                needed += 1;
-                                // Stop an oversized sparse operation before building an
-                                // index for its entire logical canvas.
-                                admission.planned_bytes(needed)?;
-                            }
-                            entry.insert(Vec::new())
-                        }
-                    };
-                    metadata.vector(writes)?;
-                    writes.push(index);
-                }
-            }
-        }
+        let (tiles, needed) = {
+            let mut target = index::RasterTarget::new(layer, admission);
+            let prepared =
+                self.index_checked(admission.paint_metadata_limit, &mut target, check)?;
+            (prepared.tiles, target.needed)
+        };
         admission.with_tile_plan(needed, |admission| {
             let missing = tiles
                 .keys()

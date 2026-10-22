@@ -12,7 +12,7 @@ use std::collections::HashMap;
 use std::sync::{Arc, OnceLock};
 
 mod paint;
-pub use paint::{DEFAULT_PAINT_METADATA_BYTES, PaintPlan};
+pub use paint::{DEFAULT_PAINT_METADATA_BYTES, PaintPlan, PaintProjection};
 mod tile;
 use tile::Tile;
 
