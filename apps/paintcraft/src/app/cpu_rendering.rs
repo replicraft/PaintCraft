@@ -59,14 +59,20 @@ impl CpuRenderer {
             self.1.clear_poison();
             cache
         });
-        paintcraft_editor::execute::execute_with_geometry_cache(
+        let result = paintcraft_editor::execute::execute_with_geometry_cache(
             doc,
             selection,
             batch,
             paintcraft_raster::Admission::new(paintcraft_core::types::policy::STAGED_PIXELS_MAX),
             Some(&mut geometry),
             check,
-        )
+        );
+        // Cancellation can now precede the geometry kernel itself. Once this
+        // request owns the cache lock, any failed staging retires its scratch.
+        if result.is_err() {
+            geometry.clear();
+        }
+        result
     }
 
     pub fn clear_geometry(&self) {
