@@ -20,6 +20,7 @@ pub enum Icon {
     Open,
     Save,
     SaveAs,
+    Share,
     Print,
     Close,
     Undo,
@@ -94,7 +95,7 @@ pub enum Icon {
 }
 
 impl Icon {
-    pub const ALL: [Self; 86] = [
+    pub const ALL: [Self; 87] = [
         Self::Polygon,
         Self::RightTriangle,
         Self::Diamond,
@@ -114,6 +115,7 @@ impl Icon {
         Self::Open,
         Self::Save,
         Self::SaveAs,
+        Self::Share,
         Self::Print,
         Self::Close,
         Self::Undo,
@@ -204,6 +206,7 @@ impl Icon {
             Self::Open => "open",
             Self::Save => "save",
             Self::SaveAs => "save-as",
+            Self::Share => "share",
             Self::Print => "print",
             Self::Close => "close",
             Self::Undo => "undo",
@@ -300,6 +303,7 @@ impl Icon {
             Self::Open => include_bytes!("../../assets/icons/open.svg"),
             Self::Save => include_bytes!("../../assets/icons/save.svg"),
             Self::SaveAs => include_bytes!("../../assets/icons/save-as.svg"),
+            Self::Share => include_bytes!("../../assets/icons/share.svg"),
             Self::Print => include_bytes!("../../assets/icons/print.svg"),
             Self::Close => include_bytes!("../../assets/icons/close.svg"),
             Self::Undo => include_bytes!("../../assets/icons/undo.svg"),

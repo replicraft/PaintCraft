@@ -172,6 +172,9 @@ add('rotate-custom',
     + path('M42 39L40 57L57 50Z', 'url(#blue)')
     + line('M31 46V29L40 17', '#61788d', 3)
     + circle(31, 29, 4, 'url(#paper)'))
+add('share',
+    line('M7 33V57H51V46', '#61788d', 5)
+    + path('M34 5L60 25L34 44V32Q19 30 10 47Q6 17 34 18Z', 'url(#blue)'))
 OUT.mkdir(parents=True,exist_ok=True)
 manifest=[]
 for i,(name,body) in enumerate(icons):

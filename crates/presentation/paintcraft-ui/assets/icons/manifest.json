@@ -586,5 +586,12 @@
     "source_row": null,
     "source_column": null,
     "file": "rotate-custom.svg"
+  },
+  {
+    "name": "share",
+    "label": "Share",
+    "source_row": null,
+    "source_column": null,
+    "file": "share.svg"
   }
 ]
