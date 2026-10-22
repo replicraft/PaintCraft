@@ -27,6 +27,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for key in ['baseline-manifest', 'candidate-artifacts', 'output']:
         parser.add_argument('--' + key, type=Path, required=True)
+    parser.add_argument('--baseline-artifacts', type=Path, help='Optional source-pinned before artifacts; retain the baseline manifest as fixture owner.')
     parser.add_argument('--execute', action='store_true')
     parser.add_argument('--preflight-only', action='store_true')
     args = parser.parse_args()
@@ -35,8 +36,9 @@ def main():
         return
     old = json.loads(args.baseline_manifest.read_text())
     new = json.loads(args.candidate_artifacts.read_text())
-    binaries = {'library': {'before': old['library'], 'shared': new['library']},
-                'cli': {'before': old['cli']['planned'], 'shared': new['cli']}}
+    before = json.loads(args.baseline_artifacts.read_text()) if args.baseline_artifacts else {'library': old['library'], 'cli': old['cli']['planned']}
+    binaries = {'library': {'before': before['library'], 'shared': new['library']},
+                'cli': {'before': before['cli'], 'shared': new['cli']}}
     for modes in binaries.values():
         for entry in modes.values():
             assert sha(entry['path']) == entry['sha256']
@@ -45,6 +47,7 @@ def main():
     assert hashlib.sha256(features.encode()).hexdigest() == old['feature_tree_sha256']
     out = args.output.resolve(); out.mkdir(exist_ok=False, parents=True)
     save(out / 'baseline-manifest.json', old)
+    save(out / 'baseline-artifacts.json', before)
     save(out / 'candidate-artifacts.json', new)
     (out / 'cli-features.log').write_text(features)
     root = args.baseline_manifest.parent
