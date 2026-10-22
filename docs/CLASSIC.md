@@ -390,3 +390,16 @@ was extracted from the general chrome module. Studio keeps its own presentation.
 covers light/dark layouts, display scales 1 and 2, long-list scrolling and repeated
 layout passes. Real layer thumbnails and complete reference/native visual parity
 remain open. No application windows or screenshot previews were launched.
+
+Confirmation prompts now share bounded, theme-aware presentation with larger
+buttons and an accented primary choice. Narrow windows stack actions; long
+explanations scroll without moving the action area. Save/discard workspace
+switching, document closing and ordinary discard/replace/export/recovery prompts
+use the same widget. The host retains all side effects and gates choices on the
+first layout pass. Escape/backdrop consistently cancel ordinary confirmations
+and document-close prompts as well as interface switches.
+131 window-free GUI tests and strict workspace Clippy pass; the
+[confirmation record](validation/confirmations-headless-2026-10-22/validation.json)
+covers long messages/paths, two/three-choice layouts down to 360x360, light/dark
+themes, scales 1 and 2, once-only choices and pixel/history-preserving cancellation.
+Native visual fidelity remains unqualified; no application windows were opened.

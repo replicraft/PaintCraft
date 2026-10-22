@@ -1,0 +1,42 @@
+{
+  "source_commit": "d83aac905dffe6c17d4d08b4b37a492635b475ef",
+  "mode": "Window-free egui and lint checks only. No desktop, native-window or screenshot-preview launches.",
+  "gui": {
+    "passed": 131,
+    "failed": 0,
+    "ignored": 17
+  },
+  "focused_gui": {
+    "passed": 3,
+    "sizes_and_scales": [
+      [
+        1360,
+        900,
+        1
+      ],
+      [
+        560,
+        500,
+        2
+      ],
+      [
+        360,
+        360,
+        1
+      ],
+      [
+        480,
+        360,
+        2
+      ]
+    ],
+    "scope": "Two/three-choice confirmations in light/dark themes with long multiline explanations and unbroken paths. All buttons remain on screen, explanation scrolling leaves footer controls fixed, each choice dispatches once across repeated layout passes. Classic close Escape keeps pixels/history; explicit discard closes. New-document Escape/backdrop cancellation preserves pixels/history. Existing full-suite save-close, save-switch, export and recovery flows also pass."
+  },
+  "clippy": "workspace all-targets with -D warnings passed",
+  "limits": "Shared presentation changes confirmation geometry and button styling; host retains save/discard/export/recovery ownership and first-pass action gating. Escape/backdrop now consistently cancel ordinary confirmations and tab-close prompts. Native/rendered visual parity remains unqualified under the user restriction.",
+  "sha256": {
+    "gui.log.gz": "8a07cb8c33148e804d2912aa2a6080d9fca9c5c64177f7c81fb22bff8ec25fbf",
+    "focused-gui.log.gz": "e2e08f9f70df5c4c972eb77df03b149e5d1309abe451e05afd3cc5f317f57d4b",
+    "clippy.log.gz": "09b4715f810b61cfebdda42a5762802777e97d135a0007f76758d01a93c037fd"
+  }
+}
