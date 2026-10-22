@@ -32,7 +32,7 @@ def main():
     parser.add_argument('--preflight-only', action='store_true')
     args = parser.parse_args()
     if not args.execute:
-        print('Plan only: fixture/exact-output preflight; no timing or files written.' if args.preflight_only else 'Plan only: 280 statistical samples, 1920 process observations; no files written.')
+        print('Plan only: fixture/exact-output preflight; no timing or files written.' if args.preflight_only else 'Plan only: 280 statistical samples, 1860 process observations; no files written.')
         return
     baseline = json.loads(args.baseline_cli.read_text())
     binaries = {'sequential': Path(baseline['binary']), 'planned': args.candidate_cli.resolve()}
@@ -57,7 +57,7 @@ def main():
     (fixtures / 'dense.rgba').write_bytes(raw)
     def chunk(kind, data):
         return struct.pack('>I', len(data)) + kind + data + struct.pack('>I', zlib.crc32(kind + data))
-    rows = b''.join(b'\0' + raw[y*4000:(y+1)*4000] for y in range(1000))
+    rows = b''.join(b'\0' + bytes(raw[y*4000:(y+1)*4000]) for y in range(1000))
     png = b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', 1000, 1000, 8, 6, 0, 0, 0)) + chunk(b'IDAT', zlib.compress(rows)) + chunk(b'IEND', b'')
     (fixtures / 'dense.png').write_bytes(png)
     (fixtures / 'dense.sha256').write_text(sha(fixtures / 'dense.png') + '\n')
@@ -91,13 +91,13 @@ def main():
         batch = {'schema': 'paintcraft.batch/v2', 'atomic': True, 'policy': 'paintcraft.core/default-v1', 'base': {'state_id': doc['state_id'], 'publication_epoch': '0'}, 'operations': operations}
         (fixtures / (case + '.json')).write_text(json.dumps(batch, separators=(',', ':')) + '\n')
     environment = dict(os.environ, PAINTCRAFT_BATCH_FIXTURES=str(fixtures))
-    sources = sorted({Path('Cargo.toml'), Path('Cargo.lock'), Path('rust-toolchain.toml'), Path(__file__).resolve().relative_to(Path.cwd()),
+    sources = sorted({Path('Cargo.toml'), Path('Cargo.lock'), Path('rust-toolchain.toml'), Path('crates/editing/paintcraft-editor/benches/support/sequential-manifest.json'), Path(__file__).resolve().relative_to(Path.cwd()),
                       *Path('apps').rglob('*.rs'), *Path('apps').rglob('Cargo.toml'), *Path('crates').rglob('*.rs'), *Path('crates').rglob('*.wgsl'), *Path('crates').rglob('Cargo.toml')})
     manifest = {'source_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(), 'utc': datetime.datetime.now(datetime.timezone.utc).isoformat(), 'platform': platform.platform(),
                 'sources_sha256': {str(p): sha(p) for p in sources}, 'cli': {mode: {'path': str(p), 'sha256': sha(p)} for mode, p in binaries.items()},
                 'library': {'path': str(library), 'sha256': sha(library)}, 'fixtures_sha256': {str(p.relative_to(out)): sha(p) for p in fixtures.iterdir()},
                 'feature_tree_sha256': hashlib.sha256(features.encode()).hexdigest(), 'rustc': subprocess.check_output(['rustc', '-Vv'], text=True), 'hyperfine': subprocess.check_output(['hyperfine', '--version'], text=True).strip(),
-                'cases': CASES, 'preflight_only': args.preflight_only, 'runs': 20, 'warmups': 3, 'sessions': 3, 'planned_statistical_samples': 280, 'planned_process_observations': 1920,
+                'cases': CASES, 'preflight_only': args.preflight_only, 'runs': 20, 'warmups': 3, 'sessions': 3, 'planned_statistical_samples': 280, 'planned_process_observations': 1860,
                 'scope': 'Whole built-in editor batch compilation/replay/destruction versus frozen executor support using common current raster primitives. Parent/current CPU-only CLIs confirm real apply/history/canonical file IO. Input acquisition excluded from statistical loops but included in process runs. Not physical RSS ceilings, scheduler fairness or native input/display latency.',
                 'environment': 'Uncontrolled local macOS host; no affinity/power/thermal controls; no intentional concurrent task builds/tests/timing. Preserve controls, raw samples and calibration without subtraction.'}
     (out / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
@@ -137,8 +137,11 @@ def main():
                 else:
                     argv = {mode: [str(library), 'calibration'] if case == 'calibration' else [str(library), 'process', case, mode] for mode in order}
                 path = out / f'hyperfine-{session}-{kind}-{case}.json'
+                # One shared library executable needs one startup calibration;
+                # the two distinct CPU CLI artifacts each retain their own.
+                measured_order=order[:1] if kind=='library' and case=='calibration' else order
                 with path.with_suffix('.log').open('wb') as log:
-                    subprocess.run(['hyperfine', '--shell=none', '--warmup', '3', '--runs', '20', '--export-json', str(path), *[shlex.join(argv[mode]) for mode in order]], env=environment, stdout=log, stderr=subprocess.STDOUT, check=True)
+                    subprocess.run(['hyperfine', '--shell=none', '--warmup', '3', '--runs', '20', '--export-json', str(path), *[shlex.join(argv[mode]) for mode in measured_order]], env=environment, stdout=log, stderr=subprocess.STDOUT, check=True)
                 raw = path.read_bytes(); data = json.loads(raw)
                 assert all(len(r['measurements']) == 20 and all(x['exit_code'] == 0 for x in r['measurements']) for r in data['results'])
                 compact = (json.dumps(data, separators=(',', ':')) + '\n').encode(); path.with_suffix('.json.gz').write_bytes(gzip.compress(raw, mtime=0)); path.write_bytes(compact)
