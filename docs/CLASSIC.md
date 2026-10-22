@@ -338,3 +338,15 @@ and hit-target checks at display scales 1 and 2. The user has requested no testi
 that opens application windows until explicitly permitted, so this pass has no
 new rendered/native visual evidence. Source-pinned logs and limits are in the
 [headless dropdown validation record](validation/classic-dropdowns-headless-2026-10-22/validation.json).
+
+Settings now uses grouped theme/interface/skin, canvas and text sections, an icon
+sidebar on wide windows and wrapped navigation tabs on narrow ones. Page content
+scrolls independently from the Apply/Cancel footer. Theme preview, draft
+cancellation and separate-workspace switching retain their existing semantics.
+Window-free tests cover 1360x900, 700x500, 480x500 and 480x360 at display scales
+1 and 2, including stable controls across repeated frames and page changes.
+Canvas defaults apply to new documents without resizing the open image.
+119 egui tests and strict workspace Clippy pass; the
+[headless settings record](validation/responsive-settings-headless-2026-10-22/validation.json)
+contains source-pinned logs. Native/rendered visual review remains intentionally
+deferred under the user's no-window-testing instruction.

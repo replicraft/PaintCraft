@@ -1,0 +1,42 @@
+{
+  "source_commit": "acf5e26c9cd8b53de0b3860e6571dd723a1c0f69",
+  "mode": "Window-free egui harness, no application/native-window or screenshot-preview launches.",
+  "gui": {
+    "passed": 119,
+    "failed": 0,
+    "ignored": 17
+  },
+  "focused": {
+    "passed": 5,
+    "sizes_and_display_scales": [
+      [
+        1360,
+        900,
+        1
+      ],
+      [
+        700,
+        500,
+        1
+      ],
+      [
+        480,
+        500,
+        2
+      ],
+      [
+        480,
+        360,
+        1
+      ]
+    ],
+    "scope": "Visible navigation/footer; stable footer across pages and repeated frames; draft cancellation restores theme and preserves settings bytes and document/history; Apply persists defaults without resizing the open image; existing separate-workspace switch guard retained."
+  },
+  "clippy": "workspace all-targets with -D warnings passed",
+  "limits": "No rendered/native visual review under the current user restriction. This adds settings presentation; editable text objects and Studio-specific settings categories remain separate roadmap work.",
+  "sha256": {
+    "focused-gui.log.gz": "717f575c7645e6384cde11c7a5e2c66f9f3b4ed222074633c62dd13a081ad133",
+    "clippy.log.gz": "e090f35b7ae96af957caf8b297474234121c252c7201b14fcff09b58daefb067",
+    "gui.log.gz": "79dadbfd39c7b27c1c6212861e46e7a6cf17dc694f198fac7e5f2bd49fc962f0"
+  }
+}

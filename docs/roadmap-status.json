@@ -428,13 +428,13 @@
       "title": "Classic v11 usable preview",
       "depends_on": ["T10", "T14"],
       "status": "partial",
-      "evidence": ["docs/validation/classic-tool-panels-2026-10-22/validation.json", "docs/validation/classic-ui-2026-10-22/validation.json",
+      "evidence": ["docs/validation/responsive-settings-headless-2026-10-22/validation.json", "docs/validation/classic-dropdowns-headless-2026-10-22/validation.json", "docs/validation/classic-file-edit-2026-10-22/validation.json", "docs/validation/classic-text-toolbar-2026-10-22/validation.json", "docs/validation/classic-ribbon-2026-10-22/validation.json", "docs/validation/classic-tool-panels-2026-10-22/validation.json", "docs/validation/classic-ui-2026-10-22/validation.json",
         "apps/paintcraft/src/settings.rs",
         "apps/paintcraft/src/lib.rs",
         "crates/presentation/paintcraft-classic/src/lib.rs",
         "crates/presentation/paintcraft-ui/src/widgets.rs"
       ],
-      "remaining_or_scope": "Classic menus, grouped tools, vector widgets, palette, right layers and persistent choice exist; brush/transform popup presentation and disabled-state tests follow supplied photos; pixel rulers, Gridlines routing, status visibility and fullscreen commands have application tests; execution of extra brush media/transforms, reference fidelity, preserving-target flow and complete M2 prerequisites remain. The latest Classic UI pass adds 20 preset colors plus ten persisted custom slots, larger scoped Selawik chrome/color wells, aligned captions and a compact three-row shape gallery. Light/dark workspace/menu/settings review renders and the actual-default-window GUI regression accompany the change. UI fidelity remains partial. Classic v11 now uses floating vertical size/opacity panels, circular accent rails and numeric entry, with canvas-input exclusion, stable tool-switch placement and fit/centering checks. The requested desktop size is 1360x900. 110 GUI tests, strict Clippy, eight light/dark review frames and isolated native startup pass; full UI fidelity and remaining operations stay open.",
+      "remaining_or_scope": "Classic palette, floating tool panels, document titles, shape icons, text options, File/Edit menus, view actions and responsive settings are implemented at the documented scope. Latest validation is 119 window-free egui tests and strict workspace Clippy. Disabled controls remain previews. Extra brush/shape/transform semantics, clipboard/platform operations, complete reference fidelity, preserving-target flow and full M2 prerequisites remain. Windowed tests and screenshot-preview runs are deferred until the user explicitly permits them; earlier native/capture evidence is historical.",
       "acceptance": "Named M2 gate, no repeated picker; explicit deviations and no dead functional claims."
     },
     {
