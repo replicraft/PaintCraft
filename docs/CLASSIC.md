@@ -247,7 +247,8 @@ scoped to Classic; Studio and historical skins retain their presentation setting
 The visual-review helper exports light/dark workspace, View-menu and Settings
 frames at 1440×900 with real egui GPU rendering. These are generated application
 previews, not original-app reference captures or OS window/pen/IME qualification.
-The default-window regression uses the actual 1200×850 desktop size.
+That pass checked the then-default 1200×850 desktop size; the current size is
+recorded in the floating-controls pass below.
 
 UI fidelity remains in progress: remaining dropdowns, native-style tool controls,
 more exact spacing and unsupported editing operations retain their separate scope.
@@ -257,3 +258,36 @@ record 108 passing GUI tests (16 explicit ignores), strict all-target Clippy,
 and six real-GPU light/dark scenes. Current [dark](validation/classic-ui-2026-10-22/classic-v11-dark-workspace.png)
 and [light](validation/classic-ui-2026-10-22/classic-v11-light-workspace.png)
 workspace previews are included for visual review.
+
+
+## Floating tool controls (2026-10-22)
+
+Classic v11 now places size in a slim vertical panel beside the canvas. Brush
+adds a separate opacity panel. Circular handles, accent-colored rails, rounded
+cards and direct numeric entry follow the supplied modern Paint direction. The
+quick size slider covers 1–64 px; numeric entry retains the full 1–1024 px range.
+Brush media choices remain in the existing gallery. Painting tools no longer
+reserve the horizontal options row. Fill/selection and text retain their working
+options; Studio and historical skins keep their existing presentations.
+
+Control edits change tool preferences without modifying document pixels or
+history. Each stroke still captures its options when it starts. Pointer presses
+inside the panels are excluded from canvas painting, including the first layout
+frame, and normal egui layer ownership remains checked. Disabled/modal contexts
+keep the controls disabled.
+
+A stable minimum inset across tools prevents brush/eraser switches from moving
+the image. Small canvases still center in the full viewport when there is room.
+Fit leaves enough space for the rail while retaining a document-centered view.
+The requested default desktop size is now 1360×900, leaving room for the default
+1000×486 document and controls. Panel height adapts to shorter viewports; GUI
+checks cover 1100×500 and maximum numeric size without moving the canvas.
+
+[Validation](validation/classic-tool-panels-2026-10-22/validation.json) records
+110 passing GUI tests (16 explicit ignores), strict all-target Clippy, a desktop
+build, eight real-GPU light/dark review scenes, and isolated 30-frame native macOS
+light/dark startup checks. These do not establish pen/IME behavior, native latency
+or complete Windows Paint reference parity.
+
+Current brush views: [dark](validation/classic-tool-panels-2026-10-22/classic-v11-dark-brush.png)
+and [light](validation/classic-tool-panels-2026-10-22/classic-v11-light-brush.png).

@@ -1,0 +1,255 @@
+{
+  "source_commit": "2c243bd16a873649296c50b98f22765e00600d7c",
+  "environment": {
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_INCREMENTAL": "0",
+    "PAINTCRAFT_REQUIRE_GPU": "1"
+  },
+  "checks": {
+    "gui": {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "paintcraft",
+        "--test",
+        "gui"
+      ],
+      "passed": 110,
+      "ignored": 16,
+      "log": "gui-verified.log.gz"
+    },
+    "clippy": {
+      "command": [
+        "cargo",
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "log": "clippy-verified.log.gz"
+    },
+    "build": {
+      "command": [
+        "cargo",
+        "build",
+        "--locked",
+        "-p",
+        "paintcraft"
+      ],
+      "exit_code": 0,
+      "log": "build.log.gz",
+      "binary_sha256": "b104284c19d527b48a0ee2f31975f00e2273b7905b06a3b7bba3b257c976ed72"
+    },
+    "previews": {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "paintcraft",
+        "--test",
+        "gui",
+        "export_classic_theme_previews",
+        "--",
+        "--ignored"
+      ],
+      "passed": 1,
+      "scenes": 8,
+      "log": "preview-verified.log.gz"
+    }
+  },
+  "native_startup": {
+    "light": {
+      "exit_code": 0,
+      "frames": 30,
+      "log_bytes": 0,
+      "isolated_settings_and_recovery": true
+    },
+    "dark": {
+      "exit_code": 0,
+      "frames": 30,
+      "log_bytes": 0,
+      "isolated_settings_and_recovery": true
+    }
+  },
+  "images": [
+    {
+      "file": "classic-v11-dark-brush.png",
+      "sha256": "fbb83821e51dd8e69704108130e417bf419e812ee8bd337fee6c88bf55d90b09",
+      "dimensions": [
+        1440,
+        900
+      ]
+    },
+    {
+      "file": "classic-v11-dark-settings.png",
+      "sha256": "26df03fe9243995322b6b905f2ce5d1919e856d95384cf0af58d76a613d27465",
+      "dimensions": [
+        1440,
+        900
+      ]
+    },
+    {
+      "file": "classic-v11-dark-view.png",
+      "sha256": "0d4faa7d3aa2f6ae66fbe45b5593aaa968d5f1b974b94e5f0ecd4343417b7fd1",
+      "dimensions": [
+        1440,
+        900
+      ]
+    },
+    {
+      "file": "classic-v11-dark-workspace.png",
+      "sha256": "43d70c34b82715034b18ce99d86f25cae5a545c1ff707b1261b880b567fd1f86",
+      "dimensions": [
+        1440,
+        900
+      ]
+    },
+    {
+      "file": "classic-v11-light-brush.png",
+      "sha256": "22c27a687f0b8fb2f697c93c3270c669b576bdf03af0fdee6db0504fef82a7af",
+      "dimensions": [
+        1440,
+        900
+      ]
+    },
+    {
+      "file": "classic-v11-light-settings.png",
+      "sha256": "2c757a25ff40f053b6d9e300e130195d54c55994c8e21823d2797c28a65d029d",
+      "dimensions": [
+        1440,
+        900
+      ]
+    },
+    {
+      "file": "classic-v11-light-view.png",
+      "sha256": "b17115617f2d3ad884242b01139fbd56f5c826c40040cc2dd19ee7bbe624212a",
+      "dimensions": [
+        1440,
+        900
+      ]
+    },
+    {
+      "file": "classic-v11-light-workspace.png",
+      "sha256": "c1693eb7a46f0989345a2fc36fe0b443f34576ea9275af4b4e8042c6dd8f51d9",
+      "dimensions": [
+        1440,
+        900
+      ]
+    }
+  ],
+  "logs": [
+    {
+      "file": "build.log.gz",
+      "original_sha256": "d12f5bc55cdd15d57fb30ca37f56ba33b8bbc1369dd23060768f8104a6e51bb0",
+      "archive_sha256": "8f8b2d1ba0dd78cbeb539a8537ff4bf4301de8d76a3903abb103036b02660690"
+    },
+    {
+      "file": "check-layout.log.gz",
+      "original_sha256": "6fbac599494c7e9d31159d4197c61aa06910cc3ee23c8acfdec8f530ae2f1e53",
+      "archive_sha256": "a3fe8785bde9e2e1ba91a76b05cd18b5ddd113e973cf6d2c88d4767d57518e3a"
+    },
+    {
+      "file": "check.log.gz",
+      "original_sha256": "f586958404ab7439299257eabb4307622d80e55cd8580b41fe6e51f7e9870f14",
+      "archive_sha256": "b20404427fada95d8f659e66010e0423fcdd644a85a919996d41c046ed8fcf76"
+    },
+    {
+      "file": "clippy-circles.log.gz",
+      "original_sha256": "77899e6eb9dca97a1ce80b09587582e642e14206dca125f10487c609bbc064bb",
+      "archive_sha256": "9f48d269f1382ec2fc335aa3b36dab63b8045e3d7be7f1523de16b10e06a2236"
+    },
+    {
+      "file": "clippy-verified.log.gz",
+      "original_sha256": "282a676871af1d6582f79b277910e1d5be0c74e6e7c1d6c29ffc4799ec22ea6c",
+      "archive_sha256": "309cc09fb9f59b1f16b7ef8f3a8a49137431693a79feababcb43ea401004a657"
+    },
+    {
+      "file": "clippy.log.gz",
+      "original_sha256": "06508a5ac1cceb2e2010fdb9e99065c65cdae8443439325705203c17d3935a98",
+      "archive_sha256": "137d0b60985facfac70f7818601227f1efbe8b7c444f40cc91e7c9381f6826f6"
+    },
+    {
+      "file": "fit.log.gz",
+      "original_sha256": "4aa9aaf45bd5245e289e983408abfbcdc5cd037861e56bad9c26ae90ac2bf22f",
+      "archive_sha256": "9b795eaaa1125ade41a883ae4b583cbbaa17bd7693e4b0d187878ce66881a42f"
+    },
+    {
+      "file": "gui-circles.log.gz",
+      "original_sha256": "842e0d5e12736a3bc80d9d8afce57bef9e98ad43b2cea2d619d0303f5e60dbf9",
+      "archive_sha256": "6d5f333826b97fd87b018373df1b2eea2fdcb940b0b26d6adec5db690d9cd4be"
+    },
+    {
+      "file": "gui-final.log.gz",
+      "original_sha256": "a9ce403f832b802202dbd974b029f47f6891c3c91569ac5d035f8aab21540728",
+      "archive_sha256": "655aeb0071b1f2d90a15318d58ae83300a2b9bf7f51e755ea1641af9336ffbd2"
+    },
+    {
+      "file": "gui-revised.log.gz",
+      "original_sha256": "9aee968b3688bbd50d836dd9cb2a142316c3f2bfdc5d4d9215a0049ea6c0cc69",
+      "archive_sha256": "112a3684ae8192236f803ca85ddd02aef4dbe06afd8bff33d321e87d55a1e9eb"
+    },
+    {
+      "file": "gui-verified.log.gz",
+      "original_sha256": "23227627f90602fbc4f1dfc46a4930c61a35ffa51a4ff31ba53529f41865107f",
+      "archive_sha256": "7d18f7c08fc5b18d96a940b8df7368935bf1b4057586210b7285cacd9d1f4585"
+    },
+    {
+      "file": "gui.log.gz",
+      "original_sha256": "c476c72276addd641e2f8b171d25468f5968496befdbf8e9dfbdfe4ea5c37784",
+      "archive_sha256": "359cca5112c901d8b201de7f646333c8d267234de792f1eefe7d8e3af6468c80"
+    },
+    {
+      "file": "native-dark.log.gz",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archive_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    {
+      "file": "native-light.log.gz",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archive_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    {
+      "file": "pointer.log.gz",
+      "original_sha256": "63aa0daf9d07f45be0518dc6fe5bebdfde71a8801b3ebe064f70ba7336077515",
+      "archive_sha256": "dd888870eacc468b607e937168f0bc38223965f559fd7a7916951bfac4884b71"
+    },
+    {
+      "file": "preview-final.log.gz",
+      "original_sha256": "56fa223930ed0e1dcba7d679dd1cd990df57c9145405c6d1c78f888dc167ea73",
+      "archive_sha256": "5aa10284cb2a8118b671a2ec22f1f7858f4f71cf32d0794721ff7789001fea73"
+    },
+    {
+      "file": "preview-verified.log.gz",
+      "original_sha256": "4945b1003303e242e2b0cf1431acc84b6ed004bd7cc838114b841cf0ea44471c",
+      "archive_sha256": "3414aa6eaaf604d34fc05222d7aafeee55b361607f06e59c1795477c90c9f797"
+    },
+    {
+      "file": "preview.log.gz",
+      "original_sha256": "60a256c4d6011ff0dc97338887828da7d1f3a795502510749e2cc99fa21f7fd8",
+      "archive_sha256": "7ed766d4d1d8f273ba33091de9e0fab4a3619e7edf975b94f49ca36642d6a53b"
+    },
+    {
+      "file": "zoom-diagnostic-fixed.log.gz",
+      "original_sha256": "636713d93a5d72a30e99e7c1e977480f4f57c7c8e6c0e562991b9b8a3839f803",
+      "archive_sha256": "7eae10c5ca7652b28be74e6c7bed9a3e0fd90f25d0978d0515f1b854dc9b8e3c"
+    },
+    {
+      "file": "zoom-diagnostic.log.gz",
+      "original_sha256": "b75d3fdc1fb8aa07ccb53681311f5896ea31eb509b7a23ae789a7161209a4773",
+      "archive_sha256": "7a5afb39c3ef719762320d99a2c648f39b9cb161ae646431579037f99841c094"
+    }
+  ],
+  "scope": "Classic v11 floating tool preferences and canvas integration; Studio and historical chrome retain their layouts. Eight headless egui GPU frames cover light/dark workspace, brush, View menu and Settings. Native light/dark macOS desktop startup uses isolated settings/recovery and 30 frames each; no OS input/pen/IME or original-app pixel parity claim. Requested desktop size is 1360x900.",
+  "regressions_exercised": [
+    "Real pointer drags on size/opacity never paint or publish document/history changes, including multipass UI.",
+    "Per-stroke size/opacity, release equality, undo/redo, eraser ground and every historical variant remain covered.",
+    "A 1024 px numeric brush size retains its value and canvas position; panels clear the fitted canvas and fit 1100x500 windows.",
+    "Small canvases remain centered at 1x/2x display scale; fixed clearance avoids brush/eraser canvas shifts.",
+    "Zoom pixel mapping starts from a fitted document-centered view; ruler tests verify scroll displacement relative to the stable inset and preserve the resulting origin."
+  ],
+  "development_evidence": "Initial GUI geometry regressions and temporary diagnostic compile/runtime logs remain alongside successful final checks. GUI full-suite and strict Clippy were repeated after the final numeric/slider changes; preview and native startup are separate executed checks."
+}
