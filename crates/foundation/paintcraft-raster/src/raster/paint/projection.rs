@@ -22,8 +22,8 @@ impl index::Target for ReadTarget {
     fn skip_empty(&self, _: Write) -> bool {
         false
     }
-    fn skip_missing(&self, _: TileCoord, _: Write) -> bool {
-        false
+    fn skip_missing(&self, _: TileCoord, _: Write) -> Result<bool> {
+        Ok(false)
     }
     fn admit_tile(&mut self, _: TileCoord) -> Result<()> {
         Ok(())
@@ -72,8 +72,17 @@ impl PaintProjection {
     /// allocator/hash controls and other programs are outside this allowance.
     /// Consumes both inputs: failure discards the complete private program.
     pub fn append_checked(
+        self,
+        incoming: PaintPlan,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<Self> {
+        let bounds = self.bounds;
+        self.append_target_checked(incoming, &mut ReadTarget(bounds), check)
+    }
+    pub(super) fn append_target_checked(
         mut self,
         incoming: PaintPlan,
+        target: &mut impl index::Target,
         check: &dyn Fn() -> Result<()>,
     ) -> Result<Self> {
         check()?;
@@ -108,7 +117,7 @@ impl PaintProjection {
                 &mut self.tiles,
                 &mut metadata,
                 &mut self.index_charge,
-                &mut ReadTarget(self.bounds),
+                target,
                 check,
             )?;
         }
@@ -124,6 +133,12 @@ impl PaintProjection {
     }
     pub fn tile_coords(&self) -> impl Iterator<Item = TileCoord> + '_ {
         self.tiles.keys().copied()
+    }
+    pub(super) fn contains_tile(&self, coord: TileCoord) -> bool {
+        self.tiles.contains_key(&coord)
+    }
+    pub(super) fn has_tiles(&self) -> bool {
+        !self.tiles.is_empty()
     }
     /// Drop the read index and recover descriptors for ordinary admitted replay.
     pub fn into_plan(self) -> PaintPlan {

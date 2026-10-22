@@ -2,9 +2,11 @@
 use super::*;
 use std::collections::hash_map::Entry;
 mod index;
+mod lineage;
 mod metadata;
 mod projection;
 mod writes;
+pub use lineage::{PaintOverlay, PaintReader, PaintSnapshot};
 pub use projection::PaintProjection;
 
 /// Provisional per-plan metadata safety policy, excluding allocator/hash overhead.

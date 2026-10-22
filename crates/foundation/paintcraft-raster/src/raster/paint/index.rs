@@ -11,7 +11,7 @@ pub(super) struct Index {
 pub(super) trait Target {
     fn bounds(&self) -> Rect;
     fn skip_empty(&self, write: Write) -> bool;
-    fn skip_missing(&self, coord: TileCoord, write: Write) -> bool;
+    fn skip_missing(&self, coord: TileCoord, write: Write) -> Result<bool>;
     fn admit_tile(&mut self, coord: TileCoord) -> Result<()>;
 }
 
@@ -39,9 +39,9 @@ impl Target for RasterTarget<'_> {
             && write.samples == 16
             && write.color == self.layer.default
     }
-    fn skip_missing(&self, coord: TileCoord, write: Write) -> bool {
-        !self.layer.tiles.contains_key(&coord)
-            && write.pixel(self.layer.default) == self.layer.default
+    fn skip_missing(&self, coord: TileCoord, write: Write) -> Result<bool> {
+        Ok(!self.layer.tiles.contains_key(&coord)
+            && write.pixel(self.layer.default) == self.layer.default)
     }
     fn admit_tile(&mut self, coord: TileCoord) -> Result<()> {
         if !self.layer.private_tile(coord) {
@@ -108,7 +108,7 @@ pub(super) fn append_write_checked(
             check()?;
             let coord = TileCoord { tx, ty };
             if tiles.len() == tiles.capacity() && !tiles.contains_key(&coord) {
-                if target.skip_missing(coord, write) {
+                if target.skip_missing(coord, write)? {
                     continue;
                 }
                 metadata.table(tiles, charge)?;
@@ -116,7 +116,7 @@ pub(super) fn append_write_checked(
             let writes = match tiles.entry(coord) {
                 Entry::Occupied(entry) => entry.into_mut(),
                 Entry::Vacant(entry) => {
-                    if target.skip_missing(coord, write) {
+                    if target.skip_missing(coord, write)? {
                         continue;
                     }
                     target.admit_tile(coord)?;
