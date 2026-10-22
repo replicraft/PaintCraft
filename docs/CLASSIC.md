@@ -604,3 +604,17 @@ Checks inspect all marker positions, size/color, hover/click safety and stationa
 layout in both themes at scales 1/2. First-pixel painting still publishes once.
 Native/rendered parity remains unverified and no application windows or screenshot
 previews were launched.
+
+Classic v11 now moves quick actions to a second row when available chrome width
+is below 600 points. File/Edit/View and the adjacent interface changer/Settings
+stay on the first row. This fixes Clear Canvas overlapping the changer at 480
+points and being clipped at 360. Both rows stay visible with an automatically
+hidden ribbon and participate in hover reveal; wide and historical-skin layouts
+retain their existing code path.
+All 149 window-free UI tests and strict workspace Clippy pass; see
+[the compact-chrome record](validation/compact-chrome-headless-2026-10-22/validation.json).
+Checks cover on-screen, nonoverlapping actions, menu spacing, actual Settings and
+skin-chooser clicks/cancellation, stationary positions and narrow ribbon
+hide/reveal, at scales 1/2 and both themes down to 360x500. Document/history remain
+unchanged. The responsive row is PaintCraft presentation policy, not native-parity
+evidence; no application windows or rendered previews were launched.

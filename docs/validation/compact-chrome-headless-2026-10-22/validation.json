@@ -1,0 +1,18 @@
+{
+  "source_commit": "df0525c6b5d1f6cc6627025f736d79776a6f0a5a",
+  "mode": "Window-free egui and lint checks only; no desktop/native-window, file-dialog or rendered-preview launches.",
+  "gui": {
+    "passed": 149,
+    "failed": 0,
+    "ignored": 17
+  },
+  "clippy": "workspace all-targets with -D warnings passed",
+  "scope": "Classic v11 moves quick actions to a second row when available chrome width is below 600 egui points. File/Edit/View and adjacent Interface/Settings controls stay on the first row. Both rows remain visible when the ribbon automatically hides and participate in hover reveal. Wide and historical-skin layouts retain the existing code path.",
+  "checks": "New repeated-layout checks cover 1360x900 scale 1 light, 700x500 scale 2 dark, 480x500 scale 1 light and 360x500 scale 2 dark. Every top action is on screen with pairwise nonoverlapping bounds. File/Edit/View spacing remains at least 12 points and Interface stays beside Settings. Settings and skin chooser open/cancel through actual pointer events. Narrow quick-action positions survive ribbon hide/reveal. Document/history remain unchanged.",
+  "regression": "Before the layout fix, the added geometry probe found Clear Canvas overlapping Interface at 480 points and Clear Canvas extending beyond the 360-point window. The current full-suite log validates the corrected layout.",
+  "limits": "The second row is a responsive PaintCraft presentation choice, not qualified native-reference behavior. Native/rendered visual parity remains unverified. No action semantics or document operations changed.",
+  "sha256": {
+    "gui.log.gz": "7694875e8bf57fe8aeda38790128301a8f88683a97183f08c9d2cada2266514a",
+    "clippy.log.gz": "0bc2fee5d8f91819e19630f7852923317119c3536c6aae1f4bbeed45cc05d50e"
+  }
+}
