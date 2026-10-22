@@ -24,7 +24,7 @@ def main():
     parser.add_argument('--execute', action='store_true')
     args = parser.parse_args()
     if not args.execute:
-        print('Plan only: 160 Criterion samples and three 180-observation process sessions; no files written.')
+        print('Plan only: 240 Criterion samples and three 260-observation process sessions; no files written.')
         return
     binary = args.binary.resolve()
     output = args.output.resolve()
@@ -44,7 +44,7 @@ def main():
                           'wall': {'dimensions':[512,64], 'plans':1, 'process_repeats':100},
                           'overlap': {'dimensions':[128,64], 'plans':64, 'process_repeats':100},
                           'default-control': {'dimensions':[512,64], 'plans':1, 'process_repeats':100}},
-                'runs':20, 'warmups':3, 'sessions':3,
+                'runs':20, 'warmups':3, 'sessions':3, 'variants':['materialized','projected','combined'],
                 'scope':'Plan construction plus exact flood classification and destruction. Same-source real library paths, not editor whole-batch integration, CLI file IO, native input/display/cancellation tails or physical all-service budgets.',
                 'environment':'Local uncontrolled macOS host; no affinity/power/thermal controls. No intentional concurrent task builds/tests/timing. Preserve all samples and calibration without subtraction.'}
     (output/'manifest.json').write_text(json.dumps(manifest, indent=2)+'\n')
@@ -63,11 +63,11 @@ def main():
     with (output/'criterion.log').open('wb') as log:
         subprocess.run([str(binary),'--bench','--noplot'], env=dict(os.environ,CRITERION_HOME=str(output/'criterion')), stdout=log, stderr=subprocess.STDOUT, check=True)
     samples = list((output/'criterion').glob('paint_projection/*/*/new/sample.json'))
-    assert len(samples)==8 and all(len(json.loads(p.read_text())['times'])==20 for p in samples)
-    print('160 statistical samples complete', flush=True)
+    assert len(samples)==12 and all(len(json.loads(p.read_text())['times'])==20 for p in samples)
+    print('240 statistical samples complete', flush=True)
     summaries = []
     for session in range(1,4):
-        order = ['materialized','projected'] if session != 2 else ['projected','materialized']
+        order = manifest['variants'] if session != 2 else list(reversed(manifest['variants']))
         for case in [*manifest['cases'],'calibration']:
             commands = [shlex.join([str(binary),'calibration'])] if case=='calibration' else [shlex.join([str(binary),'process',case,mode]) for mode in order]
             # Calibration uses the same executable once per session (20 observations).
@@ -87,7 +87,7 @@ def main():
             print('session',session,case,'complete',flush=True)
         verify(f'after-{session}')
     identities()
-    (output/'summary.json').write_text(json.dumps({'statistical_samples':160,'workload_observations':480,'calibration_observations':60,'process':summaries},indent=2)+'\n')
+    (output/'summary.json').write_text(json.dumps({'statistical_samples':240,'workload_observations':720,'calibration_observations':60,'process':summaries},indent=2)+'\n')
     print('All correctness postflights and identities verified',flush=True)
 
 

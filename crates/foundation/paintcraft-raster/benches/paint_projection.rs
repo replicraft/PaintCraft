@@ -49,6 +49,22 @@ const CASES: [Case; 4] = [
         repeats: 100,
     },
 ];
+#[derive(Clone, Copy)]
+enum Mode {
+    Materialized,
+    Projected,
+    Combined,
+}
+impl Mode {
+    fn name(self) -> &'static str {
+        match self {
+            Self::Materialized => "materialized",
+            Self::Projected => "projected",
+            Self::Combined => "combined",
+        }
+    }
+}
+const MODES: [Mode; 3] = [Mode::Materialized, Mode::Projected, Mode::Combined];
 const BACK: Rgba = Rgba([31, 63, 127, 0]);
 fn plans(case: Case) -> Vec<PaintPlan> {
     (0..case.plans)
@@ -90,6 +106,21 @@ fn projections(case: Case, bounds: Rect) -> Vec<PaintProjection> {
         .map(|plan| plan.into_projection_checked(bounds, &|| Ok(())).unwrap())
         .collect()
 }
+fn views(case: Case, bounds: Rect, mode: Mode) -> Vec<PaintProjection> {
+    if matches!(mode, Mode::Projected) {
+        return projections(case, bounds);
+    }
+    let mut plans = plans(case).into_iter();
+    let mut program = plans
+        .next()
+        .expect("nonempty fixture")
+        .into_projection_checked(bounds, &|| Ok(()))
+        .unwrap();
+    for plan in plans {
+        program = program.append_checked(plan, &|| Ok(())).unwrap();
+    }
+    vec![program]
+}
 fn read(views: &[PaintProjection], x: i64, y: i64) -> Rgba {
     let mut pixel = BACK;
     for view in views {
@@ -111,10 +142,10 @@ struct Output {
     decoded_peak: u64,
     projection_payload: usize,
 }
-fn run(case: Case, projected: bool) -> Output {
+fn run(case: Case, mode: Mode) -> Output {
     let bounds = Rect::new(0, 0, i64::from(case.width), i64::from(case.height)).unwrap();
-    if projected {
-        let views = projections(case, bounds);
+    if !matches!(mode, Mode::Materialized) {
+        let views = views(case, bounds, mode);
         let projection_payload = views.iter().map(PaintProjection::metadata_bytes).sum();
         let region = flood::region_from_source_checked(
             |x, y| Ok(read(&views, x, y)),
@@ -148,25 +179,40 @@ fn canonical(region: &mut [Span]) {
 fn verify() {
     for case in CASES {
         let bounds = Rect::new(0, 0, i64::from(case.width), i64::from(case.height)).unwrap();
-        let views = projections(case, bounds);
         let layer = materialize(
             case,
             &mut Admission::with_residency(16 * 65_536, SharedBudget::new(16 << 20)),
         );
-        for y in 0..i64::from(case.height) {
-            for x in 0..i64::from(case.width) {
-                assert_eq!(read(&views, x, y), layer.get(x, y), "{} {x},{y}", case.name);
+        let mut reference = run(case, Mode::Materialized);
+        canonical(&mut reference.region);
+        for mode in MODES {
+            if !matches!(mode, Mode::Materialized) {
+                let views = views(case, bounds, mode);
+                for y in 0..i64::from(case.height) {
+                    for x in 0..i64::from(case.width) {
+                        assert_eq!(
+                            read(&views, x, y),
+                            layer.get(x, y),
+                            "{} {} {x},{y}",
+                            case.name,
+                            mode.name()
+                        );
+                    }
+                }
             }
-        }
-        let mut a = run(case, false);
-        let mut b = run(case, true);
-        canonical(&mut a.region);
-        canonical(&mut b.region);
-        assert_eq!(a.region, b.region, "{}", case.name);
-        for (mode, out) in [("materialized", a), ("projected", b)] {
-            println!(
-                "{} {mode} decoded_peak={} projection_payload={} spans={} pixels={} repeats={}",
+            let mut out = run(case, mode);
+            canonical(&mut out.region);
+            assert_eq!(
+                reference.region,
+                out.region,
+                "{} {}",
                 case.name,
+                mode.name()
+            );
+            println!(
+                "{} {} decoded_peak={} projection_payload={} spans={} pixels={} repeats={}",
+                case.name,
+                mode.name(),
                 out.decoded_peak,
                 out.projection_payload,
                 out.region.len(),
@@ -190,13 +236,12 @@ fn main() {
             .into_iter()
             .find(|c| Some(c.name) == args.get(2).map(String::as_str))
             .expect("known case");
-        let projected = match args.get(3).map(String::as_str) {
-            Some("projected") => true,
-            Some("materialized") => false,
-            _ => panic!("known implementation"),
-        };
+        let mode = MODES
+            .into_iter()
+            .find(|mode| Some(mode.name()) == args.get(3).map(String::as_str))
+            .expect("known implementation");
         for _ in 0..case.repeats {
-            drop(black_box(run(black_box(case), black_box(projected))));
+            drop(black_box(run(black_box(case), black_box(mode))));
         }
         return;
     }
@@ -209,19 +254,12 @@ fn main() {
     let mut group = criterion.benchmark_group("paint_projection");
     group.sampling_mode(SamplingMode::Flat);
     for case in CASES {
-        for projected in [false, true] {
+        for mode in MODES {
             group.bench_with_input(
-                BenchmarkId::new(
-                    case.name,
-                    if projected {
-                        "projected"
-                    } else {
-                        "materialized"
-                    },
-                ),
-                &projected,
-                |bench, &projected| {
-                    bench.iter(|| drop(black_box(run(black_box(case), black_box(projected)))))
+                BenchmarkId::new(case.name, mode.name()),
+                &mode,
+                |bench, &mode| {
+                    bench.iter(|| drop(black_box(run(black_box(case), black_box(mode)))))
                 },
             );
         }
