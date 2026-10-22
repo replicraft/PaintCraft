@@ -250,3 +250,6 @@ mod dropdown_states;
 
 #[path = "gui/selection_menu.rs"]
 mod selection_menu;
+
+#[path = "gui/skin_picker.rs"]
+mod skin_picker;

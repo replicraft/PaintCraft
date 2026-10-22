@@ -17,11 +17,13 @@ impl App {
         let events = ui.input(|i| i.events.clone());
         let widget_focus = ctx.egui_wants_keyboard_input();
         let popup_open = egui::Popup::is_any_open(&ctx);
+        let picker_open = self.picking.is_some();
         for event in events {
             let text_focus = self.document_count() > 0
                 && self.editor.is_editing_text()
                 && !widget_focus
-                && !popup_open;
+                && !popup_open
+                && !picker_open;
             match event {
                 egui::Event::Ime(egui::ImeEvent::Preedit { text, .. }) => {
                     self.ime_composing = !text.is_empty();
@@ -45,6 +47,7 @@ impl App {
                     // Popup dismissal takes precedence over cancelling a canvas
                     // draft or leaving fullscreen, even if egui released focus.
                     egui::Key::Escape if popup_open => {}
+                    egui::Key::Escape if picker_open => self.picking = None,
                     egui::Key::Escape => {
                         if self.fullscreen && !text_focus && !self.editor.gesture_in_progress() {
                             self.dispatch_chrome(

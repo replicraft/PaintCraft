@@ -146,105 +146,18 @@ impl App {
         let Some(mut current) = self.picking else {
             return;
         };
-        let ctx = ui.ctx().clone();
-        let mut done = false;
-        egui::Window::new("Choose your Classic skin")
-            .collapsible(false)
-            .resizable(false)
-            .anchor(egui::Align2::CENTER_CENTER, Vec2::ZERO)
-            .show(&ctx, |ui| {
-                ui.label(
-                    "Choose a Paint skin. Change it later from the changer button or Settings.",
-                );
-                ui.horizontal(|ui| {
-                    for v in ClassicVariant::ALL {
-                        let (rect, response) =
-                            ui.allocate_exact_size(Vec2::new(150.0, 110.0), Sense::click());
-                        response.widget_info(|| {
-                            egui::WidgetInfo::selected(
-                                egui::Role::RadioButton,
-                                true,
-                                current == v,
-                                v.name(),
-                            )
-                        });
-                        if response.clicked() {
-                            current = v;
-                        }
-                        draw_variant_thumbnail(ui.painter(), rect, v, current == v);
-                    }
-                });
-                ui.horizontal(|ui| {
-                    for v in ClassicVariant::ALL {
-                        ui.add_sized([150.0, 18.0], egui::Label::new(v.name()));
-                    }
-                });
-                if ui.button("Continue").clicked() {
-                    done = true;
-                }
-            });
-        if done {
-            self.choose_variant(current);
-        } else {
-            self.picking = Some(current);
+        let choice = paintcraft_classic::skin_picker::show(
+            ui.ctx(),
+            &mut current,
+            self.settings.classic_variant.is_none(),
+        );
+        if ui.ctx().current_pass_index() != 0 {
+            return;
+        }
+        match choice {
+            paintcraft_classic::skin_picker::Choice::Apply => self.choose_variant(current),
+            paintcraft_classic::skin_picker::Choice::Cancel => self.picking = None,
+            paintcraft_classic::skin_picker::Choice::Pending => self.picking = Some(current),
         }
     }
-}
-
-/// A small schematic of each variant's window, so the choice is visual.
-fn draw_variant_thumbnail(p: &egui::Painter, rect: Rect, v: ClassicVariant, selected: bool) {
-    let (bar, ribbon, canvas) = match v {
-        ClassicVariant::V7 => (
-            Color32::from_rgb(120, 160, 215),
-            Color32::from_rgb(214, 224, 240),
-            Color32::WHITE,
-        ),
-        ClassicVariant::V10 => (
-            Color32::from_rgb(255, 255, 255),
-            Color32::from_rgb(235, 235, 235),
-            Color32::WHITE,
-        ),
-        ClassicVariant::V11 => (
-            Color32::from_rgb(243, 243, 243),
-            Color32::from_rgb(250, 250, 250),
-            Color32::WHITE,
-        ),
-    };
-    let round = if v == ClassicVariant::V11 { 8.0 } else { 0.0 };
-    let stroke = if selected {
-        egui::Stroke::new(3.0, Color32::from_rgb(0, 95, 184))
-    } else {
-        egui::Stroke::new(1.0, Color32::GRAY)
-    };
-    p.rect_filled(rect, round, Color32::from_gray(220));
-    p.rect_filled(
-        Rect::from_min_size(rect.min, Vec2::new(rect.width(), 14.0)),
-        round,
-        bar,
-    );
-    p.rect_filled(
-        Rect::from_min_size(
-            rect.min + Vec2::new(0.0, 14.0),
-            Vec2::new(rect.width(), 28.0),
-        ),
-        0.0,
-        ribbon,
-    );
-    for i in 0..6 {
-        let x = rect.min.x + 8.0 + i as f32 * 14.0;
-        p.rect_filled(
-            Rect::from_min_size(Pos2::new(x, rect.min.y + 20.0), Vec2::splat(10.0)),
-            if v == ClassicVariant::V11 { 5.0 } else { 0.0 },
-            Color32::from_gray(150),
-        );
-    }
-    p.rect_filled(
-        Rect::from_min_max(
-            rect.min + Vec2::new(8.0, 50.0),
-            rect.max - Vec2::new(8.0, 8.0),
-        ),
-        0.0,
-        canvas,
-    );
-    p.rect_stroke(rect, round, stroke, egui::StrokeKind::Inside);
 }

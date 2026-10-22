@@ -18,6 +18,7 @@ mod quick_access;
 mod ribbon;
 mod selection_menu;
 mod shapes;
+pub mod skin_picker;
 #[derive(Debug, Default)]
 pub struct Workspace {
     pub layers: bool,

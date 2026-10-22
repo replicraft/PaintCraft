@@ -71,7 +71,7 @@ use std::time::Duration;
 
 use crate::controller::{Action, Editor, Preview, Tool};
 use crate::settings::{ClassicVariant, Experience, Loaded, Settings};
-use eframe::egui::{self, Color32, Pos2, Rect, Sense, Vec2};
+use eframe::egui::{self, Color32, Pos2, Rect, Vec2};
 use paintcraft_core::types::Rgba;
 use paintcraft_document::{hex, import_image};
 use paintcraft_editor::execute::Selection;
