@@ -59,6 +59,44 @@ impl PaintPlan {
     }
 }
 impl PaintProjection {
+    /// Append ordered paint to this logical program using one shared tile index.
+    /// The receiver's metadata policy bounds all retained capacities plus the
+    /// incoming descriptor buffer while it is transferred. Caller-owned inputs,
+    /// allocator/hash controls and other programs are outside this allowance.
+    /// Consumes both inputs: failure discards the complete private program.
+    pub fn append_checked(
+        mut self,
+        incoming: PaintPlan,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<Self> {
+        check()?;
+        let input_bytes = incoming.descriptor_bytes();
+        let used = self
+            .bytes
+            .checked_add(input_bytes)
+            .ok_or_else(metadata::exhausted)?;
+        let mut metadata = metadata::Metadata::new(used, self.plan.metadata_limit)?;
+        // IntoIter retains its entire allocation until the transfer finishes;
+        // charge capacity, not the number of descriptors remaining in the loop.
+        for write in incoming.writes {
+            check()?;
+            metadata.vector(&mut self.plan.writes)?;
+            let index = self.plan.writes.len();
+            self.plan.writes.push(write);
+            index::append_write_checked(
+                index,
+                write,
+                &mut self.tiles,
+                &mut metadata,
+                &mut ReadTarget(self.bounds),
+                check,
+            )?;
+        }
+        self.bytes = metadata.used - input_bytes;
+        check()?;
+        Ok(self)
+    }
+
     /// Declared descriptors, usable map payload and write-index vector capacities.
     /// Excludes allocator/hash controls, input geometry and any preceding sources.
     pub fn metadata_bytes(&self) -> usize {

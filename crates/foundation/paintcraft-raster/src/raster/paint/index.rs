@@ -63,37 +63,7 @@ impl PaintPlan {
             metadata::Metadata::new(self.descriptor_bytes(), self.metadata_limit.min(limit))?;
         let mut tiles: HashMap<TileCoord, Vec<usize>> = HashMap::new();
         for (index, &write) in self.writes.iter().enumerate() {
-            check()?;
-            let Some(area) = write.area.intersect(&target.bounds()) else {
-                continue;
-            };
-            if tiles.is_empty() && target.skip_empty(write) {
-                continue;
-            }
-            for ty in area.y0 / i64::from(TILE_EDGE)..=(area.y1 - 1) / i64::from(TILE_EDGE) {
-                for tx in area.x0 / i64::from(TILE_EDGE)..=(area.x1 - 1) / i64::from(TILE_EDGE) {
-                    check()?;
-                    let coord = TileCoord { tx, ty };
-                    if tiles.len() == tiles.capacity() && !tiles.contains_key(&coord) {
-                        if target.skip_missing(coord, write) {
-                            continue;
-                        }
-                        metadata.table(&mut tiles)?;
-                    }
-                    let writes = match tiles.entry(coord) {
-                        Entry::Occupied(entry) => entry.into_mut(),
-                        Entry::Vacant(entry) => {
-                            if target.skip_missing(coord, write) {
-                                continue;
-                            }
-                            target.admit_tile(coord)?;
-                            entry.insert(Vec::new())
-                        }
-                    };
-                    metadata.vector(writes)?;
-                    writes.push(index);
-                }
-            }
+            append_write_checked(index, write, &mut tiles, &mut metadata, target, check)?;
         }
         check()?;
         Ok(Index {
@@ -101,4 +71,47 @@ impl PaintPlan {
             bytes: metadata.used,
         })
     }
+}
+
+/// Index one descriptor, shared by initial construction and incremental programs.
+pub(super) fn append_write_checked(
+    index: usize,
+    write: Write,
+    tiles: &mut HashMap<TileCoord, Vec<usize>>,
+    metadata: &mut metadata::Metadata,
+    target: &mut impl Target,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<()> {
+    check()?;
+    let Some(area) = write.area.intersect(&target.bounds()) else {
+        return Ok(());
+    };
+    if tiles.is_empty() && target.skip_empty(write) {
+        return Ok(());
+    }
+    for ty in area.y0 / i64::from(TILE_EDGE)..=(area.y1 - 1) / i64::from(TILE_EDGE) {
+        for tx in area.x0 / i64::from(TILE_EDGE)..=(area.x1 - 1) / i64::from(TILE_EDGE) {
+            check()?;
+            let coord = TileCoord { tx, ty };
+            if tiles.len() == tiles.capacity() && !tiles.contains_key(&coord) {
+                if target.skip_missing(coord, write) {
+                    continue;
+                }
+                metadata.table(tiles)?;
+            }
+            let writes = match tiles.entry(coord) {
+                Entry::Occupied(entry) => entry.into_mut(),
+                Entry::Vacant(entry) => {
+                    if target.skip_missing(coord, write) {
+                        continue;
+                    }
+                    target.admit_tile(coord)?;
+                    entry.insert(Vec::new())
+                }
+            };
+            metadata.vector(writes)?;
+            writes.push(index);
+        }
+    }
+    Ok(())
 }
