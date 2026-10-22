@@ -618,3 +618,17 @@ skin-chooser clicks/cancellation, stationary positions and narrow ribbon
 hide/reveal, at scales 1/2 and both themes down to 360x500. Document/history remain
 unchanged. The responsive row is PaintCraft presentation policy, not native-parity
 evidence; no application windows or rendered previews were launched.
+
+Classic's Drawing on label now stays on one truncated line, keeping property
+editors fixed when a layer has a long name. It exposes the full name in one
+explicit tooltip; egui's automatic elision tooltip is disabled there to avoid
+duplication. Layer rows now use inactive frameless styling, hover feedback and a
+selected accent outline, with their own full-name tooltip. Layer identity and
+committed rename/opacity behavior are unchanged.
+All 150 window-free UI tests and strict workspace Clippy pass; see
+[the layer-name record](validation/layer-names-headless-2026-10-22/validation.json).
+A real 900-character rename checks stationary name/opacity fields, one-line
+status, selected metadata/painted outlines and single tooltips in light/dark at
+scales 1/2. Subsequent hovering preserves document/history, and existing
+visibility/order/rename-owner/undo checks pass. Thumbnails remain open work; no
+native windows or rendered previews were launched.

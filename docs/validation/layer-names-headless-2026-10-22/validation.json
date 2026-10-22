@@ -1,0 +1,17 @@
+{
+  "source_commit": "4b9ef24db2dca53d38d64a99f3085c2a13757a8b",
+  "mode": "Window-free egui and lint checks only; no desktop/native-window, file-dialog or rendered-preview launches.",
+  "gui": {
+    "passed": 150,
+    "failed": 0,
+    "ignored": 17
+  },
+  "clippy": "workspace all-targets with -D warnings passed",
+  "scope": "Classic bounds the Drawing on label to one truncated line with one explicit full-name tooltip. Automatic elision tooltips are disabled on that label to prevent duplicates. Layer rows show hover feedback, a selected accent outline and a full-name tooltip. The host retains layer-identity capture and committed property-edit semantics.",
+  "checks": "A new regression renames a real layer to 900 characters through the UI, at 1360x900 scale 1 light and 1100x500 scale 2 dark with repeated layout. Layer-name and opacity editors stay fixed and on-screen; the status stays one line. Selected metadata and painted accent outlines are inspected. Both row and status hover show exactly one full-name tooltip, with horizontal bounds checked. Hover and repeated frames preserve the post-rename document/history. Existing layer ordering, visibility, old-owner rename and undo tests remain passing.",
+  "limits": "No layer thumbnails or additional layer operations are implemented. Studio retains its prior status-label behavior. This is headless geometry/interaction evidence, not native/rendered visual parity or latency qualification.",
+  "sha256": {
+    "gui.log.gz": "c1ebc474c6665afb5f3c3c1d73b4640663b54cce0bfb92fc1c636ebc001a769e",
+    "clippy.log.gz": "94fa7abb6c929f12aebc6540dc2645cffdbb0c123c0a166fba194afd16fe8ab1"
+  }
+}
