@@ -1,0 +1,48 @@
+{
+  "source_commit": "86578654d06b135683129ca2d51e54b48e5a8b16",
+  "mode": "Window-free egui and unit/lint checks only. No desktop, native-window or screenshot-preview launches.",
+  "gui": {
+    "passed": 132,
+    "failed": 0,
+    "ignored": 17
+  },
+  "focused_gui": {
+    "passed": 3,
+    "ignored": 1,
+    "sizes_and_scales": [
+      [
+        1360,
+        900,
+        1
+      ],
+      [
+        700,
+        500,
+        2
+      ],
+      [
+        360,
+        500,
+        1
+      ],
+      [
+        480,
+        360,
+        2
+      ]
+    ],
+    "scope": "Current-image and New-document default dialogs in light/dark themes with fixed reachable Apply/Cancel actions, scrollable grouped fields/policy choices, staged cancellation preserving exact preference bytes and document/history. Repeated layout passes; one real undoable resize and remembered-size update per application. Existing save/reopen/new-image persistence coverage retained."
+  },
+  "unit": {
+    "passed": 1,
+    "scope": "Stale document revision rejects the resize draft without changing the snapshot."
+  },
+  "clippy": "workspace all-targets with -D warnings passed",
+  "limits": "Classic owns dialog presentation through CanvasSize/StartupSize view data; host retains tab/revision guards, typed resize commands and preference persistence. Existing top-left anchoring and off-canvas preservation semantics are unchanged. Native/rendered visual parity remains unqualified under the user restriction.",
+  "sha256": {
+    "gui.log.gz": "c96edcebaa50140d5cc0d7ca0768d3679d484fa7b239a4357ca7ab32e2ef8035",
+    "focused-gui.log.gz": "e7ead89d3c021e88a5e35d31a8c0c39b044ed5468bea70ea8d3b795ec1161f15",
+    "unit.log.gz": "b1b8121c0d25f43769053263acaaa7989fbfdcfd4a271db8627f93dbbe491ce5",
+    "clippy.log.gz": "9ddd9cbdcaef6449d2a950847bde4c864e2b7cf69ecc3a6b68b476a5f8a31917"
+  }
+}

@@ -403,3 +403,16 @@ and document-close prompts as well as interface switches.
 covers long messages/paths, two/three-choice layouts down to 360x360, light/dark
 themes, scales 1 and 2, once-only choices and pixel/history-preserving cancellation.
 Native visual fidelity remains unqualified; no application windows were opened.
+
+Canvas-size dialogs now use grouped dimension fields, larger inputs and a fixed
+accented Apply/Cancel footer. The body scrolls independently, including the
+remembered/configured startup-size choices. Classic owns the presentation through
+view data; the desktop host retains tab/revision validation, typed resize actions
+and preference persistence. Existing top-left anchoring and preservation of
+off-canvas content remain unchanged.
+132 window-free GUI tests, the stale-revision unit check and strict workspace
+Clippy pass; the [canvas-size record](validation/canvas-size-headless-2026-10-22/validation.json)
+covers both dialogs down to 360x500/480x360 in light/dark themes and scales 1 and 2.
+Staged edits/cancellation preserve exact preference bytes and document history;
+Apply produces one undoable resize and updates the remembered size. Native visual
+comparison remains deferred; no application windows or screenshot previews ran.
