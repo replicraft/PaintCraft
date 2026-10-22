@@ -1,0 +1,21 @@
+{
+  "source_commit": "fe9fb2c117f3188b11ddddc7c049ee525a895fb5",
+  "mode": "Window-free egui, unit and lint checks only; no desktop/native-window or rendered-preview launches.",
+  "gui": {
+    "passed": 143,
+    "failed": 0,
+    "ignored": 17
+  },
+  "title_test": {
+    "passed": 1,
+    "scope": "Bound document filename and Untitled window-title formatting; draft destinations do not rename the document."
+  },
+  "clippy": "workspace all-targets with -D warnings passed",
+  "scope": "Selection, Brushes, shape outline/fill, Rotate and Flip triggers now show hover feedback and an accent outline while open. AccessKit reports their expanded selection state. Shape paint choices use 220x40-point rows and selected outlines. Tests inspect actual egui frame shapes, hover/open/Escape transitions and document/history preservation, using light scale 1 and dark scale 2 with repeated layout passes. Existing fill/outline drawing test remains passing. Startup now lets eframe use PaintCraft as its initial title/application-menu name; document window titles remain host-published.",
+  "limits": "No native macOS menu appearance or rendered reference parity is claimed. The launch-title fix is based on inspected eframe 0.37.0 AppTitleIconSetter behavior. Relaunch is required to pick up the startup change. Existing unavailable operations remain disabled, with no new engine semantics.",
+  "sha256": {
+    "gui.log.gz": "b684c5c2e921819b31f41a204a3639713e814ab5bd1fd7f7b86c6a12a9f1ffac",
+    "title-test.log.gz": "7a5c57571071f6bb5d74ac1d798e686c003f9bcc07429625a3666a51b89b460c",
+    "clippy.log.gz": "37204faf5c61b0460eef51aeeb52650ddb196e1518551b08ff939b42cdf6ec29"
+  }
+}

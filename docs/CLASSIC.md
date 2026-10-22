@@ -532,3 +532,20 @@ Checks cover final-row geometry and tool selection at scales 1 and 2, with no
 document/history changes. Only Line, Ellipse and Rectangle are functional; the
 other twenty remain previews. Native/rendered parity remains unqualified and no
 application windows or screenshot previews ran.
+
+Selection, Brushes, shape outline/fill and Rotate/Flip triggers now show hover
+feedback while staying frameless at rest. An accent outline remains while a popup
+is open, with matching accessible state. Arrow hit targets keep their compact
+height; shape paint choices now have 220x40-point rows and selected outlines.
+Existing selection, fill/outline and brush behavior is unchanged.
+All 143 window-free UI tests, the document-title unit test and strict workspace
+Clippy pass; see [the dropdown-state record](validation/dropdown-states-headless-2026-10-22/validation.json).
+The new tests inspect painted frames and Escape dismissal in light/dark at scales
+1/2, with repeated layout passes and document/history preservation.
+
+Desktop startup now leaves the initial viewport title at eframe's application-name
+default, PaintCraft. eframe 0.37.0 captures that launch title for its macOS app-menu
+name. The existing first UI pass separately publishes Untitled - PaintCraft or
+the bound filename as the window title. This avoids capturing a document title
+as the app-menu name and requires an app restart. Native appearance is unverified
+under the no-window testing restriction; no application windows were launched.
