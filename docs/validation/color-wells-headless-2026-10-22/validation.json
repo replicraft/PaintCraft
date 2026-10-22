@@ -1,0 +1,34 @@
+{
+  "source_commit": "3359e8f79ad6c8b4a95432afdf279da4ede86d79",
+  "reference": "docs/temp/paint-references/photos/image.png",
+  "mode": "Window-free egui, CPU icon rasterization and lint checks only. No desktop, native-window or screenshot-preview launches.",
+  "gui": {
+    "passed": 136,
+    "failed": 0,
+    "ignored": 17
+  },
+  "color_gui": {
+    "passed": 5,
+    "ignored": 1,
+    "scope": "Existing staged RGB/HSL/custom palette acceptance, invalid RGB, cancellation, secondary-target and responsive-dialog cases remain passing."
+  },
+  "hover_gui": {
+    "passed": 3,
+    "scope": "Existing tooltip checks plus centered 40-point primary/32-point secondary wells at display scales 1 and 2. Each well shows one named RGB/hex tooltip after primary/secondary palette choices; arbitrary custom RGB gets a Custom color label. Color choices and secondary-dialog acceptance preserve document/history across repeated layout passes."
+  },
+  "icon_unit": {
+    "passed": 3,
+    "ignored": 1,
+    "scope": "All 88 registered icons parse and rasterize with transparency at 24/64/128 pixels; bounded cache and density selection pass. Edit Colors has null sheet coordinates and regenerates byte-identically."
+  },
+  "clippy": "workspace all-targets with -D warnings passed",
+  "limits": "Color presentation moved into the palette module. Tool-color adoption, alpha retention, palette values and staged-dialog policy remain unchanged. Names reuse the existing palette labels; native color nomenclature/processing and rendered visual parity remain unqualified under the user restriction.",
+  "sha256": {
+    "gui.log.gz": "beebee1f4e2e05f54cbdbbb346907e4189245d8ee3bf7934b86955d110ef86c0",
+    "color-gui.log.gz": "1cfb7bf44dc7010aba8b9675c0d10a06fc8014655c2119303fac6cd3c433b019",
+    "hover-gui.log.gz": "1c1e4f48da53a65e182b5ddb9b25442e11b670b7b9a20edef82e63d3e15b64e6",
+    "icon-unit.log.gz": "2143d17622b48e26389e8d18e156a171136ec079e81fdaf55eff809812d34e0f",
+    "clippy.log.gz": "e2181b33076863192060abc8be2d57ee106d9aed37b7f2fbc7e7dc5acf74539b",
+    "regeneration.json": "ce707321fa09143a091b3cb94d5f9ca1990104bb425ee03d3d46e6eb5688b88d"
+  }
+}
