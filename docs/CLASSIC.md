@@ -519,3 +519,16 @@ The checks include single availability tooltips at scales 1 and 2, selected-tip
 metadata, real fit/pixel mapping and document/view preservation. No magnifier or
 additional media implementation is claimed. No native windows or rendered
 previews ran; reference/native parity remains unqualified.
+
+The Shapes gallery now follows the supplied 23-item reference ordering: the
+fourth row ends with rectangular and oval callouts, followed by Cloud callout,
+Heart and Lightning. Internal asset names are replaced by readable labels.
+Working shapes have consistent hover feedback and a selected outline; disabled
+shapes explain availability in one tooltip. Gallery presentation now lives in
+its own module. Shared extra shape assets remain available to other frontends.
+All 141 window-free UI tests and strict workspace Clippy pass; see
+[the shape-gallery record](validation/shapes-headless-2026-10-22/validation.json).
+Checks cover final-row geometry and tool selection at scales 1 and 2, with no
+document/history changes. Only Line, Ellipse and Rectangle are functional; the
+other twenty remain previews. Native/rendered parity remains unqualified and no
+application windows or screenshot previews ran.

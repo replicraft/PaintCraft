@@ -1,0 +1,25 @@
+{
+  "source_commit": "07ba2fbd9468eb0fb6559d1deb09de7de1fdb859",
+  "references": [
+    "docs/temp/paint-references/photos/image.png",
+    "docs/temp/paint-references/photos/im2age.png",
+    "docs/temp/paint-references/PLAN.md"
+  ],
+  "mode": "Window-free egui and lint checks only. No desktop, native-window, file-dialog or screenshot-preview launches.",
+  "gui": {
+    "passed": 141,
+    "failed": 0,
+    "ignored": 17
+  },
+  "focused_gui": {
+    "passed": 1,
+    "scope": "Reference ordering and final-row geometry at display scales 1 and 2, readable disabled tooltip, working Line/Ellipse/Rectangle selection metadata, and unchanged document/history."
+  },
+  "clippy": "workspace all-targets with -D warnings passed",
+  "limits": "The Classic gallery has 23 reference entries, including two callouts followed by Cloud callout, Heart and Lightning. Extra shared assets remain available to other frontends. Only Line, Ellipse and Rectangle have working tool implementations; twenty entries remain disabled previews. Hover/selection styling and accessible names are presentation changes. Native/rendered fidelity and additional shape execution remain open.",
+  "sha256": {
+    "gui.log.gz": "d74868a2acb8dc819abc97ba4cd546a26ef28228f103a9730dcabaf1313c2cc3",
+    "focused-gui.log.gz": "6cc912c49d36502bbc2bcd84931b958781ce809631e37b11aba623873cc50d64",
+    "clippy.log.gz": "579203369e947636f5f52ad37e1b31ca68c00578d9979e044a10568d8c7b479a"
+  }
+}
