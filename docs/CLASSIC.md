@@ -428,3 +428,11 @@ scales 1 and 2; the suspected font-height cap did not affect that path.
 [the image-menu record](validation/image-menus-headless-2026-10-22/validation.json).
 The supplied Rotate/Flip photos guide layout; native/rendered parity remains
 unqualified and no application windows or screenshot previews were launched.
+
+Following the requested size adjustment, Layers now draws a 44-point icon in a
+60-point button. It stays frameless while closed and idle, shows a hover surface,
+and retains its selected surface while the panel is open. The single bottom
+caption remains. Classic v11 adds 12 points of spacing between File/Edit/View.
+Updated headless checks cover actual icon geometry and hover frames at scales 1
+and 2, menu spacing, and default-window ribbon visibility. All 134 window-free UI
+tests and strict workspace Clippy pass; no windows or rendered previews ran.

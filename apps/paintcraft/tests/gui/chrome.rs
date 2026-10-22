@@ -181,9 +181,30 @@ fn classic_layers_icon_keeps_its_full_size_at_each_display_scale() {
                 })
                 .collect();
             assert!(
-                images.iter().any(|image| image.size() == Vec2::splat(52.0)),
-                "Layers must draw a 52-point image at scale {ppp}, open={open}: {images:?}"
+                images.iter().any(|image| image.size() == Vec2::splat(44.0)),
+                "Layers must draw a 44-point image at scale {ppp}, open={open}: {images:?}"
             );
+            if !open {
+                let visible_frame = |h: &Harness<App>| {
+                    h.output().shapes.iter().any(|shape| {
+                        let Shape::Rect(rect) = &shape.shape else {
+                            return false;
+                        };
+                        rect.brush.is_none()
+                            && rect.rect.center().distance(button.center()) < 1.0
+                            && rect.rect.width() >= button.width() - 4.0
+                            && rect.rect.height() >= button.height() - 4.0
+                            && (rect.fill.a() > 0 || rect.stroke.width > 0.0)
+                    })
+                };
+                assert!(!visible_frame(&h), "closed Layers is frameless while idle");
+                h.get_by_role_and_label(Role::Button, "Layers").hover();
+                h.run();
+                assert!(
+                    visible_frame(&h),
+                    "hovering Layers must show its button surface"
+                );
+            }
         }
     }
 }
@@ -195,6 +216,18 @@ fn classic_ribbon_tools_are_visible_and_activate_at_the_default_window_size() {
         .build_ui_state(|ui, app: &mut App| app.ui(ui), App::new(None));
     h.run();
     let canvas = h.state().canvas_rect().unwrap();
+    for (left, right) in [("File", "Edit"), ("Edit", "View")] {
+        let left = h
+            .get_by_role_and_label(eframe::egui::Role::Button, left)
+            .rect();
+        let right = h
+            .get_by_role_and_label(eframe::egui::Role::Button, right)
+            .rect();
+        assert!(
+            right.left() - left.right() >= 12.0,
+            "menu labels need breathing room"
+        );
+    }
     for label in [
         "Pencil",
         "Fill",
