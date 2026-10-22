@@ -1,0 +1,98 @@
+{
+  "production_source_commit": "e6e8896",
+  "measured_source_commit": "1c9afaf30e10aa4cef911b91866ae0e985fb0f6f",
+  "source_identities": "../../../benchmarks/results/projection-coverage-2026-10-22/manifest.json",
+  "checks": {
+    "workspace": {
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--quiet"
+      ],
+      "exit_code": 0,
+      "tests": {
+        "passed": 914,
+        "ignored": 26,
+        "suites": 85
+      }
+    },
+    "clippy": {
+      "command": [
+        "cargo",
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0
+    },
+    "release-raster": {
+      "command": [
+        "cargo",
+        "test",
+        "--release",
+        "-p",
+        "paintcraft-raster",
+        "--lib",
+        "--tests"
+      ],
+      "exit_code": 0,
+      "tests": {
+        "passed": 126,
+        "ignored": 0,
+        "suites": 17
+      }
+    },
+    "release-editor": {
+      "command": [
+        "cargo",
+        "test",
+        "--release",
+        "-p",
+        "paintcraft-editor",
+        "--lib",
+        "--tests"
+      ],
+      "exit_code": 0,
+      "tests": {
+        "passed": 120,
+        "ignored": 0,
+        "suites": 20
+      }
+    },
+    "bench-build": {
+      "command": [
+        "cargo",
+        "bench",
+        "-p",
+        "paintcraft-editor",
+        "--bench",
+        "batch_preparation",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "exit_code": 0
+    },
+    "cli-cpu": {
+      "command": [
+        "cargo",
+        "build",
+        "--release",
+        "--locked",
+        "-p",
+        "paintcraft-cli"
+      ],
+      "exit_code": 0
+    }
+  },
+  "environment": {
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_INCREMENTAL": "0",
+    "PAINTCRAFT_REQUIRE_GPU": "1"
+  },
+  "logs": "logs.json",
+  "scope": "Workspace/native GPU tests, optimized raster/editor tests, strict all-target Clippy, release benchmark and CPU CLI build. No native sustained-input/display latency claim."
+}

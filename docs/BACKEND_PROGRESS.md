@@ -398,3 +398,23 @@ library RSS and wall time improve, but mixed sessions, large slow control tails
 and startup drift preclude a general speed claim. Mixed-source optimization,
 aggregate/physical admission and native latency remain open. No dependency,
 wire/file policy or rendering default changes.
+
+
+## Fifty-fourth slice: conservative projected-write coverage
+
+Logical programs now skip tile lookup/descriptor scans outside a clipped write
+envelope while preserving preceding-source calls/errors, layer bounds and
+cancellation. Pixel-oracle and long-list/fast-miss tests pass.
+[The measured decision](../benchmarks/results/projection-coverage-2026-10-22/DECISION.md)
+retains 480 statistical samples and 3,120 original process observations with exact
+all-checkpoint canonical/library output. Mixed flood/duplicate library execution
+improves 2.65x statistically and 53.4–69.7% in processes; actual CPU CLI improves
+10.1–11.0%. Declared metadata rises by 520 bytes; decoded peak is unchanged.
+Unrelated controls retain large slow tails and opposing sessions. No general
+throughput, physical-memory or native latency claim follows.
+
+914 workspace tests pass (26 ignores, 85 suites), along with strict all-target
+Clippy, 126 optimized raster and 120 optimized editor tests, and release CPU CLI/
+benchmark builds. [Validation](validation/projection-coverage-2026-10-22/validation.json)
+pins commands and original logs. The next active work returns to Classic UI;
+remaining performance scope stays recorded without starting another experiment.

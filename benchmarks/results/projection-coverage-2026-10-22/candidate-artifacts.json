@@ -1,0 +1,11 @@
+{
+  "library": {
+    "path": "/tmp/paintcraft-projection-coverage-library-06f8d69e2eb9",
+    "sha256": "06f8d69e2eb9a22dfed234b0c8786189d838611af57344253514d2487626ad30"
+  },
+  "cli": {
+    "path": "/tmp/paintcraft-projection-coverage-cli-4f413c5f086c",
+    "sha256": "4f413c5f086c0c551f257cdc4489391e1bef98f0d7cbf4ff5c225b65eac63bee"
+  },
+  "production_source_commit": "e6e889607b5a78f3f640b7b329f35fb65006ecd9"
+}

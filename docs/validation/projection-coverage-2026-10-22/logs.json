@@ -1,0 +1,52 @@
+[
+  {
+    "file": "batches.log.gz",
+    "original_sha256": "11cc3f7e5466943d2e0c56656b34ebfdfd712bc7e50fa7fd701afa917ebe48be",
+    "archive_sha256": "1bdf010ac6acef729b0f06936217a0b29db86f670485018346134b96162d639c"
+  },
+  {
+    "file": "bench-build.log.gz",
+    "original_sha256": "67f11f585af13baf1a3ef0151773632efdd6fb6656484a3de10d0e52b8a83932",
+    "archive_sha256": "9a04ac8f37126237ae44cb9dfbfdbe9c5f68af1443eb8a57535f61fd17485524"
+  },
+  {
+    "file": "cli-cpu.log.gz",
+    "original_sha256": "891e166f487cec5b5562dca2f2bf8a12445ab45eed864804c28c4e7f1926a894",
+    "archive_sha256": "a2668e4a42d3cb8320b2c3c30ca4c4719db4431bb63fd1d855ea55f8b977a71d"
+  },
+  {
+    "file": "clippy.log.gz",
+    "original_sha256": "923bd203f08226cd4546908918f7905521d1772495f61ffb121151ecfe8ffc3e",
+    "archive_sha256": "b7f797d70d278ded10d6b71f36d19684d7b0c68b3f7f94b2b1a8b9cf3a5fdf94"
+  },
+  {
+    "file": "initial.log.gz",
+    "original_sha256": "f06a516804e7a514b306570fc2f57bff0ce374092e771fbdf52e7e5428cbf888",
+    "archive_sha256": "22160aaecb5de1ec8e0273bf9b1a9cfbbebec25bb0c231199f70c992dbcb34f7"
+  },
+  {
+    "file": "measured.log.gz",
+    "original_sha256": "2881af1447e88d2227e3cae2282e34ab323b1f5c80062d8f74ff816a8cb31853",
+    "archive_sha256": "af26bb8a7e9502180e69ec53c40e20b7adfcf5979fe4551ef0ff6514e204f256"
+  },
+  {
+    "file": "release-editor.log.gz",
+    "original_sha256": "8ff1085a3f0e9847b89d9a3e8093a3457bf640d46d1008546d72857729b8d407",
+    "archive_sha256": "eb84cf2bc177e1d069817ed34be8efc2f6f15fe1e6120cb1d3382d92a41d56d0"
+  },
+  {
+    "file": "release-raster.log.gz",
+    "original_sha256": "07a6a46f4cac9dc5d861325013bce3b7e9785ae49174af9c6ca0cdde3ee611d5",
+    "archive_sha256": "45711d328fc1964f7277dd8ce192a76583707eb4d37b111c9136e9715f3dd1e9"
+  },
+  {
+    "file": "targeted.log.gz",
+    "original_sha256": "191aacc51b711d6ad5f301be87c6dd9c56e49ad740c71f40208d8fbae130a930",
+    "archive_sha256": "abfc6d8c07ae76b956784f88d2e507d04b466481ba2e4a023dec34b18dbc2bf2"
+  },
+  {
+    "file": "workspace.log.gz",
+    "original_sha256": "dc0bd5783d320f484eb7677f28b62f34632be31e8c55e310f7508b316bd9f47f",
+    "archive_sha256": "b71eae3de3dd5f234d27aaa0cb2857569d2471fd589ad1d938cee36a9b8988ff"
+  }
+]

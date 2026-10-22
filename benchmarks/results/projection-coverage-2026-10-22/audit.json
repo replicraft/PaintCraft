@@ -1,0 +1,20 @@
+{
+  "source_commit": "1c9afaf30e10aa4cef911b91866ae0e985fb0f6f",
+  "production_commit": "e6e889607b5a78f3f640b7b329f35fb65006ecd9",
+  "source_count": 422,
+  "binary_count": 4,
+  "fixture_count": 24,
+  "checkpoints": [
+    "before",
+    "after-1",
+    "after-2",
+    "after-3"
+  ],
+  "counts": {
+    "statistical": 480,
+    "workload": 2880,
+    "calibration": 240
+  },
+  "original_process_observations": 3120,
+  "compressed_artifacts": "compressed-artifacts.json"
+}
