@@ -645,3 +645,15 @@ values. Hover emits no zoom action and leaves controls stationary. Synthetic
 facts qualify presentation; existing app status/zoom checks retain their own
 document/history evidence. Native/rendered parity remains unverified and no
 application windows or screenshot previews were launched.
+
+Edit colors now uses 40-point RGB/HSL dropdown rows with inactive hover styling
+and selected accent outlines. Popup height is bounded and choosing a model
+explicitly closes it. Numeric conversions and color-adoption policy are unchanged.
+All 152 window-free UI tests and strict workspace Clippy pass; see
+[the color-model record](validation/color-model-headless-2026-10-22/validation.json).
+Actual-dialog checks cover both themes and scales 1/2 down to 360x360, including
+on-screen rows, selected metadata, nested Escape dismissal, stable footer
+placement and exact staged hex preservation across model switches. Cancel keeps
+active color, raw preferences and document/history unchanged. The reference shows
+the closed control; open-menu/native color parity remains unqualified. No
+application windows or rendered previews were launched.

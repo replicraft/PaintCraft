@@ -1,0 +1,24 @@
+{
+  "source_commit": "3853c2aa13811eeaa86e85673827229e1582ce53",
+  "references": [
+    "docs/temp/paint-references/photos/11111imagekr.png"
+  ],
+  "mode": "Window-free egui and lint checks only; no native-window, desktop, file-dialog or rendered-preview launches.",
+  "gui": {
+    "passed": 152,
+    "failed": 0,
+    "ignored": 17
+  },
+  "focused_gui": {
+    "passed": 1,
+    "scope": "Actual Edit colors dialog at 1360x900 scale 1 light, 700x500 scale 2 dark, 360x360 scale 1 dark and 480x360 scale 2 light, with repeated layout. Both 40-point popup rows stay on screen and report selected state. Escape dismisses only the popup, RGB/HSL switching preserves the staged hex string, the acceptance footer stays fixed, and Cancel preserves active color, preferences, document and history."
+  },
+  "clippy": "workspace all-targets with -D warnings passed",
+  "scope": "The RGB/HSL dropdown uses 40-point choices, zero row gaps, inactive hover styling, selected accent outlines and a bounded popup height. Choosing a model explicitly closes the popup. Existing conversion and staged color-adoption policy are retained.",
+  "limits": "The supplied reference establishes the closed numeric-model control, not a qualified open-menu or color-processing oracle. Native/rendered fidelity and native input behavior remain unverified. No new color model or document operation is implemented.",
+  "sha256": {
+    "gui.log.gz": "68b8f903d8fc2336cf9f3e1a053173b3f6a52161b938fe985fa878ef83ec6e20",
+    "focused-gui.log.gz": "7b09faf5587a7f51372ae966401a0bb7e351950eba8da733d72a47aac4e2263d",
+    "clippy.log.gz": "4aba01c8b643713d7d5f9b2742f115f49c7ee53dd71491774c6a966c47535afb"
+  }
+}
