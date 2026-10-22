@@ -9,6 +9,8 @@ use font8x8::{BASIC_FONTS, LATIN_FONTS, UnicodeFonts};
 use paintcraft_core::types::Rect;
 
 use crate::shape::Span;
+mod checked;
+pub use checked::visit_layout;
 
 /// Pixels per glyph cell at scale 1.
 pub const CELL: i64 = 8;
