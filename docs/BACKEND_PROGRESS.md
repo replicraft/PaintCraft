@@ -655,3 +655,53 @@ Whole-batch/source-lineage planning and contextual no-op proofs, joint tile/meta
 reservations, aggregate geometry/font/flood/service budgets, physical accounting,
 scheduling fairness and native input/display/cancellation tails remain open.
 No roadmap gate, file/wire policy or rendering default changes.
+
+
+## Fifty-first slice: source-bound logical paint lineage
+
+PaintSnapshot captures an owned sparse input and its decoded leases; PaintOverlay
+appends logical writes and freezes immutable branch prefixes without decoded
+replay. Forks retain exact source pixels across sibling edits and external COW.
+Expansion reveals the implicit default, including hidden RGB, without making old
+out-of-bounds descriptors visible. The bound API exposes neither a replacement
+source callback nor a detached replay plan. Arbitrary-source projections retain
+their existing behavior. See [the lineage contract](PAINT_LINEAGE.md).
+
+Captured missing/default proofs omit contextual no-ops and allow million-square
+uniform views without a tile-grid walk or reader scratch. Other readers prepare
+one bounded reference vector and evaluate ancestry iteratively. Source nodes,
+source-map payload, programs/indices and reader scratch carry shared/reserved
+metadata accounts. Input decoded buffers remain ordinary pinned reader leases.
+Deep teardown consumes ancestors iteratively, including concurrent release; it
+does not rely on recursive Arc destruction.
+
+Ten regressions cover source/branch identity, clipping/defaults after expansion,
+independent coverage/source-over pixels, external COW, huge no-op proofs, metadata
+denials/reservations, reentrant source release, cancellation and 4,096-node reads
+and teardown on a small stack. An independent BFS checks 18,432 flood cases.
+The first broad checks passed before review strengthened concurrent teardown;
+final validation is repeated against the resulting source. Development visibility
+errors and test type/borrow diagnostics remain separate from final validation.
+
+893 workspace tests pass (26 explicit ignores) across 81 suites. Strict all-target
+Clippy, 39 optimized raster tests, 23 renderer unit and 31 required Metal integration
+tests, 236 required-GPU desktop tests (eight explicit ignores), release desktop/CLI
+builds and isolated default/single-layer 30-frame startup checks pass.
+[Validation](validation/paint-lineage-2026-10-22/validation.json) pins final source,
+commands, exact logs and release hashes.
+
+The [matched three-way comparison](../benchmarks/results/paint-lineage-2026-10-22/DECISION.md)
+retains 240 statistical samples, 780 original process observations and exact pixel/
+region postflights. Bound default/no-op process preparation is 3.71–3.91x faster
+than combined but 13.5–21.1% slower than materialized. Bound tiny is 11.5–16.3%
+slower than combined; wall retains roughly 16% statistical overhead and two slow
+process sessions. Noisy wall tails, overlap tier disagreement, calibration and
+RSS remain. Source/reader ownership adds declared payload in painted cases;
+physical budgets, branching-chain/native latency and editor dispatch are not qualified.
+
+This remains a preparation primitive. The editor still replays sequentially;
+complete batch compilation needs structural integration, contextual tile-ownership
+and decoded peak/cumulative simulation, source guards and operation attribution.
+Joint resource reservations, aggregate geometry/font/flood/service budgets, physical
+accounting, scheduling fairness, native latency and the broader roadmap remain open.
+No dependency, wire/file policy or rendering default changes.

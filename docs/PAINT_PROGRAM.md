@@ -61,3 +61,10 @@ immutable storage; mutation copies under admission. Metadata denials carry their
 own class and never enter decoded-history reclamation. [Native waiting and reserved known metadata
 capacity](RESERVED_PAINT_METADATA.md) preserve the captured request; complete batch
 planning and aggregate geometry/service/physical budgets remain open.
+
+
+[Source-bound lineage](PAINT_LINEAGE.md) now captures immutable input pixels,
+forks logical programs, preserves expansion clipping/defaults and uses contextual
+no-op proofs without detaching them from their source. Free projections retain
+the arbitrary-source contract. This is another preparation prerequisite; complete
+editor structural integration and decoded peak/cumulative simulation remain open.

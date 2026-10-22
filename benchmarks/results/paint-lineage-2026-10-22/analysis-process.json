@@ -1,0 +1,462 @@
+[
+  {
+    "case": "tiny",
+    "sessions": [
+      {
+        "session": 1,
+        "results": {
+          "materialized": {
+            "mean_ms": 129.5331145,
+            "median_ms": 127.80412450000001,
+            "min_ms": 121.95295800000001,
+            "max_ms": 174.397833,
+            "mean_cpu_ms": 125.89939999999999,
+            "median_rss_mib": 2.84375
+          },
+          "combined": {
+            "mean_ms": 59.01132075,
+            "median_ms": 57.4728335,
+            "min_ms": 55.985625000000006,
+            "max_ms": 71.274166,
+            "mean_cpu_ms": 56.93065,
+            "median_rss_mib": 1.5
+          },
+          "bound": {
+            "mean_ms": 65.77144580000001,
+            "median_ms": 64.859125,
+            "min_ms": 64.191292,
+            "max_ms": 72.87370800000001,
+            "mean_cpu_ms": 64.42909999999999,
+            "median_rss_mib": 1.5
+          }
+        },
+        "bound_time_change_pct": {
+          "materialized": -49.22422266006736,
+          "combined": 11.455640992410764
+        }
+      },
+      {
+        "session": 2,
+        "results": {
+          "bound": {
+            "mean_ms": 65.89904175000001,
+            "median_ms": 64.53733300000002,
+            "min_ms": 63.953458000000005,
+            "max_ms": 80.400417,
+            "mean_cpu_ms": 64.2174,
+            "median_rss_mib": 1.5
+          },
+          "combined": {
+            "mean_ms": 56.8348729,
+            "median_ms": 56.647937500000005,
+            "min_ms": 55.866667,
+            "max_ms": 60.252584000000006,
+            "mean_cpu_ms": 55.7945,
+            "median_rss_mib": 1.5
+          },
+          "materialized": {
+            "mean_ms": 132.33870215000002,
+            "median_ms": 130.81397900000002,
+            "min_ms": 123.10508300000001,
+            "max_ms": 144.893167,
+            "mean_cpu_ms": 128.82625,
+            "median_rss_mib": 3.484375
+          }
+        },
+        "bound_time_change_pct": {
+          "materialized": -50.204255686816104,
+          "combined": 15.948252168960163
+        }
+      },
+      {
+        "session": 3,
+        "results": {
+          "materialized": {
+            "mean_ms": 126.7657563,
+            "median_ms": 127.26547950000003,
+            "min_ms": 122.074792,
+            "max_ms": 131.90412500000002,
+            "mean_cpu_ms": 125.43469999999999,
+            "median_rss_mib": 2.6875
+          },
+          "combined": {
+            "mean_ms": 60.391868650000006,
+            "median_ms": 57.4955415,
+            "min_ms": 55.092417000000005,
+            "max_ms": 84.315708,
+            "mean_cpu_ms": 57.324549999999995,
+            "median_rss_mib": 1.46875
+          },
+          "bound": {
+            "mean_ms": 70.22910615,
+            "median_ms": 68.2490205,
+            "min_ms": 65.06875000000001,
+            "max_ms": 78.955875,
+            "mean_cpu_ms": 66.51855,
+            "median_rss_mib": 1.625
+          }
+        },
+        "bound_time_change_pct": {
+          "materialized": -44.599308046726804,
+          "combined": 16.28900996094613
+        }
+      }
+    ]
+  },
+  {
+    "case": "wall",
+    "sessions": [
+      {
+        "session": 1,
+        "results": {
+          "materialized": {
+            "mean_ms": 209.30474985,
+            "median_ms": 188.7955205,
+            "min_ms": 181.95587500000002,
+            "max_ms": 553.007416,
+            "mean_cpu_ms": 186.94815,
+            "median_rss_mib": 3.671875
+          },
+          "combined": {
+            "mean_ms": 177.20912285,
+            "median_ms": 176.6737915,
+            "min_ms": 174.327167,
+            "max_ms": 184.16095900000002,
+            "mean_cpu_ms": 175.8286,
+            "median_rss_mib": 1.65625
+          },
+          "bound": {
+            "mean_ms": 207.90905610000002,
+            "median_ms": 203.91247900000002,
+            "min_ms": 202.109291,
+            "max_ms": 228.626291,
+            "mean_cpu_ms": 204.2616,
+            "median_rss_mib": 1.65625
+          }
+        },
+        "bound_time_change_pct": {
+          "materialized": -0.6668237347696282,
+          "combined": 17.324126859984634
+        }
+      },
+      {
+        "session": 2,
+        "results": {
+          "bound": {
+            "mean_ms": 222.22889795,
+            "median_ms": 218.25295850000003,
+            "min_ms": 208.011208,
+            "max_ms": 264.881792,
+            "mean_cpu_ms": 210.37519999999998,
+            "median_rss_mib": 1.84375
+          },
+          "combined": {
+            "mean_ms": 186.0572624,
+            "median_ms": 180.75512500000002,
+            "min_ms": 177.15508300000002,
+            "max_ms": 230.08483400000003,
+            "mean_cpu_ms": 178.46589999999998,
+            "median_rss_mib": 1.78125
+          },
+          "materialized": {
+            "mean_ms": 188.73420415,
+            "median_ms": 187.5128335,
+            "min_ms": 183.201167,
+            "max_ms": 207.9745,
+            "mean_cpu_ms": 185.644,
+            "median_rss_mib": 3.65625
+          }
+        },
+        "bound_time_change_pct": {
+          "materialized": 17.747018327096377,
+          "combined": 19.441130694611353
+        }
+      },
+      {
+        "session": 3,
+        "results": {
+          "materialized": {
+            "mean_ms": 203.3565834,
+            "median_ms": 197.98389550000002,
+            "min_ms": 188.152292,
+            "max_ms": 227.98754200000002,
+            "mean_cpu_ms": 191.68509999999998,
+            "median_rss_mib": 4.03125
+          },
+          "combined": {
+            "mean_ms": 216.04350225000002,
+            "median_ms": 194.590438,
+            "min_ms": 181.107125,
+            "max_ms": 371.64225,
+            "mean_cpu_ms": 184.4873,
+            "median_rss_mib": 1.78125
+          },
+          "bound": {
+            "mean_ms": 211.8040458,
+            "median_ms": 209.7191875,
+            "min_ms": 203.590584,
+            "max_ms": 243.415792,
+            "mean_cpu_ms": 207.46375,
+            "median_rss_mib": 1.78125
+          }
+        },
+        "bound_time_change_pct": {
+          "materialized": 4.15401471580783,
+          "combined": -1.9623161103425435
+        }
+      }
+    ]
+  },
+  {
+    "case": "overlap",
+    "sessions": [
+      {
+        "session": 1,
+        "results": {
+          "materialized": {
+            "mean_ms": 99.38471455000001,
+            "median_ms": 97.40175,
+            "min_ms": 96.47991600000002,
+            "max_ms": 109.777584,
+            "mean_cpu_ms": 96.77635,
+            "median_rss_mib": 3.8125
+          },
+          "combined": {
+            "mean_ms": 56.964493600000004,
+            "median_ms": 56.22443750000001,
+            "min_ms": 55.643375,
+            "max_ms": 60.748791000000004,
+            "mean_cpu_ms": 55.52155,
+            "median_rss_mib": 1.7890625
+          },
+          "bound": {
+            "mean_ms": 54.93819800000001,
+            "median_ms": 53.616771,
+            "min_ms": 52.49870800000001,
+            "max_ms": 75.31325,
+            "mean_cpu_ms": 52.79035,
+            "median_rss_mib": 1.7734375
+          }
+        },
+        "bound_time_change_pct": {
+          "materialized": -44.721682555760786,
+          "combined": -3.55712036032213
+        }
+      },
+      {
+        "session": 2,
+        "results": {
+          "bound": {
+            "mean_ms": 52.8545582,
+            "median_ms": 52.70839600000001,
+            "min_ms": 52.024208,
+            "max_ms": 54.36516600000001,
+            "mean_cpu_ms": 51.9077,
+            "median_rss_mib": 1.671875
+          },
+          "combined": {
+            "mean_ms": 55.939302000000005,
+            "median_ms": 55.730292000000006,
+            "min_ms": 55.22341600000001,
+            "max_ms": 57.179666000000005,
+            "mean_cpu_ms": 54.927299999999995,
+            "median_rss_mib": 1.671875
+          },
+          "materialized": {
+            "mean_ms": 96.5996355,
+            "median_ms": 96.506854,
+            "min_ms": 95.209584,
+            "max_ms": 98.887875,
+            "mean_cpu_ms": 95.32625,
+            "median_rss_mib": 3.046875
+          }
+        },
+        "bound_time_change_pct": {
+          "materialized": -45.28492998299151,
+          "combined": -5.514448142381189
+        }
+      },
+      {
+        "session": 3,
+        "results": {
+          "materialized": {
+            "mean_ms": 99.72183340000001,
+            "median_ms": 99.45777100000001,
+            "min_ms": 96.589375,
+            "max_ms": 106.05375000000001,
+            "mean_cpu_ms": 97.2789,
+            "median_rss_mib": 3.8046875
+          },
+          "combined": {
+            "mean_ms": 56.96848545,
+            "median_ms": 55.944770500000004,
+            "min_ms": 54.942334,
+            "max_ms": 74.11279100000002,
+            "mean_cpu_ms": 55.323499999999996,
+            "median_rss_mib": 1.6875
+          },
+          "bound": {
+            "mean_ms": 54.8149959,
+            "median_ms": 53.367125,
+            "min_ms": 52.128458,
+            "max_ms": 73.961667,
+            "mean_cpu_ms": 52.41195,
+            "median_rss_mib": 1.75
+          }
+        },
+        "bound_time_change_pct": {
+          "materialized": -45.03210176639212,
+          "combined": -3.7801418327859104
+        }
+      }
+    ]
+  },
+  {
+    "case": "default-control",
+    "sessions": [
+      {
+        "session": 1,
+        "results": {
+          "materialized": {
+            "mean_ms": 53.684314400000005,
+            "median_ms": 53.06979150000001,
+            "min_ms": 52.02125,
+            "max_ms": 57.823209,
+            "mean_cpu_ms": 52.0027,
+            "median_rss_mib": 1.625
+          },
+          "combined": {
+            "mean_ms": 232.53233755000002,
+            "median_ms": 231.79787550000003,
+            "min_ms": 223.563959,
+            "max_ms": 240.25400000000002,
+            "mean_cpu_ms": 229.25715,
+            "median_rss_mib": 1.78125
+          },
+          "bound": {
+            "mean_ms": 61.3244958,
+            "median_ms": 60.427833500000006,
+            "min_ms": 59.458583000000004,
+            "max_ms": 70.385208,
+            "mean_cpu_ms": 59.8174,
+            "median_rss_mib": 1.65625
+          }
+        },
+        "bound_time_change_pct": {
+          "materialized": 14.2316829140692,
+          "combined": -73.62754082028967
+        }
+      },
+      {
+        "session": 2,
+        "results": {
+          "bound": {
+            "mean_ms": 60.020264600000004,
+            "median_ms": 59.793979500000006,
+            "min_ms": 59.27012500000001,
+            "max_ms": 63.199666,
+            "mean_cpu_ms": 59.00015,
+            "median_rss_mib": 1.59375
+          },
+          "combined": {
+            "mean_ms": 234.45872085000002,
+            "median_ms": 232.2377295,
+            "min_ms": 225.568541,
+            "max_ms": 263.33662499999997,
+            "mean_cpu_ms": 232.27515,
+            "median_rss_mib": 1.71875
+          },
+          "materialized": {
+            "mean_ms": 52.8785541,
+            "median_ms": 52.669146,
+            "min_ms": 51.414500000000004,
+            "max_ms": 54.268083000000004,
+            "mean_cpu_ms": 51.76445,
+            "median_rss_mib": 1.609375
+          }
+        },
+        "bound_time_change_pct": {
+          "materialized": 13.505873262899982,
+          "combined": -74.40049814210184
+        }
+      },
+      {
+        "session": 3,
+        "results": {
+          "materialized": {
+            "mean_ms": 52.731031300000005,
+            "median_ms": 52.310354000000004,
+            "min_ms": 51.663833000000004,
+            "max_ms": 55.14945900000001,
+            "mean_cpu_ms": 51.393449999999994,
+            "median_rss_mib": 1.609375
+          },
+          "combined": {
+            "mean_ms": 236.59234375,
+            "median_ms": 233.00075,
+            "min_ms": 220.601666,
+            "max_ms": 271.456417,
+            "mean_cpu_ms": 230.31719999999999,
+            "median_rss_mib": 1.78125
+          },
+          "bound": {
+            "mean_ms": 63.843133300000005,
+            "median_ms": 61.32245850000001,
+            "min_ms": 59.823167000000005,
+            "max_ms": 75.54075,
+            "mean_cpu_ms": 60.8756,
+            "median_rss_mib": 1.71875
+          }
+        },
+        "bound_time_change_pct": {
+          "materialized": 21.073174042018028,
+          "combined": -73.01555397436651
+        }
+      }
+    ]
+  },
+  {
+    "case": "calibration",
+    "sessions": [
+      {
+        "session": 1,
+        "results": {
+          "calibration": {
+            "mean_ms": 1.54012915,
+            "median_ms": 1.3807915,
+            "min_ms": 1.2096660000000001,
+            "max_ms": 3.1143330000000002,
+            "mean_cpu_ms": 1.03125,
+            "median_rss_mib": 1.203125
+          }
+        }
+      },
+      {
+        "session": 2,
+        "results": {
+          "calibration": {
+            "mean_ms": 1.6001167,
+            "median_ms": 1.585979,
+            "min_ms": 1.41175,
+            "max_ms": 2.0430840000000003,
+            "mean_cpu_ms": 1.1498,
+            "median_rss_mib": 1.203125
+          }
+        }
+      },
+      {
+        "session": 3,
+        "results": {
+          "calibration": {
+            "mean_ms": 1.6621645500000002,
+            "median_ms": 1.6814585000000002,
+            "min_ms": 1.328459,
+            "max_ms": 2.0573750000000004,
+            "mean_cpu_ms": 1.137,
+            "median_rss_mib": 1.203125
+          }
+        }
+      }
+    ]
+  }
+]

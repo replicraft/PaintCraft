@@ -265,3 +265,21 @@ waiting. CPU timing does not exercise native waiting. Exact canonical/library
 outputs, startup calibration, slow controls and original schema-v2 exports remain
 retained. Separate source-pinned tests verify native FIFO/file barriers and class-
 specific wakes. Atomic metadata reservations and native latency remain unqualified.
+
+
+Source-bound lineage uses the separate paint_lineage driver, leaving the earlier
+projection fixture and its frozen comparisons intact. Build with
+`cargo bench -p paintcraft-raster --bench paint_lineage --no-run --message-format=json`,
+freeze the reported optimized executable, then run:
+
+```sh
+python3 -B benchmarks/tools/run_paint_projection.py --binary <frozen-lineage-bench> --bound-source --output <new-dir> --execute
+```
+
+Without `--execute` this writes nothing. The bound-source flag selects materialized,
+combined and bound modes with 240 Criterion samples and 780 process observations,
+including startup calibration. Exact every-pixel/canonical-region checks surround
+sessions. The [decision](results/paint-lineage-2026-10-22/DECISION.md) retains no-op
+gains, tiny/wall overhead, source/reader payload costs and slow controls separately.
+These flat library cases do not qualify complete batch integration or branching-
+chain/native event latency.

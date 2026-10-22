@@ -17,6 +17,10 @@ retains mixed results and slow controls. [Reserved metadata retry admission](RES
 capacity before dispatch. Complete batch planning and joint multi-resource
 reservations remain open.
 
+[Source-bound logical lineage](PAINT_LINEAGE.md) now preserves immutable branch
+inputs and expansion/default proofs. Its library comparison retains mixed results;
+complete editor batch compilation and decoded peak/cumulative planning remain open.
+
 Current user priority: shared backend correctness, performance and reliability;
 see the [backend audit and progress](BACKEND_PROGRESS.md). Classic toolbar/UI work
 is deferred during this tranche. [Classic coverage](CLASSIC.md) retains the frontend
