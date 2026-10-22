@@ -426,3 +426,54 @@ Clippy, optimized raster/editor text regressions, release desktop/CLI builds,
 desktop tests pass. Default/single-layer 30-frame native startup checks exit zero
 with empty logs. The [validation record](validation/text-preparation-2026-10-21/validation.json)
 pins committed source, commands, exact compressed logs and release hashes.
+
+
+## Forty-sixth slice: logical paint reads before decoded replay
+
+A bounded owned PaintProjection now exposes exact planned pixels without source
+raster ownership or decoded tile allocation. Ordered descriptor/tile indexing is
+shared with ordinary admitted replay; the latter retains its default/missing
+proofs, private/weak COW normalization and staged limits. Projections keep all writes
+because their source is supplied later. Reads preserve hidden RGB, straight-alpha
+rounding and partial replacement coverage, observe cancellation through long
+noncovering lists and return no partial pixel on source failure. Recovering the
+original descriptors drops the read index without rebuilding geometry. The owning
+planner must preserve captured bounds/source identity when replaying them. See
+[the projection contract](PAINT_PROJECTION.md).
+
+The existing flood classifier now accepts a fallible immutable pixel source.
+Raster callers still use the same getter; logical sources can observe earlier
+planned writes. Existing scratch/seed/clip/tolerance checks and scan work policies
+remain. Six new tests cover unchanged decoded usage/weak versions, ordered chained
+coverage, recovered admitted replay, fixed index quotas, bounds, every observed
+construction/read cancellation checkpoint and source errors. An independent BFS
+checks all 512 binary 3x3 inputs, nine seeds and four tolerances after two planned
+writes: 18,432 cases.
+
+841 workspace tests pass (26 explicit ignores) across 76 suites. Strict all-target
+Clippy, 16 optimized projection/replay/flood tests, release desktop/CLI builds,
+23 renderer unit tests, 31 required Metal integration tests and 224 required-GPU
+desktop tests pass. Default/single-layer 30-frame startup checks exit zero with
+empty logs. The [validation record](validation/paint-projection-2026-10-21/validation.json)
+pins production/final benchmark source, exact compressed logs and release hashes.
+An initial wrapper-extraction compile error and an incorrectly named optimized
+test target are corrected and their exact diagnostics retained.
+
+The editor still executes batches sequentially. Complete retained-program ownership,
+layer duplication/deletion/expansion lineage, aggregate metadata/scratch leases,
+decoded peak planning and upfront batch reservation remain. Per-plan payload and
+work-count bounds are not physical RSS or native cancellation/input/display-tail
+guarantees. No new dependency or wire/file policy is introduced; no roadmap gate
+is promoted by this prerequisite.
+
+
+The [real-library preparation comparison](../benchmarks/results/paint-projection-2026-10-21/DECISION.md)
+retains 160 raw Criterion samples and 540 Hyperfine observations (480 workloads,
+60 calibration), all exit zero, with exact pre/postflight pixels and region spans.
+Tiny preparation is about 2.5x faster; wall process results are mixed/tied. Chaining
+64 independent projections is 9–10x slower and default/no-op projection is over 4x
+slower. All slow controls and session-specific RSS remain. Declared decoded charges
+fall to zero for the projected path, while retained map/descriptor payload remains;
+this is not an aggregate physical-memory claim. Sequential editor replay stays.
+The next program implementation must avoid repeated per-pixel source-chain lookups
+and preserve context-specific no-op proofs, then qualify integrated batch behavior.

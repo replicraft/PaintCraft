@@ -206,3 +206,22 @@ builds/tests alongside timing. The [local decision](results/stroke-preparation-2
 retains all 160 statistical samples and 720 process observations, including slower
 checked unions, calibration and variable controls. It qualifies preparation costs,
 not native input/display or cancellation wall-clock latency.
+
+
+Read-only paint projection versus materialized paint followed by the same flood
+classification uses the `paintcraft-raster` `paint_projection` optimized benchmark:
+
+```sh
+cargo bench -p paintcraft-raster --bench paint_projection --no-run
+python3 -B benchmarks/tools/run_paint_projection.py --binary <frozen-prebuilt-bench> --output <new-dir> --execute
+```
+
+Copy the optimized artifact outside Cargo's output directory before timing. Without
+`--execute` the runner prints a plan and writes nothing. It verifies every required
+pixel and exact region before Criterion and after each Hyperfine session, pins
+source/binary identity and retains 160 statistical samples plus 540 process
+observations (including calibration). No builds/tests should overlap timing.
+The [local decision](results/paint-projection-2026-10-21/DECISION.md) records tiny,
+wall, overlapping-plan and default/no-op controls. These exercise real library
+preparation/destruction, not native editor interaction, file IO or whole-batch
+reservation integration.

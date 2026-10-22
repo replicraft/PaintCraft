@@ -99,3 +99,9 @@ Built-in text now [streams into admitted plans](TEXT_PREPARATION.md), and resolv
 mask validation/accounting/clipping observe cancellation even offscreen. This
 removes an editor geometry collector without extending per-plan limits into a
 whole-batch, installed-font or physical-memory guarantee.
+
+
+[Read-only paint projections](PAINT_PROJECTION.md) now provide exact logical
+pixels for data-dependent preparation without decoded replay. Ordinary painting
+shares the bounded index builder, and flood accepts fallible immutable sources.
+Aggregate program ownership and upfront whole-batch reservation remain open.

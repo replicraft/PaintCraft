@@ -70,3 +70,9 @@ A future compiled compound batch must share an aggregate allowance across retain
 plans, rather than multiplying this per-plan limit by its operation count. It also
 needs correct planning boundaries for data-dependent floods and shared-layer copies.
 The current executor still builds and releases one operation plan at a time.
+
+
+[Read-only paint projections](PAINT_PROJECTION.md) now provide exact logical
+pixels for data-dependent preparation without decoded replay. Ordinary painting
+shares the bounded index builder, and flood accepts fallible immutable sources.
+Aggregate program ownership and upfront whole-batch reservation remain open.

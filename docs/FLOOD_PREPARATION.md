@@ -68,3 +68,9 @@ Allocator overhead/rounding and transient reallocations are outside capacity
 accounting. The default and interval are not benchmark-selected optima. Whole-batch
 planning, aggregate scratch/metadata admission, other command kernels, scheduling
 fairness, physical pressure and native cancellation/display tails remain open.
+
+
+[Read-only paint projections](PAINT_PROJECTION.md) now provide exact logical
+pixels for data-dependent preparation without decoded replay. Ordinary painting
+shares the bounded index builder, and flood accepts fallible immutable sources.
+Aggregate program ownership and upfront whole-batch reservation remain open.

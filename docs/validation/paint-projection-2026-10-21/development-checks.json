@@ -1,0 +1,39 @@
+{
+  "workspace": {
+    "command": [
+      "cargo",
+      "test",
+      "--workspace",
+      "--quiet"
+    ],
+    "exit_code": 0
+  },
+  "clippy": {
+    "command": [
+      "cargo",
+      "clippy",
+      "--workspace",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0
+  },
+  "release-raster": {
+    "command": [
+      "cargo",
+      "test",
+      "--release",
+      "-p",
+      "paintcraft-raster",
+      "--test",
+      "paint_projection",
+      "--test",
+      "paint_plan",
+      "--test",
+      "flood_preparation"
+    ],
+    "exit_code": 101
+  }
+}

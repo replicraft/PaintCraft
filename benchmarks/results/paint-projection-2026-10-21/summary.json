@@ -1,0 +1,232 @@
+{
+  "statistical_samples": 160,
+  "workload_observations": 480,
+  "calibration_observations": 60,
+  "process": [
+    {
+      "session": 1,
+      "case": "tiny",
+      "results": [
+        {
+          "command": "/private/tmp/paintcraft-projection-driver-a963a1e7d9e5 process tiny materialized",
+          "mean_ms": 125.34737300000002,
+          "median_rss_mib": 2.671875
+        },
+        {
+          "command": "/private/tmp/paintcraft-projection-driver-a963a1e7d9e5 process tiny projected",
+          "mean_ms": 48.89029995,
+          "median_rss_mib": 1.40625
+        }
+      ]
+    },
+    {
+      "session": 1,
+      "case": "wall",
+      "results": [
+        {
+          "command": "/private/tmp/paintcraft-projection-driver-a963a1e7d9e5 process wall materialized",
+          "mean_ms": 185.79192295000001,
+          "median_rss_mib": 3.984375
+        },
+        {
+          "command": "/private/tmp/paintcraft-projection-driver-a963a1e7d9e5 process wall projected",
+          "mean_ms": 184.48161455000002,
+          "median_rss_mib": 1.671875
+        }
+      ]
+    },
+    {
+      "session": 1,
+      "case": "overlap",
+      "results": [
+        {
+          "command": "/private/tmp/paintcraft-projection-driver-a963a1e7d9e5 process overlap materialized",
+          "mean_ms": 95.92117710000001,
+          "median_rss_mib": 3.3125
+        },
+        {
+          "command": "/private/tmp/paintcraft-projection-driver-a963a1e7d9e5 process overlap projected",
+          "mean_ms": 964.2937646500001,
+          "median_rss_mib": 1.875
+        }
+      ]
+    },
+    {
+      "session": 1,
+      "case": "default-control",
+      "results": [
+        {
+          "command": "/private/tmp/paintcraft-projection-driver-a963a1e7d9e5 process default-control materialized",
+          "mean_ms": 53.24149595,
+          "median_rss_mib": 1.671875
+        },
+        {
+          "command": "/private/tmp/paintcraft-projection-driver-a963a1e7d9e5 process default-control projected",
+          "mean_ms": 232.80986670000001,
+          "median_rss_mib": 1.703125
+        }
+      ]
+    },
+    {
+      "session": 1,
+      "case": "calibration",
+      "results": [
+        {
+          "command": "/private/tmp/paintcraft-projection-driver-a963a1e7d9e5 calibration",
+          "mean_ms": 1.483896,
+          "median_rss_mib": 1.203125
+        }
+      ]
+    },
+    {
+      "session": 2,
+      "case": "tiny",
+      "results": [
+        {
+          "command": "/private/tmp/paintcraft-projection-driver-a963a1e7d9e5 process tiny projected",
+          "mean_ms": 49.600827200000005,
+          "median_rss_mib": 1.40625
+        },
+        {
+          "command": "/private/tmp/paintcraft-projection-driver-a963a1e7d9e5 process tiny materialized",
+          "mean_ms": 123.76204585,
+          "median_rss_mib": 2.828125
+        }
+      ]
+    },
+    {
+      "session": 2,
+      "case": "wall",
+      "results": [
+        {
+          "command": "/private/tmp/paintcraft-projection-driver-a963a1e7d9e5 process wall projected",
+          "mean_ms": 182.2271312,
+          "median_rss_mib": 1.625
+        },
+        {
+          "command": "/private/tmp/paintcraft-projection-driver-a963a1e7d9e5 process wall materialized",
+          "mean_ms": 184.34452085000004,
+          "median_rss_mib": 3.640625
+        }
+      ]
+    },
+    {
+      "session": 2,
+      "case": "overlap",
+      "results": [
+        {
+          "command": "/private/tmp/paintcraft-projection-driver-a963a1e7d9e5 process overlap projected",
+          "mean_ms": 969.5597188500001,
+          "median_rss_mib": 1.8671875
+        },
+        {
+          "command": "/private/tmp/paintcraft-projection-driver-a963a1e7d9e5 process overlap materialized",
+          "mean_ms": 102.22872515,
+          "median_rss_mib": 3.65625
+        }
+      ]
+    },
+    {
+      "session": 2,
+      "case": "default-control",
+      "results": [
+        {
+          "command": "/private/tmp/paintcraft-projection-driver-a963a1e7d9e5 process default-control projected",
+          "mean_ms": 231.04971040000004,
+          "median_rss_mib": 1.6875
+        },
+        {
+          "command": "/private/tmp/paintcraft-projection-driver-a963a1e7d9e5 process default-control materialized",
+          "mean_ms": 52.81781670000001,
+          "median_rss_mib": 1.59375
+        }
+      ]
+    },
+    {
+      "session": 2,
+      "case": "calibration",
+      "results": [
+        {
+          "command": "/private/tmp/paintcraft-projection-driver-a963a1e7d9e5 calibration",
+          "mean_ms": 1.8447124000000001,
+          "median_rss_mib": 1.203125
+        }
+      ]
+    },
+    {
+      "session": 3,
+      "case": "tiny",
+      "results": [
+        {
+          "command": "/private/tmp/paintcraft-projection-driver-a963a1e7d9e5 process tiny materialized",
+          "mean_ms": 124.58565635000001,
+          "median_rss_mib": 2.84375
+        },
+        {
+          "command": "/private/tmp/paintcraft-projection-driver-a963a1e7d9e5 process tiny projected",
+          "mean_ms": 49.74401445,
+          "median_rss_mib": 1.40625
+        }
+      ]
+    },
+    {
+      "session": 3,
+      "case": "wall",
+      "results": [
+        {
+          "command": "/private/tmp/paintcraft-projection-driver-a963a1e7d9e5 process wall materialized",
+          "mean_ms": 185.19788335,
+          "median_rss_mib": 3.46875
+        },
+        {
+          "command": "/private/tmp/paintcraft-projection-driver-a963a1e7d9e5 process wall projected",
+          "mean_ms": 190.24906035,
+          "median_rss_mib": 1.65625
+        }
+      ]
+    },
+    {
+      "session": 3,
+      "case": "overlap",
+      "results": [
+        {
+          "command": "/private/tmp/paintcraft-projection-driver-a963a1e7d9e5 process overlap materialized",
+          "mean_ms": 96.97439375000002,
+          "median_rss_mib": 3.3125
+        },
+        {
+          "command": "/private/tmp/paintcraft-projection-driver-a963a1e7d9e5 process overlap projected",
+          "mean_ms": 955.9735854500001,
+          "median_rss_mib": 1.859375
+        }
+      ]
+    },
+    {
+      "session": 3,
+      "case": "default-control",
+      "results": [
+        {
+          "command": "/private/tmp/paintcraft-projection-driver-a963a1e7d9e5 process default-control materialized",
+          "mean_ms": 52.305622850000006,
+          "median_rss_mib": 1.546875
+        },
+        {
+          "command": "/private/tmp/paintcraft-projection-driver-a963a1e7d9e5 process default-control projected",
+          "mean_ms": 232.0922813,
+          "median_rss_mib": 1.65625
+        }
+      ]
+    },
+    {
+      "session": 3,
+      "case": "calibration",
+      "results": [
+        {
+          "command": "/private/tmp/paintcraft-projection-driver-a963a1e7d9e5 calibration",
+          "mean_ms": 1.5549812,
+          "median_rss_mib": 1.203125
+        }
+      ]
+    }
+  ]
+}
