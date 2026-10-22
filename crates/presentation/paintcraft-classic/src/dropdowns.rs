@@ -12,56 +12,7 @@ pub(super) fn selection(
     actions: &mut Vec<Action>,
 ) {
     dropdown(ui, "Selection options", None, |ui| {
-        popup_style(ui, 240.0);
-        let rectangle = ui.add(
-            egui::Button::image_and_text(
-                paintcraft_ui::icons::image(ui.ctx(), Icon::RectangleSelect, 18.0),
-                "Rectangle",
-            )
-            .selected(state.tool == Tool::Select),
-        );
-        rectangle.widget_info(|| {
-            egui::WidgetInfo::selected(
-                egui::Role::Button,
-                ui.is_enabled(),
-                state.tool == Tool::Select,
-                "Rectangular selection",
-            )
-        });
-        if rectangle.clicked() {
-            state.tool = Tool::Select;
-            actions.push(Action::SelectTool(Tool::Select));
-            ui.close();
-        }
-        let free_form = ui.add_enabled(
-            false,
-            egui::Button::image_and_text(
-                paintcraft_ui::icons::image(ui.ctx(), Icon::LassoSelect, 18.0),
-                "Free-form",
-            ),
-        );
-        free_form.widget_info(|| {
-            egui::WidgetInfo::labeled(egui::Role::Button, false, "Free-form selection")
-        });
-        ui.separator();
-        for action in [Action::SelectAll, Action::Deselect] {
-            if paintcraft_ui::actions::menu_item(ui, action, context) {
-                actions.push(action);
-                ui.close();
-            }
-        }
-        ui.add_enabled(false, egui::Button::new("Invert selection"));
-        ui.separator();
-        ui.add_enabled(false, egui::Button::new("Transparent selection"));
-        ui.separator();
-        ui.add_enabled(
-            false,
-            egui::Button::image_and_text(
-                paintcraft_ui::icons::image(ui.ctx(), Icon::DeleteLayer, 18.0),
-                "Delete",
-            )
-            .shortcut_text("Delete"),
-        );
+        super::selection_menu::show(ui, state, context, actions);
     });
 }
 

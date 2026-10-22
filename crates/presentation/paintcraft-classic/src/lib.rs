@@ -16,6 +16,7 @@ pub use toolbar_visibility::ToolbarVisibility;
 mod palette;
 mod quick_access;
 mod ribbon;
+mod selection_menu;
 mod shapes;
 #[derive(Debug, Default)]
 pub struct Workspace {

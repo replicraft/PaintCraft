@@ -247,3 +247,6 @@ mod toolbar_visibility;
 
 #[path = "gui/dropdown_states.rs"]
 mod dropdown_states;
+
+#[path = "gui/selection_menu.rs"]
+mod selection_menu;
