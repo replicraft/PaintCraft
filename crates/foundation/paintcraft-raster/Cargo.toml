@@ -21,3 +21,7 @@ criterion.workspace = true
 [[bench]]
 name = "paint_plan"
 harness = false
+
+[[bench]]
+name = "stroke_union"
+harness = false
