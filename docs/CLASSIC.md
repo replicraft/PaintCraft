@@ -575,3 +575,18 @@ Checks cover both list endpoints, selected outlines, typed values, fit/shortcuts
 and safe Escape dismissal, with document/history preservation, light/dark at
 scales 1/2 and windows down to 360x360. Native/rendered parity remains unverified;
 no application windows or screenshot previews were launched.
+
+The Classic skin chooser now lives in the Classic presentation crate. It uses
+three cards on wide windows and stacked cards in a bounded scroll area on narrow
+ones, above fixed Continue/Apply and Cancel actions. Original schematics follow
+the active theme and selected cards have accent outlines and radio metadata.
+Choices stay staged until acceptance; Cancel, window close and Escape dismiss
+them. First-visit cancellation leaves the default active for this run and prompts
+again next time. Changer Apply and first-visit Continue retain host persistence.
+Plain text and Escape in the chooser now preserve unpublished canvas text.
+All 147 window-free UI tests and strict workspace Clippy pass; see
+[the skin-chooser record](validation/skin-picker-headless-2026-10-22/validation.json).
+Checks cover bounds, scrolling, stable footers, cancellation bytes, acceptance and
+restart at scales 1/2 in both themes down to 360x360. The chooser remains modeless;
+its schematics are not native captures. Window-close dismissal is implemented but
+not separately tested. No application windows or screenshot previews were launched.

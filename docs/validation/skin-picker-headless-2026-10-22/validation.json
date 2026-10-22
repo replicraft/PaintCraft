@@ -1,0 +1,17 @@
+{
+  "source_commit": "79f7ed17f1f5a4d63cd987a3a93dc1c537f3484f",
+  "mode": "Window-free egui and lint checks only; no native-window, desktop, file-dialog or rendered-preview launches.",
+  "gui": {
+    "passed": 147,
+    "failed": 0,
+    "ignored": 17
+  },
+  "clippy": "workspace all-targets with -D warnings passed",
+  "scope": "Classic owns the skin chooser presentation. Wide layouts use three cards; narrow layouts stack cards in a bounded scroll area above fixed Continue/Apply and Cancel actions. Theme-aware original schematics show selected outlines and accessible radio states. First-visit Continue and changer Apply persist a staged choice; Cancel, window close and Escape dismiss it. Host preference writes stay first-pass-only. Text and Escape while choosing a skin preserve unpublished canvas text.",
+  "checks": "New tests cover on-screen window/card/footer bounds, scroll reachability and stable footer placement at 1360x900 scale 1 light, 700x500 scale 2 dark, 360x360 scale 1 dark and 480x360 scale 2 light, with repeated layout passes. Cancel preserves raw preference bytes and document/history. Continue persists/restarts; changer Apply persists while preserving a pending canvas text draft. Escape preserves the draft and preference bytes. Existing first-visit, settings and frontend switching checks remain passing.",
+  "limits": "Schematics are original layout illustrations, not rendered screenshots or native-reference reproductions. The chooser retains its existing modeless Window presentation. First-visit cancellation uses the default skin for the current run and prompts again at the next start until a choice is saved. Native/window-close appearance and full skin parity remain unverified; window-close dismissal is implemented but not independently exercised by the new tests.",
+  "sha256": {
+    "gui.log.gz": "388ab77c4dcaba1b0084498f271e3b68feead9816ad3ca05a478717539a0d221",
+    "clippy.log.gz": "3f549c740873c71b48f9a083882df04e7e434fdeecd8dba29aec1250d6cc0fc5"
+  }
+}
