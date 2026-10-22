@@ -97,12 +97,24 @@ pub fn panel<Id: Copy + Eq + Hash + std::fmt::Debug>(
                                 visible,
                             });
                         }
+                        let selected = selected == Some(row.id);
                         let button = egui::Button::new(())
                             .left_text(row.name)
-                            .selected(selected == Some(row.id))
+                            .selected(selected)
+                            .frame_when_inactive(selected)
+                            .frame(true)
                             .min_size(Vec2::new(ui.available_width(), 40.0))
                             .truncate();
-                        if ui.add(button).clicked() {
+                        let response = ui.add(button).on_hover_text(row.name);
+                        if selected {
+                            ui.painter().rect_stroke(
+                                response.rect.shrink(0.5),
+                                5,
+                                ui.visuals().selection.stroke,
+                                egui::StrokeKind::Inside,
+                            );
+                        }
+                        if response.clicked() {
                             actions.push(Action::Select(row.id));
                         }
                     });

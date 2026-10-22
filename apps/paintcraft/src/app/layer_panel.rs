@@ -115,7 +115,17 @@ impl App {
         let Some((name, opacity, index)) = self.editor.layer_properties(t) else {
             return;
         };
-        ui.label(format!("Drawing on: {name}"));
+        let drawing_on = format!("Drawing on: {name}");
+        if self.experience() == Experience::Classic {
+            ui.add(
+                egui::Label::new(drawing_on)
+                    .truncate()
+                    .show_tooltip_when_elided(false),
+            )
+            .on_hover_text(&name);
+        } else {
+            ui.label(drawing_on);
+        }
         let top = self.editor.document().roots.len() - 1;
 
         // Name: edited locally, applied when the field loses focus.
