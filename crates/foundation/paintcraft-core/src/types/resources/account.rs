@@ -8,13 +8,52 @@ pub struct BudgetAccount {
     budget: SharedBudget,
     class: AllocationClass,
     bytes: u64,
+    scope: Option<Arc<Mutex<ScopeFootprint>>>,
+}
+/// Attempt-local declarations, including the largest observed pending request.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct ScopeFootprint {
+    pub live: u64,
+    pub peak: u64,
+}
+/// Clone this factory to group independently owned accounts in one attempt.
+/// The scope owns no capacity; each account still releases independently.
+#[derive(Clone, Debug)]
+pub struct BudgetScope {
+    budget: SharedBudget,
+    class: AllocationClass,
+    state: Arc<Mutex<ScopeFootprint>>,
+}
+impl BudgetScope {
+    pub fn account(&self) -> BudgetAccount {
+        BudgetAccount {
+            budget: self.budget.clone(),
+            class: self.class,
+            bytes: 0,
+            scope: Some(self.state.clone()),
+        }
+    }
+    pub fn budget(&self) -> SharedBudget {
+        self.budget.clone()
+    }
+    pub fn footprint(&self) -> ScopeFootprint {
+        *self.state.lock().unwrap_or_else(|e| e.into_inner())
+    }
 }
 impl SharedBudget {
+    pub fn scope(&self, class: AllocationClass) -> BudgetScope {
+        BudgetScope {
+            budget: self.clone(),
+            class,
+            state: Arc::new(Mutex::new(ScopeFootprint::default())),
+        }
+    }
     pub fn account(&self, class: AllocationClass) -> BudgetAccount {
         BudgetAccount {
             budget: self.clone(),
             class,
             bytes: 0,
+            scope: None,
         }
     }
 }
@@ -25,25 +64,58 @@ impl BudgetAccount {
     pub fn budget(&self) -> SharedBudget {
         self.budget.clone()
     }
+    /// Create an empty declaration in this account's realm and attempt scope.
+    pub fn sibling(&self) -> Self {
+        Self {
+            budget: self.budget.clone(),
+            class: self.class,
+            bytes: 0,
+            scope: self.scope.clone(),
+        }
+    }
     /// Grow atomically before allocating, or shrink after freeing storage. A
     /// rejected growth keeps the old charge. Release callbacks run outside locks.
     pub fn resize(&mut self, bytes: u64) -> Result<()> {
         if bytes > self.bytes {
-            self.budget
-                .admit(bytes - self.bytes)
-                .map_err(|error| error.with_allocation_requirement(self.class, bytes))?;
+            let delta = bytes - self.bytes;
+            let required = if let Some(scope) = &self.scope {
+                let mut scope = scope.lock().unwrap_or_else(|e| e.into_inner());
+                scope.live = scope.live.checked_add(delta).ok_or_else(|| {
+                    Error::new(
+                        ErrorCode::ResourceLimit,
+                        "resource scope footprint overflow",
+                    )
+                })?;
+                scope.peak = scope.peak.max(scope.live);
+                scope.peak
+            } else {
+                bytes
+            };
+            // No scope lock survives budget callbacks. Failure rolls back the
+            // pending live declaration, while preserving its known demand peak.
+            if let Err(error) = self.budget.admit(delta) {
+                self.release_scope(delta);
+                return Err(error.with_allocation_requirement(self.class, required));
+            }
             self.bytes = bytes;
         } else if bytes < self.bytes {
             let released = self.bytes - bytes;
             self.bytes = bytes;
+            self.release_scope(released);
             self.budget.release(released);
         }
         Ok(())
+    }
+    fn release_scope(&self, bytes: u64) {
+        if let Some(scope) = &self.scope {
+            scope.lock().unwrap_or_else(|e| e.into_inner()).live -= bytes;
+        }
     }
 }
 impl Drop for BudgetAccount {
     fn drop(&mut self) {
         if self.bytes != 0 {
+            self.release_scope(self.bytes);
             self.budget.release(self.bytes);
         }
     }

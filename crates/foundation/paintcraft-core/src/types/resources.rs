@@ -9,7 +9,7 @@ pub use reservation::BudgetReservation;
 mod denial;
 pub use denial::{AllocationClass, AllocationDenial};
 mod account;
-pub use account::BudgetAccount;
+pub use account::{BudgetAccount, BudgetScope, ScopeFootprint};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct BudgetUsage {
@@ -159,3 +159,6 @@ mod demand_tests;
 #[cfg(test)]
 #[path = "resources/reservation_tests.rs"]
 mod reservation_tests;
+
+#[cfg(test)]
+mod scope_tests;
