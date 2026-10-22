@@ -1,0 +1,27 @@
+{
+  "source_commit": "22d9a0f2afaf50990117873192c1b60001539d25",
+  "mode": "Window-free egui and lint checks only; no native-window, desktop, file-dialog or rendered-preview launches.",
+  "gui": {
+    "passed": 151,
+    "failed": 0,
+    "ignored": 17
+  },
+  "focused_gui": {
+    "passed": 1,
+    "scope": "Narrow status fields with large legal dimensions/coordinates and a long import message with recovery details, at scale 1/light and scale 2/dark. Truncation leaves one full explicit hint rather than an automatic raw-text hint plus the explicit one. Hover emits no zoom intentions and zoom control positions stay fixed."
+  },
+  "clippy": "workspace all-targets with -D warnings passed",
+  "regression_baseline": {
+    "source_commit": "b01beeabd1725574c5823f048de20cfde4746941",
+    "probe_from_commit": "22d9a0f2afaf50990117873192c1b60001539d25",
+    "result": "The added unchanged probe failed before the status-label fix: raw field text appeared twice instead of once in the accessibility tree, exposing the extra automatic tooltip. This expected baseline failure is preserved separately from passing current logs."
+  },
+  "scope": "Classic v11 status metric and message labels disable automatic elision tooltips while retaining their explicit complete tooltips, including recovery details. Layout and document/zoom semantics are unchanged.",
+  "limits": "The new focused check supplies synthetic presentation facts, not a live document at those dimensions. Existing application status/zoom/document-preservation checks pass in the full suite. Native/rendered visual parity, input latency and broader roadmap completion remain open.",
+  "sha256": {
+    "gui.log.gz": "56ed43f3091e21afb97c1856ceefa01e883c0707632e9fc377bc387990690759",
+    "focused-gui.log.gz": "b93844f754a8ebcd9f89f886b6e55762245c77b36223b8dba0f3d045c0cce6cb",
+    "regression-before.log.gz": "340344be9ebf8722b17ae9cd2c1c61c72955fbec68768796bf911832512f21d8",
+    "clippy.log.gz": "f16274e53b1e784650a7a8ad73f7b6c8ac52b4240f4f5799c043bf3749abd5dd"
+  }
+}

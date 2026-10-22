@@ -632,3 +632,16 @@ status, selected metadata/painted outlines and single tooltips in light/dark at
 scales 1/2. Subsequent hovering preserves document/history, and existing
 visibility/order/rename-owner/undo checks pass. Thumbnails remain open work; no
 native windows or rendered previews were launched.
+
+Classic status labels now disable automatic elision tooltips while retaining
+their explicit hints. This prevents truncated pointer/selection/canvas values
+from adding a second raw-value tooltip beside the full named hint. Long status
+messages similarly retain one complete message/recovery tooltip.
+All 151 window-free UI tests and strict workspace Clippy pass; see
+[the status-tooltip record](validation/status-tooltips-headless-2026-10-22/validation.json).
+The new narrow-layout probe reproduced the duplicate before the fix and passes
+afterward in light/dark at scales 1/2, including long messages and large numeric
+values. Hover emits no zoom action and leaves controls stationary. Synthetic
+facts qualify presentation; existing app status/zoom checks retain their own
+document/history evidence. Native/rendered parity remains unverified and no
+application windows or screenshot previews were launched.
