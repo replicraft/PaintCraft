@@ -22,6 +22,7 @@ def main():
     parser.add_argument('--binary', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--execute', action='store_true')
+    parser.add_argument('--bound-source', action='store_true', help='Use the paint_lineage driver: materialized/combined/source-bound variants')
     args = parser.parse_args()
     if not args.execute:
         print('Plan only: 240 Criterion samples and three 260-observation process sessions; no files written.')
@@ -44,7 +45,7 @@ def main():
                           'wall': {'dimensions':[512,64], 'plans':1, 'process_repeats':100},
                           'overlap': {'dimensions':[128,64], 'plans':64, 'process_repeats':100},
                           'default-control': {'dimensions':[512,64], 'plans':1, 'process_repeats':100}},
-                'runs':20, 'warmups':3, 'sessions':3, 'variants':['materialized','projected','combined'],
+                'runs':20, 'warmups':3, 'sessions':3, 'variants':(['materialized','combined','bound'] if args.bound_source else ['materialized','projected','combined']),
                 'scope':'Plan construction plus exact flood classification and destruction. Same-source real library paths, not editor whole-batch integration, CLI file IO, native input/display/cancellation tails or physical all-service budgets.',
                 'environment':'Local uncontrolled macOS host; no affinity/power/thermal controls. No intentional concurrent task builds/tests/timing. Preserve all samples and calibration without subtraction.'}
     (output/'manifest.json').write_text(json.dumps(manifest, indent=2)+'\n')
