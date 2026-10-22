@@ -73,6 +73,19 @@ pub fn chrome(
     context: paintcraft_ui::actions::Context,
 ) -> Vec<Action> {
     let mut actions = Vec::new();
+    if variant == ClassicVariant::V11 {
+        // Scoped to Classic chrome: Studio and historical skins keep their own
+        // metrics, while installed Selawik supplies the Windows-style text.
+        for text in [egui::TextStyle::Body, egui::TextStyle::Button] {
+            ui.style_mut()
+                .text_styles
+                .insert(text, egui::FontId::proportional(15.0));
+        }
+        ui.style_mut()
+            .text_styles
+            .insert(egui::TextStyle::Small, egui::FontId::proportional(12.0));
+        ui.spacing_mut().interact_size.y = 32.0;
+    }
     egui::MenuBar::new().ui(ui, |ui| {
         ui.menu_button("File", |ui| {
             menu_layout(ui, variant);
@@ -400,7 +413,7 @@ pub fn apply_style_for_theme(ctx: &egui::Context, v: ClassicVariant, theme: egui
 
 fn menu_layout(ui: &mut egui::Ui, variant: ClassicVariant) {
     if variant == ClassicVariant::V11 {
-        ui.set_min_width(240.0);
-        ui.spacing_mut().interact_size.y = 30.0;
+        ui.set_min_width(260.0);
+        ui.spacing_mut().interact_size.y = 32.0;
     }
 }

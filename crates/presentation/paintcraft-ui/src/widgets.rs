@@ -19,7 +19,7 @@ pub fn icon_button_with_tooltip(
     let size = if large {
         Vec2::new(64.0, 54.0)
     } else {
-        Vec2::splat(30.0)
+        Vec2::splat(30.0_f32.max(ui.spacing().interact_size.y))
     };
     let (rect, response) = ui.allocate_exact_size(size, Sense::click());
     response.widget_info(|| {
@@ -64,7 +64,7 @@ pub fn icon_button_with_tooltip(
             rect.center_bottom() - Vec2::new(0.0, 8.0),
             egui::Align2::CENTER_CENTER,
             label,
-            egui::FontId::proportional(10.0),
+            egui::TextStyle::Small.resolve(ui.style()),
             ink,
         );
     }

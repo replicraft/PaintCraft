@@ -90,6 +90,7 @@ pub(super) fn ribbon(
                                     .max_width(132.0)
                                     .show(ui, |ui| {
                                         egui::Grid::new("windows11-shapes")
+                                            .min_row_height(24.0)
                                             .spacing(Vec2::ZERO)
                                             .show(ui, |ui| {
                                                 for (i, icon) in [
@@ -190,7 +191,7 @@ fn group(ui: &mut egui::Ui, label: &str, contents: impl FnOnce(&mut egui::Ui)) {
             |ui| {
                 ui.label(
                     egui::RichText::new(label)
-                        .size(11.0)
+                        .size(12.0)
                         .color(ui.visuals().weak_text_color()),
                 );
             },
@@ -238,15 +239,22 @@ fn colors(
                 ("Fill color", state.secondary, Action::EditSecondaryColors),
             ] {
                 let (rect, response) =
-                    ui.allocate_exact_size(Vec2::splat(29.0), egui::Sense::click());
+                    ui.allocate_exact_size(Vec2::splat(32.0), egui::Sense::click());
                 ui.painter().circle_stroke(
                     rect.center(),
-                    13.0,
-                    egui::Stroke::new(1.0, ui.visuals().widgets.noninteractive.fg_stroke.color),
+                    14.0,
+                    egui::Stroke::new(
+                        1.0,
+                        if label == "Pencil color" {
+                            ui.visuals().selection.stroke.color
+                        } else {
+                            ui.visuals().widgets.noninteractive.fg_stroke.color
+                        },
+                    ),
                 );
                 ui.painter().circle_filled(
                     rect.center(),
-                    10.0,
+                    11.0,
                     Color32::from_rgb(color.0[0], color.0[1], color.0[2]),
                 );
                 response.widget_info(|| {

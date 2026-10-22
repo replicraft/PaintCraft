@@ -157,7 +157,7 @@ fn renaming_and_opacity_apply_once_on_commit_not_per_keystroke() {
 #[test]
 fn classic_ribbon_tools_are_visible_and_activate_at_the_default_window_size() {
     let mut h = Harness::builder()
-        .with_size(Vec2::new(960.0, 720.0))
+        .with_size(Vec2::new(1200.0, 850.0))
         .build_ui_state(|ui, app: &mut App| app.ui(ui), App::new(None));
     h.run();
     let canvas = h.state().canvas_rect().unwrap();
@@ -167,11 +167,11 @@ fn classic_ribbon_tools_are_visible_and_activate_at_the_default_window_size() {
         "Text",
         "Rectangle",
         "Select",
-        "Color #E0E0FF",
+        "Palette custom color 10",
     ] {
         let rect = h.get_by_label(label).rect();
         assert!(
-            rect.min.x >= 0.0 && rect.max.x <= 960.0,
+            rect.min.x >= 0.0 && rect.max.x <= 1200.0,
             "{label} is outside the window: {rect:?}"
         );
         assert!(

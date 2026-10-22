@@ -46,6 +46,7 @@ pub(super) fn swatches(
     egui::Grid::new("windows11-palette")
         .num_columns(10)
         .min_col_width(0.0)
+        .min_row_height(20.0)
         .spacing(egui::vec2(4.0, 3.0))
         .show(ui, |ui| {
             for index in 0..30 {
@@ -74,23 +75,23 @@ pub(super) fn swatches(
                     (color, format!("Palette custom color {}", slot + 1), tip)
                 };
                 let (rect, response) =
-                    ui.allocate_exact_size(egui::Vec2::splat(17.0), egui::Sense::click());
+                    ui.allocate_exact_size(egui::Vec2::splat(20.0), egui::Sense::click());
                 if let Some(color) = color {
                     ui.painter().circle_filled(
                         rect.center(),
-                        7.5,
+                        9.0,
                         egui::Color32::from_rgb(color.0[0], color.0[1], color.0[2]),
                     );
                 }
                 ui.painter().circle_stroke(
                     rect.center(),
-                    7.5,
+                    9.0,
                     egui::Stroke::new(0.8, ui.visuals().widgets.noninteractive.fg_stroke.color),
                 );
                 if response.hovered() || response.has_focus() {
                     ui.painter().circle_stroke(
                         rect.center(),
-                        8.5,
+                        9.75,
                         egui::Stroke::new(1.0, ui.visuals().selection.stroke.color),
                     );
                 }
