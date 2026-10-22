@@ -1,0 +1,32 @@
+{
+  "source_commit": "ac286cfdbb9787efca72956ae20ff5fa0dc594fe",
+  "mode": "Window-free egui and lint checks only. No desktop, native-window or screenshot-preview launches.",
+  "gui": {
+    "passed": 128,
+    "failed": 0,
+    "ignored": 17
+  },
+  "focused_gui": {
+    "passed": 2,
+    "sizes_and_scales": [
+      [
+        1360,
+        900,
+        1
+      ],
+      [
+        1100,
+        500,
+        2
+      ]
+    ],
+    "scope": "Classic light/dark layer-list scrolling with fixed name/opacity controls; 18-layer document, selection without history, visibility and ordering on stable layer identities, close/reopen without history; forced repeated layout passes. Focus loss during layer selection commits the edited name to its original owner with one undoable entry."
+  },
+  "clippy": "workspace all-targets with -D warnings passed",
+  "limits": "No rendered/native visual qualification under the user restriction. Classic owns its list presentation; host dispatches existing engine actions and retains name/opacity commit semantics. Studio presentation remains separate. Real layer thumbnails, complete layer interactions and reference parity remain open.",
+  "sha256": {
+    "gui.log.gz": "d4861fa9e38b2f686a00ce4c1319baf0b3b83ceca06b726081897621a7e93e0b",
+    "focused-gui.log.gz": "9636861c98f98e2485462fb94ac556296c10ddff11487c63acf7e90802487584",
+    "clippy.log.gz": "6399a048abcf28a2ae648ad82aebede165073fc30704521f03a3db3c0fc64b05"
+  }
+}

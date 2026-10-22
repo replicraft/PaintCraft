@@ -377,3 +377,16 @@ unchanged. Tests cover 1360x900 through 360x500/480x360 and display scales 1 and
 pass; [source-pinned headless results](validation/responsive-colors-headless-2026-10-22/validation.json)
 record acceptance/cancellation and palette persistence without document mutations.
 Rendered/native visual comparison remains deferred until the user permits it.
+
+Classic now owns a scrollable Layers list with larger selectable rows, icon actions
+for creation/reordering/deletion and a close button. Name/opacity fields remain
+visible below the list. Stable per-layer widget identities survive reordering,
+and selecting another layer commits a focused name edit to its original owner.
+The desktop host still applies document mutations through existing engine actions;
+selection and panel visibility do not add history. Host layer/property integration
+was extracted from the general chrome module. Studio keeps its own presentation.
+128 window-free GUI tests and strict workspace Clippy pass; the
+[headless Layers record](validation/classic-layers-headless-2026-10-22/validation.json)
+covers light/dark layouts, display scales 1 and 2, long-list scrolling and repeated
+layout passes. Real layer thumbnails and complete reference/native visual parity
+remain open. No application windows or screenshot previews were launched.
