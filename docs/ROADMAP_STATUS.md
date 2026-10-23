@@ -11,6 +11,14 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest Classic Selection work bounds popup width, uses distinct outline glyphs
+and improves text contrast. V11 selection no longer adds a duplicate toolbar row
+or shifts the canvas. All 168 normal UI tests, SVG/cache/contact-sheet checks,
+fresh GPU popup states and strict workspace Clippy pass; see
+[the Selection record](validation/selection-menu-gpu-2026-10-23/validation.json).
+The full default icon sheet now includes all 98 IDs. Unavailable selection
+operations and full reference parity remain open.
+
 Latest Classic brush-gallery work aligns row/text/sample proportions with the
 close-up and removes seams from decorative stroke bands. V11 primary Brush/
 Select controls use outline glyphs. All 168 normal UI tests, seven icon tests,

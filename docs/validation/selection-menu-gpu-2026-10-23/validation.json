@@ -1,0 +1,41 @@
+{
+  "source_commit": "db8198d67705353be74d9f1a3b0a9ddf85ac62f3",
+  "assets_commit": "638c03c",
+  "baseline": "Unchanged prior Selection captures from the 1b39659 brush-gallery review export, copied before refreshing outputs.",
+  "references": [
+    "docs/temp/paint-references/photos/ima1111ge.png",
+    "docs/temp/paint-references/photos/image.png"
+  ],
+  "gui": {
+    "passed": 168,
+    "failed": 0,
+    "ignored": 19
+  },
+  "icons": {
+    "passed": 8,
+    "scope": "Seven ordinary SVG/cache checks plus the explicitly enabled contact-sheet exporter pass. Registry has 98 default IDs and 35 menu/control sources. New Select all/Invert selection semantic IDs and Free-form/Delete variants render with transparency and monochrome tint; existing colored sources retain their mappings. Contact sheet grows to nine rows and normalizes view boxes, with dark tiles for default white glyphs so entries beyond 72 are no longer clipped."
+  },
+  "gpu": {
+    "passed": 1,
+    "test": "classic_dropdowns::render_classic_dropdowns_and_cursor_for_review",
+    "scope": "Fresh light/dark client scenes; default and selected Rectangle Selection popup states archived alongside historical comparisons. Eraser is restored before the cursor review scene."
+  },
+  "clippy": "workspace all-targets with -D warnings passed",
+  "generator": "All 35 menu/control sources and manifest regenerate byte for byte with scripts/generate_classic_menu_icons.py. Original artwork; not extracted native assets.",
+  "scope": "Classic Selection popup has a bounded 260-point body, 16-point labels/shortcuts, theme-specific primary/secondary contrast and distinct outline glyphs. Disabled rows fade once through their painter scope. Shared Classic action artwork refines Select all without changing colorful defaults. V11 no longer adds a duplicate Select all/Deselect tool-options row; commands remain in Selection/Edit and retain keyboard routes. Shared Classic popup styling also applies to its existing historical placeholder consumers; historical parity is not qualified.",
+  "regressions": "Four wide/short light/dark DPI cases verify bounded width, font size, distinct actual textures, full glyphs, selected marker, one disabled tooltip, safe preview clicks and reachable actions. Select all and Deselect each publish once, restore inactive selection and leave document semantics unchanged. Choosing Select preserves the initial canvas viewport, with no duplicate closed-popup Deselect button. Existing real-pixel selection-restriction test now removes it through the popup, and outside-selection painting works again.",
+  "limits": "Free-form, invert, transparent selection and delete remain disabled previews. Exact Windows popup/vector parity, historical skins, other native menu/device operations and the full roadmap remain incomplete. This slice adds no selection-engine operation or performance claim. Native presentation baseline remains separate.",
+  "sha256": {
+    "after-dark-selection-rectangle.png": "d205b9dd0f5bd79ab754c71d0bd9b2c841e0cec15426d4cd87ea3d97b666c55a",
+    "after-dark-selection.png": "a066e9a700a623fe8a010127cfcfc8c61bdd679fa9f07950985f63b9db39b00c",
+    "after-light-selection-rectangle.png": "c1ffe0da7b4d8f0abb0cf49f915efc17d23082f5af706b2d9180d4b3b1f96861",
+    "after-light-selection.png": "34076b1161e3acbf431ecd0b0984aa739692d8586e300096d2b5cc0923ef9264",
+    "all-default-icons.png": "8e82cbaf485eed91f18be0fe4cbe9791614580720e4ff0ab84ba8ec3490cf00b",
+    "before-dark-selection.png": "97730497e3dc1eeca91769b2b19c77ab9ad9fa76e4b1c5a2b845d4f8e666fcc5",
+    "before-light-selection.png": "bffe0ff5cb2d230c661f9c28c6733b4db60a387ea8220e867eddf39b84e89457",
+    "clippy.log.gz": "22fdcbcc6517d464fc2cad13713f2715afd8321c63885c84246e9d8a143f5f9e",
+    "gpu.log.gz": "b72a187b6d9cc81c92c1bec32e08d185bd747f1d55636e0963614b81bb7b4da9",
+    "gui.log.gz": "bf4f6c01f3e872f2fa87556934cabdd9845f7770aee2b01c71dd5ddc746672c0",
+    "icons.log.gz": "074eb387569bdf68f1cf5f3703b53c493b44a623ff62d6f44e4678f3298d9af6"
+  }
+}

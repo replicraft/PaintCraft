@@ -958,3 +958,22 @@ label/sample clearance, disabled media/one tooltip, reachable working tips and
 unchanged document/history. Raw light/dark comparisons and scrolled/selected tip
 states are in [the brush gallery record](validation/brush-gallery-gpu-2026-10-23/validation.json).
 Unavailable media, full reference parity and the remaining roadmap are still open.
+
+The Classic Selection popup now has a bounded 260-point body, 16-point labels/
+shortcuts and consistent primary/secondary contrast. Rectangle, Free-form,
+Select all, Invert and Delete have distinct monochrome SVG artwork; unavailable
+rows retain disabled state and fade once. Classic action artwork refines Select
+all while preserving default colorful mappings. The v11 ribbon's duplicate
+selection-action row is removed, so choosing Select keeps the canvas viewport
+stable; Selection/Edit menus and shortcuts retain the working commands.
+All 168 normal UI tests, seven SVG/cache checks plus the full contact-sheet
+exporter, GPU dropdown export and strict workspace Clippy pass. Four theme/DPI/
+window cases verify width, fonts, real glyph textures, selection marker, safe
+previews and one publication per Select all/Deselect action. A real-pixel test
+continues to verify paint restrictions and removing them through the popup.
+The icon contact sheet now includes all 98 default IDs in nine rows, with
+normalized size and contrasting tiles for white artwork; it previously clipped
+entries beyond 72. The registry has 35 menu/control sources. Raw comparisons,
+selected popup states and the full sheet are in [the Selection record](validation/selection-menu-gpu-2026-10-23/validation.json).
+Unimplemented selection operations, historical parity and full Windows fidelity
+remain open. Shared Classic popup styling is not historical-skin qualification.

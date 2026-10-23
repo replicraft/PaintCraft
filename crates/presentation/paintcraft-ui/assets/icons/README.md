@@ -96,5 +96,5 @@ artwork; Free-form and Delete have separate monochrome variants of existing
 LassoSelect/DeleteLayer IDs. The Selection popup uses these SVGs, while default
 colored action mapping remains available to other frontends. The contact-sheet
 review now sizes its rows from the full registry, normalizes previews to a
-64-point square, and places default monochrome glyphs on dark tiles so all 98
+64-pixel square, and places default monochrome glyphs on dark tiles so all 98
 default sources are visible. It previously clipped entries beyond 72.
