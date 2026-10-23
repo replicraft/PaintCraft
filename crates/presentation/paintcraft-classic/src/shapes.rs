@@ -78,11 +78,16 @@ fn button(ui: &mut egui::Ui, label: &str, icon: Icon, selected: bool) -> egui::R
         .scope(|ui| {
             ui.spacing_mut().interact_size = Vec2::splat(24.0);
             ui.add(
-                egui::Button::new(paintcraft_ui::icons::image(ui.ctx(), icon, 19.0))
-                    .selected(selected)
-                    .min_size(Vec2::splat(24.0))
-                    .frame_when_inactive(selected)
-                    .frame(true),
+                egui::Button::new(paintcraft_ui::icons::classic_shape_image(
+                    ui.ctx(),
+                    icon,
+                    19.0,
+                    ui.visuals().strong_text_color(),
+                ))
+                .selected(selected)
+                .min_size(Vec2::splat(24.0))
+                .frame_when_inactive(selected)
+                .frame(true),
             )
         })
         .inner;
