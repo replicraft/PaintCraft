@@ -1,0 +1,34 @@
+{
+  "source_commit": "4a46991a60ba2216e198cbdd307efe300b76709b",
+  "changes": "Canvas dimension/default dialogs use 16-point margins, 12-point rounded frames, 24-point headings, 16-point body text, readable secondary text and 40-point fields/actions. The Dimensions group spans the body. Bodies shrink to contents on roomy displays and scroll with a reserved visible scrollbar when constrained, keeping acceptance actions outside the scroller. Host resize/default-policy behavior is unchanged.",
+  "gui": {
+    "passed": 178,
+    "failed": 0,
+    "ignored": 26,
+    "scope": "Full UI suite passes. Existing canvas-dialog tests cover light/dark wide/compact and 1x/2x repeated layout, fixed/reachable actions during scrolling, staged dimensions/policy cancellation, preference bytes and history preservation, actual defaults/remembered sizes and restart behavior."
+  },
+  "gpu": {
+    "passed": 1,
+    "test": "canvas_settings::export_canvas_dimension_dialogs",
+    "scope": "Ten raw light/dark scenes: current/default dialogs at 1360x900 and 360x360, plus scrolled compact default-policy controls."
+  },
+  "clippy": "Strict workspace all-targets passed.",
+  "checks": "Formatting, whitespace and source file length checks passed.",
+  "limits": "App-specific canvas/default-size presentation follows shared Classic surfaces; no native Paint canvas-dialog close-up was supplied, so exact native Properties parity is not claimed. Existing shared dialog consumers inherit the styling. No new resize policy, document operation or performance claim.",
+  "sha256": {
+    "clippy.log.gz": "72d3100d75b806cec69d6e3992409a7b14cca1d9537b9d54a6d44b5e247eb97b",
+    "dark-compact-current.png": "eb5c480d30d2b30bc9a5aefdaeb4cc868dcaca6d4462b4b1fa8d52e2d889a0cf",
+    "dark-compact-defaults-policy.png": "01395c88f70fca7cd9c42e8a49c7698c5d8d786a0e849870b4b435bf34fe3f1f",
+    "dark-compact-defaults.png": "e59b29d231a2795717dc5521b92b823fb4d012c78d21637ec394d40046932423",
+    "dark-desktop-current.png": "1dfe9ee565132a82f595f69cbde146ff696d9b513bae831b1a6f64673bac9d85",
+    "dark-desktop-defaults.png": "9dd2f370b462b46b05bbb854ea234673b33fe352c94bfb1f7c4dd995751f9df0",
+    "gpu.log.gz": "c92c948528b9e209213e4f160f069af6bad6e220be510400f95cee91c30ce4cd",
+    "gui.log.gz": "ba5f2c76e8a918906e165570a112365a2ce0889a8eb2610e396dbccf62536e01",
+    "light-compact-current.png": "a729f2202aee279366120c6849561abef04082236654daec78ac9594f5ec1c80",
+    "light-compact-defaults-policy.png": "85c342bc85218dcfdb48d78cf5bf46f821d43ca98807346034c2bd8a710fe5bc",
+    "light-compact-defaults.png": "a0eede46d6aea9ea81dff23d9baf1078c9c3edea6103200e072be9a6b28630df",
+    "light-desktop-current.png": "885ee8af4f2e179baaba8d2d0cf1fc4036891bc49c53d53249ed2e35b792f63b",
+    "light-desktop-defaults.png": "2c05e7f6a4844d2a5ec199484602b0d4b032f66ce17c0b7d793935eaf1534be3",
+    "targeted.log.gz": "8ce608f9ff984ce1318dc1f36a55c633c9efcc372d09e79c7b56dd142dfaac19"
+  }
+}

@@ -11,6 +11,13 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest canvas dimension/default dialogs use consistent Classic headings,
+padding, fields and contrast, with content-sized desktop bodies and visible
+compact scrolling cues. All 178 ordinary UI tests, ten light/dark GPU states
+and strict workspace Clippy pass; see
+[the canvas dialog record](validation/canvas-dialog-surfaces-gpu-2026-10-23/validation.json).
+Resize/default policies stay unchanged; exact native Properties parity is unqualified.
+
 Latest Classic Settings work replaces the colorful top gear with outline art,
 aligns navigation symbols/selection styling and improves heading/description
 contrast. All 178 ordinary UI tests, nine SVG/cache tests, Classic/Studio theme
