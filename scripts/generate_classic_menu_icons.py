@@ -24,6 +24,11 @@ glass = '<circle cx="10" cy="10" r="7"/>' + path('M15 15L22 22')
 icons = {
     'new': path('M5 2H14L20 8V22H5ZM14 2V8H20'),
     'open': path('M2 20V5H9L12 8H21V10M2 20H19L22 10H7Z'),
+    'import-image': path('M11 4H21V21H3V12M3 17L9 11L15 17L18 14L21 17') + '<circle cx="17" cy="8" r="1.2"/>' + '<circle cx="5" cy="5" r="4"/>' + path('M5 2.5V7.5M3 5.5L5 7.5L7 5.5'),
+    'recent': '<circle cx="12" cy="12" r="9"/>' + path('M12 5V12H17'),
+    'desktop-background': rect(2, 3, 20, 15) + path('M8 22H16M12 18V22M3 14L8 9L13 14L17 10L21 14') + '<circle cx="16" cy="7" r="1.2"/>',
+    'image-properties': path('M13 4H21V22H3V14M3 18L9 12L14 17L17 14L21 18') + '<circle cx="17" cy="8" r="1.2"/><circle cx="6" cy="6" r="3"/>' + path('M6 1V3M6 9V11M1 6H3M9 6H11M2.5 2.5L4 4M8 8L9.5 9.5M2.5 9.5L4 8M8 4L9.5 2.5'),
+    'thumbnail': rect(6, 3, 16, 16) + path('M3 8H2V22H17V21M6 15L11 10L16 15L19 12L22 15') + '<circle cx="17" cy="7" r="1.2"/>',
     'save': save,
     'save-as': save_as,
     'print': path('M6 9V3H18V9M6 18H3V9H21V18H18M6 14H18V22H6Z') + '<circle cx="18" cy="11.5" r=".5" fill="#fff"/>',

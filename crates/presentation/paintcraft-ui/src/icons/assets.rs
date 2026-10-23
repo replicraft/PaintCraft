@@ -1,4 +1,4 @@
-//! Named assets adapted from the user-supplied generated icon sheet.
+//! Named SVG assets from the generated sheet and original menu artwork.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Icon {
     Polygon,
@@ -87,6 +87,11 @@ pub enum Icon {
     Blur,
     Sharpen,
     Levels,
+    ImportImage,
+    Recent,
+    DesktopBackground,
+    ImageProperties,
+    Thumbnail,
     ColorBalance,
     EditColors,
     Pointer,
@@ -99,7 +104,7 @@ pub enum Icon {
 }
 
 impl Icon {
-    pub const ALL: [Self; 91] = [
+    pub const ALL: [Self; 96] = [
         Self::Polygon,
         Self::RightTriangle,
         Self::Diamond,
@@ -190,6 +195,11 @@ impl Icon {
         Self::Pointer,
         Self::StrokeSize,
         Self::Opacity,
+        Self::ImportImage,
+        Self::Recent,
+        Self::DesktopBackground,
+        Self::ImageProperties,
+        Self::Thumbnail,
         Self::ColorBalance,
     ];
 
@@ -281,6 +291,11 @@ impl Icon {
             Self::Blur => "blur",
             Self::Sharpen => "sharpen",
             Self::Levels => "levels",
+            Self::ImportImage => "import-image",
+            Self::Recent => "recent",
+            Self::DesktopBackground => "desktop-background",
+            Self::ImageProperties => "image-properties",
+            Self::Thumbnail => "thumbnail",
             Self::ColorBalance => "color-balance",
             Self::EditColors => "edit-colors",
             Self::Pointer => "pointer",
@@ -386,6 +401,17 @@ impl Icon {
             Self::Blur => include_bytes!("../../assets/icons/blur.svg"),
             Self::Sharpen => include_bytes!("../../assets/icons/sharpen.svg"),
             Self::Levels => include_bytes!("../../assets/icons/levels.svg"),
+            Self::ImportImage => {
+                include_bytes!("../../assets/icons/classic-menus/import-image.svg")
+            }
+            Self::Recent => include_bytes!("../../assets/icons/classic-menus/recent.svg"),
+            Self::DesktopBackground => {
+                include_bytes!("../../assets/icons/classic-menus/desktop-background.svg")
+            }
+            Self::ImageProperties => {
+                include_bytes!("../../assets/icons/classic-menus/image-properties.svg")
+            }
+            Self::Thumbnail => include_bytes!("../../assets/icons/classic-menus/thumbnail.svg"),
             Self::ColorBalance => include_bytes!("../../assets/icons/color-balance.svg"),
             Self::EditColors => include_bytes!("../../assets/icons/edit-colors.svg"),
             Self::Pointer => include_bytes!("../../assets/icons/pointer.svg"),

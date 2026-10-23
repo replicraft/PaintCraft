@@ -28,6 +28,15 @@ pub(super) fn source(icon: Icon) -> Option<&'static [u8]> {
         Icon::PixelGrid => include_bytes!("../../assets/icons/classic-menus/pixel-grid.svg"),
         Icon::Rulers => include_bytes!("../../assets/icons/classic-menus/rulers.svg"),
         Icon::Resize => include_bytes!("../../assets/icons/classic-menus/resize.svg"),
+        Icon::ImportImage => include_bytes!("../../assets/icons/classic-menus/import-image.svg"),
+        Icon::Recent => include_bytes!("../../assets/icons/classic-menus/recent.svg"),
+        Icon::DesktopBackground => {
+            include_bytes!("../../assets/icons/classic-menus/desktop-background.svg")
+        }
+        Icon::ImageProperties => {
+            include_bytes!("../../assets/icons/classic-menus/image-properties.svg")
+        }
+        Icon::Thumbnail => include_bytes!("../../assets/icons/classic-menus/thumbnail.svg"),
         _ => return None,
     })
 }

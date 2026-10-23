@@ -15,6 +15,26 @@
       "file": "open.svg"
     },
     {
+      "name": "import-image",
+      "file": "import-image.svg"
+    },
+    {
+      "name": "recent",
+      "file": "recent.svg"
+    },
+    {
+      "name": "desktop-background",
+      "file": "desktop-background.svg"
+    },
+    {
+      "name": "image-properties",
+      "file": "image-properties.svg"
+    },
+    {
+      "name": "thumbnail",
+      "file": "thumbnail.svg"
+    },
+    {
       "name": "save",
       "file": "save.svg"
     },

@@ -26,7 +26,8 @@ with disabled previews for the current UI/theme pass.
 Two additional project-authored SVGs, `settings.svg` and `layers.svg`, provide
 application chrome. They are not adaptations of sheet cells and are intentionally
 absent from the source manifest/generator. The Rust asset set contains
-91 icons and the same vector/transparency tests cover the two additions.
+91 colored/chrome icons before the menu additions below; the same
+vector/transparency tests cover the chrome additions.
 
 The UI uses [resvg 0.48.1](https://docs.rs/resvg/0.48.1/resvg/) without default
 features, rasterizing bundled sources at display density. Per-context derived
@@ -53,7 +54,7 @@ Regenerate the outline sources with `python3 scripts/generate_classic_shape_icon
 These vectors are project-authored adaptations of the visible shape vocabulary,
 not extracted native assets or a claim of exact Windows rendering parity.
 
-Classic v11 menus additionally opt into 23 original tintable outline sources in
+Classic v11 menus additionally opt into 28 original tintable outline sources in
 [classic-menus](classic-menus/manifest.json). Regenerate them with
 `python3 scripts/generate_classic_menu_icons.py`. The menu helper's default stays
 colorful; its Classic option preserves shared action metadata/gates and uses
@@ -61,3 +62,10 @@ theme-tinted menu variants. Unmapped icons retain their original artwork. The
 same bounded cache keeps colored, shape-outline and menu-outline identities
 separate. These are original PaintCraft glyphs following the supplied references,
 not extracted Windows assets or a pixel-exact compatibility claim.
+
+Import image, Recent, Desktop background, Image properties and Thumbnail have
+dedicated semantic icon IDs and original monochrome artwork. Their default
+source is the same SVG as their Classic menu variant; they are not sheet
+adaptations. This brings the registry to 96 IDs, retaining all 91 prior sources,
+with 23 shape variants and 28 menu sources. The generated menu manifest owns
+these five additional sources.
