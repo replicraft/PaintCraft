@@ -1,0 +1,36 @@
+{
+  "source_commit": "290ada0b0f8868c8793fa17a360616b5301eeb06",
+  "references": [
+    "docs/temp/paint-references/photos/image.png",
+    "docs/temp/paint-references/photos/ima2ge.png"
+  ],
+  "changes": "Classic v11 now has a 28x24-point display-options chevron at the lower-right caption row. Wide windows align it to the available far edge; narrow windows retain access through the ribbon scroller. Its 280-point popup body has two contiguous 40-point rows with selected markers and uses existing AlwaysShowToolbar/AutoHideToolbar actions and persistence. Hover/open feedback and accessibility labels follow other Classic dropdowns.",
+  "gui": {
+    "passed": 172,
+    "failed": 0,
+    "ignored": 22,
+    "scope": "Full UI suite passes. New light 1x/dark 2x and narrow checks cover trigger/row bounds, selected state, Escape without changing preferences, persisted modes, hide/reveal and no document/history changes under repeated layout. Existing coalesced press/release mapping, open-popup reveal and Studio isolation tests pass."
+  },
+  "gpu": {
+    "passed": 1,
+    "test": "toolbar_visibility::export_ribbon_visibility_menu",
+    "scope": "Eight raw light/dark scenes: desktop popup with always-show selected, auto-hide selected, hidden ribbon and a horizontally scrolled compact popup."
+  },
+  "clippy": "Strict workspace all-targets passed.",
+  "checks": "Formatting, whitespace and source file length checks passed.",
+  "limits": "The reference shows the chevron and existing View choices; the direct popup styling follows shared Classic conventions rather than a supplied close-up of that popup. Native Windows menu behavior and full reference fidelity remain partial. No new document operation or performance claim.",
+  "sha256": {
+    "clippy.log.gz": "14309dfe8a2f455023287cf508cc08ea7a12f79f3474890cf740662659937d91",
+    "dark-always-show.png": "41dbd31ac0f72130694986cba8e2f9fe25a3a81c28d7a7ceeb3db57894e685c7",
+    "dark-auto-hide.png": "5d1da65d3a4d50ec88880f2d5b89d61840d59376452acbe750dacc9bf1ed5f37",
+    "dark-compact-menu.png": "6509ec6496f881cdb47d2c7f83dc0961eecc1e5764871718067bbf2ca24d026d",
+    "dark-hidden.png": "4e854c3950102fe4cd8caf977a6a5aea24e0c0fdab7c3f58b55c52abe8af2bb1",
+    "gpu.log.gz": "228d24d4c91b423e6a398387fb51b44c54d2f7fb18e3408a39e83ceba5b3287d",
+    "gui.log.gz": "d48748e4e4e0fc646d3e39f8c57be8820b1d3f1b0b1793860f084de0d3f4d7fe",
+    "light-always-show.png": "9f37ef418e87376033aaad175f638c080a8421acd1db24ab23060a52a3fc8477",
+    "light-auto-hide.png": "e727591aa4381ac1ede1ced55e0889fca4d632e3825e48dd076a3594238f3b89",
+    "light-compact-menu.png": "f9a71044737de06ed119f041cc1dd37bac4a10a5e9b93ed7ec445b13e9247fc4",
+    "light-hidden.png": "a8bcb11dfe66a8faf47cfebbafbcbb8e3b4edcc838debfad43744c0a449198e5",
+    "targeted.log.gz": "2a7128fc54400394886ce76b55488226dbce51dd949ed72f4cb7695a1c0b9925"
+  }
+}

@@ -11,6 +11,12 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest Classic ribbon work adds the lower-right display-options chevron,
+routing to the existing persisted visibility modes. All 172 normal UI tests,
+light/dark desktop/compact/hidden GPU states and strict workspace Clippy pass;
+see [the ribbon visibility record](validation/ribbon-visibility-gpu-2026-10-23/validation.json).
+Narrow windows retain scrolling access; full native reference parity stays partial.
+
 Latest Classic picker work rounds gradient edges, enlarges markers and keeps
 brightness thumbs inside their lane without endpoint jumps. All 171 normal UI
 tests, seven Classic unit tests, actual rounded-corner GPU pixel checks and
