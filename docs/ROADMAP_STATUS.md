@@ -11,6 +11,13 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest Classic numeric controls use leading-aligned values in both resting and
+edit modes, matching the color/text reference insets while retaining native
+numeric input. All 183 ordinary UI tests, twelve light/dark GPU states and
+strict workspace Clippy pass; see
+[the numeric field record](validation/numeric-field-surfaces-gpu-2026-10-23/validation.json).
+This resolves the earlier centered-value gap; complete native fidelity remains partial.
+
 Latest Classic text dropdown work reveals selected families/nearby sizes, aligns
 choice labels and joins the size field/arrow. The font-count footer has measured
 space. All 181 ordinary UI tests, fixture dropdown/real-app text GPU scenes and

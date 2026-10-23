@@ -1,0 +1,41 @@
+{
+  "source_commit": "fdbea6289be32b455bc6cf60bb679aa3773577fe",
+  "references": [
+    "docs/temp/paint-references/photos/11111imagekr.png",
+    "docs/temp/paint-references/photos/mspaint-text-settings.png"
+  ],
+  "changes": "Classic RGB/HSL and font-size values use 16-point body text, 14-point leading padding, explicit leading horizontal layout and native DragValue min_size instead of a centered add_sized child. Color hex/model controls align with their numeric fields; model popup labels align left with 16-point text. Font-size arrow padding is restored independently, retaining the joined 90-point control. Native numeric input/range/accessibility and existing staged draft handling remain in use.",
+  "gui": {
+    "passed": 183,
+    "failed": 0,
+    "ignored": 31,
+    "scope": "Full GUI suite. Two new light 1x/dark 2x regressions verify actual painted leading insets/font sizes, RGB resting/focused alignment, HSL alignment, accessibility numeric values, joined font-size geometry, cancelled size drafts and unchanged preference bytes/pixels/history where applicable. Both fail on centered resting values before the fix. Existing compact bounds, color staging, preset persistence and unpublished text cancellation pass."
+  },
+  "gpu": {
+    "passed": 1,
+    "test": "numeric_fields::export_numeric_field_surfaces",
+    "scope": "Twelve raw light/dark actual-app scenes: RGB, focused Red, model popup, HSL, font size and focused font size. The document snapshot and history ticket remain unchanged."
+  },
+  "clippy": "Strict workspace all-targets passed.",
+  "checks": "Formatting, whitespace and source file length checks passed.",
+  "limits": "This resolves the previously recorded centered numeric-field presentation gap. It does not qualify complete native Paint/historical appearance, physical accessibility or IME and adds no editing-engine, text rasterization, color-management or performance behavior. Native DragValue input semantics and HSL formatting remain unchanged. T15 remains partial.",
+  "sha256": {
+    "after.log.gz": "27d4abdb71469a854be0c85137237bf12a65a184f01f616b0ea2c768cf2a4313",
+    "before.log.gz": "0f6327c6ffd3f0b6bf86c1ab0f91ac70b0652dc4ea84bb986f54d51f5a98f8bb",
+    "clippy.log.gz": "495d74f45c90fd05d80c243b65a8ac7091af2f8b33b254cfc7c5ade2c20f4427",
+    "dark-font-size-focused.png": "193008e737725bac07091a6e8c29a3a1e13f62a2c4bef62457ada56f660c470b",
+    "dark-font-size.png": "be1ed454b67e317f00851b9ee14b6d392bf6ee738540f7f75dec3e0757b0f08a",
+    "dark-hsl.png": "0e24b8449f8538b425904a1089fb265436644fc116241041d8a67da01db835f8",
+    "dark-model-popup.png": "1104219105fd0f39c901b2cc50d0459b6d411170ccf4d564919fd3fa25706755",
+    "dark-red-focused.png": "8db0d30cbee528e4bf059f09f733d05f4fe39f132bc22997b175b1d604281853",
+    "dark-rgb.png": "cb27396e41f07bc7ee1bdee7669ac3eb906553bf05508aeea8c358e3462d4b7d",
+    "gpu.log.gz": "4a3fb66c34a0457ba4195231167aa655bd15c488dd54dd950bcf1299d10070d9",
+    "gui.log.gz": "b06eef3866c87ab83652a3b12cc7317b207c99cb3dcb5971266c4237ad711b03",
+    "light-font-size-focused.png": "97dfb1d47ea706facf996b0040b838d72ffba8764d6ed0ced289317ac8b68aaf",
+    "light-font-size.png": "ba37704d77790720aaecea0fd0d76f6313bb75e75b9daa009e49bab72a61e800",
+    "light-hsl.png": "1fb5fa541d36c74cc6d086a5a543798029071a6680dedea2a32b795d31255bcf",
+    "light-model-popup.png": "26c46c15f32a51b0ae7ceedc271beda1cddccee8dc4b797c9f161884c0d0a8fb",
+    "light-red-focused.png": "2121034355aef590af9cf47a43574ab8a0c55313dd01eb0d056255ad49a024b0",
+    "light-rgb.png": "61f91df29c25ab8e1dd3eced8146c646336b0c0cbfd283796ecacb8c3db51f54"
+  }
+}
