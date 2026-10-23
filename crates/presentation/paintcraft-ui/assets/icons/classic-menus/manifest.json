@@ -10,6 +10,10 @@
   ],
   "icons": [
     {
+      "name": "settings",
+      "file": "settings.svg"
+    },
+    {
       "name": "new",
       "file": "new.svg"
     },

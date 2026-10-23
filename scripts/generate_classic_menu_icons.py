@@ -2,6 +2,7 @@
 """Original tintable menu vectors following the supplied Classic UI references."""
 from pathlib import Path
 import json
+from math import cos, sin, radians
 
 OUT = Path(__file__).resolve().parents[1] / 'crates/presentation/paintcraft-ui/assets/icons/classic-menus'
 
@@ -24,7 +25,14 @@ glass = '<circle cx="10" cy="10" r="7"/>' + path('M15 15L22 22')
 selection_cells = [(x, y) for y in [3, 10, 17] for x in [3, 10, 17]]
 select_all = ''.join(rect(x, y, 4, 4, .5) for x, y in selection_cells)
 invert = ''.join(f'<rect x="{x}" y="{y}" width="4" height="4" rx=".5"' + (' fill="#fff"' if i % 2 == 0 else '') + '/>' for i, (x, y) in enumerate(selection_cells))
+gear_points = []
+for tooth in range(8):
+    for offset, radius in [(-22.5, 8), (-15, 8), (-10, 10), (10, 10), (15, 8)]:
+        angle = radians(tooth * 45 + offset)
+        gear_points.append(f'{12 + radius * cos(angle):.3f} {12 + radius * sin(angle):.3f}')
+gear = path('M' + 'L'.join(gear_points) + 'Z') + '<circle cx="12" cy="12" r="3.5"/>'
 icons = {
+    'settings': gear,
     'new': path('M5 2H14L20 8V22H5ZM14 2V8H20'),
     'open': path('M2 20V5H9L12 8H21V10M2 20H19L22 10H7Z'),
     'import-image': path('M11 4H21V21H3V12M3 17L9 11L15 17L18 14L21 17') + '<circle cx="17" cy="8" r="1.2"/>' + '<circle cx="5" cy="5" r="4"/>' + path('M5 2.5V7.5M3 5.5L5 7.5L7 5.5'),
