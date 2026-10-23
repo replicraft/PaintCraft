@@ -941,3 +941,20 @@ seven icon tests, the expanded GPU scene export and strict workspace Clippy pass
 Eight raw light/dark popup states are archived in [the shape paint record](validation/shape-paint-gpu-2026-10-23/validation.json).
 The menu generator now reproduces all 30 menu/control sources. Textured styles,
 additional shapes and full native/reference parity remain incomplete.
+
+The Classic brush gallery now follows the supplied close-up's proportions with
+a 320-point body, 56-point rows, 16-point labels and inset stroke illustrations.
+The popup stays bounded and scrolls to the Square brush extension below the nine
+reference rows. Oil artwork has distinct strands; broad/tapered bands use shared
+mesh vertices and feathered edges to remove per-segment seams. Brush ends are
+round. These are UI illustrations, not implemented media or document previews.
+Classic v11 primary Brush/Select controls now use original monochrome variants
+while retaining centered metrics, selected state, accessible names and actions.
+Colored tool sources remain available to other presentations. The gallery is
+shared Classic chrome; historical skin fidelity remains unqualified.
+All 168 normal GUI tests, seven icon tests, the expanded GPU gallery export and
+strict workspace Clippy pass. Wide/narrow repeated-layout cases verify every row,
+label/sample clearance, disabled media/one tooltip, reachable working tips and
+unchanged document/history. Raw light/dark comparisons and scrolled/selected tip
+states are in [the brush gallery record](validation/brush-gallery-gpu-2026-10-23/validation.json).
+Unavailable media, full reference parity and the remaining roadmap are still open.

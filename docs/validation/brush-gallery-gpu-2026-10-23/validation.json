@@ -1,0 +1,45 @@
+{
+  "source_commit": "1b39659e8ff2259458d595901a6b7016776a5349",
+  "assets_commit": "f24df6b",
+  "primary_controls_commit": "4bcf0e5",
+  "baseline": "Unchanged prior brush-gallery captures from the b62d2af shape-paint review export, copied before refreshing outputs.",
+  "references": [
+    "docs/temp/paint-references/photos/i11mage.png",
+    "docs/temp/paint-references/photos/image.png"
+  ],
+  "gui": {
+    "passed": 168,
+    "failed": 0,
+    "ignored": 19
+  },
+  "icons": {
+    "passed": 7,
+    "scope": "Existing source/shape/Image/cache gates pass with 31 monochrome menu/control sources. New vertical Brush variant remains independent of colored tool art; Select reuses the dashed rectangle menu variant."
+  },
+  "gpu": {
+    "passed": 1,
+    "test": "classic_dropdowns::render_classic_dropdowns_and_cursor_for_review",
+    "scope": "Fresh wgpu scenes in both themes; archived default gallery comparisons, scrolled Square extension and selected round/square tip states. Other dropdown/cursor scenes in the review test also render successfully."
+  },
+  "clippy": "workspace all-targets with -D warnings passed",
+  "generator": "All 31 menu/control SVGs and manifest regenerate byte for byte with scripts/generate_classic_menu_icons.py. Reference paths now include the full ribbon and brush-gallery close-up.",
+  "scope": "Classic gallery uses a 320-point body, 56-point rows, 16-point labels, inset samples and a bounded remaining-screen scroll region. Oil illustration has visible strands. Broad/tapered sample bands use shared mesh vertices and one-physical-pixel feathering to avoid internal segment seams; Brush illustration has round ends. These are deterministic UI decorations, not document brush implementations. V11 primary Brush/Select controls use original outline variants while preserving centered size, selected state, names and actions. Gallery is shared Classic presentation; historical skin fidelity remains unqualified. Studio/default colored icon helpers are unchanged.",
+  "regressions": "Wide light 1x/dark 2x and 360x360 dark 2x layouts check each row height, bounded visibility, font size and label/sample clearance through real scrolling. Unavailable media remain disabled with one tooltip; disabled Oil does not select a tool. Square and round remain reachable, close after acceptance, announce selected state and preserve document/history. Primary-control tests additionally check theme tint while preserving geometry and action routing.",
+  "limits": "Only round/square brush tips are implemented; eight other media remain disabled previews. No brush raster kernel, document sample behavior or performance claim was changed. Exact native stroke vocabulary, complete reference parity, historical skins, physical pen/text input and remaining roadmap milestones are incomplete. These are client GPU scenes, separate from the preceding native presentation baseline.",
+  "sha256": {
+    "after-dark-brushes-round-selected.png": "83a6f07fe4a2d40fa338d369868212ba481ac01c68b61817c115a94602b35485",
+    "after-dark-brushes-square-selected.png": "9c57735d4d003889e4e6f59d2a7eea652de08b64daa6cc4345a83338ae608f74",
+    "after-dark-brushes-square-visible.png": "e19f8157a342c83850c9231a50eba49a318b7ae03f7fcd1bc3a8a9bb18e6698e",
+    "after-dark-brushes.png": "99cd247522c93bc9f4fd82dc1f64decf38b52fce4f540263ba503fd5bf2b8c9c",
+    "after-light-brushes-round-selected.png": "09de0597a78565e9163ab2b65f0ef7af7bcfeb40106f51fadf0f98b6f14e931a",
+    "after-light-brushes-square-selected.png": "3c9457c48451c8e9b94f5ab0acadbbc56b80bed756ca7e2be2f6e0be79206cca",
+    "after-light-brushes-square-visible.png": "7d6e6767334107c43fe03d746db587ec7196cea79958a6c3dc1938a3a4f3a7ea",
+    "after-light-brushes.png": "aa3dc0a1d4be069d76f07dd1f0ad88e1080d5c59b1a7c84e7a5d204c606fcb4a",
+    "before-dark-brushes.png": "74a60e3d92673f5fcb24fd774258110d379ac89ee1b5e2ea6eef34faf921edd3",
+    "before-light-brushes.png": "554717e88800869f3916346e3bbc1b22477f517d57b370c1b0a75236e162fd49",
+    "clippy.log.gz": "f3fdc0157031247914b08a806f4f893e494d271c5f88dd723c5d898b43e0e51e",
+    "gpu.log.gz": "ff7b6d501a36c84499643a5b4b52f4a27982267401ecddcbb5d3eae181330391",
+    "gui.log.gz": "c52bb9cf2540ce21f771a6e68eaf41d1dcc908769e062af7a9a1d3404940c174",
+    "icons.log.gz": "b31a9fa995aeebf980781c4af2a4429bf56c41a265d357d76c6990ecfab33344"
+  }
+}

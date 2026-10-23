@@ -11,6 +11,13 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest Classic brush-gallery work aligns row/text/sample proportions with the
+close-up and removes seams from decorative stroke bands. V11 primary Brush/
+Select controls use outline glyphs. All 168 normal UI tests, seven icon tests,
+fresh gallery GPU states and strict workspace Clippy pass; see
+[the gallery record](validation/brush-gallery-gpu-2026-10-23/validation.json).
+Round/square tips retain working behavior; other media remain disabled previews.
+
 Latest Classic shape-paint dropdowns have monochrome trigger glyphs, contiguous
 40-point rows and consistent text/selection styling. All 167 normal UI tests,
 seven icon tests, fresh GPU popup captures and strict workspace Clippy pass; see
