@@ -1,0 +1,41 @@
+{
+  "source_commit": "e57e6a4c38b312d02d1ce865ba4686b985696153",
+  "reference": "docs/temp/paint-references/photos/mspaint-text-settings.png",
+  "changes": "Classic font family and size popup rows share left-aligned 16-point text, 40-point targets and resting scroll cues. Opening reveals the selected family through the virtualized list or the nearest point-size preset. The search/header and count footer retain measured space; searching resets the list to its top. Font size uses a joined 90x40-point field/arrow with complementary corners. Existing draft acceptance, selection and persistence remain host-owned.",
+  "gui": {
+    "passed": 181,
+    "failed": 0,
+    "ignored": 30,
+    "scope": "Full GUI suite. New light 1x/dark 2x desktop/compact tests check a selected family at index 900 of 1000, painted row clipping/insets/font size, a visible count footer, joined entry geometry, search reset, free size-list scrolling, Escape and unchanged custom 37-point size near the unselected 36-point preset. Existing virtualization, long-name truncation, preset adoption/persistence, no-match reporting and pending-text/typed-size cancellation pass. Before log reproduces an absent selected family on opening."
+  },
+  "gpu": {
+    "passed": 2,
+    "tests": [
+      "font_popup::export_text_dropdowns",
+      "font_text::render_font_text_for_review"
+    ],
+    "scope": "Eight deterministic thousand-family fixture dropdown captures across both themes and desktop/480x360 layouts; two actual-app Selawik text-preview captures are archived. The app exporter also captures pencil controls; those unrelated images are not included."
+  },
+  "clippy": "Strict workspace all-targets passed.",
+  "checks": "Formatting, whitespace and source file length checks passed.",
+  "limits": "Dropdown catalog captures use deterministic fixture family labels with bundled Selawik UI text, not native installed-font enumeration. Actual app text captures exercise the current Selawik preview/commit flow. This adds no shaping/rasterization/font-discovery capability and does not qualify complete Windows or historical text-toolbar fidelity, IME, physical accessibility or performance. Numeric DragValue resting text retains its existing alignment. T15 remains partial.",
+  "sha256": {
+    "after.log.gz": "28173b9516a9ae482367287eae141369bf0a803671b9a7ca4e3fd8d55c5de539",
+    "before.log.gz": "f5e39fd715a2122e0e06b0691f873ed33a8359bf288fe9676ce574628ada0e76",
+    "clippy.log.gz": "c5eb8ee7ce5a1e77c45311a9865ddc1ade56de9cd2adad7eb031a6b3bc78d11a",
+    "dark-app-text.png": "eff286589e971cb5a106f0d3931dcd4b9f5ad440bd108c25685b39745f11751e",
+    "dark-compact-family.png": "ff8c7fbe570260ea77a95344a96a74593180b4c351a5babef55b985367472fa3",
+    "dark-compact-size.png": "72155268cbad076d41ff75d299e9f3c7474ef19bb273d34acf559bfe13db1485",
+    "dark-desktop-family.png": "efc204682a12acb5b1e61b3277828025aff71b2bb7a94fbc57aa4050ff6acd11",
+    "dark-desktop-size.png": "8950c46a209b86224bc2c8cd5c2bcbe5fc590ff99a6c201679923c8a8d2ad1e6",
+    "gpu.log.gz": "c0d33a6018bd7c66ebce18f456932263db27bbe952a54989057c51f071e971fe",
+    "gui.log.gz": "db536f976d1adcce90b9a12cb979db58d6fc9a3cbc05acf88465dd8834000d55",
+    "host-gpu.log.gz": "7b2e01cce816d7f5e1e9d67a11dd7e8c7493e7ceb7e8e7abcb142696564ae6cb",
+    "host.log.gz": "96d719a836d819a0b14c3434f586b6fbee6c14f3a6f47ce35b1cb207fb2933e9",
+    "light-app-text.png": "7cc45a9380108b4aac1edf192b493cf064fc317d0c2875c1870e9dfb601fd3fb",
+    "light-compact-family.png": "be874ca2209f20e25077325e8ec3d63b04203778710e7e1ecc73a841edd52b06",
+    "light-compact-size.png": "de16b21d85c04503c66985b07cd7d3767474f7a4c1a4f487a5e3dd2de9535644",
+    "light-desktop-family.png": "76753727072f3d9a554b27e0bd0807d89ed0c4940b7ff5d679eb1c8b0fe0cf9e",
+    "light-desktop-size.png": "faebce379d961ed55a8c2def865d5a3b2535d4ae777983c4b76a2e1711aca2bd"
+  }
+}

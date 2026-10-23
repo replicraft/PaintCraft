@@ -11,6 +11,13 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest Classic text dropdown work reveals selected families/nearby sizes, aligns
+choice labels and joins the size field/arrow. The font-count footer has measured
+space. All 181 ordinary UI tests, fixture dropdown/real-app text GPU scenes and
+strict workspace Clippy pass; see
+[the text dropdown record](validation/text-dropdown-surfaces-gpu-2026-10-23/validation.json).
+Font discovery and text rasterization are unchanged; full fidelity remains partial.
+
 Latest Classic zoom popup work aligns percentage rows with the reference, keeps
 a resting scroll cue and reveals the nearest current preset when opening.
 All 180 ordinary UI tests, twelve light/dark GPU scenes and strict workspace
