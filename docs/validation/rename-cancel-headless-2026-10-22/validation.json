@@ -1,0 +1,28 @@
+{
+  "source_commit": "6fb3b5fc31d19d56c1901d39ac1f07e0c17fb042",
+  "mode": "Window-free egui and lint checks only; no native-window, desktop, file-dialog or rendered-preview launches.",
+  "gui": {
+    "passed": 156,
+    "failed": 0,
+    "ignored": 17
+  },
+  "focused_gui": {
+    "passed": 1,
+    "scope": "Classic and Studio, each at scale 1/light and scale 2/dark with repeated layout. Escape restores a real layer-name field without publishing, changing ticket/document semantics or cancelling unpublished canvas text. A later separate Escape cancels the canvas preview without publication. An ordinary Enter rename then publishes exactly once."
+  },
+  "regression_baseline": {
+    "source_commit": "7b3e04614efbf6feccdcbb1b94e557b6ca41f6d5",
+    "probe_from_commit": "6fb3b5fc31d19d56c1901d39ac1f07e0c17fb042",
+    "scope": "The unchanged cancellation prefix of the added regression; the baseline stops at its first failure before later acceptance checks.",
+    "result": "Before the fix, Escape renamed Layer 2 to Discard this rename instead of discarding the draft. The expected baseline failure is archived separately from current passing logs."
+  },
+  "clippy": "workspace all-targets with -D warnings passed",
+  "scope": "Layer-name fields use stable document/layer-scoped IDs, capture Escape while focused, restore the current committed name and release focus before the focus-loss commit path. Enter and normal focus-loss behavior retain host action routing and layer ownership.",
+  "limits": "Normal focused-field Escape is tested, not arbitrary native event coalescing or IME. Accepting a rename retains the existing command policy that resolves pending canvas text; the test separately cancels that preview before checking one ordinary rename publication. Retained editable text objects and native/rendered parity remain separate work.",
+  "sha256": {
+    "gui.log.gz": "35f80213fd6bbd808a5c5f63c7b16490f17eb6f5af78e418398ddcfe1a853c30",
+    "focused-gui.log.gz": "f29d22eea094fb4879aaeaa470ddeaf70451f5e0f58c1432aa7c3478a1c20857",
+    "regression-before.log.gz": "b0519876062c05b95a40c5be35254e95944eeea335fa045e02c0f57ee9949aff",
+    "clippy.log.gz": "0bc00be8567665f1b1a5e4605eaf575c270a2ec4fc43261acf9057de1bf534f8"
+  }
+}

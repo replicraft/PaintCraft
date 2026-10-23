@@ -701,3 +701,17 @@ cancellation, current zoom restoration and pending text/document/history
 preservation at scales 1/2 with repeated layout. Tab still applies a valid draft
 without a document edit. This qualifies normal focused-field Escape, not arbitrary
 native coalescing or IME. No application windows or rendered previews were launched.
+
+Escape now discards a staged layer-name edit instead of committing it through
+focus loss. The shared Classic/Studio field captures Escape, restores the current
+committed name and releases focus, preserving pending canvas text and publishing
+nothing. Normal Enter/focus-loss acceptance retains its existing layer-owner
+routing and pending-text resolution policy.
+All 156 window-free UI tests and strict workspace Clippy pass; see
+[the rename-cancellation record](validation/rename-cancel-headless-2026-10-22/validation.json).
+The cancellation regression failed before the fix and now passes in both
+frontends, both themes and scales 1/2 with repeated layout. A second Escape can
+then cancel the canvas preview without publication; an ordinary accepted rename
+still publishes once. Existing old-owner rename/undo checks pass. Native event
+coalescing, IME and rendered parity remain unqualified; no application windows or
+rendered previews were launched.
