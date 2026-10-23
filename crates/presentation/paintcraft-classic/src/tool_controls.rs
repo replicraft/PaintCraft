@@ -3,6 +3,8 @@ use egui::{Rect, Vec2, Widget};
 use paintcraft_tools::{Tool, ToolOptions};
 use paintcraft_ui::icons::Icon;
 
+mod slider;
+
 /// Only clamp the canvas to this inset when centering would cross the controls.
 /// Keep it stable across tools so brush/eraser changes never shift document pixels.
 pub const CANVAS_CLEARANCE: f32 = 144.0;
@@ -52,14 +54,8 @@ pub fn show(
                         } else {
                             &mut options.size
                         };
-                        let response = slider(
-                            ui,
-                            egui::Slider::new(size, 1..=64)
-                                .vertical()
-                                .show_value(false)
-                                .clamping(egui::SliderClamping::Edits),
-                            height,
-                        );
+                        let response =
+                            slider::show(ui, size, 1..=64, height, egui::SliderClamping::Edits);
                         response.widget_info(|| {
                             egui::WidgetInfo::labeled(
                                 egui::Role::Slider,
@@ -84,12 +80,12 @@ pub fn show(
                             header(ui, Icon::Opacity, "Brush opacity");
                             ui.add_space(6.0);
                             ui.spacing_mut().slider_width = height;
-                            let response = slider(
+                            let response = slider::show(
                                 ui,
-                                egui::Slider::new(&mut options.brush_opacity, 0..=100)
-                                    .vertical()
-                                    .show_value(false),
+                                &mut options.brush_opacity,
+                                0..=100,
                                 height,
+                                egui::SliderClamping::Always,
                             );
                             response.widget_info(|| {
                                 egui::WidgetInfo::labeled(
@@ -129,27 +125,6 @@ fn panel(ui: &mut egui::Ui, body: impl FnOnce(&mut egui::Ui)) {
             ui.set_width(36.0);
             ui.with_layout(egui::Layout::top_down(egui::Align::Center), body);
         });
-}
-
-fn slider(ui: &mut egui::Ui, slider: egui::Slider<'_>, height: f32) -> egui::Response {
-    ui.scope(|ui| {
-        let accent = ui.visuals().selection.stroke.color;
-        ui.visuals_mut().selection.bg_fill = accent;
-        ui.visuals_mut().widgets.inactive.bg_fill = if ui.visuals().dark_mode {
-            egui::Color32::from_gray(76)
-        } else {
-            egui::Color32::from_gray(224)
-        };
-        ui.visuals_mut().widgets.inactive.fg_stroke = egui::Stroke::new(1.5, accent);
-        ui.spacing_mut().slider_rail_height = 4.0;
-        ui.add_sized(
-            Vec2::new(20.0, height),
-            slider
-                .handle_shape(egui::style::HandleShape::Circle)
-                .trailing_fill(true),
-        )
-    })
-    .inner
 }
 
 fn header(ui: &mut egui::Ui, icon: Icon, label: &str) {
