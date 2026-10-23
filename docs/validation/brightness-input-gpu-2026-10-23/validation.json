@@ -1,0 +1,35 @@
+{
+  "source_commit": "3c3df524c028691485e3e57dd630ea8eb0a9ec25",
+  "problem": "The custom brightness control declared a slider role but did not process accessibility value requests or expose the full range metadata.",
+  "changes": "The existing egui Slider now owns pointer dragging, keyboard focus, range metadata and accessibility actions while its default paint is suppressed beneath the existing gradient/marker. Click-and-drag interaction preserves coalesced click handling; endpoint mapping follows egui circle geometry. Arrow presses are consumed after native processing to avoid repeated-layout duplicate steps. A focused thumb has an accent ring. Root dependencies and color-engine semantics are unchanged.",
+  "gui": {
+    "passed": 174,
+    "failed": 0,
+    "ignored": 24,
+    "scope": "Full final UI suite passes. A new 1x/2x single-versus-repeated-layout test sends accessibility values 0/1/0.5, checks range/value metadata, visible focus, staged editor state, equal one-arrow results across layouts, Cancel preference preservation and OK adoption without document/history changes. Existing coalesced pointer, endpoint retention, RGB/HSL and responsive dialog checks pass."
+  },
+  "gpu": {
+    "passed": 1,
+    "test": "classic_colors::render_classic_edit_colors_for_review",
+    "scope": "Ten fresh light/dark desktop/model-popup/compact captures, including focus after an accessibility-driven 0.5 brightness update. Existing rounded-corner/interior pixel checks pass."
+  },
+  "clippy": "Strict workspace all-targets passed.",
+  "checks": "Formatting, whitespace and source file length checks passed.",
+  "limits": "Accessibility evidence is synthetic egui AccessKit input and metadata; physical VoiceOver/Narrator behavior is not qualified. Native egui keyboard stepping replaces the former fixed manual increment, with consistency checked across layout passes. Full Windows/color-editor fidelity and the wider roadmap remain incomplete.",
+  "sha256": {
+    "clippy.log.gz": "012e342e0594e1b684c764ef6ad8ec40e6750ce137ed940e10a7d2633acd0168",
+    "dark-brightness-focus.png": "b272a313a826cf0d9b4a914aabbaa1e95a9198eaaef483a88422e66eae51e6d0",
+    "dark-compact-palette.png": "042416ded7a586dcb27b0f484d36b8741edd9260ff9457c62f3a40f9d033bc6d",
+    "dark-compact-picker.png": "50fe947f5ace1f7c0cad3c3f4514166654e5c72812ffa59a8a107dadd7205ad1",
+    "dark-desktop.png": "91d14b2c50429f25a0f6a7355d61f856bdea76769aeb70cc5dd8f1e5aa8311d6",
+    "dark-model-popup.png": "3be5111e8d986f46c4e04b7ba457143b1de6664e1a28879c5c6ad15e903c8313",
+    "gpu.log.gz": "ce9ac343c53b7c52fc30ab33395588b2dc0409a65c332201d3a7ef94b2820820",
+    "gui.log.gz": "fba267b2027863de353decfe9aaf3ad6486dd23288d22626ac52c771200cd477",
+    "light-brightness-focus.png": "440c3b472ebf23292e65ecd6ea3a69c1c438fa2f25b52d78b186be3a27818de2",
+    "light-compact-palette.png": "99ab7d34fd9e71c54909255457568a914e08b3f5d83f74cb76d61dc4378fe026",
+    "light-compact-picker.png": "2589c36219771d4a312078ce3f79d24e41fb1d44b893176035efa473413482d3",
+    "light-desktop.png": "8d7b086a62f1e4c855d852eb8f27aabe208e9263791ab754370db44d85eca0d6",
+    "light-model-popup.png": "41f8e478aebbca727197e1f601388060b6c61793518885b6debc395c6675c749",
+    "targeted.log.gz": "c45649849f2cd72a798963616ed6399aff519b7ef5db9280fd5d1a808ce7cf2e"
+  }
+}
