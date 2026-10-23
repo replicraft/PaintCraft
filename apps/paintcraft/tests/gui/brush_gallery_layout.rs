@@ -2,6 +2,155 @@ use super::*;
 use eframe::egui::{Role, accesskit::Toggled, epaint::Shape};
 use paintcraft::settings::{Appearance, ClassicVariant, Settings};
 
+fn row_visible(h: &Harness<App>, accessible: &str, label: &str) -> bool {
+    let rect = h.get_by_label(accessible).rect();
+    h.output().shapes.iter().any(|shape| {
+        matches!(&shape.shape, Shape::Text(text) if text.galley.job.text == label)
+            && shape.clip_rect.contains_rect(rect.shrink(0.5))
+    })
+}
+
+#[test]
+fn brush_gallery_reveals_its_selected_tip_only_when_opened() {
+    for (size, ppp, appearance) in [
+        (Vec2::new(1360.0, 900.0), 1.0, Appearance::Light),
+        (Vec2::new(1360.0, 900.0), 2.0, Appearance::Dark),
+        (Vec2::new(480.0, 360.0), 1.0, Appearance::Light),
+        (Vec2::new(480.0, 360.0), 2.0, Appearance::Dark),
+    ] {
+        let dir = scratch("brush-gallery-opening");
+        Settings {
+            appearance,
+            classic_variant: Some(ClassicVariant::V11),
+            ..Default::default()
+        }
+        .save(&dir)
+        .unwrap();
+        let mut h = harness_with(App::new(None).with_settings(dir.clone()), ppp, true);
+        h.set_size(size);
+        h.run();
+        h.get_by_role_and_label(Role::Button, "Brushes")
+            .scroll_to_me();
+        h.run();
+        let document = h.state().editor().document_snapshot();
+        let ticket = h.state().editor().history_view().ticket;
+        h.get_by_role_and_label(Role::Button, "Brushes").click();
+        h.run();
+        h.get_by_label("Square brush").scroll_to_me();
+        h.run();
+        h.get_by_label("Square brush").click();
+        h.run();
+        h.get_by_role_and_label(Role::Button, "Brushes").click();
+        h.run();
+        h.get_by_label("Round brush").scroll_to_me();
+        h.run();
+        assert!(row_visible(&h, "Round brush", "Brush"));
+        assert!(!row_visible(&h, "Square brush", "Square brush"));
+        h.key_press(Key::Escape);
+        h.run();
+        h.get_by_role_and_label(Role::Button, "Brushes").click();
+        h.run();
+        assert!(
+            row_visible(&h, "Square brush", "Square brush"),
+            "{size:?} / {ppp}: square={:?}, round={}, clips={:?}",
+            h.get_by_label("Square brush").rect(),
+            h.state().editor().options.round,
+            h.output()
+                .shapes
+                .iter()
+                .filter_map(|s| {
+                    matches!(&s.shape, Shape::Text(t) if t.galley.job.text=="Square brush")
+                        .then_some(s.clip_rect)
+                })
+                .collect::<Vec<_>>()
+        );
+        assert_eq!(
+            h.get_by_label("Square brush").accesskit_node().toggled(),
+            Some(Toggled::True)
+        );
+        let settled = h.get_by_label("Square brush").rect();
+        h.run_steps(12);
+        assert_eq!(h.get_by_label("Square brush").rect(), settled);
+        assert!(row_visible(&h, "Square brush", "Square brush"));
+        h.get_by_label("Round brush").scroll_to_me();
+        h.run();
+        assert!(row_visible(&h, "Round brush", "Brush"));
+        assert!(!row_visible(&h, "Square brush", "Square brush"));
+        h.key_press(Key::Escape);
+        h.run();
+        assert!(!h.state().editor().options.round);
+        assert!(h.state().editor().document().same_semantics(&document));
+        assert_eq!(h.state().editor().history_view().ticket, ticket);
+        drop(h);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+}
+
+#[test]
+#[ignore = "Explicit GPU Classic brush gallery opening review"]
+fn export_brush_gallery_opening() {
+    let output = std::env::temp_dir().join("paintcraft-brush-gallery-opening");
+    std::fs::create_dir_all(&output).unwrap();
+    for (appearance, theme) in [(Appearance::Light, "light"), (Appearance::Dark, "dark")] {
+        for (size, layout) in [
+            (Vec2::new(1360.0, 900.0), "desktop"),
+            (Vec2::new(480.0, 360.0), "compact"),
+        ] {
+            let dir = scratch("brush-opening-review");
+            Settings {
+                appearance,
+                classic_variant: Some(ClassicVariant::V11),
+                ..Default::default()
+            }
+            .save(&dir)
+            .unwrap();
+            let mut h = harness_with(App::new(None).with_settings(dir.clone()), 1.0, false);
+            h.set_size(size);
+            h.run();
+            h.get_by_role_and_label(Role::Button, "Brushes")
+                .scroll_to_me();
+            h.run();
+            let document = h.state().editor().document_snapshot();
+            let ticket = h.state().editor().history_view().ticket;
+            h.get_by_role_and_label(Role::Button, "Brushes").click();
+            h.run();
+            h.get_by_label("Square brush").scroll_to_me();
+            h.run();
+            h.get_by_label("Square brush").click();
+            h.run();
+            h.get_by_role_and_label(Role::Button, "Brushes").click();
+            h.run();
+            h.get_by_label("Round brush").scroll_to_me();
+            h.run();
+            h.key_press(Key::Escape);
+            h.run();
+            h.get_by_role_and_label(Role::Button, "Brushes").click();
+            h.run();
+            h.event(Event::PointerMoved(Pos2::new(3.0, 3.0)));
+            h.run();
+            assert!(row_visible(&h, "Square brush", "Square brush"));
+            h.render()
+                .unwrap()
+                .save(output.join(format!("{theme}-{layout}-selected.png")))
+                .unwrap();
+            h.get_by_label("Round brush").scroll_to_me();
+            h.run();
+            assert!(row_visible(&h, "Round brush", "Brush"));
+            h.render()
+                .unwrap()
+                .save(output.join(format!("{theme}-{layout}-scrolled.png")))
+                .unwrap();
+            h.key_press(Key::Escape);
+            h.run();
+            assert!(!h.state().editor().options.round);
+            assert!(h.state().editor().document().same_semantics(&document));
+            assert_eq!(h.state().editor().history_view().ticket, ticket);
+            drop(h);
+            std::fs::remove_dir_all(dir).unwrap();
+        }
+    }
+}
+
 #[test]
 fn brush_gallery_has_reference_sized_rows_and_reachable_truthful_choices() {
     for (size, ppp, appearance) in [

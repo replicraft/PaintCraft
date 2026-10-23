@@ -55,6 +55,8 @@ pub(super) fn show(
             }
             ui.spacing_mut().interact_size.y = 20.0;
             ui.spacing_mut().button_padding.y = 0.0;
+            let open_state = ui.make_persistent_id((label, "was-open"));
+            let was_open = ui.data(|data| data.get_temp::<bool>(open_state).unwrap_or(false));
             let arrow = ui
                 .push_id(label, |ui| {
                     egui::containers::menu::MenuButton::from_button(
@@ -68,13 +70,14 @@ pub(super) fn show(
                     )
                     .ui(ui, |ui| match tool {
                         Tool::Select => crate::selection_menu::show(ui, state, context, actions),
-                        Tool::Brush => crate::brush_gallery::gallery(ui, state, actions),
+                        Tool::Brush => crate::brush_gallery::gallery(ui, state, actions, !was_open),
                         _ => unreachable!(),
                     })
                     .0
                 })
                 .inner;
             let open = egui::Popup::is_id_open(ui.ctx(), egui::Popup::menu(&arrow).get_id());
+            ui.data_mut(|data| data.insert_temp(open_state, open));
             arrow.widget_info(|| {
                 egui::WidgetInfo::selected(egui::Role::Button, ui.is_enabled(), open, label)
             });
