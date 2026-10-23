@@ -11,6 +11,13 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest Classic desktop Shapes/Colors galleries use larger cells, glyphs and
+color controls while retaining compact dimensions below 1200 logical points.
+Captions align and Layers stays reachable through repeated resizing. All 169
+normal UI tests, eight light/dark desktop/compact GPU captures and strict
+workspace Clippy pass; see [the gallery density record](validation/gallery-density-gpu-2026-10-23/validation.json).
+Unavailable shape operations and full Windows parity remain open.
+
 Latest Classic v11 Tools use six independently cached outline SVGs and 40-point
 controls, with medium-width spacing that keeps Layers reachable. All 168 normal
 UI tests, eight SVG/cache tests, light/dark GPU scenes and strict workspace

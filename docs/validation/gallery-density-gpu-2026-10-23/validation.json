@@ -1,0 +1,36 @@
+{
+  "source_commit": "e78d5be9ccb0bf47204022357fa4d5e02b2d59d6",
+  "references": [
+    "docs/temp/paint-references/photos/image.png",
+    "docs/temp/paint-references/photos/im2age.png"
+  ],
+  "changes": "Classic v11 windows at least 1200 logical points wide use 28-point shape cells with 22-point glyphs and a 90-point scrolling viewport, 24-point swatches with six-point horizontal gaps, and a 40-point Edit colors target with 32-point artwork. A 108-point group content baseline aligns captions. Medium/small windows retain 24-point shape cells, 20-point swatches and the existing compact baseline. Hover rings track swatch size.",
+  "gui": {
+    "passed": 169,
+    "failed": 0,
+    "ignored": 20,
+    "scope": "New interaction check repeatedly resizes 1360 -> 1200 -> 1199 -> 1100 -> 1360 in light 1x and dark 2x with forced repeated layout. It checks shape/swatch target geometry, caption alignment, visible Layers and scrolling to the last shape row. Primary/secondary color selection, Rectangle routing, Layers opening/closing and Edit colors cancellation preserve document semantics and history."
+  },
+  "gpu": {
+    "passed": 1,
+    "test": "classic_shapes::export_gallery_density_for_review",
+    "scope": "Eight raw client captures: desktop 1360x900 and compact 1100x900, both themes, selected Rectangle/top shapes and lower shapes/named Red hover states."
+  },
+  "clippy": "Strict workspace all-targets passed.",
+  "checks": "Formatting, whitespace and source length checks passed.",
+  "limits": "UI proportions and responsive behavior only. Disabled shape previews remain disabled; no new shape semantics or performance claims. Native Windows parity, historical skins and the wider roadmap remain incomplete.",
+  "sha256": {
+    "clippy.log.gz": "2020f68750a2cc3307c633bd2b7afce065b785962e7ac81fef30f57abbdcc554",
+    "dark-compact-scrolled.png": "ea68af222b78a37ad5ba8dd5e6d0308a892d67182f1ef37c7d6317e5e3295ee1",
+    "dark-compact-shapes.png": "040218a047a45bdc0b160f51e41049aa1352b99bd6f144cffc9b863ab7850b30",
+    "dark-desktop-scrolled.png": "b61a4e62052f49d49cc94a887402657e70296c3e400fe60b6d3d2905a07f38a6",
+    "dark-desktop-shapes.png": "354b1e5c3a9b287c0fed82f66f32047cfcb67f3684742748492d1233e04cd4f9",
+    "gpu.log.gz": "244d89a9e5a65017e7358103bf4e667e4c2623870a053951201ea103ac364f89",
+    "gui.log.gz": "4b7bfaf1d6d249369c8cef3f77d25ba8bc0bb728bb00c7a2cd2f95168dd3e028",
+    "light-compact-scrolled.png": "538e12989decf3f2ef43b439ba0dbc44c45ea9bf3e3ae6f24db3d9f5e76687f5",
+    "light-compact-shapes.png": "195a186e96d338ffa857a5d86597f265400a3261d3541ea021c16e0881e40ba3",
+    "light-desktop-scrolled.png": "19da5ffbed139831ca6daaf3438d53907b8b5eaa835ec730de8f828362256d5e",
+    "light-desktop-shapes.png": "fc2fee358ede1a971320f1b6196ddd8b68276dd07e0775243a2fd5a0ab8dbe08",
+    "targeted.log.gz": "56ea02bb133396bbfd52462dee623c488834a9cf818e402a884a276969012c01"
+  }
+}
