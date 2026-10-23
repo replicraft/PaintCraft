@@ -1,0 +1,39 @@
+{
+  "source_commit": "cdaf89840b296c8c9781d4659aac2e0016dbed6f",
+  "changes": "Classic font search stages a keyboard candidate independently of the current font. Up/Down and Page Up/Down browse virtualized results and reveal the candidate; Enter applies and closes, Escape cancels. Search retains ordinary editing keys. A candidate outline and search accessibility description identify the pending choice. Navigation keys are suppressed during IME preedit/commit handling so TextEdit receives composition events without accepting a font or moving its composition cursor.",
+  "gui": {
+    "passed": 194,
+    "failed": 0,
+    "ignored": 37,
+    "scope": "Full GUI suite. Added desktop 1x/compact 2x repeated-layout tests cover a 1000-family fixture catalog, arrow/page navigation, candidate visibility/description, staged acceptance/cancellation, empty-result Enter and synthetic IME preedit/commit routing. An actual App test accepts Selawik through Enter, persists the font preference and preserves unpublished canvas text plus document/history semantics. Extended View menu alignment coverage, committed separately, includes Canvas size at desktop width."
+  },
+  "gpu": {
+    "passed": 1,
+    "test": "font_popup::export_text_dropdowns",
+    "scope": "16 component-level light/dark desktop/compact GPU captures use installed Selawik UI fonts and a deterministic 1000-name fixture catalog. Family/size lists, pending keyboard candidates and accepted toolbar labels are shown. This exporter does not render a complete App scene or establish fixture fonts as installed document fonts."
+  },
+  "checks": "Strict workspace all-target Clippy, formatting, source-length and whitespace checks passed.",
+  "limits": "Synthetic IME events and AccessKit description checks do not qualify native OS IME or screen-reader behavior. Full native Windows/historical fidelity, additional text interaction features and broader T15 acceptance remain incomplete. No text rasterizer or performance change.",
+  "sha256": {
+    "checks.log.gz": "f922c56ced3ec5b00e71d83ef53e6a507af5e86e67969dc74b50a73c3ba99c6e",
+    "clippy.log.gz": "108c138aebe827663e5ed745d53bdbfd126e3f3dceeb1cc072be127f9919964c",
+    "dark-compact-family.png": "29499a68ea8f195d26d9f05bbce49b63891155e825e2dafae5aea57d4f6326d9",
+    "dark-compact-keyboard-accepted.png": "3b25a2740a34a56a50106a0de754368b6ea107df156624fe4440e28817f52681",
+    "dark-compact-keyboard-candidate.png": "f18952f1b95c1a43d2c7928dc42709139fc1eafaa4d5536c860a1a78598035ce",
+    "dark-compact-size.png": "b531da9fa7dce2c4062ce275863bc64702bbca10c6611aa3fa3f4947b6584a37",
+    "dark-desktop-family.png": "0691be162e509681bd8bee8c5e0c4121b73523cf4d4580c023c249b87e485034",
+    "dark-desktop-keyboard-accepted.png": "af3dc3539932360eed1b2b0b21190c6657a9b7a4829c7517b7ca32ac44e05797",
+    "dark-desktop-keyboard-candidate.png": "8e5bbf0d4e0b58ac6f9e44d05ca4a5abfea67cec1910df3230c5f8c61a3f273c",
+    "dark-desktop-size.png": "39b2ea88f29f6e705af62ae163d70f757ef11db4d57f7f493c64a85b6701ffbf",
+    "gpu.log.gz": "8393c275b8acc7819cd1acb59fa9826abab598ade9ed395dfabe9811d60062bc",
+    "gui.log.gz": "5c449f5321ca470d13c2db1b6e65f42cc1f86f97d91ef8ee0547d1da25cf613d",
+    "light-compact-family.png": "68c5143b0c2ccbd601358a3698b254bffd4f5ebcf46d4184223cb45b988090cd",
+    "light-compact-keyboard-accepted.png": "bd14f93efe14fe057b0d759a008067eb2e502a37cbd11caddc4830054a59ebca",
+    "light-compact-keyboard-candidate.png": "050da620d8b98c2abc5073b51a03534eb8a991ebcdfccb36aed96f8ce6fc65c2",
+    "light-compact-size.png": "f33b5d79cba9a315ddfb1781862dfdbddeb1ea3bd536792d607e2430b92f3cfe",
+    "light-desktop-family.png": "6cef34ca24e787f67e26f09464b1d9950dc175c3a8159af3d631ad87a364d8cc",
+    "light-desktop-keyboard-accepted.png": "cc32ed436d749f3e591d9f94f1d7b1a6aafa8fbdffad1a7a889d724f9bc528b6",
+    "light-desktop-keyboard-candidate.png": "2ccbfb4e71f0201f42b9bcd7356b0d04ea63a0ee411cf7321e0eeb2324660854",
+    "light-desktop-size.png": "b5b6e25816fcf5c290a4f4c95d5eb152791a2ec1d86f537c0703aa2bf1af0ea5"
+  }
+}
