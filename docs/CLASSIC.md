@@ -674,3 +674,17 @@ narrow auto-hide regression also verifies activation after scrolling. Document
 semantics are unchanged; clipboard/platform previews remain disabled. Native
 AppKit/rendered parity remains unverified and no application windows or rendered
 previews were launched.
+
+Classic floating controls now use dedicated Stroke Size and Opacity SVG symbols
+instead of the paintbrush and blur-effect icons. Size headers identify the active
+tool through accessibility labels and a single tooltip; opacity has its own
+labelled header. These are original static UI illustrations, not stroke previews.
+The generator, manifest/gallery and asset registry now cover 91 SVGs in total
+(89 generated plus the two separate chrome assets).
+All 154 window-free UI tests, three CPU icon tests and strict workspace Clippy
+pass; see [the tool-symbol record](validation/tool-symbols-headless-2026-10-22/validation.json).
+Regeneration is byte-identical. Checks cover all six size-controlled tools plus
+brush opacity, 22-point headers and single tooltips in both themes/scales 1/2.
+Header clicks add no document/history/gesture changes; option editing still works
+and canvas layout stays fixed. Brush kernels and media coverage are unchanged.
+No application windows or rendered previews were launched.

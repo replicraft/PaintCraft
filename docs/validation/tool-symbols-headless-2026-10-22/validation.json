@@ -1,0 +1,36 @@
+{
+  "source_commit": "6c26ed7f2aa51a10964b8ab00fd5ebf1630b1853",
+  "asset_commit": "38d8de686faa9246a66920e53ef89abd85a12f34",
+  "references": [
+    "docs/temp/paint-references/photos/image.png",
+    "docs/temp/paint-references/photos/im1age.png"
+  ],
+  "mode": "Window-free egui, CPU SVG and lint checks only; no native-window, desktop, file-dialog or rendered-preview launches.",
+  "gui": {
+    "passed": 154,
+    "failed": 0,
+    "ignored": 17
+  },
+  "focused_gui": {
+    "passed": 1,
+    "scope": "Pencil/Brush/Eraser/Line/Rectangle/Ellipse size headers and brush opacity at scales 1/light and 2/dark with repeated layout. Headers have 22-point image bounds, tool-specific accessible names and one tooltip. Header clicks preserve document/history and gesture state; size and opacity values still update actual tool options. Canvas layout stays fixed across tool changes."
+  },
+  "icons": {
+    "passed": 3,
+    "failed": 0,
+    "ignored": 1,
+    "assets": 91,
+    "generated": 89,
+    "scope": "Every registered SVG parses and CPU-rasterizes with transparency at 24/64/128 pixels. Existing density and cache bounds pass. Generator rerun leaves SVGs, manifest and gallery byte-identical."
+  },
+  "clippy": "workspace all-targets with -D warnings passed",
+  "scope": "Dedicated original Stroke Size and Opacity SVG symbols replace unrelated brush/blur assets in Classic floating tool panels. Generator/manifest/gallery and asset documentation are updated. Header accessibility labels and tooltips identify the active size setting and brush opacity.",
+  "limits": "Symbols are original UI illustrations, not captured native artwork or live stroke previews. Brush kernels, gesture semantics, media availability and opacity policy are unchanged. Native/rendered parity and native latency remain unverified.",
+  "sha256": {
+    "gui.log.gz": "4c3016337d4510df6346d7e536278ac29db4633860ccaab5102fa00ea9b6a467",
+    "focused-gui.log.gz": "4a393c8703e2b82c86137f10fd2c134663ebe146a5086ea0419e7dd9672f437f",
+    "icons.log.gz": "5f4a51cc2146507845da61c5e27f4dbba02895e72bb56700df7dd98e61270295",
+    "generator.log.gz": "fe09adf5ddff8899f11b3614e49ff5e481f0ba621b214e8b5d1e38757aa065a8",
+    "clippy.log.gz": "cadd90c1220a4d8f0c7c623822cbc7cd40b6ecc37f2e57f5ad897d3cf1dc3755"
+  }
+}
