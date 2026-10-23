@@ -1,0 +1,33 @@
+{
+  "provenance": "Original PaintCraft outline tool vectors; not extracted native assets.",
+  "references": [
+    "docs/temp/paint-references/photos/image.png",
+    "docs/temp/paint-references/photos/mspaint-text-settings.png"
+  ],
+  "icons": [
+    {
+      "name": "pencil",
+      "file": "pencil.svg"
+    },
+    {
+      "name": "fill",
+      "file": "fill.svg"
+    },
+    {
+      "name": "text",
+      "file": "text.svg"
+    },
+    {
+      "name": "eraser",
+      "file": "eraser.svg"
+    },
+    {
+      "name": "eyedropper",
+      "file": "eyedropper.svg"
+    },
+    {
+      "name": "zoom-in",
+      "file": "zoom-in.svg"
+    }
+  ]
+}

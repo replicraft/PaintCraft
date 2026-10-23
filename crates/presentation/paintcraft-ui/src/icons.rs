@@ -4,6 +4,7 @@ mod assets;
 mod classic_image;
 mod classic_menus;
 mod classic_shapes;
+mod classic_tools;
 pub use assets::Icon;
 use egui::{Color32, ColorImage, Context, Rect, TextureHandle, TextureOptions};
 use std::{collections::VecDeque, sync::Arc};
@@ -16,6 +17,7 @@ enum Variant {
     Sheet,
     ClassicShape,
     ClassicMenu,
+    ClassicTool,
     ClassicImageLight,
     ClassicImageDark,
 }
@@ -38,6 +40,9 @@ fn rasterize_variant(icon: Icon, size: u32, variant: Variant) -> ColorImage {
         }
         Variant::ClassicMenu => {
             classic_menus::source(icon).expect("Classic menu icon must have an outline SVG")
+        }
+        Variant::ClassicTool => {
+            classic_tools::source(icon).expect("Classic tool must have an outline SVG")
         }
         Variant::ClassicImageLight | Variant::ClassicImageDark => {
             classic_image::source(icon, variant == Variant::ClassicImageDark)
@@ -140,6 +145,22 @@ pub fn classic_menu_image(
     egui::Image::new((texture.id(), egui::Vec2::splat(points))).tint(ink)
 }
 
+/// V11 Tools use their own glyphs rather than menu symbols or the colored sheet.
+pub fn classic_tool_image(
+    ctx: &Context,
+    icon: Icon,
+    points: f32,
+    ink: Color32,
+) -> egui::Image<'static> {
+    let texture = variant_texture(
+        ctx,
+        icon,
+        physical_size(points, ctx.pixels_per_point()),
+        Variant::ClassicTool,
+    );
+    egui::Image::new((texture.id(), egui::Vec2::splat(points))).tint(ink)
+}
+
 /// Image ribbon/transform art preserves blue accents in light and dark themes.
 pub fn classic_image(ctx: &Context, icon: Icon, points: f32, dark: bool) -> egui::Image<'static> {
     if classic_image::source(icon, dark).is_none() {
@@ -176,6 +197,39 @@ pub fn paint(painter: &egui::Painter, rect: Rect, icon: Icon) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn classic_tool_vectors_render_at_each_density_and_keep_independent_identity() {
+        let ctx = Context::default();
+        let tools: Vec<_> = Icon::ALL
+            .into_iter()
+            .filter(|icon| classic_tools::source(*icon).is_some())
+            .collect();
+        assert_eq!(tools.len(), 6);
+        for icon in tools {
+            for size in [24, 48, 96, 128] {
+                let image = rasterize_variant(icon, size, Variant::ClassicTool);
+                assert!(image.pixels.iter().any(|pixel| pixel.a() > 0));
+                assert!(image.pixels.iter().any(|pixel| pixel.a() == 0));
+                for pixel in image.pixels {
+                    let [r, g, b, a] = pixel.to_array();
+                    assert_eq!([r, g, b], [a; 3], "{} must accept theme tint", icon.name());
+                }
+            }
+            let tool = variant_texture(&ctx, icon, 48, Variant::ClassicTool);
+            assert_ne!(tool.id(), texture(&ctx, icon, 48).id());
+            if classic_menus::source(icon).is_some() {
+                assert_ne!(
+                    tool.id(),
+                    variant_texture(&ctx, icon, 48, Variant::ClassicMenu).id()
+                );
+            }
+            assert_eq!(
+                tool.id(),
+                variant_texture(&ctx, icon, 48, Variant::ClassicTool).id()
+            );
+        }
+    }
 
     #[test]
     fn every_sheet_icon_is_standalone_vector_and_renders_with_transparency_at_multiple_sizes() {
