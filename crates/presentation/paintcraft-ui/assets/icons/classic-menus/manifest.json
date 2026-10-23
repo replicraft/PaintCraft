@@ -117,6 +117,14 @@
     {
       "name": "resize",
       "file": "resize.svg"
+    },
+    {
+      "name": "pencil",
+      "file": "pencil.svg"
+    },
+    {
+      "name": "bucket",
+      "file": "bucket.svg"
     }
   ]
 }

@@ -54,7 +54,7 @@ Regenerate the outline sources with `python3 scripts/generate_classic_shape_icon
 These vectors are project-authored adaptations of the visible shape vocabulary,
 not extracted native assets or a claim of exact Windows rendering parity.
 
-Classic v11 menus additionally opt into 28 original tintable outline sources in
+Classic v11 menus and shape-paint triggers additionally opt into 30 original tintable outline sources in
 [classic-menus](classic-menus/manifest.json). Regenerate them with
 `python3 scripts/generate_classic_menu_icons.py`. The menu helper's default stays
 colorful; its Classic option preserves shared action metadata/gates and uses
@@ -67,7 +67,7 @@ Import image, Recent, Desktop background, Image properties and Thumbnail have
 dedicated semantic icon IDs and original monochrome artwork. Their default
 source is the same SVG as their Classic menu variant; they are not sheet
 adaptations. This brings the registry to 96 IDs, retaining all 91 prior sources,
-with 23 shape variants and 28 menu sources. The generated menu manifest owns
+with 23 shape variants and 30 menu/control sources. The generated menu manifest owns
 these five additional sources.
 
 Classic's Image ribbon and transform dropdowns use nine original glyphs with
@@ -78,3 +78,8 @@ Regenerate all 18 SVGs and their manifest with
 IDs; colored, shape, menu and Image light/dark textures have independent cache
 identities under the same bounds. They are original artwork following the
 supplied Image group, not extracted Windows assets or exact native glyphs.
+
+The Shape outline and Shape fill triggers use separate monochrome pen-over-box
+and bucket SVG variants for the existing Pencil/Bucket IDs. Colored tool art
+retains its original mapping. These dropdown glyphs render at an explicit
+22-point size and use the same variant-aware cache and theme tint as menu art.

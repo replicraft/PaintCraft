@@ -50,6 +50,8 @@ icons = {
     'pixel-grid': rect(3, 3, 18, 18) + path('M9 3V21M15 3V21M3 9H21M3 15H21'),
     'rulers': path('M2 2H7V17H22V22H2ZM4 6H7M4 10H7M4 14H7M11 17V20M15 17V20M19 17V20'),
     'resize': path('M15 3H21V9M21 3L14 10M3 15V21H9M3 21L10 14'),
+    'pencil': path('M14 4H3V21H20V12M8 15L18 5L21 8L11 18H8ZM17 6L20 9'),
+    'bucket': path('M4 10L11 3L19 11L12 18ZM8 6L15 13M10 2L21 13M4 14H2V22H16V20M20 15C24 19 24 22 20 22C16 22 16 19 20 15Z'),
 }
 OUT.mkdir(parents=True, exist_ok=True)
 for name, geometry in icons.items():
