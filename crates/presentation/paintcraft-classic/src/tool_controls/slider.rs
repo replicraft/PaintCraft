@@ -24,6 +24,19 @@ pub(super) fn show<Num: Numeric>(
                 .handle_shape(egui::style::HandleShape::Circle)
                 .trailing_fill(true),
         );
+        let (mut response, tap) = crate::slider_input::finish(ui, response, true);
+        if let Some(fraction) = tap {
+            let mapped = min + (max - min) * f64::from(fraction);
+            let next = Num::from_f64(if Num::INTEGRAL {
+                mapped.round()
+            } else {
+                mapped
+            });
+            if *value != next {
+                *value = next;
+                crate::slider_input::changed_tap(ui, &mut response);
+            }
+        }
         let fraction = ((value.to_f64() - min) / (max - min)).clamp(0.0, 1.0) as f32;
         crate::slider_thumb::paint(ui, &response, fraction, true);
         response

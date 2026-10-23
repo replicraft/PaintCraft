@@ -20,6 +20,7 @@ mod ribbon;
 mod selection_menu;
 mod shapes;
 pub mod skin_picker;
+mod slider_input;
 mod slider_thumb;
 #[derive(Debug, Default)]
 pub struct Workspace {

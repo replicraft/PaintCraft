@@ -292,3 +292,6 @@ mod menu_density;
 
 #[path = "gui/brush_gallery_layout.rs"]
 mod brush_gallery_layout;
+
+#[path = "gui/slider_input.rs"]
+mod slider_input;

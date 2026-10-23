@@ -68,25 +68,12 @@ pub(super) fn brightness(ui: &mut egui::Ui, editor: &mut ColorEditor, height: f3
                     .handle_shape(egui::style::HandleShape::Circle),
             )
         })
-        .inner
-        .interact(egui::Sense::click_and_drag());
+        .inner;
+    let (response, tap) = crate::slider_input::finish(ui, response, true);
     let rect = response.rect;
     let travel = rect.y_range().shrink(rect.width() / 2.5);
-    // Slider's drag sense alone does not report coalesced press/release clicks.
-    if response.clicked()
-        && let Some(point) = response.interact_pointer_pos()
-    {
-        editor.hsv.v = 1.0 - ((point.y - travel.min) / travel.span()).clamp(0.0, 1.0);
-        response.request_focus();
-    }
-    // egui reads arrow presses without consuming them. Do that after its first
-    // handling so discarded layout passes cannot apply the same step twice.
-    if response.has_focus() {
-        ui.input_mut(|input| {
-            let modifiers = input.modifiers;
-            input.consume_key(modifiers, egui::Key::ArrowUp);
-            input.consume_key(modifiers, egui::Key::ArrowDown);
-        });
+    if let Some(fraction) = tap {
+        editor.hsv.v = fraction;
     }
     if editor.hsv.v != previous {
         editor.set_hsv();

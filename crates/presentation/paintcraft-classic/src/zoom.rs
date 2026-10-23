@@ -67,6 +67,14 @@ pub fn zoom_controls(ui: &mut egui::Ui, context: Context, state_id: egui::Id) ->
                                 .clamping(egui::SliderClamping::Edits)
                                 .handle_shape(egui::style::HandleShape::Circle),
                         );
+                        let (mut response, tap) = crate::slider_input::finish(ui, response, false);
+                        if let Some(fraction) = tap {
+                            let next = (12.5 * (1000.0_f32 / 12.5).powf(fraction) * 100.0).round();
+                            if (zoom * 100.0).round() != next {
+                                zoom = next / 100.0;
+                                crate::slider_input::changed_tap(ui, &mut response);
+                            }
+                        }
                         let fraction =
                             (zoom.clamp(12.5, 1000.0) / 12.5).ln() / (1000.0_f32 / 12.5).ln();
                         crate::slider_thumb::paint(ui, &response, fraction, false);
