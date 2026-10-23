@@ -657,3 +657,20 @@ placement and exact staged hex preservation across model switches. Cancel keeps
 active color, raw preferences and document/history unchanged. The reference shows
 the closed control; open-menu/native color parity remains unqualified. No
 application windows or rendered previews were launched.
+
+V11 File/Edit/View menus now use 40-point rows and 22-point icons, including
+the reference Zoom entry. Shared command rendering accepts frontend icon metrics
+while retaining labels, shortcuts, enabled gates and checkmarks; its default size
+remains unchanged for other callers. Edit now scrolls to keep lower commands
+reachable on short displays. Classic submenu anchors are clipped to visible
+entry bounds, preventing a scrolled-off Zoom entry from opening under a stationary
+pointer. Escape/Left dismiss a child without closing its parent, with deliberate
+keyboard/click or pointer movement required before hover reopens it.
+All 153 window-free UI tests, six shared-action tests and strict workspace Clippy
+pass; see [the menu-row record](validation/menu-rows-headless-2026-10-22/validation.json).
+Checks inspect actual icon shapes/row sizes, lower-command reachability, submenu
+bounds and keyboard navigation in light/dark at scales 1/2 down to 360x360. The
+narrow auto-hide regression also verifies activation after scrolling. Document
+semantics are unchanged; clipboard/platform previews remain disabled. Native
+AppKit/rendered parity remains unverified and no application windows or rendered
+previews were launched.

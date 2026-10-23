@@ -1,0 +1,31 @@
+{
+  "source_commit": "ce988306f021d8845aab80a391a83e410f3bd1ee",
+  "references": [
+    "docs/temp/paint-references/photos/im1age.png",
+    "docs/temp/paint-references/photos/imag1e.png",
+    "docs/temp/paint-references/photos/ima2ge.png"
+  ],
+  "mode": "Window-free egui, unit and lint checks only; no native-window, desktop, file-dialog or rendered-preview launches.",
+  "gui": {
+    "passed": 153,
+    "failed": 0,
+    "ignored": 17
+  },
+  "focused_gui": {
+    "passed": 1,
+    "scope": "Actual File/Edit/View menus at 1360x900 scale 1 light, 700x500 scale 2 dark and 360x360 scale 2 light, with repeated layout. Checks inspect 40-point rows and actual 22-point image shapes, reachable Exit/Clear Canvas and bounded Zoom submenu rows. Keyboard Right enters Zoom; Escape dismisses the child before returning to its parent, and Left navigation is exercised. Document/history stay unchanged."
+  },
+  "shared_actions": {
+    "passed": 6,
+    "failed": 0
+  },
+  "clippy": "workspace all-targets with -D warnings passed",
+  "scope": "V11 File/Edit/View menu rows now use 40-point height and 22-point icons, including the Zoom entry. A shared presentation helper accepts icon size while retaining common labels, shortcuts, gates and checkmarks; its default remains 16 points. Edit now scrolls to retain lower commands. Classic submenu hover anchors are clipped to visible entry bounds, so scrolling does not activate an off-screen Zoom entry. Explicit keyboard dismissal keeps a stationary pointer from reopening the dismissed child until pointer movement or deliberate keyboard/click entry. The compact-chrome regression verifies scrolling and actual auto-hide activation.",
+  "limits": "This covers egui menu presentation and interaction, not native AppKit menu appearance or rendered reference parity. Disabled clipboard/platform entries remain previews. Historical skins and Studio retain their existing metrics through the shared default helper. No new editing operation is implemented.",
+  "sha256": {
+    "gui.log.gz": "bb4aec6aff2ae24fd96342870cd299b71937db2df6a146115a27c186eb31c172",
+    "focused-gui.log.gz": "d75f4586caf08211093153d2aba9d2c4f2459a1359fc844cce59991b0169797b",
+    "actions.log.gz": "74a0cc28d5213d3faf4beae0041e8139db7b55877b5db64465ec1b7365615a1b",
+    "clippy.log.gz": "0183ca6df0ef393bcc1323659e1f74fff12fd2863195116d2d9fefd52a0b1d26"
+  }
+}
