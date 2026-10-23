@@ -11,6 +11,13 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest Classic form work makes radio/checkbox boundaries visible in Settings,
+canvas-default choices and the text toolbar. Scoped native-shape checks cover
+contrast, feedback and input without changing chrome or Studio styling. All 196
+ordinary GUI tests, 16 actual-App GPU scenes and strict workspace Clippy pass; see
+[the form boundary record](validation/classic-form-boundaries-gpu-2026-10-23/validation.json).
+Full accessibility/native fidelity and broader T15 acceptance remain partial.
+
 Latest Classic Settings work aligns dialog typography and targets, puts a cancelling
 Close action at the upper right, and gives sidebar icons/labels consistent leading
 alignment and neutral selected surfaces. All 195 ordinary GUI tests, 16 actual-App

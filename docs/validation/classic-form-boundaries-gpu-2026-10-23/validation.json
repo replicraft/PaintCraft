@@ -1,0 +1,40 @@
+{
+  "source_commit": "b506efad48b79a0fdc66b4545ef23d78d36ed9fe",
+  "changes": "A scoped Classic form style supplies visible idle/hover/focus/pressed borders and neutral fills in Settings content, canvas dimension/default content, and the text-toolbar Background fill checkbox. Existing native egui widgets retain input/value/accessibility behavior. Application chrome, modal actions and Studio retain their styles.",
+  "gui": {
+    "passed": 196,
+    "failed": 0,
+    "ignored": 39,
+    "scope": "Full GUI suite. New light 1x/dark 2x repeated-layout checks inspect native circle/rectangle shapes, flatten nested frame shapes to locate actual opaque surrounding surfaces, and require a visible opaque outline with at least 3:1 contrast against both fill and surrounding card. Idle, hover, pressed and focused states, distinct feedback, mouse/Space toggles, Settings/Canvas cancellation, preference restoration, document/history preservation and unchanged global widget styling are covered. The before log records the missing idle Use system setting radio outline."
+  },
+  "gpu": {
+    "passed": 1,
+    "test": "form_controls::export_classic_form_boundaries",
+    "scope": "16 actual-App light/dark desktop/compact GPU captures show Settings appearance radios, the checked staged text preference, canvas startup choices and the checked text-toolbar background preference. The exporter restores preferences and preserves document/history. Font counts are asynchronous snapshots."
+  },
+  "checks": "Strict workspace all-target Clippy, formatting, source-length and whitespace checks passed.",
+  "limits": "The 3:1 test is a scoped UI boundary check, not a full accessibility certification or native screen-reader qualification. Complete Windows/historical fidelity, additional UI details and broader T15 acceptance remain incomplete. Prototype preferences remain explicit. No editing-engine, text-rasterizer or performance change.",
+  "sha256": {
+    "after.log.gz": "34aaa891592394ab1b9bf6867c19bdefcdc550bb9d911257f9520bfb48794b29",
+    "before.log.gz": "3bbdfa2dd7bc396317748fe2d8a2f25e9b3b5f4162c7b9f9087c5cd58b77dc70",
+    "clippy.log.gz": "86293af0f5b77830ee8de4cd8e05c3d93c2dd8df9f1bf11c1fd5ee5311fd6742",
+    "dark-compact-appearance.png": "eedd4877c37b7be819d87ceb1307e668349c2617f4fd76d7571bf0768c5d4264",
+    "dark-compact-settings-checked.png": "a2dcda5f35daa517284893ba8c44a4d13ef2b88c7c73a58f7ef09cd857750f1f",
+    "dark-compact-startup-policy.png": "ec500dbf92b73c5c3f4e2aaf77709e5cb807276a245e3204e2252feca2ebc884",
+    "dark-compact-text-checked.png": "f6cfe49429f5f3f437c471c72739db4ebf60d5938d48a2d5da71cd6570aaf444",
+    "dark-desktop-appearance.png": "48352a9effe90a33f8fc468f929ab15863c738034fc909f9a944b4795749049a",
+    "dark-desktop-settings-checked.png": "284f112d793b88e1c7905bf4e132b67d463658b4373ac4ab13a5c51c8dcacc05",
+    "dark-desktop-startup-policy.png": "ab2bab7acd67b900aa4d033a92668c12498f2ab68da2d2a09856142d29c5999f",
+    "dark-desktop-text-checked.png": "8af711a140e39effbebf38725d5d8d800fb7edcb376a0968aa71c3c09766dd13",
+    "gpu.log.gz": "a2234e734fce8a883d3e59fb21fed21375f49cf99574b82932153a1da6fb4461",
+    "gui.log.gz": "ee66146ab000e4ef37ac0d80018219ce274410a4b19158a805efce0453b0ec9c",
+    "light-compact-appearance.png": "2947140de7e7a770498aab287d70a7757386405ac3ac391b6357e8a8d92fbf0c",
+    "light-compact-settings-checked.png": "cc5d8d2b09d7e42152e2987a883f6d728cd889715075793c00c502c823e47847",
+    "light-compact-startup-policy.png": "ec32a3e78e9c4c81c919b99e921adc7472c4d8e6e9d8b3fe3b393935d6f7e723",
+    "light-compact-text-checked.png": "713cd14a0d05e44351ee6ea4672a9d0b84b01e107cd5a5866dcaadd6fa2cc182",
+    "light-desktop-appearance.png": "add835fc4a4c28374d83e6a23aa76ba79ce5c2f8d9e53533fa270c0a905e7920",
+    "light-desktop-settings-checked.png": "927502919dd6d7a6aeda5e0d65263d96c5d967d7d493e91e5e94173d3278944f",
+    "light-desktop-startup-policy.png": "42a98d8eaadd31f88bcb0be3452483f6e0cf597154049b153ec68d08ec039ba5",
+    "light-desktop-text-checked.png": "d910d9825fa322c118f324564e77910e1dc975e4f7e22c597b463bcd733bda2f"
+  }
+}
