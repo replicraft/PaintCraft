@@ -11,6 +11,12 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest Classic popup work shares stable screen-relative bounds across scrolling
+menus, reserves the main headings for menu switching and exposes overflow with a
+resting scrollbar. All 191 ordinary GUI tests, 24 light/dark compact GPU scenes and
+strict workspace Clippy pass; see [the compact popup record](validation/compact-popup-stability-gpu-2026-10-23/validation.json).
+Full native fidelity and broader T15 acceptance remain partial.
+
 Latest Classic brush-gallery work reveals the selected preset on opening, keeps
 manual scrolling free, and fixes a shrinking popup on compact displays. A thin
 resting scrollbar exposes overflow. All 190 ordinary GUI tests, eight GPU scenes

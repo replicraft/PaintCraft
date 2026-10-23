@@ -1,0 +1,50 @@
+{
+  "source_commit": "44b7d11828fc23f4bfc05d39bc8afecaed4c920a",
+  "changes": "Classic File/Edit/View, Selection, Rotate/Flip and brush-gallery scrolling share a stable screen-relative popup height and thin resting scrollbar cue. The limit reserves the 32/40-point main menu row plus margins/frame clearance, keeping headings reachable for menu switching. It no longer depends on a popup cursor that moves while egui positions the area.",
+  "gui": {
+    "passed": 191,
+    "failed": 0,
+    "ignored": 37,
+    "scope": "Full GUI suite. Added light 1x 480x360 and dark 2x 480x260 repeated-layout checks scroll between upper/lower entries of six menus, verify full row clipping bounds and unchanged coordinates over 12 additional frames, and preserve documents/history/settings. Before log reproduces moving Selection popup bounds. Existing menu switching, off-screen Zoom hover isolation, keyboard submenu navigation, brush reopening and disabled entries pass."
+  },
+  "gpu": {
+    "passed": 1,
+    "test": "popup_stability::export_compact_popup_bounds",
+    "scope": "24 actual-app 480x260 light/dark GPU captures show upper/lower scroll positions in File, Edit, View, Selection, Rotate and Flip. Reviewed the exposed main menu headings, visible lower entries and overflow cues."
+  },
+  "checks": "Strict workspace all-target Clippy, formatting, source-length and whitespace checks passed.",
+  "limits": "Full native Windows/historical fidelity, OS accessibility and unsupported editing operations remain incomplete. No editing-engine or performance change. T15 remains partial.",
+  "sha256": {
+    "after.log.gz": "333a682f377a2d0ffac0baa5b19907a76b5b244650c5c7da21f4d921b8835898",
+    "before.log.gz": "b56b48076aee6369fdfa6fe887bce61027381419ebece03c9f5985bb41f2bcde",
+    "clippy.log.gz": "a4a905703988d4756bdcecff9a8c32a987f8f962fecee6f0af6f7bd4ad35dfb5",
+    "dark-edit-bottom.png": "cee0dff92966e5889c50f3c007fc606d4e1b5c1f6395dfd3db8902575a64f835",
+    "dark-edit-top.png": "960112c80ba3362ac269fe79399096f44bfc9534624fdf05c3710e274ab23cc5",
+    "dark-file-bottom.png": "7cc60701abe19ba6dc0fce460e898e3e7f7cb4a28c73eef070590607fdc91edc",
+    "dark-file-top.png": "2cc43fcca5ad360e8201cd8497594b8d6c9ee054ac2b38e1d6ed66a941fdaef9",
+    "dark-flip-bottom.png": "4728ba0c54e4a8c64fb0c16acd0adbe5d16798df227258d2f0f3e70746b4fbe4",
+    "dark-flip-top.png": "4728ba0c54e4a8c64fb0c16acd0adbe5d16798df227258d2f0f3e70746b4fbe4",
+    "dark-rotate-bottom.png": "ae6ef96cdc8d72163d54d59d8ee761a2a89cf9e7684390ebdaffdd3284a090a5",
+    "dark-rotate-top.png": "ae6ef96cdc8d72163d54d59d8ee761a2a89cf9e7684390ebdaffdd3284a090a5",
+    "dark-selection-options-bottom.png": "eb7efe1b67a5342b8da94de495429911f9d703e233b5b314ca92ad22815cdee3",
+    "dark-selection-options-top.png": "ca27334103bc0dc629435ffb222b456bf326286e92670aec7e74802f171a5def",
+    "dark-view-bottom.png": "e62b247baca965d7103717e13461bede0423c36d974e45a9d0944f87e240df5c",
+    "dark-view-top.png": "b0092918ce4f1ff8d81c8a0be3f22d44f997435841e5878567632b5deeb93dea",
+    "gpu.log.gz": "4dee36e2374c8462f18f42c418bd04f0c9e5fd66fda0d4bad4a0020f9131d2b1",
+    "gui.log.gz": "08f4b3807f6ca5ca62644efe007f3ba52017f906a4d49685817710ae5ecd2cfd",
+    "light-edit-bottom.png": "fca1afd64209c94d65473ff268c809a7302fbd8d7755a244ab377b6bbb4dc34b",
+    "light-edit-top.png": "28afb90e5657eb9a617536fb640262817d31458d6dc1e303e534d46306fd97bd",
+    "light-file-bottom.png": "9430a673a7fe68ed226e420bae1ba651341d4baabc94fb03cb3f18300d933ea2",
+    "light-file-top.png": "8381a8c8d3f61af31ebc56673b0107db1e0230bfc851e2d790da97b51c730696",
+    "light-flip-bottom.png": "addd63c647de784194943a27ede8848499e47dce21531d73ca8106f0f694e6b1",
+    "light-flip-top.png": "addd63c647de784194943a27ede8848499e47dce21531d73ca8106f0f694e6b1",
+    "light-rotate-bottom.png": "5e568e1748256c766a7b452acf63daae3597b79f7bc8e53f1292f07eab0fe46e",
+    "light-rotate-top.png": "5e568e1748256c766a7b452acf63daae3597b79f7bc8e53f1292f07eab0fe46e",
+    "light-selection-options-bottom.png": "ab9517b030fdffe512a64ae099e03cdbd9ec8b9818f652990cd026a4c1595eac",
+    "light-selection-options-top.png": "493c02f0a3e0da6c93ed9d5c3032d67d9f63e297d1eb208224e5c6fc600ae0a0",
+    "light-view-bottom.png": "cd90f6e5008b99b8184d7ed4276aed4409238e45c9444fa479d2b437a60bf066",
+    "light-view-top.png": "0448bafcece8415e700f1937e9c381527c514395e2981fc67ad7585227498481",
+    "menu-rows.log.gz": "71b8dcc01c31463d8cc50e13d50fd952df9f3981ee44e2ca3ab305adc7c149ff",
+    "top-actions.log.gz": "a40fda5b78ccc798f92b504c2b6f055a0e8540a6a5b65e8829ac082752d204d8"
+  }
+}
