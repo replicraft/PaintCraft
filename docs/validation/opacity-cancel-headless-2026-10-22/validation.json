@@ -1,0 +1,28 @@
+{
+  "source_commit": "20c150b2935b93ce1e5448d3a9260bc88ebe03f9",
+  "mode": "Window-free egui and lint checks only; no native-window, desktop, file-dialog or rendered-preview launches.",
+  "gui": {
+    "passed": 157,
+    "failed": 0,
+    "ignored": 17
+  },
+  "focused_gui": {
+    "passed": 1,
+    "scope": "Classic and Studio, each at scale 1/light and scale 2/dark with repeated layout. Escape discards typed opacity without changing document semantics, history ticket or pending canvas text. A later separate Escape cancels canvas text. Enter publishes exactly once and Undo restores document semantics. Pointer dragging leaves committed opacity unchanged until release, which publishes once."
+  },
+  "regression_baseline": {
+    "source_commit": "a137709847d8ff724a20fb04ebbbb11329bdae32",
+    "probe_from_commit": "20c150b2935b93ce1e5448d3a9260bc88ebe03f9",
+    "scope": "The unchanged cancellation prefix of the regression; baseline stops before the later acceptance and drag checks.",
+    "result": "Before the fix, Escape committed the typed opacity 72 instead of preserving 255. The expected baseline failure is archived separately from current passing logs."
+  },
+  "clippy": "workspace all-targets with -D warnings passed",
+  "scope": "Typed opacity is staged until acceptance; focused Escape captures cancellation across the entire frame so repeated layout cannot publish the numeric widget private edit buffer. Existing pointer-release publication remains.",
+  "limits": "Normal focused-field Escape is tested, not arbitrary native event coalescing or IME. Accepting a property edit retains pending-text resolution policy; the test separately cancels canvas text before verifying one ordinary property publication. Native appearance and complete reference fidelity remain unqualified.",
+  "sha256": {
+    "gui.log.gz": "e443c3bddf59a1c1a9d8d5abe5b9ac2b515787aacc2a1c1525c8a3786c2057d1",
+    "focused-gui.log.gz": "846fad2fa9ee7636412a649729b99683344996194f0406c0a98812115115d655",
+    "regression-before.log.gz": "000fd64f8cf480035f1ea2c7c037248ea7e0567f9b0ddcfd95da85d16bd68927",
+    "clippy.log.gz": "539bf2ef242421bf8325e96b414a515e776f3b1689b762ec10c8d94442ff2b71"
+  }
+}

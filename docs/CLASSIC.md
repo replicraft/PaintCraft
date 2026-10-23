@@ -715,3 +715,15 @@ then cancel the canvas preview without publication; an ordinary accepted rename
 still publishes once. Existing old-owner rename/undo checks pass. Native event
 coalescing, IME and rendered parity remain unqualified; no application windows or
 rendered previews were launched.
+
+Escape now discards typed layer-opacity drafts in Classic and Studio without
+publishing or cancelling pending canvas text. Numeric edits remain staged until
+acceptance; cancellation persists through repeated layout so a widget's private
+text buffer cannot publish the discarded value on a later pass. Pointer drags
+retain one publication on release.
+All 157 window-free UI tests and strict workspace Clippy pass; see
+[the opacity-cancellation record](validation/opacity-cancel-headless-2026-10-22/validation.json).
+The cancellation prefix failed before the fix. The regression covers both
+frontends, light/dark at scales 1/2, pending text/history preservation, accepted
+Enter, Undo and release-only pointer publication. Native event coalescing, IME
+and rendered parity remain unqualified; no windows or rendered previews were launched.
