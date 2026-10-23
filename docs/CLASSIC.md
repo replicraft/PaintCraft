@@ -752,3 +752,22 @@ preference. A separate narrow-toolbar regression verifies existing horizontal
 wheel scrolling to Background fill, isolated toggling and scrolling back to the
 font selector. Native coalescing, IME and visual/rasterization parity remain
 unqualified; no windows or rendered previews were launched.
+
+Classic layer rows now show real committed-content previews over a transparency
+checker, positioned at the leading edge without moving name/opacity fields.
+A single CPU worker uses the display compositor's box filtering on an immutable
+selected-layer snapshot, with at most 64x64 output samples and aspect-correct
+32-point presentation. Hidden/zero-opacity layers keep identifiable previews.
+Only visible images are retained (up to 64), source changes reject stale results,
+and panel close/interface switch cancel work and evict images. Shared admission
+retains declared working/source charges through completion and image charges
+through eviction; this does not qualify physical GPU/RSS usage or native latency.
+All 161 window-free UI tests, four thumbnail-renderer tests, two worker tests,
+five existing display-compositor regressions and strict workspace Clippy pass;
+see [the layer-thumbnail record](validation/layer-thumbnails-headless-2026-10-22/validation.json).
+The UI regression observes real image meshes through paint/Undo while preserving
+property geometry and document/history ownership. Pixel checks cover clipping,
+source alpha and partial edges; worker checks cover stale completions, portrait
+aspect changes and reservation release. Studio/document-tab previews, the
+separate View Thumbnail window, live tool previews and native visual parity
+remain open. No windows, GPU tests or rendered previews were launched.

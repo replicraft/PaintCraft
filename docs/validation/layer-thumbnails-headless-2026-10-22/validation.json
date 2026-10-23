@@ -1,0 +1,43 @@
+{
+  "source_commit": "792dd9e7e89423f6b41164de343cc5483b06d289",
+  "renderer_commit": "3a3f8b8d9d1c321078974921d7515c6f52b72c77",
+  "mode": "Window-free egui, CPU renderer, background worker and lint checks only; no native-window, file-dialog, GPU execution or rendered-preview launches.",
+  "gui": {
+    "passed": 161,
+    "failed": 0,
+    "ignored": 17
+  },
+  "focused_gui": {
+    "passed": 1,
+    "scope": "Classic light at scale 1 and dark at scale 2 with repeated layout. Actual image meshes appear at the leading edge of layer rows and change texture identities after paint and Undo. Preview work preserves document semantics, publication/history state and property geometry; only paint and Undo publish."
+  },
+  "worker": {
+    "passed": 2,
+    "scope": "Real runtime worker completion creates bounded textures with retained declared image charges. State changes evict old cached images, including a landscape-to-portrait transition. Closing/hiding releases image charges. A gated stale worker retains its source-work reservation through cancellation until completion consumption; it cannot publish and does not prevent a new-state preview."
+  },
+  "renderer": {
+    "passed": 4,
+    "scope": "Isolated content preserves source alpha while ignoring layer visibility/opacity; a hand-calculated clipped offset example proves exclusion of other layers and partial-edge alpha filtering. A 1000000x1000000 uniform canvas produces bounded output with zero native pixels materialized. Invalid size/cancellation return errors without partial results."
+  },
+  "display_regressions": {
+    "passed": 5,
+    "scope": "Existing CPU display compositor independent composite/filter oracles, unaligned reductions, separate preview validity, sparse large-canvas work and cancellation/retry."
+  },
+  "clippy": "workspace all-targets with -D warnings passed",
+  "policy": {
+    "frontend": "Classic layer list; Studio thumbnails and the separate View Thumbnail window remain future work.",
+    "source": "Committed immutable selected-layer snapshot, positioned in canvas bounds; visibility and opacity are ignored to preserve layer identification.",
+    "output": "At most 64x64 samples, drawn aspect-correct into a 32-point checker-backed row preview. UV clips partial sample footprints at canvas edges.",
+    "scheduling": "One CPU worker and one outstanding job. Visible preview requests capped at 64; only requested visible images are retained. Stale source identities cannot publish. Panel close and interface switch cancel pending work and evict cached images. Completion wakes are delayed by 50 ms to avoid immediate repaint chains.",
+    "admission": "Shared budget reserves 1 MiB working allowance plus selected-layer resident tile bytes per job, with a 1 GiB local request cap. Retained images reserve eight bytes per output sample for declared CPU/texture ownership until eviction. Offscreen source layers are not pinned by the job."
+  },
+  "limits": "Declared resource accounting is not physical driver/RSS measurement. Dense source CPU work may be large and is cancellable off the UI thread; native latency and rendering/reference parity are unqualified. Thumbnails do not include unpublished tool previews. Studio thumbnails, document-tab previews and the View Thumbnail window remain outside this change. No app windows or rendered previews were launched.",
+  "sha256": {
+    "gui.log.gz": "cc08be3c6f2b5ee64bc51b246549fd454e5e9db347fa0c14c55fcfb73694a18b",
+    "preview-gui.log.gz": "b240f5b5f906f60dc96184fe51c1892351416f0caf5f0450285aeef456b30dc0",
+    "worker.log.gz": "a4f21642f7502a1f2c28dd4cbbb9754034aa2d1c46f3867c945c559a24f10365",
+    "renderer.log.gz": "e01aeaca795a1124f7867ff5cf49fa8d11449ff51b511138eac36562133baeaa",
+    "display.log.gz": "febf8fef28545e305285a8ec2a97a50c9a23dd3eca697f6a6a7d3ebf1c5f953e",
+    "clippy.log.gz": "c8f6782e7e9f72a9d7bb7fe01259f21e8d204ba605947c7647d964c6444fa7dd"
+  }
+}
