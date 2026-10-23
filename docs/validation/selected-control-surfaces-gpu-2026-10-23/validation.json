@@ -1,0 +1,43 @@
+{
+  "source_commit": "7708400549d2a3c9244a53cc7b92d52886b93fa4",
+  "references": [
+    "docs/temp/paint-references/photos/image.png",
+    "docs/temp/paint-references/photos/mspaint-text-settings.png"
+  ],
+  "changes": "Classic toolbar selections use neutral gray surfaces and accent outlines instead of the global blue-tinted selection fill. A private helper reserves background paint before the ordinary egui Button, reads current response state for idle/hover/press feedback, and keeps button input/selected accessibility metadata. Applied to v11 Tools, Selection/Brush primary buttons, Layers, shape choices and shared Classic text style/alignment controls. Alignment glyphs use the strong foreground. Global text-selection and popup-choice colors are unchanged.",
+  "gui": {
+    "passed": 186,
+    "failed": 0,
+    "ignored": 33,
+    "scope": "Full GUI suite. New light 1x/dark 2x repeated-layout checks inspect actual opaque neutral selected fills, accent outlines, distinct idle/hover/pressed states, selected metadata across tools/shapes/Layers/text controls, strong alignment glyphs, preserved blue text-selection mesh vertices and popup choice surfaces, plus document/history isolation. The before log reproduces the blue-tinted Pencil fill."
+  },
+  "gpu": {
+    "passed": 1,
+    "test": "control_surfaces::export_classic_control_surfaces",
+    "scope": "Fourteen actual-app raw light/dark scenes cover Pencil idle/hover/press, Brush, selected Rectangle, text style/alignment and Layers. Snapshot/history tickets stay unchanged."
+  },
+  "clippy": "Strict workspace all-targets passed.",
+  "checks": "Formatting, whitespace and source file length checks passed.",
+  "limits": "The dark references establish neutral selected surfaces with blue outlines, not a complete hover/pressed/light-mode specification. Light state shades are consistent app choices; exact native pixel parity and OS accessibility remain unqualified. Shared Classic text controls inherit the refinement without historical-skin qualification. Studio/global selection colors and unavailable tool capabilities are unchanged. No editing engine or performance claim; T15 remains partial.",
+  "sha256": {
+    "after.log.gz": "232ed69a8a902309498b5acc61d1ef93581e8f3e5c04210c4d6d0e2b43649951",
+    "before.log.gz": "358d22384b8fd3a4a28fa6dbb9a141b970f85fe1d6c52506d6cddb2c53723df6",
+    "clippy.log.gz": "75a96365dc6f6de81230f8b46b015524d229c9e251581131300edc9408428870",
+    "dark-brush.png": "823faad22a4d37d016c8e13a194c87f430c9949665ce740297c22f06e588bf82",
+    "dark-layers.png": "24f9770169ee96e48b647905dbe3e50103c686176e5ed0ac01b5a0568842fe3b",
+    "dark-pencil-hover.png": "08653e2df0ea1e52ec8e9e074bf59ecaf38c3d83363f3de51e224748d0822c13",
+    "dark-pencil-idle.png": "1c9895167a585986de00dcb5e23a5245339bdba5b96f3ba52a6b0eac3858ae74",
+    "dark-pencil-pressed.png": "bbe1ebad217617728653d608238f75ef68ac4414b615d79c8e352e831b7c39b6",
+    "dark-shape.png": "96cbca911b27e0d8a9cfcc13542caf2704c92422fa3de4974170b8d13cf0a049",
+    "dark-text.png": "07973be01d074443d85c4053c8875e0ee6e90074c8f0f168f0b7a47d74153014",
+    "gpu.log.gz": "03c816bbb7b998f03a796628612cabe8f7554db73744c22ed2c35d14bdc2f509",
+    "gui.log.gz": "59e6bcba31ee97b4d67e8076d2120b8f4e36fbda51ee34105a0c9a1b549e8b41",
+    "light-brush.png": "7cd146b7803f5f00eb73581cf5010d8afe5ee3f35cf580b714aebb3595ba3e63",
+    "light-layers.png": "2d6ec4014015b4e506f438db4dc8f0daa7679db2886cd07ebd6839cd961319d2",
+    "light-pencil-hover.png": "09b400a6fd36ed79a840914194b277b7388b09685822dd1372af316d2cc36377",
+    "light-pencil-idle.png": "16c2e64dc60722ce3bace64261b835e567579a340845ecb6b0f2507a974a47fd",
+    "light-pencil-pressed.png": "cb069e78ea253dc8eacbd22471399fce05577570bffea7b7a293e223fb7835f0",
+    "light-shape.png": "ebd1ff887b9299a60f0da74d260f11244c56adfb706327c3bd908540e43dfa60",
+    "light-text.png": "b2aa65ec1df10d928d6cc505c516f39899f55e303808750932428f838988b333"
+  }
+}

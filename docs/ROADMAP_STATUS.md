@@ -11,6 +11,13 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest Classic control styling uses neutral selected surfaces with accent outlines
+and distinct current-response hover/press feedback. Alignment glyph contrast is
+stronger while text-selection and popup-choice highlights stay accented. All 186
+ordinary UI tests, fourteen light/dark GPU scenes and strict workspace Clippy pass; see
+[the control surface record](validation/selected-control-surfaces-gpu-2026-10-23/validation.json).
+Complete native Windows/historical fidelity remains partial.
+
 Latest Classic canvas work adds reserved edge rails with narrow egui thumbs and
 working press/repeat arrows, removes the v11 workspace inset and reports the
 actual drawable viewport. All 185 ordinary UI tests, GPU captures/edge-pixel
