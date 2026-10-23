@@ -11,6 +11,13 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest native macOS validation confirms application menu `PaintCraft`, independent
+window title `Untitled - PaintCraft` and a successful native Quit. A versioned plist
+is embedded for unbundled desktop runs; see [the native naming record](validation/macos-app-identity-2026-10-22/validation.json).
+Build, the document-title regression and strict workspace Clippy pass. The native
+window capture has a blank client and remains unqualified; surface presentation/
+capture is under investigation. This does not complete native/reference fidelity.
+
 Latest Classic Image controls follow the two-row reference grouping with a
 spanning Resize preview and theme-aware blue-accent SVGs. Rotate/Flip popups
 have bounded width, contiguous rows and larger text. All 167 normal GUI tests,

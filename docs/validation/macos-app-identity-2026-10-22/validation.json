@@ -1,0 +1,57 @@
+{
+  "source_commit": "a7576ae6676fa52c4638075ced8665f647ed9eaf",
+  "baseline_commit": "6d900c2",
+  "host": "macOS 14.7.2, Apple Silicon; current debug desktop binary",
+  "binary_sha256": "2c3e2ba52cdb61e30bba3babd8283325bf3f6df4a67a35fe57db8e66c51622c3",
+  "native_observation": {
+    "before_menu": [
+      "Apple",
+      "paintcraft",
+      "File",
+      "Edit",
+      "View",
+      "Window"
+    ],
+    "after_menu": [
+      "Apple",
+      "PaintCraft",
+      "File",
+      "Edit",
+      "View",
+      "Window"
+    ],
+    "window_title": "Untitled - PaintCraft",
+    "quit_action": "AXPress of Quit PaintCraft succeeded; ordinary desktop process exited 0",
+    "profile": "Isolated temporary Classic/v11/dark config and recovery directories; user profile untouched",
+    "startup": "Final ordinary session omitted PAINTCRAFT_EXIT_AFTER_FRAMES; earlier frame-count smoke probes are not used to qualify client presentation."
+  },
+  "embedded_metadata": "otool -P independently decoded via plistlib: application/display name PaintCraft, executable paintcraft, package version 0.1.0. macOS-only linker arguments target the desktop executable, not the library, tests or CLI. No new dependencies, runtime process-name mutation or unsafe code.",
+  "checks": {
+    "build": "cargo build -p paintcraft passed",
+    "title": "window_title_uses_the_bound_document_name_and_ignores_draft_destinations passed",
+    "clippy": "workspace all-targets with -D warnings passed",
+    "format_and_lengths": "passed"
+  },
+  "references": [
+    "https://developer.apple.com/library/archive/qa/qa1544/_index.html",
+    "Apple CoreFoundation SDK CFBundle.h unbundled application info contract: __TEXT,__info_plist section"
+  ],
+  "limits": "Only application/window naming and native Quit routing are qualified. Window capture returned success but its client is blank. Review activation returned false and AXRaise failed; the capture is archived as unqualified evidence, not visual parity. Screen-capture access preflight was true. Native surface presentation/capture remains under investigation. Full desktop/reference parity, packaging, signing/notarization, other OS platforms and remaining roadmap features are incomplete. Headless/GPU scene evidence from earlier slices is separate.",
+  "sha256": {
+    "after-state.json": "ec35271d19f96bee214bc8ec64d576999408dcfda778dd83a458f0cd2ee3a828",
+    "before-state.json": "edebe1e78a02c8a6f2fc2466ac20838a2e266f96ddb1185705cf1a1008e6ae93",
+    "build.log.gz": "3f1e8f41760c1be2a9c303b8c13f19c430a132345108f72576ecabf3db3d646a",
+    "capture-access.log": "b5a3311225220aa5cbd79c7164f3950229831a94cac393a9ab632554a77ad896",
+    "capture.log": "19eaf43821a7660ec323a87c8457bf74823beb296c39f5e01aa8a683aa50f061",
+    "clippy.log.gz": "8f139491704e1319b1671c05a4a379b6d49fa1cad76f775202a7735aec48a109",
+    "desktop.log.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "embedded-plist.txt": "f4545d306f35ab536ff1e0b24f7ff7ae18773229ba7a7a15ac1f6785bd334d98",
+    "inspect.swift": "00dfc5d01a6f8473c2be1d33ab301b88f71a7615f4544a8a93c48bb4ae033e68",
+    "native-activation.log": "be1bc3be75aa8fc424e339b873c23a772ed5c11ad9d71bd7628844fe3a97c552",
+    "native-exit-code.txt": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+    "native-quit.log": "1c8c6a2383925f925aa026c03e2ce8634776d9414f5631d02df23f7ec83e7409",
+    "quit.swift": "521a716c2f81f26d13d00662ecf46c5cdd1c5a3846efc66a14ffca2426bf9891",
+    "title-test.log.gz": "86e044af7c2994eb28bba7b19c4cb67be0237f6060656b3ca783a5d0d682d731",
+    "unqualified-window-capture.png": "9d8ede562075dd70c46d68094049d4a7ed94eedf42174adf6f6b063df823a49a"
+  }
+}

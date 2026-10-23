@@ -1,0 +1,32 @@
+{
+  "accessibility_trusted" : true,
+  "menu_titles" : [
+    "Apple",
+    "paintcraft",
+    "File",
+    "Edit",
+    "View",
+    "Window"
+  ],
+  "pid" : 15144,
+  "windows" : [
+    {
+      "kCGWindowAlpha" : 1,
+      "kCGWindowBounds" : {
+        "Height" : 928,
+        "Width" : 1360,
+        "X" : 184,
+        "Y" : 76
+      },
+      "kCGWindowIsOnscreen" : true,
+      "kCGWindowLayer" : 0,
+      "kCGWindowMemoryUsage" : 2176,
+      "kCGWindowName" : "Untitled - PaintCraft",
+      "kCGWindowNumber" : 20058,
+      "kCGWindowOwnerName" : "paintcraft",
+      "kCGWindowOwnerPID" : 15144,
+      "kCGWindowSharingState" : 1,
+      "kCGWindowStoreType" : 1
+    }
+  ]
+}

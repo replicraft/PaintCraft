@@ -892,3 +892,21 @@ Clippy pass. Raw before/after wide workspaces, compact/short layouts and both
 transform popups are in [the Image ribbon record](validation/classic-image-ribbon-gpu-2026-10-22/validation.json).
 Transform semantics, exact native glyph geometry and full reference parity remain
 open. No document or history behavior was added in this presentation slice.
+
+Native macOS naming is now independently checked through Accessibility menu
+titles and CoreGraphics window metadata. The unbundled executable previously
+showed lowercase `paintcraft` in the application menu. A desktop-only build
+script now embeds versioned application metadata with `CFBundleName` and
+`CFBundleDisplayName` set to `PaintCraft`; document/window titles stay independent.
+A fresh ordinary native session reports application menu `PaintCraft` and window
+`Untitled - PaintCraft`. Native Quit routes successfully and exits zero. The
+embedded plist is decoded independently with `otool`/`plistlib`; the existing
+document-bound title regression and strict workspace Clippy pass. The metadata
+adds no runtime dependencies or unsafe code. [Apple's naming guidance](https://developer.apple.com/library/archive/qa/qa1544/_index.html)
+identifies `CFBundleName` as the canonical application name used by the main menu.
+See [the native naming record](validation/macos-app-identity-2026-10-22/validation.json).
+Native appearance remains unqualified: the successful window capture contains a
+blank client, activation returned false, and raising the review window failed.
+The raw image is archived explicitly as unqualified evidence; native surface
+presentation/capture needs further investigation. GPU client-scene exports remain
+separate evidence. The full UI/reference roadmap remains incomplete.
