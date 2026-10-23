@@ -50,6 +50,7 @@ icons = {
     'pixel-grid': rect(3, 3, 18, 18) + path('M9 3V21M15 3V21M3 9H21M3 15H21'),
     'rulers': path('M2 2H7V17H22V22H2ZM4 6H7M4 10H7M4 14H7M11 17V20M15 17V20M19 17V20'),
     'resize': path('M15 3H21V9M21 3L14 10M3 15V21H9M3 21L10 14'),
+    'brush': path('M6 2V10C6 16 8 20 12 22C16 20 18 16 18 10V2M4 5H20M6 9H18M9 12V17M12 12V19M15 12V17'),
     'pencil': path('M14 4H3V21H20V12M8 15L18 5L21 8L11 18H8ZM17 6L20 9'),
     'bucket': path('M4 10L11 3L19 11L12 18ZM8 6L15 13M10 2L21 13M4 14H2V22H16V20M20 15C24 19 24 22 20 22C16 22 16 19 20 15Z'),
 }
@@ -64,7 +65,7 @@ for name, geometry in icons.items():
 ''')
 (OUT / 'manifest.json').write_text(json.dumps({
     'provenance': 'Original PaintCraft outline menu vectors; not extracted native assets.',
-    'references': ['docs/temp/paint-references/photos/im1age.png', 'docs/temp/paint-references/photos/imag1e.png', 'docs/temp/paint-references/photos/ima2ge.png'],
+    'references': ['docs/temp/paint-references/photos/im1age.png', 'docs/temp/paint-references/photos/imag1e.png', 'docs/temp/paint-references/photos/ima2ge.png', 'docs/temp/paint-references/photos/image.png', 'docs/temp/paint-references/photos/i11mage.png'],
     'icons': [{'name': name, 'file': f'{name}.svg'} for name in icons],
 }, indent=2) + '\n')
 print(f'Wrote {len(icons)} Classic menu SVGs to {OUT}')

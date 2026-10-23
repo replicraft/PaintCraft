@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+<title>Brush</title>
+<g fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+<path d="M6 2V10C6 16 8 20 12 22C16 20 18 16 18 10V2M4 5H20M6 9H18M9 12V17M12 12V19M15 12V17"/>
+</g>
+</svg>

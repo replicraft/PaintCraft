@@ -3,7 +3,9 @@
   "references": [
     "docs/temp/paint-references/photos/im1age.png",
     "docs/temp/paint-references/photos/imag1e.png",
-    "docs/temp/paint-references/photos/ima2ge.png"
+    "docs/temp/paint-references/photos/ima2ge.png",
+    "docs/temp/paint-references/photos/image.png",
+    "docs/temp/paint-references/photos/i11mage.png"
   ],
   "icons": [
     {
@@ -117,6 +119,10 @@
     {
       "name": "resize",
       "file": "resize.svg"
+    },
+    {
+      "name": "brush",
+      "file": "brush.svg"
     },
     {
       "name": "pencil",

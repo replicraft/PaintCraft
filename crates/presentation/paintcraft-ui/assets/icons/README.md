@@ -54,7 +54,7 @@ Regenerate the outline sources with `python3 scripts/generate_classic_shape_icon
 These vectors are project-authored adaptations of the visible shape vocabulary,
 not extracted native assets or a claim of exact Windows rendering parity.
 
-Classic v11 menus and shape-paint triggers additionally opt into 30 original tintable outline sources in
+Classic v11 menus and primary/shape-paint controls additionally opt into 31 original tintable outline sources in
 [classic-menus](classic-menus/manifest.json). Regenerate them with
 `python3 scripts/generate_classic_menu_icons.py`. The menu helper's default stays
 colorful; its Classic option preserves shared action metadata/gates and uses
@@ -67,7 +67,7 @@ Import image, Recent, Desktop background, Image properties and Thumbnail have
 dedicated semantic icon IDs and original monochrome artwork. Their default
 source is the same SVG as their Classic menu variant; they are not sheet
 adaptations. This brings the registry to 96 IDs, retaining all 91 prior sources,
-with 23 shape variants and 30 menu/control sources. The generated menu manifest owns
+with 23 shape variants and 31 menu/control sources. The generated menu manifest owns
 these five additional sources.
 
 Classic's Image ribbon and transform dropdowns use nine original glyphs with
@@ -83,3 +83,9 @@ The Shape outline and Shape fill triggers use separate monochrome pen-over-box
 and bucket SVG variants for the existing Pencil/Bucket IDs. Colored tool art
 retains its original mapping. These dropdown glyphs render at an explicit
 22-point size and use the same variant-aware cache and theme tint as menu art.
+
+Classic v11's primary Brush uses an original vertical outline brush variant,
+while Select uses the existing dashed rectangle variant. The source sheet
+versions stay available to Studio and historical toolbars. Gallery strokes are
+separate deterministic UI illustrations; they do not implement the previewed
+brush media.

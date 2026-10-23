@@ -39,6 +39,7 @@ pub(super) fn source(icon: Icon) -> Option<&'static [u8]> {
         Icon::Thumbnail => include_bytes!("../../assets/icons/classic-menus/thumbnail.svg"),
         Icon::Pencil => include_bytes!("../../assets/icons/classic-menus/pencil.svg"),
         Icon::Bucket => include_bytes!("../../assets/icons/classic-menus/bucket.svg"),
+        Icon::Brush => include_bytes!("../../assets/icons/classic-menus/brush.svg"),
         _ => return None,
     })
 }
