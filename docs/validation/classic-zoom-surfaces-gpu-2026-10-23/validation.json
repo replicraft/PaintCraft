@@ -1,0 +1,40 @@
+{
+  "source_commit": "2b660e07abd6e5533a4d11f88e6afa71933823b1",
+  "shared_thumb_commit": "6de3da1",
+  "references": [
+    "docs/temp/paint-references/photos/image.png",
+    "docs/temp/paint-references/photos/im1a1111ge.png",
+    "docs/temp/paint-references/photos/imag111111e.png"
+  ],
+  "baseline": "Matched desktop light/dark scenes copied from classic-status-icons-gpu-2026-10-23, source 7c34f9c.",
+  "changes": "Classic percentage entry and preset trigger form a joined 30-point selector with larger text, shared fill, complementary corners and an outline chevron. Percentage draft logic lives in zoom/percentage.rs. Zoom and floating tool sliders share neutral-shell/accent-center decoration while egui retains input/accessibility. The zoom decoration follows the existing logarithmic mapping. Desktop footer allocation is 400 points with a 160-point track at window width >=1200; compact allocation stays 340 with a 100-point track. Status message allocation reserves the corresponding width.",
+  "gui": {
+    "passed": 173,
+    "failed": 0,
+    "ignored": 24,
+    "scope": "Full final UI suite passes. A new light 1x/dark 2x test checks joined selector edges/heights, actual canvas zoom and decoration against egui shell centers at 12.5/100/500/1000 percent. Existing typed acceptance/invalid input/Escape-with-pending-text tests pass, as do wide/compact bounds, metric alignment, vertical slider alignment/drag tests and history isolation. An initial five-point selector baseline regression was corrected before committing."
+  },
+  "gpu": {
+    "passed": 1,
+    "test": "classic_status::export_classic_footer_artwork",
+    "scope": "Six fresh light/dark desktop metrics, zoom hover and compact scenes; matched baseline desktop captures included."
+  },
+  "clippy": "Strict workspace all-targets passed.",
+  "checks": "Formatting, whitespace and source file length checks passed.",
+  "limits": "Appearance and responsive sizing only. Exact Windows focus/hover/popup parity and broader roadmap work remain incomplete. Shared Classic zoom consumers inherit the presentation, without a historical-parity claim. This adds no zoom-engine semantics or performance claim.",
+  "sha256": {
+    "before-dark-desktop-metrics.png": "485b3083e2f962f42427dd6499642d2888e57c3f6e6557bbc9730ca1f6d1fa74",
+    "before-light-desktop-metrics.png": "7ca30788289998f9a76ae7b52ae5e3bdab6115511ae98ad338c053df3193250f",
+    "clippy.log.gz": "8be04cf7ae9b5602b6edb9491626a9a1241b065ac405afbe28f3d846ba569692",
+    "dark-compact.png": "d2a459286a67a912eb3fd22fd089487ea2b679dcc3130bf532bcf6315e0631ce",
+    "dark-desktop-metrics.png": "306b585a76c0a4547bb8ac104590e866f1268427cd14b534352e04f25015a222",
+    "dark-zoom-hover.png": "46e127368374c55468bfbef1d362a3df2351c28722acebbe42a70d870d585f63",
+    "gpu.log.gz": "ca268dde79119091d7da63d2fd8b98275d0190a3679a5758adbb592826f09437",
+    "gui.log.gz": "3289ce0386b33bdfe1449a9a2b881efe22f557b4286019990d1d2dc88c77beeb",
+    "light-compact.png": "1e2ca17984dadeea7e6af74ce49ce7919d27f5dbfac8832aec7875147a95f6ba",
+    "light-desktop-metrics.png": "20cb50b3604ed0e1456a0c54ba0a9e5a7971ada4cf898ca7fc7c12519c315a15",
+    "light-zoom-hover.png": "6bd8b3a8fdd20015fbeac0a35aa0ad80c29e95bf1ff26b7c163d0ccc4b55f48f",
+    "status.log.gz": "8f55d7cfa69e6f146e0d050a7f771300324c48c25db7ebcc74ea7ef036e05840",
+    "targeted.log.gz": "3ed0b98a0ac4a1f26fe1c186931e388b44458806272cc3252dff3480b8e35562"
+  }
+}

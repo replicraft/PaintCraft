@@ -11,6 +11,13 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest Classic zoom work joins the percentage selector, shares neutral-shell
+thumb styling and lengthens the desktop track while keeping compact bounds.
+All 173 normal UI tests, logarithmic shell-alignment checks, light/dark GPU scenes
+and strict workspace Clippy pass; see
+[the zoom surfaces record](validation/classic-zoom-surfaces-gpu-2026-10-23/validation.json).
+Typed drafts and pending-text Escape behavior remain; exact native parity stays partial.
+
 Latest Classic footer work uses theme-aware metric and accented zoom glyphs
 through shared action gates and tooltips. All 172 normal UI tests, nine SVG/cache
 tests, desktop/compact light/dark GPU captures and strict workspace Clippy pass;
