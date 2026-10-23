@@ -1,0 +1,35 @@
+{
+  "source_commit": "a4b7720e519716554eba0b1d65b6d827dad16dcc",
+  "implementation_commit": "547d77ce8d50729ab663c2a754bd3485ffb66682",
+  "mode": "Window-free egui and lint checks only; no native-window, desktop, file-dialog or rendered-preview launches.",
+  "gui": {
+    "passed": 160,
+    "failed": 0,
+    "ignored": 17
+  },
+  "focused_gui": {
+    "size_cancellation": {
+      "passed": 1,
+      "scope": "Classic light at scale 1 and dark at scale 2 with repeated layout. Typed size is not persisted before acceptance. Escape preserves original preferences, unpublished canvas text, document semantics, history ticket and publication count. Subsequent Enter applies the size and retains the canvas draft without a document publication."
+    },
+    "narrow_toolbar": {
+      "passed": 1,
+      "scope": "360-point width at scale 1 and 480-point width at scale 2, repeated layout. Actual horizontal wheel input reveals Background fill; clicking toggles only that option. Accessibility scrolling returns the font selector to the visible bounds without changing options. This existing behavior passed before the fix and is not claimed as a newly implemented scrolling feature."
+    }
+  },
+  "regression_baseline": {
+    "source_commit": "5d8405c8840598f4bff46d045539a35dff1759ce",
+    "probe_from_commit": "547d77ce8d50729ab663c2a754bd3485ffb66682",
+    "result": "Before the fix, typing 40 persisted points=40 instead of leaving the original points=11 until acceptance. The expected failure is archived separately from passing current logs."
+  },
+  "clippy": "workspace all-targets with -D warnings passed",
+  "scope": "Shared Classic text-size control stages typed numbers and captures focused Escape across repeated layout. Numeric range, presets and pointer edits retain existing paths. Narrow toolbar interaction is now covered explicitly.",
+  "limits": "Normal focused-field Escape and Enter are tested; native coalescing, IME, exact font rasterization and full visual reference parity remain unqualified. The narrow toolbar regression uses an isolated egui text-options fixture. No native UI or rendered previews were launched.",
+  "sha256": {
+    "gui.log.gz": "b05b2ed863dabdaf5363fe0e38e95ee5ae976f46ef97a42e741b70c5df84167f",
+    "size-focused.log.gz": "4607c644e935d136dc5068c59448ad79e1a2f9b571953c3eebb2fb3c9dc76a4e",
+    "overflow-focused.log.gz": "e56a28436ffa8c3c96a607d73e6cd1c60b9280a7242325c84f0cb8999f918961",
+    "regression-before.log.gz": "8d158709ceeb8f68d00f61a724ab16f913fe372bd54623bd72f72c58588636f5",
+    "clippy.log.gz": "10b9c07bd63d1c16a37516f39b07c97f7c8804daf2a4e7bec72e2d82cb8aea81"
+  }
+}

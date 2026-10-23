@@ -740,3 +740,15 @@ cover selected-size paint, short-window last-preset reachability, acceptance and
 Escape, plus the existing large-catalog/search regression in repeated layout.
 Native appearance, full reference fidelity and text rasterization parity remain
 unqualified; no windows or rendered previews were launched.
+
+Typed font sizes now remain local until acceptance. Escape restores the saved
+size without cancelling unpublished canvas text or creating document history;
+frame-wide cancellation prevents the numeric widget's private buffer from being
+applied during repeated layout. Enter still applies the preference.
+All 160 window-free UI tests and strict workspace Clippy pass; see
+[the text-input record](validation/text-input-headless-2026-10-22/validation.json).
+The size regression fails before the fix because typing prematurely saves the
+preference. A separate narrow-toolbar regression verifies existing horizontal
+wheel scrolling to Background fill, isolated toggling and scrolling back to the
+font selector. Native coalescing, IME and visual/rasterization parity remain
+unqualified; no windows or rendered previews were launched.
