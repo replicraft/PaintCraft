@@ -31,6 +31,24 @@ fn classic_layers_scroll_without_moving_properties_and_close_without_history() {
             );
         h.run();
         with_layer(&mut h);
+        for label in [
+            "Close Layers",
+            "Add layer",
+            "Move up",
+            "Move down",
+            "Delete layer",
+        ] {
+            let rect = h.get_by_role_and_label(Role::Button, label).rect();
+            assert!(
+                h.output().shapes.iter().any(|shape| matches!(&shape.shape,
+                    eframe::egui::epaint::Shape::Rect(image)
+                        if image.brush.is_some() && image.rect.size() == Vec2::splat(22.0)
+                        && image.rect.center() == rect.center()
+                        && image.fill.r() == image.fill.g() && image.fill.g() == image.fill.b()
+                )),
+                "{label} must use centered theme-tinted artwork"
+            );
+        }
         for _ in 0..16 {
             h.get_by_label("Add layer").click();
             h.run();
@@ -195,6 +213,51 @@ fn long_layer_names_keep_classic_properties_fixed_and_have_one_full_name_tooltip
         assert_eq!(h.get_by_label("Layer name").rect(), field);
         assert!(h.state().editor().document().same_semantics(&snapshot));
         assert_eq!(h.state().editor().history_view().ticket, ticket);
+        drop(h);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+}
+
+#[test]
+#[ignore = "requires GPU; exports Classic Layers glyphs and panel actions"]
+fn export_classic_layer_controls() {
+    use paintcraft::settings::{Appearance, ClassicVariant, Settings};
+    let output = std::env::temp_dir().join("paintcraft-layer-controls");
+    std::fs::create_dir_all(&output).unwrap();
+    for (appearance, theme) in [(Appearance::Light, "light"), (Appearance::Dark, "dark")] {
+        let dir = scratch("classic-layer-controls-review");
+        Settings {
+            appearance,
+            classic_variant: Some(ClassicVariant::V11),
+            ..Default::default()
+        }
+        .save(&dir)
+        .unwrap();
+        let mut h = harness_with(App::new(None).with_settings(dir.clone()), 1.0, false);
+        h.set_size(Vec2::new(1360.0, 900.0));
+        h.run();
+        h.get_by_role_and_label(Role::Button, "Layers").hover();
+        h.run();
+        h.render()
+            .unwrap()
+            .save(output.join(format!("{theme}-ribbon-hover.png")))
+            .unwrap();
+        h.get_by_role_and_label(Role::Button, "Layers").click();
+        h.run();
+        h.render()
+            .unwrap()
+            .save(output.join(format!("{theme}-panel.png")))
+            .unwrap();
+        h.get_by_label("Add layer").click();
+        h.run();
+        h.get_by_label("Add layer").click();
+        h.run();
+        h.get_by_label("Move down").hover();
+        h.run();
+        h.render()
+            .unwrap()
+            .save(output.join(format!("{theme}-panel-actions.png")))
+            .unwrap();
         drop(h);
         std::fs::remove_dir_all(dir).unwrap();
     }

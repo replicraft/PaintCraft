@@ -1,6 +1,6 @@
 //! Classic layer-list presentation. The desktop host applies every intention.
 use egui::{Align, Layout, Vec2};
-use paintcraft_ui::widgets::{Icon, icon_button};
+use paintcraft_ui::widgets::{Icon, classic_menu_button};
 use std::hash::Hash;
 
 #[derive(Debug)]
@@ -45,7 +45,8 @@ pub fn panel<Id: Copy + Eq + Hash + std::fmt::Debug>(
     ui.horizontal(|ui| {
         ui.label(egui::RichText::new("Layers").size(16.0).strong());
         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-            if icon_button(ui, "Close Layers", Icon::Close, false, false).clicked() {
+            if classic_menu_button(ui, "Close Layers", Icon::Close, false, "Close Layers").clicked()
+            {
                 actions.push(Action::Close);
             }
         });
@@ -75,7 +76,9 @@ pub fn panel<Id: Copy + Eq + Hash + std::fmt::Debug>(
             ),
         ] {
             if ui
-                .add_enabled_ui(enabled, |ui| icon_button(ui, label, icon, false, false))
+                .add_enabled_ui(enabled, |ui| {
+                    classic_menu_button(ui, label, icon, false, label)
+                })
                 .inner
                 .clicked()
             {

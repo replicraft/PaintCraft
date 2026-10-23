@@ -86,10 +86,11 @@ pub(super) fn ribbon(
                             egui::Layout::top_down(egui::Align::Center),
                             |ui| {
                                 let response = ui.add(
-                                    egui::Button::image(paintcraft_ui::icons::image(
+                                    egui::Button::image(paintcraft_ui::icons::classic_image(
                                         ui.ctx(),
                                         Icon::Layers,
                                         44.0,
+                                        ui.visuals().dark_mode,
                                     ))
                                     .min_size(Vec2::new(60.0, 60.0))
                                     .selected(workspace.layers)
