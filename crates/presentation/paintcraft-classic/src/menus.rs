@@ -18,7 +18,7 @@ pub(super) fn file(ui: &mut Ui, context: Context, actions: &mut Vec<Action>) {
         .show(ui, |ui| {
             action(ui, context, actions, Action::New, "New");
             action(ui, context, actions, Action::Open, "Open");
-            submenu(ui, "Import to canvas", Icon::Open, |ui| {
+            submenu(ui, "Import to canvas", Icon::ImportImage, |ui| {
                 layout(ui);
                 unavailable(
                     ui,
@@ -35,11 +35,10 @@ pub(super) fn file(ui: &mut Ui, context: Context, actions: &mut Vec<Action>) {
                     "Scanner and camera acquisition is not available yet.",
                 );
             });
-            unavailable(
+            unavailable_submenu(
                 ui,
                 "Recent",
-                Icon::Open,
-                None,
+                Icon::Recent,
                 "Recent files are not available yet.",
             );
             ui.separator();
@@ -71,18 +70,17 @@ pub(super) fn file(ui: &mut Ui, context: Context, actions: &mut Vec<Action>) {
                 "System sharing is not available yet.",
             );
             ui.separator();
-            unavailable(
+            unavailable_submenu(
                 ui,
                 "Set as desktop background",
-                Icon::CanvasSize,
-                None,
+                Icon::DesktopBackground,
                 "Setting the desktop background is not available yet.",
             );
             ui.separator();
             unavailable(
                 ui,
                 "Image properties",
-                Icon::CanvasSize,
+                Icon::ImageProperties,
                 Some(KeyboardShortcut::new(Modifiers::COMMAND, Key::E)),
                 "Image properties are not available yet. Canvas size is available in View.",
             );
@@ -174,7 +172,7 @@ fn unavailable(
     icon: Icon,
     shortcut: Option<KeyboardShortcut>,
     help: &str,
-) {
+) -> egui::Response {
     let mut button = Button::image_and_text(
         paintcraft_ui::icons::classic_menu_image(
             ui.ctx(),
@@ -189,7 +187,28 @@ fn unavailable(
     }
     let response = ui.add_enabled(false, button);
     response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, false, label));
-    response.on_disabled_hover_text(help);
+    response.on_disabled_hover_text(help)
+}
+
+fn unavailable_submenu(ui: &mut Ui, label: &str, icon: Icon, help: &str) {
+    let response = unavailable(ui, label, icon, None, help);
+    submenu_arrow(
+        ui,
+        &response,
+        ui.visuals().disable(ui.visuals().text_color()),
+    );
+}
+
+fn submenu_arrow(ui: &Ui, response: &egui::Response, ink: egui::Color32) {
+    let center = response.rect.right_center() - egui::vec2(8.0, 0.0);
+    ui.painter().add(egui::epaint::PathShape::line(
+        vec![
+            center + egui::vec2(-2.0, -4.0),
+            center + egui::vec2(2.0, 0.0),
+            center + egui::vec2(-2.0, 4.0),
+        ],
+        egui::Stroke::new(1.25, ink),
+    ));
 }
 
 /// Visibility choices add rows, so retain access to lower view commands on
@@ -251,8 +270,13 @@ pub(super) fn view(
                 }
             }
             if variant == ClassicVariant::V11 {
-                ui.add_enabled(false, egui::Button::new("Thumbnail"))
-                    .on_disabled_hover_text("The thumbnail window is not available yet.");
+                unavailable(
+                    ui,
+                    "Thumbnail",
+                    Icon::Thumbnail,
+                    None,
+                    "The thumbnail window is not available yet.",
+                );
             }
             ui.separator();
             for action in [Action::CanvasSize, Action::CanvasDefaults] {
@@ -262,7 +286,19 @@ pub(super) fn view(
                 }
             }
             ui.separator();
-            if ui.button("Change Classic skin…").clicked() {
+            let change_skin = if variant == ClassicVariant::V11 {
+                paintcraft_ui::actions::menu_item_with_icon_style(
+                    ui,
+                    Action::Interface,
+                    context,
+                    "Change Classic skin…",
+                    22.0,
+                    MenuIconStyle::ClassicOutline,
+                )
+            } else {
+                ui.button("Change Classic skin…").clicked()
+            };
+            if change_skin {
                 actions.push(Action::Interface);
                 ui.close();
             }
@@ -332,15 +368,7 @@ fn submenu(ui: &mut Ui, label: &str, icon: Icon, contents: impl FnOnce(&mut Ui))
     );
     ui.style_mut().visuals.widgets.inactive = inactive;
     response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, ui.is_enabled(), label));
-    let arrow = egui::Rect::from_center_size(
-        response.rect.right_center() - egui::vec2(8.0, 0.0),
-        egui::vec2(8.0, 12.0),
-    );
-    ui.painter()
-        .add(egui::containers::menu::SubMenuButton::arrow_shape(
-            arrow,
-            ui.visuals().text_color(),
-        ));
+    submenu_arrow(ui, &response, ui.visuals().text_color());
     let dismissed_id = response.id.with("submenu-keyboard-dismissed");
     let child_id = egui::containers::menu::SubMenu::id_from_widget_id(response.id);
     let child_open = egui::containers::menu::MenuState::from_ui(ui, |state, _| {

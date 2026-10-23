@@ -98,6 +98,72 @@ fn classic_file_and_edit_reference_previews_are_disabled_without_changing_docume
 }
 
 #[test]
+fn classic_file_previews_have_distinct_icons_and_disabled_submenu_markers() {
+    use eframe::egui::epaint::Shape;
+    use paintcraft::settings::{Appearance, ClassicVariant, Settings};
+    for (ppp, appearance) in [(1.0, Appearance::Light), (2.0, Appearance::Dark)] {
+        let dir = scratch("file-preview-icons");
+        Settings {
+            appearance,
+            classic_variant: Some(ClassicVariant::V11),
+            ..Default::default()
+        }
+        .save(&dir)
+        .unwrap();
+        let mut h = harness_with(App::new(None).with_settings(dir.clone()), ppp, true);
+        let base = h.state().editor().document_snapshot();
+        let ticket = h.state().editor().history_view().ticket;
+        file(&mut h);
+        let mut textures = std::collections::HashSet::new();
+        for label in [
+            "Open",
+            "Import to canvas",
+            "Recent",
+            "Set as desktop background",
+            "Image properties",
+        ] {
+            let row = h
+                .get_by_role_and_label(Role::Button, "File")
+                .get_by_label_contains(label);
+            let rect = row.rect();
+            let texture = h
+                .output()
+                .shapes
+                .iter()
+                .find_map(|shape| match &shape.shape {
+                    Shape::Rect(image) if rect.contains_rect(image.rect) => {
+                        image.brush.as_ref().map(|brush| brush.fill_texture_id)
+                    }
+                    _ => None,
+                })
+                .expect("menu row paints an image");
+            assert!(
+                textures.insert(texture),
+                "{label} must have its own artwork"
+            );
+            if matches!(label, "Recent" | "Set as desktop background") {
+                assert!(row.accesskit_node().is_disabled());
+                assert!(h.output().shapes.iter().any(|shape| matches!(&shape.shape,
+                    Shape::Path(path) if path.points.len() == 3
+                        && path.points.iter().all(|point| rect.contains(*point) && point.x > rect.right() - 24.0)
+                )), "{label} must retain a submenu arrow");
+                row.click();
+                h.run();
+                assert!(h.query_by_label("From file…").is_none());
+                // Menu dismissal on a disabled-row click is owned by egui.
+                if !eframe::egui::Popup::is_any_open(&h.ctx) {
+                    file(&mut h);
+                }
+            }
+        }
+        assert!(h.state().editor().document().same_semantics(&base));
+        assert_eq!(h.state().editor().history_view().ticket, ticket);
+        drop(h);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+}
+
+#[test]
 fn classic_exit_requests_window_close_and_the_unsaved_guard_can_cancel_it() {
     let mut h = harness_with(App::new(None), 1.0, true);
     with_layer(&mut h);

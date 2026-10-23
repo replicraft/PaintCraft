@@ -316,7 +316,8 @@ pub fn menu_item_with_icon_style(
     let checked = action.checked(ctx);
     // Checkable menu rows reserve an indicator column; their selected state is
     // announced to accessibility without painting a permanently selected button.
-    let classic_marker = checked.is_some() && icon_style != MenuIconStyle::Colorful;
+    let classic_marker =
+        (checked.is_some() || action.icon(ctx).is_none()) && icon_style != MenuIconStyle::Colorful;
     let marker_id = egui::IdSalt::new("menu-toggle-marker");
     let title = if checked.is_some() && !classic_marker {
         format!("       {}", descriptor.label)

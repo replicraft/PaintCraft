@@ -111,7 +111,16 @@ fn classic_view_labels_align_across_icons_and_toggle_states() {
     for checked in [false, true] {
         view_menu(&mut h);
         let mut positions = Vec::new();
-        for label in ["Zoom", "Rulers", "Gridlines", "Status bar", "Full screen"] {
+        for label in [
+            "Zoom",
+            "Rulers",
+            "Gridlines",
+            "Status bar",
+            "Full screen",
+            "Thumbnail",
+            "Default canvas size…",
+            "Change Classic skin…",
+        ] {
             let x = h
                 .output()
                 .shapes
