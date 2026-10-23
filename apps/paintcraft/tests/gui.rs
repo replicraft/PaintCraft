@@ -295,3 +295,6 @@ mod brush_gallery_layout;
 
 #[path = "gui/slider_input.rs"]
 mod slider_input;
+
+#[path = "gui/numeric_fields.rs"]
+mod numeric_fields;

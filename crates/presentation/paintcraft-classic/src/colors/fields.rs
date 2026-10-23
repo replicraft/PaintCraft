@@ -18,7 +18,7 @@ pub(super) fn controls(ui: &mut egui::Ui, editor: &mut ColorEditor, width: f32) 
     let response = ui.add(
         egui::TextEdit::singleline(&mut editor.hex)
             .desired_width(field_width)
-            .margin(Vec2::new(8.0, 8.0))
+            .margin(Vec2::new(14.0, 8.0))
             .hint_text("#RRGGBB"),
     );
     response.widget_info(|| {
@@ -36,49 +36,61 @@ pub(super) fn controls(ui: &mut egui::Ui, editor: &mut ColorEditor, width: f32) 
         ui.weak("Enter six hex digits, such as #2080FF.");
     }
     ui.add_space(8.0);
-    let model = egui::ComboBox::from_id_salt("classic-color-model")
-        .width(field_width)
-        .height(100.0)
-        .icon(|ui, rect, visuals, _| {
-            let center = rect.center();
-            ui.painter().add(egui::Shape::line(
-                vec![
-                    center + Vec2::new(-4.0, -2.0),
-                    center + Vec2::new(0.0, 2.0),
-                    center + Vec2::new(4.0, -2.0),
-                ],
-                egui::Stroke::new(1.0, visuals.fg_stroke.color),
-            ));
+    let model = ui
+        .scope(|ui| {
+            ui.spacing_mut().button_padding.x = 14.0;
+            egui::ComboBox::from_id_salt("classic-color-model")
+                .width(field_width)
+                .height(100.0)
+                .icon(|ui, rect, visuals, _| {
+                    let center = rect.center();
+                    ui.painter().add(egui::Shape::line(
+                        vec![
+                            center + Vec2::new(-4.0, -2.0),
+                            center + Vec2::new(0.0, 2.0),
+                            center + Vec2::new(4.0, -2.0),
+                        ],
+                        egui::Stroke::new(1.0, visuals.fg_stroke.color),
+                    ));
+                })
+                .selected_text(match editor.mode {
+                    NumericMode::Rgb => "RGB",
+                    NumericMode::Hsl => "HSL",
+                })
+                .show_ui(ui, |ui| {
+                    ui.spacing_mut().item_spacing.y = 0.0;
+                    ui.spacing_mut().button_padding.x = 14.0;
+                    for style in [egui::TextStyle::Body, egui::TextStyle::Button] {
+                        ui.style_mut()
+                            .text_styles
+                            .insert(style, egui::FontId::proportional(16.0));
+                    }
+                    for (mode, label) in [(NumericMode::Rgb, "RGB"), (NumericMode::Hsl, "HSL")] {
+                        let selected = editor.mode == mode;
+                        let response = ui.add(
+                            egui::Button::new(())
+                                .left_text(label)
+                                .selected(selected)
+                                .frame_when_inactive(selected)
+                                .frame(true)
+                                .min_size(Vec2::new(field_width, 40.0)),
+                        );
+                        if selected {
+                            ui.painter().rect_stroke(
+                                response.rect.shrink(0.5),
+                                4,
+                                ui.visuals().selection.stroke,
+                                egui::StrokeKind::Inside,
+                            );
+                        }
+                        if response.clicked() {
+                            editor.mode = mode;
+                            ui.close();
+                        }
+                    }
+                })
         })
-        .selected_text(match editor.mode {
-            NumericMode::Rgb => "RGB",
-            NumericMode::Hsl => "HSL",
-        })
-        .show_ui(ui, |ui| {
-            ui.spacing_mut().item_spacing.y = 0.0;
-            for (mode, label) in [(NumericMode::Rgb, "RGB"), (NumericMode::Hsl, "HSL")] {
-                let selected = editor.mode == mode;
-                let response = ui.add(
-                    egui::Button::new(label)
-                        .selected(selected)
-                        .frame_when_inactive(selected)
-                        .frame(true)
-                        .min_size(Vec2::new(field_width, 40.0)),
-                );
-                if selected {
-                    ui.painter().rect_stroke(
-                        response.rect.shrink(0.5),
-                        4,
-                        ui.visuals().selection.stroke,
-                        egui::StrokeKind::Inside,
-                    );
-                }
-                if response.clicked() {
-                    editor.mode = mode;
-                    ui.close();
-                }
-            }
-        });
+        .inner;
     model.response.widget_info(|| {
         egui::WidgetInfo::labeled(egui::Role::ComboBox, ui.is_enabled(), "Color model")
     });
@@ -89,14 +101,22 @@ pub(super) fn controls(ui: &mut egui::Ui, editor: &mut ColorEditor, width: f32) 
             let mut rgb: [u8; 3] = editor.color.0[..3].try_into().expect("three channels");
             let mut changed = false;
             for (i, label) in ["Red", "Green", "Blue"].into_iter().enumerate() {
-                ui.horizontal(|ui| {
-                    let value = ui.add_sized(
-                        [field_width, 40.0],
-                        egui::DragValue::new(&mut rgb[i]).range(0..=255),
-                    );
-                    let caption = ui.label(label);
-                    changed |= value.labelled_by(caption.id).changed();
-                });
+                ui.allocate_ui_with_layout(
+                    Vec2::new(ui.available_width(), 40.0),
+                    egui::Layout::left_to_right(egui::Align::Center)
+                        .with_main_align(egui::Align::Min),
+                    |ui| {
+                        ui.spacing_mut().button_padding.x = 14.0;
+                        ui.style_mut().drag_value_text_style = egui::TextStyle::Body;
+                        let value = ui.add(
+                            egui::DragValue::new(&mut rgb[i])
+                                .min_size(Vec2::new(field_width, 40.0))
+                                .range(0..=255),
+                        );
+                        let caption = ui.label(label);
+                        changed |= value.labelled_by(caption.id).changed();
+                    },
+                );
             }
             if changed {
                 editor.set_rgb(rgb);
@@ -110,16 +130,23 @@ pub(super) fn controls(ui: &mut egui::Ui, editor: &mut ColorEditor, width: f32) 
                 (1, "Saturation", 100.0),
                 (2, "Lightness", 100.0),
             ] {
-                ui.horizontal(|ui| {
-                    let value = ui.add_sized(
-                        [field_width, 40.0],
-                        egui::DragValue::new(&mut hsl[i])
-                            .speed(0.5)
-                            .range(0.0..=max),
-                    );
-                    let caption = ui.label(label);
-                    changed |= value.labelled_by(caption.id).changed();
-                });
+                ui.allocate_ui_with_layout(
+                    Vec2::new(ui.available_width(), 40.0),
+                    egui::Layout::left_to_right(egui::Align::Center)
+                        .with_main_align(egui::Align::Min),
+                    |ui| {
+                        ui.spacing_mut().button_padding.x = 14.0;
+                        ui.style_mut().drag_value_text_style = egui::TextStyle::Body;
+                        let value = ui.add(
+                            egui::DragValue::new(&mut hsl[i])
+                                .min_size(Vec2::new(field_width, 40.0))
+                                .speed(0.5)
+                                .range(0.0..=max),
+                        );
+                        let caption = ui.label(label);
+                        changed |= value.labelled_by(caption.id).changed();
+                    },
+                );
             }
             if changed {
                 editor.set_hsl(hsl);

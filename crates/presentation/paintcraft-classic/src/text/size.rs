@@ -6,16 +6,20 @@ const FONT_SIZES: [u16; 16] = [8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28,
 pub(super) fn font_size(ui: &mut Ui, points: &mut u16) {
     ui.allocate_ui_with_layout(
         Vec2::new(90.0, CONTROL_HEIGHT),
-        egui::Layout::left_to_right(Align::Center),
+        egui::Layout::left_to_right(Align::Center).with_main_align(Align::Min),
         |ui| {
             ui.spacing_mut().item_spacing.x = 0.0;
             ui.visuals_mut().extreme_bg_color = ui.visuals().widgets.inactive.weak_bg_fill;
             corners(ui, true);
+            let padding = ui.spacing().button_padding;
+            ui.spacing_mut().button_padding.x = 14.0;
+            ui.style_mut().drag_value_text_style = egui::TextStyle::Body;
             let size = size_entry(ui, points);
             size.widget_info(|| {
                 egui::WidgetInfo::labeled(egui::Role::SpinButton, ui.is_enabled(), "Font size")
             });
             size.on_hover_text("Font size in points · type a value or choose a preset");
+            ui.spacing_mut().button_padding = padding;
             corners(ui, false);
             let state_id = ui.make_persistent_id("font-size-was-open");
             let was_open = ui.data(|data| data.get_temp::<bool>(state_id).unwrap_or(false));
@@ -119,9 +123,11 @@ fn size_entry(ui: &mut Ui, points: &mut u16) -> Response {
         *points = original;
         ui.memory_mut(|memory| memory.surrender_focus(id));
     }
-    let response = ui.add_sized(
-        [66.0, CONTROL_HEIGHT],
+    // add_sized centers its child layout; min_size retains leading text alignment
+    // in both the resting button and the focused text editor.
+    let response = ui.add(
         egui::DragValue::new(points)
+            .min_size(Vec2::new(66.0, CONTROL_HEIGHT))
             .range(1..=512)
             .update_while_editing(false),
     );
