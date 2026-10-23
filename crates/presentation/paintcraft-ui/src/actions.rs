@@ -296,6 +296,8 @@ pub enum MenuIconStyle {
     #[default]
     Colorful,
     ClassicOutline,
+    /// Keep the action glyph visible until a toggle becomes checked.
+    ClassicOutlineToggle,
 }
 
 /// Choose frontend artwork while retaining shared action metadata and routing.
@@ -314,25 +316,36 @@ pub fn menu_item_with_icon_style(
     let checked = action.checked(ctx);
     // Checkable menu rows reserve an indicator column; their selected state is
     // announced to accessibility without painting a permanently selected button.
-    let title = if checked.is_some() {
+    let classic_marker = checked.is_some() && icon_style != MenuIconStyle::Colorful;
+    let marker_id = egui::IdSalt::new("menu-toggle-marker");
+    let title = if checked.is_some() && !classic_marker {
         format!("       {}", descriptor.label)
     } else {
         descriptor.label.to_owned()
     };
-    let mut button = match (checked, action.icon(ctx)) {
-        (None, Some(icon)) => {
-            let image = match icon_style {
-                MenuIconStyle::Colorful => crate::icons::image(ui.ctx(), icon, icon_size),
-                MenuIconStyle::ClassicOutline => crate::icons::classic_menu_image(
-                    ui.ctx(),
-                    icon,
-                    icon_size,
-                    ui.visuals().strong_text_color(),
-                ),
-            };
-            egui::Button::image_and_text(image, title)
+    let mut button = if classic_marker {
+        egui::Button::new((
+            egui::Atom::custom(marker_id, egui::Vec2::splat(icon_size)),
+            title,
+        ))
+    } else {
+        match (checked, action.icon(ctx)) {
+            (None, Some(icon)) => {
+                let image = match icon_style {
+                    MenuIconStyle::Colorful => crate::icons::image(ui.ctx(), icon, icon_size),
+                    MenuIconStyle::ClassicOutline | MenuIconStyle::ClassicOutlineToggle => {
+                        crate::icons::classic_menu_image(
+                            ui.ctx(),
+                            icon,
+                            icon_size,
+                            ui.visuals().strong_text_color(),
+                        )
+                    }
+                };
+                egui::Button::image_and_text(image, title)
+            }
+            _ => egui::Button::new(title),
         }
-        _ => egui::Button::new(title),
     };
     let shortcut = descriptor
         .shortcut
@@ -341,7 +354,9 @@ pub fn menu_item_with_icon_style(
         button = button.shortcut_text(shortcut);
     }
     let enabled = action.enabled(ctx) && ui.is_enabled();
-    let response = ui.add_enabled(enabled, button);
+    let painted = ui.add_enabled_ui(enabled, |ui| button.atom_ui(ui)).inner;
+    let marker_rect = painted.rect(marker_id);
+    let response = painted.response;
     if let Some(checked) = checked {
         let label = shortcut.map_or_else(
             || descriptor.label.to_owned(),
@@ -351,7 +366,9 @@ pub fn menu_item_with_icon_style(
             egui::WidgetInfo::selected(egui::Role::Button, enabled, checked, &label)
         });
         if checked {
-            let center = response.rect.left_center();
+            let center = marker_rect.map_or(response.rect.left_center(), |rect| {
+                rect.center() - egui::vec2(8.0, 0.0)
+            });
             let ink = if enabled {
                 ui.visuals().text_color()
             } else {
@@ -363,6 +380,15 @@ pub fn menu_item_with_icon_style(
             let c = center + egui::vec2(13.0, -4.0);
             ui.painter().line_segment([a, b], stroke);
             ui.painter().line_segment([b, c], stroke);
+        } else if icon_style == MenuIconStyle::ClassicOutlineToggle
+            && let (Some(rect), Some(icon)) = (marker_rect, action.icon(ctx))
+        {
+            let ink = if enabled {
+                ui.visuals().strong_text_color()
+            } else {
+                ui.visuals().weak_text_color()
+            };
+            crate::icons::classic_menu_image(ui.ctx(), icon, icon_size, ink).paint_at(ui, rect);
         }
     }
     response.clicked()

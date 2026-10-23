@@ -96,6 +96,76 @@ fn fullscreen_menu_f11_and_escape_emit_window_commands_without_history() {
 }
 
 #[test]
+fn classic_view_labels_align_across_icons_and_toggle_states() {
+    use eframe::egui::{accesskit::Toggled, epaint::Shape};
+    let dir = scratch("view-marker-alignment");
+    Settings {
+        classic_variant: Some(ClassicVariant::V11),
+        ..Default::default()
+    }
+    .save(&dir)
+    .unwrap();
+    let mut h = harness_with(App::new(None).with_settings(dir.clone()), 1.0, true);
+    let base = h.state().editor().document_snapshot();
+    let ticket = h.state().editor().history_view().ticket;
+    for checked in [false, true] {
+        view_menu(&mut h);
+        let mut positions = Vec::new();
+        for label in ["Zoom", "Rulers", "Gridlines", "Status bar", "Full screen"] {
+            let x = h
+                .output()
+                .shapes
+                .iter()
+                .find_map(|shape| match &shape.shape {
+                    Shape::Text(text) if text.galley.job.text.trim() == label => {
+                        let row = text.galley.rows.first()?;
+                        let glyph = row.glyphs.iter().find(|glyph| !glyph.chr.is_whitespace())?;
+                        Some(text.pos.x + row.pos.x + glyph.pos.x)
+                    }
+                    _ => None,
+                })
+                .expect("menu label is painted");
+            positions.push(x);
+        }
+        assert!(
+            positions.iter().all(|x| (x - positions[0]).abs() <= 1.0),
+            "{positions:?}"
+        );
+        let full = h.get_by_label_contains("Full screen");
+        assert_eq!(
+            full.accesskit_node().toggled(),
+            Some(if checked {
+                Toggled::True
+            } else {
+                Toggled::False
+            })
+        );
+        if !checked {
+            let rect = full.rect();
+            assert!(
+                h.output().shapes.iter().any(|shape| matches!(&shape.shape,
+                    Shape::Rect(image) if image.brush.is_some()
+                        && rect.contains_rect(image.rect)
+                        && (image.rect.width() - 22.0).abs() < 0.1
+                )),
+                "unchecked Full screen must paint its glyph"
+            );
+            full.click();
+            h.step();
+            assert!(fullscreen_command(&h, true));
+            h.run();
+        } else {
+            h.key_press(Key::Escape);
+            h.run();
+        }
+    }
+    assert!(h.state().editor().document().same_semantics(&base));
+    assert_eq!(h.state().editor().history_view().ticket, ticket);
+    drop(h);
+    std::fs::remove_dir_all(dir).unwrap();
+}
+
+#[test]
 fn escape_cancels_pending_text_before_leaving_fullscreen() {
     let mut h = harness();
     h.get_by_label("Text").click();

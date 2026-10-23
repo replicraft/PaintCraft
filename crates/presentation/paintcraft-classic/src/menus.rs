@@ -281,7 +281,11 @@ fn view_item(ui: &mut Ui, action: Action, context: Context, variant: ClassicVari
             16.0
         },
         if variant == ClassicVariant::V11 {
-            MenuIconStyle::ClassicOutline
+            if action == Action::View(paintcraft_ui::actions::ViewAction::FullScreen) {
+                MenuIconStyle::ClassicOutlineToggle
+            } else {
+                MenuIconStyle::ClassicOutline
+            }
         } else {
             MenuIconStyle::Colorful
         },
