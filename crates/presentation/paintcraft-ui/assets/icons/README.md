@@ -42,3 +42,13 @@ cargo test -p paintcraft-ui icons::review::render_all_icons_for_review -- --igno
 
 Output: `/tmp/paintcraft-svg-icons.png`. Native GPU workspace captures separately
 verify the widgets using the assets.
+
+Classic's 23 shape-gallery choices additionally use original monochrome outline
+SVGs in [classic-shapes](classic-shapes/manifest.json), following the supplied
+Windows Paint references. These have transparent interiors and are tinted at
+paint time for each theme. They are separate variants of the existing icon IDs;
+the 91 colored/chrome sources retain their original mapping. The shared cache
+keys include the variant so colored and outline textures cannot alias.
+Regenerate the outline sources with `python3 scripts/generate_classic_shape_icons.py`.
+These vectors are project-authored adaptations of the visible shape vocabulary,
+not extracted native assets or a claim of exact Windows rendering parity.

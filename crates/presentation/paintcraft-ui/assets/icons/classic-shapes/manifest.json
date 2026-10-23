@@ -1,0 +1,101 @@
+{
+  "provenance": "Original PaintCraft vectors for the monochrome Classic gallery; not extracted native assets.",
+  "references": [
+    "docs/temp/paint-references/photos/image.png",
+    "docs/temp/paint-references/photos/im2age.png"
+  ],
+  "icons": [
+    {
+      "name": "line",
+      "file": "line.svg"
+    },
+    {
+      "name": "curve",
+      "file": "curve.svg"
+    },
+    {
+      "name": "ellipse",
+      "file": "ellipse.svg"
+    },
+    {
+      "name": "rectangle",
+      "file": "rectangle.svg"
+    },
+    {
+      "name": "rounded-rectangle",
+      "file": "rounded-rectangle.svg"
+    },
+    {
+      "name": "polygon",
+      "file": "polygon.svg"
+    },
+    {
+      "name": "triangle",
+      "file": "triangle.svg"
+    },
+    {
+      "name": "right-triangle",
+      "file": "right-triangle.svg"
+    },
+    {
+      "name": "diamond",
+      "file": "diamond.svg"
+    },
+    {
+      "name": "pentagon",
+      "file": "pentagon.svg"
+    },
+    {
+      "name": "hexagon",
+      "file": "hexagon.svg"
+    },
+    {
+      "name": "right-arrow",
+      "file": "right-arrow.svg"
+    },
+    {
+      "name": "left-arrow",
+      "file": "left-arrow.svg"
+    },
+    {
+      "name": "up-arrow",
+      "file": "up-arrow.svg"
+    },
+    {
+      "name": "down-arrow",
+      "file": "down-arrow.svg"
+    },
+    {
+      "name": "four-point-star",
+      "file": "four-point-star.svg"
+    },
+    {
+      "name": "star",
+      "file": "star.svg"
+    },
+    {
+      "name": "six-point-star",
+      "file": "six-point-star.svg"
+    },
+    {
+      "name": "rounded-speech-bubble",
+      "file": "rounded-speech-bubble.svg"
+    },
+    {
+      "name": "speech-bubble",
+      "file": "speech-bubble.svg"
+    },
+    {
+      "name": "cloud-callout",
+      "file": "cloud-callout.svg"
+    },
+    {
+      "name": "heart",
+      "file": "heart.svg"
+    },
+    {
+      "name": "lightning",
+      "file": "lightning.svg"
+    }
+  ]
+}

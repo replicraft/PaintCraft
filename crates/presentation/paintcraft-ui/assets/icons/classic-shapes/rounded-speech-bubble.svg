@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+<title>Rounded Speech Bubble</title>
+<g fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+<path d="M5 3H19Q22 3 22 6V14Q22 17 19 17H12L6 22V17H5Q2 17 2 14V6Q2 3 5 3Z"/>
+</g>
+</svg>
