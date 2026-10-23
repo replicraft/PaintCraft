@@ -99,8 +99,8 @@ pub fn chrome(
             .insert(egui::TextStyle::Small, egui::FontId::proportional(12.0));
         ui.spacing_mut().interact_size.y = 32.0;
     }
-    let compact = variant == ClassicVariant::V11 && ui.available_width() < 600.0;
-    let menu = egui::MenuBar::new().ui(ui, |ui| {
+    let compact = variant == ClassicVariant::V11 && ui.available_width() < 720.0;
+    let menu = quick_access::menu_bar(ui, variant).ui(ui, |ui| {
         ui.menu_button("File", |ui| {
             menu_layout(ui, variant);
             if variant == ClassicVariant::V11 {
@@ -166,7 +166,7 @@ pub fn chrome(
     if compact {
         // Quick actions stay visible with the menus even when the ribbon hides.
         // Keep Settings and the changer together without overlapping this row.
-        let quick = egui::MenuBar::new().ui(ui, |ui| {
+        let quick = quick_access::menu_bar(ui, variant).ui(ui, |ui| {
             quick_access::show(ui, variant, context, &mut actions);
         });
         menu_bounds = menu_bounds.union(quick.response.rect);
