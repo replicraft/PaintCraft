@@ -927,3 +927,17 @@ See [the native presentation record](validation/native-presentation-2026-10-23/v
 for raw native/framebuffer captures, activation/name reports and scope limits.
 This qualifies a native presentation baseline on this Mac; full Windows parity,
 all native menu interactions and physical input/text-device qualification remain open.
+
+Classic's Shape outline/fill triggers now use original monochrome pen-over-box
+and bucket menu variants at an explicit 22-point size. Colored tool sources
+keep their existing artwork. The two working choices in each popup have bounded
+220-point bodies, contiguous 40-point rows and 16-point text, preserving selected
+outlines and hover/open surfaces. Repeated-layout tests in light 1x/dark 2x and
+a 360x360 dark layout verify glyphs, bounds, aligned labels, selected states,
+Escape and Both/Filled/Outline option transitions without document/history edits.
+The narrow case reveals the outer ribbon before selecting Rectangle; the existing
+filled-shape test still checks actual published pixels. All 167 normal GUI tests,
+seven icon tests, the expanded GPU scene export and strict workspace Clippy pass.
+Eight raw light/dark popup states are archived in [the shape paint record](validation/shape-paint-gpu-2026-10-23/validation.json).
+The menu generator now reproduces all 30 menu/control sources. Textured styles,
+additional shapes and full native/reference parity remain incomplete.

@@ -11,6 +11,13 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest Classic shape-paint dropdowns have monochrome trigger glyphs, contiguous
+40-point rows and consistent text/selection styling. All 167 normal UI tests,
+seven icon tests, fresh GPU popup captures and strict workspace Clippy pass; see
+[the shape paint record](validation/shape-paint-gpu-2026-10-23/validation.json).
+Solid/no-outline/no-fill choices retain their working semantics; textured styles
+and full reference parity remain open.
+
 Latest native checks (2026-10-23) capture complete ordinary light/dark desktop
 windows, with correct menu/window names, regular active state and clean native
 Quit. An explicit framebuffer review example adds an independent readback path.

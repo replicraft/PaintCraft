@@ -1,0 +1,39 @@
+{
+  "source_commit": "b62d2afd3ce9d3103f1dfe51478b063dd0161956",
+  "assets_commit": "c360c54",
+  "reference": "docs/temp/paint-references/photos/image.png; monochrome shape-paint trigger vocabulary only",
+  "gui": {
+    "passed": 167,
+    "failed": 0,
+    "ignored": 19
+  },
+  "icons": {
+    "passed": 7,
+    "scope": "96 original/default icon IDs, 23 gallery variants, 30 menu/control sources and paired Image variants retain existing coverage/cache checks. New Pencil/Bucket menu variants are transparent, tintable white vectors tested at multiple densities; colored tool sources retain their original mapping."
+  },
+  "gpu": {
+    "passed": 1,
+    "test": "classic_dropdowns::render_classic_dropdowns_and_cursor_for_review",
+    "scope": "Fresh light/dark dropdown scenes; eight archived shape-paint captures show both choices selected in each menu. Client scenes, not native title/menu bars."
+  },
+  "clippy": "workspace all-targets with -D warnings passed",
+  "generator": "All 30 menu/control sources and manifest regenerate byte for byte with scripts/generate_classic_menu_icons.py. New artwork is original, not extracted native assets.",
+  "scope": "Classic v11 Shape outline/Shape fill triggers use explicit 22-point monochrome pen-over-box/bucket variants. Existing working choices use bounded 220-point popup bodies, contiguous 40-point rows and 16-point labels. Selected outlines and hover/open state remain. Default colored tool artwork, Studio and historical options paths retain their existing behavior.",
+  "regressions": "Light 1x/dark 2x wide layouts and dark 2x at 360x360 verify actual glyph size/tint, row bounds/contiguity, aligned text, selected accessibility state, Escape dismissal and Both/Filled/Outline transitions without document/history publication. The narrow case pans the outer ribbon via a direct child before clicking Rectangle, then reveals each dropdown. Existing test still draws the filled shape and checks a real interior pixel; all ordinary tests pass.",
+  "limits": "This qualifies existing solid/no-outline/no-fill presentation and interaction. It does not add textured styles or extra shape implementations, prove exact native popup parity, complete physical input/text-device checks or finish the roadmap. Native presentation was separately qualified by the preceding record.",
+  "sha256": {
+    "clippy.log.gz": "0c8a9cef2a03f56b0f37e4bdd25da9fb85a1a85c074fa4268dae1941fd57ed91",
+    "dark-shape-fill-solid.png": "eb498f552586568546416d04c554a605a0b420280b6b4cfa3df4add1a4ca6c13",
+    "dark-shape-fill.png": "470aa41062443e13a9226d02055f38192810b8bc59dbd0cfcf7d687c8517341a",
+    "dark-shape-outline-none.png": "ce6b015783f6a27516d75e988687243fa884f74d93730659701ce3ebbd8e6923",
+    "dark-shape-outline.png": "a5fcafd0ae1481ce67e264d9ad8cc466330b3b297053404d9ed6a3ec355620fb",
+    "focused.log.gz": "8c8ecf82d7e5e92885bfa5d05d842834d6f118cc6959ea930b235f91d6b43998",
+    "gpu.log.gz": "c57a7edc1e062265e04eee2690ed914f19d6ea7051227c82592a6c1b6fdadb3b",
+    "gui.log.gz": "1e78f886e658a0313f84ed4eca1f8f5e9fd12cc647490fec3b29a88f97e86084",
+    "icons.log.gz": "3f44eee5cc0d629b2d8646a2e0c94c861214eab347dca85687d79e0d1553cbc4",
+    "light-shape-fill-solid.png": "00a371ae52b5ff0ba629b6869af18bdc3f8b5196f9298f084f0239131cafb40a",
+    "light-shape-fill.png": "87516e874b57118ae5cc4ca5ebe8ade90552208cdd663decccafafea216956cb",
+    "light-shape-outline-none.png": "70dc13cdfe185a2fbcb3c07d64ea3388e13f4190cfa60ce5941b46647d0d0d34",
+    "light-shape-outline.png": "d67a18b6ea034ff9fa1b6ba9226634dd78a23fe97aea97403997522e54ee365b"
+  }
+}
