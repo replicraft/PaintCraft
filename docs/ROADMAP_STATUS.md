@@ -11,6 +11,13 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest Classic canvas work adds reserved edge rails with narrow egui thumbs and
+working press/repeat arrows, removes the v11 workspace inset and reports the
+actual drawable viewport. All 185 ordinary UI tests, GPU captures/edge-pixel
+checks, native macOS fit/overflow captures and strict workspace Clippy pass; see
+[the canvas rail record](validation/canvas-edge-rails-gpu-2026-10-23/validation.json).
+Resize handles remain disabled previews; complete native fidelity is still partial.
+
 Latest Classic numeric controls use leading-aligned values in both resting and
 edit modes, matching the color/text reference insets while retaining native
 numeric input. All 183 ordinary UI tests, twelve light/dark GPU states and

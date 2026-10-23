@@ -1,0 +1,51 @@
+{
+  "source_commit": "df06b1f125b5c1cfd47619a5ae6e5252078a6763",
+  "reference": "docs/temp/paint-references/photos/image.png",
+  "changes": "Classic canvas scrolling uses reserved 14-point edge rails with 6-point egui thumbs and original arrow glyphs. Arrows pan by 40 UI points per step, act on press, repeat after 400 ms then every 50 ms while held, and do not step again on release. Native egui wheel/thumb handling remains. Opening geometry settles with a layout pass, and arrow actions are applied once across repeated passes. Classic v11 removes the inherited 20-point workspace inset; host viewport metrics use the actual scrolling content clip, excluding rails. Studio retains its canvas presentation.",
+  "gui": {
+    "passed": 185,
+    "failed": 0,
+    "ignored": 32,
+    "scope": "Full GUI suite. New ordinary/ruled 1x/2x checks verify arrows and native scrollbar roles outside the image clip, disabled start boundaries, exact single-step movement, actual native thumb dragging, held repeat and no release duplicate. Actual-app navigation preserves snapshot/history/preference bytes and starts no paint gesture. Existing wheel/zoom, rulers, skin modal, compact, toolbar/status visibility, Studio input and fit/pixel mapping tests pass."
+  },
+  "gpu": {
+    "passed": 2,
+    "tests": [
+      "canvas_scrollbars::export_classic_canvas_rails",
+      "canvas_fades::rendered_canvas_pixels_remain_white_at_clipped_edges_before_and_after_pan"
+    ],
+    "scope": "Ten actual-app light/dark vertical-only, two-axis, ruled, compact and panned captures. Separate 1x/2x plain Classic/ruled Classic/Studio tests sample white canvas pixels at clipped edges before and after pan."
+  },
+  "native": {
+    "exit_codes": [
+      0,
+      0
+    ],
+    "scope": "Two authorized macOS wgpu native launches used isolated temporary preferences/recovery and auto-closed. At 2x display scale a 2000x1200 physical-pixel canvas fits; a 4000x2400 canvas overflows with both edge rails visible. Both raw client framebuffer captures and logs are archived. Native physical pointer/tablet interaction was not exercised."
+  },
+  "clippy": "Strict workspace all-targets passed.",
+  "checks": "Formatting, whitespace and source file length checks passed.",
+  "limits": "Reserved rails and arrows follow the supplied v11 full-window reference; this is not complete native Windows/historical fidelity or OS accessibility qualification. Historical Classic consumers share the rail helper, while only v11 loses the workspace inset. Existing resize handles remain disabled preview markers; canvas bounds editing still uses the dialog. No document operation, renderer-performance or new compositor claim. T15 and its prerequisites remain partial.",
+  "sha256": {
+    "after.log.gz": "ba2a398f53180ec8cbec828d53eb3daeadac4a758d5373579b5dfbcb3216ed4a",
+    "clippy.log.gz": "2d4517c3d58cf62e42150afba9b32f3c099228bb02da234a54038217bfa29e68",
+    "dark-both.png": "f1bba75b06ceeb2d3bc17b28d272b052ade346127988d6a1b962d9f3ac0037b5",
+    "dark-compact.png": "9b4d5e8d21dcd5c57b79b9e62a69cec7dc39722beb9bfb77978f10b4aef6371b",
+    "dark-panned.png": "4130e4f294d2121bb272072fc3c14a5ef5cb576e80aef4436be3eadb6eb35b0e",
+    "dark-ruled.png": "d36c7b48d4579ab5ec0fb6cd47cf9e6dc30544ca51e99fc5e3a0b8babcd44433",
+    "dark-vertical.png": "e8b782ab1a10ff49a108a83c97555233902ba590e4ce822c49feb3a92d60c4d1",
+    "gpu.log.gz": "c92886e0cf007967979416ac9b1929afcedb92a2b1b6dbc0f26be5f6ebc952fb",
+    "gui.log.gz": "0cf49b24df59370160e95f3ac5d447fe554bb8df3395dfa65c268ebd73b84f27",
+    "light-both.png": "7cfa0682b5ded90bfb0e0c839a29cde79dc25838ab5bcc57e3f5f6443badab71",
+    "light-compact.png": "04ff27a63be3251adcd27c836be25d9245a0e9ecaabfeb29e3cc8409e3f5ba50",
+    "light-panned.png": "b4e4a4dd68dded0d891a3725d4a5fff607c400612773c0e3b4278d6df7b22131",
+    "light-ruled.png": "81d63c3a44041e3b458a9fd0763e27693a1a499159682dc420568b7b48d0a22f",
+    "light-vertical.png": "a9239f348547acf01225b0e31dc31897885b80e9aab969ed0634a7e1c949251b",
+    "native-build.log.gz": "5a29347f8172bbe4144c84797ff1be9f6a92aa9274b2829adda786abd101904a",
+    "native-fitting-canvas.png": "0d9c3f68a959715d035417bc0fce426fb10c239841dd1543987c1797b12900af",
+    "native-overflow-rails.png": "d4632492d175b60e96220b9feee3f5f5e2dc76c311d8a9217d22b4fed5c1787c",
+    "native-overflow.log.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "native.log.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "pixels.log.gz": "d4d0071beae31b56d4666080d849b98b47aaf46d0946950158c0df9819233d62"
+  }
+}
