@@ -402,6 +402,26 @@ pub fn toolbar_button(
     icon: crate::widgets::Icon,
     ctx: Context,
 ) -> bool {
+    toolbar_button_artwork(ui, action, icon, ctx, false)
+}
+
+/// Classic artwork shares the same action gates, selected state and tooltip.
+pub fn classic_toolbar_button(
+    ui: &mut egui::Ui,
+    action: Action,
+    icon: crate::widgets::Icon,
+    ctx: Context,
+) -> bool {
+    toolbar_button_artwork(ui, action, icon, ctx, true)
+}
+
+fn toolbar_button_artwork(
+    ui: &mut egui::Ui,
+    action: Action,
+    icon: crate::widgets::Icon,
+    ctx: Context,
+    classic: bool,
+) -> bool {
     let descriptor = action.descriptor_for(ctx.frontend);
     let label = descriptor.label.trim_end_matches('…');
     let tooltip = descriptor.shortcut.map_or_else(
@@ -420,14 +440,24 @@ pub fn toolbar_button(
         tooltip
     };
     ui.add_enabled_ui(action.enabled(ctx), |ui| {
-        crate::widgets::icon_button_with_tooltip(
-            ui,
-            label,
-            icon,
-            action.checked(ctx).unwrap_or(false),
-            false,
-            tooltip,
-        )
+        if classic {
+            crate::widgets::classic_menu_button(
+                ui,
+                label,
+                icon,
+                action.checked(ctx).unwrap_or(false),
+                tooltip,
+            )
+        } else {
+            crate::widgets::icon_button_with_tooltip(
+                ui,
+                label,
+                icon,
+                action.checked(ctx).unwrap_or(false),
+                false,
+                tooltip,
+            )
+        }
     })
     .inner
     .clicked()

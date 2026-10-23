@@ -16,6 +16,29 @@ pub fn icon_button_with_tooltip(
     large: bool,
     tooltip: impl Into<egui::WidgetText>,
 ) -> Response {
+    icon_button_artwork(ui, label, icon, selected, large, tooltip, false)
+}
+
+/// Theme-tinted outline artwork for compact Classic action bars.
+pub fn classic_menu_button(
+    ui: &mut Ui,
+    label: &str,
+    icon: Icon,
+    selected: bool,
+    tooltip: impl Into<egui::WidgetText>,
+) -> Response {
+    icon_button_artwork(ui, label, icon, selected, false, tooltip, true)
+}
+
+fn icon_button_artwork(
+    ui: &mut Ui,
+    label: &str,
+    icon: Icon,
+    selected: bool,
+    large: bool,
+    tooltip: impl Into<egui::WidgetText>,
+    classic: bool,
+) -> Response {
     let size = if large {
         Vec2::new(64.0, 54.0)
     } else {
@@ -28,6 +51,8 @@ pub fn icon_button_with_tooltip(
     let visuals = ui.style().interact_selectable(&response, false);
     let ink = if selected {
         ui.visuals().selection.stroke.color
+    } else if classic {
+        ui.visuals().strong_text_color()
     } else {
         visuals.fg_stroke.color
     };
@@ -54,11 +79,12 @@ pub fn icon_button_with_tooltip(
         } else {
             Vec2::ZERO
         };
-    crate::icons::paint(
-        ui.painter(),
-        Rect::from_center_size(center, Vec2::splat(22.0)),
-        icon,
-    );
+    let glyph = Rect::from_center_size(center, Vec2::splat(22.0));
+    if classic {
+        crate::icons::classic_menu_image(ui.ctx(), icon, 22.0, ink).paint_at(ui, glyph);
+    } else {
+        crate::icons::paint(ui.painter(), glyph, icon);
+    }
     if large {
         ui.painter().text(
             rect.center_bottom() - Vec2::new(0.0, 8.0),
