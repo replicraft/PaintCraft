@@ -20,6 +20,17 @@ pub(super) fn family(
                     .width(FAMILY_WIDTH)
                     .height(popup_height)
                     .truncate()
+                    .icon(|ui, rect, visuals, _| {
+                        let center = rect.center();
+                        ui.painter().add(egui::Shape::line(
+                            vec![
+                                center + Vec2::new(-4.0, -2.0),
+                                center + Vec2::new(0.0, 2.0),
+                                center + Vec2::new(4.0, -2.0),
+                            ],
+                            egui::Stroke::new(1.0, visuals.fg_stroke.color),
+                        ));
+                    })
                     .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside)
                     .selected_text(&*family)
                     .show_ui(ui, |ui| {

@@ -24,9 +24,10 @@ pub fn text_options(
             Color32::from_gray(245)
         })
         .stroke(ui.visuals().widgets.noninteractive.bg_stroke)
-        .inner_margin(8)
+        .inner_margin(egui::Margin::symmetric(20, 10))
         .show(ui, |ui| {
             ui.spacing_mut().interact_size.y = CONTROL_HEIGHT;
+            ui.spacing_mut().item_spacing.x = 12.0;
             for style in [egui::TextStyle::Body, egui::TextStyle::Button] {
                 ui.style_mut()
                     .text_styles
@@ -64,7 +65,7 @@ pub fn text_options(
                         alignment(ui, &mut options.alignment);
                         ui.separator();
                         ui.scope(|ui| {
-                            ui.spacing_mut().icon_width = 22.0;
+                            ui.spacing_mut().icon_width = 24.0;
                             ui.visuals_mut().widgets.inactive.bg_stroke =
                                 egui::Stroke::new(1.0, ui.visuals().weak_text_color());
                             ui.checkbox(&mut options.background_fill, "Background fill")
