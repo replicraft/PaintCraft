@@ -1,0 +1,41 @@
+{
+  "source_commit": "b18fcabf59a4fb3dd71934e3b354e833c2ac1ab8",
+  "reference": "docs/temp/paint-references/photos/11111imagekr.png",
+  "baseline": "Matched 1360x900 light/dark desktop captures copied from color-dialog-gpu-2026-10-23, source b2bc1b6.",
+  "changes": "Hue/saturation and brightness gradients now use rounded textured rectangles. The hue marker is larger and clipped to its square. Brightness uses a neutral shell with a white center and an inset travel range that keeps the entire thumb inside its lane; pressing a displayed endpoint retains its value. Two per-context textures are bounded to 256x256 and 1x256 (257 KiB total RGBA payload); hue texture is reused and brightness updates reuse its existing handle.",
+  "gui": {
+    "passed": 171,
+    "failed": 0,
+    "ignored": 21,
+    "scope": "Full UI suite passes. New light/HiDPI repeated-layout endpoint test checks displayed brightness thumb bounds, unchanged endpoint values when pressed, keyboard changes and cancellation preserving editor color/document/history. Existing RGB/HSL and pointer tests still pass."
+  },
+  "classic_unit": {
+    "passed": 7,
+    "scope": "Includes a new gradient size/handle identity test, plus existing color conversion and UI geometry tests."
+  },
+  "gpu": {
+    "passed": 1,
+    "test": "classic_colors::render_classic_edit_colors_for_review",
+    "scope": "Eight refreshed light/dark desktop/model-popup/compact captures. Pixel assertions check exposed dialog background at rounded corners and a red-dominant hue sample inside the gradient. The sample bounds account for existing linear-to-sRGB conversion."
+  },
+  "clippy": "Strict workspace all-targets passed.",
+  "checks": "Formatting, whitespace and source file length checks passed.",
+  "limits": "Numeric resting DragValue alignment remains centered because the existing public widget does not expose it. Full Windows/native color-editor parity, all color management semantics and the wider roadmap remain incomplete. Texture storage is bounded but this is not a rendering-performance claim.",
+  "sha256": {
+    "before-dark-desktop.png": "fbe4ad70fe0fc0073800631290be8c9f42bd0bf3913838349b9877fddb78eb60",
+    "before-light-desktop.png": "5e01fd56e3b6dd1453a117bc7382990a01f03d9b19a37eb906866bd11a6fc71a",
+    "clippy.log.gz": "9a2339d7cffb458b6014ade4b061790e244815bf8bf4015052041b7efca1b7eb",
+    "dark-compact-palette.png": "ea2ce72626128a5bbaf07a586ef2c08c97621ebe3e0f4b63cb967703ae2b37a7",
+    "dark-compact-picker.png": "74e98b15ca0dd5387fd76d6a515733258fa07542c7b096f634f13a989d41b428",
+    "dark-desktop.png": "d43e6977508793aaf080590c80a3ceee8156bb6185d49f28bf9cac582ece8b9e",
+    "dark-model-popup.png": "e22cb2de59f6b1d82f927502f6c1132feef437e0f35186af383e786a723d3d0b",
+    "gpu.log.gz": "455380976a15174647177e17129635dca8017b06bc5f1d4d4b9a67aa7518e6c5",
+    "gui.log.gz": "b0c629038afc2fb71734d9b04a79826005f51b2cd600780a7b2e68cb924c4876",
+    "lib.log.gz": "8378f0a49f472b451fa54d70571ae7af78561be122bf54cef182b7c5f4465ea5",
+    "light-compact-palette.png": "a76132ac5b496b227506aead84cca1510994ab35b3dea6678a99dcf8de8af885",
+    "light-compact-picker.png": "78ab20632ab639a0bf61a2e2de0e0ba605c164cb21810bd2faa7a2f4daa97fee",
+    "light-desktop.png": "02ce1ec808d37267b67e7405f864e89bed756118ed08f9a7c5258ae77fc03c75",
+    "light-model-popup.png": "6543e1d6a245c7de24d52cdfcb1c67dc3dc41e1102f232bb2d3adc6f102644a0",
+    "targeted.log.gz": "a8ad948508a2778a29bb6be7c04a253d8e86e7cd2904624d061f86958ffdad74"
+  }
+}

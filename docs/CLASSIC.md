@@ -1011,3 +1011,11 @@ The Classic color modal now follows `11111imagekr.png` more closely: desktop pad
 All 170 ordinary GUI tests pass (21 opt-in tests ignored). Final responsive geometry/cancellation checks pass after the last border/geometry assertions; strict workspace Clippy and source/format checks also pass. Eight fresh light/dark desktop/model-popup/compact-scrolled GPU scenes plus an explicitly different-size historical before capture are archived in `docs/validation/color-dialog-gpu-2026-10-23/validation.json`. Staged color/custom-slot behavior, invalid-input rejection, RGB/HSL changes, nested dismissal and document/history isolation remain covered.
 
 The existing 28 custom slots remain a PaintCraft extension. Centered resting DragValue text, gradient corners/marker details and complete native Windows fidelity remain open; this slice adds no color-management or engine semantics.
+
+### Rounded picker gradients and brightness endpoints (2026-10-23)
+
+The hue/saturation square and brightness bar now use rounded textured rectangles, with egui antialiasing their edges. The hue marker is larger and clipped to the square. Brightness has a gray shell and white center; its inset travel range keeps the entire thumb inside the lane, and pressing its displayed endpoint retains the value. Existing pointer/keyboard input and staged color semantics remain intact. Two context-local textures have a bounded 257 KiB RGBA payload: 256×256 for hue/saturation and 1×256 for brightness. Brightness color changes update the existing texture rather than adding cache entries.
+
+Validation: all 171 normal UI tests pass (21 opt-in tests ignored), seven Classic unit tests pass, and strict workspace Clippy/format/source checks pass. A new repeated-layout endpoint test covers press stability, marker bounds, keyboard changes and cancellation at 1x/2x. GPU checks verify actual rounded-corner background pixels and an interior hue sample, with eight refreshed light/dark desktop/popup/compact captures. Matched earlier desktop captures and raw logs are archived in `docs/validation/picker-gradients-gpu-2026-10-23/validation.json`.
+
+Numeric resting values still use centered egui DragValue text; its public API does not expose alignment. Full native Windows fidelity and color-management work remain open. This slice makes no rendering-performance claim.

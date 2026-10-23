@@ -11,6 +11,13 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest Classic picker work rounds gradient edges, enlarges markers and keeps
+brightness thumbs inside their lane without endpoint jumps. All 171 normal UI
+tests, seven Classic unit tests, actual rounded-corner GPU pixel checks and
+strict workspace Clippy pass; see
+[the picker record](validation/picker-gradients-gpu-2026-10-23/validation.json).
+Numeric resting-field alignment and full Windows fidelity remain open.
+
 Latest Classic Edit colors work adds reference-proportioned padding, fields,
 palettes and a separate footer surface, with clearer contrast and model chevrons.
 All 170 normal UI tests, final responsive geometry/cancellation checks, fresh
