@@ -4,6 +4,9 @@ use super::*;
 impl App {
     fn classic_layer_list(&mut self, ui: &mut egui::Ui) {
         use paintcraft_classic::layers::{Action as Intent, Layer};
+        let document = self.editor.document_snapshot();
+        self.layer_thumbnails
+            .begin(ui.ctx(), &document, &self.worker_budget);
         let rows = self.editor.layers();
         let view: Vec<_> = rows
             .iter()
@@ -11,11 +14,15 @@ impl App {
                 id: row.id,
                 name: &row.name,
                 visible: row.visible,
+                preview: self.layer_thumbnails.preview(row.id),
             })
             .collect();
         let target = self.editor.target();
         let ctx = ui.ctx().clone();
-        let actions = paintcraft_classic::layers::panel(ui, &view, target);
+        let mut visible_previews = Vec::new();
+        let actions = paintcraft_classic::layers::panel(ui, &view, target, &mut visible_previews);
+        self.layer_thumbnails
+            .request(&ctx, document, &visible_previews, &self.worker_budget);
         if ctx.current_pass_index() != 0 {
             return;
         }

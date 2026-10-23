@@ -25,6 +25,8 @@ mod history;
 mod input;
 #[path = "app/layer_panel.rs"]
 mod layer_panel;
+#[path = "app/layer_thumbnails.rs"]
+mod layer_thumbnails;
 #[path = "app/layers.rs"]
 mod layers;
 #[cfg(target_os = "macos")]
@@ -179,6 +181,7 @@ pub struct App {
     worker_budget: paintcraft_runtime::SharedBudget,
     budget_wakes: Option<residency::BudgetWakes>,
     cpu_renderer: cpu_rendering::CpuRenderer,
+    layer_thumbnails: layer_thumbnails::LayerThumbnails,
     pending_frame: Option<(RenderKey, JobHandle)>,
     dialogs: Option<NativeDialogs>,
     dialog_owner: Option<Uuid>,
@@ -290,6 +293,7 @@ impl App {
             worker_budget: paintcraft_runtime::SharedBudget::new(3 << 30),
             budget_wakes: None,
             cpu_renderer: cpu_rendering::CpuRenderer::new(),
+            layer_thumbnails: Default::default(),
             pending_frame: None,
             dialogs: None,
             dialog_owner: None,

@@ -25,6 +25,16 @@ impl App {
                 self.window_title = title;
             }
             self.poll_edits(&ctx);
+            if self.experience() != Experience::Classic
+                || !self.classic.layers
+                || self.document_count() == 0
+            {
+                let document = self.editor.document_snapshot();
+                self.layer_thumbnails
+                    .begin(&ctx, &document, &self.worker_budget);
+                self.layer_thumbnails
+                    .request(&ctx, document, &[], &self.worker_budget);
+            }
             if let Some(fullscreen) = ctx.input(|i| i.viewport().fullscreen) {
                 self.fullscreen = fullscreen;
             }

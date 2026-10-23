@@ -277,3 +277,6 @@ mod rename_cancel;
 
 #[path = "gui/opacity_cancel.rs"]
 mod opacity_cancel;
+
+#[path = "gui/layer_previews.rs"]
+mod layer_previews;
