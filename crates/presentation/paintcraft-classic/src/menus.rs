@@ -2,7 +2,7 @@
 use super::ClassicVariant;
 use egui::{Button, Key, KeyboardShortcut, Modifiers, Ui};
 use paintcraft_ui::{
-    actions::{Action, Context},
+    actions::{Action, Context, MenuIconStyle},
     icons::Icon,
 };
 
@@ -155,7 +155,14 @@ fn action(
     item: Action,
     label: &'static str,
 ) {
-    if paintcraft_ui::actions::menu_item_with_icon_size(ui, item, context, label, 22.0) {
+    if paintcraft_ui::actions::menu_item_with_icon_style(
+        ui,
+        item,
+        context,
+        label,
+        22.0,
+        MenuIconStyle::ClassicOutline,
+    ) {
         actions.push(item);
         ui.close();
     }
@@ -168,8 +175,15 @@ fn unavailable(
     shortcut: Option<KeyboardShortcut>,
     help: &str,
 ) {
-    let mut button =
-        Button::image_and_text(paintcraft_ui::icons::image(ui.ctx(), icon, 22.0), label);
+    let mut button = Button::image_and_text(
+        paintcraft_ui::icons::classic_menu_image(
+            ui.ctx(),
+            icon,
+            22.0,
+            ui.visuals().strong_text_color(),
+        ),
+        label,
+    );
     if let Some(shortcut) = shortcut {
         button = button.shortcut_text(ui.ctx().format_shortcut(&shortcut));
     }
@@ -256,7 +270,7 @@ pub(super) fn view(
 }
 
 fn view_item(ui: &mut Ui, action: Action, context: Context, variant: ClassicVariant) -> bool {
-    paintcraft_ui::actions::menu_item_with_icon_size(
+    paintcraft_ui::actions::menu_item_with_icon_style(
         ui,
         action,
         context,
@@ -265,6 +279,11 @@ fn view_item(ui: &mut Ui, action: Action, context: Context, variant: ClassicVari
             22.0
         } else {
             16.0
+        },
+        if variant == ClassicVariant::V11 {
+            MenuIconStyle::ClassicOutline
+        } else {
+            MenuIconStyle::Colorful
         },
     )
 }
@@ -296,8 +315,16 @@ fn submenu(ui: &mut Ui, label: &str, icon: Icon, contents: impl FnOnce(&mut Ui))
         ui.style_mut().visuals.widgets.inactive = ui.visuals().widgets.open;
     }
     let response = ui.add(
-        Button::image_and_text(paintcraft_ui::icons::image(ui.ctx(), icon, 22.0), label)
-            .right_text("    "),
+        Button::image_and_text(
+            paintcraft_ui::icons::classic_menu_image(
+                ui.ctx(),
+                icon,
+                22.0,
+                ui.visuals().strong_text_color(),
+            ),
+            label,
+        )
+        .right_text("    "),
     );
     ui.style_mut().visuals.widgets.inactive = inactive;
     response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, ui.is_enabled(), label));

@@ -139,6 +139,14 @@ fn render_classic_workspace_view_for_review() {
             .unwrap()
             .save(output.join(format!("{name}-view-menu.png")))
             .unwrap();
+        h.get_by_role_and_label(Role::Button, "Zoom").hover();
+        h.run();
+        h.render()
+            .unwrap()
+            .save(output.join(format!("{name}-zoom-menu.png")))
+            .unwrap();
+        h.key_press(Key::ArrowLeft);
+        h.run();
         h.get_by_label("Status bar").click();
         h.run();
         h.render()
