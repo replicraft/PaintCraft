@@ -1,5 +1,41 @@
 use super::*;
 use paintcraft::settings::{Appearance, ClassicVariant, Settings};
+
+#[test]
+fn keyboard_font_acceptance_persists_without_publishing_the_canvas_text_draft() {
+    let dir = scratch("keyboard-font-draft");
+    let mut settings = Settings {
+        classic_variant: Some(ClassicVariant::V11),
+        ..Default::default()
+    };
+    settings.text.family = "Missing fixture family".into();
+    settings.save(&dir).unwrap();
+    let mut h = harness_with(App::new(None).with_settings(dir.clone()), 2.0, true);
+    h.get_by_label("Text").click();
+    h.run();
+    drag(&mut h, (50.0, 50.0), (50.0, 50.0));
+    h.event(Event::Text("Keep this editable".into()));
+    h.run();
+    let document = h.state().editor().document_snapshot();
+    let ticket = h.state().editor().history_view().ticket;
+    h.get_by_label("Font family").click();
+    h.run();
+    h.get_by_label("Search fonts").type_text("Selawik");
+    h.run();
+    assert_eq!(Settings::load(&dir).0.text.family, "Missing fixture family");
+    h.key_press(Key::Enter);
+    h.run();
+    assert!(h.query_by_label("Search fonts").is_none());
+    assert_eq!(Settings::load(&dir).0.text.family, "Selawik");
+    assert!(h.state().editor().is_editing_text());
+    assert!(
+        matches!(h.state().editor().preview(),Some(paintcraft_tools::Preview::Text {text,..}) if text=="Keep this editable")
+    );
+    assert!(h.state().editor().document().same_semantics(&document));
+    assert_eq!(h.state().editor().history_view().ticket, ticket);
+    drop(h);
+    std::fs::remove_dir_all(dir).unwrap();
+}
 #[test]
 #[ignore = "requires GPU; exports real font text and updated Classic controls"]
 fn render_font_text_for_review() {

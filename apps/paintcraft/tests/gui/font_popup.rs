@@ -9,6 +9,171 @@ struct FontUi {
 }
 
 #[test]
+fn font_navigation_leaves_ime_composition_in_control_of_search() {
+    let mut h = Harness::builder().build_ui_state(
+        |ui, state: &mut FontUi| {
+            paintcraft_classic::text_options(
+                ui,
+                &mut state.options,
+                &state.families,
+                &mut state.search,
+                false,
+            );
+            if ui.ctx().current_pass_index() == 0 {
+                ui.ctx().request_discard("test: repeated font IME layout");
+            }
+        },
+        FontUi {
+            families: vec!["Selawik".into(), "Test family".into()],
+            ..Default::default()
+        },
+    );
+    h.run();
+    h.get_by_label("Font family").click();
+    h.run();
+    h.event(Event::Ime(eframe::egui::ImeEvent::Preedit {
+        text: "Test family".into(),
+        active_range_chars: None,
+    }));
+    h.run();
+    h.key_press(Key::ArrowDown);
+    h.run();
+    h.key_press(Key::Enter);
+    h.run();
+    assert_eq!(h.state().options.family, "Selawik");
+    assert!(h.query_by_label("Search fonts").is_some());
+    h.event(Event::Ime(eframe::egui::ImeEvent::Commit(
+        "Test family".into(),
+    )));
+    h.run();
+    h.key_press(Key::Enter);
+    h.run();
+    assert_eq!(
+        h.state().options.family,
+        "Test family",
+        "search={:?}",
+        h.state().search
+    );
+    assert!(h.query_by_label("Search fonts").is_none());
+}
+
+#[test]
+fn font_search_supports_keyboard_navigation_acceptance_and_cancellation() {
+    for (size, ppp) in [
+        (Vec2::new(1100.0, 500.0), 1.0),
+        (Vec2::new(480.0, 360.0), 2.0),
+    ] {
+        let mut h = Harness::builder()
+            .with_size(size)
+            .with_pixels_per_point(ppp)
+            .build_ui_state(
+                |ui, state: &mut FontUi| {
+                    paintcraft_classic::text_options(
+                        ui,
+                        &mut state.options,
+                        &state.families,
+                        &mut state.search,
+                        false,
+                    );
+                    if ui.ctx().current_pass_index() == 0 {
+                        ui.ctx()
+                            .request_discard("test: repeated keyboard font selection");
+                    }
+                },
+                FontUi {
+                    options: TextOptions {
+                        family: "Fixture font 0900".into(),
+                        ..Default::default()
+                    },
+                    families: (0..1000).map(|i| format!("Fixture font {i:04}")).collect(),
+                    search: String::new(),
+                },
+            );
+        h.run();
+        h.get_by_label("Font family").click();
+        h.run();
+        h.key_press(Key::ArrowDown);
+        h.run();
+        assert!(
+            h.get_by_label("Search fonts")
+                .accesskit_node()
+                .description()
+                .unwrap()
+                .contains("Fixture font 0901")
+        );
+        h.key_press(Key::PageDown);
+        h.run();
+        h.key_press(Key::PageUp);
+        h.run();
+        h.key_press(Key::ArrowUp);
+        h.run();
+        h.get_by_label("Search fonts").type_text("Fixture font 099");
+        h.run();
+        h.key_press(Key::ArrowDown);
+        h.run();
+        assert_eq!(h.state().options.family, "Fixture font 0900");
+        assert!(
+            h.get_by_label("Search fonts")
+                .accesskit_node()
+                .description()
+                .unwrap()
+                .contains("Fixture font 0991")
+        );
+        let row = h.get_by_label("Fixture font 0991").rect();
+        assert!(h.output().shapes.iter().any(|shape| matches!(&shape.shape,
+            eframe::egui::epaint::Shape::Text(text) if text.galley.job.text=="Fixture font 0991" && shape.clip_rect.contains_rect(row))));
+        h.key_press(Key::Enter);
+        h.run();
+        assert_eq!(h.state().options.family, "Fixture font 0991");
+        assert!(h.query_by_label("Search fonts").is_none());
+        h.get_by_label("Font family").click();
+        h.run();
+        h.get_by_label("Search fonts").focus();
+        h.run();
+        h.key_combination_modifiers(Modifiers::COMMAND, &[Key::A]);
+        h.run();
+        h.get_by_label("Search fonts").type_text("Fixture font 000");
+        h.run();
+        h.key_press(Key::ArrowDown);
+        h.run();
+        h.key_press(Key::ArrowUp);
+        h.run();
+        h.key_press(Key::PageDown);
+        h.run();
+        h.key_press(Key::PageUp);
+        h.run();
+        h.key_press(Key::Enter);
+        h.run();
+        assert_eq!(h.state().options.family, "Fixture font 0000");
+        h.get_by_label("Font family").click();
+        h.run();
+        h.key_press(Key::ArrowDown);
+        h.run();
+        h.key_press(Key::Escape);
+        h.run();
+        assert_eq!(h.state().options.family, "Fixture font 0000");
+        h.get_by_label("Font family").click();
+        h.run();
+        h.get_by_label("Search fonts").focus();
+        h.run();
+        h.key_combination_modifiers(Modifiers::COMMAND, &[Key::A]);
+        h.run();
+        h.get_by_label("Search fonts")
+            .type_text("no-matching-family");
+        h.run();
+        h.key_press(Key::ArrowDown);
+        h.run();
+        h.key_press(Key::Enter);
+        h.run();
+        assert!(h.query_by_label("Search fonts").is_some());
+        assert_eq!(h.state().options.family, "Fixture font 0000");
+        h.key_press(Key::Escape);
+        h.run();
+        assert!(h.query_by_label("Search fonts").is_none());
+    }
+}
+
+#[test]
 fn font_popup_keeps_search_fixed_while_scrolling_a_large_catalog_and_filters_from_the_top() {
     for (size, ppp) in [
         (Vec2::new(480.0, 500.0), 1.0),
@@ -405,6 +570,26 @@ fn export_text_dropdowns() {
                 h.run();
                 assert_eq!(h.state().options, original);
             }
+            h.get_by_label("Font family").click();
+            h.run();
+            h.get_by_label("Search fonts")
+                .type_text("Fixture family 099");
+            h.run();
+            h.key_press(Key::ArrowDown);
+            h.run();
+            assert_eq!(h.state().options, original);
+            h.render()
+                .unwrap()
+                .save(output.join(format!("{name}-{layout}-keyboard-candidate.png")))
+                .unwrap();
+            h.key_press(Key::Enter);
+            h.run();
+            assert_eq!(h.state().options.family, "Fixture family 0991");
+            assert!(h.query_by_label("Search fonts").is_none());
+            h.render()
+                .unwrap()
+                .save(output.join(format!("{name}-{layout}-keyboard-accepted.png")))
+                .unwrap();
         }
     }
 }
