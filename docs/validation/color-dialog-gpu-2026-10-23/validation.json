@@ -1,0 +1,36 @@
+{
+  "source_commit": "b2bc1b64fd426925442648caf70ada534d1be1e4",
+  "reference": "docs/temp/paint-references/photos/11111imagekr.png",
+  "baseline": "Before image is the original 1100x900 light exporter at 0a5c033, captured before editing; after desktop views are 1360x900. Different viewport sizes are explicit, not a matched pixel comparison.",
+  "changes": "Color modal uses 30-point desktop padding, a 24-point heading, readable 16-point labels, 40-point fields/actions, a 54-point desktop preview, wider brightness control and outline model chevron. Desktop basic/custom palettes have 24-point circles with 14-point gaps and clearer borders. Custom add action aligns to the right. The footer has a separate theme-aware surface. Compact layouts retain stacked fields, denser palettes, scrolling and a fixed footer.",
+  "gui": {
+    "passed": 170,
+    "failed": 0,
+    "ignored": 21,
+    "scope": "Full UI suite passes after modal/footer/custom-heading restructuring. Final responsive test rerun passes after the palette border contrast and explicit geometry assertions: 320-point picker, 54-point preview, 40-point fields/actions and 24-point swatches. Existing compact acceptance, repeated-layout staging, invalid-input, RGB/HSL, nested dismissal and cancellation behavior remain covered."
+  },
+  "gpu": {
+    "passed": 1,
+    "test": "classic_colors::render_classic_edit_colors_for_review",
+    "scope": "Eight fresh captures: light/dark desktop at 1360x900, model popup, compact picker and scrolled compact palette at 480x500."
+  },
+  "clippy": "Strict workspace all-targets passed on final source.",
+  "checks": "Formatting, whitespace and source file length checks passed.",
+  "limits": "The existing 28 custom slots remain a PaintCraft extension; reference art shows a different custom-grid count. Numeric resting values remain centered by egui DragValue, and gradient-corner/marker fidelity and full native Windows appearance remain incomplete. This adds no editing-engine or color-management semantics and makes no performance claim.",
+  "sha256": {
+    "before-light-1100.png": "c357c05806bc0aa9b27df9d32f44eb861a98cf7f6d1673c47e2c5a6f8b3cb5a1",
+    "before.log.gz": "a6f42c72ef6fa0db2dc81a647659d107b5bc2bd01c09ef8f9110df54d1a2499d",
+    "clippy.log.gz": "3163a78ea9ff86320a07bcf0b316cda13dc5c98885b7186e759f01fbe7a48bd7",
+    "dark-compact-palette.png": "ea2ce72626128a5bbaf07a586ef2c08c97621ebe3e0f4b63cb967703ae2b37a7",
+    "dark-compact-picker.png": "96df9bd239a85b58d0ab46c5a928347f005990e68220076001faf062ca43bd79",
+    "dark-desktop.png": "fbe4ad70fe0fc0073800631290be8c9f42bd0bf3913838349b9877fddb78eb60",
+    "dark-model-popup.png": "c8f7c9641b013ee271eb4f81162f5a08f034e16f228b26647c242509ad9c8373",
+    "gpu.log.gz": "fabfb975df9b933eb33a9c864aff8a8305fe60e27c4b05df87b40c3b3b66d961",
+    "gui.log.gz": "d7df3e56c6c46cecf3b73162981e878afb1273fbffab6d1f5077faf93d164751",
+    "light-compact-palette.png": "a76132ac5b496b227506aead84cca1510994ab35b3dea6678a99dcf8de8af885",
+    "light-compact-picker.png": "ed808da9ea483814f981d62cc0439e4c649452aa99c90e745e7baee5815a0277",
+    "light-desktop.png": "5e01fd56e3b6dd1453a117bc7382990a01f03d9b19a37eb906866bd11a6fc71a",
+    "light-model-popup.png": "2ffb72d73018f14c988e343479525ad1be13b8b1def61e46612b862221f0281f",
+    "targeted.log.gz": "f3283a7611001805c1e93986db3046b2398f12c1027b7d25cc7fd8fd09f58adf"
+  }
+}

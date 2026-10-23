@@ -11,6 +11,13 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest Classic Edit colors work adds reference-proportioned padding, fields,
+palettes and a separate footer surface, with clearer contrast and model chevrons.
+All 170 normal UI tests, final responsive geometry/cancellation checks, fresh
+light/dark desktop/compact GPU captures and strict workspace Clippy pass; see
+[the color editor record](validation/color-dialog-gpu-2026-10-23/validation.json).
+The 28-slot custom palette remains an extension; full Windows fidelity is partial.
+
 Latest Classic floating size/opacity sliders have gray shells and solid accent
 centers, with larger targets and hover/focus/pressed feedback. All 170 normal
 UI tests, final pointer/keyboard/accessibility alignment checks, light/dark GPU
