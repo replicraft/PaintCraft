@@ -1,0 +1,38 @@
+{
+  "source_commit": "7c34f9c13014b881b2269e9281432afad96d1615",
+  "assets_commit": "991fe29",
+  "reference": "docs/temp/paint-references/photos/image.png",
+  "changes": "Six Classic footer symbols have original paired theme SVGs: pointer, selection, canvas dimensions, fit, zoom in/out. The dimensions symbol is distinct from a picture-file icon; zoom glyphs retain blue accents. Metric glyphs remain 16 points and action glyphs 22 points. A shared internal artwork enum replaces the prior boolean choice and adds the status family while preserving action gates, checked state and shortcut tooltips. Existing default/Classic-menu button APIs retain their artwork.",
+  "gui": {
+    "passed": 172,
+    "failed": 0,
+    "ignored": 24,
+    "scope": "Full UI suite passes. Existing Classic footer checks cover desktop/compact bounds, stable field positions, current-frame pointer coordinates, real selection dimensions, actual zoom changes and document/history isolation. Shared toolbar regression coverage includes both frontends, shortcut routing and single tooltips."
+  },
+  "icons": {
+    "passed": 9,
+    "ignored": 1,
+    "scope": "New six-symbol test renders both theme sources at four densities, checks equal alpha coverage and retained zoom accents, distinct colored/menu/theme texture identities and resident reuse. Existing cache limits and SVG checks pass. Default ID registry stays at 98; new status family has 12 SVGs. Generator reproduces assets byte for byte."
+  },
+  "gpu": {
+    "passed": 1,
+    "test": "classic_status::export_classic_footer_artwork",
+    "scope": "Six raw light/dark desktop metrics, zoom-hover and compact 480x360 footer scenes. Desktop scenes use a real selection and pointer coordinates."
+  },
+  "clippy": "Strict workspace all-targets passed.",
+  "checks": "Formatting, whitespace and source file length checks passed.",
+  "limits": "Glyph proportions and action-family integration only. Percentage-field grouping, slider style and complete Windows/native footer fidelity remain open. Shared Classic zoom consumers inherit the status artwork; historical parity is not established. No zoom-engine or performance claim.",
+  "sha256": {
+    "clippy.log.gz": "49936dfcb114a6aca0880db904699824a57f08e96dcd541d86f0e4800b5ab103",
+    "dark-compact.png": "401c30c747f75a4c5be813074d730d2546c49159dd76c3adee7fb9460acdd1eb",
+    "dark-desktop-metrics.png": "485b3083e2f962f42427dd6499642d2888e57c3f6e6557bbc9730ca1f6d1fa74",
+    "dark-zoom-hover.png": "40508071dda4bb874a071dda20f807803c08f99bfc525cfb41fbc2b331a4306b",
+    "gpu.log.gz": "7fbf0d71e72d2436e42f169b12d27088783467c77086845a0f34916d3ea4aa39",
+    "gui.log.gz": "04f4f99f8c8bd5d23aa4de6381060829889f4d26f597dffb2ccce8274821168a",
+    "icons.log.gz": "dd4126072fd4f429c9dd0779bc8cd7278120ca21950601a62659fd23ee04cdfb",
+    "light-compact.png": "67e1310c0ceb0cedbd6cb9ba29e2305508c1b7d63c5d5df0a7aa098e74a5d187",
+    "light-desktop-metrics.png": "7ca30788289998f9a76ae7b52ae5e3bdab6115511ae98ad338c053df3193250f",
+    "light-zoom-hover.png": "f70e1c87522db6ba4095e6a023982cc03a9ee9a966c6a981917341d8550ed247",
+    "targeted.log.gz": "cfabb544feadb6a51edbfce6b72ef1454b562490ca62d9f851d4b19d8dbc38a0"
+  }
+}

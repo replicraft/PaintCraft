@@ -11,6 +11,12 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest Classic footer work uses theme-aware metric and accented zoom glyphs
+through shared action gates and tooltips. All 172 normal UI tests, nine SVG/cache
+tests, desktop/compact light/dark GPU captures and strict workspace Clippy pass;
+see [the status artwork record](validation/classic-status-icons-gpu-2026-10-23/validation.json).
+Metric layout and zoom semantics remain; full native footer fidelity is partial.
+
 Latest Classic Layers controls use an accented outline ribbon glyph and
 monochrome panel actions. All 172 normal UI tests, eight SVG/cache tests,
 light/dark hover/open/action GPU captures and strict workspace Clippy pass;
