@@ -198,6 +198,16 @@ fn render_classic_edit_colors_for_review() {
         image
             .save(output.join(format!("{theme}-desktop.png")))
             .unwrap();
+        h.get_by_label("Brightness").set_value_accesskit(0.5);
+        h.run();
+        h.get_by_label("Brightness").focus();
+        h.run();
+        h.render()
+            .unwrap()
+            .save(output.join(format!("{theme}-brightness-focus.png")))
+            .unwrap();
+        h.get_by_label("Brightness").set_value_accesskit(1.0);
+        h.run();
         h.get_by_label("Color model").click();
         h.run();
         h.render()
@@ -487,5 +497,93 @@ fn brightness_thumb_stays_inside_its_lane_and_endpoints_do_not_jump_on_press() {
         assert_eq!(h.state().editor().color, Rgba([0, 0, 0, 255]));
         drop(h);
         std::fs::remove_dir_all(dir).unwrap();
+    }
+}
+
+#[test]
+fn brightness_accessibility_requests_and_arrow_steps_are_staged_and_layout_independent() {
+    use eframe::egui::Role;
+    for ppp in [1.0, 2.0] {
+        let mut stepped = Vec::new();
+        for two_passes in [false, true] {
+            let (mut h, dir) = classic(ppp, two_passes);
+            let snapshot = h.state().editor().document_snapshot();
+            let ticket = h.state().editor().history_view().ticket;
+            let saved = std::fs::read(dir.join("settings.json")).unwrap();
+            h.get_by_label("Edit colors…").click();
+            h.run();
+            hex(&mut h, "#FF0000");
+            for (value, expected_hex) in
+                [(0.0, Some("#000000")), (1.0, Some("#FF0000")), (0.5, None)]
+            {
+                h.get_by_role_and_label(Role::Slider, "Brightness")
+                    .set_value_accesskit(value);
+                h.run();
+                let node = h.get_by_role_and_label(Role::Slider, "Brightness");
+                assert_eq!(node.accesskit_node().min_numeric_value(), Some(0.0));
+                assert_eq!(node.accesskit_node().max_numeric_value(), Some(1.0));
+                assert!((node.accesskit_node().numeric_value().unwrap() - value).abs() < 0.00001);
+                if let Some(expected) = expected_hex {
+                    assert_eq!(
+                        h.get_by_label("Hex RGB")
+                            .accesskit_node()
+                            .value()
+                            .as_deref(),
+                        Some(expected)
+                    );
+                }
+                assert_eq!(
+                    h.state().editor().color,
+                    Rgba([0, 0, 0, 255]),
+                    "accessibility edits remain staged"
+                );
+            }
+            let red = h
+                .get_by_role_and_label(Role::SpinButton, "Red")
+                .accesskit_node()
+                .numeric_value()
+                .unwrap();
+            assert!(red > 0.0 && red < 255.0);
+            h.get_by_role_and_label(Role::Slider, "Brightness").focus();
+            h.run();
+            let bar = h.get_by_label("Brightness").rect();
+            assert!(h.output().shapes.iter().any(|shape| matches!(&shape.shape,
+                eframe::egui::epaint::Shape::Circle(circle) if bar.contains(circle.center)
+                    && circle.radius == 9.0 && circle.stroke == h.ctx.style_of(h.ctx.theme()).visuals.selection.stroke
+            )), "brightness focus must have visible feedback");
+            h.key_press(Key::ArrowUp);
+            h.run();
+            let up = h
+                .get_by_role_and_label(Role::Slider, "Brightness")
+                .accesskit_node()
+                .numeric_value()
+                .unwrap();
+            assert!(up > 0.5 && up < 1.0);
+            stepped.push(up);
+            h.get_by_role_and_label(Role::Slider, "Brightness")
+                .set_value_accesskit(0.5);
+            h.run();
+            h.get_by_label("Cancel").click();
+            h.run();
+            assert_eq!(std::fs::read(dir.join("settings.json")).unwrap(), saved);
+            assert_eq!(h.state().editor().color, Rgba([0, 0, 0, 255]));
+            h.get_by_label("Edit colors…").click();
+            h.run();
+            hex(&mut h, "#FF0000");
+            h.get_by_role_and_label(Role::Slider, "Brightness")
+                .set_value_accesskit(0.5);
+            h.run();
+            h.get_by_label("OK").click();
+            h.run();
+            assert_eq!(h.state().editor().color, Rgba([red as u8, 0, 0, 255]));
+            assert!(h.state().editor().document().same_semantics(&snapshot));
+            assert_eq!(h.state().editor().history_view().ticket, ticket);
+            drop(h);
+            std::fs::remove_dir_all(dir).unwrap();
+        }
+        assert!(
+            (stepped[0] - stepped[1]).abs() < 0.00001,
+            "an arrow press must apply once across layout passes"
+        );
     }
 }

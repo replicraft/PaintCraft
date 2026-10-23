@@ -43,8 +43,54 @@ pub(super) fn square(ui: &mut egui::Ui, editor: &mut ColorEditor, side: f32) {
 }
 
 pub(super) fn brightness(ui: &mut egui::Ui, editor: &mut ColorEditor, height: f32) {
-    let (rect, response) =
-        ui.allocate_exact_size(Vec2::new(32.0, height), egui::Sense::click_and_drag());
+    let previous = editor.hsv.v;
+    // Keep the gradient/marker presentation, but let egui own the slider's
+    // pointer, keyboard and accessibility actions rather than merely its role.
+    let response = ui
+        .scope(|ui| {
+            ui.spacing_mut().slider_width = height;
+            ui.spacing_mut().interact_size.y = 32.0;
+            let widgets = &mut ui.visuals_mut().widgets;
+            for state in [
+                &mut widgets.inactive,
+                &mut widgets.hovered,
+                &mut widgets.active,
+            ] {
+                state.bg_fill = Color32::TRANSPARENT;
+                state.fg_stroke = egui::Stroke::NONE;
+            }
+            ui.add_sized(
+                Vec2::new(32.0, height),
+                egui::Slider::new(&mut editor.hsv.v, 0.0..=1.0)
+                    .vertical()
+                    .show_value(false)
+                    .trailing_fill(false)
+                    .handle_shape(egui::style::HandleShape::Circle),
+            )
+        })
+        .inner
+        .interact(egui::Sense::click_and_drag());
+    let rect = response.rect;
+    let travel = rect.y_range().shrink(rect.width() / 2.5);
+    // Slider's drag sense alone does not report coalesced press/release clicks.
+    if response.clicked()
+        && let Some(point) = response.interact_pointer_pos()
+    {
+        editor.hsv.v = 1.0 - ((point.y - travel.min) / travel.span()).clamp(0.0, 1.0);
+        response.request_focus();
+    }
+    // egui reads arrow presses without consuming them. Do that after its first
+    // handling so discarded layout passes cannot apply the same step twice.
+    if response.has_focus() {
+        ui.input_mut(|input| {
+            let modifiers = input.modifiers;
+            input.consume_key(modifiers, egui::Key::ArrowUp);
+            input.consume_key(modifiers, egui::Key::ArrowDown);
+        });
+    }
+    if editor.hsv.v != previous {
+        editor.set_hsv();
+    }
     response.widget_info(|| {
         egui::WidgetInfo::slider(ui.is_enabled(), editor.hsv.v.into(), "Brightness")
     });
@@ -53,24 +99,8 @@ pub(super) fn brightness(ui: &mut egui::Ui, editor: &mut ColorEditor, height: f3
         egui::pos2(rect.right() - 8.0, rect.bottom()),
     );
     gradients::brightness(ui, rail, editor.hsv.h, editor.hsv.s);
-    let travel = rect.y_range().shrink(10.0);
-    if (response.clicked() || response.dragged())
-        && let Some(pos) = response.interact_pointer_pos()
-    {
-        editor.hsv.v = 1.0 - ((pos.y - travel.min) / travel.span()).clamp(0.0, 1.0);
-        editor.set_hsv();
-        response.request_focus();
-    }
-    if response.has_focus() && ui.ctx().current_pass_index() == 0 {
-        let delta = ui.input_mut(|i| {
-            i.consume_key(egui::Modifiers::NONE, egui::Key::ArrowUp) as i32
-                - i.consume_key(egui::Modifiers::NONE, egui::Key::ArrowDown) as i32
-        });
-        if delta != 0 {
-            editor.hsv.v = (editor.hsv.v + delta as f32 / 100.0).clamp(0.0, 1.0);
-            editor.set_hsv();
-        }
-    }
+    // Follow egui's circle-handle center inset, independently checked against
+    // its actual painted shell in the GUI tests.
     let marker = egui::pos2(
         rect.center().x,
         egui::lerp(travel.min..=travel.max, 1.0 - editor.hsv.v),
@@ -78,4 +108,8 @@ pub(super) fn brightness(ui: &mut egui::Ui, editor: &mut ColorEditor, height: f3
     ui.painter()
         .circle_filled(marker, 10.0, Color32::from_gray(76));
     ui.painter().circle_filled(marker, 6.0, Color32::WHITE);
+    if response.has_focus() {
+        ui.painter()
+            .circle_stroke(marker, 9.0, ui.visuals().selection.stroke);
+    }
 }
