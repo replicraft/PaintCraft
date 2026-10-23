@@ -7,6 +7,8 @@ fn brush_and_selection_dropdowns_close_after_selection_without_editing_document(
     h.get_by_role_and_label(eframe::egui::Role::Button, "Brushes")
         .click();
     h.run();
+    h.get_by_label("Square brush").scroll_to_me();
+    h.run();
     h.get_by_label("Square brush").click();
     h.run();
     assert_eq!(h.state().editor().tool, paintcraft_tools::Tool::Brush);
@@ -102,6 +104,34 @@ fn render_classic_dropdowns_and_cursor_for_review() {
         h.render()
             .unwrap()
             .save(output.join(format!("{name}-brushes.png")))
+            .unwrap();
+        h.get_by_label("Square brush").scroll_to_me();
+        h.run();
+        h.render()
+            .unwrap()
+            .save(output.join(format!("{name}-brushes-square-visible.png")))
+            .unwrap();
+        h.get_by_label("Square brush").click();
+        h.run();
+        h.get_by_role_and_label(eframe::egui::Role::Button, "Brushes")
+            .click();
+        h.run();
+        h.get_by_label("Square brush").scroll_to_me();
+        h.run();
+        h.render()
+            .unwrap()
+            .save(output.join(format!("{name}-brushes-square-selected.png")))
+            .unwrap();
+        h.get_by_label("Round brush").scroll_to_me();
+        h.run();
+        h.get_by_label("Round brush").click();
+        h.run();
+        h.get_by_role_and_label(eframe::egui::Role::Button, "Brushes")
+            .click();
+        h.run();
+        h.render()
+            .unwrap()
+            .save(output.join(format!("{name}-brushes-round-selected.png")))
             .unwrap();
         h.key_press(Key::Escape);
         h.run();

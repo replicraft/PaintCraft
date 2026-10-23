@@ -289,3 +289,6 @@ mod ribbon_captions;
 
 #[path = "gui/menu_density.rs"]
 mod menu_density;
+
+#[path = "gui/brush_gallery_layout.rs"]
+mod brush_gallery_layout;

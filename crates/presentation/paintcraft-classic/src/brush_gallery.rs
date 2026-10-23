@@ -1,4 +1,4 @@
-//! Reference-shaped gallery; sample decorations do not implement brush media.
+//! Brush gallery presentation; sample artwork does not implement brush media.
 use super::{Action, Controls};
 use egui::{Color32, Pos2, Rect, Stroke, Vec2};
 use paintcraft_tools::Tool;
@@ -18,8 +18,15 @@ const PRESETS: [&str; 9] = [
 pub(super) fn gallery(ui: &mut egui::Ui, state: &mut Controls, actions: &mut Vec<Action>) {
     // A popup starts with a conservative area estimate. Give the gallery the
     // actual remaining screen height so lower rows are not clipped by that estimate.
-    let height = (ui.ctx().content_rect().bottom() - ui.cursor().min.y - 12.0).clamp(44.0, 520.0);
-    ui.set_height(height);
+    let height = (ui.ctx().content_rect().bottom() - ui.cursor().min.y - 12.0).clamp(56.0, 520.0);
+    ui.visuals_mut().override_text_color = Some(Color32::from_gray(if ui.visuals().dark_mode {
+        245
+    } else {
+        24
+    }));
+    ui.set_width(320.0);
+    ui.set_max_height(height);
+    ui.spacing_mut().item_spacing.y = 0.0;
     egui::ScrollArea::vertical()
         .id_salt("classic-brush-media-gallery")
         .max_height(height)
@@ -69,7 +76,7 @@ fn row(
             .selected(selected)
             .frame_when_inactive(selected)
             .frame(true)
-            .min_size(Vec2::new(280.0, 44.0)),
+            .min_size(Vec2::new(320.0, 56.0)),
     );
     if selected {
         ui.painter().rect_stroke(
@@ -93,14 +100,14 @@ fn row(
         ui.visuals().weak_text_color()
     };
     ui.painter().text(
-        response.rect.left_center() + Vec2::new(10.0, 0.0),
+        response.rect.left_center() + Vec2::new(14.0, 0.0),
         egui::Align2::LEFT_CENTER,
         label,
-        egui::FontId::proportional(14.0),
+        egui::FontId::proportional(16.0),
         ink,
     );
     let sample = Rect::from_center_size(
-        response.rect.right_center() - Vec2::new(54.0, 0.0),
+        response.rect.right_center() - Vec2::new(90.0, 0.0),
         Vec2::new(84.0, 24.0),
     );
     draw_sample(ui.painter(), sample, index, ink);
@@ -149,34 +156,83 @@ fn draw_sample(painter: &egui::Painter, rect: Rect, media: usize, ink: Color32) 
         );
         return;
     }
-    for i in 0..64 {
-        let t = i as f32 / 64.0;
-        let width = match media {
-            1 => 1.0 + 4.0 * (t * std::f32::consts::TAU).sin().abs(),
-            2 => 2.0 + 5.0 * (t * std::f32::consts::TAU).cos().abs(),
-            6 => 10.0,
-            8 => 8.0,
-            _ => 6.0,
-        };
-        let color = if media == 8 {
-            ink.gamma_multiply(0.45)
-        } else {
-            ink
-        };
-        painter.line_segment(
-            [point(t), point((i + 1) as f32 / 64.0)],
-            Stroke::new(width, color),
-        );
-        if media == 4 {
-            for offset in [-2.0, 0.0, 2.0] {
+    if media == 4 {
+        let band = (0..=64).map(|i| point(i as f32 / 64.0)).collect();
+        painter.add(egui::epaint::PathShape::line(
+            band,
+            Stroke::new(8.0, ink.gamma_multiply(0.3)),
+        ));
+        for offset in [-3.0_f32, -1.5, 0.0, 1.5, 3.0] {
+            let strand = |t: f32| {
+                point(t)
+                    + Vec2::new(
+                        0.0,
+                        offset + 0.4 * (t * std::f32::consts::TAU * 3.0 + offset).sin(),
+                    )
+            };
+            for i in 0..64 {
+                let t = i as f32 / 64.0;
                 painter.line_segment(
-                    [
-                        point(t) + Vec2::new(0.0, offset),
-                        point((i + 1) as f32 / 64.0) + Vec2::new(0.0, offset),
-                    ],
-                    Stroke::new(0.7, ink.gamma_multiply(0.4)),
+                    [strand(t), strand((i + 1) as f32 / 64.0)],
+                    Stroke::new(
+                        0.65,
+                        ink.gamma_multiply(0.75 + 0.2 * (t * 8.0 + offset).sin()),
+                    ),
                 );
             }
         }
+        return;
     }
+    if media == 0 {
+        for end in [0.0, 1.0] {
+            painter.circle_filled(point(end), 3.0, ink);
+        }
+    }
+    let width = |t: f32| match media {
+        1 => 1.0 + 4.0 * (t * std::f32::consts::TAU).sin().abs(),
+        2 => 2.0 + 5.0 * (t * std::f32::consts::TAU).cos().abs(),
+        6 => 10.0,
+        8 => 8.0,
+        _ => 6.0,
+    };
+    let color = if media == 8 {
+        ink.gamma_multiply(0.45)
+    } else {
+        ink
+    };
+    draw_band(painter, point, width, color);
+}
+
+/// Shared vertices avoid antialiasing seams where adjacent sample segments meet.
+fn draw_band(
+    painter: &egui::Painter,
+    point: impl Fn(f32) -> Pos2,
+    width: impl Fn(f32) -> f32,
+    ink: Color32,
+) {
+    let feather = painter.ctx().pixels_per_point().recip();
+    let mut mesh = egui::epaint::Mesh::default();
+    for i in 0..=64 {
+        let t = i as f32 / 64.0;
+        let direction = point(t + 0.001) - point(t - 0.001);
+        let normal = Vec2::new(-direction.y, direction.x).normalized();
+        let inner = (width(t) * 0.5 - feather * 0.5).max(0.0);
+        let outer = width(t) * 0.5 + feather * 0.5;
+        for (offset, color) in [
+            (outer, Color32::TRANSPARENT),
+            (inner, ink),
+            (-inner, ink),
+            (-outer, Color32::TRANSPARENT),
+        ] {
+            mesh.colored_vertex(point(t) + normal * offset, color);
+        }
+    }
+    for i in 0..64 {
+        for band in 0..3 {
+            let a = i * 4 + band;
+            mesh.add_triangle(a, a + 1, a + 4);
+            mesh.add_triangle(a + 1, a + 5, a + 4);
+        }
+    }
+    painter.add(egui::Shape::mesh(mesh));
 }
