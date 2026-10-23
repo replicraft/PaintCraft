@@ -1,0 +1,41 @@
+{
+  "source_commit": "223812f05776964d83c98e4a36cf849d76c1f1ad",
+  "changes": "Classic skin chooser blocks background action dispatch and canvas input, uses a modal focus layer/backdrop, 16-point margins, 12-point rounded frame, 24-point heading, 16-point body/labels and 40-point actions. Compact choices scroll above a fixed footer; Close/Cancel/Escape preserve the staged preference.",
+  "gui": {
+    "passed": 179,
+    "failed": 0,
+    "ignored": 28,
+    "scope": "Full GUI suite. New 1x/2x regression reproduces background undo before the fix and checks blocked tool changes/pixel edits, unchanged history/preference bytes, then actual painting and one publication after dismissal. Existing layout/staging/restart and pending-text preservation tests pass. The dropdown-state fixture now selects a skin explicitly instead of relying on first-visit click-through."
+  },
+  "gpu": {
+    "passed": 1,
+    "test": "skin_picker::export_skin_chooser_surfaces",
+    "scope": "Eight light/dark desktop/360x360 first-visit/change captures; staged v7 selection and Close preserve preference bytes."
+  },
+  "native": {
+    "command": "PAINTCRAFT_CONFIG_DIR=<isolated>/config PAINTCRAFT_RECOVERY_DIR=<isolated>/recovery target/debug/examples/native_capture <output>.png",
+    "exit_code": 0,
+    "scope": "Authorized native macOS wgpu launch with isolated temporary preferences/recovery, framebuffer capture of first-visit chooser and automatic close. Client image only; no new OS menu/device qualification."
+  },
+  "clippy": "Strict workspace all-targets passed.",
+  "checks": "Formatting, whitespace and source file length checks passed.",
+  "limits": "Chooser thumbnails are original schematic layout illustrations, not rendered skin previews. This does not qualify full historical/native Paint fidelity, physical accessibility or performance. Roadmap T15 remains partial.",
+  "sha256": {
+    "before.log.gz": "21c37a0a3ee9d5402c3fdf795892f10288475df967ae121c8e78c34f9fc2e05c",
+    "clippy.log.gz": "47fc9623780871f13fb3c6bd00c0b39bbedc5e0b22606b7b92f81191ef98ae11",
+    "dark-compact-change.png": "f8d6e7ae5a2eed7b1013f258432ba12ad06e53c70cb97abbdab0e74d36fdad31",
+    "dark-compact-first-visit.png": "63aa97340116fc4dc0fe10c85a5cc2fa7d379711dbb6115600828c3cda616fad",
+    "dark-desktop-change.png": "87e1797bcd43f80d352b8b5a96fcaec7635ff9ea7031637e66cca99c33047be6",
+    "dark-desktop-first-visit.png": "4be017033918cd6aeee3fbb76e493597d9288ec8b59584f93c3435ff2ab00d8c",
+    "gpu.log.gz": "cecac588dffa7862016d247d33b0a27ca9892d3d704007bae9b5d08fd505da32",
+    "gui.log.gz": "c1e52769879a4359452832b3462ddd254d8cfbdd4959fa8481419d8bff2ba82f",
+    "light-compact-change.png": "31a3930c7693e8bafc161a81bd8ce92a2e7db3ef913f564e3d3b1ee9c8167549",
+    "light-compact-first-visit.png": "1f02c018549cd95a55b9c410b0c5a1bd6b78243c94da1ad3b0b57e1fdadd1aa4",
+    "light-desktop-change.png": "00a623de0f562be84f27beaab8cc22183dfeaceeff4b3d56b64fbf0c33b68b4a",
+    "light-desktop-first-visit.png": "593540a61a4488471fbd67b202327893b38e255525cf2ab49ffa8aee90a36b3e",
+    "native-build.log.gz": "e6270394f8f8bf3e201ef450d00163805d47b7211083a42708da3a975ca24d7f",
+    "native-first-visit.png": "8d6af62acb0f5e634f414e02adf952623359c17ce6ef372cd5b86f3d6b821fb8",
+    "native.log.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "targeted.log.gz": "6e13d76004d63cef4936b670e7ea75ce05c6bef93c0ebc73230bfc16cfb0f070"
+  }
+}

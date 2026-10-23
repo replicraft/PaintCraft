@@ -11,6 +11,13 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest Classic skin chooser work blocks background undo/tool/canvas input and
+uses consistent dialog surfaces with a fixed compact footer. All 179 ordinary
+UI tests, eight light/dark GPU scenes, an isolated native macOS wgpu capture
+and strict workspace Clippy pass; see
+[the chooser record](validation/skin-chooser-surfaces-gpu-2026-10-23/validation.json).
+Preferences remain staged until acceptance; historical fidelity remains partial.
+
 Latest shared confirmations use consistent dialog typography/padding and
 measured action labels for row/stack layout, with visible long-message scrolling.
 All 178 ordinary UI tests, twelve real-context light/dark GPU scenes and strict
