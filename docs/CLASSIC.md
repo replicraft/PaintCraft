@@ -850,3 +850,15 @@ GUI tests and strict workspace Clippy pass. Fresh light/dark GPU View captures
 are archived in [the marker record](validation/view-markers-gpu-2026-10-22/validation.json).
 Thumbnail and extension-row presentation, native appearance and full reference
 parity remain open.
+
+Classic menu previews now have dedicated Import image, Recent, Desktop background,
+Image properties and Thumbnail SVGs, retaining all prior artwork. The registry
+contains 96 IDs and 28 menu sources; the menu generator/manifest owns the additions.
+Recent and Desktop background show disabled outline submenu chevrons. Active
+anchors share the outline chevron, and no-icon View extension rows reserve the
+label column. All 166 normal GUI tests, six icon tests, both GPU menu capture tests
+and strict workspace Clippy pass. Distinct real-row textures, disabled marker/input
+behavior and extension-label alignment are verified; fresh raw light/dark File/View
+comparisons are in [the menu identity record](validation/menu-identities-gpu-2026-10-22/validation.json).
+Unavailable operations remain disabled. Exact glyph geometry, native appearance
+and full reference parity remain incomplete.

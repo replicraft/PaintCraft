@@ -1,0 +1,44 @@
+{
+  "source_commit": "9206371ae357bcf7846ffdba8580e4623de15d12",
+  "assets_commit": "a16ccc5",
+  "references": [
+    "docs/temp/paint-references/photos/im1age.png",
+    "docs/temp/paint-references/photos/ima2ge.png"
+  ],
+  "gui": {
+    "passed": 166,
+    "failed": 0,
+    "ignored": 18
+  },
+  "icons": {
+    "passed": 6,
+    "scope": "96 source IDs, 23 shape variants and 28 menu sources. New monochrome sources render with nonempty transparent coverage at 24/48/96/128 pixels; bounded texture cache identity remains checked."
+  },
+  "gpu": {
+    "passed": 2,
+    "tests": [
+      "classic_menus::export_classic_file_and_edit_menus",
+      "workspace_view::render_classic_workspace_view_for_review"
+    ],
+    "scope": "Actual light/dark File/Edit/Save-as/Print/View/Zoom scenes through wgpu. Raw File and View comparisons archived."
+  },
+  "clippy": "workspace all-targets with -D warnings passed",
+  "scope": "Dedicated Import image, Recent, Desktop background, Image properties and Thumbnail glyphs. Disabled Recent/Desktop background retain submenu chevrons; active anchors use the same outline chevron. Classic no-icon actions reserve the shared icon column, including Default canvas size and Change Classic skin. Colored default action formatting and historical skin path retained.",
+  "regressions": "Real File rows paint distinct texture identities; disabled submenu markers remain visible and clicks do not publish document/history changes across repeated layout in light at 1x and dark at 2x. View visible-glyph alignment now includes Thumbnail and extension rows before/after fullscreen toggle. Existing bounded-menu, submenu, action and shortcut tests pass.",
+  "limits": "This slice qualifies menu presentation and existing routing; unavailable operations remain disabled. Exact Windows glyph geometry, native menus/desktop appearance, full UI/reference parity and remaining roadmap features are incomplete. No native desktop window was launched for this slice. File baseline source f819457; View baseline source 0f279c0.",
+  "sha256": {
+    "after-dark-file.png": "42ba3268ff4b21d2349bb7b412fae7fd650165013c32b3fbd31478028adaaf0f",
+    "after-dark-view.png": "93a9a7c1b60122047dbb0b21df232d59cace468fc6216da174c647385a3a3d01",
+    "after-light-file.png": "5f4249e5f179792d8aee12dde34903abecfbfb5fdf1ec7525a25cc3998433358",
+    "after-light-view.png": "f3c976928fbf7b720106cbfeabf578cfe3ec902d3c22966ab22736470de14b52",
+    "before-dark-file.png": "7e12b2ef687bdaf6e5d2db61a0ec30887ad0dd362e097c3e46db647435436e65",
+    "before-dark-view.png": "d3ce183361403bef0554d39b05f78e2a5acfd0ec57a3de8e8a2c89cfe8eb706e",
+    "before-light-file.png": "233ff5eda9a8ac0c1a62e566d3b112c6abd244e530d0301b69ae9aa7da406a87",
+    "before-light-view.png": "7e13e848abe0f1f85cf97675438f5c13e70dfadc9c70fcbe219159cdf0144fbd",
+    "clippy.log.gz": "80f3d4bc789cfe345a58d9f5a34e0785dc7b168c6192f14fce5ec286b4a24163",
+    "gpu-file.log.gz": "45912c23bdbef66c97b4923992ed955c8fa6f55c2d841f1ba7bd16f036e76f0c",
+    "gpu-view.log.gz": "6b5d9ddb8347f46a6aa8c2c4ec2d760d79dcc804f3e7830698a90402d9adb69e",
+    "gui.log.gz": "098b43124bb012ab443b2209b6645c2f15eb5159a3c96c237de9d236f2a398d7",
+    "icons.log.gz": "0ca3e2fea1005ed7753bb89d0bff73f87aa72825e373b79704d9c669d00411cb"
+  }
+}
