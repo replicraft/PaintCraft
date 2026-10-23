@@ -813,3 +813,15 @@ change; current checks cover all seven captions, image size/centering, duplicate
 text removal, tool activation and document/history preservation at scales 1/2
 with repeated layout. Full Windows parity and native menu/desktop appearance
 remain unqualified; other chrome and feature work remains on the roadmap.
+
+Classic v11 File/Edit/View menus now use contiguous 40-point rows, removing the
+five-point dead gap observed between adjacent entries. Body text is 16 points;
+primary/shortcut colors remain distinct and readable in each theme. Separators,
+shared action metadata/gates, submenu behavior and existing extensions are retained.
+All 164 window-free UI tests, a fresh wgpu-backed menu scene export and strict
+workspace Clippy pass; see [the menu density record](validation/menu-density-gpu-2026-10-22/validation.json)
+for raw light/dark File/Edit before/after captures. The old geometry probe fails
+on the extra gap. Current checks also click within that former gap to activate
+Gridlines, confirm its checked state and preserve document/history in repeated
+layout at scales 1/2. Menu icon styling is a separate remaining fidelity task;
+full Windows parity, native menu appearance and unavailable operations remain open.

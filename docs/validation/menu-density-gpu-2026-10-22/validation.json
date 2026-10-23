@@ -1,0 +1,46 @@
+{
+  "source_commit": "c8ae0b968b4b7117580063735af1b7fdd45826e8",
+  "baseline_commit": "c87753ebcca4d78a994a56f4171a98048012046e",
+  "references": [
+    "docs/temp/paint-references/photos/im1age.png",
+    "docs/temp/paint-references/photos/imag1e.png",
+    "docs/temp/paint-references/photos/ima2ge.png"
+  ],
+  "gui": {
+    "passed": 164,
+    "failed": 0,
+    "ignored": 18
+  },
+  "focused_gui": {
+    "passed": 1,
+    "scope": "Classic v11 light at scale 1 and dark at scale 2 with repeated layout. Adjacent File/Edit/View rows have contiguous 40-point hit targets and 16-point text. File shortcut color remains legible. A real pointer click two points below the Rulers row edge, within the former gap, activates Gridlines; reopening View confirms checked state. Menu interactions preserve document semantics and history ticket."
+  },
+  "gpu_scenes": {
+    "passed": 1,
+    "command": "cargo test -p paintcraft --test gui classic_menus::export_classic_file_and_edit_menus -- --ignored --exact",
+    "scope": "Raw 1360x900 wgpu-backed File/Edit/Save as/Print scenes in light/dark, before and after. The record archives File/Edit comparisons; rendered inspection confirms reduced inter-row spacing, larger text and clearer shortcuts. OS title/menu bars are outside these captures."
+  },
+  "regression_baseline": {
+    "result": "The original File probe reports Open top=94 while New bottom=89, exposing a five-point gap between adjacent hit targets.",
+    "probe_scope": "The initial File geometry assertion; later Copy-query disambiguation, pointer-gap activation and shortcut contrast checks were added after the baseline failure."
+  },
+  "clippy": "workspace all-targets with -D warnings passed",
+  "scope": "Classic v11 main-menu layout now has zero extra vertical spacing between ordinary 40-point rows, 16-point body/button text and theme-specific primary/secondary text contrast. Separators, icons, shared action identities, shortcuts, enabled state, submenu behavior and PaintCraft extensions are retained. Studio and historical skins keep their own layouts.",
+  "limits": "Main-menu icons still use the colorful supplied-sheet adaptations and differ from the monochrome reference. Icon styling, unavailable operations, native menu/desktop appearance and complete Windows fidelity remain open. This record qualifies menu density/typography and pointer routing, not the full feature roadmap.",
+  "sha256": {
+    "gui.log.gz": "8ebb655d26315149e90bd4e810d396108eb60f3fa79c7fde9ce1a16985dfa545",
+    "focused-gui.log.gz": "272b8df9472df54bbe10e4773fecda69612d5ff42a5c2908ea25f1e5bf352b64",
+    "gpu-scenes.log.gz": "d4e6102d97256d6c1526eab781cab760a8e838d9dacd8f5fd2a2c19e54087908",
+    "gpu-scenes-before.log.gz": "d4f43a5bc4fb97c75b414bfcdf91a7c3c8b397a60c6c12a94ab6ffa9100ff9cb",
+    "clippy.log.gz": "4bc43222c1fedd2a06b273ea0f005f70c8c8b46690413060a0b4cb2dec558afe",
+    "regression-before.log.gz": "c8c014be735788b10720c06411ec6086c844ee713430a29d8bf0fed1a4decbd9",
+    "before-classic-light-file.png": "897f3c44663c1fb3dc10a0802e817e162d09a865481fc3e2c3ba93b2b36ac75e",
+    "after-classic-light-file.png": "220076a0745045d813be7cb47ab4e201ee9c2a8791d4842009f22c0202b77352",
+    "before-classic-light-edit.png": "9ca036c479c0a29ee50b743f742cd520c25a7d7535b0ec0698010e1b3c385701",
+    "after-classic-light-edit.png": "eda6a004e00b9b79b66d64bba6cdce731fe0001065f7045b9d7f1926830c2dc3",
+    "before-classic-dark-file.png": "0daae2e5b4aac7c20ad281718b1eefd327b32678d5ad361d1004a04f31617c3a",
+    "after-classic-dark-file.png": "e8ca5738e46765af33a5ff8057659e3e98378e9305824599abf0483ed2a97ab8",
+    "before-classic-dark-edit.png": "d718cee7ed4785ef5300e8a220232783ecebfb722a21908f625db88cae4ee5b9",
+    "after-classic-dark-edit.png": "37b8aba93429fcbe7a718dbef28e6905996b0bb1a0e885bd52114bd7585669e0"
+  }
+}
