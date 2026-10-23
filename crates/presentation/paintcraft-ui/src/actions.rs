@@ -23,6 +23,8 @@ pub enum Action {
     CanvasDefaults,
     EditColors,
     EditSecondaryColors,
+    /// Open the color editor at a zero-based custom palette slot.
+    EditCustomColor(u8),
     SelectTool(Tool),
     SelectAll,
     Deselect,
@@ -116,6 +118,7 @@ impl Action {
             Self::CanvasDefaults => ("Default canvas size…", None),
             Self::EditColors => ("Edit colors…", None),
             Self::EditSecondaryColors => ("Edit secondary color…", None),
+            Self::EditCustomColor(_) => ("Edit custom color…", None),
             Self::SelectTool(tool) => (tool.name(), None),
             Self::SelectAll => ("Select all", Some((Key::A, false))),
             Self::Deselect => ("Deselect", Some((Key::D, false))),
@@ -176,7 +179,8 @@ impl Action {
             | Self::CanvasSize
             | Self::CanvasDefaults
             | Self::EditColors
-            | Self::EditSecondaryColors => frontend == Frontend::Classic,
+            | Self::EditSecondaryColors
+            | Self::EditCustomColor(_) => frontend == Frontend::Classic,
             Self::Layer(_) => frontend == Frontend::Studio,
             _ => true,
         }
@@ -261,6 +265,7 @@ impl Action {
             Self::CanvasDefaults => 1012,
             Self::EditColors => 1013,
             Self::EditSecondaryColors => 1014,
+            Self::EditCustomColor(slot) => 2000 + u64::from(slot),
             Self::SelectTool(tool) => 1100 + tool as u64,
         }
     }

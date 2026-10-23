@@ -10,6 +10,16 @@ pub(crate) struct ColorDraft {
 }
 
 impl App {
+    pub(super) fn begin_custom_color_dialog(&mut self, ctx: &egui::Context, slot: u8) {
+        self.begin_color_dialog(ctx, false);
+        if let Some(Confirm::Colors(draft)) = &mut self.confirm {
+            draft.editor = draft
+                .editor
+                .clone()
+                .with_selected_custom_slot(usize::from(slot));
+        }
+    }
+
     pub(super) fn begin_color_dialog(&mut self, ctx: &egui::Context, secondary: bool) {
         self.resolve_tab_input(ctx);
         let source = if secondary {

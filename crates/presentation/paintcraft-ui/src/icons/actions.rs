@@ -31,7 +31,9 @@ impl Action {
             }
             Self::CanvasSize => Icon::CanvasSize,
             Self::ClearCanvas => Icon::ClearCanvas,
-            Self::EditColors | Self::EditSecondaryColors => Icon::EditColors,
+            Self::EditColors | Self::EditSecondaryColors | Self::EditCustomColor(_) => {
+                Icon::EditColors
+            }
             Self::View(action) => match action {
                 ViewAction::ZoomIn => Icon::ZoomIn,
                 ViewAction::ZoomOut => Icon::ZoomOut,

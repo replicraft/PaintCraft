@@ -49,6 +49,15 @@ impl ColorEditor {
         editor
     }
 
+    /// Target a custom swatch when opening from the ribbon. Invalid slots retain
+    /// the constructor's first-empty-slot selection.
+    pub fn with_selected_custom_slot(mut self, slot: usize) -> Self {
+        if slot < self.custom.len() {
+            self.selected_slot = slot;
+        }
+        self
+    }
+
     fn set_rgb(&mut self, rgb: [u8; 3]) {
         let previous = self.hsv;
         self.hsv = Hsva::from_srgba_unmultiplied([rgb[0], rgb[1], rgb[2], 255]);

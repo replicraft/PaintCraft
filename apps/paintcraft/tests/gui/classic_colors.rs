@@ -25,6 +25,38 @@ fn hex(h: &mut Harness<App>, value: &str) {
 }
 
 #[test]
+fn empty_ribbon_custom_color_edits_the_clicked_slot_and_stages_until_ok() {
+    for ppp in [1.0, 2.0] {
+        let (mut h, dir) = classic(ppp, true);
+        let document = h.state().editor().document_snapshot();
+        let before = publications(&h);
+        let saved = std::fs::read(dir.join("settings.json")).unwrap();
+        for accept in [false, true] {
+            h.get_by_label("Palette custom color 10").click();
+            h.run();
+            hex(&mut h, "#2080FF");
+            h.get_by_label("Add custom color").click();
+            h.run();
+            assert_eq!(std::fs::read(dir.join("settings.json")).unwrap(), saved);
+            h.get_by_label(if accept { "OK" } else { "Cancel" }).click();
+            h.run();
+            let colors = Settings::load(&dir).0.custom_colors;
+            if accept {
+                assert_eq!(colors[9], Some(Rgba([32, 128, 255, 255])));
+                assert_eq!(colors.iter().flatten().count(), 1);
+            } else {
+                assert_eq!(colors, [None; 28]);
+                assert_eq!(h.state().editor().color, Rgba([0, 0, 0, 255]));
+            }
+        }
+        assert_eq!(publications(&h), before);
+        assert!(h.state().editor().document().same_semantics(&document));
+        drop(h);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+}
+
+#[test]
 fn color_dialog_stages_exact_rgb_custom_slots_and_cancel_without_document_history() {
     let (mut h, dir) = classic(1.0, true);
     with_layer(&mut h);

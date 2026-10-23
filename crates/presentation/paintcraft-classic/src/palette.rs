@@ -223,7 +223,7 @@ fn swatches(
                         state.secondary = color;
                     }
                 } else if response.clicked() && super::Action::EditColors.enabled(context) {
-                    actions.push(super::Action::EditColors);
+                    actions.push(super::Action::EditCustomColor((index - 20) as u8));
                 }
                 response.on_hover_text(tip);
                 if index % 10 == 9 {
