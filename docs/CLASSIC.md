@@ -786,3 +786,17 @@ appearance remain visually unqualified. Existing ignored window/GPU checks may
 now be run selectively. Full reference fidelity remains partial, including
 caption/text contrast/scale, other icons and native interaction checks. The scene
 exports also expose a clipped canvas-edge gradient requiring investigation.
+
+The clipped canvas-edge gradient is fixed. egui's default scroll fade was painted
+after the document and tinted image pixels. Plain/ruled Classic and Studio now
+disable that effect within their own canvas presentation scopes, preserving
+ordinary scroll cues in caller UI and menus. Studio's scope is document-stable;
+Classic retains its shared plain/ruled scope and navigation identity.
+All 162 window-free UI tests and strict workspace Clippy pass; see
+[the canvas fade record](validation/canvas-fades-gpu-2026-10-22/validation.json).
+Pre-fix headless and GPU probes both fail. The current GPU regression verifies
+60 white framebuffer samples across centers/edges before and after actual
+two-axis panning in all three presentations, light at scale 1 and dark at scale 2.
+Fresh whole-application light/dark scenes confirm the visible strip is gone.
+Caller scroll policy is unchanged. These checks qualify the fade fix, not every
+image color, native menus/driver paths, pen/IME or full Windows visual parity.

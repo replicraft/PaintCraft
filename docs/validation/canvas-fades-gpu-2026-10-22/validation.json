@@ -1,0 +1,40 @@
+{
+  "source_commit": "473269da648fc7488eadd32b60f55d9d4f568f76",
+  "baseline_commit": "e4d8c0620478caff49cd052259ceaee5869417e8",
+  "mode": "User-authorized wgpu scene/pixel checks, window-free egui regression suite and strict linting. No native desktop window was launched during this change.",
+  "gui": {
+    "passed": 162,
+    "failed": 0,
+    "ignored": 18,
+    "scope": "Includes a new regression for plain Classic, ruled Classic and Studio at light/scale 1 and dark/scale 2, repeated layout, before/after actual two-axis wheel panning. No scroll-fade gradient mesh overlays the canvas, and caller scroll styling remains unchanged."
+  },
+  "gpu_pixels": {
+    "passed": 1,
+    "command": "cargo test -p paintcraft --test gui canvas_fades::rendered_canvas_pixels_remain_white_at_clipped_edges_before_and_after_pan -- --ignored --exact",
+    "scope": "The real frontend canvas wrappers paint a known opaque white fixture. Sixty actual framebuffer sample checks cover the center plus four clipped edges across the three presentations, two theme/density cases and pre/post-pan states. The fixture verifies both axes actually move and keeps its rendered test cursor outside samples."
+  },
+  "gpu_scenes": {
+    "passed": 1,
+    "command": "cargo test -p paintcraft --test gui appearance::export_theme_previews -- --ignored --exact",
+    "scope": "Complete application scenes render through wgpu in both themes. Archived 1100x900 Classic workspaces show removal of the right-edge gradient; OS title/menu bars are outside these exports. Before images are copied unchanged from the previous outline review record, whose source commit is 63b363f."
+  },
+  "regression_baseline": {
+    "result": "The pre-fix headless probe detects a scroll-edge gradient. The actual GPU sample at Classic scale 1, point [377,150], is [254,254,254,255] rather than opaque white [255,255,255,255].",
+    "probe_scope": "Initial overflow assertions before panning; later pan-origin assertions and test-cursor handling were added after these baseline probes. Expected failures are archived separately from passing current logs."
+  },
+  "clippy": "workspace all-targets with -D warnings passed",
+  "scope": "egui 0.37 scroll fades paint after canvas content and tint visible image pixels near clipped viewport edges. Both frontends now disable the fade locally; Studio has its own stable presentation scope so caller scroll cues remain unaffected. Classic plain/ruled views retain their shared presentation identity.",
+  "limits": "Pixel checks use an opaque white chrome fixture, not every image color or native window/driver path. Full application scene exports are visually reviewed, not a complete Windows fidelity qualification. Native menus, pen/IME, sustained-input latency and remaining roadmap requirements remain open.",
+  "sha256": {
+    "gui.log.gz": "4a1c4349faa876d7bc205dac7e9205938df4107ae0b7201ca15f928f89993838",
+    "gpu-pixels.log.gz": "bfbf82be40a055911941c91653bcb8421f1d5c1124b90692d00b442bb88bbe64",
+    "gpu-scenes.log.gz": "c61402c42e4d986f75c3c7c4f5cd78645471fe21507979407731defc110cd10d",
+    "clippy.log.gz": "11a6a406a3895418e73a4b8ceab22494c1972d0124a783845bb6d4964fa7f005",
+    "regression-before.log.gz": "c264be142179fa703b754b71e14adbfb99043700bb76e38d23ea3bd92fbb7792",
+    "gpu-pixels-before.log.gz": "7ab8936dfd417597f66eb15df582cac639d8285084418f1426c2a402436b7553",
+    "before-classic-dark.png": "dc18159517048155967af11451fc40762aaef7c1c7194a41f9b410b076268249",
+    "after-classic-dark.png": "8b3b4a67ae6078ab11be6a8d8c4324979ca9b2ca8d42536fbf5801774e20e66d",
+    "before-classic-light.png": "56b2228eef737f5069c1a3a47204bbdfcf545023a1412e045b61f0b6dad70235",
+    "after-classic-light.png": "05a0a3766eb0f8d8cc35fc5caecfda766406dc8419ccf84de3923983d2b7205c"
+  }
+}
