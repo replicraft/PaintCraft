@@ -78,14 +78,14 @@ pub fn text_options(
 }
 
 fn style_button(ui: &mut Ui, text: RichText, label: &str, selected: bool) -> Response {
-    let response = ui.add(
+    let response = crate::control_surface::button(
+        ui,
         Button::new(text)
-            .selected(selected)
             .min_size(Vec2::splat(CONTROL_HEIGHT))
             .frame_when_inactive(selected)
             .frame(true),
+        selected,
     );
-    selected_outline(ui, &response, selected);
     response.widget_info(|| {
         egui::WidgetInfo::selected(egui::Role::Button, ui.is_enabled(), selected, label)
     });
@@ -100,7 +100,7 @@ fn alignment(ui: &mut Ui, alignment: &mut TextAlignment) {
     ] {
         let response = style_button(ui, RichText::new("     "), label, *alignment == value);
         let rect = response.rect.shrink(9.0);
-        let ink = ui.visuals().text_color();
+        let ink = ui.visuals().strong_text_color();
         draw_alignment(ui.painter(), rect, value, ink);
         if response.clicked() {
             *alignment = value;

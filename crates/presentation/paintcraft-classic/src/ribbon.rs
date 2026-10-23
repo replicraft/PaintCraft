@@ -85,7 +85,7 @@ pub(super) fn ribbon(
                             Vec2::new(60.0, 60.0),
                             egui::Layout::top_down(egui::Align::Center),
                             |ui| {
-                                let response = ui.add(
+                                let response = super::control_surface::button(ui,
                                     egui::Button::image(paintcraft_ui::icons::classic_image(
                                         ui.ctx(),
                                         Icon::Layers,
@@ -93,9 +93,9 @@ pub(super) fn ribbon(
                                         ui.visuals().dark_mode,
                                     ))
                                     .min_size(Vec2::new(60.0, 60.0))
-                                    .selected(workspace.layers)
                                     .frame_when_inactive(workspace.layers)
                                     .frame(true),
+                                    workspace.layers,
                                 );
                                 response.widget_info(|| {
                                     egui::WidgetInfo::selected(
@@ -175,7 +175,8 @@ fn primary_tool(ui: &mut egui::Ui, state: &mut Controls, tool: Tool, icon: Icon)
     } else {
         icon
     };
-    let response = ui.add(
+    let response = super::control_surface::button(
+        ui,
         egui::Button::new((
             egui::Atom::grow(),
             paintcraft_ui::icons::classic_menu_image(
@@ -187,18 +188,10 @@ fn primary_tool(ui: &mut egui::Ui, state: &mut Controls, tool: Tool, icon: Icon)
             egui::Atom::grow(),
         ))
         .min_size(Vec2::new(64.0, 60.0))
-        .selected(selected)
         .frame_when_inactive(selected)
         .frame(true),
+        selected,
     );
-    if selected {
-        ui.painter().rect_stroke(
-            response.rect.shrink(0.5),
-            4,
-            ui.visuals().selection.stroke,
-            egui::StrokeKind::Inside,
-        );
-    }
     response.widget_info(|| {
         egui::WidgetInfo::selected(egui::Role::Button, ui.is_enabled(), selected, tool.name())
     });

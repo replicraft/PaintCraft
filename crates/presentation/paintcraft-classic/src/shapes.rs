@@ -87,28 +87,21 @@ fn button(
     let response = ui
         .scope(|ui| {
             ui.spacing_mut().interact_size = Vec2::splat(cell);
-            ui.add(
+            crate::control_surface::button(
+                ui,
                 egui::Button::new(paintcraft_ui::icons::classic_shape_image(
                     ui.ctx(),
                     icon,
                     glyph,
                     ui.visuals().strong_text_color(),
                 ))
-                .selected(selected)
                 .min_size(Vec2::splat(cell))
                 .frame_when_inactive(selected)
                 .frame(true),
+                selected,
             )
         })
         .inner;
-    if selected {
-        ui.painter().rect_stroke(
-            response.rect.shrink(0.5),
-            4,
-            ui.visuals().selection.stroke,
-            egui::StrokeKind::Inside,
-        );
-    }
     response.widget_info(|| {
         egui::WidgetInfo::selected(egui::Role::Button, ui.is_enabled(), selected, label)
     });

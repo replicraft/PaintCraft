@@ -24,12 +24,13 @@ pub(super) fn prototype(ui: &mut egui::Ui, label: &str, icon: Icon, help: &str) 
 }
 
 fn button(ui: &mut egui::Ui, label: &str, icon: Icon, selected: bool) -> egui::Response {
-    let response = ui.add(
+    let response = crate::control_surface::button(
+        ui,
         egui::Button::new("")
             .min_size(Vec2::splat(40.0))
-            .selected(selected)
             .frame_when_inactive(selected)
             .frame(true),
+        selected,
     );
     paintcraft_ui::icons::classic_tool_image(
         ui.ctx(),
@@ -41,14 +42,6 @@ fn button(ui: &mut egui::Ui, label: &str, icon: Icon, selected: bool) -> egui::R
         ui,
         egui::Rect::from_center_size(response.rect.center(), Vec2::splat(24.0)),
     );
-    if selected {
-        ui.painter().rect_stroke(
-            response.rect.shrink(0.5),
-            4,
-            ui.visuals().selection.stroke,
-            egui::StrokeKind::Inside,
-        );
-    }
     response.widget_info(|| {
         egui::WidgetInfo::selected(egui::Role::Button, ui.is_enabled(), selected, label)
     });

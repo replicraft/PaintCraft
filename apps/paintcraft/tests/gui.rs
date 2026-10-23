@@ -301,3 +301,6 @@ mod numeric_fields;
 
 #[path = "gui/canvas_scrollbars.rs"]
 mod canvas_scrollbars;
+
+#[path = "gui/control_surfaces.rs"]
+mod control_surfaces;

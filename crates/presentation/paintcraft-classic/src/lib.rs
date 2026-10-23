@@ -9,6 +9,7 @@ mod rulers;
 pub mod status;
 pub mod tool_controls;
 pub use rulers::RULER_SIZE;
+mod control_surface;
 mod dropdowns;
 mod image_menus;
 pub mod layers;
