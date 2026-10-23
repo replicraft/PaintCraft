@@ -316,3 +316,6 @@ mod settings_surfaces;
 
 #[path = "gui/form_controls.rs"]
 mod form_controls;
+
+#[path = "gui/dimension_fields.rs"]
+mod dimension_fields;

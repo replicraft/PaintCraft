@@ -1,5 +1,7 @@
 //! Canvas dimension/default presentation; document and preference writes stay in the host.
 use egui::{Color32, Vec2};
+mod fields;
+pub use fields::dimension_fields;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct StartupSize {
@@ -76,21 +78,7 @@ pub fn canvas_size_dialog(
                         ui.set_min_width(ui.available_width().max(0.0));
                         ui.strong("Dimensions");
                         ui.add_space(8.0);
-                        for (label, value) in
-                            [("Width", &mut draft.size.0), ("Height", &mut draft.size.1)]
-                        {
-                            ui.horizontal(|ui| {
-                                let caption = ui.add_sized([72.0, 40.0], egui::Label::new(label));
-                                let field_width = ui.available_width().clamp(80.0, 220.0);
-                                ui.add_sized(
-                                    [field_width, 40.0],
-                                    egui::DragValue::new(value)
-                                        .range(1..=max_dimension)
-                                        .suffix(" px"),
-                                )
-                                .labelled_by(caption.id);
-                            });
-                        }
+                        dimension_fields(ui, &mut draft.size, max_dimension, ["Width", "Height"]);
                     });
                 ui.add_space(12.0);
                 if let Some(startup) = &mut draft.startup {

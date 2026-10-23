@@ -240,7 +240,7 @@ fn content(
             .max_height(height).auto_shrink([false, false]).show(ui, |ui| {
                 match draft.page {
                     Page::Appearance => appearance(ui, &mut draft.values),
-                    Page::Canvas => canvas(ui, &mut draft.values.canvas),
+                    Page::Canvas => canvas(ui, &mut draft.values.canvas, classic),
                     Page::Text => card(ui, "Text editing", |ui| {
                         ui.label(format!("{fonts} available font families"));
                         ui.checkbox(&mut draft.values.text.editable_until_save,
@@ -312,22 +312,31 @@ fn appearance(ui: &mut egui::Ui, values: &mut Settings) {
     }
 }
 
-fn canvas(ui: &mut egui::Ui, values: &mut settings::CanvasDefaults) {
+fn canvas(ui: &mut egui::Ui, values: &mut settings::CanvasDefaults, classic: bool) {
     card(ui, "New Classic canvas", |ui| {
         ui.weak("These defaults apply to new documents, leaving the current image unchanged.");
-        for (label, value) in [
-            ("Default width", &mut values.configured.0),
-            ("Default height", &mut values.configured.1),
-        ] {
-            ui.horizontal(|ui| {
-                let caption = ui.label(label);
-                ui.add(
-                    egui::DragValue::new(value)
-                        .range(1..=settings::SIZE_MAX)
-                        .suffix(" px"),
-                )
-                .labelled_by(caption.id);
-            });
+        if classic {
+            paintcraft_classic::canvas_size::dimension_fields(
+                ui,
+                &mut values.configured,
+                settings::SIZE_MAX,
+                ["Default width", "Default height"],
+            );
+        } else {
+            for (label, value) in [
+                ("Default width", &mut values.configured.0),
+                ("Default height", &mut values.configured.1),
+            ] {
+                ui.horizontal(|ui| {
+                    let caption = ui.label(label);
+                    ui.add(
+                        egui::DragValue::new(value)
+                            .range(1..=settings::SIZE_MAX)
+                            .suffix(" px"),
+                    )
+                    .labelled_by(caption.id);
+                });
+            }
         }
     });
     card(ui, "Canvas size on startup", |ui| {
