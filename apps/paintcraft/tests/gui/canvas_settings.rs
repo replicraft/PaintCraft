@@ -258,3 +258,56 @@ fn render_classic_canvas_preferences_for_review() {
         .unwrap();
     std::fs::remove_dir_all(dir).unwrap();
 }
+
+#[test]
+#[ignore = "requires GPU; exports canvas/current-default dimension dialog surfaces"]
+fn export_canvas_dimension_dialogs() {
+    use paintcraft::settings::Appearance;
+    let output = std::env::temp_dir().join("paintcraft-canvas-dialogs");
+    std::fs::create_dir_all(&output).unwrap();
+    for (appearance, theme) in [(Appearance::Light, "light"), (Appearance::Dark, "dark")] {
+        let dir = scratch("canvas-dialog-review");
+        Settings {
+            appearance,
+            classic_variant: Some(ClassicVariant::V11),
+            canvas: CanvasDefaults {
+                remember_last: false,
+                last: Some((800, 600)),
+                ..Default::default()
+            },
+            ..Default::default()
+        }
+        .save(&dir)
+        .unwrap();
+        let mut h = harness_with(App::new(None).with_settings(dir.clone()), 1.0, false);
+        for (size, name) in [
+            (Vec2::new(1360.0, 900.0), "desktop"),
+            (Vec2::new(360.0, 360.0), "compact"),
+        ] {
+            h.set_size(size);
+            h.run();
+            for (action, kind) in [
+                ("Canvas size…", "current"),
+                ("Default canvas size…", "defaults"),
+            ] {
+                dialog(&mut h, action);
+                h.render()
+                    .unwrap()
+                    .save(output.join(format!("{theme}-{name}-{kind}.png")))
+                    .unwrap();
+                if name == "compact" && kind == "defaults" {
+                    h.get_by_label("Remember last canvas size").scroll_to_me();
+                    h.run();
+                    h.render()
+                        .unwrap()
+                        .save(output.join(format!("{theme}-compact-defaults-policy.png")))
+                        .unwrap();
+                }
+                h.get_by_label("Cancel").click();
+                h.run();
+            }
+        }
+        drop(h);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+}
