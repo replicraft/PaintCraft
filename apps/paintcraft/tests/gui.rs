@@ -286,3 +286,6 @@ mod canvas_fades;
 
 #[path = "gui/ribbon_captions.rs"]
 mod ribbon_captions;
+
+#[path = "gui/menu_density.rs"]
+mod menu_density;

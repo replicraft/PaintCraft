@@ -136,10 +136,15 @@ pub(super) fn edit(ui: &mut Ui, context: Context, actions: &mut Vec<Action>) {
 fn layout(ui: &mut Ui) {
     ui.set_min_width(300.0);
     ui.spacing_mut().interact_size.y = 40.0;
+    ui.spacing_mut().item_spacing.y = 0.0;
+    let dark = ui.visuals().dark_mode;
+    ui.visuals_mut().override_text_color =
+        Some(egui::Color32::from_gray(if dark { 245 } else { 24 }));
+    ui.visuals_mut().weak_text_color = Some(egui::Color32::from_gray(if dark { 208 } else { 96 }));
     for text in [egui::TextStyle::Body, egui::TextStyle::Button] {
         ui.style_mut()
             .text_styles
-            .insert(text, egui::FontId::proportional(15.0));
+            .insert(text, egui::FontId::proportional(16.0));
     }
 }
 
