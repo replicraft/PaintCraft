@@ -106,6 +106,8 @@ fn classic_view_labels_align_across_icons_and_toggle_states() {
     .save(&dir)
     .unwrap();
     let mut h = harness_with(App::new(None).with_settings(dir.clone()), 1.0, true);
+    h.set_size(Vec2::new(1360.0, 900.0));
+    h.run();
     let base = h.state().editor().document_snapshot();
     let ticket = h.state().editor().history_view().ticket;
     for checked in [false, true] {
@@ -118,6 +120,7 @@ fn classic_view_labels_align_across_icons_and_toggle_states() {
             "Status bar",
             "Full screen",
             "Thumbnail",
+            "Canvas size…",
             "Default canvas size…",
             "Change Classic skin…",
         ] {
