@@ -10,6 +10,7 @@ pub mod status;
 pub mod tool_controls;
 pub use rulers::RULER_SIZE;
 mod control_surface;
+pub use control_surface::button as selected_button;
 mod dropdowns;
 mod image_menus;
 pub mod layers;

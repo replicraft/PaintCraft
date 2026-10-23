@@ -1,7 +1,8 @@
 //! Neutral toolbar selections retain the shared accent for outlines and text editing.
 use egui::{Button, Color32, Response, Shape, Stroke, StrokeKind, Ui};
 
-pub(super) fn button(ui: &mut Ui, button: Button<'_>, selected: bool) -> Response {
+/// Classic selected surfaces retain ordinary egui button input and metadata.
+pub fn button(ui: &mut Ui, button: Button<'_>, selected: bool) -> Response {
     if !selected {
         return ui.add(button.selected(false));
     }

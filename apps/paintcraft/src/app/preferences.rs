@@ -31,17 +31,29 @@ impl App {
         let room = ctx.content_rect().size() - egui::vec2(48.0, 64.0);
         let width = room.x.clamp(240.0, 720.0);
         let height = room.y.clamp(180.0, 520.0);
-        let response = egui::Modal::new(egui::Id::unique("application-settings")).show(ctx, |ui| {
+        let control_height = if classic { 40.0 } else { 36.0 };
+        let mut modal = egui::Modal::new(egui::Id::unique("application-settings"));
+        if classic {
+            modal = modal.frame(
+                egui::Frame::window(&ctx.style_of(ctx.theme()))
+                    .inner_margin(16)
+                    .corner_radius(12),
+            );
+        }
+        let response = modal.show(ctx, |ui| {
             ui.set_width(width);
             ui.set_max_height(height);
-            ui.spacing_mut().interact_size.y = 36.0;
+            ui.spacing_mut().interact_size.y = control_height;
             ui.spacing_mut().icon_width = 22.0;
             for style in [egui::TextStyle::Body, egui::TextStyle::Button] {
-                ui.style_mut()
-                    .text_styles
-                    .insert(style, egui::FontId::proportional(15.0));
+                ui.style_mut().text_styles.insert(
+                    style,
+                    egui::FontId::proportional(if classic { 16.0 } else { 15.0 }),
+                );
             }
             if classic {
+                ui.spacing_mut().scroll.floating_allocated_width = 4.0;
+                ui.spacing_mut().scroll.dormant_handle_opacity = 0.6;
                 ui.visuals_mut().override_text_color = Some(ui.visuals().strong_text_color());
                 ui.visuals_mut().weak_text_color =
                     Some(Color32::from_gray(if ui.visuals().dark_mode {
@@ -49,12 +61,30 @@ impl App {
                     } else {
                         88
                     }));
-                ui.label(egui::RichText::new("Settings").size(24.0).strong());
+                ui.horizontal_top(|ui| {
+                    let heading_width = width - control_height - ui.spacing().item_spacing.x;
+                    ui.allocate_ui_with_layout(
+                        egui::vec2(heading_width, 0.0),
+                        egui::Layout::top_down(egui::Align::Min),
+                        |ui| {
+                            ui.set_width(heading_width);
+                            ui.label(egui::RichText::new("Settings").size(24.0).strong());
+                        },
+                    );
+                    cancel = paintcraft_ui::widgets::classic_menu_button(
+                        ui,
+                        "Close settings",
+                        Icon::Close,
+                        false,
+                        "Close settings",
+                    )
+                    .clicked();
+                });
             } else {
                 ui.heading("Settings");
             }
             ui.add_space(10.0);
-            let mut body_height = (height - 104.0).max(60.0);
+            let mut body_height = (height - if classic { 128.0 } else { 104.0 }).max(60.0);
             if width < 560.0 {
                 let tabs =
                     ui.horizontal_wrapped(|ui| navigation(ui, &mut draft.page, false, classic));
@@ -94,11 +124,11 @@ impl App {
             ui.add_space(10.0);
             ui.separator();
             ui.allocate_ui_with_layout(
-                egui::vec2(width, 36.0),
+                egui::vec2(width, control_height),
                 egui::Layout::right_to_left(egui::Align::Center),
                 |ui| {
-                    cancel = ui
-                        .add(egui::Button::new("Cancel").min_size(egui::vec2(96.0, 36.0)))
+                    cancel |= ui
+                        .add(egui::Button::new("Cancel").min_size(egui::vec2(96.0, control_height)))
                         .clicked();
                     let ink = if ui.visuals().dark_mode {
                         Color32::from_gray(16)
@@ -109,7 +139,7 @@ impl App {
                         .add(
                             egui::Button::new(egui::RichText::new("Apply").color(ink))
                                 .fill(ui.visuals().selection.stroke.color)
-                                .min_size(egui::vec2(96.0, 36.0)),
+                                .min_size(egui::vec2(96.0, control_height)),
                         )
                         .clicked();
                 },
@@ -167,7 +197,8 @@ fn navigation(ui: &mut egui::Ui, current: &mut Page, sidebar: bool, classic: boo
         };
         let selected = *current == page;
         let mut button = if classic {
-            egui::Button::new((image, label))
+            egui::Button::new(())
+                .left_text((label, image))
                 .selected(selected)
                 .frame_when_inactive(selected)
                 .frame(true)
@@ -179,15 +210,11 @@ fn navigation(ui: &mut egui::Ui, current: &mut Page, sidebar: bool, classic: boo
         if sidebar {
             button = button.min_size(egui::vec2(156.0, if classic { 40.0 } else { 36.0 }));
         }
-        let response = ui.add(button);
-        if classic && selected {
-            ui.painter().rect_stroke(
-                response.rect.shrink(0.5),
-                5,
-                ui.visuals().selection.stroke,
-                egui::StrokeKind::Inside,
-            );
-        }
+        let response = if classic {
+            paintcraft_classic::selected_button(ui, button, selected)
+        } else {
+            ui.add(button)
+        };
         if response.clicked() {
             *current = page;
         }

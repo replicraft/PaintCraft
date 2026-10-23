@@ -310,3 +310,6 @@ mod split_controls;
 
 #[path = "gui/popup_stability.rs"]
 mod popup_stability;
+
+#[path = "gui/settings_surfaces.rs"]
+mod settings_surfaces;
