@@ -1,0 +1,41 @@
+{
+  "source_commit": "f8a12bbbd0e108834c2b43b80f5497b5903efd6b",
+  "changes": "Classic Settings uses the 16-point body/button typography, 40-point targets, 16-point frame margin and 12-point corners used by other Classic dialogs. Its upper-right Close action cancels the draft, including theme preview. Sidebar icons precede aligned labels; selected navigation reuses the existing neutral Classic button surface and accent outline. Compact page content has a resting scroll cue, with a fixed footer. Studio metrics are retained.",
+  "gui": {
+    "passed": 195,
+    "failed": 0,
+    "ignored": 38,
+    "scope": "Full GUI suite. Added light desktop 1x/dark desktop 2x plus 360x360 light 1x/480x360 dark 2x repeated-layout checks cover target heights, font sizes, neutral selected fill, accessibility selection metadata, sidebar icon/text order and alignment, upper-right Close placement, a single Close tooltip, mouse/Space cancellation, theme restoration and unchanged persisted preferences/document/history. Existing Apply/Cancel, responsive page/footer, contrast and frontend-switching tests pass. Before log reproduces the previous 36-point Apply target."
+  },
+  "gpu": {
+    "passed": 1,
+    "test": "settings_surfaces::export_classic_settings_surfaces",
+    "scope": "16 actual-App light/dark desktop/compact GPU captures show Appearance, Canvas, Text preferences and Close hover. Reviewed heading/close placement, leading sidebar icons, neutral selection, readable typography and exposed scroll cues. Font-family counts are asynchronous snapshots, not enumeration qualification."
+  },
+  "checks": "Strict workspace all-target Clippy, formatting, source-length and whitespace checks passed.",
+  "limits": "This aligns shared Classic Settings presentation with the application\u2019s dialog surfaces. Exact native Windows/historical fidelity, OS accessibility and broader T15 acceptance remain incomplete. Prototype-only preferences retain their explanatory text. No editing-engine or performance change.",
+  "sha256": {
+    "after.log.gz": "3dbc76bfb630f1c61b85769cbf1e6cf8e7c7d7134c700ac8a6e0af1294950599",
+    "before.log.gz": "70fcd1c9528fd7699d9d29a922637d16b7fdbb8b85162ab0c78654a4f2f4cf33",
+    "checks.log.gz": "f922c56ced3ec5b00e71d83ef53e6a507af5e86e67969dc74b50a73c3ba99c6e",
+    "clippy.log.gz": "00df0284d24623e8d8c011302b5346f60d578a3d6d16b38da0545f2f61ff29b7",
+    "dark-compact-appearance.png": "50c2717423454731caa30625d2eb5f8250597fc4ef158925a4160c63b0c39cfa",
+    "dark-compact-canvas.png": "c7fb03e442781b2e1e9846c75caec08aefa2781bcb698c6d99084418e4f4085a",
+    "dark-compact-close-hover.png": "62c955272f9f345706d4a1d1c9188093132f5f69d1b61a9e3a489e2a53284c7f",
+    "dark-compact-text.png": "9096d9a16c4d7c482c4b0b21305844d167d8a40db0cfebbaa0d1c610733356f7",
+    "dark-desktop-appearance.png": "ee5ad861f3d4b5dc355313584da6990fa19a1bf6f526391fe1e85445a71a1efa",
+    "dark-desktop-canvas.png": "f2aab34eeebc313a2de5effcfb857876cd604266cbaf4c2dc0f8eafef83f9fcc",
+    "dark-desktop-close-hover.png": "86a05b53f6bf0259b6630dbda84d6921cd2e7cdd7ddcf34e955b0fdbdcb79820",
+    "dark-desktop-text.png": "17bb0fd853020a96129cb15cceaf134f99bbada0c06c15c2f93eea289b46fb68",
+    "gpu.log.gz": "c789ba61e89e672831e28acea2e56676c639fde48ad54e43bb382b30741a9c44",
+    "gui.log.gz": "b6b89d9deafedccc6aa66acfe4ca0d5c8f305cba482be56b61f786258f6686bf",
+    "light-compact-appearance.png": "088db184b82ee9e11bad58edea784ef6bb81cab828b0f51f1f2a50622ab264b5",
+    "light-compact-canvas.png": "4207f3d6087c4b84d9d0c7754428fd498088423c4b9030d38ba771a6aefe6cd1",
+    "light-compact-close-hover.png": "4e9f9857e1274262069cd4228a91f7dc50eb34fbde3ea8cf197981efa9c17e44",
+    "light-compact-text.png": "e0b58b2c8fbaef527bcaf96bc6018971c5fcc3d878f53cbb9a1269bf3ac22551",
+    "light-desktop-appearance.png": "2c0049b2bf939bead860c269a903ab4cc9f191ea30ede16287b6f885d09afb53",
+    "light-desktop-canvas.png": "03701ba67075511540e698a15dcae1406882495cdfcf45070b6ae8996b91ee07",
+    "light-desktop-close-hover.png": "e4d01b3a2d52764eb55c2b61898301bfb5ed5e127b1f10301535b682c3855645",
+    "light-desktop-text.png": "82e25f5277906ddc49ed6deb323eba755a568fc1ec4a8ad01ca0d44f8194b221"
+  }
+}

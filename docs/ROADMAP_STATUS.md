@@ -11,6 +11,12 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest Classic Settings work aligns dialog typography and targets, puts a cancelling
+Close action at the upper right, and gives sidebar icons/labels consistent leading
+alignment and neutral selected surfaces. All 195 ordinary GUI tests, 16 actual-App
+GPU scenes and strict workspace Clippy pass; see [the Settings surface record](validation/classic-settings-surfaces-gpu-2026-10-23/validation.json).
+Full native fidelity and broader T15 acceptance remain partial.
+
 Latest Classic font-search work adds staged arrow/page navigation, Enter acceptance
 and Escape cancellation, with virtualized candidate visibility and IME routing
 guards. All 194 ordinary GUI tests, 16 component GPU scenes and strict workspace
