@@ -185,9 +185,22 @@ fn render_classic_dropdowns_and_cursor_for_review() {
                 .unwrap()
                 .save(output.join(format!("{name}-{filename}.png")))
                 .unwrap();
+            if menu == "Selection options" {
+                h.get_by_label("Rectangular selection").click();
+                h.run();
+                h.get_by_role_and_label(eframe::egui::Role::Button, menu)
+                    .click();
+                h.run();
+                h.render()
+                    .unwrap()
+                    .save(output.join(format!("{name}-selection-rectangle.png")))
+                    .unwrap();
+            }
             h.key_press(Key::Escape);
             h.run();
         }
+        h.get_by_label("Eraser").click();
+        h.run();
         // egui_kittest's synthetic arrow ignores platform CursorIcon::None.
         h.set_render_cursor(false);
         h.event(Event::PointerMoved(at(&h, 100.0, 100.0)));

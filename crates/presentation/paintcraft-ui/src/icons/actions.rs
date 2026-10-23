@@ -3,6 +3,15 @@ use super::Icon;
 use crate::actions::{Action, Context, LayerAction, ViewAction};
 
 impl Action {
+    /// Classic presentation can refine a shared action's default artwork.
+    pub fn classic_menu_icon(self, ctx: Context) -> Option<Icon> {
+        if self == Self::SelectAll {
+            Some(Icon::SelectAll)
+        } else {
+            self.icon(ctx)
+        }
+    }
+
     pub fn icon(self, ctx: Context) -> Option<Icon> {
         Some(match self {
             Self::Settings => Icon::Settings,

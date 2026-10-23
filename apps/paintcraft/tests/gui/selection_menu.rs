@@ -49,6 +49,7 @@ fn classic_selection_menu_has_aligned_rows_safe_previews_and_reachable_actions()
             style.interaction.tooltip_delay = 0.0;
             style.interaction.show_tooltips_only_when_still = false;
         });
+        let viewport = h.state().canvas_viewport().unwrap();
         let snapshot = h.state().editor().document_snapshot();
         let ticket = h.state().editor().history_view().ticket;
         open(&mut h);
@@ -75,15 +76,77 @@ fn classic_selection_menu_has_aligned_rows_safe_previews_and_reachable_actions()
             .rect()
             .left();
         for label in labels {
+            reveal(&mut h, label);
             let rect = h
                 .get_by_role_and_label(Role::Button, "Selection options")
                 .get_by_role_and_label(Role::Button, label)
                 .rect();
-            assert!(rect.top() >= previous_bottom, "row ordering: {label}");
+            if size.y > 400.0 {
+                assert!(rect.top() >= previous_bottom, "row ordering: {label}");
+            }
             assert_eq!(rect.height(), 40.0);
-            assert!(rect.width() >= 260.0);
+            assert!(
+                rect.width() >= 260.0 && rect.width() <= 276.0,
+                "bounded {label} width: {rect:?}"
+            );
             assert_eq!(rect.left(), left);
             previous_bottom = rect.bottom();
+            let display = match label {
+                "Rectangular selection" => "Rectangle",
+                "Free-form selection" => "Free-form",
+                other => other,
+            };
+            let text = h
+                .output()
+                .shapes
+                .iter()
+                .find_map(|shape| match &shape.shape {
+                    Shape::Text(text)
+                        if text.galley.job.text == display && rect.contains(text.pos) =>
+                    {
+                        Some(text)
+                    }
+                    _ => None,
+                })
+                .expect("selection label is painted");
+            assert_eq!(text.galley.job.sections[0].format.font_id.size, 16.0);
+            if matches!(
+                label,
+                "Rectangular selection"
+                    | "Free-form selection"
+                    | "Select all"
+                    | "Invert selection"
+                    | "Delete"
+            ) {
+                assert!(h.output().shapes.iter().any(|shape| matches!(&shape.shape,
+                    Shape::Rect(image) if image.brush.is_some() && rect.contains_rect(image.rect) && image.rect.size()==Vec2::splat(22.0)
+                        && image.fill.r()==image.fill.g() && image.fill.g()==image.fill.b()
+                )),"{label} paints its monochrome glyph");
+            }
+        }
+        if size.y > 400.0 {
+            let mut textures = std::collections::HashSet::new();
+            for label in [
+                "Rectangular selection",
+                "Free-form selection",
+                "Select all",
+                "Invert selection",
+                "Delete",
+            ] {
+                let rect = h.get_by_label(label).rect();
+                let texture = h
+                    .output()
+                    .shapes
+                    .iter()
+                    .find_map(|shape| match &shape.shape {
+                        Shape::Rect(image) if rect.contains_rect(image.rect) => {
+                            image.brush.as_ref().map(|brush| brush.fill_texture_id)
+                        }
+                        _ => None,
+                    })
+                    .expect("selection glyph is present");
+                assert!(textures.insert(texture), "{label} has distinct artwork");
+            }
         }
         assert!(
             h.get_by_role_and_label(Role::Button, "Selection options")
@@ -136,6 +199,15 @@ fn classic_selection_menu_has_aligned_rows_safe_previews_and_reachable_actions()
             .click();
         h.run();
         assert_eq!(h.state().editor().tool, paintcraft_tools::Tool::Select);
+        assert_eq!(
+            h.state().canvas_viewport().unwrap(),
+            viewport,
+            "Select must not add a second action row"
+        );
+        assert!(
+            h.query_by_role_and_label(Role::Button, "Deselect")
+                .is_none()
+        );
         assert!(h.query_by_label("Rectangular selection").is_none());
         assert_eq!(h.state().editor().history_view().ticket, ticket);
         open(&mut h);

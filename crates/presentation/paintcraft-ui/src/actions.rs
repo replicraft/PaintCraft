@@ -314,10 +314,15 @@ pub fn menu_item_with_icon_style(
         ..action.descriptor_for(ctx.frontend)
     };
     let checked = action.checked(ctx);
+    let icon = if icon_style == MenuIconStyle::Colorful {
+        action.icon(ctx)
+    } else {
+        action.classic_menu_icon(ctx)
+    };
     // Checkable menu rows reserve an indicator column; their selected state is
     // announced to accessibility without painting a permanently selected button.
     let classic_marker =
-        (checked.is_some() || action.icon(ctx).is_none()) && icon_style != MenuIconStyle::Colorful;
+        (checked.is_some() || icon.is_none()) && icon_style != MenuIconStyle::Colorful;
     let marker_id = egui::IdSalt::new("menu-toggle-marker");
     let title = if checked.is_some() && !classic_marker {
         format!("       {}", descriptor.label)
@@ -330,7 +335,7 @@ pub fn menu_item_with_icon_style(
             title,
         ))
     } else {
-        match (checked, action.icon(ctx)) {
+        match (checked, icon) {
             (None, Some(icon)) => {
                 let image = match icon_style {
                     MenuIconStyle::Colorful => crate::icons::image(ui.ctx(), icon, icon_size),
@@ -382,7 +387,7 @@ pub fn menu_item_with_icon_style(
             ui.painter().line_segment([a, b], stroke);
             ui.painter().line_segment([b, c], stroke);
         } else if icon_style == MenuIconStyle::ClassicOutlineToggle
-            && let (Some(rect), Some(icon)) = (marker_rect, action.icon(ctx))
+            && let (Some(rect), Some(icon)) = (marker_rect, icon)
         {
             let ink = if enabled {
                 ui.visuals().strong_text_color()

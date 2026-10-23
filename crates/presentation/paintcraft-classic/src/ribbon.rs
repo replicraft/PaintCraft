@@ -107,7 +107,9 @@ pub(super) fn ribbon(
             });
         });
     ui.separator();
-    if state.tool != Tool::Text && !super::tool_controls::supports(state.tool) {
+    // Selection actions live in the Selection popup and Edit menu; they do not
+    // need a second toolbar row that shifts the canvas when choosing Select.
+    if state.tool == Tool::Fill {
         ui.allocate_ui_with_layout(
             Vec2::new(ui.available_width(), 40.0),
             egui::Layout::top_down(egui::Align::Min),

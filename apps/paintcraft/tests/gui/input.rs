@@ -322,7 +322,7 @@ fn fill_and_eraser_work_from_the_palette() {
 }
 
 #[test]
-fn selection_restricts_painting_until_it_is_removed_from_the_palette() {
+fn selection_restricts_painting_until_it_is_removed_from_the_selection_menu() {
     let mut h = harness();
     with_layer(&mut h);
     h.get_by_label("Select").click();
@@ -337,6 +337,9 @@ fn selection_restricts_painting_until_it_is_removed_from_the_palette() {
         "only inside the selection"
     );
     h.get_by_label("Select").click();
+    h.run();
+    h.get_by_role_and_label(eframe::egui::Role::Button, "Selection options")
+        .click();
     h.run();
     h.get_by_label("Deselect").click();
     h.run();

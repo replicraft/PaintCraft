@@ -11,7 +11,11 @@ pub(super) fn show(
     actions: &mut Vec<Action>,
 ) {
     let height = (ui.ctx().content_rect().bottom() - ui.cursor().min.y - 12.0).clamp(40.0, 480.0);
-    ui.set_min_width(260.0);
+    ui.set_width(260.0);
+    let dark = ui.visuals().dark_mode;
+    ui.visuals_mut().override_text_color =
+        Some(egui::Color32::from_gray(if dark { 245 } else { 24 }));
+    ui.visuals_mut().weak_text_color = Some(egui::Color32::from_gray(if dark { 208 } else { 96 }));
     ui.set_max_height(height);
     ui.spacing_mut().item_spacing.y = 0.0;
     egui::ScrollArea::vertical()
@@ -46,7 +50,7 @@ pub(super) fn show(
                 ui,
                 "Invert selection",
                 "Invert selection",
-                None,
+                Some(Icon::InvertSelection),
                 None,
                 "Inverting selections is not available yet.",
             );
@@ -86,7 +90,7 @@ fn action(ui: &mut egui::Ui, action: Action, context: Context, actions: &mut Vec
                 ui,
                 descriptor.label,
                 descriptor.label,
-                action.icon(context),
+                action.classic_menu_icon(context),
                 None,
                 shortcut.as_deref(),
             )
@@ -132,11 +136,8 @@ fn row(
         }
         None => egui::WidgetInfo::labeled(egui::Role::Button, ui.is_enabled(), accessible),
     });
-    let ink = if ui.is_enabled() {
-        ui.visuals().text_color()
-    } else {
-        ui.visuals().weak_text_color()
-    };
+    // Disabled rows already fade through their scoped painter.
+    let ink = ui.visuals().text_color();
     if selected == Some(true) {
         ui.painter().rect_filled(
             Rect::from_center_size(
@@ -152,13 +153,19 @@ fn row(
             response.rect.left_center() + Vec2::new(26.0, 0.0),
             Vec2::splat(22.0),
         );
-        paintcraft_ui::icons::paint(ui.painter(), rect, icon);
+        paintcraft_ui::icons::classic_menu_image(
+            ui.ctx(),
+            icon,
+            22.0,
+            ui.visuals().strong_text_color(),
+        )
+        .paint_at(ui, rect);
     }
     ui.painter().text(
         response.rect.left_center() + Vec2::new(50.0, 0.0),
         Align2::LEFT_CENTER,
         label,
-        FontId::proportional(15.0),
+        FontId::proportional(16.0),
         ink,
     );
     if let Some(shortcut) = shortcut {
@@ -166,8 +173,8 @@ fn row(
             response.rect.right_center() - Vec2::new(12.0, 0.0),
             Align2::RIGHT_CENTER,
             shortcut,
-            FontId::proportional(13.0),
-            ink,
+            FontId::proportional(16.0),
+            ui.visuals().weak_text_color(),
         );
     }
     response
