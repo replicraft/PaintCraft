@@ -1,0 +1,16 @@
+{
+  "provenance": "Original PaintCraft Classic status vectors; not extracted native assets.",
+  "reference": "docs/temp/paint-references/photos/image.png",
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "icons": [
+    "pointer",
+    "selection",
+    "canvas-size",
+    "fit-window",
+    "zoom-in",
+    "zoom-out"
+  ]
+}

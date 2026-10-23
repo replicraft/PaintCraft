@@ -4,6 +4,7 @@ mod assets;
 mod classic_image;
 mod classic_menus;
 mod classic_shapes;
+mod classic_status;
 mod classic_tools;
 pub use assets::Icon;
 use egui::{Color32, ColorImage, Context, Rect, TextureHandle, TextureOptions};
@@ -20,6 +21,8 @@ enum Variant {
     ClassicTool,
     ClassicImageLight,
     ClassicImageDark,
+    ClassicStatusLight,
+    ClassicStatusDark,
 }
 
 #[derive(Default)]
@@ -47,6 +50,10 @@ fn rasterize_variant(icon: Icon, size: u32, variant: Variant) -> ColorImage {
         Variant::ClassicImageLight | Variant::ClassicImageDark => {
             classic_image::source(icon, variant == Variant::ClassicImageDark)
                 .expect("Classic Image control must have theme artwork")
+        }
+        Variant::ClassicStatusLight | Variant::ClassicStatusDark => {
+            classic_status::source(icon, variant == Variant::ClassicStatusDark)
+                .expect("Classic status icon must have theme artwork")
         }
     };
     let tree = resvg::usvg::Tree::from_data(source, &resvg::usvg::Options::default())
@@ -180,6 +187,27 @@ pub fn classic_image(ctx: &Context, icon: Icon, points: f32, dark: bool) -> egui
     egui::Image::new((texture.id(), egui::Vec2::splat(points)))
 }
 
+/// Classic metric and zoom glyphs retain theme ink and blue zoom accents.
+pub fn classic_status_image(
+    ctx: &Context,
+    icon: Icon,
+    points: f32,
+    dark: bool,
+) -> egui::Image<'static> {
+    let variant = if dark {
+        Variant::ClassicStatusDark
+    } else {
+        Variant::ClassicStatusLight
+    };
+    let texture = variant_texture(
+        ctx,
+        icon,
+        physical_size(points, ctx.pixels_per_point()),
+        variant,
+    );
+    egui::Image::new((texture.id(), egui::Vec2::splat(points)))
+}
+
 pub fn paint(painter: &egui::Painter, rect: Rect, icon: Icon) {
     let size = physical_size(
         rect.width().max(rect.height()),
@@ -197,6 +225,52 @@ pub fn paint(painter: &egui::Painter, rect: Rect, icon: Icon) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn classic_status_vectors_keep_theme_coverage_accents_and_independent_cache_identity() {
+        let ctx = Context::default();
+        let icons: Vec<_> = Icon::ALL
+            .into_iter()
+            .filter(|icon| classic_status::source(*icon, false).is_some())
+            .collect();
+        assert_eq!(icons.len(), 6);
+        for icon in icons {
+            for size in [24, 48, 96, 128] {
+                let light = rasterize_variant(icon, size, Variant::ClassicStatusLight);
+                let dark = rasterize_variant(icon, size, Variant::ClassicStatusDark);
+                assert!(light.pixels.iter().any(|pixel| pixel.a() == 0));
+                assert!(light.pixels.iter().any(|pixel| pixel.a() > 0));
+                assert!(light.pixels.iter().zip(&dark.pixels).any(|(a, b)| a != b));
+                for (a, b) in light.pixels.iter().zip(&dark.pixels) {
+                    assert_eq!(a.a(), b.a());
+                }
+                if matches!(icon, Icon::ZoomIn | Icon::ZoomOut) {
+                    for image in [&light, &dark] {
+                        assert!(
+                            image
+                                .pixels
+                                .iter()
+                                .any(|pixel| pixel.b() > pixel.g() && pixel.g() > pixel.r())
+                        );
+                    }
+                }
+            }
+            let light = variant_texture(&ctx, icon, 48, Variant::ClassicStatusLight);
+            let dark = variant_texture(&ctx, icon, 48, Variant::ClassicStatusDark);
+            assert_ne!(light.id(), dark.id());
+            assert_ne!(light.id(), texture(&ctx, icon, 48).id());
+            if classic_menus::source(icon).is_some() {
+                assert_ne!(
+                    light.id(),
+                    variant_texture(&ctx, icon, 48, Variant::ClassicMenu).id()
+                );
+            }
+            assert_eq!(
+                light.id(),
+                variant_texture(&ctx, icon, 48, Variant::ClassicStatusLight).id()
+            );
+        }
+    }
 
     #[test]
     fn classic_tool_vectors_render_at_each_density_and_keep_independent_identity() {
