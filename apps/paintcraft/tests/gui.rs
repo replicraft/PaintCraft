@@ -268,3 +268,6 @@ mod color_model;
 
 #[path = "gui/menu_rows.rs"]
 mod menu_rows;
+
+#[path = "gui/tool_headers.rs"]
+mod tool_headers;

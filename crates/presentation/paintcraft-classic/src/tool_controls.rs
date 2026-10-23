@@ -43,7 +43,8 @@ pub fn show(
                 ui.horizontal_top(|ui| {
                     ui.spacing_mut().item_spacing.x = 10.0;
                     panel(ui, |ui| {
-                        paintcraft_ui::icons::image(ui.ctx(), Icon::Brush, 22.0).ui(ui);
+                        let label = format!("{} size", tool.name());
+                        header(ui, Icon::StrokeSize, &label);
                         ui.add_space(6.0);
                         ui.spacing_mut().slider_width = height;
                         let size = if tool == Tool::Pencil {
@@ -80,7 +81,7 @@ pub fn show(
                     });
                     if tool == Tool::Brush {
                         panel(ui, |ui| {
-                            paintcraft_ui::icons::image(ui.ctx(), Icon::Blur, 22.0).ui(ui);
+                            header(ui, Icon::Opacity, "Brush opacity");
                             ui.add_space(6.0);
                             ui.spacing_mut().slider_width = height;
                             let response = slider(
@@ -149,4 +150,10 @@ fn slider(ui: &mut egui::Ui, slider: egui::Slider<'_>, height: f32) -> egui::Res
         )
     })
     .inner
+}
+
+fn header(ui: &mut egui::Ui, icon: Icon, label: &str) {
+    let response = paintcraft_ui::icons::image(ui.ctx(), icon, 22.0).ui(ui);
+    response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Image, ui.is_enabled(), label));
+    response.on_hover_text(label);
 }
