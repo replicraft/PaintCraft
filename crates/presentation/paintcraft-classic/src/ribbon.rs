@@ -23,7 +23,7 @@ pub(super) fn ribbon(
         .show(ui, |ui| {
             ui.horizontal_top(|ui| {
                 group(ui, "Selection", |ui| {
-                    if tool_button(ui, state, Tool::Select, true) {
+                    if primary_tool(ui, state, Tool::Select, Icon::Select) {
                         actions.push(Action::SelectTool(Tool::Select));
                     }
                     super::dropdowns::selection(ui, state, context, actions);
@@ -65,7 +65,7 @@ pub(super) fn ribbon(
                 });
                 ui.separator();
                 group(ui, "Brushes", |ui| {
-                    if tool_button(ui, state, Tool::Brush, true) {
+                    if primary_tool(ui, state, Tool::Brush, Icon::Brush) {
                         actions.push(Action::SelectTool(Tool::Brush));
                     }
                     super::dropdowns::brushes(ui, state, actions);
@@ -137,17 +137,54 @@ fn group(ui: &mut egui::Ui, label: &str, contents: impl FnOnce(&mut egui::Ui)) {
         ui.add_space((top + 96.0 - ui.cursor().min.y).max(0.0));
         let width = ui.min_rect().width();
         ui.allocate_ui_with_layout(
-            Vec2::new(width, 15.0),
+            Vec2::new(width, 18.0),
             egui::Layout::top_down(egui::Align::Center),
             |ui| {
                 ui.label(
                     egui::RichText::new(label)
-                        .size(12.0)
-                        .color(ui.visuals().weak_text_color()),
+                        .size(14.0)
+                        .color(egui::Color32::from_gray(if ui.visuals().dark_mode {
+                            208
+                        } else {
+                            68
+                        })),
                 );
             },
         );
     });
+}
+
+// Primary tool names stay accessible and in tooltips; the group is captioned once.
+fn primary_tool(ui: &mut egui::Ui, state: &mut Controls, tool: Tool, icon: Icon) -> bool {
+    let selected = state.tool == tool;
+    let response = ui.add(
+        egui::Button::new((
+            egui::Atom::grow(),
+            paintcraft_ui::icons::image(ui.ctx(), icon, 32.0),
+            egui::Atom::grow(),
+        ))
+        .min_size(Vec2::new(64.0, 60.0))
+        .selected(selected)
+        .frame_when_inactive(selected)
+        .frame(true),
+    );
+    if selected {
+        ui.painter().rect_stroke(
+            response.rect.shrink(0.5),
+            4,
+            ui.visuals().selection.stroke,
+            egui::StrokeKind::Inside,
+        );
+    }
+    response.widget_info(|| {
+        egui::WidgetInfo::selected(egui::Role::Button, ui.is_enabled(), selected, tool.name())
+    });
+    if response.on_hover_text(tool.name()).clicked() {
+        state.tool = tool;
+        true
+    } else {
+        false
+    }
 }
 
 fn prototype(ui: &mut egui::Ui, label: &str, icon: Icon, help: &str) {

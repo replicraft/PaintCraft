@@ -283,3 +283,6 @@ mod layer_previews;
 
 #[path = "gui/canvas_fades.rs"]
 mod canvas_fades;
+
+#[path = "gui/ribbon_captions.rs"]
+mod ribbon_captions;
