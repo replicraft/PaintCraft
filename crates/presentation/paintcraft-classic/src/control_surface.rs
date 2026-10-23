@@ -14,16 +14,11 @@ pub(super) fn button(ui: &mut Ui, button: Button<'_>, selected: bool) -> Respons
             .fill(Color32::TRANSPARENT)
             .stroke(Stroke::NONE),
     );
-    let dark = ui.visuals().dark_mode;
-    let gray = if response.is_pointer_button_down_on() {
-        if dark { 43 } else { 219 }
-    } else if response.hovered() || response.has_focus() {
-        if dark { 61 } else { 229 }
-    } else if dark {
-        51
-    } else {
-        237
-    };
+    let fill = fill(
+        ui,
+        response.hovered() || response.has_focus(),
+        response.is_pointer_button_down_on(),
+    );
     let stroke = if ui.is_enabled() {
         ui.visuals().selection.stroke
     } else {
@@ -35,10 +30,23 @@ pub(super) fn button(ui: &mut Ui, button: Button<'_>, selected: bool) -> Respons
         egui::epaint::RectShape::new(
             response.rect.shrink(0.5),
             5,
-            Color32::from_gray(gray),
+            fill,
             stroke,
             StrokeKind::Inside,
         ),
     );
     response
+}
+
+pub(super) fn fill(ui: &Ui, hovered: bool, pressed: bool) -> Color32 {
+    let dark = ui.visuals().dark_mode;
+    Color32::from_gray(if pressed {
+        if dark { 43 } else { 219 }
+    } else if hovered {
+        if dark { 61 } else { 229 }
+    } else if dark {
+        51
+    } else {
+        237
+    })
 }

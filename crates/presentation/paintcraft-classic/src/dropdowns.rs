@@ -16,12 +16,6 @@ pub(super) fn selection(
     });
 }
 
-pub(super) fn brushes(ui: &mut egui::Ui, state: &mut Controls, actions: &mut Vec<Action>) {
-    dropdown(ui, "Brushes", None, |ui| {
-        super::brush_gallery::gallery(ui, state, actions);
-    });
-}
-
 pub(super) fn shape_paint(ui: &mut egui::Ui, state: &mut Controls) {
     ui.add_enabled_ui(matches!(state.tool, Tool::Rect | Tool::Ellipse), |ui| {
         dropdown(ui, "Shape outline", Some(Icon::Pencil), |ui| {

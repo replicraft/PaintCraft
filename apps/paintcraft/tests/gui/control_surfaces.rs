@@ -8,7 +8,21 @@ fn selected_surface(h: &Harness<App>, label: &str) -> Color32 {
         button.accesskit_node().toggled(),
         Some(eframe::egui::accesskit::Toggled::True)
     );
-    let rect = button.rect();
+    let rect = if matches!(label, "Select" | "Brush") {
+        button.rect().union(
+            h.get_by_role_and_label(
+                Role::Button,
+                if label == "Select" {
+                    "Selection options"
+                } else {
+                    "Brushes"
+                },
+            )
+            .rect(),
+        )
+    } else {
+        button.rect()
+    };
     let fill = h
         .output()
         .shapes

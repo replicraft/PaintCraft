@@ -304,3 +304,6 @@ mod canvas_scrollbars;
 
 #[path = "gui/control_surfaces.rs"]
 mod control_surfaces;
+
+#[path = "gui/split_controls.rs"]
+mod split_controls;

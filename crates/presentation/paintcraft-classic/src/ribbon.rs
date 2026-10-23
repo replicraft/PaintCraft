@@ -4,6 +4,7 @@ use egui::Vec2;
 use paintcraft_tools::Tool;
 use paintcraft_ui::{actions::Context, widgets::Icon};
 
+mod split_tool;
 mod tools;
 use tools::{prototype, tool_button};
 
@@ -31,10 +32,7 @@ pub(super) fn ribbon(
                     ui.spacing_mut().item_spacing.x = 4.0;
                 }
                 group(ui, "Selection", |ui| {
-                    if primary_tool(ui, state, Tool::Select, Icon::Select) {
-                        actions.push(Action::SelectTool(Tool::Select));
-                    }
-                    super::dropdowns::selection(ui, state, context, actions);
+                    split_tool::show(ui, state, Tool::Select, context, actions);
                 });
                 ui.separator();
                 group(ui, "Image", |ui| {
@@ -62,10 +60,7 @@ pub(super) fn ribbon(
                 });
                 ui.separator();
                 group(ui, "Brushes", |ui| {
-                    if primary_tool(ui, state, Tool::Brush, Icon::Brush) {
-                        actions.push(Action::SelectTool(Tool::Brush));
-                    }
-                    super::dropdowns::brushes(ui, state, actions);
+                    split_tool::show(ui, state, Tool::Brush, context, actions);
                 });
                 ui.separator();
                 group(ui, "Shapes", |ui| {
@@ -165,40 +160,4 @@ fn group(ui: &mut egui::Ui, label: &str, contents: impl FnOnce(&mut egui::Ui)) {
             },
         );
     });
-}
-
-// Primary tool names stay accessible and in tooltips; the group is captioned once.
-fn primary_tool(ui: &mut egui::Ui, state: &mut Controls, tool: Tool, icon: Icon) -> bool {
-    let selected = state.tool == tool;
-    let icon = if tool == Tool::Select {
-        Icon::RectangleSelect
-    } else {
-        icon
-    };
-    let response = super::control_surface::button(
-        ui,
-        egui::Button::new((
-            egui::Atom::grow(),
-            paintcraft_ui::icons::classic_menu_image(
-                ui.ctx(),
-                icon,
-                32.0,
-                ui.visuals().strong_text_color(),
-            ),
-            egui::Atom::grow(),
-        ))
-        .min_size(Vec2::new(64.0, 60.0))
-        .frame_when_inactive(selected)
-        .frame(true),
-        selected,
-    );
-    response.widget_info(|| {
-        egui::WidgetInfo::selected(egui::Role::Button, ui.is_enabled(), selected, tool.name())
-    });
-    if response.on_hover_text(tool.name()).clicked() {
-        state.tool = tool;
-        true
-    } else {
-        false
-    }
 }

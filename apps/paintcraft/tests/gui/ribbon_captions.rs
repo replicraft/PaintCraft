@@ -87,7 +87,7 @@ fn classic_ribbon_has_legible_single_captions_and_icon_only_primary_tools() {
             ("Brush", paintcraft_tools::Tool::Brush),
         ] {
             let rect = h.get_by_role_and_label(Role::Button, label).rect();
-            assert_eq!(rect.size(), Vec2::new(64.0, 60.0));
+            assert_eq!(rect.size(), Vec2::splat(48.0));
             assert!(h.output().shapes.iter().any(|shape| matches!(&shape.shape, Shape::Rect(image)
                 if image.brush.is_some() && image.rect.size() == Vec2::splat(32.0) && rect.contains_rect(image.rect) && image.rect.center() == rect.center()
                 && image.fill.r() == image.fill.g() && image.fill.g() == image.fill.b()
