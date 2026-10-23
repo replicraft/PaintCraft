@@ -1,0 +1,53 @@
+{
+  "source_commit": "f81945725cfa77b90a7927b3e2b99d9a86225968",
+  "assets_api_commit": "98820dedd386794746b5d95661be2b770e2703fe",
+  "baseline_commit": "dcb0730f759752e45783887f70c73065bc803313",
+  "references": [
+    "docs/temp/paint-references/photos/im1age.png",
+    "docs/temp/paint-references/photos/imag1e.png",
+    "docs/temp/paint-references/photos/ima2ge.png"
+  ],
+  "gui": {
+    "passed": 164,
+    "failed": 0,
+    "ignored": 18
+  },
+  "icon_tests": {
+    "passed": 6,
+    "ignored": 1,
+    "scope": "All 91 existing colored/chrome sources and 23 shape variants retain their checks. The 23 new menu sources render at 24/48/96/128 pixels with transparency, nonempty coverage and white premultiplied pixels suitable for tinting. Sources contain no raster images, font text, external hrefs or gradients. Menu variants have distinct reusable texture identities from colored sources; existing density/cache bounds and shape cache separation checks pass."
+  },
+  "gpu_file_edit": {
+    "passed": 1,
+    "command": "cargo test -p paintcraft --test gui classic_menus::export_classic_file_and_edit_menus -- --ignored --exact",
+    "scope": "Light/dark File/Edit/Save as/Print scenes render through wgpu. Raw 1360x900 File/Edit comparisons are archived; before images come unchanged from the prior menu-density record, source c8ae0b9. Final Save as art masks disk strokes behind the pencil for separation at small sizes."
+  },
+  "gpu_view_zoom": {
+    "passed": 1,
+    "command": "cargo test -p paintcraft --test gui workspace_view::render_classic_workspace_view_for_review -- --ignored --exact",
+    "scope": "Light/dark View and hovered Zoom submenu render through wgpu at 1100x900. ArrowLeft dismisses the child, and the test then invokes the parent Status bar action. The existing review test now captures both menu levels."
+  },
+  "clippy": "workspace all-targets with -D warnings passed",
+  "generator": "All 23 final menu SVGs and their manifest regenerate byte-identically with scripts/generate_classic_menu_icons.py.",
+  "scope": "Original outline menu glyphs are opt-in through MenuIconStyle::ClassicOutline. Existing helpers default to Colorful. Classic v11 opts in for working action rows, disabled previews, submenu anchors and Zoom children. Shared descriptor labels, shortcuts, checked/enabled state and action routing are preserved. Unknown glyphs retain default artwork. Native OS menus, ribbon tool art, Studio and historical skins retain their existing paths.",
+  "limits": "This qualifies monochrome menu styling and existing interaction behavior, not exact Windows glyph/feature parity. Import/recent/property glyphs still reuse shared logical icon identities; thumbnail/fullscreen marker presentation and other reference-specific details remain open. Some bundled menu variants correspond to checked actions whose current marker path does not display their icon. Native menu/desktop appearance and unavailable operations remain unqualified. No desktop windows were launched for this slice; captures are raw GPU-backed client scenes.",
+  "sha256": {
+    "gui.log.gz": "4eff4578d99d4e673855b83b173dbcb911d5b5dcba543a0a4204f9c6895363c6",
+    "icons.log.gz": "58fa6617a1435afb4125e5124d603f7c0a87dc6689c236b926c322f58d73aa3b",
+    "gpu-file-edit.log.gz": "d9393820c1acc977cc058a9bc69712301d1f01aebb345994311439289c170118",
+    "gpu-view-zoom.log.gz": "c3cfd812d04eb32d07d3dd13a7e82453558dcfa22ab0909d482be7ec06c67d08",
+    "clippy.log.gz": "4b9f5f957c71add72893e1f7bfd0773167cafb3dfc8af369d69ff107f1de0dd3",
+    "before-classic-light-file.png": "220076a0745045d813be7cb47ab4e201ee9c2a8791d4842009f22c0202b77352",
+    "after-classic-light-file.png": "233ff5eda9a8ac0c1a62e566d3b112c6abd244e530d0301b69ae9aa7da406a87",
+    "before-classic-light-edit.png": "eda6a004e00b9b79b66d64bba6cdce731fe0001065f7045b9d7f1926830c2dc3",
+    "after-classic-light-edit.png": "e397e0f1262bcb68692ce6269ba0a5ee959e6ee031bbc4a9f70ea139f27cd478",
+    "after-classic-light-view-menu.png": "e6c76c95658330edbb61ea3c6dc50b233eb37bb3b5abe6e32edf89d4e629b5ab",
+    "after-classic-light-zoom-menu.png": "eb6d7af742b0bbdbc0eaafb070d44d395de18ca2f37e32ffde4e713da3052382",
+    "before-classic-dark-file.png": "e8ca5738e46765af33a5ff8057659e3e98378e9305824599abf0483ed2a97ab8",
+    "after-classic-dark-file.png": "7e12b2ef687bdaf6e5d2db61a0ec30887ad0dd362e097c3e46db647435436e65",
+    "before-classic-dark-edit.png": "37b8aba93429fcbe7a718dbef28e6905996b0bb1a0e885bd52114bd7585669e0",
+    "after-classic-dark-edit.png": "9ea0d359b65a7e3ef667bf90aa787d422f5bf1308570a5dbb016ec7cdd625630",
+    "after-classic-dark-view-menu.png": "45770edf496a5daca137acd43b7e740380cfa8661c4dd5cfcf869a16aa88af43",
+    "after-classic-dark-zoom-menu.png": "8ad638f68f9f860053d474c2b2fe3137d5c01ef09f96e857441f165b2ee93afe"
+  }
+}

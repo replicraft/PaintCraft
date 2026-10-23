@@ -825,3 +825,18 @@ on the extra gap. Current checks also click within that former gap to activate
 Gridlines, confirm its checked state and preserve document/history in repeated
 layout at scales 1/2. Menu icon styling is a separate remaining fidelity task;
 full Windows parity, native menu appearance and unavailable operations remain open.
+
+Classic v11 main menus now opt into original monochrome outline SVG glyphs,
+including disabled previews, submenu anchors and Zoom children. The shared
+menu helper keeps its colorful default; shared action metadata, gates, shortcuts
+and checks retain their existing path. Colored/chrome sources and shape variants
+keep separate texture identities in the bounded cache. The 23 new menu sources
+and manifest are reproduced by `scripts/generate_classic_menu_icons.py`.
+All 164 window-free UI tests, six icon tests, two wgpu-backed menu capture tests
+and strict workspace Clippy pass; see [the outline-menu record](validation/menu-outlines-gpu-2026-10-22/validation.json).
+Raw light/dark File/Edit comparisons and View/Zoom scenes are archived. Source
+checks cover transparency and white tintable output at multiple densities, while
+cache checks prevent colored/outline aliasing. The Save as pencil has a local
+mask to separate underlying disk strokes. Full reference parity remains partial:
+import/recent/property glyph identities, thumbnail/fullscreen marker presentation,
+native menus and unavailable operations remain open.
