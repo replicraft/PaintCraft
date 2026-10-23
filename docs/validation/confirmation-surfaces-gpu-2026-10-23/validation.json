@@ -1,0 +1,36 @@
+{
+  "source_commit": "420fc3c53c31c309cf0695ceb0d54c9920c57c30",
+  "changes": "Shared confirmation prompts use 16-point margins, 12-point rounded frames, 24-point headings, 16-point body/button text and 40-point actions. Action rows stack according to measured label widths plus padding/strokes rather than a fixed threshold. Message height accounts for wrapped headings; long messages scroll with a reserved visible scrollbar. Caller-owned meanings, choices, Escape/backdrop cancellation and default focus are unchanged.",
+  "gui": {
+    "passed": 178,
+    "failed": 0,
+    "ignored": 27,
+    "scope": "Full UI suite passes. Existing 1x/2x light/dark wide/compact tests cover long messages and unbroken paths, action bounds, stable footer during scrolling, exactly-once choices across repeated layout, Escape/backdrop cancellation, dirty-close preservation and interface switching."
+  },
+  "gpu": {
+    "passed": 1,
+    "test": "confirmations::export_confirmation_surfaces",
+    "scope": "Twelve raw light/dark desktop/360x360 scenes show real dirty-document New, Close and interface-switch prompts. Each scene is cancelled and the document remains dirty."
+  },
+  "clippy": "Strict workspace all-targets passed.",
+  "checks": "Formatting, whitespace and source file length checks passed.",
+  "limits": "Shared app confirmation styling is consistent with current Classic surfaces but no native Paint confirmation close-up was supplied. Studio/shared consumers inherit the styling; exact native/historical parity and OS accessibility remain unqualified. No new save/discard workflow, auto-accept behavior or performance claim.",
+  "sha256": {
+    "clippy.log.gz": "d64eca1f3cef2a037e9f023a3e508e109a7dc03c7f4098ab081aacee46696cb4",
+    "dark-compact-close.png": "3c18ef88b0d62dab0b284f2bd2bebdfadaed34c77c11182672ca98d629126daa",
+    "dark-compact-new.png": "67f95f06a2d25da73552bed5c5455d327b6eb0ebfba9656569390b4c7e28c12f",
+    "dark-compact-switch.png": "e25e730699f28ef1f77de01fe70eca832729869a627117a4b00dbbb60684a68e",
+    "dark-desktop-close.png": "815a81584646a7f284116f1decb4e50024a491cf332f099019d828ead6f09d3a",
+    "dark-desktop-new.png": "b70bcb558edeadec8bd7b0a7724563129234284e9be79744344c8cf5a21a77a4",
+    "dark-desktop-switch.png": "fc607eb4b9f5b3f72722353eb55f64f7edeef45ff50065e541b906036b2a429c",
+    "gpu.log.gz": "75a78b71669d46f81b1a0045fa632c4d9396d17ea6546d590e33dcef4ba165c9",
+    "gui.log.gz": "da4e76ea8fd072fc4fed0a2f3bef3ec5c4a9a84c19f1ccdae931dc7152d171b2",
+    "light-compact-close.png": "77e4c2cd995a6a2b24eacf18eb347dd5676eb83b75af795024f5d785aa4ac5ad",
+    "light-compact-new.png": "cd96a24dcf74afe84eabe88a6a6d964f6ed19ba622d84e918e7b02499883bfed",
+    "light-compact-switch.png": "d34118750de9be53b5e01c37d28b375914ac82f8980c55846316185439649f6a",
+    "light-desktop-close.png": "eb5533f50ec8a14722ac9a1031c9b49f0ba12cf7aeaf4f6d0965980af253dd91",
+    "light-desktop-new.png": "93d5d968d13110740a2ff17abf6b7b584c5e4dae6f8940834de30ac28db1649c",
+    "light-desktop-switch.png": "a045fd81404748a133d80e6b61ed2c711a9ba0b3a9e4091084d1a878129115d7",
+    "targeted.log.gz": "7fb058b5ed87df3a36554b6b33b17aa86cf9ad8ea80ec224747e723ba2f143dc"
+  }
+}

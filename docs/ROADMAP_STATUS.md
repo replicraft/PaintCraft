@@ -11,6 +11,13 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest shared confirmations use consistent dialog typography/padding and
+measured action labels for row/stack layout, with visible long-message scrolling.
+All 178 ordinary UI tests, twelve real-context light/dark GPU scenes and strict
+workspace Clippy pass; see
+[the confirmation record](validation/confirmation-surfaces-gpu-2026-10-23/validation.json).
+Save/discard decisions, cancellation and default focus remain caller-owned.
+
 Latest canvas dimension/default dialogs use consistent Classic headings,
 padding, fields and contrast, with content-sized desktop bodies and visible
 compact scrolling cues. All 178 ordinary UI tests, ten light/dark GPU states
