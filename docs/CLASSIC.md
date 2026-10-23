@@ -688,3 +688,16 @@ brush opacity, 22-point headers and single tooltips in both themes/scales 1/2.
 Header clicks add no document/history/gesture changes; option editing still works
 and canvas layout stays fixed. Brush kernels and media coverage are unchanged.
 No application windows or rendered previews were launched.
+
+Escape now discards an uncommitted typed zoom percentage instead of applying it
+through the field's focus-loss path. The editor captures Escape while focused,
+restores the actual formatted percentage and releases focus. This also keeps the
+same Escape from cancelling pending canvas text. Enter/Tab commits and existing
+zoom bounds/action routing are retained.
+All 155 window-free UI tests and strict workspace Clippy pass; see
+[the zoom-cancellation record](validation/zoom-cancel-headless-2026-10-22/validation.json).
+The added regression failed before the fix and now verifies valid/invalid draft
+cancellation, current zoom restoration and pending text/document/history
+preservation at scales 1/2 with repeated layout. Tab still applies a valid draft
+without a document edit. This qualifies normal focused-field Escape, not arbitrary
+native coalescing or IME. No application windows or rendered previews were launched.

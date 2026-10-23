@@ -1,0 +1,27 @@
+{
+  "source_commit": "14adca2dc43c028f0cf03acfcacd97354c09c39b",
+  "mode": "Window-free egui and lint checks only; no native-window, desktop, file-dialog or rendered-preview launches.",
+  "gui": {
+    "passed": 155,
+    "failed": 0,
+    "ignored": 17
+  },
+  "focused_gui": {
+    "passed": 1,
+    "scope": "Actual Classic zoom field at scales 1 and 2 with repeated layout and unpublished canvas text. Escape discards valid 250% and invalid text drafts, restores 100%, leaves canvas physical width at 1000 pixels and preserves pending text/document/history. Tab still commits a valid 250% value without document history."
+  },
+  "regression_baseline": {
+    "source_commit": "aaead01120b06b36b5f0bbb45369f88af5b4cd67",
+    "probe_from_commit": "14adca2dc43c028f0cf03acfcacd97354c09c39b",
+    "result": "The unchanged added probe failed before the fix: Escape left 250% displayed instead of restoring 100%. The expected baseline failure is archived separately from passing current logs."
+  },
+  "clippy": "workspace all-targets with -D warnings passed",
+  "scope": "The percentage editor has a stable document-scoped ID and captures Escape before egui clears focus. Cancellation restores the current formatted percentage, clears the local dirty flag, releases focus and bypasses the focus-loss commit path. Existing arrow-key editing, Tab/Enter commit, percentage bounds and view action routing remain unchanged.",
+  "limits": "This tests normal unmodified Escape while the percentage field is focused, not arbitrary coalesced native input or IME. Pending text is the existing unpublished canvas preview; retained editable text objects remain separate roadmap work. Native/rendered parity and latency remain unverified.",
+  "sha256": {
+    "gui.log.gz": "375ce217acc995438d23142074b02615395b0d59b8f27766b6085f1b14f298f8",
+    "focused-gui.log.gz": "6d039d632f212f5810b819f6661be682f36ef07ed7d86082fc5c814cc9c3e671",
+    "regression-before.log.gz": "353908f8c41ebedf0781c73226b7998a462cf6f037b9b4d100b1d3bbdaf46baa",
+    "clippy.log.gz": "9a0407ff13ae89cc33e21b3b697a93b2b220ba74ef490957eca53910f647cda3"
+  }
+}
