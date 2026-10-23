@@ -12,12 +12,12 @@ pub(super) fn family(
     let mut search_response = None;
     let font = ui
         .allocate_ui_with_layout(
-            Vec2::new(220.0, 36.0),
+            Vec2::new(FAMILY_WIDTH, CONTROL_HEIGHT),
             egui::Layout::left_to_right(Align::Center),
             |ui| {
-                ui.set_max_width(220.0);
+                ui.set_max_width(FAMILY_WIDTH);
                 egui::ComboBox::from_id_salt("classic-font-family")
-                    .width(220.0)
+                    .width(FAMILY_WIDTH)
                     .height(popup_height)
                     .truncate()
                     .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside)
@@ -25,7 +25,7 @@ pub(super) fn family(
                     .show_ui(ui, |ui| {
                         ui.set_height(popup_height);
                         let find = ui.add_sized(
-                            [ui.available_width(), 36.0],
+                            [ui.available_width(), CONTROL_HEIGHT],
                             egui::TextEdit::singleline(search).hint_text("Search fonts"),
                         );
                         find.widget_info(|| {
@@ -55,7 +55,7 @@ pub(super) fn family(
                                 }
                             });
                         } else {
-                            let row_height = ui.spacing().interact_size.y;
+                            let row_height = CONTROL_HEIGHT;
                             list.show_rows(ui, row_height, filtered.len(), |ui, rows| {
                                 for index in rows {
                                     let name = filtered[index];
@@ -63,6 +63,7 @@ pub(super) fn family(
                                         [ui.available_width(), row_height],
                                         Button::selectable(*family == *name, name).truncate(),
                                     );
+                                    selected_outline(ui, &response, *family == *name);
                                     if response.clicked() {
                                         family.clone_from(name);
                                         find.surrender_focus();

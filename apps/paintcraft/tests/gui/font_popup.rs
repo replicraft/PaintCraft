@@ -93,7 +93,7 @@ fn font_popup_keeps_search_fixed_while_scrolling_a_large_catalog_and_filters_fro
         h.run();
         assert_eq!(h.state().options.family, selected);
         assert!(h.query_by_label("Search fonts").is_none());
-        assert!(h.get_by_label("Font family").rect().width() <= 220.0);
+        assert!(h.get_by_label("Font family").rect().width() <= 238.0);
         h.get_by_label("Font family").click();
         h.run();
         // Opening the popup focuses search without an additional click.
@@ -104,5 +104,77 @@ fn font_popup_keeps_search_fixed_while_scrolling_a_large_catalog_and_filters_fro
         h.get_by_label("Fixture font 0004").click();
         h.run();
         assert_eq!(h.state().options.family, "Fixture font 0004");
+    }
+}
+
+#[test]
+fn text_dropdown_rows_match_toolbar_metrics_and_keep_selected_choices_reachable() {
+    use eframe::egui::{Role, accesskit::Toggled, epaint::Shape};
+    for (size, ppp, dark) in [
+        (Vec2::new(1100.0, 500.0), 1.0, false),
+        (Vec2::new(480.0, 360.0), 2.0, true),
+    ] {
+        let mut h = Harness::builder()
+            .with_size(size)
+            .with_pixels_per_point(ppp)
+            .build_ui_state(
+                move |ui, state: &mut FontUi| {
+                    ui.ctx().set_visuals(if dark {
+                        eframe::egui::Visuals::dark()
+                    } else {
+                        eframe::egui::Visuals::light()
+                    });
+                    paintcraft_classic::text_options(
+                        ui,
+                        &mut state.options,
+                        &state.families,
+                        &mut state.search,
+                        false,
+                    );
+                    if ui.ctx().current_pass_index() == 0 {
+                        ui.ctx()
+                            .request_discard("test: repeated text-dropdown layout");
+                    }
+                },
+                FontUi {
+                    families: vec!["Selawik".into(), "Fixture family".into()],
+                    ..Default::default()
+                },
+            );
+        h.run();
+        for label in ["Font family", "Font size", "Font size presets"] {
+            assert_eq!(h.get_by_label(label).rect().height(), 40.0, "{label}");
+        }
+        h.get_by_label("Font size presets").click();
+        h.run();
+        let selected = h.get_by_role_and_label(Role::Button, "11 pt");
+        assert_eq!(selected.rect().height(), 40.0);
+        assert_eq!(selected.accesskit_node().toggled(), Some(Toggled::True));
+        let rect = selected.rect();
+        assert!(h.output().shapes.iter().any(|shape| {
+            matches!(&shape.shape, Shape::Rect(painted)
+                if rect.contains_rect(painted.rect)
+                    && painted.rect.width() > rect.width() - 2.0
+                    && painted.stroke.width > 0.0
+                    && painted.stroke.color.a() > 0)
+        }));
+        h.get_by_label("72 pt").scroll_to_me();
+        h.run();
+        let last = h.get_by_label("72 pt").rect();
+        assert!(last.min.y >= 0.0 && last.max.y <= size.y && last.max.x <= size.x);
+        h.get_by_label("72 pt").click();
+        h.run();
+        assert_eq!(h.state().options.points, 72);
+        assert!(h.query_by_label("72 pt").is_none());
+        h.get_by_label("Font family").click();
+        h.run();
+        let selected = h.get_by_label("Selawik");
+        assert_eq!(selected.rect().height(), 40.0);
+        assert_eq!(selected.accesskit_node().toggled(), Some(Toggled::True));
+        h.key_press(Key::Escape);
+        h.run();
+        assert!(h.query_by_label("Search fonts").is_none());
+        assert_eq!(h.state().options.family, "Selawik");
+        assert_eq!(h.state().options.points, 72);
     }
 }

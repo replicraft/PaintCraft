@@ -6,6 +6,9 @@ use egui::{Align, Button, Color32, Response, RichText, Ui, Vec2};
 mod fonts;
 mod size;
 
+const CONTROL_HEIGHT: f32 = 40.0;
+const FAMILY_WIDTH: f32 = 238.0;
+
 pub fn text_options(
     ui: &mut Ui,
     options: &mut TextOptions,
@@ -23,7 +26,7 @@ pub fn text_options(
         .stroke(ui.visuals().widgets.noninteractive.bg_stroke)
         .inner_margin(8)
         .show(ui, |ui| {
-            ui.spacing_mut().interact_size.y = 36.0;
+            ui.spacing_mut().interact_size.y = CONTROL_HEIGHT;
             for style in [egui::TextStyle::Body, egui::TextStyle::Button] {
                 ui.style_mut()
                     .text_styles
@@ -31,7 +34,7 @@ pub fn text_options(
             }
             egui::ScrollArea::horizontal()
                 .id_salt("classic-text-options")
-                .max_height(42.0)
+                .max_height(CONTROL_HEIGHT + 6.0)
                 .show(ui, |ui| {
                     ui.horizontal_centered(|ui| {
                         fonts::family(ui, &mut options.family, families, search, loading);
@@ -76,18 +79,11 @@ fn style_button(ui: &mut Ui, text: RichText, label: &str, selected: bool) -> Res
     let response = ui.add(
         Button::new(text)
             .selected(selected)
-            .min_size(Vec2::splat(36.0))
+            .min_size(Vec2::splat(CONTROL_HEIGHT))
             .frame_when_inactive(selected)
             .frame(true),
     );
-    if selected {
-        ui.painter().rect_stroke(
-            response.rect.shrink(0.5),
-            4,
-            ui.visuals().selection.stroke,
-            egui::StrokeKind::Inside,
-        );
-    }
+    selected_outline(ui, &response, selected);
     response.widget_info(|| {
         egui::WidgetInfo::selected(egui::Role::Button, ui.is_enabled(), selected, label)
     });
@@ -127,6 +123,17 @@ fn draw_alignment(
         painter.line_segment(
             [egui::pos2(x.min, y), egui::pos2(x.max, y)],
             egui::Stroke::new(1.0, ink),
+        );
+    }
+}
+
+fn selected_outline(ui: &Ui, response: &Response, selected: bool) {
+    if selected {
+        ui.painter().rect_stroke(
+            response.rect.shrink(0.5),
+            4,
+            ui.visuals().selection.stroke,
+            egui::StrokeKind::Inside,
         );
     }
 }
