@@ -11,6 +11,12 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest Classic dimension-field work aligns captions and numeric columns across
+Settings and canvas/default-size dialogs, including keyboard editing. All 197
+ordinary GUI tests, 24 actual-App GPU scenes and strict workspace Clippy pass; see
+[the dimension field record](validation/classic-dimension-fields-gpu-2026-10-23/validation.json).
+Range/persistence/resize semantics remain; native fidelity and broader T15 gates remain partial.
+
 Latest Classic form work makes radio/checkbox boundaries visible in Settings,
 canvas-default choices and the text toolbar. Scoped native-shape checks cover
 contrast, feedback and input without changing chrome or Studio styling. All 196

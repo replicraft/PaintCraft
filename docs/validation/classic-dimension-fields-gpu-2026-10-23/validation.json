@@ -1,0 +1,48 @@
+{
+  "source_commit": "a515d8de21e8ab1729301caafb9f2eae2a5bdc65",
+  "changes": "Classic Settings and canvas/default-size dialogs reuse dimension rows with a measured common caption column, leading labels, 40-point native numeric fields, 16-point text and a 14-point leading numeric inset. Both resting and keyboard-editing layouts retain the same column. Host-owned values, range policy, px suffix, persistence and document commands remain. Studio retains its existing fields.",
+  "gui": {
+    "passed": 197,
+    "failed": 0,
+    "ignored": 40,
+    "scope": "Full GUI suite. Added light desktop 1x/dark compact 2x repeated-layout checks cover the three surfaces: shared field/caption columns, resting/focused numeric insets and font metrics, numeric accessibility values, typing/Enter, and cancellation with unchanged saved preferences/document/history. Existing canvas resizing, undo/redo and remembered-default workflows pass. Before log reproduces the unequal Settings field positions."
+  },
+  "gpu": {
+    "passed": 1,
+    "test": "dimension_fields::export_classic_dimension_fields",
+    "scope": "24 actual-App light/dark desktop/compact captures show Settings, Canvas size and Default canvas size in idle/focused states. Values 777/512 are staged review inputs and discarded; the exporter verifies preferences/document/history remain unchanged."
+  },
+  "checks": "Strict workspace all-target Clippy, formatting, source-length and whitespace checks passed.",
+  "limits": "This aligns Classic dimension controls with the application\u2019s other numeric fields. Exact native Windows/historical fidelity, OS input/accessibility qualification and broader T15 acceptance remain incomplete. No resize algorithm, editing-engine or performance change.",
+  "sha256": {
+    "after.log.gz": "f64a6eea99c4a37d9404edc0db9ed31a0a3fd516c04748ccb7d12312d1630f50",
+    "before.log.gz": "365629c2355c368d00b6bd942e9daf0d55cd985972f6d89cd943c0fb2373479d",
+    "clippy.log.gz": "6db5e77048e4001fc934dbf2d538210423e721ef22e841c46b7f103ca6561f19",
+    "dark-compact-canvas-focused.png": "5e589ee52726283e3704d7c0361c6c71b413eb9ce408ba12024df60d9c832d79",
+    "dark-compact-canvas-idle.png": "5185c79b0435418a6e4f45536c347dc01ac44d24d5b33762b22254b7ffef9d91",
+    "dark-compact-defaults-focused.png": "0dcc5c3ad55912582cbff1ebbe3ff023a29de1e6f0ea1e38437cdcea7bbcb6a6",
+    "dark-compact-defaults-idle.png": "f285c334135c67f9aa0a7a8f65dd3f7b1a9b4cb16c2336f0ee323b9f8a8dee0c",
+    "dark-compact-settings-focused.png": "a53cb2509eab17edf21340bb0af9b3e056ec69ea5ff8f92df9605bc258cfa015",
+    "dark-compact-settings-idle.png": "5d41a7d3830c726c5a94f5066556a45c0ecfd56c662d9376765ad57fbd5ac15d",
+    "dark-desktop-canvas-focused.png": "0c457a67fb5c05332c13ab4de7d056bde0738c8757cd72a84e26821332ca4bdf",
+    "dark-desktop-canvas-idle.png": "b24f57c2c378c11a906c43e0e2a30cdb5484067c232a9abd97ef9519f055fa2e",
+    "dark-desktop-defaults-focused.png": "91f2fdce9933aeeb55e2dfa79bb9fd7db50d8893354d9a2b017f8f5d6609fd8e",
+    "dark-desktop-defaults-idle.png": "cbdb931757507c1975805440149a3f61984bbc166b72bb89a6dbf2f2ae33e3c6",
+    "dark-desktop-settings-focused.png": "674da268eeae53bdc7a7ac98fb548832cd1b2c9d2c39a2cf200f92c72bd046be",
+    "dark-desktop-settings-idle.png": "d1ce7c9ffd457a8c3ed097d8ed4cdae0ffc65bec73ddb8b56a39632337d60f53",
+    "gpu.log.gz": "eac8dfbc7c119c5551a2ed6de82243f2f7728700bae0e5ed80169a86af60021b",
+    "gui.log.gz": "fcc3685c9ffdd82de6c65d1b31e08b0f9f597cb5ec67d59463e8de9ba9cdea75",
+    "light-compact-canvas-focused.png": "c7a5c55deceb1178587b684099d6a3cb0aa7ffe808ac282a2644ba71e7d7e4b4",
+    "light-compact-canvas-idle.png": "60603018636eb5670708354a7bf18233ef7e1632e1fff8c258078d38f1f6cf92",
+    "light-compact-defaults-focused.png": "badae91cd39cd4c74fda664c406402f7d44fb385eeb52c6fcb1964f82fa5fbf4",
+    "light-compact-defaults-idle.png": "1f786849f5082a7a7b9b82ea15d3cba5401edc427b8c8b61cf0c7c69d66c204d",
+    "light-compact-settings-focused.png": "63de0ace82d5fd34bd74fb224ae5c440d64b388de99fc4072a1bfbd65f86b9bf",
+    "light-compact-settings-idle.png": "77749d76d961b40e1a84d0a402c7d76b0b863f80b309034df305c77116a577e4",
+    "light-desktop-canvas-focused.png": "823b7660a3104c9df5ebbf9a60e250c6b2169ef6385c85e0e9ffa59694966545",
+    "light-desktop-canvas-idle.png": "1083bebcc62e3d2bd0180e3a5794b0db661131fd37f23dc9463ed5a174ddc718",
+    "light-desktop-defaults-focused.png": "89ac8f32fc152fdf97e5a21e221d7030de65faeab9975112befe3ab4807042a9",
+    "light-desktop-defaults-idle.png": "b60ece01e6bccdf377f117a4fdab54e4892779f13e50c84a9cfa25e9bb854071",
+    "light-desktop-settings-focused.png": "355fc98ec29b50fcae273063bcdc2147fce2c8e5a9517cd15af3686da147d263",
+    "light-desktop-settings-idle.png": "29d30bb9ad2f88ba99af4185ef189c386c8d59fb4f9426db89ef1dce2824bfae"
+  }
+}
