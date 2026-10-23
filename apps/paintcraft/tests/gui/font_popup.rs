@@ -229,3 +229,182 @@ fn narrow_text_toolbar_scrolls_to_background_and_back_without_changing_other_opt
         assert_eq!(h.state().options, expected);
     }
 }
+
+#[test]
+fn text_dropdowns_reveal_current_choices_and_keep_their_labels_left_aligned() {
+    use eframe::egui::{Role, epaint::Shape};
+    for (size, ppp, dark) in [
+        (Vec2::new(1100.0, 500.0), 1.0, false),
+        (Vec2::new(480.0, 360.0), 2.0, true),
+    ] {
+        let families: Vec<_> = (0..1000)
+            .map(|i| format!("Fixture family {i:04}"))
+            .collect();
+        let options = TextOptions {
+            family: families[900].clone(),
+            points: 72,
+            ..Default::default()
+        };
+        let original = options.clone();
+        let mut h = Harness::builder()
+            .with_size(size)
+            .with_pixels_per_point(ppp)
+            .build_ui_state(
+                move |ui, state: &mut FontUi| {
+                    ui.ctx().set_visuals(if dark {
+                        eframe::egui::Visuals::dark()
+                    } else {
+                        eframe::egui::Visuals::light()
+                    });
+                    paintcraft_classic::text_options(
+                        ui,
+                        &mut state.options,
+                        &state.families,
+                        &mut state.search,
+                        false,
+                    );
+                    if ui.ctx().current_pass_index() == 0 {
+                        ui.ctx()
+                            .request_discard("test: repeated selected font layout");
+                    }
+                },
+                FontUi {
+                    options,
+                    families,
+                    search: String::new(),
+                },
+            );
+        h.run();
+        let entry = h.get_by_label("Font size").rect();
+        let trigger = h.get_by_label("Font size presets").rect();
+        assert_eq!(entry.height(), 40.0);
+        assert_eq!(entry.right(), trigger.left());
+        assert_eq!(entry.top(), trigger.top());
+        assert_eq!(entry.width() + trigger.width(), 90.0);
+        for (popup, selected, painted_label) in [
+            ("Font family", "Fixture family 0900", "Fixture family 0900"),
+            ("Font size presets", "72 pt", "72"),
+        ] {
+            h.get_by_label(popup).click();
+            h.run();
+            let row = h.get_by_role_and_label(Role::Button, selected).rect();
+            let (clip, label) = h
+                .output()
+                .shapes
+                .iter()
+                .find_map(|shape| {
+                    if let Shape::Text(text) = &shape.shape
+                        && text.galley.job.text == painted_label
+                        && row.contains(text.pos)
+                    {
+                        Some((shape.clip_rect, text))
+                    } else {
+                        None
+                    }
+                })
+                .expect("current choice is painted on opening");
+            assert!(
+                clip.contains_rect(row),
+                "selected row {row:?} outside {clip:?}"
+            );
+            assert!((10.0..=18.0).contains(&(label.pos.x - row.left())));
+            assert_eq!(label.galley.job.sections[0].format.font_id.size, 16.0);
+            assert!(h.query_all_by_label_contains("Fixture family ").count() < 30);
+            if popup == "Font family" {
+                let search = h.get_by_label("Search fonts").rect();
+                let footer = h.get_by_label("1000 fonts").rect();
+                assert!(h.output().shapes.iter().any(|shape| matches!(&shape.shape,
+                    Shape::Text(text) if text.galley.job.text == "1000 fonts"
+                        && shape.clip_rect.contains_rect(footer))));
+                h.event(Event::Text("Fixture family 0004".into()));
+                h.run();
+                assert_eq!(h.get_by_label("Search fonts").rect(), search);
+                let result = h.get_by_label("Fixture family 0004").rect();
+                assert!(result.top() > search.bottom() && result.bottom() <= size.y);
+                assert_eq!(h.state().options, original);
+            } else {
+                h.get_by_label("8 pt").scroll_to_me();
+                h.run();
+                let first = h.get_by_label("8 pt").rect();
+                assert!(first.min.y >= 0.0 && first.max.y <= size.y);
+            }
+            h.key_press(Key::Escape);
+            h.run();
+            assert_eq!(h.state().options, original);
+        }
+        h.state_mut().options.points = 37;
+        h.run();
+        h.get_by_label("Font size presets").click();
+        h.run();
+        let nearest = h.get_by_label("36 pt");
+        assert_eq!(
+            nearest.accesskit_node().toggled(),
+            Some(eframe::egui::accesskit::Toggled::False)
+        );
+        let row = nearest.rect();
+        assert!(h.output().shapes.iter().any(|shape| matches!(&shape.shape,
+            Shape::Text(text) if text.galley.job.text == "36" && row.contains(text.pos)
+                && shape.clip_rect.contains_rect(row))));
+        h.key_press(Key::Escape);
+        h.run();
+        assert_eq!(h.state().options.points, 37);
+    }
+}
+
+#[test]
+#[ignore = "Explicit GPU text dropdown review with a deterministic catalog"]
+fn export_text_dropdowns() {
+    use paintcraft_classic::ClassicVariant;
+    let output = std::env::temp_dir().join("paintcraft-text-dropdowns");
+    std::fs::create_dir_all(&output).unwrap();
+    for (theme, name) in [
+        (eframe::egui::Theme::Light, "light"),
+        (eframe::egui::Theme::Dark, "dark"),
+    ] {
+        for (size, layout) in [
+            (Vec2::new(1100.0, 500.0), "desktop"),
+            (Vec2::new(480.0, 360.0), "compact"),
+        ] {
+            let families: Vec<_> = (0..1000)
+                .map(|i| format!("Fixture family {i:04}"))
+                .collect();
+            let options = TextOptions {
+                family: families[900].clone(),
+                points: 72,
+                ..Default::default()
+            };
+            let original = options.clone();
+            let mut h = Harness::builder().with_size(size).build_ui_state(
+                |ui, state: &mut FontUi| {
+                    paintcraft_classic::text_options(
+                        ui,
+                        &mut state.options,
+                        &state.families,
+                        &mut state.search,
+                        false,
+                    );
+                },
+                FontUi {
+                    options,
+                    families,
+                    search: String::new(),
+                },
+            );
+            paintcraft_ui::fonts::install(&h.ctx);
+            paintcraft_ui::theme::apply(&h.ctx, theme);
+            paintcraft_classic::apply_style_for_theme(&h.ctx, ClassicVariant::V11, theme);
+            h.run();
+            for (popup, label) in [("Font family", "family"), ("Font size presets", "size")] {
+                h.get_by_label(popup).click();
+                h.run();
+                h.render()
+                    .unwrap()
+                    .save(output.join(format!("{name}-{layout}-{label}.png")))
+                    .unwrap();
+                h.key_press(Key::Escape);
+                h.run();
+                assert_eq!(h.state().options, original);
+            }
+        }
+    }
+}

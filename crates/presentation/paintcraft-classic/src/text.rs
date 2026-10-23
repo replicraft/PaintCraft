@@ -4,6 +4,7 @@ pub use paintcraft_core::types::text::{TextAlignment, TextOptions};
 use egui::{Align, Button, Color32, Response, RichText, Ui, Vec2};
 
 mod fonts;
+mod popup;
 mod size;
 
 const CONTROL_HEIGHT: f32 = 40.0;

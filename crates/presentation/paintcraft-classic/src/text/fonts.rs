@@ -10,6 +10,8 @@ pub(super) fn family(
 ) {
     let popup_height = (ui.ctx().content_rect().height() * 0.5 - 24.0).clamp(120.0, 340.0);
     let mut search_response = None;
+    let state_id = ui.make_persistent_id("font-family-was-open");
+    let was_open = ui.data(|data| data.get_temp::<bool>(state_id).unwrap_or(false));
     let font = ui
         .allocate_ui_with_layout(
             Vec2::new(FAMILY_WIDTH, CONTROL_HEIGHT),
@@ -34,6 +36,7 @@ pub(super) fn family(
                     .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside)
                     .selected_text(&*family)
                     .show_ui(ui, |ui| {
+                        popup::style(ui);
                         ui.set_height(popup_height);
                         let find = ui.add_sized(
                             [ui.available_width(), CONTROL_HEIGHT],
@@ -47,6 +50,10 @@ pub(super) fn family(
                             )
                         });
                         ui.separator();
+                        let header_height = ui.cursor().min.y - ui.min_rect().min.y;
+                        let list_height =
+                            (popup_height - header_height - 20.0 - ui.spacing().item_spacing.y)
+                                .max(CONTROL_HEIGHT);
                         let filter = search.to_lowercase();
                         let filtered: Vec<_> = families
                             .iter()
@@ -54,10 +61,18 @@ pub(super) fn family(
                             .collect();
                         let mut list = egui::ScrollArea::vertical()
                             .id_salt("font-family-list")
-                            .max_height((popup_height - 76.0).max(40.0))
+                            .max_height(list_height)
                             .auto_shrink([false, false]);
                         if find.changed() {
                             list = list.vertical_scroll_offset(0.0);
+                        } else if !was_open {
+                            let index = filtered
+                                .iter()
+                                .position(|name| **name == *family)
+                                .unwrap_or(0);
+                            let step = CONTROL_HEIGHT + ui.spacing().item_spacing.y;
+                            let offset = index as f32 * step - (list_height - CONTROL_HEIGHT) * 0.5;
+                            list = list.vertical_scroll_offset(offset.max(0.0));
                         }
                         if filtered.is_empty() {
                             list.show(ui, |ui| {
@@ -70,11 +85,7 @@ pub(super) fn family(
                             list.show_rows(ui, row_height, filtered.len(), |ui, rows| {
                                 for index in rows {
                                     let name = filtered[index];
-                                    let response = ui.add_sized(
-                                        [ui.available_width(), row_height],
-                                        Button::selectable(*family == *name, name).truncate(),
-                                    );
-                                    selected_outline(ui, &response, *family == *name);
+                                    let response = popup::row(ui, name, *family == *name);
                                     if response.clicked() {
                                         family.clone_from(name);
                                         find.surrender_focus();
@@ -101,6 +112,8 @@ pub(super) fn family(
             },
         )
         .inner;
+    let open = egui::ComboBox::is_open(ui.ctx(), font.response.id);
+    ui.data_mut(|data| data.insert_temp(state_id, open));
     if font.response.clicked()
         && ui.ctx().current_pass_index() == 0
         && let Some(find) = search_response
