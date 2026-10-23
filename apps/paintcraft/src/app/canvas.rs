@@ -79,9 +79,13 @@ impl App {
         let ppp = ui.ctx().pixels_per_point();
         let rect = response.rect;
         self.canvas_rect = Some(rect);
-        let visible_canvas = rect
-            .intersect(painter.clip_rect())
-            .intersect(self.canvas_viewport.unwrap_or(rect));
+        // The scroll area reserves edge chrome outside its clipped content. Keep
+        // viewport metrics and zoom centers tied to that actual drawable region.
+        let viewport = ui
+            .clip_rect()
+            .intersect(self.canvas_viewport.unwrap_or(ui.clip_rect()));
+        self.canvas_viewport = Some(viewport);
+        let visible_canvas = rect.intersect(viewport);
         let view = View::with_scale((rect.min.x, rect.min.y), self.zoom, ppp);
         self.hover_doc = ui
             .input(|i| i.pointer.hover_pos())

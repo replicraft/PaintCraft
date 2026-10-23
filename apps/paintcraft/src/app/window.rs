@@ -105,7 +105,15 @@ impl App {
             .frame(
                 egui::Frame::new()
                     .fill(paintcraft_ui::theme::workspace(ctx.theme()))
-                    .inner_margin(20),
+                    .inner_margin(
+                        if self.experience() == Experience::Classic
+                            && self.variant() == ClassicVariant::V11
+                        {
+                            0
+                        } else {
+                            20
+                        },
+                    ),
             )
             .show(ui, |ui| {
                 if self.document_count() > 0 {

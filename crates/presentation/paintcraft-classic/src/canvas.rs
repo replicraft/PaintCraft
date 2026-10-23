@@ -6,33 +6,27 @@ fn content<R>(
     left_clearance: f32,
     paint: impl FnOnce(&mut egui::Ui, egui::Response, egui::Painter) -> R,
 ) -> R {
-    // Scroll cues belong outside image pixels, even when the image is clipped.
-    ui.spacing_mut().scroll.fade.strength = 0.0;
-    egui::ScrollArea::both()
-        .id_salt(("classic-canvas", id))
-        .auto_shrink([false, false])
-        .show(ui, |ui| {
-            let inset = (ui.available_size() - size) * 0.5;
-            ui.add_space(inset.y.max(0.0));
-            let (response, painter) = ui
-                .horizontal(|ui| {
-                    ui.add_space(inset.x.max(left_clearance).max(0.0));
-                    ui.allocate_painter(size, egui::Sense::click_and_drag())
-                })
-                .inner;
-            let rect = response.rect;
-            let shadow = egui::epaint::Shadow {
-                offset: [0, 2],
-                blur: 10,
-                spread: 0,
-                color: egui::Color32::from_black_alpha(45),
-            };
-            ui.painter().add(shadow.as_shape(rect, 0));
-            let output = paint(ui, response, painter);
-            super::canvas_handles::show(ui, rect);
-            output
-        })
-        .inner
+    super::canvas_scroll::show(ui, id, |ui| {
+        let inset = (ui.available_size() - size) * 0.5;
+        ui.add_space(inset.y.max(0.0));
+        let (response, painter) = ui
+            .horizontal(|ui| {
+                ui.add_space(inset.x.max(left_clearance).max(0.0));
+                ui.allocate_painter(size, egui::Sense::click_and_drag())
+            })
+            .inner;
+        let rect = response.rect;
+        let shadow = egui::epaint::Shadow {
+            offset: [0, 2],
+            blur: 10,
+            spread: 0,
+            color: egui::Color32::from_black_alpha(45),
+        };
+        ui.painter().add(shadow.as_shape(rect, 0));
+        let output = paint(ui, response, painter);
+        super::canvas_handles::show(ui, rect);
+        output
+    })
 }
 
 /// Plain and ruled views share a stable document scope, preserving scroll state.

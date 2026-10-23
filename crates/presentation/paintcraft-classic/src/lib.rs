@@ -2,6 +2,7 @@
 mod brush_gallery;
 pub mod canvas;
 mod canvas_handles;
+mod canvas_scroll;
 pub mod canvas_size;
 mod ruler_axis;
 mod rulers;

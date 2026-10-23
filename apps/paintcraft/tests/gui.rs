@@ -298,3 +298,6 @@ mod slider_input;
 
 #[path = "gui/numeric_fields.rs"]
 mod numeric_fields;
+
+#[path = "gui/canvas_scrollbars.rs"]
+mod canvas_scrollbars;
