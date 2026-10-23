@@ -12,7 +12,8 @@ than claiming a pixel-exact automatic trace. Names are PaintCraft's interpretati
 of the sheet's visible glyphs. The source sheet is reference material; these SVGs
 and their generator are project assets under the repository license.
 
-[gallery.html](gallery.html) displays the full set. [manifest.json](manifest.json)
+[gallery.html](gallery.html) displays the set from `generate_icons.py`; registry
+additions and themed variants are documented below. [manifest.json](manifest.json)
 maps sheet adaptations to their source row and column. Original Clear Canvas, Share, Edit Colors, Pointer, Stroke Size, Opacity, Remove Background, Classic shape-gallery and additional rotation icons
 use null source coordinates and are generated alongside the sheet icons. Regenerate the SVGs,
 manifest and gallery with `python3 scripts/generate_icons.py` from the repository
@@ -54,7 +55,7 @@ Regenerate the outline sources with `python3 scripts/generate_classic_shape_icon
 These vectors are project-authored adaptations of the visible shape vocabulary,
 not extracted native assets or a claim of exact Windows rendering parity.
 
-Classic v11 menus and primary/shape-paint controls additionally opt into 31 original tintable outline sources in
+Classic v11 menus and primary/shape-paint controls additionally opt into 35 original tintable outline sources in
 [classic-menus](classic-menus/manifest.json). Regenerate them with
 `python3 scripts/generate_classic_menu_icons.py`. The menu helper's default stays
 colorful; its Classic option preserves shared action metadata/gates and uses
@@ -66,8 +67,8 @@ not extracted Windows assets or a pixel-exact compatibility claim.
 Import image, Recent, Desktop background, Image properties and Thumbnail have
 dedicated semantic icon IDs and original monochrome artwork. Their default
 source is the same SVG as their Classic menu variant; they are not sheet
-adaptations. This brings the registry to 96 IDs, retaining all 91 prior sources,
-with 23 shape variants and 31 menu/control sources. The generated menu manifest owns
+adaptations. Together with the selection IDs below, the registry contains 98 IDs, retaining
+all 91 prior sources, with 23 shape variants and 35 menu/control sources. The generated menu manifest owns
 these five additional sources.
 
 Classic's Image ribbon and transform dropdowns use nine original glyphs with
@@ -89,3 +90,11 @@ while Select uses the existing dashed rectangle variant. The source sheet
 versions stay available to Studio and historical toolbars. Gallery strokes are
 separate deterministic UI illustrations; they do not implement the previewed
 brush media.
+
+Select all and Invert selection have dedicated semantic IDs and original grid
+artwork; Free-form and Delete have separate monochrome variants of existing
+LassoSelect/DeleteLayer IDs. The Selection popup uses these SVGs, while default
+colored action mapping remains available to other frontends. The contact-sheet
+review now sizes its rows from the full registry, normalizes previews to a
+64-point square, and places default monochrome glyphs on dark tiles so all 98
+default sources are visible. It previously clipped entries beyond 72.

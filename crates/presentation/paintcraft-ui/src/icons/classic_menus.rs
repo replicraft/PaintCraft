@@ -40,6 +40,12 @@ pub(super) fn source(icon: Icon) -> Option<&'static [u8]> {
         Icon::Pencil => include_bytes!("../../assets/icons/classic-menus/pencil.svg"),
         Icon::Bucket => include_bytes!("../../assets/icons/classic-menus/bucket.svg"),
         Icon::Brush => include_bytes!("../../assets/icons/classic-menus/brush.svg"),
+        Icon::SelectAll => include_bytes!("../../assets/icons/classic-menus/select-all.svg"),
+        Icon::InvertSelection => {
+            include_bytes!("../../assets/icons/classic-menus/invert-selection.svg")
+        }
+        Icon::LassoSelect => include_bytes!("../../assets/icons/classic-menus/lasso-select.svg"),
+        Icon::DeleteLayer => include_bytes!("../../assets/icons/classic-menus/delete-layer.svg"),
         _ => return None,
     })
 }

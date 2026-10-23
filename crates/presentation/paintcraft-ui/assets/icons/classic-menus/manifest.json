@@ -5,7 +5,8 @@
     "docs/temp/paint-references/photos/imag1e.png",
     "docs/temp/paint-references/photos/ima2ge.png",
     "docs/temp/paint-references/photos/image.png",
-    "docs/temp/paint-references/photos/i11mage.png"
+    "docs/temp/paint-references/photos/i11mage.png",
+    "docs/temp/paint-references/photos/ima1111ge.png"
   ],
   "icons": [
     {
@@ -83,6 +84,22 @@
     {
       "name": "redo",
       "file": "redo.svg"
+    },
+    {
+      "name": "select-all",
+      "file": "select-all.svg"
+    },
+    {
+      "name": "invert-selection",
+      "file": "invert-selection.svg"
+    },
+    {
+      "name": "lasso-select",
+      "file": "lasso-select.svg"
+    },
+    {
+      "name": "delete-layer",
+      "file": "delete-layer.svg"
     },
     {
       "name": "rectangle-select",

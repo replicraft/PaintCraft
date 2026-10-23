@@ -21,6 +21,9 @@ save_as = ('<defs><mask id="pen-gap" maskUnits="userSpaceOnUse" x="0" y="0" widt
            + f'<g mask="url(#pen-gap)">{save}</g>' + path(pen) + path('M18 14L21 17'))
 undo = path('M3 9H13Q21 9 21 17M3 9L8 4M3 9L8 14')
 glass = '<circle cx="10" cy="10" r="7"/>' + path('M15 15L22 22')
+selection_cells = [(x, y) for y in [3, 10, 17] for x in [3, 10, 17]]
+select_all = ''.join(rect(x, y, 4, 4, .5) for x, y in selection_cells)
+invert = ''.join(f'<rect x="{x}" y="{y}" width="4" height="4" rx=".5"' + (' fill="#fff"' if i % 2 == 0 else '') + '/>' for i, (x, y) in enumerate(selection_cells))
 icons = {
     'new': path('M5 2H14L20 8V22H5ZM14 2V8H20'),
     'open': path('M2 20V5H9L12 8H21V10M2 20H19L22 10H7Z'),
@@ -41,6 +44,10 @@ icons = {
     'copy-merged': rect(3, 7, 12, 15) + path('M7 4H19V18M11 1H23V14'),
     'undo': undo,
     'redo': f'<g transform="translate(24 0) scale(-1 1)">{undo}</g>',
+    'select-all': select_all,
+    'invert-selection': invert,
+    'lasso-select': '<path d="M6 3C1 5 2 9 3 13S3 21 9 21S21 20 21 14S20 2 14 3S9 1 6 3Z" stroke-dasharray="3 2"/>',
+    'delete-layer': path('M3 5H21M8 5V2H16V5M5 5L7 22H17L19 5M10 9V18M14 9V18'),
     'rectangle-select': '<rect x="3" y="4" width="18" height="16" rx="1" stroke-dasharray="3 3"/>',
     'clear-canvas': path('M10 12L18 2M6 10L14 14L10 23L1 18ZM3 15L11 19M5 12L13 16M2 19L10 23'),
     'zoom-in': glass + path('M6 10H14M10 6V14'),
@@ -65,7 +72,7 @@ for name, geometry in icons.items():
 ''')
 (OUT / 'manifest.json').write_text(json.dumps({
     'provenance': 'Original PaintCraft outline menu vectors; not extracted native assets.',
-    'references': ['docs/temp/paint-references/photos/im1age.png', 'docs/temp/paint-references/photos/imag1e.png', 'docs/temp/paint-references/photos/ima2ge.png', 'docs/temp/paint-references/photos/image.png', 'docs/temp/paint-references/photos/i11mage.png'],
+    'references': ['docs/temp/paint-references/photos/im1age.png', 'docs/temp/paint-references/photos/imag1e.png', 'docs/temp/paint-references/photos/ima2ge.png', 'docs/temp/paint-references/photos/image.png', 'docs/temp/paint-references/photos/i11mage.png', 'docs/temp/paint-references/photos/ima1111ge.png'],
     'icons': [{'name': name, 'file': f'{name}.svg'} for name in icons],
 }, indent=2) + '\n')
 print(f'Wrote {len(icons)} Classic menu SVGs to {OUT}')

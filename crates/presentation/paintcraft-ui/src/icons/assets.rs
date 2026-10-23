@@ -92,6 +92,8 @@ pub enum Icon {
     DesktopBackground,
     ImageProperties,
     Thumbnail,
+    SelectAll,
+    InvertSelection,
     ColorBalance,
     EditColors,
     Pointer,
@@ -104,7 +106,7 @@ pub enum Icon {
 }
 
 impl Icon {
-    pub const ALL: [Self; 96] = [
+    pub const ALL: [Self; 98] = [
         Self::Polygon,
         Self::RightTriangle,
         Self::Diamond,
@@ -200,6 +202,8 @@ impl Icon {
         Self::DesktopBackground,
         Self::ImageProperties,
         Self::Thumbnail,
+        Self::SelectAll,
+        Self::InvertSelection,
         Self::ColorBalance,
     ];
 
@@ -296,6 +300,8 @@ impl Icon {
             Self::DesktopBackground => "desktop-background",
             Self::ImageProperties => "image-properties",
             Self::Thumbnail => "thumbnail",
+            Self::SelectAll => "select-all",
+            Self::InvertSelection => "invert-selection",
             Self::ColorBalance => "color-balance",
             Self::EditColors => "edit-colors",
             Self::Pointer => "pointer",
@@ -412,6 +418,10 @@ impl Icon {
                 include_bytes!("../../assets/icons/classic-menus/image-properties.svg")
             }
             Self::Thumbnail => include_bytes!("../../assets/icons/classic-menus/thumbnail.svg"),
+            Self::SelectAll => include_bytes!("../../assets/icons/classic-menus/select-all.svg"),
+            Self::InvertSelection => {
+                include_bytes!("../../assets/icons/classic-menus/invert-selection.svg")
+            }
             Self::ColorBalance => include_bytes!("../../assets/icons/color-balance.svg"),
             Self::EditColors => include_bytes!("../../assets/icons/edit-colors.svg"),
             Self::Pointer => include_bytes!("../../assets/icons/pointer.svg"),

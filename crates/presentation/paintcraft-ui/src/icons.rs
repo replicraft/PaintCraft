@@ -179,7 +179,7 @@ mod tests {
 
     #[test]
     fn every_sheet_icon_is_standalone_vector_and_renders_with_transparency_at_multiple_sizes() {
-        assert_eq!(Icon::ALL.len(), 96);
+        assert_eq!(Icon::ALL.len(), 98);
         let mut names = std::collections::HashSet::new();
         for icon in Icon::ALL {
             assert!(names.insert(icon.name()));
@@ -289,7 +289,7 @@ mod tests {
             .into_iter()
             .filter(|icon| classic_menus::source(*icon).is_some())
             .collect();
-        assert_eq!(menus.len(), 31);
+        assert_eq!(menus.len(), 35);
         for icon in menus {
             let source = std::str::from_utf8(classic_menus::source(icon).unwrap()).unwrap();
             for forbidden in ["<image", "href=", "<text", "Gradient"] {
@@ -402,15 +402,33 @@ mod review {
     #[test]
     #[ignore = "writes an icon contact sheet to /tmp for visual review"]
     fn render_all_icons_for_review() {
-        let mut sheet = resvg::tiny_skia::Pixmap::new(12 * 88, 6 * 88).unwrap();
+        let rows = Icon::ALL.len().div_ceil(12) as u32;
+        let mut sheet = resvg::tiny_skia::Pixmap::new(12 * 88, rows * 88).unwrap();
         sheet.fill(resvg::tiny_skia::Color::from_rgba8(242, 244, 248, 255));
         for (index, icon) in Icon::ALL.into_iter().enumerate() {
             let tree =
                 resvg::usvg::Tree::from_data(icon.svg(), &resvg::usvg::Options::default()).unwrap();
+            if classic_menus::source(icon).is_some_and(|source| source == icon.svg()) {
+                let mut background = resvg::tiny_skia::Paint::default();
+                background.set_color_rgba8(40, 40, 40, 255);
+                sheet.fill_rect(
+                    resvg::tiny_skia::Rect::from_xywh(
+                        (index % 12) as f32 * 88.0,
+                        (index / 12) as f32 * 88.0,
+                        88.0,
+                        88.0,
+                    )
+                    .unwrap(),
+                    &background,
+                    resvg::tiny_skia::Transform::identity(),
+                    None,
+                );
+            }
             let transform = resvg::tiny_skia::Transform::from_translate(
                 (index % 12) as f32 * 88.0 + 12.0,
                 (index / 12) as f32 * 88.0 + 12.0,
-            );
+            )
+            .pre_scale(64.0 / tree.size().width(), 64.0 / tree.size().height());
             resvg::render(&tree, transform, &mut sheet.as_mut());
         }
         sheet.save_png("/tmp/paintcraft-svg-icons.png").unwrap();
