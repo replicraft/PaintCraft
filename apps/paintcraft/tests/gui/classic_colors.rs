@@ -180,8 +180,22 @@ fn render_classic_edit_colors_for_review() {
         h.get_by_label("Edit colors…").click();
         h.run();
         hex(&mut h, "#2080FF");
-        h.render()
-            .unwrap()
+        let image = h.render().unwrap();
+        let square = h.get_by_label("Hue and saturation").rect();
+        let background = h.ctx.style_of(h.ctx.theme()).visuals.window_fill.to_array();
+        assert_eq!(
+            image.get_pixel(square.left() as u32, square.top() as u32).0,
+            background,
+            "rounded picker corner must expose the dialog surface"
+        );
+        let red = image
+            .get_pixel((square.left() + 8.0) as u32, (square.top() + 1.0) as u32)
+            .0;
+        assert!(
+            red[0] > 200 && red[1] < 150 && red[2] < 32,
+            "interior must retain the hue gradient: {red:?}"
+        );
+        image
             .save(output.join(format!("{theme}-desktop.png")))
             .unwrap();
         h.get_by_label("Color model").click();
@@ -392,4 +406,86 @@ fn narrow_color_dialog_accepts_rgb_and_custom_palette_changes_without_document_h
     assert!(!h.state().editor().is_dirty());
     drop(h);
     std::fs::remove_dir_all(dir).unwrap();
+}
+
+#[test]
+fn brightness_thumb_stays_inside_its_lane_and_endpoints_do_not_jump_on_press() {
+    use eframe::egui::{Role, epaint::Shape};
+    for ppp in [1.0, 2.0] {
+        let (mut h, dir) = classic(ppp, true);
+        h.get_by_label("Edit colors…").click();
+        h.run();
+        hex(&mut h, "#FF0000");
+        let before = h.state().editor().document_snapshot();
+        let ticket = h.state().editor().history_view().ticket;
+        let bar = h.get_by_label("Brightness").rect();
+        for (y, expected) in [
+            (bar.bottom() - 0.5, "#000000"),
+            (bar.top() + 0.5, "#FF0000"),
+        ] {
+            let point = Pos2::new(bar.center().x, y);
+            h.input_mut()
+                .events
+                .extend([Event::PointerMoved(point), press(point), release(point)]);
+            h.run();
+            assert_eq!(
+                h.get_by_label("Hex RGB")
+                    .accesskit_node()
+                    .value()
+                    .as_deref(),
+                Some(expected)
+            );
+            let marker = h
+                .output()
+                .shapes
+                .iter()
+                .find_map(|shape| match &shape.shape {
+                    Shape::Circle(circle)
+                        if circle.radius == 6.0
+                            && circle.fill == eframe::egui::Color32::WHITE
+                            && bar.contains(circle.center) =>
+                    {
+                        Some(circle.center)
+                    }
+                    _ => None,
+                })
+                .unwrap();
+            assert!(bar.contains_rect(eframe::egui::Rect::from_center_size(
+                marker,
+                Vec2::splat(20.0)
+            )));
+            h.input_mut().events.extend([
+                Event::PointerMoved(marker),
+                press(marker),
+                release(marker),
+            ]);
+            h.run();
+            assert_eq!(
+                h.get_by_label("Hex RGB")
+                    .accesskit_node()
+                    .value()
+                    .as_deref(),
+                Some(expected),
+                "clicking the endpoint thumb must retain its value"
+            );
+        }
+        h.get_by_role_and_label(Role::Slider, "Brightness").focus();
+        h.run();
+        h.key_press(Key::ArrowDown);
+        h.run();
+        assert_ne!(
+            h.get_by_label("Hex RGB")
+                .accesskit_node()
+                .value()
+                .as_deref(),
+            Some("#FF0000")
+        );
+        h.get_by_label("Cancel").click();
+        h.run();
+        assert!(h.state().editor().document().same_semantics(&before));
+        assert_eq!(h.state().editor().history_view().ticket, ticket);
+        assert_eq!(h.state().editor().color, Rgba([0, 0, 0, 255]));
+        drop(h);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
 }

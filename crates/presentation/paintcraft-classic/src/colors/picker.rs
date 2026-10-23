@@ -1,5 +1,7 @@
 use super::*;
 
+mod gradients;
+
 fn color(h: f32, s: f32, v: f32) -> Color32 {
     let rgba = Hsva { h, s, v, a: 1.0 }.to_srgba_unmultiplied();
     Color32::from_rgb(rgba[0], rgba[1], rgba[2])
@@ -10,24 +12,7 @@ pub(super) fn square(ui: &mut egui::Ui, editor: &mut ColorEditor, side: f32) {
     response.widget_info(|| {
         egui::WidgetInfo::labeled(egui::Role::ColorWell, ui.is_enabled(), "Hue and saturation")
     });
-    let mut mesh = egui::epaint::Mesh::default();
-    const COLUMNS: u32 = 36;
-    const ROWS: u32 = 16;
-    for y in 0..=ROWS {
-        for x in 0..=COLUMNS {
-            let (h, white) = (x as f32 / COLUMNS as f32, y as f32 / ROWS as f32);
-            mesh.colored_vertex(
-                rect.min + rect.size() * egui::vec2(h, white),
-                color(h, 1.0 - white, 1.0),
-            );
-            if x > 0 && y > 0 {
-                let i = y * (COLUMNS + 1) + x;
-                mesh.add_triangle(i - COLUMNS - 2, i - 1, i);
-                mesh.add_triangle(i - COLUMNS - 2, i, i - COLUMNS - 1);
-            }
-        }
-    }
-    ui.painter().add(egui::Shape::mesh(mesh));
+    gradients::square(ui, rect);
     if (response.clicked() || response.dragged())
         && let Some(pos) = response.interact_pointer_pos()
     {
@@ -52,10 +37,9 @@ pub(super) fn square(ui: &mut egui::Ui, editor: &mut ColorEditor, side: f32) {
         }
     }
     let marker = rect.min + rect.size() * egui::vec2(editor.hsv.h, 1.0 - editor.hsv.s);
-    ui.painter()
-        .circle_stroke(marker, 4.0, egui::Stroke::new(2.0, Color32::BLACK));
-    ui.painter()
-        .circle_stroke(marker, 3.0, egui::Stroke::new(1.0, Color32::WHITE));
+    let painter = ui.painter().with_clip_rect(rect);
+    painter.circle_stroke(marker, 7.0, egui::Stroke::new(2.0, Color32::BLACK));
+    painter.circle_stroke(marker, 6.0, egui::Stroke::new(2.0, Color32::WHITE));
 }
 
 pub(super) fn brightness(ui: &mut egui::Ui, editor: &mut ColorEditor, height: f32) {
@@ -64,24 +48,16 @@ pub(super) fn brightness(ui: &mut egui::Ui, editor: &mut ColorEditor, height: f3
     response.widget_info(|| {
         egui::WidgetInfo::slider(ui.is_enabled(), editor.hsv.v.into(), "Brightness")
     });
-    let mut mesh = egui::epaint::Mesh::default();
-    for i in 0..=32 {
-        let t = i as f32 / 32.0;
-        let y = rect.top() + t * rect.height();
-        let color = color(editor.hsv.h, editor.hsv.s, 1.0 - t);
-        mesh.colored_vertex(egui::pos2(rect.left() + 8.0, y), color);
-        mesh.colored_vertex(egui::pos2(rect.right() - 8.0, y), color);
-        if i > 0 {
-            let i = i * 2;
-            mesh.add_triangle(i - 2, i - 1, i + 1);
-            mesh.add_triangle(i - 2, i + 1, i);
-        }
-    }
-    ui.painter().add(egui::Shape::mesh(mesh));
+    let rail = egui::Rect::from_min_max(
+        egui::pos2(rect.left() + 8.0, rect.top()),
+        egui::pos2(rect.right() - 8.0, rect.bottom()),
+    );
+    gradients::brightness(ui, rail, editor.hsv.h, editor.hsv.s);
+    let travel = rect.y_range().shrink(10.0);
     if (response.clicked() || response.dragged())
         && let Some(pos) = response.interact_pointer_pos()
     {
-        editor.hsv.v = 1.0 - ((pos.y - rect.top()) / rect.height()).clamp(0.0, 1.0);
+        editor.hsv.v = 1.0 - ((pos.y - travel.min) / travel.span()).clamp(0.0, 1.0);
         editor.set_hsv();
         response.request_focus();
     }
@@ -97,9 +73,9 @@ pub(super) fn brightness(ui: &mut egui::Ui, editor: &mut ColorEditor, height: f3
     }
     let marker = egui::pos2(
         rect.center().x,
-        rect.top() + (1.0 - editor.hsv.v) * rect.height(),
+        egui::lerp(travel.min..=travel.max, 1.0 - editor.hsv.v),
     );
-    ui.painter().circle_filled(marker, 5.0, Color32::WHITE);
     ui.painter()
-        .circle_stroke(marker, 5.0, egui::Stroke::new(1.0, Color32::GRAY));
+        .circle_filled(marker, 10.0, Color32::from_gray(76));
+    ui.painter().circle_filled(marker, 6.0, Color32::WHITE);
 }
