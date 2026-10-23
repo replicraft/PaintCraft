@@ -112,6 +112,18 @@ pub(super) fn ribbon(
                         workspace.layers = !workspace.layers;
                     }
                 });
+                let height = if spacious(ui) { 108.0 } else { 96.0 };
+                // Follow the caption row at the far edge on desktop. In small
+                // windows this stays in the ribbon's horizontal scroller.
+                ui.add_space((ui.available_width() - 28.0).max(0.0));
+                ui.allocate_ui_with_layout(
+                    Vec2::new(28.0, height + 18.0),
+                    egui::Layout::top_down(egui::Align::Center),
+                    |ui| {
+                        ui.add_space(height - 6.0);
+                        super::toolbar_visibility::menu(ui, context, actions);
+                    },
+                );
             });
         });
     ui.separator();

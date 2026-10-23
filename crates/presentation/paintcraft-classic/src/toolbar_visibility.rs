@@ -1,6 +1,58 @@
 //! Presentation-only reveal state for Classic's automatically hidden toolbar.
 use egui::{Rect, Ui};
 
+/// Direct ribbon access to the same persisted choices offered in View.
+pub(super) fn menu(
+    ui: &mut Ui,
+    context: paintcraft_ui::actions::Context,
+    actions: &mut Vec<super::Action>,
+) {
+    use paintcraft_ui::actions::{Action, MenuIconStyle, ViewAction};
+    ui.spacing_mut().interact_size.y = 24.0;
+    ui.spacing_mut().button_padding = egui::Vec2::ZERO;
+    let (response, _) = egui::containers::menu::MenuButton::from_button(
+        egui::Button::new("")
+            .min_size(egui::vec2(28.0, 24.0))
+            .frame_when_inactive(false)
+            .frame(true),
+    )
+    .ui(ui, |ui| {
+        ui.set_width(280.0);
+        ui.spacing_mut().interact_size.y = 40.0;
+        ui.spacing_mut().item_spacing.y = 0.0;
+        for style in [egui::TextStyle::Body, egui::TextStyle::Button] {
+            ui.style_mut()
+                .text_styles
+                .insert(style, egui::FontId::proportional(16.0));
+        }
+        for mode in [ViewAction::AlwaysShowToolbar, ViewAction::AutoHideToolbar] {
+            let action = Action::View(mode);
+            if paintcraft_ui::actions::menu_item_with_icon_style(
+                ui,
+                action,
+                context,
+                action.descriptor_for(context.frontend).label,
+                22.0,
+                MenuIconStyle::ClassicOutline,
+            ) {
+                actions.push(action);
+                ui.close();
+            }
+        }
+    });
+    let center = response.rect.center();
+    ui.painter().add(egui::Shape::line(
+        vec![
+            center + egui::vec2(-4.0, -2.0),
+            center + egui::vec2(0.0, 2.0),
+            center + egui::vec2(4.0, -2.0),
+        ],
+        egui::Stroke::new(1.0, ui.visuals().strong_text_color()),
+    ));
+    super::dropdowns::open_state(ui, &response, "Toolbar display options");
+    response.on_hover_text("Toolbar display options");
+}
+
 #[derive(Debug, Default)]
 pub struct ToolbarVisibility {
     collapsed: bool,

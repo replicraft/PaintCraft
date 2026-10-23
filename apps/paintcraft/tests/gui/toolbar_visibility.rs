@@ -199,3 +199,173 @@ fn view_menu_remains_scrollable_to_lower_commands_on_short_displays() {
     let rect = h.get_by_label("Change Classic skin…").rect();
     assert!(rect.min.y >= 0.0 && rect.max.y <= 360.0, "{rect:?}");
 }
+
+#[test]
+fn ribbon_visibility_chevron_uses_persisted_modes_and_is_reachable_after_scrolling() {
+    use paintcraft::settings::Appearance;
+    for (width, ppp, appearance) in [
+        (1360.0, 1.0, Appearance::Light),
+        (1100.0, 2.0, Appearance::Dark),
+        (480.0, 1.0, Appearance::Light),
+    ] {
+        let dir = scratch("ribbon-visibility-chevron");
+        Settings {
+            appearance,
+            classic_variant: Some(ClassicVariant::V11),
+            ..Default::default()
+        }
+        .save(&dir)
+        .unwrap();
+        let mut h = Harness::builder()
+            .with_size(Vec2::new(width, 900.0))
+            .with_pixels_per_point(ppp)
+            .build_ui_state(
+                |ui, app: &mut App| {
+                    app.ui(ui);
+                    if ui.ctx().current_pass_index() == 0 {
+                        ui.ctx()
+                            .request_discard("test: repeated ribbon visibility layout");
+                    }
+                },
+                App::new(None).with_settings(dir.clone()),
+            );
+        h.run();
+        let document = h.state().editor().document_snapshot();
+        let ticket = h.state().editor().history_view().ticket;
+        let initial = h.state().canvas_viewport().unwrap();
+        h.get_by_label("Toolbar display options").scroll_to_me();
+        h.run();
+        let trigger = h.get_by_label("Toolbar display options").rect();
+        assert_eq!(trigger.size(), Vec2::new(28.0, 24.0));
+        assert!(trigger.min.x >= 0.0 && trigger.max.x <= width && trigger.max.y <= initial.top());
+        h.get_by_label("Toolbar display options").click();
+        h.run();
+        assert_eq!(
+            h.get_by_label("Toolbar display options")
+                .accesskit_node()
+                .toggled(),
+            Some(Toggled::True)
+        );
+        for (label, selected) in [
+            ("Always show toolbar", true),
+            ("Automatically hide toolbar", false),
+        ] {
+            let node = h.get_by_label(label);
+            let rect = node.rect();
+            assert_eq!(rect.height(), 40.0);
+            assert!(
+                rect.min.x >= 0.0
+                    && rect.max.x <= width
+                    && rect.min.y >= 0.0
+                    && rect.max.y <= 900.0
+            );
+            assert_eq!(
+                node.accesskit_node().toggled(),
+                Some(if selected {
+                    Toggled::True
+                } else {
+                    Toggled::False
+                })
+            );
+        }
+        h.key_press(Key::Escape);
+        h.run();
+        assert!(h.query_by_label("Automatically hide toolbar").is_none());
+        assert!(!Settings::load(&dir).0.classic_toolbar_auto_hide);
+        h.get_by_label("Toolbar display options").click();
+        h.run();
+        h.get_by_label("Automatically hide toolbar").click();
+        h.run();
+        assert!(Settings::load(&dir).0.classic_toolbar_auto_hide);
+        h.event(Event::PointerMoved(
+            h.state().canvas_viewport().unwrap().center(),
+        ));
+        h.run();
+        assert!(h.query_by_label("Toolbar display options").is_none());
+        assert!(h.state().canvas_viewport().unwrap().height() > initial.height() + 80.0);
+        h.get_by_role_and_label(Role::Button, "View").hover();
+        h.run();
+        h.get_by_label("Toolbar display options").scroll_to_me();
+        h.run();
+        h.get_by_label("Toolbar display options").click();
+        h.run();
+        assert_eq!(
+            h.get_by_label("Automatically hide toolbar")
+                .accesskit_node()
+                .toggled(),
+            Some(Toggled::True)
+        );
+        h.get_by_label("Always show toolbar").click();
+        h.run();
+        assert!(!Settings::load(&dir).0.classic_toolbar_auto_hide);
+        assert!(h.state().editor().document().same_semantics(&document));
+        assert_eq!(h.state().editor().history_view().ticket, ticket);
+        drop(h);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+}
+
+#[test]
+#[ignore = "requires GPU; exports ribbon visibility menus and hidden layout"]
+fn export_ribbon_visibility_menu() {
+    use paintcraft::settings::Appearance;
+    let output = std::env::temp_dir().join("paintcraft-ribbon-visibility");
+    std::fs::create_dir_all(&output).unwrap();
+    for (appearance, theme) in [(Appearance::Light, "light"), (Appearance::Dark, "dark")] {
+        let dir = scratch("ribbon-visibility-review");
+        Settings {
+            appearance,
+            classic_variant: Some(ClassicVariant::V11),
+            ..Default::default()
+        }
+        .save(&dir)
+        .unwrap();
+        let mut h = harness_with(App::new(None).with_settings(dir.clone()), 1.0, false);
+        h.set_size(Vec2::new(1360.0, 900.0));
+        h.run();
+        h.get_by_label("Toolbar display options").click();
+        h.run();
+        h.render()
+            .unwrap()
+            .save(output.join(format!("{theme}-always-show.png")))
+            .unwrap();
+        h.get_by_label("Automatically hide toolbar").click();
+        h.run();
+        h.get_by_role_and_label(Role::Button, "View").hover();
+        h.run();
+        h.get_by_label("Toolbar display options").click();
+        h.run();
+        h.render()
+            .unwrap()
+            .save(output.join(format!("{theme}-auto-hide.png")))
+            .unwrap();
+        h.key_press(Key::Escape);
+        h.run();
+        h.event(Event::PointerMoved(
+            h.state().canvas_viewport().unwrap().center(),
+        ));
+        h.run();
+        h.render()
+            .unwrap()
+            .save(output.join(format!("{theme}-hidden.png")))
+            .unwrap();
+        h.get_by_role_and_label(Role::Button, "View").hover();
+        h.run();
+        h.get_by_label("Toolbar display options").click();
+        h.run();
+        h.get_by_label("Always show toolbar").click();
+        h.run();
+        h.set_size(Vec2::new(480.0, 500.0));
+        h.run();
+        h.get_by_label("Toolbar display options").scroll_to_me();
+        h.run();
+        h.get_by_label("Toolbar display options").click();
+        h.run();
+        h.render()
+            .unwrap()
+            .save(output.join(format!("{theme}-compact-menu.png")))
+            .unwrap();
+        drop(h);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+}
