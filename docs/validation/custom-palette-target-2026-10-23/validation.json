@@ -1,0 +1,27 @@
+{
+  "source_commit": "90e395c5ece08099df2741eb643d54fe9e2c5b40",
+  "changes": "Clicking an empty Classic ribbon custom-color swatch opens the staged color editor at that slot. Shared typed actions carry its zero-based index. Generic color-editor entry points retain first-empty-slot behavior.",
+  "gui": {
+    "passed": 189,
+    "failed": 0,
+    "ignored": 35,
+    "scope": "Full GUI suite; new 1x/2x repeated-layout regression opens empty slot 10 with earlier slots empty, adds a color, checks Cancel and OK persistence, exactly one populated slot and unchanged document publications/semantics. Before log reproduces the incorrect slot."
+  },
+  "shared_ui": {
+    "passed": 23,
+    "failed": 0,
+    "ignored": 1
+  },
+  "clippy": "Strict workspace all-target checks passed. Formatting, source length and whitespace checks passed.",
+  "native": "Isolated Classic v11 Metal/wgpu framebuffer captured and inspected; native_capture exited successfully. User settings/recovery paths were isolated. This launch smoke check does not exercise the clicked-slot workflow or capture OS menu/title bars.",
+  "limits": "No native Windows parity, platform accessibility or performance qualification. T15 remains partial.",
+  "sha256": {
+    "before.log.gz": "99bf4df00f6393840097881e9112e2b3de8f1b2c947b0a356983b35243ae1b49",
+    "classic-native.png": "786a37e2bf36da9b919939e830d52db64156aece1b6a4af4ae3a79b4f01e1417",
+    "clippy.log.gz": "49936dfcb114a6aca0880db904699824a57f08e96dcd541d86f0e4800b5ab103",
+    "gui.log.gz": "ad777f7dcb1d53a6b545537be8d205dbfb05257afaa22a459d3cfa8a569731f9",
+    "native-build.log.gz": "63569476c2b3fb28531dc1e8f620a83f61554e9b2bd95a323e3090e2df8d73f7",
+    "native.log.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "ui.log.gz": "c6a0bc3c402b90d9859bd303aa9f3925a3c649210a2fafda8f252d001ba13866"
+  }
+}

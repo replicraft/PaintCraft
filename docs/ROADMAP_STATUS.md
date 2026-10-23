@@ -11,6 +11,12 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest Classic palette work targets the empty custom-color slot that was clicked,
+while preserving staged Cancel/OK preferences. All 189 ordinary GUI tests, 23
+shared-UI unit tests and strict workspace Clippy pass. An isolated native Classic
+launch also passed; see [the palette target record](validation/custom-palette-target-2026-10-23/validation.json).
+Full native fidelity and broader T15 gates remain partial.
+
 Latest Selection popup work keeps Rectangle marked independently of the active
 drawing tool and uses a neutral selected row with a leading accent indicator.
 All 188 ordinary UI tests, eight light/dark desktop/compact GPU scenes and strict
