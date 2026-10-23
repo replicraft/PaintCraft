@@ -189,3 +189,55 @@ fn text_and_escape_in_popups_leave_unpublished_canvas_text_intact() {
     assert!(h.state().editor().document().same_semantics(&snapshot));
     assert_eq!(h.state().editor().history_view().ticket, ticket);
 }
+
+#[test]
+fn typed_font_size_escape_preserves_preferences_and_unpublished_canvas_text() {
+    for (ppp, appearance) in [(1.0, Appearance::Light), (2.0, Appearance::Dark)] {
+        let dir = scratch("text-size-cancel");
+        Settings {
+            appearance,
+            classic_variant: Some(ClassicVariant::V11),
+            ..Default::default()
+        }
+        .save(&dir)
+        .unwrap();
+        let mut h = harness_with(App::new(None).with_settings(dir.clone()), ppp, true);
+        h.get_by_label("Text").click();
+        h.run();
+        drag(&mut h, (50.0, 50.0), (50.0, 50.0));
+        h.event(Event::Text("Keep me".into()));
+        h.run();
+        let original = Settings::load(&dir).0.text;
+        let snapshot = h.state().editor().document_snapshot();
+        let ticket = h.state().editor().history_view().ticket;
+        let published = publications(&h);
+        h.get_by_label("Font size").focus();
+        h.run();
+        h.key_combination_modifiers(Modifiers::COMMAND, &[Key::A]);
+        h.run();
+        h.get_by_label("Font size").type_text("40");
+        h.run();
+        assert_eq!(Settings::load(&dir).0.text, original);
+        h.key_press(Key::Escape);
+        h.run();
+        assert_eq!(Settings::load(&dir).0.text, original);
+        assert!(matches!(h.state().editor().preview(),
+            Some(paintcraft_tools::Preview::Text { text, .. }) if text == "Keep me"));
+        assert!(h.state().editor().document().same_semantics(&snapshot));
+        assert_eq!(h.state().editor().history_view().ticket, ticket);
+        assert_eq!(publications(&h), published);
+        h.get_by_label("Font size").focus();
+        h.run();
+        h.key_combination_modifiers(Modifiers::COMMAND, &[Key::A]);
+        h.run();
+        h.get_by_label("Font size").type_text("40");
+        h.run();
+        h.key_press(Key::Enter);
+        h.run();
+        assert_eq!(Settings::load(&dir).0.text.points, 40);
+        assert!(h.state().editor().is_editing_text());
+        assert_eq!(publications(&h), published);
+        drop(h);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+}
