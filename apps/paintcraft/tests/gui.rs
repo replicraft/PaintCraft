@@ -271,3 +271,6 @@ mod menu_rows;
 
 #[path = "gui/tool_headers.rs"]
 mod tool_headers;
+
+#[path = "gui/rename_cancel.rs"]
+mod rename_cancel;

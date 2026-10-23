@@ -128,17 +128,37 @@ impl App {
         }
         let top = self.editor.document().roots.len() - 1;
 
-        // Name: edited locally, applied when the field loses focus.
+        // Name: committed on focus loss; Escape discards the local draft.
         let buf = match &mut self.name_edit {
             Some(b) if b.0 == t => b,
             other => other.insert((t, name.clone())),
         };
         ui.horizontal(|ui| {
             let label = ui.label("Layer name");
+            let field_id = ui.scope_id().with(("layer-name", t));
+            let focused = ui.memory(|memory| memory.has_focus(field_id));
+            let cancel = focused
+                && ui.ctx().current_pass_index() == 0
+                && ui
+                    .input_mut(|input| input.consume_key(egui::Modifiers::NONE, egui::Key::Escape));
+            if cancel {
+                buf.1.clone_from(&name);
+            }
             let r = ui
-                .add(egui::TextEdit::singleline(&mut buf.1))
+                .add(
+                    egui::TextEdit::singleline(&mut buf.1)
+                        .id(field_id)
+                        .event_filter(egui::EventFilter {
+                            horizontal_arrows: true,
+                            vertical_arrows: true,
+                            escape: true,
+                            ..Default::default()
+                        }),
+                )
                 .labelled_by(label.id);
-            if r.lost_focus() {
+            if cancel {
+                r.surrender_focus();
+            } else if r.lost_focus() {
                 if buf.1 != name {
                     let rename = Action::Rename {
                         layer: t,
