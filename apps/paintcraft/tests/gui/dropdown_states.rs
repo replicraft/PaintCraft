@@ -1,6 +1,6 @@
 use super::*;
 use eframe::egui::{Rect, Role, epaint::Shape};
-use paintcraft::settings::{Appearance, Settings};
+use paintcraft::settings::{Appearance, ClassicVariant, Settings};
 
 fn has_surface(h: &Harness<App>, bounds: Rect, outline: bool) -> bool {
     h.output().shapes.iter().any(|shape| {
@@ -25,6 +25,7 @@ fn classic_dropdowns_highlight_hover_and_keep_an_outline_while_open() {
         let dir = scratch("dropdown-states");
         Settings {
             appearance,
+            classic_variant: Some(ClassicVariant::V11),
             ..Default::default()
         }
         .save(&dir)
@@ -79,7 +80,6 @@ fn classic_dropdowns_highlight_hover_and_keep_an_outline_while_open() {
 
 #[test]
 fn shape_paint_choices_have_contiguous_readable_rows_and_safe_option_transitions() {
-    use paintcraft::settings::ClassicVariant;
     use paintcraft_tools::ShapeStyle;
     for (size, ppp, appearance) in [
         (Vec2::new(1360.0, 900.0), 1.0, Appearance::Light),

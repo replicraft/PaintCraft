@@ -10,13 +10,24 @@ pub enum Choice {
 }
 
 pub fn show(ctx: &egui::Context, current: &mut ClassicVariant, first_visit: bool) -> Choice {
-    let width = (ctx.content_rect().width() - 64.0).clamp(240.0, 540.0);
-    let height = (ctx.content_rect().height() - 96.0).clamp(180.0, 480.0);
+    let width = (ctx.content_rect().width() - 56.0).clamp(240.0, 540.0);
+    let height = (ctx.content_rect().height() - 72.0).clamp(180.0, 480.0);
     let wide = width >= 480.0;
     let mut choice = Choice::Pending;
-    let mut open = true;
+    let id = egui::Id::unique("classic-skin-chooser");
+    let layer = egui::LayerId::new(egui::Order::Foreground, id);
+    ctx.memory_mut(|memory| memory.set_modal_layer(layer));
+    ctx.layer_painter(layer)
+        .rect_filled(ctx.content_rect(), 0, Color32::from_black_alpha(96));
     egui::Window::new("Choose your Classic skin")
-        .open(&mut open)
+        .id(id)
+        .order(egui::Order::Foreground)
+        .title_bar(false)
+        .frame(
+            egui::Frame::window(&ctx.style_of(ctx.theme()))
+                .inner_margin(16)
+                .corner_radius(12),
+        )
         .collapsible(false)
         .resizable(false)
         .movable(false)
@@ -27,11 +38,44 @@ pub fn show(ctx: &egui::Context, current: &mut ClassicVariant, first_visit: bool
             for style in [egui::TextStyle::Body, egui::TextStyle::Button] {
                 ui.style_mut()
                     .text_styles
-                    .insert(style, FontId::proportional(15.0));
+                    .insert(style, FontId::proportional(16.0));
             }
+            ui.visuals_mut().override_text_color = Some(ui.visuals().strong_text_color());
+            ui.spacing_mut().interact_size.y = 40.0;
+            let header = ui.horizontal_top(|ui| {
+                ui.allocate_ui_with_layout(
+                    Vec2::new(width - 48.0, 0.0),
+                    egui::Layout::top_down(egui::Align::Min),
+                    |ui| {
+                        ui.set_width(width - 48.0);
+                        ui.label(
+                            egui::RichText::new("Choose your Classic skin")
+                                .size(24.0)
+                                .strong(),
+                        );
+                    },
+                );
+                if paintcraft_ui::widgets::classic_menu_button(
+                    ui,
+                    "Close skin chooser",
+                    paintcraft_ui::icons::Icon::Close,
+                    false,
+                    "Close skin chooser",
+                )
+                .clicked()
+                {
+                    choice = Choice::Cancel;
+                }
+            });
+            ui.add_space(8.0);
+            ui.spacing_mut().scroll.floating = false;
             egui::ScrollArea::vertical()
                 .id_salt("classic-skin-choices")
-                .max_height((height - 64.0).min(if wide { 200.0 } else { 400.0 }))
+                .max_height(
+                    (height - header.response.rect.height() - 84.0)
+                        .max(48.0)
+                        .min(if wide { 220.0 } else { 400.0 }),
+                )
                 .auto_shrink([false, true])
                 .show(ui, |ui| {
                     ui.add(egui::Label::new(
@@ -39,15 +83,16 @@ pub fn show(ctx: &egui::Context, current: &mut ClassicVariant, first_visit: bool
                     ).wrap());
                     ui.add_space(12.0);
                     if wide {
+                        let card_width = (ui.available_width() - 24.0) / 3.0;
                         ui.horizontal(|ui| {
                             ui.spacing_mut().item_spacing.x = 12.0;
                             for skin in ClassicVariant::ALL {
-                                card(ui, current, skin, (width - 24.0) / 3.0, true);
+                                card(ui, current, skin, card_width, true);
                             }
                         });
                     } else {
                         for skin in ClassicVariant::ALL {
-                            card(ui, current, skin, width - 16.0, false);
+                            card(ui, current, skin, ui.available_width(), false);
                             ui.add_space(8.0);
                         }
                     }
@@ -65,18 +110,18 @@ pub fn show(ctx: &egui::Context, current: &mut ClassicVariant, first_visit: bool
                     egui::RichText::new(if first_visit { "Continue" } else { "Apply" }).color(ink),
                 )
                 .fill(ui.visuals().selection.stroke.color);
-                if ui.add_sized([button_width, 36.0], apply).clicked() {
+                if ui.add_sized([button_width, 40.0], apply).clicked() {
                     choice = Choice::Apply;
                 }
                 if ui
-                    .add_sized([button_width, 36.0], egui::Button::new("Cancel"))
+                    .add_sized([button_width, 40.0], egui::Button::new("Cancel"))
                     .clicked()
                 {
                     choice = Choice::Cancel;
                 }
             });
         });
-    if !open || ctx.input(|i| i.key_pressed(egui::Key::Escape)) {
+    if ctx.input(|i| i.key_pressed(egui::Key::Escape)) {
         Choice::Cancel
     } else {
         choice
@@ -135,7 +180,7 @@ fn card(
         position,
         align,
         skin.name(),
-        FontId::proportional(15.0),
+        FontId::proportional(16.0),
         ui.visuals().text_color(),
     );
     if selected {

@@ -38,7 +38,8 @@ impl App {
             rulers: self.settings.classic_rulers,
             fullscreen: self.fullscreen,
             auto_hide_toolbar: self.settings.classic_toolbar_auto_hide,
-            blocked: self.switching.is_some()
+            blocked: self.picking.is_some()
+                || self.switching.is_some()
                 || self.closing_workspace
                 || self.close_after_saves
                 || self.close_after_edits
