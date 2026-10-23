@@ -1,0 +1,33 @@
+{
+  "source_commit": "2b5bc613eab29b937f1484ff8f1fb691d4e185ce",
+  "reference": "docs/temp/paint-references/photos/i11mage.png",
+  "changes": "Classic v11 brush gallery reveals the active round/square preset on opening, then allows free scrolling. The height limit is screen-relative and stable while egui positions its popup; the former cursor-relative limit shrank as the popup moved on short displays. A thin resting scrollbar cue exposes overflow. Existing preset availability and decorative media samples remain.",
+  "gui": {
+    "passed": 190,
+    "failed": 0,
+    "ignored": 36,
+    "scope": "Full GUI suite. Added light 1x/dark 2x desktop and compact repeated-layout checks reproduce selection, manual scrolling away, Escape/reopening, selected-row visibility, stability across 12 additional frames, continued free scrolling and document/history preservation. Before log reproduces failure to reveal Square brush."
+  },
+  "gpu": {
+    "passed": 1,
+    "test": "brush_gallery_layout::export_brush_gallery_opening",
+    "scope": "Eight actual-app light/dark desktop/compact captures, showing the selected Square brush on reopening and subsequent manual scrolling back to the top. Images inspected for selected-row visibility and the resting scroll cue."
+  },
+  "clippy": "Strict workspace all-target Clippy passed. Formatting, source length and whitespace checks passed.",
+  "limits": "Square brush is a PaintCraft extension. Brush-media implementations, full Windows/historical fidelity and platform accessibility remain incomplete. No performance or editing-engine change; T15 remains partial.",
+  "sha256": {
+    "after.log.gz": "119f9d07886c1789809dc91074d8e0c5f0bc9e837fd26cae3525b0413e83a3be",
+    "before.log.gz": "0d2a6f24e937f680459553691580f2fa62bffa0d0b5bc8c872f9b9ffd77b307f",
+    "clippy.log.gz": "0aee3624316c86ef3f932d2b7c5d3fb5e4531b577dff0c49455a73073356561e",
+    "dark-compact-scrolled.png": "e1a508153e19faf199071f8fb5d39786f985a13dd95d5a245c5ba7402025bd8f",
+    "dark-compact-selected.png": "8231e99833bc5007b714c40dd31cd6db68da2e9e7332072e8a7f8aa0d8bfa65f",
+    "dark-desktop-scrolled.png": "ba68f88d307cd7831a43ce7dca7416a463b52c0fb9a26c8f8c2df34f78e7f4d6",
+    "dark-desktop-selected.png": "470da01fda33bba4ee0d3be13b657e0925e41b9d6fda6f3eb316477b45dad01a",
+    "gpu.log.gz": "4ae2f1708871f6e42fd991bd7d29db36558b06d4711b51a7445fda99eb6364ac",
+    "gui.log.gz": "133f034d20319141a31196d12fc0cf15c934f4ca86e467350079ee9a35613927",
+    "light-compact-scrolled.png": "37673feefffd9c7388218cbc6e928c9128d654bf540d3a41774762a7562d9ae2",
+    "light-compact-selected.png": "a94e6a5e865c0b2d92a2f34f58093e1d65961115cda85601322db84b3e97e7ba",
+    "light-desktop-scrolled.png": "b768ac429b9cccb6ea5bcaeb25e53f7c4bfda43182800295b326e6786370927e",
+    "light-desktop-selected.png": "5e31e2d5cb547b15c32547ad2582f37162fb19639e74fe6395e23db41f03ad92"
+  }
+}
