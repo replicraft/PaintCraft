@@ -1,0 +1,32 @@
+{
+  "source_commit": "d0c52ef85c062fecfca9c6bb9e5e72a794541000",
+  "problem": "Before implementation, regression tests reproduced ignored same-frame primary press/release rail clicks in Classic size/opacity and zoom controls. The keyboard comparison already passed.",
+  "changes": "Shared Classic slider input extends drag sense with coalesced taps, preserves native changed flags and consumes handled axis arrows. Ordinary press/drag smart aim and accessibility requests remain with egui. Integer tool values map to nearest range values; zoom uses its existing logarithmic mapping and centipercent precision. Changed taps request relayout/repaint so the native shell and accent decoration settle together. Brightness reuses the common path.",
+  "gui": {
+    "passed": 177,
+    "ignored_in_full_run": 24,
+    "scope": "Full suite passes after the input fix and expanded midpoint/endpoint checks. A new opt-in exporter was then added and separately executed; final all-target Clippy includes it (25 current opt-in tests). New 1x/2x tests cover coalesced tool/opacity clicks, logarithmic zoom midpoint and both endpoints, single/repeated-layout keyboard equivalence and no document/history/canvas-paint publication. Existing brightness accessibility, endpoint, slider geometry, typed drafts and view checks pass."
+  },
+  "regression_evidence": "before.log.gz contains the two reproduced failures and passing keyboard comparison before production changes; targeted.log.gz shows the initial fixed cases, and the final full run includes the expanded zoom coverage.",
+  "gpu": {
+    "passed": 1,
+    "test": "slider_input::export_classic_slider_taps",
+    "scope": "Six light/dark captures reached through real same-frame press/release taps: size 33 / opacity 50%, zoom midpoint 111.8%, zoom minimum 12.5%."
+  },
+  "clippy": "Strict workspace all-targets passed on final source.",
+  "checks": "Formatting, whitespace and source file length checks passed.",
+  "limits": "This corrects Classic slider input and keeps native drag/AT paths; it does not qualify physical devices, OS screen readers, Windows parity or a rendering-performance improvement. Roadmap milestones remain partial.",
+  "sha256": {
+    "before.log.gz": "eedb3e83f63dba38bcaf8c422e56e86b9fcb209e9fefe7cf549647f8f25402bc",
+    "clippy.log.gz": "6b711ae82f29441a38407c7b13a6d9539710ca4ee782742264e0eb8505a3a10f",
+    "dark-tool-taps.png": "fa9f02489ca8d12249f0685f2ece0c88a406d1908bfb0a38038ae4895bc1a425",
+    "dark-zoom-middle.png": "71f84a458b7ac83a0b1d1807ff68b1510a36e2b1a1bfc907fd3245cffe660226",
+    "dark-zoom-minimum.png": "32da19cc0f1fc1b76669ede98be432d089e28a698bb3b229b96cfedfe234d2cf",
+    "gpu.log.gz": "5a42f70b6c790f229f03943d1c1755d73cb87c7214ea2b0f4782f1f534881904",
+    "gui.log.gz": "0884c3acb0a9f8d97680f98af0ef248f3a21340800944202466dc60eb80a65f1",
+    "light-tool-taps.png": "be6551d2fab7dc4cb742d2d2118370fd68321d7c2c7ebd75b52b7fd0d663f99c",
+    "light-zoom-middle.png": "788afe37b3712c7ef955acd3872070bf107b2c5c39f0c18e186ef7bab436ed49",
+    "light-zoom-minimum.png": "d9c45afdaa1df0c9b5ffbc39c5791dec547304586eb8a860c49ba2617a00dd6e",
+    "targeted.log.gz": "54be92c6ed75a1f0d426237d13edf54edd70fe543ff8f6687360694a52f7c2cf"
+  }
+}

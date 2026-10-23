@@ -11,6 +11,13 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest Classic slider input work fixes ignored coalesced rail clicks through a
+shared completion path while preserving native drags and accessibility updates.
+All 177 ordinary UI tests, light/dark tap-result GPU captures and strict workspace
+Clippy pass; the two failing-before cases are retained in
+[the slider input record](validation/classic-slider-input-gpu-2026-10-23/validation.json).
+Device/OS accessibility and full reference qualification remain open.
+
 Latest Classic brightness work replaces role-only input with egui's real slider
 actions/range metadata, retaining quick clicks and adding stable arrow stepping
 and visible focus. All 174 normal UI tests, synthetic accessibility/staging checks,
