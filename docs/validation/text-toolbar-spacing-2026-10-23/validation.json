@@ -1,0 +1,19 @@
+{
+  "source_commit": "67be281",
+  "reference": "docs/temp/paint-references/photos/mspaint-text-settings.png",
+  "changes": "Classic text toolbar uses wider group spacing, 20-point horizontal and 10-point vertical inset, a 24-point background checkbox, and an outline font-family chevron. Existing 40-point controls and font search behavior remain.",
+  "validation": {
+    "gui": "168 passed, 19 ignored",
+    "gpu": "appearance::export_theme_previews passed; light and dark text scenes archived",
+    "clippy": "paintcraft-classic --all-targets -- -D warnings passed",
+    "checks": "Formatting, whitespace and source file length checks passed."
+  },
+  "limits": "Presentation refinement only. No new text rasterization or editing semantics; these client captures do not establish native Windows parity.",
+  "sha256": {
+    "classic-dark-text.png": "57aed3f78dd86926ce2f86be1c1d6ae29d6a7b4f853777e3eee74322d6657c4d",
+    "classic-light-text.png": "a70706f9c7539abd88f812736bab5ab8e1c7db0e44ef18fe1f9af7321094d5f5",
+    "clippy.log.gz": "43ef911b9a0acd70e95488bcac48fc4bb0382066092364cc3bc04bc62c9ff2c4",
+    "gpu.log.gz": "90fa8961165417116ae83fc1095ea5f7fe869f6571b08ca2c3b1ab0a4e751a72",
+    "gui.log.gz": "6748e15a474e316bd8d34fb916579770edbf1bf8c9250c0aa048cc37a357ac4b"
+  }
+}

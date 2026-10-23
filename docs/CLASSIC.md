@@ -977,3 +977,9 @@ entries beyond 72. The registry has 35 menu/control sources. Raw comparisons,
 selected popup states and the full sheet are in [the Selection record](validation/selection-menu-gpu-2026-10-23/validation.json).
 Unimplemented selection operations, historical parity and full Windows fidelity
 remain open. Shared Classic popup styling is not historical-skin qualification.
+
+### Text toolbar spacing and font chevron (2026-10-23)
+
+The text bar now gives the family, size, formatting, alignment and background groups the spacing shown in `mspaint-text-settings.png`. Its rounded panel has 20-point horizontal and 10-point vertical insets; the background checkbox is 24 points, and the family picker uses a thin outline chevron. The existing 40-point controls, searchable installed-font list, staged size entry and editable canvas text behavior are preserved.
+
+Validation: 168 UI tests passed (19 opt-in tests ignored), including narrow scrolling, repeated layout, font list virtualization and cancellation coverage. Light/dark GPU theme exports and strict Classic Clippy passed, along with formatting and source-length checks. Raw captures and logs: `docs/validation/text-toolbar-spacing-2026-10-23/validation.json`. This is a presentation refinement; native Windows fidelity and remaining text semantics are still incomplete.
