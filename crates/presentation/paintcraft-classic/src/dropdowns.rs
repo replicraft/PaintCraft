@@ -64,10 +64,15 @@ fn dropdown(
     let response = ui
         .push_id(label, |ui| {
             let button = if let Some(icon) = icon {
-                egui::Button::image_and_text(
-                    paintcraft_ui::icons::image(ui.ctx(), icon, 20.0),
+                egui::Button::new((
+                    paintcraft_ui::icons::classic_menu_image(
+                        ui.ctx(),
+                        icon,
+                        22.0,
+                        ui.visuals().strong_text_color(),
+                    ),
                     "   ",
-                )
+                ))
                 .min_size(Vec2::new(54.0, 32.0))
                 .frame_when_inactive(false)
                 .frame(true)
@@ -152,11 +157,12 @@ fn selected_outline(ui: &egui::Ui, rect: egui::Rect) {
 }
 
 fn popup_style(ui: &mut egui::Ui, width: f32) {
-    ui.set_min_width(width);
-    ui.spacing_mut().interact_size.y = 32.0;
+    ui.set_width(width);
+    ui.spacing_mut().interact_size.y = 40.0;
+    ui.spacing_mut().item_spacing.y = 0.0;
     for style in [egui::TextStyle::Body, egui::TextStyle::Button] {
         ui.style_mut()
             .text_styles
-            .insert(style, egui::FontId::proportional(15.0));
+            .insert(style, egui::FontId::proportional(16.0));
     }
 }

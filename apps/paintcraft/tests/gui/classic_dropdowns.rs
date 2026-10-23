@@ -113,6 +113,30 @@ fn render_classic_dropdowns_and_cursor_for_review() {
             .unwrap()
             .save(output.join(format!("{name}-shape-fill.png")))
             .unwrap();
+        h.get_by_label("Solid fill").click();
+        h.run();
+        h.get_by_label("Shape fill").click();
+        h.run();
+        h.render()
+            .unwrap()
+            .save(output.join(format!("{name}-shape-fill-solid.png")))
+            .unwrap();
+        h.key_press(Key::Escape);
+        h.run();
+        h.get_by_label("Shape outline").click();
+        h.run();
+        h.render()
+            .unwrap()
+            .save(output.join(format!("{name}-shape-outline.png")))
+            .unwrap();
+        h.get_by_label("No outline").click();
+        h.run();
+        h.get_by_label("Shape outline").click();
+        h.run();
+        h.render()
+            .unwrap()
+            .save(output.join(format!("{name}-shape-outline-none.png")))
+            .unwrap();
         h.key_press(Key::Escape);
         h.run();
         h.get_by_label("Eraser").click();
