@@ -277,6 +277,17 @@ pub fn menu_item_with_label(
     ctx: Context,
     label: &'static str,
 ) -> bool {
+    menu_item_with_icon_size(ui, action, ctx, label, 16.0)
+}
+
+/// Frontend icon metrics retain the same labels, gates, shortcuts and checkmarks.
+pub fn menu_item_with_icon_size(
+    ui: &mut egui::Ui,
+    action: Action,
+    ctx: Context,
+    label: &'static str,
+    icon_size: f32,
+) -> bool {
     let descriptor = Descriptor {
         label,
         ..action.descriptor_for(ctx.frontend)
@@ -291,7 +302,7 @@ pub fn menu_item_with_label(
     };
     let mut button = match (checked, action.icon(ctx)) {
         (None, Some(icon)) => {
-            egui::Button::image_and_text(crate::icons::image(ui.ctx(), icon, 16.0), title)
+            egui::Button::image_and_text(crate::icons::image(ui.ctx(), icon, icon_size), title)
         }
         _ => egui::Button::new(title),
     };

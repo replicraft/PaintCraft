@@ -18,27 +18,23 @@ pub(super) fn file(ui: &mut Ui, context: Context, actions: &mut Vec<Action>) {
         .show(ui, |ui| {
             action(ui, context, actions, Action::New, "New");
             action(ui, context, actions, Action::Open, "Open");
-            ui.menu_image_text_button(
-                paintcraft_ui::icons::image(ui.ctx(), Icon::Open, 16.0),
-                "Import to canvas",
-                |ui| {
-                    layout(ui);
-                    unavailable(
-                        ui,
-                        "From file…",
-                        Icon::Open,
-                        None,
-                        "Importing into the current canvas is not available yet.",
-                    );
-                    unavailable(
-                        ui,
-                        "From scanner or camera…",
-                        Icon::New,
-                        None,
-                        "Scanner and camera acquisition is not available yet.",
-                    );
-                },
-            );
+            submenu(ui, "Import to canvas", Icon::Open, |ui| {
+                layout(ui);
+                unavailable(
+                    ui,
+                    "From file…",
+                    Icon::Open,
+                    None,
+                    "Importing into the current canvas is not available yet.",
+                );
+                unavailable(
+                    ui,
+                    "From scanner or camera…",
+                    Icon::New,
+                    None,
+                    "Scanner and camera acquisition is not available yet.",
+                );
+            });
             unavailable(
                 ui,
                 "Recent",
@@ -48,33 +44,25 @@ pub(super) fn file(ui: &mut Ui, context: Context, actions: &mut Vec<Action>) {
             );
             ui.separator();
             action(ui, context, actions, Action::Save, "Save");
-            ui.menu_image_text_button(
-                paintcraft_ui::icons::image(ui.ctx(), Icon::SaveAs, 16.0),
-                "Save as",
-                |ui| {
-                    layout(ui);
-                    action(ui, context, actions, Action::Export, "Picture…");
-                    ui.weak("PNG, BMP or JPEG");
-                },
-            );
+            submenu(ui, "Save as", Icon::SaveAs, |ui| {
+                layout(ui);
+                action(ui, context, actions, Action::Export, "Picture…");
+                ui.weak("PNG, BMP or JPEG");
+            });
             action(ui, context, actions, Action::SaveAs, "Save as project");
             ui.separator();
-            ui.menu_image_text_button(
-                paintcraft_ui::icons::image(ui.ctx(), Icon::Print, 16.0),
-                "Print",
-                |ui| {
-                    layout(ui);
-                    for label in ["Print…", "Page setup…", "Print preview"] {
-                        unavailable(
-                            ui,
-                            label,
-                            Icon::Print,
-                            None,
-                            "Printing is not available yet.",
-                        );
-                    }
-                },
-            );
+            submenu(ui, "Print", Icon::Print, |ui| {
+                layout(ui);
+                for label in ["Print…", "Page setup…", "Print preview"] {
+                    unavailable(
+                        ui,
+                        label,
+                        Icon::Print,
+                        None,
+                        "Printing is not available yet.",
+                    );
+                }
+            });
             unavailable(
                 ui,
                 "Share",
@@ -108,39 +96,46 @@ pub(super) fn file(ui: &mut Ui, context: Context, actions: &mut Vec<Action>) {
 
 pub(super) fn edit(ui: &mut Ui, context: Context, actions: &mut Vec<Action>) {
     layout(ui);
-    for (label, icon, key, shift) in [
-        ("Cut", Icon::Cut, Key::X, false),
-        ("Copy", Icon::Copy, Key::C, false),
-        ("Paste", Icon::Paste, Key::V, false),
-        ("Copy visible layers", Icon::CopyMerged, Key::C, true),
-    ] {
-        if shift {
+    let height = (ui.ctx().content_rect().bottom() - ui.cursor().min.y - 16.0).clamp(80.0, 640.0);
+    ui.set_max_height(height);
+    egui::ScrollArea::vertical()
+        .id_salt("classic-edit-menu")
+        .max_height(height)
+        .show(ui, |ui| {
+            for (label, icon, key, shift) in [
+                ("Cut", Icon::Cut, Key::X, false),
+                ("Copy", Icon::Copy, Key::C, false),
+                ("Paste", Icon::Paste, Key::V, false),
+                ("Copy visible layers", Icon::CopyMerged, Key::C, true),
+            ] {
+                if shift {
+                    ui.separator();
+                }
+                unavailable(
+                    ui,
+                    label,
+                    icon,
+                    Some(KeyboardShortcut::new(
+                        Modifiers {
+                            shift,
+                            ..Modifiers::COMMAND
+                        },
+                        key,
+                    )),
+                    "Canvas clipboard operations are not available yet.",
+                );
+            }
+            // Preserve existing working PaintCraft commands below the reference entries.
             ui.separator();
-        }
-        unavailable(
-            ui,
-            label,
-            icon,
-            Some(KeyboardShortcut::new(
-                Modifiers {
-                    shift,
-                    ..Modifiers::COMMAND
-                },
-                key,
-            )),
-            "Canvas clipboard operations are not available yet.",
-        );
-    }
-    // Preserve existing working PaintCraft commands below the reference entries.
-    ui.separator();
-    for &item in paintcraft_ui::actions::EDIT {
-        action(ui, context, actions, item, item.descriptor().label);
-    }
+            for &item in paintcraft_ui::actions::EDIT {
+                action(ui, context, actions, item, item.descriptor().label);
+            }
+        });
 }
 
 fn layout(ui: &mut Ui) {
     ui.set_min_width(300.0);
-    ui.spacing_mut().interact_size.y = 36.0;
+    ui.spacing_mut().interact_size.y = 40.0;
     for text in [egui::TextStyle::Body, egui::TextStyle::Button] {
         ui.style_mut()
             .text_styles
@@ -155,7 +150,7 @@ fn action(
     item: Action,
     label: &'static str,
 ) {
-    if paintcraft_ui::actions::menu_item_with_label(ui, item, context, label) {
+    if paintcraft_ui::actions::menu_item_with_icon_size(ui, item, context, label, 22.0) {
         actions.push(item);
         ui.close();
     }
@@ -169,7 +164,7 @@ fn unavailable(
     help: &str,
 ) {
     let mut button =
-        Button::image_and_text(paintcraft_ui::icons::image(ui.ctx(), icon, 16.0), label);
+        Button::image_and_text(paintcraft_ui::icons::image(ui.ctx(), icon, 22.0), label);
     if let Some(shortcut) = shortcut {
         button = button.shortcut_text(ui.ctx().format_shortcut(&shortcut));
     }
@@ -195,29 +190,27 @@ pub(super) fn view(
         .id_salt("classic-view-menu")
         .max_height(height)
         .show(ui, |ui| {
-            ui.menu_button("Zoom", |ui| {
-                for &action in paintcraft_ui::actions::VIEW {
-                    if action == paintcraft_ui::actions::ViewAction::PixelGrid {
-                        continue;
-                    }
-                    if paintcraft_ui::actions::menu_item(ui, Action::View(action), context) {
-                        actions.push(Action::View(action));
-                        ui.close();
-                    }
-                }
-            });
-            if paintcraft_ui::actions::menu_item(
+            if variant == ClassicVariant::V11 {
+                submenu(ui, "Zoom", Icon::ZoomIn, |ui| {
+                    zoom_menu(ui, variant, context, actions)
+                });
+            } else {
+                ui.menu_button("Zoom", |ui| zoom_menu(ui, variant, context, actions));
+            }
+            if view_item(
                 ui,
                 Action::View(paintcraft_ui::actions::ViewAction::Rulers),
                 context,
+                variant,
             ) {
                 actions.push(Action::View(paintcraft_ui::actions::ViewAction::Rulers));
                 ui.close();
             }
-            if paintcraft_ui::actions::menu_item(
+            if view_item(
                 ui,
                 Action::View(paintcraft_ui::actions::ViewAction::PixelGrid),
                 context,
+                variant,
             ) {
                 actions.push(Action::View(paintcraft_ui::actions::ViewAction::PixelGrid));
                 ui.close();
@@ -233,7 +226,7 @@ pub(super) fn view(
                 ) {
                     ui.separator();
                 }
-                if paintcraft_ui::actions::menu_item(ui, Action::View(action), context) {
+                if view_item(ui, Action::View(action), context, variant) {
                     actions.push(Action::View(action));
                     ui.close();
                 }
@@ -244,7 +237,7 @@ pub(super) fn view(
             }
             ui.separator();
             for action in [Action::CanvasSize, Action::CanvasDefaults] {
-                if paintcraft_ui::actions::menu_item(ui, action, context) {
+                if view_item(ui, action, context, variant) {
                     actions.push(action);
                     ui.close();
                 }
@@ -255,4 +248,98 @@ pub(super) fn view(
                 ui.close();
             }
         });
+}
+
+fn view_item(ui: &mut Ui, action: Action, context: Context, variant: ClassicVariant) -> bool {
+    paintcraft_ui::actions::menu_item_with_icon_size(
+        ui,
+        action,
+        context,
+        action.descriptor_for(context.frontend).label,
+        if variant == ClassicVariant::V11 {
+            22.0
+        } else {
+            16.0
+        },
+    )
+}
+
+fn zoom_menu(ui: &mut Ui, variant: ClassicVariant, context: Context, actions: &mut Vec<Action>) {
+    if variant == ClassicVariant::V11 {
+        layout(ui);
+    }
+    for &action in paintcraft_ui::actions::VIEW {
+        if action == paintcraft_ui::actions::ViewAction::PixelGrid {
+            continue;
+        }
+        if view_item(ui, Action::View(action), context, variant) {
+            actions.push(Action::View(action));
+            ui.close();
+        }
+    }
+}
+
+/// egui's submenu hover heuristic uses the full layout rect, including scrolled
+/// off-screen rows. Restrict its anchor to the visible portion of the entry.
+fn submenu(ui: &mut Ui, label: &str, icon: Icon, contents: impl FnOnce(&mut Ui)) {
+    let id = ui.next_auto_id();
+    let open = egui::containers::menu::MenuState::from_ui(ui, |state, _| {
+        state.open_item == Some(egui::containers::menu::SubMenu::id_from_widget_id(id))
+    });
+    let inactive = ui.visuals().widgets.inactive;
+    if open {
+        ui.style_mut().visuals.widgets.inactive = ui.visuals().widgets.open;
+    }
+    let response = ui.add(
+        Button::image_and_text(paintcraft_ui::icons::image(ui.ctx(), icon, 22.0), label)
+            .right_text("    "),
+    );
+    ui.style_mut().visuals.widgets.inactive = inactive;
+    response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, ui.is_enabled(), label));
+    let arrow = egui::Rect::from_center_size(
+        response.rect.right_center() - egui::vec2(8.0, 0.0),
+        egui::vec2(8.0, 12.0),
+    );
+    ui.painter()
+        .add(egui::containers::menu::SubMenuButton::arrow_shape(
+            arrow,
+            ui.visuals().text_color(),
+        ));
+    let dismissed_id = response.id.with("submenu-keyboard-dismissed");
+    let child_id = egui::containers::menu::SubMenu::id_from_widget_id(response.id);
+    let child_open = egui::containers::menu::MenuState::from_ui(ui, |state, _| {
+        state.open_item == Some(child_id)
+    });
+    if child_open
+        && ui.input_mut(|input| {
+            input.consume_key(Modifiers::NONE, Key::Escape)
+                || input.consume_key(Modifiers::NONE, Key::ArrowLeft)
+        })
+    {
+        egui::containers::menu::MenuState::from_ui(ui, |state, _| state.open_item = None);
+        ui.data_mut(|data| data.insert_temp(dismissed_id, true));
+        response.request_focus();
+        ui.memory_mut(|memory| memory.move_focus(egui::FocusDirection::None));
+        return;
+    }
+    if ui
+        .data(|data| data.get_temp::<bool>(dismissed_id))
+        .unwrap_or(false)
+    {
+        let focused = response.has_focus();
+        let resume = response.clicked()
+            || ui.input(|input| {
+                input.pointer.delta() != egui::Vec2::ZERO
+                    || (focused && input.key_pressed(Key::ArrowRight))
+            });
+        if !resume {
+            return;
+        }
+        ui.data_mut(|data| data.remove::<bool>(dismissed_id));
+    }
+    let mut anchor = response;
+    anchor.rect = anchor.rect.intersect(ui.clip_rect());
+    if anchor.rect.is_positive() {
+        egui::containers::menu::SubMenu::new().show(ui, &anchor, contents);
+    }
 }

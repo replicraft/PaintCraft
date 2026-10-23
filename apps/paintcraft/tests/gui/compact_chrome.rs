@@ -113,8 +113,23 @@ fn classic_top_actions_and_settings_remain_reachable_in_narrow_windows() {
             h.run();
             h.get_by_label("Automatically hide toolbar").scroll_to_me();
             h.run();
+            assert!(
+                h.get_by_role_and_label(Role::Button, "View")
+                    .query_by_label_contains("Actual size")
+                    .is_none(),
+                "scrolling must not hover an off-screen Zoom entry"
+            );
+            let hide = h.get_by_label("Automatically hide toolbar").rect();
+            assert!(
+                hide.min.y >= 0.0 && hide.max.y <= size.y,
+                "hide row outside {size:?}: {hide:?}"
+            );
             h.get_by_label("Automatically hide toolbar").click();
             h.run();
+            assert!(
+                Settings::load(&dir).0.classic_toolbar_auto_hide,
+                "hide action did not activate at {size:?}, row={hide:?}"
+            );
             let point = h.state().canvas_viewport().unwrap().center();
             h.event(Event::PointerMoved(point));
             h.run();

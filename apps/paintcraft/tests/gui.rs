@@ -265,3 +265,6 @@ mod status_tooltips;
 
 #[path = "gui/color_model.rs"]
 mod color_model;
+
+#[path = "gui/menu_rows.rs"]
+mod menu_rows;
