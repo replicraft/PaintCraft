@@ -274,3 +274,6 @@ mod tool_headers;
 
 #[path = "gui/rename_cancel.rs"]
 mod rename_cancel;
+
+#[path = "gui/opacity_cancel.rs"]
+mod opacity_cancel;

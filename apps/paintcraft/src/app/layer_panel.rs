@@ -178,10 +178,31 @@ impl App {
         };
         ui.horizontal(|ui| {
             let label = ui.label("Opacity");
+            let field_id = ui.next_auto_id();
+            let focused = ui.memory(|memory| memory.has_focus(field_id));
+            let cancel_id = field_id.with("opacity-cancel-frame");
+            let frame = ui.ctx().cumulative_frame_nr();
+            if focused && ui.input(|input| input.key_pressed(egui::Key::Escape)) {
+                ui.data_mut(|data| data.insert_temp(cancel_id, frame));
+            }
+            let cancel = ui.data(|data| data.get_temp::<u64>(cancel_id)) == Some(frame);
+            if cancel {
+                obuf.1 = opacity;
+                ui.memory_mut(|memory| memory.surrender_focus(field_id));
+            }
             let r = ui
-                .add(egui::DragValue::new(&mut obuf.1).range(0..=255))
+                .add(
+                    egui::DragValue::new(&mut obuf.1)
+                        .range(0..=255)
+                        .update_while_editing(false),
+                )
                 .labelled_by(label.id);
-            if r.drag_stopped() || r.lost_focus() {
+            if cancel {
+                obuf.1 = opacity;
+                r.surrender_focus();
+                // Its private edit buffer may be parsed on a later pass after
+                // Escape is consumed; suppress publication for the whole frame.
+            } else if r.drag_stopped() || r.lost_focus() {
                 if obuf.1 != opacity {
                     let set = Action::SetOpacity {
                         layer: t,
@@ -191,6 +212,19 @@ impl App {
                 }
             } else if !r.dragged() && !r.has_focus() {
                 obuf.1 = opacity;
+            }
+            if r.has_focus() {
+                ui.memory_mut(|memory| {
+                    memory.set_focus_lock_filter(
+                        r.id,
+                        egui::EventFilter {
+                            horizontal_arrows: true,
+                            vertical_arrows: true,
+                            escape: true,
+                            ..Default::default()
+                        },
+                    )
+                });
             }
         });
 
