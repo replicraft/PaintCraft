@@ -60,7 +60,7 @@ pub(super) fn square(ui: &mut egui::Ui, editor: &mut ColorEditor, side: f32) {
 
 pub(super) fn brightness(ui: &mut egui::Ui, editor: &mut ColorEditor, height: f32) {
     let (rect, response) =
-        ui.allocate_exact_size(Vec2::new(24.0, height), egui::Sense::click_and_drag());
+        ui.allocate_exact_size(Vec2::new(32.0, height), egui::Sense::click_and_drag());
     response.widget_info(|| {
         egui::WidgetInfo::slider(ui.is_enabled(), editor.hsv.v.into(), "Brightness")
     });
@@ -69,8 +69,8 @@ pub(super) fn brightness(ui: &mut egui::Ui, editor: &mut ColorEditor, height: f3
         let t = i as f32 / 32.0;
         let y = rect.top() + t * rect.height();
         let color = color(editor.hsv.h, editor.hsv.s, 1.0 - t);
-        mesh.colored_vertex(egui::pos2(rect.left() + 7.0, y), color);
-        mesh.colored_vertex(egui::pos2(rect.right() - 7.0, y), color);
+        mesh.colored_vertex(egui::pos2(rect.left() + 8.0, y), color);
+        mesh.colored_vertex(egui::pos2(rect.right() - 8.0, y), color);
         if i > 0 {
             let i = i * 2;
             mesh.add_triangle(i - 2, i - 1, i + 1);

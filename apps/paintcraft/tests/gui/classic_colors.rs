@@ -162,15 +162,53 @@ fn hsv_picker_and_hsl_numeric_fields_edit_the_actual_color_at_each_display_scale
 #[test]
 #[ignore = "requires a native GPU; writes a review image to /tmp"]
 fn render_classic_edit_colors_for_review() {
-    let (mut h, dir) = classic(1.0, false);
-    h.get_by_label("Edit colors…").click();
-    h.run();
-    hex(&mut h, "#2080FF");
-    h.render()
-        .unwrap()
-        .save("/tmp/paintcraft-classic-edit-colors.png")
+    use paintcraft::settings::Appearance;
+    let output = std::env::temp_dir().join("paintcraft-color-dialog-review");
+    std::fs::create_dir_all(&output).unwrap();
+    for (appearance, theme) in [(Appearance::Light, "light"), (Appearance::Dark, "dark")] {
+        let dir = scratch("color-dialog-review");
+        Settings {
+            appearance,
+            classic_variant: Some(ClassicVariant::V11),
+            ..Default::default()
+        }
+        .save(&dir)
         .unwrap();
-    std::fs::remove_dir_all(dir).unwrap();
+        let mut h = harness_with(App::new(None).with_settings(dir.clone()), 1.0, false);
+        h.set_size(Vec2::new(1360.0, 900.0));
+        h.run();
+        h.get_by_label("Edit colors…").click();
+        h.run();
+        hex(&mut h, "#2080FF");
+        h.render()
+            .unwrap()
+            .save(output.join(format!("{theme}-desktop.png")))
+            .unwrap();
+        h.get_by_label("Color model").click();
+        h.run();
+        h.render()
+            .unwrap()
+            .save(output.join(format!("{theme}-model-popup.png")))
+            .unwrap();
+        h.key_press(Key::Escape);
+        h.run();
+        h.set_size(Vec2::new(480.0, 500.0));
+        h.run();
+        h.get_by_label("Hue and saturation").scroll_to_me();
+        h.run();
+        h.render()
+            .unwrap()
+            .save(output.join(format!("{theme}-compact-picker.png")))
+            .unwrap();
+        h.get_by_label("Custom color 28").scroll_to_me();
+        h.run();
+        h.render()
+            .unwrap()
+            .save(output.join(format!("{theme}-compact-palette.png")))
+            .unwrap();
+        drop(h);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
 }
 
 #[test]
@@ -214,6 +252,36 @@ fn responsive_color_dialog_keeps_controls_and_footer_reachable_and_cancel_discar
         h.get_by_label("Edit colors…").click();
         h.run();
         let footer = h.get_by_label("OK").rect();
+        if size.x >= 1200.0 {
+            assert_eq!(
+                h.get_by_role_and_label(Role::ColorWell, "Hue and saturation")
+                    .rect()
+                    .size(),
+                Vec2::splat(320.0)
+            );
+            assert_eq!(
+                h.get_by_role_and_label(Role::ColorWell, "Current color preview")
+                    .rect()
+                    .width(),
+                54.0
+            );
+            for label in [
+                "Hex RGB",
+                "Color model",
+                "Red",
+                "Green",
+                "Blue",
+                "OK",
+                "Cancel",
+            ] {
+                assert_eq!(h.get_by_label(label).rect().height(), 40.0, "{label}");
+            }
+            for label in ["Basic #F08080", "Custom color 28"] {
+                let rect = h.get_by_label(label).rect();
+                assert_eq!(rect.size(), Vec2::splat(24.0));
+                assert!(rect.max.y < footer.min.y && rect.max.x <= size.x);
+            }
+        }
         h.run_steps(8);
         assert_eq!(
             h.get_by_label("OK").rect(),

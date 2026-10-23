@@ -75,42 +75,51 @@ impl ColorEditor {
     }
 }
 
-fn swatch(ui: &mut egui::Ui, color: Option<Rgba>, label: &str, selected: bool) -> egui::Response {
-    let (rect, response) = ui.allocate_exact_size(Vec2::splat(23.0), egui::Sense::click());
+fn swatch(
+    ui: &mut egui::Ui,
+    color: Option<Rgba>,
+    label: &str,
+    selected: bool,
+    spacious: bool,
+) -> egui::Response {
+    let cell = if spacious { 24.0 } else { 23.0 };
+    let radius = if spacious { 12.0 } else { 9.0 };
+    let (rect, response) = ui.allocate_exact_size(Vec2::splat(cell), egui::Sense::click());
     let stroke = egui::Stroke::new(
         if selected { 2.0 } else { 1.0 },
         if selected {
             ui.visuals().selection.stroke.color
         } else {
-            ui.visuals().widgets.noninteractive.bg_stroke.color
+            Color32::from_gray(if ui.visuals().dark_mode { 128 } else { 144 })
         },
     );
     if let Some(color) = color {
         ui.painter().circle_filled(
             rect.center(),
-            9.0,
+            radius,
             Color32::from_rgb(color.0[0], color.0[1], color.0[2]),
         );
     }
     if color.is_none() && !selected {
         let points: [egui::Pos2; 33] = std::array::from_fn(|i| {
             let angle = i as f32 * std::f32::consts::TAU / 32.0;
-            rect.center() + Vec2::angled(angle) * 9.0
+            rect.center() + Vec2::angled(angle) * radius
         });
         ui.painter()
             .extend(egui::Shape::dashed_line(&points, stroke, 3.0, 2.0));
     } else {
-        ui.painter().circle_stroke(rect.center(), 9.0, stroke);
+        ui.painter().circle_stroke(rect.center(), radius, stroke);
     }
     response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, ui.is_enabled(), label));
     response.on_hover_text(label)
 }
 
-fn palette(ui: &mut egui::Ui, editor: &mut ColorEditor, columns: usize) {
+fn palette(ui: &mut egui::Ui, editor: &mut ColorEditor, columns: usize, spacious: bool) {
     egui::Grid::new("classic-basic-colors")
         .num_columns(columns)
         .min_col_width(0.0)
-        .spacing(Vec2::splat(2.0))
+        .min_row_height(if spacious { 24.0 } else { 36.0 })
+        .spacing(Vec2::splat(if spacious { 14.0 } else { 2.0 }))
         .show(ui, |ui| {
             for (i, rgb) in BASIC.into_iter().enumerate() {
                 let label = format!("Basic #{:02X}{:02X}{:02X}", rgb[0], rgb[1], rgb[2]);
@@ -119,6 +128,7 @@ fn palette(ui: &mut egui::Ui, editor: &mut ColorEditor, columns: usize) {
                     Some(Rgba([rgb[0], rgb[1], rgb[2], 255])),
                     &label,
                     editor.color.0[..3] == rgb,
+                    spacious,
                 )
                 .clicked()
                 {
@@ -131,11 +141,12 @@ fn palette(ui: &mut egui::Ui, editor: &mut ColorEditor, columns: usize) {
         });
 }
 
-fn custom_palette(ui: &mut egui::Ui, editor: &mut ColorEditor) {
+fn custom_palette(ui: &mut egui::Ui, editor: &mut ColorEditor, spacious: bool) {
     egui::Grid::new("classic-custom-colors")
         .num_columns(7)
         .min_col_width(0.0)
-        .spacing(Vec2::splat(2.0))
+        .min_row_height(if spacious { 24.0 } else { 36.0 })
+        .spacing(Vec2::splat(if spacious { 14.0 } else { 2.0 }))
         .show(ui, |ui| {
             for i in 0..CUSTOM_COLOR_COUNT {
                 if swatch(
@@ -143,6 +154,7 @@ fn custom_palette(ui: &mut egui::Ui, editor: &mut ColorEditor) {
                     editor.custom[i],
                     &format!("Custom color {}", i + 1),
                     editor.selected_slot == i,
+                    spacious,
                 )
                 .clicked()
                 {

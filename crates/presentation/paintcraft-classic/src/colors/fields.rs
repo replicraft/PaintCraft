@@ -14,7 +14,7 @@ pub(super) fn parse_hex(text: &str) -> Option<[u8; 3]> {
 
 pub(super) fn controls(ui: &mut egui::Ui, editor: &mut ColorEditor, width: f32) {
     ui.set_width(width);
-    let field_width = (width - 100.0).clamp(100.0, 180.0);
+    let field_width = (width - 100.0).clamp(100.0, 150.0);
     let response = ui.add(
         egui::TextEdit::singleline(&mut editor.hex)
             .desired_width(field_width)
@@ -39,6 +39,17 @@ pub(super) fn controls(ui: &mut egui::Ui, editor: &mut ColorEditor, width: f32) 
     let model = egui::ComboBox::from_id_salt("classic-color-model")
         .width(field_width)
         .height(100.0)
+        .icon(|ui, rect, visuals, _| {
+            let center = rect.center();
+            ui.painter().add(egui::Shape::line(
+                vec![
+                    center + Vec2::new(-4.0, -2.0),
+                    center + Vec2::new(0.0, 2.0),
+                    center + Vec2::new(4.0, -2.0),
+                ],
+                egui::Stroke::new(1.0, visuals.fg_stroke.color),
+            ));
+        })
         .selected_text(match editor.mode {
             NumericMode::Rgb => "RGB",
             NumericMode::Hsl => "HSL",
@@ -80,7 +91,7 @@ pub(super) fn controls(ui: &mut egui::Ui, editor: &mut ColorEditor, width: f32) 
             for (i, label) in ["Red", "Green", "Blue"].into_iter().enumerate() {
                 ui.horizontal(|ui| {
                     let value = ui.add_sized(
-                        [field_width, 36.0],
+                        [field_width, 40.0],
                         egui::DragValue::new(&mut rgb[i]).range(0..=255),
                     );
                     let caption = ui.label(label);
@@ -101,7 +112,7 @@ pub(super) fn controls(ui: &mut egui::Ui, editor: &mut ColorEditor, width: f32) 
             ] {
                 ui.horizontal(|ui| {
                     let value = ui.add_sized(
-                        [field_width, 36.0],
+                        [field_width, 40.0],
                         egui::DragValue::new(&mut hsl[i])
                             .speed(0.5)
                             .range(0.0..=max),

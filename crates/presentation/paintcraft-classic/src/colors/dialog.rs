@@ -3,66 +3,102 @@ use super::*;
 
 pub fn edit_colors_dialog(ctx: &egui::Context, editor: &mut ColorEditor) -> ColorResponse {
     let mut result = ColorResponse::Pending;
-    let width = (ctx.content_rect().width() - 48.0).clamp(240.0, 760.0);
-    let height = (ctx.content_rect().height() - 64.0).clamp(180.0, 640.0);
-    let body_height = (height - 100.0).max(60.0);
-    let modal = egui::Modal::new(egui::Id::unique("classic-edit-colors")).show(ctx, |ui| {
-        ui.set_width(width);
-        ui.set_max_height(height);
-        ui.spacing_mut().interact_size.y = 36.0;
-        for style in [egui::TextStyle::Body, egui::TextStyle::Button] {
-            ui.style_mut()
-                .text_styles
-                .insert(style, egui::FontId::proportional(15.0));
-        }
-        ui.heading("Edit colors");
-        ui.add_space(12.0);
-        egui::ScrollArea::vertical()
-            .id_salt("classic-color-dialog-body")
-            .max_height(body_height)
-            .auto_shrink([false, false])
-            .show(ui, |ui| {
-                picker_and_fields(ui, editor, width);
-                ui.add_space(24.0);
-                if width >= 600.0 {
-                    ui.horizontal_top(|ui| {
-                        ui.vertical(|ui| {
-                            basic_heading(ui);
-                            palette(ui, editor, 12);
-                        });
-                        ui.add_space(24.0);
-                        ui.vertical(|ui| custom(ui, editor));
-                    });
-                } else {
-                    basic_heading(ui);
-                    palette(ui, editor, ((width / 25.0) as usize).clamp(4, 12));
+    let margin = if ctx.content_rect().width() >= 900.0 {
+        30
+    } else {
+        16
+    };
+    let width = (ctx.content_rect().width() - f32::from(margin) * 2.0 - 24.0).clamp(240.0, 772.0);
+    let spacious = width >= 740.0;
+    let height = (ctx.content_rect().height() - f32::from(margin) * 2.0 - 40.0).clamp(180.0, 740.0);
+    let body_height = (height - 112.0).max(60.0);
+    let frame = egui::Frame::window(&ctx.style_of(ctx.theme()))
+        .inner_margin(0)
+        .corner_radius(12);
+    let modal = egui::Modal::new(egui::Id::unique("classic-edit-colors"))
+        .frame(frame)
+        .show(ctx, |ui| {
+            ui.set_width(width + f32::from(margin) * 2.0);
+            ui.set_max_height(height);
+            ui.spacing_mut().interact_size.y = 40.0;
+            for style in [egui::TextStyle::Body, egui::TextStyle::Button] {
+                ui.style_mut()
+                    .text_styles
+                    .insert(style, egui::FontId::proportional(16.0));
+            }
+            ui.visuals_mut().override_text_color = Some(ui.visuals().strong_text_color());
+            egui::Frame::new()
+                .inner_margin(egui::Margin {
+                    left: margin,
+                    right: margin,
+                    top: margin,
+                    bottom: 0,
+                })
+                .show(ui, |ui| {
+                    ui.set_width(width);
+                    ui.label(egui::RichText::new("Edit colors").size(24.0).strong());
                     ui.add_space(12.0);
-                    custom(ui, editor);
-                }
-            });
-        ui.add_space(12.0);
-        ui.separator();
-        let button_width = (width - ui.spacing().item_spacing.x) * 0.5;
-        ui.horizontal(|ui| {
-            let ink = if ui.visuals().dark_mode {
-                Color32::from_gray(16)
-            } else {
-                Color32::WHITE
-            };
-            let accept = egui::Button::new(egui::RichText::new("OK").color(ink))
-                .fill(ui.visuals().selection.stroke.color)
-                .min_size(Vec2::new(button_width, 36.0));
-            if ui.add_enabled(editor.valid(), accept).clicked() {
-                result = ColorResponse::Accept;
-            }
-            if ui
-                .add_sized([button_width, 36.0], egui::Button::new("Cancel"))
-                .clicked()
-            {
-                result = ColorResponse::Cancel;
-            }
+                    egui::ScrollArea::vertical()
+                        .id_salt("classic-color-dialog-body")
+                        .max_height(body_height)
+                        .auto_shrink([false, false])
+                        .show(ui, |ui| {
+                            picker_and_fields(ui, editor, width);
+                            ui.add_space(if spacious { 56.0 } else { 24.0 });
+                            if width >= 600.0 {
+                                ui.horizontal_top(|ui| {
+                                    ui.vertical(|ui| {
+                                        basic_heading(ui);
+                                        palette(ui, editor, 12, spacious);
+                                    });
+                                    ui.add_space(24.0);
+                                    ui.vertical(|ui| custom(ui, editor, spacious));
+                                });
+                            } else {
+                                basic_heading(ui);
+                                palette(ui, editor, ((width / 25.0) as usize).clamp(4, 12), false);
+                                ui.add_space(12.0);
+                                custom(ui, editor, false);
+                            }
+                        });
+                });
+            egui::Frame::new()
+                .fill(Color32::from_gray(if ui.visuals().dark_mode {
+                    32
+                } else {
+                    240
+                }))
+                .corner_radius(egui::CornerRadius {
+                    nw: 0,
+                    ne: 0,
+                    sw: 12,
+                    se: 12,
+                })
+                .inner_margin(margin)
+                .show(ui, |ui| {
+                    ui.set_width(width);
+                    let button_width = (width - ui.spacing().item_spacing.x) * 0.5;
+                    ui.horizontal(|ui| {
+                        let ink = if ui.visuals().dark_mode {
+                            Color32::from_gray(16)
+                        } else {
+                            Color32::WHITE
+                        };
+                        let accept = egui::Button::new(egui::RichText::new("OK").color(ink))
+                            .fill(ui.visuals().selection.stroke.color)
+                            .min_size(Vec2::new(button_width, 40.0));
+                        if ui.add_enabled(editor.valid(), accept).clicked() {
+                            result = ColorResponse::Accept;
+                        }
+                        if ui
+                            .add_sized([button_width, 40.0], egui::Button::new("Cancel"))
+                            .clicked()
+                        {
+                            result = ColorResponse::Cancel;
+                        }
+                    });
+                });
         });
-    });
     if modal.should_close() {
         result = ColorResponse::Cancel;
     }
@@ -78,7 +114,10 @@ fn picker_and_fields(ui: &mut egui::Ui, editor: &mut ColorEditor, width: f32) {
     };
     ui.horizontal_top(|ui| {
         picker::square(ui, editor, side);
-        let (rect, response) = ui.allocate_exact_size(Vec2::new(36.0, side), egui::Sense::hover());
+        let (rect, response) = ui.allocate_exact_size(
+            Vec2::new(if width >= 740.0 { 54.0 } else { 36.0 }, side),
+            egui::Sense::hover(),
+        );
         ui.painter().rect(
             rect,
             4.0,
@@ -106,10 +145,24 @@ fn picker_and_fields(ui: &mut egui::Ui, editor: &mut ColorEditor, width: f32) {
     }
 }
 
-fn custom(ui: &mut egui::Ui, editor: &mut ColorEditor) {
+fn custom(ui: &mut egui::Ui, editor: &mut ColorEditor, spacious: bool) {
+    if spacious {
+        ui.set_width(252.0);
+    }
     ui.horizontal(|ui| {
+        ui.set_min_height(40.0);
         ui.label("Custom colors");
-        let add = ui.add_enabled(editor.valid(), egui::Button::new("+"));
+        let add = ui
+            .with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                ui.spacing_mut().button_padding = Vec2::ZERO;
+                ui.spacing_mut().interact_size = Vec2::splat(32.0);
+                ui.add_enabled(
+                    editor.valid(),
+                    egui::Button::new(egui::RichText::new("+").size(26.0))
+                        .min_size(Vec2::splat(32.0)),
+                )
+            })
+            .inner;
         add.widget_info(|| {
             egui::WidgetInfo::labeled(
                 egui::Role::Button,
@@ -132,12 +185,12 @@ fn custom(ui: &mut egui::Ui, editor: &mut ColorEditor) {
                 .unwrap_or((editor.selected_slot + 1) % CUSTOM_COLOR_COUNT);
         }
     });
-    custom_palette(ui, editor);
+    custom_palette(ui, editor, spacious);
 }
 
 fn basic_heading(ui: &mut egui::Ui) {
     ui.horizontal(|ui| {
-        ui.set_min_height(36.0);
+        ui.set_min_height(40.0);
         ui.label("Basic colors");
     });
 }
