@@ -10,13 +10,12 @@ pub(super) fn show(
     context: Context,
     actions: &mut Vec<Action>,
 ) {
-    let height = (ui.ctx().content_rect().bottom() - ui.cursor().min.y - 12.0).clamp(40.0, 480.0);
+    let height = super::popup_layout::height(ui, 40.0, 480.0);
     ui.set_width(260.0);
     let dark = ui.visuals().dark_mode;
     ui.visuals_mut().override_text_color =
         Some(egui::Color32::from_gray(if dark { 245 } else { 24 }));
     ui.visuals_mut().weak_text_color = Some(egui::Color32::from_gray(if dark { 208 } else { 96 }));
-    ui.set_max_height(height);
     ui.spacing_mut().item_spacing.y = 0.0;
     egui::ScrollArea::vertical()
         .id_salt("classic-selection-menu")

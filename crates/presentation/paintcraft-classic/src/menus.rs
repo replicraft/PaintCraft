@@ -10,8 +10,7 @@ pub(super) fn file(ui: &mut Ui, context: Context, actions: &mut Vec<Action>) {
     layout(ui);
     // The full reference menu is taller than a small window. Keep all rows,
     // including Exit, reachable without drawing outside the viewport.
-    let height = (ui.ctx().content_rect().bottom() - ui.cursor().min.y - 16.0).clamp(80.0, 640.0);
-    ui.set_max_height(height);
+    let height = super::popup_layout::height(ui, 80.0, 640.0);
     egui::ScrollArea::vertical()
         .id_salt("classic-file-menu")
         .max_height(height)
@@ -94,8 +93,7 @@ pub(super) fn file(ui: &mut Ui, context: Context, actions: &mut Vec<Action>) {
 
 pub(super) fn edit(ui: &mut Ui, context: Context, actions: &mut Vec<Action>) {
     layout(ui);
-    let height = (ui.ctx().content_rect().bottom() - ui.cursor().min.y - 16.0).clamp(80.0, 640.0);
-    ui.set_max_height(height);
+    let height = super::popup_layout::height(ui, 80.0, 640.0);
     egui::ScrollArea::vertical()
         .id_salt("classic-edit-menu")
         .max_height(height)
@@ -222,8 +220,7 @@ pub(super) fn view(
     if variant == ClassicVariant::V11 {
         layout(ui);
     }
-    let height = (ui.ctx().content_rect().bottom() - ui.cursor().min.y - 16.0).clamp(80.0, 640.0);
-    ui.set_max_height(height);
+    let height = super::popup_layout::height(ui, 80.0, 640.0);
     egui::ScrollArea::vertical()
         .id_salt("classic-view-menu")
         .max_height(height)

@@ -17,6 +17,7 @@ mod menus;
 mod toolbar_visibility;
 pub use toolbar_visibility::ToolbarVisibility;
 mod palette;
+mod popup_layout;
 mod quick_access;
 mod ribbon;
 mod selection_menu;

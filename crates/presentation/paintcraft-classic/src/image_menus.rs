@@ -107,9 +107,7 @@ fn menu(ui: &mut egui::Ui, label: &str, icon: Icon, entries: &[(&str, Icon)]) {
                 .text_styles
                 .insert(style, egui::FontId::proportional(16.0));
         }
-        let height =
-            (ui.ctx().content_rect().bottom() - ui.cursor().min.y - 12.0).clamp(40.0, 480.0);
-        ui.set_max_height(height);
+        let height = super::popup_layout::height(ui, 40.0, 480.0);
         egui::ScrollArea::vertical()
             .id_salt(("image-transform-menu", label))
             .max_height(height)

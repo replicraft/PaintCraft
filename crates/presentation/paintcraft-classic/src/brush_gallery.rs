@@ -21,20 +21,14 @@ pub(super) fn gallery(
     actions: &mut Vec<Action>,
     opening: bool,
 ) {
-    // Use a stable screen-relative limit: the popup may move above its trigger.
-    // Deriving height from its moving cursor creates a shrinking feedback loop.
-    // Leave room for the popup frame and screen-edge clearance.
-    let height = (ui.ctx().content_rect().height() - 32.0).clamp(56.0, 520.0);
+    let height = super::popup_layout::height(ui, 56.0, 520.0);
     ui.visuals_mut().override_text_color = Some(Color32::from_gray(if ui.visuals().dark_mode {
         245
     } else {
         24
     }));
     ui.set_width(320.0);
-    ui.set_max_height(height);
     ui.spacing_mut().item_spacing.y = 0.0;
-    ui.spacing_mut().scroll.floating_allocated_width = 4.0;
-    ui.spacing_mut().scroll.dormant_handle_opacity = 0.6;
     egui::ScrollArea::vertical()
         .id_salt("classic-brush-media-gallery")
         .max_height(height)
