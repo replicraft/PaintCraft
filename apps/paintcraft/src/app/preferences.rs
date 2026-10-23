@@ -25,6 +25,7 @@ impl App {
     }
 
     pub(super) fn settings_dialog(&mut self, ctx: &egui::Context, mut draft: SettingsDraft) {
+        let classic = self.experience() == Experience::Classic;
         let mut apply = false;
         let mut cancel = false;
         let room = ctx.content_rect().size() - egui::vec2(48.0, 64.0);
@@ -40,11 +41,23 @@ impl App {
                     .text_styles
                     .insert(style, egui::FontId::proportional(15.0));
             }
-            ui.heading("Settings");
+            if classic {
+                ui.visuals_mut().override_text_color = Some(ui.visuals().strong_text_color());
+                ui.visuals_mut().weak_text_color =
+                    Some(Color32::from_gray(if ui.visuals().dark_mode {
+                        184
+                    } else {
+                        88
+                    }));
+                ui.label(egui::RichText::new("Settings").size(24.0).strong());
+            } else {
+                ui.heading("Settings");
+            }
             ui.add_space(10.0);
             let mut body_height = (height - 104.0).max(60.0);
             if width < 560.0 {
-                let tabs = ui.horizontal_wrapped(|ui| navigation(ui, &mut draft.page, false));
+                let tabs =
+                    ui.horizontal_wrapped(|ui| navigation(ui, &mut draft.page, false, classic));
                 ui.separator();
                 body_height = (body_height - tabs.response.rect.height() - 12.0).max(60.0);
                 content(
@@ -63,7 +76,7 @@ impl App {
                             egui::vec2(164.0, body_height),
                             egui::Layout::top_down(egui::Align::Min),
                             |ui| {
-                                navigation(ui, &mut draft.page, true);
+                                navigation(ui, &mut draft.page, true, classic);
                             },
                         );
                         ui.separator();
@@ -122,20 +135,60 @@ impl App {
     }
 }
 
-fn navigation(ui: &mut egui::Ui, current: &mut Page, sidebar: bool) {
+fn navigation(ui: &mut egui::Ui, current: &mut Page, sidebar: bool, classic: bool) {
     for (page, label, icon) in [
         (Page::Appearance, "Appearance", Icon::Settings),
         (Page::Canvas, "Canvas", Icon::CanvasSize),
         (Page::Text, "Text preferences", Icon::Text),
     ] {
-        let mut button =
-            egui::Button::image_and_text(paintcraft_ui::icons::image(ui.ctx(), icon, 18.0), label)
-                .selected(*current == page)
-                .frame(*current == page);
+        let image = if classic {
+            match page {
+                Page::Appearance => paintcraft_ui::icons::classic_menu_image(
+                    ui.ctx(),
+                    icon,
+                    22.0,
+                    ui.visuals().strong_text_color(),
+                ),
+                Page::Canvas => paintcraft_ui::icons::classic_status_image(
+                    ui.ctx(),
+                    icon,
+                    22.0,
+                    ui.visuals().dark_mode,
+                ),
+                Page::Text => paintcraft_ui::icons::classic_tool_image(
+                    ui.ctx(),
+                    icon,
+                    22.0,
+                    ui.visuals().strong_text_color(),
+                ),
+            }
+        } else {
+            paintcraft_ui::icons::image(ui.ctx(), icon, 18.0)
+        };
+        let selected = *current == page;
+        let mut button = if classic {
+            egui::Button::new((image, label))
+                .selected(selected)
+                .frame_when_inactive(selected)
+                .frame(true)
+        } else {
+            egui::Button::image_and_text(image, label)
+                .selected(selected)
+                .frame(selected)
+        };
         if sidebar {
-            button = button.min_size(egui::vec2(156.0, 36.0));
+            button = button.min_size(egui::vec2(156.0, if classic { 40.0 } else { 36.0 }));
         }
-        if ui.add(button).clicked() {
+        let response = ui.add(button);
+        if classic && selected {
+            ui.painter().rect_stroke(
+                response.rect.shrink(0.5),
+                5,
+                ui.visuals().selection.stroke,
+                egui::StrokeKind::Inside,
+            );
+        }
+        if response.clicked() {
             *current = page;
         }
     }

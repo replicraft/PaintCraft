@@ -314,3 +314,70 @@ fn narrow_settings_apply_persists_theme_and_canvas_defaults_without_resizing_the
     drop(h);
     std::fs::remove_dir_all(dir).unwrap();
 }
+
+#[test]
+fn classic_settings_descriptions_remain_readable_against_their_actual_card_surfaces() {
+    use eframe::egui::epaint::Shape;
+    for appearance in [Appearance::Light, Appearance::Dark] {
+        let (mut h, dir) = configured("settings-text-contrast", Experience::Classic, appearance);
+        h.get_by_label("Settings…").click();
+        h.run();
+        let shapes = &h.output().shapes;
+        let mut checked = 0;
+        for (index, shape) in shapes.iter().enumerate() {
+            let Shape::Text(text) = &shape.shape else {
+                continue;
+            };
+            if !text.galley.job.text.starts_with("Preview the theme now.")
+                && !text
+                    .galley
+                    .job
+                    .text
+                    .starts_with("Each interface has a separate workspace.")
+            {
+                continue;
+            }
+            let rect = text.visual_bounding_rect();
+            let background = shapes[..index]
+                .iter()
+                .rev()
+                .find_map(|shape| match &shape.shape {
+                    Shape::Rect(frame)
+                        if frame.brush.is_none()
+                            && frame.fill.a() == 255
+                            && frame.rect.contains_rect(rect) =>
+                    {
+                        Some(frame.fill)
+                    }
+                    _ => None,
+                })
+                .expect("description has an opaque card surface");
+            let ink = text.galley.job.sections[0].format.color;
+            let (a, b) = (luminance(ink), luminance(background));
+            let contrast = (a.max(b) + 0.05) / (a.min(b) + 0.05);
+            assert!(
+                contrast >= 4.5,
+                "description contrast must stay readable: {contrast:.2}"
+            );
+            checked += 1;
+        }
+        assert_eq!(checked, 2);
+        h.get_by_label("Cancel").click();
+        h.run();
+        assert!(!h.state().editor().is_dirty());
+        drop(h);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+    fn luminance(color: eframe::egui::Color32) -> f32 {
+        let channel = |value: u8| {
+            let v = f32::from(value) / 255.0;
+            if v <= 0.04045 {
+                v / 12.92
+            } else {
+                ((v + 0.055) / 1.055).powf(2.4)
+            }
+        };
+        let [r, g, b, _] = color.to_array();
+        0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b)
+    }
+}

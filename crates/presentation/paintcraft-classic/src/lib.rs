@@ -156,9 +156,18 @@ pub fn chrome(
             workspace.layers = !workspace.layers;
         }
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            if paintcraft_ui::widgets::icon_button(ui, "Settings…", Icon::Settings, false, false)
-                .clicked()
-            {
+            let settings = if variant == ClassicVariant::V11 {
+                paintcraft_ui::widgets::classic_menu_button(
+                    ui,
+                    "Settings…",
+                    Icon::Settings,
+                    false,
+                    "Settings…",
+                )
+            } else {
+                paintcraft_ui::widgets::icon_button(ui, "Settings…", Icon::Settings, false, false)
+            };
+            if settings.clicked() {
                 actions.push(Action::Settings);
             }
             actions.extend(paintcraft_ui::chrome::interface_changer(ui, context));
