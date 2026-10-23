@@ -1,0 +1,42 @@
+{
+  "source_commit": "bed431b644436ed9e493c8c9e2cd0539f42ef903",
+  "shared_helpers_commit": "f4f45cf",
+  "baseline_source": "c760b13; unchanged raw closed-menu wide scenes from the ribbon-caption record, before subsequent menu refinements",
+  "reference": "docs/temp/paint-references/photos/im1age.png",
+  "gui": {
+    "passed": 166,
+    "failed": 0,
+    "ignored": 19
+  },
+  "gpu": {
+    "passed": 1,
+    "test": "compact_chrome::export_classic_top_bars",
+    "scope": "12 raw wgpu client scenes: light/dark wide (1360x900), compact (700x600), short (480x360), each resting and Save-hover state."
+  },
+  "clippy": "workspace all-targets with -D warnings passed",
+  "scope": "Classic v11 top bars use 16-point labels, 8-point horizontal button padding and 40-point targets in ordinary windows. Below 420 points tall, 32-point targets preserve the full ribbon and existing canvas interaction. Below 720 points wide, quick actions move to a separate row. Save/Share/Undo/Redo/Clear Canvas use the existing theme-tinted menu artwork with shared action metadata, enabled/selected state and tooltips. Default colored widgets and historical skin metrics remain their prior paths.",
+  "regressions": "Six sizes/DPI/theme cases check target heights, font size, actual theme-tinted Save image, bounds, nonoverlap, menu spacing, repeated-layout stability, minimum visible canvas, Settings/changer interaction and auto-hide. Existing real canvas click and current-frame cursor-status tests pass.",
+  "short_window_failure": "An intermediate 40-point layout left a 4-point canvas viewport at 480x360. Diagnostic failure logs are retained; those tests pass in the final responsive 32-point short-window layout. Final source retains the full ribbon with no new vertical-scroll behavior.",
+  "limits": "Presentation and interaction qualification only. Full Windows/reference parity, native desktop/menu appearance, other ribbon spacing/artwork and remaining roadmap features remain incomplete. Client scenes do not include native title bars or menus. No native desktop window was launched for this slice.",
+  "sha256": {
+    "after-dark-compact-hover.png": "17a04b2ef1f3447ace687944278e1d55a288e0ee471684b8e96b69c2b8c7bb0e",
+    "after-dark-compact.png": "3996e547f06b4740c62b60280bc6390b95399cbd57987c74377cf2dda0e8d727",
+    "after-dark-short-hover.png": "6c30b0772834975d4178464daad5484c1fab1a5f53e7c413ba6df6bb5874620d",
+    "after-dark-short.png": "bb455b9eb312bc447e9afdf73ddec5c9f3353899902057dcd257bfd716412958",
+    "after-dark-wide-hover.png": "bb634e45b0966d77b6718a981ed636c723ec08bb257f6d3095b09a5fe6f6807d",
+    "after-dark-wide.png": "40dcf1286135c046cfedd43d4e0ddd3098b0d43b6ce2f29da831952b4c658665",
+    "after-light-compact-hover.png": "44c8de43c40b86aca5853467c177ce5ec7f91f4b45986a05711606c99cc52720",
+    "after-light-compact.png": "66b7b18a8aaa6b07734c614239cd3c05dd34cbd5516e70831657ba8a87068b41",
+    "after-light-short-hover.png": "c67689149d4c78b4005080dea44e80e74abc878d988c11e26dcc4986ada89fc8",
+    "after-light-short.png": "976e6edccc769427a2c112839e63130302aa704c406ee82166bba725db78bac7",
+    "after-light-wide-hover.png": "d4847c69d5b2d0a4cc254eeafa2fd56e2219bfb3f060384064188beb8c44d23f",
+    "after-light-wide.png": "6fcd477f53c8170a87480c0333f70bad7f9e7e660114438053c5945917e2f742",
+    "before-dark-wide.png": "66b25480770b19e7070699aee60bb67cea149d1e14303355735806e66a9f9cd8",
+    "before-light-wide.png": "abf698b2c77ab48c700ea628a424f73b1e64b0e4064efc1e6f63bff6cd65afb4",
+    "clippy.log.gz": "2a2787f4d5f496cf9f091d2c0ea5bb15b204276329a735e3ca93412eda05cf1e",
+    "gpu.log.gz": "788391a5243a2b30ba3d4ea77b75951cd87c67e022fbbe3f45b85c31c5e56211",
+    "gui.log.gz": "add444c32a624aa4bcb80a2a1b5a462525404d4c5149d40cf6e15f96bcaca3e1",
+    "short-regression-close.log.gz": "bb4a4dadb54e34b12bf2c956d2745c140eae17a9f0d67a4995b5fb311a15934a",
+    "short-regression-status.log.gz": "c7c252168023e39e5d437b87417b0c747cc4e942e5552bef460c14beee0aad17"
+  }
+}

@@ -862,3 +862,18 @@ behavior and extension-label alignment are verified; fresh raw light/dark File/V
 comparisons are in [the menu identity record](validation/menu-identities-gpu-2026-10-22/validation.json).
 Unavailable operations remain disabled. Exact glyph geometry, native appearance
 and full reference parity remain incomplete.
+
+Classic v11 top bars now use 16-point labels, wider menu padding and 40-point
+controls. Short windows below 420 points high retain 32-point targets so the
+full ribbon and real canvas input remain usable. Windows below 720 points wide
+keep quick actions in a second row alongside stable Settings/changer placement.
+Save/Share/Undo/Redo/Clear Canvas use theme-tinted outline menu artwork through
+optional shared helpers, retaining action gates, accessibility, single tooltips
+and hover surfaces. Default colored widgets and historical skin metrics retain
+their prior path. Six geometry/theme/DPI cases verify these controls and
+canvas availability; existing real canvas-click and cursor-status regressions
+pass. All 166 normal GUI tests (19 GPU/export tests ignored) and strict workspace
+Clippy pass. Twelve fresh GPU scenes cover both themes at wide, compact and
+short sizes, including hover: [the top-bar record](validation/classic-topbar-gpu-2026-10-22/validation.json).
+An intermediate short-window canvas regression is documented with its failing
+logs and corrected in the final source. Full Windows/native parity remains open.

@@ -11,10 +11,10 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
-Latest Classic menus use dedicated Import/Recent/Desktop background/Properties/
-Thumbnail glyphs, outline submenu chevrons and aligned View extension labels.
-All 166 normal GUI tests, six icon tests, both fresh GPU scene exports and strict
-workspace Clippy pass; see [the menu identity record](validation/menu-identities-gpu-2026-10-22/validation.json).
+Latest Classic v11 top bars use larger labels/targets and outline quick actions,
+with a short-window compact mode and separate quick-action row below 720 points.
+All 166 normal GUI tests (19 ignored exports), twelve fresh GPU scene captures
+and strict workspace Clippy pass; see [the top-bar record](validation/classic-topbar-gpu-2026-10-22/validation.json).
 Native appearance and complete reference fidelity remain partial.
 
 Current focus is Classic UI fidelity and themes. The [UI progress record](CLASSIC.md)
