@@ -178,3 +178,54 @@ fn text_dropdown_rows_match_toolbar_metrics_and_keep_selected_choices_reachable(
         assert_eq!(h.state().options.points, 72);
     }
 }
+
+#[test]
+fn narrow_text_toolbar_scrolls_to_background_and_back_without_changing_other_options() {
+    for (width, ppp) in [(360.0, 1.0), (480.0, 2.0)] {
+        let mut h = Harness::builder()
+            .with_size(Vec2::new(width, 360.0))
+            .with_pixels_per_point(ppp)
+            .build_ui_state(
+                |ui, state: &mut FontUi| {
+                    paintcraft_classic::text_options(
+                        ui,
+                        &mut state.options,
+                        &state.families,
+                        &mut state.search,
+                        false,
+                    );
+                    if ui.ctx().current_pass_index() == 0 {
+                        ui.ctx()
+                            .request_discard("test: repeated narrow text layout");
+                    }
+                },
+                FontUi::default(),
+            );
+        h.run();
+        let original = h.state().options.clone();
+        let start = h.get_by_label("Font family").rect().center();
+        h.input_mut().events.extend([
+            Event::PointerMoved(start),
+            Event::MouseWheel {
+                unit: eframe::egui::MouseWheelUnit::Point,
+                delta: Vec2::new(-10000.0, 0.0),
+                phase: eframe::egui::TouchPhase::Move,
+                source: eframe::egui::MouseWheelSource::Unknown,
+                modifiers: Modifiers::NONE,
+            },
+        ]);
+        h.run_steps(12);
+        let background = h.get_by_label("Background fill").rect();
+        assert!(background.min.x >= 0.0 && background.max.x <= width);
+        h.get_by_label("Background fill").click();
+        h.run();
+        let mut expected = original;
+        expected.background_fill = true;
+        assert_eq!(h.state().options, expected);
+        h.get_by_label("Font family").scroll_to_me();
+        h.run();
+        let family = h.get_by_label("Font family").rect();
+        assert!(family.min.x >= 0.0 && family.max.x <= width);
+        assert_eq!(h.state().options, expected);
+    }
+}
