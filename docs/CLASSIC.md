@@ -910,3 +910,20 @@ blank client, activation returned false, and raising the review window failed.
 The raw image is archived explicitly as unqualified evidence; native surface
 presentation/capture needs further investigation. GPU client-scene exports remain
 separate evidence. The full UI/reference roadmap remains incomplete.
+
+Native presentation was rechecked on 2026-10-23. Fresh ordinary desktop launches
+now produce complete light/dark native window captures with ribbon, tool panel,
+canvas and status UI. Both report regular activation policy and active state,
+application menu `PaintCraft`, window `Untitled - PaintCraft`, and successful
+native Quit with exit zero. These production runs use no forced readback or
+frame-count shortcut. The activation-policy hypothesis was disproved; no runtime
+startup/renderer change was needed. The exact trigger of the prior inactive
+blank captures is not established, and they remain archived as historical evidence.
+An explicit [native capture example](../apps/paintcraft/examples/README.md) now
+uses the real App/native services and requests a GPU framebuffer even if occluded.
+Light/dark outputs are verified; missing arguments and write failures return
+nonzero exits. Strict workspace Clippy, formatting and source-length checks pass.
+See [the native presentation record](validation/native-presentation-2026-10-23/validation.json)
+for raw native/framebuffer captures, activation/name reports and scope limits.
+This qualifies a native presentation baseline on this Mac; full Windows parity,
+all native menu interactions and physical input/text-device qualification remain open.

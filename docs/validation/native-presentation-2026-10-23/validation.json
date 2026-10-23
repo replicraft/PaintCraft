@@ -1,0 +1,69 @@
+{
+  "review_tool_commit": "e0bf678f3df32ad4941c71e3c3586458bbdd15af",
+  "desktop_source_commit": "a7576ae; production desktop code unchanged since the metadata fix",
+  "baseline_record": "docs/validation/macos-app-identity-2026-10-22/validation.json",
+  "host": "macOS 14.7.2 arm64, native wgpu/Metal debug builds",
+  "binaries": {
+    "desktop_sha256": "8425d46c955ad71d17232c6439a0305e0d9b95b4db1a60239f976112b5732ffd",
+    "example_sha256": "bb2b66ac373d33b1262d0320f3e407789f029f1ea6565435fedbd27c71e9be96"
+  },
+  "normal_desktop": {
+    "passed": 2,
+    "scope": "Independent ordinary light/dark launches, isolated Classic/v11 config/recovery, no frame-count override and no forced screenshot request. Both report regular activation policy (0), active=true, application menu PaintCraft and window Untitled - PaintCraft. Both native window captures contain complete ribbon, tool panel, canvas and status UI. Native Quit succeeds and each process exits zero. Raw captures reviewed directly.",
+    "dimensions": {
+      "light": [
+        2944,
+        2080
+      ],
+      "dark": [
+        2944,
+        2080
+      ]
+    }
+  },
+  "framebuffer_example": {
+    "passed": 2,
+    "scope": "Real App with native services/recovery in explicit example. Context screenshot request asks native renderer to paint even while occluded. PNGs encoded through existing image-based formats API; straight RGBA conversion retained. Three-second post-readback inspection interval then viewport close. This diagnostic binary has its own native application identity; production naming was verified separately.",
+    "dimensions": {
+      "light": [
+        2720,
+        1800
+      ],
+      "dark": [
+        2720,
+        1800
+      ]
+    },
+    "failures": "Missing output argument exits 1 before a window is created; missing output directory produces a write error and exits 1 after the diagnostic window closes. No artifact is falsely reported as successful."
+  },
+  "checks": {
+    "build": "native_capture example built successfully",
+    "clippy": "workspace all-targets with -D warnings passed",
+    "format_lengths_diff": "passed"
+  },
+  "finding": "The current ordinary desktop path renders and presents in both themes. An activation-policy hypothesis was disproved by the live regular/active report, so no production startup or renderer change was made. eframe source explicitly skips painting non-visible/occluded viewports unless a screenshot/PaintWhileHidden action requests it. Earlier inactive blank captures remain historical evidence; their exact trigger is not proven, and a persistent rendering defect was not reproduced.",
+  "limits": "Qualifies current native window presentation baseline, naming and Quit on this host plus explicit readback tooling. It does not complete Windows reference parity, all native menu interactions, real brush/text/pen/IME input, other platforms, signing/notarization or the full roadmap. Earlier 167 normal GUI tests remain separate prior evidence; they were not rerun for this example-only addition. Ordinary tests/startup do not invoke the example.",
+  "sha256": {
+    "build.log.gz": "f059e5acc73377414b80009b65a3a9742e40c1274c59730fb2602f55b42ec74e",
+    "clippy.log.gz": "464ad70df6edc8b0c6020e8fd6fedcbd3035eae3f0285f799deefc6cf6532191",
+    "dark-framebuffer.png": "16c52375c943f35ab82ee92a58ff46840eeab80f5d6f9ce145a56de8be95c9ee",
+    "dark-ordinary-capture.log": "19eaf43821a7660ec323a87c8457bf74823beb296c39f5e01aa8a683aa50f061",
+    "dark-ordinary-desktop.log.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "dark-ordinary-exit-code": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+    "dark-ordinary-quit.log": "1c8c6a2383925f925aa026c03e2ce8634776d9414f5631d02df23f7ec83e7409",
+    "dark-ordinary-state.json": "1ecc940e3346013d66382818c7334c7e341f4eb9bb16837046917e166f6fe4b2",
+    "dark-ordinary-window.png": "dbd0c845bde8c0cc2f54e6398f478903fce32489880305f5f910c49ce633863b",
+    "historical-blank-window.png": "9d8ede562075dd70c46d68094049d4a7ed94eedf42174adf6f6b063df823a49a",
+    "inspect.swift": "98d03e861b59ee70f9d48871abf548732400db577dcd5f7930220345dd548eca",
+    "light-framebuffer.png": "8230dd7ebe1e9aff5f4d6ec3bce3e9c81a95023eaa31f9b3eada484713f688b2",
+    "light-ordinary-capture.log": "19eaf43821a7660ec323a87c8457bf74823beb296c39f5e01aa8a683aa50f061",
+    "light-ordinary-desktop.log.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "light-ordinary-exit-code": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+    "light-ordinary-quit.log": "1c8c6a2383925f925aa026c03e2ce8634776d9414f5631d02df23f7ec83e7409",
+    "light-ordinary-state.json": "1c418826f4079e0ee177c31c81248f612d3ceb012289ca4a7c23fe8cd995388f",
+    "light-ordinary-window.png": "90bbfad3d708639d20de956065635f39f668632407d0974feae073fff1532f84",
+    "missing-argument.log": "cc8add2b4d8e3d334c89d82a927c780f7cbd0ce775390fbfb8e1ee3d8f502735",
+    "write-failure-example-exit-code": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
+    "write-failure-example.log": "bee9dc1fd2ef574fad451833b1e852cd1396906c5815e1c32651676ef3a8e436"
+  }
+}

@@ -1,0 +1,2 @@
+Native capture failed: No such file or directory (os error 2)
+Error: Os { code: 2, kind: NotFound, message: "No such file or directory" }
