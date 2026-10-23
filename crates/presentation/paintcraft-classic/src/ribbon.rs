@@ -7,6 +7,10 @@ use paintcraft_ui::{actions::Context, widgets::Icon};
 mod tools;
 use tools::{prototype, tool_button};
 
+pub(super) fn spacious(ui: &egui::Ui) -> bool {
+    ui.ctx().content_rect().width() >= 1200.0
+}
+
 pub(super) fn ribbon(
     ui: &mut egui::Ui,
     state: &mut Controls,
@@ -17,13 +21,13 @@ pub(super) fn ribbon(
     ui.separator();
     egui::ScrollArea::horizontal()
         .id_salt("windows11-ribbon")
-        .max_height(96.0)
+        .max_height(if spacious(ui) { 108.0 } else { 96.0 })
         .auto_shrink([false, true])
         .show(ui, |ui| {
             ui.horizontal_top(|ui| {
                 // Keep all groups reachable at medium widths before scrolling
                 // is necessary; preserve the roomier desktop spacing otherwise.
-                if ui.ctx().content_rect().width() < 1200.0 {
+                if !spacious(ui) {
                     ui.spacing_mut().item_spacing.x = 4.0;
                 }
                 group(ui, "Selection", |ui| {
@@ -126,10 +130,11 @@ pub(super) fn ribbon(
 }
 
 fn group(ui: &mut egui::Ui, label: &str, contents: impl FnOnce(&mut egui::Ui)) {
+    let content_height = if spacious(ui) { 108.0 } else { 96.0 };
     ui.vertical(|ui| {
         let top = ui.cursor().min.y;
         contents(ui);
-        ui.add_space((top + 96.0 - ui.cursor().min.y).max(0.0));
+        ui.add_space((top + content_height - ui.cursor().min.y).max(0.0));
         let width = ui.min_rect().width();
         ui.allocate_ui_with_layout(
             Vec2::new(width, 18.0),

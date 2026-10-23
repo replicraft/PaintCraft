@@ -80,3 +80,137 @@ fn classic_shape_gallery_matches_reference_rows_and_preserves_tool_and_document_
         assert_eq!(h.state().editor().history_view().ticket, ticket);
     }
 }
+
+#[test]
+fn desktop_galleries_resize_without_losing_actions_colors_or_history() {
+    use paintcraft::settings::{Appearance, ClassicVariant, Settings};
+    for (ppp, appearance) in [(1.0, Appearance::Light), (2.0, Appearance::Dark)] {
+        let dir = scratch("desktop-gallery-density");
+        Settings {
+            appearance,
+            classic_variant: Some(ClassicVariant::V11),
+            ..Default::default()
+        }
+        .save(&dir)
+        .unwrap();
+        let mut h = harness_with(App::new(None).with_settings(dir.clone()), ppp, true);
+        let snapshot = h.state().editor().document_snapshot();
+        let ticket = h.state().editor().history_view().ticket;
+        for width in [1360.0, 1200.0, 1199.0, 1100.0, 1360.0] {
+            h.set_size(Vec2::new(width, 900.0));
+            h.run();
+            let desktop = width >= 1200.0;
+            for label in ["Line", "Ellipse", "Rectangle"] {
+                assert_eq!(
+                    h.get_by_role_and_label(Role::Button, label).rect().size(),
+                    Vec2::splat(if desktop { 28.0 } else { 24.0 })
+                );
+            }
+            let swatch = h.get_by_label("Color #ED1C24").rect();
+            assert_eq!(
+                swatch.size(),
+                Vec2::splat(if desktop { 24.0 } else { 20.0 })
+            );
+            if desktop {
+                assert_eq!(
+                    h.get_by_label("Edit colors…").rect().size(),
+                    Vec2::splat(40.0)
+                );
+            }
+            let layers = h.get_by_role_and_label(Role::Button, "Layers").rect();
+            assert!(
+                layers.max.x <= width,
+                "Layers must remain visible at {width}: {layers:?}"
+            );
+            let captions: Vec<_> = h
+                .output()
+                .shapes
+                .iter()
+                .filter_map(|shape| match &shape.shape {
+                    eframe::egui::epaint::Shape::Text(text)
+                        if ["Tools", "Shapes", "Colors", "Layers"]
+                            .contains(&text.galley.job.text.as_str()) =>
+                    {
+                        Some(text.pos.y)
+                    }
+                    _ => None,
+                })
+                .collect();
+            assert_eq!(captions.len(), 4);
+            assert!(
+                captions.iter().all(|y| (*y - captions[0]).abs() < 0.5),
+                "captions must align at {width}: {captions:?}"
+            );
+            h.get_by_label("Color #ED1C24").click();
+            h.run();
+            h.get_by_label("Color #00A2E8").click_secondary();
+            h.run();
+            assert_eq!(h.state().editor().color, Rgba([237, 28, 36, 255]));
+            assert_eq!(h.state().editor().secondary, Rgba([0, 162, 232, 255]));
+            h.get_by_role_and_label(Role::Button, "Rectangle").click();
+            h.run();
+            assert_eq!(h.state().editor().tool, paintcraft_tools::Tool::Rect);
+            h.get_by_label("Lightning").scroll_to_me();
+            h.run();
+            let last = h.get_by_label("Lightning").rect();
+            assert!(last.max.y < h.state().canvas_viewport().unwrap().min.y);
+            h.get_by_label("Line").scroll_to_me();
+            h.run();
+            h.get_by_role_and_label(Role::Button, "Layers").click();
+            h.run();
+            assert!(h.query_by_label("Add layer").is_some());
+            h.get_by_role_and_label(Role::Button, "Layers").click();
+            h.run();
+            h.get_by_label("Edit colors…").click();
+            h.run();
+            assert!(h.query_by_label("Hex RGB").is_some());
+            h.get_by_label("Cancel").click();
+            h.run();
+            assert!(h.state().editor().document().same_semantics(&snapshot));
+            assert_eq!(h.state().editor().history_view().ticket, ticket);
+        }
+        drop(h);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+}
+
+#[test]
+#[ignore = "requires GPU; exports desktop and compact gallery review scenes"]
+fn export_gallery_density_for_review() {
+    use paintcraft::settings::{Appearance, ClassicVariant, Settings};
+    let output = std::env::temp_dir().join("paintcraft-gallery-density");
+    std::fs::create_dir_all(&output).unwrap();
+    for (appearance, theme) in [(Appearance::Light, "light"), (Appearance::Dark, "dark")] {
+        let dir = scratch("gallery-density-review");
+        Settings {
+            appearance,
+            classic_variant: Some(ClassicVariant::V11),
+            ..Default::default()
+        }
+        .save(&dir)
+        .unwrap();
+        let mut h = harness_with(App::new(None).with_settings(dir.clone()), 1.0, false);
+        for (width, name) in [(1360.0, "desktop"), (1100.0, "compact")] {
+            h.set_size(Vec2::new(width, 900.0));
+            h.run();
+            h.get_by_label("Line").scroll_to_me();
+            h.run();
+            h.get_by_label("Rectangle").click();
+            h.run();
+            h.render()
+                .unwrap()
+                .save(output.join(format!("{theme}-{name}-shapes.png")))
+                .unwrap();
+            h.get_by_label("Lightning").scroll_to_me();
+            h.run();
+            h.get_by_label("Color #ED1C24").hover();
+            h.run();
+            h.render()
+                .unwrap()
+                .save(output.join(format!("{theme}-{name}-scrolled.png")))
+                .unwrap();
+        }
+        drop(h);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+}

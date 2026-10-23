@@ -31,6 +31,9 @@ const SHAPES: [(Icon, &str, Option<Tool>); 23] = [
 ];
 
 pub(super) fn gallery(ui: &mut egui::Ui, state: &mut Controls, actions: &mut Vec<Action>) {
+    let spacious = super::ribbon::spacious(ui);
+    let cell = if spacious { 28.0 } else { 24.0 };
+    let glyph = if spacious { 22.0 } else { 19.0 };
     egui::Frame::new()
         .stroke(ui.visuals().widgets.noninteractive.bg_stroke)
         .corner_radius(4)
@@ -39,19 +42,19 @@ pub(super) fn gallery(ui: &mut egui::Ui, state: &mut Controls, actions: &mut Vec
             ui.spacing_mut().button_padding = Vec2::splat(2.0);
             egui::ScrollArea::vertical()
                 .id_salt("classic-shapes-gallery")
-                .max_height(78.0)
-                .max_width(132.0)
+                .max_height(if spacious { 90.0 } else { 78.0 })
+                .max_width(cell * 5.0 + 12.0)
                 .show(ui, |ui| {
                     egui::Grid::new("windows11-shapes")
-                        .min_row_height(24.0)
-                        .min_col_width(24.0)
+                        .min_row_height(cell)
+                        .min_col_width(cell)
                         .spacing(Vec2::ZERO)
                         .show(ui, |ui| {
                             for (index, (icon, label, tool)) in SHAPES.into_iter().enumerate() {
                                 let selected = tool.is_some_and(|tool| state.tool == tool);
                                 let response = ui
                                     .add_enabled_ui(tool.is_some(), |ui| {
-                                        button(ui, label, icon, selected)
+                                        button(ui, label, icon, selected, cell, glyph)
                                     })
                                     .inner;
                                 if let Some(tool) = tool {
@@ -73,19 +76,26 @@ pub(super) fn gallery(ui: &mut egui::Ui, state: &mut Controls, actions: &mut Vec
         });
 }
 
-fn button(ui: &mut egui::Ui, label: &str, icon: Icon, selected: bool) -> egui::Response {
+fn button(
+    ui: &mut egui::Ui,
+    label: &str,
+    icon: Icon,
+    selected: bool,
+    cell: f32,
+    glyph: f32,
+) -> egui::Response {
     let response = ui
         .scope(|ui| {
-            ui.spacing_mut().interact_size = Vec2::splat(24.0);
+            ui.spacing_mut().interact_size = Vec2::splat(cell);
             ui.add(
                 egui::Button::new(paintcraft_ui::icons::classic_shape_image(
                     ui.ctx(),
                     icon,
-                    19.0,
+                    glyph,
                     ui.visuals().strong_text_color(),
                 ))
                 .selected(selected)
-                .min_size(Vec2::splat(24.0))
+                .min_size(Vec2::splat(cell))
                 .frame_when_inactive(selected)
                 .frame(true),
             )
