@@ -51,9 +51,28 @@ pub fn zoom_controls(ui: &mut egui::Ui, context: Context, state_id: egui::Id) ->
                         text: percentage_text(context.zoom),
                     };
                 }
+                let field_id = ui.scope_id().with("percentage-entry");
+                let focused = ui.memory(|memory| memory.has_focus(field_id));
+                let cancel = focused
+                    && ui.ctx().current_pass_index() == 0
+                    && ui.input_mut(|input| {
+                        input.consume_key(egui::Modifiers::NONE, egui::Key::Escape)
+                    });
+                if cancel {
+                    draft.dirty = false;
+                    draft.text = percentage_text(context.zoom);
+                }
                 let response = ui.add_enabled(
                     !context.blocked,
-                    egui::TextEdit::singleline(&mut draft.text).desired_width(60.0),
+                    egui::TextEdit::singleline(&mut draft.text)
+                        .id(field_id)
+                        .event_filter(egui::EventFilter {
+                            horizontal_arrows: true,
+                            vertical_arrows: true,
+                            escape: true,
+                            ..Default::default()
+                        })
+                        .desired_width(60.0),
                 );
                 response.widget_info(|| {
                     egui::WidgetInfo::labeled(
@@ -64,7 +83,9 @@ pub fn zoom_controls(ui: &mut egui::Ui, context: Context, state_id: egui::Id) ->
                 });
                 draft.dirty |= response.changed();
                 let enter = response.has_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter));
-                if (response.lost_focus() || enter) && ui.ctx().current_pass_index() == 0 {
+                if cancel {
+                    response.surrender_focus();
+                } else if (response.lost_focus() || enter) && ui.ctx().current_pass_index() == 0 {
                     if draft.dirty
                         && let Some(value) = percent(&draft.text)
                     {

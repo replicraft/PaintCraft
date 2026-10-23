@@ -154,3 +154,60 @@ fn classic_zoom_popup_has_reference_rows_and_scrolls_on_short_displays() {
         std::fs::remove_dir_all(dir).unwrap();
     }
 }
+
+#[test]
+fn escape_discards_zoom_drafts_before_reaching_unpublished_canvas_text() {
+    for ppp in [1.0, 2.0] {
+        let mut h = harness_with(App::new(None), ppp, true);
+        h.get_by_label("Text").click();
+        h.run();
+        let point = h.state().canvas_rect().unwrap().min + Vec2::splat(50.5 / ppp);
+        h.input_mut()
+            .events
+            .extend([Event::PointerMoved(point), press(point), release(point)]);
+        h.run();
+        h.event(Event::Text("Keep me".into()));
+        h.run();
+        let snapshot = h.state().editor().document_snapshot();
+        let ticket = h.state().editor().history_view().ticket;
+        for (draft, expected) in [("250%", "100%"), ("oops", "100%")] {
+            h.get_by_label("Zoom percentage").focus();
+            h.run();
+            h.key_combination_modifiers(Modifiers::COMMAND, &[Key::A]);
+            h.run();
+            h.get_by_label("Zoom percentage").type_text(draft);
+            h.run();
+            h.key_press(Key::Escape);
+            h.run();
+            assert_eq!(
+                h.get_by_label("Zoom percentage")
+                    .accesskit_node()
+                    .value()
+                    .as_deref(),
+                Some(expected),
+                "Escape must discard the percentage draft"
+            );
+            assert_eq!(h.state().canvas_rect().unwrap().width() * ppp, 1000.0);
+            assert!(
+                matches!(h.state().editor().preview(), Some(paintcraft_tools::Preview::Text { text, .. }) if text == "Keep me")
+            );
+            assert!(h.state().editor().document().same_semantics(&snapshot));
+            assert_eq!(h.state().editor().history_view().ticket, ticket);
+        }
+        h.get_by_label("Zoom percentage").focus();
+        h.run();
+        h.key_combination_modifiers(Modifiers::COMMAND, &[Key::A]);
+        h.run();
+        h.get_by_label("Zoom percentage").type_text("250%");
+        h.run();
+        h.key_press(Key::Tab);
+        h.run();
+        assert_eq!(
+            h.state().canvas_rect().unwrap().width() * ppp,
+            2500.0,
+            "Tab still applies a valid draft"
+        );
+        assert!(h.state().editor().document().same_semantics(&snapshot));
+        assert_eq!(h.state().editor().history_view().ticket, ticket);
+    }
+}
