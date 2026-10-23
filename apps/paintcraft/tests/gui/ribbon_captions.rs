@@ -16,6 +16,39 @@ fn classic_ribbon_has_legible_single_captions_and_icon_only_primary_tools() {
         let mut h = harness_with(App::new(None).with_settings(dir.clone()), ppp, true);
         let snapshot = h.state().editor().document_snapshot();
         let ticket = h.state().editor().history_view().ticket;
+        for label in [
+            "Pencil",
+            "Fill",
+            "Text",
+            "Eraser",
+            "Color picker",
+            "Magnifier",
+        ] {
+            let rect = h.get_by_role_and_label(Role::Button, label).rect();
+            assert_eq!(rect.size(), Vec2::splat(40.0), "{label}");
+            assert!(
+                h.output()
+                    .shapes
+                    .iter()
+                    .any(|shape| matches!(&shape.shape, Shape::Rect(image)
+                if image.brush.is_some() && image.rect.size() == Vec2::splat(24.0)
+                    && rect.contains_rect(image.rect) && image.rect.center() == rect.center()
+                    && image.fill.r() == image.fill.g() && image.fill.g() == image.fill.b())),
+                "{label} must use a centered theme-tinted glyph"
+            );
+        }
+        for (label, tool) in [
+            ("Text", paintcraft_tools::Tool::Text),
+            ("Fill", paintcraft_tools::Tool::Fill),
+            ("Eraser", paintcraft_tools::Tool::Eraser),
+            ("Pencil", paintcraft_tools::Tool::Pencil),
+        ] {
+            h.get_by_role_and_label(Role::Button, label).click();
+            h.run();
+            assert_eq!(h.state().editor().tool, tool);
+            assert!(h.state().editor().document().same_semantics(&snapshot));
+            assert_eq!(h.state().editor().history_view().ticket, ticket);
+        }
         for caption in [
             "Selection",
             "Image",

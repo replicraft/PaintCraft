@@ -2,11 +2,10 @@
 use super::{Action, Controls, Workspace};
 use egui::Vec2;
 use paintcraft_tools::Tool;
-use paintcraft_ui::{
-    actions::Context,
-    chrome::tool_button,
-    widgets::{Icon, icon_button},
-};
+use paintcraft_ui::{actions::Context, widgets::Icon};
+
+mod tools;
+use tools::{prototype, tool_button};
 
 pub(super) fn ribbon(
     ui: &mut egui::Ui,
@@ -22,6 +21,11 @@ pub(super) fn ribbon(
         .auto_shrink([false, true])
         .show(ui, |ui| {
             ui.horizontal_top(|ui| {
+                // Keep all groups reachable at medium widths before scrolling
+                // is necessary; preserve the roomier desktop spacing otherwise.
+                if ui.ctx().content_rect().width() < 1200.0 {
+                    ui.spacing_mut().item_spacing.x = 4.0;
+                }
                 group(ui, "Selection", |ui| {
                     if primary_tool(ui, state, Tool::Select, Icon::Select) {
                         actions.push(Action::SelectTool(Tool::Select));
@@ -38,12 +42,12 @@ pub(super) fn ribbon(
                         .spacing(Vec2::splat(1.0))
                         .show(ui, |ui| {
                             for tool in [Tool::Pencil, Tool::Fill, Tool::Text] {
-                                if tool_button(ui, state, tool, false) {
+                                if tool_button(ui, state, tool) {
                                     actions.push(Action::SelectTool(tool));
                                 }
                             }
                             ui.end_row();
-                            if tool_button(ui, state, Tool::Eraser, false) {
+                            if tool_button(ui, state, Tool::Eraser) {
                                 actions.push(Action::SelectTool(Tool::Eraser));
                             }
                             prototype(ui, "Color picker", Icon::Eyedropper,
@@ -186,10 +190,4 @@ fn primary_tool(ui: &mut egui::Ui, state: &mut Controls, tool: Tool, icon: Icon)
     } else {
         false
     }
-}
-
-fn prototype(ui: &mut egui::Ui, label: &str, icon: Icon, help: &str) {
-    ui.add_enabled_ui(false, |ui| icon_button(ui, label, icon, false, false))
-        .inner
-        .on_disabled_hover_text(help);
 }
