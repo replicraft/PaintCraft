@@ -192,6 +192,65 @@ fn media_gallery_preserves_unavailable_presets_and_has_reachable_working_tips() 
 }
 
 #[test]
+fn classic_image_controls_use_two_rows_with_a_spanning_resize_preview() {
+    use eframe::egui::{Role, epaint::Shape};
+    use paintcraft::settings::{Appearance, ClassicVariant, Settings};
+    for (ppp, appearance) in [(1.0, Appearance::Light), (2.0, Appearance::Dark)] {
+        let dir = scratch("image-ribbon-geometry");
+        Settings {
+            appearance,
+            classic_variant: Some(ClassicVariant::V11),
+            ..Default::default()
+        }
+        .save(&dir)
+        .unwrap();
+        let mut h = Harness::builder()
+            .with_size(Vec2::new(1360.0, 900.0))
+            .with_pixels_per_point(ppp)
+            .build_ui_state(
+                |ui, app: &mut App| {
+                    app.ui(ui);
+                    if ui.ctx().current_pass_index() == 0 {
+                        ui.ctx().request_discard("test: repeated Image controls");
+                    }
+                },
+                App::new(None).with_settings(dir.clone()),
+            );
+        h.run();
+        let snapshot = h.state().editor().document_snapshot();
+        let ticket = h.state().editor().history_view().ticket;
+        let rect = |label| h.get_by_role_and_label(Role::Button, label).rect();
+        let crop = rect("Crop");
+        let rotate = rect("Rotate");
+        let remove = rect("Remove background");
+        let flip = rect("Flip");
+        let resize = rect("Resize and skew");
+        assert_eq!(crop.height(), 40.0);
+        assert_eq!(rotate.height(), 40.0);
+        assert_eq!(remove.top(), crop.bottom() + 4.0);
+        assert_eq!(flip.top(), remove.top());
+        assert_eq!(crop.left(), remove.left());
+        assert_eq!(rotate.left(), flip.left());
+        assert_eq!(resize.top(), crop.top());
+        assert_eq!(resize.bottom(), remove.bottom());
+        assert!(resize.left() > rotate.right());
+        assert!(h.output().shapes.iter().any(|shape| matches!(&shape.shape,
+            Shape::Rect(image) if image.brush.is_some() && resize.contains_rect(image.rect) && image.rect.size() == Vec2::splat(32.0) && image.rect.center().distance(resize.center()) < 0.5
+        )), "Resize paints its larger picture/arrow glyph");
+        for label in ["Crop", "Remove background", "Resize and skew"] {
+            let node = h.get_by_role_and_label(Role::Button, label);
+            assert!(node.accesskit_node().is_disabled());
+            node.click();
+            h.run();
+        }
+        assert!(h.state().editor().document().same_semantics(&snapshot));
+        assert_eq!(h.state().editor().history_view().ticket, ticket);
+        drop(h);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+}
+
+#[test]
 fn image_menus_show_reference_entries_without_executing_unavailable_operations() {
     let mut h = harness_with(App::new(None), 1.0, true);
     let base = h.state().editor().document_snapshot();
@@ -276,12 +335,14 @@ fn image_transform_popups_keep_rows_icons_and_single_tooltips_reachable_on_short
             assert_eq!(h.query_all_by_role_and_label(Role::Label, menu).count(), 1);
             h.get_by_role_and_label(Role::Button, menu).click();
             h.run();
+            let mut previous_bottom = None;
             for entry in &entries {
                 h.get_by_label(entry).scroll_to_me();
                 h.run();
                 let row = h.get_by_label(entry).rect();
                 assert!(
                     row.height() >= 40.0
+                        && row.width() <= 260.0
                         && row.min.x >= 0.0
                         && row.min.y >= 0.0
                         && row.max.x <= size.x
@@ -289,6 +350,22 @@ fn image_transform_popups_keep_rows_icons_and_single_tooltips_reachable_on_short
                     "{entry}: {row:?} outside {size:?}"
                 );
                 assert!(h.get_by_label(entry).accesskit_node().is_disabled());
+                if size.y > 400.0
+                    && let Some(bottom) = previous_bottom
+                {
+                    assert_eq!(row.top(), bottom);
+                }
+                previous_bottom = Some(row.bottom());
+                let text = h
+                    .output()
+                    .shapes
+                    .iter()
+                    .find_map(|shape| match &shape.shape {
+                        Shape::Text(text) if text.galley.job.text == *entry => Some(text),
+                        _ => None,
+                    })
+                    .expect("transform row label is painted");
+                assert_eq!(text.galley.job.sections[0].format.font_id.size, 16.0);
                 assert!(
                     h.output().shapes.iter().any(|shape| {
                         let Shape::Rect(icon) = &shape.shape else {

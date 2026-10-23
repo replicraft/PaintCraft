@@ -30,18 +30,7 @@ pub(super) fn ribbon(
                 });
                 ui.separator();
                 group(ui, "Image", |ui| {
-                    egui::Grid::new("image-ribbon")
-                        .spacing(Vec2::splat(1.0))
-                        .show(ui, |ui| {
-                            prototype(ui, "Crop", Icon::Crop, "Cropping is not available yet.");
-                            super::image_menus::rotate(ui);
-                            prototype(ui, "Resize and skew", Icon::Resize,
-                                "Image resizing and skewing are not available yet. Canvas size is available in View.");
-                            ui.end_row();
-                            prototype(ui, "Remove background", Icon::RemoveBackground,
-                                "Background removal is not available yet.");
-                            super::image_menus::flip(ui);
-                        });
+                    super::image_menus::controls(ui);
                 });
                 ui.separator();
                 group(ui, "Tools", |ui| {
