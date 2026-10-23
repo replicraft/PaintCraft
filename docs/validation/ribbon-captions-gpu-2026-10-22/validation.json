@@ -1,0 +1,38 @@
+{
+  "source_commit": "c760b13857a35700a3c58accfc9c4cf73e86bb9e",
+  "baseline_commit": "45d0ae5faacbc41a751258f5f6bc82c1e0331ab9",
+  "reference": "docs/temp/paint-references/photos/image.png",
+  "gui": {
+    "passed": 163,
+    "failed": 0,
+    "ignored": 18
+  },
+  "focused_gui": {
+    "passed": 1,
+    "scope": "Classic v11 light at scale 1 and dark at scale 2 with repeated layout. Each of seven group captions is painted exactly once at 14 points with a legible theme shade. Select/Brush retain accessible names and selected state, have 64x60 buttons with centered 32-point image shapes, and do not repeat text inside the button. Both tools activate without document/history changes."
+  },
+  "gpu_scenes": {
+    "passed": 1,
+    "command": "cargo test -p paintcraft --test gui appearance::export_theme_previews -- --ignored --exact",
+    "scope": "Actual wgpu-backed egui theme scene exports for Classic workspace/text/settings and Studio workspace/settings. Archived raw 1100x900 light/dark Classic scenes show the revised captions and icon-only controls. Rendered inspection caught initial left alignment; final centered images are checked by the focused regression.",
+    "before_image_source": "Previous canvas-fade record, source commit 473269d; images copied unchanged."
+  },
+  "regression_baseline": {
+    "result": "Before the change, the caption-size regression fails on Selection: 12 points rather than 14.",
+    "probe_scope": "The initial caption assertion, before later primary-tool checks. The image-centering assertion was strengthened after rendered review."
+  },
+  "clippy": "workspace all-targets with -D warnings passed",
+  "scope": "Classic v11 alone uses larger, higher-contrast 14-point group captions and icon-only Select/Brush controls. The shared tool widgets, Studio and historical skins retain their own presentation. Tool actions still use the shared host path; names stay available to accessibility and one hover tooltip.",
+  "limits": "This qualifies the caption/icon layout slice through headless paint geometry and rendered scene inspection, not full Windows parity or native menu/desktop appearance. Other icon styling, menus/dialog comparisons and remaining editing/platform features stay open.",
+  "sha256": {
+    "gui.log.gz": "c89f57b431cc78e597050abf9c4f74f1135a320b2802cf705e91e1d2e5711fd5",
+    "focused-gui.log.gz": "823b29d68cadd3036cafd5a3c9c42e1d7301b31c38337af312fdc2174ecd4304",
+    "gpu-scenes.log.gz": "141bc9622164ff577fc541da5ae9031fd79b2ecbdd6598547b0f804a44c0bd53",
+    "clippy.log.gz": "d3f2afe2c240c3272e4ffd0ba43ccb8372eb1b1343e846be6d099c2c08eed057",
+    "regression-before.log.gz": "f2d420242b94fff1dffb6dd96242a7a519f0535ca5318f87502adeb2ff22d845",
+    "before-classic-dark.png": "8b3b4a67ae6078ab11be6a8d8c4324979ca9b2ca8d42536fbf5801774e20e66d",
+    "after-classic-dark.png": "66b25480770b19e7070699aee60bb67cea149d1e14303355735806e66a9f9cd8",
+    "before-classic-light.png": "05a0a3766eb0f8d8cc35fc5caecfda766406dc8419ccf84de3923983d2b7205c",
+    "after-classic-light.png": "abf698b2c77ab48c700ea628a424f73b1e64b0e4064efc1e6f63bff6cd65afb4"
+  }
+}

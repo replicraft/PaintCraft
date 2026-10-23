@@ -800,3 +800,16 @@ two-axis panning in all three presentations, light at scale 1 and dark at scale 
 Fresh whole-application light/dark scenes confirm the visible strip is gone.
 Caller scroll policy is unchanged. These checks qualify the fade fix, not every
 image color, native menus/driver paths, pen/IME or full Windows visual parity.
+
+Classic v11 ribbon groups now use larger 14-point captions with readable theme
+shades. The Select and Brush controls use centered 32-point SVG images in
+64x60 icon-only buttons, retaining accessible names, hover tooltips and selected
+frames. Their names are no longer painted inside the button as well as below
+the group. Shared widgets, Studio and historical skins retain their presentation.
+All 163 window-free UI tests, a fresh wgpu-backed theme scene export and strict
+workspace Clippy pass; see [the ribbon caption record](validation/ribbon-captions-gpu-2026-10-22/validation.json)
+for raw light/dark before/after scenes. The caption-size probe fails before the
+change; current checks cover all seven captions, image size/centering, duplicate
+text removal, tool activation and document/history preservation at scales 1/2
+with repeated layout. Full Windows parity and native menu/desktop appearance
+remain unqualified; other chrome and feature work remains on the roadmap.
