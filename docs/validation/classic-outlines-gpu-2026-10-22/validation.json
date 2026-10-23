@@ -1,0 +1,42 @@
+{
+  "source_commit": "63b363f6abce4f1a69870442a8076862b1cb1d81",
+  "assets_commit": "828b2a92d937ff5fd9b437d91b70cc2862f78e24",
+  "baseline_commit": "148dc10c53d157851ba1a70480ce8f530a1a6941",
+  "authorization": "User explicitly allowed launching windows on 2026-10-22; prior no-window restriction is lifted.",
+  "gui": {
+    "passed": 161,
+    "failed": 0,
+    "ignored": 17
+  },
+  "icon_tests": {
+    "passed": 5,
+    "ignored": 1,
+    "scope": "The 91 existing colored/chrome icons still parse/render at 24/64/128 pixels. All 23 Classic variants parse/render at 24/48/96/128, have transparent pixels and white premultiplied output, and rectangle/rounded-rectangle/ellipse centers remain transparent. Line orientation matches the reference. Colored and outline textures retain distinct reusable cache identities; bounded cache and density checks pass."
+  },
+  "gpu_scenes": {
+    "passed": 1,
+    "command": "cargo test -p paintcraft --test gui appearance::export_theme_previews -- --ignored --exact",
+    "scope": "wgpu-backed egui scenes for Classic workspace, text and settings plus Studio workspace/settings in light/dark. Archived before/after Classic workspace images are raw 1100x900 scene exports at scale 1, without OS title/menu bars.",
+    "inspection": "Compared Classic gallery against supplied image.png and im2age.png. Filled blue geometry is replaced with theme-tinted hollow outline geometry. Unsupported choices remain dimmed previews; enabled Line/Ellipse/Rectangle retain existing semantics. This improves the gallery style and does not qualify complete UI parity."
+  },
+  "native_smoke": {
+    "source_commit": "148dc10c53d157851ba1a70480ce8f530a1a6941",
+    "configuration": "Classic v11 dark with isolated temporary settings/recovery, 1360x900 requested client size, automatic exit after 3600 frames.",
+    "exit_code": 0,
+    "limits": "Desktop process launched and exited successfully. OS window capture returned could not create image from window; no native window/menu screenshot is archived. App-menu text and complete desktop appearance remain visually unqualified."
+  },
+  "clippy": "workspace all-targets with -D warnings passed",
+  "generator": "All 23 SVG files and their manifest regenerate byte-identically with scripts/generate_classic_shape_icons.py.",
+  "scope": "Original Classic-only SVG variants are separate from the supplied colored sheet. Sources are tinted at paint time; cache identity includes the variant. Shared icon IDs, colored sources, shape ordering/selection, disabled-preview policy and document semantics are preserved.",
+  "remaining": "Classic fidelity remains partial. Caption/text scale and contrast, other icon styling, native menu appearance, full dropdown/dialog comparison, live thumbnail/native latency checks and broader feature prerequisites remain open. The before/after scenes also show a clipped canvas-edge gradient that needs investigation.",
+  "sha256": {
+    "gui.log.gz": "9507ffee2859ebdeee5cab52c26207e3585fb5125f31b1a23151d463d8b69039",
+    "icons.log.gz": "3c54a6588d7f8099e57faac37199561987e27fa0ec0b19d793f4a74ca0e910dc",
+    "gpu-scenes.log.gz": "c15863e739625b303ecc0efb60d0177cd3cd5a780025ea5835705f593de98bb8",
+    "clippy.log.gz": "856f23b2e49aabe46010e235c1a2edb9549a1eef52537c2b6adb2eb6e5a68e6d",
+    "before-classic-dark.png": "1be0090d0fc7a702a309bb3845e5bb5bcdf27a6b11785c39a073dbe728a32b1b",
+    "before-classic-light.png": "2eb717afd38d82647214f5b01123a8fdd3d637492822fa80f22e3d2d73806d5e",
+    "after-classic-dark.png": "dc18159517048155967af11451fc40762aaef7c1c7194a41f9b410b076268249",
+    "after-classic-light.png": "56b2228eef737f5069c1a3a47204bbdfcf545023a1412e045b61f0b6dad70235"
+  }
+}

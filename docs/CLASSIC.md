@@ -771,3 +771,18 @@ source alpha and partial edges; worker checks cover stale completions, portrait
 aspect changes and reservation release. Studio/document-tab previews, the
 separate View Thumbnail window, live tool previews and native visual parity
 remain open. No windows, GPU tests or rendered previews were launched.
+
+Windowed and GPU visual review is now authorized by the user (2026-10-22).
+The first fresh scene comparison found filled blue shapes where the supplied
+Paint references use monochrome outlines. Classic's 23 gallery entries now use
+original individual outline SVG variants, tinted for the theme; colored sheet
+icons keep their existing sources. Variant-aware cache keys prevent aliasing.
+All 161 window-free UI tests, five icon tests, a wgpu-backed theme scene export
+and strict workspace Clippy pass. The generator reproduces all 23 outline
+sources and manifest exactly. See [the outline review record](validation/classic-outlines-gpu-2026-10-22/validation.json)
+for raw light/dark before/after scenes. The isolated desktop launch exited
+successfully, but its OS window capture failed; native menu text and desktop
+appearance remain visually unqualified. Existing ignored window/GPU checks may
+now be run selectively. Full reference fidelity remains partial, including
+caption/text contrast/scale, other icons and native interaction checks. The scene
+exports also expose a clipped canvas-edge gradient requiring investigation.
