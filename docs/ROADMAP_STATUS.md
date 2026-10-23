@@ -11,6 +11,13 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest Classic Layers controls use an accented outline ribbon glyph and
+monochrome panel actions. All 172 normal UI tests, eight SVG/cache tests,
+light/dark hover/open/action GPU captures and strict workspace Clippy pass;
+see [the layer controls record](validation/classic-layer-controls-gpu-2026-10-23/validation.json).
+The existing button size and layer semantics remain; full native panel fidelity
+is not established by the supplied ribbon reference.
+
 Latest Classic ribbon work adds the lower-right display-options chevron,
 routing to the existing persisted visibility modes. All 172 normal UI tests,
 light/dark desktop/compact/hidden GPU states and strict workspace Clippy pass;

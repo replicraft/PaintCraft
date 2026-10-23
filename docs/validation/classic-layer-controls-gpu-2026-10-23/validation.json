@@ -1,0 +1,37 @@
+{
+  "source_commit": "78c20969c0c009ff403ce7ab831714a261ed1f03",
+  "assets_commit": "8a213b4",
+  "reference": "docs/temp/paint-references/photos/image.png",
+  "changes": "V11 Layers ribbon button uses original paired light/dark outline artwork with a blue accent; 44-point image and 60-point button geometry are preserved. The shared Classic Layers panel uses existing monochrome Close/Delete art and new Add/Move up/Move down vectors through the existing outline button helper. Default colored SVG mappings and Studio controls are unchanged.",
+  "gui": {
+    "passed": 172,
+    "failed": 0,
+    "ignored": 23,
+    "scope": "Full UI suite passes. Existing panel scrolling, property position, selection, visibility, reorder/delete/undo, rename, opacity, preview isolation and close/reopen checks remain. Panel action geometry additionally verifies centered 22-point theme-tinted art in light 1x/dark 2x under repeated layout."
+  },
+  "icons": {
+    "passed": 8,
+    "ignored": 1,
+    "scope": "98 default IDs remain. Outline collection has 38 menu/control sources; accented ribbon collection has 10 paired logical sources (20 SVGs). Both theme sources render at four sizes with matching alpha coverage, retained accents, independent cache identities and open layer-stack interiors. Both generators reproduce assets byte for byte."
+  },
+  "gpu": {
+    "passed": 1,
+    "test": "classic_layers::export_classic_layer_controls",
+    "scope": "Six fresh light/dark 1360x900 client captures: ribbon hover, opened panel and multiple-layer action hover states."
+  },
+  "clippy": "Strict workspace all-targets passed.",
+  "checks": "Formatting, whitespace and source file length checks passed.",
+  "limits": "Only the ribbon glyph is directly referenced by the supplied Classic full-window screenshot. Panel action art follows shared Classic conventions; no native Classic Layers panel reference was supplied, and the Studio Layers reference is not used as proof of Classic parity. Historical Classic panel consumers share this outline styling, without a historical-parity claim. No new editing semantics or performance claim.",
+  "sha256": {
+    "clippy.log.gz": "063ac20e9b251a4eff62380b082a0cd2a14a477edf2ee0d1269dd99527e21f8a",
+    "dark-panel-actions.png": "4ed63125b9371d3d712f232ced4ece81a4a6a69abc8813c4f4aa84e8a151902b",
+    "dark-panel.png": "c5d2fe01a0a24e52564edd6a2cb1d3d5dae34469b5d2fdac8fbdfd57d55de0e7",
+    "dark-ribbon-hover.png": "ba7d8570aa7d1f8aa16b6c37ab55a4e1d23a9349029366a4bc5960f64027939a",
+    "gpu.log.gz": "ea3d12d797f6832f9bd2b19359a8f4664926451c601ed789472197341d0e94ce",
+    "gui.log.gz": "b067bd044882ca6036083741f5461d5db0ed049479a61eea22b6494f453b580c",
+    "icons.log.gz": "db9f667b72015f73e1fec737dbabc922bba5ce3b97c5bd5d600c3291f6aae695",
+    "light-panel-actions.png": "99035d22ab9c5d77d3ab306c15a204ab64571c781ba65fb4c598c8c8542413e3",
+    "light-panel.png": "d46eb93d12d83da88d25496d4d76a14d8752f0a863e7c64f4f49ba323f3618bb",
+    "light-ribbon-hover.png": "9fe09fcf1ab03b2582181b29d7d83105795ba18fb935424480e2aad8d5737fae"
+  }
+}
