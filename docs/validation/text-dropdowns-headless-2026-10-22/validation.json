@@ -1,0 +1,28 @@
+{
+  "source_commit": "7ca8299039a0dcc6cff2e1e635e6b683a041ccff",
+  "mode": "Window-free egui and lint checks only; no native-window, desktop, file-dialog or rendered-preview launches.",
+  "reference": "docs/temp/paint-references/photos/mspaint-text-settings.png",
+  "gui": {
+    "passed": 158,
+    "failed": 0,
+    "ignored": 17
+  },
+  "focused_gui": {
+    "passed": 2,
+    "scope": "Text controls and preset rows measure 40 points. Selected size has an actual painted outline. Last preset scrolls into short-window bounds, selection closes the popup and updates options. Font rows expose selected state and Escape closes without changing options. Cases cover 1100x500 light at scale 1 and 480x360 dark at scale 2 with repeated layout. Existing large-catalog regression covers fixed search, virtualization, filtering, selection and long family-name truncation at 480x500 and 360x360."
+  },
+  "regression_baseline": {
+    "source_commit": "23de59b5f326826540b8f5e5b3265af2b772d855",
+    "probe_from_commit": "7ca8299039a0dcc6cff2e1e635e6b683a041ccff",
+    "result": "The added metric regression fails on the former 36-point family control, before later dropdown checks."
+  },
+  "clippy": "workspace all-targets with -D warnings passed",
+  "scope": "Shared text toolbar uses 40-point controls, a 238-point family selector and 90-point numeric/preset group. Size presets have full-width outlined selected rows. Family rows use matching selected outlines. Existing font discovery, custom-size range, persistence and text rasterization semantics are retained.",
+  "limits": "Geometry and egui interaction checks do not prove native rendering or full Windows reference fidelity. No app windows or rendered previews were launched. Editable text objects, IME and native text rasterization parity remain separate roadmap work.",
+  "sha256": {
+    "gui.log.gz": "758af7043f131264384c5f25472ec1f02eda6e873bcb163465443b2e0b67fe4a",
+    "focused-gui.log.gz": "e9ae3eaeee03ddef4554ba3f7f8373e74b2f562240ee4ad34c2db326dfaa8017",
+    "regression-before.log.gz": "ff7136969507582e43df26fe31d15c2a785411fc8f5b37d2b242642fcfcb5854",
+    "clippy.log.gz": "5f8d3f4199e4de9f7e0a414ba62d86c3f22f7a8ede2283779e6377ec36239459"
+  }
+}

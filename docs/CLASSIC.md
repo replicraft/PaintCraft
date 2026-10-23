@@ -727,3 +727,16 @@ The cancellation prefix failed before the fix. The regression covers both
 frontends, light/dark at scales 1/2, pending text/history preservation, accepted
 Enter, Undo and release-only pointer publication. Native event coalescing, IME
 and rendered parity remain unqualified; no windows or rendered previews were launched.
+
+The text toolbar now follows the supplied text-settings reference with 40-point
+controls, a wider family selector and size field, and matching outlined selected
+rows in both font-family and point-size popups. Size choices retain bounded
+scrolling, custom values and close-on-selection behavior; font search remains
+fixed above the virtualized family list.
+All 158 window-free UI tests and strict workspace Clippy pass; see
+[the text-dropdown record](validation/text-dropdowns-headless-2026-10-22/validation.json).
+The added metric regression fails on the previous 36-point control. Current checks
+cover selected-size paint, short-window last-preset reachability, acceptance and
+Escape, plus the existing large-catalog/search regression in repeated layout.
+Native appearance, full reference fidelity and text rasterization parity remain
+unqualified; no windows or rendered previews were launched.
