@@ -1,6 +1,7 @@
 //! SVG sources are rasterized at display density and cached per egui context.
 mod actions;
 mod assets;
+mod classic_image;
 mod classic_menus;
 mod classic_shapes;
 pub use assets::Icon;
@@ -15,6 +16,8 @@ enum Variant {
     Sheet,
     ClassicShape,
     ClassicMenu,
+    ClassicImageLight,
+    ClassicImageDark,
 }
 
 #[derive(Default)]
@@ -35,6 +38,10 @@ fn rasterize_variant(icon: Icon, size: u32, variant: Variant) -> ColorImage {
         }
         Variant::ClassicMenu => {
             classic_menus::source(icon).expect("Classic menu icon must have an outline SVG")
+        }
+        Variant::ClassicImageLight | Variant::ClassicImageDark => {
+            classic_image::source(icon, variant == Variant::ClassicImageDark)
+                .expect("Classic Image control must have theme artwork")
         }
     };
     let tree = resvg::usvg::Tree::from_data(source, &resvg::usvg::Options::default())
@@ -131,6 +138,25 @@ pub fn classic_menu_image(
     let size = physical_size(points, ctx.pixels_per_point());
     let texture = variant_texture(ctx, icon, size, Variant::ClassicMenu);
     egui::Image::new((texture.id(), egui::Vec2::splat(points))).tint(ink)
+}
+
+/// Image ribbon/transform art preserves blue accents in light and dark themes.
+pub fn classic_image(ctx: &Context, icon: Icon, points: f32, dark: bool) -> egui::Image<'static> {
+    if classic_image::source(icon, dark).is_none() {
+        return image(ctx, icon, points);
+    }
+    let variant = if dark {
+        Variant::ClassicImageDark
+    } else {
+        Variant::ClassicImageLight
+    };
+    let texture = variant_texture(
+        ctx,
+        icon,
+        physical_size(points, ctx.pixels_per_point()),
+        variant,
+    );
+    egui::Image::new((texture.id(), egui::Vec2::splat(points)))
 }
 
 pub fn paint(painter: &egui::Painter, rect: Rect, icon: Icon) {
@@ -300,6 +326,64 @@ mod tests {
             .unwrap();
         assert!(cache.lock().entries.len() <= CACHE_ENTRIES);
         assert!(cache.lock().bytes <= CACHE_BYTES);
+    }
+
+    #[test]
+    fn classic_image_art_retains_accent_coverage_and_independent_theme_textures() {
+        let ctx = Context::default();
+        let icons: Vec<_> = Icon::ALL
+            .into_iter()
+            .filter(|icon| classic_image::source(*icon, false).is_some())
+            .collect();
+        assert_eq!(icons.len(), 9);
+        for icon in icons {
+            for dark in [false, true] {
+                let source =
+                    std::str::from_utf8(classic_image::source(icon, dark).unwrap()).unwrap();
+                for forbidden in ["<image", "href=", "<text", "Gradient"] {
+                    assert!(!source.contains(forbidden));
+                }
+            }
+
+            for size in [24, 48, 96, 128] {
+                let light = rasterize_variant(icon, size, Variant::ClassicImageLight);
+                let dark = rasterize_variant(icon, size, Variant::ClassicImageDark);
+                assert!(light.pixels.iter().any(|pixel| pixel.a() > 0));
+                assert!(light.pixels.iter().any(|pixel| pixel.a() == 0));
+                for (a, b) in light.pixels.iter().zip(&dark.pixels) {
+                    assert_eq!(a.a(), b.a(), "{} theme coverage must agree", icon.name());
+                }
+                assert!(
+                    light.pixels.iter().zip(&dark.pixels).any(|(a, b)| a != b),
+                    "theme ink must change"
+                );
+                if icon != Icon::Crop {
+                    for image in [&light, &dark] {
+                        assert!(
+                            image
+                                .pixels
+                                .iter()
+                                .any(|pixel| pixel.b() > pixel.g() && pixel.g() > pixel.r()),
+                            "{} retains its blue accent",
+                            icon.name()
+                        );
+                    }
+                }
+            }
+            let light = variant_texture(&ctx, icon, 48, Variant::ClassicImageLight);
+            let dark = variant_texture(&ctx, icon, 48, Variant::ClassicImageDark);
+            assert_ne!(light.id(), dark.id());
+            if classic_menus::source(icon).is_some() {
+                let menu = variant_texture(&ctx, icon, 48, Variant::ClassicMenu);
+                assert_ne!(light.id(), menu.id());
+                assert_ne!(dark.id(), menu.id());
+            }
+            assert_ne!(light.id(), texture(&ctx, icon, 48).id());
+            assert_eq!(
+                light.id(),
+                variant_texture(&ctx, icon, 48, Variant::ClassicImageLight).id()
+            );
+        }
     }
 
     #[test]

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+<title>Rotate Custom</title>
+<g fill="none" stroke="#f5f5f5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+<path d="M4 9C6 2 16 2 20 7M16 7H20V3M4 20H20M7 20L17 11" stroke="#60cdff"/><circle cx="12" cy="12" r="2"/>
+</g>
+</svg>

@@ -69,3 +69,12 @@ source is the same SVG as their Classic menu variant; they are not sheet
 adaptations. This brings the registry to 96 IDs, retaining all 91 prior sources,
 with 23 shape variants and 28 menu sources. The generated menu manifest owns
 these five additional sources.
+
+Classic's Image ribbon and transform dropdowns use nine original glyphs with
+paired light/dark sources in [classic-image](classic-image/manifest.json).
+These retain blue accents while changing the outline ink for the current theme.
+Regenerate all 18 SVGs and their manifest with
+`python3 scripts/generate_classic_image_icons.py`. They are variants of existing
+IDs; colored, shape, menu and Image light/dark textures have independent cache
+identities under the same bounds. They are original artwork following the
+supplied Image group, not extracted Windows assets or exact native glyphs.

@@ -1,0 +1,19 @@
+{
+  "provenance": "Original PaintCraft Image ribbon vectors, not extracted Windows assets.",
+  "reference": "docs/temp/paint-references/photos/image.png",
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "icons": [
+    "crop",
+    "remove-background",
+    "resize",
+    "rotate-clockwise",
+    "rotate-counterclockwise",
+    "rotate-180",
+    "rotate-custom",
+    "flip-horizontal",
+    "flip-vertical"
+  ]
+}
