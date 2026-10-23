@@ -11,6 +11,13 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest Selection popup work keeps Rectangle marked independently of the active
+drawing tool and uses a neutral selected row with a leading accent indicator.
+All 188 ordinary UI tests, eight light/dark desktop/compact GPU scenes and strict
+workspace Clippy pass; see
+[the Selection row record](validation/selection-row-surfaces-gpu-2026-10-23/validation.json).
+Existing selection capabilities and the broader incomplete fidelity gates remain.
+
 Latest v11 Selection/Brush controls join their primary/menu targets under one
 selected outline while keeping separate actions and keyboard focus. Caption
 columns stay stable. All 187 ordinary UI tests, sixteen light/dark desktop/compact

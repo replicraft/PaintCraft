@@ -1,0 +1,34 @@
+{
+  "source_commit": "fada9f25e0de077cfae8a60386770e56308ac802",
+  "reference": "docs/temp/paint-references/photos/ima1111ge.png",
+  "changes": "Classic Selection popup uses a neutral rounded selected row with current-response hover/focus/press feedback and its existing 3x22-point leading accent indicator, without a tinted full-row fill or accent perimeter. Rectangle remains checked as the supported selection mode while Pencil or another drawing tool is active, as shown in the reference. Opening the menu does not activate Select; choosing Rectangle still emits the existing tool action. Ordinary egui Button input and selected metadata remain.",
+  "gui": {
+    "passed": 188,
+    "failed": 0,
+    "ignored": 35,
+    "scope": "Full GUI suite. Added light 1x desktop/dark 2x compact repeated-layout checks inspect actual neutral fills, no perimeter stroke, the accent indicator, distinct hover treatment, Rectangle metadata while Pencil stays active, keyboard focus/Enter activation and unchanged document/history. Existing bounds, scrolling, single tooltips, disabled previews and Select All/Deselect publication checks pass. Before log reproduces the tinted row fill."
+  },
+  "gpu": {
+    "passed": 1,
+    "test": "selection_menu::export_selection_row_surfaces",
+    "scope": "Eight actual-app light/dark desktop/compact idle/hover captures show Rectangle mode marked with Pencil active. Escape leaves Pencil active; snapshot/history tickets remain unchanged."
+  },
+  "clippy": "Strict workspace all-targets passed.",
+  "checks": "Formatting, whitespace and source file length checks passed.",
+  "limits": "Rectangle is the currently supported selection mode; this adds no free-form, transparent-selection, inversion or pixel-deletion capability. Shared Classic menu presentation inherits the refinement without historical-skin qualification. Exact native pixel parity, full Windows UI fidelity and OS accessibility remain unqualified. No editing engine or performance change; T15 remains partial.",
+  "sha256": {
+    "after.log.gz": "9ba373f13f7fa0a57a6ab489346ace24810e50a0f39be1d064f989302e5fc90d",
+    "before.log.gz": "e9e757723954718ca60f806ac0f97a647c392d8adaf466d5fa752b20092f1100",
+    "clippy.log.gz": "256e4a450e381afff2caab9e73b4620553da156b3d711d7728f0bc18d8359cba",
+    "dark-compact-hover.png": "e84e17289a2b5468d730f8af73831cbe4e985284ebad7ae77f565cb4ee7eab07",
+    "dark-compact-idle.png": "14022290414e03bb5c429b7aaf9069af35e3d1ef7111f7712d4581aad827b7b5",
+    "dark-desktop-hover.png": "82f4f70530360401616172a60fe11698a3a7472776fcb97886990db285cdbdaf",
+    "dark-desktop-idle.png": "62fb716d364d4d708bbb4a4e2c4656c42714dd73326d5043690869aa002a34f2",
+    "gpu.log.gz": "f15974ecaff13ca0c867b5b65d47391741cd65f7e6e50aeb27749a82b8ac530f",
+    "gui.log.gz": "61b391ef3589b0362f09e883b906a4a7b85be08f07468e7ef46e1cf42338b2c1",
+    "light-compact-hover.png": "cec98590f0cc694cb6558d13d094aacb301b3f19a92081582b258bc26df0f668",
+    "light-compact-idle.png": "302278f508a94b79db3065099798d624c044e4a7f9472e940e3a0fa5ab38bc0d",
+    "light-desktop-hover.png": "863b0ba2a51ecf8c3a332de7ad93e316b0ea32fcbd238ebc1e1d0a8215f6bbe6",
+    "light-desktop-idle.png": "9b897101a3dee0544186dac433ad55d29f88f58909ad60af11a62b250962d067"
+  }
+}
