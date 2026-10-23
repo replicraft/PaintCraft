@@ -211,3 +211,65 @@ fn escape_discards_zoom_drafts_before_reaching_unpublished_canvas_text() {
         assert_eq!(h.state().editor().history_view().ticket, ticket);
     }
 }
+
+#[test]
+fn joined_zoom_selector_and_logarithmic_thumb_preserve_layout_and_history() {
+    use eframe::egui::{Role, epaint::Shape};
+    use paintcraft::settings::{Appearance, ClassicVariant, Settings};
+    for (ppp, appearance) in [(1.0, Appearance::Light), (2.0, Appearance::Dark)] {
+        let dir = scratch("classic-zoom-surfaces");
+        Settings {
+            appearance,
+            classic_variant: Some(ClassicVariant::V11),
+            ..Default::default()
+        }
+        .save(&dir)
+        .unwrap();
+        let mut h = harness_with(App::new(None).with_settings(dir.clone()), ppp, true);
+        h.set_size(Vec2::new(1360.0, 900.0));
+        h.run();
+        let snapshot = h.state().editor().document_snapshot();
+        let ticket = h.state().editor().history_view().ticket;
+        let field = h.get_by_label("Zoom percentage").rect();
+        let presets = h.get_by_label("Zoom presets").rect();
+        assert!(
+            (presets.left() - field.right()).abs() < 0.1,
+            "joined selector: {field:?} / {presets:?}"
+        );
+        assert_eq!(field.height(), presets.height());
+        assert_eq!(field.height(), 30.0);
+        for percent in [12.5, 100.0, 500.0, 1000.0] {
+            h.get_by_label("Canvas zoom").set_value_accesskit(percent);
+            h.run();
+            assert!(
+                (h.state().canvas_rect().unwrap().width() * ppp - percent as f32 * 10.0).abs()
+                    < 0.1
+            );
+            let rail = h.get_by_role_and_label(Role::Slider, "Canvas zoom").rect();
+            let circles: Vec<_> = h
+                .output()
+                .shapes
+                .iter()
+                .filter_map(|shape| match &shape.shape {
+                    Shape::Circle(circle) if rail.contains(circle.center) => Some(circle),
+                    _ => None,
+                })
+                .collect();
+            let shell = circles.iter().find(|circle| circle.radius > 10.0).unwrap();
+            let center = circles
+                .iter()
+                .find(|circle| (5.0..=7.0).contains(&circle.radius))
+                .unwrap();
+            assert!(
+                shell.center.distance(center.center) < 0.01,
+                "logarithmic center must follow egui at {percent}%"
+            );
+            assert!(center.fill.b() > center.fill.r());
+            assert_eq!(h.get_by_label("Zoom percentage").rect(), field);
+        }
+        assert!(h.state().editor().document().same_semantics(&snapshot));
+        assert_eq!(h.state().editor().history_view().ticket, ticket);
+        drop(h);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+}

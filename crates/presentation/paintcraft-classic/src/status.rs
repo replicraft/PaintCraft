@@ -5,8 +5,6 @@ use paintcraft_ui::{
     icons::Icon,
 };
 
-const ZOOM_WIDTH: f32 = 340.0;
-
 /// Reserve chrome before canvas layout; paint it afterward with current values.
 pub fn height(ui: &egui::Ui, document_open: bool) -> f32 {
     if document_open && ui.available_width() < 860.0 {
@@ -43,8 +41,14 @@ pub fn contents(
     let narrow = width < 860.0;
     let metrics_width = if narrow { width * 0.65 } else { 416.0 };
     let gap = ui.spacing().item_spacing.x;
-    let message_width =
-        (width - metrics_width - if narrow { gap } else { ZOOM_WIDTH + gap * 2.0 }).max(0.0);
+    let message_width = (width
+        - metrics_width
+        - if narrow {
+            gap
+        } else {
+            super::zoom::width(ui) + gap * 2.0
+        })
+    .max(0.0);
     ui.allocate_ui_with_layout(
         Vec2::new(width, 30.0),
         Layout::left_to_right(Align::Center),
