@@ -12,6 +12,8 @@ pub use rulers::RULER_SIZE;
 mod control_surface;
 pub use control_surface::button as selected_button;
 mod dropdowns;
+mod form_controls;
+pub use form_controls::style as form_control_style;
 mod image_menus;
 pub mod layers;
 mod menus;

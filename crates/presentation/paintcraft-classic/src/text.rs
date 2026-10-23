@@ -67,8 +67,7 @@ pub fn text_options(
                         ui.separator();
                         ui.scope(|ui| {
                             ui.spacing_mut().icon_width = 24.0;
-                            ui.visuals_mut().widgets.inactive.bg_stroke =
-                                egui::Stroke::new(1.0, ui.visuals().weak_text_color());
+                            crate::form_controls::style(ui);
                             ui.checkbox(&mut options.background_fill, "Background fill")
                                 .on_hover_text("Fill the text background with the secondary color");
                         });

@@ -96,6 +96,7 @@ impl App {
                     self.fonts.families.len(),
                     width,
                     body_height,
+                    classic,
                 );
             } else {
                 ui.allocate_ui_with_layout(
@@ -117,6 +118,7 @@ impl App {
                             self.fonts.families.len(),
                             content_width,
                             body_height,
+                            classic,
                         );
                     },
                 );
@@ -221,9 +223,19 @@ fn navigation(ui: &mut egui::Ui, current: &mut Page, sidebar: bool, classic: boo
     }
 }
 
-fn content(ui: &mut egui::Ui, draft: &mut SettingsDraft, fonts: usize, width: f32, height: f32) {
+fn content(
+    ui: &mut egui::Ui,
+    draft: &mut SettingsDraft,
+    fonts: usize,
+    width: f32,
+    height: f32,
+    classic: bool,
+) {
     ui.allocate_ui_with_layout(egui::vec2(width, height), egui::Layout::top_down(egui::Align::Min), |ui| {
         ui.set_width(width);
+        if classic {
+            paintcraft_classic::form_control_style(ui);
+        }
         egui::ScrollArea::vertical().id_salt(("settings-page", draft.page))
             .max_height(height).auto_shrink([false, false]).show(ui, |ui| {
                 match draft.page {

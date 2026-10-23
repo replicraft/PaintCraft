@@ -313,3 +313,6 @@ mod popup_stability;
 
 #[path = "gui/settings_surfaces.rs"]
 mod settings_surfaces;
+
+#[path = "gui/form_controls.rs"]
+mod form_controls;

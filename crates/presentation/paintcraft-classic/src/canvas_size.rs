@@ -68,6 +68,7 @@ pub fn canvas_size_dialog(
             .max_height((height - 124.0).max(60.0))
                 .auto_shrink([false, true])
             .show(ui, |ui| {
+                crate::form_controls::style(ui);
                 egui::Frame::group(ui.style())
                     .corner_radius(6)
                     .inner_margin(12)
