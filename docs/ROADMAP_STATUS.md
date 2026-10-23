@@ -11,6 +11,14 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest Classic v11 Tools use six independently cached outline SVGs and 40-point
+controls, with medium-width spacing that keeps Layers reachable. All 168 normal
+UI tests, eight SVG/cache tests, light/dark GPU scenes and strict workspace
+Clippy pass; see [the Tools record](validation/classic-tools-gpu-2026-10-23/validation.json).
+The text toolbar also has refined spacing and a font-family chevron; see
+[its record](validation/text-toolbar-spacing-2026-10-23/validation.json).
+Picker/magnifier remain disabled and T15 remains partial.
+
 Latest Classic Selection work bounds popup width, uses distinct outline glyphs
 and improves text contrast. V11 selection no longer adds a duplicate toolbar row
 or shifts the canvas. All 168 normal UI tests, SVG/cache/contact-sheet checks,

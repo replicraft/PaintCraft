@@ -983,3 +983,11 @@ remain open. Shared Classic popup styling is not historical-skin qualification.
 The text bar now gives the family, size, formatting, alignment and background groups the spacing shown in `mspaint-text-settings.png`. Its rounded panel has 20-point horizontal and 10-point vertical insets; the background checkbox is 24 points, and the family picker uses a thin outline chevron. The existing 40-point controls, searchable installed-font list, staged size entry and editable canvas text behavior are preserved.
 
 Validation: 168 UI tests passed (19 opt-in tests ignored), including narrow scrolling, repeated layout, font list virtualization and cancellation coverage. Light/dark GPU theme exports and strict Classic Clippy passed, along with formatting and source-length checks. Raw captures and logs: `docs/validation/text-toolbar-spacing-2026-10-23/validation.json`. This is a presentation refinement; native Windows fidelity and remaining text semantics are still incomplete.
+
+### V11 Tools outline artwork and medium ribbon layout (2026-10-23)
+
+The six Tools controls now use original tintable SVGs for Pencil, Fill, Text, Eraser, Color picker and Magnifier. These are distinct from the colored sheet and the menu glyphs; the cache includes their variant. The v11 controls have centered 24-point artwork, 40-point targets, theme tint and selected outlines. Picker/magnifier stay disabled with their existing availability hints. Historical skins and Studio retain their existing tool artwork.
+
+At medium widths below 1200 points, group gaps tighten to keep the complete ribbon and Layers reachable. Larger windows keep the roomier spacing; small windows retain horizontal scrolling. An initial wider-button layout broke medium-width Layers access and was corrected before committing.
+
+Validation: 168 normal UI tests pass (19 opt-in tests ignored), eight ordinary SVG/cache tests pass, both light/dark GPU theme exports pass, and strict workspace Clippy passes. Tests cover actual centered glyph rectangles, target sizes and tool routing without history publication under repeated layout. The six sources regenerate byte-identically and render with transparency/tint at four densities. Raw scenes and logs: `docs/validation/classic-tools-gpu-2026-10-23/validation.json`. Full Windows fidelity and unavailable tool semantics remain open.

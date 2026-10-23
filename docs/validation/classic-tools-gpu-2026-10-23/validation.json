@@ -1,0 +1,27 @@
+{
+  "source_commit": "1814e0b9ca16fe61123a315bce951ce21f96de64",
+  "assets_commit": "0538962",
+  "references": [
+    "docs/temp/paint-references/photos/image.png",
+    "docs/temp/paint-references/photos/mspaint-text-settings.png"
+  ],
+  "changes": "Six original monochrome tool vectors, independently cached from colored and menu art. Classic v11 Tools use centered 24-point glyphs in 40-point targets with selected outlines. Medium windows below 1200 points use tighter group gaps so Layers stays reachable; wider windows retain their spacing.",
+  "validation": {
+    "gui": "168 passed, 19 ignored. Tools geometry/tint and selection routing are exercised at 1x light/2x dark with repeated layout; existing layers, strokes, text, drafts and history tests pass.",
+    "icons": "8 ordinary tests passed, 1 contact-sheet export ignored. New six-vector test verifies monochrome alpha at four sizes and distinct cache identities. Generator reproduces identical bytes.",
+    "gpu": "appearance::export_theme_previews passed; current light/dark workspace and text scenes archived.",
+    "clippy": "Strict workspace all-targets passed.",
+    "checks": "Formatting, whitespace and source length checks passed."
+  },
+  "limits": "Color picker and magnifier remain disabled previews. No editing-engine or platform input changes, Windows parity or performance claim. Existing colored art remains available to Studio and historical skins.",
+  "sha256": {
+    "classic-dark-text.png": "a600c6337c28defcd0097379a79cf5c8fce19a0d78e2ec44a01e48ea68291fd8",
+    "classic-dark.png": "4efea233b8d49439db0c2fd36fbd0836c2ef6119784b51ea9a2ebcc8254872f3",
+    "classic-light-text.png": "1616e45fb2ceb1f1e1115c6f2019efa7b3126411b4f513704e0534062af84109",
+    "classic-light.png": "dd8e300f2953ef32667438669aa10e219b9fe44d845b44d43973887f6b7fddb0",
+    "clippy.log.gz": "8be04cf7ae9b5602b6edb9491626a9a1241b065ac405afbe28f3d846ba569692",
+    "gpu.log.gz": "e8bdf5a94733c7ea6e6b1dcfce66d75ba7e786a8da9043e422cb6e7c8e7b05c4",
+    "gui.log.gz": "04730bab9d063622a763c56a4663443d1bee137a3aac182494623cdf84735582",
+    "icons.log.gz": "89b5895ae70b3b15db04ccb72b2b5af04300bad91a61ae90ff9f3dbcc11af65f"
+  }
+}
