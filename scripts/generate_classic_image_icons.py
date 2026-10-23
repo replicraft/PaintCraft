@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Original Classic Image ribbon vectors; theme ink retains blue accents."""
+"""Original Classic ribbon vectors; theme ink retains blue accents."""
 from pathlib import Path
 import json
 
@@ -12,6 +12,7 @@ def path(d, accent=False):
 
 rotate = path('M5 8C6 3 15 1 19 6M15 6H19V2') + '<path d="M5 20L17 15L17 20Z" fill="#60cdff" stroke="none"/>'
 icons = {
+    'layers': path('M2 8L12 2L22 8L12 14ZM2 12L12 18L22 12') + path('M2 16L12 22L22 16', True),
     'crop': path('M6 2V18H22M2 6H18V22'),
     'remove-background': path('M2 7L7 2M2 12L12 2M2 17L17 2M2 22L6 18M12 22L22 12M17 22L22 17M22 7L19 10') + '<rect x="8" y="8" width="8" height="8" rx="1"/>' + path('M12 6V18M6 12H18', True),
     'resize': '<rect x="2" y="8" width="14" height="14" rx="2" stroke-dasharray="3 3"/>' + path('M3 19L7 15L11 19L14 16') + '<circle cx="11" cy="12" r="1"/>' + path('M10 3H21V14M21 3L12 12', True),
@@ -33,7 +34,7 @@ for theme, ink in [('light', '#181818'), ('dark', '#f5f5f5')]:
 </svg>
 ''')
 (OUT / 'manifest.json').write_text(json.dumps({
-    'provenance': 'Original PaintCraft Image ribbon vectors, not extracted Windows assets.',
+    'provenance': 'Original PaintCraft accented ribbon vectors, not extracted Windows assets.',
     'reference': 'docs/temp/paint-references/photos/image.png',
     'themes': ['light', 'dark'],
     'icons': list(icons),

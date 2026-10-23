@@ -1,8 +1,12 @@
-//! Original theme-aware Image controls; accent colors remain independent of ink.
+//! Original accented ribbon controls; accent colors remain independent of ink.
 use super::Icon;
 
 pub(super) fn source(icon: Icon, dark: bool) -> Option<&'static [u8]> {
     Some(match (icon, dark) {
+        (Icon::Layers, false) => {
+            include_bytes!("../../assets/icons/classic-image/layers-light.svg")
+        }
+        (Icon::Layers, true) => include_bytes!("../../assets/icons/classic-image/layers-dark.svg"),
         (Icon::Crop, false) => include_bytes!("../../assets/icons/classic-image/crop-light.svg"),
         (Icon::Crop, true) => include_bytes!("../../assets/icons/classic-image/crop-dark.svg"),
         (Icon::RemoveBackground, false) => {

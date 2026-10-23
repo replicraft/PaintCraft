@@ -98,6 +98,18 @@
       "file": "lasso-select.svg"
     },
     {
+      "name": "add-layer",
+      "file": "add-layer.svg"
+    },
+    {
+      "name": "move-layer-up",
+      "file": "move-layer-up.svg"
+    },
+    {
+      "name": "move-layer-down",
+      "file": "move-layer-down.svg"
+    },
+    {
       "name": "delete-layer",
       "file": "delete-layer.svg"
     },

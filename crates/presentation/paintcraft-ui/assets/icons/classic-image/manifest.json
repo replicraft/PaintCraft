@@ -1,11 +1,12 @@
 {
-  "provenance": "Original PaintCraft Image ribbon vectors, not extracted Windows assets.",
+  "provenance": "Original PaintCraft accented ribbon vectors, not extracted Windows assets.",
   "reference": "docs/temp/paint-references/photos/image.png",
   "themes": [
     "light",
     "dark"
   ],
   "icons": [
+    "layers",
     "crop",
     "remove-background",
     "resize",

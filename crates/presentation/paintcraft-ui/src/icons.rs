@@ -161,7 +161,7 @@ pub fn classic_tool_image(
     egui::Image::new((texture.id(), egui::Vec2::splat(points))).tint(ink)
 }
 
-/// Image ribbon/transform art preserves blue accents in light and dark themes.
+/// Accented ribbon/transform art preserves blue details in light and dark themes.
 pub fn classic_image(ctx: &Context, icon: Icon, points: f32, dark: bool) -> egui::Image<'static> {
     if classic_image::source(icon, dark).is_none() {
         return image(ctx, icon, points);
@@ -343,7 +343,7 @@ mod tests {
             .into_iter()
             .filter(|icon| classic_menus::source(*icon).is_some())
             .collect();
-        assert_eq!(menus.len(), 35);
+        assert_eq!(menus.len(), 38);
         for icon in menus {
             let source = std::str::from_utf8(classic_menus::source(icon).unwrap()).unwrap();
             for forbidden in ["<image", "href=", "<text", "Gradient"] {
@@ -389,7 +389,7 @@ mod tests {
             .into_iter()
             .filter(|icon| classic_image::source(*icon, false).is_some())
             .collect();
-        assert_eq!(icons.len(), 9);
+        assert_eq!(icons.len(), 10);
         for icon in icons {
             for dark in [false, true] {
                 let source =
@@ -404,6 +404,13 @@ mod tests {
                 let dark = rasterize_variant(icon, size, Variant::ClassicImageDark);
                 assert!(light.pixels.iter().any(|pixel| pixel.a() > 0));
                 assert!(light.pixels.iter().any(|pixel| pixel.a() == 0));
+                if icon == Icon::Layers {
+                    assert_eq!(
+                        light.pixels[((size * 8 / 24) * size + size / 2) as usize].a(),
+                        0,
+                        "the layer stack must have open outline interiors"
+                    );
+                }
                 for (a, b) in light.pixels.iter().zip(&dark.pixels) {
                     assert_eq!(a.a(), b.a(), "{} theme coverage must agree", icon.name());
                 }

@@ -46,6 +46,11 @@ pub(super) fn source(icon: Icon) -> Option<&'static [u8]> {
         }
         Icon::LassoSelect => include_bytes!("../../assets/icons/classic-menus/lasso-select.svg"),
         Icon::DeleteLayer => include_bytes!("../../assets/icons/classic-menus/delete-layer.svg"),
+        Icon::AddLayer => include_bytes!("../../assets/icons/classic-menus/add-layer.svg"),
+        Icon::MoveLayerUp => include_bytes!("../../assets/icons/classic-menus/move-layer-up.svg"),
+        Icon::MoveLayerDown => {
+            include_bytes!("../../assets/icons/classic-menus/move-layer-down.svg")
+        }
         _ => return None,
     })
 }
