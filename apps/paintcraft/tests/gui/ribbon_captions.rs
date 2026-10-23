@@ -56,7 +56,9 @@ fn classic_ribbon_has_legible_single_captions_and_icon_only_primary_tools() {
             let rect = h.get_by_role_and_label(Role::Button, label).rect();
             assert_eq!(rect.size(), Vec2::new(64.0, 60.0));
             assert!(h.output().shapes.iter().any(|shape| matches!(&shape.shape, Shape::Rect(image)
-                if image.brush.is_some() && image.rect.size() == Vec2::splat(32.0) && rect.contains_rect(image.rect) && image.rect.center() == rect.center())));
+                if image.brush.is_some() && image.rect.size() == Vec2::splat(32.0) && rect.contains_rect(image.rect) && image.rect.center() == rect.center()
+                && image.fill.r() == image.fill.g() && image.fill.g() == image.fill.b()
+                && (if appearance == Appearance::Dark {image.fill.r() >= 220} else {image.fill.r() <= 40}))));
             assert!(!h.output().shapes.iter().any(|shape| matches!(&shape.shape, Shape::Text(text)
                 if text.galley.job.text == label && rect.contains_rect(text.visual_bounding_rect()))),
                 "{label} must not repeat its name inside the primary button");

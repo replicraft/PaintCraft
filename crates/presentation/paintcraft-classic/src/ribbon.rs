@@ -146,10 +146,20 @@ fn group(ui: &mut egui::Ui, label: &str, contents: impl FnOnce(&mut egui::Ui)) {
 // Primary tool names stay accessible and in tooltips; the group is captioned once.
 fn primary_tool(ui: &mut egui::Ui, state: &mut Controls, tool: Tool, icon: Icon) -> bool {
     let selected = state.tool == tool;
+    let icon = if tool == Tool::Select {
+        Icon::RectangleSelect
+    } else {
+        icon
+    };
     let response = ui.add(
         egui::Button::new((
             egui::Atom::grow(),
-            paintcraft_ui::icons::image(ui.ctx(), icon, 32.0),
+            paintcraft_ui::icons::classic_menu_image(
+                ui.ctx(),
+                icon,
+                32.0,
+                ui.visuals().strong_text_color(),
+            ),
             egui::Atom::grow(),
         ))
         .min_size(Vec2::new(64.0, 60.0))
