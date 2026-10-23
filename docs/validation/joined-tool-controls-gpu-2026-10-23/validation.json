@@ -1,0 +1,46 @@
+{
+  "source_commit": "788fe7b4fc78474c4209dc0731a5a2b792c852c0",
+  "references": [
+    "docs/temp/paint-references/photos/image.png",
+    "docs/temp/paint-references/photos/i11mage.png",
+    "docs/temp/paint-references/photos/ima1111ge.png"
+  ],
+  "changes": "Classic v11 Selection/Brush primary controls use a joined 48-point-wide surface with a 48x48 main target and contiguous 48x20 menu target. One neutral outer fill/accent boundary spans both when selected. Arrow hover/open feedback remains local to the lower target. The group reserves its existing 64-point caption column, with 12-point top inset. Ordinary egui Button/MenuButton retain distinct labels, tool selection, popup ownership, focus and dismissal. Existing Selection/Brush menu contents are reused; the neutral fill function is shared with other Classic controls.",
+  "gui": {
+    "passed": 187,
+    "failed": 0,
+    "ignored": 34,
+    "scope": "Full GUI suite. New light 1x desktop/dark 2x compact repeated-layout test checks exact joined bounds, shared selected surface, independent main/menu actions, arrow open metadata, keyboard Space activation, Escape, and document/history preservation. Existing caption/glyph checks now require a centered 32-point glyph in the new 48-point main target; neutral-surface checks inspect the combined bounds. Tooltip, menu scrolling, brush presets and selection workflows remain covered. The before log reproduces the former 64x60 main target."
+  },
+  "gpu": {
+    "passed": 1,
+    "test": "split_controls::export_classic_split_controls",
+    "scope": "Sixteen actual-app light/dark desktop/compact captures show selected/open Selection and Brush controls. Each menu is cancelled; snapshot/history tickets are unchanged."
+  },
+  "clippy": "Strict workspace all-targets passed.",
+  "checks": "Formatting, whitespace and source file length checks passed.",
+  "limits": "This refines v11 trigger geometry, shared outlines and interaction; it does not qualify full native Windows/historical fidelity or OS accessibility. Selection popup rows still need reference-specific selection treatment. The same existing tool/media capabilities and editing workflows remain; no renderer or performance claim. T15 remains partial.",
+  "sha256": {
+    "after.log.gz": "c143f8bc706822f6c25f15fcd1beee9f41fce82432499dc34bb7511ab315db5c",
+    "before.log.gz": "ef4828e121d7f0d1ea448ee22366f9e3956a2cb83c2d8c350fd6e6f4400bb027",
+    "clippy.log.gz": "5f4576fee1cfab1e931e17b26be1ff97bad9fb927bec6e436f477839477a424b",
+    "dark-compact-brush-open.png": "4947204fdb689b88a58dafbeb19f01c3a7c1eeb2db325a489a77cddc422f8c18",
+    "dark-compact-brush-selected.png": "a4d1a370cd3912144651b14a1e28165a40832e974ba46c48ffe8a5c2f9be60f1",
+    "dark-compact-selection-open.png": "719241f024291345006cbfc9750b454ecb1dd8095944a2499fef9b0bce187678",
+    "dark-compact-selection-selected.png": "4b8b7e38ad0c5072f18925f4e2c0b2c2215c4edb4981ec86f512d2a09d581e67",
+    "dark-desktop-brush-open.png": "b63de340812c237c3c7085314bf19e3a0294e945ee9c188ed5e11b2f600eae63",
+    "dark-desktop-brush-selected.png": "b0e24a8074422083d159becd1ea7865a51053533b030fbdf780107e1823de55a",
+    "dark-desktop-selection-open.png": "30f52c5889ef3100a6bc252a337bdc5a6d802376e6ee486b26c723b7fd6cf8a6",
+    "dark-desktop-selection-selected.png": "314a6878e838d8b6695ba6a5e4c05af85c3ebb62227e7f67812788e2d59b4348",
+    "gpu.log.gz": "4ea4433ae61f194f238c35d8bb0c759ee861a025cd159bfd5499494615b0d87a",
+    "gui.log.gz": "c7987260bce9fc172dd4e459d228a9b6af414ad394d7681033747682868e57cd",
+    "light-compact-brush-open.png": "3ae5e6893af63bb0fa7e385c5473a7c1307fadc74720cb134b9d454d7ae87702",
+    "light-compact-brush-selected.png": "2eeaffc3e63aa061a47bb5bd220c7bf2484c2cbbd33929c48282b0bd50d20767",
+    "light-compact-selection-open.png": "19e0f5238da3cd78dba7ca1b769c546e917ede29ee14b3940006dac59b53b2bb",
+    "light-compact-selection-selected.png": "7308e32e4d30bc8df8a750b1716ede235bedc47494173499d7b04ee000021355",
+    "light-desktop-brush-open.png": "84c1d108c354299225074aa76fdb4ffd85cb2879a180c8edf7d61728df4ade39",
+    "light-desktop-brush-selected.png": "4cc65a0b08dc20de35e5bb0e4eab955fd3776c273971a31f45cb9fbdd96bdcfa",
+    "light-desktop-selection-open.png": "b79b00e1df09e7e5f77a11810144231d6bd0cbc6172c5c9e16daf119cd001024",
+    "light-desktop-selection-selected.png": "d2bb5c5b13e0e5488757d24e1d119bf2d25614e9bb7265804a7b41f631d7d932"
+  }
+}

@@ -11,6 +11,13 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest v11 Selection/Brush controls join their primary/menu targets under one
+selected outline while keeping separate actions and keyboard focus. Caption
+columns stay stable. All 187 ordinary UI tests, sixteen light/dark desktop/compact
+GPU scenes and strict workspace Clippy pass; see
+[the joined control record](validation/joined-tool-controls-gpu-2026-10-23/validation.json).
+Popup-specific selection treatment and full native fidelity remain partial.
+
 Latest Classic control styling uses neutral selected surfaces with accent outlines
 and distinct current-response hover/press feedback. Alignment glyph contrast is
 stronger while text-selection and popup-choice highlights stay accented. All 186
