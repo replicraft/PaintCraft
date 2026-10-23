@@ -191,6 +191,13 @@ add('edit-colors', ''.join(segments)
     + line('M46 13H56M51 8V18', '#128ff5', 2))
 add('pointer', path('M13 4L13 52L25 41L35 61L46 55L36 35H56Z', 'url(#paper)')
     + line('M19 17L19 38', '#59ceff', 2))
+# Original tool-control symbols, independent of the brush and blur-effect assets.
+waves = 'M8 17C18 9 34 25 56 17M8 31C18 23 34 39 56 31M8 45C18 37 34 53 56 45'
+add('stroke-size', line(waves, '#253241', 7) + line(waves, '#f4f4f4', 3))
+drop = 'M32 5C28 12 12 28 12 41A20 20 0 0 0 52 41C52 28 36 12 32 5Z'
+add('opacity', '<defs><clipPath id="opacity-drop"><path d="'+drop+'"/></clipPath></defs>'
+    + rect(10, 38, 44, 24, '#f4f4f4', 0, 'stroke="none" clip-path="url(#opacity-drop)"')
+    + line(drop, '#253241', 7) + line(drop, '#f4f4f4', 3))
 OUT.mkdir(parents=True,exist_ok=True)
 manifest=[]
 for i,(name,body) in enumerate(icons):

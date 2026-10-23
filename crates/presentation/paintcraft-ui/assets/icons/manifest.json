@@ -607,5 +607,19 @@
     "source_row": null,
     "source_column": null,
     "file": "pointer.svg"
+  },
+  {
+    "name": "stroke-size",
+    "label": "Stroke Size",
+    "source_row": null,
+    "source_column": null,
+    "file": "stroke-size.svg"
+  },
+  {
+    "name": "opacity",
+    "label": "Opacity",
+    "source_row": null,
+    "source_column": null,
+    "file": "opacity.svg"
   }
 ]
