@@ -6,6 +6,8 @@ fn content<R>(
     left_clearance: f32,
     paint: impl FnOnce(&mut egui::Ui, egui::Response, egui::Painter) -> R,
 ) -> R {
+    // Scroll cues belong outside image pixels, even when the image is clipped.
+    ui.spacing_mut().scroll.fade.strength = 0.0;
     egui::ScrollArea::both()
         .id_salt(("classic-canvas", id))
         .auto_shrink([false, false])

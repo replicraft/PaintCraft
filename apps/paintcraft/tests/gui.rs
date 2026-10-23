@@ -280,3 +280,6 @@ mod opacity_cancel;
 
 #[path = "gui/layer_previews.rs"]
 mod layer_previews;
+
+#[path = "gui/canvas_fades.rs"]
+mod canvas_fades;
