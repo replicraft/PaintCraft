@@ -1,0 +1,24 @@
+{
+  "source_commit": "0f279c03fa6c2ee587f502eca41c34628e886a49",
+  "baseline_commit": "4358f26",
+  "reference": "docs/temp/paint-references/photos/ima2ge.png",
+  "gui": {
+    "passed": 165,
+    "failed": 0,
+    "ignored": 18
+  },
+  "gpu": "workspace_view::render_classic_workspace_view_for_review passed; light/dark View and Zoom scenes rendered through wgpu. Raw View comparisons archived.",
+  "clippy": "workspace all-targets with -D warnings passed",
+  "scope": "Classic v11 checkable rows use a fixed 22-point marker atom matching the icon column. Full screen displays its existing outline action glyph while unchecked and a check when selected. Accessibility selection and action routing retained. Colorful/default and older skin title formatting retained.",
+  "regression": "Actual first non-whitespace glyph positions align for Zoom, Rulers, Gridlines, Status bar and Full screen before/after toggle. Unchecked Full screen paints a 22-point image; clicking emits Fullscreen(true), updates selected accessibility state, and preserves document semantics/history. Existing F11/Escape tests pass.",
+  "limits": "Client scene and interaction qualification only. Native menu/desktop appearance and full Windows parity remain unqualified. Thumbnail and extension-row presentation, import/recent/property glyph identities and unavailable operations remain open.",
+  "sha256": {
+    "after-dark-view.png": "d3ce183361403bef0554d39b05f78e2a5acfd0ec57a3de8e8a2c89cfe8eb706e",
+    "after-light-view.png": "7e13e848abe0f1f85cf97675438f5c13e70dfadc9c70fcbe219159cdf0144fbd",
+    "before-dark-view.png": "45770edf496a5daca137acd43b7e740380cfa8661c4dd5cfcf869a16aa88af43",
+    "before-light-view.png": "e6c76c95658330edbb61ea3c6dc50b233eb37bb3b5abe6e32edf89d4e629b5ab",
+    "clippy.log.gz": "a577d67d0a94a87fd69689d9425d3f9b7ba17f2f1d81c771467810c0b6b98b0c",
+    "gpu.log.gz": "e96a85ef1d315280aa7ac599921f6a0a58e93257b8ea0a78aa6c9d9fb6f51f1d",
+    "gui.log.gz": "0a9663f6d3a9e8520c8e374c7229628e6c787d2d2ee6593f56bd8e3351d10f21"
+  }
+}

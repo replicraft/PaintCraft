@@ -840,3 +840,13 @@ cache checks prevent colored/outline aliasing. The Save as pencil has a local
 mask to separate underlying disk strokes. Full reference parity remains partial:
 import/recent/property glyph identities, thumbnail/fullscreen marker presentation,
 native menus and unavailable operations remain open.
+
+Classic v11 View checkboxes now reserve the same fixed icon column as Zoom.
+Full screen retains its outline arrows while unchecked and shows a check while
+selected. A regression compares actual visible glyph positions before/after
+toggling, verifies the unchecked image and selected accessibility state, and
+checks the viewport command without document/history mutation. All 165 normal
+GUI tests and strict workspace Clippy pass. Fresh light/dark GPU View captures
+are archived in [the marker record](validation/view-markers-gpu-2026-10-22/validation.json).
+Thumbnail and extension-row presentation, native appearance and full reference
+parity remain open.

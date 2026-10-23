@@ -11,6 +11,12 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest Classic View menu refinement aligns toggle labels with the icon column
+and retains Full screen arrows until checked. All 165 normal GUI tests, fresh
+light/dark GPU scenes and strict workspace Clippy pass; see
+[the marker record](validation/view-markers-gpu-2026-10-22/validation.json).
+Native appearance and complete reference fidelity remain partial.
+
 Current focus is Classic UI fidelity and themes. The [UI progress record](CLASSIC.md)
 covers the palette, floating tool panels, document titles, shape icons, text options,
 File/Edit menus and compact dropdowns. Settings now uses grouped sections, responsive
