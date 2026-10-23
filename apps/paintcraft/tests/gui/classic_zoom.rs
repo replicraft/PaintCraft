@@ -85,7 +85,7 @@ fn classic_zoom_popup_has_reference_rows_and_scrolls_on_short_displays() {
         );
         h.get_by_label("Zoom presets").click();
         h.run();
-        let mut previous_bottom = 0.0;
+        let mut previous_bottom = None;
         for label in [
             "1000%", "900%", "800%", "700%", "600%", "500%", "400%", "300%", "200%", "100%", "75%",
             "50%", "25%", "12.5%",
@@ -93,8 +93,10 @@ fn classic_zoom_popup_has_reference_rows_and_scrolls_on_short_displays() {
             let rect = h.get_by_role_and_label(Role::Button, label).rect();
             assert_eq!(rect.height(), 40.0);
             assert!(rect.width() >= 100.0);
-            assert!(rect.top() >= previous_bottom, "descending order: {label}");
-            previous_bottom = rect.bottom();
+            if let Some(bottom) = previous_bottom {
+                assert!(rect.top() >= bottom, "descending order: {label}");
+            }
+            previous_bottom = Some(rect.bottom());
         }
         h.get_by_label("1000%").scroll_to_me();
         h.run();
@@ -271,5 +273,127 @@ fn joined_zoom_selector_and_logarithmic_thumb_preserve_layout_and_history() {
         assert_eq!(h.state().editor().history_view().ticket, ticket);
         drop(h);
         std::fs::remove_dir_all(dir).unwrap();
+    }
+}
+
+#[test]
+fn zoom_presets_open_near_the_current_value_with_left_aligned_labels() {
+    use eframe::egui::{Role, epaint::Shape};
+    use paintcraft::settings::{Appearance, ClassicVariant, Settings};
+    for (size, ppp, appearance) in [
+        (Vec2::new(1360.0, 900.0), 1.0, Appearance::Light),
+        (Vec2::new(480.0, 360.0), 2.0, Appearance::Dark),
+    ] {
+        let dir = scratch("zoom-popup-opening");
+        Settings {
+            appearance,
+            classic_variant: Some(ClassicVariant::V11),
+            ..Default::default()
+        }
+        .save(&dir)
+        .unwrap();
+        let mut h = harness_with(App::new(None).with_settings(dir.clone()), ppp, true);
+        h.set_size(size);
+        h.run();
+        let snapshot = h.state().editor().document_snapshot();
+        let ticket = h.state().editor().history_view().ticket;
+        for (value, nearest) in [("73%", "75%"), ("1000%", "1000%"), ("12.5%", "12.5%")] {
+            enter_percent(&mut h, value);
+            let canvas = h.state().canvas_rect().unwrap();
+            h.get_by_label("Zoom presets").click();
+            h.run();
+            let row = h.get_by_role_and_label(Role::Button, nearest).rect();
+            let painted = h
+                .output()
+                .shapes
+                .iter()
+                .find_map(|shape| {
+                    if let Shape::Text(text) = &shape.shape
+                        && text.galley.job.text == nearest
+                        && row.contains(text.pos)
+                    {
+                        Some((shape.clip_rect, text))
+                    } else {
+                        None
+                    }
+                })
+                .expect("preset label is painted");
+            assert!(
+                painted.0.contains_rect(row),
+                "{value}: current row {row:?} outside {:?}",
+                painted.0
+            );
+            let inset = painted.1.pos.x - row.left();
+            assert!(
+                (10.0..=18.0).contains(&inset),
+                "left-aligned row inset: {inset}"
+            );
+            assert_eq!(row.height(), 40.0);
+            if value == "73%" {
+                h.get_by_label("1000%").scroll_to_me();
+                h.run();
+                let first = h.get_by_role_and_label(Role::Button, "1000%").rect();
+                assert!(first.top() >= 0.0 && first.bottom() <= size.y);
+                h.key_press(Key::Escape);
+                h.run();
+                h.get_by_label("Zoom presets").click();
+                h.run();
+                let nearest = h.get_by_role_and_label(Role::Button, nearest).rect();
+                assert!(h.output().shapes.iter().any(|shape| matches!(&shape.shape,
+                    Shape::Text(text) if text.galley.job.text == "75%"
+                        && nearest.contains(text.pos) && shape.clip_rect.contains_rect(nearest))));
+            }
+            // Opening and scrolling are view-only. Escape retains the typed zoom.
+            h.key_press(Key::Escape);
+            h.run();
+            assert_eq!(h.state().canvas_rect().unwrap(), canvas);
+            assert!(h.state().editor().document().same_semantics(&snapshot));
+            assert_eq!(h.state().editor().history_view().ticket, ticket);
+        }
+        drop(h);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+}
+
+#[test]
+#[ignore = "Explicit GPU zoom popup review"]
+fn export_zoom_popup_opening() {
+    use paintcraft::settings::{Appearance, ClassicVariant, Settings};
+    let output = std::env::temp_dir().join("paintcraft-zoom-popup-opening");
+    std::fs::create_dir_all(&output).unwrap();
+    for (appearance, theme) in [(Appearance::Light, "light"), (Appearance::Dark, "dark")] {
+        for (size, name) in [
+            (Vec2::new(1360.0, 900.0), "desktop"),
+            (Vec2::new(480.0, 360.0), "compact"),
+        ] {
+            let dir = scratch("zoom-popup-review");
+            Settings {
+                appearance,
+                classic_variant: Some(ClassicVariant::V11),
+                ..Default::default()
+            }
+            .save(&dir)
+            .unwrap();
+            let mut h = harness_with(App::new(None).with_settings(dir.clone()), 1.0, false);
+            h.set_size(size);
+            h.run();
+            let snapshot = h.state().editor().document_snapshot();
+            let ticket = h.state().editor().history_view().ticket;
+            for value in ["73", "1000", "12.5"] {
+                enter_percent(&mut h, value);
+                h.get_by_label("Zoom presets").click();
+                h.run();
+                h.render()
+                    .unwrap()
+                    .save(output.join(format!("{theme}-{name}-{value}.png")))
+                    .unwrap();
+                h.key_press(Key::Escape);
+                h.run();
+                assert!(h.state().editor().document().same_semantics(&snapshot));
+                assert_eq!(h.state().editor().history_view().ticket, ticket);
+            }
+            drop(h);
+            std::fs::remove_dir_all(dir).unwrap();
+        }
     }
 }

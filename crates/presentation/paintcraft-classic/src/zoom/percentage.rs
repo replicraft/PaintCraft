@@ -69,68 +69,7 @@ pub(super) fn show(ui: &mut egui::Ui, context: Context, actions: &mut Vec<Action
             }
             ui.ctx().data_mut(|d| d.insert_temp(id, draft));
             corners(ui, false);
-            ui.spacing_mut().button_padding = egui::vec2(6.0, 0.0);
-            ui.spacing_mut().icon_width = 12.0;
-            let menu = egui::ComboBox::from_id_salt("zoom-presets")
-                .selected_text("")
-                .width(24.0)
-                .icon(|ui, rect, visuals, _| {
-                    let center = rect.center();
-                    ui.painter().add(egui::Shape::line(
-                        vec![
-                            center + egui::vec2(-3.0, -1.5),
-                            center + egui::vec2(0.0, 1.5),
-                            center + egui::vec2(3.0, -1.5),
-                        ],
-                        egui::Stroke::new(1.0, visuals.fg_stroke.color),
-                    ));
-                })
-                .height((ui.ctx().content_rect().height() - 96.0).clamp(80.0, 420.0))
-                .show_ui(ui, |ui| {
-                    let widgets = &mut ui.visuals_mut().widgets;
-                    for state in [
-                        &mut widgets.inactive,
-                        &mut widgets.hovered,
-                        &mut widgets.active,
-                        &mut widgets.open,
-                    ] {
-                        state.corner_radius = egui::CornerRadius::same(5);
-                    }
-                    ui.set_min_width(100.0);
-                    ui.spacing_mut().item_spacing.y = 0.0;
-                    for style in [egui::TextStyle::Body, egui::TextStyle::Button] {
-                        ui.style_mut()
-                            .text_styles
-                            .insert(style, egui::FontId::proportional(15.0));
-                    }
-                    for value in [
-                        100000, 90000, 80000, 70000, 60000, 50000, 40000, 30000, 20000, 10000,
-                        7500, 5000, 2500, 1250,
-                    ] {
-                        let selected = (context.zoom * 10000.0 - value as f32).abs() < 0.5;
-                        let response = ui.add(
-                            egui::Button::new(percentage_text(value as f32 / 10000.0))
-                                .selected(selected)
-                                .frame_when_inactive(selected)
-                                .min_size(egui::vec2(100.0, 40.0)),
-                        );
-                        if selected {
-                            ui.painter().rect_stroke(
-                                response.rect.shrink(0.5),
-                                4,
-                                ui.visuals().selection.stroke,
-                                egui::StrokeKind::Inside,
-                            );
-                        }
-                        if response.clicked() {
-                            actions.push(Action::View(ViewAction::SetZoom(value)));
-                            ui.close();
-                        }
-                    }
-                });
-            menu.response.widget_info(|| {
-                egui::WidgetInfo::labeled(egui::Role::Button, ui.is_enabled(), "Zoom presets")
-            });
+            super::presets::show(ui, context, actions);
         },
     );
 }

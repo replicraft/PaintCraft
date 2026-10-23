@@ -3,6 +3,7 @@ use paintcraft_ui::actions::{Action, Context, ViewAction};
 use paintcraft_ui::widgets::Icon;
 
 mod percentage;
+mod presets;
 
 pub(super) fn width(ui: &egui::Ui) -> f32 {
     if ui.ctx().content_rect().width() >= 1200.0 {
