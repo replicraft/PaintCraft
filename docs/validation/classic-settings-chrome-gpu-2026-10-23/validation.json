@@ -1,0 +1,38 @@
+{
+  "source_commit": "9c2dffb66c78215566b23e4ac8d4050f0fa2a4fb",
+  "assets_commit": "a2c7ad4",
+  "reference": "docs/temp/paint-references/photos/image.png",
+  "changes": "V11 top Settings action uses an original outline gear. Classic Settings navigation uses matching 22-point gear/canvas/text artwork, 40-point sidebar choices and an explicit selected outline. Classic heading and body/description contrast improve; Studio retains its existing colorful navigation, sizing and heading/text style. Navigation styling follows the actual host experience rather than the staged experience choice.",
+  "gui": {
+    "passed": 178,
+    "failed": 0,
+    "ignored": 25,
+    "scope": "Full UI suite passes. New light/dark check finds two actual description text shapes and their preceding opaque card backgrounds, requiring contrast >=4.5 without claiming whole-UI compliance. Existing theme preview/cancel/apply/restart, compact pages, canvas defaults, text preferences, workspace switching and document/history isolation pass."
+  },
+  "icons": {
+    "passed": 9,
+    "ignored": 1,
+    "scope": "Outline menu/control sources now total 39, with 98 default IDs unchanged. Settings renders with monochrome alpha at multiple sizes and independent cache identity under existing tests. Generator reproduces identical bytes."
+  },
+  "gpu": {
+    "passed": 1,
+    "test": "appearance::export_theme_previews",
+    "scope": "Fresh theme exporter passes; six relevant raw captures archived: Classic light/dark workspace and Settings, plus Studio light/dark Settings comparison scenes."
+  },
+  "clippy": "Strict workspace all-targets passed.",
+  "checks": "Formatting, whitespace and source file length checks passed.",
+  "limits": "The supplied Classic screenshot establishes the top gear; Settings navigation follows shared Classic conventions rather than a supplied native Classic Settings close-up. No added preference, feature or persistence behavior. Full native/historical parity and OS accessibility remain incomplete.",
+  "sha256": {
+    "classic-dark-settings.png": "857abc78a2c55a7f38f254ea48e2028fe98770b7ee5c14e57d5b8022dac65d87",
+    "classic-dark.png": "ea7580869d99092e832984af8dae8541069c9da07ce7172fbbf494e53fa36577",
+    "classic-light-settings.png": "93eb6718d79e6d4f5454dbe8977b25aed7f6306ef661f5a712e90ea279fb9a94",
+    "classic-light.png": "2b4de0e901d51ea272586682186d9b06b7cb5489aa4fa8deda3b8869c00e3c27",
+    "clippy.log.gz": "18ce82ea82454200b67e1e8e416b8aa69ba0b5bca64ecb644fd2a191701182d7",
+    "gpu.log.gz": "632edbfab7ad1ceaf32c6b7bbda98531ccee470decf7973e0eba4d2cedc130e1",
+    "gui.log.gz": "ea0745869fdf0cc31042fbc4baa9a01d1488fdaa6bf84eac4498121f88c00103",
+    "icons.log.gz": "0f5ccaad52e18cab6fded1688c40527a118b21d040a27352ab4ceb0d326956fe",
+    "studio-dark-settings.png": "904c9d0992b259cd4a6bef8327a459153d2f77df2bedb4845ce18d0a2f0a475f",
+    "studio-light-settings.png": "5954ce4f40f485a498cc7b94668666faf29e4ce2f30c10878543d157aaaa832e",
+    "targeted.log.gz": "9bafec2e40dc2f83673167eb3d2cd1d51d8324056c68f9d8466e4639ba2f7a19"
+  }
+}

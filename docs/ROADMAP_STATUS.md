@@ -11,6 +11,13 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest Classic Settings work replaces the colorful top gear with outline art,
+aligns navigation symbols/selection styling and improves heading/description
+contrast. All 178 ordinary UI tests, nine SVG/cache tests, Classic/Studio theme
+GPU scenes and strict workspace Clippy pass; see
+[the Settings chrome record](validation/classic-settings-chrome-gpu-2026-10-23/validation.json).
+Preference behavior stays unchanged; full native Settings fidelity remains partial.
+
 Latest Classic slider input work fixes ignored coalesced rail clicks through a
 shared completion path while preserving native drags and accessibility updates.
 All 177 ordinary UI tests, light/dark tap-result GPU captures and strict workspace
