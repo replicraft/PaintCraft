@@ -877,3 +877,18 @@ Clippy pass. Twelve fresh GPU scenes cover both themes at wide, compact and
 short sizes, including hover: [the top-bar record](validation/classic-topbar-gpu-2026-10-22/validation.json).
 An intermediate short-window canvas regression is documented with its failing
 logs and corrected in the final source. Full Windows/native parity remains open.
+
+Classic's Image group now follows the two-row reference grouping, with Crop/
+Rotate above Remove background/Flip and a centered larger Resize preview
+spanning both rows. Nine original glyphs have paired light/dark SVGs that retain
+blue accents, separate from colored/menu sources in the bounded cache. The
+Image generator and manifest own these 18 sources. Rotate/Flip dropdowns now use
+the same artwork, contiguous 40-point rows, 16-point labels and bounded 240-point
+bodies. Disabled operations and single availability tooltips remain explicit.
+Repeated-layout geometry/state checks and existing short-window popup tests
+verify actual glyph centering, width, scrolling and safe dismissal. All 167
+normal GUI tests, seven icon tests, two GPU review exports and strict workspace
+Clippy pass. Raw before/after wide workspaces, compact/short layouts and both
+transform popups are in [the Image ribbon record](validation/classic-image-ribbon-gpu-2026-10-22/validation.json).
+Transform semantics, exact native glyph geometry and full reference parity remain
+open. No document or history behavior was added in this presentation slice.

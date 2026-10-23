@@ -1,0 +1,47 @@
+{
+  "source_commit": "84a118294968bdfd45b98c3c5b09172ec05b4f48",
+  "assets_commit": "d473c85",
+  "baseline_source": "bed431b; unchanged wide scene captures from the previous top-bar validation record",
+  "reference": "docs/temp/paint-references/photos/image.png",
+  "gui": {
+    "passed": 167,
+    "failed": 0,
+    "ignored": 19
+  },
+  "icons": {
+    "passed": 7,
+    "scope": "Existing source/menu/shape checks retained. Nine Image glyphs have paired light/dark sources, identical alpha coverage and retained blue accents (except monochrome Crop), tested at 24/48/96/128 pixels. Theme/source/menu texture identities remain independent; embedded raster, font text, external href and gradients are rejected."
+  },
+  "gpu": {
+    "passed": 2,
+    "tests": [
+      "classic_dropdowns::render_classic_dropdowns_and_cursor_for_review",
+      "compact_chrome::export_classic_top_bars"
+    ],
+    "scope": "Fresh light/dark workspace, hover and dropdown/cursor scenes through wgpu. Raw wide before/after, compact/short workspaces and Rotate/Flip popups archived."
+  },
+  "clippy": "workspace all-targets with -D warnings passed",
+  "generator": "All 18 Image SVGs and manifest regenerate byte for byte with scripts/generate_classic_image_icons.py. Original project-authored reference-inspired artwork; no native asset extraction.",
+  "scope": "Classic v11 Image group has Crop/Rotate above Remove background/Flip, beside an 84-point tall Resize preview with a centered 32-point glyph. Existing ribbon captions retained. Rotate/Flip anchors and their disabled entries use theme-aware outline/accent artwork. Transform dropdowns have 16-point text, contiguous 40-point rows and a bounded 240-point body. Studio and historical skins retain their existing source artwork and layout.",
+  "regressions": "Repeated-layout tests in light 1x/dark 2x verify row/column geometry, spanning resize bounds, centered actual glyph and disabled clicks preserving document/history. Existing short-window transform tests now also check bounded width, contiguous wide rows and 16-point labels, retaining scroll access, single tooltips, disabled-operation state and Escape dismissal. All normal UI tests pass.",
+  "limits": "Presentation/interaction qualification only. Crop, background removal, resize/skew and transform implementations remain unavailable. Exact Windows vector geometry, full ribbon reference fidelity, native menu/desktop appearance and full roadmap completion remain open. No native desktop windows were launched for this slice; GPU captures are client scenes.",
+  "sha256": {
+    "after-dark-compact.png": "6c392c6595414c41f1c44caf992ad47bf1c81fa0d1a87e8218b54815fb2eedf0",
+    "after-dark-flip.png": "f256e597c777f55fadf0cec067249bbaa9dd6bba3658a67b25d1e0dd49341724",
+    "after-dark-rotate.png": "ad2d8440cbe46f2346b99fffd36035a88ea28099da0dff5d8335e9a815aca040",
+    "after-dark-short.png": "82108811af2ae7f417305552d96cc06932e2c8512311ac2cd770cf82ef64e44c",
+    "after-dark-wide.png": "9578d43aeb2df220c6b391474d793bda1e94f4645b582341de63b9f8ae6db8bb",
+    "after-light-compact.png": "081db76725d4ac7cb1d0d4f337e9636a3794f7466e0b5ae689f4525c68bca670",
+    "after-light-flip.png": "d1436886d0abb3d60fa18e9e66027a5bff9e2fd15d5f358775359ef208a7ea74",
+    "after-light-rotate.png": "ac13268575d560becce161b55cd8b10a9a1d0f7f9509ab3ecbd19676f3d8ea2b",
+    "after-light-short.png": "34a05f0b0c335ce601b34f5e8f43f02e50c32c76cfba0d6f6ed2c4e06b847246",
+    "after-light-wide.png": "19fd882820c0315de9a7da79d53d40aef7c82463e2548995c53d517c78cc0a05",
+    "before-dark-wide.png": "40dcf1286135c046cfedd43d4e0ddd3098b0d43b6ce2f29da831952b4c658665",
+    "before-light-wide.png": "6fcd477f53c8170a87480c0333f70bad7f9e7e660114438053c5945917e2f742",
+    "clippy.log.gz": "300f72e02debd64e3681ffc23629728bf1636e714dad99a651c8a3fcda4ff9d4",
+    "gpu-dropdowns.log.gz": "1c4910a3a949b1c365d11ec95d09228f9e1d14420d2556895a1d310ebe94c393",
+    "gpu-workspace.log.gz": "456996e83b7aef11c25ab3dc5e2a931cdd34f8e439996a1099a6f10f7bfaddc7",
+    "gui.log.gz": "465de0b10f462f7003936158535fc99af7b35f75e5c7fe98061325d219e43931",
+    "icons.log.gz": "49d2f004752e874608ba6917968b96e71fd8b1d02797ddf39e645dcaccdd1e2f"
+  }
+}

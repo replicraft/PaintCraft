@@ -11,10 +11,11 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
-Latest Classic v11 top bars use larger labels/targets and outline quick actions,
-with a short-window compact mode and separate quick-action row below 720 points.
-All 166 normal GUI tests (19 ignored exports), twelve fresh GPU scene captures
-and strict workspace Clippy pass; see [the top-bar record](validation/classic-topbar-gpu-2026-10-22/validation.json).
+Latest Classic Image controls follow the two-row reference grouping with a
+spanning Resize preview and theme-aware blue-accent SVGs. Rotate/Flip popups
+have bounded width, contiguous rows and larger text. All 167 normal GUI tests,
+seven icon tests, both GPU exports and strict workspace Clippy pass; see
+[the Image ribbon record](validation/classic-image-ribbon-gpu-2026-10-22/validation.json).
 Native appearance and complete reference fidelity remain partial.
 
 Current focus is Classic UI fidelity and themes. The [UI progress record](CLASSIC.md)
