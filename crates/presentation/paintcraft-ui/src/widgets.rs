@@ -3,6 +3,13 @@ use egui::{Rect, Response, Sense, Stroke, StrokeKind, Ui, Vec2};
 
 pub use crate::icons::Icon;
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(crate) enum IconArtwork {
+    Colorful,
+    ClassicMenu,
+    ClassicStatus,
+}
+
 pub fn icon_button(ui: &mut Ui, label: &str, icon: Icon, selected: bool, large: bool) -> Response {
     icon_button_with_tooltip(ui, label, icon, selected, large, label)
 }
@@ -16,7 +23,15 @@ pub fn icon_button_with_tooltip(
     large: bool,
     tooltip: impl Into<egui::WidgetText>,
 ) -> Response {
-    icon_button_artwork(ui, label, icon, selected, large, tooltip, false)
+    icon_button_artwork(
+        ui,
+        label,
+        icon,
+        selected,
+        large,
+        tooltip,
+        IconArtwork::Colorful,
+    )
 }
 
 /// Theme-tinted outline artwork for compact Classic action bars.
@@ -27,17 +42,25 @@ pub fn classic_menu_button(
     selected: bool,
     tooltip: impl Into<egui::WidgetText>,
 ) -> Response {
-    icon_button_artwork(ui, label, icon, selected, false, tooltip, true)
+    icon_button_artwork(
+        ui,
+        label,
+        icon,
+        selected,
+        false,
+        tooltip,
+        IconArtwork::ClassicMenu,
+    )
 }
 
-fn icon_button_artwork(
+pub(crate) fn icon_button_artwork(
     ui: &mut Ui,
     label: &str,
     icon: Icon,
     selected: bool,
     large: bool,
     tooltip: impl Into<egui::WidgetText>,
-    classic: bool,
+    artwork: IconArtwork,
 ) -> Response {
     let size = if large {
         Vec2::new(64.0, 54.0)
@@ -51,7 +74,7 @@ fn icon_button_artwork(
     let visuals = ui.style().interact_selectable(&response, false);
     let ink = if selected {
         ui.visuals().selection.stroke.color
-    } else if classic {
+    } else if artwork != IconArtwork::Colorful {
         ui.visuals().strong_text_color()
     } else {
         visuals.fg_stroke.color
@@ -80,10 +103,15 @@ fn icon_button_artwork(
             Vec2::ZERO
         };
     let glyph = Rect::from_center_size(center, Vec2::splat(22.0));
-    if classic {
-        crate::icons::classic_menu_image(ui.ctx(), icon, 22.0, ink).paint_at(ui, glyph);
-    } else {
-        crate::icons::paint(ui.painter(), glyph, icon);
+    match artwork {
+        IconArtwork::ClassicMenu => {
+            crate::icons::classic_menu_image(ui.ctx(), icon, 22.0, ink).paint_at(ui, glyph);
+        }
+        IconArtwork::ClassicStatus => {
+            crate::icons::classic_status_image(ui.ctx(), icon, 22.0, ui.visuals().dark_mode)
+                .paint_at(ui, glyph);
+        }
+        IconArtwork::Colorful => crate::icons::paint(ui.painter(), glyph, icon),
     }
     if large {
         ui.painter().text(

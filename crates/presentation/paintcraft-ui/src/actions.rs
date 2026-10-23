@@ -407,7 +407,7 @@ pub fn toolbar_button(
     icon: crate::widgets::Icon,
     ctx: Context,
 ) -> bool {
-    toolbar_button_artwork(ui, action, icon, ctx, false)
+    toolbar_button_artwork(ui, action, icon, ctx, crate::widgets::IconArtwork::Colorful)
 }
 
 /// Classic artwork shares the same action gates, selected state and tooltip.
@@ -417,7 +417,29 @@ pub fn classic_toolbar_button(
     icon: crate::widgets::Icon,
     ctx: Context,
 ) -> bool {
-    toolbar_button_artwork(ui, action, icon, ctx, true)
+    toolbar_button_artwork(
+        ui,
+        action,
+        icon,
+        ctx,
+        crate::widgets::IconArtwork::ClassicMenu,
+    )
+}
+
+/// Classic status symbols share the same action gates, state and tooltip.
+pub fn classic_status_button(
+    ui: &mut egui::Ui,
+    action: Action,
+    icon: crate::widgets::Icon,
+    ctx: Context,
+) -> bool {
+    toolbar_button_artwork(
+        ui,
+        action,
+        icon,
+        ctx,
+        crate::widgets::IconArtwork::ClassicStatus,
+    )
 }
 
 fn toolbar_button_artwork(
@@ -425,7 +447,7 @@ fn toolbar_button_artwork(
     action: Action,
     icon: crate::widgets::Icon,
     ctx: Context,
-    classic: bool,
+    artwork: crate::widgets::IconArtwork,
 ) -> bool {
     let descriptor = action.descriptor_for(ctx.frontend);
     let label = descriptor.label.trim_end_matches('…');
@@ -445,24 +467,15 @@ fn toolbar_button_artwork(
         tooltip
     };
     ui.add_enabled_ui(action.enabled(ctx), |ui| {
-        if classic {
-            crate::widgets::classic_menu_button(
-                ui,
-                label,
-                icon,
-                action.checked(ctx).unwrap_or(false),
-                tooltip,
-            )
-        } else {
-            crate::widgets::icon_button_with_tooltip(
-                ui,
-                label,
-                icon,
-                action.checked(ctx).unwrap_or(false),
-                false,
-                tooltip,
-            )
-        }
+        crate::widgets::icon_button_artwork(
+            ui,
+            label,
+            icon,
+            action.checked(ctx).unwrap_or(false),
+            false,
+            tooltip,
+            artwork,
+        )
     })
     .inner
     .clicked()

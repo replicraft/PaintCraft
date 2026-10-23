@@ -113,3 +113,44 @@ fn classic_status_selection_dimensions_follow_real_selection_without_moving_zoom
     );
     assert_eq!(h.get_by_label("Zoom percentage").rect(), zoom);
 }
+
+#[test]
+#[ignore = "requires GPU; exports Classic footer glyphs and zoom hover"]
+fn export_classic_footer_artwork() {
+    let output = std::env::temp_dir().join("paintcraft-footer-artwork");
+    std::fs::create_dir_all(&output).unwrap();
+    for (appearance, theme) in [(Appearance::Light, "light"), (Appearance::Dark, "dark")] {
+        let dir = scratch("footer-artwork-review");
+        Settings {
+            appearance,
+            classic_variant: Some(ClassicVariant::V11),
+            ..Default::default()
+        }
+        .save(&dir)
+        .unwrap();
+        let mut h = harness_with(App::new(None).with_settings(dir.clone()), 1.0, false);
+        h.set_size(Vec2::new(1360.0, 900.0));
+        h.run();
+        h.get_by_label("Select").click();
+        h.run();
+        drag(&mut h, (10.0, 15.0), (20.0, 20.0));
+        h.render()
+            .unwrap()
+            .save(output.join(format!("{theme}-desktop-metrics.png")))
+            .unwrap();
+        h.get_by_label("Zoom out").hover();
+        h.run();
+        h.render()
+            .unwrap()
+            .save(output.join(format!("{theme}-zoom-hover.png")))
+            .unwrap();
+        h.set_size(Vec2::new(480.0, 360.0));
+        h.run();
+        h.render()
+            .unwrap()
+            .save(output.join(format!("{theme}-compact.png")))
+            .unwrap();
+        drop(h);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+}

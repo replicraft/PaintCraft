@@ -113,7 +113,12 @@ fn metrics(ui: &mut egui::Ui, status: &Status<'_>, width: f32) {
                         ui.set_min_size(Vec2::new(width * fraction, 30.0));
                         ui.spacing_mut().item_spacing.x = 4.0;
                         ui.add_space(4.0);
-                        ui.add(paintcraft_ui::icons::image(ui.ctx(), icon, 16.0));
+                        ui.add(paintcraft_ui::icons::classic_status_image(
+                            ui.ctx(),
+                            icon,
+                            16.0,
+                            ui.visuals().dark_mode,
+                        ));
                         let text = value.as_deref().unwrap_or("");
                         ui.add(
                             egui::Label::new(text)

@@ -27,7 +27,7 @@ pub fn zoom_controls(ui: &mut egui::Ui, context: Context, state_id: egui::Id) ->
             egui::Layout::left_to_right(egui::Align::Center),
             |ui| {
                 ui.spacing_mut().slider_width = 100.0;
-                if paintcraft_ui::actions::toolbar_button(
+                if paintcraft_ui::actions::classic_status_button(
                     ui,
                     Action::View(ViewAction::FitWindow),
                     Icon::FitWindow,
@@ -136,7 +136,7 @@ pub fn zoom_controls(ui: &mut egui::Ui, context: Context, state_id: egui::Id) ->
                 menu.response.widget_info(|| {
                     egui::WidgetInfo::labeled(egui::Role::Button, ui.is_enabled(), "Zoom presets")
                 });
-                if paintcraft_ui::actions::toolbar_button(
+                if paintcraft_ui::actions::classic_status_button(
                     ui,
                     Action::View(ViewAction::ZoomOut),
                     Icon::ZoomOut,
@@ -160,7 +160,7 @@ pub fn zoom_controls(ui: &mut egui::Ui, context: Context, state_id: egui::Id) ->
                         (zoom * 100.0).round() as u32
                     )));
                 }
-                if paintcraft_ui::actions::toolbar_button(
+                if paintcraft_ui::actions::classic_status_button(
                     ui,
                     Action::View(ViewAction::ZoomIn),
                     Icon::ZoomIn,
