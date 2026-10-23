@@ -18,25 +18,51 @@ pub struct Prompt<'a> {
 
 pub fn show(ctx: &Context, id: Id, prompt: Prompt<'_>) -> Option<Choice> {
     let screen = ctx.input(|input| input.content_rect());
-    let width = (screen.width() - 48.0).clamp(240.0, 560.0);
-    let height = (screen.height() - 64.0).clamp(180.0, 480.0);
+    let width = (screen.width() - 56.0).clamp(240.0, 560.0);
+    let height = (screen.height() - 72.0).clamp(180.0, 480.0);
     let count = if prompt.discard.is_some() { 3 } else { 2 };
-    let stacked = width < if count == 3 { 500.0 } else { 340.0 };
-    let footer_height = if stacked { count as f32 * 44.0 } else { 44.0 };
     let mut choice = None;
-    let response = egui::Modal::new(id).show(ctx, |ui| {
+    let frame = egui::Frame::window(&ctx.style_of(ctx.theme()))
+        .inner_margin(16)
+        .corner_radius(12);
+    let response = egui::Modal::new(id).frame(frame).show(ctx, |ui| {
         ui.set_width(width);
         ui.set_max_height(height);
         for style in [egui::TextStyle::Body, egui::TextStyle::Button] {
             ui.style_mut()
                 .text_styles
-                .insert(style, egui::FontId::proportional(15.0));
+                .insert(style, egui::FontId::proportional(16.0));
         }
-        ui.label(egui::RichText::new(prompt.title).size(18.0).strong());
+        ui.visuals_mut().override_text_color = Some(ui.visuals().strong_text_color());
+        let widest = [Some(prompt.accept), prompt.discard, Some("Cancel")]
+            .into_iter()
+            .flatten()
+            .map(|label| {
+                ui.painter()
+                    .layout_no_wrap(
+                        label.to_owned(),
+                        egui::FontId::proportional(16.0),
+                        Color32::WHITE,
+                    )
+                    .size()
+                    .x
+            })
+            .fold(0.0_f32, f32::max);
+        // Include padding, frame strokes and rounding when checking a row.
+        let minimum_button = widest + ui.spacing().button_padding.x * 2.0 + 4.0;
+        let stacked = width
+            < minimum_button * count as f32 + ui.spacing().item_spacing.x * (count - 1) as f32;
+        let footer_height = if stacked {
+            count as f32 * 40.0 + (count - 1) as f32 * ui.spacing().item_spacing.y
+        } else {
+            40.0
+        };
+        let heading = ui.label(egui::RichText::new(prompt.title).size(24.0).strong());
         ui.add_space(8.0);
+        ui.spacing_mut().scroll.floating = false;
         egui::ScrollArea::vertical()
             .id_salt("confirmation-message")
-            .max_height((height - footer_height - 72.0).max(32.0))
+            .max_height((height - footer_height - heading.rect.height() - 40.0).max(24.0))
             .auto_shrink([false, true])
             .show(ui, |ui| {
                 ui.add(egui::Label::new(prompt.message).wrap());
@@ -68,7 +94,7 @@ pub fn show(ctx: &Context, id: Id, prompt: Prompt<'_>) -> Option<Choice> {
                         .fill(ui.visuals().selection.stroke.color);
                 }
                 if ui
-                    .add_sized(Vec2::new(button_width, 36.0), button)
+                    .add_sized(Vec2::new(button_width, 40.0), button)
                     .clicked()
                 {
                     choice = Some(value);

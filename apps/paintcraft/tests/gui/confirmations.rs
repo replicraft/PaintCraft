@@ -178,3 +178,58 @@ fn classic_close_prompt_escape_keeps_the_document_and_discard_closes_only_on_cli
     h.run();
     assert_eq!(h.state().document_count(), 0);
 }
+
+#[test]
+#[ignore = "requires GPU; exports real save/discard/cancel confirmation contexts"]
+fn export_confirmation_surfaces() {
+    use paintcraft::settings::{Appearance, ClassicVariant, Settings};
+    let output = std::env::temp_dir().join("paintcraft-confirmation-surfaces");
+    std::fs::create_dir_all(&output).unwrap();
+    for (appearance, theme) in [(Appearance::Light, "light"), (Appearance::Dark, "dark")] {
+        for (size, name) in [
+            (Vec2::new(1360.0, 900.0), "desktop"),
+            (Vec2::new(360.0, 360.0), "compact"),
+        ] {
+            for kind in ["new", "close", "switch"] {
+                let dir = scratch("confirmation-surface-review");
+                Settings {
+                    appearance,
+                    classic_variant: Some(ClassicVariant::V11),
+                    ..Default::default()
+                }
+                .save(&dir)
+                .unwrap();
+                let mut h = harness_with(App::new(None).with_settings(dir.clone()), 1.0, false);
+                h.set_size(size);
+                h.run();
+                let p = at(&h, 10.0, 10.0);
+                h.input_mut()
+                    .events
+                    .extend([Event::PointerMoved(p), press(p), release(p)]);
+                h.run();
+                assert!(h.state().editor().is_dirty());
+                match kind {
+                    "new" => h.key_combination_modifiers(Modifiers::COMMAND, &[Key::N]),
+                    "close" => h.key_combination_modifiers(Modifiers::COMMAND, &[Key::W]),
+                    "switch" => {
+                        h.get_by_label("Interface").click();
+                        h.run();
+                        h.get_by_label("Studio").click();
+                    }
+                    _ => unreachable!(),
+                }
+                h.run();
+                assert!(h.query_by_label("Cancel").is_some());
+                h.render()
+                    .unwrap()
+                    .save(output.join(format!("{theme}-{name}-{kind}.png")))
+                    .unwrap();
+                h.get_by_label("Cancel").click();
+                h.run();
+                assert!(h.state().editor().is_dirty());
+                drop(h);
+                std::fs::remove_dir_all(dir).unwrap();
+            }
+        }
+    }
+}
