@@ -1,0 +1,102 @@
+{
+  "provenance": "Original PaintCraft outline menu vectors; not extracted native assets.",
+  "references": [
+    "docs/temp/paint-references/photos/im1age.png",
+    "docs/temp/paint-references/photos/imag1e.png",
+    "docs/temp/paint-references/photos/ima2ge.png"
+  ],
+  "icons": [
+    {
+      "name": "new",
+      "file": "new.svg"
+    },
+    {
+      "name": "open",
+      "file": "open.svg"
+    },
+    {
+      "name": "save",
+      "file": "save.svg"
+    },
+    {
+      "name": "save-as",
+      "file": "save-as.svg"
+    },
+    {
+      "name": "print",
+      "file": "print.svg"
+    },
+    {
+      "name": "share",
+      "file": "share.svg"
+    },
+    {
+      "name": "canvas-size",
+      "file": "canvas-size.svg"
+    },
+    {
+      "name": "close",
+      "file": "close.svg"
+    },
+    {
+      "name": "cut",
+      "file": "cut.svg"
+    },
+    {
+      "name": "copy",
+      "file": "copy.svg"
+    },
+    {
+      "name": "paste",
+      "file": "paste.svg"
+    },
+    {
+      "name": "copy-merged",
+      "file": "copy-merged.svg"
+    },
+    {
+      "name": "undo",
+      "file": "undo.svg"
+    },
+    {
+      "name": "redo",
+      "file": "redo.svg"
+    },
+    {
+      "name": "rectangle-select",
+      "file": "rectangle-select.svg"
+    },
+    {
+      "name": "clear-canvas",
+      "file": "clear-canvas.svg"
+    },
+    {
+      "name": "zoom-in",
+      "file": "zoom-in.svg"
+    },
+    {
+      "name": "zoom-out",
+      "file": "zoom-out.svg"
+    },
+    {
+      "name": "fit-window",
+      "file": "fit-window.svg"
+    },
+    {
+      "name": "actual-size",
+      "file": "actual-size.svg"
+    },
+    {
+      "name": "pixel-grid",
+      "file": "pixel-grid.svg"
+    },
+    {
+      "name": "rulers",
+      "file": "rulers.svg"
+    },
+    {
+      "name": "resize",
+      "file": "resize.svg"
+    }
+  ]
+}

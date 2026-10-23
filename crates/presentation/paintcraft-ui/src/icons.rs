@@ -1,6 +1,7 @@
 //! SVG sources are rasterized at display density and cached per egui context.
 mod actions;
 mod assets;
+mod classic_menus;
 mod classic_shapes;
 pub use assets::Icon;
 use egui::{Color32, ColorImage, Context, Rect, TextureHandle, TextureOptions};
@@ -13,6 +14,7 @@ const CACHE_ENTRIES: usize = 64;
 enum Variant {
     Sheet,
     ClassicShape,
+    ClassicMenu,
 }
 
 #[derive(Default)]
@@ -30,6 +32,9 @@ fn rasterize_variant(icon: Icon, size: u32, variant: Variant) -> ColorImage {
         Variant::Sheet => icon.svg(),
         Variant::ClassicShape => {
             classic_shapes::source(icon).expect("Classic shape must have an outline SVG")
+        }
+        Variant::ClassicMenu => {
+            classic_menus::source(icon).expect("Classic menu icon must have an outline SVG")
         }
     };
     let tree = resvg::usvg::Tree::from_data(source, &resvg::usvg::Options::default())
@@ -110,6 +115,21 @@ pub fn classic_shape_image(
 ) -> egui::Image<'static> {
     let size = physical_size(points, ctx.pixels_per_point());
     let texture = variant_texture(ctx, icon, size, Variant::ClassicShape);
+    egui::Image::new((texture.id(), egui::Vec2::splat(points))).tint(ink)
+}
+
+/// Theme-tinted menu variants; unmapped operations retain their default artwork.
+pub fn classic_menu_image(
+    ctx: &Context,
+    icon: Icon,
+    points: f32,
+    ink: Color32,
+) -> egui::Image<'static> {
+    if classic_menus::source(icon).is_none() {
+        return image(ctx, icon, points);
+    }
+    let size = physical_size(points, ctx.pixels_per_point());
+    let texture = variant_texture(ctx, icon, size, Variant::ClassicMenu);
     egui::Image::new((texture.id(), egui::Vec2::splat(points))).tint(ink)
 }
 
@@ -234,6 +254,52 @@ mod tests {
             variant_texture(&ctx, Icon::Rectangle, 48, Variant::ClassicShape).id(),
             outline.id()
         );
+    }
+
+    #[test]
+    fn classic_menu_vectors_are_monochrome_and_do_not_alias_colored_textures() {
+        let ctx = Context::default();
+        let menus: Vec<_> = Icon::ALL
+            .into_iter()
+            .filter(|icon| classic_menus::source(*icon).is_some())
+            .collect();
+        assert_eq!(menus.len(), 23);
+        for icon in menus {
+            let source = std::str::from_utf8(classic_menus::source(icon).unwrap()).unwrap();
+            for forbidden in ["<image", "href=", "<text", "Gradient"] {
+                assert!(!source.contains(forbidden), "{}: {forbidden}", icon.name());
+            }
+            for size in [24, 48, 96, 128] {
+                let pixels = rasterize_variant(icon, size, Variant::ClassicMenu).pixels;
+                assert!(pixels.iter().any(|pixel| pixel.a() > 0));
+                assert!(pixels.iter().any(|pixel| pixel.a() == 0));
+                for pixel in pixels {
+                    let [r, g, b, a] = pixel.to_array();
+                    assert_eq!(
+                        [r, g, b],
+                        [a; 3],
+                        "{} must remain tintable white",
+                        icon.name()
+                    );
+                }
+            }
+            let colored = texture(&ctx, icon, 48);
+            let outline = variant_texture(&ctx, icon, 48, Variant::ClassicMenu);
+            assert_ne!(colored.id(), outline.id());
+            assert_eq!(
+                variant_texture(&ctx, icon, 48, Variant::ClassicMenu).id(),
+                outline.id()
+            );
+        }
+        let cache = ctx
+            .data_mut(|data| {
+                data.get_temp::<Arc<egui::mutex::Mutex<Cache>>>(egui::Id::unique(
+                    "paintcraft-svg-icons",
+                ))
+            })
+            .unwrap();
+        assert!(cache.lock().entries.len() <= CACHE_ENTRIES);
+        assert!(cache.lock().bytes <= CACHE_BYTES);
     }
 
     #[test]

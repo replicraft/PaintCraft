@@ -1,0 +1,63 @@
+#!/usr/bin/env python3
+"""Original tintable menu vectors following the supplied Classic UI references."""
+from pathlib import Path
+import json
+
+OUT = Path(__file__).resolve().parents[1] / 'crates/presentation/paintcraft-ui/assets/icons/classic-menus'
+
+
+def path(d):
+    return f'<path d="{d}"/>'
+
+
+def rect(x, y, w, h, radius=1):
+    return f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="{radius}"/>'
+
+
+save = path('M3 3H18L21 6V21H3ZM7 3V10H17V3M7 21V14H17V21M14 5V8')
+pen = 'M12 20L19 13L22 16L15 23H12Z'
+save_as = ('<defs><mask id="pen-gap" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24"><rect width="24" height="24" fill="#fff" stroke="none"/>'
+           + f'<path d="{pen}" fill="#000" stroke="#000" stroke-width="4"/></mask></defs>'
+           + f'<g mask="url(#pen-gap)">{save}</g>' + path(pen) + path('M18 14L21 17'))
+undo = path('M3 9H13Q21 9 21 17M3 9L8 4M3 9L8 14')
+glass = '<circle cx="10" cy="10" r="7"/>' + path('M15 15L22 22')
+icons = {
+    'new': path('M5 2H14L20 8V22H5ZM14 2V8H20'),
+    'open': path('M2 20V5H9L12 8H21V10M2 20H19L22 10H7Z'),
+    'save': save,
+    'save-as': save_as,
+    'print': path('M6 9V3H18V9M6 18H3V9H21V18H18M6 14H18V22H6Z') + '<circle cx="18" cy="11.5" r=".5" fill="#fff"/>',
+    'share': path('M3 12V21H20V15M10 12Q11 6 17 6H20M15 2L20 6L15 10'),
+    'canvas-size': rect(3, 4, 18, 15) + path('M5 15L10 10L14 14L17 11L20 15') + '<circle cx="17" cy="8" r="1"/>',
+    'close': path('M4 4L20 20M20 4L4 20'),
+    'cut': '<circle cx="7" cy="17" r="4"/><circle cx="17" cy="17" r="4"/>' + path('M5 3L17 17M19 3L7 17'),
+    'copy': rect(7, 3, 13, 15) + path('M4 7H2V22H15V20'),
+    'paste': rect(5, 5, 15, 17) + rect(8, 2, 8, 5),
+    'copy-merged': rect(3, 7, 12, 15) + path('M7 4H19V18M11 1H23V14'),
+    'undo': undo,
+    'redo': f'<g transform="translate(24 0) scale(-1 1)">{undo}</g>',
+    'rectangle-select': '<rect x="3" y="4" width="18" height="16" rx="1" stroke-dasharray="3 3"/>',
+    'clear-canvas': path('M10 12L18 2M6 10L14 14L10 23L1 18ZM3 15L11 19M5 12L13 16M2 19L10 23'),
+    'zoom-in': glass + path('M6 10H14M10 6V14'),
+    'zoom-out': glass + path('M6 10H14'),
+    'fit-window': path('M3 9V3H9M15 3H21V9M21 15V21H15M9 21H3V15M7 7L11 11M17 7L13 11M7 17L11 13M17 17L13 13'),
+    'actual-size': glass + path('M8 8L11 6V13M8 13H14'),
+    'pixel-grid': rect(3, 3, 18, 18) + path('M9 3V21M15 3V21M3 9H21M3 15H21'),
+    'rulers': path('M2 2H7V17H22V22H2ZM4 6H7M4 10H7M4 14H7M11 17V20M15 17V20M19 17V20'),
+    'resize': path('M15 3H21V9M21 3L14 10M3 15V21H9M3 21L10 14'),
+}
+OUT.mkdir(parents=True, exist_ok=True)
+for name, geometry in icons.items():
+    (OUT / f'{name}.svg').write_text(f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+<title>{name.replace('-', ' ').title()}</title>
+<g fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+{geometry}
+</g>
+</svg>
+''')
+(OUT / 'manifest.json').write_text(json.dumps({
+    'provenance': 'Original PaintCraft outline menu vectors; not extracted native assets.',
+    'references': ['docs/temp/paint-references/photos/im1age.png', 'docs/temp/paint-references/photos/imag1e.png', 'docs/temp/paint-references/photos/ima2ge.png'],
+    'icons': [{'name': name, 'file': f'{name}.svg'} for name in icons],
+}, indent=2) + '\n')
+print(f'Wrote {len(icons)} Classic menu SVGs to {OUT}')

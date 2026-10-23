@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+<title>Fit Window</title>
+<g fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+<path d="M3 9V3H9M15 3H21V9M21 15V21H15M9 21H3V15M7 7L11 11M17 7L13 11M7 17L11 13M17 17L13 13"/>
+</g>
+</svg>

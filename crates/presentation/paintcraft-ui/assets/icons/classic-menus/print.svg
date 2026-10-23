@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+<title>Print</title>
+<g fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+<path d="M6 9V3H18V9M6 18H3V9H21V18H18M6 14H18V22H6Z"/><circle cx="18" cy="11.5" r=".5" fill="#fff"/>
+</g>
+</svg>

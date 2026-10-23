@@ -288,6 +288,25 @@ pub fn menu_item_with_icon_size(
     label: &'static str,
     icon_size: f32,
 ) -> bool {
+    menu_item_with_icon_style(ui, action, ctx, label, icon_size, MenuIconStyle::Colorful)
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum MenuIconStyle {
+    #[default]
+    Colorful,
+    ClassicOutline,
+}
+
+/// Choose frontend artwork while retaining shared action metadata and routing.
+pub fn menu_item_with_icon_style(
+    ui: &mut egui::Ui,
+    action: Action,
+    ctx: Context,
+    label: &'static str,
+    icon_size: f32,
+    icon_style: MenuIconStyle,
+) -> bool {
     let descriptor = Descriptor {
         label,
         ..action.descriptor_for(ctx.frontend)
@@ -302,7 +321,16 @@ pub fn menu_item_with_icon_size(
     };
     let mut button = match (checked, action.icon(ctx)) {
         (None, Some(icon)) => {
-            egui::Button::image_and_text(crate::icons::image(ui.ctx(), icon, icon_size), title)
+            let image = match icon_style {
+                MenuIconStyle::Colorful => crate::icons::image(ui.ctx(), icon, icon_size),
+                MenuIconStyle::ClassicOutline => crate::icons::classic_menu_image(
+                    ui.ctx(),
+                    icon,
+                    icon_size,
+                    ui.visuals().strong_text_color(),
+                ),
+            };
+            egui::Button::image_and_text(image, title)
         }
         _ => egui::Button::new(title),
     };
