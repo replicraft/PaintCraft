@@ -261,3 +261,152 @@ fn classic_selection_menu_has_aligned_rows_safe_previews_and_reachable_actions()
         std::fs::remove_dir_all(dir).unwrap();
     }
 }
+
+fn selected_row_fill(h: &Harness<App>) -> eframe::egui::Color32 {
+    let rect = h
+        .get_by_role_and_label(Role::Button, "Rectangular selection")
+        .rect();
+    let surface = h
+        .output()
+        .shapes
+        .iter()
+        .find_map(|shape| match &shape.shape {
+            Shape::Rect(painted)
+                if painted.rect.center().distance(rect.center()) < 0.1
+                    && painted.rect.width() >= rect.width() - 2.0
+                    && painted.rect.height() >= rect.height() - 2.0
+                    && painted.fill.a() == 255 =>
+            {
+                Some(painted)
+            }
+            _ => None,
+        })
+        .expect("selected menu row has a painted surface");
+    assert_eq!(
+        surface.fill.r(),
+        surface.fill.g(),
+        "selected row uses a neutral fill"
+    );
+    assert_eq!(
+        surface.fill.g(),
+        surface.fill.b(),
+        "selected row uses a neutral fill"
+    );
+    assert_eq!(
+        surface.stroke.width, 0.0,
+        "the accent belongs to the leading indicator"
+    );
+    let accent = h.ctx.style_of(h.ctx.theme()).visuals.selection.stroke.color;
+    assert!(h.output().shapes.iter().any(|shape| matches!(&shape.shape,
+        Shape::Rect(marker) if rect.contains_rect(marker.rect) && marker.rect.size()==Vec2::new(3.0,22.0)
+            && marker.fill==accent)),"selected row retains its accent indicator");
+    surface.fill
+}
+
+#[test]
+fn selection_popup_uses_neutral_selected_rows_with_accent_indicators_and_native_input() {
+    for (size, ppp, appearance) in [
+        (Vec2::new(1360.0, 900.0), 1.0, Appearance::Light),
+        (Vec2::new(480.0, 360.0), 2.0, Appearance::Dark),
+    ] {
+        let dir = scratch("selection-row-surfaces");
+        Settings {
+            appearance,
+            classic_variant: Some(ClassicVariant::V11),
+            ..Default::default()
+        }
+        .save(&dir)
+        .unwrap();
+        let mut h = harness_with(App::new(None).with_settings(dir.clone()), ppp, true);
+        h.set_size(size);
+        h.run();
+        let snapshot = h.state().editor().document_snapshot();
+        let ticket = h.state().editor().history_view().ticket;
+        open(&mut h);
+        assert_eq!(
+            h.state().editor().tool,
+            paintcraft_tools::Tool::Pencil,
+            "opening the mode menu must not activate Select"
+        );
+        assert_eq!(
+            h.get_by_role_and_label(Role::Button, "Rectangular selection")
+                .accesskit_node()
+                .toggled(),
+            Some(eframe::egui::accesskit::Toggled::True),
+            "Rectangle remains the selected mode while Pencil is active"
+        );
+        h.event(Event::PointerMoved(Pos2::new(4.0, 4.0)));
+        h.run();
+        let idle = selected_row_fill(&h);
+        h.get_by_role_and_label(Role::Button, "Rectangular selection")
+            .hover();
+        h.run();
+        assert_ne!(selected_row_fill(&h), idle);
+        h.get_by_role_and_label(Role::Button, "Rectangular selection")
+            .focus();
+        h.run();
+        selected_row_fill(&h);
+        h.key_press(Key::Enter);
+        h.run();
+        assert!(
+            h.query_by_role_and_label(Role::Button, "Rectangular selection")
+                .is_none()
+        );
+        assert_eq!(h.state().editor().tool, paintcraft_tools::Tool::Select);
+        assert_eq!(h.state().editor().selection(), Selection::Inactive);
+        assert!(h.state().editor().document().same_semantics(&snapshot));
+        assert_eq!(h.state().editor().history_view().ticket, ticket);
+        drop(h);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+}
+
+#[test]
+#[ignore = "Explicit GPU Classic Selection mode row review"]
+fn export_selection_row_surfaces() {
+    let output = std::env::temp_dir().join("paintcraft-selection-row-surfaces");
+    std::fs::create_dir_all(&output).unwrap();
+    for (appearance, theme) in [(Appearance::Light, "light"), (Appearance::Dark, "dark")] {
+        for (size, layout) in [
+            (Vec2::new(1360.0, 900.0), "desktop"),
+            (Vec2::new(480.0, 360.0), "compact"),
+        ] {
+            let dir = scratch("selection-row-review");
+            Settings {
+                appearance,
+                classic_variant: Some(ClassicVariant::V11),
+                ..Default::default()
+            }
+            .save(&dir)
+            .unwrap();
+            let mut h = harness_with(App::new(None).with_settings(dir.clone()), 1.0, false);
+            h.set_size(size);
+            h.run();
+            let snapshot = h.state().editor().document_snapshot();
+            let ticket = h.state().editor().history_view().ticket;
+            open(&mut h);
+            h.event(Event::PointerMoved(Pos2::new(4.0, 4.0)));
+            h.run();
+            selected_row_fill(&h);
+            h.render()
+                .unwrap()
+                .save(output.join(format!("{theme}-{layout}-idle.png")))
+                .unwrap();
+            h.get_by_role_and_label(Role::Button, "Rectangular selection")
+                .hover();
+            h.run();
+            selected_row_fill(&h);
+            h.render()
+                .unwrap()
+                .save(output.join(format!("{theme}-{layout}-hover.png")))
+                .unwrap();
+            h.key_press(Key::Escape);
+            h.run();
+            assert_eq!(h.state().editor().tool, paintcraft_tools::Tool::Pencil);
+            assert!(h.state().editor().document().same_semantics(&snapshot));
+            assert_eq!(h.state().editor().history_view().ticket, ticket);
+            drop(h);
+            std::fs::remove_dir_all(dir).unwrap();
+        }
+    }
+}

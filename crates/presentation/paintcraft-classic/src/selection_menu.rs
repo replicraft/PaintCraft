@@ -28,7 +28,8 @@ pub(super) fn show(
                 "Rectangle",
                 "Rectangular selection",
                 Some(Icon::RectangleSelect),
-                Some(state.tool == Tool::Select),
+                // The mode persists independently of which drawing tool is active.
+                Some(true),
                 None,
             );
             if rectangle.clicked() {
@@ -123,13 +124,33 @@ fn row(
     selected: Option<bool>,
     shortcut: Option<&str>,
 ) -> egui::Response {
+    let background = (selected == Some(true)).then(|| ui.painter().add(egui::Shape::Noop));
     let mut button = egui::Button::new(" ")
         .frame_when_inactive(selected == Some(true))
         .min_size(Vec2::new(ui.available_width().max(260.0), 40.0));
     if let Some(selected) = selected {
         button = button.selected(selected);
+        if selected {
+            button = button
+                .fill(egui::Color32::TRANSPARENT)
+                .stroke(egui::Stroke::NONE);
+        }
     }
     let response = ui.add(button);
+    if let Some(background) = background {
+        ui.painter().set(
+            background,
+            egui::Shape::rect_filled(
+                response.rect.shrink(0.5),
+                5,
+                crate::control_surface::fill(
+                    ui,
+                    response.hovered() || response.has_focus(),
+                    response.is_pointer_button_down_on(),
+                ),
+            ),
+        );
+    }
     response.widget_info(|| match selected {
         Some(selected) => {
             egui::WidgetInfo::selected(egui::Role::Button, ui.is_enabled(), selected, accessible)
