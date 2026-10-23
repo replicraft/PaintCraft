@@ -11,6 +11,13 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest Classic zoom popup work aligns percentage rows with the reference, keeps
+a resting scroll cue and reveals the nearest current preset when opening.
+All 180 ordinary UI tests, twelve light/dark GPU scenes and strict workspace
+Clippy pass; see
+[the zoom popup record](validation/zoom-popup-opening-gpu-2026-10-23/validation.json).
+Custom zoom values and document/history semantics remain unchanged.
+
 Latest Classic skin chooser work blocks background undo/tool/canvas input and
 uses consistent dialog surfaces with a fixed compact footer. All 179 ordinary
 UI tests, eight light/dark GPU scenes, an isolated native macOS wgpu capture

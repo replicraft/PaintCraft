@@ -1,0 +1,38 @@
+{
+  "source_commit": "8d651f04e8d7134de66a316d0917bda0f1b5d98e",
+  "reference": "docs/temp/paint-references/photos/imag111111e.png",
+  "changes": "Classic zoom popup uses left-aligned percentage rows, a resting scrollbar cue and opening-only scroll to the nearest current preset. Custom zooms remain unchanged and unselected until a preset is chosen. Opening state is read from the actual ComboBox response ID. Popup presentation is separated into zoom/presets.rs; draft acceptance remains in percentage.rs.",
+  "gui": {
+    "passed": 180,
+    "failed": 0,
+    "ignored": 29,
+    "scope": "Full GUI suite. Added light 1x/dark 2x desktop/compact coverage checks painted nearest rows and their clipping bounds at 73%, 1000% and 12.5%, left text insets, row heights, scrolling away, reopening near current value, Escape and document/history preservation. Existing preset adoption, fit, invalid/valid drafts, pending-text Escape and joined-selector checks pass. The before log reproduces the missing visible nearest row."
+  },
+  "gpu": {
+    "passed": 1,
+    "test": "classic_zoom::export_zoom_popup_opening",
+    "scope": "Twelve light/dark desktop/480x360 captures at 73%, 1000% and 12.5%; each popup is cancelled without document/history change."
+  },
+  "clippy": "Strict workspace all-targets passed.",
+  "checks": "Formatting, whitespace and source file length checks passed.",
+  "limits": "This qualifies the egui zoom dropdown presentation/opening behavior against the supplied screenshot. Full native Windows and historical skin fidelity, physical accessibility/input and remaining editing/save prerequisites are still incomplete. No renderer, zoom engine or performance change.",
+  "sha256": {
+    "after.log.gz": "4d21bec96e378c7239771f315b0e0af5a5d0831b73ffdde1d04c1aa21e3a11b3",
+    "before.log.gz": "8007f89402f19d597a4a037f415de42f3bfaf1d282a6a841ab614306bd4c1609",
+    "clippy.log.gz": "84c4c0fe65a7fbf5e54c7fd75d9484ec010380e7dbab2be24958c0ec62cfcef2",
+    "dark-compact-1000.png": "784f4910f40e5df0b7e44ff3335cec8b19d43dad9aba02adaf8957298fecbabd",
+    "dark-compact-12.5.png": "2070b1b351698d4df6c8b15f59b929dd11ad6dd563f6062f9a3d087e3877b4bc",
+    "dark-compact-73.png": "3c4eca7859ce17ab9144e865561027f204a346f1f1e78a3e352ba8d237b98bec",
+    "dark-desktop-1000.png": "abc167ec4386873186d2c15ef7057f26cdb6a8d566e26c27adb0df78695c0fea",
+    "dark-desktop-12.5.png": "a5da70cb3dd7c150b730d0d6a9729151bae41099b85664ac23b741816bdb9a98",
+    "dark-desktop-73.png": "1dc7c4cd85586480d72dde79b8b8e0bab463c1414679bf137ac8292996b4c7ae",
+    "gpu.log.gz": "0cedbcb34126ecfd86f9b22f7ce69d6ef24f4937b4330059eab3953ee973fca5",
+    "gui.log.gz": "00419f16071ead125be06869a7740d5dd9b9bdf1728ec06593db1640f197c4ca",
+    "light-compact-1000.png": "29f8e05f6bdf367932ed0616876a88d2269395969befecbda4e3ea70ea978770",
+    "light-compact-12.5.png": "659aae715be0c2da5c44b377c3669851e01f01ea1ddf1ee66d3b5fbf20e52262",
+    "light-compact-73.png": "9c8fe9af0d5c7e564c299cac103ff80167b65875fb13c3f2c75894f21e1ac590",
+    "light-desktop-1000.png": "a6489ce8a6b861e9bac44b927ffd2a659cdaa034e6988dcac8ab817a15892810",
+    "light-desktop-12.5.png": "6467e63570fba08d18b8b881f12c3ac62b0133d90654e0acc6d14dde417ec743",
+    "light-desktop-73.png": "d2d19bb8184da13ee6be93c6c214981a2b35ddd8beccd6179ed8a6d0230cedc6"
+  }
+}
