@@ -1,0 +1,33 @@
+{
+  "source_commit": "e7672a6b7443526753d62cb8590eb3bc4f5fbe81",
+  "reference": "docs/temp/paint-references/photos/image.png",
+  "changes": "Floating Classic size/opacity sliders have a neutral gray shell with a solid accent center, wider 32-point interaction lanes and hover/focus/pressed center sizes. egui retains rail fill, input, keyboard and accessibility handling. Numeric size range 1..1024 and visual slider range 1..64 are preserved.",
+  "gui": {
+    "passed": 170,
+    "failed": 0,
+    "ignored": 21,
+    "scope": "Full UI suite passes. An additional final targeted run passes both tool-header tests after extending the alignment check to pressed pointer drags. The alignment test compares the actual egui shell CircleShape against the independently decorated center at min/middle/max and custom size 1024, after accessibility requests, keyboard steps, pointer drag and release. Light 1x and dark 2x use repeated layout and preserve document/history."
+  },
+  "gpu": {
+    "passed": 1,
+    "test": "tool_headers::export_floating_slider_thumbs",
+    "scope": "Eight raw 1360x900 light/dark client captures at minimum, middle, maximum and hover states."
+  },
+  "clippy": "Strict workspace all-targets passed on final source.",
+  "checks": "Formatting, whitespace and source file length checks passed.",
+  "limits": "The decoration follows egui 0.37 circle-handle inset geometry; the independent shape-alignment test guards upgrades. Reference appearance refinement only; no new brush behavior, Windows parity or performance claim. Numeric readouts remain a PaintCraft extension.",
+  "sha256": {
+    "clippy.log.gz": "9eccfb234dd1872225cba9435c54cca60f295594f8e0dc0489531e0fbed535d9",
+    "dark-hover.png": "dae3e41a4eb8c532a77e222d9aff4684a52d9ed8efc47e06bb84b19636101d10",
+    "dark-maximum.png": "fb2f53f75549aac1d4426861e673a7eefed898e571d144c32c707aaa1418d31f",
+    "dark-middle.png": "431b85418d1c8a16b68b7019bb529949c25525542507a427043a2aec3b822921",
+    "dark-minimum.png": "c273a3d0e44af98a7fe7175c3b3d2e76eb7381281ec1ecfe8225cec95b6d8e3e",
+    "gpu.log.gz": "ed1740884e8432a2930e646886c8c630f9b782d34fc11617c7eb9e66a16a8ff1",
+    "gui.log.gz": "ee5048a26a5887fe72d935396b96e164fd3cc74ad0d1c418d1e83c4c68020faa",
+    "light-hover.png": "6c46106fe224fd173283d39849b3bc88bec5c00e1bafe1c2af194eac932d2a22",
+    "light-maximum.png": "b30f989ed7e6872952f790305c1e9604bdfae9616272893e40259127e22c91a9",
+    "light-middle.png": "679edd80612abb6ac3f80b96eceee11da783250fbad8d464a8a62e2ccd0b7601",
+    "light-minimum.png": "2ee3f4bbabad62090efb4f260fd8535c34696fc78b3064fc6053cdf1761e2aac",
+    "targeted.log.gz": "43f940dbf515c9d58bab412c2528961fc9b517224908ad7403e08ef66f496529"
+  }
+}

@@ -11,6 +11,13 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest Classic floating size/opacity sliders have gray shells and solid accent
+centers, with larger targets and hover/focus/pressed feedback. All 170 normal
+UI tests, final pointer/keyboard/accessibility alignment checks, light/dark GPU
+states and strict workspace Clippy pass; see
+[the slider record](validation/slider-thumbs-gpu-2026-10-23/validation.json).
+Custom oversized sizes remain intact; full reference parity stays partial.
+
 Latest Classic desktop Shapes/Colors galleries use larger cells, glyphs and
 color controls while retaining compact dimensions below 1200 logical points.
 Captions align and Layers stays reachable through repeated resizing. All 169
