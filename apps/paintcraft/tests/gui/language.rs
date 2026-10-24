@@ -133,3 +133,42 @@ fn japanese_classic_translates_tool_sizes_view_and_selection_menus() {
     drop(h);
     std::fs::remove_dir_all(dir).unwrap();
 }
+
+#[test]
+fn all_language_choices_apply_persist_and_restore_in_classic_and_studio() {
+    use paintcraft_ui::i18n::{language, translate};
+    for experience in [Experience::Classic, Experience::Studio] {
+        for selected in Language::ALL {
+            let dir = scratch(&format!("locale-{}-{experience:?}", selected.id()));
+            Settings {
+                experience,
+                classic_variant: Some(ClassicVariant::V11),
+                ..Default::default()
+            }
+            .save(&dir)
+            .unwrap();
+            let mut h = harness_with(App::new(None).with_settings(dir.clone()), 1.0, false);
+            h.set_size(Vec2::new(1360.0, 900.0));
+            h.run();
+            let original = h.state().editor().document_snapshot();
+            h.get_by_label("Settings…").click();
+            h.run();
+            h.get_by_label("Language").click();
+            h.run();
+            h.get_by_label(selected.name()).click();
+            h.run();
+            assert_eq!(language(&h.ctx), selected);
+            h.get_by_label(&translate(selected, "Apply")).click();
+            h.run();
+            assert_eq!(Settings::load(&dir).0.language, selected);
+            assert!(h.state().editor().document().same_semantics(&original));
+            drop(h);
+            let restored = App::new(None).with_settings(dir.clone());
+            let mut h = harness_with(restored, 1.0, false);
+            h.run();
+            assert_eq!(language(&h.ctx), selected);
+            drop(h);
+            std::fs::remove_dir_all(dir).unwrap();
+        }
+    }
+}

@@ -1,27 +1,56 @@
 //! Fluent-backed UI translations. Locale belongs to an egui context, not a process.
 use fluent_bundle::{FluentArgs, FluentBundle, FluentResource};
+use std::cell::RefCell;
+use std::collections::HashMap;
+
+pub(crate) mod catalogs;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub enum Language {
     #[default]
     English,
     Japanese,
+    German,
+    Spanish,
+    PortugueseBrazil,
+    Hindi,
+    ChineseSimplified,
 }
 impl Language {
-    pub const ALL: [Self; 2] = [Self::English, Self::Japanese];
+    pub const ALL: [Self; 7] = [
+        Self::English,
+        Self::German,
+        Self::Spanish,
+        Self::Hindi,
+        Self::Japanese,
+        Self::PortugueseBrazil,
+        Self::ChineseSimplified,
+    ];
     pub fn id(self) -> &'static str {
         match self {
             Self::English => "en-US",
             Self::Japanese => "ja",
+            Self::German => "de",
+            Self::Spanish => "es",
+            Self::PortugueseBrazil => "pt-BR",
+            Self::Hindi => "hi",
+            Self::ChineseSimplified => "zh-CN",
         }
     }
     pub fn name(self) -> &'static str {
         match self {
             Self::English => "English",
             Self::Japanese => "日本語",
+            Self::German => "Deutsch",
+            Self::Spanish => "Español",
+            Self::PortugueseBrazil => "Português (Brasil)",
+            Self::Hindi => "हिन्दी",
+            Self::ChineseSimplified => "简体中文",
         }
     }
     pub fn parse(id: &str) -> Option<Self> {
+        // Retain en-US for existing preferences, while the catalog directory is en.
+        let id = if id == "en" { "en-US" } else { id };
         Self::ALL.into_iter().find(|lang| lang.id() == id)
     }
 }
@@ -34,7 +63,7 @@ pub fn language(ctx: &egui::Context) -> Language {
 pub fn set_language(ctx: &egui::Context, lang: Language) {
     if language(ctx) != lang {
         ctx.data_mut(|data| data.insert_temp(context_key(), lang));
-        crate::fonts::install(ctx);
+        crate::fonts::install_for_locale(ctx, lang.id());
         ctx.request_repaint();
     }
 }
@@ -44,20 +73,25 @@ fn bundle(lang: Language) -> FluentBundle<FluentResource> {
             .parse::<unic_langid::LanguageIdentifier>()
             .expect("valid bundled locale"),
     ]);
-    // Both supported UI languages are left-to-right; keep accessible labels literal.
+    // All bundled languages are left-to-right; preserve literal accessible labels.
     bundle.set_use_isolating(false);
-    let source = match lang {
-        Language::English => include_str!("../locales/en-US.ftl"),
-        Language::Japanese => include_str!("../locales/ja.ftl"),
-    };
-    bundle
-        .add_resource(FluentResource::try_new(source.into()).expect("valid bundled translations"))
-        .expect("unique bundled message IDs");
+    for source in catalogs::sources(lang) {
+        bundle
+            .add_resource(
+                FluentResource::try_new((*source).into()).expect("valid bundled translations"),
+            )
+            .expect("unique bundled message IDs across interfaces");
+    }
     bundle
 }
 thread_local! {
-    static JAPANESE: FluentBundle<FluentResource> = bundle(Language::Japanese);
-    static ENGLISH: FluentBundle<FluentResource> = bundle(Language::English);
+    static BUNDLES: RefCell<HashMap<Language, FluentBundle<FluentResource>>> = RefCell::default();
+}
+fn with_bundle<T>(lang: Language, render: impl FnOnce(&FluentBundle<FluentResource>) -> T) -> T {
+    BUNDLES.with(|cache| {
+        let mut cache = cache.borrow_mut();
+        render(cache.entry(lang).or_insert_with(|| bundle(lang)))
+    })
 }
 fn key(source: &str) -> String {
     let mut result = String::new();
@@ -82,7 +116,7 @@ pub fn translate(lang: Language, source: &str) -> String {
     if lang == Language::English {
         return source.into();
     }
-    JAPANESE.with(|bundle| {
+    with_bundle(lang, |bundle| {
         let Some(value) = bundle.get_message(&key(source)).and_then(|msg| msg.value()) else {
             return source.into();
         };
@@ -115,10 +149,7 @@ pub fn format_message(lang: Language, source: &str, values: &[(&str, String)]) -
             .into_owned();
         errors.is_empty().then_some(result)
     };
-    let translated = match lang {
-        Language::English => ENGLISH.with(render),
-        Language::Japanese => JAPANESE.with(render),
-    };
+    let translated = with_bundle(lang, render);
     translated.unwrap_or_else(|| {
         // Keep the English fallback useful even for templates absent from the catalog.
         let mut result = source.to_owned();
@@ -245,21 +276,55 @@ pub fn picker(ui: &mut egui::Ui, lang: &mut Language) {
 mod tests {
     use super::*;
     #[test]
-    fn every_english_message_has_a_valid_japanese_translation() {
-        let en = bundle(Language::English);
-        let ja = bundle(Language::Japanese);
-        for line in include_str!("../locales/en-US.ftl").lines() {
-            let (id, source) = line.split_once(" = ").unwrap();
-            assert!(en.get_message(id).is_some());
-            assert!(ja.get_message(id).is_some(), "{id}");
-            if source != "OK" && !source.contains("{ $") {
-                assert_ne!(translate(Language::Japanese, source), source, "{id}");
+    fn every_interface_catalog_is_valid_and_complete_in_every_language() {
+        for language in Language::ALL {
+            let translated = bundle(language);
+            for source in catalogs::sources(Language::English) {
+                for line in source
+                    .lines()
+                    .filter(|line| !line.is_empty() && !line.starts_with('#'))
+                {
+                    let (id, english) = line.split_once(" = ").unwrap();
+                    let message = translated
+                        .get_message(id)
+                        .unwrap_or_else(|| panic!("{}: missing {id}", language.id()));
+                    let mut args = FluentArgs::new();
+                    for tail in english.split('$').skip(1) {
+                        let name = tail
+                            .split(|c: char| !c.is_ascii_alphanumeric() && c != '_')
+                            .next()
+                            .unwrap();
+                        args.set(name, "sample 日本語 हिन्दी.png");
+                    }
+                    let mut errors = Vec::new();
+                    let value = translated.format_pattern(
+                        message.value().unwrap(),
+                        Some(&args),
+                        &mut errors,
+                    );
+                    assert!(errors.is_empty(), "{}: {id}: {errors:?}", language.id());
+                    assert!(!value.is_empty(), "{}: {id}", language.id());
+                }
             }
+            assert_eq!(
+                translate(language, "unknown user text"),
+                "unknown user text"
+            );
+            assert_eq!(Language::parse(language.id()), Some(language));
         }
-        assert_eq!(
-            translate(Language::Japanese, "unknown user text"),
-            "unknown user text"
-        );
+        assert_eq!(Language::parse("en"), Some(Language::English));
+    }
+    #[test]
+    fn macro_formats_named_arguments_and_preserves_user_values() {
+        let ctx = egui::Context::default();
+        for language in Language::ALL {
+            set_language(&ctx, language);
+            assert_eq!(crate::t!(&ctx, "Settings"), translate(language, "Settings"));
+            let filename = "my 日本語 हिन्दी.png";
+            let text = crate::t!(&ctx, "Opened { $detail }", detail = filename);
+            assert!(text.contains(filename), "{}: {text}", language.id());
+            assert!(!text.contains("{ $detail }"));
+        }
     }
     #[test]
     fn formatted_messages_translate_templates_and_preserve_user_values() {

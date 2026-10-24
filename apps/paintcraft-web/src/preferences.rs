@@ -254,16 +254,22 @@ mod language_tests {
     use paintcraft_ui::i18n::Language;
     #[test]
     fn language_round_trips_and_old_preferences_keep_english() {
+        for language in Language::ALL {
+            let prefs = Preferences {
+                language,
+                ..Default::default()
+            };
+            assert_eq!(
+                Preferences::parse(&prefs.bytes().unwrap())
+                    .unwrap()
+                    .language,
+                language
+            );
+        }
         let prefs = Preferences {
             language: Language::Japanese,
             ..Default::default()
         };
-        assert_eq!(
-            Preferences::parse(&prefs.bytes().unwrap())
-                .unwrap()
-                .language,
-            Language::Japanese
-        );
         let mut value = json::parse(&prefs.bytes().unwrap()).unwrap();
         let Value::Object(ref mut object) = value else {
             unreachable!()

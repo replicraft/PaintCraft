@@ -1,36 +1,87 @@
 # Interface languages
 
-Settings includes a Language dropdown with English and Japanese on desktop and
-web. The desktop previews the choice in its existing Apply/Cancel dialog; Cancel
-restores the previous language. Browser settings take effect immediately. Both
-hosts persist the choice without storing it in image documents. Existing settings
-without a language keep English; unknown language IDs are rejected.
+Desktop and web offer English, German, Spanish, Hindi, Japanese, Brazilian
+Portuguese and Simplified Chinese in Settings → Language. Language names appear
+in their own language. Desktop previews the choice in its Apply/Cancel dialog;
+Cancel restores the previous choice. Browser settings take effect immediately.
+Both hosts persist the language independently of image documents. Existing
+`en-US` preferences remain compatible, and unknown IDs are rejected.
 
-Shared menus, action buttons, tools, brushes, settings and form captions use
-Fluent resources in `paintcraft-ui/locales`. English source labels remain the
-fallback for messages that have not been translated. Low-level diagnostic errors,
-some generated status sentences and remaining prototype help text still use
-English. User-entered text, filenames, font family names and command identifiers
-are never translated. CLI diagnostics and machine-readable receipts retain their
-existing English/stable identifier contracts.
+## Catalog layout
 
-The application keeps Selawik as its primary interface font. Noto Sans JP supplies
-Japanese glyphs in both UI and canvas text, including when no Japanese system
-fonts are installed. It is also available in the browser's Default font chooser.
-The font is bundled with its SIL Open Font License and source/hash record.
+Fluent resources live in `crates/presentation/paintcraft-ui/locales`:
 
-Fluent bundles are cached per thread, while the selected language belongs to each
-egui context. Two editor contexts can use different languages. The native menu
-updates its action labels and File/Edit/View/Window headings without rebuilding
-the menu or changing action IDs. OS-supplied standard menu items retain the host
-system's localization. Application-supplied native file-picker titles/filter
-labels and the browser HTML download prompt receive translated strings from the
-frontend; the platform adapter does not import the UI crate.
+```text
+locales/
+  en/
+    app.ftl
+    common.ftl
+    classic.ftl
+    studio.ftl
+    settings.ftl
+  de/
+  es/
+  hi/
+  ja/
+  pt-BR/
+  zh-CN/
+```
 
-Tests parse every bundled message, check Japanese catalog coverage, fallback and
-context isolation, drive the actual browser dropdown, verify preference round
-trips and switch/Cancel/Apply through every desktop skin and Studio while checking
-that document pixels are unchanged. These checks do not substitute for a native
-Japanese language review of every workflow.
+Every language has the same five files and message IDs. `app.ftl` contains host
+workflow messages, file operations and recovery. `common.ftl` contains shared
+actions, tools, colors and dialogs. `classic.ftl` and `studio.ftl` contain their
+interface-specific chrome. `settings.ftl` contains preferences. IDs are unique
+across the files because each locale is loaded into one Fluent bundle. Shared
+labels belong in `common.ftl` rather than being duplicated across interfaces.
 
-The implementation uses the [Fluent Rust runtime](https://docs.rs/fluent-bundle/0.16.0/fluent_bundle/).
+## Translating UI code
+
+Import `paintcraft_ui::t` once at the top of the module:
+
+```rust,ignore
+use paintcraft_ui::t;
+
+let label = t!(ui.ctx(), "Settings");
+let status = t!(ui.ctx(), "Opened { $detail }", detail = filename);
+```
+
+The first argument selects the egui context's language. Literal English labels
+map to stable Fluent message IDs; formatted templates use the `format-` prefix.
+Named arguments are values, never translation keys. An existing slice of named
+string values is also accepted by the macro. Keep translations outside
+context-locked accessibility callbacks.
+
+User-entered text, filenames, font family names and command identifiers are not
+translated. English source text remains the fallback for unknown messages.
+Low-level diagnostic payloads and CLI machine-readable receipts retain their
+existing contracts. Adding languages does not imply that every external error
+message is localized or that a native speaker has reviewed every workflow.
+
+## Fonts
+
+Selawik remains the primary interface font. Bundled Noto Sans JP, Noto Sans SC
+and Noto Sans Devanagari provide Japanese, Simplified Chinese and Hindi coverage
+without relying on installed system fonts. Chinese selects SC before JP in the
+fallback list so shared Han characters use the appropriate regional forms.
+All language names remain readable before selecting a language. The same font
+collection is available to document text on desktop and web. Each added font
+includes its SIL Open Font License and a source/hash record.
+
+The current egui text renderer shapes complex scripts, including Devanagari
+conjuncts. Document text uses the existing cosmic-text renderer. Fonts are
+reinstalled only when the context's language changes, rather than every frame.
+
+## Validation
+
+Run `python3 scripts/check_translations.py` to check all seven locales for
+matching interface files, message IDs and Fluent arguments, duplicate IDs and
+missing UI literals. Rust tests parse every resource and format every message
+with sample arguments. Additional tests check context isolation, macro argument
+preservation, bundled glyph coverage and Devanagari shaping. Desktop and web
+GUI tests select the actual language options, check translated settings, and
+verify document semantics remain unchanged; desktop also checks persistence.
+
+Fluent bundles are cached per thread, while language belongs to each egui
+context. Native menus update labels without changing action IDs. OS-supplied
+standard menu entries retain the host system's localization. Native file-picker
+titles and filter labels are localized at the presentation boundary.
