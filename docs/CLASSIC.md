@@ -1403,3 +1403,18 @@ workspace and wasm Clippy and the release browser build pass. An isolated Brave
 review verified polygon/curve preview/release equality, one-Undo restoration, Escape
 and refusal to download an unfinished shape, with no JavaScript exceptions.
 Generated captures/logs remain local in the ignored validation folder.
+
+## Selection Crop (2026-10-24)
+
+Crop is now a real selection-gated action in the Image ribbon and Edit menu,
+using the shared desktop/web engine. It destructively clips all layers, keeps
+identities/metadata and exact straight RGBA, clears the selection and records
+one undoable change. Native worker publication remembers the last authored size;
+Undo retains that startup preference. The native GUI, web and CLI paths have
+real action/selection/pixel/Undo coverage. An isolated browser produced a
+121 × 81 PCND verified by the CLI and restored sampled original pixels on Undo.
+See [the operation, admission and validation details](CROP_PLANNING.md).
+
+Earlier disabled-Crop entries are historical. Rotate/flip/skew, clipboard, full
+selection manipulation and additional brush/image semantics remain feature
+work. No Windows pixel-fidelity or full M2/T22 completion is claimed.

@@ -11,6 +11,18 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest editing work adds real selection Crop across desktop, web and CLI. The
+shared `canvas.crop` operation preserves layer identities/metadata and raw RGBA,
+discards outside content, clears selection and supports exact one-step Undo.
+Source-bound sparse plans retain prior operations in a mixed batch and reserve
+the complete private decoded peak before replay. Native asynchronous publication
+now remembers authored dimensions without changing that preference on Undo.
+Raster/engine, native worker/GUI, web, CLI and independently checked grammar tests
+cover the change. An isolated browser downloaded a valid 121 × 81 cropped PCND
+and restored original pixels on Undo. See [Crop planning](CROP_PLANNING.md).
+Rotate/flip/skew, richer selections, clipboard and remaining unavailable image
+tools are still work. T14/T15 remain partial; T22 remains not-started.
+
 Current priority is completing editing features; UI cleanup is deferred. All 23
 Classic gallery choices now have real operations: the eighteen closed presets
 plus line/rectangle/ellipse, polygon construction and two-handle cubic curves.
@@ -19,11 +31,11 @@ The shared contour command supports clipped fill and once-covered outlines in a
 single admitted paint plan. Host tests cover finish/cancel, coalesced Enter,
 button/layer ownership, bounded vertices, native worker backpressure, file guards
 and Undo; an isolated browser confirmed preview/release equality and one-step Undo.
-Current validation: 256 native library tests (8 ignored), 215 GUI tests (45
+Gallery tranche validation: 256 native library tests (8 ignored), 215 GUI tests (45
 ignored), 63 web/tool tests, contour engine/parser/CLI cases and strict native/
 wasm Clippy. This establishes feature behavior, not full native input or Windows
 pixel fidelity. Remaining shape work includes antialiasing, richer draft editing
-and automatic resolution at tool/document boundaries. Crop/transforms, clipboard,
+and automatic resolution at tool/document boundaries. Rotate/flip/skew, clipboard,
 other brush semantics and unavailable image tools remain feature work. Source
 checks live in the [Classic ledger](CLASSIC.md); generated validation artifacts
 are ignored. T14/T15 remain partial; T22 conformance remains not-started.

@@ -2,7 +2,7 @@
 
 PaintCraft Web connects the shared Classic interface, tool state machines,
 transactional document session and raster compositor. Pencil, round/square brush,
-eraser, fill, all 23 Classic shape choices, rectangular selection, clear canvas
+eraser, fill, all 23 Classic shape choices, rectangular selection, selection Crop, clear canvas
 and undo/redo edit real pixels. Shift constrains shapes; Ctrl/Cmd-scroll zooms. The
 Layers panel adds, selects, hides, reorders and deletes real layers. Brush preview
 and release use the same shared commands. Erasing and Clear Canvas restore the
@@ -20,8 +20,14 @@ undoable. Unchanged dimensions do not publish history. The dialog enforces the
 browser pixel limit before Apply. Physical units, resolution and monochrome
 conversion remain unavailable.
 
+Image → Crop and Edit → Crop use the selected canvas region. Crop discards
+outside content from every layer, including hidden layers, preserves layer IDs
+and metadata, and clears the selection. Undo restores the complete previous
+state. Straight RGBA and hidden RGB survive project saving. Rotate, flip and skew
+remain unavailable. See [Crop's semantics and limits](../../docs/CROP_PLANNING.md).
+
 View → Default canvas size chooses a configured size or remembers the last size
-created/resized. The initial default is 1000 × 486. Startup dimensions, theme,
+created/resized/cropped. Undo/Redo preserve the last authored size. The initial default is 1000 × 486. Startup dimensions, theme,
 Classic skin and custom swatches persist in this browser when local storage is
 available. Preferences are validated before use; malformed or unavailable storage
 falls back to defaults with a status message. Preference storage contains no

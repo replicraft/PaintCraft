@@ -432,3 +432,14 @@ admission still applies; broader metadata residency accounting remains T04/T11 w
 Tests inspect hidden/off-canvas samples, identity/order, tile sharing, independent
 writes, failure rollback and exact recorded undo/redo. This is a defined native
 operation, not yet independently verified Paint.NET duplicate-layer semantics.
+
+### Destructive Crop (batch v2)
+
+`canvas.crop` accepts a canvas-contained `rect`, destructively clips every layer,
+translates origins and clears selection in one recorded transaction. Layer
+identities/metadata and straight RGBA survive. Source-bound sparse maps participate
+in complete batch compilation and decoded peak admission, including earlier
+painting/crops and later reads. V1 remains unchanged. See
+[Crop planning](CROP_PLANNING.md) for limits, failure behavior and source tests.
+This implements a defined operation; it does not establish independent Windows
+reference pixel fidelity or other transforms.
