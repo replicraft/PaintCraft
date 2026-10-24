@@ -27,7 +27,7 @@ pub(super) struct CanvasDraft {
 
 impl WebApp {
     pub(super) fn begin_colors(&mut self, secondary: bool, slot: Option<u8>) {
-        self.editor.cancel();
+        self.editor.tools.cancel_gesture();
         let source = if secondary {
             self.controls.secondary
         } else {
@@ -48,7 +48,7 @@ impl WebApp {
     pub(super) fn begin_canvas(&mut self, action: Action) {
         let defaults = action == Action::CanvasDefaults;
         let properties = action == Action::ImageProperties;
-        self.editor.cancel();
+        self.editor.tools.cancel_gesture();
         self.form = Some(Form::Canvas(CanvasDraft {
             ticket: self.editor.session.history_ticket(),
             view: paintcraft_classic::canvas_size::CanvasSize {

@@ -5,6 +5,7 @@ mod editor;
 mod files;
 mod layers;
 mod preferences;
+mod text_ui;
 pub use app::WebApp;
 
 #[cfg(test)]
@@ -13,6 +14,8 @@ mod app_tests;
 mod controls_tests;
 #[cfg(test)]
 mod forms_tests;
+#[cfg(test)]
+mod text_tests;
 
 #[cfg(target_arch = "wasm32")]
 mod browser {
@@ -58,9 +61,9 @@ mod browser {
 
         /// Used by the host page's unsaved-work guard; active gestures count too.
         pub fn is_dirty(&self) -> bool {
-            self.runner.app_mut::<super::WebApp>().is_some_and(|app| {
-                app.editor.session.is_dirty() || app.editor.tools.gesture_in_progress()
-            })
+            self.runner
+                .app_mut::<super::WebApp>()
+                .is_some_and(|app| app.unsaved() || app.editor.tools.gesture_in_progress())
         }
 
         pub fn destroy(&self) {

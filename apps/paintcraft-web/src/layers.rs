@@ -34,7 +34,10 @@ impl WebApp {
             })
             .inner;
         for action in actions {
-            self.editor.cancel();
+            if !matches!(action, Action::Close) && !self.finish_text() {
+                continue;
+            }
+            self.editor.tools.cancel_gesture();
             let op = match action {
                 Action::Close => {
                     self.workspace.layers = false;

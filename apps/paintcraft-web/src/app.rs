@@ -22,7 +22,8 @@ pub struct WebApp {
     preferences: crate::preferences::Preferences,
     export_confirm: bool,
     confirm_replace: Option<Action>,
-    files: crate::files::Files,
+    pub(crate) files: crate::files::Files,
+    pub(crate) text: crate::text_ui::TextUi,
     pending_import: Option<crate::files::Loaded>,
     form: Option<forms::Form>,
     pub(crate) message: String,
@@ -58,6 +59,7 @@ impl WebApp {
             export_confirm: false,
             confirm_replace: None,
             files: crate::files::Files::default(),
+            text: crate::text_ui::TextUi::default(),
             pending_import: None,
             form: None,
             message: warning.unwrap_or_else(|| {
@@ -84,7 +86,7 @@ impl WebApp {
         Context {
             frontend: Frontend::Classic,
             document_open: true,
-            can_undo: self.editor.session.undo_depth() > 0,
+            can_undo: self.editor.session.undo_depth() > 0 || self.editor.has_text(),
             can_redo: self.editor.session.redo_depth() > 0,
             selection_active: self.editor.session.selection()
                 != paintcraft_editor::execute::Selection::Inactive,
@@ -111,7 +113,7 @@ impl WebApp {
     pub(crate) fn edit(&mut self, action: Edit) {
         match self.editor.apply(action) {
             Ok(()) => {
-                self.message = if self.editor.session.is_dirty() {
+                self.message = if self.unsaved() {
                     "Unsaved changes — kept only in this tab".into()
                 } else {
                     "Ready".into()
@@ -124,7 +126,7 @@ impl WebApp {
     fn action(&mut self, ctx: &egui::Context, action: Action) {
         match action {
             Action::Settings | Action::Interface => {
-                self.editor.cancel();
+                self.editor.tools.cancel_gesture();
                 self.settings = true;
             }
             Action::CanvasSize | Action::ImageProperties | Action::CanvasDefaults => {
@@ -133,9 +135,12 @@ impl WebApp {
             Action::EditColors => self.begin_colors(false, None),
             Action::EditSecondaryColors => self.begin_colors(true, None),
             Action::EditCustomColor(slot) => self.begin_colors(false, Some(slot)),
-            Action::SelectTool(Tool::Text) => self.unsupported(action),
             Action::SelectTool(tool) => {
-                self.editor.cancel();
+                if !self.finish_text() {
+                    self.controls.tool = Tool::Text;
+                    return;
+                }
+                self.editor.tools.cancel_gesture();
                 self.controls.tool = tool;
             }
             Action::Undo => self.edit(Edit::Undo),
@@ -151,17 +156,16 @@ impl WebApp {
                 });
             }
             Action::Export => {
-                self.editor.cancel();
+                self.editor.tools.cancel_gesture();
                 self.export_confirm = true;
             }
             Action::Save | Action::SaveAs => {
-                self.editor.cancel();
-                self.files
-                    .download(ctx, self.editor.session.document(), false);
+                self.editor.tools.cancel_gesture();
+                self.download(ctx, false);
             }
             Action::New | Action::Open => {
-                self.editor.cancel();
-                if self.editor.session.is_dirty() {
+                self.editor.tools.cancel_gesture();
+                if self.unsaved() {
                     self.confirm_replace = Some(action);
                 } else {
                     self.replace(ctx, action);
@@ -186,6 +190,7 @@ impl WebApp {
             _ => self.unsupported(action),
         }
         self.zoom = self.zoom.clamp(0.125, 10.0);
+        ctx.request_repaint();
     }
 
     fn new_document(&mut self) {
@@ -194,6 +199,7 @@ impl WebApp {
             Ok(editor) => {
                 self.editor = editor;
                 self.canvas = Canvas::default();
+                self.text.preedit.clear();
                 self.name = "Untitled".into();
                 self.update_title();
                 self.message = "New document".into();
@@ -217,6 +223,7 @@ impl WebApp {
             Ok(editor) => {
                 self.editor = editor;
                 self.canvas = Canvas::default();
+                self.text.preedit.clear();
                 self.name = loaded.name;
                 self.update_title();
                 self.message = format!("Opened {}", self.name);
@@ -269,24 +276,40 @@ impl WebApp {
         );
     }
 
-    fn keyboard(&mut self, ctx: &egui::Context) {
-        if ctx.current_pass_index() != 0 || self.blocked() || ctx.egui_wants_keyboard_input() {
-            return;
+    pub(crate) fn keyboard_event(&mut self, ctx: &egui::Context, event: &egui::Event) -> bool {
+        if self.blocked()
+            || self.text.widget_owned_input
+            || ctx.egui_wants_keyboard_input()
+            || egui::Popup::is_any_open(ctx)
+            || !self.text.preedit.is_empty()
+        {
+            return false;
         }
-        for event in ctx.input(|i| i.events.clone()) {
-            if let egui::Event::Key {
-                key,
-                pressed: true,
-                modifiers,
-                repeat: false,
-                ..
-            } = event
-                && let Some(action) = Action::from_shortcut_for(Frontend::Classic, key, modifiers)
+        if let egui::Event::Key {
+            key,
+            pressed: true,
+            modifiers,
+            repeat: false,
+            ..
+        } = event
+        {
+            if self.editor.tools.is_editing_text()
+                && modifiers.command
+                && matches!(
+                    key,
+                    egui::Key::A | egui::Key::B | egui::Key::I | egui::Key::U
+                )
+            {
+                return false;
+            }
+            if let Some(action) = Action::from_shortcut_for(Frontend::Classic, *key, *modifiers)
                 && action.enabled(self.context())
             {
                 self.action(ctx, action);
+                return true;
             }
         }
+        false
     }
 
     pub fn show(&mut self, ui: &mut egui::Ui) {
@@ -294,12 +317,13 @@ impl WebApp {
         if ctx.current_pass_index() == 0 {
             self.poll_files();
         }
-        self.keyboard(&ctx);
+        self.text.widget_owned_input =
+            ctx.egui_wants_keyboard_input() || egui::Popup::is_any_open(&ctx);
         let context = self.context();
         egui::Panel::top("web-editor-banner").show(ui, |ui| {
             ui.horizontal_wrapped(|ui| {
                 ui.strong("PaintCraft Web · Early editor");
-                ui.label("Save downloads a project copy. Export downloads PNG. Editable text is not connected yet.");
+                ui.label("Save downloads a project copy. Export downloads PNG. Text stays editable until placed; downloads include the draft.");
             });
         });
         egui::Panel::top("classic-chrome").show(ui, |ui| {
@@ -331,6 +355,7 @@ impl WebApp {
                 self.action(&ctx, action);
             }
         });
+        self.text_chrome(ui);
         self.layers(ui);
         egui::CentralPanel::default()
             .frame(egui::Frame::new().fill(paintcraft_ui::theme::workspace(ctx.theme())))
@@ -348,7 +373,7 @@ impl WebApp {
                 ui.label("Download a project copy to keep your work. Browser downloads cannot confirm a disk save; discard explicitly when ready.");
                 ui.horizontal_wrapped(|ui| {
                     if ui.button("Download project").clicked() {
-                        self.files.download(ctx,self.editor.session.document(),false);
+                        self.download(ctx,false);
                     }
                     if ui.button("Discard and continue").clicked()
                         && let Some(action) = self.confirm_replace.take()
@@ -383,7 +408,7 @@ impl WebApp {
                 ui.label("PNG flattens visible layers and omits hidden layer data. Save a PaintCraft project to preserve editable layers.");
                 ui.horizontal(|ui| {
                     if ui.button("Download PNG").clicked() {
-                        self.files.download(ctx,self.editor.session.document(),true);
+                        self.download(ctx,true);
                         self.export_confirm = false;
                     }
                     if ui.button("Cancel").clicked() { self.export_confirm = false; }

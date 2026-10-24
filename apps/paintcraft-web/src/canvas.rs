@@ -105,6 +105,7 @@ impl WebApp {
                         Color32::WHITE,
                     );
                 }
+                self.text_overlay(ui, &painter, response.rect);
                 let selection = match self.editor.tools.preview() {
                     Some(Preview::Marquee { from, to }) => Some((from, (to.0 + 1, to.1 + 1))),
                     _ => match self.editor.session.selection() {
@@ -132,7 +133,12 @@ impl WebApp {
                         self.canvas.controls.is_none_or(|rect| !rect.contains(pos))
                     })
                 {
-                    ui.ctx().set_cursor_icon(egui::CursorIcon::Crosshair);
+                    ui.ctx()
+                        .set_cursor_icon(if self.controls.tool == Tool::Text {
+                            egui::CursorIcon::Text
+                        } else {
+                            egui::CursorIcon::Crosshair
+                        });
                     if self.controls.tool == Tool::Eraser
                         && let Some(pos) = ui.ctx().pointer_hover_pos()
                     {
@@ -175,8 +181,8 @@ impl WebApp {
             Ok(pixels) => pixels,
             Err(error) => {
                 // Never leave a failed speculative image presented as committed.
-                self.editor.cancel();
-                self.message = format!("Preview cancelled: {error}");
+                self.editor.tools.cancel_gesture();
+                self.message = format!("Preview unavailable: {error}");
                 match paintcraft_render::render_flat(self.editor.session.document()) {
                     Ok(pixels) => pixels,
                     Err(error) => {
@@ -204,7 +210,7 @@ impl WebApp {
 
     fn canvas_input(&mut self, ui: &egui::Ui, response: &egui::Response) {
         if self.blocked() {
-            self.editor.cancel();
+            self.editor.tools.cancel_gesture();
             return;
         }
         self.editor.tools.tool = self.controls.tool;
@@ -221,13 +227,16 @@ impl WebApp {
         };
         let events = ui.input(|i| i.events.clone());
         if !ui.input(|i| i.focused) {
-            self.editor.cancel();
+            self.editor.tools.cancel_gesture();
             return;
         }
         self.editor
             .tools
             .constrain_shape(ui.input(|i| i.modifiers.shift));
         for event in events {
+            if self.keyboard_event(ui.ctx(), &event) {
+                continue;
+            }
             match event {
                 egui::Event::PointerButton {
                     pos,
@@ -249,9 +258,45 @@ impl WebApp {
                         if let Some(layer) = self.editor.target
                             && self.editor.session.document().layers[&layer].visible
                         {
-                            self.editor
-                                .tools
-                                .pointer_down_subpixel(layer, point(pos), button);
+                            if self.controls.tool == Tool::Text {
+                                let p = point(pos);
+                                let doc_point = (p.0.div_euclid(256), p.1.div_euclid(256));
+                                let inside_draft = match self.editor.tools.preview() {
+                                    Some(Preview::Text {
+                                        style: Some(style),
+                                        text,
+                                        at,
+                                        ..
+                                    }) => self
+                                        .editor
+                                        .text_mask(&text, &style, at)
+                                        .ok()
+                                        .and_then(|mask| mask.bounds)
+                                        .is_some_and(|bounds| {
+                                            doc_point.0 >= bounds.x0
+                                                && doc_point.0 < bounds.x1
+                                                && doc_point.1 >= bounds.y0
+                                                && doc_point.1 < bounds.y1
+                                        }),
+                                    _ => false,
+                                };
+                                if button == PointerButton::Primary
+                                    && !inside_draft
+                                    && self.finish_text()
+                                {
+                                    let p = point(pos);
+                                    self.sync_text();
+                                    self.text.selected_all = false;
+                                    self.editor.tools.begin_text(
+                                        layer,
+                                        (p.0.div_euclid(256), p.1.div_euclid(256)),
+                                    );
+                                }
+                            } else {
+                                self.editor
+                                    .tools
+                                    .pointer_down_subpixel(layer, point(pos), button);
+                            }
                             self.editor.tools.constrain_shape(modifiers.shift);
                         }
                     } else if !pressed && self.editor.tools.gesture_button() == Some(button) {
@@ -269,7 +314,7 @@ impl WebApp {
                         && self.canvas.controls.is_none_or(|rect| !rect.contains(pos)))
                     .then_some((p.0.div_euclid(256), p.1.div_euclid(256)));
                     if self.editor.tools.gesture_points().len() >= MAX_POINTS {
-                        self.editor.cancel();
+                        self.editor.tools.cancel_gesture();
                         self.message =
                             "Stroke cancelled: browser point limit reached; use shorter strokes"
                                 .into();
@@ -278,15 +323,21 @@ impl WebApp {
                     }
                 }
                 egui::Event::PointerGone => {
-                    self.editor.cancel();
+                    self.editor.tools.cancel_gesture();
                     self.canvas.pointer = None;
                 }
                 egui::Event::Key {
                     key: egui::Key::Escape,
                     pressed: true,
                     ..
-                } => self.editor.cancel(),
-                _ => {}
+                } if !self.text.widget_owned_input
+                    && !ui.ctx().egui_wants_keyboard_input()
+                    && !egui::Popup::is_any_open(ui.ctx()) =>
+                {
+                    self.editor.cancel();
+                    self.text.preedit.clear();
+                }
+                event => self.text_event(ui.ctx(), event),
             }
         }
     }
