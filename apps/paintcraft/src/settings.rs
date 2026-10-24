@@ -4,6 +4,7 @@
 //! moved aside (not deleted), defaults are used, and the reason is reported.
 
 mod colors;
+mod studio;
 mod text;
 pub use paintcraft_classic::canvas_size::{CanvasDefaults, DEFAULT_SIZE, SIZE_MAX};
 
@@ -39,6 +40,7 @@ pub struct Settings {
     pub classic_toolbar_auto_hide: bool,
     pub studio_overscroll: bool,
     pub studio_auto_scroll: bool,
+    pub studio_layout: paintcraft_studio::layout::Layout,
 }
 
 impl Default for Settings {
@@ -56,6 +58,7 @@ impl Default for Settings {
             classic_toolbar_auto_hide: false,
             studio_overscroll: true,
             studio_auto_scroll: true,
+            studio_layout: Default::default(),
         }
     }
 }
@@ -137,6 +140,7 @@ fn parse(bytes: &[u8]) -> Result<Settings, String> {
             .ok_or("unknown language")?,
     };
     Ok(Settings {
+        studio_layout: studio::parse(v.get("studio_layout"))?,
         studio_auto_scroll: match v.get("studio_auto_scroll") {
             None => true,
             Some(Value::Bool(value)) => *value,
@@ -203,6 +207,7 @@ impl Settings {
     }
 
     pub fn save(&self, dir: &Path) -> Result<(), String> {
+        studio::parse(Some(&studio::value(&self.studio_layout)))?;
         CanvasDefaults::parse(&self.canvas.value())?;
         text::parse(Some(&text::value(&self.text)))?;
         colors::parse(Some(&colors::value(&self.custom_colors)))?;
@@ -218,6 +223,7 @@ impl Settings {
             ("classic_rulers", Value::Bool(self.classic_rulers)),
             ("studio_overscroll", Value::Bool(self.studio_overscroll)),
             ("studio_auto_scroll", Value::Bool(self.studio_auto_scroll)),
+            ("studio_layout", studio::value(&self.studio_layout)),
             (
                 "classic_toolbar_auto_hide",
                 Value::Bool(self.classic_toolbar_auto_hide),

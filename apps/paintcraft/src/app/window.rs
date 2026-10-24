@@ -133,7 +133,16 @@ impl App {
             self.classic_status_contents(ui, rect);
         }
         if self.experience() == Experience::Studio {
+            self.settings.studio_layout.install(&ctx);
             self.studio_windows(&ctx);
+            if first_pass && self.confirm.is_none() && !ctx.input(|input| input.pointer.any_down())
+            {
+                let layout = self.settings.studio_layout.capture(&ctx, &self.studio);
+                if layout != self.settings.studio_layout {
+                    self.settings.studio_layout = layout;
+                    self.persist_settings();
+                }
+            }
         }
         if first_pass {
             self.update_thumbnail(&ctx);

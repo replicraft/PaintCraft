@@ -31,6 +31,7 @@ impl App {
         self.picking = (settings.experience == Experience::Classic
             && settings.classic_variant.is_none())
         .then_some(ClassicVariant::DEFAULT);
+        settings.studio_layout.restore_visibility(&mut self.studio);
         self.settings = settings;
         let opened = self.recent.entries.clone();
         self.recent = recent::History::load(dir.clone());
@@ -170,5 +171,84 @@ impl App {
             paintcraft_classic::skin_picker::Choice::Cancel => self.picking = None,
             paintcraft_classic::skin_picker::Choice::Pending => self.picking = Some(current),
         }
+    }
+}
+
+#[cfg(test)]
+mod studio_layout_tests {
+    use super::*;
+
+    fn frame(app: &mut App, context: &egui::Context) {
+        let mut output = context.run_ui(
+            egui::RawInput {
+                screen_rect: Some(egui::Rect::from_min_size(
+                    egui::Pos2::ZERO,
+                    egui::vec2(1400.0, 1000.0),
+                )),
+                ..Default::default()
+            },
+            |ui| app.ui(ui),
+        );
+        output.textures_delta.clear();
+    }
+
+    #[test]
+    fn studio_panel_changes_survive_restart_without_editing_documents_or_classic_preferences() {
+        let directory =
+            std::env::temp_dir().join(format!("paintcraft-panel-restart-{}", Uuid::new_v4()));
+        let settings = Settings {
+            experience: Experience::Studio,
+            classic_variant: Some(ClassicVariant::V10),
+            classic_rulers: true,
+            classic_status_bar: false,
+            ..Default::default()
+        };
+        settings.save(&directory).unwrap();
+        let mut app = App::new(None).with_settings(directory.clone());
+        let original = app.editor.document_snapshot();
+        let original_ticket = app.editor.history_view().ticket;
+        let context = egui::Context::default();
+        for _ in 0..3 {
+            frame(&mut app, &context);
+        }
+        let positions = app.settings.studio_layout.clone();
+        app.studio.tools = false;
+        app.studio.layers = false;
+        app.studio.history = false;
+        frame(&mut app, &context);
+        assert!(Arc::ptr_eq(&original, &app.editor.document_snapshot()));
+        assert_eq!(app.editor.history_view().ticket, original_ticket);
+        let saved = Settings::load(&directory).0;
+        assert!(!saved.studio_layout.panels[0].visible);
+        assert!(!saved.studio_layout.panels[2].visible);
+        assert!(!saved.studio_layout.panels[3].visible);
+        assert_eq!(
+            saved.studio_layout.panels[0].position,
+            positions.panels[0].position
+        );
+        assert_eq!(saved.classic_variant, Some(ClassicVariant::V10));
+        assert!(saved.classic_rulers);
+        assert!(!saved.classic_status_bar);
+        let mut restarted = App::new(None).with_settings(directory.clone());
+        assert!(!restarted.studio.tools);
+        assert!(!restarted.studio.layers);
+        assert!(!restarted.studio.history);
+        assert!(restarted.studio.colors);
+        let restarted_context = egui::Context::default();
+        for _ in 0..3 {
+            frame(&mut restarted, &restarted_context);
+        }
+        assert_eq!(restarted.settings.studio_layout, saved.studio_layout);
+        restarted.settings.experience = Experience::Classic;
+        restarted.studio.tools = true;
+        frame(&mut restarted, &restarted_context);
+        assert_eq!(
+            Settings::load(&directory).0.studio_layout,
+            saved.studio_layout,
+            "Classic frames cannot overwrite Studio preferences"
+        );
+        drop(restarted);
+        drop(app);
+        std::fs::remove_dir_all(directory).unwrap();
     }
 }
