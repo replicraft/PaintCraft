@@ -5,6 +5,13 @@ selection/rotation/background-removal work](CLASSIC_FOLLOWUP.md). Full feature a
 historical skin parity remain incomplete.
 
 
+Magnifier now works in desktop/web Classic skins: primary click steps in,
+secondary click steps out, and the clicked document point is centered where scroll
+bounds allow. View changes retain document/history and editable text. Drag-to-zoom,
+per-version native qualification and broader roadmap gates remain unfinished.
+See [Classic follow-up](CLASSIC_FOLLOWUP.md).
+
+
 Historical File panels now route PNG/JPEG/BMP choices to native and browser
 exports, with localized confirmation/download labels and unchanged project/history
 state. Windows 7/10 Home/View ribbons and slim status strips have scoped host and

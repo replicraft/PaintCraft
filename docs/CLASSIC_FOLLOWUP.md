@@ -67,8 +67,8 @@ feature roadmap or claim native Paint parity.
 
 This improves the reference layout; it does not establish full skin or feature
 parity. Some original artwork, native Windows window decorations and
-version-specific details remain. Clipboard operations and
-Magnifier remain explicitly disabled. Existing canvas centering is retained.
+version-specific details remain. Clipboard operations remain explicitly disabled. Magnifier now performs click
+zooming as documented below. Existing canvas centering is retained.
 
 ## Brush comparison
 
@@ -567,3 +567,44 @@ The Windows 7 English outline and Japanese fill captures were visually inspected
 These original sample glyphs and scoped layout changes do not establish full
 native Windows parity. Raw evidence is retained in ignored
 `docs/validation/historical-shape-paint-2026-10-24/`.
+
+### Magnifier click zoom (2026-10-24)
+
+Magnifier is enabled in all three Classic skins on desktop and web. Primary
+canvas press steps to the next power-of-two zoom, secondary press steps back;
+the clicked document point is centered where scroll bounds allow. The hosts retain
+their existing zoom limits (desktop 1/65536 through 64, web 0.125 through 10).
+The canvas uses the ZoomIn cursor and the tool's existing icon/selection styling.
+The native toolbar's existing zoom steps and Magnifier share the same bounded
+helper. Other browser zoom actions retain their existing behavior.
+
+The shared tool identity has stable action ID 30, preserving previous IDs. Its
+state machine never opens a paint gesture or emits document intentions, including
+subpixel/secondary-button input. Hosts intercept visible canvas presses before
+paint-layer admission and keep zoom separate from document publication. Native
+centering is deferred until a frame has the updated zoom geometry; browser uses
+the same pending-center approach. UI/tool scopes and popups continue to own input.
+
+Switching Text to Magnifier and back preserves the editable text draft. Other
+ordinary tool switches retain their prior placement behavior. Browser routing
+checks the previous engine tool rather than the already-updated ribbon selection,
+so returning to Text does not accidentally place the draft. Preferences and saved
+project data do not acquire view commands.
+
+Validation: workspace cargo check, tool tests and shared UI tests pass. The full
+ordinary native GUI suite passes 251 tests; the focused Magnifier tests also pass
+with the added off-center anchor check. They cover all skins/languages, light/dark,
+normal/high DPI, forced multipass, both mouse buttons, cursor feedback, unchanged
+document/history, text preservation and centering when both axes can scroll. All
+68 browser library tests pass; the strengthened focused browser anchor test also
+passes. Strict all-target Clippy passes for desktop/web/tools/shared UI; the browser
+release distribution rebuilds. Translation, source-length and whitespace checks
+pass.
+
+Six actual app captures are stored as
+`assets/repo/classic-v{7,10,11}-magnifier-{en-US,ja}.png`, showing an edited canvas at
+200 percent. The Windows 7 English and Windows 11 Japanese captures were visually
+inspected. These checks establish the implemented click workflow, not exact native
+Windows profile behavior. Drag-to-zoom, magnification preview rectangles and
+per-version interaction qualification remain unfinished. Raw logs are retained in
+ignored `docs/validation/magnifier-2026-10-24/`.
