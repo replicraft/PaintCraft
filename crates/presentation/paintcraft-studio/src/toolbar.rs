@@ -73,7 +73,12 @@ pub fn toolbar(
             }
         }
         ui.separator();
-        ui.label(tr(ui.ctx(), state.tool.name()));
+        ui.label(tr(
+            ui.ctx(),
+            Action::SelectTool(state.tool)
+                .descriptor_for(context.frontend)
+                .label,
+        ));
     });
     ui.separator();
     ui.add_enabled_ui(context.document_open, |ui| {

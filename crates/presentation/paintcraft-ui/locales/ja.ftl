@@ -894,3 +894,5 @@ luminosity = 明るさ
 format-basic-color-hex = 基本色 #{ $hex }
 sat = 彩度
 lum = 明るさ
+zoom-tool = ズームツール
+drag-an-area-to-zoom-in-right-click-to-zoom-out = 範囲をドラッグして拡大 · 右クリックで縮小

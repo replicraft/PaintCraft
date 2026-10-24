@@ -113,6 +113,12 @@ pub fn options_with_shape_style(
                 "Command/Ctrl+Enter to place · Escape to cancel",
             ));
         }
+        if state.tool == Tool::Magnifier {
+            ui.label(tr(
+                ui.ctx(),
+                "Drag an area to zoom in · Right-click to zoom out",
+            ));
+        }
         if state.tool == Tool::Select {
             if ui.button(tr(ui.ctx(), "Select all")).clicked() {
                 actions.push(Action::SelectAll);
@@ -163,7 +169,12 @@ pub fn tool_button(ui: &mut egui::Ui, state: &mut Controls, tool: Tool, large: b
         Tool::Select => Icon::Select,
         Tool::Text => Icon::Text,
     };
-    if icon_button(ui, tool.name(), icon, state.tool == tool, large).clicked() {
+    let label = if tool == Tool::Magnifier {
+        "Zoom tool"
+    } else {
+        tool.name()
+    };
+    if icon_button(ui, label, icon, state.tool == tool, large).clicked() {
         state.tool = tool;
         true
     } else {

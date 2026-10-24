@@ -26,6 +26,7 @@ pub struct Workspace {
     pub history: bool,
     pub edit_secondary: bool,
     pub more_colors: bool,
+    pub zoom: paintcraft_tools::navigation::ZoomGesture<egui::Id>,
 }
 
 impl Default for Workspace {
@@ -38,6 +39,7 @@ impl Default for Workspace {
             history: true,
             edit_secondary: false,
             more_colors: false,
+            zoom: Default::default(),
         }
     }
 }

@@ -894,3 +894,5 @@ luminosity = Luminosity
 format-basic-color-hex = Basic #{ $hex }
 sat = Sat
 lum = Lum
+zoom-tool = Zoom tool
+drag-an-area-to-zoom-in-right-click-to-zoom-out = Drag an area to zoom in · Right-click to zoom out

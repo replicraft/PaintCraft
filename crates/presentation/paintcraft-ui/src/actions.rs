@@ -187,10 +187,18 @@ impl Action {
             descriptor.label = "Gridlines";
             descriptor.shortcut = Some(KeyboardShortcut::new(Modifiers::COMMAND, Key::G));
         }
+        if frontend == Frontend::Studio && self == Self::SelectTool(Tool::Magnifier) {
+            descriptor.label = "Zoom tool";
+            descriptor.shortcut = Some(KeyboardShortcut::new(Modifiers::NONE, Key::Z));
+        }
         descriptor
     }
 
     pub fn from_shortcut_for(frontend: Frontend, key: Key, modifiers: Modifiers) -> Option<Self> {
+        if frontend == Frontend::Studio && key == Key::Z && modifiers.matches_exact(Modifiers::NONE)
+        {
+            return Some(Self::SelectTool(Tool::Magnifier));
+        }
         VIEW.iter()
             .chain(WORKSPACE_VIEW)
             .copied()
@@ -551,6 +559,26 @@ fn toolbar_button_artwork(
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn studio_zoom_shortcut_is_plain_z_and_keeps_classic_routing() {
+        use super::*;
+        let action = Action::SelectTool(Tool::Magnifier);
+        assert_eq!(
+            Action::from_shortcut_for(Frontend::Studio, Key::Z, Modifiers::NONE),
+            Some(action)
+        );
+        assert_eq!(
+            Action::from_shortcut_for(Frontend::Classic, Key::Z, Modifiers::NONE),
+            None
+        );
+        assert_eq!(
+            Action::from_shortcut_for(Frontend::Studio, Key::Z, Modifiers::COMMAND),
+            Some(Action::Undo)
+        );
+        assert_eq!(action.descriptor_for(Frontend::Studio).label, "Zoom tool");
+        assert_eq!(action.descriptor_for(Frontend::Classic).label, "Magnifier");
+    }
+
     use super::*;
 
     #[test]
