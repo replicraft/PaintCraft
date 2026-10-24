@@ -386,3 +386,33 @@ pub fn selection_polygon(points: &[(i64, i64)]) -> Result<Value> {
 pub fn invert_selection() -> Value {
     Value::object([("op", Value::str("selection.invert"))])
 }
+
+/// Translate exact selected samples; RGB key matching ignores the key's alpha.
+pub fn move_selection(
+    layer: Uuid,
+    offset: (i64, i64),
+    clear: Rgba,
+    transparent_key: Option<Rgba>,
+) -> Result<Value> {
+    if !crate::selection::valid_point(offset) {
+        return Err(paintcraft_core::types::Error::new(
+            paintcraft_core::types::ErrorCode::InputSchema,
+            "selection offset exceeds coordinate bounds",
+        ));
+    }
+    let mut pairs = vec![
+        ("op", Value::str("raster.move_selection")),
+        ("layer_ref", layer_ref(layer)),
+        ("offset", point(offset)),
+        ("clear", Value::str(clear.to_hex())),
+    ];
+    if let Some(key) = transparent_key {
+        pairs.push(("transparent_key", Value::str(key.to_hex())));
+    }
+    Ok(Value::Object(
+        pairs
+            .into_iter()
+            .map(|(key, value)| (key.to_owned(), value))
+            .collect(),
+    ))
+}

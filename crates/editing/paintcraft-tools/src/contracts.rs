@@ -124,6 +124,8 @@ pub enum SelectionMode {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct ToolOptions {
     pub selection_mode: SelectionMode,
+    /// Ignore the captured secondary color while placing a moved selection.
+    pub transparent_selection: bool,
     /// Pencil thickness in pixels, captured at pointer-down (1..=1024).
     pub pencil_size: u32,
     /// Brush, eraser and outline thickness in pixels (1..=1024).
@@ -149,6 +151,7 @@ impl Default for ToolOptions {
     fn default() -> Self {
         ToolOptions {
             selection_mode: SelectionMode::Rectangle,
+            transparent_selection: false,
             pencil_size: 1,
             size: 4,
             round: true,
@@ -203,6 +206,12 @@ pub struct ColorPick {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Action {
+    MoveSelection {
+        layer: Uuid,
+        offset: (i64, i64),
+        clear: Rgba,
+        transparent_key: Option<Rgba>,
+    },
     SelectPolygon {
         points: Vec<(i64, i64)>,
     },
@@ -303,6 +312,12 @@ pub enum Action {
 /// What the UI should draw for an unpublished gesture.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Preview {
+    MoveSelection {
+        layer: Uuid,
+        offset: (i64, i64),
+        clear: Rgba,
+        transparent_key: Option<Rgba>,
+    },
     /// Overlay only: polygon closure does not mutate the raster or selection.
     SelectionPath {
         points: Vec<(i64, i64)>,

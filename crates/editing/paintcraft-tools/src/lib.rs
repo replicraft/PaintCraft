@@ -2,6 +2,8 @@
 pub mod commands;
 mod construction;
 mod contracts;
+mod floating;
+pub use floating::{FloatingOptions, FloatingSelection};
 pub mod navigation;
 pub use contracts::*;
 mod geometry;
@@ -56,6 +58,7 @@ pub struct ToolState {
     pub options: ToolOptions,
     previous_tool: Tool,
     gesture: Option<Gesture>,
+    floating: Option<FloatingSelection>,
     construction: Option<construction::Construction>,
     text: Option<TextEdit>,
     next_gesture: u64,
@@ -71,6 +74,7 @@ impl Default for ToolState {
             options: ToolOptions::default(),
             previous_tool: Tool::Pencil,
             gesture: None,
+            floating: None,
             construction: None,
             text: None,
             next_gesture: 1 << 63,
@@ -98,6 +102,9 @@ impl ToolState {
         }
     }
     pub fn begin_text(&mut self, layer: Uuid, at: (i64, i64)) {
+        if self.floating.is_some() {
+            self.cancel_gesture();
+        }
         self.next_gesture += 1;
         self.text = Some(TextEdit {
             style: self.text_style.clone(),
@@ -118,6 +125,9 @@ impl ToolState {
         self.pointer_down_button(layer, at, PointerButton::Primary);
     }
     pub fn pointer_down_button(&mut self, layer: Uuid, at: (i64, i64), button: PointerButton) {
+        if self.floating.is_some() && self.tool != Tool::Select {
+            self.cancel_gesture();
+        }
         if matches!(self.tool, Tool::Magnifier | Tool::Pan) {
             return;
         }
@@ -133,7 +143,10 @@ impl ToolState {
         {
             return;
         }
-        if self.gesture.is_some() || !self.tool.supports_button(button) {
+        if self.floating_selection().is_some()
+            || self.gesture.is_some()
+            || !self.tool.supports_button(button)
+        {
             return;
         }
         self.next_gesture += 1;
@@ -186,27 +199,31 @@ impl ToolState {
     }
 
     pub fn preview_token(&self) -> Option<u64> {
-        self.gesture
-            .as_ref()
-            .map(|g| g.token)
+        self.floating_selection()
+            .map(|f| f.token())
+            .or_else(|| self.gesture.as_ref().map(|g| g.token))
             .or_else(|| self.construction.as_ref().map(|c| c.base.token))
             .or_else(|| self.text.as_ref().map(|t| t.token))
     }
 
     pub fn gesture_token(&self) -> Option<u64> {
-        self.gesture
-            .as_ref()
-            .map(|g| g.token)
+        self.floating_selection()
+            .map(|f| f.token())
+            .or_else(|| self.gesture.as_ref().map(|g| g.token))
             .or_else(|| self.construction.as_ref().map(|c| c.base.token))
     }
 
     pub fn gesture_button(&self) -> Option<PointerButton> {
-        self.gesture.as_ref().map(|g| g.button).or_else(|| {
-            self.construction
-                .as_ref()
-                .filter(|c| c.pressed)
-                .map(|c| c.base.button)
-        })
+        self.floating_selection()
+            .filter(|floating| floating.pointer_is_down())
+            .map(|_| PointerButton::Primary)
+            .or_else(|| self.gesture.as_ref().map(|g| g.button))
+            .or_else(|| {
+                self.construction
+                    .as_ref()
+                    .filter(|c| c.pressed)
+                    .map(|c| c.base.button)
+            })
     }
     pub fn gesture_is_path(&self) -> bool {
         self.gesture
@@ -215,7 +232,7 @@ impl ToolState {
     }
 
     pub fn gesture_in_progress(&self) -> bool {
-        self.gesture.is_some() || self.construction.is_some()
+        self.floating_selection().is_some() || self.gesture.is_some() || self.construction.is_some()
     }
     pub fn pointer_is_down(&self) -> bool {
         self.gesture_button().is_some()
@@ -268,6 +285,9 @@ impl ToolState {
     }
 
     pub fn preview(&self) -> Option<Preview> {
+        if let Some(floating) = self.floating_selection() {
+            return floating.preview();
+        }
         if let Some(t) = &self.text {
             return Some(Preview::Text {
                 layer: t.layer,
@@ -404,6 +424,9 @@ impl ToolState {
     }
 
     fn append_point(&mut self, doc_point: (i64, i64)) {
+        if self.update_floating(doc_point).is_some() {
+            return;
+        }
         if self.gesture_is_lasso() {
             // Infallible legacy hosts still discard an oversized path completely.
             let _ = self.append_lasso_admitted(doc_point, POINTS_PER_OP, POINTS_PER_OP);
@@ -438,9 +461,10 @@ impl ToolState {
     }
 
     pub fn cancel_gesture(&mut self) {
+        let floating = self.floating.take().is_some();
         let gesture = self.gesture.take().is_some();
         let construction = self.construction.take().is_some();
-        if gesture || construction {
+        if floating || gesture || construction {
             self.preview_revision.advance();
         }
     }
@@ -448,6 +472,9 @@ impl ToolState {
         self.pointer_up_button(PointerButton::Primary)
     }
     pub fn pointer_up_button(&mut self, button: PointerButton) -> Option<(u64, Action)> {
+        if let Some(result) = self.release_floating(button) {
+            return result;
+        }
         if self.construction.is_some() {
             return self.release_shape(button);
         }

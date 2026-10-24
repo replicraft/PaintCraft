@@ -4,6 +4,9 @@ use paintcraft_core::types::picker::PickerAfter;
 impl ToolState {
     /// Explicit activation also invalidates late picker results on re-selection.
     pub fn choose_tool(&mut self, tool: Tool) {
+        if self.floating.is_some() {
+            self.cancel_gesture();
+        }
         if self.tool == tool {
             self.preview_revision.advance();
         } else {
@@ -13,6 +16,9 @@ impl ToolState {
     /// Synchronize tool state without advancing its revision every layout frame.
     pub fn activate_tool(&mut self, tool: Tool) {
         if self.tool != tool {
+            if self.floating.is_some() {
+                self.cancel_gesture();
+            }
             if self.tool != Tool::ColorPicker {
                 self.previous_tool = self.tool;
             }
