@@ -4,6 +4,7 @@ use paintcraft_input::PointerButton;
 
 impl Editor {
     pub(crate) fn shape_file_ready(&mut self) -> bool {
+        self.finish_selection_move();
         if self.is_constructing_shape() {
             self.set_status(paintcraft_tools::FINISH_SHAPE_BEFORE_FILE);
             false
@@ -39,6 +40,9 @@ impl Editor {
         if self.tool != Tool::ColorPicker {
             self.commit_text();
         }
+        if self.begin_floating(point, button) {
+            return;
+        }
         let layer = match (
             self.tool,
             self.target
@@ -70,15 +74,18 @@ impl Editor {
         self.refresh_shape_hint();
     }
     pub fn pointer_move(&mut self, point: (i64, i64)) {
+        self.guard_floating_source();
         self.move_paint_pointer(point, false);
     }
     pub fn pointer_move_subpixel(&mut self, point: (i64, i64)) {
+        self.guard_floating_source();
         self.move_paint_pointer(point, true);
     }
     pub fn pointer_up(&mut self) {
         self.pointer_up_button(PointerButton::Primary);
     }
     pub fn pointer_up_button(&mut self, button: PointerButton) {
+        self.guard_floating_source();
         if let Some((token, action)) = self.tools.pointer_up_button(button) {
             self.request(token, action);
         }
@@ -105,6 +112,7 @@ impl Editor {
         }
     }
     pub fn cancel_gesture(&mut self) {
+        self.floating_source = None;
         self.tools.cancel_gesture();
     }
     pub fn pointer_event(&mut self, event: paintcraft_input::PointerEvent) {

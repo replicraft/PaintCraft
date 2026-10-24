@@ -396,6 +396,17 @@ impl Editor {
 
 pub(super) fn preview(action: &Action) -> Option<Preview> {
     match action {
+        Action::MoveSelection {
+            layer,
+            offset,
+            clear,
+            transparent_key,
+        } => Some(Preview::MoveSelection {
+            layer: *layer,
+            offset: *offset,
+            clear: *clear,
+            transparent_key: *transparent_key,
+        }),
         Action::Contour(contour) => Some(Preview::Contour(contour.clone())),
         Action::Stroke(stroke) => Some(Preview::Path(stroke.clone())),
         Action::Shape {

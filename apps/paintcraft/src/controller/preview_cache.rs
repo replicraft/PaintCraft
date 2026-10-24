@@ -10,6 +10,7 @@ pub(crate) struct Stamp {
     document: (Uuid, u64),
     lineage: Uuid,
     tool: Tool,
+    target: Option<Uuid>,
     native: bool,
     pending: bool,
 }
@@ -30,6 +31,7 @@ impl Editor {
             document: self.render_key(),
             lineage: self.preview_lineage,
             tool: self.tools.tool,
+            target: self.target,
             native: self.editing.is_some(),
             pending: self.has_inflight_edit(),
         }
@@ -38,6 +40,9 @@ impl Editor {
     /// Reuse an immutable snapshot while a renderer owns it and its inputs match.
     /// An expired weak entry is rebuilt; the cache itself owns no point buffers.
     pub(crate) fn preview_snapshot(&self) -> Option<Arc<Preview>> {
+        if self.has_floating_selection() && !self.floating_source_current() {
+            return None;
+        }
         let stamp = self.preview_stamp();
         if let Ok(cache) = self.preview_cache.0.lock()
             && let Some((cached_stamp, preview)) = cache.as_ref()

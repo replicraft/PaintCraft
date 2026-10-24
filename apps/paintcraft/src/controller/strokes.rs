@@ -86,6 +86,17 @@ impl PreviewPreparation {
     pub(crate) fn build(self, check: impl Fn() -> Result<()>) -> Result<Option<Batch>> {
         check()?;
         let operations = match self.preview.as_deref() {
+            Some(Preview::MoveSelection {
+                layer,
+                offset,
+                clear,
+                transparent_key,
+            }) => vec![paintcraft_tools::commands::move_selection(
+                *layer,
+                *offset,
+                *clear,
+                *transparent_key,
+            )?],
             Some(Preview::Contour(contour)) => vec![paintcraft_tools::commands::contour(contour)],
             Some(Preview::Path(stroke)) => stroke_operations(stroke, &check)?,
             Some(Preview::Paths(strokes)) => {

@@ -12,6 +12,8 @@ pub(crate) mod background;
 mod canvas;
 #[path = "controller/dispatch.rs"]
 mod dispatch;
+mod floating;
+mod floating_feedback;
 #[path = "controller/history.rs"]
 mod history;
 #[path = "controller/layers.rs"]
@@ -73,6 +75,8 @@ pub struct Editor {
     session: Session,
     canvas_size_edit: Option<(u32, u32)>,
     tools: ToolState,
+    floating_source: Option<floating::Source>,
+    floating_commit_on_release: bool,
     text_renderer: Option<crate::text::Shared>,
     target: Option<Uuid>,
     outbox: Outbox<Action>,
@@ -149,6 +153,8 @@ impl Editor {
             session,
             canvas_size_edit: None,
             tools: ToolState::default(),
+            floating_source: None,
+            floating_commit_on_release: true,
             text_renderer: None,
             target,
             outbox: Outbox::default(),
@@ -427,50 +433,35 @@ impl Editor {
         {
             self.commit_text();
         }
+        self.finish_selection_move();
         self.cancel_gesture();
         self.tools.choose_tool(tool);
     }
     fn collect_preview(&self) -> Option<Preview> {
-        self.paint_preview().or_else(|| {
-            if self.editing.is_some() && self.painting_blocked() {
-                self.publication_preview.clone()
-            } else {
-                self.tools
-                    .preview()
-                    .or_else(|| self.publication_preview.clone())
-            }
-        })
+        self.paint_preview()
+            .or_else(|| self.queued_move_preview())
+            .or_else(|| {
+                let published = self
+                    .publication_preview
+                    .as_ref()
+                    .filter(|preview| self.move_preview_current(preview))
+                    .cloned();
+                if self.editing.is_some() && self.painting_blocked() {
+                    published
+                } else {
+                    self.floating_preview().or(published)
+                }
+            })
     }
     pub fn gesture_points(&self) -> &[(i64, i64)] {
         self.tools.gesture_points()
     }
     // ---- commands ---------------------------------------------------------------
 
-    /// Queue a command for one user activation. `token` must be stable across
-    /// layout passes of the same activation and different between activations.
-    pub fn request(&mut self, token: Token, action: Action) -> bool {
-        if self.outbox.has_seen(token) {
-            return false;
-        }
-        if let Action::Stroke(stroke) = &action
-            && !self.admit_paint(stroke)
-        {
-            return false;
-        }
-        // Typed text is part of the document the user is about to undo, save or change.
-        if !matches!(action, Action::Text { .. } | Action::PickColor(_)) {
-            self.commit_text();
-        }
-        let accepted = self.outbox.push(token, action);
-        if accepted {
-            self.preview_queue_revision.advance();
-        }
-        accepted
-    }
-
     /// Consume completions and execute queued activations in arrival order.
     /// Native editors prepare one transaction at a time on the shared worker.
     pub fn run_pending(&mut self) -> u64 {
+        self.guard_floating_source();
         self.poll_residency_maintenance();
         if self.maintenance.is_some() {
             return 0;
@@ -537,6 +528,12 @@ impl Editor {
 
     fn execute(&mut self, action: Action) {
         match action {
+            Action::MoveSelection {
+                layer,
+                offset,
+                clear,
+                transparent_key,
+            } => self.move_selection(layer, offset, clear, transparent_key),
             Action::SelectPolygon { points } => self.select_polygon(&points),
             Action::InvertSelection => self.invert_selection(),
             Action::PickColor(pick) => self.pick_color(pick),
