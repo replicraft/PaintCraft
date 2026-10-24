@@ -117,3 +117,12 @@ release distribution and debug macOS bundle were rebuilt; the nested app passes
 strict deep code-signature verification. These builds do not establish native
 Paint fidelity, physical-device behavior, masked interactive latency or release
 signing qualification. The full roadmap remains incomplete.
+
+
+## Floating selection follow-up, October 24, 2026
+
+[The floating selection tranche](FLOATING_SELECTIONS.md) now implements exact
+integer movement and transparent RGB-keyed placement with frozen source pixels,
+private previews, bounded admission and one recorded change. Native Classic/Studio,
+browser Classic and CLI have independent pixel and lifecycle evidence. Remaining
+fractional, custom-angle, clipboard and native qualification work stays open.

@@ -72,3 +72,12 @@ Raw logs and source recording are local under the ignored
 checks; physical pen/IME devices, real OS-menu interaction, native reference builds,
 interactive latency and cross-browser qualification remain separate evidence gaps.
 T14/T15/T19 remain partial and the T16/T22 conformance gates are not promoted.
+
+
+## Floating selection follow-up, October 24, 2026
+
+[The floating selection tranche](FLOATING_SELECTIONS.md) now implements exact
+integer movement and transparent RGB-keyed placement with frozen source pixels,
+private previews, bounded admission and one recorded change. Native Classic/Studio,
+browser Classic and CLI have independent pixel and lifecycle evidence. Remaining
+fractional, custom-angle, clipboard and native qualification work stays open.

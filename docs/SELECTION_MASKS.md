@@ -230,3 +230,12 @@ sampled bounds, reusable host feedback, Crop/Fit Selection and exact selected/wh
 canvas orientations. It preserves mask holes, frozen original samples, exact
 history and private admission failure. Floating and transparent selections,
 fractional combination and matched native qualification remain unfinished.
+
+
+## Floating selection follow-up, October 24, 2026
+
+[The floating selection tranche](FLOATING_SELECTIONS.md) now implements exact
+integer movement and transparent RGB-keyed placement with frozen source pixels,
+private previews, bounded admission and one recorded change. Native Classic/Studio,
+browser Classic and CLI have independent pixel and lifecycle evidence. Remaining
+fractional, custom-angle, clipboard and native qualification work stays open.
