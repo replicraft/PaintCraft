@@ -132,6 +132,7 @@ pub enum Op {
     SelectionClear,
     /// v2: a brush stroke of `size` pixels along a path, blended once per pixel.
     StrokePath {
+        media: paintcraft_core::types::brush::BrushMedia,
         layer: LayerRef,
         points: Vec<(i64, i64)>,
         color: Rgba,

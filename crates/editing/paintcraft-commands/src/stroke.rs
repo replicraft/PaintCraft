@@ -14,12 +14,18 @@ pub(super) fn parse(v: &Value) -> Result<Op> {
         ],
         &["point_scale"],
     )?;
+    use paintcraft_core::types::brush::BrushMedia;
+    let media = o["brush"]
+        .as_str()
+        .and_then(BrushMedia::parse)
+        .unwrap_or_default();
+    let custom = media != BrushMedia::Plain;
     let smooth = o["brush"].as_str() == Some("smooth-round");
     let point_scale = match o.get("point_scale") {
         None => 1,
         Some(Value::Int(1)) => 1,
-        Some(Value::Int(256)) if smooth => 256,
-        _ => return Err(bad("point_scale must be 1, or 256 for smooth-round")),
+        Some(Value::Int(256)) if smooth || custom => 256,
+        _ => return Err(bad("point_scale must be 1, or 256 for antialiased brushes")),
     };
     let pts = o["points"]
         .as_array()
@@ -38,16 +44,22 @@ pub(super) fn parse(v: &Value) -> Result<Op> {
             ))
         })
         .collect::<Result<_>>()?;
+    let mode = mode(&o["mode"])?;
+    if custom && mode != Mode::SourceOver {
+        return Err(bad("textured brushes require source-over"));
+    }
     Ok(Op::StrokePath {
+        media,
         layer: layer_ref(&o["layer_ref"])?,
         points,
         color: color(&o["color"])?,
-        mode: mode(&o["mode"])?,
+        mode,
         size: int_in(&o["size"], 1, BRUSH_SIZE_MAX, "size")? as u32,
         round: match o["brush"].as_str() {
             Some("round" | "smooth-round") => true,
             Some("square") => false,
-            _ => return Err(bad("brush must be round, square or smooth-round")),
+            Some(_) if custom => true,
+            _ => return Err(bad("unknown brush medium")),
         },
         smooth,
         point_scale,

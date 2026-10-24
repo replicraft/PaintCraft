@@ -487,15 +487,45 @@ impl Stage<'_> {
                 size,
                 round,
                 smooth,
+                media,
                 point_scale,
             } => {
-                if !matches!(point_scale, 1 | 256) || (*point_scale != 1 && !smooth) {
+                if !matches!(point_scale, 1 | 256)
+                    || (*point_scale != 1
+                        && !smooth
+                        && *media == paintcraft_core::types::brush::BrushMedia::Plain)
+                {
                     return Err(Error::new(
                         ErrorCode::InputSchema,
                         "invalid stroke point scale",
                     ));
                 }
                 let id = self.resolve(layer)?;
+                if *media != paintcraft_core::types::brush::BrushMedia::Plain {
+                    if *mode != Mode::SourceOver {
+                        return Err(Error::new(
+                            ErrorCode::InputSchema,
+                            "textured brushes require source-over",
+                        ));
+                    }
+                    self.charge_stroke(points, *size, *point_scale)?;
+                    let Some(area) = self.editable(&self.doc.layers[&id]) else {
+                        return Ok(());
+                    };
+                    let spans = paintcraft_raster::media::coverage(
+                        points,
+                        *size,
+                        *point_scale,
+                        *media,
+                        area,
+                        self.check,
+                    )?;
+                    return if spans.is_empty() {
+                        Ok(())
+                    } else {
+                        self.paint_mask(layer, *color, &spans)
+                    };
+                }
                 if *smooth {
                     self.charge_stroke(points, *size, *point_scale)?;
                     let Some(area) = self.editable(&self.doc.layers[&id]) else {

@@ -375,8 +375,9 @@
                 "enum": ["replace", "source-over"]
               },
               "size": {"type": "integer", "minimum": 1, "maximum": 1024},
+              "point_scale": {"enum": [1, 256]},
               "brush": {
-                "enum": ["round", "square", "smooth-round"]
+                "enum": ["round", "square", "smooth-round", "calligraphy-brush", "calligraphy-pen", "airbrush", "oil", "crayon", "marker", "natural-pencil", "watercolor"]
               }
             },
             "required": ["op", "layer_ref", "points", "color", "mode", "size", "brush"],

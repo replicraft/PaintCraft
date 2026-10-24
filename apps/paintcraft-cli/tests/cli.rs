@@ -110,3 +110,6 @@ mod orthogonal;
 
 #[path = "cli/selection_transform.rs"]
 mod selection_transform;
+
+#[path = "cli/brush_media.rs"]
+mod brush_media;

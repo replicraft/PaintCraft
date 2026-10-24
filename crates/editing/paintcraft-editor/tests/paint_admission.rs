@@ -60,6 +60,7 @@ fn painting_families_admit_their_operation_before_allocating_a_tile_prefix() {
     ];
     for smooth in [false, true] {
         operations.push(Op::StrokePath {
+            media: Default::default(),
             layer: layer.clone(),
             points: vec![(1, 8), (298, 8)],
             color,
@@ -131,6 +132,7 @@ fn cancelled_smooth_preparation_preserves_owner_and_releases_decoded_capacity() 
         seed: None,
         digest: "0".repeat(64),
         operations: vec![Op::StrokePath {
+            media: Default::default(),
             layer: LayerRef::Id(snapshot.roots[0]),
             points: vec![(8, 8), (290, 290)],
             color: Rgba([17, 88, 156, 128]),
@@ -209,6 +211,7 @@ fn incremental_preview_geometry_never_reuses_blended_pixels_or_skips_current_sel
                     seed: None,
                     digest: "0".repeat(64),
                     operations: vec![Op::StrokePath {
+                        media: Default::default(),
                         layer: LayerRef::Id(id),
                         points: points[..n].to_vec(),
                         color: Rgba([17, 88, 156, 128]),

@@ -256,6 +256,7 @@ fn all_painting_families_compile_once_against_prior_logical_results() {
     }
     for smooth in [false, true] {
         ops.push(Op::StrokePath {
+            media: Default::default(),
             layer: id.clone(),
             points: vec![(250, 3), (260, 8), (270, 3)],
             color,

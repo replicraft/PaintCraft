@@ -6,7 +6,8 @@
       "source_sha256": "069d14011da765e351689700cd4b40a77ef8b0a194bd368ea09723c52722a9e7",
       "production_sha256": "12ba53b8a9b4aa56dfd89bbed769487d9ff4dd7183ccb4bccde35fe67edbe2da",
       "copied_to": "crates/editing/paintcraft-editor/benches/support/sequential.rs",
-      "copied_sha256": "dcf6242d3a4843e17027233f4673eb6495609d0f6aba2cc2e6977200ba43a0b2"
+      "copied_sha256": "4fc35056fafe9f901df7f5d6e30dba0939110157cbd06a0031411297f3ae19f9",
+      "original_copied_sha256": "dcf6242d3a4843e17027233f4673eb6495609d0f6aba2cc2e6977200ba43a0b2"
     },
     "crates/editing/paintcraft-editor/src/execute/paint.rs": {
       "source_sha256": "000a9f22699181ab72bbb6a524d2805067a0acd06a16e314af0251e8a1209798",
@@ -44,5 +45,8 @@
       "copied_to": "crates/editing/paintcraft-editor/benches/support/sequential/layers.rs",
       "copied_sha256": "5d196bcfd71b6582d139ef726432fcc475c560721e741fd8623cfa1a1dee046f"
     }
-  }
+  },
+  "compatibility_changes": [
+    "2026-10-24: match the added StrokePath media field and explicitly reject non-Plain media in the frozen baseline. Existing algorithms and benchmark fixtures are unchanged."
+  ]
 }

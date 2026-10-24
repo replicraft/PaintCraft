@@ -19,6 +19,7 @@ fn batch(doc: &Document, operations: Vec<Op>) -> Batch {
 }
 fn stroke(id: uuid::Uuid, round: bool) -> Op {
     Op::StrokePath {
+        media: Default::default(),
         layer: LayerRef::Id(id),
         points: vec![(3, 8), (12, 8), (3, 8)],
         color: Rgba([17, 88, 156, 128]),

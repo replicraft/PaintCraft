@@ -74,6 +74,7 @@ fn all_painting_families_use_the_admitted_metadata_policy() {
     ];
     for smooth in [false, true] {
         operations.push(Op::StrokePath {
+            media: Default::default(),
             layer: layer.clone(),
             points: vec![(1, 8), (298, 8)],
             color,

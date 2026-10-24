@@ -397,8 +397,15 @@ impl Stage<'_> {
                 size,
                 round,
                 smooth,
+                media,
                 point_scale,
             } => {
+                if *media != paintcraft_core::types::brush::BrushMedia::Plain {
+                    return Err(Error::new(
+                        ErrorCode::CapabilityUnsupported,
+                        "frozen baseline does not implement textured brushes",
+                    ));
+                }
                 if !matches!(point_scale, 1 | 256) || (*point_scale != 1 && !smooth) {
                     return Err(Error::new(
                         ErrorCode::InputSchema,
