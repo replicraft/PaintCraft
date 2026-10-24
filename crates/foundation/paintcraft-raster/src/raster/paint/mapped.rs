@@ -7,12 +7,22 @@ const READS_MAX: u64 = 16_777_216;
 #[derive(Debug)]
 pub(super) struct Mapping {
     pub(super) sampling: sampling::Sampling,
+    pub(super) patch: Option<super::patch::Patch>,
     pub(super) tiles: HashMap<TileCoord, ()>,
-    charge: BudgetAccount,
+    pub(super) charge: BudgetAccount,
 }
 impl Mapping {
     pub(super) fn bounds(&self) -> Rect {
-        self.sampling.bounds()
+        self.patch
+            .as_ref()
+            .map_or_else(|| self.sampling.bounds(), |p| p.bounds)
+    }
+    pub(super) fn sample(&self, x: i64, y: i64) -> Result<super::patch::Sample> {
+        if let Some(patch) = &self.patch {
+            return patch.sample(x, y);
+        }
+        let (x, y) = self.sampling.coordinates().pixel(x, y)?;
+        Ok(super::patch::Sample::Source(x, y))
     }
     pub(super) fn bytes(&self) -> usize {
         self.charge.bytes() as usize
@@ -20,11 +30,16 @@ impl Mapping {
 }
 #[derive(Clone, Debug)]
 pub struct MappedPlan {
-    source: PaintSnapshot,
-    mapping: Arc<Mapping>,
-    reads: u64,
+    pub(super) source: PaintSnapshot,
+    pub(super) mapping: Arc<Mapping>,
+    pub(super) reads: u64,
 }
 impl MappedPlan {
+    pub fn dimensions(&self) -> (u32, u32) {
+        let b = self.mapping.bounds();
+        (b.width() as u32, b.height() as u32)
+    }
+
     pub fn prepare(
         source: PaintSnapshot,
         area: Rect,
@@ -88,6 +103,7 @@ impl MappedPlan {
         }
         let mut mapping = Mapping {
             sampling,
+            patch: None,
             tiles: HashMap::new(),
             charge: admission.paint_metadata_account(),
         };
@@ -175,8 +191,18 @@ impl MappedPlan {
                 for y in region.y0..region.y1 {
                     check()?;
                     for x in region.x0..region.x1 {
-                        let (sx, sy) = coordinates.pixel(x, y)?;
-                        let color = reader.read_checked(sx, sy, check)?;
+                        let sample = if let Some(patch) = &self.mapping.patch {
+                            patch.sample(x, y)?
+                        } else {
+                            let (x, y) = coordinates.pixel(x, y)?;
+                            super::patch::Sample::Source(x, y)
+                        };
+                        let color = match sample {
+                            super::patch::Sample::Source(sx, sy) => {
+                                reader.read_checked(sx, sy, check)?
+                            }
+                            super::patch::Sample::Color(c) => c,
+                        };
                         let pixel = ((y % i64::from(TILE_EDGE)) * i64::from(TILE_EDGE)
                             + x % i64::from(TILE_EDGE))
                             as usize

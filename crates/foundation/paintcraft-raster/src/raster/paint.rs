@@ -4,6 +4,7 @@ use std::collections::hash_map::Entry;
 mod index;
 mod lineage;
 mod mapped;
+mod patch;
 mod sampling;
 pub use mapped::MappedPlan;
 /// Source-bound cropped pixel plan; shares the exact mapping implementation.

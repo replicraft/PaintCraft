@@ -67,6 +67,7 @@ pub struct PaintReader<'a> {
     bounds: Rect,
     chain: Vec<Frame<'a>>,
     charge: BudgetAccount,
+    positions: Option<std::sync::Mutex<Vec<(i64, i64)>>>,
 }
 #[derive(Debug)]
 struct Frame<'a> {
@@ -383,11 +384,13 @@ impl<'a> PaintReader<'a> {
                 bounds,
                 chain,
                 charge,
+                positions: None,
             });
         }
         let mut metadata = metadata::Metadata::new(0, admission.paint_metadata_limit)?;
         let mut node = Some(source.source.as_ref());
         let mut coordinates = sampling::Coordinates::IDENTITY;
+        let mut conditional = false;
         while let Some(current) = node {
             check()?;
             metadata.vector(&mut chain, &mut charge)?;
@@ -396,10 +399,24 @@ impl<'a> PaintReader<'a> {
                 coordinates,
             });
             if let Data::Mapped(mapping) = &current.data {
-                coordinates = coordinates.then(mapping.sampling.coordinates())?;
+                conditional |= mapping.patch.is_some();
+                if !conditional {
+                    coordinates = coordinates.then(mapping.sampling.coordinates())?;
+                }
             }
             node = current.parent.as_deref();
         }
+        let positions = if conditional {
+            let mut positions = Vec::new();
+            for _ in &chain {
+                check()?;
+                metadata.vector(&mut positions, &mut charge)?;
+                positions.push((0, 0));
+            }
+            Some(std::sync::Mutex::new(positions))
+        } else {
+            None
+        };
         check()?;
         Ok(Self {
             source,
@@ -407,6 +424,7 @@ impl<'a> PaintReader<'a> {
             bounds,
             chain,
             charge,
+            positions,
         })
     }
     pub fn scratch_bytes(&self) -> u64 {
@@ -456,6 +474,9 @@ impl<'a> PaintReader<'a> {
         if self.chain.is_empty() || !self.bounds.contains(x, y) {
             return Ok(self.source.default);
         }
+        if let Some(positions) = &self.positions {
+            return self.read_conditional(x, y, positions, check);
+        }
         let mut pixel = self.source.default;
         for frame in self.chain.iter().rev() {
             check()?;
@@ -473,6 +494,60 @@ impl<'a> PaintReader<'a> {
         }
         if let Some(program) = self.program {
             pixel = program.read_checked(x, y, |_, _| Ok(pixel), check)?;
+        }
+        Ok(pixel)
+    }
+    fn read_conditional(
+        &self,
+        x: i64,
+        y: i64,
+        positions: &std::sync::Mutex<Vec<(i64, i64)>>,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<Rgba> {
+        let mut positions = positions.lock().map_err(|_| {
+            Error::new(
+                ErrorCode::InvariantViolation,
+                "pixel reader scratch poisoned",
+            )
+        })?;
+        let mut at = (x, y);
+        let mut end = 0;
+        let mut pixel = self.source.default;
+        for (i, frame) in self.chain.iter().enumerate() {
+            check()?;
+            positions[i] = at;
+            end = i + 1;
+            let node = frame.node;
+            if !node.bounds.contains(at.0, at.1) {
+                pixel = node.default;
+                break;
+            }
+            match &node.data {
+                Data::Raster(r) => {
+                    pixel = r.get(at.0, at.1);
+                    break;
+                }
+                Data::Program(_) => {}
+                Data::Mapped(m) => match m.sample(at.0, at.1)? {
+                    super::patch::Sample::Source(x, y) => at = (x, y),
+                    super::patch::Sample::Color(c) => {
+                        pixel = c;
+                        break;
+                    }
+                },
+            }
+        }
+        for i in (0..end).rev() {
+            check()?;
+            if let Data::Program(p) = &self.chain[i].node.data {
+                let at = positions[i];
+                if self.chain[i].node.bounds.contains(at.0, at.1) {
+                    pixel = p.read_checked(at.0, at.1, |_, _| Ok(pixel), check)?;
+                }
+            }
+        }
+        if let Some(p) = self.program {
+            pixel = p.read_checked(x, y, |_, _| Ok(pixel), check)?;
         }
         Ok(pixel)
     }
