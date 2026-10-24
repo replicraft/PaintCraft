@@ -11,6 +11,12 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest canvas-dialog work adds fixed header Close controls that discard staged
+dimensions and startup policy. All 201 ordinary GUI tests, the actual-App GPU
+exporter and strict workspace Clippy pass; four representative captures were
+reviewed. See [the canvas Close record](validation/canvas-dialog-close-gpu-2026-10-23/validation.json).
+Native Paint properties fidelity and broader T15 acceptance remain partial.
+
 Latest Classic Layers form work aligns property fields, raises body text to 16
 points, adds visible native form boundaries and keeps both editors above the
 status bar with adaptive compact metrics. All 200 ordinary GUI tests, the

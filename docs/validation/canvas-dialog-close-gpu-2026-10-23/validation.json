@@ -1,0 +1,24 @@
+{
+  "source_commit": "ecdec6e70d68c58a0d2627d7092feee1cd12bba8",
+  "date": "2026-10-23",
+  "scope": "Canvas size and Default canvas size dialogs have an upper-right 40-point outline Close control. Close returns the existing cancellation response; staged dimensions and startup policy are discarded. The body height accounts for measured header height and allows a 48-point minimum scroll viewport, retaining fixed acceptance actions.",
+  "checks": {
+    "gui": "201 passed; 41 ignored. Added light desktop 1x/dark 360x260 2x repeated-layout checks for Close geometry, right-edge alignment, one tooltip, fixed header/footer through scrolling, staged dimensions/policy, mouse/Space cancellation, saved preference bytes and document/history isolation. Existing Apply/Cancel/Escape, remembered defaults, resize/undo and field workflows pass.",
+    "clippy": "workspace all-targets -D warnings passed",
+    "static": "cargo fmt, source length policy and git diff --check passed",
+    "gpu": "Existing actual-App exporter passed with ten light/dark desktop/compact captures. Four representative scenes were archived and visually reviewed: current/default headers, compact current dialog and scrolled default policy."
+  },
+  "limitations": [
+    "These are PaintCraft canvas dialogs, not a claim of native Paint Image properties or Resize and skew parity.",
+    "OS accessibility and exact native fidelity remain unqualified. T15 and the broader roadmap remain partial."
+  ],
+  "sha256": {
+    "clippy.log.gz": "d5968a4e2260702360a9a833857bb419dfa07569091b4eb5669b1db914165291",
+    "dark-compact-current.png": "ac3624e5f67f6a22db7c936eec34f7cbf9dfc5f268ff6229a00003f82eb435e9",
+    "dark-desktop-defaults.png": "af96887289272b5ca622aa45045ef4433e285460bc71a0517b68518c586e660a",
+    "gpu.log.gz": "7a672ad038349938c03a58164ae9be6ab230e75775aede7b8fb61026dfe0d5ff",
+    "gui.log.gz": "e63b4a0b396ed9e7b5a5c9c1100679513845e8905f73f0e5c7609cefed47879e",
+    "light-compact-defaults-policy.png": "e3a5eec72ef144cf0e5388f46ea8ad122630307e5c09c8805cf28df4b249149b",
+    "light-desktop-current.png": "d973dc83431e2cd7b7c8005c334b3557316ea2f2221979093c8337305c5193b5"
+  }
+}
