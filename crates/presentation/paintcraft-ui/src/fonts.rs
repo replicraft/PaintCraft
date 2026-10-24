@@ -1,11 +1,13 @@
 //! Bundled interface typography, independent of the host's installed fonts.
 
-pub const SELAWIK_REGULAR: &[u8] = include_bytes!("../assets/selawik/selawk.ttf");
-pub const SELAWIK_BOLD: &[u8] = include_bytes!("../assets/selawik/selawkb.ttf");
-pub const NOTO_SANS_JP: &[u8] = include_bytes!("../assets/noto-sans-jp/NotoSansJP-Regular.otf");
-pub const NOTO_SANS_SC: &[u8] = include_bytes!("../assets/noto-sans-sc/NotoSansSC-Regular.otf");
+pub const SELAWIK_REGULAR: &[u8] = include_bytes!("../../../../assets/fonts/selawik/selawk.ttf");
+pub const SELAWIK_BOLD: &[u8] = include_bytes!("../../../../assets/fonts/selawik/selawkb.ttf");
+pub const NOTO_SANS_JP: &[u8] =
+    include_bytes!("../../../../assets/fonts/noto-sans-jp/NotoSansJP-Regular.otf");
+pub const NOTO_SANS_SC: &[u8] =
+    include_bytes!("../../../../assets/fonts/noto-sans-sc/NotoSansSC-Regular.otf");
 pub const NOTO_SANS_DEVANAGARI: &[u8] =
-    include_bytes!("../assets/noto-sans-devanagari/NotoSansDevanagari.ttf");
+    include_bytes!("../../../../assets/fonts/noto-sans-devanagari/NotoSansDevanagari.ttf");
 
 /// The same portable font collection is used for interface and document text.
 pub const BUNDLED_DATA: [&[u8]; 5] = [

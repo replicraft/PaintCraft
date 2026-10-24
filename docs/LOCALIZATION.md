@@ -59,6 +59,10 @@ message is localized or that a native speaker has reviewed every workflow.
 
 ## Fonts
 
+Bundled fonts live in the repository root at `assets/fonts`, together with their
+licenses and source records. Desktop and web embed this shared collection through
+`paintcraft_ui::fonts`; neither host keeps a separate copy.
+
 Selawik remains the primary interface font. Bundled Noto Sans JP, Noto Sans SC
 and Noto Sans Devanagari provide Japanese, Simplified Chinese and Hindi coverage
 without relying on installed system fonts. Chinese selects SC before JP in the

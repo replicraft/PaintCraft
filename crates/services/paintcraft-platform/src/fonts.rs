@@ -47,7 +47,7 @@ mod tests {
     #[test]
     fn catalog_reads_real_family_metadata_and_deduplicates_faces() {
         let mut database = fontdb::Database::new();
-        let bytes = include_bytes!("../../../presentation/paintcraft-ui/assets/selawik/selawk.ttf");
+        let bytes = include_bytes!("../../../../assets/fonts/selawik/selawk.ttf");
         database.load_font_data(bytes.to_vec());
         database.load_font_data(bytes.to_vec());
         assert_eq!(
