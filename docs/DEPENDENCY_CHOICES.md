@@ -9,12 +9,15 @@ The user-approved crate naming supersedes the pack: shared foundations are
 Dependencies are declared at the workspace root and enabled only by their actual consumers.
 A correct integrated baseline is not a measured performance or release qualification.
 
+The [2026-10-24 library evaluation](LIBRARY_EVALUATION.md) records concrete consumers,
+tradeoffs and experiment priorities for SIMD, containers, parsers, caches and errors.
+
 ## Selected library directions
 
 | Library | Direction | Actual or intended consumer | Benchmark | Application state |
 |---|---|---|---|---|
 | `glam` | selected-on-use | Typed viewport and affine transforms in core/UI | BF01 | Integrated baseline, 0.34.1 with std/f64; inverse, composition, rebase and actual-pixel tests; benchmark pending |
-| `wide` | preferred-on-use | Exact pixel kernels in raster/render | BF02 | Not directly adopted; activate with its consumer |
+| `wide` | preferred-on-use | Exact pixel kernels in raster/render | BF02 | First optimization experiment: dense opaque-destination composition; scalar parity and optimized measurements required before adoption |
 | `zerocopy` | selective-on-use | Bounded fixed-layout BMP header admission | BF03 | Integrated baseline, 0.8.63 with derive; header size/offset and malformed-input tests; benchmark pending |
 | `bytemuck` | selected-on-use | Explicit GPU staging layouts in render | BF04 | Integrated baseline, 1.25.2 with derive; WGSL offsets/endian checks and Metal parity pass; benchmark pending |
 | `tess2-rust` | evaluate | Complex path fills; compare Lyon | BF05 | Not directly adopted; activate with its consumer |
@@ -39,6 +42,7 @@ A correct integrated baseline is not a measured performance or release qualifica
 | SVG UI assets | resvg 0.48.1, default features disabled | Shared UI renders the user-supplied generated icon sheet as 68 bundled SVG adaptations; per-context density cache and all-icon render tests; SVG document import remains deferred |
 | Native shell | Compare eframe with direct egui-winit/egui-wgpu | eframe remains provisional pending T02 hardware/IME traces |
 | GPU | wgpu + WGSL | Integer compositor and device epochs integrated; Metal parity, explicit destruction and fresh-device host-history reconstruction tested; async transfer, residency and automatic native-window device recovery pending |
+| Typed errors | thiserror 2.0.21 | Core Error and JsonError derive standard error/display implementations; stable codes, error/v1 and CLI exit mapping preserved. Anyhow reserved for a concrete host-only context boundary |
 | CLI | Clap | Integrated, command modules and end-to-end tests |
 | File dialogs | rfd | Integrated for Open, Save As and Export |
 | macOS menus | muda 0.21.2, default features disabled | Optional platform menus feature; desktop action routing and guarded Quit, no CLI dependency |
