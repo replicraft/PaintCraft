@@ -2,6 +2,7 @@
 use egui::{Align, Color32, FontId, TextStyle, Ui, Vec2};
 use paintcraft_ui::i18n::tr;
 use paintcraft_ui::icons::Icon;
+mod legacy;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Draft {
@@ -45,6 +46,20 @@ impl Draft {
         } else {
             self.scale[axis] = scale;
         }
+    }
+}
+
+/// Select historical presentation without changing staged transform semantics.
+pub fn dialog_for_skin(
+    ctx: &egui::Context,
+    variant: crate::ClassicVariant,
+    draft: &mut Draft,
+    maximum: u32,
+) -> bool {
+    if variant == crate::ClassicVariant::V11 {
+        dialog(ctx, draft, maximum)
+    } else {
+        legacy::show(ctx, draft, maximum)
     }
 }
 
@@ -175,33 +190,7 @@ fn resize_fields(ui: &mut Ui, draft: &mut Draft, maximum: u32) {
         for (axis, label) in ["Horizontal", "Vertical"].into_iter().enumerate() {
             field_column(ui, width, label, |ui| {
                 ui.push_id(("resize-field", axis, draft.pixels), |ui| {
-                    let base = if draft.pixels {
-                        f64::from(draft.source[axis])
-                    } else {
-                        100.0
-                    };
-                    let mut value = draft.scale[axis] * base;
-                    let range = if draft.pixels {
-                        value = value.round().clamp(1.0, f64::from(maximum));
-                        1.0..=f64::from(maximum)
-                    } else {
-                        0.000001..=f64::from(maximum) * 100.0
-                    };
-                    let response = ui.add(
-                        egui::DragValue::new(&mut value)
-                            .range(range)
-                            .max_decimals(if draft.pixels { 0 } else { 6 })
-                            .min_size(Vec2::new(width, 40.0)),
-                    );
-                    numeric_info(
-                        ui,
-                        &response,
-                        &format!("Resize {}", label.to_lowercase()),
-                        value,
-                    );
-                    if response.changed() {
-                        draft.edit_size(axis, value, maximum);
-                    }
+                    size_field(ui, draft, axis, maximum, width, 40.0, label);
                 });
             });
             if axis == 0 {
@@ -272,4 +261,42 @@ fn numeric_info(ui: &Ui, response: &egui::Response, label: &str, value: f64) {
         info.value = Some(value);
         info
     });
+}
+
+fn size_field(
+    ui: &mut Ui,
+    draft: &mut Draft,
+    axis: usize,
+    maximum: u32,
+    width: f32,
+    height: f32,
+    label: &str,
+) {
+    let base = if draft.pixels {
+        f64::from(draft.source[axis])
+    } else {
+        100.0
+    };
+    let mut value = draft.scale[axis] * base;
+    let range = if draft.pixels {
+        value = value.round().clamp(1.0, f64::from(maximum));
+        1.0..=f64::from(maximum)
+    } else {
+        0.000001..=f64::from(maximum) * 100.0
+    };
+    let response = ui.add(
+        egui::DragValue::new(&mut value)
+            .range(range)
+            .max_decimals(if draft.pixels { 0 } else { 6 })
+            .min_size(Vec2::new(width, height)),
+    );
+    numeric_info(
+        ui,
+        &response,
+        &format!("Resize {}", label.to_lowercase()),
+        value,
+    );
+    if response.changed() {
+        draft.edit_size(axis, value, maximum);
+    }
 }
