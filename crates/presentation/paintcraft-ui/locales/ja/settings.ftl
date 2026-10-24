@@ -61,3 +61,5 @@ user-interface = ユーザーインターフェイス
 canvas-navigation = キャンバスの操作
 scroll-past-the-edge-of-the-image-overscroll = 画像の端を越えてスクロールする（オーバースクロール）
 move-small-images-halfway-offscreen-and-large-image-edges-to-the-viewport-center = 小さい画像は半分が画面の外に出るまで、大きい画像は端が表示領域の中央に来るまで移動できます。
+auto-scroll = 自動スクロール
+scroll-automatically-while-dragging-near-the-edge-of-the-canvas-viewport = キャンバスの表示領域の端付近でドラッグすると自動的にスクロールします。

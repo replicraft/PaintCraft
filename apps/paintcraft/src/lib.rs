@@ -1,5 +1,7 @@
 #[path = "app/appearance.rs"]
 mod appearance;
+#[path = "app/auto_scroll.rs"]
+mod auto_scroll;
 #[path = "app/canvas.rs"]
 mod canvas;
 #[path = "app/canvas_settings.rs"]

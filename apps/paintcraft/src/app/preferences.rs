@@ -261,6 +261,8 @@ fn content(
                 match draft.page {
                     Page::Appearance => appearance(ui, &mut draft.values),
                     Page::Interface => card(ui, "Canvas navigation", |ui| {
+                        ui.checkbox(&mut draft.values.studio_auto_scroll, t!(ui.ctx(), "Auto-scroll"));
+                        ui.label(t!(ui.ctx(), "Scroll automatically while dragging near the edge of the canvas viewport."));
                         ui.checkbox(&mut draft.values.studio_overscroll, t!(ui.ctx(), "Scroll past the edge of the image (overscroll)"));
                         ui.label(t!(ui.ctx(), "Move small images halfway offscreen and large image edges to the viewport center."));
                     }),

@@ -10,6 +10,7 @@ impl App {
             self.editor.tool.action_id(),
             self.zoom.to_bits(),
             self.settings.studio_overscroll,
+            self.settings.studio_auto_scroll,
             ctx.pixels_per_point().to_bits(),
             ctx.content_rect().width().to_bits(),
             ctx.content_rect().height().to_bits(),

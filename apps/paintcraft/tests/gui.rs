@@ -399,3 +399,6 @@ mod studio_overscroll;
 
 #[path = "gui/keyboard_pan.rs"]
 mod keyboard_pan;
+
+#[path = "gui/auto_scroll.rs"]
+mod auto_scroll;

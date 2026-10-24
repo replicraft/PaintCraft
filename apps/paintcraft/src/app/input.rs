@@ -81,6 +81,7 @@ impl App {
                     self.studio.zoom.cancel();
                     self.studio.pan.cancel();
                     self.studio.space_pan = false;
+                    self.studio.auto_scroll.cancel();
                     if !matches!(self.editor.tool, Tool::Magnifier | Tool::Pan) {
                         self.editor.commit_text();
                     }

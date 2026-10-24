@@ -61,3 +61,5 @@ user-interface = 用户界面
 canvas-navigation = 画布导航
 scroll-past-the-edge-of-the-image-overscroll = 滚动到图像边缘之外（过度滚动）
 move-small-images-halfway-offscreen-and-large-image-edges-to-the-viewport-center = 允许小图像移出屏幕一半，大图像的边缘移至视口中央。
+auto-scroll = 自动滚动
+scroll-automatically-while-dragging-near-the-edge-of-the-canvas-viewport = 在画布可视区域的边缘附近拖动时自动滚动。

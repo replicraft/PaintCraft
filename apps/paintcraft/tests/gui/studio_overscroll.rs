@@ -199,6 +199,15 @@ fn studio_navigation_settings_stay_reachable_in_a_small_window() {
         settings(&mut h, language);
         h.set_size(Vec2::new(360.0, 360.0));
         h.run();
+        let auto = translate(language, "Auto-scroll");
+        h.get_by_role_and_label(Role::CheckBox, &auto)
+            .scroll_to_me();
+        h.run();
+        assert!(
+            h.ctx
+                .content_rect()
+                .contains_rect(h.get_by_role_and_label(Role::CheckBox, &auto).rect())
+        );
         let label = translate(language, "Scroll past the edge of the image (overscroll)");
         h.get_by_role_and_label(Role::CheckBox, &label)
             .scroll_to_me();

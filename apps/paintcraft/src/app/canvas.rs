@@ -194,9 +194,13 @@ impl App {
                                     self.editor.options.picker_source = SampleSource::Image;
                                 }
                             }
+                            let was_down = self.editor.pointer_is_down();
                             self.editor.pointer_down_subpixel(d, button);
                             self.editor.options.picker_source = source;
                             self.editor.constrain_shape(modifiers.shift);
+                            if !was_down && self.editor.pointer_is_down() {
+                                self.begin_studio_auto_scroll(ui, rect, viewport);
+                            }
                         }
                     }
                     egui::Event::ModifiersChanged(modifiers) => {
@@ -247,6 +251,7 @@ impl App {
                     _ => {}
                 }
             }
+            self.advance_studio_auto_scroll(ui, &painter, rect, viewport);
         }
 
         // Shift may change without a pointer event. Apply it before preview or release.

@@ -38,6 +38,7 @@ pub struct Settings {
     pub classic_rulers: bool,
     pub classic_toolbar_auto_hide: bool,
     pub studio_overscroll: bool,
+    pub studio_auto_scroll: bool,
 }
 
 impl Default for Settings {
@@ -54,6 +55,7 @@ impl Default for Settings {
             classic_rulers: false,
             classic_toolbar_auto_hide: false,
             studio_overscroll: true,
+            studio_auto_scroll: true,
         }
     }
 }
@@ -135,6 +137,11 @@ fn parse(bytes: &[u8]) -> Result<Settings, String> {
             .ok_or("unknown language")?,
     };
     Ok(Settings {
+        studio_auto_scroll: match v.get("studio_auto_scroll") {
+            None => true,
+            Some(Value::Bool(value)) => *value,
+            Some(_) => return Err("invalid Studio auto-scroll preference".into()),
+        },
         studio_overscroll: match v.get("studio_overscroll") {
             None => true,
             Some(Value::Bool(value)) => *value,
@@ -210,6 +217,7 @@ impl Settings {
             ("classic_status_bar", Value::Bool(self.classic_status_bar)),
             ("classic_rulers", Value::Bool(self.classic_rulers)),
             ("studio_overscroll", Value::Bool(self.studio_overscroll)),
+            ("studio_auto_scroll", Value::Bool(self.studio_auto_scroll)),
             (
                 "classic_toolbar_auto_hide",
                 Value::Bool(self.classic_toolbar_auto_hide),
@@ -248,6 +256,38 @@ mod tests {
         ));
         fs::create_dir_all(&d).unwrap();
         d
+    }
+
+    #[test]
+    fn studio_auto_scroll_migrates_checks_types_and_roundtrips_disabled() {
+        for version in ["v1", "v2"] {
+            let source =
+                format!(r#"{{"schema":"paintcraft.settings/{version}","experience":"studio"}}"#);
+            assert!(parse(source.as_bytes()).unwrap().studio_auto_scroll);
+        }
+        let dir = scratch("auto-scroll");
+        let settings = Settings {
+            experience: Experience::Studio,
+            studio_auto_scroll: false,
+            ..Default::default()
+        };
+        settings.save(&dir).unwrap();
+        assert_eq!(Settings::load(&dir), (settings, Loaded::Ok));
+        let mut saved = json::parse(&fs::read(file(&dir)).unwrap()).unwrap();
+        let Value::Object(object) = &mut saved else {
+            unreachable!()
+        };
+        object.remove("studio_auto_scroll");
+        assert!(parse(&json::canonical(&saved)).unwrap().studio_auto_scroll);
+        let Value::Object(object) = &mut saved else {
+            unreachable!()
+        };
+        object.insert("studio_auto_scroll".into(), Value::str("false"));
+        assert_eq!(
+            parse(&json::canonical(&saved)).unwrap_err(),
+            "invalid Studio auto-scroll preference"
+        );
+        fs::remove_dir_all(dir).unwrap();
     }
 
     #[test]

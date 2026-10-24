@@ -61,3 +61,5 @@ user-interface = User Interface
 canvas-navigation = Canvas navigation
 scroll-past-the-edge-of-the-image-overscroll = Scroll past the edge of the image (overscroll)
 move-small-images-halfway-offscreen-and-large-image-edges-to-the-viewport-center = Move small images halfway offscreen and large image edges to the viewport center.
+auto-scroll = Auto-scroll
+scroll-automatically-while-dragging-near-the-edge-of-the-canvas-viewport = Scroll automatically while dragging near the edge of the canvas viewport.
