@@ -44,6 +44,14 @@ pub enum ShapeKind {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Op {
+    /// v2: cut selected pixels and paste an exact frozen capture at an offset.
+    /// RGB-keyed samples are still cut, but skipped during the paste phase.
+    MoveSelection {
+        layer: LayerRef,
+        offset: (i64, i64),
+        clear: Rgba,
+        transparent_key: Option<Rgba>,
+    },
     TransformSelection {
         layer: LayerRef,
         transform: paintcraft_core::types::orthogonal::OrthogonalTransform,

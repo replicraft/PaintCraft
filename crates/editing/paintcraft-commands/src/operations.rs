@@ -19,6 +19,7 @@ pub(super) fn op(v: &Value, version: u8) -> Result<Op> {
                 | "canvas.crop"
                 | "canvas.transform"
                 | "raster.transform_selection"
+                | "raster.move_selection"
                 | "raster.text"
                 | "raster.mask_spans"
                 | "layer.reorder"
@@ -30,6 +31,20 @@ pub(super) fn op(v: &Value, version: u8) -> Result<Op> {
         )));
     }
     Ok(match name {
+        "raster.move_selection" => {
+            let o = obj(
+                v,
+                &["op", "layer_ref", "offset", "clear"],
+                &["transparent_key"],
+            )?;
+            Op::MoveSelection {
+                layer: layer_ref(&o["layer_ref"])?,
+                offset: point(&o["offset"])?,
+                clear: color(&o["clear"])?,
+                transparent_key: o.get("transparent_key").map(color).transpose()?,
+            }
+        }
+
         "raster.transform_selection" => {
             let o = obj(v, &["op", "layer_ref", "transform", "clear"], &[])?;
             Op::TransformSelection {
