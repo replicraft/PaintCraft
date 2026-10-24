@@ -1,6 +1,8 @@
 //! Browser-owned UI state. Native filesystem, menus and workers stay in desktop.
 mod app;
 mod canvas;
+mod clipboard;
+mod clipboard_ui;
 mod editor;
 mod files;
 mod floating_ui;

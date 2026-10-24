@@ -39,6 +39,7 @@ pub struct WebApp {
     pending_import: Option<crate::files::Loaded>,
     form: Option<forms::Form>,
     pub(crate) message: String,
+    pub(crate) clipboard: crate::clipboard_ui::State,
 }
 
 impl WebApp {
@@ -82,6 +83,7 @@ impl WebApp {
             files: crate::files::Files::default(),
             pending_import: None,
             form: None,
+            clipboard: Default::default(),
             message: warning.unwrap_or_else(|| {
                 "Ready - Save downloads a project copy; work stays in this tab".into()
             }),
@@ -203,6 +205,7 @@ impl WebApp {
             return;
         }
         match action {
+            Action::Copy => self.copy_requested(ctx),
             Action::Crop => self.edit(Edit::CropToSelection),
             Action::EraseSelection => self.edit(Edit::EraseSelection {
                 color: paintcraft_tools::commands::canvas_color(self.editor.session.document()),
@@ -387,6 +390,12 @@ impl WebApp {
         {
             return false;
         }
+        if matches!(event, egui::Event::Copy) && !self.editor.tools.is_editing_text() {
+            if Action::Copy.enabled(self.context()) {
+                self.action(ctx, Action::Copy);
+            }
+            return true;
+        }
         if let egui::Event::Key {
             key,
             pressed: true,
@@ -399,7 +408,7 @@ impl WebApp {
                 && modifiers.command
                 && matches!(
                     key,
-                    egui::Key::A | egui::Key::B | egui::Key::I | egui::Key::U
+                    egui::Key::A | egui::Key::B | egui::Key::I | egui::Key::U | egui::Key::C
                 )
             {
                 return false;
@@ -418,6 +427,7 @@ impl WebApp {
         let ctx = ui.ctx().clone();
         if ctx.current_pass_index() == 0 {
             self.poll_files();
+            self.poll_copy(&ctx);
         }
         self.text.widget_owned_input =
             ctx.egui_wants_keyboard_input() || egui::Popup::is_any_open(&ctx);

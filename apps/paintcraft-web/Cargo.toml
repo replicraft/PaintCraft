@@ -32,7 +32,7 @@ rfd = { workspace = true, features = ["file-handle-inner"] }
 js-sys.workspace = true
 wasm-bindgen.workspace = true
 wasm-bindgen-futures.workspace = true
-web-sys = { workspace = true, features = ["HtmlCanvasElement", "HtmlElement", "Window", "Document", "Storage"] }
+web-sys = { workspace = true, features = ["HtmlCanvasElement", "HtmlElement", "Window", "Document", "Storage", "Navigator", "Clipboard", "ClipboardItem", "Blob", "BlobPropertyBag"] }
 # Explicit browser backends: prefer WebGPU, retain WebGL where available.
 wgpu = { workspace = true, features = ["webgpu", "webgl"] }
 
