@@ -9,6 +9,7 @@ publish.workspace = true
 
 [features]
 default = []
+printing = []
 menus = ["dep:muda"]
 fonts = ["dep:fontdb"]
 dialogs = ["dep:rfd", "dep:raw-window-handle", "dep:pollster"]
