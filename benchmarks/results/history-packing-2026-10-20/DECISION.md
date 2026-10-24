@@ -62,7 +62,7 @@ p50/p95/p99/max in `phase-summary.csv`. For sparse 1,000-edit histories:
 | Undo p95 | 0.0047 ms | 0.0187 ms |
 | Redo p95 | 0.0046 ms | 0.0178 ms |
 | Edit cycle p99 | 0.3219 ms | 4.2710 ms |
-| Checkpoint compaction maximum | — | 4.6876 ms |
+| Checkpoint compaction maximum | - | 4.6876 ms |
 
 Edit-cycle events include capture/CRC and occasional explicit packing; navigation
 events exclude the subsequent fingerprint verification. The final extra packing

@@ -185,7 +185,7 @@ mod tests {
     fn fills_only_the_connected_region_and_not_diagonals() {
         let l = layer(&["..#..", "..#..", "###..", "....#", "....."]);
         let clip = l.bounds();
-        // Top-left pocket: (0,0),(1,0),(0,1),(1,1) — walled by the hash cells.
+        // Top-left pocket: (0,0),(1,0),(0,1),(1,1) - walled by the hash cells.
         assert_eq!(cells(&region(&l, (0, 0), &clip, 0).unwrap()), 4);
         // Everything else transparent is one region through the open bottom/right.
         let rest = region(&l, (4, 0), &clip, 0).unwrap();

@@ -60,7 +60,7 @@ fn render_font_text_for_review() {
             .events
             .extend([Event::PointerMoved(p), press(p), release(p)]);
         h.run();
-        h.event(Event::Text("PaintCraft — Selawik".into()));
+        h.event(Event::Text("PaintCraft - Selawik".into()));
         h.run();
         h.get_by_label("Bold").click();
         h.run();

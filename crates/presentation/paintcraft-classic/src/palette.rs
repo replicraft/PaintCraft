@@ -189,7 +189,7 @@ fn swatches(
                     let slot = index - 20;
                     let color = custom[slot];
                     let tip = color.map_or_else(
-                        || format!("Custom color {} — add a color", slot + 1),
+                        || format!("Custom color {} - add a color", slot + 1),
                         |c| {
                             format!(
                                 "Custom color {}\n#{:02X}{:02X}{:02X}",

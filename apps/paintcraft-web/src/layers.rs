@@ -103,7 +103,7 @@ impl WebApp {
                 }
             };
             match self.editor.commit(vec![op]) {
-                Ok(()) => self.message = "Layers changed — unsaved".into(),
+                Ok(()) => self.message = "Layers changed - unsaved".into(),
                 Err(error) => self.message = format!("Layer change failed: {error}"),
             }
         }

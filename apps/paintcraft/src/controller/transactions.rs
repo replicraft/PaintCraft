@@ -78,7 +78,7 @@ impl Editor {
         self.retarget();
         if receipt.committed && self.session.last_trimmed() > 0 {
             self.status += &format!(
-                " — the {} oldest undo step(s) were dropped under the history memory policy",
+                " - the {} oldest undo step(s) were dropped under the history memory policy",
                 self.session.last_trimmed()
             );
         }

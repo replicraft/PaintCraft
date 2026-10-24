@@ -72,7 +72,7 @@ impl WebApp {
             pending_import: None,
             form: None,
             message: warning.unwrap_or_else(|| {
-                "Ready — Save downloads a project copy; work stays in this tab".into()
+                "Ready - Save downloads a project copy; work stays in this tab".into()
             }),
         }
     }
@@ -139,7 +139,7 @@ impl WebApp {
                     self.remember_canvas_size(size);
                 }
                 self.message = if self.unsaved() {
-                    "Unsaved changes — kept only in this tab".into()
+                    "Unsaved changes - kept only in this tab".into()
                 } else {
                     "Ready".into()
                 }
@@ -307,7 +307,7 @@ impl WebApp {
             }
             Some(Ok(Outcome::DownloadClosed)) => {
                 self.message =
-                    "Download dialog closed — verify your copy; this tab remains unsaved".into()
+                    "Download dialog closed - verify your copy; this tab remains unsaved".into()
             }
             Some(Err(error)) => self.message = format!("File operation failed: {error}"),
             None => {}

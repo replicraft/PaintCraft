@@ -1288,7 +1288,7 @@ Native Paint window/preview parity, live OS menu activation, OS accessibility,
 physical resource/latency qualification, browser document thumbnails and T15
 completion remain unproven.
 
-## 2026-10-23 — live canvas overview
+## 2026-10-23 - live canvas overview
 
 The desktop Thumbnail now includes active pencil/brush/eraser strokes, shapes and
 editable text. Private immutable source captures share the final raster commands
@@ -1309,7 +1309,7 @@ visually reviewed. See [the live overview evidence](validation/classic-live-thum
 T15 remains partial; native shape antialiasing/fidelity and browser document
 thumbnails remain unqualified.
 
-## 2026-10-23 — Classic browser controls and preferences
+## 2026-10-23 - Classic browser controls and preferences
 
 The browser now connects the shared primary/secondary/custom color editor, staged
 Canvas size and Image properties pixel fields, and configured-versus-remembered

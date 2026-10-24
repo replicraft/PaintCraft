@@ -506,7 +506,7 @@ fn toolbar_button_artwork(
         },
     );
     let tooltip = if action == Action::ClearCanvas {
-        "Clear Canvas — replace all layers with a blank background. Undo restores them.".to_owned()
+        "Clear Canvas - replace all layers with a blank background. Undo restores them.".to_owned()
     } else {
         tooltip
     };

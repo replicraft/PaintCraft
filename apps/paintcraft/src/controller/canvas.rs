@@ -48,7 +48,7 @@ impl Editor {
         ])];
         if let Some(receipt) = self.commit_target(
             ops,
-            "Canvas cleared — Undo restores all layers",
+            "Canvas cleared - Undo restores all layers",
             Some("background"),
         ) {
             self.target = receipt.aliases.get("background").copied().or(self.target);
