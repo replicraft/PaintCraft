@@ -1,4 +1,4 @@
-//! Frozen rectangular extraction, clear and exact replacement over one source.
+//! Frozen selection extraction, clearing, orientation and exact translation.
 use super::*;
 use crate::selection::BinaryMask;
 use paintcraft_core::types::orthogonal::OrthogonalTransform;
@@ -17,6 +17,7 @@ pub(super) struct Patch {
     clear: Rgba,
     selected: Rect,
     mask: Option<BinaryMask>,
+    paste_mask: Option<BinaryMask>,
     coordinates: sampling::Coordinates,
 }
 impl Patch {
@@ -32,7 +33,12 @@ impl Patch {
             let (sx, sy) = self
                 .coordinates
                 .pixel(x - self.destination.x0, y - self.destination.y0)?;
-            if self.selected_pixel(sx, sy) {
+            if self.selected_pixel(sx, sy)
+                && self
+                    .paste_mask
+                    .as_ref()
+                    .is_none_or(|mask| mask.coverage(sx, sy) == 255)
+            {
                 return Ok(if self.source_bounds.contains(sx, sy) {
                     Sample::Source(sx, sy)
                 } else {
@@ -89,7 +95,16 @@ impl MappedPlan {
         check: &dyn Fn() -> Result<()>,
     ) -> Result<(Self, (i64, i64))> {
         Self::prepare_patch_inner(
-            source, area, None, transform, clear, admission, limit, check,
+            source,
+            area,
+            None,
+            Some(transform),
+            (0, 0),
+            clear,
+            None,
+            admission,
+            limit,
+            check,
         )
     }
     /// Cut and reorient only binary-selected pixels within `area`, relative to
@@ -115,8 +130,42 @@ impl MappedPlan {
             source,
             area,
             Some(mask),
-            transform,
+            Some(transform),
+            (0, 0),
             clear,
+            None,
+            admission,
+            limit,
+            check,
+        )
+    }
+    /// Move a frozen binary-selected patch by an exact layer-local displacement.
+    /// `area` and `mask` are source-local; the returned origin shift rebases the
+    /// output relative to the original layer. RGB keys exclude pasting only: all
+    /// original selected finite samples are still cleared. Key alpha is ignored.
+    /// A zero displacement is always identity, even with a key, so an idle drag
+    /// cannot erase keyed pixels. Keyed nonzero moves freeze a paste mask before
+    /// replay under the existing read, selection and paint metadata policies.
+    #[allow(clippy::too_many_arguments)]
+    pub fn prepare_moved_patch(
+        source: PaintSnapshot,
+        area: Rect,
+        mask: Option<BinaryMask>,
+        offset: (i64, i64),
+        clear: Rgba,
+        transparent_key: Option<Rgba>,
+        admission: &Admission,
+        limit: u64,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<(Self, (i64, i64))> {
+        Self::prepare_patch_inner(
+            source,
+            area,
+            mask,
+            None,
+            offset,
+            clear,
+            transparent_key,
             admission,
             limit,
             check,
@@ -127,8 +176,10 @@ impl MappedPlan {
         source: PaintSnapshot,
         area: Rect,
         mask: Option<BinaryMask>,
-        transform: OrthogonalTransform,
+        transform: Option<OrthogonalTransform>,
+        offset: (i64, i64),
         clear: Rgba,
+        transparent_key: Option<Rgba>,
         admission: &Admission,
         limit: u64,
         check: &dyn Fn() -> Result<()>,
@@ -159,9 +210,28 @@ impl MappedPlan {
                 "patch coordinates outside policy",
             ));
         }
-        let (dw, dh) = transform.dimensions(w as u32, h as u32);
-        let destination =
-            Rect::from_origin_size(area.x0, area.y0, dw, dh).ok_or_else(metadata::exhausted)?;
+        if transform.is_none() && offset == (0, 0) {
+            return Self::prepare_identity_patch(source, admission, check)
+                .map(|plan| (plan, (0, 0)));
+        }
+        let (dw, dh) = transform.map_or((w as u32, h as u32), |t| t.dimensions(w as u32, h as u32));
+        let destination = Rect::from_origin_size(area.x0, area.y0, dw, dh)
+            .and_then(|rect| rect.translated(offset.0, offset.1))
+            .ok_or_else(metadata::exhausted)?;
+        if [
+            destination.x0,
+            destination.y0,
+            destination.x1,
+            destination.y1,
+        ]
+        .iter()
+        .any(|v| v.unsigned_abs() > bound)
+        {
+            return Err(Error::new(
+                ErrorCode::InputSchema,
+                "patch destination outside policy",
+            ));
+        }
         let old = source.bounds();
         let (ox, oy) = (old.x0.min(destination.x0), old.y0.min(destination.y0));
         let (endx, endy) = (old.x1.max(destination.x1), old.y1.max(destination.y1));
@@ -173,16 +243,22 @@ impl MappedPlan {
             .checked_sub(oy)
             .filter(|h| *h <= 1_048_576)
             .ok_or_else(metadata::exhausted)?;
-        let sampling = sampling::Sampling {
-            area,
-            transform: Some(transform),
-        };
+        let sampling = sampling::Sampling { area, transform };
         let destination = destination
             .translated(-ox, -oy)
             .ok_or_else(metadata::exhausted)?;
+        let (paste_mask, key_reads) = match transparent_key {
+            Some(key) => {
+                let (mask, reads) =
+                    keyed_paste_mask(&source, area, mask.as_ref(), key, admission, limit, check)?;
+                (Some(mask), reads)
+            }
+            None => (None, 0),
+        };
         let patch = Patch {
             selected: area,
             mask,
+            paste_mask,
             coordinates: sampling.coordinates(),
             bounds: Rect::new(0, 0, width, height).unwrap(),
             source_bounds: old,
@@ -250,7 +326,7 @@ impl MappedPlan {
                     .unwrap())?;
             }
         }
-        let mut reads = 0u64;
+        let mut reads = key_reads;
         for coord in candidates.keys() {
             let r = Rect::new(
                 coord.tx * i64::from(TILE_EDGE),
@@ -297,4 +373,135 @@ impl MappedPlan {
             (ox, oy),
         ))
     }
+}
+
+impl MappedPlan {
+    fn prepare_identity_patch(
+        source: PaintSnapshot,
+        admission: &Admission,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<Self> {
+        let mut mapping = mapped::Mapping {
+            sampling: sampling::Sampling {
+                area: source.bounds(),
+                transform: None,
+            },
+            patch: None,
+            tiles: HashMap::new(),
+            charge: admission.paint_metadata_account(),
+        };
+        mapping.charge.resize(size_of::<mapped::Mapping>() as u64)?;
+        let mut metadata =
+            metadata::Metadata::new(size_of::<mapped::Mapping>(), admission.paint_metadata_limit)?;
+        let reader = source.reader(admission, check)?;
+        reader.visit_candidate_tiles(check, |coord| {
+            let tile = Rect::new(
+                coord.tx * i64::from(TILE_EDGE),
+                coord.ty * i64::from(TILE_EDGE),
+                i64::from(TILE_EDGE),
+                i64::from(TILE_EDGE),
+            )
+            .unwrap();
+            if tile.intersect(&source.bounds()).is_some() && !mapping.tiles.contains_key(&coord) {
+                metadata.table(&mut mapping.tiles, &mut mapping.charge)?;
+                mapping.tiles.insert(coord, ());
+            }
+            Ok(())
+        })?;
+        drop(reader);
+        check()?;
+        Ok(Self {
+            source,
+            mapping: Arc::new(mapping),
+            reads: 0,
+        })
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn keyed_paste_mask(
+    source: &PaintSnapshot,
+    area: Rect,
+    mask: Option<&BinaryMask>,
+    key: Rgba,
+    admission: &Admission,
+    limit: u64,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<(BinaryMask, u64)> {
+    check()?;
+    let reads = u64::try_from(area.area()).map_err(|_| metadata::exhausted())?;
+    if reads > limit.min(16_777_216) {
+        return Err(Error::new(
+            ErrorCode::ResourceLimit,
+            "patch key sample budget exceeded",
+        ));
+    }
+    // The temporary ordered runs are capacity-priced in the paint realm; the
+    // retained binary field keeps its own existing selection-storage ownership.
+    let mut charge = admission.paint_metadata_account();
+    let mut spans = Vec::new();
+    let mut metadata = metadata::Metadata::new(0, admission.paint_metadata_limit)?;
+    let reader = source.reader(admission, check)?;
+    for y in area.y0..area.y1 {
+        check()?;
+        let mut start = None;
+        for x in area.x0..area.x1 {
+            if ((x - area.x0) as u64).is_multiple_of(256) {
+                check()?;
+            }
+            let selected = mask.is_none_or(|mask| mask.coverage(x, y) == 255);
+            let paste = if selected {
+                let color = if source.bounds().contains(x, y) {
+                    reader.read_checked(x, y, check)?
+                } else {
+                    Rgba::TRANSPARENT
+                };
+                color.0[..3] != key.0[..3]
+            } else {
+                false
+            };
+            if paste {
+                start.get_or_insert(x);
+            } else if let Some(x0) = start.take() {
+                if spans.len() == crate::selection::MaskLimits::default().spans {
+                    return Err(Error::new(
+                        ErrorCode::ResourceLimit,
+                        "patch key span budget exceeded",
+                    ));
+                }
+                metadata.vector(&mut spans, &mut charge)?;
+                spans.push(paintcraft_core::types::text::MaskSpan {
+                    y,
+                    x0,
+                    x1: x - 1,
+                    coverage: 255,
+                });
+            }
+        }
+        if let Some(x0) = start {
+            if spans.len() == crate::selection::MaskLimits::default().spans {
+                return Err(Error::new(
+                    ErrorCode::ResourceLimit,
+                    "patch key span budget exceeded",
+                ));
+            }
+            metadata.vector(&mut spans, &mut charge)?;
+            spans.push(paintcraft_core::types::text::MaskSpan {
+                y,
+                x0,
+                x1: area.x1 - 1,
+                coverage: 255,
+            });
+        }
+    }
+    drop(reader);
+    let field = BinaryMask::from_spans(
+        area,
+        false,
+        &spans,
+        &admission.selection_budget(),
+        crate::selection::MaskLimits::default(),
+        check,
+    )?;
+    Ok((field, reads))
 }
