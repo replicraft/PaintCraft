@@ -902,3 +902,4 @@ user-interface = ユーザーインターフェイス
 canvas-navigation = キャンバスの操作
 scroll-past-the-edge-of-the-image-overscroll = 画像の端を越えてスクロールする（オーバースクロール）
 move-small-images-halfway-offscreen-and-large-image-edges-to-the-viewport-center = 小さい画像は半分が画面の外に出るまで、大きい画像は端が表示領域の中央に来るまで移動できます。
+drag-to-pan-space-drag-or-space-arrows-ctrl-space-arrows-moves-faster = ドラッグで移動 · スペース＋ドラッグ／矢印キーで一時移動 · Ctrl＋スペース＋矢印キーで高速移動

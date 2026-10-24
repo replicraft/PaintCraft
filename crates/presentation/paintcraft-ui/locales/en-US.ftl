@@ -902,3 +902,4 @@ user-interface = User Interface
 canvas-navigation = Canvas navigation
 scroll-past-the-edge-of-the-image-overscroll = Scroll past the edge of the image (overscroll)
 move-small-images-halfway-offscreen-and-large-image-edges-to-the-viewport-center = Move small images halfway offscreen and large image edges to the viewport center.
+drag-to-pan-space-drag-or-space-arrows-ctrl-space-arrows-moves-faster = Drag to pan · Space+drag or Space+arrows · Ctrl+Space+arrows moves faster

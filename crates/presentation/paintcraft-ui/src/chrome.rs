@@ -116,7 +116,7 @@ pub fn options_with_shape_style(
         if state.tool == Tool::Pan {
             ui.label(tr(
                 ui.ctx(),
-                "Drag to pan · Hold Space to pan with another tool",
+                "Drag to pan · Space+drag or Space+arrows · Ctrl+Space+arrows moves faster",
             ));
         }
         if state.tool == Tool::Magnifier {
