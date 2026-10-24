@@ -67,6 +67,7 @@ pub struct LayerRow {
 #[derive(Debug)]
 pub struct Editor {
     session: Session,
+    canvas_size_edit: Option<(u32, u32)>,
     tools: ToolState,
     text_renderer: Option<crate::text::Shared>,
     target: Option<Uuid>,
@@ -142,6 +143,7 @@ impl Editor {
         }
         Editor {
             session,
+            canvas_size_edit: None,
             tools: ToolState::default(),
             text_renderer: None,
             target,
@@ -527,6 +529,7 @@ impl Editor {
 
     fn execute(&mut self, action: Action) {
         match action {
+            Action::CropToSelection => self.crop_to_selection(),
             Action::Contour(contour) => self.contour(&contour),
             Action::ResizeCanvas { width, height } => self.resize_canvas(width, height),
             Action::ClearCanvas { color } => self.clear_canvas(color),

@@ -6,6 +6,15 @@ use super::*;
 mod tests;
 
 impl Editor {
+    pub(super) fn crop_to_selection(&mut self) {
+        match paintcraft_tools::commands::crop_to_selection(self.document(), self.selection()) {
+            Ok(op) => {
+                self.cancel_gesture();
+                self.draw(vec![op], "Crop canvas");
+            }
+            Err(error) => self.status = error.to_string(),
+        }
+    }
     /// Solid canvas ground used by Classic; imported images fall back to white.
     pub fn canvas_color(&self) -> Rgba {
         paintcraft_tools::commands::canvas_color(self.document())

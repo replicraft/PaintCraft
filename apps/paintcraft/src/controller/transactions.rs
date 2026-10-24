@@ -44,9 +44,10 @@ impl Editor {
             self.start_edit(batch, done, target_alias);
             return None;
         }
+        let before_canvas = self.document().canvas;
         match self.session.apply(&batch) {
             Ok(r) => {
-                self.accept_edit(&r, done, target_alias);
+                self.accept_edit(&r, done, target_alias, before_canvas);
                 Some(r)
             }
             Err(e) => {
@@ -61,7 +62,11 @@ impl Editor {
         receipt: &paintcraft_editor::session::Receipt,
         done: &str,
         target_alias: Option<&str>,
+        before_canvas: (u32, u32),
     ) {
+        if receipt.committed && self.document().canvas != before_canvas {
+            self.canvas_size_edit = Some(self.document().canvas);
+        }
         self.status = if receipt.committed {
             done.to_owned()
         } else {
@@ -77,6 +82,11 @@ impl Editor {
                 self.session.last_trimmed()
             );
         }
+    }
+
+    /// Last authored dimension change, excluding history navigation.
+    pub(crate) fn take_canvas_size_edit(&mut self) -> Option<(u32, u32)> {
+        self.canvas_size_edit.take()
     }
 
     /// Commit drawing operations; a batch that changes nothing is reported as such.

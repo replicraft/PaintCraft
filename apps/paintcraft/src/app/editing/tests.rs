@@ -43,6 +43,28 @@ fn idle(app: &App) -> bool {
 fn color(doc: &paintcraft_document::Document) -> Rgba {
     doc.layers[&doc.roots[0]].raster.default_pixel()
 }
+
+#[test]
+fn completed_native_crop_remembers_the_authored_size_after_undo() {
+    let (mut app, context) = app(false);
+    app.settings.canvas.remember_last = true;
+    let original = app.editor.document().canvas;
+    app.editor.request(
+        8001,
+        Action::Select {
+            corners: Some(((10, 20), (39, 59))),
+        },
+    );
+    pump(&mut app, &context, idle);
+    app.editor.request(8002, Action::CropToSelection);
+    pump(&mut app, &context, idle);
+    assert_eq!(app.editor.document().canvas, (30, 40));
+    assert_eq!(app.settings.canvas.last, Some((30, 40)));
+    app.editor.request(8003, Action::Undo);
+    pump(&mut app, &context, idle);
+    assert_eq!(app.editor.document().canvas, original);
+    assert_eq!(app.settings.canvas.last, Some((30, 40)));
+}
 #[test]
 fn save_captures_preceding_edit_while_later_edit_stays_dirty_for_native_and_fallback_io() {
     for native_save in [false, true] {

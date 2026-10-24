@@ -15,6 +15,13 @@ pub(super) struct DeferredFile {
 }
 
 impl App {
+    pub(super) fn remember_published_canvas_size(&mut self) {
+        if let Some(size) = self.editor.take_canvas_size_edit()
+            && self.experience() == Experience::Classic
+        {
+            self.remember_canvas_size(size);
+        }
+    }
     pub(super) fn initialize_editing(&mut self, context: egui::Context) {
         match controller::background::Service::with_budget(context, self.worker_budget.clone()) {
             Ok(service) => {
@@ -98,6 +105,7 @@ impl App {
             if self.editor.run_pending() > 0 {
                 ctx.request_repaint();
             }
+            self.remember_published_canvas_size();
             let can_run_file = self.confirm.is_none()
                 && !self.dialogs.as_ref().is_some_and(NativeDialogs::pending);
             if can_run_file && let Some(request) = self.deferred_files.front() {

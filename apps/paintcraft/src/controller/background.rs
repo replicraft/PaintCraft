@@ -349,12 +349,13 @@ impl Editor {
         };
         self.preview_queue_revision.advance();
         self.publication_preview = None;
+        let before_canvas = self.document().canvas;
         let result = match result {
             Ok(Completion::Edit(prepared)) => self
                 .session
                 .publish_prepared(prepared, || Ok(()))
                 .map(|receipt| {
-                    self.accept_edit(&receipt, &pending.done, pending.target_alias);
+                    self.accept_edit(&receipt, &pending.done, pending.target_alias, before_canvas);
                 }),
             Ok(Completion::Navigation(prepared)) => self
                 .session

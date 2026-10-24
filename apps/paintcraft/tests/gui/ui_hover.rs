@@ -97,7 +97,7 @@ fn classic_ribbon_dropdowns_are_compact_and_show_one_tooltip_at_each_display_sca
         });
         let before = h.state().editor().document_snapshot();
         for (label, tooltip) in [
-            ("Crop", "Cropping is not available yet."),
+            ("Crop", "Select an area of the canvas to crop"),
             (
                 "Remove background",
                 "Background removal is not available yet.",

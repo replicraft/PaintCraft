@@ -10,6 +10,8 @@ use egui_kittest::Harness;
 use egui_kittest::kittest::{NodeT, Queryable};
 use paintcraft::App;
 use paintcraft_core::types::Rgba;
+#[path = "gui/crop.rs"]
+mod crop;
 
 fn harness_with(app: App, ppp: f32, two_passes: bool) -> Harness<'static, App> {
     let mut h = Harness::builder()

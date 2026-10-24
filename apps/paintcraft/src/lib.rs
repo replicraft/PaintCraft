@@ -110,6 +110,7 @@ mod code {
     pub const CANVAS_SIZE: u64 = 14;
     pub const CLEAR_CANVAS: u64 = 15;
     pub const EXPORT: u64 = 16;
+    pub const CROP: u64 = 17;
 }
 
 const DEFAULT_SIZE: (u32, u32) = settings::DEFAULT_SIZE;

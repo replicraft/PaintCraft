@@ -183,6 +183,7 @@ impl App {
                 self.sync_texture(&ctx);
             }
         }
+        self.remember_published_canvas_size();
         self.poll_edits(&ctx);
         self.finish_save();
         self.poll_native_saves(&ctx);

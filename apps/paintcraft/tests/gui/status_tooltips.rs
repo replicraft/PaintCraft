@@ -39,6 +39,7 @@ fn elided_classic_status_fields_show_one_complete_tooltip() {
                         zoom: 1.0,
                         pixel_grid: false,
                         can_fit_selection: true,
+                        can_crop_selection: true,
                         status_bar: true,
                         rulers: false,
                         fullscreen: false,

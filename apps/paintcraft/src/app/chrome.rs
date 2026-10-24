@@ -34,6 +34,7 @@ impl App {
             zoom: self.zoom,
             pixel_grid: self.pixel_grid,
             can_fit_selection: matches!(self.editor.selection(), Selection::Rect(_)),
+            can_crop_selection: matches!(self.editor.selection(),Selection::Rect(rect) if rect.intersect(&self.editor.document().canvas_rect()).is_some()),
             status_bar: self.settings.classic_status_bar,
             rulers: self.settings.classic_rulers,
             fullscreen: self.fullscreen,
@@ -193,6 +194,7 @@ impl App {
                     self.request(ctx, code::CLEAR_CANVAS, Action::ClearCanvas { color });
                 }
                 Chrome::ResizeSkew => self.begin_resize_skew(),
+                Chrome::Crop => self.request(ctx, code::CROP, Action::CropToSelection),
                 Chrome::ImageProperties => self.begin_image_properties(),
                 Chrome::CanvasSize | Chrome::CanvasDefaults => {
                     self.begin_canvas_dialog(ctx, action == Chrome::CanvasDefaults)
