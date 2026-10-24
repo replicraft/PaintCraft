@@ -34,8 +34,10 @@ rasterization](SELECTION_MASKS.md), including compact inversion, shared snapshot
 ownership and admitted private construction. Owned session/history snapshots and v2 polygon/inversion commands are integrated,
 including resident accounting and guarded publication. Painting/erasing now gate
 exact binary coverage, and flood traversal honors mask connectivity through earlier
-logical writes. Mapped transforms, frontend outlines and free-form/invert/transparent
-controls remain unconnected; T14/T15 stay partial.
+logical writes. [Free-form gestures, Invert and cached true outlines](LASSO_SELECTIONS.md)
+now work in Classic 7/10/11, Studio and browser Classic. Floating/transparent
+selection, tight mask dimensions, mapped transforms and reference qualification
+remain; T14/T15 stay partial.
 
 
 This is the live application ledger for the reference pack's 37 tasks. The

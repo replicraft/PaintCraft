@@ -27,6 +27,8 @@ separately in the dependency choices and is not bundled yet.
 - Pan tool with H, temporary Space-drag, middle-button pan, Space-plus-arrow
   keyboard movement, Ctrl acceleration and hand cursors.
 - Overscroll and drag-edge auto-scroll with persisted Studio navigation preferences.
+- Rectangular/free-form selection modes, Invert, mask-clipped painting/Delete and
+  exact selection history, with [bounded true outlines](LASSO_SELECTIONS.md).
 - Shared staged brush previews, CPU/wgpu composition, transactions and undo/redo.
   Open, Save As and Export retain the native file-dialog and preservation paths.
 

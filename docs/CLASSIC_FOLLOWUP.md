@@ -101,12 +101,11 @@ retracing, cancellation and resource bounds still apply.
 
 ## Still required by this feedback
 
-1. Binary selection masks, free-form creation, inversion, floating movement and
-   secondary-color-keyed transparent selection. Merely checking a menu item would
-   not implement these behaviors. The UI still exposes rectangular selection. The
-   [binary R8 engine](SELECTION_MASKS.md) now owns masks through session/history
-   and accepts polygon/inversion batches. Exact painting, erasing and flood
-   connectivity now work; mask outlines and tool controls remain work.
+1. Floating movement and secondary-color-keyed transparent selection. The
+   [binary R8 engine](SELECTION_MASKS.md) now owns masks through session/history,
+   and [free-form selection and Invert](LASSO_SELECTIONS.md) work in desktop and
+   browser controls with true outlines, exact painting/erasing and flood connectivity.
+   Tight mask dimensions, mapped transforms and native reference qualification remain.
 2. Arbitrary-angle rotation with agreed resampling, bounds, selection and alpha
    rules across native, CLI and browser. Orthogonal rotations already work.
 3. Subject-aware background removal. A border flood fill would not match Paint's

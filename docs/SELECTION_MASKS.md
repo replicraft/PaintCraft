@@ -6,9 +6,9 @@ R8 coverage for the selection work required by T14/T15 and
 The storage/kernel foundation now has owned session/history integration. The
 canonical `Selection` also carries `Mask(BinaryMask)`, with cheap immutable clones
 through worker preparations, recorded history and cold document restoration.
-Painting and flood connectivity now honor the exact binary field. Free-form and
-Invert UI remain disabled until lasso input and mask-derived outlines are connected;
-transparent and floating selection require their own pixel-placement semantics.
+Painting and flood connectivity honor the exact binary field. Desktop and browser
+now expose [free-form selection, Invert and true mask outlines](LASSO_SELECTIONS.md).
+Transparent and floating selection require their own pixel-placement semantics.
 
 ## Field semantics
 
@@ -75,8 +75,8 @@ and cancellation during construction/sorting leave no retained private capacity.
 
 The remaining integration must:
 
-1. Complete frontend routing and reference qualification for the owned mask
-   snapshots, polygon creation and finite-domain inversion implemented below.
+1. Complete native reference qualification for the owned mask snapshots, polygon
+   creation and finite-domain inversion now routed through both frontends.
 2. Qualify native reference selection behavior and masked interactive performance.
    Binary painting gates and flood connectivity are implemented and tested below.
 3. Add mask-specific packing/spill and native pressure/retry services. Recorded
@@ -85,10 +85,10 @@ The remaining integration must:
    promoted to named document data.
 4. Translate/clip/reframe selections correctly for canvas and image operations,
    and carry the original mask with floating selected pixels and transforms.
-5. Add native/browser lasso gestures and mask-derived boundaries/status, then wire
-   Invert and transparent color-keyed floating selection to real shared commands.
-6. Add independent batch, native worker, GUI, CLI and browser evidence before
-   enabling the corresponding controls or claiming SEL-01 through SEL-05 complete.
+5. Add tight selected bounds/status and transparent color-keyed floating selection.
+   Native/browser lasso gestures, true boundaries and Invert now work.
+6. Expand native profile and device evidence before claiming SEL-01 through SEL-05
+   complete. Scoped batch, worker, GUI, CLI and browser-host evidence exists.
 
 The broader Classic backlog is recorded in [Classic follow-up](CLASSIC_FOLLOWUP.md).
 
@@ -144,9 +144,8 @@ The ownership slice initially rejected painting while a mask was active. The
 coverage integration below now enables painting and flood fill. Crop and mapped
 transforms remain rejected pending explicit sampling/selection mapping policies.
 Layer operations, canvas placement and Clear Canvas retain their established
-semantics. Frontend mask creation/Invert controls stay disabled; hosts omit a
-rectangle-only overlay/dimension projection for masks. These are engine commands,
-not a claim that free-form selection is usable in desktop or browser yet.
+semantics. The subsequent frontend integration exposes lasso/Invert with true
+mask outlines. It omits a rectangle-only dimension projection for masks.
 
 New engine tests cover independent polygon pixels, finite inversion, selection-only
 Undo/Redo/seek, stale workers, single-construction replay, equal-field no-ops,
@@ -218,6 +217,7 @@ separately. Final strict workspace Clippy, Wasm checking, portable browser build
 formatting, source-length, translation and whitespace checks passed. Raw logs and
 source recording are local in the ignored
 `docs/validation/masked-painting-2026-10-24/` directory. Native reference fidelity,
-interactive latency, fractional masks, mask packing/spill, outlines, lasso controls,
-floating pixels and mapped selection transforms remain incomplete. T14/T15 and
+interactive latency, fractional masks, mask packing/spill, floating pixels and
+mapped selection transforms remain incomplete. Outlines and lasso controls were
+implemented after this run; see the frontend evidence linked above. T14/T15 and
 SEL-01 through SEL-05 are not promoted to completed gates by this tranche.
