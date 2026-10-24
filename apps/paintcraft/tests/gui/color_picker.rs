@@ -150,7 +150,10 @@ fn studio_picker_exposes_sampling_choices_raw_hidden_layer_ctrl_image_and_after_
     );
     h.get_by_label("Sampling source").click();
     h.run();
-    h.get_by_label("Image").click();
+    h.query_all_by_role_and_label(Role::Button, "Image")
+        .find(|node| node.accesskit_node().toggled().is_some())
+        .expect("the sampling option, rather than the Image menu")
+        .click();
     h.run();
     assert_eq!(
         h.state().editor().options.picker_source,

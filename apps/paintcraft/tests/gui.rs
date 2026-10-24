@@ -348,3 +348,6 @@ mod legacy_skins;
 
 #[path = "gui/screenshots.rs"]
 mod screenshots;
+
+#[path = "gui/studio_image_tools.rs"]
+mod studio_image_tools;

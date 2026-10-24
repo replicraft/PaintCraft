@@ -27,6 +27,7 @@ pub fn toolbar(
                 }
             }
         });
+        crate::image_menu::show(ui, context, &mut actions);
         ui.menu_button(paintcraft_ui::i18n::tr(ui.ctx(), "View"), |ui| {
             for (index, &action) in actions::VIEW.iter().enumerate() {
                 if index == 5 {
@@ -76,16 +77,18 @@ pub fn toolbar(
             (Icon::Export, Action::Export),
             (Icon::Undo, Action::Undo),
             (Icon::Redo, Action::Redo),
+            (Icon::ClearCanvas, Action::ClearCanvas),
         ] {
             if paintcraft_ui::actions::toolbar_button(ui, action, icon, context) {
                 actions.push(action);
             }
         }
         ui.separator();
-        ui.label(state.tool.name());
+        ui.label(paintcraft_ui::i18n::tr(ui.ctx(), state.tool.name()));
     });
     ui.separator();
     ui.add_enabled_ui(context.document_open, |ui| {
+        crate::shapes::picker(ui, state, &mut actions);
         options(ui, state, &mut actions);
         paintcraft_ui::chrome::picker_options(ui, state);
     });

@@ -4,6 +4,8 @@ mod colors;
 mod history;
 mod properties;
 pub use properties::{LayerProperties, PropertiesResponse, layer_properties_dialog};
+mod image_menu;
+mod shapes;
 mod tabs;
 mod toolbar;
 mod windows;

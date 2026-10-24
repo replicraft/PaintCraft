@@ -1,6 +1,6 @@
 # PaintCraft Studio
 
-Studio remains available while Classic is the current development priority. Its
+Studio shares the editing engine with Classic and has its own presentation. Its
 presentation lives in
 `paintcraft-studio`, with the desktop shell supplying the editor and native services.
 Select **Studio** in the application header; the choice is saved for the next launch.
@@ -272,3 +272,18 @@ source glyphs have named standalone vector files and a local review gallery in
 is embedded in an SVG. Unimplemented tool/effect icons do not create placeholder
 commands. The SVG renderer caches derived textures at the display's density;
 accessible labels, action identities and selected/disabled behavior remain shared.
+
+## Shared feature catch-up (2026-10-24)
+
+The brush options now offer all nine brush media alongside round/square tips and
+opacity. The Image menu exposes selection Crop, right/left 90-degree rotation,
+180-degree rotation, horizontal/vertical flip and Clear Canvas. Clearing in Studio
+uses transparent ground and remains undoable. The dedicated Shape selector exposes
+all implemented preset figures while retaining Studio's own toolbar and floating
+Tools window. Japanese settings, menus and window titles use the shared Fluent
+catalogs and bundled Japanese fallback font.
+
+The UI integration test selects every preset, checks action availability, clears
+and restores the document, rotates it and restores it again. Further Studio work
+includes its own image/canvas dimension controls, more advanced selections,
+editable placed objects, effects and complete Paint.NET behavior qualification.
