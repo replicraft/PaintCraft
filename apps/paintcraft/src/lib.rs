@@ -46,6 +46,8 @@ mod saving;
 pub mod settings;
 #[path = "app/status.rs"]
 mod status;
+#[path = "app/studio_canvas.rs"]
+mod studio_canvas;
 #[path = "app/switching.rs"]
 mod switching;
 #[path = "app/tabs.rs"]

@@ -1,8 +1,13 @@
-//! Classic canvas dimensions and New-canvas policy use separate staged dialogs.
+//! Frontend-owned canvas dimensions and New-canvas policy use separate staged dialogs.
 use super::*;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) enum CanvasDraft {
+    Studio {
+        tab: Uuid,
+        revision: Option<(Uuid, u64)>,
+        view: paintcraft_studio::CanvasSize,
+    },
     Defaults(settings::CanvasDefaults),
     Properties {
         tab: Uuid,
@@ -27,6 +32,17 @@ impl App {
 
     pub(super) fn begin_canvas_dialog(&mut self, ctx: &egui::Context, defaults: bool) {
         self.resolve_tab_input(ctx);
+        if !defaults && self.experience() == Experience::Studio {
+            self.confirm = Some(Confirm::Canvas(CanvasDraft::Studio {
+                tab: self.active_tab_id(),
+                revision: (!self.editor.has_pending_edits()).then(|| self.editor.render_key()),
+                view: paintcraft_studio::CanvasSize {
+                    size: self.editor.document().canvas,
+                    anchor: paintcraft_core::types::canvas::Anchor::Center,
+                },
+            }));
+            return;
+        }
         let draft = if defaults {
             CanvasDraft::Defaults(self.settings.canvas.clone())
         } else {
@@ -56,6 +72,15 @@ impl App {
     }
 
     pub(super) fn canvas_settings_dialog(&mut self, ctx: &egui::Context, mut draft: CanvasDraft) {
+        if let CanvasDraft::Studio {
+            tab,
+            revision,
+            view,
+        } = draft
+        {
+            self.studio_canvas_settings_dialog(ctx, tab, revision, view);
+            return;
+        }
         if let CanvasDraft::Resize { tab, revision, .. }
         | CanvasDraft::Properties { tab, revision, .. } = &draft
             && (*tab != self.active_tab_id() || *revision != self.editor.render_key())
@@ -67,6 +92,7 @@ impl App {
         }
         use paintcraft_classic::canvas_size::{CanvasResponse, CanvasSize, StartupSize};
         let mut view = match &draft {
+            CanvasDraft::Studio { .. } => unreachable!("Studio has its own dialog"),
             CanvasDraft::Defaults(prefs) => CanvasSize {
                 size: prefs.configured,
                 startup: Some(StartupSize {
@@ -93,6 +119,7 @@ impl App {
             return;
         }
         match &mut draft {
+            CanvasDraft::Studio { .. } => unreachable!("Studio has its own dialog"),
             CanvasDraft::Defaults(prefs) => {
                 prefs.configured = view.size;
                 prefs.remember_last = view.startup.expect("default-size policy").remember_last;
@@ -106,6 +133,7 @@ impl App {
         } else if response == CanvasResponse::Apply {
             self.confirm = None;
             match draft {
+                CanvasDraft::Studio { .. } => unreachable!("Studio has its own dialog"),
                 CanvasDraft::Defaults(prefs) => {
                     self.settings.canvas = prefs;
                     self.persist_settings();

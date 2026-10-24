@@ -203,7 +203,6 @@ impl Action {
                 | ViewAction::Thumbnail,
             ) => frontend == Frontend::Classic,
             Self::Interface
-            | Self::CanvasSize
             | Self::ResizeSkew
             | Self::ImageProperties
             | Self::CanvasDefaults

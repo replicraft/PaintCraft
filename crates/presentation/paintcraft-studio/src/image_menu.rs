@@ -7,6 +7,11 @@ use paintcraft_ui::{
 
 pub(super) fn show(ui: &mut egui::Ui, context: Context, actions: &mut Vec<Action>) {
     ui.menu_button(tr(ui.ctx(), "Image"), |ui| {
+        if paintcraft_ui::actions::menu_item(ui, Action::CanvasSize, context) {
+            actions.push(Action::CanvasSize);
+            ui.close();
+        }
+        ui.separator();
         if paintcraft_ui::actions::menu_item(ui, Action::Crop, context) {
             actions.push(Action::Crop);
             ui.close();
