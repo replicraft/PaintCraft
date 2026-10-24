@@ -57,7 +57,7 @@ fn classic_quick_access_follows_the_reference_and_keeps_file_actions_in_the_menu
 }
 
 #[test]
-fn classic_file_and_edit_reference_previews_are_disabled_without_changing_documents() {
+fn classic_file_exposes_native_print_and_keeps_unimplemented_actions_disabled() {
     let mut h = harness_with(App::new(None), 1.0, true);
     let before = h.state().editor().document_snapshot();
     let history = h.state().editor().history_view().ticket;
@@ -78,7 +78,13 @@ fn classic_file_and_edit_reference_previews_are_disabled_without_changing_docume
     }
     h.get_by_label("Print").hover();
     h.run();
-    for label in ["Print…", "Page setup…", "Print preview"] {
+    let print = h.get_by_label_contains("Print…");
+    assert_eq!(
+        print.accesskit_node().is_disabled(),
+        !cfg!(target_os = "macos")
+    );
+    // Inspect availability without invoking a real print dialog or printer job.
+    for label in ["Page setup…", "Print preview"] {
         assert!(h.get_by_label(label).accesskit_node().is_disabled());
     }
     h.get_by_role_and_label(Role::Button, "Edit").hover();
