@@ -47,7 +47,8 @@ pub(super) fn file(ui: &mut Ui, context: Context, actions: &mut Vec<Action>) {
             ui.separator();
             submenu(ui, "Print", Icon::Print, |ui| {
                 layout(ui);
-                for label in ["Print…", "Page setup…", "Print preview"] {
+                action(ui, context, actions, Action::Print, "Print…");
+                for label in ["Page setup…", "Print preview"] {
                     unavailable(
                         ui,
                         label,

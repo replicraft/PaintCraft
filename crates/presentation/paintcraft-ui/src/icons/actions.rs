@@ -19,6 +19,7 @@ impl Action {
             Self::Open => Icon::Open,
             Self::RecentFiles => Icon::Recent,
             Self::Save | Self::SaveAll => Icon::Save,
+            Self::Print => Icon::Print,
             Self::SaveAs | Self::Export | Self::ExportImage(_) => Icon::SaveAs,
             Self::Close | Self::Exit => Icon::Close,
             Self::Undo => Icon::Undo,

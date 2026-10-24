@@ -273,7 +273,16 @@ fn content(ui: &mut egui::Ui, context: Context, actions: &mut Vec<Action>, pane:
             dispatch(ui, response, Action::SaveAs, actions);
         }
         Pane::Print => {
-            for title in ["Print…", "Page setup…", "Print preview"] {
+            let response = row(
+                ui,
+                ui.available_width(),
+                Icon::Print,
+                "Print…",
+                Action::Print.enabled(context),
+                false,
+            );
+            dispatch(ui, response, Action::Print, actions);
+            for title in ["Page setup…", "Print preview"] {
                 row(ui, ui.available_width(), Icon::Print, title, false, false)
                     .on_disabled_hover_text(t!(ui.ctx(), "Printing is not available yet."));
             }

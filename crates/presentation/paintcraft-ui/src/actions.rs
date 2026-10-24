@@ -19,6 +19,7 @@ pub enum Action {
     SaveAs,
     SaveAll,
     Export,
+    Print,
     ExportImage(ImageExport),
     Undo,
     Redo,
@@ -97,6 +98,7 @@ pub const FILE: &[Action] = &[
     Action::Save,
     Action::SaveAs,
     Action::Export,
+    Action::Print,
     Action::Close,
 ];
 pub const STUDIO_FILE: &[Action] = &[
@@ -107,6 +109,7 @@ pub const STUDIO_FILE: &[Action] = &[
     Action::SaveAs,
     Action::SaveAll,
     Action::Export,
+    Action::Print,
     Action::Close,
 ];
 pub const EDIT: &[Action] = &[
@@ -142,6 +145,7 @@ impl Action {
             Self::SaveAs => ("Save as…", Some((Key::S, true))),
             Self::SaveAll => ("Save All", None),
             Self::Export => ("Export…", None),
+            Self::Print => ("Print…", Some((Key::P, false))),
             Self::ExportImage(format) => (format.label(), None),
             Self::Undo => ("Undo", Some((Key::Z, false))),
             Self::Redo => ("Redo", Some((Key::Y, false))),
@@ -295,6 +299,9 @@ impl Action {
             | Self::CanvasDefaults
             | Self::Settings
             | Self::ChooseFrontend(_) => true,
+            Self::Print => {
+                ctx.document_open && cfg!(target_os = "macos") && !cfg!(target_arch = "wasm32")
+            }
             Self::RecentFiles => ctx.can_recent,
             Self::SaveAll => ctx.document_open && ctx.can_save_all,
             Self::Undo => ctx.document_open && ctx.can_undo,
@@ -360,6 +367,7 @@ impl Action {
             Self::SaveAs => 1003,
             Self::SaveAll => 1024,
             Self::Export => 1004,
+            Self::Print => 1027,
             Self::ExportImage(format) => 1040 + format as u64,
             Self::Undo => 1005,
             Self::Redo => 1006,

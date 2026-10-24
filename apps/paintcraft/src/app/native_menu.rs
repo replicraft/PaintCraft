@@ -47,6 +47,7 @@ fn shortcut(action: Chrome, frontend: Frontend) -> Option<&'static str> {
         Chrome::New => "meta+KeyN",
         Chrome::Open => "meta+KeyO",
         Chrome::Save => "meta+KeyS",
+        Chrome::Print => "meta+KeyP",
         Chrome::SaveAs => "meta+shift+KeyS",
         Chrome::SaveAll if frontend == Frontend::Studio => "meta+alt+KeyS",
         Chrome::Close => "meta+KeyW",
