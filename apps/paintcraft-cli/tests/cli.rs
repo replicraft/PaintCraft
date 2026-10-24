@@ -116,3 +116,6 @@ mod brush_media;
 
 #[path = "cli/selection_masks.rs"]
 mod selection_masks;
+
+#[path = "cli/selection_move.rs"]
+mod selection_move;
