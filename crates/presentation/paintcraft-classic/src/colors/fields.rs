@@ -1,4 +1,5 @@
 use super::*;
+use paintcraft_ui::i18n::tr;
 
 pub(super) fn parse_hex(text: &str) -> Option<[u8; 3]> {
     let text = text.trim().strip_prefix('#').unwrap_or(text.trim());
@@ -21,8 +22,9 @@ pub(super) fn controls(ui: &mut egui::Ui, editor: &mut ColorEditor, width: f32) 
             .margin(Vec2::new(14.0, 8.0))
             .hint_text("#RRGGBB"),
     );
+    let accessible_label = tr(ui.ctx(), "Hex RGB");
     response.widget_info(|| {
-        egui::WidgetInfo::labeled(egui::Role::TextInput, ui.is_enabled(), "Hex RGB")
+        egui::WidgetInfo::labeled(egui::Role::TextInput, ui.is_enabled(), &accessible_label)
     });
     if response.changed()
         && let Some(rgb) = parse_hex(&editor.hex)
@@ -31,12 +33,9 @@ pub(super) fn controls(ui: &mut egui::Ui, editor: &mut ColorEditor, width: f32) 
         editor.set_rgb(rgb);
         editor.hex = text;
     }
-    response.on_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), "Hex RGB"));
+    response.on_hover_text(tr(ui.ctx(), "Hex RGB"));
     if !editor.valid() {
-        ui.weak(paintcraft_ui::i18n::tr(
-            ui.ctx(),
-            "Enter six hex digits, such as #2080FF.",
-        ));
+        ui.weak(tr(ui.ctx(), "Enter six hex digits, such as #2080FF."));
     }
     ui.add_space(8.0);
     let model = ui
@@ -94,12 +93,11 @@ pub(super) fn controls(ui: &mut egui::Ui, editor: &mut ColorEditor, width: f32) 
                 })
         })
         .inner;
+    let accessible_label = tr(ui.ctx(), "Color model");
     model.response.widget_info(|| {
-        egui::WidgetInfo::labeled(egui::Role::ComboBox, ui.is_enabled(), "Color model")
+        egui::WidgetInfo::labeled(egui::Role::ComboBox, ui.is_enabled(), &accessible_label)
     });
-    model
-        .response
-        .on_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), "Color model"));
+    model.response.on_hover_text(tr(ui.ctx(), "Color model"));
     ui.add_space(8.0);
     match editor.mode {
         NumericMode::Rgb => {
@@ -118,7 +116,7 @@ pub(super) fn controls(ui: &mut egui::Ui, editor: &mut ColorEditor, width: f32) 
                                 .min_size(Vec2::new(field_width, 40.0))
                                 .range(0..=255),
                         );
-                        let caption = ui.label(paintcraft_ui::i18n::tr(ui.ctx(), label));
+                        let caption = ui.label(tr(ui.ctx(), label));
                         changed |= value.labelled_by(caption.id).changed();
                     },
                 );
@@ -148,7 +146,7 @@ pub(super) fn controls(ui: &mut egui::Ui, editor: &mut ColorEditor, width: f32) 
                                 .speed(0.5)
                                 .range(0.0..=max),
                         );
-                        let caption = ui.label(paintcraft_ui::i18n::tr(ui.ctx(), label));
+                        let caption = ui.label(tr(ui.ctx(), label));
                         changed |= value.labelled_by(caption.id).changed();
                     },
                 );

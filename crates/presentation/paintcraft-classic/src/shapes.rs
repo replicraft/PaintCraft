@@ -2,6 +2,7 @@
 use super::{Action, Controls};
 use egui::Vec2;
 use paintcraft_tools::{ShapePreset, Tool};
+use paintcraft_ui::i18n::tr;
 use paintcraft_ui::icons::Icon;
 
 const SHAPES: [(Icon, &str, Option<Tool>); 23] = [
@@ -152,7 +153,7 @@ fn button(
     cell: f32,
     glyph: f32,
 ) -> egui::Response {
-    let localized_label = paintcraft_ui::i18n::tr(ui.ctx(), label);
+    let localized_label = tr(ui.ctx(), label);
     let label = localized_label.as_str();
     let response = ui
         .scope(|ui| {
@@ -172,8 +173,14 @@ fn button(
             )
         })
         .inner;
+    let accessible_label = tr(ui.ctx(), label);
     response.widget_info(|| {
-        egui::WidgetInfo::selected(egui::Role::Button, ui.is_enabled(), selected, label)
+        egui::WidgetInfo::selected(
+            egui::Role::Button,
+            ui.is_enabled(),
+            selected,
+            &accessible_label,
+        )
     });
-    response.on_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), label))
+    response.on_hover_text(tr(ui.ctx(), label))
 }

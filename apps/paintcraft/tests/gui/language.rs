@@ -97,3 +97,39 @@ fn japanese_classic_dialog_footers_and_tooltips_use_the_selected_language() {
         std::fs::remove_dir_all(dir).unwrap();
     }
 }
+
+#[test]
+fn japanese_classic_translates_tool_sizes_view_and_selection_menus() {
+    use eframe::egui::Role;
+    let dir = scratch("japanese-menu-sweep");
+    Settings {
+        language: Language::Japanese,
+        ..Default::default()
+    }
+    .save(&dir)
+    .unwrap();
+    let mut h = harness_with(App::new(None).with_settings(dir.clone()), 1.0, false);
+    h.set_size(Vec2::new(1360.0, 900.0));
+    h.run();
+    assert!(
+        h.query_by_role_and_label(Role::Image, "鉛筆のサイズ")
+            .is_some()
+    );
+    assert!(
+        h.query_by_role_and_label(Role::Slider, "ツールのサイズ")
+            .is_some()
+    );
+    h.get_by_label("表示").click();
+    h.run();
+    assert!(h.query_by_label("ウィンドウに合わせる").is_some());
+    assert!(h.query_by_label("ツールバーを自動的に隠す").is_some());
+    assert!(h.query_by_label("Automatically hide toolbar").is_none());
+    h.event(key(Key::Escape, Modifiers::NONE));
+    h.run();
+    h.get_by_label("選択のオプション").click();
+    h.run();
+    assert!(h.query_by_label("選択範囲の反転").is_some());
+    assert!(h.query_by_label("Invert selection").is_none());
+    drop(h);
+    std::fs::remove_dir_all(dir).unwrap();
+}

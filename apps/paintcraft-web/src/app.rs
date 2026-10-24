@@ -11,6 +11,7 @@ use eframe::egui;
 use paintcraft_classic::{ClassicVariant, Controls, Workspace};
 use paintcraft_tools::{Action as Edit, Tool, ToolOptions};
 use paintcraft_ui::actions::{Action, Context, Frontend, ViewAction};
+use paintcraft_ui::i18n::{tr, tr_status};
 
 #[derive(Debug)]
 pub struct WebApp {
@@ -369,8 +370,8 @@ impl WebApp {
         let context = self.context();
         egui::Panel::top("web-editor-banner").show(ui, |ui| {
             ui.horizontal_wrapped(|ui| {
-                ui.strong(paintcraft_ui::i18n::tr(ui.ctx(), "PaintCraft Web · Early editor"));
-                ui.label(paintcraft_ui::i18n::tr(ui.ctx(), "Save downloads a project copy. Export downloads PNG. Text stays editable until placed; downloads include the draft."));
+                ui.strong(tr(ui.ctx(), "PaintCraft Web · Early editor"));
+                ui.label(tr(ui.ctx(), "Save downloads a project copy. Export downloads PNG. Text stays editable until placed; downloads include the draft."));
             });
         });
         egui::Panel::top("classic-chrome").show(ui, |ui| {
@@ -416,7 +417,7 @@ impl WebApp {
             let actions = paintcraft_classic::status::contents(
                 ui,
                 paintcraft_classic::status::Status {
-                    message: &self.message,
+                    message: &tr_status(ui.ctx(), &self.message),
                     recovery: None,
                     canvas: Some(self.editor.session.document().canvas),
                     pointer: self.canvas.pointer,
@@ -436,16 +437,16 @@ impl WebApp {
     fn dialogs(&mut self, ctx: &egui::Context) {
         if self.confirm_replace.is_some() {
             egui::Modal::new(egui::Id::unique("web-new-unsaved")).show(ctx, |ui| {
-                ui.heading(paintcraft_ui::i18n::tr(ui.ctx(), "Discard unsaved changes?"));
-                ui.label(paintcraft_ui::i18n::tr(ui.ctx(), "Download a project copy to keep your work. Browser downloads cannot confirm a disk save; discard explicitly when ready."));
+                ui.heading(tr(ui.ctx(), "Discard unsaved changes?"));
+                ui.label(tr(ui.ctx(), "Download a project copy to keep your work. Browser downloads cannot confirm a disk save; discard explicitly when ready."));
                 ui.horizontal_wrapped(|ui| {
-                    if ui.button(paintcraft_ui::i18n::tr(ui.ctx(), "Download project")).clicked() {
+                    if ui.button(tr(ui.ctx(), "Download project")).clicked() {
                         self.download(ctx,false);
                     }
-                    if ui.button(paintcraft_ui::i18n::tr(ui.ctx(), "Discard and continue")).clicked()
+                    if ui.button(tr(ui.ctx(), "Discard and continue")).clicked()
                         && let Some(action) = self.confirm_replace.take()
                     { self.replace(ctx,action); }
-                    if ui.button(paintcraft_ui::i18n::tr(ui.ctx(), "Cancel")).clicked() { self.confirm_replace = None; }
+                    if ui.button(tr(ui.ctx(), "Cancel")).clicked() { self.confirm_replace = None; }
                 });
             });
         }
@@ -453,20 +454,13 @@ impl WebApp {
             let mut accept = false;
             let mut cancel = false;
             egui::Modal::new(egui::Id::unique("web-import-losses")).show(ctx, |ui| {
-                ui.heading(paintcraft_ui::i18n::tr(
-                    ui.ctx(),
-                    "Open with these import limitations?",
-                ));
+                ui.heading(tr(ui.ctx(), "Open with these import limitations?"));
                 for loss in &self.pending_import.as_ref().expect("pending import").losses {
                     ui.label(loss);
                 }
                 ui.horizontal(|ui| {
-                    accept = ui
-                        .button(paintcraft_ui::i18n::tr(ui.ctx(), "Open image"))
-                        .clicked();
-                    cancel = ui
-                        .button(paintcraft_ui::i18n::tr(ui.ctx(), "Cancel"))
-                        .clicked();
+                    accept = ui.button(tr(ui.ctx(), "Open image")).clicked();
+                    cancel = ui.button(tr(ui.ctx(), "Cancel")).clicked();
                 });
             });
             if accept && let Some(loaded) = self.pending_import.take() {
@@ -478,14 +472,14 @@ impl WebApp {
         }
         if self.export_confirm {
             egui::Modal::new(egui::Id::unique("web-export-png")).show(ctx, |ui| {
-                ui.heading(paintcraft_ui::i18n::tr(ui.ctx(), "Export PNG copy?"));
-                ui.label(paintcraft_ui::i18n::tr(ui.ctx(), "PNG flattens visible layers and omits hidden layer data. Save a PaintCraft project to preserve editable layers."));
+                ui.heading(tr(ui.ctx(), "Export PNG copy?"));
+                ui.label(tr(ui.ctx(), "PNG flattens visible layers and omits hidden layer data. Save a PaintCraft project to preserve editable layers."));
                 ui.horizontal(|ui| {
-                    if ui.button(paintcraft_ui::i18n::tr(ui.ctx(), "Download PNG")).clicked() {
+                    if ui.button(tr(ui.ctx(), "Download PNG")).clicked() {
                         self.download(ctx,true);
                         self.export_confirm = false;
                     }
-                    if ui.button(paintcraft_ui::i18n::tr(ui.ctx(), "Cancel")).clicked() { self.export_confirm = false; }
+                    if ui.button(tr(ui.ctx(), "Cancel")).clicked() { self.export_confirm = false; }
                 });
             });
         }
@@ -494,23 +488,23 @@ impl WebApp {
             let previous_language = self.preferences.language;
             let mut theme_changed = false;
             let previous_font = self.preferences.default_font.clone();
-            egui::Window::new(paintcraft_ui::i18n::tr(ctx, "Web settings")).open(&mut self.settings).resizable(false).show(ctx, |ui| {
+            egui::Window::new(tr(ctx, "Web settings")).open(&mut self.settings).resizable(false).show(ctx, |ui| {
                 paintcraft_ui::i18n::picker(ui, &mut self.preferences.language);
                 let mut dark = ctx.theme() == egui::Theme::Dark;
-                if ui.checkbox(&mut dark, paintcraft_ui::i18n::tr(ui.ctx(), "Dark mode")).changed() {
+                if ui.checkbox(&mut dark, tr(ui.ctx(), "Dark mode")).changed() {
                     let theme = if dark { egui::Theme::Dark } else { egui::Theme::Light };
                     ctx.set_theme(theme); paintcraft_ui::theme::apply(ctx,theme);
                     self.preferences.theme = Some(theme); theme_changed = true;
                 }
-                egui::ComboBox::from_label(paintcraft_ui::i18n::tr(ui.ctx(), "Classic skin")).selected_text(self.variant.name()).show_ui(ui, |ui| {
+                egui::ComboBox::from_label(tr(ui.ctx(), "Classic skin")).selected_text(self.variant.name()).show_ui(ui, |ui| {
                     for variant in ClassicVariant::ALL { ui.selectable_value(&mut self.variant,variant,variant.name()); }
                 });
                 ui.separator();
-                ui.heading(paintcraft_ui::i18n::tr(ui.ctx(), "Text preferences"));
-                ui.label(paintcraft_ui::i18n::tr(ui.ctx(), "Default font"));
+                ui.heading(tr(ui.ctx(), "Text preferences"));
+                ui.label(tr(ui.ctx(), "Default font"));
                 paintcraft_classic::font_family(ui, &mut self.preferences.default_font, &self.text.families, &mut self.text.search, false);
-                ui.label(paintcraft_ui::i18n::tr(ui.ctx(), "Preferences are stored in this browser when storage is available. Document pixels are not stored."));
-                ui.label(paintcraft_ui::i18n::tr(ui.ctx(), "Browser limits: 4 megapixels, 8192 points per stroke; 64 MiB history budget (older entries may be trimmed)."));
+                ui.label(tr(ui.ctx(), "Preferences are stored in this browser when storage is available. Document pixels are not stored."));
+                ui.label(tr(ui.ctx(), "Browser limits: 4 megapixels, 8192 points per stroke; 64 MiB history budget (older entries may be trimmed)."));
             });
             if previous_language != self.preferences.language {
                 paintcraft_ui::i18n::set_language(ctx, self.preferences.language);

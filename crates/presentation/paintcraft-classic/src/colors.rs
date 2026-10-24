@@ -5,6 +5,7 @@ mod fields;
 mod picker;
 use egui::{Color32, Vec2, ecolor::Hsva};
 use paintcraft_core::types::Rgba;
+use paintcraft_ui::i18n::tr;
 
 pub const CUSTOM_COLOR_COUNT: usize = 28;
 pub type CustomColors = [Option<Rgba>; CUSTOM_COLOR_COUNT];
@@ -120,7 +121,7 @@ fn swatch(
         ui.painter().circle_stroke(rect.center(), radius, stroke);
     }
     response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, ui.is_enabled(), label));
-    response.on_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), label))
+    response.on_hover_text(tr(ui.ctx(), label))
 }
 
 fn palette(ui: &mut egui::Ui, editor: &mut ColorEditor, columns: usize, spacious: bool) {

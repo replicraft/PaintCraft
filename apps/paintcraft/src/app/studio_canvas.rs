@@ -1,6 +1,7 @@
 //! Studio owns canvas placement UI; Classic startup preferences stay independent.
 use super::*;
 use paintcraft_studio::{CanvasResponse, CanvasSize};
+use paintcraft_ui::i18n::tr;
 
 impl App {
     pub(super) fn studio_canvas_settings_dialog(
@@ -24,14 +25,9 @@ impl App {
                 let mut cancel = false;
                 let modal =
                     egui::Modal::new(egui::Id::unique("studio-canvas-wait")).show(ctx, |ui| {
-                        ui.heading(paintcraft_ui::i18n::tr(ui.ctx(), "Canvas size"));
-                        ui.label(paintcraft_ui::i18n::tr(
-                            ui.ctx(),
-                            "Finishing earlier edits…",
-                        ));
-                        cancel = ui
-                            .button(paintcraft_ui::i18n::tr(ui.ctx(), "Cancel"))
-                            .clicked();
+                        ui.heading(tr(ui.ctx(), "Canvas size"));
+                        ui.label(tr(ui.ctx(), "Finishing earlier edits…"));
+                        cancel = ui.button(tr(ui.ctx(), "Cancel")).clicked();
                     });
                 if ctx.current_pass_index() == 0 {
                     self.confirm = if cancel || modal.should_close() {

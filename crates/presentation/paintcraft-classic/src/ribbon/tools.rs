@@ -1,5 +1,6 @@
 //! V11 tool controls; other skins retain their shared colorful toolbar.
 use super::*;
+use paintcraft_ui::i18n::tr;
 
 pub(super) fn tool_button(ui: &mut egui::Ui, state: &mut Controls, tool: Tool) -> bool {
     let icon = match tool {
@@ -21,11 +22,11 @@ pub(super) fn tool_button(ui: &mut egui::Ui, state: &mut Controls, tool: Tool) -
 pub(super) fn prototype(ui: &mut egui::Ui, label: &str, icon: Icon, help: &str) {
     ui.add_enabled_ui(false, |ui| button(ui, label, icon, false))
         .inner
-        .on_disabled_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), help));
+        .on_disabled_hover_text(tr(ui.ctx(), help));
 }
 
 fn button(ui: &mut egui::Ui, label: &str, icon: Icon, selected: bool) -> egui::Response {
-    let localized_label = paintcraft_ui::i18n::tr(ui.ctx(), label);
+    let localized_label = tr(ui.ctx(), label);
     let label = localized_label.as_str();
     let response = crate::control_surface::button(
         ui,
@@ -40,8 +41,14 @@ fn button(ui: &mut egui::Ui, label: &str, icon: Icon, selected: bool) -> egui::R
             ui,
             egui::Rect::from_center_size(response.rect.center(), Vec2::splat(24.0)),
         );
+    let accessible_label = tr(ui.ctx(), label);
     response.widget_info(|| {
-        egui::WidgetInfo::selected(egui::Role::Button, ui.is_enabled(), selected, label)
+        egui::WidgetInfo::selected(
+            egui::Role::Button,
+            ui.is_enabled(),
+            selected,
+            &accessible_label,
+        )
     });
-    response.on_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), label))
+    response.on_hover_text(tr(ui.ctx(), label))
 }

@@ -1,6 +1,7 @@
 //! Desktop recovery integration.
 
 use super::*;
+use paintcraft_ui::i18n::{tr, tr_format};
 
 impl App {
     /// Protect work with crash-recovery checkpoints in `dir`, and offer whatever an
@@ -131,14 +132,16 @@ impl App {
         let name = item
             .original
             .clone()
-            .unwrap_or_else(|| "an unsaved document".to_owned());
-        egui::Window::new("Recover unsaved work?")
+            .unwrap_or_else(|| tr(&ctx, "an unsaved document"));
+        egui::Window::new(tr(&ctx, "Recover unsaved work?"))
             .collapsible(false)
             .resizable(false)
             .anchor(egui::Align2::CENTER_CENTER, Vec2::ZERO)
             .show(&ctx, |ui| {
-                ui.label(format!(
-                    "PaintCraft found unsaved work from an earlier session: {name}."
+                ui.label(tr_format(
+                    ui.ctx(),
+                    "PaintCraft found unsaved work from an earlier session: { $name }.",
+                    &[("name", name.clone())],
                 ));
                 self.recovered_inspection_controls(ui, &item);
                 let restoring = self.recovery_offer_busy(&item);
@@ -146,14 +149,14 @@ impl App {
                     if ui
                         .add_enabled(
                             self.confirm.is_none() && !restoring,
-                            egui::Button::new("Recover"),
+                            egui::Button::new(tr(ui.ctx(), "Recover")),
                         )
                         .clicked()
                     {
                         self.recover_requested(item.clone());
                     }
                     if ui
-                        .add_enabled(!restoring, egui::Button::new("Discard"))
+                        .add_enabled(!restoring, egui::Button::new(tr(ui.ctx(), "Discard")))
                         .clicked()
                         && let Some(dir) = &self.recovery_dir
                     {
@@ -176,10 +179,7 @@ impl App {
                             }
                         }
                     }
-                    if ui
-                        .button(paintcraft_ui::i18n::tr(ui.ctx(), "Ask later"))
-                        .clicked()
-                    {
+                    if ui.button(tr(ui.ctx(), "Ask later")).clicked() {
                         if let Some(saving) = &mut self.saving {
                             saving.cancel_restore();
                             saving.cancel_inspection();

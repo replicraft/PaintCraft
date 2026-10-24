@@ -51,6 +51,7 @@ pub use zoom::zoom_controls;
 
 use egui::Color32;
 use paintcraft_core::types::Rgba;
+use paintcraft_ui::i18n::tr;
 use paintcraft_ui::widgets::Icon;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -112,7 +113,7 @@ pub fn chrome(
     }
     let compact = variant == ClassicVariant::V11 && ui.available_width() < 720.0;
     let menu = quick_access::menu_bar(ui, variant).ui(ui, |ui| {
-        ui.menu_button(paintcraft_ui::i18n::tr(ui.ctx(), "File"), |ui| {
+        ui.menu_button(tr(ui.ctx(), "File"), |ui| {
             menu_layout(ui, variant);
             if variant == ClassicVariant::V11 {
                 menus::file(ui, context, &mut actions);
@@ -131,7 +132,7 @@ pub fn chrome(
         if variant == ClassicVariant::V11 {
             ui.add_space(6.0);
         }
-        ui.menu_button(paintcraft_ui::i18n::tr(ui.ctx(), "Edit"), |ui| {
+        ui.menu_button(tr(ui.ctx(), "Edit"), |ui| {
             menu_layout(ui, variant);
             if variant == ClassicVariant::V11 {
                 menus::edit(ui, context, &mut actions);
@@ -150,7 +151,7 @@ pub fn chrome(
         if variant == ClassicVariant::V11 {
             ui.add_space(6.0);
         }
-        ui.menu_button(paintcraft_ui::i18n::tr(ui.ctx(), "View"), |ui| {
+        ui.menu_button(tr(ui.ctx(), "View"), |ui| {
             menu_layout(ui, variant);
             menus::view(ui, variant, context, &mut actions);
         });
@@ -159,9 +160,7 @@ pub fn chrome(
             quick_access::show(ui, variant, context, &mut actions);
         }
         if variant != ClassicVariant::V11
-            && ui
-                .button(paintcraft_ui::i18n::tr(ui.ctx(), "Layers"))
-                .clicked()
+            && ui.button(tr(ui.ctx(), "Layers")).clicked()
             && ui.ctx().current_pass_index() == 0
         {
             workspace.layers = !workspace.layers;
@@ -203,7 +202,7 @@ pub fn chrome(
     if variant != ClassicVariant::V11 {
         ui.horizontal(|ui| {
             ui.label(
-                egui::RichText::new(paintcraft_ui::i18n::tr(ui.ctx(), "Home"))
+                egui::RichText::new(tr(ui.ctx(), "Home"))
                     .color(Color32::from_rgb(0, 95, 184))
                     .strong(),
             );

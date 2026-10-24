@@ -1,4 +1,5 @@
 use super::*;
+use paintcraft_ui::i18n::tr;
 
 mod gradients;
 
@@ -9,8 +10,9 @@ fn color(h: f32, s: f32, v: f32) -> Color32 {
 
 pub(super) fn square(ui: &mut egui::Ui, editor: &mut ColorEditor, side: f32) {
     let (rect, response) = ui.allocate_exact_size(Vec2::splat(side), egui::Sense::click_and_drag());
+    let accessible_label = tr(ui.ctx(), "Hue and saturation");
     response.widget_info(|| {
-        egui::WidgetInfo::labeled(egui::Role::ColorWell, ui.is_enabled(), "Hue and saturation")
+        egui::WidgetInfo::labeled(egui::Role::ColorWell, ui.is_enabled(), &accessible_label)
     });
     gradients::square(ui, rect);
     if (response.clicked() || response.dragged())

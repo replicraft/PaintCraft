@@ -2,6 +2,7 @@
 use super::Controls;
 use egui::{Button, Rect, Vec2};
 use paintcraft_tools::Tool;
+use paintcraft_ui::i18n::{tr, tr_format};
 use paintcraft_ui::{actions::Context, icons::Icon};
 
 pub(super) fn show(ui: &mut egui::Ui, state: &mut Controls, context: Context) {
@@ -77,8 +78,12 @@ pub(super) fn show(ui: &mut egui::Ui, state: &mut Controls, context: Context) {
                     ui.add_sized(
                         [220.0, 24.0],
                         egui::Label::new(
-                            egui::RichText::new(format!("Current: {} px", state.options.size))
-                                .weak(),
+                            egui::RichText::new(tr_format(
+                                ui.ctx(),
+                                "Current: { $size } px",
+                                &[("size", state.options.size.to_string())],
+                            ))
+                            .weak(),
                         ),
                     );
                 }
@@ -95,9 +100,9 @@ pub(super) fn show(ui: &mut egui::Ui, state: &mut Controls, context: Context) {
         );
         super::dropdowns::open_state(ui, &response, "Stroke size");
         if enabled {
-            response.on_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), "Stroke size"));
+            response.on_hover_text(tr(ui.ctx(), "Stroke size"));
         } else {
-            response.on_disabled_hover_text(paintcraft_ui::i18n::tr(
+            response.on_disabled_hover_text(tr(
                 ui.ctx(),
                 "Select a line, rectangle or ellipse to change stroke size.",
             ));

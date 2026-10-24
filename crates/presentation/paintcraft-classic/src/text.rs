@@ -2,6 +2,7 @@
 pub use paintcraft_core::types::text::{TextAlignment, TextOptions};
 
 use egui::{Align, Button, Color32, Response, RichText, Ui, Vec2};
+use paintcraft_ui::i18n::tr;
 
 mod fonts;
 pub use fonts::family as font_family;
@@ -71,9 +72,9 @@ pub fn text_options(
                             crate::form_controls::style(ui);
                             ui.checkbox(
                                 &mut options.background_fill,
-                                paintcraft_ui::i18n::tr(ui.ctx(), "Background fill"),
+                                tr(ui.ctx(), "Background fill"),
                             )
-                            .on_hover_text(paintcraft_ui::i18n::tr(
+                            .on_hover_text(tr(
                                 ui.ctx(),
                                 "Fill the text background with the secondary color",
                             ));
@@ -92,11 +93,11 @@ fn style_button(ui: &mut Ui, text: RichText, label: &str, selected: bool) -> Res
             .frame(true),
         selected,
     );
-    let label = paintcraft_ui::i18n::tr(ui.ctx(), label);
+    let label = tr(ui.ctx(), label);
     response.widget_info(|| {
         egui::WidgetInfo::selected(egui::Role::Button, ui.is_enabled(), selected, &label)
     });
-    response.on_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), label))
+    response.on_hover_text(tr(ui.ctx(), label))
 }
 
 fn alignment(ui: &mut Ui, alignment: &mut TextAlignment) {

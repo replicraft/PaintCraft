@@ -1,5 +1,6 @@
 //! Document status and zoom presentation.
 use super::*;
+use paintcraft_ui::i18n::{tr, tr_format, tr_status};
 
 impl App {
     pub(super) fn status_bar(&mut self, ui: &mut egui::Ui) -> Option<egui::Rect> {
@@ -99,25 +100,19 @@ impl App {
 
     fn status_message(&self) -> String {
         if self.document_count() == 0 {
-            return paintcraft_ui::i18n::tr(&self.context, "No document open");
+            return tr(&self.context, "No document open");
         }
         let mut status = if self.editor.status().starts_with("Opened ") {
             self.editor.path().and_then(Path::file_name).map_or_else(
-                || paintcraft_ui::i18n::tr(&self.context, self.editor.status()),
-                |name| {
-                    format!(
-                        "{} {}",
-                        paintcraft_ui::i18n::tr(&self.context, "Opened"),
-                        name.to_string_lossy()
-                    )
-                },
+                || tr_status(&self.context, self.editor.status()),
+                |name| format!("{} {}", tr(&self.context, "Opened"), name.to_string_lossy()),
             )
         } else {
-            paintcraft_ui::i18n::tr(&self.context, self.editor.status())
+            tr_status(&self.context, self.editor.status())
         };
         if self.editor.is_dirty() {
             status.push_str("  •  ");
-            status.push_str(&paintcraft_ui::i18n::tr(&self.context, "unsaved changes"));
+            status.push_str(&tr(&self.context, "unsaved changes"));
         }
         status
     }
@@ -125,18 +120,31 @@ impl App {
     fn checkpoint_tooltip(&self) -> Option<String> {
         let info = self.editor.checkpoint_info()?;
         let when = info.completed.elapsed().map_or_else(
-            |_| "at a recorded earlier time".to_owned(),
-            |elapsed| format!("{} seconds ago", elapsed.as_secs()),
+            |_| tr(&self.context, "at a recorded earlier time"),
+            |elapsed| {
+                tr_format(
+                    &self.context,
+                    "{ $seconds } seconds ago",
+                    &[("seconds", elapsed.as_secs().to_string())],
+                )
+            },
         );
-        Some(format!(
-            "Recovery checkpoint {} confirmed {}. {}",
-            info.sequence,
-            when,
+        let state = tr(
+            &self.context,
             if info.state_id == self.editor.document().state_id {
                 "This checkpoint contains the current document."
             } else {
                 "Newer edits are not in this checkpoint yet."
-            }
+            },
+        );
+        Some(tr_format(
+            &self.context,
+            "Recovery checkpoint { $sequence } confirmed { $when }. { $state }",
+            &[
+                ("sequence", info.sequence.to_string()),
+                ("when", when),
+                ("state", state),
+            ],
         ))
     }
 }

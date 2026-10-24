@@ -14,6 +14,7 @@ jobs:
         run: rustup show active-toolchain || rustup toolchain install
       - run: rustc -Vv && cargo -V
       - run: python3 scripts/check_file_lengths.py
+      - run: python3 scripts/check_translations.py
       - run: cargo fmt --all --check
       - run: cargo clippy --workspace --all-targets -- -D warnings
       - run: cargo test --workspace

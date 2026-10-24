@@ -3,6 +3,7 @@ use crate::app::WebApp;
 use eframe::egui::{self, Color32, Pos2, Rect, Vec2};
 use paintcraft_core::types::text::TextOptions;
 use paintcraft_tools::{Preview, Tool};
+use paintcraft_ui::i18n::tr;
 
 #[derive(Debug)]
 pub(crate) struct TextUi {
@@ -80,11 +81,11 @@ impl WebApp {
             ui.add_enabled_ui(enabled,|ui| {
                 paintcraft_classic::text_options(ui,&mut self.text.style,&self.text.families,&mut self.text.search,false);
                 ui.horizontal_wrapped(|ui| {
-                    ui.label(paintcraft_ui::i18n::tr(ui.ctx(), "Bundled Selawik · Enter for a new line · Cmd/Ctrl+Enter to place · Escape to cancel"));
-                    if ui.add_enabled(self.editor.tools.is_editing_text() && self.text.preedit.is_empty(),egui::Button::new("Place text")).clicked() {
+                    ui.label(tr(ui.ctx(), "Bundled Selawik · Enter for a new line · Cmd/Ctrl+Enter to place · Escape to cancel"));
+                    if ui.add_enabled(self.editor.tools.is_editing_text() && self.text.preedit.is_empty(),egui::Button::new(tr(ui.ctx(), "Place text"))).clicked() {
                         self.finish_text();
                     }
-                    if ui.add_enabled(self.editor.tools.is_editing_text(),egui::Button::new("Cancel text")).clicked() {
+                    if ui.add_enabled(self.editor.tools.is_editing_text(),egui::Button::new(tr(ui.ctx(), "Cancel text"))).clicked() {
                         self.editor.tools.cancel_text();self.text.preedit.clear();
                     }
                 });

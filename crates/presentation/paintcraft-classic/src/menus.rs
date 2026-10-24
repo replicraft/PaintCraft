@@ -1,6 +1,7 @@
 //! Windows 11 File/Edit presentation; unavailable reference operations stay disabled.
 use super::ClassicVariant;
 use egui::{Button, Key, KeyboardShortcut, Modifiers, Ui};
+use paintcraft_ui::i18n::tr;
 use paintcraft_ui::{
     actions::{Action, Context, MenuIconStyle},
     icons::Icon,
@@ -45,7 +46,7 @@ pub(super) fn file(ui: &mut Ui, context: Context, actions: &mut Vec<Action>) {
             submenu(ui, "Save as", Icon::SaveAs, |ui| {
                 layout(ui);
                 action(ui, context, actions, Action::Export, "Picture…");
-                ui.weak(paintcraft_ui::i18n::tr(ui.ctx(), "PNG, BMP or JPEG"));
+                ui.weak(tr(ui.ctx(), "PNG, BMP or JPEG"));
             });
             action(ui, context, actions, Action::SaveAs, "Save as project");
             ui.separator();
@@ -185,7 +186,7 @@ fn unavailable(
     }
     let response = ui.add_enabled(false, button);
     response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, false, label));
-    response.on_disabled_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), help))
+    response.on_disabled_hover_text(tr(ui.ctx(), help))
 }
 
 fn unavailable_submenu(ui: &mut Ui, label: &str, icon: Icon, help: &str) {
@@ -230,7 +231,7 @@ pub(super) fn view(
                     zoom_menu(ui, variant, context, actions)
                 });
             } else {
-                ui.menu_button(paintcraft_ui::i18n::tr(ui.ctx(), "Zoom"), |ui| {
+                ui.menu_button(tr(ui.ctx(), "Zoom"), |ui| {
                     zoom_menu(ui, variant, context, actions)
                 });
             }
@@ -286,8 +287,7 @@ pub(super) fn view(
                     MenuIconStyle::ClassicOutline,
                 )
             } else {
-                ui.button(paintcraft_ui::i18n::tr(ui.ctx(), "Change Classic skin…"))
-                    .clicked()
+                ui.button(tr(ui.ctx(), "Change Classic skin…")).clicked()
             };
             if change_skin {
                 actions.push(Action::Interface);
@@ -343,7 +343,7 @@ fn zoom_menu(ui: &mut Ui, variant: ClassicVariant, context: Context, actions: &m
 /// egui's submenu hover heuristic uses the full layout rect, including scrolled
 /// off-screen rows. Restrict its anchor to the visible portion of the entry.
 fn submenu(ui: &mut Ui, label: &str, icon: Icon, contents: impl FnOnce(&mut Ui)) {
-    let localized_label = paintcraft_ui::i18n::tr(ui.ctx(), label);
+    let localized_label = tr(ui.ctx(), label);
     let label = localized_label.as_str();
     let id = ui.next_auto_id();
     let open = egui::containers::menu::MenuState::from_ui(ui, |state, _| {

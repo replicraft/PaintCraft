@@ -1,6 +1,7 @@
 //! Paint-style names for the fixed palette; extra swatches have descriptive names.
 use super::{Action, Controls, CustomColors, Rgba};
 use egui::{Color32, Vec2};
+use paintcraft_ui::i18n::{tr, tr_format};
 use paintcraft_ui::{actions::Context, icons::Icon, widgets::icon_button};
 
 const NAMES: [&str; 28] = [
@@ -36,7 +37,7 @@ const NAMES: [&str; 28] = [
 pub(super) fn tooltip(ctx: &egui::Context, index: usize, rgb: [u8; 3]) -> String {
     format!(
         "{}\n#{:02X}{:02X}{:02X}",
-        paintcraft_ui::i18n::tr(ctx, NAMES[index]),
+        tr(ctx, NAMES[index]),
         rgb[0],
         rgb[1],
         rgb[2]
@@ -81,10 +82,11 @@ fn edit_button(ui: &mut egui::Ui) -> egui::Response {
         ui,
         egui::Rect::from_center_size(response.rect.center(), Vec2::splat(32.0)),
     );
+    let accessible_label = tr(ui.ctx(), "Edit colors…");
     response.widget_info(|| {
-        egui::WidgetInfo::labeled(egui::Role::Button, ui.is_enabled(), "Edit colors…")
+        egui::WidgetInfo::labeled(egui::Role::Button, ui.is_enabled(), &accessible_label)
     });
-    response.on_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), "Edit colors…"))
+    response.on_hover_text(tr(ui.ctx(), "Edit colors…"))
 }
 
 fn wells(ui: &mut egui::Ui, state: &Controls, context: Context, actions: &mut Vec<Action>) {
@@ -131,10 +133,15 @@ fn wells(ui: &mut egui::Ui, state: &Controls, context: Context, actions: &mut Ve
                             inner,
                             Color32::from_rgb(color.0[0], color.0[1], color.0[2]),
                         );
+                        let accessible = tr(ui.ctx(), label);
                         response.widget_info(|| {
-                            egui::WidgetInfo::labeled(egui::Role::ColorWell, ui.is_enabled(), label)
+                            egui::WidgetInfo::labeled(
+                                egui::Role::ColorWell,
+                                ui.is_enabled(),
+                                &accessible,
+                            )
                         });
-                        response.on_hover_text(well_tooltip(label, color))
+                        response.on_hover_text(well_tooltip(ui.ctx(), label, color))
                     })
                     .inner;
                 if response.clicked() {
@@ -145,12 +152,14 @@ fn wells(ui: &mut egui::Ui, state: &Controls, context: Context, actions: &mut Ve
     );
 }
 
-fn well_tooltip(label: &str, color: Rgba) -> String {
+fn well_tooltip(ctx: &egui::Context, label: &str, color: Rgba) -> String {
     let rgb = [color.0[0], color.0[1], color.0[2]];
     let name = super::PALETTE
         .iter()
         .position(|value| *value == rgb)
         .map_or("Custom color", |index| NAMES[index]);
+    let label = tr(ctx, label);
+    let name = tr(ctx, name);
     format!(
         "{label}\n{name}\n#{:02X}{:02X}{:02X}",
         rgb[0], rgb[1], rgb[2]
@@ -192,18 +201,36 @@ fn swatches(
                     let slot = index - 20;
                     let color = custom[slot];
                     let tip = color.map_or_else(
-                        || format!("Custom color {} - add a color", slot + 1),
+                        || {
+                            tr_format(
+                                ui.ctx(),
+                                "Custom color { $number } - add a color",
+                                &[("number", (slot + 1).to_string())],
+                            )
+                        },
                         |c| {
                             format!(
-                                "Custom color {}\n#{:02X}{:02X}{:02X}",
-                                slot + 1,
+                                "{}\n#{:02X}{:02X}{:02X}",
+                                tr_format(
+                                    ui.ctx(),
+                                    "Custom color { $number }",
+                                    &[("number", (slot + 1).to_string())]
+                                ),
                                 c.0[0],
                                 c.0[1],
                                 c.0[2]
                             )
                         },
                     );
-                    (color, format!("Palette custom color {}", slot + 1), tip)
+                    (
+                        color,
+                        tr_format(
+                            ui.ctx(),
+                            "Palette custom color { $number }",
+                            &[("number", (slot + 1).to_string())],
+                        ),
+                        tip,
+                    )
                 };
                 let (rect, response) =
                     ui.allocate_exact_size(egui::Vec2::splat(cell), egui::Sense::click());

@@ -1,5 +1,5 @@
 //! Fluent-backed UI translations. Locale belongs to an egui context, not a process.
-use fluent_bundle::{FluentBundle, FluentResource};
+use fluent_bundle::{FluentArgs, FluentBundle, FluentResource};
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub enum Language {
@@ -44,6 +44,8 @@ fn bundle(lang: Language) -> FluentBundle<FluentResource> {
             .parse::<unic_langid::LanguageIdentifier>()
             .expect("valid bundled locale"),
     ]);
+    // Both supported UI languages are left-to-right; keep accessible labels literal.
+    bundle.set_use_isolating(false);
     let source = match lang {
         Language::English => include_str!("../locales/en-US.ftl"),
         Language::Japanese => include_str!("../locales/ja.ftl"),
@@ -53,7 +55,10 @@ fn bundle(lang: Language) -> FluentBundle<FluentResource> {
         .expect("unique bundled message IDs");
     bundle
 }
-thread_local! { static JAPANESE: FluentBundle<FluentResource> = bundle(Language::Japanese); }
+thread_local! {
+    static JAPANESE: FluentBundle<FluentResource> = bundle(Language::Japanese);
+    static ENGLISH: FluentBundle<FluentResource> = bundle(Language::English);
+}
 fn key(source: &str) -> String {
     let mut result = String::new();
     for c in source.chars() {
@@ -90,6 +95,143 @@ pub fn translate(lang: Language, source: &str) -> String {
         }
     })
 }
+/// Format a translated template with named Fluent arguments. User values are never translated.
+/// Call before entering context-locked accessibility callbacks.
+pub fn tr_format(ctx: &egui::Context, source: &str, values: &[(&str, String)]) -> String {
+    format_message(language(ctx), source, values)
+}
+pub fn format_message(lang: Language, source: &str, values: &[(&str, String)]) -> String {
+    let mut args = FluentArgs::new();
+    for (name, value) in values {
+        args.set(*name, value.as_str());
+    }
+    let render = |bundle: &FluentBundle<FluentResource>| {
+        let value = bundle
+            .get_message(&format!("format-{}", key(source)))?
+            .value()?;
+        let mut errors = Vec::new();
+        let result = bundle
+            .format_pattern(value, Some(&args), &mut errors)
+            .into_owned();
+        errors.is_empty().then_some(result)
+    };
+    let translated = match lang {
+        Language::English => ENGLISH.with(render),
+        Language::Japanese => JAPANESE.with(render),
+    };
+    translated.unwrap_or_else(|| {
+        // Keep the English fallback useful even for templates absent from the catalog.
+        let mut result = source.to_owned();
+        for (name, value) in values {
+            result = result.replace(&format!("{{ ${name} }}"), value);
+        }
+        result
+    })
+}
+/// Localize controller status envelopes at the presentation boundary. Diagnostic details
+/// remain intact; document paths and error payloads are never treated as message keys.
+pub fn tr_status(ctx: &egui::Context, source: &str) -> String {
+    if language(ctx) == Language::English {
+        return source.into();
+    }
+    let translated = tr(ctx, source);
+    if translated != source {
+        return translated;
+    }
+    if let Some(size) = source
+        .strip_prefix("New ")
+        .and_then(|s| s.strip_suffix(" document"))
+        && let Some((width, height)) = size.split_once('×')
+        && width.parse::<u32>().is_ok()
+        && height.parse::<u32>().is_ok()
+    {
+        return tr_format(
+            ctx,
+            "New { $width }×{ $height } document",
+            &[("width", width.into()), ("height", height.into())],
+        );
+    }
+    for (prefix, template) in [
+        (
+            "Crash recovery unavailable: ",
+            "Crash recovery unavailable: { $detail }",
+        ),
+        ("Cannot recover: ", "Cannot recover: { $detail }"),
+        (
+            "Cannot discard recovery: ",
+            "Cannot discard recovery: { $detail }",
+        ),
+        ("Using CPU rendering: ", "Using CPU rendering: { $detail }"),
+        ("Using CPU display: ", "Using CPU display: { $detail }"),
+        (
+            "Scaled display used CPU: ",
+            "Scaled display used CPU: { $detail }",
+        ),
+        ("Cannot render: ", "Cannot render: { $detail }"),
+        (
+            "Cannot render viewport: ",
+            "Cannot render viewport: { $detail }",
+        ),
+        (
+            "Background saving unavailable: ",
+            "Background saving unavailable: { $detail }",
+        ),
+        (
+            "Background renderer unavailable: ",
+            "Background renderer unavailable: { $detail }",
+        ),
+        (
+            "Background editing unavailable: ",
+            "Background editing unavailable: { $detail }",
+        ),
+        (
+            "Installed fonts unavailable: ",
+            "Installed fonts unavailable: { $detail }",
+        ),
+        (
+            "Could not save preferences: ",
+            "Could not save preferences: { $detail }",
+        ),
+        (
+            "Cannot create preferred canvas: ",
+            "Cannot create preferred canvas: { $detail }",
+        ),
+        ("Edit failed: ", "Edit failed: { $detail }"),
+        ("Open failed: ", "Open failed: { $detail }"),
+        ("Cannot open: ", "Cannot open: { $detail }"),
+        ("Cannot export: ", "Cannot export: { $detail }"),
+        (
+            "File operation failed: ",
+            "File operation failed: { $detail }",
+        ),
+        ("Layer change failed: ", "Layer change failed: { $detail }"),
+        ("Preview unavailable: ", "Preview unavailable: { $detail }"),
+        ("Stroke not prepared: ", "Stroke not prepared: { $detail }"),
+        (
+            "Cannot replace document: ",
+            "Cannot replace document: { $detail }",
+        ),
+        ("Save not queued: ", "Save not queued: { $detail }"),
+        ("Autosave not queued: ", "Autosave not queued: { $detail }"),
+        (
+            "Native menu unavailable: ",
+            "Native menu unavailable: { $detail }",
+        ),
+        (
+            "Native menu update failed: ",
+            "Native menu update failed: { $detail }",
+        ),
+        ("Opened ", "Opened { $detail }"),
+        ("Imported ", "Imported { $detail }"),
+        ("Exported ", "Exported { $detail }"),
+        ("Saved ", "Saved { $detail }"),
+    ] {
+        if let Some(detail) = source.strip_prefix(prefix) {
+            return tr_format(ctx, template, &[("detail", detail.into())]);
+        }
+    }
+    source.into()
+}
 pub fn picker(ui: &mut egui::Ui, lang: &mut Language) {
     egui::ComboBox::from_label(tr(ui.ctx(), "Language"))
         .selected_text(lang.name())
@@ -110,7 +252,7 @@ mod tests {
             let (id, source) = line.split_once(" = ").unwrap();
             assert!(en.get_message(id).is_some());
             assert!(ja.get_message(id).is_some(), "{id}");
-            if source != "OK" {
+            if source != "OK" && !source.contains("{ $") {
                 assert_ne!(translate(Language::Japanese, source), source, "{id}");
             }
         }
@@ -118,6 +260,66 @@ mod tests {
             translate(Language::Japanese, "unknown user text"),
             "unknown user text"
         );
+    }
+    #[test]
+    fn formatted_messages_translate_templates_and_preserve_user_values() {
+        let value = [("count", "315".to_owned())];
+        assert_eq!(
+            format_message(
+                Language::English,
+                "{ $count } available font families",
+                &value
+            )
+            .replace(['\u{2068}', '\u{2069}'], ""),
+            "315 available font families"
+        );
+        assert_eq!(
+            format_message(
+                Language::Japanese,
+                "{ $count } available font families",
+                &value
+            )
+            .replace(['\u{2068}', '\u{2069}'], ""),
+            "利用可能なフォント: 315種類"
+        );
+        let ctx = egui::Context::default();
+        set_language(&ctx, Language::Japanese);
+        let size = tr_format(&ctx, "{ $tool } size", &[("tool", tr(&ctx, "Pencil"))]);
+        assert_eq!(size.replace(['\u{2068}', '\u{2069}'], ""), "鉛筆のサイズ");
+        assert_eq!(tr(&ctx, "Tool size"), "ツールのサイズ");
+        let filename = "Pencil Size.png";
+        assert!(tr_status(&ctx, &format!("Opened {filename}")).contains(filename));
+        assert!(tr_status(&ctx, "New 1000×486 document").contains("新しい"));
+        assert_eq!(
+            tr_status(&ctx, "Crash recovery ready"),
+            "クラッシュからの復元の準備ができました"
+        );
+        assert_eq!(
+            tr_status(&ctx, "Crash recovery unavailable: disk full")
+                .replace(['\u{2068}', '\u{2069}'], ""),
+            "クラッシュからの復元を利用できません: disk full"
+        );
+        assert_eq!(
+            format_message(
+                Language::Japanese,
+                "Uncatalogued { $name }",
+                &[("name", filename.into())]
+            ),
+            "Uncatalogued Pencil Size.png"
+        );
+    }
+    #[test]
+    fn reported_classic_labels_are_translated() {
+        for source in [
+            "Automatically hide toolbar",
+            "Zoom to window",
+            "Rotate custom",
+            "Selection options",
+            "Invert selection",
+            "Stroke",
+        ] {
+            assert_ne!(translate(Language::Japanese, source), source, "{source}");
+        }
     }
     #[test]
     fn language_is_isolated_per_context_and_unknown_locales_are_rejected() {

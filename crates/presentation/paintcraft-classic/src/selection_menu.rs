@@ -2,6 +2,7 @@
 use super::{Action, Controls};
 use egui::{Align2, FontId, Rect, Vec2};
 use paintcraft_tools::Tool;
+use paintcraft_ui::i18n::tr;
 use paintcraft_ui::{actions::Context, icons::Icon};
 
 pub(super) fn show(
@@ -105,7 +106,7 @@ fn unavailable(
 ) {
     ui.add_enabled_ui(false, |ui| row(ui, label, accessible, icon, None, shortcut))
         .inner
-        .on_disabled_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), help));
+        .on_disabled_hover_text(tr(ui.ctx(), help));
 }
 
 fn row(
@@ -116,7 +117,7 @@ fn row(
     selected: Option<bool>,
     shortcut: Option<&str>,
 ) -> egui::Response {
-    let label = paintcraft_ui::i18n::tr(ui.ctx(), label);
+    let label = tr(ui.ctx(), label);
     let background = (selected == Some(true)).then(|| ui.painter().add(egui::Shape::Noop));
     let mut button = egui::Button::new(" ")
         .frame_when_inactive(selected == Some(true))
@@ -144,7 +145,7 @@ fn row(
             ),
         );
     }
-    let accessible = paintcraft_ui::i18n::tr(ui.ctx(), accessible);
+    let accessible = tr(ui.ctx(), accessible);
     response.widget_info(|| match selected {
         Some(selected) => {
             egui::WidgetInfo::selected(egui::Role::Button, ui.is_enabled(), selected, &accessible)

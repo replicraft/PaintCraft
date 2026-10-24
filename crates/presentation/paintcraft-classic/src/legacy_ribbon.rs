@@ -2,6 +2,7 @@
 use super::{Action, Controls, PALETTE, Rgba, Workspace, dropdowns, palette, shapes};
 use egui::{Color32, Vec2};
 use paintcraft_tools::Tool;
+use paintcraft_ui::i18n::tr;
 use paintcraft_ui::{
     actions::Context,
     chrome::{options, tool_button},
@@ -68,7 +69,7 @@ pub(super) fn show(
                                 paintcraft_ui::icons::Icon::Brush,
                                 28.0,
                             ),
-                            paintcraft_ui::i18n::tr(ui.ctx(), "Brushes"),
+                            tr(ui.ctx(), "Brushes"),
                         )
                         .min_size(Vec2::new(80.0, 54.0)),
                     )
@@ -76,7 +77,7 @@ pub(super) fn show(
                         super::brush_gallery::gallery(ui, state, actions, !was_open);
                     });
                     ui.data_mut(|data| data.insert_temp(id, popup.is_some()));
-                    button.on_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), "Brushes"));
+                    button.on_hover_text(tr(ui.ctx(), "Brushes"));
                 });
                 ui.separator();
                 ribbon_group(ui, "Shapes", |ui| {
@@ -106,11 +107,12 @@ pub(super) fn show(
                                         .fill(Color32::from_rgb(color.0[0], color.0[1], color.0[2]))
                                         .min_size(Vec2::new(36.0, 22.0)),
                                 );
+                                let accessible_label = tr(ui.ctx(), label);
                                 response.widget_info(|| {
                                     egui::WidgetInfo::labeled(
                                         egui::Role::ColorWell,
                                         action.enabled(context) && ui.is_enabled(),
-                                        label,
+                                        &accessible_label,
                                     )
                                 });
                                 if response.clicked() {
@@ -217,7 +219,7 @@ fn ribbon_group(ui: &mut egui::Ui, label: &str, contents: impl FnOnce(&mut egui:
             Vec2::new(width, 16.0),
             egui::Layout::top_down(egui::Align::Center),
             |ui| {
-                ui.weak(paintcraft_ui::i18n::tr(ui.ctx(), label));
+                ui.weak(tr(ui.ctx(), label));
             },
         );
     });

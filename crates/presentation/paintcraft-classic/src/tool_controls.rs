@@ -1,6 +1,7 @@
 //! Classic v11 tool preferences float beside the canvas; no document mutations.
 use egui::{Rect, Vec2, Widget};
 use paintcraft_tools::{Tool, ToolOptions};
+use paintcraft_ui::i18n::{tr, tr_format};
 use paintcraft_ui::icons::Icon;
 
 mod slider;
@@ -53,7 +54,11 @@ pub fn show(
                 ui.horizontal_top(|ui| {
                     ui.spacing_mut().item_spacing.x = 10.0;
                     panel(ui, |ui| {
-                        let label = format!("{} size", tool.name());
+                        let label = tr_format(
+                            ui.ctx(),
+                            "{ $tool } size",
+                            &[("tool", tr(ui.ctx(), tool.name()))],
+                        );
                         header(ui, Icon::StrokeSize, &label);
                         ui.add_space(6.0);
                         ui.spacing_mut().slider_width = height;
@@ -64,22 +69,28 @@ pub fn show(
                         };
                         let response =
                             slider::show(ui, size, 1..=64, height, egui::SliderClamping::Edits);
+                        let accessible = tr(ui.ctx(), "Tool size");
                         response.widget_info(|| {
                             egui::WidgetInfo::labeled(
                                 egui::Role::Slider,
                                 ui.is_enabled(),
-                                "Tool size",
+                                &accessible,
                             )
                         });
-                        response.on_hover_text(format!("Size: {size} px"));
+                        response.on_hover_text(tr_format(
+                            ui.ctx(),
+                            "Size: { $size } px",
+                            &[("size", size.to_string())],
+                        ));
                         let value = ui
                             .add(egui::DragValue::new(size).range(1..=1024))
-                            .on_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), "Size in pixels"));
+                            .on_hover_text(tr(ui.ctx(), "Size in pixels"));
+                        let accessible = tr(ui.ctx(), "Size");
                         value.widget_info(|| {
                             egui::WidgetInfo::labeled(
                                 egui::Role::SpinButton,
                                 ui.is_enabled(),
-                                "Size",
+                                &accessible,
                             )
                         });
                     });
@@ -95,24 +106,30 @@ pub fn show(
                                 height,
                                 egui::SliderClamping::Always,
                             );
+                            let accessible = tr(ui.ctx(), "Brush opacity");
                             response.widget_info(|| {
                                 egui::WidgetInfo::labeled(
                                     egui::Role::Slider,
                                     ui.is_enabled(),
-                                    "Brush opacity",
+                                    &accessible,
                                 )
                             });
-                            response.on_hover_text(format!("Opacity: {}%", options.brush_opacity));
+                            response.on_hover_text(tr_format(
+                                ui.ctx(),
+                                "Opacity: { $opacity }%",
+                                &[("opacity", options.brush_opacity.to_string())],
+                            ));
                             let value = ui.add(
                                 egui::DragValue::new(&mut options.brush_opacity)
                                     .range(0..=100)
                                     .suffix("%"),
                             );
+                            let accessible = tr(ui.ctx(), "Opacity");
                             value.widget_info(|| {
                                 egui::WidgetInfo::labeled(
                                     egui::Role::SpinButton,
                                     ui.is_enabled(),
-                                    "Opacity",
+                                    &accessible,
                                 )
                             });
                         });
@@ -137,6 +154,7 @@ fn panel(ui: &mut egui::Ui, body: impl FnOnce(&mut egui::Ui)) {
 
 fn header(ui: &mut egui::Ui, icon: Icon, label: &str) {
     let response = paintcraft_ui::icons::image(ui.ctx(), icon, 22.0).ui(ui);
-    response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Image, ui.is_enabled(), label));
-    response.on_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), label));
+    let label = tr(ui.ctx(), label);
+    response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Image, ui.is_enabled(), &label));
+    response.on_hover_text(label);
 }

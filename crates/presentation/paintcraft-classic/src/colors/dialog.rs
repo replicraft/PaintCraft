@@ -1,5 +1,6 @@
 //! Responsive color dialog presentation, with a fixed acceptance footer.
 use super::*;
+use paintcraft_ui::i18n::tr;
 
 pub fn edit_colors_dialog(ctx: &egui::Context, editor: &mut ColorEditor) -> ColorResponse {
     let mut result = ColorResponse::Pending;
@@ -37,7 +38,7 @@ pub fn edit_colors_dialog(ctx: &egui::Context, editor: &mut ColorEditor) -> Colo
                 .show(ui, |ui| {
                     ui.set_width(width);
                     ui.label(
-                        egui::RichText::new(paintcraft_ui::i18n::tr(ui.ctx(), "Edit colors"))
+                        egui::RichText::new(tr(ui.ctx(), "Edit colors"))
                             .size(24.0)
                             .strong(),
                     );
@@ -88,18 +89,17 @@ pub fn edit_colors_dialog(ctx: &egui::Context, editor: &mut ColorEditor) -> Colo
                         } else {
                             Color32::WHITE
                         };
-                        let accept = egui::Button::new(
-                            egui::RichText::new(paintcraft_ui::i18n::tr(ui.ctx(), "OK")).color(ink),
-                        )
-                        .fill(ui.visuals().selection.stroke.color)
-                        .min_size(Vec2::new(button_width, 40.0));
+                        let accept =
+                            egui::Button::new(egui::RichText::new(tr(ui.ctx(), "OK")).color(ink))
+                                .fill(ui.visuals().selection.stroke.color)
+                                .min_size(Vec2::new(button_width, 40.0));
                         if ui.add_enabled(editor.valid(), accept).clicked() {
                             result = ColorResponse::Accept;
                         }
                         if ui
                             .add_sized(
                                 [button_width, 40.0],
-                                egui::Button::new(paintcraft_ui::i18n::tr(ui.ctx(), "Cancel")),
+                                egui::Button::new(tr(ui.ctx(), "Cancel")),
                             )
                             .clicked()
                         {
@@ -134,12 +134,9 @@ fn picker_and_fields(ui: &mut egui::Ui, editor: &mut ColorEditor, width: f32) {
             ui.visuals().widgets.noninteractive.bg_stroke,
             egui::StrokeKind::Inside,
         );
+        let accessible_label = tr(ui.ctx(), "Current color preview");
         response.widget_info(|| {
-            egui::WidgetInfo::labeled(
-                egui::Role::ColorWell,
-                ui.is_enabled(),
-                "Current color preview",
-            )
+            egui::WidgetInfo::labeled(egui::Role::ColorWell, ui.is_enabled(), &accessible_label)
         });
         picker::brightness(ui, editor, side);
         if wide {
@@ -160,7 +157,7 @@ fn custom(ui: &mut egui::Ui, editor: &mut ColorEditor, spacious: bool) {
     }
     ui.horizontal(|ui| {
         ui.set_min_height(40.0);
-        ui.label(paintcraft_ui::i18n::tr(ui.ctx(), "Custom colors"));
+        ui.label(tr(ui.ctx(), "Custom colors"));
         let add = ui
             .with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 ui.spacing_mut().button_padding = Vec2::ZERO;
@@ -172,15 +169,16 @@ fn custom(ui: &mut egui::Ui, editor: &mut ColorEditor, spacious: bool) {
                 )
             })
             .inner;
+        let accessible_label = tr(ui.ctx(), "Add custom color");
         add.widget_info(|| {
             egui::WidgetInfo::labeled(
                 egui::Role::Button,
                 ui.is_enabled() && editor.valid(),
-                "Add custom color",
+                &accessible_label,
             )
         });
         if add
-            .on_hover_text(paintcraft_ui::i18n::tr(
+            .on_hover_text(tr(
                 ui.ctx(),
                 "Add current color to the selected custom slot",
             ))
@@ -203,6 +201,6 @@ fn custom(ui: &mut egui::Ui, editor: &mut ColorEditor, spacious: bool) {
 fn basic_heading(ui: &mut egui::Ui) {
     ui.horizontal(|ui| {
         ui.set_min_height(40.0);
-        ui.label(paintcraft_ui::i18n::tr(ui.ctx(), "Basic colors"));
+        ui.label(tr(ui.ctx(), "Basic colors"));
     });
 }

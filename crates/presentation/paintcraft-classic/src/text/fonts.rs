@@ -1,5 +1,6 @@
 //! Search stays fixed while the family list scrolls. Only visible rows are drawn.
 use super::*;
+use paintcraft_ui::i18n::{tr, tr_format};
 mod navigation;
 
 pub fn family(
@@ -46,17 +47,18 @@ pub fn family(
                             [ui.available_width(), CONTROL_HEIGHT],
                             egui::TextEdit::singleline(search)
                                 .id(search_id)
-                                .hint_text(paintcraft_ui::i18n::tr(ui.ctx(), "Search fonts"))
+                                .hint_text(tr(ui.ctx(), "Search fonts"))
                                 .event_filter(egui::EventFilter {
                                     vertical_arrows: true,
                                     ..Default::default()
                                 }),
                         );
+                        let accessible_label = tr(ui.ctx(), "Search fonts");
                         find.widget_info(|| {
                             egui::WidgetInfo::labeled(
                                 egui::Role::TextInput,
                                 ui.is_enabled(),
-                                "Search fonts",
+                                &accessible_label,
                             )
                         });
                         ui.separator();
@@ -91,11 +93,12 @@ pub fn family(
                             }
                         }
                         let candidate = navigation.index(&filtered);
+                        let description = navigation.candidate.as_ref().map_or_else(
+                            || tr(ui.ctx(), "No matching fonts"),
+                            |name| tr_format(ui.ctx(), "Keyboard choice: { $name }. Up/Down or Page Up/Down to browse; Enter to apply; Escape to cancel.", &[("name", name.clone())]),
+                        );
                         ui.ctx().accesskit_node_builder(find.id, |node| {
-                            node.set_description(navigation.candidate.as_ref().map_or_else(
-                                || "No matching fonts".to_owned(),
-                                |name| format!("Keyboard choice: {name}. Up/Down or Page Up/Down to browse; Enter to apply; Escape to cancel."),
-                            ));
+                            node.set_description(description);
                         });
                         ui.data_mut(|data| data.insert_temp(navigation_id, navigation));
                         let mut list = egui::ScrollArea::vertical()
@@ -113,7 +116,7 @@ pub fn family(
                         if filtered.is_empty() {
                             list.show(ui, |ui| {
                                 if !loading {
-                                    ui.weak(paintcraft_ui::i18n::tr(ui.ctx(), "No matching fonts"));
+                                    ui.weak(tr(ui.ctx(), "No matching fonts"));
                                 }
                             });
                         } else {
@@ -137,13 +140,9 @@ pub fn family(
                             });
                         }
                         let footer = if loading {
-                            "Loading installed fonts…".to_owned()
+                            tr(ui.ctx(), "Loading installed fonts…")
                         } else {
-                            format!(
-                                "{} {}",
-                                filtered.len(),
-                                if filtered.len() == 1 { "font" } else { "fonts" }
-                            )
+                            tr_format(ui.ctx(), "{ $count } fonts", &[("count", filtered.len().to_string())])
                         };
                         ui.add_sized(
                             [ui.available_width(), 20.0],
@@ -162,9 +161,9 @@ pub fn family(
     {
         find.request_focus();
     }
+    let accessible_label = tr(ui.ctx(), "Font family");
     font.response.widget_info(|| {
-        egui::WidgetInfo::labeled(egui::Role::ComboBox, ui.is_enabled(), "Font family")
+        egui::WidgetInfo::labeled(egui::Role::ComboBox, ui.is_enabled(), &accessible_label)
     });
-    font.response
-        .on_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), "Font family"));
+    font.response.on_hover_text(tr(ui.ctx(), "Font family"));
 }

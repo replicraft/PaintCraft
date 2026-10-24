@@ -1,6 +1,7 @@
 //! Desktop chrome integration.
 
 use super::*;
+use paintcraft_ui::i18n::tr;
 
 impl App {
     pub(super) fn action_context(&self) -> paintcraft_ui::actions::Context {
@@ -56,7 +57,7 @@ impl App {
         let ctx = ui.ctx().clone();
         if self.experience() == Experience::Studio {
             ui.horizontal(|ui| {
-                ui.strong(paintcraft_ui::i18n::tr(ui.ctx(), "PaintCraft Studio"));
+                ui.strong(tr(ui.ctx(), "PaintCraft Studio"));
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     if paintcraft_ui::widgets::icon_button(
                         ui,
