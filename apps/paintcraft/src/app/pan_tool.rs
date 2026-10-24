@@ -1,6 +1,6 @@
 //! Studio pan input owns pointer events before the paint tools see them.
 use super::*;
-use paintcraft_tools::navigation::PanButton;
+use paintcraft_tools::navigation::{PanButton, PanDirection, keyboard_pan_delta};
 
 impl App {
     pub(super) fn studio_pan_scope(&self, ctx: &egui::Context) -> egui::Id {
@@ -66,6 +66,36 @@ impl App {
                     self.studio.zoom.cancel();
                 }
                 consumed = self.studio.space_pan || self.studio.pan.is_active();
+            }
+            egui::Event::Key {
+                key,
+                pressed: true,
+                modifiers,
+                ..
+            } if self.studio.space_pan
+                && !modifiers.alt
+                && !modifiers.shift
+                && !ui.ctx().egui_wants_keyboard_input()
+                && !self.editor.is_editing_text()
+                && !self.editor.gesture_in_progress()
+                && !self.ime_composing =>
+            {
+                let direction = match key {
+                    egui::Key::ArrowLeft => Some(PanDirection::Left),
+                    egui::Key::ArrowRight => Some(PanDirection::Right),
+                    egui::Key::ArrowUp => Some(PanDirection::Up),
+                    egui::Key::ArrowDown => Some(PanDirection::Down),
+                    _ => None,
+                };
+                if let Some(direction) = direction {
+                    delta =
+                        keyboard_pan_delta(direction, modifiers.ctrl, ui.ctx().pixels_per_point());
+                    consumed = true;
+                    ui.input_mut(|input| {
+                        input.consume_key(*modifiers, *key);
+                    });
+                    ui.memory_mut(|memory| memory.move_focus(egui::FocusDirection::None));
+                }
             }
             egui::Event::PointerButton {
                 pos,
