@@ -5,6 +5,7 @@ mod contracts;
 pub use contracts::*;
 mod geometry;
 mod path_admission;
+mod picker;
 mod preview_revision;
 #[cfg(feature = "text")]
 pub mod text;
@@ -41,6 +42,7 @@ struct Gesture {
     points: Vec<(i64, i64)>,
     point_scale: u32,
     constrain_shape: bool,
+    return_tool: Tool,
 }
 
 #[derive(Debug)]
@@ -50,6 +52,7 @@ pub struct ToolState {
     pub secondary: Rgba,
     pub tool: Tool,
     pub options: ToolOptions,
+    previous_tool: Tool,
     gesture: Option<Gesture>,
     construction: Option<construction::Construction>,
     text: Option<TextEdit>,
@@ -64,6 +67,7 @@ impl Default for ToolState {
             secondary: Rgba([255; 4]),
             tool: Tool::Pencil,
             options: ToolOptions::default(),
+            previous_tool: Tool::Pencil,
             gesture: None,
             construction: None,
             text: None,
@@ -138,6 +142,7 @@ impl ToolState {
             points: vec![at],
             point_scale: 1,
             constrain_shape: false,
+            return_tool: self.previous_tool,
         });
         if matches!(self.tool, Tool::Polygon | Tool::Curve) {
             self.construction = Some(construction::Construction::new(
@@ -257,7 +262,9 @@ impl ToolState {
                     color,
                 })
             }
-            Tool::Fill | Tool::Text | Tool::Polygon | Tool::Curve => return None,
+            Tool::ColorPicker | Tool::Fill | Tool::Text | Tool::Polygon | Tool::Curve => {
+                return None;
+            }
             Tool::Select => Preview::Marquee {
                 from: first,
                 to: last,
@@ -408,6 +415,7 @@ impl ToolState {
                 })
             }
             Tool::Text | Tool::Polygon | Tool::Curve => return None,
+            Tool::ColorPicker => Action::PickColor(self.color_pick(&g, last)),
             Tool::Fill => Action::Fill {
                 layer: g.layer,
                 at: first,

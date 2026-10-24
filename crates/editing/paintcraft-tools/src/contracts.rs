@@ -19,6 +19,7 @@ pub enum Tool {
     Brush,
     Eraser,
     Fill,
+    ColorPicker,
     Line,
     Rect,
     Ellipse,
@@ -45,6 +46,7 @@ impl Tool {
             Self::Preset(preset) => 9 + preset as u64,
             Self::Polygon => 27,
             Self::Curve => 28,
+            Self::ColorPicker => 29,
         }
     }
     /// Native Studio color gestures. Other secondary-button tool policies remain
@@ -53,7 +55,8 @@ impl Tool {
         button == PointerButton::Primary
             || matches!(
                 self,
-                Self::Pencil
+                Self::ColorPicker
+                    | Self::Pencil
                     | Self::Brush
                     | Self::Fill
                     | Self::Line
@@ -65,7 +68,7 @@ impl Tool {
             )
     }
 
-    pub const ALL: [Tool; 11] = [
+    pub const ALL: [Tool; 12] = [
         Tool::Pencil,
         Tool::Brush,
         Tool::Eraser,
@@ -77,6 +80,7 @@ impl Tool {
         Tool::Text,
         Tool::Polygon,
         Tool::Curve,
+        Tool::ColorPicker,
     ];
 
     pub fn name(self) -> &'static str {
@@ -85,6 +89,7 @@ impl Tool {
             Tool::Brush => "Brush",
             Tool::Eraser => "Eraser",
             Tool::Fill => "Fill",
+            Tool::ColorPicker => "Color picker",
             Tool::Line => "Line",
             Tool::Rect => "Rectangle",
             Tool::Ellipse => "Ellipse",
@@ -114,6 +119,9 @@ pub struct ToolOptions {
     pub tolerance: u8,
     /// Text size as a whole-number multiple of the 8-pixel font (1..=16).
     pub text_scale: u32,
+    pub picker_source: paintcraft_core::types::picker::SampleSource,
+    pub picker_size: paintcraft_core::types::picker::SampleSize,
+    pub picker_after: paintcraft_core::types::picker::PickerAfter,
 }
 
 impl Default for ToolOptions {
@@ -127,6 +135,9 @@ impl Default for ToolOptions {
             style: ShapeStyle::Outline,
             tolerance: 0,
             text_scale: 2,
+            picker_source: paintcraft_core::types::picker::SampleSource::Layer,
+            picker_size: paintcraft_core::types::picker::SampleSize::One,
+            picker_after: paintcraft_core::types::picker::PickerAfter::Stay,
         }
     }
 }
@@ -153,8 +164,22 @@ pub struct Contour {
     pub fill: Option<Rgba>,
 }
 
+/// Captured sampling intention: no document mutation or recorded history.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ColorPick {
+    pub original: Rgba,
+    pub revision: super::PreviewRevision,
+    pub layer: Uuid,
+    pub at: (i64, i64),
+    pub button: PointerButton,
+    pub source: paintcraft_core::types::picker::SampleSource,
+    pub size: paintcraft_core::types::picker::SampleSize,
+    pub return_to: Option<Tool>,
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum Action {
+    PickColor(ColorPick),
     CropToSelection,
     TransformImage {
         transform: paintcraft_core::types::orthogonal::OrthogonalTransform,
