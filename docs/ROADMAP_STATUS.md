@@ -1,5 +1,10 @@
 # PaintCraft roadmap implementation status
 
+Latest Classic feedback: [implemented changes, validation scope and remaining
+selection/rotation/background-removal work](CLASSIC_FOLLOWUP.md). Full feature and
+historical skin parity remain incomplete.
+
+
 This is the live application ledger for the reference pack's 37 tasks. The
 [roadmap](temp/paintcraft-implementation-spec-v5-hyperfine/ROADMAP.md) owns milestone
 intent; [roadmap-status.json](roadmap-status.json) preserves task dependencies,
