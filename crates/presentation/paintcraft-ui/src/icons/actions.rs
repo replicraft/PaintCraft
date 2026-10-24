@@ -34,6 +34,23 @@ impl Action {
             Self::ImageProperties => Icon::ImageProperties,
             Self::ClearCanvas => Icon::ClearCanvas,
             Self::Crop => Icon::Crop,
+            Self::TransformImage(t) => match t {
+                paintcraft_core::types::orthogonal::OrthogonalTransform::RotateRight => {
+                    Icon::RotateClockwise
+                }
+                paintcraft_core::types::orthogonal::OrthogonalTransform::RotateLeft => {
+                    Icon::RotateCounterclockwise
+                }
+                paintcraft_core::types::orthogonal::OrthogonalTransform::Rotate180 => {
+                    Icon::Rotate180
+                }
+                paintcraft_core::types::orthogonal::OrthogonalTransform::FlipHorizontal => {
+                    Icon::FlipHorizontal
+                }
+                paintcraft_core::types::orthogonal::OrthogonalTransform::FlipVertical => {
+                    Icon::FlipVertical
+                }
+            },
             Self::EditColors | Self::EditSecondaryColors | Self::EditCustomColor(_) => {
                 Icon::EditColors
             }

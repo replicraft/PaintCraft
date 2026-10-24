@@ -279,3 +279,30 @@ pub fn crop_to_selection(
         ("rect", rect_value(area)),
     ]))
 }
+
+/// Whole canvas when unrestricted; otherwise the active layer's selected pixels.
+pub fn transform_image(
+    selection: paintcraft_raster::Selection,
+    target: Option<Uuid>,
+    transform: paintcraft_core::types::orthogonal::OrthogonalTransform,
+    clear: Rgba,
+) -> Result<Value> {
+    if selection == paintcraft_raster::Selection::Inactive {
+        return Ok(Value::object([
+            ("op", Value::str("canvas.transform")),
+            ("transform", Value::str(transform.name())),
+        ]));
+    }
+    let layer = target.ok_or_else(|| {
+        paintcraft_core::types::Error::new(
+            paintcraft_core::types::ErrorCode::InputSchema,
+            "Choose a layer to transform selected pixels",
+        )
+    })?;
+    Ok(Value::object([
+        ("op", Value::str("raster.transform_selection")),
+        ("layer_ref", layer_ref(layer)),
+        ("transform", Value::str(transform.name())),
+        ("clear", Value::str(clear.to_hex())),
+    ]))
+}

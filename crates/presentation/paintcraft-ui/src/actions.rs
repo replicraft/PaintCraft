@@ -1,5 +1,6 @@
 //! Semantic action metadata shared by menus, toolbars and keyboard dispatch.
 use egui::{Key, KeyboardShortcut, Modifiers};
+use paintcraft_core::types::orthogonal::OrthogonalTransform as Transform;
 use paintcraft_tools::Tool;
 mod layers;
 mod view;
@@ -23,6 +24,7 @@ pub enum Action {
     ImageProperties,
     ClearCanvas,
     Crop,
+    TransformImage(Transform),
     CanvasDefaults,
     EditColors,
     EditSecondaryColors,
@@ -88,6 +90,11 @@ pub const EDIT: &[Action] = &[
     Action::SelectAll,
     Action::Deselect,
     Action::ClearCanvas,
+    Action::TransformImage(Transform::RotateRight),
+    Action::TransformImage(Transform::RotateLeft),
+    Action::TransformImage(Transform::Rotate180),
+    Action::TransformImage(Transform::FlipVertical),
+    Action::TransformImage(Transform::FlipHorizontal),
 ];
 
 impl Action {
@@ -124,6 +131,16 @@ impl Action {
             Self::ImageProperties => ("Image properties", Some((Key::E, false))),
             Self::ClearCanvas => ("Clear Canvas", None),
             Self::Crop => ("Crop", None),
+            Self::TransformImage(t) => (
+                match t {
+                    Transform::RotateRight => "Rotate right 90°",
+                    Transform::RotateLeft => "Rotate left 90°",
+                    Transform::Rotate180 => "Rotate 180°",
+                    Transform::FlipHorizontal => "Flip horizontal",
+                    Transform::FlipVertical => "Flip vertical",
+                },
+                None,
+            ),
             Self::CanvasDefaults => ("Default canvas size…", None),
             Self::EditColors => ("Edit colors…", None),
             Self::EditSecondaryColors => ("Edit secondary color…", None),
@@ -216,6 +233,11 @@ impl Action {
             Self::Redo => ctx.document_open && ctx.can_redo,
             Self::Deselect => ctx.document_open && ctx.selection_active,
             Self::Crop => ctx.document_open && ctx.can_crop_selection,
+            Self::TransformImage(_) => {
+                ctx.document_open
+                    && (!ctx.selection_active
+                        || (ctx.can_crop_selection && ctx.layer_index.is_some()))
+            }
             _ => ctx.document_open,
         }
     }
@@ -276,6 +298,7 @@ impl Action {
             Self::ImageProperties => 1021,
             Self::ClearCanvas => 1018,
             Self::Crop => 1022,
+            Self::TransformImage(t) => 1030 + t as u64,
             Self::Settings => 1015,
             Self::ChooseFrontend(frontend) => 1016 + frontend as u64,
             Self::CanvasDefaults => 1012,

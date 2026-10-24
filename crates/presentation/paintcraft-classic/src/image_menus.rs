@@ -1,5 +1,6 @@
 //! Image controls with real selection Crop and staged Resize/skew presentation.
 use egui::{Rect, Vec2};
+use paintcraft_core::types::orthogonal::OrthogonalTransform as Transform;
 use paintcraft_ui::icons::Icon;
 
 /// The resize control spans the two Image rows, matching the reference grouping.
@@ -45,7 +46,7 @@ pub(super) fn controls(
                 } else {
                     response.on_disabled_hover_text("Select an area of the canvas to crop");
                 }
-                rotate(ui);
+                rotate(ui, context, actions);
                 ui.end_row();
                 unavailable(
                     ui,
@@ -55,7 +56,7 @@ pub(super) fn controls(
                     22.0,
                     "Background removal is not available yet.",
                 );
-                flip(ui);
+                flip(ui, context, actions);
             });
         let enabled = super::Action::ResizeSkew.enabled(context);
         let response = ui
@@ -113,33 +114,68 @@ fn unavailable(ui: &mut egui::Ui, label: &str, icon: Icon, size: Vec2, points: f
     response.on_disabled_hover_text(help);
 }
 
-pub(super) fn rotate(ui: &mut egui::Ui) {
+pub(super) fn rotate(
+    ui: &mut egui::Ui,
+    context: paintcraft_ui::actions::Context,
+    actions: &mut Vec<super::Action>,
+) {
     menu(
         ui,
         "Rotate",
         Icon::RotateClockwise,
+        context,
+        actions,
         &[
-            ("Rotate right 90°", Icon::RotateClockwise),
-            ("Rotate left 90°", Icon::RotateCounterclockwise),
-            ("Rotate 180°", Icon::Rotate180),
-            ("Rotate custom", Icon::RotateCustom),
+            (
+                "Rotate right 90°",
+                Icon::RotateClockwise,
+                Some(Transform::RotateRight),
+            ),
+            (
+                "Rotate left 90°",
+                Icon::RotateCounterclockwise,
+                Some(Transform::RotateLeft),
+            ),
+            ("Rotate 180°", Icon::Rotate180, Some(Transform::Rotate180)),
+            ("Rotate custom", Icon::RotateCustom, None),
         ],
     );
 }
 
-pub(super) fn flip(ui: &mut egui::Ui) {
+pub(super) fn flip(
+    ui: &mut egui::Ui,
+    context: paintcraft_ui::actions::Context,
+    actions: &mut Vec<super::Action>,
+) {
     menu(
         ui,
         "Flip",
         Icon::FlipVertical,
+        context,
+        actions,
         &[
-            ("Flip vertical", Icon::FlipVertical),
-            ("Flip horizontal", Icon::FlipHorizontal),
+            (
+                "Flip vertical",
+                Icon::FlipVertical,
+                Some(Transform::FlipVertical),
+            ),
+            (
+                "Flip horizontal",
+                Icon::FlipHorizontal,
+                Some(Transform::FlipHorizontal),
+            ),
         ],
     );
 }
 
-fn menu(ui: &mut egui::Ui, label: &str, icon: Icon, entries: &[(&str, Icon)]) {
+fn menu(
+    ui: &mut egui::Ui,
+    label: &str,
+    icon: Icon,
+    context: paintcraft_ui::actions::Context,
+    actions: &mut Vec<super::Action>,
+    entries: &[(&str, Icon, Option<Transform>)],
+) {
     let (response, _) = egui::containers::menu::MenuButton::from_button(
         egui::Button::new("     ")
             .min_size(Vec2::new(56.0, 40.0))
@@ -165,9 +201,11 @@ fn menu(ui: &mut egui::Ui, label: &str, icon: Icon, entries: &[(&str, Icon)]) {
             .max_height(height)
             .auto_shrink([false, true])
             .show(ui, |ui| {
-                for &(name, icon) in entries {
-                    ui.add_enabled(
-                        false,
+                for &(name, icon, transform) in entries {
+                    let action = transform.map(super::Action::TransformImage);
+                    let enabled = action.is_some_and(|a| a.enabled(context));
+                    let response = ui.add_enabled(
+                        enabled,
                         egui::Button::new((
                             paintcraft_ui::icons::classic_image(
                                 ui.ctx(),
@@ -178,8 +216,16 @@ fn menu(ui: &mut egui::Ui, label: &str, icon: Icon, entries: &[(&str, Icon)]) {
                             name,
                         ))
                         .min_size(Vec2::new(240.0, 40.0)),
-                    )
-                    .on_disabled_hover_text("This image transformation is not available yet.");
+                    );
+                    if response.clicked() && let Some(action) = action {
+                        actions.push(action);
+                        ui.close();
+                    }
+                    if transform.is_none() {
+                        response.on_disabled_hover_text("This image transformation is not available yet.");
+                    } else if !enabled {
+                        response.on_disabled_hover_text("Select a nonempty canvas area and choose a layer, or deselect to transform the whole image.");
+                    }
                 }
             });
     });

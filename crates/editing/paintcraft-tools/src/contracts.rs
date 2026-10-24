@@ -156,6 +156,10 @@ pub struct Contour {
 #[derive(Clone, Debug, PartialEq)]
 pub enum Action {
     CropToSelection,
+    TransformImage {
+        transform: paintcraft_core::types::orthogonal::OrthogonalTransform,
+        clear: Rgba,
+    },
     Contour(Contour),
     Stroke(Stroke),
     Fill {
