@@ -30,35 +30,7 @@ pub enum LayerRef {
     Id(Uuid),
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Anchor {
-    TopLeft,
-    Top,
-    TopRight,
-    Left,
-    Center,
-    Right,
-    BottomLeft,
-    Bottom,
-    BottomRight,
-}
-
-impl Anchor {
-    /// Anchor position in halves: 0, 1 (middle) or 2.
-    pub fn halves(self) -> (i64, i64) {
-        match self {
-            Anchor::TopLeft => (0, 0),
-            Anchor::Top => (1, 0),
-            Anchor::TopRight => (2, 0),
-            Anchor::Left => (0, 1),
-            Anchor::Center => (1, 1),
-            Anchor::Right => (2, 1),
-            Anchor::BottomLeft => (0, 2),
-            Anchor::Bottom => (1, 2),
-            Anchor::BottomRight => (2, 2),
-        }
-    }
-}
+pub use paintcraft_core::types::canvas::Anchor;
 
 pub use paintcraft_core::types::policy::BlendMode as Mode;
 

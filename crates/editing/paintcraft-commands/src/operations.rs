@@ -262,18 +262,10 @@ pub(super) fn op(v: &Value, version: u8) -> Result<Op> {
             Op::CanvasResize {
                 width: int_in(&o["width"], 1, SIZE_MAX, "width")? as u32,
                 height: int_in(&o["height"], 1, SIZE_MAX, "height")? as u32,
-                anchor: match o["anchor"].as_str() {
-                    Some("top-left") => Anchor::TopLeft,
-                    Some("top") => Anchor::Top,
-                    Some("top-right") => Anchor::TopRight,
-                    Some("left") => Anchor::Left,
-                    Some("center") => Anchor::Center,
-                    Some("right") => Anchor::Right,
-                    Some("bottom-left") => Anchor::BottomLeft,
-                    Some("bottom") => Anchor::Bottom,
-                    Some("bottom-right") => Anchor::BottomRight,
-                    _ => return Err(bad("unknown anchor")),
-                },
+                anchor: o["anchor"]
+                    .as_str()
+                    .and_then(Anchor::parse)
+                    .ok_or_else(|| bad("unknown anchor"))?,
             }
         }
         other => return Err(bad(format!("unknown operation {other:?}"))),

@@ -26,3 +26,5 @@ pub mod orthogonal;
 pub mod picker;
 
 pub mod brush;
+
+pub mod canvas;
