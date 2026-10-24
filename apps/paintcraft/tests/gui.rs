@@ -342,3 +342,9 @@ mod color_picker;
 
 #[path = "gui/language.rs"]
 mod language;
+
+#[path = "gui/legacy_skins.rs"]
+mod legacy_skins;
+
+#[path = "gui/screenshots.rs"]
+mod screenshots;
