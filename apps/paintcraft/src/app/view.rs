@@ -21,7 +21,7 @@ impl App {
         }
     }
 
-    fn set_zoom(&mut self, ctx: &egui::Context, zoom: f32, center: (f32, f32)) {
+    pub(super) fn set_zoom(&mut self, ctx: &egui::Context, zoom: f32, center: (f32, f32)) {
         self.editor.cancel_gesture();
         self.zoom = zoom.clamp(ZOOM_MIN, ZOOM_MAX);
         self.pending_center = Some(center);
@@ -128,8 +128,8 @@ impl App {
         let ppp = ctx.pixels_per_point();
         let center = self.visible_document_center(ppp);
         let zoom = match action {
-            ViewAction::ZoomIn => 2.0_f32.powf((self.zoom.log2() + 1e-5).floor() + 1.0),
-            ViewAction::ZoomOut => 2.0_f32.powf((self.zoom.log2() - 1e-5).ceil() - 1.0),
+            ViewAction::ZoomIn => paintcraft_ui::actions::stepped_zoom(self.zoom, true),
+            ViewAction::ZoomOut => paintcraft_ui::actions::stepped_zoom(self.zoom, false),
             ViewAction::ActualSize => 1.0,
             ViewAction::Double => 2.0,
             ViewAction::Quadruple => 4.0,

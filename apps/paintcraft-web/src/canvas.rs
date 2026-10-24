@@ -9,6 +9,7 @@ use paintcraft_tools::{Preview, PreviewRevision, Tool};
 pub(crate) struct Canvas {
     texture: Option<TextureHandle>,
     fitted: bool,
+    pending_center: Option<(f32, f32)>,
     key: Option<(Ticket, PreviewRevision)>,
     pub rect: Option<Rect>,
     pub viewport: Vec2,
@@ -108,6 +109,13 @@ impl WebApp {
             clearance,
             |ui, response, painter| {
                 self.canvas.rect = Some(response.rect);
+                if let Some((x, y)) = self.canvas.pending_center.take() {
+                    let center = response.rect.min + Vec2::new(x, y) * self.zoom;
+                    ui.scroll_to_rect(
+                        Rect::from_center_size(center, Vec2::ZERO),
+                        Some(egui::Align::Center),
+                    );
+                }
                 response
                     .widget_info(|| egui::WidgetInfo::labeled(egui::Role::Image, true, "Canvas"));
                 if ui.ctx().current_pass_index() == 0 {
@@ -154,6 +162,8 @@ impl WebApp {
                     ui.ctx()
                         .set_cursor_icon(if self.controls.tool == Tool::Text {
                             egui::CursorIcon::Text
+                        } else if self.controls.tool == Tool::Magnifier {
+                            egui::CursorIcon::ZoomIn
                         } else {
                             egui::CursorIcon::Crosshair
                         });
@@ -305,6 +315,18 @@ impl WebApp {
                         && self.canvas.controls.is_none_or(|rect| !rect.contains(pos))
                         && response.contains_pointer()
                     {
+                        if self.controls.tool == Tool::Magnifier {
+                            let p = point(pos);
+                            self.zoom = paintcraft_ui::actions::stepped_zoom(
+                                self.zoom,
+                                button == PointerButton::Primary,
+                            )
+                            .clamp(0.125, 10.0);
+                            self.canvas.pending_center =
+                                Some((p.0 as f32 / 256.0, p.1 as f32 / 256.0));
+                            ui.ctx().request_repaint();
+                            continue;
+                        }
                         let layer = self.editor.target.unwrap_or(uuid::Uuid::nil());
                         if self.controls.tool == Tool::ColorPicker
                             || self

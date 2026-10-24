@@ -84,6 +84,7 @@ impl App {
         let painter = egui::Painter::new(ui.ctx().clone(), painter.layer_id(), painter.clip_rect());
         let ppp = ui.ctx().pixels_per_point();
         let rect = response.rect;
+        let pending_center = self.pending_center.take();
         self.canvas_rect = Some(rect);
         // The scroll area reserves edge chrome outside its clipped content. Keep
         // viewport metrics and zoom centers tied to that actual drawable region.
@@ -137,7 +138,10 @@ impl App {
                             }
                             egui::PointerButton::Secondary
                                 if self.experience() == Experience::Studio
-                                    || self.editor.tool == Tool::ColorPicker =>
+                                    || matches!(
+                                        self.editor.tool,
+                                        Tool::ColorPicker | Tool::Magnifier
+                                    ) =>
                             {
                                 paintcraft_input::PointerButton::Secondary
                             }
@@ -148,6 +152,18 @@ impl App {
                             && ui.ctx().layer_id_at(pos) == Some(painter.layer_id()))
                             && let Some(d) = view.to_doc_subpixel((pos.x, pos.y))
                         {
+                            if self.editor.tool == Tool::Magnifier {
+                                let zoom = paintcraft_ui::actions::stepped_zoom(
+                                    self.zoom,
+                                    button == paintcraft_input::PointerButton::Primary,
+                                );
+                                self.set_zoom(
+                                    ui.ctx(),
+                                    zoom,
+                                    (d.0 as f32 / 256.0, d.1 as f32 / 256.0),
+                                );
+                                continue;
+                            }
                             // Classic restores the solid canvas ground; Studio removes
                             // pixels. Capture this policy with the rest of the gesture.
                             self.editor.options.eraser_color = match self.experience() {
@@ -199,7 +215,10 @@ impl App {
                             }
                             egui::PointerButton::Secondary
                                 if self.experience() == Experience::Studio
-                                    || self.editor.tool == Tool::ColorPicker =>
+                                    || matches!(
+                                        self.editor.tool,
+                                        Tool::ColorPicker | Tool::Magnifier
+                                    ) =>
                             {
                                 paintcraft_input::PointerButton::Secondary
                             }
@@ -336,7 +355,7 @@ impl App {
         }
         self.draw_overlays(&painter, &view, ppp);
         self.draw_tool_cursor(ui, &painter, visible_canvas, &view, ppp);
-        if let Some((x, y)) = self.pending_center.take() {
+        if let Some((x, y)) = pending_center {
             let center =
                 rect.min + Vec2::new(x * view.points_per_pixel(), y * view.points_per_pixel());
             ui.scroll_to_rect(

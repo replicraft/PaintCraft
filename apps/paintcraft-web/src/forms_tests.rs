@@ -509,3 +509,83 @@ fn stale_browser_resize_preview_closes_without_publication() {
         "Resize and skew preview closed because the document changed."
     );
 }
+
+#[test]
+fn browser_magnifier_zoom_is_view_only_and_preserves_editable_text() {
+    use eframe::egui::{Event, PointerButton, Role};
+    use paintcraft_classic::ClassicVariant;
+    use paintcraft_tools::Tool;
+    use paintcraft_ui::i18n::{Language, set_language, translate};
+    for variant in ClassicVariant::ALL {
+        for language in Language::ALL {
+            let mut h = harness();
+            h.state_mut().variant = variant;
+            set_language(&h.ctx, language);
+            h.state_mut().zoom = 1.0;
+            h.run();
+            let label = |s| translate(language, s);
+            let ticket = h.state().editor.session.ticket();
+            h.get_by_role_and_label(Role::Button, &label("Magnifier"))
+                .click();
+            h.run();
+            assert_eq!(h.state().controls.tool, Tool::Magnifier);
+            for (button, expected) in [
+                (PointerButton::Primary, 2.0),
+                (PointerButton::Secondary, 1.0),
+            ] {
+                let original = h.state().canvas.rect.unwrap();
+                let pos = if button == PointerButton::Primary {
+                    original.min + original.size() * Vec2::new(0.4, 0.42)
+                } else {
+                    original.center()
+                };
+                h.event(Event::PointerMoved(pos));
+                h.event(Event::PointerButton {
+                    pos,
+                    button,
+                    pressed: true,
+                    modifiers: Modifiers::NONE,
+                });
+                h.event(Event::PointerButton {
+                    pos,
+                    button,
+                    pressed: false,
+                    modifiers: Modifiers::NONE,
+                });
+                h.run();
+                assert_eq!(h.state().zoom, expected);
+                if button == PointerButton::Primary {
+                    let mapped = h.state().canvas.rect.unwrap().min + (pos - original.min) * 2.0;
+                    assert!(
+                        (mapped - original.center()).length() < 3.0,
+                        "{mapped:?} vs {:?}",
+                        original.center()
+                    );
+                }
+                assert_eq!(h.state().editor.session.ticket(), ticket);
+                assert!(!h.state().editor.tools.gesture_in_progress());
+            }
+            let layer = h.state().editor.target.unwrap();
+            h.state_mut().editor.tools.begin_text(layer, (40, 50));
+            h.state_mut().editor.tools.type_text("Still editable");
+            h.get_by_role_and_label(Role::Button, &label("Text"))
+                .click();
+            h.run();
+            if variant != ClassicVariant::V11 {
+                h.get_by_role_and_label(Role::Button, &label("Home"))
+                    .click();
+                h.run();
+            }
+            h.get_by_role_and_label(Role::Button, &label("Magnifier"))
+                .click();
+            h.run();
+            h.get_by_role_and_label(Role::Button, &label("Text"))
+                .click();
+            h.run();
+            assert_eq!(h.state().editor.session.ticket(), ticket);
+            assert!(
+                matches!(h.state().editor.tools.preview(), Some(paintcraft_tools::Preview::Text { text, .. }) if text == "Still editable")
+            );
+        }
+    }
+}

@@ -420,7 +420,9 @@ impl Editor {
         self.tools.cancel_text();
     }
     pub fn select_tool(&mut self, tool: Tool) {
-        self.commit_text();
+        if tool != Tool::Magnifier && !(self.tool == Tool::Magnifier && tool == Tool::Text) {
+            self.commit_text();
+        }
         self.cancel_gesture();
         self.tools.choose_tool(tool);
     }

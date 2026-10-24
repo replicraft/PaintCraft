@@ -24,6 +24,7 @@ impl App {
         ui.ctx().set_cursor_icon(match self.editor.tool {
             Tool::Eraser => egui::CursorIcon::None,
             Tool::Text => egui::CursorIcon::Text,
+            Tool::Magnifier => egui::CursorIcon::ZoomIn,
             _ => egui::CursorIcon::Crosshair,
         });
         if self.editor.tool != Tool::Eraser {

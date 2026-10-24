@@ -512,7 +512,7 @@ fn unavailable_image_tools_stay_disabled_while_picker_and_shape_tools_are_enable
     let mut h = harness();
     let before = h.state().editor().document_snapshot();
     let canvas = h.state().canvas_rect();
-    for label in ["Crop", "Remove background", "Magnifier"] {
+    for label in ["Crop", "Remove background"] {
         assert!(
             h.get_by_label(label).accesskit_node().is_disabled(),
             "{label}"
