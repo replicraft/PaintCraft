@@ -27,6 +27,7 @@ impl App {
                 || self.editor.has_pending_edits(),
             can_redo: (self.editor.redo_depth() > 0 || self.editor.has_pending_edits())
                 && !pending_text,
+            can_recent: true,
             can_save_all: self.tab_close_wait.is_none()
                 && self.tab_save_close.is_none()
                 && (self.any_dirty_documents()
@@ -175,6 +176,7 @@ impl App {
                     }
                 }
                 Chrome::Open => self.open_requested(ctx),
+                Chrome::RecentFiles => self.begin_recent_files(ctx),
                 Chrome::Save => self.save_requested(ctx),
                 Chrome::SaveAll => self.begin_save_all(ctx),
                 Chrome::SaveAs => self.request_dialog(ctx, Kind::SaveAs),
@@ -292,6 +294,10 @@ impl App {
             return;
         };
         let ctx = ui.ctx().clone();
+        if confirm == Confirm::RecentFiles {
+            self.recent_files_dialog(&ctx);
+            return;
+        }
         if let Confirm::Settings(draft) = confirm {
             self.settings_dialog(&ctx, draft);
             return;
@@ -313,7 +319,7 @@ impl App {
             return;
         }
         let (title, text, go) = match &confirm {
-            Confirm::Settings(_) | Confirm::SwitchInterface(_) | Confirm::Colors(_) | Confirm::Canvas(_) | Confirm::ResizeSkew(_) | Confirm::LayerProperties(_) => unreachable!("properties handled above"),
+            Confirm::RecentFiles | Confirm::Settings(_) | Confirm::SwitchInterface(_) | Confirm::Colors(_) | Confirm::Canvas(_) | Confirm::ResizeSkew(_) | Confirm::LayerProperties(_) => unreachable!("properties handled above"),
             Confirm::DiscardForNew
             | Confirm::DiscardForOpen(_)
             | Confirm::DiscardForRecovery(_)
@@ -394,7 +400,8 @@ impl App {
         match choice {
             Some(Choice::Accept) => {
                 match confirm {
-                    Confirm::Settings(_)
+                    Confirm::RecentFiles
+                    | Confirm::Settings(_)
                     | Confirm::SwitchInterface(_)
                     | Confirm::Colors(_)
                     | Confirm::Canvas(_)

@@ -155,6 +155,7 @@ impl App {
             && let Some(id) = self.tab_bound_to_path(path)
         {
             self.activate_tab(id, &self.context.clone());
+            self.recent.remember(path);
             return Ok(());
         }
         let bytes = std::fs::read(path).map_err(|e| {
@@ -200,6 +201,7 @@ impl App {
         .to_string_lossy()
         .into_owned();
         self.editor.set_status(note);
+        self.recent.remember(path);
         Ok(())
     }
 

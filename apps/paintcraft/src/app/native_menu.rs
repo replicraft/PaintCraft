@@ -82,8 +82,7 @@ impl App {
                 })
                 .collect(),
         };
-        let mut file = paintcraft_ui::actions::FILE.to_vec();
-        file.insert(4, Chrome::SaveAll);
+        let mut file = paintcraft_ui::actions::STUDIO_FILE.to_vec();
         file.insert(file.len() - 1, Chrome::ImageProperties);
         let wake = ctx.clone();
         let image = image_actions();

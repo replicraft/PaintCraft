@@ -224,7 +224,16 @@ fn content(ui: &mut egui::Ui, context: Context, actions: &mut Vec<Action>, pane:
     ui.separator();
     match pane {
         Pane::Recent => {
-            ui.add(egui::Label::new(t!(ui.ctx(), "Recent files are not available yet.")).wrap());
+            if context.can_recent {
+                if paintcraft_ui::actions::menu_item(ui, Action::RecentFiles, context) {
+                    actions.push(Action::RecentFiles);
+                    ui.close();
+                }
+            } else {
+                ui.add(
+                    egui::Label::new(t!(ui.ctx(), "Recent files are not available yet.")).wrap(),
+                );
+            }
         }
         Pane::SaveAs => {
             for format in ImageExport::ALL {

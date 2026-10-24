@@ -32,6 +32,11 @@ impl App {
             && settings.classic_variant.is_none())
         .then_some(ClassicVariant::DEFAULT);
         self.settings = settings;
+        let opened = self.recent.entries.clone();
+        self.recent = recent::History::load(dir.clone());
+        for path in opened.iter().rev() {
+            self.recent.remember(path);
+        }
         self.settings_dir = Some(dir);
         self
     }

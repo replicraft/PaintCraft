@@ -269,6 +269,7 @@ impl App {
         snapshot: &paintcraft_document::Document,
         adopted: Option<Uuid>,
     ) {
+        self.recent.remember(path);
         let current = self.active_tab_id();
         if adopted != Some(current)
             && self

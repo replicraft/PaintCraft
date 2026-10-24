@@ -14,6 +14,7 @@ pub use view::{VIEW, ViewAction, WORKSPACE_VIEW, ZOOM_MAX, ZOOM_MIN, stepped_zoo
 pub enum Action {
     New,
     Open,
+    RecentFiles,
     Save,
     SaveAs,
     SaveAll,
@@ -59,6 +60,7 @@ pub struct Context {
     pub document_open: bool,
     pub can_undo: bool,
     pub can_redo: bool,
+    pub can_recent: bool,
     pub can_save_all: bool,
     pub selection_active: bool,
     pub tool: Tool,
@@ -87,6 +89,7 @@ pub struct Descriptor {
 pub const FILE: &[Action] = &[
     Action::New,
     Action::Open,
+    Action::RecentFiles,
     Action::Save,
     Action::SaveAs,
     Action::Export,
@@ -95,6 +98,7 @@ pub const FILE: &[Action] = &[
 pub const STUDIO_FILE: &[Action] = &[
     Action::New,
     Action::Open,
+    Action::RecentFiles,
     Action::Save,
     Action::SaveAs,
     Action::SaveAll,
@@ -128,6 +132,7 @@ impl Action {
             Self::Layer(_) | Self::View(_) => unreachable!(),
             Self::New => ("New", Some((Key::N, false))),
             Self::Open => ("Open…", Some((Key::O, false))),
+            Self::RecentFiles => ("Recent files", None),
             Self::Save => ("Save", Some((Key::S, false))),
             Self::SaveAs => ("Save as…", Some((Key::S, true))),
             Self::SaveAll => ("Save All", None),
@@ -284,6 +289,7 @@ impl Action {
             | Self::CanvasDefaults
             | Self::Settings
             | Self::ChooseFrontend(_) => true,
+            Self::RecentFiles => ctx.can_recent,
             Self::SaveAll => ctx.document_open && ctx.can_save_all,
             Self::Undo => ctx.document_open && ctx.can_undo,
             Self::Redo => ctx.document_open && ctx.can_redo,
@@ -342,6 +348,7 @@ impl Action {
             Self::View(action) => action.activation_code(),
             Self::New => 1000,
             Self::Open => 1001,
+            Self::RecentFiles => 1025,
             Self::Save => 1002,
             Self::SaveAs => 1003,
             Self::SaveAll => 1024,
@@ -665,6 +672,7 @@ mod tests {
             document_open: false,
             can_undo: true,
             can_redo: true,
+            can_recent: false,
             can_save_all: true,
             selection_active: true,
             tool: Tool::Brush,
@@ -753,5 +761,7 @@ mod tests {
     }
 }
 
+#[cfg(test)]
+mod recent_tests;
 #[cfg(test)]
 mod save_all_tests;

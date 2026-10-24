@@ -100,6 +100,7 @@ impl WebApp {
             document_open: true,
             can_undo: self.editor.session.undo_depth() > 0 || self.editor.has_text(),
             can_redo: self.editor.session.redo_depth() > 0,
+            can_recent: false,
             can_save_all: false,
             selection_active: self.editor.session.selection()
                 != paintcraft_editor::execute::Selection::Inactive,

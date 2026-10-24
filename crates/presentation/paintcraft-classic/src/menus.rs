@@ -35,12 +35,7 @@ pub(super) fn file(ui: &mut Ui, context: Context, actions: &mut Vec<Action>) {
                     "Scanner and camera acquisition is not available yet.",
                 );
             });
-            unavailable_submenu(
-                ui,
-                "Recent",
-                Icon::Recent,
-                "Recent files are not available yet.",
-            );
+            action(ui, context, actions, Action::RecentFiles, "Recent");
             ui.separator();
             action(ui, context, actions, Action::Save, "Save");
             submenu(ui, "Save as", Icon::SaveAs, |ui| {

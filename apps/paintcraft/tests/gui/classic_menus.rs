@@ -62,7 +62,7 @@ fn classic_file_and_edit_reference_previews_are_disabled_without_changing_docume
     let before = h.state().editor().document_snapshot();
     let history = h.state().editor().history_view().ticket;
     file(&mut h);
-    for label in ["Recent", "Share", "Set as desktop background"] {
+    for label in ["Share", "Set as desktop background"] {
         assert!(
             h.get_by_role_and_label(Role::Button, "File")
                 .get_by_label(label)
@@ -93,7 +93,7 @@ fn classic_file_and_edit_reference_previews_are_disabled_without_changing_docume
 }
 
 #[test]
-fn classic_file_previews_have_distinct_icons_and_disabled_submenu_markers() {
+fn classic_file_rows_keep_distinct_icons_and_unavailable_submenu_markers() {
     use eframe::egui::epaint::Shape;
     use paintcraft::settings::{Appearance, ClassicVariant, Settings};
     for (ppp, appearance) in [(1.0, Appearance::Light), (2.0, Appearance::Dark)] {
@@ -136,7 +136,10 @@ fn classic_file_previews_have_distinct_icons_and_disabled_submenu_markers() {
                 textures.insert(texture),
                 "{label} must have its own artwork"
             );
-            if matches!(label, "Recent" | "Set as desktop background") {
+            if label == "Recent" {
+                assert!(!row.accesskit_node().is_disabled());
+            }
+            if label == "Set as desktop background" {
                 assert!(row.accesskit_node().is_disabled());
                 assert!(h.output().shapes.iter().any(|shape| matches!(&shape.shape,
                     Shape::Path(path) if path.points.len() == 3

@@ -38,6 +38,8 @@ mod native_menu;
 mod pan_tool;
 #[path = "app/preferences.rs"]
 mod preferences;
+#[path = "app/recent.rs"]
+mod recent;
 #[path = "app/recovery.rs"]
 mod recovery;
 #[path = "app/rendering.rs"]
@@ -133,6 +135,7 @@ enum Confirm {
     Colors(colors::ColorDraft),
     Canvas(canvas_settings::CanvasDraft),
     ResizeSkew(resize_skew::Draft),
+    RecentFiles,
     LayerProperties(layers::PropertiesDraft),
     DiscardForNew,
     DiscardForOpen(PathBuf),
@@ -252,6 +255,7 @@ pub struct App {
     last_autosave: f64,
     allow_close: bool,
     settings_dir: Option<PathBuf>,
+    recent: recent::History,
     settings: Settings,
     /// The variant highlighted in the first-visit picker.
     picking: Option<ClassicVariant>,
@@ -363,6 +367,7 @@ impl App {
             last_autosave: 0.0,
             allow_close: false,
             settings_dir: None,
+            recent: Default::default(),
             settings: Settings::default(),
             picking: None,
             applied_variant: None,

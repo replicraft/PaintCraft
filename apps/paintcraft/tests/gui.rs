@@ -408,3 +408,6 @@ mod fit_toggle;
 
 #[path = "gui/save_all.rs"]
 mod save_all;
+
+#[path = "gui/recent.rs"]
+mod recent;

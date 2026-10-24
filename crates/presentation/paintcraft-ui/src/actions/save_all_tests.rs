@@ -41,6 +41,7 @@ fn save_all_requires_a_modified_document_and_an_unblocked_studio_workspace() {
     let context = Context {
         frontend: Frontend::Studio,
         document_open: true,
+        can_recent: false,
         can_save_all: true,
         can_undo: false,
         can_redo: false,

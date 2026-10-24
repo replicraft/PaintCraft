@@ -185,6 +185,7 @@ mod tests {
             document_open: true,
             can_undo: false,
             can_redo: false,
+            can_recent: false,
             can_save_all: false,
             selection_active: true,
             tool: paintcraft_tools::Tool::Pencil,
