@@ -7,6 +7,7 @@ mod history;
 mod properties;
 pub use properties::{LayerProperties, PropertiesResponse, layer_properties_dialog};
 mod image_menu;
+pub mod layout;
 mod shapes;
 mod tabs;
 mod toolbar;

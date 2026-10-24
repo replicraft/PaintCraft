@@ -16,7 +16,11 @@ pub fn floating_controls(
         .enabled(enabled)
         .resizable(false)
         .auto_sized()
-        .default_pos(egui::pos2(12.0, workspace.canvas_top.max(150.0)))
+        .default_pos(crate::layout::position(
+            ctx,
+            "studio-tools",
+            egui::pos2(12.0, workspace.canvas_top.max(150.0)),
+        ))
         .constrain_to(egui::Rect::from_min_max(
             egui::pos2(ctx.viewport_rect().left(), workspace.canvas_top),
             ctx.viewport_rect().max,
@@ -63,7 +67,11 @@ pub fn floating_controls(
         .resizable(false)
         .default_width(310.0)
         .max_width(340.0)
-        .default_pos(egui::pos2(12.0, 500.0))
+        .default_pos(crate::layout::position(
+            ctx,
+            "studio-colors",
+            egui::pos2(12.0, 500.0),
+        ))
         .constrain_to(egui::Rect::from_min_max(
             egui::pos2(ctx.viewport_rect().left(), workspace.canvas_top),
             ctx.viewport_rect().max,
@@ -92,9 +100,10 @@ pub fn layers_window(
         ))
         .open(open)
         .default_width(240.0)
-        .default_pos(egui::pos2(
-            (ctx.viewport_rect().right() - 260.0).max(170.0),
-            360.0,
+        .default_pos(crate::layout::position(
+            ctx,
+            "studio-layers",
+            egui::pos2((ctx.viewport_rect().right() - 260.0).max(170.0), 360.0),
         ))
         .show(ctx, contents);
 }

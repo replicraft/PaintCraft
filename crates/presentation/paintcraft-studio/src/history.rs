@@ -19,7 +19,7 @@ pub fn history_window(
     let mut selected = None;
     egui::Window::new(t!(ctx, "History")).id(egui::Id::unique("studio-history"))
         .open(open).default_width(240.0).default_height(160.0)
-        .default_pos(egui::pos2((ctx.viewport_rect().right()-260.0).max(170.0),top.max(150.0)))
+        .default_pos(crate::layout::position(ctx, "studio-history", egui::pos2((ctx.viewport_rect().right()-260.0).max(170.0),top.max(150.0))))
         .constrain_to(egui::Rect::from_min_max(egui::pos2(ctx.viewport_rect().left(),top),ctx.viewport_rect().max))
         .show(ctx,|ui| {
             if trimmed > 0 { ui.label(t!(ui.ctx(), "{ $count } oldest history step(s) were dropped to stay within the memory budget.", &[("count", trimmed.to_string())])); }
