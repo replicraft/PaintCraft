@@ -361,8 +361,8 @@
                 "items": {
                   "type": "object",
                   "properties": {
-                    "x": {"type": "integer", "minimum": -140737488355327, "maximum": 140737488355327},
-                    "y": {"type": "integer", "minimum": -140737488355327, "maximum": 140737488355327}
+                    "x": {"type": "integer", "minimum": -36028797018963712, "maximum": 36028797018963712},
+                    "y": {"type": "integer", "minimum": -36028797018963712, "maximum": 36028797018963712}
                   },
                   "required": ["x", "y"],
                   "additionalProperties": false
@@ -381,6 +381,20 @@
               }
             },
             "required": ["op", "layer_ref", "points", "color", "mode", "size", "brush"],
+            "allOf": [
+              {
+                "if": {"properties": {"point_scale": {"const": 256}}, "required": ["point_scale"]},
+                "then": {"properties": {"brush": {"not": {"enum": ["round", "square"]}}}},
+                "else": {"properties": {"points": {"items": {"properties": {
+                  "x": {"minimum": -140737488355327, "maximum": 140737488355327},
+                  "y": {"minimum": -140737488355327, "maximum": 140737488355327}
+                }}}}}
+              },
+              {
+                "if": {"properties": {"brush": {"enum": ["calligraphy-brush", "calligraphy-pen", "airbrush", "oil", "crayon", "marker", "natural-pencil", "watercolor"]}}, "required": ["brush"]},
+                "then": {"properties": {"mode": {"const": "source-over"}}}
+              }
+            ],
             "additionalProperties": false
           },
           {

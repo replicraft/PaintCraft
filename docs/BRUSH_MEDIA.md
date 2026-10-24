@@ -46,3 +46,9 @@ project/export round trips and browser preview-to-publication pixel identity.
 The frozen sequential benchmark executor rejects the newly added media and
 retains the original algorithms for existing benchmark fixtures; its manifest
 records this compatibility-only change.
+
+The published CLI schema also enforces each medium's blend and fixed-point rules.
+An independent JSON Schema validator and actual CLI apply processes agreed on all
+330 combinations of brush, point scale, mode and coordinate boundary in the local
+qualification matrix. The raw matrix is under
+`docs/validation/editor-finishing-2026-10-24/brush-schema-matrix.json` (ignored).

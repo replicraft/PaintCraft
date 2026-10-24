@@ -10,7 +10,7 @@ no claim of parity with a captured Windows Paint build or measured performance.
 
 Integer points identify pixel centres `(x + 0.5, y + 0.5)`, for odd and even sizes.
 The additive v2 `point_scale: 256` option records exact document positions in
-1/256-pixel units for `smooth-round` only, without a center offset. Omitted
+1/256-pixel units for `smooth-round` and the [textured brush media](BRUSH_MEDIA.md), without a center offset. Omitted
 `point_scale` and an explicit value of 1 retain historical integer semantics.
 Desktop round brush input preserves subpixel movement at every canvas zoom and
 display scale. Pencil, square brushes, eraser, shapes and selections retain
@@ -99,3 +99,10 @@ change. At 4000 samples the corresponding result was 488.92 + 89.71 ms versus
 35.10 + 2.40 ms. These are local diagnostic samples, not full-window frame latency
 or the roadmap's statistical benchmark qualification. Native GPU rendering still
 uses the existing readback path; incremental tile uploads remain future work.
+
+## Gallery media and preview scheduling follow-up
+
+All nine brush media are now available in Classic, Studio, web and CLI batches;
+see [coverage, limits and qualification](BRUSH_MEDIA.md). Growing shape previews
+now retain in-flight progress within the same owner/style/view, with exact latest
+frame convergence and stale-owner rejection. See [shape scheduling](SHAPE_PREVIEWS.md).
