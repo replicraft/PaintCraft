@@ -9,14 +9,13 @@ Current task/capability status is maintained in [the roadmap ledger](ROADMAP_STA
 and [backend progress](BACKEND_PROGRESS.md). The earlier differences, unqualified
 baselines and backlog below are historical notes, not the current capability inventory.
 
-## Interactive test restriction
+## Interactive validation
 
-The user has requested that testing must not open application windows or interrupt
-other desktop work until they explicitly allow it. Use the window-free egui test
-harness and ordinary build/unit/lint checks. Do not launch the desktop executable,
-native window smoke tests, interactive file dialogs or screenshot-preview runs
-without that permission. Native/GPU/window evidence from earlier passes remains
-historical evidence, not validation of subsequent changes.
+The user reauthorized application-window launches on 2026-10-23. Native window,
+GPU and dialog reviews may run when needed; ordinary GUI tests remain window-free.
+Use isolated settings/recovery directories for native review so testing does not
+change the user's workspace. Record native/GPU evidence with its source revision
+and scope; earlier captures do not validate later changes automatically.
 
 ## Workspace boundaries
 
