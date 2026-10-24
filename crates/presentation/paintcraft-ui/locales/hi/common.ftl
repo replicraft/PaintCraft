@@ -279,3 +279,9 @@ selection-bounds-unavailable = चयन की सीमाएँ उपलब�
 move-selection = चयन खिसकाएँ
 when-moving-a-selection-skip-pixels-whose-rgb-matches-color-2-alpha-is-ignored = चयन को खिसकाते समय रंग 2 से मेल खाने वाले RGB पिक्सेल छोड़ें; अल्फ़ा को अनदेखा किया जाता है।
 finish-moving-the-selection-before-opening-saving-or-exporting-a-file = फ़ाइल खोलने, सहेजने या निर्यात करने से पहले चयन को खिसकाना पूरा करें
+
+finish-the-current-edit-before-copying = कॉपी करने से पहले वर्तमान संपादन पूरा करें।
+there-are-no-selected-pixels-to-copy = कॉपी करने के लिए कोई पिक्सेल चयनित नहीं हैं।
+copying-to-clipboard-more = क्लिपबोर्ड पर कॉपी हो रहा है…
+copied-to-clipboard = क्लिपबोर्ड पर कॉपी किया गया।
+clipboard-copy-failed = क्लिपबोर्ड पर कॉपी करना विफल हुआ

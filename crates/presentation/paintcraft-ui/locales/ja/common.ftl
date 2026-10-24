@@ -279,3 +279,9 @@ selection-bounds-unavailable = 選択範囲の境界を取得できません
 move-selection = 選択範囲を移動
 when-moving-a-selection-skip-pixels-whose-rgb-matches-color-2-alpha-is-ignored = 選択範囲を移動するとき、RGB が色 2 と一致するピクセルを除外します。アルファ値は無視されます。
 finish-moving-the-selection-before-opening-saving-or-exporting-a-file = ファイルを開く、保存する、書き出す前に選択範囲の移動を完了してください
+
+finish-the-current-edit-before-copying = コピーする前に現在の編集を完了してください。
+there-are-no-selected-pixels-to-copy = コピーする選択ピクセルがありません。
+copying-to-clipboard-more = クリップボードにコピー中…
+copied-to-clipboard = クリップボードにコピーしました。
+clipboard-copy-failed = クリップボードへのコピーに失敗しました

@@ -279,3 +279,9 @@ selection-bounds-unavailable = Auswahlgrenzen nicht verfügbar
 move-selection = Auswahl verschieben
 when-moving-a-selection-skip-pixels-whose-rgb-matches-color-2-alpha-is-ignored = Beim Verschieben einer Auswahl werden Pixel übersprungen, deren RGB-Wert Farbe 2 entspricht; Alpha wird ignoriert.
 finish-moving-the-selection-before-opening-saving-or-exporting-a-file = Schließe das Verschieben der Auswahl ab, bevor du eine Datei öffnest, speicherst oder exportierst
+
+finish-the-current-edit-before-copying = Beenden Sie die aktuelle Bearbeitung vor dem Kopieren.
+there-are-no-selected-pixels-to-copy = Es sind keine Pixel zum Kopieren ausgewählt.
+copying-to-clipboard-more = Wird in die Zwischenablage kopiert…
+copied-to-clipboard = In die Zwischenablage kopiert.
+clipboard-copy-failed = Kopieren in die Zwischenablage fehlgeschlagen

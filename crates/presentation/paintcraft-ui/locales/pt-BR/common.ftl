@@ -279,3 +279,9 @@ selection-bounds-unavailable = Limites da seleção indisponíveis
 move-selection = Mover seleção
 when-moving-a-selection-skip-pixels-whose-rgb-matches-color-2-alpha-is-ignored = Ao mover uma seleção, ignore os pixels cujo RGB corresponde à Cor 2; o alfa é ignorado.
 finish-moving-the-selection-before-opening-saving-or-exporting-a-file = Conclua a movimentação da seleção antes de abrir, salvar ou exportar um arquivo
+
+finish-the-current-edit-before-copying = Conclua a edição atual antes de copiar.
+there-are-no-selected-pixels-to-copy = Não há pixels selecionados para copiar.
+copying-to-clipboard-more = Copiando para a área de transferência…
+copied-to-clipboard = Copiado para a área de transferência.
+clipboard-copy-failed = Falha ao copiar para a área de transferência

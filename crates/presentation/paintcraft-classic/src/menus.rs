@@ -101,6 +101,10 @@ pub(super) fn edit(ui: &mut Ui, context: Context, actions: &mut Vec<Action>) {
                 ("Paste", Icon::Paste, Key::V, false),
                 ("Copy visible layers", Icon::CopyMerged, Key::C, true),
             ] {
+                if label == "Copy" {
+                    action(ui, context, actions, Action::Copy, label);
+                    continue;
+                }
                 if shift {
                     ui.separator();
                 }
@@ -121,6 +125,9 @@ pub(super) fn edit(ui: &mut Ui, context: Context, actions: &mut Vec<Action>) {
             // Preserve existing working PaintCraft commands below the reference entries.
             ui.separator();
             for &item in paintcraft_ui::actions::EDIT {
+                if item == Action::Copy {
+                    continue;
+                }
                 action(ui, context, actions, item, item.descriptor().label);
             }
         });

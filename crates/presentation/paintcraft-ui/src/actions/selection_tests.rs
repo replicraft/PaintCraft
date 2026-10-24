@@ -150,3 +150,50 @@ fn mask_erasure_does_not_advertise_unsupported_crop_or_transforms() {
         }));
     }
 }
+
+#[test]
+fn copy_requires_a_visible_target_and_nonempty_field_and_shares_the_command_shortcut() {
+    for frontend in [Frontend::Classic, Frontend::Studio] {
+        let context = Context {
+            layer_index: Some(0),
+            layer_count: 1,
+            layer_visible: true,
+            ..context(frontend)
+        };
+        assert!(Action::Copy.enabled(context));
+        assert!(!Action::Copy.enabled(Context {
+            layer_visible: false,
+            ..context
+        }));
+        assert!(!Action::Copy.enabled(Context {
+            layer_index: None,
+            ..context
+        }));
+        assert!(!Action::Copy.enabled(Context {
+            blocked: true,
+            ..context
+        }));
+        assert!(!Action::Copy.enabled(Context {
+            document_open: false,
+            ..context
+        }));
+        assert!(!Action::Copy.enabled(Context {
+            selection_active: true,
+            can_crop_selection: false,
+            ..context
+        }));
+        assert!(Action::Copy.enabled(Context {
+            selection_active: true,
+            can_crop_selection: true,
+            ..context
+        }));
+        assert_eq!(
+            Action::from_shortcut_for(frontend, Key::C, Modifiers::COMMAND),
+            Some(Action::Copy)
+        );
+        assert_ne!(
+            Action::from_shortcut_for(frontend, Key::C, Modifiers::COMMAND | Modifiers::SHIFT),
+            Some(Action::Copy)
+        );
+    }
+}

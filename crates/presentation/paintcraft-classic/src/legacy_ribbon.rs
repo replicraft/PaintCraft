@@ -35,18 +35,23 @@ pub(super) fn show(
                         });
                         ui.vertical(|ui| {
                             for (caption, icon) in [("Cut", Icon::Cut), ("Copy", Icon::Copy)] {
-                                ui.add_enabled(
-                                    false,
+                                let response = ui.add_enabled(
+                                    caption == "Copy" && Action::Copy.enabled(context),
                                     egui::Button::new((
                                         paintcraft_ui::icons::legacy_image(ui.ctx(), icon, 14.0),
                                         t!(ui.ctx(), caption),
                                     ))
                                     .frame_when_inactive(false),
-                                )
-                                .on_disabled_hover_text(t!(
-                                    ui.ctx(),
-                                    "Canvas clipboard operations are not available yet.",
-                                ));
+                                );
+                                if response.clicked() {
+                                    actions.push(Action::Copy);
+                                }
+                                if caption != "Copy" {
+                                    response.on_disabled_hover_text(t!(
+                                        ui.ctx(),
+                                        "Canvas clipboard operations are not available yet."
+                                    ));
+                                }
                             }
                         });
                     });

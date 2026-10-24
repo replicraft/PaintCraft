@@ -279,3 +279,9 @@ selection-bounds-unavailable = 无法获取选区边界
 move-selection = 移动选区
 when-moving-a-selection-skip-pixels-whose-rgb-matches-color-2-alpha-is-ignored = 移动选区时，跳过 RGB 与颜色 2 匹配的像素；忽略透明度。
 finish-moving-the-selection-before-opening-saving-or-exporting-a-file = 请先完成选区移动，再打开、保存或导出文件
+
+finish-the-current-edit-before-copying = 复制前请完成当前编辑。
+there-are-no-selected-pixels-to-copy = 没有可复制的选中像素。
+copying-to-clipboard-more = 正在复制到剪贴板…
+copied-to-clipboard = 已复制到剪贴板。
+clipboard-copy-failed = 复制到剪贴板失败
