@@ -37,6 +37,7 @@ pub struct Settings {
     pub classic_status_bar: bool,
     pub classic_rulers: bool,
     pub classic_toolbar_auto_hide: bool,
+    pub studio_overscroll: bool,
 }
 
 impl Default for Settings {
@@ -52,6 +53,7 @@ impl Default for Settings {
             classic_status_bar: true,
             classic_rulers: false,
             classic_toolbar_auto_hide: false,
+            studio_overscroll: true,
         }
     }
 }
@@ -133,6 +135,11 @@ fn parse(bytes: &[u8]) -> Result<Settings, String> {
             .ok_or("unknown language")?,
     };
     Ok(Settings {
+        studio_overscroll: match v.get("studio_overscroll") {
+            None => true,
+            Some(Value::Bool(value)) => *value,
+            Some(_) => return Err("invalid Studio overscroll preference".into()),
+        },
         language,
         appearance,
         classic_toolbar_auto_hide: match v.get("classic_toolbar_auto_hide") {
@@ -202,6 +209,7 @@ impl Settings {
             ("language", Value::str(self.language.id())),
             ("classic_status_bar", Value::Bool(self.classic_status_bar)),
             ("classic_rulers", Value::Bool(self.classic_rulers)),
+            ("studio_overscroll", Value::Bool(self.studio_overscroll)),
             (
                 "classic_toolbar_auto_hide",
                 Value::Bool(self.classic_toolbar_auto_hide),
@@ -240,6 +248,22 @@ mod tests {
         ));
         fs::create_dir_all(&d).unwrap();
         d
+    }
+
+    #[test]
+    fn studio_overscroll_migrates_checks_types_and_roundtrips_disabled() {
+        let old = parse(br#"{"schema":"paintcraft.settings/v2","experience":"studio"}"#).unwrap();
+        assert!(old.studio_overscroll);
+        assert!(parse(br#"{"schema":"paintcraft.settings/v2","experience":"studio","studio_overscroll":"false"}"#).is_err());
+        let dir = scratch("overscroll");
+        let settings = Settings {
+            experience: Experience::Studio,
+            studio_overscroll: false,
+            ..Default::default()
+        };
+        settings.save(&dir).unwrap();
+        assert_eq!(Settings::load(&dir), (settings, Loaded::Ok));
+        fs::remove_dir_all(dir).unwrap();
     }
 
     #[test]

@@ -64,11 +64,12 @@ impl App {
                     self.paint_canvas(ui, response, painter, first_pass, controls)
                 },
             ),
-            Experience::Studio => paintcraft_studio::canvas::canvas_for_scope(
+            Experience::Studio => paintcraft_studio::canvas::canvas_for_profile(
                 ui,
                 id,
                 self.studio_pan_scope(ui.ctx()),
                 canvas_size,
+                self.settings.studio_overscroll,
                 |ui, response, painter| {
                     self.paint_canvas(ui, response, painter, first_pass, controls)
                 },

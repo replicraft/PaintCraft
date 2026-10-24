@@ -898,3 +898,7 @@ zoom-tool = ズームツール
 drag-an-area-to-zoom-in-right-click-to-zoom-out = 範囲をドラッグして拡大 · 右クリックで縮小
 pan-tool = パンツール
 drag-to-pan-hold-space-to-pan-with-another-tool = ドラッグで移動 · 他のツールではスペースキーを押しながらドラッグ
+user-interface = ユーザーインターフェイス
+canvas-navigation = キャンバスの操作
+scroll-past-the-edge-of-the-image-overscroll = 画像の端を越えてスクロールする（オーバースクロール）
+move-small-images-halfway-offscreen-and-large-image-edges-to-the-viewport-center = 小さい画像は半分が画面の外に出るまで、大きい画像は端が表示領域の中央に来るまで移動できます。

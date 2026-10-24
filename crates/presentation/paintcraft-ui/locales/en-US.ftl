@@ -898,3 +898,7 @@ zoom-tool = Zoom tool
 drag-an-area-to-zoom-in-right-click-to-zoom-out = Drag an area to zoom in · Right-click to zoom out
 pan-tool = Pan tool
 drag-to-pan-hold-space-to-pan-with-another-tool = Drag to pan · Hold Space to pan with another tool
+user-interface = User Interface
+canvas-navigation = Canvas navigation
+scroll-past-the-edge-of-the-image-overscroll = Scroll past the edge of the image (overscroll)
+move-small-images-halfway-offscreen-and-large-image-edges-to-the-viewport-center = Move small images halfway offscreen and large image edges to the viewport center.

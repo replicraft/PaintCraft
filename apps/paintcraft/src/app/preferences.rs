@@ -6,6 +6,7 @@ use paintcraft_ui::icons::Icon;
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 enum Page {
     Appearance,
+    Interface,
     Canvas,
     Text,
 }
@@ -182,14 +183,18 @@ impl App {
 fn navigation(ui: &mut egui::Ui, current: &mut Page, sidebar: bool, classic: bool) {
     for (page, label, icon) in [
         (Page::Appearance, "Appearance", Icon::Settings),
+        (Page::Interface, "User Interface", Icon::Settings),
         (Page::Canvas, "Canvas", Icon::CanvasSize),
         (Page::Text, "Text preferences", Icon::Text),
     ] {
+        if classic && page == Page::Interface {
+            continue;
+        }
         let localized_label = tr(ui.ctx(), label);
         let label = localized_label.as_str();
         let image = if classic {
             match page {
-                Page::Appearance => paintcraft_ui::icons::classic_menu_image(
+                Page::Appearance | Page::Interface => paintcraft_ui::icons::classic_menu_image(
                     ui.ctx(),
                     icon,
                     22.0,
@@ -254,6 +259,10 @@ fn content(
             .max_height(height).auto_shrink([false, false]).show(ui, |ui| {
                 match draft.page {
                     Page::Appearance => appearance(ui, &mut draft.values),
+                    Page::Interface => card(ui, "Canvas navigation", |ui| {
+                        ui.checkbox(&mut draft.values.studio_overscroll, tr(ui.ctx(), "Scroll past the edge of the image (overscroll)"));
+                        ui.label(tr(ui.ctx(), "Move small images halfway offscreen and large image edges to the viewport center."));
+                    }),
                     Page::Canvas => canvas(ui, &mut draft.values.canvas, classic),
                     Page::Text => card(ui, "Text editing", |ui| {
                         ui.label(tr(ui.ctx(), "Default font"));
