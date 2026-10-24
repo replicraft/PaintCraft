@@ -33,6 +33,57 @@ pub enum Action<Id> {
     Delete,
 }
 
+/// Apply within the host's scoped Classic panel; Studio keeps its own metrics.
+pub fn style(ui: &mut egui::Ui) {
+    crate::form_controls::style(ui);
+    for text in [egui::TextStyle::Body, egui::TextStyle::Button] {
+        ui.style_mut()
+            .text_styles
+            .insert(text, egui::FontId::proportional(16.0));
+    }
+    ui.style_mut().drag_value_text_style = egui::TextStyle::Body;
+    ui.spacing_mut().interact_size.y = if ui.available_height() < 320.0 {
+        32.0
+    } else {
+        40.0
+    };
+    ui.spacing_mut().icon_width = 20.0;
+    ui.spacing_mut().icon_width_inner = 12.0;
+}
+
+/// Compact panels retain room for the list and both property editors.
+pub fn property_height(ui: &egui::Ui) -> f32 {
+    if ui.ctx().content_rect().height() < 650.0 {
+        32.0
+    } else {
+        40.0
+    }
+}
+
+/// Align property captions without taking ownership of their editor drafts.
+pub fn property_label(ui: &mut egui::Ui, label: &str) -> egui::Response {
+    let font = egui::TextStyle::Body.resolve(ui.style());
+    let width = ["Layer name", "Opacity"]
+        .into_iter()
+        .map(|text| {
+            ui.painter()
+                .layout_no_wrap(text.to_owned(), font.clone(), ui.visuals().text_color())
+                .size()
+                .x
+        })
+        .fold(72.0, f32::max)
+        .ceil();
+    ui.allocate_ui_with_layout(
+        Vec2::new(width, property_height(ui)),
+        Layout::left_to_right(Align::Center),
+        |ui| {
+            ui.set_width(width);
+            ui.label(label)
+        },
+    )
+    .inner
+}
+
 /// Rows are supplied topmost first. Reserve room below the list for the host's
 /// name/opacity editors; scrolling must not push those controls off the panel.
 pub fn panel<Id: Copy + Eq + Hash + std::fmt::Debug>(
@@ -87,10 +138,11 @@ pub fn panel<Id: Copy + Eq + Hash + std::fmt::Debug>(
         }
     });
     ui.separator();
-    let height = (ui.available_height() - 120.0).max(40.0);
+    let height = (ui.available_height() - 160.0).max(40.0);
     egui::ScrollArea::vertical()
         .id_salt("classic-layer-list")
         .max_height(height)
+        .min_scrolled_height(40.0)
         .auto_shrink([false, false])
         .show(ui, |ui| {
             ui.spacing_mut().item_spacing.y = 6.0;

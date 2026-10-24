@@ -155,6 +155,42 @@ fn long_layer_names_keep_classic_properties_fixed_and_have_one_full_name_tooltip
         });
         let field = h.get_by_label("Layer name").rect();
         let opacity = h.get_by_label("Opacity").rect();
+        let height = if size.y < 650.0 { 32.0 } else { 40.0 };
+        assert_eq!(field.height(), height);
+        assert_eq!(opacity.height(), height);
+        assert!((field.left() - opacity.left()).abs() < 0.1);
+        assert!(
+            opacity.bottom() <= size.y - 40.0,
+            "properties stay above the status bar: {opacity:?}"
+        );
+        fn caption_font(shape: &Shape, caption: &str) -> Option<f32> {
+            match shape {
+                Shape::Text(text) if text.galley.job.text == caption => {
+                    Some(text.galley.job.sections[0].format.font_id.size)
+                }
+                Shape::Vec(children) => children
+                    .iter()
+                    .find_map(|shape| caption_font(shape, caption)),
+                _ => None,
+            }
+        }
+        for caption in ["Layer name", "Opacity"] {
+            assert_eq!(
+                h.output()
+                    .shapes
+                    .iter()
+                    .find_map(|shape| caption_font(&shape.shape, caption)),
+                Some(16.0),
+                "{caption} uses the Classic body font"
+            );
+        }
+        let global = h.ctx.style_of(h.ctx.theme());
+        assert_ne!(
+            global.text_styles[&eframe::egui::TextStyle::Body].size,
+            16.0,
+            "panel metrics must stay scoped"
+        );
+
         let name = "Long_layer_name_".repeat(60);
         h.get_by_label("Layer name").focus();
         h.run();
@@ -338,6 +374,9 @@ fn classic_layer_rows_use_neutral_selected_surfaces_and_keep_native_input() {
         h.run();
         assert_eq!(h.state().editor().target(), top);
         assert_eq!(h.get_by_role_and_label(Role::Button, "Layer 2").rect(), row);
+        h.get_by_role_and_label(Role::Button, "Background")
+            .scroll_to_me();
+        h.run();
         h.get_by_role_and_label(Role::Button, "Background").click();
         h.run();
         assert_eq!(h.state().editor().target(), Some(bottom));
@@ -348,6 +387,9 @@ fn classic_layer_rows_use_neutral_selected_surfaces_and_keep_native_input() {
                 .toggled(),
             Some(eframe::egui::accesskit::Toggled::False)
         );
+        h.get_by_role_and_label(Role::Button, "Layer 2")
+            .scroll_to_me();
+        h.run();
         h.get_by_role_and_label(Role::Button, "Layer 2").focus();
         h.run();
         h.key_press(Key::Space);

@@ -62,12 +62,21 @@ impl App {
 
     pub(super) fn layer_panel(&mut self, ui: &mut egui::Ui) {
         ui.push_id(("document-layers", self.active_tab_id()), |ui| {
-            self.layer_controls(ui)
+            if self.experience() == Experience::Classic {
+                ui.scope(|ui| {
+                    paintcraft_classic::layers::style(ui);
+                    self.layer_controls(ui);
+                });
+            } else {
+                self.layer_controls(ui);
+            }
         });
     }
 
     fn layer_controls(&mut self, ui: &mut egui::Ui) {
         let ctx = ui.ctx().clone();
+        let classic = self.experience() == Experience::Classic;
+        let property_height = paintcraft_classic::layers::property_height(ui);
         if self.document_count() == 0 {
             ui.label("No document open");
             return;
@@ -141,7 +150,11 @@ impl App {
             other => other.insert((t, name.clone())),
         };
         ui.horizontal(|ui| {
-            let label = ui.label("Layer name");
+            let label = if classic {
+                paintcraft_classic::layers::property_label(ui, "Layer name")
+            } else {
+                ui.label("Layer name")
+            };
             let field_id = ui.scope_id().with(("layer-name", t));
             let focused = ui.memory(|memory| memory.has_focus(field_id));
             let cancel = focused
@@ -151,18 +164,22 @@ impl App {
             if cancel {
                 buf.1.clone_from(&name);
             }
-            let r = ui
-                .add(
-                    egui::TextEdit::singleline(&mut buf.1)
-                        .id(field_id)
-                        .event_filter(egui::EventFilter {
-                            horizontal_arrows: true,
-                            vertical_arrows: true,
-                            escape: true,
-                            ..Default::default()
-                        }),
-                )
-                .labelled_by(label.id);
+            let editor = egui::TextEdit::singleline(&mut buf.1)
+                .id(field_id)
+                .event_filter(egui::EventFilter {
+                    horizontal_arrows: true,
+                    vertical_arrows: true,
+                    escape: true,
+                    ..Default::default()
+                });
+            let editor = if classic {
+                editor
+                    .min_size(Vec2::new(0.0, property_height))
+                    .align(egui::Align2::LEFT_CENTER)
+            } else {
+                editor
+            };
+            let r = ui.add(editor).labelled_by(label.id);
             if cancel {
                 r.surrender_focus();
             } else if r.lost_focus() {
@@ -184,7 +201,11 @@ impl App {
             other => other.insert((t, opacity)),
         };
         ui.horizontal(|ui| {
-            let label = ui.label("Opacity");
+            let label = if classic {
+                paintcraft_classic::layers::property_label(ui, "Opacity")
+            } else {
+                ui.label("Opacity")
+            };
             let field_id = ui.next_auto_id();
             let focused = ui.memory(|memory| memory.has_focus(field_id));
             let cancel_id = field_id.with("opacity-cancel-frame");
@@ -197,13 +218,15 @@ impl App {
                 obuf.1 = opacity;
                 ui.memory_mut(|memory| memory.surrender_focus(field_id));
             }
-            let r = ui
-                .add(
-                    egui::DragValue::new(&mut obuf.1)
-                        .range(0..=255)
-                        .update_while_editing(false),
-                )
-                .labelled_by(label.id);
+            let editor = egui::DragValue::new(&mut obuf.1)
+                .range(0..=255)
+                .update_while_editing(false);
+            let editor = if classic {
+                editor.min_size(Vec2::new(ui.available_width(), property_height))
+            } else {
+                editor
+            };
+            let r = ui.add(editor).labelled_by(label.id);
             if cancel {
                 obuf.1 = opacity;
                 r.surrender_focus();
