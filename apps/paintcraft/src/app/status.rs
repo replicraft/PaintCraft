@@ -10,7 +10,11 @@ impl App {
                 if self.experience() == Experience::Classic {
                     let size = Vec2::new(
                         ui.available_width(),
-                        paintcraft_classic::status::height(ui, self.document_count() > 0),
+                        paintcraft_classic::status::height_for_skin(
+                            ui,
+                            self.variant(),
+                            self.document_count() > 0,
+                        ),
                     );
                     return Some(ui.allocate_space(size).1);
                 }
@@ -87,8 +91,9 @@ impl App {
                     pointer: self.hover_doc,
                     selection,
                 };
-                let actions = paintcraft_classic::status::contents(
+                let actions = paintcraft_classic::status::contents_for_skin(
                     ui,
+                    self.variant(),
                     model,
                     self.action_context(),
                     egui::Id::unique(self.active_tab_id()),

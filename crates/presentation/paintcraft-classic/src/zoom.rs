@@ -21,7 +21,7 @@ struct Draft {
     text: String,
 }
 
-fn percent(text: &str) -> Option<u32> {
+pub(super) fn percent(text: &str) -> Option<u32> {
     let value: f32 = text.trim().trim_end_matches('%').trim().parse().ok()?;
     (value.is_finite() && (12.5..=1000.0).contains(&value)).then(|| (value * 100.0).round() as u32)
 }

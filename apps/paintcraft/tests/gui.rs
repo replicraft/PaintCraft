@@ -345,6 +345,8 @@ mod language;
 
 #[path = "gui/legacy_skins.rs"]
 mod legacy_skins;
+#[path = "gui/legacy_status.rs"]
+mod legacy_status;
 
 #[path = "gui/screenshots.rs"]
 mod screenshots;

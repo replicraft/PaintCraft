@@ -390,7 +390,7 @@ impl WebApp {
             .show(ui, |ui| {
                 let size = egui::vec2(
                     ui.available_width(),
-                    paintcraft_classic::status::height(ui, true),
+                    paintcraft_classic::status::height_for_skin(ui, self.variant, true),
                 );
                 ui.allocate_space(size).1
             })
@@ -414,8 +414,9 @@ impl WebApp {
                     paintcraft_editor::execute::Selection::Empty => Some((0, 0)),
                     paintcraft_editor::execute::Selection::Inactive => None,
                 });
-            let actions = paintcraft_classic::status::contents(
+            let actions = paintcraft_classic::status::contents_for_skin(
                 ui,
+                self.variant,
                 paintcraft_classic::status::Status {
                     message: &tr_status(ui.ctx(), &self.message),
                     recovery: None,

@@ -6,12 +6,39 @@ use paintcraft_ui::{
     icons::Icon,
 };
 
+mod legacy;
+
 /// Reserve chrome before canvas layout; paint it afterward with current values.
 pub fn height(ui: &egui::Ui, document_open: bool) -> f32 {
     if document_open && ui.available_width() < 860.0 {
         60.0 + ui.spacing().item_spacing.y
     } else {
         30.0
+    }
+}
+
+/// Historical skins retain the slim status strip shown in their references.
+pub fn height_for_skin(ui: &egui::Ui, variant: super::ClassicVariant, document_open: bool) -> f32 {
+    if variant == super::ClassicVariant::V11 {
+        height(ui, document_open)
+    } else if document_open && ui.available_width() < 860.0 {
+        44.0
+    } else {
+        22.0
+    }
+}
+
+pub fn contents_for_skin(
+    ui: &mut egui::Ui,
+    variant: super::ClassicVariant,
+    status: Status<'_>,
+    context: Context,
+    id: egui::Id,
+) -> Vec<Action> {
+    if variant == super::ClassicVariant::V11 {
+        contents(ui, status, context, id)
+    } else {
+        legacy::contents(ui, status, context, id)
     }
 }
 
@@ -36,7 +63,7 @@ pub fn contents(
     let width = ui.available_width();
     let mut actions = Vec::new();
     if status.canvas.is_none() {
-        message(ui, &status, width);
+        message(ui, &status, width, 30.0);
         return actions;
     }
     let narrow = width < 860.0;
@@ -55,8 +82,8 @@ pub fn contents(
         Layout::left_to_right(Align::Center),
         |ui| {
             ui.set_min_size(Vec2::new(width, 30.0));
-            metrics(ui, &status, metrics_width);
-            message(ui, &status, message_width);
+            metrics(ui, &status, metrics_width, 30.0);
+            message(ui, &status, message_width, 30.0);
             if !narrow {
                 actions.extend(super::zoom_controls(ui, context, id));
             }
@@ -75,12 +102,12 @@ pub fn contents(
     actions
 }
 
-fn metrics(ui: &mut egui::Ui, status: &Status<'_>, width: f32) {
+fn metrics(ui: &mut egui::Ui, status: &Status<'_>, width: f32, row_height: f32) {
     ui.allocate_ui_with_layout(
-        Vec2::new(width, 30.0),
+        Vec2::new(width, row_height),
         Layout::left_to_right(Align::Center),
         |ui| {
-            ui.set_min_size(Vec2::new(width, 30.0));
+            ui.set_min_size(Vec2::new(width, row_height));
             ui.spacing_mut().item_spacing.x = 0.0;
             let pointer = status.pointer.map(|(x, y)| format!("{x}, {y} px"));
             let selection = status.selection.map(|(w, h)| format!("{w} × {h} px"));
@@ -112,10 +139,10 @@ fn metrics(ui: &mut egui::Ui, status: &Status<'_>, width: f32) {
             .enumerate()
             {
                 let field = ui.allocate_ui_with_layout(
-                    Vec2::new(width * fraction, 30.0),
+                    Vec2::new(width * fraction, row_height),
                     Layout::left_to_right(Align::Center),
                     |ui| {
-                        ui.set_min_size(Vec2::new(width * fraction, 30.0));
+                        ui.set_min_size(Vec2::new(width * fraction, row_height));
                         ui.spacing_mut().item_spacing.x = 4.0;
                         ui.add_space(4.0);
                         ui.add(paintcraft_ui::icons::classic_status_image(
@@ -156,12 +183,12 @@ fn metrics(ui: &mut egui::Ui, status: &Status<'_>, width: f32) {
     );
 }
 
-fn message(ui: &mut egui::Ui, status: &Status<'_>, width: f32) {
+fn message(ui: &mut egui::Ui, status: &Status<'_>, width: f32, row_height: f32) {
     ui.allocate_ui_with_layout(
-        Vec2::new(width, 30.0),
+        Vec2::new(width, row_height),
         Layout::left_to_right(Align::Center),
         |ui| {
-            ui.set_min_size(Vec2::new(width, 30.0));
+            ui.set_min_size(Vec2::new(width, row_height));
             let mut tip = status.message.to_owned();
             if let Some(recovery) = status.recovery {
                 tip.push('\n');
