@@ -303,6 +303,28 @@
           {
             "type": "object",
             "properties": {
+              "op": {"const": "selection.set_polygon"},
+              "points": {
+                "type": "array", "minItems": 3, "maxItems": 65536,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "x": {"type": "integer", "minimum": -140737488355327, "maximum": 140737488355327},
+                    "y": {"type": "integer", "minimum": -140737488355327, "maximum": 140737488355327}
+                  },
+                  "required": ["x", "y"], "additionalProperties": false
+                }
+              }
+            },
+            "required": ["op", "points"], "additionalProperties": false
+          },
+          {
+            "type": "object", "properties": {"op": {"const": "selection.invert"}},
+            "required": ["op"], "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
               "op": {"const": "selection.clear"}
             },
             "required": ["op"],

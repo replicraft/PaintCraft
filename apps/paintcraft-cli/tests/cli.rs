@@ -113,3 +113,6 @@ mod selection_transform;
 
 #[path = "cli/brush_media.rs"]
 mod brush_media;
+
+#[path = "cli/selection_masks.rs"]
+mod selection_masks;
