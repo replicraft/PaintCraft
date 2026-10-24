@@ -367,3 +367,28 @@ fn mask_selection_unsupported() -> paintcraft_core::types::Error {
         "This operation does not yet support selection masks",
     )
 }
+
+/// Finite even-odd selection in integer document coordinates, without a target layer.
+pub fn selection_polygon(points: &[(i64, i64)]) -> Result<Value> {
+    if !(3..=POINTS_PER_OP).contains(&points.len())
+        || points
+            .iter()
+            .any(|&point| !crate::selection::valid_point(point))
+    {
+        return Err(paintcraft_core::types::Error::new(
+            paintcraft_core::types::ErrorCode::InputSchema,
+            "selection polygon requires 3..=65536 bounded integer points",
+        ));
+    }
+    Ok(Value::object([
+        ("op", Value::str("selection.set_polygon")),
+        (
+            "points",
+            Value::Array(points.iter().copied().map(point).collect()),
+        ),
+    ]))
+}
+
+pub fn invert_selection() -> Value {
+    Value::object([("op", Value::str("selection.invert"))])
+}

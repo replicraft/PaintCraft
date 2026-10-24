@@ -53,6 +53,9 @@ impl ToolState {
         self.append_admitted(at, points, capacity)
     }
     fn append_admitted(&mut self, at: (i64, i64), points: usize, capacity: usize) -> Result<()> {
+        if self.gesture_is_lasso() {
+            return self.append_lasso_admitted(at, points, capacity);
+        }
         if self.construction.is_some() {
             self.append_point(at);
             return Ok(());

@@ -8,6 +8,7 @@ mod geometry;
 mod path_admission;
 mod picker;
 mod preview_revision;
+mod selection;
 #[cfg(feature = "text")]
 pub mod text;
 pub use preview_revision::PreviewRevision;
@@ -124,6 +125,12 @@ impl ToolState {
             if draft.press(layer, self.tool, at, button) {
                 self.preview_revision.advance();
             }
+            return;
+        }
+        if self.tool == Tool::Select
+            && self.options.selection_mode == SelectionMode::FreeForm
+            && !selection::valid_point(at)
+        {
             return;
         }
         if self.gesture.is_some() || !self.tool.supports_button(button) {
@@ -246,6 +253,9 @@ impl ToolState {
             .gesture
             .as_ref()
             .filter(|gesture| gesture.tool == Tool::Select)?;
+        if gesture.options.selection_mode == SelectionMode::FreeForm {
+            return None; // A lasso is not a rectangular selection preview.
+        }
         let (a, b) = geometry::endpoints(gesture.tool, &gesture.points, false);
         let size = paintcraft_core::types::Rect::new(
             a.0.min(b.0),
@@ -300,6 +310,11 @@ impl ToolState {
             | Tool::Polygon
             | Tool::Curve => {
                 return None;
+            }
+            Tool::Select if g.options.selection_mode == SelectionMode::FreeForm => {
+                Preview::SelectionPath {
+                    points: g.points.clone(),
+                }
             }
             Tool::Select => Preview::Marquee {
                 from: first,
@@ -389,6 +404,11 @@ impl ToolState {
     }
 
     fn append_point(&mut self, doc_point: (i64, i64)) {
+        if self.gesture_is_lasso() {
+            // Infallible legacy hosts still discard an oversized path completely.
+            let _ = self.append_lasso_admitted(doc_point, POINTS_PER_OP, POINTS_PER_OP);
+            return;
+        }
         if let Some(draft) = &mut self.construction {
             if draft.move_to(doc_point) {
                 self.preview_revision.advance();
@@ -463,6 +483,12 @@ impl ToolState {
                 color: g.color,
                 tolerance: g.options.tolerance,
             },
+            Tool::Select if g.options.selection_mode == SelectionMode::FreeForm => {
+                if !selection::has_three_vertices(&g.points) {
+                    return None;
+                }
+                Action::SelectPolygon { points: g.points }
+            }
             Tool::Select => Action::Select {
                 corners: Some((first, last)),
             },
