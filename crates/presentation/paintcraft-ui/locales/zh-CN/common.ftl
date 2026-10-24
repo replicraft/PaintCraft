@@ -275,3 +275,7 @@ pan-tool = 平移工具
 drag-to-pan-hold-space-to-pan-with-another-tool = 拖动以平移 · 使用其他工具时按住空格键可平移
 drag-to-pan-space-drag-or-space-arrows-ctrl-space-arrows-moves-faster = 拖动以平移 · 空格键+拖动或空格键+方向键 · Ctrl+空格键+方向键加速移动
 selection-bounds-unavailable = 无法获取选区边界
+
+move-selection = 移动选区
+when-moving-a-selection-skip-pixels-whose-rgb-matches-color-2-alpha-is-ignored = 移动选区时，跳过 RGB 与颜色 2 匹配的像素；忽略透明度。
+finish-moving-the-selection-before-opening-saving-or-exporting-a-file = 请先完成选区移动，再打开、保存或导出文件

@@ -275,3 +275,7 @@ pan-tool = Verschiebewerkzeug
 drag-to-pan-hold-space-to-pan-with-another-tool = Zum Verschieben ziehen · Leertaste gedrückt halten, um mit einem anderen Werkzeug zu verschieben
 drag-to-pan-space-drag-or-space-arrows-ctrl-space-arrows-moves-faster = Zum Verschieben ziehen · Leertaste+Ziehen oder Leertaste+Pfeile · Strg+Leertaste+Pfeile bewegt schneller
 selection-bounds-unavailable = Auswahlgrenzen nicht verfügbar
+
+move-selection = Auswahl verschieben
+when-moving-a-selection-skip-pixels-whose-rgb-matches-color-2-alpha-is-ignored = Beim Verschieben einer Auswahl werden Pixel übersprungen, deren RGB-Wert Farbe 2 entspricht; Alpha wird ignoriert.
+finish-moving-the-selection-before-opening-saving-or-exporting-a-file = Schließe das Verschieben der Auswahl ab, bevor du eine Datei öffnest, speicherst oder exportierst

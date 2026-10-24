@@ -26,4 +26,11 @@ pub(super) fn options(ui: &mut egui::Ui, state: &mut Controls) {
                 t!(ui.ctx(), "Free-form selection"),
             );
         });
+    let label = t!(ui.ctx(), "Transparent selection");
+    let help = t!(
+        ui.ctx(),
+        "When moving a selection, skip pixels whose RGB matches Color 2; alpha is ignored."
+    );
+    ui.checkbox(&mut state.options.transparent_selection, label)
+        .on_hover_text(help);
 }

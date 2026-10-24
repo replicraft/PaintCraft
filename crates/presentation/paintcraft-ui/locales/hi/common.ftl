@@ -275,3 +275,7 @@ pan-tool = दृश्य खिसकाने का औज़ार
 drag-to-pan-hold-space-to-pan-with-another-tool = खिसकाने के लिए खींचें · दूसरे औज़ार के साथ खिसकाने के लिए Space दबाए रखें
 drag-to-pan-space-drag-or-space-arrows-ctrl-space-arrows-moves-faster = खिसकाने के लिए खींचें · Space+खींचें या Space+तीर · Ctrl+Space+तीर से तेज़ खिसकाएँ
 selection-bounds-unavailable = चयन की सीमाएँ उपलब्ध नहीं हैं
+
+move-selection = चयन खिसकाएँ
+when-moving-a-selection-skip-pixels-whose-rgb-matches-color-2-alpha-is-ignored = चयन को खिसकाते समय रंग 2 से मेल खाने वाले RGB पिक्सेल छोड़ें; अल्फ़ा को अनदेखा किया जाता है।
+finish-moving-the-selection-before-opening-saving-or-exporting-a-file = फ़ाइल खोलने, सहेजने या निर्यात करने से पहले चयन को खिसकाना पूरा करें

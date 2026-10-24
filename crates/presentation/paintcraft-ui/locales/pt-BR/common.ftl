@@ -275,3 +275,7 @@ pan-tool = Ferramenta de deslocamento
 drag-to-pan-hold-space-to-pan-with-another-tool = Arraste para deslocar · Segure Espaço para deslocar com outra ferramenta
 drag-to-pan-space-drag-or-space-arrows-ctrl-space-arrows-moves-faster = Arraste para deslocar · Espaço+arrastar ou Espaço+setas · Ctrl+Espaço+setas move mais rápido
 selection-bounds-unavailable = Limites da seleção indisponíveis
+
+move-selection = Mover seleção
+when-moving-a-selection-skip-pixels-whose-rgb-matches-color-2-alpha-is-ignored = Ao mover uma seleção, ignore os pixels cujo RGB corresponde à Cor 2; o alfa é ignorado.
+finish-moving-the-selection-before-opening-saving-or-exporting-a-file = Conclua a movimentação da seleção antes de abrir, salvar ou exportar um arquivo

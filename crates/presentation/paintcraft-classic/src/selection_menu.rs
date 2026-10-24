@@ -104,14 +104,7 @@ fn show_profile(
                         variant,
                     ),
                     Item::Invert => action(ui, Action::InvertSelection, context, actions, variant),
-                    Item::Transparent => unavailable(
-                        ui,
-                        "Transparent selection",
-                        "Transparent selection",
-                        None,
-                        "Transparent selection is not available yet.",
-                        variant,
-                    ),
+                    Item::Transparent => transparent(ui, state, context, variant),
                     Item::SelectAll => action(ui, Action::SelectAll, context, actions, variant),
                     Item::Delete => action(ui, Action::EraseSelection, context, actions, variant),
                     Item::Deselect => action(ui, Action::Deselect, context, actions, variant),
@@ -201,19 +194,34 @@ fn action(
         ui.close();
     }
 }
-fn unavailable(
+fn transparent(
     ui: &mut egui::Ui,
-    label: &str,
-    accessible: &str,
-    icon: Option<Icon>,
-    help: &str,
+    state: &mut Controls,
+    context: Context,
     variant: Option<ClassicVariant>,
 ) {
-    ui.add_enabled_ui(false, |ui| {
-        row(ui, label, accessible, icon, None, None, variant)
-    })
-    .inner
-    .on_disabled_hover_text(t!(ui.ctx(), help));
+    let response = ui
+        .add_enabled_ui(Action::SelectTool(Tool::Select).enabled(context), |ui| {
+            row(
+                ui,
+                "Transparent selection",
+                "Transparent selection",
+                None,
+                Some(state.options.transparent_selection),
+                None,
+                variant,
+            )
+        })
+        .inner;
+    let clicked = response.clicked();
+    response.on_hover_text(t!(
+        ui.ctx(),
+        "When moving a selection, skip pixels whose RGB matches Color 2; alpha is ignored."
+    ));
+    if clicked && ui.ctx().current_pass_index() == 0 {
+        state.options.transparent_selection = !state.options.transparent_selection;
+        ui.close();
+    }
 }
 fn row(
     ui: &mut egui::Ui,
