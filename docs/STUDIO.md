@@ -22,6 +22,7 @@ separately in the dependency choices and is not bundled yet.
 - Centered canvas in both Studio and Classic when the viewport is larger than the document; scrolling and
   actual-pixel zoom retain the common mapping.
 - Zoom tool with click stepping, rectangle-to-viewport fit and text-safe Z shortcut.
+- Pan tool with H, temporary Space-drag, middle-button pan and hand cursors.
 - Shared staged brush previews, CPU/wgpu composition, transactions and undo/redo.
   Open, Save As and Export retain the native file-dialog and preservation paths.
 
@@ -348,6 +349,63 @@ Actual app captures are in `assets/repo/studio-zoom-box-en-US.png`,
 `studio-zoom-result-ja.png`. The English box and Japanese dark result were visually
 inspected, and the English box was reviewed again after the caption correction.
 Raw evidence is retained in ignored `docs/validation/studio-zoom-2026-10-24/`.
-Pan, middle-button navigation, temporary spacebar pan, overscroll and native
-qualification remain unfinished. The browser currently has Classic only; these
+Pan, middle-button navigation and temporary spacebar pan are now implemented as
+documented below. Overscroll and native qualification remain unfinished. The browser currently has Classic only; these
 captures do not establish Studio web parity or complete the Studio roadmap gate.
+
+## Pan tool and temporary navigation (2026-10-24)
+
+Studio's Pan tool now has an original standalone hand SVG, localized labels and
+usage guidance, and the plain `H` shortcut. Dragging moves the view with the pointer.
+Space-drag temporarily pans from other idle tools without changing the selected
+tool; middle-button drag also pans, including while Zoom is selected. Open-hand
+and grabbing cursors distinguish hover from capture. Text fields and editable
+canvas text retain typing ownership, so `H` and Space continue to enter text.
+Switching Text to Pan and back, or losing focus with Pan selected, retains the
+editable draft without placing it.
+
+The workflow reference remains the official
+[Paint.NET View Tools documentation](https://paint.net/doc/latest/ViewTools.html):
+it documents H, temporary Space-drag and middle-button pan from Zoom. Enabling
+middle-button pan across the other idle tools is the current PaintCraft policy;
+exact per-tool/version equivalence is not qualified. No artwork or code was copied
+from that page. The hand vector is original repository-native SVG artwork.
+
+The normalized pan state machine captures logical-screen displacement and its
+owning button. Paint and selection state machines never receive a captured pan's
+pointer events, including extra mouse buttons. Pan and Zoom now share an ordered
+host routing path before ordinary painting. Escape, focus/pointer loss, tool
+changes, document publication and view changes cancel capture. Cancellation stops
+future movement and retains any scroll already performed. Native pan is currently
+bounded by the existing scroll area, so small fitting images do not move.
+
+Queued scroll requests carry document/view scope as well as the tab identity.
+A replaced source or changed view cannot inherit an old pending pan. Independent
+scroll-adapter tests reject stale requests and replace stale queued deltas rather
+than accumulating them into a new scope. Studio's implicit touch-only drag-scroll
+path is disabled so canvas gestures have one owner; native touch/pen behavior and
+multitouch are not qualified by the mouse-input tests.
+
+Validation: the full desktop GUI suite passes 257 ordinary tests (62 explicit
+manual/capture tests ignored). The final focused Pan tests pass after strengthening
+the zoom setup to send complete key-down/key-up pairs. They cover English/Japanese,
+light/dark, DPI 1/2, forced multipass, exact screen displacement, one-frame
+Space-down/drag/Space-up ordering, middle drag under Zoom, foreign mouse buttons,
+unchanged pixels/selection/history and restored tool/cursor state. They also cover
+Escape, focus loss, a real layer publication during capture, tool changes and
+text-preserving H/Space input. Tool tests, 30 ordinary shared UI tests and the
+Studio scroll-adapter tests pass. Workspace check, strict all-target Clippy,
+translation, source-length and whitespace checks pass. All 68 browser library
+tests pass and its release distribution rebuilds; the browser still exposes
+Classic only.
+
+Actual light English and dark Japanese captures are in
+`assets/repo/studio-pan-en-US.png` and `studio-pan-ja.png`. Both were visually
+inspected. Their fixture asserts a scrollable canvas before capturing the active
+Pan tool at 1600 percent with an edited pencil stroke. These captures do not prove
+OS cursor appearance or native Paint.NET parity. Raw logs are retained in ignored
+`docs/validation/studio-pan-2026-10-24/`.
+
+Overscroll, Space-plus-arrow panning, Ctrl-accelerated keyboard pan, automatic
+edge scrolling and per-device/native qualification remain unfinished. This does
+not complete the Studio or browser parity gates.

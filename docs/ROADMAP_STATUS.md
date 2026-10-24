@@ -15,7 +15,8 @@ See [Classic follow-up](CLASSIC_FOLLOWUP.md).
 Studio now exposes its own Zoom tool with `Z`, click stepping and a transient
 rectangle that fits the dragged document area into the viewport. It preserves
 pixels/selection/history and editable text, with cancellation on source/view
-changes. Pan, overscroll and full reference qualification remain unfinished.
+changes. Pan now includes H, temporary Space-drag and middle-button dragging. Overscroll
+and full reference qualification remain unfinished.
 See [Studio workflow and evidence](STUDIO.md).
 
 
