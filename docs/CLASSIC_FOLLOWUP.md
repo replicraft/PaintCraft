@@ -49,14 +49,16 @@ feature roadmap or claim native Paint parity.
 - Windows 7/10 now use dedicated compact Home/View ribbons instead of the v11
   menu arrangement. Clipboard, Image, Tools, Shapes and Colors follow the supplied
   reference grouping; brushes have separate primary and dropdown interactions.
-  Size lives in Shapes, with line-width samples and a custom numeric entry.
+  Brushes and Size occupy their own ribbon columns, with line-width samples
+  and a custom numeric entry in Size.
 - Historical colors use side-by-side square Color 1/Color 2 wells, exactly ten
   custom palette slots and a rainbow rectangle for Edit Colors. Their seven-column
   shape gallery uses small blue outlines. Windows 7 has its blue application menu,
   pale ribbon gradient and gold selection treatment; Windows 10 has a flat gray
   ribbon and blue selections.
 - Historical status strips are 22 points tall, with a compact percentage entry,
-  circular minus/plus controls and a blue slider thumb. Their zoom actions and
+  circular minus/plus controls. Windows 7 uses a silver grip thumb in its light
+  theme; Windows 10 retains its blue thumb. Their zoom actions and
   slider/touch handling retain shared editor behavior. Windows 11 keeps its own
   status presentation.
 - Updated the actual offscreen captures in `assets/repo/classic-windows-7.png`
@@ -193,3 +195,35 @@ Raw logs are in `docs/validation/historical-file-panels-2026-10-24/` (ignored).
 Actual OS picker interactions, live browser download/persistence behavior, native
 Windows parity and a full native Japanese language review are not established by
 these host tests and offscreen captures.
+
+## Windows 7 reference refinement
+
+Compared the larger `windows7/microsoft_paint.webp` reference and the detailed
+`mspaint7-corner.png` against fresh offscreen editor captures. The historical
+ribbon now has separate Tools, Brushes, Shapes and Size columns, a shorter group
+footer and correctly positioned Select/Brushes disclosure triangles. The six
+small tools sit in a bordered tray. Historical tool, selection, resize and rotate
+artwork uses separate scalable SVGs instead of the modern icon sheet.
+
+Windows 7 light-mode Pencil, shape and Color 1 selections use a glossy gold
+surface with an inset highlight. The application button has a white menu glyph,
+the selected Home/View tab meets the pale ribbon, the workspace is blue-gray and
+the status zoom thumb is silver. Desktop and browser use the same skin-specific
+workspace color. The canvas retains the requested centered placement. Windows 11
+keeps its own ribbon and icon sources; Windows 10 shares the historical group and
+artwork corrections but retains its flat selection treatment.
+
+The updated `assets/repo/classic-windows-7.png` and
+`assets/repo/classic-windows-10.png` are real editor renders. OS window chrome is
+outside those captures. This is a closer presentation baseline, not a claim of
+pixel-exact Windows 7 parity: remaining historical artwork, gallery scroll-button
+styling, popup details and native platform differences still need comparison.
+
+Validation for this refinement: all 235 regular native GUI tests passed, with 49
+opt-in captures ignored. The five focused historical UI tests also passed,
+covering English/Japanese, light/dark themes and both display scales. Native
+all-target Clippy passed with warnings denied; the WebAssembly target checked
+and the browser release distribution rebuilt successfully. Both refreshed
+historical screenshots were rendered offscreen and the Windows 7 capture was
+visually compared with the supplied references. Translation, source-length and
+whitespace checks passed. This does not qualify native Windows rendering parity.
