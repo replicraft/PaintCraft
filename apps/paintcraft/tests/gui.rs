@@ -346,6 +346,8 @@ mod language;
 #[path = "gui/legacy_file.rs"]
 mod legacy_file;
 
+#[path = "gui/legacy_colors.rs"]
+mod legacy_colors;
 #[path = "gui/legacy_dropdowns.rs"]
 mod legacy_dropdowns;
 #[path = "gui/legacy_palette.rs"]

@@ -52,7 +52,8 @@ impl App {
                 .set_status("Color was not applied: the source document or color changed.");
             return;
         }
-        let result = paintcraft_classic::edit_colors_dialog(ctx, &mut draft.editor);
+        let result =
+            paintcraft_classic::edit_colors_dialog_for_skin(ctx, self.variant(), &mut draft.editor);
         if ctx.current_pass_index() != 0 {
             return;
         }

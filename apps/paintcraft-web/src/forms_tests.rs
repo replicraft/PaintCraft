@@ -1,6 +1,9 @@
 use crate::WebApp;
 use eframe::egui::{Key, Modifiers, Vec2};
-use egui_kittest::{Harness, kittest::Queryable};
+use egui_kittest::{
+    Harness,
+    kittest::{NodeT, Queryable},
+};
 use paintcraft_core::types::Rgba;
 
 fn harness() -> Harness<'static, WebApp> {
@@ -302,6 +305,81 @@ fn historical_browser_palette_targets_secondary_and_stages_custom_slot_adoption(
                     .session
                     .document()
                     .same_semantics(&snapshot)
+            );
+            assert_eq!(h.state().editor.session.ticket(), ticket);
+        }
+    }
+}
+
+#[test]
+fn historical_browser_color_dialog_has_hsl_luminosity_and_staged_acceptance() {
+    use eframe::egui::Role;
+    use paintcraft_classic::ClassicVariant;
+    use paintcraft_ui::i18n::{Language, set_language, translate};
+    for variant in [ClassicVariant::V7, ClassicVariant::V10] {
+        for language in Language::ALL {
+            let mut h = harness();
+            h.state_mut().variant = variant;
+            set_language(&h.ctx, language);
+            h.run();
+            let label = |s| translate(language, s);
+            let ticket = h.state().editor.session.ticket();
+            let original = Rgba([17, 93, 157, 255]);
+            h.state_mut().controls.primary = original;
+            h.run();
+            h.get_by_label(&label("Edit colors…")).click();
+            h.run();
+            h.run_steps(6);
+            h.get_by_label(&label("OK")).click();
+            h.run();
+            assert_eq!(
+                h.state().controls.primary,
+                original,
+                "Opening/accepting must not quantize untouched RGB through the HSL grid"
+            );
+            h.get_by_label(&label("Edit colors…")).click();
+            h.run();
+            for (name, value) in [("Hue", 80.0), ("Saturation", 240.0), ("Luminosity", 120.0)] {
+                h.get_by_role_and_label(Role::SpinButton, &label(name))
+                    .set_value_accesskit(value);
+                h.run();
+            }
+            assert_eq!(
+                h.get_by_role_and_label(Role::SpinButton, &label("Green"))
+                    .accesskit_node()
+                    .numeric_value(),
+                Some(255.0)
+            );
+            h.get_by_role_and_label(Role::Slider, &label("Luminosity"))
+                .set_value_accesskit(240.0);
+            h.run();
+            for name in ["Red", "Green", "Blue"] {
+                assert_eq!(
+                    h.get_by_role_and_label(Role::SpinButton, &label(name))
+                        .accesskit_node()
+                        .numeric_value(),
+                    Some(255.0)
+                );
+            }
+            h.get_by_label(&label("Cancel")).click();
+            h.run();
+            assert_eq!(h.state().controls.primary, original);
+            h.get_by_label(&label("Edit colors…")).click();
+            h.run();
+            for (name, value) in [("Hue", 160.0), ("Saturation", 240.0), ("Luminosity", 120.0)] {
+                h.get_by_role_and_label(Role::SpinButton, &label(name))
+                    .set_value_accesskit(value);
+                h.run();
+            }
+            h.get_by_label(&label("Add custom color")).click();
+            h.run();
+            assert!(h.state().workspace.custom_colors[0].is_none());
+            h.get_by_label(&label("OK")).click();
+            h.run();
+            assert_eq!(h.state().controls.primary, Rgba([0, 0, 255, 255]));
+            assert_eq!(
+                h.state().workspace.custom_colors[0],
+                Some(Rgba([0, 0, 255, 255]))
             );
             assert_eq!(h.state().editor.session.ticket(), ticket);
         }
