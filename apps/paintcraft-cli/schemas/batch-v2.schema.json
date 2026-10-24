@@ -402,7 +402,7 @@
                 ]
               },
               "kind": {
-                "enum": ["line", "rect", "ellipse"]
+                "enum": ["line", "rect", "ellipse", "rounded-rect", "triangle", "right-triangle", "diamond", "pentagon", "hexagon", "right-arrow", "left-arrow", "up-arrow", "down-arrow", "four-point-star", "five-point-star", "six-point-star", "rectangular-callout", "oval-callout", "cloud-callout", "heart", "lightning"]
               },
               "from": {
                 "type": "object",

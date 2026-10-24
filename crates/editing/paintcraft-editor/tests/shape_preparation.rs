@@ -57,7 +57,10 @@ fn enormous_admitted_ellipse_commits_exact_clipped_pixels_and_recorded_history()
 }
 #[test]
 fn cancelled_shape_rows_discard_logical_prefix_before_decoded_admission() {
-    for kind in [ShapeKind::Rect, ShapeKind::Ellipse] {
+    for kind in [ShapeKind::Rect, ShapeKind::Ellipse]
+        .into_iter()
+        .chain(paintcraft_core::types::shapes::ShapePreset::ALL.map(ShapeKind::Preset))
+    {
         let doc = new_document(300, 300, Some(Rgba([31, 63, 127, 0])), 0, POLICY).unwrap();
         let id = doc.roots[0];
         let batch = batch(

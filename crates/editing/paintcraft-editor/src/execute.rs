@@ -250,9 +250,26 @@ impl Stage<'_> {
         color: Rgba,
         mode: Mode,
     ) -> Result<()> {
+        let Some(set) = self.stroke_spans(id, points, size, round)? else {
+            return Ok(());
+        };
+        let mut plan = self.adm.paint_plan();
+        set.visit_spans(self.check, |span| {
+            self.add_paint_spans(id, &[span], color, mode, &mut plan)
+        })?;
+        self.apply_paint(id, &plan)
+    }
+
+    fn stroke_spans(
+        &mut self,
+        id: Uuid,
+        points: &[(i64, i64)],
+        size: u32,
+        round: bool,
+    ) -> Result<Option<CheckedSpanSet>> {
         self.charge_stroke(points, size, 1)?;
         let Some(clip) = self.editable(&self.doc.layers[&id]) else {
-            return Ok(());
+            return Ok(None);
         };
         let n = i64::from(size);
         let reach = Rect {
@@ -267,11 +284,7 @@ impl Stage<'_> {
                 set.add_stamp(x, y, n, round, &clip, self.check)
             })?;
         }
-        let mut plan = self.adm.paint_plan();
-        set.visit_spans(self.check, |span| {
-            self.add_paint_spans(id, &[span], color, mode, &mut plan)
-        })?;
-        self.apply_paint(id, &plan)
+        Ok(Some(set))
     }
 
     fn run(&mut self, index: usize, op: &Op) -> Result<()> {
@@ -532,6 +545,27 @@ impl Stage<'_> {
                     .zip(height)
                     .and_then(|(w, h)| Rect::new(x0, y0, w, h))
                     .ok_or_else(|| Error::new(ErrorCode::InputSchema, "shape box overflows"))?;
+                if let ShapeKind::Preset(preset) = kind {
+                    let contour = shape::presets::contour(*preset, &bbox)?;
+                    let mut plan = self.adm.paint_plan();
+                    if let Some(c) = fill {
+                        let mut emit =
+                            |span| self.add_paint_spans(id, &[span], *c, *mode, &mut plan);
+                        if width == Some(1) || height == Some(1) {
+                            shape::visit_filled(Figure::Rect, &bbox, &clip, self.check, &mut emit)?;
+                        } else {
+                            shape::visit_polygon(&contour, &clip, self.check, &mut emit)?;
+                        }
+                    }
+                    if let Some((c, size)) = stroke
+                        && let Some(set) = self.stroke_spans(id, &contour, *size, true)?
+                    {
+                        set.visit_spans(self.check, |span| {
+                            self.add_paint_spans(id, &[span], *c, *mode, &mut plan)
+                        })?;
+                    }
+                    return self.apply_paint(id, &plan);
+                }
                 let fig = if *kind == ShapeKind::Rect {
                     Figure::Rect
                 } else {

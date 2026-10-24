@@ -14,6 +14,7 @@ pub mod policy;
 
 pub mod coordinates;
 
+pub mod shapes;
 pub mod text;
 
 pub mod storage;

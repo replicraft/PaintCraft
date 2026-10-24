@@ -11,8 +11,11 @@ use std::collections::HashMap;
 use paintcraft_core::types::{Error, ErrorCode, Rect, Result};
 mod checked;
 mod ellipse;
+mod polygon;
+pub mod presets;
 mod stroke_budget;
 pub use checked::{CheckedSpanSet, DEFAULT_STROKE_SCRATCH_BYTES};
+pub use polygon::visit_polygon;
 
 /// Inclusive horizontal run on absolute row `y`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]

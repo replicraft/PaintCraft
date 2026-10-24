@@ -64,6 +64,7 @@ pub enum ShapeKind {
     Line,
     Rect,
     Ellipse,
+    Preset(paintcraft_core::types::shapes::ShapePreset),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -318,7 +319,11 @@ fn op(v: &Value, version: u8) -> Result<Op> {
                     Some("line") => ShapeKind::Line,
                     Some("rect") => ShapeKind::Rect,
                     Some("ellipse") => ShapeKind::Ellipse,
-                    _ => return Err(bad("kind must be line, rect or ellipse")),
+                    Some(name) => ShapeKind::Preset(
+                        paintcraft_core::types::shapes::ShapePreset::from_command_name(name)
+                            .ok_or_else(|| bad("unknown shape kind"))?,
+                    ),
+                    _ => return Err(bad("shape kind must be a string")),
                 },
                 from: point(&o["from"])?,
                 to: point(&o["to"])?,

@@ -469,6 +469,12 @@ impl Stage<'_> {
                     let (color, size) = stroke.expect("validated at parse time");
                     return self.stroke(id, &[*from, *to], size, true, color, *mode);
                 }
+                if matches!(kind, ShapeKind::Preset(_)) {
+                    return Err(Error::new(
+                        ErrorCode::CapabilityUnsupported,
+                        "historical benchmark oracle supports only line, rectangle and ellipse",
+                    ));
+                }
                 let Some(clip) = self.editable(&self.doc.layers[&id]) else {
                     return Ok(());
                 };
