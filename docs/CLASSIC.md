@@ -1219,3 +1219,33 @@ The actual editor filename is shown with bounded text and one full-name tooltip.
 A new regression reproduced unchanged OK expanding a cropped layer and dirtying a clean native file. The shared dimension host now skips requests when dimensions are unchanged, covering Image properties and Canvas size. A valid fixture with a 1000×486 canvas and 32×16 layer stays semantically identical and clean. Backend command schemas and resize policy are unchanged.
 
 All 207 ordinary GUI tests pass (43 opt-in tests ignored), together with 23 shared UI tests, stale-source coverage for both dialogs and a native-menu identity/accelerator unit check. Tests cover one publication from each menu/shortcut path, preserved outside pixels, undo/redo, repeated light desktop 1x/dark 360×260 2x layouts, cancellation, fixed controls, bounded filenames, one tooltip, missing-metadata states and modal text/backspace isolation. Strict workspace Clippy, formatting and source lengths pass. Eight actual-App Wgpu scenes were generated from the committed source; four representative final light/dark desktop/compact captures were archived and reviewed. Logs and hashes are recorded in `docs/validation/image-properties-gpu-2026-10-23/validation.json`. Live OS menu activation, complete file/DPI/color metadata, physical units, monochrome conversion, exact current native Properties fidelity and full T15 acceptance remain incomplete.
+
+### Ribbon alignment, compact quick bar and browser presentation (2026-10-23)
+
+The Layers target now follows the measured vertical center of the Colors row,
+matching the color editor button while retaining its 44-point glyph, 60-point
+hit target and hover/selected surfaces. The v11 quick bar is 36 points tall
+(32 on short windows), and the additional File/Edit/View gaps are 6 points.
+The zoom rail now fills blue from its left edge to underneath the thumb;
+logarithmic input, accessibility values and history isolation are unchanged.
+
+All 207 ordinary GUI tests pass, with 43 opt-in tests ignored. The actual-App
+Wgpu exporter generated 12 scenes; the reviewed wide light/dark captures are
+archived with logs in
+[the validation record](validation/classic-ribbon-web-preview-2026-10-23/validation.json).
+Workspace all-target Clippy, formatting, source lengths and whitespace checks pass.
+
+`apps/paintcraft-web` now reuses the real Classic presentation, bundled Selawik,
+SVGs, canvas view and zoom controls in a standalone WebAssembly **UI preview**.
+Its release bundle started in an isolated headless Brave session without uncaught
+JavaScript exceptions; settings and dark-to-light switching were exercised and
+captured. A host UI test and strict wasm32 Clippy also pass. The canvas is blank:
+browser drawing, documents, history, file handling, workers and recovery remain
+unconnected, with an explicit preview banner and unsupported-action feedback.
+See [browser build and scope](../apps/paintcraft-web/README.md).
+
+Tablet-specific support remains incomplete on desktop: the shared `PenSample`
+contract has pressure/tilt fields, but native acquisition and brush propagation
+are not connected. Ordinary pointer events are the current drawing path.
+T15 remains partial; this web scaffold does not satisfy T22 browser conformance,
+Windows fidelity, physical tablet or cross-browser/device qualification.

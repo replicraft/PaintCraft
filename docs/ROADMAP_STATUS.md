@@ -11,6 +11,19 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest Classic polish aligns Layers with the measured Colors row, reduces the
+quick-bar height and menu gaps, and fills the zoom rail blue up to the thumb.
+All 207 ordinary GUI tests pass; light/dark actual-App GPU captures were reviewed.
+A separate `apps/paintcraft-web` WebAssembly **UI preview** now starts in a served
+browser bundle with the shared Classic chrome and theme/skin/zoom controls.
+Host UI tests, strict workspace/wasm32 Clippy and release bundling pass; real
+headless Brave startup/settings/theme interactions were captured. Drawing and
+browser document/file services are unconnected. Tablet pressure/tilt acquisition
+and rendering are also unfinished. See [the scoped evidence](validation/classic-ribbon-web-preview-2026-10-23/validation.json)
+and [web build/next slices](../apps/paintcraft-web/README.md). T15 stays partial;
+T22 conformance remains not-started because its fixtures/interruption gates have
+not been implemented by this presentation scaffold.
+
 Latest Classic Properties work enables File → Image properties and Ctrl/Cmd+E,
 with real undoable pixel dimensions and staged cancellation. Resolution/physical
 units and monochrome conversion remain unavailable. Unchanged OK no longer

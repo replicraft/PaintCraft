@@ -41,6 +41,11 @@ The ordinary UI test runs without opening a browser or native window. Compiling
 to WebAssembly and testing the shared view on the host do not establish browser
 compatibility; a served bundle still needs live browser review.
 
+A 2026-10-23 local review built the optimized bundle and exercised startup,
+settings and dark-to-light switching in isolated headless Brave. The screenshots,
+commands and scope limits are recorded in [the validation evidence](../../docs/validation/classic-ribbon-web-preview-2026-10-23/validation.json).
+This single-browser smoke check does not establish cross-browser conformance.
+
 ## Next browser slices
 
 1. Connect a bounded document/session and the shared tools, preserving identical

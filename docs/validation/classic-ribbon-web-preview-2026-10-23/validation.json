@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-23",
+  "source_commit": "b2367572d6f1e175b9759c276699f763eb4bb563",
+  "desktop_ui_commit": "6452558235500f51cba7c6d48befecc89ee2ae86",
+  "reference": "User-supplied Paint ribbon screenshot in the 2026-10-23 conversation; no complete native parity claim.",
+  "scope": "Measured palette/Layers vertical alignment, 36-point normal v11 quick bar (32 on short displays), reduced extra menu gaps from 12 to 6 points, and blue logarithmic zoom trailing fill. Separate WebAssembly Classic UI preview; no connected browser document/editor services.",
+  "checks": {
+    "desktop_gui": "207 passed, 43 opt-in tests ignored. Existing history/pointer/zoom checks retained; alignment and blue fill geometry asserted.",
+    "desktop_gpu": "Actual-App Wgpu exporter passed and produced 12 scenes. Two wide light/dark captures reviewed and archived.",
+    "web_ui": "1 host UI test passed: shared alignment, truthful unsupported Save and Layers messages, and theme switching.",
+    "wasm": "Locked wasm32 check and strict target Clippy passed; release build plus matching wasm-bindgen 0.2.129 bundle succeeded.",
+    "browser": "Isolated headless Brave at 1360x900, localhost HTTP, --enable-unsafe-webgpu --use-angle=metal. Startup loading overlay hid and WebHandle existed with no uncaught JS exceptions; actual settings click and dark-to-light change captured and reviewed. navigator.gpu exists; this is not a document GPU compositor or cross-browser qualification.",
+    "workspace_clippy": "all-targets -D warnings passed; preceding thumbnail adapter test updated for the chunks_exact_to_as_chunks lint.",
+    "render": "10 library tests passed.",
+    "static": "Formatting, source-length policy and diff whitespace checks passed."
+  },
+  "remaining": [
+    "Browser drawing, session/commands/history, import/export/save/recovery/text and worker/resource adapters remain unconnected. UI preview banner and unsupported-action feedback are explicit.",
+    "No native pen sample acquisition or brush pressure/tilt propagation exists. PenSample is a contract only; ordinary tablet pointer drawing does not establish tablet-specific support.",
+    "T15 stays partial. T22 browser conformance remains not-started: this UI scaffold does not implement its fixture/interruption acceptance gates.",
+    "No cross-browser/device, real tablet, exact Windows fidelity, OS accessibility or GPU document performance qualification follows."
+  ],
+  "bundle_sha256": {
+    "index.html": "2e89e6fe1e59e5006ef7bd8136905e0d731274af939ca59f741d4ff01002ab92",
+    "paintcraft_web.js": "e4a83b7342aa85ee5773c08339caa105bde419d5033ebd1c35a89def01d0db10",
+    "paintcraft_web_bg.wasm": "8fefede6199eb3c7da6499c1863a39d278ddb0aa6a8fb481b83fd123e11cf201"
+  },
+  "sha256": {
+    "browser-dark.png": "9305880828062a99598738a080bd9c78326138eebb911fe34515bb5f1c6be128",
+    "browser-interact.mjs": "863583ff2a6795f82856c5dd675b140527355c28daa369a25291ad1b3b8b7829",
+    "browser-light-settings.png": "00bc83882332e5e40163f4e2aae0f821737f8a30df8477fe261ae6038c799d6a",
+    "browser-settings.log.gz": "dcc850a4935000cd122ab9eb78a062aae9126ebec1b76518f8c2df98ccd0b0df",
+    "browser-smoke.log.gz": "90b04537124bc7c566a7391ffd6e802bf87a6e0208db12df17a9fe9cf4bf86a5",
+    "browser-smoke.mjs": "a65d040987ad231a1dcc55a0af8fee8869bca0c877a1a588baa7c6ad14320df4",
+    "browser-theme.log.gz": "fe2fad93dd015e23d6845a7dc00d3a91b0fc6e09899a721a84da55c7d20d1402",
+    "browser-theme.mjs": "1fc3d0007e3d44452e248c5c5d7de27e30c0da1a40587e24312be15999bff161",
+    "desktop-dark.png": "8f381fae2a6e9ddde20345a50497de2db5c9505a13dc76aa5231d98768f0e800",
+    "desktop-gpu.log.gz": "9228987bb78497765355f8ba3784c612a8fafbe38a4ecf6ee6db642ad29009ea",
+    "desktop-light.png": "043cf15ebb24527e5bd6c90d51df3ec82e249a777be8efc423c5658ea92bae64",
+    "gui.log.gz": "184fe2ae789a868bec9168ec09d53df5ac3621501d0d0c622ccb1f07553ab81d",
+    "render-tests.log.gz": "06ddbc6e4f3b683c58ad8a3e0e4831f2179ceffd6c349a92a2269d13cea5a36f",
+    "wasm-clippy.log.gz": "680676cdbeb859875e2ba04e67028afffa939e750fdf5a9ca473dc00850821ab",
+    "web-build.log.gz": "e295c85de9719170a8c9a3c29e70b39ecbe5d81a8ea75d66df16ac46e631d671",
+    "web-ui-test.log.gz": "d652767638ec77f6447c049a740c46799a1481bd0d76efb1dc1d53a74238bebd",
+    "workspace-clippy.log.gz": "3c01c4c539babfbce9c3d1eb41221527aba563dec3116b5f3e72b26b19ac9405"
+  }
+}
