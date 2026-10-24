@@ -83,6 +83,10 @@ fn malformed_oversized_png_and_invalid_title_do_not_start_a_worker() {
         assert!(service.request(bytes, "test".into(), || {}).is_err());
         assert!(!service.pending());
     }
+    let mut encoded = PNG.to_vec();
+    encoded.resize(ENCODED_BYTES_MAX + 1, 0);
+    assert!(service.request(encoded, "test".into(), || {}).is_err());
+    assert!(!service.pending());
     let mut oversized = PNG.to_vec();
     oversized[16..20].copy_from_slice(&u32::MAX.to_be_bytes());
     assert!(service.request(oversized, "test".into(), || {}).is_err());
