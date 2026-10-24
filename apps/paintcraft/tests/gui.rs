@@ -350,6 +350,8 @@ mod legacy_file;
 mod legacy_dropdowns;
 #[path = "gui/legacy_palette.rs"]
 mod legacy_palette;
+#[path = "gui/legacy_selection.rs"]
+mod legacy_selection;
 #[path = "gui/legacy_skins.rs"]
 mod legacy_skins;
 #[path = "gui/legacy_status.rs"]

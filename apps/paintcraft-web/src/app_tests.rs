@@ -223,3 +223,82 @@ fn browser_starts_at_the_same_scale_as_zoom_to_window() {
     assert!(h.state().canvas.rect.unwrap().height() < h.state().canvas.viewport.y);
     assert!(h.state().editor.session.document().same_semantics(&source));
 }
+
+#[test]
+fn historical_browser_selection_menu_routes_delete_undo_and_safe_disabled_choices() {
+    use eframe::egui::Role;
+    use paintcraft_classic::ClassicVariant;
+    use paintcraft_core::types::Rgba;
+    use paintcraft_editor::execute::Selection;
+    use paintcraft_tools::Action;
+    use paintcraft_ui::i18n::{Language, set_language, translate};
+    for variant in [ClassicVariant::V7, ClassicVariant::V10] {
+        for language in Language::ALL {
+            let mut h = harness();
+            h.state_mut().variant = variant;
+            set_language(&h.ctx, language);
+            let layer = h.state().editor.target.unwrap();
+            h.state_mut()
+                .editor
+                .apply(Action::Shape {
+                    layer,
+                    tool: Tool::Rect,
+                    from: (0, 0),
+                    to: (15, 15),
+                    stroke: None,
+                    fill: Some(Rgba([12, 34, 56, 255])),
+                })
+                .unwrap();
+            h.run();
+            let label = |s| translate(language, s);
+            let ticket = h.state().editor.session.ticket();
+            h.get_by_role_and_label(Role::Button, &label("Selection options"))
+                .click();
+            h.run();
+            assert!(
+                h.query_by_role_and_label(Role::Label, &label("Selection shapes"))
+                    .is_some()
+            );
+            h.get_by_role_and_label(Role::Button, &label("Free-form selection"))
+                .click();
+            h.run();
+            assert_eq!(h.state().editor.session.ticket(), ticket);
+            assert!(h.query_by_label(&label("Rectangular selection")).is_some());
+            h.get_by_role_and_label(Role::Button, &label("Select all"))
+                .click();
+            h.run();
+            assert!(matches!(
+                h.state().editor.session.selection(),
+                Selection::Rect(_)
+            ));
+            h.get_by_role_and_label(Role::Button, &label("Selection options"))
+                .click();
+            h.run();
+            h.get_by_role_and_label(Role::Button, &label("Delete"))
+                .click();
+            h.run();
+            assert_eq!(
+                h.state().editor.session.document().layers[&layer]
+                    .raster
+                    .get(5, 5),
+                Rgba([255; 4])
+            );
+            h.get_by_role_and_label(Role::Button, &label("Undo"))
+                .click();
+            h.run();
+            assert_eq!(
+                h.state().editor.session.document().layers[&layer]
+                    .raster
+                    .get(5, 5),
+                Rgba([12, 34, 56, 255])
+            );
+            h.get_by_role_and_label(Role::Button, &label("Selection options"))
+                .click();
+            h.run();
+            h.get_by_role_and_label(Role::Button, &label("Deselect"))
+                .click();
+            h.run();
+            assert_eq!(h.state().editor.session.selection(), Selection::Inactive);
+        }
+    }
+}

@@ -53,7 +53,7 @@ pub(super) fn show(
                 ui.separator();
                 group(ui, "Image", |ui| {
                     ui.horizontal_top(|ui| {
-                        super::legacy_controls::selection(ui, state, context, actions);
+                        super::legacy_controls::selection(ui, variant, state, context, actions);
                         ui.vertical(|ui| {
                             super::image_menus::legacy_controls(ui, context, actions);
                         });

@@ -161,6 +161,7 @@ pub(super) fn tools(
 
 pub(super) fn selection(
     ui: &mut egui::Ui,
+    variant: ClassicVariant,
     state: &mut Controls,
     context: Context,
     actions: &mut Vec<Action>,
@@ -184,9 +185,12 @@ pub(super) fn selection(
                 .min_size(Vec2::new(50.0, 12.0))
                 .frame_when_inactive(false),
         )
-        .config(super::legacy_surface::menu_config())
+        .config(
+            super::legacy_surface::menu_config()
+                .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside),
+        )
         .ui(ui, |ui| {
-            super::selection_menu::show(ui, state, context, actions)
+            super::selection_menu::historical(ui, variant, state, context, actions)
         });
         arrow(ui, response.rect.center());
         super::legacy_surface::open_state(ui, &response, "Selection options");

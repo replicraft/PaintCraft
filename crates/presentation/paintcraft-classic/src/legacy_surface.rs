@@ -34,7 +34,11 @@ pub(super) fn button(
     }
     let background = ui.painter().add(egui::Shape::Noop);
     let response = ui.add(button.frame(false));
-    if selected || response.hovered() || response.is_pointer_button_down_on() {
+    if selected
+        || response.hovered()
+        || response.has_focus()
+        || response.is_pointer_button_down_on()
+    {
         let rect = response.rect.shrink(0.5);
         let middle = rect.top() + rect.height() * 0.45;
         let (top, upper, lower, bottom) = if selected {

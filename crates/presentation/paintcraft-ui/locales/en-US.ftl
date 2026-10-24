@@ -889,3 +889,4 @@ transparent = Transparent
 alignment = Alignment
 text-tools = Text Tools
 format-color-hex = Color #{ $hex }
+selection-shapes = Selection shapes
