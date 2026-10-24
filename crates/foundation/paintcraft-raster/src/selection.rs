@@ -14,7 +14,9 @@ pub enum Selection {
 }
 
 mod mask;
-pub use mask::{BinaryMask, MaskLimits};
+pub use mask::{BinaryMask, BoundarySegment, MaskLimits, MaskOutline, OutlineLimits};
+mod outline_cache;
+pub use outline_cache::OutlineCache;
 
 impl Selection {
     /// Exact finite field comparison for selection-only publication. Identity is

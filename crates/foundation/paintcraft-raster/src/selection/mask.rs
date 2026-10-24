@@ -7,6 +7,8 @@ use paintcraft_core::types::{
 use std::{collections::HashMap, sync::Arc};
 
 mod builder;
+mod outline;
+pub use outline::{BoundarySegment, MaskOutline, OutlineLimits};
 mod polygon;
 mod rows;
 mod views;
