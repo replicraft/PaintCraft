@@ -64,8 +64,8 @@ feature roadmap or claim native Paint parity.
   pixels; OS window borders and the macOS menu bar are outside the captures.
 
 This improves the reference layout; it does not establish full skin or feature
-parity. Historical File backstage panels, some original artwork, native Windows
-window decorations and version-specific details remain. Clipboard operations and
+parity. Some original artwork, native Windows window decorations and
+version-specific details remain. Clipboard operations and
 Magnifier remain explicitly disabled. Existing canvas centering is retained.
 
 ## Brush comparison
@@ -108,8 +108,9 @@ retracing, cancellation and resource bounds still apply.
    rules across native, CLI and browser. Orthogonal rotations already work.
 3. Subject-aware background removal. A border flood fill would not match Paint's
    subject detection, so it must not be substituted under that name.
-4. Windows 7/10 File backstage panels, clipboard workflows, remaining historical
-   artwork and version-specific behavior. Home/View tabs and ribbon grouping are
+4. Recent-file history, printing, scanner/camera acquisition, email/background
+   integration, clipboard workflows, remaining historical artwork and
+   version-specific behavior. Home/View ribbons and two-column File panels are
    implemented; full presentation or feature parity remains unqualified.
 5. Remaining low-level diagnostic payload localization and continued
    localization/accessibility audits. Literal catalog checks do not establish
@@ -151,3 +152,44 @@ Updated offscreen captures were rendered and visually compared with the supplied
 Windows 7 and Windows 10 reference folders. The final source checks also enforce
 the 800-line limit and matching translation arguments. Raw follow-up logs are in
 `docs/validation/ui-localization-skins-2026-10-24/` (ignored).
+
+## Historical File panels and image export
+
+Windows 7/10 now have a dedicated two-column File panel, with hover/click category
+navigation, independently scrolling columns, normal-height Exit access, Escape
+closure and a reset to Recent pictures when reopened. The Save as pane offers
+PNG, JPEG and BMP copies plus a separate PaintCraft project save. GIF remains
+explicitly disabled. Print, acquisition, email, desktop background and recent-file
+integration remain unavailable rather than showing fabricated data or success.
+
+Typed format actions select the native dialog's initial filename/filter and
+missing-extension fallback. The returned filename extension remains authoritative.
+The same choices now produce PNG, JPEG and BMP browser downloads using the existing
+image codecs. Project association, pixels, history and dirtiness are unchanged by
+export. Export confirmation explains flattening, invisible colors and JPEG loss;
+existing files are untouched when cancelled. Browser downloads continue to be
+unconfirmed copies rather than acknowledged persistent saves.
+
+Application-supplied native file-dialog labels and the browser HTML download
+prompt now receive English/Japanese strings from the selected UI language. The
+platform crate stays independent of the UI translator. OS-supplied buttons still
+use the host system's own language. Filenames are preserved as data.
+
+The workspace run passed 1,226 tests with 60 opt-in tests ignored. Final focused
+native File panel tests passed both skins and both languages with multipass
+frames, byte signatures, decoded pixels, cancellation and unchanged project/history
+checks. Browser menu/codec, UI metadata/catalog and platform tests passed 129 tests
+with one ignored preview. Workspace/WebAssembly Clippy, browser release packaging,
+JavaScript syntax, translation coverage, source length and whitespace checks passed.
+The additional opt-in File capture rendered four real offscreen frames, reviewed
+against the supplied references:
+
+- `assets/repo/classic-v7-file-en-US.png`
+- `assets/repo/classic-v7-file-ja.png`
+- `assets/repo/classic-v10-file-en-US.png`
+- `assets/repo/classic-v10-file-ja.png`
+
+Raw logs are in `docs/validation/historical-file-panels-2026-10-24/` (ignored).
+Actual OS picker interactions, live browser download/persistence behavior, native
+Windows parity and a full native Japanese language review are not established by
+these host tests and offscreen captures.

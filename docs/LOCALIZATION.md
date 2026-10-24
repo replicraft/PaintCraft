@@ -23,7 +23,9 @@ Fluent bundles are cached per thread, while the selected language belongs to eac
 egui context. Two editor contexts can use different languages. The native menu
 updates its action labels and File/Edit/View/Window headings without rebuilding
 the menu or changing action IDs. OS-supplied standard menu items retain the host
-system's localization.
+system's localization. Application-supplied native file-picker titles/filter
+labels and the browser HTML download prompt receive translated strings from the
+frontend; the platform adapter does not import the UI crate.
 
 Tests parse every bundled message, check Japanese catalog coverage, fallback and
 context isolation, drive the actual browser dropdown, verify preference round

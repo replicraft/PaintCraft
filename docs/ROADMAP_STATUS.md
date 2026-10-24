@@ -5,6 +5,14 @@ selection/rotation/background-removal work](CLASSIC_FOLLOWUP.md). Full feature a
 historical skin parity remain incomplete.
 
 
+Historical File panels now route PNG/JPEG/BMP choices to native and browser
+exports, with localized confirmation/download labels and unchanged project/history
+state. Windows 7/10 Home/View ribbons and slim status strips have scoped host and
+offscreen evidence. Recent files, printing, acquisition, clipboard and formal
+per-version native qualification remain work; this presentation slice does not
+start or complete the T16 parity gate. See [Classic follow-up](CLASSIC_FOLLOWUP.md).
+
+
 Selection work now has [finite sparse binary R8 storage and exact polygon
 rasterization](SELECTION_MASKS.md), including compact inversion, shared snapshot
 ownership and admitted private construction. Session/history/paint gating and
