@@ -77,7 +77,7 @@ pub(super) fn show(
                     ui.horizontal_top(|ui| {
                         super::shapes::legacy_gallery(ui, variant, state, actions);
                         ui.vertical(|ui| {
-                            super::legacy_controls::shape_styles(ui, state);
+                            super::legacy_shape_paint::show(ui, variant, state);
                         });
                     });
                 });

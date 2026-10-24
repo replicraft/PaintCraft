@@ -17,11 +17,7 @@ pub(super) fn shape_paint(ui: &mut egui::Ui, state: &mut Controls) {
                 let outlined = state.options.style != ShapeStyle::Filled;
                 for (solid, label) in [(false, "No outline"), (true, "Solid outline")] {
                     if shape_choice(ui, label, outlined == solid).clicked() {
-                        state.options.style = match (solid, state.options.style) {
-                            (false, _) => ShapeStyle::Filled,
-                            (true, ShapeStyle::Filled) => ShapeStyle::Both,
-                            (true, style) => style,
-                        };
+                        set_shape_paint(state, true, solid);
                         ui.close();
                     }
                 }
@@ -31,11 +27,7 @@ pub(super) fn shape_paint(ui: &mut egui::Ui, state: &mut Controls) {
                 let filled = state.options.style != ShapeStyle::Outline;
                 for (solid, label) in [(false, "No fill"), (true, "Solid fill")] {
                     if shape_choice(ui, label, filled == solid).clicked() {
-                        state.options.style = match (solid, state.options.style) {
-                            (false, _) => ShapeStyle::Outline,
-                            (true, ShapeStyle::Outline) => ShapeStyle::Both,
-                            (true, style) => style,
-                        };
+                        set_shape_paint(state, false, solid);
                         ui.close();
                     }
                 }
@@ -166,4 +158,14 @@ fn popup_style(ui: &mut egui::Ui, width: f32) {
             .text_styles
             .insert(style, egui::FontId::proportional(16.0));
     }
+}
+
+/// Shared outline/fill choice semantics for modern and historical presentation.
+pub(super) fn set_shape_paint(state: &mut Controls, outline: bool, solid: bool) {
+    state.options.style = match (outline, solid, state.options.style) {
+        (true, false, _) => ShapeStyle::Filled,
+        (false, false, _) => ShapeStyle::Outline,
+        (true, true, ShapeStyle::Filled) | (false, true, ShapeStyle::Outline) => ShapeStyle::Both,
+        (_, true, style) => style,
+    };
 }

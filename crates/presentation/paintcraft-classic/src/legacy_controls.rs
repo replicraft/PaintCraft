@@ -1,7 +1,7 @@
 //! Compact square controls used by the historical ribbon, independent of v11 metrics.
 use super::{Action, ClassicVariant, Controls};
 use egui::{Rect, Response, Vec2};
-use paintcraft_tools::{ShapeStyle, Tool};
+use paintcraft_tools::Tool;
 use paintcraft_ui::{actions::Context, i18n::tr, icons::Icon};
 
 pub(super) fn icon_button(
@@ -195,66 +195,6 @@ pub(super) fn selection(
         arrow(ui, response.rect.center());
         super::legacy_surface::open_state(ui, &response, "Selection options");
     });
-}
-
-pub(super) fn shape_styles(ui: &mut egui::Ui, state: &mut Controls) {
-    let enabled = matches!(
-        state.tool,
-        Tool::Rect | Tool::Ellipse | Tool::Preset(_) | Tool::Polygon
-    );
-    for (outline, title, icon) in [
-        (true, "Outline", Icon::Pencil),
-        (false, "Fill", Icon::Bucket),
-    ] {
-        ui.add_enabled_ui(enabled, |ui| {
-            ui.menu_button(
-                (
-                    paintcraft_ui::icons::legacy_image(ui.ctx(), icon, 14.0),
-                    tr(ui.ctx(), title),
-                ),
-                |ui| {
-                    for (solid, label) in [
-                        (false, if outline { "No outline" } else { "No fill" }),
-                        (
-                            true,
-                            if outline {
-                                "Solid outline"
-                            } else {
-                                "Solid fill"
-                            },
-                        ),
-                    ] {
-                        let selected = if outline {
-                            state.options.style != ShapeStyle::Filled
-                        } else {
-                            state.options.style != ShapeStyle::Outline
-                        };
-                        if ui
-                            .selectable_label(selected == solid, tr(ui.ctx(), label))
-                            .clicked()
-                        {
-                            state.options.style = if outline {
-                                if !solid {
-                                    ShapeStyle::Filled
-                                } else if state.options.style == ShapeStyle::Filled {
-                                    ShapeStyle::Both
-                                } else {
-                                    state.options.style
-                                }
-                            } else if !solid {
-                                ShapeStyle::Outline
-                            } else if state.options.style == ShapeStyle::Outline {
-                                ShapeStyle::Both
-                            } else {
-                                state.options.style
-                            };
-                            ui.close();
-                        }
-                    }
-                },
-            );
-        });
-    }
 }
 
 /// Tiny filled disclosure triangle, independent of font glyph coverage.

@@ -26,6 +26,7 @@ mod legacy_chrome;
 mod legacy_controls;
 mod legacy_file;
 mod legacy_palette;
+mod legacy_shape_paint;
 pub use legacy_palette::PaletteTarget;
 mod legacy_ribbon;
 mod legacy_size;
