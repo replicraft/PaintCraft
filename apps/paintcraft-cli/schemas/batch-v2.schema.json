@@ -24,6 +24,7 @@
       "type": "array",
       "items": {
         "oneOf": [
+          {"type":"object","properties":{"op":{"const":"canvas.transform"},"transform":{"enum":["rotate-right","rotate-left","rotate-180","flip-horizontal","flip-vertical"]}},"required":["op","transform"],"additionalProperties":false},
           {
             "type": "object",
             "properties": {
