@@ -318,7 +318,7 @@ fn classic_image_controls_use_two_rows_with_a_spanning_resize_preview() {
 }
 
 #[test]
-fn image_menus_show_reference_entries_without_executing_unavailable_operations() {
+fn image_menus_enable_exact_orientations_and_keep_custom_rotation_unavailable() {
     let mut h = harness_with(App::new(None), 1.0, true);
     let base = h.state().editor().document_snapshot();
     for (menu, entries) in [
@@ -337,11 +337,19 @@ fn image_menus_show_reference_entries_without_executing_unavailable_operations()
             .click();
         h.run();
         for entry in &entries {
-            assert!(h.get_by_label(entry).accesskit_node().is_disabled());
+            assert_eq!(
+                h.get_by_label(entry).accesskit_node().is_disabled(),
+                *entry == "Rotate custom"
+            );
         }
-        h.get_by_label(entries[0]).click();
+        let selected = if menu == "Rotate" {
+            "Rotate custom"
+        } else {
+            entries[0]
+        };
+        h.get_by_label(selected).click();
         h.run();
-        assert!(h.query_by_label(entries[0]).is_some());
+        assert_eq!(h.query_by_label(entries[0]).is_some(), menu == "Rotate");
         assert!(h.state().editor().document().same_semantics(&base));
         h.key_press(Key::Escape);
         h.run();
@@ -416,7 +424,10 @@ fn image_transform_popups_keep_rows_icons_and_single_tooltips_reachable_on_short
                         && row.max.y <= size.y,
                     "{entry}: {row:?} outside {size:?}"
                 );
-                assert!(h.get_by_label(entry).accesskit_node().is_disabled());
+                assert_eq!(
+                    h.get_by_label(entry).accesskit_node().is_disabled(),
+                    *entry == "Rotate custom"
+                );
                 if size.y > 400.0
                     && let Some(bottom) = previous_bottom
                 {
@@ -453,13 +464,14 @@ fn image_transform_popups_keep_rows_icons_and_single_tooltips_reachable_on_short
                     "This image transformation is not available yet."
                 )
                 .count(),
-                1
+                usize::from(menu == "Rotate")
             );
             h.get_by_label(entries.last().unwrap()).click();
             h.run();
-            assert!(
+            assert_eq!(
                 h.query_by_label(entries[0]).is_some(),
-                "a disabled entry keeps the popup open"
+                menu == "Rotate",
+                "disabled custom rotation stays open; real flips close"
             );
             h.key_press(Key::Escape);
             h.run();

@@ -195,6 +195,18 @@ impl App {
                 }
                 Chrome::ResizeSkew => self.begin_resize_skew(),
                 Chrome::Crop => self.request(ctx, code::CROP, Action::CropToSelection),
+                Chrome::TransformImage(transform) => {
+                    let clear = if self.experience() == Experience::Classic {
+                        self.editor.canvas_color()
+                    } else {
+                        Rgba::TRANSPARENT
+                    };
+                    self.request(
+                        ctx,
+                        action.activation_code(),
+                        Action::TransformImage { transform, clear },
+                    );
+                }
                 Chrome::ImageProperties => self.begin_image_properties(),
                 Chrome::CanvasSize | Chrome::CanvasDefaults => {
                     self.begin_canvas_dialog(ctx, action == Chrome::CanvasDefaults)

@@ -361,3 +361,70 @@ fn coalesced_translucent_gestures_keep_their_complete_preview_and_publish_once_p
     assert_eq!(&app.rendered()[offset..offset + 4], &expected);
     assert_eq!(app.editor.undo_depth(), 4);
 }
+
+#[test]
+fn native_worker_transforms_captured_selection_then_whole_canvas_and_remembers_authored_size() {
+    use paintcraft_core::types::orthogonal::OrthogonalTransform as Transform;
+    let (mut app, context) = app(false);
+    let layer = app.editor.target().unwrap();
+    app.editor.request(
+        8101,
+        Action::Stroke(paintcraft_tools::Stroke {
+            layer,
+            points: vec![(5, 6)],
+            point_scale: 1,
+            color: RED,
+            size: 1,
+            round: false,
+            mode: paintcraft_tools::BlendMode::Replace,
+        }),
+    );
+    pump(&mut app, &context, idle);
+    app.editor.request(
+        8102,
+        Action::Select {
+            corners: Some(((4, 5), (9, 7))),
+        },
+    );
+    pump(&mut app, &context, idle);
+    let before = app.editor.document_snapshot();
+    let selection = app.editor.selection();
+    let count = app.editor.publications();
+    app.editor.request(
+        8103,
+        Action::TransformImage {
+            transform: Transform::FlipHorizontal,
+            clear: Rgba([255; 4]),
+        },
+    );
+    pump(&mut app, &context, idle);
+    assert_eq!(app.editor.publications(), count + 1);
+    assert_eq!(app.editor.document().layers[&layer].raster.get(8, 6), RED);
+    app.editor.request(8104, Action::Undo);
+    pump(&mut app, &context, idle);
+    assert!(app.editor.document().same_semantics(&before));
+    assert_eq!(app.editor.selection(), selection);
+    app.editor.request(8105, Action::Select { corners: None });
+    pump(&mut app, &context, idle);
+    let size = app.editor.document().canvas;
+    app.editor.request(
+        8106,
+        Action::TransformImage {
+            transform: Transform::RotateRight,
+            clear: Rgba([255; 4]),
+        },
+    );
+    pump(&mut app, &context, idle);
+    assert_eq!(app.editor.document().canvas, (size.1, size.0));
+    assert_eq!(app.settings.canvas.last, Some((size.1, size.0)));
+    assert_eq!(
+        app.editor.document().layers[&layer]
+            .raster
+            .get(i64::from(size.1) - 7, 5),
+        RED
+    );
+    app.editor.request(8107, Action::Undo);
+    pump(&mut app, &context, idle);
+    assert_eq!(app.editor.document().canvas, size);
+    assert_eq!(app.settings.canvas.last, Some((size.1, size.0)));
+}

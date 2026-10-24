@@ -6,6 +6,25 @@ use super::*;
 mod tests;
 
 impl Editor {
+    pub(super) fn transform_image(
+        &mut self,
+        transform: paintcraft_core::types::orthogonal::OrthogonalTransform,
+        clear: Rgba,
+    ) {
+        match paintcraft_tools::commands::transform_image(
+            self.selection(),
+            self.target,
+            transform,
+            clear,
+        ) {
+            Ok(op) => {
+                self.cancel_gesture();
+                self.draw(vec![op], "Transform image");
+            }
+            Err(e) => self.status = e.to_string(),
+        }
+    }
+
     pub(super) fn crop_to_selection(&mut self) {
         match paintcraft_tools::commands::crop_to_selection(self.document(), self.selection()) {
             Ok(op) => {

@@ -333,3 +333,6 @@ mod image_properties;
 
 #[path = "gui/thumbnail.rs"]
 mod thumbnail;
+
+#[path = "gui/transforms.rs"]
+mod transforms;

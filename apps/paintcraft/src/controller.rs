@@ -530,6 +530,7 @@ impl Editor {
     fn execute(&mut self, action: Action) {
         match action {
             Action::CropToSelection => self.crop_to_selection(),
+            Action::TransformImage { transform, clear } => self.transform_image(transform, clear),
             Action::Contour(contour) => self.contour(&contour),
             Action::ResizeCanvas { width, height } => self.resize_canvas(width, height),
             Action::ClearCanvas { color } => self.clear_canvas(color),
