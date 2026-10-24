@@ -123,6 +123,16 @@ impl Editor {
             self.place_text()?;
         }
         match action {
+            Action::TransformImage { transform, clear } => {
+                let op = commands::transform_image(
+                    self.session.selection(),
+                    self.target,
+                    transform,
+                    clear,
+                )?;
+                self.tools.cancel_gesture();
+                self.commit(vec![op])
+            }
             Action::CropToSelection => {
                 let operation =
                     commands::crop_to_selection(self.session.document(), self.session.selection())?;

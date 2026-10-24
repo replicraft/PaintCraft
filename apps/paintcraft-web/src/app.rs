@@ -115,7 +115,10 @@ impl WebApp {
     }
 
     pub(crate) fn edit(&mut self, action: Edit) {
-        let remember_size = matches!(action, Edit::CropToSelection | Edit::ResizeCanvas { .. });
+        let remember_size = matches!(
+            action,
+            Edit::CropToSelection | Edit::ResizeCanvas { .. } | Edit::TransformImage { .. }
+        );
         let before_size = self.editor.session.document().canvas;
         match self.editor.apply(action) {
             Ok(()) => {
@@ -144,6 +147,10 @@ impl WebApp {
         }
         match action {
             Action::Crop => self.edit(Edit::CropToSelection),
+            Action::TransformImage(transform) => self.edit(Edit::TransformImage {
+                transform,
+                clear: paintcraft_tools::commands::canvas_color(self.editor.session.document()),
+            }),
             Action::Settings | Action::Interface => {
                 self.editor.tools.cancel_gesture();
                 self.settings = true;
