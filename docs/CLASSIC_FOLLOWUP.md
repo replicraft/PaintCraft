@@ -69,6 +69,8 @@ retracing, cancellation and resource bounds still apply.
 1. Binary selection masks, free-form creation, inversion, floating movement and
    secondary-color-keyed transparent selection. Merely checking a menu item would
    not implement these behaviors. The current engine projection is rectangular.
+   The [binary R8 storage foundation](SELECTION_MASKS.md) is implemented; its
+   session/history/tool integration remains work.
 2. Arbitrary-angle rotation with agreed resampling, bounds, selection and alpha
    rules across native, CLI and browser. Orthogonal rotations already work.
 3. Subject-aware background removal. A border flood fill would not match Paint's

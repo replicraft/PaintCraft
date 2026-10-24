@@ -5,6 +5,13 @@ selection/rotation/background-removal work](CLASSIC_FOLLOWUP.md). Full feature a
 historical skin parity remain incomplete.
 
 
+Selection work now has [finite sparse binary R8 storage and exact polygon
+rasterization](SELECTION_MASKS.md), including compact inversion, shared snapshot
+ownership and admitted private construction. Session/history/paint gating and
+free-form/invert/transparent-selection controls remain unconnected; T14/T15 stay
+partial.
+
+
 This is the live application ledger for the reference pack's 37 tasks. The
 [roadmap](temp/paintcraft-implementation-spec-v5-hyperfine/ROADMAP.md) owns milestone
 intent; [roadmap-status.json](roadmap-status.json) preserves task dependencies,
