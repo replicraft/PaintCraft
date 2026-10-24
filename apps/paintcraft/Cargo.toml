@@ -27,10 +27,9 @@ paintcraft-platform = { workspace = true, features = ["dialogs", "menus", "fonts
 paintcraft-raster.workspace = true
 paintcraft-runtime = { workspace = true, features = ["native-io"] }
 paintcraft-render = { workspace = true, features = ["gpu"] }
-paintcraft-tools.workspace = true
+paintcraft-tools = { workspace = true, features = ["text"] }
 paintcraft-ui.workspace = true
 
-cosmic-text.workspace = true
 eframe.workspace = true
 sha2.workspace = true
 uuid.workspace = true

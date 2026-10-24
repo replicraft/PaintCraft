@@ -289,7 +289,7 @@ fn synchronous_controllers_still_accept_two_gestures_before_draining_the_outbox(
 #[test]
 fn retained_font_text_keeps_its_captured_layer_after_text_entry_and_target_selection_change() {
     let service = Service::new(egui::Context::default()).unwrap();
-    let renderer = Arc::new(Mutex::new(crate::text::TextRenderer::bundled()));
+    let renderer = Arc::new(Mutex::new(crate::text::bundled()));
     let mut editor = Editor::new_document(128, 80)
         .unwrap()
         .with_text_renderer(renderer);
@@ -347,7 +347,7 @@ fn retained_font_text_keeps_its_captured_layer_after_text_entry_and_target_selec
 fn styled_text_command_submission_does_not_wait_for_worker_font_rasterization() {
     use std::sync::atomic::{AtomicBool, Ordering};
     let service = Service::new(egui::Context::default()).unwrap();
-    let fonts = Arc::new(Mutex::new(crate::text::TextRenderer::bundled()));
+    let fonts = Arc::new(Mutex::new(crate::text::bundled()));
     let mut editor = Editor::new_document(128, 80)
         .unwrap()
         .with_text_renderer(fonts.clone());
@@ -394,7 +394,7 @@ fn styled_text_command_submission_does_not_wait_for_worker_font_rasterization() 
 #[test]
 fn whitespace_text_finishes_as_a_guarded_noop_and_preserves_the_redo_branch() {
     let service = Service::new(egui::Context::default()).unwrap();
-    let fonts = Arc::new(Mutex::new(crate::text::TextRenderer::bundled()));
+    let fonts = Arc::new(Mutex::new(crate::text::bundled()));
     let mut editor = Editor::new_document(128, 80)
         .unwrap()
         .with_text_renderer(fonts);

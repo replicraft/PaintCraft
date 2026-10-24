@@ -171,3 +171,64 @@ pub fn canvas_color(document: &paintcraft_document::Document) -> Rgba {
         .find(|color| color.a() == 255)
         .unwrap_or(Rgba([255; 4]))
 }
+
+pub fn font_text(
+    mask: &paintcraft_core::types::text::TextMask,
+    canvas: paintcraft_core::types::Rect,
+    layer: Uuid,
+    style: &paintcraft_core::types::text::TextOptions,
+    color: Rgba,
+    background: Rgba,
+    check: &impl Fn() -> Result<()>,
+) -> Result<Vec<Value>> {
+    let mut ops = Vec::new();
+    if style.background_fill
+        && let Some(rect) = mask.bounds.and_then(|rect| rect.intersect(&canvas))
+    {
+        ops.push(Value::object([
+            ("op", Value::str("raster.fill_rect")),
+            ("layer_ref", layer_ref(layer)),
+            ("rect", rect_value(rect)),
+            ("color", Value::str(background.to_hex())),
+            ("mode", Value::str("source-over")),
+        ]));
+    }
+    check()?;
+    if !mask.spans.is_empty() {
+        ops.push(Value::object([
+            ("op", Value::str("raster.mask_spans")),
+            ("layer_ref", layer_ref(layer)),
+            ("color", Value::str(color.to_hex())),
+            (
+                "spans",
+                Value::Array(
+                    mask.spans
+                        .iter()
+                        .enumerate()
+                        .map(|(index, s)| {
+                            if index % 256 == 0 {
+                                check()?;
+                            }
+                            Ok(Value::Array(vec![
+                                Value::Int(s.x0),
+                                Value::Int(s.y),
+                                Value::Int(s.x1),
+                                Value::Int(i64::from(s.coverage)),
+                            ]))
+                        })
+                        .collect::<Result<Vec<_>>>()?,
+                ),
+            ),
+        ]));
+    }
+    Ok(ops)
+}
+
+fn rect_value(r: paintcraft_core::types::Rect) -> Value {
+    Value::object([
+        ("x", Value::Int(r.x0)),
+        ("y", Value::Int(r.y0)),
+        ("width", Value::Int(r.x1 - r.x0)),
+        ("height", Value::Int(r.y1 - r.y0)),
+    ])
+}

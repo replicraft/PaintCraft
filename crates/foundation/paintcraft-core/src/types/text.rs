@@ -44,3 +44,12 @@ pub struct MaskSpan {
     pub x1: i64,
     pub coverage: u8,
 }
+
+/// Resolved text coverage and layout geometry. These immutable samples are
+/// portable; font lookup and shaping remain outside document transactions.
+#[derive(Debug)]
+pub struct TextMask {
+    pub spans: Vec<MaskSpan>,
+    pub bounds: Option<super::Rect>,
+    pub caret: (i64, i64, i64),
+}

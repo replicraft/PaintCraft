@@ -2617,7 +2617,6 @@ dependencies = [
 name = "paintcraft"
 version = "0.1.0"
 dependencies = [
- "cosmic-text",
  "criterion",
  "eframe",
  "egui_kittest",
@@ -2810,6 +2809,7 @@ dependencies = [
 name = "paintcraft-tools"
 version = "0.1.0"
 dependencies = [
+ "cosmic-text",
  "paintcraft-core",
  "paintcraft-document",
  "paintcraft-input",
@@ -3736,7 +3736,10 @@ version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8eab9a99a024a169fe8a903cf9d4a3b3601109bcc13bd9e3c6fff259138626c4"
 dependencies = [
+ "js-sys",
  "libc",
+ "wasm-bindgen",
+ "web-sys",
 ]
 
 [[package]]

@@ -7,6 +7,10 @@ rust-version.workspace = true
 license-file.workspace = true
 publish.workspace = true
 
+[features]
+default = []
+text = ["dep:cosmic-text"]
+
 [dependencies]
 paintcraft-core.workspace = true
 paintcraft-document.workspace = true
@@ -14,6 +18,10 @@ paintcraft-input.workspace = true
 paintcraft-raster.workspace = true
 
 uuid.workspace = true
+cosmic-text = { workspace = true, optional = true }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+cosmic-text = { workspace = true, optional = true, features = ["wasm-web"] }
 
 [lints]
 workspace = true

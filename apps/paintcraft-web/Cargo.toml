@@ -21,7 +21,7 @@ paintcraft-formats.workspace = true
 sha2.workspace = true
 paintcraft-input.workspace = true
 uuid.workspace = true
-paintcraft-tools.workspace = true
+paintcraft-tools = { workspace = true, features = ["text"] }
 paintcraft-ui.workspace = true
 eframe.workspace = true
 

@@ -3,6 +3,8 @@ pub mod commands;
 mod geometry;
 mod path_admission;
 mod preview_revision;
+#[cfg(feature = "text")]
+pub mod text;
 pub use preview_revision::PreviewRevision;
 
 pub use paintcraft_core::types::policy::BlendMode;

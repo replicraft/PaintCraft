@@ -66,7 +66,7 @@ fn cancellation_during_point_preparation_returns_no_partial_batch_or_publication
 }
 #[test]
 fn text_capture_does_not_rasterize_until_the_owned_request_runs_on_a_worker() {
-    let fonts = Arc::new(Mutex::new(crate::text::TextRenderer::bundled()));
+    let fonts = Arc::new(Mutex::new(crate::text::bundled()));
     let mut editor = Editor::new_document(128, 80)
         .unwrap()
         .with_text_renderer(fonts);
@@ -114,7 +114,7 @@ fn text_capture_does_not_rasterize_until_the_owned_request_runs_on_a_worker() {
 
 #[test]
 fn an_empty_text_preview_prepares_caret_geometry_without_creating_an_edit_batch() {
-    let fonts = Arc::new(Mutex::new(crate::text::TextRenderer::bundled()));
+    let fonts = Arc::new(Mutex::new(crate::text::bundled()));
     let mut editor = Editor::new_document(128, 80)
         .unwrap()
         .with_text_renderer(fonts);

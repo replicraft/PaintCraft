@@ -69,7 +69,7 @@ fn live_paint_shape_and_bitmap_text_match_release_without_publishing() {
 
 #[test]
 fn live_font_text_is_private_frozen_and_matches_the_committed_mask() {
-    let fonts = Arc::new(std::sync::Mutex::new(crate::text::TextRenderer::bundled()));
+    let fonts = Arc::new(std::sync::Mutex::new(crate::text::bundled()));
     let mut editor = editor().with_text_renderer(fonts);
     editor.tool = Tool::Text;
     editor.pointer_down((1, 1));

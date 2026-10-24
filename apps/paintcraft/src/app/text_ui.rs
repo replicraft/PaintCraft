@@ -30,9 +30,9 @@ impl App {
         match std::thread::Builder::new()
             .name("paintcraft-font-catalog".into())
             .spawn(move || {
-                let renderer = text::TextRenderer::system();
+                let renderer = text::system();
                 let catalog = FontCatalog {
-                    families: renderer.families(),
+                    families: text::families(&renderer),
                 };
                 let _ = sender.send((catalog, renderer));
                 wake.request_repaint();
@@ -126,7 +126,7 @@ mod tests {
                 FontCatalog {
                     families: vec!["Example".into()],
                 },
-                text::TextRenderer::bundled(),
+                text::bundled(),
             ))
             .unwrap();
         app.fonts.pending = Some(receiver);

@@ -1,6 +1,6 @@
 //! Resolve fonts before publication. Transactions store grayscale coverage only.
 use super::*;
-use paintcraft_core::types::{Error, ErrorCode, Rect, text::TextOptions};
+use paintcraft_core::types::{Error, ErrorCode, text::TextOptions};
 impl Editor {
     pub(crate) fn with_text_renderer(mut self, renderer: crate::text::Shared) -> Self {
         self.text_renderer_connect(renderer);
@@ -99,66 +99,7 @@ impl Editor {
         }
     }
 }
-pub(super) fn text_operations(
-    mask: &crate::text::TextMask,
-    canvas: Rect,
-    layer: Uuid,
-    style: &TextOptions,
-    color: Rgba,
-    background: Rgba,
-    check: &impl Fn() -> Result<()>,
-) -> Result<Vec<Value>> {
-    let mut ops = Vec::new();
-    if style.background_fill
-        && let Some(rect) = mask.bounds.and_then(|rect| rect.intersect(&canvas))
-    {
-        ops.push(Value::object([
-            ("op", Value::str("raster.fill_rect")),
-            ("layer_ref", layer_ref(layer)),
-            ("rect", rect_value(rect)),
-            ("color", Value::str(background.to_hex())),
-            ("mode", Value::str("source-over")),
-        ]));
-    }
-    check()?;
-    if !mask.spans.is_empty() {
-        ops.push(Value::object([
-            ("op", Value::str("raster.mask_spans")),
-            ("layer_ref", layer_ref(layer)),
-            ("color", Value::str(color.to_hex())),
-            (
-                "spans",
-                Value::Array(
-                    mask.spans
-                        .iter()
-                        .enumerate()
-                        .map(|(index, s)| {
-                            if index % 256 == 0 {
-                                check()?;
-                            }
-                            Ok(Value::Array(vec![
-                                Value::Int(s.x0),
-                                Value::Int(s.y),
-                                Value::Int(s.x1),
-                                Value::Int(i64::from(s.coverage)),
-                            ]))
-                        })
-                        .collect::<Result<Vec<_>>>()?,
-                ),
-            ),
-        ]));
-    }
-    Ok(ops)
-}
-
-fn rect_value(r: Rect) -> Value {
-    Value::object([
-        ("x", Value::Int(r.x0)),
-        ("y", Value::Int(r.y0)),
-        ("width", Value::Int(r.x1 - r.x0)),
-        ("height", Value::Int(r.y1 - r.y0)),
-    ])
-}
+pub(super) use paintcraft_tools::commands::font_text as text_operations;
 
 #[cfg(test)]
 mod tests {
@@ -166,7 +107,7 @@ mod tests {
     use crate::controller::{Action, Tool};
     #[test]
     fn font_text_preview_commit_undo_and_saved_pixels_match_with_selection_and_alpha() {
-        let renderer = Arc::new(std::sync::Mutex::new(crate::text::TextRenderer::bundled()));
+        let renderer = Arc::new(std::sync::Mutex::new(crate::text::bundled()));
         let mut editor = Editor::new_document(128, 80)
             .unwrap()
             .with_text_renderer(renderer);

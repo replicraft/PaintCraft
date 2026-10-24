@@ -270,7 +270,7 @@ impl App {
             || "untitled.pcnd".to_owned(),
             |p| p.to_string_lossy().into_owned(),
         );
-        let text_renderer = Arc::new(std::sync::Mutex::new(text::TextRenderer::bundled()));
+        let text_renderer = Arc::new(std::sync::Mutex::new(text::bundled()));
         let mut app = App {
             #[cfg(target_os = "macos")]
             native_menu: None,
