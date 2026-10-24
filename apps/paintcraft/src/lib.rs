@@ -64,6 +64,8 @@ mod thumbnail;
 mod view;
 #[path = "app/window.rs"]
 mod window;
+#[path = "app/zoom_tool.rs"]
+mod zoom_tool;
 // The PaintCraft desktop UI. Shared widgets live in `paintcraft-ui`;
 // the `app` modules connect native services, editor state, and presentation.
 //

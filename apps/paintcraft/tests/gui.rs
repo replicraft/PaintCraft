@@ -387,3 +387,6 @@ mod legacy_shape_paint;
 
 #[path = "gui/magnifier.rs"]
 mod magnifier;
+
+#[path = "gui/studio_zoom.rs"]
+mod studio_zoom;

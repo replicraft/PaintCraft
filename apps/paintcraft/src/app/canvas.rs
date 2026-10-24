@@ -99,7 +99,9 @@ impl App {
             .filter(|p| visible_canvas.contains(*p) && controls.is_none_or(|r| !r.contains(*p)))
             .and_then(|p| view.to_doc((p.x, p.y)));
 
-        if first_pass {
+        let studio_zoom =
+            self.experience() == Experience::Studio && self.editor.tool == Tool::Magnifier;
+        if first_pass && !studio_zoom {
             let events = ui.input(|i| i.events.clone());
             for event in events {
                 match event {
@@ -355,6 +357,7 @@ impl App {
         }
         self.draw_overlays(&painter, &view, ppp);
         self.draw_tool_cursor(ui, &painter, visible_canvas, &view, ppp);
+        self.studio_zoom_input(ui, &painter, rect, viewport, first_pass);
         if let Some((x, y)) = pending_center {
             let center =
                 rect.min + Vec2::new(x * view.points_per_pixel(), y * view.points_per_pixel());

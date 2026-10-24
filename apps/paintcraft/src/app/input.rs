@@ -48,6 +48,8 @@ impl App {
                     // draft or leaving fullscreen, even if egui released focus.
                     egui::Key::Escape if popup_open => {}
                     egui::Key::Escape if picker_open => self.picking = None,
+                    egui::Key::Escape if self.studio.zoom.is_active() => self.studio.zoom.cancel(),
+                    egui::Key::Z if text_focus && !modifiers.command => {}
                     egui::Key::Escape => {
                         if self.fullscreen && !text_focus && !self.editor.gesture_in_progress() {
                             self.dispatch_chrome(
@@ -75,7 +77,10 @@ impl App {
                 egui::Event::WindowFocused(false) => {
                     self.ime_composing = false;
                     self.editor.cancel_gesture();
-                    self.editor.commit_text();
+                    self.studio.zoom.cancel();
+                    if self.editor.tool != Tool::Magnifier {
+                        self.editor.commit_text();
+                    }
                 }
                 egui::Event::Text(typed) if text_focus && !self.ime_composing => {
                     self.editor.type_text(&typed);
