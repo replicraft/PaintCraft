@@ -78,7 +78,7 @@ impl App {
         let classic = self.experience() == Experience::Classic;
         let property_height = paintcraft_classic::layers::property_height(ui);
         if self.document_count() == 0 {
-            ui.label("No document open");
+            ui.label(paintcraft_ui::i18n::tr(ui.ctx(), "No document open"));
             return;
         }
         // Finish a focused property's draft against the layer it belonged to
@@ -88,15 +88,20 @@ impl App {
             self.classic_layer_list(ui);
         } else {
             ui.horizontal(|ui| {
-                ui.heading("Layers");
-                if ui.button("Add layer").clicked() {
+                ui.heading(paintcraft_ui::i18n::tr(ui.ctx(), "Layers"));
+                if ui
+                    .button(paintcraft_ui::i18n::tr(ui.ctx(), "Add layer"))
+                    .clicked()
+                {
                     self.request(&ctx, code::ADD_LAYER, Action::AddLayer);
                 }
             });
             for row in self.editor.layers() {
                 ui.horizontal(|ui| {
                     let mut visible = row.visible;
-                    let toggle = ui.checkbox(&mut visible, "").on_hover_text("Visible");
+                    let toggle = ui
+                        .checkbox(&mut visible, paintcraft_ui::i18n::tr(ui.ctx(), ""))
+                        .on_hover_text("Visible");
                     toggle.widget_info(|| {
                         egui::WidgetInfo::selected(
                             egui::Role::CheckBox,
@@ -125,7 +130,7 @@ impl App {
         }
         ui.separator();
         let Some(t) = target else {
-            ui.label("Drawing on: (no layer)");
+            ui.label(paintcraft_ui::i18n::tr(ui.ctx(), "Drawing on: (no layer)"));
             return;
         };
         let Some((name, opacity, index)) = self.editor.layer_properties(t) else {
@@ -153,7 +158,7 @@ impl App {
             let label = if classic {
                 paintcraft_classic::layers::property_label(ui, "Layer name")
             } else {
-                ui.label("Layer name")
+                ui.label(paintcraft_ui::i18n::tr(ui.ctx(), "Layer name"))
             };
             let field_id = ui.scope_id().with(("layer-name", t));
             let focused = ui.memory(|memory| memory.has_focus(field_id));
@@ -204,7 +209,7 @@ impl App {
             let label = if classic {
                 paintcraft_classic::layers::property_label(ui, "Opacity")
             } else {
-                ui.label("Opacity")
+                ui.label(paintcraft_ui::i18n::tr(ui.ctx(), "Opacity"))
             };
             let field_id = ui.next_auto_id();
             let focused = ui.memory(|memory| memory.has_focus(field_id));
@@ -306,7 +311,10 @@ impl App {
                     )],
                 );
             }
-            if self.experience() == Experience::Studio && ui.button("Layer properties…").clicked()
+            if self.experience() == Experience::Studio
+                && ui
+                    .button(paintcraft_ui::i18n::tr(ui.ctx(), "Layer properties…"))
+                    .clicked()
             {
                 self.dispatch_chrome(
                     &ctx,
@@ -315,7 +323,10 @@ impl App {
                     )],
                 );
             }
-            if ui.button("Delete layer").clicked() {
+            if ui
+                .button(paintcraft_ui::i18n::tr(ui.ctx(), "Delete layer"))
+                .clicked()
+            {
                 self.request(&ctx, code::DELETE, Action::DeleteLayer { layer: t });
             }
         });

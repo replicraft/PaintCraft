@@ -22,7 +22,7 @@ pub fn history_window(
         .constrain_to(egui::Rect::from_min_max(egui::pos2(ctx.viewport_rect().left(),top),ctx.viewport_rect().max))
         .show(ctx,|ui| {
             if trimmed > 0 { ui.label(format!("{trimmed} oldest history step(s) were dropped to stay within the memory budget.")); }
-            if !enabled { ui.weak("Finish or cancel the active tool before navigating history."); }
+            if !enabled { ui.weak(paintcraft_ui::i18n::tr(ui.ctx(), "Finish or cancel the active tool before navigating history.")); }
             ui.add_enabled_ui(enabled,|ui| {
                 let height = ui.text_style_height(&egui::TextStyle::Body)+6.0;
                 egui::ScrollArea::vertical().id_salt("studio-history-rows").stick_to_bottom(true)

@@ -339,3 +339,6 @@ mod transforms;
 
 #[path = "gui/color_picker.rs"]
 mod color_picker;
+
+#[path = "gui/language.rs"]
+mod language;

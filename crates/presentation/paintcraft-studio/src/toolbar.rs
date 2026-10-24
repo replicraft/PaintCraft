@@ -11,7 +11,7 @@ pub fn toolbar(
 ) -> Vec<Action> {
     let mut actions = Vec::new();
     egui::MenuBar::new().ui(ui, |ui| {
-        ui.menu_button("File", |ui| {
+        ui.menu_button(paintcraft_ui::i18n::tr(ui.ctx(), "File"), |ui| {
             for &action in actions::FILE {
                 if actions::menu_item(ui, action, context) {
                     actions.push(action);
@@ -19,7 +19,7 @@ pub fn toolbar(
                 }
             }
         });
-        ui.menu_button("Edit", |ui| {
+        ui.menu_button(paintcraft_ui::i18n::tr(ui.ctx(), "Edit"), |ui| {
             for &action in actions::EDIT {
                 if actions::menu_item(ui, action, context) {
                     actions.push(action);
@@ -27,7 +27,7 @@ pub fn toolbar(
                 }
             }
         });
-        ui.menu_button("View", |ui| {
+        ui.menu_button(paintcraft_ui::i18n::tr(ui.ctx(), "View"), |ui| {
             for (index, &action) in actions::VIEW.iter().enumerate() {
                 if index == 5 {
                     ui.separator();
@@ -38,7 +38,7 @@ pub fn toolbar(
                 }
             }
         });
-        ui.menu_button("Layers", |ui| {
+        ui.menu_button(paintcraft_ui::i18n::tr(ui.ctx(), "Layers"), |ui| {
             for (index, &action) in actions::LAYERS.iter().enumerate() {
                 if matches!(index, 3 | 4 | 8 | 12) {
                     ui.separator();
@@ -49,11 +49,23 @@ pub fn toolbar(
                 }
             }
         });
-        ui.menu_button("Window", |ui| {
-            ui.checkbox(&mut workspace.tools, "Tools");
-            ui.checkbox(&mut workspace.colors, "Colors");
-            ui.checkbox(&mut workspace.layers, "Layers");
-            ui.checkbox(&mut workspace.history, "History");
+        ui.menu_button(paintcraft_ui::i18n::tr(ui.ctx(), "Window"), |ui| {
+            ui.checkbox(
+                &mut workspace.tools,
+                paintcraft_ui::i18n::tr(ui.ctx(), "Tools"),
+            );
+            ui.checkbox(
+                &mut workspace.colors,
+                paintcraft_ui::i18n::tr(ui.ctx(), "Colors"),
+            );
+            ui.checkbox(
+                &mut workspace.layers,
+                paintcraft_ui::i18n::tr(ui.ctx(), "Layers"),
+            );
+            ui.checkbox(
+                &mut workspace.history,
+                paintcraft_ui::i18n::tr(ui.ctx(), "History"),
+            );
         });
     });
     ui.horizontal(|ui| {

@@ -117,6 +117,11 @@ impl App {
             Some(Confirm::Settings(draft)) => draft.values.appearance,
             _ => self.settings.appearance,
         };
+        let language = match &self.confirm {
+            Some(Confirm::Settings(draft)) => draft.values.language,
+            _ => self.settings.language,
+        };
+        paintcraft_ui::i18n::set_language(ctx, language);
         let theme = appearance.resolve(ctx.system_theme());
         if self.applied_variant == Some((experience, v, appearance, theme)) {
             return;

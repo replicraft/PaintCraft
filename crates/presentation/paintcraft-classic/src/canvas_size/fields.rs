@@ -34,7 +34,7 @@ pub fn dimension_fields(ui: &mut Ui, size: &mut (u32, u32), maximum: u32, labels
                             Layout::left_to_right(Align::Center).with_main_align(Align::Min),
                             |ui| {
                                 ui.set_width(caption_width);
-                                ui.label(label)
+                                ui.label(paintcraft_ui::i18n::tr(ui.ctx(), label))
                             },
                         )
                         .inner;

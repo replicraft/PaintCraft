@@ -78,7 +78,7 @@ pub fn property_label(ui: &mut egui::Ui, label: &str) -> egui::Response {
         Layout::left_to_right(Align::Center),
         |ui| {
             ui.set_width(width);
-            ui.label(label)
+            ui.label(paintcraft_ui::i18n::tr(ui.ctx(), label))
         },
     )
     .inner
@@ -150,7 +150,9 @@ pub fn panel<Id: Copy + Eq + Hash + std::fmt::Debug>(
                 ui.push_id(row.id, |ui| {
                     ui.horizontal(|ui| {
                         let mut visible = row.visible;
-                        let toggle = ui.checkbox(&mut visible, "").on_hover_text("Visible");
+                        let toggle = ui
+                            .checkbox(&mut visible, paintcraft_ui::i18n::tr(ui.ctx(), ""))
+                            .on_hover_text("Visible");
                         toggle.widget_info(|| {
                             egui::WidgetInfo::selected(
                                 egui::Role::CheckBox,

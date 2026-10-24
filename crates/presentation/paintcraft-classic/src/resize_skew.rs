@@ -105,11 +105,19 @@ pub fn dialog(ctx: &egui::Context, draft: &mut Draft, maximum: u32) -> bool {
                 .auto_shrink([false, true])
                 .show(ui, |ui| {
                     crate::form_controls::style(ui);
-                    ui.strong("Resize");
+                    ui.strong(paintcraft_ui::i18n::tr(ui.ctx(), "Resize"));
                     ui.horizontal(|ui| {
                         ui.spacing_mut().item_spacing.x = 24.0;
-                        ui.radio_value(&mut draft.pixels, false, "Percentage");
-                        ui.radio_value(&mut draft.pixels, true, "Pixels");
+                        ui.radio_value(
+                            &mut draft.pixels,
+                            false,
+                            paintcraft_ui::i18n::tr(ui.ctx(), "Percentage"),
+                        );
+                        ui.radio_value(
+                            &mut draft.pixels,
+                            true,
+                            paintcraft_ui::i18n::tr(ui.ctx(), "Pixels"),
+                        );
                     });
                     ui.add_space(if ctx.content_rect().height() < 420.0 {
                         0.0
@@ -118,7 +126,7 @@ pub fn dialog(ctx: &egui::Context, draft: &mut Draft, maximum: u32) -> bool {
                     });
                     resize_fields(ui, draft, maximum);
                     ui.add_space(16.0);
-                    ui.strong("Skew");
+                    ui.strong(paintcraft_ui::i18n::tr(ui.ctx(), "Skew"));
                     ui.horizontal_top(|ui| {
                         let width = (ui.available_width() - ui.spacing().item_spacing.x) * 0.5;
                         for (axis, label) in ["Horizontal", "Vertical"].into_iter().enumerate() {
@@ -140,7 +148,7 @@ pub fn dialog(ctx: &egui::Context, draft: &mut Draft, maximum: u32) -> bool {
                     });
                 });
             ui.add_space(12.0);
-            ui.label("Preview only")
+            ui.label(paintcraft_ui::i18n::tr(ui.ctx(), "Preview only"))
                 .on_hover_text("Resize and skew changes cannot be applied yet.");
             ui.separator();
             ui.horizontal(|ui| {
@@ -245,7 +253,7 @@ fn field_column(ui: &mut Ui, width: f32, label: &str, contents: impl FnOnce(&mut
         egui::Layout::top_down(Align::Min),
         |ui| {
             ui.set_width(width);
-            ui.label(label);
+            ui.label(paintcraft_ui::i18n::tr(ui.ctx(), label));
             contents(ui);
         },
     );

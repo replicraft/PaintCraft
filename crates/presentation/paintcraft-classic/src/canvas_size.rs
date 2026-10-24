@@ -147,7 +147,7 @@ fn dialog(
                     .inner_margin(12)
                     .show(ui, |ui| {
                         ui.set_min_width(ui.available_width().max(0.0));
-                        ui.strong("Dimensions");
+                        ui.strong(paintcraft_ui::i18n::tr(ui.ctx(), "Dimensions"));
                         ui.add_space(8.0);
                         if properties.is_some() {
                             ui.horizontal_wrapped(|ui| {
@@ -166,11 +166,11 @@ fn dialog(
                     let too_large = u64::from(draft.size.0) * u64::from(draft.size.1) > maximum;
                     let label = format!("Image limit: {maximum} pixels");
                     if too_large { ui.colored_label(ui.visuals().error_fg_color,label); }
-                    else { ui.label(label); }
+                    else { ui.label(paintcraft_ui::i18n::tr(ui.ctx(), label)); }
                 }
                 if properties.is_some() {
                     ui.add_space(12.0);
-                    ui.strong("Colors");
+                    ui.strong(paintcraft_ui::i18n::tr(ui.ctx(), "Colors"));
                     ui.horizontal_wrapped(|ui| {
                         ui.add_enabled(false, egui::RadioButton::new(false, "Black and white"))
                             .on_disabled_hover_text("Monochrome conversion is not available yet.");
@@ -179,7 +179,7 @@ fn dialog(
                 }
                 ui.add_space(12.0);
                 if let Some(startup) = &mut draft.startup {
-                    ui.strong("When you create a new image");
+                    ui.strong(paintcraft_ui::i18n::tr(ui.ctx(), "When you create a new image"));
                     ui.radio_value(
                         &mut startup.remember_last,
                         true,
@@ -194,9 +194,9 @@ fn dialog(
                         ui.weak(format!("Last canvas: {w} × {h} pixels"));
                     }
                     ui.add_space(8.0);
-                    ui.label("Applies to new Classic documents. The current image stays as it is.");
+                    ui.label(paintcraft_ui::i18n::tr(ui.ctx(), "Applies to new Classic documents. The current image stays as it is."));
                 } else {
-                    ui.label("Keep the top-left corner. Content outside the canvas is preserved.");
+                    ui.label(paintcraft_ui::i18n::tr(ui.ctx(), "Keep the top-left corner. Content outside the canvas is preserved."));
                 }
             });
                 ui.add_space(12.0);
@@ -232,12 +232,12 @@ fn dialog(
 }
 
 fn properties_info(ui: &mut egui::Ui, name: &str) {
-    ui.strong("Image");
+    ui.strong(paintcraft_ui::i18n::tr(ui.ctx(), "Image"));
     let value_width = (ui.available_width() - 104.0 - ui.spacing().item_spacing.x).max(40.0);
     egui::Grid::new("image-properties-attributes")
         .max_col_width(value_width)
         .show(ui, |ui| {
-            ui.label("File name");
+            ui.label(paintcraft_ui::i18n::tr(ui.ctx(), "File name"));
             ui.add(
                 egui::Label::new(name)
                     .truncate()
@@ -245,8 +245,8 @@ fn properties_info(ui: &mut egui::Ui, name: &str) {
             )
             .on_hover_text(name);
             ui.end_row();
-            ui.label("Resolution");
-            ui.label("Not available")
+            ui.label(paintcraft_ui::i18n::tr(ui.ctx(), "Resolution"));
+            ui.label(paintcraft_ui::i18n::tr(ui.ctx(), "Not available"))
                 .on_hover_text("No image resolution metadata is stored for this document.");
             ui.end_row();
         });

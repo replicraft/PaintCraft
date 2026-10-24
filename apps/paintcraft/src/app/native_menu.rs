@@ -54,7 +54,10 @@ impl App {
                 .into_iter()
                 .map(|action| Entry {
                     id: action.activation_code(),
-                    text: action.descriptor_for(context.frontend).label.into(),
+                    text: paintcraft_ui::i18n::tr(
+                        ctx,
+                        action.descriptor_for(context.frontend).label,
+                    ),
                     shortcut: shortcut(action, context.frontend),
                     checked: action.checked(context),
                 })
@@ -95,11 +98,19 @@ impl App {
         let Some(menu) = &mut self.native_menu else {
             return;
         };
+        for title in ["File", "Edit", "View", "Window"] {
+            menu.update_section(title, &paintcraft_ui::i18n::tr(ctx, title));
+        }
+        let _ = menu.update_presentation(
+            QUIT,
+            &paintcraft_ui::i18n::tr(ctx, "Quit PaintCraft"),
+            Some("meta+KeyQ"),
+        );
         let text_focus = ctx.egui_wants_keyboard_input();
         for action in actions() {
             if let Err(error) = menu.update_presentation(
                 action.activation_code(),
-                action.descriptor_for(context.frontend).label,
+                &paintcraft_ui::i18n::tr(ctx, action.descriptor_for(context.frontend).label),
                 shortcut(action, context.frontend),
             ) {
                 self.editor

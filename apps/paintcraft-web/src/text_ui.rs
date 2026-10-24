@@ -18,7 +18,7 @@ impl Default for TextUi {
         Self {
             style: TextOptions::default(),
             search: String::new(),
-            families: vec!["Selawik".into()],
+            families: vec!["Noto Sans JP".into(), "Selawik".into()],
             preedit: String::new(),
             widget_owned_input: false,
             selected_all: false,
@@ -80,7 +80,7 @@ impl WebApp {
             ui.add_enabled_ui(enabled,|ui| {
                 paintcraft_classic::text_options(ui,&mut self.text.style,&self.text.families,&mut self.text.search,false);
                 ui.horizontal_wrapped(|ui| {
-                    ui.label("Bundled Selawik · Enter for a new line · Cmd/Ctrl+Enter to place · Escape to cancel");
+                    ui.label(paintcraft_ui::i18n::tr(ui.ctx(), "Bundled Selawik · Enter for a new line · Cmd/Ctrl+Enter to place · Escape to cancel"));
                     if ui.add_enabled(self.editor.tools.is_editing_text() && self.text.preedit.is_empty(),egui::Button::new("Place text")).clicked() {
                         self.finish_text();
                     }

@@ -151,7 +151,7 @@ fn custom(ui: &mut egui::Ui, editor: &mut ColorEditor, spacious: bool) {
     }
     ui.horizontal(|ui| {
         ui.set_min_height(40.0);
-        ui.label("Custom colors");
+        ui.label(paintcraft_ui::i18n::tr(ui.ctx(), "Custom colors"));
         let add = ui
             .with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 ui.spacing_mut().button_padding = Vec2::ZERO;
@@ -191,6 +191,6 @@ fn custom(ui: &mut egui::Ui, editor: &mut ColorEditor, spacious: bool) {
 fn basic_heading(ui: &mut egui::Ui) {
     ui.horizontal(|ui| {
         ui.set_min_height(40.0);
-        ui.label("Basic colors");
+        ui.label(paintcraft_ui::i18n::tr(ui.ctx(), "Basic colors"));
     });
 }

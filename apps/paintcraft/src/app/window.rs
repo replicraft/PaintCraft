@@ -66,7 +66,10 @@ impl App {
         if self.experience() == Experience::Studio || self.document_count() > 1 {
             egui::Panel::top("documents").show(ui, |ui| {
                 if self.experience() == Experience::Classic {
-                    ui.weak("PaintCraft workspace documents");
+                    ui.weak(paintcraft_ui::i18n::tr(
+                        ui.ctx(),
+                        "PaintCraft workspace documents",
+                    ));
                 }
                 self.document_tab_bar(ui, first_pass);
             });
@@ -120,7 +123,10 @@ impl App {
                     self.canvas(ui, accept_input && self.tab_closing.is_none());
                 } else {
                     ui.centered_and_justified(|ui| {
-                        ui.label("Open an image or create a new document.")
+                        ui.label(paintcraft_ui::i18n::tr(
+                            ui.ctx(),
+                            "Open an image or create a new document.",
+                        ))
                     });
                 }
             });

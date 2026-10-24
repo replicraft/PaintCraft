@@ -113,7 +113,7 @@ pub fn family(
                         if filtered.is_empty() {
                             list.show(ui, |ui| {
                                 if !loading {
-                                    ui.weak("No matching fonts");
+                                    ui.weak(paintcraft_ui::i18n::tr(ui.ctx(), "No matching fonts"));
                                 }
                             });
                         } else {

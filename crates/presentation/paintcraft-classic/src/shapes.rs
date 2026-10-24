@@ -152,6 +152,8 @@ fn button(
     cell: f32,
     glyph: f32,
 ) -> egui::Response {
+    let localized_label = paintcraft_ui::i18n::tr(ui.ctx(), label);
+    let label = localized_label.as_str();
     let response = ui
         .scope(|ui| {
             ui.spacing_mut().interact_size = Vec2::splat(cell);

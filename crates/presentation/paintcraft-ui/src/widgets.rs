@@ -62,6 +62,8 @@ pub(crate) fn icon_button_artwork(
     tooltip: impl Into<egui::WidgetText>,
     artwork: IconArtwork,
 ) -> Response {
+    let localized_label = crate::i18n::tr(ui.ctx(), label);
+    let label = localized_label.as_str();
     let size = if large {
         Vec2::new(64.0, 54.0)
     } else {
@@ -122,5 +124,6 @@ pub(crate) fn icon_button_artwork(
             ink,
         );
     }
-    response.on_hover_text(tooltip)
+    let tooltip = tooltip.into();
+    response.on_hover_text(crate::i18n::tr(ui.ctx(), tooltip.text()))
 }

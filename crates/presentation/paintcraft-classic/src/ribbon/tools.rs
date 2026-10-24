@@ -25,6 +25,8 @@ pub(super) fn prototype(ui: &mut egui::Ui, label: &str, icon: Icon, help: &str) 
 }
 
 fn button(ui: &mut egui::Ui, label: &str, icon: Icon, selected: bool) -> egui::Response {
+    let localized_label = paintcraft_ui::i18n::tr(ui.ctx(), label);
+    let label = localized_label.as_str();
     let response = crate::control_surface::button(
         ui,
         egui::Button::new("")

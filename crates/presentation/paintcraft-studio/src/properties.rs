@@ -20,28 +20,37 @@ pub fn layer_properties_dialog(
     let mut response = PropertiesResponse::Pending;
     let modal = egui::Modal::new(egui::Id::unique("studio-layer-properties")).show(ctx, |ui| {
         ui.set_min_width(300.0);
-        ui.heading("Layer Properties");
+        ui.heading(paintcraft_ui::i18n::tr(ui.ctx(), "Layer Properties"));
         ui.horizontal(|ui| {
-            let label = ui.label("Name");
+            let label = ui.label(paintcraft_ui::i18n::tr(ui.ctx(), "Name"));
             ui.text_edit_singleline(&mut values.name)
                 .labelled_by(label.id);
         });
-        ui.checkbox(&mut values.visible, "Visible");
+        ui.checkbox(
+            &mut values.visible,
+            paintcraft_ui::i18n::tr(ui.ctx(), "Visible"),
+        );
         ui.horizontal(|ui| {
-            let label = ui.label("Layer opacity");
+            let label = ui.label(paintcraft_ui::i18n::tr(ui.ctx(), "Layer opacity"));
             ui.add(egui::Slider::new(&mut values.opacity, 0..=255))
                 .labelled_by(label.id);
         });
         let valid = values.name.chars().count() <= 1024;
         if !valid {
-            ui.label("Layer names can contain up to 1024 characters.");
+            ui.label(paintcraft_ui::i18n::tr(
+                ui.ctx(),
+                "Layer names can contain up to 1024 characters.",
+            ));
         }
         ui.separator();
         ui.horizontal(|ui| {
             if ui.add_enabled(valid, egui::Button::new("Apply")).clicked() {
                 response = PropertiesResponse::Apply;
             }
-            if ui.button("Cancel").clicked() {
+            if ui
+                .button(paintcraft_ui::i18n::tr(ui.ctx(), "Cancel"))
+                .clicked()
+            {
                 response = PropertiesResponse::Cancel;
             }
         });

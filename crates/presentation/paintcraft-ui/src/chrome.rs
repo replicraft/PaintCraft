@@ -59,15 +59,27 @@ pub fn options_with_shape_style(
             });
         }
         if state.tool == Tool::Brush {
-            ui.selectable_value(&mut state.options.round, true, "Round");
-            ui.selectable_value(&mut state.options.round, false, "Square");
+            ui.selectable_value(
+                &mut state.options.round,
+                true,
+                crate::i18n::tr(ui.ctx(), "Round"),
+            );
+            ui.selectable_value(
+                &mut state.options.round,
+                false,
+                crate::i18n::tr(ui.ctx(), "Square"),
+            );
             if state.options.round {
                 use paintcraft_core::types::brush::BrushMedia;
                 egui::ComboBox::from_label("Brush medium")
-                    .selected_text(state.options.media.name())
+                    .selected_text(crate::i18n::tr(ui.ctx(), state.options.media.name()))
                     .show_ui(ui, |ui| {
                         for media in BrushMedia::ALL {
-                            ui.selectable_value(&mut state.options.media, media, media.name());
+                            ui.selectable_value(
+                                &mut state.options.media,
+                                media,
+                                crate::i18n::tr(ui.ctx(), media.name()),
+                            );
                         }
                     });
             }
@@ -88,27 +100,34 @@ pub fn options_with_shape_style(
                 (ShapeStyle::Filled, "Filled"),
                 (ShapeStyle::Both, "Both"),
             ] {
-                ui.selectable_value(&mut state.options.style, style, label);
+                ui.selectable_value(
+                    &mut state.options.style,
+                    style,
+                    crate::i18n::tr(ui.ctx(), label),
+                );
             }
         }
         if state.tool == Tool::Fill {
-            let label = ui.label("Tolerance");
+            let label = ui.label(crate::i18n::tr(ui.ctx(), "Tolerance"));
             ui.add(egui::DragValue::new(&mut state.options.tolerance).range(0..=255))
                 .labelled_by(label.id);
         }
         if state.tool == Tool::Text {
-            ui.label("Command/Ctrl+Enter to place · Escape to cancel");
+            ui.label(crate::i18n::tr(
+                ui.ctx(),
+                "Command/Ctrl+Enter to place · Escape to cancel",
+            ));
         }
         if state.tool == Tool::Select {
-            if ui.button("Select all").clicked() {
+            if ui.button(crate::i18n::tr(ui.ctx(), "Select all")).clicked() {
                 actions.push(Action::SelectAll);
             }
-            if ui.button("Deselect").clicked() {
+            if ui.button(crate::i18n::tr(ui.ctx(), "Deselect")).clicked() {
                 actions.push(Action::Deselect);
             }
         }
         if matches!(state.tool, Tool::Pencil) {
-            ui.weak("Pencil · hard edge");
+            ui.weak(crate::i18n::tr(ui.ctx(), "Pencil · hard edge"));
         }
     });
 }
@@ -168,7 +187,7 @@ pub fn color_edit(ui: &mut egui::Ui, label: &str, value: &mut Rgba) {
 /// Kept next to Settings in either frontend; switching policy belongs to the host.
 pub fn interface_changer(ui: &mut egui::Ui, context: crate::actions::Context) -> Vec<Action> {
     let mut actions = Vec::new();
-    ui.menu_button("Interface", |ui| {
+    ui.menu_button(crate::i18n::tr(ui.ctx(), "Interface"), |ui| {
         for frontend in [
             crate::actions::Frontend::Classic,
             crate::actions::Frontend::Studio,
@@ -181,7 +200,10 @@ pub fn interface_changer(ui: &mut egui::Ui, context: crate::actions::Context) ->
         }
         if context.frontend == crate::actions::Frontend::Classic {
             ui.separator();
-            if ui.button("Change Classic skin…").clicked() {
+            if ui
+                .button(crate::i18n::tr(ui.ctx(), "Change Classic skin…"))
+                .clicked()
+            {
                 actions.push(Action::Interface);
                 ui.close();
             }
@@ -197,7 +219,7 @@ pub fn picker_options(ui: &mut egui::Ui, state: &mut Controls) {
         return;
     }
     ui.horizontal_wrapped(|ui| {
-        let label = ui.label("Sampling source");
+        let label = ui.label(crate::i18n::tr(ui.ctx(), "Sampling source"));
         egui::ComboBox::from_id_salt("picker-source")
             .selected_text(match state.options.picker_source {
                 SampleSource::Image => "Image",
@@ -217,7 +239,7 @@ pub fn picker_options(ui: &mut egui::Ui, state: &mut Controls) {
             })
             .response
             .labelled_by(label.id);
-        let label = ui.label("Sample size");
+        let label = ui.label(crate::i18n::tr(ui.ctx(), "Sample size"));
         egui::ComboBox::from_id_salt("picker-size")
             .selected_text(format!(
                 "{} × {}",
@@ -235,7 +257,7 @@ pub fn picker_options(ui: &mut egui::Ui, state: &mut Controls) {
             })
             .response
             .labelled_by(label.id);
-        let label = ui.label("After picking");
+        let label = ui.label(crate::i18n::tr(ui.ctx(), "After picking"));
         egui::ComboBox::from_id_salt("picker-after")
             .selected_text(match state.options.picker_after {
                 PickerAfter::Stay => "Keep color picker",
@@ -253,6 +275,6 @@ pub fn picker_options(ui: &mut egui::Ui, state: &mut Controls) {
             })
             .response
             .labelled_by(label.id);
-        ui.label("Ctrl-click samples the image");
+        ui.label(crate::i18n::tr(ui.ctx(), "Ctrl-click samples the image"));
     });
 }

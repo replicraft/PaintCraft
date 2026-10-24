@@ -70,7 +70,11 @@ impl App {
                         egui::Layout::top_down(egui::Align::Min),
                         |ui| {
                             ui.set_width(heading_width);
-                            ui.label(egui::RichText::new("Settings").size(24.0).strong());
+                            ui.label(
+                                egui::RichText::new(paintcraft_ui::i18n::tr(ui.ctx(), "Settings"))
+                                    .size(24.0)
+                                    .strong(),
+                            );
                         },
                     );
                     cancel = paintcraft_ui::widgets::classic_menu_button(
@@ -83,7 +87,7 @@ impl App {
                     .clicked();
                 });
             } else {
-                ui.heading("Settings");
+                ui.heading(paintcraft_ui::i18n::tr(ui.ctx(), "Settings"));
             }
             ui.add_space(10.0);
             let mut body_height = (height - if classic { 128.0 } else { 104.0 }).max(60.0);
@@ -132,7 +136,10 @@ impl App {
                 egui::Layout::right_to_left(egui::Align::Center),
                 |ui| {
                     cancel |= ui
-                        .add(egui::Button::new("Cancel").min_size(egui::vec2(96.0, control_height)))
+                        .add(
+                            egui::Button::new(paintcraft_ui::i18n::tr(ui.ctx(), "Cancel"))
+                                .min_size(egui::vec2(96.0, control_height)),
+                        )
                         .clicked();
                     let ink = if ui.visuals().dark_mode {
                         Color32::from_gray(16)
@@ -141,9 +148,12 @@ impl App {
                     };
                     apply = ui
                         .add(
-                            egui::Button::new(egui::RichText::new("Apply").color(ink))
-                                .fill(ui.visuals().selection.stroke.color)
-                                .min_size(egui::vec2(96.0, control_height)),
+                            egui::Button::new(
+                                egui::RichText::new(paintcraft_ui::i18n::tr(ui.ctx(), "Apply"))
+                                    .color(ink),
+                            )
+                            .fill(ui.visuals().selection.stroke.color)
+                            .min_size(egui::vec2(96.0, control_height)),
                         )
                         .clicked();
                 },
@@ -175,6 +185,8 @@ fn navigation(ui: &mut egui::Ui, current: &mut Page, sidebar: bool, classic: boo
         (Page::Canvas, "Canvas", Icon::CanvasSize),
         (Page::Text, "Text preferences", Icon::Text),
     ] {
+        let localized_label = paintcraft_ui::i18n::tr(ui.ctx(), label);
+        let label = localized_label.as_str();
         let image = if classic {
             match page {
                 Page::Appearance => paintcraft_ui::icons::classic_menu_image(
@@ -244,12 +256,12 @@ fn content(
                     Page::Appearance => appearance(ui, &mut draft.values),
                     Page::Canvas => canvas(ui, &mut draft.values.canvas, classic),
                     Page::Text => card(ui, "Text editing", |ui| {
-                        ui.label("Default font");
+                        ui.label(paintcraft_ui::i18n::tr(ui.ctx(), "Default font"));
                         paintcraft_classic::font_family(ui, &mut draft.values.text.family, fonts, &mut draft.font_search, false);
                         ui.label(format!("{} available font families", fonts.len()));
                         ui.checkbox(&mut draft.values.text.editable_until_save,
-                            "Keep text editable until save (prototype)");
-                        ui.weak("Prototype preference only. Text is rasterized when placed; editable text objects and save-time rasterization are not available yet.");
+                            paintcraft_ui::i18n::tr(ui.ctx(), "Keep text editable until save (prototype)"));
+                        ui.weak(paintcraft_ui::i18n::tr(ui.ctx(), "Prototype preference only. Text is rasterized when placed; editable text objects and save-time rasterization are not available yet."));
                     }),
                 }
             });
@@ -269,7 +281,7 @@ fn card(ui: &mut egui::Ui, heading: &str, contents: impl FnOnce(&mut egui::Ui)) 
         .inner_margin(12)
         .show(ui, |ui| {
             ui.set_min_width(ui.available_width().max(0.0));
-            ui.strong(heading);
+            ui.strong(paintcraft_ui::i18n::tr(ui.ctx(), heading));
             ui.add_space(6.0);
             contents(ui);
         });
@@ -277,15 +289,25 @@ fn card(ui: &mut egui::Ui, heading: &str, contents: impl FnOnce(&mut egui::Ui)) 
 }
 
 fn appearance(ui: &mut egui::Ui, values: &mut Settings) {
+    card(ui, "App language", |ui| {
+        paintcraft_ui::i18n::picker(ui, &mut values.language);
+    });
     card(ui, "App theme", |ui| {
-        ui.weak("Preview the theme now. Apply saves your choice; Cancel restores it.");
+        ui.weak(paintcraft_ui::i18n::tr(
+            ui.ctx(),
+            "Preview the theme now. Apply saves your choice; Cancel restores it.",
+        ));
         ui.horizontal_wrapped(|ui| {
             for (value, label) in [
                 (settings::Appearance::System, "Use system setting"),
                 (settings::Appearance::Light, "Light"),
                 (settings::Appearance::Dark, "Dark"),
             ] {
-                ui.radio_value(&mut values.appearance, value, label);
+                ui.radio_value(
+                    &mut values.appearance,
+                    value,
+                    paintcraft_ui::i18n::tr(ui.ctx(), label),
+                );
             }
         });
     });
@@ -298,7 +320,11 @@ fn appearance(ui: &mut egui::Ui, values: &mut Settings) {
                 (Experience::Classic, "Classic interface"),
                 (Experience::Studio, "Studio interface"),
             ] {
-                ui.radio_value(&mut values.experience, value, label);
+                ui.radio_value(
+                    &mut values.experience,
+                    value,
+                    paintcraft_ui::i18n::tr(ui.ctx(), label),
+                );
             }
         });
     });
@@ -318,7 +344,10 @@ fn appearance(ui: &mut egui::Ui, values: &mut Settings) {
 
 fn canvas(ui: &mut egui::Ui, values: &mut settings::CanvasDefaults, classic: bool) {
     card(ui, "New Classic canvas", |ui| {
-        ui.weak("These defaults apply to new documents, leaving the current image unchanged.");
+        ui.weak(paintcraft_ui::i18n::tr(
+            ui.ctx(),
+            "These defaults apply to new documents, leaving the current image unchanged.",
+        ));
         if classic {
             paintcraft_classic::canvas_size::dimension_fields(
                 ui,
@@ -332,7 +361,7 @@ fn canvas(ui: &mut egui::Ui, values: &mut settings::CanvasDefaults, classic: boo
                 ("Default height", &mut values.configured.1),
             ] {
                 ui.horizontal(|ui| {
-                    let caption = ui.label(label);
+                    let caption = ui.label(paintcraft_ui::i18n::tr(ui.ctx(), label));
                     ui.add(
                         egui::DragValue::new(value)
                             .range(1..=settings::SIZE_MAX)
@@ -344,7 +373,11 @@ fn canvas(ui: &mut egui::Ui, values: &mut settings::CanvasDefaults, classic: boo
         }
     });
     card(ui, "Canvas size on startup", |ui| {
-        ui.radio_value(&mut values.remember_last, true, "Remember last canvas size");
+        ui.radio_value(
+            &mut values.remember_last,
+            true,
+            paintcraft_ui::i18n::tr(ui.ctx(), "Remember last canvas size"),
+        );
         ui.radio_value(
             &mut values.remember_last,
             false,

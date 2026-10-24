@@ -33,10 +33,13 @@ const NAMES: [&str; 28] = [
     "Mint",
     "Periwinkle",
 ];
-pub(super) fn tooltip(index: usize, rgb: [u8; 3]) -> String {
+pub(super) fn tooltip(ctx: &egui::Context, index: usize, rgb: [u8; 3]) -> String {
     format!(
         "{}\n#{:02X}{:02X}{:02X}",
-        NAMES[index], rgb[0], rgb[1], rgb[2]
+        paintcraft_ui::i18n::tr(ctx, NAMES[index]),
+        rgb[0],
+        rgb[1],
+        rgb[2]
     )
 }
 
@@ -183,7 +186,7 @@ fn swatches(
                     (
                         Some(super::Rgba([rgb[0], rgb[1], rgb[2], 255])),
                         format!("Color #{:02X}{:02X}{:02X}", rgb[0], rgb[1], rgb[2]),
-                        tooltip(index, rgb),
+                        tooltip(ui.ctx(), index, rgb),
                     )
                 } else {
                     let slot = index - 20;

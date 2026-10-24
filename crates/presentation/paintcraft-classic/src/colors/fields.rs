@@ -33,7 +33,10 @@ pub(super) fn controls(ui: &mut egui::Ui, editor: &mut ColorEditor, width: f32) 
     }
     response.on_hover_text("Hex RGB");
     if !editor.valid() {
-        ui.weak("Enter six hex digits, such as #2080FF.");
+        ui.weak(paintcraft_ui::i18n::tr(
+            ui.ctx(),
+            "Enter six hex digits, such as #2080FF.",
+        ));
     }
     ui.add_space(8.0);
     let model = ui
@@ -113,7 +116,7 @@ pub(super) fn controls(ui: &mut egui::Ui, editor: &mut ColorEditor, width: f32) 
                                 .min_size(Vec2::new(field_width, 40.0))
                                 .range(0..=255),
                         );
-                        let caption = ui.label(label);
+                        let caption = ui.label(paintcraft_ui::i18n::tr(ui.ctx(), label));
                         changed |= value.labelled_by(caption.id).changed();
                     },
                 );
@@ -143,7 +146,7 @@ pub(super) fn controls(ui: &mut egui::Ui, editor: &mut ColorEditor, width: f32) 
                                 .speed(0.5)
                                 .range(0.0..=max),
                         );
-                        let caption = ui.label(label);
+                        let caption = ui.label(paintcraft_ui::i18n::tr(ui.ctx(), label));
                         changed |= value.labelled_by(caption.id).changed();
                     },
                 );

@@ -27,6 +27,7 @@ pub enum Experience {
 pub struct Settings {
     pub experience: Experience,
     pub appearance: Appearance,
+    pub language: paintcraft_ui::i18n::Language,
     pub text: paintcraft_classic::TextOptions,
     /// `None` until the first-visit picker has been answered.
     pub classic_variant: Option<ClassicVariant>,
@@ -42,6 +43,7 @@ impl Default for Settings {
         Self {
             experience: Experience::default(),
             appearance: Appearance::default(),
+            language: Default::default(),
             text: Default::default(),
             classic_variant: None,
             canvas: Default::default(),
@@ -122,7 +124,15 @@ fn parse(bytes: &[u8]) -> Result<Settings, String> {
         Some(Value::Str(id)) => Appearance::parse(id).ok_or("unknown appearance")?,
         Some(_) => return Err("invalid appearance".into()),
     };
+    let language = match v.get("language") {
+        None => Default::default(),
+        Some(value) => value
+            .as_str()
+            .and_then(paintcraft_ui::i18n::Language::parse)
+            .ok_or("unknown language")?,
+    };
     Ok(Settings {
+        language,
         appearance,
         classic_toolbar_auto_hide: match v.get("classic_toolbar_auto_hide") {
             None => false,
@@ -188,6 +198,7 @@ impl Settings {
             ("canvas", self.canvas.value()),
             ("custom_colors", colors::value(&self.custom_colors)),
             ("appearance", Value::str(self.appearance.id())),
+            ("language", Value::str(self.language.id())),
             ("classic_status_bar", Value::Bool(self.classic_status_bar)),
             ("classic_rulers", Value::Bool(self.classic_rulers)),
             (

@@ -17,6 +17,7 @@ pub(crate) struct Preferences {
     pub custom_colors: CustomColors,
     pub theme: Option<Theme>,
     pub default_font: String,
+    pub language: paintcraft_ui::i18n::Language,
 }
 impl Default for Preferences {
     fn default() -> Self {
@@ -26,6 +27,7 @@ impl Default for Preferences {
             custom_colors: [None; 28],
             theme: None,
             default_font: "Selawik".into(),
+            language: Default::default(),
         }
     }
 }
@@ -81,7 +83,15 @@ impl Preferences {
                 .ok_or("invalid default font")?
                 .to_owned(),
         };
+        let language = match value.get("language") {
+            None => Default::default(),
+            Some(value) => value
+                .as_str()
+                .and_then(paintcraft_ui::i18n::Language::parse)
+                .ok_or("unknown language")?,
+        };
         Ok(Self {
+            language,
             default_font,
             canvas,
             variant,
@@ -95,6 +105,7 @@ impl Preferences {
             ("schema", Value::str("paintcraft.web.preferences/v1")),
             ("canvas", self.canvas.value()),
             ("default_font", Value::str(&self.default_font)),
+            ("language", Value::str(self.language.id())),
             ("skin", Value::str(self.variant.id())),
             (
                 "theme",
@@ -232,6 +243,41 @@ mod tests {
             unreachable!()
         };
         object.insert("schema".into(), Value::str("unknown"));
+        assert!(Preferences::parse(&json::canonical(&value)).is_err());
+    }
+}
+
+#[cfg(test)]
+mod language_tests {
+    use super::*;
+    use paintcraft_ui::i18n::Language;
+    #[test]
+    fn language_round_trips_and_old_preferences_keep_english() {
+        let prefs = Preferences {
+            language: Language::Japanese,
+            ..Default::default()
+        };
+        assert_eq!(
+            Preferences::parse(&prefs.bytes().unwrap())
+                .unwrap()
+                .language,
+            Language::Japanese
+        );
+        let mut value = json::parse(&prefs.bytes().unwrap()).unwrap();
+        let Value::Object(ref mut object) = value else {
+            unreachable!()
+        };
+        object.remove("language");
+        assert_eq!(
+            Preferences::parse(&json::canonical(&value))
+                .unwrap()
+                .language,
+            Language::English
+        );
+        let Value::Object(ref mut object) = value else {
+            unreachable!()
+        };
+        object.insert("language".into(), Value::str("unknown"));
         assert!(Preferences::parse(&json::canonical(&value)).is_err());
     }
 }

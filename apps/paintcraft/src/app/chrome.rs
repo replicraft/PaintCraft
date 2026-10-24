@@ -56,7 +56,7 @@ impl App {
         let ctx = ui.ctx().clone();
         if self.experience() == Experience::Studio {
             ui.horizontal(|ui| {
-                ui.strong("PaintCraft Studio");
+                ui.strong(paintcraft_ui::i18n::tr(ui.ctx(), "PaintCraft Studio"));
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     if paintcraft_ui::widgets::icon_button(
                         ui,

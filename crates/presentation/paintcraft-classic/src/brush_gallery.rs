@@ -76,6 +76,10 @@ fn row(
     enabled: bool,
     index: usize,
 ) -> egui::Response {
+    let localized_label = paintcraft_ui::i18n::tr(ui.ctx(), label);
+    let label = localized_label.as_str();
+    let localized_accessible = paintcraft_ui::i18n::tr(ui.ctx(), accessible);
+    let accessible = localized_accessible.as_str();
     let response = ui.add_enabled(
         enabled,
         egui::Button::new(" ")

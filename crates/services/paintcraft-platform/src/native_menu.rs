@@ -26,6 +26,7 @@ enum Item {
 pub struct NativeMenu {
     menu: Menu,
     items: HashMap<u64, Item>,
+    sections: HashMap<String, (Submenu, String)>,
     events: mpsc::Receiver<u64>,
     presentation: HashMap<u64, (String, Option<&'static str>)>,
 }
@@ -47,6 +48,7 @@ impl NativeMenu {
     ) -> Result<Self, String> {
         let menu = Menu::new();
         let mut items = HashMap::new();
+        let mut section_items = HashMap::new();
         let app = Submenu::new("PaintCraft", true);
         app.append(&PredefinedMenuItem::about(
             Some("About PaintCraft"),
@@ -92,7 +94,8 @@ impl NativeMenu {
         )?;
         menu.append(&app).map_err(|e| e.to_string())?;
         for section in sections {
-            let submenu = Submenu::new(section.title, true);
+            let submenu = Submenu::new(&section.title, true);
+            section_items.insert(section.title.clone(), (submenu.clone(), section.title));
             for entry in section.entries {
                 append(&submenu, &mut items, entry)?;
             }
@@ -107,6 +110,7 @@ impl NativeMenu {
             .map_err(|e| e.to_string())?;
         menu.append(&window).map_err(|e| e.to_string())?;
         window.set_as_windows_menu_for_nsapp();
+        section_items.insert("Window".into(), (window, "Window".into()));
         let (sender, events) = mpsc::channel();
         MenuEvent::set_event_handler(Some(move |event: MenuEvent| {
             if let Some(id) = event
@@ -125,7 +129,17 @@ impl NativeMenu {
             items,
             events,
             presentation: HashMap::new(),
+            sections: section_items,
         })
+    }
+
+    pub fn update_section(&mut self, source: &str, text: &str) {
+        if let Some((menu, old)) = self.sections.get_mut(source)
+            && old != text
+        {
+            menu.set_text(text);
+            *old = text.to_owned();
+        }
     }
 
     pub fn poll(&self) -> Vec<u64> {

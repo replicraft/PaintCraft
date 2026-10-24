@@ -176,7 +176,10 @@ impl App {
                             }
                         }
                     }
-                    if ui.button("Ask later").clicked() {
+                    if ui
+                        .button(paintcraft_ui::i18n::tr(ui.ctx(), "Ask later"))
+                        .clicked()
+                    {
                         if let Some(saving) = &mut self.saving {
                             saving.cancel_restore();
                             saving.cancel_inspection();

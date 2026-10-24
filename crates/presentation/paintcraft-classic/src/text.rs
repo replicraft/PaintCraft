@@ -69,8 +69,11 @@ pub fn text_options(
                         ui.scope(|ui| {
                             ui.spacing_mut().icon_width = 24.0;
                             crate::form_controls::style(ui);
-                            ui.checkbox(&mut options.background_fill, "Background fill")
-                                .on_hover_text("Fill the text background with the secondary color");
+                            ui.checkbox(
+                                &mut options.background_fill,
+                                paintcraft_ui::i18n::tr(ui.ctx(), "Background fill"),
+                            )
+                            .on_hover_text("Fill the text background with the secondary color");
                         });
                     });
                 });

@@ -357,6 +357,7 @@ pub fn menu_item_with_icon_style(
         label,
         ..action.descriptor_for(ctx.frontend)
     };
+    let localized_label = crate::i18n::tr(ui.ctx(), descriptor.label);
     let checked = action.checked(ctx);
     let icon = if icon_style == MenuIconStyle::Colorful {
         action.icon(ctx)
@@ -369,9 +370,9 @@ pub fn menu_item_with_icon_style(
         (checked.is_some() || icon.is_none()) && icon_style != MenuIconStyle::Colorful;
     let marker_id = egui::IdSalt::new("menu-toggle-marker");
     let title = if checked.is_some() && !classic_marker {
-        format!("       {}", descriptor.label)
+        format!("       {}", localized_label)
     } else {
-        descriptor.label.to_owned()
+        localized_label.clone()
     };
     let mut button = if classic_marker {
         egui::Button::new((
@@ -409,8 +410,8 @@ pub fn menu_item_with_icon_style(
     let response = painted.response;
     if let Some(checked) = checked {
         let label = shortcut.map_or_else(
-            || descriptor.label.to_owned(),
-            |shortcut| format!("{} {shortcut}", descriptor.label),
+            || localized_label.clone(),
+            |shortcut| format!("{} {shortcut}", localized_label),
         );
         response.widget_info(|| {
             egui::WidgetInfo::selected(egui::Role::Button, enabled, checked, &label)
@@ -494,13 +495,14 @@ fn toolbar_button_artwork(
     artwork: crate::widgets::IconArtwork,
 ) -> bool {
     let descriptor = action.descriptor_for(ctx.frontend);
-    let label = descriptor.label.trim_end_matches('…');
+    let localized_label = crate::i18n::tr(ui.ctx(), descriptor.label);
+    let label = localized_label.trim_end_matches('…');
     let tooltip = descriptor.shortcut.map_or_else(
-        || descriptor.label.to_owned(),
+        || localized_label.clone(),
         |shortcut| {
             format!(
                 "{} ({})",
-                descriptor.label,
+                localized_label,
                 ui.ctx().format_shortcut(&shortcut)
             )
         },

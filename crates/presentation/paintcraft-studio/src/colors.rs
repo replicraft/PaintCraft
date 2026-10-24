@@ -6,13 +6,25 @@ use paintcraft_ui::chrome::{Controls, color_edit};
 
 pub(super) fn controls(ui: &mut egui::Ui, state: &mut Controls, workspace: &mut Workspace) {
     ui.horizontal(|ui| {
-        ui.selectable_value(&mut workspace.edit_secondary, false, "Primary");
+        ui.selectable_value(
+            &mut workspace.edit_secondary,
+            false,
+            paintcraft_ui::i18n::tr(ui.ctx(), "Primary"),
+        );
         color_edit(ui, "Primary color", &mut state.primary);
-        ui.selectable_value(&mut workspace.edit_secondary, true, "Secondary");
+        ui.selectable_value(
+            &mut workspace.edit_secondary,
+            true,
+            paintcraft_ui::i18n::tr(ui.ctx(), "Secondary"),
+        );
         color_edit(ui, "Secondary color", &mut state.secondary);
     });
     ui.horizontal(|ui| {
-        if ui.button("Swap colors").clicked() && ui.ctx().current_pass_index() == 0 {
+        if ui
+            .button(paintcraft_ui::i18n::tr(ui.ctx(), "Swap colors"))
+            .clicked()
+            && ui.ctx().current_pass_index() == 0
+        {
             std::mem::swap(&mut state.primary, &mut state.secondary);
         }
         let label = if workspace.more_colors {
@@ -170,7 +182,7 @@ fn advanced(ui: &mut egui::Ui, color: &mut Rgba) {
         };
     }
     ui.horizontal(|ui| {
-        let label = ui.label("Hex RGBA");
+        let label = ui.label(paintcraft_ui::i18n::tr(ui.ctx(), "Hex RGBA"));
         let response = ui
             .add(
                 egui::TextEdit::singleline(&mut draft.text)
@@ -190,7 +202,10 @@ fn advanced(ui: &mut egui::Ui, color: &mut Rgba) {
         }
     });
     if Rgba::parse(&draft.text).is_none() {
-        ui.weak("Use #RRGGBBAA; incomplete text has not changed the color.");
+        ui.weak(paintcraft_ui::i18n::tr(
+            ui.ctx(),
+            "Use #RRGGBBAA; incomplete text has not changed the color.",
+        ));
     }
     ui.data_mut(|d| d.insert_temp(id, draft));
 }

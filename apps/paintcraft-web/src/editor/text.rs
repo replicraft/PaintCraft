@@ -9,6 +9,7 @@ pub(super) fn fonts() -> RefCell<TextRenderer> {
     for bytes in [
         paintcraft_ui::fonts::SELAWIK_REGULAR,
         paintcraft_ui::fonts::SELAWIK_BOLD,
+        paintcraft_ui::fonts::NOTO_SANS_JP,
     ] {
         db.load_font_data(bytes.to_vec());
     }

@@ -113,7 +113,7 @@ pub fn chrome(
     }
     let compact = variant == ClassicVariant::V11 && ui.available_width() < 720.0;
     let menu = quick_access::menu_bar(ui, variant).ui(ui, |ui| {
-        ui.menu_button("File", |ui| {
+        ui.menu_button(paintcraft_ui::i18n::tr(ui.ctx(), "File"), |ui| {
             menu_layout(ui, variant);
             if variant == ClassicVariant::V11 {
                 menus::file(ui, context, &mut actions);
@@ -132,7 +132,7 @@ pub fn chrome(
         if variant == ClassicVariant::V11 {
             ui.add_space(6.0);
         }
-        ui.menu_button("Edit", |ui| {
+        ui.menu_button(paintcraft_ui::i18n::tr(ui.ctx(), "Edit"), |ui| {
             menu_layout(ui, variant);
             if variant == ClassicVariant::V11 {
                 menus::edit(ui, context, &mut actions);
@@ -151,7 +151,7 @@ pub fn chrome(
         if variant == ClassicVariant::V11 {
             ui.add_space(6.0);
         }
-        ui.menu_button("View", |ui| {
+        ui.menu_button(paintcraft_ui::i18n::tr(ui.ctx(), "View"), |ui| {
             menu_layout(ui, variant);
             menus::view(ui, variant, context, &mut actions);
         });
@@ -160,7 +160,9 @@ pub fn chrome(
             quick_access::show(ui, variant, context, &mut actions);
         }
         if variant != ClassicVariant::V11
-            && ui.button("Layers").clicked()
+            && ui
+                .button(paintcraft_ui::i18n::tr(ui.ctx(), "Layers"))
+                .clicked()
             && ui.ctx().current_pass_index() == 0
         {
             workspace.layers = !workspace.layers;
@@ -206,7 +208,7 @@ pub fn chrome(
                     .color(Color32::from_rgb(0, 95, 184))
                     .strong(),
             );
-            ui.label("PaintCraft");
+            ui.label(paintcraft_ui::i18n::tr(ui.ctx(), "PaintCraft"));
         });
     }
     if variant == ClassicVariant::V11 {
@@ -315,7 +317,8 @@ pub fn chrome(
                                             ),
                                         )
                                     });
-                                    let response = response.on_hover_text(palette::tooltip(i, rgb));
+                                    let response =
+                                        response.on_hover_text(palette::tooltip(ui.ctx(), i, rgb));
                                     if response.clicked() {
                                         state.primary = Rgba([rgb[0], rgb[1], rgb[2], 255]);
                                     }
@@ -349,7 +352,7 @@ fn ribbon_group(ui: &mut egui::Ui, label: &str, contents: impl FnOnce(&mut egui:
             Vec2::new(width, 16.0),
             egui::Layout::top_down(egui::Align::Center),
             |ui| {
-                ui.weak(label);
+                ui.weak(paintcraft_ui::i18n::tr(ui.ctx(), label));
             },
         );
     });
