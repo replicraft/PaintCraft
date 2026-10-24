@@ -81,7 +81,8 @@ pub(super) fn ribbon(
                         });
                         if spacious(ui) {
                             ui.vertical(|ui| {
-                                ui.add_space(24.0);
+                                // Center the 40-point button against the 84-point gallery.
+                                ui.add_space(22.0);
                                 super::stroke_size::show(ui, state, context);
                             });
                         }
@@ -121,7 +122,7 @@ pub(super) fn ribbon(
                                         "Layers",
                                     )
                                 });
-                                response.on_hover_text("Layers")
+                                response.on_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), "Layers"))
                             },
                         )
                         .inner;

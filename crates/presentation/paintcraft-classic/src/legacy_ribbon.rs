@@ -80,7 +80,17 @@ pub(super) fn show(
                 });
                 ui.separator();
                 ribbon_group(ui, "Shapes", |ui| {
-                    shapes::gallery(ui, state, actions);
+                    ui.horizontal_top(|ui| {
+                        shapes::gallery(ui, state, actions);
+                        ui.vertical(|ui| {
+                            dropdowns::shape_paint(ui, state);
+                        });
+                    });
+                });
+                ui.separator();
+                ribbon_group(ui, "Size", |ui| {
+                    ui.add_space(22.0);
+                    super::stroke_size::show(ui, state, context);
                 });
                 ui.separator();
                 ribbon_group(ui, "Colors", |ui| {

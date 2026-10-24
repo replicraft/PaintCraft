@@ -18,15 +18,10 @@ pub(super) fn show(ui: &mut egui::Ui, state: &mut Controls, context: Context) {
             ui.spacing_mut().button_padding.y = 2.0;
             Vec2::new(54.0, 28.0)
         };
-        let button = Button::new(paintcraft_ui::icons::classic_menu_image(
-            ui.ctx(),
-            Icon::StrokeSize,
-            22.0,
-            ui.visuals().strong_text_color(),
-        ))
-        .min_size(target)
-        .frame_when_inactive(false)
-        .frame(true);
+        let button = Button::new("")
+            .min_size(target)
+            .frame_when_inactive(false)
+            .frame(true);
         let (response, _) = egui::containers::menu::MenuButton::from_button(button)
             .config(
                 egui::containers::menu::MenuConfig::new()
@@ -88,13 +83,24 @@ pub(super) fn show(ui: &mut egui::Ui, state: &mut Controls, context: Context) {
                     );
                 }
             });
+        paintcraft_ui::icons::classic_menu_image(
+            ui.ctx(),
+            Icon::StrokeSize,
+            22.0,
+            ui.visuals().strong_text_color(),
+        )
+        .paint_at(
+            ui,
+            Rect::from_center_size(response.rect.center(), Vec2::splat(22.0)),
+        );
         super::dropdowns::open_state(ui, &response, "Stroke size");
         if enabled {
-            response.on_hover_text("Stroke size");
+            response.on_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), "Stroke size"));
         } else {
-            response.on_disabled_hover_text(
+            response.on_disabled_hover_text(paintcraft_ui::i18n::tr(
+                ui.ctx(),
                 "Select a line, rectangle or ellipse to change stroke size.",
-            );
+            ));
         }
     });
 }
