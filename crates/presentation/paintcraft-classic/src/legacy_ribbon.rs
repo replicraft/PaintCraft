@@ -55,7 +55,7 @@ pub(super) fn show(
                     ui.horizontal_top(|ui| {
                         super::legacy_controls::selection(ui, variant, state, context, actions);
                         ui.vertical(|ui| {
-                            super::image_menus::legacy_controls(ui, context, actions);
+                            super::image_menus::legacy_controls(ui, variant, context, actions);
                         });
                     });
                 });

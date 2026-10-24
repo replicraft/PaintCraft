@@ -2,6 +2,7 @@
 use egui::{Rect, Vec2};
 use paintcraft_core::types::orthogonal::OrthogonalTransform as Transform;
 use paintcraft_ui::i18n::tr;
+mod legacy;
 use paintcraft_ui::icons::Icon;
 
 /// The resize control spans the two Image rows, matching the reference grouping.
@@ -259,6 +260,7 @@ fn menu(
 /// advertising newer background-removal or layer/AI presentation controls.
 pub(super) fn legacy_controls(
     ui: &mut egui::Ui,
+    variant: super::ClassicVariant,
     context: paintcraft_ui::actions::Context,
     actions: &mut Vec<super::Action>,
 ) {
@@ -293,25 +295,5 @@ pub(super) fn legacy_controls(
             actions.push(action);
         }
     }
-    ui.menu_button(
-        (
-            paintcraft_ui::icons::legacy_image(ui.ctx(), Icon::RotateClockwise, 14.0),
-            tr(ui.ctx(), "Rotate"),
-        ),
-        |ui| {
-            for transform in [
-                Transform::RotateRight,
-                Transform::RotateLeft,
-                Transform::Rotate180,
-                Transform::FlipVertical,
-                Transform::FlipHorizontal,
-            ] {
-                let action = Action::TransformImage(transform);
-                if paintcraft_ui::actions::menu_item(ui, action, context) {
-                    actions.push(action);
-                    ui.close();
-                }
-            }
-        },
-    );
+    legacy::rotate(ui, variant, context, actions);
 }
