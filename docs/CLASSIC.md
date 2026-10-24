@@ -1308,3 +1308,31 @@ workspace/wasm32 Clippy and web compilation pass. Four actual-App Wgpu scenes we
 visually reviewed. See [the live overview evidence](validation/classic-live-thumbnail-gpu-2026-10-23/validation.json).
 T15 remains partial; native shape antialiasing/fidelity and browser document
 thumbnails remain unqualified.
+
+## 2026-10-23 — Classic browser controls and preferences
+
+The browser now connects the shared primary/secondary/custom color editor, staged
+Canvas size and Image properties pixel fields, and configured-versus-remembered
+New-canvas sizes. Resizing preserves off-canvas content and is undoable; unchanged
+dimensions leave cropped layers and history intact. The browser dialog checks its
+output-pixel limit before Apply. Session/source guards discard stale drafts.
+
+Classic v11 floating size/opacity controls are connected to the browser tools.
+Each gesture captures its settings at press; control drags do not paint and
+Ctrl/Cmd-scroll over controls does not zoom the canvas. Pencil thickness remains
+independent. Stable canvas clearance matches the desktop presentation.
+
+Startup dimensions, theme, skin and custom swatches persist in versioned browser
+preferences. Invalid/unavailable storage reports a warning and uses defaults.
+This stores no document pixels or recovery data. The existing native canvas-default
+contract and preserving resize commands are shared; native settings retain their
+JSON representation. Browser eraser/Clear Canvas also share native opaque-ground
+lookup, including colored project backgrounds and white imported-image fallback.
+
+Thirty web tests pass, with native settings/canvas regressions and strict
+workspace/wasm checks. An isolated browser exercised real dimension entry, Undo,
+reload/startup size, theme/skin/palette persistence, color painting and malformed
+or denied storage. The final bundle was rebuilt and started. See the scoped
+[controls evidence](validation/web-classic-controls-2026-10-23/validation.json).
+Native Windows parity, broad browser/device conformance, editable browser text,
+transforms, workers/recovery and GPU document composition remain unfinished.

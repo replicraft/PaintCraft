@@ -5,7 +5,28 @@ transactional document session and raster compositor. Pencil, round/square brush
 eraser, fill, line/rectangle/ellipse, rectangular selection, clear canvas and
 undo/redo edit real pixels. Shift constrains shapes; Ctrl/Cmd-scroll zooms. The
 Layers panel adds, selects, hides, reorders and deletes real layers. Brush preview
-and release use the same shared commands. Erasing restores the white Classic ground.
+and release use the same shared commands. Erasing and Clear Canvas restore the
+solid project ground, with white used for new canvases and imported images that
+have no opaque default ground.
+
+Classic v11 now has the same floating size and brush-opacity controls as desktop.
+Pencil thickness is independent of brush/eraser thickness; each gesture captures
+its settings at press. Control drags and Ctrl/Cmd-scroll over those panels do not
+paint or zoom the canvas. The canvas keeps stable clearance across tool changes.
+
+View → Canvas size and File → Image properties edit staged pixel dimensions.
+Resizing preserves off-canvas content, expands editable layer bounds and is
+undoable. Unchanged dimensions do not publish history. The dialog enforces the
+browser pixel limit before Apply. Physical units, resolution and monochrome
+conversion remain unavailable.
+
+View → Default canvas size chooses a configured size or remembers the last size
+created/resized. The initial default is 1000 × 486. Startup dimensions, theme,
+Classic skin and custom swatches persist in this browser when local storage is
+available. Preferences are validated before use; malformed or unavailable storage
+falls back to defaults with a status message. Preference storage contains no
+document pixels and provides no document recovery. Primary/secondary color and
+other tool choices remain session state. Opened filenames update the page title.
 
 Open uses a browser file picker for `.pcnd`, PNG, BMP and JPEG. Image metadata or
 bit-depth losses require acknowledgement before replacing the current document.
@@ -66,6 +87,10 @@ commands and scope limits are recorded in [the validation evidence](../../docs/v
 The subsequent editor checks verified brush preview/release/undo pixels and real
 project download, PNG import and painted project reopening. Host tests cover the
 PNG export confirmation and codec output. See [the editor evidence](../../docs/validation/web-editor-2026-10-23/validation.json).
+The next controls/preferences slice exercised typed dimensions and Undo, remembered
+startup size after reload, actual theme/skin selection, custom-color persistence
+and painting, and malformed/denied local storage. Host regressions also cover a
+reopened colored-ground project. See [the controls evidence](../../docs/validation/web-classic-controls-2026-10-23/validation.json).
 These single-browser smoke checks do not establish cross-browser conformance.
 
 ## Next browser slices

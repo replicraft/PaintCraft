@@ -1,0 +1,142 @@
+{
+  "afterTheme": {
+    "canvas": {
+      "configured": {
+        "height": 486,
+        "width": 1000
+      },
+      "last": {
+        "height": 64,
+        "width": 96
+      },
+      "remember_last": true
+    },
+    "custom_colors": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "schema": "paintcraft.web.preferences/v1",
+    "skin": "v11",
+    "theme": "light"
+  },
+  "afterSkin": {
+    "canvas": {
+      "configured": {
+        "height": 486,
+        "width": 1000
+      },
+      "last": {
+        "height": 64,
+        "width": 96
+      },
+      "remember_last": true
+    },
+    "custom_colors": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "schema": "paintcraft.web.preferences/v1",
+    "skin": "v7",
+    "theme": "light"
+  },
+  "reloaded": {
+    "canvas": {
+      "configured": {
+        "height": 486,
+        "width": 1000
+      },
+      "last": {
+        "height": 64,
+        "width": 96
+      },
+      "remember_last": true
+    },
+    "custom_colors": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "schema": "paintcraft.web.preferences/v1",
+    "skin": "v7",
+    "theme": "light"
+  },
+  "clean": true,
+  "exceptions": []
+}

@@ -11,6 +11,19 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest Classic web controls connect staged primary/secondary/custom colors,
+bounded canvas dimensions and Image properties, configured/remembered startup
+sizes, persistent browser preferences and floating size/opacity controls. Shared
+resize/default/ground logic keeps native semantics; eraser and Clear Canvas now
+restore a loaded project's ground. Thirty web tests pass, alongside native
+controller/settings/canvas regressions and strict workspace/wasm checks. An
+isolated browser verified dimensions/Undo/reload, theme/skin/palette persistence,
+color painting and malformed/denied preference storage. The final bundle was
+rebuilt and started successfully. See [the controls evidence](validation/web-classic-controls-2026-10-23/validation.json).
+Preferences contain no document pixels. Text, transforms, workers/recovery, actual
+GPU document composition and cross-browser/native fidelity remain work. T15 stays
+partial and the T22 conformance fixture/interruption gate stays not-started.
+
 Latest web work replaces the blank preview with a bounded Classic editor: shared
 document/session/tools, matching raster previews and commits, selection, real
 layers and undo/redo. Browser picking opens PCND/PNG/BMP/JPEG; project downloads

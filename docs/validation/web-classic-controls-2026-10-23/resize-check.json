@@ -1,0 +1,52 @@
+{
+  "after": {
+    "canvas": {
+      "configured": {
+        "height": 486,
+        "width": 1000
+      },
+      "last": {
+        "height": 64,
+        "width": 96
+      },
+      "remember_last": true
+    },
+    "custom_colors": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "schema": "paintcraft.web.preferences/v1",
+    "skin": "v11",
+    "theme": null
+  },
+  "undoClean": true,
+  "ready": true,
+  "cleanAfterReload": true,
+  "exceptions": []
+}

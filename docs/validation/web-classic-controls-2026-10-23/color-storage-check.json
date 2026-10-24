@@ -1,0 +1,101 @@
+{
+  "after": {
+    "canvas": {
+      "configured": {
+        "height": 486,
+        "width": 1000
+      },
+      "last": {
+        "height": 64,
+        "width": 96
+      },
+      "remember_last": true
+    },
+    "custom_colors": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      "#2080FFFF",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "schema": "paintcraft.web.preferences/v1",
+    "skin": "v11",
+    "theme": "light"
+  },
+  "persisted": {
+    "canvas": {
+      "configured": {
+        "height": 486,
+        "width": 1000
+      },
+      "last": {
+        "height": 64,
+        "width": 96
+      },
+      "remember_last": true
+    },
+    "custom_colors": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      "#2080FFFF",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "schema": "paintcraft.web.preferences/v1",
+    "skin": "v11",
+    "theme": "light"
+  },
+  "clean": true,
+  "dirtyAfterPaint": true,
+  "cleanAfterUndo": true,
+  "invalidRetained": true,
+  "invalidReady": true,
+  "deniedReady": true,
+  "exceptions": []
+}
