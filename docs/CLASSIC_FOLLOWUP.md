@@ -535,3 +535,35 @@ The supplied `windows7/mspaint7-topbar.jpeg` reference was inspected for ribbon
 placement. A pinned native popup comparison remains absent, so this change does
 not qualify complete historical skin parity. Evidence logs are retained in
 ignored `docs/validation/historical-rotate-2026-10-24/`.
+
+### Historical Outline and Fill menus (2026-10-24)
+
+Windows 7/10 shape paint menus now use the compact historical command-row renderer
+with 24-pixel rows, original outline/fill sample glyphs, square frames and explicit
+selected markers. Visible ribbon captions remain Outline and Fill; accessibility
+and tooltips use Shape outline and Shape fill to distinguish them from the Fill
+tool. Menu triggers retain their open state after the pointer enters the popup.
+Disabled triggers explain that a supported shape must be selected.
+
+The old duplicated historical choice logic was removed. Modern and historical
+menus call the same preference-update helper and retain the existing three-state
+shape-paint policy. Menu choices do not publish document history; a subsequent
+gesture uses the chosen paint style through the actual tools/editor path. This
+slice covers the existing solid/no-paint choices only. Textured outlines/fills
+and exact native per-version paint semantics remain unfinished.
+
+All 249 ordinary desktop GUI tests pass (59 manual/capture tests ignored).
+The historical desktop regression covers both languages/skins, light/dark, normal
+and high DPI, forced multipass rendering, selected accessibility state, popup
+closure and no document/history publication for preference edits. It then draws
+outlined and filled rectangles, checks exact interior/edge pixels and undoes them.
+All 67 browser library tests pass, including equivalent real shape/Undo checks in
+all three skins and both languages. Native/web all-target Clippy passes with
+warnings denied and the browser release distribution rebuilds. Translation,
+source-length and whitespace checks pass.
+
+Eight actual app captures are in `assets/repo/classic-v{7,10}-{outline,fill}-{en-US,ja}.png`.
+The Windows 7 English outline and Japanese fill captures were visually inspected.
+These original sample glyphs and scoped layout changes do not establish full
+native Windows parity. Raw evidence is retained in ignored
+`docs/validation/historical-shape-paint-2026-10-24/`.
