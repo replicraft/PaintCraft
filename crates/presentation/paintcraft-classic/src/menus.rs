@@ -266,15 +266,6 @@ pub(super) fn view(
                     ui.close();
                 }
             }
-            if variant == ClassicVariant::V11 {
-                unavailable(
-                    ui,
-                    "Thumbnail",
-                    Icon::Thumbnail,
-                    None,
-                    "The thumbnail window is not available yet.",
-                );
-            }
             ui.separator();
             for action in [Action::CanvasSize, Action::CanvasDefaults] {
                 if view_item(ui, action, context, variant) {
@@ -314,7 +305,13 @@ fn view_item(ui: &mut Ui, action: Action, context: Context, variant: ClassicVari
             16.0
         },
         if variant == ClassicVariant::V11 {
-            if action == Action::View(paintcraft_ui::actions::ViewAction::FullScreen) {
+            if matches!(
+                action,
+                Action::View(
+                    paintcraft_ui::actions::ViewAction::FullScreen
+                        | paintcraft_ui::actions::ViewAction::Thumbnail
+                )
+            ) {
                 MenuIconStyle::ClassicOutlineToggle
             } else {
                 MenuIconStyle::ClassicOutline

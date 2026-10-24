@@ -328,3 +328,6 @@ mod resize_skew;
 
 #[path = "gui/image_properties.rs"]
 mod image_properties;
+
+#[path = "gui/thumbnail.rs"]
+mod thumbnail;

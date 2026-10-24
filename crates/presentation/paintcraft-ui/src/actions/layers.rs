@@ -131,6 +131,7 @@ mod tests {
             rulers: false,
             fullscreen: false,
             auto_hide_toolbar: false,
+            thumbnail: false,
         };
         assert!(Action::Layer(LayerAction::MoveTop).enabled(context));
         assert!(!Action::Layer(LayerAction::MoveBottom).enabled(context));

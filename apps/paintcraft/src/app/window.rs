@@ -25,6 +25,7 @@ impl App {
                 self.window_title = title;
             }
             self.poll_edits(&ctx);
+            self.update_thumbnail(&ctx);
             if self.experience() != Experience::Classic
                 || !self.classic.layers
                 || self.document_count() == 0
@@ -130,6 +131,7 @@ impl App {
         if self.experience() == Experience::Studio {
             self.studio_windows(&ctx);
         }
+        self.thumbnail_window(&ctx);
         self.picker_dialog(ui);
         self.recovery_dialog(ui);
         self.confirm_dialog(ui);

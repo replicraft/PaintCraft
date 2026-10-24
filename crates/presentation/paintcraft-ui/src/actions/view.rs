@@ -17,6 +17,7 @@ pub enum ViewAction {
     AutoHideToolbar,
     Rulers,
     FullScreen,
+    Thumbnail,
     Double,
     Quadruple,
     Octuple,
@@ -30,6 +31,7 @@ pub const WORKSPACE_VIEW: &[ViewAction] = &[
     ViewAction::AlwaysShowToolbar,
     ViewAction::AutoHideToolbar,
     ViewAction::FullScreen,
+    ViewAction::Thumbnail,
 ];
 
 pub const VIEW: &[ViewAction] = &[
@@ -58,6 +60,7 @@ impl ViewAction {
             Self::AutoHideToolbar => ("Automatically hide toolbar", None),
             Self::Rulers => ("Rulers", Some((Key::R, Modifiers::COMMAND))),
             Self::FullScreen => ("Full screen", Some((Key::F11, Modifiers::NONE))),
+            Self::Thumbnail => ("Thumbnail", None),
             Self::Double => ("200%", None),
             Self::Quadruple => ("400%", None),
             Self::Octuple => ("800%", None),
@@ -94,6 +97,7 @@ impl ViewAction {
     }
     pub(super) fn activation_code(self) -> u64 {
         match self {
+            Self::Thumbnail => 1315,
             Self::ZoomIn => 1300,
             Self::ZoomOut => 1301,
             Self::FitWindow => 1302,
@@ -113,6 +117,7 @@ impl ViewAction {
     }
     pub(super) fn checked(self, ctx: Context) -> Option<bool> {
         match self {
+            Self::Thumbnail => Some(ctx.thumbnail),
             Self::PixelGrid => Some(ctx.pixel_grid),
             Self::StatusBar => Some(ctx.status_bar),
             Self::AlwaysShowToolbar => Some(!ctx.auto_hide_toolbar),
@@ -160,6 +165,7 @@ mod tests {
             rulers: false,
             fullscreen: false,
             auto_hide_toolbar: false,
+            thumbnail: false,
         };
         assert_eq!(
             Action::from_shortcut(Key::F11, Modifiers::NONE),
@@ -176,6 +182,25 @@ mod tests {
             document_open: false,
             ..ctx
         };
+        let thumbnail = Action::View(ViewAction::Thumbnail);
+        assert!(!thumbnail.enabled(ctx)); // Studio does not own the window.
+        assert!(!thumbnail.enabled(classic)); // A closed document has no overview.
+        let overview = Context {
+            document_open: true,
+            thumbnail: true,
+            ..classic
+        };
+        assert!(thumbnail.enabled(overview));
+        assert_eq!(thumbnail.checked(overview), Some(true));
+        assert!(!thumbnail.enabled(Context {
+            blocked: true,
+            ..overview
+        }));
+        let ids: std::collections::HashSet<_> = WORKSPACE_VIEW
+            .iter()
+            .map(|view| Action::View(*view).activation_code())
+            .collect();
+        assert_eq!(ids.len(), WORKSPACE_VIEW.len());
         let show = Action::View(ViewAction::AlwaysShowToolbar);
         let hide = Action::View(ViewAction::AutoHideToolbar);
         assert!(!show.enabled(ctx) && !hide.enabled(ctx));
@@ -183,6 +208,7 @@ mod tests {
         assert_eq!(hide.checked(classic), Some(false));
         let hidden = Context {
             auto_hide_toolbar: true,
+            thumbnail: false,
             ..classic
         };
         assert!(hide.enabled(hidden) && show.enabled(hidden));

@@ -57,6 +57,7 @@ impl WebApp {
             rulers: false,
             fullscreen: false,
             auto_hide_toolbar: false,
+            thumbnail: false,
         }
     }
 

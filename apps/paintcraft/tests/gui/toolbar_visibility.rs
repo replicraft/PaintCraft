@@ -39,7 +39,7 @@ fn toolbar_modes_are_exclusive_persist_and_reveal_without_document_changes() {
             .toggled(),
         Some(Toggled::False)
     );
-    assert!(h.get_by_label("Thumbnail").accesskit_node().is_disabled());
+    assert!(!h.get_by_label("Thumbnail").accesskit_node().is_disabled());
     h.get_by_label("Automatically hide toolbar").click();
     h.run();
     assert!(Settings::load(&dir).0.classic_toolbar_auto_hide);

@@ -61,6 +61,7 @@ pub struct Context {
     pub rulers: bool,
     pub fullscreen: bool,
     pub auto_hide_toolbar: bool,
+    pub thumbnail: bool,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -177,7 +178,8 @@ impl Action {
                 ViewAction::StatusBar
                 | ViewAction::Rulers
                 | ViewAction::AlwaysShowToolbar
-                | ViewAction::AutoHideToolbar,
+                | ViewAction::AutoHideToolbar
+                | ViewAction::Thumbnail,
             ) => frontend == Frontend::Classic,
             Self::Interface
             | Self::CanvasSize
@@ -542,6 +544,7 @@ mod tests {
             rulers: false,
             fullscreen: false,
             auto_hide_toolbar: false,
+            thumbnail: false,
         };
         let ids: std::collections::HashSet<_> = FILE
             .iter()

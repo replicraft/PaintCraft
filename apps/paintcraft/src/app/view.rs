@@ -81,6 +81,13 @@ impl App {
 
     pub(super) fn dispatch_view_action(&mut self, ctx: &egui::Context, action: ViewAction) {
         match action {
+            ViewAction::Thumbnail => {
+                if self.experience() == Experience::Classic && self.document_count() > 0 {
+                    self.classic.thumbnail = !self.classic.thumbnail;
+                    ctx.request_repaint();
+                }
+                return;
+            }
             ViewAction::AlwaysShowToolbar | ViewAction::AutoHideToolbar => {
                 self.editor.cancel_gesture();
                 self.settings.classic_toolbar_auto_hide = action == ViewAction::AutoHideToolbar;
@@ -165,6 +172,7 @@ impl App {
                 return;
             }
             ViewAction::PixelGrid
+            | ViewAction::Thumbnail
             | ViewAction::StatusBar
             | ViewAction::FullScreen
             | ViewAction::Rulers

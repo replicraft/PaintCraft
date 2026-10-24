@@ -56,6 +56,8 @@ mod tests;
 mod text;
 #[path = "app/text_ui.rs"]
 mod text_ui;
+#[path = "app/thumbnail.rs"]
+mod thumbnail;
 #[path = "app/view.rs"]
 mod view;
 #[path = "app/window.rs"]
@@ -185,6 +187,7 @@ pub struct App {
     budget_wakes: Option<residency::BudgetWakes>,
     cpu_renderer: cpu_rendering::CpuRenderer,
     layer_thumbnails: layer_thumbnails::LayerThumbnails,
+    thumbnail: thumbnail::Thumbnail,
     pending_frame: Option<(RenderKey, JobHandle)>,
     dialogs: Option<NativeDialogs>,
     dialog_owner: Option<Uuid>,
@@ -297,6 +300,7 @@ impl App {
             budget_wakes: None,
             cpu_renderer: cpu_rendering::CpuRenderer::new(),
             layer_thumbnails: Default::default(),
+            thumbnail: Default::default(),
             pending_frame: None,
             dialogs: None,
             dialog_owner: None,

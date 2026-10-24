@@ -43,6 +43,7 @@ fn elided_classic_status_fields_show_one_complete_tooltip() {
                         rulers: false,
                         fullscreen: false,
                         auto_hide_toolbar: false,
+                        thumbnail: false,
                     };
                     *actions += paintcraft_classic::status::contents(
                         ui,

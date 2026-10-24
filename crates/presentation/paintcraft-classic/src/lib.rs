@@ -7,6 +7,7 @@ pub mod canvas_size;
 mod ruler_axis;
 mod rulers;
 pub mod status;
+pub mod thumbnail;
 pub mod tool_controls;
 pub use rulers::RULER_SIZE;
 mod control_surface;
@@ -33,6 +34,7 @@ mod stroke_size;
 #[derive(Debug, Default)]
 pub struct Workspace {
     pub layers: bool,
+    pub thumbnail: bool,
     pub toolbar: ToolbarVisibility,
     /// Current persisted custom colors supplied by the desktop host.
     pub custom_colors: CustomColors,

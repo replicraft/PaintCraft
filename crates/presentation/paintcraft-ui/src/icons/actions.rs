@@ -46,6 +46,7 @@ impl Action {
                 | ViewAction::AlwaysShowToolbar
                 | ViewAction::AutoHideToolbar => return None,
                 ViewAction::Rulers => Icon::Rulers,
+                ViewAction::Thumbnail => Icon::Thumbnail,
                 ViewAction::FullScreen => Icon::Resize,
                 ViewAction::Double
                 | ViewAction::Quadruple
