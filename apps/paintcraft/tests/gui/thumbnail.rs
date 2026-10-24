@@ -72,6 +72,13 @@ fn thumbnail_toggles_closes_and_fits_compact_themes_without_editing_or_persistin
             .get_by_role_and_label(Role::Image, "Canvas thumbnail")
             .rect();
         let close = h.get_by_label("Close thumbnail").rect();
+        // Size controls are intentionally hidden when the canvas viewport is short.
+        if let Some(control) = h.query_by_role_and_label(Role::Slider, "Tool size") {
+            assert!(
+                preview.left() > control.rect().right(),
+                "the initial overview must clear the floating size control"
+            );
+        }
         assert!(
             preview.min.x >= 0.0
                 && preview.min.y >= 0.0
@@ -201,7 +208,7 @@ fn export_thumbnail() {
         }
         .save(&dir)
         .unwrap();
-        let mut h = harness_with(App::new(None).with_settings(dir.clone()), 1.0, true);
+        let mut h = harness_with(App::new(None).with_settings(dir.clone()), 1.0, false);
         h.set_size(Vec2::new(1360.0, 900.0));
         h.run();
         drag(&mut h, (500.0, 160.0), (760.0, 320.0));

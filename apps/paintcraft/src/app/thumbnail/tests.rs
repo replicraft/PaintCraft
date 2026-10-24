@@ -120,10 +120,41 @@ fn reopening_same_source_during_cancellation_remains_eligible() {
     let ctx = egui::Context::default();
     let budget = paintcraft_runtime::SharedBudget::new(32 << 20);
     let doc = document();
-    let mut service = Thumbnail::default();
-    service.update(&ctx, Some(doc.clone()), &budget, true);
+    let mut executor = Executor::with_budget(
+        WorkerLimits {
+            workers: 1,
+            pending_jobs: 1,
+            transient_bytes: SOURCE_LIMIT,
+        },
+        budget.clone(),
+    )
+    .unwrap();
+    let (release, gate) = std::sync::mpsc::channel();
+    let source = doc.clone();
+    let handle = executor
+        .submit(
+            WORK_BYTES,
+            move |_| {
+                gate.recv_timeout(Duration::from_secs(5)).unwrap();
+                paintcraft_render::thumbnail::render_document(&source, SIDE, || Ok(()))
+            },
+            || {},
+        )
+        .unwrap();
+    let mut service = Thumbnail {
+        scope: Some((doc.document_id, doc.state_id)),
+        executor: Some(executor),
+        pending: Some(((doc.document_id, doc.state_id), handle)),
+        output: Some(budget.reserve(250 * 122 * 12).unwrap()),
+        ..Default::default()
+    };
     service.update(&ctx, None, &budget, false);
     service.update(&ctx, Some(doc.clone()), &budget, false);
+    assert!(
+        service.pending.is_some(),
+        "cancelled work is still gated while reopening"
+    );
+    release.send(()).unwrap();
     drain(&mut service, &ctx, Some(doc.clone()), &budget);
     assert!(!service.failed);
     assert!(service.image.is_none());

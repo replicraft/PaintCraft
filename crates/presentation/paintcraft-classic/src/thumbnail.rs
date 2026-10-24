@@ -10,7 +10,10 @@ pub fn show(ctx: &egui::Context, preview: Preview, enabled: bool) -> bool {
         .id(egui::Id::unique("classic-thumbnail-window"))
         .title_bar(false)
         .enabled(enabled)
-        .default_pos(ctx.content_rect().min + Vec2::new(32.0, 224.0).min(max * 0.5))
+        .default_pos(egui::pos2(
+            (ctx.content_rect().right() - 332.0).max(ctx.content_rect().left() + 16.0),
+            ctx.content_rect().top() + 224.0_f32.min(max.y * 0.5),
+        ))
         .default_size(Vec2::new(300.0, 236.0).min(max))
         .min_size(Vec2::new(128.0, 100.0))
         .max_size(max)
@@ -18,7 +21,7 @@ pub fn show(ctx: &egui::Context, preview: Preview, enabled: bool) -> bool {
         .show(ctx, |ui| {
             ui.spacing_mut().interact_size.y = 40.0;
             ui.horizontal(|ui| {
-                ui.label(egui::RichText::new("Thumbnail").size(16.0));
+                ui.label(egui::RichText::new("Thumbnail").size(16.0).color(ui.visuals().strong_text_color()));
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     close = paintcraft_ui::widgets::classic_menu_button(
                         ui,
@@ -48,7 +51,7 @@ pub fn show(ctx: &egui::Context, preview: Preview, enabled: bool) -> bool {
                     );
                 }
             }
-            ui.small("Committed image").on_hover_text("Shows the completed image. Active brush, shape and text drafts appear after they are committed.");
+            ui.label(egui::RichText::new("Committed image").size(12.0)).on_hover_text("Shows the completed image. Active brush, shape and text drafts appear after they are committed.");
         });
     close
 }
