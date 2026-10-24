@@ -10,7 +10,6 @@ publish.workspace = true
 [dependencies]
 paintcraft-core.workspace = true
 paintcraft-document.workspace = true
-paintcraft-platform.workspace = true
 paintcraft-raster.workspace = true
 paintcraft-render.workspace = true
 
@@ -19,6 +18,9 @@ image.workspace = true
 zerocopy.workspace = true
 sha2.workspace = true
 uuid.workspace = true
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+paintcraft-platform.workspace = true
 
 [dev-dependencies]
 png.workspace = true

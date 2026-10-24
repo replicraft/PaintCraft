@@ -34,3 +34,14 @@ fn constrained_pcnd_checks_canvas_even_without_allocated_tiles() {
             .same_semantics(&small)
     );
 }
+
+#[test]
+fn constrained_pcnd_rejects_tile_staging_without_weakening_default_reader() {
+    let doc = paintcraft_document::import_image(2, 2, &[10; 16], "host-limit").unwrap();
+    let bytes = pcnd::write(&doc).unwrap();
+    assert_eq!(
+        pcnd::read_with_limits(&bytes, 4, 0).unwrap_err().code,
+        ErrorCode::ResourceLimit
+    );
+    assert!(pcnd::read(&bytes).unwrap().same_semantics(&doc));
+}
