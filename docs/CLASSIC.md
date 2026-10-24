@@ -1456,3 +1456,20 @@ and painting after a pick uses the sampled color. See [the detailed scope and
 limits](COLOR_PICKER.md). Earlier disabled-picker descriptions are historical.
 Magnifier, background removal, custom transforms, floating selections and further
 brush/selection semantics remain work; UI polish stays deferred.
+
+## Historical ribbon and language follow-up (2026-10-24)
+
+Windows 7 and 10 skins now have a separate ribbon module, compact colorful tool
+buttons including the color picker, all brush media, Crop, Resize/skew presentation
+and Rotate/Flip actions. Their palette has twenty named colors and ten custom
+slots. Empty custom slots open the existing color editor. Their light themes use
+distinct Windows 7 warm selection accents and Windows 10 flat blue accents.
+Newer background-removal controls are absent from these historical ribbons.
+Resize/skew remains a preview-only dialog; resampling/skew publication is not
+implemented. Complete native-version behavior qualification remains outstanding.
+
+All Classic skins now render status metrics after canvas input, including live
+selection dimensions. Fluent translations also cover ribbon captions and tool
+accessibility labels. Translation lookup must occur before `widget_info`
+callbacks, because egui may hold a context lock while evaluating those callbacks.
+The regression check runs the ordinary GUI suite with accessibility enabled.

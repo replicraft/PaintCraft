@@ -21,6 +21,7 @@ mod menus;
 pub mod resize_skew;
 mod toolbar_visibility;
 pub use toolbar_visibility::ToolbarVisibility;
+mod legacy_ribbon;
 mod palette;
 mod popup_layout;
 mod quick_access;
@@ -48,9 +49,8 @@ pub use colors::{
 mod zoom;
 pub use zoom::zoom_controls;
 
-use egui::{Color32, Vec2};
+use egui::Color32;
 use paintcraft_core::types::Rgba;
-use paintcraft_tools::Tool;
 use paintcraft_ui::widgets::Icon;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -88,7 +88,6 @@ impl ClassicVariant {
 }
 
 pub use paintcraft_ui::chrome::{Action, Controls};
-use paintcraft_ui::chrome::{options, tool_button};
 
 pub fn chrome(
     ui: &mut egui::Ui,
@@ -204,158 +203,18 @@ pub fn chrome(
     if variant != ClassicVariant::V11 {
         ui.horizontal(|ui| {
             ui.label(
-                egui::RichText::new("Home")
+                egui::RichText::new(paintcraft_ui::i18n::tr(ui.ctx(), "Home"))
                     .color(Color32::from_rgb(0, 95, 184))
                     .strong(),
             );
-            ui.label(paintcraft_ui::i18n::tr(ui.ctx(), "PaintCraft"));
         });
     }
     if variant == ClassicVariant::V11 {
         ribbon::ribbon(ui, state, workspace, context, &mut actions);
         return actions;
     }
-    ui.separator();
-    egui::ScrollArea::horizontal()
-        .id_salt("classic-ribbon-scroll")
-        .max_height(142.0)
-        .auto_shrink([false, true])
-        .show(ui, |ui| {
-            ui.horizontal_top(|ui| {
-                ribbon_group(ui, "Selection", |ui| {
-                    if tool_button(ui, state, Tool::Select, true) {
-                        actions.push(Action::SelectTool(Tool::Select));
-                    }
-                    dropdowns::selection(ui, state, context, &mut actions);
-                });
-                ui.separator();
-                ribbon_group(ui, "Tools", |ui| {
-                    egui::Grid::new("classic-tools")
-                        .num_columns(3)
-                        .spacing(Vec2::new(2.0, 2.0))
-                        .show(ui, |ui| {
-                            for (i, tool) in [
-                                Tool::Pencil,
-                                Tool::Fill,
-                                Tool::Text,
-                                Tool::Eraser,
-                                Tool::Brush,
-                            ]
-                            .into_iter()
-                            .enumerate()
-                            {
-                                if tool_button(ui, state, tool, true) {
-                                    actions.push(Action::SelectTool(tool));
-                                }
-                                if i % 3 == 2 {
-                                    ui.end_row();
-                                }
-                            }
-                        });
-                });
-                ui.separator();
-                ribbon_group(ui, "Shapes", |ui| {
-                    shapes::gallery(ui, state, &mut actions);
-                });
-                ui.separator();
-                ribbon_group(ui, "Colors", |ui| {
-                    ui.horizontal(|ui| {
-                        ui.vertical(|ui| {
-                            for (label, color, action) in [
-                                ("Pencil color", state.primary, Action::EditColors),
-                                ("Fill color", state.secondary, Action::EditSecondaryColors),
-                            ] {
-                                let response = ui.add_enabled(
-                                    action.enabled(context),
-                                    egui::Button::new("")
-                                        .fill(Color32::from_rgb(color.0[0], color.0[1], color.0[2]))
-                                        .min_size(Vec2::new(36.0, 22.0)),
-                                );
-                                response.widget_info(|| {
-                                    egui::WidgetInfo::labeled(
-                                        egui::Role::ColorWell,
-                                        action.enabled(context) && ui.is_enabled(),
-                                        label,
-                                    )
-                                });
-                                if response.clicked() {
-                                    actions.push(action);
-                                }
-                            }
-                        });
-                        egui::Grid::new("classic-palette")
-                            .min_col_width(0.0)
-                            .num_columns(14)
-                            .spacing(Vec2::splat(3.0))
-                            .show(ui, |ui| {
-                                for (i, rgb) in PALETTE.into_iter().enumerate() {
-                                    let color = Color32::from_rgb(rgb[0], rgb[1], rgb[2]);
-                                    let (rect, response) = ui.allocate_exact_size(
-                                        Vec2::new(17.0, 19.0),
-                                        egui::Sense::click(),
-                                    );
-                                    if variant == ClassicVariant::V11 {
-                                        ui.painter().circle_filled(rect.center(), 8.0, color);
-                                    } else {
-                                        ui.painter().rect_filled(rect.shrink(1.0), 0.0, color);
-                                    }
-                                    if response.hovered() || response.has_focus() {
-                                        ui.painter().rect_stroke(
-                                            rect,
-                                            2.0,
-                                            egui::Stroke::new(1.0, Color32::from_rgb(0, 95, 184)),
-                                            egui::StrokeKind::Inside,
-                                        );
-                                    }
-                                    response.widget_info(|| {
-                                        egui::WidgetInfo::labeled(
-                                            egui::Role::Button,
-                                            ui.is_enabled(),
-                                            format!(
-                                                "Color #{:02X}{:02X}{:02X}",
-                                                rgb[0], rgb[1], rgb[2]
-                                            ),
-                                        )
-                                    });
-                                    let response =
-                                        response.on_hover_text(palette::tooltip(ui.ctx(), i, rgb));
-                                    if response.clicked() {
-                                        state.primary = Rgba([rgb[0], rgb[1], rgb[2], 255]);
-                                    }
-                                    if response.secondary_clicked() {
-                                        state.secondary = Rgba([rgb[0], rgb[1], rgb[2], 255]);
-                                    }
-                                    if i % 14 == 13 {
-                                        ui.end_row();
-                                    }
-                                }
-                            });
-                    });
-                    if paintcraft_ui::actions::menu_item(ui, Action::EditColors, context) {
-                        actions.push(Action::EditColors);
-                    }
-                });
-            });
-        });
-    ui.separator();
-    options(ui, state, &mut actions);
+    legacy_ribbon::show(ui, state, workspace, context, &mut actions);
     actions
-}
-fn ribbon_group(ui: &mut egui::Ui, label: &str, contents: impl FnOnce(&mut egui::Ui)) {
-    ui.vertical(|ui| {
-        let top = ui.cursor().min.y;
-        ui.set_min_height(126.0);
-        contents(ui);
-        ui.add_space((top + 108.0 - ui.cursor().min.y).max(0.0));
-        let width = ui.min_rect().width();
-        ui.allocate_ui_with_layout(
-            Vec2::new(width, 16.0),
-            egui::Layout::top_down(egui::Align::Center),
-            |ui| {
-                ui.weak(paintcraft_ui::i18n::tr(ui.ctx(), label));
-            },
-        );
-    });
 }
 const PALETTE: [[u8; 3]; 28] = [
     [0, 0, 0],
@@ -407,8 +266,19 @@ pub fn apply_style_for_theme(ctx: &egui::Context, v: ClassicVariant, theme: egui
         ] {
             widget.corner_radius = egui::CornerRadius::same(radius);
         }
+        if v == ClassicVariant::V10 && theme == egui::Theme::Light {
+            style.visuals.panel_fill = Color32::from_rgb(245, 246, 247);
+            style.visuals.selection.bg_fill = Color32::from_rgb(204, 232, 255);
+            style.visuals.selection.stroke = egui::Stroke::new(1.0, Color32::from_rgb(0, 120, 215));
+        }
         if v == ClassicVariant::V7 && theme == egui::Theme::Light {
             style.visuals.panel_fill = Color32::from_rgb(233, 238, 247);
+            style.visuals.selection.bg_fill = Color32::from_rgb(255, 232, 166);
+            style.visuals.selection.stroke =
+                egui::Stroke::new(1.0, Color32::from_rgb(194, 140, 43));
+            style.visuals.widgets.hovered.weak_bg_fill = Color32::from_rgb(255, 242, 203);
+            style.visuals.widgets.hovered.bg_stroke =
+                egui::Stroke::new(1.0, Color32::from_rgb(226, 187, 92));
         }
     });
 }

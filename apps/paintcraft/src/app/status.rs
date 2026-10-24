@@ -6,8 +6,7 @@ impl App {
         let ctx = ui.ctx().clone();
         egui::Panel::bottom("status")
             .show(ui, |ui| {
-                if self.experience() == Experience::Classic && self.variant() == ClassicVariant::V11
-                {
+                if self.experience() == Experience::Classic {
                     let size = Vec2::new(
                         ui.available_width(),
                         paintcraft_classic::status::height(ui, self.document_count() > 0),

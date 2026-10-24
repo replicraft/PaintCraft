@@ -249,3 +249,49 @@ fn menu(
     );
     response.on_hover_text(label);
 }
+
+/// The older ribbons group Crop, Resize and Rotate/Flip together without
+/// advertising newer background-removal or layer/AI presentation controls.
+pub(super) fn legacy_controls(
+    ui: &mut egui::Ui,
+    context: paintcraft_ui::actions::Context,
+    actions: &mut Vec<super::Action>,
+) {
+    use paintcraft_ui::actions::Action;
+    for action in [Action::Crop, Action::ResizeSkew] {
+        let label =
+            paintcraft_ui::i18n::tr(ui.ctx(), action.descriptor_for(context.frontend).label);
+        let icon = if action == Action::Crop {
+            Icon::Crop
+        } else {
+            Icon::Resize
+        };
+        if ui
+            .add_enabled(
+                action.enabled(context),
+                egui::Button::image_and_text(
+                    paintcraft_ui::icons::image(ui.ctx(), icon, 18.0),
+                    label,
+                ),
+            )
+            .clicked()
+        {
+            actions.push(action);
+        }
+    }
+    ui.menu_button(paintcraft_ui::i18n::tr(ui.ctx(), "Rotate"), |ui| {
+        for transform in [
+            Transform::RotateRight,
+            Transform::RotateLeft,
+            Transform::Rotate180,
+            Transform::FlipVertical,
+            Transform::FlipHorizontal,
+        ] {
+            let action = Action::TransformImage(transform);
+            if paintcraft_ui::actions::menu_item(ui, action, context) {
+                actions.push(action);
+                ui.close();
+            }
+        }
+    });
+}
