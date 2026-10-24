@@ -199,7 +199,10 @@ impl App {
                 Chrome::EditColors | Chrome::EditSecondaryColors => {
                     self.begin_color_dialog(ctx, action == Chrome::EditSecondaryColors)
                 }
-                Chrome::EditCustomColor(slot) => self.begin_custom_color_dialog(ctx, slot),
+                Chrome::EditCustomColor(slot) => self.begin_custom_color_dialog(ctx, slot, false),
+                Chrome::EditSecondaryCustomColor(slot) => {
+                    self.begin_custom_color_dialog(ctx, slot, true)
+                }
                 Chrome::ClearCanvas => {
                     let color = match self.experience() {
                         Experience::Classic => self.editor.canvas_color(),

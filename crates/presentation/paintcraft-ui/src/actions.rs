@@ -35,6 +35,8 @@ pub enum Action {
     EditSecondaryColors,
     /// Open the color editor at a zero-based custom palette slot.
     EditCustomColor(u8),
+    /// Edit a custom palette slot while retaining Color 2 as the adoption target.
+    EditSecondaryCustomColor(u8),
     SelectTool(Tool),
     SelectAll,
     Deselect,
@@ -152,7 +154,9 @@ impl Action {
             Self::CanvasDefaults => ("Default canvas size…", None),
             Self::EditColors => ("Edit colors…", None),
             Self::EditSecondaryColors => ("Edit secondary color…", None),
-            Self::EditCustomColor(_) => ("Edit custom color…", None),
+            Self::EditCustomColor(_) | Self::EditSecondaryCustomColor(_) => {
+                ("Edit custom color…", None)
+            }
             Self::SelectTool(tool) => (tool.name(), None),
             Self::SelectAll => ("Select all", Some((Key::A, false))),
             Self::Deselect => ("Deselect", Some((Key::D, false))),
@@ -220,7 +224,8 @@ impl Action {
             | Self::CanvasDefaults
             | Self::EditColors
             | Self::EditSecondaryColors
-            | Self::EditCustomColor(_) => frontend == Frontend::Classic,
+            | Self::EditCustomColor(_)
+            | Self::EditSecondaryCustomColor(_) => frontend == Frontend::Classic,
             Self::Layer(_) => frontend == Frontend::Studio,
             _ => true,
         }
@@ -321,6 +326,7 @@ impl Action {
             Self::EditColors => 1013,
             Self::EditSecondaryColors => 1014,
             Self::EditCustomColor(slot) => 2000 + u64::from(slot),
+            Self::EditSecondaryCustomColor(slot) => 2300 + u64::from(slot),
             Self::SelectTool(tool) => 1100 + tool.action_id(),
         }
     }
@@ -602,6 +608,26 @@ mod tests {
         assert_eq!(ids.len(), FILE.len() + EDIT.len());
         assert!(!ids.contains(&Action::Exit.activation_code()));
         let mut ids = ids;
+        for slot in 0..=u8::MAX {
+            for action in [
+                Action::EditCustomColor(slot),
+                Action::EditSecondaryCustomColor(slot),
+            ] {
+                assert!(ids.insert(action.activation_code()));
+                assert!(!action.enabled(context));
+                assert!(action.enabled(Context {
+                    frontend: Frontend::Classic,
+                    document_open: true,
+                    ..context
+                }));
+                assert!(!action.enabled(Context {
+                    frontend: Frontend::Classic,
+                    document_open: true,
+                    blocked: true,
+                    ..context
+                }));
+            }
+        }
         for format in ImageExport::ALL {
             let action = Action::ExportImage(format);
             assert!(ids.insert(action.activation_code()));

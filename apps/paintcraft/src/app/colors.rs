@@ -10,8 +10,13 @@ pub(crate) struct ColorDraft {
 }
 
 impl App {
-    pub(super) fn begin_custom_color_dialog(&mut self, ctx: &egui::Context, slot: u8) {
-        self.begin_color_dialog(ctx, false);
+    pub(super) fn begin_custom_color_dialog(
+        &mut self,
+        ctx: &egui::Context,
+        slot: u8,
+        secondary: bool,
+    ) {
+        self.begin_color_dialog(ctx, secondary);
         if let Some(Confirm::Colors(draft)) = &mut self.confirm {
             draft.editor = draft
                 .editor

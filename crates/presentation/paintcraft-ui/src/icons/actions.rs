@@ -52,9 +52,10 @@ impl Action {
                     Icon::FlipVertical
                 }
             },
-            Self::EditColors | Self::EditSecondaryColors | Self::EditCustomColor(_) => {
-                Icon::EditColors
-            }
+            Self::EditColors
+            | Self::EditSecondaryColors
+            | Self::EditCustomColor(_)
+            | Self::EditSecondaryCustomColor(_) => Icon::EditColors,
             Self::View(action) => match action {
                 ViewAction::ZoomIn => Icon::ZoomIn,
                 ViewAction::ZoomOut => Icon::ZoomOut,

@@ -186,6 +186,7 @@ impl WebApp {
             Action::EditColors => self.begin_colors(false, None),
             Action::EditSecondaryColors => self.begin_colors(true, None),
             Action::EditCustomColor(slot) => self.begin_colors(false, Some(slot)),
+            Action::EditSecondaryCustomColor(slot) => self.begin_colors(true, Some(slot)),
             Action::SelectTool(tool) => {
                 if !self.finish_text() {
                     self.controls.tool = Tool::Text;
