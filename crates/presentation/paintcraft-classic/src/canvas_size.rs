@@ -28,7 +28,7 @@ pub fn canvas_size_dialog(
     draft: &mut CanvasSize,
     max_dimension: u32,
 ) -> CanvasResponse {
-    dialog(ctx, draft, max_dimension, None)
+    dialog(ctx, draft, max_dimension, None, None)
 }
 
 /// Pixel dimensions use the existing canvas operation; unsupported metadata and
@@ -43,9 +43,21 @@ pub fn image_properties_dialog(
         size: *size,
         startup: None,
     };
-    let response = dialog(ctx, &mut draft, max_dimension, Some(name));
+    let response = dialog(ctx, &mut draft, max_dimension, Some(name), None);
     *size = draft.size;
     response
+}
+
+/// Use the same staged dimension/properties surface with a constrained host's
+/// output-pixel admission. Invalid dimensions cannot emit Apply.
+pub fn bounded_canvas_size_dialog(
+    ctx: &egui::Context,
+    draft: &mut CanvasSize,
+    max_dimension: u32,
+    max_pixels: u64,
+    properties: Option<&str>,
+) -> CanvasResponse {
+    dialog(ctx, draft, max_dimension, properties, Some(max_pixels))
 }
 
 fn dialog(
@@ -53,6 +65,7 @@ fn dialog(
     draft: &mut CanvasSize,
     max_dimension: u32,
     properties: Option<&str>,
+    max_pixels: Option<u64>,
 ) -> CanvasResponse {
     let defaults = draft.startup.is_some();
     let title = if properties.is_some() {
@@ -146,6 +159,13 @@ fn dialog(
                         }
                         dimension_fields(ui, &mut draft.size, max_dimension, ["Width", "Height"]);
                     });
+                if let Some(maximum) = max_pixels {
+                    ui.add_space(8.0);
+                    let too_large = u64::from(draft.size.0) * u64::from(draft.size.1) > maximum;
+                    let label = format!("Image limit: {maximum} pixels");
+                    if too_large { ui.colored_label(ui.visuals().error_fg_color,label); }
+                    else { ui.label(label); }
+                }
                 if properties.is_some() {
                     ui.add_space(12.0);
                     ui.strong("Colors");
@@ -187,7 +207,8 @@ fn dialog(
                         Color32::WHITE
                     };
                     let valid = (1..=max_dimension).contains(&draft.size.0)
-                        && (1..=max_dimension).contains(&draft.size.1);
+                        && (1..=max_dimension).contains(&draft.size.1)
+                        && max_pixels.is_none_or(|maximum| u64::from(draft.size.0) * u64::from(draft.size.1) <= maximum);
                     let apply = egui::Button::new(egui::RichText::new(if properties.is_some() {"OK"} else {"Apply"}).color(ink))
                         .fill(ui.visuals().selection.stroke.color)
                         .min_size(Vec2::new(button_width, 40.0));

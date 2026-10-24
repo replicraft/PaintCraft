@@ -16,6 +16,7 @@ pub struct WebApp {
     pub(crate) canvas: Canvas,
     pub(crate) workspace: Workspace,
     variant: ClassicVariant,
+    name: String,
     pub(crate) zoom: f32,
     settings: bool,
     export_confirm: bool,
@@ -41,6 +42,7 @@ impl WebApp {
             canvas: Canvas::default(),
             workspace: Workspace::default(),
             variant: ClassicVariant::V11,
+            name: "Untitled".into(),
             zoom: 1.0,
             settings: false,
             export_confirm: false,
@@ -113,6 +115,8 @@ impl WebApp {
                 self.editor.cancel();
                 self.settings = true;
             }
+            Action::CanvasSize => self.begin_canvas(false),
+            Action::ImageProperties => self.begin_canvas(true),
             Action::EditColors => self.begin_colors(false, None),
             Action::EditSecondaryColors => self.begin_colors(true, None),
             Action::EditCustomColor(slot) => self.begin_colors(false, Some(slot)),
@@ -174,6 +178,8 @@ impl WebApp {
             Ok(editor) => {
                 self.editor = editor;
                 self.canvas = Canvas::default();
+                self.name = "Untitled".into();
+                self.update_title();
                 self.message = "New document".into();
             }
             Err(error) => self.message = error.to_string(),
@@ -194,9 +200,18 @@ impl WebApp {
             Ok(editor) => {
                 self.editor = editor;
                 self.canvas = Canvas::default();
-                self.message = format!("Opened {}", loaded.name);
+                self.name = loaded.name;
+                self.update_title();
+                self.message = format!("Opened {}", self.name);
             }
             Err(error) => self.message = format!("Open failed: {error}"),
+        }
+    }
+
+    fn update_title(&self) {
+        #[cfg(target_arch = "wasm32")]
+        if let Some(document) = web_sys::window().and_then(|window| window.document()) {
+            document.set_title(&format!("{} - PaintCraft", self.name));
         }
     }
 

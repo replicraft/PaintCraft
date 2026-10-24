@@ -153,3 +153,74 @@ fn selection_clips_paint_and_clear_ignores_selection() {
         vec![255; 8 * 8 * 4]
     );
 }
+
+#[test]
+fn resize_keeps_cropped_pixels_extends_white_ground_and_restores_history() {
+    let mut e = Editor::new(32, 24).unwrap();
+    let layer = e.target.unwrap();
+    e.apply(Action::Fill {
+        layer,
+        at: (0, 0),
+        color: Rgba([10, 20, 30, 255]),
+        tolerance: 0,
+    })
+    .unwrap();
+    e.apply(Action::ResizeCanvas {
+        width: 10,
+        height: 10,
+    })
+    .unwrap();
+    assert_eq!(
+        e.session.document().layers[&layer].raster.get(20, 17),
+        Rgba([10, 20, 30, 255])
+    );
+    e.apply(Action::ResizeCanvas {
+        width: 40,
+        height: 30,
+    })
+    .unwrap();
+    assert_eq!(e.session.document().canvas, (40, 30));
+    assert_eq!(
+        e.session.document().layers[&layer].raster.get(20, 17),
+        Rgba([10, 20, 30, 255])
+    );
+    assert_eq!(
+        e.session.document().layers[&layer].raster.get(39, 29),
+        WHITE
+    );
+    e.apply(Action::Undo).unwrap();
+    assert_eq!(e.session.document().canvas, (10, 10));
+    e.apply(Action::Redo).unwrap();
+    assert_eq!(e.session.document().canvas, (40, 30));
+}
+
+#[test]
+fn invalid_resize_and_unchanged_cropped_layer_leave_session_unchanged() {
+    let mut doc = new_document(2, 2, Some(WHITE), 0, POLICY).unwrap();
+    doc.canvas = (32, 24);
+    let mut e = Editor::from_document(doc).unwrap();
+    let before = e.session.snapshot();
+    let ticket = e.session.ticket();
+    e.apply(Action::ResizeCanvas {
+        width: 32,
+        height: 24,
+    })
+    .unwrap();
+    assert!(
+        e.apply(Action::ResizeCanvas {
+            width: 4096,
+            height: 4096
+        })
+        .is_err()
+    );
+    assert!(
+        e.apply(Action::ResizeCanvas {
+            width: 0,
+            height: 1
+        })
+        .is_err()
+    );
+    assert_eq!(e.session.ticket(), ticket);
+    assert_eq!(e.session.undo_depth(), 0);
+    assert!(e.session.document().same_semantics(&before));
+}

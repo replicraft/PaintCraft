@@ -142,6 +142,21 @@ impl Editor {
                     ("color", Value::str(color.to_hex())),
                 ])])
             }
+            Action::ResizeCanvas { width, height } => {
+                if u64::from(width) * u64::from(height) > MAX_PIXELS {
+                    return Err(Error::new(
+                        ErrorCode::ResourceLimit,
+                        "Browser canvas limit is 4 megapixels",
+                    ));
+                }
+                let operations = commands::resize_canvas(self.session.document(), width, height);
+                self.cancel();
+                if operations.is_empty() {
+                    Ok(())
+                } else {
+                    self.commit(operations)
+                }
+            }
             Action::Undo | Action::Redo => {
                 self.cancel();
                 if matches!(action, Action::Undo) {

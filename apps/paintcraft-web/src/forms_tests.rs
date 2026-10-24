@@ -94,3 +94,89 @@ fn secondary_color_edits_do_not_replace_primary_and_invalid_hex_stays_open() {
     assert_eq!(h.state().controls.primary, Rgba([0, 0, 0, 255]));
     assert!(!h.state().editor.session.is_dirty());
 }
+
+fn properties(h: &mut Harness<WebApp>) {
+    h.key_press_modifiers(Modifiers::COMMAND, Key::E);
+    h.run();
+    assert!(h.query_by_label("Width").is_some());
+}
+
+#[test]
+fn properties_resize_is_staged_bounded_and_undoable() {
+    let mut h = harness();
+    let before = h.state().editor.session.ticket();
+    properties(&mut h);
+    h.get_by_label("Width").set_value_accesskit(64.0);
+    h.run();
+    h.get_by_label("Height").set_value_accesskit(32.0);
+    h.run();
+    assert_eq!(h.state().editor.session.ticket(), before);
+    h.get_by_label("OK").click();
+    h.run();
+    assert_eq!(h.state().editor.session.document().canvas, (64, 32));
+    assert_eq!(h.state().editor.session.undo_depth(), 1);
+    h.key_press_modifiers(Modifiers::COMMAND, Key::Z);
+    h.run();
+    assert_eq!(h.state().editor.session.document().canvas, (1000, 486));
+    properties(&mut h);
+    h.get_by_label("Width").set_value_accesskit(4096.0);
+    h.run();
+    h.get_by_label("Height").set_value_accesskit(4096.0);
+    h.run();
+    let before = h.state().editor.session.ticket();
+    h.get_by_label("OK").click();
+    h.run();
+    assert_eq!(h.state().editor.session.ticket(), before);
+    assert!(h.query_by_label("Width").is_some());
+    assert!(h.query_by_label("Image limit: 4194304 pixels").is_some());
+    h.get_by_label("Cancel").click();
+    h.run();
+    assert_eq!(h.state().editor.session.document().canvas, (1000, 486));
+}
+
+#[test]
+fn unchanged_properties_and_cancel_do_not_publish() {
+    let mut h = harness();
+    let before = h.state().editor.session.ticket();
+    properties(&mut h);
+    h.get_by_label("OK").click();
+    h.run();
+    assert_eq!(h.state().editor.session.ticket(), before);
+    properties(&mut h);
+    h.get_by_label("Width").set_value_accesskit(64.0);
+    h.run();
+    h.key_press(Key::Escape);
+    h.run();
+    assert_eq!(h.state().editor.session.ticket(), before);
+    assert_eq!(h.state().editor.session.undo_depth(), 0);
+}
+
+#[test]
+fn stale_properties_draft_cannot_edit_a_replaced_or_advanced_session() {
+    for replace in [false, true] {
+        let mut h = harness();
+        properties(&mut h);
+        h.get_by_label("Width").set_value_accesskit(64.0);
+        h.run();
+        if replace {
+            let doc = h.state().editor.session.document().clone();
+            h.state_mut().editor = crate::editor::Editor::from_document(doc).unwrap();
+        } else {
+            let layer = h.state().editor.target.unwrap();
+            h.state_mut()
+                .editor
+                .apply(paintcraft_tools::Action::Fill {
+                    layer,
+                    at: (0, 0),
+                    color: Rgba([20, 30, 40, 255]),
+                    tolerance: 0,
+                })
+                .unwrap();
+        }
+        let before = h.state().editor.session.ticket();
+        h.run();
+        assert!(h.query_by_label("Width").is_none());
+        assert_eq!(h.state().editor.session.ticket(), before);
+        assert_eq!(h.state().editor.session.document().canvas, (1000, 486));
+    }
+}

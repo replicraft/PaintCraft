@@ -6,7 +6,7 @@ use uuid::Uuid;
 
 #[derive(Debug)]
 pub(super) struct ColorDraft {
-    document: Uuid,
+    owner: Uuid,
     source: Rgba,
     secondary: bool,
     editor: ColorEditor,
@@ -15,6 +15,14 @@ pub(super) struct ColorDraft {
 #[derive(Debug)]
 pub(super) enum Form {
     Colors(ColorDraft),
+    Canvas(CanvasDraft),
+}
+
+#[derive(Debug)]
+pub(super) struct CanvasDraft {
+    ticket: paintcraft_editor::session::HistoryTicket,
+    view: paintcraft_classic::canvas_size::CanvasSize,
+    properties: Option<String>,
 }
 
 impl WebApp {
@@ -30,23 +38,61 @@ impl WebApp {
             editor = editor.with_selected_custom_slot(usize::from(slot));
         }
         self.form = Some(Form::Colors(ColorDraft {
-            document: self.editor.session.document().document_id,
+            owner: self.editor.session.history_ticket().owner,
             source,
             secondary,
             editor,
         }));
     }
 
-    pub(super) fn show_form(&mut self, ctx: &egui::Context) {
-        let Some(Form::Colors(mut draft)) = self.form.take() else {
+    pub(super) fn begin_canvas(&mut self, properties: bool) {
+        self.editor.cancel();
+        self.form = Some(Form::Canvas(CanvasDraft {
+            ticket: self.editor.session.history_ticket(),
+            view: paintcraft_classic::canvas_size::CanvasSize {
+                size: self.editor.session.document().canvas,
+                startup: None,
+            },
+            properties: properties.then(|| self.name.clone()),
+        }));
+    }
+
+    fn canvas_form(&mut self, ctx: &egui::Context, mut draft: CanvasDraft) {
+        use paintcraft_classic::canvas_size::{CanvasResponse, bounded_canvas_size_dialog};
+        if draft.ticket != self.editor.session.history_ticket() {
+            self.message = "Dimensions were not applied: the source document changed".into();
             return;
-        };
+        }
+        let result = bounded_canvas_size_dialog(
+            ctx,
+            &mut draft.view,
+            paintcraft_document::CANVAS_SIDE_MAX,
+            crate::editor::MAX_PIXELS,
+            draft.properties.as_deref(),
+        );
+        if ctx.current_pass_index() != 0 || result == CanvasResponse::Pending {
+            self.form = Some(Form::Canvas(draft));
+        } else if result == CanvasResponse::Apply {
+            let (width, height) = draft.view.size;
+            self.edit(Edit::ResizeCanvas { width, height });
+        }
+    }
+
+    pub(super) fn show_form(&mut self, ctx: &egui::Context) {
+        match self.form.take() {
+            Some(Form::Colors(draft)) => self.color_form(ctx, draft),
+            Some(Form::Canvas(draft)) => self.canvas_form(ctx, draft),
+            None => {}
+        }
+    }
+
+    fn color_form(&mut self, ctx: &egui::Context, mut draft: ColorDraft) {
         let current = if draft.secondary {
             self.controls.secondary
         } else {
             self.controls.primary
         };
-        if current != draft.source || self.editor.session.document().document_id != draft.document {
+        if current != draft.source || self.editor.session.history_ticket().owner != draft.owner {
             self.message = "Color was not applied: the source document or color changed".into();
             return;
         }
