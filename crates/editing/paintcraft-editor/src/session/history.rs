@@ -131,5 +131,6 @@ pub(super) fn label(batch: &Batch) -> Label {
         Op::Text { .. } | Op::MaskSpans { .. } => Label::Text,
         Op::CanvasResize { .. } | Op::LayerExpand { .. } => Label::ResizeCanvas,
         Op::CanvasClear { .. } => Label::ClearCanvas,
+        Op::CanvasCrop { .. } => Label::CropCanvas,
     }
 }

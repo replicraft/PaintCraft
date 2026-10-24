@@ -8,7 +8,12 @@ use storage::Store;
 pub(super) struct Paint {
     pub operation: usize,
     pub layer: Uuid,
-    pub plan: PaintPlan,
+    pub plan: CompiledPlan,
+}
+#[derive(Debug)]
+pub(super) enum CompiledPlan {
+    Paint(PaintPlan),
+    Crop(std::sync::Arc<paintcraft_raster::CropPlan>),
 }
 #[derive(Debug)]
 struct Logical {
@@ -31,7 +36,10 @@ impl Compiler {
         let mut needs_pixels = false;
         for operations in batch.operations.chunks(1024) {
             check()?;
-            if operations.iter().any(|op| kind(op) == Kind::ReadWrite) {
+            if operations
+                .iter()
+                .any(|op| matches!(kind(op), Kind::ReadWrite | Kind::Transform))
+            {
                 needs_pixels = true;
                 break;
             }
@@ -89,11 +97,14 @@ impl Compiler {
         // source-program append: equal translucent operations must blend again.
         // All plans in this compiler use the same admission realm/policy. Avoid
         // replacing a smaller freshly compiled payload with a larger capacity.
-        let retained = if let Some(previous) = self.paints.values.last()
-            && previous.plan.descriptor_bytes() <= plan.descriptor_bytes()
-            && previous.plan.same_writes_checked(plan, check)?
+        let retained = if let Some(Paint {
+            plan: CompiledPlan::Paint(previous),
+            ..
+        }) = self.paints.values.last()
+            && previous.descriptor_bytes() <= plan.descriptor_bytes()
+            && previous.same_writes_checked(plan, check)?
         {
-            previous.plan.clone()
+            previous.clone()
         } else {
             plan.clone()
         };
@@ -107,7 +118,7 @@ impl Compiler {
         self.paints.push(Paint {
             operation,
             layer: id,
-            plan: retained,
+            plan: CompiledPlan::Paint(retained),
         })
     }
     #[allow(clippy::too_many_arguments)]
@@ -177,6 +188,46 @@ impl Compiler {
             self.layers.values.swap_remove(index);
         }
     }
+    pub fn snapshot(
+        &mut self,
+        id: Uuid,
+        source: &RasterLayer,
+        admission: &Admission,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<PaintSnapshot> {
+        let index = self.ensure(id, source, admission, check)?;
+        if let Some(pixels) = self.layers.values[index].1.pixels.take() {
+            let snapshot = pixels.freeze_checked(admission, check)?;
+            self.layers.values[index].1.pixels = Some(snapshot.fork(admission, check)?);
+            Ok(snapshot)
+        } else {
+            PaintSnapshot::capture(source, admission, check)
+        }
+    }
+    pub fn replace_crop(
+        &mut self,
+        id: Uuid,
+        target: &RasterLayer,
+        plan: std::sync::Arc<paintcraft_raster::CropPlan>,
+        operation: usize,
+        admission: &Admission,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<()> {
+        self.remove(id);
+        let index = self.ensure(id, target, admission, check)?;
+        self.layers.values[index].1.tiles.allocate_tiles_checked(
+            plan.tile_coords(),
+            operation,
+            check,
+        )?;
+        self.layers.values[index].1.pixels =
+            Some(plan.snapshot(admission, check)?.fork(admission, check)?);
+        self.paints.push(Paint {
+            operation,
+            layer: id,
+            plan: CompiledPlan::Crop(plan),
+        })
+    }
     pub fn clear(&mut self) {
         self.layers.values.clear();
     }
@@ -218,6 +269,7 @@ enum Kind {
     Structural,
     Write,
     ReadWrite,
+    Transform,
 }
 fn kind(op: &Op) -> Kind {
     match op {
@@ -229,6 +281,7 @@ fn kind(op: &Op) -> Kind {
         | Op::MaskSpans { .. }
         | Op::Text { .. } => Kind::Write,
         Op::FloodFill { .. } => Kind::ReadWrite,
+        Op::CanvasCrop { .. } => Kind::Transform,
         Op::LayerAdd { .. }
         | Op::LayerDuplicate { .. }
         | Op::LayerDelete { .. }

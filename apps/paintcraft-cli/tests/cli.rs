@@ -94,6 +94,8 @@ fn decode_png(path: &str) -> (u32, u32, Vec<u8>) {
 
 #[path = "cli/contours.rs"]
 mod contours;
+#[path = "cli/crop.rs"]
+mod crop;
 #[path = "cli/editing.rs"]
 mod editing;
 #[path = "cli/formats_and_receipts.rs"]

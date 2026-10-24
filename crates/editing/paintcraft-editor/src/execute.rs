@@ -3,6 +3,7 @@
 
 mod canvas;
 mod contour;
+mod crop;
 mod fill;
 mod layers;
 mod mask;
@@ -105,6 +106,7 @@ pub fn execute_with_geometry_cache(
         pencil_pixels: 0,
         pencil_segments: 0,
         stroke_rows: 0,
+        transform_reads: 0,
         base_state: base.state_id.to_string(),
         digest: &batch.digest,
         check,
@@ -141,16 +143,29 @@ pub fn execute_with_geometry_cache(
                 e.at(index)
             }
         })?;
-        let result = if planning::is_paint(op) {
-            if paints.peek().is_some_and(|paint| paint.operation == index) {
-                let paint = paints.next().expect("peeked paint");
-                s.apply_paint(paint.layer, &paint.plan)
-            } else {
-                Ok(())
+        let result = (|| {
+            if let Op::CanvasCrop { rect } = op {
+                s.crop_layout(*rect)?;
             }
-        } else {
-            s.run(index, op)
-        };
+            if planning::is_paint(op) {
+                while paints.peek().is_some_and(|paint| paint.operation == index) {
+                    let paint = paints.next().expect("peeked paint");
+                    match paint.plan {
+                        planning::CompiledPlan::Paint(plan) => s.apply_paint(paint.layer, &plan)?,
+                        planning::CompiledPlan::Crop(plan) => {
+                            s.doc
+                                .layers
+                                .get_mut(&paint.layer)
+                                .expect("compiled crop layer")
+                                .raster = plan.replay(&mut s.adm, s.check)?;
+                        }
+                    }
+                }
+                Ok(())
+            } else {
+                s.run(index, op)
+            }
+        })();
         result.map_err(|e| {
             if e.operation_index.is_some() {
                 e
@@ -190,6 +205,7 @@ struct Stage<'a> {
     pencil_pixels: i128,
     pencil_segments: i128,
     stroke_rows: i128,
+    transform_reads: u64,
     base_state: String,
     digest: &'a str,
     check: &'a dyn Fn() -> Result<()>,
@@ -290,6 +306,7 @@ impl Stage<'_> {
 
     fn run(&mut self, index: usize, op: &Op) -> Result<()> {
         match op {
+            Op::CanvasCrop { rect } => self.crop_canvas(*rect)?,
             Op::Contour {
                 layer,
                 points,

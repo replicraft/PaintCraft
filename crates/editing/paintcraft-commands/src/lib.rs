@@ -70,6 +70,9 @@ pub enum ShapeKind {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Op {
+    CanvasCrop {
+        rect: Rect,
+    },
     Contour {
         layer: LayerRef,
         points: Vec<(i64, i64)>,
@@ -273,6 +276,7 @@ fn op(v: &Value, version: u8) -> Result<Op> {
                 | "raster.flood_fill"
                 | "raster.shape"
                 | "raster.contour"
+                | "canvas.crop"
                 | "raster.text"
                 | "raster.mask_spans"
                 | "layer.reorder"
@@ -286,6 +290,12 @@ fn op(v: &Value, version: u8) -> Result<Op> {
     Ok(match name {
         "raster.stroke_path" => stroke::parse(v)?,
         "raster.contour" => contour::parse(v)?,
+        "canvas.crop" => {
+            let o = obj(v, &["op", "rect"], &[])?;
+            Op::CanvasCrop {
+                rect: rect(&o["rect"])?,
+            }
+        }
         "raster.mask_spans" => mask::parse(v)?,
         "raster.flood_fill" => {
             let o = obj(

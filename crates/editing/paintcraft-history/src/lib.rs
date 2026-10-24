@@ -26,6 +26,7 @@ pub enum Label {
     Text,
     ResizeCanvas,
     ClearCanvas,
+    CropCanvas,
 }
 
 impl Label {
@@ -48,6 +49,7 @@ impl Label {
             Self::Text => "Text",
             Self::ResizeCanvas => "Resize canvas",
             Self::ClearCanvas => "Clear Canvas",
+            Self::CropCanvas => "Crop canvas",
         }
     }
 }
