@@ -1,7 +1,7 @@
 //! Compile logical paint and model complete private decoded ownership before replay.
 use super::*;
 use paintcraft_raster::{PaintOverlay, PaintSnapshot, SimulatedLayer, TileFootprint, TilePlanner};
-mod storage;
+pub(super) mod storage;
 use storage::Store;
 
 #[derive(Debug)]
@@ -292,6 +292,8 @@ fn kind(op: &Op) -> Kind {
         | Op::LayerExpand { .. }
         | Op::CanvasClear { .. }
         | Op::CanvasResize { .. }
+        | Op::SelectionSetPolygon { .. }
+        | Op::SelectionInvert
         | Op::SelectionSetRect { .. }
         | Op::SelectionClear => Kind::Structural,
     }

@@ -224,14 +224,14 @@ fn incremental_preview_geometry_never_reuses_blended_pixels_or_skips_current_sel
                 };
                 let actual = execute_with_geometry_cache(
                     &doc,
-                    selection,
+                    selection.clone(),
                     &batch,
                     Admission::new(65_536),
                     Some(&mut cache),
                     &|| Ok(()),
                 )
                 .unwrap();
-                let expected = execute(&doc, selection, &batch).unwrap();
+                let expected = execute(&doc, selection.clone(), &batch).unwrap();
                 for y in 0..32 {
                     for x in 0..32 {
                         assert_eq!(

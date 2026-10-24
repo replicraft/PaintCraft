@@ -125,7 +125,10 @@ pub(super) fn label(batch: &Batch) -> Label {
                 Label::Brush
             }
         }
-        Op::SelectionSetRect { .. } | Op::SelectionClear => Label::Selection,
+        Op::SelectionSetRect { .. }
+        | Op::SelectionSetPolygon { .. }
+        | Op::SelectionInvert
+        | Op::SelectionClear => Label::Selection,
         Op::Shape { .. } => Label::Shape,
         Op::Contour { .. } => Label::Shape,
         Op::Text { .. } | Op::MaskSpans { .. } => Label::Text,

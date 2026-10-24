@@ -21,6 +21,12 @@ impl Stage<'_> {
                 ));
             }
             Selection::Empty => return Ok(None),
+            Selection::Mask(_) => {
+                return Err(Error::new(
+                    ErrorCode::InputSchema,
+                    "mask selection transforms are not implemented yet",
+                ));
+            }
             Selection::Rect(r) => match r.intersect(&self.doc.canvas_rect()) {
                 Some(r) => r,
                 None => return Ok(None),

@@ -204,7 +204,7 @@ impl Session {
     }
 
     pub fn selection(&self) -> Selection {
-        self.selection
+        self.selection.clone()
     }
 
     pub fn ticket(&self) -> Ticket {
@@ -266,14 +266,18 @@ impl Session {
         }
         let mut staged = execute_with_admission_checked(
             &self.doc,
-            self.selection,
+            self.selection.clone(),
             batch,
             admission.constrain_pixels(self.staged_pixels),
             &check,
         )?;
         check()?;
         let content_changed = !staged.doc.same_semantics(&self.doc);
-        if !content_changed && staged.selection == self.selection {
+        if !content_changed
+            && staged
+                .selection
+                .same_field_checked(&self.selection, 67_108_864, &check)?
+        {
             return Ok(Receipt {
                 committed: false,
                 state_id: self.doc.state_id,
@@ -294,7 +298,7 @@ impl Session {
         self.history.record_labeled_checked(
             Snapshot {
                 document: Arc::clone(&doc),
-                selection: staged.selection,
+                selection: staged.selection.clone(),
                 history_id: Some(history_id),
             },
             history::label(batch),

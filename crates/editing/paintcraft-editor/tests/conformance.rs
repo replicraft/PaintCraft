@@ -55,6 +55,7 @@ fn error_view(e: &Error) -> Value {
 
 fn selection_json(sel: Selection) -> Value {
     match sel {
+        Selection::Mask(_) => panic!("v1 conformance fixtures cannot create mask selections"),
         Selection::Inactive => Value::object([("state", Value::str("inactive"))]),
         Selection::Empty => Value::object([("state", Value::str("active-empty"))]),
         Selection::Rect(r) => Value::object([

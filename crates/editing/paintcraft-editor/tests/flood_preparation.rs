@@ -177,7 +177,7 @@ fn local_span_replay_preserves_selection_and_negative_layer_origin() {
         }],
     );
     let selection = Selection::Rect(Rect::new(1, 2, 3, 2).unwrap());
-    let staged = execute(&doc, selection, &batch).unwrap();
+    let staged = execute(&doc, selection.clone(), &batch).unwrap();
     assert_eq!(staged.selection, selection);
     for y in 0..8 {
         for x in 0..10 {

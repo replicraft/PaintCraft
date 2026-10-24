@@ -10,6 +10,7 @@ mod mask;
 mod paint;
 mod path;
 mod planning;
+mod selection;
 mod selection_transform;
 mod transform;
 use path::walk_clipped;
@@ -35,11 +36,12 @@ pub use paintcraft_core::types::policy::STAGED_PIXELS_MAX;
 
 pub use paintcraft_raster::Selection;
 
-fn clip(selection: Selection, area: Option<Rect>) -> Option<Rect> {
+fn clip(selection: &Selection, area: Option<Rect>) -> Option<Rect> {
     match selection {
         Selection::Inactive => area,
         Selection::Empty => None,
-        Selection::Rect(r) => area.and_then(|a| a.intersect(&r)),
+        Selection::Rect(r) => area.and_then(|a| a.intersect(r)),
+        Selection::Mask(_) => None, // Unsupported paint fails before this projection.
     }
 }
 #[derive(Debug)]
@@ -100,7 +102,8 @@ pub fn execute_with_geometry_cache(
     check()?;
     let mut s = Stage {
         doc: base.clone(),
-        selection,
+        selection: selection.clone(),
+        selections: planning::storage::Store::new(&admission),
         aliases: HashMap::new(),
         planning: Some(planning::Compiler::new(&admission, batch, check)?),
         operation: 0,
@@ -206,6 +209,7 @@ pub fn execute_with_geometry_cache(
 struct Stage<'a> {
     doc: Document,
     selection: Selection,
+    selections: planning::storage::Store<(usize, Selection)>,
     /// Every alias ever declared in this batch; `None` once its layer is deleted.
     aliases: HashMap<String, Option<Uuid>>,
     adm: Admission,
@@ -242,7 +246,7 @@ impl Stage<'_> {
     /// Document-space area an edit of `layer` may touch: canvas ∩ layer ∩ selection.
     fn editable(&self, layer: &Layer) -> Option<Rect> {
         clip(
-            self.selection,
+            &self.selection,
             self.doc.canvas_rect().intersect(&layer.extent()),
         )
     }
@@ -312,7 +316,18 @@ impl Stage<'_> {
     }
 
     fn run(&mut self, index: usize, op: &Op) -> Result<()> {
+        // Masks are owned session/history data now. Until exact per-pixel gates
+        // and mapped sampling are implemented, never substitute rectangular bounds.
+        if matches!(self.selection, Selection::Mask(_)) && planning::is_paint(op) {
+            return Err(Error::new(
+                ErrorCode::InputSchema,
+                "painting and transforms on mask selections are not implemented yet",
+            ));
+        }
         match op {
+            Op::SelectionSetPolygon { .. } | Op::SelectionInvert => {
+                self.mask_selection(index, op)?
+            }
             Op::CanvasCrop { rect } => self.crop_canvas(*rect)?,
             Op::CanvasTransform { transform } => self.transform_canvas(*transform)?,
             Op::TransformSelection {
@@ -730,15 +745,7 @@ impl Stage<'_> {
                     l.origin = (x, y);
                 }
                 self.doc.canvas = (*width, *height);
-                if let Selection::Rect(r) = self.selection {
-                    self.selection = match r
-                        .translated(dx, dy)
-                        .and_then(|t| t.intersect(&self.doc.canvas_rect()))
-                    {
-                        Some(t) => Selection::Rect(t),
-                        None => Selection::Empty,
-                    };
-                }
+                self.resize_selection(dx, dy)?;
             }
         }
         Ok(())

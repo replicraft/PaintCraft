@@ -39,6 +39,7 @@ pub use paintcraft_raster::Selection;
 fn clip(selection: Selection, area: Option<Rect>) -> Option<Rect> {
     match selection {
         Selection::Inactive => area,
+        Selection::Mask(_) => unreachable!("historical oracle rejects mask snapshots"),
         Selection::Empty => None,
         Selection::Rect(r) => area.and_then(|a| a.intersect(&r)),
     }
@@ -99,6 +100,12 @@ pub fn execute_with_geometry_cache(
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Staged> {
     check()?;
+    if matches!(selection, Selection::Mask(_)) {
+        return Err(Error::new(
+            ErrorCode::CapabilityUnsupported,
+            "historical benchmark oracle does not implement mask selections",
+        ));
+    }
     let mut s = Stage {
         doc: base.clone(),
         selection,
@@ -173,7 +180,7 @@ impl Stage<'_> {
     /// Document-space area an edit of `layer` may touch: canvas ∩ layer ∩ selection.
     fn editable(&self, layer: &Layer) -> Option<Rect> {
         clip(
-            self.selection,
+            self.selection.clone(),
             self.doc.canvas_rect().intersect(&layer.extent()),
         )
     }
@@ -231,7 +238,11 @@ impl Stage<'_> {
 
     fn run(&mut self, index: usize, op: &Op) -> Result<()> {
         match op {
-            Op::CanvasCrop { .. } | Op::CanvasTransform { .. } | Op::TransformSelection { .. } => {
+            Op::SelectionSetPolygon { .. }
+            | Op::SelectionInvert
+            | Op::CanvasCrop { .. }
+            | Op::CanvasTransform { .. }
+            | Op::TransformSelection { .. } => {
                 return Err(Error::new(
                     ErrorCode::CapabilityUnsupported,
                     "historical benchmark oracle does not implement destructive crop",

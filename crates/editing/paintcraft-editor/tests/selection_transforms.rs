@@ -221,7 +221,7 @@ fn inactive_empty_invalid_target_and_preallocation_denial_preserve_owner() {
     let budget = SharedBudget::new(0);
     let error = execute::execute_with_admission(
         &before,
-        selection,
+        selection.clone(),
         &b,
         Admission::with_residency(40 * 65536, budget.clone()),
     )

@@ -29,7 +29,7 @@ fn raster(t: OrthogonalTransform, source: &RasterLayer) -> RasterLayer {
 }
 impl Stage<'_> {
     fn transform_selection(&mut self, t: OrthogonalTransform) -> Result<()> {
-        self.selection = match self.selection {
+        self.selection = match self.selection.clone() {
             Selection::Rect(r) => match r.intersect(&self.doc.canvas_rect()) {
                 None => Selection::Empty,
                 Some(r) => {

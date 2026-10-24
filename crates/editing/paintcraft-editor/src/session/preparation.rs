@@ -36,7 +36,7 @@ impl Session {
             session: Self {
                 owner: self.owner,
                 doc: self.doc.clone(),
-                selection: self.selection,
+                selection: self.selection.clone(),
                 epoch: self.epoch,
                 history: self.history.try_fork()?,
                 saved_state: self.saved_state,

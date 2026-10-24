@@ -85,7 +85,7 @@ mod tests {
             }],
         };
         let selection = Selection::Rect(Rect::new(3, 2, 2, 1).unwrap());
-        let result = execute(&base, selection, &batch).unwrap();
+        let result = execute(&base, selection.clone(), &batch).unwrap();
         assert_eq!(
             result.doc.layers[&id].raster.get(1, 1),
             Rgba([200, 100, 50, 64])
