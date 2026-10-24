@@ -1418,3 +1418,23 @@ See [the operation, admission and validation details](CROP_PLANNING.md).
 Earlier disabled-Crop entries are historical. Rotate/flip/skew, clipboard, full
 selection manipulation and additional brush/image semantics remain feature
 work. No Windows pixel-fidelity or full M2/T22 completion is claimed.
+
+## Exact Rotate/Flip controls (2026-10-24)
+
+Right/left 90°, 180°, Flip horizontal and Flip vertical now execute from the
+Classic popups and shared Edit actions. Deselecting targets the whole canvas and
+all complete layer extents. A nonempty rectangular selection targets the active
+layer, using captured samples before clearing/replacing the source/destination.
+The canvas remains unchanged; raw RGBA, layer metadata and one-step Undo are
+preserved. Custom rotation remains disabled. Native worker publication remembers
+whole-canvas quarter-turn sizes without changing startup preferences on Undo.
+
+All 217 ordinary GUI tests pass (45 opt-in tests ignored), alongside 258 native
+library tests (8 ignored), 48 web tests, engine/raster/CLI/grammar tests and strict
+native/wasm checks. Isolated browser selection and whole-image rotations produce
+PCND files whose rendered pixels match independent full-image oracles. See
+[the semantics, admission and qualification](SELECTION_TRANSFORMS.md). This is an
+immediate integer transform; persistent floating pixels, arbitrary angles, pivot/
+profile fidelity, resampling/skew and full native input qualification remain work.
+Earlier disabled Rotate/Flip descriptions are historical. Feature work continues
+before UI polish.

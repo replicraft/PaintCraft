@@ -27,10 +27,11 @@ transform target for this operation. A single recorded transaction restores the
 exact previous document and selection on Undo/Redo. Inverting an orientation
 restores stored samples and layer extents, including off-canvas content.
 
-These engine/CLI operations are implemented. Classic Rotate/Flip controls remain
-unavailable while selection-target transform semantics and host actions are being
-completed. Custom angles, resize resampling, skew and interactive handles remain
-work. This tranche does not establish Windows selection behavior or pixel fidelity.
+Classic Rotate/Flip and shared Edit actions now route into these operations when
+no selection is active. With a rectangular selection, the active layer uses
+[an exact source-bound patch transaction](SELECTION_TRANSFORMS.md). Custom angles,
+resize resampling, skew, floating selections and interactive handles remain work.
+Native profile pivots/behavior and pixel fidelity remain unqualified.
 
 ## Sparse plans and admission
 
@@ -69,7 +70,7 @@ No sequential fallback bypasses the compiler.
 - [CLI tests](../apps/paintcraft-cli/tests/cli/orthogonal.rs) execute every wire
   transform and reopen PCND to inspect known asymmetric pixels, IDs and dimensions.
 - [Grammar fixtures](../conformance/grammar-v2.cases) include all five names and
-  rejected names/types/keys/versions. Ninety stored verdicts agree with an
+  rejected names/types/keys/versions. The current stored verdicts agree with an
   independent JSON Schema validator and the Rust parser.
 
 The 2026-10-24 qualification includes 325 passing foundation/editor tests (0 ignored), all 47 web

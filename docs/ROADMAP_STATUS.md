@@ -11,15 +11,26 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest editing work connects Rotate/Flip to native/web controls and shared Edit
+actions. No selection reorients the complete canvas/layers; a rectangular selection
+uses a captured-source patch on the active layer with exact overlap, clear and
+recorded Undo. The canvas remains unchanged for selection transforms. Native
+worker, GUI and web tests cover routing and authored-size policy; independent dense
+oracles cover sparse patches and mixed batches. An isolated browser's downloaded
+projects match every rendered pixel against independent selected/whole rotation
+oracles. See [selection transforms](SELECTION_TRANSFORMS.md). Custom angles, resize/
+skew, floating selections, masks and native profile qualification remain work.
+UI polish stays deferred; T14/T15 remain partial and T22 stays not-started.
+
 Latest engine work adds `canvas.transform` for exact clockwise/counterclockwise
 quarter turns, 180° rotation and horizontal/vertical mirroring. Sparse mapped plans
 preserve complete layer extents and raw RGBA through compiled mixed batches and
 recorded history. All five wire operations round-trip through the CLI; independent
 row/column and known-pixel oracles qualify orientation. See
 [orthogonal transform semantics and validation](ORTHOGONAL_TRANSFORMS.md).
-Classic controls and selection-target transforms remain work; this engine tranche
-does not make those disabled controls functional. Feature completion continues
-before UI cleanup. T14/T15 remain partial.
+That engine tranche preceded the selected-pixel and host integration above.
+Custom angles and native profile qualification remain work. Feature completion
+continues before UI cleanup. T14/T15 remain partial.
 
 Latest editing work adds real selection Crop across desktop, web and CLI. The
 shared `canvas.crop` operation preserves layer identities/metadata and raw RGBA,

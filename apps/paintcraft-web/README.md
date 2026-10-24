@@ -23,11 +23,19 @@ conversion remain unavailable.
 Image → Crop and Edit → Crop use the selected canvas region. Crop discards
 outside content from every layer, including hidden layers, preserves layer IDs
 and metadata, and clears the selection. Undo restores the complete previous
-state. Straight RGBA and hidden RGB survive project saving. Rotate, flip and skew
-remain unavailable. See [Crop's semantics and limits](../../docs/CROP_PLANNING.md).
+state. Straight RGBA and hidden RGB survive project saving.
+See [Crop's semantics and limits](../../docs/CROP_PLANNING.md).
+
+Rotate/Flip execute right/left 90°, 180° and both mirrors. With no selection they
+reorient the whole canvas and all layer extents. A rectangular selection transforms
+the active layer's selected pixels at its top-left position, clearing the source
+to the project ground and preserving overlap from captured samples. Undo restores
+the exact previous state. New padding is transparent; off-canvas content remains
+stored. See [selected-pixel transform semantics](../../docs/SELECTION_TRANSFORMS.md).
+Custom angles, skew, resampling and a persistent floating selection remain work.
 
 View → Default canvas size chooses a configured size or remembers the last size
-created/resized/cropped. Undo/Redo preserve the last authored size. The initial default is 1000 × 486. Startup dimensions, theme,
+created/resized/cropped/rotated. Undo/Redo preserve the last authored size. The initial default is 1000 × 486. Startup dimensions, theme,
 Classic skin and custom swatches persist in this browser when local storage is
 available. Preferences are validated before use; malformed or unavailable storage
 falls back to defaults with a status message. Preference storage contains no
@@ -66,7 +74,7 @@ Completed shapes are raster transactions, not persistent editable vector objects
 The older Classic skins expose the same 23-entry gallery. Curved preset contours use
 bounded fixed-point flattenings, not a Windows pixel-fidelity guarantee.
 
-This is an early editor. Image transforms, clipboard and recovery
+This is an early editor. Custom transforms, clipboard and recovery
 are not connected yet. Unsupported actions report this in the status bar.
 The page requests the browser's
 unsaved-work confirmation before unloading. Browser policy controls whether that

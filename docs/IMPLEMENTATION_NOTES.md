@@ -452,3 +452,15 @@ transforming origins and the selection rectangle. Integer source-bound maps shar
 Crop's complete-batch admission machinery. See
 [orthogonal transforms](ORTHOGONAL_TRANSFORMS.md) for the wire values, limits,
 independent oracles and pending host/selection-target integration.
+
+### Selected-pixel orthogonal transforms (batch v2)
+
+`raster.transform_selection` reads the active selection and one explicit layer,
+with an exact orientation and clear color. Frozen source-bound patch maps capture
+overlap before clearing; complete-batch preparation reserves the full decoded
+peak before replay. Outside-layer sampling/padding is transparent, full destination
+pixels remain stored off-canvas, and selection state clips to the canvas. Native/
+web controls route to this operation for selections and `canvas.transform` when
+unrestricted. See [selection transforms](SELECTION_TRANSFORMS.md) for the defined
+top-left anchoring, immediate-commit lifecycle, oracles and remaining native-profile
+and floating-selection work.
