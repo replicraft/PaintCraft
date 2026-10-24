@@ -19,6 +19,8 @@ fn native_history_capability_survives_empty_workspaces_but_respects_modals() {
         pixel_grid: false,
         can_fit_selection: false,
         can_crop_selection: false,
+        can_erase_selection: false,
+        can_transform_image: true,
         status_bar: true,
         rulers: false,
         fullscreen: false,

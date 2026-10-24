@@ -41,6 +41,7 @@ pub enum Action {
     EditSecondaryCustomColor(u8),
     SelectTool(Tool),
     SelectAll,
+    InvertSelection,
     Deselect,
     Close,
     Exit,
@@ -72,6 +73,9 @@ pub struct Context {
     pub pixel_grid: bool,
     pub can_fit_selection: bool,
     pub can_crop_selection: bool,
+    pub can_erase_selection: bool,
+    /// Whole-image or selected-pixel transform is implemented for this selection kind.
+    pub can_transform_image: bool,
     pub status_bar: bool,
     pub rulers: bool,
     pub fullscreen: bool,
@@ -110,6 +114,7 @@ pub const EDIT: &[Action] = &[
     Action::Undo,
     Action::Redo,
     Action::SelectAll,
+    Action::InvertSelection,
     Action::Deselect,
     Action::EraseSelection,
     Action::ClearCanvas,
@@ -176,6 +181,7 @@ impl Action {
             }
             Self::SelectTool(tool) => (tool.name(), None),
             Self::SelectAll => ("Select all", Some((Key::A, false))),
+            Self::InvertSelection => ("Invert selection", Some((Key::I, false))),
             Self::Deselect => ("Deselect", Some((Key::D, false))),
             Self::Close => ("Close", Some((Key::W, false))),
             Self::Exit => ("Exit", None),
@@ -296,10 +302,11 @@ impl Action {
             Self::Deselect => ctx.document_open && ctx.selection_active,
             Self::Crop => ctx.document_open && ctx.can_crop_selection,
             Self::EraseSelection => {
-                ctx.document_open && ctx.can_crop_selection && ctx.layer_index.is_some()
+                ctx.document_open && ctx.can_erase_selection && ctx.layer_index.is_some()
             }
             Self::TransformImage(_) => {
                 ctx.document_open
+                    && ctx.can_transform_image
                     && (!ctx.selection_active
                         || (ctx.can_crop_selection && ctx.layer_index.is_some()))
             }
@@ -358,6 +365,7 @@ impl Action {
             Self::Redo => 1006,
             Self::Interface => 1007,
             Self::SelectAll => 1008,
+            Self::InvertSelection => 1026,
             Self::Deselect => 1009,
             Self::Close => 1010,
             Self::Exit => 1019,
@@ -684,6 +692,8 @@ mod tests {
             pixel_grid: false,
             can_fit_selection: false,
             can_crop_selection: false,
+            can_erase_selection: false,
+            can_transform_image: true,
             status_bar: true,
             rulers: false,
             fullscreen: false,
@@ -765,3 +775,6 @@ mod tests {
 mod recent_tests;
 #[cfg(test)]
 mod save_all_tests;
+
+#[cfg(test)]
+mod selection_tests;

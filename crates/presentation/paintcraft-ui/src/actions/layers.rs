@@ -130,6 +130,8 @@ mod tests {
             pixel_grid: false,
             can_fit_selection: false,
             can_crop_selection: false,
+            can_erase_selection: false,
+            can_transform_image: true,
             status_bar: true,
             rulers: false,
             fullscreen: false,
