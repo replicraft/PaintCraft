@@ -22,7 +22,8 @@ separately in the dependency choices and is not bundled yet.
 - Centered canvas in both Studio and Classic when the viewport is larger than the document; scrolling and
   actual-pixel zoom retain the common mapping.
 - Zoom tool with click stepping, rectangle-to-viewport fit and text-safe Z shortcut.
-- Pan tool with H, temporary Space-drag, middle-button pan and hand cursors.
+- Pan tool with H, temporary Space-drag, middle-button pan, Space-plus-arrow
+  keyboard movement, Ctrl acceleration and hand cursors.
 - Overscroll with a persisted Studio navigation preference.
 - Shared staged brush previews, CPU/wgpu composition, transactions and undo/redo.
   Open, Save As and Export retain the native file-dialog and preservation paths.
@@ -408,9 +409,8 @@ Pan tool at 1600 percent with an edited pencil stroke. These captures do not pro
 OS cursor appearance or native Paint.NET parity. Raw logs are retained in ignored
 `docs/validation/studio-pan-2026-10-24/`.
 
-Overscroll is implemented in the following slice. Space-plus-arrow panning,
-Ctrl-accelerated keyboard pan, automatic
-edge scrolling and per-device/native qualification remain unfinished. This does
+Overscroll and keyboard panning are implemented below. Automatic edge scrolling
+and per-device/native qualification remain unfinished. This does
 not complete the Studio or browser parity gates.
 
 ## Overscroll and navigation preference (2026-10-24)
@@ -462,6 +462,55 @@ settings surface were visually inspected. The fixture verifies that the small
 canvas extends outside its viewport before capture. Raw evidence is retained in
 ignored `docs/validation/studio-overscroll-2026-10-24/`.
 
-Space-plus-arrow panning, Ctrl-accelerated keyboard movement, automatic edge
-scrolling and native/per-device qualification remain unfinished. Studio web
+Keyboard panning is implemented below. Automatic edge scrolling and
+native/per-device qualification remain unfinished. Studio web
 presentation and the complete Studio roadmap gate remain unfinished.
+
+## Space-plus-arrow keyboard panning (2026-10-24)
+
+Holding Space and pressing an arrow now pans Studio's viewport in that direction.
+Ctrl multiplies the movement by ten. Releasing Space stops keyboard panning;
+ordinary arrows without Space do not navigate the canvas. Native repeat events
+contribute one movement each, and coalesced input retains key-down/key-up ordering.
+The selected paint tool, document pixels, selection and history remain unchanged.
+
+The primary workflow reference remains the official
+[Paint.NET View Tools documentation](https://paint.net/doc/latest/ViewTools.html),
+which describes Space-plus-arrow movement, Ctrl acceleration and document-pixel
+movement varying inversely with zoom. PaintCraft currently chooses one physical
+display pixel per arrow event, or ten with Ctrl. Thus 12.5 percent zoom moves eight
+document pixels, while 1600 percent moves a sixteenth of a document pixel. These step-size and direction choices still require comparison with a pinned
+native build.
+
+The normalized direction/step helper lives with the shared view gestures. The
+host converts the physical step to logical UI points using the display scale and
+queues the same scoped scroll request used by mouse panning. Existing scroll and
+overscroll limits apply. The handler consumes only eligible arrow presses and
+clears egui's pending focus navigation so the same key cannot also move widget
+focus. Repeats still pass through this view path after ordinary document-shortcut
+repeat suppression.
+
+Text fields, editable canvas text, IME composition, popups and settings dialogs
+retain keyboard ownership. Focus loss clears temporary Space-pan activation.
+Modifier combinations reserved for other interactions are not reinterpreted as
+plain Space-plus-arrow movement. Keyboard panning produces no document command or
+paint gesture and does not place or discard an editable text draft.
+
+Validation: the full ordinary desktop GUI suite passes 263 tests (63 explicit
+manual/capture tests ignored). New GUI coverage checks all four directions, Ctrl's
+tenfold multiplier, exact physical steps at DPI 1/2, English/Japanese, light/dark,
+forced multipass, low/high zoom document displacement, repeat counts, release
+ordering, focus loss, no-Space behavior and unchanged document/history/tool state.
+It also checks layer-name fields, open menus, modal settings, pending canvas text
+and IME preedit. Six shared navigation tests and 30 ordinary shared UI tests pass.
+All 68 browser library tests pass; its release distribution rebuilds. Workspace
+check, strict all-target Clippy, translation, source-length and whitespace checks
+pass. The final combined hint also retains the passing narrow settings check.
+
+The actual Pan captures at `assets/repo/studio-pan-en-US.png` and
+`studio-pan-ja.png` were refreshed and visually inspected with one combined
+mouse/keyboard instruction. They demonstrate the current UI, while the exact
+keyboard movement evidence is in the GUI assertions and ignored raw logs under
+`docs/validation/studio-keyboard-pan-2026-10-24/`. OS shortcut delivery, physical
+IME/device behavior and full native Paint.NET parity remain unqualified. Automatic
+edge scrolling and the broader Studio/browser roadmap remain unfinished.
