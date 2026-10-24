@@ -12,6 +12,10 @@ pub(super) fn spacious(ui: &egui::Ui) -> bool {
     ui.ctx().content_rect().width() >= 1200.0
 }
 
+pub(super) fn roomy_spacing(ui: &egui::Ui) -> bool {
+    ui.ctx().content_rect().width() >= 1280.0
+}
+
 pub(super) fn ribbon(
     ui: &mut egui::Ui,
     state: &mut Controls,
@@ -28,7 +32,7 @@ pub(super) fn ribbon(
             ui.horizontal_top(|ui| {
                 // Keep all groups reachable at medium widths before scrolling
                 // is necessary; preserve the roomier desktop spacing otherwise.
-                if !spacious(ui) {
+                if !roomy_spacing(ui) {
                     ui.spacing_mut().item_spacing.x = 4.0;
                 }
                 group(ui, "Selection", |ui| {
@@ -66,7 +70,22 @@ pub(super) fn ribbon(
                 group(ui, "Shapes", |ui| {
                     ui.horizontal_top(|ui| {
                         super::shapes::gallery(ui, state, actions);
-                        ui.vertical(|ui| super::dropdowns::shape_paint(ui, state));
+                        ui.vertical(|ui| {
+                            if !spacious(ui) {
+                                // Three compact targets fit the shared caption baseline.
+                                ui.spacing_mut().item_spacing.y = 3.0;
+                            }
+                            super::dropdowns::shape_paint(ui, state);
+                            if !spacious(ui) {
+                                super::stroke_size::show(ui, state, context);
+                            }
+                        });
+                        if spacious(ui) {
+                            ui.vertical(|ui| {
+                                ui.add_space(24.0);
+                                super::stroke_size::show(ui, state, context);
+                            });
+                        }
                     });
                 });
                 ui.separator();

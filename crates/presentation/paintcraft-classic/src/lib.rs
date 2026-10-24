@@ -28,6 +28,7 @@ mod shapes;
 pub mod skin_picker;
 mod slider_input;
 mod slider_thumb;
+mod stroke_size;
 #[derive(Debug, Default)]
 pub struct Workspace {
     pub layers: bool,

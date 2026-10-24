@@ -164,7 +164,14 @@ fn swatches(
         .num_columns(10)
         .min_col_width(0.0)
         .min_row_height(cell)
-        .spacing(egui::vec2(if spacious { 6.0 } else { 4.0 }, 3.0))
+        .spacing(egui::vec2(
+            if super::ribbon::roomy_spacing(ui) {
+                6.0
+            } else {
+                4.0
+            },
+            3.0,
+        ))
         .show(ui, |ui| {
             for index in 0..30 {
                 let (color, label, tip) = if index < 20 {

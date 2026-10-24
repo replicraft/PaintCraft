@@ -58,6 +58,15 @@ fn dropdown(
     let response = ui
         .push_id(label, |ui| {
             let button = if let Some(icon) = icon {
+                let height = if super::ribbon::spacious(ui) {
+                    32.0
+                } else {
+                    28.0
+                };
+                ui.spacing_mut().interact_size.y = height;
+                if height < 32.0 {
+                    ui.spacing_mut().button_padding.y = 2.0;
+                }
                 egui::Button::new((
                     paintcraft_ui::icons::classic_menu_image(
                         ui.ctx(),
@@ -67,7 +76,7 @@ fn dropdown(
                     ),
                     "   ",
                 ))
-                .min_size(Vec2::new(54.0, 32.0))
+                .min_size(Vec2::new(54.0, height))
                 .frame_when_inactive(false)
                 .frame(true)
             } else {

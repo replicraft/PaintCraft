@@ -319,3 +319,6 @@ mod form_controls;
 
 #[path = "gui/dimension_fields.rs"]
 mod dimension_fields;
+
+#[path = "gui/stroke_size.rs"]
+mod stroke_size;
