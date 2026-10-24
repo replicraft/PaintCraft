@@ -195,6 +195,18 @@ impl App {
                 }
                 Chrome::ResizeSkew => self.begin_resize_skew(),
                 Chrome::Crop => self.request(ctx, code::CROP, Action::CropToSelection),
+                Chrome::EraseSelection => {
+                    let color = if self.experience() == Experience::Classic {
+                        self.editor.canvas_color()
+                    } else {
+                        Rgba::TRANSPARENT
+                    };
+                    self.request(
+                        ctx,
+                        action.activation_code(),
+                        Action::EraseSelection { color },
+                    );
+                }
                 Chrome::TransformImage(transform) => {
                     let clear = if self.experience() == Experience::Classic {
                         self.editor.canvas_color()

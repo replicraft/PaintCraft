@@ -24,6 +24,7 @@ pub enum Action {
     ImageProperties,
     ClearCanvas,
     Crop,
+    EraseSelection,
     TransformImage(Transform),
     CanvasDefaults,
     EditColors,
@@ -89,6 +90,7 @@ pub const EDIT: &[Action] = &[
     Action::Redo,
     Action::SelectAll,
     Action::Deselect,
+    Action::EraseSelection,
     Action::ClearCanvas,
     Action::TransformImage(Transform::RotateRight),
     Action::TransformImage(Transform::RotateLeft),
@@ -131,6 +133,7 @@ impl Action {
             Self::ImageProperties => ("Image properties", Some((Key::E, false))),
             Self::ClearCanvas => ("Clear Canvas", None),
             Self::Crop => ("Crop", None),
+            Self::EraseSelection => ("Delete", None),
             Self::TransformImage(t) => (
                 match t {
                     Transform::RotateRight => "Rotate right 90°",
@@ -154,13 +157,17 @@ impl Action {
         Descriptor {
             action: self,
             label,
-            shortcut: key.map(|(logical_key, shift)| KeyboardShortcut {
-                modifiers: Modifiers {
-                    shift,
-                    ..Modifiers::COMMAND
-                },
-                logical_key,
-            }),
+            shortcut: if self == Self::EraseSelection {
+                Some(KeyboardShortcut::new(Modifiers::NONE, Key::Delete))
+            } else {
+                key.map(|(logical_key, shift)| KeyboardShortcut {
+                    modifiers: Modifiers {
+                        shift,
+                        ..Modifiers::COMMAND
+                    },
+                    logical_key,
+                })
+            },
         }
     }
 
@@ -232,6 +239,9 @@ impl Action {
             Self::Redo => ctx.document_open && ctx.can_redo,
             Self::Deselect => ctx.document_open && ctx.selection_active,
             Self::Crop => ctx.document_open && ctx.can_crop_selection,
+            Self::EraseSelection => {
+                ctx.document_open && ctx.can_crop_selection && ctx.layer_index.is_some()
+            }
             Self::TransformImage(_) => {
                 ctx.document_open
                     && (!ctx.selection_active
@@ -297,6 +307,7 @@ impl Action {
             Self::ImageProperties => 1021,
             Self::ClearCanvas => 1018,
             Self::Crop => 1022,
+            Self::EraseSelection => 1023,
             Self::TransformImage(t) => 1030 + t as u64,
             Self::Settings => 1015,
             Self::ChooseFrontend(frontend) => 1016 + frontend as u64,

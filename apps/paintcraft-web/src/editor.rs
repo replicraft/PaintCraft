@@ -166,6 +166,14 @@ impl Editor {
                 self.tools.cancel_gesture();
                 self.commit(vec![op])
             }
+            Action::EraseSelection { color } => {
+                let ops = commands::erase_selection(self.session.selection(), self.target, color)?;
+                if ops.is_empty() {
+                    return Ok(());
+                }
+                self.tools.cancel_gesture();
+                self.commit(ops)
+            }
             Action::CropToSelection => {
                 let operation =
                     commands::crop_to_selection(self.session.document(), self.session.selection())?;

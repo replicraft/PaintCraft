@@ -63,3 +63,43 @@ fn browser_noop_and_rejected_resize_preserve_the_unpublished_text_draft() {
         assert!(editor.session.document().same_semantics(&source));
     }
 }
+
+#[test]
+fn browser_selection_delete_clears_only_the_selected_pixels_and_undo_restores_them() {
+    use paintcraft_core::types::Rgba;
+    let mut editor = Editor::new(32, 24).unwrap();
+    let layer = editor.target.unwrap();
+    editor
+        .apply(Action::Shape {
+            layer,
+            tool: Tool::Rect,
+            from: (0, 0),
+            to: (31, 23),
+            stroke: None,
+            fill: Some(Rgba([12, 34, 56, 255])),
+        })
+        .unwrap();
+    editor
+        .apply(Action::Select {
+            corners: Some(((5, 5), (10, 10))),
+        })
+        .unwrap();
+    let source = editor.session.snapshot();
+    let selection = editor.session.selection();
+    editor
+        .apply(Action::EraseSelection {
+            color: Rgba([255; 4]),
+        })
+        .unwrap();
+    assert_eq!(
+        editor.session.document().layers[&layer].raster.get(7, 7),
+        Rgba([255; 4])
+    );
+    assert_eq!(
+        editor.session.document().layers[&layer].raster.get(4, 7),
+        Rgba([12, 34, 56, 255])
+    );
+    editor.apply(Action::Undo).unwrap();
+    assert!(editor.session.document().same_semantics(&source));
+    assert_eq!(editor.session.selection(), selection);
+}

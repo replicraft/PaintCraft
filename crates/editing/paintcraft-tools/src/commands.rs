@@ -327,3 +327,28 @@ pub fn transform_image(
         ("clear", Value::str(clear.to_hex())),
     ]))
 }
+
+/// Erase only an active nonempty selection, using the frontend's captured ground.
+/// The fill command retains selection clipping and publication/undo semantics.
+pub fn erase_selection(
+    selection: paintcraft_raster::Selection,
+    target: Option<Uuid>,
+    color: Rgba,
+) -> Result<Vec<Value>> {
+    let paintcraft_raster::Selection::Rect(rect) = selection else {
+        return Ok(Vec::new());
+    };
+    let layer = target.ok_or_else(|| {
+        paintcraft_core::types::Error::new(
+            paintcraft_core::types::ErrorCode::ReferenceUnknownId,
+            "Select a layer to erase selected pixels",
+        )
+    })?;
+    Ok(vec![Value::object([
+        ("op", Value::str("raster.fill_rect")),
+        ("layer_ref", layer_ref(layer)),
+        ("rect", rect_value(rect)),
+        ("color", Value::str(color.to_hex())),
+        ("mode", Value::str("replace")),
+    ])])
+}

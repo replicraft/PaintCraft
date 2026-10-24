@@ -167,7 +167,6 @@ fn classic_selection_menu_has_aligned_rows_safe_previews_and_reachable_actions()
                 "Transparent selection",
                 "Transparent selection is not available yet.",
             ),
-            ("Delete", "Deleting selected pixels is not available yet."),
         ] {
             reveal(&mut h, label);
             assert!(

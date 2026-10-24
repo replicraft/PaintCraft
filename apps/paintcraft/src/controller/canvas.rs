@@ -25,6 +25,17 @@ impl Editor {
         }
     }
 
+    pub(super) fn erase_selection(&mut self, color: Rgba) {
+        match paintcraft_tools::commands::erase_selection(self.selection(), self.target, color) {
+            Ok(ops) if !ops.is_empty() => {
+                self.cancel_gesture();
+                self.draw(ops, "Erase selection");
+            }
+            Ok(_) => {}
+            Err(error) => self.status = error.to_string(),
+        }
+    }
+
     pub(super) fn crop_to_selection(&mut self) {
         match paintcraft_tools::commands::crop_to_selection(self.document(), self.selection()) {
             Ok(op) => {

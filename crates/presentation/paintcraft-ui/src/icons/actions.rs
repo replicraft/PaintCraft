@@ -34,6 +34,7 @@ impl Action {
             Self::ImageProperties => Icon::ImageProperties,
             Self::ClearCanvas => Icon::ClearCanvas,
             Self::Crop => Icon::Crop,
+            Self::EraseSelection => Icon::DeleteLayer,
             Self::TransformImage(t) => match t {
                 paintcraft_core::types::orthogonal::OrthogonalTransform::RotateRight => {
                     Icon::RotateClockwise

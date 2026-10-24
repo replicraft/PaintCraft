@@ -184,6 +184,9 @@ pub struct ColorPick {
 pub enum Action {
     PickColor(ColorPick),
     CropToSelection,
+    EraseSelection {
+        color: Rgba,
+    },
     TransformImage {
         transform: paintcraft_core::types::orthogonal::OrthogonalTransform,
         clear: Rgba,

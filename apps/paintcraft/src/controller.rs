@@ -533,6 +533,7 @@ impl Editor {
         match action {
             Action::PickColor(pick) => self.pick_color(pick),
             Action::CropToSelection => self.crop_to_selection(),
+            Action::EraseSelection { color } => self.erase_selection(color),
             Action::TransformImage { transform, clear } => self.transform_image(transform, clear),
             Action::Contour(contour) => self.contour(&contour),
             Action::ResizeCanvas { width, height } => self.resize_canvas(width, height),
