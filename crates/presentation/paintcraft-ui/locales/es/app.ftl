@@ -129,3 +129,6 @@ no-recent-files-yet = Todavía no hay archivos recientes.
 clear-recent-history = Borrar historial reciente
 format-recent-file-history-is-unavailable-detail = El historial de archivos no está disponible: { $detail }
 waiting-for-pending-work-more = Esperando a que finalicen las operaciones pendientes…
+
+selection-path-is-too-complex-try-a-shorter-path = El trazado de selección es demasiado complejo; prueba uno más corto
+selection-outline-is-too-complex-zoom-in-to-view-it = El contorno de selección es demasiado complejo; acerca el zoom para verlo

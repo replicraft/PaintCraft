@@ -129,3 +129,6 @@ no-recent-files-yet = Noch keine zuletzt verwendeten Dateien.
 clear-recent-history = Verlauf leeren
 format-recent-file-history-is-unavailable-detail = Der Dateiverlauf ist nicht verfügbar: { $detail }
 waiting-for-pending-work-more = Ausstehende Vorgänge werden abgeschlossen…
+
+selection-path-is-too-complex-try-a-shorter-path = Der Auswahlpfad ist zu komplex; versuche einen kürzeren Pfad
+selection-outline-is-too-complex-zoom-in-to-view-it = Die Auswahlkontur ist zu komplex; zoome hinein, um sie anzuzeigen

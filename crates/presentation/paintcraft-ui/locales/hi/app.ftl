@@ -129,3 +129,6 @@ no-recent-files-yet = अभी कोई हाल की फ़ाइल न�
 clear-recent-history = हाल का इतिहास साफ़ करें
 format-recent-file-history-is-unavailable-detail = हाल की फ़ाइलों का इतिहास उपलब्ध नहीं है: { $detail }
 waiting-for-pending-work-more = लंबित काम पूरा होने की प्रतीक्षा में…
+
+selection-path-is-too-complex-try-a-shorter-path = चयन पथ बहुत जटिल है; छोटा पथ आज़माएँ
+selection-outline-is-too-complex-zoom-in-to-view-it = चयन की रूपरेखा बहुत जटिल है; उसे देखने के लिए ज़ूम इन करें

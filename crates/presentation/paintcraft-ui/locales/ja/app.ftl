@@ -129,3 +129,6 @@ no-recent-files-yet = 最近使ったファイルはありません。
 clear-recent-history = 最近使ったファイルの履歴を消去
 format-recent-file-history-is-unavailable-detail = 最近使ったファイルの履歴を利用できません: { $detail }
 waiting-for-pending-work-more = 処理が完了するまでお待ちください…
+
+selection-path-is-too-complex-try-a-shorter-path = 選択範囲のパスが複雑すぎます。短いパスをお試しください
+selection-outline-is-too-complex-zoom-in-to-view-it = 選択範囲の輪郭が複雑すぎます。拡大して表示してください

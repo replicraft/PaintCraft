@@ -129,3 +129,6 @@ no-recent-files-yet = No recent files yet.
 clear-recent-history = Clear recent history
 format-recent-file-history-is-unavailable-detail = Recent file history is unavailable: { $detail }
 waiting-for-pending-work-more = Waiting for pending work…
+
+selection-path-is-too-complex-try-a-shorter-path = Selection path is too complex; try a shorter path
+selection-outline-is-too-complex-zoom-in-to-view-it = Selection outline is too complex; zoom in to view it

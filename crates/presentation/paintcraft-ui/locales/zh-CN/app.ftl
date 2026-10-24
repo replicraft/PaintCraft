@@ -129,3 +129,6 @@ no-recent-files-yet = 暂无最近使用的文件。
 clear-recent-history = 清除最近记录
 format-recent-file-history-is-unavailable-detail = 无法使用最近文件记录：{ $detail }
 waiting-for-pending-work-more = 正在等待未完成的操作…
+
+selection-path-is-too-complex-try-a-shorter-path = 选区路径过于复杂，请尝试更短的路径
+selection-outline-is-too-complex-zoom-in-to-view-it = 选区轮廓过于复杂，请放大以查看
