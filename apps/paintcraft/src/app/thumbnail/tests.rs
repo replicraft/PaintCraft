@@ -32,7 +32,7 @@ fn full_document_thumbnail_is_bounded_revision_checked_and_releases_when_hidden(
     assert_eq!(budget.usage().reserved, 0);
     service.update(&ctx, Some(doc.clone()), &budget, true);
     drain(&mut service, &ctx, Some(doc.clone()), &budget);
-    assert!(matches!(service.preview(), Preview::Ready { .. }));
+    assert!(matches!(service.preview(), ImagePreview::Ready { .. }));
     let image = service.image.as_ref().unwrap();
     assert_eq!(image.texture.size(), [250, 122]);
     assert_eq!(image.aspect, 1000.0 / 486.0);
@@ -55,7 +55,7 @@ fn hidden_or_stale_work_cannot_publish_and_releases_only_after_completion() {
         let budget = paintcraft_runtime::SharedBudget::new(32 << 20);
         let doc = document();
         let mut service = Thumbnail {
-            scope: Some((doc.document_id, doc.state_id)),
+            scope: Some(Scope::committed(&doc)),
             ..Default::default()
         };
         let mut executor = Executor::with_budget(
@@ -79,7 +79,7 @@ fn hidden_or_stale_work_cannot_publish_and_releases_only_after_completion() {
                 || {},
             )
             .unwrap();
-        service.pending = Some(((doc.document_id, doc.state_id), handle));
+        service.pending = Some((Scope::committed(&doc), handle));
         service.executor = Some(executor);
         let mut next = (*doc).clone();
         // A different document can share a state identity; document identity is mandatory.
@@ -142,9 +142,9 @@ fn reopening_same_source_during_cancellation_remains_eligible() {
         )
         .unwrap();
     let mut service = Thumbnail {
-        scope: Some((doc.document_id, doc.state_id)),
+        scope: Some(Scope::committed(&doc)),
         executor: Some(executor),
-        pending: Some(((doc.document_id, doc.state_id), handle)),
+        pending: Some((Scope::committed(&doc), handle)),
         output: Some(budget.reserve(250 * 122 * 12).unwrap()),
         ..Default::default()
     };
@@ -161,5 +161,5 @@ fn reopening_same_source_during_cancellation_remains_eligible() {
     assert!(service.output.is_none());
     service.update(&ctx, Some(doc.clone()), &budget, true);
     drain(&mut service, &ctx, Some(doc), &budget);
-    assert!(matches!(service.preview(), Preview::Ready { .. }));
+    assert!(matches!(service.preview(), ImagePreview::Ready { .. }));
 }

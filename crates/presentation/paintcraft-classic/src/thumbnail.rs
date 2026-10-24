@@ -1,9 +1,9 @@
-//! Floating full-canvas overview. The host supplies committed pixels and owns jobs.
+//! Floating full-canvas overview. The host supplies prepared canvas pixels and owns jobs.
 pub use crate::layers::Preview;
 use egui::{Color32, Rect, Vec2};
 
 /// Returns true when the user closes the window. This view never edits pixels.
-pub fn show(ctx: &egui::Context, preview: Preview, enabled: bool) -> bool {
+pub fn show(ctx: &egui::Context, preview: Preview, updating: bool, enabled: bool) -> bool {
     let mut close = false;
     let max = (ctx.content_rect().size() - Vec2::splat(32.0)).max(Vec2::new(128.0, 100.0));
     egui::Window::new("Thumbnail")
@@ -51,7 +51,7 @@ pub fn show(ctx: &egui::Context, preview: Preview, enabled: bool) -> bool {
                     );
                 }
             }
-            ui.label(egui::RichText::new("Committed image").size(12.0)).on_hover_text("Shows the completed image. Active brush, shape and text drafts appear after they are committed.");
+            ui.label(egui::RichText::new(if updating { "Updating preview…" } else { "Canvas overview" }).size(12.0)).on_hover_text("Shows the canvas and active paint, shape and text previews. Selection borders and text carets stay on the main canvas.");
         });
     close
 }

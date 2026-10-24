@@ -224,3 +224,149 @@ fn export_thumbnail() {
         std::fs::remove_dir_all(dir).unwrap();
     }
 }
+
+fn current(h: &mut Harness<App>) -> TextureId {
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
+    loop {
+        h.step();
+        if let Some(texture) = image(h)
+            && h.query_by_label("Canvas overview").is_some()
+        {
+            return texture;
+        }
+        assert!(
+            std::time::Instant::now() < deadline,
+            "live overview did not catch up"
+        );
+        std::thread::yield_now();
+    }
+}
+
+#[test]
+fn live_shapes_share_canvas_pixels_with_release_and_refresh_the_overview_before_publication() {
+    for tool in ["Line", "Rectangle", "Ellipse"] {
+        let mut h = harness_with(App::new(None), 1.0, true);
+        h.set_size(Vec2::new(1360.0, 900.0));
+        h.run();
+        toggle(&mut h);
+        let initial = current(&mut h);
+        h.get_by_role_and_label(Role::Button, tool).click();
+        h.run();
+        let before = h.state().editor().document_snapshot();
+        let ticket = h.state().editor().history_view().ticket;
+        let a = at(&h, 400.0, 120.0);
+        let b = at(&h, 650.0, 260.0);
+        h.event(Event::PointerMoved(a));
+        h.event(press(a));
+        h.run();
+        h.event(Event::PointerMoved(b));
+        h.run();
+        let live = current(&mut h);
+        assert_ne!(live, initial);
+        assert!(h.state().editor().gesture_in_progress());
+        assert!(h.state().editor().document().same_semantics(&before));
+        assert_eq!(h.state().editor().history_view().ticket, ticket);
+        let pixels = h.state().rendered().to_vec();
+        assert!(
+            pixels.as_chunks::<4>().0.contains(&[0, 0, 0, 255]),
+            "{tool} must render raster pixels before release"
+        );
+        h.event(release(b));
+        h.run();
+        current(&mut h);
+        assert_eq!(
+            h.state().rendered(),
+            pixels,
+            "{tool} preview must match publication"
+        );
+        assert_eq!(publications(&h), 1);
+    }
+}
+
+#[test]
+fn editable_text_updates_the_overview_and_escape_removes_it_without_history() {
+    let mut h = harness_with(App::new(None), 1.0, true);
+    h.set_size(Vec2::new(1360.0, 900.0));
+    h.run();
+    toggle(&mut h);
+    let initial = current(&mut h);
+    h.get_by_role_and_label(Role::Button, "Text").click();
+    h.run();
+    drag(&mut h, (400.0, 120.0), (400.0, 120.0));
+    h.event(Event::Text("Editable".into()));
+    h.run();
+    let text = current(&mut h);
+    assert_ne!(text, initial);
+    assert!(h.state().editor().is_editing_text());
+    assert_eq!(publications(&h), 0);
+    h.key_press(Key::Backspace);
+    h.run();
+    assert_ne!(current(&mut h), text);
+    h.key_press(Key::Escape);
+    h.run();
+    current(&mut h);
+    assert!(!h.state().editor().is_editing_text());
+    assert_eq!(publications(&h), 0);
+    assert!(
+        h.state()
+            .editor()
+            .document()
+            .layers
+            .values()
+            .all(|layer| layer.raster.resident_tiles() == 0)
+    );
+}
+
+#[test]
+#[ignore = "Explicit Wgpu review of live shape and editable-text overviews"]
+fn export_live_thumbnail() {
+    let output = PathBuf::from("/tmp/paintcraft-live-thumbnail");
+    std::fs::create_dir_all(&output).unwrap();
+    for (name, appearance, tool, compact) in [
+        ("light-shape", Appearance::Light, "Rectangle", false),
+        ("dark-shape", Appearance::Dark, "Ellipse", false),
+        ("dark-text", Appearance::Dark, "Text", false),
+        ("dark-text-compact", Appearance::Dark, "Text", true),
+    ] {
+        let dir = scratch("live-thumbnail-capture");
+        Settings {
+            appearance,
+            classic_variant: Some(ClassicVariant::V11),
+            ..Default::default()
+        }
+        .save(&dir)
+        .unwrap();
+        let mut h = harness_with(App::new(None).with_settings(dir.clone()), 1.0, false);
+        h.set_size(Vec2::new(1360.0, 900.0));
+        h.run();
+        toggle(&mut h);
+        current(&mut h);
+        h.get_by_role_and_label(Role::Button, tool).click();
+        h.run();
+        if tool == "Text" {
+            drag(&mut h, (400.0, 120.0), (400.0, 120.0));
+            h.event(Event::Text("Still editable".into()));
+            h.run();
+        } else {
+            let a = at(&h, 400.0, 120.0);
+            let b = at(&h, 650.0, 260.0);
+            h.event(Event::PointerMoved(a));
+            h.event(press(a));
+            h.run();
+            h.event(Event::PointerMoved(b));
+            h.run();
+        }
+        if compact {
+            h.set_size(Vec2::new(480.0, 360.0));
+            h.run();
+        }
+        current(&mut h);
+        assert_eq!(publications(&h), 0);
+        h.render()
+            .unwrap()
+            .save(output.join(format!("{name}.png")))
+            .unwrap();
+        drop(h);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+}
