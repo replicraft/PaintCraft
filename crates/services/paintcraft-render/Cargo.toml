@@ -1,6 +1,6 @@
 [package]
 name = "paintcraft-render"
-description = "Ordered scalar and GPU document compositing"
+description = "Ordered CPU and GPU document compositing"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -8,7 +8,12 @@ license-file.workspace = true
 publish.workspace = true
 
 [features]
-default = []
+# The u16 kernel dispatches only to NEON, SSE2 or SIMD128; other builds use scalar.
+default = ["simd-u16"]
+simd = ["dep:wide"]
+# Retain the first implementation for source-matched benchmark comparisons.
+simd-channels = ["simd"]
+simd-u16 = ["simd"]
 gpu = ["dep:wgpu", "dep:bytemuck"]
 
 [dependencies]
@@ -16,6 +21,7 @@ paintcraft-core.workspace = true
 paintcraft-document.workspace = true
 paintcraft-raster.workspace = true
 rayon.workspace = true
+wide = { workspace = true, optional = true }
 
 bytemuck = { workspace = true, optional = true }
 wgpu = { workspace = true, optional = true }
@@ -44,4 +50,8 @@ workspace = true
 
 [[bench]]
 name = "regional_reuse"
+harness = false
+
+[[bench]]
+name = "simd_composite"
 harness = false

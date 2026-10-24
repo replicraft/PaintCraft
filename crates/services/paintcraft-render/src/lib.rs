@@ -10,6 +10,8 @@ use paintcraft_core::types::{Error, ErrorCode, Rect, Result, Rgba};
 use paintcraft_document::Document;
 use paintcraft_raster::RowSpan;
 
+mod kernels;
+
 pub mod parallel;
 
 pub mod cache;
@@ -140,19 +142,7 @@ pub(crate) fn compose_row(
                 }
             }
             RowSpan::Pixels(src) => {
-                for (dst, src) in dst
-                    .as_chunks_mut::<4>()
-                    .0
-                    .iter_mut()
-                    .zip(src.as_chunks::<4>().0)
-                {
-                    let color = Rgba(*src).with_opacity(layer.opacity);
-                    match color.a() {
-                        0 => {}
-                        255 => *dst = color.0,
-                        _ => *dst = color.source_over(Rgba(*dst)).0,
-                    }
-                }
+                kernels::dense(dst, src, layer.opacity);
             }
         }
     }

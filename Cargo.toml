@@ -73,6 +73,9 @@ fontdb = { version = "0.23.0", default-features = false, features = ["std", "fs"
 rfd = "0.17.2"
 raw-window-handle = "0.6.2"
 
+# Explicit integer SIMD kernels; renderer enables only with its simd feature.
+wide = "1.7.1"
+
 # GPU compositing; kept optional for headless consumers.
 bytemuck = { version = "1.25.2", features = ["derive"] }
 wgpu = { version = "30.0.1", default-features = false, features = ["std", "parking_lot", "metal", "dx12", "vulkan", "gles", "wgsl"] }
