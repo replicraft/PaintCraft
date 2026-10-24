@@ -1,7 +1,5 @@
 //! Stable machine error codes (`paintcraft.error/v1`) and the CLI exit-code map.
 
-use std::fmt;
-
 /// Codes are part of the wire contract; never rename one.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum ErrorCode {
@@ -54,7 +52,8 @@ impl ErrorCode {
 }
 
 /// A pre-publication failure. `message` is diagnostic and never part of conformance.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, thiserror::Error)]
+#[error("{}: {message}", .code.as_str())]
 pub struct Error {
     pub code: ErrorCode,
     pub message: String,
@@ -116,14 +115,6 @@ impl PartialEq for Error {
 }
 impl Eq for Error {}
 
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}: {}", self.code.as_str(), self.message)
-    }
-}
-
-impl std::error::Error for Error {}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -149,6 +140,16 @@ mod tests {
         names.dedup();
         assert_eq!(names.len(), all.len());
         assert!(all.iter().all(|c| (1..=6).contains(&c.exit_code())));
+    }
+
+    #[test]
+    fn diagnostic_display_and_standard_error_contract_remain_stable() {
+        let error = Error::new(ErrorCode::StorageFailed, "cannot save document").at(3);
+        assert_eq!(error.to_string(), "storage.failed: cannot save document");
+        let standard: &dyn std::error::Error = &error;
+        assert!(standard.source().is_none());
+        assert_eq!(error.operation_index, Some(3));
+        assert_eq!(error.code.exit_code(), 6);
     }
 
     #[test]
