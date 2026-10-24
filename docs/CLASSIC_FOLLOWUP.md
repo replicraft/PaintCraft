@@ -436,3 +436,37 @@ English captures use light mode; Japanese captures use PaintCraft's dark theme.
 Windows 7 light/dark captures were visually inspected. These are app renders,
 not native Windows qualification. Raw evidence is retained in ignored
 `docs/validation/historical-color-dialog-2026-10-24/`.
+
+### Historical image properties presentation (2026-10-24)
+
+Windows 7/10 skins now use a separate compact Image Properties and Canvas Size
+surface in desktop and web: square gray dialog, 12-point labels, 24-pixel numeric
+fields, compact unit/color groups and right-aligned 80-pixel footer buttons. The
+modern and startup-preferences surfaces retain their existing layout. Dimension
+captions are measured after translation so Japanese alignment follows the actual
+text. The scrollable body keeps the footer available at 480 by 300.
+
+This changes presentation only. The existing staged host operation retains its
+source revision checks, single resize publication, undo, no-op behavior and
+cropped-out pixels. The browser still disables acceptance above its pixel limit.
+Missing resolution/physical-unit conversion and monochrome conversion remain
+explicitly unavailable. No metadata values are invented. The generic Resize and
+Skew preview still needs a historical presentation pass and real transformations;
+this change does not enable that preview's Apply action.
+
+The new desktop regression covers both skins, English/Japanese, light/dark,
+normal/high DPI, forced multipass rendering, Cancel, real resize/undo and the
+short-window footer. All 246 ordinary desktop GUI tests pass (56 manual/capture tests ignored).
+All 63 browser library tests pass, including historical
+pixel-admission and staged-resize coverage. Native/web all-target Clippy passes
+with warnings denied, and the browser release distribution rebuilds. Translation,
+source-length and whitespace checks pass.
+
+Actual offscreen app captures are stored as
+`assets/repo/classic-v7-properties-en-US.png`, `classic-v7-properties-ja.png`,
+`classic-v10-properties-en-US.png` and `classic-v10-properties-ja.png`. The two
+Windows 7 captures were visually inspected. The supplied historical reference
+pack has no separately qualified Image Properties capture: these changes are a
+compact historical presentation, not a claim of exact native dialog parity.
+Raw check output is retained in ignored
+`docs/validation/historical-properties-2026-10-24/`.
