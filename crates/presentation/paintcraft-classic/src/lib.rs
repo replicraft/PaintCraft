@@ -21,6 +21,9 @@ mod menus;
 pub mod resize_skew;
 mod toolbar_visibility;
 pub use toolbar_visibility::ToolbarVisibility;
+mod legacy_chrome;
+mod legacy_controls;
+mod legacy_palette;
 mod legacy_ribbon;
 mod palette;
 mod popup_layout;
@@ -36,6 +39,8 @@ mod stroke_size;
 pub struct Workspace {
     pub layers: bool,
     pub thumbnail: bool,
+    /// Presentation-only Home/View tab for the historical ribbons.
+    pub legacy_view: bool,
     pub toolbar: ToolbarVisibility,
     /// Current persisted custom colors supplied by the desktop host.
     pub custom_colors: CustomColors,
@@ -97,60 +102,31 @@ pub fn chrome(
     workspace: &mut Workspace,
     context: paintcraft_ui::actions::Context,
 ) -> Vec<Action> {
+    if variant != ClassicVariant::V11 {
+        return legacy_chrome::show(ui, variant, state, workspace, context);
+    }
     let mut actions = Vec::new();
-    if variant == ClassicVariant::V11 {
-        // Scoped to Classic chrome: Studio and historical skins keep their own
-        // metrics, while installed Selawik supplies the Windows-style text.
-        for text in [egui::TextStyle::Body, egui::TextStyle::Button] {
-            ui.style_mut()
-                .text_styles
-                .insert(text, egui::FontId::proportional(15.0));
-        }
+    for text in [egui::TextStyle::Body, egui::TextStyle::Button] {
         ui.style_mut()
             .text_styles
-            .insert(egui::TextStyle::Small, egui::FontId::proportional(12.0));
-        ui.spacing_mut().interact_size.y = 32.0;
+            .insert(text, egui::FontId::proportional(15.0));
     }
-    let compact = variant == ClassicVariant::V11 && ui.available_width() < 720.0;
+    ui.style_mut()
+        .text_styles
+        .insert(egui::TextStyle::Small, egui::FontId::proportional(12.0));
+    ui.spacing_mut().interact_size.y = 32.0;
+    let compact = ui.available_width() < 720.0;
     let menu = quick_access::menu_bar(ui, variant).ui(ui, |ui| {
         ui.menu_button(tr(ui.ctx(), "File"), |ui| {
             menu_layout(ui, variant);
-            if variant == ClassicVariant::V11 {
-                menus::file(ui, context, &mut actions);
-                return;
-            }
-            for &action in paintcraft_ui::actions::FILE {
-                if matches!(action, Action::Save | Action::Close) {
-                    ui.separator();
-                }
-                if paintcraft_ui::actions::menu_item(ui, action, context) {
-                    actions.push(action);
-                    ui.close();
-                }
-            }
+            menus::file(ui, context, &mut actions);
         });
-        if variant == ClassicVariant::V11 {
-            ui.add_space(6.0);
-        }
+        ui.add_space(6.0);
         ui.menu_button(tr(ui.ctx(), "Edit"), |ui| {
             menu_layout(ui, variant);
-            if variant == ClassicVariant::V11 {
-                menus::edit(ui, context, &mut actions);
-                return;
-            }
-            for &action in paintcraft_ui::actions::EDIT {
-                if action == Action::SelectAll {
-                    ui.separator();
-                }
-                if paintcraft_ui::actions::menu_item(ui, action, context) {
-                    actions.push(action);
-                    ui.close();
-                }
-            }
+            menus::edit(ui, context, &mut actions);
         });
-        if variant == ClassicVariant::V11 {
-            ui.add_space(6.0);
-        }
+        ui.add_space(6.0);
         ui.menu_button(tr(ui.ctx(), "View"), |ui| {
             menu_layout(ui, variant);
             menus::view(ui, variant, context, &mut actions);
@@ -159,25 +135,16 @@ pub fn chrome(
             ui.separator();
             quick_access::show(ui, variant, context, &mut actions);
         }
-        if variant != ClassicVariant::V11
-            && ui.button(tr(ui.ctx(), "Layers")).clicked()
-            && ui.ctx().current_pass_index() == 0
-        {
-            workspace.layers = !workspace.layers;
-        }
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            let settings = if variant == ClassicVariant::V11 {
-                paintcraft_ui::widgets::classic_menu_button(
-                    ui,
-                    "Settings…",
-                    Icon::Settings,
-                    false,
-                    "Settings…",
-                )
-            } else {
-                paintcraft_ui::widgets::icon_button(ui, "Settings…", Icon::Settings, false, false)
-            };
-            if settings.clicked() {
+            if paintcraft_ui::widgets::classic_menu_button(
+                ui,
+                "Settings…",
+                Icon::Settings,
+                false,
+                "Settings…",
+            )
+            .clicked()
+            {
                 actions.push(Action::Settings);
             }
             actions.extend(paintcraft_ui::chrome::interface_changer(ui, context));
@@ -185,8 +152,6 @@ pub fn chrome(
     });
     let mut menu_bounds = menu.response.rect;
     if compact {
-        // Quick actions stay visible with the menus even when the ribbon hides.
-        // Keep Settings and the changer together without overlapping this row.
         let quick = quick_access::menu_bar(ui, variant).ui(ui, |ui| {
             quick_access::show(ui, variant, context, &mut actions);
         });
@@ -199,22 +164,10 @@ pub fn chrome(
         ui.separator();
         return actions;
     }
-    if variant != ClassicVariant::V11 {
-        ui.horizontal(|ui| {
-            ui.label(
-                egui::RichText::new(tr(ui.ctx(), "Home"))
-                    .color(Color32::from_rgb(0, 95, 184))
-                    .strong(),
-            );
-        });
-    }
-    if variant == ClassicVariant::V11 {
-        ribbon::ribbon(ui, state, workspace, context, &mut actions);
-        return actions;
-    }
-    legacy_ribbon::show(ui, state, workspace, context, &mut actions);
+    ribbon::ribbon(ui, state, workspace, context, &mut actions);
     actions
 }
+
 const PALETTE: [[u8; 3]; 28] = [
     [0, 0, 0],
     [127, 127, 127],

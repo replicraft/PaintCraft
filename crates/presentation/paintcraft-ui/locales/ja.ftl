@@ -837,3 +837,6 @@ color-sample-cancelled-tool-or-color-slot-changed = ツールまたは対象の�
 format-close-title = { $title }を閉じる
 format-shape-is-not-available-yet = { $shape }はまだ利用できません。
 format-tool-size = { $tool }のサイズ
+clipboard = クリップボード
+show-or-hide = 表示または非表示
+display = 表示方法

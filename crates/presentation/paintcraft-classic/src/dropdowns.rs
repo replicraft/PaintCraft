@@ -1,21 +1,9 @@
 //! Classic ribbon popups. Only choices backed by tool operations are enabled.
-use super::{Action, Controls};
+use super::Controls;
 use egui::Vec2;
 use paintcraft_tools::{ShapeStyle, Tool};
-use paintcraft_ui::actions::Context;
 use paintcraft_ui::i18n::tr;
 use paintcraft_ui::icons::Icon;
-
-pub(super) fn selection(
-    ui: &mut egui::Ui,
-    state: &mut Controls,
-    context: Context,
-    actions: &mut Vec<Action>,
-) {
-    dropdown(ui, "Selection options", None, |ui| {
-        super::selection_menu::show(ui, state, context, actions);
-    });
-}
 
 pub(super) fn shape_paint(ui: &mut egui::Ui, state: &mut Controls) {
     ui.add_enabled_ui(

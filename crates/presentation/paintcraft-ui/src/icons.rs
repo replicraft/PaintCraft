@@ -16,6 +16,7 @@ const CACHE_ENTRIES: usize = 64;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Variant {
     Sheet,
+    Legacy,
     ClassicShape,
     ClassicMenu,
     ClassicToolLight,
@@ -37,8 +38,13 @@ fn rasterize(icon: Icon, size: u32) -> ColorImage {
 }
 
 fn rasterize_variant(icon: Icon, size: u32, variant: Variant) -> ColorImage {
-    let source = match variant {
+    let source: &[u8] = match variant {
         Variant::Sheet => icon.svg(),
+        Variant::Legacy => match icon {
+            Icon::Brush => include_bytes!("../assets/icons/legacy/brushes.svg"),
+            Icon::EditColors => include_bytes!("../assets/icons/legacy/edit-colors.svg"),
+            _ => icon.svg(),
+        },
         Variant::ClassicShape => {
             classic_shapes::source(icon).expect("Classic shape must have an outline SVG")
         }
@@ -123,6 +129,13 @@ fn variant_texture(ctx: &Context, icon: Icon, size: u32, variant: Variant) -> Te
 pub fn image(ctx: &Context, icon: Icon, points: f32) -> egui::Image<'static> {
     let size = physical_size(points, ctx.pixels_per_point());
     let texture = texture(ctx, icon, size);
+    egui::Image::new((texture.id(), egui::Vec2::splat(points)))
+}
+
+/// Small historical ribbon artwork, with its own density-aware cache entries.
+pub fn legacy_image(ctx: &Context, icon: Icon, points: f32) -> egui::Image<'static> {
+    let size = physical_size(points, ctx.pixels_per_point());
+    let texture = variant_texture(ctx, icon, size, Variant::Legacy);
     egui::Image::new((texture.id(), egui::Vec2::splat(points)))
 }
 

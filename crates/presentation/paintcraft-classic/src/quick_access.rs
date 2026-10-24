@@ -5,24 +5,10 @@ use paintcraft_ui::{actions::Context, icons::Icon};
 
 pub(super) fn show(
     ui: &mut egui::Ui,
-    variant: ClassicVariant,
+    _variant: ClassicVariant,
     context: Context,
     actions: &mut Vec<Action>,
 ) {
-    if variant != ClassicVariant::V11 {
-        for (icon, action) in [
-            (Icon::New, Action::New),
-            (Icon::Open, Action::Open),
-            (Icon::Save, Action::Save),
-            (Icon::Export, Action::Export),
-            (Icon::Undo, Action::Undo),
-            (Icon::Redo, Action::Redo),
-            (Icon::ClearCanvas, Action::ClearCanvas),
-        ] {
-            button(ui, context, actions, icon, action, false);
-        }
-        return;
-    }
     button(ui, context, actions, Icon::Save, Action::Save, true);
     ui.separator();
     ui.add_enabled_ui(false, |ui| {

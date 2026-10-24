@@ -264,22 +264,28 @@ pub(super) fn legacy_controls(
 ) {
     use paintcraft_ui::actions::Action;
     for action in [Action::Crop, Action::ResizeSkew] {
-        let label = tr(ui.ctx(), action.descriptor_for(context.frontend).label);
+        let label = tr(
+            ui.ctx(),
+            if action == Action::Crop {
+                "Crop"
+            } else {
+                "Resize"
+            },
+        );
         let icon = if action == Action::Crop {
             Icon::Crop
         } else {
             Icon::Resize
         };
-        if ui
-            .add_enabled(
-                action.enabled(context),
-                egui::Button::image_and_text(
-                    paintcraft_ui::icons::image(ui.ctx(), icon, 18.0),
-                    label,
-                ),
-            )
-            .clicked()
-        {
+        let response = ui.add_enabled(
+            action.enabled(context),
+            egui::Button::image_and_text(paintcraft_ui::icons::image(ui.ctx(), icon, 14.0), label),
+        );
+        let accessible = tr(ui.ctx(), action.descriptor_for(context.frontend).label);
+        response.widget_info(|| {
+            egui::WidgetInfo::labeled(egui::Role::Button, action.enabled(context), &accessible)
+        });
+        if response.clicked() {
             actions.push(action);
         }
     }

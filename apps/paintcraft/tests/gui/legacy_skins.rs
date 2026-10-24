@@ -56,3 +56,68 @@ fn historical_ribbons_expose_picker_every_brush_and_image_transforms() {
         std::fs::remove_dir_all(dir).unwrap();
     }
 }
+
+#[test]
+fn historical_home_view_tabs_keep_compact_layout_in_both_languages_and_themes() {
+    use eframe::egui::Role;
+    use paintcraft::settings::Appearance;
+    use paintcraft_ui::i18n::{Language, translate};
+    for variant in [ClassicVariant::V7, ClassicVariant::V10] {
+        for appearance in [Appearance::Light, Appearance::Dark] {
+            for language in Language::ALL {
+                let dir = scratch("legacy-tabs");
+                Settings {
+                    classic_variant: Some(variant),
+                    appearance,
+                    language,
+                    ..Default::default()
+                }
+                .save(&dir)
+                .unwrap();
+                let mut h = harness_with(App::new(None).with_settings(dir.clone()), 1.0, false);
+                h.set_size(Vec2::new(1360.0, 900.0));
+                h.run();
+                let source = h.state().editor().document_snapshot();
+                let label = |source| translate(language, source);
+                assert!(
+                    h.get_by_role_and_label(Role::Button, &label("Pencil"))
+                        .rect()
+                        .max
+                        .y
+                        < 160.0
+                );
+                assert!(
+                    h.query_by_role_and_label(Role::Button, &label("Edit"))
+                        .is_none()
+                );
+                assert!(h.query_by_label(&label("Clipboard")).is_some());
+                assert!(
+                    !h.get_by_role_and_label(Role::Button, &label("Stroke size"))
+                        .accesskit_node()
+                        .is_disabled()
+                );
+                h.get_by_role_and_label(Role::Button, &label("View"))
+                    .click();
+                h.run();
+                assert!(
+                    h.query_by_role_and_label(Role::CheckBox, &label("Rulers"))
+                        .is_some()
+                );
+                assert!(
+                    h.query_by_role_and_label(Role::CheckBox, &label("Gridlines"))
+                        .is_some()
+                );
+                h.get_by_role_and_label(Role::Button, &label("Home"))
+                    .click();
+                h.run();
+                assert!(
+                    h.query_by_role_and_label(Role::Button, &label("Pencil"))
+                        .is_some()
+                );
+                assert!(h.state().editor().document().same_semantics(&source));
+                drop(h);
+                std::fs::remove_dir_all(dir).unwrap();
+            }
+        }
+    }
+}

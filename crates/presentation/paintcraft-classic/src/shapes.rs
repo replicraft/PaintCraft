@@ -145,6 +145,51 @@ pub(super) fn gallery(ui: &mut egui::Ui, state: &mut Controls, actions: &mut Vec
         });
 }
 
+/// Historical Paint uses seven columns of small blue outline shapes, with three rows visible.
+pub(super) fn legacy_gallery(ui: &mut egui::Ui, state: &mut Controls, actions: &mut Vec<Action>) {
+    ui.scope(|ui| {
+        ui.visuals_mut().override_text_color = Some(if ui.visuals().dark_mode {
+            egui::Color32::from_rgb(150, 205, 240)
+        } else {
+            egui::Color32::from_rgb(30, 93, 130)
+        });
+        ui.visuals_mut().widgets.active.fg_stroke.color = if ui.visuals().dark_mode {
+            egui::Color32::from_rgb(150, 205, 240)
+        } else {
+            egui::Color32::from_rgb(30, 93, 130)
+        };
+        egui::Frame::new()
+            .stroke(ui.visuals().widgets.noninteractive.bg_stroke)
+            .inner_margin(1)
+            .show(ui, |ui| {
+                egui::ScrollArea::vertical()
+                    .id_salt("legacy-shapes")
+                    .max_height(60.0)
+                    .max_width(153.0)
+                    .show(ui, |ui| {
+                        egui::Grid::new("legacy-shapes-grid")
+                            .spacing(Vec2::ZERO)
+                            .min_col_width(20.0)
+                            .min_row_height(20.0)
+                            .show(ui, |ui| {
+                                for (index, (icon, label, tool)) in SHAPES.into_iter().enumerate() {
+                                    if let Some(tool) = tool
+                                        && button(ui, label, icon, state.tool == tool, 20.0, 16.0)
+                                            .clicked()
+                                    {
+                                        state.tool = tool;
+                                        actions.push(Action::SelectTool(tool));
+                                    }
+                                    if index % 7 == 6 {
+                                        ui.end_row();
+                                    }
+                                }
+                            });
+                    });
+            });
+    });
+}
+
 fn button(
     ui: &mut egui::Ui,
     label: &str,

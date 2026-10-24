@@ -837,3 +837,6 @@ color-sample-cancelled-tool-or-color-slot-changed = Color sample cancelled: tool
 format-close-title = Close { $title }
 format-shape-is-not-available-yet = { $shape } is not available yet.
 format-tool-size = { $tool } size
+clipboard = Clipboard
+show-or-hide = Show or hide
+display = Display
