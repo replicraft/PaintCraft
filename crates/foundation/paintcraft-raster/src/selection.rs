@@ -14,7 +14,10 @@ pub enum Selection {
 }
 
 mod mask;
-pub use mask::{BinaryMask, BoundarySegment, MaskLimits, MaskOutline, OutlineLimits};
+pub use mask::{
+    BOUNDS_CACHE_WORK, BinaryMask, BoundarySegment, BoundsCache, MaskLimits, MaskOutline,
+    OutlineLimits,
+};
 mod outline_cache;
 pub use outline_cache::OutlineCache;
 

@@ -6,7 +6,9 @@ use paintcraft_core::types::{
 };
 use std::{collections::HashMap, sync::Arc};
 
+mod bounds;
 mod builder;
+pub use bounds::{BOUNDS_CACHE_WORK, BoundsCache};
 mod outline;
 pub use outline::{BoundarySegment, MaskOutline, OutlineLimits};
 mod polygon;
