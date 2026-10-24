@@ -11,6 +11,22 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Current UI/tool follow-up adds a persisted Default font, live selection dimensions,
+replacement fill/picker SVGs and all nine working brush media across desktop, web
+and CLI batches. Shape drags retain in-flight render progress instead of cancelling
+every frame. Windows 7/10 ribbons now expose the shared image actions, picker,
+brush gallery and custom palette slots. English/Japanese settings use Fluent with
+bundled Japanese glyph coverage. The README is feature-focused with actual editor
+captures. See [brush media](BRUSH_MEDIA.md), [shape previews](SHAPE_PREVIEWS.md) and
+[localization](LOCALIZATION.md) for exact scope and remaining qualification.
+
+Studio catch-up follows these changes: its own Image menu now exposes Crop,
+Rotate/Flip and Clear Canvas; its Shape selector includes every implemented preset.
+The interfaces keep separate document workspaces and their own canvas UI. Studio's
+image dimension controls, richer selections, editable placed objects and effects
+remain work. Resize/skew remains preview-only, and complete Windows 7/10/11 and
+Paint.NET native behavior parity is not claimed. See [Studio](STUDIO.md).
+
 Latest tool work enables the document Color picker in native/web Classic and
 Studio. It updates primary/secondary slots without changing document history,
 selection or dirtiness. Classic uses a one-shot image pixel; Studio exposes raw
@@ -497,9 +513,9 @@ remaining performance optimization and native latency remain open.
 inputs and expansion/default proofs. Its library comparison retains mixed results;
 complete editor batch compilation and decoded peak/cumulative planning remain open.
 
-Current user priority: shared backend correctness, performance and reliability;
-see the [backend audit and progress](BACKEND_PROGRESS.md). Classic toolbar/UI work
-is deferred during this tranche. [Classic coverage](CLASSIC.md) retains the frontend
+Current user priority: finish the requested font, brush, shape responsiveness,
+skin, language and cross-host work, then focus on Studio. The
+[backend audit and progress](BACKEND_PROGRESS.md) retains earlier reliability work. [Classic coverage](CLASSIC.md) retains the frontend
 fidelity target, and Studio remains available on the shared editor. [Retro](RETRO.md) remains deferred, with W95FA selected as its
 default UI font and planned skins for older Microsoft Paint versions and
 Deluxe Paint II Enhanced 2.0.

@@ -294,7 +294,7 @@ remain T16 work. Current-app GPU previews can be exported with the ignored
 | Safe save and recovery (T10) | Streaming staging → atomic replace → bounded read-back; ordered native queue and file receipts; autosave checkpoints with per-session locks; recover, discard or ask later | platform `save.rs`, format `recovery.rs`, GUI tests |
 | Bounded history (T11) | Memory budget over all retained snapshots (shared tiles counted once); only the oldest undo steps are dropped, the newest edit stays undoable, the user is told | `session.rs`, editor tests |
 | CLI (T08, T33, T34) | `new`, `inspect`, `schema batch|batch-v2`, `capabilities`, `apply` (hash-guarded), `import`, `render` | 11 end-to-end tests of the real binary; output validates against the pack's schemas |
-| Editor (T09, T14 subset) | Pencil, brush (round/square), eraser, flood fill, all 23 Classic shapes including polygon/two-handle curve, outline/filled/both for closed shapes, rectangle select, desktop font text with antialiased resolved masks and legacy bitmap text; layers: add, show/hide, move, delete, rename, opacity; undo/redo; one gesture or text object is one transaction | desktop controller tests; headless egui tests |
+| Editor (T09, T14 subset) | Pencil, nine brush media plus square tip, eraser, flood fill, all 23 Classic shapes including polygon/two-handle curve, outline/filled/both for closed shapes, rectangle select, desktop font text with antialiased resolved masks and legacy bitmap text; layers: add, show/hide, move, delete, rename, opacity; undo/redo; one gesture or text object is one transaction | desktop controller tests; headless egui tests |
 | Presentation (T15 subset) | First-visit Classic picker (v11 preselected), remembered choice, Interface button, damaged settings kept aside | GUI tests |
 
 Native evidence is limited to repeated runs of the real wgpu window, which opened, drew
@@ -474,3 +474,17 @@ reject stale document/tool/slot results. No publication, history or dirty state 
 created by sampling, including with an unpublished text draft. Web invokes the
 same renderer kernel synchronously. See [Color picker](COLOR_PICKER.md) for
 neighborhood arithmetic, profile choices, qualification and remaining native gaps.
+
+
+### UI/tool and Studio catch-up (2026-10-24)
+
+Default font selection and live selection status are implemented on native/web.
+All brush media now resolve through the shared v2 command path, including CLI
+exports; see [brush media](BRUSH_MEDIA.md). Shape resizing no longer starves the
+native renderer by invalidating every unfinished frame. Historical ribbons expose
+the shared image controls, picker, brushes and custom colors. Fluent-backed
+English/Japanese preferences and bundled Noto Sans JP provide UI/canvas glyphs
+without installed Japanese fonts. The feature README includes real offscreen
+application captures. Studio has its own Image menu and full preset selector.
+Full native fidelity, rich selections, effects, editable placed objects and
+resize/skew publication remain unfinished.

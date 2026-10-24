@@ -1,7 +1,7 @@
 # PaintCraft Web
 
 PaintCraft Web connects the shared Classic interface, tool state machines,
-transactional document session and raster compositor. Pencil, round/square brush,
+transactional document session and raster compositor. Pencil, all nine brush media and square brush,
 eraser, fill, color picker, all 23 Classic shape choices, rectangular selection, selection Crop, clear canvas
 and undo/redo edit real pixels. Shift constrains shapes; Ctrl/Cmd-scroll zooms. The
 Layers panel adds, selects, hides, reorders and deletes real layers. Brush preview
@@ -57,7 +57,7 @@ explicit discard when dirty; cancelling or failing an import retains the current
 session. Native save/recovery services remain outside the browser build.
 
 Text uses the same Cosmic Text shaping and Swash grayscale rasterization as
-desktop, with bundled Selawik regular/bold. Click the canvas to start one editable
+desktop, with bundled Selawik regular/bold and Noto Sans JP fallback. Click the canvas to start one editable
 draft; the shared toolbar changes its style. Enter adds a newline,
 Ctrl/Cmd+Enter or Place text commits, and Escape cancels. Backspace and
 Ctrl/Cmd+A replacement work; arbitrary caret movement/range selection remain
@@ -148,3 +148,15 @@ These single-browser smoke checks do not establish cross-browser conformance.
 Desktop tablet support is also incomplete: `PenSample` defines pressure and tilt,
 but the canvas currently consumes ordinary pointer events, without native pen
 sample acquisition or pressure/tilt propagation into brush rendering.
+
+## Language and font preferences
+
+Settings includes English and Japanese, plus Default font. The browser bundles
+Selawik and Noto Sans JP, so Japanese UI and canvas text do not need system fonts.
+The language and default font persist locally with theme, skin and canvas defaults.
+Windows 7 and 10 skins expose the shared image controls, color picker and full
+brush gallery. Resize/skew remains a preview-only dialog on every host.
+
+Brushes use the same deterministic coverage and batch commands as desktop and CLI.
+See [brush media](../../docs/BRUSH_MEDIA.md) and
+[localization scope](../../docs/LOCALIZATION.md) for current behavior and limits.
