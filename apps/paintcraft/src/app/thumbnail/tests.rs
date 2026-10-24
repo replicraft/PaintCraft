@@ -133,17 +133,22 @@ fn reopening_same_source_during_cancellation_remains_eligible() {
     )
     .unwrap();
     let (release, gate) = std::sync::mpsc::channel();
+    let (started, wait_started) = std::sync::mpsc::sync_channel(1);
     let source = doc.clone();
     let handle = executor
         .submit(
             WORK_BYTES,
             move |_| {
+                started.send(()).unwrap();
                 gate.recv_timeout(Duration::from_secs(5)).unwrap();
                 paintcraft_render::thumbnail::render_document(&source, SIDE, || Ok(()))
             },
             || {},
         )
         .unwrap();
+    // Cancellation must happen after the closure starts; cancelling a queued
+    // job legitimately drops its gate before it is ever called.
+    wait_started.recv_timeout(Duration::from_secs(5)).unwrap();
     let mut service = Thumbnail {
         scope: Some(Scope::committed(&doc)),
         executor: Some(executor),
