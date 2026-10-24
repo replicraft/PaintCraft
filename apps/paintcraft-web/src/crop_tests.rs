@@ -158,3 +158,87 @@ fn image_transform_controls_choose_selected_pixels_or_whole_canvas_and_keep_auth
     );
     assert!(h.state().message.starts_with("Unsaved"));
 }
+
+#[test]
+fn historical_rotate_popup_maps_pixels_and_undoes_in_both_languages() {
+    use paintcraft_classic::ClassicVariant;
+    use paintcraft_ui::i18n::{Language, set_language, translate};
+    for variant in [ClassicVariant::V7, ClassicVariant::V10] {
+        for language in Language::ALL {
+            let mut h = Harness::builder()
+                .with_size(Vec2::new(1360.0, 900.0))
+                .build_eframe(|cc| WebApp::new(&cc.egui_ctx));
+            h.state_mut().variant = variant;
+            set_language(&h.ctx, language);
+            h.state_mut().edit(Action::ResizeCanvas {
+                width: 32,
+                height: 24,
+            });
+            let layer = h.state().editor.target.unwrap();
+            h.state_mut().edit(Action::Stroke(paintcraft_tools::Stroke {
+                media: Default::default(),
+                layer,
+                points: vec![(5, 5)],
+                point_scale: 1,
+                color: Rgba([17, 33, 55, 0]),
+                size: 1,
+                round: false,
+                mode: paintcraft_tools::BlendMode::Replace,
+            }));
+            h.run();
+            let label = |s| translate(language, s);
+            for selected in [false, true] {
+                if selected {
+                    h.state_mut().edit(Action::Select {
+                        corners: Some(((4, 5), (9, 7))),
+                    });
+                    h.run();
+                }
+                let source = h.state().editor.session.snapshot();
+                let selection = h.state().editor.session.selection();
+                for (name, whole, region, swap) in [
+                    ("Rotate right 90°", (18, 5), (6, 6), true),
+                    ("Rotate left 90°", (5, 26), (4, 9), true),
+                    ("Rotate 180°", (26, 18), (8, 7), false),
+                    ("Flip vertical", (5, 18), (5, 7), false),
+                    ("Flip horizontal", (26, 5), (8, 5), false),
+                ] {
+                    let before = h.state().editor.session.undo_depth();
+                    h.get_by_role_and_label(Role::Button, &label("Rotate"))
+                        .click();
+                    h.run();
+                    let caption = label(name);
+                    let row = h.get_by_role_and_label(Role::Button, &caption);
+                    assert!(row.rect().height() <= 26.0);
+                    row.click();
+                    h.run();
+                    assert!(h.query_by_role_and_label(Role::Button, &caption).is_none());
+                    assert_eq!(h.state().editor.session.undo_depth(), before + 1);
+                    let doc = h.state().editor.session.document();
+                    let (x, y) = if selected { region } else { whole };
+                    assert_eq!(
+                        doc.layers[&layer].raster.get(
+                            x - doc.layers[&layer].origin.0,
+                            y - doc.layers[&layer].origin.1
+                        ),
+                        Rgba([17, 33, 55, 0]),
+                        "{variant:?} {name} selected={selected}"
+                    );
+                    assert_eq!(
+                        doc.canvas,
+                        if swap && !selected {
+                            (24, 32)
+                        } else {
+                            (32, 24)
+                        }
+                    );
+                    h.get_by_role_and_label(Role::Button, &label("Undo"))
+                        .click();
+                    h.run();
+                    assert!(h.state().editor.session.document().same_semantics(&source));
+                    assert_eq!(h.state().editor.session.selection(), selection);
+                }
+            }
+        }
+    }
+}

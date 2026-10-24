@@ -378,3 +378,6 @@ mod legacy_properties;
 
 #[path = "gui/legacy_resize.rs"]
 mod legacy_resize;
+
+#[path = "gui/legacy_rotate.rs"]
+mod legacy_rotate;
