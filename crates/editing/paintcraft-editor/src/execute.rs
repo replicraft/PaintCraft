@@ -11,6 +11,7 @@ mod paint;
 mod path;
 mod planning;
 mod selection;
+mod selection_move;
 mod selection_transform;
 mod transform;
 use path::walk_clipped;
@@ -158,9 +159,10 @@ pub fn execute_with_geometry_cache(
             match op {
                 Op::CanvasCrop { rect } => s.crop_layout(*rect)?,
                 Op::CanvasTransform { transform } => s.transform_layout(*transform)?,
-                Op::TransformSelection {
-                    layer, transform, ..
-                } => s.selection_transform_layout(layer, *transform)?,
+                Op::TransformSelection { layer, .. } => s.selection_geometry_layout(layer)?,
+                Op::MoveSelection { layer, offset, .. } => {
+                    s.selection_move_layout(layer, *offset)?
+                }
                 _ => {}
             }
             if planning::is_paint(op) {
@@ -330,6 +332,14 @@ impl Stage<'_> {
             }
             Op::CanvasCrop { rect } => self.crop_canvas(*rect)?,
             Op::CanvasTransform { transform } => self.transform_canvas(*transform)?,
+            Op::MoveSelection {
+                layer,
+                offset,
+                clear,
+                transparent_key,
+            } => {
+                self.move_selected(layer, *offset, *clear, *transparent_key)?;
+            }
             Op::TransformSelection {
                 layer,
                 transform,

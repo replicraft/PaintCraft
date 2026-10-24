@@ -287,9 +287,10 @@ fn kind(op: &Op) -> Kind {
         | Op::MaskSpans { .. }
         | Op::Text { .. } => Kind::Write,
         Op::FloodFill { .. } => Kind::ReadWrite,
-        Op::CanvasCrop { .. } | Op::CanvasTransform { .. } | Op::TransformSelection { .. } => {
-            Kind::Transform
-        }
+        Op::CanvasCrop { .. }
+        | Op::CanvasTransform { .. }
+        | Op::TransformSelection { .. }
+        | Op::MoveSelection { .. } => Kind::Transform,
         Op::LayerAdd { .. }
         | Op::LayerDuplicate { .. }
         | Op::LayerDelete { .. }

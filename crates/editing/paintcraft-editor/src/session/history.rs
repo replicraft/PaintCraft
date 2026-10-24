@@ -137,5 +137,6 @@ pub(super) fn label(batch: &Batch) -> Label {
         Op::CanvasCrop { .. } => Label::CropCanvas,
         Op::CanvasTransform { .. } => Label::TransformCanvas,
         Op::TransformSelection { .. } => Label::TransformSelection,
+        Op::MoveSelection { .. } => Label::MoveSelection,
     }
 }

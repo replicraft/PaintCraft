@@ -7,35 +7,31 @@ use paintcraft_raster::MappedPlan;
 use std::sync::Arc;
 #[derive(Clone)]
 pub(super) struct Geometry {
-    source: Rect,
-    origin: (i64, i64),
-    size: (u32, u32),
-    selection: Selection,
+    pub(super) source: Rect,
+    pub(super) origin: (i64, i64),
+    pub(super) size: (u32, u32),
+    pub(super) selection: Selection,
 }
 impl Stage<'_> {
+    pub(super) fn selected_area(&mut self) -> Result<Option<Rect>> {
+        match &self.selection {
+            Selection::Inactive => Err(Error::new(
+                ErrorCode::InputSchema,
+                "selection operation requires an active selection",
+            )),
+            Selection::Empty => Ok(None),
+            Selection::Mask(mask) => mask.bounds_with_remaining_checked(
+                self.doc.canvas_rect(),
+                &mut self.selection_work,
+                self.check,
+            ),
+            Selection::Rect(rect) => Ok(rect.intersect(&self.doc.canvas_rect())),
+        }
+    }
+
     fn selection_geometry(&mut self, id: Uuid, t: Transform) -> Result<Option<Geometry>> {
-        let area = match self.selection {
-            Selection::Inactive => {
-                return Err(Error::new(
-                    ErrorCode::InputSchema,
-                    "selection transform requires an active selection",
-                ));
-            }
-            Selection::Empty => return Ok(None),
-            Selection::Mask(ref mask) => {
-                match mask.bounds_with_remaining_checked(
-                    self.doc.canvas_rect(),
-                    &mut self.selection_work,
-                    self.check,
-                )? {
-                    Some(area) => area,
-                    None => return Ok(None),
-                }
-            }
-            Selection::Rect(r) => match r.intersect(&self.doc.canvas_rect()) {
-                Some(r) => r,
-                None => return Ok(None),
-            },
+        let Some(area) = self.selected_area()? else {
+            return Ok(None);
         };
         let l = &self.doc.layers[&id];
         let old = l.extent();
@@ -78,17 +74,13 @@ impl Stage<'_> {
             selection,
         }))
     }
-    fn install_selection_geometry(&mut self, id: Uuid, g: &Geometry) {
+    pub(super) fn install_selection_geometry(&mut self, id: Uuid, g: &Geometry) {
         let l = self.doc.layers.get_mut(&id).unwrap();
         l.raster = RasterLayer::new(g.size.0, g.size.1, l.raster.default_pixel());
         l.origin = g.origin;
         self.selection = g.selection.clone();
     }
-    pub(super) fn selection_transform_layout(
-        &mut self,
-        layer: &LayerRef,
-        _t: Transform,
-    ) -> Result<()> {
+    pub(super) fn selection_geometry_layout(&mut self, layer: &LayerRef) -> Result<()> {
         let id = self.resolve(layer)?;
         let geometry = self
             .selection_geometries

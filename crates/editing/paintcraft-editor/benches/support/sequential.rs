@@ -242,7 +242,8 @@ impl Stage<'_> {
             | Op::SelectionInvert
             | Op::CanvasCrop { .. }
             | Op::CanvasTransform { .. }
-            | Op::TransformSelection { .. } => {
+            | Op::TransformSelection { .. }
+            | Op::MoveSelection { .. } => {
                 return Err(Error::new(
                     ErrorCode::CapabilityUnsupported,
                     "historical benchmark oracle does not implement destructive crop",
