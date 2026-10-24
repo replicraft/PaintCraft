@@ -19,6 +19,7 @@ fn browser_language_changes_real_chrome_settings_and_keeps_document_pixels() {
     assert_eq!(paintcraft_ui::i18n::language(&h.ctx), Language::Japanese);
     assert!(h.query_by_label("既定のフォント").is_some());
     assert!(h.query_by_label("ダークモード").is_some());
+    assert!(h.query_by_role_and_label(Role::Label, "図形").is_some());
     assert!(
         h.query_by_role_and_label(Role::Button, "ファイル")
             .is_some()

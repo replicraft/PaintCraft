@@ -19,7 +19,7 @@ pub fn show(ctx: &egui::Context, current: &mut ClassicVariant, first_visit: bool
     ctx.memory_mut(|memory| memory.set_modal_layer(layer));
     ctx.layer_painter(layer)
         .rect_filled(ctx.content_rect(), 0, Color32::from_black_alpha(96));
-    egui::Window::new("Choose your Classic skin")
+    egui::Window::new(paintcraft_ui::i18n::tr(ctx, "Choose your Classic skin"))
         .id(id)
         .order(egui::Order::Foreground)
         .title_bar(false)

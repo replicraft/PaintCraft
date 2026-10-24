@@ -14,6 +14,8 @@ pub(super) fn show(
         Tool::Brush => (Icon::Brush, "Brushes"),
         _ => unreachable!("only Selection and Brushes have primary split controls"),
     };
+    let localized_tool = paintcraft_ui::i18n::tr(ui.ctx(), tool.name());
+    let localized_menu = paintcraft_ui::i18n::tr(ui.ctx(), label);
     ui.allocate_ui_with_layout(
         Vec2::new(64.0, 80.0),
         egui::Layout::top_down(egui::Align::Center),
@@ -45,7 +47,7 @@ pub(super) fn show(
                     egui::Role::Button,
                     ui.is_enabled(),
                     selected,
-                    tool.name(),
+                    &localized_tool,
                 )
             });
             if main.clicked() && ui.ctx().current_pass_index() == 0 {
@@ -79,7 +81,12 @@ pub(super) fn show(
             let open = egui::Popup::is_id_open(ui.ctx(), egui::Popup::menu(&arrow).get_id());
             ui.data_mut(|data| data.insert_temp(open_state, open));
             arrow.widget_info(|| {
-                egui::WidgetInfo::selected(egui::Role::Button, ui.is_enabled(), open, label)
+                egui::WidgetInfo::selected(
+                    egui::Role::Button,
+                    ui.is_enabled(),
+                    open,
+                    &localized_menu,
+                )
             });
             let body = main.rect.union(arrow.rect);
             let main_hover = main.hovered() || main.has_focus();
@@ -139,8 +146,8 @@ pub(super) fn show(
                 }
             }
             chevron(ui, &arrow);
-            main.on_hover_text(tool.name());
-            arrow.on_hover_text(label);
+            main.on_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), tool.name()));
+            arrow.on_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), label));
         },
     );
 }

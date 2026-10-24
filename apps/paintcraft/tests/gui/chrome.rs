@@ -32,6 +32,9 @@ fn first_visit_shows_the_picker_with_v11_selected_and_remembers_the_choice() {
     h.run();
     assert!(!h.state().picker_open());
     h.get_by_role_and_label(eframe::egui::Role::RadioButton, "Paint v7")
+        .scroll_to_me();
+    h.run();
+    h.get_by_role_and_label(eframe::egui::Role::RadioButton, "Paint v7")
         .click();
     h.run();
     h.get_by_label("Apply").click();

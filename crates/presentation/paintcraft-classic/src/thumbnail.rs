@@ -6,7 +6,7 @@ use egui::{Color32, Rect, Vec2};
 pub fn show(ctx: &egui::Context, preview: Preview, updating: bool, enabled: bool) -> bool {
     let mut close = false;
     let max = (ctx.content_rect().size() - Vec2::splat(32.0)).max(Vec2::new(128.0, 100.0));
-    egui::Window::new("Thumbnail")
+    egui::Window::new(paintcraft_ui::i18n::tr(ctx, "Thumbnail"))
         .id(egui::Id::unique("classic-thumbnail-window"))
         .title_bar(false)
         .enabled(enabled)

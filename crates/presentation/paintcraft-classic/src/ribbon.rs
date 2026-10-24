@@ -170,7 +170,7 @@ fn group(ui: &mut egui::Ui, label: &str, contents: impl FnOnce(&mut egui::Ui)) {
             egui::Layout::top_down(egui::Align::Center),
             |ui| {
                 ui.label(
-                    egui::RichText::new(label)
+                    egui::RichText::new(paintcraft_ui::i18n::tr(ui.ctx(), label))
                         .size(14.0)
                         .color(egui::Color32::from_gray(if ui.visuals().dark_mode {
                             208
