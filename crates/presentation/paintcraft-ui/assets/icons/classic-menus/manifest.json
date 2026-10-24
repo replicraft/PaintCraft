@@ -10,6 +10,10 @@
   ],
   "icons": [
     {
+      "name": "aspect-ratio",
+      "file": "aspect-ratio.svg"
+    },
+    {
       "name": "stroke-size",
       "file": "stroke-size.svg"
     },

@@ -32,6 +32,7 @@ for tooth in range(8):
         gear_points.append(f'{12 + radius * cos(angle):.3f} {12 + radius * sin(angle):.3f}')
 gear = path('M' + 'L'.join(gear_points) + 'Z') + '<circle cx="12" cy="12" r="3.5"/>'
 icons = {
+    'aspect-ratio': path('M9 8H6A4 4 0 0 0 6 16H9M15 8H18A4 4 0 0 1 18 16H15M8 12H16'),
     'stroke-size': rect(2, 4, 20, 16, 2) + path('M5 8C9 6 15 10 19 8M5 12C9 10 15 14 19 12M5 16C9 14 15 18 19 16'),
     'settings': gear,
     'new': path('M5 2H14L20 8V22H5ZM14 2V8H20'),

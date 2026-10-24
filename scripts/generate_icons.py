@@ -198,6 +198,8 @@ drop = 'M32 5C28 12 12 28 12 41A20 20 0 0 0 52 41C52 28 36 12 32 5Z'
 add('opacity', '<defs><clipPath id="opacity-drop"><path d="'+drop+'"/></clipPath></defs>'
     + rect(10, 38, 44, 24, '#f4f4f4', 0, 'stroke="none" clip-path="url(#opacity-drop)"')
     + line(drop, '#253241', 7) + line(drop, '#f4f4f4', 3))
+# Original chain-link symbol for constrained resize UI.
+add('aspect-ratio', line('M26 21H18A11 11 0 0 0 18 43H26M38 21H46A11 11 0 0 1 46 43H38M22 32H42', '#f4f4f4', 4))
 OUT.mkdir(parents=True,exist_ok=True)
 manifest=[]
 for i,(name,body) in enumerate(icons):

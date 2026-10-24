@@ -621,5 +621,12 @@
     "source_row": null,
     "source_column": null,
     "file": "opacity.svg"
+  },
+  {
+    "name": "aspect-ratio",
+    "label": "Aspect Ratio",
+    "source_row": null,
+    "source_column": null,
+    "file": "aspect-ratio.svg"
   }
 ]

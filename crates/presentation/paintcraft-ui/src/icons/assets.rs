@@ -42,6 +42,7 @@ pub enum Icon {
     Crop,
     Resize,
     CanvasSize,
+    AspectRatio,
     Pencil,
     Brush,
     Spray,
@@ -106,7 +107,7 @@ pub enum Icon {
 }
 
 impl Icon {
-    pub const ALL: [Self; 98] = [
+    pub const ALL: [Self; 99] = [
         Self::Polygon,
         Self::RightTriangle,
         Self::Diamond,
@@ -148,6 +149,7 @@ impl Icon {
         Self::Crop,
         Self::Resize,
         Self::CanvasSize,
+        Self::AspectRatio,
         Self::Pencil,
         Self::Brush,
         Self::Spray,
@@ -250,6 +252,7 @@ impl Icon {
             Self::Crop => "crop",
             Self::Resize => "resize",
             Self::CanvasSize => "canvas-size",
+            Self::AspectRatio => "aspect-ratio",
             Self::Pencil => "pencil",
             Self::Brush => "brush",
             Self::Spray => "spray",
@@ -358,6 +361,7 @@ impl Icon {
             Self::Crop => include_bytes!("../../assets/icons/crop.svg"),
             Self::Resize => include_bytes!("../../assets/icons/resize.svg"),
             Self::CanvasSize => include_bytes!("../../assets/icons/canvas-size.svg"),
+            Self::AspectRatio => include_bytes!("../../assets/icons/aspect-ratio.svg"),
             Self::Pencil => include_bytes!("../../assets/icons/pencil.svg"),
             Self::Brush => include_bytes!("../../assets/icons/brush.svg"),
             Self::Spray => include_bytes!("../../assets/icons/spray.svg"),
