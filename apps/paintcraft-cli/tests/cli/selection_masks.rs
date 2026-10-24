@@ -10,7 +10,7 @@ fn batch(state: &str, operations: &str) -> String {
 }
 
 #[test]
-fn selection_masks_are_session_only_and_unsupported_transform_is_atomic() {
+fn selection_masks_are_session_only_and_late_invalid_crop_is_atomic() {
     let scratch = Scratch::new("selection-masks");
     let base = scratch.path("base.pcnd");
     let operations = scratch.path("operations.json");
@@ -68,12 +68,12 @@ fn selection_masks_are_session_only_and_unsupported_transform_is_atomic() {
     let paint = format!(
         r##"{{"op":"raster.fill_rect","layer_ref":{{"id":"{layer}"}},"rect":{{"x":0,"y":0,"width":8,"height":6}},"color":"#13579BFF","mode":"replace"}}"##
     );
-    // A real private paint prefix must also roll back when a later mask transform fails.
+    // A real paint and mask-transform prefix must roll back on a later invalid crop.
     fs::write(
         &operations,
         batch(
             &state,
-            &format!(r#"{paint},{POLYGON},{{"op":"canvas.transform","transform":"rotate-right"}}"#),
+            &format!(r#"{paint},{POLYGON},{{"op":"canvas.transform","transform":"rotate-right"}},{{"op":"canvas.crop","rect":{{"x":6,"y":0,"width":1,"height":1}}}}"#),
         ),
     )
     .unwrap();
@@ -93,7 +93,7 @@ fn selection_masks_are_session_only_and_unsupported_transform_is_atomic() {
     assert_eq!(text(&error, &["engine", "code"]), "input.schema");
     assert_eq!(
         error.get("engine").unwrap().get("operation_index"),
-        Some(&Value::Int(2))
+        Some(&Value::Int(3))
     );
     assert_eq!(
         error.get("engine").unwrap().get("committed"),
@@ -345,4 +345,86 @@ fn masked_flood_respects_selection_connectivity_and_forbidden_seed() {
         }
     }
     assert_eq!(fs::read(base).unwrap(), original);
+}
+
+#[test]
+fn masked_orthogonal_commands_roundtrip_original_pixels_and_holes_through_pcnd() {
+    let scratch = Scratch::new("masked-orientations");
+    let base = scratch.path("base.pcnd");
+    let operations = scratch.path("operations.json");
+    let rgba: Vec<u8> = (0..48u8)
+        .flat_map(|n| [n * 3, n * 2, n, if n % 3 == 0 { 0 } else { 255 }])
+        .collect();
+    let doc = paintcraft_document::import_image(8, 6, &rgba, "cli-mask-orientations").unwrap();
+    let original = paintcraft_formats::pcnd::write(&doc).unwrap();
+    fs::write(&base, &original).unwrap();
+    let layer = doc.roots[0];
+    let triangle = [
+        "........", ".#####..", "..###...", "..##....", "........", "........",
+    ];
+    let selected: Vec<(usize, usize)> = triangle
+        .iter()
+        .enumerate()
+        .flat_map(|(y, row)| {
+            row.bytes()
+                .enumerate()
+                .filter_map(move |(x, byte)| (byte == b'#').then_some((x, y)))
+        })
+        .collect();
+    for name in [
+        "rotate-right",
+        "rotate-left",
+        "rotate-180",
+        "flip-horizontal",
+        "flip-vertical",
+    ] {
+        let destination = scratch.path(&format!("{name}.pcnd"));
+        let ops = format!(
+            r##"{POLYGON},{{"op":"raster.transform_selection","layer_ref":{{"id":"{layer}"}},"transform":"{name}","clear":"#FFFFFFFF"}}"##
+        );
+        fs::write(&operations, batch(&doc.state_id.to_string(), &ops)).unwrap();
+        let applied = run(&[
+            "apply",
+            &base,
+            "--operations",
+            &operations,
+            "-o",
+            &destination,
+            "--json",
+        ]);
+        assert_eq!(
+            applied.code, 0,
+            "{name}: {} {}",
+            applied.stdout, applied.stderr
+        );
+        let restored = paintcraft_formats::pcnd::read(&fs::read(destination).unwrap()).unwrap();
+        assert_eq!(restored.canvas, (8, 6));
+        let mut expected = rgba.clone();
+        for &(x, y) in &selected {
+            expected[(y * 8 + x) * 4..(y * 8 + x + 1) * 4].fill(255);
+        }
+        for &(x, y) in &selected {
+            // Independent forward mappings around the sampled 5x3 bound at (1,1).
+            let (dx, dy) = match name {
+                "rotate-right" => (4 - y, x),
+                "rotate-left" => (y, 6 - x),
+                "rotate-180" => (6 - x, 4 - y),
+                "flip-horizontal" => (6 - x, y),
+                "flip-vertical" => (x, 4 - y),
+                _ => unreachable!(),
+            };
+            expected[(dy * 8 + dx) * 4..(dy * 8 + dx + 1) * 4]
+                .copy_from_slice(&rgba[(y * 8 + x) * 4..(y * 8 + x + 1) * 4]);
+        }
+        for y in 0..6 {
+            for x in 0..8 {
+                assert_eq!(
+                    restored.layers[&layer].raster.get(x as i64, y as i64).0,
+                    expected[(y * 8 + x) * 4..(y * 8 + x + 1) * 4],
+                    "{name}: {x},{y}"
+                );
+            }
+        }
+        assert_eq!(fs::read(&base).unwrap(), original);
+    }
 }
