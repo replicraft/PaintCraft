@@ -351,6 +351,11 @@ pub fn probe(bytes: &[u8]) -> Result<Manifest> {
 
 /// Read a flat PCND v1 file into an editable document.
 pub fn read(bytes: &[u8]) -> Result<Document> {
+    read_with_limits(bytes, u64::MAX, STAGED_PIXELS_MAX)
+}
+
+/// Lower host canvas/output and tile staging limits without changing file semantics.
+pub fn read_with_limits(bytes: &[u8], canvas_pixels: u64, staged_pixels: u64) -> Result<Document> {
     let members = zip::read(bytes, ENTRIES_MAX, |name| match name {
         "manifest.json" => Some(MANIFEST_MAX),
         "document.json" => Some(DOCUMENT_MAX),
@@ -412,6 +417,12 @@ pub fn read(bytes: &[u8]) -> Result<Document> {
         range(&canvas["width"], 1, 1_048_576, "canvas width")? as u32,
         range(&canvas["height"], 1, 1_048_576, "canvas height")? as u32,
     );
+    if u64::from(canvas.0) * u64::from(canvas.1) > canvas_pixels {
+        return Err(Error::new(
+            ErrorCode::ResourceLimit,
+            "canvas exceeds the host pixel limit",
+        ));
+    }
     let meta = obj(&d["metadata"], "metadata", &[], &["title"])?;
     let title = meta
         .get("title")
@@ -578,7 +589,7 @@ pub fn read(bytes: &[u8]) -> Result<Document> {
     // Blocks: chunk ranges, overlap consistency, lengths and hashes.
     let mut used: HashSet<String> = HashSet::new();
     let mut ranges: HashMap<String, Vec<(usize, usize, String)>> = HashMap::new();
-    let mut adm = Admission::new(STAGED_PIXELS_MAX);
+    let mut adm = Admission::new(staged_pixels.min(STAGED_PIXELS_MAX));
     let mut layers = HashMap::new();
     for id in &roots {
         let rec = parsed.remove(id).expect("checked above");

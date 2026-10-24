@@ -116,15 +116,21 @@ fn image_error(error: ::image::ImageError) -> Error {
     }
 }
 
-fn decode_limits() -> ::image::Limits {
+fn decode_limits(pixels: u64) -> ::image::Limits {
     let mut limits = ::image::Limits::default();
     limits.max_image_width = Some(SIDE_MAX);
     limits.max_image_height = Some(SIDE_MAX);
-    limits.max_alloc = Some(DECODE_PIXELS_MAX * 8);
+    limits.max_alloc = Some(pixels.saturating_mul(8));
     limits
 }
 
 pub fn decode(bytes: &[u8]) -> Result<Decoded> {
+    decode_with_pixel_limit(bytes, DECODE_PIXELS_MAX)
+}
+
+/// Constrained hosts can lower decoded admission before pixel buffers are allocated.
+pub fn decode_with_pixel_limit(bytes: &[u8], pixels: u64) -> Result<Decoded> {
+    let pixels = pixels.min(DECODE_PIXELS_MAX);
     let format = ImageFormat::sniff(bytes).ok_or_else(|| codec("not a PNG, BMP or JPEG image"))?;
     if bytes.len() as u64 > 1 << 30 {
         return Err(Error::new(
@@ -133,25 +139,28 @@ pub fn decode(bytes: &[u8]) -> Result<Decoded> {
         ));
     }
     if format == ImageFormat::Png {
-        let decoder =
-            ::image::codecs::png::PngDecoder::with_limits(Cursor::new(bytes), decode_limits())
-                .map_err(image_error)?;
+        let decoder = ::image::codecs::png::PngDecoder::with_limits(
+            Cursor::new(bytes),
+            decode_limits(pixels),
+        )
+        .map_err(image_error)?;
         let losses = if decoder.is_apng().map_err(image_error)? {
             vec!["animation-first-frame-only".to_owned()]
         } else {
             Vec::new()
         };
-        return decode_pixels(decoder, format, losses);
+        return decode_pixels(decoder, format, losses, pixels);
     }
     if format == ImageFormat::Bmp {
         admit_bmp(bytes)?;
     }
     let mut reader = ::image::ImageReader::with_format(Cursor::new(bytes), external_format(format));
-    reader.limits(decode_limits());
+    reader.limits(decode_limits(pixels));
     decode_pixels(
         reader.into_decoder().map_err(image_error)?,
         format,
         Vec::new(),
+        pixels,
     )
 }
 
@@ -159,11 +168,14 @@ fn decode_pixels(
     decoder: impl ImageDecoder,
     format: ImageFormat,
     mut losses: Vec<String>,
+    pixels: u64,
 ) -> Result<Decoded> {
     let mut decoder = decoder;
     let (width, height) = decoder.dimensions();
     check_size(u64::from(width), u64::from(height))?;
-    if decoder.total_bytes() > DECODE_PIXELS_MAX * 8 {
+    if u64::from(width) * u64::from(height) > pixels
+        || decoder.total_bytes() > pixels.saturating_mul(8)
+    {
         return Err(Error::new(
             ErrorCode::ResourceLimit,
             "decoded image exceeds the byte budget",
