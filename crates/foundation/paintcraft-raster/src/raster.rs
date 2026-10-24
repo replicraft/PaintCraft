@@ -69,11 +69,24 @@ pub struct Admission {
     flood_scratch_limit: usize,
     stroke_scratch_limit: usize,
     residency: SharedBudget,
+    selection_budget: SharedBudget,
     reservation: Option<BudgetReservation>,
     allocation_scope: Option<Arc<std::sync::Mutex<tile::Scope>>>,
 }
 
 impl Admission {
+    fn default_selection_budget() -> SharedBudget {
+        static DEFAULT: OnceLock<SharedBudget> = OnceLock::new();
+        DEFAULT.get_or_init(|| SharedBudget::new(256 << 20)).clone()
+    }
+    /// Resident selection payloads share a separate realm across snapshots/history.
+    pub fn with_selection_budget(mut self, budget: SharedBudget) -> Self {
+        self.selection_budget = budget;
+        self
+    }
+    pub fn selection_budget(&self) -> SharedBudget {
+        self.selection_budget.clone()
+    }
     pub fn new(limit_pixels: u64) -> Self {
         static DEFAULT: OnceLock<SharedBudget> = OnceLock::new();
         Self::with_residency(
@@ -88,6 +101,7 @@ impl Admission {
     pub fn with_residency(limit_pixels: u64, residency: SharedBudget) -> Self {
         Self {
             remaining_pixels: limit_pixels,
+            selection_budget: Self::default_selection_budget(),
             paint_metadata_limit: DEFAULT_PAINT_METADATA_BYTES,
             paint_metadata_scope: paint::default_metadata_budget()
                 .scope(AllocationClass::PaintMetadata),
@@ -104,6 +118,7 @@ impl Admission {
     pub fn with_reserved_residency(limit_pixels: u64, reservation: BudgetReservation) -> Self {
         Self {
             remaining_pixels: limit_pixels,
+            selection_budget: Self::default_selection_budget(),
             paint_metadata_limit: DEFAULT_PAINT_METADATA_BYTES,
             paint_metadata_scope: paint::default_metadata_budget()
                 .scope(AllocationClass::PaintMetadata),

@@ -146,7 +146,17 @@ impl Builder {
             return BinaryMask::uniform(self.domain, self.default == 0);
         }
         let storage = (!self.tiles.is_empty()).then(|| {
+            let bytes = self.charge.bytes()
+                + self
+                    .tiles
+                    .values()
+                    .map(|tile| match tile {
+                        Tile::Dense(dense) => dense._charge.bytes(),
+                        Tile::Solid(_) => 0,
+                    })
+                    .sum::<u64>();
             Arc::new(Storage {
+                bytes,
                 tiles: self.tiles,
                 _charge: self.charge,
             })

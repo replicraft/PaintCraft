@@ -9,6 +9,7 @@ use std::{collections::HashMap, sync::Arc};
 mod builder;
 mod polygon;
 mod rows;
+mod views;
 
 /// Explicit per-construction bounds, separate from the caller's shared byte capacity.
 #[derive(Clone, Copy, Debug)]
@@ -49,6 +50,7 @@ impl Tile {
 #[derive(Debug)]
 struct Storage {
     tiles: HashMap<TileCoord, Tile>,
+    bytes: u64,
     _charge: BudgetAccount,
 }
 
@@ -63,6 +65,18 @@ pub struct BinaryMask {
     offset: (i64, i64),
     storage: Option<Arc<Storage>>,
 }
+// Equality identifies the same immutable field view. Separately constructed fields
+// use same_coverage_checked when a semantic no-op decision is required.
+impl PartialEq for BinaryMask {
+    fn eq(&self, other: &Self) -> bool {
+        self.domain == other.domain
+            && self.default == other.default
+            && self.inverted == other.inverted
+            && self.offset == other.offset
+            && self.shares_storage(other)
+    }
+}
+impl Eq for BinaryMask {}
 impl BinaryMask {
     pub fn uniform(domain: Rect, selected: bool) -> Result<Self> {
         valid_domain(domain)?;
@@ -102,6 +116,46 @@ impl BinaryMask {
         check: &dyn Fn() -> Result<()>,
     ) -> Result<Self> {
         polygon::rasterize(domain, vertices, budget, limits, check)
+    }
+    /// Unique resident payload declaration. Views share this allocation identity;
+    /// history may deduplicate it without treating mask storage as decoded RGBA.
+    pub fn storage_usage(&self) -> Option<(usize, u64)> {
+        self.storage
+            .as_ref()
+            .map(|storage| (Arc::as_ptr(storage) as usize, storage.bytes))
+    }
+    /// Exact bounded comparison, including the finite domain. Checks long rows
+    /// cooperatively; a failed comparison cannot publish a selection change.
+    pub fn same_coverage_checked(
+        &self,
+        other: &Self,
+        work: u64,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<bool> {
+        check()?;
+        if self == other {
+            return Ok(true);
+        }
+        if self.domain != other.domain {
+            return Ok(false);
+        }
+        if let (Some(a), Some(b)) = (self.uniform_coverage(), other.uniform_coverage()) {
+            return Ok(a == b);
+        }
+        if self.domain.area() > u128::from(work) {
+            return Err(limit());
+        }
+        for y in self.domain.y0..self.domain.y1 {
+            for x in self.domain.x0..self.domain.x1 {
+                if (x - self.domain.x0) % 1024 == 0 {
+                    check()?;
+                }
+                if self.coverage(x, y) != other.coverage(x, y) {
+                    return Ok(false);
+                }
+            }
+        }
+        Ok(true)
     }
     pub fn domain(&self) -> Rect {
         self.domain
