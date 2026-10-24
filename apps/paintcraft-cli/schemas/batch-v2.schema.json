@@ -380,6 +380,175 @@
           {
             "type": "object",
             "properties": {
+              "op": {
+                "const": "raster.contour"
+              },
+              "layer_ref": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ref": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                      }
+                    },
+                    "required": [
+                      "ref"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "stroke": {
+                "type": "object",
+                "properties": {
+                  "color": {
+                    "type": "string",
+                    "pattern": "^#[0-9A-Fa-f]{8}$"
+                  },
+                  "size": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1024
+                  }
+                },
+                "required": [
+                  "color",
+                  "size"
+                ],
+                "additionalProperties": false
+              },
+              "fill": {
+                "type": "string",
+                "pattern": "^#[0-9A-Fa-f]{8}$"
+              },
+              "mode": {
+                "enum": [
+                  "replace",
+                  "source-over"
+                ]
+              },
+              "points": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "x": {
+                      "type": "integer",
+                      "minimum": -140737488355327,
+                      "maximum": 140737488355327
+                    },
+                    "y": {
+                      "type": "integer",
+                      "minimum": -140737488355327,
+                      "maximum": 140737488355327
+                    }
+                  },
+                  "required": [
+                    "x",
+                    "y"
+                  ],
+                  "additionalProperties": false
+                },
+                "minItems": 2,
+                "maxItems": 1024
+              },
+              "closed": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "op",
+              "layer_ref",
+              "points",
+              "closed",
+              "mode"
+            ],
+            "additionalProperties": false,
+            "anyOf": [
+              {
+                "required": [
+                  "stroke"
+                ]
+              },
+              {
+                "required": [
+                  "fill"
+                ]
+              }
+            ],
+            "if": {
+              "properties": {
+                "kind": {
+                  "const": "line"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "stroke"
+              ]
+            },
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "required": [
+                      "stroke"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "fill"
+                    ]
+                  }
+                ]
+              },
+              {
+                "if": {
+                  "properties": {
+                    "closed": {
+                      "const": true
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "points": {
+                      "minItems": 3
+                    }
+                  }
+                },
+                "else": {
+                  "required": [
+                    "stroke"
+                  ],
+                  "not": {
+                    "required": [
+                      "fill"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
               "op": {"const": "raster.shape"},
               "layer_ref": {
                 "oneOf": [

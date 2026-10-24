@@ -2,6 +2,7 @@
 //! Nothing here publishes; the session installs the result atomically.
 
 mod canvas;
+mod contour;
 mod fill;
 mod layers;
 mod mask;
@@ -289,6 +290,16 @@ impl Stage<'_> {
 
     fn run(&mut self, index: usize, op: &Op) -> Result<()> {
         match op {
+            Op::Contour {
+                layer,
+                points,
+                closed,
+                stroke,
+                fill,
+                mode,
+            } => {
+                self.contour(layer, points, *closed, (*stroke, *fill, *mode))?;
+            }
             Op::CanvasClear { alias, color } => self.clear_canvas(index, alias, *color)?,
             Op::LayerAdd {
                 alias,

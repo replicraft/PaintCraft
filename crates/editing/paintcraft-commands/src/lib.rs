@@ -14,6 +14,7 @@ use paintcraft_core::types::policy::{COORD_ABS_MAX, hex};
 
 mod mask;
 pub use mask::{validate_mask_spans, validate_mask_spans_checked};
+mod contour;
 mod stroke;
 
 const SIZE_MAX: i64 = 1_048_576;
@@ -69,6 +70,14 @@ pub enum ShapeKind {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Op {
+    Contour {
+        layer: LayerRef,
+        points: Vec<(i64, i64)>,
+        closed: bool,
+        stroke: Option<(Rgba, u32)>,
+        fill: Option<Rgba>,
+        mode: Mode,
+    },
     LayerAdd {
         alias: String,
         name: String,
@@ -263,6 +272,7 @@ fn op(v: &Value, version: u8) -> Result<Op> {
                 | "raster.stroke_path"
                 | "raster.flood_fill"
                 | "raster.shape"
+                | "raster.contour"
                 | "raster.text"
                 | "raster.mask_spans"
                 | "layer.reorder"
@@ -275,6 +285,7 @@ fn op(v: &Value, version: u8) -> Result<Op> {
     }
     Ok(match name {
         "raster.stroke_path" => stroke::parse(v)?,
+        "raster.contour" => contour::parse(v)?,
         "raster.mask_spans" => mask::parse(v)?,
         "raster.flood_fill" => {
             let o = obj(

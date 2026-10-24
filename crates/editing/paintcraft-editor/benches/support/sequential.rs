@@ -231,6 +231,12 @@ impl Stage<'_> {
 
     fn run(&mut self, index: usize, op: &Op) -> Result<()> {
         match op {
+            Op::Contour { .. } => {
+                return Err(Error::new(
+                    ErrorCode::CapabilityUnsupported,
+                    "historical benchmark oracle does not implement arbitrary contours",
+                ));
+            }
             Op::CanvasClear { alias, color } => self.clear_canvas(index, alias, *color)?,
             Op::LayerAdd {
                 alias,

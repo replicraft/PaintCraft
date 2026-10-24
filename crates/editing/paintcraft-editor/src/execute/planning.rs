@@ -225,6 +225,7 @@ fn kind(op: &Op) -> Kind {
         | Op::PencilPath { .. }
         | Op::StrokePath { .. }
         | Op::Shape { .. }
+        | Op::Contour { .. }
         | Op::MaskSpans { .. }
         | Op::Text { .. } => Kind::Write,
         Op::FloodFill { .. } => Kind::ReadWrite,

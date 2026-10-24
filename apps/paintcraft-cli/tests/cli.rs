@@ -92,6 +92,8 @@ fn decode_png(path: &str) -> (u32, u32, Vec<u8>) {
     (info.width, info.height, buf[..info.buffer_size()].to_vec())
 }
 
+#[path = "cli/contours.rs"]
+mod contours;
 #[path = "cli/editing.rs"]
 mod editing;
 #[path = "cli/formats_and_receipts.rs"]
