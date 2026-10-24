@@ -18,7 +18,8 @@ enum Variant {
     Sheet,
     ClassicShape,
     ClassicMenu,
-    ClassicTool,
+    ClassicToolLight,
+    ClassicToolDark,
     ClassicImageLight,
     ClassicImageDark,
     ClassicStatusLight,
@@ -44,8 +45,9 @@ fn rasterize_variant(icon: Icon, size: u32, variant: Variant) -> ColorImage {
         Variant::ClassicMenu => {
             classic_menus::source(icon).expect("Classic menu icon must have an outline SVG")
         }
-        Variant::ClassicTool => {
-            classic_tools::source(icon).expect("Classic tool must have an outline SVG")
+        Variant::ClassicToolLight | Variant::ClassicToolDark => {
+            classic_tools::source(icon, variant == Variant::ClassicToolDark)
+                .expect("Classic tool must have theme artwork")
         }
         Variant::ClassicImageLight | Variant::ClassicImageDark => {
             classic_image::source(icon, variant == Variant::ClassicImageDark)
@@ -152,20 +154,25 @@ pub fn classic_menu_image(
     egui::Image::new((texture.id(), egui::Vec2::splat(points))).tint(ink)
 }
 
-/// V11 Tools use their own glyphs rather than menu symbols or the colored sheet.
+/// V11 Tools preserve color accents with neutral outlines adapted to the theme.
 pub fn classic_tool_image(
     ctx: &Context,
     icon: Icon,
     points: f32,
-    ink: Color32,
+    dark: bool,
 ) -> egui::Image<'static> {
+    let variant = if dark {
+        Variant::ClassicToolDark
+    } else {
+        Variant::ClassicToolLight
+    };
     let texture = variant_texture(
         ctx,
         icon,
         physical_size(points, ctx.pixels_per_point()),
-        Variant::ClassicTool,
+        variant,
     );
-    egui::Image::new((texture.id(), egui::Vec2::splat(points))).tint(ink)
+    egui::Image::new((texture.id(), egui::Vec2::splat(points)))
 }
 
 /// Accented ribbon/transform art preserves blue details in light and dark themes.
@@ -277,31 +284,53 @@ mod tests {
         let ctx = Context::default();
         let tools: Vec<_> = Icon::ALL
             .into_iter()
-            .filter(|icon| classic_tools::source(*icon).is_some())
+            .filter(|icon| classic_tools::source(*icon, false).is_some())
             .collect();
         assert_eq!(tools.len(), 6);
         for icon in tools {
             for size in [24, 48, 96, 128] {
-                let image = rasterize_variant(icon, size, Variant::ClassicTool);
-                assert!(image.pixels.iter().any(|pixel| pixel.a() > 0));
-                assert!(image.pixels.iter().any(|pixel| pixel.a() == 0));
-                for pixel in image.pixels {
-                    let [r, g, b, a] = pixel.to_array();
-                    assert_eq!([r, g, b], [a; 3], "{} must accept theme tint", icon.name());
+                let light = rasterize_variant(icon, size, Variant::ClassicToolLight);
+                let dark = rasterize_variant(icon, size, Variant::ClassicToolDark);
+                assert_ne!(light.pixels, dark.pixels);
+                assert!(
+                    light
+                        .pixels
+                        .iter()
+                        .zip(&dark.pixels)
+                        .all(|(a, b)| a.a() == b.a())
+                );
+                for image in [light, dark] {
+                    assert!(image.pixels.iter().any(|p| p.a() > 0));
+                    assert!(image.pixels.iter().any(|p| p.a() == 0));
+                    if icon != Icon::Text {
+                        assert!(
+                            image.pixels.iter().any(|p| match icon {
+                                Icon::Pencil => p.r() > p.g() && p.g() > p.b(),
+                                Icon::Eraser => p.r() > p.g() && p.b() > p.g(),
+                                _ => p.b() > p.g() && p.g() > p.r(),
+                            }),
+                            "{} must retain its reference color accents",
+                            icon.name()
+                        );
+                    }
                 }
             }
-            let tool = variant_texture(&ctx, icon, 48, Variant::ClassicTool);
-            assert_ne!(tool.id(), texture(&ctx, icon, 48).id());
-            if classic_menus::source(icon).is_some() {
-                assert_ne!(
-                    tool.id(),
-                    variant_texture(&ctx, icon, 48, Variant::ClassicMenu).id()
-                );
+            let light = variant_texture(&ctx, icon, 48, Variant::ClassicToolLight);
+            let dark = variant_texture(&ctx, icon, 48, Variant::ClassicToolDark);
+            assert_ne!(light.id(), dark.id());
+            for (tool, variant) in [
+                (light, Variant::ClassicToolLight),
+                (dark, Variant::ClassicToolDark),
+            ] {
+                assert_ne!(tool.id(), texture(&ctx, icon, 48).id());
+                if classic_menus::source(icon).is_some() {
+                    assert_ne!(
+                        tool.id(),
+                        variant_texture(&ctx, icon, 48, Variant::ClassicMenu).id()
+                    );
+                }
+                assert_eq!(tool.id(), variant_texture(&ctx, icon, 48, variant).id());
             }
-            assert_eq!(
-                tool.id(),
-                variant_texture(&ctx, icon, 48, Variant::ClassicTool).id()
-            );
         }
     }
 

@@ -191,7 +191,7 @@ fn navigation(ui: &mut egui::Ui, current: &mut Page, sidebar: bool, classic: boo
                     ui.ctx(),
                     icon,
                     22.0,
-                    ui.visuals().strong_text_color(),
+                    ui.visuals().dark_mode,
                 ),
             }
         } else {

@@ -1,33 +1,55 @@
 {
-  "provenance": "Original PaintCraft outline tool vectors; not extracted native assets.",
+  "provenance": "Original PaintCraft accented tool vectors with themed ink; not extracted native assets.",
   "references": [
     "docs/temp/paint-references/photos/image.png",
     "docs/temp/paint-references/photos/mspaint-text-settings.png"
   ],
+  "themes": [
+    "light",
+    "dark"
+  ],
   "icons": [
     {
       "name": "pencil",
-      "file": "pencil.svg"
+      "files": {
+        "light": "pencil-light.svg",
+        "dark": "pencil-dark.svg"
+      }
     },
     {
       "name": "fill",
-      "file": "fill.svg"
+      "files": {
+        "light": "fill-light.svg",
+        "dark": "fill-dark.svg"
+      }
     },
     {
       "name": "text",
-      "file": "text.svg"
+      "files": {
+        "light": "text-light.svg",
+        "dark": "text-dark.svg"
+      }
     },
     {
       "name": "eraser",
-      "file": "eraser.svg"
+      "files": {
+        "light": "eraser-light.svg",
+        "dark": "eraser-dark.svg"
+      }
     },
     {
       "name": "eyedropper",
-      "file": "eyedropper.svg"
+      "files": {
+        "light": "eyedropper-light.svg",
+        "dark": "eyedropper-dark.svg"
+      }
     },
     {
       "name": "zoom-in",
-      "file": "zoom-in.svg"
+      "files": {
+        "light": "zoom-in-light.svg",
+        "dark": "zoom-in-dark.svg"
+      }
     }
   ]
 }

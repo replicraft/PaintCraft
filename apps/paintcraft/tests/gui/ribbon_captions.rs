@@ -33,8 +33,9 @@ fn classic_ribbon_has_legible_single_captions_and_icon_only_primary_tools() {
                     .any(|shape| matches!(&shape.shape, Shape::Rect(image)
                 if image.brush.is_some() && image.rect.size() == Vec2::splat(24.0)
                     && rect.contains_rect(image.rect) && image.rect.center() == rect.center()
-                    && image.fill.r() == image.fill.g() && image.fill.g() == image.fill.b())),
-                "{label} must use a centered theme-tinted glyph"
+                    && image.fill.r() == image.fill.g() && image.fill.g() == image.fill.b()
+                    && (matches!(label, "Color picker" | "Magnifier") || image.fill == eframe::egui::Color32::WHITE))),
+                "{label} must use centered tool artwork"
             );
         }
         for (label, tool) in [

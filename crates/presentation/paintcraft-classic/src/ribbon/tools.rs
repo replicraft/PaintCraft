@@ -32,16 +32,11 @@ fn button(ui: &mut egui::Ui, label: &str, icon: Icon, selected: bool) -> egui::R
             .frame(true),
         selected,
     );
-    paintcraft_ui::icons::classic_tool_image(
-        ui.ctx(),
-        icon,
-        24.0,
-        ui.visuals().strong_text_color(),
-    )
-    .paint_at(
-        ui,
-        egui::Rect::from_center_size(response.rect.center(), Vec2::splat(24.0)),
-    );
+    paintcraft_ui::icons::classic_tool_image(ui.ctx(), icon, 24.0, ui.visuals().dark_mode)
+        .paint_at(
+            ui,
+            egui::Rect::from_center_size(response.rect.center(), Vec2::splat(24.0)),
+        );
     response.widget_info(|| {
         egui::WidgetInfo::selected(egui::Role::Button, ui.is_enabled(), selected, label)
     });
