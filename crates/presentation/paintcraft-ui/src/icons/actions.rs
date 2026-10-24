@@ -17,7 +17,7 @@ impl Action {
             Self::Settings => Icon::Settings,
             Self::New => Icon::New,
             Self::Open => Icon::Open,
-            Self::Save => Icon::Save,
+            Self::Save | Self::SaveAll => Icon::Save,
             Self::SaveAs | Self::Export | Self::ExportImage(_) => Icon::SaveAs,
             Self::Close | Self::Exit => Icon::Close,
             Self::Undo => Icon::Undo,

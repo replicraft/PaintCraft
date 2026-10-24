@@ -118,6 +118,7 @@ mod tests {
             document_open: true,
             can_undo: false,
             can_redo: false,
+            can_save_all: false,
             selection_active: false,
             tool: Tool::Pencil,
             blocked: false,

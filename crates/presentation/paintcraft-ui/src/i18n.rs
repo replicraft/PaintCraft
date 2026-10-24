@@ -252,6 +252,7 @@ pub fn tr_status(ctx: &egui::Context, source: &str) -> String {
             "Native menu update failed: ",
             "Native menu update failed: { $detail }",
         ),
+        ("Save All stopped: ", "Save All stopped: { $detail }"),
         ("Opened ", "Opened { $detail }"),
         ("Imported ", "Imported { $detail }"),
         ("Exported ", "Exported { $detail }"),

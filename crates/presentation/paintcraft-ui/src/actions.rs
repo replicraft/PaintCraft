@@ -16,6 +16,7 @@ pub enum Action {
     Open,
     Save,
     SaveAs,
+    SaveAll,
     Export,
     ExportImage(ImageExport),
     Undo,
@@ -58,6 +59,7 @@ pub struct Context {
     pub document_open: bool,
     pub can_undo: bool,
     pub can_redo: bool,
+    pub can_save_all: bool,
     pub selection_active: bool,
     pub tool: Tool,
     pub blocked: bool,
@@ -90,6 +92,15 @@ pub const FILE: &[Action] = &[
     Action::Export,
     Action::Close,
 ];
+pub const STUDIO_FILE: &[Action] = &[
+    Action::New,
+    Action::Open,
+    Action::Save,
+    Action::SaveAs,
+    Action::SaveAll,
+    Action::Export,
+    Action::Close,
+];
 pub const EDIT: &[Action] = &[
     Action::Crop,
     Action::Undo,
@@ -119,6 +130,7 @@ impl Action {
             Self::Open => ("Open…", Some((Key::O, false))),
             Self::Save => ("Save", Some((Key::S, false))),
             Self::SaveAs => ("Save as…", Some((Key::S, true))),
+            Self::SaveAll => ("Save All", None),
             Self::Export => ("Export…", None),
             Self::ExportImage(format) => (format.label(), None),
             Self::Undo => ("Undo", Some((Key::Z, false))),
@@ -166,7 +178,12 @@ impl Action {
         Descriptor {
             action: self,
             label,
-            shortcut: if self == Self::EraseSelection {
+            shortcut: if self == Self::SaveAll {
+                Some(KeyboardShortcut::new(
+                    Modifiers::COMMAND | Modifiers::ALT,
+                    Key::S,
+                ))
+            } else if self == Self::EraseSelection {
                 Some(KeyboardShortcut::new(Modifiers::NONE, Key::Delete))
             } else {
                 key.map(|(logical_key, shift)| KeyboardShortcut {
@@ -198,6 +215,12 @@ impl Action {
     }
 
     pub fn from_shortcut_for(frontend: Frontend, key: Key, modifiers: Modifiers) -> Option<Self> {
+        if frontend == Frontend::Studio
+            && key == Key::S
+            && modifiers.matches_exact(Modifiers::COMMAND | Modifiers::ALT)
+        {
+            return Some(Self::SaveAll);
+        }
         if frontend == Frontend::Studio && key == Key::Z && modifiers.matches_exact(Modifiers::NONE)
         {
             return Some(Self::SelectTool(Tool::Magnifier));
@@ -226,7 +249,7 @@ impl Action {
 
     pub fn available(self, frontend: Frontend) -> bool {
         match self {
-            Self::SelectTool(Tool::Pan) => frontend == Frontend::Studio,
+            Self::SaveAll | Self::SelectTool(Tool::Pan) => frontend == Frontend::Studio,
             Self::View(
                 ViewAction::StatusBar
                 | ViewAction::Rulers
@@ -261,6 +284,7 @@ impl Action {
             | Self::CanvasDefaults
             | Self::Settings
             | Self::ChooseFrontend(_) => true,
+            Self::SaveAll => ctx.document_open && ctx.can_save_all,
             Self::Undo => ctx.document_open && ctx.can_undo,
             Self::Redo => ctx.document_open && ctx.can_redo,
             Self::Deselect => ctx.document_open && ctx.selection_active,
@@ -320,6 +344,7 @@ impl Action {
             Self::Open => 1001,
             Self::Save => 1002,
             Self::SaveAs => 1003,
+            Self::SaveAll => 1024,
             Self::Export => 1004,
             Self::ExportImage(format) => 1040 + format as u64,
             Self::Undo => 1005,
@@ -640,6 +665,7 @@ mod tests {
             document_open: false,
             can_undo: true,
             can_redo: true,
+            can_save_all: true,
             selection_active: true,
             tool: Tool::Brush,
             blocked: false,
@@ -726,3 +752,6 @@ mod tests {
         }));
     }
 }
+
+#[cfg(test)]
+mod save_all_tests;

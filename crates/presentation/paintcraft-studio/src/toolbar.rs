@@ -13,7 +13,7 @@ pub fn toolbar(
     let mut actions = Vec::new();
     egui::MenuBar::new().ui(ui, |ui| {
         ui.menu_button(t!(ui.ctx(), "File"), |ui| {
-            for &action in actions::FILE {
+            for &action in actions::STUDIO_FILE {
                 if actions::menu_item(ui, action, context) {
                     actions.push(action);
                     ui.close();
