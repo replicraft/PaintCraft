@@ -36,7 +36,11 @@ pub fn edit_colors_dialog(ctx: &egui::Context, editor: &mut ColorEditor) -> Colo
                 })
                 .show(ui, |ui| {
                     ui.set_width(width);
-                    ui.label(egui::RichText::new("Edit colors").size(24.0).strong());
+                    ui.label(
+                        egui::RichText::new(paintcraft_ui::i18n::tr(ui.ctx(), "Edit colors"))
+                            .size(24.0)
+                            .strong(),
+                    );
                     ui.add_space(12.0);
                     egui::ScrollArea::vertical()
                         .id_salt("classic-color-dialog-body")
@@ -84,14 +88,19 @@ pub fn edit_colors_dialog(ctx: &egui::Context, editor: &mut ColorEditor) -> Colo
                         } else {
                             Color32::WHITE
                         };
-                        let accept = egui::Button::new(egui::RichText::new("OK").color(ink))
-                            .fill(ui.visuals().selection.stroke.color)
-                            .min_size(Vec2::new(button_width, 40.0));
+                        let accept = egui::Button::new(
+                            egui::RichText::new(paintcraft_ui::i18n::tr(ui.ctx(), "OK")).color(ink),
+                        )
+                        .fill(ui.visuals().selection.stroke.color)
+                        .min_size(Vec2::new(button_width, 40.0));
                         if ui.add_enabled(editor.valid(), accept).clicked() {
                             result = ColorResponse::Accept;
                         }
                         if ui
-                            .add_sized([button_width, 40.0], egui::Button::new("Cancel"))
+                            .add_sized(
+                                [button_width, 40.0],
+                                egui::Button::new(paintcraft_ui::i18n::tr(ui.ctx(), "Cancel")),
+                            )
                             .clicked()
                         {
                             result = ColorResponse::Cancel;
@@ -171,7 +180,10 @@ fn custom(ui: &mut egui::Ui, editor: &mut ColorEditor, spacious: bool) {
             )
         });
         if add
-            .on_hover_text("Add current color to the selected custom slot")
+            .on_hover_text(paintcraft_ui::i18n::tr(
+                ui.ctx(),
+                "Add current color to the selected custom slot",
+            ))
             .clicked()
             && ui.ctx().current_pass_index() == 0
         {

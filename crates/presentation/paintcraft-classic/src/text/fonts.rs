@@ -165,5 +165,6 @@ pub fn family(
     font.response.widget_info(|| {
         egui::WidgetInfo::labeled(egui::Role::ComboBox, ui.is_enabled(), "Font family")
     });
-    font.response.on_hover_text("Font family");
+    font.response
+        .on_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), "Font family"));
 }

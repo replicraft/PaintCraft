@@ -112,7 +112,7 @@ fn dialog(
                         egui::Layout::top_down(egui::Align::Min),
                         |ui| {
                             ui.set_width(heading_width);
-                            ui.label(egui::RichText::new(title).size(24.0).strong());
+                            ui.label(egui::RichText::new(paintcraft_ui::i18n::tr(ui.ctx(), title)).size(24.0).strong());
                         },
                     );
                     if paintcraft_ui::widgets::classic_menu_button(
@@ -152,10 +152,10 @@ fn dialog(
                         if properties.is_some() {
                             ui.horizontal_wrapped(|ui| {
                                 for label in ["Inches", "Centimeters"] {
-                                    ui.add_enabled(false, egui::RadioButton::new(false, label))
-                                        .on_disabled_hover_text("Physical units require image resolution metadata, which is not available for this document.");
+                                    ui.add_enabled(false, egui::RadioButton::new(false, paintcraft_ui::i18n::tr(ui.ctx(), label)))
+                                        .on_disabled_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), "Physical units require image resolution metadata, which is not available for this document."));
                                 }
-                                let _ = ui.radio(true, "Pixels");
+                                let _ = ui.radio(true, paintcraft_ui::i18n::tr(ui.ctx(), "Pixels"));
                             });
                             ui.add_space(8.0);
                         }
@@ -172,9 +172,9 @@ fn dialog(
                     ui.add_space(12.0);
                     ui.strong(paintcraft_ui::i18n::tr(ui.ctx(), "Colors"));
                     ui.horizontal_wrapped(|ui| {
-                        ui.add_enabled(false, egui::RadioButton::new(false, "Black and white"))
-                            .on_disabled_hover_text("Monochrome conversion is not available yet.");
-                        let _ = ui.radio(true, "Color");
+                        ui.add_enabled(false, egui::RadioButton::new(false, paintcraft_ui::i18n::tr(ui.ctx(), "Black and white")))
+                            .on_disabled_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), "Monochrome conversion is not available yet."));
+                        let _ = ui.radio(true, paintcraft_ui::i18n::tr(ui.ctx(), "Color"));
                     });
                 }
                 ui.add_space(12.0);
@@ -183,12 +183,12 @@ fn dialog(
                     ui.radio_value(
                         &mut startup.remember_last,
                         true,
-                        "Remember last canvas size",
+                        paintcraft_ui::i18n::tr(ui.ctx(), "Remember last canvas size"),
                     );
                     ui.radio_value(
                         &mut startup.remember_last,
                         false,
-                        "Use configured default size",
+                        paintcraft_ui::i18n::tr(ui.ctx(), "Use configured default size"),
                     );
                     if let Some((w, h)) = startup.last {
                         ui.weak(format!("Last canvas: {w} × {h} pixels"));
@@ -211,14 +211,14 @@ fn dialog(
                     let valid = (1..=max_dimension).contains(&draft.size.0)
                         && (1..=max_dimension).contains(&draft.size.1)
                         && max_pixels.is_none_or(|maximum| u64::from(draft.size.0) * u64::from(draft.size.1) <= maximum);
-                    let apply = egui::Button::new(egui::RichText::new(if properties.is_some() {"OK"} else {"Apply"}).color(ink))
+                    let apply = egui::Button::new(egui::RichText::new(paintcraft_ui::i18n::tr(ui.ctx(), if properties.is_some() {"OK"} else {"Apply"})).color(ink))
                         .fill(ui.visuals().selection.stroke.color)
                         .min_size(Vec2::new(button_width, 40.0));
                     if ui.add_enabled(valid, apply).clicked() {
                         result = CanvasResponse::Apply;
                     }
                     if ui
-                        .add_sized([button_width, 40.0], egui::Button::new("Cancel"))
+                        .add_sized([button_width, 40.0], egui::Button::new(paintcraft_ui::i18n::tr(ui.ctx(), "Cancel")))
                         .clicked()
                     {
                         result = CanvasResponse::Cancel;
@@ -247,7 +247,10 @@ fn properties_info(ui: &mut egui::Ui, name: &str) {
             ui.end_row();
             ui.label(paintcraft_ui::i18n::tr(ui.ctx(), "Resolution"));
             ui.label(paintcraft_ui::i18n::tr(ui.ctx(), "Not available"))
-                .on_hover_text("No image resolution metadata is stored for this document.");
+                .on_hover_text(paintcraft_ui::i18n::tr(
+                    ui.ctx(),
+                    "No image resolution metadata is stored for this document.",
+                ));
             ui.end_row();
         });
 }

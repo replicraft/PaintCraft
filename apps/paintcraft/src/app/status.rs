@@ -99,17 +99,27 @@ impl App {
 
     fn status_message(&self) -> String {
         if self.document_count() == 0 {
-            return "No document open".to_owned();
+            return paintcraft_ui::i18n::tr(&self.context, "No document open");
         }
-        format!(
-            "{}{}",
-            self.editor.status(),
-            if self.editor.is_dirty() {
-                "  •  unsaved changes"
-            } else {
-                ""
-            }
-        )
+        let mut status = if self.editor.status().starts_with("Opened ") {
+            self.editor.path().and_then(Path::file_name).map_or_else(
+                || paintcraft_ui::i18n::tr(&self.context, self.editor.status()),
+                |name| {
+                    format!(
+                        "{} {}",
+                        paintcraft_ui::i18n::tr(&self.context, "Opened"),
+                        name.to_string_lossy()
+                    )
+                },
+            )
+        } else {
+            paintcraft_ui::i18n::tr(&self.context, self.editor.status())
+        };
+        if self.editor.is_dirty() {
+            status.push_str("  •  ");
+            status.push_str(&paintcraft_ui::i18n::tr(&self.context, "unsaved changes"));
+        }
+        status
     }
 
     fn checkpoint_tooltip(&self) -> Option<String> {

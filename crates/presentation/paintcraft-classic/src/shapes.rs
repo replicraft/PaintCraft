@@ -175,5 +175,5 @@ fn button(
     response.widget_info(|| {
         egui::WidgetInfo::selected(egui::Role::Button, ui.is_enabled(), selected, label)
     });
-    response.on_hover_text(label)
+    response.on_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), label))
 }

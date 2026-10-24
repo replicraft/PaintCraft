@@ -28,7 +28,10 @@ pub(super) fn show(
         paintcraft_ui::widgets::classic_menu_button(ui, "Share", Icon::Share, false, "Share")
     })
     .inner
-    .on_disabled_hover_text("System sharing is not available yet.");
+    .on_disabled_hover_text(paintcraft_ui::i18n::tr(
+        ui.ctx(),
+        "System sharing is not available yet.",
+    ));
     ui.separator();
     button(ui, context, actions, Icon::Undo, Action::Undo, true);
     button(ui, context, actions, Icon::Redo, Action::Redo, true);

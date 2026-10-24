@@ -31,7 +31,7 @@ pub(super) fn controls(ui: &mut egui::Ui, editor: &mut ColorEditor, width: f32) 
         editor.set_rgb(rgb);
         editor.hex = text;
     }
-    response.on_hover_text("Hex RGB");
+    response.on_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), "Hex RGB"));
     if !editor.valid() {
         ui.weak(paintcraft_ui::i18n::tr(
             ui.ctx(),
@@ -97,7 +97,9 @@ pub(super) fn controls(ui: &mut egui::Ui, editor: &mut ColorEditor, width: f32) 
     model.response.widget_info(|| {
         egui::WidgetInfo::labeled(egui::Role::ComboBox, ui.is_enabled(), "Color model")
     });
-    model.response.on_hover_text("Color model");
+    model
+        .response
+        .on_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), "Color model"));
     ui.add_space(8.0);
     match editor.mode {
         NumericMode::Rgb => {

@@ -45,7 +45,7 @@ pub fn options_with_shape_style(
             };
             let slider = ui.add(
                 egui::Slider::new(size, 1..=64)
-                    .text("Size")
+                    .text(crate::i18n::tr(ui.ctx(), "Size"))
                     .suffix(" px")
                     .show_value(false)
                     .clamping(egui::SliderClamping::Edits),
@@ -85,7 +85,7 @@ pub fn options_with_shape_style(
             }
             ui.add(
                 egui::Slider::new(&mut state.options.brush_opacity, 0..=100)
-                    .text("Brush opacity")
+                    .text(crate::i18n::tr(ui.ctx(), "Brush opacity"))
                     .suffix("%"),
             );
         }

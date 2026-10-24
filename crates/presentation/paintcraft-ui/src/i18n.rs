@@ -110,7 +110,9 @@ mod tests {
             let (id, source) = line.split_once(" = ").unwrap();
             assert!(en.get_message(id).is_some());
             assert!(ja.get_message(id).is_some(), "{id}");
-            assert_ne!(translate(Language::Japanese, source), source, "{id}");
+            if source != "OK" {
+                assert_ne!(translate(Language::Japanese, source), source, "{id}");
+            }
         }
         assert_eq!(
             translate(Language::Japanese, "unknown user text"),

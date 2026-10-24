@@ -124,7 +124,10 @@ fn row(
     if enabled {
         response
     } else {
-        response.on_disabled_hover_text("This brush is not available yet.")
+        response.on_disabled_hover_text(paintcraft_ui::i18n::tr(
+            ui.ctx(),
+            "This brush is not available yet.",
+        ))
     }
 }
 

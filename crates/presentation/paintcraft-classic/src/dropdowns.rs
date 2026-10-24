@@ -123,10 +123,12 @@ fn dropdown(
     );
     open_state(ui, &response, label);
     if ui.is_enabled() {
-        response.on_hover_text(label)
+        response.on_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), label))
     } else {
-        response
-            .on_disabled_hover_text("Select a rectangle or ellipse to change its outline and fill")
+        response.on_disabled_hover_text(paintcraft_ui::i18n::tr(
+            ui.ctx(),
+            "Select a rectangle or ellipse to change its outline and fill",
+        ))
     }
 }
 
@@ -137,14 +139,15 @@ pub(super) fn open_state(ui: &egui::Ui, response: &egui::Response, label: &str) 
     if open && ui.is_enabled() {
         selected_outline(ui, response.rect);
     }
+    let label = paintcraft_ui::i18n::tr(ui.ctx(), label);
     response.widget_info(|| {
-        egui::WidgetInfo::selected(egui::Role::Button, ui.is_enabled(), open, label)
+        egui::WidgetInfo::selected(egui::Role::Button, ui.is_enabled(), open, &label)
     });
 }
 
 fn shape_choice(ui: &mut egui::Ui, label: &str, selected: bool) -> egui::Response {
     let response = ui.add(
-        egui::Button::new(label)
+        egui::Button::new(paintcraft_ui::i18n::tr(ui.ctx(), label))
             .selected(selected)
             .frame_when_inactive(selected)
             .frame(true)

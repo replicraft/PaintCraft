@@ -49,9 +49,12 @@ pub fn show(ctx: &egui::Context, current: &mut ClassicVariant, first_visit: bool
                     |ui| {
                         ui.set_width(width - 48.0);
                         ui.label(
-                            egui::RichText::new("Choose your Classic skin")
-                                .size(24.0)
-                                .strong(),
+                            egui::RichText::new(paintcraft_ui::i18n::tr(
+                                ui.ctx(),
+                                "Choose your Classic skin",
+                            ))
+                            .size(24.0)
+                            .strong(),
                         );
                     },
                 );
@@ -79,7 +82,7 @@ pub fn show(ctx: &egui::Context, current: &mut ClassicVariant, first_visit: bool
                 .auto_shrink([false, true])
                 .show(ui, |ui| {
                     ui.add(egui::Label::new(
-                        "Choose a Paint skin. Change it later from the changer button or Settings.",
+                        paintcraft_ui::i18n::tr(ui.ctx(), "Choose a Paint skin. Change it later from the changer button or Settings."),
                     ).wrap());
                     ui.add_space(12.0);
                     if wide {
@@ -107,14 +110,17 @@ pub fn show(ctx: &egui::Context, current: &mut ClassicVariant, first_visit: bool
                     Color32::WHITE
                 };
                 let apply = egui::Button::new(
-                    egui::RichText::new(if first_visit { "Continue" } else { "Apply" }).color(ink),
+                    egui::RichText::new(paintcraft_ui::i18n::tr(ui.ctx(), if first_visit { "Continue" } else { "Apply" })).color(ink),
                 )
                 .fill(ui.visuals().selection.stroke.color);
                 if ui.add_sized([button_width, 40.0], apply).clicked() {
                     choice = Choice::Apply;
                 }
                 if ui
-                    .add_sized([button_width, 40.0], egui::Button::new("Cancel"))
+                    .add_sized(
+                        [button_width, 40.0],
+                        egui::Button::new(paintcraft_ui::i18n::tr(ui.ctx(), "Cancel")),
+                    )
                     .clicked()
                 {
                     choice = Choice::Cancel;

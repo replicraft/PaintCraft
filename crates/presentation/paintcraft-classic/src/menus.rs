@@ -185,7 +185,7 @@ fn unavailable(
     }
     let response = ui.add_enabled(false, button);
     response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, false, label));
-    response.on_disabled_hover_text(help)
+    response.on_disabled_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), help))
 }
 
 fn unavailable_submenu(ui: &mut Ui, label: &str, icon: Icon, help: &str) {

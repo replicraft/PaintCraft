@@ -21,7 +21,7 @@ pub fn show(ctx: &egui::Context, preview: Preview, updating: bool, enabled: bool
         .show(ctx, |ui| {
             ui.spacing_mut().interact_size.y = 40.0;
             ui.horizontal(|ui| {
-                ui.label(egui::RichText::new("Thumbnail").size(16.0).color(ui.visuals().strong_text_color()));
+                ui.label(egui::RichText::new(paintcraft_ui::i18n::tr(ui.ctx(), "Thumbnail")).size(16.0).color(ui.visuals().strong_text_color()));
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     close = paintcraft_ui::widgets::classic_menu_button(
                         ui,
@@ -51,7 +51,7 @@ pub fn show(ctx: &egui::Context, preview: Preview, updating: bool, enabled: bool
                     );
                 }
             }
-            ui.label(egui::RichText::new(if updating { "Updating preview…" } else { "Canvas overview" }).size(12.0)).on_hover_text("Shows the canvas and active paint, shape and text previews. Selection borders and text carets stay on the main canvas.");
+            ui.label(egui::RichText::new(if updating { "Updating preview…" } else { "Canvas overview" }).size(12.0)).on_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), "Shows the canvas and active paint, shape and text previews. Selection borders and text carets stay on the main canvas."));
         });
     close
 }

@@ -84,7 +84,7 @@ fn edit_button(ui: &mut egui::Ui) -> egui::Response {
     response.widget_info(|| {
         egui::WidgetInfo::labeled(egui::Role::Button, ui.is_enabled(), "Edit colors…")
     });
-    response.on_hover_text("Edit colors…")
+    response.on_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), "Edit colors…"))
 }
 
 fn wells(ui: &mut egui::Ui, state: &Controls, context: Context, actions: &mut Vec<Action>) {

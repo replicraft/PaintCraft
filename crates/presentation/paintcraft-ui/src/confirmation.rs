@@ -40,7 +40,7 @@ pub fn show(ctx: &Context, id: Id, prompt: Prompt<'_>) -> Option<Choice> {
             .map(|label| {
                 ui.painter()
                     .layout_no_wrap(
-                        label.to_owned(),
+                        crate::i18n::tr(ctx, label),
                         egui::FontId::proportional(16.0),
                         Color32::WHITE,
                     )
@@ -57,7 +57,11 @@ pub fn show(ctx: &Context, id: Id, prompt: Prompt<'_>) -> Option<Choice> {
         } else {
             40.0
         };
-        let heading = ui.label(egui::RichText::new(prompt.title).size(24.0).strong());
+        let heading = ui.label(
+            egui::RichText::new(crate::i18n::tr(ctx, prompt.title))
+                .size(24.0)
+                .strong(),
+        );
         ui.add_space(8.0);
         ui.spacing_mut().scroll.floating = false;
         egui::ScrollArea::vertical()
@@ -65,7 +69,7 @@ pub fn show(ctx: &Context, id: Id, prompt: Prompt<'_>) -> Option<Choice> {
             .max_height((height - footer_height - heading.rect.height() - 40.0).max(24.0))
             .auto_shrink([false, true])
             .show(ui, |ui| {
-                ui.add(egui::Label::new(prompt.message).wrap());
+                ui.add(egui::Label::new(crate::i18n::tr(ctx, prompt.message)).wrap());
             });
         ui.add_space(12.0);
         ui.separator();
@@ -83,15 +87,17 @@ pub fn show(ctx: &Context, id: Id, prompt: Prompt<'_>) -> Option<Choice> {
                 let Some(label) = label else {
                     continue;
                 };
-                let mut button = egui::Button::new(label);
+                let mut button = egui::Button::new(crate::i18n::tr(ctx, label));
                 if value == Choice::Accept {
                     let ink = if ui.visuals().dark_mode {
                         Color32::from_rgb(16, 16, 16)
                     } else {
                         Color32::WHITE
                     };
-                    button = egui::Button::new(egui::RichText::new(label).color(ink))
-                        .fill(ui.visuals().selection.stroke.color);
+                    button = egui::Button::new(
+                        egui::RichText::new(crate::i18n::tr(ctx, label)).color(ink),
+                    )
+                    .fill(ui.visuals().selection.stroke.color);
                 }
                 if ui
                     .add_sized(Vec2::new(button_width, 40.0), button)

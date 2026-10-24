@@ -73,7 +73,10 @@ pub fn text_options(
                                 &mut options.background_fill,
                                 paintcraft_ui::i18n::tr(ui.ctx(), "Background fill"),
                             )
-                            .on_hover_text("Fill the text background with the secondary color");
+                            .on_hover_text(paintcraft_ui::i18n::tr(
+                                ui.ctx(),
+                                "Fill the text background with the secondary color",
+                            ));
                         });
                     });
                 });
@@ -89,10 +92,11 @@ fn style_button(ui: &mut Ui, text: RichText, label: &str, selected: bool) -> Res
             .frame(true),
         selected,
     );
+    let label = paintcraft_ui::i18n::tr(ui.ctx(), label);
     response.widget_info(|| {
-        egui::WidgetInfo::selected(egui::Role::Button, ui.is_enabled(), selected, label)
+        egui::WidgetInfo::selected(egui::Role::Button, ui.is_enabled(), selected, &label)
     });
-    response.on_hover_text(label)
+    response.on_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), label))
 }
 
 fn alignment(ui: &mut Ui, alignment: &mut TextAlignment) {

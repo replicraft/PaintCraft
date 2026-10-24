@@ -21,7 +21,7 @@ pub(super) fn tool_button(ui: &mut egui::Ui, state: &mut Controls, tool: Tool) -
 pub(super) fn prototype(ui: &mut egui::Ui, label: &str, icon: Icon, help: &str) {
     ui.add_enabled_ui(false, |ui| button(ui, label, icon, false))
         .inner
-        .on_disabled_hover_text(help);
+        .on_disabled_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), help));
 }
 
 fn button(ui: &mut egui::Ui, label: &str, icon: Icon, selected: bool) -> egui::Response {
@@ -43,5 +43,5 @@ fn button(ui: &mut egui::Ui, label: &str, icon: Icon, selected: bool) -> egui::R
     response.widget_info(|| {
         egui::WidgetInfo::selected(egui::Role::Button, ui.is_enabled(), selected, label)
     });
-    response.on_hover_text(label)
+    response.on_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), label))
 }

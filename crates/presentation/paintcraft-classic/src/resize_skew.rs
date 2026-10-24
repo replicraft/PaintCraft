@@ -84,7 +84,14 @@ pub fn dialog(ctx: &egui::Context, draft: &mut Draft, maximum: u32) -> bool {
                     egui::Layout::top_down(Align::Min),
                     |ui| {
                         ui.set_width(heading);
-                        ui.label(egui::RichText::new("Resize and skew").size(24.0).strong());
+                        ui.label(
+                            egui::RichText::new(paintcraft_ui::i18n::tr(
+                                ui.ctx(),
+                                "Resize and skew",
+                            ))
+                            .size(24.0)
+                            .strong(),
+                        );
                     },
                 );
                 close = paintcraft_ui::widgets::classic_menu_button(
@@ -149,17 +156,27 @@ pub fn dialog(ctx: &egui::Context, draft: &mut Draft, maximum: u32) -> bool {
                 });
             ui.add_space(12.0);
             ui.label(paintcraft_ui::i18n::tr(ui.ctx(), "Preview only"))
-                .on_hover_text("Resize and skew changes cannot be applied yet.");
+                .on_hover_text(paintcraft_ui::i18n::tr(
+                    ui.ctx(),
+                    "Resize and skew changes cannot be applied yet.",
+                ));
             ui.separator();
             ui.horizontal(|ui| {
                 let button = (width - ui.spacing().item_spacing.x) * 0.5;
                 ui.add_enabled(
                     false,
-                    egui::Button::new("OK").min_size(Vec2::new(button, 40.0)),
+                    egui::Button::new(paintcraft_ui::i18n::tr(ui.ctx(), "OK"))
+                        .min_size(Vec2::new(button, 40.0)),
                 )
-                .on_disabled_hover_text("Applying resize and skew is not available yet.");
+                .on_disabled_hover_text(paintcraft_ui::i18n::tr(
+                    ui.ctx(),
+                    "Applying resize and skew is not available yet.",
+                ));
                 close |= ui
-                    .add_sized([button, 40.0], egui::Button::new("Cancel"))
+                    .add_sized(
+                        [button, 40.0],
+                        egui::Button::new(paintcraft_ui::i18n::tr(ui.ctx(), "Cancel")),
+                    )
                     .clicked();
             });
         });
@@ -236,7 +253,9 @@ fn resize_fields(ui: &mut Ui, draft: &mut Draft, maximum: u32) {
                             "Maintain aspect ratio",
                         )
                     });
-                    if response.on_hover_text("Maintain aspect ratio").clicked()
+                    if response
+                        .on_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), "Maintain aspect ratio"))
+                        .clicked()
                         && ui.ctx().current_pass_index() == 0
                     {
                         draft.linked = !draft.linked;

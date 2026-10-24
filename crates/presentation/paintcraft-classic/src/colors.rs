@@ -120,7 +120,7 @@ fn swatch(
         ui.painter().circle_stroke(rect.center(), radius, stroke);
     }
     response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, ui.is_enabled(), label));
-    response.on_hover_text(label)
+    response.on_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), label))
 }
 
 fn palette(ui: &mut egui::Ui, editor: &mut ColorEditor, columns: usize, spacious: bool) {

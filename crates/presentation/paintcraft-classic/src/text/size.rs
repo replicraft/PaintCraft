@@ -18,7 +18,10 @@ pub(super) fn font_size(ui: &mut Ui, points: &mut u16) {
             size.widget_info(|| {
                 egui::WidgetInfo::labeled(egui::Role::SpinButton, ui.is_enabled(), "Font size")
             });
-            size.on_hover_text("Font size in points · type a value or choose a preset");
+            size.on_hover_text(paintcraft_ui::i18n::tr(
+                ui.ctx(),
+                "Font size in points · type a value or choose a preset",
+            ));
             ui.spacing_mut().button_padding = padding;
             corners(ui, false);
             let state_id = ui.make_persistent_id("font-size-was-open");
@@ -72,7 +75,7 @@ pub(super) fn font_size(ui: &mut Ui, points: &mut u16) {
                 ],
                 egui::Stroke::new(1.0, ui.visuals().text_color()),
             ));
-            response.on_hover_text("Font size presets");
+            response.on_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), "Font size presets"));
         },
     );
 }

@@ -94,7 +94,11 @@ pub fn panel<Id: Copy + Eq + Hash + std::fmt::Debug>(
 ) -> Vec<Action<Id>> {
     let mut actions = Vec::new();
     ui.horizontal(|ui| {
-        ui.label(egui::RichText::new("Layers").size(16.0).strong());
+        ui.label(
+            egui::RichText::new(paintcraft_ui::i18n::tr(ui.ctx(), "Layers"))
+                .size(16.0)
+                .strong(),
+        );
         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
             if classic_menu_button(ui, "Close Layers", Icon::Close, false, "Close Layers").clicked()
             {
@@ -152,7 +156,7 @@ pub fn panel<Id: Copy + Eq + Hash + std::fmt::Debug>(
                         let mut visible = row.visible;
                         let toggle = ui
                             .checkbox(&mut visible, paintcraft_ui::i18n::tr(ui.ctx(), ""))
-                            .on_hover_text("Visible");
+                            .on_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), "Visible"));
                         toggle.widget_info(|| {
                             egui::WidgetInfo::selected(
                                 egui::Role::CheckBox,

@@ -74,7 +74,7 @@ pub fn show(
                         response.on_hover_text(format!("Size: {size} px"));
                         let value = ui
                             .add(egui::DragValue::new(size).range(1..=1024))
-                            .on_hover_text("Size in pixels");
+                            .on_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), "Size in pixels"));
                         value.widget_info(|| {
                             egui::WidgetInfo::labeled(
                                 egui::Role::SpinButton,
@@ -138,5 +138,5 @@ fn panel(ui: &mut egui::Ui, body: impl FnOnce(&mut egui::Ui)) {
 fn header(ui: &mut egui::Ui, icon: Icon, label: &str) {
     let response = paintcraft_ui::icons::image(ui.ctx(), icon, 22.0).ui(ui);
     response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Image, ui.is_enabled(), label));
-    response.on_hover_text(label);
+    response.on_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), label));
 }

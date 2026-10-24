@@ -141,7 +141,13 @@ fn metrics(ui: &mut egui::Ui, status: &Status<'_>, width: f32) {
                         ui.visuals().widgets.noninteractive.bg_stroke,
                     );
                 }
-                let tip = format!("{label}: {}", value.as_deref().unwrap_or(empty));
+                let tip = format!(
+                    "{}: {}",
+                    paintcraft_ui::i18n::tr(ui.ctx(), label),
+                    value
+                        .clone()
+                        .unwrap_or_else(|| paintcraft_ui::i18n::tr(ui.ctx(), empty))
+                );
                 field.response.widget_info(|| {
                     egui::WidgetInfo::labeled(egui::Role::Label, ui.is_enabled(), &tip)
                 });

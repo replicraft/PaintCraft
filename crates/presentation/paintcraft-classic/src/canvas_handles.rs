@@ -33,9 +33,10 @@ pub(super) fn show(ui: &mut egui::Ui, canvas: Rect) {
         if response.contains_pointer() {
             ui.ctx().set_cursor_icon(CursorIcon::NotAllowed);
         }
-        response.on_disabled_hover_text(
+        response.on_disabled_hover_text(paintcraft_ui::i18n::tr(
+            ui.ctx(),
             "Canvas resize handles are not available yet. Use the View menu's Canvas size command.",
-        );
+        ));
         ui.painter().rect(
             Rect::from_center_size(point, Vec2::splat(5.0)),
             0,

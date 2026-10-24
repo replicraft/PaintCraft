@@ -42,9 +42,12 @@ pub(super) fn controls(
                     actions.push(super::Action::Crop);
                 }
                 if enabled {
-                    response.on_hover_text("Crop");
+                    response.on_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), "Crop"));
                 } else {
-                    response.on_disabled_hover_text("Select an area of the canvas to crop");
+                    response.on_disabled_hover_text(paintcraft_ui::i18n::tr(
+                        ui.ctx(),
+                        "Select an area of the canvas to crop",
+                    ));
                 }
                 rotate(ui, context, actions);
                 ui.end_row();
@@ -84,8 +87,11 @@ pub(super) fn controls(
             egui::WidgetInfo::labeled(egui::Role::Button, enabled, "Resize and skew")
         });
         if response
-            .on_hover_text("Resize and skew")
-            .on_disabled_hover_text("Open an image to preview resize and skew.")
+            .on_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), "Resize and skew"))
+            .on_disabled_hover_text(paintcraft_ui::i18n::tr(
+                ui.ctx(),
+                "Open an image to preview resize and skew.",
+            ))
             .clicked()
         {
             actions.push(super::Action::ResizeSkew);
@@ -111,7 +117,7 @@ fn unavailable(ui: &mut egui::Ui, label: &str, icon: Icon, size: Vec2, points: f
         })
         .inner;
     response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, false, label));
-    response.on_disabled_hover_text(help);
+    response.on_disabled_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), help));
 }
 
 pub(super) fn rotate(
@@ -213,7 +219,7 @@ fn menu(
                                 22.0,
                                 ui.visuals().dark_mode,
                             ),
-                            name,
+                            paintcraft_ui::i18n::tr(ui.ctx(), name),
                         ))
                         .min_size(Vec2::new(240.0, 40.0)),
                     );
@@ -222,9 +228,9 @@ fn menu(
                         ui.close();
                     }
                     if transform.is_none() {
-                        response.on_disabled_hover_text("This image transformation is not available yet.");
+                        response.on_disabled_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), "This image transformation is not available yet."));
                     } else if !enabled {
-                        response.on_disabled_hover_text("Select a nonempty canvas area and choose a layer, or deselect to transform the whole image.");
+                        response.on_disabled_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), "Select a nonempty canvas area and choose a layer, or deselect to transform the whole image."));
                     }
                 }
             });
@@ -247,7 +253,7 @@ fn menu(
         [center + Vec2::new(0.0, 1.5), center + Vec2::new(3.0, -1.5)],
         stroke,
     );
-    response.on_hover_text(label);
+    response.on_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), label));
 }
 
 /// The older ribbons group Crop, Resize and Rotate/Flip together without
