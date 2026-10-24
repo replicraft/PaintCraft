@@ -191,6 +191,7 @@ impl App {
                     };
                     self.request(ctx, code::CLEAR_CANVAS, Action::ClearCanvas { color });
                 }
+                Chrome::ResizeSkew => self.begin_resize_skew(),
                 Chrome::CanvasSize | Chrome::CanvasDefaults => {
                     self.begin_canvas_dialog(ctx, action == Chrome::CanvasDefaults)
                 }
@@ -247,6 +248,10 @@ impl App {
             self.classic_color_dialog(&ctx, draft);
             return;
         }
+        if let Confirm::ResizeSkew(draft) = confirm {
+            self.resize_skew_dialog(&ctx, draft);
+            return;
+        }
         if let Confirm::Canvas(draft) = confirm {
             self.canvas_settings_dialog(&ctx, draft);
             return;
@@ -256,7 +261,7 @@ impl App {
             return;
         }
         let (title, text, go) = match &confirm {
-            Confirm::Settings(_) | Confirm::SwitchInterface(_) | Confirm::Colors(_) | Confirm::Canvas(_) | Confirm::LayerProperties(_) => unreachable!("properties handled above"),
+            Confirm::Settings(_) | Confirm::SwitchInterface(_) | Confirm::Colors(_) | Confirm::Canvas(_) | Confirm::ResizeSkew(_) | Confirm::LayerProperties(_) => unreachable!("properties handled above"),
             Confirm::DiscardForNew
             | Confirm::DiscardForOpen(_)
             | Confirm::DiscardForRecovery(_)
@@ -335,6 +340,7 @@ impl App {
                     | Confirm::SwitchInterface(_)
                     | Confirm::Colors(_)
                     | Confirm::Canvas(_)
+                    | Confirm::ResizeSkew(_)
                     | Confirm::LayerProperties(_) => {
                         unreachable!("properties handled above")
                     }

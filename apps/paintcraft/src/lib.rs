@@ -40,6 +40,8 @@ mod recovery;
 mod rendering;
 #[path = "app/residency.rs"]
 mod residency;
+#[path = "app/resize_skew.rs"]
+mod resize_skew;
 mod saving;
 pub mod settings;
 #[path = "app/status.rs"]
@@ -117,6 +119,7 @@ enum Confirm {
     SwitchInterface(Experience),
     Colors(colors::ColorDraft),
     Canvas(canvas_settings::CanvasDraft),
+    ResizeSkew(resize_skew::Draft),
     LayerProperties(layers::PropertiesDraft),
     DiscardForNew,
     DiscardForOpen(PathBuf),

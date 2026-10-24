@@ -99,10 +99,6 @@ fn classic_ribbon_dropdowns_are_compact_and_show_one_tooltip_at_each_display_sca
         for (label, tooltip) in [
             ("Crop", "Cropping is not available yet."),
             (
-                "Resize and skew",
-                "Image resizing and skewing are not available yet. Canvas size is available in View.",
-            ),
-            (
                 "Remove background",
                 "Background removal is not available yet.",
             ),

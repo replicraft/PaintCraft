@@ -1,9 +1,13 @@
-//! Image menu presentation. Transform operations remain unavailable.
+//! Image controls and Resize/skew presentation; transforms remain unavailable.
 use egui::{Rect, Vec2};
 use paintcraft_ui::icons::Icon;
 
 /// The resize control spans the two Image rows, matching the reference grouping.
-pub(super) fn controls(ui: &mut egui::Ui) {
+pub(super) fn controls(
+    ui: &mut egui::Ui,
+    context: paintcraft_ui::actions::Context,
+    actions: &mut Vec<super::Action>,
+) {
     ui.horizontal_top(|ui| {
         ui.spacing_mut().item_spacing.x = 6.0;
         egui::Grid::new("image-ribbon")
@@ -29,14 +33,38 @@ pub(super) fn controls(ui: &mut egui::Ui) {
                 );
                 flip(ui);
             });
-        unavailable(
-            ui,
-            "Resize and skew",
-            Icon::Resize,
-            Vec2::new(64.0, 84.0),
-            32.0,
-            "Image resizing and skewing are not available yet. Canvas size is available in View.",
-        );
+        let enabled = super::Action::ResizeSkew.enabled(context);
+        let response = ui
+            .add_enabled_ui(enabled, |ui| {
+                let response = ui.add(
+                    egui::Button::new("")
+                        .min_size(Vec2::new(64.0, 84.0))
+                        .frame_when_inactive(false)
+                        .frame(true),
+                );
+                paintcraft_ui::icons::classic_image(
+                    ui.ctx(),
+                    Icon::Resize,
+                    32.0,
+                    ui.visuals().dark_mode,
+                )
+                .paint_at(
+                    ui,
+                    Rect::from_center_size(response.rect.center(), Vec2::splat(32.0)),
+                );
+                response
+            })
+            .inner;
+        response.widget_info(|| {
+            egui::WidgetInfo::labeled(egui::Role::Button, enabled, "Resize and skew")
+        });
+        if response
+            .on_hover_text("Resize and skew")
+            .on_disabled_hover_text("Open an image to preview resize and skew.")
+            .clicked()
+        {
+            actions.push(super::Action::ResizeSkew);
+        }
     });
 }
 

@@ -40,7 +40,7 @@ pub(super) fn ribbon(
                 });
                 ui.separator();
                 group(ui, "Image", |ui| {
-                    super::image_menus::controls(ui);
+                    super::image_menus::controls(ui, context, actions);
                 });
                 ui.separator();
                 group(ui, "Tools", |ui| {

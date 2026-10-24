@@ -30,6 +30,7 @@ impl Action {
                 return None;
             }
             Self::CanvasSize => Icon::CanvasSize,
+            Self::ResizeSkew => Icon::Resize,
             Self::ClearCanvas => Icon::ClearCanvas,
             Self::EditColors | Self::EditSecondaryColors | Self::EditCustomColor(_) => {
                 Icon::EditColors

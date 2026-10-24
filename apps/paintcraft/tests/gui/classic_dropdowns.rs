@@ -304,7 +304,7 @@ fn classic_image_controls_use_two_rows_with_a_spanning_resize_preview() {
         assert!(h.output().shapes.iter().any(|shape| matches!(&shape.shape,
             Shape::Rect(image) if image.brush.is_some() && resize.contains_rect(image.rect) && image.rect.size() == Vec2::splat(32.0) && image.rect.center().distance(resize.center()) < 0.5
         )), "Resize paints its larger picture/arrow glyph");
-        for label in ["Crop", "Remove background", "Resize and skew"] {
+        for label in ["Crop", "Remove background"] {
             let node = h.get_by_role_and_label(Role::Button, label);
             assert!(node.accesskit_node().is_disabled());
             node.click();
@@ -494,13 +494,7 @@ fn classic_image_and_shape_previews_are_present_without_enabling_unimplemented_e
     let mut h = harness();
     let before = h.state().editor().document_snapshot();
     let canvas = h.state().canvas_rect();
-    for label in [
-        "Crop",
-        "Resize and skew",
-        "Remove background",
-        "Color picker",
-        "Magnifier",
-    ] {
+    for label in ["Crop", "Remove background", "Color picker", "Magnifier"] {
         assert!(
             h.get_by_label(label).accesskit_node().is_disabled(),
             "{label}"

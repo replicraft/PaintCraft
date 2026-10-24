@@ -322,3 +322,6 @@ mod dimension_fields;
 
 #[path = "gui/stroke_size.rs"]
 mod stroke_size;
+
+#[path = "gui/resize_skew.rs"]
+mod resize_skew;

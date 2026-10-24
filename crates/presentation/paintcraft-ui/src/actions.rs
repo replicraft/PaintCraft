@@ -19,6 +19,7 @@ pub enum Action {
     Settings,
     ChooseFrontend(Frontend),
     CanvasSize,
+    ResizeSkew,
     ClearCanvas,
     CanvasDefaults,
     EditColors,
@@ -114,6 +115,7 @@ impl Action {
                 cfg!(target_os = "macos").then_some((Key::Comma, false)),
             ),
             Self::CanvasSize => ("Canvas size…", None),
+            Self::ResizeSkew => ("Resize and skew", None),
             Self::ClearCanvas => ("Clear Canvas", None),
             Self::CanvasDefaults => ("Default canvas size…", None),
             Self::EditColors => ("Edit colors…", None),
@@ -177,6 +179,7 @@ impl Action {
             ) => frontend == Frontend::Classic,
             Self::Interface
             | Self::CanvasSize
+            | Self::ResizeSkew
             | Self::CanvasDefaults
             | Self::EditColors
             | Self::EditSecondaryColors
@@ -259,6 +262,7 @@ impl Action {
             Self::Close => 1010,
             Self::Exit => 1019,
             Self::CanvasSize => 1011,
+            Self::ResizeSkew => 1020,
             Self::ClearCanvas => 1018,
             Self::Settings => 1015,
             Self::ChooseFrontend(frontend) => 1016 + frontend as u64,

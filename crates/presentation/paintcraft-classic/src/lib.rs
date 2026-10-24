@@ -17,6 +17,7 @@ pub use form_controls::style as form_control_style;
 mod image_menus;
 pub mod layers;
 mod menus;
+pub mod resize_skew;
 mod toolbar_visibility;
 pub use toolbar_visibility::ToolbarVisibility;
 mod palette;
