@@ -73,3 +73,6 @@ mod browser {
         }
     }
 }
+
+#[cfg(test)]
+mod picker_tests;

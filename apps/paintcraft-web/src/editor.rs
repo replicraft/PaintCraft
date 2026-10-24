@@ -119,10 +119,41 @@ impl Editor {
         {
             return Ok(());
         }
-        if !matches!(&action, Action::Text { .. }) {
+        if !matches!(&action, Action::Text { .. } | Action::PickColor(_)) {
             self.place_text()?;
         }
         match action {
+            Action::PickColor(pick) => {
+                if !self.tools.can_apply_color_pick(&pick) {
+                    return Err(Error::new(
+                        ErrorCode::ConflictStaleBase,
+                        "color sample cancelled: tool or color slot changed",
+                    ));
+                }
+                let layer =
+                    match pick.source {
+                        paintcraft_core::types::picker::SampleSource::Image => None,
+                        paintcraft_core::types::picker::SampleSource::Layer => {
+                            Some(self.session.document().layers.get(&pick.layer).ok_or_else(
+                                || {
+                                    Error::new(
+                                        ErrorCode::ReferenceUnknownId,
+                                        "sampling layer is unavailable",
+                                    )
+                                },
+                            )?)
+                        }
+                    };
+                let color = paintcraft_render::sampling::sample_color(
+                    self.session.document(),
+                    layer,
+                    pick.at,
+                    pick.size,
+                    || Ok(()),
+                )?;
+                self.tools.apply_picked_color(&pick, color);
+                Ok(())
+            }
             Action::TransformImage { transform, clear } => {
                 let op = commands::transform_image(
                     self.session.selection(),

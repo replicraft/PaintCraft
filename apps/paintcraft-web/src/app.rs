@@ -119,9 +119,15 @@ impl WebApp {
             action,
             Edit::CropToSelection | Edit::ResizeCanvas { .. } | Edit::TransformImage { .. }
         );
+        let picked = matches!(action, Edit::PickColor(_));
         let before_size = self.editor.session.document().canvas;
         match self.editor.apply(action) {
             Ok(()) => {
+                if picked {
+                    self.controls.primary = self.editor.tools.color;
+                    self.controls.secondary = self.editor.tools.secondary;
+                    self.controls.tool = self.editor.tools.tool;
+                }
                 let size = self.editor.session.document().canvas;
                 if remember_size && size != before_size {
                     self.remember_canvas_size(size);
@@ -168,6 +174,7 @@ impl WebApp {
                 }
                 self.editor.tools.cancel_gesture();
                 self.controls.tool = tool;
+                self.editor.tools.choose_tool(tool);
             }
             Action::Undo => {
                 self.editor.tools.cancel_gesture();

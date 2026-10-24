@@ -213,10 +213,16 @@ impl WebApp {
             self.editor.tools.cancel_gesture();
             return;
         }
-        self.editor.tools.tool = self.controls.tool;
+        self.editor.tools.activate_tool(self.controls.tool);
         self.editor.tools.color = self.controls.primary;
         self.editor.tools.secondary = self.controls.secondary;
         self.editor.tools.options = self.controls.options;
+        if self.controls.tool == Tool::ColorPicker {
+            use paintcraft_core::types::picker::{PickerAfter, SampleSize, SampleSource};
+            self.editor.tools.options.picker_source = SampleSource::Image;
+            self.editor.tools.options.picker_size = SampleSize::One;
+            self.editor.tools.options.picker_after = PickerAfter::Previous;
+        }
         self.editor.tools.options.eraser_color =
             paintcraft_tools::commands::canvas_color(self.editor.session.document());
         let rect = response.rect;
@@ -281,8 +287,15 @@ impl WebApp {
                         && self.canvas.controls.is_none_or(|rect| !rect.contains(pos))
                         && response.contains_pointer()
                     {
-                        if let Some(layer) = self.editor.target
-                            && self.editor.session.document().layers[&layer].visible
+                        let layer = self.editor.target.unwrap_or(uuid::Uuid::nil());
+                        if self.controls.tool == Tool::ColorPicker
+                            || self
+                                .editor
+                                .session
+                                .document()
+                                .layers
+                                .get(&layer)
+                                .is_some_and(|layer| layer.visible)
                         {
                             if self.controls.tool == Tool::Text {
                                 let p = point(pos);
