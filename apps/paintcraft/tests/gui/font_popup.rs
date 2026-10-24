@@ -24,7 +24,7 @@ fn font_navigation_leaves_ime_composition_in_control_of_search() {
             }
         },
         FontUi {
-            families: vec!["Selawik".into(), "Test family".into()],
+            families: vec!["Arial".into(), "Test family".into()],
             ..Default::default()
         },
     );
@@ -40,7 +40,7 @@ fn font_navigation_leaves_ime_composition_in_control_of_search() {
     h.run();
     h.key_press(Key::Enter);
     h.run();
-    assert_eq!(h.state().options.family, "Selawik");
+    assert_eq!(h.state().options.family, "Arial");
     assert!(h.query_by_label("Search fonts").is_some());
     h.event(Event::Ime(eframe::egui::ImeEvent::Commit(
         "Test family".into(),
@@ -302,7 +302,7 @@ fn text_dropdown_rows_match_toolbar_metrics_and_keep_selected_choices_reachable(
                     }
                 },
                 FontUi {
-                    families: vec!["Selawik".into(), "Fixture family".into()],
+                    families: vec!["Arial".into(), "Fixture family".into()],
                     ..Default::default()
                 },
             );
@@ -333,13 +333,13 @@ fn text_dropdown_rows_match_toolbar_metrics_and_keep_selected_choices_reachable(
         assert!(h.query_by_label("72 pt").is_none());
         h.get_by_label("Font family").click();
         h.run();
-        let selected = h.get_by_label("Selawik");
+        let selected = h.get_by_label("Arial");
         assert_eq!(selected.rect().height(), 40.0);
         assert_eq!(selected.accesskit_node().toggled(), Some(Toggled::True));
         h.key_press(Key::Escape);
         h.run();
         assert!(h.query_by_label("Search fonts").is_none());
-        assert_eq!(h.state().options.family, "Selawik");
+        assert_eq!(h.state().options.family, "Arial");
         assert_eq!(h.state().options.points, 72);
     }
 }

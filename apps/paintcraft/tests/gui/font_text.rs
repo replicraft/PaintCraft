@@ -163,7 +163,7 @@ fn classic_font_search_reports_no_matches_and_does_not_change_the_selected_font(
         .type_text("no-matching-family-982341");
     h.run();
     assert!(h.query_by_label("No matching fonts").is_some());
-    assert_eq!(Settings::load(&dir).0.text.family, "Selawik");
+    assert_eq!(Settings::load(&dir).0.text.family, "Arial");
     assert!(!h.state().editor().is_dirty());
     h.key_press(Key::Escape);
     h.run();

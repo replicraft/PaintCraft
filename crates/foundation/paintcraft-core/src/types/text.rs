@@ -23,7 +23,7 @@ pub struct TextOptions {
 impl Default for TextOptions {
     fn default() -> Self {
         Self {
-            family: "Selawik".into(),
+            family: "Arial".into(),
             points: 11,
             bold: false,
             italic: false,

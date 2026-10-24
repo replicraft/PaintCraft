@@ -90,6 +90,13 @@ impl App {
             self.fonts.families.push("Selawik".into());
         }
         self.fonts.families.sort_by_key(|name| name.to_lowercase());
+        // Arial ships on Windows and macOS, but may be absent elsewhere.
+        // Keep explicit user preferences; only resolve an unavailable default.
+        if self.settings.text.family == "Arial"
+            && !self.fonts.families.iter().any(|name| name == "Arial")
+        {
+            self.settings.text.family = "Selawik".into();
+        }
     }
 
     pub(super) fn classic_text_options(&mut self, ui: &mut egui::Ui) {
@@ -142,5 +149,24 @@ mod tests {
         assert_eq!(app.preview_revision, revision + 1);
         app.poll_fonts();
         assert_eq!(app.preview_revision, revision + 1);
+    }
+    #[test]
+    fn installed_arial_is_the_default_without_overwriting_custom_font_preferences() {
+        for (selected, installed, expected) in [
+            ("Arial", vec!["Arial".into()], "Arial"),
+            ("Arial", vec!["Example".into()], "Selawik"),
+            ("Example", vec!["Arial".into(), "Example".into()], "Example"),
+        ] {
+            let mut app = App::new(None);
+            app.settings.text.family = selected.into();
+            app.fonts.ready = Some((
+                FontCatalog {
+                    families: installed,
+                },
+                text::bundled(),
+            ));
+            app.poll_fonts();
+            assert_eq!(app.settings.text.family, expected);
+        }
     }
 }
