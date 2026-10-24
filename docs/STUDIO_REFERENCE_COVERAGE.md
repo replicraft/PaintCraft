@@ -50,12 +50,12 @@ independent behavioral reference evidence.
 | History | working | Recorded labels, undo/redo and guarded direct navigation; branching/spill is separate work |
 | File workflows | partially working | New/Open/Save/Save As/Export and native dialogs work; shared metadata and menu/shortcut dispatch cover existing operations; Save All and desktop recent files now work; printing and acquisition remain |
 | Colors and layers | partially working | Primary/secondary swatches, swap, wheel, palette and More RGBA/hex controls work; layer selection/visibility/rename/opacity/reorder/add/delete/duplicate and staged properties work; custom palettes, thumbnails, merge/transforms and broader blend modes remain |
-| View menu | partially working | Zoom in/out, actual size, fit window/selection and a display-only pixel grid work; rulers, units, pan tools and overscroll remain |
+| View menu | partially working | Zoom in/out, actual size, fit window/selection and a display-only pixel grid work; pan, temporary Space/middle-button navigation, keyboard panning, overscroll and drag-edge auto-scroll also work; rulers, units and native/reference qualification remain |
 | Settings | partially working | Light/Dark/System with live preview and Apply/Cancel, experience/version and canvas defaults; text prototype preference; utility-window persistence and remaining reference pages pending |
-| Selection/clipboard/image/adjustments/effects | partially working | Rectangle selection and existing drawing tools work; clipboard, transforms, adjustment/effect registries and preview lifecycles remain |
-| Classic v11 fidelity | in progress | Current frontend priority; subpixel brush input and percentage zoom controls work; staged RGB/HSL color picker and persistent custom palettes work; full ribbon and remaining editing workflows remain |
+| Selection/clipboard/image/adjustments/effects | partially working | Rectangle selection, crop and exact 90°/180° rotations/flips work; richer selections, clipboard, custom-angle/resampling/skew transforms, adjustment/effect registries and preview lifecycles remain |
+| Classic v11 fidelity | in progress | Subpixel brush input and percentage zoom controls work; staged RGB/HSL color picker and persistent custom palettes work; full ribbon and remaining editing workflows remain |
 
-Current user priority is UI/theme fidelity, permitting explicitly labelled or disabled prototypes before further editing features. See [Classic UI scope](CLASSIC.md).
+Current user priority is completing missing editing features before UI cleanup, then focusing on Studio. See [Classic UI scope](CLASSIC.md).
 
 Finish one functional slice at a time. Shared action descriptors and menu/shortcut equivalence now cover existing
 operations, respecting text/IME and modal ownership. Subsequent slices add missing

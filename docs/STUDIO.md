@@ -39,10 +39,11 @@ Settings v3 saves the active experience independently of the Classic version and
 adds Classic canvas-size preferences. V1/v2 settings migrate with their original
 interface choice retained. Studio New retains its existing 320 × 320 size. Launching a
 saved Studio workspace skips the Classic picker; entering Classic for the first
-time still asks for its version. Switching presentation preserves the current
-document, target and history; an active stroke is cancelled and active text follows
-the existing explicit commit path. Panel placement and visibility currently last
-for the running session, not across restarts.
+time still asks for its version. Classic and Studio have independent document
+workspaces. Switching requires saving or explicitly discarding changed documents;
+cancelled or failed saves keep the current interface active. Each workspace retains
+its own document, target, history and view state. Panel placement and visibility
+currently last for the running session, not across restarts.
 
 ## Next Studio work
 
@@ -53,7 +54,9 @@ for the running session, not across restarts.
 3. Image/layer editing operations and richer selection interactions through typed
    commands, with clipping, atomic failure and history coverage.
 4. Region-aware adjustments/effects, followed by qualified GPU implementations.
-5. Shaped system-font text and IME interactions; broader codecs and PDN compatibility.
+5. Persistent editable text, caret/selection editing, font-resource capture and IME
+   qualification; broader codecs and PDN compatibility. Cosmic Text/Swash already
+   provide system-font shaping and grayscale rasterization.
 
 This slice is not Paint.NET parity or a completed T19/M3 gate. Document tabs are
 working; thumbnail navigation, effects UI and PDN import remain deferred.
@@ -139,9 +142,9 @@ New, Open, Save, Save As, Close, Undo, Redo, Select All and Deselect have comman
 shortcuts (Ctrl on Windows/Linux, Command on macOS). Shift+Command+Z also invokes
 Redo. Save As does not fall through to Save. Focused widgets and active IME
 preedit retain keyboard ownership; modal/file-dialog ownership blocks background
-actions. This protects input routing; full system-font/IME canvas text is still
-pending. Engine-only operations remain available through their typed commands
-and CLI; native document-window actions have no headless equivalent.
+actions. Cosmic Text/Swash already render shaped system-font canvas text;
+persistent text objects, caret editing and native IME qualification remain pending.
+Engine-only operations remain available through their typed commands and CLI; native document-window actions have no headless equivalent.
 
 Save All is implemented below, and the desktop now has [recent files](RECENT_FILES.md).
 Printing, acquisition and remaining editing commands are not registered as working controls yet. The registry is a first slice for
@@ -258,8 +261,9 @@ Pixel Grid is an overlay at magnification of at least four physical pixels per
 document pixel. It draws only visible boundaries with one-physical-pixel strokes,
 without scanning the document area or changing the rendered image buffer. Zoom,
 grid and pending viewport centering belong to each document. None changes pixels,
-selection, history, dirty state or PCND bytes. Rulers, units/DPI metadata,
-pan tools and persistent viewport settings remain separate work.
+selection, history, dirty state or PCND bytes. Pan, overscroll and drag-edge
+auto-scroll are implemented below. Rulers, units/DPI metadata and remaining
+viewport persistence/reference qualification remain separate work.
 
 Tests cover physical scaling, fractional drawing coordinates, actual size, fit at
 multiple DPI scales, fitting/scrolling to a selection, menu/shortcut/preset dispatch,
