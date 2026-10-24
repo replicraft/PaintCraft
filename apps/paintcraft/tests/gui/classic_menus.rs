@@ -62,12 +62,7 @@ fn classic_file_and_edit_reference_previews_are_disabled_without_changing_docume
     let before = h.state().editor().document_snapshot();
     let history = h.state().editor().history_view().ticket;
     file(&mut h);
-    for label in [
-        "Recent",
-        "Share",
-        "Set as desktop background",
-        "Image properties",
-    ] {
+    for label in ["Recent", "Share", "Set as desktop background"] {
         assert!(
             h.get_by_role_and_label(Role::Button, "File")
                 .get_by_label(label)

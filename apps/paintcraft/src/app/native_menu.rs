@@ -17,7 +17,7 @@ fn actions() -> Vec<Chrome> {
                 .copied()
                 .map(Chrome::View),
         )
-        .chain([Chrome::Settings])
+        .chain([Chrome::Settings, Chrome::ImageProperties])
         .collect()
 }
 
@@ -28,6 +28,7 @@ fn shortcut(action: Chrome, frontend: Frontend) -> Option<&'static str> {
         Chrome::Save => "meta+KeyS",
         Chrome::SaveAs => "meta+shift+KeyS",
         Chrome::Close => "meta+KeyW",
+        Chrome::ImageProperties if frontend == Frontend::Classic => "meta+KeyE",
         Chrome::Undo => "meta+KeyZ",
         Chrome::Redo => "meta+shift+KeyZ",
         Chrome::SelectAll => "meta+KeyA",
@@ -59,10 +60,12 @@ impl App {
                 })
                 .collect(),
         };
+        let mut file = paintcraft_ui::actions::FILE.to_vec();
+        file.insert(file.len() - 1, Chrome::ImageProperties);
         let wake = ctx.clone();
         match NativeMenu::new(
             vec![
-                section("File", paintcraft_ui::actions::FILE.to_vec()),
+                section("File", file),
                 section("Edit", paintcraft_ui::actions::EDIT.to_vec()),
                 section(
                     "View",
@@ -138,5 +141,33 @@ impl App {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn image_properties_has_one_native_identity_and_a_classic_only_accelerator() {
+        assert_eq!(
+            actions()
+                .iter()
+                .filter(|&&a| a == Chrome::ImageProperties)
+                .count(),
+            1
+        );
+        assert_eq!(
+            shortcut(Chrome::ImageProperties, Frontend::Classic),
+            Some("meta+KeyE")
+        );
+        assert_eq!(shortcut(Chrome::ImageProperties, Frontend::Studio), None);
+        assert_eq!(
+            Chrome::from_shortcut_for(Frontend::Classic, egui::Key::E, egui::Modifiers::COMMAND),
+            Some(Chrome::ImageProperties)
+        );
+        assert_eq!(
+            Chrome::from_shortcut_for(Frontend::Studio, egui::Key::E, egui::Modifiers::COMMAND),
+            None
+        );
     }
 }

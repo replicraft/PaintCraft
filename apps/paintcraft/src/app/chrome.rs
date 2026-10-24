@@ -192,6 +192,7 @@ impl App {
                     self.request(ctx, code::CLEAR_CANVAS, Action::ClearCanvas { color });
                 }
                 Chrome::ResizeSkew => self.begin_resize_skew(),
+                Chrome::ImageProperties => self.begin_image_properties(),
                 Chrome::CanvasSize | Chrome::CanvasDefaults => {
                     self.begin_canvas_dialog(ctx, action == Chrome::CanvasDefaults)
                 }

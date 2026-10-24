@@ -325,3 +325,6 @@ mod stroke_size;
 
 #[path = "gui/resize_skew.rs"]
 mod resize_skew;
+
+#[path = "gui/image_properties.rs"]
+mod image_properties;

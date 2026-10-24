@@ -31,6 +31,7 @@ impl Action {
             }
             Self::CanvasSize => Icon::CanvasSize,
             Self::ResizeSkew => Icon::Resize,
+            Self::ImageProperties => Icon::ImageProperties,
             Self::ClearCanvas => Icon::ClearCanvas,
             Self::EditColors | Self::EditSecondaryColors | Self::EditCustomColor(_) => {
                 Icon::EditColors

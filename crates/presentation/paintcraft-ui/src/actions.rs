@@ -20,6 +20,7 @@ pub enum Action {
     ChooseFrontend(Frontend),
     CanvasSize,
     ResizeSkew,
+    ImageProperties,
     ClearCanvas,
     CanvasDefaults,
     EditColors,
@@ -116,6 +117,7 @@ impl Action {
             ),
             Self::CanvasSize => ("Canvas size…", None),
             Self::ResizeSkew => ("Resize and skew", None),
+            Self::ImageProperties => ("Image properties", Some((Key::E, false))),
             Self::ClearCanvas => ("Clear Canvas", None),
             Self::CanvasDefaults => ("Default canvas size…", None),
             Self::EditColors => ("Edit colors…", None),
@@ -180,6 +182,7 @@ impl Action {
             Self::Interface
             | Self::CanvasSize
             | Self::ResizeSkew
+            | Self::ImageProperties
             | Self::CanvasDefaults
             | Self::EditColors
             | Self::EditSecondaryColors
@@ -235,7 +238,7 @@ impl Action {
         FILE.iter()
             .chain(EDIT)
             .copied()
-            .chain([Self::Settings])
+            .chain([Self::Settings, Self::ImageProperties])
             .chain(LAYERS.iter().copied().map(Self::Layer))
             .chain(VIEW.iter().copied().map(Self::View))
             .find(|a| {
@@ -263,6 +266,7 @@ impl Action {
             Self::Exit => 1019,
             Self::CanvasSize => 1011,
             Self::ResizeSkew => 1020,
+            Self::ImageProperties => 1021,
             Self::ClearCanvas => 1018,
             Self::Settings => 1015,
             Self::ChooseFrontend(frontend) => 1016 + frontend as u64,

@@ -76,12 +76,12 @@ pub(super) fn file(ui: &mut Ui, context: Context, actions: &mut Vec<Action>) {
                 "Setting the desktop background is not available yet.",
             );
             ui.separator();
-            unavailable(
+            action(
                 ui,
+                context,
+                actions,
+                Action::ImageProperties,
                 "Image properties",
-                Icon::ImageProperties,
-                Some(KeyboardShortcut::new(Modifiers::COMMAND, Key::E)),
-                "Image properties are not available yet. Canvas size is available in View.",
             );
             // Close is a PaintCraft document-workspace extension; Exit closes the
             // window through the same host-owned unsaved-work guard as the OS menu.
