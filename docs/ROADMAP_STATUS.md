@@ -11,6 +11,20 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest web work replaces the blank preview with a bounded Classic editor: shared
+document/session/tools, matching raster previews and commits, selection, real
+layers and undo/redo. Browser picking opens PCND/PNG/BMP/JPEG; project downloads
+and confirmed PNG flattening/export are connected. Downloads retain unsaved state,
+and New/Open require explicit discard of dirty work. Native codec/filesystem
+services are excluded from wasm. Thirteen web tests, 69 format tests (one ignored
+helper), strict workspace/wasm checks and release bundling pass. Isolated headless
+Brave verified drawing/release/undo pixels plus project download, PNG import and
+project reopen. See [the browser editor evidence](validation/web-editor-2026-10-23/validation.json).
+Editable text, transforms, browser workers/recovery and actual GPU document
+composition remain unfinished. This single-browser smoke check does not implement
+the native-equivalent fixture/interruption matrix: T22 stays not-started and T15
+stays partial. Earlier preview-only entries below are historical.
+
 Latest desktop Thumbnail work includes active paint, shapes and editable text
 through immutable private raster preparation. Same-gesture older results are
 marked updating; document/state/epoch/owner checks reject cancelled or superseded

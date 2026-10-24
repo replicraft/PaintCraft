@@ -1,0 +1,44 @@
+{
+  "date": "2026-10-23",
+  "source_commit": "86a30823d82c25cea91e104ddaed3e1429d7f2c2",
+  "drawing_browser_source_commit": "fa9fae8809557825590195da371dcafaeb0a5de7",
+  "status": "partial_browser_editor",
+  "scope": "Classic browser presentation now owns a real shared document/session, tool state machines, command rasterization, selection and history. Supported tools: pencil, round/square brush, opaque-ground eraser, fill, line/rectangle/ellipse; Shift constraints, Ctrl/Cmd-scroll zoom, clear and undo/redo. Layers can be added/selected/hidden/reordered/deleted.",
+  "files": "Browser picker opens PCND/PNG/BMP/JPEG. Image import losses require acknowledgement. Save/Save as request an editable PCND download. Export requests a PNG after explicit flattening confirmation. New/Open protect dirty work; cancellation/failure retains the current session. Downloads never acknowledge confirmed disk persistence or clear dirty state. Before-unload confirmation is browser-policy controlled and is not recovery.",
+  "architecture": "Raster command preparation moved into paintcraft-tools and is shared with desktop. Native Zstandard history and native filesystem save/recovery services remain outside the wasm dependency graph. Browser history currently uses raw snapshots; LZ4 is also portable. No fork of the desktop controller or native dialog service is used.",
+  "limits": "Synchronous browser adapter: canvas <=4,194,304 pixels, strokes <=8192 points (exceeding cancels), history retention budget 64 MiB with old-entry trimming, input/project output <=64 MiB, private staged tile budget 16,777,216 pixels. These are logical admission limits, not an allocator-enforced physical memory bound or measured latency qualification. Document composition is CPU; wgpu/WebGPU/WebGL present the UI.",
+  "checks": {
+    "web": "12 unit/UI integration tests plus 1 external UI test passed; includes preview/release equality for six tools, independent opaque eraser pixels, selection clipping, atomic denied staging, undo/redo, Escape/pointer-loss, New discard/cancel, layer retargeting, zoom and PNG export confirmation.",
+    "formats": "69 tests passed, 1 subprocess helper ignored. New host limits reject oversized canvases/decodes and denied tile staging, preserving the default reader contract.",
+    "history": "12 native history tests passed, including Zstandard/LZ4 bounded and corrupt-frame behavior after codec isolation.",
+    "desktop": "94 desktop controller tests passed, 2 ignored, after shared command extraction.",
+    "static": "Strict workspace all-target Clippy, final web all-target Clippy and final wasm32 Clippy passed. Source length, formatting, whitespace and JavaScript syntax checks passed.",
+    "build": "Final optimized wasm bundle and wasm-bindgen generation passed.",
+    "browser": "Isolated headless Brave on one Mac with WebGPU enabled. Initial drawing sample had byte-identical captured canvas crops while held/after release, Undo restored blank pixels and dirty state, and no uncaught JavaScript errors. Final file sample downloaded a real PCND, kept the session dirty, successfully undid after dialog close, imported a 320x200 PNG and reopened the painted 1000x486 project. File chooser interception supplies smoke fixtures; this is not physical chooser/device qualification. PNG export has host codec and GUI confirmation coverage; its browser download was not separately exercised."
+  },
+  "remaining": [
+    "Editable text and shaping, image transforms, custom color/canvas property dialogs, additional brushes/shapes/view actions and frontend switching.",
+    "Browser workers, large-document resource/cancellation qualification, storage/recovery, confirmed durable browser saves, clipboard and actual GPU document composition.",
+    "Cross-browser/native-equivalent conformance fixtures, interruption matrix, IME, tablet/touch/pressure/tilt, WebGL fallback and device/accessibility qualification. T22 conformance remains not-started and T15 remains partial."
+  ],
+  "sha256": {
+    "brush-held.png": "5687862760ac636c9d2204dfa31924c16df1b138b62529dcb7df3c2ffa857ab5",
+    "brush-released.png": "5687862760ac636c9d2204dfa31924c16df1b138b62529dcb7df3c2ffa857ab5",
+    "brush-undone.png": "09b0e76bdaaa956190dfa8ce6ed709d65f2890279ba5779fa138977c9106878a",
+    "desktop-controller-tests.log.gz": "16029c26f9d9664078b0be83c0e2ea01104d62dd13d466893aad2dd31c371048",
+    "downloaded-project.pcnd.gz": "643103b39dbf42b96bddcb7e82c8d3c2df4c450feac7cd8cddf8aa42a24907a2",
+    "drawing-check.json": "961906724fbfdeedcfc28edd8689a121c4499de4beed930e683e0e7f77b69845",
+    "drawing-smoke.mjs": "c427db0de8e84a6ffa24a58528e7211437ad49a2f9ec19d0aed3a6fcbcddf359",
+    "files-check.json": "c3b23813d863ea57d9866bdf61627e2708987695bb4fa1b5beef8f0c70201d7e",
+    "files-smoke.mjs": "d97ff7a064d5f278a4dd3b37eab49ff664dcdc9252d9dde69ac9083ad62f1879",
+    "formats-tests.log.gz": "2c67450ec5d7947b724ee2dc27984564e0f26b316e14dba3c6c13f726bc9cb8f",
+    "history-tests.log.gz": "36b8a99fb59e2912630c629613c27d536e82b9fb8dd2fbc31badb64aa2174673",
+    "imported-png.png": "73c2c698549161fc55c2ac18bc658c149f7a6b09807c187cdcd10e471afa6581",
+    "release-build.log.gz": "8d973235ff9cc21655e4b172f14f607293a1e95887e14e6d24eeb4b22f32c327",
+    "reopened-project.png": "dcbe60e256299e3b7ed94d5ca6b0871a1374924da1310b6161a31fd788b39683",
+    "wasm-clippy.log.gz": "5a333358ed091b3d6eeb628ce32b63b2daa220abe79d3eb4850e36cc3910754d",
+    "web-clippy.log.gz": "689dbfb4dc79cee26d343e7667e068f7867514ac719e3fffc40b364bbba467f7",
+    "web-tests.log.gz": "669d4c7192615ffe036b47147fa621afcae8b55dc266f2db7565b8bd39364f91",
+    "workspace-clippy.log.gz": "b92c040cb2875bb28de99e31ca404d9bb835dd1dce619bf5a19568c52457a35e"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "beforeDirty": false,
+  "duringDirty": true,
+  "afterDirty": true,
+  "undoneDirty": false,
+  "changed": true,
+  "previewMatchesRelease": true,
+  "undoRestores": true,
+  "exceptions": []
+}

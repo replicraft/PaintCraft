@@ -63,7 +63,10 @@ compatibility; a served bundle still needs live browser review.
 A 2026-10-23 local review built the optimized bundle and exercised startup,
 settings and dark-to-light switching in isolated headless Brave. The screenshots,
 commands and scope limits are recorded in [the validation evidence](../../docs/validation/classic-ribbon-web-preview-2026-10-23/validation.json).
-This single-browser smoke check does not establish cross-browser conformance.
+The subsequent editor checks verified brush preview/release/undo pixels and real
+project download, PNG import and painted project reopening. Host tests cover the
+PNG export confirmation and codec output. See [the editor evidence](../../docs/validation/web-editor-2026-10-23/validation.json).
+These single-browser smoke checks do not establish cross-browser conformance.
 
 ## Next browser slices
 

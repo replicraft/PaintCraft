@@ -429,6 +429,7 @@
       "depends_on": ["T10", "T14"],
       "status": "partial",
       "evidence": [
+        "docs/validation/web-editor-2026-10-23/validation.json",
         "docs/validation/classic-live-thumbnail-gpu-2026-10-23/validation.json",
         "docs/validation/classic-thumbnail-gpu-2026-10-23/validation.json",
         "docs/validation/classic-ribbon-web-preview-2026-10-23/validation.json",
@@ -577,8 +578,8 @@
       "title": "Browser conformance",
       "depends_on": ["T15", "T18"],
       "status": "not-started",
-      "evidence": [],
-      "remaining_or_scope": "Native-equivalent fixtures, interruption tests and unsupported-capability reports.",
+      "evidence": ["docs/validation/web-editor-2026-10-23/validation.json"],
+      "remaining_or_scope": "A bounded Classic browser editor now has tools/history/layers, project downloads and image/project opening, with host tests and one Brave smoke check. Native-equivalent fixture and interruption matrices, unsupported-capability reports and multi-browser/device qualification remain unimplemented; this frontend slice does not complete or start the conformance gate.",
       "acceptance": "Native-equivalent fixtures, interruption tests and unsupported-capability reports."
     },
     {
