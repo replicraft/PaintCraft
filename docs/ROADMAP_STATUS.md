@@ -11,6 +11,12 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest Classic ribbon work adds the missing stroke-size dropdown, backed by
+existing line/rectangle/ellipse size options, with an original SVG and adaptive
+placement. All 199 ordinary GUI tests, 23 shared-UI unit tests, 18 actual-App GPU
+scenes and strict workspace Clippy pass; see [the stroke-size record](validation/classic-stroke-size-gpu-2026-10-23/validation.json).
+Exact native popup/raster qualification and broader T15 acceptance remain partial.
+
 Latest Classic dimension-field work aligns captions and numeric columns across
 Settings and canvas/default-size dialogs, including keyboard editing. All 197
 ordinary GUI tests, 24 actual-App GPU scenes and strict workspace Clippy pass; see

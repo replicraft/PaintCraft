@@ -1,0 +1,55 @@
+{
+  "source_commit": "07076e3308c3b78df1c14388294548e7d61491bb",
+  "references": {
+    "image": "docs/temp/paint-references/photos/image.png",
+    "image_sha256": "5088470383ffc85e4c91e876404f6e1b7376c473d1b490d20368b545306172ba",
+    "announcement": "https://blogs.windows.com/windows-insider/2021/09/28/redesigned-paint-app-for-windows-11-begins-rolling-out-to-windows-insiders/"
+  },
+  "changes": "Classic v11 adds the missing shape stroke-size trigger with an original tintable SVG. A 1/3/5/8 px sample menu updates the existing ToolOptions.size for Line, Rectangle and Ellipse, with normal mouse/keyboard input and modal/document gates. Custom widths retain an explicit Current value and do not falsely select a preset. Wide layouts place it beside Outline/Fill; compact layouts stack the three controls. Medium gaps tighten while retaining existing glyph/swatch sizes and caption/Layer reachability.",
+  "gui": {
+    "passed": 199,
+    "failed": 0,
+    "ignored": 41,
+    "scope": "Full GUI suite. Added light desktop 1x/dark compact 2x repeated-layout checks cover supported/disabled tool states, one tooltip, native option synchronization, custom 37px retention through resizing, exact checked states, sample dimensions, keyboard acceptance/Escape, modal gating and unchanged document/history. Independent line tests measure the drawn raster column after 1px/8px choices and verify normal undo/redo. Existing 1200/1199 resizing, palette, caption and layer tests pass. Before log records the absent trigger."
+  },
+  "shared_ui": {
+    "passed": 23,
+    "failed": 0,
+    "ignored": 1,
+    "scope": "SVG transparency, monochrome variants, raster densities and independent bounded cache identities pass. The 40-entry generated menu manifest matches 40 SVG files."
+  },
+  "gpu": {
+    "passed": 1,
+    "test": "stroke_size::export_classic_stroke_size",
+    "scope": "18 actual-App light/dark desktop/1200-point medium/compact captures show disabled, custom-current and selected-preset states, preserving document/history. Reviewed the new glyph, samples, selection, footer and adaptive placement."
+  },
+  "checks": "Strict workspace all-target Clippy, formatting, source-length and whitespace checks passed.",
+  "limits": "The supplied screenshot and dated announcement establish the control\u2019s presence. The popup uses PaintCraft preset choices and a custom-value readout; exact current native popup geometry/values and original-app stroke raster policies remain unqualified. No new shape kernel, performance or full Windows/historical fidelity claim. T15 remains partial.",
+  "sha256": {
+    "before.log.gz": "92adfd2a94bd35b6d5eb1793e62dd4e1b831a93531482b70a68ae2f602b3238e",
+    "clippy.log.gz": "c389dfb68acc9125896a10b99442e3157362b707ae43560b3b65acb0b88da097",
+    "dark-compact-custom-current.png": "cf3b9749950dd910c63c8d4d130d1ef8602baa4d918417d7f2173b98191182fe",
+    "dark-compact-disabled.png": "c0ec5a801a4491d8e38b53a72becff9d3db1d2f7720e3d48b4388b37ab4aa63e",
+    "dark-compact-selected.png": "8fd2fe1a7e771c9fb73785a7065bae90fcb0c13401a467dc6c698dde877456a0",
+    "dark-desktop-custom-current.png": "2e7e1a220b1337de1908e202664e4eebeb48bd55e9daf477bcdd9e2f9cc7aaa0",
+    "dark-desktop-disabled.png": "3c9e3a7bf5181184541f0022281cbc8d8c755b29bc8291098c7252f3f9452f7a",
+    "dark-desktop-selected.png": "70a348a24645218f05a5399519d5bcd30cfb68196b281b3853b4fe7a8f7ca603",
+    "dark-medium-custom-current.png": "7d5bb17bc5f35ea3403a99c178b620f266af47f315f4cada8db5d5c5541b4526",
+    "dark-medium-disabled.png": "5e2a49638b9e35d794a91f568be371b3a3c2e00eae715605c86ad623cacf7899",
+    "dark-medium-selected.png": "7616ab1d9f4cdad40dc708b198b1750b8bdc56379d411221f1dcd1f4ba5cf9d2",
+    "density.log.gz": "1e632c9f202326ec85561dc8c25b9ec79b34dd5ced1127eafc3607dd35a291e1",
+    "gpu.log.gz": "9efc418db0b18060ee880979c76f1e36638a0e4a95f22d738e1fd4f5f7b60d5d",
+    "gui.log.gz": "6fa0aef61f292388a1723faad47ce2435c4460f527d8eb2db5f77d95cd1a2f3a",
+    "light-compact-custom-current.png": "e19794726264ce61e2771437d0fb35039026c0420286b3a95d5dac7c097a5d2f",
+    "light-compact-disabled.png": "58e8ceb537802b12d3bd580190789f1c8a5f8673e9fb24e339d0caccb9465e6b",
+    "light-compact-selected.png": "81fb5dfec8cae006463621941efce70f45d557ca5f973e3719a65824d3f05919",
+    "light-desktop-custom-current.png": "9561ee81d99dc79b2a01c9695ec4d470a2d76734afd4097c508d221869085463",
+    "light-desktop-disabled.png": "7a2cd7e02611d93d13eb142c95dd1ccb1022cf334c4fdb93f0671fbae085306b",
+    "light-desktop-selected.png": "e2a57a19ce45fce4a17eb8931ff7a8ae7ee612c19720000cdff6858830142ea0",
+    "light-medium-custom-current.png": "19e7b0ec6bd4e67dd24b2a2a1931534e08810a48dddecd955e33c1dcaaa65fc8",
+    "light-medium-disabled.png": "8a2db2f651bd47ee01dad9700b8b7896c801c3fa1f3e638f59962a59b298cb67",
+    "light-medium-selected.png": "214563e9d22c262bb03c088b9a0d22d888973e2256e3213f20e598bc4380d2bc",
+    "targeted.log.gz": "63dc00ff524e4f92b261d75b7ebb93a47228a5ae67b7f9d9cf7dbf4db18fd8a4",
+    "ui.log.gz": "552d55fa506139e04efde8a5b3ad2e1002aaa0d22a7bb45715f08c5a918bb51b"
+  }
+}
