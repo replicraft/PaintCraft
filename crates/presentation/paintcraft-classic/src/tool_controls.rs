@@ -12,7 +12,13 @@ pub const CANVAS_CLEARANCE: f32 = 144.0;
 pub fn supports(tool: Tool) -> bool {
     matches!(
         tool,
-        Tool::Pencil | Tool::Brush | Tool::Eraser | Tool::Line | Tool::Rect | Tool::Ellipse
+        Tool::Pencil
+            | Tool::Brush
+            | Tool::Eraser
+            | Tool::Line
+            | Tool::Rect
+            | Tool::Ellipse
+            | Tool::Preset(_)
     )
 }
 

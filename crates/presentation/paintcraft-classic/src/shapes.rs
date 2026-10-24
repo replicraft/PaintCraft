@@ -1,7 +1,7 @@
 //! The five-column Classic gallery follows the supplied reference ordering.
 use super::{Action, Controls};
 use egui::Vec2;
-use paintcraft_tools::Tool;
+use paintcraft_tools::{ShapePreset, Tool};
 use paintcraft_ui::icons::Icon;
 
 const SHAPES: [(Icon, &str, Option<Tool>); 23] = [
@@ -9,25 +9,93 @@ const SHAPES: [(Icon, &str, Option<Tool>); 23] = [
     (Icon::Curve, "Curve", None),
     (Icon::Ellipse, "Ellipse", Some(Tool::Ellipse)),
     (Icon::Rectangle, "Rectangle", Some(Tool::Rect)),
-    (Icon::RoundedRectangle, "Rounded rectangle", None),
+    (
+        Icon::RoundedRectangle,
+        "Rounded rectangle",
+        Some(Tool::Preset(ShapePreset::RoundedRectangle)),
+    ),
     (Icon::Polygon, "Polygon", None),
-    (Icon::Triangle, "Triangle", None),
-    (Icon::RightTriangle, "Right triangle", None),
-    (Icon::Diamond, "Diamond", None),
-    (Icon::Pentagon, "Pentagon", None),
-    (Icon::Hexagon, "Hexagon", None),
-    (Icon::RightArrow, "Right arrow", None),
-    (Icon::LeftArrow, "Left arrow", None),
-    (Icon::UpArrow, "Up arrow", None),
-    (Icon::DownArrow, "Down arrow", None),
-    (Icon::FourPointStar, "Four-point star", None),
-    (Icon::Star, "Five-point star", None),
-    (Icon::SixPointStar, "Six-point star", None),
-    (Icon::RoundedSpeechBubble, "Rectangular callout", None),
-    (Icon::SpeechBubble, "Oval callout", None),
-    (Icon::CloudCallout, "Cloud callout", None),
-    (Icon::Heart, "Heart", None),
-    (Icon::Lightning, "Lightning", None),
+    (
+        Icon::Triangle,
+        "Triangle",
+        Some(Tool::Preset(ShapePreset::Triangle)),
+    ),
+    (
+        Icon::RightTriangle,
+        "Right triangle",
+        Some(Tool::Preset(ShapePreset::RightTriangle)),
+    ),
+    (
+        Icon::Diamond,
+        "Diamond",
+        Some(Tool::Preset(ShapePreset::Diamond)),
+    ),
+    (
+        Icon::Pentagon,
+        "Pentagon",
+        Some(Tool::Preset(ShapePreset::Pentagon)),
+    ),
+    (
+        Icon::Hexagon,
+        "Hexagon",
+        Some(Tool::Preset(ShapePreset::Hexagon)),
+    ),
+    (
+        Icon::RightArrow,
+        "Right arrow",
+        Some(Tool::Preset(ShapePreset::RightArrow)),
+    ),
+    (
+        Icon::LeftArrow,
+        "Left arrow",
+        Some(Tool::Preset(ShapePreset::LeftArrow)),
+    ),
+    (
+        Icon::UpArrow,
+        "Up arrow",
+        Some(Tool::Preset(ShapePreset::UpArrow)),
+    ),
+    (
+        Icon::DownArrow,
+        "Down arrow",
+        Some(Tool::Preset(ShapePreset::DownArrow)),
+    ),
+    (
+        Icon::FourPointStar,
+        "Four-point star",
+        Some(Tool::Preset(ShapePreset::FourPointStar)),
+    ),
+    (
+        Icon::Star,
+        "Five-point star",
+        Some(Tool::Preset(ShapePreset::FivePointStar)),
+    ),
+    (
+        Icon::SixPointStar,
+        "Six-point star",
+        Some(Tool::Preset(ShapePreset::SixPointStar)),
+    ),
+    (
+        Icon::RoundedSpeechBubble,
+        "Rectangular callout",
+        Some(Tool::Preset(ShapePreset::RectangularCallout)),
+    ),
+    (
+        Icon::SpeechBubble,
+        "Oval callout",
+        Some(Tool::Preset(ShapePreset::OvalCallout)),
+    ),
+    (
+        Icon::CloudCallout,
+        "Cloud callout",
+        Some(Tool::Preset(ShapePreset::CloudCallout)),
+    ),
+    (Icon::Heart, "Heart", Some(Tool::Preset(ShapePreset::Heart))),
+    (
+        Icon::Lightning,
+        "Lightning",
+        Some(Tool::Preset(ShapePreset::Lightning)),
+    ),
 ];
 
 pub(super) fn gallery(ui: &mut egui::Ui, state: &mut Controls, actions: &mut Vec<Action>) {

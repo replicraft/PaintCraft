@@ -1,6 +1,35 @@
 use super::*;
 
 #[test]
+fn classic_shape_gallery_selects_real_presets_and_publishes_one_undoable_edit() {
+    use paintcraft_tools::{ShapePreset, Tool};
+    let mut h = harness();
+    for preset in [
+        ShapePreset::Triangle,
+        ShapePreset::Diamond,
+        ShapePreset::Hexagon,
+    ] {
+        h.get_by_label(preset.name()).click();
+        h.run();
+        assert_eq!(h.state().editor().tool, Tool::Preset(preset));
+        let before = h.state().editor().document_snapshot();
+        let a = at(&h, 20.0, 20.0);
+        let b = at(&h, 80.0, 70.0);
+        h.input_mut().events.extend([
+            Event::PointerMoved(a),
+            press(a),
+            Event::PointerMoved(b),
+            release(b),
+        ]);
+        h.run();
+        assert!(!h.state().editor().document().same_semantics(&before));
+        h.get_by_label("Undo").click();
+        h.run();
+        assert!(h.state().editor().document().same_semantics(&before));
+    }
+}
+
+#[test]
 fn shift_changes_shape_preview_without_pointer_motion_and_constrains_publication() {
     let mut h = harness_with(App::new(None), 1.0, true);
     h.get_by_label("Rectangle").click();

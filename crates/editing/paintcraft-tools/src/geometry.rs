@@ -6,7 +6,12 @@ type Point = (i64, i64);
 pub(super) fn endpoints(tool: Tool, points: &[Point], constrained: bool) -> (Point, Point) {
     let first = points[0];
     let last = *points.last().expect("a gesture has a point");
-    if !constrained || !matches!(tool, Tool::Line | Tool::Rect | Tool::Ellipse) {
+    if !constrained
+        || !matches!(
+            tool,
+            Tool::Line | Tool::Rect | Tool::Ellipse | Tool::Preset(_)
+        )
+    {
         return (first, last);
     }
     let dx = last.0.saturating_sub(first.0);

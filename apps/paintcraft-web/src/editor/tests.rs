@@ -11,7 +11,10 @@ fn preview_release_pixels_match_without_publishing_and_undo_redo_restore() {
         Tool::Line,
         Tool::Rect,
         Tool::Ellipse,
-    ] {
+    ]
+    .into_iter()
+    .chain(paintcraft_tools::ShapePreset::ALL.map(Tool::Preset))
+    {
         let mut editor = Editor::new(32, 24).unwrap();
         editor.tools.tool = tool;
         editor.tools.options.size = 5;

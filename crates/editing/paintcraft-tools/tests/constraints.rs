@@ -3,7 +3,10 @@ use uuid::Uuid;
 
 #[test]
 fn shift_keeps_shape_dimensions_equal_in_all_drag_directions_and_release_matches() {
-    for tool in [Tool::Rect, Tool::Ellipse] {
+    for tool in [Tool::Rect, Tool::Ellipse]
+        .into_iter()
+        .chain(paintcraft_tools::ShapePreset::ALL.map(Tool::Preset))
+    {
         for (dx, dy) in [(30, 10), (-30, 10), (10, -30), (-10, -30), (0, 30)] {
             let mut tools = ToolState::default();
             tools.tool = tool;

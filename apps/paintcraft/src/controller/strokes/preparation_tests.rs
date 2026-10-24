@@ -147,7 +147,10 @@ fn an_empty_text_preview_prepares_caret_geometry_without_creating_an_edit_batch(
 
 #[test]
 fn shape_previews_use_captured_layers_and_the_same_selected_pixels_as_release() {
-    for tool in [Tool::Line, Tool::Rect, Tool::Ellipse] {
+    for tool in [Tool::Line, Tool::Rect, Tool::Ellipse]
+        .into_iter()
+        .chain(paintcraft_tools::ShapePreset::ALL.map(Tool::Preset))
+    {
         for style in [ShapeStyle::Outline, ShapeStyle::Filled, ShapeStyle::Both] {
             let mut editor = Editor::new_document(32, 24).unwrap();
             editor.request(

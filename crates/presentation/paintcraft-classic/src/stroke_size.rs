@@ -5,7 +5,10 @@ use paintcraft_tools::Tool;
 use paintcraft_ui::{actions::Context, icons::Icon};
 
 pub(super) fn show(ui: &mut egui::Ui, state: &mut Controls, context: Context) {
-    let supported = matches!(state.tool, Tool::Line | Tool::Rect | Tool::Ellipse);
+    let supported = matches!(
+        state.tool,
+        Tool::Line | Tool::Rect | Tool::Ellipse | Tool::Preset(_)
+    );
     let enabled = supported && context.document_open && !context.blocked;
     ui.add_enabled_ui(enabled, |ui| {
         let target = if super::ribbon::spacious(ui) {

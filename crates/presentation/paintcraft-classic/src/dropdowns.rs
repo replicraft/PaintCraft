@@ -17,36 +17,39 @@ pub(super) fn selection(
 }
 
 pub(super) fn shape_paint(ui: &mut egui::Ui, state: &mut Controls) {
-    ui.add_enabled_ui(matches!(state.tool, Tool::Rect | Tool::Ellipse), |ui| {
-        dropdown(ui, "Shape outline", Some(Icon::Pencil), |ui| {
-            popup_style(ui, 220.0);
-            let outlined = state.options.style != ShapeStyle::Filled;
-            for (solid, label) in [(false, "No outline"), (true, "Solid outline")] {
-                if shape_choice(ui, label, outlined == solid).clicked() {
-                    state.options.style = match (solid, state.options.style) {
-                        (false, _) => ShapeStyle::Filled,
-                        (true, ShapeStyle::Filled) => ShapeStyle::Both,
-                        (true, style) => style,
-                    };
-                    ui.close();
+    ui.add_enabled_ui(
+        matches!(state.tool, Tool::Rect | Tool::Ellipse | Tool::Preset(_)),
+        |ui| {
+            dropdown(ui, "Shape outline", Some(Icon::Pencil), |ui| {
+                popup_style(ui, 220.0);
+                let outlined = state.options.style != ShapeStyle::Filled;
+                for (solid, label) in [(false, "No outline"), (true, "Solid outline")] {
+                    if shape_choice(ui, label, outlined == solid).clicked() {
+                        state.options.style = match (solid, state.options.style) {
+                            (false, _) => ShapeStyle::Filled,
+                            (true, ShapeStyle::Filled) => ShapeStyle::Both,
+                            (true, style) => style,
+                        };
+                        ui.close();
+                    }
                 }
-            }
-        });
-        dropdown(ui, "Shape fill", Some(Icon::Bucket), |ui| {
-            popup_style(ui, 220.0);
-            let filled = state.options.style != ShapeStyle::Outline;
-            for (solid, label) in [(false, "No fill"), (true, "Solid fill")] {
-                if shape_choice(ui, label, filled == solid).clicked() {
-                    state.options.style = match (solid, state.options.style) {
-                        (false, _) => ShapeStyle::Outline,
-                        (true, ShapeStyle::Outline) => ShapeStyle::Both,
-                        (true, style) => style,
-                    };
-                    ui.close();
+            });
+            dropdown(ui, "Shape fill", Some(Icon::Bucket), |ui| {
+                popup_style(ui, 220.0);
+                let filled = state.options.style != ShapeStyle::Outline;
+                for (solid, label) in [(false, "No fill"), (true, "Solid fill")] {
+                    if shape_choice(ui, label, filled == solid).clicked() {
+                        state.options.style = match (solid, state.options.style) {
+                            (false, _) => ShapeStyle::Outline,
+                            (true, ShapeStyle::Outline) => ShapeStyle::Both,
+                            (true, style) => style,
+                        };
+                        ui.close();
+                    }
                 }
-            }
-        });
-    });
+            });
+        },
+    );
 }
 
 fn dropdown(

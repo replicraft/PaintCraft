@@ -29,6 +29,7 @@ pub fn shape(
             Value::str(match tool {
                 Tool::Line => "line",
                 Tool::Rect => "rect",
+                Tool::Preset(preset) => preset.command_name(),
                 _ => "ellipse",
             }),
         ),

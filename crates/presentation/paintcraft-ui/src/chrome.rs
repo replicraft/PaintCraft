@@ -28,7 +28,13 @@ pub fn options_with_shape_style(
     ui.horizontal_wrapped(|ui| {
         if matches!(
             state.tool,
-            Tool::Pencil | Tool::Brush | Tool::Eraser | Tool::Line | Tool::Rect | Tool::Ellipse
+            Tool::Pencil
+                | Tool::Brush
+                | Tool::Eraser
+                | Tool::Line
+                | Tool::Rect
+                | Tool::Ellipse
+                | Tool::Preset(_)
         ) {
             let size = if state.tool == Tool::Pencil {
                 &mut state.options.pencil_size
@@ -59,7 +65,7 @@ pub fn options_with_shape_style(
                     .suffix("%"),
             );
         }
-        if show_shape_style && matches!(state.tool, Tool::Rect | Tool::Ellipse) {
+        if show_shape_style && matches!(state.tool, Tool::Rect | Tool::Ellipse | Tool::Preset(_)) {
             for (style, label) in [
                 (ShapeStyle::Outline, "Outline"),
                 (ShapeStyle::Filled, "Filled"),
@@ -99,6 +105,26 @@ pub fn tool_button(ui: &mut egui::Ui, state: &mut Controls, tool: Tool, large: b
         Tool::Line => Icon::Line,
         Tool::Rect => Icon::Rectangle,
         Tool::Ellipse => Icon::Ellipse,
+        Tool::Preset(preset) => match preset {
+            paintcraft_tools::ShapePreset::RoundedRectangle => Icon::RoundedRectangle,
+            paintcraft_tools::ShapePreset::Triangle => Icon::Triangle,
+            paintcraft_tools::ShapePreset::RightTriangle => Icon::RightTriangle,
+            paintcraft_tools::ShapePreset::Diamond => Icon::Diamond,
+            paintcraft_tools::ShapePreset::Pentagon => Icon::Pentagon,
+            paintcraft_tools::ShapePreset::Hexagon => Icon::Hexagon,
+            paintcraft_tools::ShapePreset::RightArrow => Icon::RightArrow,
+            paintcraft_tools::ShapePreset::LeftArrow => Icon::LeftArrow,
+            paintcraft_tools::ShapePreset::UpArrow => Icon::UpArrow,
+            paintcraft_tools::ShapePreset::DownArrow => Icon::DownArrow,
+            paintcraft_tools::ShapePreset::FourPointStar => Icon::FourPointStar,
+            paintcraft_tools::ShapePreset::FivePointStar => Icon::Star,
+            paintcraft_tools::ShapePreset::SixPointStar => Icon::SixPointStar,
+            paintcraft_tools::ShapePreset::RectangularCallout => Icon::RoundedSpeechBubble,
+            paintcraft_tools::ShapePreset::OvalCallout => Icon::SpeechBubble,
+            paintcraft_tools::ShapePreset::CloudCallout => Icon::CloudCallout,
+            paintcraft_tools::ShapePreset::Heart => Icon::Heart,
+            paintcraft_tools::ShapePreset::Lightning => Icon::Lightning,
+        },
         Tool::Select => Icon::Select,
         Tool::Text => Icon::Text,
     };

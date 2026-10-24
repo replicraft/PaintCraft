@@ -276,7 +276,7 @@ impl Action {
             Self::EditColors => 1013,
             Self::EditSecondaryColors => 1014,
             Self::EditCustomColor(slot) => 2000 + u64::from(slot),
-            Self::SelectTool(tool) => 1100 + tool as u64,
+            Self::SelectTool(tool) => 1100 + tool.action_id(),
         }
     }
 }

@@ -7,8 +7,8 @@ mod preview_revision;
 pub mod text;
 pub use preview_revision::PreviewRevision;
 
-pub use paintcraft_core::types::policy::BlendMode;
 use paintcraft_core::types::{Rgba, text::TextOptions};
+pub use paintcraft_core::types::{policy::BlendMode, shapes::ShapePreset};
 pub use paintcraft_input::PointerButton;
 use uuid::Uuid;
 const POINTS_PER_OP: usize = 65_536;
@@ -31,18 +31,40 @@ pub enum Tool {
     Line,
     Rect,
     Ellipse,
+    Preset(ShapePreset),
     Select,
     Text,
 }
 
 impl Tool {
+    /// Stable action identity; preserve the original nine tool IDs.
+    pub fn action_id(self) -> u64 {
+        match self {
+            Self::Pencil => 0,
+            Self::Brush => 1,
+            Self::Eraser => 2,
+            Self::Fill => 3,
+            Self::Line => 4,
+            Self::Rect => 5,
+            Self::Ellipse => 6,
+            Self::Select => 7,
+            Self::Text => 8,
+            Self::Preset(preset) => 9 + preset as u64,
+        }
+    }
     /// Native Studio color gestures. Other secondary-button tool policies remain
     /// unavailable until their distinct selection/text/eraser semantics exist.
     pub fn supports_button(self, button: PointerButton) -> bool {
         button == PointerButton::Primary
             || matches!(
                 self,
-                Self::Pencil | Self::Brush | Self::Fill | Self::Line | Self::Rect | Self::Ellipse
+                Self::Pencil
+                    | Self::Brush
+                    | Self::Fill
+                    | Self::Line
+                    | Self::Rect
+                    | Self::Ellipse
+                    | Self::Preset(_)
             )
     }
 
@@ -67,6 +89,7 @@ impl Tool {
             Tool::Line => "Line",
             Tool::Rect => "Rectangle",
             Tool::Ellipse => "Ellipse",
+            Tool::Preset(preset) => preset.name(),
             Tool::Select => "Select",
             Tool::Text => "Text",
         }
@@ -445,7 +468,7 @@ impl ToolState {
                 from: first,
                 to: last,
             },
-            Tool::Line | Tool::Rect | Tool::Ellipse => {
+            Tool::Line | Tool::Rect | Tool::Ellipse | Tool::Preset(_) => {
                 let (stroke, fill) = Self::shape_paint(g);
                 Preview::Shape {
                     layer: g.layer,
@@ -583,7 +606,7 @@ impl ToolState {
             Tool::Select => Action::Select {
                 corners: Some((first, last)),
             },
-            Tool::Line | Tool::Rect | Tool::Ellipse => {
+            Tool::Line | Tool::Rect | Tool::Ellipse | Tool::Preset(_) => {
                 let (stroke, fill) = Self::shape_paint(&g);
                 Action::Shape {
                     layer: g.layer,
