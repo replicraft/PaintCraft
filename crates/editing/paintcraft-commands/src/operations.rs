@@ -9,6 +9,8 @@ pub(super) fn op(v: &Value, version: u8) -> Result<Op> {
         && matches!(
             name,
             "canvas.clear"
+                | "selection.set_polygon"
+                | "selection.invert"
                 | "layer.expand"
                 | "raster.stroke_path"
                 | "raster.flood_fill"
@@ -230,6 +232,22 @@ pub(super) fn op(v: &Value, version: u8) -> Result<Op> {
             Op::SelectionSetRect {
                 rect: rect(&o["rect"])?,
             }
+        }
+        "selection.set_polygon" => {
+            let o = obj(v, &["op", "points"], &[])?;
+            let Value::Array(points) = &o["points"] else {
+                return Err(bad("points must be an array"));
+            };
+            if points.len() < 3 || points.len() > MAX_POINTS {
+                return Err(bad("polygon points must contain 3..=65536 items"));
+            }
+            Op::SelectionSetPolygon {
+                points: points.iter().map(point).collect::<Result<_>>()?,
+            }
+        }
+        "selection.invert" => {
+            obj(v, &["op"], &[])?;
+            Op::SelectionInvert
         }
         "selection.clear" => {
             obj(v, &["op"], &[])?;

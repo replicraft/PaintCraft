@@ -102,6 +102,12 @@ pub enum Op {
         rect: Rect,
     },
     SelectionClear,
+    /// v2: finite canvas-domain binary polygon at pixel centers.
+    SelectionSetPolygon {
+        points: Vec<(i64, i64)>,
+    },
+    /// v2: complement the current coverage within the canvas domain.
+    SelectionInvert,
     /// v2: a brush stroke of `size` pixels along a path, blended once per pixel.
     StrokePath {
         media: paintcraft_core::types::brush::BrushMedia,
