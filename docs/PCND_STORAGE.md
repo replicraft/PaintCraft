@@ -73,3 +73,19 @@ truncated frame, checksum errors, dictionaries, excessive windows, concatenated
 frames, trailing bytes and unknown-size frames with short or excessive output.
 
 Raw local logs are retained in ignored `docs/validation/pcnd-storage-2026-10-24/`.
+
+## Validation
+
+The native formats suite passes, including the canonical specimen and conformance
+roundtrips. Strict formats Clippy passes. The portable decoder compiles in the
+actual browser dependency graph with:
+
+```sh
+cargo check -p paintcraft-formats -p paintcraft-web --target wasm32-unknown-unknown
+```
+
+Including the browser supplies its existing `uuid/js` randomness feature. An
+isolated formats-only Wasm check lacks that preexisting feature and is not claimed
+as passing. No live browser import or save-speed benchmark is inferred from this
+compile check. Native filesystem/recovery integration is validated separately by
+the desktop tests.

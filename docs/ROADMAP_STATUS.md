@@ -24,9 +24,18 @@ Historical File panels now route PNG/JPEG/BMP choices to native and browser
 exports, with localized confirmation/download labels and unchanged project/history
 state. Windows 7/10 Home/View ribbons and slim status strips have scoped host and
 offscreen evidence. Desktop recent files now have a persisted chooser with guarded
-Open and clear-only-history semantics. Browser history, printing, acquisition, clipboard and formal
+Open and clear-only-history semantics. Browser history, printing on other platforms, acquisition, clipboard and formal
 per-version native qualification remain work; this presentation slice does not
 start or complete the T16 parity gate. See [Classic follow-up](CLASSIC_FOLLOWUP.md).
+
+
+File integration now includes [compact PCND storage](PCND_STORAGE.md), a
+[macOS document bundle and Finder launcher](FILE_ASSOCIATIONS.md), and
+[native macOS printing and image export options](PRINTING_EXPORT.md). Desktop
+confirmed saves use lossless block compression; browser reads compact projects
+and still writes canonical raw projects. PNG/BMP/JPEG export choices and JPEG
+quality work on desktop and web. Other-platform printing, JPEG XL and broader
+format/OS qualification remain unfinished; these slices do not complete T19.
 
 
 Selection work now has [finite sparse binary R8 storage and exact polygon

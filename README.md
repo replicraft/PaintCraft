@@ -10,6 +10,8 @@ A familiar place to draw, paint and edit images. Built in Rust.
 - Crop, rotate and flip.
 - Undo, redo, editable projects and PNG, BMP and JPEG images.
 - Desktop recent files with one-click reopening.
+- Export format options and adjustable JPEG quality.
+- Native printing on macOS.
 - Light and dark themes in seven languages.
 - Desktop, browser and command-line apps.
 

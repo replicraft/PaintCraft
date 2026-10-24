@@ -151,7 +151,9 @@ persistent text objects, caret editing and native IME qualification remain pendi
 Engine-only operations remain available through their typed commands and CLI; native document-window actions have no headless equivalent.
 
 Save All is implemented below, and the desktop now has [recent files](RECENT_FILES.md).
-Printing, acquisition and remaining editing commands are not registered as working controls yet. The registry is a first slice for
+Native macOS printing now uses the shared File menu and Cmd+P, with a captured
+document and the system print panel. Acquisition, printing on other platforms and
+remaining editing commands are not registered as working controls yet. The registry is a first slice for
 existing actions, not a claim of complete menu or CLI coverage.
 
 ## Layer workflows

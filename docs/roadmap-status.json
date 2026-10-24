@@ -129,8 +129,14 @@
       "title": "PCND and headless round trip",
       "depends_on": ["T07", "T29", "T34"],
       "status": "partial",
-      "evidence": ["crates/services/paintcraft-formats/tests/conformance.rs", "apps/paintcraft-cli/tests/cli.rs"],
-      "remaining_or_scope": "Canonical PCND and CLI round trips pass; full native subset/hostile-archive scope remains.",
+      "evidence": [
+        "crates/services/paintcraft-formats/tests/conformance.rs",
+        "apps/paintcraft-cli/tests/cli.rs",
+        "docs/PCND_STORAGE.md",
+        "crates/services/paintcraft-formats/src/pcnd/compact_tests.rs",
+        "crates/services/paintcraft-formats/src/pcnd/compression.rs"
+      ],
+      "remaining_or_scope": "Canonical PCND and CLI round trips pass; full native subset/hostile-archive scope remains. Existing PCND v1 optional Zstandard blocks now have bounded portable decoding, native compact writing, canonical byte preservation, corruption/cancellation tests and scoped storage-size evidence. Desktop saves select compact output; browser encoding stays raw.",
       "acceptance": "Generated specimen plus malformed corpus; canonical writer reproduces the specimen and every vector PCND/render digest (NATIVE-09, CORE-08, DET-02); CLI-01..03; no GUI dependency."
     },
     {
@@ -514,13 +520,20 @@
         "T15"
       ],
       "status": "not-started",
-      "evidence": ["docs/RECENT_FILES.md", "apps/paintcraft/src/app/recent.rs", "apps/paintcraft/src/app/recent/store.rs", "apps/paintcraft/tests/gui/recent.rs",
+      "evidence": [
+        "docs/RECENT_FILES.md",
+        "apps/paintcraft/src/app/recent.rs",
+        "apps/paintcraft/src/app/recent/store.rs",
+        "apps/paintcraft/tests/gui/recent.rs",
         "docs/CLASSIC_FOLLOWUP.md",
         "apps/paintcraft/tests/gui/legacy_skins.rs",
         "apps/paintcraft/tests/gui/legacy_status.rs",
-        "apps/paintcraft/tests/gui/legacy_file.rs"
+        "apps/paintcraft/tests/gui/legacy_file.rs",
+        "docs/PRINTING_EXPORT.md",
+        "docs/FILE_ASSOCIATIONS.md",
+        "apps/paintcraft/src/app/export_options.rs"
       ],
-      "remaining_or_scope": "Per-operation evidence records; original menu/eraser/canvas/tool lifecycles and allowed OS differences. Scoped Home/View ribbons, slim status strips and two-column File panels now have host interaction tests and actual offscreen captures. PNG/JPEG/BMP choices route real exports without adopting a project binding. This presentation work does not establish or start the per-version parity gate. Desktop recent files now have bounded lossless path persistence, guarded Open and Studio tab reuse, confirmed-save tracking, corrupt-metadata preservation, and clear-only-history behavior. Seven-language Classic/Studio GUI tests cover actual reopening and empty workspaces. Browser retention and live native reference qualification remain open.",
+      "remaining_or_scope": "Per-operation evidence records; original menu/eraser/canvas/tool lifecycles and allowed OS differences. Scoped Home/View ribbons, slim status strips and two-column File panels now have host interaction tests and actual offscreen captures. PNG/JPEG/BMP choices route real exports without adopting a project binding. This presentation work does not establish or start the per-version parity gate. Desktop recent files now have bounded lossless path persistence, guarded Open and Studio tab reuse, confirmed-save tracking, corrupt-metadata preservation, and clear-only-history behavior. Seven-language Classic/Studio GUI tests cover actual reopening and empty workspaces. Browser retention and live native reference qualification remain open. Desktop and browser export options now include all supported PNG/BMP/JPEG outputs and JPEG quality with localized interaction tests. Native macOS Print is connected; physical printer and historical reference behavior remain unqualified.",
       "acceptance": "Per-operation evidence records; original menu/eraser/canvas/tool lifecycles and allowed OS differences."
     },
     {
@@ -549,14 +562,34 @@
       "title": "Studio parity tranches",
       "depends_on": ["T12", "T14", "T17"],
       "status": "partial",
-      "evidence": ["docs/RECENT_FILES.md", "apps/paintcraft/src/app/recent.rs", "apps/paintcraft/src/app/recent/store.rs", "apps/paintcraft/tests/gui/recent.rs", "crates/presentation/paintcraft-studio/src/lib.rs", "apps/paintcraft/tests/gui/studio.rs", "docs/STUDIO.md", "docs/STUDIO_CANVAS_SIZE.md", "apps/paintcraft/tests/gui/studio_canvas.rs", "apps/paintcraft/src/app/studio_canvas/tests.rs",
+      "evidence": [
+        "docs/RECENT_FILES.md",
+        "apps/paintcraft/src/app/recent.rs",
+        "apps/paintcraft/src/app/recent/store.rs",
+        "apps/paintcraft/tests/gui/recent.rs",
+        "crates/presentation/paintcraft-studio/src/lib.rs",
+        "apps/paintcraft/tests/gui/studio.rs",
+        "docs/STUDIO.md",
+        "docs/STUDIO_CANVAS_SIZE.md",
+        "apps/paintcraft/tests/gui/studio_canvas.rs",
+        "apps/paintcraft/src/app/studio_canvas/tests.rs",
         "apps/paintcraft/tests/gui/auto_scroll.rs",
         "crates/editing/paintcraft-tools/src/navigation/auto_scroll.rs",
         "apps/paintcraft/tests/gui/fit_toggle.rs",
         "apps/paintcraft/src/app/view/fit_tests.rs",
-        "apps/paintcraft/src/app/save_all.rs", "apps/paintcraft/src/app/save_all/tests.rs",
-        "apps/paintcraft/tests/gui/save_all.rs", "crates/presentation/paintcraft-studio/src/layout.rs", "apps/paintcraft/src/settings/studio.rs", "docs/LASSO_SELECTIONS.md", "apps/paintcraft/tests/gui/lasso.rs", "apps/paintcraft-web/src/lasso_tests.rs"],
-      "remaining_or_scope": "Studio now supports Save All through serial owner-bound normal saves, native Save As dialogs, failure/cancellation stops and original-tab restoration. Studio view navigation now includes scoped drag/rectangle zoom, per-document fit/restore centering, Pan, temporary Space/middle-button movement, keyboard panning, overscroll and configurable time-based tool-drag auto-scroll with endpoint rebasing. Reference speed/input behavior and native device qualification remain open. Studio now has shared image actions, every preset, all brush media and its own nine-anchor canvas-size dialog with ordered source capture, exact history and independent Classic preferences. Studio toolbar, floating Tools/Colors/Layers, guarded History navigation and independent document tabs with owner-routed save/recovery and close handling work; shared descriptors and menu/shortcut dispatch cover existing actions; full action coverage, image operations, effects, PDN and reference parity remain. Desktop recent files now have bounded lossless path persistence, guarded Open and Studio tab reuse, confirmed-save tracking, corrupt-metadata preservation, and clear-only-history behavior. Seven-language Classic/Studio GUI tests cover actual reopening and empty workspaces. Browser retention and live native reference qualification remain open. Studio utility-panel visibility and logical positions now persist across desktop restarts; resizable dimensions remain session-only.",
+        "apps/paintcraft/src/app/save_all.rs",
+        "apps/paintcraft/src/app/save_all/tests.rs",
+        "apps/paintcraft/tests/gui/save_all.rs",
+        "crates/presentation/paintcraft-studio/src/layout.rs",
+        "apps/paintcraft/src/settings/studio.rs",
+        "docs/LASSO_SELECTIONS.md",
+        "apps/paintcraft/tests/gui/lasso.rs",
+        "apps/paintcraft-web/src/lasso_tests.rs",
+        "docs/PRINTING_EXPORT.md",
+        "docs/FILE_ASSOCIATIONS.md",
+        "apps/paintcraft/src/app/printing.rs"
+      ],
+      "remaining_or_scope": "Studio now supports Save All through serial owner-bound normal saves, native Save As dialogs, failure/cancellation stops and original-tab restoration. Studio view navigation now includes scoped drag/rectangle zoom, per-document fit/restore centering, Pan, temporary Space/middle-button movement, keyboard panning, overscroll and configurable time-based tool-drag auto-scroll with endpoint rebasing. Reference speed/input behavior and native device qualification remain open. Studio now has shared image actions, every preset, all brush media and its own nine-anchor canvas-size dialog with ordered source capture, exact history and independent Classic preferences. Studio toolbar, floating Tools/Colors/Layers, guarded History navigation and independent document tabs with owner-routed save/recovery and close handling work; shared descriptors and menu/shortcut dispatch cover existing actions; full action coverage, image operations, effects, PDN and reference parity remain. Desktop recent files now have bounded lossless path persistence, guarded Open and Studio tab reuse, confirmed-save tracking, corrupt-metadata preservation, and clear-only-history behavior. Seven-language Classic/Studio GUI tests cover actual reopening and empty workspaces. Browser retention and live native reference qualification remain open. Studio utility-panel visibility and logical positions now persist across desktop restarts; resizable dimensions remain session-only. Native macOS Print now captures ordered committed document snapshots and opens the system print panel. Export includes format/options before destination selection. Physical output, other-platform printing and complete OS integration qualification remain open.",
       "acceptance": "Release only named tested tranches; high-depth/groups not misrepresented as source features."
     },
     {
@@ -653,9 +686,11 @@
       "title": "Compact PCND container study",
       "depends_on": ["T11", "T21"],
       "status": "not-started",
-      "evidence": [],
-      "remaining_or_scope": "Benchmark justification, corruption tests and old-v1 corpus preserved.",
-      "acceptance": "Benchmark justification, corruption tests and old-v1 corpus preserved."
+      "evidence": [
+        "docs/PCND_STORAGE.md"
+      ],
+      "remaining_or_scope": "Benchmark justification, corruption tests and old-v1 corpus preserved. Compression of existing v1 blocks has scoped size/corruption evidence and does not establish justification for a different container or complete this study.",
+      "acceptance": "Benchmark justification, corruption tests and old-v1 corpus preserved. Compression of existing v1 blocks has scoped size/corruption evidence and does not establish justification for a different container or complete this study."
     },
     {
       "id": "T25",
