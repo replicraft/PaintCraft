@@ -896,3 +896,5 @@ sat = 彩度
 lum = 明るさ
 zoom-tool = ズームツール
 drag-an-area-to-zoom-in-right-click-to-zoom-out = 範囲をドラッグして拡大 · 右クリックで縮小
+pan-tool = パンツール
+drag-to-pan-hold-space-to-pan-with-another-tool = ドラッグで移動 · 他のツールではスペースキーを押しながらドラッグ

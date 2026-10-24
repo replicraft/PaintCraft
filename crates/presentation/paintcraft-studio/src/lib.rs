@@ -27,6 +27,8 @@ pub struct Workspace {
     pub edit_secondary: bool,
     pub more_colors: bool,
     pub zoom: paintcraft_tools::navigation::ZoomGesture<egui::Id>,
+    pub pan: paintcraft_tools::navigation::PanGesture<egui::Id>,
+    pub space_pan: bool,
 }
 
 impl Default for Workspace {
@@ -40,6 +42,8 @@ impl Default for Workspace {
             edit_secondary: false,
             more_colors: false,
             zoom: Default::default(),
+            pan: Default::default(),
+            space_pan: false,
         }
     }
 }

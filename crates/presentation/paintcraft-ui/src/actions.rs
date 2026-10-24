@@ -191,6 +191,9 @@ impl Action {
             descriptor.label = "Zoom tool";
             descriptor.shortcut = Some(KeyboardShortcut::new(Modifiers::NONE, Key::Z));
         }
+        if frontend == Frontend::Studio && self == Self::SelectTool(Tool::Pan) {
+            descriptor.shortcut = Some(KeyboardShortcut::new(Modifiers::NONE, Key::H));
+        }
         descriptor
     }
 
@@ -198,6 +201,10 @@ impl Action {
         if frontend == Frontend::Studio && key == Key::Z && modifiers.matches_exact(Modifiers::NONE)
         {
             return Some(Self::SelectTool(Tool::Magnifier));
+        }
+        if frontend == Frontend::Studio && key == Key::H && modifiers.matches_exact(Modifiers::NONE)
+        {
+            return Some(Self::SelectTool(Tool::Pan));
         }
         VIEW.iter()
             .chain(WORKSPACE_VIEW)
@@ -219,6 +226,7 @@ impl Action {
 
     pub fn available(self, frontend: Frontend) -> bool {
         match self {
+            Self::SelectTool(Tool::Pan) => frontend == Frontend::Studio,
             Self::View(
                 ViewAction::StatusBar
                 | ViewAction::Rulers
@@ -559,6 +567,26 @@ fn toolbar_button_artwork(
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn pan_is_studio_only_and_h_has_no_modifiers() {
+        use super::*;
+        let pan = Action::SelectTool(Tool::Pan);
+        assert!(pan.available(Frontend::Studio));
+        assert!(!pan.available(Frontend::Classic));
+        assert_eq!(
+            Action::from_shortcut_for(Frontend::Studio, Key::H, Modifiers::NONE),
+            Some(pan)
+        );
+        assert_eq!(
+            Action::from_shortcut_for(Frontend::Classic, Key::H, Modifiers::NONE),
+            None
+        );
+        assert_eq!(
+            Action::from_shortcut_for(Frontend::Studio, Key::H, Modifiers::ALT),
+            None
+        );
+    }
+
     #[test]
     fn studio_zoom_shortcut_is_plain_z_and_keeps_classic_routing() {
         use super::*;

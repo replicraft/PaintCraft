@@ -896,3 +896,5 @@ sat = Sat
 lum = Lum
 zoom-tool = Zoom tool
 drag-an-area-to-zoom-in-right-click-to-zoom-out = Drag an area to zoom in · Right-click to zoom out
+pan-tool = Pan tool
+drag-to-pan-hold-space-to-pan-with-another-tool = Drag to pan · Hold Space to pan with another tool

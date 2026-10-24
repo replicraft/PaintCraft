@@ -358,7 +358,7 @@ mod tests {
 
     #[test]
     fn every_sheet_icon_is_standalone_vector_and_renders_with_transparency_at_multiple_sizes() {
-        assert_eq!(Icon::ALL.len(), 99);
+        assert_eq!(Icon::ALL.len(), 100);
         let mut names = std::collections::HashSet::new();
         for icon in Icon::ALL {
             assert!(names.insert(icon.name()));

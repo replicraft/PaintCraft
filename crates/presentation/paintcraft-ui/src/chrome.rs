@@ -113,6 +113,12 @@ pub fn options_with_shape_style(
                 "Command/Ctrl+Enter to place · Escape to cancel",
             ));
         }
+        if state.tool == Tool::Pan {
+            ui.label(tr(
+                ui.ctx(),
+                "Drag to pan · Hold Space to pan with another tool",
+            ));
+        }
         if state.tool == Tool::Magnifier {
             ui.label(tr(
                 ui.ctx(),
@@ -141,6 +147,7 @@ pub fn tool_button(ui: &mut egui::Ui, state: &mut Controls, tool: Tool, large: b
         Tool::Fill => Icon::Fill,
         Tool::ColorPicker => Icon::Eyedropper,
         Tool::Magnifier => Icon::ZoomIn,
+        Tool::Pan => Icon::Pan,
         Tool::Line => Icon::Line,
         Tool::Rect => Icon::Rectangle,
         Tool::Ellipse => Icon::Ellipse,

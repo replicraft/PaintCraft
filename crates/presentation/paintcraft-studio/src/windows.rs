@@ -35,6 +35,7 @@ pub fn floating_controls(
                             Tool::Fill,
                             Tool::ColorPicker,
                             Tool::Magnifier,
+                            Tool::Pan,
                             Tool::Text,
                             Tool::Line,
                             Tool::Rect,

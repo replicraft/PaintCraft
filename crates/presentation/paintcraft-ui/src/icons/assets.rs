@@ -39,6 +39,7 @@ pub enum Icon {
     LassoSelect,
     MagicWand,
     Move,
+    Pan,
     Crop,
     Resize,
     CanvasSize,
@@ -107,7 +108,7 @@ pub enum Icon {
 }
 
 impl Icon {
-    pub const ALL: [Self; 99] = [
+    pub const ALL: [Self; 100] = [
         Self::Polygon,
         Self::RightTriangle,
         Self::Diamond,
@@ -146,6 +147,7 @@ impl Icon {
         Self::LassoSelect,
         Self::MagicWand,
         Self::Move,
+        Self::Pan,
         Self::Crop,
         Self::Resize,
         Self::CanvasSize,
@@ -249,6 +251,7 @@ impl Icon {
             Self::LassoSelect => "lasso-select",
             Self::MagicWand => "magic-wand",
             Self::Move => "move",
+            Self::Pan => "pan",
             Self::Crop => "crop",
             Self::Resize => "resize",
             Self::CanvasSize => "canvas-size",
@@ -358,6 +361,7 @@ impl Icon {
             Self::LassoSelect => include_bytes!("../../assets/icons/lasso-select.svg"),
             Self::MagicWand => include_bytes!("../../assets/icons/magic-wand.svg"),
             Self::Move => include_bytes!("../../assets/icons/move.svg"),
+            Self::Pan => include_bytes!("../../assets/icons/pan.svg"),
             Self::Crop => include_bytes!("../../assets/icons/crop.svg"),
             Self::Resize => include_bytes!("../../assets/icons/resize.svg"),
             Self::CanvasSize => include_bytes!("../../assets/icons/canvas-size.svg"),
