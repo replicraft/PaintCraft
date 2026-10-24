@@ -1,4 +1,5 @@
 //! Browser integration of shared Classic presentation and editor services.
+mod forms;
 use crate::{
     canvas::Canvas,
     editor::{Editor, WHITE},
@@ -21,6 +22,7 @@ pub struct WebApp {
     confirm_replace: Option<Action>,
     files: crate::files::Files,
     pending_import: Option<crate::files::Loaded>,
+    form: Option<forms::Form>,
     pub(crate) message: String,
 }
 
@@ -45,6 +47,7 @@ impl WebApp {
             confirm_replace: None,
             files: crate::files::Files::default(),
             pending_import: None,
+            form: None,
             message: "Ready — Save downloads a project copy; work stays in this tab".into(),
         }
     }
@@ -55,6 +58,7 @@ impl WebApp {
             || self.confirm_replace.is_some()
             || self.files.busy
             || self.pending_import.is_some()
+            || self.form.is_some()
     }
 
     fn context(&self) -> Context {
@@ -109,6 +113,9 @@ impl WebApp {
                 self.editor.cancel();
                 self.settings = true;
             }
+            Action::EditColors => self.begin_colors(false, None),
+            Action::EditSecondaryColors => self.begin_colors(true, None),
+            Action::EditCustomColor(slot) => self.begin_colors(false, Some(slot)),
             Action::SelectTool(Tool::Text) => self.unsupported(action),
             Action::SelectTool(tool) => {
                 self.editor.cancel();
@@ -286,6 +293,7 @@ impl WebApp {
                 self.canvas(ui);
             });
         self.dialogs(&ctx);
+        self.show_form(&ctx);
     }
 
     fn dialogs(&mut self, ctx: &egui::Context) {

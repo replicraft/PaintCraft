@@ -8,6 +8,8 @@ pub use app::WebApp;
 
 #[cfg(test)]
 mod app_tests;
+#[cfg(test)]
+mod forms_tests;
 
 #[cfg(target_arch = "wasm32")]
 mod browser {
