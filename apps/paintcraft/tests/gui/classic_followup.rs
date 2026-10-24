@@ -108,3 +108,29 @@ fn selection_delete_erases_only_selected_pixels_and_undo_restores_them() {
         std::fs::remove_dir_all(dir).unwrap();
     }
 }
+
+#[test]
+fn magnified_paint_previews_remain_regional_then_restore_the_reusable_idle_texture() {
+    let mut h = harness();
+    h.get_by_label("Brush").click();
+    h.run();
+    for _ in 0..3 {
+        h.get_by_label("Zoom in").click();
+        h.run();
+    }
+    let point = h.state().canvas_viewport().unwrap().center();
+    let canvas = h.state().canvas_rect().unwrap();
+    let scale = canvas.width() / 1000.0;
+    let local = (point - canvas.min) / scale;
+    let pixel = (local.x.floor() as i64, local.y.floor() as i64);
+    h.event(Event::PointerMoved(point));
+    h.event(press(point));
+    h.run();
+    assert!(h.state().rendered_region().unwrap().area() < 1000 * 486);
+    let preview = displayed_pixel(&h, pixel.0, pixel.1);
+    h.event(release(point));
+    h.run();
+    assert_eq!(h.state().rendered_size(), Some([1000, 486]));
+    assert_eq!(displayed_pixel(&h, pixel.0, pixel.1), preview);
+    assert_eq!(top_pixel(&h, pixel.0, pixel.1), Rgba([0, 0, 0, 255]));
+}

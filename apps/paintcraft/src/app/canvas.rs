@@ -233,7 +233,12 @@ impl App {
                     * u64::from(self.editor.document().canvas.1)
                     <= 1_048_576
                 && self.editor.document().canvas.0 <= 2048
-                && self.editor.document().canvas.1 <= 2048;
+                && self.editor.document().canvas.1 <= 2048
+                // Magnified live painting must keep the smaller visible region.
+                && !(self.zoom > 1.0
+                    && (self.editor.gesture_in_progress()
+                        || self.editor.is_editing_text()
+                        || self.editor.has_pending_edits()));
             let region = if small {
                 self.editor.document().canvas_rect()
             } else {

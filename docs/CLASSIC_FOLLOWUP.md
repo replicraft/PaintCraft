@@ -13,7 +13,9 @@ feature roadmap or claim native Paint parity.
 - Classic initially fits the canvas using the Zoom to Window calculation. A
   restored explicit view scale takes precedence; new/opened documents fit again.
 - Classic images up to 1 megapixel and 2048 pixels on either side reuse a complete
-  level-zero texture across zoom changes. Larger images retain bounded regional
+  level-zero texture across idle zoom changes. Magnified live painting/text and
+  queued edits retain regional rendering to avoid widening preview work. Larger
+  images retain bounded regional
   display requests. This reduces render work; native end-to-end latency is not
   benchmark-qualified by this change.
 - The checkerboard is submitted as one mesh. Scrollbar geometry changes schedule
@@ -81,3 +83,27 @@ retracing, cancellation and resource bounds still apply.
 Crop already works after a nonempty canvas selection, across native/browser/CLI,
 and has an end-to-end pixel/Undo regression. Without a selection its control
 explains that an area must first be selected.
+
+## Validation
+
+The complete workspace run passed 1,205 tests with 60 ignored tests across 107
+suites. The final native preview-region guard then passed all 230 ordinary GUI
+tests (48 opt-in captures ignored), including magnified preview/release pixel
+identity. The browser suite passed all 57 tests, including fitted startup,
+selection erasure, crop and curve-preview release coordinates.
+
+Workspace Clippy, WebAssembly Clippy and the final native all-target Clippy run
+passed with warnings denied. The browser release distribution built successfully.
+Four real offscreen application captures and a real editor brush sheet were
+exported and visually inspected. These captures do not include OS window borders
+or the native menu bar. Source length and whitespace checks passed.
+
+An existing thumbnail cancellation test exposed a queued-versus-running race:
+cancelling before the closure starts correctly drops its receiver. Its intended
+running-job scenario now waits for a worker-start handshake. The targeted
+thumbnail tests and complete workspace run pass with that synchronization.
+
+Local raw evidence is archived in the ignored directory
+`docs/validation/classic-feedback-2026-10-24/`. Live Windows latency, real tablet
+input, complete translation coverage and native Paint golden comparisons are not
+established by these checks.
