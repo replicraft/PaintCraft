@@ -92,16 +92,19 @@ impl App {
             self.confirm = None;
         } else if accept {
             self.confirm = None;
-            let suggested = self
-                .bound
-                .as_deref()
-                .unwrap_or_else(|| Path::new(&self.path_text))
-                .with_extension(draft.format.extension());
             if self.dialogs.is_some() {
+                let suggested = self
+                    .bound
+                    .as_deref()
+                    .unwrap_or_else(|| Path::new(&self.path_text))
+                    .with_extension(draft.format.extension());
                 self.export_dialog_quality = Some(draft.jpeg_quality);
                 self.request_dialog_suggested(ctx, Kind::Export, Some(suggested));
             } else {
-                self.export_selected_quality(suggested, draft.jpeg_quality);
+                // Headless callers supply an explicit destination with set_path_text.
+                let destination =
+                    Path::new(&self.path_text).with_extension(draft.format.extension());
+                self.export_selected_quality(destination, draft.jpeg_quality);
             }
         } else {
             self.confirm = Some(Confirm::ExportOptions(draft));

@@ -217,7 +217,16 @@ fn opening_a_picture_imports_it_and_exporting_names_the_losses() {
         "the picture is shown exactly"
     );
 
-    // JPEG export of this picture is lossy: the dialog says so and only then writes.
+    // Options and loss review can each be cancelled before an image is written.
+    fn choose_jpeg_destination(h: &mut Harness<App>) {
+        h.get_by_role_and_label(eframe::egui::Role::ComboBox, "File format")
+            .click();
+        h.run();
+        h.get_by_label("JPEG picture").click();
+        h.run();
+        h.get_by_label("Choose destination…").click();
+        h.run();
+    }
     let out = dir.join("out.jpg");
     h.state_mut().set_path_text(&out.to_string_lossy());
     classic_file_action(&mut h, "Picture…");
@@ -226,16 +235,29 @@ fn opening_a_picture_imports_it_and_exporting_names_the_losses() {
     h.run();
     assert!(!out.exists());
     classic_file_action(&mut h, "Picture…");
+    choose_jpeg_destination(&mut h);
     h.get_by_label_contains("JPEG uses lossy compression.");
+    assert!(!out.exists());
+    h.get_by_label("Cancel").click();
+    h.run();
+    assert!(!out.exists());
+    classic_file_action(&mut h, "Picture…");
+    choose_jpeg_destination(&mut h);
     h.get_by_label("Export now").click();
     h.run();
     assert!(out.exists());
     let back = paintcraft_formats::image::decode(&std::fs::read(&out).unwrap()).unwrap();
     assert_eq!((back.width, back.height), (16, 8));
 
-    h.state_mut().set_path_text("noextension");
+    let no_extension = dir.join("noextension");
+    h.state_mut().set_path_text(&no_extension.to_string_lossy());
     classic_file_action(&mut h, "Picture…");
-    assert!(h.state().editor().status().contains(".png"));
+    h.get_by_label("Choose destination…").click();
+    h.run();
+    h.get_by_label_contains("as PNG.");
+    h.get_by_label("Cancel").click();
+    h.run();
+    assert!(!no_extension.with_extension("png").exists());
     std::fs::remove_dir_all(dir).unwrap();
 }
 

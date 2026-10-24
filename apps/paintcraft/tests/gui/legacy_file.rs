@@ -68,6 +68,18 @@ fn historical_save_as_choices_export_real_formats_only_after_confirmation() {
                 h.run();
                 assert_eq!(std::fs::read(&out).unwrap(), b"existing picture");
                 choose_format(&mut h, language, format);
+                h.get_by_label(&translate(language, "Choose destination…"))
+                    .click();
+                h.run();
+                assert_eq!(std::fs::read(&out).unwrap(), b"existing picture");
+                h.get_by_label(&translate(language, "Cancel")).click();
+                h.run();
+                assert_eq!(std::fs::read(&out).unwrap(), b"existing picture");
+                choose_format(&mut h, language, format);
+                h.get_by_label(&translate(language, "Choose destination…"))
+                    .click();
+                h.run();
+                assert_eq!(std::fs::read(&out).unwrap(), b"existing picture");
                 h.get_by_label(&translate(language, "Export now")).click();
                 h.run();
                 let bytes = std::fs::read(&out).unwrap();
