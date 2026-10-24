@@ -46,11 +46,15 @@ pub struct Workspace {
     /// Presentation-only Home/View tab for the historical ribbons.
     pub legacy_view: bool,
     pub toolbar: ToolbarVisibility,
+    /// Contextual Text tab is independent of the Home/View choice.
+    pub legacy_text: bool,
+    #[doc(hidden)]
+    pub legacy_tool: Option<paintcraft_tools::Tool>,
     /// Current persisted custom colors supplied by the desktop host.
     pub custom_colors: CustomColors,
 }
 mod text;
-pub use text::{TextAlignment, TextOptions, font_family, text_options};
+pub use text::{TextAlignment, TextControls, TextOptions, font_family, text_options};
 mod colors;
 pub use colors::{
     CUSTOM_COLOR_COUNT, ColorEditor, ColorResponse, CustomColors, edit_colors_dialog,
@@ -106,8 +110,19 @@ pub fn chrome(
     workspace: &mut Workspace,
     context: paintcraft_ui::actions::Context,
 ) -> Vec<Action> {
+    chrome_with_text(ui, variant, state, workspace, context, None)
+}
+
+pub fn chrome_with_text(
+    ui: &mut egui::Ui,
+    variant: ClassicVariant,
+    state: &mut Controls,
+    workspace: &mut Workspace,
+    context: paintcraft_ui::actions::Context,
+    text: Option<TextControls<'_>>,
+) -> Vec<Action> {
     if variant != ClassicVariant::V11 {
-        return legacy_chrome::show(ui, variant, state, workspace, context);
+        return legacy_chrome::show(ui, variant, state, workspace, context, text);
     }
     let mut actions = Vec::new();
     for text in [egui::TextStyle::Body, egui::TextStyle::Button] {

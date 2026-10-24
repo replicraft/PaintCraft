@@ -13,7 +13,16 @@ pub(super) fn show(
     state: &mut Controls,
     workspace: &mut Workspace,
     context: Context,
+    text: Option<super::TextControls<'_>>,
 ) -> Vec<Action> {
+    let text_available = text.is_some() && state.tool == paintcraft_tools::Tool::Text;
+    if workspace.legacy_tool != Some(state.tool) {
+        workspace.legacy_tool = Some(state.tool);
+        workspace.legacy_text = text_available;
+        if text_available {
+            workspace.legacy_view = false;
+        }
+    }
     let mut actions = Vec::new();
     ui.visuals_mut().menu_corner_radius = egui::CornerRadius::ZERO;
     for style in [egui::TextStyle::Body, egui::TextStyle::Button] {
@@ -43,6 +52,19 @@ pub(super) fn show(
             if super::legacy_controls::icon_button(ui, context, action, icon, 18.0).clicked() {
                 actions.push(action);
             }
+        }
+        if text_available {
+            let fill = if ui.visuals().dark_mode {
+                Color32::from_rgb(43, 77, 54)
+            } else {
+                Color32::from_rgb(210, 235, 216)
+            };
+            egui::Frame::new()
+                .fill(fill)
+                .inner_margin(egui::Margin::symmetric(8, 2))
+                .show(ui, |ui| {
+                    ui.label(tr(ui.ctx(), "Text Tools"));
+                });
         }
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             if super::legacy_controls::icon_button(
@@ -122,7 +144,7 @@ pub(super) fn show(
         response
             .widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, ui.is_enabled(), &label));
         for (view, title) in [(false, "Home"), (true, "View")] {
-            let selected = workspace.legacy_view == view;
+            let selected = !workspace.legacy_text && workspace.legacy_view == view;
             let response = ui.add(
                 egui::Button::new(tr(ui.ctx(), title))
                     .fill(if selected {
@@ -144,6 +166,29 @@ pub(super) fn show(
             );
             if response.clicked() {
                 workspace.legacy_view = view;
+                workspace.legacy_text = false;
+            }
+        }
+        if text_available {
+            let selected = workspace.legacy_text;
+            let response = ui.add(
+                egui::Button::new(tr(ui.ctx(), "Text"))
+                    .fill(if selected {
+                        ui.visuals().panel_fill
+                    } else if ui.visuals().dark_mode {
+                        Color32::from_rgb(43, 77, 54)
+                    } else {
+                        Color32::from_rgb(210, 235, 216)
+                    })
+                    .min_size(Vec2::new(58.0, 24.0)),
+            );
+            let label = tr(ui.ctx(), "Text");
+            response.widget_info(|| {
+                egui::WidgetInfo::selected(egui::Role::Tab, ui.is_enabled(), selected, &label)
+            });
+            if response.clicked() {
+                workspace.legacy_text = true;
+                workspace.legacy_view = false;
             }
         }
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -157,7 +202,28 @@ pub(super) fn show(
     ) {
         let bounds = ui.available_rect_before_wrap();
         let background = ui.painter().add(egui::Shape::Noop);
-        if workspace.legacy_view {
+        if workspace.legacy_text && text_available {
+            egui::ScrollArea::horizontal()
+                .id_salt("historical-text-ribbon")
+                .max_height(88.0)
+                .show(ui, |ui| {
+                    ui.horizontal_top(|ui| {
+                        text.expect("text controls are available")
+                            .historical(ui, variant);
+                        ui.separator();
+                        super::legacy_ribbon::group(ui, "Colors", |ui| {
+                            super::legacy_palette::show(
+                                ui,
+                                variant,
+                                state,
+                                workspace,
+                                context,
+                                &mut actions,
+                            )
+                        });
+                    });
+                });
+        } else if workspace.legacy_view {
             view_ribbon(ui, context, &mut actions);
         } else {
             super::legacy_ribbon::show(ui, variant, state, workspace, context, &mut actions);

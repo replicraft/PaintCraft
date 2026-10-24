@@ -23,6 +23,12 @@ impl Default for FontState {
     }
 }
 
+impl FontState {
+    pub(super) fn loading(&self) -> bool {
+        self.pending.is_some() || self.ready.is_some()
+    }
+}
+
 impl App {
     pub(super) fn initialize_fonts(&mut self, ctx: &egui::Context) {
         let (sender, receiver) = std::sync::mpsc::channel();
@@ -108,7 +114,15 @@ impl App {
             &mut self.fonts.search,
             self.fonts.pending.is_some() || self.fonts.ready.is_some(),
         );
-        self.fonts.changed |= before != self.settings.text;
+        self.finish_text_preferences(ui, &before);
+    }
+
+    pub(super) fn finish_text_preferences(
+        &mut self,
+        ui: &mut egui::Ui,
+        before: &paintcraft_classic::TextOptions,
+    ) {
+        self.fonts.changed |= *before != self.settings.text;
         if self.fonts.changed
             && ui.ctx().current_pass_index() == 0
             && !ui.input(|input| input.pointer.any_down())

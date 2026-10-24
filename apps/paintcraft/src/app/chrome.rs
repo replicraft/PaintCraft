@@ -84,15 +84,23 @@ impl App {
         };
         let action_context = self.action_context();
         self.classic.custom_colors = self.settings.custom_colors;
+        let text_before = self.settings.text.clone();
+        let fonts_loading = self.fonts.loading();
         let actions = ui
             .push_id(("document-chrome", self.active_tab_id()), |ui| {
                 match self.experience() {
-                    Experience::Classic => paintcraft_classic::chrome(
+                    Experience::Classic => paintcraft_classic::chrome_with_text(
                         ui,
                         self.variant(),
                         &mut controls,
                         &mut self.classic,
                         action_context,
+                        Some(paintcraft_classic::TextControls {
+                            options: &mut self.settings.text,
+                            families: &self.fonts.families,
+                            search: &mut self.fonts.search,
+                            loading: fonts_loading,
+                        }),
                     ),
                     Experience::Studio => paintcraft_studio::toolbar(
                         ui,
@@ -104,10 +112,14 @@ impl App {
             })
             .inner;
         self.apply_chrome(&ctx, controls, actions);
+        self.finish_text_preferences(ui, &text_before);
         if self.editor.tool == Tool::Text
-            && (self.experience() == Experience::Studio || self.classic.toolbar.visible())
+            && (self.experience() == Experience::Studio
+                || (self.variant() == ClassicVariant::V11 && self.classic.toolbar.visible()))
         {
             self.classic_text_options(ui);
+        }
+        if self.editor.tool == Tool::Text {
             self.editor.set_text_style(self.settings.text.clone());
         }
         if self.experience() == Experience::Classic {

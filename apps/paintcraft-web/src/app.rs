@@ -384,12 +384,18 @@ impl WebApp {
             });
         });
         egui::Panel::top("classic-chrome").show(ui, |ui| {
-            let actions = paintcraft_classic::chrome(
+            let actions = paintcraft_classic::chrome_with_text(
                 ui,
                 self.variant,
                 &mut self.controls,
                 &mut self.workspace,
                 context,
+                Some(paintcraft_classic::TextControls {
+                    options: &mut self.text.style,
+                    families: &self.text.families,
+                    search: &mut self.text.search,
+                    loading: false,
+                }),
             );
             for action in actions {
                 self.action(&ctx, action);

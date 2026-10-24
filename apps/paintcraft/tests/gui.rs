@@ -352,6 +352,8 @@ mod legacy_dropdowns;
 mod legacy_skins;
 #[path = "gui/legacy_status.rs"]
 mod legacy_status;
+#[path = "gui/legacy_text.rs"]
+mod legacy_text;
 
 #[path = "gui/screenshots.rs"]
 mod screenshots;

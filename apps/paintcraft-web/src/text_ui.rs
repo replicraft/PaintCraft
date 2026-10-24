@@ -86,7 +86,9 @@ impl WebApp {
         let enabled = !self.blocked();
         egui::Panel::top("web-text-options").show(ui,|ui| {
             ui.add_enabled_ui(enabled,|ui| {
-                paintcraft_classic::text_options(ui,&mut self.text.style,&self.text.families,&mut self.text.search,false);
+                if self.variant == paintcraft_classic::ClassicVariant::V11 {
+                    paintcraft_classic::text_options(ui,&mut self.text.style,&self.text.families,&mut self.text.search,false);
+                }
                 ui.horizontal_wrapped(|ui| {
                     ui.label(tr(ui.ctx(), "Bundled Selawik · Enter for a new line · Cmd/Ctrl+Enter to place · Escape to cancel"));
                     if ui.add_enabled(self.editor.tools.is_editing_text() && self.text.preedit.is_empty(),egui::Button::new(tr(ui.ctx(), "Place text"))).clicked() {
