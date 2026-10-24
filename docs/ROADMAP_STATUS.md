@@ -22,9 +22,10 @@ captures. See [brush media](BRUSH_MEDIA.md), [shape previews](SHAPE_PREVIEWS.md)
 
 Studio catch-up follows these changes: its own Image menu now exposes Crop,
 Rotate/Flip and Clear Canvas; its Shape selector includes every implemented preset.
-The interfaces keep separate document workspaces and their own canvas UI. Studio's
-image dimension controls, richer selections, editable placed objects and effects
-remain work. Resize/skew remains preview-only, and complete Windows 7/10/11 and
+The interfaces keep separate document workspaces and their own canvas UI. Studio's own nine-anchor Canvas size dialog now stages placement and preserves
+off-canvas data, with ordered wait/capture and stale-source guards. Image
+resampling, newly exposed-margin painting, richer selections, editable placed
+objects and effects remain work. See [Studio canvas size](STUDIO_CANVAS_SIZE.md). Resize/skew remains preview-only, and complete Windows 7/10/11 and
 Paint.NET native behavior parity is not claimed. See [Studio](STUDIO.md).
 
 Latest tool work enables the document Color picker in native/web Classic and

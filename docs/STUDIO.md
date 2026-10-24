@@ -285,5 +285,17 @@ catalogs and bundled Japanese fallback font.
 
 The UI integration test selects every preset, checks action availability, clears
 and restores the document, rotates it and restores it again. Further Studio work
-includes its own image/canvas dimension controls, more advanced selections,
+includes image resampling, more advanced selections,
 editable placed objects, effects and complete Paint.NET behavior qualification.
+
+
+## Canvas placement (2026-10-24)
+
+Image → Canvas size now opens a Studio-owned staged dialog with aligned pixel
+fields and nine anchors. It preserves off-canvas content and raw layer pixels,
+translates/clips selections, supports exact Undo/Redo, and leaves Classic startup
+preferences alone. Earlier accepted edits finish before dimensions/revision are
+captured; stale owners cannot receive a later Apply. English/Japanese and compact
+light/dark layouts are exercised by real application GUI tests. See
+[canvas semantics, validation and limits](STUDIO_CANVAS_SIZE.md). Resampling, skew,
+automatic layer growth into newly uncovered margins and full native parity remain.

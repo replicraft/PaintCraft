@@ -538,8 +538,8 @@
       "title": "Studio parity tranches",
       "depends_on": ["T12", "T14", "T17"],
       "status": "partial",
-      "evidence": ["crates/presentation/paintcraft-studio/src/lib.rs", "apps/paintcraft/tests/gui/studio.rs", "docs/STUDIO.md"],
-      "remaining_or_scope": "Studio toolbar, floating Tools/Colors/Layers, guarded History navigation and independent document tabs with owner-routed save/recovery and close handling work; shared descriptors and menu/shortcut dispatch cover existing actions; full action coverage, image operations, effects, PDN and reference parity remain.",
+      "evidence": ["crates/presentation/paintcraft-studio/src/lib.rs", "apps/paintcraft/tests/gui/studio.rs", "docs/STUDIO.md", "docs/STUDIO_CANVAS_SIZE.md", "apps/paintcraft/tests/gui/studio_canvas.rs", "apps/paintcraft/src/app/studio_canvas/tests.rs"],
+      "remaining_or_scope": "Studio now has shared image actions, every preset, all brush media and its own nine-anchor canvas-size dialog with ordered source capture, exact history and independent Classic preferences. Studio toolbar, floating Tools/Colors/Layers, guarded History navigation and independent document tabs with owner-routed save/recovery and close handling work; shared descriptors and menu/shortcut dispatch cover existing actions; full action coverage, image operations, effects, PDN and reference parity remain.",
       "acceptance": "Release only named tested tranches; high-depth/groups not misrepresented as source features."
     },
     {
