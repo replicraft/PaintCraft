@@ -2,12 +2,19 @@
 
 PaintCraft Web connects the shared Classic interface, tool state machines,
 transactional document session and raster compositor. Pencil, round/square brush,
-eraser, fill, all 23 Classic shape choices, rectangular selection, selection Crop, clear canvas
+eraser, fill, color picker, all 23 Classic shape choices, rectangular selection, selection Crop, clear canvas
 and undo/redo edit real pixels. Shift constrains shapes; Ctrl/Cmd-scroll zooms. The
 Layers panel adds, selects, hides, reorders and deletes real layers. Brush preview
 and release use the same shared commands. Erasing and Clear Canvas restore the
 solid project ground, with white used for new canvases and imported images that
 have no opaque default ground.
+
+The Color picker samples a document-image pixel on release into the primary
+(left click) or secondary (right click) slot, then restores the previous tool.
+It ignores the selection and viewport decorations, preserves composite RGBA and
+creates no pixel edit/history entry. Picking from a clean document keeps it clean.
+See [sampling and ownership rules](../../docs/COLOR_PICKER.md). Studio's layer/
+neighborhood options remain in the desktop frontend.
 
 Classic v11 now has the same floating size and brush-opacity controls as desktop.
 Pencil thickness is independent of brush/eraser thickness; each gesture captures

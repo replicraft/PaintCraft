@@ -1438,3 +1438,21 @@ immediate integer transform; persistent floating pixels, arbitrary angles, pivot
 profile fidelity, resampling/skew and full native input qualification remain work.
 Earlier disabled Rotate/Flip descriptions are historical. Feature work continues
 before UI polish.
+
+## Functional document Color picker (2026-10-24)
+
+The eyedropper now samples one composite document pixel into the primary or
+secondary slot and restores the previously selected tool after success. Sampling
+ignores selection clipping and presentation decorations, preserves composite RGBA
+and does not publish pixels/history or dirty a clean document. Desktop uses the
+ordered worker with document/tool/slot guards; web copies the same kernel's result
+into its controls. Source sampling is defined by the shared policy; versioned
+Windows return/input behavior remains unqualified.
+
+Classic 1×/2× GUI cases, native worker ownership/cancellation cases, web, render
+and tool tests pass, with 219 ordinary GUI and 263 native library tests. The browser
+produces byte-identical PCND downloads across both primary and secondary picks,
+and painting after a pick uses the sampled color. See [the detailed scope and
+limits](COLOR_PICKER.md). Earlier disabled-picker descriptions are historical.
+Magnifier, background removal, custom transforms, floating selections and further
+brush/selection semantics remain work; UI polish stays deferred.

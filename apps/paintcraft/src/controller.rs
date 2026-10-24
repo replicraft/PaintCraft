@@ -1,10 +1,10 @@
 //! The editor controller: one pencil, an explicit editing target, undo/redo and
 //! safe save, expressed as typed batch transactions against a [`Session`].
 //!
-//! A gesture (pointer down, moves, up) is collected locally and committed as
-//! exactly one transaction queued on release. Nothing is published while it is in
-//! progress, so a cancelled or interrupted gesture changes nothing and a stroke
-//! is one undo step. Commands reach the session only through the [`Outbox`].
+//! Editing gestures collect locally and queue one transaction on release. Nothing
+//! is published during a gesture; cancellation changes nothing and a stroke is one
+//! undo step. Color-picker gestures queue a read-only sample and update session
+//! slots without a document transaction. Actions enter through the [`Outbox`].
 
 #[path = "controller/background.rs"]
 pub(crate) mod background;

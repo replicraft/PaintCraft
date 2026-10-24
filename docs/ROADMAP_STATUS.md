@@ -11,6 +11,16 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest tool work enables the document Color picker in native/web Classic and
+Studio. It updates primary/secondary slots without changing document history,
+selection or dirtiness. Classic uses a one-shot image pixel; Studio exposes raw
+layer/image sources, six neighborhoods and after-click choices. Native sampling
+runs on the ordered worker with late-result ownership guards. The browser's
+before/after-pick PCND downloads are byte-identical. See
+[color picker semantics and qualification](COLOR_PICKER.md). Native reference
+averaging/input fidelity, extra shortcuts and other missing tools remain work.
+Feature completion continues before UI cleanup; T14/T15 stay partial.
+
 Latest editing work connects Rotate/Flip to native/web controls and shared Edit
 actions. No selection reorients the complete canvas/layers; a rectangular selection
 uses a captured-source patch on the active layer with exact overlap, clear and

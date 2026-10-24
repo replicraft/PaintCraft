@@ -464,3 +464,13 @@ web controls route to this operation for selections and `canvas.transform` when
 unrestricted. See [selection transforms](SELECTION_TRANSFORMS.md) for the defined
 top-left anchoring, immediate-commit lifecycle, oracles and remaining native-profile
 and floating-selection work.
+
+### Read-only document sampling
+
+The Color picker produces a session-only `ColorPick` intention, not a document
+command. Image samples use bounded regional ordered composition; Layer samples
+read raw finite-layer RGBA. Native jobs share the ordered editing service and
+reject stale document/tool/slot results. No publication, history or dirty state is
+created by sampling, including with an unpublished text draft. Web invokes the
+same renderer kernel synchronously. See [Color picker](COLOR_PICKER.md) for
+neighborhood arithmetic, profile choices, qualification and remaining native gaps.
