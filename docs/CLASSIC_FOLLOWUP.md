@@ -216,8 +216,8 @@ artwork corrections but retains its flat selection treatment.
 The updated `assets/repo/classic-windows-7.png` and
 `assets/repo/classic-windows-10.png` are real editor renders. OS window chrome is
 outside those captures. This is a closer presentation baseline, not a claim of
-pixel-exact Windows 7 parity: remaining historical artwork, gallery scroll-button
-styling, popup details and native platform differences still need comparison.
+pixel-exact Windows 7 parity: remaining historical artwork, popup details and native platform differences
+still need comparison.
 
 Validation for this refinement: all 235 regular native GUI tests passed, with 49
 opt-in captures ignored. The five focused historical UI tests also passed,
@@ -227,3 +227,29 @@ and the browser release distribution rebuilt successfully. Both refreshed
 historical screenshots were rendered offscreen and the Windows 7 capture was
 visually compared with the supplied references. Translation, source-length and
 whitespace checks passed. This does not qualify native Windows rendering parity.
+
+## Historical shape gallery controls
+
+The seven-column historical gallery now has the reference's narrow right-hand
+rail: previous row, next row and an expanded chooser. The arrows scroll actual
+shape rows and disable at the bounds. Wheel/trackpad scrolling and focus-driven
+scrolling remain available. The expanded, square-cornered popup exposes all 23
+existing shape choices using the historical blue outline artwork, selects the
+real drawing tool and closes after a choice. English and Japanese labels cover
+the new controls. This presentation is shared by Windows 7 and Windows 10;
+Windows 11 retains its own gallery.
+
+The new regression reaches Lightning through row scrolling and Heart through
+the expanded chooser in both historical skins, languages and display scales,
+including forced multipass input. It verifies unchanged document semantics and
+history tickets after tool selection. The opt-in captures use normal frame
+scheduling and assert that settled frames have no discard requests or performance
+warning banner. Updated real captures include
+`assets/repo/classic-v7-shapes.png` and `assets/repo/classic-v10-shapes.png`.
+
+All 236 regular native GUI tests passed, with 50 opt-in captures ignored. Native
+all-target Clippy passed with warnings denied, the browser release distribution
+rebuilt, and translation/source-length/whitespace checks passed. Offscreen chooser
+captures were inspected. Native Windows parity and keyboard Ribbon KeyTips remain
+unqualified. Raw logs are in the ignored
+`docs/validation/historical-shape-gallery-2026-10-24/` directory.
