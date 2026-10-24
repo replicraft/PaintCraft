@@ -64,11 +64,15 @@ impl App {
                     self.paint_canvas(ui, response, painter, first_pass, controls)
                 },
             ),
-            Experience::Studio => {
-                paintcraft_studio::canvas::canvas(ui, id, canvas_size, |ui, response, painter| {
+            Experience::Studio => paintcraft_studio::canvas::canvas_for_scope(
+                ui,
+                id,
+                self.studio_pan_scope(ui.ctx()),
+                canvas_size,
+                |ui, response, painter| {
                     self.paint_canvas(ui, response, painter, first_pass, controls)
-                })
-            }
+                },
+            ),
         }
     }
 
@@ -99,11 +103,15 @@ impl App {
             .filter(|p| visible_canvas.contains(*p) && controls.is_none_or(|r| !r.contains(*p)))
             .and_then(|p| view.to_doc((p.x, p.y)));
 
-        let studio_zoom =
-            self.experience() == Experience::Studio && self.editor.tool == Tool::Magnifier;
-        if first_pass && !studio_zoom {
+        self.validate_studio_pan(ui, viewport);
+        if first_pass {
             let events = ui.input(|i| i.events.clone());
             for event in events {
+                if self.studio_pan_event(ui, &painter, viewport, &event)
+                    || self.studio_zoom_event(ui, &painter, rect, viewport, &event)
+                {
+                    continue;
+                }
                 match event {
                     egui::Event::WindowFocused(false) if self.editor.is_constructing_shape() => {
                         self.editor.cancel_gesture();
@@ -357,7 +365,7 @@ impl App {
         }
         self.draw_overlays(&painter, &view, ppp);
         self.draw_tool_cursor(ui, &painter, visible_canvas, &view, ppp);
-        self.studio_zoom_input(ui, &painter, rect, viewport, first_pass);
+        self.draw_studio_zoom(ui, &painter, rect, viewport);
         if let Some((x, y)) = pending_center {
             let center =
                 rect.min + Vec2::new(x * view.points_per_pixel(), y * view.points_per_pixel());

@@ -10,13 +10,30 @@ impl App {
         view: &View,
         ppp: f32,
     ) {
+        let pan = self.experience() == Experience::Studio
+            && (self.editor.tool == Tool::Pan
+                || (self.studio.space_pan && !self.editor.gesture_in_progress())
+                || self.studio.pan.is_active());
+        let cursor_area = if pan {
+            self.canvas_viewport.unwrap_or(visible_canvas)
+        } else {
+            visible_canvas
+        };
         let Some(pos) = ui.input(|i| i.pointer.hover_pos()).filter(|pos| {
             ui.is_enabled()
-                && visible_canvas.contains(*pos)
+                && cursor_area.contains(*pos)
                 && ui.ctx().layer_id_at(*pos) == Some(painter.layer_id())
         }) else {
             return;
         };
+        if pan {
+            ui.ctx().set_cursor_icon(if self.studio.pan.is_active() {
+                egui::CursorIcon::Grabbing
+            } else {
+                egui::CursorIcon::Grab
+            });
+            return;
+        }
         if self.editor.painting_blocked() {
             ui.ctx().set_cursor_icon(egui::CursorIcon::Progress);
             return;

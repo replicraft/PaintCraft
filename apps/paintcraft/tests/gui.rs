@@ -390,3 +390,6 @@ mod magnifier;
 
 #[path = "gui/studio_zoom.rs"]
 mod studio_zoom;
+
+#[path = "gui/studio_pan.rs"]
+mod studio_pan;

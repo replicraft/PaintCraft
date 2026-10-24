@@ -32,6 +32,8 @@ mod layers;
 #[cfg(target_os = "macos")]
 #[path = "app/native_menu.rs"]
 mod native_menu;
+#[path = "app/pan_tool.rs"]
+mod pan_tool;
 #[path = "app/preferences.rs"]
 mod preferences;
 #[path = "app/recovery.rs"]

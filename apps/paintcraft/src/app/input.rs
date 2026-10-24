@@ -49,7 +49,8 @@ impl App {
                     egui::Key::Escape if popup_open => {}
                     egui::Key::Escape if picker_open => self.picking = None,
                     egui::Key::Escape if self.studio.zoom.is_active() => self.studio.zoom.cancel(),
-                    egui::Key::Z if text_focus && !modifiers.command => {}
+                    egui::Key::Escape if self.studio.pan.is_active() => self.studio.pan.cancel(),
+                    egui::Key::Z | egui::Key::H if text_focus && !modifiers.command => {}
                     egui::Key::Escape => {
                         if self.fullscreen && !text_focus && !self.editor.gesture_in_progress() {
                             self.dispatch_chrome(
@@ -78,7 +79,9 @@ impl App {
                     self.ime_composing = false;
                     self.editor.cancel_gesture();
                     self.studio.zoom.cancel();
-                    if self.editor.tool != Tool::Magnifier {
+                    self.studio.pan.cancel();
+                    self.studio.space_pan = false;
+                    if !matches!(self.editor.tool, Tool::Magnifier | Tool::Pan) {
                         self.editor.commit_text();
                     }
                 }
