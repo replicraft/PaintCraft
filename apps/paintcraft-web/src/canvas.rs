@@ -1,8 +1,5 @@
 //! Classic browser input and texture presentation; no native viewport services.
-use crate::{
-    app::WebApp,
-    editor::{MAX_POINTS, WHITE},
-};
+use crate::{app::WebApp, editor::MAX_POINTS};
 use eframe::egui::{self, Color32, Pos2, Rect, TextureHandle, TextureOptions, Vec2};
 use paintcraft_editor::session::Ticket;
 use paintcraft_input::PointerButton;
@@ -214,7 +211,8 @@ impl WebApp {
         self.editor.tools.color = self.controls.primary;
         self.editor.tools.secondary = self.controls.secondary;
         self.editor.tools.options = self.controls.options;
-        self.editor.tools.options.eraser_color = WHITE;
+        self.editor.tools.options.eraser_color =
+            paintcraft_tools::commands::canvas_color(self.editor.session.document());
         let rect = response.rect;
         let zoom = self.zoom;
         let point = |pos: Pos2| {

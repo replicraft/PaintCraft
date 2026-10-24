@@ -1,4 +1,4 @@
-//! One command description for speculative raster pixels and final publication.
+//! Shared raster command preparation and Paint-style canvas ground.
 use crate::{Stroke, Tool};
 use paintcraft_core::types::{Result, Rgba, json::Value};
 use uuid::Uuid;
@@ -160,4 +160,14 @@ pub fn resize_canvas(
         }
     }
     ops
+}
+
+/// Solid ground for Paint-style frontends. Imported images without an opaque
+/// default layer sample use white; layered frontends can choose transparency.
+pub fn canvas_color(document: &paintcraft_document::Document) -> Rgba {
+    document
+        .layers_in_order()
+        .map(|layer| layer.raster.default_pixel())
+        .find(|color| color.a() == 255)
+        .unwrap_or(Rgba([255; 4]))
 }

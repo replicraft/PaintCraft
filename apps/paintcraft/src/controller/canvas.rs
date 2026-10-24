@@ -8,11 +8,7 @@ mod tests;
 impl Editor {
     /// Solid canvas ground used by Classic; imported images fall back to white.
     pub fn canvas_color(&self) -> Rgba {
-        self.document()
-            .layers_in_order()
-            .map(|layer| layer.raster.default_pixel())
-            .find(|color| color.a() == 255)
-            .unwrap_or(Rgba([255; 4]))
+        paintcraft_tools::commands::canvas_color(self.document())
     }
 
     pub(super) fn clear_canvas(&mut self, color: Rgba) {

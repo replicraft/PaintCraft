@@ -140,7 +140,9 @@ impl WebApp {
             }
             Action::Undo => self.edit(Edit::Undo),
             Action::Redo => self.edit(Edit::Redo),
-            Action::ClearCanvas => self.edit(Edit::ClearCanvas { color: WHITE }),
+            Action::ClearCanvas => self.edit(Edit::ClearCanvas {
+                color: paintcraft_tools::commands::canvas_color(self.editor.session.document()),
+            }),
             Action::Deselect => self.edit(Edit::Select { corners: None }),
             Action::SelectAll => {
                 let (w, h) = self.editor.session.document().canvas;

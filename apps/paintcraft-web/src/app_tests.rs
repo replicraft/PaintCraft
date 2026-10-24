@@ -160,3 +160,51 @@ fn png_export_requires_explicit_flattening_confirmation() {
     assert_eq!(h.state().editor.session.ticket(), before);
     assert_eq!(h.state().editor.session.undo_depth(), 0);
 }
+
+#[test]
+fn reopened_project_ground_is_used_by_eraser_and_clear_with_undo() {
+    use paintcraft_core::types::Rgba;
+    let mut h = harness();
+    let ground = Rgba([18, 45, 67, 255]);
+    let doc =
+        paintcraft_document::new_document(16, 16, Some(ground), 0, paintcraft_document::POLICY)
+            .unwrap();
+    let bytes = paintcraft_formats::pcnd::write(&doc).unwrap();
+    let reopened = paintcraft_formats::pcnd::read(&bytes).unwrap();
+    h.state_mut().editor = crate::editor::Editor::from_document(reopened).unwrap();
+    h.run();
+    button(&mut h, true);
+    button(&mut h, false);
+    let pixel = |h: &Harness<WebApp>| {
+        let layer = h.state().editor.target.unwrap();
+        h.state().editor.session.document().layers[&layer]
+            .raster
+            .get(8, 8)
+    };
+    assert_eq!(pixel(&h), Rgba([0, 0, 0, 255]));
+    h.get_by_role_and_label(egui::Role::Button, "Eraser")
+        .click();
+    h.run();
+    button(&mut h, true);
+    button(&mut h, false);
+    assert_eq!(pixel(&h), ground);
+    h.get_by_role_and_label(egui::Role::Button, "Pencil")
+        .click();
+    h.run();
+    button(&mut h, true);
+    button(&mut h, false);
+    assert_eq!(pixel(&h), Rgba([0, 0, 0, 255]));
+    h.get_by_label("Clear Canvas").click();
+    h.run();
+    assert!(
+        paintcraft_render::render_flat(h.state().editor.session.document())
+            .unwrap()
+            .as_chunks::<4>()
+            .0
+            .iter()
+            .all(|pixel| *pixel == ground.0)
+    );
+    h.key_press_modifiers(Modifiers::COMMAND, Key::Z);
+    h.run();
+    assert_eq!(pixel(&h), Rgba([0, 0, 0, 255]));
+}
