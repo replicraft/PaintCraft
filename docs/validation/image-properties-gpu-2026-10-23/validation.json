@@ -1,0 +1,41 @@
+{
+  "source_commit": "3be6b240396ff005d22ee90816577ccae49b3099",
+  "date": "2026-10-23",
+  "status": "partial_properties_ui_with_working_pixel_dimensions",
+  "scope": "File Image properties and Ctrl/Cmd+E share a Classic-only action. Native menu entry/accelerator route to the same outbox. Dialog shows the actual editor filename, unavailable resolution, pixel dimension fields and explicit unavailable physical-unit/monochrome controls. Pixel changes use existing top-left, outside-content-preserving canvas transactions; no resampling kernel or command schema was added.",
+  "reference": {
+    "supplied_file_menu": "docs/temp/paint-references/photos/im1age.png",
+    "sha256": "19d68fa8fef6378f09883e5b52659cef959e6d0fac5d2db2ab6573417fb4b317",
+    "requirements": "docs/temp/paint-references/PLAN.md",
+    "scope": "Supplied screenshot establishes File entry and Ctrl+E, not complete dialog geometry. Body follows shared Classic dialog conventions.",
+    "historical_pixel_attributes": "https://learn.microsoft.com/en-us/troubleshoot/dynamics/gp/prevent-image-quality-of-graphic-from-being-reduced"
+  },
+  "checks": {
+    "gui": "207 passed; 43 ignored. Menu/shortcut parity publishes one resize; outside pixels survive and undo/redo restore semantics. Light desktop 1x/dark 360x260 2x repeated layouts check staging/cancellation, fixed controls, unsupported metadata gates, and unpublished text/history/preference preservation, including ordinary text/backspace input while modal. Long real file names remain bounded with one extra full-name tooltip. Unchanged OK preserves cropped layer bounds, history, path and clean state.",
+    "noop_regression": "Before guard, a valid PCND with a 1000x486 canvas and 32x16 layer was modified by unchanged OK. Failing log captured against staged integration before the guard; final full GUI run passes. Shared dimension host now skips unchanged requests.",
+    "shared_ui": "23 passed; 1 ignored.",
+    "host_unit": "Stale source guard passed for both Canvas size and Image properties.",
+    "native_menu_unit": "Passed: one action identity, Classic meta+KeyE, no Studio accelerator, matching frontend shortcut routing. This does not prove live OS menu activation.",
+    "gpu": "Opt-in actual-App Wgpu exporter passed against the committed source and generated eight light/dark desktop/compact current/staged scenes. Four representative final captures archived and visually reviewed; staging was cancelled with unchanged document/history.",
+    "clippy": "workspace all-targets -D warnings passed",
+    "static": "cargo fmt, source length policy and git diff --check passed"
+  },
+  "remaining": [
+    "Resolution/DPI metadata and physical-unit conversion, monochrome conversion and complete file metadata presentation remain unavailable. No default 96 DPI or file statistics are fabricated.",
+    "Exact current Windows Image properties layout/raster semantics, live native menu activation and OS accessibility remain unqualified. Project canvas preservation policy is explicit in the dialog.",
+    "T15 and the full roadmap remain partial."
+  ],
+  "sha256": {
+    "clippy.log.gz": "8983208807f4ca4e15198067e8e3bd020db1d0744157007dc7a4e89d98c39657",
+    "dark-compact-top.png": "43a6b629d0e1134333b3310a6d10e3a56215f651a484d1ec92a4b937f6bad0f8",
+    "dark-desktop-staged.png": "c5fd79174516e5fc2db98fd427c62622d8f0ec763baf4c4cbfbaefca0b0b93f7",
+    "gpu.log.gz": "95744aa6c1f1e309abf5fe855e50b1e37b9c638669449d6d5c4579f96a96a3b7",
+    "gui.log.gz": "40e3db23f5b73844762b6e728b5fa5b3d811d2d975d3c5c26d07830b8cca3bde",
+    "light-compact-staged.png": "83c597f79c480a8aa33d9d41b171f6479a09d20a9f107e462596ff3f1fc504c8",
+    "light-desktop-top.png": "827c6ffa9a319a47ac84ea0e1c6240c546e43da268f7aa9e4d4249bf434d05e6",
+    "native-menu.log.gz": "e59bd65153b3ff2bda55b220a96d465658c7e0aed9dfe7eef1263059b9894575",
+    "noop-before.log.gz": "3ca73ed5335ad4e8186b2dd645667ff5dd3ea4b2ea3473fac10c513bf951bf02",
+    "stale.log.gz": "fb65991f95c58fb7e7881fd82d1c428d04567acee0c7f6ae491ed073bb0b7d7c",
+    "ui.log.gz": "b99ab7a344a1e3bb53ae0336baa86ae4357268d17e1e4536f46a358482e96112"
+  }
+}
