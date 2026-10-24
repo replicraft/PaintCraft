@@ -1,4 +1,7 @@
 //! Browser integration of shared Classic presentation and editor services.
+#[cfg(test)]
+#[path = "crop_tests.rs"]
+mod crop_tests;
 mod forms;
 use crate::{
     canvas::Canvas,
@@ -102,6 +105,7 @@ impl WebApp {
             zoom: self.zoom,
             pixel_grid: false,
             can_fit_selection: false,
+            can_crop_selection: matches!(self.editor.session.selection(),paintcraft_editor::execute::Selection::Rect(rect) if rect.intersect(&doc.canvas_rect()).is_some()),
             status_bar: true,
             rulers: false,
             fullscreen: false,
@@ -111,8 +115,14 @@ impl WebApp {
     }
 
     pub(crate) fn edit(&mut self, action: Edit) {
+        let remember_size = matches!(action, Edit::CropToSelection | Edit::ResizeCanvas { .. });
+        let before_size = self.editor.session.document().canvas;
         match self.editor.apply(action) {
             Ok(()) => {
+                let size = self.editor.session.document().canvas;
+                if remember_size && size != before_size {
+                    self.remember_canvas_size(size);
+                }
                 self.message = if self.unsaved() {
                     "Unsaved changes — kept only in this tab".into()
                 } else {
@@ -133,6 +143,7 @@ impl WebApp {
             return;
         }
         match action {
+            Action::Crop => self.edit(Edit::CropToSelection),
             Action::Settings | Action::Interface => {
                 self.editor.tools.cancel_gesture();
                 self.settings = true;

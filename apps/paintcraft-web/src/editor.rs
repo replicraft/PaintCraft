@@ -123,6 +123,12 @@ impl Editor {
             self.place_text()?;
         }
         match action {
+            Action::CropToSelection => {
+                let operation =
+                    commands::crop_to_selection(self.session.document(), self.session.selection())?;
+                self.tools.cancel_gesture();
+                self.commit(vec![operation])
+            }
             Action::Contour(contour) => self.commit(vec![commands::contour(&contour)]),
             action @ Action::Text { .. } => {
                 let operations = self.text_operations(&action)?;
