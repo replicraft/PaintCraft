@@ -7,6 +7,38 @@ pub enum PanButton {
     Middle,
 }
 
+/// Viewport direction; the image moves opposite the requested scroll direction.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PanDirection {
+    Left,
+    Right,
+    Up,
+    Down,
+}
+
+/// One physical display pixel per press, or ten with Ctrl. Document displacement
+/// is therefore inverse to zoom; the host supplies physical pixels per UI point.
+pub fn keyboard_pan_delta(
+    direction: PanDirection,
+    accelerated: bool,
+    pixels_per_point: f32,
+) -> Option<Point> {
+    if !pixels_per_point.is_finite() || pixels_per_point <= 0.0 {
+        return None;
+    }
+    let pixels = if accelerated { 10.0 } else { 1.0 };
+    let step = pixels / pixels_per_point;
+    if !step.is_finite() {
+        return None;
+    }
+    Some(match direction {
+        PanDirection::Left => (step, 0.0),
+        PanDirection::Right => (-step, 0.0),
+        PanDirection::Up => (0.0, step),
+        PanDirection::Down => (0.0, -step),
+    })
+}
+
 #[derive(Clone, Debug)]
 struct Drag<S> {
     scope: S,
@@ -98,5 +130,32 @@ mod tests {
         pan.begin(2, PanButton::Primary, (0.0, 0.0));
         assert_eq!(pan.move_to(&2, (f32::NAN, 0.0)), None);
         assert!(!pan.is_active());
+    }
+}
+
+#[cfg(test)]
+mod keyboard_tests {
+    use super::*;
+    #[test]
+    fn arrows_use_screen_pixels_and_accelerate_tenfold() {
+        assert_eq!(
+            keyboard_pan_delta(PanDirection::Left, false, 1.0),
+            Some((1.0, 0.0))
+        );
+        assert_eq!(
+            keyboard_pan_delta(PanDirection::Right, false, 2.0),
+            Some((-0.5, 0.0))
+        );
+        assert_eq!(
+            keyboard_pan_delta(PanDirection::Up, true, 2.0),
+            Some((0.0, 5.0))
+        );
+        assert_eq!(
+            keyboard_pan_delta(PanDirection::Down, true, 1.0),
+            Some((0.0, -10.0))
+        );
+        for invalid in [0.0, -1.0, f32::NAN, f32::INFINITY] {
+            assert!(keyboard_pan_delta(PanDirection::Left, false, invalid).is_none());
+        }
     }
 }
