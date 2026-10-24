@@ -105,6 +105,7 @@ pub fn stroke_operations(stroke: &Stroke, check: &impl Fn() -> Result<()>) -> Re
         round,
         point_scale,
         mode,
+        media,
     } = stroke;
     if points.is_empty() {
         return Ok(Vec::new());
@@ -146,7 +147,7 @@ pub fn stroke_operations(stroke: &Stroke, check: &impl Fn() -> Result<()>) -> Re
             ("point_scale", Value::Int(i64::from(*point_scale))),
             (
                 "brush",
-                Value::str(if *round { "smooth-round" } else { "square" }),
+                Value::str(if *round { media.id() } else { "square" }),
             ),
         ]));
         if end == points.len() {

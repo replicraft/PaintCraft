@@ -58,6 +58,7 @@ fn ordered_worker_samples_earlier_accepted_ink_without_a_second_publication() {
     e.request(
         9101,
         Action::Stroke(paintcraft_tools::Stroke {
+            media: Default::default(),
             layer: id,
             points: vec![(1, 1)],
             point_scale: 1,
@@ -142,6 +143,7 @@ fn hidden_layer_sampling_preserves_raw_transparent_rgb_and_ignores_selection() {
     e.request(
         9201,
         Action::Stroke(paintcraft_tools::Stroke {
+            media: Default::default(),
             layer: id,
             points: vec![(1, 1)],
             point_scale: 1,

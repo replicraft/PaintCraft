@@ -224,6 +224,7 @@ fn cancelling_and_retrying_identical_queued_paint_retires_the_old_owner_even_wit
     app.initialize_editing(ctx.clone());
     let gate = app.editing.as_ref().unwrap().pause();
     let stroke = paintcraft_tools::Stroke {
+        media: Default::default(),
         layer: app.editor.target().unwrap(),
         points: vec![(3, 3)],
         point_scale: 1,

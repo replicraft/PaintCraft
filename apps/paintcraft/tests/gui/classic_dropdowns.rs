@@ -215,7 +215,7 @@ fn render_classic_dropdowns_and_cursor_for_review() {
 }
 
 #[test]
-fn media_gallery_preserves_unavailable_presets_and_has_reachable_working_tips() {
+fn media_gallery_has_reachable_working_media_and_tips() {
     let mut h = harness();
     let base = h.state().editor().document_snapshot();
     h.get_by_role_and_label(eframe::egui::Role::Button, "Brushes")
@@ -231,12 +231,18 @@ fn media_gallery_preserves_unavailable_presets_and_has_reachable_working_tips() 
         "Natural pencil",
         "Watercolor brush",
     ] {
-        assert!(h.get_by_label(label).accesskit_node().is_disabled());
+        assert!(!h.get_by_label(label).accesskit_node().is_disabled());
     }
     h.get_by_label("Calligraphy brush").click();
     h.run();
-    assert_eq!(h.state().editor().tool, paintcraft_tools::Tool::Pencil);
-    assert!(h.query_by_label("Watercolor brush").is_some());
+    assert_eq!(
+        h.state().editor().options.media,
+        paintcraft_core::types::brush::BrushMedia::CalligraphyBrush
+    );
+    assert!(h.query_by_label("Watercolor brush").is_none());
+    h.get_by_role_and_label(eframe::egui::Role::Button, "Brushes")
+        .click();
+    h.run();
     h.get_by_label("Square brush").scroll_to_me();
     h.run();
     h.get_by_label("Square brush").click();

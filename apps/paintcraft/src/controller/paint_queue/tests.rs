@@ -172,6 +172,7 @@ fn structural_and_file_boundaries_pause_new_gestures_and_exclude_later_paint_fro
     assert!(editor.request(
         20,
         Action::Stroke(Stroke {
+            media: Default::default(),
             layer,
             points: vec![(3, 3)],
             point_scale: 1,
@@ -221,6 +222,7 @@ fn queue_limits_reject_excess_strokes_and_oversized_point_storage_without_losing
     let layer = editor.target().unwrap();
     let action = |points| {
         Action::Stroke(Stroke {
+            media: Default::default(),
             layer,
             points,
             point_scale: 1,
@@ -282,6 +284,7 @@ fn live_capacity_growth_is_admitted_before_replacing_the_captured_prefix() {
     assert!(editor.request(
         999,
         Action::Stroke(Stroke {
+            media: Default::default(),
             layer,
             points,
             point_scale: 1,

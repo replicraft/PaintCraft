@@ -23,6 +23,7 @@ fn crop_button_is_selection_gated_undoable_and_preserves_pixels_without_enabling
     h.state_mut()
         .editor
         .apply(Action::Stroke(paintcraft_tools::Stroke {
+            media: Default::default(),
             layer,
             points: vec![(40, 50)],
             point_scale: 1,
@@ -85,6 +86,7 @@ fn image_transform_controls_choose_selected_pixels_or_whole_canvas_and_keep_auth
     h.run();
     let layer = h.state().editor.target.unwrap();
     h.state_mut().edit(Action::Stroke(paintcraft_tools::Stroke {
+        media: Default::default(),
         layer,
         points: vec![(5, 6)],
         point_scale: 1,

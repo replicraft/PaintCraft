@@ -41,6 +41,7 @@ fn cancellation_during_point_preparation_returns_no_partial_batch_or_publication
     let initial = editor.document_snapshot();
     let history = editor.history_view();
     let request = editor.prepare_preview(Some(Preview::Path(Stroke {
+        media: Default::default(),
         layer: editor.target().unwrap(),
         points: vec![(2, 3); 2048],
         point_scale: 1,

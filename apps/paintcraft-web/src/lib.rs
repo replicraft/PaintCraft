@@ -76,3 +76,6 @@ mod browser {
 
 #[cfg(test)]
 mod picker_tests;
+
+#[cfg(test)]
+mod media_tests;

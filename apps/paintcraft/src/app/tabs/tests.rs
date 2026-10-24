@@ -11,6 +11,7 @@ fn paint(app: &mut App, x: i64) {
     app.editor.request(
         100 + x as u64,
         Action::Stroke(paintcraft_tools::Stroke {
+            media: Default::default(),
             mode: paintcraft_tools::BlendMode::SourceOver,
             point_scale: 1,
             layer,

@@ -10,6 +10,7 @@ fn pending_edit_makes_a_queued_history_click_stale_instead_of_erasing_new_work()
     editor.request(
         2,
         Action::Stroke(paintcraft_tools::Stroke {
+            media: Default::default(),
             mode: paintcraft_tools::BlendMode::SourceOver,
             point_scale: 1,
             layer,

@@ -61,6 +61,16 @@ pub fn options_with_shape_style(
         if state.tool == Tool::Brush {
             ui.selectable_value(&mut state.options.round, true, "Round");
             ui.selectable_value(&mut state.options.round, false, "Square");
+            if state.options.round {
+                use paintcraft_core::types::brush::BrushMedia;
+                egui::ComboBox::from_label("Brush medium")
+                    .selected_text(state.options.media.name())
+                    .show_ui(ui, |ui| {
+                        for media in BrushMedia::ALL {
+                            ui.selectable_value(&mut state.options.media, media, media.name());
+                        }
+                    });
+            }
             ui.add(
                 egui::Slider::new(&mut state.options.brush_opacity, 0..=100)
                     .text("Brush opacity")

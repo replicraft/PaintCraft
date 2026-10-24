@@ -109,6 +109,7 @@ pub struct ToolOptions {
     /// Brush, eraser and outline thickness in pixels (1..=1024).
     pub size: u32,
     pub round: bool,
+    pub media: paintcraft_core::types::brush::BrushMedia,
     /// Replacement pixel for erasing, captured at pointer-down. Transparent for
     /// layered editors; an opaque canvas color for paint-style frontends.
     pub eraser_color: Rgba,
@@ -130,6 +131,7 @@ impl Default for ToolOptions {
             pencil_size: 1,
             size: 4,
             round: true,
+            media: Default::default(),
             eraser_color: Rgba::TRANSPARENT,
             brush_opacity: 100,
             style: ShapeStyle::Outline,
@@ -151,6 +153,7 @@ pub struct Stroke {
     pub color: Rgba,
     pub size: u32,
     pub round: bool,
+    pub media: paintcraft_core::types::brush::BrushMedia,
     pub mode: BlendMode,
 }
 

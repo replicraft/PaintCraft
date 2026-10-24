@@ -193,14 +193,14 @@ fn brush_gallery_has_reference_sized_rows_and_reachable_truthful_choices() {
         h.run();
         for (accessible, label, enabled) in [
             ("Round brush", "Brush", true),
-            ("Calligraphy brush", "Calligraphy brush", false),
-            ("Calligraphy pen", "Calligraphy pen", false),
-            ("Airbrush", "Airbrush", false),
-            ("Oil brush", "Oil brush", false),
-            ("Crayon", "Crayon", false),
-            ("Marker", "Marker", false),
-            ("Natural pencil", "Natural pencil", false),
-            ("Watercolor brush", "Watercolor brush", false),
+            ("Calligraphy brush", "Calligraphy brush", true),
+            ("Calligraphy pen", "Calligraphy pen", true),
+            ("Airbrush", "Airbrush", true),
+            ("Oil brush", "Oil brush", true),
+            ("Crayon", "Crayon", true),
+            ("Marker", "Marker", true),
+            ("Natural pencil", "Natural pencil", true),
+            ("Watercolor brush", "Watercolor brush", true),
             ("Square brush", "Square brush", true),
         ] {
             h.get_by_role_and_label(Role::Button, accessible)
@@ -245,11 +245,16 @@ fn brush_gallery_has_reference_sized_rows_and_reachable_truthful_choices() {
         assert_eq!(
             h.query_all_by_role_and_label(Role::Label, "This brush is not available yet.")
                 .count(),
-            1
+            0
         );
         h.get_by_label("Oil brush").click();
         h.run();
-        assert_eq!(h.state().editor().tool, paintcraft_tools::Tool::Pencil);
+        assert_eq!(
+            h.state().editor().options.media,
+            paintcraft_core::types::brush::BrushMedia::Oil
+        );
+        h.get_by_role_and_label(Role::Button, "Brushes").click();
+        h.run();
         h.get_by_label("Square brush").scroll_to_me();
         h.run();
         h.get_by_label("Square brush").click();

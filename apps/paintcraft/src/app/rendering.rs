@@ -494,6 +494,7 @@ fn preserves_preview_progress(previous: Option<&Preview>, next: Option<&Preview>
             && last.point_scale == tail.point_scale
             && last.color == tail.color
             && last.size == tail.size
+            && last.media == tail.media
             && last.round == tail.round
             && last.mode == tail.mode
             && tail.points.starts_with(&last.points);

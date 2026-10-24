@@ -275,6 +275,11 @@ impl ToolState {
                 let (size, round, color, mode) = Self::brush_of(g);
                 Preview::Path(Stroke {
                     layer: g.layer,
+                    media: if g.tool == Tool::Brush {
+                        g.options.media
+                    } else {
+                        Default::default()
+                    },
                     mode,
                     points: g.points.clone(),
                     point_scale: g.point_scale,
@@ -426,6 +431,11 @@ impl ToolState {
             Tool::Pencil | Tool::Brush | Tool::Eraser => {
                 let (size, round, color, mode) = Self::brush_of(&g);
                 Action::Stroke(Stroke {
+                    media: if g.tool == Tool::Brush {
+                        g.options.media
+                    } else {
+                        Default::default()
+                    },
                     mode,
                     layer: g.layer,
                     points: g.points,

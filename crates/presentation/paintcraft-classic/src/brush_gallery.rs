@@ -1,19 +1,9 @@
-//! Brush gallery presentation; sample artwork does not implement brush media.
+//! Brush gallery bound to the shared deterministic brush media.
 use super::{Action, Controls};
 use egui::{Color32, Pos2, Rect, Stroke, Vec2};
 use paintcraft_tools::Tool;
 
-const PRESETS: [&str; 9] = [
-    "Brush",
-    "Calligraphy brush",
-    "Calligraphy pen",
-    "Airbrush",
-    "Oil brush",
-    "Crayon",
-    "Marker",
-    "Natural pencil",
-    "Watercolor brush",
-];
+use paintcraft_core::types::brush::BrushMedia;
 
 pub(super) fn gallery(
     ui: &mut egui::Ui,
@@ -33,13 +23,16 @@ pub(super) fn gallery(
         .id_salt("classic-brush-media-gallery")
         .max_height(height)
         .show(ui, |ui| {
-            for (index, label) in PRESETS.into_iter().enumerate() {
-                let enabled = index == 0;
-                let selected = enabled && state.tool == Tool::Brush && state.options.round;
+            for (index, media) in BrushMedia::ALL.into_iter().enumerate() {
+                let label = media.name();
+                let enabled = true;
+                let selected = state.tool == Tool::Brush
+                    && state.options.round
+                    && state.options.media == media;
                 let response = row(
                     ui,
                     label,
-                    if enabled { "Round brush" } else { label },
+                    if index == 0 { "Round brush" } else { label },
                     selected,
                     enabled,
                     index,
@@ -48,6 +41,7 @@ pub(super) fn gallery(
                     response.scroll_to_me(Some(egui::Align::Center));
                 }
                 if response.clicked() {
+                    state.options.media = media;
                     choose(state, actions, true);
                     ui.close();
                 }
@@ -66,6 +60,9 @@ pub(super) fn gallery(
 }
 
 fn choose(state: &mut Controls, actions: &mut Vec<Action>, round: bool) {
+    if !round {
+        state.options.media = BrushMedia::Plain;
+    }
     state.tool = Tool::Brush;
     state.options.round = round;
     actions.push(Action::SelectTool(Tool::Brush));

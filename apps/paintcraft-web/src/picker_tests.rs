@@ -46,6 +46,7 @@ fn web_picker_uses_real_document_pixels_and_updates_controls_without_history_or_
     h.run();
     let layer = h.state().editor.target.unwrap();
     h.state_mut().edit(Action::Stroke(paintcraft_tools::Stroke {
+        media: Default::default(),
         layer,
         points: vec![(40, 50)],
         point_scale: 1,

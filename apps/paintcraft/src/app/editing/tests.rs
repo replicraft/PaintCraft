@@ -370,6 +370,7 @@ fn native_worker_transforms_captured_selection_then_whole_canvas_and_remembers_a
     app.editor.request(
         8101,
         Action::Stroke(paintcraft_tools::Stroke {
+            media: Default::default(),
             layer,
             points: vec![(5, 6)],
             point_scale: 1,
