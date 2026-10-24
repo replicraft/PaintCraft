@@ -11,6 +11,12 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest Classic Layers work replaces the blue selected-row fill with the neutral
+Classic surface and accent outline, retaining thumbnails and native button input.
+All 200 ordinary GUI tests, the actual-App GPU exporter (14 captures) and strict
+workspace Clippy pass; see [the layer surface record](validation/classic-layer-surfaces-gpu-2026-10-23/validation.json).
+Complete native panel fidelity and T15 remain partial.
+
 Latest Classic Tools artwork restores reference color accents using paired light/dark
 SVGs. All 199 ordinary GUI tests, 23 shared UI unit tests and strict workspace
 Clippy pass; two native Wgpu framebuffer captures were reviewed. See

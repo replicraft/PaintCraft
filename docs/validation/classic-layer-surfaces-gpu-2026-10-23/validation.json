@@ -1,0 +1,36 @@
+{
+  "source_commit": "20903d6dfd549f2c3bf67e61710adc3e28112e12",
+  "date": "2026-10-23",
+  "scope": "Classic Layers rows reuse the neutral selected-button background and accent boundary, keeping custom thumbnail atoms and ordinary egui input. Supersedes the previous blue row fill. Shared Classic consumers inherit styling; Studio is unchanged.",
+  "checks": {
+    "gui": "200 passed; 41 ignored. Regression covers light desktop 1x/dark compact 2x, repeated layout, idle/hover/pressed fills, accent outline, 40-point row stability, mouse/Space target selection, selected metadata and document/history isolation. Existing scrolling, thumbnails, visibility and layer action tests pass.",
+    "before": "Regression reproduced the prior blue Layer 2 selected fill (#E0EFF9).",
+    "clippy": "workspace all-targets -D warnings passed",
+    "format_and_lengths": "cargo fmt, source length policy and git diff --check passed",
+    "gpu": "Opt-in actual-App exporter passed; 14 light/dark Wgpu captures: ribbon/panel/actions, selected row idle/hover/pressed and compact layout. Light idle, dark pressed and dark compact images visually reviewed."
+  },
+  "limitations": [
+    "No supplied screenshot establishes a complete native Classic Layers panel. This applies the established Classic surface convention, without claiming native panel parity.",
+    "No new layer operation, performance gain or OS accessibility qualification. T15 and the full roadmap remain partial."
+  ],
+  "sha256": {
+    "before.log.gz": "af2a9dc7541e93b5cbb9369e56721fdc45d874f7f31acad9c8e9966a9d3111fe",
+    "clippy.log.gz": "490967140e4ff0859e85e9b579bff9239ec320adee1b15837b8998175c89435f",
+    "dark-panel-actions.png": "f586a09cc09cf78f5b28e5862471bf018970105bfa61506b0321c0949d6c96d3",
+    "dark-panel.png": "2fad2852aacb6bd7599cfc5a44715130f899b769ed61799f325a5310343577f4",
+    "dark-ribbon-hover.png": "0de73c9ecde1eeedfbeb76a75421905433e50d46a0e53610f54f5b0ba4528cd5",
+    "dark-row-hover.png": "123072d3eb25bd09bac2c923b220d99d906e141dbffd62811bbd9f82df4651e7",
+    "dark-row-idle.png": "145eef04f8a664c3cd0f2cd6af2722e5c40b218e8ad6588e2ff39b01de5c8adf",
+    "dark-row-pressed.png": "3216fc705bd0af5b0ae31f409f0a92ca33526cfdd72661153b1a0795fdb6c0d4",
+    "dark-rows-compact.png": "7c7fd553e43c459082bc23af154858b1e17f28756740ba1783544bbb7868c19d",
+    "gpu.log.gz": "b8fc88bf572de090727be5ba37c726aaab59a1cae8a7c204fd1c4e456ce9c857",
+    "gui.log.gz": "b427a7973d9d42fdbe005a743468ce785d8c22b25a1b3608f8eca7860b46f859",
+    "light-panel-actions.png": "bdfc274a30d265061cd07265d25a1fe4d904c5f5a750a5c4607c79e3bd7ba45b",
+    "light-panel.png": "14a9e1a958037ebb44dfb46065d5620734c59797a40d0a88629b6d716be94274",
+    "light-ribbon-hover.png": "81f4fade777cf07d5489b2d3c8a8b8c4f8096c9d62b15503d4e65d877c4d2d2e",
+    "light-row-hover.png": "042e1fdf169c637118ba01321d464d8ca4069cfe492f2abfb5909c8f7126e28a",
+    "light-row-idle.png": "43a736e2f9acbf21c6595b0a613980581772ee086f8ea0e8113cf62f07e50880",
+    "light-row-pressed.png": "767336962ceda52cfabe65b55cc730a769ffa87ba1785f003a4ec8721846afbb",
+    "light-rows-compact.png": "a8b484a136c19cb5a55019b7fb1e311622d5434e6c11f6d9608525b650f34dc7"
+  }
+}
