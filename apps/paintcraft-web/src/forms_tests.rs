@@ -385,3 +385,47 @@ fn historical_browser_color_dialog_has_hsl_luminosity_and_staged_acceptance() {
         }
     }
 }
+
+#[test]
+fn historical_properties_keep_browser_admission_and_staged_resize() {
+    use eframe::egui::Role;
+    use paintcraft_classic::ClassicVariant;
+    use paintcraft_ui::i18n::{Language, set_language, translate};
+    for variant in [ClassicVariant::V7, ClassicVariant::V10] {
+        for language in Language::ALL {
+            let mut h = harness();
+            h.state_mut().variant = variant;
+            set_language(&h.ctx, language);
+            h.run();
+            let label = |s| translate(language, s);
+            let ticket = h.state().editor.session.ticket();
+            h.key_press_modifiers(Modifiers::COMMAND, Key::E);
+            h.run();
+            let width_label = label("Width");
+            let width = h.get_by_role_and_label(Role::SpinButton, &width_label);
+            assert!(width.rect().height() <= 26.0);
+            width.set_value_accesskit(4096.0);
+            h.run();
+            h.get_by_label(&label("Height")).set_value_accesskit(4096.0);
+            h.run();
+            assert!(
+                h.get_by_role_and_label(Role::Button, &label("OK"))
+                    .accesskit_node()
+                    .is_disabled()
+            );
+            h.get_by_label(&label("Cancel")).click();
+            h.run();
+            assert_eq!(h.state().editor.session.ticket(), ticket);
+            h.key_press_modifiers(Modifiers::COMMAND, Key::E);
+            h.run();
+            h.get_by_label(&label("Width")).set_value_accesskit(640.0);
+            h.run();
+            h.get_by_label(&label("OK")).click();
+            h.run();
+            assert_eq!(h.state().editor.session.document().canvas, (640, 486));
+            h.key_press_modifiers(Modifiers::COMMAND, Key::Z);
+            h.run();
+            assert_eq!(h.state().editor.session.document().canvas, (1000, 486));
+        }
+    }
+}

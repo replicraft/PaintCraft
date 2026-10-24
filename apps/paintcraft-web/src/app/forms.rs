@@ -67,16 +67,17 @@ impl WebApp {
     }
 
     fn canvas_form(&mut self, ctx: &egui::Context, mut draft: CanvasDraft) {
-        use paintcraft_classic::canvas_size::{CanvasResponse, bounded_canvas_size_dialog};
+        use paintcraft_classic::canvas_size::{CanvasResponse, canvas_size_dialog_for_skin};
         if draft.ticket != self.editor.session.history_ticket() {
             self.message = "Dimensions were not applied: the source document changed".into();
             return;
         }
-        let result = bounded_canvas_size_dialog(
+        let result = canvas_size_dialog_for_skin(
             ctx,
+            self.variant,
             &mut draft.view,
             paintcraft_document::CANVAS_SIDE_MAX,
-            crate::editor::MAX_PIXELS,
+            Some(crate::editor::MAX_PIXELS),
             draft.properties.as_deref(),
         );
         if ctx.current_pass_index() != 0 || result == CanvasResponse::Pending {

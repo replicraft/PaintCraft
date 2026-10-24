@@ -105,16 +105,18 @@ impl App {
                 startup: None,
             },
         };
-        let response = if let CanvasDraft::Properties { name, .. } = &draft {
-            paintcraft_classic::canvas_size::image_properties_dialog(
-                ctx,
-                &mut view.size,
-                name,
-                settings::SIZE_MAX,
-            )
-        } else {
-            paintcraft_classic::canvas_size::canvas_size_dialog(ctx, &mut view, settings::SIZE_MAX)
+        let properties = match &draft {
+            CanvasDraft::Properties { name, .. } => Some(name.as_str()),
+            _ => None,
         };
+        let response = paintcraft_classic::canvas_size::canvas_size_dialog_for_skin(
+            ctx,
+            self.variant(),
+            &mut view,
+            settings::SIZE_MAX,
+            None,
+            properties,
+        );
         if ctx.current_pass_index() != 0 {
             return;
         }

@@ -372,3 +372,6 @@ mod studio_canvas;
 
 #[path = "gui/classic_followup.rs"]
 mod classic_followup;
+
+#[path = "gui/legacy_properties.rs"]
+mod legacy_properties;
