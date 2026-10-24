@@ -1,16 +1,26 @@
 # PaintCraft Web
 
-The first browser slice is a **Classic UI preview**, using the same ribbon,
-Selawik font, SVG artwork, canvas presentation and zoom controls as desktop.
-It has its own frontend state and does not depend on the desktop application or
-native platform services. WebRunner renders the interface through wgpu, with
-WebGPU and WebGL browser backends enabled.
+PaintCraft Web connects the shared Classic interface, tool state machines,
+transactional document session and raster compositor. Pencil, round/square brush,
+eraser, fill, line/rectangle/ellipse, rectangular selection, clear canvas and
+undo/redo edit real pixels. Shift constrains shapes; Ctrl/Cmd-scroll zooms. The
+Layers panel adds, selects, hides, reorders and deletes real layers. Brush preview
+and release use the same shared commands. Erasing restores the white Classic ground.
 
-This is not a browser editor yet. The canvas is a blank 1000 × 486 preview.
-Tool selection, ribbon dropdown options, palette swatches, zoom and theme/skin
-settings are interactive. Drawing, layers, document commands, import, export,
-saving, recovery and editable text are not connected. Unsupported shared actions
-report that limitation in the status bar. Nothing is saved across page reloads.
+This is an early editor. Files, editable text, image transforms, clipboard and
+recovery are not connected yet. Unsupported actions report this in the status bar.
+New requires explicit discard for dirty work, and the page requests the browser's
+unsaved-work confirmation before unloading. Browser policy controls whether that
+confirmation appears; it is not recovery or persistence.
+
+The current synchronous browser adapter admits at most 4,194,304 canvas pixels,
+8192 points per stroke and a 64 MiB history retention budget (older entries may
+be trimmed). It cancels oversized strokes rather than silently cutting them off.
+Large-document workers/cancellation and physical memory/latency qualification
+remain work. Browser history uses raw snapshots; native Zstandard codecs remain
+native-only, while raw/LZ4 support compiles to WebAssembly. WebRunner presents the
+interface through wgpu, with WebGPU and WebGL enabled; document composition is
+currently CPU, not qualified GPU document rendering. No native services are used.
 
 ## Run locally
 
@@ -48,13 +58,11 @@ This single-browser smoke check does not establish cross-browser conformance.
 
 ## Next browser slices
 
-1. Connect a bounded document/session and the shared tools, preserving identical
-   preview and committed raster semantics. Avoid copying the desktop controller.
-2. Add browser file picking and downloads, plus an explicit unsaved-work policy.
+1. Add browser file picking and downloads, plus an explicit unsaved-work policy.
    Browser storage and permission behavior must remain separate from native rfd
    dialogs and desktop atomic saves.
-3. Add browser workers, memory admission and cancellation before large documents.
-4. Connect document GPU composition and qualify WebGPU/WebGL behavior, touch,
+2. Add browser workers, memory admission and cancellation before large documents.
+3. Connect document GPU composition and qualify WebGPU/WebGL behavior, touch,
    keyboard, browser zoom and pen pressure across actual browsers/devices.
 
 Desktop tablet support is also incomplete: `PenSample` defines pressure and tilt,

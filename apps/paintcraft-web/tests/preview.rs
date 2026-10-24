@@ -3,7 +3,7 @@ use egui_kittest::{Harness, kittest::Queryable};
 use paintcraft_web::WebApp;
 
 #[test]
-fn preview_uses_classic_chrome_and_exposes_unsupported_actions_honestly() {
+fn editor_uses_classic_chrome_and_exposes_remaining_unsupported_actions_honestly() {
     let mut harness = Harness::builder()
         .with_size(Vec2::new(1360.0, 900.0))
         .with_theme(egui::Theme::Light)
@@ -23,11 +23,10 @@ fn preview_uses_classic_chrome_and_exposes_unsupported_actions_honestly() {
         .get_by_role_and_label(Role::Button, "Layers")
         .click();
     harness.run();
-    assert!(
-        harness
-            .query_by_label_contains("Document layers are not connected")
-            .is_some()
-    );
+    assert!(harness.query_by_label("Background").is_some());
+    harness.get_by_label("Add layer").click();
+    harness.run();
+    assert!(harness.query_by_label("Layer 2").is_some());
     harness.get_by_label("Settings…").click();
     harness.run();
     harness.get_by_label("Dark mode").click();

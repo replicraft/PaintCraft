@@ -1,6 +1,6 @@
 [package]
 name = "paintcraft-web"
-description = "PaintCraft browser frontend: initial Classic UI preview"
+description = "PaintCraft browser editor with Classic presentation"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -13,6 +13,12 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 paintcraft-classic.workspace = true
 paintcraft-core.workspace = true
+paintcraft-commands.workspace = true
+paintcraft-document.workspace = true
+paintcraft-editor.workspace = true
+paintcraft-render.workspace = true
+paintcraft-input.workspace = true
+uuid.workspace = true
 paintcraft-tools.workspace = true
 paintcraft-ui.workspace = true
 eframe.workspace = true

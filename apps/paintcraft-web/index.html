@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PaintCraft Web — UI preview</title>
+  <title>Untitled - PaintCraft</title>
   <style>
     html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #272727; color: white; font: 16px system-ui; }
     canvas { width: 100%; height: 100%; display: block; }
@@ -12,7 +12,7 @@
   </style>
 </head>
 <body>
-  <canvas id="paintcraft" aria-label="PaintCraft Classic UI preview"></canvas>
+  <canvas id="paintcraft" aria-label="PaintCraft Classic canvas"></canvas>
   <div id="loading" role="status">Loading PaintCraft Web…</div>
   <noscript>PaintCraft Web requires JavaScript and WebAssembly.</noscript>
   <script type="module">
@@ -24,12 +24,18 @@
       window.paintcraft = app;
       await app.start(document.getElementById('paintcraft'));
       status.hidden = true;
+      window.addEventListener('beforeunload', (event) => {
+        if (app.is_dirty()) {
+          event.preventDefault();
+          event.returnValue = '';
+        }
+      });
       window.addEventListener('pagehide', (event) => {
         if (!event.persisted) app.destroy();
       });
     } catch (error) {
       window.paintcraft?.destroy();
-      status.textContent = `PaintCraft could not start. This preview needs WebAssembly and WebGPU or WebGL. ${error}`;
+      status.textContent = `PaintCraft could not start. PaintCraft needs WebAssembly and WebGPU or WebGL. ${error}`;
       console.error(error);
     }
   </script>

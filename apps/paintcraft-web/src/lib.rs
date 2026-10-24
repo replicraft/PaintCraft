@@ -1,6 +1,12 @@
 //! Browser-owned UI state. Native filesystem, menus and workers stay in desktop.
 mod app;
+mod canvas;
+mod editor;
+mod layers;
 pub use app::WebApp;
+
+#[cfg(test)]
+mod app_tests;
 
 #[cfg(target_arch = "wasm32")]
 mod browser {
@@ -42,6 +48,13 @@ mod browser {
                     Box::new(|cc| Ok(Box::new(super::WebApp::new(&cc.egui_ctx)))),
                 )
                 .await
+        }
+
+        /// Used by the host page's unsaved-work guard; active gestures count too.
+        pub fn is_dirty(&self) -> bool {
+            self.runner.app_mut::<super::WebApp>().is_some_and(|app| {
+                app.editor.session.is_dirty() || app.editor.tools.gesture_in_progress()
+            })
         }
 
         pub fn destroy(&self) {
