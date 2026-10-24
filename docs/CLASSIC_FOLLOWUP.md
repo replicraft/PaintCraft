@@ -357,3 +357,38 @@ are `assets/repo/classic-v7-color2.png` and `classic-v10-color2.png`; the Window
 capture was visually inspected. This does not establish pinned native Paint
 behavioral parity. Evidence, including pointer-timing diagnostics, is retained in
 ignored `docs/validation/historical-palette-2026-10-24/`.
+
+## Historical Selection menu presentation
+
+Windows 7/10 Selection now uses separate compact presentation: 24-point rows,
+12-point labels, 16-point glyphs and Selection shapes/Selection options headers.
+The rectangular mode is marked at its icon instead of using the Windows 11
+accent pill. Delete uses its own red-cross historical SVG. Windows 11 retains its
+larger rows, short mode captions and existing selection treatment. Both layouts
+share the command/availability dispatcher, and Deselect remains a PaintCraft
+extension after the historical choices.
+
+The historical popup closes only on an explicit command or an outside click.
+A regression exposed the previous default dismissal on disabled-row clicks;
+clicking an unavailable mode now keeps the menu and document state intact.
+Free-form, invert and transparent selection remain disabled with localized
+explanations. This presentation change does not implement their missing engine
+semantics. Focused historical controls now show their focus treatment even when
+the pointer is elsewhere.
+
+Native regressions cover section/row ordering, compact labels, one disabled-mode
+tooltip, keyboard rectangular-mode selection, real Select all/Delete/Undo pixels,
+Deselect and short-window scrolling. Cases include both historical skins,
+English/Japanese, light/dark and normal/forced multipass input. The browser
+regression invokes the same menu and verifies disabled choices, selection,
+actual erasure and restored pixels after Undo in both skins/languages.
+
+All 243 regular GUI tests and 61 browser tests passed; 54 native opt-in captures
+were ignored by the regular suite. Native/web all-target Clippy passed with
+warnings denied, and the browser release distribution rebuilt. Translation,
+source-length and whitespace checks passed. Four actual offscreen menu captures
+are in `assets/repo/classic-v7-selection-en-US.png`, `classic-v7-selection-ja.png`,
+`classic-v10-selection-en-US.png` and `classic-v10-selection-ja.png`. English and
+Japanese Windows 7 captures and the English Windows 10 capture were visually
+inspected. Exact pinned native Windows parity remains unqualified. Evidence is
+retained in ignored `docs/validation/historical-selection-menu-2026-10-24/`.
