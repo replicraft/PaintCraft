@@ -3,6 +3,7 @@ mod app;
 mod canvas;
 mod editor;
 mod files;
+mod floating_ui;
 mod layers;
 mod preferences;
 mod selection_ui;

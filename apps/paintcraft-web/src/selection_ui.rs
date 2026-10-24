@@ -8,7 +8,7 @@ impl WebApp {
     ) -> paintcraft_core::types::Result<Option<paintcraft_core::types::Rect>> {
         use paintcraft_raster::Selection;
         let clip = self.editor.session.document().canvas_rect();
-        match self.editor.session.selection() {
+        match self.editor.display_selection()? {
             Selection::Mask(mask) => self.canvas.bounds.borrow_mut().get(&mask, clip),
             selection => {
                 self.canvas.bounds.borrow_mut().clear();
@@ -43,7 +43,11 @@ impl WebApp {
         }
     }
     pub(crate) fn draw_mask_overlay(&mut self, painter: &egui::Painter, rect: Rect) {
-        let paintcraft_raster::Selection::Mask(mask) = self.editor.session.selection() else {
+        let paintcraft_raster::Selection::Mask(mask) = self
+            .editor
+            .display_selection()
+            .unwrap_or(paintcraft_raster::Selection::Empty)
+        else {
             self.canvas.outline.clear();
             return;
         };

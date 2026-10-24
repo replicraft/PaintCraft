@@ -29,6 +29,7 @@ impl std::fmt::Debug for Canvas {
 
 impl WebApp {
     pub(crate) fn fit_selection(&mut self) {
+        self.editor.cancel_floating();
         let Ok(Some(bounds)) = self.selected_bounds() else {
             return;
         };
@@ -118,6 +119,7 @@ impl WebApp {
                     .sum::<f32>()
             });
             if scroll != 0.0 {
+                self.editor.cancel_floating();
                 self.zoom =
                     (self.zoom * 1.1_f32.powf(scroll.clamp(-32.0, 32.0))).clamp(0.125, 10.0);
             }
@@ -171,7 +173,11 @@ impl WebApp {
                 }
                 let selection = match self.editor.tools.preview() {
                     Some(Preview::Marquee { from, to }) => Some((from, (to.0 + 1, to.1 + 1))),
-                    _ => match self.editor.session.selection() {
+                    _ => match self
+                        .editor
+                        .display_selection()
+                        .unwrap_or(paintcraft_raster::Selection::Empty)
+                    {
                         paintcraft_editor::execute::Selection::Rect(r) => {
                             Some(((r.x0, r.y0), (r.x1, r.y1)))
                         }
@@ -201,6 +207,12 @@ impl WebApp {
                             egui::CursorIcon::Text
                         } else if self.controls.tool == Tool::Magnifier {
                             egui::CursorIcon::ZoomIn
+                        } else if self
+                            .canvas
+                            .pointer
+                            .is_some_and(|point| self.selection_move_cursor(point))
+                        {
+                            egui::CursorIcon::Move
                         } else {
                             egui::CursorIcon::Crosshair
                         });
@@ -230,6 +242,7 @@ impl WebApp {
     }
 
     fn refresh_texture(&mut self, ctx: &egui::Context) {
+        self.editor.validate_floating();
         let key = (
             self.editor.session.ticket(),
             (!self.editor.tools.gesture_is_selection())
@@ -247,6 +260,7 @@ impl WebApp {
             Ok(pixels) => pixels,
             Err(error) => {
                 // Never leave a failed speculative image presented as committed.
+                self.editor.cancel_floating();
                 self.editor.tools.cancel_gesture();
                 self.message = format!("Preview unavailable: {error}");
                 match paintcraft_render::render_flat(self.editor.session.document()) {
@@ -277,10 +291,12 @@ impl WebApp {
 
     fn canvas_input(&mut self, ui: &egui::Ui, response: &egui::Response) {
         if self.blocked() {
+            self.editor.cancel_floating();
             self.editor.tools.cancel_gesture();
             return;
         }
         self.editor.tools.activate_tool(self.controls.tool);
+        self.editor.validate_floating();
         self.editor.tools.color = self.controls.primary;
         self.editor.tools.secondary = self.controls.secondary;
         self.editor.tools.options = self.controls.options;
@@ -300,6 +316,7 @@ impl WebApp {
         };
         let events = ui.input(|i| i.events.clone());
         if !ui.input(|i| i.focused) {
+            self.editor.cancel_floating();
             self.editor.tools.cancel_gesture();
             return;
         }
@@ -312,6 +329,7 @@ impl WebApp {
             }
             match event {
                 egui::Event::WindowFocused(false) => {
+                    self.editor.cancel_floating();
                     self.editor.tools.cancel_gesture();
                     self.canvas.pointer = None;
                     break;
@@ -410,7 +428,7 @@ impl WebApp {
                                         (p.0.div_euclid(256), p.1.div_euclid(256)),
                                     );
                                 }
-                            } else {
+                            } else if !self.begin_selection_float(point(pos), button) {
                                 self.editor
                                     .tools
                                     .pointer_down_subpixel(layer, point(pos), button);
@@ -452,6 +470,7 @@ impl WebApp {
                     }
                 }
                 egui::Event::PointerGone => {
+                    self.editor.cancel_floating();
                     self.editor.tools.cancel_gesture();
                     self.canvas.pointer = None;
                 }

@@ -1,4 +1,5 @@
 //! Browser-owned session. Raster algorithms and history remain in shared crates.
+mod floating;
 mod text;
 use paintcraft_commands::Batch;
 use paintcraft_core::types::{Error, ErrorCode, Result, Rgba, json::Value};
@@ -20,6 +21,7 @@ pub(crate) struct Editor {
     pub tools: ToolState,
     pub target: Option<Uuid>,
     fonts: std::cell::RefCell<paintcraft_tools::text::TextRenderer>,
+    floating_source: Option<floating::Source>,
 }
 
 impl Editor {
@@ -54,6 +56,7 @@ impl Editor {
             target,
             tools,
             fonts: text::fonts(),
+            floating_source: None,
         })
     }
 
@@ -94,11 +97,22 @@ impl Editor {
     }
 
     pub fn cancel(&mut self) {
+        self.cancel_floating();
         self.tools.cancel_gesture();
         self.tools.cancel_text();
     }
 
     pub fn apply(&mut self, action: Action) -> Result<()> {
+        if let Action::MoveSelection {
+            layer,
+            offset,
+            clear,
+            transparent_key,
+        } = action
+        {
+            return self.commit_selection_move(layer, offset, clear, transparent_key);
+        }
+        self.cancel_floating();
         if let Action::ResizeCanvas { width, height }
         | Action::ResizeCanvasAnchored { width, height, .. } = &action
         {
@@ -296,6 +310,14 @@ impl Editor {
     /// Private staging is also used for release; preview never publishes history.
     pub fn display_document(&self) -> Result<Option<Document>> {
         let operations = match self.tools.preview() {
+            Some(Preview::MoveSelection {
+                layer,
+                offset,
+                clear,
+                transparent_key,
+            }) => {
+                return self.preview_selection_move(layer, offset, clear, transparent_key);
+            }
             Some(Preview::Contour(contour)) => vec![commands::contour(&contour)],
             Some(Preview::Path(stroke)) => commands::stroke_operations(&stroke, &|| Ok(()))?,
             Some(Preview::Shape {

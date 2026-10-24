@@ -23,7 +23,7 @@ impl Editor {
             .is_some_and(|text| !text.is_empty())
     }
     pub fn is_dirty(&self) -> bool {
-        self.session.is_dirty() || self.has_text()
+        self.session.is_dirty() || self.has_text() || self.tools.floating_selection().is_some()
     }
 
     pub fn text_mask(
@@ -93,6 +93,12 @@ impl Editor {
     /// An immutable export revision has the same state ID/pixels as placement,
     /// while the editable draft, owning session and history remain unchanged.
     pub fn copy_snapshot(&self) -> Result<Arc<Document>> {
+        if self.tools.floating_selection().is_some() {
+            return Err(Error::new(
+                ErrorCode::InputSchema,
+                "Finish moving the selection before opening, saving or exporting a file",
+            ));
+        }
         let Some(action) = self.tools.pending_text_action() else {
             return Ok(self.session.snapshot());
         };

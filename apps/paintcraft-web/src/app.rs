@@ -3,6 +3,9 @@ use paintcraft_ui::t;
 #[cfg(test)]
 #[path = "crop_tests.rs"]
 mod crop_tests;
+#[cfg(test)]
+#[path = "floating_tests.rs"]
+mod floating_tests;
 mod forms;
 #[cfg(test)]
 #[path = "lasso_tests.rs"]
@@ -174,6 +177,18 @@ impl WebApp {
     }
 
     fn action(&mut self, ctx: &egui::Context, action: Action) {
+        if matches!(
+            action,
+            Action::New
+                | Action::Open
+                | Action::Save
+                | Action::SaveAs
+                | Action::Export
+                | Action::ExportImage(_)
+        ) && !self.floating_file_ready()
+        {
+            return;
+        }
         if matches!(
             action,
             Action::New

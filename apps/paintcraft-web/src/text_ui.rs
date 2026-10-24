@@ -60,6 +60,9 @@ impl WebApp {
         self.download_as(ctx, Some(format));
     }
     fn download_as(&mut self, ctx: &egui::Context, format: Option<ImageExport>) {
+        if !self.floating_file_ready() {
+            return;
+        }
         if self.editor.tools.is_constructing_shape() {
             self.message = paintcraft_tools::FINISH_SHAPE_BEFORE_FILE.into();
             return;
