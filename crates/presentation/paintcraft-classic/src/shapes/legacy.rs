@@ -67,12 +67,7 @@ pub(crate) fn gallery(
                         let (response, _) = egui::containers::menu::MenuButton::from_button(
                             egui::Button::new(" ").min_size(Vec2::new(14.0, 20.0)),
                         )
-                        .config(egui::containers::menu::MenuConfig::new().style(
-                            |style: &mut egui::Style| {
-                                egui::containers::menu::menu_style(style);
-                                style.visuals.menu_corner_radius = egui::CornerRadius::ZERO;
-                            },
-                        ))
+                        .config(crate::legacy_surface::menu_config())
                         .ui(ui, |ui| {
                             ui.visuals_mut().override_text_color = Some(ink);
                             ui.visuals_mut().widgets.active.fg_stroke.color = ink;
@@ -93,7 +88,7 @@ pub(crate) fn gallery(
                             ],
                             ui.visuals().widgets.inactive.fg_stroke,
                         );
-                        crate::dropdowns::open_state(ui, &response, "Shapes…");
+                        crate::legacy_surface::open_state(ui, &response, "Shapes…");
                         response.on_hover_text(tr(ui.ctx(), "Shapes…"));
                     });
                 });

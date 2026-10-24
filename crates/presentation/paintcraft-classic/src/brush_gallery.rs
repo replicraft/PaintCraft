@@ -60,7 +60,7 @@ pub(super) fn gallery(
         });
 }
 
-fn choose(state: &mut Controls, actions: &mut Vec<Action>, round: bool) {
+pub(super) fn choose(state: &mut Controls, actions: &mut Vec<Action>, round: bool) {
     if !round {
         state.options.media = BrushMedia::Plain;
     }
@@ -130,7 +130,7 @@ fn row(
 }
 
 /// Deterministic, original UI illustrations. These are not document stroke previews.
-fn draw_sample(painter: &egui::Painter, rect: Rect, media: usize, ink: Color32) {
+pub(super) fn draw_sample(painter: &egui::Painter, rect: Rect, media: usize, ink: Color32) {
     let point = |t: f32| {
         Pos2::new(
             rect.left() + t * rect.width(),

@@ -83,7 +83,7 @@ pub(super) fn show(
                 });
                 ui.separator();
                 ui.vertical(|ui| {
-                    super::legacy_controls::size(ui, state, context);
+                    super::legacy_size::show(ui, variant, state, context);
                 });
                 ui.separator();
                 group(ui, "Colors", |ui| {
@@ -164,8 +164,9 @@ fn brushes(
                 .selected(selected)
                 .frame_when_inactive(selected),
         )
+        .config(super::legacy_surface::menu_config())
         .ui(ui, |ui| {
-            super::brush_gallery::gallery(ui, state, actions, !was_open);
+            super::legacy_brushes::gallery(ui, variant, state, actions, !was_open);
         });
         ui.data_mut(|data| data.insert_temp(id, popup.is_some()));
         ui.painter().text(
@@ -176,7 +177,7 @@ fn brushes(
             ui.visuals().text_color(),
         );
         super::legacy_controls::arrow(ui, button.rect.center_bottom() - Vec2::new(0.0, 5.0));
-        super::dropdowns::open_state(ui, &button, "Brushes");
+        super::legacy_surface::open_state(ui, &button, "Brushes");
         button.on_hover_text(tr(ui.ctx(), "Brushes"));
     });
 }
