@@ -14,6 +14,7 @@ pub mod parallel;
 
 pub mod cache;
 pub mod display;
+pub mod sampling;
 pub mod thumbnail;
 
 /// Largest canvas this renderer will materialize (provisional admission limit).
