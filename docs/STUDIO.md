@@ -17,6 +17,7 @@ separately in the dependency choices and is not bundled yet.
   colors, color wheel, swap, palette, expanded RGBA/hex controls, brush size/tip, shape style, fill tolerance and font text family/size/style controls.
 - A movable/resizable Layers window using the existing add, select, visibility,
   rename, opacity, reorder, duplicate and delete operations. Window menu toggles restore panels.
+- Save All for changed documents, with serial native dialogs and original-tab restoration.
 - A movable History window with recorded action labels, current/redo rows, direct
   snapshot navigation and an explicit notice when older entries were trimmed.
 - Centered canvas in both Studio and Classic when the viewport is larger than the document; scrolling and
@@ -55,7 +56,7 @@ for the running session, not across restarts.
 5. Shaped system-font text and IME interactions; broader codecs and PDN compatibility.
 
 This slice is not Paint.NET parity or a completed T19/M3 gate. Document tabs are
-working; thumbnail navigation, Save All, effects UI and PDN import remain deferred.
+working; thumbnail navigation, effects UI and PDN import remain deferred.
 Reference-build captures, the remaining engine prerequisites and native qualification
 remain separate acceptance work. Tests cover saved experience migration, preservation
 on switching, floating-window input ownership, brush undo/redo, multipass action
@@ -142,8 +143,8 @@ actions. This protects input routing; full system-font/IME canvas text is still
 pending. Engine-only operations remain available through their typed commands
 and CLI; native document-window actions have no headless equivalent.
 
-Save All, recent files, printing, acquisition and the remaining editing commands
-are not registered as working controls yet. The registry is a first slice for
+Save All is implemented below. Recent files, printing, acquisition and the
+remaining editing commands are not registered as working controls yet. The registry is a first slice for
 existing actions, not a claim of complete menu or CLI coverage.
 
 ## Layer workflows
@@ -607,3 +608,60 @@ that manual zoom starts a fresh cycle. Workspace check, strict all-target native
 Clippy, translation, source-length and whitespace checks pass. Raw local logs are
 in `docs/validation/studio-fit-restore-2026-10-24/`. Native OS shortcut delivery,
 reference-build visuals and the full Studio/browser roadmap remain unqualified.
+
+
+## Save All (2026-10-24)
+
+Studio's File menu now has Save All, enabled when a document in the workspace has
+unsaved work or accepted edits waiting to finish. Ctrl+Alt+S invokes the same
+operation, with Command+Option+S on macOS. Ordinary Save and Save As retain their
+own shortcuts. A clean active tab does not disable Save All if another tab is
+dirty. The command and progress/completion/stopped messages are translated in all
+seven languages. Classic's own menus and browser presentation retain their
+existing single-document save behavior; the unified macOS menu keeps Save All
+disabled outside Studio.
+
+The batch captures stable tab identities, waits for earlier editing/file work,
+and visits documents in tab order through the normal Save path. Named projects
+reuse their binding. Unnamed dirty documents use the existing parented native
+Save As dialog and overwrite confirmations, one at a time. Saves use the current
+PCND project workflow; image exports and future PDN support remain separate.
+Clean documents are skipped, including files changed externally since their last
+confirmed save. The starting tab and its zoom return when the batch completes or
+stops. No document is closed by Save All itself.
+
+Cancel, failed or unconfirmed I/O, a missing source tab or a newer unsaved edit
+stops the batch before later documents are saved. Earlier confirmed saves remain
+on disk. Unsaved documents remain open with their history intact. The batch does
+not mark a newer revision clean merely because an older captured revision was
+written. Existing recovery receipts and retained snapshots keep their normal
+ownership and inspection paths. UI editing and tab changes are blocked while the
+batch owns the workspace. A window-close request waits for the batch and follows
+the existing recovery-cleanup close path after success; failure/cancellation
+leaves the window open.
+
+The workflow reference is the official
+[Paint.NET File Menu documentation](https://paint.net/doc/latest/FileMenu.html),
+which documents saving modified images with Ctrl+Alt+S and disabling Save All
+when no images are modified. This tranche implements PaintCraft's current native
+project-save capabilities and does not qualify Paint.NET's other formats,
+configuration dialogs or native OS behavior.
+
+
+Validation for source revision `6eb2960`: 272 ordinary desktop GUI tests pass
+(63 explicitly ignored tests), 289 native library tests pass (8 ignored), all 69
+browser library tests pass, and 37 shared UI tests pass (one ignored). Eight new
+coordinator tests cover exact multi-tab snapshots, original-tab/zoom restoration,
+clean-file skipping despite external replacement, failure and overwrite
+cancellation, cancelled/owner-routed Save As completions, newer edits after capture
+and deferred close. Successful and failing batches run through both synchronous
+saves and the real native background I/O service. Real GUI menu/shortcut input
+runs in all seven languages at DPI 1/2 with forced multipass, mixed clean/dirty
+tabs, coalesced duplicate activations and PCND reopen checks. Two shared action
+tests cover capability gates and exact modifier matching. Existing Save As,
+close/recovery and independent frontend workspace tests still pass. Workspace
+check, strict all-target Clippy, the browser release build, catalog, source-length
+and whitespace checks pass. Raw local logs are under
+`docs/validation/studio-save-all-2026-10-24/`. Automated tests inject native dialog
+completions without opening OS dialogs; actual OS dialog/shortcut delivery and
+reference-build comparisons remain qualification work.

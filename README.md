@@ -3,12 +3,12 @@
 A familiar place to draw, paint and edit images. Built in Rust.
 
 - Classic with Windows 7, 10 and 11 skins.
-- Studio with layers and floating tool panels.
+- Studio with layers, document tabs, Save All and floating tool panels.
 - Pencil, eraser, fill, color picker and nine brush styles.
 - Shapes, curves and text.
 - Selection, crop, rotate and flip.
 - Undo, redo, editable projects and PNG, BMP and JPEG images.
-- Light and dark themes, English and Japanese.
+- Light and dark themes in seven languages.
 - Desktop, browser and command-line apps.
 
 ![PaintCraft Classic, Windows 11](assets/repo/classic-windows-11.png)
