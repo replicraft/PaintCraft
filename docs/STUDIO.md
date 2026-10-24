@@ -23,6 +23,7 @@ separately in the dependency choices and is not bundled yet.
   actual-pixel zoom retain the common mapping.
 - Zoom tool with click stepping, rectangle-to-viewport fit and text-safe Z shortcut.
 - Pan tool with H, temporary Space-drag, middle-button pan and hand cursors.
+- Overscroll with a persisted Studio navigation preference.
 - Shared staged brush previews, CPU/wgpu composition, transactions and undo/redo.
   Open, Save As and Export retain the native file-dialog and preservation paths.
 
@@ -254,7 +255,7 @@ Pixel Grid is an overlay at magnification of at least four physical pixels per
 document pixel. It draws only visible boundaries with one-physical-pixel strokes,
 without scanning the document area or changing the rendered image buffer. Zoom,
 grid and pending viewport centering belong to each document. None changes pixels,
-selection, history, dirty state or PCND bytes. Rulers, units/DPI metadata, overscroll,
+selection, history, dirty state or PCND bytes. Rulers, units/DPI metadata,
 pan tools and persistent viewport settings remain separate work.
 
 Tests cover physical scaling, fractional drawing coordinates, actual size, fit at
@@ -350,7 +351,8 @@ Actual app captures are in `assets/repo/studio-zoom-box-en-US.png`,
 inspected, and the English box was reviewed again after the caption correction.
 Raw evidence is retained in ignored `docs/validation/studio-zoom-2026-10-24/`.
 Pan, middle-button navigation and temporary spacebar pan are now implemented as
-documented below. Overscroll and native qualification remain unfinished. The browser currently has Classic only; these
+documented below. Overscroll is now available as described below; native
+qualification remains unfinished. The browser currently has Classic only; these
 captures do not establish Studio web parity or complete the Studio roadmap gate.
 
 ## Pan tool and temporary navigation (2026-10-24)
@@ -406,6 +408,60 @@ Pan tool at 1600 percent with an edited pencil stroke. These captures do not pro
 OS cursor appearance or native Paint.NET parity. Raw logs are retained in ignored
 `docs/validation/studio-pan-2026-10-24/`.
 
-Overscroll, Space-plus-arrow panning, Ctrl-accelerated keyboard pan, automatic
+Overscroll is implemented in the following slice. Space-plus-arrow panning,
+Ctrl-accelerated keyboard pan, automatic
 edge scrolling and per-device/native qualification remain unfinished. This does
 not complete the Studio or browser parity gates.
+
+## Overscroll and navigation preference (2026-10-24)
+
+Studio overscroll now defaults on. Small images can move halfway offscreen;
+images larger than the viewport can move until either edge reaches the viewport
+center. The policy applies independently on each axis, including images that are
+small horizontally and large vertically. The workflow reference is the official
+[Paint.NET View Tools documentation](https://paint.net/doc/latest/ViewTools.html).
+The geometry implements that documented range without changing canvas dimensions
+or allocating pixels for the surrounding workspace. Exact native qualification
+remains separate from this implementation evidence.
+
+Settings now has a Studio-only User Interface page. Scroll past the edge of the
+image (overscroll) is staged until Apply; Cancel retains the prior preference and
+view. Disabling it restores the constrained scroll range. Enabling it preserves
+the visible center; resizing the viewport preserves the image's displacement from
+that center. Applying the preference does not change pixels, selection or history.
+Classic retains its own canvas presentation and has no overscroll setting here.
+
+The existing settings/v3 file gains an optional `studio_overscroll` boolean.
+Older v1/v2/v3 files default to enabled, disabled values round-trip, and malformed
+types take the existing preserved-unusable-file path. Settings are still written
+atomically. Pending pan requests include the preference in their document/view
+scope, so queued displacement cannot cross an overscroll policy change.
+
+Studio's scroll adapter now lays out the canvas inside an explicit virtual extent,
+with leading/trailing room for the overscroll range. Layout changes preserve the
+screen-space point under the viewport center; explicit zoom targets remain owned
+by the shell. The adapter accounts for reserved scrollbar space and retains the
+existing scoped pan-request admission. Physical touch/pen behavior, kinetic
+navigation and native reference rendering are not qualified by these tests.
+
+Validation: 260 ordinary desktop GUI tests pass (63 explicit manual/capture tests
+ignored). New tests check exact small/large endpoint geometry, both directions,
+English/Japanese, light/dark, DPI 1/2, forced multipass, unchanged document/history,
+staged Cancel/Apply, disabled behavior after restart, re-enabling without a center
+jump and window resize preservation. A 360 by 360 high-DPI settings test verifies
+that the checkbox and footer remain reachable in both languages. Existing Studio
+pan/zoom and workspace workflows pass. Four Studio library tests cover geometry
+and scoped scroll requests; settings parsing/round-trip tests pass. All 68 browser
+library tests pass and the browser release distribution rebuilds. Workspace check,
+strict all-target Clippy, translation, source-length and whitespace checks pass.
+
+Actual offscreen app captures are in `assets/repo/studio-overscroll-en-US.png`,
+`studio-overscroll-ja.png`, `studio-navigation-settings-en-US.png` and
+`studio-navigation-settings-ja.png`. The English panned canvas and Japanese dark
+settings surface were visually inspected. The fixture verifies that the small
+canvas extends outside its viewport before capture. Raw evidence is retained in
+ignored `docs/validation/studio-overscroll-2026-10-24/`.
+
+Space-plus-arrow panning, Ctrl-accelerated keyboard movement, automatic edge
+scrolling and native/per-device qualification remain unfinished. Studio web
+presentation and the complete Studio roadmap gate remain unfinished.
