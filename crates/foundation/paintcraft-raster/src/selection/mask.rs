@@ -13,6 +13,7 @@ mod outline;
 pub use outline::{BoundarySegment, MaskOutline, OutlineLimits};
 mod polygon;
 mod rows;
+mod transform;
 mod views;
 
 /// Explicit per-construction bounds, separate from the caller's shared byte capacity.

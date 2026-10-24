@@ -44,6 +44,12 @@ impl Builder {
     pub(super) fn spend(&mut self, amount: u64) -> Result<()> {
         spend(&mut self.remaining, amount)
     }
+    pub(super) fn remaining_work(&self) -> u64 {
+        self.remaining
+    }
+    pub(super) fn retained_tiles(&self) -> usize {
+        self.tiles.len()
+    }
     pub(super) fn span(&mut self, span: MaskSpan, check: &dyn Fn() -> Result<()>) -> Result<()> {
         check()?;
         self.spend(1)?;
