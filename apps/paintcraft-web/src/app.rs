@@ -438,7 +438,8 @@ impl WebApp {
                         Some((rect.width(), rect.height()))
                     }
                     paintcraft_editor::execute::Selection::Empty => Some((0, 0)),
-                    paintcraft_editor::execute::Selection::Inactive => None,
+                    paintcraft_editor::execute::Selection::Inactive
+                    | paintcraft_editor::execute::Selection::Mask(_) => None,
                 });
             let actions = paintcraft_classic::status::contents_for_skin(
                 ui,

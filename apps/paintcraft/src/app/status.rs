@@ -82,7 +82,7 @@ impl App {
                     match self.editor.selection() {
                         Selection::Rect(rect) => Some((rect.width(), rect.height())),
                         Selection::Empty => Some((0, 0)),
-                        Selection::Inactive => None,
+                        Selection::Inactive | Selection::Mask(_) => None,
                     }
                 });
                 let model = paintcraft_classic::status::Status {

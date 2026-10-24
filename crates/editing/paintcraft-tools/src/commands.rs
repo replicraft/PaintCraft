@@ -287,6 +287,7 @@ pub fn crop_to_selection(
 ) -> Result<Value> {
     let area = match selection {
         paintcraft_raster::Selection::Rect(rect) => rect.intersect(&document.canvas_rect()),
+        paintcraft_raster::Selection::Mask(_) => return Err(mask_selection_unsupported()),
         _ => None,
     }
     .ok_or_else(|| {
@@ -308,6 +309,9 @@ pub fn transform_image(
     transform: paintcraft_core::types::orthogonal::OrthogonalTransform,
     clear: Rgba,
 ) -> Result<Value> {
+    if matches!(selection, paintcraft_raster::Selection::Mask(_)) {
+        return Err(mask_selection_unsupported());
+    }
     if selection == paintcraft_raster::Selection::Inactive {
         return Ok(Value::object([
             ("op", Value::str("canvas.transform")),
@@ -335,6 +339,9 @@ pub fn erase_selection(
     target: Option<Uuid>,
     color: Rgba,
 ) -> Result<Vec<Value>> {
+    if matches!(selection, paintcraft_raster::Selection::Mask(_)) {
+        return Err(mask_selection_unsupported());
+    }
     let paintcraft_raster::Selection::Rect(rect) = selection else {
         return Ok(Vec::new());
     };
@@ -351,4 +358,11 @@ pub fn erase_selection(
         ("color", Value::str(color.to_hex())),
         ("mode", Value::str("replace")),
     ])])
+}
+
+fn mask_selection_unsupported() -> paintcraft_core::types::Error {
+    paintcraft_core::types::Error::new(
+        paintcraft_core::types::ErrorCode::InputSchema,
+        "This operation does not yet support selection masks",
+    )
 }
