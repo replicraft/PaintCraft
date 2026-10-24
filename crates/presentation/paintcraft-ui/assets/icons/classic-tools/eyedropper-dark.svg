@@ -1,4 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
-<title>Eyedropper</title>
-<g fill="none" stroke="#f5f5f5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18L7 15L10 18L4 21Z" fill="#f2d37f" stroke="none"/><path d="M6 12L3 20L4 21L12 18L18 12M6 12L12 18M5 10L14 19"/><path d="M13 7L18 2Q19 1 20 2L22 4Q23 5 22 6L17 11Z" fill="#55bce9"/><path d="M11 5L19 13"/></g>
-</svg>
+<title>Color picker</title>
+<defs><linearGradient id="bulb" x2="0" y2="1"><stop stop-color="#69dfff"/><stop offset="1" stop-color="#0078d4"/></linearGradient></defs>
+<g stroke="#f3f3f3" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+<path d="m13 8-8.5 8.5-.5 3 3-.5L15.5 10" fill="#344758"/>
+<path d="m5 17 1 1 7-7" stroke="#39c6ff" stroke-width="2" fill="none"/>
+<path d="m12 7 5 5" fill="none" stroke-width="2"/>
+<path d="m14 7 3.8-3.8a2.8 2.8 0 0 1 4 4L18 11Z" fill="url(#bulb)"/>
+<path d="m4 20-1 1" fill="none"/>
+</g></svg>
