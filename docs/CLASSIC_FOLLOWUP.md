@@ -253,3 +253,35 @@ rebuilt, and translation/source-length/whitespace checks passed. Offscreen choos
 captures were inspected. Native Windows parity and keyboard Ribbon KeyTips remain
 unqualified. Raw logs are in the ignored
 `docs/validation/historical-shape-gallery-2026-10-24/` directory.
+
+## Historical Brushes and Size dropdowns
+
+Windows 7/10 Brushes now has a compact three-column grid for the nine brush media,
+with a separate Square brush row below it. Every tile has a localized accessible
+name and tooltip, shows selection and chooses the existing editor brush. The
+samples reuse the original deterministic UI illustrations; they are not document
+stroke previews or native Paint brush-accuracy evidence. Windows 11 retains its
+larger list. The historical popup and trigger selection outlines use square
+corners; Selection, Shapes and Size share the same historical popup styling.
+
+The Size popup has separate left-aligned labels and right-side thickness samples,
+explicit selected states, a localized current-value label for custom widths and
+an accessible numeric entry. Pencil size remains independent of the other tools'
+size. Both popups scroll in a 640 by 240 client area.
+
+A directional-key regression exposed egui's default linear menu navigation:
+Right did not move between brush tiles. Historical brush tiles now handle all
+four arrow directions as a grid before the enclosing menu applies its linear
+navigation. Enter chooses; Escape dismisses. Tests cover English/Japanese, both
+historical skins, light/dark themes and normal/forced multipass rendering, and
+verify that tool preferences do not publish document edits or history entries.
+
+All 238 regular GUI tests passed, with 51 opt-in captures ignored. Native
+all-target Clippy passed with warnings denied; the browser release distribution
+rebuilt. Translation, source-length and whitespace checks passed. Actual
+`assets/repo/classic-v7-brushes.png`, `classic-v7-size.png`,
+`classic-v10-brushes.png` and `classic-v10-size.png` captures show the resulting
+controls. The Windows 7 dropdowns and Windows 10 brush grid were visually
+inspected. Full native Windows visual/behavioral parity remains unqualified.
+Raw logs, including the original directional-navigation failure, are retained in
+the ignored `docs/validation/historical-dropdowns-2026-10-24/` directory.
