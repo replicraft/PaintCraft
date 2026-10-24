@@ -1,4 +1,5 @@
 //! Browser-owned session. Raster algorithms and history remain in shared crates.
+mod text;
 use paintcraft_commands::Batch;
 use paintcraft_core::types::{Error, ErrorCode, Result, Rgba, json::Value};
 use paintcraft_document::{Document, POLICY, new_document};
@@ -18,6 +19,7 @@ pub(crate) struct Editor {
     pub session: Session,
     pub tools: ToolState,
     pub target: Option<Uuid>,
+    fonts: std::cell::RefCell<paintcraft_tools::text::TextRenderer>,
 }
 
 impl Editor {
@@ -45,10 +47,13 @@ impl Editor {
         session.set_staged_pixel_budget(MAX_PIXELS * 4);
         session.set_history_budget(64 * 1024 * 1024);
         session.set_history_retention(HistoryRetention::TrimOldest);
+        let mut tools = ToolState::default();
+        tools.text_style = Some(paintcraft_core::types::text::TextOptions::default());
         Ok(Self {
             session,
             target,
-            tools: ToolState::default(),
+            tools,
+            fonts: text::fonts(),
         })
     }
 
@@ -94,7 +99,38 @@ impl Editor {
     }
 
     pub fn apply(&mut self, action: Action) -> Result<()> {
+        if let Action::ResizeCanvas { width, height } = &action {
+            if u64::from(*width) * u64::from(*height) > MAX_PIXELS {
+                return Err(Error::new(
+                    ErrorCode::ResourceLimit,
+                    "Browser canvas limit is 4 megapixels",
+                ));
+            }
+            if !(1..=paintcraft_document::CANVAS_SIDE_MAX).contains(width)
+                || !(1..=paintcraft_document::CANVAS_SIDE_MAX).contains(height)
+            {
+                return Err(Error::new(
+                    ErrorCode::InputSchema,
+                    "Canvas dimensions are out of range",
+                ));
+            }
+        }
+        if matches!(&action,Action::ResizeCanvas{width,height} if (*width,*height)==self.session.document().canvas)
+        {
+            return Ok(());
+        }
+        if !matches!(&action, Action::Text { .. }) {
+            self.place_text()?;
+        }
         match action {
+            action @ Action::Text { .. } => {
+                let operations = self.text_operations(&action)?;
+                if operations.is_empty() {
+                    Ok(())
+                } else {
+                    self.commit(operations)
+                }
+            }
             Action::Stroke(stroke) => {
                 self.commit(commands::stroke_operations(&stroke, &|| Ok(()))?)
             }
@@ -186,8 +222,28 @@ impl Editor {
                 stroke,
                 fill,
             }) => vec![commands::shape(layer, tool, from, to, stroke, fill)],
+            Some(Preview::Text {
+                layer,
+                style,
+                background,
+                at,
+                text,
+                scale,
+                color,
+            }) => self.text_operations(&Action::Text {
+                layer,
+                style,
+                background,
+                at,
+                text,
+                scale,
+                color,
+            })?,
             _ => return Ok(None),
         };
+        if operations.is_empty() {
+            return Ok(None);
+        }
         Ok(Some(
             execute::execute_with_budget(
                 self.session.document(),
@@ -209,3 +265,5 @@ fn point(p: (i64, i64)) -> Value {
 
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod text_tests;
