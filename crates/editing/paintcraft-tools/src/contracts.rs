@@ -20,6 +20,8 @@ pub enum Tool {
     Eraser,
     Fill,
     ColorPicker,
+    /// View-only tool. Hosts handle clicks; it never produces document edits.
+    Magnifier,
     Line,
     Rect,
     Ellipse,
@@ -47,6 +49,7 @@ impl Tool {
             Self::Polygon => 27,
             Self::Curve => 28,
             Self::ColorPicker => 29,
+            Self::Magnifier => 30,
         }
     }
     /// Native Studio color gestures. Other secondary-button tool policies remain
@@ -56,6 +59,7 @@ impl Tool {
             || matches!(
                 self,
                 Self::ColorPicker
+                    | Self::Magnifier
                     | Self::Pencil
                     | Self::Brush
                     | Self::Fill
@@ -68,7 +72,7 @@ impl Tool {
             )
     }
 
-    pub const ALL: [Tool; 12] = [
+    pub const ALL: [Tool; 13] = [
         Tool::Pencil,
         Tool::Brush,
         Tool::Eraser,
@@ -81,6 +85,7 @@ impl Tool {
         Tool::Polygon,
         Tool::Curve,
         Tool::ColorPicker,
+        Tool::Magnifier,
     ];
 
     pub fn name(self) -> &'static str {
@@ -90,6 +95,7 @@ impl Tool {
             Tool::Eraser => "Eraser",
             Tool::Fill => "Fill",
             Tool::ColorPicker => "Color picker",
+            Tool::Magnifier => "Magnifier",
             Tool::Line => "Line",
             Tool::Rect => "Rectangle",
             Tool::Ellipse => "Ellipse",

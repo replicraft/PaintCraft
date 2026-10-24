@@ -116,6 +116,9 @@ impl ToolState {
         self.pointer_down_button(layer, at, PointerButton::Primary);
     }
     pub fn pointer_down_button(&mut self, layer: Uuid, at: (i64, i64), button: PointerButton) {
+        if self.tool == Tool::Magnifier {
+            return;
+        }
         if let Some(draft) = &mut self.construction {
             if draft.press(layer, self.tool, at, button) {
                 self.preview_revision.advance();
@@ -288,7 +291,12 @@ impl ToolState {
                     color,
                 })
             }
-            Tool::ColorPicker | Tool::Fill | Tool::Text | Tool::Polygon | Tool::Curve => {
+            Tool::Magnifier
+            | Tool::ColorPicker
+            | Tool::Fill
+            | Tool::Text
+            | Tool::Polygon
+            | Tool::Curve => {
                 return None;
             }
             Tool::Select => Preview::Marquee {
@@ -445,7 +453,7 @@ impl ToolState {
                     round,
                 })
             }
-            Tool::Text | Tool::Polygon | Tool::Curve => return None,
+            Tool::Magnifier | Tool::Text | Tool::Polygon | Tool::Curve => return None,
             Tool::ColorPicker => Action::PickColor(self.color_pick(&g, last)),
             Tool::Fill => Action::Fill {
                 layer: g.layer,
