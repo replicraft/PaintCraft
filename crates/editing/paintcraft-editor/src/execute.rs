@@ -31,6 +31,8 @@ pub const PENCIL_PIXELS_MAX: i128 = 16_777_216;
 pub const PENCIL_SEGMENTS_MAX: i128 = 1_048_576;
 /// Stamp rows (path pixels × brush diameter) per batch for all brush strokes.
 pub const STROKE_ROWS_MAX: i128 = 16_777_216;
+/// Shared mask-filter traversal allowance across all paint plans in one batch.
+pub const SELECTION_FILTER_WORK_MAX: u64 = 67_108_864;
 /// Staged pixel storage per batch (the untrusted-decode soft limit).
 pub use paintcraft_core::types::policy::STAGED_PIXELS_MAX;
 
@@ -41,7 +43,8 @@ fn clip(selection: &Selection, area: Option<Rect>) -> Option<Rect> {
         Selection::Inactive => area,
         Selection::Empty => None,
         Selection::Rect(r) => area.and_then(|a| a.intersect(r)),
-        Selection::Mask(_) => None, // Unsupported paint fails before this projection.
+        Selection::Mask(mask) if mask.uniform_coverage() == Some(0) => None,
+        Selection::Mask(mask) => area.and_then(|a| a.intersect(&mask.domain())),
     }
 }
 #[derive(Debug)]
@@ -111,6 +114,7 @@ pub fn execute_with_geometry_cache(
         pencil_pixels: 0,
         pencil_segments: 0,
         stroke_rows: 0,
+        selection_work: SELECTION_FILTER_WORK_MAX,
         transform_reads: 0,
         base_state: base.state_id.to_string(),
         digest: &batch.digest,
@@ -216,6 +220,7 @@ struct Stage<'a> {
     pencil_pixels: i128,
     pencil_segments: i128,
     stroke_rows: i128,
+    selection_work: u64,
     transform_reads: u64,
     base_state: String,
     digest: &'a str,
@@ -316,12 +321,16 @@ impl Stage<'_> {
     }
 
     fn run(&mut self, index: usize, op: &Op) -> Result<()> {
-        // Masks are owned session/history data now. Until exact per-pixel gates
-        // and mapped sampling are implemented, never substitute rectangular bounds.
-        if matches!(self.selection, Selection::Mask(_)) && planning::is_paint(op) {
+        // Mapped transforms need their own mask sampling/selection mapping policy.
+        if matches!(self.selection, Selection::Mask(_))
+            && matches!(
+                op,
+                Op::CanvasCrop { .. } | Op::CanvasTransform { .. } | Op::TransformSelection { .. }
+            )
+        {
             return Err(Error::new(
                 ErrorCode::InputSchema,
-                "painting and transforms on mask selections are not implemented yet",
+                "mapped transforms on mask selections are not implemented yet",
             ));
         }
         match op {

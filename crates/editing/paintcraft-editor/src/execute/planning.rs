@@ -1,7 +1,9 @@
 //! Compile logical paint and model complete private decoded ownership before replay.
 use super::*;
 use paintcraft_raster::{PaintOverlay, PaintSnapshot, SimulatedLayer, TileFootprint, TilePlanner};
+mod flood;
 pub(super) mod storage;
+pub(super) use flood::classify as classify_flood;
 use storage::Store;
 
 #[derive(Debug)]
@@ -129,6 +131,7 @@ impl Compiler {
         seed: (i64, i64),
         area: Rect,
         tolerance: u8,
+        allowed: Option<&dyn Fn(i64, i64) -> Result<bool>>,
         admission: &Admission,
         check: &dyn Fn() -> Result<()>,
     ) -> Result<Vec<Span>> {
@@ -140,25 +143,28 @@ impl Compiler {
         }
         let index = self.ensure(id, source, admission, check)?;
         let Some(pixels) = self.layers.values[index].1.pixels.as_ref() else {
-            return paintcraft_raster::flood::region_with_scratch_limit_checked(
-                source,
+            return classify_flood(
+                |x, y| Ok(source.get(x, y)),
+                allowed,
                 seed,
-                &area,
+                area,
                 tolerance,
-                admission.flood_scratch_limit(),
+                admission,
                 check,
             );
         };
         let reader = pixels.reader(admission, check)?;
-        paintcraft_raster::flood::region_from_source_checked(
+        classify_flood(
             |x, y| reader.read_checked(x, y, check),
+            allowed,
             seed,
-            &area,
+            area,
             tolerance,
-            admission.flood_scratch_limit(),
+            admission,
             check,
         )
     }
+
     pub fn duplicate(
         &mut self,
         source: Uuid,

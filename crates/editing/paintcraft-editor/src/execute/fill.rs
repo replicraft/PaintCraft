@@ -18,6 +18,20 @@ impl Stage<'_> {
         let local = area
             .translated(-ox, -oy)
             .expect("area lies inside the layer");
+        let mask = match &self.selection {
+            Selection::Mask(mask) => Some(mask),
+            _ => None,
+        };
+        let predicate = |x: i64, y: i64| -> Result<bool> {
+            Ok(mask.is_none_or(|mask| mask.coverage(x + ox, y + oy) == 255))
+        };
+        let allowed = mask.map(|_| &predicate as &dyn Fn(i64, i64) -> Result<bool>);
+        // A blocked seed is empty without allocating a classifier or reading pixels.
+        if let Some(allowed) = allowed
+            && !allowed(at.0 - ox, at.1 - oy)?
+        {
+            return Ok(());
+        }
         let spans = if let Some(planning) = &mut self.planning {
             planning.flood(
                 id,
@@ -25,16 +39,18 @@ impl Stage<'_> {
                 (at.0 - ox, at.1 - oy),
                 local,
                 tolerance,
+                allowed,
                 &self.adm,
                 self.check,
             )?
         } else {
-            paintcraft_raster::flood::region_with_scratch_limit_checked(
-                &layer.raster,
+            planning::classify_flood(
+                |x, y| Ok(layer.raster.get(x, y)),
+                allowed,
                 (at.0 - ox, at.1 - oy),
-                &local,
+                local,
                 tolerance,
-                self.adm.flood_scratch_limit(),
+                &self.adm,
                 self.check,
             )?
         };

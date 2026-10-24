@@ -29,6 +29,20 @@ impl Stage<'_> {
     }
     pub(super) fn apply_paint(&mut self, id: Uuid, plan: &PaintPlan) -> Result<()> {
         if let Some(planning) = &mut self.planning {
+            // Filter once before retaining logical/replay descriptors. Reapplying
+            // coverage at replay could change overlap and replacement semantics.
+            let filtered;
+            let plan = if let Selection::Mask(mask) = &self.selection {
+                filtered = plan.masked_checked(
+                    mask,
+                    self.doc.layers[&id].origin,
+                    &mut self.selection_work,
+                    self.check,
+                )?;
+                &filtered
+            } else {
+                plan
+            };
             return planning.paint(
                 id,
                 &self.doc.layers[&id].raster,

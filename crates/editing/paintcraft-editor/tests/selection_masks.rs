@@ -178,23 +178,17 @@ fn failed_mixed_batches_and_every_cancellation_leave_published_state_untouched()
         assert_eq!(err.code, ErrorCode::OperationCancelled);
         assert_eq!(budget.usage().reserved, 0);
     }
-    let id = s.document().roots[0];
     for paint in [
-        Op::FillRect {
-            layer: LayerRef::Id(id),
-            rect: Rect::new(0, 0, 8, 6).unwrap(),
-            color: Rgba([0; 4]),
-            mode: Mode::Replace,
-        },
-        Op::FloodFill {
-            layer: LayerRef::Id(id),
-            at: (1, 1),
-            color: Rgba([0; 4]),
-            mode: Mode::Replace,
-            tolerance: 0,
-        },
         Op::CanvasTransform {
             transform: paintcraft_core::types::orthogonal::OrthogonalTransform::RotateRight,
+        },
+        Op::CanvasCrop {
+            rect: Rect::new(1, 1, 3, 3).unwrap(),
+        },
+        Op::TransformSelection {
+            layer: LayerRef::Id(s.document().roots[0]),
+            transform: paintcraft_core::types::orthogonal::OrthogonalTransform::FlipHorizontal,
+            clear: Rgba([0; 4]),
         },
     ] {
         let err = s
