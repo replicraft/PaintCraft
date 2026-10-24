@@ -72,6 +72,11 @@ pub enum ShapeKind {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Op {
+    TransformSelection {
+        layer: LayerRef,
+        transform: paintcraft_core::types::orthogonal::OrthogonalTransform,
+        clear: Rgba,
+    },
     CanvasTransform {
         transform: paintcraft_core::types::orthogonal::OrthogonalTransform,
     },

@@ -107,3 +107,6 @@ mod parallel;
 
 #[path = "cli/orthogonal.rs"]
 mod orthogonal;
+
+#[path = "cli/selection_transform.rs"]
+mod selection_transform;

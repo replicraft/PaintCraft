@@ -10,6 +10,7 @@ mod mask;
 mod paint;
 mod path;
 mod planning;
+mod selection_transform;
 mod transform;
 use path::walk_clipped;
 
@@ -148,6 +149,9 @@ pub fn execute_with_geometry_cache(
             match op {
                 Op::CanvasCrop { rect } => s.crop_layout(*rect)?,
                 Op::CanvasTransform { transform } => s.transform_layout(*transform)?,
+                Op::TransformSelection {
+                    layer, transform, ..
+                } => s.selection_transform_layout(layer, *transform)?,
                 _ => {}
             }
             if planning::is_paint(op) {
@@ -159,7 +163,7 @@ pub fn execute_with_geometry_cache(
                             s.doc
                                 .layers
                                 .get_mut(&paint.layer)
-                                .expect("compiled crop layer")
+                                .expect("compiled mapped layer")
                                 .raster = plan.replay(&mut s.adm, s.check)?;
                         }
                     }
@@ -311,6 +315,11 @@ impl Stage<'_> {
         match op {
             Op::CanvasCrop { rect } => self.crop_canvas(*rect)?,
             Op::CanvasTransform { transform } => self.transform_canvas(*transform)?,
+            Op::TransformSelection {
+                layer,
+                transform,
+                clear,
+            } => self.transform_selected(layer, *transform, *clear)?,
             Op::Contour {
                 layer,
                 points,

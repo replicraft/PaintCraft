@@ -16,6 +16,7 @@ pub(super) fn op(v: &Value, version: u8) -> Result<Op> {
                 | "raster.contour"
                 | "canvas.crop"
                 | "canvas.transform"
+                | "raster.transform_selection"
                 | "raster.text"
                 | "raster.mask_spans"
                 | "layer.reorder"
@@ -27,6 +28,18 @@ pub(super) fn op(v: &Value, version: u8) -> Result<Op> {
         )));
     }
     Ok(match name {
+        "raster.transform_selection" => {
+            let o = obj(v, &["op", "layer_ref", "transform", "clear"], &[])?;
+            Op::TransformSelection {
+                layer: layer_ref(&o["layer_ref"])?,
+                transform: o["transform"]
+                    .as_str()
+                    .and_then(paintcraft_core::types::orthogonal::OrthogonalTransform::parse)
+                    .ok_or_else(|| bad("unknown orthogonal transform"))?,
+                clear: color(&o["clear"])?,
+            }
+        }
+
         "canvas.transform" => {
             let o = obj(v, &["op", "transform"], &[])?;
             Op::CanvasTransform {

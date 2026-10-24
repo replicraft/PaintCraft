@@ -28,6 +28,7 @@ pub enum Label {
     ClearCanvas,
     CropCanvas,
     TransformCanvas,
+    TransformSelection,
 }
 
 impl Label {
@@ -52,6 +53,7 @@ impl Label {
             Self::ClearCanvas => "Clear Canvas",
             Self::CropCanvas => "Crop canvas",
             Self::TransformCanvas => "Transform canvas",
+            Self::TransformSelection => "Transform selection",
         }
     }
 }
