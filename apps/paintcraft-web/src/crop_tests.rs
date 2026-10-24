@@ -242,3 +242,87 @@ fn historical_rotate_popup_maps_pixels_and_undoes_in_both_languages() {
         }
     }
 }
+
+#[test]
+fn shape_paint_menus_change_preferences_then_draw_and_undo_in_every_skin() {
+    use paintcraft_classic::ClassicVariant;
+    use paintcraft_tools::ShapeStyle;
+    use paintcraft_ui::i18n::{Language, set_language, translate};
+    for variant in ClassicVariant::ALL {
+        for language in Language::ALL {
+            let mut h = Harness::builder()
+                .with_size(Vec2::new(1360.0, 900.0))
+                .build_eframe(|cc| WebApp::new(&cc.egui_ctx));
+            h.state_mut().variant = variant;
+            set_language(&h.ctx, language);
+            h.run();
+            let label = |s| translate(language, s);
+            h.get_by_role_and_label(Role::Button, &label("Rectangle"))
+                .click();
+            h.run();
+            let source = h.state().editor.session.snapshot();
+            let ticket = h.state().editor.session.ticket();
+            for (trigger, choice, expected) in [
+                ("Shape fill", "Solid fill", ShapeStyle::Both),
+                ("Shape outline", "No outline", ShapeStyle::Filled),
+                ("Shape fill", "No fill", ShapeStyle::Outline),
+                ("Shape outline", "Solid outline", ShapeStyle::Outline),
+            ] {
+                h.get_by_role_and_label(Role::Button, &label(trigger))
+                    .click();
+                h.run();
+                h.get_by_role_and_label(Role::Button, &label(choice))
+                    .click();
+                h.run();
+                assert_eq!(h.state().controls.options.style, expected);
+                assert_eq!(h.state().editor.session.ticket(), ticket);
+                assert!(h.query_by_label(&label(choice)).is_none());
+            }
+            let layer = h.state().editor.target.unwrap();
+            for filled in [false, true] {
+                if filled {
+                    h.get_by_role_and_label(Role::Button, &label("Shape outline"))
+                        .click();
+                    h.run();
+                    h.get_by_role_and_label(Role::Button, &label("No outline"))
+                        .click();
+                    h.run();
+                }
+                let rect = h.state().canvas.rect.unwrap();
+                let a = rect.min + Vec2::new(50.5, 50.5) * h.state().zoom;
+                let b = rect.min + Vec2::new(80.5, 80.5) * h.state().zoom;
+                h.input_mut().events.extend([
+                    Event::PointerMoved(a),
+                    Event::PointerButton {
+                        pos: a,
+                        button: PointerButton::Primary,
+                        pressed: true,
+                        modifiers: Modifiers::NONE,
+                    },
+                    Event::PointerMoved(b),
+                    Event::PointerButton {
+                        pos: b,
+                        button: PointerButton::Primary,
+                        pressed: false,
+                        modifiers: Modifiers::NONE,
+                    },
+                ]);
+                h.run();
+                let doc = h.state().editor.session.document();
+                assert_eq!(
+                    doc.layers[&layer].raster.get(65, 65),
+                    if filled {
+                        Rgba([0, 0, 0, 255])
+                    } else {
+                        Rgba([255; 4])
+                    }
+                );
+                assert_eq!(doc.layers[&layer].raster.get(50, 65), Rgba([0, 0, 0, 255]));
+                h.get_by_role_and_label(Role::Button, &label("Undo"))
+                    .click();
+                h.run();
+                assert!(h.state().editor.session.document().same_semantics(&source));
+            }
+        }
+    }
+}

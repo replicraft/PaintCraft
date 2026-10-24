@@ -381,3 +381,6 @@ mod legacy_resize;
 
 #[path = "gui/legacy_rotate.rs"]
 mod legacy_rotate;
+
+#[path = "gui/legacy_shape_paint.rs"]
+mod legacy_shape_paint;
