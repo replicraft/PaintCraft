@@ -13,7 +13,7 @@ pub(super) struct Paint {
 #[derive(Debug)]
 pub(super) enum CompiledPlan {
     Paint(PaintPlan),
-    Crop(std::sync::Arc<paintcraft_raster::CropPlan>),
+    Mapped(std::sync::Arc<paintcraft_raster::MappedPlan>),
 }
 #[derive(Debug)]
 struct Logical {
@@ -204,11 +204,11 @@ impl Compiler {
             PaintSnapshot::capture(source, admission, check)
         }
     }
-    pub fn replace_crop(
+    pub fn replace_mapping(
         &mut self,
         id: Uuid,
         target: &RasterLayer,
-        plan: std::sync::Arc<paintcraft_raster::CropPlan>,
+        plan: std::sync::Arc<paintcraft_raster::MappedPlan>,
         operation: usize,
         admission: &Admission,
         check: &dyn Fn() -> Result<()>,
@@ -225,7 +225,7 @@ impl Compiler {
         self.paints.push(Paint {
             operation,
             layer: id,
-            plan: CompiledPlan::Crop(plan),
+            plan: CompiledPlan::Mapped(plan),
         })
     }
     pub fn clear(&mut self) {
@@ -281,7 +281,7 @@ fn kind(op: &Op) -> Kind {
         | Op::MaskSpans { .. }
         | Op::Text { .. } => Kind::Write,
         Op::FloodFill { .. } => Kind::ReadWrite,
-        Op::CanvasCrop { .. } => Kind::Transform,
+        Op::CanvasCrop { .. } | Op::CanvasTransform { .. } => Kind::Transform,
         Op::LayerAdd { .. }
         | Op::LayerDuplicate { .. }
         | Op::LayerDelete { .. }

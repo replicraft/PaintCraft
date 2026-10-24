@@ -10,6 +10,7 @@ mod mask;
 mod paint;
 mod path;
 mod planning;
+mod transform;
 use path::walk_clipped;
 
 use std::collections::{BTreeMap, HashMap};
@@ -144,15 +145,17 @@ pub fn execute_with_geometry_cache(
             }
         })?;
         let result = (|| {
-            if let Op::CanvasCrop { rect } = op {
-                s.crop_layout(*rect)?;
+            match op {
+                Op::CanvasCrop { rect } => s.crop_layout(*rect)?,
+                Op::CanvasTransform { transform } => s.transform_layout(*transform)?,
+                _ => {}
             }
             if planning::is_paint(op) {
                 while paints.peek().is_some_and(|paint| paint.operation == index) {
                     let paint = paints.next().expect("peeked paint");
                     match paint.plan {
                         planning::CompiledPlan::Paint(plan) => s.apply_paint(paint.layer, &plan)?,
-                        planning::CompiledPlan::Crop(plan) => {
+                        planning::CompiledPlan::Mapped(plan) => {
                             s.doc
                                 .layers
                                 .get_mut(&paint.layer)
@@ -307,6 +310,7 @@ impl Stage<'_> {
     fn run(&mut self, index: usize, op: &Op) -> Result<()> {
         match op {
             Op::CanvasCrop { rect } => self.crop_canvas(*rect)?,
+            Op::CanvasTransform { transform } => self.transform_canvas(*transform)?,
             Op::Contour {
                 layer,
                 points,

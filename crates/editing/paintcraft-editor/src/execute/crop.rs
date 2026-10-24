@@ -96,7 +96,7 @@ impl Stage<'_> {
                     )?);
                     self.transform_reads += plan.source_reads();
                     let target = clipped_raster(&layer.raster, area);
-                    planning.replace_crop(
+                    planning.replace_mapping(
                         id,
                         &target,
                         plan,

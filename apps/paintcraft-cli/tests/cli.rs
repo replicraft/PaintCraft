@@ -104,3 +104,6 @@ mod formats_and_receipts;
 mod layers;
 #[path = "cli/parallel.rs"]
 mod parallel;
+
+#[path = "cli/orthogonal.rs"]
+mod orthogonal;

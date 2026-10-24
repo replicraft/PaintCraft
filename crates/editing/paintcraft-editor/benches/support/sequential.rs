@@ -231,7 +231,7 @@ impl Stage<'_> {
 
     fn run(&mut self, index: usize, op: &Op) -> Result<()> {
         match op {
-            Op::CanvasCrop { .. } => {
+            Op::CanvasCrop { .. } | Op::CanvasTransform { .. } => {
                 return Err(Error::new(
                     ErrorCode::CapabilityUnsupported,
                     "historical benchmark oracle does not implement destructive crop",
