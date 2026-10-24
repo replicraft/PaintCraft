@@ -1,41 +1,41 @@
 # PaintCraft
 
-A familiar place to draw, paint and edit images.
+A familiar place to draw, paint and edit images. Built in Rust.
 
-Choose **Classic** for the feel of Windows Paint, or **Studio** for a layered
-workspace with floating tool panels. PaintCraft is an early preview and is still
-being built.
+- Classic with Windows 7, 10 and 11 skins.
+- Studio with layers and floating tool panels.
+- Pencil, eraser, fill, color picker and nine brush styles.
+- Shapes, curves and text.
+- Selection, crop, rotate and flip.
+- Undo, redo, editable projects and PNG, BMP and JPEG images.
+- Light and dark themes, English and Japanese.
+- Desktop, browser and command-line apps.
 
-## Make something
+![PaintCraft Classic, Windows 11](assets/repo/classic-windows-11.png)
 
-- Draw with pencil, eraser, fill and nine brush styles, including calligraphy,
-  airbrush, oil, crayon, marker and watercolor.
-- Add shapes, polygons, curves and antialiased text.
-- Pick colors from your image and keep a custom palette.
-- Select, crop, resize, rotate and flip your work.
-- Organize artwork with layers, visibility and opacity.
-- Undo and redo edits, save projects, and open or export PNG, BMP and JPEG images.
+![PaintCraft Classic in Japanese](assets/repo/classic-japanese.png)
 
-## Make it yours
+## Run
 
-Classic includes Windows 7, 10 and 11 skins, light and dark themes, canvas defaults
-and a default text font. Settings includes English and Japanese. Studio keeps its
-own document workspace, with Save or Discard before switching interfaces.
+Desktop:
 
-![PaintCraft Classic with the Windows 11 skin](docs/screenshots/classic-windows-11.png)
+```sh
+cargo run --release -p paintcraft
+```
 
-*Classic, Windows 11 skin.*
+Command line:
 
-![PaintCraft Classic in Japanese](docs/screenshots/classic-japanese.png)
+```sh
+cargo run --release -p paintcraft-cli -- --help
+```
 
-*Japanese interface with the same drawing tools.*
+Browser:
 
-## Desktop, browser and automation
+```sh
+rustup target add wasm32-unknown-unknown
+cargo install wasm-bindgen-cli --version 0.2.129 --locked
+python3 apps/paintcraft-web/build.py
+python3 -m http.server 8088 --directory apps/paintcraft-web/dist
+```
 
-The desktop app uses native file dialogs and includes crash recovery. The
-[browser editor](apps/paintcraft-web/README.md) provides Classic drawing, layers,
-text, project downloads and PNG export. A command-line companion supports image
-editing and conversion without opening a window.
-
-[Getting started and development](docs/DEVELOPMENT.md) ·
-[Current progress](docs/ROADMAP_STATUS.md) · [License](LICENSE)
+Open [localhost:8088](http://localhost:8088).

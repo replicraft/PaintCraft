@@ -134,14 +134,36 @@ fn export_readme_screenshots() {
         paintcraft_formats::pcnd::write(editor.document()).unwrap(),
     )
     .unwrap();
-    for (language, name) in [
-        (paintcraft_ui::i18n::Language::English, "classic-windows-11"),
-        (paintcraft_ui::i18n::Language::Japanese, "classic-japanese"),
+    for (language, variant, name) in [
+        (
+            paintcraft_ui::i18n::Language::English,
+            ClassicVariant::V11,
+            "classic-windows-11",
+        ),
+        (
+            paintcraft_ui::i18n::Language::Japanese,
+            ClassicVariant::V11,
+            "classic-japanese",
+        ),
+        (
+            paintcraft_ui::i18n::Language::English,
+            ClassicVariant::V10,
+            "classic-windows-10",
+        ),
+        (
+            paintcraft_ui::i18n::Language::English,
+            ClassicVariant::V7,
+            "classic-windows-7",
+        ),
     ] {
         Settings {
-            appearance: Appearance::Dark,
+            appearance: if variant == ClassicVariant::V11 {
+                Appearance::Dark
+            } else {
+                Appearance::Light
+            },
             language,
-            classic_variant: Some(ClassicVariant::V11),
+            classic_variant: Some(variant),
             ..Default::default()
         }
         .save(&dir)
@@ -159,4 +181,55 @@ fn export_readme_screenshots() {
             .unwrap();
     }
     std::fs::remove_dir_all(dir).unwrap();
+}
+
+#[test]
+#[ignore = "Explicit export of real editor brush strokes for reference comparison"]
+fn export_brush_samples() {
+    let output = std::env::var_os("PAINTCRAFT_SCREENSHOT_DIR")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| std::env::temp_dir().join("paintcraft-readme-screenshots"));
+    std::fs::create_dir_all(&output).unwrap();
+    let mut editor = paintcraft::controller::Editor::new_document(630, 280).unwrap();
+    let layer = editor.target().unwrap();
+    for (i, media) in BrushMedia::ALL.into_iter().enumerate() {
+        let x = 35 + i as i64 * 70;
+        editor.request(
+            i as u64 * 2 + 1,
+            Action::Text {
+                style: None,
+                background: Rgba::TRANSPARENT,
+                layer,
+                at: (x - 4, 14),
+                text: (i + 1).to_string(),
+                scale: 2,
+                color: Rgba([0, 0, 0, 255]),
+            },
+        );
+        editor.run_pending();
+        editor.request(
+            i as u64 * 2 + 2,
+            Action::Stroke(paintcraft_tools::Stroke {
+                layer,
+                points: vec![(x, 50), (x - 2, 100), (x + 3, 150), (x, 240)],
+                point_scale: 1,
+                color: Rgba([0, 0, 0, 255]),
+                size: 32,
+                round: true,
+                media,
+                mode: BlendMode::SourceOver,
+            }),
+        );
+        editor.run_pending();
+    }
+    let pixels = paintcraft_render::render_flat(editor.document()).unwrap();
+    let bytes = paintcraft_formats::image::encode(
+        paintcraft_formats::image::ImageFormat::Png,
+        630,
+        280,
+        &pixels,
+        90,
+    )
+    .unwrap();
+    std::fs::write(output.join("brush-samples.png"), bytes).unwrap();
 }
