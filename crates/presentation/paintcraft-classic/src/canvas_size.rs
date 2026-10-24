@@ -1,5 +1,7 @@
 //! Canvas dimension/default presentation; document and preference writes stay in the host.
 use egui::{Color32, Vec2};
+mod defaults;
+pub use defaults::{CanvasDefaults, DEFAULT_SIZE, SIZE_MAX};
 mod fields;
 pub use fields::dimension_fields;
 

@@ -30,7 +30,7 @@ impl CanvasDefaults {
         }
     }
 
-    pub(super) fn parse(value: &Value) -> Result<Self, String> {
+    pub fn parse(value: &Value) -> Result<Self, String> {
         let configured = dimensions(
             value
                 .get("configured")
@@ -52,7 +52,7 @@ impl CanvasDefaults {
         })
     }
 
-    pub(super) fn value(&self) -> Value {
+    pub fn value(&self) -> Value {
         Value::object([
             ("configured", size_value(self.configured)),
             ("remember_last", Value::Bool(self.remember_last)),

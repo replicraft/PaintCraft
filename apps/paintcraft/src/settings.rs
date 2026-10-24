@@ -3,10 +3,9 @@
 //! A damaged or unfamiliar settings file never costs the user anything: it is
 //! moved aside (not deleted), defaults are used, and the reason is reported.
 
-mod canvas;
 mod colors;
 mod text;
-pub use canvas::{CanvasDefaults, DEFAULT_SIZE, SIZE_MAX};
+pub use paintcraft_classic::canvas_size::{CanvasDefaults, DEFAULT_SIZE, SIZE_MAX};
 
 use std::fs;
 use std::path::{Path, PathBuf};
