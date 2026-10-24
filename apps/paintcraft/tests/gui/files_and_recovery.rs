@@ -226,7 +226,7 @@ fn opening_a_picture_imports_it_and_exporting_names_the_losses() {
     h.run();
     assert!(!out.exists());
     classic_file_action(&mut h, "Picture…");
-    h.get_by_label_contains("lossy-jpeg");
+    h.get_by_label_contains("JPEG uses lossy compression.");
     h.get_by_label("Export now").click();
     h.run();
     assert!(out.exists());

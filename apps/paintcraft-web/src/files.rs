@@ -5,6 +5,9 @@ use paintcraft_core::types::{Error, ErrorCode, Result};
 use paintcraft_document::Document;
 #[cfg(any(target_arch = "wasm32", test))]
 use paintcraft_formats::{image, pcnd};
+use paintcraft_ui::actions::ImageExport;
+#[cfg(target_arch = "wasm32")]
+use paintcraft_ui::i18n::{tr, tr_format};
 #[cfg(any(target_arch = "wasm32", test))]
 use sha2::{Digest, Sha256};
 use std::{cell::RefCell, rc::Rc};
@@ -93,11 +96,16 @@ impl Files {
     }
 
     #[cfg(target_arch = "wasm32")]
-    pub fn download(&mut self, ctx: &eframe::egui::Context, document: &Document, png: bool) {
+    pub fn download(
+        &mut self,
+        ctx: &eframe::egui::Context,
+        document: &Document,
+        format: Option<ImageExport>,
+    ) {
         if self.busy {
             return;
         }
-        let bytes = match encode(document, png) {
+        let bytes = match encode(document, format) {
             Ok(bytes) => bytes,
             Err(error) => {
                 *self.outcome.borrow_mut() = Some(Err(error));
@@ -108,19 +116,39 @@ impl Files {
         let target = Rc::clone(&self.outcome);
         let ctx = ctx.clone();
         wasm_bindgen_futures::spawn_local(async move {
-            let name = if png { "Untitled.png" } else { "Untitled.pcnd" };
-            let result = wasm_bindgen_futures::JsFuture::from(download_copy(&bytes, name))
-                .await
-                .map(|requested| {
-                    if requested.as_bool() == Some(true) {
-                        Outcome::DownloadClosed
-                    } else {
-                        Outcome::Cancelled
-                    }
-                })
-                .map_err(|_| {
-                    Error::new(ErrorCode::StorageFailed, "Browser download dialog failed")
-                });
+            let extension = format.map_or("pcnd", ImageExport::extension);
+            let name = format!("Untitled.{extension}");
+            let mime = match format {
+                None => "application/zip",
+                Some(ImageExport::Png) => "image/png",
+                Some(ImageExport::Jpeg) => "image/jpeg",
+                Some(ImageExport::Bmp) => "image/bmp",
+            };
+            let title = tr(&ctx, "Download a copy");
+            let description = tr(
+                &ctx,
+                "Keep this tab open until you have verified the downloaded file.",
+            );
+            let link = tr_format(&ctx, "Download { $name }", &[("name", name.clone())]);
+            let cancel = tr(&ctx, "Cancel");
+            let result = wasm_bindgen_futures::JsFuture::from(download_copy(
+                &bytes,
+                &name,
+                mime,
+                &title,
+                &description,
+                &link,
+                &cancel,
+            ))
+            .await
+            .map(|requested| {
+                if requested.as_bool() == Some(true) {
+                    Outcome::DownloadClosed
+                } else {
+                    Outcome::Cancelled
+                }
+            })
+            .map_err(|_| Error::new(ErrorCode::StorageFailed, "Browser download dialog failed"));
             *target.borrow_mut() = Some(result);
             focus_canvas();
             ctx.request_repaint();
@@ -128,7 +156,12 @@ impl Files {
     }
 
     #[cfg(not(target_arch = "wasm32"))]
-    pub fn download(&mut self, _ctx: &eframe::egui::Context, _document: &Document, _png: bool) {
+    pub fn download(
+        &mut self,
+        _ctx: &eframe::egui::Context,
+        _document: &Document,
+        _format: Option<ImageExport>,
+    ) {
         *self.outcome.borrow_mut() = Some(Err(Error::new(
             ErrorCode::CapabilityUnsupported,
             "Downloads are available in the browser build",
@@ -161,13 +194,18 @@ fn decode(bytes: &[u8], name: String) -> Result<Loaded> {
 }
 
 #[cfg(any(target_arch = "wasm32", test))]
-fn encode(document: &Document, png: bool) -> Result<Vec<u8>> {
-    if png {
+fn encode(document: &Document, format: Option<ImageExport>) -> Result<Vec<u8>> {
+    if let Some(format) = format {
+        let format = match format {
+            ImageExport::Png => image::ImageFormat::Png,
+            ImageExport::Jpeg => image::ImageFormat::Jpeg,
+            ImageExport::Bmp => image::ImageFormat::Bmp,
+        };
         return Ok(paintcraft_formats::export::export_flat(
             document,
-            image::ImageFormat::Png,
+            format,
             90,
-            &["flatten".into(), "hidden-rgb".into()],
+            &paintcraft_formats::export::KNOWN_LOSSES.map(str::to_owned),
         )?
         .bytes);
     }
@@ -231,11 +269,11 @@ mod tests {
             ])])
             .unwrap();
         let doc = editor.session.document();
-        let bytes = encode(doc, false).unwrap();
+        let bytes = encode(doc, None).unwrap();
         let loaded = decode(&bytes, "example.pcnd".into()).unwrap();
         assert!(loaded.document.same_semantics(doc));
         assert!(loaded.losses.is_empty());
-        let png = encode(doc, true).unwrap();
+        let png = encode(doc, Some(ImageExport::Png)).unwrap();
         let loaded = decode(&png, "example.png".into()).unwrap();
         assert_eq!(loaded.document.canvas, doc.canvas);
         assert_eq!(
@@ -253,6 +291,36 @@ mod tests {
             paintcraft_core::types::Rgba::TRANSPARENT
         );
         assert_eq!(WHITE.0, [255; 4]);
+    }
+    #[test]
+    fn image_export_formats_roundtrip_with_explicit_jpeg_losses_without_publication() {
+        let document = paintcraft_document::new_document(
+            24,
+            16,
+            Some(paintcraft_core::types::Rgba([40, 80, 140, 128])),
+            0,
+            paintcraft_document::POLICY,
+        )
+        .unwrap();
+        let state = document.state_id;
+        for format in ImageExport::ALL {
+            let bytes = encode(&document, Some(format)).unwrap();
+            let magic: &[u8] = match format {
+                ImageExport::Png => b"\x89PNG\r\n\x1a\n",
+                ImageExport::Jpeg => &[255, 216, 255],
+                ImageExport::Bmp => b"BM",
+            };
+            assert!(bytes.starts_with(magic));
+            let decoded = image::decode(&bytes).unwrap();
+            assert_eq!((decoded.width, decoded.height), (24, 16));
+            assert!(decoded.rgba.as_chunks::<4>().0.iter().all(|pixel| pixel[3]
+                == if format == ImageExport::Jpeg {
+                    255
+                } else {
+                    128
+                }));
+            assert_eq!(document.state_id, state);
+        }
     }
     #[test]
     fn rejected_file_never_replaces_the_current_session() {
@@ -281,7 +349,15 @@ mod tests {
 #[wasm_bindgen::prelude::wasm_bindgen(module = "/download.js")]
 extern "C" {
     #[wasm_bindgen::prelude::wasm_bindgen(js_name = downloadCopy)]
-    fn download_copy(bytes: &[u8], name: &str) -> js_sys::Promise;
+    fn download_copy(
+        bytes: &[u8],
+        name: &str,
+        mime: &str,
+        title: &str,
+        description: &str,
+        link: &str,
+        cancel: &str,
+    ) -> js_sys::Promise;
 }
 
 #[cfg(target_arch = "wasm32")]

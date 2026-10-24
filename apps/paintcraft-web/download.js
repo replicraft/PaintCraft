@@ -1,19 +1,19 @@
 // A download requests a browser-managed copy; it cannot confirm persistence.
-export async function downloadCopy(bytes, name) {
-  const url = URL.createObjectURL(new Blob([bytes]));
+export async function downloadCopy(bytes, name, mime, titleText, descriptionText, linkText, cancelText) {
+  const url = URL.createObjectURL(new Blob([bytes], {type: mime}));
   const dialog = document.createElement('dialog');
-  dialog.setAttribute('aria-label', 'Download a copy');
+  dialog.setAttribute('aria-label', titleText);
   dialog.style.cssText = 'font:16px system-ui;padding:24px;border:1px solid #888;border-radius:12px;max-width:420px;color-scheme:light dark';
   const title = document.createElement('h2');
-  title.textContent = 'Download a copy';
+  title.textContent = titleText;
   const description = document.createElement('p');
-  description.textContent = 'Keep this tab open until you have verified the downloaded file.';
+  description.textContent = descriptionText;
   const link = document.createElement('a');
   link.href = url;
   link.download = name;
-  link.textContent = `Download ${name}`;
+  link.textContent = linkText;
   const cancel = document.createElement('button');
-  cancel.textContent = 'Cancel';
+  cancel.textContent = cancelText;
   cancel.style.cssText = 'margin-left:24px;padding:8px 16px';
   dialog.append(title, description, link, cancel);
   document.body.append(dialog);

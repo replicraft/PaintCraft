@@ -1,9 +1,19 @@
 //! Desktop files integration.
 
 use super::*;
+use paintcraft_ui::i18n::tr;
 
 impl App {
     pub(super) fn request_dialog(&mut self, ctx: &egui::Context, kind: Kind) {
+        self.request_dialog_suggested(ctx, kind, None);
+    }
+
+    fn request_dialog_suggested(
+        &mut self,
+        ctx: &egui::Context,
+        kind: Kind,
+        suggestion: Option<PathBuf>,
+    ) {
         if !self.editor.shape_file_ready() {
             return;
         }
@@ -12,18 +22,25 @@ impl App {
         }
         self.editor.cancel_gesture();
         self.editor.commit_text();
-        let suggested = if kind == Kind::Export {
-            PathBuf::from("untitled.png")
-        } else {
-            PathBuf::from(&self.path_text)
-        };
+        let suggested = suggestion.unwrap_or_else(|| {
+            if kind == Kind::Export {
+                PathBuf::from("untitled.png")
+            } else {
+                PathBuf::from(&self.path_text)
+            }
+        });
         let owner = self.active_tab_id();
         if let Some(dialogs) = &mut self.dialogs
             && !dialogs.pending()
         {
             self.dialog_owner = (owner != Uuid::nil()).then_some(owner);
-            let ctx = ctx.clone();
-            dialogs.request(kind, Some(&suggested), move || ctx.request_repaint());
+            let wake_ctx = ctx.clone();
+            dialogs.request_with_labels(
+                kind,
+                Some(&suggested),
+                |source| tr(ctx, source),
+                move || wake_ctx.request_repaint(),
+            );
         }
     }
 
@@ -212,6 +229,26 @@ impl App {
             self.request_dialog(ctx, Kind::Export);
         } else {
             self.export_selected(PathBuf::from(self.path_text.trim()));
+        }
+    }
+
+    pub(super) fn export_image_requested(
+        &mut self,
+        ctx: &egui::Context,
+        format: paintcraft_ui::actions::ImageExport,
+    ) {
+        if self.document_count() == 0 {
+            return;
+        }
+        if self.dialogs.is_some() {
+            self.request_dialog_suggested(
+                ctx,
+                Kind::Export,
+                Some(PathBuf::from(format!("Untitled.{}", format.extension()))),
+            );
+        } else {
+            let path = PathBuf::from(self.path_text.trim()).with_extension(format.extension());
+            self.export_selected(path);
         }
     }
 

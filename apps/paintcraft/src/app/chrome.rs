@@ -1,7 +1,7 @@
 //! Desktop chrome integration.
 
 use super::*;
-use paintcraft_ui::i18n::tr;
+use paintcraft_ui::i18n::{tr, tr_format};
 
 impl App {
     pub(super) fn action_context(&self) -> paintcraft_ui::actions::Context {
@@ -160,6 +160,7 @@ impl App {
                 Chrome::Save => self.save_requested(ctx),
                 Chrome::SaveAs => self.request_dialog(ctx, Kind::SaveAs),
                 Chrome::Export => self.export_requested(ctx),
+                Chrome::ExportImage(format) => self.export_image_requested(ctx, format),
                 Chrome::Undo => self.request(ctx, code::UNDO, Action::Undo),
                 Chrome::Redo => self.request(ctx, code::REDO, Action::Redo),
                 Chrome::View(action) => self.dispatch_view_action(ctx, action),
@@ -338,13 +339,19 @@ impl App {
                 losses,
                 exists,
             } => {
-                let mut t = format!("Export {} as {}.", path.display(), format.name());
-                if !losses.is_empty() {
-                    t += &format!("\nThis export loses: {}.", losses.join(", "));
+                let mut t = tr_format(&ctx, "Export { $path } as { $format }.", &[("path", path.display().to_string()), ("format", format.name().into())]);
+                for loss in losses {
+                    let explanation = match loss.as_str() {
+                        "flatten" => "Visible layers will be flattened into one picture.",
+                        "hidden-rgb" => "Invisible color information will not be retained.",
+                        "lossy-jpeg" => "JPEG uses lossy compression.",
+                        "alpha-discarded" => "Transparency will not be preserved.",
+                        _ => loss,
+                    };
+                    t.push('\n');
+                    t.push_str(&tr(&ctx, explanation));
                 }
-                if *exists {
-                    t += "\nThe file exists and will be replaced.";
-                }
+                if *exists { t.push('\n'); t.push_str(&tr(&ctx, "The file exists and will be replaced.")); }
                 ("Export", t, "Export now")
             }
         };

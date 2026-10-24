@@ -10,8 +10,8 @@ use crate::{
 use eframe::egui;
 use paintcraft_classic::{ClassicVariant, Controls, Workspace};
 use paintcraft_tools::{Action as Edit, Tool, ToolOptions};
-use paintcraft_ui::actions::{Action, Context, Frontend, ViewAction};
-use paintcraft_ui::i18n::{picker, set_language, tr, tr_status};
+use paintcraft_ui::actions::{Action, Context, Frontend, ImageExport, ViewAction};
+use paintcraft_ui::i18n::{picker, set_language, tr, tr_format, tr_status};
 
 #[derive(Debug)]
 pub struct WebApp {
@@ -24,7 +24,7 @@ pub struct WebApp {
     pub(crate) zoom: f32,
     settings: bool,
     preferences: crate::preferences::Preferences,
-    export_confirm: bool,
+    export_confirm: Option<ImageExport>,
     confirm_replace: Option<Action>,
     pub(crate) files: crate::files::Files,
     pub(crate) text: crate::text_ui::TextUi,
@@ -68,7 +68,7 @@ impl WebApp {
                 ..Default::default()
             },
             preferences,
-            export_confirm: false,
+            export_confirm: None,
             confirm_replace: None,
             files: crate::files::Files::default(),
             pending_import: None,
@@ -81,7 +81,7 @@ impl WebApp {
 
     pub(crate) fn blocked(&self) -> bool {
         self.settings
-            || self.export_confirm
+            || self.export_confirm.is_some()
             || self.confirm_replace.is_some()
             || self.files.busy
             || self.pending_import.is_some()
@@ -156,7 +156,12 @@ impl WebApp {
     fn action(&mut self, ctx: &egui::Context, action: Action) {
         if matches!(
             action,
-            Action::New | Action::Open | Action::Save | Action::SaveAs | Action::Export
+            Action::New
+                | Action::Open
+                | Action::Save
+                | Action::SaveAs
+                | Action::Export
+                | Action::ExportImage(_)
         ) && self.editor.tools.is_constructing_shape()
         {
             self.message = paintcraft_tools::FINISH_SHAPE_BEFORE_FILE.into();
@@ -210,7 +215,11 @@ impl WebApp {
             }
             Action::Export => {
                 self.editor.tools.cancel_gesture();
-                self.export_confirm = true;
+                self.export_confirm = Some(ImageExport::Png);
+            }
+            Action::ExportImage(format) => {
+                self.editor.tools.cancel_gesture();
+                self.export_confirm = Some(format);
             }
             Action::Save | Action::SaveAs => {
                 self.editor.tools.cancel_gesture();
@@ -471,16 +480,22 @@ impl WebApp {
                 self.pending_import = None;
             }
         }
-        if self.export_confirm {
-            egui::Modal::new(egui::Id::unique("web-export-png")).show(ctx, |ui| {
-                ui.heading(tr(ui.ctx(), "Export PNG copy?"));
-                ui.label(tr(ui.ctx(), "PNG flattens visible layers and omits hidden layer data. Save a PaintCraft project to preserve editable layers."));
+        if let Some(mut format) = self.export_confirm {
+            egui::Modal::new(egui::Id::unique("web-export-image")).show(ctx, |ui| {
+                ui.heading(tr_format(ui.ctx(), "Export { $format } copy?", &[("format", format.name().into())]));
+                egui::ComboBox::from_label(tr(ui.ctx(), "File type")).selected_text(format.name()).show_ui(ui, |ui| {
+                    for choice in ImageExport::ALL { ui.selectable_value(&mut format, choice, choice.name()); }
+                });
+                self.export_confirm = Some(format);
+                ui.label(tr(ui.ctx(), "Image exports flatten visible layers and omit hidden layer data. Save a PaintCraft project to preserve editable layers."));
+                ui.label(tr(ui.ctx(), "Invisible color information will not be retained."));
+                if format == ImageExport::Jpeg { ui.label(tr(ui.ctx(), "JPEG uses lossy compression and cannot preserve transparency.")); }
                 ui.horizontal(|ui| {
-                    if ui.button(tr(ui.ctx(), "Download PNG")).clicked() {
-                        self.download(ctx,true);
-                        self.export_confirm = false;
+                    if ui.button(tr_format(ui.ctx(), "Download { $format }", &[("format", format.name().into())])).clicked() {
+                        self.download_image(ctx, format);
+                        self.export_confirm = None;
                     }
-                    if ui.button(tr(ui.ctx(), "Cancel")).clicked() { self.export_confirm = false; }
+                    if ui.button(tr(ui.ctx(), "Cancel")).clicked() { self.export_confirm = None; }
                 });
             });
         }

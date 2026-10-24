@@ -3,6 +3,8 @@ use crate::i18n::tr;
 use egui::{Key, KeyboardShortcut, Modifiers};
 use paintcraft_core::types::orthogonal::OrthogonalTransform as Transform;
 use paintcraft_tools::Tool;
+mod export;
+pub use export::ImageExport;
 mod layers;
 mod view;
 pub use layers::{LAYERS, LayerAction};
@@ -15,6 +17,7 @@ pub enum Action {
     Save,
     SaveAs,
     Export,
+    ExportImage(ImageExport),
     Undo,
     Redo,
     Interface,
@@ -115,6 +118,7 @@ impl Action {
             Self::Save => ("Save", Some((Key::S, false))),
             Self::SaveAs => ("Save as…", Some((Key::S, true))),
             Self::Export => ("Export…", None),
+            Self::ExportImage(format) => (format.label(), None),
             Self::Undo => ("Undo", Some((Key::Z, false))),
             Self::Redo => ("Redo", Some((Key::Y, false))),
             Self::ChooseFrontend(frontend) => (
@@ -296,6 +300,7 @@ impl Action {
             Self::Save => 1002,
             Self::SaveAs => 1003,
             Self::Export => 1004,
+            Self::ExportImage(format) => 1040 + format as u64,
             Self::Undo => 1005,
             Self::Redo => 1006,
             Self::Interface => 1007,
@@ -596,6 +601,21 @@ mod tests {
             .collect();
         assert_eq!(ids.len(), FILE.len() + EDIT.len());
         assert!(!ids.contains(&Action::Exit.activation_code()));
+        let mut ids = ids;
+        for format in ImageExport::ALL {
+            let action = Action::ExportImage(format);
+            assert!(ids.insert(action.activation_code()));
+            assert!(!action.enabled(context));
+            assert!(action.enabled(Context {
+                document_open: true,
+                ..context
+            }));
+            assert!(!action.enabled(Context {
+                document_open: true,
+                blocked: true,
+                ..context
+            }));
+        }
         assert!(
             Action::Exit.enabled(context),
             "Exit remains available without a document"

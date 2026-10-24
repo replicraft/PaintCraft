@@ -3,6 +3,7 @@ use crate::app::WebApp;
 use eframe::egui::{self, Color32, Pos2, Rect, Vec2};
 use paintcraft_core::types::text::TextOptions;
 use paintcraft_tools::{Preview, Tool};
+use paintcraft_ui::actions::ImageExport;
 use paintcraft_ui::i18n::tr;
 
 #[derive(Debug)]
@@ -51,6 +52,12 @@ impl WebApp {
         }
     }
     pub(crate) fn download(&mut self, ctx: &egui::Context, png: bool) {
+        self.download_as(ctx, png.then_some(ImageExport::Png));
+    }
+    pub(crate) fn download_image(&mut self, ctx: &egui::Context, format: ImageExport) {
+        self.download_as(ctx, Some(format));
+    }
+    fn download_as(&mut self, ctx: &egui::Context, format: Option<ImageExport>) {
         if self.editor.tools.is_constructing_shape() {
             self.message = paintcraft_tools::FINISH_SHAPE_BEFORE_FILE.into();
             return;
@@ -62,7 +69,7 @@ impl WebApp {
             return;
         }
         match self.editor.copy_snapshot() {
-            Ok(snapshot) => self.files.download(ctx, &snapshot, png),
+            Ok(snapshot) => self.files.download(ctx, &snapshot, format),
             Err(error) => {
                 self.message = format!("Download not prepared: {error}; text remains editable")
             }
