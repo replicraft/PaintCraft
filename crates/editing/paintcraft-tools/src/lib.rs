@@ -597,6 +597,35 @@ impl ToolState {
         };
         Some((g.token, action))
     }
+    pub fn clear_text(&mut self) {
+        if let Some(text) = &mut self.text
+            && !text.text.is_empty()
+        {
+            text.text.clear();
+            self.preview_revision.advance();
+        }
+    }
+    /// Borrow the active draft without cloning its text or resolving fonts.
+    pub fn text_content(&self) -> Option<&str> {
+        self.text.as_ref().map(|text| text.text.as_str())
+    }
+    /// Freeze the text intention while retaining the editable draft. A host can
+    /// prepare/validate/publicize it before dropping the draft on success.
+    pub fn pending_text_action(&self) -> Option<Action> {
+        let t = self.text.as_ref()?;
+        if t.text.is_empty() {
+            return None;
+        }
+        Some(Action::Text {
+            style: t.style.clone(),
+            background: t.background,
+            layer: t.layer,
+            at: t.at,
+            text: t.text.clone(),
+            scale: t.scale,
+            color: t.color,
+        })
+    }
     pub fn commit_text(&mut self) -> Option<(u64, Action)> {
         if let Some(t) = self.text.take() {
             self.preview_revision.advance();

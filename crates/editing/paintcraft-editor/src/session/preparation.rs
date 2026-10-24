@@ -208,3 +208,11 @@ impl Preparation {
         })
     }
 }
+
+impl PreparedEdit {
+    /// Freeze a complete prepared revision for exporting a copy. This does not
+    /// publish it or acknowledge any save on the owning session.
+    pub fn document_snapshot(&self) -> Arc<Document> {
+        self.session.snapshot()
+    }
+}

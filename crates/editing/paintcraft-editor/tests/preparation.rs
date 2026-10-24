@@ -210,3 +210,31 @@ fn explicit_empty_preparation_obeys_cancellation_and_stale_publication_guards() 
     );
     assert_eq!(s.history_view(), view);
 }
+
+#[test]
+fn exported_prepared_snapshot_has_final_identity_without_owner_publication() {
+    let mut owner = session();
+    let ticket = owner.ticket();
+    let before = owner.history_view();
+    let prepared = owner
+        .preparation()
+        .unwrap()
+        .apply(&edit(&owner, "#123456FF"), || Ok(()))
+        .unwrap();
+    let snapshot = prepared.document_snapshot();
+    assert_ne!(snapshot.state_id, ticket.state_id);
+    assert_eq!(
+        snapshot.layers[&snapshot.roots[0]].raster.get(1, 1),
+        Rgba([18, 52, 86, 255])
+    );
+    assert_eq!(owner.ticket(), ticket);
+    assert_eq!(owner.history_view(), before);
+    assert!(!owner.is_dirty());
+    owner.publish_prepared(prepared, || Ok(())).unwrap();
+    assert!(Arc::ptr_eq(&snapshot, &owner.snapshot()));
+    owner.undo().unwrap();
+    assert_eq!(
+        snapshot.layers[&snapshot.roots[0]].raster.get(1, 1),
+        Rgba([18, 52, 86, 255])
+    );
+}
