@@ -38,6 +38,34 @@ impl Stage<'_> {
                     Selection::Rect(Rect::from_origin_size(p.0, p.1, w, h).unwrap())
                 }
             },
+            Selection::Mask(mask) => {
+                if self.planning.is_none() {
+                    self.selections
+                        .values
+                        .iter()
+                        .find(|(index, _)| *index == self.operation)
+                        .ok_or_else(|| {
+                            Error::new(
+                                ErrorCode::InvariantViolation,
+                                "compiled canvas selection was not retained",
+                            )
+                        })?
+                        .1
+                        .clone()
+                } else {
+                    let transformed = mask.transformed_with_remaining_checked(
+                        self.doc.canvas_rect(),
+                        t,
+                        &self.adm.selection_budget(),
+                        paintcraft_raster::selection::MaskLimits::default(),
+                        &mut self.selection_work,
+                        self.check,
+                    )?;
+                    let selection = Selection::Mask(transformed);
+                    self.selections.push((self.operation, selection.clone()))?;
+                    selection
+                }
+            }
             other => other,
         };
         self.doc.canvas = t.dimensions(self.doc.canvas.0, self.doc.canvas.1);

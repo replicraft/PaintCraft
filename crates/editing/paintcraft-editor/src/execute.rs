@@ -107,6 +107,7 @@ pub fn execute_with_geometry_cache(
         doc: base.clone(),
         selection: selection.clone(),
         selections: planning::storage::Store::new(&admission),
+        selection_geometries: planning::storage::Store::new(&admission),
         aliases: HashMap::new(),
         planning: Some(planning::Compiler::new(&admission, batch, check)?),
         operation: 0,
@@ -145,6 +146,7 @@ pub fn execute_with_geometry_cache(
     let (_charge, values) = paints.into_parts();
     let mut paints = values.into_iter().peekable();
     for (index, op) in batch.operations.iter().enumerate() {
+        s.operation = index;
         check().map_err(|e| {
             if e.operation_index.is_some() {
                 e
@@ -214,6 +216,7 @@ struct Stage<'a> {
     doc: Document,
     selection: Selection,
     selections: planning::storage::Store<(usize, Selection)>,
+    selection_geometries: planning::storage::Store<(usize, Option<selection_transform::Geometry>)>,
     /// Every alias ever declared in this batch; `None` once its layer is deleted.
     aliases: HashMap<String, Option<Uuid>>,
     adm: Admission,
@@ -321,18 +324,6 @@ impl Stage<'_> {
     }
 
     fn run(&mut self, index: usize, op: &Op) -> Result<()> {
-        // Mapped transforms need their own mask sampling/selection mapping policy.
-        if matches!(self.selection, Selection::Mask(_))
-            && matches!(
-                op,
-                Op::CanvasCrop { .. } | Op::CanvasTransform { .. } | Op::TransformSelection { .. }
-            )
-        {
-            return Err(Error::new(
-                ErrorCode::InputSchema,
-                "mapped transforms on mask selections are not implemented yet",
-            ));
-        }
         match op {
             Op::SelectionSetPolygon { .. } | Op::SelectionInvert => {
                 self.mask_selection(index, op)?

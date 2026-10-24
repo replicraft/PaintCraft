@@ -1,18 +1,19 @@
-//! Immediate rectangular pixel transforms on one captured target layer.
+//! Immediate exact selected-pixel transforms on one captured target layer.
 use super::*;
 use paintcraft_core::types::{
     orthogonal::OrthogonalTransform as Transform, policy::CANVAS_SIDE_MAX,
 };
 use paintcraft_raster::MappedPlan;
 use std::sync::Arc;
-struct Geometry {
+#[derive(Clone)]
+pub(super) struct Geometry {
     source: Rect,
-    destination: Rect,
     origin: (i64, i64),
     size: (u32, u32),
+    selection: Selection,
 }
 impl Stage<'_> {
-    fn selection_geometry(&self, id: Uuid, t: Transform) -> Result<Option<Geometry>> {
+    fn selection_geometry(&mut self, id: Uuid, t: Transform) -> Result<Option<Geometry>> {
         let area = match self.selection {
             Selection::Inactive => {
                 return Err(Error::new(
@@ -21,11 +22,15 @@ impl Stage<'_> {
                 ));
             }
             Selection::Empty => return Ok(None),
-            Selection::Mask(_) => {
-                return Err(Error::new(
-                    ErrorCode::InputSchema,
-                    "mask selection transforms are not implemented yet",
-                ));
+            Selection::Mask(ref mask) => {
+                match mask.bounds_with_remaining_checked(
+                    self.doc.canvas_rect(),
+                    &mut self.selection_work,
+                    self.check,
+                )? {
+                    Some(area) => area,
+                    None => return Ok(None),
+                }
             }
             Selection::Rect(r) => match r.intersect(&self.doc.canvas_rect()) {
                 Some(r) => r,
@@ -49,29 +54,56 @@ impl Stage<'_> {
                 "selection transform exceeds layer extent policy",
             ));
         }
+        let selection = if let Selection::Mask(mask) = &self.selection {
+            let mapped = mask.transformed_with_remaining_checked(
+                area,
+                t,
+                &self.adm.selection_budget(),
+                paintcraft_raster::selection::MaskLimits::default(),
+                &mut self.selection_work,
+                self.check,
+            )?;
+            mapped
+                .clipped(self.doc.canvas_rect())?
+                .map_or(Selection::Empty, Selection::Mask)
+        } else {
+            destination
+                .intersect(&self.doc.canvas_rect())
+                .map_or(Selection::Empty, Selection::Rect)
+        };
         Ok(Some(Geometry {
             source: area.translated(-l.origin.0, -l.origin.1).unwrap(),
-            destination,
             origin,
             size: (width as u32, height as u32),
+            selection,
         }))
     }
     fn install_selection_geometry(&mut self, id: Uuid, g: &Geometry) {
         let l = self.doc.layers.get_mut(&id).unwrap();
         l.raster = RasterLayer::new(g.size.0, g.size.1, l.raster.default_pixel());
         l.origin = g.origin;
-        self.selection = g
-            .destination
-            .intersect(&self.doc.canvas_rect())
-            .map_or(Selection::Empty, Selection::Rect);
+        self.selection = g.selection.clone();
     }
     pub(super) fn selection_transform_layout(
         &mut self,
         layer: &LayerRef,
-        t: Transform,
+        _t: Transform,
     ) -> Result<()> {
         let id = self.resolve(layer)?;
-        if let Some(g) = self.selection_geometry(id, t)? {
+        let geometry = self
+            .selection_geometries
+            .values
+            .iter()
+            .find(|(index, _)| *index == self.operation)
+            .ok_or_else(|| {
+                Error::new(
+                    ErrorCode::InvariantViolation,
+                    "compiled selection geometry was not retained",
+                )
+            })?
+            .1
+            .clone();
+        if let Some(g) = geometry {
             self.install_selection_geometry(id, &g);
         }
         Ok(())
@@ -83,7 +115,10 @@ impl Stage<'_> {
         clear: Rgba,
     ) -> Result<()> {
         let id = self.resolve(layer)?;
-        let Some(g) = self.selection_geometry(id, t)? else {
+        let geometry = self.selection_geometry(id, t)?;
+        self.selection_geometries
+            .push((self.operation, geometry.clone()))?;
+        let Some(g) = geometry else {
             return Ok(());
         };
         let l = &self.doc.layers[&id];
@@ -92,15 +127,29 @@ impl Stage<'_> {
             .as_mut()
             .expect("selection transforms compile before replay");
         let source = planning.snapshot(id, &l.raster, &self.adm, self.check)?;
-        let (plan, offset) = MappedPlan::prepare_patch(
-            source,
-            g.source,
-            t,
-            clear,
-            &self.adm,
-            16_777_216 - self.transform_reads,
-            self.check,
-        )?;
+        let (plan, offset) = if let Selection::Mask(mask) = &self.selection {
+            let local = mask.translated(-l.origin.0, -l.origin.1)?;
+            MappedPlan::prepare_masked_patch(
+                source,
+                g.source,
+                local,
+                t,
+                clear,
+                &self.adm,
+                16_777_216 - self.transform_reads,
+                self.check,
+            )?
+        } else {
+            MappedPlan::prepare_patch(
+                source,
+                g.source,
+                t,
+                clear,
+                &self.adm,
+                16_777_216 - self.transform_reads,
+                self.check,
+            )?
+        };
         if plan.dimensions() != g.size || (l.origin.0 + offset.0, l.origin.1 + offset.1) != g.origin
         {
             return Err(Error::new(

@@ -178,27 +178,6 @@ fn failed_mixed_batches_and_every_cancellation_leave_published_state_untouched()
         assert_eq!(err.code, ErrorCode::OperationCancelled);
         assert_eq!(budget.usage().reserved, 0);
     }
-    for paint in [
-        Op::CanvasTransform {
-            transform: paintcraft_core::types::orthogonal::OrthogonalTransform::RotateRight,
-        },
-        Op::CanvasCrop {
-            rect: Rect::new(1, 1, 3, 3).unwrap(),
-        },
-        Op::TransformSelection {
-            layer: LayerRef::Id(s.document().roots[0]),
-            transform: paintcraft_core::types::orthogonal::OrthogonalTransform::FlipHorizontal,
-            clear: Rgba([0; 4]),
-        },
-    ] {
-        let err = s
-            .preparation()
-            .unwrap()
-            .apply(&batch(&s, vec![polygon(), paint]), || Ok(()))
-            .unwrap_err();
-        assert_eq!(err.code, ErrorCode::InputSchema);
-        assert_eq!(err.operation_index, Some(1));
-    }
     assert_eq!(s.ticket(), ticket);
     assert_eq!(s.history_view(), history);
     assert_eq!(s.selection(), Selection::Inactive);
