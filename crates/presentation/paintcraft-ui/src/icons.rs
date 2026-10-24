@@ -417,7 +417,7 @@ mod tests {
             .into_iter()
             .filter(|icon| classic_menus::source(*icon).is_some())
             .collect();
-        assert_eq!(menus.len(), 39);
+        assert_eq!(menus.len(), 40);
         for icon in menus {
             let source = std::str::from_utf8(classic_menus::source(icon).unwrap()).unwrap();
             for forbidden in ["<image", "href=", "<text", "Gradient"] {

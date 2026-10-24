@@ -10,6 +10,10 @@
   ],
   "icons": [
     {
+      "name": "stroke-size",
+      "file": "stroke-size.svg"
+    },
+    {
       "name": "settings",
       "file": "settings.svg"
     },

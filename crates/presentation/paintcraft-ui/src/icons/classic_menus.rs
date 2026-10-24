@@ -3,6 +3,7 @@ use super::Icon;
 
 pub(super) fn source(icon: Icon) -> Option<&'static [u8]> {
     Some(match icon {
+        Icon::StrokeSize => include_bytes!("../../assets/icons/classic-menus/stroke-size.svg"),
         Icon::Settings => include_bytes!("../../assets/icons/classic-menus/settings.svg"),
         Icon::New => include_bytes!("../../assets/icons/classic-menus/new.svg"),
         Icon::Open => include_bytes!("../../assets/icons/classic-menus/open.svg"),

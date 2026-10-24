@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+<title>Stroke Size</title>
+<g fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M5 8C9 6 15 10 19 8M5 12C9 10 15 14 19 12M5 16C9 14 15 18 19 16"/>
+</g>
+</svg>
