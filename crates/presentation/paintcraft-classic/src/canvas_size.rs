@@ -4,6 +4,7 @@ use paintcraft_ui::i18n::{tr, tr_format};
 mod defaults;
 pub use defaults::{CanvasDefaults, DEFAULT_SIZE, SIZE_MAX};
 mod fields;
+mod legacy;
 pub use fields::dimension_fields;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -61,6 +62,24 @@ pub fn bounded_canvas_size_dialog(
     properties: Option<&str>,
 ) -> CanvasResponse {
     dialog(ctx, draft, max_dimension, properties, Some(max_pixels))
+}
+
+/// Skin-specific presentation with optional host pixel admission. Startup policy
+/// keeps its dedicated preferences surface; document properties use compact
+/// historical controls in the earlier skins.
+pub fn canvas_size_dialog_for_skin(
+    ctx: &egui::Context,
+    variant: crate::ClassicVariant,
+    draft: &mut CanvasSize,
+    max_dimension: u32,
+    max_pixels: Option<u64>,
+    properties: Option<&str>,
+) -> CanvasResponse {
+    if variant != crate::ClassicVariant::V11 && draft.startup.is_none() {
+        legacy::show(ctx, draft, max_dimension, max_pixels, properties)
+    } else {
+        dialog(ctx, draft, max_dimension, properties, max_pixels)
+    }
 }
 
 fn dialog(
