@@ -5,6 +5,7 @@ pub enum AllocationClass {
     SharedBudget,
     DecodedTiles,
     PaintMetadata,
+    SelectionMasks,
 }
 #[derive(Clone, Debug)]
 pub struct AllocationDenial {

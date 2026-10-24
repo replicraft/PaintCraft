@@ -10,3 +10,6 @@ pub enum Selection {
     /// Binary coverage over a half-open document rectangle.
     Rect(Rect),
 }
+
+mod mask;
+pub use mask::{BinaryMask, MaskLimits};

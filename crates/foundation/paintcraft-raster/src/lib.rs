@@ -2,7 +2,7 @@
 pub mod flood;
 pub mod font;
 pub mod raster;
-mod selection;
+pub mod selection;
 pub mod shape;
 pub mod smooth;
 pub use raster::*;
