@@ -11,6 +11,9 @@ pub const CASES: &[&str] = &[
     "sparse20",
     "sparse100",
     "dense5",
+    "dense-opaque5",
+    "dense-opaque-odd5",
+    "short-opaque5",
     "uniform5",
     "clipped100",
 ];
@@ -18,9 +21,17 @@ pub const CASES: &[&str] = &[
 /// Fixed seed and geometry; fixtures are generated once outside steady-state timing.
 pub fn fixture(case: &str) -> Document {
     assert!(CASES.contains(&case));
-    let side = if case == "tiny" { 16 } else { 1024 };
+    let side = match case {
+        "tiny" => 16,
+        "short-opaque5" => 17,
+        "dense-opaque-odd5" => 1025,
+        _ => 1024,
+    };
+    let opaque = case.contains("opaque") && case != "opaque1";
+    let dense = case == "dense5" || opaque;
     let count = match case {
-        "sparse5" | "dense5" | "uniform5" => 5,
+        "sparse5" | "dense5" | "uniform5" | "dense-opaque5" | "dense-opaque-odd5"
+        | "short-opaque5" => 5,
         "sparse20" => 20,
         "sparse100" | "clipped100" => 100,
         _ => 1,
@@ -39,20 +50,24 @@ pub fn fixture(case: &str) -> Document {
             Rgba([45, 89, 123, 0]) // Deliberately nonzero hidden RGB.
         };
         let mut raster = RasterLayer::new(side, side, default);
-        if case == "dense5" {
+        if dense {
             let pixels: Vec<u8> = (0..side * side)
                 .flat_map(|p| {
                     [
                         p as u8,
                         (p / side) as u8,
                         (p.wrapping_mul(17) + n) as u8,
-                        [0, 1, 64, 128, 254, 255][p as usize % 6],
+                        if opaque && n == 0 {
+                            255
+                        } else {
+                            [0, 1, 64, 128, 254, 255][p as usize % 6]
+                        },
                     ]
                 })
                 .collect();
             raster = RasterLayer::from_rgba(side, side, default, &pixels, &mut adm).unwrap();
         }
-        if case != "opaque1" {
+        if case != "opaque1" && !opaque {
             let x = i64::from((n * 31) % (side - 7));
             let y = i64::from((n * 47) % (side - 7));
             raster
@@ -73,7 +88,11 @@ pub fn fixture(case: &str) -> Document {
                 (0, 0)
             },
             visible: true,
-            opacity: if case == "dense5" { 173 } else { 255 },
+            opacity: if dense && !(opaque && n == 0) {
+                173
+            } else {
+                255
+            },
             raster,
         };
         doc.roots.push(id);

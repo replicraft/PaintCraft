@@ -6,7 +6,7 @@ only its printed summary. Three earlier cases retain another 240 raw process
 observations. All six Criterion cases retain 480 raw samples. No complete
 three-session process result or default-policy decision is claimed here.
 
-[Interruption and recovery](interruption.json) records the terminal failure and
+`benchmarks/results/gpu-submission-batches-2026-10-21/interruption.json` (local result) records the terminal failure and
 Cargo dev-profile-only cleanup. Input sources and the frozen release executable
 were verified unchanged. The separate
 [retry](../gpu-submission-batches-2026-10-21-rerun/DECISION.md) repeats the entire
@@ -26,7 +26,7 @@ establish a CPU/GPU crossover. The automatic desktop scaled path remains CPU.
 
 Measured source/runner commit: `addabc079a48ee83f42b7845c0e61028e4f30a9f`.
 That documentation-only archive commit contains implementation `6781978`, native
-integration `bbf27f5` and driver `2fdb90f`. The [manifest](manifest.json) records
+integration `bbf27f5` and driver `2fdb90f`. The `benchmarks/results/gpu-submission-batches-2026-10-21/manifest.json` (local result) records
 full Rust/WGSL/manifest/runner hashes, executable hash, compiler, workload settings
 and exact ignored test identity. No build or other test is intentionally run
 alongside timing. Compiler flag/wrapper/target-directory environment overrides were

@@ -51,8 +51,8 @@ Its smooth-eraser ratio is 1.66–1.73x; native input latency remains unqualifie
 
 ## Preserved earlier candidates
 
-The [first prototype](../paint-plan-2026-10-20/manifest.json) and
-[grouped lookup prototype](../paint-plan-grouped-2026-10-20/manifest.json) preserve
+The `benchmarks/results/paint-plan-2026-10-20/manifest.json` (local result) and
+`benchmarks/results/paint-plan-grouped-2026-10-20/manifest.json` (local result) preserve
 all measurements, including their diagonal/brush slowdowns. Their manifests map
 `raster/paint.rs` to the archived prototype source override; other source hashes
 match the final comparison. They are superseded, not dropped from the evidence.

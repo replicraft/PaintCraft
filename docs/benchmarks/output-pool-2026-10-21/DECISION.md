@@ -10,9 +10,9 @@ This is a measured rejection of global enablement, not a claimed performance win
 ## Source and reproduction
 
 The measured implementation/runner is frozen at
-`94939e417a4a8f6968625c1af76c34d442ae6b5e`. The [manifest](manifest.json) records
+`94939e417a4a8f6968625c1af76c34d442ae6b5e`. The `benchmarks/results/output-pool-2026-10-21/manifest.json` (local result) records
 source/runner/shader/manifests and executable identities, compiler/build and environment.
-[Identity verification](identity-verification.json) confirms all 349 source hashes
+`benchmarks/results/output-pool-2026-10-21/identity-verification.json` (local result) confirms all 349 source hashes
 against that commit and the executable after measurement. The subsequent policy change
 sets the public default from the candidate 64 MiB to zero; explicit 0/64 MiB comparison
 paths are unchanged. Reproduce the frozen evidence from the recorded source revision.

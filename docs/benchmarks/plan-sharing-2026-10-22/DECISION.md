@@ -17,7 +17,7 @@ sequential executor. The library driver itself is unchanged between the frozen
 binaries. Thus this experiment measures the descriptor-sharing follow-up directly;
 it does not erase the original whole-batch-versus-sequential regressions.
 
-[manifest.json](manifest.json) pins all source files, four frozen binaries, fixture
+`benchmarks/results/plan-sharing-2026-10-22/manifest.json` (local result) pins all source files, four frozen binaries, fixture
 bytes, matched CPU-only feature graph and platform/tool versions. The candidate
 build/validation and exact before/shared preflight identities are in
 [validation](../../../docs/validation/paint-plan-sharing-2026-10-22/validation.json).
@@ -43,7 +43,7 @@ input hash guard. Absolute library/CLI durations have different work scopes.
 Three process sessions use forward/reverse/forward ordering, 20 runs and three
 warmups: **2,880 workload observations plus 240 startup calibrations**, or **3,120
 original schema-v2 observations**. Each of four distinct binaries retains its own
-startup calibration. [audit.json](audit.json) records verified counts.
+startup calibration. `benchmarks/results/plan-sharing-2026-10-22/audit.json` (local result) records verified counts.
 
 ## Correctness and declared resources
 
@@ -54,7 +54,7 @@ CLI archives are byte-identical. Independent raw PCND pixel reconstruction gives
 the same canonical document semantic SHA as the real library output. All source,
 fixture and executable hashes pass postflight. Original and compact correctness
 JSON hashes are retained, as are every original Hyperfine export and its compact
-value-equivalent view. [compressed-artifacts.json](compressed-artifacts.json)
+value-equivalent view. `benchmarks/results/plan-sharing-2026-10-22/compressed-artifacts.json` (local result)
 records uncompressed/archive hashes and lengths for logs, inputs and outputs.
 
 Declared metadata peaks for repeated cases change as follows:
@@ -81,7 +81,7 @@ mixed; there is no universal process-memory claim.
 
 Milliseconds per planned library edit; brackets are 95% confidence intervals of
 the mean. Point-estimate changes are not promoted to universal improvements.
-Raw samples and [analysis-kernels.json](analysis-kernels.json) remain available.
+Raw samples and `benchmarks/results/plan-sharing-2026-10-22/analysis-kernels.json` (local result) remain available.
 
 | Dataset / case | Before mean [CI] | Shared mean [CI] | Shared time change |
 | --- | ---: | ---: | ---: |

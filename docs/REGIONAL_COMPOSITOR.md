@@ -108,7 +108,7 @@ use 1/5/20/100-layer sparse and five-layer dense fixtures. A global opacity chan
 and a cropped viewport are separate controls. History has the same 32 MiB limit
 for all contenders. This is not an input-to-display latency measurement.
 
-The [cache comparison evidence](../benchmarks/results/cpu-cache-2026-10-20/DECISION.md)
+The [cache comparison evidence](../docs/benchmarks/cpu-cache-2026-10-20/DECISION.md)
 records selection, regressions and reproducible raw timing/resource data. The
 [earlier row-span measurements](CPU_COMPOSITOR.md) remain a separate comparison.
 
@@ -122,7 +122,7 @@ correctness and resource/performance qualification.
 
 
 The original 2026-10-20 comparison remains frozen to whole-tile identities.
-[Regional patch measurements](../benchmarks/results/regional-patches-2026-10-21/DECISION.md)
+[Regional patch measurements](../docs/benchmarks/regional-patches-2026-10-21/DECISION.md)
 compare current 64/128/256 output grids and full composition separately. Changes
 to source-region identities and patch routing do not retroactively qualify the
 older timings. Both documents retain their local host/workload limitations.

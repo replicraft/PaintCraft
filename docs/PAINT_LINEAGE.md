@@ -79,7 +79,7 @@ records 893 workspace tests (26 explicit ignores), strict all-target Clippy,
 isolated native startup checks. The initial compile diagnostics and superseded
 pre-concurrency checks remain separate from the final successful rerun.
 
-[Matched preparation evidence](../benchmarks/results/paint-lineage-2026-10-22/DECISION.md)
+[Matched preparation evidence](../docs/benchmarks/paint-lineage-2026-10-22/DECISION.md)
 retains 240 statistical samples and 780 process observations. Bound default/no-op
 preparation is about 3.7–3.9x faster than combined in process measurements, but
 13.5–21.1% slower than materialized. Tiny/wall overhead and overlap tier disagreement

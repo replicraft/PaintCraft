@@ -7,7 +7,7 @@ policy as the default. The regional policy is an explicit host option through
 
 ## Reproduction and equivalent required work
 
-Measured implementation/driver commit: `be6ab2a`. The [manifest](manifest.json)
+Measured implementation/driver commit: `be6ab2a`. The `benchmarks/results/gpu-region-sources-2026-10-21/manifest.json` (local result)
 records full source identity, executable hash, compiler, environment and exact
 test. All measurements use the optimized prebuilt ignored library test
 `cpu_rendering::display_benchmark::native_multires_process`.
@@ -95,7 +95,7 @@ edge-32 maxima reach 3.13 s baseline and 3.55 s regional; sparse baseline reache
 1.08 s. All slow observations remain included, along with calibration (not
 subtracted). No failed or incomplete baseline is treated as a speedup.
 
-Final session summaries are recorded in [summary.json](summary.json). All three
+Final session summaries are recorded in `benchmarks/results/gpu-region-sources-2026-10-21/summary.json` (local result). All three
 sessions, reversed-order session two, calibration and slow observations are retained.
 Exact raw Hyperfine exports are gzip-preserved alongside compact equal-valued JSON
 and hash sidecars. Criterion sample/iteration arrays are retained independently.
@@ -103,7 +103,7 @@ Diagnostic logs are compressed byte-for-byte rather than truncated.
 There are 320 raw statistical samples and 1,020 process observations, including
 960 comparisons and 60 calibration observations, all with zero exit status.
 The runner checks source/binary identity after each session;
-[identity verification](identity-verification.json) also checks all final recorded
+`benchmarks/results/gpu-region-sources-2026-10-21/identity-verification.json` (local result) also checks all final recorded
 source blobs against the measured commit and the executable hash.
 
 Completion still waits after every native layer and reduction operation. These

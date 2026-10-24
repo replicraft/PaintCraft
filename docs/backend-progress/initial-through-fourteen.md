@@ -56,7 +56,7 @@ checks, COW/edge/hidden-RGB tests and an on-disk editing/save/export workflow.
 passed. The final dense render allocation remains; one 4 KiB scratch-row allocation
 is removed at 1024-pixel width. No source tiles are copied for reading.
 
-[The local decision and raw evidence](../../benchmarks/results/cpu-spans-2026-10-19/DECISION.md)
+[The local decision and raw evidence](../../docs/benchmarks/cpu-spans-2026-10-19/DECISION.md)
 record Divan and three Hyperfine sessions per workload. Sparse process medians
 improve 5.5–11.3×; the implicit opaque-background case improves 15.6×. Dense
 mixed-alpha composition is inconclusive (about 1.4% slower by pooled process
@@ -93,7 +93,7 @@ The stale-worker test's artificial 8 MiB budget now includes the new cache/key
 allowance; its stale-presentation and released-reservation assertions remain.
 
 See [the implementation contract](../REGIONAL_COMPOSITOR.md) and
-[the measured cache decision](../../benchmarks/results/cpu-cache-2026-10-20/DECISION.md)
+[the measured cache decision](../../docs/benchmarks/cpu-cache-2026-10-20/DECISION.md)
 for timing, memory and limitations. CPU frames still assemble and upload the full
 dense image. Parallel partitions, finer operation invalidation, GPU residency,
 mipmaps and history compression/spill remain incomplete; T12 stays partial.
@@ -122,7 +122,7 @@ A follow-up must add raw in-process samples for the older span/cache choices too
 This is an explicit remaining gate rather than a rewritten historical artifact.
 
 See [the partition contract](../PARALLEL_COMPOSITOR.md) and
-[BF06 measurements](../../benchmarks/results/cpu-parallel-2026-10-20/DECISION.md).
+[BF06 measurements](../../docs/benchmarks/cpu-parallel-2026-10-20/DECISION.md).
 The desktop cache/GPU path keeps its existing dispatch; bulk pool throughput does
 not prove interactive responsiveness or scheduling priority. Global CPU/resource
 coordination, parallel cache misses, finer invalidation, history compression/spill
@@ -154,7 +154,7 @@ Global logical tile authority, previous-version photographic deltas, LZ4/Zstd,
 disk spill/segment GC, background priorities, history branches and interactive
 latency/resource qualification remain. T04/T07/T11 remain partial.
 
-The [local history decision](../../benchmarks/results/history-packing-2026-10-20/DECISION.md)
+The [local history decision](../../docs/benchmarks/history-packing-2026-10-20/DECISION.md)
 retains 1,200 process measurements, 800 forward/reverse internal samples and 20
 separate phase traces. Sparse 1,000-edit/32-checkpoint history lowers median peak
 RSS from 253.5 to 57.2 MiB while increasing complete lifecycle time by about 50%.
@@ -179,7 +179,7 @@ solid/raw/small-patch fallback and cancellation before/after codec execution.
 The default remains raw/patch until the comparative evidence supports a choice;
 no disk spilling, background priority or complete physical-budget claim is made.
 
-The [codec decision](../../benchmarks/results/history-codecs-2026-10-20/DECISION.md)
+The [codec decision](../../docs/benchmarks/history-codecs-2026-10-20/DECISION.md)
 retains 1,800 process measurements, 1,200 internal samples and 30 phase traces.
 LZ4 lowers structured256 median peak RSS from 66.6 to 48.5 MiB but increases the
 complete lifecycle from 62.8 to 87.8 ms. Zstd stores fewer bytes but costs much more
@@ -215,7 +215,7 @@ closed provisional barriers, quota, permissions, missing/short/corrupt segments 
 readers outliving stores. Editor tests verify full raw/codec navigation, rejected
 edits retaining redo, cancellation after write/sync and cleanup of unpublished data.
 
-The [spill decision](../../benchmarks/results/history-spill-2026-10-20/DECISION.md)
+The [spill decision](../../docs/benchmarks/history-spill-2026-10-20/DECISION.md)
 retains 1,200 process runs, 800 internal samples and 20 separate traces. Disk lowers
 structured raw-history median peak RSS from 67.1 to 52.4 MiB at about 5x lifecycle
 time; short noisy history shows almost no RSS improvement despite releasing decoded
@@ -246,7 +246,7 @@ than two transfer batches, later-batch failure retaining document/redo and recla
 provisional files, hidden-RGB uniform refinement and warm codec completion without
 disk. A unit case registers 80 sources with exactly 64 scanned and 16 deferred.
 
-The [large-history decision](../../benchmarks/results/history-large-2026-10-20/DECISION.md)
+The [large-history decision](../../docs/benchmarks/history-large-2026-10-20/DECISION.md)
 retains 360 process runs, 240 internal samples and six independent phase traces.
 On 65/130/260-tile shared bases, automatic lifecycle medians are 2.1–2.2x faster
 than the explicit full-scan/spill strategy under identical allowances and full
@@ -422,7 +422,7 @@ an equal-value source refresh. T13 remains partial.
 
 ## Thirteenth slice: measure preview snapshot reuse
 
-The [local process decision](../../benchmarks/results/preview-reuse-2026-10-20-measured/DECISION.md)
+The [local process decision](../../docs/benchmarks/preview-reuse-2026-10-20-measured/DECISION.md)
 compares real controller capture with frozen collect/compare behavior using short,
 long, queued and changing paths. Three Hyperfine sessions per case retain 60 raw
 samples per variant, setup/destruction, correctness preflights, resource logs and

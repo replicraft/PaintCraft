@@ -2,7 +2,7 @@
 
 The batch compiler retains every operation but shares descriptor storage with the
 previous retained paint when the exact ordered writes match. This addresses the
-retained-geometry cost observed in the [complete batch experiment](../benchmarks/results/batch-preparation-2026-10-22/DECISION.md).
+retained-geometry cost observed in the [complete batch experiment](../docs/benchmarks/batch-preparation-2026-10-22/DECISION.md).
 It does not merge operations or skip blending, tile simulation, source-program
 updates, validation, work accounting, cancellation or replay records.
 
@@ -56,7 +56,7 @@ decoded peaks. Declared metadata peaks before/shared are:
 | Dense | 24,072 | 8,392 |
 
 These are actual declared-account peaks, not physical memory ceilings or RSS.
-The [matched follow-up](../benchmarks/results/plan-sharing-2026-10-22/DECISION.md)
+The [matched follow-up](../docs/benchmarks/plan-sharing-2026-10-22/DECISION.md)
 now retains 480 statistical samples and 3,120 original process observations,
 including early color-mismatch controls and startup calibration. Diagonal process
 RSS decreases and library wall time improves 2.2–5.1%, but other controls have

@@ -72,7 +72,7 @@ segment relocation, background priority work, branching history graphs,
 process-wide physical admission and interactive latency qualification remain.
 The timeline still truncates redo when a new edit branches from an older state.
 
-Local [history measurements](../benchmarks/results/history-packing-2026-10-20/DECISION.md)
+Local [history measurements](../docs/benchmarks/history-packing-2026-10-20/DECISION.md)
 retain 1,200 whole-process runs, 800 internal samples and separate phase traces.
 Sparse history uses less peak RSS at higher lifecycle/checkpoint cost; full-extent
 noise gains no memory. Reader allocation release does not force immediate RSS return.
@@ -117,7 +117,7 @@ encoding. Disk spill, masks/higher-depth codecs and previous-version deltas rema
 API references: [LZ4 block slices](https://docs.rs/lz4_flex/0.14.0/lz4_flex/block/index.html)
 and [Zstd bulk buffers](https://docs.rs/zstd/0.14.3/zstd/bulk/index.html).
 
-Local [codec measurements](../benchmarks/results/history-codecs-2026-10-20/DECISION.md)
+Local [codec measurements](../docs/benchmarks/history-codecs-2026-10-20/DECISION.md)
 retain 1,800 process runs, 1,200 internal samples and separate phase traces. LZ4
 reduces structured-tile peak RSS at higher CPU cost; Zstd improves stored ratio
 without delivering the best process result. The default remains raw/patch.

@@ -17,7 +17,7 @@ tradeoffs and experiment priorities for SIMD, containers, parsers, caches and er
 | Library | Direction | Actual or intended consumer | Benchmark | Application state |
 |---|---|---|---|---|
 | `glam` | selected-on-use | Typed viewport and affine transforms in core/UI | BF01 | Integrated baseline, 0.34.1 with std/f64; inverse, composition, rebase and actual-pixel tests; benchmark pending |
-| `wide` | preferred-on-use | Exact pixel kernels in raster/render | BF02 | First optimization experiment: dense opaque-destination composition; scalar parity and optimized measurements required before adoption |
+| `wide` | preferred-on-use | Exact pixel kernels in raster/render | BF02 | 1.7.1; three SIMD implementations compared with frozen and specialized scalar spans. NEON, SSE2 and SIMD128 builds select the hoisted u16 kernel, with scalar fallback otherwise. Performance is measured on M1 Pro; other targets have build/correctness coverage. Exact oracle checks and local Criterion/Hyperfine evidence are retained in the [BF02 decision](benchmarks/wide-compositor-2026-10-24/DECISION.md); cross-target and interactive qualification remain |
 | `zerocopy` | selective-on-use | Bounded fixed-layout BMP header admission | BF03 | Integrated baseline, 0.8.63 with derive; header size/offset and malformed-input tests; benchmark pending |
 | `bytemuck` | selected-on-use | Explicit GPU staging layouts in render | BF04 | Integrated baseline, 1.25.2 with derive; WGSL offsets/endian checks and Metal parity pass; benchmark pending |
 | `tess2-rust` | evaluate | Complex path fills; compare Lyon | BF05 | Not directly adopted; activate with its consumer |
@@ -36,6 +36,7 @@ tradeoffs and experiment priorities for SIMD, containers, parsers, caches and er
 
 | Area | Choice | Application state |
 |---|---|---|
+| UI tessellation | epaint through egui 0.37 | Already used by Painter and custom Studio color-wheel meshes. No duplicate direct dependency needed; [graphics responsibilities](GRAPHICS_LIBRARIES.md) |
 | UI | egui | Integrated through eframe; Classic ribbon/vector widgets and separate Studio toolbar/floating windows exist; reference fidelity and further Studio features remain pending |
 | UI font | Selawik | Unmodified Microsoft 1.01 Regular and Bold embedded with OFL 1.1 notice; document text uses these plus installed fonts |
 | Retro UI font | [W95FA by MadeByArne](https://www.dafont.com/w95fa.font) | User-selected for RetroPaint; author listing identifies SIL Open Font License and commercial use. Not bundled yet; preserve the font archive's license and provenance when adopted |
@@ -52,16 +53,18 @@ tradeoffs and experiment priorities for SIMD, containers, parsers, caches and er
 | Native container | ZIP64 reader/writer; raw and Zstd blocks | Current canonical ZIP subset is bounded and stored-only; extension must preserve v1 fixtures |
 | Storage compression | Raw/LZ4/Zstd comparison | Shared raw, solid and independent patch records plus explicit lz4_flex 0.14.0 (safe checked block APIs, no alloc/frame) and zstd 0.14.3 (default features off, fixed levels 1/3) policies; CRC-protected independent restore tests pass. Default remains raw/patch; local BF19 comparisons retain CPU/RSS/ownership tradeoffs. Native session append segments and immutable byte leases are integrated; natural/mask/depth, relocation/GC and interference qualification remain pending (see HISTORY_STORAGE.md) |
 | Color management | Evaluate moxcms/LittleCMS | Profiles currently reported as discarded; color-managed pipeline pending |
-| Interface localization | Fluent Bundle 0.16.0 + unic-langid 0.9.6 | Shared English/Japanese catalogs, persisted native/web language choice, context-local selection and cached bundles; English fallback for untranslated diagnostics. Selawik remains primary, with bundled SIL OFL Noto Sans JP for Japanese UI and canvas glyphs. [Scope](LOCALIZATION.md) |
+| Interface localization | Fluent Bundle 0.16.0 + unic-langid 0.9.6 | Seven interface-separated locale catalogs, persisted native/web language choice, context-local selection and cached bundles; English fallback for untranslated diagnostics. Shared Selawik and Noto Japanese/Chinese/Devanagari fonts live in root assets/fonts. [Scope](LOCALIZATION.md) |
 | Document text | Cosmic Text 0.19.0 + Swash 0.2.10 | std/swash/shape-run-cache, default features and fontconfig disabled; HarfRust shaping, fontdb fallback, hinted grayscale masks; atomic preview/publication; legacy bitmap commands remain stable. [Comparison](TEXT_RENDERING.md) |
 | Wasm effects | wasmi conformance baseline; Wasmtime throughput candidate | Not implemented; core wasm32 ABI is the first SDK target |
 | Statistical benchmarks | Divan 0.1.21 and Criterion 0.8.2 (development only) | Divan retains allocation summaries; Criterion adds raw per-sample JSON/CSV for bounded CPU partitions, regional output patches, recorded history, raster paint-plan replay and desktop CPU/GPU preview geometry and residency with optional parallel analysis disabled. Earlier Divan-only raw-sample gates remain pending. See [parallel renderer](PARALLEL_COMPOSITOR.md) |
-| Process benchmarks | Hyperfine 2.0.0 | Three native sessions per CPU span, cache and partition workload, with raw exports and RSS evidence; [span decision](../benchmarks/results/cpu-spans-2026-10-19/DECISION.md), [cache decision](../benchmarks/results/cpu-cache-2026-10-20/DECISION.md), [partition decision](../benchmarks/results/cpu-parallel-2026-10-20/DECISION.md). Other cases remain pending |
+| Process benchmarks | Hyperfine 2.0.0 | Three native sessions per CPU span, cache and partition workload, with raw exports and RSS evidence; [span decision](../docs/benchmarks/cpu-spans-2026-10-19/DECISION.md), [cache decision](../docs/benchmarks/cpu-cache-2026-10-20/DECISION.md), [partition decision](../docs/benchmarks/cpu-parallel-2026-10-20/DECISION.md). Other cases remain pending |
 
 ## Admission and evidence
 
 Each adoption records the requirement/task, real consumer, version/features from the
-compiled lockfile, correctness checks, and benchmark disposition. The fifteen BF01–BF15
-cases remain pending until their actual workloads are measured. No optimized or
+compiled lockfile, correctness checks, and benchmark disposition. The BF01–BF15
+cases remain unqualified overall. BF02 now has partial local opaque-compositor
+evidence; its cross-target and interactive gates remain open. Other cases await
+their own workload measurements. No optimized or
 release-qualified claim follows from adding a dependency or passing a model test.
 The tracked [roadmap ledger](ROADMAP_STATUS.md) identifies remaining acceptance work.

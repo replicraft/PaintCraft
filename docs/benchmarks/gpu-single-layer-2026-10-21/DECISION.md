@@ -2,7 +2,7 @@
 
 Measured source: `ea2b154` on Apple M1 Pro / Metal, Rust 1.99.0. The frozen
 optimized desktop test executable, complete source/dependency hashes, selected
-Hyperfine version and commands are in [manifest.json](manifest.json). Both
+Hyperfine version and commands are in `benchmarks/results/gpu-single-layer-2026-10-21/manifest.json` (local result). Both
 variants run actual preview staging, completed GPU native-resolution rendering and
 App texture registration for eight frames. Cold device, pipeline and document
 setup and destruction are included. This measures texture readiness, not OS input,
@@ -33,7 +33,7 @@ original exports remain compressed alongside compact equal-valued JSON and hash
 sidecars. Calibration means are 10.89/13.62/11.55 ms and are never subtracted.
 No slow samples, controls or sessions are excluded.
 
-[summary.json](summary.json) derives wall-clock ratios and RSS from the raw exports.
+`benchmarks/results/gpu-single-layer-2026-10-21/summary.json` (local result) derives wall-clock ratios and RSS from the raw exports.
 An initial analysis attempt expected the older `times` field; analysis was adapted
 to schema-v2 `measurements`/`summary` without changing or rerunning timing data.
 Untimed `/usr/bin/time -l` logs also retain process RSS and renderer work counters.

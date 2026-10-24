@@ -89,7 +89,7 @@ in-process evidence needs a raw-sample follow-up; its process evidence is retain
 See [Criterion's source/tests](https://docs.rs/crate/criterion/0.8.2/source/tests/criterion_tests.rs)
 and [CSV output documentation](https://bheisler.github.io/criterion.rs/book/user_guide/csv_output.html).
 
-The [local decision and raw evidence](../benchmarks/results/cpu-parallel-2026-10-20/DECISION.md)
+The [local decision and raw evidence](../docs/benchmarks/cpu-parallel-2026-10-20/DECISION.md)
 record process time, steady render latency, memory, CPU cost, regressions and
 retained calibration. No cross-host, GPU, input-to-display p99 or scheduler priority
 claim is made. This slice leaves T12/T13 and BF06 partial under the full roadmap.

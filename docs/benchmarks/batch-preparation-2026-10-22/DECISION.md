@@ -14,13 +14,13 @@ strengthens the benchmark driver and its independent CLI semantic verifier.
 The later Clear Canvas icon commit is outside this measured source.
 
 Parent CPU-only CLI source is `ff50020`; its full source hashes are retained in
-[baseline-cli-manifest.json](baseline-cli-manifest.json). The real-library driver
+`benchmarks/results/batch-preparation-2026-10-22/baseline-cli-manifest.json` (local result). The real-library driver
 uses source-pinned sequential executor support and the current raster primitives
 for both modes. Thus library comparisons isolate editor preparation changes,
 while the two frozen CLI artifacts include the complete parent/current application
 changes, recorded history and canonical file IO. Frozen binary hashes, complete
 source/fixture identities, toolchain, platform and matched CPU-only feature graph
-are in [manifest.json](manifest.json). No GPU is linked into either timed CLI.
+are in `benchmarks/results/batch-preparation-2026-10-22/manifest.json` (local result). No GPU is linked into either timed CLI.
 
 Seven cases use 100 operations, except mixed lineage with 42 operations. The
 1000-square white-source stroke fixtures retain earlier workload geometry. Mixed
@@ -57,9 +57,9 @@ input dense image also matches its independently decoded PCND pixels. Source,
 frozen executable and fixture hashes were checked after measurement; this audit
 rechecked the source through `git show` of the measured commit.
 
-[correctness.json](correctness.json) retains checkpoint identities;
-[audit.json](audit.json) records exact counts and scope. Raw logs, fixtures and
-canonical outputs use lossless deterministic gzip. [compressed-artifacts.json](compressed-artifacts.json)
+`benchmarks/results/batch-preparation-2026-10-22/correctness.json` (local result) retains checkpoint identities;
+`benchmarks/results/batch-preparation-2026-10-22/audit.json` (local result) records exact counts and scope. Raw logs, fixtures and
+canonical outputs use lossless deterministic gzip. `benchmarks/results/batch-preparation-2026-10-22/compressed-artifacts.json` (local result)
 records original/archive hashes and lengths. Hyperfine's original schema-v2 JSON
 exports are independently retained in `.json.gz`; the compact `.json` values are
 identical, with both byte hashes in the corresponding `.identity.json`.
@@ -86,7 +86,7 @@ their raw distributions rather than promoting nonoverlap to a universal result.
 Each cell is sequential / planned milliseconds, followed by planned wall-time
 change. Negative means faster in that session. No session or slow control is
 excluded. Full median/min/max, CPU and RSS summaries are retained in
-[analysis-cli.json](analysis-cli.json) and [analysis-library.json](analysis-library.json).
+`benchmarks/results/batch-preparation-2026-10-22/analysis-cli.json` (local result) and `benchmarks/results/batch-preparation-2026-10-22/analysis-library.json` (local result).
 
 ### CPU-only CLI
 

@@ -9,7 +9,7 @@ not a universal rendering gain, CPU/GPU crossover, OS presentation rate or input
 
 Source commit `031eff29376606a944a07e84c2e129841a298e7c` includes the production
 regional APIs, desktop integration, exact tests and measurement runner. The frozen
-[manifest](manifest.json) hashes Rust/WGSL/manifests, runner and optimized executable;
+`benchmarks/results/native-viewport-2026-10-21/manifest.json` (local result) hashes Rust/WGSL/manifests, runner and optimized executable;
 all source hashes were checked against that commit and the executable/current source
 identities checked before/after sessions. Build and compiler details are recorded.
 
@@ -66,7 +66,7 @@ mixed process ratios expose host/GPU variation; the apparent statistical improve
 is not adopted as a whole-canvas gain. Cropped process improvements are modest:
 about 5–7% lower elapsed time for fixed views and 7–10% lower for pan (ratios above
 express baseline/contender). The full raw maxima and slow observations stay in
-[summary.json](summary.json) and original exports. No outliers were removed.
+`benchmarks/results/native-viewport-2026-10-21/summary.json` (local result) and original exports. No outliers were removed.
 
 Calibration medians are 11.40, 13.55 and 13.18 ms; startup is material and is never
 subtracted. CPU/GPU synchronization, native setup and complete operation staging

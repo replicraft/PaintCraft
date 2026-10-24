@@ -62,7 +62,7 @@ isolated native startup checks. The sandbox adapter failure and corrected test
 notification harness remain archived.
 
 These are ownership and admission correctness checks. The prior
-[normal-path scope comparison](../benchmarks/results/metadata-waiting-2026-10-22/DECISION.md)
+[normal-path scope comparison](../docs/benchmarks/metadata-waiting-2026-10-22/DECISION.md)
 is frozen to its recorded source and does not qualify this change's overhead or
 native latency. Whole-batch/source-lineage planning, contextual no-op proofs,
 aggregate geometry/font/flood/service budgets, physical memory accounting,

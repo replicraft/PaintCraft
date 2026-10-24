@@ -61,7 +61,7 @@ regression is native 64-bit specific; other profile qualification remains separa
 [Validation](validation/shared-paint-metadata-2026-10-22/validation.json) pins source,
 commands and compressed logs.
 
-The [matched overhead comparison](../benchmarks/results/shared-paint-metadata-2026-10-22/DECISION.md)
+The [matched overhead comparison](../docs/benchmarks/shared-paint-metadata-2026-10-22/DECISION.md)
 retains frozen CPU-only CLI and real-library baselines, source/binary/feature/input
 identity, exact canonical output and raw samples. Shared accounting is a correctness
 baseline; its overhead and negative controls are reported rather than described

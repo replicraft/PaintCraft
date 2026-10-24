@@ -67,7 +67,7 @@ egui renderer draws native and managed images side by side over a background;
 nontrivial output pixels match exactly with nearest/predictable filtering and no
 dithering. This validates the display path, not Windows historical reference fidelity.
 
-[Complete texture-readiness measurements](../benchmarks/results/direct-display-2026-10-21/DECISION.md)
+[Complete texture-readiness measurements](../docs/benchmarks/direct-display-2026-10-21/DECISION.md)
 compare actual desktop staging, GPU work and UI registration against completed
 straight readback/ColorImage conversion/backend upload. Both include cold setup and
 teardown. OS input/display traces, compositor swap/presentation, GPU timestamps,

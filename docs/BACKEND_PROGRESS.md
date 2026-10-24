@@ -84,7 +84,7 @@ guarantees. No new dependency or wire/file policy is introduced; no roadmap gate
 is promoted by this prerequisite.
 
 
-The [real-library preparation comparison](../benchmarks/results/paint-projection-2026-10-21/DECISION.md)
+The [real-library preparation comparison](../docs/benchmarks/paint-projection-2026-10-21/DECISION.md)
 retains 160 raw Criterion samples and 540 Hyperfine observations (480 workloads,
 60 calibration), all exit zero, with exact pre/postflight pixels and region spans.
 Tiny preparation is about 2.5x faster; wall process results are mixed/tied. Chaining
@@ -121,7 +121,7 @@ required-GPU desktop tests pass. Default/single-layer 30-frame native startup
 checks exit zero with empty logs. The [validation record](validation/paint-program-2026-10-22/validation.json)
 pins production/final measured source, exact compressed logs and release hashes.
 
-The [three-way real-library comparison](../benchmarks/results/paint-program-2026-10-22/DECISION.md)
+The [three-way real-library comparison](../docs/benchmarks/paint-program-2026-10-22/DECISION.md)
 retains 240 raw statistical samples and 780 Hyperfine observations, including 60
 calibration observations, all exit zero. Exact all-pixel and canonical region
 pre/postflights surround three ordered process sessions. For 64 plans, combined is
@@ -168,7 +168,7 @@ exit zero with empty logs. The [validation record](validation/shared-paint-metad
 pins final source, commands, exact compressed logs and release hashes. The specific
 clamped-capacity regression is native 64-bit; other target qualification is separate.
 
-The [matched overhead comparison](../benchmarks/results/shared-paint-metadata-2026-10-22/DECISION.md)
+The [matched overhead comparison](../docs/benchmarks/shared-paint-metadata-2026-10-22/DECISION.md)
 retains 480 statistical samples and 1,200 original Hyperfine observations with
 identical CPU-only CLI feature graphs and canonical outputs. Most CLI cases are
 near tied/mixed, but original eraser session 2 retains 48.9% mean overhead, a broad
@@ -218,7 +218,7 @@ release desktop/CLI builds and isolated default/single-layer 30-frame native
 startup smokes pass. Initial visibility errors and an unused-mut warning remain
 archived separately from final successful validation.
 
-The [matched overhead comparison](../benchmarks/results/metadata-waiting-2026-10-22/DECISION.md)
+The [matched overhead comparison](../docs/benchmarks/metadata-waiting-2026-10-22/DECISION.md)
 retains 480 statistical samples and 1,200 original process observations, exact
 canonical/library outputs and unchanged CPU-only dependency graphs. Projected
 tiny is about 7% slower statistically; tiny process medians are slower in all
@@ -307,7 +307,7 @@ builds and isolated default/single-layer 30-frame startup checks pass.
 [Validation](validation/paint-lineage-2026-10-22/validation.json) pins final source,
 commands, exact logs and release hashes.
 
-The [matched three-way comparison](../benchmarks/results/paint-lineage-2026-10-22/DECISION.md)
+The [matched three-way comparison](../docs/benchmarks/paint-lineage-2026-10-22/DECISION.md)
 retains 240 statistical samples, 780 original process observations and exact pixel/
 region postflights. Bound default/no-op process preparation is 3.71–3.91x faster
 than combined but 13.5–21.1% slower than materialized. Bound tiny is 11.5–16.3%
@@ -355,7 +355,7 @@ and default/single-layer isolated 30-frame startup checks pass.
 source and logs. A later benchmark-only semantic verifier change reran Clippy and
 benchmark compilation. Original development failures and earlier validation remain.
 
-The [completed comparison](../benchmarks/results/batch-preparation-2026-10-22/DECISION.md)
+The [completed comparison](../docs/benchmarks/batch-preparation-2026-10-22/DECISION.md)
 retains 280 statistical samples and 1,860 original process observations. Exact
 library/CLI semantics, complete canonical archives, decoded peaks and matched
 CPU-only feature graphs pass. Diagonal library execution is about 1.56x slower
@@ -392,7 +392,7 @@ raster and 119 optimized editor tests, and release benchmark/CPU CLI builds.
 A final test-only duplicate/flood addition then passes in the nine-case batch suite
 in debug/release and strict Clippy; production code is unchanged.
 Before/shared repeated and varied-miss preflights match canonical/library output.
-The [matched follow-up](../benchmarks/results/plan-sharing-2026-10-22/DECISION.md)
+The [matched follow-up](../docs/benchmarks/plan-sharing-2026-10-22/DECISION.md)
 retains 480 statistical samples and 3,120 original process observations. Diagonal
 library RSS and wall time improve, but mixed sessions, large slow control tails
 and startup drift preclude a general speed claim. Mixed-source optimization,
@@ -405,7 +405,7 @@ wire/file policy or rendering default changes.
 Logical programs now skip tile lookup/descriptor scans outside a clipped write
 envelope while preserving preceding-source calls/errors, layer bounds and
 cancellation. Pixel-oracle and long-list/fast-miss tests pass.
-[The measured decision](../benchmarks/results/projection-coverage-2026-10-22/DECISION.md)
+[The measured decision](../docs/benchmarks/projection-coverage-2026-10-22/DECISION.md)
 retains 480 statistical samples and 3,120 original process observations with exact
 all-checkpoint canonical/library output. Mixed flood/duplicate library execution
 improves 2.65x statistically and 53.4–69.7% in processes; actual CPU CLI improves

@@ -56,7 +56,7 @@ and preservation of resident history under metadata-only pressure. Existing deco
 retry/navigation regressions remain in the validation scope.
 
 [Validation](validation/metadata-waiting-2026-10-22/validation.json) pins source,
-commands and compressed logs. [Matched overhead evidence](../benchmarks/results/metadata-waiting-2026-10-22/DECISION.md)
+commands and compressed logs. [Matched overhead evidence](../docs/benchmarks/metadata-waiting-2026-10-22/DECISION.md)
 uses frozen pre-scope/current CPU-only CLI and library binaries with identical
 required output. Unit pumping deadlines and wake counts do not qualify native
 input/display/cancellation latency or cross-window fairness.

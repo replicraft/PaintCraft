@@ -60,7 +60,7 @@ changing owner/history. The existing native preview regression covers early cach
 retirement. [Validation](validation/stroke-preparation-2026-10-21/validation.json)
 records committed source and exact commands/logs.
 
-The [matched comparison](../benchmarks/results/stroke-preparation-2026-10-21/DECISION.md)
+The [matched comparison](../docs/benchmarks/stroke-preparation-2026-10-21/DECISION.md)
 retains statistical union samples and complete CPU-only CLI apply observations,
 canonical output equality, slow controls, resource metrics and calibration. This
 is a correctness-mandated bounded baseline; performance overhead is reported rather

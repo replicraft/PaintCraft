@@ -3,8 +3,8 @@
 This directory selectively adopts the reference pack's existing two-tier workflow.
 `tools/run_hyperfine.py` and `tools/benchmark_support.py` come from
 `docs/temp/paintcraft-implementation-spec-v5-hyperfine/benchmarks/tools/`; the only
-support adaptation is the registry path, now `benchmarks/cases.json`. Only the
-currently active BF29 case is adopted. The runner preserves artifact hashes,
+support adaptation is the registry path, now `benchmarks/cases.json`. Active workload cases and their remaining gates are recorded in
+`cases.json`. The runner preserves artifact hashes,
 correctness logs, raw results and failed runs; it never builds or installs tools.
 
 The real production CPU renderer is compared with its frozen 95db5d0 scalar
@@ -30,7 +30,7 @@ independent sessions including reverse order before a selection decision. Record
 optimized binary, lockfile and generator identities and all applicable memory
 metrics. A single machine cannot qualify all supported CPU/GPU targets.
 
-The first [CPU span decision](results/cpu-spans-2026-10-19/DECISION.md) retains
+The first [CPU span decision](../docs/benchmarks/cpu-spans-2026-10-19/DECISION.md) retains
 three native process sessions for each case. To reproduce, build the example and
 run `python3 benchmarks/tools/run_composite.py --output /tmp/new-comparison --execute`.
 Use a new output directory; existing evidence is never overwritten. Derive CSV
@@ -103,7 +103,7 @@ python3 -B benchmarks/tools/summarize_composite.py <new-dir> --output <new-dir>/
 Only the named ignored driver executes. Preflights compare captured paths and
 cancellation before each session. Three forward/reverse sessions compare unchanged
 short/long/queued previews and a changing-input control, including setup and
-cleanup. See the [local decision](results/preview-reuse-2026-10-20-measured/DECISION.md).
+cleanup. See the [local decision](../docs/benchmarks/preview-reuse-2026-10-20-measured/DECISION.md).
 This measures preview collection/comparison, not native brush/frame latency.
 
 
@@ -113,7 +113,7 @@ lib test in release, then set `PAINTCRAFT_GEOMETRY_VARIANT` to `verify`, `criter
 `baseline`, `cached` or `calibration` and run that exact ignored test. Process
 fixtures use `PAINTCRAFT_GEOMETRY_CASE=tiny|growing|retrace`. The driver runs actual
 Editor batch construction, checked preview staging and desktop CPU composition.
-[The decision and reproduction record](results/preview-geometry-2026-10-21/DECISION.md)
+[The decision and reproduction record](../docs/benchmarks/preview-geometry-2026-10-21/DECISION.md)
 retain tiny non-win controls and distinguish these complete-frame sequences from
 native OS input/display latency.
 
@@ -121,11 +121,11 @@ native OS input/display latency.
 Regional output patching compares the existing `cache_replay` example at full,
 tile64, tile128 and tile256 configurations. The `regional_reuse` Criterion target
 adds raw 20-sample complete construction/eight-edit/teardown sequences. The
-[compositor record](results/regional-patches-2026-10-21/DECISION.md) retains global,
+[compositor record](../docs/benchmarks/regional-patches-2026-10-21/DECISION.md) retains global,
 single-layer, viewport and cold controls. The desktop preview driver additionally
 accepts `PAINTCRAFT_GEOMETRY_BASE=sparse1|sparse5|dense5` and
 `PAINTCRAFT_GEOMETRY_COMPOSITOR=full|regional`; keep geometry caching enabled for
-both when isolating the compositor. See [consumer confirmation](results/regional-patches-app-2026-10-21/DECISION.md)
+both when isolating the compositor. See [consumer confirmation](../docs/benchmarks/regional-patches-app-2026-10-21/DECISION.md)
 for exact commands, retained host drift/memory costs and native latency limits.
 
 
@@ -134,7 +134,7 @@ Resident GPU sources use the same optimized desktop preview driver with
 `CASE=growing` and `VARIANT=cached` (all names carry the `PAINTCRAFT_GEOMETRY_`
 prefix). `VARIANT=gpu-criterion` retains 20 flat complete-sequence samples per GPU
 mode, while `VARIANT=verify` checks complete pixels/source preservation on a required
-real adapter. [The record](results/gpu-sources-2026-10-21/DECISION.md) includes
+real adapter. [The record](../docs/benchmarks/gpu-sources-2026-10-21/DECISION.md) includes
 completion/readback, cold setup/teardown, source-stage bytes, over-entry-limit
 behavior and retained timing variability. It does not qualify CPU/GPU crossover,
 sparse atlas layout or native input/display latency.
@@ -144,7 +144,7 @@ Direct native texture readiness uses the optimized desktop lib test
 `gpu_display::benchmark::native_display_process`. Set
 `PAINTCRAFT_GEOMETRY_BASE=sparse1|dense5|dense65` and
 `PAINTCRAFT_DISPLAY_VARIANT=readback|texture|verify|criterion|calibration`.
-[The record](results/direct-display-2026-10-21/DECISION.md) compares completed
+[The record](../docs/benchmarks/direct-display-2026-10-21/DECISION.md) compares completed
 readback/ColorImage/backend upload with completed texture conversion/native
 registration, retains mixed/tied controls and separates this boundary from OS
 input/display latency. The first failed preflight is preserved separately.
@@ -157,7 +157,7 @@ CARGO_BUILD_JOBS=2 CARGO_INCREMENTAL=0 cargo test -p paintcraft --lib --release 
 python3 benchmarks/tools/run_native_viewport.py --binary <reported-lib-test-executable> --output <new-result-directory>
 ```
 
-[The decision](results/native-viewport-2026-10-21/DECISION.md) retains stationary,
+[The decision](../docs/benchmarks/native-viewport-2026-10-21/DECISION.md) retains stationary,
 panning and full-canvas controls, exact independent visible pixels, native App
 acceptance, completed GPU work and three process sessions with raw statistical
 samples. The full-output control remains mixed/tied; cropped work reductions do not
@@ -167,7 +167,7 @@ behavior remain separate qualification work.
 The same native runner accepts `--suite output-pool` for explicit fresh versus
 64 MiB completed compositor-buffer retention. It records small, 4096×2160 and
 alternating-size cases, with the same raw statistical/process and independent
-pixel gates. [The decision](results/output-pool-2026-10-21/DECISION.md) rejects global
+pixel gates. [The decision](../docs/benchmarks/output-pool-2026-10-21/DECISION.md) rejects global
 enablement: fewer logical buffer creations did not establish a general native gain.
 Fresh allocation stays the default; display textures are never recycled by this pool.
 
@@ -175,7 +175,7 @@ Fresh allocation stays the default; display textures are never recycled by this 
 filter against bounded and cached CPU box sampling, actual App acceptance and
 completed native managed-texture upload. The exact test is
 `cpu_rendering::display_benchmark::native_multires_process`. See
-[the source-scoped decision](results/multires-display-2026-10-21/DECISION.md) for tiny
+[the source-scoped decision](../docs/benchmarks/multires-display-2026-10-21/DECISION.md) for tiny
 controls, dense cache costs, the sparse-4K gain, raw 180 statistical samples/600 process
 observations, and the distinction from GPU scaled composition or OS frame latency.
 
@@ -186,7 +186,7 @@ executable as above, then run `run_native_viewport.py --suite single-layer --bin
 command/scalar pixels before timing. Six cases retain cold setup/teardown, raw
 Criterion samples, three process sessions, calibration and process RSS, including
 multiple-layer and partial-coverage fallback controls. See
-[the complete decision](results/gpu-single-layer-2026-10-21/DECISION.md).
+[the complete decision](../docs/benchmarks/gpu-single-layer-2026-10-21/DECISION.md).
 
 
 The bounded stroke-preparation comparison uses a frozen CPU-only baseline CLI,
@@ -202,7 +202,7 @@ before editing source, build both CLIs with `cargo build --release --locked -p
 paintcraft-cli`, and keep the candidate executable outside Cargo's output path.
 The runner requires identical CPU-only feature trees and verifies artifact hashes
 and exact canonical PCND/member output before and after its sessions. Do not run
-builds/tests alongside timing. The [local decision](results/stroke-preparation-2026-10-21/DECISION.md)
+builds/tests alongside timing. The [local decision](../docs/benchmarks/stroke-preparation-2026-10-21/DECISION.md)
 retains all 160 statistical samples and 720 process observations, including slower
 checked unions, calibration and variable controls. It qualifies preparation costs,
 not native input/display or cancellation wall-clock latency.
@@ -222,7 +222,7 @@ pixel and exact region before Criterion and after each Hyperfine session, pins
 source/binary identity. No builds/tests should overlap timing. The original
 two-way run at its pinned revision retains 160 statistical samples plus 540
 process observations (including calibration). Its
-[local decision](results/paint-projection-2026-10-21/DECISION.md) records tiny,
+[local decision](../docs/benchmarks/paint-projection-2026-10-21/DECISION.md) records tiny,
 wall, overlapping-plan and default/no-op controls. These exercise real library
 preparation/destruction, not native editor interaction, file IO or whole-batch
 reservation integration.
@@ -234,7 +234,7 @@ chained views. It retains 240 Criterion samples and 780 Hyperfine observations
 (720 workloads plus 60 calibration). Build and freeze the matching optimized
 driver before running; do not use a newer runner with an older driver. Exact
 all-pixel and canonical flood-region checks surround the sessions. The
-[combined-program decision](results/paint-program-2026-10-22/DECISION.md) keeps no-op
+[combined-program decision](../docs/benchmarks/paint-program-2026-10-22/DECISION.md) keeps no-op
 controls and per-session RSS separate from declared retained payload. It does not
 qualify native whole-batch integration or physical/service memory ceilings.
 
@@ -248,7 +248,7 @@ python3 -B benchmarks/tools/run_shared_metadata.py --baseline-cli <baseline-cli-
 
 Without `--execute` this writes nothing. Both CLIs must have identical CPU-only
 feature trees; baseline manifests retain source identities and artifact hashes.
-The [decision record](results/shared-paint-metadata-2026-10-22/DECISION.md) retains
+The [decision record](../docs/benchmarks/shared-paint-metadata-2026-10-22/DECISION.md) retains
 480 statistical samples and the original 1,200 process observations, then separately
 labels another 240 focused eraser/calibration observations prompted by a broad
 slow session. Every original sample remains. Exact canonical PCND/member and
@@ -258,7 +258,7 @@ a physical memory ceiling or complete metadata retry/batch planning.
 
 
 The same frozen-artifact runner qualifies normal-path attempt-scope overhead in
-[metadata waiting](results/metadata-waiting-2026-10-22/DECISION.md): 480 statistical
+[metadata waiting](../docs/benchmarks/metadata-waiting-2026-10-22/DECISION.md): 480 statistical
 samples and 1,200 original process observations. Both baseline and candidate have
 shared paint metadata ownership; only the candidate adds scoped demand/native
 waiting. CPU timing does not exercise native waiting. Exact canonical/library
@@ -279,7 +279,7 @@ python3 -B benchmarks/tools/run_paint_projection.py --binary <frozen-lineage-ben
 Without `--execute` this writes nothing. The bound-source flag selects materialized,
 combined and bound modes with 240 Criterion samples and 780 process observations,
 including startup calibration. Exact every-pixel/canonical-region checks surround
-sessions. The [decision](results/paint-lineage-2026-10-22/DECISION.md) retains no-op
+sessions. The [decision](../docs/benchmarks/paint-lineage-2026-10-22/DECISION.md) retains no-op
 gains, tiny/wall overhead, source/reader payload costs and slow controls separately.
 These flat library cases do not qualify complete batch integration or branching-
 chain/native event latency.
@@ -293,7 +293,7 @@ CLI artifacts and their source/feature identities before a combined desktop buil
 arguments; default mode prints the plan without timing, and `--preflight-only
 --execute` verifies fixtures and exact outputs. A fresh output directory and
 `--execute` run seven cases, 280 statistical samples and 1,860 process observations,
-including calibrations. The [completed decision](results/batch-preparation-2026-10-22/DECISION.md)
+including calibrations. The [completed decision](../docs/benchmarks/batch-preparation-2026-10-22/DECISION.md)
 retains exact semantic/canonical comparisons, original schema-v2 exports, declared
 resource counters and substantial diagonal/mixed regressions. Whole-batch admission
 is a correctness baseline; performance and native latency remain separate work.
@@ -304,5 +304,25 @@ Default mode writes nothing; `--preflight-only --execute` checks outputs without
 timing. A fresh `--output` with `--execute` compares frozen before/shared planned
 binaries on seven repeated cases and five changing-color miss controls, retaining
 480 statistical samples and 3,120 process observations.
-[The decision](results/plan-sharing-2026-10-22/DECISION.md) selects bounded retained
+[The decision](../docs/benchmarks/plan-sharing-2026-10-22/DECISION.md) selects bounded retained
 memory while preserving mixed wall/CPU/RSS, large slow tails and calibration drift.
+
+
+BF02 compares exact dense-span kernels with both the frozen optimized scalar
+implementation at 75ff9e3 and an opaque-destination scalar specialization:
+
+```sh
+cargo bench --release -p paintcraft-render --bench simd_composite
+cargo bench --release -p paintcraft-render --bench simd_composite --no-default-features
+cargo bench --release -p paintcraft-render --bench simd_composite --no-default-features --features simd
+cargo bench --release -p paintcraft-render --bench simd_composite --no-default-features --features simd-channels
+cargo run --release -p paintcraft-render --example simd_composite -- verify
+```
+
+The default `simd-u16` feature selects u16 SIMD on NEON, SSE2 and Wasm SIMD128 targets, with
+scalar fallback otherwise. The standard browser build does not enable SIMD128. `--no-default-features` is required when comparing
+scalar, packed-u32 (`simd`) and channel-wise-u32 (`simd-channels`) implementations.
+Use a separate `CRITERION_HOME` for each run and archive it before another run.
+Prebuild process drivers and use the retained configs with the Hyperfine runner;
+recompute binary/source hashes for a new build rather than bypassing validation.
+See the [BF02 decision](../docs/benchmarks/wide-compositor-2026-10-24/DECISION.md).

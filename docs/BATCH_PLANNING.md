@@ -101,7 +101,7 @@ metadata/decoded counters, calibration and slow controls remain required before
 any performance claim. Physical RSS ceilings and native latency are not inferred
 from these correctness or library measurements.
 
-The [completed matched experiment](../benchmarks/results/batch-preparation-2026-10-22/DECISION.md)
+The [completed matched experiment](../docs/benchmarks/batch-preparation-2026-10-22/DECISION.md)
 retains 280 statistical samples and 1,860 original process observations. Exact
 outputs and decoded peaks match, but diagonal and mixed-source batches regress
 substantially and retain more metadata. This is a correctness adoption; reducing
@@ -110,5 +110,5 @@ records executed checks and preserves development failures.
 
 [Exact descriptor sharing](PAINT_PLAN_SHARING.md) now reduces retained payload for
 repeated equal plans without merging operations. Original timing evidence remains
-pinned to its pre-sharing source. The [matched follow-up](../benchmarks/results/plan-sharing-2026-10-22/DECISION.md)
+pinned to its pre-sharing source. The [matched follow-up](../docs/benchmarks/plan-sharing-2026-10-22/DECISION.md)
 retains memory benefits, mixed timings and slow controls separately.

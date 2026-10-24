@@ -121,7 +121,7 @@ relocation/GC efficiency, global logical tile authority, restart-persistent bran
 history, higher-depth/mask data and photographic before/after deltas remain.
 See [history ownership](HISTORY_STORAGE.md) for the warm/raw/codec contracts.
 
-Local [spill measurements](../benchmarks/results/history-spill-2026-10-20/DECISION.md)
+Local [spill measurements](../docs/benchmarks/history-spill-2026-10-20/DECISION.md)
 retain 1,200 process measurements, 800 internal samples and separate phase traces.
 They include real storage synchronization and destruction, with every required
 history state retained. Results show material I/O costs and workload-dependent
@@ -134,7 +134,7 @@ A preparation test registers 80 sources while scanning 64 and deferring 16; raw
 leases remain authoritative until classified. CRC validation is mandatory for
 encoded and disk-backed records.
 
-The [large-snapshot comparison](../benchmarks/results/history-large-2026-10-20/DECISION.md)
+The [large-snapshot comparison](../docs/benchmarks/history-large-2026-10-20/DECISION.md)
 retains 360 process runs, 240 internal samples and six phase traces at identical
 allowances. Automatic preparation reduces work versus explicit full preparation
 for shared bases; it does not establish lower RSS or uniformly better latency.

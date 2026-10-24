@@ -61,7 +61,7 @@ Desktop tests cover the actual staged/composited frames, cancellation, committed
 cache retirement and panic recovery. Existing preview/publication/undo tests remain.
 
 Performance evidence lives in
-[the desktop replay decision](../benchmarks/results/preview-geometry-2026-10-21/DECISION.md).
+[the desktop replay decision](../docs/benchmarks/preview-geometry-2026-10-21/DECISION.md).
 It measures batch construction, private staging, CPU composition and teardown in an
 optimized desktop test executable. It does not establish native event/display tails,
 GPU upload costs, scheduling priority, fairness, long-session RSS or Windows parity.

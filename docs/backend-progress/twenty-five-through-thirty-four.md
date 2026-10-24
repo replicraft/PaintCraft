@@ -22,7 +22,7 @@ allocated operation prefix, reader/COW behavior, whole-attempt retry demand and
 bounded fresh-tile discovery. An editor test covers eight painting variants under
 an injected two-tile quota. Existing command oracle/brush/preview/history tests pass.
 
-The [local replay decision](../../benchmarks/results/paint-plan-rows-2026-10-20/DECISION.md)
+The [local replay decision](../../docs/benchmarks/paint-plan-rows-2026-10-20/DECISION.md)
 retains raw Criterion samples, three Hyperfine sessions and process resources for
 three source snapshots. Earlier slower candidates remain archived. Final process
 medians improve 1.41–1.53x for horizontal pencil, 1.14–1.15x for brush runs and
@@ -38,7 +38,7 @@ eviction, all-service physical admission, priorities/fairness and sustained nati
 latency qualification remain. T11/T13/T14/T37 remain partial or in progress.
 
 
-Matched CPU-only [baseline/current CLI apply measurements](../../benchmarks/results/paint-plan-cli-cpu-2026-10-21/DECISION.md)
+Matched CPU-only [baseline/current CLI apply measurements](../../docs/benchmarks/paint-plan-cli-cpu-2026-10-21/DECISION.md)
 retain 480 process observations and byte-identical complete canonical outputs.
 Horizontal pencil improves 1.12–1.20x, smooth brush 1.07–1.10x and smooth eraser
 1.66–1.73x across three sessions; diagonal is a tie/slight regression. These
@@ -104,7 +104,7 @@ cover exact growing prefixes/retraces, subpixel/clipped/translated policy change
 retention disablement, cancellation at each extension boundary, budget equivalence,
 no old-segment rescanning, current selection/origin/opacity, cache retirement and poison.
 
-[The desktop replay decision](../../benchmarks/results/preview-geometry-2026-10-21/DECISION.md)
+[The desktop replay decision](../../docs/benchmarks/preview-geometry-2026-10-21/DECISION.md)
 retains 120 Criterion samples, 360 comparison process runs, 60 calibration runs,
 full-frame pre/postflight checks, frozen source/binary identities and process RSS.
 Across three sessions, growing previews improve 1.63–1.71x and retraces 1.62–1.75x;
@@ -145,7 +145,7 @@ workspace/example/bench build exhausted disk before timing; generated debug obje
 and incremental caches were reclaimed, two-job builds passed, and failed build logs
 are retained separately from timing evidence.
 
-[Current compositor measurements](../../benchmarks/results/regional-patches-2026-10-21/DECISION.md)
+[Current compositor measurements](../../docs/benchmarks/regional-patches-2026-10-21/DECISION.md)
 retain 400 Criterion samples and 1440 Hyperfine observations, including cold/zero-edit
 controls. Keep 256-pixel output tiles: 64 increases lookup overhead; 128/256 are close
 or mixed in dense/viewport cases. Current tile256 versus full composition ratios are
@@ -154,7 +154,7 @@ sparse-layer caching regresses; global-bottom results reverse sign and drift sha
 in session 3. All samples remain and calibration is never subtracted. These are
 current configuration comparisons, not an isolated old/new patch speedup claim.
 
-[Desktop consumer confirmation](../../benchmarks/results/regional-patches-app-2026-10-21/DECISION.md)
+[Desktop consumer confirmation](../../docs/benchmarks/regional-patches-app-2026-10-21/DECISION.md)
 adds 420 process observations over actual preview batches, checked staging and CPU
 composition. Dense5 improves 1.54–1.89x; the single-layer bypass is a tie. Sparse5
 improves in two sessions and regresses in the third. Cached sparse/dense runs have
@@ -194,7 +194,7 @@ lease release, every observed cancellation boundary, poisoning and device recove
 A test-only follow-up additionally exercises cross-frame eviction after a source
 becomes invisible; production and benchmark driver remain frozen for timing evidence.
 
-[Actual desktop GPU preview measurements](../../benchmarks/results/gpu-sources-2026-10-21/DECISION.md)
+[Actual desktop GPU preview measurements](../../docs/benchmarks/gpu-sources-2026-10-21/DECISION.md)
 retain 120 Criterion samples and 420 Hyperfine observations with full-frame/source
 pre/postflights and frozen source/shader/executable hashes. Across 32-frame sequences,
 source staging falls from 16 to 8.25 MiB (one layer), 80 to 10.25 MiB (dense5), and
@@ -237,7 +237,7 @@ synchronous-drop assumption: abandoned maintenance may still own a tile until ac
 completion. The assertion now waits for observed release; no production lifecycle
 changed. This correction has its own commit.
 
-[Actual texture-readiness evidence](../../benchmarks/results/direct-display-2026-10-21/DECISION.md)
+[Actual texture-readiness evidence](../../docs/benchmarks/direct-display-2026-10-21/DECISION.md)
 retains 120 Criterion samples and 420 Hyperfine observations. Both complete GPU work;
 the control also completes CPU conversion/backend upload. Across sessions, sparse1
 ratios are 1.05–1.13x, dense5 is mixed (0.99–1.25x), and dense65 is effectively a tie
@@ -283,7 +283,7 @@ regional buffers across DPI/zoom/multipass changes without editing the document;
 a separate CPU test verifies safe backend-limit failure/recovery. A 30-frame release
 native window smoke exits zero with an empty log.
 
-[Measured completed texture readiness](../../benchmarks/results/native-viewport-2026-10-21/DECISION.md)
+[Measured completed texture readiness](../../docs/benchmarks/native-viewport-2026-10-21/DECISION.md)
 retains 120 Criterion samples and 420 Hyperfine observations. The fixed 128×96 view
 has process baseline/contender ratios 1.06–1.07x and the panning view 1.07–1.11x;
 the whole-canvas control is mixed/tied (0.98–1.07x). Cropped output pixel counts are
@@ -317,7 +317,7 @@ retry and retired epochs. Actual egui framebuffer tests draw an old registered v
 after later composites reuse scratch; CPU pixels remain exact. No document/history
 references or authoritative edits are retained in the pool.
 
-[The completed native experiment](../../benchmarks/results/output-pool-2026-10-21/DECISION.md)
+[The completed native experiment](../../docs/benchmarks/output-pool-2026-10-21/DECISION.md)
 retains 120 Criterion samples and 420 process observations for small, 4096×2160 and
 alternating-size views. Logical compositor buffer creations fall from 16 to one per
 sequence, but small-view process ratios are 0.88–0.97x (pooled slower), 4K is mixed
@@ -372,7 +372,7 @@ cache fallback and unaligned dense recursive splits. The latter test-only follow
 is recorded separately from the frozen measured source. A 30-frame default native
 window smoke exits zero with no log; giant live OS input/display tails remain unqualified.
 
-[Completed native managed-upload evidence](../../benchmarks/results/multires-display-2026-10-21/DECISION.md)
+[Completed native managed-upload evidence](../../docs/benchmarks/multires-display-2026-10-21/DECISION.md)
 retains 180 Criterion samples and 600 Hyperfine observations, including the existing
 cached native-resolution compositor before filtering. Sparse 4K process ratios are
 3.12–3.20x; tiny controls are tied (1.00–1.02x), and dense input is mixed/tied against
@@ -399,7 +399,7 @@ bounds, dimensions and identity. Ordinary scaled-resource failures use uploadabl
 CPU pixels while retaining a working native-resolution GPU. See
 [the implementation contract](../GPU_SCALED_DISPLAY.md).
 
-[Completed native evidence](../../benchmarks/results/gpu-scaled-display-2026-10-21/DECISION.md)
+[Completed native evidence](../../docs/benchmarks/gpu-scaled-display-2026-10-21/DECISION.md)
 retains 240 statistical samples and 780 process observations. GPU64 process ratios
 (CPU/GPU) are 0.43–0.86 for tiny, 0.29–0.36 for dense multilayer, 0.95–1.03 for sparse
 4K brush and 1.20–1.36 for uniform 4K opacity edits. Allocation reductions do not

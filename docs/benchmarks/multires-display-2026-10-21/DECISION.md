@@ -11,10 +11,10 @@ but is not universally faster. GPU scaled composition remains unimplemented.
 ## Source and reproduction
 
 Measured source/runner commit: `d6345efab7ac8cafa9d2e8a8f751a3fc6cf96345`.
-The [manifest](manifest.json) records compiler/build, executable, Rust/WGSL/manifests,
-runner, environment and exact test identity. [Identity verification](identity-verification.json)
+The `benchmarks/results/multires-display-2026-10-21/manifest.json` (local result) records compiler/build, executable, Rust/WGSL/manifests,
+runner, environment and exact test identity. `benchmarks/results/multires-display-2026-10-21/identity-verification.json` (local result)
 checks frozen source blobs and the executable after all sessions. A later
-[test-only follow-up](test-followup.json) adds independent dense recursive-boundary
+`benchmarks/results/multires-display-2026-10-21/test-followup.json` (local result) adds independent dense recursive-boundary
 coverage; production/benchmark code and the measured executable remain unchanged.
 
 ```sh
@@ -99,7 +99,7 @@ The current bounded cache preserves dense reuse rather than claiming universal w
 
 Calibration medians are 13.21, 13.41 and 13.23 ms and are never subtracted. Cold GPU/
 renderer/font/process costs are material for tiny inputs. Slow observations and
-statistical/process disagreement stay in [summary.json](summary.json) and original
+statistical/process disagreement stay in `benchmarks/results/multires-display-2026-10-21/summary.json` (local result) and original
 exports without an invented cause or selective exclusion.
 
 ## Memory and retained cache costs

@@ -60,7 +60,7 @@ Projected flood matches an independent BFS for all 512 binary 3x3 inputs, nine
 seeds and four tolerances (18,432 cases) after two earlier planned writes.
 
 [Validation](validation/paint-projection-2026-10-21/validation.json) pins source,
-commands and compressed logs. This is a correctness/capability baseline. The [preparation comparison](../benchmarks/results/paint-projection-2026-10-21/DECISION.md)
+commands and compressed logs. This is a correctness/capability baseline. The [preparation comparison](../docs/benchmarks/paint-projection-2026-10-21/DECISION.md)
 retains 160 statistical samples and 540 process observations, tiny gains and
 severe chained/no-op regressions. Sequential editor replay remains. Native
 cancellation/input/display tails and aggregate physical budgets remain unqualified;

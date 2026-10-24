@@ -64,7 +64,7 @@ set. Completion checks, cancellation retirement and independently owned display
 textures follow the same rules in either policy. This is bounded region-view
 retention, not a sparse tile atlas, asynchronous transfer or physical GPU admission.
 The original single-view policy remains the default after
-[native comparisons](../benchmarks/results/gpu-region-sources-2026-10-21/DECISION.md)
+[native comparisons](../docs/benchmarks/gpu-region-sources-2026-10-21/DECISION.md)
 confirmed allocation/upload reductions but mixed process timing and mostly tied
 statistical samples. This is an explicit host option, not automatic native dispatch.
 
@@ -92,7 +92,7 @@ recovery, lock-independent admission and decoded-lease release. Device destructi
 rejects old frames, clears retained sources on the next attempted render and
 reconstructs host-backed committed/undo/redo output on a fresh device.
 
-The [desktop measurement record](../benchmarks/results/gpu-sources-2026-10-21/DECISION.md)
+The [desktop measurement record](../docs/benchmarks/gpu-sources-2026-10-21/DECISION.md)
 compares actual preview staging, GPU composition, completion, full readback and
 teardown with source retention enabled/disabled. It retains raw statistical/process
 samples and an over-entry-limit workload. No zero-copy display or input/frame-tail

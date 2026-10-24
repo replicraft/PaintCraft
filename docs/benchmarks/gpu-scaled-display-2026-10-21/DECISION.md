@@ -8,9 +8,9 @@ unchanged. No general CPU/GPU crossover follows from these four fixtures.
 ## Reproduction and required work
 
 Measured source/runner: `c3dc4b0e701802bad1c48ab620ac59797346774c`.
-[The manifest](manifest.json) records compiler, executable hash, source hashes,
+`benchmarks/results/gpu-scaled-display-2026-10-21/manifest.json` (local result) records compiler, executable hash, source hashes,
 adapter environment, exact test identity and settings. The independently checked
-[identity record](identity-verification.json) confirms the executable and all
+`benchmarks/results/gpu-scaled-display-2026-10-21/identity-verification.json` (local result) confirms the executable and all
 source blobs matched that commit after measurement, before the final default-policy
 follow-up. The measured candidate attempted GPU scaling automatically; the final
 policy rejects global enablement based on the results below.
@@ -81,7 +81,7 @@ generalization. There are no affinity, thermal or background-load controls.
 
 ## Artifacts, limitations and final policy
 
-[Summary](summary.json) retains per-session medians/min/max/RSS and all statistical
+`benchmarks/results/gpu-scaled-display-2026-10-21/summary.json` (local result) retains per-session medians/min/max/RSS and all statistical
 sample summaries. There are 240 raw statistical samples and 780 process observations
 (720 comparison plus 60 calibration), all with zero exit status. Hyperfine original
 JSON bytes are gzip-preserved alongside compact equal-valued JSON and SHA sidecars.

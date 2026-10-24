@@ -46,7 +46,7 @@ The speed ratio is baseline median divided by cached median.
 
 Median process CPU time falls from 18.88 to 12.47 ms (short), 36.63 to 11.38 ms
 (long), and 74.34 to 18.93 ms (queue). Changing CPU medians are 22.77 / 22.82 ms.
-[summary.csv](summary.csv) retains throughput, mean, standard deviation, min/max,
+`benchmarks/results/preview-reuse-2026-10-20-measured/summary.csv` (local result) retains throughput, mean, standard deviation, min/max,
 CPU cycles/instructions and process peak RSS. RSS includes allocator, fixture and
 test runtime; it does not establish steady native-editor reclamation or budgets.
 

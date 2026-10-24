@@ -64,7 +64,7 @@ large viewport and opacity-only cases have one source; multiple-layer and partia
 coverage cases are fallback controls. It does not measure OS presentation, input
 latency, physical allocation or general CPU/GPU crossover.
 
-[The completed native comparison](../benchmarks/results/gpu-single-layer-2026-10-21/DECISION.md)
+[The completed native comparison](../docs/benchmarks/gpu-single-layer-2026-10-21/DECISION.md)
 retains all 240 statistical samples and 780 process observations. Intermediate
 work falls as intended, but fallback variation, a large-view regression and RSS
 results reject global enablement. The implementation remains explicitly selectable.

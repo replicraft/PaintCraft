@@ -13,7 +13,7 @@ This is an opt-in host policy, not a universal acceleration claim.
 
 Measured source/runner commit: `addabc079a48ee83f42b7845c0e61028e4f30a9f`.
 That documentation-only archive commit contains implementation `6781978`, native
-integration `bbf27f5` and driver `2fdb90f`. The [manifest](manifest.json) records
+integration `bbf27f5` and driver `2fdb90f`. The `benchmarks/results/gpu-submission-batches-2026-10-21-rerun/manifest.json` (local result) records
 full Rust/WGSL/manifest/runner hashes, executable hash, compiler, workload settings
 and exact ignored test identity. No build or other test is intentionally run
 alongside timing. Compiler flag/wrapper/target-directory environment overrides were
@@ -113,7 +113,7 @@ the reason for explicit opt-in rather than global enablement.
 
 All maxima remain: single-view twenty-layer serial reaches 2,739.97 ms and
 regional hundred-layer serial reaches 3,424.86 ms. Calibration is un-subtracted.
-The [summary](summary.json) retains every session's medians/min/max/RSS plus raw
+The `benchmarks/results/gpu-submission-batches-2026-10-21-rerun/summary.json` (local result) retains every session's medians/min/max/RSS plus raw
 statistical sample summaries; Criterion arrays retain exact times/iteration counts.
 Within-process samples and whole-process observations are distinct scopes.
 
@@ -127,7 +127,7 @@ not replace native input/display tail measurements.
 
 This retry retains 480 raw statistical samples and 1,500 process observations
 (1,440 comparison plus 60 calibration), all with zero exit status. The runner
-checks source/binary identity after each session; [identity verification](identity-verification.json)
+checks source/binary identity after each session; `benchmarks/results/gpu-submission-batches-2026-10-21-rerun/identity-verification.json` (local result)
 also checks all recorded blobs against the frozen commit after measurement.
 Final native-option integration has separate source/validation evidence.
 
@@ -138,7 +138,7 @@ a printed summary and is not promoted into missing raw samples. No complete
 process comparison is claimed for that attempt. The full retry was preplanned
 after its terminal ENOSPC error, not selected by excluding slow observations.
 Only generated Cargo dev-profile artifacts were reclaimed; the frozen release
-executable and source identities stayed unchanged. [Disk sampling](free-space.json)
+executable and source identities stayed unchanged. `benchmarks/results/gpu-submission-batches-2026-10-21-rerun/free-space.json` (local result)
 records a minimum sampled free space of approximately 15.59 GiB during the retry. No concurrent build/test
 was intentionally run with either timing attempt.
 

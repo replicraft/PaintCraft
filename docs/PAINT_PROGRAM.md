@@ -42,7 +42,7 @@ flood after earlier writes over all 512 binary 3x3 images, nine seeds and four
 tolerances: 18,432 cases.
 
 [Validation](validation/paint-program-2026-10-22/validation.json) pins source,
-commands and exact logs. The [three-way preparation comparison](../benchmarks/results/paint-program-2026-10-22/DECISION.md)
+commands and exact logs. The [three-way preparation comparison](../docs/benchmarks/paint-program-2026-10-22/DECISION.md)
 retains materialized, chained and combined paths with required pixel/region
 preflights, raw statistical/process samples, calibration and no-op controls.
 It measures current real library preparation, not native editor or file workflows.

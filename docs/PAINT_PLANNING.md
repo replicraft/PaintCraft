@@ -61,12 +61,12 @@ variants under the same two-tile quota and verifies successful exact capacity us
 Existing command oracle, antialiasing, selection, preview and history tests retain
 the numerical/transactional acceptance checks.
 
-The [measured replay comparison](../benchmarks/results/paint-plan-rows-2026-10-20/DECISION.md)
+The [measured replay comparison](../docs/benchmarks/paint-plan-rows-2026-10-20/DECISION.md)
 archives Criterion raw samples, three Hyperfine sessions and process resource data.
 Horizontal pencil, brush runs and partial replacement improve locally; diagonal
 pencil remains a non-win control. Earlier slower candidates are preserved. These
 are same-source synthetic replay comparisons, not native input/display latency or
-parent desktop benchmarks. The separate [matched CLI comparison](../benchmarks/results/paint-plan-cli-cpu-2026-10-21/DECISION.md)
+parent desktop benchmarks. The separate [matched CLI comparison](../docs/benchmarks/paint-plan-cli-cpu-2026-10-21/DECISION.md)
 checks baseline/current CPU-only apply commands and byte-identical canonical output:
 horizontal pencil improves 1.12–1.20x, smooth brush 1.07–1.10x and smooth eraser
 1.66–1.73x; diagonal remains a tie/slight regression. Full-batch planning, coordinated metadata admission,

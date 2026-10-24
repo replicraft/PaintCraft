@@ -8,7 +8,7 @@ appearing in `Cargo.lock` does not mean PaintCraft code directly uses it.
 
 | Library and upstream documentation | Decision | Concrete use and constraints |
 |---|---|---|
-| [wide](https://docs.rs/wide/latest/wide/) | First optimization experiment | Dense RGBA compositor spans in `paintcraft-render/src/lib.rs`. Compare an exact integer kernel against the existing scalar path; retain uniform skip/fill paths and a scalar tail. Details below. |
+| [wide](https://docs.rs/wide/latest/wide/) | Implemented and locally measured | Dense RGBA compositor spans in `paintcraft-render/src/lib.rs`. Three SIMD implementations were compared against frozen and specialized scalar loops. NEON, SSE2 and SIMD128 builds select the hoisted u16 kernel; targets without those features retain scalar behavior. Performance is locally measured on M1 Pro. Uniform skip/fill paths and scalar tails remain. See the BF02 decision. |
 | [binrw](https://docs.rs/binrw/latest/binrw/) | Preferred candidate for future structured binary formats | Derived endian-aware readers/writers could simplify future PDN/legacy container records. Current PCND ZIP admission cross-checks local/central records, CRCs, overlaps and bounds; replacing it requires equivalent tests and explicit resource limits. Keep `zerocopy` for current bounded fixed-layout header views. |
 | [deku](https://docs.rs/deku/latest/deku/) | Defer until a bit-oriented format requires it | Useful for declarative bit-level binary reading/writing. Current image codecs belong to `image`, and the stored ZIP subset is byte-oriented. Avoid adopting both this and binrw for the same records. |
 | [smallvec](https://docs.rs/smallvec/latest/smallvec/) | High-priority allocation experiment | Short changed-region lists and compositor key dependency lists in `paintcraft-render/src/cache/key.rs`. Measure actual length distributions before choosing inline capacity; spill allocation, larger enclosing structs and budget accounting still count. |
@@ -35,14 +35,14 @@ by an alpha-dependent denominator. SIMD multiplication alone will not remove
 that cost, and float conversion or reciprocal approximation can change rounding.
 `wide` integer operators also wrap, so intermediate bounds must be proved.
 
-Start with the narrower opaque-destination case, where source-over reduces to
+The implementation starts with the narrower opaque-destination case, where source-over reduces to
 `(source * alpha + destination * (255 - alpha) + 127) / 255` per RGB channel.
 Here alpha already includes the existing rounded layer-opacity adjustment.
-Use widened integer lanes and exact division-by-255 arithmetic. Prove the
-specialization equivalent to the current straight-alpha formula before routing
-real spans through it. Fall back for partially transparent destinations unless
-an independently verified exact general kernel wins. This is an experiment plan;
-no SIMD code or performance improvement is claimed in this review.
+It uses widened integer lanes and exact division-by-255 arithmetic. Exhaustive
+channel/alpha/opacity checks and document oracles verify equivalence to the
+straight-alpha formula. Partially transparent destination blocks retain the
+general scalar kernel. Three measured SIMD implementations and their selection
+are documented in the [BF02 decision](benchmarks/wide-compositor-2026-10-24/DECISION.md).
 
 Acceptance requires:
 
@@ -60,19 +60,21 @@ Acceptance requires:
   interactive responsiveness. Geometry, scheduling, upload and UI work may dominate.
 
 Follow [the benchmark protocol](development/HYPERFINE_PROTOCOL.md) and existing
-[CPU compositor evidence](CPU_COMPOSITOR.md). BF02 remains pending.
+[CPU compositor evidence](CPU_COMPOSITOR.md). BF02 now has partial local evidence; cross-target performance and native input-to-display qualification remain pending.
 
 ## Dependency footprint at review
 
 Already locked transitively: `arrayvec` 0.7.8, `bitflags` 1.3.2/2.13.2,
 `bytes` 1.12.1, `indexmap` 2.14.2, `memchr` 2.8.3, `parking_lot` 0.12.5,
 `smallvec` 1.16.3, `winnow` 1.0.4 and `thiserror` 1.0.69/2.0.21.
-Only `thiserror` is newly adopted directly by this review. No unused entries
+`thiserror` was adopted directly by the review. The subsequent BF02 work adds
+`wide` 1.7.1 in the renderer, with a target-feature-gated u16 default and explicit comparison features. No unused entries
 were added to the workspace manifest. Future direct consumers must use
 `dependency.workspace = true` and declare only needed features.
 
-Next experiments, in order: `wide` dense integer composition, `smallvec` short-list
-allocation profiles, `bitvec` selection storage, then `memchr` bounded scans.
+Next experiments: extend SIMD only for independently qualified kernels/targets,
+then `smallvec` short-list allocation profiles, `bitvec` selection storage and
+`memchr` bounded scans.
 `parking_lot` and `moka` follow only if profiles show lock or cache pressure.
 
 ## Validation of the error change
@@ -80,5 +82,5 @@ allocation profiles, `bitvec` selection storage, then `memchr` bounded scans.
 Core and CLI tests: 67 passed, including CLI error/v1 reporting and allocation
 context compatibility. Workspace checking, strict all-target Clippy for core/CLI,
 Wasm web checking, formatting and whitespace checks passed. These checks validate
-the error migration; the container and SIMD experiments above remain unimplemented
-and unmeasured.
+the error migration. Container experiments remain unimplemented and unmeasured;
+subsequent SIMD validation is recorded with the BF02 decision.

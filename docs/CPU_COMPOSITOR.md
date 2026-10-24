@@ -62,7 +62,7 @@ populates every tile and varies alpha across 0/1/64/128/254/255; it is not an
 implicit-default-only approximation of a dense image.
 
 Raw evidence is retained under
-[`benchmarks/results/cpu-spans-2026-10-19`](../benchmarks/results/cpu-spans-2026-10-19).
+`benchmarks/results/cpu-spans-2026-10-19` (local result).
 Exploratory runs are labelled separately and excluded from selection. Hyperfine
 execution metadata stays `unreviewed`; a separate decision records the accepted
 scope rather than rewriting raw execution status into a release claim.

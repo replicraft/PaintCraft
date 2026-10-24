@@ -14,7 +14,7 @@ No source view aliases authoritative pixels or an independently owned display fr
 No dependency, atlas, asynchronous service or physical budget is added. See
 [source ownership and bounds](../GPU_SOURCES.md).
 
-[The native comparison](../../benchmarks/results/gpu-region-sources-2026-10-21/DECISION.md)
+[The native comparison](../../docs/benchmarks/gpu-region-sources-2026-10-21/DECISION.md)
 retains 320 raw statistical samples and 1,020 process observations across both
 tile edges. In the dense five-layer edge-64 sequence, source staging falls from
 20 MiB to 3.375 MiB and logical source creations from 320 to 40, retaining 2.5 MiB
@@ -56,7 +56,7 @@ frames stay independently owned. The native worker adds an immutable 4 MiB pendi
 allowance without GPU locks. This is not physical driver/RSS admission. See
 [the batching contract](../GPU_BATCHING.md); no new dependency is introduced.
 
-[Completed native evidence](../../benchmarks/results/gpu-submission-batches-2026-10-21-rerun/DECISION.md)
+[Completed native evidence](../../docs/benchmarks/gpu-submission-batches-2026-10-21-rerun/DECISION.md)
 retains 480 statistical samples and 1,500 process observations across single-layer,
 5/20/100-layer, sparse 4K and uniform controls under both source policies. Compositor
 submissions fall from 320 to 64 (five layers), 1,280 to 128 (twenty) and 6,400 to
@@ -219,7 +219,7 @@ cover default, direct single-layer and combined regional-batching options, with
 zero exits and empty logs. [Source-pinned validation](../validation/gpu-single-layer-2026-10-21/validation.json)
 retains commands/logs and corrected development compile diagnostics.
 
-[The native comparison](../../benchmarks/results/gpu-single-layer-2026-10-21/DECISION.md)
+[The native comparison](../../docs/benchmarks/gpu-single-layer-2026-10-21/DECISION.md)
 retains 240 raw statistical samples and 780 process observations over six cases,
 including independent per-pixel pre/postflights, reverse order, calibration, RSS
 and fallback controls. Eligible frames remove eight intermediate allocations and
@@ -362,7 +362,7 @@ coverage and owner/history rollback. Earlier cancellation exposed a native cache
 cleanup dependency; staging now clears acquired disposable geometry on any error.
 The existing regression passes. Development diagnostics are retained.
 
-The [matched CPU-only comparison](../../benchmarks/results/stroke-preparation-2026-10-21/DECISION.md)
+The [matched CPU-only comparison](../../docs/benchmarks/stroke-preparation-2026-10-21/DECISION.md)
 retains 160 raw Criterion samples and 720 Hyperfine observations over three ordered
 sessions, all exit zero. Baseline/candidate feature graphs are identical without
 wgpu. Exact PCND archive/member output passes preflight and every session postflight.

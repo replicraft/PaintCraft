@@ -6,7 +6,7 @@ configurable through `GpuRenderer::with_working_cache_limits`; zero disables it.
 The measured 64 MiB candidate cap holds at most one buffer, not a preallocated arena.
 Fresh allocation remains the default (`DEFAULT_OUTPUT_POOL_BYTES == 0`): the native
 comparison has small-view regressions and mixed 4K evidence. A host must explicitly
-configure a nonzero cap to use retention. See [the decision](../benchmarks/results/output-pool-2026-10-21/DECISION.md).
+configure a nonzero cap to use retention. See [the decision](../docs/benchmarks/output-pool-2026-10-21/DECISION.md).
 Requests larger than the cap stream without retaining their output. A retained
 buffer may serve a smaller request; the larger capacity remains charged/reported.
 Changing a region's origin does not invalidate scratch because no content is reused.
