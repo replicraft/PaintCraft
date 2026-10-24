@@ -28,3 +28,4 @@ pub mod picker;
 pub mod brush;
 
 pub mod canvas;
+pub mod clipboard;
