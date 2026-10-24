@@ -7,13 +7,20 @@ use paintcraft_document::Layer;
 
 /// Compose the full canvas before box filtering, preserving ordinary layer order,
 /// visibility and opacity. Output is bounded; dense source work still belongs on
-/// an admitted worker. This never creates a full-canvas intermediate image.
+/// an admitted worker. It never creates an intermediate larger than the bounded output.
 pub fn render_document(
     doc: &Document,
     side: u16,
     check: impl Fn() -> Result<()>,
 ) -> Result<DisplayFrame> {
     check()?;
+    let request = document_request(doc, side)?;
+    render_display_cancellable(doc, request, check)
+}
+
+/// Determine the admitted output extent without allocating pixel buffers.
+/// Consumers can reserve output ownership before scheduling composition.
+pub fn document_request(doc: &Document, side: u16) -> Result<DisplayRequest> {
     if !(1..=256).contains(&side) {
         return Err(Error::new(
             ErrorCode::InputSchema,
@@ -24,8 +31,7 @@ pub fn render_document(
     while doc.canvas.0.max(doc.canvas.1).div_ceil(1 << level) > u32::from(side) {
         level += 1;
     }
-    let request = DisplayRequest::new(doc, doc.canvas_rect(), level)?;
-    render_display_cancellable(doc, request, check)
+    DisplayRequest::new(doc, doc.canvas_rect(), level)
 }
 
 /// Render one layer against transparency, positioned in the document canvas.
