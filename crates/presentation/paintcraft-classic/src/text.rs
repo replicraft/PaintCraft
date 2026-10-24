@@ -10,7 +10,36 @@ mod popup;
 mod size;
 
 const CONTROL_HEIGHT: f32 = 40.0;
-const FAMILY_WIDTH: f32 = 238.0;
+
+#[derive(Clone, Copy)]
+struct Metrics {
+    height: f32,
+    family_width: f32,
+    size_width: f32,
+    entry_width: f32,
+    font_points: f32,
+    radius: u8,
+}
+impl Metrics {
+    const MODERN: Self = Self {
+        height: 40.0,
+        family_width: 238.0,
+        size_width: 90.0,
+        entry_width: 66.0,
+        font_points: 16.0,
+        radius: 5,
+    };
+    const LEGACY: Self = Self {
+        height: 24.0,
+        family_width: 190.0,
+        size_width: 76.0,
+        entry_width: 52.0,
+        font_points: 12.0,
+        radius: 0,
+    };
+}
+mod legacy;
+pub use legacy::TextControls;
 
 pub fn text_options(
     ui: &mut Ui,
@@ -133,17 +162,6 @@ fn draw_alignment(
         painter.line_segment(
             [egui::pos2(x.min, y), egui::pos2(x.max, y)],
             egui::Stroke::new(1.0, ink),
-        );
-    }
-}
-
-fn selected_outline(ui: &Ui, response: &Response, selected: bool) {
-    if selected {
-        ui.painter().rect_stroke(
-            response.rect.shrink(0.5),
-            4,
-            ui.visuals().selection.stroke,
-            egui::StrokeKind::Inside,
         );
     }
 }

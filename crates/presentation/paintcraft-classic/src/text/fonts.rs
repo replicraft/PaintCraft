@@ -10,18 +10,29 @@ pub fn family(
     search: &mut String,
     loading: bool,
 ) {
+    family_with_metrics(ui, family, families, search, loading, Metrics::MODERN);
+}
+
+pub(super) fn family_with_metrics(
+    ui: &mut Ui,
+    family: &mut String,
+    families: &[String],
+    search: &mut String,
+    loading: bool,
+    metrics: Metrics,
+) {
     let popup_height = (ui.ctx().content_rect().height() * 0.5 - 24.0).clamp(120.0, 340.0);
     let mut search_response = None;
     let state_id = ui.make_persistent_id("font-family-was-open");
     let was_open = ui.data(|data| data.get_temp::<bool>(state_id).unwrap_or(false));
     let font = ui
         .allocate_ui_with_layout(
-            Vec2::new(FAMILY_WIDTH, CONTROL_HEIGHT),
+            Vec2::new(metrics.family_width, metrics.height),
             egui::Layout::left_to_right(Align::Center),
             |ui| {
-                ui.set_max_width(FAMILY_WIDTH);
+                ui.set_max_width(metrics.family_width);
                 egui::ComboBox::from_id_salt("classic-font-family")
-                    .width(FAMILY_WIDTH)
+                    .width(metrics.family_width)
                     .height(popup_height)
                     .truncate()
                     .icon(|ui, rect, visuals, _| {
@@ -38,13 +49,13 @@ pub fn family(
                     .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside)
                     .selected_text(&*family)
                     .show_ui(ui, |ui| {
-                        popup::style(ui);
+                        popup::style(ui, metrics);
                         ui.set_height(popup_height);
                         let search_id = ui.make_persistent_id("font-search");
                         let navigation_id = ui.make_persistent_id("font-navigation");
                         let key = navigation::take_key(ui, search_id);
                         let find = ui.add_sized(
-                            [ui.available_width(), CONTROL_HEIGHT],
+                            [ui.available_width(), metrics.height],
                             egui::TextEdit::singleline(search)
                                 .id(search_id)
                                 .hint_text(tr(ui.ctx(), "Search fonts"))
@@ -65,7 +76,7 @@ pub fn family(
                         let header_height = ui.cursor().min.y - ui.min_rect().min.y;
                         let list_height =
                             (popup_height - header_height - 20.0 - ui.spacing().item_spacing.y)
-                                .max(CONTROL_HEIGHT);
+                                .max(metrics.height);
                         let filter = search.to_lowercase();
                         let filtered: Vec<_> = families
                             .iter()
@@ -82,7 +93,7 @@ pub fn family(
                             navigation.reset(&filtered, None);
                         }
                         if let Some(key) = key {
-                            let page = (list_height / CONTROL_HEIGHT).floor().max(1.0) as usize;
+                            let page = (list_height / metrics.height).floor().max(1.0) as usize;
                             navigation.move_by(&filtered, key, page);
                             if key == egui::Key::Enter
                                 && let Some(index) = navigation.index(&filtered)
@@ -109,8 +120,8 @@ pub fn family(
                             list = list.vertical_scroll_offset(0.0);
                         } else if !was_open || key.is_some() {
                             let index = candidate.unwrap_or(0);
-                            let step = CONTROL_HEIGHT + ui.spacing().item_spacing.y;
-                            let offset = index as f32 * step - (list_height - CONTROL_HEIGHT) * 0.5;
+                            let step = metrics.height + ui.spacing().item_spacing.y;
+                            let offset = index as f32 * step - (list_height - metrics.height) * 0.5;
                             list = list.vertical_scroll_offset(offset.max(0.0));
                         }
                         if filtered.is_empty() {
@@ -120,11 +131,11 @@ pub fn family(
                                 }
                             });
                         } else {
-                            let row_height = CONTROL_HEIGHT;
+                            let row_height = metrics.height;
                             list.show_rows(ui, row_height, filtered.len(), |ui, rows| {
                                 for index in rows {
                                     let name = filtered[index];
-                                    let response = popup::row(ui, name, *family == *name);
+                                    let response = popup::row(ui, name, *family == *name, metrics);
                                     if Some(index) == candidate && *family != *name {
                                         ui.painter().rect_stroke(
                                             response.rect.shrink(0.5), 4,

@@ -5,17 +5,21 @@ use paintcraft_ui::i18n::tr;
 const FONT_SIZES: [u16; 16] = [8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72];
 
 pub(super) fn font_size(ui: &mut Ui, points: &mut u16) {
+    font_size_with_metrics(ui, points, Metrics::MODERN);
+}
+
+pub(super) fn font_size_with_metrics(ui: &mut Ui, points: &mut u16, metrics: Metrics) {
     ui.allocate_ui_with_layout(
-        Vec2::new(90.0, CONTROL_HEIGHT),
+        Vec2::new(metrics.size_width, metrics.height),
         egui::Layout::left_to_right(Align::Center).with_main_align(Align::Min),
         |ui| {
             ui.spacing_mut().item_spacing.x = 0.0;
             ui.visuals_mut().extreme_bg_color = ui.visuals().widgets.inactive.weak_bg_fill;
-            corners(ui, true);
+            corners(ui, true, metrics.radius);
             let padding = ui.spacing().button_padding;
             ui.spacing_mut().button_padding.x = 14.0;
             ui.style_mut().drag_value_text_style = egui::TextStyle::Body;
-            let size = size_entry(ui, points);
+            let size = size_entry(ui, points, metrics);
             let accessible_label = tr(ui.ctx(), "Font size");
             size.widget_info(|| {
                 egui::WidgetInfo::labeled(
@@ -29,17 +33,17 @@ pub(super) fn font_size(ui: &mut Ui, points: &mut u16) {
                 "Font size in points · type a value or choose a preset",
             ));
             ui.spacing_mut().button_padding = padding;
-            corners(ui, false);
+            corners(ui, false, metrics.radius);
             let state_id = ui.make_persistent_id("font-size-was-open");
             let was_open = ui.data(|data| data.get_temp::<bool>(state_id).unwrap_or(false));
             let nearest = FONT_SIZES
                 .into_iter()
                 .min_by_key(|size| size.abs_diff(*points));
             let (response, _) = egui::containers::menu::MenuButton::from_button(
-                Button::new(" ").min_size(Vec2::new(24.0, CONTROL_HEIGHT)),
+                Button::new(" ").min_size(Vec2::new(24.0, metrics.height)),
             )
             .ui(ui, |ui| {
-                popup::style(ui);
+                popup::style(ui, metrics);
                 ui.set_min_width(90.0);
                 ui.spacing_mut().item_spacing.y = 0.0;
                 egui::ScrollArea::vertical()
@@ -48,7 +52,7 @@ pub(super) fn font_size(ui: &mut Ui, points: &mut u16) {
                     .show(ui, |ui| {
                         for size in FONT_SIZES {
                             let selected = *points == size;
-                            let choice = popup::row(ui, &size.to_string(), selected);
+                            let choice = popup::row(ui, &size.to_string(), selected, metrics);
                             if !was_open && Some(size) == nearest {
                                 choice.scroll_to_me(Some(Align::Center));
                             }
@@ -87,11 +91,11 @@ pub(super) fn font_size(ui: &mut Ui, points: &mut u16) {
     );
 }
 
-fn corners(ui: &mut Ui, left: bool) {
+fn corners(ui: &mut Ui, left: bool, radius: u8) {
     let radius = if left {
         egui::CornerRadius {
-            nw: 5,
-            sw: 5,
+            nw: radius,
+            sw: radius,
             ne: 0,
             se: 0,
         }
@@ -99,8 +103,8 @@ fn corners(ui: &mut Ui, left: bool) {
         egui::CornerRadius {
             nw: 0,
             sw: 0,
-            ne: 5,
-            se: 5,
+            ne: radius,
+            se: radius,
         }
     };
     let widgets = &mut ui.visuals_mut().widgets;
@@ -116,7 +120,7 @@ fn corners(ui: &mut Ui, left: bool) {
 
 /// Keep typed sizes local until accepted. A discarded private DragValue buffer
 /// must not be parsed back into the preference on a repeated layout pass.
-fn size_entry(ui: &mut Ui, points: &mut u16) -> Response {
+fn size_entry(ui: &mut Ui, points: &mut u16, metrics: Metrics) -> Response {
     let id = ui.next_auto_id();
     let cancel_id = id.with("font-size-cancel-frame");
     let frame = ui.ctx().cumulative_frame_nr();
@@ -137,7 +141,7 @@ fn size_entry(ui: &mut Ui, points: &mut u16) -> Response {
     // in both the resting button and the focused text editor.
     let response = ui.add(
         egui::DragValue::new(points)
-            .min_size(Vec2::new(66.0, CONTROL_HEIGHT))
+            .min_size(Vec2::new(metrics.entry_width, metrics.height))
             .range(1..=512)
             .update_while_editing(false),
     );
