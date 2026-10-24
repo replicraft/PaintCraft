@@ -12,6 +12,13 @@ per-version native qualification and broader roadmap gates remain unfinished.
 See [Classic follow-up](CLASSIC_FOLLOWUP.md).
 
 
+Studio now exposes its own Zoom tool with `Z`, click stepping and a transient
+rectangle that fits the dragged document area into the viewport. It preserves
+pixels/selection/history and editable text, with cancellation on source/view
+changes. Pan, overscroll and full reference qualification remain unfinished.
+See [Studio workflow and evidence](STUDIO.md).
+
+
 Historical File panels now route PNG/JPEG/BMP choices to native and browser
 exports, with localized confirmation/download labels and unchanged project/history
 state. Windows 7/10 Home/View ribbons and slim status strips have scoped host and

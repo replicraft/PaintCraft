@@ -21,6 +21,7 @@ separately in the dependency choices and is not bundled yet.
   snapshot navigation and an explicit notice when older entries were trimmed.
 - Centered canvas in both Studio and Classic when the viewport is larger than the document; scrolling and
   actual-pixel zoom retain the common mapping.
+- Zoom tool with click stepping, rectangle-to-viewport fit and text-safe Z shortcut.
 - Shared staged brush previews, CPU/wgpu composition, transactions and undo/redo.
   Open, Save As and Export retain the native file-dialog and preservation paths.
 
@@ -299,3 +300,54 @@ captured; stale owners cannot receive a later Apply. English/Japanese and compac
 light/dark layouts are exercised by real application GUI tests. See
 [canvas semantics, validation and limits](STUDIO_CANVAS_SIZE.md). Resampling, skew,
 automatic layer growth into newly uncovered margins and full native parity remain.
+
+## Zoom tool rectangle workflow (2026-10-24)
+
+Studio's Tools window now includes a Zoom tool with the plain `Z` shortcut.
+Primary click steps in; secondary click steps out. A primary drag shows a temporary
+rectangle and, on release, fits that document area inside the editing viewport.
+The box retains subpixel document positions and supports either drag direction.
+Current host zoom limits and scroll bounds still apply. English/Japanese tool
+labels and a short usage hint distinguish this from Classic's Magnifier.
+
+The primary workflow reference is the official
+[Paint.NET View Tools documentation](https://paint.net/doc/latest/ViewTools.html),
+consulted 2026-10-24 (page revision 2023-01-15). It documents click zoom, the `Z`
+shortcut and fitting a dragged rectangle. No source code or artwork was copied.
+Current step sizes, drag threshold and scrolling limits are PaintCraft policies;
+exact per-version native interaction parity is not qualified.
+
+The normalized view gesture lives in `paintcraft-tools::navigation`, separate from
+paint gestures, selection and document commands. A host scope captures document,
+tab, revision and viewport mapping. Document/view changes, disabled input, focus
+loss and pointer loss cancel stale boxes. Foreign-button releases cannot complete
+the owner's gesture. Four logical points separate a deliberate box from click
+jitter. A one-document-pixel minimum fit extent keeps thin boxes finite.
+
+The desktop shell renders the temporary box and applies only zoom/scroll state.
+Neither drawing the box nor accepting it changes pixels, selection or history.
+Escape during the box cancels the view gesture and retains pending canvas text.
+Plain `Z` typed into an editable text draft continues to type text; Command/Ctrl+Z
+retains Undo. Returning from Zoom to Text preserves the draft. Classic retains its
+existing click workflow; this feature does not assume that Paint.NET's drag gesture
+matches historical Microsoft Paint.
+
+Validation: the full ordinary desktop GUI suite passes 254 tests (61 explicit
+manual/capture tests ignored). Studio tests verify viewport fit, subpixel mapping,
+reverse drags, DPI 1/2, English/Japanese, light/dark, forced multipass rendering,
+no zoom before release, right-click stepping, unchanged selection/history/pixels,
+Escape, focus loss, real document publication during a drag, shortcut ownership and
+editable text preservation. Shared tool navigation tests and 29 ordinary shared UI
+tests pass. All 68 browser library tests pass, including unchanged Classic
+Magnifier behavior; the browser release distribution rebuilds. Workspace check,
+strict all-target Clippy, translation, source-length and whitespace checks pass.
+The final Studio caption also passes a focused strict Clippy check.
+
+Actual app captures are in `assets/repo/studio-zoom-box-en-US.png`,
+`studio-zoom-box-ja.png`, `studio-zoom-result-en-US.png` and
+`studio-zoom-result-ja.png`. The English box and Japanese dark result were visually
+inspected, and the English box was reviewed again after the caption correction.
+Raw evidence is retained in ignored `docs/validation/studio-zoom-2026-10-24/`.
+Pan, middle-button navigation, temporary spacebar pan, overscroll and native
+qualification remain unfinished. The browser currently has Classic only; these
+captures do not establish Studio web parity or complete the Studio roadmap gate.
