@@ -1,4 +1,14 @@
 //! Studio canvas presentation. Layered navigation is independent of Classic.
+mod geometry;
+use geometry::Geometry;
+
+#[derive(Clone, Copy)]
+struct Layout {
+    outer: egui::Vec2,
+    inner: egui::Vec2,
+    geometry: Geometry,
+}
+
 pub fn canvas<R>(
     ui: &mut egui::Ui,
     id: egui::Id,
@@ -16,6 +26,18 @@ pub fn canvas_for_scope<R>(
     size: egui::Vec2,
     paint: impl FnOnce(&mut egui::Ui, egui::Response, egui::Painter) -> R,
 ) -> R {
+    canvas_for_profile(ui, id, scope, size, true, paint)
+}
+
+/// Overscroll is a frontend preference, separate from canvas/document dimensions.
+pub fn canvas_for_profile<R>(
+    ui: &mut egui::Ui,
+    id: egui::Id,
+    scope: egui::Id,
+    size: egui::Vec2,
+    overscroll: bool,
+    paint: impl FnOnce(&mut egui::Ui, egui::Response, egui::Painter) -> R,
+) -> R {
     let viewport = ui.available_rect_before_wrap();
     ui.scope_builder(
         egui::UiBuilder::new()
@@ -31,6 +53,24 @@ pub fn canvas_for_scope<R>(
                 data.remove::<(egui::Id, egui::Vec2)>(pending);
                 request
             });
+            let layout_id = id.with("studio-canvas-geometry");
+            let previous = ui.data(|data| data.get_temp::<Layout>(layout_id));
+            let outer = viewport.size();
+            let inner = previous.map_or(outer, |old| outer - (old.outer - old.inner));
+            let geometry = Geometry::new(inner, size, overscroll);
+            let old_offset = ui
+                .data(|data| data.get_temp::<egui::Vec2>(offset))
+                .unwrap_or_default();
+            let mut position = previous.map_or(geometry.initial, |old| {
+                geometry.preserve_center(old.geometry, old_offset)
+            });
+            let mut force_position = previous.is_none_or(|old| old.geometry != geometry);
+            if let Some((source, delta)) = delta
+                && source == scope
+            {
+                position = geometry.clamp(position - delta);
+                force_position = true;
+            }
             let mut area = egui::ScrollArea::both()
                 .id_salt(("studio-canvas", id))
                 .auto_shrink([false, false])
@@ -38,33 +78,42 @@ pub fn canvas_for_scope<R>(
                     drag: egui::scroll_area::DragScroll::Never,
                     ..Default::default()
                 });
-            if let Some((source, delta)) = delta
-                && source == scope
-            {
-                let old = ui
-                    .data(|data| data.get_temp::<egui::Vec2>(offset))
-                    .unwrap_or_default();
-                area = area.scroll_offset((old - delta).max(egui::Vec2::ZERO));
+            if force_position {
+                area = area.scroll_offset(position);
             }
-            let output = area.show(ui, |ui| {
-                let inset = (ui.available_size() - size) * 0.5;
-                ui.add_space(inset.y.max(12.0));
-                let (response, painter) = ui
-                    .horizontal(|ui| {
-                        ui.add_space(inset.x.max(12.0));
-                        ui.allocate_painter(size, egui::Sense::click_and_drag())
-                    })
-                    .inner;
-                let border = response.rect.expand(1.0);
+            let output = area.show_viewport(ui, |ui, view| {
+                let actual = Geometry::new(view.size(), size, overscroll);
+                let (content, _) = ui.allocate_exact_size(actual.extent, egui::Sense::hover());
+                let rect = egui::Rect::from_min_size(content.min + actual.leading, size);
+                let response = ui.interact(
+                    rect,
+                    id.with("studio-canvas-image"),
+                    egui::Sense::click_and_drag(),
+                );
+                let painter = ui.painter_at(rect);
                 ui.painter().rect_filled(
-                    border,
-                    0.0,
+                    rect.expand(1.0),
+                    0,
                     ui.visuals().widgets.noninteractive.bg_stroke.color,
                 );
-                paint(ui, response, painter)
+                (paint(ui, response, painter), actual)
             });
-            ui.data_mut(|data| data.insert_temp(offset, output.state.clamped_offset()));
-            output.inner
+            let (result, actual) = output.inner;
+            ui.data_mut(|data| {
+                data.insert_temp(offset, output.state.clamped_offset());
+                data.insert_temp(
+                    layout_id,
+                    Layout {
+                        outer,
+                        inner: output.inner_rect.size(),
+                        geometry,
+                    },
+                );
+            });
+            if (actual.viewport - geometry.viewport).length() > 0.5 {
+                ui.ctx().request_repaint();
+            }
+            result
         },
     )
     .inner
