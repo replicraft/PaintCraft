@@ -132,3 +132,7 @@ waiting-for-pending-work-more = Waiting for pending work…
 
 selection-path-is-too-complex-try-a-shorter-path = Selection path is too complex; try a shorter path
 selection-outline-is-too-complex-zoom-in-to-view-it = Selection outline is too complex; zoom in to view it
+
+printing-is-limited-to-16-megapixels-per-document = Printing is limited to 16 megapixels per document.
+print-job-submitted = Print job submitted.
+printing-cancelled = Printing cancelled.

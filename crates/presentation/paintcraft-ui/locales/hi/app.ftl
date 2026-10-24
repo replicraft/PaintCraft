@@ -132,3 +132,7 @@ waiting-for-pending-work-more = लंबित काम पूरा होन
 
 selection-path-is-too-complex-try-a-shorter-path = चयन पथ बहुत जटिल है; छोटा पथ आज़माएँ
 selection-outline-is-too-complex-zoom-in-to-view-it = चयन की रूपरेखा बहुत जटिल है; उसे देखने के लिए ज़ूम इन करें
+
+printing-is-limited-to-16-megapixels-per-document = प्रति दस्तावेज़ प्रिंटिंग की सीमा 16 मेगापिक्सेल है।
+print-job-submitted = प्रिंट कार्य भेज दिया गया।
+printing-cancelled = प्रिंटिंग रद्द की गई।

@@ -132,3 +132,7 @@ waiting-for-pending-work-more = 処理が完了するまでお待ちください
 
 selection-path-is-too-complex-try-a-shorter-path = 選択範囲のパスが複雑すぎます。短いパスをお試しください
 selection-outline-is-too-complex-zoom-in-to-view-it = 選択範囲の輪郭が複雑すぎます。拡大して表示してください
+
+printing-is-limited-to-16-megapixels-per-document = 印刷できるドキュメントは1600万画素までです。
+print-job-submitted = 印刷ジョブを送信しました。
+printing-cancelled = 印刷をキャンセルしました。

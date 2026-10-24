@@ -38,6 +38,8 @@ mod native_menu;
 mod pan_tool;
 #[path = "app/preferences.rs"]
 mod preferences;
+#[path = "app/printing.rs"]
+mod printing;
 #[path = "app/recent.rs"]
 mod recent;
 #[path = "app/recovery.rs"]
@@ -207,6 +209,7 @@ pub struct App {
     thumbnail: thumbnail::Thumbnail,
     pending_frame: Option<(RenderKey, JobHandle)>,
     dialogs: Option<NativeDialogs>,
+    printer: paintcraft_platform::printing::PrintService,
     dialog_owner: Option<Uuid>,
     texture: Option<egui::TextureHandle>,
     gpu_target: Option<gpu_display::Target>,
@@ -325,6 +328,7 @@ impl App {
             thumbnail: Default::default(),
             pending_frame: None,
             dialogs: None,
+            printer: Default::default(),
             dialog_owner: None,
             texture: None,
             gpu_target: None,

@@ -132,3 +132,7 @@ waiting-for-pending-work-more = Ausstehende Vorgänge werden abgeschlossen…
 
 selection-path-is-too-complex-try-a-shorter-path = Der Auswahlpfad ist zu komplex; versuche einen kürzeren Pfad
 selection-outline-is-too-complex-zoom-in-to-view-it = Die Auswahlkontur ist zu komplex; zoome hinein, um sie anzuzeigen
+
+printing-is-limited-to-16-megapixels-per-document = Drucken ist auf 16 Megapixel pro Dokument begrenzt.
+print-job-submitted = Druckauftrag gesendet.
+printing-cancelled = Drucken abgebrochen.

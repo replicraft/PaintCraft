@@ -193,6 +193,7 @@ impl App {
                 Chrome::SaveAll => self.begin_save_all(ctx),
                 Chrome::SaveAs => self.request_dialog(ctx, Kind::SaveAs),
                 Chrome::Export => self.export_requested(ctx),
+                Chrome::Print => self.print_requested(ctx),
                 Chrome::ExportImage(format) => self.export_image_requested(ctx, format),
                 Chrome::Undo => self.request(ctx, code::UNDO, Action::Undo),
                 Chrome::Redo => self.request(ctx, code::REDO, Action::Redo),

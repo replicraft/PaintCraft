@@ -4,6 +4,7 @@ use super::*;
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(super) enum FileRequest {
     Save(PathBuf),
+    Print,
     Export(PathBuf),
 }
 #[derive(Debug)]
@@ -120,6 +121,11 @@ impl App {
                 } else if self.editor.file_barrier_ready(request.barrier) {
                     let request = request.request.clone();
                     match request {
+                        FileRequest::Print => {
+                            let request = self.deferred_files.pop_front().expect("deferred print");
+                            self.capture_print(ctx);
+                            self.editor.release_file_barrier(request.barrier);
+                        }
                         FileRequest::Save(path) => {
                             let request = self.deferred_files.pop_front().expect("deferred save");
                             self.save_activation = None;
