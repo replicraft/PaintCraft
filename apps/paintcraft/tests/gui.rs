@@ -393,3 +393,6 @@ mod studio_zoom;
 
 #[path = "gui/studio_pan.rs"]
 mod studio_pan;
+
+#[path = "gui/studio_overscroll.rs"]
+mod studio_overscroll;
