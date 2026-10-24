@@ -1,6 +1,7 @@
 //! Desktop appearance integration.
 
 use super::*;
+use paintcraft_ui::i18n::set_language;
 
 impl App {
     /// Load saved settings from `dir`. With no saved Classic variant the first-visit
@@ -121,7 +122,7 @@ impl App {
             Some(Confirm::Settings(draft)) => draft.values.language,
             _ => self.settings.language,
         };
-        paintcraft_ui::i18n::set_language(ctx, language);
+        set_language(ctx, language);
         let theme = appearance.resolve(ctx.system_theme());
         if self.applied_variant == Some((experience, v, appearance, theme)) {
             return;

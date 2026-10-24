@@ -7,6 +7,7 @@ mod colors;
 mod text;
 pub use paintcraft_classic::canvas_size::{CanvasDefaults, DEFAULT_SIZE, SIZE_MAX};
 
+use paintcraft_ui::i18n::Language;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -27,7 +28,7 @@ pub enum Experience {
 pub struct Settings {
     pub experience: Experience,
     pub appearance: Appearance,
-    pub language: paintcraft_ui::i18n::Language,
+    pub language: Language,
     pub text: paintcraft_classic::TextOptions,
     /// `None` until the first-visit picker has been answered.
     pub classic_variant: Option<ClassicVariant>,
@@ -128,7 +129,7 @@ fn parse(bytes: &[u8]) -> Result<Settings, String> {
         None => Default::default(),
         Some(value) => value
             .as_str()
-            .and_then(paintcraft_ui::i18n::Language::parse)
+            .and_then(Language::parse)
             .ok_or("unknown language")?,
     };
     Ok(Settings {

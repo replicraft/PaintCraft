@@ -1,6 +1,6 @@
 //! Application settings with reversible theme preview and explicit adoption.
 use super::*;
-use paintcraft_ui::i18n::{tr, tr_format};
+use paintcraft_ui::i18n::{picker, tr, tr_format};
 use paintcraft_ui::icons::Icon;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -290,7 +290,7 @@ fn card(ui: &mut egui::Ui, heading: &str, contents: impl FnOnce(&mut egui::Ui)) 
 
 fn appearance(ui: &mut egui::Ui, values: &mut Settings) {
     card(ui, "App language", |ui| {
-        paintcraft_ui::i18n::picker(ui, &mut values.language);
+        picker(ui, &mut values.language);
     });
     card(ui, "App theme", |ui| {
         ui.weak(tr(

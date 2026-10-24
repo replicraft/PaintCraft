@@ -5,6 +5,7 @@ use paintcraft_core::types::{
     Rgba,
     json::{self, Value},
 };
+use paintcraft_ui::i18n::Language;
 
 #[cfg(target_arch = "wasm32")]
 const KEY: &str = "paintcraft.web.preferences.v1";
@@ -17,7 +18,7 @@ pub(crate) struct Preferences {
     pub custom_colors: CustomColors,
     pub theme: Option<Theme>,
     pub default_font: String,
-    pub language: paintcraft_ui::i18n::Language,
+    pub language: Language,
 }
 impl Default for Preferences {
     fn default() -> Self {
@@ -87,7 +88,7 @@ impl Preferences {
             None => Default::default(),
             Some(value) => value
                 .as_str()
-                .and_then(paintcraft_ui::i18n::Language::parse)
+                .and_then(Language::parse)
                 .ok_or("unknown language")?,
         };
         Ok(Self {

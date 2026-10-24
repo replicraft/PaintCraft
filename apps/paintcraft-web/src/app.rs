@@ -11,7 +11,7 @@ use eframe::egui;
 use paintcraft_classic::{ClassicVariant, Controls, Workspace};
 use paintcraft_tools::{Action as Edit, Tool, ToolOptions};
 use paintcraft_ui::actions::{Action, Context, Frontend, ViewAction};
-use paintcraft_ui::i18n::{tr, tr_status};
+use paintcraft_ui::i18n::{picker, set_language, tr, tr_status};
 
 #[derive(Debug)]
 pub struct WebApp {
@@ -40,7 +40,7 @@ impl WebApp {
             ctx.set_theme(theme);
         }
         let (width, height) = preferences.canvas.new_size();
-        paintcraft_ui::i18n::set_language(ctx, preferences.language);
+        set_language(ctx, preferences.language);
         paintcraft_ui::fonts::install(ctx);
         paintcraft_ui::theme::apply(ctx, ctx.theme());
         Self {
@@ -489,7 +489,7 @@ impl WebApp {
             let mut theme_changed = false;
             let previous_font = self.preferences.default_font.clone();
             egui::Window::new(tr(ctx, "Web settings")).open(&mut self.settings).resizable(false).show(ctx, |ui| {
-                paintcraft_ui::i18n::picker(ui, &mut self.preferences.language);
+                picker(ui, &mut self.preferences.language);
                 let mut dark = ctx.theme() == egui::Theme::Dark;
                 if ui.checkbox(&mut dark, tr(ui.ctx(), "Dark mode")).changed() {
                     let theme = if dark { egui::Theme::Dark } else { egui::Theme::Light };
@@ -507,7 +507,7 @@ impl WebApp {
                 ui.label(tr(ui.ctx(), "Browser limits: 4 megapixels, 8192 points per stroke; 64 MiB history budget (older entries may be trimmed)."));
             });
             if previous_language != self.preferences.language {
-                paintcraft_ui::i18n::set_language(ctx, self.preferences.language);
+                set_language(ctx, self.preferences.language);
             }
             if previous_font != self.preferences.default_font {
                 self.text
