@@ -392,3 +392,47 @@ are in `assets/repo/classic-v7-selection-en-US.png`, `classic-v7-selection-ja.pn
 Japanese Windows 7 captures and the English Windows 10 capture were visually
 inspected. Exact pinned native Windows parity remains unqualified. Evidence is
 retained in ignored `docs/validation/historical-selection-menu-2026-10-24/`.
+
+## Historical Edit Colors dialog
+
+Windows 7/10 now use a separate compact, square dialog presentation on desktop
+and web. Basic colors are arranged in an eight-column grid, with a hue/saturation
+spectrum, a white-to-black luminosity rail, simultaneous HSL/RGB fields, a color
+preview and small fixed OK/Cancel buttons. PaintCraft retains all 28 custom slots
+and hex entry as extensions. Small windows stack and scroll the body while
+keeping the footer reachable. Windows 11 retains its existing dialog layout;
+shared basic/custom swatch labels now translate in Japanese too.
+
+The controls follow the [documented Windows color-dialog ranges](https://learn.microsoft.com/en-us/windows/win32/dlgbox/color-dialog-box):
+hue 0 through 239, saturation/luminosity 0 through 240. The historical picker uses
+HSL luminosity rather than HSV brightness. Named-color vectors, both endpoints
+and untouched-RGB preservation have explicit checks. ColorEditor staging and
+host source/owner checks remain shared, including Color 2 and custom-slot paths.
+
+The client layout was compared with Microsoft's [common-dialog illustration](https://learn.microsoft.com/en-us/windows/win32/dlgbox/images/colordialogboxxp.png).
+That illustration depicts XP, so it is a common-dialog baseline, not a pinned
+Windows 7 capture. Its rendered colors are quantized and were not used as exact
+RGB data. Conventional nominal palette values were cross-checked against the
+published numeric palette in [Wine's common-dialog source](https://github.com/wine-mirror/wine/blob/master/dlls/comdlg32/colordlg.c#L43).
+The spectrum and conversion use PaintCraft's existing HSL conversion; Wine's
+conversion implementation was not adopted. The dialog opens with all controls;
+partial/full view switching is not implemented. Exact Win32 integer rounding,
+system window decoration and per-build native parity remain unqualified. The
+Microsoft reference bitmap is not redistributed.
+
+All 245 regular native GUI tests and 62 browser library tests passed, with 55
+native captures ignored by the ordinary suite. All nine Classic library tests
+passed. Coverage includes native-range color editing, invalid hex rejection,
+accept/cancel, custom-slot staging, a 480 by 300 layout, preserved document/history,
+both historical skins/languages/themes, forced multipass rendering and accepting
+an untouched RGB color without HSL-grid quantization. Native/web all-target
+Clippy passed with warnings denied; the browser release distribution rebuilt.
+Translation, source-length and whitespace checks passed.
+
+Four actual offscreen captures are in
+`assets/repo/classic-v7-edit-colors-en-US.png`, `classic-v7-edit-colors-ja.png`,
+`classic-v10-edit-colors-en-US.png` and `classic-v10-edit-colors-ja.png`.
+English captures use light mode; Japanese captures use PaintCraft's dark theme.
+Windows 7 light/dark captures were visually inspected. These are app renders,
+not native Windows qualification. Raw evidence is retained in ignored
+`docs/validation/historical-color-dialog-2026-10-24/`.
