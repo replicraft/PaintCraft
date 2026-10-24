@@ -429,6 +429,7 @@
       "depends_on": ["T10", "T14"],
       "status": "partial",
       "evidence": [
+        "docs/validation/classic-layer-forms-gpu-2026-10-23/validation.json",
         "docs/validation/classic-layer-surfaces-gpu-2026-10-23/validation.json",
         "docs/validation/classic-tool-colors-native-2026-10-23/validation.json",
         "docs/validation/classic-stroke-size-gpu-2026-10-23/validation.json",

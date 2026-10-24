@@ -1,0 +1,24 @@
+{
+  "source_commit": "8d4fa5a965a1fe0835b366e3cde3b4ec3b5d9205",
+  "date": "2026-10-23",
+  "scope": "Classic Layers uses scoped 16-point body/button text and native form boundaries. Property captions share a measured column; fields are 40 points on desktop and 32 below 650-point window height. Header actions are 40 points, reducing to 32 in short panels. The list reserves 160 points for properties and permits a 40-point scrolled viewport instead of egui's default minimum. Studio retains its existing builders and metrics.",
+  "checks": {
+    "gui": "200 passed, 41 ignored. Extended long-name checks cover aligned property fields, desktop/compact heights, rendered 16-point captions and fields above the status bar, scoped global styling, fixed properties, single full-name tooltips and document/history isolation. Existing tests cover rename/opacity transactions and cancellation, scrolling, visibility, layer actions, mouse/Space selection and neutral selected-row feedback. Compact selection checks scroll each target into view.",
+    "gpu": "Existing actual-App Wgpu exporter passed and produced 14 captures. Four final light/dark desktop and compact captures were archived and visually reviewed; both fields are fully visible.",
+    "clippy": "cargo clippy --workspace --all-targets -- -D warnings passed",
+    "static": "cargo fmt --all -- --check, scripts/check_file_lengths.py and git diff --check passed"
+  },
+  "limitations": [
+    "Supplied references do not establish complete native Classic Layers panel geometry. These controls follow the shared Classic design conventions.",
+    "This does not qualify OS accessibility, exact native fidelity or new editing functionality. T15 and the full roadmap remain partial."
+  ],
+  "sha256": {
+    "clippy.log.gz": "9b78c963dc3a68b1d77f708c4e7382d81c765e16af479aa7fb5d7775b6be51f3",
+    "dark-row-idle.png": "aaefe62f89e9b5795411d1e6be272572f3af0e620751347c8d88b454f63acc75",
+    "dark-rows-compact.png": "b36cb86c9b7796c50ccc91f0257970b6dc45e7a2c5b30092774f2af81e3a1373",
+    "gpu.log.gz": "e185d5b8dfc88efae404ad2382b7db81c0c1d43bffe5787f3f50418c3e06e608",
+    "gui.log.gz": "593fb14b4c28c299ce1577acb91cf79d065b8a5a5c7f1a36982c271f20150416",
+    "light-row-idle.png": "4d562a974f47399c17217b94250b14ec198b9260405ecb2f86f0d9cb02e61620",
+    "light-rows-compact.png": "107db787ecc58441b5e23d98d75412fdbe1b0aec513f609d9e3db007cb710f85"
+  }
+}

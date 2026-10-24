@@ -11,6 +11,13 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest Classic Layers form work aligns property fields, raises body text to 16
+points, adds visible native form boundaries and keeps both editors above the
+status bar with adaptive compact metrics. All 200 ordinary GUI tests, the
+actual-App GPU exporter and strict workspace Clippy pass; four final captures
+were reviewed. See [the layer form record](validation/classic-layer-forms-gpu-2026-10-23/validation.json).
+Complete native panel fidelity and T15 remain partial.
+
 Latest Classic Layers work replaces the blue selected-row fill with the neutral
 Classic surface and accent outline, retaining thumbnails and native button input.
 All 200 ordinary GUI tests, the actual-App GPU exporter (14 captures) and strict
