@@ -402,3 +402,6 @@ mod keyboard_pan;
 
 #[path = "gui/auto_scroll.rs"]
 mod auto_scroll;
+
+#[path = "gui/fit_toggle.rs"]
+mod fit_toggle;

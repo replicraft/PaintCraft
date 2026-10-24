@@ -33,6 +33,7 @@ pub(super) struct DocumentState {
     pub(super) editor: Editor,
     session: SessionState,
     zoom: f32,
+    studio_fit: Option<view::StudioFit>,
     initial_fit: bool,
     pixel_grid: bool,
     pending_center: Option<(f32, f32)>,
@@ -54,6 +55,7 @@ impl DocumentState {
             editor,
             session: Default::default(),
             zoom: 1.0,
+            studio_fit: None,
             initial_fit: true,
             pixel_grid: false,
             pending_center: None,
@@ -76,6 +78,7 @@ impl DocumentState {
             app.editor.connect_editing(service.clone());
         }
         std::mem::swap(&mut self.zoom, &mut app.zoom);
+        std::mem::swap(&mut self.studio_fit, &mut app.studio_fit);
         std::mem::swap(&mut self.initial_fit, &mut app.initial_fit);
         std::mem::swap(&mut self.pixel_grid, &mut app.pixel_grid);
         std::mem::swap(&mut self.pending_center, &mut app.pending_center);

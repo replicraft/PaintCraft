@@ -2,6 +2,14 @@
 use super::*;
 use paintcraft_ui::actions::{ViewAction, ZOOM_MAX, ZOOM_MIN};
 
+#[derive(Clone, Copy, Debug)]
+pub(super) struct StudioFit {
+    document: Uuid,
+    size: (u32, u32),
+    previous: f32,
+    fitted: f32,
+}
+
 fn fit_scale(available: Vec2, size: Vec2, ppp: f32) -> f32 {
     ((available.x.max(1.0) / size.x.max(1.0)).min(available.y.max(1.0) / size.y.max(1.0)) * ppp)
         .clamp(ZOOM_MIN, ZOOM_MAX)
@@ -23,6 +31,10 @@ impl App {
 
     pub(super) fn set_zoom(&mut self, ctx: &egui::Context, zoom: f32, center: (f32, f32)) {
         self.editor.cancel_gesture();
+        self.studio.pan.cancel();
+        self.studio.zoom.cancel();
+        self.studio.auto_scroll.cancel();
+        self.studio_fit = None;
         self.zoom = zoom.clamp(ZOOM_MIN, ZOOM_MAX);
         self.pending_center = Some(center);
         ctx.request_repaint();
@@ -156,10 +168,27 @@ impl App {
                 } else {
                     0.0
                 };
-                let zoom = fit_scale(
-                    viewport.size() - Vec2::new(clearance + 24.0, 24.0),
-                    Vec2::new((area.x1 - area.x0) as f32, (area.y1 - area.y0) as f32),
-                    ppp,
+                let studio_toggle =
+                    action == ViewAction::FitWindow && self.experience() == Experience::Studio;
+                let restore = if studio_toggle {
+                    self.studio_fit.take().filter(|fit| {
+                        fit.document == self.editor.document().document_id
+                            && fit.size == self.editor.document().canvas
+                            && fit.fitted.to_bits() == self.zoom.to_bits()
+                    })
+                } else {
+                    None
+                };
+                let previous = self.zoom;
+                let zoom = restore.map_or_else(
+                    || {
+                        fit_scale(
+                            viewport.size() - Vec2::new(clearance + 24.0, 24.0),
+                            Vec2::new((area.x1 - area.x0) as f32, (area.y1 - area.y0) as f32),
+                            ppp,
+                        )
+                    },
+                    |fit| fit.previous,
                 );
                 self.set_zoom(
                     ctx,
@@ -169,6 +198,14 @@ impl App {
                         (area.y0 + area.y1) as f32 / 2.0,
                     ),
                 );
+                if studio_toggle && restore.is_none() {
+                    self.studio_fit = Some(StudioFit {
+                        document: self.editor.document().document_id,
+                        size: self.editor.document().canvas,
+                        previous,
+                        fitted: self.zoom,
+                    });
+                }
                 return;
             }
             ViewAction::PixelGrid
@@ -311,3 +348,7 @@ mod tests {
         assert_eq!(app.zoom, 0.5);
     }
 }
+
+#[cfg(test)]
+#[path = "view/fit_tests.rs"]
+mod fit_tests;

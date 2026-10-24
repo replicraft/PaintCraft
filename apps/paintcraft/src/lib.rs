@@ -218,6 +218,7 @@ pub struct App {
     /// CPU-backed flat display; native GPU surfaces deliberately have no host copy.
     rendered: Vec<u8>,
     zoom: f32,
+    studio_fit: Option<view::StudioFit>,
     initial_fit: bool,
     pixel_grid: bool,
     fullscreen: bool,
@@ -328,6 +329,7 @@ impl App {
             preview_start_revision: 0,
             rendered: Vec::new(),
             zoom: 1.0,
+            studio_fit: None,
             initial_fit: true,
             pixel_grid: false,
             fullscreen: false,
