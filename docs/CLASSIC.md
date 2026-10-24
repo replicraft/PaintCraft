@@ -831,7 +831,7 @@ including disabled previews, submenu anchors and Zoom children. The shared
 menu helper keeps its colorful default; shared action metadata, gates, shortcuts
 and checks retain their existing path. Colored/chrome sources and shape variants
 keep separate texture identities in the bounded cache. The 23 new menu sources
-and manifest are reproduced by `scripts/generate_classic_menu_icons.py`.
+and manifest are checked in alongside the other icon assets.
 All 164 window-free UI tests, six icon tests, two wgpu-backed menu capture tests
 and strict workspace Clippy pass; see [the outline-menu record](validation/menu-outlines-gpu-2026-10-22/validation.json).
 Raw light/dark File/Edit comparisons and View/Zoom scenes are archived. Source
@@ -1180,7 +1180,7 @@ All 199 ordinary GUI tests pass (41 opt-in tests ignored), together with 23 shar
 
 ### Restored tool icon color accents (2026-10-23)
 
-The earlier monochrome Tools treatment is superseded by six pairs of original light/dark SVGs. Pencil keeps a gold shaft, Fill and Eyedropper keep cyan details, Eraser keeps pink, and Magnifier keeps a blue plus. Text uses neutral themed ink. The ribbon and Settings Text navigation use untinted artwork, preserving these colors. Button geometry, selected surfaces, availability and routing remain unchanged. Regenerate with `python3 scripts/generate_classic_tool_icons.py`.
+The earlier monochrome Tools treatment is superseded by six pairs of original light/dark SVGs. Pencil keeps a gold shaft, Fill and Eyedropper keep cyan details, Eraser keeps pink, and Magnifier keeps a blue plus. Text uses neutral themed ink. The ribbon and Settings Text navigation use untinted artwork, preserving these colors. Button geometry, selected surfaces, availability and routing remain unchanged.
 
 All 199 ordinary GUI tests and 23 shared UI unit tests pass; strict workspace Clippy passes. Multi-density tests cover color families, identical theme coverage and separate cache identities. Two native Wgpu windows were launched with isolated settings/recovery directories and their light/dark framebuffers reviewed. Logs, reference hashes and captures are recorded in `docs/validation/classic-tool-colors-native-2026-10-23/validation.json`. This corrects reference color families; exact Windows fidelity and T15 remain partial.
 
