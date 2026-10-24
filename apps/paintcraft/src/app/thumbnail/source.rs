@@ -53,9 +53,12 @@ impl Source {
 
     pub fn capture(editor: &controller::Editor) -> Self {
         let doc = editor.document_snapshot();
-        let preview = editor
-            .preview_snapshot()
-            .filter(|preview| !matches!(preview.as_ref(), Preview::Marquee { .. }));
+        let preview = editor.preview_snapshot().filter(|preview| {
+            !matches!(
+                preview.as_ref(),
+                Preview::Marquee { .. } | Preview::SelectionPath { .. }
+            )
+        });
         // Read after the main canvas has retained its snapshot: no second path
         // clone or command construction is needed on the UI thread.
         let scope = Scope {

@@ -19,6 +19,9 @@ impl App {
         self.context = ctx.clone();
         let first_pass = ctx.current_pass_index() == 0;
         if first_pass {
+            if self.document_count() == 0 {
+                self.selection_outline.clear();
+            }
             let title = self.document_window_title();
             if title != self.window_title {
                 ctx.send_viewport_cmd(egui::ViewportCommand::Title(title.clone()));

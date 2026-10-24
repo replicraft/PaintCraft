@@ -70,6 +70,17 @@ impl Editor {
         }
     }
     pub(super) fn move_paint_pointer(&mut self, at: (i64, i64), subpixel: bool) {
+        if self.tools.gesture_is_lasso() {
+            let result = if subpixel {
+                self.tools.try_pointer_move_subpixel(at, 65_536, 65_536)
+            } else {
+                self.tools.try_pointer_move(at, 65_536, 65_536)
+            };
+            if let Err(error) = result {
+                self.status = error.message;
+            }
+            return;
+        }
         if self.editing.is_none() || !self.tools.gesture_is_path() {
             if subpixel {
                 self.tools.pointer_move_subpixel(at);

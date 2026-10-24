@@ -40,6 +40,18 @@ impl App {
             layer_visible,
             zoom: self.zoom,
             pixel_grid: self.pixel_grid,
+            can_transform_image: !matches!(self.editor.selection(), Selection::Mask(_)),
+            can_erase_selection: match self.editor.selection() {
+                Selection::Rect(r) => r.intersect(&self.editor.document().canvas_rect()).is_some(),
+                Selection::Mask(mask) => {
+                    mask.uniform_coverage() != Some(0)
+                        && mask
+                            .domain()
+                            .intersect(&self.editor.document().canvas_rect())
+                            .is_some()
+                }
+                _ => false,
+            },
             can_fit_selection: matches!(self.editor.selection(), Selection::Rect(_)),
             can_crop_selection: matches!(self.editor.selection(),Selection::Rect(rect) if rect.intersect(&self.editor.document().canvas_rect()).is_some()),
             status_bar: self.settings.classic_status_bar,
@@ -195,6 +207,10 @@ impl App {
                 }),
                 Chrome::Interface => self.picking = Some(self.variant()),
                 Chrome::SelectTool(tool) => self.editor.select_tool(tool),
+                Chrome::InvertSelection => {
+                    self.editor.cancel_gesture();
+                    self.request(ctx, action.activation_code(), Action::InvertSelection);
+                }
                 Chrome::SelectAll => {
                     let (w, h) = self.editor.document().canvas;
                     self.request(

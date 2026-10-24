@@ -411,3 +411,6 @@ mod save_all;
 
 #[path = "gui/recent.rs"]
 mod recent;
+
+#[path = "gui/lasso.rs"]
+mod lasso;

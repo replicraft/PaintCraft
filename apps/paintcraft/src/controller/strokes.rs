@@ -77,6 +77,7 @@ pub(crate) struct PreviewPreparation {
 impl PreviewPreparation {
     pub(crate) fn possible_preview(&self) -> bool {
         match self.preview.as_deref() {
+            Some(Preview::Marquee { .. } | Preview::SelectionPath { .. }) => false,
             Some(Preview::Text { text, .. }) if text.is_empty() => false,
             Some(_) => true,
             None => false,

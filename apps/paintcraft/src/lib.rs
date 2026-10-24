@@ -51,6 +51,8 @@ mod resize_skew;
 #[path = "app/save_all.rs"]
 mod save_all;
 mod saving;
+#[path = "app/selection_ui.rs"]
+mod selection_ui;
 pub mod settings;
 #[path = "app/status.rs"]
 mod status;
@@ -201,6 +203,7 @@ pub struct App {
     budget_wakes: Option<residency::BudgetWakes>,
     cpu_renderer: cpu_rendering::CpuRenderer,
     layer_thumbnails: layer_thumbnails::LayerThumbnails,
+    selection_outline: paintcraft_raster::selection::OutlineCache,
     thumbnail: thumbnail::Thumbnail,
     pending_frame: Option<(RenderKey, JobHandle)>,
     dialogs: Option<NativeDialogs>,
@@ -318,6 +321,7 @@ impl App {
             budget_wakes: None,
             cpu_renderer: cpu_rendering::CpuRenderer::new(),
             layer_thumbnails: Default::default(),
+            selection_outline: Default::default(),
             thumbnail: Default::default(),
             pending_frame: None,
             dialogs: None,

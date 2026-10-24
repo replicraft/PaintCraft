@@ -81,13 +81,7 @@ fn historical_selection_menu_has_compact_sections_and_executes_real_delete_and_u
                         .expect("visible historical selection caption");
                     assert_eq!(text.galley.job.sections[0].format.font_id.size, 12.0);
                 }
-                for name in [
-                    "Free-form selection",
-                    "Invert selection",
-                    "Transparent selection",
-                    "Delete",
-                    "Deselect",
-                ] {
+                for name in ["Transparent selection", "Delete", "Deselect"] {
                     assert!(
                         h.get_by_role_and_label(Role::Button, &label(name))
                             .accesskit_node()
@@ -98,18 +92,18 @@ fn historical_selection_menu_has_compact_sections_and_executes_real_delete_and_u
                     style.interaction.tooltip_delay = 0.0;
                     style.interaction.show_tooltips_only_when_still = false;
                 });
-                h.get_by_role_and_label(Role::Button, &label("Free-form selection"))
+                h.get_by_role_and_label(Role::Button, &label("Transparent selection"))
                     .hover();
                 h.run();
                 assert_eq!(
                     h.query_all_by_role_and_label(
                         Role::Label,
-                        &label("Free-form selection is not available yet.")
+                        &label("Transparent selection is not available yet.")
                     )
                     .count(),
                     1
                 );
-                h.get_by_role_and_label(Role::Button, &label("Free-form selection"))
+                h.get_by_role_and_label(Role::Button, &label("Transparent selection"))
                     .click();
                 h.run();
                 assert!(h.state().editor().document().same_semantics(&snapshot));

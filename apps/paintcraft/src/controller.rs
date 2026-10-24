@@ -24,6 +24,8 @@ mod picker;
 mod pointer;
 #[path = "controller/preview_cache.rs"]
 mod preview_cache;
+#[path = "controller/selection.rs"]
+mod selection;
 use paintcraft_tools::commands as raster_commands;
 pub(crate) use preview_cache::Stamp as PreviewStamp;
 pub(crate) use strokes::PreviewPreparation;
@@ -535,6 +537,8 @@ impl Editor {
 
     fn execute(&mut self, action: Action) {
         match action {
+            Action::SelectPolygon { points } => self.select_polygon(&points),
+            Action::InvertSelection => self.invert_selection(),
             Action::PickColor(pick) => self.pick_color(pick),
             Action::CropToSelection => self.crop_to_selection(),
             Action::EraseSelection { color } => self.erase_selection(color),

@@ -42,6 +42,8 @@ fn elided_classic_status_fields_show_one_complete_tooltip() {
                         pixel_grid: false,
                         can_fit_selection: true,
                         can_crop_selection: true,
+                        can_erase_selection: true,
+                        can_transform_image: true,
                         status_bar: true,
                         rulers: false,
                         fullscreen: false,

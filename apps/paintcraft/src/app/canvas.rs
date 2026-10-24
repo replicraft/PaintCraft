@@ -383,7 +383,7 @@ impl App {
     }
 
     /// Display-only feedback: the committed selection and the unpublished gesture.
-    pub(super) fn draw_overlays(&self, painter: &egui::Painter, view: &View, ppp: f32) {
+    pub(super) fn draw_overlays(&mut self, painter: &egui::Painter, view: &View, ppp: f32) {
         let screen = |p: (i64, i64)| {
             let s = view.to_screen(p);
             Pos2::new(s.0, s.1)
@@ -408,6 +408,7 @@ impl App {
                 egui::StrokeKind::Outside,
             );
         };
+        self.draw_mask_overlay(painter, view, ppp);
         if let Selection::Rect(r) = self.editor.selection() {
             ants(box_of((r.x0, r.y0), (r.x1 - 1, r.y1 - 1)));
         }
@@ -422,6 +423,17 @@ impl App {
             Some(
                 Preview::Path(_) | Preview::Paths(_) | Preview::Shape { .. } | Preview::Contour(_),
             ) => {} // Staged raster pixels, not vector approximations.
+            Some(Preview::SelectionPath { points }) => {
+                let path: Vec<_> = points.into_iter().map(screen).collect();
+                painter.add(egui::Shape::closed_line(
+                    path.clone(),
+                    egui::Stroke::new(3.0 / ppp, Color32::WHITE),
+                ));
+                painter.add(egui::Shape::closed_line(
+                    path,
+                    egui::Stroke::new(1.0 / ppp, Color32::BLACK),
+                ));
+            }
             Some(Preview::Marquee { from, to }) => ants(box_of(from, to)),
             Some(Preview::Text {
                 style: Some(style),

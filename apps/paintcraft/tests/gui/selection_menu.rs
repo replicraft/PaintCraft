@@ -154,20 +154,19 @@ fn classic_selection_menu_has_aligned_rows_safe_previews_and_reachable_actions()
                 .accesskit_node()
                 .is_disabled()
         );
-        for (label, tooltip) in [
-            (
-                "Free-form selection",
-                "Free-form selection is not available yet.",
-            ),
-            (
-                "Invert selection",
-                "Inverting selections is not available yet.",
-            ),
-            (
+        for label in ["Free-form selection", "Invert selection"] {
+            assert!(
+                !h.get_by_role_and_label(Role::Button, "Selection options")
+                    .get_by_label(label)
+                    .accesskit_node()
+                    .is_disabled()
+            );
+        }
+        {
+            let (label, tooltip) = (
                 "Transparent selection",
                 "Transparent selection is not available yet.",
-            ),
-        ] {
+            );
             reveal(&mut h, label);
             assert!(
                 h.get_by_role_and_label(Role::Button, "Selection options")

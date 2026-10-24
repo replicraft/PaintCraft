@@ -55,6 +55,7 @@ fn shortcut(action: Chrome, frontend: Frontend) -> Option<&'static str> {
         Chrome::Redo => "meta+shift+KeyZ",
         Chrome::SelectAll => "meta+KeyA",
         Chrome::Deselect => "meta+KeyD",
+        Chrome::InvertSelection => "meta+KeyI",
         Chrome::View(ViewAction::ZoomIn) => "meta+Equal",
         Chrome::View(ViewAction::ZoomOut) => "meta+Minus",
         Chrome::View(ViewAction::ActualSize) => "meta+Digit0",
