@@ -319,3 +319,41 @@ checks passed. Real `assets/repo/classic-v7-text.png` and
 Native Text Tools artwork, exact contextual-header geometry and full Windows
 parity remain unqualified. Raw evidence is in the ignored
 `docs/validation/historical-text-ribbon-2026-10-24/` directory.
+
+## Historical Color 1/Color 2 workflow
+
+The historical palette now has an active color well. A single click on Color 1
+or Color 2 selects that target; left-clicking a standard or saved custom swatch
+changes the selected color. Right-clicking a swatch continues to set Color 2.
+The selected well has the skin's gold/blue treatment and accessible selected
+state. Empty custom slots use the ribbon background, distinguishing them from
+saved white colors. The 20 standard RGB values and named tooltips are retained;
+palette accessible labels now translate the Color prefix in Japanese too.
+
+Edit Colors follows the active well. An empty custom slot carries an explicit
+primary/secondary target through the UI action outbox to the native/browser
+staged editor. Cancel retains both colors and custom slots; OK adopts only the
+intended color. Double-clicking a well or swatch opens its editor, and a saved
+custom swatch retains its slot when reopened. These changes affect tool
+preferences, not document pixels/history. Windows 11 keeps its existing
+well-click behavior. The Edit Colors dialog itself still uses the shared Classic
+presentation; native Windows 7/10 dialog fidelity is not claimed.
+
+Native regressions cover both historical skins, English/Japanese, light/dark
+and normal/forced multipass input, standard/custom swatches, acceptance,
+cancellation and unchanged document/history. A separate pointer regression uses
+60 Hz input to distinguish a custom-swatch double-click from the earlier well
+activation, and verifies the existing slot is updated for Color 2. Browser UI
+regressions exercise secondary custom-slot acceptance/cancellation in both
+historical skins and languages. Action metadata checks verify unique primary and
+secondary slot activation codes and frontend/modal gates.
+
+The full native GUI run passed 240 regular tests; the final double-click
+regression passed separately after its addition. All 60 browser library tests
+and 27 shared UI tests passed, with one shared UI capture ignored. Native/web
+all-target Clippy passed with warnings denied, the browser release distribution
+rebuilt, and translation/source-length/whitespace checks passed. Real captures
+are `assets/repo/classic-v7-color2.png` and `classic-v10-color2.png`; the Windows 7
+capture was visually inspected. This does not establish pinned native Paint
+behavioral parity. Evidence, including pointer-timing diagnostics, is retained in
+ignored `docs/validation/historical-palette-2026-10-24/`.
