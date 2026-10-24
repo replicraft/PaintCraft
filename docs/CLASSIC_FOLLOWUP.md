@@ -504,3 +504,34 @@ inspected. The supplied Windows 7 reference pack was reviewed for the surroundin
 ribbon, but contains no separately pinned Resize and Skew dialog: this layout is
 not qualified as exact native parity. Raw evidence is retained in ignored
 `docs/validation/historical-resize-2026-10-24/`.
+
+### Historical Rotate menu (2026-10-24)
+
+The Windows 7/10 Image group's Rotate menu now uses compact 24-pixel icon rows,
+12-point text, square popup styling and a separator between rotation and flip
+commands. Windows 7 light-mode hover uses the shared gold glossy surface. The
+selection popup's existing row renderer was moved into the historical surface
+module and reused, retaining its accessibility labels, selection markers and
+shortcut rendering. Win 11's Rotate/Flip menus retain their own presentation.
+
+The five entries still dispatch the canonical typed TransformImage actions.
+Desktop/web regression tests exercise every operation on the whole image and a
+rectangular selection, both historical skins and both languages. They check exact
+known-pixel destinations, raw hidden RGB in web, canvas dimensions, one history
+entry, popup closure and semantic Undo with selection restoration. The browser
+assertions account for layer origins when preserved off-canvas extents rotate.
+No transform engine semantics changed.
+
+All 248 ordinary desktop GUI tests pass (58 manual/capture tests ignored).
+All 66 browser library tests pass. The focused desktop transform test passes with
+forced multipass rendering. Native/web all-target Clippy passes with warnings
+denied; the browser release distribution rebuilds. Translation, source-length and
+whitespace checks pass.
+
+Actual app captures are in `assets/repo/classic-v7-rotate-en-US.png`,
+`classic-v7-rotate-ja.png`, `classic-v10-rotate-en-US.png` and
+`classic-v10-rotate-ja.png`; both Windows 7 captures were visually inspected.
+The supplied `windows7/mspaint7-topbar.jpeg` reference was inspected for ribbon
+placement. A pinned native popup comparison remains absent, so this change does
+not qualify complete historical skin parity. Evidence logs are retained in
+ignored `docs/validation/historical-rotate-2026-10-24/`.
