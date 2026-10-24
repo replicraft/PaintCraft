@@ -8,6 +8,8 @@ mod canvas;
 mod canvas_settings;
 #[path = "app/chrome.rs"]
 mod chrome;
+#[path = "app/clipboard.rs"]
+mod clipboard;
 #[path = "app/colors.rs"]
 mod colors;
 pub mod controller;
@@ -215,6 +217,7 @@ pub struct App {
     pending_frame: Option<(RenderKey, JobHandle)>,
     dialogs: Option<NativeDialogs>,
     printer: paintcraft_platform::printing::PrintService,
+    clipboard: clipboard::State,
     dialog_owner: Option<Uuid>,
     export_dialog_quality: Option<u8>,
     texture: Option<egui::TextureHandle>,
@@ -336,6 +339,7 @@ impl App {
             pending_frame: None,
             dialogs: None,
             printer: Default::default(),
+            clipboard: Default::default(),
             dialog_owner: None,
             export_dialog_quality: None,
             texture: None,

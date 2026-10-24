@@ -15,6 +15,10 @@ impl App {
         let ctx = ui.ctx().clone();
         self.handle_canvas_wheel(ui);
         let events = ui.input(|i| i.events.clone());
+        let copy_key = events.iter().any(|event| {
+            matches!(event,
+            egui::Event::Key {key: egui::Key::C, pressed:true, modifiers, ..} if modifiers.command)
+        });
         let widget_focus = ctx.egui_wants_keyboard_input();
         let popup_open = egui::Popup::is_any_open(&ctx);
         let picker_open = self.picking.is_some();
@@ -25,6 +29,11 @@ impl App {
                 && !popup_open
                 && !picker_open;
             match event {
+                egui::Event::Copy
+                    if !copy_key && !widget_focus && !self.ime_composing && !text_focus =>
+                {
+                    self.copy_requested(&ctx);
+                }
                 egui::Event::Ime(egui::ImeEvent::Preedit { text, .. }) => {
                     self.ime_composing = !text.is_empty();
                 }
@@ -48,6 +57,7 @@ impl App {
                         self.editor.type_text("\n");
                     }
                     egui::Key::Backspace if text_focus => self.editor.backspace(),
+                    egui::Key::C if modifiers.command && text_focus => {}
                     _ if repeat => {}
                     egui::Key::Enter if modifiers.command && text_focus => {
                         self.editor.commit_text();

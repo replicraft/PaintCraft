@@ -50,6 +50,7 @@ impl App {
             self.poll_native_menu(&ctx);
             self.poll_dialog(&ctx);
             self.poll_print(&ctx);
+            self.poll_clipboard(&ctx);
             if !self.closing_workspace
                 && self.confirm.is_none()
                 && self.tab_closing.is_none()

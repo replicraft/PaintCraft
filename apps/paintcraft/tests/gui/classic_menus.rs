@@ -89,7 +89,14 @@ fn classic_file_exposes_native_print_and_keeps_unimplemented_actions_disabled() 
     }
     h.get_by_role_and_label(Role::Button, "Edit").hover();
     h.run();
-    for label in ["Cut", "Copy", "Paste", "Copy visible layers"] {
+    assert_eq!(
+        h.query_all_by_label_contains("Copy")
+            .filter(|node| node.accesskit_node().role() == Role::Button
+                && !node.accesskit_node().is_disabled())
+            .count(),
+        1
+    );
+    for label in ["Cut", "Paste", "Copy visible layers"] {
         assert!(h.get_by_label(label).accesskit_node().is_disabled());
     }
     assert!(h.state().editor().document().same_semantics(&before));

@@ -175,7 +175,9 @@ impl App {
         for action in self.chrome_outbox.drain() {
             // Earlier events in a coalesced frame may have queued an edit or
             // history move. Its result determines this action's enabled state.
-            self.editor.run_pending();
+            if action != paintcraft_ui::chrome::Action::Copy {
+                self.editor.run_pending();
+            }
             if !action.enabled(self.action_context()) {
                 continue;
             }
@@ -197,6 +199,7 @@ impl App {
                 Chrome::SaveAs => self.request_dialog(ctx, Kind::SaveAs),
                 Chrome::Export => self.export_requested(ctx),
                 Chrome::Print => self.print_requested(ctx),
+                Chrome::Copy => self.copy_requested(ctx),
                 Chrome::ExportImage(format) => self.export_image_requested(ctx, format),
                 Chrome::Undo => self.request(ctx, code::UNDO, Action::Undo),
                 Chrome::Redo => self.request(ctx, code::REDO, Action::Redo),
