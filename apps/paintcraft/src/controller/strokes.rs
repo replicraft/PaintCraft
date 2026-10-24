@@ -1,7 +1,7 @@
 //! Brush command construction shared by preview and publication.
 
 use super::*;
-use paintcraft_tools::{BlendMode, Stroke};
+use paintcraft_tools::{BlendMode, Stroke, commands::stroke_operations};
 
 #[cfg(test)]
 #[path = "strokes/tests.rs"]
@@ -58,68 +58,6 @@ impl Editor {
             },
         );
     }
-}
-
-fn stroke_operations(stroke: &Stroke, check: &impl Fn() -> Result<()>) -> Result<Vec<Value>> {
-    check()?;
-    let Stroke {
-        layer,
-        points,
-        color,
-        size,
-        round,
-        point_scale,
-        mode,
-    } = stroke;
-    if points.is_empty() {
-        return Ok(Vec::new());
-    }
-    // Long gestures are split across operations; each starts on the previous
-    // chunk's last point so the path stays connected. A translucent colour
-    // blends the joint's stamp twice, once per operation.
-    let mut ops = Vec::new();
-    let mut start = 0;
-    while start < points.len() && ops.len() < OPS_PER_BATCH {
-        check()?;
-        let end = (start + POINTS_PER_OP).min(points.len());
-        let mut values = Vec::new();
-        values.try_reserve_exact(end - start).map_err(|_| {
-            paintcraft_core::types::Error::new(
-                paintcraft_core::types::ErrorCode::ResourceLimit,
-                "cannot prepare stroke point values",
-            )
-        })?;
-        for (index, p) in points[start..end].iter().enumerate() {
-            if index % 256 == 0 {
-                check()?;
-            }
-            values.push(point(*p));
-        }
-        ops.push(Value::object([
-            ("op", Value::str("raster.stroke_path")),
-            ("layer_ref", layer_ref(*layer)),
-            ("points", Value::Array(values)),
-            ("color", Value::str(color.to_hex())),
-            (
-                "mode",
-                Value::str(match mode {
-                    BlendMode::Replace => "replace",
-                    BlendMode::SourceOver => "source-over",
-                }),
-            ),
-            ("size", Value::Int(i64::from(*size))),
-            ("point_scale", Value::Int(i64::from(*point_scale))),
-            (
-                "brush",
-                Value::str(if *round { "smooth-round" } else { "square" }),
-            ),
-        ]));
-        if end == points.len() {
-            break;
-        }
-        start = end - 1;
-    }
-    Ok(ops)
 }
 
 /// Owned render input. Capturing it does not parse commands or rasterize fonts.

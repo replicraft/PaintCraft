@@ -22,10 +22,9 @@ mod paint_queue;
 mod pointer;
 #[path = "controller/preview_cache.rs"]
 mod preview_cache;
+use paintcraft_tools::commands as raster_commands;
 pub(crate) use preview_cache::Stamp as PreviewStamp;
 pub(crate) use strokes::PreviewPreparation;
-#[path = "controller/raster_commands.rs"]
-mod raster_commands;
 #[path = "controller/residency.rs"]
 mod residency;
 #[path = "controller/retry.rs"]
@@ -53,11 +52,6 @@ use paintcraft_formats::{pcnd, save};
 use uuid::Uuid;
 
 use paintcraft_ui::outbox::{Outbox, Token};
-
-/// Points per `raster.pencil_path` operation (the schema maximum).
-const POINTS_PER_OP: usize = 65_536;
-/// Operations per batch (the schema maximum); longer gestures are cut off.
-const OPS_PER_BATCH: usize = 1024;
 
 use paintcraft_tools::ToolState;
 pub use paintcraft_tools::{Action, Preview, ShapeStyle, Tool, ToolOptions};

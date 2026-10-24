@@ -1,4 +1,5 @@
 //! Tool state machines produce intentions; the application publishes them.
+pub mod commands;
 mod geometry;
 mod path_admission;
 mod preview_revision;
