@@ -29,7 +29,12 @@ fn classic_main_menu_rows_have_contiguous_hit_targets_and_readable_text() {
                 .rect();
             let second = if menu == "Edit" {
                 h.get_by_role_and_label(Role::Button, menu)
-                    .get_by_role_and_label(Role::Button, labels[1])
+                    .query_all_by_label_contains(labels[1])
+                    .find(|node| {
+                        node.accesskit_node().role() == Role::Button
+                            && !node.accesskit_node().is_disabled()
+                    })
+                    .expect("enabled Copy row with its shortcut")
                     .rect()
             } else {
                 h.get_by_role_and_label(Role::Button, menu)
