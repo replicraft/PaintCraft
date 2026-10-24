@@ -72,3 +72,24 @@ fn invalid_requests_scratch_overflow_and_cancellation_fail_before_publication() 
     );
     assert!(coverage(&[], 16, 1, BrushMedia::Oil, clip, &|| Ok(())).is_err());
 }
+
+#[test]
+fn artistic_strokes_deplete_and_spray_has_discrete_particles() {
+    let clip = Rect::new(0, 0, 320, 64).unwrap();
+    for media in [BrushMedia::Oil, BrushMedia::Watercolor] {
+        let stroke = pixels(media, &[(16, 32), (300, 32)], clip);
+        let early: u64 = (12..=20)
+            .filter_map(|x| stroke.get(&(x, 32)))
+            .map(|&a| u64::from(a))
+            .sum();
+        let late: u64 = (200..=208)
+            .filter_map(|x| stroke.get(&(x, 32)))
+            .map(|&a| u64::from(a))
+            .sum();
+        assert!(early > 0);
+        assert_eq!(late, 0, "{media:?} should run out along a long stroke");
+    }
+    let spray = pixels(BrushMedia::Airbrush, &[(16, 32)], clip);
+    assert!(spray.values().any(|&alpha| alpha == 255));
+    assert!((12..=20).any(|x| !spray.contains_key(&(x, 32))));
+}

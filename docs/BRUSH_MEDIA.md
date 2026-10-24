@@ -9,12 +9,12 @@ same coverage and transaction implementation.
 | Brush | Existing antialiased round brush |
 | Calligraphy brush | Broad diagonal elliptical nib |
 | Calligraphy pen | Opposite diagonal nib |
-| Airbrush | Soft radial falloff |
-| Oil brush | Bristle bands |
+| Airbrush | Discrete spray particles with radial density |
+| Oil brush | Bristle bands with distance-based depletion |
 | Crayon | Coarse grain with paper gaps |
 | Marker | Translucent rectangular nib |
 | Natural pencil | Fine, lighter grain with paper gaps |
-| Watercolor brush | Translucent, granulated coverage |
+| Watercolor brush | Translucent, granulated coverage with distance-based depletion |
 
 These are PaintCraft media, not reference-qualified simulations of Microsoft
 Paint's material engine. Oil does not mix existing pigment, watercolor does not
@@ -52,3 +52,6 @@ An independent JSON Schema validator and actual CLI apply processes agreed on al
 330 combinations of brush, point scale, mode and coordinate boundary in the local
 qualification matrix. The raw matrix is under
 `docs/validation/editor-finishing-2026-10-24/brush-schema-matrix.json` (ignored).
+
+The latest [Classic follow-up](CLASSIC_FOLLOWUP.md#brush-comparison) records the
+real Paint examples inspected and the limits of that visual comparison.

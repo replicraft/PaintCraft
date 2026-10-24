@@ -93,7 +93,7 @@ pub fn coverage(
     mask.resize(width * height, 0u8);
     let mut work = 0u64;
     let spacing = (f64::from(size) / 8.0).clamp(0.5, 8.0);
-    let mut dab = |cx: f64, cy: f64| -> Result<()> {
+    let mut dab = |cx: f64, cy: f64, travel: f64| -> Result<()> {
         let left = ((cx - radius - 1.0).floor() as i64).max(x0);
         let right = ((cx + radius + 1.0).ceil() as i64).min(x1);
         let top = ((cy - radius - 1.0).floor() as i64).max(y0);
@@ -107,6 +107,13 @@ pub fn coverage(
         if work > DAB_PIXELS_MAX {
             return Err(limit());
         }
+        // Artistic media run out of paint along a gesture. Travel is
+        // measured before viewport clipping, preserving its phase.
+        let charge = match media {
+            BrushMedia::Oil => (1.0 - travel / (f64::from(size) * 8.0)).clamp(0.0, 1.0),
+            BrushMedia::Watercolor => (1.0 - travel / (f64::from(size) * 6.0)).clamp(0.0, 1.0),
+            _ => 1.0,
+        };
         for y in top..bottom {
             check()?;
             for x in left..right {
@@ -118,16 +125,21 @@ pub fn coverage(
                     x + clip.x0,
                     y + clip.y0,
                 );
+                let alpha = (f64::from(alpha) * charge).round() as u8;
                 let dest = &mut mask[(y - y0) as usize * width + (x - x0) as usize];
                 *dest = (*dest).max(alpha);
             }
         }
         Ok(())
     };
-    dab(local(points[0]).0, local(points[0]).1)?;
+    dab(local(points[0]).0, local(points[0]).1, 0.0)?;
+    let mut travel = 0.0;
     for pair in points.windows(2) {
         check()?;
         let (a, b) = (local(pair[0]), local(pair[1]));
+        let length = (b.0 - a.0).hypot(b.1 - a.1);
+        let start = travel;
+        travel += length;
         let Some((lo, hi)) = clipped_segment(
             a,
             b,
@@ -137,7 +149,7 @@ pub fn coverage(
         ) else {
             continue;
         };
-        let count = ((b.0 - a.0).hypot(b.1 - a.1) / spacing).ceil().max(1.0) as u64;
+        let count = (length / spacing).ceil().max(1.0) as u64;
         let first = (lo * count as f64).floor() as u64;
         let last = (hi * count as f64).ceil() as u64;
         if last.saturating_sub(first) > DAB_PIXELS_MAX {
@@ -146,7 +158,11 @@ pub fn coverage(
         for i in first..=last {
             check()?;
             let t = i as f64 / count as f64;
-            dab(a.0 + (b.0 - a.0) * t, a.1 + (b.1 - a.1) * t)?;
+            dab(
+                a.0 + (b.0 - a.0) * t,
+                a.1 + (b.1 - a.1) * t,
+                start + length * t,
+            )?;
         }
     }
     let mut spans = Vec::new();
@@ -230,7 +246,14 @@ fn tip(media: BrushMedia, dx: f64, dy: f64, radius: f64, x: i64, y: i64) -> u8 {
     let edge = (radius + 0.5 - distance).clamp(0.0, 1.0);
     let normalized = (distance / radius).min(1.0);
     let density = match media {
-        BrushMedia::Airbrush => (1.0 - normalized * normalized).powi(2) * 0.45,
+        BrushMedia::Airbrush => {
+            // Discrete spray particles, rather than a uniformly translucent disc.
+            if grain < (1.0 - normalized * normalized).powi(2) * 0.48 {
+                1.0
+            } else {
+                0.0
+            }
+        }
         BrushMedia::Oil => 0.65 + 0.35 * ((x.rem_euclid(5) as f64) / 4.0),
         BrushMedia::Crayon => {
             if grain < 0.18 {
