@@ -46,6 +46,8 @@ pub(super) fn large_button(
         ui.ctx(),
         if icon == Icon::Paste {
             "Paste"
+        } else if icon == Icon::EditColors {
+            "Edit colors…"
         } else {
             action.descriptor_for(context.frontend).label
         },

@@ -249,3 +249,61 @@ fn default_size_cancel_does_not_change_startup_policy_or_document() {
     assert_eq!(h.state().editor.session.document().canvas, (1000, 486));
     assert!(!h.state().editor.session.is_dirty());
 }
+
+#[test]
+fn historical_browser_palette_targets_secondary_and_stages_custom_slot_adoption() {
+    use eframe::egui::Role;
+    use paintcraft_classic::ClassicVariant;
+    use paintcraft_ui::i18n::{Language, format_message, set_language, translate};
+    for variant in [ClassicVariant::V7, ClassicVariant::V10] {
+        for language in Language::ALL {
+            let mut h = harness();
+            h.state_mut().variant = variant;
+            set_language(&h.ctx, language);
+            h.run();
+            let label = |s| translate(language, s);
+            let snapshot = h.state().editor.session.snapshot();
+            let ticket = h.state().editor.session.ticket();
+            h.get_by_role_and_label(Role::ColorWell, &label("Fill color"))
+                .click();
+            h.run();
+            assert!(h.query_by_label(&label("Hex RGB")).is_none());
+            let slot = format_message(
+                language,
+                "Palette custom color { $number }",
+                &[("number", "6".into())],
+            );
+            for accept in [false, true] {
+                h.get_by_label(&slot).click();
+                h.run();
+                h.get_by_label(&label("Hex RGB")).focus();
+                h.run();
+                h.key_combination_modifiers(Modifiers::COMMAND, &[Key::A]);
+                h.run();
+                h.get_by_label(&label("Hex RGB")).type_text("#2080FF");
+                h.run();
+                h.get_by_label(&label("Add custom color")).click();
+                h.run();
+                assert_eq!(h.state().controls.secondary, Rgba([255; 4]));
+                assert!(h.state().workspace.custom_colors[5].is_none());
+                h.get_by_label(&label(if accept { "OK" } else { "Cancel" }))
+                    .click();
+                h.run();
+            }
+            assert_eq!(h.state().controls.primary, Rgba([0, 0, 0, 255]));
+            assert_eq!(h.state().controls.secondary, Rgba([32, 128, 255, 255]));
+            assert_eq!(
+                h.state().workspace.custom_colors[5],
+                Some(Rgba([32, 128, 255, 255]))
+            );
+            assert!(
+                h.state()
+                    .editor
+                    .session
+                    .document()
+                    .same_semantics(&snapshot)
+            );
+            assert_eq!(h.state().editor.session.ticket(), ticket);
+        }
+    }
+}

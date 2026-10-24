@@ -26,6 +26,7 @@ mod legacy_chrome;
 mod legacy_controls;
 mod legacy_file;
 mod legacy_palette;
+pub use legacy_palette::PaletteTarget;
 mod legacy_ribbon;
 mod legacy_size;
 mod legacy_surface;
@@ -48,6 +49,8 @@ pub struct Workspace {
     pub toolbar: ToolbarVisibility,
     /// Contextual Text tab is independent of the Home/View choice.
     pub legacy_text: bool,
+    /// Active color well in the historical palette.
+    pub palette_target: PaletteTarget,
     #[doc(hidden)]
     pub legacy_tool: Option<paintcraft_tools::Tool>,
     /// Current persisted custom colors supplied by the desktop host.

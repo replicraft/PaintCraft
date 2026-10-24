@@ -7,24 +7,58 @@ use paintcraft_ui::{
     icons::Icon,
 };
 
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum PaletteTarget {
+    #[default]
+    Primary,
+    Secondary,
+}
+impl PaletteTarget {
+    fn edit(self) -> Action {
+        match self {
+            Self::Primary => Action::EditColors,
+            Self::Secondary => Action::EditSecondaryColors,
+        }
+    }
+    fn custom(self, slot: u8) -> Action {
+        match self {
+            Self::Primary => Action::EditCustomColor(slot),
+            Self::Secondary => Action::EditSecondaryCustomColor(slot),
+        }
+    }
+    fn apply(self, state: &mut Controls, color: Rgba) {
+        match self {
+            Self::Primary => state.primary = color,
+            Self::Secondary => state.secondary = color,
+        }
+    }
+}
+
 pub(super) fn show(
     ui: &mut egui::Ui,
     variant: ClassicVariant,
     state: &mut Controls,
-    workspace: &Workspace,
+    workspace: &mut Workspace,
     context: Context,
     actions: &mut Vec<Action>,
 ) {
     ui.horizontal_top(|ui| {
-        for (caption, label, color, action) in [
-            ("Color 1", "Pencil color", state.primary, Action::EditColors),
+        for (target, caption, label, color) in [
             (
+                PaletteTarget::Primary,
+                "Color 1",
+                "Pencil color",
+                state.primary,
+            ),
+            (
+                PaletteTarget::Secondary,
                 "Color 2",
                 "Fill color",
                 state.secondary,
-                Action::EditSecondaryColors,
             ),
         ] {
+            let action = target.edit();
+            let selected = workspace.palette_target == target;
             let response = ui
                 .add_enabled_ui(action.enabled(context), |ui| {
                     super::legacy_surface::button(
@@ -32,15 +66,15 @@ pub(super) fn show(
                         variant,
                         egui::Button::new("")
                             .min_size(Vec2::new(42.0, 68.0))
-                            .selected(action == Action::EditColors)
-                            .frame_when_inactive(action == Action::EditColors),
-                        action == Action::EditColors,
+                            .selected(selected)
+                            .frame_when_inactive(selected),
+                        selected,
                     )
                 })
                 .inner;
             let rect = Rect::from_center_size(
                 response.rect.center_top() + Vec2::new(0.0, 19.0),
-                Vec2::splat(if action == Action::EditColors {
+                Vec2::splat(if target == PaletteTarget::Primary {
                     32.0
                 } else {
                     26.0
@@ -67,13 +101,18 @@ pub(super) fn show(
             );
             let accessible = tr(ui.ctx(), label);
             response.widget_info(|| {
-                egui::WidgetInfo::labeled(
+                egui::WidgetInfo::selected(
                     egui::Role::ColorWell,
                     action.enabled(context) && ui.is_enabled(),
+                    selected,
                     &accessible,
                 )
             });
-            if response.on_hover_text(accessible).clicked() {
+            let response = response.on_hover_text(accessible);
+            if response.clicked() {
+                workspace.palette_target = target;
+            }
+            if response.double_clicked() {
                 actions.push(action);
             }
         }
@@ -96,7 +135,11 @@ pub(super) fn show(
                     ui.painter().rect_filled(
                         rect.shrink(2.0),
                         0,
-                        Color32::from_rgb(rgb[0], rgb[1], rgb[2]),
+                        if color.is_some() {
+                            Color32::from_rgb(rgb[0], rgb[1], rgb[2])
+                        } else {
+                            ui.visuals().panel_fill
+                        },
                     );
                     ui.painter().rect_stroke(
                         rect.shrink(0.5),
@@ -109,7 +152,7 @@ pub(super) fn show(
                         egui::StrokeKind::Inside,
                     );
                     let label = if index < 20 {
-                        format!("Color #{:02X}{:02X}{:02X}", rgb[0], rgb[1], rgb[2])
+                        super::palette::accessible(ui.ctx(), rgb)
                     } else {
                         tr_format(
                             ui.ctx(),
@@ -132,15 +175,24 @@ pub(super) fn show(
                     let response = response.on_hover_text(tip);
                     if response.clicked() {
                         if let Some(color) = color {
-                            state.primary = color;
+                            workspace.palette_target.apply(state, color);
                         } else {
-                            actions.push(Action::EditCustomColor(slot as u8));
+                            actions.push(workspace.palette_target.custom(slot as u8));
                         }
                     }
-                    if response.secondary_clicked()
-                        && let Some(color) = color
-                    {
-                        state.secondary = color;
+                    if response.double_clicked() && color.is_some() {
+                        actions.push(if index < 20 {
+                            workspace.palette_target.edit()
+                        } else {
+                            workspace.palette_target.custom(slot as u8)
+                        });
+                    }
+                    if response.secondary_clicked() {
+                        if let Some(color) = color {
+                            state.secondary = color;
+                        } else {
+                            actions.push(PaletteTarget::Secondary.custom(slot as u8));
+                        }
                     }
                     if index % 10 == 9 {
                         ui.end_row();
@@ -150,13 +202,13 @@ pub(super) fn show(
         if super::legacy_controls::large_button(
             ui,
             context,
-            Action::EditColors,
+            workspace.palette_target.edit(),
             Icon::EditColors,
             "Edit colors",
         )
         .clicked()
         {
-            actions.push(Action::EditColors);
+            actions.push(workspace.palette_target.edit());
         }
     });
 }

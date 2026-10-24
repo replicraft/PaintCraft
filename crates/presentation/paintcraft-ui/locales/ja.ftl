@@ -888,3 +888,4 @@ opaque = 不透明
 transparent = 透明
 alignment = 配置
 text-tools = テキストツール
+format-color-hex = 色 #{ $hex }

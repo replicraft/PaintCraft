@@ -34,6 +34,14 @@ const NAMES: [&str; 28] = [
     "Mint",
     "Periwinkle",
 ];
+pub(super) fn accessible(ctx: &egui::Context, rgb: [u8; 3]) -> String {
+    tr_format(
+        ctx,
+        "Color #{ $hex }",
+        &[("hex", format!("{:02X}{:02X}{:02X}", rgb[0], rgb[1], rgb[2]))],
+    )
+}
+
 pub(super) fn tooltip(ctx: &egui::Context, index: usize, rgb: [u8; 3]) -> String {
     format!(
         "{}\n#{:02X}{:02X}{:02X}",
@@ -194,7 +202,7 @@ fn swatches(
                     let rgb = super::PALETTE[index];
                     (
                         Some(super::Rgba([rgb[0], rgb[1], rgb[2], 255])),
-                        format!("Color #{:02X}{:02X}{:02X}", rgb[0], rgb[1], rgb[2]),
+                        accessible(ui.ctx(), rgb),
                         tooltip(ui.ctx(), index, rgb),
                     )
                 } else {
