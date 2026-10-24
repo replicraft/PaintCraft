@@ -85,3 +85,22 @@ fn clear_is_sparse_at_maximum_size_and_repeating_it_is_a_noop() {
     assert_eq!(editor.run_pending(), 0);
     assert_eq!(editor.target(), Some(target));
 }
+
+#[test]
+fn unchanged_resize_does_not_expand_a_smaller_layer_or_publish_history() {
+    let mut doc = new_document(8, 8, Some(WHITE), 0, POLICY).unwrap();
+    let layer = doc.roots[0];
+    doc.layers.get_mut(&layer).unwrap().raster = paintcraft_raster::RasterLayer::new(2, 2, WHITE);
+    let mut editor = Editor::with_document(doc, None);
+    let before = editor.document_snapshot();
+    editor.request(
+        1,
+        Action::ResizeCanvas {
+            width: 8,
+            height: 8,
+        },
+    );
+    assert_eq!(editor.run_pending(), 0);
+    assert_eq!(editor.undo_depth(), 0);
+    assert!(editor.document().same_semantics(&before));
+}

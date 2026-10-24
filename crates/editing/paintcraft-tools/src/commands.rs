@@ -129,3 +129,35 @@ pub fn stroke_operations(stroke: &Stroke, check: &impl Fn() -> Result<()>) -> Re
     }
     Ok(ops)
 }
+
+/// Resize from the top left, retaining off-canvas pixels and extending editable
+/// layer bounds. Unchanged dimensions are a no-op, including cropped layers.
+pub fn resize_canvas(
+    document: &paintcraft_document::Document,
+    width: u32,
+    height: u32,
+) -> Vec<Value> {
+    if document.canvas == (width, height) {
+        return Vec::new();
+    }
+    let mut ops = vec![Value::object([
+        ("op", Value::str("canvas.resize")),
+        ("width", Value::Int(width.into())),
+        ("height", Value::Int(height.into())),
+        ("anchor", Value::str("top-left")),
+        ("outside_content", Value::str("preserve")),
+    ])];
+    for layer in document.layers_in_order() {
+        let w = i64::from(layer.raster.width()).max(i64::from(width) - layer.origin.0);
+        let h = i64::from(layer.raster.height()).max(i64::from(height) - layer.origin.1);
+        if w > i64::from(layer.raster.width()) || h > i64::from(layer.raster.height()) {
+            ops.push(Value::object([
+                ("op", Value::str("layer.expand")),
+                ("layer_ref", layer_ref(layer.id)),
+                ("width", Value::Int(w)),
+                ("height", Value::Int(h)),
+            ]));
+        }
+    }
+    ops
+}

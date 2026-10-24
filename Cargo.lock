@@ -2811,6 +2811,7 @@ name = "paintcraft-tools"
 version = "0.1.0"
 dependencies = [
  "paintcraft-core",
+ "paintcraft-document",
  "paintcraft-input",
  "paintcraft-raster",
  "uuid",

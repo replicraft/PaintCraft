@@ -9,6 +9,7 @@ publish.workspace = true
 
 [dependencies]
 paintcraft-core.workspace = true
+paintcraft-document.workspace = true
 paintcraft-input.workspace = true
 paintcraft-raster.workspace = true
 
