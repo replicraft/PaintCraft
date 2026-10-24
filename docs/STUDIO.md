@@ -24,7 +24,7 @@ separately in the dependency choices and is not bundled yet.
 - Zoom tool with click stepping, rectangle-to-viewport fit and text-safe Z shortcut.
 - Pan tool with H, temporary Space-drag, middle-button pan, Space-plus-arrow
   keyboard movement, Ctrl acceleration and hand cursors.
-- Overscroll with a persisted Studio navigation preference.
+- Overscroll and drag-edge auto-scroll with persisted Studio navigation preferences.
 - Shared staged brush previews, CPU/wgpu composition, transactions and undo/redo.
   Open, Save As and Export retain the native file-dialog and preservation paths.
 
@@ -409,8 +409,8 @@ Pan tool at 1600 percent with an edited pencil stroke. These captures do not pro
 OS cursor appearance or native Paint.NET parity. Raw logs are retained in ignored
 `docs/validation/studio-pan-2026-10-24/`.
 
-Overscroll and keyboard panning are implemented below. Automatic edge scrolling
-and per-device/native qualification remain unfinished. This does
+Overscroll, keyboard panning and drag-edge auto-scroll are implemented below.
+Per-device/native qualification remains unfinished. This does
 not complete the Studio or browser parity gates.
 
 ## Overscroll and navigation preference (2026-10-24)
@@ -462,8 +462,8 @@ settings surface were visually inspected. The fixture verifies that the small
 canvas extends outside its viewport before capture. Raw evidence is retained in
 ignored `docs/validation/studio-overscroll-2026-10-24/`.
 
-Keyboard panning is implemented below. Automatic edge scrolling and
-native/per-device qualification remain unfinished. Studio web
+Keyboard panning and drag-edge auto-scroll are implemented below.
+Native/per-device qualification remains unfinished. Studio web
 presentation and the complete Studio roadmap gate remain unfinished.
 
 ## Space-plus-arrow keyboard panning (2026-10-24)
@@ -512,5 +512,58 @@ The actual Pan captures at `assets/repo/studio-pan-en-US.png` and
 mouse/keyboard instruction. They demonstrate the current UI, while the exact
 keyboard movement evidence is in the GUI assertions and ignored raw logs under
 `docs/validation/studio-keyboard-pan-2026-10-24/`. OS shortcut delivery, physical
-IME/device behavior and full native Paint.NET parity remain unqualified. Automatic
-edge scrolling and the broader Studio/browser roadmap remain unfinished.
+IME/device behavior and full native Paint.NET parity remain unqualified. Drag-edge
+auto-scroll is implemented below; the broader Studio/browser roadmap remains unfinished.
+
+
+## Drag-edge auto-scroll (2026-10-24)
+
+Studio now scrolls the view while an accepted tool drag remains near an edge of
+its viewport. This lets a selection, line, or paint stroke extend beyond the
+initial view without releasing the pointer. Moving the image beneath a stationary
+pointer updates the original tool's document-space endpoint. The drag retains
+its original anchor, layer, button, colors and transaction ownership. Scrolling
+itself does not publish pixels or create an undo step; releasing the tool still
+publishes one normal operation. Cancellation publishes nothing.
+
+Settings → User Interface includes an Auto-scroll checkbox beside the existing
+overscroll preference. Apply persists the setting; Cancel preserves the saved
+choice. The optional `studio_auto_scroll` boolean defaults to enabled for older
+settings files. Wrong types use the existing unusable-settings path. Both the
+checkbox and its help text have entries in all seven interface languages. Classic
+retains its independent canvas implementation. The browser currently presents
+Classic and does not gain a Studio canvas from this change.
+
+The shared gesture helper uses elapsed time rather than frames, binds its state
+to the document/view/tool/gesture identity, and cancels stale or nonfinite input.
+The host also checks the owning button, focus, modal/popup state and topmost UI
+layer. Hovering, releasing, cancelling, focus loss and moving over another UI
+layer cannot continue auto-scroll. Changing the view invalidates the old source;
+it cannot silently restart without another accepted press. Pan and Zoom retain
+their own input paths. A bounded scroll request stops scheduling auto-scroll
+animation when the configured scroll or overscroll limit is reached.
+
+PaintCraft's current policy accelerates across a 24-logical-point edge band, caps
+speed at 480 logical points per second per axis, and caps each elapsed interval at
+50 milliseconds to avoid jumps after a stalled frame. These are provisional
+product choices, not measured Paint.NET speed equivalence. The official
+[Paint.NET View Tools documentation](https://paint.net/doc/latest/ViewTools.html)
+describes an Auto-Scroll preference for work at the edge of the editing window;
+pinned native build and device qualification remain unfinished.
+
+
+Validation: 269 ordinary desktop GUI tests pass (63 explicit manual/capture tests
+ignored). New GUI tests exercise stationary-pointer endpoint rebasing for Select,
+Line and Pencil at DPI 1/2, forced multipass, one publication on release, Undo,
+disabled behavior, idle hover, Escape, focus loss, pointer loss, zoom changes and
+small-image scroll limits. The settings tests cover Apply/Cancel and persistence
+in all seven languages, plus reachable controls in 360 by 360 windows. Twelve
+settings tests cover migration, round trips and invalid types. Nine shared
+navigation tests include 30/60/120-frame elapsed-time equivalence, direction,
+source changes and stall capping. Coalesced cancellation/new-press and foreign-button
+regressions preserve drag ownership. Five Studio library tests cover bounded requests
+and geometry; 35 shared UI and all 69 browser library tests pass. Workspace check,
+strict all-target Clippy, catalog/source-length/whitespace checks and the web
+release build pass. Raw local logs are retained under
+`docs/validation/studio-auto-scroll-2026-10-24/`. No native speed, sustained-input
+latency or reference-build visual qualification is claimed by this tranche.
