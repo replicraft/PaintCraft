@@ -18,8 +18,8 @@ pub fn contour(preset: ShapePreset, bbox: &Rect) -> Result<Vec<Point>> {
         .map_err(|_| Error::new(ErrorCode::ResourceLimit, "cannot reserve shape contour"))?;
     normalized(preset, &mut points);
     for (x, y) in &mut points {
-        *x = bbox.x0 + (i128::from(*x) * i128::from(w - 1) / 1024) as i64;
-        *y = bbox.y0 + (i128::from(*y) * i128::from(h - 1) / 1024) as i64;
+        *x = bbox.x0 + ((i128::from(*x) * i128::from(w - 1) + 512) / 1024) as i64;
+        *y = bbox.y0 + ((i128::from(*y) * i128::from(h - 1) + 512) / 1024) as i64;
     }
     points.dedup();
     if points.last() != points.first() {

@@ -25,7 +25,7 @@ fn inside(points: &[(i64, i64)], x: i64, y: i64) -> bool {
 fn every_preset_matches_independent_pixel_membership_and_never_blends_twice() {
     let clip = Rect::new(-8, -8, 48, 48).unwrap();
     for shape in ShapePreset::ALL {
-        for (w, h) in [(3, 3), (31, 27), (11, 34), (34, 11)] {
+        for (w, h) in [(2, 2), (3, 3), (31, 27), (11, 34), (34, 11)] {
             let bbox = Rect::new(-3, -5, w, h).unwrap();
             let vertices = contour(shape, &bbox).unwrap();
             assert!(vertices.len() <= 257 && vertices.first() == vertices.last());
@@ -98,4 +98,19 @@ fn far_clipped_polygons_stream_only_visible_rows_and_support_cancellation() {
     )
     .unwrap_err();
     assert_eq!(error.code, ErrorCode::ResourceLimit);
+}
+
+#[test]
+fn tiny_heart_rounding_keeps_width_instead_of_collapsing_to_a_vertical_line() {
+    let bbox = Rect::new(0, 0, 2, 2).unwrap();
+    let points = contour(ShapePreset::Heart, &bbox).unwrap();
+    assert!(points.iter().any(|p| p.0 == 0));
+    assert!(points.iter().any(|p| p.0 == 1));
+    let mut pixels = 0;
+    visit_polygon(&points, &bbox, &|| Ok(()), |span| {
+        pixels += span.x1 - span.x0 + 1;
+        Ok(())
+    })
+    .unwrap();
+    assert!(pixels > 0);
 }
