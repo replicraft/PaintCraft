@@ -2,6 +2,7 @@
 use super::{BlendMode, PointerButton, ShapePreset};
 use paintcraft_core::types::{Rgba, text::TextOptions};
 use uuid::Uuid;
+pub const FINISH_SHAPE_BEFORE_FILE: &str = "Finish the shape with Enter or cancel it with Escape before opening, saving or exporting a file";
 
 /// How a shape is painted.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -22,6 +23,8 @@ pub enum Tool {
     Rect,
     Ellipse,
     Preset(ShapePreset),
+    Polygon,
+    Curve,
     Select,
     Text,
 }
@@ -40,6 +43,8 @@ impl Tool {
             Self::Select => 7,
             Self::Text => 8,
             Self::Preset(preset) => 9 + preset as u64,
+            Self::Polygon => 27,
+            Self::Curve => 28,
         }
     }
     /// Native Studio color gestures. Other secondary-button tool policies remain
@@ -55,10 +60,12 @@ impl Tool {
                     | Self::Rect
                     | Self::Ellipse
                     | Self::Preset(_)
+                    | Self::Polygon
+                    | Self::Curve
             )
     }
 
-    pub const ALL: [Tool; 9] = [
+    pub const ALL: [Tool; 11] = [
         Tool::Pencil,
         Tool::Brush,
         Tool::Eraser,
@@ -68,6 +75,8 @@ impl Tool {
         Tool::Ellipse,
         Tool::Select,
         Tool::Text,
+        Tool::Polygon,
+        Tool::Curve,
     ];
 
     pub fn name(self) -> &'static str {
@@ -80,6 +89,8 @@ impl Tool {
             Tool::Rect => "Rectangle",
             Tool::Ellipse => "Ellipse",
             Tool::Preset(preset) => preset.name(),
+            Tool::Polygon => "Polygon",
+            Tool::Curve => "Curve",
             Tool::Select => "Select",
             Tool::Text => "Text",
         }
@@ -132,8 +143,19 @@ pub struct Stroke {
     pub mode: BlendMode,
 }
 
+/// A closed polygon or a flattened open curve, captured independently of UI.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Contour {
+    pub layer: Uuid,
+    pub points: Vec<(i64, i64)>,
+    pub closed: bool,
+    pub stroke: Option<(Rgba, u32)>,
+    pub fill: Option<Rgba>,
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum Action {
+    Contour(Contour),
     Stroke(Stroke),
     Fill {
         layer: Uuid,
@@ -214,6 +236,7 @@ pub enum Action {
 /// What the UI should draw for an unpublished gesture.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Preview {
+    Contour(Contour),
     Path(Stroke),
     /// Ordered unpublished strokes against one committed base.
     Paths(Vec<Stroke>),

@@ -13,6 +13,32 @@ fn point(p: (i64, i64)) -> Value {
     Value::object([("x", Value::Int(p.0)), ("y", Value::Int(p.1))])
 }
 
+pub fn contour(shape: &crate::Contour) -> Value {
+    let mut pairs = vec![
+        ("op", Value::str("raster.contour")),
+        ("layer_ref", layer_ref(shape.layer)),
+        (
+            "points",
+            Value::Array(shape.points.iter().map(|&p| point(p)).collect()),
+        ),
+        ("closed", Value::Bool(shape.closed)),
+        ("mode", Value::str("source-over")),
+    ];
+    if let Some((color, size)) = shape.stroke {
+        pairs.push((
+            "stroke",
+            Value::object([
+                ("color", Value::str(color.to_hex())),
+                ("size", Value::Int(size.into())),
+            ]),
+        ));
+    }
+    if let Some(color) = shape.fill {
+        pairs.push(("fill", Value::str(color.to_hex())));
+    }
+    Value::Object(pairs.into_iter().map(|(k, v)| (k.to_owned(), v)).collect())
+}
+
 pub fn shape(
     layer: Uuid,
     tool: Tool,

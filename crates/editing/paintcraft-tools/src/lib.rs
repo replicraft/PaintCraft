@@ -1,5 +1,6 @@
 //! Tool state machines produce intentions; the application publishes them.
 pub mod commands;
+mod construction;
 mod contracts;
 pub use contracts::*;
 mod geometry;
@@ -50,6 +51,7 @@ pub struct ToolState {
     pub tool: Tool,
     pub options: ToolOptions,
     gesture: Option<Gesture>,
+    construction: Option<construction::Construction>,
     text: Option<TextEdit>,
     next_gesture: u64,
     preview_revision: PreviewRevision,
@@ -63,6 +65,7 @@ impl Default for ToolState {
             tool: Tool::Pencil,
             options: ToolOptions::default(),
             gesture: None,
+            construction: None,
             text: None,
             next_gesture: 1 << 63,
             preview_revision: PreviewRevision::default(),
@@ -109,6 +112,12 @@ impl ToolState {
         self.pointer_down_button(layer, at, PointerButton::Primary);
     }
     pub fn pointer_down_button(&mut self, layer: Uuid, at: (i64, i64), button: PointerButton) {
+        if let Some(draft) = &mut self.construction {
+            if draft.press(layer, self.tool, at, button) {
+                self.preview_revision.advance();
+            }
+            return;
+        }
         if self.gesture.is_some() || !self.tool.supports_button(button) {
             return;
         }
@@ -130,11 +139,16 @@ impl ToolState {
             point_scale: 1,
             constrain_shape: false,
         });
+        if matches!(self.tool, Tool::Polygon | Tool::Curve) {
+            self.construction = Some(construction::Construction::new(
+                self.gesture.take().unwrap(),
+            ));
+        }
         self.preview_revision.advance();
     }
     /// Round brushes retain fixed-point positions; other tools stay pixel exact.
     pub fn pointer_down_subpixel(&mut self, layer: Uuid, at: (i64, i64), button: PointerButton) {
-        if self.gesture.is_some() {
+        if self.pointer_is_down() {
             return;
         }
         self.pointer_down_button(layer, (at.0.div_euclid(256), at.1.div_euclid(256)), button);
@@ -159,15 +173,24 @@ impl ToolState {
         self.gesture
             .as_ref()
             .map(|g| g.token)
+            .or_else(|| self.construction.as_ref().map(|c| c.base.token))
             .or_else(|| self.text.as_ref().map(|t| t.token))
     }
 
     pub fn gesture_token(&self) -> Option<u64> {
-        self.gesture.as_ref().map(|g| g.token)
+        self.gesture
+            .as_ref()
+            .map(|g| g.token)
+            .or_else(|| self.construction.as_ref().map(|c| c.base.token))
     }
 
     pub fn gesture_button(&self) -> Option<PointerButton> {
-        self.gesture.as_ref().map(|g| g.button)
+        self.gesture.as_ref().map(|g| g.button).or_else(|| {
+            self.construction
+                .as_ref()
+                .filter(|c| c.pressed)
+                .map(|c| c.base.button)
+        })
     }
     pub fn gesture_is_path(&self) -> bool {
         self.gesture
@@ -176,7 +199,10 @@ impl ToolState {
     }
 
     pub fn gesture_in_progress(&self) -> bool {
-        self.gesture.is_some()
+        self.gesture.is_some() || self.construction.is_some()
+    }
+    pub fn pointer_is_down(&self) -> bool {
+        self.gesture_button().is_some()
     }
 
     pub fn text_layer(&self) -> Option<Uuid> {
@@ -213,6 +239,9 @@ impl ToolState {
                 color: t.color,
             });
         }
+        if let Some(draft) = &self.construction {
+            return draft.view(false).map(Preview::Contour);
+        }
         let g = self.gesture.as_ref()?;
         let (first, last) = geometry::endpoints(g.tool, &g.points, g.constrain_shape);
         Some(match g.tool {
@@ -228,7 +257,7 @@ impl ToolState {
                     color,
                 })
             }
-            Tool::Fill | Tool::Text => return None,
+            Tool::Fill | Tool::Text | Tool::Polygon | Tool::Curve => return None,
             Tool::Select => Preview::Marquee {
                 from: first,
                 to: last,
@@ -289,6 +318,12 @@ impl ToolState {
 
     /// Live modifier: retain raw pointer geometry so releasing Shift restores it.
     pub fn constrain_shape(&mut self, enabled: bool) {
+        if let Some(draft) = &mut self.construction
+            && draft.base.constrain_shape != enabled
+        {
+            draft.base.constrain_shape = enabled;
+            self.preview_revision.advance();
+        }
         if let Some(g) = &mut self.gesture
             && g.constrain_shape != enabled
         {
@@ -311,6 +346,12 @@ impl ToolState {
     }
 
     fn append_point(&mut self, doc_point: (i64, i64)) {
+        if let Some(draft) = &mut self.construction {
+            if draft.move_to(doc_point) {
+                self.preview_revision.advance();
+            }
+            return;
+        }
         let Some(g) = &mut self.gesture else { return };
         match g.tool {
             Tool::Pencil | Tool::Brush | Tool::Eraser => {
@@ -334,7 +375,9 @@ impl ToolState {
     }
 
     pub fn cancel_gesture(&mut self) {
-        if self.gesture.take().is_some() {
+        let gesture = self.gesture.take().is_some();
+        let construction = self.construction.take().is_some();
+        if gesture || construction {
             self.preview_revision.advance();
         }
     }
@@ -342,6 +385,9 @@ impl ToolState {
         self.pointer_up_button(PointerButton::Primary)
     }
     pub fn pointer_up_button(&mut self, button: PointerButton) -> Option<(u64, Action)> {
+        if self.construction.is_some() {
+            return self.release_shape(button);
+        }
         if self.gesture_button() != Some(button) {
             return None;
         }
@@ -361,7 +407,7 @@ impl ToolState {
                     round,
                 })
             }
-            Tool::Text => return None,
+            Tool::Text | Tool::Polygon | Tool::Curve => return None,
             Tool::Fill => Action::Fill {
                 layer: g.layer,
                 at: first,
