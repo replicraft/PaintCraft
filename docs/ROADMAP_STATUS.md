@@ -11,6 +11,12 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest Classic Tools artwork restores reference color accents using paired light/dark
+SVGs. All 199 ordinary GUI tests, 23 shared UI unit tests and strict workspace
+Clippy pass; two native Wgpu framebuffer captures were reviewed. See
+[the tool color record](validation/classic-tool-colors-native-2026-10-23/validation.json).
+Exact Windows fidelity and broader T15 acceptance remain partial.
+
 Latest Classic ribbon work adds the missing stroke-size dropdown, backed by
 existing line/rectangle/ellipse size options, with an original SVG and adaptive
 placement. All 199 ordinary GUI tests, 23 shared-UI unit tests, 18 actual-App GPU

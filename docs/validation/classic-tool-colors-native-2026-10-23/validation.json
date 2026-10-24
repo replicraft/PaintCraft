@@ -1,0 +1,32 @@
+{
+  "source_commit": "ea32424db74c0fe77123fdeba86654bfca16c63d",
+  "date": "2026-10-23",
+  "scope": "Six Classic v11 Tools icons, with paired theme artwork and preserved gold, cyan and pink accents. Text remains neutral themed ink. Original project vectors, not extracted Windows assets.",
+  "checks": {
+    "shared_ui": "23 passed; 1 ignored",
+    "desktop_gui": "199 passed; 41 ignored",
+    "clippy": "workspace all-targets, -D warnings passed",
+    "native": "Two actual native Wgpu framebuffer captures, 1360x900 logical points at 2x display density; light and dark, selected Pencil. Visually reviewed.",
+    "regression": "Before correction the existing color assertion failed for zoom-in. Both themes now preserve hue families at 24/48/96/128 pixels; theme alpha geometry matches and texture identities remain independent."
+  },
+  "references": {
+    "docs/temp/paint-references/photos/image.png": "5088470383ffc85e4c91e876404f6e1b7376c473d1b490d20368b545306172ba",
+    "docs/temp/paint-references/photos/mspaint-text-settings.png": "985ffaf0a598a4de5228555279cea85bc3c59a4fbd49103f20db2e470d62e127"
+  },
+  "limitations": [
+    "No claim of exact native Windows pixel parity, new tool capabilities, OS accessibility qualification or performance improvement.",
+    "Captures are application framebuffers and exclude the macOS title and menu bars.",
+    "T15 and the overall roadmap remain partial."
+  ],
+  "sha256": {
+    "before.log.gz": "0aeb0f8434e96f7fbd6ca81604ca0e316464af49a976505b769cfb66e7d5a519",
+    "clippy.log.gz": "540d5a14983b5f4ba193c7b039503f0d80083a6faae94edaf064dbf416443540",
+    "dark.png": "79131edecf5fdc526fcc3a694c793c322afbde369f6f055b0e3435fd0dcd01dd",
+    "gui.log.gz": "8d9ab772ea0bdabab141640b71afd7b22dc8d6177311eb453f292459ce4b0f77",
+    "light.png": "e71ad1738b689f7741c2c2b4744aca5906c04dbb1a1092da021f871598014ee7",
+    "native-build.log.gz": "b6e462c11cb243888a561dc9130ddf54adaf37b5b4a47d2e8a4df96a028151ea",
+    "native-dark.log.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "native-light.log.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "ui.log.gz": "d0dc4504b562432a57d24d1b8e6e8078b0f33deb8c807c143b522f2e3083c067"
+  }
+}

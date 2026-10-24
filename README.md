@@ -92,3 +92,8 @@ what is deliberately provisional and what is not started. The licence is in `LIC
 CPU exports default to one worker. `--render-workers` accepts 1..64 and uses one
 bounded pool; small/cheap images can be faster serially. See the
 [CPU partition contract and measurements](docs/PARALLEL_COMPOSITOR.md).
+
+Classic v11 Tools use six original paired light/dark SVGs, preserving gold, blue
+and pink accents while adapting neutral outlines to the theme. Regenerate them
+with `python3 scripts/generate_classic_tool_icons.py`; their texture identities
+are separate from menu icons and the general icon sheet.
