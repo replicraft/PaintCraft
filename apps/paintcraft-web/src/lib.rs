@@ -2,6 +2,7 @@
 mod app;
 mod canvas;
 mod editor;
+mod files;
 mod layers;
 pub use app::WebApp;
 

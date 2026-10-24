@@ -16,7 +16,7 @@ fn editor_uses_classic_chrome_and_exposes_remaining_unsupported_actions_honestly
     harness.run();
     assert!(
         harness
-            .query_by_label_contains("Save is not connected")
+            .query_by_label_contains("Downloads are available in the browser build")
             .is_some()
     );
     harness

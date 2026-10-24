@@ -24,9 +24,9 @@ cargo run -p paintcraft-cli -- --help
 cargo run --release -- [file.pcnd]   # the desktop editor
 ```
 
-An initial [PaintCraft Web UI preview](apps/paintcraft-web/README.md) shares the
-Classic presentation and builds to WebAssembly. Browser drawing and file handling
-are not connected yet.
+[PaintCraft Web](apps/paintcraft-web/README.md) builds the Classic browser editor
+to WebAssembly, with drawing tools, selections, layers, undo/redo, project
+open/download and PNG export. Editable text, transforms and recovery remain work.
 
 The toolchain is pinned in `rust-toolchain.toml`. The root manifest owns package metadata
 and dependency versions; member manifests inherit them through `workspace = true`.
@@ -73,7 +73,7 @@ members with `workspace = true`. Application entry points stay in `apps/`.
 | `crates/presentation/paintcraft-studio` | Studio document tabs, toolbar, tool options and floating Tools/Colors/Layers/History windows |
 | `apps/paintcraft` | Desktop controller, settings and egui application (wgpu) |
 | `apps/paintcraft-cli` | Headless Clap CLI; each command lives in `src/commands/` |
-| `apps/paintcraft-web` | WebAssembly Classic UI preview; browser document editing pending |
+| `apps/paintcraft-web` | WebAssembly Classic editor, browser file picking and project/PNG downloads |
 | `conformance/` | Vendored batch v1 conformance vectors and the canonical specimen |
 
 ## Try it

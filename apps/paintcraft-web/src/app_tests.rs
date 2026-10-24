@@ -73,7 +73,7 @@ fn new_requires_discard_and_cancel_keeps_the_document() {
     assert_eq!(h.state().editor.session.ticket(), before);
     shortcut(&mut h, Modifiers::COMMAND, Key::N);
     h.run();
-    h.get_by_label("Discard and create new").click();
+    h.get_by_label("Discard and continue").click();
     h.run();
     assert!(!h.state().editor.session.is_dirty());
     assert_eq!(h.state().editor.session.undo_depth(), 0);
@@ -123,4 +123,40 @@ fn layers_add_delete_and_undo_retarget_paint_safely() {
     button(&mut h, true);
     button(&mut h, false);
     assert!(h.state().editor.session.is_dirty());
+}
+
+#[test]
+fn command_scroll_zooms_without_publishing() {
+    let mut h = harness();
+    let before = h.state().editor.session.ticket();
+    let p = h.state().canvas.rect.unwrap().center();
+    h.event(Event::PointerMoved(p));
+    h.event(Event::MouseWheel {
+        unit: egui::MouseWheelUnit::Line,
+        delta: Vec2::new(0.0, 1.0),
+        modifiers: Modifiers::COMMAND,
+        source: egui::MouseWheelSource::Unknown,
+        phase: egui::TouchPhase::Move,
+    });
+    h.run();
+    assert!(h.state().zoom > 1.0);
+    assert_eq!(h.state().editor.session.ticket(), before);
+    assert_eq!(h.state().editor.session.undo_depth(), 0);
+}
+
+#[test]
+fn png_export_requires_explicit_flattening_confirmation() {
+    let mut h = harness();
+    h.get_by_role_and_label(egui::Role::Button, "File").click();
+    h.run();
+    h.get_by_label("Save as").hover();
+    h.run();
+    h.get_by_label("Picture…").click();
+    h.run();
+    assert!(h.query_by_label("Download PNG").is_some());
+    let before = h.state().editor.session.ticket();
+    h.get_by_label("Cancel").click();
+    h.run();
+    assert_eq!(h.state().editor.session.ticket(), before);
+    assert_eq!(h.state().editor.session.undo_depth(), 0);
 }

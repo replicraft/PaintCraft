@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the standalone browser UI preview with the locked wasm-bindgen ABI."""
+"""Build the standalone browser editor with the locked wasm-bindgen ABI."""
 import json
 import pathlib
 import shutil

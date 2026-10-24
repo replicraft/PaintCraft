@@ -17,6 +17,8 @@ paintcraft-commands.workspace = true
 paintcraft-document.workspace = true
 paintcraft-editor.workspace = true
 paintcraft-render.workspace = true
+paintcraft-formats.workspace = true
+sha2.workspace = true
 paintcraft-input.workspace = true
 uuid.workspace = true
 paintcraft-tools.workspace = true
@@ -25,9 +27,11 @@ eframe.workspace = true
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 uuid = { workspace = true, features = ["js"] }
+rfd = { workspace = true, features = ["file-handle-inner"] }
+js-sys.workspace = true
 wasm-bindgen.workspace = true
 wasm-bindgen-futures.workspace = true
-web-sys = { workspace = true, features = ["HtmlCanvasElement"] }
+web-sys = { workspace = true, features = ["HtmlCanvasElement", "HtmlElement", "Window", "Document"] }
 # Explicit browser backends: prefer WebGPU, retain WebGL where available.
 wgpu = { workspace = true, features = ["webgpu", "webgl"] }
 

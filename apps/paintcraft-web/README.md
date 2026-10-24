@@ -7,11 +7,20 @@ undo/redo edit real pixels. Shift constrains shapes; Ctrl/Cmd-scroll zooms. The
 Layers panel adds, selects, hides, reorders and deletes real layers. Brush preview
 and release use the same shared commands. Erasing restores the white Classic ground.
 
-This is an early editor. Files, editable text, image transforms, clipboard and
-recovery are not connected yet. Unsupported actions report this in the status bar.
-New requires explicit discard for dirty work, and the page requests the browser's
+Open uses a browser file picker for `.pcnd`, PNG, BMP and JPEG. Image metadata or
+bit-depth losses require acknowledgement before replacing the current document.
+Save/Save as download an editable `.pcnd` copy; Export confirms flattening and
+downloads PNG. Inputs and project output are limited to 64 MiB. New/Open require
+explicit discard when dirty; cancelling or failing an import retains the current
+session. Native save/recovery services remain outside the browser build.
+
+This is an early editor. Editable text, image transforms, clipboard and recovery
+are not connected yet. Unsupported actions report this in the status bar.
+The page requests the browser's
 unsaved-work confirmation before unloading. Browser policy controls whether that
-confirmation appears; it is not recovery or persistence.
+confirmation appears; it is not recovery or persistence. Downloads never mark the
+tab saved: a download request cannot confirm disk persistence. Verify your copy
+before closing or explicitly discarding the current document.
 
 The current synchronous browser adapter admits at most 4,194,304 canvas pixels,
 8192 points per stroke and a 64 MiB history retention budget (older entries may
@@ -58,11 +67,8 @@ This single-browser smoke check does not establish cross-browser conformance.
 
 ## Next browser slices
 
-1. Add browser file picking and downloads, plus an explicit unsaved-work policy.
-   Browser storage and permission behavior must remain separate from native rfd
-   dialogs and desktop atomic saves.
-2. Add browser workers, memory admission and cancellation before large documents.
-3. Connect document GPU composition and qualify WebGPU/WebGL behavior, touch,
+1. Add browser workers, memory admission and cancellation before large documents.
+2. Connect document GPU composition and qualify WebGPU/WebGL behavior, touch,
    keyboard, browser zoom and pen pressure across actual browsers/devices.
 
 Desktop tablet support is also incomplete: `PenSample` defines pressure and tilt,

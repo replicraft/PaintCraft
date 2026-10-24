@@ -17,7 +17,10 @@ pub struct WebApp {
     variant: ClassicVariant,
     pub(crate) zoom: f32,
     settings: bool,
-    confirm_new: bool,
+    export_confirm: bool,
+    confirm_replace: Option<Action>,
+    files: crate::files::Files,
+    pending_import: Option<crate::files::Loaded>,
     pub(crate) message: String,
 }
 
@@ -38,13 +41,20 @@ impl WebApp {
             variant: ClassicVariant::V11,
             zoom: 1.0,
             settings: false,
-            confirm_new: false,
-            message: "Ready — drawing stays in this tab; file saving is not connected yet".into(),
+            export_confirm: false,
+            confirm_replace: None,
+            files: crate::files::Files::default(),
+            pending_import: None,
+            message: "Ready — Save downloads a project copy; work stays in this tab".into(),
         }
     }
 
     pub(crate) fn blocked(&self) -> bool {
-        self.settings || self.confirm_new
+        self.settings
+            || self.export_confirm
+            || self.confirm_replace.is_some()
+            || self.files.busy
+            || self.pending_import.is_some()
     }
 
     fn context(&self) -> Context {
@@ -93,7 +103,7 @@ impl WebApp {
         }
     }
 
-    fn action(&mut self, action: Action) {
+    fn action(&mut self, ctx: &egui::Context, action: Action) {
         match action {
             Action::Settings | Action::Interface => {
                 self.editor.cancel();
@@ -114,12 +124,21 @@ impl WebApp {
                     corners: Some(((0, 0), (i64::from(w) - 1, i64::from(h) - 1))),
                 });
             }
-            Action::New => {
+            Action::Export => {
+                self.editor.cancel();
+                self.export_confirm = true;
+            }
+            Action::Save | Action::SaveAs => {
+                self.editor.cancel();
+                self.files
+                    .download(ctx, self.editor.session.document(), false);
+            }
+            Action::New | Action::Open => {
                 self.editor.cancel();
                 if self.editor.session.is_dirty() {
-                    self.confirm_new = true;
+                    self.confirm_replace = Some(action);
                 } else {
-                    self.new_document();
+                    self.replace(ctx, action);
                 }
             }
             Action::View(view) => match view {
@@ -152,7 +171,43 @@ impl WebApp {
             }
             Err(error) => self.message = error.to_string(),
         }
-        self.confirm_new = false;
+        self.confirm_replace = None;
+    }
+
+    fn replace(&mut self, ctx: &egui::Context, action: Action) {
+        if action == Action::Open {
+            self.files.open(ctx);
+        } else {
+            self.new_document();
+        }
+    }
+
+    fn install(&mut self, loaded: crate::files::Loaded) {
+        match Editor::from_document(loaded.document) {
+            Ok(editor) => {
+                self.editor = editor;
+                self.canvas = Canvas::default();
+                self.message = format!("Opened {}", loaded.name);
+            }
+            Err(error) => self.message = format!("Open failed: {error}"),
+        }
+    }
+
+    fn poll_files(&mut self) {
+        use crate::files::Outcome;
+        match self.files.poll() {
+            Some(Ok(Outcome::Loaded(loaded))) if loaded.losses.is_empty() => self.install(loaded),
+            Some(Ok(Outcome::Loaded(loaded))) => self.pending_import = Some(loaded),
+            Some(Ok(Outcome::Cancelled)) => {
+                self.message = "File dialog cancelled; current document retained".into()
+            }
+            Some(Ok(Outcome::DownloadClosed)) => {
+                self.message =
+                    "Download dialog closed — verify your copy; this tab remains unsaved".into()
+            }
+            Some(Err(error)) => self.message = format!("File operation failed: {error}"),
+            None => {}
+        }
     }
 
     fn unsupported(&mut self, action: Action) {
@@ -177,19 +232,22 @@ impl WebApp {
                 && let Some(action) = Action::from_shortcut_for(Frontend::Classic, key, modifiers)
                 && action.enabled(self.context())
             {
-                self.action(action);
+                self.action(ctx, action);
             }
         }
     }
 
     pub fn show(&mut self, ui: &mut egui::Ui) {
         let ctx = ui.ctx().clone();
+        if ctx.current_pass_index() == 0 {
+            self.poll_files();
+        }
         self.keyboard(&ctx);
         let context = self.context();
         egui::Panel::top("web-editor-banner").show(ui, |ui| {
             ui.horizontal_wrapped(|ui| {
                 ui.strong("PaintCraft Web · Early editor");
-                ui.label("Work stays in this tab. Files and text are not connected yet.");
+                ui.label("Save downloads a project copy. Export downloads PNG. Editable text is not connected yet.");
             });
         });
         egui::Panel::top("classic-chrome").show(ui, |ui| {
@@ -201,7 +259,7 @@ impl WebApp {
                 context,
             );
             for action in actions {
-                self.action(action);
+                self.action(&ctx, action);
             }
         });
         egui::Panel::bottom("classic-status").show(ui, |ui| {
@@ -218,7 +276,7 @@ impl WebApp {
                 egui::Id::unique("web-zoom"),
             );
             for action in actions {
-                self.action(action);
+                self.action(&ctx, action);
             }
         });
         self.layers(ui);
@@ -231,13 +289,51 @@ impl WebApp {
     }
 
     fn dialogs(&mut self, ctx: &egui::Context) {
-        if self.confirm_new {
+        if self.confirm_replace.is_some() {
             egui::Modal::new(egui::Id::unique("web-new-unsaved")).show(ctx, |ui| {
                 ui.heading("Discard unsaved changes?");
-                ui.label("File saving is not connected yet. Creating a new canvas discards this document.");
+                ui.label("Download a project copy to keep your work. Browser downloads cannot confirm a disk save; discard explicitly when ready.");
+                ui.horizontal_wrapped(|ui| {
+                    if ui.button("Download project").clicked() {
+                        self.files.download(ctx,self.editor.session.document(),false);
+                    }
+                    if ui.button("Discard and continue").clicked()
+                        && let Some(action) = self.confirm_replace.take()
+                    { self.replace(ctx,action); }
+                    if ui.button("Cancel").clicked() { self.confirm_replace = None; }
+                });
+            });
+        }
+        if self.pending_import.is_some() {
+            let mut accept = false;
+            let mut cancel = false;
+            egui::Modal::new(egui::Id::unique("web-import-losses")).show(ctx, |ui| {
+                ui.heading("Open with these import limitations?");
+                for loss in &self.pending_import.as_ref().expect("pending import").losses {
+                    ui.label(loss);
+                }
                 ui.horizontal(|ui| {
-                    if ui.button("Discard and create new").clicked() { self.new_document(); }
-                    if ui.button("Cancel").clicked() { self.confirm_new = false; }
+                    accept = ui.button("Open image").clicked();
+                    cancel = ui.button("Cancel").clicked();
+                });
+            });
+            if accept && let Some(loaded) = self.pending_import.take() {
+                self.install(loaded);
+            }
+            if cancel {
+                self.pending_import = None;
+            }
+        }
+        if self.export_confirm {
+            egui::Modal::new(egui::Id::unique("web-export-png")).show(ctx, |ui| {
+                ui.heading("Export PNG copy?");
+                ui.label("PNG flattens visible layers and omits hidden layer data. Save a PaintCraft project to preserve editable layers.");
+                ui.horizontal(|ui| {
+                    if ui.button("Download PNG").clicked() {
+                        self.files.download(ctx,self.editor.session.document(),true);
+                        self.export_confirm = false;
+                    }
+                    if ui.button("Cancel").clicked() { self.export_confirm = false; }
                 });
             });
         }

@@ -1,0 +1,37 @@
+// A download requests a browser-managed copy; it cannot confirm persistence.
+export async function downloadCopy(bytes, name) {
+  const url = URL.createObjectURL(new Blob([bytes]));
+  const dialog = document.createElement('dialog');
+  dialog.setAttribute('aria-label', 'Download a copy');
+  dialog.style.cssText = 'font:16px system-ui;padding:24px;border:1px solid #888;border-radius:12px;max-width:420px;color-scheme:light dark';
+  const title = document.createElement('h2');
+  title.textContent = 'Download a copy';
+  const description = document.createElement('p');
+  description.textContent = 'Keep this tab open until you have verified the downloaded file.';
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = name;
+  link.textContent = `Download ${name}`;
+  const cancel = document.createElement('button');
+  cancel.textContent = 'Cancel';
+  cancel.style.cssText = 'margin-left:24px;padding:8px 16px';
+  dialog.append(title, description, link, cancel);
+  document.body.append(dialog);
+  try {
+    return await new Promise((resolve) => {
+      let requested = false;
+      link.addEventListener('click', () => {
+        requested = true;
+        // Leave the URL alive while the browser starts consuming the download.
+        setTimeout(() => { dialog.close(); resolve(true); }, 1000);
+      }, {once:true});
+      cancel.addEventListener('click', () => { if (!requested) dialog.close(); });
+      dialog.addEventListener('cancel', (event) => { if (requested) event.preventDefault(); });
+      dialog.addEventListener('close', () => resolve(requested), {once:true});
+      dialog.showModal();
+    });
+  } finally {
+    dialog.remove();
+    URL.revokeObjectURL(url);
+  }
+}

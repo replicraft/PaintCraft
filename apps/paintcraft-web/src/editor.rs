@@ -30,7 +30,17 @@ impl Editor {
         }
         let seed = (Uuid::new_v4().as_u128() as u64) & 9_007_199_254_740_991;
         let doc = new_document(width, height, Some(WHITE), seed, POLICY)?;
-        let target = doc.roots.first().copied();
+        Self::from_document(doc)
+    }
+
+    pub fn from_document(doc: Document) -> Result<Self> {
+        if u64::from(doc.canvas.0) * u64::from(doc.canvas.1) > MAX_PIXELS {
+            return Err(Error::new(
+                ErrorCode::ResourceLimit,
+                "Browser canvas limit is 4 megapixels",
+            ));
+        }
+        let target = doc.roots.last().copied();
         let mut session = Session::new(doc);
         session.set_staged_pixel_budget(MAX_PIXELS * 4);
         session.set_history_budget(64 * 1024 * 1024);
