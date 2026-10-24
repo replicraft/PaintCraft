@@ -7,7 +7,8 @@ pub(super) fn tool_button(ui: &mut egui::Ui, state: &mut Controls, tool: Tool) -
         Tool::Fill => Icon::Bucket,
         Tool::Text => Icon::Text,
         Tool::Eraser => Icon::Eraser,
-        _ => unreachable!("only the four v11 Tools choices use this control"),
+        Tool::ColorPicker => Icon::Eyedropper,
+        _ => unreachable!("only the v11 Tools choices use this control"),
     };
     if button(ui, tool.name(), icon, state.tool == tool).clicked() {
         state.tool = tool;

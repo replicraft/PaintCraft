@@ -109,6 +109,7 @@ pub fn tool_button(ui: &mut egui::Ui, state: &mut Controls, tool: Tool, large: b
         Tool::Brush => Icon::Brush,
         Tool::Eraser => Icon::Eraser,
         Tool::Fill => Icon::Fill,
+        Tool::ColorPicker => Icon::Eyedropper,
         Tool::Line => Icon::Line,
         Tool::Rect => Icon::Rectangle,
         Tool::Ellipse => Icon::Ellipse,
@@ -177,4 +178,71 @@ pub fn interface_changer(ui: &mut egui::Ui, context: crate::actions::Context) ->
         }
     });
     actions
+}
+
+/// Studio exposes the distinct sampling choices; Classic has a one-shot image picker.
+pub fn picker_options(ui: &mut egui::Ui, state: &mut Controls) {
+    use paintcraft_core::types::picker::{PickerAfter, SampleSize, SampleSource};
+    if state.tool != Tool::ColorPicker {
+        return;
+    }
+    ui.horizontal_wrapped(|ui| {
+        let label = ui.label("Sampling source");
+        egui::ComboBox::from_id_salt("picker-source")
+            .selected_text(match state.options.picker_source {
+                SampleSource::Image => "Image",
+                SampleSource::Layer => "Layer",
+            })
+            .show_ui(ui, |ui| {
+                ui.selectable_value(
+                    &mut state.options.picker_source,
+                    SampleSource::Layer,
+                    "Layer",
+                );
+                ui.selectable_value(
+                    &mut state.options.picker_source,
+                    SampleSource::Image,
+                    "Image",
+                );
+            })
+            .response
+            .labelled_by(label.id);
+        let label = ui.label("Sample size");
+        egui::ComboBox::from_id_salt("picker-size")
+            .selected_text(format!(
+                "{} × {}",
+                state.options.picker_size.side(),
+                state.options.picker_size.side()
+            ))
+            .show_ui(ui, |ui| {
+                for size in SampleSize::ALL {
+                    ui.selectable_value(
+                        &mut state.options.picker_size,
+                        size,
+                        format!("{} × {}", size.side(), size.side()),
+                    );
+                }
+            })
+            .response
+            .labelled_by(label.id);
+        let label = ui.label("After picking");
+        egui::ComboBox::from_id_salt("picker-after")
+            .selected_text(match state.options.picker_after {
+                PickerAfter::Stay => "Keep color picker",
+                PickerAfter::Previous => "Previous tool",
+                PickerAfter::Pencil => "Switch to Pencil",
+            })
+            .show_ui(ui, |ui| {
+                for (value, name) in [
+                    (PickerAfter::Stay, "Keep color picker"),
+                    (PickerAfter::Previous, "Previous tool"),
+                    (PickerAfter::Pencil, "Switch to Pencil"),
+                ] {
+                    ui.selectable_value(&mut state.options.picker_after, value, name);
+                }
+            })
+            .response
+            .labelled_by(label.id);
+        ui.label("Ctrl-click samples the image");
+    });
 }

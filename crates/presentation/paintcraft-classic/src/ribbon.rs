@@ -56,8 +56,7 @@ pub(super) fn ribbon(
                             if tool_button(ui, state, Tool::Eraser) {
                                 actions.push(Action::SelectTool(Tool::Eraser));
                             }
-                            prototype(ui, "Color picker", Icon::Eyedropper,
-                                "Picking colors from the canvas is not available yet.");
+                            if tool_button(ui,state,Tool::ColorPicker){actions.push(Action::SelectTool(Tool::ColorPicker));}
                             prototype(ui, "Magnifier", Icon::ZoomIn,
                                 "The magnifier tool is not available yet. Use the status bar or the View menu's Zoom controls to change magnification.");
                         });

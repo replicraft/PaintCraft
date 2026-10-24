@@ -73,6 +73,9 @@ pub fn toolbar(
         ui.label(state.tool.name());
     });
     ui.separator();
-    ui.add_enabled_ui(context.document_open, |ui| options(ui, state, &mut actions));
+    ui.add_enabled_ui(context.document_open, |ui| {
+        options(ui, state, &mut actions);
+        paintcraft_ui::chrome::picker_options(ui, state);
+    });
     actions
 }

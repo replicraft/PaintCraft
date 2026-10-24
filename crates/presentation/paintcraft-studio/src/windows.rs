@@ -32,6 +32,7 @@ pub fn floating_controls(
                             Tool::Brush,
                             Tool::Eraser,
                             Tool::Fill,
+                            Tool::ColorPicker,
                             Tool::Text,
                             Tool::Line,
                             Tool::Rect,
