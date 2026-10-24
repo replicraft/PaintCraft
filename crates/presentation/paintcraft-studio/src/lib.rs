@@ -29,6 +29,7 @@ pub struct Workspace {
     pub zoom: paintcraft_tools::navigation::ZoomGesture<egui::Id>,
     pub pan: paintcraft_tools::navigation::PanGesture<egui::Id>,
     pub space_pan: bool,
+    pub auto_scroll: paintcraft_tools::navigation::AutoScroll<egui::Id>,
 }
 
 impl Default for Workspace {
@@ -44,6 +45,7 @@ impl Default for Workspace {
             zoom: Default::default(),
             pan: Default::default(),
             space_pan: false,
+            auto_scroll: Default::default(),
         }
     }
 }

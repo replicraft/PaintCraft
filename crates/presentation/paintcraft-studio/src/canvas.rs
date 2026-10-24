@@ -139,6 +139,31 @@ pub fn pan_by(ctx: &egui::Context, id: egui::Id, scope: egui::Id, delta: egui::V
     ctx.request_repaint();
 }
 
+/// Queue bounded movement only when there is room to scroll. Edge drags stop
+/// requesting animation frames at a limit, including when overscroll is disabled.
+pub fn pan_by_clamped(
+    ctx: &egui::Context,
+    id: egui::Id,
+    scope: egui::Id,
+    delta: egui::Vec2,
+) -> bool {
+    if !delta.is_finite() || delta == egui::Vec2::ZERO {
+        return false;
+    }
+    let admitted = ctx
+        .data(|data| {
+            let layout = data.get_temp::<Layout>(id.with("studio-canvas-geometry"))?;
+            let offset = data.get_temp::<egui::Vec2>(id.with("studio-pan-offset"))?;
+            Some(offset - layout.geometry.clamp(offset - delta))
+        })
+        .unwrap_or_default();
+    if admitted.length_sq() < 0.000001 {
+        return false;
+    }
+    pan_by(ctx, id, scope, admitted);
+    true
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -165,6 +190,26 @@ mod tests {
         output.textures_delta.clear();
         canvas
     }
+    #[test]
+    fn bounded_pan_stops_at_limits_and_rejects_nonfinite_requests() {
+        let ctx = egui::Context::default();
+        let tab = egui::Id::unique("tab");
+        let scope = egui::Id::unique("source");
+        frame(&ctx, scope);
+        assert!(!pan_by_clamped(&ctx, tab, scope, egui::vec2(f32::NAN, 0.0)));
+        assert!(pan_by_clamped(
+            &ctx,
+            tab,
+            scope,
+            egui::vec2(-100_000.0, -100_000.0)
+        ));
+        let last = frame(&ctx, scope);
+        assert!(!pan_by_clamped(&ctx, tab, scope, egui::vec2(-50.0, -50.0)));
+        assert_eq!(frame(&ctx, scope), last);
+        assert!(pan_by_clamped(&ctx, tab, scope, egui::vec2(50.0, 50.0)));
+        assert_eq!(frame(&ctx, scope).min - last.min, egui::vec2(50.0, 50.0));
+    }
+
     #[test]
     fn queued_pan_cannot_cross_a_document_or_view_scope() {
         let ctx = egui::Context::default();

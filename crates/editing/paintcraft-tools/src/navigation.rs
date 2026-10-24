@@ -1,5 +1,7 @@
 //! View-only navigation gestures. Hosts supply scope identity and map view requests.
 use crate::PointerButton;
+mod auto_scroll;
+pub use auto_scroll::{AutoScroll, AutoScrollStep};
 mod pan;
 pub use pan::{PanButton, PanDirection, PanGesture, keyboard_pan_delta};
 
