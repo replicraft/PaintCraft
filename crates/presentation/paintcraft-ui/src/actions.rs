@@ -8,7 +8,7 @@ pub use export::ImageExport;
 mod layers;
 mod view;
 pub use layers::{LAYERS, LayerAction};
-pub use view::{VIEW, ViewAction, WORKSPACE_VIEW, ZOOM_MAX, ZOOM_MIN};
+pub use view::{VIEW, ViewAction, WORKSPACE_VIEW, ZOOM_MAX, ZOOM_MIN, stepped_zoom};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Action {

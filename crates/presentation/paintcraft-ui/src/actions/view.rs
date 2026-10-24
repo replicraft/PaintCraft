@@ -4,6 +4,21 @@ use super::*;
 pub const ZOOM_MIN: f32 = 1.0 / 65536.0;
 pub const ZOOM_MAX: f32 = 64.0;
 
+/// Adjacent power-of-two scale for toolbar and canvas magnification.
+pub fn stepped_zoom(zoom: f32, increase: bool) -> f32 {
+    let zoom = if zoom.is_finite() && zoom > 0.0 {
+        zoom.clamp(ZOOM_MIN, ZOOM_MAX)
+    } else {
+        1.0
+    };
+    let exponent = if increase {
+        (zoom.log2() + 1e-5).floor() + 1.0
+    } else {
+        (zoom.log2() - 1e-5).ceil() - 1.0
+    };
+    2.0_f32.powf(exponent).clamp(ZOOM_MIN, ZOOM_MAX)
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ViewAction {
     ZoomIn,
@@ -131,6 +146,24 @@ impl ViewAction {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn zoom_steps_choose_adjacent_powers_and_bound_extreme_input() {
+        use super::{ZOOM_MAX, ZOOM_MIN, stepped_zoom};
+        for (scale, down, up) in [
+            (1.0, 0.5, 2.0),
+            (0.75, 0.5, 1.0),
+            (3.0, 2.0, 4.0),
+            (0.125, 0.0625, 0.25),
+        ] {
+            assert_eq!(stepped_zoom(scale, false), down);
+            assert_eq!(stepped_zoom(scale, true), up);
+        }
+        assert_eq!(stepped_zoom(ZOOM_MAX, true), ZOOM_MAX);
+        assert_eq!(stepped_zoom(ZOOM_MIN, false), ZOOM_MIN);
+        assert_eq!(stepped_zoom(f32::NAN, true), 2.0);
+        assert_eq!(stepped_zoom(0.0, false), 0.5);
+    }
+
     use super::*;
 
     #[test]

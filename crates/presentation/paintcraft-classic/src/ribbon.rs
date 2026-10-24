@@ -7,7 +7,7 @@ use paintcraft_ui::{actions::Context, widgets::Icon};
 
 mod split_tool;
 mod tools;
-use tools::{prototype, tool_button};
+use tools::tool_button;
 
 pub(super) fn spacious(ui: &egui::Ui) -> bool {
     ui.ctx().content_rect().width() >= 1200.0
@@ -57,9 +57,12 @@ pub(super) fn ribbon(
                             if tool_button(ui, state, Tool::Eraser) {
                                 actions.push(Action::SelectTool(Tool::Eraser));
                             }
-                            if tool_button(ui,state,Tool::ColorPicker){actions.push(Action::SelectTool(Tool::ColorPicker));}
-                            prototype(ui, "Magnifier", Icon::ZoomIn,
-                                "The magnifier tool is not available yet. Use the status bar or the View menu's Zoom controls to change magnification.");
+                            if tool_button(ui, state, Tool::ColorPicker) {
+                                actions.push(Action::SelectTool(Tool::ColorPicker));
+                            }
+                            if tool_button(ui, state, Tool::Magnifier) {
+                                actions.push(Action::SelectTool(Tool::Magnifier));
+                            }
                         });
                 });
                 ui.separator();
@@ -92,7 +95,13 @@ pub(super) fn ribbon(
                 ui.separator();
                 let mut colors_center = ui.cursor().min.y;
                 group(ui, "Colors", |ui| {
-                    colors_center = super::palette::colors(ui, state, &workspace.custom_colors, context, actions);
+                    colors_center = super::palette::colors(
+                        ui,
+                        state,
+                        &workspace.custom_colors,
+                        context,
+                        actions,
+                    );
                 });
                 ui.separator();
                 group(ui, "Layers", |ui| {
@@ -103,7 +112,8 @@ pub(super) fn ribbon(
                             Vec2::new(60.0, 60.0),
                             egui::Layout::top_down(egui::Align::Center),
                             |ui| {
-                                let response = super::control_surface::button(ui,
+                                let response = super::control_surface::button(
+                                    ui,
                                     egui::Button::image(paintcraft_ui::icons::classic_image(
                                         ui.ctx(),
                                         Icon::Layers,

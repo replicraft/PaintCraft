@@ -134,6 +134,7 @@ pub fn tool_button(ui: &mut egui::Ui, state: &mut Controls, tool: Tool, large: b
         Tool::Eraser => Icon::Eraser,
         Tool::Fill => Icon::Fill,
         Tool::ColorPicker => Icon::Eyedropper,
+        Tool::Magnifier => Icon::ZoomIn,
         Tool::Line => Icon::Line,
         Tool::Rect => Icon::Rectangle,
         Tool::Ellipse => Icon::Ellipse,

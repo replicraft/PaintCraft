@@ -9,6 +9,7 @@ pub(super) fn tool_button(ui: &mut egui::Ui, state: &mut Controls, tool: Tool) -
         Tool::Text => Icon::Text,
         Tool::Eraser => Icon::Eraser,
         Tool::ColorPicker => Icon::Eyedropper,
+        Tool::Magnifier => Icon::ZoomIn,
         _ => unreachable!("only the v11 Tools choices use this control"),
     };
     if button(ui, tool.name(), icon, state.tool == tool).clicked() {
@@ -17,12 +18,6 @@ pub(super) fn tool_button(ui: &mut egui::Ui, state: &mut Controls, tool: Tool) -
     } else {
         false
     }
-}
-
-pub(super) fn prototype(ui: &mut egui::Ui, label: &str, icon: Icon, help: &str) {
-    ui.add_enabled_ui(false, |ui| button(ui, label, icon, false))
-        .inner
-        .on_disabled_hover_text(tr(ui.ctx(), help));
 }
 
 fn button(ui: &mut egui::Ui, label: &str, icon: Icon, selected: bool) -> egui::Response {

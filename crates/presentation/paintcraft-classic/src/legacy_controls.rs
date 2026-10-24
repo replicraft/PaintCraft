@@ -120,40 +120,57 @@ pub(super) fn tools(
                 .spacing(Vec2::new(2.0, 3.0))
                 .show(ui, |ui| {
                     for (index, tool) in [
-                        Some(Tool::Pencil), Some(Tool::Fill), Some(Tool::Text),
-                        Some(Tool::Eraser), Some(Tool::ColorPicker), None,
-                    ].into_iter().enumerate() {
-                        if let Some(tool) = tool {
-                            let action = Action::SelectTool(tool);
-                            let selected = state.tool == tool;
-                            let icon = match tool {
-                                Tool::Pencil => Icon::Pencil,
-                                Tool::Fill => Icon::Bucket,
-                                Tool::Text => Icon::Text,
-                                Tool::Eraser => Icon::Eraser,
-                                _ => Icon::Eyedropper,
-                            };
-                            let label = tr(ui.ctx(), tool.name());
-                            let response = ui.add_enabled_ui(action.enabled(context), |ui| {
-                                super::legacy_surface::button(ui, variant,
-                                    egui::Button::new(paintcraft_ui::icons::legacy_image(ui.ctx(), icon, 16.0))
-                                        .min_size(Vec2::splat(22.0)), selected)
-                            }).inner;
-                            response.widget_info(|| egui::WidgetInfo::selected(
-                                egui::Role::Button, action.enabled(context) && ui.is_enabled(), selected, &label));
-                            if response.on_hover_text(label).clicked() {
-                                state.tool = tool;
-                                actions.push(action);
-                            }
-                        } else {
-                            let response = ui.add_enabled(false,
-                                egui::Button::new(paintcraft_ui::icons::legacy_image(ui.ctx(), Icon::ZoomIn, 16.0))
-                                    .min_size(Vec2::splat(22.0)).frame_when_inactive(false));
-                            let label = tr(ui.ctx(), "Magnifier");
-                            response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, false, &label));
-                            response.on_disabled_hover_text(tr(ui.ctx(), "The magnifier tool is not available yet. Use the status bar or the View menu's zoom controls to change magnification."));
+                        Tool::Pencil,
+                        Tool::Fill,
+                        Tool::Text,
+                        Tool::Eraser,
+                        Tool::ColorPicker,
+                        Tool::Magnifier,
+                    ]
+                    .into_iter()
+                    .enumerate()
+                    {
+                        let action = Action::SelectTool(tool);
+                        let selected = state.tool == tool;
+                        let icon = match tool {
+                            Tool::Pencil => Icon::Pencil,
+                            Tool::Fill => Icon::Bucket,
+                            Tool::Text => Icon::Text,
+                            Tool::Eraser => Icon::Eraser,
+                            Tool::Magnifier => Icon::ZoomIn,
+                            _ => Icon::Eyedropper,
+                        };
+                        let label = tr(ui.ctx(), tool.name());
+                        let response = ui
+                            .add_enabled_ui(action.enabled(context), |ui| {
+                                super::legacy_surface::button(
+                                    ui,
+                                    variant,
+                                    egui::Button::new(paintcraft_ui::icons::legacy_image(
+                                        ui.ctx(),
+                                        icon,
+                                        16.0,
+                                    ))
+                                    .min_size(Vec2::splat(22.0)),
+                                    selected,
+                                )
+                            })
+                            .inner;
+                        response.widget_info(|| {
+                            egui::WidgetInfo::selected(
+                                egui::Role::Button,
+                                action.enabled(context) && ui.is_enabled(),
+                                selected,
+                                &label,
+                            )
+                        });
+                        if response.on_hover_text(label).clicked() {
+                            state.tool = tool;
+                            actions.push(action);
                         }
-                        if index % 3 == 2 { ui.end_row(); }
+                        if index % 3 == 2 {
+                            ui.end_row();
+                        }
                     }
                 });
         });
