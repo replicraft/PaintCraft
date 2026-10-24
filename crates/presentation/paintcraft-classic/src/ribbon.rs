@@ -89,11 +89,14 @@ pub(super) fn ribbon(
                     });
                 });
                 ui.separator();
+                let mut colors_center = ui.cursor().min.y;
                 group(ui, "Colors", |ui| {
-                    super::palette::colors(ui, state, &workspace.custom_colors, context, actions)
+                    colors_center = super::palette::colors(ui, state, &workspace.custom_colors, context, actions);
                 });
                 ui.separator();
                 group(ui, "Layers", |ui| {
+                    // Follow the measured palette row at either ribbon density.
+                    ui.add_space((colors_center - ui.cursor().min.y - 30.0).max(0.0));
                     let response = ui
                         .allocate_ui_with_layout(
                             Vec2::new(60.0, 60.0),

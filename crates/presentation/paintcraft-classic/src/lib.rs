@@ -128,7 +128,7 @@ pub fn chrome(
             }
         });
         if variant == ClassicVariant::V11 {
-            ui.add_space(12.0);
+            ui.add_space(6.0);
         }
         ui.menu_button("Edit", |ui| {
             menu_layout(ui, variant);
@@ -147,7 +147,7 @@ pub fn chrome(
             }
         });
         if variant == ClassicVariant::V11 {
-            ui.add_space(12.0);
+            ui.add_space(6.0);
         }
         ui.menu_button("View", |ui| {
             menu_layout(ui, variant);

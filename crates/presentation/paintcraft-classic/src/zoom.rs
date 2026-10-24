@@ -63,6 +63,7 @@ pub fn zoom_controls(ui: &mut egui::Ui, context: Context, state_id: egui::Id) ->
                         ui.spacing_mut().interact_size.y = 30.0;
                         let response = ui.add(
                             egui::Slider::new(&mut zoom, 12.5..=1000.0)
+                                .trailing_fill(true)
                                 .logarithmic(true)
                                 .show_value(false)
                                 .clamping(egui::SliderClamping::Edits)

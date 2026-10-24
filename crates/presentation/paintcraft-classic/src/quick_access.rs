@@ -68,7 +68,7 @@ pub(super) fn menu_bar(ui: &egui::Ui, variant: ClassicVariant) -> egui::MenuBar 
     let height = if ui.ctx().content_rect().height() < 420.0 {
         32.0
     } else {
-        40.0
+        36.0
     };
     egui::MenuBar::new().style(move |style: &mut egui::Style| {
         egui::containers::menu::menu_style(style);

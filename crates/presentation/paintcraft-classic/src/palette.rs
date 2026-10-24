@@ -46,7 +46,7 @@ pub(super) fn colors(
     custom: &CustomColors,
     context: Context,
     actions: &mut Vec<Action>,
-) {
+) -> f32 {
     ui.horizontal(|ui| {
         wells(ui, state, context, actions);
         swatches(ui, state, custom, context, actions);
@@ -57,7 +57,11 @@ pub(super) fn colors(
         {
             actions.push(Action::EditColors);
         }
-    });
+    })
+    .response
+    .rect
+    .center()
+    .y
 }
 
 fn edit_button(ui: &mut egui::Ui) -> egui::Response {

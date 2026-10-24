@@ -224,10 +224,18 @@ fn classic_ribbon_tools_are_visible_and_activate_at_the_default_window_size() {
             .get_by_role_and_label(eframe::egui::Role::Button, right)
             .rect();
         assert!(
-            right.left() - left.right() >= 12.0,
-            "menu labels need breathing room"
+            (6.0..=12.0).contains(&(right.left() - left.right())),
+            "menu headings retain a compact, distinct gap"
         );
     }
+    let layers = h
+        .get_by_role_and_label(eframe::egui::Role::Button, "Layers")
+        .rect();
+    let colors = h.get_by_label("Edit colors…").rect();
+    assert!(
+        (layers.center().y - colors.center().y).abs() < 1.0,
+        "layers={layers:?}, colors={colors:?}"
+    );
     for label in [
         "Pencil",
         "Fill",

@@ -267,6 +267,29 @@ fn joined_zoom_selector_and_logarithmic_thumb_preserve_layout_and_history() {
                 "logarithmic center must follow egui at {percent}%"
             );
             assert!(center.fill.b() > center.fill.r());
+            if percent > 12.5 {
+                let fill = h
+                    .output()
+                    .shapes
+                    .iter()
+                    .find_map(|shape| match &shape.shape {
+                        Shape::Rect(rect)
+                            if rail.contains_rect(rect.rect)
+                                && (rect.rect.height() - 4.0).abs() < 0.01
+                                && rect.fill == center.fill =>
+                        {
+                            Some(rect.rect)
+                        }
+                        _ => None,
+                    })
+                    .expect("blue rail fill before the thumb");
+                // egui extends the rounded fill underneath the thumb.
+                assert!(
+                    (center.center.x - 0.01..=center.center.x + center.radius)
+                        .contains(&fill.right())
+                );
+                assert!((fill.left() - rail.left()).abs() < 0.01);
+            }
             assert_eq!(h.get_by_label("Zoom percentage").rect(), field);
         }
         assert!(h.state().editor().document().same_semantics(&snapshot));
