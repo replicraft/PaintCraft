@@ -1,11 +1,24 @@
 //! Staged Classic color picker. The host adopts the result only on OK.
 mod dialog;
+mod legacy;
 pub use dialog::edit_colors_dialog;
+
+pub fn edit_colors_dialog_for_skin(
+    ctx: &egui::Context,
+    variant: crate::ClassicVariant,
+    editor: &mut ColorEditor,
+) -> ColorResponse {
+    if variant == crate::ClassicVariant::V11 {
+        edit_colors_dialog(ctx, editor)
+    } else {
+        legacy::show(ctx, editor)
+    }
+}
 mod fields;
 mod picker;
 use egui::{Color32, Vec2, ecolor::Hsva};
 use paintcraft_core::types::Rgba;
-use paintcraft_ui::i18n::tr;
+use paintcraft_ui::i18n::tr_format;
 
 pub const CUSTOM_COLOR_COUNT: usize = 28;
 pub type CustomColors = [Option<Rgba>; CUSTOM_COLOR_COUNT];
@@ -121,7 +134,7 @@ fn swatch(
         ui.painter().circle_stroke(rect.center(), radius, stroke);
     }
     response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, ui.is_enabled(), label));
-    response.on_hover_text(tr(ui.ctx(), label))
+    response.on_hover_text(label)
 }
 
 fn palette(ui: &mut egui::Ui, editor: &mut ColorEditor, columns: usize, spacious: bool) {
@@ -132,7 +145,11 @@ fn palette(ui: &mut egui::Ui, editor: &mut ColorEditor, columns: usize, spacious
         .spacing(Vec2::splat(if spacious { 14.0 } else { 2.0 }))
         .show(ui, |ui| {
             for (i, rgb) in BASIC.into_iter().enumerate() {
-                let label = format!("Basic #{:02X}{:02X}{:02X}", rgb[0], rgb[1], rgb[2]);
+                let label = tr_format(
+                    ui.ctx(),
+                    "Basic color #{ $hex }",
+                    &[("hex", format!("{:02X}{:02X}{:02X}", rgb[0], rgb[1], rgb[2]))],
+                );
                 if swatch(
                     ui,
                     Some(Rgba([rgb[0], rgb[1], rgb[2], 255])),
@@ -162,7 +179,11 @@ fn custom_palette(ui: &mut egui::Ui, editor: &mut ColorEditor, spacious: bool) {
                 if swatch(
                     ui,
                     editor.custom[i],
-                    &format!("Custom color {}", i + 1),
+                    &tr_format(
+                        ui.ctx(),
+                        "Custom color { $number }",
+                        &[("number", (i + 1).to_string())],
+                    ),
                     editor.selected_slot == i,
                     spacious,
                 )

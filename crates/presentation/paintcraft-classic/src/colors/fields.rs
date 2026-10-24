@@ -204,7 +204,7 @@ fn to_hsl(color: Rgba, fallback_hue: f32) -> [f32; 3] {
     [hue * 360.0, saturation * 100.0, light * 100.0]
 }
 
-fn from_hsl([h, s, l]: [f32; 3]) -> [u8; 3] {
+pub(super) fn from_hsl([h, s, l]: [f32; 3]) -> [u8; 3] {
     let h = h.rem_euclid(360.0) / 60.0;
     let (s, l) = (s.clamp(0.0, 100.0) / 100.0, l.clamp(0.0, 100.0) / 100.0);
     let c = (1.0 - (2.0 * l - 1.0).abs()) * s;

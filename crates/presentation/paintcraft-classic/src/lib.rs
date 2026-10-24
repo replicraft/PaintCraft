@@ -61,6 +61,7 @@ pub use text::{TextAlignment, TextControls, TextOptions, font_family, text_optio
 mod colors;
 pub use colors::{
     CUSTOM_COLOR_COUNT, ColorEditor, ColorResponse, CustomColors, edit_colors_dialog,
+    edit_colors_dialog_for_skin,
 };
 mod zoom;
 pub use zoom::zoom_controls;

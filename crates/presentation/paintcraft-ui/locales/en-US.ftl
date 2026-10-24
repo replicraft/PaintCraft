@@ -890,3 +890,7 @@ alignment = Alignment
 text-tools = Text Tools
 format-color-hex = Color #{ $hex }
 selection-shapes = Selection shapes
+luminosity = Luminosity
+format-basic-color-hex = Basic #{ $hex }
+sat = Sat
+lum = Lum

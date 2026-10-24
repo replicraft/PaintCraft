@@ -890,3 +890,7 @@ alignment = 配置
 text-tools = テキストツール
 format-color-hex = 色 #{ $hex }
 selection-shapes = 選択の形状
+luminosity = 明るさ
+format-basic-color-hex = 基本色 #{ $hex }
+sat = 彩度
+lum = 明るさ
