@@ -514,13 +514,13 @@
         "T15"
       ],
       "status": "not-started",
-      "evidence": [
+      "evidence": ["docs/RECENT_FILES.md", "apps/paintcraft/src/app/recent.rs", "apps/paintcraft/src/app/recent/store.rs", "apps/paintcraft/tests/gui/recent.rs",
         "docs/CLASSIC_FOLLOWUP.md",
         "apps/paintcraft/tests/gui/legacy_skins.rs",
         "apps/paintcraft/tests/gui/legacy_status.rs",
         "apps/paintcraft/tests/gui/legacy_file.rs"
       ],
-      "remaining_or_scope": "Per-operation evidence records; original menu/eraser/canvas/tool lifecycles and allowed OS differences. Scoped Home/View ribbons, slim status strips and two-column File panels now have host interaction tests and actual offscreen captures. PNG/JPEG/BMP choices route real exports without adopting a project binding. This presentation work does not establish or start the per-version parity gate.",
+      "remaining_or_scope": "Per-operation evidence records; original menu/eraser/canvas/tool lifecycles and allowed OS differences. Scoped Home/View ribbons, slim status strips and two-column File panels now have host interaction tests and actual offscreen captures. PNG/JPEG/BMP choices route real exports without adopting a project binding. This presentation work does not establish or start the per-version parity gate. Desktop recent files now have bounded lossless path persistence, guarded Open and Studio tab reuse, confirmed-save tracking, corrupt-metadata preservation, and clear-only-history behavior. Seven-language Classic/Studio GUI tests cover actual reopening and empty workspaces. Browser retention and live native reference qualification remain open.",
       "acceptance": "Per-operation evidence records; original menu/eraser/canvas/tool lifecycles and allowed OS differences."
     },
     {
@@ -549,14 +549,14 @@
       "title": "Studio parity tranches",
       "depends_on": ["T12", "T14", "T17"],
       "status": "partial",
-      "evidence": ["crates/presentation/paintcraft-studio/src/lib.rs", "apps/paintcraft/tests/gui/studio.rs", "docs/STUDIO.md", "docs/STUDIO_CANVAS_SIZE.md", "apps/paintcraft/tests/gui/studio_canvas.rs", "apps/paintcraft/src/app/studio_canvas/tests.rs",
+      "evidence": ["docs/RECENT_FILES.md", "apps/paintcraft/src/app/recent.rs", "apps/paintcraft/src/app/recent/store.rs", "apps/paintcraft/tests/gui/recent.rs", "crates/presentation/paintcraft-studio/src/lib.rs", "apps/paintcraft/tests/gui/studio.rs", "docs/STUDIO.md", "docs/STUDIO_CANVAS_SIZE.md", "apps/paintcraft/tests/gui/studio_canvas.rs", "apps/paintcraft/src/app/studio_canvas/tests.rs",
         "apps/paintcraft/tests/gui/auto_scroll.rs",
         "crates/editing/paintcraft-tools/src/navigation/auto_scroll.rs",
         "apps/paintcraft/tests/gui/fit_toggle.rs",
         "apps/paintcraft/src/app/view/fit_tests.rs",
         "apps/paintcraft/src/app/save_all.rs", "apps/paintcraft/src/app/save_all/tests.rs",
         "apps/paintcraft/tests/gui/save_all.rs"],
-      "remaining_or_scope": "Studio now supports Save All through serial owner-bound normal saves, native Save As dialogs, failure/cancellation stops and original-tab restoration. Studio view navigation now includes scoped drag/rectangle zoom, per-document fit/restore centering, Pan, temporary Space/middle-button movement, keyboard panning, overscroll and configurable time-based tool-drag auto-scroll with endpoint rebasing. Reference speed/input behavior and native device qualification remain open. Studio now has shared image actions, every preset, all brush media and its own nine-anchor canvas-size dialog with ordered source capture, exact history and independent Classic preferences. Studio toolbar, floating Tools/Colors/Layers, guarded History navigation and independent document tabs with owner-routed save/recovery and close handling work; shared descriptors and menu/shortcut dispatch cover existing actions; full action coverage, image operations, effects, PDN and reference parity remain.",
+      "remaining_or_scope": "Studio now supports Save All through serial owner-bound normal saves, native Save As dialogs, failure/cancellation stops and original-tab restoration. Studio view navigation now includes scoped drag/rectangle zoom, per-document fit/restore centering, Pan, temporary Space/middle-button movement, keyboard panning, overscroll and configurable time-based tool-drag auto-scroll with endpoint rebasing. Reference speed/input behavior and native device qualification remain open. Studio now has shared image actions, every preset, all brush media and its own nine-anchor canvas-size dialog with ordered source capture, exact history and independent Classic preferences. Studio toolbar, floating Tools/Colors/Layers, guarded History navigation and independent document tabs with owner-routed save/recovery and close handling work; shared descriptors and menu/shortcut dispatch cover existing actions; full action coverage, image operations, effects, PDN and reference parity remain. Desktop recent files now have bounded lossless path persistence, guarded Open and Studio tab reuse, confirmed-save tracking, corrupt-metadata preservation, and clear-only-history behavior. Seven-language Classic/Studio GUI tests cover actual reopening and empty workspaces. Browser retention and live native reference qualification remain open.",
       "acceptance": "Release only named tested tranches; high-depth/groups not misrepresented as source features."
     },
     {

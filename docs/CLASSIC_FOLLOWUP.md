@@ -110,7 +110,7 @@ retracing, cancellation and resource bounds still apply.
    rules across native, CLI and browser. Orthogonal rotations already work.
 3. Subject-aware background removal. A border flood fill would not match Paint's
    subject detection, so it must not be substituted under that name.
-4. Recent-file history, printing, scanner/camera acquisition, email/background
+4. Printing, scanner/camera acquisition, email/background
    integration, clipboard workflows, remaining historical artwork and
    version-specific behavior. Home/View ribbons and two-column File panels are
    implemented; full presentation or feature parity remains unqualified.
@@ -161,8 +161,9 @@ Windows 7/10 now have a dedicated two-column File panel, with hover/click catego
 navigation, independently scrolling columns, normal-height Exit access, Escape
 closure and a reset to Recent pictures when reopened. The Save as pane offers
 PNG, JPEG and BMP copies plus a separate PaintCraft project save. GIF remains
-explicitly disabled. Print, acquisition, email, desktop background and recent-file
-integration remain unavailable rather than showing fabricated data or success.
+explicitly disabled. Print, acquisition, email and desktop background integration
+remain unavailable. Desktop recent files now open the working shared chooser;
+browser recent-file retention remains unavailable.
 
 Typed format actions select the native dialog's initial filename/filter and
 missing-extension fallback. The returned filename extension remains authoritative.
@@ -608,3 +609,11 @@ inspected. These checks establish the implemented click workflow, not exact nati
 Windows profile behavior. Drag-to-zoom, magnification preview rectangles and
 per-version interaction qualification remain unfinished. Raw logs are retained in
 ignored `docs/validation/magnifier-2026-10-24/`.
+
+
+## Desktop recent files
+
+File → Recent in Windows 11 and Recent pictures in the Windows 7/10 File panels
+now open a real persisted history chooser. Normal dirty-document guards protect
+Open, and Clear recent history only removes list entries. All seven locales have
+real-control coverage. [Full behavior and scope](RECENT_FILES.md).

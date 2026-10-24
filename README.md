@@ -8,6 +8,7 @@ A familiar place to draw, paint and edit images. Built in Rust.
 - Shapes, curves and text.
 - Selection, crop, rotate and flip.
 - Undo, redo, editable projects and PNG, BMP and JPEG images.
+- Desktop recent files with one-click reopening.
 - Light and dark themes in seven languages.
 - Desktop, browser and command-line apps.
 

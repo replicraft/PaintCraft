@@ -48,7 +48,7 @@ independent behavioral reference evidence.
 | Studio workspace | partially working | Separate frontend, toolbar/options, floating Tools/Colors/History/Layers and centered canvas; reference spacing, theme and several tools remain |
 | Document switching/close | working | Independent frontend document workspaces with save-gated switching; sessions, histories, view/tool state, owner-routed saves/recovery and save/discard/cancel document close; text tabs rather than reference thumbnails |
 | History | working | Recorded labels, undo/redo and guarded direct navigation; branching/spill is separate work |
-| File workflows | partially working | New/Open/Save/Save As/Export and native dialogs work; shared metadata and menu/shortcut dispatch cover existing operations; Save All, recent files, printing and acquisition remain |
+| File workflows | partially working | New/Open/Save/Save As/Export and native dialogs work; shared metadata and menu/shortcut dispatch cover existing operations; Save All and desktop recent files now work; printing and acquisition remain |
 | Colors and layers | partially working | Primary/secondary swatches, swap, wheel, palette and More RGBA/hex controls work; layer selection/visibility/rename/opacity/reorder/add/delete/duplicate and staged properties work; custom palettes, thumbnails, merge/transforms and broader blend modes remain |
 | View menu | partially working | Zoom in/out, actual size, fit window/selection and a display-only pixel grid work; rulers, units, pan tools and overscroll remain |
 | Settings | partially working | Light/Dark/System with live preview and Apply/Cancel, experience/version and canvas defaults; text prototype preference; utility-window persistence and remaining reference pages pending |

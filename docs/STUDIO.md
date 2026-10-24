@@ -143,8 +143,8 @@ actions. This protects input routing; full system-font/IME canvas text is still
 pending. Engine-only operations remain available through their typed commands
 and CLI; native document-window actions have no headless equivalent.
 
-Save All is implemented below. Recent files, printing, acquisition and the
-remaining editing commands are not registered as working controls yet. The registry is a first slice for
+Save All is implemented below, and the desktop now has [recent files](RECENT_FILES.md).
+Printing, acquisition and remaining editing commands are not registered as working controls yet. The registry is a first slice for
 existing actions, not a claim of complete menu or CLI coverage.
 
 ## Layer workflows
@@ -665,3 +665,12 @@ and whitespace checks pass. Raw local logs are under
 `docs/validation/studio-save-all-2026-10-24/`. Automated tests inject native dialog
 completions without opening OS dialogs; actual OS dialog/shortcut delivery and
 reference-build comparisons remain qualification work.
+
+
+## Recent files
+
+Desktop File → Recent files opens the shared persisted chooser. Successful opens,
+imports and confirmed saves enter its bounded MRU list. Selecting a bound path
+activates its existing tab; selecting another path opens a new document without
+replacing other work. Clear only removes the list, and an empty Studio workspace
+can reopen a record. [Semantics and validation](RECENT_FILES.md).
