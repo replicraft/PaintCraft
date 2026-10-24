@@ -263,7 +263,13 @@ fn historical_browser_selection_menu_routes_delete_undo_and_safe_disabled_choice
                 .click();
             h.run();
             assert_eq!(h.state().editor.session.ticket(), ticket);
-            assert!(h.query_by_label(&label("Rectangular selection")).is_some());
+            assert_eq!(
+                h.state().controls.options.selection_mode,
+                paintcraft_tools::SelectionMode::FreeForm
+            );
+            h.get_by_role_and_label(Role::Button, &label("Selection options"))
+                .click();
+            h.run();
             h.get_by_role_and_label(Role::Button, &label("Select all"))
                 .click();
             h.run();

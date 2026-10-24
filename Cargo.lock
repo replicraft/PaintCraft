@@ -2910,6 +2910,7 @@ dependencies = [
  "paintcraft-editor",
  "paintcraft-formats",
  "paintcraft-input",
+ "paintcraft-raster",
  "paintcraft-render",
  "paintcraft-tools",
  "paintcraft-ui",

@@ -125,6 +125,13 @@ impl Editor {
             self.place_text()?;
         }
         match action {
+            Action::SelectPolygon { points } => {
+                self.commit(vec![commands::selection_polygon(&points)?])
+            }
+            Action::InvertSelection => {
+                self.tools.cancel_gesture();
+                self.commit(vec![commands::invert_selection()])
+            }
             Action::PickColor(pick) => {
                 if !self.tools.can_apply_color_pick(&pick) {
                     return Err(Error::new(

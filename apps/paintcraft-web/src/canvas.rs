@@ -8,9 +8,10 @@ use paintcraft_tools::{Preview, PreviewRevision, Tool};
 #[derive(Default)]
 pub(crate) struct Canvas {
     texture: Option<TextureHandle>,
+    pub(crate) outline: paintcraft_raster::selection::OutlineCache,
     fitted: bool,
     pending_center: Option<(f32, f32)>,
-    key: Option<(Ticket, PreviewRevision)>,
+    key: Option<(Ticket, Option<PreviewRevision>)>,
     pub rect: Option<Rect>,
     pub viewport: Vec2,
     pub pointer: Option<(i64, i64)>,
@@ -132,6 +133,22 @@ impl WebApp {
                     );
                 }
                 self.text_overlay(ui, &painter, response.rect);
+                self.draw_mask_overlay(&painter, response.rect);
+                if let Some(Preview::SelectionPath { points }) = self.editor.tools.preview() {
+                    let path: Vec<_> = points
+                        .into_iter()
+                        .map(|p| response.rect.min + Vec2::new(p.0 as f32, p.1 as f32) * self.zoom)
+                        .collect();
+                    let ppp = ui.ctx().pixels_per_point();
+                    painter.add(egui::Shape::closed_line(
+                        path.clone(),
+                        egui::Stroke::new(3.0 / ppp, Color32::WHITE),
+                    ));
+                    painter.add(egui::Shape::closed_line(
+                        path,
+                        egui::Stroke::new(1.0 / ppp, Color32::BLACK),
+                    ));
+                }
                 let selection = match self.editor.tools.preview() {
                     Some(Preview::Marquee { from, to }) => Some((from, (to.0 + 1, to.1 + 1))),
                     _ => match self.editor.session.selection() {
@@ -195,7 +212,8 @@ impl WebApp {
     fn refresh_texture(&mut self, ctx: &egui::Context) {
         let key = (
             self.editor.session.ticket(),
-            self.editor.tools.preview_revision(),
+            (!self.editor.tools.gesture_is_selection())
+                .then(|| self.editor.tools.preview_revision()),
         );
         if self.canvas.key == Some(key) {
             return;
@@ -232,7 +250,8 @@ impl WebApp {
         }
         self.canvas.key = Some((
             self.editor.session.ticket(),
-            self.editor.tools.preview_revision(),
+            (!self.editor.tools.gesture_is_selection())
+                .then(|| self.editor.tools.preview_revision()),
         ));
     }
 
@@ -328,7 +347,7 @@ impl WebApp {
                             continue;
                         }
                         let layer = self.editor.target.unwrap_or(uuid::Uuid::nil());
-                        if self.controls.tool == Tool::ColorPicker
+                        if matches!(self.controls.tool, Tool::Select | Tool::ColorPicker)
                             || self
                                 .editor
                                 .session
@@ -379,7 +398,7 @@ impl WebApp {
                             self.editor.tools.constrain_shape(modifiers.shift);
                         }
                     } else if !pressed && self.editor.tools.gesture_button() == Some(button) {
-                        self.editor.tools.pointer_move_subpixel(point(pos));
+                        self.move_selection_pointer(point(pos));
                         self.editor.tools.constrain_shape(modifiers.shift);
                         if let Some((_, action)) = self.editor.tools.pointer_up_button(button) {
                             self.edit(action);
@@ -401,7 +420,9 @@ impl WebApp {
                     {
                         continue;
                     }
-                    if self.editor.tools.gesture_points().len() >= MAX_POINTS {
+                    if self.editor.tools.gesture_is_lasso() {
+                        self.move_selection_pointer(p);
+                    } else if self.editor.tools.gesture_points().len() >= MAX_POINTS {
                         self.editor.tools.cancel_gesture();
                         self.message =
                             "Stroke cancelled: browser point limit reached; use shorter strokes"

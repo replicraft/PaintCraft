@@ -4,6 +4,9 @@ use paintcraft_ui::t;
 #[path = "crop_tests.rs"]
 mod crop_tests;
 mod forms;
+#[cfg(test)]
+#[path = "lasso_tests.rs"]
+mod lasso_tests;
 use crate::{
     canvas::Canvas,
     editor::{Editor, WHITE},
@@ -115,6 +118,18 @@ impl WebApp {
                 .is_some_and(|l| l.visible),
             zoom: self.zoom,
             pixel_grid: false,
+            can_transform_image: !matches!(
+                self.editor.session.selection(),
+                paintcraft_raster::Selection::Mask(_)
+            ),
+            can_erase_selection: match self.editor.session.selection() {
+                paintcraft_raster::Selection::Rect(r) => r.intersect(&doc.canvas_rect()).is_some(),
+                paintcraft_raster::Selection::Mask(mask) => {
+                    mask.uniform_coverage() != Some(0)
+                        && mask.domain().intersect(&doc.canvas_rect()).is_some()
+                }
+                _ => false,
+            },
             can_fit_selection: false,
             can_crop_selection: matches!(self.editor.session.selection(),paintcraft_editor::execute::Selection::Rect(rect) if rect.intersect(&doc.canvas_rect()).is_some()),
             status_bar: true,
@@ -215,6 +230,10 @@ impl WebApp {
                 color: paintcraft_tools::commands::canvas_color(self.editor.session.document()),
             }),
             Action::Deselect => self.edit(Edit::Select { corners: None }),
+            Action::InvertSelection => {
+                self.editor.tools.cancel_gesture();
+                self.edit(Edit::InvertSelection);
+            }
             Action::SelectAll => {
                 let (w, h) = self.editor.session.document().canvas;
                 self.edit(Edit::Select {

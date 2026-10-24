@@ -5,6 +5,7 @@ mod editor;
 mod files;
 mod layers;
 mod preferences;
+mod selection_ui;
 mod text_ui;
 pub use app::WebApp;
 
