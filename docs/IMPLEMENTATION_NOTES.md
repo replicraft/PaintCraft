@@ -289,12 +289,12 @@ remain T16 work. Current-app GPU previews can be exported with the ignored
 |---|---|---|
 | Engine (T01, T04–T07) | Sparse RGBA8 layers (256×256 copy-on-write tiles, exact default pixel, hidden RGB preserved), immutable documents, deterministic UUIDv5 identifiers, atomic staged batches, semantic no-ops, linear recorded undo/redo | unit tests; 21 conformance vectors from the Python oracle |
 | Native format (T08, T29) | Canonical PCND v1 writer (byte-identical to the specimen) and bounded reader; unknown version, schema, feature, encoding or group is `capability.unsupported`, never editable | `pcnd.rs` tests, vector digests |
-| Batch v2 | v1 plus `raster.stroke_path`, `raster.flood_fill`, `raster.shape`, `raster.text`, `layer.reorder`, `layer.duplicate`, `canvas.clear` (see below) | behavior tests, JSON-Schema grammar cases |
+| Batch v2 | v1 plus `raster.stroke_path`, `raster.flood_fill`, `raster.shape`, `raster.contour`, `raster.text`, `layer.reorder`, `layer.duplicate`, `canvas.clear` (see below) | behavior tests, JSON-Schema grammar cases |
 | Image formats | PNG, BMP, JPEG import and export with named, acknowledged losses (flatten, hidden RGB, lossy JPEG, discarded alpha) | `image.rs`, `export.rs`, CLI tests |
 | Safe save and recovery (T10) | Streaming staging → atomic replace → bounded read-back; ordered native queue and file receipts; autosave checkpoints with per-session locks; recover, discard or ask later | platform `save.rs`, format `recovery.rs`, GUI tests |
 | Bounded history (T11) | Memory budget over all retained snapshots (shared tiles counted once); only the oldest undo steps are dropped, the newest edit stays undoable, the user is told | `session.rs`, editor tests |
 | CLI (T08, T33, T34) | `new`, `inspect`, `schema batch|batch-v2`, `capabilities`, `apply` (hash-guarded), `import`, `render` | 11 end-to-end tests of the real binary; output validates against the pack's schemas |
-| Editor (T09, T14 subset) | Pencil, brush (round/square), eraser, flood fill, line, rectangle, ellipse (outline/filled/both), rectangle select, desktop font text with antialiased resolved masks and legacy bitmap text; layers: add, show/hide, move, delete, rename, opacity; undo/redo; one gesture or text object is one transaction | desktop controller tests; headless egui tests |
+| Editor (T09, T14 subset) | Pencil, brush (round/square), eraser, flood fill, all 23 Classic shapes including polygon/two-handle curve, outline/filled/both for closed shapes, rectangle select, desktop font text with antialiased resolved masks and legacy bitmap text; layers: add, show/hide, move, delete, rename, opacity; undo/redo; one gesture or text object is one transaction | desktop controller tests; headless egui tests |
 | Presentation (T15 subset) | First-visit Classic picker (v11 preselected), remembered choice, Interface button, damaged settings kept aside | GUI tests |
 
 Native evidence is limited to repeated runs of the real wgpu window, which opened, drew
@@ -344,6 +344,13 @@ Geometry definitions (the historical integer operations remain exact):
 - **Ellipse.** Pixel `(px,py)` in a `w×h` box is inside when
   `(2px+1−w)²h² + (2py+1−h)²w² ≤ w²h²`. An outline of thickness `t` is the figure minus the
   same figure shrunk by `t` on every side; if nothing remains inside, it is solid.
+- **Contours.** Additive `raster.contour` accepts 3..=1024 points for a closed
+  path, 2..=1024 for an open path. Closed fills use even-odd pixel-centre membership
+  with half-open edges; open paths require stroke and prohibit fill. Fill and
+  outline share one admitted plan. Outline stamps are unioned before blending.
+  Polygon scanning is clipped to visible rows and admits at most 16,777,216 edge
+  tests per contour. Interactive curves are fixed-point cubic flattenings with at
+  most 257 points; these are explicit PaintCraft semantics, not Windows oracles.
 - **Flood fill.** 4-connected from the seed; a pixel joins when each channel differs from
   the seed pixel by at most the tolerance; the region is computed before painting.
 - **Text.** Desktop text uses Cosmic Text shaping/fallback and hinted Swash grayscale

@@ -2,8 +2,8 @@
 
 PaintCraft Web connects the shared Classic interface, tool state machines,
 transactional document session and raster compositor. Pencil, round/square brush,
-eraser, fill, line/rectangle/ellipse, 18 closed shape presets, rectangular
-selection, clear canvas and undo/redo edit real pixels. Shift constrains shapes; Ctrl/Cmd-scroll zooms. The
+eraser, fill, all 23 Classic shape choices, rectangular selection, clear canvas
+and undo/redo edit real pixels. Shift constrains shapes; Ctrl/Cmd-scroll zooms. The
 Layers panel adds, selects, hides, reorders and deletes real layers. Brush preview
 and release use the same shared commands. Erasing and Clear Canvas restore the
 solid project ground, with white used for new canvases and imported images that
@@ -50,7 +50,14 @@ Closed shapes include rounded rectangle, triangles, diamond, pentagon, hexagon,
 four directional arrows, three stars, three callouts, heart and lightning.
 They support fill/outline/both, stroke size, secondary colors and live Shift
 constraints. Preview and release share their commands; placement is undoable.
-Curve and polygon interactions remain unavailable. Curved preset contours use
+Polygon starts with a dragged edge; subsequent clicks add vertices. Click its
+start/last vertex or press Enter after at least three vertices to finish;
+Backspace removes the last vertex. Curve starts with a dragged line and then
+accepts two control-handle placements/drags. Enter can finish a curve early.
+Escape cancels either draft. Save/Open/New/Export retain unfinished constructions
+and explain how to finish/cancel first. Tool changes cancel unfinished drafts.
+Completed shapes are raster transactions, not persistent editable vector objects.
+The older Classic skins expose the same 23-entry gallery. Curved preset contours use
 bounded fixed-point flattenings, not a Windows pixel-fidelity guarantee.
 
 This is an early editor. Image transforms, clipboard and recovery

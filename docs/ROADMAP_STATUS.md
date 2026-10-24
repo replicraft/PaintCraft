@@ -11,14 +11,22 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
-Current priority is completing editing features and missing shapes; UI cleanup
-is deferred. Eighteen closed presets now work through the shared tool/command/
-raster path in Classic native and web, including Shift constraints, fill/outline,
-selection clipping and Undo. That enables 21 of the 23 gallery choices. Curve and
-Polygon still need multi-step interactions; remaining brush semantics, transforms,
-clipboard and other unavailable actions remain feature work. Source-based
-checks live in the shape tests and [Classic ledger](CLASSIC.md); generated
-validation artifacts are now ignored instead of added to Git.
+Current priority is completing editing features; UI cleanup is deferred. All 23
+Classic gallery choices now have real operations: the eighteen closed presets
+plus line/rectangle/ellipse, polygon construction and two-handle cubic curves.
+Classic's older skins share the gallery; Studio's palette exposes Polygon/Curve.
+The shared contour command supports clipped fill and once-covered outlines in a
+single admitted paint plan. Host tests cover finish/cancel, coalesced Enter,
+button/layer ownership, bounded vertices, native worker backpressure, file guards
+and Undo; an isolated browser confirmed preview/release equality and one-step Undo.
+Current validation: 256 native library tests (8 ignored), 215 GUI tests (45
+ignored), 63 web/tool tests, contour engine/parser/CLI cases and strict native/
+wasm Clippy. This establishes feature behavior, not full native input or Windows
+pixel fidelity. Remaining shape work includes antialiasing, richer draft editing
+and automatic resolution at tool/document boundaries. Crop/transforms, clipboard,
+other brush semantics and unavailable image tools remain feature work. Source
+checks live in the [Classic ledger](CLASSIC.md); generated validation artifacts
+are ignored. T14/T15 remain partial; T22 conformance remains not-started.
 
 Latest web text connects the shared Cosmic Text/Swash engine and bundled Selawik
 to Classic's toolbar and one editable canvas draft. Downloads capture a rasterized

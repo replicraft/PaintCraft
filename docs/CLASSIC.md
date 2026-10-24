@@ -1355,8 +1355,8 @@ shape fill/outline choices and thickness controls route to shared tool/command
 operations in native and web. Live Shift constrains the bounds in every drag
 direction; primary/secondary colors are captured at press. Fill and outline share
 one admitted paint plan, with selection clipping, exactly-once stroke coverage,
-atomic publication and undo/redo. The 21 working choices leave Curve and Polygon
-disabled until their multi-step interactions exist. Preset curves use bounded
+atomic publication and undo/redo. Polygon/Curve were subsequently connected as
+described below, enabling all 23 choices. Preset curves use bounded
 fixed-point contours; native reference parity and shape antialiasing remain work.
 
 Checks include independent polygon membership/coverage, clipping/cancellation and
@@ -1368,3 +1368,38 @@ browser exercised triangle, rounded rectangle and right arrow, with identical
 preview/release captures and clean state after Undo. New generated evidence stays
 local under the ignored validation folder or `/tmp`; source tests remain tracked.
 UI polishing is deferred while missing editing features are completed.
+
+### Polygon and curve construction (2026-10-23)
+
+All 23 Classic gallery entries now select working tools. V7/V10 skins share the
+complete gallery, and Studio's toolbox includes Polygon and Curve. Polygon keeps
+a private first edge and subsequent vertices until the user clicks the start/last
+vertex or presses Enter with at least three vertices. Backspace removes the last
+vertex; the 1024-vertex limit closes the polygon without dropping accepted points.
+Shift snaps the current edge. Curve starts with a dragged baseline, then accepts
+two control-handle placements/drags. A fixed-point cubic flattening supplies at
+most 257 points. Enter permits early completion. Both capture the initial target,
+button, colors, stroke and fill, and produce one raster transaction on completion.
+Escape/focus loss cancel unpublished work.
+
+The additive v2 `raster.contour` command distinguishes open/closed paths. Closed
+paths permit fill/outline/both; open paths require stroke and cannot be filled.
+Fill and outline use one admitted plan, selection clipping and recorded Undo/Redo.
+The historical benchmark oracle explicitly declines this new operation. Save and
+Export refuse an unfinished construction instead of silently omitting it; browser
+New/Open also retain it. Tool changes and some document actions still cancel
+unfinished drafts, and committed shapes are raster pixels. Automatic draft
+resolution, richer adjustment handles, shape antialiasing and Windows reference
+fidelity remain work; this does not complete T14/T15 or the T22 input matrix.
+
+Checks: 256 native library tests pass (8 ignored), including frozen worker previews
+and file guards; 215 GUI tests pass (45 ignored), including all gallery selections,
+multipass pointer/Enter ordering and curve pixels. Sixty-three web/tool tests pass;
+contour engine tests cover selection, cancellation/denial and single-coverage corners.
+The real CLI applies and reopens PCND contours and renders expected open/closed
+pixels. An independent JSON Schema validator checked 68 v2 grammar cases, including
+26 new contour/preset cases; the Rust parser agrees on those verdicts. Strict
+workspace and wasm Clippy and the release browser build pass. An isolated Brave
+review verified polygon/curve preview/release equality, one-Undo restoration, Escape
+and refusal to download an unfinished shape, with no JavaScript exceptions.
+Generated captures/logs remain local in the ignored validation folder.
