@@ -68,11 +68,13 @@ fn hidden_or_stale_work_cannot_publish_and_releases_only_after_completion() {
         )
         .unwrap();
         let (release, gate) = std::sync::mpsc::channel();
+        let (started, wait_started) = std::sync::mpsc::sync_channel(1);
         let source = doc.clone();
         let handle = executor
             .submit(
                 WORK_BYTES,
                 move |_| {
+                    started.send(()).unwrap();
                     gate.recv_timeout(Duration::from_secs(5)).unwrap();
                     paintcraft_render::thumbnail::render_document(&source, SIDE, || Ok(()))
                 },
@@ -80,6 +82,7 @@ fn hidden_or_stale_work_cannot_publish_and_releases_only_after_completion() {
             )
             .unwrap();
         service.pending = Some((Scope::committed(&doc), handle));
+        wait_started.recv_timeout(Duration::from_secs(5)).unwrap();
         service.executor = Some(executor);
         let mut next = (*doc).clone();
         // A different document can share a state identity; document identity is mandatory.
