@@ -15,7 +15,7 @@ pub struct WebApp {
     pub(crate) editor: Editor,
     pub(crate) canvas: Canvas,
     pub(crate) workspace: Workspace,
-    variant: ClassicVariant,
+    pub(crate) variant: ClassicVariant,
     name: String,
     pub(crate) zoom: f32,
     settings: bool,

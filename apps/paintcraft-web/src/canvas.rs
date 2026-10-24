@@ -15,6 +15,7 @@ pub(crate) struct Canvas {
     pub rect: Option<Rect>,
     pub viewport: Vec2,
     pub pointer: Option<(i64, i64)>,
+    pub controls: Option<Rect>,
 }
 
 impl std::fmt::Debug for Canvas {
@@ -28,6 +29,30 @@ impl std::fmt::Debug for Canvas {
 impl WebApp {
     pub(crate) fn canvas(&mut self, ui: &mut egui::Ui) {
         self.canvas.viewport = ui.available_size();
+        let modern = self.variant == paintcraft_classic::ClassicVariant::V11;
+        let enabled = !self.blocked();
+        self.canvas.controls = if modern {
+            paintcraft_classic::tool_controls::show(
+                ui,
+                egui::Id::unique("web-tool-options"),
+                ui.available_rect_before_wrap(),
+                self.controls.tool,
+                &mut self.controls.options,
+                enabled,
+            )
+        } else {
+            None
+        };
+        let clearance = if modern {
+            paintcraft_classic::tool_controls::CANVAS_CLEARANCE
+        } else {
+            0.0
+        };
+        let pointer_on_workspace = ui.input(|i| i.pointer.hover_pos()).is_some_and(|pos| {
+            ui.clip_rect().contains(pos)
+                && self.canvas.controls.is_none_or(|rect| !rect.contains(pos))
+                && ui.ctx().layer_id_at(pos) == Some(ui.layer_id())
+        });
         if ui.ctx().current_pass_index() == 0 && !self.blocked() {
             let scroll = ui.input(|i| {
                 i.events
@@ -41,9 +66,7 @@ impl WebApp {
                         } = event
                             && (modifiers.ctrl || modifiers.command || modifiers.mac_cmd)
                             && !modifiers.alt
-                            && i.pointer
-                                .hover_pos()
-                                .is_some_and(|p| ui.clip_rect().contains(p))
+                            && pointer_on_workspace
                         {
                             Some(match unit {
                                 egui::MouseWheelUnit::Point => delta.y / 40.0,
@@ -67,7 +90,7 @@ impl WebApp {
             ui,
             egui::Id::unique("web-editor-canvas"),
             Vec2::new(extent.0 as f32, extent.1 as f32) * self.zoom,
-            0.0,
+            clearance,
             |ui, response, painter| {
                 self.canvas.rect = Some(response.rect);
                 response
@@ -106,7 +129,12 @@ impl WebApp {
                         egui::StrokeKind::Inside,
                     );
                 }
-                if response.hovered() && !self.blocked() {
+                if response.hovered()
+                    && !self.blocked()
+                    && ui.ctx().pointer_hover_pos().is_some_and(|pos| {
+                        self.canvas.controls.is_none_or(|rect| !rect.contains(pos))
+                    })
+                {
                     ui.ctx().set_cursor_icon(egui::CursorIcon::Crosshair);
                     if self.controls.tool == Tool::Eraser
                         && let Some(pos) = ui.ctx().pointer_hover_pos()
@@ -217,6 +245,7 @@ impl WebApp {
                     if pressed
                         && rect.contains(pos)
                         && ui.clip_rect().contains(pos)
+                        && self.canvas.controls.is_none_or(|rect| !rect.contains(pos))
                         && response.contains_pointer()
                     {
                         if let Some(layer) = self.editor.target
@@ -237,9 +266,10 @@ impl WebApp {
                 }
                 egui::Event::PointerMoved(pos) => {
                     let p = point(pos);
-                    self.canvas.pointer = rect
-                        .contains(pos)
-                        .then_some((p.0.div_euclid(256), p.1.div_euclid(256)));
+                    self.canvas.pointer = (rect.contains(pos)
+                        && ui.clip_rect().contains(pos)
+                        && self.canvas.controls.is_none_or(|rect| !rect.contains(pos)))
+                    .then_some((p.0.div_euclid(256), p.1.div_euclid(256)));
                     if self.editor.tools.gesture_points().len() >= MAX_POINTS {
                         self.editor.cancel();
                         self.message =
