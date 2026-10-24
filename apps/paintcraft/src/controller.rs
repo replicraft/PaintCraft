@@ -18,6 +18,8 @@ mod history;
 mod layers;
 #[path = "controller/paint_queue.rs"]
 mod paint_queue;
+#[path = "controller/picker.rs"]
+mod picker;
 #[path = "controller/pointer.rs"]
 mod pointer;
 #[path = "controller/preview_cache.rs"]
@@ -420,7 +422,7 @@ impl Editor {
     pub fn select_tool(&mut self, tool: Tool) {
         self.commit_text();
         self.cancel_gesture();
-        self.tools.tool = tool;
+        self.tools.choose_tool(tool);
     }
     fn collect_preview(&self) -> Option<Preview> {
         self.paint_preview().or_else(|| {
@@ -450,7 +452,7 @@ impl Editor {
             return false;
         }
         // Typed text is part of the document the user is about to undo, save or change.
-        if !matches!(action, Action::Text { .. }) {
+        if !matches!(action, Action::Text { .. } | Action::PickColor(_)) {
             self.commit_text();
         }
         let accepted = self.outbox.push(token, action);
@@ -529,6 +531,7 @@ impl Editor {
 
     fn execute(&mut self, action: Action) {
         match action {
+            Action::PickColor(pick) => self.pick_color(pick),
             Action::CropToSelection => self.crop_to_selection(),
             Action::TransformImage { transform, clear } => self.transform_image(transform, clear),
             Action::Contour(contour) => self.contour(&contour),

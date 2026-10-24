@@ -130,7 +130,8 @@ impl App {
                                 paintcraft_input::PointerButton::Primary
                             }
                             egui::PointerButton::Secondary
-                                if self.experience() == Experience::Studio =>
+                                if self.experience() == Experience::Studio
+                                    || self.editor.tool == Tool::ColorPicker =>
                             {
                                 paintcraft_input::PointerButton::Secondary
                             }
@@ -147,7 +148,21 @@ impl App {
                                 Experience::Classic => self.editor.canvas_color(),
                                 Experience::Studio => Rgba::TRANSPARENT,
                             };
+                            let source = self.editor.options.picker_source;
+                            if self.editor.tool == Tool::ColorPicker {
+                                use paintcraft_core::types::picker::{
+                                    PickerAfter, SampleSize, SampleSource,
+                                };
+                                if self.experience() == Experience::Classic {
+                                    self.editor.options.picker_source = SampleSource::Image;
+                                    self.editor.options.picker_size = SampleSize::One;
+                                    self.editor.options.picker_after = PickerAfter::Previous;
+                                } else if modifiers.ctrl {
+                                    self.editor.options.picker_source = SampleSource::Image;
+                                }
+                            }
                             self.editor.pointer_down_subpixel(d, button);
+                            self.editor.options.picker_source = source;
                             self.editor.constrain_shape(modifiers.shift);
                         }
                     }
@@ -177,7 +192,8 @@ impl App {
                                 paintcraft_input::PointerButton::Primary
                             }
                             egui::PointerButton::Secondary
-                                if self.experience() == Experience::Studio =>
+                                if self.experience() == Experience::Studio
+                                    || self.editor.tool == Tool::ColorPicker =>
                             {
                                 paintcraft_input::PointerButton::Secondary
                             }

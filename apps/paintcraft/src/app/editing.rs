@@ -102,7 +102,10 @@ impl App {
             if let Some(service) = &self.editing {
                 self.editor.connect_editing(service.clone());
             }
-            if self.editor.run_pending() > 0 {
+            let palette = (self.editor.color, self.editor.secondary, self.editor.tool);
+            if self.editor.run_pending() > 0
+                || palette != (self.editor.color, self.editor.secondary, self.editor.tool)
+            {
                 ctx.request_repaint();
             }
             self.remember_published_canvas_size();

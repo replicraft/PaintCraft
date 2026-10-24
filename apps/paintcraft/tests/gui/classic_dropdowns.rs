@@ -502,11 +502,11 @@ fn brush_gallery_scrolls_lower_choices_into_a_short_window() {
 }
 
 #[test]
-fn classic_image_previews_stay_disabled_while_shape_tools_are_enabled() {
+fn unavailable_image_tools_stay_disabled_while_picker_and_shape_tools_are_enabled() {
     let mut h = harness();
     let before = h.state().editor().document_snapshot();
     let canvas = h.state().canvas_rect();
-    for label in ["Crop", "Remove background", "Color picker", "Magnifier"] {
+    for label in ["Crop", "Remove background", "Magnifier"] {
         assert!(
             h.get_by_label(label).accesskit_node().is_disabled(),
             "{label}"
@@ -523,6 +523,15 @@ fn classic_image_previews_stay_disabled_while_shape_tools_are_enabled() {
             "{label} must not open a different operation's dialog"
         );
     }
+    assert!(
+        !h.get_by_label("Color picker")
+            .accesskit_node()
+            .is_disabled()
+    );
+    h.get_by_label("Color picker").click();
+    h.run();
+    assert_eq!(h.state().canvas_rect(), canvas);
+    assert!(h.query_by_label("Apply").is_none());
     for label in [
         "Polygon",
         "Right triangle",

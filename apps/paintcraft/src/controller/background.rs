@@ -12,6 +12,7 @@ const PREPARATION_CHARGE: u64 = 2 << 30;
 #[derive(Debug)]
 pub(super) enum Completion {
     Edit(PreparedEdit),
+    Pick(Box<picker::Picked>),
     Deferred(Box<retry::Deferred>),
     Navigation(PreparedNavigation),
     Maintenance(paintcraft_editor::session::PreparedHistoryMaintenance),
@@ -351,6 +352,7 @@ impl Editor {
         self.publication_preview = None;
         let before_canvas = self.document().canvas;
         let result = match result {
+            Ok(Completion::Pick(picked)) => self.accept_pick(*picked),
             Ok(Completion::Edit(prepared)) => self
                 .session
                 .publish_prepared(prepared, || Ok(()))
@@ -377,7 +379,13 @@ impl Editor {
         };
         if let Err(error) = result {
             self.preview_lineage = Uuid::new_v4();
-            self.status = if error.code == ErrorCode::OperationCancelled {
+            self.status = if pending.done == picker::STATUS {
+                if error.code == ErrorCode::OperationCancelled {
+                    "Color sample cancelled".into()
+                } else {
+                    format!("Color sample failed: {error}")
+                }
+            } else if error.code == ErrorCode::OperationCancelled {
                 "Edit cancelled".into()
             } else {
                 format!("Edit not published: {error}")

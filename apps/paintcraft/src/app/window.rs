@@ -177,11 +177,15 @@ impl App {
                 self.confirm = Some(Confirm::QuitUnsaved);
             }
         }
+        let palette = (self.editor.color, self.editor.secondary, self.editor.tool);
         if self.editor.run_pending() > 0 {
             ctx.request_repaint();
             if self.render_region.is_some() {
                 self.sync_texture(&ctx);
             }
+        }
+        if palette != (self.editor.color, self.editor.secondary, self.editor.tool) {
+            ctx.request_repaint();
         }
         self.remember_published_canvas_size();
         self.poll_edits(&ctx);

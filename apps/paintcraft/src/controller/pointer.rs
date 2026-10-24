@@ -36,20 +36,24 @@ impl Editor {
         {
             return;
         }
-        self.commit_text();
+        if self.tool != Tool::ColorPicker {
+            self.commit_text();
+        }
         let layer = match (
             self.tool,
             self.target
                 .filter(|id| self.document().layers.contains_key(id)),
         ) {
-            (Tool::Select, t) => t.unwrap_or_else(Uuid::nil),
+            (Tool::Select | Tool::ColorPicker, t) => t.unwrap_or_else(Uuid::nil),
             (_, Some(layer)) => layer,
             (_, None) => {
                 self.status = "No editing target: add or choose a layer".into();
                 return;
             }
         };
-        if self.tool != Tool::Select && !self.document().layers[&layer].visible {
+        if !matches!(self.tool, Tool::Select | Tool::ColorPicker)
+            && !self.document().layers[&layer].visible
+        {
             self.status = "The target layer is hidden; show it or choose another layer".into();
             return;
         }

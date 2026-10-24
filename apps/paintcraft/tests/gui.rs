@@ -336,3 +336,6 @@ mod thumbnail;
 
 #[path = "gui/transforms.rs"]
 mod transforms;
+
+#[path = "gui/color_picker.rs"]
+mod color_picker;
