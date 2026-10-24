@@ -2827,6 +2827,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "paintcraft-web"
+version = "0.1.0"
+dependencies = [
+ "eframe",
+ "egui_kittest",
+ "paintcraft-classic",
+ "paintcraft-core",
+ "paintcraft-tools",
+ "paintcraft-ui",
+ "uuid",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+ "wgpu",
+]
+
+[[package]]
 name = "parking"
 version = "2.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"

@@ -17,3 +17,13 @@ jobs:
       - run: cargo fmt --all --check
       - run: cargo clippy --workspace --all-targets -- -D warnings
       - run: cargo test --workspace
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install the pinned toolchain and browser target
+        run: |
+          rustup show active-toolchain || rustup toolchain install
+          rustup target add wasm32-unknown-unknown
+      - run: cargo check --locked -p paintcraft-web --target wasm32-unknown-unknown
+      - run: cargo clippy --locked -p paintcraft-web --target wasm32-unknown-unknown -- -D warnings

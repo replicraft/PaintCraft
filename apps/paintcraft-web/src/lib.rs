@@ -1,0 +1,51 @@
+//! Browser-owned UI state. Native filesystem, menus and workers stay in desktop.
+mod app;
+pub use app::WebApp;
+
+#[cfg(target_arch = "wasm32")]
+mod browser {
+    use wasm_bindgen::prelude::*;
+
+    /// JavaScript retains this handle until the page is closed or destroyed.
+    #[derive(Clone)]
+    #[wasm_bindgen]
+    pub struct WebHandle {
+        runner: eframe::WebRunner,
+    }
+
+    impl Default for WebHandle {
+        fn default() -> Self {
+            Self {
+                runner: eframe::WebRunner::new(),
+            }
+        }
+    }
+
+    impl std::fmt::Debug for WebHandle {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            f.debug_struct("WebHandle").finish_non_exhaustive()
+        }
+    }
+
+    #[wasm_bindgen]
+    impl WebHandle {
+        #[wasm_bindgen(constructor)]
+        pub fn new() -> Self {
+            Self::default()
+        }
+
+        pub async fn start(&self, canvas: web_sys::HtmlCanvasElement) -> Result<(), JsValue> {
+            self.runner
+                .start(
+                    canvas,
+                    eframe::WebOptions::default(),
+                    Box::new(|cc| Ok(Box::new(super::WebApp::new(&cc.egui_ctx)))),
+                )
+                .await
+        }
+
+        pub fn destroy(&self) {
+            self.runner.destroy();
+        }
+    }
+}

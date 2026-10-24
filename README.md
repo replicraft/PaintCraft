@@ -24,11 +24,15 @@ cargo run -p paintcraft-cli -- --help
 cargo run --release -- [file.pcnd]   # the desktop editor
 ```
 
+An initial [PaintCraft Web UI preview](apps/paintcraft-web/README.md) shares the
+Classic presentation and builds to WebAssembly. Browser drawing and file handling
+are not connected yet.
+
 The toolchain is pinned in `rust-toolchain.toml`. The root manifest owns package metadata
 and dependency versions; member manifests inherit them through `workspace = true`.
 Running `cargo run` at the repository root selects the desktop application.
-Handwritten source, tests, schemas, fixtures, and documentation are limited to 800
-lines per file; CI checks this limit. Cargo’s generated `Cargo.lock` is exempt.
+Repository-owned source code files are limited to 800 lines; CI checks this limit.
+Documentation and generated data are exempt.
 
 The desktop attempts GPU document composition on its existing wgpu device and falls back
 to the CPU compositor when unavailable or beyond device limits. This initial GPU backend
@@ -69,6 +73,7 @@ members with `workspace = true`. Application entry points stay in `apps/`.
 | `crates/presentation/paintcraft-studio` | Studio document tabs, toolbar, tool options and floating Tools/Colors/Layers/History windows |
 | `apps/paintcraft` | Desktop controller, settings and egui application (wgpu) |
 | `apps/paintcraft-cli` | Headless Clap CLI; each command lives in `src/commands/` |
+| `apps/paintcraft-web` | WebAssembly Classic UI preview; browser document editing pending |
 | `conformance/` | Vendored batch v1 conformance vectors and the canonical specimen |
 
 ## Try it
