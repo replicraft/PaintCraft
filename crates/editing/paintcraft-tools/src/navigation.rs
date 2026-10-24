@@ -1,5 +1,7 @@
 //! View-only zoom gestures. Hosts supply scope identity and map view requests.
 use crate::PointerButton;
+mod pan;
+pub use pan::{PanButton, PanGesture};
 
 pub type Point = (f32, f32);
 

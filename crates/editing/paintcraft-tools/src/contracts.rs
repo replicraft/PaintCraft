@@ -22,6 +22,8 @@ pub enum Tool {
     ColorPicker,
     /// View-only tool. Hosts handle clicks; it never produces document edits.
     Magnifier,
+    /// View-only navigation; never produces document commands.
+    Pan,
     Line,
     Rect,
     Ellipse,
@@ -50,6 +52,7 @@ impl Tool {
             Self::Curve => 28,
             Self::ColorPicker => 29,
             Self::Magnifier => 30,
+            Self::Pan => 31,
         }
     }
     /// Native Studio color gestures. Other secondary-button tool policies remain
@@ -72,7 +75,7 @@ impl Tool {
             )
     }
 
-    pub const ALL: [Tool; 13] = [
+    pub const ALL: [Tool; 14] = [
         Tool::Pencil,
         Tool::Brush,
         Tool::Eraser,
@@ -86,6 +89,7 @@ impl Tool {
         Tool::Curve,
         Tool::ColorPicker,
         Tool::Magnifier,
+        Tool::Pan,
     ];
 
     pub fn name(self) -> &'static str {
@@ -96,6 +100,7 @@ impl Tool {
             Tool::Fill => "Fill",
             Tool::ColorPicker => "Color picker",
             Tool::Magnifier => "Magnifier",
+            Tool::Pan => "Pan tool",
             Tool::Line => "Line",
             Tool::Rect => "Rectangle",
             Tool::Ellipse => "Ellipse",
