@@ -470,3 +470,37 @@ pack has no separately qualified Image Properties capture: these changes are a
 compact historical presentation, not a claim of exact native dialog parity.
 Raw check output is retained in ignored
 `docs/validation/historical-properties-2026-10-24/`.
+
+### Historical Resize and Skew presentation (2026-10-24)
+
+The Windows 7/10 skins now have a dedicated compact Resize and Skew preview:
+square gray surface, separate outlined groups, stacked horizontal/vertical fields,
+a Maintain aspect ratio checkbox and small right-aligned footer buttons. Win 11
+retains its existing presentation. Both layouts call the same staged scale-editing
+and numeric accessibility helpers. Percentage/pixel changes preserve scale and
+retain the existing rounding/range rules.
+
+Desktop selects the appropriate skin surface. The browser now opens the shared
+preview from Resize and Skew rather than falling through to an unsupported-action
+message, in all three skins. Its modal blocks canvas input and captures the source
+history ticket; a replaced/modified source closes the preview. Cancel, Escape and
+reopening retain document/history and reset the draft. Applying transformations
+remains unavailable and OK is disabled in both hosts. This work does not implement
+image resampling, skew mapping, selection transform scope or interpolation parity.
+
+All 247 ordinary desktop GUI tests pass (57 manual/capture tests ignored).
+The focused desktop tests pass for existing modern previews and the new historical
+layout, including both languages, themes, DPI scales, forced multipass rendering,
+linked/unlinked axes, units, angles and a 480 by 300 footer. All 65 browser library
+tests pass, including every skin/language, draft dismissal, disabled acceptance and
+source-change dismissal. Native/web all-target Clippy passes with warnings denied;
+the browser release distribution rebuilds. Translation, source-length and
+whitespace checks pass.
+
+Four actual app captures are in `assets/repo/classic-v7-resize-en-US.png`,
+`classic-v7-resize-ja.png`, `classic-v10-resize-en-US.png` and
+`classic-v10-resize-ja.png`. The Windows 7 English/Japanese captures were visually
+inspected. The supplied Windows 7 reference pack was reviewed for the surrounding
+ribbon, but contains no separately pinned Resize and Skew dialog: this layout is
+not qualified as exact native parity. Raw evidence is retained in ignored
+`docs/validation/historical-resize-2026-10-24/`.
