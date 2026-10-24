@@ -22,6 +22,10 @@ mod paint_queue;
 mod pointer;
 #[path = "controller/preview_cache.rs"]
 mod preview_cache;
+pub(crate) use preview_cache::Stamp as PreviewStamp;
+pub(crate) use strokes::PreviewPreparation;
+#[path = "controller/raster_commands.rs"]
+mod raster_commands;
 #[path = "controller/residency.rs"]
 mod residency;
 #[path = "controller/retry.rs"]
@@ -556,35 +560,10 @@ impl Editor {
                 stroke,
                 fill,
             } => {
-                let mut pairs = vec![
-                    ("op", Value::str("raster.shape")),
-                    ("layer_ref", layer_ref(layer)),
-                    (
-                        "kind",
-                        Value::str(match tool {
-                            Tool::Line => "line",
-                            Tool::Rect => "rect",
-                            _ => "ellipse",
-                        }),
-                    ),
-                    ("from", point(from)),
-                    ("to", point(to)),
-                    ("mode", Value::str("source-over")),
-                ];
-                if let Some((c, size)) = stroke {
-                    pairs.push((
-                        "stroke",
-                        Value::object([
-                            ("color", Value::str(c.to_hex())),
-                            ("size", Value::Int(i64::from(size))),
-                        ]),
-                    ));
-                }
-                if let Some(c) = fill {
-                    pairs.push(("fill", Value::str(c.to_hex())));
-                }
-                let op = Value::Object(pairs.into_iter().map(|(k, v)| (k.to_owned(), v)).collect());
-                self.draw(vec![op], tool.name());
+                self.draw(
+                    vec![raster_commands::shape(layer, tool, from, to, stroke, fill)],
+                    tool.name(),
+                );
             }
             Action::Text {
                 style,
@@ -599,16 +578,10 @@ impl Editor {
                     self.draw_font_text(layer, at, &text, &style, color, background);
                     return;
                 }
-                let op = Value::object([
-                    ("op", Value::str("raster.text")),
-                    ("layer_ref", layer_ref(layer)),
-                    ("at", point(at)),
-                    ("text", Value::str(text)),
-                    ("scale", Value::Int(i64::from(scale))),
-                    ("color", Value::str(color.to_hex())),
-                    ("mode", Value::str("source-over")),
-                ]);
-                self.draw(vec![op], "Text");
+                self.draw(
+                    vec![raster_commands::bitmap_text(layer, at, &text, scale, color)],
+                    "Text",
+                );
             }
             Action::Select { corners } => {
                 let op = match corners {

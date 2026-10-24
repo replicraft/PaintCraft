@@ -4,7 +4,7 @@ use paintcraft_tools::PreviewRevision;
 use std::sync::{Mutex, Weak};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-struct Stamp {
+pub(crate) struct Stamp {
     tool_revision: PreviewRevision,
     queue_revision: PreviewRevision,
     document: (Uuid, u64),
@@ -17,10 +17,9 @@ struct Stamp {
 pub(super) struct Cache(Mutex<Option<(Stamp, Option<Weak<Preview>>)>>);
 
 impl Editor {
-    /// Reuse an immutable snapshot while a renderer owns it and its inputs match.
-    /// An expired weak entry is rebuilt; the cache itself owns no point buffers.
-    pub(crate) fn preview_snapshot(&self) -> Option<Arc<Preview>> {
-        let stamp = Stamp {
+    /// Cheap identity for every input used by the immutable preview snapshot.
+    pub(crate) fn preview_stamp(&self) -> Stamp {
+        Stamp {
             tool_revision: self.tools.preview_revision(),
             queue_revision: self.preview_queue_revision,
             document: self.render_key(),
@@ -28,7 +27,13 @@ impl Editor {
             tool: self.tools.tool,
             native: self.editing.is_some(),
             pending: self.has_inflight_edit(),
-        };
+        }
+    }
+
+    /// Reuse an immutable snapshot while a renderer owns it and its inputs match.
+    /// An expired weak entry is rebuilt; the cache itself owns no point buffers.
+    pub(crate) fn preview_snapshot(&self) -> Option<Arc<Preview>> {
+        let stamp = self.preview_stamp();
         if let Ok(cache) = self.preview_cache.0.lock()
             && let Some((cached_stamp, preview)) = cache.as_ref()
             && *cached_stamp == stamp

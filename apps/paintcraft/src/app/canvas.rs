@@ -277,7 +277,6 @@ impl App {
             let s = view.to_screen(p);
             Pos2::new(s.0, s.1)
         };
-        let px = view.points_per_pixel();
         let box_of = |a: (i64, i64), b: (i64, i64)| {
             Rect::from_min_max(
                 screen((a.0.min(b.0), a.1.min(b.1))),
@@ -301,57 +300,15 @@ impl App {
         if let Selection::Rect(r) = self.editor.selection() {
             ants(box_of((r.x0, r.y0), (r.x1 - 1, r.y1 - 1)));
         }
-        let color = |c: Rgba| Color32::from_rgba_unmultiplied(c.0[0], c.0[1], c.0[2], c.0[3]);
         let snapshot = self.editor.preview_snapshot();
-        let overlay = snapshot
-            .as_deref()
-            .filter(|preview| !matches!(preview, Preview::Path(_) | Preview::Paths(_)));
+        let overlay = snapshot.as_deref().filter(|preview| {
+            !matches!(
+                preview,
+                Preview::Path(_) | Preview::Paths(_) | Preview::Shape { .. }
+            )
+        });
         match overlay.cloned() {
-            Some(Preview::Path(_) | Preview::Paths(_)) => {} // Rendered through the same staged pixels as publication.
-            Some(Preview::Shape {
-                tool,
-                from,
-                to,
-                stroke,
-                fill,
-            }) => {
-                let r = box_of(from, to);
-                let line = stroke.map(|(c, size)| {
-                    egui::Stroke::new((size as f32 * px).max(1.0 / ppp), color(c))
-                });
-                match tool {
-                    Tool::Line => {
-                        if let Some(l) = line {
-                            let half = Vec2::splat(px / 2.0);
-                            painter.line_segment([screen(from) + half, screen(to) + half], l);
-                        }
-                    }
-                    Tool::Rect => {
-                        if let Some(f) = fill {
-                            painter.rect_filled(r, 0.0, color(f));
-                        }
-                        if let Some(l) = line {
-                            painter.rect_stroke(r, 0.0, l, egui::StrokeKind::Inside);
-                        }
-                    }
-                    _ => {
-                        if let Some(f) = fill {
-                            painter.add(egui::epaint::EllipseShape::filled(
-                                r.center(),
-                                r.size() / 2.0,
-                                color(f),
-                            ));
-                        }
-                        if let Some(l) = line {
-                            painter.add(egui::epaint::EllipseShape::stroke(
-                                r.center(),
-                                r.size() / 2.0,
-                                l,
-                            ));
-                        }
-                    }
-                }
-            }
+            Some(Preview::Path(_) | Preview::Paths(_) | Preview::Shape { .. }) => {} // Staged raster pixels, not vector approximations.
             Some(Preview::Marquee { from, to }) => ants(box_of(from, to)),
             Some(Preview::Text {
                 style: Some(style),
@@ -388,26 +345,8 @@ impl App {
                 at,
                 text,
                 scale,
-                color: c,
+                color: _,
             }) => {
-                let canvas = paintcraft_core::types::Rect::new(
-                    i64::MIN / 4,
-                    i64::MIN / 4,
-                    i64::MAX / 2,
-                    i64::MAX / 2,
-                )
-                .expect("a huge clip");
-                if let Ok(spans) =
-                    paintcraft_raster::font::layout(&text, at, i64::from(scale), &canvas)
-                {
-                    for s in spans {
-                        painter.rect_filled(
-                            Rect::from_min_max(screen((s.x0, s.y)), screen((s.x1 + 1, s.y + 1))),
-                            0.0,
-                            color(c),
-                        );
-                    }
-                }
                 // A caret after the last typed character, and a frame around the box.
                 let lines: Vec<&str> = text.split('\n').collect();
                 let cols = lines.last().map_or(0, |l| l.chars().count()) as i64;

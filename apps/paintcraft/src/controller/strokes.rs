@@ -149,6 +149,34 @@ impl PreviewPreparation {
                 }
                 operations
             }
+            Some(Preview::Shape {
+                layer,
+                tool,
+                from,
+                to,
+                stroke,
+                fill,
+            }) => {
+                vec![super::raster_commands::shape(
+                    *layer, *tool, *from, *to, *stroke, *fill,
+                )]
+            }
+            Some(Preview::Text {
+                layer,
+                style: None,
+                at,
+                text,
+                scale,
+                color,
+                ..
+            }) => {
+                if text.is_empty() {
+                    return Ok(None);
+                }
+                vec![super::raster_commands::bitmap_text(
+                    *layer, *at, text, *scale, *color,
+                )]
+            }
             Some(Preview::Text {
                 layer,
                 style: Some(style),

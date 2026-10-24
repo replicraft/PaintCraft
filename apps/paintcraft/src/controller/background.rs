@@ -389,6 +389,7 @@ pub(super) fn preview(action: &Action) -> Option<Preview> {
     match action {
         Action::Stroke(stroke) => Some(Preview::Path(stroke.clone())),
         Action::Shape {
+            layer,
             tool,
             from,
             to,
@@ -396,6 +397,7 @@ pub(super) fn preview(action: &Action) -> Option<Preview> {
             fill,
             ..
         } => Some(Preview::Shape {
+            layer: *layer,
             tool: *tool,
             from: *from,
             to: *to,

@@ -202,6 +202,7 @@ pub enum Preview {
     /// Ordered unpublished strokes against one committed base.
     Paths(Vec<Stroke>),
     Shape {
+        layer: Uuid,
         tool: Tool,
         from: (i64, i64),
         to: (i64, i64),
@@ -444,6 +445,7 @@ impl ToolState {
             Tool::Line | Tool::Rect | Tool::Ellipse => {
                 let (stroke, fill) = Self::shape_paint(g);
                 Preview::Shape {
+                    layer: g.layer,
                     tool: g.tool,
                     from: first,
                     to: last,
