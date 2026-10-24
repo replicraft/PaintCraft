@@ -19,7 +19,14 @@ fn main() -> eframe::Result {
         renderer: eframe::Renderer::Wgpu,
         // eframe also uses the launch title for the macOS application menu.
         // Keep its default (the app name); App::ui publishes document window titles.
-        viewport: eframe::egui::ViewportBuilder::default().with_inner_size([1360.0, 900.0]),
+        viewport: eframe::egui::ViewportBuilder::default()
+            .with_inner_size([1360.0, 900.0])
+            .with_icon(
+                eframe::icon_data::from_png_bytes(include_bytes!(
+                    "../../../assets/paintcraft-icon.iconset/icon_256x256@2x.png"
+                ))
+                .expect("bundled PaintCraft icon is a valid PNG"),
+            ),
         ..Default::default()
     };
     eframe::run_native(

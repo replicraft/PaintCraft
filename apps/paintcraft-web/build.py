@@ -21,4 +21,5 @@ dist = APP / "dist"
 dist.mkdir(exist_ok=True)
 subprocess.run(["wasm-bindgen", str(wasm), "--target", "web", "--out-dir", str(dist)], check=True)
 shutil.copyfile(APP / "index.html", dist / "index.html")
+shutil.copytree(APP / "public", dist, dirs_exist_ok=True)
 print(f"Serve with: python3 -m http.server 8080 --directory {dist}")

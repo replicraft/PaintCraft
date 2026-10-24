@@ -8,6 +8,8 @@
     <string>PaintCraft</string>
     <key>CFBundleExecutable</key>
     <string>paintcraft</string>
+    <key>CFBundleIconFile</key>
+    <string>paintcraft-icon.icns</string>
     <key>CFBundleIdentifier</key>
     <string>io.github.replicraft.PaintCraft</string>
     <key>CFBundleInfoDictionaryVersion</key>
