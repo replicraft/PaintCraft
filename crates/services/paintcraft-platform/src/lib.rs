@@ -13,3 +13,6 @@ pub mod spill;
 
 #[cfg(feature = "printing")]
 pub mod printing;
+
+#[cfg(feature = "clipboard")]
+pub mod clipboard;

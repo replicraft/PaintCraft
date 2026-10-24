@@ -67,8 +67,9 @@ wasm-bindgen-futures = "0.4.79"
 web-sys = "0.3.106"
 js-sys = "0.3.106"
 
-# Native menus, installed-font catalog and file dialogs.
+# Native menus, installed-font catalog, clipboard ownership and file dialogs.
 muda = { version = "0.21.2", default-features = false }
+arboard = { version = "3.7.0", default-features = false, features = ["image-data", "wayland-data-control"] }
 fontdb = { version = "0.23.0", default-features = false, features = ["std", "fs"] }
 rfd = "0.17.2"
 raw-window-handle = "0.6.2"

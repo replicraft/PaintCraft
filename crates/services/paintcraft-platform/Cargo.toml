@@ -10,6 +10,7 @@ publish.workspace = true
 [features]
 default = []
 printing = []
+clipboard = ["dep:arboard"]
 menus = ["dep:muda"]
 fonts = ["dep:fontdb"]
 dialogs = ["dep:rfd", "dep:raw-window-handle", "dep:pollster"]
@@ -17,6 +18,7 @@ dialogs = ["dep:rfd", "dep:raw-window-handle", "dep:pollster"]
 [dependencies]
 paintcraft-core.workspace = true
 fontdb = { workspace = true, optional = true }
+arboard = { workspace = true, optional = true }
 
 pollster = { workspace = true, optional = true }
 raw-window-handle = { workspace = true, optional = true }

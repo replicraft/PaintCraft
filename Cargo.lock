@@ -2817,6 +2817,7 @@ version = "0.1.0"
 name = "paintcraft-platform"
 version = "0.1.0"
 dependencies = [
+ "arboard",
  "fontdb",
  "muda",
  "paintcraft-core",
