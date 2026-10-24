@@ -25,7 +25,7 @@ pub(super) fn save_document(
         destination,
         true,
         save::STAGED_FILE_BYTES_MAX,
-        |sink| paintcraft_formats::pcnd::write_to(document, sink),
+        |sink| paintcraft_formats::pcnd::write_compact_to(document, sink),
         |outcome| {
             retention
                 .as_ref()

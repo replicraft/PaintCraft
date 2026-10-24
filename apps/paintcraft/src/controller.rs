@@ -751,7 +751,7 @@ impl Editor {
             return;
         };
         let outcome = save::save_with(&path, true, save::STAGED_FILE_BYTES_MAX, |sink| {
-            pcnd::write_to(self.document(), sink)
+            pcnd::write_compact_to(self.document(), sink)
         });
         if outcome.is_success() {
             self.save_outcome = Some(true);
