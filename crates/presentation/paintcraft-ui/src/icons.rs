@@ -42,6 +42,7 @@ fn rasterize_variant(icon: Icon, size: u32, variant: Variant) -> ColorImage {
         Variant::Sheet => icon.svg(),
         Variant::Legacy => match icon {
             Icon::Brush => include_bytes!("../assets/icons/legacy/brushes.svg"),
+            Icon::DeleteLayer => include_bytes!("../assets/icons/legacy/delete-selection.svg"),
             Icon::Pencil => include_bytes!("../assets/icons/legacy/pencil.svg"),
             Icon::Bucket => include_bytes!("../assets/icons/legacy/bucket.svg"),
             Icon::Eraser => include_bytes!("../assets/icons/legacy/eraser.svg"),
