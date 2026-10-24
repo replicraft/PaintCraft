@@ -124,7 +124,10 @@ impl WebApp {
     pub(crate) fn edit(&mut self, action: Edit) {
         let remember_size = matches!(
             action,
-            Edit::CropToSelection | Edit::ResizeCanvas { .. } | Edit::TransformImage { .. }
+            Edit::CropToSelection
+                | Edit::ResizeCanvas { .. }
+                | Edit::ResizeCanvasAnchored { .. }
+                | Edit::TransformImage { .. }
         );
         let picked = matches!(action, Edit::PickColor(_));
         let before_size = self.editor.session.document().canvas;

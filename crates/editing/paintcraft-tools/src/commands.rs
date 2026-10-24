@@ -158,6 +158,26 @@ pub fn stroke_operations(stroke: &Stroke, check: &impl Fn() -> Result<()>) -> Re
     Ok(ops)
 }
 
+/// Core canvas placement: move origins and selection without scaling or changing
+/// layer-local bounds. Additional canvas area remains uncovered by those layers.
+pub fn resize_canvas_anchored(
+    document: &paintcraft_document::Document,
+    width: u32,
+    height: u32,
+    anchor: paintcraft_core::types::canvas::Anchor,
+) -> Vec<Value> {
+    if document.canvas == (width, height) {
+        return Vec::new();
+    }
+    vec![Value::object([
+        ("op", Value::str("canvas.resize")),
+        ("width", Value::Int(width.into())),
+        ("height", Value::Int(height.into())),
+        ("anchor", Value::str(anchor.id())),
+        ("outside_content", Value::str("preserve")),
+    ])]
+}
+
 /// Resize from the top left, retaining off-canvas pixels and extending editable
 /// layer bounds. Unchanged dimensions are a no-op, including cropped layers.
 pub fn resize_canvas(

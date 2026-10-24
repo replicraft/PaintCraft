@@ -82,3 +82,6 @@ mod media_tests;
 
 #[cfg(test)]
 mod language_tests;
+
+#[cfg(test)]
+mod canvas_anchor_tests;

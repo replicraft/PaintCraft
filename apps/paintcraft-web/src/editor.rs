@@ -99,7 +99,9 @@ impl Editor {
     }
 
     pub fn apply(&mut self, action: Action) -> Result<()> {
-        if let Action::ResizeCanvas { width, height } = &action {
+        if let Action::ResizeCanvas { width, height }
+        | Action::ResizeCanvasAnchored { width, height, .. } = &action
+        {
             if u64::from(*width) * u64::from(*height) > MAX_PIXELS {
                 return Err(Error::new(
                     ErrorCode::ResourceLimit,
@@ -115,7 +117,7 @@ impl Editor {
                 ));
             }
         }
-        if matches!(&action,Action::ResizeCanvas{width,height} if (*width,*height)==self.session.document().canvas)
+        if matches!(&action,Action::ResizeCanvas{width,height} | Action::ResizeCanvasAnchored{width,height,..} if (*width,*height)==self.session.document().canvas)
         {
             return Ok(());
         }
@@ -225,6 +227,24 @@ impl Editor {
                     ("ref", Value::str("background")),
                     ("color", Value::str(color.to_hex())),
                 ])])
+            }
+            Action::ResizeCanvasAnchored {
+                width,
+                height,
+                anchor,
+            } => {
+                let operations = commands::resize_canvas_anchored(
+                    self.session.document(),
+                    width,
+                    height,
+                    anchor,
+                );
+                self.cancel();
+                if operations.is_empty() {
+                    Ok(())
+                } else {
+                    self.commit(operations)
+                }
             }
             Action::ResizeCanvas { width, height } => {
                 if u64::from(width) * u64::from(height) > MAX_PIXELS {

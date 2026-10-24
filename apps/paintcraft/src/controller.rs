@@ -536,6 +536,21 @@ impl Editor {
             Action::TransformImage { transform, clear } => self.transform_image(transform, clear),
             Action::Contour(contour) => self.contour(&contour),
             Action::ResizeCanvas { width, height } => self.resize_canvas(width, height),
+            Action::ResizeCanvasAnchored {
+                width,
+                height,
+                anchor,
+            } => {
+                let ops = paintcraft_tools::commands::resize_canvas_anchored(
+                    self.document(),
+                    width,
+                    height,
+                    anchor,
+                );
+                if !ops.is_empty() {
+                    self.draw(ops, "Canvas size");
+                }
+            }
             Action::ClearCanvas { color } => self.clear_canvas(color),
             Action::Stroke(stroke) => self.stroke(&stroke),
             Action::Fill {

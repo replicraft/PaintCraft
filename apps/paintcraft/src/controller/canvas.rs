@@ -62,3 +62,7 @@ impl Editor {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "canvas/anchor_tests.rs"]
+mod anchor_tests;

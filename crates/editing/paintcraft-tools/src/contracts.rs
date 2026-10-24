@@ -221,6 +221,12 @@ pub enum Action {
     ClearCanvas {
         color: Rgba,
     },
+    /// Preserve layer-local pixels/bounds and position them with a canvas anchor.
+    ResizeCanvasAnchored {
+        width: u32,
+        height: u32,
+        anchor: paintcraft_core::types::canvas::Anchor,
+    },
     ResizeCanvas {
         width: u32,
         height: u32,
