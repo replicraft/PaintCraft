@@ -42,8 +42,10 @@ saved Studio workspace skips the Classic picker; entering Classic for the first
 time still asks for its version. Classic and Studio have independent document
 workspaces. Switching requires saving or explicitly discarding changed documents;
 cancelled or failed saves keep the current interface active. Each workspace retains
-its own document, target, history and view state. Panel placement and visibility
-currently last for the running session, not across restarts.
+its own document, target, history and view state. Tools, Colors, Layers and History now persist their visibility and logical
+positions across desktop restarts, independently of Classic preferences. Saved
+off-screen positions are constrained into the current viewport. Panel dimensions
+remain session-only.
 
 ## Next Studio work
 
