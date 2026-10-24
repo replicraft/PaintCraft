@@ -15,6 +15,7 @@ pub(super) fn show(
     context: Context,
 ) -> Vec<Action> {
     let mut actions = Vec::new();
+    ui.visuals_mut().menu_corner_radius = egui::CornerRadius::ZERO;
     for style in [egui::TextStyle::Body, egui::TextStyle::Button] {
         ui.style_mut()
             .text_styles
@@ -79,9 +80,21 @@ pub(super) fn show(
                 .fill(Color32::from_rgb(25, 121, 202))
                 .min_size(Vec2::new(56.0, 24.0))
         };
-        let (response, _) = egui::containers::menu::MenuButton::from_button(file).ui(ui, |ui| {
-            super::menus::file(ui, context, &mut actions);
-        });
+        let state_id = ui.make_persistent_id("historical-file-open");
+        let was_open = ui.data(|data| data.get_temp::<bool>(state_id).unwrap_or(false));
+        let (response, popup) = egui::containers::menu::MenuButton::from_button(file)
+            .config(
+                egui::containers::menu::MenuConfig::new()
+                    .style(|style: &mut egui::Style| {
+                        egui::containers::menu::menu_style(style);
+                        style.visuals.menu_corner_radius = egui::CornerRadius::ZERO;
+                    })
+                    .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside),
+            )
+            .ui(ui, |ui| {
+                super::legacy_file::show(ui, context, &mut actions, !was_open)
+            });
+        ui.data_mut(|data| data.insert_temp(state_id, popup.is_some()));
         if variant == ClassicVariant::V7 {
             super::legacy_controls::arrow(ui, response.rect.right_center() - Vec2::new(7.0, 0.0));
         }

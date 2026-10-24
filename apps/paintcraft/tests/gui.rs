@@ -343,6 +343,9 @@ mod color_picker;
 #[path = "gui/language.rs"]
 mod language;
 
+#[path = "gui/legacy_file.rs"]
+mod legacy_file;
+
 #[path = "gui/legacy_skins.rs"]
 mod legacy_skins;
 #[path = "gui/legacy_status.rs"]

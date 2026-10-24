@@ -15,6 +15,8 @@ mod construction_tests;
 #[cfg(test)]
 mod controls_tests;
 #[cfg(test)]
+mod export_tests;
+#[cfg(test)]
 mod forms_tests;
 #[cfg(test)]
 mod text_tests;

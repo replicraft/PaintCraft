@@ -23,6 +23,7 @@ mod toolbar_visibility;
 pub use toolbar_visibility::ToolbarVisibility;
 mod legacy_chrome;
 mod legacy_controls;
+mod legacy_file;
 mod legacy_palette;
 mod legacy_ribbon;
 mod palette;
