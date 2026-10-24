@@ -33,6 +33,7 @@ impl Action {
             Self::ResizeSkew => Icon::Resize,
             Self::ImageProperties => Icon::ImageProperties,
             Self::ClearCanvas => Icon::ClearCanvas,
+            Self::Crop => Icon::Crop,
             Self::EditColors | Self::EditSecondaryColors | Self::EditCustomColor(_) => {
                 Icon::EditColors
             }

@@ -127,6 +127,7 @@ mod tests {
             zoom: 1.0,
             pixel_grid: false,
             can_fit_selection: false,
+            can_crop_selection: false,
             status_bar: true,
             rulers: false,
             fullscreen: false,

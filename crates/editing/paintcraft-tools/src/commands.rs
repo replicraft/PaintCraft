@@ -259,3 +259,23 @@ fn rect_value(r: paintcraft_core::types::Rect) -> Value {
         ("height", Value::Int(r.y1 - r.y0)),
     ])
 }
+
+pub fn crop_to_selection(
+    document: &paintcraft_document::Document,
+    selection: paintcraft_raster::Selection,
+) -> Result<Value> {
+    let area = match selection {
+        paintcraft_raster::Selection::Rect(rect) => rect.intersect(&document.canvas_rect()),
+        _ => None,
+    }
+    .ok_or_else(|| {
+        paintcraft_core::types::Error::new(
+            paintcraft_core::types::ErrorCode::InputSchema,
+            "Select an area of the canvas before cropping",
+        )
+    })?;
+    Ok(Value::object([
+        ("op", Value::str("canvas.crop")),
+        ("rect", rect_value(area)),
+    ]))
+}

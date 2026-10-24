@@ -155,6 +155,7 @@ pub struct Contour {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Action {
+    CropToSelection,
     Contour(Contour),
     Stroke(Stroke),
     Fill {

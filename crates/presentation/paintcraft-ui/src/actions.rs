@@ -22,6 +22,7 @@ pub enum Action {
     ResizeSkew,
     ImageProperties,
     ClearCanvas,
+    Crop,
     CanvasDefaults,
     EditColors,
     EditSecondaryColors,
@@ -57,6 +58,7 @@ pub struct Context {
     pub zoom: f32,
     pub pixel_grid: bool,
     pub can_fit_selection: bool,
+    pub can_crop_selection: bool,
     pub status_bar: bool,
     pub rulers: bool,
     pub fullscreen: bool,
@@ -80,6 +82,7 @@ pub const FILE: &[Action] = &[
     Action::Close,
 ];
 pub const EDIT: &[Action] = &[
+    Action::Crop,
     Action::Undo,
     Action::Redo,
     Action::SelectAll,
@@ -120,6 +123,7 @@ impl Action {
             Self::ResizeSkew => ("Resize and skew", None),
             Self::ImageProperties => ("Image properties", Some((Key::E, false))),
             Self::ClearCanvas => ("Clear Canvas", None),
+            Self::Crop => ("Crop", None),
             Self::CanvasDefaults => ("Default canvas size…", None),
             Self::EditColors => ("Edit colors…", None),
             Self::EditSecondaryColors => ("Edit secondary color…", None),
@@ -211,6 +215,7 @@ impl Action {
             Self::Undo => ctx.document_open && ctx.can_undo,
             Self::Redo => ctx.document_open && ctx.can_redo,
             Self::Deselect => ctx.document_open && ctx.selection_active,
+            Self::Crop => ctx.document_open && ctx.can_crop_selection,
             _ => ctx.document_open,
         }
     }
@@ -270,6 +275,7 @@ impl Action {
             Self::ResizeSkew => 1020,
             Self::ImageProperties => 1021,
             Self::ClearCanvas => 1018,
+            Self::Crop => 1022,
             Self::Settings => 1015,
             Self::ChooseFrontend(frontend) => 1016 + frontend as u64,
             Self::CanvasDefaults => 1012,
@@ -540,6 +546,7 @@ mod tests {
             zoom: 1.0,
             pixel_grid: false,
             can_fit_selection: false,
+            can_crop_selection: false,
             status_bar: true,
             rulers: false,
             fullscreen: false,

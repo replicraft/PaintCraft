@@ -1,4 +1,4 @@
-//! Image controls and Resize/skew presentation; transforms remain unavailable.
+//! Image controls with real selection Crop and staged Resize/skew presentation.
 use egui::{Rect, Vec2};
 use paintcraft_ui::icons::Icon;
 
@@ -13,14 +13,38 @@ pub(super) fn controls(
         egui::Grid::new("image-ribbon")
             .spacing(Vec2::new(6.0, 4.0))
             .show(ui, |ui| {
-                unavailable(
-                    ui,
-                    "Crop",
-                    Icon::Crop,
-                    Vec2::splat(40.0),
-                    22.0,
-                    "Cropping is not available yet.",
-                );
+                let enabled = super::Action::Crop.enabled(context);
+                let response = ui
+                    .add_enabled_ui(enabled, |ui| {
+                        let response = ui.add(
+                            egui::Button::new("")
+                                .min_size(Vec2::splat(40.0))
+                                .frame_when_inactive(false)
+                                .frame(true),
+                        );
+                        paintcraft_ui::icons::classic_image(
+                            ui.ctx(),
+                            Icon::Crop,
+                            22.0,
+                            ui.visuals().dark_mode,
+                        )
+                        .paint_at(
+                            ui,
+                            Rect::from_center_size(response.rect.center(), Vec2::splat(22.0)),
+                        );
+                        response
+                    })
+                    .inner;
+                response
+                    .widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, enabled, "Crop"));
+                if response.clicked() {
+                    actions.push(super::Action::Crop);
+                }
+                if enabled {
+                    response.on_hover_text("Crop");
+                } else {
+                    response.on_disabled_hover_text("Select an area of the canvas to crop");
+                }
                 rotate(ui);
                 ui.end_row();
                 unavailable(

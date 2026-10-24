@@ -161,6 +161,7 @@ mod tests {
             zoom: ZOOM_MAX,
             pixel_grid: true,
             can_fit_selection: false,
+            can_crop_selection: false,
             status_bar: true,
             rulers: false,
             fullscreen: false,
