@@ -1,5 +1,5 @@
 //! Square Color 1/Color 2 wells and a three-row palette, matching the old ribbon.
-use super::{Action, Controls, PALETTE, Rgba, Workspace};
+use super::{Action, ClassicVariant, Controls, PALETTE, Rgba, Workspace};
 use egui::{Color32, Rect, Vec2};
 use paintcraft_ui::{
     actions::Context,
@@ -9,6 +9,7 @@ use paintcraft_ui::{
 
 pub(super) fn show(
     ui: &mut egui::Ui,
+    variant: ClassicVariant,
     state: &mut Controls,
     workspace: &Workspace,
     context: Context,
@@ -24,13 +25,19 @@ pub(super) fn show(
                 Action::EditSecondaryColors,
             ),
         ] {
-            let response = ui.add_enabled(
-                action.enabled(context),
-                egui::Button::new("")
-                    .min_size(Vec2::new(42.0, 68.0))
-                    .selected(action == Action::EditColors)
-                    .frame_when_inactive(action == Action::EditColors),
-            );
+            let response = ui
+                .add_enabled_ui(action.enabled(context), |ui| {
+                    super::legacy_surface::button(
+                        ui,
+                        variant,
+                        egui::Button::new("")
+                            .min_size(Vec2::new(42.0, 68.0))
+                            .selected(action == Action::EditColors)
+                            .frame_when_inactive(action == Action::EditColors),
+                        action == Action::EditColors,
+                    )
+                })
+                .inner;
             let rect = Rect::from_center_size(
                 response.rect.center_top() + Vec2::new(0.0, 19.0),
                 Vec2::splat(if action == Action::EditColors {

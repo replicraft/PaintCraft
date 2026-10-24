@@ -105,7 +105,11 @@ impl App {
         egui::CentralPanel::default()
             .frame(
                 egui::Frame::new()
-                    .fill(paintcraft_ui::theme::workspace(ctx.theme()))
+                    .fill(if self.experience() == Experience::Classic {
+                        paintcraft_classic::workspace_color(self.variant(), ctx.theme())
+                    } else {
+                        paintcraft_ui::theme::workspace(ctx.theme())
+                    })
                     .inner_margin(
                         if self.experience() == Experience::Classic
                             && self.variant() == ClassicVariant::V11

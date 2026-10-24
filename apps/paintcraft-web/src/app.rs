@@ -407,7 +407,10 @@ impl WebApp {
         self.text_chrome(ui);
         self.layers(ui);
         egui::CentralPanel::default()
-            .frame(egui::Frame::new().fill(paintcraft_ui::theme::workspace(ctx.theme())))
+            .frame(egui::Frame::new().fill(paintcraft_classic::workspace_color(
+                self.variant,
+                ctx.theme(),
+            )))
             .show(ui, |ui| {
                 self.canvas(ui);
             });

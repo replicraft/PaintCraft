@@ -146,7 +146,12 @@ pub(super) fn gallery(ui: &mut egui::Ui, state: &mut Controls, actions: &mut Vec
 }
 
 /// Historical Paint uses seven columns of small blue outline shapes, with three rows visible.
-pub(super) fn legacy_gallery(ui: &mut egui::Ui, state: &mut Controls, actions: &mut Vec<Action>) {
+pub(super) fn legacy_gallery(
+    ui: &mut egui::Ui,
+    variant: super::ClassicVariant,
+    state: &mut Controls,
+    actions: &mut Vec<Action>,
+) {
     ui.scope(|ui| {
         ui.visuals_mut().override_text_color = Some(if ui.visuals().dark_mode {
             egui::Color32::from_rgb(150, 205, 240)
@@ -174,8 +179,14 @@ pub(super) fn legacy_gallery(ui: &mut egui::Ui, state: &mut Controls, actions: &
                             .show(ui, |ui| {
                                 for (index, (icon, label, tool)) in SHAPES.into_iter().enumerate() {
                                     if let Some(tool) = tool
-                                        && button(ui, label, icon, state.tool == tool, 20.0, 16.0)
-                                            .clicked()
+                                        && legacy_button(
+                                            ui,
+                                            variant,
+                                            label,
+                                            icon,
+                                            state.tool == tool,
+                                        )
+                                        .clicked()
                                     {
                                         state.tool = tool;
                                         actions.push(Action::SelectTool(tool));
@@ -228,4 +239,30 @@ fn button(
         )
     });
     response.on_hover_text(tr(ui.ctx(), label))
+}
+
+fn legacy_button(
+    ui: &mut egui::Ui,
+    variant: super::ClassicVariant,
+    label: &str,
+    icon: Icon,
+    selected: bool,
+) -> egui::Response {
+    let label = tr(ui.ctx(), label);
+    let image = paintcraft_ui::icons::classic_shape_image(
+        ui.ctx(),
+        icon,
+        16.0,
+        ui.visuals().strong_text_color(),
+    );
+    let response = super::legacy_surface::button(
+        ui,
+        variant,
+        egui::Button::new(image).min_size(Vec2::splat(20.0)),
+        selected,
+    );
+    response.widget_info(|| {
+        egui::WidgetInfo::selected(egui::Role::Button, ui.is_enabled(), selected, &label)
+    });
+    response.on_hover_text(label)
 }

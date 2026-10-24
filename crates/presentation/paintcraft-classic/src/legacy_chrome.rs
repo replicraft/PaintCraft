@@ -69,12 +69,9 @@ pub(super) fn show(
     let tabs = ui.horizontal(|ui| {
         ui.spacing_mut().item_spacing.x = 0.0;
         let file = if variant == ClassicVariant::V7 {
-            egui::Button::new((
-                paintcraft_ui::icons::legacy_image(ui.ctx(), Icon::New, 14.0),
-                "  ",
-            ))
-            .fill(Color32::from_rgb(38, 89, 149))
-            .min_size(Vec2::new(42.0, 24.0))
+            egui::Button::new(" ")
+                .fill(Color32::from_rgb(38, 89, 149))
+                .min_size(Vec2::new(42.0, 24.0))
         } else {
             egui::Button::new(egui::RichText::new(tr(ui.ctx(), "File")).color(Color32::WHITE))
                 .fill(Color32::from_rgb(25, 121, 202))
@@ -96,6 +93,29 @@ pub(super) fn show(
             });
         ui.data_mut(|data| data.insert_temp(state_id, popup.is_some()));
         if variant == ClassicVariant::V7 {
+            let glyph = egui::Rect::from_min_size(
+                response.rect.min + Vec2::new(10.0, 7.0),
+                Vec2::new(13.0, 10.0),
+            );
+            ui.painter()
+                .rect_filled(glyph, 0, Color32::from_rgb(239, 246, 255));
+            ui.painter().rect_filled(
+                egui::Rect::from_min_max(
+                    glyph.min + Vec2::splat(1.0),
+                    glyph.min + Vec2::new(4.0, 9.0),
+                ),
+                0,
+                Color32::from_rgb(103, 160, 216),
+            );
+            for offset in [2.5, 5.0, 7.5] {
+                ui.painter().line_segment(
+                    [
+                        glyph.min + Vec2::new(6.0, offset),
+                        glyph.min + Vec2::new(11.0, offset),
+                    ],
+                    egui::Stroke::new(0.8, Color32::from_rgb(70, 102, 138)),
+                );
+            }
             super::legacy_controls::arrow(ui, response.rect.right_center() - Vec2::new(7.0, 0.0));
         }
         let label = tr(ui.ctx(), "File");
@@ -106,7 +126,11 @@ pub(super) fn show(
             let response = ui.add(
                 egui::Button::new(tr(ui.ctx(), title))
                     .fill(if selected {
-                        ui.visuals().panel_fill
+                        if variant == ClassicVariant::V7 && !ui.visuals().dark_mode {
+                            Color32::from_rgb(250, 252, 255)
+                        } else {
+                            ui.visuals().panel_fill
+                        }
                     } else {
                         Color32::TRANSPARENT
                     })
@@ -136,7 +160,7 @@ pub(super) fn show(
         if workspace.legacy_view {
             view_ribbon(ui, context, &mut actions);
         } else {
-            super::legacy_ribbon::show(ui, state, workspace, context, &mut actions);
+            super::legacy_ribbon::show(ui, variant, state, workspace, context, &mut actions);
         }
         if variant == ClassicVariant::V7 && !ui.visuals().dark_mode {
             let rect = egui::Rect::from_min_max(

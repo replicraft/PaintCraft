@@ -38,7 +38,7 @@ pub fn contents_for_skin(
     if variant == super::ClassicVariant::V11 {
         contents(ui, status, context, id)
     } else {
-        legacy::contents(ui, status, context, id)
+        legacy::contents(ui, variant, status, context, id)
     }
 }
 

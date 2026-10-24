@@ -26,6 +26,7 @@ mod legacy_controls;
 mod legacy_file;
 mod legacy_palette;
 mod legacy_ribbon;
+mod legacy_surface;
 mod palette;
 mod popup_layout;
 mod quick_access;
@@ -240,5 +241,14 @@ fn menu_layout(ui: &mut egui::Ui, variant: ClassicVariant) {
     if variant == ClassicVariant::V11 {
         ui.set_min_width(260.0);
         ui.spacing_mut().interact_size.y = 32.0;
+    }
+}
+
+/// Windows 7's blue-gray workspace surrounds the centered document.
+pub fn workspace_color(variant: ClassicVariant, theme: egui::Theme) -> Color32 {
+    if variant == ClassicVariant::V7 && theme == egui::Theme::Light {
+        Color32::from_rgb(190, 205, 222)
+    } else {
+        paintcraft_ui::theme::workspace(theme)
     }
 }

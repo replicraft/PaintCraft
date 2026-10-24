@@ -1,5 +1,5 @@
 //! Compact square controls used by the historical ribbon, independent of v11 metrics.
-use super::{Action, Controls};
+use super::{Action, ClassicVariant, Controls};
 use egui::{Rect, Response, Vec2};
 use paintcraft_tools::{ShapeStyle, Tool};
 use paintcraft_ui::{actions::Context, i18n::tr, icons::Icon};
@@ -61,7 +61,14 @@ pub(super) fn large_button(
     let response = ui.add_enabled(
         action.enabled(context),
         egui::Button::new("")
-            .min_size(Vec2::new(width.max(50.0), 64.0))
+            .min_size(Vec2::new(
+                width.max(50.0),
+                if icon == Icon::RectangleSelect {
+                    52.0
+                } else {
+                    64.0
+                },
+            ))
             .frame_when_inactive(false),
     );
     paintcraft_ui::icons::legacy_image(ui.ctx(), icon, 28.0).paint_at(
@@ -72,7 +79,15 @@ pub(super) fn large_button(
         ),
     );
     ui.painter().text(
-        response.rect.center_bottom() - Vec2::new(0.0, 15.0),
+        response.rect.center_bottom()
+            - Vec2::new(
+                0.0,
+                if icon == Icon::RectangleSelect {
+                    9.0
+                } else {
+                    15.0
+                },
+            ),
         egui::Align2::CENTER_CENTER,
         caption,
         font,
@@ -90,30 +105,56 @@ pub(super) fn large_button(
 
 pub(super) fn tools(
     ui: &mut egui::Ui,
+    variant: ClassicVariant,
     state: &mut Controls,
     context: Context,
     actions: &mut Vec<Action>,
 ) {
-    egui::Grid::new("legacy-tools").spacing(Vec2::new(2.0, 3.0)).show(ui, |ui| {
-        for (index, tool) in [Some(Tool::Pencil), Some(Tool::Fill), Some(Tool::Text), Some(Tool::Eraser), Some(Tool::ColorPicker), None].into_iter().enumerate() {
-            if let Some(tool) = tool {
-                let action = Action::SelectTool(tool);
-                let icon = match tool { Tool::Pencil => Icon::Pencil, Tool::Fill => Icon::Bucket, Tool::Text => Icon::Text, Tool::Eraser => Icon::Eraser, _ => Icon::Eyedropper };
-                let label = tr(ui.ctx(), tool.name());
-                let response = ui.add_enabled(action.enabled(context), egui::Button::new(paintcraft_ui::icons::legacy_image(ui.ctx(), icon, 16.0))
-                    .min_size(Vec2::splat(22.0)).selected(state.tool == tool).frame_when_inactive(state.tool == tool));
-                response.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, action.enabled(context) && ui.is_enabled(), state.tool == tool, &label));
-                if response.on_hover_text(label).clicked() { state.tool = tool; actions.push(action); }
-            } else {
-                let response = ui.add_enabled(false, egui::Button::new(paintcraft_ui::icons::legacy_image(ui.ctx(), Icon::ZoomIn, 16.0)).min_size(Vec2::splat(22.0)).frame_when_inactive(false));
-                let label = tr(ui.ctx(), "Magnifier");
-                response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, false, &label));
-                response
-                    .on_disabled_hover_text(tr(ui.ctx(), "The magnifier tool is not available yet. Use the status bar or the View menu's zoom controls to change magnification."));
-            }
-            if index % 3 == 2 { ui.end_row(); }
-        }
-    });
+    egui::Frame::new()
+        .stroke(ui.visuals().widgets.noninteractive.bg_stroke)
+        .inner_margin(0)
+        .show(ui, |ui| {
+            egui::Grid::new("legacy-tools")
+                .spacing(Vec2::new(2.0, 3.0))
+                .show(ui, |ui| {
+                    for (index, tool) in [
+                        Some(Tool::Pencil), Some(Tool::Fill), Some(Tool::Text),
+                        Some(Tool::Eraser), Some(Tool::ColorPicker), None,
+                    ].into_iter().enumerate() {
+                        if let Some(tool) = tool {
+                            let action = Action::SelectTool(tool);
+                            let selected = state.tool == tool;
+                            let icon = match tool {
+                                Tool::Pencil => Icon::Pencil,
+                                Tool::Fill => Icon::Bucket,
+                                Tool::Text => Icon::Text,
+                                Tool::Eraser => Icon::Eraser,
+                                _ => Icon::Eyedropper,
+                            };
+                            let label = tr(ui.ctx(), tool.name());
+                            let response = ui.add_enabled_ui(action.enabled(context), |ui| {
+                                super::legacy_surface::button(ui, variant,
+                                    egui::Button::new(paintcraft_ui::icons::legacy_image(ui.ctx(), icon, 16.0))
+                                        .min_size(Vec2::splat(22.0)), selected)
+                            }).inner;
+                            response.widget_info(|| egui::WidgetInfo::selected(
+                                egui::Role::Button, action.enabled(context) && ui.is_enabled(), selected, &label));
+                            if response.on_hover_text(label).clicked() {
+                                state.tool = tool;
+                                actions.push(action);
+                            }
+                        } else {
+                            let response = ui.add_enabled(false,
+                                egui::Button::new(paintcraft_ui::icons::legacy_image(ui.ctx(), Icon::ZoomIn, 16.0))
+                                    .min_size(Vec2::splat(22.0)).frame_when_inactive(false));
+                            let label = tr(ui.ctx(), "Magnifier");
+                            response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, false, &label));
+                            response.on_disabled_hover_text(tr(ui.ctx(), "The magnifier tool is not available yet. Use the status bar or the View menu's zoom controls to change magnification."));
+                        }
+                        if index % 3 == 2 { ui.end_row(); }
+                    }
+                });
+        });
 }
 
 pub(super) fn selection(

@@ -279,7 +279,11 @@ pub(super) fn legacy_controls(
         };
         let response = ui.add_enabled(
             action.enabled(context),
-            egui::Button::image_and_text(paintcraft_ui::icons::image(ui.ctx(), icon, 14.0), label),
+            egui::Button::image_and_text(
+                paintcraft_ui::icons::legacy_image(ui.ctx(), icon, 14.0),
+                label,
+            )
+            .frame_when_inactive(false),
         );
         let accessible = tr(ui.ctx(), action.descriptor_for(context.frontend).label);
         response.widget_info(|| {
@@ -289,19 +293,25 @@ pub(super) fn legacy_controls(
             actions.push(action);
         }
     }
-    ui.menu_button(tr(ui.ctx(), "Rotate"), |ui| {
-        for transform in [
-            Transform::RotateRight,
-            Transform::RotateLeft,
-            Transform::Rotate180,
-            Transform::FlipVertical,
-            Transform::FlipHorizontal,
-        ] {
-            let action = Action::TransformImage(transform);
-            if paintcraft_ui::actions::menu_item(ui, action, context) {
-                actions.push(action);
-                ui.close();
+    ui.menu_button(
+        (
+            paintcraft_ui::icons::legacy_image(ui.ctx(), Icon::RotateClockwise, 14.0),
+            tr(ui.ctx(), "Rotate"),
+        ),
+        |ui| {
+            for transform in [
+                Transform::RotateRight,
+                Transform::RotateLeft,
+                Transform::Rotate180,
+                Transform::FlipVertical,
+                Transform::FlipHorizontal,
+            ] {
+                let action = Action::TransformImage(transform);
+                if paintcraft_ui::actions::menu_item(ui, action, context) {
+                    actions.push(action);
+                    ui.close();
+                }
             }
-        }
-    });
+        },
+    );
 }

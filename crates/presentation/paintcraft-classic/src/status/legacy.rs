@@ -10,6 +10,7 @@ struct Draft {
 
 pub(super) fn contents(
     ui: &mut egui::Ui,
+    variant: crate::ClassicVariant,
     status: Status<'_>,
     context: Context,
     id: egui::Id,
@@ -39,7 +40,7 @@ pub(super) fn contents(
                 22.0,
             );
             if !narrow {
-                zoom(ui, context, id, &mut actions);
+                zoom(ui, variant, context, id, &mut actions);
             }
         },
     );
@@ -47,13 +48,19 @@ pub(super) fn contents(
         ui.allocate_ui_with_layout(
             Vec2::new(width, 22.0),
             Layout::right_to_left(Align::Center),
-            |ui| zoom(ui, context, id, &mut actions),
+            |ui| zoom(ui, variant, context, id, &mut actions),
         );
     }
     actions
 }
 
-fn zoom(ui: &mut egui::Ui, context: Context, id: egui::Id, actions: &mut Vec<Action>) {
+fn zoom(
+    ui: &mut egui::Ui,
+    variant: crate::ClassicVariant,
+    context: Context,
+    id: egui::Id,
+    actions: &mut Vec<Action>,
+) {
     ui.push_id(("legacy-zoom", id), |ui| {
         ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
             let draft_id = ui.make_persistent_id("percentage");
@@ -130,17 +137,40 @@ fn zoom(ui: &mut egui::Ui, context: Context, id: egui::Id, actions: &mut Vec<Act
                         ],
                         egui::Stroke::new(2.0, ui.visuals().widgets.noninteractive.bg_stroke.color),
                     );
-                    ui.painter().add(egui::Shape::convex_polygon(
-                        vec![
-                            egui::pos2(x - 4.0, y - 7.0),
-                            egui::pos2(x + 4.0, y - 7.0),
-                            egui::pos2(x + 4.0, y + 4.0),
-                            egui::pos2(x, y + 8.0),
-                            egui::pos2(x - 4.0, y + 4.0),
-                        ],
-                        accent,
-                        egui::Stroke::NONE,
-                    ));
+                    if variant == crate::ClassicVariant::V7 && !ui.visuals().dark_mode {
+                        let thumb =
+                            egui::Rect::from_center_size(egui::pos2(x, y), Vec2::new(10.0, 17.0));
+                        crate::legacy_surface::gradient(
+                            ui,
+                            thumb,
+                            egui::Color32::WHITE,
+                            egui::Color32::from_rgb(205, 214, 224),
+                        );
+                        ui.painter().rect_stroke(
+                            thumb,
+                            2,
+                            egui::Stroke::new(1.0, egui::Color32::from_rgb(125, 143, 160)),
+                            egui::StrokeKind::Inside,
+                        );
+                        for dx in [-1.5, 1.5] {
+                            ui.painter().line_segment(
+                                [egui::pos2(x + dx, y - 3.0), egui::pos2(x + dx, y + 3.0)],
+                                egui::Stroke::new(1.0, egui::Color32::from_rgb(155, 167, 179)),
+                            );
+                        }
+                    } else {
+                        ui.painter().add(egui::Shape::convex_polygon(
+                            vec![
+                                egui::pos2(x - 4.0, y - 7.0),
+                                egui::pos2(x + 4.0, y - 7.0),
+                                egui::pos2(x + 4.0, y + 4.0),
+                                egui::pos2(x, y + 8.0),
+                                egui::pos2(x - 4.0, y + 4.0),
+                            ],
+                            accent,
+                            egui::Stroke::NONE,
+                        ));
+                    }
                     response
                 })
                 .inner;
