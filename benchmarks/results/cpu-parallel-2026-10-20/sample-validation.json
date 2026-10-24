@@ -1,9 +1,0 @@
-{
-  "criterion_sessions": 2,
-  "parameters_per_session": 49,
-  "samples_per_parameter": 100,
-  "json_and_csv_counts_verified": true,
-  "binary_and_source_hashes_unchanged": true,
-  "reverse_execution_status": "completed",
-  "source_revision": "1d87c2349cbb9411c8a060fdb92c287d4c55a87c"
-}

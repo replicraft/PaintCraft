@@ -1,7 +1,0 @@
-paintcraft-render v0.1.0 (/private/tmp/paintcraft-cli-plans-t_3_z33d/baseline/crates/services/paintcraft-render)
-└── paintcraft-render feature "default"
-    ├── paintcraft-cli v0.1.0 (/private/tmp/paintcraft-cli-plans-t_3_z33d/baseline/apps/paintcraft-cli)
-    │   └── paintcraft-cli feature "default" (command-line)
-    └── paintcraft-formats v0.1.0 (/private/tmp/paintcraft-cli-plans-t_3_z33d/baseline/crates/services/paintcraft-formats)
-        └── paintcraft-formats feature "default"
-            └── paintcraft-cli v0.1.0 (/private/tmp/paintcraft-cli-plans-t_3_z33d/baseline/apps/paintcraft-cli) (*)

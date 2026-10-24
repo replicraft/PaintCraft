@@ -1,5 +1,0 @@
-Benchmark 1: /usr/bin/env PAINTCRAFT_GEOMETRY_VARIANT=calibration /Users/dielpi/Desktop/replicraft/PaintCraft/target/release/deps/paintcraft-f824b331897e58e1 --exact cpu_rendering::geometry_benchmark::preview_geometry_process --ignored (20 runs)
-                mean     ±       σ          min     …     max
-  Wall Time     12.2 ms  ±     0.7 ms      11.0 ms  …    13.3 ms
-  Memory         7.2 MiB ±     0.1 MiB      7.1 MiB …     7.3 MiB
- 

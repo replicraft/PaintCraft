@@ -1,6 +1,0 @@
-   Compiling paintcraft-raster v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/crates/foundation/paintcraft-raster)
-   Compiling paintcraft-document v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/crates/foundation/paintcraft-document)
-   Compiling paintcraft-history v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/crates/editing/paintcraft-history)
-   Compiling paintcraft-render v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-render)
-   Compiling paintcraft-editor v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/crates/editing/paintcraft-editor)
-    Finished `release` profile [optimized + debuginfo] target(s) in 2.75s

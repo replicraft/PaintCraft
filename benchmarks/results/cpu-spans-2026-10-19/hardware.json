@@ -1,9 +1,0 @@
-{
-  "cpu": "Apple M1 Pro",
-  "memory_bytes": 34359738368,
-  "os": "macOS 14.7.2 (23H311)",
-  "low_power_mode": "0 in both reported AC and battery policies",
-  "thermal_state": "not instrumented",
-  "power_source": "not recorded",
-  "limitations": "Developer host with background load and observable timing outliers; not release/per-interactive-event qualification."
-}

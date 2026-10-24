@@ -1,9 +1,0 @@
-{
-  "platform": "macOS-14.7.2-arm64-arm-64bit-Mach-O",
-  "logical_cpus": 10,
-  "rustc": "rustc 1.99.0 (b940084d7 2026-09-28)\nbinary: rustc\ncommit-hash: b940084d7eb6a299eb4bfeb8e34901bc051e7ac4\ncommit-date: 2026-09-28\nhost: aarch64-apple-darwin\nrelease: 1.99.0\nLLVM version: 23.1.1",
-  "hyperfine": "hyperfine 2.0.0",
-  "source_revision": "8a7d1fd401837c57a5b2780b4f109df370baba05",
-  "worktree_status": "?? benchmarks/results/preview-reuse-2026-10-20/",
-  "limitations": "One developer machine, uncontrolled power/thermal state and affinity; process RSS includes fixture and native pool; no input/frame/GPU latency qualification."
-}

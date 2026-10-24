@@ -1,5 +1,0 @@
-Benchmark 1: /usr/bin/env PAINTCRAFT_DISPLAY_VARIANT=calibration /Users/dielpi/Desktop/replicraft/PaintCraft/target/release/deps/paintcraft-30d295483bc0fb78 --exact gpu_display::benchmark::native_display_process --ignored (20 runs)
-                mean     ±       σ          min     …     max
-  Wall Time     13.2 ms  ±     0.6 ms      12.4 ms  …    14.8 ms
-  Memory         7.4 MiB ±     0.0 MiB      7.3 MiB …     7.5 MiB
- 

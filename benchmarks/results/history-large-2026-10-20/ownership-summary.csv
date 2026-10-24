@@ -1,7 +1,0 @@
-case,variant,decoded_bytes,leased_decoded_bytes,encoded_bytes,metadata_weight,disk_bytes,disk_payloads,store_reserved_bytes,store_segments
-large65,automatic,17563648,0,0,162845,7864320,30,7865760,10
-large65,explicit,17301504,0,0,154893,24903680,95,24908240,35
-large130,automatic,34340864,0,0,242005,8126464,31,8127952,12
-large130,explicit,34340864,0,0,275029,41943040,160,41950720,39
-large260,automatic,68419584,0,0,448997,8126464,31,8127952,17
-large260,explicit,68419584,0,0,515301,76021760,290,76035680,48

@@ -1,6 +1,0 @@
-    Checking paintcraft-render v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-render)
-    Checking paintcraft-formats v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-formats)
-    Checking paintcraft-editor v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/crates/editing/paintcraft-editor)
-    Checking paintcraft v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/apps/paintcraft)
-    Checking paintcraft-cli v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/apps/paintcraft-cli)
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 8.01s

@@ -1,9 +1,0 @@
-{
-  "platform": "macOS-14.7.2-arm64-arm-64bit-Mach-O",
-  "logical_cpus": 10,
-  "rustc": "rustc 1.99.0 (b940084d7 2026-09-28)\nbinary: rustc\ncommit-hash: b940084d7eb6a299eb4bfeb8e34901bc051e7ac4\ncommit-date: 2026-09-28\nhost: aarch64-apple-darwin\nrelease: 1.99.0\nLLVM version: 23.1.1",
-  "hyperfine": "hyperfine 2.0.0",
-  "source_revision": "573ab3bd9ac29f45d5039e88cf15c433225eca54",
-  "worktree_status": "M benchmarks/tools/run_composite.py\n M benchmarks/tools/summarize_composite.py\n M crates/foundation/paintcraft-raster/src/raster.rs\n M crates/services/paintcraft-render/Cargo.toml\n M crates/services/paintcraft-render/src/lib.rs\n?? benchmarks/results/cpu-cache-2026-10-20-sandbox-attempt/\n?? benchmarks/tools/__pycache__/\n?? crates/foundation/paintcraft-raster/src/raster/versions.rs\n?? crates/services/paintcraft-render/benches/cache_replay.rs\n?? crates/services/paintcraft-render/examples/cache_replay.rs\n?? crates/services/paintcraft-render/examples/support/replay.rs\n?? crates/services/paintcraft-render/src/cache.rs\n?? crates/services/paintcraft-render/src/cache/\n?? crates/services/paintcraft-render/tests/cache.rs\n?? crates/services/paintcraft-render/tests/regions.rs",
-  "limitations": "Single developer machine; no controlled power/thermal state, CPU affinity or cross-ISA qualification. RSS is process-wide, not decoded-tile residency."
-}

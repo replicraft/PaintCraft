@@ -1,8 +1,0 @@
-criterion v0.8.2
-├── criterion feature "cargo_bench_support"
-│   [dev-dependencies]
-│   └── paintcraft-render v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-render)
-│       └── paintcraft-render feature "default" (command-line)
-└── criterion feature "csv_output"
-    [dev-dependencies]
-    └── paintcraft-render v0.1.0 (/Users/dielpi/Desktop/replicraft/PaintCraft/crates/services/paintcraft-render) (*)

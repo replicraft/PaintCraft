@@ -3,3 +3,5 @@
 .codesight/
 .DS_Store
 /docs/validation/
+
+/benchmarks/results/
