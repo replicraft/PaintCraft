@@ -165,11 +165,11 @@ fn classic_selection_menu_has_aligned_rows_safe_previews_and_reachable_actions()
         {
             let (label, tooltip) = (
                 "Transparent selection",
-                "Transparent selection is not available yet.",
+                "When moving a selection, skip pixels whose RGB matches Color 2; alpha is ignored.",
             );
             reveal(&mut h, label);
             assert!(
-                h.get_by_role_and_label(Role::Button, "Selection options")
+                !h.get_by_role_and_label(Role::Button, "Selection options")
                     .get_by_label(label)
                     .accesskit_node()
                     .is_disabled()
@@ -186,11 +186,26 @@ fn classic_selection_menu_has_aligned_rows_safe_previews_and_reachable_actions()
                 .get_by_label(label)
                 .click();
             h.run();
-            assert!(h.query_by_label("Rectangular selection").is_some());
+            assert!(h.query_by_label("Rectangular selection").is_none());
+            assert!(h.state().editor().options.transparent_selection);
+            assert!(h.state().editor().document().same_semantics(&snapshot));
             assert_eq!(h.state().editor().tool, paintcraft_tools::Tool::Pencil);
             assert_eq!(h.state().editor().selection(), Selection::Inactive);
             assert_eq!(h.state().editor().history_view().ticket, ticket);
+            open(&mut h);
+            reveal(&mut h, label);
+            assert_eq!(
+                h.get_by_label(label).accesskit_node().toggled(),
+                Some(eframe::egui::accesskit::Toggled::True)
+            );
+            h.get_by_label(label).click();
+            h.run();
+            assert!(!h.state().editor().options.transparent_selection);
+            assert!(h.state().editor().document().same_semantics(&snapshot));
+            assert_eq!(h.state().editor().tool, paintcraft_tools::Tool::Pencil);
+            assert_eq!(h.state().editor().history_view().ticket, ticket);
         }
+        open(&mut h);
         reveal(&mut h, "Rectangular selection");
         h.get_by_role_and_label(Role::Button, "Selection options")
             .get_by_label("Rectangular selection")

@@ -81,13 +81,19 @@ fn historical_selection_menu_has_compact_sections_and_executes_real_delete_and_u
                         .expect("visible historical selection caption");
                     assert_eq!(text.galley.job.sections[0].format.font_id.size, 12.0);
                 }
-                for name in ["Transparent selection", "Delete", "Deselect"] {
+                for name in ["Delete", "Deselect"] {
                     assert!(
                         h.get_by_role_and_label(Role::Button, &label(name))
                             .accesskit_node()
                             .is_disabled()
                     );
                 }
+                assert!(
+                    !h.get_by_role_and_label(Role::Button, &label("Transparent selection"))
+                        .accesskit_node()
+                        .is_disabled()
+                );
+                assert!(!h.state().editor().options.transparent_selection);
                 h.ctx.style_mut_of(h.ctx.theme(), |style| {
                     style.interaction.tooltip_delay = 0.0;
                     style.interaction.show_tooltips_only_when_still = false;
@@ -98,7 +104,7 @@ fn historical_selection_menu_has_compact_sections_and_executes_real_delete_and_u
                 assert_eq!(
                     h.query_all_by_role_and_label(
                         Role::Label,
-                        &label("Transparent selection is not available yet.")
+                        &label("When moving a selection, skip pixels whose RGB matches Color 2; alpha is ignored.")
                     )
                     .count(),
                     1
@@ -108,6 +114,24 @@ fn historical_selection_menu_has_compact_sections_and_executes_real_delete_and_u
                 h.run();
                 assert!(h.state().editor().document().same_semantics(&snapshot));
                 assert_eq!(h.state().editor().history_view().ticket, ticket);
+                assert!(h.state().editor().options.transparent_selection);
+                assert!(
+                    h.query_by_role_and_label(Role::Button, &label("Rectangular selection"))
+                        .is_none()
+                );
+                open(&mut h, language);
+                assert_eq!(
+                    h.get_by_label(&label("Transparent selection"))
+                        .accesskit_node()
+                        .toggled(),
+                    Some(eframe::egui::accesskit::Toggled::True)
+                );
+                h.get_by_label(&label("Transparent selection")).click();
+                h.run();
+                assert!(!h.state().editor().options.transparent_selection);
+                assert!(h.state().editor().document().same_semantics(&snapshot));
+                assert_eq!(h.state().editor().history_view().ticket, ticket);
+                open(&mut h, language);
                 h.get_by_role_and_label(Role::Button, &label("Rectangular selection"))
                     .focus();
                 h.run();
