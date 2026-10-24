@@ -1,5 +1,6 @@
 //! Frozen rectangular extraction, clear and exact replacement over one source.
 use super::*;
+use crate::selection::BinaryMask;
 use paintcraft_core::types::orthogonal::OrthogonalTransform;
 use std::mem::size_of;
 
@@ -15,24 +16,34 @@ pub(super) struct Patch {
     destination: Rect,
     clear: Rgba,
     selected: Rect,
+    mask: Option<BinaryMask>,
     coordinates: sampling::Coordinates,
 }
 impl Patch {
+    fn selected_pixel(&self, x: i64, y: i64) -> bool {
+        self.selected.contains(x, y)
+            && self
+                .mask
+                .as_ref()
+                .is_none_or(|mask| mask.coverage(x, y) == 255)
+    }
     pub fn sample(&self, x: i64, y: i64) -> Result<Sample> {
         if self.destination.contains(x, y) {
             let (sx, sy) = self
                 .coordinates
                 .pixel(x - self.destination.x0, y - self.destination.y0)?;
-            return Ok(if self.source_bounds.contains(sx, sy) {
-                Sample::Source(sx, sy)
-            } else {
-                Sample::Color(Rgba::TRANSPARENT)
-            });
+            if self.selected_pixel(sx, sy) {
+                return Ok(if self.source_bounds.contains(sx, sy) {
+                    Sample::Source(sx, sy)
+                } else {
+                    Sample::Color(Rgba::TRANSPARENT)
+                });
+            }
         }
         let (sx, sy) = (x - self.source_origin.0, y - self.source_origin.1);
         Ok(if !self.source_bounds.contains(sx, sy) {
             Sample::Color(Rgba::TRANSPARENT)
-        } else if self.selected.contains(sx, sy) {
+        } else if self.selected_pixel(sx, sy) {
             Sample::Color(self.clear)
         } else {
             Sample::Source(sx, sy)
@@ -71,6 +82,51 @@ impl MappedPlan {
     pub fn prepare_patch(
         source: PaintSnapshot,
         area: Rect,
+        transform: OrthogonalTransform,
+        clear: Rgba,
+        admission: &Admission,
+        limit: u64,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<(Self, (i64, i64))> {
+        Self::prepare_patch_inner(
+            source, area, None, transform, clear, admission, limit, check,
+        )
+    }
+    /// Cut and reorient only binary-selected pixels within `area`, relative to
+    /// that rectangle's top-left. Both `area` and `mask` use source-layer-local
+    /// coordinates; callers translate document-space masks before preparation.
+    /// `area` should be the tight selected bounds. Destination holes preserve
+    /// the old pixel unless it belongs to the original cut; selected destination
+    /// pixels win on overlap. Selected samples outside the old finite layer are
+    /// transparent, regardless of its default pixel. Retains the admitted mask
+    /// view without copying it; preparation/replay use the ordinary sample limit.
+    #[allow(clippy::too_many_arguments)]
+    pub fn prepare_masked_patch(
+        source: PaintSnapshot,
+        area: Rect,
+        mask: BinaryMask,
+        transform: OrthogonalTransform,
+        clear: Rgba,
+        admission: &Admission,
+        limit: u64,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<(Self, (i64, i64))> {
+        Self::prepare_patch_inner(
+            source,
+            area,
+            Some(mask),
+            transform,
+            clear,
+            admission,
+            limit,
+            check,
+        )
+    }
+    #[allow(clippy::too_many_arguments)]
+    fn prepare_patch_inner(
+        source: PaintSnapshot,
+        area: Rect,
+        mask: Option<BinaryMask>,
         transform: OrthogonalTransform,
         clear: Rgba,
         admission: &Admission,
@@ -126,6 +182,7 @@ impl MappedPlan {
             .ok_or_else(metadata::exhausted)?;
         let patch = Patch {
             selected: area,
+            mask,
             coordinates: sampling.coordinates(),
             bounds: Rect::new(0, 0, width, height).unwrap(),
             source_bounds: old,
