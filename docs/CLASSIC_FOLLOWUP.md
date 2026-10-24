@@ -285,3 +285,37 @@ controls. The Windows 7 dropdowns and Windows 10 brush grid were visually
 inspected. Full native Windows visual/behavioral parity remains unqualified.
 Raw logs, including the original directional-navigation failure, are retained in
 the ignored `docs/validation/historical-dropdowns-2026-10-24/` directory.
+
+## Contextual historical text ribbon
+
+Windows 7/10 now activate a Text tab with a green Text Tools indicator when the
+Text tool is selected. It replaces the Home ribbon, retaining compact Font,
+Background and Colors groups. Alignment is retained as a PaintCraft extension.
+Home/View/Text tab changes keep the current tool and live text draft intact.
+Selecting a different tool retires the contextual tab; reselecting Text activates
+it again. Desktop and browser pass their existing text preferences and font
+catalogs into the same borrowed UI contract.
+
+The historical font family, size and formatting controls use 24-point hit targets
+and smaller text, while Windows 11/Studio retain their larger controls. The font
+search, virtualized list, IME/key handling, typed-size cancellation and text
+renderer are reused. Opaque/Transparent use the existing secondary-color
+background behavior. Desktop preference changes persist and update the live
+draft without publishing document pixels. Native font discovery remains
+asynchronous; browser font choices remain the bundled families.
+
+The regression covers both historical skins, English/Japanese, light/dark themes
+and normal/forced multipass rendering. It selects Selawik through font search,
+chooses a size preset, toggles formatting/background, moves between the three
+tabs while a draft exists, verifies unchanged document/history before placement,
+and finally places the draft. Existing modern font-search, IME, popup and Escape
+regressions also pass.
+
+All 239 regular GUI tests and 59 browser library tests passed; 52 opt-in native
+captures were ignored. Native all-target Clippy passed with warnings denied, the
+browser release distribution rebuilt, and translation/source-length/whitespace
+checks passed. Real `assets/repo/classic-v7-text.png` and
+`assets/repo/classic-v10-text.png` captures were rendered offscreen and inspected.
+Native Text Tools artwork, exact contextual-header geometry and full Windows
+parity remain unqualified. Raw evidence is in the ignored
+`docs/validation/historical-text-ribbon-2026-10-24/` directory.
