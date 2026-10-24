@@ -46,7 +46,7 @@ pub fn family(
                             [ui.available_width(), CONTROL_HEIGHT],
                             egui::TextEdit::singleline(search)
                                 .id(search_id)
-                                .hint_text("Search fonts")
+                                .hint_text(paintcraft_ui::i18n::tr(ui.ctx(), "Search fonts"))
                                 .event_filter(egui::EventFilter {
                                     vertical_arrows: true,
                                     ..Default::default()

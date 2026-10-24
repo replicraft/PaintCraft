@@ -501,7 +501,7 @@ impl WebApp {
                     ctx.set_theme(theme); paintcraft_ui::theme::apply(ctx,theme);
                     self.preferences.theme = Some(theme); theme_changed = true;
                 }
-                egui::ComboBox::from_label("Classic skin").selected_text(self.variant.name()).show_ui(ui, |ui| {
+                egui::ComboBox::from_label(paintcraft_ui::i18n::tr(ui.ctx(), "Classic skin")).selected_text(self.variant.name()).show_ui(ui, |ui| {
                     for variant in ClassicVariant::ALL { ui.selectable_value(&mut self.variant,variant,variant.name()); }
                 });
                 ui.separator();

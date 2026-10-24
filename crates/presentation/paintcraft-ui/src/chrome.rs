@@ -71,7 +71,7 @@ pub fn options_with_shape_style(
             );
             if state.options.round {
                 use paintcraft_core::types::brush::BrushMedia;
-                egui::ComboBox::from_label("Brush medium")
+                egui::ComboBox::from_label(crate::i18n::tr(ui.ctx(), "Brush medium"))
                     .selected_text(crate::i18n::tr(ui.ctx(), state.options.media.name()))
                     .show_ui(ui, |ui| {
                         for media in BrushMedia::ALL {
@@ -221,20 +221,23 @@ pub fn picker_options(ui: &mut egui::Ui, state: &mut Controls) {
     ui.horizontal_wrapped(|ui| {
         let label = ui.label(crate::i18n::tr(ui.ctx(), "Sampling source"));
         egui::ComboBox::from_id_salt("picker-source")
-            .selected_text(match state.options.picker_source {
-                SampleSource::Image => "Image",
-                SampleSource::Layer => "Layer",
-            })
+            .selected_text(crate::i18n::tr(
+                ui.ctx(),
+                match state.options.picker_source {
+                    SampleSource::Image => "Image",
+                    SampleSource::Layer => "Layer",
+                },
+            ))
             .show_ui(ui, |ui| {
                 ui.selectable_value(
                     &mut state.options.picker_source,
                     SampleSource::Layer,
-                    "Layer",
+                    crate::i18n::tr(ui.ctx(), "Layer"),
                 );
                 ui.selectable_value(
                     &mut state.options.picker_source,
                     SampleSource::Image,
-                    "Image",
+                    crate::i18n::tr(ui.ctx(), "Image"),
                 );
             })
             .response
@@ -259,18 +262,25 @@ pub fn picker_options(ui: &mut egui::Ui, state: &mut Controls) {
             .labelled_by(label.id);
         let label = ui.label(crate::i18n::tr(ui.ctx(), "After picking"));
         egui::ComboBox::from_id_salt("picker-after")
-            .selected_text(match state.options.picker_after {
-                PickerAfter::Stay => "Keep color picker",
-                PickerAfter::Previous => "Previous tool",
-                PickerAfter::Pencil => "Switch to Pencil",
-            })
+            .selected_text(crate::i18n::tr(
+                ui.ctx(),
+                match state.options.picker_after {
+                    PickerAfter::Stay => "Keep color picker",
+                    PickerAfter::Previous => "Previous tool",
+                    PickerAfter::Pencil => "Switch to Pencil",
+                },
+            ))
             .show_ui(ui, |ui| {
                 for (value, name) in [
                     (PickerAfter::Stay, "Keep color picker"),
                     (PickerAfter::Previous, "Previous tool"),
                     (PickerAfter::Pencil, "Switch to Pencil"),
                 ] {
-                    ui.selectable_value(&mut state.options.picker_after, value, name);
+                    ui.selectable_value(
+                        &mut state.options.picker_after,
+                        value,
+                        crate::i18n::tr(ui.ctx(), name),
+                    );
                 }
             })
             .response
