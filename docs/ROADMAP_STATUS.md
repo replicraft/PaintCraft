@@ -11,6 +11,26 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Current priority is completing editing features and missing shapes; UI cleanup
+is deferred. Eighteen closed presets now work through the shared tool/command/
+raster path in Classic native and web, including Shift constraints, fill/outline,
+selection clipping and Undo. That enables 21 of the 23 gallery choices. Curve and
+Polygon still need multi-step interactions; remaining brush semantics, transforms,
+clipboard and other unavailable actions remain feature work. Source-based
+checks live in the shape tests and [Classic ledger](CLASSIC.md); generated
+validation artifacts are now ignored instead of added to Git.
+
+Latest web text connects the shared Cosmic Text/Swash engine and bundled Selawik
+to Classic's toolbar and one editable canvas draft. Downloads capture a rasterized
+copy without publishing the draft; explicit placement supports Undo/Redo. Native
+font discovery still lives in the desktop app. Forty-two web tests, 254 native
+tests (8 ignored), preparation tests and strict native/wasm checks pass. An isolated
+browser confirmed draft/download/placement pixel equality, Undo and PCND reopening.
+See [text interaction tests](../apps/paintcraft-web/src/text_tests.rs). Arbitrary caret
+editing, multiple editable objects, the native editable-until-save preference,
+missing-glyph fallback and real IME qualification remain work. T15 stays partial;
+T22 stays not-started.
+
 Latest Classic web controls connect staged primary/secondary/custom colors,
 bounded canvas dimensions and Image properties, configured/remembered startup
 sizes, persistent browser preferences and floating size/opacity controls. Shared
@@ -20,7 +40,7 @@ controller/settings/canvas regressions and strict workspace/wasm checks. An
 isolated browser verified dimensions/Undo/reload, theme/skin/palette persistence,
 color painting and malformed/denied preference storage. The final bundle was
 rebuilt and started successfully. See [the controls evidence](validation/web-classic-controls-2026-10-23/validation.json).
-Preferences contain no document pixels. Text, transforms, workers/recovery, actual
+Preferences contain no document pixels. Full text-object editing, transforms, workers/recovery, actual
 GPU document composition and cross-browser/native fidelity remain work. T15 stays
 partial and the T22 conformance fixture/interruption gate stays not-started.
 

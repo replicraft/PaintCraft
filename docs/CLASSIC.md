@@ -1336,3 +1336,35 @@ or denied storage. The final bundle was rebuilt and started. See the scoped
 [controls evidence](validation/web-classic-controls-2026-10-23/validation.json).
 Native Windows parity, broad browser/device conformance, editable browser text,
 transforms, workers/recovery and GPU document composition remain unfinished.
+
+### Web text integration (2026-10-23)
+
+Classic web text now shares desktop's Cosmic Text/Swash rasterizer and toolbar,
+using bundled Selawik. One draft remains editable through copy downloads; placing
+it creates an undoable raster edit. Failed placement, focus loss and cancelled
+dialogs retain the draft. See [text interaction tests](../apps/paintcraft-web/src/text_tests.rs).
+Arbitrary caret/range editing, persistent editable objects, native preference
+semantics and hardware IME qualification remain incomplete.
+
+### Closed shape features (2026-10-23)
+
+Eighteen drag-to-size presets now produce real document pixels: rounded rectangle,
+triangle/right triangle, diamond, pentagon/hexagon, four arrows, four/five/six-point
+stars, rectangular/oval/cloud callouts, heart and lightning. Classic's gallery,
+shape fill/outline choices and thickness controls route to shared tool/command
+operations in native and web. Live Shift constrains the bounds in every drag
+direction; primary/secondary colors are captured at press. Fill and outline share
+one admitted paint plan, with selection clipping, exactly-once stroke coverage,
+atomic publication and undo/redo. The 21 working choices leave Curve and Polygon
+disabled until their multi-step interactions exist. Preset curves use bounded
+fixed-point contours; native reference parity and shape antialiasing remain work.
+
+Checks include independent polygon membership/coverage, clipping/cancellation and
+work-limit cases, command parsing, every preset's preview/release/selection and
+Shift behavior, native gallery clicks, and a window-free committed-pixel sheet.
+The complete editor suite passed 121 tests; native library 254 passed/8 ignored;
+web/tools 54 passed. Strict workspace and wasm Clippy pass. An isolated Brave
+browser exercised triangle, rounded rectangle and right arrow, with identical
+preview/release captures and clean state after Undo. New generated evidence stays
+local under the ignored validation folder or `/tmp`; source tests remain tracked.
+UI polishing is deferred while missing editing features are completed.

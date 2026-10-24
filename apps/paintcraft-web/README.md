@@ -2,8 +2,8 @@
 
 PaintCraft Web connects the shared Classic interface, tool state machines,
 transactional document session and raster compositor. Pencil, round/square brush,
-eraser, fill, line/rectangle/ellipse, rectangular selection, clear canvas and
-undo/redo edit real pixels. Shift constrains shapes; Ctrl/Cmd-scroll zooms. The
+eraser, fill, line/rectangle/ellipse, 18 closed shape presets, rectangular
+selection, clear canvas and undo/redo edit real pixels. Shift constrains shapes; Ctrl/Cmd-scroll zooms. The
 Layers panel adds, selects, hides, reorders and deletes real layers. Brush preview
 and release use the same shared commands. Erasing and Clear Canvas restore the
 solid project ground, with white used for new canvases and imported images that
@@ -35,7 +35,25 @@ downloads PNG. Inputs and project output are limited to 64 MiB. New/Open require
 explicit discard when dirty; cancelling or failing an import retains the current
 session. Native save/recovery services remain outside the browser build.
 
-This is an early editor. Editable text, image transforms, clipboard and recovery
+Text uses the same Cosmic Text shaping and Swash grayscale rasterization as
+desktop, with bundled Selawik regular/bold. Click the canvas to start one editable
+draft; the shared toolbar changes its style. Enter adds a newline,
+Ctrl/Cmd+Enter or Place text commits, and Escape cancels. Backspace and
+Ctrl/Cmd+A replacement work; arbitrary caret movement/range selection remain
+unimplemented. Switching tools or editing layers places the draft first.
+Downloads include a rasterized snapshot while retaining the editable draft and
+its unsaved state. Failed placement retains the draft. Installed browser fonts,
+multiple editable text objects and the native editable-until-save preference
+are not implemented here. IME has synthetic event coverage, not device qualification.
+
+Closed shapes include rounded rectangle, triangles, diamond, pentagon, hexagon,
+four directional arrows, three stars, three callouts, heart and lightning.
+They support fill/outline/both, stroke size, secondary colors and live Shift
+constraints. Preview and release share their commands; placement is undoable.
+Curve and polygon interactions remain unavailable. Curved preset contours use
+bounded fixed-point flattenings, not a Windows pixel-fidelity guarantee.
+
+This is an early editor. Image transforms, clipboard and recovery
 are not connected yet. Unsupported actions report this in the status bar.
 The page requests the browser's
 unsaved-work confirmation before unloading. Browser policy controls whether that
