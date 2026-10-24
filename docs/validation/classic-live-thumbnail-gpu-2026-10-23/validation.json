@@ -1,0 +1,40 @@
+{
+  "date": "2026-10-23",
+  "source_commit": "318dba68c51dc3ad4ef51974f59a74ca8aeab3b9",
+  "shared_preview_commit": "3d7423564d57a7e4a11e4aaa30b0827b495fb9c9",
+  "status": "partial_live_classic_overview",
+  "scope": "Desktop Thumbnail includes active pencil, brush, eraser, line/rectangle/ellipse and bitmap/font text through shared private command staging. Main-canvas shape/text previews use their final raster commands. No history publication is required to display a draft.",
+  "resource_boundary": "One worker and one pending job. Committed sources have a 1 GiB raster cap; live staging reserves STAGED_PIXELS_MAX*4 + 256 MiB (1.25 GiB), plus 8 MiB declared scratch. Output ownership of 12 bytes per sample, at most 256x256, is admitted before scheduling and retained through UI handoff. Native shared budget remains 3 GiB. These are logical reservations, not physical RSS or latency measurements.",
+  "scope_guards": "Document/state/epoch and preview-owner scopes reject stale or cancelled drafts. Same-gesture older frames may be shown only as Updating preview. Cancelling/replacing a gesture removes incompatible images and drains charged work.",
+  "checks": {
+    "desktop_lib": "254 passed, 8 ignored",
+    "gui": "212 passed, 45 ignored",
+    "thumbnail_unit": "9 passed",
+    "thumbnail_gui": "5 passed, 2 ignored",
+    "tools": "3 integration tests passed",
+    "clippy": "Strict workspace all-targets and wasm32 web Clippy passed",
+    "web": "1 host test and optimized bundle passed; browser document thumbnails were not implemented by this slice",
+    "gpu": "Four actual-App Wgpu scenes exported and visually reviewed: light held rectangle, dark held ellipse, editable font text and compact editable text. Main canvas and overview track each other."
+  },
+  "limits": [
+    "T15 remains partial; native Windows geometry/rendering parity is not established.",
+    "The existing shape raster kernel is visibly aliased; this change does not establish native shape antialiasing.",
+    "No performance, physical memory, OS accessibility, live native menu or cross-browser conformance claim."
+  ],
+  "sha256": {
+    "app-lib.log.gz": "af2a641ea54c7cd031b36427fd456b9168d4f778a9a07f798ea28587ce9d415c",
+    "clippy.log.gz": "ace461ec1b7870509071b0b938b9ecf19fde318cf98a2c367fbe4b1c50f3b922",
+    "dark-shape.png": "0cbcc21176bf0d7e4d06b43c14f300e3adddcd3c28b166c8bbf24f75082b2836",
+    "dark-text-compact.png": "ff4f993f4fa6c1d19b1378043064e5c6b0d212d6032fda8da857b2860eff78bb",
+    "dark-text.png": "04c3c1f74903b5ff2262c3ef827139cb81976c95c3256878bd53602351753765",
+    "gpu.log.gz": "830bae219c1d2671527d4765b614708d2088901adcc03983789d0b27c550146c",
+    "gui-full.log.gz": "329ef6d64e288ba7814dc7def92bc2a21e5daf9d3e2a853a3bb8c2e466161fc1",
+    "light-shape.png": "74455f0f9724962087fa8c7939c7d65a30113e6a5edd67d1d76b30ec2cd610ae",
+    "thumbnail-gui.log.gz": "8e90f439f4b9786844e43d89c5aeaad7b4a264674b73f15658755a01d163803e",
+    "thumbnail-unit.log.gz": "12cecff801120056fa703690d8d8077d881e4ca96f30c92459e9cb14fa46fcd1",
+    "tools.log.gz": "f2355c5f9a479396fcb243ecd144d41a47fa8ddd75a6ff19c41b424cc94248e2",
+    "wasm.log.gz": "70edf74e61bbd2016e0f25a75e8deb39a0b947c9f2985b1fec380858deada8b5",
+    "web-build.log.gz": "3a6b1e80d3d28e880868673ea3b48a13025a56b5142eb5cb703afa14d7fe2314",
+    "web-test.log.gz": "6acf69a0353c418a9fdae6039a79d3a4ffb13080efd96844c632817b0aa9336a"
+  }
+}

@@ -1287,3 +1287,24 @@ archived with logs in [the Thumbnail record](validation/classic-thumbnail-gpu-20
 Native Paint window/preview parity, live OS menu activation, OS accessibility,
 physical resource/latency qualification, browser document thumbnails and T15
 completion remain unproven.
+
+## 2026-10-23 — live canvas overview
+
+The desktop Thumbnail now includes active pencil/brush/eraser strokes, shapes and
+editable text. Private immutable source captures share the final raster commands
+with publication; preparing an overview never commits a draft. Main-canvas shape
+and bitmap-text previews now use those same raster commands as well.
+
+Document/state/epoch and gesture-owner checks reject superseded work. While an
+active gesture grows, a compatible older frame is explicitly labelled updating.
+Cancellation, another gesture or another document clears incompatible images.
+The worker retains logical source/staging/output charges through cancellation and
+handoff. Live staging adds a conservative 1.25 GiB reservation; these are not
+measurements of physical memory or latency.
+
+Validation: 254 desktop library tests and 212 ordinary GUI tests pass (8 and 45
+ignored respectively), including 9 overview unit tests and 5 GUI cases. Strict
+workspace/wasm32 Clippy and web compilation pass. Four actual-App Wgpu scenes were
+visually reviewed. See [the live overview evidence](validation/classic-live-thumbnail-gpu-2026-10-23/validation.json).
+T15 remains partial; native shape antialiasing/fidelity and browser document
+thumbnails remain unqualified.
