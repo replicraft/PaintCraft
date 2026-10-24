@@ -2,6 +2,7 @@
 pub mod commands;
 mod construction;
 mod contracts;
+pub mod navigation;
 pub use contracts::*;
 mod geometry;
 mod path_admission;
