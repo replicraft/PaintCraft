@@ -16,6 +16,10 @@ pub(super) struct ColorDraft {
 pub(super) enum Form {
     Colors(ColorDraft),
     Canvas(CanvasDraft),
+    ResizeSkew {
+        ticket: paintcraft_editor::session::HistoryTicket,
+        view: paintcraft_classic::resize_skew::Draft,
+    },
 }
 
 #[derive(Debug)]
@@ -26,6 +30,16 @@ pub(super) struct CanvasDraft {
 }
 
 impl WebApp {
+    pub(super) fn begin_resize_skew(&mut self) {
+        self.editor.tools.cancel_gesture();
+        self.form = Some(Form::ResizeSkew {
+            ticket: self.editor.session.history_ticket(),
+            view: paintcraft_classic::resize_skew::Draft::new(
+                self.editor.session.document().canvas,
+            ),
+        });
+    }
+
     pub(super) fn begin_colors(&mut self, secondary: bool, slot: Option<u8>) {
         self.editor.tools.cancel_gesture();
         let source = if secondary {
@@ -103,6 +117,22 @@ impl WebApp {
 
     pub(super) fn show_form(&mut self, ctx: &egui::Context) {
         match self.form.take() {
+            Some(Form::ResizeSkew { ticket, mut view }) => {
+                if ticket != self.editor.session.history_ticket() {
+                    self.message =
+                        "Resize and skew preview closed because the document changed.".into();
+                    return;
+                }
+                let close = paintcraft_classic::resize_skew::dialog_for_skin(
+                    ctx,
+                    self.variant,
+                    &mut view,
+                    paintcraft_document::CANVAS_SIDE_MAX,
+                );
+                if ctx.current_pass_index() != 0 || !close {
+                    self.form = Some(Form::ResizeSkew { ticket, view });
+                }
+            }
             Some(Form::Colors(draft)) => self.color_form(ctx, draft),
             Some(Form::Canvas(draft)) => self.canvas_form(ctx, draft),
             None => {}

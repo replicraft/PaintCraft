@@ -375,3 +375,6 @@ mod classic_followup;
 
 #[path = "gui/legacy_properties.rs"]
 mod legacy_properties;
+
+#[path = "gui/legacy_resize.rs"]
+mod legacy_resize;

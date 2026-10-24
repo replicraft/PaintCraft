@@ -24,8 +24,12 @@ impl App {
                 .set_status("Resize and skew preview closed because the document changed.");
             return;
         }
-        let close =
-            paintcraft_classic::resize_skew::dialog(ctx, &mut draft.view, settings::SIZE_MAX);
+        let close = paintcraft_classic::resize_skew::dialog_for_skin(
+            ctx,
+            self.variant(),
+            &mut draft.view,
+            settings::SIZE_MAX,
+        );
         if ctx.current_pass_index() == 0 {
             self.confirm = (!close).then_some(Confirm::ResizeSkew(draft));
         }

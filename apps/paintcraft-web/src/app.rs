@@ -180,6 +180,7 @@ impl WebApp {
                 self.editor.tools.cancel_gesture();
                 self.settings = true;
             }
+            Action::ResizeSkew => self.begin_resize_skew(),
             Action::CanvasSize | Action::ImageProperties | Action::CanvasDefaults => {
                 self.begin_canvas(action)
             }

@@ -429,3 +429,83 @@ fn historical_properties_keep_browser_admission_and_staged_resize() {
         }
     }
 }
+
+#[test]
+fn resize_preview_uses_shared_units_and_cannot_publish_in_any_skin() {
+    use eframe::egui::Role;
+    use paintcraft_classic::ClassicVariant;
+    use paintcraft_ui::i18n::{Language, set_language, translate};
+    for variant in ClassicVariant::ALL {
+        for language in Language::ALL {
+            let mut h = harness();
+            h.state_mut().variant = variant;
+            set_language(&h.ctx, language);
+            h.run();
+            let label = |s| translate(language, s);
+            let ticket = h.state().editor.session.ticket();
+            h.get_by_role_and_label(Role::Button, &label("Resize and skew"))
+                .click();
+            h.run();
+            h.get_by_role_and_label(Role::SpinButton, &label("Resize horizontal"))
+                .set_value_accesskit(50.0);
+            h.run();
+            h.get_by_role_and_label(Role::RadioButton, &label("Pixels"))
+                .click();
+            h.run();
+            assert_eq!(
+                h.get_by_role_and_label(Role::SpinButton, &label("Resize vertical"))
+                    .accesskit_node()
+                    .numeric_value(),
+                Some(243.0)
+            );
+            h.get_by_role_and_label(Role::SpinButton, &label("Skew horizontal"))
+                .set_value_accesskit(15.0);
+            h.run();
+            assert!(
+                h.get_by_role_and_label(Role::Button, &label("OK"))
+                    .accesskit_node()
+                    .is_disabled()
+            );
+            h.get_by_role_and_label(Role::Button, &label("Cancel"))
+                .click();
+            h.run();
+            assert_eq!(h.state().editor.session.ticket(), ticket);
+            h.get_by_role_and_label(Role::Button, &label("Resize and skew"))
+                .click();
+            h.run();
+            assert_eq!(
+                h.get_by_role_and_label(Role::SpinButton, &label("Resize horizontal"))
+                    .accesskit_node()
+                    .numeric_value(),
+                Some(100.0)
+            );
+            h.key_press(Key::Escape);
+            h.run();
+            assert!(
+                h.query_by_role_and_label(Role::SpinButton, &label("Resize horizontal"))
+                    .is_none()
+            );
+            assert_eq!(h.state().editor.session.ticket(), ticket);
+        }
+    }
+}
+
+#[test]
+fn stale_browser_resize_preview_closes_without_publication() {
+    let mut h = harness();
+    h.get_by_label("Resize and skew").click();
+    h.run();
+    h.state_mut().edit(paintcraft_tools::Action::ResizeCanvas {
+        width: 640,
+        height: 480,
+    });
+    let ticket = h.state().editor.session.ticket();
+    h.run();
+    assert!(h.query_by_label("Resize horizontal").is_none());
+    assert_eq!(h.state().editor.session.ticket(), ticket);
+    assert_eq!(h.state().editor.session.document().canvas, (640, 480));
+    assert_eq!(
+        h.state().message,
+        "Resize and skew preview closed because the document changed."
+    );
+}
