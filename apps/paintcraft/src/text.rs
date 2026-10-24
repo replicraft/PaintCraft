@@ -6,11 +6,7 @@ use std::sync::{Arc, Mutex};
 pub(crate) type Shared = Arc<Mutex<TextRenderer>>;
 
 fn load_bundled(db: &mut Database) {
-    for bytes in [
-        paintcraft_ui::fonts::SELAWIK_REGULAR,
-        paintcraft_ui::fonts::SELAWIK_BOLD,
-        paintcraft_ui::fonts::NOTO_SANS_JP,
-    ] {
+    for bytes in paintcraft_ui::fonts::BUNDLED_DATA {
         db.load_font_data(bytes.to_vec());
     }
     db.set_sans_serif_family("Selawik");
@@ -38,6 +34,37 @@ use paintcraft_core::types::{
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn bundled_document_text_rasterizes_every_locale_without_system_fonts() {
+        let mut renderer = bundled();
+        let families = families(&renderer);
+        for family in paintcraft_ui::fonts::BUNDLED_FAMILIES {
+            assert!(
+                families.iter().any(|name| name == family),
+                "Missing {family}"
+            );
+        }
+        for text in [
+            "Deutsch Español Português",
+            "日本語",
+            "简体中文",
+            "हिन्दी क्ष",
+        ] {
+            // Request Latin Selawik to exercise script fallback, not an explicit Noto face.
+            let style = TextOptions {
+                family: "Selawik".into(),
+                points: 24,
+                ..Default::default()
+            };
+            let mask = renderer
+                .rasterize(text, &style, (4, 4), Rect::new(0, 0, 500, 100).unwrap())
+                .unwrap();
+            assert!(!mask.spans.is_empty(), "Empty mask for {text}");
+            assert!(mask.spans.iter().any(|span| span.coverage < 255));
+            paintcraft_commands::validate_mask_spans(&mask.spans).unwrap();
+        }
+    }
+
     #[test]
     fn selawik_masks_have_grayscale_edges_real_styles_alignment_and_a_reused_cache() {
         let mut renderer = bundled();

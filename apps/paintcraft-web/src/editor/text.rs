@@ -6,11 +6,7 @@ use std::{cell::RefCell, sync::Arc};
 
 pub(super) fn fonts() -> RefCell<TextRenderer> {
     let mut db = Database::new();
-    for bytes in [
-        paintcraft_ui::fonts::SELAWIK_REGULAR,
-        paintcraft_ui::fonts::SELAWIK_BOLD,
-        paintcraft_ui::fonts::NOTO_SANS_JP,
-    ] {
+    for bytes in paintcraft_ui::fonts::BUNDLED_DATA {
         db.load_font_data(bytes.to_vec());
     }
     db.set_sans_serif_family("Selawik");

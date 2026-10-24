@@ -128,7 +128,7 @@ impl App {
             return;
         }
         if self.applied_variant.is_none() {
-            paintcraft_ui::fonts::install(ctx);
+            paintcraft_ui::fonts::install_for_locale(ctx, language.id());
         }
         ctx.options_mut(|options| {
             options.zoom_with_keyboard = false;
