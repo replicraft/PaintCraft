@@ -339,11 +339,12 @@ pub fn erase_selection(
     target: Option<Uuid>,
     color: Rgba,
 ) -> Result<Vec<Value>> {
-    if matches!(selection, paintcraft_raster::Selection::Mask(_)) {
-        return Err(mask_selection_unsupported());
-    }
-    let paintcraft_raster::Selection::Rect(rect) = selection else {
-        return Ok(Vec::new());
+    let rect = match selection {
+        paintcraft_raster::Selection::Rect(rect) => rect,
+        paintcraft_raster::Selection::Mask(mask) if mask.uniform_coverage() != Some(0) => {
+            mask.domain()
+        }
+        _ => return Ok(Vec::new()),
     };
     let layer = target.ok_or_else(|| {
         paintcraft_core::types::Error::new(
