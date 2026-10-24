@@ -125,7 +125,7 @@ pub fn panel<Id: Copy + Eq + Hash + std::fmt::Debug>(
                             .frame(true)
                             .min_size(Vec2::new(ui.available_width(), 40.0))
                             .truncate();
-                        let painted = button.atom_ui(ui);
+                        let painted = crate::control_surface::atom_button(ui, button, selected);
                         if let Some(rect) = painted.rect(egui::IdSalt::new("preview"))
                             && ui.is_rect_visible(rect)
                         {
@@ -139,14 +139,6 @@ pub fn panel<Id: Copy + Eq + Hash + std::fmt::Debug>(
                             _ => row.name.to_owned(),
                         };
                         let response = painted.response.on_hover_text(hint);
-                        if selected {
-                            ui.painter().rect_stroke(
-                                response.rect.shrink(0.5),
-                                5,
-                                ui.visuals().selection.stroke,
-                                egui::StrokeKind::Inside,
-                            );
-                        }
                         if response.clicked() {
                             actions.push(Action::Select(row.id));
                         }

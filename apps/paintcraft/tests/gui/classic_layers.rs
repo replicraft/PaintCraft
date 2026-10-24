@@ -258,6 +258,104 @@ fn export_classic_layer_controls() {
             .unwrap()
             .save(output.join(format!("{theme}-panel-actions.png")))
             .unwrap();
+        let snapshot = h.state().editor().document_snapshot();
+        let ticket = h.state().editor().history_view().ticket;
+        h.event(Event::PointerMoved(Pos2::new(4.0, 4.0)));
+        h.run();
+        h.render()
+            .unwrap()
+            .save(output.join(format!("{theme}-row-idle.png")))
+            .unwrap();
+        h.get_by_role_and_label(Role::Button, "Layer 3").hover();
+        h.run();
+        h.render()
+            .unwrap()
+            .save(output.join(format!("{theme}-row-hover.png")))
+            .unwrap();
+        let point = h
+            .get_by_role_and_label(Role::Button, "Layer 3")
+            .rect()
+            .center();
+        h.event(press(point));
+        h.step();
+        h.render()
+            .unwrap()
+            .save(output.join(format!("{theme}-row-pressed.png")))
+            .unwrap();
+        h.event(release(point));
+        h.run();
+        h.set_size(Vec2::new(1100.0, 500.0));
+        h.event(Event::PointerMoved(Pos2::new(4.0, 4.0)));
+        h.run();
+        h.render()
+            .unwrap()
+            .save(output.join(format!("{theme}-rows-compact.png")))
+            .unwrap();
+        assert!(h.state().editor().document().same_semantics(&snapshot));
+        assert_eq!(h.state().editor().history_view().ticket, ticket);
+        drop(h);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+}
+
+#[test]
+fn classic_layer_rows_use_neutral_selected_surfaces_and_keep_native_input() {
+    use super::control_surfaces::selected_surface;
+    use paintcraft::settings::{Appearance, ClassicVariant, Settings};
+    for (size, ppp, appearance) in [
+        (Vec2::new(1360.0, 900.0), 1.0, Appearance::Light),
+        (Vec2::new(1100.0, 500.0), 2.0, Appearance::Dark),
+    ] {
+        let dir = scratch("classic-layer-row-surfaces");
+        Settings {
+            appearance,
+            classic_variant: Some(ClassicVariant::V11),
+            ..Default::default()
+        }
+        .save(&dir)
+        .unwrap();
+        let mut h = harness_with(App::new(None).with_settings(dir.clone()), ppp, true);
+        h.set_size(size);
+        h.run();
+        with_layer(&mut h);
+        let top = h.state().editor().target();
+        let bottom = h.state().editor().document().roots[0];
+        let snapshot = h.state().editor().document_snapshot();
+        let ticket = h.state().editor().history_view().ticket;
+        h.event(Event::PointerMoved(Pos2::new(4.0, 4.0)));
+        h.run();
+        let idle = selected_surface(&h, "Layer 2");
+        let row = h.get_by_role_and_label(Role::Button, "Layer 2").rect();
+        assert_eq!(row.height(), 40.0);
+        h.get_by_role_and_label(Role::Button, "Layer 2").hover();
+        h.run();
+        let hovered = selected_surface(&h, "Layer 2");
+        assert_ne!(idle, hovered);
+        h.event(press(row.center()));
+        h.step();
+        assert_ne!(selected_surface(&h, "Layer 2"), hovered);
+        h.event(release(row.center()));
+        h.run();
+        assert_eq!(h.state().editor().target(), top);
+        assert_eq!(h.get_by_role_and_label(Role::Button, "Layer 2").rect(), row);
+        h.get_by_role_and_label(Role::Button, "Background").click();
+        h.run();
+        assert_eq!(h.state().editor().target(), Some(bottom));
+        selected_surface(&h, "Background");
+        assert_eq!(
+            h.get_by_role_and_label(Role::Button, "Layer 2")
+                .accesskit_node()
+                .toggled(),
+            Some(eframe::egui::accesskit::Toggled::False)
+        );
+        h.get_by_role_and_label(Role::Button, "Layer 2").focus();
+        h.run();
+        h.key_press(Key::Space);
+        h.run();
+        assert_eq!(h.state().editor().target(), top);
+        selected_surface(&h, "Layer 2");
+        assert!(h.state().editor().document().same_semantics(&snapshot));
+        assert_eq!(h.state().editor().history_view().ticket, ticket);
         drop(h);
         std::fs::remove_dir_all(dir).unwrap();
     }

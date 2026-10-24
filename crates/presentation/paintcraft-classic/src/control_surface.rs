@@ -3,18 +3,27 @@ use egui::{Button, Color32, Response, Shape, Stroke, StrokeKind, Ui};
 
 /// Classic selected surfaces retain ordinary egui button input and metadata.
 pub fn button(ui: &mut Ui, button: Button<'_>, selected: bool) -> Response {
+    atom_button(ui, button, selected).response
+}
+
+/// Keep custom thumbnail atom rectangles while sharing ordinary button styling.
+pub(super) fn atom_button(
+    ui: &mut Ui,
+    button: Button<'_>,
+    selected: bool,
+) -> egui::WidgetAtomResponse {
     if !selected {
-        return ui.add(button.selected(false));
+        return button.selected(false).atom_ui(ui);
     }
     // Reserve a background before egui paints the button's text and images.
     // Its interaction/accessibility still belongs to the native Button.
     let background = ui.painter().add(Shape::Noop);
-    let response = ui.add(
-        button
-            .selected(true)
-            .fill(Color32::TRANSPARENT)
-            .stroke(Stroke::NONE),
-    );
+    let painted = button
+        .selected(true)
+        .fill(Color32::TRANSPARENT)
+        .stroke(Stroke::NONE)
+        .atom_ui(ui);
+    let response = &painted.response;
     let fill = fill(
         ui,
         response.hovered() || response.has_focus(),
@@ -36,7 +45,7 @@ pub fn button(ui: &mut Ui, button: Button<'_>, selected: bool) -> Response {
             StrokeKind::Inside,
         ),
     );
-    response
+    painted
 }
 
 pub(super) fn fill(ui: &Ui, hovered: bool, pressed: bool) -> Color32 {

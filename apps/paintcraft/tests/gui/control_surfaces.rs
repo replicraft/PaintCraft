@@ -2,7 +2,7 @@ use super::*;
 use eframe::egui::{Color32, Role, epaint::Shape};
 use paintcraft::settings::{Appearance, ClassicVariant, Settings};
 
-fn selected_surface(h: &Harness<App>, label: &str) -> Color32 {
+pub(super) fn selected_surface(h: &Harness<App>, label: &str) -> Color32 {
     let button = h.get_by_role_and_label(Role::Button, label);
     assert_eq!(
         button.accesskit_node().toggled(),
