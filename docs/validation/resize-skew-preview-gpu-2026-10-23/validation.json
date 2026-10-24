@@ -1,0 +1,41 @@
+{
+  "source_commit": "744f003abd58a0d8f174e011b8f99d24f51dacb9",
+  "assets_commit": "e02c4e24ad2ce866189ec712be4e4b0f6f16978b",
+  "date": "2026-10-23",
+  "status": "partial_ui_preview",
+  "applies_transforms": false,
+  "scope": "Classic Resize and skew ribbon control opens a staged modal: Percentage/Pixels, linked/unlinked dimensions, two skew angles, fixed Close/Cancel/disabled OK, and always-visible Preview only status. A shared semantic action gates document/modal/frontend availability. No transform command is published.",
+  "reference": {
+    "page": "https://blogs.windows.com/windows-insider/2021/11/30/paint-app-for-windows-11-update-for-windows-insiders-brings-updated-dialogs-and-more/",
+    "published": "2021-11-30",
+    "image": "https://blogs.windows.com/wp-content/uploads/prod/sites/44/2021/11/paint2.png",
+    "image_sha256": "3a38b39e489dcfcc5c2eaddb9b11f28016b9fb8758d5e8fd9b5e19e71be11f7d",
+    "scope": "Primary historical reference for grouped resize/skew controls and filled aspect-ratio link. Not proof of a current pinned Paint build. Reference bitmap was inspected but is not redistributed as a PaintCraft asset."
+  },
+  "checks": {
+    "gui": "203 passed; 42 ignored. Light desktop 1x/dark compact 2x repeated layouts cover linked/unlinked values, scale-preserving unit changes, one-pixel readouts, angles, disabled OK, blocked background undo, cancellation/reopening, fixed compact header/footer/notice, single tooltips, no-document gating and document/history/preference isolation. Compact interactions reveal targets before clicking. Existing ribbon geometry and disabled unsupported-operation checks pass.",
+    "shared_ui": "23 passed; 1 ignored. SVG sources rasterize at multiple densities, retain independent cache identities and stay within cache bounds. Registry has 99 logical icon IDs; Classic menu vectors total 41.",
+    "host_unit": "Stale source revision test passed; closes preview without changing document or history.",
+    "gpu": "Opt-in actual-App Wgpu exporter passed and generated 12 light/dark desktop/compact Percentage/Pixels/Skew scenes. Four representative final images archived and visually reviewed.",
+    "clippy": "workspace all-targets -D warnings passed",
+    "assets": "Both generators reproduce the SVGs, manifests and gallery byte for byte. Aspect-ratio glyphs are original PaintCraft vectors.",
+    "static": "cargo fmt, source length policy and git diff --check passed"
+  },
+  "remaining": [
+    "Actual resampling/skew commands, atomic publication, selection-target behavior, undo/redo, engine/CLI conformance and raster qualification remain unimplemented for this dialog.",
+    "No resize shortcut was added; existing document-close bindings remain.",
+    "Reference pixel parity, current native build behavior and OS accessibility remain unqualified. T15 and the full roadmap are partial."
+  ],
+  "sha256": {
+    "assets.log.gz": "d9b6a3939ee8399b8579c9a0900199e4b194e58acffe18f52cc8638d4775a849",
+    "clippy.log.gz": "967b1f431689054d05762346206a11ba0829274c23a39554e4d19d53c69a078f",
+    "dark-compact-percentage.png": "e16227205d2d9ffa851724125c4078572670574cd523b584923cebac93e137d5",
+    "dark-desktop-pixels.png": "384f551050ceef6036e37aa40803cdb7c598140ec5edf6cc46fb4ead068cad54",
+    "gpu.log.gz": "78370cbf8727316a1ded8b369f85bcb8b16cf759be4e46dbf00fab3dcad1053f",
+    "gui.log.gz": "03b576eecd3b1330c2ffd98e25b3799644aedc54e70c817dadd9802b1e91cae4",
+    "light-compact-skew.png": "0b3afaf5049fe5149e55679bcc43f60539845fc6f407b53a499938dcbb7286b3",
+    "light-desktop-percentage.png": "be58bed807962530dc2f75a8dae3226744c9a6333294f918d7308a0165f13955",
+    "stale.log.gz": "c756430c6ffbfd920aeed5d3f853254bb4262901c493d9bfe18cc38757a011e9",
+    "ui.log.gz": "da50ffdee1c143f9f91fd4bd7e78c55fec0c37ffacc9aa94958d9afeb5d9fac3"
+  }
+}
