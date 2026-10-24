@@ -17,7 +17,27 @@ fn actions() -> Vec<Chrome> {
                 .copied()
                 .map(Chrome::View),
         )
-        .chain([Chrome::Settings, Chrome::ImageProperties])
+        .chain([
+            Chrome::Settings,
+            Chrome::ImageProperties,
+            Chrome::CanvasSize,
+        ])
+        .collect()
+}
+
+fn image_actions() -> Vec<Chrome> {
+    std::iter::once(Chrome::CanvasSize)
+        .chain(
+            paintcraft_ui::actions::EDIT
+                .iter()
+                .copied()
+                .filter(|action| {
+                    matches!(
+                        action,
+                        Chrome::Crop | Chrome::ClearCanvas | Chrome::TransformImage(_)
+                    )
+                }),
+        )
         .collect()
 }
 
@@ -66,10 +86,19 @@ impl App {
         let mut file = paintcraft_ui::actions::FILE.to_vec();
         file.insert(file.len() - 1, Chrome::ImageProperties);
         let wake = ctx.clone();
+        let image = image_actions();
         match NativeMenu::new(
             vec![
                 section("File", file),
-                section("Edit", paintcraft_ui::actions::EDIT.to_vec()),
+                section(
+                    "Edit",
+                    paintcraft_ui::actions::EDIT
+                        .iter()
+                        .copied()
+                        .filter(|action| !image.contains(action))
+                        .collect(),
+                ),
+                section("Image", image),
                 section(
                     "View",
                     paintcraft_ui::actions::VIEW
@@ -98,7 +127,7 @@ impl App {
         let Some(menu) = &mut self.native_menu else {
             return;
         };
-        for title in ["File", "Edit", "View", "Window"] {
+        for title in ["File", "Edit", "Image", "View", "Window"] {
             menu.update_section(title, &paintcraft_ui::i18n::tr(ctx, title));
         }
         let _ = menu.update_presentation(
@@ -158,6 +187,21 @@ impl App {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn image_menu_actions_have_unique_native_ids_and_canvas_size_is_available_in_studio() {
+        let actions = actions();
+        let ids: std::collections::HashSet<_> = actions
+            .iter()
+            .map(|action| action.activation_code())
+            .collect();
+        assert_eq!(ids.len(), actions.len());
+        let image = image_actions();
+        assert!(image.contains(&Chrome::CanvasSize));
+        assert!(image.iter().all(|action| actions.contains(action)));
+        assert!(Chrome::CanvasSize.available(Frontend::Studio));
+        assert!(!Chrome::CanvasDefaults.available(Frontend::Studio));
+    }
+
     #[test]
     fn image_properties_has_one_native_identity_and_a_classic_only_accelerator() {
         assert_eq!(
