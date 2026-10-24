@@ -101,11 +101,12 @@ impl Files {
         ctx: &eframe::egui::Context,
         document: &Document,
         format: Option<ImageExport>,
+        jpeg_quality: u8,
     ) {
         if self.busy {
             return;
         }
-        let bytes = match encode(document, format) {
+        let bytes = match encode_quality(document, format, jpeg_quality) {
             Ok(bytes) => bytes,
             Err(error) => {
                 *self.outcome.borrow_mut() = Some(Err(error));
@@ -161,6 +162,7 @@ impl Files {
         _ctx: &eframe::egui::Context,
         _document: &Document,
         _format: Option<ImageExport>,
+        _jpeg_quality: u8,
     ) {
         *self.outcome.borrow_mut() = Some(Err(Error::new(
             ErrorCode::CapabilityUnsupported,
@@ -193,8 +195,17 @@ fn decode(bytes: &[u8], name: String) -> Result<Loaded> {
     })
 }
 
-#[cfg(any(target_arch = "wasm32", test))]
+#[cfg(test)]
 fn encode(document: &Document, format: Option<ImageExport>) -> Result<Vec<u8>> {
+    encode_quality(document, format, 90)
+}
+
+#[cfg(any(target_arch = "wasm32", test))]
+fn encode_quality(
+    document: &Document,
+    format: Option<ImageExport>,
+    jpeg_quality: u8,
+) -> Result<Vec<u8>> {
     if let Some(format) = format {
         let format = match format {
             ImageExport::Png => image::ImageFormat::Png,
@@ -204,7 +215,7 @@ fn encode(document: &Document, format: Option<ImageExport>) -> Result<Vec<u8>> {
         return Ok(paintcraft_formats::export::export_flat(
             document,
             format,
-            90,
+            jpeg_quality,
             &paintcraft_formats::export::KNOWN_LOSSES.map(str::to_owned),
         )?
         .bytes);
@@ -322,6 +333,41 @@ mod tests {
             assert_eq!(document.state_id, state);
         }
     }
+    #[test]
+    fn jpeg_quality_changes_the_downloaded_codestream_but_preserves_the_project() {
+        let document = paintcraft_document::new_document(
+            32,
+            24,
+            Some(paintcraft_core::types::Rgba([40, 80, 140, 128])),
+            0,
+            paintcraft_document::POLICY,
+        )
+        .unwrap();
+        let snapshot = document.clone();
+        let low = encode_quality(&document, Some(ImageExport::Jpeg), 10).unwrap();
+        let high = encode_quality(&document, Some(ImageExport::Jpeg), 95).unwrap();
+        assert_ne!(low, high, "quality must reach the actual JPEG encoder");
+        for bytes in [&low, &high] {
+            let decoded = image::decode(bytes).unwrap();
+            assert_eq!((decoded.width, decoded.height), document.canvas);
+            // The exported alpha is composed over white before JPEG encoding.
+            for pixel in decoded.rgba.as_chunks::<4>().0 {
+                assert_eq!(pixel[3], 255);
+                for (actual, expected) in pixel[..3].iter().zip([147, 167, 197]) {
+                    assert!((i16::from(*actual) - expected).abs() <= 12);
+                }
+            }
+        }
+        for format in [None, Some(ImageExport::Png), Some(ImageExport::Bmp)] {
+            assert_eq!(
+                encode_quality(&document, format, 10).unwrap(),
+                encode_quality(&document, format, 95).unwrap()
+            );
+        }
+        assert!(document.same_semantics(&snapshot));
+        assert_eq!(document.state_id, snapshot.state_id);
+    }
+
     #[test]
     fn rejected_file_never_replaces_the_current_session() {
         let editor = Editor::new(16, 16).unwrap();
