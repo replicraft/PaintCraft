@@ -11,6 +11,8 @@ pub use app::WebApp;
 #[cfg(test)]
 mod app_tests;
 #[cfg(test)]
+mod construction_tests;
+#[cfg(test)]
 mod controls_tests;
 #[cfg(test)]
 mod forms_tests;

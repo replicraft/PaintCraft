@@ -123,6 +123,7 @@ impl Editor {
             self.place_text()?;
         }
         match action {
+            Action::Contour(contour) => self.commit(vec![commands::contour(&contour)]),
             action @ Action::Text { .. } => {
                 let operations = self.text_operations(&action)?;
                 if operations.is_empty() {
@@ -213,6 +214,7 @@ impl Editor {
     /// Private staging is also used for release; preview never publishes history.
     pub fn display_document(&self) -> Result<Option<Document>> {
         let operations = match self.tools.preview() {
+            Some(Preview::Contour(contour)) => vec![commands::contour(&contour)],
             Some(Preview::Path(stroke)) => commands::stroke_operations(&stroke, &|| Ok(()))?,
             Some(Preview::Shape {
                 layer,

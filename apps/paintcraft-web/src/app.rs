@@ -124,6 +124,14 @@ impl WebApp {
     }
 
     fn action(&mut self, ctx: &egui::Context, action: Action) {
+        if matches!(
+            action,
+            Action::New | Action::Open | Action::Save | Action::SaveAs | Action::Export
+        ) && self.editor.tools.is_constructing_shape()
+        {
+            self.message = paintcraft_tools::FINISH_SHAPE_BEFORE_FILE.into();
+            return;
+        }
         match action {
             Action::Settings | Action::Interface => {
                 self.editor.tools.cancel_gesture();
@@ -143,8 +151,14 @@ impl WebApp {
                 self.editor.tools.cancel_gesture();
                 self.controls.tool = tool;
             }
-            Action::Undo => self.edit(Edit::Undo),
-            Action::Redo => self.edit(Edit::Redo),
+            Action::Undo => {
+                self.editor.tools.cancel_gesture();
+                self.edit(Edit::Undo);
+            }
+            Action::Redo => {
+                self.editor.tools.cancel_gesture();
+                self.edit(Edit::Redo);
+            }
             Action::ClearCanvas => self.edit(Edit::ClearCanvas {
                 color: paintcraft_tools::commands::canvas_color(self.editor.session.document()),
             }),

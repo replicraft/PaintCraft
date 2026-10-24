@@ -50,6 +50,10 @@ impl WebApp {
         }
     }
     pub(crate) fn download(&mut self, ctx: &egui::Context, png: bool) {
+        if self.editor.tools.is_constructing_shape() {
+            self.message = paintcraft_tools::FINISH_SHAPE_BEFORE_FILE.into();
+            return;
+        }
         self.editor.tools.cancel_gesture();
         self.sync_text();
         if !self.text.preedit.is_empty() {

@@ -238,6 +238,32 @@ impl WebApp {
                 continue;
             }
             match event {
+                egui::Event::WindowFocused(false) => {
+                    self.editor.tools.cancel_gesture();
+                    self.canvas.pointer = None;
+                    break;
+                }
+                egui::Event::Key {
+                    key,
+                    pressed: true,
+                    repeat: false,
+                    ..
+                } if self.editor.tools.is_constructing_shape()
+                    && !self.text.widget_owned_input
+                    && !ui.ctx().egui_wants_keyboard_input()
+                    && !egui::Popup::is_any_open(ui.ctx()) =>
+                {
+                    match key {
+                        egui::Key::Enter => {
+                            if let Some((_, action)) = self.editor.tools.finish_shape() {
+                                self.edit(action);
+                            }
+                        }
+                        egui::Key::Backspace => self.editor.tools.remove_shape_vertex(),
+                        egui::Key::Escape => self.editor.tools.cancel_gesture(),
+                        _ => {}
+                    }
+                }
                 egui::Event::PointerButton {
                     pos,
                     button,
@@ -305,6 +331,9 @@ impl WebApp {
                         if let Some((_, action)) = self.editor.tools.pointer_up_button(button) {
                             self.edit(action);
                         }
+                        if let Some(hint) = self.editor.tools.shape_hint() {
+                            self.message = hint.into();
+                        }
                     }
                 }
                 egui::Event::PointerMoved(pos) => {
@@ -313,6 +342,12 @@ impl WebApp {
                         && ui.clip_rect().contains(pos)
                         && self.canvas.controls.is_none_or(|rect| !rect.contains(pos)))
                     .then_some((p.0.div_euclid(256), p.1.div_euclid(256)));
+                    if self.editor.tools.is_constructing_shape()
+                        && !self.editor.tools.pointer_is_down()
+                        && self.canvas.pointer.is_none()
+                    {
+                        continue;
+                    }
                     if self.editor.tools.gesture_points().len() >= MAX_POINTS {
                         self.editor.tools.cancel_gesture();
                         self.message =
