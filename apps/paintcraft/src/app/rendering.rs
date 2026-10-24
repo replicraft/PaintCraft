@@ -135,7 +135,7 @@ impl App {
                 .checked_add(1)
                 .expect("preview revision exhausted");
             if owner_changed
-                || !extends_preview(self.rendered_preview.as_deref(), preview.as_deref())
+                || !preserves_preview_progress(self.rendered_preview.as_deref(), preview.as_deref())
             {
                 self.preview_start_revision = revision;
             }
@@ -466,9 +466,10 @@ impl App {
     }
 }
 
-// Only logical input extensions may reuse an older in-flight preview. Removal,
-// replacement, style changes and cancelled/retried plans retire the old result.
-fn extends_preview(previous: Option<&Preview>, next: Option<&Preview>) -> bool {
+// Within one gesture, growing strokes and reshaped figures may finish an older
+// frame before rendering the newest input. Style changes retire the old result.
+// The caller separately checks document, gesture owner, viewport and scale.
+fn preserves_preview_progress(previous: Option<&Preview>, next: Option<&Preview>) -> bool {
     fn paths(preview: &Preview) -> Option<&[paintcraft_tools::Stroke]> {
         match preview {
             Preview::Path(path) => Some(std::slice::from_ref(path)),
@@ -498,6 +499,27 @@ fn extends_preview(previous: Option<&Preview>, next: Option<&Preview>) -> bool {
             && tail.points.starts_with(&last.points);
     }
     match (previous, next) {
+        (
+            Preview::Shape {
+                layer: a,
+                tool: ta,
+                from: fa,
+                stroke: sa,
+                fill: ca,
+                ..
+            },
+            Preview::Shape {
+                layer: b,
+                tool: tb,
+                from: fb,
+                stroke: sb,
+                fill: cb,
+                ..
+            },
+        ) => a == b && ta == tb && fa == fb && sa == sb && ca == cb,
+        (Preview::Contour(a), Preview::Contour(b)) => {
+            a.layer == b.layer && a.closed == b.closed && a.stroke == b.stroke && a.fill == b.fill
+        }
         (
             Preview::Text {
                 layer: a,
@@ -539,3 +561,7 @@ mod region_tests;
 #[cfg(test)]
 #[path = "rendering/display_tests.rs"]
 mod display_tests;
+
+#[cfg(test)]
+#[path = "rendering/shape_scheduling_tests.rs"]
+mod shape_scheduling_tests;
