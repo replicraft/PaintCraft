@@ -132,6 +132,13 @@ waiting-for-pending-work-more = 処理が完了するまでお待ちください
 
 selection-path-is-too-complex-try-a-shorter-path = 選択範囲のパスが複雑すぎます。短いパスをお試しください
 selection-outline-is-too-complex-zoom-in-to-view-it = 選択範囲の輪郭が複雑すぎます。拡大して表示してください
+choose-an-image-format-before-selecting-where-to-save = 保存先を選択する前に画像形式を選択してください。
+file-format = ファイル形式
+jpeg-quality = JPEG 品質
+higher-quality-creates-a-larger-file-transparent-pixels-are-placed-on-white = 品質を上げるとファイルサイズが大きくなります。透明なピクセルは白い背景に合成されます。
+format-image-dimensions-width-height-px = 画像サイズ: { $width } × { $height } px
+save-a-paintcraft-document-to-keep-editable-layers = レイヤーを編集可能な状態で保持するには、PaintCraft ドキュメントとして保存してください。
+choose-destination-more = 保存先を選択…
 
 printing-is-limited-to-16-megapixels-per-document = 印刷できるドキュメントは1600万画素までです。
 print-job-submitted = 印刷ジョブを送信しました。

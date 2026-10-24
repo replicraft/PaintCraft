@@ -7,7 +7,7 @@ impl App {
         self.request_dialog_suggested(ctx, kind, None);
     }
 
-    fn request_dialog_suggested(
+    pub(super) fn request_dialog_suggested(
         &mut self,
         ctx: &egui::Context,
         kind: Kind,
@@ -56,6 +56,11 @@ impl App {
         completion: paintcraft_platform::dialogs::Completion,
     ) {
         let owner = self.dialog_owner.take();
+        let jpeg_quality = if completion.kind == Kind::Export {
+            self.export_dialog_quality.take().unwrap_or(90)
+        } else {
+            90
+        };
         if (completion.path.is_some() || completion.kind == Kind::InspectRecovery)
             && let Some(owner) = owner
         {
@@ -78,13 +83,13 @@ impl App {
         let Some(path) = completion.path else {
             return;
         };
-        if completion.kind != Kind::Open {
+        if completion.kind == Kind::SaveAs {
             self.path_text = path.to_string_lossy().into_owned();
         }
         match completion.kind {
             Kind::Open => self.open_selected(path),
             Kind::SaveAs => self.save_selected(ctx, path),
-            Kind::Export => self.export_selected(path),
+            Kind::Export => self.export_selected_quality(path, jpeg_quality),
             Kind::InspectRecovery => unreachable!("inspection completion handled separately"),
         }
     }
@@ -221,40 +226,25 @@ impl App {
         }
     }
 
-    /// Plan an export to the format named by the file extension; losses and
-    /// replacement are confirmed before anything is written.
-    pub(super) fn export_requested(&mut self, ctx: &egui::Context) {
-        if self.document_count() == 0 {
-            return;
-        }
-        if self.dialogs.is_some() {
-            self.request_dialog(ctx, Kind::Export);
-        } else {
-            self.export_selected(PathBuf::from(self.path_text.trim()));
-        }
+    /// Stage format and encoder options before opening the native destination picker.
+    pub(super) fn export_requested(&mut self, _ctx: &egui::Context) {
+        self.begin_export_options(paintcraft_ui::actions::ImageExport::Png);
     }
 
     pub(super) fn export_image_requested(
         &mut self,
-        ctx: &egui::Context,
+        _ctx: &egui::Context,
         format: paintcraft_ui::actions::ImageExport,
     ) {
-        if self.document_count() == 0 {
-            return;
-        }
-        if self.dialogs.is_some() {
-            self.request_dialog_suggested(
-                ctx,
-                Kind::Export,
-                Some(PathBuf::from(format!("Untitled.{}", format.extension()))),
-            );
-        } else {
-            let path = PathBuf::from(self.path_text.trim()).with_extension(format.extension());
-            self.export_selected(path);
-        }
+        self.begin_export_options(format);
     }
 
+    #[cfg(test)]
     pub(super) fn export_selected(&mut self, path: PathBuf) {
+        self.export_selected_quality(path, 90);
+    }
+
+    pub(super) fn export_selected_quality(&mut self, path: PathBuf, jpeg_quality: u8) {
         if !self.editor.shape_file_ready() {
             return;
         }
@@ -262,36 +252,48 @@ impl App {
         self.editor.run_pending();
         if self.editing.is_some() {
             self.defer_file(
-                editing::FileRequest::Export(path),
+                editing::FileRequest::Export(path, jpeg_quality),
                 token(&self.context, code::EXPORT),
             );
             return;
         }
-        self.plan_export(path);
+        self.plan_export_quality(path, jpeg_quality);
     }
 
-    pub(super) fn plan_export(&mut self, path: PathBuf) {
+    pub(super) fn plan_export_quality(&mut self, path: PathBuf, jpeg_quality: u8) {
         let Some(format) = ImageFormat::from_extension(&path) else {
             self.editor
                 .set_status("Name the file .png, .bmp or .jpg to export");
             return;
         };
         let all: Vec<String> = KNOWN_LOSSES.iter().map(|l| (*l).to_owned()).collect();
-        match export::export_flat(self.editor.document(), format, 90, &all) {
+        match export::export_flat(self.editor.document(), format, jpeg_quality, &all) {
             Ok(plan) => {
                 self.confirm = Some(Confirm::Export {
                     exists: path.exists(),
                     path,
                     format,
                     losses: plan.losses,
+                    jpeg_quality,
                 })
             }
             Err(e) => self.editor.set_status(format!("Cannot export: {e}")),
         }
     }
 
+    #[cfg(test)]
     pub(super) fn do_export(&mut self, path: &Path, format: ImageFormat, losses: &[String]) {
-        let result = export::export_flat(self.editor.document(), format, 90, losses)
+        self.do_export_quality(path, format, losses, 90);
+    }
+
+    pub(super) fn do_export_quality(
+        &mut self,
+        path: &Path,
+        format: ImageFormat,
+        losses: &[String],
+        jpeg_quality: u8,
+    ) {
+        let result = export::export_flat(self.editor.document(), format, jpeg_quality, losses)
             .map_err(|e| e.to_string());
         let status = match result {
             Ok(flat) => {

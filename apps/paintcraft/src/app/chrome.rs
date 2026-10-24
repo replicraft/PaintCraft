@@ -315,6 +315,10 @@ impl App {
             self.recent_files_dialog(&ctx);
             return;
         }
+        if let Confirm::ExportOptions(draft) = confirm {
+            self.export_options_dialog(&ctx, draft);
+            return;
+        }
         if let Confirm::Settings(draft) = confirm {
             self.settings_dialog(&ctx, draft);
             return;
@@ -336,7 +340,7 @@ impl App {
             return;
         }
         let (title, text, go) = match &confirm {
-            Confirm::RecentFiles | Confirm::Settings(_) | Confirm::SwitchInterface(_) | Confirm::Colors(_) | Confirm::Canvas(_) | Confirm::ResizeSkew(_) | Confirm::LayerProperties(_) => unreachable!("properties handled above"),
+            Confirm::RecentFiles | Confirm::ExportOptions(_) | Confirm::Settings(_) | Confirm::SwitchInterface(_) | Confirm::Colors(_) | Confirm::Canvas(_) | Confirm::ResizeSkew(_) | Confirm::LayerProperties(_) => unreachable!("properties handled above"),
             Confirm::DiscardForNew
             | Confirm::DiscardForOpen(_)
             | Confirm::DiscardForRecovery(_)
@@ -383,6 +387,7 @@ impl App {
                 format,
                 losses,
                 exists,
+                ..
             } => {
                 let mut t = t!(&ctx, "Export { $path } as { $format }.", &[("path", path.display().to_string()), ("format", format.name().into())]);
                 for loss in losses {
@@ -418,6 +423,7 @@ impl App {
             Some(Choice::Accept) => {
                 match confirm {
                     Confirm::RecentFiles
+                    | Confirm::ExportOptions(_)
                     | Confirm::Settings(_)
                     | Confirm::SwitchInterface(_)
                     | Confirm::Colors(_)
@@ -446,8 +452,9 @@ impl App {
                         path,
                         format,
                         losses,
+                        jpeg_quality,
                         ..
-                    } => self.do_export(&path, format, &losses),
+                    } => self.do_export_quality(&path, format, &losses, jpeg_quality),
                 }
                 self.confirm = None;
             }

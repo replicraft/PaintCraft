@@ -17,6 +17,8 @@ mod cpu_rendering;
 mod cursor;
 #[path = "app/editing.rs"]
 mod editing;
+#[path = "app/export_options.rs"]
+mod export_options;
 #[path = "app/files.rs"]
 mod files;
 #[path = "app/gpu_display.rs"]
@@ -140,6 +142,7 @@ enum Confirm {
     Canvas(canvas_settings::CanvasDraft),
     ResizeSkew(resize_skew::Draft),
     RecentFiles,
+    ExportOptions(export_options::Draft),
     LayerProperties(layers::PropertiesDraft),
     DiscardForNew,
     DiscardForOpen(PathBuf),
@@ -154,6 +157,7 @@ enum Confirm {
         path: PathBuf,
         format: ImageFormat,
         losses: Vec<String>,
+        jpeg_quality: u8,
         exists: bool,
     },
 }
@@ -211,6 +215,7 @@ pub struct App {
     dialogs: Option<NativeDialogs>,
     printer: paintcraft_platform::printing::PrintService,
     dialog_owner: Option<Uuid>,
+    export_dialog_quality: Option<u8>,
     texture: Option<egui::TextureHandle>,
     gpu_target: Option<gpu_display::Target>,
     gpu_scaled_display: bool,
@@ -330,6 +335,7 @@ impl App {
             dialogs: None,
             printer: Default::default(),
             dialog_owner: None,
+            export_dialog_quality: None,
             texture: None,
             gpu_target: None,
             gpu_scaled_display: false,

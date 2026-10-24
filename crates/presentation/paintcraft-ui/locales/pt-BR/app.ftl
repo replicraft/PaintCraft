@@ -132,6 +132,13 @@ waiting-for-pending-work-more = Aguardando a conclusão das operações pendente
 
 selection-path-is-too-complex-try-a-shorter-path = O caminho da seleção é complexo demais; tente um caminho mais curto
 selection-outline-is-too-complex-zoom-in-to-view-it = O contorno da seleção é complexo demais; aumente o zoom para vê-lo
+choose-an-image-format-before-selecting-where-to-save = Escolha um formato de imagem antes de selecionar onde salvar.
+file-format = Formato de arquivo
+jpeg-quality = Qualidade JPEG
+higher-quality-creates-a-larger-file-transparent-pixels-are-placed-on-white = Uma qualidade maior cria um arquivo maior. Os pixels transparentes são colocados sobre branco.
+format-image-dimensions-width-height-px = Dimensões da imagem: { $width } × { $height } px
+save-a-paintcraft-document-to-keep-editable-layers = Salve um documento do PaintCraft para manter as camadas editáveis.
+choose-destination-more = Escolher destino…
 
 printing-is-limited-to-16-megapixels-per-document = A impressão é limitada a 16 megapixels por documento.
 print-job-submitted = Trabalho de impressão enviado.

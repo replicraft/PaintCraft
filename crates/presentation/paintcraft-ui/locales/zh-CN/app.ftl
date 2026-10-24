@@ -132,6 +132,13 @@ waiting-for-pending-work-more = 正在等待未完成的操作…
 
 selection-path-is-too-complex-try-a-shorter-path = 选区路径过于复杂，请尝试更短的路径
 selection-outline-is-too-complex-zoom-in-to-view-it = 选区轮廓过于复杂，请放大以查看
+choose-an-image-format-before-selecting-where-to-save = 选择保存位置之前，请先选择图像格式。
+file-format = 文件格式
+jpeg-quality = JPEG 质量
+higher-quality-creates-a-larger-file-transparent-pixels-are-placed-on-white = 更高的质量会生成更大的文件。透明像素会放置在白色背景上。
+format-image-dimensions-width-height-px = 图像尺寸：{ $width } × { $height } px
+save-a-paintcraft-document-to-keep-editable-layers = 保存为 PaintCraft 文档以保留可编辑图层。
+choose-destination-more = 选择保存位置…
 
 printing-is-limited-to-16-megapixels-per-document = 每个文档的打印上限为1600万像素。
 print-job-submitted = 打印任务已提交。
