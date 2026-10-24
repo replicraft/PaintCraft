@@ -551,8 +551,10 @@
       "status": "partial",
       "evidence": ["crates/presentation/paintcraft-studio/src/lib.rs", "apps/paintcraft/tests/gui/studio.rs", "docs/STUDIO.md", "docs/STUDIO_CANVAS_SIZE.md", "apps/paintcraft/tests/gui/studio_canvas.rs", "apps/paintcraft/src/app/studio_canvas/tests.rs",
         "apps/paintcraft/tests/gui/auto_scroll.rs",
-        "crates/editing/paintcraft-tools/src/navigation/auto_scroll.rs"],
-      "remaining_or_scope": "Studio view navigation now includes scoped drag/rectangle zoom, Pan, temporary Space/middle-button movement, keyboard panning, overscroll and configurable time-based tool-drag auto-scroll with endpoint rebasing. Reference speed/input behavior and native device qualification remain open. Studio now has shared image actions, every preset, all brush media and its own nine-anchor canvas-size dialog with ordered source capture, exact history and independent Classic preferences. Studio toolbar, floating Tools/Colors/Layers, guarded History navigation and independent document tabs with owner-routed save/recovery and close handling work; shared descriptors and menu/shortcut dispatch cover existing actions; full action coverage, image operations, effects, PDN and reference parity remain.",
+        "crates/editing/paintcraft-tools/src/navigation/auto_scroll.rs",
+        "apps/paintcraft/tests/gui/fit_toggle.rs",
+        "apps/paintcraft/src/app/view/fit_tests.rs"],
+      "remaining_or_scope": "Studio view navigation now includes scoped drag/rectangle zoom, per-document fit/restore centering, Pan, temporary Space/middle-button movement, keyboard panning, overscroll and configurable time-based tool-drag auto-scroll with endpoint rebasing. Reference speed/input behavior and native device qualification remain open. Studio now has shared image actions, every preset, all brush media and its own nine-anchor canvas-size dialog with ordered source capture, exact history and independent Classic preferences. Studio toolbar, floating Tools/Colors/Layers, guarded History navigation and independent document tabs with owner-routed save/recovery and close handling work; shared descriptors and menu/shortcut dispatch cover existing actions; full action coverage, image operations, effects, PDN and reference parity remain.",
       "acceptance": "Release only named tested tranches; high-depth/groups not misrepresented as source features."
     },
     {

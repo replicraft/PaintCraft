@@ -22,6 +22,7 @@ separately in the dependency choices and is not bundled yet.
 - Centered canvas in both Studio and Classic when the viewport is larger than the document; scrolling and
   actual-pixel zoom retain the common mapping.
 - Zoom tool with click stepping, rectangle-to-viewport fit and text-safe Z shortcut.
+- Zoom to window toggles between fitting and the prior zoom, centering the image.
 - Pan tool with H, temporary Space-drag, middle-button pan, Space-plus-arrow
   keyboard movement, Ctrl acceleration and hand cursors.
 - Overscroll and drag-edge auto-scroll with persisted Studio navigation preferences.
@@ -567,3 +568,42 @@ strict all-target Clippy, catalog/source-length/whitespace checks and the web
 release build pass. Raw local logs are retained under
 `docs/validation/studio-auto-scroll-2026-10-24/`. No native speed, sustained-input
 latency or reference-build visual qualification is claimed by this tranche.
+
+
+## Fit/restore centering (2026-10-24)
+
+In Studio, View → Zoom to window and Ctrl/Cmd+B now share a two-step cycle. The
+first action fits and centers the image. The second restores the exact previous
+zoom while keeping the image centered. Panning before the cycle does not restore
+the old displacement. Repeating the action starts another fit/restore cycle.
+The official [Paint.NET View Tools documentation](https://paint.net/doc/latest/ViewTools.html)
+describes using Zoom to Window or Ctrl+B twice to center an image at its previous
+zoom. A comparison with a pinned native build remains separate work.
+
+The restore target belongs to the document tab's view state. Switching tabs parks
+it alongside zoom and pixel-grid settings; a new document starts with no restore
+target. Replacing the source document or changing its canvas dimensions prevents
+an old target from being restored. Ordinary pixel edits retain the target. Other
+zoom actions, including presets, wheel zoom and the Zoom tool, end the current
+cycle, so the next fit remembers the new zoom. Classic keeps its existing repeated
+fit behavior and does not use Studio's toggle. Browser Classic is unaffected.
+
+Fit/restore changes neither document pixels nor metadata, selection, history,
+dirtiness, nor PCND bytes. An editable text draft stays editable. Explicit zoom
+commands cancel active paint and navigation drags even if the resulting scale is
+unchanged, preventing a stale drag from resuming after centering. The temporary
+Space-pan modifier still follows its own key-down/key-up lifecycle.
+
+
+Validation for source revision `b08644a`: 271 ordinary desktop GUI tests pass
+(63 explicitly ignored capture/manual tests), and 281 native library tests pass
+(8 explicitly ignored tests). Six new controller fixtures check exact fractional
+zoom restoration, tab isolation, manual zoom interruption, source/canvas changes,
+text preservation, Classic's unchanged repeat behavior and same-scale navigation
+cancellation. Real GUI input mixes shortcut and menu actions in all seven
+languages at DPI 1/2 with forced multipass and verifies centering, original scale,
+unchanged history, clean state and identical PCND bytes. A second GUI test checks
+that manual zoom starts a fresh cycle. Workspace check, strict all-target native
+Clippy, translation, source-length and whitespace checks pass. Raw local logs are
+in `docs/validation/studio-fit-restore-2026-10-24/`. Native OS shortcut delivery,
+reference-build visuals and the full Studio/browser roadmap remain unqualified.
