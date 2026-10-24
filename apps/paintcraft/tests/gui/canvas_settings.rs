@@ -311,3 +311,89 @@ fn export_canvas_dimension_dialogs() {
         std::fs::remove_dir_all(dir).unwrap();
     }
 }
+
+#[test]
+fn canvas_dialog_header_close_discards_staged_dimensions_and_startup_policy() {
+    use eframe::egui::Role;
+    use paintcraft::settings::Appearance;
+    for (size, ppp, appearance) in [
+        (Vec2::new(1360.0, 900.0), 1.0, Appearance::Light),
+        (Vec2::new(360.0, 260.0), 2.0, Appearance::Dark),
+    ] {
+        let dir = scratch("canvas-header-close");
+        Settings {
+            appearance,
+            classic_variant: Some(ClassicVariant::V11),
+            ..Default::default()
+        }
+        .save(&dir)
+        .unwrap();
+        let mut h = harness_with(App::new(None).with_settings(dir.clone()), ppp, true);
+        h.set_size(size);
+        h.run();
+        h.ctx.style_mut_of(h.ctx.theme(), |style| {
+            style.interaction.tooltip_delay = 0.0;
+            style.interaction.show_tooltips_only_when_still = false;
+        });
+        let snapshot = h.state().editor().document_snapshot();
+        let ticket = h.state().editor().history_view().ticket;
+        let saved = std::fs::read(dir.join("settings.json")).unwrap();
+        for (menu, close, defaults) in [
+            ("Canvas size…", "Close canvas size", false),
+            ("Default canvas size…", "Close default canvas size", true),
+        ] {
+            dialog(&mut h, menu);
+            let rect = h.get_by_role_and_label(Role::Button, close).rect();
+            assert_eq!(rect.size(), Vec2::splat(40.0));
+            assert!(
+                rect.min.x >= 0.0
+                    && rect.max.x <= size.x
+                    && rect.min.y >= 0.0
+                    && rect.max.y <= size.y
+            );
+            let footer = h.get_by_label("Apply").rect();
+            let cancel = h.get_by_label("Cancel").rect();
+            assert!(footer.min.y >= 0.0 && footer.max.y <= size.y && cancel.max.y <= size.y);
+            assert!(
+                (rect.right() - cancel.right()).abs() < 1.0,
+                "Close aligns with the dialog's right edge"
+            );
+            assert!(rect.bottom() < footer.top());
+            for (label, value) in [("Width", 777.0), ("Height", 512.0)] {
+                h.get_by_label(label).scroll_to_me();
+                h.run();
+                h.get_by_label(label).set_value_accesskit(value);
+                h.run();
+            }
+            if defaults {
+                h.get_by_label("Use configured default size").scroll_to_me();
+                h.run();
+                h.get_by_label("Use configured default size").click();
+                h.run();
+            }
+            assert_eq!(
+                h.get_by_role_and_label(Role::Button, close).rect(),
+                rect,
+                "scrolling must keep the header fixed"
+            );
+            assert_eq!(h.get_by_label("Apply").rect(), footer);
+            h.get_by_role_and_label(Role::Button, close).hover();
+            h.run();
+            assert_eq!(h.query_all_by_role_and_label(Role::Label, close).count(), 1);
+            if defaults {
+                h.get_by_role_and_label(Role::Button, close).focus();
+                h.run();
+                h.key_press(Key::Space);
+            } else {
+                h.get_by_role_and_label(Role::Button, close).click();
+            }
+            h.run();
+            assert!(h.query_by_label("Apply").is_none());
+            assert!(h.state().editor().document().same_semantics(&snapshot));
+            assert_eq!(h.state().editor().history_view().ticket, ticket);
+            assert_eq!(std::fs::read(dir.join("settings.json")).unwrap(), saved);
+        }
+        drop(h);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+}

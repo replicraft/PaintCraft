@@ -60,14 +60,37 @@ pub fn canvas_size_dialog(
                     } else {
                         88
                     }));
-                ui.label(egui::RichText::new(title).size(24.0).strong());
+                let close_label = format!("Close {}", title.to_lowercase());
+                let header = ui.horizontal_top(|ui| {
+                    let heading_width = width - 40.0 - ui.spacing().item_spacing.x;
+                    ui.allocate_ui_with_layout(
+                        Vec2::new(heading_width, 0.0),
+                        egui::Layout::top_down(egui::Align::Min),
+                        |ui| {
+                            ui.set_width(heading_width);
+                            ui.label(egui::RichText::new(title).size(24.0).strong());
+                        },
+                    );
+                    if paintcraft_ui::widgets::classic_menu_button(
+                        ui,
+                        &close_label,
+                        paintcraft_ui::icons::Icon::Close,
+                        false,
+                        &close_label,
+                    )
+                    .clicked()
+                    {
+                        result = CanvasResponse::Cancel;
+                    }
+                });
                 ui.add_space(12.0);
                 // A visible reserved scrollbar makes lower policy choices discoverable
                 // on short displays without covering dimension fields.
                 ui.spacing_mut().scroll.floating = false;
                 egui::ScrollArea::vertical()
             .id_salt("canvas-size-body")
-            .max_height((height - 124.0).max(60.0))
+            .max_height((height - header.response.rect.height() - 84.0).max(48.0))
+            .min_scrolled_height(48.0)
                 .auto_shrink([false, true])
             .show(ui, |ui| {
                 crate::form_controls::style(ui);
