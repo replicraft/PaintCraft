@@ -96,6 +96,29 @@ impl App {
             let events = ui.input(|i| i.events.clone());
             for event in events {
                 match event {
+                    egui::Event::WindowFocused(false) if self.editor.is_constructing_shape() => {
+                        self.editor.cancel_gesture();
+                        break;
+                    }
+                    egui::Event::Key {
+                        key,
+                        pressed: true,
+                        repeat: false,
+                        ..
+                    } if self.editor.is_constructing_shape()
+                        && !ui.ctx().egui_wants_keyboard_input()
+                        && !egui::Popup::is_any_open(ui.ctx()) =>
+                    {
+                        match key {
+                            egui::Key::Enter => self.editor.finish_shape(),
+                            egui::Key::Backspace => self.editor.remove_shape_vertex(),
+                            egui::Key::Escape => self.editor.cancel_gesture(),
+                            _ => {}
+                        }
+                    }
+                    egui::Event::PointerGone if self.editor.is_constructing_shape() => {
+                        self.editor.cancel_gesture()
+                    }
                     egui::Event::PointerButton {
                         pos,
                         button,
@@ -132,6 +155,13 @@ impl App {
                         self.editor.constrain_shape(modifiers.shift);
                     }
                     egui::Event::PointerMoved(pos) => {
+                        if self.editor.is_constructing_shape()
+                            && !self.editor.pointer_is_down()
+                            && (!visible_canvas.contains(pos)
+                                || controls.is_some_and(|r| r.contains(pos)))
+                        {
+                            continue;
+                        }
                         if let Some(d) = view.to_doc_subpixel((pos.x, pos.y)) {
                             self.editor.pointer_move_subpixel(d);
                         }
@@ -304,11 +334,13 @@ impl App {
         let overlay = snapshot.as_deref().filter(|preview| {
             !matches!(
                 preview,
-                Preview::Path(_) | Preview::Paths(_) | Preview::Shape { .. }
+                Preview::Path(_) | Preview::Paths(_) | Preview::Shape { .. } | Preview::Contour(_)
             )
         });
         match overlay.cloned() {
-            Some(Preview::Path(_) | Preview::Paths(_) | Preview::Shape { .. }) => {} // Staged raster pixels, not vector approximations.
+            Some(
+                Preview::Path(_) | Preview::Paths(_) | Preview::Shape { .. } | Preview::Contour(_),
+            ) => {} // Staged raster pixels, not vector approximations.
             Some(Preview::Marquee { from, to }) => ants(box_of(from, to)),
             Some(Preview::Text {
                 style: Some(style),

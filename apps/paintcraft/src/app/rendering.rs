@@ -115,7 +115,11 @@ impl App {
         let preview = self.editor.preview_snapshot().filter(|p| {
             matches!(
                 p.as_ref(),
-                Preview::Path(_) | Preview::Paths(_) | Preview::Shape { .. } | Preview::Text { .. }
+                Preview::Path(_)
+                    | Preview::Paths(_)
+                    | Preview::Shape { .. }
+                    | Preview::Contour(_)
+                    | Preview::Text { .. }
             )
         });
         let owner = preview.as_ref().map(|_| self.editor.preview_owner());

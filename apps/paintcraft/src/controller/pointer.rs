@@ -3,6 +3,14 @@ use super::*;
 use paintcraft_input::PointerButton;
 
 impl Editor {
+    pub(crate) fn shape_file_ready(&mut self) -> bool {
+        if self.is_constructing_shape() {
+            self.set_status(paintcraft_tools::FINISH_SHAPE_BEFORE_FILE);
+            false
+        } else {
+            true
+        }
+    }
     pub fn pointer_down(&mut self, point: (i64, i64)) {
         self.pointer_down_button(point, PointerButton::Primary);
     }
@@ -23,7 +31,7 @@ impl Editor {
         precise: Option<(i64, i64)>,
     ) {
         if self.painting_blocked()
-            || self.tools.gesture_in_progress()
+            || self.tools.pointer_is_down()
             || !self.tool.supports_button(button)
         {
             return;
@@ -55,6 +63,7 @@ impl Editor {
         } else {
             self.tools.pointer_down_button(layer, point, button);
         }
+        self.refresh_shape_hint();
     }
     pub fn pointer_move(&mut self, point: (i64, i64)) {
         self.move_paint_pointer(point, false);
@@ -68,6 +77,27 @@ impl Editor {
     pub fn pointer_up_button(&mut self, button: PointerButton) {
         if let Some((token, action)) = self.tools.pointer_up_button(button) {
             self.request(token, action);
+        }
+        self.refresh_shape_hint();
+    }
+    pub fn is_constructing_shape(&self) -> bool {
+        self.tools.is_constructing_shape()
+    }
+    pub fn pointer_is_down(&self) -> bool {
+        self.tools.pointer_is_down()
+    }
+    pub fn finish_shape(&mut self) {
+        if let Some((token, action)) = self.tools.finish_shape() {
+            self.request(token, action);
+        }
+    }
+    pub fn remove_shape_vertex(&mut self) {
+        self.tools.remove_shape_vertex();
+        self.refresh_shape_hint();
+    }
+    fn refresh_shape_hint(&mut self) {
+        if let Some(hint) = self.tools.shape_hint() {
+            self.status = hint.into();
         }
     }
     pub fn cancel_gesture(&mut self) {

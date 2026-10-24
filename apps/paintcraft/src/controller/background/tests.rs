@@ -47,6 +47,45 @@ fn color(editor: &Editor) -> Rgba {
         .raster
         .default_pixel()
 }
+
+#[test]
+fn constructed_shapes_keep_a_frozen_preview_while_waiting_for_native_worker_capacity() {
+    for tool in [Tool::Polygon, Tool::Curve] {
+        let service = Service::new(egui::Context::default()).unwrap();
+        let release = service.pause();
+        let mut editor = editor(&service);
+        editor.tool = tool;
+        editor.pointer_down((1, 1));
+        editor.pointer_move((6, 1));
+        editor.pointer_up();
+        editor.pointer_down((1, 6));
+        editor.pointer_up();
+        if tool == Tool::Polygon {
+            editor.pointer_down((1, 1));
+        } else {
+            editor.pointer_down((6, 6));
+        }
+        let before = editor.document_snapshot();
+        let history = editor.history_view();
+        let batch = editor.preview_batch().unwrap().unwrap();
+        let expected = paintcraft_editor::execute::execute(&before, editor.selection(), &batch)
+            .unwrap()
+            .doc;
+        editor.pointer_up();
+        assert_eq!(editor.run_pending(), 0);
+        assert!(editor.has_pending_edits());
+        assert_eq!(editor.history_view(), history);
+        assert!(matches!(editor.preview(), Some(Preview::Contour(_))));
+        release.send(()).unwrap();
+        until(|| {
+            editor.run_pending();
+            !editor.has_pending_edits()
+        });
+        assert_eq!(editor.publications(), 1);
+        assert!(editor.document().same_semantics(&expected));
+        assert!(editor.preview().is_none());
+    }
+}
 #[test]
 fn queued_activations_use_one_shared_worker_publish_once_and_retarget_aliases() {
     let service = Service::new(egui::Context::default()).unwrap();

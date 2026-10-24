@@ -527,6 +527,7 @@ impl Editor {
 
     fn execute(&mut self, action: Action) {
         match action {
+            Action::Contour(contour) => self.contour(&contour),
             Action::ResizeCanvas { width, height } => self.resize_canvas(width, height),
             Action::ClearCanvas { color } => self.clear_canvas(color),
             Action::Stroke(stroke) => self.stroke(&stroke),

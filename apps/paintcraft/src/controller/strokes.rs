@@ -8,6 +8,13 @@ use paintcraft_tools::{BlendMode, Stroke, commands::stroke_operations};
 mod tests;
 
 impl Editor {
+    pub(super) fn contour(&mut self, contour: &paintcraft_tools::Contour) {
+        if self.editing.is_some() {
+            self.start_tool_plan(Preview::Contour(contour.clone()), "Shape");
+        } else {
+            self.draw(vec![paintcraft_tools::commands::contour(contour)], "Shape");
+        }
+    }
     /// Staged gesture commands; applying them never publishes or adds history.
     pub fn preview_batch(&self) -> Option<Result<Batch>> {
         match self.prepare_preview(self.preview()).build(|| Ok(())) {
@@ -78,6 +85,7 @@ impl PreviewPreparation {
     pub(crate) fn build(self, check: impl Fn() -> Result<()>) -> Result<Option<Batch>> {
         check()?;
         let operations = match self.preview.as_deref() {
+            Some(Preview::Contour(contour)) => vec![paintcraft_tools::commands::contour(contour)],
             Some(Preview::Path(stroke)) => stroke_operations(stroke, &check)?,
             Some(Preview::Paths(strokes)) => {
                 let mut operations = Vec::new();

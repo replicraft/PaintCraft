@@ -387,6 +387,7 @@ impl Editor {
 
 pub(super) fn preview(action: &Action) -> Option<Preview> {
     match action {
+        Action::Contour(contour) => Some(Preview::Contour(contour.clone())),
         Action::Stroke(stroke) => Some(Preview::Path(stroke.clone())),
         Action::Shape {
             layer,

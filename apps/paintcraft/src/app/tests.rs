@@ -1,5 +1,33 @@
 use super::*;
 
+#[test]
+fn file_actions_preserve_unfinished_shapes_and_do_not_write_partial_documents() {
+    let mut app = App::new(None);
+    app.editor.tool = Tool::Polygon;
+    app.editor.pointer_down((10, 10));
+    app.editor.pointer_move((60, 10));
+    app.editor.pointer_up();
+    let before = app.editor.document_snapshot();
+    let ctx = egui::Context::default();
+    let path = std::env::temp_dir().join(format!(
+        "paintcraft-unfinished-shape-{}.pcnd",
+        Uuid::new_v4()
+    ));
+    app.do_save(&ctx, path.clone());
+    app.export_selected(path.with_extension("png"));
+    for kind in [Kind::Open, Kind::SaveAs, Kind::Export] {
+        app.request_dialog(&ctx, kind);
+    }
+    assert!(app.editor.is_constructing_shape());
+    assert!(!path.exists());
+    assert_eq!(
+        app.editor.status(),
+        paintcraft_tools::FINISH_SHAPE_BEFORE_FILE
+    );
+    assert!(Arc::ptr_eq(&before, &app.editor.document_snapshot()));
+    assert_eq!(app.editor.publications(), 0);
+}
+
 #[cfg(test)]
 mod save_binding_tests {
     use super::*;

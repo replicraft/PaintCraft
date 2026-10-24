@@ -4,6 +4,9 @@ use super::*;
 
 impl App {
     pub(super) fn request_dialog(&mut self, ctx: &egui::Context, kind: Kind) {
+        if !self.editor.shape_file_ready() {
+            return;
+        }
         if self.document_count() == 0 && kind != Kind::Open {
             return;
         }
@@ -212,6 +215,9 @@ impl App {
     }
 
     pub(super) fn export_selected(&mut self, path: PathBuf) {
+        if !self.editor.shape_file_ready() {
+            return;
+        }
         self.editor.commit_text();
         self.editor.run_pending();
         if self.editing.is_some() {
@@ -262,6 +268,9 @@ impl App {
     }
 
     pub(super) fn save_requested(&mut self, ctx: &egui::Context) {
+        if !self.editor.shape_file_ready() {
+            return;
+        }
         if self.document_count() == 0 {
             return;
         }
@@ -292,6 +301,9 @@ impl App {
     }
 
     pub(super) fn do_save(&mut self, ctx: &egui::Context, path: PathBuf) {
+        if !self.editor.shape_file_ready() {
+            return;
+        }
         self.editor.cancel_gesture();
         self.editor.commit_text();
         self.editor.run_pending();
