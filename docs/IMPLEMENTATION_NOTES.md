@@ -443,3 +443,12 @@ painting/crops and later reads. V1 remains unchanged. See
 [Crop planning](CROP_PLANNING.md) for limits, failure behavior and source tests.
 This implements a defined operation; it does not establish independent Windows
 reference pixel fidelity or other transforms.
+
+### Orthogonal canvas transforms (batch v2)
+
+`canvas.transform` accepts one exact orientation name. It reorients every complete
+layer and the canvas, preserving samples, default pixels, IDs and metadata while
+transforming origins and the selection rectangle. Integer source-bound maps share
+Crop's complete-batch admission machinery. See
+[orthogonal transforms](ORTHOGONAL_TRANSFORMS.md) for the wire values, limits,
+independent oracles and pending host/selection-target integration.

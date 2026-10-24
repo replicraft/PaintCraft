@@ -37,7 +37,9 @@ cropped layers; dense larger crops report `ResourceLimit`. Replay may read more
 samples because destination tiles cross source tile boundaries. Metadata and
 lineage retain their existing bounded accounts. These are logical admission
 limits, not measured physical RSS or latency guarantees. Large dense transforms,
-rotate/flip/skew and broader document structures remain separate work.
+selection-target transforms, skew and broader document structures remain separate work.
+Whole-canvas rotations/mirroring now share the generalized
+[integer mapping plans](ORTHOGONAL_TRANSFORMS.md); host integration remains work.
 
 ## Host behavior and validation
 

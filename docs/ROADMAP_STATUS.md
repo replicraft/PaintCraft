@@ -11,6 +11,16 @@ external-author trials and physical devices retain explicit evidence gaps while 
 implementation work continues. The optional M5 products are separate roadmap tranches,
 not implicit requirements to enable accounts or external services.
 
+Latest engine work adds `canvas.transform` for exact clockwise/counterclockwise
+quarter turns, 180° rotation and horizontal/vertical mirroring. Sparse mapped plans
+preserve complete layer extents and raw RGBA through compiled mixed batches and
+recorded history. All five wire operations round-trip through the CLI; independent
+row/column and known-pixel oracles qualify orientation. See
+[orthogonal transform semantics and validation](ORTHOGONAL_TRANSFORMS.md).
+Classic controls and selection-target transforms remain work; this engine tranche
+does not make those disabled controls functional. Feature completion continues
+before UI cleanup. T14/T15 remain partial.
+
 Latest editing work adds real selection Crop across desktop, web and CLI. The
 shared `canvas.crop` operation preserves layer identities/metadata and raw RGBA,
 discards outside content, clears selection and supports exact one-step Undo.
