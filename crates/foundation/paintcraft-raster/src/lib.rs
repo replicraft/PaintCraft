@@ -7,3 +7,5 @@ pub mod shape;
 pub mod smooth;
 pub use raster::*;
 pub use selection::Selection;
+
+pub mod media;

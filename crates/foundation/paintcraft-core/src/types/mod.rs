@@ -24,3 +24,5 @@ pub mod resources;
 pub mod orthogonal;
 
 pub mod picker;
+
+pub mod brush;
