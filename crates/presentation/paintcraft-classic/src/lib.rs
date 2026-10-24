@@ -40,7 +40,7 @@ pub struct Workspace {
     pub custom_colors: CustomColors,
 }
 mod text;
-pub use text::{TextAlignment, TextOptions, text_options};
+pub use text::{TextAlignment, TextOptions, font_family, text_options};
 mod colors;
 pub use colors::{
     CUSTOM_COLOR_COUNT, ColorEditor, ColorResponse, CustomColors, edit_colors_dialog,

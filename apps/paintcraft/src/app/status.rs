@@ -73,11 +73,13 @@ impl App {
                 .scope_id(egui::Id::unique(("classic-status", self.active_tab_id())))
                 .max_rect(rect),
             |ui| {
-                let selection = match self.editor.selection() {
-                    Selection::Rect(rect) => Some((rect.width(), rect.height())),
-                    Selection::Empty => Some((0, 0)),
-                    Selection::Inactive => None,
-                };
+                let selection = self.editor.selection_preview_size().or_else(|| {
+                    match self.editor.selection() {
+                        Selection::Rect(rect) => Some((rect.width(), rect.height())),
+                        Selection::Empty => Some((0, 0)),
+                        Selection::Inactive => None,
+                    }
+                });
                 let model = paintcraft_classic::status::Status {
                     message: &status,
                     recovery: recovery.as_deref(),

@@ -2,7 +2,7 @@
 use super::*;
 mod navigation;
 
-pub(super) fn family(
+pub fn family(
     ui: &mut Ui,
     family: &mut String,
     families: &[String],

@@ -17,6 +17,11 @@ pub(crate) struct Stamp {
 pub(super) struct Cache(Mutex<Option<(Stamp, Option<Weak<Preview>>)>>);
 
 impl Editor {
+    pub(crate) fn selection_preview_size(&self) -> Option<(i64, i64)> {
+        self.tools
+            .selection_preview_size(self.document().canvas_rect())
+    }
+
     /// Cheap identity for every input used by the immutable preview snapshot.
     pub(crate) fn preview_stamp(&self) -> Stamp {
         Stamp {

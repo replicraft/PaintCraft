@@ -232,6 +232,27 @@ impl ToolState {
         }
     }
 
+    /// Current marquee dimensions, clipped exactly like selection publication.
+    /// This reads endpoints directly, without cloning stroke or text buffers.
+    pub fn selection_preview_size(
+        &self,
+        canvas: paintcraft_core::types::Rect,
+    ) -> Option<(i64, i64)> {
+        let gesture = self
+            .gesture
+            .as_ref()
+            .filter(|gesture| gesture.tool == Tool::Select)?;
+        let (a, b) = geometry::endpoints(gesture.tool, &gesture.points, false);
+        let size = paintcraft_core::types::Rect::new(
+            a.0.min(b.0),
+            a.1.min(b.1),
+            a.0.abs_diff(b.0).saturating_add(1).min(i64::MAX as u64) as i64,
+            a.1.abs_diff(b.1).saturating_add(1).min(i64::MAX as u64) as i64,
+        )
+        .and_then(|rect| rect.intersect(&canvas));
+        Some(size.map_or((0, 0), |rect| (rect.width(), rect.height())))
+    }
+
     pub fn preview(&self) -> Option<Preview> {
         if let Some(t) = &self.text {
             return Some(Preview::Text {

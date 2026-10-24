@@ -7,8 +7,8 @@ use paintcraft_tools::{Preview, Tool};
 #[derive(Debug)]
 pub(crate) struct TextUi {
     pub style: TextOptions,
-    search: String,
-    families: Vec<String>,
+    pub(crate) search: String,
+    pub(crate) families: Vec<String>,
     pub preedit: String,
     pub widget_owned_input: bool,
     pub selected_all: bool,

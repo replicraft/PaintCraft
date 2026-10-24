@@ -13,6 +13,7 @@ enum Page {
 pub(crate) struct SettingsDraft {
     pub values: Settings,
     page: Page,
+    font_search: String,
 }
 
 impl App {
@@ -21,6 +22,7 @@ impl App {
         self.confirm = Some(Confirm::Settings(SettingsDraft {
             values: self.settings.clone(),
             page: Page::Appearance,
+            font_search: String::new(),
         }));
     }
 
@@ -93,7 +95,7 @@ impl App {
                 content(
                     ui,
                     &mut draft,
-                    self.fonts.families.len(),
+                    &self.fonts.families,
                     width,
                     body_height,
                     classic,
@@ -115,7 +117,7 @@ impl App {
                         content(
                             ui,
                             &mut draft,
-                            self.fonts.families.len(),
+                            &self.fonts.families,
                             content_width,
                             body_height,
                             classic,
@@ -226,7 +228,7 @@ fn navigation(ui: &mut egui::Ui, current: &mut Page, sidebar: bool, classic: boo
 fn content(
     ui: &mut egui::Ui,
     draft: &mut SettingsDraft,
-    fonts: usize,
+    fonts: &[String],
     width: f32,
     height: f32,
     classic: bool,
@@ -242,7 +244,9 @@ fn content(
                     Page::Appearance => appearance(ui, &mut draft.values),
                     Page::Canvas => canvas(ui, &mut draft.values.canvas, classic),
                     Page::Text => card(ui, "Text editing", |ui| {
-                        ui.label(format!("{fonts} available font families"));
+                        ui.label("Default font");
+                        paintcraft_classic::font_family(ui, &mut draft.values.text.family, fonts, &mut draft.font_search, false);
+                        ui.label(format!("{} available font families", fonts.len()));
                         ui.checkbox(&mut draft.values.text.editable_until_save,
                             "Keep text editable until save (prototype)");
                         ui.weak("Prototype preference only. Text is rasterized when placed; editable text objects and save-time rasterization are not available yet.");

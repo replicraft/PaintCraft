@@ -16,6 +16,7 @@ pub(crate) struct Preferences {
     pub variant: ClassicVariant,
     pub custom_colors: CustomColors,
     pub theme: Option<Theme>,
+    pub default_font: String,
 }
 impl Default for Preferences {
     fn default() -> Self {
@@ -24,6 +25,7 @@ impl Default for Preferences {
             variant: ClassicVariant::DEFAULT,
             custom_colors: [None; 28],
             theme: None,
+            default_font: "Selawik".into(),
         }
     }
 }
@@ -71,7 +73,16 @@ impl Preferences {
                 ),
             };
         }
+        let default_font = match value.get("default_font") {
+            None => "Selawik".to_owned(),
+            Some(value) => value
+                .as_str()
+                .filter(|name| !name.is_empty() && name.len() <= 256)
+                .ok_or("invalid default font")?
+                .to_owned(),
+        };
         Ok(Self {
+            default_font,
             canvas,
             variant,
             custom_colors,
@@ -83,6 +94,7 @@ impl Preferences {
         let value = Value::object([
             ("schema", Value::str("paintcraft.web.preferences/v1")),
             ("canvas", self.canvas.value()),
+            ("default_font", Value::str(&self.default_font)),
             ("skin", Value::str(self.variant.id())),
             (
                 "theme",
@@ -173,6 +185,7 @@ mod tests {
         prefs.canvas.configured = (640, 480);
         prefs.canvas.last = Some((900, 700));
         prefs.variant = ClassicVariant::V7;
+        prefs.default_font = "Example font".into();
         prefs.theme = Some(Theme::Light);
         prefs.custom_colors[9] = Some(Rgba([32, 128, 255, 255]));
         assert_eq!(Preferences::parse(&prefs.bytes().unwrap()).unwrap(), prefs);
@@ -182,6 +195,28 @@ mod tests {
         assert_eq!(decoded.canvas.new_size(), (640, 480));
         assert_eq!(decoded.canvas.last, Some((900, 700)));
     }
+    #[test]
+    fn legacy_preferences_default_font_and_invalid_fonts_are_checked() {
+        let mut value = json::parse(&Preferences::default().bytes().unwrap()).unwrap();
+        let Value::Object(ref mut object) = value else {
+            unreachable!()
+        };
+        object.remove("default_font");
+        assert_eq!(
+            Preferences::parse(&json::canonical(&value))
+                .unwrap()
+                .default_font,
+            "Selawik"
+        );
+        for invalid in [Value::Null, Value::str(""), Value::str("x".repeat(257))] {
+            let Value::Object(ref mut object) = value else {
+                unreachable!()
+            };
+            object.insert("default_font".into(), invalid);
+            assert!(Preferences::parse(&json::canonical(&value)).is_err());
+        }
+    }
+
     #[test]
     fn malformed_unknown_or_oversized_preferences_are_rejected() {
         assert!(Preferences::parse(b"{}").is_err());

@@ -4,6 +4,7 @@ pub use paintcraft_core::types::text::{TextAlignment, TextOptions};
 use egui::{Align, Button, Color32, Response, RichText, Ui, Vec2};
 
 mod fonts;
+pub use fonts::family as font_family;
 mod popup;
 mod size;
 

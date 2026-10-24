@@ -58,11 +58,17 @@ impl WebApp {
             name: "Untitled".into(),
             zoom: 1.0,
             settings: false,
+            text: crate::text_ui::TextUi {
+                style: paintcraft_classic::TextOptions {
+                    family: preferences.default_font.clone(),
+                    ..Default::default()
+                },
+                ..Default::default()
+            },
             preferences,
             export_confirm: false,
             confirm_replace: None,
             files: crate::files::Files::default(),
-            text: crate::text_ui::TextUi::default(),
             pending_import: None,
             form: None,
             message: warning.unwrap_or_else(|| {
@@ -377,7 +383,34 @@ impl WebApp {
                 self.action(&ctx, action);
             }
         });
-        egui::Panel::bottom("classic-status").show(ui, |ui| {
+        let status_rect = egui::Panel::bottom("classic-status")
+            .show(ui, |ui| {
+                let size = egui::vec2(
+                    ui.available_width(),
+                    paintcraft_classic::status::height(ui, true),
+                );
+                ui.allocate_space(size).1
+            })
+            .inner;
+        self.text_chrome(ui);
+        self.layers(ui);
+        egui::CentralPanel::default()
+            .frame(egui::Frame::new().fill(paintcraft_ui::theme::workspace(ctx.theme())))
+            .show(ui, |ui| {
+                self.canvas(ui);
+            });
+        ui.scope_builder(egui::UiBuilder::new().max_rect(status_rect), |ui| {
+            let selection = self
+                .editor
+                .tools
+                .selection_preview_size(self.editor.session.document().canvas_rect())
+                .or_else(|| match self.editor.session.selection() {
+                    paintcraft_editor::execute::Selection::Rect(rect) => {
+                        Some((rect.width(), rect.height()))
+                    }
+                    paintcraft_editor::execute::Selection::Empty => Some((0, 0)),
+                    paintcraft_editor::execute::Selection::Inactive => None,
+                });
             let actions = paintcraft_classic::status::contents(
                 ui,
                 paintcraft_classic::status::Status {
@@ -385,7 +418,7 @@ impl WebApp {
                     recovery: None,
                     canvas: Some(self.editor.session.document().canvas),
                     pointer: self.canvas.pointer,
-                    selection: None,
+                    selection,
                 },
                 self.context(),
                 egui::Id::unique("web-zoom"),
@@ -394,13 +427,6 @@ impl WebApp {
                 self.action(&ctx, action);
             }
         });
-        self.text_chrome(ui);
-        self.layers(ui);
-        egui::CentralPanel::default()
-            .frame(egui::Frame::new().fill(paintcraft_ui::theme::workspace(ctx.theme())))
-            .show(ui, |ui| {
-                self.canvas(ui);
-            });
         self.dialogs(&ctx);
         self.show_form(&ctx);
     }
@@ -457,6 +483,7 @@ impl WebApp {
         if self.settings {
             let previous_variant = self.variant;
             let mut theme_changed = false;
+            let previous_font = self.preferences.default_font.clone();
             egui::Window::new("Web settings").open(&mut self.settings).resizable(false).show(ctx, |ui| {
                 let mut dark = ctx.theme() == egui::Theme::Dark;
                 if ui.checkbox(&mut dark, "Dark mode").changed() {
@@ -467,10 +494,24 @@ impl WebApp {
                 egui::ComboBox::from_label("Classic skin").selected_text(self.variant.name()).show_ui(ui, |ui| {
                     for variant in ClassicVariant::ALL { ui.selectable_value(&mut self.variant,variant,variant.name()); }
                 });
+                ui.separator();
+                ui.heading("Text preferences");
+                ui.label("Default font");
+                paintcraft_classic::font_family(ui, &mut self.preferences.default_font, &self.text.families, &mut self.text.search, false);
                 ui.label("Preferences are stored in this browser when storage is available. Document pixels are not stored.");
                 ui.label("Browser limits: 4 megapixels, 8192 points per stroke; 64 MiB history budget (older entries may be trimmed).");
             });
-            if theme_changed || previous_variant != self.variant {
+            if previous_font != self.preferences.default_font {
+                self.text
+                    .style
+                    .family
+                    .clone_from(&self.preferences.default_font);
+                self.sync_text();
+            }
+            if theme_changed
+                || previous_variant != self.variant
+                || previous_font != self.preferences.default_font
+            {
                 self.preferences.variant = self.variant;
                 self.persist_preferences();
             }
