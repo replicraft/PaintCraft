@@ -30,7 +30,9 @@ impl App {
     }
 
     pub(super) fn set_zoom(&mut self, ctx: &egui::Context, zoom: f32, center: (f32, f32)) {
-        self.editor.cancel_gesture();
+        if !self.editor.has_floating_selection() {
+            self.editor.cancel_gesture();
+        }
         self.studio.pan.cancel();
         self.studio.zoom.cancel();
         self.studio.auto_scroll.cancel();

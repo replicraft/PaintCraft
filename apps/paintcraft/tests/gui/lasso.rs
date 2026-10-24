@@ -91,6 +91,19 @@ fn mode(h: &mut Harness<App>, language: Language, studio: bool, free: bool) {
         }
     );
 }
+fn transparent(h: &mut Harness<App>, language: Language, studio: bool) {
+    if !studio {
+        h.get_by_role_and_label(Role::Button, &translate(language, "Selection options"))
+            .click();
+        h.run();
+    }
+    h.get_by_label(&translate(language, "Transparent selection"))
+        .scroll_to_me();
+    h.run();
+    h.get_by_label(&translate(language, "Transparent selection"))
+        .click();
+    h.run();
+}
 fn check_pixels(h: &Harness<App>, selected_color: Rgba, painted: bool) {
     for y in 0..32 {
         for x in 0..32 {
@@ -150,6 +163,11 @@ fn lasso_and_invert_route_real_pointer_keyboard_and_history_in_every_native_fron
             let ticket = h.state().editor().history_view().ticket;
             let depth = h.state().editor().undo_depth();
             mode(&mut h, language, classic.is_none(), true);
+            assert!(!h.state().editor().options.transparent_selection);
+            transparent(&mut h, language, classic.is_none());
+            assert!(h.state().editor().options.transparent_selection);
+            transparent(&mut h, language, classic.is_none());
+            assert!(!h.state().editor().options.transparent_selection);
             let first = point(&h, 4, 4);
             h.input_mut()
                 .events
@@ -248,5 +266,155 @@ fn lasso_and_invert_route_real_pointer_keyboard_and_history_in_every_native_fron
             drop(h);
             std::fs::remove_dir_all(dir).unwrap();
         }
+    }
+}
+
+#[test]
+fn classic_move_commits_on_release_and_studio_regrabs_then_enter_commits_once() {
+    for studio in [false, true] {
+        let dir = scratch("floating-selection-native");
+        let path = dir.join("source.pcnd");
+        let doc = paintcraft_document::new_document(
+            32,
+            32,
+            Some(Rgba([255; 4])),
+            17,
+            paintcraft_document::POLICY,
+        )
+        .unwrap();
+        std::fs::write(&path, paintcraft_formats::pcnd::write(&doc).unwrap()).unwrap();
+        Settings {
+            experience: if studio {
+                Experience::Studio
+            } else {
+                Experience::Classic
+            },
+            classic_variant: Some(ClassicVariant::V11),
+            ..Default::default()
+        }
+        .save(&dir)
+        .unwrap();
+        let mut h = harness_with(App::new(Some(path)).with_settings(dir.clone()), 1.0, true);
+        h.get_by_role_and_label(Role::Button, "Pencil").click();
+        h.run();
+        for (x, y) in [(6, 6), (20, 20)] {
+            let p = point(&h, x, y);
+            h.event(Event::PointerMoved(p));
+            h.event(press(p));
+            h.event(release(p));
+            h.run();
+        }
+        mode(&mut h, Language::English, studio, false);
+        let a = point(&h, 4, 4);
+        let b = point(&h, 11, 11);
+        h.event(Event::PointerMoved(a));
+        h.event(press(a));
+        h.event(Event::PointerMoved(b));
+        h.event(release(b));
+        h.run();
+        let selection = h.state().editor().selection();
+        let before = h.state().editor().document_snapshot();
+        let depth = h.state().editor().undo_depth();
+        let ticket = h.state().editor().history_view().ticket;
+        let a = point(&h, 6, 6);
+        h.event(Event::PointerMoved(a));
+        h.run();
+        assert_eq!(
+            h.output().platform_output.cursor_icon,
+            eframe::egui::CursorIcon::Move
+        );
+        let b = point(&h, 9, 8);
+        h.event(Event::PointerMoved(a));
+        h.event(press(a));
+        h.event(Event::PointerMoved(b));
+        h.run();
+        assert!(std::sync::Arc::ptr_eq(
+            &before,
+            &h.state().editor().document_snapshot()
+        ));
+        assert_eq!(
+            h.state().editor().display_selection(),
+            Selection::Rect(paintcraft_core::types::Rect::new(7, 6, 8, 8).unwrap())
+        );
+        h.event(release(b));
+        h.run();
+        let destination = if studio {
+            assert!(h.state().editor().has_floating_selection());
+            assert!(std::sync::Arc::ptr_eq(
+                &before,
+                &h.state().editor().document_snapshot()
+            ));
+            assert_eq!(h.state().editor().history_view().ticket, ticket);
+            assert_eq!(h.state().editor().undo_depth(), depth);
+            // Two identical Undo activations in one frame cancel the draft once.
+            for pressed in [true, true, false] {
+                h.event(Event::Key {
+                    key: Key::Z,
+                    physical_key: None,
+                    pressed,
+                    repeat: false,
+                    modifiers: Modifiers::COMMAND,
+                });
+            }
+            h.run();
+            assert!(!h.state().editor().has_floating_selection());
+            assert_eq!(h.state().editor().history_view().ticket, ticket);
+            assert_eq!(h.state().editor().undo_depth(), depth);
+            assert_eq!(h.state().editor().selection(), selection);
+            let a = point(&h, 6, 6);
+            let b = point(&h, 9, 8);
+            h.event(Event::PointerMoved(a));
+            h.event(press(a));
+            h.event(Event::PointerMoved(b));
+            h.event(release(b));
+            h.run();
+            assert!(h.state().editor().has_floating_selection());
+            h.get_by_label("2×").click();
+            h.run();
+            assert!(
+                h.state().editor().has_floating_selection(),
+                "zoom preserves the floating draft"
+            );
+            assert_eq!(h.state().editor().history_view().ticket, ticket);
+            let a = point(&h, 9, 8);
+            let b = point(&h, 11, 7);
+            h.event(Event::PointerMoved(a));
+            h.event(press(a));
+            h.event(Event::PointerMoved(b));
+            h.event(release(b));
+            h.run();
+            assert!(h.state().editor().has_floating_selection());
+            assert_eq!(h.state().editor().undo_depth(), depth);
+            assert_eq!(
+                h.state().editor().display_selection(),
+                Selection::Rect(paintcraft_core::types::Rect::new(9, 5, 8, 8).unwrap())
+            );
+            h.key_press(Key::Enter);
+            h.run();
+            (11, 7)
+        } else {
+            (9, 8)
+        };
+        assert!(!h.state().editor().has_floating_selection());
+        assert_eq!(h.state().editor().undo_depth(), depth + 1);
+        assert_eq!(
+            top_pixel(&h, destination.0, destination.1),
+            Rgba([0, 0, 0, 255])
+        );
+        assert_eq!(
+            top_pixel(&h, 6, 6),
+            if studio {
+                Rgba::TRANSPARENT
+            } else {
+                Rgba([255; 4])
+            }
+        );
+        assert_eq!(top_pixel(&h, 20, 20), Rgba([0, 0, 0, 255]));
+        h.get_by_label("Undo").click();
+        h.run();
+        assert!(h.state().editor().document().same_semantics(&before));
+        assert_eq!(h.state().editor().selection(), selection);
+        drop(h);
+        std::fs::remove_dir_all(dir).unwrap();
     }
 }

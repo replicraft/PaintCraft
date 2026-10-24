@@ -19,6 +19,8 @@ impl App {
         self.context = ctx.clone();
         let first_pass = ctx.current_pass_index() == 0;
         if first_pass {
+            self.editor
+                .set_floating_commit_on_release(self.experience() == Experience::Classic);
             if self.document_count() == 0 {
                 self.selection_outline.clear();
                 self.selection_bounds.borrow_mut().clear();

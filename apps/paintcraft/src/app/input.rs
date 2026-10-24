@@ -36,6 +36,14 @@ impl App {
                     modifiers,
                     ..
                 } if !widget_focus && !self.ime_composing => match key {
+                    egui::Key::Enter
+                        if self.editor.has_floating_selection()
+                            && modifiers == egui::Modifiers::NONE
+                            && !popup_open
+                            && !picker_open =>
+                    {
+                        self.editor.finish_selection_move();
+                    }
                     egui::Key::Enter if text_focus && !modifiers.command => {
                         self.editor.type_text("\n");
                     }

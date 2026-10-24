@@ -409,19 +409,27 @@ impl App {
             );
         };
         self.draw_mask_overlay(painter, view, ppp);
-        if let Selection::Rect(r) = self.editor.selection() {
+        if let Selection::Rect(r) = self.editor.display_selection() {
             ants(box_of((r.x0, r.y0), (r.x1 - 1, r.y1 - 1)));
         }
         let snapshot = self.editor.preview_snapshot();
         let overlay = snapshot.as_deref().filter(|preview| {
             !matches!(
                 preview,
-                Preview::Path(_) | Preview::Paths(_) | Preview::Shape { .. } | Preview::Contour(_)
+                Preview::Path(_)
+                    | Preview::Paths(_)
+                    | Preview::Shape { .. }
+                    | Preview::Contour(_)
+                    | Preview::MoveSelection { .. }
             )
         });
         match overlay.cloned() {
             Some(
-                Preview::Path(_) | Preview::Paths(_) | Preview::Shape { .. } | Preview::Contour(_),
+                Preview::Path(_)
+                | Preview::Paths(_)
+                | Preview::Shape { .. }
+                | Preview::Contour(_)
+                | Preview::MoveSelection { .. },
             ) => {} // Staged raster pixels, not vector approximations.
             Some(Preview::SelectionPath { points }) => {
                 let path: Vec<_> = points.into_iter().map(screen).collect();

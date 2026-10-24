@@ -11,7 +11,7 @@ impl App {
             return Ok(None);
         }
         let clip = self.editor.document().canvas_rect();
-        match self.editor.selection() {
+        match self.editor.display_selection() {
             Selection::Mask(mask) => self.selection_bounds.borrow_mut().get(&mask, clip),
             selection => {
                 self.selection_bounds.borrow_mut().clear();
@@ -23,7 +23,7 @@ impl App {
         }
     }
     pub(super) fn selected_dimensions(&self) -> Option<(i64, i64)> {
-        if self.document_count() == 0 || self.editor.selection() == Selection::Inactive {
+        if self.document_count() == 0 || self.editor.display_selection() == Selection::Inactive {
             self.selection_bounds.borrow_mut().clear();
             return None;
         }
@@ -33,7 +33,7 @@ impl App {
     }
 
     pub(super) fn draw_mask_overlay(&mut self, painter: &egui::Painter, view: &View, ppp: f32) {
-        let Selection::Mask(mask) = self.editor.selection() else {
+        let Selection::Mask(mask) = self.editor.display_selection() else {
             self.selection_outline.clear();
             return;
         };

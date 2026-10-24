@@ -38,7 +38,15 @@ impl App {
             ui.ctx().set_cursor_icon(egui::CursorIcon::Progress);
             return;
         }
+        let move_selection = self.editor.tool == Tool::Select
+            && view.to_doc((pos.x, pos.y)).is_some_and(|point| {
+                paintcraft_tools::FloatingSelection::hit_test(
+                    &self.editor.display_selection(),
+                    point,
+                )
+            });
         ui.ctx().set_cursor_icon(match self.editor.tool {
+            Tool::Select if move_selection => egui::CursorIcon::Move,
             Tool::Eraser => egui::CursorIcon::None,
             Tool::Text => egui::CursorIcon::Text,
             Tool::Magnifier => egui::CursorIcon::ZoomIn,
