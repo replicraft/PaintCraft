@@ -83,10 +83,10 @@ The remaining integration must:
    snapshots already retain exact masks with resident byte accounting and
    cancellation. Session masks remain outside PCND persistence unless explicitly
    promoted to named document data.
-4. Translate/clip/reframe selections correctly for canvas and image operations,
-   and carry the original mask with floating selected pixels and transforms.
-5. Add tight selected bounds/status and transparent color-keyed floating selection.
-   Native/browser lasso gestures, true boundaries and Invert now work.
+4. Carry the original mask with floating selected pixels and interactive transforms.
+   Canvas mapping and immediate orthogonal operations now work as documented below.
+5. Add transparent color-keyed floating selection. Tight sampled bounds/status,
+   native/browser lasso gestures, true boundaries and Invert now work.
 6. Expand native profile and device evidence before claiming SEL-01 through SEL-05
    complete. Scoped batch, worker, GUI, CLI and browser-host evidence exists.
 
@@ -142,10 +142,10 @@ mask readers still hold their original realm charges after history drops them.
 
 The ownership slice initially rejected painting while a mask was active. The
 coverage integration below now enables painting and flood fill. Crop and mapped
-transforms remain rejected pending explicit sampling/selection mapping policies.
+orthogonal transforms now follow [explicit sampling and geometry policies](MASKED_SELECTION_TRANSFORMS.md).
 Layer operations, canvas placement and Clear Canvas retain their established
 semantics. The subsequent frontend integration exposes lasso/Invert with true
-mask outlines. It omits a rectangle-only dimension projection for masks.
+mask outlines. Tight sampled dimensions now use a separate derived bounds cache.
 
 New engine tests cover independent polygon pixels, finite inversion, selection-only
 Undo/Redo/seek, stale workers, single-construction replay, equal-field no-ops,
@@ -221,3 +221,12 @@ interactive latency, fractional masks, mask packing/spill, floating pixels and
 mapped selection transforms remain incomplete. Outlines and lasso controls were
 implemented after this run; see the frontend evidence linked above. T14/T15 and
 SEL-01 through SEL-05 are not promoted to completed gates by this tranche.
+
+
+## Tight bounds and orthogonal transforms, October 24, 2026
+
+[The next selection tranche](MASKED_SELECTION_TRANSFORMS.md) implements bounded
+sampled bounds, reusable host feedback, Crop/Fit Selection and exact selected/whole
+canvas orientations. It preserves mask holes, frozen original samples, exact
+history and private admission failure. Floating and transparent selections,
+fractional combination and matched native qualification remain unfinished.

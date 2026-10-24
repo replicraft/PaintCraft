@@ -38,12 +38,12 @@ sharing a 16 MiB process geometry realm. If extraction exceeds its bounds, the U
 shows a translated notice to zoom in. Selection coverage and editing remain intact.
 These are declared payload/work bounds, not application RSS or latency guarantees.
 
-Crop and mapped rotations remain disabled for mask selections. Delete has its own
-capability and remains available independently of Crop; it uses Classic's canvas
-ground or Studio's transparent clearing policy. Rectangular operations retain
-existing behavior. Tight selected dimensions are not inferred from the mask domain;
-committed mask dimensions remain absent. Floating movement, transparent color-keyed
-selection, mask transforms, fractional masks and matched native behavior remain work.
+[Tight sampled dimensions, Crop, Fit Selection and exact rotate/flip](MASKED_SELECTION_TRANSFORMS.md)
+now work for proven nonempty mask selections. Delete retains its independent
+capability and Classic canvas-ground/Studio transparent clearing policies.
+Active empty masks display 0 × 0. Bounded bounds-extraction failure omits unproven
+dimensions and disables dependent actions. Floating movement, transparent color-keyed
+selection, fractional masks and matched native behavior remain work.
 
 ## Evidence
 

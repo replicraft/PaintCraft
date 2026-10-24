@@ -40,8 +40,10 @@ impl App {
             layer_visible,
             zoom: self.zoom,
             pixel_grid: self.pixel_grid,
-            can_transform_image: !matches!(self.editor.selection(), Selection::Mask(_) | Selection::Empty)
-                || self.selected_bounds().is_ok_and(|bounds| bounds.is_some()),
+            can_transform_image: !matches!(
+                self.editor.selection(),
+                Selection::Mask(_) | Selection::Empty
+            ) || self.selected_bounds().is_ok_and(|bounds| bounds.is_some()),
             can_erase_selection: match self.editor.selection() {
                 Selection::Rect(r) => r.intersect(&self.editor.document().canvas_rect()).is_some(),
                 Selection::Mask(mask) => {
