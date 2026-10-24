@@ -7,6 +7,7 @@ A familiar place to draw, paint and edit images. Built in Rust.
 - Pencil, eraser, fill, color picker and nine brush styles.
 - Shapes, curves and text.
 - Rectangular and free-form selections, inversion and delete.
+- Copy selections to the clipboard.
 - Crop, rotate and flip.
 - Undo, redo, editable projects and PNG, BMP and JPEG images.
 - Desktop recent files with one-click reopening.

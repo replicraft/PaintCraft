@@ -684,3 +684,11 @@ imports and confirmed saves enter its bounded MRU list. Selecting a bound path
 activates its existing tab; selecting another path opens a new document without
 replacing other work. Clear only removes the list, and an empty Studio workspace
 can reopen a record. [Semantics and validation](RECENT_FILES.md).
+
+
+## Clipboard Copy, October 24, 2026
+
+[Canvas Copy](CLIPBOARD_COPY.md) now works through the shared menu/shortcut and
+acknowledged native/browser writes. Exact active-layer capture preserves selection
+holes and raw RGBA without modifying document/history. Earlier disabled Copy
+previews are historical; Cut, Paste and Copy visible layers remain separate work.
