@@ -40,7 +40,8 @@ impl App {
             layer_visible,
             zoom: self.zoom,
             pixel_grid: self.pixel_grid,
-            can_transform_image: !matches!(self.editor.selection(), Selection::Mask(_)),
+            can_transform_image: !matches!(self.editor.selection(), Selection::Mask(_) | Selection::Empty)
+                || self.selected_bounds().is_ok_and(|bounds| bounds.is_some()),
             can_erase_selection: match self.editor.selection() {
                 Selection::Rect(r) => r.intersect(&self.editor.document().canvas_rect()).is_some(),
                 Selection::Mask(mask) => {
@@ -52,8 +53,8 @@ impl App {
                 }
                 _ => false,
             },
-            can_fit_selection: matches!(self.editor.selection(), Selection::Rect(_)),
-            can_crop_selection: matches!(self.editor.selection(),Selection::Rect(rect) if rect.intersect(&self.editor.document().canvas_rect()).is_some()),
+            can_fit_selection: self.selected_bounds().is_ok_and(|bounds| bounds.is_some()),
+            can_crop_selection: self.selected_bounds().is_ok_and(|bounds| bounds.is_some()),
             status_bar: self.settings.classic_status_bar,
             rulers: self.settings.classic_rulers,
             fullscreen: self.fullscreen,

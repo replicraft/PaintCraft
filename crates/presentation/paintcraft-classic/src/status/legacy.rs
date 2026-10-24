@@ -33,7 +33,7 @@ pub(super) fn contents(
                 super::message(ui, &status, width, 22.0);
                 return;
             }
-            super::metrics(ui, &status, metrics, 22.0);
+            super::metrics(ui, &status, metrics, 22.0, context.selection_active);
             super::message(
                 ui,
                 &status,

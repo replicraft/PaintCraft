@@ -274,3 +274,4 @@ drag-an-area-to-zoom-in-right-click-to-zoom-out = 範囲をドラッグして拡
 pan-tool = パンツール
 drag-to-pan-hold-space-to-pan-with-another-tool = ドラッグで移動 · 他のツールではスペースキーを押しながらドラッグ
 drag-to-pan-space-drag-or-space-arrows-ctrl-space-arrows-moves-faster = ドラッグで移動 · スペース＋ドラッグ／矢印キーで一時移動 · Ctrl＋スペース＋矢印キーで高速移動
+selection-bounds-unavailable = 選択範囲の境界を取得できません

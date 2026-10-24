@@ -30,6 +30,13 @@ impl App {
                         ui.separator();
                         ui.label(format!("{x}, {y}"));
                     }
+                    if let Some((width, height)) = self.selected_dimensions() {
+                        ui.separator();
+                        ui.label(format!(
+                            "{}: {width} × {height} px",
+                            t!(&ctx, "Selection size")
+                        ));
+                    }
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         if self.document_count() == 0 {
                             return;
@@ -78,13 +85,10 @@ impl App {
                 .scope_id(egui::Id::unique(("classic-status", self.active_tab_id())))
                 .max_rect(rect),
             |ui| {
-                let selection = self.editor.selection_preview_size().or_else(|| {
-                    match self.editor.selection() {
-                        Selection::Rect(rect) => Some((rect.width(), rect.height())),
-                        Selection::Empty => Some((0, 0)),
-                        Selection::Inactive | Selection::Mask(_) => None,
-                    }
-                });
+                let selection = self
+                    .editor
+                    .selection_preview_size()
+                    .or_else(|| self.selected_dimensions());
                 let model = paintcraft_classic::status::Status {
                     message: &status,
                     recovery: recovery.as_deref(),

@@ -274,3 +274,4 @@ drag-an-area-to-zoom-in-right-click-to-zoom-out = Bereich zum Vergrößern ziehe
 pan-tool = Verschiebewerkzeug
 drag-to-pan-hold-space-to-pan-with-another-tool = Zum Verschieben ziehen · Leertaste gedrückt halten, um mit einem anderen Werkzeug zu verschieben
 drag-to-pan-space-drag-or-space-arrows-ctrl-space-arrows-moves-faster = Zum Verschieben ziehen · Leertaste+Ziehen oder Leertaste+Pfeile · Strg+Leertaste+Pfeile bewegt schneller
+selection-bounds-unavailable = Auswahlgrenzen nicht verfügbar

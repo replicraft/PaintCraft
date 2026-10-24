@@ -274,3 +274,4 @@ drag-an-area-to-zoom-in-right-click-to-zoom-out = 拖出区域放大 · 右键�
 pan-tool = 平移工具
 drag-to-pan-hold-space-to-pan-with-another-tool = 拖动以平移 · 使用其他工具时按住空格键可平移
 drag-to-pan-space-drag-or-space-arrows-ctrl-space-arrows-moves-faster = 拖动以平移 · 空格键+拖动或空格键+方向键 · Ctrl+空格键+方向键加速移动
+selection-bounds-unavailable = 无法获取选区边界

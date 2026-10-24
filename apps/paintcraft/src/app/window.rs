@@ -21,6 +21,7 @@ impl App {
         if first_pass {
             if self.document_count() == 0 {
                 self.selection_outline.clear();
+                self.selection_bounds.borrow_mut().clear();
             }
             let title = self.document_window_title();
             if title != self.window_title {

@@ -152,7 +152,7 @@ impl App {
                     return;
                 };
                 let area = if action == ViewAction::FitSelection {
-                    let Selection::Rect(rect) = self.editor.selection() else {
+                    let Ok(Some(rect)) = self.selected_bounds() else {
                         return;
                     };
                     rect

@@ -274,3 +274,4 @@ drag-an-area-to-zoom-in-right-click-to-zoom-out = ज़ूम बढ़ान�
 pan-tool = दृश्य खिसकाने का औज़ार
 drag-to-pan-hold-space-to-pan-with-another-tool = खिसकाने के लिए खींचें · दूसरे औज़ार के साथ खिसकाने के लिए Space दबाए रखें
 drag-to-pan-space-drag-or-space-arrows-ctrl-space-arrows-moves-faster = खिसकाने के लिए खींचें · Space+खींचें या Space+तीर · Ctrl+Space+तीर से तेज़ खिसकाएँ
+selection-bounds-unavailable = चयन की सीमाएँ उपलब्ध नहीं हैं

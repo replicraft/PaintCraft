@@ -274,3 +274,4 @@ drag-an-area-to-zoom-in-right-click-to-zoom-out = Arraste uma área para ampliar
 pan-tool = Ferramenta de deslocamento
 drag-to-pan-hold-space-to-pan-with-another-tool = Arraste para deslocar · Segure Espaço para deslocar com outra ferramenta
 drag-to-pan-space-drag-or-space-arrows-ctrl-space-arrows-moves-faster = Arraste para deslocar · Espaço+arrastar ou Espaço+setas · Ctrl+Espaço+setas move mais rápido
+selection-bounds-unavailable = Limites da seleção indisponíveis

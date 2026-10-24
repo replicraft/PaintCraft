@@ -82,7 +82,7 @@ pub fn contents(
         Layout::left_to_right(Align::Center),
         |ui| {
             ui.set_min_size(Vec2::new(width, 30.0));
-            metrics(ui, &status, metrics_width, 30.0);
+            metrics(ui, &status, metrics_width, 30.0, context.selection_active);
             message(ui, &status, message_width, 30.0);
             if !narrow {
                 actions.extend(super::zoom_controls(ui, context, id));
@@ -102,7 +102,13 @@ pub fn contents(
     actions
 }
 
-fn metrics(ui: &mut egui::Ui, status: &Status<'_>, width: f32, row_height: f32) {
+fn metrics(
+    ui: &mut egui::Ui,
+    status: &Status<'_>,
+    width: f32,
+    row_height: f32,
+    selection_active: bool,
+) {
     ui.allocate_ui_with_layout(
         Vec2::new(width, row_height),
         Layout::left_to_right(Align::Center),
@@ -123,7 +129,11 @@ fn metrics(ui: &mut egui::Ui, status: &Status<'_>, width: f32, row_height: f32) 
                 (
                     "Selection size",
                     selection,
-                    "No selection",
+                    if selection_active {
+                        "Selection bounds unavailable"
+                    } else {
+                        "No selection"
+                    },
                     Icon::RectangleSelect,
                     0.28,
                 ),

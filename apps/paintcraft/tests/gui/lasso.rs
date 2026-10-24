@@ -171,6 +171,10 @@ fn lasso_and_invert_route_real_pointer_keyboard_and_history_in_every_native_fron
             h.run();
             check_mask(h.state().editor().selection(), false);
             check_outline(&h);
+            h.get_by_label(&format!(
+                "{}: 24 × 24 px",
+                translate(language, "Selection size")
+            ));
             assert!(
                 !h.state().editor().is_dirty(),
                 "selection must not dirty saved pixels"
@@ -178,6 +182,10 @@ fn lasso_and_invert_route_real_pointer_keyboard_and_history_in_every_native_fron
             assert_eq!(h.state().editor().undo_depth(), depth + 1);
             shortcut(&mut h, Key::I, Modifiers::COMMAND);
             check_mask(h.state().editor().selection(), true);
+            h.get_by_label(&format!(
+                "{}: 32 × 32 px",
+                translate(language, "Selection size")
+            ));
             assert!(!h.state().editor().is_dirty());
             shortcut(&mut h, Key::Z, Modifiers::COMMAND);
             check_mask(h.state().editor().selection(), false);

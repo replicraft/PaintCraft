@@ -274,3 +274,4 @@ drag-an-area-to-zoom-in-right-click-to-zoom-out = Drag an area to zoom in · Rig
 pan-tool = Pan tool
 drag-to-pan-hold-space-to-pan-with-another-tool = Drag to pan · Hold Space to pan with another tool
 drag-to-pan-space-drag-or-space-arrows-ctrl-space-arrows-moves-faster = Drag to pan · Space+drag or Space+arrows · Ctrl+Space+arrows moves faster
+selection-bounds-unavailable = Selection bounds unavailable
