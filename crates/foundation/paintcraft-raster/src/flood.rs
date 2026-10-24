@@ -83,8 +83,33 @@ pub fn region_from_source_checked(
     scratch_bytes: usize,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Vec<Span>> {
+    region_from_source_masked_checked(
+        read,
+        |_, _| Ok(true),
+        seed,
+        clip,
+        tolerance,
+        scratch_bytes,
+        check,
+    )
+}
+
+/// Classify only the four-connected allowed field. The predicate is checked
+/// before every source read, including the seed; forbidden pixels are barriers,
+/// not a filter applied after unrestricted classification. A forbidden seed
+/// returns an empty region before allocating scratch or reading source pixels.
+/// Predicate/source/cancellation errors discard all privately collected spans.
+pub fn region_from_source_masked_checked(
+    read: impl Fn(i64, i64) -> Result<Rgba>,
+    allowed: impl Fn(i64, i64) -> Result<bool>,
+    seed: (i64, i64),
+    clip: &Rect,
+    tolerance: u8,
+    scratch_bytes: usize,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Vec<Span>> {
     check()?;
-    if !clip.contains(seed.0, seed.1) {
+    if !clip.contains(seed.0, seed.1) || !allowed(seed.0, seed.1)? {
         return Ok(Vec::new());
     }
     // Public rectangles can span more than i64::MAX; reject area before narrowing.
@@ -107,7 +132,12 @@ pub fn region_from_source_checked(
     let idx = |x: i64, y: i64| (y - clip.y0) as usize * w + (x - clip.x0) as usize;
     let is_seen = |seen: &[u64], x, y| seen[idx(x, y) / 64] >> (idx(x, y) % 64) & 1 == 1;
     let target = read(seed.0, seed.1)?;
-    let matches = |x: i64, y: i64| read(x, y).map(|pixel| near(pixel, target, tolerance));
+    let matches = |x: i64, y: i64| {
+        if !allowed(x, y)? {
+            return Ok(false);
+        }
+        read(x, y).map(|pixel| near(pixel, target, tolerance))
+    };
     let mut out = Vec::new();
     let mut stack = Vec::new();
     scratch.push(&mut stack, seed, check)?;
@@ -245,3 +275,6 @@ mod tests {
         );
     }
 }
+
+#[cfg(test)]
+mod masked_tests;
