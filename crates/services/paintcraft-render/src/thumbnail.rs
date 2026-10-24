@@ -110,8 +110,10 @@ mod tests {
         assert!(
             frame
                 .pixels
-                .chunks_exact(4)
-                .all(|pixel| pixel == [5, 40, 80, 255])
+                .as_chunks::<4>()
+                .0
+                .iter()
+                .all(|pixel| *pixel == [5, 40, 80, 255])
         );
         for side in [0, 257] {
             assert_eq!(
