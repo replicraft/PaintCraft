@@ -8,8 +8,7 @@ use paintcraft_core::types::Rgba;
 use paintcraft_tools::Action;
 
 #[test]
-fn crop_button_is_selection_gated_undoable_and_preserves_pixels_without_enabling_unimplemented_view()
- {
+fn crop_button_is_selection_gated_undoable_and_preserves_pixels_with_fit_selection() {
     let mut h = Harness::builder()
         .with_size(Vec2::new(1360.0, 900.0))
         .build_eframe(|cc| WebApp::new(&cc.egui_ctx));
@@ -57,7 +56,7 @@ fn crop_button_is_selection_gated_undoable_and_preserves_pixels_without_enabling
     h.run();
     let before = h.state().editor.session.snapshot();
     let selection = h.state().editor.session.selection();
-    assert!(h.state().context().can_crop_selection && !h.state().context().can_fit_selection);
+    assert!(h.state().context().can_crop_selection && h.state().context().can_fit_selection);
     h.get_by_role_and_label(Role::Button, "Crop").click();
     h.run();
     let doc = h.state().editor.session.document();

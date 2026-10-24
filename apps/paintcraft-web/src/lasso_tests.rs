@@ -164,13 +164,22 @@ fn lasso_and_invert_route_browser_menus_pointer_keyboard_and_history_in_all_skin
             h.run();
             check_mask(h.state().editor.session.selection(), false);
             check_outline(&h);
+            h.get_by_label(&format!(
+                "{}: 24 × 24 px",
+                translate(language, "Selection size")
+            ));
             assert_eq!(h.state().editor.session.is_dirty(), dirty);
             assert_eq!(h.state().editor.session.undo_depth(), depth + 1);
-            assert!(!h.state().context().can_crop_selection);
-            assert!(!h.state().context().can_transform_image);
+            assert!(h.state().context().can_crop_selection);
+            assert!(h.state().context().can_fit_selection);
+            assert!(h.state().context().can_transform_image);
             assert!(h.state().context().can_erase_selection);
             shortcut(&mut h, Key::I, Modifiers::COMMAND);
             check_mask(h.state().editor.session.selection(), true);
+            h.get_by_label(&format!(
+                "{}: 32 × 32 px",
+                translate(language, "Selection size")
+            ));
             assert_eq!(h.state().editor.session.is_dirty(), dirty);
             shortcut(&mut h, Key::Z, Modifiers::COMMAND);
             check_mask(h.state().editor.session.selection(), false);

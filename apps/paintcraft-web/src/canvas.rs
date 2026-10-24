@@ -9,8 +9,9 @@ use paintcraft_tools::{Preview, PreviewRevision, Tool};
 pub(crate) struct Canvas {
     texture: Option<TextureHandle>,
     pub(crate) outline: paintcraft_raster::selection::OutlineCache,
+    pub(crate) bounds: std::cell::RefCell<paintcraft_raster::selection::BoundsCache>,
     fitted: bool,
-    pending_center: Option<(f32, f32)>,
+    pub(crate) pending_center: Option<(f32, f32)>,
     key: Option<(Ticket, Option<PreviewRevision>)>,
     pub rect: Option<Rect>,
     pub viewport: Vec2,
@@ -27,6 +28,25 @@ impl std::fmt::Debug for Canvas {
 }
 
 impl WebApp {
+    pub(crate) fn fit_selection(&mut self) {
+        let Ok(Some(bounds)) = self.selected_bounds() else {
+            return;
+        };
+        self.editor.tools.cancel_gesture();
+        let clearance = if self.variant == paintcraft_classic::ClassicVariant::V11 {
+            2.0 * paintcraft_classic::tool_controls::CANVAS_CLEARANCE
+        } else {
+            0.0
+        };
+        let size = (self.canvas.viewport - Vec2::new(clearance + 24.0, 24.0)).max(Vec2::splat(1.0));
+        self.zoom = (size.x / bounds.width() as f32)
+            .min(size.y / bounds.height() as f32)
+            .clamp(0.125, 10.0);
+        self.canvas.pending_center = Some((
+            (bounds.x0 + bounds.x1) as f32 / 2.0,
+            (bounds.y0 + bounds.y1) as f32 / 2.0,
+        ));
+    }
     pub(crate) fn fit_canvas(&mut self) {
         let (w, h) = self.editor.session.document().canvas;
         let clearance = if self.variant == paintcraft_classic::ClassicVariant::V11 {

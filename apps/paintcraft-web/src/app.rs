@@ -122,8 +122,8 @@ impl WebApp {
             pixel_grid: false,
             can_transform_image: !matches!(
                 self.editor.session.selection(),
-                paintcraft_raster::Selection::Mask(_)
-            ),
+                paintcraft_raster::Selection::Mask(_) | paintcraft_raster::Selection::Empty
+            ) || self.selected_bounds().is_ok_and(|bounds| bounds.is_some()),
             can_erase_selection: match self.editor.session.selection() {
                 paintcraft_raster::Selection::Rect(r) => r.intersect(&doc.canvas_rect()).is_some(),
                 paintcraft_raster::Selection::Mask(mask) => {
@@ -132,8 +132,8 @@ impl WebApp {
                 }
                 _ => false,
             },
-            can_fit_selection: false,
-            can_crop_selection: matches!(self.editor.session.selection(),paintcraft_editor::execute::Selection::Rect(rect) if rect.intersect(&doc.canvas_rect()).is_some()),
+            can_fit_selection: self.selected_bounds().is_ok_and(|bounds| bounds.is_some()),
+            can_crop_selection: self.selected_bounds().is_ok_and(|bounds| bounds.is_some()),
             status_bar: true,
             rulers: false,
             fullscreen: false,
@@ -271,6 +271,7 @@ impl WebApp {
                 ViewAction::Quadruple => self.zoom = 4.0,
                 ViewAction::Octuple => self.zoom = 8.0,
                 ViewAction::FitWindow => self.fit_canvas(),
+                ViewAction::FitSelection => self.fit_selection(),
                 _ => self.unsupported(action),
             },
             _ => self.unsupported(action),
@@ -454,14 +455,7 @@ impl WebApp {
                 .editor
                 .tools
                 .selection_preview_size(self.editor.session.document().canvas_rect())
-                .or_else(|| match self.editor.session.selection() {
-                    paintcraft_editor::execute::Selection::Rect(rect) => {
-                        Some((rect.width(), rect.height()))
-                    }
-                    paintcraft_editor::execute::Selection::Empty => Some((0, 0)),
-                    paintcraft_editor::execute::Selection::Inactive
-                    | paintcraft_editor::execute::Selection::Mask(_) => None,
-                });
+                .or_else(|| self.selected_dimensions());
             let actions = paintcraft_classic::status::contents_for_skin(
                 ui,
                 self.variant,
