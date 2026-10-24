@@ -6,7 +6,7 @@ use std::mem::size_of;
 enum Data {
     Raster(RasterLayer),
     Program(PaintProjection),
-    Crop(Arc<crop::Mapping>),
+    Mapped(Arc<mapped::Mapping>),
 }
 struct Node {
     bounds: Rect,
@@ -71,7 +71,7 @@ pub struct PaintReader<'a> {
 #[derive(Debug)]
 struct Frame<'a> {
     node: &'a Node,
-    offset: (i64, i64),
+    coordinates: sampling::Coordinates,
 }
 fn node_charge(admission: &Admission, extra: usize) -> Result<BudgetAccount> {
     let bytes = size_of::<Node>()
@@ -86,9 +86,9 @@ impl PaintSnapshot {
     pub fn default_pixel(&self) -> Rgba {
         self.default
     }
-    pub(super) fn cropped(
+    pub(super) fn mapped(
         &self,
-        mapping: Arc<crop::Mapping>,
+        mapping: Arc<mapped::Mapping>,
         admission: &Admission,
         check: &dyn Fn() -> Result<()>,
     ) -> Result<Self> {
@@ -106,7 +106,7 @@ impl PaintSnapshot {
             source: Arc::new(Node {
                 bounds,
                 default: self.default,
-                data: Data::Crop(mapping),
+                data: Data::Mapped(mapping),
                 parent: Some(self.source.clone()),
                 bytes,
                 _charge: node_charge(admission, 0)?,
@@ -245,7 +245,7 @@ impl PaintSnapshot {
             let present = match &current.data {
                 Data::Raster(raster) => raster.tiles.contains_key(&coord),
                 Data::Program(program) => program.contains_tile(coord),
-                Data::Crop(mapping) => return Ok(mapping.tiles.contains_key(&coord)),
+                Data::Mapped(mapping) => return Ok(mapping.tiles.contains_key(&coord)),
             };
             if present {
                 return Ok(true);
@@ -387,23 +387,16 @@ impl<'a> PaintReader<'a> {
         }
         let mut metadata = metadata::Metadata::new(0, admission.paint_metadata_limit)?;
         let mut node = Some(source.source.as_ref());
-        let mut offset = (0_i64, 0_i64);
+        let mut coordinates = sampling::Coordinates::IDENTITY;
         while let Some(current) = node {
             check()?;
             metadata.vector(&mut chain, &mut charge)?;
             chain.push(Frame {
                 node: current,
-                offset,
+                coordinates,
             });
-            if let Data::Crop(mapping) = &current.data {
-                offset.0 = offset
-                    .0
-                    .checked_add(mapping.area.x0)
-                    .ok_or_else(metadata::exhausted)?;
-                offset.1 = offset
-                    .1
-                    .checked_add(mapping.area.y0)
-                    .ok_or_else(metadata::exhausted)?;
+            if let Data::Mapped(mapping) = &current.data {
+                coordinates = coordinates.then(mapping.sampling.coordinates())?;
             }
             node = current.parent.as_deref();
         }
@@ -446,7 +439,7 @@ impl<'a> PaintReader<'a> {
                         emit(coord)?;
                     }
                 }
-                Data::Crop(mapping) => {
+                Data::Mapped(mapping) => {
                     for &coord in mapping.tiles.keys() {
                         check()?;
                         emit(coord)?;
@@ -467,12 +460,7 @@ impl<'a> PaintReader<'a> {
         for frame in self.chain.iter().rev() {
             check()?;
             let node = frame.node;
-            let (x, y) = (
-                x.checked_add(frame.offset.0)
-                    .ok_or_else(metadata::exhausted)?,
-                y.checked_add(frame.offset.1)
-                    .ok_or_else(metadata::exhausted)?,
-            );
+            let (x, y) = frame.coordinates.pixel(x, y)?;
             if !node.bounds.contains(x, y) {
                 pixel = node.default;
                 continue;
@@ -480,7 +468,7 @@ impl<'a> PaintReader<'a> {
             pixel = match &node.data {
                 Data::Raster(raster) => raster.get(x, y),
                 Data::Program(program) => program.read_checked(x, y, |_, _| Ok(pixel), check)?,
-                Data::Crop(_) => pixel,
+                Data::Mapped(_) => pixel,
             };
         }
         if let Some(program) = self.program {

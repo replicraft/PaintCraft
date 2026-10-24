@@ -1,10 +1,13 @@
 //! Ordered paint descriptors with operation-wide tile admission.
 use super::*;
 use std::collections::hash_map::Entry;
-mod crop;
 mod index;
 mod lineage;
-pub use crop::CropPlan;
+mod mapped;
+mod sampling;
+pub use mapped::MappedPlan;
+/// Source-bound cropped pixel plan; shares the exact mapping implementation.
+pub type CropPlan = MappedPlan;
 mod metadata;
 mod projection;
 mod writes;

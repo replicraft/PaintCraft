@@ -1,4 +1,4 @@
-//! Sparse source-bound cropping: prepare metadata, then allocate only after admission.
+//! Sparse source-bound pixel mapping: prepare metadata, then allocate only after admission.
 use super::*;
 use paintcraft_core::types::resources::BudgetAccount;
 use std::mem::size_of;
@@ -6,25 +6,25 @@ use std::mem::size_of;
 const READS_MAX: u64 = 16_777_216;
 #[derive(Debug)]
 pub(super) struct Mapping {
-    pub(super) area: Rect,
+    pub(super) sampling: sampling::Sampling,
     pub(super) tiles: HashMap<TileCoord, ()>,
     charge: BudgetAccount,
 }
 impl Mapping {
     pub(super) fn bounds(&self) -> Rect {
-        Rect::new(0, 0, self.area.width(), self.area.height()).unwrap()
+        self.sampling.bounds()
     }
     pub(super) fn bytes(&self) -> usize {
         self.charge.bytes() as usize
     }
 }
 #[derive(Clone, Debug)]
-pub struct CropPlan {
+pub struct MappedPlan {
     source: PaintSnapshot,
     mapping: Arc<Mapping>,
     reads: u64,
 }
-impl CropPlan {
+impl MappedPlan {
     pub fn prepare(
         source: PaintSnapshot,
         area: Rect,
@@ -40,6 +40,44 @@ impl CropPlan {
         limit: u64,
         check: &dyn Fn() -> Result<()>,
     ) -> Result<Self> {
+        Self::prepare_mapping(
+            source,
+            sampling::Sampling {
+                area,
+                transform: None,
+            },
+            admission,
+            limit,
+            check,
+        )
+    }
+    pub fn prepare_transform(
+        source: PaintSnapshot,
+        transform: paintcraft_core::types::orthogonal::OrthogonalTransform,
+        admission: &Admission,
+        limit: u64,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<Self> {
+        let area = source.bounds();
+        Self::prepare_mapping(
+            source,
+            sampling::Sampling {
+                area,
+                transform: Some(transform),
+            },
+            admission,
+            limit,
+            check,
+        )
+    }
+    fn prepare_mapping(
+        source: PaintSnapshot,
+        sampling: sampling::Sampling,
+        admission: &Admission,
+        limit: u64,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<Self> {
+        let area = sampling.area;
         check()?;
         if source.bounds().intersect(&area) != Some(area) || area.width() <= 0 || area.height() <= 0
         {
@@ -49,7 +87,7 @@ impl CropPlan {
             ));
         }
         let mut mapping = Mapping {
-            area,
+            sampling,
             tiles: HashMap::new(),
             charge: admission.paint_metadata_account(),
         };
@@ -75,16 +113,17 @@ impl CropPlan {
             if reads > limit.min(READS_MAX) {
                 return Err(Error::new(
                     ErrorCode::ResourceLimit,
-                    "crop source-read budget exceeded",
+                    "mapped source-read budget exceeded",
                 ));
             }
             for y in region.y0..region.y1 {
                 check()?;
                 for x in region.x0..region.x1 {
                     if reader.read_checked(x, y, check)? != source.default_pixel() {
+                        let (x, y) = sampling.target_pixel(x, y);
                         let target = TileCoord {
-                            tx: (x - area.x0) / i64::from(TILE_EDGE),
-                            ty: (y - area.y0) / i64::from(TILE_EDGE),
+                            tx: x / i64::from(TILE_EDGE),
+                            ty: y / i64::from(TILE_EDGE),
                         };
                         if !mapping.tiles.contains_key(&target) {
                             metadata.table(&mut mapping.tiles, &mut mapping.charge)?;
@@ -110,7 +149,7 @@ impl CropPlan {
         admission: &Admission,
         check: &dyn Fn() -> Result<()>,
     ) -> Result<PaintSnapshot> {
-        self.source.cropped(self.mapping.clone(), admission, check)
+        self.source.mapped(self.mapping.clone(), admission, check)
     }
     pub fn tile_coords(&self) -> impl Iterator<Item = TileCoord> + '_ {
         self.mapping.tiles.keys().copied()
@@ -128,6 +167,7 @@ impl CropPlan {
             self.source.default_pixel(),
         );
         let reader = self.source.reader(admission, check)?;
+        let coordinates = self.mapping.sampling.coordinates();
         for coord in self.tile_coords() {
             let region = tile_rect(coord).intersect(&bounds).unwrap();
             output.with_tile_mut(coord, admission, |tile| -> Result<()> {
@@ -135,11 +175,8 @@ impl CropPlan {
                 for y in region.y0..region.y1 {
                     check()?;
                     for x in region.x0..region.x1 {
-                        let color = reader.read_checked(
-                            x + self.mapping.area.x0,
-                            y + self.mapping.area.y0,
-                            check,
-                        )?;
+                        let (sx, sy) = coordinates.pixel(x, y)?;
+                        let color = reader.read_checked(sx, sy, check)?;
                         let pixel = ((y % i64::from(TILE_EDGE)) * i64::from(TILE_EDGE)
                             + x % i64::from(TILE_EDGE))
                             as usize
