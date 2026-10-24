@@ -34,6 +34,15 @@ impl<A> Default for Outbox<A> {
 impl<A> Outbox<A> {
     /// Queue an action. Returns `false` when the token was already queued or run.
     pub fn push(&mut self, token: Token, action: A) -> bool {
+        if !self.remember(token) {
+            return false;
+        }
+        self.pending.push((token, action));
+        true
+    }
+
+    /// Remember an activation consumed locally without queuing a document action.
+    pub fn remember(&mut self, token: Token) -> bool {
         if !self.seen.insert(token) {
             return false;
         }
@@ -43,7 +52,6 @@ impl<A> Outbox<A> {
         {
             self.seen.remove(&old);
         }
-        self.pending.push((token, action));
         true
     }
 
@@ -88,6 +96,22 @@ mod tests {
         o.push(2, 'b');
         assert_eq!(o.drain(), ['a', 'b']);
         assert!(o.is_empty());
+    }
+
+    #[test]
+    fn consumed_activation_is_deduplicated_without_affecting_pending_actions() {
+        let mut o = Outbox::default();
+        assert!(o.push(1, "prior action"));
+        assert!(o.remember(2));
+        assert!(!o.remember(2));
+        assert!(!o.push(2, "cancelled undo"));
+        assert_eq!(o.drain(), ["prior action"]);
+        for token in 3..(REMEMBERED as u64 + 3) {
+            assert!(o.remember(token));
+        }
+        assert_eq!(o.seen.len(), REMEMBERED);
+        assert_eq!(o.order.len(), REMEMBERED);
+        assert!(o.push(2, "new activation after eviction"));
     }
 
     #[test]
