@@ -19,6 +19,7 @@ pub struct WebApp {
     name: String,
     pub(crate) zoom: f32,
     settings: bool,
+    preferences: crate::preferences::Preferences,
     export_confirm: bool,
     confirm_replace: Option<Action>,
     files: crate::files::Files,
@@ -29,6 +30,11 @@ pub struct WebApp {
 
 impl WebApp {
     pub fn new(ctx: &egui::Context) -> Self {
+        let (preferences, warning) = crate::preferences::Preferences::load();
+        if let Some(theme) = preferences.theme {
+            ctx.set_theme(theme);
+        }
+        let (width, height) = preferences.canvas.new_size();
         paintcraft_ui::fonts::install(ctx);
         paintcraft_ui::theme::apply(ctx, ctx.theme());
         Self {
@@ -38,19 +44,25 @@ impl WebApp {
                 primary: paintcraft_core::types::Rgba([0, 0, 0, 255]),
                 secondary: WHITE,
             },
-            editor: Editor::new(1000, 486).expect("default canvas is admitted"),
+            editor: Editor::new(width, height).expect("validated startup canvas is admitted"),
             canvas: Canvas::default(),
-            workspace: Workspace::default(),
-            variant: ClassicVariant::V11,
+            workspace: Workspace {
+                custom_colors: preferences.custom_colors,
+                ..Workspace::default()
+            },
+            variant: preferences.variant,
             name: "Untitled".into(),
             zoom: 1.0,
             settings: false,
+            preferences,
             export_confirm: false,
             confirm_replace: None,
             files: crate::files::Files::default(),
             pending_import: None,
             form: None,
-            message: "Ready — Save downloads a project copy; work stays in this tab".into(),
+            message: warning.unwrap_or_else(|| {
+                "Ready — Save downloads a project copy; work stays in this tab".into()
+            }),
         }
     }
 
@@ -115,8 +127,9 @@ impl WebApp {
                 self.editor.cancel();
                 self.settings = true;
             }
-            Action::CanvasSize => self.begin_canvas(false),
-            Action::ImageProperties => self.begin_canvas(true),
+            Action::CanvasSize | Action::ImageProperties | Action::CanvasDefaults => {
+                self.begin_canvas(action)
+            }
             Action::EditColors => self.begin_colors(false, None),
             Action::EditSecondaryColors => self.begin_colors(true, None),
             Action::EditCustomColor(slot) => self.begin_colors(false, Some(slot)),
@@ -174,13 +187,15 @@ impl WebApp {
     }
 
     fn new_document(&mut self) {
-        match Editor::new(1000, 486) {
+        let (width, height) = self.preferences.canvas.new_size();
+        match Editor::new(width, height) {
             Ok(editor) => {
                 self.editor = editor;
                 self.canvas = Canvas::default();
                 self.name = "Untitled".into();
                 self.update_title();
                 self.message = "New document".into();
+                self.remember_canvas_size((width, height));
             }
             Err(error) => self.message = error.to_string(),
         }
@@ -205,6 +220,19 @@ impl WebApp {
                 self.message = format!("Opened {}", self.name);
             }
             Err(error) => self.message = format!("Open failed: {error}"),
+        }
+    }
+
+    fn persist_preferences(&mut self) {
+        if let Err(error) = self.preferences.save() {
+            self.message = format!("{error}; choices apply only to this tab");
+        }
+    }
+
+    fn remember_canvas_size(&mut self, size: (u32, u32)) {
+        if self.preferences.canvas.last != Some(size) {
+            self.preferences.canvas.last = Some(size);
+            self.persist_preferences();
         }
     }
 
@@ -361,18 +389,25 @@ impl WebApp {
             });
         }
         if self.settings {
+            let previous_variant = self.variant;
+            let mut theme_changed = false;
             egui::Window::new("Web settings").open(&mut self.settings).resizable(false).show(ctx, |ui| {
                 let mut dark = ctx.theme() == egui::Theme::Dark;
                 if ui.checkbox(&mut dark, "Dark mode").changed() {
                     let theme = if dark { egui::Theme::Dark } else { egui::Theme::Light };
                     ctx.set_theme(theme); paintcraft_ui::theme::apply(ctx,theme);
+                    self.preferences.theme = Some(theme); theme_changed = true;
                 }
                 egui::ComboBox::from_label("Classic skin").selected_text(self.variant.name()).show_ui(ui, |ui| {
                     for variant in ClassicVariant::ALL { ui.selectable_value(&mut self.variant,variant,variant.name()); }
                 });
-                ui.label("Settings last until this page reloads.");
+                ui.label("Preferences are stored in this browser when storage is available. Document pixels are not stored.");
                 ui.label("Browser limits: 4 megapixels, 8192 points per stroke; 64 MiB history budget (older entries may be trimmed).");
             });
+            if theme_changed || previous_variant != self.variant {
+                self.preferences.variant = self.variant;
+                self.persist_preferences();
+            }
         }
     }
 }

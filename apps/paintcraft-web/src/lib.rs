@@ -4,6 +4,7 @@ mod canvas;
 mod editor;
 mod files;
 mod layers;
+mod preferences;
 pub use app::WebApp;
 
 #[cfg(test)]

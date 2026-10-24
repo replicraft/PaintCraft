@@ -180,3 +180,72 @@ fn stale_properties_draft_cannot_edit_a_replaced_or_advanced_session() {
         assert_eq!(h.state().editor.session.document().canvas, (1000, 486));
     }
 }
+
+fn defaults(h: &mut Harness<WebApp>) {
+    h.get_by_role_and_label(eframe::egui::Role::Button, "View")
+        .click();
+    h.run();
+    h.get_by_label("Default canvas size…").scroll_to_me();
+    h.run();
+    h.get_by_label("Default canvas size…").click();
+    h.run();
+}
+
+#[test]
+fn configured_default_and_remember_last_have_distinct_new_canvas_behavior() {
+    for remember in [true, false] {
+        let mut h = harness();
+        properties(&mut h);
+        h.get_by_label("Width").set_value_accesskit(64.0);
+        h.run();
+        h.get_by_label("Height").set_value_accesskit(32.0);
+        h.run();
+        h.get_by_label("OK").click();
+        h.run();
+        let before = h.state().editor.session.ticket();
+        defaults(&mut h);
+        h.get_by_label("Width").set_value_accesskit(80.0);
+        h.run();
+        h.get_by_label("Height").set_value_accesskit(40.0);
+        h.run();
+        h.get_by_label(if remember {
+            "Remember last canvas size"
+        } else {
+            "Use configured default size"
+        })
+        .click();
+        h.run();
+        h.get_by_label("Apply").click();
+        h.run();
+        assert_eq!(h.state().editor.session.ticket(), before);
+        assert_eq!(h.state().editor.session.document().canvas, (64, 32));
+        h.key_press_modifiers(Modifiers::COMMAND, Key::N);
+        h.run();
+        h.get_by_label("Discard and continue").click();
+        h.run();
+        assert_eq!(
+            h.state().editor.session.document().canvas,
+            if remember { (64, 32) } else { (80, 40) }
+        );
+        assert_eq!(h.state().editor.session.undo_depth(), 0);
+        assert!(!h.state().editor.session.is_dirty());
+    }
+}
+
+#[test]
+fn default_size_cancel_does_not_change_startup_policy_or_document() {
+    let mut h = harness();
+    let before = h.state().editor.session.ticket();
+    defaults(&mut h);
+    h.get_by_label("Width").set_value_accesskit(64.0);
+    h.run();
+    h.get_by_label("Use configured default size").click();
+    h.run();
+    h.get_by_label("Cancel").click();
+    h.run();
+    assert_eq!(h.state().editor.session.ticket(), before);
+    h.key_press_modifiers(Modifiers::COMMAND, Key::N);
+    h.run();
+    assert_eq!(h.state().editor.session.document().canvas, (1000, 486));
+    assert!(!h.state().editor.session.is_dirty());
+}

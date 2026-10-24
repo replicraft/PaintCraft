@@ -45,13 +45,22 @@ impl WebApp {
         }));
     }
 
-    pub(super) fn begin_canvas(&mut self, properties: bool) {
+    pub(super) fn begin_canvas(&mut self, action: Action) {
+        let defaults = action == Action::CanvasDefaults;
+        let properties = action == Action::ImageProperties;
         self.editor.cancel();
         self.form = Some(Form::Canvas(CanvasDraft {
             ticket: self.editor.session.history_ticket(),
             view: paintcraft_classic::canvas_size::CanvasSize {
-                size: self.editor.session.document().canvas,
-                startup: None,
+                size: if defaults {
+                    self.preferences.canvas.configured
+                } else {
+                    self.editor.session.document().canvas
+                },
+                startup: defaults.then_some(paintcraft_classic::canvas_size::StartupSize {
+                    remember_last: self.preferences.canvas.remember_last,
+                    last: self.preferences.canvas.last,
+                }),
             },
             properties: properties.then(|| self.name.clone()),
         }));
@@ -74,7 +83,20 @@ impl WebApp {
             self.form = Some(Form::Canvas(draft));
         } else if result == CanvasResponse::Apply {
             let (width, height) = draft.view.size;
-            self.edit(Edit::ResizeCanvas { width, height });
+            if let Some(startup) = draft.view.startup {
+                self.preferences.canvas.configured = (width, height);
+                self.preferences.canvas.remember_last = startup.remember_last;
+                self.message = "Default canvas preferences updated".into();
+                self.persist_preferences();
+            } else {
+                let before = self.editor.session.document().canvas;
+                self.edit(Edit::ResizeCanvas { width, height });
+                if before != (width, height)
+                    && self.editor.session.document().canvas == (width, height)
+                {
+                    self.remember_canvas_size((width, height));
+                }
+            }
         }
     }
 
@@ -106,7 +128,9 @@ impl WebApp {
                 self.controls.primary = draft.editor.color;
             }
             self.workspace.custom_colors = draft.editor.custom;
+            self.preferences.custom_colors = draft.editor.custom;
             self.message = "Color updated".into();
+            self.persist_preferences();
         }
     }
 }
