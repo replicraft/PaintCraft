@@ -119,6 +119,38 @@ impl Trace {
     }
 }
 impl SimulatedLayer {
+    /// Admit fresh sparse output cells while modelling decoded allocation only.
+    /// The caller supplies a blank target and owns the source sampling policy.
+    pub fn allocate_tiles_checked(
+        &mut self,
+        coords: impl IntoIterator<Item = TileCoord>,
+        operation: usize,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<()> {
+        let mut metadata = metadata::Metadata::new(
+            self.charge.bytes() as usize,
+            self.trace.admission.paint_metadata_limit,
+        )?;
+        for coord in coords {
+            check()?;
+            if coord.tx < 0
+                || coord.ty < 0
+                || coord.tx > (self.bounds.x1 - 1) / i64::from(TILE_EDGE)
+                || coord.ty > (self.bounds.y1 - 1) / i64::from(TILE_EDGE)
+            {
+                return Err(Error::new(
+                    ErrorCode::InputSchema,
+                    "planned tile lies outside target",
+                ));
+            }
+            if !self.tiles.contains_key(&coord) {
+                metadata.table(&mut self.tiles, &mut self.charge)?;
+                self.tiles
+                    .insert(coord, Ownership::Private(self.trace.allocate(operation)?));
+            }
+        }
+        check()
+    }
     pub fn resident_tiles(&self) -> usize {
         self.tiles.len()
     }

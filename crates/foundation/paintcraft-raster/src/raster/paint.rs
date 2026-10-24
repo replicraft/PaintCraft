@@ -1,8 +1,10 @@
 //! Ordered paint descriptors with operation-wide tile admission.
 use super::*;
 use std::collections::hash_map::Entry;
+mod crop;
 mod index;
 mod lineage;
+pub use crop::CropPlan;
 mod metadata;
 mod projection;
 mod writes;
