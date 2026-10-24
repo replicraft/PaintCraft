@@ -2,7 +2,8 @@
 use super::{Action, ClassicVariant, Controls};
 use egui::{Rect, Response, Vec2};
 use paintcraft_tools::Tool;
-use paintcraft_ui::{actions::Context, i18n::tr, icons::Icon};
+use paintcraft_ui::t;
+use paintcraft_ui::{actions::Context, icons::Icon};
 
 pub(super) fn icon_button(
     ui: &mut egui::Ui,
@@ -11,7 +12,7 @@ pub(super) fn icon_button(
     icon: Icon,
     size: f32,
 ) -> Response {
-    let label = tr(
+    let label = t!(
         ui.ctx(),
         if icon == Icon::Paste {
             "Paste"
@@ -42,7 +43,7 @@ pub(super) fn large_button(
     icon: Icon,
     caption: &str,
 ) -> Response {
-    let label = tr(
+    let label = t!(
         ui.ctx(),
         if icon == Icon::Paste {
             "Paste"
@@ -52,7 +53,7 @@ pub(super) fn large_button(
             action.descriptor_for(context.frontend).label
         },
     );
-    let caption = tr(ui.ctx(), caption).replacen(' ', "\n", 1);
+    let caption = t!(ui.ctx(), caption).replacen(' ', "\n", 1);
     let font = egui::TextStyle::Body.resolve(ui.style());
     let width = ui
         .painter()
@@ -140,7 +141,7 @@ pub(super) fn tools(
                             Tool::Magnifier => Icon::ZoomIn,
                             _ => Icon::Eyedropper,
                         };
-                        let label = tr(ui.ctx(), tool.name());
+                        let label = t!(ui.ctx(), tool.name());
                         let response = ui
                             .add_enabled_ui(action.enabled(context), |ui| {
                                 super::legacy_surface::button(

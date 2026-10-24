@@ -1,7 +1,6 @@
 //! Zoom preset list follows the current value on opening, then scrolls freely.
 use super::*;
-use paintcraft_ui::i18n::tr;
-
+use paintcraft_ui::t;
 const PRESETS: [u32; 14] = [
     100000, 90000, 80000, 70000, 60000, 50000, 40000, 30000, 20000, 10000, 7500, 5000, 2500, 1250,
 ];
@@ -79,7 +78,7 @@ pub(super) fn show(ui: &mut egui::Ui, context: Context, actions: &mut Vec<Action
                 }
             }
         });
-    let accessible_label = tr(ui.ctx(), "Zoom presets");
+    let accessible_label = t!(ui.ctx(), "Zoom presets");
     menu.response.widget_info(|| {
         egui::WidgetInfo::labeled(egui::Role::Button, ui.is_enabled(), &accessible_label)
     });

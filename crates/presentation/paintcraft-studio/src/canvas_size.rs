@@ -1,7 +1,6 @@
 //! Studio canvas placement; the host captures ownership and publishes atomically.
 use paintcraft_core::types::canvas::Anchor;
-use paintcraft_ui::i18n::tr;
-
+use paintcraft_ui::t;
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CanvasSize {
     pub size: (u32, u32),
@@ -27,13 +26,13 @@ pub fn canvas_size_dialog(
     let modal = egui::Modal::new(egui::Id::unique("studio-canvas-size")).show(ctx, |ui| {
         ui.set_width(width);
         ui.spacing_mut().interact_size.y = 32.0;
-        ui.heading(tr(ui.ctx(), "Canvas size"));
+        ui.heading(t!(ui.ctx(), "Canvas size"));
         ui.add_space(6.0);
         egui::ScrollArea::vertical()
             .id_salt("studio-canvas-size-body")
             .max_height((height - 90.0).max(40.0))
             .show(ui, |ui| {
-                ui.label(tr(
+                ui.label(t!(
                     ui.ctx(),
                     "Your artwork stays at its original size. Content outside the canvas is kept.",
                 ));
@@ -45,7 +44,7 @@ pub fn canvas_size_dialog(
                             ("Width", &mut values.size.0),
                             ("Height", &mut values.size.1),
                         ] {
-                            let label = ui.label(tr(ui.ctx(), name));
+                            let label = ui.label(t!(ui.ctx(), name));
                             ui.add(
                                 egui::DragValue::new(value)
                                     .range(1..=max_dimension)
@@ -57,7 +56,7 @@ pub fn canvas_size_dialog(
                         }
                     });
                 ui.add_space(8.0);
-                ui.label(tr(ui.ctx(), "Anchor"));
+                ui.label(t!(ui.ctx(), "Anchor"));
                 egui::Grid::new("studio-canvas-anchor-grid")
                     .spacing(egui::vec2(4.0, 4.0))
                     .show(ui, |ui| {
@@ -65,8 +64,8 @@ pub fn canvas_size_dialog(
                             let selected = values.anchor == anchor;
                             let label = format!(
                                 "{}: {}",
-                                tr(ui.ctx(), "Anchor"),
-                                tr(ui.ctx(), anchor.name())
+                                t!(ui.ctx(), "Anchor"),
+                                t!(ui.ctx(), anchor.name())
                             );
                             let glyph = ["↖", "↑", "↗", "←", "●", "→", "↙", "↓", "↘"][index];
                             let button = ui.add(
@@ -96,12 +95,12 @@ pub fn canvas_size_dialog(
         ui.separator();
         ui.horizontal(|ui| {
             if ui
-                .add_enabled(valid, egui::Button::new(tr(ui.ctx(), "Apply")))
+                .add_enabled(valid, egui::Button::new(t!(ui.ctx(), "Apply")))
                 .clicked()
             {
                 response = CanvasResponse::Apply;
             }
-            if ui.button(tr(ui.ctx(), "Cancel")).clicked() {
+            if ui.button(t!(ui.ctx(), "Cancel")).clicked() {
                 response = CanvasResponse::Cancel;
             }
         });

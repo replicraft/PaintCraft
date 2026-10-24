@@ -1,7 +1,8 @@
 //! Application settings with reversible theme preview and explicit adoption.
 use super::*;
-use paintcraft_ui::i18n::{picker, tr, tr_format};
+use paintcraft_ui::i18n::picker;
 use paintcraft_ui::icons::Icon;
+use paintcraft_ui::t;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 enum Page {
@@ -73,7 +74,7 @@ impl App {
                         |ui| {
                             ui.set_width(heading_width);
                             ui.label(
-                                egui::RichText::new(tr(ui.ctx(), "Settings"))
+                                egui::RichText::new(t!(ui.ctx(), "Settings"))
                                     .size(24.0)
                                     .strong(),
                             );
@@ -89,7 +90,7 @@ impl App {
                     .clicked();
                 });
             } else {
-                ui.heading(tr(ui.ctx(), "Settings"));
+                ui.heading(t!(ui.ctx(), "Settings"));
             }
             ui.add_space(10.0);
             let mut body_height = (height - if classic { 128.0 } else { 104.0 }).max(60.0);
@@ -139,7 +140,7 @@ impl App {
                 |ui| {
                     cancel |= ui
                         .add(
-                            egui::Button::new(tr(ui.ctx(), "Cancel"))
+                            egui::Button::new(t!(ui.ctx(), "Cancel"))
                                 .min_size(egui::vec2(96.0, control_height)),
                         )
                         .clicked();
@@ -151,7 +152,7 @@ impl App {
                     apply = ui
                         .add(
                             egui::Button::new(
-                                egui::RichText::new(tr(ui.ctx(), "Apply")).color(ink),
+                                egui::RichText::new(t!(ui.ctx(), "Apply")).color(ink),
                             )
                             .fill(ui.visuals().selection.stroke.color)
                             .min_size(egui::vec2(96.0, control_height)),
@@ -190,7 +191,7 @@ fn navigation(ui: &mut egui::Ui, current: &mut Page, sidebar: bool, classic: boo
         if classic && page == Page::Interface {
             continue;
         }
-        let localized_label = tr(ui.ctx(), label);
+        let localized_label = t!(ui.ctx(), label);
         let label = localized_label.as_str();
         let image = if classic {
             match page {
@@ -260,17 +261,17 @@ fn content(
                 match draft.page {
                     Page::Appearance => appearance(ui, &mut draft.values),
                     Page::Interface => card(ui, "Canvas navigation", |ui| {
-                        ui.checkbox(&mut draft.values.studio_overscroll, tr(ui.ctx(), "Scroll past the edge of the image (overscroll)"));
-                        ui.label(tr(ui.ctx(), "Move small images halfway offscreen and large image edges to the viewport center."));
+                        ui.checkbox(&mut draft.values.studio_overscroll, t!(ui.ctx(), "Scroll past the edge of the image (overscroll)"));
+                        ui.label(t!(ui.ctx(), "Move small images halfway offscreen and large image edges to the viewport center."));
                     }),
                     Page::Canvas => canvas(ui, &mut draft.values.canvas, classic),
                     Page::Text => card(ui, "Text editing", |ui| {
-                        ui.label(tr(ui.ctx(), "Default font"));
+                        ui.label(t!(ui.ctx(), "Default font"));
                         paintcraft_classic::font_family(ui, &mut draft.values.text.family, fonts, &mut draft.font_search, false);
-                        ui.label(tr_format(ui.ctx(), "{ $count } available font families", &[("count", fonts.len().to_string())]));
+                        ui.label(t!(ui.ctx(), "{ $count } available font families", &[("count", fonts.len().to_string())]));
                         ui.checkbox(&mut draft.values.text.editable_until_save,
-                            tr(ui.ctx(), "Keep text editable until save (prototype)"));
-                        ui.weak(tr(ui.ctx(), "Prototype preference only. Text is rasterized when placed; editable text objects and save-time rasterization are not available yet."));
+                            t!(ui.ctx(), "Keep text editable until save (prototype)"));
+                        ui.weak(t!(ui.ctx(), "Prototype preference only. Text is rasterized when placed; editable text objects and save-time rasterization are not available yet."));
                     }),
                 }
             });
@@ -290,7 +291,7 @@ fn card(ui: &mut egui::Ui, heading: &str, contents: impl FnOnce(&mut egui::Ui)) 
         .inner_margin(12)
         .show(ui, |ui| {
             ui.set_min_width(ui.available_width().max(0.0));
-            ui.strong(tr(ui.ctx(), heading));
+            ui.strong(t!(ui.ctx(), heading));
             ui.add_space(6.0);
             contents(ui);
         });
@@ -302,7 +303,7 @@ fn appearance(ui: &mut egui::Ui, values: &mut Settings) {
         picker(ui, &mut values.language);
     });
     card(ui, "App theme", |ui| {
-        ui.weak(tr(
+        ui.weak(t!(
             ui.ctx(),
             "Preview the theme now. Apply saves your choice; Cancel restores it.",
         ));
@@ -312,7 +313,7 @@ fn appearance(ui: &mut egui::Ui, values: &mut Settings) {
                 (settings::Appearance::Light, "Light"),
                 (settings::Appearance::Dark, "Dark"),
             ] {
-                ui.radio_value(&mut values.appearance, value, tr(ui.ctx(), label));
+                ui.radio_value(&mut values.appearance, value, t!(ui.ctx(), label));
             }
         });
     });
@@ -325,7 +326,7 @@ fn appearance(ui: &mut egui::Ui, values: &mut Settings) {
                 (Experience::Classic, "Classic interface"),
                 (Experience::Studio, "Studio interface"),
             ] {
-                ui.radio_value(&mut values.experience, value, tr(ui.ctx(), label));
+                ui.radio_value(&mut values.experience, value, t!(ui.ctx(), label));
             }
         });
     });
@@ -345,7 +346,7 @@ fn appearance(ui: &mut egui::Ui, values: &mut Settings) {
 
 fn canvas(ui: &mut egui::Ui, values: &mut settings::CanvasDefaults, classic: bool) {
     card(ui, "New Classic canvas", |ui| {
-        ui.weak(tr(
+        ui.weak(t!(
             ui.ctx(),
             "These defaults apply to new documents, leaving the current image unchanged.",
         ));
@@ -362,7 +363,7 @@ fn canvas(ui: &mut egui::Ui, values: &mut settings::CanvasDefaults, classic: boo
                 ("Default height", &mut values.configured.1),
             ] {
                 ui.horizontal(|ui| {
-                    let caption = ui.label(tr(ui.ctx(), label));
+                    let caption = ui.label(t!(ui.ctx(), label));
                     ui.add(
                         egui::DragValue::new(value)
                             .range(1..=settings::SIZE_MAX)
@@ -377,15 +378,15 @@ fn canvas(ui: &mut egui::Ui, values: &mut settings::CanvasDefaults, classic: boo
         ui.radio_value(
             &mut values.remember_last,
             true,
-            tr(ui.ctx(), "Remember last canvas size"),
+            t!(ui.ctx(), "Remember last canvas size"),
         );
         ui.radio_value(
             &mut values.remember_last,
             false,
-            "Use configured default size",
+            t!(ui.ctx(), "Use configured default size"),
         );
         if let Some((w, h)) = values.last {
-            ui.weak(tr_format(
+            ui.weak(t!(
                 ui.ctx(),
                 "Last canvas: { $width } × { $height } pixels",
                 &[("width", w.to_string()), ("height", h.to_string())],

@@ -2,8 +2,8 @@
 use super::Controls;
 use egui::Vec2;
 use paintcraft_tools::{ShapeStyle, Tool};
-use paintcraft_ui::i18n::tr;
 use paintcraft_ui::icons::Icon;
+use paintcraft_ui::t;
 
 pub(super) fn shape_paint(ui: &mut egui::Ui, state: &mut Controls) {
     ui.add_enabled_ui(
@@ -104,9 +104,9 @@ fn dropdown(
     );
     open_state(ui, &response, label);
     if ui.is_enabled() {
-        response.on_hover_text(tr(ui.ctx(), label))
+        response.on_hover_text(t!(ui.ctx(), label))
     } else {
-        response.on_disabled_hover_text(tr(
+        response.on_disabled_hover_text(t!(
             ui.ctx(),
             "Select a rectangle or ellipse to change its outline and fill",
         ))
@@ -120,7 +120,7 @@ pub(super) fn open_state(ui: &egui::Ui, response: &egui::Response, label: &str) 
     if open && ui.is_enabled() {
         selected_outline(ui, response.rect);
     }
-    let label = tr(ui.ctx(), label);
+    let label = t!(ui.ctx(), label);
     response.widget_info(|| {
         egui::WidgetInfo::selected(egui::Role::Button, ui.is_enabled(), open, &label)
     });
@@ -128,7 +128,7 @@ pub(super) fn open_state(ui: &egui::Ui, response: &egui::Response, label: &str) 
 
 fn shape_choice(ui: &mut egui::Ui, label: &str, selected: bool) -> egui::Response {
     let response = ui.add(
-        egui::Button::new(tr(ui.ctx(), label))
+        egui::Button::new(t!(ui.ctx(), label))
             .selected(selected)
             .frame_when_inactive(selected)
             .frame(true)

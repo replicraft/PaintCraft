@@ -1,8 +1,7 @@
 //! Desktop files integration.
 
 use super::*;
-use paintcraft_ui::i18n::tr;
-
+use paintcraft_ui::t;
 impl App {
     pub(super) fn request_dialog(&mut self, ctx: &egui::Context, kind: Kind) {
         self.request_dialog_suggested(ctx, kind, None);
@@ -38,7 +37,7 @@ impl App {
             dialogs.request_with_labels(
                 kind,
                 Some(&suggested),
-                |source| tr(ctx, source),
+                |source| t!(ctx, source),
                 move || wake_ctx.request_repaint(),
             );
         }

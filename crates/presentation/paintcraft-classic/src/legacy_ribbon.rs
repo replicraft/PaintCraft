@@ -1,7 +1,8 @@
 //! Historical Home ribbon: compact Clipboard, Image, Tools, Shapes and Colors groups.
 use super::{Action, ClassicVariant, Controls, Workspace};
 use egui::Vec2;
-use paintcraft_ui::{actions::Context, i18n::tr, icons::Icon};
+use paintcraft_ui::t;
+use paintcraft_ui::{actions::Context, icons::Icon};
 
 pub(super) fn show(
     ui: &mut egui::Ui,
@@ -27,7 +28,7 @@ pub(super) fn show(
                                 Icon::Paste,
                                 "Paste",
                             )
-                            .on_disabled_hover_text(tr(
+                            .on_disabled_hover_text(t!(
                                 ui.ctx(),
                                 "Canvas clipboard operations are not available yet.",
                             ));
@@ -38,11 +39,11 @@ pub(super) fn show(
                                     false,
                                     egui::Button::new((
                                         paintcraft_ui::icons::legacy_image(ui.ctx(), icon, 14.0),
-                                        tr(ui.ctx(), caption),
+                                        t!(ui.ctx(), caption),
                                     ))
                                     .frame_when_inactive(false),
                                 )
-                                .on_disabled_hover_text(tr(
+                                .on_disabled_hover_text(t!(
                                     ui.ctx(),
                                     "Canvas clipboard operations are not available yet.",
                                 ));
@@ -105,7 +106,7 @@ pub(super) fn group(ui: &mut egui::Ui, label: &str, contents: impl FnOnce(&mut e
             egui::Layout::top_down(egui::Align::Center),
             |ui| {
                 ui.label(
-                    egui::RichText::new(tr(ui.ctx(), label))
+                    egui::RichText::new(t!(ui.ctx(), label))
                         .color(ui.visuals().text_color())
                         .size(11.0),
                 );
@@ -143,7 +144,7 @@ fn brushes(
                 )
             })
             .inner;
-        let label = tr(ui.ctx(), "Brush");
+        let label = t!(ui.ctx(), "Brush");
         response.widget_info(|| {
             egui::WidgetInfo::selected(
                 egui::Role::Button,
@@ -172,12 +173,12 @@ fn brushes(
         ui.painter().text(
             button.rect.center_top() + Vec2::new(0.0, 6.0),
             egui::Align2::CENTER_CENTER,
-            tr(ui.ctx(), "Brushes"),
+            t!(ui.ctx(), "Brushes"),
             egui::TextStyle::Body.resolve(ui.style()),
             ui.visuals().text_color(),
         );
         super::legacy_controls::arrow(ui, button.rect.center_bottom() - Vec2::new(0.0, 5.0));
         super::legacy_surface::open_state(ui, &button, "Brushes");
-        button.on_hover_text(tr(ui.ctx(), "Brushes"));
+        button.on_hover_text(t!(ui.ctx(), "Brushes"));
     });
 }

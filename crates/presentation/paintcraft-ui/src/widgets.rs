@@ -1,5 +1,5 @@
 //! Shared icon widgets; no operating-system or editor-session side effects.
-use crate::i18n::tr;
+use crate::t;
 use egui::{Rect, Response, Sense, Stroke, StrokeKind, Ui, Vec2};
 
 pub use crate::icons::Icon;
@@ -63,7 +63,7 @@ pub(crate) fn icon_button_artwork(
     tooltip: impl Into<egui::WidgetText>,
     artwork: IconArtwork,
 ) -> Response {
-    let localized_label = tr(ui.ctx(), label);
+    let localized_label = t!(ui.ctx(), label);
     let label = localized_label.as_str();
     let size = if large {
         Vec2::new(64.0, 54.0)
@@ -71,7 +71,7 @@ pub(crate) fn icon_button_artwork(
         Vec2::splat(30.0_f32.max(ui.spacing().interact_size.y))
     };
     let (rect, response) = ui.allocate_exact_size(size, Sense::click());
-    let accessible_label = tr(ui.ctx(), label);
+    let accessible_label = t!(ui.ctx(), label);
     response.widget_info(|| {
         egui::WidgetInfo::selected(
             egui::Role::Button,
@@ -132,5 +132,5 @@ pub(crate) fn icon_button_artwork(
         );
     }
     let tooltip = tooltip.into();
-    response.on_hover_text(tr(ui.ctx(), tooltip.text()))
+    response.on_hover_text(t!(ui.ctx(), tooltip.text()))
 }

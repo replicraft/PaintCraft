@@ -1,5 +1,5 @@
 //! Document tabs emit intentions; session and I/O ownership belong to the host.
-use paintcraft_ui::i18n::{tr, tr_format};
+use paintcraft_ui::t;
 #[derive(Clone, Debug)]
 pub struct DocumentTab<'a> {
     pub label: &'a str,
@@ -25,7 +25,7 @@ pub fn document_tabs(ui: &mut egui::Ui, tabs: &[DocumentTab<'_>]) -> Option<TabA
                     ui.push_id(tab.number, |ui| {
                         let label = format!("{}{}", tab.label, if tab.dirty { " *" } else { "" });
                         let r = ui.selectable_label(tab.active, &label);
-                        let accessible = tr_format(
+                        let accessible = t!(
                             ui.ctx(),
                             "Document { $number }: { $title }",
                             &[("number", tab.number.to_string()), ("title", label.clone())],
@@ -43,8 +43,8 @@ pub fn document_tabs(ui: &mut egui::Ui, tabs: &[DocumentTab<'_>]) -> Option<TabA
                         }
                         let r = ui
                             .small_button("×")
-                            .on_hover_text(tr(ui.ctx(), "Close document"));
-                        let accessible = tr_format(
+                            .on_hover_text(t!(ui.ctx(), "Close document"));
+                        let accessible = t!(
                             ui.ctx(),
                             "Close document { $number }",
                             &[("number", tab.number.to_string())],
@@ -64,8 +64,8 @@ pub fn document_tabs(ui: &mut egui::Ui, tabs: &[DocumentTab<'_>]) -> Option<TabA
                 }
                 let r = ui
                     .small_button("+")
-                    .on_hover_text(tr(ui.ctx(), "New document"));
-                let accessible = tr(ui.ctx(), "New document tab");
+                    .on_hover_text(t!(ui.ctx(), "New document"));
+                let accessible = t!(ui.ctx(), "New document tab");
                 r.widget_info(|| {
                     egui::WidgetInfo::labeled(egui::Role::Button, ui.is_enabled(), &accessible)
                 });

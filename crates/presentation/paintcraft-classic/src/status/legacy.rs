@@ -1,6 +1,7 @@
 //! Historical 22-pixel status strip and compact Windows slider presentation.
 use super::*;
 use paintcraft_ui::actions::ViewAction;
+use paintcraft_ui::t;
 
 #[derive(Clone)]
 struct Draft {
@@ -79,7 +80,7 @@ fn zoom(
                     .margin(Vec2::ZERO)
                     .frame(egui::Frame::NONE),
             );
-            let label = tr(ui.ctx(), "Zoom percentage");
+            let label = t!(ui.ctx(), "Zoom percentage");
             response.widget_info(|| {
                 egui::WidgetInfo::labeled(egui::Role::TextInput, ui.is_enabled(), &label)
             });
@@ -174,7 +175,7 @@ fn zoom(
                     response
                 })
                 .inner;
-            let label = tr(ui.ctx(), "Canvas zoom");
+            let label = t!(ui.ctx(), "Canvas zoom");
             response.widget_info(|| {
                 egui::WidgetInfo::labeled(egui::Role::Slider, ui.is_enabled(), &label)
             });
@@ -214,7 +215,7 @@ fn step(ui: &mut egui::Ui, context: Context, view: ViewAction, actions: &mut Vec
             egui::Stroke::new(0.8, ink),
         );
     }
-    let label = tr(ui.ctx(), action.descriptor().label);
+    let label = t!(ui.ctx(), action.descriptor().label);
     response.widget_info(|| {
         egui::WidgetInfo::labeled(egui::Role::Button, action.enabled(context), &label)
     });

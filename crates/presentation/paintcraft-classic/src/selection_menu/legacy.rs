@@ -1,7 +1,6 @@
 //! Compact historical selection rows and section captions.
 use egui::{Align2, Color32, FontId, Vec2};
-use paintcraft_ui::i18n::tr;
-
+use paintcraft_ui::t;
 pub(super) fn heading(ui: &mut egui::Ui, label: &str) {
     let (rect, response) =
         ui.allocate_exact_size(Vec2::new(ui.available_width(), 22.0), egui::Sense::hover());
@@ -14,7 +13,7 @@ pub(super) fn heading(ui: &mut egui::Ui, label: &str) {
             Color32::from_rgb(235, 238, 243)
         },
     );
-    let label = tr(ui.ctx(), label);
+    let label = t!(ui.ctx(), label);
     response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Label, ui.is_enabled(), &label));
     ui.painter().text(
         rect.left_center() + Vec2::new(6.0, 0.0),

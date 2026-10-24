@@ -1,7 +1,6 @@
 //! Classic edge rails retain egui scrolling and thumb interaction.
 use egui::{Color32, Id, Pos2, Rect, Response, Sense, Shape, Ui, Vec2};
-use paintcraft_ui::i18n::tr;
-
+use paintcraft_ui::t;
 const RAIL: f32 = 14.0;
 const STEP: f32 = 40.0;
 
@@ -156,8 +155,8 @@ fn arrow(
         egui::Stroke::NONE,
     ));
     response
-        .on_hover_text(tr(ui.ctx(), label))
-        .on_disabled_hover_text(tr(ui.ctx(), label))
+        .on_hover_text(t!(ui.ctx(), label))
+        .on_disabled_hover_text(t!(ui.ctx(), label))
 }
 
 /// Press immediately, then repeat while held. A release must not add a second step.

@@ -1,6 +1,5 @@
 use super::*;
-use paintcraft_ui::i18n::tr;
-
+use paintcraft_ui::t;
 pub(super) fn parse_hex(text: &str) -> Option<[u8; 3]> {
     let text = text.trim().strip_prefix('#').unwrap_or(text.trim());
     if text.len() != 6 || !text.bytes().all(|b| b.is_ascii_hexdigit()) {
@@ -22,7 +21,7 @@ pub(super) fn controls(ui: &mut egui::Ui, editor: &mut ColorEditor, width: f32) 
             .margin(Vec2::new(14.0, 8.0))
             .hint_text("#RRGGBB"),
     );
-    let accessible_label = tr(ui.ctx(), "Hex RGB");
+    let accessible_label = t!(ui.ctx(), "Hex RGB");
     response.widget_info(|| {
         egui::WidgetInfo::labeled(egui::Role::TextInput, ui.is_enabled(), &accessible_label)
     });
@@ -33,9 +32,9 @@ pub(super) fn controls(ui: &mut egui::Ui, editor: &mut ColorEditor, width: f32) 
         editor.set_rgb(rgb);
         editor.hex = text;
     }
-    response.on_hover_text(tr(ui.ctx(), "Hex RGB"));
+    response.on_hover_text(t!(ui.ctx(), "Hex RGB"));
     if !editor.valid() {
-        ui.weak(tr(ui.ctx(), "Enter six hex digits, such as #2080FF."));
+        ui.weak(t!(ui.ctx(), "Enter six hex digits, such as #2080FF."));
     }
     ui.add_space(8.0);
     let model = ui
@@ -93,11 +92,11 @@ pub(super) fn controls(ui: &mut egui::Ui, editor: &mut ColorEditor, width: f32) 
                 })
         })
         .inner;
-    let accessible_label = tr(ui.ctx(), "Color model");
+    let accessible_label = t!(ui.ctx(), "Color model");
     model.response.widget_info(|| {
         egui::WidgetInfo::labeled(egui::Role::ComboBox, ui.is_enabled(), &accessible_label)
     });
-    model.response.on_hover_text(tr(ui.ctx(), "Color model"));
+    model.response.on_hover_text(t!(ui.ctx(), "Color model"));
     ui.add_space(8.0);
     match editor.mode {
         NumericMode::Rgb => {
@@ -116,7 +115,7 @@ pub(super) fn controls(ui: &mut egui::Ui, editor: &mut ColorEditor, width: f32) 
                                 .min_size(Vec2::new(field_width, 40.0))
                                 .range(0..=255),
                         );
-                        let caption = ui.label(tr(ui.ctx(), label));
+                        let caption = ui.label(t!(ui.ctx(), label));
                         changed |= value.labelled_by(caption.id).changed();
                     },
                 );
@@ -146,7 +145,7 @@ pub(super) fn controls(ui: &mut egui::Ui, editor: &mut ColorEditor, width: f32) 
                                 .speed(0.5)
                                 .range(0.0..=max),
                         );
-                        let caption = ui.label(tr(ui.ctx(), label));
+                        let caption = ui.label(t!(ui.ctx(), label));
                         changed |= value.labelled_by(caption.id).changed();
                     },
                 );

@@ -1,7 +1,6 @@
 //! Joined percentage field/preset presentation; draft acceptance remains staged.
 use super::*;
-use paintcraft_ui::i18n::tr;
-
+use paintcraft_ui::t;
 pub(super) fn show(ui: &mut egui::Ui, context: Context, actions: &mut Vec<Action>) {
     ui.allocate_ui_with_layout(
         egui::vec2(114.0, 30.0),
@@ -51,7 +50,7 @@ pub(super) fn show(ui: &mut egui::Ui, context: Context, actions: &mut Vec<Action
                     .margin(egui::vec2(8.0, 4.0))
                     .desired_width(90.0),
             );
-            let accessible_label = tr(ui.ctx(), "Zoom percentage");
+            let accessible_label = t!(ui.ctx(), "Zoom percentage");
             response.widget_info(|| {
                 egui::WidgetInfo::labeled(egui::Role::TextInput, ui.is_enabled(), &accessible_label)
             });

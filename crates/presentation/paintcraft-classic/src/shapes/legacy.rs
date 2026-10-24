@@ -2,7 +2,8 @@
 use super::SHAPES;
 use crate::{Action, ClassicVariant, Controls};
 use egui::{Color32, Vec2};
-use paintcraft_ui::{i18n::tr, icons::Icon};
+use paintcraft_ui::icons::Icon;
+use paintcraft_ui::t;
 
 pub(crate) fn gallery(
     ui: &mut egui::Ui,
@@ -89,7 +90,7 @@ pub(crate) fn gallery(
                             ui.visuals().widgets.inactive.fg_stroke,
                         );
                         crate::legacy_surface::open_state(ui, &response, "Shapes…");
-                        response.on_hover_text(tr(ui.ctx(), "Shapes…"));
+                        response.on_hover_text(t!(ui.ctx(), "Shapes…"));
                     });
                 });
             });
@@ -145,7 +146,7 @@ fn scroll_button(ui: &mut egui::Ui, label: &str, direction: f32, enabled: bool) 
         ink,
         egui::Stroke::NONE,
     ));
-    let label = tr(ui.ctx(), label);
+    let label = t!(ui.ctx(), label);
     response.widget_info(|| {
         egui::WidgetInfo::labeled(egui::Role::Button, enabled && ui.is_enabled(), &label)
     });
@@ -159,7 +160,7 @@ fn button(
     icon: Icon,
     selected: bool,
 ) -> egui::Response {
-    let label = tr(ui.ctx(), label);
+    let label = t!(ui.ctx(), label);
     let image = paintcraft_ui::icons::classic_shape_image(
         ui.ctx(),
         icon,

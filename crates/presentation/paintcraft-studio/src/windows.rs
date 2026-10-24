@@ -1,8 +1,7 @@
 use crate::Workspace;
 use paintcraft_tools::Tool;
 use paintcraft_ui::chrome::{Action, Controls, tool_button};
-use paintcraft_ui::i18n::tr;
-
+use paintcraft_ui::t;
 pub fn floating_controls(
     ctx: &egui::Context,
     state: &mut Controls,
@@ -11,7 +10,7 @@ pub fn floating_controls(
     state_id: egui::Id,
 ) -> Vec<Action> {
     let mut actions = Vec::new();
-    egui::Window::new(tr(ctx, "Tools"))
+    egui::Window::new(t!(ctx, "Tools"))
         .id(egui::Id::unique("studio-tools"))
         .open(&mut workspace.tools)
         .enabled(enabled)
@@ -57,7 +56,7 @@ pub fn floating_controls(
             });
         });
     let mut colors_open = workspace.colors;
-    egui::Window::new(tr(ctx, "Colors"))
+    egui::Window::new(t!(ctx, "Colors"))
         .id(egui::Id::unique("studio-colors"))
         .open(&mut colors_open)
         .enabled(enabled)
@@ -85,7 +84,7 @@ pub fn layers_window(
     top: f32,
     contents: impl FnOnce(&mut egui::Ui),
 ) {
-    egui::Window::new(tr(ctx, "Layers"))
+    egui::Window::new(t!(ctx, "Layers"))
         .id(egui::Id::unique("studio-layers"))
         .constrain_to(egui::Rect::from_min_max(
             egui::pos2(ctx.viewport_rect().left(), top),

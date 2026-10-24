@@ -3,8 +3,7 @@ use super::{Action, ClassicVariant, Controls};
 use egui::{Rect, Vec2};
 use paintcraft_core::types::brush::BrushMedia;
 use paintcraft_tools::Tool;
-use paintcraft_ui::i18n::tr;
-
+use paintcraft_ui::t;
 pub(super) fn gallery(
     ui: &mut egui::Ui,
     variant: ClassicVariant,
@@ -27,7 +26,7 @@ pub(super) fn gallery(
                         let selected = state.tool == Tool::Brush
                             && state.options.round
                             && state.options.media == media;
-                        let label = tr(
+                        let label = t!(
                             ui.ctx(),
                             if index == 0 {
                                 "Round brush"
@@ -73,7 +72,7 @@ pub(super) fn gallery(
                 });
             ui.separator();
             let selected = state.tool == Tool::Brush && !state.options.round;
-            let label = tr(ui.ctx(), "Square brush");
+            let label = t!(ui.ctx(), "Square brush");
             let square = super::legacy_surface::button(
                 ui,
                 variant,

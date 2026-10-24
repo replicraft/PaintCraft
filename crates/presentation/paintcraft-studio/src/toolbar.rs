@@ -1,7 +1,7 @@
 use crate::Workspace;
 use paintcraft_ui::actions::{self, Context};
 use paintcraft_ui::chrome::{Action, Controls, options};
-use paintcraft_ui::i18n::tr;
+use paintcraft_ui::t;
 use paintcraft_ui::widgets::Icon;
 
 pub fn toolbar(
@@ -12,7 +12,7 @@ pub fn toolbar(
 ) -> Vec<Action> {
     let mut actions = Vec::new();
     egui::MenuBar::new().ui(ui, |ui| {
-        ui.menu_button(tr(ui.ctx(), "File"), |ui| {
+        ui.menu_button(t!(ui.ctx(), "File"), |ui| {
             for &action in actions::FILE {
                 if actions::menu_item(ui, action, context) {
                     actions.push(action);
@@ -20,7 +20,7 @@ pub fn toolbar(
                 }
             }
         });
-        ui.menu_button(tr(ui.ctx(), "Edit"), |ui| {
+        ui.menu_button(t!(ui.ctx(), "Edit"), |ui| {
             for &action in actions::EDIT {
                 if actions::menu_item(ui, action, context) {
                     actions.push(action);
@@ -29,7 +29,7 @@ pub fn toolbar(
             }
         });
         crate::image_menu::show(ui, context, &mut actions);
-        ui.menu_button(tr(ui.ctx(), "View"), |ui| {
+        ui.menu_button(t!(ui.ctx(), "View"), |ui| {
             for (index, &action) in actions::VIEW.iter().enumerate() {
                 if index == 5 {
                     ui.separator();
@@ -40,7 +40,7 @@ pub fn toolbar(
                 }
             }
         });
-        ui.menu_button(tr(ui.ctx(), "Layers"), |ui| {
+        ui.menu_button(t!(ui.ctx(), "Layers"), |ui| {
             for (index, &action) in actions::LAYERS.iter().enumerate() {
                 if matches!(index, 3 | 4 | 8 | 12) {
                     ui.separator();
@@ -51,11 +51,11 @@ pub fn toolbar(
                 }
             }
         });
-        ui.menu_button(tr(ui.ctx(), "Window"), |ui| {
-            ui.checkbox(&mut workspace.tools, tr(ui.ctx(), "Tools"));
-            ui.checkbox(&mut workspace.colors, tr(ui.ctx(), "Colors"));
-            ui.checkbox(&mut workspace.layers, tr(ui.ctx(), "Layers"));
-            ui.checkbox(&mut workspace.history, tr(ui.ctx(), "History"));
+        ui.menu_button(t!(ui.ctx(), "Window"), |ui| {
+            ui.checkbox(&mut workspace.tools, t!(ui.ctx(), "Tools"));
+            ui.checkbox(&mut workspace.colors, t!(ui.ctx(), "Colors"));
+            ui.checkbox(&mut workspace.layers, t!(ui.ctx(), "Layers"));
+            ui.checkbox(&mut workspace.history, t!(ui.ctx(), "History"));
         });
     });
     ui.horizontal(|ui| {
@@ -73,7 +73,7 @@ pub fn toolbar(
             }
         }
         ui.separator();
-        ui.label(tr(
+        ui.label(t!(
             ui.ctx(),
             Action::SelectTool(state.tool)
                 .descriptor_for(context.frontend)

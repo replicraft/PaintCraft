@@ -1,7 +1,6 @@
 //! Shared Classic dimension rows keep captions and numeric text left aligned.
 use egui::{Align, DragValue, FontId, Layout, TextStyle, Ui, Vec2};
-use paintcraft_ui::i18n::tr;
-
+use paintcraft_ui::t;
 /// Render document-pixel dimensions. The host retains draft ownership and range
 /// policy; these native egui fields only edit the supplied values.
 pub fn dimension_fields(ui: &mut Ui, size: &mut (u32, u32), maximum: u32, labels: [&str; 2]) {
@@ -30,7 +29,7 @@ pub(super) fn rows(
             .map(|label| {
                 ui.painter()
                     .layout_no_wrap(
-                        tr(ui.ctx(), *label),
+                        t!(ui.ctx(), *label),
                         font.clone(),
                         ui.visuals().text_color(),
                     )
@@ -50,7 +49,7 @@ pub(super) fn rows(
                             Layout::left_to_right(Align::Center).with_main_align(Align::Min),
                             |ui| {
                                 ui.set_width(caption_width);
-                                ui.label(tr(ui.ctx(), label))
+                                ui.label(t!(ui.ctx(), label))
                             },
                         )
                         .inner;

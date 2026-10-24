@@ -1,7 +1,7 @@
 //! Image controls with real selection Crop and staged Resize/skew presentation.
 use egui::{Rect, Vec2};
 use paintcraft_core::types::orthogonal::OrthogonalTransform as Transform;
-use paintcraft_ui::i18n::tr;
+use paintcraft_ui::t;
 mod legacy;
 use paintcraft_ui::icons::Icon;
 
@@ -44,9 +44,9 @@ pub(super) fn controls(
                     actions.push(super::Action::Crop);
                 }
                 if enabled {
-                    response.on_hover_text(tr(ui.ctx(), "Crop"));
+                    response.on_hover_text(t!(ui.ctx(), "Crop"));
                 } else {
-                    response.on_disabled_hover_text(tr(
+                    response.on_disabled_hover_text(t!(
                         ui.ctx(),
                         "Select an area of the canvas to crop",
                     ));
@@ -85,13 +85,13 @@ pub(super) fn controls(
                 response
             })
             .inner;
-        let accessible_label = tr(ui.ctx(), "Resize and skew");
+        let accessible_label = t!(ui.ctx(), "Resize and skew");
         response.widget_info(|| {
             egui::WidgetInfo::labeled(egui::Role::Button, enabled, &accessible_label)
         });
         if response
-            .on_hover_text(tr(ui.ctx(), "Resize and skew"))
-            .on_disabled_hover_text(tr(ui.ctx(), "Open an image to preview resize and skew."))
+            .on_hover_text(t!(ui.ctx(), "Resize and skew"))
+            .on_disabled_hover_text(t!(ui.ctx(), "Open an image to preview resize and skew."))
             .clicked()
         {
             actions.push(super::Action::ResizeSkew);
@@ -117,7 +117,7 @@ fn unavailable(ui: &mut egui::Ui, label: &str, icon: Icon, size: Vec2, points: f
         })
         .inner;
     response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, false, label));
-    response.on_disabled_hover_text(tr(ui.ctx(), help));
+    response.on_disabled_hover_text(t!(ui.ctx(), help));
 }
 
 pub(super) fn rotate(
@@ -219,7 +219,7 @@ fn menu(
                                 22.0,
                                 ui.visuals().dark_mode,
                             ),
-                            tr(ui.ctx(), name),
+                            t!(ui.ctx(), name),
                         ))
                         .min_size(Vec2::new(240.0, 40.0)),
                     );
@@ -228,9 +228,9 @@ fn menu(
                         ui.close();
                     }
                     if transform.is_none() {
-                        response.on_disabled_hover_text(tr(ui.ctx(), "This image transformation is not available yet."));
+                        response.on_disabled_hover_text(t!(ui.ctx(), "This image transformation is not available yet."));
                     } else if !enabled {
-                        response.on_disabled_hover_text(tr(ui.ctx(), "Select a nonempty canvas area and choose a layer, or deselect to transform the whole image."));
+                        response.on_disabled_hover_text(t!(ui.ctx(), "Select a nonempty canvas area and choose a layer, or deselect to transform the whole image."));
                     }
                 }
             });
@@ -253,7 +253,7 @@ fn menu(
         [center + Vec2::new(0.0, 1.5), center + Vec2::new(3.0, -1.5)],
         stroke,
     );
-    response.on_hover_text(tr(ui.ctx(), label));
+    response.on_hover_text(t!(ui.ctx(), label));
 }
 
 /// The older ribbons group Crop, Resize and Rotate/Flip together without
@@ -266,7 +266,7 @@ pub(super) fn legacy_controls(
 ) {
     use paintcraft_ui::actions::Action;
     for action in [Action::Crop, Action::ResizeSkew] {
-        let label = tr(
+        let label = t!(
             ui.ctx(),
             if action == Action::Crop {
                 "Crop"
@@ -287,7 +287,7 @@ pub(super) fn legacy_controls(
             )
             .frame_when_inactive(false),
         );
-        let accessible = tr(ui.ctx(), action.descriptor_for(context.frontend).label);
+        let accessible = t!(ui.ctx(), action.descriptor_for(context.frontend).label);
         response.widget_info(|| {
             egui::WidgetInfo::labeled(egui::Role::Button, action.enabled(context), &accessible)
         });

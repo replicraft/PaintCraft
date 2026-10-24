@@ -1,6 +1,6 @@
 //! Host integration for frontend layer controls and committed property edits.
 use super::*;
-use paintcraft_ui::i18n::{tr, tr_format};
+use paintcraft_ui::t;
 
 impl App {
     fn classic_layer_list(&mut self, ui: &mut egui::Ui) {
@@ -79,7 +79,7 @@ impl App {
         let classic = self.experience() == Experience::Classic;
         let property_height = paintcraft_classic::layers::property_height(ui);
         if self.document_count() == 0 {
-            ui.label(tr(ui.ctx(), "No document open"));
+            ui.label(t!(ui.ctx(), "No document open"));
             return;
         }
         // Finish a focused property's draft against the layer it belonged to
@@ -89,8 +89,8 @@ impl App {
             self.classic_layer_list(ui);
         } else {
             ui.horizontal(|ui| {
-                ui.heading(tr(ui.ctx(), "Layers"));
-                if ui.button(tr(ui.ctx(), "Add layer")).clicked() {
+                ui.heading(t!(ui.ctx(), "Layers"));
+                if ui.button(t!(ui.ctx(), "Add layer")).clicked() {
                     self.request(&ctx, code::ADD_LAYER, Action::AddLayer);
                 }
             });
@@ -98,10 +98,10 @@ impl App {
                 ui.horizontal(|ui| {
                     let mut visible = row.visible;
                     let toggle = ui
-                        .checkbox(&mut visible, tr(ui.ctx(), ""))
-                        .on_hover_text(tr(ui.ctx(), "Visible"));
+                        .checkbox(&mut visible, t!(ui.ctx(), ""))
+                        .on_hover_text(t!(ui.ctx(), "Visible"));
                     let accessible =
-                        tr_format(ui.ctx(), "Show { $name }", &[("name", row.name.to_owned())]);
+                        t!(ui.ctx(), "Show { $name }", &[("name", row.name.to_owned())]);
                     toggle.widget_info(|| {
                         egui::WidgetInfo::selected(egui::Role::CheckBox, true, visible, &accessible)
                     });
@@ -125,13 +125,13 @@ impl App {
         }
         ui.separator();
         let Some(t) = target else {
-            ui.label(tr(ui.ctx(), "Drawing on: (no layer)"));
+            ui.label(t!(ui.ctx(), "Drawing on: (no layer)"));
             return;
         };
         let Some((name, opacity, index)) = self.editor.layer_properties(t) else {
             return;
         };
-        let drawing_on = tr_format(ui.ctx(), "Drawing on: { $name }", &[("name", name.clone())]);
+        let drawing_on = t!(ui.ctx(), "Drawing on: { $name }", &[("name", name.clone())]);
         if self.experience() == Experience::Classic {
             ui.add(
                 egui::Label::new(drawing_on)
@@ -153,7 +153,7 @@ impl App {
             let label = if classic {
                 paintcraft_classic::layers::property_label(ui, "Layer name")
             } else {
-                ui.label(tr(ui.ctx(), "Layer name"))
+                ui.label(t!(ui.ctx(), "Layer name"))
             };
             let field_id = ui.scope_id().with(("layer-name", t));
             let focused = ui.memory(|memory| memory.has_focus(field_id));
@@ -204,7 +204,7 @@ impl App {
             let label = if classic {
                 paintcraft_classic::layers::property_label(ui, "Opacity")
             } else {
-                ui.label(tr(ui.ctx(), "Opacity"))
+                ui.label(t!(ui.ctx(), "Opacity"))
             };
             let field_id = ui.next_auto_id();
             let focused = ui.memory(|memory| memory.has_focus(field_id));
@@ -263,7 +263,7 @@ impl App {
         }
         ui.horizontal_wrapped(|ui| {
             if ui
-                .add_enabled(index < top, egui::Button::new(tr(ui.ctx(), "Move up")))
+                .add_enabled(index < top, egui::Button::new(t!(ui.ctx(), "Move up")))
                 .clicked()
             {
                 self.request(
@@ -276,7 +276,7 @@ impl App {
                 );
             }
             if ui
-                .add_enabled(index > 0, egui::Button::new(tr(ui.ctx(), "Move down")))
+                .add_enabled(index > 0, egui::Button::new(t!(ui.ctx(), "Move down")))
                 .clicked()
             {
                 self.request(
@@ -295,7 +295,7 @@ impl App {
                             paintcraft_ui::actions::LayerAction::Duplicate,
                         )
                         .enabled(self.action_context()),
-                        egui::Button::new(tr(ui.ctx(), "Duplicate layer")),
+                        egui::Button::new(t!(ui.ctx(), "Duplicate layer")),
                     )
                     .clicked()
             {
@@ -307,7 +307,7 @@ impl App {
                 );
             }
             if self.experience() == Experience::Studio
-                && ui.button(tr(ui.ctx(), "Layer properties…")).clicked()
+                && ui.button(t!(ui.ctx(), "Layer properties…")).clicked()
             {
                 self.dispatch_chrome(
                     &ctx,
@@ -316,7 +316,7 @@ impl App {
                     )],
                 );
             }
-            if ui.button(tr(ui.ctx(), "Delete layer")).clicked() {
+            if ui.button(t!(ui.ctx(), "Delete layer")).clicked() {
                 self.request(&ctx, code::DELETE, Action::DeleteLayer { layer: t });
             }
         });

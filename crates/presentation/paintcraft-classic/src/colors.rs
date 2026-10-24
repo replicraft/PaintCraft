@@ -1,4 +1,5 @@
 //! Staged Classic color picker. The host adopts the result only on OK.
+use paintcraft_ui::t;
 mod dialog;
 mod legacy;
 pub use dialog::edit_colors_dialog;
@@ -18,8 +19,6 @@ mod fields;
 mod picker;
 use egui::{Color32, Vec2, ecolor::Hsva};
 use paintcraft_core::types::Rgba;
-use paintcraft_ui::i18n::tr_format;
-
 pub const CUSTOM_COLOR_COUNT: usize = 28;
 pub type CustomColors = [Option<Rgba>; CUSTOM_COLOR_COUNT];
 
@@ -145,7 +144,7 @@ fn palette(ui: &mut egui::Ui, editor: &mut ColorEditor, columns: usize, spacious
         .spacing(Vec2::splat(if spacious { 14.0 } else { 2.0 }))
         .show(ui, |ui| {
             for (i, rgb) in BASIC.into_iter().enumerate() {
-                let label = tr_format(
+                let label = t!(
                     ui.ctx(),
                     "Basic color #{ $hex }",
                     &[("hex", format!("{:02X}{:02X}{:02X}", rgb[0], rgb[1], rgb[2]))],
@@ -179,7 +178,7 @@ fn custom_palette(ui: &mut egui::Ui, editor: &mut ColorEditor, spacious: bool) {
                 if swatch(
                     ui,
                     editor.custom[i],
-                    &tr_format(
+                    &t!(
                         ui.ctx(),
                         "Custom color { $number }",
                         &[("number", (i + 1).to_string())],

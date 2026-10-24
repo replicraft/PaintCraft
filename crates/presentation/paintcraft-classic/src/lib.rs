@@ -1,4 +1,5 @@
 //! Classic presentation emits actions; editor and platform services own effects.
+use paintcraft_ui::t;
 mod brush_gallery;
 pub mod canvas;
 mod canvas_handles;
@@ -69,7 +70,6 @@ pub use zoom::zoom_controls;
 
 use egui::Color32;
 use paintcraft_core::types::Rgba;
-use paintcraft_ui::i18n::tr;
 use paintcraft_ui::widgets::Icon;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -141,17 +141,17 @@ pub fn chrome_with_text(
     ui.spacing_mut().interact_size.y = 32.0;
     let compact = ui.available_width() < 720.0;
     let menu = quick_access::menu_bar(ui, variant).ui(ui, |ui| {
-        ui.menu_button(tr(ui.ctx(), "File"), |ui| {
+        ui.menu_button(t!(ui.ctx(), "File"), |ui| {
             menu_layout(ui, variant);
             menus::file(ui, context, &mut actions);
         });
         ui.add_space(6.0);
-        ui.menu_button(tr(ui.ctx(), "Edit"), |ui| {
+        ui.menu_button(t!(ui.ctx(), "Edit"), |ui| {
             menu_layout(ui, variant);
             menus::edit(ui, context, &mut actions);
         });
         ui.add_space(6.0);
-        ui.menu_button(tr(ui.ctx(), "View"), |ui| {
+        ui.menu_button(t!(ui.ctx(), "View"), |ui| {
             menu_layout(ui, variant);
             menus::view(ui, variant, context, &mut actions);
         });

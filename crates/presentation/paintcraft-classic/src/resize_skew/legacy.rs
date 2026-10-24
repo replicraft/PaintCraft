@@ -1,8 +1,7 @@
 //! Historical two-group layout; the host retains the preview draft.
 use super::{Draft, numeric_info, size_field};
 use egui::{Color32, Ui, Vec2};
-use paintcraft_ui::i18n::tr;
-
+use paintcraft_ui::t;
 pub(super) fn show(ctx: &egui::Context, draft: &mut Draft, maximum: u32) -> bool {
     let width = (ctx.content_rect().width() - 40.0).clamp(240.0, 300.0);
     let body_height = (ctx.content_rect().height() - 130.0).clamp(48.0, 360.0);
@@ -39,9 +38,9 @@ pub(super) fn show(ctx: &egui::Context, draft: &mut Draft, maximum: u32) -> bool
                 state.corner_radius = 0.into();
             }
             ui.horizontal(|ui| {
-                ui.strong(tr(ui.ctx(), "Resize and skew"));
+                ui.strong(t!(ui.ctx(), "Resize and skew"));
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    let label = tr(ui.ctx(), "Close resize and skew");
+                    let label = t!(ui.ctx(), "Close resize and skew");
                     let response = ui.add_sized([22.0, 22.0], egui::Button::new("×"));
                     response.widget_info(|| {
                         egui::WidgetInfo::labeled(egui::Role::Button, true, &label)
@@ -59,8 +58,8 @@ pub(super) fn show(ctx: &egui::Context, draft: &mut Draft, maximum: u32) -> bool
                 .show(ui, |ui| {
                     group(ui, "Resize", |ui| {
                         ui.horizontal(|ui| {
-                            ui.radio_value(&mut draft.pixels, false, tr(ui.ctx(), "Percentage"));
-                            ui.radio_value(&mut draft.pixels, true, tr(ui.ctx(), "Pixels"));
+                            ui.radio_value(&mut draft.pixels, false, t!(ui.ctx(), "Percentage"));
+                            ui.radio_value(&mut draft.pixels, true, t!(ui.ctx(), "Pixels"));
                         });
                         for (axis, label) in ["Horizontal", "Vertical"].into_iter().enumerate() {
                             row(ui, label, |ui, width| {
@@ -69,7 +68,7 @@ pub(super) fn show(ctx: &egui::Context, draft: &mut Draft, maximum: u32) -> bool
                                 });
                             });
                         }
-                        ui.checkbox(&mut draft.linked, tr(ui.ctx(), "Maintain aspect ratio"));
+                        ui.checkbox(&mut draft.linked, t!(ui.ctx(), "Maintain aspect ratio"));
                     });
                     group(ui, "Skew", |ui| {
                         for (axis, label) in ["Horizontal", "Vertical"].into_iter().enumerate() {
@@ -90,20 +89,20 @@ pub(super) fn show(ctx: &egui::Context, draft: &mut Draft, maximum: u32) -> bool
                         }
                     });
                 });
-            ui.label(tr(ui.ctx(), "Preview only")).on_hover_text(tr(
+            ui.label(t!(ui.ctx(), "Preview only")).on_hover_text(t!(
                 ui.ctx(),
                 "Resize and skew changes cannot be applied yet.",
             ));
             ui.separator();
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 close |= ui
-                    .add_sized([80.0, 24.0], egui::Button::new(tr(ui.ctx(), "Cancel")))
+                    .add_sized([80.0, 24.0], egui::Button::new(t!(ui.ctx(), "Cancel")))
                     .clicked();
                 ui.add_enabled(
                     false,
-                    egui::Button::new(tr(ui.ctx(), "OK")).min_size(Vec2::new(80.0, 24.0)),
+                    egui::Button::new(t!(ui.ctx(), "OK")).min_size(Vec2::new(80.0, 24.0)),
                 )
-                .on_disabled_hover_text(tr(
+                .on_disabled_hover_text(t!(
                     ui.ctx(),
                     "Applying resize and skew is not available yet.",
                 ));
@@ -118,14 +117,14 @@ fn group(ui: &mut Ui, title: &str, body: impl FnOnce(&mut Ui)) {
         .inner_margin(8)
         .show(ui, |ui| {
             ui.set_min_width((ui.available_width() - 1.0).max(0.0));
-            ui.label(tr(ui.ctx(), title));
+            ui.label(t!(ui.ctx(), title));
             body(ui);
         });
 }
 
 fn row(ui: &mut Ui, label: &str, body: impl FnOnce(&mut Ui, f32)) {
     ui.horizontal(|ui| {
-        ui.add_sized([90.0, 24.0], egui::Label::new(tr(ui.ctx(), label)));
+        ui.add_sized([90.0, 24.0], egui::Label::new(t!(ui.ctx(), label)));
         let width = ui.available_width().max(60.0);
         body(ui, width);
     });

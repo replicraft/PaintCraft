@@ -1,7 +1,7 @@
 //! Historical common-dialog layout; adoption remains owned by the host's color draft.
 use super::{CUSTOM_COLOR_COUNT, ColorEditor, ColorResponse, Rgba};
 use egui::{Color32, Vec2};
-use paintcraft_ui::i18n::{tr, tr_format};
+use paintcraft_ui::t;
 mod fields;
 mod picker;
 
@@ -44,7 +44,7 @@ pub(super) fn show(ctx: &egui::Context, editor: &mut ColorEditor) -> ColorRespon
             ] {
                 widget.corner_radius = egui::CornerRadius::ZERO;
             }
-            ui.label(egui::RichText::new(tr(ui.ctx(), "Edit colors")).strong());
+            ui.label(egui::RichText::new(t!(ui.ctx(), "Edit colors")).strong());
             ui.separator();
             egui::ScrollArea::vertical()
                 .id_salt("historical-color-body")
@@ -74,14 +74,14 @@ pub(super) fn show(ctx: &egui::Context, editor: &mut ColorEditor) -> ColorRespon
                 if ui
                     .add_enabled(
                         editor.valid(),
-                        egui::Button::new(tr(ui.ctx(), "OK")).min_size(Vec2::new(76.0, 24.0)),
+                        egui::Button::new(t!(ui.ctx(), "OK")).min_size(Vec2::new(76.0, 24.0)),
                     )
                     .clicked()
                 {
                     result = ColorResponse::Accept;
                 }
                 if ui
-                    .add_sized([76.0, 24.0], egui::Button::new(tr(ui.ctx(), "Cancel")))
+                    .add_sized([76.0, 24.0], egui::Button::new(t!(ui.ctx(), "Cancel")))
                     .clicked()
                 {
                     result = ColorResponse::Cancel;
@@ -95,13 +95,13 @@ pub(super) fn show(ctx: &egui::Context, editor: &mut ColorEditor) -> ColorRespon
 }
 
 fn palettes(ui: &mut egui::Ui, editor: &mut ColorEditor) {
-    ui.label(tr(ui.ctx(), "Basic colors"));
+    ui.label(t!(ui.ctx(), "Basic colors"));
     egui::Grid::new("historical-basic-colors")
         .min_col_width(0.0)
         .spacing(Vec2::splat(3.0))
         .show(ui, |ui| {
             for (index, rgb) in BASIC.into_iter().enumerate() {
-                let label = tr_format(
+                let label = t!(
                     ui.ctx(),
                     "Basic color #{ $hex }",
                     &[("hex", format!("{:02X}{:02X}{:02X}", rgb[0], rgb[1], rgb[2]))],
@@ -122,13 +122,13 @@ fn palettes(ui: &mut egui::Ui, editor: &mut ColorEditor) {
             }
         });
     ui.add_space(4.0);
-    ui.label(tr(ui.ctx(), "Custom colors"));
+    ui.label(t!(ui.ctx(), "Custom colors"));
     egui::Grid::new("historical-custom-colors")
         .min_col_width(0.0)
         .spacing(Vec2::splat(3.0))
         .show(ui, |ui| {
             for index in 0..CUSTOM_COLOR_COUNT {
-                let label = tr_format(
+                let label = t!(
                     ui.ctx(),
                     "Custom color { $number }",
                     &[("number", (index + 1).to_string())],
@@ -210,7 +210,7 @@ fn definition(ui: &mut egui::Ui, editor: &mut ColorEditor) {
             ui.visuals().widgets.noninteractive.bg_stroke,
             egui::StrokeKind::Inside,
         );
-        let label = tr(ui.ctx(), "Current color preview");
+        let label = t!(ui.ctx(), "Current color preview");
         response.widget_info(|| {
             egui::WidgetInfo::labeled(egui::Role::ColorWell, ui.is_enabled(), &label)
         });
@@ -223,7 +223,7 @@ fn definition(ui: &mut egui::Ui, editor: &mut ColorEditor) {
     if ui
         .add_enabled(
             editor.valid(),
-            egui::Button::new(tr(ui.ctx(), "Add custom color")).min_size(Vec2::new(234.0, 24.0)),
+            egui::Button::new(t!(ui.ctx(), "Add custom color")).min_size(Vec2::new(234.0, 24.0)),
         )
         .clicked()
         && ui.ctx().current_pass_index() == 0

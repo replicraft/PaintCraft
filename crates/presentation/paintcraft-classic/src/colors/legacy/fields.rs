@@ -1,6 +1,5 @@
 use super::*;
-use paintcraft_ui::i18n::tr;
-
+use paintcraft_ui::t;
 pub(super) fn native_hsl(editor: &ColorEditor) -> [u16; 3] {
     [
         (editor.hsl[0] * 240.0 / 360.0).round().clamp(0.0, 239.0) as u16,
@@ -32,7 +31,7 @@ pub(super) fn hex_entry(ui: &mut egui::Ui, editor: &mut ColorEditor) {
                 .desired_width(218.0)
                 .hint_text("#RRGGBB"),
         );
-        let label = tr(ui.ctx(), "Hex RGB");
+        let label = t!(ui.ctx(), "Hex RGB");
         response.widget_info(|| {
             egui::WidgetInfo::labeled(egui::Role::TextInput, ui.is_enabled(), &label)
         });
@@ -44,7 +43,7 @@ pub(super) fn hex_entry(ui: &mut egui::Ui, editor: &mut ColorEditor) {
             editor.hex = text;
         }
         if !editor.valid() {
-            ui.weak(tr(ui.ctx(), "Enter six hex digits, such as #2080FF."));
+            ui.weak(t!(ui.ctx(), "Enter six hex digits, such as #2080FF."));
         }
     });
 }
@@ -76,18 +75,18 @@ pub(super) fn numbers(ui: &mut egui::Ui, editor: &mut ColorEditor) {
                 .into_iter()
                 .enumerate()
                 {
-                    ui.label(tr(ui.ctx(), short));
+                    ui.label(t!(ui.ctx(), short));
                     let value = ui.add(
                         egui::DragValue::new(&mut hsl[index])
                             .range(0..=if index == 0 { 239 } else { 240 })
                             .min_size(Vec2::new(40.0, 24.0)),
                     );
-                    let label = tr(ui.ctx(), full);
+                    let label = t!(ui.ctx(), full);
                     value.widget_info(|| {
                         egui::WidgetInfo::labeled(egui::Role::SpinButton, ui.is_enabled(), &label)
                     });
                     hsl_changed |= value.changed();
-                    let caption = ui.label(tr(ui.ctx(), rgb_label));
+                    let caption = ui.label(t!(ui.ctx(), rgb_label));
                     rgb_changed |= ui
                         .add(
                             egui::DragValue::new(&mut rgb[index])

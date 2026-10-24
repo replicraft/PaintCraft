@@ -1,7 +1,8 @@
 //! Historical rotation rows share the canonical transform actions with modern UI.
 use crate::{Action, ClassicVariant};
 use paintcraft_core::types::orthogonal::OrthogonalTransform as Transform;
-use paintcraft_ui::{actions::Context, i18n::tr, icons::Icon};
+use paintcraft_ui::t;
+use paintcraft_ui::{actions::Context, icons::Icon};
 
 pub(super) fn rotate(
     ui: &mut egui::Ui,
@@ -12,7 +13,7 @@ pub(super) fn rotate(
     let (button, _) = egui::containers::menu::MenuButton::from_button(
         egui::Button::new((
             paintcraft_ui::icons::legacy_image(ui.ctx(), Icon::RotateClockwise, 14.0),
-            tr(ui.ctx(), "Rotate"),
+            t!(ui.ctx(), "Rotate"),
         )).frame_when_inactive(false),
     )
     .config(crate::legacy_surface::menu_config())
@@ -38,11 +39,11 @@ pub(super) fn rotate(
                         ui.close();
                     }
                     if !action.enabled(context) {
-                        response.on_disabled_hover_text(tr(ui.ctx(), "Select a nonempty canvas area and choose a layer, or deselect to transform the whole image."));
+                        response.on_disabled_hover_text(t!(ui.ctx(), "Select a nonempty canvas area and choose a layer, or deselect to transform the whole image."));
                     }
                 }
             });
     });
     crate::legacy_surface::open_state(ui, &button, "Rotate");
-    button.on_hover_text(tr(ui.ctx(), "Rotate"));
+    button.on_hover_text(t!(ui.ctx(), "Rotate"));
 }

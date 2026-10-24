@@ -1,9 +1,9 @@
 //! Historical two-column File panel. Navigation never writes; actions use the host outbox.
 use super::Action;
 use egui::{Color32, Rect, Response, Vec2};
+use paintcraft_ui::t;
 use paintcraft_ui::{
     actions::{Context, ImageExport},
-    i18n::{tr, tr_format},
     icons::Icon,
 };
 
@@ -96,11 +96,11 @@ fn navigation(
         false,
         false,
     )
-    .on_disabled_hover_text(tr(
+    .on_disabled_hover_text(t!(
         ui.ctx(),
         "Scanner and camera acquisition is not available yet.",
     ));
-    row(ui, width, Icon::Share, "Send in email", false, false).on_disabled_hover_text(tr(
+    row(ui, width, Icon::Share, "Send in email", false, false).on_disabled_hover_text(t!(
         ui.ctx(),
         "Sending pictures by email is not available yet.",
     ));
@@ -162,7 +162,7 @@ fn row(
     selected: bool,
     enabled: bool,
 ) -> Response {
-    let caption = tr(ui.ctx(), caption);
+    let caption = t!(ui.ctx(), caption);
     let image = if matches!(
         icon,
         Icon::DesktopBackground | Icon::ImageProperties | Icon::ImportImage
@@ -220,11 +220,11 @@ fn content(ui: &mut egui::Ui, context: Context, actions: &mut Vec<Action>, pane:
         Pane::Background => "Set as desktop background",
         Pane::About => "About PaintCraft",
     };
-    ui.add(egui::Label::new(egui::RichText::new(tr(ui.ctx(), title)).strong()).wrap());
+    ui.add(egui::Label::new(egui::RichText::new(t!(ui.ctx(), title)).strong()).wrap());
     ui.separator();
     match pane {
         Pane::Recent => {
-            ui.add(egui::Label::new(tr(ui.ctx(), "Recent files are not available yet.")).wrap());
+            ui.add(egui::Label::new(t!(ui.ctx(), "Recent files are not available yet.")).wrap());
         }
         Pane::SaveAs => {
             for format in ImageExport::ALL {
@@ -245,7 +245,7 @@ fn content(ui: &mut egui::Ui, context: Context, actions: &mut Vec<Action>, pane:
                 "GIF export is not available yet.",
                 false,
             )
-            .on_disabled_hover_text(tr(ui.ctx(), "GIF export is not available yet."));
+            .on_disabled_hover_text(t!(ui.ctx(), "GIF export is not available yet."));
             let response = format_row(
                 ui,
                 "…",
@@ -266,7 +266,7 @@ fn content(ui: &mut egui::Ui, context: Context, actions: &mut Vec<Action>, pane:
         Pane::Print => {
             for title in ["Print…", "Page setup…", "Print preview"] {
                 row(ui, ui.available_width(), Icon::Print, title, false, false)
-                    .on_disabled_hover_text(tr(ui.ctx(), "Printing is not available yet."));
+                    .on_disabled_hover_text(t!(ui.ctx(), "Printing is not available yet."));
             }
         }
         Pane::Background => {
@@ -279,7 +279,7 @@ fn content(ui: &mut egui::Ui, context: Context, actions: &mut Vec<Action>, pane:
                     false,
                     false,
                 )
-                .on_disabled_hover_text(tr(
+                .on_disabled_hover_text(t!(
                     ui.ctx(),
                     "Setting the desktop background is not available yet.",
                 ));
@@ -287,12 +287,12 @@ fn content(ui: &mut egui::Ui, context: Context, actions: &mut Vec<Action>, pane:
         }
         Pane::About => {
             ui.heading("PaintCraft");
-            ui.label(tr_format(
+            ui.label(t!(
                 ui.ctx(),
                 "Version { $version }",
                 &[("version", env!("CARGO_PKG_VERSION").into())],
             ));
-            ui.label(tr(ui.ctx(), "A painting app for Classic and Studio."));
+            ui.label(t!(ui.ctx(), "A painting app for Classic and Studio."));
         }
     }
 }
@@ -304,8 +304,8 @@ fn format_row(
     description: &str,
     enabled: bool,
 ) -> Response {
-    let caption = tr(ui.ctx(), caption);
-    let description = tr(ui.ctx(), description);
+    let caption = t!(ui.ctx(), caption);
+    let description = t!(ui.ctx(), description);
     let width = ui.available_width();
     let ink = if enabled {
         ui.visuals().text_color()

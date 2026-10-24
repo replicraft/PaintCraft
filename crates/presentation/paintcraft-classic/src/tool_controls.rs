@@ -1,8 +1,8 @@
 //! Classic v11 tool preferences float beside the canvas; no document mutations.
 use egui::{Rect, Vec2, Widget};
 use paintcraft_tools::{Tool, ToolOptions};
-use paintcraft_ui::i18n::{tr, tr_format};
 use paintcraft_ui::icons::Icon;
+use paintcraft_ui::t;
 
 mod slider;
 
@@ -54,10 +54,10 @@ pub fn show(
                 ui.horizontal_top(|ui| {
                     ui.spacing_mut().item_spacing.x = 10.0;
                     panel(ui, |ui| {
-                        let label = tr_format(
+                        let label = t!(
                             ui.ctx(),
                             "{ $tool } size",
-                            &[("tool", tr(ui.ctx(), tool.name()))],
+                            &[("tool", t!(ui.ctx(), tool.name()))],
                         );
                         header(ui, Icon::StrokeSize, &label);
                         ui.add_space(6.0);
@@ -69,7 +69,7 @@ pub fn show(
                         };
                         let response =
                             slider::show(ui, size, 1..=64, height, egui::SliderClamping::Edits);
-                        let accessible = tr(ui.ctx(), "Tool size");
+                        let accessible = t!(ui.ctx(), "Tool size");
                         response.widget_info(|| {
                             egui::WidgetInfo::labeled(
                                 egui::Role::Slider,
@@ -77,15 +77,15 @@ pub fn show(
                                 &accessible,
                             )
                         });
-                        response.on_hover_text(tr_format(
+                        response.on_hover_text(t!(
                             ui.ctx(),
                             "Size: { $size } px",
                             &[("size", size.to_string())],
                         ));
                         let value = ui
                             .add(egui::DragValue::new(size).range(1..=1024))
-                            .on_hover_text(tr(ui.ctx(), "Size in pixels"));
-                        let accessible = tr(ui.ctx(), "Size");
+                            .on_hover_text(t!(ui.ctx(), "Size in pixels"));
+                        let accessible = t!(ui.ctx(), "Size");
                         value.widget_info(|| {
                             egui::WidgetInfo::labeled(
                                 egui::Role::SpinButton,
@@ -106,7 +106,7 @@ pub fn show(
                                 height,
                                 egui::SliderClamping::Always,
                             );
-                            let accessible = tr(ui.ctx(), "Brush opacity");
+                            let accessible = t!(ui.ctx(), "Brush opacity");
                             response.widget_info(|| {
                                 egui::WidgetInfo::labeled(
                                     egui::Role::Slider,
@@ -114,7 +114,7 @@ pub fn show(
                                     &accessible,
                                 )
                             });
-                            response.on_hover_text(tr_format(
+                            response.on_hover_text(t!(
                                 ui.ctx(),
                                 "Opacity: { $opacity }%",
                                 &[("opacity", options.brush_opacity.to_string())],
@@ -124,7 +124,7 @@ pub fn show(
                                     .range(0..=100)
                                     .suffix("%"),
                             );
-                            let accessible = tr(ui.ctx(), "Opacity");
+                            let accessible = t!(ui.ctx(), "Opacity");
                             value.widget_info(|| {
                                 egui::WidgetInfo::labeled(
                                     egui::Role::SpinButton,
@@ -154,7 +154,7 @@ fn panel(ui: &mut egui::Ui, body: impl FnOnce(&mut egui::Ui)) {
 
 fn header(ui: &mut egui::Ui, icon: Icon, label: &str) {
     let response = paintcraft_ui::icons::image(ui.ctx(), icon, 22.0).ui(ui);
-    let label = tr(ui.ctx(), label);
+    let label = t!(ui.ctx(), label);
     response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Image, ui.is_enabled(), &label));
     response.on_hover_text(label);
 }

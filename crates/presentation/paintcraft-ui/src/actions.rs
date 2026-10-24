@@ -1,5 +1,5 @@
 //! Semantic action metadata shared by menus, toolbars and keyboard dispatch.
-use crate::i18n::tr;
+use crate::t;
 use egui::{Key, KeyboardShortcut, Modifiers};
 use paintcraft_core::types::orthogonal::OrthogonalTransform as Transform;
 use paintcraft_tools::Tool;
@@ -395,7 +395,7 @@ pub fn menu_item_with_icon_style(
         label,
         ..action.descriptor_for(ctx.frontend)
     };
-    let localized_label = tr(ui.ctx(), descriptor.label);
+    let localized_label = t!(ui.ctx(), descriptor.label);
     let checked = action.checked(ctx);
     let icon = if icon_style == MenuIconStyle::Colorful {
         action.icon(ctx)
@@ -533,7 +533,7 @@ fn toolbar_button_artwork(
     artwork: crate::widgets::IconArtwork,
 ) -> bool {
     let descriptor = action.descriptor_for(ctx.frontend);
-    let localized_label = tr(ui.ctx(), descriptor.label);
+    let localized_label = t!(ui.ctx(), descriptor.label);
     let label = localized_label.trim_end_matches('…');
     let tooltip = descriptor.shortcut.map_or_else(
         || localized_label.clone(),

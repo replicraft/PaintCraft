@@ -1,6 +1,6 @@
 //! Classic status-bar zoom: percentage entry, presets, fit and slider.
 use paintcraft_ui::actions::{Action, Context, ViewAction};
-use paintcraft_ui::i18n::tr;
+use paintcraft_ui::t;
 use paintcraft_ui::widgets::Icon;
 
 mod percentage;
@@ -84,7 +84,7 @@ pub fn zoom_controls(ui: &mut egui::Ui, context: Context, state_id: egui::Id) ->
                         response
                     })
                     .inner;
-                let accessible_label = tr(ui.ctx(), "Canvas zoom");
+                let accessible_label = t!(ui.ctx(), "Canvas zoom");
                 response.widget_info(|| {
                     egui::WidgetInfo::labeled(
                         egui::Role::Slider,

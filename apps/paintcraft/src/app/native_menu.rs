@@ -2,8 +2,7 @@
 use super::*;
 use paintcraft_platform::native_menu::{Entry, NativeMenu, Section};
 use paintcraft_ui::actions::{Action as Chrome, Frontend, ViewAction};
-use paintcraft_ui::i18n::tr;
-
+use paintcraft_ui::t;
 const QUIT: u64 = 9000;
 
 fn actions() -> Vec<Chrome> {
@@ -75,7 +74,7 @@ impl App {
                 .into_iter()
                 .map(|action| Entry {
                     id: action.activation_code(),
-                    text: tr(ctx, action.descriptor_for(context.frontend).label),
+                    text: t!(ctx, action.descriptor_for(context.frontend).label),
                     shortcut: shortcut(action, context.frontend),
                     checked: action.checked(context),
                 })
@@ -126,14 +125,14 @@ impl App {
             return;
         };
         for title in ["File", "Edit", "Image", "View", "Window"] {
-            menu.update_section(title, &tr(ctx, title));
+            menu.update_section(title, &t!(ctx, title));
         }
-        let _ = menu.update_presentation(QUIT, &tr(ctx, "Quit PaintCraft"), Some("meta+KeyQ"));
+        let _ = menu.update_presentation(QUIT, &t!(ctx, "Quit PaintCraft"), Some("meta+KeyQ"));
         let text_focus = ctx.egui_wants_keyboard_input();
         for action in actions() {
             if let Err(error) = menu.update_presentation(
                 action.activation_code(),
-                &tr(ctx, action.descriptor_for(context.frontend).label),
+                &t!(ctx, action.descriptor_for(context.frontend).label),
                 shortcut(action, context.frontend),
             ) {
                 self.editor

@@ -1,6 +1,6 @@
 //! Classic status presentation; the host supplies document facts and applies actions.
 use egui::{Align, Layout, Vec2};
-use paintcraft_ui::i18n::tr;
+use paintcraft_ui::t;
 use paintcraft_ui::{
     actions::{Action, Context},
     icons::Icon,
@@ -171,8 +171,8 @@ fn metrics(ui: &mut egui::Ui, status: &Status<'_>, width: f32, row_height: f32) 
                 }
                 let tip = format!(
                     "{}: {}",
-                    tr(ui.ctx(), label),
-                    value.clone().unwrap_or_else(|| tr(ui.ctx(), empty))
+                    t!(ui.ctx(), label),
+                    value.clone().unwrap_or_else(|| t!(ui.ctx(), empty))
                 );
                 field.response.widget_info(|| {
                     egui::WidgetInfo::labeled(egui::Role::Label, ui.is_enabled(), &tip)

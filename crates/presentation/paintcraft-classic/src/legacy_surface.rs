@@ -1,8 +1,8 @@
 //! Windows 7 ribbon surfaces have a four-stop gloss and an inset highlight.
 use super::ClassicVariant;
 use egui::{Color32, Rect, Response, Stroke, StrokeKind, Ui, Vec2};
-use paintcraft_ui::i18n::tr;
 use paintcraft_ui::icons::{self, Icon};
+use paintcraft_ui::t;
 
 pub(super) fn gradient(ui: &Ui, rect: Rect, top: Color32, bottom: Color32) {
     ui.painter().add(gradient_shape(rect, top, bottom));
@@ -115,7 +115,7 @@ pub(super) fn open_state(ui: &Ui, response: &Response, label: &str) {
             StrokeKind::Inside,
         );
     }
-    let label = tr(ui.ctx(), label);
+    let label = t!(ui.ctx(), label);
     response.widget_info(|| {
         egui::WidgetInfo::selected(egui::Role::Button, ui.is_enabled(), open, &label)
     });
@@ -187,7 +187,7 @@ pub(super) fn menu_row(
         egui::Button::new(" ").min_size(Vec2::new(ui.available_width().max(220.0), 24.0)),
         false,
     );
-    let accessible = tr(ui.ctx(), accessible);
+    let accessible = t!(ui.ctx(), accessible);
     response.widget_info(|| match selected {
         Some(selected) => {
             egui::WidgetInfo::selected(egui::Role::Button, ui.is_enabled(), selected, &accessible)
@@ -223,7 +223,7 @@ pub(super) fn menu_row(
     ui.painter().text(
         response.rect.left_center() + Vec2::new(32.0, 0.0),
         egui::Align2::LEFT_CENTER,
-        tr(ui.ctx(), label),
+        t!(ui.ctx(), label),
         egui::FontId::proportional(12.0),
         ui.visuals().text_color(),
     );

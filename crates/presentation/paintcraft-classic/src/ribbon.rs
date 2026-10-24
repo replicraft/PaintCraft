@@ -2,7 +2,7 @@
 use super::{Action, Controls, Workspace};
 use egui::Vec2;
 use paintcraft_tools::Tool;
-use paintcraft_ui::i18n::tr;
+use paintcraft_ui::t;
 use paintcraft_ui::{actions::Context, widgets::Icon};
 
 mod split_tool;
@@ -125,7 +125,7 @@ pub(super) fn ribbon(
                                     .frame(true),
                                     workspace.layers,
                                 );
-                                let accessible_label = tr(ui.ctx(), "Layers");
+                                let accessible_label = t!(ui.ctx(), "Layers");
                                 response.widget_info(|| {
                                     egui::WidgetInfo::selected(
                                         egui::Role::Button,
@@ -134,7 +134,7 @@ pub(super) fn ribbon(
                                         &accessible_label,
                                     )
                                 });
-                                response.on_hover_text(tr(ui.ctx(), "Layers"))
+                                response.on_hover_text(t!(ui.ctx(), "Layers"))
                             },
                         )
                         .inner;
@@ -182,7 +182,7 @@ fn group(ui: &mut egui::Ui, label: &str, contents: impl FnOnce(&mut egui::Ui)) {
             Vec2::new(width, 18.0),
             egui::Layout::top_down(egui::Align::Center),
             |ui| {
-                ui.label(egui::RichText::new(tr(ui.ctx(), label)).size(14.0).color(
+                ui.label(egui::RichText::new(t!(ui.ctx(), label)).size(14.0).color(
                     egui::Color32::from_gray(if ui.visuals().dark_mode { 208 } else { 68 }),
                 ));
             },

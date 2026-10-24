@@ -3,25 +3,24 @@ use crate::Workspace;
 use egui::{Color32, Sense, Vec2, ecolor::Hsva};
 use paintcraft_core::types::Rgba;
 use paintcraft_ui::chrome::{Controls, color_edit};
-use paintcraft_ui::i18n::tr;
-
+use paintcraft_ui::t;
 pub(super) fn controls(ui: &mut egui::Ui, state: &mut Controls, workspace: &mut Workspace) {
     ui.horizontal(|ui| {
         ui.selectable_value(
             &mut workspace.edit_secondary,
             false,
-            tr(ui.ctx(), "Primary"),
+            t!(ui.ctx(), "Primary"),
         );
         color_edit(ui, "Primary color", &mut state.primary);
         ui.selectable_value(
             &mut workspace.edit_secondary,
             true,
-            tr(ui.ctx(), "Secondary"),
+            t!(ui.ctx(), "Secondary"),
         );
         color_edit(ui, "Secondary color", &mut state.secondary);
     });
     ui.horizontal(|ui| {
-        if ui.button(tr(ui.ctx(), "Swap colors")).clicked() && ui.ctx().current_pass_index() == 0 {
+        if ui.button(t!(ui.ctx(), "Swap colors")).clicked() && ui.ctx().current_pass_index() == 0 {
             std::mem::swap(&mut state.primary, &mut state.secondary);
         }
         let label = if workspace.more_colors {
@@ -29,7 +28,7 @@ pub(super) fn controls(ui: &mut egui::Ui, state: &mut Controls, workspace: &mut 
         } else {
             "More >>"
         };
-        if ui.button(tr(ui.ctx(), label)).clicked() && ui.ctx().current_pass_index() == 0 {
+        if ui.button(t!(ui.ctx(), label)).clicked() && ui.ctx().current_pass_index() == 0 {
             workspace.more_colors = !workspace.more_colors;
         }
     });
@@ -86,7 +85,7 @@ fn wheel(
     const RADIUS: f32 = 86.0;
     let (rect, response) =
         ui.allocate_exact_size(Vec2::splat(2.0 * RADIUS + 8.0), Sense::click_and_drag());
-    let accessible = tr(ui.ctx(), "Color wheel");
+    let accessible = t!(ui.ctx(), "Color wheel");
     response.widget_info(|| {
         egui::WidgetInfo::labeled(egui::Role::ColorWell, ui.is_enabled(), &accessible)
     });
@@ -152,7 +151,7 @@ fn wheel(
             result = Some((wheel_color(delta, RADIUS, selected.0[3]), secondary));
         }
     }
-    response.on_hover_text(tr(ui.ctx(), "Choose hue and saturation. Right-click edits secondary. Arrow keys change hue and saturation."));
+    response.on_hover_text(t!(ui.ctx(), "Choose hue and saturation. Right-click edits secondary. Arrow keys change hue and saturation."));
     result
 }
 
@@ -164,7 +163,7 @@ struct HexDraft {
 
 fn advanced(ui: &mut egui::Ui, color: &mut Rgba) {
     for (index, label) in ["Red", "Green", "Blue", "Alpha"].into_iter().enumerate() {
-        ui.add(egui::Slider::new(&mut color.0[index], 0..=255).text(tr(ui.ctx(), label)));
+        ui.add(egui::Slider::new(&mut color.0[index], 0..=255).text(t!(ui.ctx(), label)));
     }
     let id = ui.scope_id().with("hex-rgba");
     let mut draft = ui
@@ -180,7 +179,7 @@ fn advanced(ui: &mut egui::Ui, color: &mut Rgba) {
         };
     }
     ui.horizontal(|ui| {
-        let label = ui.label(tr(ui.ctx(), "Hex RGBA"));
+        let label = ui.label(t!(ui.ctx(), "Hex RGBA"));
         let response = ui
             .add(
                 egui::TextEdit::singleline(&mut draft.text)
@@ -200,7 +199,7 @@ fn advanced(ui: &mut egui::Ui, color: &mut Rgba) {
         }
     });
     if Rgba::parse(&draft.text).is_none() {
-        ui.weak(tr(
+        ui.weak(t!(
             ui.ctx(),
             "Use #RRGGBBAA; incomplete text has not changed the color.",
         ));

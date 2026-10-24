@@ -2,10 +2,8 @@
 use super::{ClassicVariant, Controls};
 use egui::{Rect, Vec2};
 use paintcraft_tools::Tool;
-use paintcraft_ui::{
-    actions::Context,
-    i18n::{tr, tr_format},
-};
+use paintcraft_ui::actions::Context;
+use paintcraft_ui::t;
 
 pub(super) fn show(
     ui: &mut egui::Ui,
@@ -38,7 +36,7 @@ pub(super) fn show(
             ui.painter().text(
                 response.rect.center_top() + Vec2::new(0.0, 46.0),
                 egui::Align2::CENTER_CENTER,
-                tr(ui.ctx(), "Size"),
+                t!(ui.ctx(), "Size"),
                 egui::TextStyle::Body.resolve(ui.style()),
                 ink,
             );
@@ -47,7 +45,7 @@ pub(super) fn show(
             response
         })
         .inner;
-    response.on_hover_text(tr(ui.ctx(), "Stroke size"));
+    response.on_hover_text(t!(ui.ctx(), "Stroke size"));
 }
 
 fn choices(ui: &mut egui::Ui, variant: ClassicVariant, state: &mut Controls) {
@@ -95,13 +93,13 @@ fn choices(ui: &mut egui::Ui, variant: ClassicVariant, state: &mut Controls) {
                 }
             }
             if ![1, 3, 5, 8].contains(size) {
-                ui.label(tr_format(
+                ui.label(t!(
                     ui.ctx(),
                     "Current: { $size } px",
                     &[("size", size.to_string())],
                 ));
             }
-            let caption = ui.label(tr(ui.ctx(), "Size in pixels"));
+            let caption = ui.label(t!(ui.ctx(), "Size in pixels"));
             ui.add(egui::DragValue::new(size).range(1..=1024))
                 .labelled_by(caption.id);
         });

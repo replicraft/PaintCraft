@@ -1,7 +1,7 @@
 //! Paint-style names for the fixed palette; extra swatches have descriptive names.
 use super::{Action, Controls, CustomColors, Rgba};
 use egui::{Color32, Vec2};
-use paintcraft_ui::i18n::{tr, tr_format};
+use paintcraft_ui::t;
 use paintcraft_ui::{actions::Context, icons::Icon, widgets::icon_button};
 
 const NAMES: [&str; 28] = [
@@ -35,7 +35,7 @@ const NAMES: [&str; 28] = [
     "Periwinkle",
 ];
 pub(super) fn accessible(ctx: &egui::Context, rgb: [u8; 3]) -> String {
-    tr_format(
+    t!(
         ctx,
         "Color #{ $hex }",
         &[("hex", format!("{:02X}{:02X}{:02X}", rgb[0], rgb[1], rgb[2]))],
@@ -45,7 +45,7 @@ pub(super) fn accessible(ctx: &egui::Context, rgb: [u8; 3]) -> String {
 pub(super) fn tooltip(ctx: &egui::Context, index: usize, rgb: [u8; 3]) -> String {
     format!(
         "{}\n#{:02X}{:02X}{:02X}",
-        tr(ctx, NAMES[index]),
+        t!(ctx, NAMES[index]),
         rgb[0],
         rgb[1],
         rgb[2]
@@ -90,11 +90,11 @@ fn edit_button(ui: &mut egui::Ui) -> egui::Response {
         ui,
         egui::Rect::from_center_size(response.rect.center(), Vec2::splat(32.0)),
     );
-    let accessible_label = tr(ui.ctx(), "Edit colors…");
+    let accessible_label = t!(ui.ctx(), "Edit colors…");
     response.widget_info(|| {
         egui::WidgetInfo::labeled(egui::Role::Button, ui.is_enabled(), &accessible_label)
     });
-    response.on_hover_text(tr(ui.ctx(), "Edit colors…"))
+    response.on_hover_text(t!(ui.ctx(), "Edit colors…"))
 }
 
 fn wells(ui: &mut egui::Ui, state: &Controls, context: Context, actions: &mut Vec<Action>) {
@@ -141,7 +141,7 @@ fn wells(ui: &mut egui::Ui, state: &Controls, context: Context, actions: &mut Ve
                             inner,
                             Color32::from_rgb(color.0[0], color.0[1], color.0[2]),
                         );
-                        let accessible = tr(ui.ctx(), label);
+                        let accessible = t!(ui.ctx(), label);
                         response.widget_info(|| {
                             egui::WidgetInfo::labeled(
                                 egui::Role::ColorWell,
@@ -166,8 +166,8 @@ fn well_tooltip(ctx: &egui::Context, label: &str, color: Rgba) -> String {
         .iter()
         .position(|value| *value == rgb)
         .map_or("Custom color", |index| NAMES[index]);
-    let label = tr(ctx, label);
-    let name = tr(ctx, name);
+    let label = t!(ctx, label);
+    let name = t!(ctx, name);
     format!(
         "{label}\n{name}\n#{:02X}{:02X}{:02X}",
         rgb[0], rgb[1], rgb[2]
@@ -210,7 +210,7 @@ fn swatches(
                     let color = custom[slot];
                     let tip = color.map_or_else(
                         || {
-                            tr_format(
+                            t!(
                                 ui.ctx(),
                                 "Custom color { $number } - add a color",
                                 &[("number", (slot + 1).to_string())],
@@ -219,7 +219,7 @@ fn swatches(
                         |c| {
                             format!(
                                 "{}\n#{:02X}{:02X}{:02X}",
-                                tr_format(
+                                t!(
                                     ui.ctx(),
                                     "Custom color { $number }",
                                     &[("number", (slot + 1).to_string())]
@@ -232,7 +232,7 @@ fn swatches(
                     );
                     (
                         color,
-                        tr_format(
+                        t!(
                             ui.ctx(),
                             "Palette custom color { $number }",
                             &[("number", (slot + 1).to_string())],

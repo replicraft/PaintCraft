@@ -1,6 +1,6 @@
 //! Search stays fixed while the family list scrolls. Only visible rows are drawn.
 use super::*;
-use paintcraft_ui::i18n::{tr, tr_format};
+use paintcraft_ui::t;
 mod navigation;
 
 pub fn family(
@@ -58,13 +58,13 @@ pub(super) fn family_with_metrics(
                             [ui.available_width(), metrics.height],
                             egui::TextEdit::singleline(search)
                                 .id(search_id)
-                                .hint_text(tr(ui.ctx(), "Search fonts"))
+                                .hint_text(t!(ui.ctx(), "Search fonts"))
                                 .event_filter(egui::EventFilter {
                                     vertical_arrows: true,
                                     ..Default::default()
                                 }),
                         );
-                        let accessible_label = tr(ui.ctx(), "Search fonts");
+                        let accessible_label = t!(ui.ctx(), "Search fonts");
                         find.widget_info(|| {
                             egui::WidgetInfo::labeled(
                                 egui::Role::TextInput,
@@ -105,8 +105,8 @@ pub(super) fn family_with_metrics(
                         }
                         let candidate = navigation.index(&filtered);
                         let description = navigation.candidate.as_ref().map_or_else(
-                            || tr(ui.ctx(), "No matching fonts"),
-                            |name| tr_format(ui.ctx(), "Keyboard choice: { $name }. Up/Down or Page Up/Down to browse; Enter to apply; Escape to cancel.", &[("name", name.clone())]),
+                            || t!(ui.ctx(), "No matching fonts"),
+                            |name| t!(ui.ctx(), "Keyboard choice: { $name }. Up/Down or Page Up/Down to browse; Enter to apply; Escape to cancel.", &[("name", name.clone())]),
                         );
                         ui.ctx().accesskit_node_builder(find.id, |node| {
                             node.set_description(description);
@@ -127,7 +127,7 @@ pub(super) fn family_with_metrics(
                         if filtered.is_empty() {
                             list.show(ui, |ui| {
                                 if !loading {
-                                    ui.weak(tr(ui.ctx(), "No matching fonts"));
+                                    ui.weak(t!(ui.ctx(), "No matching fonts"));
                                 }
                             });
                         } else {
@@ -151,9 +151,9 @@ pub(super) fn family_with_metrics(
                             });
                         }
                         let footer = if loading {
-                            tr(ui.ctx(), "Loading installed fonts…")
+                            t!(ui.ctx(), "Loading installed fonts…")
                         } else {
-                            tr_format(ui.ctx(), "{ $count } fonts", &[("count", filtered.len().to_string())])
+                            t!(ui.ctx(), "{ $count } fonts", &[("count", filtered.len().to_string())])
                         };
                         ui.add_sized(
                             [ui.available_width(), 20.0],
@@ -172,9 +172,9 @@ pub(super) fn family_with_metrics(
     {
         find.request_focus();
     }
-    let accessible_label = tr(ui.ctx(), "Font family");
+    let accessible_label = t!(ui.ctx(), "Font family");
     font.response.widget_info(|| {
         egui::WidgetInfo::labeled(egui::Role::ComboBox, ui.is_enabled(), &accessible_label)
     });
-    font.response.on_hover_text(tr(ui.ctx(), "Font family"));
+    font.response.on_hover_text(t!(ui.ctx(), "Font family"));
 }

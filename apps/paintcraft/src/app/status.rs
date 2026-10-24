@@ -1,6 +1,7 @@
 //! Document status and zoom presentation.
 use super::*;
-use paintcraft_ui::i18n::{tr, tr_format, tr_status};
+use paintcraft_ui::i18n::tr_status;
+use paintcraft_ui::t;
 
 impl App {
     pub(super) fn status_bar(&mut self, ui: &mut egui::Ui) -> Option<egui::Rect> {
@@ -105,19 +106,19 @@ impl App {
 
     fn status_message(&self) -> String {
         if self.document_count() == 0 {
-            return tr(&self.context, "No document open");
+            return t!(&self.context, "No document open");
         }
         let mut status = if self.editor.status().starts_with("Opened ") {
             self.editor.path().and_then(Path::file_name).map_or_else(
                 || tr_status(&self.context, self.editor.status()),
-                |name| format!("{} {}", tr(&self.context, "Opened"), name.to_string_lossy()),
+                |name| format!("{} {}", t!(&self.context, "Opened"), name.to_string_lossy()),
             )
         } else {
             tr_status(&self.context, self.editor.status())
         };
         if self.editor.is_dirty() {
             status.push_str("  •  ");
-            status.push_str(&tr(&self.context, "unsaved changes"));
+            status.push_str(&t!(&self.context, "unsaved changes"));
         }
         status
     }
@@ -125,16 +126,16 @@ impl App {
     fn checkpoint_tooltip(&self) -> Option<String> {
         let info = self.editor.checkpoint_info()?;
         let when = info.completed.elapsed().map_or_else(
-            |_| tr(&self.context, "at a recorded earlier time"),
+            |_| t!(&self.context, "at a recorded earlier time"),
             |elapsed| {
-                tr_format(
+                t!(
                     &self.context,
                     "{ $seconds } seconds ago",
                     &[("seconds", elapsed.as_secs().to_string())],
                 )
             },
         );
-        let state = tr(
+        let state = t!(
             &self.context,
             if info.state_id == self.editor.document().state_id {
                 "This checkpoint contains the current document."
@@ -142,7 +143,7 @@ impl App {
                 "Newer edits are not in this checkpoint yet."
             },
         );
-        Some(tr_format(
+        Some(t!(
             &self.context,
             "Recovery checkpoint { $sequence } confirmed { $when }. { $state }",
             &[

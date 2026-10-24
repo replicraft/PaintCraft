@@ -2,8 +2,7 @@
 use super::{Metrics, TextAlignment, TextOptions, fonts, size};
 use crate::ClassicVariant;
 use egui::{RichText, Vec2};
-use paintcraft_ui::i18n::tr;
-
+use paintcraft_ui::t;
 #[derive(Debug)]
 pub struct TextControls<'a> {
     pub options: &'a mut TextOptions,
@@ -41,7 +40,7 @@ impl TextControls<'_> {
                         "Strikeout",
                     ),
                 ] {
-                    let label = tr(ui.ctx(), label);
+                    let label = t!(ui.ctx(), label);
                     let response = crate::legacy_surface::button(
                         ui,
                         variant,
@@ -66,7 +65,7 @@ impl TextControls<'_> {
         ui.separator();
         crate::legacy_ribbon::group(ui, "Background", |ui| {
             for (fill, label) in [(true, "Opaque"), (false, "Transparent")] {
-                let label = tr(ui.ctx(), label);
+                let label = t!(ui.ctx(), label);
                 let selected = options.background_fill == fill;
                 let response = crate::legacy_surface::button(
                     ui,
@@ -95,7 +94,7 @@ impl TextControls<'_> {
                     (TextAlignment::Center, "Align center"),
                     (TextAlignment::Right, "Align right"),
                 ] {
-                    let label = tr(ui.ctx(), label);
+                    let label = t!(ui.ctx(), label);
                     let selected = options.alignment == alignment;
                     let response = crate::legacy_surface::button(
                         ui,

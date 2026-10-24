@@ -1,10 +1,9 @@
 //! Brush gallery bound to the shared deterministic brush media.
 use super::{Action, Controls};
 use egui::{Color32, Pos2, Rect, Stroke, Vec2};
-use paintcraft_tools::Tool;
-use paintcraft_ui::i18n::tr;
-
 use paintcraft_core::types::brush::BrushMedia;
+use paintcraft_tools::Tool;
+use paintcraft_ui::t;
 
 pub(super) fn gallery(
     ui: &mut egui::Ui,
@@ -77,9 +76,9 @@ fn row(
     enabled: bool,
     index: usize,
 ) -> egui::Response {
-    let localized_label = tr(ui.ctx(), label);
+    let localized_label = t!(ui.ctx(), label);
     let label = localized_label.as_str();
-    let localized_accessible = tr(ui.ctx(), accessible);
+    let localized_accessible = t!(ui.ctx(), accessible);
     let accessible = localized_accessible.as_str();
     let response = ui.add_enabled(
         enabled,
@@ -125,7 +124,7 @@ fn row(
     if enabled {
         response
     } else {
-        response.on_disabled_hover_text(tr(ui.ctx(), "This brush is not available yet."))
+        response.on_disabled_hover_text(t!(ui.ctx(), "This brush is not available yet."))
     }
 }
 

@@ -1,4 +1,5 @@
 //! Browser integration of shared Classic presentation and editor services.
+use paintcraft_ui::t;
 #[cfg(test)]
 #[path = "crop_tests.rs"]
 mod crop_tests;
@@ -11,7 +12,7 @@ use eframe::egui;
 use paintcraft_classic::{ClassicVariant, Controls, Workspace};
 use paintcraft_tools::{Action as Edit, Tool, ToolOptions};
 use paintcraft_ui::actions::{Action, Context, Frontend, ImageExport, ViewAction};
-use paintcraft_ui::i18n::{picker, set_language, tr, tr_format, tr_status};
+use paintcraft_ui::i18n::{picker, set_language, tr_status};
 
 #[derive(Debug)]
 pub struct WebApp {
@@ -41,7 +42,7 @@ impl WebApp {
         }
         let (width, height) = preferences.canvas.new_size();
         set_language(ctx, preferences.language);
-        paintcraft_ui::fonts::install(ctx);
+        paintcraft_ui::fonts::install_for_locale(ctx, preferences.language.id());
         paintcraft_ui::theme::apply(ctx, ctx.theme());
         Self {
             controls: Controls {
@@ -384,8 +385,8 @@ impl WebApp {
         let context = self.context();
         egui::Panel::top("web-editor-banner").show(ui, |ui| {
             ui.horizontal_wrapped(|ui| {
-                ui.strong(tr(ui.ctx(), "PaintCraft Web · Early editor"));
-                ui.label(tr(ui.ctx(), "Save downloads a project copy. Export downloads PNG. Text stays editable until placed; downloads include the draft."));
+                ui.strong(t!(ui.ctx(), "PaintCraft Web · Early editor"));
+                ui.label(t!(ui.ctx(), "Save downloads a project copy. Export downloads PNG. Text stays editable until placed; downloads include the draft."));
             });
         });
         egui::Panel::top("classic-chrome").show(ui, |ui| {
@@ -461,16 +462,16 @@ impl WebApp {
     fn dialogs(&mut self, ctx: &egui::Context) {
         if self.confirm_replace.is_some() {
             egui::Modal::new(egui::Id::unique("web-new-unsaved")).show(ctx, |ui| {
-                ui.heading(tr(ui.ctx(), "Discard unsaved changes?"));
-                ui.label(tr(ui.ctx(), "Download a project copy to keep your work. Browser downloads cannot confirm a disk save; discard explicitly when ready."));
+                ui.heading(t!(ui.ctx(), "Discard unsaved changes?"));
+                ui.label(t!(ui.ctx(), "Download a project copy to keep your work. Browser downloads cannot confirm a disk save; discard explicitly when ready."));
                 ui.horizontal_wrapped(|ui| {
-                    if ui.button(tr(ui.ctx(), "Download project")).clicked() {
+                    if ui.button(t!(ui.ctx(), "Download project")).clicked() {
                         self.download(ctx,false);
                     }
-                    if ui.button(tr(ui.ctx(), "Discard and continue")).clicked()
+                    if ui.button(t!(ui.ctx(), "Discard and continue")).clicked()
                         && let Some(action) = self.confirm_replace.take()
                     { self.replace(ctx,action); }
-                    if ui.button(tr(ui.ctx(), "Cancel")).clicked() { self.confirm_replace = None; }
+                    if ui.button(t!(ui.ctx(), "Cancel")).clicked() { self.confirm_replace = None; }
                 });
             });
         }
@@ -478,13 +479,13 @@ impl WebApp {
             let mut accept = false;
             let mut cancel = false;
             egui::Modal::new(egui::Id::unique("web-import-losses")).show(ctx, |ui| {
-                ui.heading(tr(ui.ctx(), "Open with these import limitations?"));
+                ui.heading(t!(ui.ctx(), "Open with these import limitations?"));
                 for loss in &self.pending_import.as_ref().expect("pending import").losses {
                     ui.label(loss);
                 }
                 ui.horizontal(|ui| {
-                    accept = ui.button(tr(ui.ctx(), "Open image")).clicked();
-                    cancel = ui.button(tr(ui.ctx(), "Cancel")).clicked();
+                    accept = ui.button(t!(ui.ctx(), "Open image")).clicked();
+                    cancel = ui.button(t!(ui.ctx(), "Cancel")).clicked();
                 });
             });
             if accept && let Some(loaded) = self.pending_import.take() {
@@ -496,20 +497,20 @@ impl WebApp {
         }
         if let Some(mut format) = self.export_confirm {
             egui::Modal::new(egui::Id::unique("web-export-image")).show(ctx, |ui| {
-                ui.heading(tr_format(ui.ctx(), "Export { $format } copy?", &[("format", format.name().into())]));
-                egui::ComboBox::from_label(tr(ui.ctx(), "File type")).selected_text(format.name()).show_ui(ui, |ui| {
+                ui.heading(t!(ui.ctx(), "Export { $format } copy?", &[("format", format.name().into())]));
+                egui::ComboBox::from_label(t!(ui.ctx(), "File type")).selected_text(format.name()).show_ui(ui, |ui| {
                     for choice in ImageExport::ALL { ui.selectable_value(&mut format, choice, choice.name()); }
                 });
                 self.export_confirm = Some(format);
-                ui.label(tr(ui.ctx(), "Image exports flatten visible layers and omit hidden layer data. Save a PaintCraft project to preserve editable layers."));
-                ui.label(tr(ui.ctx(), "Invisible color information will not be retained."));
-                if format == ImageExport::Jpeg { ui.label(tr(ui.ctx(), "JPEG uses lossy compression and cannot preserve transparency.")); }
+                ui.label(t!(ui.ctx(), "Image exports flatten visible layers and omit hidden layer data. Save a PaintCraft project to preserve editable layers."));
+                ui.label(t!(ui.ctx(), "Invisible color information will not be retained."));
+                if format == ImageExport::Jpeg { ui.label(t!(ui.ctx(), "JPEG uses lossy compression and cannot preserve transparency.")); }
                 ui.horizontal(|ui| {
-                    if ui.button(tr_format(ui.ctx(), "Download { $format }", &[("format", format.name().into())])).clicked() {
+                    if ui.button(t!(ui.ctx(), "Download { $format }", &[("format", format.name().into())])).clicked() {
                         self.download_image(ctx, format);
                         self.export_confirm = None;
                     }
-                    if ui.button(tr(ui.ctx(), "Cancel")).clicked() { self.export_confirm = None; }
+                    if ui.button(t!(ui.ctx(), "Cancel")).clicked() { self.export_confirm = None; }
                 });
             });
         }
@@ -518,23 +519,23 @@ impl WebApp {
             let previous_language = self.preferences.language;
             let mut theme_changed = false;
             let previous_font = self.preferences.default_font.clone();
-            egui::Window::new(tr(ctx, "Web settings")).open(&mut self.settings).resizable(false).show(ctx, |ui| {
+            egui::Window::new(t!(ctx, "Web settings")).open(&mut self.settings).resizable(false).show(ctx, |ui| {
                 picker(ui, &mut self.preferences.language);
                 let mut dark = ctx.theme() == egui::Theme::Dark;
-                if ui.checkbox(&mut dark, tr(ui.ctx(), "Dark mode")).changed() {
+                if ui.checkbox(&mut dark, t!(ui.ctx(), "Dark mode")).changed() {
                     let theme = if dark { egui::Theme::Dark } else { egui::Theme::Light };
                     ctx.set_theme(theme); paintcraft_ui::theme::apply(ctx,theme);
                     self.preferences.theme = Some(theme); theme_changed = true;
                 }
-                egui::ComboBox::from_label(tr(ui.ctx(), "Classic skin")).selected_text(self.variant.name()).show_ui(ui, |ui| {
+                egui::ComboBox::from_label(t!(ui.ctx(), "Classic skin")).selected_text(self.variant.name()).show_ui(ui, |ui| {
                     for variant in ClassicVariant::ALL { ui.selectable_value(&mut self.variant,variant,variant.name()); }
                 });
                 ui.separator();
-                ui.heading(tr(ui.ctx(), "Text preferences"));
-                ui.label(tr(ui.ctx(), "Default font"));
+                ui.heading(t!(ui.ctx(), "Text preferences"));
+                ui.label(t!(ui.ctx(), "Default font"));
                 paintcraft_classic::font_family(ui, &mut self.preferences.default_font, &self.text.families, &mut self.text.search, false);
-                ui.label(tr(ui.ctx(), "Preferences are stored in this browser when storage is available. Document pixels are not stored."));
-                ui.label(tr(ui.ctx(), "Browser limits: 4 megapixels, 8192 points per stroke; 64 MiB history budget (older entries may be trimmed)."));
+                ui.label(t!(ui.ctx(), "Preferences are stored in this browser when storage is available. Document pixels are not stored."));
+                ui.label(t!(ui.ctx(), "Browser limits: 4 megapixels, 8192 points per stroke; 64 MiB history budget (older entries may be trimmed)."));
             });
             if previous_language != self.preferences.language {
                 set_language(ctx, self.preferences.language);

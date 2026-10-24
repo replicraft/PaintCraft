@@ -1,8 +1,7 @@
 //! Desktop window integration.
 
 use super::*;
-use paintcraft_ui::i18n::tr;
-
+use paintcraft_ui::t;
 impl App {
     pub(super) fn document_window_title(&self) -> String {
         let name = self
@@ -67,7 +66,7 @@ impl App {
         if self.experience() == Experience::Studio || self.document_count() > 1 {
             egui::Panel::top("documents").show(ui, |ui| {
                 if self.experience() == Experience::Classic {
-                    ui.weak(tr(ui.ctx(), "PaintCraft workspace documents"));
+                    ui.weak(t!(ui.ctx(), "PaintCraft workspace documents"));
                 }
                 self.document_tab_bar(ui, first_pass);
             });
@@ -125,7 +124,7 @@ impl App {
                     self.canvas(ui, accept_input && self.tab_closing.is_none());
                 } else {
                     ui.centered_and_justified(|ui| {
-                        ui.label(tr(ui.ctx(), "Open an image or create a new document."))
+                        ui.label(t!(ui.ctx(), "Open an image or create a new document."))
                     });
                 }
             });

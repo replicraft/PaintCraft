@@ -2,10 +2,8 @@
 use crate::{ClassicVariant, Controls};
 use egui::{Color32, Rect, Stroke, StrokeKind, Vec2};
 use paintcraft_tools::{ShapeStyle, Tool};
-use paintcraft_ui::{
-    i18n::tr,
-    icons::{self, Icon},
-};
+use paintcraft_ui::icons::{self, Icon};
+use paintcraft_ui::t;
 
 pub(super) fn show(ui: &mut egui::Ui, variant: ClassicVariant, state: &mut Controls) {
     let enabled = matches!(
@@ -20,7 +18,7 @@ pub(super) fn show(ui: &mut egui::Ui, variant: ClassicVariant, state: &mut Contr
             let (button, _) = egui::containers::menu::MenuButton::from_button(
                 egui::Button::new((
                     icons::legacy_image(ui.ctx(), icon, 14.0),
-                    tr(ui.ctx(), caption),
+                    t!(ui.ctx(), caption),
                 ))
                 .frame_when_inactive(false),
             )
@@ -67,9 +65,9 @@ pub(super) fn show(ui: &mut egui::Ui, variant: ClassicVariant, state: &mut Contr
             });
             crate::legacy_surface::open_state(ui, &button, accessible);
             if enabled {
-                button.on_hover_text(tr(ui.ctx(), accessible));
+                button.on_hover_text(t!(ui.ctx(), accessible));
             } else {
-                button.on_disabled_hover_text(tr(
+                button.on_disabled_hover_text(t!(
                     ui.ctx(),
                     "Select a rectangle or ellipse to change its outline and fill",
                 ));

@@ -4,8 +4,7 @@ use eframe::egui::{self, Color32, Pos2, Rect, Vec2};
 use paintcraft_core::types::text::TextOptions;
 use paintcraft_tools::{Preview, Tool};
 use paintcraft_ui::actions::ImageExport;
-use paintcraft_ui::i18n::tr;
-
+use paintcraft_ui::t;
 #[derive(Debug)]
 pub(crate) struct TextUi {
     pub style: TextOptions,
@@ -20,7 +19,10 @@ impl Default for TextUi {
         Self {
             style: TextOptions::default(),
             search: String::new(),
-            families: vec!["Noto Sans JP".into(), "Selawik".into()],
+            families: paintcraft_ui::fonts::BUNDLED_FAMILIES
+                .iter()
+                .map(|name| (*name).into())
+                .collect(),
             preedit: String::new(),
             widget_owned_input: false,
             selected_all: false,
@@ -90,11 +92,11 @@ impl WebApp {
                     paintcraft_classic::text_options(ui,&mut self.text.style,&self.text.families,&mut self.text.search,false);
                 }
                 ui.horizontal_wrapped(|ui| {
-                    ui.label(tr(ui.ctx(), "Bundled Selawik · Enter for a new line · Cmd/Ctrl+Enter to place · Escape to cancel"));
-                    if ui.add_enabled(self.editor.tools.is_editing_text() && self.text.preedit.is_empty(),egui::Button::new(tr(ui.ctx(), "Place text"))).clicked() {
+                    ui.label(t!(ui.ctx(), "Bundled Selawik · Enter for a new line · Cmd/Ctrl+Enter to place · Escape to cancel"));
+                    if ui.add_enabled(self.editor.tools.is_editing_text() && self.text.preedit.is_empty(),egui::Button::new(t!(ui.ctx(), "Place text"))).clicked() {
                         self.finish_text();
                     }
-                    if ui.add_enabled(self.editor.tools.is_editing_text(),egui::Button::new(tr(ui.ctx(), "Cancel text"))).clicked() {
+                    if ui.add_enabled(self.editor.tools.is_editing_text(),egui::Button::new(t!(ui.ctx(), "Cancel text"))).clicked() {
                         self.editor.tools.cancel_text();self.text.preedit.clear();
                     }
                 });

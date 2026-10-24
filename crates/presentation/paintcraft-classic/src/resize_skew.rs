@@ -1,7 +1,7 @@
 //! Interactive presentation preview; no image transform is published here.
 use egui::{Align, Color32, FontId, TextStyle, Ui, Vec2};
-use paintcraft_ui::i18n::tr;
 use paintcraft_ui::icons::Icon;
+use paintcraft_ui::t;
 mod legacy;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -101,7 +101,7 @@ pub fn dialog(ctx: &egui::Context, draft: &mut Draft, maximum: u32) -> bool {
                     |ui| {
                         ui.set_width(heading);
                         ui.label(
-                            egui::RichText::new(tr(ui.ctx(), "Resize and skew"))
+                            egui::RichText::new(t!(ui.ctx(), "Resize and skew"))
                                 .size(24.0)
                                 .strong(),
                         );
@@ -125,11 +125,11 @@ pub fn dialog(ctx: &egui::Context, draft: &mut Draft, maximum: u32) -> bool {
                 .auto_shrink([false, true])
                 .show(ui, |ui| {
                     crate::form_controls::style(ui);
-                    ui.strong(tr(ui.ctx(), "Resize"));
+                    ui.strong(t!(ui.ctx(), "Resize"));
                     ui.horizontal(|ui| {
                         ui.spacing_mut().item_spacing.x = 24.0;
-                        ui.radio_value(&mut draft.pixels, false, tr(ui.ctx(), "Percentage"));
-                        ui.radio_value(&mut draft.pixels, true, tr(ui.ctx(), "Pixels"));
+                        ui.radio_value(&mut draft.pixels, false, t!(ui.ctx(), "Percentage"));
+                        ui.radio_value(&mut draft.pixels, true, t!(ui.ctx(), "Pixels"));
                     });
                     ui.add_space(if ctx.content_rect().height() < 420.0 {
                         0.0
@@ -138,7 +138,7 @@ pub fn dialog(ctx: &egui::Context, draft: &mut Draft, maximum: u32) -> bool {
                     });
                     resize_fields(ui, draft, maximum);
                     ui.add_space(16.0);
-                    ui.strong(tr(ui.ctx(), "Skew"));
+                    ui.strong(t!(ui.ctx(), "Skew"));
                     ui.horizontal_top(|ui| {
                         let width = (ui.available_width() - ui.spacing().item_spacing.x) * 0.5;
                         for (axis, label) in ["Horizontal", "Vertical"].into_iter().enumerate() {
@@ -160,7 +160,7 @@ pub fn dialog(ctx: &egui::Context, draft: &mut Draft, maximum: u32) -> bool {
                     });
                 });
             ui.add_space(12.0);
-            ui.label(tr(ui.ctx(), "Preview only")).on_hover_text(tr(
+            ui.label(t!(ui.ctx(), "Preview only")).on_hover_text(t!(
                 ui.ctx(),
                 "Resize and skew changes cannot be applied yet.",
             ));
@@ -169,14 +169,14 @@ pub fn dialog(ctx: &egui::Context, draft: &mut Draft, maximum: u32) -> bool {
                 let button = (width - ui.spacing().item_spacing.x) * 0.5;
                 ui.add_enabled(
                     false,
-                    egui::Button::new(tr(ui.ctx(), "OK")).min_size(Vec2::new(button, 40.0)),
+                    egui::Button::new(t!(ui.ctx(), "OK")).min_size(Vec2::new(button, 40.0)),
                 )
-                .on_disabled_hover_text(tr(
+                .on_disabled_hover_text(t!(
                     ui.ctx(),
                     "Applying resize and skew is not available yet.",
                 ));
                 close |= ui
-                    .add_sized([button, 40.0], egui::Button::new(tr(ui.ctx(), "Cancel")))
+                    .add_sized([button, 40.0], egui::Button::new(t!(ui.ctx(), "Cancel")))
                     .clicked();
             });
         });
@@ -219,7 +219,7 @@ fn resize_fields(ui: &mut Ui, draft: &mut Draft, maximum: u32) {
                         button
                     };
                     let response = ui.add(button);
-                    let accessible_label = tr(ui.ctx(), "Maintain aspect ratio");
+                    let accessible_label = t!(ui.ctx(), "Maintain aspect ratio");
                     response.widget_info(|| {
                         egui::WidgetInfo::selected(
                             egui::Role::Button,
@@ -229,7 +229,7 @@ fn resize_fields(ui: &mut Ui, draft: &mut Draft, maximum: u32) {
                         )
                     });
                     if response
-                        .on_hover_text(tr(ui.ctx(), "Maintain aspect ratio"))
+                        .on_hover_text(t!(ui.ctx(), "Maintain aspect ratio"))
                         .clicked()
                         && ui.ctx().current_pass_index() == 0
                     {
@@ -247,14 +247,14 @@ fn field_column(ui: &mut Ui, width: f32, label: &str, contents: impl FnOnce(&mut
         egui::Layout::top_down(Align::Min),
         |ui| {
             ui.set_width(width);
-            ui.label(tr(ui.ctx(), label));
+            ui.label(t!(ui.ctx(), label));
             contents(ui);
         },
     );
 }
 
 fn numeric_info(ui: &Ui, response: &egui::Response, label: &str, value: f64) {
-    let accessible_label = tr(ui.ctx(), label);
+    let accessible_label = t!(ui.ctx(), label);
     response.widget_info(|| {
         let mut info =
             egui::WidgetInfo::labeled(egui::Role::SpinButton, ui.is_enabled(), &accessible_label);

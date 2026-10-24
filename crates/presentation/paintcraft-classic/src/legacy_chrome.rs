@@ -1,9 +1,9 @@
 //! The Windows 7/10 ribbon has its own quick access strip and Home/View tabs.
 use super::{Action, ClassicVariant, Controls, Workspace};
 use egui::{Color32, Vec2};
+use paintcraft_ui::t;
 use paintcraft_ui::{
     actions::{Context, ViewAction},
-    i18n::tr,
     icons::Icon,
 };
 
@@ -63,7 +63,7 @@ pub(super) fn show(
                 .fill(fill)
                 .inner_margin(egui::Margin::symmetric(8, 2))
                 .show(ui, |ui| {
-                    ui.label(tr(ui.ctx(), "Text Tools"));
+                    ui.label(t!(ui.ctx(), "Text Tools"));
                 });
         }
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -80,7 +80,7 @@ pub(super) fn show(
             }
             actions.extend(paintcraft_ui::chrome::interface_changer(ui, context));
             if ui
-                .selectable_label(workspace.layers, tr(ui.ctx(), "Layers"))
+                .selectable_label(workspace.layers, t!(ui.ctx(), "Layers"))
                 .clicked()
                 && ui.ctx().current_pass_index() == 0
             {
@@ -95,7 +95,7 @@ pub(super) fn show(
                 .fill(Color32::from_rgb(38, 89, 149))
                 .min_size(Vec2::new(42.0, 24.0))
         } else {
-            egui::Button::new(egui::RichText::new(tr(ui.ctx(), "File")).color(Color32::WHITE))
+            egui::Button::new(egui::RichText::new(t!(ui.ctx(), "File")).color(Color32::WHITE))
                 .fill(Color32::from_rgb(25, 121, 202))
                 .min_size(Vec2::new(56.0, 24.0))
         };
@@ -140,13 +140,13 @@ pub(super) fn show(
             }
             super::legacy_controls::arrow(ui, response.rect.right_center() - Vec2::new(7.0, 0.0));
         }
-        let label = tr(ui.ctx(), "File");
+        let label = t!(ui.ctx(), "File");
         response
             .widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, ui.is_enabled(), &label));
         for (view, title) in [(false, "Home"), (true, "View")] {
             let selected = !workspace.legacy_text && workspace.legacy_view == view;
             let response = ui.add(
-                egui::Button::new(tr(ui.ctx(), title))
+                egui::Button::new(t!(ui.ctx(), title))
                     .fill(if selected {
                         if variant == ClassicVariant::V7 && !ui.visuals().dark_mode {
                             Color32::from_rgb(250, 252, 255)
@@ -172,7 +172,7 @@ pub(super) fn show(
         if text_available {
             let selected = workspace.legacy_text;
             let response = ui.add(
-                egui::Button::new(tr(ui.ctx(), "Text"))
+                egui::Button::new(t!(ui.ctx(), "Text"))
                     .fill(if selected {
                         ui.visuals().panel_fill
                     } else if ui.visuals().dark_mode {
@@ -182,7 +182,7 @@ pub(super) fn show(
                     })
                     .min_size(Vec2::new(58.0, 24.0)),
             );
-            let label = tr(ui.ctx(), "Text");
+            let label = t!(ui.ctx(), "Text");
             response.widget_info(|| {
                 egui::WidgetInfo::selected(egui::Role::Tab, ui.is_enabled(), selected, &label)
             });
@@ -291,7 +291,7 @@ fn view_ribbon(ui: &mut egui::Ui, context: Context, actions: &mut Vec<Action>) {
                         action.enabled(context),
                         egui::Checkbox::new(
                             &mut value,
-                            tr(ui.ctx(), action.descriptor_for(context.frontend).label),
+                            t!(ui.ctx(), action.descriptor_for(context.frontend).label),
                         ),
                     )
                     .changed()

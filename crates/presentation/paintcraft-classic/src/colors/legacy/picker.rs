@@ -1,6 +1,7 @@
 //! HSL spectrum and luminosity use the common-dialog scale, not HSV brightness.
 use super::*;
 use egui::{Pos2, Rect, Stroke};
+use paintcraft_ui::t;
 
 fn rgb(h: f32, s: f32, l: f32) -> Color32 {
     let [r, g, b] = super::super::fields::from_hsl([h, s, l]);
@@ -34,7 +35,7 @@ fn spectrum_texture(ctx: &egui::Context) -> egui::TextureHandle {
 pub(super) fn spectrum(ui: &mut egui::Ui, editor: &mut ColorEditor) {
     let (rect, response) =
         ui.allocate_exact_size(Vec2::new(200.0, 160.0), egui::Sense::click_and_drag());
-    let label = tr(ui.ctx(), "Hue and saturation");
+    let label = t!(ui.ctx(), "Hue and saturation");
     response
         .widget_info(|| egui::WidgetInfo::labeled(egui::Role::ColorWell, ui.is_enabled(), &label));
     let texture = spectrum_texture(ui.ctx());
@@ -136,7 +137,7 @@ pub(super) fn luminosity(ui: &mut egui::Ui, editor: &mut ColorEditor) {
         hsl[2] = value as u16;
         super::fields::set_native(editor, hsl);
     }
-    let label = tr(ui.ctx(), "Luminosity");
+    let label = t!(ui.ctx(), "Luminosity");
     response.widget_info(|| egui::WidgetInfo::slider(ui.is_enabled(), value.into(), &label));
     let rect = response.rect;
     let travel = rect.y_range().shrink(rect.width() / 2.5);

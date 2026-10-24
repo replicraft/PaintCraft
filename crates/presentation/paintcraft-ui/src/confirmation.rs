@@ -1,5 +1,5 @@
 //! Bounded confirmation presentation. Callers own and gate all side effects.
-use crate::i18n::tr;
+use crate::t;
 use egui::{Color32, Context, Id, Vec2};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -41,7 +41,7 @@ pub fn show(ctx: &Context, id: Id, prompt: Prompt<'_>) -> Option<Choice> {
             .map(|label| {
                 ui.painter()
                     .layout_no_wrap(
-                        tr(ctx, label),
+                        t!(ctx, label),
                         egui::FontId::proportional(16.0),
                         Color32::WHITE,
                     )
@@ -59,7 +59,7 @@ pub fn show(ctx: &Context, id: Id, prompt: Prompt<'_>) -> Option<Choice> {
             40.0
         };
         let heading = ui.label(
-            egui::RichText::new(tr(ctx, prompt.title))
+            egui::RichText::new(t!(ctx, prompt.title))
                 .size(24.0)
                 .strong(),
         );
@@ -70,7 +70,7 @@ pub fn show(ctx: &Context, id: Id, prompt: Prompt<'_>) -> Option<Choice> {
             .max_height((height - footer_height - heading.rect.height() - 40.0).max(24.0))
             .auto_shrink([false, true])
             .show(ui, |ui| {
-                ui.add(egui::Label::new(tr(ctx, prompt.message)).wrap());
+                ui.add(egui::Label::new(t!(ctx, prompt.message)).wrap());
             });
         ui.add_space(12.0);
         ui.separator();
@@ -88,14 +88,14 @@ pub fn show(ctx: &Context, id: Id, prompt: Prompt<'_>) -> Option<Choice> {
                 let Some(label) = label else {
                     continue;
                 };
-                let mut button = egui::Button::new(tr(ctx, label));
+                let mut button = egui::Button::new(t!(ctx, label));
                 if value == Choice::Accept {
                     let ink = if ui.visuals().dark_mode {
                         Color32::from_rgb(16, 16, 16)
                     } else {
                         Color32::WHITE
                     };
-                    button = egui::Button::new(egui::RichText::new(tr(ctx, label)).color(ink))
+                    button = egui::Button::new(egui::RichText::new(t!(ctx, label)).color(ink))
                         .fill(ui.visuals().selection.stroke.color);
                 }
                 if ui

@@ -1,8 +1,7 @@
 //! Joined primary tool/menu controls; menu contents and editing remain host-owned.
 use super::*;
 use egui::{Color32, CornerRadius, Response, Shape, Stroke, StrokeKind};
-use paintcraft_ui::i18n::tr;
-
+use paintcraft_ui::t;
 pub(super) fn show(
     ui: &mut egui::Ui,
     state: &mut Controls,
@@ -15,8 +14,8 @@ pub(super) fn show(
         Tool::Brush => (Icon::Brush, "Brushes"),
         _ => unreachable!("only Selection and Brushes have primary split controls"),
     };
-    let localized_tool = tr(ui.ctx(), tool.name());
-    let localized_menu = tr(ui.ctx(), label);
+    let localized_tool = t!(ui.ctx(), tool.name());
+    let localized_menu = t!(ui.ctx(), label);
     ui.allocate_ui_with_layout(
         Vec2::new(64.0, 80.0),
         egui::Layout::top_down(egui::Align::Center),
@@ -147,8 +146,8 @@ pub(super) fn show(
                 }
             }
             chevron(ui, &arrow);
-            main.on_hover_text(tr(ui.ctx(), tool.name()));
-            arrow.on_hover_text(tr(ui.ctx(), label));
+            main.on_hover_text(t!(ui.ctx(), tool.name()));
+            arrow.on_hover_text(t!(ui.ctx(), label));
         },
     );
 }

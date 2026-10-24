@@ -1,11 +1,8 @@
 //! Square Color 1/Color 2 wells and a three-row palette, matching the old ribbon.
 use super::{Action, ClassicVariant, Controls, PALETTE, Rgba, Workspace};
 use egui::{Color32, Rect, Vec2};
-use paintcraft_ui::{
-    actions::Context,
-    i18n::{tr, tr_format},
-    icons::Icon,
-};
+use paintcraft_ui::t;
+use paintcraft_ui::{actions::Context, icons::Icon};
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum PaletteTarget {
@@ -95,11 +92,11 @@ pub(super) fn show(
             ui.painter().text(
                 response.rect.center_bottom() - Vec2::new(0.0, 17.0),
                 egui::Align2::CENTER_CENTER,
-                tr(ui.ctx(), caption).replace(' ', "\n"),
+                t!(ui.ctx(), caption).replace(' ', "\n"),
                 egui::TextStyle::Body.resolve(ui.style()),
                 ui.visuals().text_color(),
             );
-            let accessible = tr(ui.ctx(), label);
+            let accessible = t!(ui.ctx(), label);
             response.widget_info(|| {
                 egui::WidgetInfo::selected(
                     egui::Role::ColorWell,
@@ -154,7 +151,7 @@ pub(super) fn show(
                     let label = if index < 20 {
                         super::palette::accessible(ui.ctx(), rgb)
                     } else {
-                        tr_format(
+                        t!(
                             ui.ctx(),
                             "Palette custom color { $number }",
                             &[("number", (slot + 1).to_string())],
@@ -166,7 +163,7 @@ pub(super) fn show(
                     let tip = if index < 20 {
                         super::palette::tooltip(ui.ctx(), index, rgb)
                     } else {
-                        tr_format(
+                        t!(
                             ui.ctx(),
                             "Custom color { $number }",
                             &[("number", (slot + 1).to_string())],

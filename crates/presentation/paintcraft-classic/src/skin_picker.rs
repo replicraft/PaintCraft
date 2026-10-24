@@ -1,8 +1,7 @@
 //! Responsive skin choice presentation. The host owns drafts and persistence.
 use super::ClassicVariant;
 use egui::{Align2, Color32, FontId, Rect, Vec2};
-use paintcraft_ui::i18n::tr;
-
+use paintcraft_ui::t;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Choice {
     Pending,
@@ -20,7 +19,7 @@ pub fn show(ctx: &egui::Context, current: &mut ClassicVariant, first_visit: bool
     ctx.memory_mut(|memory| memory.set_modal_layer(layer));
     ctx.layer_painter(layer)
         .rect_filled(ctx.content_rect(), 0, Color32::from_black_alpha(96));
-    egui::Window::new(tr(ctx, "Choose your Classic skin"))
+    egui::Window::new(t!(ctx, "Choose your Classic skin"))
         .id(id)
         .order(egui::Order::Foreground)
         .title_bar(false)
@@ -50,7 +49,7 @@ pub fn show(ctx: &egui::Context, current: &mut ClassicVariant, first_visit: bool
                     |ui| {
                         ui.set_width(width - 48.0);
                         ui.label(
-                            egui::RichText::new(tr(
+                            egui::RichText::new(t!(
                                 ui.ctx(),
                                 "Choose your Classic skin",
                             ))
@@ -83,7 +82,7 @@ pub fn show(ctx: &egui::Context, current: &mut ClassicVariant, first_visit: bool
                 .auto_shrink([false, true])
                 .show(ui, |ui| {
                     ui.add(egui::Label::new(
-                        tr(ui.ctx(), "Choose a Paint skin. Change it later from the changer button or Settings."),
+                        t!(ui.ctx(), "Choose a Paint skin. Change it later from the changer button or Settings."),
                     ).wrap());
                     ui.add_space(12.0);
                     if wide {
@@ -111,7 +110,7 @@ pub fn show(ctx: &egui::Context, current: &mut ClassicVariant, first_visit: bool
                     Color32::WHITE
                 };
                 let apply = egui::Button::new(
-                    egui::RichText::new(tr(ui.ctx(), if first_visit { "Continue" } else { "Apply" })).color(ink),
+                    egui::RichText::new(t!(ui.ctx(), if first_visit { "Continue" } else { "Apply" })).color(ink),
                 )
                 .fill(ui.visuals().selection.stroke.color);
                 if ui.add_sized([button_width, 40.0], apply).clicked() {
@@ -120,7 +119,7 @@ pub fn show(ctx: &egui::Context, current: &mut ClassicVariant, first_visit: bool
                 if ui
                     .add_sized(
                         [button_width, 40.0],
-                        egui::Button::new(tr(ui.ctx(), "Cancel")),
+                        egui::Button::new(t!(ui.ctx(), "Cancel")),
                     )
                     .clicked()
                 {

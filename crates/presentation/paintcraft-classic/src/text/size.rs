@@ -1,7 +1,6 @@
 //! Point-size entry and presets for the text toolbar.
 use super::*;
-use paintcraft_ui::i18n::tr;
-
+use paintcraft_ui::t;
 const FONT_SIZES: [u16; 16] = [8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72];
 
 pub(super) fn font_size(ui: &mut Ui, points: &mut u16) {
@@ -20,7 +19,7 @@ pub(super) fn font_size_with_metrics(ui: &mut Ui, points: &mut u16, metrics: Met
             ui.spacing_mut().button_padding.x = 14.0;
             ui.style_mut().drag_value_text_style = egui::TextStyle::Body;
             let size = size_entry(ui, points, metrics);
-            let accessible_label = tr(ui.ctx(), "Font size");
+            let accessible_label = t!(ui.ctx(), "Font size");
             size.widget_info(|| {
                 egui::WidgetInfo::labeled(
                     egui::Role::SpinButton,
@@ -28,7 +27,7 @@ pub(super) fn font_size_with_metrics(ui: &mut Ui, points: &mut u16, metrics: Met
                     &accessible_label,
                 )
             });
-            size.on_hover_text(tr(
+            size.on_hover_text(t!(
                 ui.ctx(),
                 "Font size in points · type a value or choose a preset",
             ));
@@ -73,7 +72,7 @@ pub(super) fn font_size_with_metrics(ui: &mut Ui, points: &mut u16, metrics: Met
             });
             let open = egui::Popup::is_id_open(ui.ctx(), egui::Popup::menu(&response).get_id());
             ui.data_mut(|data| data.insert_temp(state_id, open));
-            let accessible_label = tr(ui.ctx(), "Font size presets");
+            let accessible_label = t!(ui.ctx(), "Font size presets");
             response.widget_info(|| {
                 egui::WidgetInfo::labeled(egui::Role::Button, ui.is_enabled(), &accessible_label)
             });
@@ -86,7 +85,7 @@ pub(super) fn font_size_with_metrics(ui: &mut Ui, points: &mut u16, metrics: Met
                 ],
                 egui::Stroke::new(1.0, ui.visuals().text_color()),
             ));
-            response.on_hover_text(tr(ui.ctx(), "Font size presets"));
+            response.on_hover_text(t!(ui.ctx(), "Font size presets"));
         },
     );
 }

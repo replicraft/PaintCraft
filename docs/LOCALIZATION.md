@@ -85,3 +85,11 @@ Fluent bundles are cached per thread, while language belongs to each egui
 context. Native menus update labels without changing action IDs. OS-supplied
 standard menu entries retain the host system's localization. Native file-picker
 titles and filter labels are localized at the presentation boundary.
+
+Verified on 2026-10-24: 264 desktop GUI tests, 69 browser library tests, 35 shared
+UI tests and three targeted document-text tests passed. Explicit native capture
+and manual-review tests remain ignored. Workspace checking, strict all-target
+Clippy for the affected packages, the web release build, catalog validation,
+source length and whitespace checks passed. Raw local logs are in
+`docs/validation/localization-seven-languages-2026-10-24/`. These automated
+checks establish coverage and behavior, not native-speaker translation approval.

@@ -1,7 +1,6 @@
 //! Presentation-only reveal state for Classic's automatically hidden toolbar.
 use egui::{Rect, Ui};
-use paintcraft_ui::i18n::tr;
-
+use paintcraft_ui::t;
 /// Direct ribbon access to the same persisted choices offered in View.
 pub(super) fn menu(
     ui: &mut Ui,
@@ -51,7 +50,7 @@ pub(super) fn menu(
         egui::Stroke::new(1.0, ui.visuals().strong_text_color()),
     ));
     super::dropdowns::open_state(ui, &response, "Toolbar display options");
-    response.on_hover_text(tr(ui.ctx(), "Toolbar display options"));
+    response.on_hover_text(t!(ui.ctx(), "Toolbar display options"));
 }
 
 #[derive(Debug, Default)]

@@ -7,7 +7,7 @@ use paintcraft_document::Document;
 use paintcraft_formats::{image, pcnd};
 use paintcraft_ui::actions::ImageExport;
 #[cfg(target_arch = "wasm32")]
-use paintcraft_ui::i18n::{tr, tr_format};
+use paintcraft_ui::t;
 #[cfg(any(target_arch = "wasm32", test))]
 use sha2::{Digest, Sha256};
 use std::{cell::RefCell, rc::Rc};
@@ -124,13 +124,13 @@ impl Files {
                 Some(ImageExport::Jpeg) => "image/jpeg",
                 Some(ImageExport::Bmp) => "image/bmp",
             };
-            let title = tr(&ctx, "Download a copy");
-            let description = tr(
+            let title = t!(&ctx, "Download a copy");
+            let description = t!(
                 &ctx,
                 "Keep this tab open until you have verified the downloaded file.",
             );
-            let link = tr_format(&ctx, "Download { $name }", &[("name", name.clone())]);
-            let cancel = tr(&ctx, "Cancel");
+            let link = t!(&ctx, "Download { $name }", &[("name", name.clone())]);
+            let cancel = t!(&ctx, "Cancel");
             let result = wasm_bindgen_futures::JsFuture::from(download_copy(
                 &bytes,
                 &name,

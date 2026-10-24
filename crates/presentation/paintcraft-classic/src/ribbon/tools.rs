@@ -1,7 +1,6 @@
 //! V11 tool controls; other skins retain their shared colorful toolbar.
 use super::*;
-use paintcraft_ui::i18n::tr;
-
+use paintcraft_ui::t;
 pub(super) fn tool_button(ui: &mut egui::Ui, state: &mut Controls, tool: Tool) -> bool {
     let icon = match tool {
         Tool::Pencil => Icon::Pencil,
@@ -21,7 +20,7 @@ pub(super) fn tool_button(ui: &mut egui::Ui, state: &mut Controls, tool: Tool) -
 }
 
 fn button(ui: &mut egui::Ui, label: &str, icon: Icon, selected: bool) -> egui::Response {
-    let localized_label = tr(ui.ctx(), label);
+    let localized_label = t!(ui.ctx(), label);
     let label = localized_label.as_str();
     let response = crate::control_surface::button(
         ui,
@@ -36,7 +35,7 @@ fn button(ui: &mut egui::Ui, label: &str, icon: Icon, selected: bool) -> egui::R
             ui,
             egui::Rect::from_center_size(response.rect.center(), Vec2::splat(24.0)),
         );
-    let accessible_label = tr(ui.ctx(), label);
+    let accessible_label = t!(ui.ctx(), label);
     response.widget_info(|| {
         egui::WidgetInfo::selected(
             egui::Role::Button,
@@ -45,5 +44,5 @@ fn button(ui: &mut egui::Ui, label: &str, icon: Icon, selected: bool) -> egui::R
             &accessible_label,
         )
     });
-    response.on_hover_text(tr(ui.ctx(), label))
+    response.on_hover_text(t!(ui.ctx(), label))
 }

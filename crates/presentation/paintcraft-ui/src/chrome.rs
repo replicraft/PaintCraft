@@ -1,6 +1,6 @@
 //! Shared frontend controls and action intentions; the shell owns execution.
 
-use crate::i18n::tr;
+use crate::t;
 use crate::widgets::{Icon, icon_button};
 use egui::Color32;
 use paintcraft_core::types::Rgba;
@@ -46,17 +46,17 @@ pub fn options_with_shape_style(
             };
             let slider = ui.add(
                 egui::Slider::new(size, 1..=64)
-                    .text(tr(ui.ctx(), "Size"))
+                    .text(t!(ui.ctx(), "Size"))
                     .suffix(" px")
                     .show_value(false)
                     .clamping(egui::SliderClamping::Edits),
             );
-            let accessible_label = tr(ui.ctx(), "Tool size");
+            let accessible_label = t!(ui.ctx(), "Tool size");
             slider.widget_info(|| {
                 egui::WidgetInfo::labeled(egui::Role::Slider, ui.is_enabled(), &accessible_label)
             });
             let value = ui.add(egui::DragValue::new(size).range(1..=1024).suffix(" px"));
-            let accessible_label = tr(ui.ctx(), "Size");
+            let accessible_label = t!(ui.ctx(), "Size");
             value.widget_info(|| {
                 egui::WidgetInfo::labeled(
                     egui::Role::SpinButton,
@@ -66,25 +66,25 @@ pub fn options_with_shape_style(
             });
         }
         if state.tool == Tool::Brush {
-            ui.selectable_value(&mut state.options.round, true, tr(ui.ctx(), "Round"));
-            ui.selectable_value(&mut state.options.round, false, tr(ui.ctx(), "Square"));
+            ui.selectable_value(&mut state.options.round, true, t!(ui.ctx(), "Round"));
+            ui.selectable_value(&mut state.options.round, false, t!(ui.ctx(), "Square"));
             if state.options.round {
                 use paintcraft_core::types::brush::BrushMedia;
-                egui::ComboBox::from_label(tr(ui.ctx(), "Brush medium"))
-                    .selected_text(tr(ui.ctx(), state.options.media.name()))
+                egui::ComboBox::from_label(t!(ui.ctx(), "Brush medium"))
+                    .selected_text(t!(ui.ctx(), state.options.media.name()))
                     .show_ui(ui, |ui| {
                         for media in BrushMedia::ALL {
                             ui.selectable_value(
                                 &mut state.options.media,
                                 media,
-                                tr(ui.ctx(), media.name()),
+                                t!(ui.ctx(), media.name()),
                             );
                         }
                     });
             }
             ui.add(
                 egui::Slider::new(&mut state.options.brush_opacity, 0..=100)
-                    .text(tr(ui.ctx(), "Brush opacity"))
+                    .text(t!(ui.ctx(), "Brush opacity"))
                     .suffix("%"),
             );
         }
@@ -99,42 +99,42 @@ pub fn options_with_shape_style(
                 (ShapeStyle::Filled, "Filled"),
                 (ShapeStyle::Both, "Both"),
             ] {
-                ui.selectable_value(&mut state.options.style, style, tr(ui.ctx(), label));
+                ui.selectable_value(&mut state.options.style, style, t!(ui.ctx(), label));
             }
         }
         if state.tool == Tool::Fill {
-            let label = ui.label(tr(ui.ctx(), "Tolerance"));
+            let label = ui.label(t!(ui.ctx(), "Tolerance"));
             ui.add(egui::DragValue::new(&mut state.options.tolerance).range(0..=255))
                 .labelled_by(label.id);
         }
         if state.tool == Tool::Text {
-            ui.label(tr(
+            ui.label(t!(
                 ui.ctx(),
                 "Command/Ctrl+Enter to place · Escape to cancel",
             ));
         }
         if state.tool == Tool::Pan {
-            ui.label(tr(
+            ui.label(t!(
                 ui.ctx(),
                 "Drag to pan · Space+drag or Space+arrows · Ctrl+Space+arrows moves faster",
             ));
         }
         if state.tool == Tool::Magnifier {
-            ui.label(tr(
+            ui.label(t!(
                 ui.ctx(),
                 "Drag an area to zoom in · Right-click to zoom out",
             ));
         }
         if state.tool == Tool::Select {
-            if ui.button(tr(ui.ctx(), "Select all")).clicked() {
+            if ui.button(t!(ui.ctx(), "Select all")).clicked() {
                 actions.push(Action::SelectAll);
             }
-            if ui.button(tr(ui.ctx(), "Deselect")).clicked() {
+            if ui.button(t!(ui.ctx(), "Deselect")).clicked() {
                 actions.push(Action::Deselect);
             }
         }
         if matches!(state.tool, Tool::Pencil) {
-            ui.weak(tr(ui.ctx(), "Pencil · hard edge"));
+            ui.weak(t!(ui.ctx(), "Pencil · hard edge"));
         }
     });
 }
@@ -191,7 +191,7 @@ pub fn tool_button(ui: &mut egui::Ui, state: &mut Controls, tool: Tool, large: b
 pub fn color_edit(ui: &mut egui::Ui, label: &str, value: &mut Rgba) {
     let mut color = Color32::from_rgba_unmultiplied(value.0[0], value.0[1], value.0[2], value.0[3]);
     let response = ui.color_edit_button_srgba(&mut color);
-    let label = tr(ui.ctx(), label);
+    let label = t!(ui.ctx(), label);
     response
         .widget_info(|| egui::WidgetInfo::labeled(egui::Role::ColorWell, ui.is_enabled(), &label));
     if response.changed() {
@@ -202,7 +202,7 @@ pub fn color_edit(ui: &mut egui::Ui, label: &str, value: &mut Rgba) {
 /// Kept next to Settings in either frontend; switching policy belongs to the host.
 pub fn interface_changer(ui: &mut egui::Ui, context: crate::actions::Context) -> Vec<Action> {
     let mut actions = Vec::new();
-    ui.menu_button(tr(ui.ctx(), "Interface"), |ui| {
+    ui.menu_button(t!(ui.ctx(), "Interface"), |ui| {
         for frontend in [
             crate::actions::Frontend::Classic,
             crate::actions::Frontend::Studio,
@@ -215,7 +215,7 @@ pub fn interface_changer(ui: &mut egui::Ui, context: crate::actions::Context) ->
         }
         if context.frontend == crate::actions::Frontend::Classic {
             ui.separator();
-            if ui.button(tr(ui.ctx(), "Change Classic skin…")).clicked() {
+            if ui.button(t!(ui.ctx(), "Change Classic skin…")).clicked() {
                 actions.push(Action::Interface);
                 ui.close();
             }
@@ -231,9 +231,9 @@ pub fn picker_options(ui: &mut egui::Ui, state: &mut Controls) {
         return;
     }
     ui.horizontal_wrapped(|ui| {
-        let label = ui.label(tr(ui.ctx(), "Sampling source"));
+        let label = ui.label(t!(ui.ctx(), "Sampling source"));
         egui::ComboBox::from_id_salt("picker-source")
-            .selected_text(tr(
+            .selected_text(t!(
                 ui.ctx(),
                 match state.options.picker_source {
                     SampleSource::Image => "Image",
@@ -244,17 +244,17 @@ pub fn picker_options(ui: &mut egui::Ui, state: &mut Controls) {
                 ui.selectable_value(
                     &mut state.options.picker_source,
                     SampleSource::Layer,
-                    tr(ui.ctx(), "Layer"),
+                    t!(ui.ctx(), "Layer"),
                 );
                 ui.selectable_value(
                     &mut state.options.picker_source,
                     SampleSource::Image,
-                    tr(ui.ctx(), "Image"),
+                    t!(ui.ctx(), "Image"),
                 );
             })
             .response
             .labelled_by(label.id);
-        let label = ui.label(tr(ui.ctx(), "Sample size"));
+        let label = ui.label(t!(ui.ctx(), "Sample size"));
         egui::ComboBox::from_id_salt("picker-size")
             .selected_text(format!(
                 "{} × {}",
@@ -272,9 +272,9 @@ pub fn picker_options(ui: &mut egui::Ui, state: &mut Controls) {
             })
             .response
             .labelled_by(label.id);
-        let label = ui.label(tr(ui.ctx(), "After picking"));
+        let label = ui.label(t!(ui.ctx(), "After picking"));
         egui::ComboBox::from_id_salt("picker-after")
-            .selected_text(tr(
+            .selected_text(t!(
                 ui.ctx(),
                 match state.options.picker_after {
                     PickerAfter::Stay => "Keep color picker",
@@ -288,11 +288,11 @@ pub fn picker_options(ui: &mut egui::Ui, state: &mut Controls) {
                     (PickerAfter::Previous, "Previous tool"),
                     (PickerAfter::Pencil, "Switch to Pencil"),
                 ] {
-                    ui.selectable_value(&mut state.options.picker_after, value, tr(ui.ctx(), name));
+                    ui.selectable_value(&mut state.options.picker_after, value, t!(ui.ctx(), name));
                 }
             })
             .response
             .labelled_by(label.id);
-        ui.label(tr(ui.ctx(), "Ctrl-click samples the image"));
+        ui.label(t!(ui.ctx(), "Ctrl-click samples the image"));
     });
 }

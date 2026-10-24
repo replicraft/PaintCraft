@@ -1,7 +1,7 @@
 //! Desktop chrome integration.
 
 use super::*;
-use paintcraft_ui::i18n::{tr, tr_format};
+use paintcraft_ui::t;
 
 impl App {
     pub(super) fn action_context(&self) -> paintcraft_ui::actions::Context {
@@ -57,7 +57,7 @@ impl App {
         let ctx = ui.ctx().clone();
         if self.experience() == Experience::Studio {
             ui.horizontal(|ui| {
-                ui.strong(tr(ui.ctx(), "PaintCraft Studio"));
+                ui.strong(t!(ui.ctx(), "PaintCraft Studio"));
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     if paintcraft_ui::widgets::icon_button(
                         ui,
@@ -354,7 +354,7 @@ impl App {
                 losses,
                 exists,
             } => {
-                let mut t = tr_format(&ctx, "Export { $path } as { $format }.", &[("path", path.display().to_string()), ("format", format.name().into())]);
+                let mut t = t!(&ctx, "Export { $path } as { $format }.", &[("path", path.display().to_string()), ("format", format.name().into())]);
                 for loss in losses {
                     let explanation = match loss.as_str() {
                         "flatten" => "Visible layers will be flattened into one picture.",
@@ -364,9 +364,9 @@ impl App {
                         _ => loss,
                     };
                     t.push('\n');
-                    t.push_str(&tr(&ctx, explanation));
+                    t.push_str(&t!(&ctx, explanation));
                 }
-                if *exists { t.push('\n'); t.push_str(&tr(&ctx, "The file exists and will be replaced.")); }
+                if *exists { t.push('\n'); t.push_str(&t!(&ctx, "The file exists and will be replaced.")); }
                 ("Export", t, "Export now")
             }
         };

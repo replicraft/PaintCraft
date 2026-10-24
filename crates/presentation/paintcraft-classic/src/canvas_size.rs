@@ -1,6 +1,6 @@
 //! Canvas dimension/default presentation; document and preference writes stay in the host.
 use egui::{Color32, Vec2};
-use paintcraft_ui::i18n::{tr, tr_format};
+use paintcraft_ui::t;
 mod defaults;
 pub use defaults::{CanvasDefaults, DEFAULT_SIZE, SIZE_MAX};
 mod fields;
@@ -124,7 +124,7 @@ fn dialog(
                     } else {
                         88
                     }));
-                let close_label = tr_format(ui.ctx(), "Close { $title }", &[("title", tr(ui.ctx(), title).to_lowercase())]);
+                let close_label = t!(ui.ctx(), "Close { $title }", &[("title", t!(ui.ctx(), title).to_lowercase())]);
                 let header = ui.horizontal_top(|ui| {
                     let heading_width = width - 40.0 - ui.spacing().item_spacing.x;
                     ui.allocate_ui_with_layout(
@@ -132,7 +132,7 @@ fn dialog(
                         egui::Layout::top_down(egui::Align::Min),
                         |ui| {
                             ui.set_width(heading_width);
-                            ui.label(egui::RichText::new(tr(ui.ctx(), title)).size(24.0).strong());
+                            ui.label(egui::RichText::new(t!(ui.ctx(), title)).size(24.0).strong());
                         },
                     );
                     if paintcraft_ui::widgets::classic_menu_button(
@@ -167,15 +167,15 @@ fn dialog(
                     .inner_margin(12)
                     .show(ui, |ui| {
                         ui.set_min_width(ui.available_width().max(0.0));
-                        ui.strong(tr(ui.ctx(), "Dimensions"));
+                        ui.strong(t!(ui.ctx(), "Dimensions"));
                         ui.add_space(8.0);
                         if properties.is_some() {
                             ui.horizontal_wrapped(|ui| {
                                 for label in ["Inches", "Centimeters"] {
-                                    ui.add_enabled(false, egui::RadioButton::new(false, tr(ui.ctx(), label)))
-                                        .on_disabled_hover_text(tr(ui.ctx(), "Physical units require image resolution metadata, which is not available for this document."));
+                                    ui.add_enabled(false, egui::RadioButton::new(false, t!(ui.ctx(), label)))
+                                        .on_disabled_hover_text(t!(ui.ctx(), "Physical units require image resolution metadata, which is not available for this document."));
                                 }
-                                let _ = ui.radio(true, tr(ui.ctx(), "Pixels"));
+                                let _ = ui.radio(true, t!(ui.ctx(), "Pixels"));
                             });
                             ui.add_space(8.0);
                         }
@@ -184,39 +184,39 @@ fn dialog(
                 if let Some(maximum) = max_pixels {
                     ui.add_space(8.0);
                     let too_large = u64::from(draft.size.0) * u64::from(draft.size.1) > maximum;
-                    let label = tr_format(ui.ctx(), "Image limit: { $maximum } pixels", &[("maximum", maximum.to_string())]);
+                    let label = t!(ui.ctx(), "Image limit: { $maximum } pixels", &[("maximum", maximum.to_string())]);
                     if too_large { ui.colored_label(ui.visuals().error_fg_color,label); }
-                    else { ui.label(tr(ui.ctx(), label)); }
+                    else { ui.label(t!(ui.ctx(), label)); }
                 }
                 if properties.is_some() {
                     ui.add_space(12.0);
-                    ui.strong(tr(ui.ctx(), "Colors"));
+                    ui.strong(t!(ui.ctx(), "Colors"));
                     ui.horizontal_wrapped(|ui| {
-                        ui.add_enabled(false, egui::RadioButton::new(false, tr(ui.ctx(), "Black and white")))
-                            .on_disabled_hover_text(tr(ui.ctx(), "Monochrome conversion is not available yet."));
-                        let _ = ui.radio(true, tr(ui.ctx(), "Color"));
+                        ui.add_enabled(false, egui::RadioButton::new(false, t!(ui.ctx(), "Black and white")))
+                            .on_disabled_hover_text(t!(ui.ctx(), "Monochrome conversion is not available yet."));
+                        let _ = ui.radio(true, t!(ui.ctx(), "Color"));
                     });
                 }
                 ui.add_space(12.0);
                 if let Some(startup) = &mut draft.startup {
-                    ui.strong(tr(ui.ctx(), "When you create a new image"));
+                    ui.strong(t!(ui.ctx(), "When you create a new image"));
                     ui.radio_value(
                         &mut startup.remember_last,
                         true,
-                        tr(ui.ctx(), "Remember last canvas size"),
+                        t!(ui.ctx(), "Remember last canvas size"),
                     );
                     ui.radio_value(
                         &mut startup.remember_last,
                         false,
-                        tr(ui.ctx(), "Use configured default size"),
+                        t!(ui.ctx(), "Use configured default size"),
                     );
                     if let Some((w, h)) = startup.last {
-                        ui.weak(tr_format(ui.ctx(), "Last canvas: { $width } × { $height } pixels", &[("width", w.to_string()), ("height", h.to_string())]));
+                        ui.weak(t!(ui.ctx(), "Last canvas: { $width } × { $height } pixels", &[("width", w.to_string()), ("height", h.to_string())]));
                     }
                     ui.add_space(8.0);
-                    ui.label(tr(ui.ctx(), "Applies to new Classic documents. The current image stays as it is."));
+                    ui.label(t!(ui.ctx(), "Applies to new Classic documents. The current image stays as it is."));
                 } else {
-                    ui.label(tr(ui.ctx(), "Keep the top-left corner. Content outside the canvas is preserved."));
+                    ui.label(t!(ui.ctx(), "Keep the top-left corner. Content outside the canvas is preserved."));
                 }
             });
                 ui.add_space(12.0);
@@ -231,14 +231,14 @@ fn dialog(
                     let valid = (1..=max_dimension).contains(&draft.size.0)
                         && (1..=max_dimension).contains(&draft.size.1)
                         && max_pixels.is_none_or(|maximum| u64::from(draft.size.0) * u64::from(draft.size.1) <= maximum);
-                    let apply = egui::Button::new(egui::RichText::new(tr(ui.ctx(), if properties.is_some() {"OK"} else {"Apply"})).color(ink))
+                    let apply = egui::Button::new(egui::RichText::new(t!(ui.ctx(), if properties.is_some() {"OK"} else {"Apply"})).color(ink))
                         .fill(ui.visuals().selection.stroke.color)
                         .min_size(Vec2::new(button_width, 40.0));
                     if ui.add_enabled(valid, apply).clicked() {
                         result = CanvasResponse::Apply;
                     }
                     if ui
-                        .add_sized([button_width, 40.0], egui::Button::new(tr(ui.ctx(), "Cancel")))
+                        .add_sized([button_width, 40.0], egui::Button::new(t!(ui.ctx(), "Cancel")))
                         .clicked()
                     {
                         result = CanvasResponse::Cancel;
@@ -252,12 +252,12 @@ fn dialog(
 }
 
 fn properties_info(ui: &mut egui::Ui, name: &str) {
-    ui.strong(tr(ui.ctx(), "Image"));
+    ui.strong(t!(ui.ctx(), "Image"));
     let value_width = (ui.available_width() - 104.0 - ui.spacing().item_spacing.x).max(40.0);
     egui::Grid::new("image-properties-attributes")
         .max_col_width(value_width)
         .show(ui, |ui| {
-            ui.label(tr(ui.ctx(), "File name"));
+            ui.label(t!(ui.ctx(), "File name"));
             ui.add(
                 egui::Label::new(name)
                     .truncate()
@@ -265,8 +265,8 @@ fn properties_info(ui: &mut egui::Ui, name: &str) {
             )
             .on_hover_text(name);
             ui.end_row();
-            ui.label(tr(ui.ctx(), "Resolution"));
-            ui.label(tr(ui.ctx(), "Not available")).on_hover_text(tr(
+            ui.label(t!(ui.ctx(), "Resolution"));
+            ui.label(t!(ui.ctx(), "Not available")).on_hover_text(t!(
                 ui.ctx(),
                 "No image resolution metadata is stored for this document.",
             ));

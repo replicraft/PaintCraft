@@ -1,6 +1,6 @@
 //! Skin-owned quick actions. All working buttons emit shared host intentions.
 use super::{Action, ClassicVariant};
-use paintcraft_ui::i18n::tr;
+use paintcraft_ui::t;
 use paintcraft_ui::{actions::Context, icons::Icon};
 
 pub(super) fn show(
@@ -15,7 +15,7 @@ pub(super) fn show(
         paintcraft_ui::widgets::classic_menu_button(ui, "Share", Icon::Share, false, "Share")
     })
     .inner
-    .on_disabled_hover_text(tr(ui.ctx(), "System sharing is not available yet."));
+    .on_disabled_hover_text(t!(ui.ctx(), "System sharing is not available yet."));
     ui.separator();
     button(ui, context, actions, Icon::Undo, Action::Undo, true);
     button(ui, context, actions, Icon::Redo, Action::Redo, true);

@@ -1,6 +1,6 @@
 //! Classic layer-list presentation. The desktop host applies every intention.
 use egui::{Align, Layout, Vec2};
-use paintcraft_ui::i18n::{tr, tr_format};
+use paintcraft_ui::t;
 use paintcraft_ui::widgets::{Icon, classic_menu_button};
 use std::hash::Hash;
 
@@ -79,7 +79,7 @@ pub fn property_label(ui: &mut egui::Ui, label: &str) -> egui::Response {
         Layout::left_to_right(Align::Center),
         |ui| {
             ui.set_width(width);
-            ui.label(tr(ui.ctx(), label))
+            ui.label(t!(ui.ctx(), label))
         },
     )
     .inner
@@ -96,7 +96,7 @@ pub fn panel<Id: Copy + Eq + Hash + std::fmt::Debug>(
     let mut actions = Vec::new();
     ui.horizontal(|ui| {
         ui.label(
-            egui::RichText::new(tr(ui.ctx(), "Layers"))
+            egui::RichText::new(t!(ui.ctx(), "Layers"))
                 .size(16.0)
                 .strong(),
         );
@@ -156,10 +156,10 @@ pub fn panel<Id: Copy + Eq + Hash + std::fmt::Debug>(
                     ui.horizontal(|ui| {
                         let mut visible = row.visible;
                         let toggle = ui
-                            .checkbox(&mut visible, tr(ui.ctx(), ""))
-                            .on_hover_text(tr(ui.ctx(), "Visible"));
+                            .checkbox(&mut visible, t!(ui.ctx(), ""))
+                            .on_hover_text(t!(ui.ctx(), "Visible"));
                         let accessible =
-                            tr_format(ui.ctx(), "Show { $name }", &[("name", row.name.to_owned())]);
+                            t!(ui.ctx(), "Show { $name }", &[("name", row.name.to_owned())]);
                         toggle.widget_info(|| {
                             egui::WidgetInfo::selected(
                                 egui::Role::CheckBox,
@@ -198,7 +198,7 @@ pub fn panel<Id: Copy + Eq + Hash + std::fmt::Debug>(
                                 format!(
                                     "{}\n{}",
                                     row.name,
-                                    tr(ui.ctx(), "Layer preview unavailable")
+                                    t!(ui.ctx(), "Layer preview unavailable")
                                 )
                             }
                             _ => row.name.to_owned(),
