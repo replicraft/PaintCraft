@@ -6,6 +6,7 @@ mod lineage;
 mod mapped;
 mod patch;
 mod sampling;
+mod selection;
 pub use mapped::MappedPlan;
 /// Source-bound cropped pixel plan; shares the exact mapping implementation.
 pub type CropPlan = MappedPlan;
