@@ -83,6 +83,7 @@ pub fn toolbar(
     ui.separator();
     ui.add_enabled_ui(context.document_open, |ui| {
         crate::shapes::picker(ui, state, &mut actions);
+        crate::selection::options(ui, state);
         options(ui, state, &mut actions);
         paintcraft_ui::chrome::picker_options(ui, state);
     });

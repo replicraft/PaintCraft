@@ -1,7 +1,7 @@
 //! Shared selection commands with distinct historical and modern presentation.
 use super::{Action, ClassicVariant, Controls};
 use egui::{Align2, FontId, Rect, Vec2};
-use paintcraft_tools::Tool;
+use paintcraft_tools::{SelectionMode, Tool};
 use paintcraft_ui::t;
 use paintcraft_ui::{actions::Context, icons::Icon};
 
@@ -87,48 +87,23 @@ fn show_profile(
                 MODERN
             } {
                 match item {
-                    Item::Rectangle => {
-                        let label = if variant.is_some() {
-                            "Rectangular selection"
-                        } else {
-                            "Rectangle"
-                        };
-                        if row(
-                            ui,
-                            label,
-                            "Rectangular selection",
-                            Some(Icon::RectangleSelect),
-                            Some(true),
-                            None,
-                            variant,
-                        )
-                        .clicked()
-                        {
-                            state.tool = Tool::Select;
-                            actions.push(Action::SelectTool(Tool::Select));
-                            ui.close();
-                        }
-                    }
-                    Item::FreeForm => unavailable(
+                    Item::Rectangle => mode(
                         ui,
-                        if variant.is_some() {
-                            "Free-form selection"
-                        } else {
-                            "Free-form"
-                        },
-                        "Free-form selection",
-                        Some(Icon::LassoSelect),
-                        "Free-form selection is not available yet.",
+                        state,
+                        context,
+                        actions,
+                        SelectionMode::Rectangle,
                         variant,
                     ),
-                    Item::Invert => unavailable(
+                    Item::FreeForm => mode(
                         ui,
-                        "Invert selection",
-                        "Invert selection",
-                        Some(Icon::InvertSelection),
-                        "Inverting selections is not available yet.",
+                        state,
+                        context,
+                        actions,
+                        SelectionMode::FreeForm,
                         variant,
                     ),
+                    Item::Invert => action(ui, Action::InvertSelection, context, actions, variant),
                     Item::Transparent => unavailable(
                         ui,
                         "Transparent selection",
@@ -148,6 +123,55 @@ fn show_profile(
             }
         });
 }
+fn mode(
+    ui: &mut egui::Ui,
+    state: &mut Controls,
+    context: Context,
+    actions: &mut Vec<Action>,
+    mode: SelectionMode,
+    variant: Option<ClassicVariant>,
+) {
+    let (label, accessible, icon) = match mode {
+        SelectionMode::Rectangle => (
+            if variant.is_some() {
+                "Rectangular selection"
+            } else {
+                "Rectangle"
+            },
+            "Rectangular selection",
+            Icon::RectangleSelect,
+        ),
+        SelectionMode::FreeForm => (
+            if variant.is_some() {
+                "Free-form selection"
+            } else {
+                "Free-form"
+            },
+            "Free-form selection",
+            Icon::LassoSelect,
+        ),
+    };
+    let response = ui
+        .add_enabled_ui(Action::SelectTool(Tool::Select).enabled(context), |ui| {
+            row(
+                ui,
+                label,
+                accessible,
+                Some(icon),
+                Some(state.options.selection_mode == mode),
+                None,
+                variant,
+            )
+        })
+        .inner;
+    if response.clicked() && ui.ctx().current_pass_index() == 0 {
+        state.options.selection_mode = mode;
+        state.tool = Tool::Select;
+        actions.push(Action::SelectTool(Tool::Select));
+        ui.close();
+    }
+}
+
 fn action(
     ui: &mut egui::Ui,
     action: Action,

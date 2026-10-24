@@ -10,7 +10,14 @@ pub(super) fn show(
     actions: &mut Vec<Action>,
 ) {
     let (icon, label) = match tool {
-        Tool::Select => (Icon::RectangleSelect, "Selection options"),
+        Tool::Select => (
+            if state.options.selection_mode == paintcraft_tools::SelectionMode::FreeForm {
+                Icon::LassoSelect
+            } else {
+                Icon::RectangleSelect
+            },
+            "Selection options",
+        ),
         Tool::Brush => (Icon::Brush, "Brushes"),
         _ => unreachable!("only Selection and Brushes have primary split controls"),
     };
