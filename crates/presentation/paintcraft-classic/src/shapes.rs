@@ -145,61 +145,8 @@ pub(super) fn gallery(ui: &mut egui::Ui, state: &mut Controls, actions: &mut Vec
         });
 }
 
-/// Historical Paint uses seven columns of small blue outline shapes, with three rows visible.
-pub(super) fn legacy_gallery(
-    ui: &mut egui::Ui,
-    variant: super::ClassicVariant,
-    state: &mut Controls,
-    actions: &mut Vec<Action>,
-) {
-    ui.scope(|ui| {
-        ui.visuals_mut().override_text_color = Some(if ui.visuals().dark_mode {
-            egui::Color32::from_rgb(150, 205, 240)
-        } else {
-            egui::Color32::from_rgb(30, 93, 130)
-        });
-        ui.visuals_mut().widgets.active.fg_stroke.color = if ui.visuals().dark_mode {
-            egui::Color32::from_rgb(150, 205, 240)
-        } else {
-            egui::Color32::from_rgb(30, 93, 130)
-        };
-        egui::Frame::new()
-            .stroke(ui.visuals().widgets.noninteractive.bg_stroke)
-            .inner_margin(1)
-            .show(ui, |ui| {
-                egui::ScrollArea::vertical()
-                    .id_salt("legacy-shapes")
-                    .max_height(60.0)
-                    .max_width(153.0)
-                    .show(ui, |ui| {
-                        egui::Grid::new("legacy-shapes-grid")
-                            .spacing(Vec2::ZERO)
-                            .min_col_width(20.0)
-                            .min_row_height(20.0)
-                            .show(ui, |ui| {
-                                for (index, (icon, label, tool)) in SHAPES.into_iter().enumerate() {
-                                    if let Some(tool) = tool
-                                        && legacy_button(
-                                            ui,
-                                            variant,
-                                            label,
-                                            icon,
-                                            state.tool == tool,
-                                        )
-                                        .clicked()
-                                    {
-                                        state.tool = tool;
-                                        actions.push(Action::SelectTool(tool));
-                                    }
-                                    if index % 7 == 6 {
-                                        ui.end_row();
-                                    }
-                                }
-                            });
-                    });
-            });
-    });
-}
+pub(super) use legacy::gallery as legacy_gallery;
+mod legacy;
 
 fn button(
     ui: &mut egui::Ui,
@@ -239,30 +186,4 @@ fn button(
         )
     });
     response.on_hover_text(tr(ui.ctx(), label))
-}
-
-fn legacy_button(
-    ui: &mut egui::Ui,
-    variant: super::ClassicVariant,
-    label: &str,
-    icon: Icon,
-    selected: bool,
-) -> egui::Response {
-    let label = tr(ui.ctx(), label);
-    let image = paintcraft_ui::icons::classic_shape_image(
-        ui.ctx(),
-        icon,
-        16.0,
-        ui.visuals().strong_text_color(),
-    );
-    let response = super::legacy_surface::button(
-        ui,
-        variant,
-        egui::Button::new(image).min_size(Vec2::splat(20.0)),
-        selected,
-    );
-    response.widget_info(|| {
-        egui::WidgetInfo::selected(egui::Role::Button, ui.is_enabled(), selected, &label)
-    });
-    response.on_hover_text(label)
 }

@@ -881,3 +881,5 @@ export-image = 画像をエクスポート
 png-image = PNG画像
 bmp-image = BMP画像
 jpeg-image = JPEG画像
+previous-shapes = 前の図形
+next-shapes = 次の図形

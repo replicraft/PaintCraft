@@ -881,3 +881,5 @@ export-image = Export image
 png-image = PNG image
 bmp-image = BMP image
 jpeg-image = JPEG image
+previous-shapes = Previous shapes
+next-shapes = Next shapes
