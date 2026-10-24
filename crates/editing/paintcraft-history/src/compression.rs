@@ -1,5 +1,6 @@
 //! Independent, fixed-size blocks; no dictionaries, frame streams or worker pool.
 use crate::archive::{corrupt, limit};
+mod zstandard;
 use paintcraft_core::types::Result;
 use paintcraft_raster::RasterLayer;
 
@@ -15,7 +16,7 @@ pub enum Compression {
 pub(crate) struct Encoder {
     policy: Compression,
     scratch: Vec<u8>,
-    zstd: Option<zstd::bulk::Compressor<'static>>,
+    zstd: Option<zstandard::Encoder>,
     initialized: bool,
     pub workspace_peak: usize,
 }
@@ -62,7 +63,7 @@ impl Encoder {
                 Compression::Lz4 => {
                     lz4_flex::block::get_maximum_output_size(RasterLayer::TILE_BYTES)
                 }
-                _ => zstd::compress_bound(RasterLayer::TILE_BYTES),
+                _ => zstandard::bound()?,
             };
             if workspace + bound > *budget {
                 return Err(limit("history codec staging admission exceeded"));
@@ -81,11 +82,7 @@ impl Encoder {
                 } else {
                     3
                 };
-                let mut encoder = zstd::bulk::Compressor::new(level)
-                    .map_err(|_| limit("cannot create history encoder"))?;
-                encoder
-                    .set_parameter(zstd::zstd_safe::CParameter::WindowLog(18))
-                    .map_err(|_| limit("cannot bound history encoder window"))?;
+                let encoder = zstandard::Encoder::new(level)?;
                 self.zstd = Some(encoder);
             } else {
                 self.workspace_peak = workspace;
@@ -93,10 +90,8 @@ impl Encoder {
             self.initialized = true;
         }
         let size = if let Some(encoder) = &mut self.zstd {
-            let size = encoder
-                .compress_to_buffer(source, self.scratch.as_mut_slice())
-                .map_err(|_| limit("history compression failed"))?;
-            self.workspace_peak = self.workspace_peak.max(encoder.context_mut().sizeof());
+            let size = encoder.encode(source, self.scratch.as_mut_slice())?;
+            self.workspace_peak = self.workspace_peak.max(encoder.workspace());
             if self.workspace_peak > 8 << 20 {
                 return Err(limit("history encoder exceeded reserved headroom"));
             }
@@ -131,23 +126,7 @@ pub(crate) fn decode(codec: Compression, bytes: &[u8], out: &mut [u8]) -> Result
     }
     let size = match codec {
         Compression::Lz4 => lz4_flex::block::decompress_into(bytes, out).map_err(|_| corrupt())?,
-        Compression::Zstd1 | Compression::Zstd3 => {
-            if zstd::zstd_safe::get_frame_content_size(bytes).map_err(|_| corrupt())?
-                != Some(out.len() as u64)
-                || zstd::zstd_safe::find_frame_compressed_size(bytes).map_err(|_| corrupt())?
-                    != bytes.len()
-            {
-                return Err(corrupt());
-            }
-            let mut decoder = zstd::bulk::Decompressor::new()
-                .map_err(|_| limit("cannot create history decoder"))?;
-            decoder
-                .set_parameter(zstd::zstd_safe::DParameter::WindowLogMax(18))
-                .map_err(|_| corrupt())?;
-            decoder
-                .decompress_to_buffer(bytes, out)
-                .map_err(|_| corrupt())?
-        }
+        Compression::Zstd1 | Compression::Zstd3 => zstandard::decode(bytes, out)?,
         Compression::None => return Err(corrupt()),
     };
     if size != out.len() {
