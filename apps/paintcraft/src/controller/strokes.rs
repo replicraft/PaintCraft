@@ -194,3 +194,7 @@ impl PreviewPreparation {
 #[cfg(test)]
 #[path = "strokes/preparation_tests.rs"]
 mod preparation_tests;
+
+#[cfg(test)]
+#[path = "strokes/mask_tests.rs"]
+mod mask_tests;

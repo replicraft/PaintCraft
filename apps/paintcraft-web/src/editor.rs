@@ -344,3 +344,6 @@ fn point(p: (i64, i64)) -> Value {
 mod tests;
 #[cfg(test)]
 mod text_tests;
+
+#[cfg(test)]
+mod mask_tests;
