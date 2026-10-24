@@ -1,4 +1,4 @@
-# Finite selection mask foundation
+# Finite selection masks and editing coverage
 
 `paintcraft_raster::selection::BinaryMask` now supplies immutable sparse binary
 R8 coverage for the selection work required by T14/T15 and
@@ -6,8 +6,9 @@ R8 coverage for the selection work required by T14/T15 and
 The storage/kernel foundation now has owned session/history integration. The
 canonical `Selection` also carries `Mask(BinaryMask)`, with cheap immutable clones
 through worker preparations, recorded history and cold document restoration.
-Free-form, inversion and transparent-selection UI remain disabled until painting,
-flood connectivity and mask outlines are integrated.
+Painting and flood connectivity now honor the exact binary field. Free-form and
+Invert UI remain disabled until lasso input and mask-derived outlines are connected;
+transparent and floating selection require their own pixel-placement semantics.
 
 ## Field semantics
 
@@ -22,7 +23,7 @@ flood connectivity and mask outlines are integrated.
   tiles collapse to a solid byte. A uniform result normalizes to no tiles.
 - Inversion complements within the mask's current domain. Inversion, cloning,
   integer translation and clipping share the same immutable tile/index storage.
-  A larger chosen inversion domain must be explicitly reframed by the future
+  A larger chosen inversion domain is explicitly reframed by the
   session adapter; expanding a clipped domain must not resurrect stored samples.
 - An empty clip returns `None` to represent an active empty intersection. Callers
   must not map that result to the unrestricted Inactive state.
@@ -76,8 +77,8 @@ The remaining integration must:
 
 1. Complete frontend routing and reference qualification for the owned mask
    snapshots, polygon creation and finite-domain inversion implemented below.
-2. Gate every painting kernel exactly once by binary coverage. Flood traversal
-   must respect mask connectivity while reading, not merely filter a finished fill.
+2. Qualify native reference selection behavior and masked interactive performance.
+   Binary painting gates and flood connectivity are implemented and tested below.
 3. Add mask-specific packing/spill and native pressure/retry services. Recorded
    snapshots already retain exact masks with resident byte accounting and
    cancellation. Session masks remain outside PCND persistence unless explicitly
@@ -139,9 +140,9 @@ or evict mask bytes. Preserving retention rejects an unaffordable record atomica
 explicit trimming can release masks when their final reader disappears. External
 mask readers still hold their original realm charges after history drops them.
 
-This slice intentionally rejects paint, flood, crop and mapped transforms while a
-mask is active. It never treats the mask's rectangular bounds as coverage. Clearing
-or replacing it with a rectangular selection restores the existing painting path.
+The ownership slice initially rejected painting while a mask was active. The
+coverage integration below now enables painting and flood fill. Crop and mapped
+transforms remain rejected pending explicit sampling/selection mapping policies.
 Layer operations, canvas placement and Clear Canvas retain their established
 semantics. Frontend mask creation/Invert controls stay disabled; hosts omit a
 rectangle-only overlay/dimension projection for masks. These are engine commands,
@@ -165,3 +166,58 @@ Studio layout tests also cover restart, save-gated switching and settings
 Apply/Cancel. No live window, native device or matched-reference qualification is
 claimed. Raw logs and the source recording are local under the ignored
 `docs/validation/owned-selection-masks-2026-10-24/` directory.
+
+
+## Exact painting and flood integration, October 24, 2026
+
+`PaintPlan::masked_checked` intersects layer-local writes with document-space
+binary coverage before the compiler retains them. Every write keeps its original
+blend mode, color, 16-sample replacement coverage and ordering. The logical program
+and decoded replay consume that same filtered plan; replay does not apply another
+selection pass. This central gate covers rectangles, pencils, all brush media,
+smooth erasing, shapes/contours, bitmap text and resolved grayscale text runs.
+Erase Selection now emits the same replacement command with the mask's domain as
+an outer bound; the actual mask field still authorizes every written pixel.
+
+A batch shares a 67,108,864-unit filtering allowance across its writes and rows.
+Traversal checks cancellation and constructs output directly under the original
+plan's metadata realm and fixed policy. Uniform empty masks produce no writes;
+uniform full masks retain a shared plan when all writes lie inside the domain,
+or clip rectangles without scanning their pixel areas. Nonuniform fields use
+ordered selected runs. Overflow, traversal or metadata denial discards the private
+result; it does not publish a partially filtered edit. Construction, flood scratch,
+decoded pixels and history continue to carry their own existing limits.
+
+The flood classifier checks eligibility before every source read, including the
+seed. Unselected pixels block four-connected traversal, so an unselected bridge
+cannot connect selected islands. The compiler reads earlier filtered writes and
+frozen duplicate-layer sources. A forbidden seed returns without classifier scratch
+or source reads. Unrestricted classification selects its existing specialized
+path outside the pixel loop. This source structure is not a throughput claim.
+
+Independent flood BFS checks 147,456 small image/mask/seed/tolerance/origin cases.
+Editor tests compare every paint family against an independent binary-field gate,
+including inverted/clipped/translated masks, negative layer origins, partial
+replacement and overlapping translucent operations. Another 384 editor cases
+compare logical walls, layer duplication and flood pixels against dense BFS.
+Cancellation at every observed masked-batch checkpoint leaves the owner ticket,
+selection, history and declared resource realms unchanged. Decoded admission
+failure is also atomic.
+
+Real CLI process tests reopen PCND outputs and check triangle/complement pixels,
+disconnected flood islands and forbidden seeds; unsupported mapped transforms
+still leave existing output files untouched. Native worker and browser tests check
+a concave polygon and its complement through previews, commit, Delete and
+Undo/Redo. A delayed native preparation cannot publish after a newer selection-only
+change, even though content StateId has not changed.
+
+The workspace run passed 1,373 tests with 75 explicit ignores across 99 result
+summaries. Following the final classifier dispatch extraction, editor/flood
+regressions passed again; two new native and one browser host tests passed
+separately. Final strict workspace Clippy, Wasm checking, portable browser build,
+formatting, source-length, translation and whitespace checks passed. Raw logs and
+source recording are local in the ignored
+`docs/validation/masked-painting-2026-10-24/` directory. Native reference fidelity,
+interactive latency, fractional masks, mask packing/spill, outlines, lasso controls,
+floating pixels and mapped selection transforms remain incomplete. T14/T15 and
+SEL-01 through SEL-05 are not promoted to completed gates by this tranche.

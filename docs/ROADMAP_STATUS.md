@@ -32,9 +32,10 @@ start or complete the T16 parity gate. See [Classic follow-up](CLASSIC_FOLLOWUP.
 Selection work now has [finite sparse binary R8 storage and exact polygon
 rasterization](SELECTION_MASKS.md), including compact inversion, shared snapshot
 ownership and admitted private construction. Owned session/history snapshots and v2 polygon/inversion commands are integrated,
-including resident accounting and guarded publication. Mask paint/flood/transform
-gates, frontend outlines and free-form/invert/transparent-selection controls remain
-unconnected; T14/T15 stay partial.
+including resident accounting and guarded publication. Painting/erasing now gate
+exact binary coverage, and flood traversal honors mask connectivity through earlier
+logical writes. Mapped transforms, frontend outlines and free-form/invert/transparent
+controls remain unconnected; T14/T15 stay partial.
 
 
 This is the live application ledger for the reference pack's 37 tasks. The
