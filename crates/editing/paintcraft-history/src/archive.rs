@@ -112,7 +112,7 @@ impl Packed {
             roots: self.roots.clone(),
             layers,
             title: self.title.clone(),
-            selection: self.selection,
+            selection: self.selection.clone(),
             history_id: self.history_id,
             decoded_doc: Mutex::new(
                 self.decoded_doc
@@ -204,7 +204,7 @@ impl Packed {
             roots: doc.roots.clone(),
             layers,
             title: doc.title.clone(),
-            selection: snapshot.selection,
+            selection: snapshot.selection.clone(),
             history_id: snapshot.history_id,
             decoded_doc: Mutex::new(Arc::downgrade(&snapshot.document)),
         })
@@ -219,7 +219,7 @@ impl Packed {
         if let Some(document) = self.decoded_document() {
             return Ok(Snapshot {
                 document,
-                selection: self.selection,
+                selection: self.selection.clone(),
                 history_id: self.history_id,
             });
         }
@@ -262,7 +262,7 @@ impl Packed {
         *self.decoded_doc.lock().unwrap_or_else(|p| p.into_inner()) = Arc::downgrade(&document);
         Ok(Snapshot {
             document,
-            selection: self.selection,
+            selection: self.selection.clone(),
             history_id: self.history_id,
         })
     }

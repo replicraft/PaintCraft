@@ -499,3 +499,6 @@ impl History {
 
 mod residency;
 pub use residency::ResidencyMaintenance;
+
+#[cfg(test)]
+mod selection_tests;
