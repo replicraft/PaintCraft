@@ -31,7 +31,8 @@ impl App {
                 },
             )
             .collect::<Vec<_>>();
-        let blocked = self.confirm.is_some()
+        let blocked = self.save_all.is_some()
+            || self.confirm.is_some()
             || self.tab_closing.is_some()
             || self.close_after_saves
             || self.dialogs.as_ref().is_some_and(NativeDialogs::pending);

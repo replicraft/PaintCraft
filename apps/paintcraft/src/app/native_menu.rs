@@ -18,6 +18,7 @@ fn actions() -> Vec<Chrome> {
                 .map(Chrome::View),
         )
         .chain([
+            Chrome::SaveAll,
             Chrome::Settings,
             Chrome::ImageProperties,
             Chrome::CanvasSize,
@@ -47,6 +48,7 @@ fn shortcut(action: Chrome, frontend: Frontend) -> Option<&'static str> {
         Chrome::Open => "meta+KeyO",
         Chrome::Save => "meta+KeyS",
         Chrome::SaveAs => "meta+shift+KeyS",
+        Chrome::SaveAll if frontend == Frontend::Studio => "meta+alt+KeyS",
         Chrome::Close => "meta+KeyW",
         Chrome::ImageProperties if frontend == Frontend::Classic => "meta+KeyE",
         Chrome::Undo => "meta+KeyZ",
@@ -81,6 +83,7 @@ impl App {
                 .collect(),
         };
         let mut file = paintcraft_ui::actions::FILE.to_vec();
+        file.insert(4, Chrome::SaveAll);
         file.insert(file.len() - 1, Chrome::ImageProperties);
         let wake = ctx.clone();
         let image = image_actions();

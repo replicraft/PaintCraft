@@ -405,3 +405,6 @@ mod auto_scroll;
 
 #[path = "gui/fit_toggle.rs"]
 mod fit_toggle;
+
+#[path = "gui/save_all.rs"]
+mod save_all;

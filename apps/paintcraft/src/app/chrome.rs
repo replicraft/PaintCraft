@@ -27,6 +27,11 @@ impl App {
                 || self.editor.has_pending_edits(),
             can_redo: (self.editor.redo_depth() > 0 || self.editor.has_pending_edits())
                 && !pending_text,
+            can_save_all: self.tab_close_wait.is_none()
+                && self.tab_save_close.is_none()
+                && (self.any_dirty_documents()
+                    || self.any_pending_edits()
+                    || self.any_deferred_files()),
             selection_active: self.editor.selection() != Selection::Inactive,
             tool: self.editor.tool,
             layer_index,
@@ -41,7 +46,8 @@ impl App {
             fullscreen: self.fullscreen,
             auto_hide_toolbar: self.settings.classic_toolbar_auto_hide,
             thumbnail: self.classic.thumbnail,
-            blocked: self.picking.is_some()
+            blocked: self.save_all.is_some()
+                || self.picking.is_some()
                 || self.switching.is_some()
                 || self.closing_workspace
                 || self.close_after_saves
@@ -170,6 +176,7 @@ impl App {
                 }
                 Chrome::Open => self.open_requested(ctx),
                 Chrome::Save => self.save_requested(ctx),
+                Chrome::SaveAll => self.begin_save_all(ctx),
                 Chrome::SaveAs => self.request_dialog(ctx, Kind::SaveAs),
                 Chrome::Export => self.export_requested(ctx),
                 Chrome::ExportImage(format) => self.export_image_requested(ctx, format),

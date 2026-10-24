@@ -51,7 +51,8 @@ impl App {
                 self.handle_global_input(ui);
             }
         }
-        if self.switching.is_some()
+        if self.save_all.is_some()
+            || self.switching.is_some()
             || self.closing_workspace
             || self.close_after_edits
             || self.confirm.is_some()
@@ -149,6 +150,14 @@ impl App {
             ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
         }
         if first_pass
+            && ctx.input(|i| i.viewport().close_requested())
+            && let Some(batch) = &mut self.save_all
+        {
+            batch.close_after = true;
+            ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
+        }
+        if first_pass
+            && self.save_all.is_none()
             && self.tab_closing.is_none()
             && self.confirm.is_none()
             && ctx.input(|i| i.viewport().close_requested())
@@ -198,6 +207,7 @@ impl App {
         self.pump_tab_close(&ctx);
         if first_pass {
             self.pump_interface_switch(&ctx);
+            self.pump_save_all(&ctx);
         }
         if self.recovery_needs_init && !self.close_after_saves && !self.allow_close {
             ctx.request_repaint_after(Duration::from_millis(250));

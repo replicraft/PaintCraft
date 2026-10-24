@@ -46,6 +46,8 @@ mod rendering;
 mod residency;
 #[path = "app/resize_skew.rs"]
 mod resize_skew;
+#[path = "app/save_all.rs"]
+mod save_all;
 mod saving;
 pub mod settings;
 #[path = "app/status.rs"]
@@ -223,6 +225,7 @@ pub struct App {
     pixel_grid: bool,
     fullscreen: bool,
     pending_center: Option<(f32, f32)>,
+    save_all: Option<save_all::Batch>,
     path_text: String,
     window_title: String,
     /// The file this document was opened from or last saved to.
@@ -334,6 +337,7 @@ impl App {
             pixel_grid: false,
             fullscreen: false,
             pending_center: None,
+            save_all: None,
             path_text,
             window_title: String::new(),
             bound: None,
