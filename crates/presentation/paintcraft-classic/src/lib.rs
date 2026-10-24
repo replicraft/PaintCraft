@@ -253,13 +253,7 @@ pub fn chrome(
                 });
                 ui.separator();
                 ribbon_group(ui, "Shapes", |ui| {
-                    ui.horizontal(|ui| {
-                        for tool in [Tool::Line, Tool::Rect, Tool::Ellipse] {
-                            if tool_button(ui, state, tool, true) {
-                                actions.push(Action::SelectTool(tool));
-                            }
-                        }
-                    });
+                    shapes::gallery(ui, state, &mut actions);
                 });
                 ui.separator();
                 ribbon_group(ui, "Colors", |ui| {

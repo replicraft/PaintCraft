@@ -19,6 +19,8 @@ pub fn supports(tool: Tool) -> bool {
             | Tool::Rect
             | Tool::Ellipse
             | Tool::Preset(_)
+            | Tool::Polygon
+            | Tool::Curve
     )
 }
 

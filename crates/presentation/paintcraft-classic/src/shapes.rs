@@ -6,7 +6,7 @@ use paintcraft_ui::icons::Icon;
 
 const SHAPES: [(Icon, &str, Option<Tool>); 23] = [
     (Icon::Line, "Line", Some(Tool::Line)),
-    (Icon::Curve, "Curve", None),
+    (Icon::Curve, "Curve", Some(Tool::Curve)),
     (Icon::Ellipse, "Ellipse", Some(Tool::Ellipse)),
     (Icon::Rectangle, "Rectangle", Some(Tool::Rect)),
     (
@@ -14,7 +14,7 @@ const SHAPES: [(Icon, &str, Option<Tool>); 23] = [
         "Rounded rectangle",
         Some(Tool::Preset(ShapePreset::RoundedRectangle)),
     ),
-    (Icon::Polygon, "Polygon", None),
+    (Icon::Polygon, "Polygon", Some(Tool::Polygon)),
     (
         Icon::Triangle,
         "Triangle",

@@ -490,7 +490,7 @@ fn brush_gallery_scrolls_lower_choices_into_a_short_window() {
 }
 
 #[test]
-fn classic_image_and_shape_previews_are_present_without_enabling_unimplemented_edits() {
+fn classic_image_previews_stay_disabled_while_shape_tools_are_enabled() {
     let mut h = harness();
     let before = h.state().editor().document_snapshot();
     let canvas = h.state().canvas_rect();
@@ -529,7 +529,7 @@ fn classic_image_and_shape_previews_are_present_without_enabling_unimplemented_e
         h.get_by_label(label).scroll_to_me();
         h.run();
         assert!(
-            h.get_by_label(label).accesskit_node().is_disabled(),
+            !h.get_by_label(label).accesskit_node().is_disabled(),
             "{label}"
         );
     }

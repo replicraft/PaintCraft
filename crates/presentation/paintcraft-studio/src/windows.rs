@@ -36,6 +36,8 @@ pub fn floating_controls(
                             Tool::Line,
                             Tool::Rect,
                             Tool::Ellipse,
+                            Tool::Polygon,
+                            Tool::Curve,
                         ]
                         .into_iter()
                         .enumerate()

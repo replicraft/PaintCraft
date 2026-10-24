@@ -11,7 +11,8 @@ fn classic_shape_gallery_matches_reference_rows_and_preserves_tool_and_document_
         });
         let snapshot = h.state().editor().document_snapshot();
         let ticket = h.state().editor().history_view().ticket;
-        h.get_by_label("Lightning").scroll_to_me();
+        h.get_by_role_and_label(Role::Button, "Lightning")
+            .scroll_to_me();
         h.run();
         let stars_and_callouts = [
             "Four-point star",
@@ -21,7 +22,10 @@ fn classic_shape_gallery_matches_reference_rows_and_preserves_tool_and_document_
             "Oval callout",
         ];
         let bottom = ["Cloud callout", "Heart", "Lightning"];
-        let row_y = h.get_by_label(stars_and_callouts[0]).rect().top();
+        let row_y = h
+            .get_by_role_and_label(Role::Button, stars_and_callouts[0])
+            .rect()
+            .top();
         let mut right = 0.0;
         for label in stars_and_callouts {
             let button = h.get_by_role_and_label(Role::Button, label);
@@ -33,37 +37,54 @@ fn classic_shape_gallery_matches_reference_rows_and_preserves_tool_and_document_
             );
             assert!(rect.left() >= right);
             assert_eq!(rect.size(), Vec2::splat(24.0));
-            assert!(button.accesskit_node().is_disabled());
+            assert!(!button.accesskit_node().is_disabled());
             right = rect.right();
         }
-        let bottom_y = h.get_by_label(bottom[0]).rect().top();
+        let bottom_y = h
+            .get_by_role_and_label(Role::Button, bottom[0])
+            .rect()
+            .top();
         assert!(bottom_y > row_y);
         for (column, label) in bottom.into_iter().enumerate() {
-            let rect = h.get_by_label(label).rect();
+            let rect = h.get_by_role_and_label(Role::Button, label).rect();
             assert_eq!(rect.top(), bottom_y);
             assert_eq!(
                 rect.left(),
-                h.get_by_label(stars_and_callouts[column]).rect().left()
+                h.get_by_role_and_label(Role::Button, stars_and_callouts[column])
+                    .rect()
+                    .left()
             );
             assert!(rect.bottom() < h.state().canvas_viewport().unwrap().top());
         }
         assert!(h.query_by_label("burst").is_none());
         assert!(h.query_by_label("rectangular-callout").is_none());
-        h.get_by_label("Rectangular callout").hover();
+        h.get_by_role_and_label(Role::Button, "Rectangular callout")
+            .hover();
         h.run();
         assert_eq!(
-            h.query_all_by_role_and_label(Role::Label, "Rectangular callout is not available yet.")
+            h.query_all_by_role_and_label(Role::Label, "Rectangular callout")
                 .count(),
             1
         );
-        h.get_by_label("Rectangular callout").click();
+        h.get_by_role_and_label(Role::Button, "Rectangular callout")
+            .click();
         h.run();
-        assert_eq!(h.state().editor().tool, paintcraft_tools::Tool::Pencil);
+        assert_eq!(
+            h.state().editor().tool,
+            paintcraft_tools::Tool::Preset(paintcraft_tools::ShapePreset::RectangularCallout)
+        );
         for (label, tool) in [
             ("Line", paintcraft_tools::Tool::Line),
             ("Ellipse", paintcraft_tools::Tool::Ellipse),
             ("Rectangle", paintcraft_tools::Tool::Rect),
-        ] {
+            ("Curve", paintcraft_tools::Tool::Curve),
+            ("Polygon", paintcraft_tools::Tool::Polygon),
+        ]
+        .into_iter()
+        .chain(
+            paintcraft_tools::ShapePreset::ALL
+                .map(|preset| (preset.name(), paintcraft_tools::Tool::Preset(preset))),
+        ) {
             h.get_by_role_and_label(Role::Button, label).scroll_to_me();
             h.run();
             h.get_by_role_and_label(Role::Button, label).click();

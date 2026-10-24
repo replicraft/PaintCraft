@@ -35,6 +35,8 @@ pub fn options_with_shape_style(
                 | Tool::Rect
                 | Tool::Ellipse
                 | Tool::Preset(_)
+                | Tool::Polygon
+                | Tool::Curve
         ) {
             let size = if state.tool == Tool::Pencil {
                 &mut state.options.pencil_size
@@ -65,7 +67,12 @@ pub fn options_with_shape_style(
                     .suffix("%"),
             );
         }
-        if show_shape_style && matches!(state.tool, Tool::Rect | Tool::Ellipse | Tool::Preset(_)) {
+        if show_shape_style
+            && matches!(
+                state.tool,
+                Tool::Rect | Tool::Ellipse | Tool::Preset(_) | Tool::Polygon
+            )
+        {
             for (style, label) in [
                 (ShapeStyle::Outline, "Outline"),
                 (ShapeStyle::Filled, "Filled"),
@@ -105,6 +112,8 @@ pub fn tool_button(ui: &mut egui::Ui, state: &mut Controls, tool: Tool, large: b
         Tool::Line => Icon::Line,
         Tool::Rect => Icon::Rectangle,
         Tool::Ellipse => Icon::Ellipse,
+        Tool::Polygon => Icon::Polygon,
+        Tool::Curve => Icon::Curve,
         Tool::Preset(preset) => match preset {
             paintcraft_tools::ShapePreset::RoundedRectangle => Icon::RoundedRectangle,
             paintcraft_tools::ShapePreset::Triangle => Icon::Triangle,

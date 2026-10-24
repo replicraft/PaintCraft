@@ -18,7 +18,10 @@ pub(super) fn selection(
 
 pub(super) fn shape_paint(ui: &mut egui::Ui, state: &mut Controls) {
     ui.add_enabled_ui(
-        matches!(state.tool, Tool::Rect | Tool::Ellipse | Tool::Preset(_)),
+        matches!(
+            state.tool,
+            Tool::Rect | Tool::Ellipse | Tool::Preset(_) | Tool::Polygon
+        ),
         |ui| {
             dropdown(ui, "Shape outline", Some(Icon::Pencil), |ui| {
                 popup_style(ui, 220.0);
