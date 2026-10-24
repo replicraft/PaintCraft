@@ -43,6 +43,10 @@ paintcraft-studio = { path = "crates/presentation/paintcraft-studio" }
 # Command-line interface.
 clap = { version = "4.6.7", features = ["derive"] }
 
+# Shared interface localization.
+fluent-bundle = "0.16.0"
+unic-langid = "0.9.6"
+
 # Desktop presentation and GUI verification.
 egui = "0.37.0"
 eframe = { version = "0.37.0", default-features = false, features = ["default_fonts", "wgpu", "wayland", "x11", "accesskit"] }

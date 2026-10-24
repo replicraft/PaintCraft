@@ -9,3 +9,5 @@ pub mod view;
 pub mod widgets;
 
 pub mod theme;
+
+pub mod i18n;

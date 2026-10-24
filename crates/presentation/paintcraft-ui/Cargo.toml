@@ -11,6 +11,8 @@ publish.workspace = true
 paintcraft-core.workspace = true
 paintcraft-tools.workspace = true
 
+fluent-bundle.workspace = true
+unic-langid.workspace = true
 egui.workspace = true
 resvg.workspace = true
 
