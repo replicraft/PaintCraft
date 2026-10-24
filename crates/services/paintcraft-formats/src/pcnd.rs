@@ -39,125 +39,34 @@ pub fn write(doc: &Document) -> Result<Vec<u8>> {
     Ok(bytes)
 }
 
+mod compression;
+mod writer;
+
 /// Canonical output with at most one 4 MiB payload chunk and one block in scratch.
-/// The sink owns backpressure; no whole-image payload queue is constructed.
 pub fn write_to(doc: &Document, sink: impl std::io::Write) -> Result<()> {
-    let mut chunks: Vec<usize> = vec![0];
-    let mut layer_records = Vec::new();
-    for layer in doc.layers_in_order() {
-        let mut blocks = Vec::new();
-        for (bx, by, _w, _h, data) in layer.raster.blocks_iter() {
-            if *chunks.last().expect("one chunk") != 0
-                && *chunks.last().expect("one chunk") + data.len() > CHUNK_TARGET
-            {
-                chunks.push(0);
-            }
-            let index = chunks.len() - 1;
-            let chunk = chunks.last_mut().expect("one chunk");
-            blocks.push(Value::object([
-                ("block_x", Value::Int(i64::from(bx))),
-                ("block_y", Value::Int(i64::from(by))),
-                ("entry", Value::str(format!("data/chunk-{index:06}.bin"))),
-                ("offset", int(*chunk)),
-                ("stored_bytes", int(data.len())),
-                ("decoded_bytes", int(data.len())),
-                ("encoding", Value::str("raw")),
-                ("sha256", Value::str(sha(&data))),
-            ]));
-            *chunk += data.len();
-        }
-        layer_records.push(Value::object([
-            ("kind", Value::str("raster")),
-            ("id", Value::str(layer.id.to_string())),
-            ("name", Value::str(&layer.name)),
-            ("visible", Value::Bool(layer.visible)),
-            ("opacity_u8", Value::Int(i64::from(layer.opacity))),
-            ("blend", Value::str("normal")),
-            (
-                "origin",
-                Value::object([
-                    ("x", Value::Int(layer.origin.0)),
-                    ("y", Value::Int(layer.origin.1)),
-                ]),
-            ),
-            ("width", Value::Int(i64::from(layer.raster.width()))),
-            ("height", Value::Int(i64::from(layer.raster.height()))),
-            ("format", Value::str("rgba8-straight-srgb")),
-            (
-                "default_pixel",
-                Value::str(layer.raster.default_pixel().to_hex()),
-            ),
-            ("blocks", Value::Array(blocks)),
-        ]));
-    }
-    let metadata = doc.title.as_ref().map_or_else(
-        || Value::Object(Default::default()),
-        |t| Value::object([("title", Value::str(t))]),
-    );
-    let document = json::canonical(&Value::object([
-        ("schema", Value::str("paintcraft.document/v1")),
-        ("document_id", Value::str(doc.document_id.to_string())),
-        ("state_id", Value::str(doc.state_id.to_string())),
-        (
-            "canvas",
-            Value::object([
-                ("width", Value::Int(i64::from(doc.canvas.0))),
-                ("height", Value::Int(i64::from(doc.canvas.1))),
-            ]),
-        ),
-        ("profile", Value::str("srgb")),
-        ("compositing_policy", Value::str(POLICY)),
-        ("persistence_block_edge", Value::Int(i64::from(TILE_EDGE))),
-        (
-            "roots",
-            Value::Array(
-                doc.roots
-                    .iter()
-                    .map(|r| Value::str(r.to_string()))
-                    .collect(),
-            ),
-        ),
-        ("layers", Value::Array(layer_records)),
-        ("metadata", metadata),
-    ]));
-    if document.len() as u64 > DOCUMENT_MAX {
-        return Err(Error::new(
-            ErrorCode::ResourceLimit,
-            "document.json exceeds its size limit",
-        ));
-    }
-    let manifest = json::canonical(&Value::object([
-        ("format", Value::str("paintcraft.native")),
-        ("container_version", Value::Int(1)),
-        ("document_schema", Value::str("paintcraft.document/v1")),
-        ("document_entry", Value::str("document.json")),
-        ("document_sha256", Value::str(sha(&document))),
-        ("document_bytes", int(document.len())),
-        (
-            "required_features",
-            Value::Array(SUPPORTED_FEATURES.iter().map(|f| Value::str(*f)).collect()),
-        ),
-    ]));
-    let mut archive = zip::StoredWriter::new(sink);
-    let mut chunk = Vec::with_capacity(CHUNK_TARGET);
-    let mut index = 0;
-    for layer in doc.layers_in_order() {
-        for (_, _, _, _, data) in layer.raster.blocks_iter() {
-            if !chunk.is_empty() && chunk.len() + data.len() > CHUNK_TARGET {
-                archive.member(&format!("data/chunk-{index:06}.bin"), &chunk)?;
-                chunk.clear();
-                index += 1;
-            }
-            chunk.extend_from_slice(&data);
-        }
-    }
-    if !chunk.is_empty() {
-        archive.member(&format!("data/chunk-{index:06}.bin"), &chunk)?;
-    }
-    archive.member("document.json", &document)?;
-    archive.member("manifest.json", &manifest)?;
-    archive.finish()?;
-    Ok(())
+    writer::write_to(doc, sink, false, &|| Ok(()))
+}
+
+/// Smaller v1 archives using bounded Zstandard frames only where they save bytes.
+/// Canonical `write` remains raw and byte-compatible with the published fixtures.
+pub fn write_compact(doc: &Document) -> Result<Vec<u8>> {
+    let mut bytes = Vec::new();
+    write_compact_to(doc, &mut bytes)?;
+    Ok(bytes)
+}
+
+pub fn write_compact_to(doc: &Document, sink: impl std::io::Write) -> Result<()> {
+    write_compact_to_checked(doc, sink, &|| Ok(()))
+}
+
+/// Cooperative block-granular compact writing; failed output remains private to
+/// the caller's sink and must be discarded rather than published as a saved file.
+pub fn write_compact_to_checked(
+    doc: &Document,
+    sink: impl std::io::Write,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<()> {
+    writer::write_to(doc, sink, true, check)
 }
 
 fn codec(m: impl Into<String>) -> Error {
@@ -242,6 +151,8 @@ struct BlockRef {
     offset: usize,
     len: usize,
     sha: String,
+    decoded: usize,
+    compressed: bool,
 }
 
 struct LayerRec {
@@ -356,6 +267,16 @@ pub fn read(bytes: &[u8]) -> Result<Document> {
 
 /// Lower host canvas/output and tile staging limits without changing file semantics.
 pub fn read_with_limits(bytes: &[u8], canvas_pixels: u64, staged_pixels: u64) -> Result<Document> {
+    read_with_limits_checked(bytes, canvas_pixels, staged_pixels, &|| Ok(()))
+}
+
+pub fn read_with_limits_checked(
+    bytes: &[u8],
+    canvas_pixels: u64,
+    staged_pixels: u64,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Document> {
+    check()?;
     let members = zip::read(bytes, ENTRIES_MAX, |name| match name {
         "manifest.json" => Some(MANIFEST_MAX),
         "document.json" => Some(DOCUMENT_MAX),
@@ -445,6 +366,7 @@ pub fn read_with_limits(bytes: &[u8], canvas_pixels: u64, staged_pixels: u64) ->
 
     let mut parsed: HashMap<Uuid, LayerRec> = HashMap::new();
     for rec in records {
+        check()?;
         if rec.get("kind").and_then(Value::as_str) == Some("group") {
             return Err(unsupported("layer groups are not supported by this build"));
         }
@@ -497,6 +419,7 @@ pub fn read_with_limits(bytes: &[u8], canvas_pixels: u64, staged_pixels: u64) ->
             .as_array()
             .ok_or_else(|| codec("blocks must be an array"))?
         {
+            check()?;
             let b = obj(
                 b,
                 "block",
@@ -538,16 +461,16 @@ pub fn read_with_limits(bytes: &[u8], canvas_pixels: u64, staged_pixels: u64) ->
             if decoded != expect {
                 return Err(codec("decoded_bytes does not match the block extent"));
             }
-            match text(&b["encoding"], "encoding")? {
-                "raw" if stored == decoded => {}
+            let compressed = match text(&b["encoding"], "encoding")? {
+                "raw" if stored == decoded => false,
                 "raw" => {
                     return Err(codec(
                         "raw block stored length differs from its decoded length",
                     ));
                 }
-                "zstd" => return Err(unsupported("zstd blocks are not supported by this build")),
+                "zstd" => true,
                 _ => return Err(codec("unknown block encoding")),
-            }
+            };
             let entry = text(&b["entry"], "entry")?;
             if !chunk_name(entry) {
                 return Err(codec("malformed chunk entry name"));
@@ -559,6 +482,8 @@ pub fn read_with_limits(bytes: &[u8], canvas_pixels: u64, staged_pixels: u64) ->
                 offset,
                 len: stored as usize,
                 sha: sha_hex(&b["sha256"], "block sha256")?,
+                decoded: decoded as usize,
+                compressed,
             });
         }
         let layer = Layer {
@@ -590,11 +515,19 @@ pub fn read_with_limits(bytes: &[u8], canvas_pixels: u64, staged_pixels: u64) ->
     let mut used: HashSet<String> = HashSet::new();
     let mut ranges: HashMap<String, Vec<(usize, usize, String)>> = HashMap::new();
     let mut adm = Admission::new(staged_pixels.min(STAGED_PIXELS_MAX));
+    let tile_count = parsed.values().try_fold(0u64, |count, rec| {
+        count
+            .checked_add(rec.blocks.len() as u64)
+            .ok_or_else(|| codec("block count overflows"))
+    })?;
+    adm.reserve_tiles(tile_count)?;
     let mut layers = HashMap::new();
     for id in &roots {
+        check()?;
         let rec = parsed.remove(id).expect("checked above");
         let LayerRec { mut layer, blocks } = rec;
         for b in &blocks {
+            check()?;
             let chunk = files
                 .get(&b.entry)
                 .ok_or_else(|| codec("block references a missing chunk"))?;
@@ -611,7 +544,14 @@ pub fn read_with_limits(bytes: &[u8], canvas_pixels: u64, staged_pixels: u64) ->
                 return Err(codec("partially overlapping blocks"));
             }
             seen.push((b.offset, end, b.sha.clone()));
-            let data = &chunk[b.offset..end];
+            let stored = &chunk[b.offset..end];
+            let decoded;
+            let data = if b.compressed {
+                decoded = compression::decode(stored, b.decoded, check)?;
+                decoded.as_slice()
+            } else {
+                stored
+            };
             if sha(data) != b.sha {
                 return Err(codec("block SHA-256 mismatch"));
             }
@@ -622,6 +562,7 @@ pub fn read_with_limits(bytes: &[u8], canvas_pixels: u64, staged_pixels: u64) ->
     if files.keys().any(|n| !used.contains(n)) {
         return Err(codec("archive contains an unreferenced member"));
     }
+    check()?;
     Ok(Document {
         document_id: uuid(&d["document_id"], "document_id")?,
         state_id: uuid(&d["state_id"], "state_id")?,
@@ -634,3 +575,6 @@ pub fn read_with_limits(bytes: &[u8], canvas_pixels: u64, staged_pixels: u64) ->
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(all(test, not(target_arch = "wasm32")))]
+mod compact_tests;

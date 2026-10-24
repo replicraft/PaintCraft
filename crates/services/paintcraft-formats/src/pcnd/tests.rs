@@ -249,7 +249,7 @@ fn hostile_variants_are_refused_with_stable_codes() {
             "\"encoding\":\"raw\"",
             "\"encoding\":\"zstd\""
         )),
-        ErrorCode::CapabilityUnsupported
+        ErrorCode::CodecFailed
     );
     assert_eq!(
         code(&mutate_document(
