@@ -33,6 +33,7 @@ pub(super) struct DocumentState {
     pub(super) editor: Editor,
     session: SessionState,
     zoom: f32,
+    initial_fit: bool,
     pixel_grid: bool,
     pending_center: Option<(f32, f32)>,
     path_text: String,
@@ -53,6 +54,7 @@ impl DocumentState {
             editor,
             session: Default::default(),
             zoom: 1.0,
+            initial_fit: true,
             pixel_grid: false,
             pending_center: None,
             path_text: "untitled.pcnd".into(),
@@ -74,6 +76,7 @@ impl DocumentState {
             app.editor.connect_editing(service.clone());
         }
         std::mem::swap(&mut self.zoom, &mut app.zoom);
+        std::mem::swap(&mut self.initial_fit, &mut app.initial_fit);
         std::mem::swap(&mut self.pixel_grid, &mut app.pixel_grid);
         std::mem::swap(&mut self.pending_center, &mut app.pending_center);
         std::mem::swap(&mut self.path_text, &mut app.path_text);

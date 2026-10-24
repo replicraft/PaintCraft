@@ -28,7 +28,9 @@ fn classic_status_fields_and_zoom_stay_reachable_without_changing_document_state
                         ui.ctx().request_discard("test: repeated status layout");
                     }
                 },
-                App::new(None).with_settings(dir.clone()),
+                App::new(None)
+                    .with_settings(dir.clone())
+                    .with_initial_zoom(1.0),
             );
         h.run();
         let snapshot = h.state().editor().document_snapshot();
@@ -128,7 +130,13 @@ fn export_classic_footer_artwork() {
         }
         .save(&dir)
         .unwrap();
-        let mut h = harness_with(App::new(None).with_settings(dir.clone()), 1.0, false);
+        let mut h = harness_with(
+            App::new(None)
+                .with_settings(dir.clone())
+                .with_initial_zoom(1.0),
+            1.0,
+            false,
+        );
         h.set_size(Vec2::new(1360.0, 900.0));
         h.run();
         h.get_by_label("Select").click();

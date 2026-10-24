@@ -212,6 +212,7 @@ pub struct App {
     /// CPU-backed flat display; native GPU surfaces deliberately have no host copy.
     rendered: Vec<u8>,
     zoom: f32,
+    initial_fit: bool,
     pixel_grid: bool,
     fullscreen: bool,
     pending_center: Option<(f32, f32)>,
@@ -321,6 +322,7 @@ impl App {
             preview_start_revision: 0,
             rendered: Vec::new(),
             zoom: 1.0,
+            initial_fit: true,
             pixel_grid: false,
             fullscreen: false,
             pending_center: None,
@@ -362,6 +364,18 @@ impl App {
             app.editor.set_path(p);
         }
         app
+    }
+
+    /// Restore a previously chosen view scale instead of fitting the first frame.
+    pub fn with_initial_zoom(mut self, zoom: f32) -> Self {
+        if zoom.is_finite() {
+            self.zoom = zoom.clamp(
+                paintcraft_ui::actions::ZOOM_MIN,
+                paintcraft_ui::actions::ZOOM_MAX,
+            );
+            self.initial_fit = false;
+        }
+        self
     }
 
     pub fn autosave_every(mut self, every: Duration) -> App {

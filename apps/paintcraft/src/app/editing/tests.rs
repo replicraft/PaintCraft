@@ -227,7 +227,7 @@ fn real_two_pass_ui_routes_a_gesture_once_and_pumps_its_background_publication()
                         .request_discard("exercise two native editing layout passes");
                 }
             },
-            App::new(None),
+            App::new(None).with_initial_zoom(1.0),
         );
     harness.run();
     let release = harness.state().editing.as_ref().unwrap().pause();
@@ -284,7 +284,7 @@ fn coalesced_translucent_gestures_keep_their_complete_preview_and_publish_once_p
                         .request_discard("coalesced paint queue in two passes");
                 }
             },
-            App::new(None),
+            App::new(None).with_initial_zoom(1.0),
         );
     harness.run();
     let release = harness.state().editing.as_ref().unwrap().pause();

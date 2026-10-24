@@ -34,8 +34,9 @@ pub(super) fn show<R>(ui: &mut Ui, id: Id, paint: impl FnOnce(&mut Ui) -> R) -> 
     let inner = output.inner_rect;
     if inner != previous {
         ui.data_mut(|data| data.insert_temp(geometry_id, inner));
-        ui.ctx()
-            .request_discard("Classic canvas scrollbar geometry changed");
+        // Geometry is used by the next frame. A discard here can oscillate
+        // with scrollbar visibility when the Layers panel changes width.
+        ui.ctx().request_repaint();
     }
     let fill = Color32::from_gray(if ui.visuals().dark_mode { 43 } else { 240 });
     let mut rails = Vec::new();
@@ -153,7 +154,9 @@ fn arrow(
         ink,
         egui::Stroke::NONE,
     ));
-    response.on_hover_text(label).on_disabled_hover_text(label)
+    response
+        .on_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), label))
+        .on_disabled_hover_text(paintcraft_ui::i18n::tr(ui.ctx(), label))
 }
 
 /// Press immediately, then repeat while held. A release must not add a second step.

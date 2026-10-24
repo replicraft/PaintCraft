@@ -163,6 +163,9 @@ impl WebApp {
         }
         match action {
             Action::Crop => self.edit(Edit::CropToSelection),
+            Action::EraseSelection => self.edit(Edit::EraseSelection {
+                color: paintcraft_tools::commands::canvas_color(self.editor.session.document()),
+            }),
             Action::TransformImage(transform) => self.edit(Edit::TransformImage {
                 transform,
                 clear: paintcraft_tools::commands::canvas_color(self.editor.session.document()),
@@ -228,12 +231,7 @@ impl WebApp {
                 ViewAction::Double => self.zoom = 2.0,
                 ViewAction::Quadruple => self.zoom = 4.0,
                 ViewAction::Octuple => self.zoom = 8.0,
-                ViewAction::FitWindow => {
-                    let (w, h) = self.editor.session.document().canvas;
-                    let size = (self.canvas.viewport - egui::Vec2::splat(32.0))
-                        .max(egui::Vec2::splat(1.0));
-                    self.zoom = (size.x / w as f32).min(size.y / h as f32);
-                }
+                ViewAction::FitWindow => self.fit_canvas(),
                 _ => self.unsupported(action),
             },
             _ => self.unsupported(action),

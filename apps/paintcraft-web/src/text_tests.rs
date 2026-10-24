@@ -13,7 +13,7 @@ fn harness() -> Harness<'static, WebApp> {
 fn begin(h: &mut Harness<WebApp>, text: &str) {
     h.get_by_role_and_label(Role::Button, "Text").click();
     h.run();
-    let p = h.state().canvas.rect.unwrap().min + Vec2::new(20.0, 20.0);
+    let p = h.state().canvas.rect.unwrap().min + Vec2::new(20.0, 20.0) * h.state().zoom;
     h.event(Event::PointerMoved(p));
     h.event(Event::PointerButton {
         pos: p,

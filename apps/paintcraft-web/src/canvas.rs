@@ -8,6 +8,7 @@ use paintcraft_tools::{Preview, PreviewRevision, Tool};
 #[derive(Default)]
 pub(crate) struct Canvas {
     texture: Option<TextureHandle>,
+    fitted: bool,
     key: Option<(Ticket, PreviewRevision)>,
     pub rect: Option<Rect>,
     pub viewport: Vec2,
@@ -24,6 +25,19 @@ impl std::fmt::Debug for Canvas {
 }
 
 impl WebApp {
+    pub(crate) fn fit_canvas(&mut self) {
+        let (w, h) = self.editor.session.document().canvas;
+        let clearance = if self.variant == paintcraft_classic::ClassicVariant::V11 {
+            2.0 * paintcraft_classic::tool_controls::CANVAS_CLEARANCE
+        } else {
+            0.0
+        };
+        let size = (self.canvas.viewport - Vec2::new(clearance + 24.0, 24.0)).max(Vec2::splat(1.0));
+        self.zoom = (size.x / w as f32)
+            .min(size.y / h as f32)
+            .clamp(0.125, 10.0);
+    }
+
     pub(crate) fn canvas(&mut self, ui: &mut egui::Ui) {
         self.canvas.viewport = ui.available_size();
         let modern = self.variant == paintcraft_classic::ClassicVariant::V11;
@@ -45,6 +59,10 @@ impl WebApp {
         } else {
             0.0
         };
+        if !self.canvas.fitted && ui.ctx().current_pass_index() == 0 {
+            self.canvas.fitted = true;
+            self.fit_canvas();
+        }
         let pointer_on_workspace = ui.input(|i| i.pointer.hover_pos()).is_some_and(|pos| {
             ui.clip_rect().contains(pos)
                 && self.canvas.controls.is_none_or(|rect| !rect.contains(pos))

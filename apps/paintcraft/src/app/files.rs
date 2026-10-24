@@ -121,6 +121,7 @@ impl App {
             saving.new_session();
         }
         self.editor = editor;
+        self.initial_fit = true;
         self.texture_key = None;
         self.render_region = None;
         self.render_level = 0;

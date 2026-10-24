@@ -55,7 +55,7 @@ fn brush_captures_ui_size_and_opacity_at_press_and_releases_exact_pixels() {
     h.get_by_role_and_label(Role::SpinButton, "Opacity")
         .set_value_accesskit(50.0);
     h.run();
-    let p = h.state().canvas.rect.unwrap().min + Vec2::splat(50.5);
+    let p = h.state().canvas.rect.unwrap().min + Vec2::splat(50.5) * h.state().zoom;
     pointer(&mut h, p, true);
     h.state_mut().controls.options.size = 28;
     h.state_mut().controls.options.brush_opacity = 20;
@@ -80,6 +80,7 @@ fn pencil_size_is_independent_and_control_scroll_does_not_zoom_the_canvas() {
     h.run();
     assert_eq!(h.state().controls.options.pencil_size, 5);
     assert_eq!(h.state().controls.options.size, 4);
+    let zoom = h.state().zoom;
     let p = h
         .get_by_role_and_label(Role::Slider, "Tool size")
         .rect()
@@ -93,7 +94,7 @@ fn pencil_size_is_independent_and_control_scroll_does_not_zoom_the_canvas() {
         phase: egui::TouchPhase::Move,
     });
     h.run();
-    assert_eq!(h.state().zoom, 1.0);
+    assert_eq!(h.state().zoom, zoom);
     assert_eq!(h.ctx.zoom_factor(), 1.0);
     assert_eq!(h.state().editor.session.undo_depth(), 0);
 }

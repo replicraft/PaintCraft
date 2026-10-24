@@ -13,8 +13,8 @@ fn harness() -> Harness<'static, WebApp> {
 }
 fn edge(h: &mut Harness<WebApp>, a: (f32, f32), b: (f32, f32), finish: bool) {
     let rect = h.state().canvas.rect.unwrap();
-    let a = rect.min + Vec2::new(a.0 + 0.5, a.1 + 0.5);
-    let b = rect.min + Vec2::new(b.0 + 0.5, b.1 + 0.5);
+    let a = rect.min + Vec2::new(a.0 + 0.5, a.1 + 0.5) * h.state().zoom;
+    let b = rect.min + Vec2::new(b.0 + 0.5, b.1 + 0.5) * h.state().zoom;
     h.input_mut().events.extend([
         Event::PointerMoved(a),
         Event::PointerButton {

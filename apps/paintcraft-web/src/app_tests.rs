@@ -29,7 +29,9 @@ fn shortcut(h: &mut Harness<WebApp>, modifiers: Modifiers, key: Key) {
     h.step();
 }
 fn button(h: &mut Harness<WebApp>, pressed: bool) {
-    let pos = h.state().canvas.rect.unwrap().center();
+    let (w, hgt) = h.state().editor.session.document().canvas;
+    let pos = h.state().canvas.rect.unwrap().min
+        + Vec2::new((w / 2) as f32 + 0.5, (hgt / 2) as f32 + 0.5) * h.state().zoom;
     h.event(Event::PointerMoved(pos));
     h.event(Event::PointerButton {
         pos,
@@ -207,4 +209,17 @@ fn reopened_project_ground_is_used_by_eraser_and_clear_with_undo() {
     h.key_press_modifiers(Modifiers::COMMAND, Key::Z);
     h.run();
     assert_eq!(pixel(&h), Rgba([0, 0, 0, 255]));
+}
+
+#[test]
+fn browser_starts_at_the_same_scale_as_zoom_to_window() {
+    let mut h = harness();
+    let zoom = h.state().zoom;
+    let source = h.state().editor.session.snapshot();
+    h.get_by_label("Zoom to window").click();
+    h.run();
+    assert_eq!(h.state().zoom, zoom);
+    assert!(h.state().canvas.rect.unwrap().width() < h.state().canvas.viewport.x);
+    assert!(h.state().canvas.rect.unwrap().height() < h.state().canvas.viewport.y);
+    assert!(h.state().editor.session.document().same_semantics(&source));
 }

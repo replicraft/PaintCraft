@@ -36,8 +36,8 @@ fn crop_button_is_selection_gated_undoable_and_preserves_pixels_without_enabling
     h.get_by_role_and_label(Role::Button, "Select").click();
     h.run();
     let rect = h.state().canvas.rect.unwrap();
-    let a = rect.min + Vec2::new(30.5, 40.5);
-    let b = rect.min + Vec2::new(59.5, 79.5);
+    let a = rect.min + Vec2::new(30.5, 40.5) * h.state().zoom;
+    let b = rect.min + Vec2::new(59.5, 79.5) * h.state().zoom;
     h.input_mut().events.extend([
         Event::PointerMoved(a),
         Event::PointerButton {

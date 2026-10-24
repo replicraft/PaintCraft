@@ -24,7 +24,7 @@ fn harness_with(app: App, ppp: f32, two_passes: bool) -> Harness<'static, App> {
                     ui.ctx().request_discard("test: force a second layout pass");
                 }
             },
-            app,
+            app.with_initial_zoom(1.0),
         );
     h.run();
     h
@@ -354,3 +354,6 @@ mod studio_image_tools;
 
 #[path = "gui/studio_canvas.rs"]
 mod studio_canvas;
+
+#[path = "gui/classic_followup.rs"]
+mod classic_followup;

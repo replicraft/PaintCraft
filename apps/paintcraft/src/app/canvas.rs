@@ -31,6 +31,12 @@ impl App {
                 0.0
             };
         self.canvas_viewport = Some(viewport);
+        if first_pass && self.initial_fit {
+            self.initial_fit = false;
+            if self.experience() == Experience::Classic {
+                self.dispatch_view_action(ui.ctx(), paintcraft_ui::actions::ViewAction::FitWindow);
+            }
+        }
         let ppp = ui.ctx().pixels_per_point();
         let (w, h) = self.editor.document().canvas;
         let size = View::with_scale((0.0, 0.0), self.zoom, ppp).canvas_size(w, h);
@@ -220,7 +226,24 @@ impl App {
             (visible_canvas.max.x, visible_canvas.max.y),
             self.editor.document().canvas,
         ) {
-            let level = (-self.zoom.log2()).floor().clamp(0.0, 20.0) as u8;
+            // A small image is cheaper to keep as one reusable texture than to
+            // continually composite differently clipped/resampled views on zoom.
+            let small = self.experience() == Experience::Classic
+                && u64::from(self.editor.document().canvas.0)
+                    * u64::from(self.editor.document().canvas.1)
+                    <= 1_048_576
+                && self.editor.document().canvas.0 <= 2048
+                && self.editor.document().canvas.1 <= 2048;
+            let region = if small {
+                self.editor.document().canvas_rect()
+            } else {
+                region
+            };
+            let level = if small {
+                0
+            } else {
+                (-self.zoom.log2()).floor().clamp(0.0, 20.0) as u8
+            };
             match paintcraft_render::display::DisplayRequest::new(
                 self.editor.document(),
                 region,
@@ -253,6 +276,7 @@ impl App {
             rect.min.y + ((visible.min.y - rect.min.y) / cell).floor() * cell,
             ((visible.min.y - rect.min.y) / cell).floor() as i64,
         );
+        let mut checker = egui::Mesh::default();
         while y < visible.max.y {
             let (mut x, mut col) = (
                 rect.min.x + ((visible.min.x - rect.min.x) / cell).floor() * cell,
@@ -260,9 +284,8 @@ impl App {
             );
             while x < visible.max.x {
                 if (row + col) % 2 == 0 {
-                    painter.rect_filled(
+                    checker.add_colored_rect(
                         Rect::from_min_size(Pos2::new(x, y), Vec2::splat(cell)).intersect(rect),
-                        0.0,
                         if ui.visuals().dark_mode {
                             Color32::from_gray(105)
                         } else {
@@ -276,6 +299,7 @@ impl App {
             y += cell;
             row += 1;
         }
+        painter.add(checker);
         if let Some(id) = self
             .gpu_texture
             .as_ref()
