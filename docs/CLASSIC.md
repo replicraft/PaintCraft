@@ -1249,3 +1249,41 @@ contract has pressure/tilt fields, but native acquisition and brush propagation
 are not connected. Ordinary pointer events are the current drawing path.
 T15 remains partial; this web scaffold does not satisfy T22 browser conformance,
 Windows fidelity, physical tablet or cross-browser/device qualification.
+
+### View Thumbnail: bounded committed overview (2026-10-23)
+
+View → Thumbnail now opens a movable, resizable Classic window instead of the
+disabled placeholder. The same semantic action is registered by the native menu,
+with Classic/open-document/modal availability and a checked menu state. Its
+session view state does not write preferences or publish document changes. Close
+releases the displayed image. The initial placement clears the floating size
+controls; explicit 16-point heading and 12-point footer text remain readable in
+light/dark desktop and compact layouts.
+
+The full canvas is composed with existing ordered visibility/opacity semantics,
+then reduced to at most 256 samples per side. Partial-edge UVs preserve the actual
+canvas aspect. A repeating 2×2 transparency texture avoids generating a checker
+rectangle mesh proportional to window area. The window currently identifies the
+**committed image**: active brush, shape and editable text drafts are excluded.
+Opening and closing it preserves pending editable text. Live drafts remain work.
+
+One optional native worker admits one job, with declared 8 MiB scratch plus pinned
+source raster charges and a 1 GiB local cap. The output/ColorImage/texture allowance
+is reserved before scheduling and retained through the UI handoff. Interactive
+gestures and pending edits defer admission. Hiding or changing document/revision
+cancels old work; source IDs gate publication. Cancelled work remains charged
+until drained. A deterministic gated test reopens the same source before releasing
+the cancelled job, ensuring its result cannot poison the reopened view.
+These are logical ownership bounds, without a physical-memory or latency claim.
+
+All 210 ordinary GUI tests pass on the final committed source (44 opt-in tests
+ignored). The three Thumbnail tests cover repeated layout, light desktop 1x/dark
+compact 2x, Close/checked state, viewport/history/preferences isolation, commit and
+Undo/Redo refresh, pointer/zoom exclusion and preservation of editable text. Four
+worker tests, ten renderer library tests, 23 shared UI tests and the web host UI
+test also pass. Strict workspace Clippy and source/static checks pass; the final
+web bundle rebuilds. Three final actual-App Wgpu captures were reviewed and
+archived with logs in [the Thumbnail record](validation/classic-thumbnail-gpu-2026-10-23/validation.json).
+Native Paint window/preview parity, live OS menu activation, OS accessibility,
+physical resource/latency qualification, browser document thumbnails and T15
+completion remain unproven.

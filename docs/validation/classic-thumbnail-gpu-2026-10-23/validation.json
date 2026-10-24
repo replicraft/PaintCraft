@@ -1,0 +1,39 @@
+{
+  "date": "2026-10-23",
+  "source_commit": "0653b1cb4e51a76c3ec200c411ee5495b4e64e79",
+  "status": "partial_committed_document_thumbnail_view",
+  "reference": "docs/temp/paint-references/PLAN.md, Classic View menu: actual Thumbnail toggle with checked/disabled state. Floating body follows shared Classic conventions; no pinned native Thumbnail geometry.",
+  "scope": "View Thumbnail is a Classic-only, open-document toggle shared by egui/native-menu routing. A movable/resizable themed window fits the complete committed canvas with alpha checkerboard and cropped partial-edge UVs. Close releases its image. No document command, save, preference write or text commit is implied.",
+  "resource_boundary": "One optional native CPU worker and one queued job, at most 256x256 output, 8 MiB declared scratch plus conservatively charged source raster tiles with a 1 GiB local cap. Output frame/ColorImage/texture allowance of 12 bytes per sample is admitted before scheduling and retained through transfer to the UI cache. A 2x2 repeated checkerboard per theme bounds presentation geometry. Source change/hiding cancels and drains; an old job cannot publish for another document/state. Hidden in-flight work keeps its charges until completion; interactive gestures/pending edits defer new overview admission. These are logical bounds, not a physical-RSS or latency qualification.",
+  "checks": {
+    "gui": "210 passed, 44 ignored from final committed source; three Thumbnail cases cover compact/dark 2x and light desktop 1x with forced repeated layout, checked state, Close, settings/history isolation, commit/Undo/Redo refresh, pointer/zoom exclusion, and preservation of editable text. Final focused run also passes.",
+    "workers": "Four unit tests pass for bounded ownership, stale document/revision scopes, hidden cancellation/drain, denied output/worker admission, and same-source reopening. Reopening is gated until after cancellation and reopening, ensuring the cancellation result actually arrives in the reactivated scope.",
+    "renderer": "10 library tests pass, including ordered opacity/visibility composition, bounded million-square output and cancellation. The new request adapter exposes output dimensions before scheduling.",
+    "shared_ui": "23 passed, 1 ignored; includes Classic/document/modal gates, checked state and unique workspace action identities.",
+    "gpu": "Three final actual-App Wgpu captures from the committed source were reviewed. Default right-side placement clears floating size controls, and header/footer labels are readable. Exporter does not inject repeated-layout warnings; repeated-layout behavior is tested separately.",
+    "clippy": "Strict workspace all-target Clippy passed after final label changes. Strict wasm32 Clippy passed for the shared API/checkerboard integration before the final position/label-only adjustments; final release wasm build also passed.",
+    "web": "Browser preview host UI test and final optimized WebAssembly bundle build passed. This does not connect browser document thumbnails or establish new browser runtime evidence.",
+    "static": "Formatting, source length limit and diff whitespace checks pass."
+  },
+  "remaining": [
+    "Active brush, shape and editable text drafts are not included; the window explicitly identifies the committed image. Live overview previews remain unimplemented.",
+    "This is a provisional correct baseline. Full native Paint geometry/behavior, physical resource/latency evidence, live macOS menu activation and OS accessibility are not qualified.",
+    "Window placement/size/visibility are session view state. Browser document editing/overview integration and tablet-specific pressure/tilt remain pending.",
+    "T15 and the full 37-task roadmap remain partial; no milestone is marked complete."
+  ],
+  "sha256": {
+    "clippy.log.gz": "39988f2cfacd3aeb26ca87c45df88eb860648cd2ede17ed879acde26a49b866b",
+    "dark-compact.png": "b1048daab9e31da283df6e4551ac84ef1eb5f234fb2df6b97b33ce8d3a66426e",
+    "dark-desktop.png": "ce5ddff10378dd4cc4dd60a475bf4f8186b5e738ce45200c84725911067bca6f",
+    "gpu.log.gz": "22fe6c5cbfa673d211fe59bceb9935fdcff82e7eca1f76f58cd0d88ff3c15e05",
+    "gui.log.gz": "217a70a29015c017d23a2cb76e0cb11ff9b07e1f17e73da38c21e81701ddb004",
+    "light-desktop.png": "6032ac7ea789cdb1b1772811a879e9df011e59680b38dbbb65b3d4c24d5c9868",
+    "render.log.gz": "0c26619a20d954cdd0b25ce8a06940cc0da035abec37daa3ef748870621c9ce2",
+    "shared-ui.log.gz": "8c47b1040559cd06ecc2172d489a6e6bf18e9844376915ffbea6d30f9ecfca30",
+    "thumbnail-gui.log.gz": "447ae594c6d93450124f8ff3c0a99a3f3c86c0bd15f248fd570f6919b49bc035",
+    "wasm-clippy.log.gz": "999dd9e57751aee62229311eec8997cf95f427e92bf02bed278fe58c90c81323",
+    "web-build.log.gz": "92bedd45bb09696924eeec9cec0aa90b970412f1092a56dd20a3486ca5ade6cd",
+    "web-test.log.gz": "cb43c98dff385eeb045408a72970d3f7204c4d5ef6bde7b1a3950231efa39b86",
+    "worker.log.gz": "08e4db5e20746468020d4c29cd6917696e948c9c4d5d2ab16fbcc0a776460e1b"
+  }
+}
