@@ -19,5 +19,6 @@ pub mod recovery;
 pub mod registry;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod save_recovery;
+pub mod svg;
 #[cfg(not(target_arch = "wasm32"))]
 pub use paintcraft_platform::save;
