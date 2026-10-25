@@ -404,3 +404,23 @@ pcx-picture = PCX 画像
 pcx-image = PCX 画像
 
 save-a-24-bit-pcx-picture-transparent-pixels-are-placed-on-white = 24 ビットの PCX 画像を保存します。透明なピクセルは白で合成されます。
+
+pcx-encoding = PCX エンコーディング
+
+rgb24 = RGB24
+
+indexed-exact-colors = インデックス形式: 元の色を維持
+
+indexed-up-to-256-colors = インデックス形式: 最大 256 色
+
+preserve-full-rgb-colors-transparency-is-placed-on-white = RGB の色をそのまま保持します。透明部分は白で合成されます。
+
+keep-exact-colors-in-a-palette-images-needing-more-than-256-colors-are-refused = 元の色をパレットに保持します。256 色を超える画像は出力できません。
+
+convert-to-at-most-256-colors-when-needed-review-the-preview-before-exporting = 必要に応じて最大 256 色に変換します。出力前にプレビューを確認してください。
+
+pcx-preview-is-unavailable-reduce-the-image-size-or-choose-rgb24 = PCX のプレビューを作成できません。画像を小さくするか RGB24 を選択してください。
+
+export-preview = エクスポートのプレビュー
+
+palette-conversion-changes-colors-exporting-accepts-this-color-loss = パレットへの変換により色が変わります。エクスポートすると、この色の変更に同意したことになります。

@@ -6,6 +6,7 @@ pub mod fonts;
 pub mod icons;
 pub mod outbox;
 pub mod page_import;
+pub mod pcx_export;
 pub mod view;
 pub mod widgets;
 

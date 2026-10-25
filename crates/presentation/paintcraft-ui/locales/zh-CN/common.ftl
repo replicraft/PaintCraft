@@ -404,3 +404,23 @@ pcx-picture = PCX 图片
 pcx-image = PCX 图像
 
 save-a-24-bit-pcx-picture-transparent-pixels-are-placed-on-white = 保存 24 位 PCX 图片。透明像素将合成到白色背景上。
+
+pcx-encoding = PCX 编码
+
+rgb24 = RGB24
+
+indexed-exact-colors = 索引色：精确颜色
+
+indexed-up-to-256-colors = 索引色：最多 256 色
+
+preserve-full-rgb-colors-transparency-is-placed-on-white = 保留完整 RGB 颜色。透明部分将合成到白色背景上。
+
+keep-exact-colors-in-a-palette-images-needing-more-than-256-colors-are-refused = 在调色板中保留精确颜色。超过 256 种颜色的图像将被拒绝。
+
+convert-to-at-most-256-colors-when-needed-review-the-preview-before-exporting = 需要时转换为最多 256 种颜色。导出前请检查预览。
+
+pcx-preview-is-unavailable-reduce-the-image-size-or-choose-rgb24 = PCX 预览不可用。请缩小图像或选择 RGB24。
+
+export-preview = 导出预览
+
+palette-conversion-changes-colors-exporting-accepts-this-color-loss = 调色板转换会改变颜色。导出即表示接受这些颜色损失。

@@ -404,3 +404,23 @@ pcx-picture = PCX चित्र
 pcx-image = PCX छवि
 
 save-a-24-bit-pcx-picture-transparent-pixels-are-placed-on-white = 24-बिट PCX चित्र सहेजें। पारदर्शी पिक्सेल सफ़ेद पृष्ठभूमि पर रखे जाते हैं।
+
+pcx-encoding = PCX एन्कोडिंग
+
+rgb24 = RGB24
+
+indexed-exact-colors = इंडेक्स किया गया: मूल रंग
+
+indexed-up-to-256-colors = इंडेक्स किया गया: अधिकतम 256 रंग
+
+preserve-full-rgb-colors-transparency-is-placed-on-white = सभी RGB रंग सुरक्षित रखें। पारदर्शिता सफ़ेद पृष्ठभूमि पर रखी जाती है।
+
+keep-exact-colors-in-a-palette-images-needing-more-than-256-colors-are-refused = पैलेट में मूल रंग रखें। 256 से अधिक रंगों वाली छवियाँ स्वीकार नहीं की जातीं।
+
+convert-to-at-most-256-colors-when-needed-review-the-preview-before-exporting = ज़रूरत पड़ने पर अधिकतम 256 रंगों में बदलें। निर्यात करने से पहले पूर्वावलोकन देखें।
+
+pcx-preview-is-unavailable-reduce-the-image-size-or-choose-rgb24 = PCX पूर्वावलोकन उपलब्ध नहीं है। छवि का आकार घटाएँ या RGB24 चुनें।
+
+export-preview = निर्यात पूर्वावलोकन
+
+palette-conversion-changes-colors-exporting-accepts-this-color-loss = पैलेट में बदलने से रंग बदलते हैं। निर्यात करके आप रंगों की इस हानि को स्वीकार करते हैं।

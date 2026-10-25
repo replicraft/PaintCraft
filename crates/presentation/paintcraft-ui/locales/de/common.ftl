@@ -404,3 +404,23 @@ pcx-picture = PCX-Bild
 pcx-image = PCX-Bild
 
 save-a-24-bit-pcx-picture-transparent-pixels-are-placed-on-white = Ein 24-Bit-PCX-Bild speichern. Transparente Pixel werden auf Weiß gesetzt.
+
+pcx-encoding = PCX-Kodierung
+
+rgb24 = RGB24
+
+indexed-exact-colors = Indiziert: exakte Farben
+
+indexed-up-to-256-colors = Indiziert: bis zu 256 Farben
+
+preserve-full-rgb-colors-transparency-is-placed-on-white = Alle RGB-Farben erhalten. Transparenz wird auf Weiß gesetzt.
+
+keep-exact-colors-in-a-palette-images-needing-more-than-256-colors-are-refused = Exakte Farben in einer Palette behalten. Bilder mit mehr als 256 Farben werden abgelehnt.
+
+convert-to-at-most-256-colors-when-needed-review-the-preview-before-exporting = Bei Bedarf in höchstens 256 Farben umwandeln. Vor dem Export die Vorschau prüfen.
+
+pcx-preview-is-unavailable-reduce-the-image-size-or-choose-rgb24 = PCX-Vorschau nicht verfügbar. Bild verkleinern oder RGB24 wählen.
+
+export-preview = Exportvorschau
+
+palette-conversion-changes-colors-exporting-accepts-this-color-loss = Die Palettenumwandlung verändert Farben. Mit dem Export wird dieser Farbverlust akzeptiert.
