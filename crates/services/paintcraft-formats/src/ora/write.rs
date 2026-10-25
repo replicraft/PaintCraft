@@ -393,11 +393,18 @@ mod tests {
                 ("Thumbnails/thumbnail.png", expected),
             ] {
                 let png = archive
-                    .read(archive.index(name).unwrap(), &limits, &[], &|| Ok(()))
+                    .read(archive.index(name).unwrap(), &limits, &|| Ok(()))
                     .unwrap();
                 let image = crate::image::decode(&png).unwrap();
                 assert_eq!((image.width, image.height), expected);
-                assert!(image.rgba.chunks_exact(4).all(|px| px == [17, 51, 93, 255]));
+                assert!(
+                    image
+                        .rgba
+                        .as_chunks::<4>()
+                        .0
+                        .iter()
+                        .all(|px| *px == [17, 51, 93, 255])
+                );
             }
         }
     }
