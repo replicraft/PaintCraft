@@ -20,12 +20,6 @@ on:
       - 'rust-toolchain.toml'
       - 'docs/RELEASING.md'
   workflow_dispatch:
-    inputs:
-      platform:
-        description: Platforms to build (FreeBSD-only runs upload its packages without publishing)
-        type: choice
-        default: all
-        options: [all, freebsd, freebsd-tests]
 
 permissions:
   contents: read
@@ -67,7 +61,6 @@ jobs:
 
   build:
     name: Build ${{ matrix.target }}
-    if: github.event_name != 'workflow_dispatch' || inputs.platform == 'all'
     needs: version
     runs-on: ${{ matrix.os }}
     timeout-minutes: 90
@@ -187,83 +180,9 @@ jobs:
           name: windows-installer-logs-${{ matrix.target }}
           path: msi-*.log
 
-  freebsd:
-    name: FreeBSD x86-64
-    needs: version
-    runs-on: ubuntu-22.04
-    timeout-minutes: 120
-    steps:
-      - uses: actions/checkout@v7
-      - name: Reserve host disk for the FreeBSD VM and Rust build
-        run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
-          df -h .
-      - uses: actions/cache/restore@v6
-        id: freebsd-cargo
-        with:
-          path: target/freebsd-cache
-          key: freebsd14.5-rust1.99-${{ hashFiles('Cargo.lock') }}-${{ github.sha }}
-          restore-keys: freebsd14.5-rust1.99-${{ hashFiles('Cargo.lock') }}-
-      - name: Build and package inside FreeBSD
-        id: freebsd-vm
-        uses: vmactions/freebsd-vm@v1
-        with:
-          release: '14.5'
-          cache-after-prepare: false
-          cpu: 4
-          mem: 12288
-          prepare: |
-            pkg install -y curl git pkgconf python313 libxkbcommon wayland libX11 libXcursor libXrandr libXi libxcb mesa-libs vulkan-loader
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain 1.99.0
-          run: |
-            set -eu
-            . "$HOME/.cargo/env"
-            export CARGO_HOME="$(pwd)/target/freebsd-cache/cargo"
-            export CARGO_TARGET_DIR="$(pwd)/target/freebsd-cache/target"
-            export CARGO_BUILD_JOBS=4 CARGO_INCREMENTAL=0
-            rm -f .freebsd-test-failure
-            if [ "${{ inputs.platform }}" != freebsd-tests ]; then
-              cargo build --locked --release -p paintcraft -p paintcraft-cli --target x86_64-unknown-freebsd
-            fi
-            if ! cargo test --locked -p paintcraft-platform --features clipboard --target x86_64-unknown-freebsd --lib; then
-              printf '%s\n' 'FreeBSD native filesystem tests failed' > .freebsd-test-failure
-              exit 0
-            fi
-            python3.13 -m unittest discover -s scripts/tests -p 'test_package_*.py'
-            if [ "${{ inputs.platform }}" = freebsd-tests ]; then
-              if ! cargo test --locked -p paintcraft-platform --features clipboard --target x86_64-unknown-freebsd --lib save::evidence::tests::persisted_evidence_reconciliation_survives_repeated_filesystem_barriers -- --ignored; then
-                printf '%s\n' 'FreeBSD repeated save-recovery test failed' > .freebsd-test-failure
-              fi
-              exit 0
-            fi
-            python3.13 scripts/packaging/package_release.py package --version "$(python3.13 scripts/packaging/package_release.py validate)" --target x86_64-unknown-freebsd --binary "$CARGO_TARGET_DIR/x86_64-unknown-freebsd/release/paintcraft" --output dist
-            python3.13 scripts/packaging/package_cli.py --version "$(python3.13 scripts/packaging/package_release.py validate)" --target x86_64-unknown-freebsd --binary "$CARGO_TARGET_DIR/x86_64-unknown-freebsd/release/paintcraft-cli" --output dist
-            ldd "$CARGO_TARGET_DIR/x86_64-unknown-freebsd/release/paintcraft" | tee dependencies.txt
-            if grep -q 'not found' dependencies.txt; then exit 1; fi
-      - name: Retain compiled FreeBSD dependencies before reporting test failures
-        uses: actions/cache/save@v6
-        if: steps.freebsd-vm.outcome == 'success' && steps.freebsd-cargo.outputs.cache-hit != 'true'
-        with:
-          path: target/freebsd-cache
-          key: ${{ steps.freebsd-cargo.outputs.cache-primary-key }}
-      - name: Require passing FreeBSD native tests
-        run: |
-          if test -f .freebsd-test-failure; then
-            cat .freebsd-test-failure
-            exit 1
-          fi
-      - uses: actions/upload-artifact@v7
-        if: inputs.platform != 'freebsd-tests'
-        with:
-          name: paintcraft-${{ needs.version.outputs.version }}-x86_64-unknown-freebsd
-          path: dist/*
-          if-no-files-found: error
-          compression-level: 0
-          retention-days: 7
-
   assemble:
     name: Verify complete release and checksums
-    needs: [version, build, freebsd]
+    needs: [version, build]
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v7

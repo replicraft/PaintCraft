@@ -21,7 +21,6 @@ TARGETS = {
     "x86_64-apple-darwin": "macos-x64",
     "x86_64-unknown-linux-gnu": "linux-x64",
     "aarch64-unknown-linux-gnu": "linux-arm64",
-    "x86_64-unknown-freebsd": "freebsd-x64",
 }
 VERSION = re.compile(r"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)"
                      r"(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?"
@@ -70,7 +69,7 @@ def validate_package_input(version, target, binary):
             cpu = 183 if target.startswith("aarch64") else 62
             valid = (len(header) == 64 and header[:6] == b"\x7fELF\x02\x01"
                      and struct.unpack_from("<H", header, 18)[0] == cpu
-                     and header[7] in ((9,) if "freebsd" in target else (0, 3)))
+                     and header[7] in (0, 3))
         if not valid:
             raise ValueError(f"Executable header does not match {target}: {binary}")
 

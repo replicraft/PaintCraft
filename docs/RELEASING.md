@@ -15,9 +15,8 @@ Names start with `paintcraft-<version>-`. For version 0.1.0:
 | Windows | `windows-x64`, `windows-arm64` | `-portable.zip`, `.exe`, `.msi` |
 | macOS | `macos-arm64`, `macos-x64` | `.dmg`, `-update.zip` |
 | Linux | `linux-x64`, `linux-arm64` | `.deb`, `.rpm`, `.AppImage`, `.tar.gz` |
-| FreeBSD | `freebsd-x64` | `.tar.gz` |
 
-The assembled release has 26 downloads plus `SHA256SUMS.txt`. Each portable ZIP
+The assembled release has 24 downloads plus `SHA256SUMS.txt`. Each portable ZIP
 or tar archive includes the application, its license and bundled font notices.
 Fonts and interface assets are embedded in the executable. There are no source trees or build tools
 inside the downloads. The checksums describe the final downloadable bytes.
@@ -58,7 +57,7 @@ release notes. Check that every release commit appears once and none fall under
 the GitHub release body without rebuilding the application downloads.
 
 The `assemble` job refuses a missing architecture, extra/stale asset, empty file,
-symlink or mismatched per-asset checksum. Only after all 26 checks succeed does
+symlink or mismatched per-asset checksum. Only after all 24 checks succeed does
 it write the sorted, LF-delimited `SHA256SUMS.txt` and remove intermediate checksum
 sidecars. It runs `sha256sum --check` independently before uploading the final set.
 
@@ -104,13 +103,6 @@ AppImage executable before running it. Portable tar archives require host runtim
 libraries. AppImages and portable archives do not install host MIME associations.
 Package generation uses pinned cargo-packager 0.11.8 and cargo-generate-rpm 0.21.0.
 
-FreeBSD x86-64 builds inside a FreeBSD 14.5 VM and produces a portable tar archive.
-The build installs `libxkbcommon`, `wayland`, `libX11`, `libXcursor`, `libXrandr`,
-`libXi`, `libxcb`, `mesa-libs` and `vulkan-loader`. Equivalent runtime graphics
-libraries and a working desktop/display are required when running the archive.
-Native dialogs also need a functioning XDG portal service/backend. CI inspects
-the resulting executable's shared-library dependencies.
-
 ## Local packaging
 
 Build the native release executable with the appropriate Rust target first:
@@ -146,7 +138,7 @@ sha256sum --check SHA256SUMS.txt
 ### Headless CLI distribution
 
 Each of the seven native targets also produces a separate `paintcraft-cli-<version>-<platform>.zip`
-(Windows) or `.tar.gz` (macOS, Linux, FreeBSD). These archives contain the CLI and license,
+(Windows) or `.tar.gz` (macOS, Linux). These archives contain the CLI and license,
 and their hashes are included in `SHA256SUMS.txt`. They are separate from desktop installers.
 Extract the binary into a directory on your PATH; the Unix archives preserve executable permissions.
 

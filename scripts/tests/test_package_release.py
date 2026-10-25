@@ -31,7 +31,7 @@ def executable(path, target):
     else:
         header = bytearray(64)
         header[:6] = b"\x7fELF\x02\x01"
-        header[7] = 9 if "freebsd" in target else 0
+        header[7] = 0
         struct.pack_into("<H", header, 18, 183 if target.startswith("aarch64") else 62)
     path.write_bytes(header)
     return path
@@ -164,12 +164,12 @@ class ReleaseTests(unittest.TestCase):
             self.assertEqual(archive.with_name(archive.name + ".sha256").read_bytes(),
                              release.checksum_line(archive))
 
-    def test_final_manifest_requires_all_26_assets_and_independently_matches_hashes(self):
-        self.assertEqual(len(release.expected_assets(self.version)), 26)
+    def test_final_manifest_requires_all_24_assets_and_independently_matches_hashes(self):
+        self.assertEqual(len(release.expected_assets(self.version)), 24)
         self.full_set()
         release.verify_assets(self.version, self.output, finalize=True)
         lines = (self.output / "SHA256SUMS.txt").read_bytes().splitlines()
-        self.assertEqual(len(lines), 26)
+        self.assertEqual(len(lines), 24)
         self.assertFalse(list(self.output.glob("*.sha256")))
         for line in lines:
             digest, name = line.decode().split("  ")
@@ -178,7 +178,7 @@ class ReleaseTests(unittest.TestCase):
         release.verify_assets(self.version, self.output)
 
     def test_missing_intel_or_arm_asset_cannot_publish_a_partial_release(self):
-        for arch in ("macos-x64.dmg", "windows-arm64.msi", "linux-arm64.rpm", "freebsd-x64.tar.gz"):
+        for arch in ("macos-x64.dmg", "windows-arm64.msi", "linux-arm64.rpm"):
             with self.subTest(arch=arch):
                 self.full_set()
                 missing = next(p for p in self.output.iterdir() if p.name.endswith(arch))
