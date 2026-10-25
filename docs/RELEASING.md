@@ -35,7 +35,7 @@ inside the downloads. The checksums describe the final downloadable bytes.
 5. Push a matching `v<version>` tag when ready to publish. A tag that disagrees
    with Cargo fails before building. The tag run builds all platforms again,
    checks every asset and SHA-256 digest, creates/uploads a draft and then
-   publishes it with the authored notes followed by the grouped git-cliff changelog.
+   publishes a short authored summary with a link to the full changelog.
    An existing published release is refused. Prerelease versions
    produce prerelease downloads; MSI and Apple bundle metadata use the numeric
    major/minor/patch version. Use a new numeric version when upgrading an MSI.
@@ -49,7 +49,7 @@ To reuse completed builds, run the Release workflow with `artifacts-run` set to
 the source run ID and `publish-tag` set to its existing version tag. Every required
 platform build must have succeeded at that exact tagged commit. The workflow
 skips compilation, downloads those artifacts, checks the complete current package
-set and publishes it with the tagged changelog. This supports removing an obsolete
+set and publishes it with a summary and a full changelog link. This supports removing an obsolete
 target without repeating successful builds; it cannot reuse binaries for a
 different source commit.
 
@@ -57,10 +57,10 @@ Like EarthCraft, release validation fetches the complete Git history and uses
 git-cliff 2.14.2 with `cliff.toml` to generate a grouped `CHANGELOG.md`.
 Download it from the separate `release-changelog-<version>` workflow artifact.
 The authored installation notes remain in `docs/releases/v<version>.md`.
-`cliff.toml` classifies descriptive commits as well as Conventional Commits, with
+`cliff.toml` excludes documentation commits and classifies descriptive commits as well as Conventional Commits, with
 explicit exceptions for historical subjects whose intent is ambiguous. Keep the
 root `CHANGELOG.md` updated with `git-cliff --output CHANGELOG.md` when preparing
-release notes. Check that every release commit appears once and none fall under
+release notes. Check that every non-documentation release commit appears once and none fall under
 "Other changes" before publishing. Note-only corrections after a tag can update
 the GitHub release body without rebuilding the application downloads.
 

@@ -244,12 +244,6 @@ jobs:
         with:
           name: paintcraft-release-${{ needs.version.outputs.version }}
           path: dist
-      - uses: actions/download-artifact@v8
-        with:
-          name: release-changelog-${{ needs.version.outputs.version }}
-          path: release-notes
-          run-id: ${{ inputs.artifacts-run || github.run_id }}
-          github-token: ${{ github.token }}
       - name: Publish after every platform succeeds
         shell: bash
         env:
@@ -262,11 +256,7 @@ jobs:
           cd dist
           sha256sum --check SHA256SUMS.txt
           cd ..
-          {
-            cat "docs/releases/v$RELEASE_VERSION.md"
-            printf '\n\n'
-            cat release-notes/CHANGELOG.md
-          } > release-body.md
+          python scripts/packaging/package_release.py notes --version "$RELEASE_VERSION" --output release-body.md
           if gh release view "$RELEASE_TAG" --json isDraft > release.json; then
             if ! jq -e '.isDraft == true' release.json > /dev/null; then
               echo '::error::Release already published; use a new version tag.'

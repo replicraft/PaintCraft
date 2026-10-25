@@ -16,6 +16,8 @@ conventional_commits = true
 filter_unconventional = false
 tag_pattern = '^v[0-9]+\.[0-9]+\.[0-9]+(?:[-+].*)?$'
 sort_commits = "oldest"
+# Omit documentation-only changes even when their subject uses another prefix.
+exclude_paths = ["docs/**", "**/*.md", "assets/repo/**"]
 # Include descriptive history as well as Conventional Commits. Explicit historical
 # exceptions cover subjects whose intent cannot be inferred from their first verb.
 commit_parsers = [
@@ -24,7 +26,7 @@ commit_parsers = [
     { message = "^fix", group = "Fixes" },
     { message = "^perf", group = "Performance" },
     { message = "^refactor", group = "Refactoring" },
-    { message = "^docs?", group = "Documentation" },
+    { message = "^docs?", skip = true },
     { message = "^(ci|build|test|chore|style)", group = "Maintenance" },
 
     { sha = "ceb3a618056feb03073985884d1533dc712c1330", group = "Fixes" },
@@ -46,9 +48,9 @@ commit_parsers = [
     { sha = "68d74488cc0880fe6e9e974ec3aeeb9fef588ab8", group = "Features" },
     { sha = "36132cbd4667f5a0d8bc3eeb8ba26fd5cc1cc4f2", group = "Features" },
     { sha = "805c457382837ab015e2b19e5be58b30aadf29bd", group = "Features" },
-    { sha = "3eeca8635cd535d3b560cd9bc862c7f1af295802", group = "Documentation" },
-    { sha = "db6bdf429a13b46ebd6e3afab2565293796d8168", group = "Documentation" },
-    { sha = "addabc079a48ee83f42b7845c0e61028e4f30a9f", group = "Documentation" },
+    { sha = "3eeca8635cd535d3b560cd9bc862c7f1af295802", skip = true },
+    { sha = "db6bdf429a13b46ebd6e3afab2565293796d8168", skip = true },
+    { sha = "addabc079a48ee83f42b7845c0e61028e4f30a9f", skip = true },
     { sha = "127e4c9f29f10290674f98724ca1351f7dce5d2a", group = "Maintenance" },
     { sha = "945f225b82d366bacc1bb8966d53ddd45fc6f00c", group = "Maintenance" },
     { sha = "f89b4a67de42a7962df6789be1415897d51c6961", group = "Maintenance" },
@@ -79,14 +81,14 @@ commit_parsers = [
     { sha = "1c9afaf30e10aa4cef911b91866ae0e985fb0f6f", group = "Performance" },
     { sha = "fe847ceec83c9ca59f647b079a71345ea38d9650", group = "Performance" },
     { message = "(?i)^(Refine|Match|Align|Center|Polish|Join|Round|Increase|Enlarge|Improve|Auto-hide|Complete Japanese|Complete language|ui(?:\\([^)]*\\))?:)\\b", group = "Fixes" },
-    { message = "(?i)^(Document|Record|Describe|Explain|Evaluate|Capture .* (?:and |with )?(?:record|document)|Refresh .* (?:captures|screenshots)|Simplify README|Reconcile roadmap|Correct the CLI test count|Update the README|.*README|Losslessly optimize README)\\b", group = "Documentation" },
+    { message = "(?i)^(Document|Record|Describe|Explain|Evaluate|Capture .* (?:and |with )?(?:record|document)|Refresh .* (?:captures|screenshots)|Simplify README|Reconcile roadmap|Correct the CLI test count|Update the README|.*README|Losslessly optimize README)\\b", skip = true },
     { message = "(?i)^(Test|Verify|Qualify|Cross-check|Simulate|Prove|Cover|Vendor|Initial commit|Ignore|Pin|Run .*tests|Synchronize worker start|Update .* (?:checks|regressions)|Preserve menu geometry checks|Package|Generate release changelogs|Fit FreeBSD|Enforce the 800-line)\\b", group = "Maintenance" },
     { message = "(?i)^(bench(?:\\([^)]*\\))?:|Benchmark|Measure|Compare|Reuse|Keep magnified|Use exact widened SIMD|Fit Classic on opening|Compress|Compact)\\b", group = "Performance" },
     { message = "(?i)^(Split|Separate|Organize|Extract|Consolidate|Unify|Import locale|Move (?:filesystem|native format|platform availability)|Replace CLI|Make core|Use the t macro|Share bundled desktop)\\b", group = "Refactoring" },
     { message = "(?i)^(Fix|Correct|Detect|Avoid|Deduplicate|Invalidate|Prevent|Protect|Refuse|Respect|Honor|Guard|Check captured|Preserve|Keep|Restore|Reject|Fence|Resolve|Return|Retry|Cancel|Retire|Quarantine|Wait|Discard|Filter|Patch|Handle|Transfer|Bound|Reserve|Reprice|Reclaim)\\b", group = "Fixes" },
     { message = "(?i)^(Add|Enable|Expose|Connect|Create|Support|Implement|Integrate|Define|Derive|Prepare|Compile|Render|Present|Give|Refine|Match|Align|Translate|Localize|Bundle|Persist|Show|Allow|Admit|Capture (?:Windows|bounded|exact)|Read|Write|Load|Request|Require|Acquire|Track|Stage|Use|Stream|Route|Save|Retain|Make|Build|Bring|Carry|Center|Complete|Toggle|Reopen|Own|Erase|Gate|Model|Map|Open|Polish|Zoom|Rebuild|Remove|Join|Round|Embed|Identify|Distinguish|Increase|Enlarge|Auto-hide|Leave|Improve|Apply|Wake|Price|Lease|Combine|Propagate|Observe|Attach|Batch|Recycle|Produce|Extend|Plan|Consume|Allocate|Resume|Represent|Claim|Discover|Journal|Replay)\\b", group = "Features" },
     { message = "^(ui|web|desktop|editor|raster|classic|tools|render|commands|icons)(\\([^)]*\\))?:", group = "Features" },
-    { message = "^release:", group = "Documentation" },
+    { message = "^release:", skip = true },
     { message = "^bench(\\([^)]*\\))?:", group = "Performance" },
     { message = ".*", group = "Other changes" },
 ]

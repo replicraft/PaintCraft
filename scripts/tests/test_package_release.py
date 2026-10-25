@@ -61,6 +61,16 @@ class ReleaseTests(unittest.TestCase):
                 release.validate("v99.0.0")
         self.assertEqual(output.read_bytes(), f"version={self.version}\n".encode())
 
+    def test_public_release_notes_are_a_summary_and_full_changelog_link(self):
+        body = release.release_notes(self.version)
+        self.assertIn("[Show full changelog]", body)
+        self.assertIn("/blob/main/CHANGELOG.md", body)
+        self.assertNotIn("### Documentation", body)
+        self.assertNotIn("## v" + self.version, body)
+        self.assertLess(len(body), 2000)
+        with self.assertRaises(ValueError):
+            release.release_notes("99.0.0")
+
     def test_every_executable_header_rejects_every_other_target(self):
         for actual in release.TARGETS:
             executable(self.binary, actual)

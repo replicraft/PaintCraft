@@ -49,6 +49,16 @@ def validate(tag):
     print(version)
 
 
+def release_notes(version):
+    if version != workspace_version():
+        raise ValueError("Release notes version must match the workspace manifest")
+    summary = (ROOT / "docs/releases" / f"v{version}.md").read_text(encoding="utf-8").strip()
+    if not summary:
+        raise ValueError("Release summary must not be empty")
+    return (summary + "\n\n[Show full changelog]"
+            "(https://github.com/replicraft/paintcraft/blob/main/CHANGELOG.md)\n")
+
+
 def validate_package_input(version, target, binary):
     if version != workspace_version() or target not in TARGETS:
         raise ValueError("Package version or target does not match the release contract")
@@ -201,6 +211,9 @@ def main():
     commands = parser.add_subparsers(dest="command", required=True)
     version = commands.add_parser("validate")
     version.add_argument("--tag", default="")
+    notes = commands.add_parser("notes")
+    notes.add_argument("--version", required=True)
+    notes.add_argument("--output", type=Path, required=True)
     archive = commands.add_parser("package")
     archive.add_argument("--version", required=True)
     archive.add_argument("--target", choices=TARGETS, required=True)
@@ -214,6 +227,8 @@ def main():
     try:
         if args.command == "validate":
             validate(args.tag)
+        elif args.command == "notes":
+            args.output.write_text(release_notes(args.version), encoding="utf-8")
         elif args.command in ("verify", "finalize"):
             verify_assets(args.version, args.output, args.command == "finalize")
         else:
