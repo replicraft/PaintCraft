@@ -238,7 +238,10 @@ fn content(ui: &mut egui::Ui, context: Context, actions: &mut Vec<Action>, pane:
             }
         }
         Pane::SaveAs => {
-            for format in ImageExport::ALL {
+            for format in ImageExport::ALL
+                .into_iter()
+                .filter(|format| format.available(context.frontend))
+            {
                 let action = Action::ExportImage(format);
                 let response = format_row(
                     ui,
@@ -249,19 +252,11 @@ fn content(ui: &mut egui::Ui, context: Context, actions: &mut Vec<Action>, pane:
                 );
                 dispatch(ui, response, action, actions);
             }
-            format_row(
-                ui,
-                "GIF",
-                "GIF picture",
-                "GIF export is not available yet.",
-                false,
-            )
-            .on_disabled_hover_text(t!(ui.ctx(), "GIF export is not available yet."));
             let response = format_row(
                 ui,
                 "…",
                 "Other formats",
-                "Choose PNG, BMP or JPEG in the save dialog.",
+                "Choose an image format in the export dialog.",
                 Action::Export.enabled(context),
             );
             dispatch(ui, response, Action::Export, actions);

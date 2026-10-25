@@ -10,11 +10,25 @@ pub(crate) struct Draft {
 }
 
 impl App {
+    fn enabled_export_formats(&self) -> Vec<ImageExport> {
+        ImageExport::ALL
+            .into_iter()
+            .filter(|format| {
+                let path = PathBuf::from("picture").with_extension(format.extension());
+                format.available(self.action_context().frontend)
+                    && ImageFormat::from_extension(&path)
+                        .is_some_and(|codec| self.admit_export_format(&path, codec).is_ok())
+            })
+            .collect()
+    }
     pub(super) fn begin_export_options(&mut self, format: ImageExport) {
         if self.document_count() == 0
             || !self.editor.shape_file_ready()
             || self.dialogs.as_ref().is_some_and(NativeDialogs::pending)
         {
+            return;
+        }
+        if !self.enabled_export_formats().contains(&format) {
             return;
         }
         self.editor.cancel_gesture();
@@ -43,7 +57,7 @@ impl App {
                 egui::ComboBox::from_id_salt("export-format")
                     .selected_text(t!(ctx, draft.format.label()))
                     .show_ui(ui, |ui| {
-                        for format in ImageExport::ALL {
+                        for format in self.enabled_export_formats() {
                             ui.selectable_value(&mut draft.format, format, t!(ctx, format.label()));
                         }
                     })
@@ -51,16 +65,14 @@ impl App {
                     .labelled_by(label.id);
             });
             ui.label(t!(ctx, draft.format.description()));
-            if draft.format == ImageExport::Jpeg {
+            if let Some(label) = draft.format.quality_label() {
                 ui.add_space(8.0);
-                ui.add(
-                    egui::Slider::new(&mut draft.jpeg_quality, 1..=100)
-                        .text(t!(ctx, "JPEG quality")),
-                );
-                ui.label(t!(
-                    ctx,
+                ui.add(egui::Slider::new(&mut draft.jpeg_quality, 1..=100).text(t!(ctx, label)));
+                ui.label(t!(ctx, if draft.format == ImageExport::Avif {
+                    "AVIF uses lossy compression for colors and transparency, even at quality 100."
+                } else {
                     "Higher quality creates a larger file. Transparent pixels are placed on white."
-                ));
+                }));
             }
             let canvas = self.editor.document().canvas;
             ui.add_space(8.0);
@@ -165,6 +177,8 @@ mod tests {
         for language in Language::ALL {
             for format in ImageExport::ALL {
                 let mut app = App::new(None);
+                app.settings.experience = Experience::Studio;
+                app.editor = Editor::new_document(16, 12).unwrap();
                 let path = std::env::temp_dir()
                     .join(format!("paintcraft-export-dialog-{}.pcnd", Uuid::new_v4()));
                 app.path_text = path.to_string_lossy().into_owned();
@@ -196,7 +210,10 @@ mod tests {
                     panic!("{} {format:?}: missing loss review", language.id());
                 };
                 assert_eq!(selected, &path.with_extension(format.extension()));
-                assert_eq!(selected_format.name(), format.name());
+                assert_eq!(
+                    Some(*selected_format),
+                    ImageFormat::from_extension(&path.with_extension(format.extension()))
+                );
                 assert_eq!(*jpeg_quality, 43);
                 assert!(!selected.exists());
                 harness.get_by_label(&translate(language, "Cancel")).click();

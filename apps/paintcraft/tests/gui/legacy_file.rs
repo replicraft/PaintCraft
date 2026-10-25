@@ -31,7 +31,10 @@ fn choose_format(h: &mut Harness<App>, language: Language, format: ImageExport) 
 fn historical_save_as_choices_export_real_formats_only_after_confirmation() {
     for variant in [ClassicVariant::V7, ClassicVariant::V10] {
         for language in Language::ALL {
-            for format in ImageExport::ALL {
+            for format in ImageExport::ALL
+                .into_iter()
+                .filter(|format| format.available(paintcraft_ui::actions::Frontend::Classic))
+            {
                 let dir = scratch("historical-file-export");
                 let source = dir.join("original.pcnd");
                 let document = paintcraft_document::new_document(
@@ -83,12 +86,12 @@ fn historical_save_as_choices_export_real_formats_only_after_confirmation() {
                 h.get_by_label(&translate(language, "Export now")).click();
                 h.run();
                 let bytes = std::fs::read(&out).unwrap();
-                let magic: &[u8] = match format {
-                    ImageExport::Png => b"\x89PNG\r\n\x1a\n",
-                    ImageExport::Jpeg => &[255, 216, 255],
-                    ImageExport::Bmp => b"BM",
-                };
-                assert!(bytes.starts_with(magic));
+                assert_eq!(
+                    paintcraft_formats::image::ImageFormat::sniff(&bytes)
+                        .unwrap()
+                        .name(),
+                    format.name()
+                );
                 let decoded = paintcraft_formats::image::decode(&bytes).unwrap();
                 assert_eq!((decoded.width, decoded.height), (24, 16));
                 assert!(decoded.rgba.as_chunks::<4>().0.iter().all(|p| {
