@@ -67,7 +67,7 @@ pub fn show(
                         ui.set_width(heading_width);
                         ui.label(
                             egui::RichText::new(t!(ui.ctx(), "Settings"))
-                                .size(24.0)
+                                .size(28.0)
                                 .strong(),
                         );
                     },
@@ -150,11 +150,11 @@ pub fn show(
 
 fn navigation(ui: &mut egui::Ui, current: &mut Page, sidebar: bool, classic: bool) {
     for (page, label, icon) in [
-        (Page::Appearance, "Appearance", Icon::Settings),
-        (Page::Interface, "User Interface", Icon::Settings),
+        (Page::Appearance, "Appearance", Icon::Appearance),
+        (Page::Interface, "User Interface", Icon::Interface),
         (Page::Canvas, "Canvas", Icon::CanvasSize),
         (Page::Text, "Text preferences", Icon::Text),
-        (Page::About, "About", Icon::Settings),
+        (Page::About, "About", Icon::About),
     ] {
         if classic && page == Page::Interface {
             continue;
@@ -226,9 +226,23 @@ pub fn card(ui: &mut egui::Ui, heading: &str, contents: impl FnOnce(&mut egui::U
         .inner_margin(12)
         .show(ui, |ui| {
             ui.set_min_width(ui.available_width().max(0.0));
-            ui.strong(t!(ui.ctx(), heading));
+            ui.label(
+                egui::RichText::new(t!(ui.ctx(), heading))
+                    .size(22.0)
+                    .strong(),
+            );
             ui.add_space(6.0);
             contents(ui);
         });
     ui.add_space(10.0);
+}
+
+/// Shared product identity in both application hosts.
+pub fn about(ui: &mut Ui) {
+    ui.label(t!(ui.ctx(), "PaintCraft by Replicraft"));
+    ui.label(format!("v{}", env!("CARGO_PKG_VERSION")));
+    ui.hyperlink_to(
+        "GitHub: replicraft/paintcraft",
+        "https://github.com/replicraft/paintcraft",
+    );
 }

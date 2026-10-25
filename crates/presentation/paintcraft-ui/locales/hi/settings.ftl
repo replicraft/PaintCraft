@@ -66,3 +66,5 @@ scroll-automatically-while-dragging-near-the-edge-of-the-canvas-viewport = क�
 
 about = परिचय
 paintcraft-by-replicraft = PaintCraft by Replicraft
+
+paint-7-uses-light-mode-your-preferred-theme-returns-with-other-skins = Paint 7 हल्के मोड का उपयोग करता है। दूसरी स्किन पर आपकी पसंदीदा थीम वापस आ जाएगी।

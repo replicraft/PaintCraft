@@ -3,6 +3,9 @@ use super::Icon;
 
 pub(super) fn source(icon: Icon) -> Option<&'static [u8]> {
     Some(match icon {
+        Icon::About => include_bytes!("../../assets/icons/about.svg"),
+        Icon::Appearance => include_bytes!("../../assets/icons/appearance.svg"),
+        Icon::Interface => include_bytes!("../../assets/icons/interface.svg"),
         Icon::AspectRatio => include_bytes!("../../assets/icons/classic-menus/aspect-ratio.svg"),
         Icon::StrokeSize => include_bytes!("../../assets/icons/classic-menus/stroke-size.svg"),
         Icon::Settings => include_bytes!("../../assets/icons/classic-menus/settings.svg"),

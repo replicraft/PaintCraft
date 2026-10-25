@@ -38,9 +38,16 @@ fn settings_match_desktop_navigation_and_cancel_restores_theme_for_every_skin_an
                 assert_eq!(r.height(), 40.0, "{label}");
                 assert!(h.ctx.content_rect().contains_rect(r), "{label}: {r:?}");
             }
-            h.get_by_label("Dark").click();
-            h.run();
-            assert_eq!(h.ctx.theme(), egui::Theme::Dark);
+            if skin != ClassicVariant::V7 {
+                h.get_by_label("Dark").scroll_to_me();
+                h.run();
+                h.get_by_label("Dark").click();
+                h.run();
+                assert_eq!(h.ctx.theme(), egui::Theme::Dark);
+            } else {
+                assert!(h.query_by_label("Dark").is_none());
+                assert_eq!(h.ctx.theme(), egui::Theme::Light);
+            }
             assert_eq!(h.state().preferences, before);
             h.get_by_label("Close settings").click();
             h.run();
@@ -69,15 +76,16 @@ fn apply_adopts_theme_and_skin_without_document_history_or_pixels() {
     let ctx = h.ctx.clone();
     h.state_mut().open_settings(&ctx);
     h.run();
-    h.get_by_label("Use system setting").click();
+    assert_eq!(h.ctx.theme(), egui::Theme::Light);
+    assert!(h.query_by_label("Dark").is_none());
+    h.get_by_label(ClassicVariant::V10.name()).click();
     h.run();
+    assert_eq!(h.ctx.theme(), egui::Theme::Dark);
     h.get_by_label("Apply").click();
     h.run();
-    assert_eq!(h.state().preferences.theme, None);
-    assert_eq!(
-        h.ctx.options(|o| o.theme_preference),
-        egui::ThemePreference::System
-    );
+    assert_eq!(h.state().preferences.theme, Some(egui::Theme::Dark));
+    assert_eq!(h.state().variant, ClassicVariant::V10);
+    assert_eq!(h.ctx.theme(), egui::Theme::Dark);
 }
 #[test]
 fn canvas_defaults_are_staged_bounded_and_only_apply_to_new_documents() {
@@ -124,6 +132,7 @@ fn text_preferences_and_about_share_desktop_controls_and_preserve_pixels() {
     h.get_by_label("About").click();
     h.run();
     assert!(h.query_by_label("PaintCraft by Replicraft").is_some());
+    assert!(h.query_by_label("GitHub: replicraft/paintcraft").is_some());
     assert!(
         h.query_by_label(&format!("v{}", env!("CARGO_PKG_VERSION")))
             .is_some()

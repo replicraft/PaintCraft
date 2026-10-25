@@ -15,6 +15,9 @@ pub enum Icon {
     SixPointStar,
     RemoveBackground,
     Settings,
+    About,
+    Appearance,
+    Interface,
     Layers,
     New,
     Open,
@@ -108,7 +111,7 @@ pub enum Icon {
 }
 
 impl Icon {
-    pub const ALL: [Self; 100] = [
+    pub const ALL: [Self; 103] = [
         Self::Polygon,
         Self::RightTriangle,
         Self::Diamond,
@@ -123,6 +126,9 @@ impl Icon {
         Self::SixPointStar,
         Self::RemoveBackground,
         Self::Settings,
+        Self::About,
+        Self::Appearance,
+        Self::Interface,
         Self::Layers,
         Self::New,
         Self::Open,
@@ -227,6 +233,9 @@ impl Icon {
             Self::SixPointStar => "six-point-star",
             Self::RemoveBackground => "remove-background",
             Self::Settings => "settings",
+            Self::About => "about",
+            Self::Appearance => "appearance",
+            Self::Interface => "interface",
             Self::Layers => "layers",
             Self::New => "new",
             Self::Open => "open",
@@ -336,6 +345,9 @@ impl Icon {
             Self::FourPointStar => include_bytes!("../../assets/icons/four-point-star.svg"),
             Self::SixPointStar => include_bytes!("../../assets/icons/six-point-star.svg"),
             Self::RemoveBackground => include_bytes!("../../assets/icons/remove-background.svg"),
+            Self::About => include_bytes!("../../assets/icons/about.svg"),
+            Self::Appearance => include_bytes!("../../assets/icons/appearance.svg"),
+            Self::Interface => include_bytes!("../../assets/icons/interface.svg"),
             Self::Settings => include_bytes!("../../assets/icons/settings.svg"),
             Self::Layers => include_bytes!("../../assets/icons/layers.svg"),
             Self::New => include_bytes!("../../assets/icons/new.svg"),

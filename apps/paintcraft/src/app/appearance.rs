@@ -137,7 +137,12 @@ impl App {
             _ => self.settings.language,
         };
         set_language(ctx, language);
-        let theme = appearance.resolve(ctx.system_theme());
+        let preferred = appearance.resolve(ctx.system_theme());
+        let theme = if experience == Experience::Classic {
+            v.effective_theme(preferred)
+        } else {
+            preferred
+        };
         if self.applied_variant == Some((experience, v, appearance, theme)) {
             return;
         }
@@ -153,11 +158,17 @@ impl App {
             Experience::Classic => paintcraft_classic::apply_style_for_theme(ctx, v, theme),
             Experience::Studio => paintcraft_studio::apply_style_for_theme(ctx, theme),
         }
-        ctx.send_viewport_cmd(egui::ViewportCommand::SetTheme(match appearance {
-            settings::Appearance::System => egui::viewport::SystemTheme::SystemDefault,
-            settings::Appearance::Light => egui::viewport::SystemTheme::Light,
-            settings::Appearance::Dark => egui::viewport::SystemTheme::Dark,
-        }));
+        ctx.send_viewport_cmd(egui::ViewportCommand::SetTheme(
+            if experience == Experience::Classic && v == ClassicVariant::V7 {
+                egui::viewport::SystemTheme::Light
+            } else {
+                match appearance {
+                    settings::Appearance::System => egui::viewport::SystemTheme::SystemDefault,
+                    settings::Appearance::Light => egui::viewport::SystemTheme::Light,
+                    settings::Appearance::Dark => egui::viewport::SystemTheme::Dark,
+                }
+            },
+        ));
         self.applied_variant = Some((experience, v, appearance, theme));
     }
 
@@ -198,6 +209,24 @@ mod studio_layout_tests {
             |ui| app.ui(ui),
         );
         output.textures_delta.clear();
+    }
+
+    #[test]
+    fn paint7_temporarily_overrides_the_theme_without_changing_the_preference() {
+        let mut app = App::new(None);
+        let ctx = egui::Context::default();
+        app.settings.appearance = settings::Appearance::Dark;
+        app.settings.classic_variant = Some(ClassicVariant::V7);
+        app.apply_style(&ctx);
+        assert_eq!(ctx.theme(), egui::Theme::Light);
+        assert_eq!(app.settings.appearance, settings::Appearance::Dark);
+        app.settings.classic_variant = Some(ClassicVariant::V10);
+        app.apply_style(&ctx);
+        assert_eq!(ctx.theme(), egui::Theme::Dark);
+        app.settings.classic_variant = Some(ClassicVariant::V7);
+        app.settings.experience = Experience::Studio;
+        app.apply_style(&ctx);
+        assert_eq!(ctx.theme(), egui::Theme::Dark);
     }
 
     #[test]

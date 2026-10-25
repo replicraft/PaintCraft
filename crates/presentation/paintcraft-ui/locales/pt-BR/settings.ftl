@@ -66,3 +66,5 @@ scroll-automatically-while-dragging-near-the-edge-of-the-canvas-viewport = Rolar
 
 about = Sobre
 paintcraft-by-replicraft = PaintCraft by Replicraft
+
+paint-7-uses-light-mode-your-preferred-theme-returns-with-other-skins = O Paint 7 usa o modo claro. Seu tema preferido volta ao mudar de visual.

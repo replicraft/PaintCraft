@@ -13,14 +13,27 @@ pub(super) struct Draft {
 }
 impl WebApp {
     pub(super) fn refresh_appearance(&mut self, ctx: &egui::Context) {
-        let key = (ctx.theme(), self.variant, self.frontend);
+        let values = self
+            .settings_draft
+            .as_ref()
+            .map_or(&self.preferences, |draft| &draft.values);
+        let preferred = values
+            .theme
+            .unwrap_or_else(|| ctx.system_theme().unwrap_or(egui::Theme::Light));
+        let theme = if self.frontend == Frontend::Classic {
+            values.variant.effective_theme(preferred)
+        } else {
+            preferred
+        };
+        ctx.set_theme(theme);
+        let key = (theme, values.variant, self.frontend);
         if self.applied_style != Some(key) {
             self.applied_style = Some(key);
             paintcraft_ui::theme::apply(ctx, key.0);
             if self.frontend == Frontend::Studio {
                 paintcraft_studio::apply_style_for_theme(ctx, key.0);
             } else {
-                paintcraft_classic::apply_style_for_theme(ctx, self.variant, key.0);
+                paintcraft_classic::apply_style_for_theme(ctx, key.1, key.0);
             }
             ctx.request_repaint();
         }
@@ -48,7 +61,15 @@ impl WebApp {
         let mut page = draft.page;
         let response =
             paintcraft_classic::settings::show(ctx, true, &mut page, |ui, page, width, height| {
-                content(ui, &mut draft, &self.text.families, page, width, height)
+                content(
+                    ui,
+                    &mut draft,
+                    &self.text.families,
+                    page,
+                    width,
+                    height,
+                    self.frontend == Frontend::Classic,
+                )
             });
         draft.page = page;
         match response {
@@ -67,8 +88,8 @@ impl WebApp {
                         .theme
                         .map_or(egui::ThemePreference::System, Into::into),
                 );
-                self.refresh_appearance(ctx);
                 self.variant = self.preferences.variant;
+                self.refresh_appearance(ctx);
                 self.text
                     .style
                     .family
@@ -102,6 +123,7 @@ fn content(
     page: Page,
     width: f32,
     height: f32,
+    classic: bool,
 ) {
     ui.allocate_ui_with_layout(
         egui::vec2(width, height), egui::Layout::top_down(egui::Align::Min),
@@ -113,12 +135,11 @@ fn content(
                 .max_height(height)
                 .auto_shrink([false, false])
                 .show(ui, |ui| match page {
-                    Page::Appearance | Page::Interface => appearance(ui, &mut draft.values),
+                    Page::Appearance | Page::Interface => appearance(ui, &mut draft.values, classic),
                     Page::Canvas => canvas(ui, &mut draft.values),
                     Page::Text => text(ui, draft, fonts),
                     Page::About => card(ui, "About", |ui| {
-                        ui.label(t!(ui.ctx(), "PaintCraft by Replicraft"));
-                        ui.label(format!("v{}", env!("CARGO_PKG_VERSION")));
+                        paintcraft_classic::settings::about(ui);
                         ui.weak(t!(
                             ui.ctx(),
                             "Preferences are stored in this browser when storage is available. Document pixels are not stored."
@@ -154,7 +175,7 @@ fn text(ui: &mut egui::Ui, draft: &mut Draft, fonts: &[String]) {
     });
 }
 
-fn appearance(ui: &mut egui::Ui, values: &mut Preferences) {
+fn appearance(ui: &mut egui::Ui, values: &mut Preferences, classic: bool) {
     card(ui, "App language", |ui| {
         picker(ui, &mut values.language);
     });
@@ -163,6 +184,14 @@ fn appearance(ui: &mut egui::Ui, values: &mut Preferences) {
             ui.ctx(),
             "Preview the theme now. Apply saves your choice; Cancel restores it."
         ));
+        if classic && values.variant == ClassicVariant::V7 {
+            ui.label(t!(
+                ui.ctx(),
+                "Paint 7 uses light mode. Your preferred theme returns with other skins."
+            ));
+            ui.add_enabled(false, egui::RadioButton::new(true, t!(ui.ctx(), "Light")));
+            return;
+        }
         ui.horizontal_wrapped(|ui| {
             for (theme, label) in [
                 (None, "Use system setting"),

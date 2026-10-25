@@ -86,6 +86,16 @@ impl ClassicVariant {
     /// Selected when the user has not chosen.
     pub const DEFAULT: ClassicVariant = ClassicVariant::V11;
 
+    /// Historical Paint 7 has a light-only presentation. The host retains the
+    /// user's preferred theme and resolves it again when leaving this skin.
+    pub fn effective_theme(self, preferred: egui::Theme) -> egui::Theme {
+        if self == Self::V7 {
+            egui::Theme::Light
+        } else {
+            preferred
+        }
+    }
+
     pub fn id(self) -> &'static str {
         match self {
             ClassicVariant::V7 => "v7",

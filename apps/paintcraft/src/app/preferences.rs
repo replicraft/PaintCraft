@@ -79,8 +79,7 @@ fn content(
                 match page {
                     Page::Appearance => appearance(ui, &mut draft.values),
                     Page::About => card(ui, "About", |ui| {
-                        ui.label(t!(ui.ctx(), "PaintCraft by Replicraft"));
-                        ui.label(format!("v{}", env!("CARGO_PKG_VERSION")));
+                        paintcraft_classic::settings::about(ui);
                     }),
                     Page::Interface => card(ui, "Canvas navigation", |ui| {
                         ui.checkbox(&mut draft.values.studio_auto_scroll, t!(ui.ctx(), "Auto-scroll"));
@@ -111,6 +110,16 @@ fn appearance(ui: &mut egui::Ui, values: &mut Settings) {
             ui.ctx(),
             "Preview the theme now. Apply saves your choice; Cancel restores it.",
         ));
+        if values.experience == Experience::Classic
+            && values.classic_variant == Some(ClassicVariant::V7)
+        {
+            ui.label(t!(
+                ui.ctx(),
+                "Paint 7 uses light mode. Your preferred theme returns with other skins."
+            ));
+            ui.add_enabled(false, egui::RadioButton::new(true, t!(ui.ctx(), "Light")));
+            return;
+        }
         ui.horizontal_wrapped(|ui| {
             for (value, label) in [
                 (settings::Appearance::System, "Use system setting"),

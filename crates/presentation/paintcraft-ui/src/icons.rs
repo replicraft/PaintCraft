@@ -358,7 +358,7 @@ mod tests {
 
     #[test]
     fn every_sheet_icon_is_standalone_vector_and_renders_with_transparency_at_multiple_sizes() {
-        assert_eq!(Icon::ALL.len(), 100);
+        assert_eq!(Icon::ALL.len(), 103);
         let mut names = std::collections::HashSet::new();
         for icon in Icon::ALL {
             assert!(names.insert(icon.name()));
@@ -468,7 +468,7 @@ mod tests {
             .into_iter()
             .filter(|icon| classic_menus::source(*icon).is_some())
             .collect();
-        assert_eq!(menus.len(), 41);
+        assert_eq!(menus.len(), 44);
         for icon in menus {
             let source = std::str::from_utf8(classic_menus::source(icon).unwrap()).unwrap();
             for forbidden in ["<image", "href=", "<text", "Gradient"] {

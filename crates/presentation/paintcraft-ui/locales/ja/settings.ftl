@@ -66,3 +66,5 @@ scroll-automatically-while-dragging-near-the-edge-of-the-canvas-viewport = キ�
 
 about = このアプリについて
 paintcraft-by-replicraft = PaintCraft by Replicraft
+
+paint-7-uses-light-mode-your-preferred-theme-returns-with-other-skins = Paint 7 はライトモードを使用します。他のスキンに切り替えると元のテーマに戻ります。
