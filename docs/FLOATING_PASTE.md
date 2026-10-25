@@ -4,8 +4,8 @@ The browser editor now connects **Paste / Ctrl+V / Cmd+V** to an existing visibl
 layer in Classic 7, 10 and 11. Classic 7/10 have a working ribbon Paste button;
 Classic 11 exposes Paste in Edit. **Paste as new layer** remains a separate action.
 [Desktop ordinary Paste](NATIVE_FLOATING_PASTE.md) is now connected through the
-native macOS reader. Windows PNG/TIFF transport is now cross-compiled and
-unqualified; DIB and other native OS read adapters remain unfinished. This is not a reference Paint clipboard-fidelity qualification.
+native macOS reader. Windows PNG/TIFF/DIB transport is now cross-compiled and
+unqualified; additional variants and other native OS readers remain unfinished. This is not a reference Paint clipboard-fidelity qualification.
 
 ## Workflow
 

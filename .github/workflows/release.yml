@@ -101,6 +101,9 @@ jobs:
       - name: Test Windows clipboard transport and lifecycle
         if: runner.os == 'Windows'
         run: cargo test --locked -p paintcraft-platform --features clipboard --target ${{ matrix.target }} --lib
+      - name: Test Windows packed DIB decoding
+        if: runner.os == 'Windows'
+        run: cargo test --locked -p paintcraft-formats --target ${{ matrix.target }} --lib image::dib
       - name: Test packaging on the native platform
         run: python -m unittest discover -s scripts/tests -p 'test_package_*.py'
       - name: Package portable archives and macOS images

@@ -2,8 +2,8 @@
 
 Desktop **Paste / Ctrl+V / Cmd+V** now targets the existing visible layer, separately
 from **Paste as new layer**. The macOS encoded clipboard reader supplies native
-images. A Windows PNG/TIFF reader is now cross-compiled but remains unqualified
-for native execution; Windows DIB and other OS read adapters remain unfinished.
+images. A Windows PNG/TIFF/DIB reader is now cross-compiled but remains unqualified
+for native execution; additional DIB variants and other OS readers remain unfinished.
 Actions follow the actual compiled platform capability. This work advances T14/T15; it does not qualify
 reference Paint behavior or complete those roadmap tasks.
 
@@ -72,7 +72,7 @@ dense source-over/RGB-key oracle, check moving-image scheduling, and reject late
 frames after cancellation. An explicit offscreen GPU test passes on Apple M1 Pro
 Metal through the admitted native render path; no native window is opened.
 
-Native Windows clipboard execution, Windows DIB and Linux/FreeBSD read adapters,
+Native Windows clipboard execution, additional DIB variants and Linux/FreeBSD read adapters,
 pinned Paint/Paint.NET clipboard
 alpha/placement/DPI behavior, cross-application flavor interoperability and physical
 device/input latency remain unqualified. General pasteboard access is not claimed
@@ -80,9 +80,12 @@ from deterministic reader tests. Aggregate physical memory and source/history
 metadata overhead remain broader resource-accounting work. No measured speedup
 is claimed by this integration.
 
-The integration passes 376 desktop library tests (nine opt-in captures/checks
+The original floating-placement slice passed 376 desktop library tests (nine opt-in captures/checks
 ignored), 280 desktop GUI tests (64 captures ignored), and the separately executed
 Metal preview test. Strict desktop all-target and Wasm Clippy, Rust formatting,
 985 translated messages across seven locales, and the 800-line source limit pass.
 Logs and source hashes are local in ignored
 `docs/validation/native-floating-paste-2026-10-25/`.
+
+The later [packed DIB follow-up](DIB_CLIPBOARD.md) records its own decoder,
+loss-consent and updated regression evidence.

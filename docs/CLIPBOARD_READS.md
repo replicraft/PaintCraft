@@ -3,7 +3,7 @@
 The platform layer has a lazy asynchronous `ReadService` and an immutable
 encoded-image snapshot. The macOS adapter reads advertised PNG or classic TIFF
 without invoking an image decoder. The Windows adapter now captures registered
-PNG (`PNG` / `image/png`) or standard `CF_TIFF` through safe bounded raw APIs.
+PNG (`PNG` / `image/png`), packed `CF_DIBV5` / `CF_DIB`, or standard `CF_TIFF` through safe bounded raw APIs.
 Both connect to [ordinary Paste](NATIVE_FLOATING_PASTE.md) and
 [Paste as new layer](CLIPBOARD_PASTE_LAYER.md), including bounded decoding and
 import-loss consent. A separate [browser reader](BROWSER_CLIPBOARD_PASTE.md)
@@ -11,8 +11,8 @@ supplies browser PNG data.
 
 Arboard remains the native write service. Its 3.7.0 public image getter decodes
 before returning pixels and cannot enforce PaintCraft's pre-decode pixel limit.
-Encoded native reads instead feed the existing bounded codecs. Windows DIB/DIBV5
-transport and Linux/FreeBSD read adapters remain unfinished.
+Encoded native reads instead feed the existing bounded codecs. [Packed DIB decoding](DIB_CLIPBOARD.md) now runs in formats after capture;
+additional DIB variants and Linux/FreeBSD readers remain unfinished.
 `ReadService::supported()` identifies compiled macOS/Windows adapters; access can
 still fail at runtime. Windows code is cross-compiled and remains unqualified for
 native clipboard interoperability.
@@ -62,8 +62,9 @@ cross-application alpha/color fidelity. Those remain separate clipboard work.
 
 The Windows reader holds `clipboard-win::Clipboard` open across format discovery,
 size queries and copying. It enumerates at most 257 IDs and rejects more than 256;
-only actually enumerated registered PNG formats or `CF_TIFF` are selected. Preferred
-PNG errors do not silently fall back to TIFF or DIB. Native lock guards close the
+only actually enumerated registered PNG, DIBV5, DIB or `CF_TIFF` formats are
+selected, in that preference order. Preferred representation errors do not
+silently fall back to a lower-priority type. Native lock guards close the
 clipboard on every result/panic path. This adapter does not empty or write it.
 
 The safe `raw::size` API obtains the advertised allocation length before the
@@ -126,17 +127,17 @@ eframe and wgpu. No Intel runtime or Windows/Linux/FreeBSD read execution is cla
 Logs are local in ignored `docs/validation/clipboard-read-2026-10-24/`.
 
 Desktop macOS and browser read/decode/loss-consent/placement are now connected.
-Windows PNG/TIFF transport is implemented and cross-compiled. Remaining: native
-Windows execution and DIB transport, Linux/FreeBSD adapters, richer flavors and
+Windows PNG/TIFF and packed DIB transport is implemented and cross-compiled. Remaining: native
+Windows execution, additional DIB variants, Linux/FreeBSD adapters, richer flavors and
 metadata, exact internal-copy matching, permissions and cross-application/native
 reference qualification. This does not complete T17, frontend parity, browser
 conformance or release qualification.
 
 
-The Windows follow-up passes four deterministic transport tests covering the
+The initial Windows PNG/TIFF follow-up passed four deterministic transport tests covering the
 preferred formats, frozen capacity ownership, delayed realization, length/sequence
 changes, failed copying, cancellation, quota/size/type-count denial and malformed
-preferred signatures. All 74 platform host tests pass (two explicit native checks
+preferred signatures. Its 74 platform host tests passed (two explicit native checks
 ignored). Strict all-target Clippy passes for Windows x86-64 and ARM64 with the
 clipboard feature, and for the macOS platform crate with all features. Cross checks
 also exposed a pre-existing Windows-only unnecessary mutable directory builder;
@@ -146,6 +147,10 @@ The existing Windows x86-64 and ARM64 release jobs are configured to run platfor
 clipboard transport/lifecycle tests. That workflow has not run from this checkout. Native
 Windows clipboard execution, delayed provider behavior and cross-application
 PNG/TIFF compatibility are not proven by cross compilation or fake-source tests.
-DIB/DIBV5 fallback, color/DPI/reference qualification, other OS readers and aggregate
+Packed DIB fallback is now connected separately; additional variants, color/DPI/
+reference qualification, other OS readers and aggregate
 physical-memory/latency qualification remain work. Evidence is local in ignored
 `docs/validation/windows-clipboard-encoded-2026-10-25/`.
+
+The later [packed DIB follow-up](DIB_CLIPBOARD.md) adds transport priority and
+strict decoder/loss-consent evidence with updated test totals.
