@@ -1,4 +1,5 @@
 //! Import consent belongs to the document/profile captured before the picker.
+pub(crate) mod pages;
 use crate::{app::WebApp, files::Loaded};
 use paintcraft_classic::ClassicVariant;
 use paintcraft_document::Document;
@@ -11,6 +12,7 @@ pub(crate) struct Owner {
     base: Arc<Document>,
     ticket: Ticket,
     variant: ClassicVariant,
+    frontend: paintcraft_ui::actions::Frontend,
     dirty: bool,
 }
 impl Owner {
@@ -19,6 +21,7 @@ impl Owner {
             base: app.editor.session.snapshot(),
             ticket: app.editor.session.ticket(),
             variant: app.variant,
+            frontend: app.frontend,
             dirty: app.editor.session.is_dirty(),
         }
     }
@@ -26,6 +29,7 @@ impl Owner {
         Arc::ptr_eq(&self.base, &app.editor.session.snapshot())
             && self.ticket == app.editor.session.ticket()
             && self.variant == app.variant
+            && self.frontend == app.frontend
             && self.dirty == app.editor.session.is_dirty()
             && !app.editor.tools.gesture_in_progress()
             && !app.editor.tools.is_editing_text()

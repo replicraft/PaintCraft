@@ -51,6 +51,7 @@ pub struct WebApp {
     pub(crate) files: crate::files::Files,
     pub(crate) text: crate::text_ui::TextUi,
     pub(crate) pending_import: Option<crate::importing::Pending>,
+    pub(crate) pending_pages: Option<crate::importing::pages::Pending>,
     pub(crate) import_owner: Option<crate::importing::Owner>,
     form: Option<forms::Form>,
     pub(crate) message: String,
@@ -105,6 +106,7 @@ impl WebApp {
             confirm_replace: None,
             files: crate::files::Files::default(),
             pending_import: None,
+            pending_pages: None,
             import_owner: None,
             form: None,
             clipboard: Default::default(),
@@ -115,6 +117,33 @@ impl WebApp {
         }
     }
 
+    pub(crate) fn format_profile(&self) -> paintcraft_formats::registry::Frontend {
+        use paintcraft_formats::registry::Frontend as Profile;
+        match (self.frontend, self.variant) {
+            (Frontend::Studio, _) => Profile::Studio,
+            (_, ClassicVariant::V7) => Profile::ClassicV7,
+            (_, ClassicVariant::V10) => Profile::ClassicV10,
+            (_, ClassicVariant::V11) => Profile::ClassicV11,
+        }
+    }
+    pub(crate) fn enabled_export_formats(&self) -> Vec<paintcraft_ui::actions::ImageExport> {
+        use paintcraft_formats::registry::{self, Family, Operation, Platform, Request};
+        paintcraft_ui::actions::ImageExport::ALL
+            .into_iter()
+            .filter(|format| {
+                format.available(self.frontend)
+                    && Family::from_extension(format.extension()).is_some_and(|family| {
+                        registry::admission(Request::new(
+                            self.format_profile(),
+                            Operation::ExportFlat,
+                            family,
+                            Platform::Web,
+                        ))
+                        .available()
+                    })
+            })
+            .collect()
+    }
     pub(crate) fn blocked(&self) -> bool {
         self.printing_pending()
             || self.paste.modal()
@@ -123,6 +152,7 @@ impl WebApp {
             || self.confirm_replace.is_some()
             || self.files.busy
             || self.pending_import.is_some()
+            || self.pending_pages.is_some()
             || self.form.is_some()
     }
 
@@ -231,6 +261,7 @@ impl WebApp {
             action,
             Action::New
                 | Action::Open
+                | Action::ImportImage
                 | Action::Save
                 | Action::SaveAs
                 | Action::Export
@@ -243,6 +274,7 @@ impl WebApp {
             action,
             Action::New
                 | Action::Open
+                | Action::ImportImage
                 | Action::Save
                 | Action::SaveAs
                 | Action::Export
@@ -338,7 +370,7 @@ impl WebApp {
                 self.editor.tools.cancel_gesture();
                 self.download(ctx, false);
             }
-            Action::New | Action::Open => {
+            Action::New | Action::Open | Action::ImportImage => {
                 self.editor.tools.cancel_gesture();
                 if self.unsaved() {
                     self.confirm_replace = Some(action);
@@ -381,29 +413,29 @@ impl WebApp {
             }
             self.switch_frontend(ctx, frontend);
             self.confirm_replace = None;
-        } else if action == Action::Open {
+        } else if matches!(action, Action::Open | Action::ImportImage) {
             if self.files.busy {
                 return;
             }
             self.import_owner = Some(crate::importing::Owner::capture(self));
-            let frontend = if self.frontend == Frontend::Studio {
-                paintcraft_formats::registry::Frontend::Studio
-            } else {
-                match self.variant {
-                    ClassicVariant::V7 => paintcraft_formats::registry::Frontend::ClassicV7,
-                    ClassicVariant::V10 => paintcraft_formats::registry::Frontend::ClassicV10,
-                    ClassicVariant::V11 => paintcraft_formats::registry::Frontend::ClassicV11,
-                }
-            };
-            self.files.open(ctx, frontend);
+            let frontend = self.format_profile();
+            self.files
+                .open(ctx, frontend, action == Action::ImportImage);
         } else {
             self.new_document();
         }
     }
 
     pub(crate) fn install(&mut self, loaded: crate::files::Loaded) {
+        let converted = loaded
+            .losses
+            .iter()
+            .any(|loss| paintcraft_formats::project_import::KNOWN_LOSSES.contains(&loss.as_str()));
         match Editor::from_document(loaded.document) {
-            Ok(editor) => {
+            Ok(mut editor) => {
+                if converted {
+                    editor.session.mark_unsaved();
+                }
                 self.editor = editor;
                 self.canvas = Canvas::default();
                 self.text.preedit.clear();
@@ -432,6 +464,7 @@ impl WebApp {
         use crate::files::Outcome;
         match self.files.poll() {
             Some(Ok(Outcome::Loaded(loaded))) => self.accept_loaded(loaded, ctx),
+            Some(Ok(Outcome::Pages(source))) => self.accept_pages(source, ctx),
             Some(Ok(Outcome::Cancelled)) => {
                 self.import_owner = None;
                 self.message = "File dialog cancelled; current document retained".into()
@@ -578,6 +611,10 @@ impl WebApp {
                 });
             });
         }
+        if self.pending_pages.is_some() {
+            self.page_dialog(ctx);
+            return;
+        }
         if self.pending_import.is_some() {
             let mut accept = false;
             let mut cancel = false;
@@ -610,15 +647,15 @@ impl WebApp {
                 ui.set_width(380.0);
                 ui.heading(t!(ui.ctx(), "Export { $format } copy?", &[("format", format.name().into())]));
                 egui::ComboBox::from_label(t!(ui.ctx(), "File type")).selected_text(format.name()).show_ui(ui, |ui| {
-                    for choice in ImageExport::ALL { ui.selectable_value(&mut format, choice, choice.name()); }
+                    for choice in self.enabled_export_formats() { ui.selectable_value(&mut format, choice, choice.name()); }
                 });
                 self.export_confirm = Some(format);
                 ui.label(t!(ui.ctx(), format.description()));
                 let (width, height) = self.editor.session.document().canvas;
                 ui.label(t!(ui.ctx(), "Image dimensions: { $width } × { $height } px", &[("width", width.to_string()), ("height", height.to_string())]));
-                if format == ImageExport::Jpeg {
-                    ui.add(egui::Slider::new(&mut self.export_quality, 1..=100).text(t!(ui.ctx(), "JPEG quality")));
-                    ui.label(t!(ui.ctx(), "Higher quality creates a larger file. Transparent pixels are placed on white."));
+                if let Some(label) = format.quality_label() {
+                    ui.add(egui::Slider::new(&mut self.export_quality, 1..=100).text(t!(ui.ctx(), label)));
+                    ui.label(t!(ui.ctx(), if format == ImageExport::Avif {"AVIF uses lossy compression for colors and transparency, even at quality 100."} else {"Higher quality creates a larger file. Transparent pixels are placed on white."}));
                 }
                 ui.label(t!(ui.ctx(), "Image exports flatten visible layers and omit hidden layer data. Save a PaintCraft project to preserve editable layers."));
                 ui.label(t!(ui.ctx(), "Invisible color information will not be retained."));

@@ -26,11 +26,20 @@ pub(crate) struct Loaded {
 #[cfg_attr(not(target_arch = "wasm32"), allow(dead_code))]
 pub(crate) enum Outcome {
     Loaded(Loaded),
+    Pages(crate::importing::pages::Source),
     Cancelled,
     DownloadRequested {
         owner: uuid::Uuid,
         project_name: Option<String>,
     },
+}
+
+#[derive(Clone, Copy, Debug)]
+#[cfg_attr(not(target_arch = "wasm32"), allow(dead_code))]
+pub(crate) struct ExportOptions {
+    pub format: Option<ImageExport>,
+    pub jpeg_quality: u8,
+    pub frontend: Frontend,
 }
 
 #[derive(Debug, Default)]
@@ -49,18 +58,33 @@ impl Files {
     }
 
     #[cfg(target_arch = "wasm32")]
-    pub fn open(&mut self, ctx: &eframe::egui::Context, frontend: Frontend) {
+    pub fn open(&mut self, ctx: &eframe::egui::Context, frontend: Frontend, convert: bool) {
         if self.busy {
             return;
         }
         self.busy = true;
         let target = Rc::clone(&self.outcome);
         let ctx = ctx.clone();
-        let extensions = paintcraft_formats::registry::enabled_extensions(
+        let mut extensions: Vec<_> = paintcraft_formats::registry::enabled_extensions(
             frontend,
-            paintcraft_formats::registry::Operation::Open,
+            if convert {
+                paintcraft_formats::registry::Operation::ImportConvert
+            } else {
+                paintcraft_formats::registry::Operation::Open
+            },
             Platform::Web,
-        );
+        )
+        .into_iter()
+        .filter(|extension| {
+            !convert
+                || Family::from_extension(extension).is_some_and(|family| {
+                    !family.is_project() || matches!(family, Family::Paint | Family::Pdn)
+                })
+        })
+        .collect();
+        if convert && frontend == Frontend::Studio {
+            extensions.push("dcx");
+        }
         wasm_bindgen_futures::spawn_local(async move {
             let result = async {
                 let Some(file) = rfd::AsyncFileDialog::new()
@@ -84,10 +108,18 @@ impl Files {
                         Error::new(ErrorCode::StorageFailed, "Browser file read failed")
                     })?;
                 let bytes = js_sys::Uint8Array::new(&buffer).to_vec();
-                Ok(Outcome::Loaded(decode_for_profile(
+                if convert && paintcraft_formats::registry::sniff(&bytes) == Some(Family::Dcx) {
+                    return Ok(Outcome::Pages(crate::importing::pages::Source::new(
+                        bytes,
+                        file.file_name(),
+                        frontend,
+                    )?));
+                }
+                Ok(Outcome::Loaded(decode_input(
                     &bytes,
                     file.file_name(),
                     frontend,
+                    convert,
                 )?))
             }
             .await;
@@ -98,7 +130,7 @@ impl Files {
     }
 
     #[cfg(not(target_arch = "wasm32"))]
-    pub fn open(&mut self, _ctx: &eframe::egui::Context, _frontend: Frontend) {
+    pub fn open(&mut self, _ctx: &eframe::egui::Context, _frontend: Frontend, _convert: bool) {
         *self.outcome.borrow_mut() = Some(Err(Error::new(
             ErrorCode::CapabilityUnsupported,
             "File picking is available in the browser build",
@@ -110,15 +142,19 @@ impl Files {
         &mut self,
         ctx: &eframe::egui::Context,
         document: &Document,
-        format: Option<ImageExport>,
-        jpeg_quality: u8,
+        options: ExportOptions,
         name: &str,
         owner: uuid::Uuid,
     ) {
         if self.busy {
             return;
         }
-        let bytes = match encode_quality(document, format, jpeg_quality) {
+        let bytes = match encode_quality_for_profile(
+            document,
+            options.format,
+            options.jpeg_quality,
+            options.frontend,
+        ) {
             Ok(bytes) => bytes,
             Err(error) => {
                 *self.outcome.borrow_mut() = Some(Err(error));
@@ -126,17 +162,14 @@ impl Files {
             }
         };
         self.busy = true;
-        let mime = match format {
-            None => "application/x-paintcraft",
-            Some(ImageExport::Png) => "image/png",
-            Some(ImageExport::Jpeg) => "image/jpeg",
-            Some(ImageExport::Bmp) => "image/bmp",
-        };
+        let mime = options
+            .format
+            .map_or("application/x-paintcraft", ImageExport::mime);
         *self.outcome.borrow_mut() = Some(
             download_copy(&bytes, name, mime)
                 .map(|()| Outcome::DownloadRequested {
                     owner,
-                    project_name: format.is_none().then(|| name.to_owned()),
+                    project_name: options.format.is_none().then(|| name.to_owned()),
                 })
                 .map_err(|_| Error::new(ErrorCode::StorageFailed, "Browser download failed")),
         );
@@ -149,8 +182,7 @@ impl Files {
         &mut self,
         _ctx: &eframe::egui::Context,
         _document: &Document,
-        _format: Option<ImageExport>,
-        _jpeg_quality: u8,
+        _options: ExportOptions,
         _name: &str,
         _owner: uuid::Uuid,
     ) {
@@ -166,15 +198,41 @@ fn decode(bytes: &[u8], name: String) -> Result<Loaded> {
     decode_for_profile(bytes, name, Frontend::ClassicV11)
 }
 
-#[cfg(any(target_arch = "wasm32", test))]
+#[cfg(test)]
 pub(crate) fn decode_for_profile(bytes: &[u8], name: String, frontend: Frontend) -> Result<Loaded> {
+    decode_input(bytes, name, frontend, false)
+}
+
+#[cfg(any(target_arch = "wasm32", test))]
+fn decode_input(bytes: &[u8], name: String, frontend: Frontend, convert: bool) -> Result<Loaded> {
     if bytes.len() > FILE_BYTES {
         return Err(Error::new(
             ErrorCode::ResourceLimit,
             "Browser input limit is 64 MiB",
         ));
     }
-    let family = paintcraft_formats::registry::admit_open(frontend, &name, bytes, Platform::Web)?;
+    let family = if convert {
+        paintcraft_formats::registry::admit_import(frontend, &name, bytes, Platform::Web)?
+    } else {
+        paintcraft_formats::registry::admit_open(frontend, &name, bytes, Platform::Web)?
+    };
+    if convert && family.is_project() && !matches!(family, Family::Paint | Family::Pdn) {
+        return Err(Error::new(
+            ErrorCode::CapabilityUnsupported,
+            "Import image expects a raster picture",
+        ));
+    }
+    if matches!(family, Family::Paint | Family::Pdn) {
+        let converted =
+            paintcraft_formats::project_import::decode_layered(family, bytes, MAX_PIXELS, &|| {
+                Ok(())
+            })?;
+        return Ok(Loaded {
+            document: converted.document,
+            name,
+            losses: converted.losses,
+        });
+    }
     if family == Family::Pcnd {
         return Ok(Loaded {
             document: pcnd::read_with_limits(bytes, MAX_PIXELS, MAX_PIXELS * 4)?,
@@ -196,33 +254,47 @@ fn encode(document: &Document, format: Option<ImageExport>) -> Result<Vec<u8>> {
     encode_quality(document, format, 90)
 }
 
-#[cfg(any(target_arch = "wasm32", test))]
+#[cfg(test)]
 fn encode_quality(
     document: &Document,
     format: Option<ImageExport>,
     jpeg_quality: u8,
+) -> Result<Vec<u8>> {
+    encode_quality_for_profile(document, format, jpeg_quality, Frontend::Studio)
+}
+
+#[cfg(any(target_arch = "wasm32", test))]
+fn encode_quality_for_profile(
+    document: &Document,
+    format: Option<ImageExport>,
+    jpeg_quality: u8,
+    frontend: Frontend,
 ) -> Result<Vec<u8>> {
     if let Some(format) = format {
         let format = match format {
             ImageExport::Png => image::ImageFormat::Png,
             ImageExport::Jpeg => image::ImageFormat::Jpeg,
             ImageExport::Bmp => image::ImageFormat::Bmp,
+            ImageExport::Gif => image::ImageFormat::Gif,
+            ImageExport::Tiff => image::ImageFormat::Tiff,
+            ImageExport::Tga => image::ImageFormat::Tga,
+            ImageExport::Webp => image::ImageFormat::WebP,
+            ImageExport::Jxl => image::ImageFormat::Jxl,
+            ImageExport::Dds => image::ImageFormat::Dds,
+            ImageExport::Avif => image::ImageFormat::Avif,
+            ImageExport::Qoi => image::ImageFormat::Qoi,
+            ImageExport::Pam => image::ImageFormat::Pnm,
+            ImageExport::Farbfeld => image::ImageFormat::Farbfeld,
         };
-        // Every currently exposed browser export is shared by all Classic skins.
-        // Any future addition must capture the active profile before widening this enum.
+        // The captured frontend determines admission before rendering or encoding.
         use paintcraft_formats::registry::{self, Operation, Request};
-        let family = Family::from_extension(format.name()).ok_or_else(|| {
+        let family = Family::from_id(format.name()).ok_or_else(|| {
             Error::new(
                 ErrorCode::CapabilityUnsupported,
                 "Unregistered export format",
             )
         })?;
-        let request = Request::new(
-            Frontend::ClassicV11,
-            Operation::ExportFlat,
-            family,
-            Platform::Web,
-        );
+        let request = Request::new(frontend, Operation::ExportFlat, family, Platform::Web);
         let decision = registry::admission(request);
         if !decision.available() {
             decision.require_allowed(request)?;
@@ -363,18 +435,23 @@ mod tests {
         )
         .unwrap();
         let state = document.state_id;
-        for format in ImageExport::ALL {
+        for format in ImageExport::ALL
+            .into_iter()
+            .filter(|format| !matches!(format, ImageExport::Jxl | ImageExport::Avif))
+        {
             let bytes = encode(&document, Some(format)).unwrap();
-            let magic: &[u8] = match format {
-                ImageExport::Png => b"\x89PNG\r\n\x1a\n",
-                ImageExport::Jpeg => &[255, 216, 255],
-                ImageExport::Bmp => b"BM",
-            };
-            assert!(bytes.starts_with(magic));
+            assert_eq!(
+                image::ImageFormat::sniff(&bytes).unwrap().name(),
+                if format == ImageExport::Pam {
+                    "PNM"
+                } else {
+                    format.name()
+                }
+            );
             let decoded = image::decode(&bytes).unwrap();
             assert_eq!((decoded.width, decoded.height), (24, 16));
             assert!(decoded.rgba.as_chunks::<4>().0.iter().all(|pixel| pixel[3]
-                == if format == ImageExport::Jpeg {
+                == if matches!(format, ImageExport::Jpeg | ImageExport::Gif) {
                     255
                 } else {
                     128
@@ -462,3 +539,65 @@ fn focus_canvas() {
         let _ = canvas.focus();
     }
 }
+
+#[cfg(test)]
+mod expanded_profiles {
+    use super::*;
+    #[test]
+    fn studio_exports_keep_the_captured_profile_and_classic_cannot_gain_stock_studio_formats() {
+        let document = paintcraft_document::new_document(
+            3,
+            2,
+            Some(paintcraft_core::types::Rgba([17, 51, 93, 127])),
+            0,
+            paintcraft_document::POLICY,
+        )
+        .unwrap();
+        for format in [ImageExport::Tga, ImageExport::Webp] {
+            for frontend in [
+                Frontend::ClassicV7,
+                Frontend::ClassicV10,
+                Frontend::ClassicV11,
+            ] {
+                assert!(encode_quality_for_profile(&document, Some(format), 90, frontend).is_err());
+            }
+            let bytes =
+                encode_quality_for_profile(&document, Some(format), 90, Frontend::Studio).unwrap();
+            let decoded = decode_for_profile(
+                &bytes,
+                format!("picture.{}", format.extension()),
+                Frontend::Studio,
+            )
+            .unwrap();
+            assert_eq!(
+                paintcraft_render::render_flat(&decoded.document).unwrap(),
+                paintcraft_render::render_flat(&document).unwrap()
+            );
+        }
+    }
+    #[test]
+    fn explicit_conversion_is_distinct_from_stock_open_and_does_not_bind_a_project() {
+        // An exact tiny QOI RGB frame, independently written from the QOI wire layout.
+        let mut bytes = b"qoif".to_vec();
+        bytes.extend(1u32.to_be_bytes());
+        bytes.extend(1u32.to_be_bytes());
+        bytes.extend([4, 0, 0xff, 17, 51, 93, 127, 0, 0, 0, 0, 0, 0, 0, 1]);
+        assert!(decode_for_profile(&bytes, "sample.qoi".into(), Frontend::Studio).is_err());
+        let loaded = decode_input(&bytes, "sample.qoi".into(), Frontend::Studio, true).unwrap();
+        assert_eq!(loaded.document.canvas, (1, 1));
+        let layer = &loaded.document.layers[&loaded.document.roots[0]];
+        assert_eq!(layer.raster.get(0, 0).0, [17, 51, 93, 127]);
+        assert!(decode_input(&bytes, "sample.qoi".into(), Frontend::ClassicV11, true).is_err());
+    }
+}
+
+#[cfg(test)]
+mod project_tests;
+
+#[cfg(test)]
+#[path = "files/specialist_exports.rs"]
+mod specialist_exports;
+
+#[cfg(test)]
+#[path = "files/foreign_import.rs"]
+mod foreign_import;

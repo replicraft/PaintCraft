@@ -140,3 +140,15 @@ fn real_gif_and_tiff_require_translated_browser_consent_in_every_skin() {
         }
     }
 }
+
+#[test]
+fn confirmation_rejects_a_frontend_switch_even_when_skin_and_document_match() {
+    let ctx = egui::Context::default();
+    let mut app = WebApp::new(&ctx);
+    let source = app.editor.session.snapshot();
+    stage(&mut app, &ctx);
+    app.frontend = paintcraft_ui::actions::Frontend::Studio;
+    app.resolve_import(&ctx, true);
+    assert!(Arc::ptr_eq(&source, &app.editor.session.snapshot()));
+    assert!(app.pending_import.is_none());
+}

@@ -84,8 +84,11 @@ impl WebApp {
                 self.files.download(
                     ctx,
                     &snapshot,
-                    format,
-                    self.export_quality,
+                    crate::files::ExportOptions {
+                        format,
+                        jpeg_quality: self.export_quality,
+                        frontend: self.format_profile(),
+                    },
                     &name,
                     self.editor.session.history_ticket().owner,
                 );
