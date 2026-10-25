@@ -24,6 +24,7 @@ pub use paintcraft_history::{
 };
 use paintcraft_history::{History, Snapshot};
 
+mod flatten;
 mod history;
 mod paste;
 mod preparation;
