@@ -18,9 +18,13 @@ A familiar place to draw, paint and edit images. Built in Rust.
 - Light and dark themes in seven languages.
 - Desktop, browser and command-line apps.
 
-![PaintCraft Classic, Windows 11](assets/repo/classic-windows-11.png)
+| Classic, Windows 11 | Studio |
+| --- | --- |
+| ![PaintCraft Classic, Windows 11](assets/repo/classic-windows-11.png) | ![PaintCraft Studio](assets/repo/studio.png) |
 
-![PaintCraft Classic in Japanese](assets/repo/classic-japanese.png)
+| Classic, Windows 10 | Classic, Windows 7 |
+| --- | --- |
+| ![PaintCraft Classic, Windows 10](assets/repo/classic-windows-10.png) | ![PaintCraft Classic, Windows 7](assets/repo/classic-windows-7.png) |
 
 ## Install
 

@@ -1,6 +1,6 @@
 //! Explicit, offscreen screenshots of the real editor, using an edited project.
 use super::*;
-use paintcraft::settings::{Appearance, ClassicVariant, Settings};
+use paintcraft::settings::{Appearance, ClassicVariant, Experience, Settings};
 use paintcraft_core::types::brush::BrushMedia;
 use paintcraft_tools::{Action, BlendMode, Contour, Tool};
 
@@ -134,29 +134,34 @@ fn export_readme_screenshots() {
         paintcraft_formats::pcnd::write(editor.document()).unwrap(),
     )
     .unwrap();
-    for (language, variant, name) in [
+    for (experience, language, variant, name) in [
         (
+            Experience::Classic,
             paintcraft_ui::i18n::Language::English,
             ClassicVariant::V11,
             "classic-windows-11",
         ),
         (
-            paintcraft_ui::i18n::Language::Japanese,
-            ClassicVariant::V11,
-            "classic-japanese",
-        ),
-        (
+            Experience::Classic,
             paintcraft_ui::i18n::Language::English,
             ClassicVariant::V10,
             "classic-windows-10",
         ),
         (
+            Experience::Classic,
             paintcraft_ui::i18n::Language::English,
             ClassicVariant::V7,
             "classic-windows-7",
         ),
+        (
+            Experience::Studio,
+            paintcraft_ui::i18n::Language::English,
+            ClassicVariant::V11,
+            "studio",
+        ),
     ] {
         Settings {
+            experience,
             appearance: if variant == ClassicVariant::V11 {
                 Appearance::Dark
             } else {
@@ -168,13 +173,31 @@ fn export_readme_screenshots() {
         }
         .save(&dir)
         .unwrap();
-        let mut h = harness_with(
-            App::new(Some(path.clone())).with_settings(dir.clone()),
-            1.0,
-            false,
-        );
-        h.set_size(Vec2::new(1480.0, 960.0));
+        let width = if experience == Experience::Studio {
+            1800.0
+        } else {
+            1480.0
+        };
+        // Start at the capture size so floating windows use their real initial
+        // placement, rather than retaining positions from a smaller test window.
+        let mut h = Harness::builder()
+            .with_size(Vec2::new(width, 960.0))
+            .with_pixels_per_point(1.0)
+            .build_ui_state(
+                |ui, app: &mut App| app.ui(ui),
+                App::new(Some(path.clone()))
+                    .with_settings(dir.clone())
+                    .with_initial_zoom(1.0),
+            );
         h.run();
+        assert_eq!(h.state().experience(), experience);
+        assert!(
+            h.state()
+                .editor()
+                .document()
+                .same_semantics(editor.document()),
+            "{name} must open the shared demo project"
+        );
         h.render()
             .unwrap()
             .save(output.join(format!("{name}.png")))
