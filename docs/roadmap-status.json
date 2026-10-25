@@ -789,9 +789,9 @@
       "milestone": "M5",
       "title": "Optional AI and MCP",
       "depends_on": ["T18", "T19"],
-      "status": "not-started",
-      "evidence": [],
-      "remaining_or_scope": "Consent/provider/model boundaries and stale-result/undo safety; no mandatory account.",
+      "status": "partial",
+      "evidence": ["apps/paintcraft-cli/src/commands/mcp", "apps/paintcraft-cli/tests/mcp.rs", "docs/MCP.md"],
+      "remaining_or_scope": "User-requested headless MCP stdio server now wraps atomic session edits, recorded history, bounded previews and guarded saves. Image import/export use the CLI Studio format-admission profile and explicit loss consent. Real stdio tests cover pixels, failed-batch preservation, layers, history, import loss consent and external-write conflicts. Desktop attachment, durable request identity/status/recovery, broader lifecycle/platform qualification and optional AI consent/provider/model boundaries remain unfinished; no mandatory account.",
       "acceptance": "Consent/provider/model boundaries and stale-result/undo safety; no mandatory account."
     },
     {

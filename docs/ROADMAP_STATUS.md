@@ -1,5 +1,12 @@
 # PaintCraft roadmap implementation status
 
+The user-requested [MCP painting server](MCP.md) now provides headless stdio tools
+through the CLI, using the existing atomic editor, history, format admission and
+guarded saves. Real protocol tests cover painted pixels, previews, project
+round trips, conversion-loss consent and failure preservation. This advances the
+MCP portion of T26 only: desktop attachment, durable request deduplication/recovery,
+broader platform qualification and the separate AI tranche remain unfinished.
+
 Windows now has [PNG/TIFF and packed DIB/DIBV5 clipboard reads](DIB_CLIPBOARD.md),
 with byte admission before decoding, strict portable DIB layout validation and
 explicit alpha/metadata loss consent. Decoder, native handoff and translated
