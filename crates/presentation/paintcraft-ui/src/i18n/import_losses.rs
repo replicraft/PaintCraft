@@ -53,6 +53,10 @@ pub fn import_loss_description(code: &str) -> Option<&'static str> {
         "psd-empty-layer-extent-normalized" => {
             "Empty Photoshop layer extents will become at least one transparent pixel in the converted copy."
         }
+        "svg-rasterized" => "SVG vectors and text will become pixels in a single picture layer.",
+        "svg-font-substituted" => {
+            "Unavailable SVG font families will be replaced with bundled fonts."
+        }
         _ => return None,
     })
 }
@@ -73,6 +77,8 @@ mod tests {
             "ora-resolution-ignored",
             "psd-metadata-ignored",
             "psd-empty-layer-extent-normalized",
+            "svg-rasterized",
+            "svg-font-substituted",
             "paint-layer-properties-unverified",
             "paint-canvas-fill-converted-to-layer",
             "paint-background-depth-reduced-to-8",

@@ -428,3 +428,27 @@ palette-conversion-changes-colors-exporting-accepts-this-color-loss = पैल�
 photoshop-metadata-and-layer-protection-settings-will-not-be-retained-in-the-converted-copy = बदली गई कॉपी में Photoshop का मेटाडेटा और लेयर सुरक्षा सेटिंग नहीं रखी जाएँगी।
 
 empty-photoshop-layer-extents-will-become-at-least-one-transparent-pixel-in-the-converted-copy = बदली गई कॉपी में खाली Photoshop लेयर का क्षेत्र कम से कम एक पारदर्शी पिक्सेल होगा।
+
+rasterize-svg = SVG को रास्टर करें
+
+dpi = DPI
+
+fitting = आकार समायोजन
+
+preserve-aspect-ratio = पक्षानुपात बनाए रखें
+
+stretch-to-size = निर्दिष्ट आकार तक फैलाएँ
+
+output-is-an-srgb-picture-with-transparency-text-uses-bundled-fonts-external-resources-are-disabled = परिणाम पारदर्शिता वाली sRGB छवि है। पाठ में शामिल फ़ॉन्ट उपयोग होते हैं; बाहरी संसाधन अक्षम हैं।
+
+choose-up-to-4-194-304-output-pixels-then-update-the-preview-changing-options-requires-a-new-preview-and-consent = अधिकतम 4,194,304 आउटपुट पिक्सेल चुनें, फिर पूर्वावलोकन अपडेट करें। विकल्प बदलने पर नया पूर्वावलोकन और सहमति आवश्यक है।
+
+update-preview = पूर्वावलोकन अपडेट करें
+
+import-preview = आयात पूर्वावलोकन
+
+i-accept-these-import-changes = मैं आयात के इन बदलावों से सहमत हूँ।
+
+svg-vectors-and-text-will-become-pixels-in-a-single-picture-layer = SVG वेक्टर और पाठ एक चित्र परत में पिक्सेल बन जाएँगे।
+
+unavailable-svg-font-families-will-be-replaced-with-bundled-fonts = अनुपलब्ध SVG फ़ॉन्ट परिवार शामिल फ़ॉन्ट से बदले जाएँगे।

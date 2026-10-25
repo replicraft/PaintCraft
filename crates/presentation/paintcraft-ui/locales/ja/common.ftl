@@ -428,3 +428,27 @@ palette-conversion-changes-colors-exporting-accepts-this-color-loss = パレッ�
 photoshop-metadata-and-layer-protection-settings-will-not-be-retained-in-the-converted-copy = 変換したコピーには、Photoshop のメタデータとレイヤーの保護設定は保持されません。
 
 empty-photoshop-layer-extents-will-become-at-least-one-transparent-pixel-in-the-converted-copy = 変換したコピーでは、空の Photoshop レイヤーは少なくとも 1 ピクセルの透明な領域になります。
+
+rasterize-svg = SVGをラスタライズ
+
+dpi = DPI
+
+fitting = サイズの合わせ方
+
+preserve-aspect-ratio = 縦横比を維持
+
+stretch-to-size = 指定サイズに引き伸ばす
+
+output-is-an-srgb-picture-with-transparency-text-uses-bundled-fonts-external-resources-are-disabled = 出力は透明度付きのsRGB画像です。テキストには同梱フォントを使用し、外部リソースは無効です。
+
+choose-up-to-4-194-304-output-pixels-then-update-the-preview-changing-options-requires-a-new-preview-and-consent = 出力は4,194,304ピクセル以内に設定し、プレビューを更新してください。設定を変更すると、プレビューと同意のやり直しが必要です。
+
+update-preview = プレビューを更新
+
+import-preview = 読み込みプレビュー
+
+i-accept-these-import-changes = 読み込みによるこれらの変更に同意します。
+
+svg-vectors-and-text-will-become-pixels-in-a-single-picture-layer = SVGのベクターとテキストは、1つの画像レイヤーのピクセルに変換されます。
+
+unavailable-svg-font-families-will-be-replaced-with-bundled-fonts = 利用できないSVGフォントは、同梱フォントに置き換えられます。

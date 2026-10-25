@@ -428,3 +428,27 @@ palette-conversion-changes-colors-exporting-accepts-this-color-loss = 调色板�
 photoshop-metadata-and-layer-protection-settings-will-not-be-retained-in-the-converted-copy = 转换后的副本不会保留 Photoshop 元数据和图层保护设置。
 
 empty-photoshop-layer-extents-will-become-at-least-one-transparent-pixel-in-the-converted-copy = 在转换后的副本中，空 Photoshop 图层的范围将至少为一个透明像素。
+
+rasterize-svg = 栅格化 SVG
+
+dpi = DPI
+
+fitting = 适配方式
+
+preserve-aspect-ratio = 保持纵横比
+
+stretch-to-size = 拉伸到指定大小
+
+output-is-an-srgb-picture-with-transparency-text-uses-bundled-fonts-external-resources-are-disabled = 输出为带透明度的 sRGB 图像。文字使用内置字体；外部资源已禁用。
+
+choose-up-to-4-194-304-output-pixels-then-update-the-preview-changing-options-requires-a-new-preview-and-consent = 选择最多 4,194,304 个输出像素，然后更新预览。更改选项后需要重新预览并同意。
+
+update-preview = 更新预览
+
+import-preview = 导入预览
+
+i-accept-these-import-changes = 我同意这些导入更改。
+
+svg-vectors-and-text-will-become-pixels-in-a-single-picture-layer = SVG 矢量和文字将转换为单个图像图层中的像素。
+
+unavailable-svg-font-families-will-be-replaced-with-bundled-fonts = 不可用的 SVG 字体系列将替换为内置字体。

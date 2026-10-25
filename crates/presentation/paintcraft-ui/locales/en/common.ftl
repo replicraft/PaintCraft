@@ -428,3 +428,27 @@ palette-conversion-changes-colors-exporting-accepts-this-color-loss = Palette co
 photoshop-metadata-and-layer-protection-settings-will-not-be-retained-in-the-converted-copy = Photoshop metadata and layer protection settings will not be retained in the converted copy.
 
 empty-photoshop-layer-extents-will-become-at-least-one-transparent-pixel-in-the-converted-copy = Empty Photoshop layer extents will become at least one transparent pixel in the converted copy.
+
+rasterize-svg = Rasterize SVG
+
+dpi = DPI
+
+fitting = Fitting
+
+preserve-aspect-ratio = Preserve aspect ratio
+
+stretch-to-size = Stretch to size
+
+output-is-an-srgb-picture-with-transparency-text-uses-bundled-fonts-external-resources-are-disabled = Output is an sRGB picture with transparency. Text uses bundled fonts; external resources are disabled.
+
+choose-up-to-4-194-304-output-pixels-then-update-the-preview-changing-options-requires-a-new-preview-and-consent = Choose up to 4,194,304 output pixels, then update the preview. Changing options requires a new preview and consent.
+
+update-preview = Update preview
+
+import-preview = Import preview
+
+i-accept-these-import-changes = I accept these import changes.
+
+svg-vectors-and-text-will-become-pixels-in-a-single-picture-layer = SVG vectors and text will become pixels in a single picture layer.
+
+unavailable-svg-font-families-will-be-replaced-with-bundled-fonts = Unavailable SVG font families will be replaced with bundled fonts.

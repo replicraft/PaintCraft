@@ -428,3 +428,27 @@ palette-conversion-changes-colors-exporting-accepts-this-color-loss = A convers�
 photoshop-metadata-and-layer-protection-settings-will-not-be-retained-in-the-converted-copy = Os metadados do Photoshop e as configurações de proteção das camadas não serão mantidos na cópia convertida.
 
 empty-photoshop-layer-extents-will-become-at-least-one-transparent-pixel-in-the-converted-copy = As camadas vazias do Photoshop ocuparão pelo menos um pixel transparente na cópia convertida.
+
+rasterize-svg = Rasterizar SVG
+
+dpi = DPI
+
+fitting = Ajuste
+
+preserve-aspect-ratio = Manter proporções
+
+stretch-to-size = Esticar para o tamanho
+
+output-is-an-srgb-picture-with-transparency-text-uses-bundled-fonts-external-resources-are-disabled = A saída é uma imagem sRGB com transparência. O texto usa fontes incluídas; recursos externos estão desativados.
+
+choose-up-to-4-194-304-output-pixels-then-update-the-preview-changing-options-requires-a-new-preview-and-consent = Escolha até 4.194.304 pixels de saída e atualize a prévia. Alterar opções exige uma nova prévia e aceitação.
+
+update-preview = Atualizar prévia
+
+import-preview = Prévia da importação
+
+i-accept-these-import-changes = Aceito estas alterações de importação.
+
+svg-vectors-and-text-will-become-pixels-in-a-single-picture-layer = Os vetores e o texto SVG serão convertidos em pixels em uma única camada de imagem.
+
+unavailable-svg-font-families-will-be-replaced-with-bundled-fonts = As famílias de fontes SVG indisponíveis serão substituídas por fontes incluídas.
