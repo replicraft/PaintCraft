@@ -39,7 +39,8 @@ Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, 
 | PAINT | Studio and Classic 11 explicit Import as a converted layered copy | Observed MIF1 `iovl`/`unci` DEFLATE RGBA8 profile only; offsets/order retained, layers numbered/visible/full-opacity because source properties are unverified. Canvas fill becomes a layer, with depth loss when needed. No writer |
 | ORA | Studio explicit Import as a converted layered copy | Flat Normal PNG layers with names, signed offsets, visibility, opacity and raw pixels; requires merged preview and thumbnail. Unsupported groups, blends, extensions, ZIP64 and resource variants refused. Fractional opacity is rounded to 8 bits and explicit print resolution is discarded with consent; fresh writer implemented internally but not enabled pending external-application qualification |
 | JXR, HEIF | No enabled frontend operations | Selected/backend qualification remains; HEIF writing is prohibited |
-| PSD/PSB, SVG, ICO/CUR, EXR/HDR, JP2, MSP, ICNS | Not yet enabled | Registry inventory or work in progress is not usable format support |
+| ICO/CUR | Internal directory inspection and explicit selected-entry decoding; not enabled in frontends | Reports every admitted entry and cursor hotspot. Requires entry-picking controls and independent consumer qualification before release |
+| PSD/PSB, SVG, EXR/HDR, JP2, MSP, ICNS | Not yet enabled | Registry inventory or work in progress is not usable format support |
 | ABR, ASE, CSH | Asset workflow policy only | Brush/palette/shape import/export implementations remain |
 | RAW, PDF, KRA, XCF, animation, advanced DDS | Future profiles | No inherited Classic support or preserving-write claims |
 
@@ -75,6 +76,8 @@ For those historical 1000x486 workloads, warmed CLI import medians span approxim
 No PNG/JPEG backend has been switched to Zune, and no performance improvement is claimed merely from adding a dependency.
 
 ## Remaining interoperability work
+
+The internal ICO/CUR adapter admits at most 256 entries and 64 MiB of encoded input. It checks all entry dimensions and payload ranges before decoding the explicitly selected entry. Its initial profile covers noninterlaced eight-bit PNG entries with a restricted chunk set and uncompressed 1/4/8/24/32-bit BITMAPINFOHEADER entries. Private gaps, suffixes, conflicting metadata, compressed bitmaps, and ambiguous legacy 32-bit alpha are refused. Cursor hotspots remain in the decoded entry DTO, with an explicit loss when converting into a flat document. Six targeted tests cover mixed entries, independently constructed cursor pixels and masks, directory reordering, pixel budgets, truncation, conflicting geometry, CRC failures, and alpha refusals. These are adapter checks, not Windows consumer qualification or preserving-save support.
 
 - Qualify JPEG XL reader confinement and cancellation tails, JXR independent comparisons and a decoder-only HEIF profile.
 - Finish and qualify extended document/asset adapters, including ORA groups and layered writing, PSD/PSB, SVG rasterization with explicit dimensions/DPI, icons and Adobe resources. EXR/HDR require precision-aware storage/import gates; JP2 and historical MSP need dedicated evidence.
