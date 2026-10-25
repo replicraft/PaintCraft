@@ -9,6 +9,7 @@ pub(super) fn op(v: &Value, version: u8) -> Result<Op> {
         && matches!(
             name,
             "canvas.clear"
+                | "raster.cut_selection"
                 | "selection.set_polygon"
                 | "selection.invert"
                 | "layer.expand"
@@ -31,6 +32,13 @@ pub(super) fn op(v: &Value, version: u8) -> Result<Op> {
         )));
     }
     Ok(match name {
+        "raster.cut_selection" => {
+            let o = obj(v, &["op", "layer_ref", "clear"], &[])?;
+            Op::CutSelection {
+                layer: layer_ref(&o["layer_ref"])?,
+                clear: color(&o["clear"])?,
+            }
+        }
         "raster.move_selection" => {
             let o = obj(
                 v,

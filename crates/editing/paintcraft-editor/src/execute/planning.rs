@@ -279,7 +279,8 @@ enum Kind {
 }
 fn kind(op: &Op) -> Kind {
     match op {
-        Op::FillRect { .. }
+        Op::CutSelection { .. }
+        | Op::FillRect { .. }
         | Op::PencilPath { .. }
         | Op::StrokePath { .. }
         | Op::Shape { .. }

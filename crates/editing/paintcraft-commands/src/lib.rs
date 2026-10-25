@@ -44,6 +44,12 @@ pub enum ShapeKind {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Op {
+    /// v2: removal half of Cut; hosts must acknowledge their clipboard write first.
+    /// Clear only canvas/layer/selection coverage and preserve the selection.
+    CutSelection {
+        layer: LayerRef,
+        clear: Rgba,
+    },
     /// v2: cut selected pixels and paste an exact frozen capture at an offset.
     /// RGB-keyed samples are still cut, but skipped during the paste phase.
     MoveSelection {

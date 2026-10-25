@@ -119,3 +119,6 @@ mod selection_masks;
 
 #[path = "cli/selection_move.rs"]
 mod selection_move;
+
+#[path = "cli/clipboard_cut.rs"]
+mod clipboard_cut;

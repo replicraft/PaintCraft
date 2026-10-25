@@ -30,6 +30,7 @@ pub enum Label {
     TransformCanvas,
     TransformSelection,
     MoveSelection,
+    Cut,
 }
 
 impl Label {
@@ -56,6 +57,7 @@ impl Label {
             Self::TransformCanvas => "Transform canvas",
             Self::TransformSelection => "Transform selection",
             Self::MoveSelection => "Move selection",
+            Self::Cut => "Cut",
         }
     }
 }

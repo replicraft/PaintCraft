@@ -444,6 +444,18 @@ impl Stage<'_> {
                     l.opacity = *o;
                 }
             }
+            Op::CutSelection { layer, clear } => {
+                // Reuse the admitted paint compiler and exact mask clipping.
+                self.run(
+                    index,
+                    &Op::FillRect {
+                        layer: layer.clone(),
+                        rect: self.doc.canvas_rect(),
+                        color: *clear,
+                        mode: Mode::Replace,
+                    },
+                )?;
+            }
             Op::FillRect {
                 layer,
                 rect,

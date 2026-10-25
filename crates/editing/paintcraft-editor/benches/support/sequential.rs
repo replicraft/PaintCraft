@@ -238,7 +238,8 @@ impl Stage<'_> {
 
     fn run(&mut self, index: usize, op: &Op) -> Result<()> {
         match op {
-            Op::SelectionSetPolygon { .. }
+            Op::CutSelection { .. }
+            | Op::SelectionSetPolygon { .. }
             | Op::SelectionInvert
             | Op::CanvasCrop { .. }
             | Op::CanvasTransform { .. }
