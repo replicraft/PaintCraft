@@ -429,3 +429,23 @@ fn native_worker_transforms_captured_selection_then_whole_canvas_and_remembers_a
     assert_eq!(app.editor.document().canvas, size);
     assert_eq!(app.settings.canvas.last, Some((size.1, size.0)));
 }
+
+#[test]
+fn icon_export_waits_for_prior_edits_and_holds_later_work_until_cancel() {
+    let (mut app, context) = app(false);
+    app.settings.experience = Experience::Studio;
+    let release = app.editing.as_ref().unwrap().pause();
+    app.editor
+        .request(7101, Action::ClearCanvas { color: BLACK });
+    app.begin_icon_export();
+    app.editor.request(7102, Action::ClearCanvas { color: RED });
+    release.send(()).unwrap();
+    pump(&mut app, &context, |app| {
+        app.confirm == Some(Confirm::IconExport)
+    });
+    assert_eq!(color(app.editor.document()), BLACK);
+    app.confirm = None;
+    app.icon_export = None;
+    pump(&mut app, &context, idle);
+    assert_eq!(color(app.editor.document()), RED);
+}

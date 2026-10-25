@@ -7,6 +7,21 @@ use std::io::Read;
 const SOURCE_BYTES: u64 = 512 << 20;
 
 impl App {
+    pub(super) fn guard_export_destination(&self, path: &Path) -> Result<()> {
+        if self
+            .bound
+            .as_deref()
+            .into_iter()
+            .chain(self.imported_source.as_deref())
+            .any(|source| crate::destination::same_file(source, path))
+        {
+            return Err(Error::new(
+                ErrorCode::InputSchema,
+                "an exported image must not replace its source",
+            ));
+        }
+        Ok(())
+    }
     pub(super) fn format_frontend(&self) -> Frontend {
         match (self.experience(), self.variant()) {
             (Experience::Studio, _) => Frontend::Studio,
@@ -25,6 +40,7 @@ impl App {
     }
 
     pub(super) fn admit_export_format(&self, path: &Path, format: ImageFormat) -> Result<()> {
+        self.guard_export_destination(path)?;
         use paintcraft_formats::registry::{self, Operation, Request};
         let family = Family::from_id(format.name()).ok_or_else(|| {
             Error::new(

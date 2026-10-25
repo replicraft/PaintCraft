@@ -141,6 +141,7 @@ impl App {
             }
             self.install(editor)?;
             self.bound = None;
+            self.imported_source = Some(pending.path.clone());
             self.path_text = pending
                 .path
                 .with_extension("pcnd")

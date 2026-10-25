@@ -32,6 +32,8 @@ mod format_filters;
 mod gpu_display;
 #[path = "app/history.rs"]
 mod history;
+#[path = "app/icon_export.rs"]
+mod icon_export;
 #[path = "app/importing.rs"]
 mod importing;
 #[path = "app/input.rs"]
@@ -156,6 +158,7 @@ enum Confirm {
     ResizeSkew(resize_skew::Draft),
     RecentFiles,
     ExportOptions(export_options::Draft),
+    IconExport,
     LayerProperties(layers::PropertiesDraft),
     DiscardForNew,
     DiscardForOpen(PathBuf),
@@ -233,6 +236,8 @@ pub struct App {
     clipboard: clipboard::State,
     paste: paste::State,
     pending_import: Option<importing::Pending>,
+    imported_source: Option<PathBuf>,
+    icon_export: Option<icon_export::State>,
     dialog_owner: Option<Uuid>,
     dialog_frontend: Option<paintcraft_formats::registry::Frontend>,
     dialog_source: Option<(Arc<paintcraft_document::Document>, (Uuid, u64))>,
@@ -367,6 +372,8 @@ impl App {
             clipboard: Default::default(),
             paste: Default::default(),
             pending_import: None,
+            imported_source: None,
+            icon_export: None,
             dialog_owner: None,
             dialog_frontend: None,
             dialog_source: None,

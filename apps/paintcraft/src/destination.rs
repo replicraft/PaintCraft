@@ -21,6 +21,15 @@ pub(crate) struct Previous {
     pub path: Option<PathBuf>,
     pub binding: Option<Binding>,
 }
+
+/// Compare regular-file identities without opening a FIFO or device.
+pub(crate) fn same_file(a: &Path, b: &Path) -> bool {
+    if matches!((a.canonicalize(), b.canonicalize()), (Ok(a), Ok(b)) if a == b) {
+        return true;
+    }
+    matches!((a.metadata(), b.metadata()), (Ok(a), Ok(b)) if a.is_file() && b.is_file())
+        && same_file::is_same_file(a, b).unwrap_or(false)
+}
 pub(crate) fn acquire(path: &Path) -> Result<(Vec<u8>, Binding)> {
     let resolved = std::fs::canonicalize(path).map_err(|e| {
         Error::new(

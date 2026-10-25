@@ -5,6 +5,7 @@ use super::*;
 pub(super) enum FileRequest {
     Save(PathBuf),
     Print,
+    ExportIcons,
     Export(PathBuf, export_options::Settings),
 }
 #[derive(Debug)]
@@ -121,6 +122,17 @@ impl App {
                 } else if self.editor.file_barrier_ready(request.barrier) {
                     let request = request.request.clone();
                     match request {
+                        FileRequest::ExportIcons => {
+                            self.deferred_files
+                                .front_mut()
+                                .expect("deferred icon export")
+                                .started = true;
+                            self.capture_icon_export();
+                            if self.confirm.is_some() {
+                                original = id;
+                                self.reset_tab_presentation();
+                            }
+                        }
                         FileRequest::Print => {
                             let request = self.deferred_files.pop_front().expect("deferred print");
                             self.capture_print(ctx);

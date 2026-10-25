@@ -243,6 +243,7 @@ impl App {
                 Chrome::Paste => self.paste_requested(ctx),
                 Chrome::CopyVisible => self.copy_source_requested(ctx, true),
                 Chrome::ExportImage(format) => self.export_image_requested(ctx, format),
+                Chrome::ExportIcons => self.begin_icon_export(),
                 Chrome::Undo => self.request(ctx, code::UNDO, Action::Undo),
                 Chrome::Redo => self.request(ctx, code::REDO, Action::Redo),
                 Chrome::View(action) => self.dispatch_view_action(ctx, action),
@@ -378,6 +379,10 @@ impl App {
             self.recent_files_dialog(&ctx);
             return;
         }
+        if confirm == Confirm::IconExport {
+            self.icon_export_dialog(&ctx);
+            return;
+        }
         if let Confirm::ExportOptions(draft) = confirm {
             self.export_options_dialog(&ctx, draft);
             return;
@@ -403,7 +408,7 @@ impl App {
             return;
         }
         let (title, text, go) = match &confirm {
-            Confirm::PasteLayer | Confirm::ImportLosses | Confirm::RecentFiles | Confirm::ExportOptions(_) | Confirm::Settings(_) | Confirm::SwitchInterface(_) | Confirm::Colors(_) | Confirm::Canvas(_) | Confirm::ResizeSkew(_) | Confirm::LayerProperties(_) => unreachable!("properties handled above"),
+            Confirm::PasteLayer | Confirm::ImportLosses | Confirm::RecentFiles | Confirm::ExportOptions(_) | Confirm::IconExport | Confirm::Settings(_) | Confirm::SwitchInterface(_) | Confirm::Colors(_) | Confirm::Canvas(_) | Confirm::ResizeSkew(_) | Confirm::LayerProperties(_) => unreachable!("properties handled above"),
             Confirm::DiscardForNew
             | Confirm::DiscardForOpen(_)
             | Confirm::DiscardForRecovery(_)
@@ -495,6 +500,7 @@ impl App {
                     | Confirm::ImportLosses
                     | Confirm::RecentFiles
                     | Confirm::ExportOptions(_)
+                    | Confirm::IconExport
                     | Confirm::Settings(_)
                     | Confirm::SwitchInterface(_)
                     | Confirm::Colors(_)

@@ -39,6 +39,7 @@ pub(super) struct DocumentState {
     pending_center: Option<(f32, f32)>,
     path_text: String,
     bound: Option<PathBuf>,
+    imported_source: Option<PathBuf>,
     pending_save: Option<(PathBuf, crate::destination::Previous)>,
     pub(super) deferred_files: std::collections::VecDeque<editing::DeferredFile>,
     save_activation: Option<u64>,
@@ -61,6 +62,7 @@ impl DocumentState {
             pending_center: None,
             path_text: "untitled.pcnd".into(),
             bound: None,
+            imported_source: None,
             pending_save: None,
             deferred_files: Default::default(),
             save_activation: None,
@@ -84,6 +86,7 @@ impl DocumentState {
         std::mem::swap(&mut self.pending_center, &mut app.pending_center);
         std::mem::swap(&mut self.path_text, &mut app.path_text);
         std::mem::swap(&mut self.bound, &mut app.bound);
+        std::mem::swap(&mut self.imported_source, &mut app.imported_source);
         std::mem::swap(&mut self.pending_save, &mut app.pending_save);
         std::mem::swap(&mut self.deferred_files, &mut app.deferred_files);
         std::mem::swap(&mut self.save_activation, &mut app.save_activation);

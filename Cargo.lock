@@ -3220,6 +3220,7 @@ dependencies = [
  "paintcraft-tools",
  "paintcraft-ui",
  "pollster 0.4.0",
+ "same-file",
  "sha2",
  "uuid",
  "wgpu",

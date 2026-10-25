@@ -81,6 +81,10 @@ impl App {
         ctx: &egui::Context,
         completion: paintcraft_platform::dialogs::Completion,
     ) {
+        if completion.kind == Kind::ExportIcons {
+            self.complete_icon_picker(ctx, completion.path);
+            return;
+        }
         let owner = self.dialog_owner.take();
         let source = self.dialog_source.take();
         let frontend = self.dialog_frontend.take();
@@ -173,6 +177,7 @@ impl App {
                 },
             ),
             Kind::InspectRecovery => unreachable!("inspection completion handled separately"),
+            Kind::ExportIcons => unreachable!("icon completion handled separately"),
         }
     }
 
@@ -224,6 +229,7 @@ impl App {
             saving.new_session();
         }
         self.editor = editor;
+        self.imported_source = None;
         self.studio_fit = None;
         self.initial_fit = true;
         self.texture_key = None;
@@ -353,6 +359,7 @@ impl App {
         };
         self.install(editor)?;
         self.bound = bound;
+        self.imported_source = self.bound.is_none().then(|| path.to_path_buf());
         self.path_text = if self.bound.is_some() {
             path.to_path_buf()
         } else {
