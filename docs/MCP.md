@@ -39,6 +39,14 @@ Available tools:
 - `save_project`: save a layered PCND project.
 - `export_image`: export an image using its filename extension.
 
+For ICO/CUR import, provide a zero-based `entry` in `import_image`; no entry is
+selected automatically. For DCX, provide a zero-based `page` instead. The two
+fields cannot be combined. Import reports losses that must be acknowledged in
+`allow_losses`: unselected icon entries use `icon-other-entries-not-imported`,
+palette expansion uses `icon-palette-expanded`, and converting a cursor into a
+picture uses `cursor-hotspot-not-retained-in-flat-document`. The original source
+remains unchanged. CLI import uses the corresponding `--entry` or `--page` flags.
+
 PCX exports accept the optional `pcx_encoding` field: `rgb24` (default),
 `indexed-exact` (refuse more than 256 colors), or `indexed-256` (explicitly allow
 palette preparation). If colors actually change, include `palette-quantized` in

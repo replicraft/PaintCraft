@@ -40,7 +40,7 @@ cargo run --release -p paintcraft-cli -- mcp
 - **Classic and Studio:** open and export PNG, JPEG, BMP, still GIF and single-page TIFF.
 - **Studio:** also open and export TGA, still WebP and supported single-surface DDS images.
 - **Studio exports:** lossless JPEG XL, lossy AVIF, QOI, PAM, farbfeld and PCX with optional 256-color palettes and a preview. JPEG XL and AVIF opening is not available yet.
-- **Extra imports in Studio:** QOI, Netpbm, farbfeld and PCX, plus an explicitly selected DCX page.
+- **Extra imports in Studio:** QOI, Netpbm, farbfeld and PCX, plus a selected DCX page or ICO/CUR entry.
 - **Layered imports:** Studio imports flat OpenRaster (`.ora`) layers and opens a limited historical Paint.NET (`.pdn`) subset as converted copies. Studio also imports a limited Windows Paint (`.paint`) subset. Save converted projects as PCND; writing PDN or PAINT is not supported.
 
 Image exports flatten layers. Conversion prompts explain supported losses such as reduced color depth, palette changes or discarded metadata. See [format support and limits](docs/FORMAT_INTEROPERABILITY.md) for the supported subsets.
