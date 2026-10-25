@@ -3,6 +3,8 @@
 //! supplied indices and palette ordering without implicit quantization.
 use paintcraft_core::types::{Error, ErrorCode, Result};
 use std::io::{self, Write};
+mod palette;
+pub use palette::{Mode, Prepared, Preview, prepare_rgba};
 
 pub const PIXELS_MAX: u64 = 4_194_304;
 pub const BYTES_MAX: usize = 64 << 20;
