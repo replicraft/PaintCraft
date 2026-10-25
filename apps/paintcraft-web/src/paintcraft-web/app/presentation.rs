@@ -17,7 +17,7 @@ impl WebApp {
         self.text.widget_owned_input =
             ctx.egui_wants_keyboard_input() || egui::Popup::is_any_open(&ctx);
         let context = self.context();
-        egui::Panel::top("classic-chrome").show(ui, |ui| {
+        let chrome = egui::Panel::top("classic-chrome").show(ui, |ui| {
             let actions = if self.frontend == Frontend::Studio {
                 let mut actions = Vec::new();
                 ui.horizontal(|ui| {
@@ -79,6 +79,11 @@ impl WebApp {
                     .inner
             });
         self.text_chrome(ui);
+        if self.frontend == Frontend::Classic {
+            let mut bounds = chrome.response.rect;
+            bounds.max.y = bounds.max.y.max(ui.available_rect_before_wrap().top());
+            self.workspace.toolbar.remember_bounds(bounds);
+        }
         if self.frontend == Frontend::Studio {
             self.studio_windows(&ctx);
         }

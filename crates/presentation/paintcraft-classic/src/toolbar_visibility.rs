@@ -90,7 +90,9 @@ impl ToolbarVisibility {
             // coalesced canvas press/release. A gesture never sees two mappings.
             if !hold {
                 if pointer.is_some_and(|point| {
-                    menu.contains(point) || self.bounds.is_some_and(|bounds| bounds.contains(point))
+                    menu.contains(point)
+                        || (!self.collapsed
+                            && self.bounds.is_some_and(|bounds| bounds.contains(point)))
                 }) {
                     self.collapsed = false;
                 } else if !egui::Popup::is_any_open(ui.ctx())

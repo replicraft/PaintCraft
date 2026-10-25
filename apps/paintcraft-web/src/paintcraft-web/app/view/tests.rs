@@ -154,3 +154,33 @@ fn unavailable_fullscreen_reports_a_translatable_error_without_document_publicat
         );
     }
 }
+
+#[test]
+fn auto_hidden_toolbar_stays_open_while_crossing_into_it_and_using_a_tool() {
+    use egui::{Event, Pos2, Role};
+    for variant in ClassicVariant::ALL {
+        let mut h = harness(variant, Language::English);
+        h.state_mut().preferences.auto_hide_toolbar = true;
+        let ticket = h.state().editor.session.ticket();
+        let center = h.state().canvas.rect.unwrap().center();
+        h.event(Event::PointerMoved(center));
+        h.run();
+        assert!(!h.state().workspace.toolbar.visible());
+        h.get_by_role_and_label(Role::Button, "View").hover();
+        h.run();
+        assert!(h.state().workspace.toolbar.visible());
+        let target = h
+            .get_by_role_and_label(Role::Button, "Pencil")
+            .rect()
+            .center();
+        for y in [45.0, 55.0, target.y] {
+            h.event(Event::PointerMoved(Pos2::new(target.x, y)));
+            h.run();
+            assert!(h.state().workspace.toolbar.visible(), "{variant:?} at {y}");
+        }
+        h.get_by_role_and_label(Role::Button, "Pencil").click();
+        h.run();
+        assert_eq!(h.state().controls.tool, Tool::Pencil);
+        assert_eq!(h.state().editor.session.ticket(), ticket);
+    }
+}
