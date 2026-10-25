@@ -8,6 +8,8 @@ use std::{
 };
 #[cfg(target_os = "macos")]
 mod macos;
+#[cfg(any(target_os = "linux", target_os = "freebsd", test))]
+mod wayland;
 #[cfg(any(target_os = "windows", test))]
 mod windows;
 trait Reader {
@@ -37,7 +39,14 @@ impl fmt::Debug for ReadService {
 }
 impl ReadService {
     pub fn supported() -> bool {
-        cfg!(any(target_os = "macos", target_os = "windows"))
+        #[cfg(any(target_os = "linux", target_os = "freebsd"))]
+        {
+            wayland::session_available()
+        }
+        #[cfg(not(any(target_os = "linux", target_os = "freebsd")))]
+        {
+            cfg!(any(target_os = "macos", target_os = "windows"))
+        }
     }
     pub fn new() -> Result<Self, String> {
         Self::with_factory(Box::new(|| {
@@ -49,7 +58,20 @@ impl ReadService {
             {
                 Ok(Box::new(windows::NativeReader))
             }
-            #[cfg(not(any(target_os = "macos", target_os = "windows")))]
+            #[cfg(any(target_os = "linux", target_os = "freebsd"))]
+            {
+                if wayland::session_available() {
+                    Ok(Box::new(wayland::NativeReader))
+                } else {
+                    Err("Encoded clipboard reads require a named Wayland session; X11 reads are not available yet".into())
+                }
+            }
+            #[cfg(not(any(
+                target_os = "macos",
+                target_os = "windows",
+                target_os = "linux",
+                target_os = "freebsd"
+            )))]
             {
                 Err("Bounded image clipboard reads are unavailable on this platform".into())
             }

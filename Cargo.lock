@@ -3204,8 +3204,10 @@ dependencies = [
  "pollster 0.4.0",
  "raw-window-handle",
  "rfd",
+ "rustix 1.1.5",
  "sha2",
  "uuid",
+ "wl-clipboard-rs",
 ]
 
 [[package]]

@@ -13,6 +13,8 @@ printing = []
 clipboard = [
     "dep:arboard",
     "dep:clipboard-win",
+    "dep:wl-clipboard-rs",
+    "dep:rustix",
     "dep:objc2",
     "dep:objc2-app-kit",
     "dep:objc2-foundation",
@@ -40,6 +42,13 @@ muda = { workspace = true, optional = true }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 clipboard-win = { workspace = true, optional = true }
+
+[target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]
+wl-clipboard-rs = { workspace = true, optional = true }
+rustix = { workspace = true, optional = true }
+
+[target.'cfg(unix)'.dev-dependencies]
+rustix = { workspace = true, features = ["pipe"] }
 
 [lints]
 workspace = true
