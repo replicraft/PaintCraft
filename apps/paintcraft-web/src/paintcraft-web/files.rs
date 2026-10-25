@@ -293,6 +293,7 @@ fn encode_quality_for_profile(
             ImageExport::Qoi => image::ImageFormat::Qoi,
             ImageExport::Pam => image::ImageFormat::Pnm,
             ImageExport::Farbfeld => image::ImageFormat::Farbfeld,
+            ImageExport::Pcx => image::ImageFormat::Pcx,
         };
         // The captured frontend determines admission before rendering or encoding.
         use paintcraft_formats::registry::{self, Operation, Request};
@@ -459,7 +460,10 @@ mod tests {
             let decoded = image::decode(&bytes).unwrap();
             assert_eq!((decoded.width, decoded.height), (24, 16));
             assert!(decoded.rgba.as_chunks::<4>().0.iter().all(|pixel| pixel[3]
-                == if matches!(format, ImageExport::Jpeg | ImageExport::Gif) {
+                == if matches!(
+                    format,
+                    ImageExport::Jpeg | ImageExport::Gif | ImageExport::Pcx
+                ) {
                     255
                 } else {
                     128

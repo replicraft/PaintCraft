@@ -83,6 +83,7 @@ fn studio_export_dialog_offers_stock_raster_additions_and_classic_keeps_its_own_
             ImageExport::Jxl,
             ImageExport::Dds,
             ImageExport::Avif,
+            ImageExport::Pcx,
         ] {
             assert_eq!(choices.contains(&format), studio);
         }
@@ -120,6 +121,18 @@ fn studio_export_dialog_offers_stock_raster_additions_and_classic_keeps_its_own_
             assert!(
                 h.query_by_label(
                     "AVIF uses lossy compression for colors and transparency, even at quality 100."
+                )
+                .is_some()
+            );
+            h.get_by_label("File type").click();
+            h.run();
+            h.get_by_label("PCX").scroll_to_me();
+            h.run();
+            h.get_by_label("PCX").click();
+            h.run();
+            assert!(
+                h.query_by_label(
+                    "Save a 24-bit PCX picture. Transparent pixels are placed on white."
                 )
                 .is_some()
             );

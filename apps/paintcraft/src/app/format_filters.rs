@@ -62,6 +62,7 @@ impl App {
                     Family::Qoi => "QOI image",
                     Family::Pnm => "PAM image",
                     Family::Farbfeld => "farbfeld image",
+                    Family::Pcx => "PCX image",
                     _ => return None,
                 };
                 Some(Filter {
