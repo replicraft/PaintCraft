@@ -1,5 +1,6 @@
 //! External pixels enter through the same private history/publication boundary.
 use super::*;
+mod onto;
 use crate::clipboard::PasteDraft;
 use paintcraft_core::types::{Rgba, policy::hex};
 use paintcraft_document::{LAYER_COUNT_MAX, Layer};
