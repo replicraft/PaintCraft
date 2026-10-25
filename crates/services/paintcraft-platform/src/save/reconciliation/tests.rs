@@ -320,6 +320,27 @@ fn repeated_inspection_diagnostics_are_bounded_and_nonattempts_cannot_reconcile(
 }
 
 #[test]
+fn a_same_content_edit_after_the_file_barrier_cannot_gain_confirmation() {
+    let dir = scratch("reconcile-edit-after-file-sync");
+    let dest = dir.join("a.pcnd");
+    let original = incomplete(&dest);
+    let checked = reconcile(&original, ReconcileMode::ConfirmDurability, |phase| {
+        if phase == Phase::DirectorySync {
+            // Link count guarantees a visible revision even within one timestamp
+            // tick; the content rewrite occurs after the guarded file barrier.
+            fs::hard_link(&dest, dir.join("late-link"))?;
+            fs::write(&dest, b"new")?;
+        }
+        Ok(())
+    })
+    .unwrap();
+    assert_eq!(checked.observation, Observation::Unreadable, "{checked:?}");
+    assert!(!checked.outcome.is_success());
+    assert_eq!(fs::read(&dest).unwrap(), b"new");
+    fs::remove_dir_all(dir).unwrap();
+}
+
+#[test]
 fn a_link_count_change_after_sync_is_not_a_new_persistence_barrier() {
     let dir = scratch("reconcile-identical-late-edit");
     let dest = dir.join("a.pcnd");
