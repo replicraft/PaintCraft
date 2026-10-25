@@ -95,6 +95,11 @@ impl WebApp {
     }
 
     pub(crate) fn text_chrome(&mut self, ui: &mut egui::Ui) {
+        if self.frontend == paintcraft_ui::actions::Frontend::Classic
+            && !self.workspace.toolbar.visible()
+        {
+            return;
+        }
         if self.controls.tool != Tool::Text && !self.editor.tools.is_editing_text() {
             return;
         }

@@ -184,3 +184,26 @@ fn auto_hidden_toolbar_stays_open_while_crossing_into_it_and_using_a_tool() {
         assert_eq!(h.state().editor.session.ticket(), ticket);
     }
 }
+
+#[test]
+fn auto_hide_includes_text_options_and_keeps_them_reachable_without_placing_text() {
+    let mut h = harness(ClassicVariant::V11, Language::English);
+    h.state_mut().controls.tool = Tool::Text;
+    h.state_mut().preferences.auto_hide_toolbar = true;
+    let ticket = h.state().editor.session.ticket();
+    let center = h.state().canvas.rect.unwrap().center();
+    h.event(egui::Event::PointerMoved(center));
+    h.run();
+    assert!(h.query_by_label("Font family").is_none());
+    h.get_by_role_and_label(egui::Role::Button, "View").hover();
+    h.run();
+    h.get_by_role_and_label(egui::Role::ComboBox, "Font family")
+        .hover();
+    h.run();
+    assert!(h.state().workspace.toolbar.visible());
+    assert!(
+        h.query_by_role_and_label(egui::Role::ComboBox, "Font family")
+            .is_some()
+    );
+    assert_eq!(h.state().editor.session.ticket(), ticket);
+}
