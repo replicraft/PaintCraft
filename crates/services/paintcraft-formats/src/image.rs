@@ -194,9 +194,15 @@ impl ImageFormat {
             | ImageFormat::Qoi
             | ImageFormat::Pnm
             | ImageFormat::Farbfeld
-            | ImageFormat::Pcx
             | ImageFormat::Jxl
             | ImageFormat::Dds => Vec::new(),
+            ImageFormat::Pcx => {
+                if has_transparency {
+                    vec!["alpha-discarded"]
+                } else {
+                    Vec::new()
+                }
+            }
             ImageFormat::Avif => crate::avif::export_losses(has_transparency, has_transparency),
             ImageFormat::Gif => {
                 let mut losses = vec!["palette-quantized"];
@@ -469,7 +475,7 @@ fn encode_inner(
         ImageFormat::Qoi | ImageFormat::Pnm | ImageFormat::Farbfeld => {
             return extended::encode(format, width, height, rgba, check);
         }
-        ImageFormat::Pcx => return Err(unsupported("PCX writing is not qualified")),
+        ImageFormat::Pcx => return crate::pcx::encode_rgba(width, height, rgba, check),
         ImageFormat::Gif => return gif::encode(width, height, rgba),
         ImageFormat::Tiff => return tiff::encode(width, height, rgba),
         ImageFormat::Tga => return tga::encode(width, height, rgba),

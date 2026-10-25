@@ -215,7 +215,9 @@ pub fn capability(family: Family, operation: Operation, _platform: Platform) -> 
         {
             Some("image-extended-rgba8")
         }
-        Family::Pcx if operation == Operation::ImportConvert => Some("pcx-rgba8"),
+        Family::Pcx if matches!(operation, Operation::ImportConvert | Operation::ExportFlat) => {
+            Some("pcx-rgba8")
+        }
         Family::Jxl if raster_operation && operation.is_write() => Some("zune-jpegxl"),
         Family::Jxl if raster_operation => Some("jxl-rs"),
         Family::Dds if raster_operation => Some("paintcraft-dds-rgba8"),
@@ -234,12 +236,10 @@ pub fn capability(family: Family, operation: Operation, _platform: Platform) -> 
                     | Operation::ImportConvert
                     | Operation::ExportFlat
             ),
-            Family::Qoi | Family::Pnm | Family::Farbfeld => {
+            Family::Qoi | Family::Pnm | Family::Farbfeld | Family::Pcx => {
                 matches!(operation, Operation::ImportConvert | Operation::ExportFlat)
             }
-            Family::Paint | Family::Pcx | Family::Dcx | Family::Ora => {
-                operation == Operation::ImportConvert
-            }
+            Family::Paint | Family::Dcx | Family::Ora => operation == Operation::ImportConvert,
             Family::Jxl | Family::Avif => operation == Operation::ExportFlat,
             Family::Pdn => matches!(
                 operation,

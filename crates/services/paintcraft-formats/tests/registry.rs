@@ -60,6 +60,7 @@ fn qualified_discovery_is_separate_from_stock_inventory_and_backend_candidates()
                     Family::Dds,
                     Family::Avif,
                     Family::Jxl,
+                    Family::Pcx,
                     Family::Qoi,
                     Family::Pnm,
                     Family::Farbfeld,
