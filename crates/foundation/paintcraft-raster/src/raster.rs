@@ -16,8 +16,8 @@ use std::sync::{Arc, OnceLock};
 mod paint;
 pub use paint::{
     CropPlan, DEFAULT_PAINT_METADATA_BYTES, DEFAULT_RESIDENT_PAINT_METADATA_BYTES, MappedPlan,
-    PaintOverlay, PaintPlan, PaintProjection, PaintReader, PaintSnapshot, SimulatedLayer,
-    TileFootprint, TilePlanner,
+    PaintOverlay, PaintPlan, PaintProjection, PaintReader, PaintSnapshot, RgbaPastePlan,
+    SimulatedLayer, TileFootprint, TilePlanner,
 };
 mod tile;
 use tile::Tile;
