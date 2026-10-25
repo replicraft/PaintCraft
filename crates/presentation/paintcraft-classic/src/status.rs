@@ -10,18 +10,16 @@ mod legacy;
 
 /// Historical status strips have no modern card padding around their controls.
 pub fn frame(variant: super::ClassicVariant, theme: egui::Theme) -> egui::Frame {
-    if variant == super::ClassicVariant::V11 {
-        return egui::Frame::default().inner_margin(egui::Margin::symmetric(8, 4));
-    }
-    let fill = match (variant, theme) {
-        (super::ClassicVariant::V7, egui::Theme::Light) => egui::Color32::from_rgb(225, 235, 247),
-        (super::ClassicVariant::V7, egui::Theme::Dark) => egui::Color32::from_rgb(38, 53, 73),
-        (_, egui::Theme::Light) => egui::Color32::from_rgb(240, 240, 240),
-        _ => egui::Color32::from_rgb(45, 45, 45),
+    let fill = match theme {
+        egui::Theme::Light => egui::Color32::from_rgb(249, 249, 249),
+        egui::Theme::Dark => egui::Color32::from_rgb(39, 39, 39),
     };
-    egui::Frame::new()
-        .fill(fill)
-        .inner_margin(egui::Margin::symmetric(4, 0))
+    let margin = if variant == super::ClassicVariant::V11 {
+        egui::Margin::symmetric(8, 4)
+    } else {
+        egui::Margin::symmetric(4, 0)
+    };
+    egui::Frame::new().fill(fill).inner_margin(margin)
 }
 
 /// Reserve chrome before canvas layout; paint it afterward with current values.

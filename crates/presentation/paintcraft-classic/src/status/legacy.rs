@@ -25,7 +25,7 @@ pub(super) fn contents(
             if ui.visuals().dark_mode {
                 egui::Color32::from_gray(75)
             } else {
-                egui::Color32::from_rgb(184, 195, 211)
+                egui::Color32::from_gray(190)
             },
         ),
     );
