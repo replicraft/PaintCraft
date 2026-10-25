@@ -1,5 +1,6 @@
 use super::super::read as open;
 use super::*;
+use paintcraft_document::POLICY;
 use paintcraft_document::new_document;
 use paintcraft_raster::BlendMode;
 
@@ -54,7 +55,10 @@ fn first_block_offset(bytes: &[u8]) -> usize {
 fn binary_roundtrip_preserves_every_field_and_detects_every_single_byte_change() {
     let doc = document();
     let bytes = write_compact(&doc).unwrap();
-    assert_eq!(probe(&bytes).unwrap().container_version, 2);
+    let restored = open(&bytes).unwrap();
+    assert!(restored.same_semantics(&doc));
+    assert_eq!(restored.state_id, doc.state_id);
+    assert_eq!(probe(&bytes).unwrap().container_version, 1);
     probe(&bytes).unwrap().require_supported().unwrap();
     assert_eq!(
         super::super::write(&open(&bytes).unwrap()).unwrap(),
@@ -218,5 +222,55 @@ fn portable_encoder_reads_identically_and_compresses_run_descriptors() {
     }
     for bad in [vec![], vec![255; 4], vec![0, 0, 0, 0], vec![255; 16]] {
         assert!(compression::decode_lz4(&bad, 262_144, true, &|| Ok(())).is_err());
+    }
+}
+
+#[test]
+fn future_versions_are_assessable_but_never_editable_and_archives_are_not_pcnd() {
+    let mut bytes = write_compact(&document()).unwrap();
+    bytes[4] = 2;
+    assert_eq!(probe(&bytes).unwrap_err().code, ErrorCode::CodecFailed);
+    let bytes = seal(bytes);
+    let header = probe(&bytes).unwrap();
+    assert_eq!(header.container_version, 2);
+    assert!(header.required_features.is_empty());
+    assert_eq!(
+        header.require_supported().unwrap_err().code,
+        ErrorCode::CapabilityUnsupported
+    );
+    assert_eq!(
+        open(&bytes).unwrap_err().code,
+        ErrorCode::CapabilityUnsupported
+    );
+    assert_eq!(
+        open(b"PK\x03\x04").unwrap_err().code,
+        ErrorCode::CodecFailed
+    );
+}
+
+#[test]
+fn all_layer_properties_stacking_and_off_canvas_pixels_survive_both_encodings() {
+    let mut doc = document();
+    let id = doc.roots[0];
+    let mut upper = doc.layers[&id].clone();
+    upper.id = Uuid::from_u128(0x1234);
+    upper.name = "Other layer".into();
+    upper.opacity = 0;
+    upper.visible = true;
+    upper.origin = (1000, -1000);
+    doc.roots.insert(0, upper.id);
+    doc.layers.insert(upper.id, upper);
+    for bytes in [
+        super::super::write(&doc).unwrap(),
+        write_compact(&doc).unwrap(),
+    ] {
+        let reopened = open(&bytes).unwrap();
+        assert!(reopened.same_semantics(&doc));
+        assert_eq!(reopened.state_id, doc.state_id);
+        assert_eq!(reopened.layers.len(), 2);
+        assert_eq!(
+            reopened.layers[&doc.roots[0]].raster.get(256, 258),
+            Rgba([42, 43, 44, 0])
+        );
     }
 }

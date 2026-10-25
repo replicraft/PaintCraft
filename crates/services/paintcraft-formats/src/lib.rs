@@ -14,4 +14,3 @@ pub mod registry;
 pub mod save_recovery;
 #[cfg(not(target_arch = "wasm32"))]
 pub use paintcraft_platform::save;
-pub mod zip;

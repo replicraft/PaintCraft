@@ -30,7 +30,7 @@ impl<W: Write> Output<W> {
     pub fn payload(&mut self, bytes: &[u8]) -> Result<()> {
         self.sink
             .write_all(bytes)
-            .map_err(|_| codec("cannot write compact PCND"))?;
+            .map_err(|_| Error::new(ErrorCode::StorageFailed, "cannot write native project"))?;
         self.hash.update(bytes);
         Ok(())
     }
@@ -61,7 +61,7 @@ impl<W: Write> Output<W> {
     pub fn finish(mut self) -> Result<()> {
         self.sink
             .write_all(&self.hash.finalize())
-            .map_err(|_| codec("cannot finish compact PCND"))
+            .map_err(|_| Error::new(ErrorCode::StorageFailed, "cannot finish native project"))
     }
 }
 

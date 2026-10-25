@@ -3134,7 +3134,6 @@ dependencies = [
 name = "paintcraft-formats"
 version = "0.1.0"
 dependencies = [
- "crc32fast",
  "dds",
  "divan",
  "image",

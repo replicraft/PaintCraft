@@ -36,7 +36,7 @@ fn layer_info(doc: &Document) -> Value {
 }
 
 /// `paintcraft.open-assessment/v1`
-fn assessment(sha: &str, m: &pcnd::Manifest, mode: &str, reasons: &[String]) -> Value {
+fn assessment(sha: &str, m: &pcnd::Header, mode: &str, reasons: &[String]) -> Value {
     let known = m.container_version == 1 && m.document_schema == "paintcraft.document/v1";
     Value::object([
         ("schema", Value::str("paintcraft.open-assessment/v1")),
@@ -45,7 +45,7 @@ fn assessment(sha: &str, m: &pcnd::Manifest, mode: &str, reasons: &[String]) -> 
         (
             "profile",
             Value::str(if known {
-                "paintcraft.native/zip1-document1"
+                "paintcraft.native/binary1-document1"
             } else {
                 "paintcraft.native/unrecognized"
             }),
@@ -78,10 +78,10 @@ pub fn run(a: Options, json: bool) -> Reply {
     };
     match pcnd::read(&bytes) {
         Ok(doc) => {
-            let manifest = pcnd::probe(&bytes).expect("a readable document has a valid manifest");
+            let header = pcnd::probe(&bytes).expect("a readable document has a valid header");
             let value = Value::object([
                 ("schema", Value::str("paintcraft.inspect/v1")),
-                ("assessment", assessment(&sha, &manifest, "editable", &[])),
+                ("assessment", assessment(&sha, &header, "editable", &[])),
                 (
                     "document",
                     Value::object([

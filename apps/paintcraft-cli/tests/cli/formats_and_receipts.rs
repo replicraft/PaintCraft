@@ -1,4 +1,6 @@
 use super::*;
+use paintcraft_core::types::ErrorCode;
+use sha2::{Digest, Sha256};
 
 #[test]
 fn inspect_rejects_unsupported_versions_and_corruption_with_stable_codes() {
@@ -20,18 +22,23 @@ fn inspect_rejects_unsupported_versions_and_corruption_with_stable_codes() {
         Some(&Value::Int(2))
     );
 
-    // Same bytes with a future feature in the manifest: rejected, never editable.
+    // A version edit without refreshing integrity is corruption, not a new
+    // editable document. Consistent future-version rejection is checked below.
     let mut future = spec.clone();
-    let needle = b"layers.flat";
-    let at = future
-        .windows(needle.len())
-        .position(|w| w == needle)
-        .unwrap();
-    future[at..at + needle.len()].copy_from_slice(b"layers.curv");
-    // The CRC no longer matches, so this is corruption (6); a consistent edit is covered in the unit tests.
+    future[4] = 2;
     let bad = s.path("bad.pcnd");
     fs::write(&bad, &future).unwrap();
     assert_eq!(run(&["inspect", &bad, "--json"]).code, 6);
+    let body = future.len() - 32;
+    let digest = Sha256::digest(&future[..body]);
+    future[body..].copy_from_slice(&digest);
+    fs::write(&bad, &future).unwrap();
+    let rejected = run(&["inspect", &bad, "--json"]);
+    assert_eq!(
+        rejected.code,
+        i32::from(ErrorCode::CapabilityUnsupported.exit_code())
+    );
+    assert_eq!(text(&rejected.json(), &["mode"]), "reject");
     assert_eq!(run(&["inspect", &s.path("missing.pcnd")]).code, 6);
     assert_eq!(run(&["inspect"]).code, 2);
 }

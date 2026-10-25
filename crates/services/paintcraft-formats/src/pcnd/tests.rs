@@ -1,5 +1,5 @@
 use super::*;
-use paintcraft_document::new_document;
+use paintcraft_document::{POLICY, hex, new_document};
 use paintcraft_editor::session::Session;
 use std::path::PathBuf;
 
@@ -44,9 +44,9 @@ fn streaming_output_matches_canonical_bytes_under_partial_writes() {
     };
     write_to(&doc, &mut sink).unwrap();
     assert_eq!(sink.bytes, expected.len());
-    assert_eq!(hex(&sink.hash.finalize()), sha(&expected));
+    assert_eq!(hex(&sink.hash.finalize()), hex(&Sha256::digest(&expected)));
     assert!(
-        sink.largest <= CHUNK_TARGET,
+        sink.largest <= BLOCK_BYTES_MAX as usize,
         "payload chunks must obey sink backpressure"
     );
     assert!(read(&expected).unwrap().same_semantics(&doc));
@@ -114,178 +114,11 @@ fn written_files_round_trip_with_hidden_rgb_titles_and_unicode() {
 }
 
 #[test]
-fn empty_documents_have_no_data_members() {
+fn empty_documents_need_no_pixel_payload() {
     let doc = new_document(3, 3, Some(Rgba([1, 2, 3, 4])), 0, POLICY).unwrap();
     let bytes = write(&doc).unwrap();
-    let names: Vec<_> = zip::read(&bytes, 10, |_| Some(1 << 20))
-        .unwrap()
-        .into_iter()
-        .map(|m| m.0)
-        .collect();
-    assert_eq!(names, ["document.json", "manifest.json"]);
+    assert!(bytes.starts_with(MAGIC));
+    assert!(bytes.len() < 160);
+    assert_eq!(bytes, write_compact(&doc).unwrap());
     assert!(read(&bytes).unwrap().same_semantics(&doc));
-}
-
-fn rewrite(bytes: &[u8], mut edit: impl FnMut(&str, Vec<u8>) -> Vec<u8>) -> Vec<u8> {
-    let mut members = zip::read(bytes, 100, |_| Some(1 << 24)).unwrap();
-    for (n, d) in &mut members {
-        *d = edit(n, std::mem::take(d));
-    }
-    zip::write_stored(&members)
-}
-
-/// Replace text in document.json and refresh the manifest so only the edit differs.
-fn mutate_document(bytes: &[u8], from: &str, to: &str) -> Vec<u8> {
-    let mut doc = None;
-    let tmp = rewrite(bytes, |n, d| {
-        if n == "document.json" {
-            doc = Some(String::from_utf8(d.clone()).unwrap().replacen(from, to, 1));
-            doc.clone().unwrap().into_bytes()
-        } else {
-            d
-        }
-    });
-    let doc = doc.unwrap();
-    rewrite(&tmp, |n, d| {
-        if n == "manifest.json" {
-            let m = String::from_utf8(d).unwrap();
-            let old = m
-                .split("\"document_bytes\":")
-                .nth(1)
-                .unwrap()
-                .split(',')
-                .next()
-                .unwrap()
-                .to_owned();
-            let old_sha = m
-                .split("\"document_sha256\":\"")
-                .nth(1)
-                .unwrap()
-                .split('"')
-                .next()
-                .unwrap()
-                .to_owned();
-            m.replace(&old_sha, &sha(doc.as_bytes()))
-                .replace(
-                    &format!("\"document_bytes\":{old}"),
-                    &format!("\"document_bytes\":{}", doc.len()),
-                )
-                .into_bytes()
-        } else {
-            d
-        }
-    })
-}
-
-#[test]
-fn hostile_variants_are_refused_with_stable_codes() {
-    let good = specimen();
-    let code = |b: &[u8]| read(b).unwrap_err().code;
-    // Corrupt block bytes.
-    assert_eq!(
-        code(&rewrite(&good, |n, mut d| {
-            if n.starts_with("data/") {
-                d[0] ^= 1;
-            }
-            d
-        })),
-        ErrorCode::CodecFailed
-    );
-    // Extra member.
-    let mut members = zip::read(&good, 100, |_| Some(1 << 20)).unwrap();
-    members.push(("zzz.txt".into(), vec![]));
-    assert_eq!(code(&zip::write_stored(&members)), ErrorCode::CodecFailed);
-    // Unknown required feature and unknown schema are capability errors, never editable.
-    assert_eq!(
-        code(&rewrite(&good, |n, d| if n == "manifest.json" {
-            String::from_utf8(d)
-                .unwrap()
-                .replace("layers.flat", "layers.cmyk")
-                .into_bytes()
-        } else {
-            d
-        })),
-        ErrorCode::CapabilityUnsupported
-    );
-    assert_eq!(
-        code(&rewrite(&good, |n, d| if n == "manifest.json" {
-            String::from_utf8(d)
-                .unwrap()
-                .replace("document/v1", "document/v2")
-                .into_bytes()
-        } else {
-            d
-        })),
-        ErrorCode::CapabilityUnsupported
-    );
-    // Edits that keep the manifest consistent.
-    assert_eq!(
-        code(&mutate_document(
-            &good,
-            "\"opacity_u8\":255",
-            "\"opacity_u8\":256"
-        )),
-        ErrorCode::CodecFailed
-    );
-    assert_eq!(
-        code(&mutate_document(&good, "\"block_y\":0", "\"block_y\":5")),
-        ErrorCode::CodecFailed
-    );
-    assert_eq!(
-        code(&mutate_document(
-            &good,
-            "\"decoded_bytes\":16",
-            "\"decoded_bytes\":20"
-        )),
-        ErrorCode::CodecFailed
-    );
-    assert_eq!(
-        code(&mutate_document(&good, "\"offset\":0", "\"offset\":8")),
-        ErrorCode::CodecFailed
-    );
-    assert_eq!(
-        code(&mutate_document(
-            &good,
-            "\"encoding\":\"raw\"",
-            "\"encoding\":\"zstd\""
-        )),
-        ErrorCode::CodecFailed
-    );
-    assert_eq!(
-        code(&mutate_document(
-            &good,
-            "paintcraft.core/default-v1",
-            "paintcraft.core/other-v1"
-        )),
-        ErrorCode::PolicyUnknown
-    );
-    assert_eq!(
-        code(&mutate_document(
-            &good,
-            "\"roots\":[\"22222222-2222-4222-8222-222222222222\"]",
-            "\"roots\":[]"
-        )),
-        ErrorCode::CodecFailed
-    );
-    assert_eq!(
-        code(&mutate_document(
-            &good,
-            "\"kind\":\"raster\"",
-            "\"kind\":\"group\""
-        )),
-        ErrorCode::CapabilityUnsupported
-    );
-    // Document tampering without refreshing the manifest.
-    assert_eq!(
-        code(&rewrite(&good, |n, d| if n == "document.json" {
-            String::from_utf8(d)
-                .unwrap()
-                .replacen("Specimen", "Specimeo", 1)
-                .into_bytes()
-        } else {
-            d
-        })),
-        ErrorCode::CodecFailed
-    );
-    assert_eq!(code(b"PK"), ErrorCode::CodecFailed);
 }

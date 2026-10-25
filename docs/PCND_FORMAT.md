@@ -1,8 +1,13 @@
-# PCND 2 wire layout
+# PCND format
 
-This is the current compact-save contract. It describes flat raster documents
-with the `paintcraft.core/default-v1` compositing policy. It is distinct from the
-PCND 1 ZIP fixture contract. Older unpublished builds need not read PCND 2.
+This is PaintCraft's initial native project format, version 1. It describes flat
+raster documents with the `paintcraft.core/default-v1` compositing policy. All
+production readers, normal saves and raw conformance fixtures use this binary
+layout. The unreleased ZIP prototype is not a supported format.
+
+This adopted contract supersedes the ZIP proposal in the original implementation
+reference pack. Historical prototype benchmark artifacts retain their original
+bytes; they do not define a current compatibility target.
 
 All integers below are canonical unsigned LEB128 unless specified otherwise.
 Redundant leading zero groups, overflow and truncated integers are invalid.
@@ -14,7 +19,7 @@ The stream consists of:
 
 | Field | Representation |
 |---|---|
-| Magic and version | Eight bytes: `50 43 4e 44 02 0d 0a 1a` |
+| Magic and version | Eight bytes: `50 43 4e 44 01 0d 0a 1a` |
 | Document ID | 16 bytes |
 | State ID | 16 bytes |
 | Canvas width, height | Two positive integers, each at most 1,048,576 |
@@ -57,7 +62,7 @@ intermediate count must be positive, divisible by six, and at most six times the
 number of decoded pixels. LZ4 must produce exactly its admitted output length.
 Zstandard uses the existing bounded-frame validation and exact output checks.
 
-There is no optional feature block or arbitrary metadata extension in version 2.
+There is no optional feature block or arbitrary metadata extension in version 1.
 Its fixed semantics imply sRGB, straight RGBA8, normal layer blending, finite
 canvas, flat roots and 256-pixel tiles. New semantics require a new version, whose
 reader must be explicitly admitted. Empty title and absent title remain distinct.

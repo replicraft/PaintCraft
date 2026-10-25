@@ -1,6 +1,6 @@
 [package]
 name = "paintcraft-formats"
-description = "PCND native container (canonical writer and bounded reader) and PNG output"
+description = "Native PCND projects and bounded raster image codecs"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -13,7 +13,6 @@ paintcraft-document.workspace = true
 paintcraft-raster.workspace = true
 paintcraft-render.workspace = true
 
-crc32fast.workspace = true
 image.workspace = true
 tiff.workspace = true
 dds.workspace = true

@@ -279,9 +279,8 @@ pub fn enabled_extensions(
         .collect()
 }
 
-/// Resolve a dispatch candidate before decoding. This is NOT file validation.
-/// A `.pcnd` ZIP is only a candidate: the strict PCND reader must validate its
-/// manifest, structure and data once. An arbitrary ZIP never gets a raster fallback.
+/// Resolve a dispatch candidate before decoding. The binary header identifies
+/// PCND; the strict reader still validates its version, integrity and payloads.
 pub fn admit_open(
     frontend: Frontend,
     filename: &str,
@@ -301,9 +300,6 @@ pub fn admit_open(
         }
     }
     let sniffed = sniff(bytes)
-        .or_else(|| {
-            (hint == Some(Family::Pcnd) && bytes.starts_with(b"PK\x03\x04")).then_some(Family::Pcnd)
-        })
         .ok_or_else(|| Reason::InvalidSignature.error(hint, frontend, Operation::Open))?;
     let mut request = Request::new(frontend, Operation::Open, sniffed, platform);
     request.extension = extension;
@@ -313,7 +309,7 @@ pub fn admit_open(
 
 /// Recognize signatures without invoking a decoder or trusting an extension.
 pub fn sniff(bytes: &[u8]) -> Option<Family> {
-    if bytes.starts_with(b"PCND\x02\r\n\x1a") {
+    if bytes.len() >= 8 && bytes.starts_with(b"PCND") && bytes[5..8] == [13, 10, 26] {
         Some(Family::Pcnd)
     } else if bytes.starts_with(b"\x89PNG\r\n\x1a\n") {
         Some(Family::Png)

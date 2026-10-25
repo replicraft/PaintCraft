@@ -1,14 +1,14 @@
 use super::*;
-use paintcraft_document::{import_image, new_document};
+use paintcraft_document::{POLICY, import_image, new_document};
 use paintcraft_raster::BlendMode;
 use std::cell::Cell;
 
 fn chunks(bytes: &[u8]) -> usize {
-    zip::read(bytes, ENTRIES_MAX, |_| Some(CHUNK_MAX))
+    read(bytes)
         .unwrap()
-        .iter()
-        .filter(|(name, _)| name.starts_with("data/"))
-        .map(|(_, data)| data.len())
+        .layers_in_order()
+        .flat_map(|layer| layer.raster.blocks_iter())
+        .map(|(_, _, _, _, data)| data.len())
         .sum()
 }
 
@@ -90,7 +90,7 @@ fn compact_storage_sizes_and_exact_roundtrip_for_blank_one_pixel_sparse_and_dens
             assert!(compact.len() < 1024);
         }
         if name == "dense-noise" {
-            assert!(compact.len() < raw.len());
+            assert_eq!(compact.len(), raw.len());
             assert!(compact.len() > dense.len(), "noise payload remains raw");
         }
     }

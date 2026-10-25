@@ -49,13 +49,13 @@ pub fn run(a: Options, json: bool) -> Reply {
             let mut rows = vec![
                 row(
                     "pcnd.rgba8.read",
-                    "paintcraft.native/zip1-document1",
+                    "paintcraft.native/binary1-document1",
                     "read",
                     "paintcraft-formats",
                 ),
                 row(
                     "pcnd.rgba8.write",
-                    "paintcraft.native/zip1-document1",
+                    "paintcraft.native/binary1-document1",
                     "fresh-write",
                     "paintcraft-formats",
                 ),

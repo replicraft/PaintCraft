@@ -281,9 +281,16 @@ fn signatures_and_suffixes_never_silently_fall_back() {
         assert!(admit_open(frontend, "image.png", b"unknown", Platform::Native).is_err());
         assert!(admit_open(frontend, "image.zip", b"PK\x03\x04", Platform::Native).is_err());
         assert_eq!(
-            admit_open(frontend, "image.pcnd", b"PK\x03\x04", Platform::Native).unwrap(),
+            admit_open(
+                frontend,
+                "image.pcnd",
+                paintcraft_formats::pcnd::MAGIC,
+                Platform::Native
+            )
+            .unwrap(),
             Family::Pcnd
         );
+        assert!(admit_open(frontend, "image.pcnd", b"PK\x03\x04", Platform::Native).is_err());
         assert!(admit_open(frontend, "image.pcnd", b"PK", Platform::Native).is_err());
         // A candidate must still pass the strict decoder; admission is not validation.
         assert!(paintcraft_formats::pcnd::read(b"PK\x03\x04").is_err());

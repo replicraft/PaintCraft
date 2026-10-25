@@ -1,11 +1,10 @@
-//! Compact PCND 2: fixed semantic schema, binary IDs/integers and inline tiles.
+//! PCND 1: fixed semantic schema, binary IDs/integers and inline tiles.
 //! The whole stream is integrity checked by a trailing SHA-256 before tile inflation.
 use super::*;
 use std::io::Write;
 mod wire;
 use wire::{Input, Output};
 
-pub(super) const MAGIC: &[u8; 8] = b"PCND\x02\r\n\x1a";
 const STRING_BYTES_MAX: usize = 16_384;
 
 pub(super) fn write(
@@ -14,6 +13,14 @@ pub(super) fn write(
     check: &dyn Fn() -> Result<()>,
 ) -> Result<()> {
     write_encoded(doc, sink, check, compression::Encoder::new(true)?)
+}
+
+pub(super) fn write_raw(
+    doc: &Document,
+    sink: impl Write,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<()> {
+    write_encoded(doc, sink, check, compression::Encoder::new(false)?)
 }
 
 fn write_encoded(
@@ -111,7 +118,7 @@ struct Record<'a> {
 }
 
 fn payload<'a>(bytes: &'a [u8], check: &dyn Fn() -> Result<()>) -> Result<&'a [u8]> {
-    if !bytes.starts_with(MAGIC) || bytes.len() < MAGIC.len() + 32 {
+    if bytes.len() < MAGIC.len() + 32 || &bytes[..4] != b"PCND" || bytes[5..8] != MAGIC[5..8] {
         return Err(codec("invalid compact PCND header"));
     }
     let (body, digest) = bytes.split_at(bytes.len() - 32);
@@ -126,19 +133,29 @@ fn payload<'a>(bytes: &'a [u8], check: &dyn Fn() -> Result<()>) -> Result<&'a [u
     Ok(&body[MAGIC.len()..])
 }
 
-pub(super) fn probe(bytes: &[u8]) -> Result<Manifest> {
-    let body = payload(bytes, &|| Ok(()))?;
-    Ok(Manifest {
-        binary: true,
-        container_version: 2,
-        document_schema: "paintcraft.document/v1".into(),
-        required_features: SUPPORTED_FEATURES
-            .iter()
-            .map(|feature| (*feature).into())
-            .collect(),
-        document_sha256: sha(body),
-        document_bytes: body.len(),
-    })
+pub(super) fn probe(bytes: &[u8]) -> Result<Header> {
+    payload(bytes, &|| Ok(()))?;
+    Ok(header(bytes[4]))
+}
+fn header(version: u8) -> Header {
+    let known = version == 1;
+    Header {
+        container_version: i64::from(version),
+        document_schema: if known {
+            "paintcraft.document/v1"
+        } else {
+            "unknown"
+        }
+        .into(),
+        required_features: if known {
+            SUPPORTED_FEATURES
+                .iter()
+                .map(|feature| (*feature).into())
+                .collect()
+        } else {
+            Vec::new()
+        },
+    }
 }
 
 pub(super) fn read(
@@ -147,7 +164,9 @@ pub(super) fn read(
     staged_pixels: u64,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Document> {
-    let mut input = Input::new(payload(bytes, check)?);
+    let body = payload(bytes, check)?;
+    header(bytes[4]).require_supported()?;
+    let mut input = Input::new(body);
     let document_id = input.id()?;
     let state_id = input.id()?;
     let canvas = (input.dimension()?, input.dimension()?);
