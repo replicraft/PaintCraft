@@ -1,0 +1,22 @@
+{
+    "generator": "Python standard library zipfile, zlib and arithmetic RGBA; no third-party artwork",
+    "layers_bottom_to_top": [
+        {
+            "name": "Background",
+            "rgba_sha256": "673f579fd4558390ed2fbc35f6674e76f43488794a0571a97e9278d62295dda4"
+        },
+        {
+            "name": "日本語 & paint",
+            "rgba_sha256": "fe2b84ccfb2a708b7f78ff0fe4c860042e12f4189feb69b36070fad8a0d49737"
+        },
+        {
+            "name": "Hidden",
+            "rgba_sha256": "7a7bf454c5f3cb1b9d9a20f81417f98d976fe3b3dd52c1b9968f02e89e7e8a2f"
+        }
+    ],
+    "merged_rgba_sha256": "b9ab523f4f328e250ee9fc690c7ffa0cc8187bc83d832703b1188f4b3320a44b",
+    "archives": {
+        "stored.ora": "afd94270c0c45dddf3cb4891a48303c7331814b295bcc857f88ff65394d567d8",
+        "deflated.ora": "afedf82548c3f379a14ae035256fb9eede066bca96f0e5ba75a8380e6b0e39b7"
+    }
+}

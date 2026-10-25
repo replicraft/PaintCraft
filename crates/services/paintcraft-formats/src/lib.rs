@@ -7,6 +7,7 @@ pub mod export;
 pub mod image;
 pub mod jxl;
 pub mod jxr;
+pub mod ora;
 pub mod pcnd;
 pub mod png;
 pub mod project_import;
