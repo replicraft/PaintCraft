@@ -40,6 +40,7 @@ pub(crate) enum Outcome {
 pub(crate) struct ExportOptions {
     pub format: Option<ImageExport>,
     pub jpeg_quality: u8,
+    pub pcx_encoding: paintcraft_ui::pcx_export::Encoding,
     pub frontend: Frontend,
 }
 
@@ -151,11 +152,12 @@ impl Files {
         if self.busy {
             return;
         }
-        let bytes = match encode_quality_for_profile(
+        let bytes = match encode_options_for_profile(
             document,
             options.format,
             options.jpeg_quality,
             options.frontend,
+            options.pcx_encoding,
         ) {
             Ok(bytes) => bytes,
             Err(error) => {
@@ -272,11 +274,12 @@ fn encode_quality(
 }
 
 #[cfg(any(target_arch = "wasm32", test))]
-fn encode_quality_for_profile(
+fn encode_options_for_profile(
     document: &Document,
     format: Option<ImageExport>,
     jpeg_quality: u8,
     frontend: Frontend,
+    pcx_encoding: paintcraft_ui::pcx_export::Encoding,
 ) -> Result<Vec<u8>> {
     if let Some(format) = format {
         let format = match format {
@@ -308,10 +311,13 @@ fn encode_quality_for_profile(
         if !decision.available() {
             decision.require_allowed(request)?;
         }
-        return Ok(paintcraft_formats::export::export_flat(
+        let mut options = paintcraft_formats::export::FlatOptions::new(format, jpeg_quality);
+        if format == image::ImageFormat::Pcx {
+            options.pcx_mode = pcx_mode(pcx_encoding);
+        }
+        return Ok(paintcraft_formats::export::export_flat_options(
             document,
-            format,
-            jpeg_quality,
+            options,
             &paintcraft_formats::export::KNOWN_LOSSES.map(str::to_owned),
         )?
         .bytes);
@@ -613,3 +619,23 @@ mod specialist_exports;
 #[cfg(test)]
 #[path = "files/foreign_import.rs"]
 mod foreign_import;
+
+pub(crate) fn pcx_mode(
+    encoding: paintcraft_ui::pcx_export::Encoding,
+) -> paintcraft_formats::pcx::Mode {
+    use paintcraft_ui::pcx_export::Encoding;
+    match encoding {
+        Encoding::Rgb24 => paintcraft_formats::pcx::Mode::Rgb24,
+        Encoding::IndexedExact => paintcraft_formats::pcx::Mode::IndexedExact,
+        Encoding::Indexed256 => paintcraft_formats::pcx::Mode::Quantized256,
+    }
+}
+#[cfg(test)]
+fn encode_quality_for_profile(
+    document: &Document,
+    format: Option<ImageExport>,
+    quality: u8,
+    frontend: Frontend,
+) -> Result<Vec<u8>> {
+    encode_options_for_profile(document, format, quality, frontend, Default::default())
+}

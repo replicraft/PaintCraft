@@ -6,6 +6,7 @@ mod chrome_tests;
 #[path = "crop_tests.rs"]
 mod crop_tests;
 mod documents;
+mod exporting;
 #[cfg(test)]
 #[path = "floating_tests.rs"]
 mod floating_tests;
@@ -47,6 +48,8 @@ pub struct WebApp {
     preferences: crate::preferences::Preferences,
     export_confirm: Option<ImageExport>,
     pub(crate) export_quality: u8,
+    pub(crate) export_pcx_encoding: paintcraft_ui::pcx_export::Encoding,
+    pcx_preview: paintcraft_ui::pcx_export::Cache<String>,
     confirm_replace: Option<Action>,
     pub(crate) files: crate::files::Files,
     pub(crate) text: crate::text_ui::TextUi,
@@ -103,6 +106,8 @@ impl WebApp {
             preferences,
             export_confirm: None,
             export_quality: 90,
+            export_pcx_encoding: Default::default(),
+            pcx_preview: Default::default(),
             confirm_replace: None,
             files: crate::files::Files::default(),
             pending_import: None,
@@ -638,33 +643,7 @@ impl WebApp {
                 self.resolve_import(ctx, accept);
             }
         }
-        if let Some(mut format) = self.export_confirm {
-            egui::Modal::new(egui::Id::unique("web-export-image")).show(ctx, |ui| {
-                ui.set_width(380.0);
-                ui.heading(t!(ui.ctx(), "Export { $format } copy?", &[("format", format.name().into())]));
-                egui::ComboBox::from_label(t!(ui.ctx(), "File type")).selected_text(format.name()).show_ui(ui, |ui| {
-                    for choice in self.enabled_export_formats() { ui.selectable_value(&mut format, choice, choice.name()); }
-                });
-                self.export_confirm = Some(format);
-                ui.label(t!(ui.ctx(), format.description()));
-                let (width, height) = self.editor.session.document().canvas;
-                ui.label(t!(ui.ctx(), "Image dimensions: { $width } × { $height } px", &[("width", width.to_string()), ("height", height.to_string())]));
-                if let Some(label) = format.quality_label() {
-                    ui.add(egui::Slider::new(&mut self.export_quality, 1..=100).text(t!(ui.ctx(), label)));
-                    ui.label(t!(ui.ctx(), if format == ImageExport::Avif {"AVIF uses lossy compression for colors and transparency, even at quality 100."} else {"Higher quality creates a larger file. Transparent pixels are placed on white."}));
-                }
-                ui.label(t!(ui.ctx(), "Image exports flatten visible layers and omit hidden layer data. Save a PaintCraft project to preserve editable layers."));
-                ui.label(t!(ui.ctx(), "Invisible color information will not be retained."));
-                if format == ImageExport::Jpeg { ui.label(t!(ui.ctx(), "JPEG uses lossy compression and cannot preserve transparency.")); }
-                ui.horizontal(|ui| {
-                    if ui.button(t!(ui.ctx(), "Download { $format }", &[("format", format.name().into())])).clicked() {
-                        self.download_image(ctx, format);
-                        self.export_confirm = None;
-                    }
-                    if ui.button(t!(ui.ctx(), "Cancel")).clicked() { self.export_confirm = None; }
-                });
-            });
-        }
+        self.export_dialog(ctx);
         self.settings_dialog(ctx);
     }
 }

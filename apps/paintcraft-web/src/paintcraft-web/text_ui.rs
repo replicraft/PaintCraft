@@ -87,6 +87,7 @@ impl WebApp {
                     crate::files::ExportOptions {
                         format,
                         jpeg_quality: self.export_quality,
+                        pcx_encoding: self.export_pcx_encoding,
                         frontend: self.format_profile(),
                     },
                     &name,

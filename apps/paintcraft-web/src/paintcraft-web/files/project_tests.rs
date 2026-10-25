@@ -2,6 +2,61 @@ use super::*;
 use crate::{WebApp, importing::Owner};
 
 #[test]
+fn browser_download_encoder_keeps_selected_palette_policy_and_classic_admission() {
+    use paintcraft_ui::pcx_export::Encoding;
+    let rgba: Vec<u8> = (0..400u32)
+        .flat_map(|i| [i as u8, (i >> 8) as u8, i.wrapping_mul(53) as u8, 255])
+        .collect();
+    let doc = paintcraft_document::import_image(40, 10, &rgba, "web-pcx-options").unwrap();
+    assert!(
+        encode_options_for_profile(
+            &doc,
+            Some(ImageExport::Pcx),
+            90,
+            Frontend::Studio,
+            Encoding::IndexedExact
+        )
+        .is_err()
+    );
+    let bytes = encode_options_for_profile(
+        &doc,
+        Some(ImageExport::Pcx),
+        90,
+        Frontend::Studio,
+        Encoding::Indexed256,
+    )
+    .unwrap();
+    assert_eq!(bytes[65], 1);
+    let expected = paintcraft_formats::pcx::prepare_rgba(
+        40,
+        10,
+        &rgba,
+        paintcraft_formats::pcx::Mode::Quantized256,
+        &|| Ok(()),
+    )
+    .unwrap()
+    .preview(40, &|| Ok(()))
+    .unwrap();
+    assert_eq!(image::decode(&bytes).unwrap().rgba, expected.rgba);
+    for frontend in [
+        Frontend::ClassicV7,
+        Frontend::ClassicV10,
+        Frontend::ClassicV11,
+    ] {
+        assert!(
+            encode_options_for_profile(
+                &doc,
+                Some(ImageExport::Pcx),
+                90,
+                frontend,
+                Encoding::Indexed256
+            )
+            .is_err()
+        );
+    }
+}
+
+#[test]
 fn openraster_explicit_conversion_requires_consent_before_publishing_layers() {
     let bytes = include_bytes!(
         "../../../../../crates/services/paintcraft-formats/tests/ora-fixtures/deflated.ora"
