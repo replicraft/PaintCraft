@@ -20,6 +20,16 @@ pub struct Open {
 }
 #[derive(Debug, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
+pub struct Import {
+    pub path: String,
+    /// Explicitly acknowledge source information that RGBA8 cannot preserve.
+    #[serde(default)]
+    pub allow_losses: Vec<String>,
+    #[serde(default)]
+    pub discard_changes: bool,
+}
+#[derive(Debug, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
 pub struct Save {
     pub path: String,
     #[serde(default)]

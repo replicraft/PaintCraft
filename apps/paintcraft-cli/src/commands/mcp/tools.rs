@@ -1,3 +1,4 @@
+use super::super::format_profile;
 use super::super::{
     BATCH_V2_SCHEMA, Context, INPUT_MAX, ImageFormat, POLICY, PathBuf, Rgba, Session, export,
     image, new_document, pcnd, read_bounded, save, write_output,
@@ -8,6 +9,7 @@ use super::{
     state::{core_json, invalid},
 };
 use base64::Engine as _;
+use paintcraft_formats::registry::Family;
 use rmcp::{
     handler::server::wrapper::Parameters,
     model::{CallToolResult, ContentBlock},
@@ -42,9 +44,63 @@ impl PaintingServer {
             state.replace_allowed(p.discard_changes)?;
             let path = PathBuf::from(p.path);
             let (bytes, sha) = read_bounded(&path, INPUT_MAX, "project")?;
+            if format_profile::Options::default().admit_open(&path, &bytes)? != Family::Pcnd {
+                return Err(invalid(
+                    "open_project expects PCND; use import_image for pictures",
+                ));
+            }
             let doc = pcnd::read(&bytes)?;
             state.session = Some(Session::new(doc));
             state.source = Some((path, sha));
+            state.inspect()
+        })
+        .await
+    }
+    #[tool(
+        description = "Import a local picture into a new unsaved project using the CLI Studio format profile. Missing loss acknowledgements or decoding failures preserve the current document. Use allow_losses to explicitly accept reported conversion losses."
+    )]
+    async fn import_image(&self, Parameters(p): Parameters<Import>) -> CallToolResult {
+        self.work(move |state| {
+            state.replace_allowed(p.discard_changes)?;
+            if let Some(code) = p
+                .allow_losses
+                .iter()
+                .find(|code| !image::KNOWN_IMPORT_LOSSES.contains(&code.as_str()))
+            {
+                return Err(invalid(&format!("unknown import loss code {code:?}")));
+            }
+            let path = PathBuf::from(p.path);
+            let (bytes, sha) = read_bounded(&path, INPUT_MAX, "image")?;
+            let profile = format_profile::Options::default();
+            let family = profile.admit_open(&path, &bytes)?;
+            profile.reject_project_import(family)?;
+            let decoded = image::decode(&bytes)?;
+            let missing = decoded
+                .losses
+                .iter()
+                .filter(|loss| !p.allow_losses.contains(loss))
+                .cloned()
+                .collect::<Vec<_>>();
+            if !missing.is_empty() {
+                return Err(paintcraft_core::types::Error::new(
+                    paintcraft_core::types::ErrorCode::CapabilityUnsupported,
+                    format!(
+                        "import would lose {}; acknowledge with allow_losses",
+                        missing.join(", ")
+                    ),
+                ));
+            }
+            let doc = paintcraft_document::import_image(
+                decoded.width,
+                decoded.height,
+                &decoded.rgba,
+                &sha,
+            )?;
+            let mut session = Session::new(doc);
+            session.mark_unsaved();
+            state.session = Some(session);
+            // A picture is not a native project binding: saving must not replace its source implicitly.
+            state.source = None;
             state.inspect()
         })
         .await
@@ -136,6 +192,9 @@ impl PaintingServer {
             let path = PathBuf::from(p.path);
             let format = ImageFormat::from_extension(&path)
                 .ok_or_else(|| invalid("unsupported image extension"))?;
+            let family = Family::from_extension(format.name())
+                .ok_or_else(|| invalid("unregistered image format"))?;
+            format_profile::Options::default().admit_export(family, &path)?;
             save::preflight(&path, p.overwrite)?;
             let doc = s.session()?.document();
             let flat = export::export_flat(doc, format, 90, &p.allow_losses)?;

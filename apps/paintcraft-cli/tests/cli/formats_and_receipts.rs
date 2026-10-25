@@ -57,6 +57,15 @@ fn schema_capabilities_and_usage() {
     let caps = run(&["capabilities", "--json"]).json();
     let rows = caps.get("capabilities").unwrap().as_array().unwrap();
     assert!(rows.len() >= 5);
+    let mcp = rows
+        .iter()
+        .find(|row| row.get("capability").and_then(Value::as_str) == Some("mcp.stdio.paint"))
+        .expect("MCP must be discoverable");
+    assert_eq!(
+        mcp.get("profile").and_then(Value::as_str),
+        Some("paintcraft.mcp/ephemeral-v1")
+    );
+    assert_eq!(mcp.get("backend_id").and_then(Value::as_str), Some("rmcp"));
     for row in rows {
         assert_eq!(
             row.get("release_qualified"),

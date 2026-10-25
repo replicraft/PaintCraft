@@ -48,6 +48,12 @@ pub fn run(a: Options, json: bool) -> Reply {
             }
             let mut rows = vec![
                 row(
+                    "mcp.stdio.paint",
+                    "paintcraft.mcp/ephemeral-v1",
+                    "serve",
+                    "rmcp",
+                ),
+                row(
                     "pcnd.rgba8.read",
                     "paintcraft.native/binary1-document1",
                     "read",
@@ -95,7 +101,7 @@ pub fn run(a: Options, json: bool) -> Reply {
             ]);
             (
                 value,
-                "pcnd read/write, batch v1 edit, flat render, image layer insertion/placement, png write (none release-qualified)"
+                "pcnd read/write, batch v1 edit, flat render, image layer insertion/placement, png write, MCP stdio painting (none release-qualified)"
                     .to_owned(),
             )
         }),

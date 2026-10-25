@@ -87,7 +87,7 @@ fn painting_history_atomicity_preview_and_guarded_files() {
     let png = folder.join("painting.png");
     let mut c = Client::new();
     let tools = c.request("tools/list", json!({}));
-    assert_eq!(tools["tools"].as_array().unwrap().len(), 11);
+    assert_eq!(tools["tools"].as_array().unwrap().len(), 12);
     assert_eq!(c.call("inspect_document", json!({}))["isError"], true);
     c.ok("create_canvas", json!({"width":32,"height":24}));
     c.ok("paint_stroke",json!({"points":[{"x":2,"y":4},{"x":20,"y":4}],"color":"#FF0000FF","size":1,"brush":"round"}));
@@ -180,6 +180,94 @@ fn painting_history_atomicity_preview_and_guarded_files() {
         true
     );
     assert_eq!(std::fs::read(&project).unwrap(), b"external change");
+    drop(c);
+    std::fs::remove_dir_all(folder).unwrap();
+}
+
+#[test]
+fn image_import_requires_loss_consent_preserves_failures_and_keeps_source_unbound() {
+    let folder = std::env::temp_dir().join(format!("paintcraft-mcp-import-{}", std::process::id()));
+    std::fs::create_dir_all(&folder).unwrap();
+    let source = folder.join("source.png");
+    let mut encoded = Vec::new();
+    {
+        let mut encoder = png::Encoder::new(&mut encoded, 1, 1);
+        encoder.set_color(png::ColorType::Rgba);
+        encoder.set_depth(png::BitDepth::Sixteen);
+        let mut writer = encoder.write_header().unwrap();
+        writer
+            .write_image_data(&[0x12, 0x12, 0x34, 0x34, 0x56, 0x56, 0xff, 0xff])
+            .unwrap();
+    }
+    std::fs::write(&source, &encoded).unwrap();
+    let mut c = Client::new();
+    let original = c.ok("create_canvas", json!({"width":4,"height":3}));
+    assert_eq!(
+        c.call("import_image", json!({"path":source}))["isError"],
+        true
+    );
+    assert_eq!(c.ok("inspect_document", json!({})), original);
+    assert_eq!(
+        c.call(
+            "import_image",
+            json!({"path":source,"discard_changes":true})
+        )["isError"],
+        true
+    );
+    assert_eq!(c.ok("inspect_document", json!({})), original);
+    assert_eq!(
+        c.call(
+            "import_image",
+            json!({"path":source,"discard_changes":true,"allow_losses":["made-up"]})
+        )["isError"],
+        true
+    );
+    assert_eq!(c.ok("inspect_document", json!({})), original);
+    let imported = c.ok(
+        "import_image",
+        json!({"path":source,"discard_changes":true,"allow_losses":["depth-16-reduced-to-8"]}),
+    );
+    assert_eq!(imported["width"], 1);
+    assert_eq!(imported["height"], 1);
+    assert_eq!(imported["dirty"], true);
+    // Import never grants an implicit overwrite binding to the source picture.
+    assert_eq!(
+        c.call("save_project", json!({"path":source}))["isError"],
+        true
+    );
+    assert_eq!(std::fs::read(&source).unwrap(), encoded);
+    assert_eq!(c.ok("inspect_document", json!({})), imported);
+    let project = folder.join("imported.pcnd");
+    c.ok("save_project", json!({"path":project}));
+    c.ok("open_project", json!({"path":project}));
+    let preview = c.call("preview", json!({}));
+    use base64::Engine as _;
+    let bytes = base64::engine::general_purpose::STANDARD
+        .decode(preview["content"][0]["data"].as_str().unwrap())
+        .unwrap();
+    let mut reader = png::Decoder::new(std::io::Cursor::new(bytes))
+        .read_info()
+        .unwrap();
+    let mut pixels = vec![0; reader.output_buffer_size().unwrap()];
+    reader.next_frame(&mut pixels).unwrap();
+    assert_eq!(pixels, &[0x12, 0x34, 0x56, 0xff]);
+    // Wrong operation and malformed input preserve the existing imported project.
+    let before = c.ok("inspect_document", json!({}));
+    assert_eq!(
+        c.call("open_project", json!({"path":source}))["isError"],
+        true
+    );
+    assert_eq!(
+        c.call("import_image", json!({"path":project}))["isError"],
+        true
+    );
+    let malformed = folder.join("broken.png");
+    std::fs::write(&malformed, b"\x89PNG\r\n\x1a\ninvalid").unwrap();
+    assert_eq!(
+        c.call("import_image", json!({"path":malformed}))["isError"],
+        true
+    );
+    assert_eq!(c.ok("inspect_document", json!({})), before);
     drop(c);
     std::fs::remove_dir_all(folder).unwrap();
 }
