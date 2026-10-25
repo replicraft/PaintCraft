@@ -6,13 +6,18 @@ struct Directory<'a> {
     little: bool,
 }
 impl Directory<'_> {
-    fn word(&self, pos: usize) -> Result<u16> {
-        let value: [u8; 2] = self
-            .bytes
-            .get(pos..pos + 2)
-            .ok_or_else(|| codec("truncated TIFF word"))?
+    fn field<const N: usize>(&self, pos: usize) -> Result<[u8; N]> {
+        let end = pos
+            .checked_add(N)
+            .ok_or_else(|| codec("TIFF field offset overflow"))?;
+        self.bytes
+            .get(pos..end)
+            .ok_or_else(|| codec("truncated TIFF field"))?
             .try_into()
-            .unwrap();
+            .map_err(|_| codec("invalid TIFF field length"))
+    }
+    fn word(&self, pos: usize) -> Result<u16> {
+        let value = self.field(pos)?;
         Ok(if self.little {
             u16::from_le_bytes(value)
         } else {
@@ -20,12 +25,7 @@ impl Directory<'_> {
         })
     }
     fn long(&self, pos: usize) -> Result<u32> {
-        let value: [u8; 4] = self
-            .bytes
-            .get(pos..pos + 4)
-            .ok_or_else(|| codec("truncated TIFF offset"))?
-            .try_into()
-            .unwrap();
+        let value = self.field(pos)?;
         Ok(if self.little {
             u32::from_le_bytes(value)
         } else {
@@ -211,4 +211,18 @@ pub(super) fn encode(width: u32, height: u32, rgba: &[u8]) -> Result<Vec<u8>> {
         .write_image(rgba, width, height, ::image::ExtendedColorType::Rgba8)
         .map_err(image_error)?;
     Ok(output.into_inner())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn overflowing_directory_offsets_fail_without_panicking() {
+        let directory = Directory { bytes: &[], little: true };
+        assert!(directory.word(usize::MAX).is_err());
+        assert!(directory.long(usize::MAX - 2).is_err());
+        let bytes = [b'I', b'I', 42, 0, 255, 255, 255, 255];
+        assert!(admit(&bytes, 1).is_err());
+    }
 }
