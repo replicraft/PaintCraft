@@ -1,5 +1,12 @@
 use super::*;
 use std::sync::atomic::{AtomicBool, Ordering};
+pub const FONT_BYTES_MAX: usize = 64 << 20;
+const BUNDLED: [&[u8]; 2] = [
+    include_bytes!("../../../../../assets/fonts/selawik/selawk.ttf"),
+    include_bytes!("../../../../../assets/fonts/selawik/selawkb.ttf"),
+];
+#[cfg(test)]
+mod tests;
 
 /// An explicit in-memory font collection. The adapter never enumerates or opens
 /// installed fonts; callers may supply font bytes they have separately admitted.
@@ -25,16 +32,16 @@ impl Default for Fonts {
     }
 }
 impl Fonts {
+    pub fn bundled_bytes() -> usize {
+        BUNDLED.iter().map(|data| data.len()).sum()
+    }
     /// Shared root assets, also used by the desktop/browser UI. Extra fonts must
     /// already be acquired by an authorized caller; SVG content cannot open them.
     pub fn with_bundled(additional: &[&[u8]], check: &dyn Fn() -> Result<()>) -> Result<Self> {
         if additional.len() > 30 {
             return Err(resource("SVG font inventory exceeds allowance"));
         }
-        let mut data: Vec<&[u8]> = vec![
-            include_bytes!("../../../../../assets/fonts/selawik/selawk.ttf"),
-            include_bytes!("../../../../../assets/fonts/selawik/selawkb.ttf"),
-        ];
+        let mut data: Vec<&[u8]> = BUNDLED.to_vec();
         data.extend_from_slice(additional);
         Self::from_data(&data, "Selawik", check)
     }
@@ -52,12 +59,15 @@ impl Fonts {
             check()?;
             bytes = bytes
                 .checked_add(font.len())
-                .filter(|n| *n <= 64 << 20)
+                .filter(|n| *n <= FONT_BYTES_MAX)
                 .ok_or_else(|| resource("SVG font bytes exceed allowance"))?;
             let before = database.len();
+            let faces = face_count(font, 64 - before)?;
             database.load_font_data(font.to_vec());
-            if database.len() == before {
-                return Err(malformed("invalid SVG font data"));
+            if database.len() - before != faces {
+                return Err(malformed(
+                    "invalid or partially unreadable SVG font collection",
+                ));
             }
             if database.len() > 64 {
                 return Err(resource("SVG font face count exceeds allowance"));
@@ -82,6 +92,126 @@ impl Fonts {
             default_family: default_family.into(),
         })
     }
+}
+
+fn face_count(bytes: &[u8], remaining: usize) -> Result<usize> {
+    if bytes.len() < 12 {
+        return Err(malformed("truncated SVG font header"));
+    }
+    if !bytes.starts_with(b"ttcf") {
+        if ![b"\0\x01\0\0", b"OTTO"].contains(&bytes[..4].try_into().unwrap()) {
+            return Err(unsupported(
+                "SVG font data must be OpenType/TrueType or a bounded collection",
+            ));
+        }
+        if remaining == 0 {
+            return Err(resource("SVG font face count exceeds allowance"));
+        }
+        admit_face(bytes, 0)?;
+        return Ok(1);
+    }
+    let version = u32::from_be_bytes(bytes[4..8].try_into().unwrap());
+    if ![0x00010000, 0x00020000].contains(&version) {
+        return Err(unsupported("SVG font collection version is not qualified"));
+    }
+    let count = u32::from_be_bytes(bytes[8..12].try_into().unwrap()) as usize;
+    if count == 0 || count > remaining {
+        return Err(resource("SVG font collection face count exceeds allowance"));
+    }
+    let header = 12 + count * 4 + if version == 0x00020000 { 12 } else { 0 };
+    if bytes.len() < header {
+        return Err(malformed("truncated SVG font collection offsets"));
+    }
+    for offset in bytes[12..12 + count * 4].as_chunks::<4>().0 {
+        let offset = u32::from_be_bytes(*offset) as usize;
+        if offset < header || offset.checked_add(12).is_none_or(|end| end > bytes.len()) {
+            return Err(malformed(
+                "SVG font collection face offset is outside its payload",
+            ));
+        }
+        admit_face(bytes, offset)?;
+    }
+    Ok(count)
+}
+fn admit_face(bytes: &[u8], offset: usize) -> Result<()> {
+    if ![b"\0\x01\0\0", b"OTTO"].contains(&bytes[offset..offset + 4].try_into().unwrap()) {
+        return Err(unsupported(
+            "SVG font face does not use a qualified TrueType/OpenType scaler",
+        ));
+    }
+    let count = usize::from(u16::from_be_bytes(
+        bytes[offset + 4..offset + 6].try_into().unwrap(),
+    ));
+    if count == 0 || count > 512 {
+        return Err(resource("SVG font table count exceeds allowance"));
+    }
+    let records = bytes
+        .get(offset + 12..offset + 12 + count * 16)
+        .ok_or_else(|| malformed("truncated SVG font table directory"))?;
+    let mut tags = Vec::new();
+    for record in records.as_chunks::<16>().0 {
+        let tag: [u8; 4] = record[..4].try_into().unwrap();
+        if tags.contains(&tag) {
+            return Err(malformed("duplicate SVG font table tag"));
+        }
+        tags.push(tag);
+        if [
+            *b"SVG ", *b"sbix", *b"CBDT", *b"CBLC", *b"EBDT", *b"EBLC", *b"COLR", *b"CPAL",
+        ]
+        .contains(&tag)
+        {
+            // Font glyph SVGs use usvg's default Options, bypassing the import
+            // resolver; bitmap/color glyphs also bypass embedded-image admission.
+            return Err(unsupported(
+                "SVG rasterization currently requires outline fonts without embedded SVG bitmap or color glyph tables",
+            ));
+        }
+        let start = u32::from_be_bytes(record[8..12].try_into().unwrap()) as usize;
+        let size = u32::from_be_bytes(record[12..16].try_into().unwrap()) as usize;
+        let end = start
+            .checked_add(size)
+            .filter(|n| *n <= bytes.len())
+            .ok_or_else(|| malformed("SVG font table exceeds its file boundary"))?;
+        if tag == *b"name" {
+            admit_names(&bytes[start..end])?;
+        }
+    }
+    if !tags
+        .iter()
+        .any(|tag| [*b"glyf", *b"CFF ", *b"CFF2"].contains(tag))
+    {
+        return Err(unsupported("SVG font face has no qualified outline table"));
+    }
+    Ok(())
+}
+fn admit_names(bytes: &[u8]) -> Result<()> {
+    if bytes.len() < 6 {
+        return Err(malformed("truncated SVG font name table"));
+    }
+    if bytes.len() > 1 << 20 {
+        return Err(resource("SVG font name metadata exceeds allowance"));
+    }
+    let count = usize::from(u16::from_be_bytes(bytes[2..4].try_into().unwrap()));
+    if count > 1024 {
+        return Err(resource("SVG font name record count exceeds allowance"));
+    }
+    let records = bytes
+        .get(6..6 + count * 12)
+        .ok_or_else(|| malformed("truncated SVG font name records"))?;
+    let base = usize::from(u16::from_be_bytes(bytes[4..6].try_into().unwrap()));
+    let mut decoded = 0usize;
+    for record in records.as_chunks::<12>().0 {
+        let size = usize::from(u16::from_be_bytes(record[8..10].try_into().unwrap()));
+        let start = base + usize::from(u16::from_be_bytes(record[10..12].try_into().unwrap()));
+        if start + size > bytes.len() {
+            return Err(malformed("SVG font name points outside its table"));
+        }
+        decoded += size;
+        if decoded > 1 << 20 {
+            return Err(resource("SVG expanded font names exceed allowance"));
+        }
+    }
+    Ok(())
 }
 #[derive(Default)]
 pub(super) struct Events {

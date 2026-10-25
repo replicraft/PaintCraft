@@ -65,7 +65,7 @@ impl Selection {
         let options = self.options()?;
         let mut additional = Vec::new();
         // Leave room for both bundled faces inside the adapter's aggregate cap.
-        let mut remaining = (64 << 20) - 131072u64;
+        let mut remaining = (svg::FONT_BYTES_MAX - svg::Fonts::bundled_bytes()) as u64;
         for path in &self.font_files {
             let (data, _) = read_bounded(path, remaining, "SVG font")?;
             remaining -= data.len() as u64;
