@@ -161,6 +161,9 @@ pub fn coverage(
     let mut travelled = 0.0;
     for pair in points.windows(2) {
         check()?;
+        if media == BrushMedia::Oil && travelled >= f64::from(size) * 20.0 {
+            break;
+        }
         let (a, b) = (local(pair[0]), local(pair[1]));
         let length = (b.0 - a.0).hypot(b.1 - a.1);
         let Some((lo, hi)) = clipped_segment(
@@ -173,6 +176,15 @@ pub fn coverage(
             travelled += length;
             continue;
         };
+        let hi = if media == BrushMedia::Oil && length > 0.0 {
+            hi.min(((f64::from(size) * 20.0 - travelled) / length).max(0.0))
+        } else {
+            hi
+        };
+        if hi < lo {
+            travelled += length;
+            continue;
+        }
         let count = (length / spacing).ceil().max(1.0) as u64;
         let first = (lo * count as f64).floor() as u64;
         let last = (hi * count as f64).ceil() as u64;

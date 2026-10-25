@@ -178,3 +178,25 @@ fn oil_load_fades_and_narrows_along_distance_without_repainting_earlier_marks() 
         pixels(BrushMedia::Oil, &[(16, 32), (620, 32), (16, 32)], clip)
     );
 }
+
+#[test]
+fn exhausted_oil_does_not_keep_sampling_invisible_dabs() {
+    use std::cell::Cell;
+    let clip = Rect::new(0, 0, 640, 64).unwrap();
+    let points = (0..65_536)
+        .map(|i| if i % 2 == 0 { (16, 32) } else { (620, 32) })
+        .collect::<Vec<_>>();
+    let calls = Cell::new(0);
+    let actual = coverage(&points, 16, 1, BrushMedia::Oil, clip, &|| {
+        calls.set(calls.get() + 1);
+        Ok(())
+    })
+    .unwrap();
+    let expected = coverage(&points[..2], 16, 1, BrushMedia::Oil, clip, &|| Ok(())).unwrap();
+    assert_eq!(actual, expected);
+    assert!(
+        calls.get() < 6000,
+        "{} checkpoints after exhaustion",
+        calls.get()
+    );
+}

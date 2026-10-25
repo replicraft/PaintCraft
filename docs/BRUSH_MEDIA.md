@@ -102,3 +102,5 @@ opacity multiplication, identical retracing, oil taper, watercolor continuity, c
 preview-prefix preservation and one-gesture undo semantics.
 
 The latest inspected contact sheet is under `docs/validation/brush-rework-2026-10-24/tapered/`, including all opacity columns and transparent pixels.
+
+Oil sampling stops once its load reaches zero, including when a segment enters the visible clip after depletion. A 65,536-point retraced-path check bounds sampling checkpoints after exhaustion. The final contact sheet matches every raw RGBA byte of the inspected tapered sheet on white, transparent and checkerboard backgrounds.
