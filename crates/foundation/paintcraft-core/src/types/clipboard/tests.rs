@@ -114,3 +114,48 @@ fn admitted_writer_is_zeroed_private_and_releases_partial_failures() {
     assert_eq!(failure.code, ErrorCode::StorageFailed);
     assert_eq!(budget.usage().reserved, 0);
 }
+
+#[test]
+fn decoder_output_transfers_pre_admitted_capacity_and_retains_exact_pixels() {
+    let budget = SharedBudget::new(64);
+    let reservation = budget.reserve_capacity(64).unwrap();
+    let image = Image::from_rgba_reserved(
+        2,
+        1,
+        vec![17, 44, 99, 0, 1, 2, 3, 127],
+        &reservation,
+        &|| Ok(()),
+    )
+    .unwrap();
+    assert_eq!(budget.usage().reserved, 64);
+    assert_eq!(image.rgba(), &[17, 44, 99, 0, 1, 2, 3, 127]);
+    drop(reservation);
+    assert_eq!(budget.usage().reserved, 8);
+    let clone = image.clone();
+    drop(image);
+    assert_eq!(budget.usage().reserved, 8);
+    drop(clone);
+    assert_eq!(budget.usage().reserved, 0);
+}
+#[test]
+fn reserved_decode_failures_release_their_owned_pixels_and_transfers() {
+    let budget = SharedBudget::new(8);
+    let reservation = budget.reserve_capacity(8).unwrap();
+    assert!(Image::from_rgba_reserved(3, 1, vec![0; 12], &reservation, &|| Ok(())).is_err());
+    assert_eq!(reservation.available(), 8);
+    assert!(Image::from_rgba_reserved(1, 1, vec![0; 3], &reservation, &|| Ok(())).is_err());
+    assert_eq!(reservation.available(), 8);
+    let calls = Cell::new(0);
+    let check = || {
+        calls.set(calls.get() + 1);
+        if calls.get() == 2 {
+            Err(Error::new(ErrorCode::OperationCancelled, "test"))
+        } else {
+            Ok(())
+        }
+    };
+    assert!(Image::from_rgba_reserved(1, 1, vec![0; 4], &reservation, &check).is_err());
+    assert_eq!(reservation.available(), 8);
+    drop(reservation);
+    assert_eq!(budget.usage().reserved, 0);
+}

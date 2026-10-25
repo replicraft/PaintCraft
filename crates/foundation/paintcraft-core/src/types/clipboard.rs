@@ -1,5 +1,5 @@
 //! Immutable straight-RGBA8 clipboard pixels. Charges vector capacity, not RSS.
-use super::resources::{BudgetLease, SharedBudget};
+use super::resources::{BudgetLease, BudgetReservation, SharedBudget};
 use super::{Error, ErrorCode, Result, Rgba};
 use std::sync::Arc;
 
@@ -139,6 +139,43 @@ impl Image {
         })
     }
 
+    /// Adopt a decoder output from capacity reserved before decoding. No second
+    /// pixel copy or second reservation is required; unused capacity stays with
+    /// the caller's reservation until it drops that attempt.
+    pub fn from_rgba_reserved(
+        width: u32,
+        height: u32,
+        rgba: Vec<u8>,
+        reservation: &BudgetReservation,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<Self> {
+        check()?;
+        if rgba.len() != size(width, height)? {
+            return Err(Error::new(
+                ErrorCode::InputSchema,
+                "Clipboard RGBA length does not match dimensions",
+            ));
+        }
+        if rgba.capacity() as u64 > MAX_BYTES {
+            return Err(Error::new(
+                ErrorCode::ResourceLimit,
+                "Clipboard allocation exceeds the limit",
+            ));
+        }
+        let lease = reservation.reserve(rgba.capacity() as u64)?;
+        let image = Self {
+            width,
+            height,
+            payload: Arc::new(Payload {
+                rgba,
+                _lease: lease,
+                _extra: None,
+            }),
+        };
+        check()?;
+        Ok(image)
+    }
+
     /// Take already-owned, unmultiplied RGBA bytes; charge their entire capacity.
     pub fn from_rgba(
         width: u32,
@@ -161,8 +198,7 @@ impl Image {
             ));
         }
         let lease = budget.reserve(rgba.capacity() as u64)?;
-        check()?;
-        Ok(Self {
+        let image = Self {
             width,
             height,
             payload: Arc::new(Payload {
@@ -170,7 +206,9 @@ impl Image {
                 _lease: lease,
                 _extra: None,
             }),
-        })
+        };
+        check()?;
+        Ok(image)
     }
 }
 
