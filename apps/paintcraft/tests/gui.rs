@@ -417,3 +417,6 @@ mod lasso;
 
 #[path = "gui/flatten.rs"]
 mod flatten;
+
+#[path = "gui/import_image.rs"]
+mod import_image;

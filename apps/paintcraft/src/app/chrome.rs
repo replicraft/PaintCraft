@@ -224,6 +224,13 @@ impl App {
                     }
                 }
                 Chrome::Open => self.open_requested(ctx),
+                Chrome::ImportImage => {
+                    if self.dialogs.is_some() {
+                        self.request_dialog(ctx, Kind::Import);
+                    } else {
+                        self.import_selected(PathBuf::from(self.path_text.trim()));
+                    }
+                }
                 Chrome::RecentFiles => self.begin_recent_files(ctx),
                 Chrome::Save => self.save_requested(ctx),
                 Chrome::SaveAll => self.begin_save_all(ctx),
@@ -451,7 +458,12 @@ impl App {
                         "flatten" => "Visible layers will be flattened into one picture.",
                         "hidden-rgb" => "Invisible color information will not be retained.",
                         "lossy-jpeg" => "JPEG uses lossy compression.",
+                        "lossy-avif" => "AVIF uses lossy compression.",
+                        "alpha-lossy" => "Transparency may change during AVIF compression.",
                         "alpha-discarded" => "Transparency will not be preserved.",
+                        "palette-quantized" => "Colors will be reduced to a GIF palette.",
+                        "alpha-binarized" => "Partial transparency will become fully transparent or opaque.",
+                        "transparent-rgb-discarded" => "Invisible color information will not be retained.",
                         _ => loss,
                     };
                     t.push('\n');

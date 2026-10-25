@@ -16,7 +16,7 @@ impl App {
         if !self.editor.shape_file_ready() {
             return;
         }
-        if self.document_count() == 0 && kind != Kind::Open {
+        if self.document_count() == 0 && !matches!(kind, Kind::Open | Kind::Import) {
             return;
         }
         self.editor.cancel_gesture();
@@ -31,7 +31,7 @@ impl App {
         let owner = self.active_tab_id();
         let filters = self.format_filters(kind);
         let frontend = self.format_frontend();
-        let source = (kind == Kind::Open)
+        let source = (matches!(kind, Kind::Open | Kind::Import))
             .then(|| (self.editor.document_snapshot(), self.editor.render_key()));
         if let Some(dialogs) = &mut self.dialogs
             && !dialogs.pending()
@@ -65,7 +65,7 @@ impl App {
         let owner = self.dialog_owner.take();
         let source = self.dialog_source.take();
         let frontend = self.dialog_frontend.take();
-        if completion.kind == Kind::Open
+        if matches!(completion.kind, Kind::Open | Kind::Import)
             && frontend.is_some_and(|frontend| frontend != self.format_frontend())
         {
             self.editor
@@ -77,7 +77,7 @@ impl App {
         } else {
             90
         };
-        if completion.kind == Kind::Open
+        if matches!(completion.kind, Kind::Open | Kind::Import)
             && completion.path.is_some()
             && let Some((base, ticket)) = source
         {
@@ -129,6 +129,7 @@ impl App {
         }
         match completion.kind {
             Kind::Open => self.open_selected(path),
+            Kind::Import => self.import_selected(path),
             Kind::SaveAs => self.save_selected(ctx, path),
             Kind::Export => self.export_selected_quality(path, jpeg_quality),
             Kind::InspectRecovery => unreachable!("inspection completion handled separately"),
@@ -197,7 +198,16 @@ impl App {
 
     /// Open a `.pcnd` document or import a PNG, BMP or JPEG picture.
     pub(super) fn open_path(&mut self, path: &Path) -> paintcraft_core::types::Result<()> {
-        if self.experience() == Experience::Studio
+        self.open_path_with_conversion(path, false)
+    }
+
+    fn open_path_with_conversion(
+        &mut self,
+        path: &Path,
+        convert: bool,
+    ) -> paintcraft_core::types::Result<()> {
+        if !convert
+            && self.experience() == Experience::Studio
             && let Some(id) = self.tab_bound_to_path(path)
         {
             self.activate_tab(id, &self.context.clone());
@@ -205,11 +215,57 @@ impl App {
             return Ok(());
         }
         let (bytes, binding) = crate::destination::acquire(path)?;
-        let family = self.admit_open_source(path, &bytes)?;
+        if convert
+            && paintcraft_formats::registry::sniff(&bytes)
+                == Some(paintcraft_formats::registry::Family::Dcx)
+        {
+            return self.stage_dcx_import(bytes, path.to_path_buf());
+        }
+
+        let family = if convert {
+            let family = paintcraft_formats::registry::admit_import(
+                self.format_frontend(),
+                &path.to_string_lossy(),
+                &bytes,
+                paintcraft_formats::registry::Platform::Native,
+            )?;
+            if family.is_project()
+                && !matches!(
+                    family,
+                    paintcraft_formats::registry::Family::Paint
+                        | paintcraft_formats::registry::Family::Pdn
+                )
+            {
+                return Err(paintcraft_core::types::Error::new(
+                    paintcraft_core::types::ErrorCode::CapabilityUnsupported,
+                    "Import image expects a raster picture",
+                ));
+            }
+            family
+        } else {
+            self.admit_open_source(path, &bytes)?
+        };
+        if matches!(
+            family,
+            paintcraft_formats::registry::Family::Paint | paintcraft_formats::registry::Family::Pdn
+        ) {
+            let converted = paintcraft_formats::project_import::decode_layered(
+                family,
+                &bytes,
+                4_194_304,
+                &|| Ok(()),
+            )?;
+            return self.stage_project_import(converted, path.to_path_buf());
+        }
         let (editor, bound, note) = if family != paintcraft_formats::registry::Family::Pcnd {
             let img = image::decode(&bytes)?;
             if !img.losses.is_empty() {
-                return self.stage_import(img, path.to_path_buf(), hex(&Sha256::digest(&bytes)));
+                return self.stage_import(
+                    img,
+                    path.to_path_buf(),
+                    hex(&Sha256::digest(&bytes)),
+                    convert,
+                );
             }
             let doc = import_image(
                 img.width,
@@ -251,7 +307,9 @@ impl App {
         .to_string_lossy()
         .into_owned();
         self.editor.set_status(note);
-        self.recent.remember(path);
+        if !convert {
+            self.recent.remember(path);
+        }
         Ok(())
     }
 
@@ -268,6 +326,12 @@ impl App {
             self.confirm = Some(Confirm::DiscardForOpen(path));
         } else if let Err(e) = self.open_path(&path) {
             self.editor.set_status(format!("Cannot open: {e}"));
+        }
+    }
+
+    pub(super) fn import_selected(&mut self, path: PathBuf) {
+        if let Err(error) = self.open_path_with_conversion(&path, true) {
+            self.editor.set_status(format!("Cannot open: {error}"));
         }
     }
 
@@ -308,7 +372,7 @@ impl App {
     pub(super) fn plan_export_quality(&mut self, path: PathBuf, jpeg_quality: u8) {
         let Some(format) = ImageFormat::from_extension(&path) else {
             self.editor
-                .set_status("Name the file .png, .bmp or .jpg to export");
+                .set_status("Choose a supported image filename extension.");
             return;
         };
         if let Err(error) = self.admit_export_format(&path, format) {

@@ -6,18 +6,37 @@ use paintcraft_platform::dialogs::Filter;
 impl App {
     pub(super) fn format_filters(&self, kind: Kind) -> Vec<Filter> {
         let frontend = self.format_frontend();
-        if kind == Kind::Open {
-            return vec![Filter {
-                name: "Images and PaintCraft documents".into(),
+        if matches!(kind, Kind::Open | Kind::Import) {
+            let mut filters = vec![Filter {
+                name: if kind == Kind::Import {
+                    "Images to import"
+                } else {
+                    "Images and PaintCraft documents"
+                }
+                .into(),
                 extensions: registry::enabled_extensions(
                     frontend,
-                    Operation::Open,
+                    if kind == Kind::Import {
+                        Operation::ImportConvert
+                    } else {
+                        Operation::Open
+                    },
                     Platform::Native,
                 )
                 .into_iter()
+                .filter(|extension| {
+                    kind != Kind::Import
+                        || registry::Family::from_extension(extension).is_some_and(|family| {
+                            !family.is_project() || matches!(family, Family::Paint | Family::Pdn)
+                        })
+                })
                 .map(str::to_owned)
                 .collect(),
             }];
+            if kind == Kind::Import && frontend == registry::Frontend::Studio {
+                filters[0].extensions.push("dcx".into());
+            }
+            return filters;
         }
         if kind != Kind::Export {
             return vec![Filter {
@@ -32,6 +51,16 @@ impl App {
                     Family::Png => "PNG image",
                     Family::Jpeg => "JPEG image",
                     Family::Bmp => "BMP image",
+                    Family::Gif => "GIF image",
+                    Family::Tiff => "TIFF image",
+                    Family::Tga => "TGA image",
+                    Family::Webp => "WebP image",
+                    Family::Jxl => "JPEG XL image",
+                    Family::Dds => "DDS image",
+                    Family::Avif => "AVIF image",
+                    Family::Qoi => "QOI image",
+                    Family::Pnm => "PAM image",
+                    Family::Farbfeld => "farbfeld image",
                     _ => return None,
                 };
                 Some(Filter {
@@ -39,7 +68,16 @@ impl App {
                     extensions: family
                         .extensions()
                         .iter()
-                        .filter(|extension| family.qualified_extension(extension))
+                        .filter(|extension| {
+                            let mut request = registry::Request::new(
+                                frontend,
+                                Operation::ExportFlat,
+                                family,
+                                Platform::Native,
+                            );
+                            request.extension = Some(extension);
+                            registry::admission(request).available()
+                        })
                         .map(|ext| (*ext).into())
                         .collect(),
                 })

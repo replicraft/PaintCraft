@@ -10,8 +10,13 @@ fn image() -> image::Decoded {
     }
 }
 fn stage(app: &mut App) {
-    app.stage_import(image(), PathBuf::from("capture.png"), "ab".repeat(32))
-        .unwrap();
+    app.stage_import(
+        image(),
+        PathBuf::from("capture.png"),
+        "ab".repeat(32),
+        false,
+    )
+    .unwrap();
 }
 
 #[test]
@@ -104,7 +109,7 @@ fn unknown_loss_cannot_be_silently_accepted() {
     let mut source = image();
     source.losses.push("unknown-loss".into());
     assert!(
-        app.stage_import(source, PathBuf::from("unknown.png"), "ab".repeat(32))
+        app.stage_import(source, PathBuf::from("unknown.png"), "ab".repeat(32), false)
             .is_err()
     );
     assert!(app.pending_import.is_none());
@@ -171,7 +176,7 @@ fn real_gif_and_tiff_consent_controls_work_across_skins_and_languages() {
 }
 
 #[test]
-fn picker_inventory_uses_qualified_read_aliases_but_not_unqualified_writers() {
+fn picker_inventory_uses_qualified_raster_aliases_and_never_exposes_studio_formats_in_classic() {
     for skin in [ClassicVariant::V7, ClassicVariant::V10, ClassicVariant::V11] {
         let mut app = App::new(None);
         app.settings.classic_variant = Some(skin);
@@ -184,14 +189,19 @@ fn picker_inventory_uses_qualified_read_aliases_but_not_unqualified_writers() {
             assert!(!aliases.contains(&extension.into()));
         }
         let export = app.format_filters(Kind::Export);
-        assert!(
-            export
+        for extension in ["gif", "tif", "tiff"] {
+            assert!(
+                export
+                    .iter()
+                    .any(|filter| filter.extensions.iter().any(|ext| ext == extension))
+            );
+        }
+        assert!(export.iter().all(|filter| {
+            filter
+                .extensions
                 .iter()
-                .all(|filter| filter.extensions.iter().all(|ext| !matches!(
-                    ext.as_str(),
-                    "gif" | "tif" | "tiff" | "heic" | "heif" | "tga" | "webp"
-                )))
-        );
+                .all(|ext| !matches!(ext.as_str(), "heic" | "heif" | "tga" | "webp"))
+        }));
     }
 }
 

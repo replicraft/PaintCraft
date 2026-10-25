@@ -18,6 +18,7 @@ pub fn show_error(title: &str, description: &str, ok: &str) {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Kind {
     Open,
+    Import,
     InspectRecovery,
     SaveAs,
     Export,
@@ -75,6 +76,10 @@ impl NativeDialogs {
                 extensions: ["pcnd", "png", "bmp", "jpg", "jpeg"]
                     .map(str::to_owned)
                     .into(),
+            }],
+            Kind::Import => vec![Filter {
+                name: "Images to import".into(),
+                extensions: ["png", "bmp", "jpg", "jpeg"].map(str::to_owned).into(),
             }],
             Kind::InspectRecovery | Kind::SaveAs => vec![Filter {
                 name: "PaintCraft document".into(),
@@ -137,6 +142,7 @@ impl NativeDialogs {
         let fallback_extension = filters[0].extensions[0].clone();
         dialog = match kind {
             Kind::Open => dialog.set_title(label("Open image or PaintCraft document")),
+            Kind::Import => dialog.set_title(label("Import image")),
             Kind::InspectRecovery => {
                 dialog.set_title(label("Locate the destination of an incomplete save"))
             }
@@ -150,7 +156,7 @@ impl NativeDialogs {
         let sender = self.sender.clone();
         std::thread::spawn(move || {
             let file = pollster::block_on(async {
-                if matches!(kind, Kind::Open | Kind::InspectRecovery) {
+                if matches!(kind, Kind::Open | Kind::Import | Kind::InspectRecovery) {
                     dialog.pick_file().await
                 } else {
                     dialog.save_file().await
@@ -159,7 +165,7 @@ impl NativeDialogs {
             let mut path = file.map(|f| f.path().to_path_buf());
             if let Some(path) = &mut path
                 && path.extension().is_none()
-                && !matches!(kind, Kind::Open | Kind::InspectRecovery)
+                && !matches!(kind, Kind::Open | Kind::Import | Kind::InspectRecovery)
             {
                 path.set_extension(fallback_extension);
             }

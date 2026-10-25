@@ -4,8 +4,25 @@ use paintcraft_core::types::{Error, ErrorCode, Result};
 use paintcraft_formats::registry::Frontend;
 use paintcraft_ui::{i18n::import_loss_description, t};
 
+#[path = "importing/dcx.rs"]
+mod dcx;
+
+enum Candidate {
+    Pages(dcx::Pages),
+    Raster(image::Decoded),
+    Layered(paintcraft_formats::project_import::Converted),
+}
+impl Candidate {
+    fn losses(&self) -> &[String] {
+        match self {
+            Self::Pages(_) => &[],
+            Self::Raster(image) => &image.losses,
+            Self::Layered(project) => &project.losses,
+        }
+    }
+}
 pub(super) struct Pending {
-    image: image::Decoded,
+    candidate: Candidate,
     path: PathBuf,
     digest: String,
     owner: Uuid,
@@ -13,6 +30,19 @@ pub(super) struct Pending {
     ticket: (Uuid, u64),
     frontend: Frontend,
     dirty: bool,
+    convert: bool,
+}
+impl Pending {
+    fn current(&self, app: &App) -> bool {
+        app.active_tab_id() == self.owner
+            && app.editor.render_key() == self.ticket
+            && Arc::ptr_eq(&app.editor.document_snapshot(), &self.base)
+            && app.format_frontend() == self.frontend
+            && !app.has_document_drafts()
+            && app.editor.is_dirty() == self.dirty
+            && !app.editor.has_pending_edits()
+            && !app.editor.has_floating_selection()
+    }
 }
 impl App {
     pub(super) fn stage_import(
@@ -20,6 +50,23 @@ impl App {
         image: image::Decoded,
         path: PathBuf,
         digest: String,
+        convert: bool,
+    ) -> Result<()> {
+        self.stage_candidate(Candidate::Raster(image), path, digest, convert)
+    }
+    pub(super) fn stage_project_import(
+        &mut self,
+        project: paintcraft_formats::project_import::Converted,
+        path: PathBuf,
+    ) -> Result<()> {
+        self.stage_candidate(Candidate::Layered(project), path, String::new(), true)
+    }
+    fn stage_candidate(
+        &mut self,
+        candidate: Candidate,
+        path: PathBuf,
+        digest: String,
+        convert: bool,
     ) -> Result<()> {
         if self.pending_import.is_some() {
             return Err(Error::new(
@@ -27,8 +74,8 @@ impl App {
                 "An image import is already awaiting confirmation",
             ));
         }
-        if image
-            .losses
+        if candidate
+            .losses()
             .iter()
             .any(|loss| import_loss_description(loss).is_none())
         {
@@ -38,7 +85,7 @@ impl App {
             ));
         }
         self.pending_import = Some(Pending {
-            image,
+            candidate,
             path,
             digest,
             owner: self.active_tab_id(),
@@ -46,6 +93,7 @@ impl App {
             ticket: self.editor.render_key(),
             frontend: self.format_frontend(),
             dirty: self.editor.is_dirty(),
+            convert,
         });
         self.confirm = Some(Confirm::ImportLosses);
         Ok(())
@@ -60,23 +108,30 @@ impl App {
             self.editor.set_status(t!(ctx, "Import cancelled."));
             return;
         }
-        if self.active_tab_id() != pending.owner
-            || self.editor.render_key() != pending.ticket
-            || !Arc::ptr_eq(&self.editor.document_snapshot(), &pending.base)
-            || self.format_frontend() != pending.frontend
-            || self.has_document_drafts()
-            || self.editor.is_dirty() != pending.dirty
-            || self.editor.has_pending_edits()
-            || self.editor.has_floating_selection()
-        {
+        if !pending.current(self) {
             self.editor
                 .set_status(t!(ctx, "The document changed; choose the image again."));
             return;
         }
+        if matches!(pending.candidate, Candidate::Pages(_)) {
+            self.pending_import = Some(pending);
+            self.confirm = Some(Confirm::ImportLosses);
+            return;
+        }
         let result = (|| {
-            let image = pending.image;
-            let document = import_image(image.width, image.height, &image.rgba, &pending.digest)?;
-            self.install(Editor::with_document(document, None))?;
+            let converted = matches!(&pending.candidate, Candidate::Layered(_));
+            let document = match pending.candidate {
+                Candidate::Raster(image) => {
+                    import_image(image.width, image.height, &image.rgba, &pending.digest)?
+                }
+                Candidate::Layered(project) => project.document,
+                Candidate::Pages(_) => unreachable!("page selection is resolved separately"),
+            };
+            let mut editor = Editor::with_document(document, None);
+            if converted {
+                editor.invalidate_saved_state();
+            }
+            self.install(editor)?;
             self.bound = None;
             self.path_text = pending
                 .path
@@ -85,7 +140,9 @@ impl App {
                 .into_owned();
             self.editor
                 .set_status(format!("Imported {}", pending.path.display()));
-            self.recent.remember(&pending.path);
+            if !pending.convert {
+                self.recent.remember(&pending.path);
+            }
             Ok::<(), Error>(())
         })();
         if let Err(error) = result {
@@ -93,6 +150,14 @@ impl App {
         }
     }
     pub(super) fn import_dialog(&mut self, ctx: &egui::Context) {
+        if self
+            .pending_import
+            .as_ref()
+            .is_some_and(|pending| matches!(pending.candidate, Candidate::Pages(_)))
+        {
+            self.dcx_page_dialog(ctx);
+            return;
+        }
         let Some(pending) = &self.pending_import else {
             self.confirm = None;
             return;
@@ -101,7 +166,7 @@ impl App {
         let mut cancel = false;
         egui::Modal::new(egui::Id::unique("native-import-losses")).show(ctx, |ui| {
             ui.heading(t!(ctx, "Open with these import limitations?"));
-            for loss in &pending.image.losses {
+            for loss in pending.candidate.losses() {
                 if let Some(description) = import_loss_description(loss) {
                     ui.label(t!(ctx, description));
                 }

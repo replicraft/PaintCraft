@@ -127,8 +127,8 @@ fn manual_unqualified_exports_and_bad_launch_never_bind_or_replace_sources() {
     let source = app.editor.document_snapshot();
     let ticket = app.editor.history_view().ticket;
     for (name, format) in [
-        ("unsupported.gif", ImageFormat::Gif),
-        ("unsupported.tiff", ImageFormat::Tiff),
+        ("unsupported.tga", ImageFormat::Tga),
+        ("unsupported.webp", ImageFormat::WebP),
         ("mismatch.heic", ImageFormat::Png),
     ] {
         let path = dir.join(name);
@@ -170,5 +170,47 @@ fn ordinary_fifo_is_refused_before_a_blocking_open() {
         .recv_timeout(Duration::from_secs(2))
         .expect("FIFO admission must not block on open");
     assert_eq!(result.unwrap_err().code, ErrorCode::StorageFailed);
+    std::fs::remove_dir_all(dir).unwrap();
+}
+
+#[test]
+fn explicit_studio_conversion_keeps_stock_open_strict_and_imports_into_an_unbound_tab() {
+    let dir = scratch();
+    let source = dir.join("sample.qoi");
+    let mut bytes = b"qoif".to_vec();
+    bytes.extend(1u32.to_be_bytes());
+    bytes.extend(1u32.to_be_bytes());
+    bytes.extend([4, 0, 0xff, 17, 51, 93, 127, 0, 0, 0, 0, 0, 0, 0, 1]);
+    std::fs::write(&source, &bytes).unwrap();
+    let mut app = App::new(None);
+    app.settings.experience = Experience::Studio;
+    let original = app.editor.document_snapshot();
+    assert!(app.open_path(&source).is_err());
+    assert!(Arc::ptr_eq(&original, &app.editor.document_snapshot()));
+    let open = app.format_filters(Kind::Open);
+    assert!(
+        !open
+            .iter()
+            .any(|filter| filter.extensions.iter().any(|extension| extension == "qoi"))
+    );
+    let import = app.format_filters(Kind::Import);
+    assert!(
+        import
+            .iter()
+            .any(|filter| filter.extensions.iter().any(|extension| extension == "qoi"))
+    );
+    app.import_selected(source.clone());
+    assert_eq!(app.editor.document().canvas, (1, 1));
+    assert_eq!(
+        app.editor.document().layers[&app.editor.target().unwrap()]
+            .raster
+            .get(0, 0)
+            .0,
+        [17, 51, 93, 127]
+    );
+    assert!(app.bound.is_none());
+    assert!(app.editor.path().is_none());
+    assert_eq!(std::fs::read(&source).unwrap(), bytes);
+    assert!(app.recent.entries.is_empty());
     std::fs::remove_dir_all(dir).unwrap();
 }
