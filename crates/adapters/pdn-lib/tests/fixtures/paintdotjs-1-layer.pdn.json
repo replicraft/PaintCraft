@@ -1,0 +1,22 @@
+{
+    "filename": "paintdotjs-1-layer.pdn",
+    "graph_bytes": 2901,
+    "pixel_offset": 3016,
+    "chunk_size": 262144,
+    "source_commit": "6fe29faa80fd3a51e84fd97ab8d7ba03b9e637a7",
+    "template_sha256": "1dd039bfdfa9be8a0d2f824d38dbb40e0e6f26cc4967f33ae5603445201bd046",
+    "sha256": "ceb65149e16686fd3383102789e5bad15715275482b073bcb485c6c3d39b43d4",
+    "width": 3,
+    "height": 2,
+    "layers": [
+        {
+            "name": "Base 日本語",
+            "visible": true,
+            "isBackground": true,
+            "opacity": 201,
+            "blendMode": "normal",
+            "rgba_sha256": "d6931877bd07347276a7149f0ff06c97a16de2b64c416385f72e649facad7c56",
+            "rgba_hex": "00478e00276eb5804e95dc8075bc03009ce32a80c30a5180"
+        }
+    ]
+}

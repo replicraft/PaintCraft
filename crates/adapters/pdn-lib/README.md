@@ -1,6 +1,6 @@
-# PDN-01: historical PDN3 envelope inspection
+# PDN3 inspection and typed-raster conversion
 
-This private Rust crate inspects the historical PDN3 header and returns inert metadata hints plus borrowed input spans. It does not decode document objects or pixels, decompress gzip, or write PDN files. A successful inspection does not prove the body is valid or establish compatibility with any modern Paint.NET build. It must not enable editable Open or preserving Save.
+This private Rust crate provides separate header inspection and narrow typed-raster decoding APIs. `inspect` returns inert metadata hints and borrowed input spans; inspection alone does not validate the object graph or pixels. `decode_layers` validates the supported inert graph and deferred buffers described below. No preserving writer is provided, and compatibility with arbitrary Paint.NET versions is not implied.
 
 The verified envelope starts with `PDN3`, followed by a three-byte little-endian UTF-8 XML byte length. The XML root is `pdnImage`; recognized hints are `width`, `height`, `layers`, and optional `savedWithVersion`. After the XML, the `00 01` deferred-data marker is separate from the following NRBF serialization header. A `1f 8b` prefix identifies the historical gzip branch. Header hints must eventually be compared with the actual decoded graph before document creation or pixel allocation.
 
@@ -14,4 +14,43 @@ Primary evidence:
 
 Injected limits cover source/header bytes, XML depth/elements/attributes, attribute size, dimensions, pixel count and declared layers. Cancellation runs during header processing and bounded gzip header scanning. The source remains borrowed; no full input or thumbnail copy is created. Application version text remains an untrusted string, not a compatibility assertion. Unknown root attributes and child XML are flagged and retained only in the original borrowed XML span.
 
-Tests author synthetic envelopes directly from the documented framing, including Unicode metadata, complete NRBF headers, malformed XML, truncations, hostile entities, unknown variants, resource limits and cancellation. These synthetic bodies are deliberately not claims of valid editable Paint.NET documents. Original files from pinned Paint.NET builds and a complete inert graph parser remain required before PDN-02/03 qualification; original-application reopen remains mandatory for any future writer.
+Tests author synthetic envelopes directly from the documented framing, including Unicode metadata, complete NRBF headers, malformed XML, truncations, hostile entities, unknown variants, resource limits and cancellation. These synthetic bodies are deliberately not claims of valid editable Paint.NET documents. The typed graph/pixel decoder below now supplies a scoped PDN-02/03 implementation. Untouched files from pinned Paint.NET builds remain necessary for broader native qualification; original-application reopen remains mandatory for any future writer.
+
+## Typed bitmap-layer conversion
+
+`decode_layers` now supports a narrow deferred PDN3 bitmap graph: Document,
+LayerList, BitmapLayer and its declared property/surface/memory records, system
+Version and string-pair metadata, and Normal blend mode only. It reconstructs
+layer order, Unicode names, visibility, opacity, background-role flags and full
+canvas-sized tight-stride RGBA8 surfaces. Unknown classes, fields, methods,
+libraries, blend modes, shared/subview buffers, padding, nondeferred pixels and
+unsupported object types are refused rather than replaced with guessed defaults.
+
+The NRBF parser bounds graph bytes, metadata capacity, object/record work, members,
+array elements and nesting. It never loads types or executes constructors. Record
+references and library bindings are validated after parsing; graph identity lookup
+is bounded and does not recursively expand cycles. The exact MessageEnd position
+locates the following deferred pixel blocks. Each buffer has its own graph
+identity. Chunk indexes may arrive in any order, but duplicate/missing/out-of-range
+indexes are rejected. Gzip headers, optional header CRC, data CRC, output size,
+DEFLATE EOF and payload boundaries are checked. Raw and gzip chunks share the
+same exact BGRA-to-RGBA conversion, preserving hidden RGB. Work yields at bounded
+input/output/copy checkpoints.
+
+XML canvas dimensions and layer count must agree with the graph. XML and graph
+version values remain separate source claims because the independent writer's
+graph templates retain a zero savedWith value. The returned mandatory
+`MetadataUnretained` diagnostic requires explicit conversion consent: EXIF/custom
+metadata, version/provenance and background lock-role semantics cannot be inferred
+to survive in PaintCraft's current document model merely because raster properties
+do. No preserving `.pdn` writer or opaque-source round trip is claimed.
+
+The [fixtures](tests/fixtures/README.md) are produced by a pinned independent
+writer using real Paint.NET-generated graph templates and original test pixels.
+Tests compare all source properties and complete RGBA hashes, exercise raw and
+out-of-order gzip chunks, every file truncation, unknown record/type/blend cases,
+invalid graph references/null runs/depth, aggregate decoding limits, corrupt CRCs,
+trailing data and cooperative cancellation. Strict Clippy and native/Wasm builds
+qualify compilation only. Untouched native reference files, a broader Paint.NET
+version corpus and original-application reopen/edit/resave tests remain required
+before general fidelity or any writer promotion.

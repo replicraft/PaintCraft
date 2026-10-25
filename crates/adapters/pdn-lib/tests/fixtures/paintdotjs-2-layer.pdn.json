@@ -1,0 +1,31 @@
+{
+    "filename": "paintdotjs-2-layer.pdn",
+    "graph_bytes": 3053,
+    "pixel_offset": 3168,
+    "chunk_size": 8,
+    "source_commit": "6fe29faa80fd3a51e84fd97ab8d7ba03b9e637a7",
+    "template_sha256": "b1d1a1c0d8f69980c66f069adeec488a24c59105a3d631737a1d571def26b256",
+    "sha256": "c30d43f95dfbcef153ae76f5577e71f8feffad61519cb67de298da4299ec7725",
+    "width": 3,
+    "height": 2,
+    "layers": [
+        {
+            "name": "Base 日本語",
+            "visible": true,
+            "isBackground": true,
+            "opacity": 201,
+            "blendMode": "normal",
+            "rgba_sha256": "d6931877bd07347276a7149f0ff06c97a16de2b64c416385f72e649facad7c56",
+            "rgba_hex": "00478e00276eb5804e95dc8075bc03009ce32a80c30a5180"
+        },
+        {
+            "name": "Overlay é",
+            "visible": false,
+            "isBackground": false,
+            "opacity": 73,
+            "blendMode": "normal",
+            "rgba_sha256": "4f570b69e8ee688b9e255dab9f8842d18f632314066f17580b70460852dc50c8",
+            "rgba_hex": "3980c70060a7eec187ce15c1aef53c00d51c63c1fc438ac1"
+        }
+    ]
+}
