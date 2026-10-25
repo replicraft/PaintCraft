@@ -243,7 +243,16 @@ fn zero_move_with_key_preserves_canonical_archive_and_state_and_reports_uncommit
             doc.state_id.to_string()
         );
         assert_eq!(text(&receipt, &["engine", "publication_epoch"]), "0");
-        assert_eq!(fs::read(&destination).unwrap(), original);
+        let saved = fs::read(&destination).unwrap();
+        assert_eq!(
+            saved,
+            paintcraft_formats::pcnd::write_compact(&doc).unwrap()
+        );
+        let restored = paintcraft_formats::pcnd::read(&saved).unwrap();
+        assert_eq!(
+            paintcraft_formats::pcnd::write(&restored).unwrap(),
+            original
+        );
         assert_eq!(
             paintcraft_formats::pcnd::read(&fs::read(destination).unwrap())
                 .unwrap()

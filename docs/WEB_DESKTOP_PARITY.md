@@ -6,14 +6,14 @@ workspaces. This ledger distinguishes connected features from remaining work.
 
 | Area | Browser state | Remaining work |
 | --- | --- | --- |
-| Settings presentation | Same dialog shell, responsive navigation, cards, control sizes, close button and footer as desktop | Browser Studio settings depend on a Studio frontend |
+| Settings presentation | Same dialog shell, responsive navigation, cards, control sizes, close button and footer as desktop | Studio-specific canvas/navigation preference parity |
 | Settings behavior | Appearance, system/light/dark theme, seven languages, Classic skins, canvas defaults, default font and About; explicit Apply/Cancel and reversible preview | Installed-font access needs a browser permission/backend; the editable-object preference remains a labelled prototype on both hosts |
 | Document identity | Open shows the photo/project name in the tab title; requested project downloads use the same basename and update that title; New restores Untitled | The browser cannot observe a name changed in the browser's own download destination UI |
 | Classic editing | Shared nine brush media, 23 shapes, fill, picker, text rasterization, masks, lasso, crop, five orientations and Undo/Redo | Arbitrary-angle/resampled transformations, effects and persistent editable objects remain broader roadmap work |
 | Clipboard | PNG read/write, Copy/Cut/Copy visible and private ordinary Paste/new-layer Paste | Other browser/device permissions and cross-application fidelity remain unqualified |
 | View and workspace controls | Canvas fit/actual/selection zoom, scroll, layers and tool controls | Pixel grid, rulers, status-bar toggle, toolbar auto-hide, fullscreen and thumbnail are not connected in the browser |
 | Frontends and documents | Classic 7, 10 and 11 skins; Studio toolbar, floating tools/colors and history, separate documents/history/views with a download/discard switch guard | Multiple documents within each workspace, tabs, Save All and remaining Studio navigation/parity workflows |
-| File adapters | Browser pickers, named project downloads, PNG/BMP/JPEG input and image export | Broader native codecs, format capabilities and export controls |
+| File adapters | Browser pickers, lossless compact PCND downloads, PNG/BMP/JPEG input and image export | Broader native codecs, format capabilities and export controls |
 | Runtime and recovery | Bounded synchronous browser editing; unload warning; preferences in local storage | Background preparation, larger document/resource handling, browser recovery/document persistence and GPU document composition |
 | Platform services | Browser file/clipboard interfaces and page title | Browser equivalents for applicable desktop services such as Print; native menu/OS registration stay platform-specific |
 

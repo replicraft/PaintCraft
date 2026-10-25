@@ -99,3 +99,14 @@ isolated formats-only Wasm check lacks that preexisting feature and is not claim
 as passing. No live browser import or save-speed benchmark is inferred from this
 compile check. Native filesystem/recovery integration is validated separately by
 the desktop tests.
+
+## Live browser save check
+
+The production browser build saved an actual 80-segment pencil doodle as a
+7,154-byte PCND. Three touched tiles contain 786,432 decoded bytes, represented by
+5,274 bytes of run payload (99.3% less pixel payload). Independent Python ZIP,
+run decoding and SHA-256 checks recovered 635 black pixels and the white canvas,
+with no additional colors. This is a separate test doodle, not the file shown in
+the user's download screenshot. Raw evidence is in ignored
+`docs/validation/release-polish-2026-10-24/compact-download.json` and
+`compact-oracle.json`.
