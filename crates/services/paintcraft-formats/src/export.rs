@@ -7,7 +7,15 @@ use paintcraft_render::render_flat;
 use crate::image::{self, ImageFormat};
 
 /// Loss codes a caller may acknowledge.
-pub const KNOWN_LOSSES: [&str; 4] = ["flatten", "hidden-rgb", "lossy-jpeg", "alpha-discarded"];
+pub const KNOWN_LOSSES: [&str; 7] = [
+    "flatten",
+    "hidden-rgb",
+    "lossy-jpeg",
+    "alpha-discarded",
+    "palette-quantized",
+    "alpha-binarized",
+    "transparent-rgb-discarded",
+];
 
 #[derive(Debug)]
 pub struct FlatExport {
@@ -59,7 +67,6 @@ pub fn export_flat_with(
             "export renderer returned an invalid pixel buffer",
         ));
     }
-    let transparent = rgba.as_chunks::<4>().0.iter().any(|p| p[3] != 255);
     let mut losses: Vec<String> = Vec::new();
     if doc.roots.len() > 1 {
         losses.push("flatten".into());
@@ -69,7 +76,7 @@ pub fn export_flat_with(
     }
     losses.extend(
         format
-            .export_losses(transparent)
+            .export_losses_for_rgba(&rgba)
             .into_iter()
             .map(str::to_owned),
     );
