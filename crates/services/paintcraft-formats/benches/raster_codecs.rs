@@ -17,19 +17,20 @@ const CASES: &[&str] = &[
     "1000x486-dense-alpha",
     "1000x486-palette",
 ];
-const FORMATS: [ImageFormat; 5] = [
+const FORMATS: [ImageFormat; 6] = [
     ImageFormat::Png,
     ImageFormat::Bmp,
     ImageFormat::Jpeg,
     ImageFormat::Gif,
     ImageFormat::Tiff,
+    ImageFormat::Pcx,
 ];
 struct Fixture {
     name: &'static str,
     width: u32,
     height: u32,
     rgba: Vec<u8>,
-    encoded: [Vec<u8>; 5],
+    encoded: [Vec<u8>; 6],
 }
 static FIXTURES: OnceLock<Vec<Fixture>> = OnceLock::new();
 
@@ -170,10 +171,27 @@ fn preflight() {
                 ImageFormat::Jpeg => {
                     assert!(decoded.rgba.as_chunks::<4>().0.iter().all(|p| p[3] == 255))
                 }
+                ImageFormat::Pcx => {
+                    for (source, actual) in fixture
+                        .rgba
+                        .as_chunks::<4>()
+                        .0
+                        .iter()
+                        .zip(decoded.rgba.as_chunks::<4>().0)
+                    {
+                        let alpha = u32::from(source[3]);
+                        let mut expected = [255; 4];
+                        for channel in 0..3 {
+                            expected[channel] =
+                                ((u32::from(source[channel]) * alpha + 255 * (255 - alpha) + 127)
+                                    / 255) as u8;
+                        }
+                        assert_eq!(*actual, expected);
+                    }
+                }
                 ImageFormat::Qoi
                 | ImageFormat::Pnm
                 | ImageFormat::Farbfeld
-                | ImageFormat::Pcx
                 | ImageFormat::Jxl
                 | ImageFormat::Dds
                 | ImageFormat::Avif => {
@@ -273,3 +291,5 @@ benches!(encode_bmp, decode_bmp, 1);
 benches!(encode_jpeg, decode_jpeg, 2);
 benches!(encode_gif, decode_gif, 3);
 benches!(encode_tiff, decode_tiff, 4);
+
+benches!(encode_pcx, decode_pcx, 5);
