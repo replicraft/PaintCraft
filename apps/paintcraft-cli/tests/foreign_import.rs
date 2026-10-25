@@ -32,6 +32,18 @@ fn foreign_layered_import_keeps_layers_and_never_replaces_the_source() {
             "ora-resolution-ignored".into(),
             3,
         ),
+        (
+            "source.psd",
+            root.join("../services/paintcraft-formats/tests/psd-fixtures/layers-3.psd"),
+            "psd-metadata-ignored".into(),
+            2,
+        ),
+        (
+            "source.psb",
+            root.join("../services/paintcraft-formats/tests/psd-fixtures/layers-1.psb"),
+            "psd-metadata-ignored".into(),
+            2,
+        ),
     ] {
         let source = dir.join(name);
         let dest = source.with_file_name(format!("{name}.pcnd"));

@@ -43,12 +43,7 @@ pub fn run(a: Options, json: bool) -> Reply {
                 (_, Some(entry)) => a.profile.admit_import_entry(input, &bytes, entry)?,
                 _ => a.profile.admit_import(input, &bytes)?,
             };
-            let (doc, losses) = if matches!(
-                family,
-                paintcraft_formats::registry::Family::Paint
-                    | paintcraft_formats::registry::Family::Pdn
-                    | paintcraft_formats::registry::Family::Ora
-            ) {
+            let (doc, losses) = if paintcraft_formats::project_import::supports(family) {
                 let converted = paintcraft_formats::project_import::decode_layered(
                     family,
                     &bytes,

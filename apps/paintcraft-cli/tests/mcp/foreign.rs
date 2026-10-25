@@ -91,6 +91,18 @@ fn foreign_layers_require_exact_consent_and_cannot_overwrite_source_aliases() {
             vec!["ora-resolution-ignored"],
             3,
         ),
+        (
+            "source.psd",
+            root.join("../services/paintcraft-formats/tests/psd-fixtures/layers-3.psd"),
+            vec!["psd-metadata-ignored"],
+            2,
+        ),
+        (
+            "source.psb",
+            root.join("../services/paintcraft-formats/tests/psd-fixtures/layers-1.psb"),
+            vec!["psd-metadata-ignored"],
+            2,
+        ),
     ] {
         let source = folder.join(name);
         let bytes = fs::read(fixture).unwrap();
