@@ -3208,6 +3208,7 @@ dependencies = [
  "sha2",
  "uuid",
  "wl-clipboard-rs",
+ "x11rb",
 ]
 
 [[package]]

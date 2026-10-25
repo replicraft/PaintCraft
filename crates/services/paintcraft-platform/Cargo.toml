@@ -15,6 +15,7 @@ clipboard = [
     "dep:clipboard-win",
     "dep:wl-clipboard-rs",
     "dep:rustix",
+    "dep:x11rb",
     "dep:objc2",
     "dep:objc2-app-kit",
     "dep:objc2-foundation",
@@ -46,9 +47,11 @@ clipboard-win = { workspace = true, optional = true }
 [target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]
 wl-clipboard-rs = { workspace = true, optional = true }
 rustix = { workspace = true, optional = true }
+x11rb = { workspace = true, optional = true }
 
 [target.'cfg(unix)'.dev-dependencies]
 rustix = { workspace = true, features = ["pipe"] }
+x11rb.workspace = true
 
 [lints]
 workspace = true
