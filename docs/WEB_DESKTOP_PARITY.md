@@ -11,7 +11,7 @@ workspaces. This ledger distinguishes connected features from remaining work.
 | Document identity | Open shows the photo/project name in the tab title; requested project downloads use the same basename and update that title; New restores Untitled | The browser cannot observe a name changed in the browser's own download destination UI |
 | Classic editing | Shared nine brush media, 23 shapes, fill, picker, text rasterization, masks, lasso, crop, five orientations and Undo/Redo | Arbitrary-angle/resampled transformations, effects and persistent editable objects remain broader roadmap work |
 | Clipboard | PNG read/write, Copy/Cut/Copy visible and private ordinary Paste/new-layer Paste | Other browser/device permissions and cross-application fidelity remain unqualified |
-| View and workspace controls | Canvas fit/actual/selection zoom, scroll, layers, tool controls, shared pixel grid, Classic rulers, persistent status/toolbar visibility and live thumbnail | Fullscreen and broader Studio navigation parity remain open |
+| View and workspace controls | Canvas fit/actual/selection zoom, scroll, layers, tool controls, shared pixel grid, Classic rulers, persistent status/toolbar visibility, live thumbnail and browser fullscreen | Broader Studio navigation parity remains open |
 | Frontends and documents | Classic 7, 10 and 11 skins; Studio toolbar, floating tools/colors and history, separate documents/history/views with a download/discard switch guard | Multiple documents within each workspace, tabs, Save All and remaining Studio navigation/parity workflows |
 | File adapters | Browser pickers, lossless compact PCND downloads, PNG/BMP/JPEG input and image export | Broader native codecs, format capabilities and export controls |
 | Runtime and recovery | Bounded synchronous browser editing; unload warning; preferences in local storage | Background preparation, larger document/resource handling, browser recovery/document persistence and GPU document composition |
@@ -59,3 +59,22 @@ high-DPI grid regression also passes against the shared overlay. Production
 headless-browser checks also verify actual reload restoration of rulers and
 status/toolbar visibility. Runtime evidence is in ignored
 `docs/validation/browser-view-controls-2026-10-24/`.
+
+## Browser fullscreen
+
+Full screen uses the browser's actual DOM fullscreen state. The View menu and
+F11 request entry/exit, Escape provides an application exit fallback, and
+fullscreen-change events refresh the checkmark after an external exit. F11's
+browser default is prevented so the browser's separate window-fullscreen action
+cannot also run. Event subscriptions are removed when the editor is destroyed;
+there is no fullscreen polling timer or stored fullscreen preference.
+
+Requests await the native promises through a small helper in `src/lib`. A denied
+or unavailable request leaves the actual mode unchanged and reports a localized
+status in all seven languages. Host tests preserve the document/history ticket;
+helper tests cover pending requests, entry/exit, denial and unavailable support.
+Dedicated headless Chromium production checks verify actual menu entry/exit,
+F11 entry/exit with its browser default prevented, Escape exit, external exit,
+menu checkmarks and caught request rejection without runtime exceptions. Evidence
+is in ignored `docs/validation/browser-fullscreen-2026-10-24/`. This is scoped
+Chromium evidence; broader browser/device qualification remains open.

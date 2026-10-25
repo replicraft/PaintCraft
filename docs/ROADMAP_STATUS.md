@@ -731,3 +731,10 @@ in all Classic skins. Visibility preferences round-trip through browser storage,
 while grid/thumbnail state remains separate for Classic and Studio. See
 [the parity ledger](WEB_DESKTOP_PARITY.md). T22 conformance remains not-started:
 its native-equivalent fixture, interruption and multi-browser gates are still open.
+
+
+Browser fullscreen now uses the DOM API, with menu/F11 controls, an Escape
+fallback, external-exit state synchronization and localized permission failures.
+Actual headless Chromium production checks and helper/host regressions pass.
+See [browser fullscreen validation scope](WEB_DESKTOP_PARITY.md#browser-fullscreen).
+Broader T22 conformance and browser/device qualification remain open.
