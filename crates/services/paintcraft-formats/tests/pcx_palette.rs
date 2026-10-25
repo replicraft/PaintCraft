@@ -13,6 +13,41 @@ fn gradient() -> Vec<u8> {
 }
 
 #[test]
+#[ignore = "requires Pillow via PAINTCRAFT_PILLOW_PYTHON and FFmpeg"]
+fn independent_decoders_reopen_exactly_the_palette_preview_pixels() {
+    let folder =
+        std::env::temp_dir().join(format!("paintcraft-pcx-preview-{}", std::process::id()));
+    std::fs::create_dir_all(&folder).unwrap();
+    let source = gradient();
+    let prepared = pcx::prepare_rgba(40, 10, &source, Mode::Quantized256, &|| Ok(())).unwrap();
+    let preview = prepared.preview(40, &|| Ok(())).unwrap();
+    std::fs::write(folder.join("source.rgba"), source).unwrap();
+    std::fs::write(folder.join("preview.rgba"), preview.rgba).unwrap();
+    std::fs::write(
+        folder.join("quantized.pcx"),
+        prepared.encode(&|| Ok(())).unwrap(),
+    )
+    .unwrap();
+    let python = std::env::var_os("PAINTCRAFT_PILLOW_PYTHON").expect("PAINTCRAFT_PILLOW_PYTHON");
+    let result = std::process::Command::new(python)
+        .arg(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/tests/pcx-fixtures/verify_palette.py"
+        ))
+        .arg(&folder)
+        .output()
+        .unwrap();
+    assert!(
+        result.status.success(),
+        "{}\n{}",
+        String::from_utf8_lossy(&result.stdout),
+        String::from_utf8_lossy(&result.stderr)
+    );
+    println!("{}", String::from_utf8_lossy(&result.stdout));
+    std::fs::remove_dir_all(folder).unwrap();
+}
+
+#[test]
 fn exact_palette_and_quantization_share_the_encoded_preview_without_source_changes() {
     let pixels = gradient();
     let before = pixels.clone();
