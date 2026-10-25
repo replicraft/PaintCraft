@@ -7,7 +7,7 @@ workspaces. This ledger distinguishes connected features from remaining work.
 | Area | Browser state | Remaining work |
 | --- | --- | --- |
 | Settings presentation | Same dialog shell, responsive navigation, cards, control sizes, close button and footer as desktop | Studio-specific canvas/navigation preference parity |
-| Settings behavior | Appearance, system/light/dark theme, seven languages, Classic skins, canvas defaults, default font and About; staged Apply/Cancel for theme, language and skin | Installed-font access needs a browser permission/backend; the editable-object preference remains a labelled prototype on both hosts |
+| Settings behavior | Appearance, system/light/dark theme, seven languages, Classic skins, canvas defaults, default font and About; staged Apply/Cancel for theme, language and skin | Installed-font enumeration and rendering use permission-gated Local Font Access in supporting desktop browsers; bundled fonts remain available elsewhere. The editable-object preference remains a labelled prototype on both hosts |
 | Document identity | Open shows the photo/project name in the tab title; requested project downloads use the same basename and update that title; New restores Untitled | The browser cannot observe a name changed in the browser's own download destination UI |
 | Classic editing | Shared nine brush media, 23 shapes, fill, picker, text rasterization, masks, lasso, crop, five orientations and Undo/Redo | Arbitrary-angle/resampled transformations, effects and persistent editable objects remain broader roadmap work |
 | Clipboard | PNG read/write, Copy/Cut/Copy visible and private ordinary Paste/new-layer Paste | Other browser/device permissions and cross-application fidelity remain unqualified |
@@ -149,3 +149,38 @@ and mobile bar hiding with real local-storage persistence and reload. Selecting
 a skin before Apply leaves the rendered top bar byte-identical. Evidence is
 local in ignored `docs/validation/browser-chrome-2026-10-25/`. This remains scoped
 headless Chromium evidence rather than native Windows reference qualification.
+
+
+## Settings typography and installed browser fonts
+
+Ordinary settings cards use 18-point headings; About retains its 22-point heading.
+Theme, skin and desktop interface radio rows use 20-point horizontal spacing and
+10-point wrapped-row spacing. Apply/Cancel behavior stays staged.
+
+Web Text preferences now offer **Load installed fonts**. The browser permission
+is requested only from that button; previously granted access is restored on
+startup. The family list merges installed and bundled fonts. Only the selected
+installed family is read, including its style faces, with a 32 MiB face / 64 MiB
+family limit. Font bytes stay in memory on the device and feed the same
+Cosmic Text/Swash document renderer. Fonts arriving asynchronously invalidate
+shaping, fallback masks and the canvas preview without publishing document edits.
+Both independent workspaces share available fonts and keep their text state.
+
+Arial is the default for new web preferences and old records without a font
+choice. Explicit saved choices are preserved. Where local access is unsupported,
+denied, or Arial is absent, the bundled collection supplies fallback glyphs;
+Selawik remains interface typography. Local Font Access currently requires a
+secure context and a supporting desktop browser, such as Chrome or Edge; Safari,
+Firefox and mobile browsers retain bundled fonts. See the
+[Local Font Access API documentation](https://developer.chrome.com/docs/capabilities/web-apis/local-fonts).
+
+The follow-up passes 138 browser host tests, 49 shared UI tests (one capture
+ignored), 10 desktop settings GUI tests (one capture ignored), and 17 JavaScript
+tests. Host/Wasm Clippy, Rust/Biome formatting and the 800-line source limit pass.
+The production build contains 22 assets, largest 14,251,426 bytes. Isolated
+Chromium enumerated 184 actual local families, read only the selected Arial or
+Courier New faces, rendered document text with those faces, and refreshed a
+private preview after deliberately delayed font arrival. Denial and unsupported
+API checks retain bundled fonts and leave a blank document clean. Evidence is
+local in ignored `docs/validation/browser-local-fonts-2026-10-25/`; other browser
+engines and physical platform rendering are not qualified by these checks.
