@@ -17,6 +17,15 @@ impl Editor {
         if self.outbox.has_seen(token) {
             return false;
         }
+        if self.has_image_paste() {
+            if matches!(action, Action::Undo) {
+                self.cancel_image_paste();
+            } else {
+                self.status = "Finish placing the pasted image before editing or saving.".into();
+            }
+            self.outbox.remember(token);
+            return false;
+        }
         if !self.before_floating_action(&action) {
             self.outbox.remember(token);
             return false;
@@ -73,6 +82,11 @@ impl Editor {
     }
     /// The field used for overlays is disposable and never replaces session coverage.
     pub fn display_selection(&self) -> Selection {
+        if self.image_paste_revision().is_some() {
+            return self
+                .image_paste_bounds()
+                .map_or(Selection::Empty, Selection::Rect);
+        }
         if let Some(floating) = self
             .tools
             .floating_selection()

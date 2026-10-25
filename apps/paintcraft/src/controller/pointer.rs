@@ -4,6 +4,10 @@ use paintcraft_input::PointerButton;
 
 impl Editor {
     pub(crate) fn shape_file_ready(&mut self) -> bool {
+        if self.has_image_paste() {
+            self.status = "Finish placing the pasted image before editing or saving.".into();
+            return false;
+        }
         self.finish_selection_move();
         if self.is_constructing_shape() {
             self.set_status(paintcraft_tools::FINISH_SHAPE_BEFORE_FILE);
@@ -31,6 +35,9 @@ impl Editor {
         button: PointerButton,
         precise: Option<(i64, i64)>,
     ) {
+        if self.image_paste_press(point, button) {
+            return;
+        }
         if self.painting_blocked()
             || self.tools.pointer_is_down()
             || !self.tool.supports_button(button)
@@ -74,10 +81,16 @@ impl Editor {
         self.refresh_shape_hint();
     }
     pub fn pointer_move(&mut self, point: (i64, i64)) {
+        if self.image_paste_move(point) {
+            return;
+        }
         self.guard_floating_source();
         self.move_paint_pointer(point, false);
     }
     pub fn pointer_move_subpixel(&mut self, point: (i64, i64)) {
+        if self.image_paste_move((point.0.div_euclid(256), point.1.div_euclid(256))) {
+            return;
+        }
         self.guard_floating_source();
         self.move_paint_pointer(point, true);
     }
@@ -85,6 +98,9 @@ impl Editor {
         self.pointer_up_button(PointerButton::Primary);
     }
     pub fn pointer_up_button(&mut self, button: PointerButton) {
+        if self.image_paste_release(button) {
+            return;
+        }
         self.guard_floating_source();
         if let Some((token, action)) = self.tools.pointer_up_button(button) {
             self.request(token, action);
@@ -94,8 +110,15 @@ impl Editor {
     pub fn is_constructing_shape(&self) -> bool {
         self.tools.is_constructing_shape()
     }
+    pub fn gesture_button(&self) -> Option<PointerButton> {
+        if self.image_paste_dragging() {
+            Some(PointerButton::Primary)
+        } else {
+            self.tools.gesture_button()
+        }
+    }
     pub fn pointer_is_down(&self) -> bool {
-        self.tools.pointer_is_down()
+        self.image_paste_dragging() || self.tools.pointer_is_down()
     }
     pub fn finish_shape(&mut self) {
         if let Some((token, action)) = self.tools.finish_shape() {
@@ -112,6 +135,7 @@ impl Editor {
         }
     }
     pub fn cancel_gesture(&mut self) {
+        self.interrupt_image_paste();
         self.floating_source = None;
         self.tools.cancel_gesture();
     }

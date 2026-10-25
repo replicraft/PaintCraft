@@ -73,6 +73,7 @@ impl Editor {
         target_alias: Option<&str>,
         before_canvas: (u32, u32),
     ) {
+        self.finish_image_paste_publication(target_alias);
         if receipt.committed && self.document().canvas != before_canvas {
             self.canvas_size_edit = Some(self.document().canvas);
         }
@@ -173,7 +174,7 @@ impl Editor {
         draft: paintcraft_editor::clipboard::PasteDraft,
         destination: super::retry::PasteDestination,
     ) -> Result<()> {
-        if self.has_pending_edits() || self.file_barrier.is_some() {
+        if self.has_pending_edits() || self.file_barrier.is_some() || self.has_image_paste() {
             return Err(paintcraft_core::types::Error::new(
                 paintcraft_core::types::ErrorCode::ConflictStaleBase,
                 "Finish pending edits before pasting",

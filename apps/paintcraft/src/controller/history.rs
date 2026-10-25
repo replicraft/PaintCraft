@@ -18,6 +18,10 @@ impl Editor {
         epoch: u64,
         history_id: Option<Uuid>,
     ) {
+        if self.has_image_paste() {
+            self.status = "Finish placing the pasted image before editing or saving.".into();
+            return;
+        }
         if self.start_navigation(background::NavigationRequest::Seek {
             ticket: HistoryTicket {
                 owner,

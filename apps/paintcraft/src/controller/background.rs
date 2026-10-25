@@ -214,7 +214,7 @@ impl Editor {
         self.file_barrier.is_some()
     }
     pub(crate) fn can_capture_file(&self) -> bool {
-        self.file_barrier.is_some() || !self.has_pending_edits()
+        !self.has_image_paste() && (self.file_barrier.is_some() || !self.has_pending_edits())
     }
     pub(crate) fn preview_owner(&self) -> (Uuid, Option<u64>) {
         (self.preview_lineage, self.preview_token())

@@ -34,6 +34,7 @@ impl Editor {
             ticket: self.session.ticket(),
             canvas: self.document().canvas_rect(),
             fonts: self.text_renderer.clone(),
+            paste: self.capture_image_paste(),
         }
     }
 
@@ -73,9 +74,22 @@ pub(crate) struct PreviewPreparation {
     ticket: paintcraft_editor::session::Ticket,
     canvas: paintcraft_core::types::Rect,
     fonts: Option<crate::text::Shared>,
+    paste: Option<super::image_paste::Captured>,
 }
 impl PreviewPreparation {
+    pub(crate) fn build_paste(
+        &mut self,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<Option<Document>> {
+        self.paste
+            .take()
+            .map(|paste| paste.build(check))
+            .transpose()
+    }
     pub(crate) fn possible_preview(&self) -> bool {
+        if self.paste.is_some() {
+            return true;
+        }
         match self.preview.as_deref() {
             Some(Preview::Marquee { .. } | Preview::SelectionPath { .. }) => false,
             Some(Preview::Text { text, .. }) if text.is_empty() => false,

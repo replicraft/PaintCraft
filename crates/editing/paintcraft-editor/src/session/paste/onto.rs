@@ -131,6 +131,21 @@ impl Session {
     }
 }
 impl Preparation {
+    /// Prepare disposable pixels for an external-image preview on a render worker.
+    /// This does not construct history or publish into either timeline.
+    pub fn preview_paste_image_onto(
+        &self,
+        draft: &PasteDraft,
+        target: Uuid,
+        mode: BlendMode,
+        key: Option<Rgba>,
+        admission: Admission,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<paintcraft_document::Document> {
+        self.session
+            .preview_paste_image_onto(draft, target, mode, key, admission, check)
+    }
+
     /// Uses the same owner/publication/resource guards as all prepared edits.
     #[allow(clippy::too_many_arguments)]
     pub fn paste_image_onto(

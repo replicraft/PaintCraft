@@ -16,6 +16,7 @@ mod floating;
 mod floating_feedback;
 #[path = "controller/history.rs"]
 mod history;
+mod image_paste;
 #[path = "controller/layers.rs"]
 mod layers;
 #[path = "controller/paint_queue.rs"]
@@ -76,6 +77,7 @@ pub struct Editor {
     canvas_size_edit: Option<(u32, u32)>,
     tools: ToolState,
     floating_source: Option<floating::Source>,
+    image_paste: Option<image_paste::Placing>,
     floating_commit_on_release: bool,
     text_renderer: Option<crate::text::Shared>,
     target: Option<Uuid>,
@@ -154,6 +156,7 @@ impl Editor {
             canvas_size_edit: None,
             tools: ToolState::default(),
             floating_source: None,
+            image_paste: None,
             floating_commit_on_release: true,
             text_renderer: None,
             target,
@@ -216,9 +219,7 @@ impl Editor {
             }
             return false;
         }
-        if self.has_pending_edits()
-            || self.tools.gesture_in_progress()
-            || self.checkpointed == Some(key)
+        if self.has_pending_edits() || self.gesture_in_progress() || self.checkpointed == Some(key)
         {
             return false;
         }
@@ -249,7 +250,7 @@ impl Editor {
     pub(crate) fn recovery_candidate(&self) -> Option<((Uuid, u64), Arc<Recovery>)> {
         let key = self.render_key();
         if self.has_pending_edits()
-            || self.tools.gesture_in_progress()
+            || self.gesture_in_progress()
             || !self.is_dirty()
             || self.checkpointed == Some(key)
         {
@@ -330,7 +331,7 @@ impl Editor {
     }
 
     pub fn is_dirty(&self) -> bool {
-        self.session.is_dirty() || self.has_pending_edits()
+        self.session.is_dirty() || self.has_pending_edits() || self.has_image_paste()
     }
 
     /// Number of publications so far (commits, undo and redo each count).
@@ -370,6 +371,9 @@ impl Editor {
 
     /// Choose the editing target explicitly; it must be an existing layer.
     pub fn set_target(&mut self, id: Uuid) -> bool {
+        if self.has_image_paste() {
+            return false;
+        }
         let ok = self.document().layers.contains_key(&id);
         if ok {
             self.cancel_gesture();
@@ -403,7 +407,7 @@ impl Editor {
     }
 
     pub fn gesture_in_progress(&self) -> bool {
-        self.tools.gesture_in_progress()
+        self.has_image_paste() || self.tools.gesture_in_progress()
     }
     pub fn is_editing_text(&self) -> bool {
         self.tools.is_editing_text()
@@ -428,6 +432,10 @@ impl Editor {
         self.tools.cancel_text();
     }
     pub fn select_tool(&mut self, tool: Tool) {
+        if self.has_image_paste() {
+            self.status = "Finish placing the pasted image before editing or saving.".into();
+            return;
+        }
         if !matches!(tool, Tool::Magnifier | Tool::Pan)
             && !(matches!(self.tool, Tool::Magnifier | Tool::Pan) && tool == Tool::Text)
         {
@@ -461,6 +469,7 @@ impl Editor {
     /// Consume completions and execute queued activations in arrival order.
     /// Native editors prepare one transaction at a time on the shared worker.
     pub fn run_pending(&mut self) -> u64 {
+        self.guard_image_paste();
         self.guard_floating_source();
         self.poll_residency_maintenance();
         if self.maintenance.is_some() {
