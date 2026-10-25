@@ -25,10 +25,14 @@ mod export_options;
 mod files;
 #[path = "app/format_admission.rs"]
 mod format_admission;
+#[path = "app/format_filters.rs"]
+mod format_filters;
 #[path = "app/gpu_display.rs"]
 mod gpu_display;
 #[path = "app/history.rs"]
 mod history;
+#[path = "app/importing.rs"]
+mod importing;
 #[path = "app/input.rs"]
 mod input;
 #[path = "app/layer_panel.rs"]
@@ -140,6 +144,7 @@ const STUDIO_SIZE: (u32, u32) = (320, 320);
 
 #[derive(Clone, Debug, PartialEq)]
 enum Confirm {
+    ImportLosses,
     Settings(preferences::SettingsDraft),
     SwitchInterface(Experience),
     Colors(colors::ColorDraft),
@@ -220,7 +225,10 @@ pub struct App {
     dialogs: Option<NativeDialogs>,
     printer: paintcraft_platform::printing::PrintService,
     clipboard: clipboard::State,
+    pending_import: Option<importing::Pending>,
     dialog_owner: Option<Uuid>,
+    dialog_frontend: Option<paintcraft_formats::registry::Frontend>,
+    dialog_source: Option<(Arc<paintcraft_document::Document>, (Uuid, u64))>,
     export_dialog_quality: Option<u8>,
     texture: Option<egui::TextureHandle>,
     gpu_target: Option<gpu_display::Target>,
@@ -342,7 +350,10 @@ impl App {
             dialogs: None,
             printer: Default::default(),
             clipboard: Default::default(),
+            pending_import: None,
             dialog_owner: None,
+            dialog_frontend: None,
+            dialog_source: None,
             export_dialog_quality: None,
             texture: None,
             gpu_target: None,

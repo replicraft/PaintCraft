@@ -19,6 +19,9 @@ impl App {
         self.context = ctx.clone();
         let first_pass = ctx.current_pass_index() == 0;
         if first_pass {
+            if self.pending_import.is_some() && self.confirm != Some(Confirm::ImportLosses) {
+                self.pending_import = None;
+            }
             self.editor
                 .set_floating_commit_on_release(self.experience() == Experience::Classic);
             if self.document_count() == 0 {

@@ -29,14 +29,21 @@ impl App {
             }
         });
         let owner = self.active_tab_id();
+        let filters = self.format_filters(kind);
+        let frontend = self.format_frontend();
+        let source = (kind == Kind::Open)
+            .then(|| (self.editor.document_snapshot(), self.editor.render_key()));
         if let Some(dialogs) = &mut self.dialogs
             && !dialogs.pending()
         {
             self.dialog_owner = (owner != Uuid::nil()).then_some(owner);
+            self.dialog_frontend = Some(frontend);
+            self.dialog_source = source;
             let wake_ctx = ctx.clone();
-            dialogs.request_with_labels(
+            dialogs.request_with_filters(
                 kind,
                 Some(&suggested),
+                &filters,
                 |source| t!(ctx, source),
                 move || wake_ctx.request_repaint(),
             );
@@ -56,11 +63,45 @@ impl App {
         completion: paintcraft_platform::dialogs::Completion,
     ) {
         let owner = self.dialog_owner.take();
+        let source = self.dialog_source.take();
+        let frontend = self.dialog_frontend.take();
+        if completion.kind == Kind::Open
+            && frontend.is_some_and(|frontend| frontend != self.format_frontend())
+        {
+            self.editor
+                .set_status(t!(ctx, "The document changed; choose the image again."));
+            return;
+        }
         let jpeg_quality = if completion.kind == Kind::Export {
             self.export_dialog_quality.take().unwrap_or(90)
         } else {
             90
         };
+        if completion.kind == Kind::Open
+            && completion.path.is_some()
+            && let Some((base, ticket)) = source
+        {
+            let editor = if owner.is_none_or(|owner| owner == self.active_tab_id()) {
+                Some(&self.editor)
+            } else {
+                self.tabs
+                    .iter()
+                    .find(|tab| Some(tab.id) == owner)
+                    .and_then(|tab| tab.state.as_ref())
+                    .map(|state| &state.editor)
+            };
+            if editor.is_none_or(|editor| {
+                !Arc::ptr_eq(&base, &editor.document_snapshot())
+                    || ticket != editor.render_key()
+                    || editor.has_pending_edits()
+                    || editor.gesture_in_progress()
+                    || editor.is_editing_text()
+            }) {
+                self.editor
+                    .set_status(t!(ctx, "The document changed; choose the image again."));
+                return;
+            }
+        }
         if (completion.path.is_some() || completion.kind == Kind::InspectRecovery)
             && let Some(owner) = owner
         {
@@ -167,6 +208,9 @@ impl App {
         let family = self.admit_open_source(path, &bytes)?;
         let (editor, bound, note) = if family != paintcraft_formats::registry::Family::Pcnd {
             let img = image::decode(&bytes)?;
+            if !img.losses.is_empty() {
+                return self.stage_import(img, path.to_path_buf(), hex(&Sha256::digest(&bytes)));
+            }
             let doc = import_image(
                 img.width,
                 img.height,

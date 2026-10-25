@@ -309,6 +309,10 @@ impl App {
     }
 
     pub(super) fn confirm_dialog(&mut self, ui: &mut egui::Ui) {
+        if self.confirm == Some(Confirm::ImportLosses) {
+            self.import_dialog(ui.ctx());
+            return;
+        }
         if let Some(Confirm::SwitchInterface(target)) = self.confirm.clone() {
             self.interface_switch_dialog(ui.ctx(), target);
             return;
@@ -346,7 +350,7 @@ impl App {
             return;
         }
         let (title, text, go) = match &confirm {
-            Confirm::RecentFiles | Confirm::ExportOptions(_) | Confirm::Settings(_) | Confirm::SwitchInterface(_) | Confirm::Colors(_) | Confirm::Canvas(_) | Confirm::ResizeSkew(_) | Confirm::LayerProperties(_) => unreachable!("properties handled above"),
+            Confirm::ImportLosses | Confirm::RecentFiles | Confirm::ExportOptions(_) | Confirm::Settings(_) | Confirm::SwitchInterface(_) | Confirm::Colors(_) | Confirm::Canvas(_) | Confirm::ResizeSkew(_) | Confirm::LayerProperties(_) => unreachable!("properties handled above"),
             Confirm::DiscardForNew
             | Confirm::DiscardForOpen(_)
             | Confirm::DiscardForRecovery(_)
@@ -427,8 +431,10 @@ impl App {
         }
         match choice {
             Some(Choice::Accept) => {
+                self.confirm = None;
                 match confirm {
-                    Confirm::RecentFiles
+                    Confirm::ImportLosses
+                    | Confirm::RecentFiles
                     | Confirm::ExportOptions(_)
                     | Confirm::Settings(_)
                     | Confirm::SwitchInterface(_)
@@ -462,7 +468,6 @@ impl App {
                         ..
                     } => self.do_export_quality(&path, format, &losses, jpeg_quality),
                 }
-                self.confirm = None;
             }
             Some(Choice::Cancel) => self.confirm = None,
             Some(Choice::Discard) => unreachable!("this prompt has no discard action"),
