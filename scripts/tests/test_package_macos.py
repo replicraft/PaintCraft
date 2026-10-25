@@ -55,7 +55,10 @@ class BundleTests(unittest.TestCase):
         self.assertEqual((contents / "Helpers/PaintCraft Editor.app/Contents/MacOS/paintcraft").read_bytes(), self.binary.read_bytes())
         self.assertEqual((contents / "Resources/FONT_LICENSES.txt").read_bytes(),
                          (PACK.ROOT / "packaging/FONT_LICENSES.txt").read_bytes())
-        self.assertTrue((contents / "Helpers/PaintCraft Editor.app/Contents/MacOS/paintcraft").stat().st_mode & 0o111)
+        # Windows chmod/stat do not implement Unix execute bits. Real DMG/ZIP
+        # permissions are also checked on each native macOS release runner.
+        if os.name != "nt":
+            self.assertTrue((contents / "Helpers/PaintCraft Editor.app/Contents/MacOS/paintcraft").stat().st_mode & 0o111)
 
     def test_replacement_requires_explicit_flag_and_recognized_bundle(self):
         PACK.publish_bundle(self.destination, self.prepare)

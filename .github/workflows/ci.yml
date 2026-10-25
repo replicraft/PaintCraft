@@ -19,6 +19,10 @@ jobs:
         with:
           key: native-filesystem
       - run: cargo test --locked -p paintcraft-platform --lib
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - run: python -m unittest discover -s scripts/tests -p 'test_package_*.py'
   test:
     strategy:
       matrix:
