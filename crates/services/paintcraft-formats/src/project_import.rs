@@ -5,7 +5,9 @@ use paintcraft_raster::{Admission, RasterLayer};
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 mod ora;
+mod psd;
 pub use ora::decode_ora;
+pub use psd::decode_psd;
 
 pub const PAINT_LOSSES: [&str; 3] = [
     "paint-layer-properties-unverified",
