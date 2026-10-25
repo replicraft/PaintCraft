@@ -4,6 +4,10 @@ Latest Classic feedback: [implemented changes, validation scope and remaining
 selection/rotation/background-removal work](CLASSIC_FOLLOWUP.md). Full feature and
 historical skin parity remain incomplete.
 
+Settings now stage theme/language/skin choices until Apply, and Classic 11 can
+hide its floating brush bars through a persisted preference. Browser header and
+auto-hide fixes are recorded in [the parity ledger](WEB_DESKTOP_PARITY.md).
+
 
 Magnifier now works in desktop/web Classic skins: primary click steps in,
 secondary click steps out, and the clicked document point is centered where scroll

@@ -86,9 +86,9 @@ two preset-color rows and ten custom-color slots, Settings gear and a collapsibl
 popups expose their reference entries with execution disabled. Resize handles are
 visual markers; View → Canvas size remains the working resize path.
 
-Settings provides Light, Dark and System appearance, with live theme preview,
-Apply/Cancel, interface/skin selection and canvas defaults. Both frontends use
-the selected theme and bundled Selawik. Cancel restores the previous theme;
+Settings provides Light, Dark and System appearance, explicit Apply/Cancel,
+interface/skin selection and canvas defaults. Choices remain staged until Apply. Both frontends use
+the selected theme and bundled Selawik. Cancel discards the draft;
 preferences do not alter document history. Existing settings files default to
 System when the optional appearance field is absent.
 
@@ -316,7 +316,7 @@ editable text objects and IME.
 
 Classic v11 File/Edit now follow the supplied `im1age.png` and `imag1e.png`
 structure: File exposes import/recent, Save as and Print submenus, Save as project,
-sharing/background/property previews and Exit. Picture export uses the existing
+sharing/background/property previews and desktop Exit. Picture export uses the existing
 PNG/BMP/JPEG path; project saving retains the native Save As action. Exit and the
 macOS Quit event share the action outbox and existing unsaved-window close guard.
 File scrolls in short windows; its height also overrides the popup's initial
@@ -340,8 +340,9 @@ new rendered/native visual evidence. Source-pinned logs and limits are in the
 
 Settings now uses grouped theme/interface/skin, canvas and text sections, an icon
 sidebar on wide windows and wrapped navigation tabs on narrow ones. Page content
-scrolls independently from the Apply/Cancel footer. Theme preview, draft
-cancellation and separate-workspace switching retain their existing semantics.
+scrolls independently from the Apply/Cancel footer. Theme, language and skin
+changes remain staged until Apply. Cancel leaves the active preferences intact,
+and interface switching retains its separate-workspace guard.
 Window-free tests cover 1360x900, 700x500, 480x500 and 480x360 at display scales
 1 and 2, including stable controls across repeated frames and page changes.
 Canvas defaults apply to new documents without resizing the open image.
@@ -1481,3 +1482,20 @@ The regression check runs the ordinary GUI suite with accessibility enabled.
 acknowledged native/browser writes. Exact active-layer capture preserves selection
 holes and raw RGBA without modifying document/history. Earlier disabled Copy
 previews are historical; Cut, Paste and Copy visible layers remain separate work.
+
+## Staged settings and mobile controls
+
+Appearance, language and skin changes take effect only after Apply on desktop and
+web. Choosing Paint 7 in a settings draft leaves the active skin and theme intact.
+Applying Paint 7 switches to its light-only presentation; applying another skin
+restores the saved theme preference. Cancel leaves the live UI unchanged.
+
+Settings > Appearance > Canvas controls includes **Show brush size and opacity
+bars**. Turning it off hides Classic 11's floating controls and releases their
+canvas clearance. The preference is persisted by both hosts and does not modify
+pixels, tool sizes, opacity or history. Existing settings default to showing them.
+
+Browser auto-hide retains the revealed ribbon and text rows while the pointer
+moves into them. Browser File menus omit Exit. The desktop-download CTA appears
+only in Classic 11, with a centered target and distinct hover/pressed appearance.
+See [browser and desktop parity](WEB_DESKTOP_PARITY.md) for current test evidence.

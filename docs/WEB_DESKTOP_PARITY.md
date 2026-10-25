@@ -7,7 +7,7 @@ workspaces. This ledger distinguishes connected features from remaining work.
 | Area | Browser state | Remaining work |
 | --- | --- | --- |
 | Settings presentation | Same dialog shell, responsive navigation, cards, control sizes, close button and footer as desktop | Studio-specific canvas/navigation preference parity |
-| Settings behavior | Appearance, system/light/dark theme, seven languages, Classic skins, canvas defaults, default font and About; explicit Apply/Cancel and reversible preview | Installed-font access needs a browser permission/backend; the editable-object preference remains a labelled prototype on both hosts |
+| Settings behavior | Appearance, system/light/dark theme, seven languages, Classic skins, canvas defaults, default font and About; staged Apply/Cancel for theme, language and skin | Installed-font access needs a browser permission/backend; the editable-object preference remains a labelled prototype on both hosts |
 | Document identity | Open shows the photo/project name in the tab title; requested project downloads use the same basename and update that title; New restores Untitled | The browser cannot observe a name changed in the browser's own download destination UI |
 | Classic editing | Shared nine brush media, 23 shapes, fill, picker, text rasterization, masks, lasso, crop, five orientations and Undo/Redo | Arbitrary-angle/resampled transformations, effects and persistent editable objects remain broader roadmap work |
 | Clipboard | PNG read/write, Copy/Cut/Copy visible and private ordinary Paste/new-layer Paste | Other browser/device permissions and cross-application fidelity remain unqualified |
@@ -25,10 +25,10 @@ preferences remain compatible with existing v1 data; the new text prototype flag
 is optional on old records. Canvas defaults are validated against the browser
 pixel limit before adoption. Changes do not publish document history or pixels.
 
-Host tests exercise reversible theme/language preview, Apply, system theme,
+Host tests exercise staged theme/language/skin choices, Apply, system theme,
 all Classic skins, compact layouts, staged canvas defaults, invalid dimensions,
 text preferences and About. Seven-language UI checks pass. Existing native
-settings, canvas, Studio navigation and Japanese preview regression tests pass.
+settings, canvas, Studio navigation and Japanese Apply/Cancel regression tests pass.
 
 A production build was exercised in isolated HeadlessChrome 156.0.8078.4. Light
 and dark Appearance, Text and About surfaces were inspected. Dark theme persisted
@@ -119,3 +119,33 @@ Waiting, cancellation and denial controls are translated. Actual production
 Chromium lifecycle and independent PNG/PCND pixel checks pass; visible printer
 dialogs, physical output and other browsers remain unqualified. See
 [browser printing](BROWSER_PRINTING.md).
+
+## Header, toolbar and mobile preferences
+
+The desktop-download control appears only in Classic 11. Its target is vertically
+centered beside Settings, with distinct hover, keyboard-focus and pressed colors.
+At compact widths the same route remains in Interface. Classic 7/10 and Studio
+omit it. Browser File menus omit Exit through an explicit host capability.
+
+Auto-hide now retains the full revealed ribbon and text-options hover region.
+Moving from the menu bar into a tool or font control keeps it visible; pointer
+down/up frames still hold the canvas mapping. Settings > Appearance > Canvas
+controls offers **Show brush size and opacity bars** on desktop and web. The
+choice stays staged until Apply, persists across restart/reload, and removes the
+floating controls' canvas clearance when disabled. Tool values and history stay
+unchanged. Old preference records default to showing the bars.
+
+Theme, language and skin choices now remain staged until Apply. Paint 7's forced
+light theme begins with its applied skin, and the saved theme returns only after
+another skin is applied. Cancel leaves the active UI unchanged.
+
+The follow-up passes 137 browser host tests, 49 shared UI tests (one capture
+ignored), 362 desktop library tests (8 ignored) and 280 desktop GUI tests
+(64 explicit captures ignored). Strict host/Wasm Clippy, Rust formatting, source
+length checks and all 978 messages in seven locales pass. The production build
+contains 22 assets below the per-file Pages limit. Isolated Chromium checks cover
+actual hover/layout, staged Paint 7/11 changes, toolbar traversal, browser menus
+and mobile bar hiding with real local-storage persistence and reload. Selecting
+a skin before Apply leaves the rendered top bar byte-identical. Evidence is
+local in ignored `docs/validation/browser-chrome-2026-10-25/`. This remains scoped
+headless Chromium evidence rather than native Windows reference qualification.
