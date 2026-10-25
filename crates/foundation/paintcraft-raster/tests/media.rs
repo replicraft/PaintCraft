@@ -76,7 +76,7 @@ fn invalid_requests_scratch_overflow_and_cancellation_fail_before_publication() 
 #[test]
 fn loaded_paint_remains_continuous_and_only_feathers_at_exposed_edges() {
     let clip = Rect::new(0, 0, 640, 64).unwrap();
-    for media in [BrushMedia::Oil, BrushMedia::Watercolor] {
+    for media in [BrushMedia::Watercolor] {
         let stroke = pixels(media, &[(16, 32), (620, 32)], clip);
         for x in 16..=620 {
             assert!(
@@ -96,7 +96,7 @@ fn loaded_paint_remains_continuous_and_only_feathers_at_exposed_edges() {
 }
 
 #[test]
-fn marker_is_dark_and_crayon_has_fewer_paper_pits_than_graphite() {
+fn marker_is_dark_and_crayon_leaves_clustered_paper_breaks() {
     let clip = Rect::new(0, 0, 320, 64).unwrap();
     let path = [(16, 32), (300, 32)];
     let marker = pixels(BrushMedia::Marker, &path, clip);
@@ -113,9 +113,17 @@ fn marker_is_dark_and_crayon_has_fewer_paper_pits_than_graphite() {
             .sum::<u64>()
             / area.len() as u64
     };
-    assert!((area.len() / 300..area.len() / 50).contains(&missing(&crayon)));
-    assert!(missing(&pencil) > missing(&crayon) * 10);
-    assert!(mean(&crayon) > mean(&pencil) + 90);
+    let gaps = missing(&crayon);
+    assert!(
+        (area.len() / 8..area.len() / 2).contains(&gaps),
+        "wax gaps {gaps}/{}",
+        area.len()
+    );
+    assert!(mean(&crayon) > mean(&pencil) + 20);
+    assert!(
+        (24..289).any(|x| !crayon.contains_key(&(x, 32)) && !crayon.contains_key(&(x + 1, 32))),
+        "wax flakes span adjacent pixels"
+    );
     let spray = pixels(BrushMedia::Airbrush, &[(16, 32)], clip);
     assert!(spray.values().any(|&alpha| alpha == 255));
     assert!((12..=20).any(|x| !spray.contains_key(&(x, 32))));
@@ -153,4 +161,20 @@ fn angled_nibs_do_not_leave_periodic_pits_along_straight_edges() {
             assert!(variation <= 16, "{medium:?} y={y} variation={variation}");
         }
     }
+}
+
+#[test]
+fn oil_load_fades_and_narrows_along_distance_without_repainting_earlier_marks() {
+    let clip = Rect::new(0, 0, 640, 64).unwrap();
+    let stroke = pixels(BrushMedia::Oil, &[(16, 32), (620, 32)], clip);
+    assert!(stroke[&(40, 32)] > 240);
+    assert!(stroke[&(180, 32)] < stroke[&(80, 32)]);
+    assert!(stroke.get(&(400, 32)).copied().unwrap_or(0) < 10);
+    assert!(!stroke.contains_key(&(600, 32)));
+    let width = |x| stroke.keys().filter(|(column, _)| *column == x).count();
+    assert!(width(40) > width(240));
+    assert_eq!(
+        stroke,
+        pixels(BrushMedia::Oil, &[(16, 32), (620, 32), (16, 32)], clip)
+    );
 }

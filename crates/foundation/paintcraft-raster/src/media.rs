@@ -98,7 +98,23 @@ pub fn coverage(
         BrushMedia::CalligraphyBrush => (f64::from(size) / 20.0).clamp(0.35, 6.0),
         _ => (f64::from(size) / 8.0).clamp(0.5, 8.0),
     };
-    let mut dab = |cx: f64, cy: f64, tangent: (f64, f64)| -> Result<()> {
+    let mut dab = |cx: f64, cy: f64, tangent: (f64, f64), travelled: f64| -> Result<()> {
+        // Oil loses its load gradually along the gesture. Earlier coverage stays
+        // fixed, so a growing preview and the released stroke remain identical.
+        let load = if media == BrushMedia::Oil {
+            (1.0 - (travelled - f64::from(size) * 2.0).max(0.0) / (f64::from(size) * 18.0))
+                .clamp(0.0, 1.0)
+        } else {
+            1.0
+        };
+        if load == 0.0 {
+            return Ok(());
+        }
+        let tip_radius = if media == BrushMedia::Oil {
+            radius * (0.30 + 0.70 * load)
+        } else {
+            radius
+        };
         let left = ((cx - radius - 1.0).floor() as i64).max(x0);
         let right = ((cx + radius + 1.0).ceil() as i64).min(x1);
         let top = ((cy - radius - 1.0).floor() as i64).max(y0);
@@ -112,8 +128,6 @@ pub fn coverage(
         if work > DAB_PIXELS_MAX {
             return Err(limit());
         }
-        // Pigment is capped over the whole gesture, not depleted by path length.
-        // Texture and exposed tip edges supply the dry-bristle transition.
         for y in top..bottom {
             check()?;
             for x in left..right {
@@ -121,12 +135,12 @@ pub fn coverage(
                     media,
                     x as f64 + 0.5 - cx,
                     y as f64 + 0.5 - cy,
-                    radius,
+                    tip_radius,
                     (x + clip.x0, y + clip.y0),
                     tangent,
                 );
                 let dest = &mut mask[(y - y0) as usize * width + (x - x0) as usize];
-                *dest = (*dest).max(alpha);
+                *dest = (*dest).max((f64::from(alpha) * load).round() as u8);
             }
         }
         Ok(())
@@ -143,7 +157,8 @@ pub fn coverage(
     let tangent = points
         .get(1)
         .map_or((1.0, 0.0), |&next| direction(start, local(next)));
-    dab(start.0, start.1, tangent)?;
+    dab(start.0, start.1, tangent, 0.0)?;
+    let mut travelled = 0.0;
     for pair in points.windows(2) {
         check()?;
         let (a, b) = (local(pair[0]), local(pair[1]));
@@ -155,6 +170,7 @@ pub fn coverage(
             clip.width() as f64,
             clip.height() as f64,
         ) else {
+            travelled += length;
             continue;
         };
         let count = (length / spacing).ceil().max(1.0) as u64;
@@ -170,8 +186,10 @@ pub fn coverage(
                 a.0 + (b.0 - a.0) * t,
                 a.1 + (b.1 - a.1) * t,
                 direction(a, b),
+                travelled + length * t,
             )?;
         }
+        travelled += length;
     }
     let mut spans = Vec::new();
     for (y, row) in mask.chunks_exact(width).enumerate() {
@@ -294,10 +312,10 @@ fn tip(
             1.0 - normalized.powi(6) * (0.12 + 0.55 * bristle)
         }
         BrushMedia::Crayon => {
-            // Wax follows coarse paper relief. Isolated pits are clustered into
-            // a few small flakes instead of peppering every part of the stroke.
+            // Broad wax catches the paper ridges, leaving clustered dry flakes
+            // and smaller pits throughout the mark instead of a solid fill.
             let paper = paper_noise(x, y, 3);
-            if paper < 0.10 && grain < 0.70 {
+            if paper < 0.32 || (paper < 0.58 && grain < 0.22) {
                 0.0
             } else {
                 0.80 + 0.20 * paper

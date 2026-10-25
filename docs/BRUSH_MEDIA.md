@@ -10,10 +10,10 @@ same coverage and transaction implementation.
 | Calligraphy brush | Broad diagonal nib with a pixel-wide antialiased edge |
 | Calligraphy pen | Finer opposing diagonal nib with the same edge treatment |
 | Airbrush | Discrete spray particles with radial density |
-| Oil brush | Opaque loaded center with bristle grooves following the stroke and feathered exposed edges |
-| Crayon | Dense wax over smoothly varying paper relief with sparse clustered pits |
+| Oil brush | Loaded bristle mark that gradually fades and narrows along the stroke |
+| Crayon | Wax on paper ridges with clustered flakes and smaller dry gaps |
 | Marker | Dark, broad felt nib with softened corners |
-| Natural pencil | Lighter graphite grain with more paper gaps than crayon |
+| Natural pencil | Lighter graphite with fine paper grain |
 | Watercolor brush | Continuous translucent wash with smoothly varying pigment and soft edges |
 
 These are PaintCraft media, not reference-qualified simulations of Microsoft
@@ -58,26 +58,22 @@ qualification matrix. The raw matrix is under
 The latest [Classic follow-up](CLASSIC_FOLLOWUP.md#brush-comparison) records the
 real Paint examples inspected and the limits of that visual comparison.
 
-## Continuous pigment follow-up
+## Pigment and paper follow-up
 
-Oil and watercolor no longer expire after six or eight brush widths. Movement
-continues to deposit their loaded pigment along the whole gesture. Their exposed
-tip edges feather into the canvas while interior coverage remains continuous.
-This is a geometry-based edge treatment, not sampling or mixing existing layer
-pixels. Document color and selection coverage still enter through the ordinary
-prepared paint transaction. Both media multiply the captured brush opacity once,
-just like every other medium.
+Oil now starts fully loaded for two brush widths, then loses load over the next
+18 widths. Its radius narrows from full size toward 30% while coverage fades to
+zero. Distance is measured from the gesture's start, including offscreen segments,
+so clipping does not reload the brush. Earlier coverage stays fixed while the
+preview grows; retracing the same gesture does not darken it. Watercolor retains
+a continuous translucent wash with smooth pigment variation and a soft radial
+falloff. Both multiply the captured opacity once.
 
-Marker interior coverage is now 255/255 at full source opacity; its felt tip has
-softened corners. Oil bristle direction follows each stroke segment, with a loaded
-center that does not dry out with distance. Reversing a segment preserves its
-groove phase. Crayon uses correlated paper relief and a few clustered pits rather
-than uniform salt-and-pepper noise. Natural pencil uses finer, lighter graphite
-texture. Watercolor uses smooth pigment variation and a soft radial falloff.
-These are deterministic PaintCraft profiles, not native Paint equivalence claims.
-Airbrush remains discrete, with its highest particle density toward the center.
-The broad and fine opposing calligraphy nibs resolve their edge distance in canvas
-pixels so the narrow nib does not collapse its antialiasing fringe.
+Crayon leaves clustered paper gaps across roughly one eighth to one half of the
+sampled stroke interior, plus smaller pits around the dry flakes. The coverage
+remains anchored to document coordinates. It is visibly distinct from the fine,
+lighter grain of natural pencil. Marker remains fully loaded at 100% opacity.
+Oil does not mix existing layer pigment. These are deterministic PaintCraft
+profiles, without a native Paint pixel-equivalence claim.
 
 All textured media still recompute bounded full-gesture coverage for a preview.
 The [incremental smooth-path cache](INCREMENTAL_COVERAGE.md) only serves the ordinary
@@ -102,5 +98,7 @@ The output remains ignored validation data.
 Before/after contact sheets at 100%, 50% and 25% opacity, on white and transparent
 backgrounds, were rendered directly from the shared coverage kernels under
 `docs/validation/brush-rework-2026-10-24/`. Regression checks cover all nine media's
-opacity multiplication, identical retracing, long-stroke continuity, clipping,
+opacity multiplication, identical retracing, oil taper, watercolor continuity, clipping,
 preview-prefix preservation and one-gesture undo semantics.
+
+The latest inspected contact sheet is under `docs/validation/brush-rework-2026-10-24/tapered/`, including all opacity columns and transparent pixels.

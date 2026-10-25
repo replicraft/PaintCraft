@@ -143,7 +143,7 @@ fn all_nine_brushes_multiply_selected_opacity_once_even_at_the_end_of_long_strok
                     );
                 }
             }
-            if matches!(media, BrushMedia::Oil | BrushMedia::Watercolor) && alpha > 0 {
+            if media == BrushMedia::Watercolor && alpha > 0 {
                 assert!((300..600).all(|x| result.doc.layers[&id].raster.get(x, 32).a() > 0));
             }
         }
