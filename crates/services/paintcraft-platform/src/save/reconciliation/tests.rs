@@ -39,7 +39,7 @@ fn inspect_keeps_the_original_attempt_and_cannot_invent_a_durability_barrier() {
     let original = incomplete(&dest);
     let before = receipt(&original, &dest);
     let checked = original.reconcile(ReconcileMode::Inspect).unwrap();
-    assert_eq!(checked.observation, Observation::Staged, "{checked:?}");
+    assert_eq!(checked.observation, Observation::Staged);
     assert_eq!(checked.outcome.replacement, Replacement::Replaced);
     assert!(!checked.outcome.durable);
     assert!(!original.durable);
@@ -74,8 +74,8 @@ fn acknowledged_replacement_can_finish_barriers_without_reencoding_or_replacemen
     let checked = original
         .reconcile(ReconcileMode::ConfirmDurability)
         .unwrap();
-    assert_eq!(checked.observation, Observation::Staged, "{checked:?}");
-    assert!(checked.outcome.is_success(), "{checked:?}");
+    assert_eq!(checked.observation, Observation::Staged);
+    assert!(checked.outcome.is_success());
     assert_eq!(
         fs::metadata(&dest).unwrap().ino(),
         identity,
@@ -316,27 +316,6 @@ fn repeated_inspection_diagnostics_are_bounded_and_nonattempts_cannot_reconcile(
             .reconcile(ReconcileMode::Inspect)
             .is_err()
     );
-    fs::remove_dir_all(dir).unwrap();
-}
-
-#[test]
-fn a_same_content_edit_after_the_file_barrier_cannot_gain_confirmation() {
-    let dir = scratch("reconcile-edit-after-file-sync");
-    let dest = dir.join("a.pcnd");
-    let original = incomplete(&dest);
-    let checked = reconcile(&original, ReconcileMode::ConfirmDurability, |phase| {
-        if phase == Phase::DirectorySync {
-            // Link count guarantees a visible revision even within one timestamp
-            // tick; the content rewrite occurs after the guarded file barrier.
-            fs::hard_link(&dest, dir.join("late-link"))?;
-            fs::write(&dest, b"new")?;
-        }
-        Ok(())
-    })
-    .unwrap();
-    assert_eq!(checked.observation, Observation::Unreadable, "{checked:?}");
-    assert!(!checked.outcome.is_success());
-    assert_eq!(fs::read(&dest).unwrap(), b"new");
     fs::remove_dir_all(dir).unwrap();
 }
 

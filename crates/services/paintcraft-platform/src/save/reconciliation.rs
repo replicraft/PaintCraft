@@ -77,21 +77,12 @@ fn reconcile(
             {
                 let mut validating = false;
                 let durable = (|| {
-                    let parent = attempt.destination.parent().ok_or_else(changed)?;
-                    let directory = File::open(parent)?;
-                    check_identity(&directory.metadata()?, &fs::symlink_metadata(parent)?)?;
-                    // UFS soft updates can complete a prior rename's inode
-                    // changes while syncing. Settle those before capturing the
-                    // revision, then issue fresh barriers under that guard.
-                    #[cfg(target_os = "freebsd")]
-                    {
-                        file.sync_all()?;
-                        directory.sync_all()?;
-                    }
                     let revision = file.metadata()?;
                     barrier(Phase::FileSync)?;
                     file.sync_all()?;
                     barrier(Phase::DirectorySync)?;
+                    let parent = attempt.destination.parent().ok_or_else(changed)?;
+                    let directory = File::open(parent)?;
                     check_identity(&directory.metadata()?, &fs::symlink_metadata(parent)?)?;
                     directory.sync_all()?;
                     validating = true;
@@ -201,8 +192,6 @@ fn check_identity(open: &fs::Metadata, named: &fs::Metadata) -> std::io::Result<
     {
         Ok(())
     } else {
-        #[cfg(test)]
-        eprintln!("save identity changed: open={open:?}; named={named:?}");
         Err(changed())
     }
 }
@@ -219,20 +208,6 @@ fn check_revision(before: &fs::Metadata, after: &fs::Metadata) -> std::io::Resul
     {
         Ok(())
     } else {
-        #[cfg(test)]
-        eprintln!(
-            "save revision changed: before={before:?} links={} mtime=({}, {}) ctime=({}, {}); after={after:?} links={} mtime=({}, {}) ctime=({}, {})",
-            before.nlink(),
-            before.mtime(),
-            before.mtime_nsec(),
-            before.ctime(),
-            before.ctime_nsec(),
-            after.nlink(),
-            after.mtime(),
-            after.mtime_nsec(),
-            after.ctime(),
-            after.ctime_nsec(),
-        );
         Err(changed())
     }
 }
