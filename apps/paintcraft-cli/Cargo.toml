@@ -27,3 +27,6 @@ workspace = true
 
 [dev-dependencies]
 png.workspace = true
+
+[target.'cfg(unix)'.dev-dependencies]
+rustix.workspace = true

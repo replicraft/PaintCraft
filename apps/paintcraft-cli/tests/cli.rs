@@ -125,3 +125,7 @@ mod clipboard_cut;
 
 #[path = "cli/paste_image.rs"]
 mod paste_image;
+
+#[cfg(unix)]
+#[path = "cli/in_place_conflict.rs"]
+mod in_place_conflict;

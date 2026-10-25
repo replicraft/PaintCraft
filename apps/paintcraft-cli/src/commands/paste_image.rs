@@ -54,6 +54,7 @@ pub fn run(a: Options, json: bool) -> Reply {
                     "output cannot replace the source image",
                 ));
             }
+            let in_place = same_file(&a.input, dest);
             let (document_bytes, sha) = read_bounded(&a.input, INPUT_MAX, "input")?;
             guard(a.expect_input_sha256.as_deref(), &sha)?;
             let (image_bytes, image_sha) = read_bounded(&a.image, 64 << 20, "image")?;
@@ -101,11 +102,7 @@ pub fn run(a: Options, json: bool) -> Reply {
                 session.paste_image(&draft, &a.name)?
             };
             let ctx = Context {
-                operation: if same_file(&a.input, dest) {
-                    "save"
-                } else {
-                    "save-as"
-                },
+                operation: if in_place { "save" } else { "save-as" },
                 source_state: session.document().state_id,
                 source_sha256: Some(sha),
                 losses_acknowledged: decoded.losses,

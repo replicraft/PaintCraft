@@ -174,9 +174,24 @@ fn write_native(
     document: &paintcraft_document::Document,
     ctx: &Context<'_>,
 ) -> (Value, bool, String) {
-    let outcome = save::save_with(dest, overwrite, save::STAGED_FILE_BYTES_MAX, |sink| {
-        pcnd::write_compact_to(document, sink)
-    });
+    let encode = |sink: &mut dyn std::io::Write| pcnd::write_compact_to(document, sink);
+    let outcome = if ctx.operation == "save" {
+        match ctx.source_sha256.as_deref() {
+            Some(expected) => save::save_with_expected_sha256(
+                dest,
+                overwrite,
+                save::STAGED_FILE_BYTES_MAX,
+                expected,
+                encode,
+            ),
+            None => save::not_attempted(&Error::new(
+                ErrorCode::ConflictStaleBase,
+                "in-place output requires the captured source digest",
+            )),
+        }
+    } else {
+        save::save_with(dest, overwrite, save::STAGED_FILE_BYTES_MAX, encode)
+    };
     finish_output(dest, ctx, outcome)
 }
 

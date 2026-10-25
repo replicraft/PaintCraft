@@ -3082,6 +3082,7 @@ dependencies = [
  "paintcraft-render",
  "png",
  "rayon",
+ "rustix 1.1.5",
  "sha2",
 ]
 

@@ -18,17 +18,14 @@ pub fn run(a: Options, json: bool) -> Reply {
             let input = &a.input;
             let dest = a.output.output.as_path();
             save::preflight(dest, a.output.overwrite)?;
+            let in_place = same_file(input, dest);
             let (bytes, sha) = read_bounded(input, INPUT_MAX, "input")?;
             guard(a.expect_input_sha256.as_deref(), &sha)?;
             let (ops, _) = read_bounded(&a.operations, OPERATIONS_MAX, "operations file")?;
             let mut session = Session::new(pcnd::read(&bytes)?);
             let receipt = session.apply_json(&ops)?;
             let ctx = Context {
-                operation: if same_file(input.as_path(), dest) {
-                    "save"
-                } else {
-                    "save-as"
-                },
+                operation: if in_place { "save" } else { "save-as" },
                 source_state: session.document().state_id,
                 source_sha256: Some(sha),
                 losses_acknowledged: vec![],
