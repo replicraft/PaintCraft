@@ -87,6 +87,8 @@ pub struct Context {
     pub status_bar: bool,
     pub rulers: bool,
     pub fullscreen: bool,
+    /// The host can close its application window.
+    pub can_exit: bool,
     /// Browser-only route opened in a new tab to preserve the editing session.
     pub desktop_download: bool,
     pub auto_hide_toolbar: bool,
@@ -312,12 +314,12 @@ impl Action {
             Self::Layer(action) => action.enabled(ctx),
             Self::View(action) => action.enabled(ctx),
             Self::New
-            | Self::Exit
             | Self::Open
             | Self::Interface
             | Self::CanvasDefaults
             | Self::Settings
             | Self::ChooseFrontend(_) => true,
+            Self::Exit => ctx.can_exit,
             Self::Cut | Self::Copy => {
                 ctx.document_open
                     && ctx.layer_index.is_some()

@@ -137,6 +137,7 @@ mod tests {
             status_bar: true,
             rulers: false,
             fullscreen: false,
+            can_exit: true,
             desktop_download: false,
             auto_hide_toolbar: false,
             thumbnail: false,

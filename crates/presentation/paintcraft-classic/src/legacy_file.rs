@@ -142,16 +142,18 @@ fn navigation(
         Action::Close.enabled(context),
     );
     dispatch(ui, response, Action::Close, actions);
-    ui.separator();
-    let response = row(
-        ui,
-        width,
-        Icon::Close,
-        "Exit",
-        false,
-        Action::Exit.enabled(context),
-    );
-    dispatch(ui, response, Action::Exit, actions);
+    if context.can_exit {
+        ui.separator();
+        let response = row(
+            ui,
+            width,
+            Icon::Close,
+            "Exit",
+            false,
+            Action::Exit.enabled(context),
+        );
+        dispatch(ui, response, Action::Exit, actions);
+    }
 }
 
 fn row(

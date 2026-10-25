@@ -1,6 +1,8 @@
 //! Browser integration of shared Classic presentation and editor services.
 use paintcraft_ui::t;
 #[cfg(test)]
+mod chrome_tests;
+#[cfg(test)]
 #[path = "crop_tests.rs"]
 mod crop_tests;
 mod documents;
@@ -169,7 +171,9 @@ impl WebApp {
             status_bar: self.frontend == Frontend::Studio || self.preferences.status_bar,
             rulers: self.rulers_visible(),
             fullscreen: self.fullscreen.active(),
-            desktop_download: true,
+            can_exit: false,
+            desktop_download: self.frontend == Frontend::Classic
+                && self.variant == ClassicVariant::V11,
             auto_hide_toolbar: self.frontend == Frontend::Classic
                 && self.preferences.auto_hide_toolbar,
             thumbnail: self.workspace.thumbnail,

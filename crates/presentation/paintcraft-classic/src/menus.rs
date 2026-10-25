@@ -83,8 +83,10 @@ pub(super) fn file(ui: &mut Ui, context: Context, actions: &mut Vec<Action>) {
             // Close is a PaintCraft document-workspace extension; Exit closes the
             // window through the same host-owned unsaved-work guard as the OS menu.
             action(ui, context, actions, Action::Close, "Close");
-            ui.separator();
-            action(ui, context, actions, Action::Exit, "Exit");
+            if context.can_exit {
+                ui.separator();
+                action(ui, context, actions, Action::Exit, "Exit");
+            }
         });
 }
 

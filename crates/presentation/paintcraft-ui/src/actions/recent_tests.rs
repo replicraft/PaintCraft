@@ -26,6 +26,7 @@ fn native_history_capability_survives_empty_workspaces_but_respects_modals() {
         status_bar: true,
         rulers: false,
         fullscreen: false,
+        can_exit: true,
         desktop_download: false,
         auto_hide_toolbar: false,
         thumbnail: false,

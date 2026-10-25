@@ -90,6 +90,7 @@ fn metadata_preserves_identity_and_context_gates_actions() {
         status_bar: true,
         rulers: false,
         fullscreen: false,
+        can_exit: true,
         desktop_download: false,
         auto_hide_toolbar: false,
         thumbnail: false,
@@ -142,6 +143,10 @@ fn metadata_preserves_identity_and_context_gates_actions() {
     );
     assert!(!Action::Exit.enabled(Context {
         blocked: true,
+        ..context
+    }));
+    assert!(!Action::Exit.enabled(Context {
+        can_exit: false,
         ..context
     }));
     assert!(Action::New.enabled(context));

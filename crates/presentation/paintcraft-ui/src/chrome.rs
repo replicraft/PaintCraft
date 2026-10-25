@@ -247,19 +247,40 @@ pub fn interface_changer(ui: &mut egui::Ui, context: crate::actions::Context) ->
     } else {
         ui.menu_button(label, contents);
     }
-    if context.desktop_download && ui.ctx().content_rect().width() >= 760.0 {
-        let label = t!(ui.ctx(), "Download for desktop");
-        if ui
-            .add(
-                egui::Button::new(egui::RichText::new(label).strong())
-                    .fill(ui.visuals().selection.bg_fill),
-            )
-            .clicked()
-        {
-            ui.ctx().open_url(egui::OpenUrl::new_tab("/download"));
-        }
+    if context.desktop_download
+        && ui.ctx().content_rect().width() >= 760.0
+        && download_button(ui).clicked()
+    {
+        ui.ctx().open_url(egui::OpenUrl::new_tab("/download"));
     }
     actions
+}
+
+fn download_button(ui: &mut egui::Ui) -> egui::Response {
+    let label = t!(ui.ctx(), "Download for desktop");
+    let font = egui::TextStyle::Button.resolve(ui.style());
+    let galley = ui
+        .painter()
+        .layout_no_wrap(label, font, ui.visuals().strong_text_color());
+    // The parent menu centers this shorter target against its icon buttons.
+    let size = egui::vec2(galley.size().x + 20.0, 28.0);
+    let (rect, response) = ui.allocate_exact_size(size, egui::Sense::click());
+    response.widget_info(|| {
+        egui::WidgetInfo::labeled(egui::Role::Button, ui.is_enabled(), galley.text())
+    });
+    let base = ui.visuals().selection.bg_fill;
+    let ink = ui.visuals().strong_text_color();
+    let fill = if response.is_pointer_button_down_on() {
+        base.lerp_to_gamma(ink, 0.24)
+    } else if response.hovered() || response.has_focus() {
+        base.lerp_to_gamma(ink, 0.12)
+    } else {
+        base
+    };
+    ui.painter().rect_filled(rect, 5.0, fill);
+    ui.painter()
+        .galley(rect.center() - galley.size() * 0.5, galley, ink);
+    response
 }
 
 /// Studio exposes the distinct sampling choices; Classic has a one-shot image picker.
