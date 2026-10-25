@@ -1,17 +1,21 @@
 # Encoded native clipboard reads
 
-The platform layer now has a lazy asynchronous `ReadService` and an immutable
-encoded-image snapshot. Its macOS adapter reads advertised PNG or classic TIFF
-bytes without invoking an image decoder. The native macOS app connects this reader to
+The platform layer has a lazy asynchronous `ReadService` and an immutable
+encoded-image snapshot. The macOS adapter reads advertised PNG or classic TIFF
+without invoking an image decoder. The Windows adapter now captures registered
+PNG (`PNG` / `image/png`) or standard `CF_TIFF` through safe bounded raw APIs.
+Both connect to [ordinary Paste](NATIVE_FLOATING_PASTE.md) and
 [Paste as new layer](CLIPBOARD_PASTE_LAYER.md), including bounded decoding and
-import-loss consent. Ordinary Paste remains unavailable; a separate
-[browser PNG reader and host](BROWSER_CLIPBOARD_PASTE.md) is now connected.
+import-loss consent. A separate [browser reader](BROWSER_CLIPBOARD_PASTE.md)
+supplies browser PNG data.
 
-The existing arboard write service is retained. Arboard 3.7.0's public image getter
-decodes before returning pixels; it does not expose PaintCraft's pre-decode pixel
-limit. The new reader obtains encoded native data so the caller can use the
-existing bounded codecs. Windows/Linux/FreeBSD encoded-read adapters remain unfinished. `ReadService::supported()` is true only for the
-compiled macOS adapter; native access can still fail at runtime.
+Arboard remains the native write service. Its 3.7.0 public image getter decodes
+before returning pixels and cannot enforce PaintCraft's pre-decode pixel limit.
+Encoded native reads instead feed the existing bounded codecs. Windows DIB/DIBV5
+transport and Linux/FreeBSD read adapters remain unfinished.
+`ReadService::supported()` identifies compiled macOS/Windows adapters; access can
+still fail at runtime. Windows code is cross-compiled and remains unqualified for
+native clipboard interoperability.
 
 ## Snapshot and admission
 
@@ -54,6 +58,33 @@ After a successful capture, the Rust-owned bytes remain frozen independently of
 later clipboard changes. This does not establish exact internal-copy matching or
 cross-application alpha/color fidelity. Those remain separate clipboard work.
 
+## Windows source ownership
+
+The Windows reader holds `clipboard-win::Clipboard` open across format discovery,
+size queries and copying. It enumerates at most 257 IDs and rejects more than 256;
+only actually enumerated registered PNG formats or `CF_TIFF` are selected. Preferred
+PNG errors do not silently fall back to TIFF or DIB. Native lock guards close the
+clipboard on every result/panic path. This adapter does not empty or write it.
+
+The safe `raw::size` API obtains the advertised allocation length before the
+encoded capacity lease is acquired. The copy callback uses fallible exact reserve,
+a fixed-length initialized slice and [raw::get](https://docs.rs/clipboard-win/5.4.1/clipboard_win/raw/fn.get.html), which copies into that slice rather
+than growing an unbounded output vector. Short copies, a changed allocation size
+or a changed sequence number reject the complete result. Final signature,
+capacity and cancellation checks remain in `EncodedImage::capture`.
+
+Windows may realize delayed clipboard content during `GetClipboardData`; its
+[sequence number changes when that content is rendered](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getclipboardsequencenumber).
+The reader therefore pins the sequence after the first size query has realized
+the data, then verifies it after copying and immediately before returning. The
+held clipboard lock follows the [native ownership rules](https://learn.microsoft.com/en-us/windows/win32/dataxchg/clipboard-operations).
+Opaque provider work and native storage remain outside the Rust payload lease.
+
+`clipboard-win` 5.4.1 was already locked as an arboard dependency. It is now a
+Windows-only optional direct dependency, inherited from the root workspace. No
+library version was upgraded, and workspace `unsafe_code = forbid` is retained.
+No upstream implementation code was copied into PaintCraft.
+
 ## Asynchronous lifecycle
 
 Construction starts a worker but does not access the pasteboard. Only explicit
@@ -94,8 +125,27 @@ standalone CLI's normal dependency graph still excludes arboard, AppKit, egui,
 eframe and wgpu. No Intel runtime or Windows/Linux/FreeBSD read execution is claimed.
 Logs are local in ignored `docs/validation/clipboard-read-2026-10-24/`.
 
-Remaining: desktop read/decode/loss-consent/placement wiring, browser reads and
-placement, other OS adapters, richer flavors and metadata, exact internal-copy
-matching, unsupported-capability reporting in the frontend, permissions and
-cross-application/native reference qualification. This does not complete T17,
-frontend parity, browser conformance or release qualification.
+Desktop macOS and browser read/decode/loss-consent/placement are now connected.
+Windows PNG/TIFF transport is implemented and cross-compiled. Remaining: native
+Windows execution and DIB transport, Linux/FreeBSD adapters, richer flavors and
+metadata, exact internal-copy matching, permissions and cross-application/native
+reference qualification. This does not complete T17, frontend parity, browser
+conformance or release qualification.
+
+
+The Windows follow-up passes four deterministic transport tests covering the
+preferred formats, frozen capacity ownership, delayed realization, length/sequence
+changes, failed copying, cancellation, quota/size/type-count denial and malformed
+preferred signatures. All 74 platform host tests pass (two explicit native checks
+ignored). Strict all-target Clippy passes for Windows x86-64 and ARM64 with the
+clipboard feature, and for the macOS platform crate with all features. Cross checks
+also exposed a pre-existing Windows-only unnecessary mutable directory builder;
+the equivalent platform-specific directory creation now compiles without warnings.
+
+The existing Windows x86-64 and ARM64 release jobs are configured to run platform
+clipboard transport/lifecycle tests. That workflow has not run from this checkout. Native
+Windows clipboard execution, delayed provider behavior and cross-application
+PNG/TIFF compatibility are not proven by cross compilation or fake-source tests.
+DIB/DIBV5 fallback, color/DPI/reference qualification, other OS readers and aggregate
+physical-memory/latency qualification remain work. Evidence is local in ignored
+`docs/validation/windows-clipboard-encoded-2026-10-25/`.

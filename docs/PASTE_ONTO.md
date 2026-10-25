@@ -4,8 +4,8 @@ The shared editor now supports frozen external-image placement onto an existing
 visible layer, separately from [new-layer insertion](PASTE_IMAGES.md). The CLI
 consumes it through `paste-image --onto-layer`. [Browser ordinary Paste](FLOATING_PASTE.md) now consumes it with private floating
 placement. [Desktop ordinary Paste](NATIVE_FLOATING_PASTE.md) now connects private placement,
-worker previews and ordered publication through the native macOS reader. Other
-native OS read adapters and reference qualification remain unfinished.
+worker previews and ordered publication through the native macOS reader. Windows PNG/TIFF reads are now cross-compiled; native Windows execution, DIB,
+other native OS readers and reference qualification remain unfinished.
 
 ```sh
 paintcraft-cli paste-image drawing.pcnd picture.png --onto-layer LAYER_UUID -o combined.pcnd
@@ -107,7 +107,8 @@ synchronous/worker results, canvas growth, Undo/Redo, immutable-owner identity,
 waiting reservations and cancellation cleanup. [Native private placement](NATIVE_FLOATING_PASTE.md) now connects worker-rendered
 preview, drag/nudge/Enter/Escape controls, ordinary Paste routing and guarded
 file/tool boundaries. Availability follows the native clipboard reader; macOS is
-connected and other OS read adapters remain unavailable.
+connected and Windows PNG/TIFF transport is cross-compiled. Native Windows
+execution, DIB and other OS read adapters remain unfinished.
 
 This prerequisite passes all 367 desktop library tests (eight opt-in captures
 ignored), including 12 paste tests, and strict desktop all-target Clippy.

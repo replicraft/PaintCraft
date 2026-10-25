@@ -1,10 +1,15 @@
 # PaintCraft roadmap implementation status
 
+Windows now has an [encoded PNG/TIFF clipboard reader](CLIPBOARD_READS.md),
+feeding the existing ordinary/new-layer Paste path without decoding before byte
+admission. Strict x86-64/ARM64 cross checks and deterministic transport tests pass;
+native Windows execution and DIB/Linux/FreeBSD adapters remain unfinished.
+
 [Desktop ordinary Paste](NATIVE_FLOATING_PASTE.md) now connects the native macOS
 reader to captured-target private placement, worker-rendered CPU/GPU previews,
 repeated dragging/nudging, Apply/Enter and Cancel/Escape/Undo, and one ordered
-history change. Other native OS read adapters and reference qualification remain
-unavailable or unfinished; T14/T15 stay partial.
+history change. Windows PNG/TIFF transport is now cross-compiled; native execution,
+DIB/other OS readers and reference qualification remain unfinished. T14/T15 stay partial.
 
 Latest Classic feedback: [implemented changes, validation scope and remaining
 selection/rotation/background-removal work](CLASSIC_FOLLOWUP.md). Full feature and
