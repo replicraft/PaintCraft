@@ -806,3 +806,15 @@ this checkout. Cross-application fidelity, Linux/FreeBSD runtime, native Wayland
 execution, acquisition deadlines and aggregate memory/latency remain unqualified.
 The broader T14/T15/T19 gates remain partial; see
 [clipboard read ownership and executed evidence](CLIPBOARD_READS.md).
+
+### Captured-content save guard follow-up
+
+CLI `apply` and `paste-image` now retain in-place intent before acquiring the
+source and require its captured SHA-256 to match the destination before staging.
+External replacement/deletion during editing refuses replacement with a truthful
+file-incomplete receipt, preserving any successful in-memory engine result.
+Three platform tests and deterministic real-process FIFO cases cover early and
+late conflicts, matching content, invalid expectations and both commands.
+Native desktop binding integration, namespace/alias authority, noncooperating
+writer races and filesystem qualification remain unfinished. T32 stays partial;
+see [captured-content guards](EXPECTED_SAVE.md).
