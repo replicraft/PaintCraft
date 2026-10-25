@@ -3194,6 +3194,7 @@ name = "paintcraft-platform"
 version = "0.1.0"
 dependencies = [
  "arboard",
+ "clipboard-win",
  "fontdb",
  "muda",
  "objc2 0.6.5",

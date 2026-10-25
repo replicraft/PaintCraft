@@ -8,6 +8,8 @@ use std::{
 };
 #[cfg(target_os = "macos")]
 mod macos;
+#[cfg(any(target_os = "windows", test))]
+mod windows;
 trait Reader {
     fn read(
         &mut self,
@@ -35,7 +37,7 @@ impl fmt::Debug for ReadService {
 }
 impl ReadService {
     pub fn supported() -> bool {
-        cfg!(target_os = "macos")
+        cfg!(any(target_os = "macos", target_os = "windows"))
     }
     pub fn new() -> Result<Self, String> {
         Self::with_factory(Box::new(|| {
@@ -43,7 +45,11 @@ impl ReadService {
             {
                 Ok(Box::new(macos::NativeReader))
             }
-            #[cfg(not(target_os = "macos"))]
+            #[cfg(target_os = "windows")]
+            {
+                Ok(Box::new(windows::NativeReader))
+            }
+            #[cfg(not(any(target_os = "macos", target_os = "windows")))]
             {
                 Err("Bounded image clipboard reads are unavailable on this platform".into())
             }

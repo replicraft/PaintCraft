@@ -76,6 +76,8 @@ js-sys = "0.3.106"
 # Native menus, installed-font catalog, clipboard ownership and file dialogs.
 muda = { version = "0.21.2", default-features = false }
 arboard = { version = "3.7.0", default-features = false, features = ["image-data", "wayland-data-control"] }
+# Bounded encoded Windows reads; reuse the clipboard-win version locked by arboard.
+clipboard-win = "5.4.1"
 # Encoded macOS pasteboard reads, before decoder allocation; writes use arboard.
 objc2 = { version = "0.6.5", default-features = false, features = ["std"] }
 objc2-app-kit = { version = "0.3.2", default-features = false, features = ["std", "NSPasteboard"] }
