@@ -25,6 +25,20 @@ pub fn run(a: Options, json: bool) -> Reply {
         (|| {
             let svg = a.svg.selection()?;
             let input = &a.input;
+            if svg.is_some() {
+                a.profile.admit_import_svg_path(input)?;
+            } else if input
+                .extension()
+                .and_then(|ext| ext.to_str())
+                .and_then(paintcraft_formats::registry::Family::from_extension)
+                == Some(paintcraft_formats::registry::Family::Svg)
+            {
+                a.profile.admit_import_svg_path(input)?;
+                return Err(Error::new(
+                    ErrorCode::InputSchema,
+                    "SVG import requires --svg-width and --svg-height",
+                ));
+            }
             let dest = a.output.output.as_path();
             if let Some(selection) = &svg {
                 selection.protect_output(dest)?;

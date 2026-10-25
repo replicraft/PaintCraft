@@ -70,6 +70,34 @@ fn svg_requires_explicit_dimensions_and_consent_and_preserves_source_and_profile
         "--allow-loss",
         "svg-rasterized",
     ];
+    let absent = dir.join("absent.svg");
+    let mut denied = args.to_vec();
+    denied[1] = absent.to_str().unwrap();
+    denied.extend(["--frontend", "classic-v7"]);
+    assert_eq!(
+        run(&denied).status.code(),
+        Some(3),
+        "frontend policy must win before missing-file acquisition"
+    );
+    assert_eq!(
+        run(&["import", absent.to_str().unwrap(), "-o", b])
+            .status
+            .code(),
+        Some(2)
+    );
+    assert_eq!(
+        run(&[
+            "import",
+            absent.to_str().unwrap(),
+            "-o",
+            b,
+            "--frontend",
+            "classic-v7"
+        ])
+        .status
+        .code(),
+        Some(3)
+    );
     let result = run(&args);
     assert!(
         result.status.success(),

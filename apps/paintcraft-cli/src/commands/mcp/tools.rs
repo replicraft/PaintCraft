@@ -87,6 +87,19 @@ impl PaintingServer {
                 return Err(invalid(&format!("unknown import loss code {code:?}")));
             }
             let path = PathBuf::from(p.path);
+            let profile = format_profile::Options::default();
+            if p.svg.is_some() {
+                profile.admit_import_svg_path(&path)?;
+            } else if path
+                .extension()
+                .and_then(|ext| ext.to_str())
+                .and_then(Family::from_extension)
+                == Some(Family::Svg)
+            {
+                return Err(invalid(
+                    "SVG import requires explicit width and height in svg options",
+                ));
+            }
             let (bytes, sha) = read_bounded(
                 &path,
                 if p.svg.is_some() {
@@ -96,7 +109,6 @@ impl PaintingServer {
                 },
                 "image",
             )?;
-            let profile = format_profile::Options::default();
             let family = if p.svg.is_some() {
                 profile.admit_import_svg(&path, &bytes)?
             } else {

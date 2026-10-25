@@ -12,7 +12,7 @@ pub fn admit_import_svg(
     request.extension = std::path::Path::new(filename)
         .extension()
         .and_then(|ext| ext.to_str());
-    request.variant = Some("svg-rasterize-explicit");
+    request.variant = Some(crate::svg::IMPORT_VARIANT);
     let decision = admission(request);
     if !decision.available() {
         decision.require_allowed(request)?;

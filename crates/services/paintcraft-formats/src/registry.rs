@@ -295,7 +295,7 @@ pub fn admission(request: Request<'_>) -> Decision {
         && request.variant == Some("icon-fresh-entry-set");
     let svg_rasterization = request.family == Family::Svg
         && request.operation == Operation::ImportConvert
-        && request.variant == Some("svg-rasterize-explicit");
+        && request.variant == Some(crate::svg::IMPORT_VARIANT);
     if request.family == Family::Svg
         && request.operation == Operation::ImportConvert
         && !svg_rasterization

@@ -18,6 +18,7 @@ pub const SIDE_MAX: u32 = 16384;
 const NODES_MAX: u32 = 16384;
 const DEPTH_MAX: usize = 64;
 pub const KNOWN_LOSSES: [&str; 2] = ["svg-rasterized", "svg-font-substituted"];
+pub const IMPORT_VARIANT: &str = "svg-rasterize-explicit";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct SourceInfo {

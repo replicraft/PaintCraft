@@ -17,6 +17,21 @@ fn explicit_svg_options_and_consent_preserve_failure_state_and_source_aliases() 
     let mut c = Client::new();
     c.ok("create_canvas", json!({"width":4,"height":3}));
     let before = c.ok("inspect_document", json!({}));
+    let missing = c.call(
+        "import_image",
+        json!({"path":dir.join("absent.svg"),"discard_changes":true}),
+    );
+    assert_eq!(missing["isError"], true);
+    let detail: Value =
+        serde_json::from_str(missing["content"][0]["text"].as_str().unwrap()).unwrap();
+    assert_eq!(detail["code"], "input.schema");
+    assert!(
+        detail["message"]
+            .as_str()
+            .unwrap()
+            .contains("explicit width")
+    );
+    assert_eq!(c.ok("inspect_document", json!({})), before);
     for request in [
         json!({"path":source,"discard_changes":true,"allow_losses":["svg-rasterized"]}),
         json!({"path":source,"svg":{"width":64,"height":64},"allow_losses":["svg-rasterized"]}),

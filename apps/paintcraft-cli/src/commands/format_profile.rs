@@ -52,6 +52,23 @@ impl Options {
             Platform::Native,
         )
     }
+    /// Refuse incompatible profiles and filenames before acquiring SVG content.
+    pub fn admit_import_svg_path(&self, path: &std::path::Path) -> Result<()> {
+        let mut request = Request::new(
+            self.frontend.into(),
+            Operation::ImportConvert,
+            Family::Svg,
+            Platform::Native,
+        );
+        request.extension = path.extension().and_then(|value| value.to_str());
+        request.variant = Some(paintcraft_formats::svg::IMPORT_VARIANT);
+        let decision = registry::admission(request);
+        if decision.available() {
+            Ok(())
+        } else {
+            decision.require_allowed(request)
+        }
+    }
     pub fn admit_import_page(
         &self,
         path: &std::path::Path,
