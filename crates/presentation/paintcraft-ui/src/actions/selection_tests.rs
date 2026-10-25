@@ -226,3 +226,45 @@ fn merged_copy_requires_pixels_but_not_an_active_or_visible_layer() {
         );
     }
 }
+
+#[test]
+fn cut_uses_the_active_layer_and_exact_selection_admission() {
+    for frontend in [Frontend::Classic, Frontend::Studio] {
+        let ctx = Context {
+            layer_index: Some(0),
+            layer_count: 1,
+            layer_visible: true,
+            ..context(frontend)
+        };
+        assert!(Action::Cut.enabled(ctx));
+        for disabled in [
+            Context {
+                layer_visible: false,
+                ..ctx
+            },
+            Context {
+                blocked: true,
+                ..ctx
+            },
+            Context {
+                document_open: false,
+                ..ctx
+            },
+            Context {
+                layer_index: None,
+                ..ctx
+            },
+            Context {
+                selection_active: true,
+                can_crop_selection: false,
+                ..ctx
+            },
+        ] {
+            assert!(!Action::Cut.enabled(disabled));
+        }
+        assert_eq!(
+            Action::from_shortcut_for(frontend, Key::X, Modifiers::COMMAND),
+            Some(Action::Cut)
+        );
+    }
+}

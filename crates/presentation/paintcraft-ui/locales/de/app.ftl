@@ -146,3 +146,11 @@ printing-cancelled = Drucken abgebrochen.
 
 paintcraft-could-not-start = PaintCraft konnte nicht gestartet werden
 paintcraft-could-not-open-its-window-check-your-display-and-graphics-driver-then-try-again = PaintCraft konnte kein Fenster öffnen. Prüfen Sie Ihren Bildschirm und Grafiktreiber und versuchen Sie es erneut.
+
+copied-but-cut-was-cancelled-because-the-source-changed = Kopiert, aber Ausschneiden wurde abgebrochen, weil sich die Quelle geändert hat.
+
+cut-cancelled-the-canvas-was-not-changed = Ausschneiden abgebrochen; die Leinwand wurde nicht verändert.
+
+clipboard-cut-failed = Ausschneiden über die Zwischenablage fehlgeschlagen
+
+cut-changed-nothing = Ausschneiden hat nichts geändert

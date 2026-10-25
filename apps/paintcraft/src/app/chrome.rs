@@ -177,7 +177,9 @@ impl App {
             // history move. Its result determines this action's enabled state.
             if !matches!(
                 action,
-                paintcraft_ui::chrome::Action::Copy | paintcraft_ui::chrome::Action::CopyVisible
+                paintcraft_ui::chrome::Action::Copy
+                    | paintcraft_ui::chrome::Action::CopyVisible
+                    | paintcraft_ui::chrome::Action::Cut
             ) {
                 self.editor.run_pending();
             }
@@ -203,6 +205,7 @@ impl App {
                 Chrome::Export => self.export_requested(ctx),
                 Chrome::Print => self.print_requested(ctx),
                 Chrome::Copy => self.copy_requested(ctx),
+                Chrome::Cut => self.cut_requested(ctx),
                 Chrome::CopyVisible => self.copy_source_requested(ctx, true),
                 Chrome::ExportImage(format) => self.export_image_requested(ctx, format),
                 Chrome::Undo => self.request(ctx, code::UNDO, Action::Undo),

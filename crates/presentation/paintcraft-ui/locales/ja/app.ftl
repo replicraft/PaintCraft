@@ -146,3 +146,11 @@ printing-cancelled = 印刷をキャンセルしました。
 
 paintcraft-could-not-start = PaintCraft を起動できませんでした
 paintcraft-could-not-open-its-window-check-your-display-and-graphics-driver-then-try-again = PaintCraft のウィンドウを開けませんでした。ディスプレイとグラフィックスドライバーを確認して、もう一度お試しください。
+
+copied-but-cut-was-cancelled-because-the-source-changed = コピーしましたが、元の内容が変わったため切り取りをキャンセルしました。
+
+cut-cancelled-the-canvas-was-not-changed = 切り取りをキャンセルしました。キャンバスは変更されていません。
+
+clipboard-cut-failed = クリップボードへの切り取りに失敗しました
+
+cut-changed-nothing = 切り取りによる変更はありません

@@ -146,3 +146,11 @@ printing-cancelled = Impresión cancelada.
 
 paintcraft-could-not-start = No se pudo iniciar PaintCraft
 paintcraft-could-not-open-its-window-check-your-display-and-graphics-driver-then-try-again = PaintCraft no pudo abrir su ventana. Comprueba la pantalla y el controlador gráfico e inténtalo de nuevo.
+
+copied-but-cut-was-cancelled-because-the-source-changed = Se ha copiado, pero se canceló Cortar porque el origen cambió.
+
+cut-cancelled-the-canvas-was-not-changed = Se canceló Cortar; el lienzo no cambió.
+
+clipboard-cut-failed = Error al cortar al portapapeles
+
+cut-changed-nothing = Cortar no cambió nada

@@ -146,3 +146,11 @@ printing-cancelled = Printing cancelled.
 
 paintcraft-could-not-start = PaintCraft could not start
 paintcraft-could-not-open-its-window-check-your-display-and-graphics-driver-then-try-again = PaintCraft could not open its window. Check your display and graphics driver, then try again.
+
+copied-but-cut-was-cancelled-because-the-source-changed = Copied, but Cut was cancelled because the source changed.
+
+cut-cancelled-the-canvas-was-not-changed = Cut cancelled; the canvas was not changed.
+
+clipboard-cut-failed = Clipboard cut failed
+
+cut-changed-nothing = Cut changed nothing

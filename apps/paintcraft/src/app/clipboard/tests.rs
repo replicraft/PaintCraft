@@ -57,7 +57,7 @@ fn asynchronous_capture_freezes_pixels_and_retains_internal_capture_only_after_a
     assert_eq!(app.editor.selection(), selection);
     assert_eq!(app.editor.publications(), publications);
     *fake.acknowledgement.lock().unwrap() = Some(Ok(()));
-    assert_eq!(app.clipboard.poll(&ctx), Some((owner, Ok(true))));
+    assert_eq!(app.clipboard.poll(&ctx), Some((owner, Ok(true), None)));
     assert!(app.clipboard.last_capture.is_some());
     assert_eq!(other.canvas, (1, 1));
 }
@@ -153,6 +153,7 @@ fn cancelled_capture_does_not_submit_or_publish_and_empty_is_not_written() {
             app.editor.document_snapshot(),
             app.editor.selection(),
             app.editor.target(),
+            None,
             &ctx,
         )
         .unwrap();
@@ -167,12 +168,13 @@ fn cancelled_capture_does_not_submit_or_publish_and_empty_is_not_written() {
             app.editor.document_snapshot(),
             Selection::Empty,
             app.editor.target(),
+            None,
             &ctx,
         )
         .unwrap();
     let deadline = std::time::Instant::now() + Duration::from_secs(5);
     loop {
-        if let Some((_, result)) = state.poll(&ctx) {
+        if let Some((_, result, _)) = state.poll(&ctx) {
             assert_eq!(result, Ok(false));
             break;
         }
@@ -326,12 +328,30 @@ fn verify_controls(caption: &str) {
             assert!(Arc::ptr_eq(&source, &h.state().editor.document_snapshot()));
             *fake.acknowledgement.lock().unwrap() = Some(Ok(()));
             h.step();
-            assert_eq!(
-                h.state().editor.status(),
-                translate(language, "Copied to clipboard.")
-            );
+            if caption == "Cut" {
+                while h.state().editor.has_pending_edits() {
+                    assert!(std::time::Instant::now() < deadline);
+                    h.step();
+                    std::thread::yield_now();
+                }
+                assert!(
+                    h.state().editor.status().starts_with("Cut"),
+                    "{}",
+                    h.state().editor.status()
+                );
+                if experience == Experience::Classic {
+                    assert_eq!(h.state().editor.history_view().ticket, before);
+                } else {
+                    assert_ne!(h.state().editor.history_view().ticket, before);
+                }
+            } else {
+                assert_eq!(
+                    h.state().editor.status(),
+                    translate(language, "Copied to clipboard.")
+                );
+                assert_eq!(h.state().editor.history_view().ticket, before);
+            }
             assert!(h.state().clipboard.last_capture.is_some());
-            assert_eq!(h.state().editor.history_view().ticket, before);
         }
     }
 }
@@ -394,4 +414,11 @@ fn merged_shortcut_and_coalesced_copy_capture_visible_layers_not_active_hidden_l
         assert!(Arc::ptr_eq(&source, &app.editor.document_snapshot()));
         assert_eq!(ticket, app.editor.history_view().ticket);
     }
+}
+
+mod cut;
+
+#[test]
+fn cut_controls_work_in_every_native_frontend_and_two_languages() {
+    verify_controls("Cut");
 }

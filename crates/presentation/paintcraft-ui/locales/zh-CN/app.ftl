@@ -146,3 +146,11 @@ printing-cancelled = 已取消打印。
 
 paintcraft-could-not-start = 无法启动 PaintCraft
 paintcraft-could-not-open-its-window-check-your-display-and-graphics-driver-then-try-again = PaintCraft 无法打开窗口。请检查显示器和显卡驱动程序，然后重试。
+
+copied-but-cut-was-cancelled-because-the-source-changed = 已复制，但由于源内容已更改，剪切已取消。
+
+cut-cancelled-the-canvas-was-not-changed = 剪切已取消；画布未更改。
+
+clipboard-cut-failed = 剪切到剪贴板失败
+
+cut-changed-nothing = 剪切未产生更改

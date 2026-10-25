@@ -21,6 +21,7 @@ pub enum Action {
     Export,
     Print,
     ExportImage(ImageExport),
+    Cut,
     Copy,
     CopyVisible,
     Undo,
@@ -115,6 +116,7 @@ pub const STUDIO_FILE: &[Action] = &[
     Action::Close,
 ];
 pub const EDIT: &[Action] = &[
+    Action::Cut,
     Action::Copy,
     Action::CopyVisible,
     Action::Crop,
@@ -151,6 +153,7 @@ impl Action {
             Self::Export => ("Export…", None),
             Self::Print => ("Print…", Some((Key::P, false))),
             Self::ExportImage(format) => (format.label(), None),
+            Self::Cut => ("Cut", Some((Key::X, false))),
             Self::Copy => ("Copy", Some((Key::C, false))),
             Self::CopyVisible => ("Copy visible layers", Some((Key::C, true))),
             Self::Undo => ("Undo", Some((Key::Z, false))),
@@ -305,7 +308,7 @@ impl Action {
             | Self::CanvasDefaults
             | Self::Settings
             | Self::ChooseFrontend(_) => true,
-            Self::Copy => {
+            Self::Cut | Self::Copy => {
                 ctx.document_open
                     && ctx.layer_index.is_some()
                     && ctx.layer_visible
@@ -384,6 +387,7 @@ impl Action {
             Self::Export => 1004,
             Self::Print => 1027,
             Self::ExportImage(format) => 1040 + format as u64,
+            Self::Cut => 1050,
             Self::Copy => 1028,
             Self::CopyVisible => 1029,
             Self::Undo => 1005,

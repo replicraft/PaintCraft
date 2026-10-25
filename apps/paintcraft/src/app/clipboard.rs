@@ -2,7 +2,7 @@
 use super::*;
 use paintcraft_core::types::clipboard::Image;
 use paintcraft_core::types::resources::SharedBudget;
-use paintcraft_editor::clipboard::{Capture, capture};
+use paintcraft_editor::clipboard::{Capture, CutSource, capture};
 use paintcraft_platform::clipboard::{ClipboardService, Job};
 use paintcraft_ui::t;
 use std::sync::{
@@ -39,6 +39,7 @@ enum Stage {
 struct Pending {
     owner: Uuid,
     cancelled: Arc<AtomicBool>,
+    cut: Option<CutSource>,
     stage: Stage,
 }
 impl Drop for Pending {
@@ -67,6 +68,7 @@ impl State {
         document: Arc<paintcraft_document::Document>,
         selection: Selection,
         target: Option<Uuid>,
+        cut: Option<CutSource>,
         ctx: &egui::Context,
     ) -> Result<bool, String> {
         if self.pending.is_some() {
@@ -113,12 +115,16 @@ impl State {
         self.pending = Some(Pending {
             owner,
             cancelled,
+            cut,
             stage: Stage::Capture(receive),
         });
         Ok(true)
     }
 
-    fn poll(&mut self, ctx: &egui::Context) -> Option<(Uuid, Result<bool, String>)> {
+    fn poll(
+        &mut self,
+        ctx: &egui::Context,
+    ) -> Option<(Uuid, Result<bool, String>, Option<CutSource>)> {
         let pending = self.pending.as_mut()?;
         let result = match &pending.stage {
             Stage::Capture(receiver) => match receiver.try_recv() {
@@ -156,8 +162,9 @@ impl State {
             },
         };
         let owner = pending.owner;
+        let cut = pending.cut.take();
         self.pending = None;
-        Some((owner, result))
+        Some((owner, result, cut))
     }
 }
 
@@ -167,6 +174,14 @@ impl App {
     }
 
     pub(super) fn copy_source_requested(&mut self, ctx: &egui::Context, visible: bool) {
+        self.clipboard_requested(ctx, visible, false);
+    }
+
+    pub(super) fn cut_requested(&mut self, ctx: &egui::Context) {
+        self.clipboard_requested(ctx, false, true);
+    }
+
+    fn clipboard_requested(&mut self, ctx: &egui::Context, visible: bool, cut: bool) {
         if self.document_count() == 0 || self.clipboard.pending.is_some() {
             return;
         }
@@ -188,11 +203,29 @@ impl App {
                 .set_status(t!(ctx, "There are no selected pixels to copy."));
             return;
         }
+        let cut = if cut {
+            let clear = if self.experience() == Experience::Studio {
+                paintcraft_core::types::Rgba::TRANSPARENT
+            } else {
+                self.editor.canvas_color()
+            };
+            match self.editor.cut_source(clear) {
+                Ok(source) => Some(source),
+                Err(error) => {
+                    self.editor
+                        .set_status(format!("{}: {error}", t!(ctx, "Clipboard copy failed")));
+                    return;
+                }
+            }
+        } else {
+            None
+        };
         match self.clipboard.start(
             self.active_tab_id(),
             self.editor.document_snapshot(),
             self.editor.selection(),
             if visible { None } else { target },
+            cut,
             ctx,
         ) {
             Ok(true) => self.editor.set_status(t!(ctx, "Copying to clipboard…")),
@@ -204,25 +237,65 @@ impl App {
     }
 
     pub(super) fn poll_clipboard(&mut self, ctx: &egui::Context) {
-        if let Some((owner, result)) = self.clipboard.poll(ctx) {
+        if let Some((owner, result, cut)) = self.clipboard.poll(ctx) {
+            if result == Ok(true)
+                && let Some(cut) = cut
+            {
+                let unchanged = self.document_count() > 0
+                    && owner == self.active_tab_id()
+                    && !self.ime_composing
+                    && !self.has_document_drafts()
+                    && !self.editor.is_editing_text()
+                    && !self.editor.has_floating_selection()
+                    && !self.editor.is_constructing_shape()
+                    && !self.editor.has_pending_edits();
+                if unchanged && self.editor.complete_cut(&cut).is_ok() {
+                    return;
+                }
+                self.clipboard_status(
+                    owner,
+                    t!(
+                        ctx,
+                        "Copied, but Cut was cancelled because the source changed."
+                    ),
+                );
+                return;
+            }
             let message = match result {
                 Ok(true) => t!(ctx, "Copied to clipboard."),
                 Ok(false) => t!(ctx, "There are no selected pixels to copy."),
                 Err(error) => format!("{}: {error}", t!(ctx, "Clipboard copy failed")),
             };
-            if owner == self.active_tab_id() {
-                self.editor.set_status(message);
-            } else if let Some(state) = self
-                .tabs
-                .iter_mut()
-                .find(|tab| tab.id == owner)
-                .and_then(|tab| tab.state.as_mut())
-            {
-                state.editor.set_status(message);
-            }
+            self.clipboard_status(owner, message);
         }
         if self.clipboard.pending.is_some() {
             ctx.request_repaint_after(Duration::from_millis(50));
+        }
+    }
+    fn clipboard_status(&mut self, owner: Uuid, message: String) {
+        if owner == self.active_tab_id() {
+            self.editor.set_status(message);
+        } else if let Some(state) = self
+            .tabs
+            .iter_mut()
+            .find(|tab| tab.id == owner)
+            .and_then(|tab| tab.state.as_mut())
+        {
+            state.editor.set_status(message);
+        }
+    }
+    pub(super) fn cancel_clipboard_cut(&mut self, ctx: &egui::Context) {
+        if self
+            .clipboard
+            .pending
+            .as_ref()
+            .is_some_and(|pending| pending.cut.is_some())
+        {
+            let pending = self.clipboard.pending.take().expect("pending Cut");
+            self.clipboard_status(
+                pending.owner,
+                t!(ctx, "Cut cancelled; the canvas was not changed."),
+            );
         }
     }
 }

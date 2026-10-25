@@ -40,6 +40,15 @@ impl Editor {
                 return None;
             }
         };
+        self.commit_batch(batch, done, target_alias)
+    }
+
+    pub(crate) fn commit_batch(
+        &mut self,
+        batch: Batch,
+        done: &str,
+        target_alias: Option<&'static str>,
+    ) -> Option<paintcraft_editor::session::Receipt> {
         if self.editing.is_some() {
             self.start_edit(batch, done, target_alias);
             return None;
@@ -96,5 +105,29 @@ impl Editor {
         {
             self.status = format!("{name} changed nothing");
         }
+    }
+}
+
+impl Editor {
+    pub(crate) fn cut_source(
+        &self,
+        clear: Rgba,
+    ) -> Result<paintcraft_editor::clipboard::CutSource> {
+        let target = self.target.ok_or_else(|| {
+            paintcraft_core::types::Error::new(
+                paintcraft_core::types::ErrorCode::ReferenceUnknownId,
+                "Cut requires a target layer",
+            )
+        })?;
+        paintcraft_editor::clipboard::CutSource::new(&self.session, target, clear)
+    }
+
+    pub(crate) fn complete_cut(
+        &mut self,
+        source: &paintcraft_editor::clipboard::CutSource,
+    ) -> Result<()> {
+        let batch = source.removal_batch(&self.session, self.target)?;
+        self.commit_batch(batch, "Cut", None);
+        Ok(())
     }
 }

@@ -19,6 +19,10 @@ impl App {
             matches!(event,
             egui::Event::Key {key: egui::Key::C, pressed:true, modifiers, ..} if modifiers.command)
         });
+        let cut_key = events.iter().any(|event| {
+            matches!(event,
+            egui::Event::Key {key: egui::Key::X, pressed: true, modifiers, ..} if modifiers.command)
+        });
         let widget_focus = ctx.egui_wants_keyboard_input();
         let popup_open = egui::Popup::is_any_open(&ctx);
         let picker_open = self.picking.is_some();
@@ -33,6 +37,11 @@ impl App {
                     if !copy_key && !widget_focus && !self.ime_composing && !text_focus =>
                 {
                     self.copy_requested(&ctx);
+                }
+                egui::Event::Cut
+                    if !cut_key && !widget_focus && !self.ime_composing && !text_focus =>
+                {
+                    self.cut_requested(&ctx);
                 }
                 egui::Event::Ime(egui::ImeEvent::Preedit { text, .. }) => {
                     self.ime_composing = !text.is_empty();
@@ -57,7 +66,7 @@ impl App {
                         self.editor.type_text("\n");
                     }
                     egui::Key::Backspace if text_focus => self.editor.backspace(),
-                    egui::Key::C if modifiers.command && text_focus => {}
+                    egui::Key::C | egui::Key::X if modifiers.command && text_focus => {}
                     _ if repeat => {}
                     egui::Key::Enter if modifiers.command && text_focus => {
                         self.editor.commit_text();
@@ -70,6 +79,7 @@ impl App {
                     egui::Key::Escape if self.studio.pan.is_active() => self.studio.pan.cancel(),
                     egui::Key::Z | egui::Key::H if text_focus && !modifiers.command => {}
                     egui::Key::Escape => {
+                        self.cancel_clipboard_cut(&ctx);
                         if self.fullscreen && !text_focus && !self.editor.gesture_in_progress() {
                             self.dispatch_chrome(
                                 &ctx,
