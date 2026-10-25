@@ -23,6 +23,8 @@ mod editing;
 mod export_options;
 #[path = "app/files.rs"]
 mod files;
+#[path = "app/format_admission.rs"]
+mod format_admission;
 #[path = "app/gpu_display.rs"]
 mod gpu_display;
 #[path = "app/history.rs"]
@@ -394,11 +396,12 @@ impl App {
             name_edit: None,
             opacity_edit: None,
         };
-        if let Some(p) = path.filter(|p| p.exists())
+        if let Some(p) = path
             && let Err(e) = app.open_path(&p)
         {
             eprintln!("cannot open {}: {e}", p.display());
-            app.editor.set_path(p);
+            app.path_text = "untitled.pcnd".into();
+            app.editor.set_status(format!("Cannot open: {e}"));
         }
         app
     }

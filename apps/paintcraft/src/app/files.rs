@@ -163,13 +163,9 @@ impl App {
             self.recent.remember(path);
             return Ok(());
         }
-        let bytes = std::fs::read(path).map_err(|e| {
-            paintcraft_core::types::Error::new(
-                paintcraft_core::types::ErrorCode::StorageFailed,
-                format!("cannot read {}: {}", path.display(), e.kind()),
-            )
-        })?;
-        let (editor, bound, note) = if image::ImageFormat::sniff(&bytes).is_some() {
+        let bytes = crate::format_admission::read_source(path)?;
+        let family = self.admit_open_source(path, &bytes)?;
+        let (editor, bound, note) = if family != paintcraft_formats::registry::Family::Pcnd {
             let img = image::decode(&bytes)?;
             let doc = import_image(
                 img.width,
@@ -189,7 +185,11 @@ impl App {
             // A picture is a new document; it is not bound to the image file.
             (Editor::with_document(doc, None), None, note)
         } else {
-            let editor = Editor::open(path)?;
+            // Decode the same bounded acquisition; do not reopen an unbounded path.
+            let editor = Editor::with_document(
+                paintcraft_formats::pcnd::read(&bytes)?,
+                Some(path.to_path_buf()),
+            );
             (
                 editor,
                 Some(path.to_path_buf()),
@@ -266,6 +266,10 @@ impl App {
                 .set_status("Name the file .png, .bmp or .jpg to export");
             return;
         };
+        if let Err(error) = self.admit_export_format(&path, format) {
+            self.editor.set_status(format!("Cannot export: {error}"));
+            return;
+        }
         let all: Vec<String> = KNOWN_LOSSES.iter().map(|l| (*l).to_owned()).collect();
         match export::export_flat(self.editor.document(), format, jpeg_quality, &all) {
             Ok(plan) => {
@@ -293,6 +297,10 @@ impl App {
         losses: &[String],
         jpeg_quality: u8,
     ) {
+        if let Err(error) = self.admit_export_format(path, format) {
+            self.editor.set_status(format!("Cannot export: {error}"));
+            return;
+        }
         let result = export::export_flat(self.editor.document(), format, jpeg_quality, losses)
             .map_err(|e| e.to_string());
         let status = match result {

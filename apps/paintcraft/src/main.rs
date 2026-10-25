@@ -7,7 +7,7 @@ fn main() -> eframe::Result {
         &std::env::temp_dir().join("paintcraft-history"),
     );
     let path = std::env::args_os().nth(1).map(std::path::PathBuf::from);
-    let mut app = App::new(path).with_settings(paintcraft::settings::default_dir());
+    let mut app = App::new_with_settings(path, paintcraft::settings::default_dir());
     // Smoke runs: close after N frames, e.g. PAINTCRAFT_EXIT_AFTER_FRAMES=30.
     if let Some(n) = std::env::var("PAINTCRAFT_EXIT_AFTER_FRAMES")
         .ok()
