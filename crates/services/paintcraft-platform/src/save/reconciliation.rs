@@ -200,6 +200,7 @@ fn check_identity(open: &fs::Metadata, named: &fs::Metadata) -> std::io::Result<
 fn check_revision(before: &fs::Metadata, after: &fs::Metadata) -> std::io::Result<()> {
     use std::os::unix::fs::MetadataExt;
     if before.len() == after.len()
+        && before.nlink() == after.nlink()
         && before.mtime() == after.mtime()
         && before.mtime_nsec() == after.mtime_nsec()
         && before.ctime() == after.ctime()

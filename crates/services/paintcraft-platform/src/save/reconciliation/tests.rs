@@ -320,14 +320,14 @@ fn repeated_inspection_diagnostics_are_bounded_and_nonattempts_cannot_reconcile(
 }
 
 #[test]
-fn rewriting_the_same_bytes_after_sync_is_not_a_new_persistence_barrier() {
+fn a_link_count_change_after_sync_is_not_a_new_persistence_barrier() {
     let dir = scratch("reconcile-identical-late-edit");
     let dest = dir.join("a.pcnd");
     let original = incomplete(&dest);
     let checked = reconcile(&original, ReconcileMode::ConfirmDurability, |phase| {
         if phase == Phase::Validate {
-            // Rename a hard link away and back: this changes the inode's ctime
-            // deterministically while preserving its identity and content.
+            // Link count changes even when the filesystem reports the same
+            // timestamps for edits within one clock tick. Content and inode stay.
             fs::hard_link(&dest, dir.join("extra-link"))?;
             fs::write(&dest, b"new")?;
         }
