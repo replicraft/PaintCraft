@@ -7,7 +7,7 @@ pub struct Options {
     profile: super::format_profile::Options,
     #[arg(long)]
     expect_input_sha256: Option<String>,
-    #[arg(long, value_parser = ["png", "bmp", "jpeg", "jpg"])]
+    #[arg(long, value_parser = ["png", "bmp", "jpeg", "jpg", "gif", "tiff", "tif", "tga", "webp", "jxl", "dds", "avif", "qoi", "pam", "ff"])]
     format: Option<String>,
     #[arg(long, default_value_t = 90, value_parser = clap::value_parser!(u8).range(1..=100))]
     quality: u8,
@@ -25,9 +25,19 @@ fn output_format(format: Option<&str>, dest: &Path) -> Result<ImageFormat> {
         "png" => Ok(ImageFormat::Png),
         "bmp" => Ok(ImageFormat::Bmp),
         "jpeg" | "jpg" => Ok(ImageFormat::Jpeg),
+        "gif" => Ok(ImageFormat::Gif),
+        "tiff" | "tif" => Ok(ImageFormat::Tiff),
+        "tga" => Ok(ImageFormat::Tga),
+        "webp" => Ok(ImageFormat::WebP),
+        "jxl" => Ok(ImageFormat::Jxl),
+        "dds" => Ok(ImageFormat::Dds),
+        "avif" => Ok(ImageFormat::Avif),
+        "qoi" => Ok(ImageFormat::Qoi),
+        "pam" => Ok(ImageFormat::Pnm),
+        "ff" => Ok(ImageFormat::Farbfeld),
         _ => Err(Error::new(
             ErrorCode::InputSchema,
-            "--format must be png, bmp or jpeg",
+            "--format must be png, bmp, jpeg, gif, tiff, tga, webp, jxl, dds, avif, qoi, pam or ff",
         )),
     });
     match by_name {
@@ -35,7 +45,7 @@ fn output_format(format: Option<&str>, dest: &Path) -> Result<ImageFormat> {
         None => ImageFormat::from_extension(dest).ok_or_else(|| {
             Error::new(
                 ErrorCode::InputSchema,
-                "cannot tell the image format; use a .png/.bmp/.jpg name or --format",
+                "cannot tell the image format; use a supported filename extension or --format",
             )
         }),
     }
@@ -48,8 +58,8 @@ pub fn run(a: Options, json: bool) -> Reply {
             let input = &a.input;
             let dest = a.output.output.as_path();
             let format = output_format(a.format.as_deref(), dest)?;
-            let family = paintcraft_formats::registry::Family::from_extension(format.name())
-                .ok_or_else(|| {
+            let family =
+                paintcraft_formats::registry::Family::from_id(format.name()).ok_or_else(|| {
                     Error::new(
                         ErrorCode::CapabilityUnsupported,
                         "Unregistered export format",

@@ -64,7 +64,7 @@ pub fn run(a: Options, json: bool) -> Reply {
                 "--expect-image-sha256",
             )?;
             let mut session = Session::new(pcnd::read(&document_bytes)?);
-            let family = a.profile.admit_open(&a.image, &image_bytes)?;
+            let family = a.profile.admit_import(&a.image, &image_bytes)?;
             a.profile.reject_project_import(family)?;
             let decoded = image::decode_with_pixel_limit(&image_bytes, MAX_PIXELS)?;
             if let Some(loss) = decoded.losses.iter().find(|loss| !allowed.contains(loss)) {

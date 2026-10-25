@@ -36,6 +36,28 @@ impl Options {
             Platform::Native,
         )
     }
+    pub fn admit_import(&self, path: &std::path::Path, bytes: &[u8]) -> Result<Family> {
+        registry::admit_import(
+            self.frontend.into(),
+            &path.to_string_lossy(),
+            bytes,
+            Platform::Native,
+        )
+    }
+    pub fn admit_import_page(
+        &self,
+        path: &std::path::Path,
+        bytes: &[u8],
+        page: u16,
+    ) -> Result<Family> {
+        registry::admit_import_page(
+            self.frontend.into(),
+            &path.to_string_lossy(),
+            bytes,
+            Platform::Native,
+            page,
+        )
+    }
     /// Availability gate only: export's existing loss preflight still runs next.
     pub fn admit_export(&self, family: Family, path: &std::path::Path) -> Result<()> {
         let mut request = Request::new(

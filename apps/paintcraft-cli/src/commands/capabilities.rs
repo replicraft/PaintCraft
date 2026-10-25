@@ -35,15 +35,21 @@ pub fn run(a: Options, json: bool) -> Reply {
             if let Some(frontend) = a.frontend {
                 use paintcraft_formats::registry::{self, Frontend, Operation, Platform};
                 let frontend: Frontend = frontend.into();
-                for family in registry::enabled(frontend, Operation::Open, Platform::Native) {
-                    frontend_rows.push(row(
-                        &format!("{}.rgba8.read", family.id()),
-                        &format!("frontend/{}", frontend.id()),
-                        "read",
-                        registry::capability(family, Operation::Open, Platform::Native)
-                            .backend
-                            .unwrap_or("unavailable"),
-                    ));
+                for (operation, suffix, wire) in [
+                    (Operation::Open, "read", "read"),
+                    (Operation::ImportConvert, "import", "import"),
+                    (Operation::ExportFlat, "write", "fresh-write"),
+                ] {
+                    for family in registry::enabled(frontend, operation, Platform::Native) {
+                        frontend_rows.push(row(
+                            &format!("{}.rgba8.{suffix}", family.id()),
+                            &format!("frontend/{}", frontend.id()),
+                            wire,
+                            registry::capability(family, operation, Platform::Native)
+                                .backend
+                                .unwrap_or("unavailable"),
+                        ));
+                    }
                 }
             }
             let mut rows = vec![
