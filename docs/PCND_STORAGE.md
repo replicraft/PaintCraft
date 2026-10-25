@@ -119,3 +119,13 @@ check, and formats/CLI Clippy. The broader desktop GUI suite reports 276 passes,
 reachability). Both assertions were subsequently updated for working clipboard
 actions and shortcut-bearing labels; the two focused reruns pass. The original
 broad run is retained as failing evidence, rather than relabeled as passing.
+
+A later production check of the initial version-1 build also passes: its 140-byte
+pencil download has the expected header, independent exact pixel decoding, clean
+file-picker reopening and a byte-identical subsequent save. The printable PNG
+contains the same 192 pencil pixels. See [browser printing](BROWSER_PRINTING.md)
+and the separate `docs/validation/browser-print-2026-10-25/` recording.
+
+The subsequent full desktop GUI rerun passes 279 tests with 64 explicit captures
+ignored. Both previously failing menu tests and the historical Print regression
+pass in that run; its separate log is retained with the browser-print evidence.

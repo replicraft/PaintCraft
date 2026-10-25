@@ -19,10 +19,9 @@ localized download. Downloads retain editable draft text in the editor and inclu
 it in the downloaded copy. Neither host claims that an image copy preserves all
 project data.
 
-JPEG XL is currently unsupported for both import and export. The selected
-[image crate](https://docs.rs/image/0.25.10/image/enum.ImageFormat.html) does not
-provide that format. It would require an additional codec adapter, bounded decode
-integration and independent roundtrip/loss qualification.
+JPEG XL is not exposed by these frontend export dialogs. A separate internal
+decoder/writer adapter has scoped pixel-oracle evidence; frontend integration and
+codec confinement remain work. See [format interoperability](FORMAT_INTEROPERABILITY.md).
 
 ## Native macOS printing
 
@@ -40,10 +39,17 @@ The helper build requires Xcode command-line tools on macOS; the Swift runtime
 ships with supported macOS systems. Rust contains no unsafe bridge code.
 
 Capture is limited to 16 megapixels and an encoded image limit of 64 MiB. Printing
-on Windows/Linux and browser printing remain unavailable. Standalone Page Setup
+on native Windows/Linux remains unavailable. Standalone Page Setup
 and Print Preview entries remain disabled; the working print panel contains its
 own settings and preview. Printer-driver fidelity and physical output have not
 been qualified.
+
+## Browser printing
+
+The browser now prints a private image copy through its own print dialog. Draft
+text remains editable, the editor chrome is excluded, and cancellation or denial
+does not change saved state. See [browser printing](BROWSER_PRINTING.md) for the
+ownership contract, production evidence and qualification limits.
 
 ## Validation
 

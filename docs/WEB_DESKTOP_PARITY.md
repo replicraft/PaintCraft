@@ -15,7 +15,7 @@ workspaces. This ledger distinguishes connected features from remaining work.
 | Frontends and documents | Classic 7, 10 and 11 skins; Studio toolbar, floating tools/colors and history, separate documents/history/views with a download/discard switch guard | Multiple documents within each workspace, tabs, Save All and remaining Studio navigation/parity workflows |
 | File adapters | Browser pickers, lossless compact PCND downloads, PNG/BMP/JPEG input and image export | Broader native codecs, format capabilities and export controls |
 | Runtime and recovery | Bounded synchronous browser editing; unload warning; preferences in local storage | Background preparation, larger document/resource handling, browser recovery/document persistence and GPU document composition |
-| Platform services | Browser file/clipboard interfaces and page title | Browser equivalents for applicable desktop services such as Print; native menu/OS registration stay platform-specific |
+| Platform services | Browser file/clipboard interfaces, page title and private-image Print | Physical printing and broader browser/device qualification; native menu/OS registration stay platform-specific |
 
 ## Settings implementation and validation
 
@@ -110,3 +110,12 @@ A production browser project was independently decoded and reopened through the
 file picker, then saved byte-identically. This does not close the remaining
 format breadth, native service, GPU composition or cross-browser roadmap gates.
 Evidence is in ignored `docs/validation/ui-storage-polish-2026-10-24/`.
+
+## Browser printing
+
+File > Print and Ctrl/Cmd+P now capture the visible document with private draft
+text, preserve dirty/history state and use a dedicated image-only print frame.
+Waiting, cancellation and denial controls are translated. Actual production
+Chromium lifecycle and independent PNG/PCND pixel checks pass; visible printer
+dialogs, physical output and other browsers remain unqualified. See
+[browser printing](BROWSER_PRINTING.md).

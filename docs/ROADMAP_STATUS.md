@@ -31,9 +31,10 @@ start or complete the T16 parity gate. See [Classic follow-up](CLASSIC_FOLLOWUP.
 
 File integration now includes [compact PCND storage](PCND_STORAGE.md), a
 [macOS document bundle and Finder launcher](FILE_ASSOCIATIONS.md), and
-[native macOS printing and image export options](PRINTING_EXPORT.md). Desktop
-confirmed saves use lossless block compression; browser reads compact projects
-and still writes canonical raw projects. PNG/BMP/JPEG export choices and JPEG
+[native macOS printing and image export options](PRINTING_EXPORT.md), plus
+[browser printing](BROWSER_PRINTING.md). Desktop
+confirmed saves and browser downloads use the same initial binary PCND format
+with lossless tile compression. PNG/BMP/JPEG export choices and JPEG
 quality work on desktop and web. Other-platform printing, JPEG XL and broader
 format/OS qualification remain unfinished; these slices do not complete T19.
 
