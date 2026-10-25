@@ -3148,6 +3148,7 @@ dependencies = [
  "png",
  "ruzstd",
  "sha2",
+ "tiff",
  "uuid",
  "zerocopy",
  "zstd",

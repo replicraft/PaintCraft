@@ -192,6 +192,16 @@ fn decode_limits(pixels: u64) -> ::image::Limits {
     limits
 }
 
+fn admit_buffer_bytes(bytes: u64, address_limit: u64) -> Result<()> {
+    if bytes > address_limit {
+        return Err(Error::new(
+            ErrorCode::ResourceLimit,
+            "image buffer exceeds the target allocation address space",
+        ));
+    }
+    Ok(())
+}
+
 pub fn decode(bytes: &[u8]) -> Result<Decoded> {
     decode_with_pixel_limit(bytes, DECODE_PIXELS_MAX)
 }
@@ -264,6 +274,12 @@ fn decode_pixels(
             | ::image::ColorType::Rgb16
             | ::image::ColorType::Rgba16
     );
+    admit_buffer_bytes(decoder.total_bytes(), isize::MAX as u64)?;
+    if depth16 {
+        // into_rgba16 below expands even grayscale/RGB source buffers to eight
+        // bytes per pixel. Vec allocations must also fit isize on wasm32.
+        admit_buffer_bytes(u64::from(width) * u64::from(height) * 8, isize::MAX as u64)?;
+    }
     if depth16 {
         losses.insert(0, "depth-16-reduced-to-8".to_owned());
     }
@@ -314,13 +330,13 @@ pub fn encode(
     rgba: &[u8],
     jpeg_quality: u8,
 ) -> Result<Vec<u8>> {
+    check_size(u64::from(width), u64::from(height))?;
     if rgba.len() as u64 != u64::from(width) * u64::from(height) * 4 {
         return Err(Error::new(
             ErrorCode::InvariantViolation,
             "pixel buffer does not match the image size",
         ));
     }
-    check_size(u64::from(width), u64::from(height))?;
     let mut out = Vec::new();
     match format {
         ImageFormat::Gif => return gif::encode(width, height, rgba),

@@ -66,8 +66,10 @@ pub(super) fn admit(bytes: &[u8], pixels: u64) -> Result<Vec<String>> {
         ));
     }
     let (mut width, mut height) = (None, None);
+    let (mut photometric, mut channels, mut alpha) = (None, None, false);
     let mut metadata = 0usize;
     let mut losses = Vec::new();
+    let mut seen = [0u64; 1024];
     for index in 0..count {
         let at = offset + 2 + index * 12;
         let (tag, kind, n) = (
@@ -75,6 +77,11 @@ pub(super) fn admit(bytes: &[u8], pixels: u64) -> Result<Vec<String>> {
             directory.word(at + 2)?,
             directory.long(at + 4)? as usize,
         );
+        let (slot, bit) = (usize::from(tag / 64), 1u64 << (tag % 64));
+        if seen[slot] & bit != 0 {
+            return Err(codec("duplicate TIFF field"));
+        }
+        seen[slot] |= bit;
         let size = match kind {
             1 | 2 | 6 | 7 => 1,
             3 | 8 => 2,
@@ -137,11 +144,16 @@ pub(super) fn admit(bytes: &[u8], pixels: u64) -> Result<Vec<String>> {
                 }
             }
             262 => {
-                if !matches!(directory.value(data, kind, 0)?, 0..=2) {
+                if n != 1 {
+                    return Err(codec("invalid TIFF photometric tag"));
+                }
+                let model = directory.value(data, kind, 0)?;
+                if !matches!(model, 0..=2) {
                     return Err(unsupported(
                         "TIFF palette/CMYK/other photometric models are not qualified",
                     ));
                 }
+                photometric = Some(model);
             }
             274 => {
                 if directory.value(data, kind, 0)? != 1 {
@@ -151,9 +163,14 @@ pub(super) fn admit(bytes: &[u8], pixels: u64) -> Result<Vec<String>> {
                 }
             }
             277 => {
-                if directory.value(data, kind, 0)? > 4 {
+                if n != 1 {
+                    return Err(codec("invalid TIFF samples-per-pixel tag"));
+                }
+                let samples = directory.value(data, kind, 0)?;
+                if !(1..=4).contains(&samples) {
                     return Err(unsupported("TIFF channel count is not qualified"));
                 }
+                channels = Some(samples);
             }
             284 => {
                 if directory.value(data, kind, 0)? != 1 {
@@ -164,6 +181,7 @@ pub(super) fn admit(bytes: &[u8], pixels: u64) -> Result<Vec<String>> {
                 if n != 1 || directory.value(data, kind, 0)? != 2 {
                     return Err(unsupported("TIFF alpha must be explicitly unassociated"));
                 }
+                alpha = true;
             }
             339 => {
                 if n > 4 {
@@ -191,6 +209,16 @@ pub(super) fn admit(bytes: &[u8], pixels: u64) -> Result<Vec<String>> {
             }
         }
     }
+    let color_channels = match photometric {
+        Some(0 | 1) => 1,
+        Some(2) => 3,
+        _ => return Err(codec("missing TIFF photometric model")),
+    };
+    if channels.unwrap_or(1) != color_channels + u32::from(alpha) {
+        return Err(unsupported(
+            "TIFF extra samples must be explicitly declared as unassociated alpha",
+        ));
+    }
     let (width, height) = (
         width.ok_or_else(|| codec("missing TIFF width"))?,
         height.ok_or_else(|| codec("missing TIFF height"))?,
@@ -207,9 +235,19 @@ pub(super) fn admit(bytes: &[u8], pixels: u64) -> Result<Vec<String>> {
 
 pub(super) fn encode(width: u32, height: u32, rgba: &[u8]) -> Result<Vec<u8>> {
     let mut output = Cursor::new(Vec::new());
-    ::image::codecs::tiff::TiffEncoder::new(&mut output)
-        .write_image(rgba, width, height, ::image::ExtendedColorType::Rgba8)
-        .map_err(image_error)?;
+    // image's RGBA writer does not declare ExtraSamples. Use its underlying
+    // codec's explicit RGB + unassociated-alpha API to avoid ambiguous opacity.
+    let error = |error: ::tiff::TiffError| codec(format!("TIFF encode failed: {error}"));
+    {
+        let mut encoder = ::tiff::encoder::TiffEncoder::new(&mut output).map_err(error)?;
+        let mut image = encoder
+            .new_image::<::tiff::encoder::colortype::RGB8>(width, height)
+            .map_err(error)?;
+        image
+            .extra_samples(&[::tiff::tags::ExtraSamples::UnassociatedAlpha])
+            .map_err(error)?;
+        image.write_data(rgba).map_err(error)?;
+    }
     Ok(output.into_inner())
 }
 
@@ -219,7 +257,10 @@ mod tests {
 
     #[test]
     fn overflowing_directory_offsets_fail_without_panicking() {
-        let directory = Directory { bytes: &[], little: true };
+        let directory = Directory {
+            bytes: &[],
+            little: true,
+        };
         assert!(directory.word(usize::MAX).is_err());
         assert!(directory.long(usize::MAX - 2).is_err());
         let bytes = [b'I', b'I', 42, 0, 255, 255, 255, 255];

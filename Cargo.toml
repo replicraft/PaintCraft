@@ -112,6 +112,8 @@ cosmic-text = { version = "0.19.0", default-features = false, features = ["std",
 
 # Standard image codecs and bounded binary header views.
 image = { version = "0.25.10", default-features = false, features = ["png", "bmp", "jpeg", "gif", "tiff", "tga", "webp", "avif"] }
+# Explicit TIFF alpha tags are unavailable through image's encoder facade.
+tiff = { version = "0.11.3", default-features = false }
 zerocopy = { version = "0.8.63", features = ["derive"] }
 # JPEG XL adapters: pure Rust decoder and a separately scoped lossless writer.
 jxl = { version = "0.8.0", default-features = false }

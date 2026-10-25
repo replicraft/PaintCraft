@@ -311,3 +311,57 @@ fn gif_truecolor_export_quantizes_to_at_most_256_colors() {
         ["palette-quantized"]
     );
 }
+
+#[test]
+fn partial_gif_frames_do_not_silently_replace_background_with_transparency() {
+    let mut bytes = gif_fixture();
+    bytes[6..8].copy_from_slice(&3u16.to_le_bytes());
+    assert_eq!(
+        decode(&bytes).unwrap_err().code,
+        ErrorCode::CapabilityUnsupported
+    );
+}
+
+#[test]
+fn tiff_requires_explicit_unassociated_alpha_for_extra_channels() {
+    for channels in [2, 4] {
+        let mut bytes = tiff_fixture(true, 8, channels, &vec![80; channels as usize * 2], &[]);
+        let count = u16::from_le_bytes(bytes[8..10].try_into().unwrap()) as usize;
+        for index in 0..count {
+            let at = 10 + index * 12;
+            if u16::from_le_bytes(bytes[at..at + 2].try_into().unwrap()) == 338 {
+                bytes[at..at + 2].copy_from_slice(&65000u16.to_le_bytes());
+            }
+        }
+        assert_eq!(
+            decode(&bytes).unwrap_err().code,
+            ErrorCode::CapabilityUnsupported
+        );
+    }
+}
+
+#[test]
+fn oversized_export_dimensions_fail_before_byte_count_arithmetic() {
+    for format in [ImageFormat::Png, ImageFormat::Gif, ImageFormat::Tiff] {
+        assert!(encode(format, u32::MAX, u32::MAX, &[], 90).is_err());
+    }
+}
+
+#[test]
+fn duplicate_tiff_fields_cannot_select_conflicting_pixel_models() {
+    let bytes = tiff_fixture(true, 8, 4, &[80; 8], &[(277, 3, 1, 3)]);
+    assert_eq!(decode(&bytes).unwrap_err().code, ErrorCode::CodecFailed);
+}
+
+#[test]
+fn deep_conversion_respects_32_bit_allocation_address_space() {
+    let wasm_limit = i32::MAX as u64;
+    // An L16 source fits, but its intermediate RGBA16 conversion does not.
+    let pixels = 16_384u64 * 16_384;
+    assert!(admit_buffer_bytes(pixels * 2, wasm_limit).is_ok());
+    assert_eq!(
+        admit_buffer_bytes(pixels * 8, wasm_limit).unwrap_err().code,
+        ErrorCode::ResourceLimit
+    );
+    assert!(admit_buffer_bytes(4_194_304 * 8, wasm_limit).is_ok());
+}

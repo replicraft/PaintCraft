@@ -54,6 +54,11 @@ pub(super) fn admit(bytes: &[u8], pixels: u64) -> Result<Vec<String>> {
                 if w == 0 || h == 0 || left + w > width || top + h > height {
                     return Err(codec("GIF frame lies outside its logical screen"));
                 }
+                if left != 0 || top != 0 || w != width || h != height {
+                    return Err(unsupported(
+                        "partial GIF frames require explicit logical-screen background composition",
+                    ));
+                }
                 if frame[8] & 128 != 0 {
                     take(bytes, &mut pos, 3usize << ((frame[8] & 7) + 1))?;
                 }
