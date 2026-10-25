@@ -220,6 +220,7 @@
 - Describe PCND and supported file formats in README (6208573)
 - Tighten README features and retain revised PCND description (3e1d665)
 - Move platform availability earlier in README (993bddb)
+- classify descriptive commits and publish grouped changelogs (3f96d05)
 
 
 ### Features
@@ -844,6 +845,8 @@
 - Match EarthCraft's macOS installer layout (4294efe)
 - Detect link-count changes during save reconciliation (3aee9de)
 - Open Windows directories with flush access and test native filesystems (ceb3a61)
+- use the cache action's supported failure-save hook (740c0cc)
+- check Unix executable permissions only on supported hosts (3ebd3af)
 
 
 ### Maintenance
@@ -925,6 +928,10 @@
 - Record X11 clipboard evidence and add isolated Linux CI checks (db260eb)
 - Fit FreeBSD release VM to hosted runner resources (b8b19b1)
 - Generate release changelogs with EarthCraft's git-cliff structure (6412061)
+- retain compiled dependency caches after failures (9e527ab)
+- reserve FreeBSD host disk and avoid duplicate VM images (90468e9)
+- allow standalone FreeBSD packaging validation (815169a)
+- use public-runner capacity for FreeBSD builds (9747d75)
 
 
 ### Performance
