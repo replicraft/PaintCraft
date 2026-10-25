@@ -127,7 +127,7 @@ impl Files {
         };
         self.busy = true;
         let mime = match format {
-            None => "application/zip",
+            None => "application/x-paintcraft",
             Some(ImageExport::Png) => "image/png",
             Some(ImageExport::Jpeg) => "image/jpeg",
             Some(ImageExport::Bmp) => "image/bmp",
