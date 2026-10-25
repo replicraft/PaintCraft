@@ -180,3 +180,7 @@ choose-a-valid-image-position-and-canvas-size = 请选择有效的图像位置�
 paste-with-these-import-limitations = 是否接受以下导入限制并粘贴？
 
 accept-import-limitations = 接受导入限制
+
+drag-to-position-enter-places-escape-cancels = 拖动调整位置；Enter 放置，Escape 取消。
+
+finish-placing-the-pasted-image-before-editing-or-saving = 请先完成粘贴图像的放置，再编辑或保存。

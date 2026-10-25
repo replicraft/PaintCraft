@@ -180,3 +180,7 @@ choose-a-valid-image-position-and-canvas-size = Choose a valid image position an
 paste-with-these-import-limitations = Paste with these import limitations?
 
 accept-import-limitations = Accept import limitations
+
+drag-to-position-enter-places-escape-cancels = Drag to position; Enter places, Escape cancels.
+
+finish-placing-the-pasted-image-before-editing-or-saving = Finish placing the pasted image before editing or saving.

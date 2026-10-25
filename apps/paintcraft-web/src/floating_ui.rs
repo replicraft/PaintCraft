@@ -50,6 +50,10 @@ impl WebApp {
                 .is_some_and(|selection| FloatingSelection::hit_test(&selection, at))
     }
     pub(crate) fn floating_file_ready(&mut self) -> bool {
+        if self.paste.is_placing() {
+            self.message = "Finish placing the pasted image before editing or saving.".into();
+            return false;
+        }
         self.editor.validate_floating();
         if self.editor.tools.floating_selection().is_some() {
             self.message = FINISH_MOVE.into();

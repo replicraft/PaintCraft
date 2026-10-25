@@ -180,3 +180,7 @@ choose-a-valid-image-position-and-canvas-size = छवि की मान्य
 paste-with-these-import-limitations = क्या इन आयात सीमाओं के साथ पेस्ट करना है?
 
 accept-import-limitations = आयात सीमाएँ स्वीकार करें
+
+drag-to-position-enter-places-escape-cancels = स्थान तय करने के लिए खींचें; Enter से रखें, Escape से रद्द करें।
+
+finish-placing-the-pasted-image-before-editing-or-saving = संपादन या सहेजने से पहले चिपकाई गई छवि को रखना पूरा करें।

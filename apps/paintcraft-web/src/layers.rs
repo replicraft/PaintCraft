@@ -9,7 +9,7 @@ impl WebApp {
         if !self.workspace.layers {
             return;
         }
-        let blocked = self.blocked();
+        let blocked = self.blocked() || self.paste.is_placing();
         let actions = egui::Panel::right("web-layers")
             .default_size(240.0)
             .show(ui, |ui| {

@@ -116,14 +116,13 @@ impl WebApp {
             can_undo: self.editor.session.undo_depth() > 0 || self.editor.has_text(),
             can_redo: self.editor.session.redo_depth() > 0,
             can_recent: false,
-            can_paste: crate::clipboard::read_supported()
-                && !self.paste.busy()
-                && !self.clipboard.busy(),
+            can_paste: self.paste.can_read() && !self.paste.busy() && !self.clipboard.busy(),
+            can_paste_onto: self.paste.can_read() && !self.paste.busy() && !self.clipboard.busy(),
             can_save_all: false,
             selection_active: self.editor.session.selection()
                 != paintcraft_editor::execute::Selection::Inactive,
             tool: self.controls.tool,
-            blocked: self.blocked(),
+            blocked: self.blocked() || self.paste.is_placing(),
             layer_index: index,
             layer_count: doc.roots.len(),
             layer_visible: self
@@ -156,6 +155,10 @@ impl WebApp {
     }
 
     pub(crate) fn edit(&mut self, action: Edit) {
+        if self.paste.is_placing() {
+            self.message = "Finish placing the pasted image before editing or saving.".into();
+            return;
+        }
         let remember_size = matches!(
             action,
             Edit::CropToSelection
@@ -187,6 +190,17 @@ impl WebApp {
     }
 
     fn action(&mut self, ctx: &egui::Context, action: Action) {
+        if self.paste.is_placing() {
+            if action == Action::Undo {
+                self.cancel_paste(ctx);
+            } else {
+                self.message = t!(
+                    ctx,
+                    "Finish placing the pasted image before editing or saving."
+                );
+            }
+            return;
+        }
         if matches!(
             action,
             Action::New
@@ -217,6 +231,7 @@ impl WebApp {
             Action::Cut => self.cut_requested(ctx),
             Action::CopyVisible => self.copy_visible_requested(ctx),
             Action::PasteLayer => self.paste_requested(ctx),
+            Action::Paste => self.paste_current_requested(ctx),
             Action::Crop => self.edit(Edit::CropToSelection),
             Action::EraseSelection => self.edit(Edit::EraseSelection {
                 color: paintcraft_tools::commands::canvas_color(self.editor.session.document()),
@@ -405,7 +420,11 @@ impl WebApp {
     }
 
     pub(crate) fn keyboard_event(&mut self, ctx: &egui::Context, event: &egui::Event) -> bool {
+        if self.paste_keyboard(ctx, event) {
+            return true;
+        }
         if self.paste.busy()
+            && !self.paste.is_placing()
             && !self.paste.modal()
             && matches!(
                 event,
@@ -520,6 +539,7 @@ impl WebApp {
                 self.action(&ctx, action);
             }
         });
+        self.paste_placement_bar(ui);
         let status_rect = egui::Panel::bottom("classic-status")
             .show(ui, |ui| {
                 let size = egui::vec2(

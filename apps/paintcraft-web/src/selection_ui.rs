@@ -3,12 +3,23 @@ use crate::{app::WebApp, editor::MAX_POINTS};
 use eframe::egui::{self, Color32, Pos2, Rect, Vec2};
 use paintcraft_ui::{t, view::View};
 impl WebApp {
+    pub(crate) fn visible_selection(
+        &self,
+    ) -> paintcraft_core::types::Result<paintcraft_raster::Selection> {
+        if self.paste.is_placing() {
+            return Ok(self.paste_bounds().map_or(
+                paintcraft_raster::Selection::Empty,
+                paintcraft_raster::Selection::Rect,
+            ));
+        }
+        self.editor.display_selection()
+    }
     pub(crate) fn selected_bounds(
         &self,
     ) -> paintcraft_core::types::Result<Option<paintcraft_core::types::Rect>> {
         use paintcraft_raster::Selection;
         let clip = self.editor.session.document().canvas_rect();
-        match self.editor.display_selection()? {
+        match self.visible_selection()? {
             Selection::Mask(mask) => self.canvas.bounds.borrow_mut().get(&mask, clip),
             selection => {
                 self.canvas.bounds.borrow_mut().clear();
@@ -20,7 +31,9 @@ impl WebApp {
         }
     }
     pub(crate) fn selected_dimensions(&self) -> Option<(i64, i64)> {
-        if self.editor.session.selection() == paintcraft_raster::Selection::Inactive {
+        if !self.paste.is_placing()
+            && self.editor.session.selection() == paintcraft_raster::Selection::Inactive
+        {
             self.canvas.bounds.borrow_mut().clear();
             return None;
         }
@@ -44,8 +57,7 @@ impl WebApp {
     }
     pub(crate) fn draw_mask_overlay(&mut self, painter: &egui::Painter, rect: Rect) {
         let paintcraft_raster::Selection::Mask(mask) = self
-            .editor
-            .display_selection()
+            .visible_selection()
             .unwrap_or(paintcraft_raster::Selection::Empty)
         else {
             self.canvas.outline.clear();

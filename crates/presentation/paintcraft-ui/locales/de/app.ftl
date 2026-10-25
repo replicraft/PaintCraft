@@ -180,3 +180,7 @@ choose-a-valid-image-position-and-canvas-size = Wählen Sie eine gültige Bildpo
 paste-with-these-import-limitations = Mit diesen Einschränkungen importieren?
 
 accept-import-limitations = Importeinschränkungen akzeptieren
+
+drag-to-position-enter-places-escape-cancels = Zum Positionieren ziehen; Eingabe platziert, Esc bricht ab.
+
+finish-placing-the-pasted-image-before-editing-or-saving = Platzieren Sie das eingefügte Bild, bevor Sie bearbeiten oder speichern.

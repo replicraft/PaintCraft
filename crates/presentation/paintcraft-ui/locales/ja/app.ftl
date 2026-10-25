@@ -180,3 +180,7 @@ choose-a-valid-image-position-and-canvas-size = 有効な画像の位置とキ�
 paste-with-these-import-limitations = 次の読み込み制限を受け入れて貼り付けますか？
 
 accept-import-limitations = 読み込み制限を受け入れる
+
+drag-to-position-enter-places-escape-cancels = ドラッグで位置を調整。Enter で配置、Escape でキャンセル。
+
+finish-placing-the-pasted-image-before-editing-or-saving = 編集や保存の前に、貼り付けた画像の配置を完了してください。

@@ -1,4 +1,4 @@
-//! Browser-owned new-layer paste; publication uses the shared editor transaction.
+//! Browser-owned image paste; publication uses shared editor transactions.
 use crate::{app::WebApp, clipboard};
 use eframe::egui;
 use paintcraft_classic::ClassicVariant;
@@ -9,12 +9,20 @@ use paintcraft_editor::{
 };
 use paintcraft_ui::{i18n::import_loss_description, t};
 use std::sync::Arc;
+mod placement;
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+enum Intent {
+    #[default]
+    NewLayer,
+    CurrentLayer,
+}
 
 #[derive(Debug)]
 struct Owner {
     document: Arc<Document>,
     ticket: HistoryTicket,
     variant: ClassicVariant,
+    target: Option<uuid::Uuid>,
 }
 impl Owner {
     fn capture(app: &WebApp) -> Self {
@@ -22,17 +30,20 @@ impl Owner {
             document: app.editor.session.snapshot(),
             ticket: app.editor.session.history_ticket(),
             variant: app.variant,
+            target: app.editor.target,
         }
     }
     fn current(&self, app: &WebApp) -> bool {
         Arc::ptr_eq(&self.document, &app.editor.session.snapshot())
             && self.ticket == app.editor.session.history_ticket()
             && self.variant == app.variant
+            && self.target == app.editor.target
             && app.paste_safe()
     }
 }
 #[derive(Debug)]
 struct Ready {
+    intent: Intent,
     draft: PasteDraft,
     losses: Vec<String>,
     accept_losses: bool,
@@ -42,14 +53,28 @@ struct Ready {
 }
 #[derive(Debug, Default)]
 pub(crate) struct State {
+    #[cfg(test)]
+    next_read: Option<clipboard::Job<clipboard::Decoded>>,
+    intent: Intent,
+    placing: Option<placement::Placing>,
     owner: Option<Owner>,
     job: Option<clipboard::Job<clipboard::Decoded>>,
     ready: Option<Ready>,
     activation: Option<u64>,
 }
 impl State {
+    pub(crate) fn can_read(&self) -> bool {
+        #[cfg(test)]
+        if self.next_read.is_some() {
+            return true;
+        }
+        clipboard::read_supported()
+    }
     pub(crate) fn busy(&self) -> bool {
-        self.job.is_some() || self.ready.is_some()
+        self.job.is_some() || self.ready.is_some() || self.placing.is_some()
+    }
+    pub(crate) fn is_placing(&self) -> bool {
+        self.placing.is_some()
     }
     pub(crate) fn modal(&self) -> bool {
         self.ready.is_some()
@@ -64,13 +89,31 @@ impl WebApp {
             && self.text.preedit.is_empty()
     }
     pub(crate) fn paste_requested(&mut self, ctx: &egui::Context) {
+        self.paste_requested_kind(ctx, Intent::NewLayer);
+    }
+    pub(crate) fn paste_current_requested(&mut self, ctx: &egui::Context) {
+        self.paste_requested_kind(ctx, Intent::CurrentLayer);
+    }
+    fn paste_requested_kind(&mut self, ctx: &egui::Context, intent: Intent) {
+        if self.paste.busy() {
+            return;
+        }
+        self.paste.intent = intent;
         let frontend = match self.variant {
             ClassicVariant::V7 => paintcraft_formats::registry::Frontend::ClassicV7,
             ClassicVariant::V10 => paintcraft_formats::registry::Frontend::ClassicV10,
             ClassicVariant::V11 => paintcraft_formats::registry::Frontend::ClassicV11,
         };
         let budget = self.clipboard.budget.clone();
-        self.paste_with(ctx, || clipboard::read(ctx, frontend, budget));
+        #[cfg(test)]
+        let next = self.paste.next_read.take();
+        self.paste_with(ctx, || {
+            #[cfg(test)]
+            if let Some(job) = next {
+                return Ok(job);
+            }
+            clipboard::read(ctx, frontend, budget)
+        });
     }
     fn paste_with(
         &mut self,
@@ -90,6 +133,19 @@ impl WebApp {
             self.message = t!(ctx, "Finish the current edit before pasting.");
             return;
         }
+        if self.paste.intent == Intent::CurrentLayer
+            && self.editor.target.is_none_or(|id| {
+                self.editor
+                    .session
+                    .document()
+                    .layers
+                    .get(&id)
+                    .is_none_or(|l| !l.visible)
+            })
+        {
+            self.message = t!(ctx, "Finish the current edit before pasting.");
+            return;
+        }
         match submit() {
             Ok(job) => {
                 self.paste.owner = Some(Owner::capture(self));
@@ -103,6 +159,8 @@ impl WebApp {
         if self.paste.busy() {
             self.paste.job = None;
             self.paste.ready = None;
+            self.paste.placing = None;
+            self.canvas.invalidate();
             self.paste.owner = None;
             self.message = t!(ctx, "Paste cancelled.");
         }
@@ -138,6 +196,7 @@ impl WebApp {
                 ));
             }
             Ok(Ready {
+                intent: self.paste.intent,
                 draft: PasteDraft::new(&self.editor.session, decoded.image)?,
                 losses: decoded.losses,
                 accept_losses: false,
@@ -153,7 +212,7 @@ impl WebApp {
             }
         }
     }
-    fn place_paste(ready: &mut Ready) -> bool {
+    fn validate_ready_placement(ready: &mut Ready) -> bool {
         ready
             .draft
             .place(
@@ -181,11 +240,15 @@ impl WebApp {
             self.message = t!(ctx, "The document changed; paste again.");
             return;
         }
-        if !Self::place_paste(&mut ready)
+        if !Self::validate_ready_placement(&mut ready)
             || ready.name.chars().take(1025).count() > 1024
             || (!ready.losses.is_empty() && !ready.accept_losses)
         {
             self.paste.ready = Some(ready);
+            return;
+        }
+        if ready.intent == Intent::CurrentLayer {
+            self.begin_paste_placement(ctx, ready);
             return;
         }
         self.paste.owner = None;
@@ -224,18 +287,29 @@ impl WebApp {
         let mut cancel = false;
         egui::Modal::new(egui::Id::unique("web-paste-layer")).show(ctx, |ui| {
             ui.set_width(400.0);
-            ui.heading(t!(ctx, "Paste as new layer…"));
-            ui.label(t!(ctx, "Pasting creates a new layer."));
+            ui.heading(t!(
+                ctx,
+                if ready.intent == Intent::NewLayer {
+                    "Paste as new layer…"
+                } else {
+                    "Paste"
+                }
+            ));
+            if ready.intent == Intent::NewLayer {
+                ui.label(t!(ctx, "Pasting creates a new layer."));
+            }
             ui.label(format!(
                 "{} × {} px",
                 ready.draft.image().width(),
                 ready.draft.image().height()
             ));
-            ui.horizontal(|ui| {
-                let label = ui.label(t!(ctx, "Name"));
-                ui.text_edit_singleline(&mut ready.name)
-                    .labelled_by(label.id);
-            });
+            if ready.intent == Intent::NewLayer {
+                ui.horizontal(|ui| {
+                    let label = ui.label(t!(ctx, "Name"));
+                    ui.text_edit_singleline(&mut ready.name)
+                        .labelled_by(label.id);
+                });
+            }
             ui.horizontal(|ui| {
                 let label = ui.label("X");
                 ui.add(egui::DragValue::new(&mut ready.origin.0).range(-1_048_576..=1_048_576))
@@ -245,10 +319,10 @@ impl WebApp {
                     .labelled_by(label.id);
             });
             ui.checkbox(&mut ready.grow, t!(ctx, "Expand canvas to fit image"));
-            if !ready.grow {
+            if !ready.grow && ready.intent == Intent::NewLayer {
                 ui.label(t!(ctx, "Pixels outside the canvas stay in the new layer."));
             }
-            let valid = Self::place_paste(&mut ready);
+            let valid = Self::validate_ready_placement(&mut ready);
             if !valid {
                 ui.colored_label(
                     ui.visuals().error_fg_color,

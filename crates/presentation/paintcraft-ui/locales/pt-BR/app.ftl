@@ -180,3 +180,7 @@ choose-a-valid-image-position-and-canvas-size = Escolha uma posição de imagem 
 paste-with-these-import-limitations = Colar com estas limitações de importação?
 
 accept-import-limitations = Aceitar limitações de importação
+
+drag-to-position-enter-places-escape-cancels = Arraste para posicionar; Enter aplica e Esc cancela.
+
+finish-placing-the-pasted-image-before-editing-or-saving = Conclua o posicionamento da imagem colada antes de editar ou salvar.

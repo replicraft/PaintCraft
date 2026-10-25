@@ -83,7 +83,7 @@ impl WebApp {
         }
     }
     pub(crate) fn unsaved(&self) -> bool {
-        self.editor.is_dirty() || !self.text.preedit.is_empty()
+        self.paste.is_placing() || self.editor.is_dirty() || !self.text.preedit.is_empty()
     }
 
     pub(crate) fn text_chrome(&mut self, ui: &mut egui::Ui) {

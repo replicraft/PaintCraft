@@ -13,10 +13,18 @@ pub(crate) struct Canvas {
     fitted: bool,
     pub(crate) pending_center: Option<(f32, f32)>,
     key: Option<(Ticket, Option<PreviewRevision>)>,
+    paste_revision: Option<PreviewRevision>,
     pub rect: Option<Rect>,
     pub viewport: Vec2,
     pub pointer: Option<(i64, i64)>,
     pub controls: Option<Rect>,
+}
+
+impl Canvas {
+    pub(crate) fn invalidate(&mut self) {
+        self.key = None;
+        self.paste_revision = None;
+    }
 }
 
 impl std::fmt::Debug for Canvas {
@@ -174,8 +182,7 @@ impl WebApp {
                 let selection = match self.editor.tools.preview() {
                     Some(Preview::Marquee { from, to }) => Some((from, (to.0 + 1, to.1 + 1))),
                     _ => match self
-                        .editor
-                        .display_selection()
+                        .visible_selection()
                         .unwrap_or(paintcraft_raster::Selection::Empty)
                     {
                         paintcraft_editor::execute::Selection::Rect(r) => {
@@ -243,15 +250,22 @@ impl WebApp {
 
     fn refresh_texture(&mut self, ctx: &egui::Context) {
         self.editor.validate_floating();
+        self.validate_paste_placement(ctx);
+        let paste_revision = self.paste_revision();
         let key = (
             self.editor.session.ticket(),
             (!self.editor.tools.gesture_is_selection())
                 .then(|| self.editor.tools.preview_revision()),
         );
-        if self.canvas.key == Some(key) {
+        if self.canvas.key == Some(key) && self.canvas.paste_revision == paste_revision {
             return;
         }
-        let result = self.editor.display_document().and_then(|preview| {
+        let result = (if self.paste.is_placing() {
+            self.paste_preview_document()
+        } else {
+            self.editor.display_document()
+        })
+        .and_then(|preview| {
             paintcraft_render::render_flat(
                 preview.as_ref().unwrap_or(self.editor.session.document()),
             )
@@ -282,6 +296,7 @@ impl WebApp {
             self.canvas.texture =
                 Some(ctx.load_texture("web-document", image, TextureOptions::NEAREST));
         }
+        self.canvas.paste_revision = paste_revision;
         self.canvas.key = Some((
             self.editor.session.ticket(),
             (!self.editor.tools.gesture_is_selection())
@@ -290,6 +305,10 @@ impl WebApp {
     }
 
     fn canvas_input(&mut self, ui: &egui::Ui, response: &egui::Response) {
+        if self.paste.is_placing() {
+            self.paste_canvas_input(ui, response);
+            return;
+        }
         if self.blocked() {
             self.editor.cancel_floating();
             self.editor.tools.cancel_gesture();
