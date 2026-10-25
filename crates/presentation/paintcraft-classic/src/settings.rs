@@ -234,7 +234,7 @@ pub fn card(ui: &mut egui::Ui, heading: &str, contents: impl FnOnce(&mut egui::U
             ui.set_min_width(ui.available_width().max(0.0));
             ui.label(
                 egui::RichText::new(t!(ui.ctx(), heading))
-                    .size(if heading == "About" { 22.0 } else { 18.0 })
+                    .size(if heading == "About" { 22.0 } else { 16.0 })
                     .strong(),
             );
             ui.add_space(6.0);
