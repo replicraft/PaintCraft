@@ -66,6 +66,7 @@ async function start() {
 		primary.href = url;
 		primary.textContent = `Download for ${target.platform} (${architecture})`;
 		primary.hidden = false;
+		document.querySelector('.browser-link').classList.remove('primary');
 		if (!chosenManually) {
 			primary.click();
 			status.textContent = `Your download for ${target.platform} (${architecture}) is starting. If it doesn't start, use the button below.`;
