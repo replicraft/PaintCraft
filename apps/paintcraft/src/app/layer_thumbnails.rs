@@ -277,11 +277,13 @@ mod tests {
         )
         .unwrap();
         let (release, gate) = std::sync::mpsc::channel();
+        let (started, running) = std::sync::mpsc::channel();
         let source = doc.clone();
         let handle = executor
             .submit(
                 WORK_BYTES,
                 move |_| {
+                    started.send(()).unwrap();
                     gate.recv_timeout(Duration::from_secs(5)).unwrap();
                     paintcraft_render::thumbnail::render_layer(
                         &source,
@@ -293,6 +295,7 @@ mod tests {
                 || {},
             )
             .unwrap();
+        running.recv_timeout(Duration::from_secs(5)).unwrap();
         service.executor = Some(executor);
         service.pending = Some(((doc.document_id, doc.state_id), id, handle));
         let mut newer = (*doc).clone();
