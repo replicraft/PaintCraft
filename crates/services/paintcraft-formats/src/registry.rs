@@ -1,5 +1,5 @@
 //! Frontend policy and qualified dispatch candidates, independent of codec enums.
-//! Admission never validates a file: the bounded selected decoder must still run.
+//! Admission never replaces bounded payload decoding and loss validation.
 use paintcraft_core::types::{Error, ErrorCode, Result};
 
 mod families;

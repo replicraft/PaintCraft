@@ -64,6 +64,46 @@ paintcraft-cli import drawing.psd -o converted.pcnd --allow-loss psd-metadata-ig
 Add any other reported loss codes explicitly. CLI Classic profiles refuse PSD
 and PSB imports; the default Studio profile supports this conversion.
 
+For SVG/SVGZ, `import_image` requires an explicit `svg` object and
+`svg-rasterized` consent. This creates an unsaved raster copy, not editable
+vectors. For example, pass these arguments to the tool:
+
+```json
+{
+    "path": "drawing.svg",
+    "svg": { "width": 1000, "height": 486, "dpi": 96, "fit": "contain" },
+    "allow_losses": ["svg-rasterized"]
+}
+```
+
+`width` and `height` are required; DPI defaults to 96 and must be between 1 and
+2400. `contain` preserves aspect ratio on transparent padding; `stretch` scales
+both axes independently. `svg`, `page` and `entry` cannot be combined. SVG input
+is limited to 8 MiB, dimensions to 16,384 per side and output to 4,194,304 pixels.
+
+Bundled Selawik regular/bold are available by default. Add explicitly chosen
+local outline TTF/OTF/TTC files with `svg.font_files`, an array of paths. This
+supports additional languages, such as the shared Noto Japanese font. Missing
+glyphs refuse the import. Family fallback requires `svg-font-substituted` consent.
+Font data is limited to 64 MiB and 64 faces, with at most 30 additional files.
+Collection counts and name metadata are checked before loading; bitmap, SVG and
+color font glyph tables need separate qualification and are currently refused.
+Neither the original SVG nor supplied font files can be save/export destinations
+through their filesystem aliases while that imported session remains active.
+
+The corresponding CLI options are:
+
+```sh
+paintcraft-cli import drawing.svg -o converted.pcnd \
+    --svg-width 1000 --svg-height 486 --svg-dpi 96 --svg-fit contain \
+    --allow-loss svg-rasterized
+```
+
+Repeat `--svg-font /path/to/font.ttf` for additional fonts. Acknowledge any other
+reported metadata or font-substitution losses explicitly. Classic CLI profiles
+refuse SVG before reading its content. Desktop/browser SVG controls remain
+pending; these options do not enable ordinary SVG Open or SVG export.
+
 `export_icons` takes `path`, an ordered `entries` array and optional `resampling`
 (`lanczos3` by default, or `nearest`). Each entry has `width`, `height`, `encoding`
 (`png` or `bitmap`) and, for CUR only, `hotspot: [x, y]`. Dimensions must be 1..256;

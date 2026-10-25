@@ -41,7 +41,8 @@ Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, 
 | JXR, HEIF | No enabled frontend operations | Selected/backend qualification remains; HEIF writing is prohibited |
 | ICO/CUR | Studio explicit selected-entry Import on desktop/browser; CLI `--entry` and MCP `entry`. Fresh multi-entry export in Studio desktop/browser, CLI `export-icons` and MCP `export_icons` | Reports every admitted entry and cursor hotspot before selection. Fresh exports use explicit sizes, RGBA PNG or 32-bit bitmap entries, independent aspect-ratio fitting, and per-entry CUR hotspots. Desktop/browser exports require a displayed preview and explicit loss consent; foreign preserving save remains unavailable |
 | PSD/PSB | Studio explicit Import on desktop/browser; CLI `import` and MCP `import_image` | RGB8 Normal raster-layer subset retains names, offsets, opacity, visibility and alpha. Metadata losses need explicit consent. Groups, masks, text, effects, clipping, high depth and foreign writing remain unavailable |
-| SVG, EXR/HDR, JP2, MSP, ICNS | Not yet enabled | Registry inventory or work in progress is not usable format support |
+| SVG/SVGZ | CLI `import` with `--svg-width`/`--svg-height`; MCP `import_image` with `svg` options | Explicit rasterization consent; chosen DPI/fitting and additional outline fonts. Desktop/browser controls remain pending. No Classic access, ordinary Open or SVG export |
+| EXR/HDR, JP2, MSP, ICNS | Not yet enabled | Registry inventory or work in progress is not usable format support |
 | ABR, ASE, CSH | Asset workflow policy only | Brush/palette/shape import/export implementations remain |
 | RAW, PDF, KRA, XCF, animation, advanced DDS | Future profiles | No inherited Classic support or preserving-write claims |
 
@@ -89,13 +90,13 @@ Fresh ICO/CUR export uses the selected `ico` container library with explicit RGB
 
 The implemented subsets advance the pack; they do not complete its full interoperability, preservation or release gates.
 
-### SVG rasterization backend, 2026-10-25
+### SVG/SVGZ rasterization, 2026-10-25
 
 The selected resvg/usvg 0.48.1 now has an explicit-size/DPI rasterization adapter
-in `paintcraft-formats::svg`. **SVG frontend admission remains disabled** until
-size/DPI controls, preview consent and CLI/MCP options are connected. This is
-backend progress, not an advertised Open or Import capability yet. Classic SVG
-access and SVG export remain denied.
+in `paintcraft-formats::svg`. CLI `import` and MCP `import_image` now expose it
+through explicit size/DPI options and named rasterization-loss consent. **Studio
+desktop/browser controls remain pending.** Generic import discovery and ordinary
+Open never guess SVG parameters. Classic SVG access and SVG export remain denied.
 
 Preparation requires output dimensions, DPI and contain/stretch fitting. It
 accepts UTF-8 SVG or a single checked SVGZ gzip member, limits encoded and
@@ -114,6 +115,21 @@ for resvg. Metadata/depth/palette losses from that conversion remain named. Both
 data and string resolvers deny everything outside the admitted image cache.
 The result is straight RGBA8 in encoded sRGB; source vector/text editability is
 lost and reported as `svg-rasterized`.
+
+CLI/MCP use the shared root Selawik regular/bold assets and may read up to 30
+explicitly supplied outline font files. TTC face counts, directories, offsets
+and expanded name metadata are bounded before fontdb reserves or parses faces.
+Embedded SVG, bitmap and color glyph tables are refused because their upstream
+rendering paths bypass the document's admitted resource resolver/cache. Partly
+unreadable collections are refused rather than silently omitting faces.
+
+Raster document identity includes source digest, dimensions, DPI, fitting and
+rendered samples, so changing options or effective fonts cannot reuse an unrelated
+state identity. PCND roundtrips preserve all raster samples. CLI/MCP tests cover
+SVGZ, fitting, physical-unit DPI coverage, required/mutually exclusive options,
+named loss consent, shared fonts, supplied Japanese fonts, unchanged failure
+state and source/font alias protection after saving. Incompatible profiles and
+missing SVG parameters are refused before source acquisition.
 
 Nine authored scenes have independent headless Chrome reference pixels and
 source/font hashes. Aligned geometry and nearest-sampled embedded pixels match
