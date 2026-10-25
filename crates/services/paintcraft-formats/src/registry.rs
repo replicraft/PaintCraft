@@ -213,6 +213,9 @@ pub fn capability(family: Family, operation: Operation, _platform: Platform) -> 
         Family::Ico | Family::Cur if operation == Operation::ImportConvert => {
             Some("ico-selected-entry")
         }
+        Family::Ico | Family::Cur if operation == Operation::SaveAsCopy => {
+            Some("ico-fresh-entry-set")
+        }
         Family::Qoi | Family::Pnm | Family::Farbfeld
             if matches!(operation, Operation::ImportConvert | Operation::ExportFlat) =>
         {
@@ -242,9 +245,10 @@ pub fn capability(family: Family, operation: Operation, _platform: Platform) -> 
             Family::Qoi | Family::Pnm | Family::Farbfeld | Family::Pcx => {
                 matches!(operation, Operation::ImportConvert | Operation::ExportFlat)
             }
-            Family::Paint | Family::Dcx | Family::Ora | Family::Ico | Family::Cur => {
-                operation == Operation::ImportConvert
+            Family::Ico | Family::Cur => {
+                matches!(operation, Operation::ImportConvert | Operation::SaveAsCopy)
             }
+            Family::Paint | Family::Dcx | Family::Ora => operation == Operation::ImportConvert,
             Family::Jxl | Family::Avif => operation == Operation::ExportFlat,
             Family::Pdn => matches!(
                 operation,
@@ -277,6 +281,15 @@ pub fn admission(request: Request<'_>) -> Decision {
     let selected_entry = matches!(request.family, Family::Ico | Family::Cur)
         && request.operation == Operation::ImportConvert
         && request.variant == Some("icon-selected-entry");
+    let fresh_entry_set = matches!(request.family, Family::Ico | Family::Cur)
+        && request.operation == Operation::SaveAsCopy
+        && request.variant == Some("icon-fresh-entry-set");
+    if matches!(request.family, Family::Ico | Family::Cur)
+        && request.operation == Operation::SaveAsCopy
+        && !fresh_entry_set
+    {
+        return Decision::TemporarilyUnavailable(Reason::VariantUnqualified);
+    }
     if matches!(request.family, Family::Ico | Family::Cur)
         && request.operation == Operation::ImportConvert
         && !selected_entry
@@ -289,7 +302,7 @@ pub fn admission(request: Request<'_>) -> Decision {
     {
         return Decision::TemporarilyUnavailable(Reason::VariantUnqualified);
     }
-    if request.variant.is_some() && !selected_page && !selected_entry {
+    if request.variant.is_some() && !selected_page && !selected_entry && !fresh_entry_set {
         return Decision::TemporarilyUnavailable(Reason::VariantUnqualified);
     }
     if request.family == Family::Pnm

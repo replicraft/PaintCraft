@@ -56,3 +56,28 @@ fn selected_entry_import_is_studio_only_and_never_open_or_preserving_save() {
         }
     }
 }
+
+#[test]
+fn fresh_entry_set_export_requires_its_own_variant_and_studio_frontend() {
+    for platform in [Platform::Native, Platform::Web] {
+        for family in [Family::Ico, Family::Cur] {
+            for frontend in [
+                Frontend::ClassicV7,
+                Frontend::ClassicV10,
+                Frontend::ClassicV11,
+                Frontend::Studio,
+            ] {
+                let mut request = Request::new(frontend, Operation::SaveAsCopy, family, platform);
+                assert!(!admission(request).available());
+                request.variant = Some("icon-fresh-entry-set");
+                assert_eq!(admission(request).available(), frontend == Frontend::Studio);
+                request.operation = Operation::SavePreserving;
+                assert!(!admission(request).available());
+                request.operation = Operation::ExportFlat;
+                assert!(!admission(request).available());
+                request.operation = Operation::ImportConvert;
+                assert!(!admission(request).available());
+            }
+        }
+    }
+}
