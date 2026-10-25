@@ -7,17 +7,19 @@ same coverage and transaction implementation.
 | Medium | Stroke |
 |---|---|
 | Brush | Existing antialiased round brush |
-| Calligraphy brush | Broad diagonal elliptical nib |
-| Calligraphy pen | Opposite diagonal nib |
+| Calligraphy brush | Broad diagonal nib with a pixel-wide antialiased edge |
+| Calligraphy pen | Finer opposing diagonal nib with the same edge treatment |
 | Airbrush | Discrete spray particles with radial density |
-| Oil brush | Bristle bands with distance-based depletion |
-| Crayon | Coarse grain with paper gaps |
-| Marker | Translucent rectangular nib |
-| Natural pencil | Fine, lighter grain with paper gaps |
-| Watercolor brush | Translucent, granulated coverage with distance-based depletion |
+| Oil brush | Continuous loaded pigment with bristle bands and a dry exposed edge |
+| Crayon | Dense wax coverage with sparse paper pits |
+| Marker | Dark, broad felt nib with softened corners |
+| Natural pencil | Lighter graphite grain with more paper gaps than crayon |
+| Watercolor brush | Continuous translucent wash with granulation and edge pooling |
 
 These are PaintCraft media, not reference-qualified simulations of Microsoft
-Paint's material engine. Oil does not mix existing pigment, watercolor does not
+Paint's material engine. The supplied interface screenshots establish the gallery
+and controls, but do not provide a measured per-pixel stroke oracle. Oil does not
+mix existing pigment, watercolor does not
 simulate wet paper, and airbrush does not accumulate while the pointer is idle.
 
 Each gesture captures its medium, color, opacity, size and fixed-point positions.
@@ -55,3 +57,42 @@ qualification matrix. The raw matrix is under
 
 The latest [Classic follow-up](CLASSIC_FOLLOWUP.md#brush-comparison) records the
 real Paint examples inspected and the limits of that visual comparison.
+
+## Continuous pigment follow-up
+
+Oil and watercolor no longer expire after six or eight brush widths. Movement
+continues to deposit their loaded pigment along the whole gesture. Their exposed
+tip edges feather into the canvas while interior coverage remains continuous.
+This is a geometry-based edge treatment, not sampling or mixing existing layer
+pixels. Document color and selection coverage still enter through the ordinary
+prepared paint transaction. Both media multiply the captured brush opacity once,
+just like every other medium.
+
+Marker interior coverage is 247/255 at full source opacity, compared with the
+previous 115/255. Its felt tip has softened corners. Crayon leaves about 0.8% of
+interior paper samples uncovered, with dense wax elsewhere. Natural pencil leaves
+about 23% uncovered and has a lighter graphite deposit. These are deterministic
+profile parameters, not benchmark measurements or native Paint equivalence claims.
+Airbrush remains discrete, with its highest particle density toward the center.
+The broad and fine opposing calligraphy nibs resolve their edge distance in canvas
+pixels so the narrow nib does not collapse its antialiasing fringe.
+
+All textured media still recompute bounded full-gesture coverage for a preview.
+The [incremental smooth-path cache](INCREMENTAL_COVERAGE.md) only serves the ordinary
+round brush. This rework does not claim to remove that textured-preview cost.
+The existing scratch, work, output-span, residency and publication policies remain.
+
+Reproduce the actual raster comparison without opening a window:
+
+```sh
+cargo run -p paintcraft-formats --example brush_contact_sheet -- \
+  docs/validation/brush-media-2026-10-24/contact-sheet
+```
+
+The example writes white and transparent PNGs plus a checkerboard presentation,
+raw straight RGBA buffers, and SHA256 hashes in `recipe.txt`. Each row is one of
+all nine media. Each opacity column uses 100%, 50% or 25% source alpha and shows
+a 510-pixel straight stroke, a curve, and a retraced straight stroke at size 18.
+It invokes the same raster coverage and integer source-over math used by the
+editor; the images are implementation evidence, not screenshots of Microsoft Paint.
+The output remains ignored validation data.
