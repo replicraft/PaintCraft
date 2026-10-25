@@ -33,16 +33,19 @@ jobs:
         with:
           path: ~/.cargo/bin/wasm-bindgen
           key: wasm-bindgen-${{ runner.os }}-${{ runner.arch }}-0.2.129
+      - uses: pnpm/action-setup@v6
+        with:
+          package_json_file: apps/paintcraft-web/package.json
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-          cache: npm
-          cache-dependency-path: apps/paintcraft-web/package-lock.json
-      - run: npm ci
+          cache: pnpm
+          cache-dependency-path: apps/paintcraft-web/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
         working-directory: apps/paintcraft-web
-      - run: npm test
+      - run: pnpm test
         working-directory: apps/paintcraft-web
-      - run: npm run build
+      - run: pnpm run build
         working-directory: apps/paintcraft-web
       - uses: actions/upload-artifact@v4
         with:
