@@ -1,6 +1,7 @@
 //! Fixed ruler strips around the scrolling Classic canvas; all units are pixels.
 use super::ruler_axis::ticks;
 use egui::{Align2, FontId, Pos2, Rect, Stroke, Vec2};
+use paintcraft_ui::t;
 
 pub const RULER_SIZE: f32 = 22.0;
 
@@ -36,8 +37,11 @@ pub(super) fn paint(ui: &egui::Ui, viewport: Rect, canvas: Rect, extent: (u32, u
         (horizontal, 0, "Horizontal ruler (pixels)"),
         (vertical, 1, "Vertical ruler (pixels)"),
     ] {
+        let translated = t!(ui.ctx(), label);
         ui.interact(rect, ui.scope_id().with(label), egui::Sense::hover())
-            .widget_info(|| egui::WidgetInfo::labeled(egui::Role::Label, ui.is_enabled(), label));
+            .widget_info(|| {
+                egui::WidgetInfo::labeled(egui::Role::Label, ui.is_enabled(), &translated)
+            });
         let painter = painter.with_clip_rect(rect.intersect(ui.clip_rect()));
         painter.rect_filled(rect, 0.0, ui.visuals().panel_fill);
         let (origin, scale, end, range) = if axis == 0 {

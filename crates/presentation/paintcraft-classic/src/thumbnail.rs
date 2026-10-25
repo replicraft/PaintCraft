@@ -34,7 +34,8 @@ pub fn show(ctx: &egui::Context, preview: Preview, updating: bool, enabled: bool
             });
             let available = Vec2::new(ui.available_width(), (ui.available_height() - 24.0).max(24.0));
             let (rect, response) = ui.allocate_exact_size(available, egui::Sense::hover());
-            response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Image, enabled, "Canvas thumbnail"));
+            let label = t!(ctx, "Canvas thumbnail");
+            response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Image, enabled, &label));
             ui.painter().rect_filled(rect, 0, paintcraft_ui::theme::workspace(ctx.theme()));
             match preview {
                 Preview::Ready { texture, aspect, uv } => {
@@ -46,12 +47,12 @@ pub fn show(ctx: &egui::Context, preview: Preview, updating: bool, enabled: bool
                 Preview::Pending | Preview::Unavailable => {
                     ui.painter().text(
                         rect.center(), egui::Align2::CENTER_CENTER,
-                        if matches!(preview, Preview::Pending) { "Updating…" } else { "Preview unavailable" },
+                        t!(ctx, if matches!(preview, Preview::Pending) { "Updating…" } else { "Preview unavailable" }),
                         egui::FontId::proportional(14.0), ui.visuals().text_color(),
                     );
                 }
             }
-            ui.label(egui::RichText::new(if updating { "Updating preview…" } else { "Canvas overview" }).size(12.0)).on_hover_text(t!(ui.ctx(), "Shows the canvas and active paint, shape and text previews. Selection borders and text carets stay on the main canvas."));
+            ui.label(egui::RichText::new(t!(ctx, if updating { "Updating preview…" } else { "Canvas overview" })).size(12.0)).on_hover_text(t!(ui.ctx(), "Shows the canvas and active paint, shape and text previews. Selection borders and text carets stay on the main canvas."));
         });
     close
 }
