@@ -143,3 +143,6 @@ choose-destination-more = Elegir destino…
 printing-is-limited-to-16-megapixels-per-document = La impresión se limita a 16 megapíxeles por documento.
 print-job-submitted = Trabajo de impresión enviado.
 printing-cancelled = Impresión cancelada.
+
+paintcraft-could-not-start = No se pudo iniciar PaintCraft
+paintcraft-could-not-open-its-window-check-your-display-and-graphics-driver-then-try-again = PaintCraft no pudo abrir su ventana. Comprueba la pantalla y el controlador gráfico e inténtalo de nuevo.

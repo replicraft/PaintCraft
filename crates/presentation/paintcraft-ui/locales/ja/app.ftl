@@ -143,3 +143,6 @@ choose-destination-more = 保存先を選択…
 printing-is-limited-to-16-megapixels-per-document = 印刷できるドキュメントは1600万画素までです。
 print-job-submitted = 印刷ジョブを送信しました。
 printing-cancelled = 印刷をキャンセルしました。
+
+paintcraft-could-not-start = PaintCraft を起動できませんでした
+paintcraft-could-not-open-its-window-check-your-display-and-graphics-driver-then-try-again = PaintCraft のウィンドウを開けませんでした。ディスプレイとグラフィックスドライバーを確認して、もう一度お試しください。

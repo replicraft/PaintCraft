@@ -143,3 +143,6 @@ choose-destination-more = 选择保存位置…
 printing-is-limited-to-16-megapixels-per-document = 每个文档的打印上限为1600万像素。
 print-job-submitted = 打印任务已提交。
 printing-cancelled = 已取消打印。
+
+paintcraft-could-not-start = 无法启动 PaintCraft
+paintcraft-could-not-open-its-window-check-your-display-and-graphics-driver-then-try-again = PaintCraft 无法打开窗口。请检查显示器和显卡驱动程序，然后重试。

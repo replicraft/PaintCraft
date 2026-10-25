@@ -5,6 +5,16 @@ use std::{
     sync::mpsc,
 };
 
+/// Show an error even when creating the parent application window failed.
+pub fn show_error(title: &str, description: &str, ok: &str) {
+    let _ = rfd::MessageDialog::new()
+        .set_title(title)
+        .set_description(description)
+        .set_level(rfd::MessageLevel::Error)
+        .set_buttons(rfd::MessageButtons::OkCustom(ok.to_owned()))
+        .show();
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Kind {
     Open,

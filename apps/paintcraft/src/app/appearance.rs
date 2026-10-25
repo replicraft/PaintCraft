@@ -1,7 +1,7 @@
 //! Desktop appearance integration.
 
 use super::*;
-use paintcraft_ui::i18n::set_language;
+use paintcraft_ui::i18n::{Language, set_language};
 
 impl App {
     /// Load saved settings from `dir`. With no saved Classic variant the first-visit
@@ -54,6 +54,11 @@ impl App {
 
     pub fn experience(&self) -> Experience {
         self.settings.experience
+    }
+
+    /// Also available before an egui context exists, for native startup messages.
+    pub fn language(&self) -> Language {
+        self.settings.language
     }
 
     pub(super) fn choose_experience(&mut self, experience: Experience) {

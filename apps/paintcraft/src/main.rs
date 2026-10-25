@@ -5,6 +5,7 @@
 )]
 
 use paintcraft::App;
+mod startup;
 
 fn main() -> eframe::Result {
     let _ = paintcraft_platform::spill::remove_abandoned(
@@ -12,6 +13,7 @@ fn main() -> eframe::Result {
     );
     let path = std::env::args_os().nth(1).map(std::path::PathBuf::from);
     let mut app = App::new_with_settings(path, paintcraft::settings::default_dir());
+    let language = app.language();
     // Smoke runs: close after N frames, e.g. PAINTCRAFT_EXIT_AFTER_FRAMES=30.
     if let Some(n) = std::env::var("PAINTCRAFT_EXIT_AFTER_FRAMES")
         .ok()
@@ -33,7 +35,7 @@ fn main() -> eframe::Result {
             ),
         ..Default::default()
     };
-    eframe::run_native(
+    let result = eframe::run_native(
         "PaintCraft",
         options,
         Box::new(move |cc| {
@@ -42,5 +44,9 @@ fn main() -> eframe::Result {
                     .with_recovery(paintcraft_formats::recovery::default_dir()),
             ))
         }),
-    )
+    );
+    if let Err(error) = &result {
+        startup::report_error(language, &error.to_string());
+    }
+    result
 }
