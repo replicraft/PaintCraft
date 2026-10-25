@@ -238,10 +238,22 @@ pub fn write_document_to(
     doc: &Document,
     sink: impl Write,
     limits: &Limits,
+    allowed_losses: &[String],
     check: &dyn Fn() -> Result<()>,
 ) -> Result<()> {
     check()?;
-    preflight(doc, limits)?;
+    if allowed_losses.iter().any(|loss| loss != TITLE_LOSS) {
+        return Err(Error::new(
+            ErrorCode::InputSchema,
+            "Unknown OpenRaster export loss acknowledgement",
+        ));
+    }
+    let losses = preflight(doc, limits)?;
+    if losses.iter().any(|loss| !allowed_losses.contains(loss)) {
+        return Err(unsupported(
+            "OpenRaster export would omit the document title; explicit acknowledgement is required",
+        ));
+    }
     let xml = stack_xml(doc, limits, check)?;
     let mut records = Vec::new();
     records
@@ -327,6 +339,7 @@ pub fn write_document_to(
 pub fn encode_document(
     doc: &Document,
     limits: &Limits,
+    allowed_losses: &[String],
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Vec<u8>> {
     struct Sink(Vec<u8>);
@@ -343,6 +356,49 @@ pub fn encode_document(
         }
     }
     let mut sink = Sink(Vec::new());
-    write_document_to(doc, &mut sink, limits, check)?;
+    write_document_to(doc, &mut sink, limits, allowed_losses, check)?;
     Ok(sink.0)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn preview_is_full_canvas_and_thumbnail_fits_without_upscaling() {
+        for (width, height, expected) in [
+            (1000, 486, (256, 124)),
+            (486, 1000, (124, 256)),
+            (17, 9, (17, 9)),
+            (1000, 1, (256, 1)),
+        ] {
+            let doc = paintcraft_document::new_document(
+                width,
+                height,
+                Some(paintcraft_core::types::Rgba([17, 51, 93, 255])),
+                0,
+                paintcraft_document::POLICY,
+            )
+            .unwrap();
+            let limits = Limits::default();
+            let bytes = encode_document(&doc, &limits, &[], &|| Ok(())).unwrap();
+            let archive = archive::Archive::parse(
+                &bytes,
+                &limits,
+                &Budget::new(limits.metadata_bytes),
+                &|| Ok(()),
+            )
+            .unwrap();
+            for (name, expected) in [
+                ("mergedimage.png", (width, height)),
+                ("Thumbnails/thumbnail.png", expected),
+            ] {
+                let png = archive
+                    .read(archive.index(name).unwrap(), &limits, &[], &|| Ok(()))
+                    .unwrap();
+                let image = crate::image::decode(&png).unwrap();
+                assert_eq!((image.width, image.height), expected);
+                assert!(image.rgba.chunks_exact(4).all(|px| px == [17, 51, 93, 255]));
+            }
+        }
+    }
 }
