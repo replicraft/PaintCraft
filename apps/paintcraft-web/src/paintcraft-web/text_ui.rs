@@ -74,9 +74,17 @@ impl WebApp {
             return;
         }
         match self.editor.copy_snapshot() {
-            Ok(snapshot) => self
-                .files
-                .download(ctx, &snapshot, format, self.export_quality),
+            Ok(snapshot) => {
+                let name = self.download_name(format);
+                self.files.download(
+                    ctx,
+                    &snapshot,
+                    format,
+                    self.export_quality,
+                    &name,
+                    self.editor.session.history_ticket().owner,
+                );
+            }
             Err(error) => {
                 self.message = format!("Download not prepared: {error}; text remains editable")
             }

@@ -3,6 +3,7 @@ use paintcraft_ui::t;
 #[cfg(test)]
 #[path = "crop_tests.rs"]
 mod crop_tests;
+mod documents;
 #[cfg(test)]
 #[path = "floating_tests.rs"]
 mod floating_tests;
@@ -390,13 +391,6 @@ impl WebApp {
         }
     }
 
-    fn update_title(&self) {
-        #[cfg(target_arch = "wasm32")]
-        if let Some(document) = web_sys::window().and_then(|window| window.document()) {
-            document.set_title(&format!("{} - PaintCraft", self.name));
-        }
-    }
-
     fn poll_files(&mut self, ctx: &egui::Context) {
         use crate::files::Outcome;
         match self.files.poll() {
@@ -405,7 +399,11 @@ impl WebApp {
                 self.import_owner = None;
                 self.message = "File dialog cancelled; current document retained".into()
             }
-            Some(Ok(Outcome::DownloadRequested)) => {
+            Some(Ok(Outcome::DownloadRequested {
+                owner,
+                project_name,
+            })) => {
+                self.accept_download_name(owner, project_name);
                 self.message =
                     "Download requested - verify your copy; this tab remains unsaved".into()
             }

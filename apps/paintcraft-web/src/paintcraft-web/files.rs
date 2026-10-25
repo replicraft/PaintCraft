@@ -27,7 +27,10 @@ pub(crate) struct Loaded {
 pub(crate) enum Outcome {
     Loaded(Loaded),
     Cancelled,
-    DownloadRequested,
+    DownloadRequested {
+        owner: uuid::Uuid,
+        project_name: Option<String>,
+    },
 }
 
 #[derive(Debug, Default)]
@@ -109,6 +112,8 @@ impl Files {
         document: &Document,
         format: Option<ImageExport>,
         jpeg_quality: u8,
+        name: &str,
+        owner: uuid::Uuid,
     ) {
         if self.busy {
             return;
@@ -121,8 +126,6 @@ impl Files {
             }
         };
         self.busy = true;
-        let extension = format.map_or("pcnd", ImageExport::extension);
-        let name = format!("Untitled.{extension}");
         let mime = match format {
             None => "application/zip",
             Some(ImageExport::Png) => "image/png",
@@ -130,8 +133,11 @@ impl Files {
             Some(ImageExport::Bmp) => "image/bmp",
         };
         *self.outcome.borrow_mut() = Some(
-            download_copy(&bytes, &name, mime)
-                .map(|()| Outcome::DownloadRequested)
+            download_copy(&bytes, name, mime)
+                .map(|()| Outcome::DownloadRequested {
+                    owner,
+                    project_name: format.is_none().then(|| name.to_owned()),
+                })
                 .map_err(|_| Error::new(ErrorCode::StorageFailed, "Browser download failed")),
         );
         focus_canvas();
@@ -145,6 +151,8 @@ impl Files {
         _document: &Document,
         _format: Option<ImageExport>,
         _jpeg_quality: u8,
+        _name: &str,
+        _owner: uuid::Uuid,
     ) {
         *self.outcome.borrow_mut() = Some(Err(Error::new(
             ErrorCode::CapabilityUnsupported,
