@@ -2333,6 +2333,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "jpegxr-pure-rs"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "be1bfea78bcd73aa67dfce7cdd22902e4e6ac06b387a5dea4f225f52525e8590"
+dependencies = [
+ "libc",
+]
+
+[[package]]
 name = "js-sys"
 version = "0.3.106"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3288,9 +3297,12 @@ dependencies = [
 name = "paintcraft-formats"
 version = "0.1.0"
 dependencies = [
+ "crc32fast",
  "dds",
  "divan",
+ "flate2",
  "image",
+ "jpegxr-pure-rs",
  "jxl",
  "lz4_flex",
  "paintcraft-commands",
@@ -3298,12 +3310,14 @@ dependencies = [
  "paintcraft-document",
  "paintcraft-editor",
  "paintcraft-paint",
+ "paintcraft-pdn",
  "paintcraft-platform",
  "paintcraft-raster",
  "paintcraft-render",
  "pcx",
  "png",
  "qoi",
+ "quick-xml",
  "ruzstd",
  "sha2",
  "tiff",
