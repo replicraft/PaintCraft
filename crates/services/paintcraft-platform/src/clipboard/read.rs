@@ -12,6 +12,8 @@ mod macos;
 mod wayland;
 #[cfg(any(target_os = "windows", test))]
 mod windows;
+#[cfg(any(target_os = "linux", target_os = "freebsd", all(test, unix)))]
+mod x11;
 trait Reader {
     fn read(
         &mut self,
@@ -41,7 +43,7 @@ impl ReadService {
     pub fn supported() -> bool {
         #[cfg(any(target_os = "linux", target_os = "freebsd"))]
         {
-            wayland::session_available()
+            wayland::session_available() || x11::session_available()
         }
         #[cfg(not(any(target_os = "linux", target_os = "freebsd")))]
         {
@@ -62,8 +64,10 @@ impl ReadService {
             {
                 if wayland::session_available() {
                     Ok(Box::new(wayland::NativeReader))
+                } else if x11::session_available() {
+                    Ok(Box::new(x11::NativeReader))
                 } else {
-                    Err("Encoded clipboard reads require a named Wayland session; X11 reads are not available yet".into())
+                    Err("Encoded clipboard reads require a named Wayland or X11 session".into())
                 }
             }
             #[cfg(not(any(
