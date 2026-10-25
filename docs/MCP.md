@@ -33,6 +33,7 @@ Available tools:
 - `draw_shape`: draw filled or outlined shapes.
 - `get_batch_schema`: discover all supported engine operations.
 - `apply_operations`: apply layers, fills, text, selections, transforms and other operations as one atomic batch.
+- `flatten_image`: combine the visible canvas into one layer, with Undo restoring the source stack.
 - `history`: undo or redo.
 - `preview`: return a PNG preview, at most 256 pixels per side.
 - `save_project`: save a layered PCND project.

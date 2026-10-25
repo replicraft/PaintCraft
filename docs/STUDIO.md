@@ -29,6 +29,7 @@ separately in the dependency choices and is not bundled yet.
 - Overscroll and drag-edge auto-scroll with persisted Studio navigation preferences.
 - Rectangular/free-form selection modes, Invert, mask-clipped painting/Delete and
   exact selection history, with [bounded true outlines](LASSO_SELECTIONS.md).
+- [Flatten Image](FLATTEN_IMAGE.md) with one-step Undo, preserved visible pixels, selection and document identity.
 - Shared staged brush previews, CPU/wgpu composition, transactions and undo/redo.
   Open, Save As and Export retain the native file-dialog and preservation paths.
 

@@ -1,5 +1,11 @@
 # PaintCraft roadmap implementation status
 
+[Flatten Image](FLATTEN_IMAGE.md) now works in desktop/browser Studio, CLI and
+MCP as one recorded transaction. It retains the visible composition, selection,
+title and document identity; Undo restores hidden/off-canvas source data as well
+as the layer stack. Native preparation uses the ordered worker and guarded
+publication. Full T19/M3 and cross-application qualification remain unfinished.
+
 The user-requested [MCP painting server](MCP.md) now provides headless stdio tools
 through the CLI, using the existing atomic editor, history, format admission and
 guarded saves. Real protocol tests cover painted pixels, previews, project

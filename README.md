@@ -10,7 +10,7 @@ A familiar place to draw, paint and edit images. Built in Rust.
 - Shapes, curves and text.
 - Rectangular and free-form selections, copy and cut.
 - Paste images onto the canvas or into new layers (macOS and supported browsers).
-- Layers, undo/redo, crop, rotate and flip.
+- Layers, flattening, undo/redo, crop, rotate and flip.
 - Recent files with quick reopening.
 - Native printing on macOS.
 - Light and dark themes in seven languages.
