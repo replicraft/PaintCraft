@@ -13,6 +13,7 @@ pub mod pcnd;
 pub mod pcx;
 pub mod png;
 pub mod project_import;
+pub mod psd;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod recovery;
 pub mod registry;
