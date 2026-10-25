@@ -51,6 +51,35 @@ pub(crate) struct Files {
 }
 
 impl Files {
+    pub fn download_asset(
+        &mut self,
+        ctx: &eframe::egui::Context,
+        bytes: &[u8],
+        name: &str,
+        owner: uuid::Uuid,
+    ) {
+        if self.busy {
+            return;
+        }
+        #[cfg(target_arch = "wasm32")]
+        let result = download_copy(bytes, name, "image/x-icon")
+            .map(|()| Outcome::DownloadRequested {
+                owner,
+                project_name: None,
+            })
+            .map_err(|_| Error::new(ErrorCode::StorageFailed, "Browser download failed"));
+        #[cfg(not(target_arch = "wasm32"))]
+        let result = {
+            let _ = (bytes, name, owner);
+            Err(Error::new(
+                ErrorCode::CapabilityUnsupported,
+                "Downloads are available in the browser build",
+            ))
+        };
+        self.busy = true;
+        *self.outcome.borrow_mut() = Some(result);
+        ctx.request_repaint();
+    }
     pub fn poll(&mut self) -> Option<Result<Outcome>> {
         let result = self.outcome.borrow_mut().take();
         if result.is_some() {

@@ -11,6 +11,7 @@ mod exporting;
 #[path = "floating_tests.rs"]
 mod floating_tests;
 mod forms;
+mod icon_exporting;
 mod interfaces;
 #[cfg(test)]
 #[path = "lasso_tests.rs"]
@@ -47,6 +48,7 @@ pub struct WebApp {
     settings_draft: Option<settings::Draft>,
     preferences: crate::preferences::Preferences,
     export_confirm: Option<ImageExport>,
+    icon_export: Option<icon_exporting::State>,
     pub(crate) export_quality: u8,
     pub(crate) export_pcx_encoding: paintcraft_ui::pcx_export::Encoding,
     pcx_preview: paintcraft_ui::pcx_export::Cache<String>,
@@ -105,6 +107,7 @@ impl WebApp {
             },
             preferences,
             export_confirm: None,
+            icon_export: None,
             export_quality: 90,
             export_pcx_encoding: Default::default(),
             pcx_preview: Default::default(),
@@ -154,6 +157,7 @@ impl WebApp {
             || self.paste.modal()
             || self.settings
             || self.export_confirm.is_some()
+            || self.icon_export.is_some()
             || self.confirm_replace.is_some()
             || self.files.busy
             || self.pending_import.is_some()
@@ -271,6 +275,7 @@ impl WebApp {
                 | Action::SaveAs
                 | Action::Export
                 | Action::ExportImage(_)
+                | Action::ExportIcons
         ) && !self.floating_file_ready()
         {
             return;
@@ -284,6 +289,7 @@ impl WebApp {
                 | Action::SaveAs
                 | Action::Export
                 | Action::ExportImage(_)
+                | Action::ExportIcons
         ) && self.editor.tools.is_constructing_shape()
         {
             self.message = paintcraft_tools::FINISH_SHAPE_BEFORE_FILE.into();
@@ -371,6 +377,7 @@ impl WebApp {
                 self.editor.tools.cancel_gesture();
                 self.export_confirm = Some(format);
             }
+            Action::ExportIcons => self.begin_icon_export(),
             Action::Save | Action::SaveAs => {
                 self.editor.tools.cancel_gesture();
                 self.download(ctx, false);
@@ -644,6 +651,7 @@ impl WebApp {
             }
         }
         self.export_dialog(ctx);
+        self.icon_export_dialog(ctx);
         self.settings_dialog(ctx);
     }
 }
