@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.replicraft.PaintCraft</id>
+  <metadata_license>MIT</metadata_license>
+  <project_license>MIT</project_license>
+  <name>PaintCraft</name>
+  <summary>Draw, paint and edit images</summary>
+  <description><p>A desktop image editor with Classic and Studio interfaces, brushes, shapes, text and layers.</p></description>
+  <launchable type="desktop-id">paintcraft.desktop</launchable>
+  <url type="homepage">https://github.com/replicraft/PaintCraft</url>
+  <url type="bugtracker">https://github.com/replicraft/PaintCraft/issues</url>
+  <provides><binary>paintcraft</binary><mediatype>application/x-paintcraft</mediatype></provides>
+  <categories><category>Graphics</category><category>RasterGraphics</category></categories>
+  <content_rating type="oars-1.1" />
+</component>

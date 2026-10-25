@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=PaintCraft
+Comment=Draw, paint and edit images
+Exec=paintcraft %f
+Icon=paintcraft
+Terminal=false
+Categories=Graphics;RasterGraphics;
+MimeType=application/x-paintcraft;
+StartupNotify=true
