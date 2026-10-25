@@ -18,14 +18,30 @@ impl WebApp {
         let context = self.context();
         egui::Panel::top("classic-chrome").show(ui, |ui| {
             let actions = if self.frontend == Frontend::Studio {
-                let mut actions =
-                    paintcraft_studio::toolbar(ui, &mut self.controls, &mut self.studio, context);
+                let mut actions = Vec::new();
                 ui.horizontal(|ui| {
-                    actions.extend(paintcraft_ui::chrome::interface_changer(ui, context));
-                    if ui.button(t!(ui.ctx(), "Settings")).clicked() {
-                        actions.push(Action::Settings);
-                    }
+                    ui.strong(t!(ui.ctx(), "PaintCraft Studio"));
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        if paintcraft_ui::widgets::classic_menu_button(
+                            ui,
+                            "Settings…",
+                            paintcraft_ui::icons::Icon::Settings,
+                            false,
+                            "Settings…",
+                        )
+                        .clicked()
+                        {
+                            actions.push(Action::Settings);
+                        }
+                        actions.extend(paintcraft_ui::chrome::interface_changer(ui, context));
+                    });
                 });
+                actions.extend(paintcraft_studio::toolbar(
+                    ui,
+                    &mut self.controls,
+                    &mut self.studio,
+                    context,
+                ));
                 self.studio.canvas_top = ui.min_rect().bottom();
                 actions
             } else {

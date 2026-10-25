@@ -77,3 +77,18 @@ pub fn ruled_canvas<R>(
     ui.advance_cursor_after_rect(viewport);
     result
 }
+
+/// Queue a screen-space pan without changing document coordinates or tool state.
+pub fn pan_by(ctx: &egui::Context, id: egui::Id, delta: egui::Vec2) {
+    if !delta.is_finite() || delta == egui::Vec2::ZERO {
+        return;
+    }
+    ctx.data_mut(|data| {
+        let key = id.with("classic-pan-request");
+        let pending = data.get_temp::<egui::Vec2>(key).unwrap_or_default() + delta;
+        if pending.is_finite() {
+            data.insert_temp(key, pending);
+        }
+    });
+    ctx.request_repaint();
+}

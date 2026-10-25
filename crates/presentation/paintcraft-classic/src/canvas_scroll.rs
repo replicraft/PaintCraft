@@ -30,8 +30,17 @@ pub(super) fn show<R>(ui: &mut Ui, id: Id, paint: impl FnOnce(&mut Ui) -> R) -> 
     if let Some(offset) = ui.data_mut(|data| data.remove_temp::<Vec2>(pending_id)) {
         area = area.scroll_offset(offset);
     }
+    let pan_id = id.with("classic-pan-request");
+    let offset_id = id.with("classic-pan-offset");
+    if let Some(delta) = ui.data_mut(|data| data.remove_temp::<Vec2>(pan_id)) {
+        let offset = ui
+            .data(|data| data.get_temp::<Vec2>(offset_id))
+            .unwrap_or_default();
+        area = area.scroll_offset((offset - delta).max(Vec2::ZERO));
+    }
     let output = area.show(ui, paint);
     let inner = output.inner_rect;
+    ui.data_mut(|data| data.insert_temp(offset_id, output.state.clamped_offset()));
     if inner != previous {
         ui.data_mut(|data| data.insert_temp(geometry_id, inner));
         // Geometry is used by the next frame. A discard here can oscillate

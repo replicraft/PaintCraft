@@ -202,7 +202,9 @@ pub fn color_edit(ui: &mut egui::Ui, label: &str, value: &mut Rgba) {
 /// Kept next to Settings in either frontend; switching policy belongs to the host.
 pub fn interface_changer(ui: &mut egui::Ui, context: crate::actions::Context) -> Vec<Action> {
     let mut actions = Vec::new();
-    ui.menu_button(t!(ui.ctx(), "Interface"), |ui| {
+    let label = t!(ui.ctx(), "Interface");
+    let compact = ui.ctx().content_rect().width() < 480.0;
+    let contents = |ui: &mut egui::Ui| {
         ui.set_min_width(200.0);
         ui.spacing_mut().button_padding = egui::vec2(12.0, 7.0);
         ui.spacing_mut().interact_size.y = 32.0;
@@ -230,7 +232,21 @@ pub fn interface_changer(ui: &mut egui::Ui, context: crate::actions::Context) ->
                 ui.close();
             }
         }
-    });
+    };
+    if compact {
+        let image = crate::icons::classic_menu_image(
+            ui.ctx(),
+            Icon::Interface,
+            20.0,
+            ui.visuals().strong_text_color(),
+        );
+        let response = ui.menu_image_button(image, contents).response;
+        response
+            .widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, ui.is_enabled(), &label));
+        response.on_hover_text(label);
+    } else {
+        ui.menu_button(label, contents);
+    }
     if context.desktop_download && ui.ctx().content_rect().width() >= 760.0 {
         let label = t!(ui.ctx(), "Download for desktop");
         if ui

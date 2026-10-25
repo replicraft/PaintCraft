@@ -355,6 +355,9 @@ impl WebApp {
             self.editor.tools.cancel_gesture();
             return;
         }
+        if self.navigate_canvas(ui, response) {
+            return;
+        }
         if self.frontend == paintcraft_ui::actions::Frontend::Studio
             && self.controls.tool == Tool::Pan
         {

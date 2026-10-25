@@ -33,7 +33,7 @@ pub(super) fn percentage_text(zoom: f32) -> String {
 
 pub fn zoom_controls(ui: &mut egui::Ui, context: Context, state_id: egui::Id) -> Vec<Action> {
     let mut actions = Vec::new();
-    let width = width(ui);
+    let width = width(ui).min(ui.available_width().max(260.0));
     ui.push_id(("classic-zoom", state_id), |ui| {
         ui.allocate_ui_with_layout(
             egui::vec2(width, ui.spacing().interact_size.y.max(30.0)),
