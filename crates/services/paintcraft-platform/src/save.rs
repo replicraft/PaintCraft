@@ -3,6 +3,7 @@
 //! as a `paintcraft.file-operation/v1` receipt; a failure after the replace
 //! request is never described as "nothing changed".
 
+mod directory;
 mod evidence;
 mod reconciliation;
 pub use reconciliation::{Observation, ReconcileMode, Reconciliation};
@@ -684,7 +685,7 @@ fn save_prepared_impl(
         .filter(|p| !p.as_os_str().is_empty())
         .unwrap_or_else(|| Path::new("."));
     match barrier(Phase::DirectorySync)
-        .and_then(|()| File::open(parent).and_then(|dir| dir.sync_all()))
+        .and_then(|()| directory::open(parent).and_then(|dir| dir.sync_all()))
     {
         Ok(()) => out.durable = out.replacement == Replacement::Replaced,
         Err(error) => out

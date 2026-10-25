@@ -3,6 +3,22 @@ on:
   push:
   pull_request:
 jobs:
+  native-filesystem:
+    name: Filesystem (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, windows-11-arm, ubuntu-22.04-arm]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: '1.99.0'
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: native-filesystem
+      - run: cargo test --locked -p paintcraft-platform --lib
   test:
     strategy:
       matrix:
