@@ -120,6 +120,62 @@ impl View {
     }
 }
 
+/// Draw visible pixel boundaries only, without reading document pixel storage.
+pub fn pixel_grid(
+    painter: &egui::Painter,
+    canvas: egui::Rect,
+    extent: (u32, u32),
+    spacing: f32,
+    pixels_per_point: f32,
+) {
+    if !spacing.is_finite()
+        || spacing <= 0.0
+        || !pixels_per_point.is_finite()
+        || pixels_per_point <= 0.0
+    {
+        return;
+    }
+    // Keep one grid line per document-pixel boundary, only where four or
+    // more physical pixels make cells legible. Enumerate visible lines only.
+    if spacing * pixels_per_point < 4.0 {
+        return;
+    }
+    let visible = painter.clip_rect().intersect(canvas);
+    if !visible.is_positive() {
+        return;
+    }
+    let (width, height) = extent;
+    let x0 = ((visible.min.x - canvas.min.x) / spacing).ceil().max(0.0) as u32;
+    let x1 = ((visible.max.x - canvas.min.x) / spacing)
+        .floor()
+        .min(width as f32) as u32;
+    let y0 = ((visible.min.y - canvas.min.y) / spacing).ceil().max(0.0) as u32;
+    let y1 = ((visible.max.y - canvas.min.y) / spacing)
+        .floor()
+        .min(height as f32) as u32;
+    let stroke = egui::Stroke::new(1.0 / pixels_per_point, egui::Color32::from_black_alpha(72));
+    for x in x0..=x1 {
+        let x = canvas.min.x + x as f32 * spacing;
+        painter.line_segment(
+            [
+                egui::Pos2::new(x, visible.min.y),
+                egui::Pos2::new(x, visible.max.y),
+            ],
+            stroke,
+        );
+    }
+    for y in y0..=y1 {
+        let y = canvas.min.y + y as f32 * spacing;
+        painter.line_segment(
+            [
+                egui::Pos2::new(visible.min.x, y),
+                egui::Pos2::new(visible.max.x, y),
+            ],
+            stroke,
+        );
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

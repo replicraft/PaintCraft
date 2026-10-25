@@ -233,40 +233,13 @@ impl App {
     }
 
     pub(super) fn draw_pixel_grid(&self, painter: &egui::Painter, canvas: Rect, view: &View) {
-        // Keep one grid line per document-pixel boundary, only where four or
-        // more physical pixels make cells legible. Enumerate visible lines only.
-        if view.zoom < 4.0 {
-            return;
-        }
-        let visible = painter.clip_rect().intersect(canvas);
-        if !visible.is_positive() {
-            return;
-        }
-        let spacing = view.points_per_pixel();
-        let (width, height) = self.editor.document().canvas;
-        let x0 = ((visible.min.x - canvas.min.x) / spacing).ceil().max(0.0) as u32;
-        let x1 = ((visible.max.x - canvas.min.x) / spacing)
-            .floor()
-            .min(width as f32) as u32;
-        let y0 = ((visible.min.y - canvas.min.y) / spacing).ceil().max(0.0) as u32;
-        let y1 = ((visible.max.y - canvas.min.y) / spacing)
-            .floor()
-            .min(height as f32) as u32;
-        let stroke = egui::Stroke::new(1.0 / view.pixels_per_point, Color32::from_black_alpha(72));
-        for x in x0..=x1 {
-            let x = canvas.min.x + x as f32 * spacing;
-            painter.line_segment(
-                [Pos2::new(x, visible.min.y), Pos2::new(x, visible.max.y)],
-                stroke,
-            );
-        }
-        for y in y0..=y1 {
-            let y = canvas.min.y + y as f32 * spacing;
-            painter.line_segment(
-                [Pos2::new(visible.min.x, y), Pos2::new(visible.max.x, y)],
-                stroke,
-            );
-        }
+        paintcraft_ui::view::pixel_grid(
+            painter,
+            canvas,
+            self.editor.document().canvas,
+            view.points_per_pixel(),
+            view.pixels_per_point,
+        );
     }
 }
 
