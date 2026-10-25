@@ -185,7 +185,13 @@ fn navigation(ui: &mut egui::Ui, current: &mut Page, sidebar: bool, classic: boo
                 ),
             }
         } else {
-            paintcraft_ui::icons::image(ui.ctx(), icon, 18.0)
+            paintcraft_ui::icons::image(ui.ctx(), icon, 18.0).tint(
+                if matches!(page, Page::Appearance | Page::Interface | Page::About) {
+                    ui.visuals().strong_text_color()
+                } else {
+                    Color32::WHITE
+                },
+            )
         };
         let selected = *current == page;
         let mut button = if classic {
@@ -241,8 +247,11 @@ pub fn card(ui: &mut egui::Ui, heading: &str, contents: impl FnOnce(&mut egui::U
 pub fn about(ui: &mut Ui) {
     ui.label(t!(ui.ctx(), "PaintCraft by Replicraft"));
     ui.label(format!("v{}", env!("CARGO_PKG_VERSION")));
-    ui.hyperlink_to(
-        "GitHub: replicraft/paintcraft",
-        "https://github.com/replicraft/paintcraft",
+    ui.add(
+        egui::Hyperlink::from_label_and_url(
+            "GitHub: replicraft/paintcraft",
+            "https://github.com/replicraft/paintcraft",
+        )
+        .open_in_new_tab(true),
     );
 }

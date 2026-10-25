@@ -17,16 +17,20 @@ impl WebApp {
             .settings_draft
             .as_ref()
             .map_or(&self.preferences, |draft| &draft.values);
+        let variant = self
+            .settings_draft
+            .as_ref()
+            .map_or(self.variant, |draft| draft.values.variant);
         let preferred = values
             .theme
             .unwrap_or_else(|| ctx.system_theme().unwrap_or(egui::Theme::Light));
         let theme = if self.frontend == Frontend::Classic {
-            values.variant.effective_theme(preferred)
+            variant.effective_theme(preferred)
         } else {
             preferred
         };
         ctx.set_theme(theme);
-        let key = (theme, values.variant, self.frontend);
+        let key = (theme, variant, self.frontend);
         if self.applied_style != Some(key) {
             self.applied_style = Some(key);
             paintcraft_ui::theme::apply(ctx, key.0);
