@@ -83,6 +83,7 @@ impl Family {
             Self::Dds => extension.eq_ignore_ascii_case("dds"),
             Self::Avif => extension.eq_ignore_ascii_case("avif"),
             Self::Pdn => extension.eq_ignore_ascii_case("pdn"),
+            Self::Ora => extension.eq_ignore_ascii_case("ora"),
             Self::Paint => extension.eq_ignore_ascii_case("paint"),
             Self::Dcx => extension.eq_ignore_ascii_case("dcx"),
             Self::Qoi => extension.eq_ignore_ascii_case("qoi"),

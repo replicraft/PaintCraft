@@ -4,6 +4,8 @@ use paintcraft_document::{Document, Layer};
 use paintcraft_raster::{Admission, RasterLayer};
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
+mod ora;
+pub use ora::decode_ora;
 
 pub const PAINT_LOSSES: [&str; 3] = [
     "paint-layer-properties-unverified",
@@ -12,7 +14,14 @@ pub const PAINT_LOSSES: [&str; 3] = [
 ];
 
 pub const PDN_LOSS: &str = "pdn-metadata-ignored";
-pub const KNOWN_LOSSES: [&str; 4] = [PAINT_LOSSES[0], PAINT_LOSSES[1], PAINT_LOSSES[2], PDN_LOSS];
+pub const KNOWN_LOSSES: [&str; 6] = [
+    PAINT_LOSSES[0],
+    PAINT_LOSSES[1],
+    PAINT_LOSSES[2],
+    PDN_LOSS,
+    crate::ora::LOSSES[0],
+    crate::ora::LOSSES[1],
+];
 
 #[derive(Debug)]
 pub struct Converted {
@@ -235,6 +244,7 @@ pub fn decode_layered(
     match family {
         crate::registry::Family::Paint => decode_paint(bytes, pixel_limit, check),
         crate::registry::Family::Pdn => decode_pdn(bytes, pixel_limit, check),
+        crate::registry::Family::Ora => decode_ora(bytes, pixel_limit, check),
         _ => Err(Error::new(
             ErrorCode::CapabilityUnsupported,
             "no qualified layered conversion for this format",

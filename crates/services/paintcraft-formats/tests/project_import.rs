@@ -10,6 +10,42 @@ const SAMPLE: &[u8] =
     include_bytes!("../../../adapters/paint-lib/tests/fixtures/mspaintlib-sample.paint");
 
 #[test]
+fn openraster_conversion_keeps_layers_matches_independent_merged_preview_and_roundtrips() {
+    let bytes = include_bytes!("ora-fixtures/deflated.ora");
+    for platform in [Platform::Native, Platform::Web] {
+        assert!(registry::admit_open(Frontend::Studio, "sample.ora", bytes, platform).is_err());
+        registry::admit_import(Frontend::Studio, "sample.ora", bytes, platform).unwrap();
+        for classic in [
+            Frontend::ClassicV7,
+            Frontend::ClassicV10,
+            Frontend::ClassicV11,
+        ] {
+            assert!(registry::admit_import(classic, "sample.ora", bytes, platform).is_err());
+        }
+    }
+    let converted = project_import::decode_ora(bytes, 100, &|| Ok(())).unwrap();
+    assert_eq!(converted.losses, ["ora-resolution-ignored"]);
+    let doc = converted.document;
+    assert_eq!(doc.roots.len(), 3);
+    let top = &doc.layers[&doc.roots[1]];
+    assert_eq!(top.name, "日本語 & paint");
+    assert_eq!(top.origin, (1, 1));
+    assert_eq!(top.raster.get(1, 0).0, [11, 12, 13, 0]);
+    assert!(!doc.layers[&doc.roots[2]].visible);
+    let frame = paintcraft_render::render_flat(&doc).unwrap();
+    assert_eq!(
+        paintcraft_document::hex(&Sha256::digest(frame)),
+        "b9ab523f4f328e250ee9fc690c7ffa0cc8187bc83d832703b1188f4b3320a44b"
+    );
+    assert!(
+        pcnd::read(&pcnd::write_compact(&doc).unwrap())
+            .unwrap()
+            .same_semantics(&doc)
+    );
+    assert!(project_import::decode_ora(bytes, 7, &|| Ok(())).is_err());
+}
+
+#[test]
 fn converted_paint_layers_match_independent_hashes_and_roundtrip_pcnd() {
     assert!(
         registry::admit_open(Frontend::Studio, "sample.paint", SAMPLE, Platform::Native).is_err()

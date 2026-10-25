@@ -206,6 +206,7 @@ pub fn capability(family: Family, operation: Operation, _platform: Platform) -> 
         Family::Paint if operation == Operation::ImportConvert => {
             Some("paintcraft-paint-iovl-unci")
         }
+        Family::Ora if operation == Operation::ImportConvert => Some("openraster-flat-png"),
         Family::Dcx if operation == Operation::ImportConvert => Some("pcx-dcx-page"),
         Family::Qoi | Family::Pnm | Family::Farbfeld
             if matches!(operation, Operation::ImportConvert | Operation::ExportFlat) =>
@@ -217,7 +218,7 @@ pub fn capability(family: Family, operation: Operation, _platform: Platform) -> 
         Family::Jxl if raster_operation => Some("jxl-rs"),
         Family::Dds if raster_operation => Some("paintcraft-dds-rgba8"),
         Family::Avif if raster_operation && operation.is_write() => Some("image-ravif"),
-        // PDN header inspection is not an image/project decode or write adapter.
+        // Recognized families do not acquire operations without a decoder.
         _ => None,
     };
     let qualified = backend.is_some()
@@ -234,7 +235,9 @@ pub fn capability(family: Family, operation: Operation, _platform: Platform) -> 
             Family::Qoi | Family::Pnm | Family::Farbfeld => {
                 matches!(operation, Operation::ImportConvert | Operation::ExportFlat)
             }
-            Family::Paint | Family::Pcx | Family::Dcx => operation == Operation::ImportConvert,
+            Family::Paint | Family::Pcx | Family::Dcx | Family::Ora => {
+                operation == Operation::ImportConvert
+            }
             Family::Jxl | Family::Avif => operation == Operation::ExportFlat,
             Family::Pdn => matches!(
                 operation,
@@ -423,7 +426,9 @@ fn admit_input(
 
 /// Recognize signatures without invoking a decoder or trusting an extension.
 pub fn sniff(bytes: &[u8]) -> Option<Family> {
-    if bytes.len() >= 8 && bytes.starts_with(b"PCND") && bytes[5..8] == [13, 10, 26] {
+    if crate::ora::has_signature(bytes) {
+        Some(Family::Ora)
+    } else if bytes.len() >= 8 && bytes.starts_with(b"PCND") && bytes[5..8] == [13, 10, 26] {
         Some(Family::Pcnd)
     } else if bytes.starts_with(b"\x89PNG\r\n\x1a\n") {
         Some(Family::Png)
