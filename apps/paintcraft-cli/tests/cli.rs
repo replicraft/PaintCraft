@@ -129,3 +129,6 @@ mod paste_image;
 #[cfg(unix)]
 #[path = "cli/in_place_conflict.rs"]
 mod in_place_conflict;
+
+#[path = "cli/flatten.rs"]
+mod flatten;

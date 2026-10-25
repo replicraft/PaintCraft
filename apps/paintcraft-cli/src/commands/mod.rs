@@ -260,3 +260,5 @@ pub mod render;
 pub mod schema;
 
 pub mod mcp;
+
+pub mod flatten;

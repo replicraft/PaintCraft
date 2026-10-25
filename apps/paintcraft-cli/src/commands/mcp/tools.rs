@@ -159,6 +159,18 @@ impl PaintingServer {
         .await
     }
     #[tool(
+        description = "Flatten the visible canvas into one layer as a single undoable edit. Hidden layers and off-canvas pixels are removed from the current state; Undo restores them. Does nothing when there is at most one layer."
+    )]
+    async fn flatten_image(&self) -> CallToolResult {
+        self.work(|state| {
+            let receipt = state
+                .session()?
+                .flatten(|doc, check| paintcraft_render::render_cancellable(doc, check))?;
+            Ok(super::state::reply(core_json(&receipt.to_value())?))
+        })
+        .await
+    }
+    #[tool(
         description = "Return a PNG preview of the composited canvas, at most 256 pixels per side. Does not save or alter the project."
     )]
     async fn preview(&self) -> CallToolResult {

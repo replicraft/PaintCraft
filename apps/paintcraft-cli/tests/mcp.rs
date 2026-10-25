@@ -87,7 +87,7 @@ fn painting_history_atomicity_preview_and_guarded_files() {
     let png = folder.join("painting.png");
     let mut c = Client::new();
     let tools = c.request("tools/list", json!({}));
-    assert_eq!(tools["tools"].as_array().unwrap().len(), 12);
+    assert_eq!(tools["tools"].as_array().unwrap().len(), 13);
     assert_eq!(c.call("inspect_document", json!({}))["isError"], true);
     c.ok("create_canvas", json!({"width":32,"height":24}));
     c.ok("paint_stroke",json!({"points":[{"x":2,"y":4},{"x":20,"y":4}],"color":"#FF0000FF","size":1,"brush":"round"}));
@@ -173,6 +173,26 @@ fn painting_history_atomicity_preview_and_guarded_files() {
             .unwrap()
             .len(),
         2
+    );
+    let layered = c.ok("inspect_document", json!({}));
+    let flattened = c.ok("flatten_image", json!({}));
+    assert_eq!(flattened["committed"], true);
+    assert_eq!(
+        c.ok("inspect_document", json!({}))["layers"]
+            .as_array()
+            .unwrap()
+            .len(),
+        1
+    );
+    assert_eq!(c.ok("flatten_image", json!({}))["committed"], false);
+    c.ok("history", json!({}));
+    assert_eq!(
+        c.ok("inspect_document", json!({}))["state_id"],
+        layered["state_id"]
+    );
+    assert_eq!(
+        c.ok("inspect_document", json!({}))["layers"],
+        layered["layers"]
     );
     std::fs::write(&project, b"external change").unwrap();
     assert_eq!(
