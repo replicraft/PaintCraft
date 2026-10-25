@@ -112,7 +112,7 @@ impl App {
                 "native-icon-export",
                 state.destination.is_some(),
             )))
-            .default_height((ctx.content_rect().height() - 80.0).max(160.0)),
+            .default_height((ctx.content_rect().height() - 80.0).clamp(160.0, 700.0)),
         )
         .show(ctx, |ui| {
             ui.set_width(480.0_f32.min((ctx.content_rect().width() - 48.0).max(160.0)));
@@ -133,7 +133,7 @@ impl App {
             }
             let eligible = egui::ScrollArea::vertical()
                 .auto_shrink([false, false])
-                .max_height((ctx.content_rect().height() - 150.0).max(160.0))
+                .max_height((ctx.content_rect().height() - 150.0).clamp(160.0, 620.0))
                 .show(ui, |ui| {
                     widget::controls(ui, &mut state.draft);
                     let config = state.draft.config.clone();
