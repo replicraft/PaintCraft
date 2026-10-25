@@ -51,7 +51,8 @@ other tool choices remain session state. Opened filenames update the page title.
 
 Open uses a browser file picker for `.pcnd`, PNG, BMP and JPEG. Image metadata or
 bit-depth losses require acknowledgement before replacing the current document.
-Save/Save as download an editable `.pcnd` copy; Export confirms flattening and
+Save/Save as immediately download an editable `.pcnd` copy without an extra modal;
+Export confirms flattening and
 downloads PNG. Inputs and project output are limited to 64 MiB. New/Open require
 explicit discard when dirty; cancelling or failing an import retains the current
 session. Native save/recovery services remain outside the browser build.

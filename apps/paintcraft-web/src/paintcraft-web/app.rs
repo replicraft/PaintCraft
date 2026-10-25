@@ -400,9 +400,9 @@ impl WebApp {
                 self.import_owner = None;
                 self.message = "File dialog cancelled; current document retained".into()
             }
-            Some(Ok(Outcome::DownloadClosed)) => {
+            Some(Ok(Outcome::DownloadRequested)) => {
                 self.message =
-                    "Download dialog closed - verify your copy; this tab remains unsaved".into()
+                    "Download requested - verify your copy; this tab remains unsaved".into()
             }
             Some(Err(error)) => {
                 self.import_owner = None;

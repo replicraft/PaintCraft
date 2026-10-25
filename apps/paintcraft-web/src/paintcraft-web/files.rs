@@ -1,4 +1,4 @@
-//! Browser pickers and download dialogs. Downloads never claim confirmed disk saves.
+//! Browser pickers and immediate downloads. Downloads never claim confirmed disk saves.
 #[cfg(any(target_arch = "wasm32", test))]
 use crate::editor::MAX_PIXELS;
 use paintcraft_core::types::{Error, ErrorCode, Result};
@@ -9,8 +9,6 @@ use paintcraft_formats::registry::{Family, Platform};
 #[cfg(any(target_arch = "wasm32", test))]
 use paintcraft_formats::{image, pcnd};
 use paintcraft_ui::actions::ImageExport;
-#[cfg(target_arch = "wasm32")]
-use paintcraft_ui::t;
 #[cfg(any(target_arch = "wasm32", test))]
 use sha2::{Digest, Sha256};
 use std::{cell::RefCell, rc::Rc};
@@ -29,7 +27,7 @@ pub(crate) struct Loaded {
 pub(crate) enum Outcome {
     Loaded(Loaded),
     Cancelled,
-    DownloadClosed,
+    DownloadRequested,
 }
 
 #[derive(Debug, Default)]
@@ -123,46 +121,21 @@ impl Files {
             }
         };
         self.busy = true;
-        let target = Rc::clone(&self.outcome);
-        let ctx = ctx.clone();
-        wasm_bindgen_futures::spawn_local(async move {
-            let extension = format.map_or("pcnd", ImageExport::extension);
-            let name = format!("Untitled.{extension}");
-            let mime = match format {
-                None => "application/zip",
-                Some(ImageExport::Png) => "image/png",
-                Some(ImageExport::Jpeg) => "image/jpeg",
-                Some(ImageExport::Bmp) => "image/bmp",
-            };
-            let title = t!(&ctx, "Download a copy");
-            let description = t!(
-                &ctx,
-                "Keep this tab open until you have verified the downloaded file.",
-            );
-            let link = t!(&ctx, "Download { $name }", &[("name", name.clone())]);
-            let cancel = t!(&ctx, "Cancel");
-            let result = wasm_bindgen_futures::JsFuture::from(download_copy(
-                &bytes,
-                &name,
-                mime,
-                &title,
-                &description,
-                &link,
-                &cancel,
-            ))
-            .await
-            .map(|requested| {
-                if requested.as_bool() == Some(true) {
-                    Outcome::DownloadClosed
-                } else {
-                    Outcome::Cancelled
-                }
-            })
-            .map_err(|_| Error::new(ErrorCode::StorageFailed, "Browser download dialog failed"));
-            *target.borrow_mut() = Some(result);
-            focus_canvas();
-            ctx.request_repaint();
-        });
+        let extension = format.map_or("pcnd", ImageExport::extension);
+        let name = format!("Untitled.{extension}");
+        let mime = match format {
+            None => "application/zip",
+            Some(ImageExport::Png) => "image/png",
+            Some(ImageExport::Jpeg) => "image/jpeg",
+            Some(ImageExport::Bmp) => "image/bmp",
+        };
+        *self.outcome.borrow_mut() = Some(
+            download_copy(&bytes, &name, mime)
+                .map(|()| Outcome::DownloadRequested)
+                .map_err(|_| Error::new(ErrorCode::StorageFailed, "Browser download failed")),
+        );
+        focus_canvas();
+        ctx.request_repaint();
     }
 
     #[cfg(not(target_arch = "wasm32"))]
@@ -462,16 +435,12 @@ mod tests {
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen::prelude::wasm_bindgen(module = "/src/lib/download.js")]
 extern "C" {
-    #[wasm_bindgen::prelude::wasm_bindgen(js_name = downloadCopy)]
+    #[wasm_bindgen::prelude::wasm_bindgen(catch, js_name = downloadCopy)]
     fn download_copy(
         bytes: &[u8],
         name: &str,
         mime: &str,
-        title: &str,
-        description: &str,
-        link: &str,
-        cancel: &str,
-    ) -> js_sys::Promise;
+    ) -> std::result::Result<(), wasm_bindgen::JsValue>;
 }
 
 #[cfg(target_arch = "wasm32")]

@@ -54,7 +54,7 @@ output. `CARGO_TARGET_DIR` is resolved through Cargo metadata.
 Rust sources and their tests live in `apps/paintcraft-web/src/paintcraft-web/`.
 The app's `Cargo.toml` points its library and integration test at that folder.
 Astro pages and JavaScript stay outside it in `src/pages/` and `src/lib/`;
-shared page and download-dialog styles live in `src/styles/global.css`.
+page styles live in `src/styles/global.css`.
 `pnpm run format` and `pnpm run format:check` use Biome for these browser files
 and the build scripts.
 

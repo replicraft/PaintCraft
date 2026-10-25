@@ -289,7 +289,7 @@ fn floating_stale_source_session_tool_target_and_file_actions_never_publish_old_
     assert!(h.state().editor.copy_snapshot().is_err());
     assert!(Arc::ptr_eq(&before, &h.state().editor.session.snapshot()));
     assert_eq!(h.state().editor.session.ticket(), ticket);
-    // The host-level download path has the same guard before it opens a dialog.
+    // The host-level download path has the same guard before it requests a download.
     let context = h.ctx.clone();
     h.state_mut().download(&context, false);
     assert!(!h.state().files.busy);
