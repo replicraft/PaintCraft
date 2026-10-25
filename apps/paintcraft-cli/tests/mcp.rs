@@ -296,3 +296,5 @@ fn image_import_requires_loss_consent_preserves_failures_and_keeps_source_unboun
 mod exports;
 #[path = "mcp/foreign.rs"]
 mod foreign;
+#[path = "mcp/icons.rs"]
+mod icons;

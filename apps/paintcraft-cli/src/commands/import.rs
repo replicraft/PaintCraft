@@ -4,8 +4,11 @@ use super::*;
 pub struct Options {
     input: PathBuf,
     /// Explicit zero-based page for a DCX import; never selects a page implicitly.
-    #[arg(long)]
+    #[arg(long, conflicts_with = "entry")]
     page: Option<u16>,
+    /// Explicit zero-based ICO/CUR entry; never selects the largest image implicitly.
+    #[arg(long)]
+    entry: Option<u16>,
     #[command(flatten)]
     profile: super::format_profile::Options,
     #[command(flatten)]
@@ -29,14 +32,16 @@ pub fn run(a: Options, json: bool) -> Reply {
             let known: Vec<&str> = image::KNOWN_IMPORT_LOSSES
                 .iter()
                 .chain(paintcraft_formats::project_import::KNOWN_LOSSES.iter())
+                .chain(paintcraft_formats::icons::KNOWN_IMPORT_LOSSES.iter())
                 .copied()
                 .collect();
             let allowed = a.losses.allowed_for(&known)?;
             save::preflight(dest, a.output.overwrite)?;
             let (bytes, sha) = read_bounded(input, INPUT_MAX, "input")?;
-            let family = match a.page {
-                Some(page) => a.profile.admit_import_page(input, &bytes, page)?,
-                None => a.profile.admit_import(input, &bytes)?,
+            let family = match (a.page, a.entry) {
+                (Some(page), _) => a.profile.admit_import_page(input, &bytes, page)?,
+                (_, Some(entry)) => a.profile.admit_import_entry(input, &bytes, entry)?,
+                _ => a.profile.admit_import(input, &bytes)?,
             };
             let (doc, losses) = if matches!(
                 family,
@@ -51,6 +56,21 @@ pub fn run(a: Options, json: bool) -> Reply {
                     &|| Ok(()),
                 )?;
                 (converted.document, converted.losses)
+            } else if let Some(entry) = a.entry {
+                let decoded = paintcraft_formats::icons::decode_entry(
+                    &bytes,
+                    entry,
+                    image::DECODE_PIXELS_MAX,
+                )?;
+                (
+                    import_image(
+                        decoded.entry.width,
+                        decoded.entry.height,
+                        &decoded.rgba,
+                        &sha,
+                    )?,
+                    decoded.losses,
+                )
             } else {
                 a.profile.reject_project_import(family)?;
                 let img = if let Some(page) = a.page {

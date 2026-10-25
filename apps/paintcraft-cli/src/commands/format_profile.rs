@@ -58,6 +58,20 @@ impl Options {
             page,
         )
     }
+    pub fn admit_import_entry(
+        &self,
+        path: &std::path::Path,
+        bytes: &[u8],
+        entry: u16,
+    ) -> Result<Family> {
+        registry::admit_import_entry(
+            self.frontend.into(),
+            &path.to_string_lossy(),
+            bytes,
+            Platform::Native,
+            entry,
+        )
+    }
     /// Availability gate only: export's existing loss preflight still runs next.
     pub fn admit_export(&self, family: Family, path: &std::path::Path) -> Result<()> {
         let mut request = Request::new(

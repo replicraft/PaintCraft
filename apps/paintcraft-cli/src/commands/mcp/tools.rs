@@ -64,18 +64,23 @@ impl PaintingServer {
     async fn import_image(&self, Parameters(p): Parameters<Import>) -> CallToolResult {
         self.work(move |state| {
             state.replace_allowed(p.discard_changes)?;
+            if p.page.is_some() && p.entry.is_some() {
+                return Err(invalid("page and entry cannot both be selected"));
+            }
             if let Some(code) = p.allow_losses.iter().find(|code| {
                 !image::KNOWN_IMPORT_LOSSES.contains(&code.as_str())
                     && !paintcraft_formats::project_import::KNOWN_LOSSES.contains(&code.as_str())
+                    && !paintcraft_formats::icons::KNOWN_IMPORT_LOSSES.contains(&code.as_str())
             }) {
                 return Err(invalid(&format!("unknown import loss code {code:?}")));
             }
             let path = PathBuf::from(p.path);
             let (bytes, sha) = read_bounded(&path, INPUT_MAX, "image")?;
             let profile = format_profile::Options::default();
-            let family = match p.page {
-                Some(page) => profile.admit_import_page(&path, &bytes, page)?,
-                None => profile.admit_import(&path, &bytes)?,
+            let family = match (p.page, p.entry) {
+                (Some(page), _) => profile.admit_import_page(&path, &bytes, page)?,
+                (_, Some(entry)) => profile.admit_import_entry(&path, &bytes, entry)?,
+                _ => profile.admit_import(&path, &bytes)?,
             };
             let (doc, losses) = if matches!(family, Family::Paint | Family::Pdn | Family::Ora) {
                 let converted = paintcraft_formats::project_import::decode_layered(
@@ -85,6 +90,21 @@ impl PaintingServer {
                     &|| Ok(()),
                 )?;
                 (converted.document, converted.losses)
+            } else if let Some(entry) = p.entry {
+                let decoded = paintcraft_formats::icons::decode_entry(
+                    &bytes,
+                    entry,
+                    image::DECODE_PIXELS_MAX,
+                )?;
+                (
+                    paintcraft_document::import_image(
+                        decoded.entry.width,
+                        decoded.entry.height,
+                        &decoded.rgba,
+                        &sha,
+                    )?,
+                    decoded.losses,
+                )
             } else {
                 profile.reject_project_import(family)?;
                 let decoded = if let Some(page) = p.page {

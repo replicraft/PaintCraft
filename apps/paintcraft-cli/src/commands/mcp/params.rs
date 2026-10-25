@@ -24,6 +24,8 @@ pub struct Import {
     pub path: String,
     /// Explicit zero-based DCX page. Required for DCX; omit for other formats.
     pub page: Option<u16>,
+    /// Explicit zero-based ICO/CUR entry. Required for icons/cursors; conflicts with page.
+    pub entry: Option<u16>,
     /// Explicitly acknowledge source information that RGBA8 cannot preserve.
     #[serde(default)]
     pub allow_losses: Vec<String>,
