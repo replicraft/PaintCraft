@@ -1,7 +1,14 @@
 ---
 // @ts-ignore
 import '../styles/download.css';
-const releases = 'https://github.com/replicraft/paintcraft/releases/latest';
+import { version } from '../../package.json';
+import {
+	platforms,
+	assetName,
+	assetUrl,
+	releasesUrl,
+} from '../lib/download-platform.js';
+const tag = `v${version}`;
 ---
 
 <!doctype html>
@@ -9,34 +16,169 @@ const releases = 'https://github.com/replicraft/paintcraft/releases/latest';
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta
+			name="description"
+			content="Download PaintCraft for Windows, macOS and Linux, or start painting in your browser."
+		>
 		<title>Download PaintCraft</title>
 		<link rel="icon" href="/favicon.ico">
 	</head>
 	<body>
 		<main>
-			<img
-				src="/icons/paintcraft-icon-192.png"
-				width="96"
-				height="96"
-				alt=""
-			>
-			<h1>PaintCraft for desktop</h1>
-			<p id="download-status" role="status">
-				Opening the latest release for your computer…
-			</p>
-			<nav aria-label="Desktop downloads">
-				{['Windows', 'macOS', 'Linux', 'FreeBSD'].map((platform) => (
-					<a href={releases}>Download for {platform}</a>
-				))}
-			</nav>
-			<p>
-				All downloads currently open the latest GitHub release. Select
-				the installer or portable download for your platform there.
-			</p>
-			<a class="back" href="/">Continue in PaintCraft Web</a>
+			<header class="hero">
+				<img
+					src="/icons/paintcraft-icon-192.png"
+					width="88"
+					height="88"
+					alt=""
+				>
+				<div>
+					<span class="eyebrow">A familiar place to paint</span>
+					<h1>Download PaintCraft</h1>
+					<p id="download-status" role="status">
+						Finding the latest download for your computer…
+					</p>
+					<div class="hero-actions">
+						<a
+							id="recommended-download"
+							class="button primary"
+							hidden
+							>Download PaintCraft</a
+						>
+						<a class="button browser-link" href="/"
+							>Try it in your browser
+							<span aria-hidden="true">↗</span></a
+						>
+						<button id="retry-download" type="button" hidden>
+							Try again
+						</button>
+					</div>
+				</div>
+			</header>
+
+			<section aria-labelledby="cli-title">
+				<div class="section-heading">
+					<div>
+						<h2 id="cli-title">Command line</h2>
+						<p>PaintCraft's tools, without the window.</p>
+					</div>
+					<span id="release-version" class="version">{tag}</span>
+				</div>
+				<div class="cli-grid">
+					{platforms.map((platform) => (
+						<div class="cli-platform">
+							{platform.architectures.map((architecture) => {
+								const target = `${platform.id}-${architecture.id}`;
+								return (
+									<a
+										class="cli-download"
+										data-download
+										data-cli
+										data-target={target}
+										data-suffix={platform.cli}
+										href={assetUrl(
+											tag,
+											assetName(
+												version,
+												target,
+												platform.cli,
+												true,
+											),
+										)}
+									>
+										<span>
+											<strong>{platform.name}</strong>
+											<span>{architecture.label}</span>
+										</span>
+										<span class="file-type">
+											{platform.cli.slice(1)}{' '}
+											<span aria-hidden="true">↓</span>
+										</span>
+									</a>
+								);
+							})}
+						</div>
+					))}
+				</div>
+			</section>
+
+			<section aria-labelledby="desktop-title">
+				<div class="section-heading">
+					<div>
+						<h2 id="desktop-title">Desktop app</h2>
+						<p>Your canvas, tools and layers, ready to go.</p>
+					</div>
+				</div>
+				<div class="platform-grid">
+					{platforms.map((platform) => (
+						<article class="platform-card">
+							<header>
+								<h3>{platform.name}</h3>
+								<span aria-hidden="true" class="platform-mark">
+									{platform.id === 'windows'
+										? '⊞'
+										: platform.id === 'macos'
+											? '⌘'
+											: '›_'}
+								</span>
+							</header>
+							{platform.architectures.map((architecture) => {
+								const target = `${platform.id}-${architecture.id}`;
+								return (
+									<div class="architecture">
+										<h4>{architecture.label}</h4>
+										<p>{architecture.detail}</p>
+										<ul>
+											{platform.formats.map((format) => (
+												<li>
+													<a
+														data-download
+														data-target={target}
+														data-suffix={
+															format.suffix
+														}
+														href={assetUrl(
+															tag,
+															assetName(
+																version,
+																target,
+																format.suffix,
+															),
+														)}
+													>
+														<span>
+															{format.label}
+														</span>
+														<span class="file-type">
+															{format.extension}{' '}
+															<span aria-hidden="true">
+																↓
+															</span>
+														</span>
+													</a>
+												</li>
+											))}
+										</ul>
+									</div>
+								);
+							})}
+						</article>
+					))}
+				</div>
+			</section>
+			<footer>
+				<a
+					data-download
+					data-checksums
+					href={assetUrl(tag, 'SHA256SUMS.txt')}
+					>SHA256 checksums</a
+				><a href={releasesUrl}>Release notes</a
+				><a href="/">Try it in your browser</a>
+			</footer>
 			<noscript
 				><p>
-					Choose a platform above to open the latest release.
+					Choose a download above. JavaScript is needed to check for
+					newer releases and start a download automatically.
 				</p></noscript
 			>
 		</main>
