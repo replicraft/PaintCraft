@@ -87,6 +87,8 @@ pub struct Context {
     pub status_bar: bool,
     pub rulers: bool,
     pub fullscreen: bool,
+    /// Browser-only route opened in a new tab to preserve the editing session.
+    pub desktop_download: bool,
     pub auto_hide_toolbar: bool,
     pub thumbnail: bool,
 }

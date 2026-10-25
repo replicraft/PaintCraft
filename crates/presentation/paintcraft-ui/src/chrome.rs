@@ -216,6 +216,13 @@ pub fn interface_changer(ui: &mut egui::Ui, context: crate::actions::Context) ->
                 ui.close();
             }
         }
+        if context.desktop_download && ui.ctx().content_rect().width() < 760.0 {
+            ui.separator();
+            if ui.button(t!(ui.ctx(), "Download for desktop")).clicked() {
+                ui.ctx().open_url(egui::OpenUrl::new_tab("/download"));
+                ui.close();
+            }
+        }
         if context.frontend == crate::actions::Frontend::Classic {
             ui.separator();
             if ui.button(t!(ui.ctx(), "Change Classic skin…")).clicked() {
@@ -224,6 +231,18 @@ pub fn interface_changer(ui: &mut egui::Ui, context: crate::actions::Context) ->
             }
         }
     });
+    if context.desktop_download && ui.ctx().content_rect().width() >= 760.0 {
+        let label = t!(ui.ctx(), "Download for desktop");
+        if ui
+            .add(
+                egui::Button::new(egui::RichText::new(label).strong())
+                    .fill(ui.visuals().selection.bg_fill),
+            )
+            .clicked()
+        {
+            ui.ctx().open_url(egui::OpenUrl::new_tab("/download"));
+        }
+    }
     actions
 }
 

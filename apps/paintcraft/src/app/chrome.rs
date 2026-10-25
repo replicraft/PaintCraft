@@ -62,6 +62,7 @@ impl App {
             status_bar: self.settings.classic_status_bar,
             rulers: self.settings.classic_rulers,
             fullscreen: self.fullscreen,
+            desktop_download: false,
             auto_hide_toolbar: self.settings.classic_toolbar_auto_hide,
             thumbnail: self.classic.thumbnail,
             blocked: self.save_all.is_some()

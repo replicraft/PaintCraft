@@ -62,6 +62,7 @@ fn save_all_requires_a_modified_document_and_an_unblocked_studio_workspace() {
         status_bar: true,
         rulers: false,
         fullscreen: false,
+        desktop_download: false,
         auto_hide_toolbar: false,
         thumbnail: false,
     };

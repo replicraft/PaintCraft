@@ -166,6 +166,7 @@ impl WebApp {
             status_bar: self.frontend == Frontend::Studio || self.preferences.status_bar,
             rulers: self.rulers_visible(),
             fullscreen: self.fullscreen.active(),
+            desktop_download: true,
             auto_hide_toolbar: self.frontend == Frontend::Classic
                 && self.preferences.auto_hide_toolbar,
             thumbnail: self.workspace.thumbnail,

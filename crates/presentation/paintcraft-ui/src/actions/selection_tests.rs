@@ -25,6 +25,7 @@ fn context(frontend: Frontend) -> Context {
         status_bar: true,
         rulers: false,
         fullscreen: false,
+        desktop_download: false,
         auto_hide_toolbar: false,
         thumbnail: false,
     }

@@ -1,0 +1,45 @@
+---
+// @ts-ignore
+import '../styles/download.css';
+const releases = 'https://github.com/replicraft/paintcraft/releases/latest';
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Download PaintCraft</title>
+		<link rel="icon" href="/favicon.ico">
+	</head>
+	<body>
+		<main>
+			<img
+				src="/icons/paintcraft-icon-192.png"
+				width="96"
+				height="96"
+				alt=""
+			>
+			<h1>PaintCraft for desktop</h1>
+			<p id="download-status" role="status">
+				Opening the latest release for your computer…
+			</p>
+			<nav aria-label="Desktop downloads">
+				{['Windows', 'macOS', 'Linux', 'FreeBSD'].map((platform) => (
+					<a href={releases}>Download for {platform}</a>
+				))}
+			</nav>
+			<p>
+				All downloads currently open the latest GitHub release. Select
+				the installer or portable download for your platform there.
+			</p>
+			<a class="back" href="/">Continue in PaintCraft Web</a>
+			<noscript
+				><p>
+					Choose a platform above to open the latest release.
+				</p></noscript
+			>
+		</main>
+		<script src="../lib/download-page.js"></script>
+	</body>
+</html>

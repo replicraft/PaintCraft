@@ -90,6 +90,7 @@ fn metadata_preserves_identity_and_context_gates_actions() {
         status_bar: true,
         rulers: false,
         fullscreen: false,
+        desktop_download: false,
         auto_hide_toolbar: false,
         thumbnail: false,
     };

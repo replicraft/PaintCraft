@@ -299,3 +299,5 @@ import-cancelled = Import abgebrochen.
 this-image-contains-unsupported-import-data = Dieses Bild enthält nicht unterstützte Importdaten.
 
 full-screen-is-unavailable-or-the-browser-denied-the-request = Der Vollbildmodus ist nicht verfügbar oder der Browser hat die Anfrage abgelehnt.
+
+download-for-desktop = Für den Desktop herunterladen

@@ -1,0 +1,41 @@
+:root {
+	color-scheme: light dark;
+	font-family: system-ui, sans-serif;
+	background: light-dark(#f9f9f9, #272727);
+	color: light-dark(#202020, #f4f4f4);
+}
+body {
+	margin: 0;
+}
+main {
+	max-width: 640px;
+	margin: 8vh auto;
+	padding: 24px;
+}
+h1 {
+	font-size: clamp(28px, 5vw, 40px);
+	line-height: 1.2;
+}
+p {
+	line-height: 1.6;
+}
+nav {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	gap: 12px;
+	margin-block: 28px;
+}
+nav a {
+	padding: 16px;
+	border: 1px solid light-dark(#c5c5c5, #666);
+	border-radius: 8px;
+	text-decoration: none;
+}
+a {
+	color: light-dark(#0067c0, #60cdff);
+}
+a:hover,
+a:focus-visible {
+	text-decoration: underline;
+	outline-offset: 4px;
+}
