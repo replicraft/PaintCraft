@@ -70,7 +70,7 @@ paintcraft-cli export-icons painting.pcnd -o pointer.cur \
 
 Use `WIDTHxHEIGHT` instead of a single size for rectangular entries. Existing
 destinations require `--overwrite` / `overwrite: true`. CLI source digest guards
-use `--expect-input-sha256`. Desktop/browser icon export controls remain pending.
+use `--expect-input-sha256`. Studio on desktop and web offers the same choices under File > Export icon or cursor.
 
 PCX exports accept the optional `pcx_encoding` field: `rgb24` (default),
 `indexed-exact` (refuse more than 256 colors), or `indexed-256` (explicitly allow
