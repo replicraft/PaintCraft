@@ -118,6 +118,7 @@ fn appearance(ui: &mut egui::Ui, values: &mut Settings) {
             return;
         }
         ui.horizontal_wrapped(|ui| {
+            ui.spacing_mut().item_spacing = egui::vec2(20.0, 10.0);
             for (value, label) in [
                 (settings::Appearance::System, "Use system setting"),
                 (settings::Appearance::Light, "Light"),
@@ -132,6 +133,7 @@ fn appearance(ui: &mut egui::Ui, values: &mut Settings) {
             "Each interface has a separate workspace. Save or discard changes before switching.",
         );
         ui.horizontal_wrapped(|ui| {
+            ui.spacing_mut().item_spacing = egui::vec2(20.0, 10.0);
             for (value, label) in [
                 (Experience::Classic, "Classic interface"),
                 (Experience::Studio, "Studio interface"),
@@ -144,6 +146,7 @@ fn appearance(ui: &mut egui::Ui, values: &mut Settings) {
         card(ui, "Classic skin", |ui| {
             let mut variant = values.classic_variant.unwrap_or(ClassicVariant::DEFAULT);
             ui.horizontal_wrapped(|ui| {
+                ui.spacing_mut().item_spacing = egui::vec2(20.0, 10.0);
                 for v in ClassicVariant::ALL {
                     if ui.radio_value(&mut variant, v, v.name()).changed() {
                         values.classic_variant = Some(variant);

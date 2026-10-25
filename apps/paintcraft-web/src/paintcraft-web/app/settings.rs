@@ -180,6 +180,7 @@ fn appearance(ui: &mut egui::Ui, values: &mut Preferences, classic: bool) {
             return;
         }
         ui.horizontal_wrapped(|ui| {
+            ui.spacing_mut().item_spacing = egui::vec2(20.0, 10.0);
             for (theme, label) in [
                 (None, "Use system setting"),
                 (Some(egui::Theme::Light), "Light"),
@@ -191,6 +192,7 @@ fn appearance(ui: &mut egui::Ui, values: &mut Preferences, classic: bool) {
     });
     card(ui, "Classic skin", |ui| {
         ui.horizontal_wrapped(|ui| {
+            ui.spacing_mut().item_spacing = egui::vec2(20.0, 10.0);
             for variant in ClassicVariant::ALL {
                 ui.radio_value(&mut values.variant, variant, variant.name());
             }
