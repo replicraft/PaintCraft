@@ -5,6 +5,8 @@ artwork. `generate.py` uses only Python's standard library. `oracle.mjs` renders
 the scenes with independent Google Chrome, blocks network requests, and loads
 the repository's Selawik bytes explicitly. It never calls PaintCraft or resvg.
 Source, oracle PNG and font hashes are recorded in `oracle.json`.
+`aligned.svgz` is a deterministic standard-library gzip sidecar for the real
+CLI/MCP import tests; its compressed-byte hash is in `sources.json`.
 
 Regenerate from the repository root using an isolated Playwright installation:
 

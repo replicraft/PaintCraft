@@ -18,6 +18,50 @@ fn root() -> std::path::PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")
 }
 #[test]
+fn compressed_svg_uses_the_explicit_fit_and_rejects_conflicting_selectors() {
+    let dir = std::env::temp_dir().join(format!("paintcraft-svgz-cli-{}", std::process::id()));
+    fs::create_dir_all(&dir).unwrap();
+    let source = dir.join("scene.svgz");
+    let output = dir.join("scene.pcnd");
+    let bytes = include_bytes!(
+        "../../../crates/services/paintcraft-formats/tests/svg-fixtures/aligned.svgz"
+    );
+    fs::write(&source, bytes).unwrap();
+    let args = [
+        "import",
+        source.to_str().unwrap(),
+        "-o",
+        output.to_str().unwrap(),
+        "--svg-width",
+        "64",
+        "--svg-height",
+        "64",
+        "--svg-fit",
+        "stretch",
+        "--allow-loss",
+        "svg-rasterized",
+    ];
+    let result = run(&args);
+    assert!(
+        result.status.success(),
+        "{}",
+        String::from_utf8_lossy(&result.stderr)
+    );
+    let doc = pcnd::read(&fs::read(&output).unwrap()).unwrap();
+    let layer = &doc.layers[&doc.roots[0]];
+    assert_eq!(layer.raster.get(0, 0).0, [255, 0, 0, 255]);
+    assert_eq!(layer.raster.get(63, 63).0, [0, 0, 255, 128]);
+    let saved = fs::read(&output).unwrap();
+    for selector in ["--page", "--entry"] {
+        let mut refused = args.to_vec();
+        refused.extend([selector, "0", "--overwrite"]);
+        assert_eq!(run(&refused).status.code(), Some(2));
+        assert_eq!(fs::read(&output).unwrap(), saved);
+    }
+    assert_eq!(fs::read(&source).unwrap(), bytes);
+    fs::remove_dir_all(dir).unwrap();
+}
+#[test]
 fn svg_requires_explicit_dimensions_and_consent_and_preserves_source_and_profile() {
     let dir = std::env::temp_dir().join(format!("paintcraft-svg-cli-{}", std::process::id()));
     fs::create_dir_all(&dir).unwrap();

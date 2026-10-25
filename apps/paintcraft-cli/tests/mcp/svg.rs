@@ -57,6 +57,19 @@ fn explicit_svg_options_and_consent_preserve_failure_state_and_source_aliases() 
     assert_eq!(layer.raster.get(0, 16).0, [255, 0, 0, 255]);
     assert_eq!(layer.raster.get(63, 47).0, [0, 0, 255, 128]);
     assert_eq!(fs::read(&source).unwrap(), bytes);
+    let compressed = dir.join("scene.svgz");
+    let zipped = include_bytes!(
+        "../../../../crates/services/paintcraft-formats/tests/svg-fixtures/aligned.svgz"
+    );
+    fs::write(&compressed, zipped).unwrap();
+    c.ok("import_image",json!({"path":compressed,"discard_changes":true,"svg":{"width":64,"height":64,"fit":"stretch"},"allow_losses":["svg-rasterized"]}));
+    let destination = dir.join("compressed.pcnd");
+    c.ok("save_project", json!({"path":destination}));
+    let doc = pcnd::read(&fs::read(destination).unwrap()).unwrap();
+    let layer = &doc.layers[&doc.roots[0]];
+    assert_eq!(layer.raster.get(0, 0).0, [255, 0, 0, 255]);
+    assert_eq!(layer.raster.get(63, 63).0, [0, 0, 255, 128]);
+    assert_eq!(fs::read(compressed).unwrap(), zipped);
     drop(c);
     fs::remove_dir_all(dir).unwrap();
 }

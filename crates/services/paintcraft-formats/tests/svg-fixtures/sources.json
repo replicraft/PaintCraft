@@ -55,5 +55,9 @@
             "height": 8,
             "source_sha256": "e1ff4c960c71fe49d94929e756730e84f8566eee7ca74f16d19b5303b400be14"
         }
-    ]
+    ],
+    "svgz": {
+        "source": "aligned.svg",
+        "sha256": "e71ef78ff1ea88cba93840374dcb2ec9bab65f29596ec69304cb7df3bc69067e"
+    }
 }

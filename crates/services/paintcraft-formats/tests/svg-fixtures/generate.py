@@ -2,6 +2,7 @@
 import base64
 import binascii
 import hashlib
+import gzip
 import json
 from pathlib import Path
 import struct
@@ -45,5 +46,10 @@ manifest = {"generator": "Authored SVG, Python struct/zlib arithmetic PNG; no th
 for name, width, height, body in fixtures:
     raw = f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}">{body}</svg>\n'.encode()
     (ROOT / f"{name}.svg").write_bytes(raw)
+    if name == "aligned":
+        compressed = bytearray(gzip.compress(raw, mtime=0))
+        compressed[9] = 255  # Stable OS header across Python/zlib versions.
+        (ROOT / "aligned.svgz").write_bytes(compressed)
+        manifest["svgz"] = {"source": "aligned.svg", "sha256": hashlib.sha256(compressed).hexdigest()}
     manifest["files"].append(dict(name=name, width=width, height=height, source_sha256=hashlib.sha256(raw).hexdigest()))
 (ROOT / "sources.json").write_text(json.dumps(manifest, indent=4) + "\n")
