@@ -24,7 +24,9 @@ inside the downloads. The checksums describe the final downloadable bytes.
 
 ## Build and publish
 
-1. Set `[workspace.package].version` in the root `Cargo.toml` and update the lockfile.
+1. Set `[workspace.package].version` in the root `Cargo.toml`, update the lockfile
+   and write `docs/releases/v<version>.md` with user-facing installation notes,
+   changes and known limitations. Tag validation requires this file to be nonempty.
 2. Run `python3 -m unittest discover -s scripts/tests -p 'test_package_*.py'`.
 3. Use **Actions → Release → Run workflow** to build and assemble every platform
    without publishing. Download `paintcraft-release-<version>` from that run.
@@ -34,7 +36,7 @@ inside the downloads. The checksums describe the final downloadable bytes.
 5. Push a matching `v<version>` tag when ready to publish. A tag that disagrees
    with Cargo fails before building. The tag run builds all platforms again,
    checks every asset and SHA-256 digest, creates/uploads a draft and then
-   publishes it. An existing published release is refused. Prerelease versions
+   publishes it with the authored notes. An existing published release is refused. Prerelease versions
    produce prerelease downloads; MSI and Apple bundle metadata use the numeric
    major/minor/patch version. Use a new numeric version when upgrading an MSI.
 

@@ -21,6 +21,10 @@ A familiar place to draw, paint and edit images. Built in Rust.
 
 ![PaintCraft Classic in Japanese](assets/repo/classic-japanese.png)
 
+## Install
+
+See [Releases](https://github.com/replicraft/PaintCraft/releases) for packaged downloads and installation notes. Choose the build for your operating system and processor. On macOS, open the DMG and drag PaintCraft to Applications. On Windows, use the MSI or extract the portable ZIP.
+
 ## Run
 
 Desktop:

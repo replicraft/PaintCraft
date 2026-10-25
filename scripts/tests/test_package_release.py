@@ -69,6 +69,20 @@ class ReleaseTests(unittest.TestCase):
                     with self.assertRaises(ValueError, msg=f"{actual} mislabeled {claimed}"):
                         release.validate_package_input(self.version, claimed, self.binary)
 
+    def test_tagged_release_requires_nonempty_notes_before_builds_are_started(self):
+        (self.root / "Cargo.toml").write_text(f'[workspace.package]\nversion = "{self.version}"\n')
+        with patch.object(release, "ROOT", self.root), contextlib.redirect_stdout(io.StringIO()):
+            release.validate("")
+            with self.assertRaisesRegex(ValueError, "release notes"):
+                release.validate("v" + self.version)
+            notes = self.root / "docs/releases" / f"v{self.version}.md"
+            notes.parent.mkdir(parents=True)
+            notes.write_text("\n  ")
+            with self.assertRaisesRegex(ValueError, "release notes"):
+                release.validate("v" + self.version)
+            notes.write_text("Preview installation notes and known limitations.")
+            release.validate("v" + self.version)
+
     def test_truncated_binary_and_wrong_version_fail_before_any_output(self):
         for data in (b"", b"MZ", b"\x7fELF", b"not a binary"):
             self.binary.write_bytes(data)

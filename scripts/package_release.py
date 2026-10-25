@@ -40,6 +40,10 @@ def validate(tag):
     version = workspace_version()
     if tag and tag != f"v{version}":
         raise ValueError(f"Tag {tag!r} must match workspace version v{version}")
+    if tag:
+        notes = ROOT / "docs/releases" / f"v{version}.md"
+        if not notes.is_file() or not notes.read_text(encoding="utf-8").strip():
+            raise ValueError(f"Write user-facing release notes before tagging: {notes}")
     if output := os.environ.get("GITHUB_OUTPUT"):
         with Path(output).open("a", encoding="utf-8", newline="\n") as stream:
             stream.write(f"version={version}\n")
