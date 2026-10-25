@@ -135,11 +135,17 @@ sample acquisition or pressure/tilt propagation into brush rendering.
 
 ## Language and font preferences
 
-Settings includes English and Japanese, plus Default font. The browser bundles
-Selawik and Noto Sans JP, so Japanese UI and canvas text do not need system fonts.
-The language and default font persist locally with theme, skin and canvas defaults.
-Windows 7 and 10 skins expose the shared image controls, color picker and full
-brush gallery. Resize/skew remains a preview-only dialog on every host.
+Settings shares desktop's Appearance, Canvas, Text preferences and About layout.
+Theme and language preview immediately; Apply stores the draft and Cancel restores
+the previous choices. System, light and dark themes, all Classic skins, canvas
+startup policy and default font are supported. English, German, Spanish, Hindi,
+Japanese, Brazilian Portuguese and Simplified Chinese are available. Shared
+Selawik and Noto fonts cover these scripts without installed-font access.
+
+Opening an image updates the browser tab title. Project downloads keep its
+basename and update the title to the requested project filename. Image exports
+leave the project title unchanged; New returns it to Untitled. See the
+[desktop parity ledger](../../docs/WEB_DESKTOP_PARITY.md) for remaining gaps.
 
 Brushes use the same deterministic coverage and batch commands as desktop and CLI.
 See [brush media](../../docs/BRUSH_MEDIA.md) and

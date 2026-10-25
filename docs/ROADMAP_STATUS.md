@@ -712,3 +712,13 @@ Classic 7/10/11 in English/Japanese; an isolated Chromium check covers actual Cm
 movement, exact copied-back committed pixels, Undo and cancellation. Native ordinary
 Paste, reference alpha/enlargement policy, other OS readers, other browser/device
 behavior and workers/physical-memory/latency qualification remain open.
+
+
+[Browser settings and document identity](WEB_DESKTOP_PARITY.md) now use the native
+settings presentation with staged adoption, reversible theme/language preview,
+canvas/default-font controls and About. Browser Open, named project download and
+New update the tab title; exports retain project identity. Native settings
+regressions, browser host tests and actual isolated Chromium file/title/reload
+workflows pass. The parity ledger records the still-unconnected workspace/view,
+format, runtime/recovery, Studio and platform-adapter work; this does not complete
+browser/desktop parity or the roadmap.
