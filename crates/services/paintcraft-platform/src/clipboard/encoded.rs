@@ -108,3 +108,5 @@ impl EncodedImage {
 }
 #[cfg(test)]
 mod tests;
+
+mod stream;
