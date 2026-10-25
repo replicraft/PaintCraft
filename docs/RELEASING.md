@@ -128,3 +128,14 @@ python3 scripts/packaging/package_release.py verify --version 0.1.0 --output dis
 cd dist
 sha256sum --check SHA256SUMS.txt
 ```
+
+### Headless CLI distribution
+
+Each of the seven native targets also produces a separate `paintcraft-cli-<version>-<platform>.zip`
+(Windows) or `.tar.gz` (macOS, Linux, FreeBSD). These archives contain the CLI and license,
+and their hashes are included in `SHA256SUMS.txt`. They are separate from desktop installers.
+Extract the binary into a directory on your PATH; the Unix archives preserve executable permissions.
+
+To build and install from a checkout, use `sh scripts/packaging/install_cli.sh` on Unix or
+`./scripts/packaging/install_cli.ps1` on Windows. These scripts require Rust and forward Cargo
+install arguments, for example `--root /your/install/prefix`. They do not download or install Rust.

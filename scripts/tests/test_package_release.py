@@ -15,6 +15,7 @@ import zipfile
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "packaging"))
 import package_release as release
 import package_macos as macos
+import package_cli as cli
 
 
 def executable(path, target):
@@ -146,12 +147,29 @@ class ReleaseTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             release.write_update_archive(app, self.output / "update.zip")
 
-    def test_final_manifest_requires_all_19_assets_and_independently_matches_hashes(self):
-        self.assertEqual(len(release.expected_assets(self.version)), 19)
+    def test_cli_archives_have_exact_binary_and_executable_mode_on_every_target(self):
+        for target in release.TARGETS:
+            binary = executable(self.root / "cli fixture", target)
+            archive = cli.package(self.version, target, binary, self.output)
+            self.assertIn(archive.name, release.expected_assets(self.version))
+            if "windows" in target:
+                with zipfile.ZipFile(archive) as stream:
+                    self.assertEqual(set(stream.namelist()), {"paintcraft-cli.exe", "LICENSE"})
+                    self.assertEqual(stream.read("paintcraft-cli.exe"), binary.read_bytes())
+            else:
+                with tarfile.open(archive) as stream:
+                    self.assertEqual(set(stream.getnames()), {"paintcraft-cli", "LICENSE"})
+                    self.assertEqual(stream.getmember("paintcraft-cli").mode, 0o755)
+                    self.assertEqual(stream.extractfile("paintcraft-cli").read(), binary.read_bytes())
+            self.assertEqual(archive.with_name(archive.name + ".sha256").read_bytes(),
+                             release.checksum_line(archive))
+
+    def test_final_manifest_requires_all_26_assets_and_independently_matches_hashes(self):
+        self.assertEqual(len(release.expected_assets(self.version)), 26)
         self.full_set()
         release.verify_assets(self.version, self.output, finalize=True)
         lines = (self.output / "SHA256SUMS.txt").read_bytes().splitlines()
-        self.assertEqual(len(lines), 19)
+        self.assertEqual(len(lines), 26)
         self.assertFalse(list(self.output.glob("*.sha256")))
         for line in lines:
             digest, name = line.decode().split("  ")

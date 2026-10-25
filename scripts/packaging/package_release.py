@@ -150,6 +150,8 @@ def expected_assets(version):
     names = set()
     for target, suffix in TARGETS.items():
         name = f"paintcraft-{version}-{suffix}"
+        names.add(f"paintcraft-cli-{version}-{suffix}" +
+                  (".zip" if "windows" in target else ".tar.gz"))
         if "apple" in target:
             names.update((name + ".dmg", name + "-update.zip"))
         elif "windows" in target:
