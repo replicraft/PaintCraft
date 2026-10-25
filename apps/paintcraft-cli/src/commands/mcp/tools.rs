@@ -1,7 +1,7 @@
 use super::super::format_profile;
 use super::super::{
     BATCH_V2_SCHEMA, Context, INPUT_MAX, ImageFormat, POLICY, PathBuf, Rgba, Session, export,
-    image, new_document, pcnd, read_bounded, save, write_output,
+    image, new_document, pcnd, read_bounded, same_file, save, write_output,
 };
 use super::{
     PaintingServer,
@@ -32,6 +32,7 @@ impl PaintingServer {
             session.mark_unsaved();
             state.session = Some(session);
             state.source = None;
+            state.import_source = None;
             state.inspect()
         })
         .await
@@ -52,6 +53,7 @@ impl PaintingServer {
             let doc = pcnd::read(&bytes)?;
             state.session = Some(Session::new(doc));
             state.source = Some((path, sha));
+            state.import_source = None;
             state.inspect()
         })
         .await
@@ -62,21 +64,45 @@ impl PaintingServer {
     async fn import_image(&self, Parameters(p): Parameters<Import>) -> CallToolResult {
         self.work(move |state| {
             state.replace_allowed(p.discard_changes)?;
-            if let Some(code) = p
-                .allow_losses
-                .iter()
-                .find(|code| !image::KNOWN_IMPORT_LOSSES.contains(&code.as_str()))
-            {
+            if let Some(code) = p.allow_losses.iter().find(|code| {
+                !image::KNOWN_IMPORT_LOSSES.contains(&code.as_str())
+                    && !paintcraft_formats::project_import::KNOWN_LOSSES.contains(&code.as_str())
+            }) {
                 return Err(invalid(&format!("unknown import loss code {code:?}")));
             }
             let path = PathBuf::from(p.path);
             let (bytes, sha) = read_bounded(&path, INPUT_MAX, "image")?;
             let profile = format_profile::Options::default();
-            let family = profile.admit_open(&path, &bytes)?;
-            profile.reject_project_import(family)?;
-            let decoded = image::decode(&bytes)?;
-            let missing = decoded
-                .losses
+            let family = match p.page {
+                Some(page) => profile.admit_import_page(&path, &bytes, page)?,
+                None => profile.admit_import(&path, &bytes)?,
+            };
+            let (doc, losses) = if matches!(family, Family::Paint | Family::Pdn) {
+                let converted = paintcraft_formats::project_import::decode_layered(
+                    family,
+                    &bytes,
+                    4_194_304,
+                    &|| Ok(()),
+                )?;
+                (converted.document, converted.losses)
+            } else {
+                profile.reject_project_import(family)?;
+                let decoded = if let Some(page) = p.page {
+                    paintcraft_formats::dcx::decode_page(&bytes, page, image::DECODE_PIXELS_MAX)?
+                } else {
+                    image::decode(&bytes)?
+                };
+                (
+                    paintcraft_document::import_image(
+                        decoded.width,
+                        decoded.height,
+                        &decoded.rgba,
+                        &sha,
+                    )?,
+                    decoded.losses,
+                )
+            };
+            let missing = losses
                 .iter()
                 .filter(|loss| !p.allow_losses.contains(loss))
                 .cloned()
@@ -90,17 +116,12 @@ impl PaintingServer {
                     ),
                 ));
             }
-            let doc = paintcraft_document::import_image(
-                decoded.width,
-                decoded.height,
-                &decoded.rgba,
-                &sha,
-            )?;
             let mut session = Session::new(doc);
             session.mark_unsaved();
             state.session = Some(session);
             // A picture is not a native project binding: saving must not replace its source implicitly.
             state.source = None;
+            state.import_source = Some(path);
             state.inspect()
         })
         .await
@@ -202,9 +223,17 @@ impl PaintingServer {
     async fn export_image(&self, Parameters(p): Parameters<Export>) -> CallToolResult {
         self.work(move |s| {
             let path = PathBuf::from(p.path);
+            if s.import_source
+                .as_ref()
+                .is_some_and(|source| same_file(source, &path))
+            {
+                return Err(invalid(
+                    "an exported image must not replace its imported source",
+                ));
+            }
             let format = ImageFormat::from_extension(&path)
                 .ok_or_else(|| invalid("unsupported image extension"))?;
-            let family = Family::from_extension(format.name())
+            let family = Family::from_id(format.name())
                 .ok_or_else(|| invalid("unregistered image format"))?;
             format_profile::Options::default().admit_export(family, &path)?;
             save::preflight(&path, p.overwrite)?;

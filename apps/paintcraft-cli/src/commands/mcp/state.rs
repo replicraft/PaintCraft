@@ -6,6 +6,7 @@ use serde_json::{Value as Json, json};
 pub struct State {
     pub session: Option<Session>,
     pub source: Option<(PathBuf, String)>,
+    pub import_source: Option<PathBuf>,
 }
 
 pub fn invalid(message: &str) -> Error {
@@ -66,6 +67,22 @@ impl State {
         Ok(reply(core_json(&receipt.to_value())?))
     }
     pub fn save(&mut self, path: PathBuf, overwrite: bool) -> Result<CallToolResult> {
+        if !path
+            .extension()
+            .and_then(|extension| extension.to_str())
+            .is_some_and(|extension| extension.eq_ignore_ascii_case("pcnd"))
+        {
+            return Err(invalid("project saves require a .pcnd filename"));
+        }
+        if self
+            .import_source
+            .as_ref()
+            .is_some_and(|source| same_file(source, &path))
+        {
+            return Err(invalid(
+                "a converted project must not replace its original source",
+            ));
+        }
         let source = self.source.clone();
         let inplace = source
             .as_ref()
