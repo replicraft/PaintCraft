@@ -515,12 +515,6 @@ impl WebApp {
         self.text.widget_owned_input =
             ctx.egui_wants_keyboard_input() || egui::Popup::is_any_open(&ctx);
         let context = self.context();
-        egui::Panel::top("web-editor-banner").show(ui, |ui| {
-            ui.horizontal_wrapped(|ui| {
-                ui.strong(t!(ui.ctx(), "PaintCraft Web · Early editor"));
-                ui.label(t!(ui.ctx(), "Save downloads a project copy. Export downloads PNG. Text stays editable until placed; downloads include the draft."));
-            });
-        });
         egui::Panel::top("classic-chrome").show(ui, |ui| {
             let actions = paintcraft_classic::chrome_with_text(
                 ui,

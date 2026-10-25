@@ -30,7 +30,6 @@ save-and-switch-more = 保存并切换…
 save-as-more = 另存为…
 save-before-switching-interfaces = 切换界面前保存
 save-changes-before-closing-this-document = 关闭此文档前保存更改？
-save-downloads-a-project-copy-export-downloads-png-text-stays-editable-until-placed-downloads-include-the-draft = 保存会下载项目副本，导出会下载 PNG。文本放置前保持可编辑；下载内容包含文本草稿。
 the-current-document-has-unsaved-changes = 当前文档有未保存的更改。
 there-are-unsaved-changes-available-recovery-data-will-be-kept = 有未保存的更改。将保留可用的恢复数据。
 this-document-has-unsaved-changes = 此文档有未保存的更改。

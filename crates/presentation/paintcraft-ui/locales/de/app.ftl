@@ -30,7 +30,6 @@ save-and-switch-more = Speichern und wechseln…
 save-as-more = Speichern unter…
 save-before-switching-interfaces = Vor dem Oberflächenwechsel speichern
 save-changes-before-closing-this-document = Änderungen vor dem Schließen dieses Dokuments speichern?
-save-downloads-a-project-copy-export-downloads-png-text-stays-editable-until-placed-downloads-include-the-draft = Speichern lädt eine Projektkopie herunter. Exportieren lädt PNG herunter. Text bleibt bis zum Platzieren bearbeitbar; Downloads enthalten den Entwurf.
 the-current-document-has-unsaved-changes = Das aktuelle Dokument hat ungespeicherte Änderungen.
 there-are-unsaved-changes-available-recovery-data-will-be-kept = Es gibt ungespeicherte Änderungen. Verfügbare Wiederherstellungsdaten bleiben erhalten.
 this-document-has-unsaved-changes = Dieses Dokument hat ungespeicherte Änderungen.

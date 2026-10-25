@@ -30,7 +30,6 @@ save-and-switch-more = सहेजें और बदलें…
 save-as-more = इस रूप में सहेजें…
 save-before-switching-interfaces = इंटरफ़ेस बदलने से पहले सहेजें
 save-changes-before-closing-this-document = इस दस्तावेज़ को बंद करने से पहले बदलाव सहेजें?
-save-downloads-a-project-copy-export-downloads-png-text-stays-editable-until-placed-downloads-include-the-draft = सहेजें से प्रोजेक्ट की कॉपी डाउनलोड होती है। निर्यात से PNG डाउनलोड होता है। पाठ रखे जाने तक संपादन योग्य रहता है; डाउनलोड में ड्राफ़्ट शामिल है।
 the-current-document-has-unsaved-changes = मौजूदा दस्तावेज़ में बिना सहेजे बदलाव हैं।
 there-are-unsaved-changes-available-recovery-data-will-be-kept = बिना सहेजे बदलाव हैं। उपलब्ध पुनर्प्राप्ति डेटा रखा जाएगा।
 this-document-has-unsaved-changes = इस दस्तावेज़ में बिना सहेजे बदलाव हैं।

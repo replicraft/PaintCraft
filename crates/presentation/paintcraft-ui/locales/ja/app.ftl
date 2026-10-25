@@ -30,7 +30,6 @@ save-and-switch-more = 保存して切り替える…
 save-as-more = 名前を付けて保存…
 save-before-switching-interfaces = 画面を切り替える前に保存
 save-changes-before-closing-this-document = 閉じる前に変更を保存しますか？
-save-downloads-a-project-copy-export-downloads-png-text-stays-editable-until-placed-downloads-include-the-draft = 「保存」でプロジェクト、「エクスポート」でPNGをダウンロードします。テキストは確定まで編集でき、ダウンロードには下書きも含まれます。
 the-current-document-has-unsaved-changes = 現在の画像には未保存の変更があります。
 there-are-unsaved-changes-available-recovery-data-will-be-kept = 保存されていない変更があります。復元データは保持されます。
 this-document-has-unsaved-changes = この画像には保存されていない変更があります。

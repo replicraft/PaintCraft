@@ -30,7 +30,6 @@ save-and-switch-more = Salvar e trocar…
 save-as-more = Salvar como…
 save-before-switching-interfaces = Salvar antes de trocar de interface
 save-changes-before-closing-this-document = Salvar alterações antes de fechar este documento?
-save-downloads-a-project-copy-export-downloads-png-text-stays-editable-until-placed-downloads-include-the-draft = Salvar baixa uma cópia do projeto. Exportar baixa PNG. O texto permanece editável até ser inserido; os downloads incluem o rascunho.
 the-current-document-has-unsaved-changes = O documento atual tem alterações não salvas.
 there-are-unsaved-changes-available-recovery-data-will-be-kept = Há alterações não salvas. Os dados de recuperação disponíveis serão mantidos.
 this-document-has-unsaved-changes = Este documento tem alterações não salvas.

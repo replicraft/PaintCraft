@@ -30,7 +30,6 @@ save-and-switch-more = Save and switch…
 save-as-more = Save As…
 save-before-switching-interfaces = Save before switching interfaces
 save-changes-before-closing-this-document = Save changes before closing this document?
-save-downloads-a-project-copy-export-downloads-png-text-stays-editable-until-placed-downloads-include-the-draft = Save downloads a project copy. Export downloads PNG. Text stays editable until placed; downloads include the draft.
 the-current-document-has-unsaved-changes = The current document has unsaved changes.
 there-are-unsaved-changes-available-recovery-data-will-be-kept = There are unsaved changes. Available recovery data will be kept.
 this-document-has-unsaved-changes = This document has unsaved changes.
