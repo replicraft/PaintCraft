@@ -3,7 +3,9 @@
 Desktop **Paste / Ctrl+V / Cmd+V** now targets the existing visible layer, separately
 from **Paste as new layer**. The macOS encoded clipboard reader supplies native
 images. A Windows PNG/TIFF/DIB reader is now cross-compiled but remains unqualified
-for native execution; additional DIB variants and other OS readers remain unfinished.
+for native execution. Linux/FreeBSD named Wayland sessions now have a bounded
+PNG/TIFF pipe reader; compositor execution, X11 and additional DIB variants remain
+unfinished. See [transport ownership and limits](CLIPBOARD_READS.md).
 Actions follow the actual compiled platform capability. This work advances T14/T15; it does not qualify
 reference Paint behavior or complete those roadmap tasks.
 
@@ -72,7 +74,7 @@ dense source-over/RGB-key oracle, check moving-image scheduling, and reject late
 frames after cancellation. An explicit offscreen GPU test passes on Apple M1 Pro
 Metal through the admitted native render path; no native window is opened.
 
-Native Windows clipboard execution, additional DIB variants and Linux/FreeBSD read adapters,
+Native Windows/Wayland clipboard execution, additional DIB variants and X11 read adapters,
 pinned Paint/Paint.NET clipboard
 alpha/placement/DPI behavior, cross-application flavor interoperability and physical
 device/input latency remain unqualified. General pasteboard access is not claimed

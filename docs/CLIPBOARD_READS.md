@@ -4,7 +4,8 @@ The platform layer has a lazy asynchronous `ReadService` and an immutable
 encoded-image snapshot. The macOS adapter reads advertised PNG or classic TIFF
 without invoking an image decoder. The Windows adapter now captures registered
 PNG (`PNG` / `image/png`), packed `CF_DIBV5` / `CF_DIB`, or standard `CF_TIFF` through safe bounded raw APIs.
-Both connect to [ordinary Paste](NATIVE_FLOATING_PASTE.md) and
+The Wayland adapter on Linux/FreeBSD requests encoded PNG or TIFF streams.
+These adapters connect to [ordinary Paste](NATIVE_FLOATING_PASTE.md) and
 [Paste as new layer](CLIPBOARD_PASTE_LAYER.md), including bounded decoding and
 import-loss consent. A separate [browser reader](BROWSER_CLIPBOARD_PASTE.md)
 supplies browser PNG data.
@@ -12,10 +13,11 @@ supplies browser PNG data.
 Arboard remains the native write service. Its 3.7.0 public image getter decodes
 before returning pixels and cannot enforce PaintCraft's pre-decode pixel limit.
 Encoded native reads instead feed the existing bounded codecs. [Packed DIB decoding](DIB_CLIPBOARD.md) now runs in formats after capture;
-additional DIB variants and Linux/FreeBSD readers remain unfinished.
-`ReadService::supported()` identifies compiled macOS/Windows adapters; access can
-still fail at runtime. Windows code is cross-compiled and remains unqualified for
-native clipboard interoperability.
+additional DIB variants and X11 reads remain unfinished.
+`ReadService::supported()` identifies compiled macOS/Windows adapters and named
+Wayland sessions on Linux/FreeBSD; access can still fail at runtime. Windows and
+Wayland code is cross-compiled and remains unqualified for native clipboard
+interoperability.
 
 ## Snapshot and admission
 
@@ -25,7 +27,7 @@ not full image validation: the result remains untrusted encoded data. The caller
 must still sniff/parse it under codec dimension/pixel/metadata limits, resolve
 losses and freeze admitted RGBA before constructing a Paste draft.
 
-Advertised length must be nonzero and no greater than 64 MiB. The snapshot reserves
+For known-length providers, advertised length must be nonzero and no greater than 64 MiB. The snapshot reserves
 that length from the caller's shared budget before invoking the byte-copy callback.
 Actual returned length and vector capacity are checked; capacity beyond the
 advertised length requires its own reservation. Clones share one payload charge
@@ -86,6 +88,38 @@ Windows-only optional direct dependency, inherited from the root workspace. No
 library version was upgraded, and workspace `unsafe_code = forbid` is retained.
 No upstream implementation code was copied into PaintCraft.
 
+## Wayland stream ownership
+
+On Linux/FreeBSD, a nonempty `WAYLAND_DISPLAY` enables the Wayland reader. It
+uses the already-locked `wl-clipboard-rs` 0.9.4 and its
+[typed clipboard pipe API](https://docs.rs/wl-clipboard-rs/0.9.4/wl_clipboard_rs/paste/fn.get_contents.html).
+It requests only `image/png`, then `image/tiff` if PNG is not offered. Acquisition
+errors and malformed preferred data stop the operation. No text or X11 fallback
+is requested. A compositor without the required data-control protocol can reject
+the request. Each MIME attempt acquires its own offer; bytes from different
+attempts are never combined.
+
+Unknown-length streams reserve a private 64 MiB capacity grant before opening
+the provider. A 32 KiB scratch buffer feeds fallible geometric vector growth
+within that grant. The exact-limit boundary probes one excess byte without
+growing storage. Only EOF plus signature validation freezes the snapshot; excess,
+read errors and cancellation discard it. The final payload retains only its
+actual vector-capacity charge, shared by clones. The unused grant is released.
+
+Safe `rustix` 1.1.5 nonblocking pipe reads poll in intervals of at most 50 ms,
+checking cancellation between waits. A transfer with no byte progress for 30
+seconds fails. Initial Wayland acquisition/roundtrips remain opaque and cannot
+be preempted through this library API. Offer/MIME metadata, provider memory,
+protocol buffers, allocator reallocation overlap and codec scratch are outside
+the payload lease; neither total RSS nor a whole-operation cancellation deadline
+is qualified.
+
+`Seat::Unspecified` provides a single-seat baseline, not verified active-seat
+selection for multi-seat systems. X11-only sessions and inherited
+`WAYLAND_SOCKET`-only sessions remain unsupported. No clipboard read occurs until
+an explicit Paste submission. The existing application pipeline performs bounded
+decode, loss consent and source-owned atomic placement after transport.
+
 ## Asynchronous lifecycle
 
 Construction starts a worker but does not access the pasteboard. Only explicit
@@ -128,7 +162,7 @@ Logs are local in ignored `docs/validation/clipboard-read-2026-10-24/`.
 
 Desktop macOS and browser read/decode/loss-consent/placement are now connected.
 Windows PNG/TIFF and packed DIB transport is implemented and cross-compiled. Remaining: native
-Windows execution, additional DIB variants, Linux/FreeBSD adapters, richer flavors and
+Windows/Wayland execution, additional DIB variants, X11 reads, richer flavors and
 metadata, exact internal-copy matching, permissions and cross-application/native
 reference qualification. This does not complete T17, frontend parity, browser
 conformance or release qualification.
@@ -154,3 +188,16 @@ physical-memory/latency qualification remain work. Evidence is local in ignored
 
 The later [packed DIB follow-up](DIB_CLIPBOARD.md) adds transport priority and
 strict decoder/loss-consent evidence with updated test totals.
+
+The Wayland follow-up passes 82 platform tests with all features (two opt-in
+native checks ignored), including real Unix pipes, EOF/hangup draining, idle
+timeout, cancellation through the asynchronous service, reservation release and
+a successful fresh snapshot after cancellation. Shared stream tests cover
+fragmentation, exact/excess limits, spoofed signatures, provider errors, every
+observed cancellation point and final-clone capacity ownership. Strict host
+all-target Clippy and Linux x86-64/ARM64 plus FreeBSD x86-64 cross checks pass.
+These are transport/compile checks, not compositor, multi-seat, cross-application,
+pixel/DPI or physical-device qualification. Linux/FreeBSD release jobs now run
+the portable clipboard suite; those remote workflows have not run from this
+checkout. Raw local evidence is ignored under
+`docs/validation/wayland-clipboard-2026-10-25/`.

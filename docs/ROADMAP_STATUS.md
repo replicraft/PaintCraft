@@ -776,3 +776,17 @@ T22 browser conformance or T24 representative codec/performance study gates.
 Oil now tapers in load and width, and crayon leaves more clustered paper breaks.
 Shared opacity, clipping, preview/release and undo tests pass. Contact sheets are
 implementation evidence, without a native Paint material-engine equivalence claim.
+
+### Wayland encoded clipboard follow-up
+
+Named Wayland sessions on Linux/FreeBSD now use the selected `wl-clipboard-rs`
+library to request PNG/TIFF without decoding in the platform adapter. Private
+up-front capacity admission, bounded stream growth, EOF/signature checks,
+nonblocking reads, cancellation and an idle timeout feed the existing ordinary
+Paste and new-layer paths. Real-pipe/service tests and strict Linux x86-64/ARM64
+and FreeBSD x86-64 cross checks pass. Release jobs now run the portable clipboard
+suite on Linux/FreeBSD as well as Windows. These workflows have not run from this
+checkout. Native compositor interoperability, active-seat fidelity, X11,
+opaque acquisition deadlines and aggregate physical-memory/latency qualification
+remain unfinished; T14/T15/T19 remain partial. See
+[encoded read ownership and evidence](CLIPBOARD_READS.md).

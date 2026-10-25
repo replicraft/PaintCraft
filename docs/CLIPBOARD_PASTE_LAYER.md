@@ -7,10 +7,14 @@ its X/Y position, optionally grow the canvas right/down, and accept known import
 limitations before applying. Cancel or Escape leaves the document unchanged.
 
 This is a PaintCraft extension. Ordinary Paste/Cmd+V, active-layer placement,
-on-canvas dragging, Windows/Linux/FreeBSD readers remain
-unfinished. [Browser Paste as new layer](BROWSER_CLIPBOARD_PASTE.md) now connects
-the same transaction to supported browser PNG reads. The legacy Paste control stays disabled. Classic 7/10 expose the
-extension through the shortcut and native macOS Edit menu.
+on-canvas dragging were unfinished in this initial tranche. The later
+[ordinary Paste integration](NATIVE_FLOATING_PASTE.md) adds private placement;
+[encoded readers](CLIPBOARD_READS.md) now include cross-checked Windows and named
+Wayland sessions, with native execution qualification and X11 still unfinished.
+[Browser Paste as new layer](BROWSER_CLIPBOARD_PASTE.md) now connects
+the same transaction to supported browser PNG reads. Ordinary Paste controls now
+follow adapter availability. Classic 7/10 expose the new-layer extension through
+the shortcut and native macOS Edit menu.
 
 ## Ownership and publication
 

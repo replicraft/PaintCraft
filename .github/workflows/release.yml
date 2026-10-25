@@ -98,8 +98,8 @@ jobs:
         run: '"RUSTFLAGS=-C target-feature=+crt-static" >> $env:GITHUB_ENV'
       - name: Build release with GPU rendering
         run: cargo build --locked --release -p paintcraft -p paintcraft-cli --target ${{ matrix.target }}
-      - name: Test Windows clipboard transport and lifecycle
-        if: runner.os == 'Windows'
+      - name: Test native clipboard transport and lifecycle
+        if: runner.os == 'Windows' || runner.os == 'Linux'
         run: cargo test --locked -p paintcraft-platform --features clipboard --target ${{ matrix.target }} --lib
       - name: Test Windows packed DIB decoding
         if: runner.os == 'Windows'
@@ -190,6 +190,7 @@ jobs:
             export CARGO_TARGET_DIR="$(pwd)/target/freebsd-cache/target"
             export CARGO_BUILD_JOBS=4 CARGO_INCREMENTAL=0
             cargo build --locked --release -p paintcraft -p paintcraft-cli --target x86_64-unknown-freebsd
+            cargo test --locked -p paintcraft-platform --features clipboard --target x86_64-unknown-freebsd --lib
             python3.13 -m unittest discover -s scripts/tests -p 'test_package_*.py'
             python3.13 scripts/packaging/package_release.py package --version "$(python3.13 scripts/packaging/package_release.py validate)" --target x86_64-unknown-freebsd --binary "$CARGO_TARGET_DIR/x86_64-unknown-freebsd/release/paintcraft" --output dist
             python3.13 scripts/packaging/package_cli.py --version "$(python3.13 scripts/packaging/package_release.py validate)" --target x86_64-unknown-freebsd --binary "$CARGO_TARGET_DIR/x86_64-unknown-freebsd/release/paintcraft-cli" --output dist
