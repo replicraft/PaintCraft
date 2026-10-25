@@ -1,5 +1,10 @@
 # PaintCraft roadmap implementation status
 
+Desktop ordinary Paste now has an ordered existing-layer publication prerequisite:
+captured target/blend/key survive admission retries, cancellation and stale-source
+checks, with one-step Undo and file-barrier ordering. Native private placement,
+preview and controls remain unfinished. See [existing-layer Paste](PASTE_ONTO.md).
+
 Latest Classic feedback: [implemented changes, validation scope and remaining
 selection/rotation/background-removal work](CLASSIC_FOLLOWUP.md). Full feature and
 historical skin parity remain incomplete.
