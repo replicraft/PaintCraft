@@ -25,6 +25,7 @@ pub enum Action {
     Copy,
     CopyVisible,
     PasteLayer,
+    Paste,
     Undo,
     Redo,
     Interface,
@@ -68,6 +69,7 @@ pub struct Context {
     pub can_redo: bool,
     pub can_recent: bool,
     pub can_paste: bool,
+    pub can_paste_onto: bool,
     pub can_save_all: bool,
     pub selection_active: bool,
     pub tool: Tool,
@@ -122,6 +124,7 @@ pub const EDIT: &[Action] = &[
     Action::Copy,
     Action::CopyVisible,
     Action::PasteLayer,
+    Action::Paste,
     Action::Crop,
     Action::Undo,
     Action::Redo,
@@ -159,6 +162,7 @@ impl Action {
             Self::Cut => ("Cut", Some((Key::X, false))),
             Self::Copy => ("Copy", Some((Key::C, false))),
             Self::CopyVisible => ("Copy visible layers", Some((Key::C, true))),
+            Self::Paste => ("Paste", Some((Key::V, false))),
             Self::PasteLayer => ("Paste as new layer…", Some((Key::V, true))),
             Self::Undo => ("Undo", Some((Key::Z, false))),
             Self::Redo => ("Redo", Some((Key::Y, false))),
@@ -318,6 +322,12 @@ impl Action {
                     && ctx.layer_visible
                     && (!ctx.selection_active || ctx.can_crop_selection)
             }
+            Self::Paste => {
+                ctx.document_open
+                    && ctx.can_paste_onto
+                    && ctx.layer_index.is_some()
+                    && ctx.layer_visible
+            }
             Self::PasteLayer => ctx.document_open && ctx.can_paste,
             Self::CopyVisible => {
                 ctx.document_open && (!ctx.selection_active || ctx.can_crop_selection)
@@ -394,6 +404,7 @@ impl Action {
             Self::ExportImage(format) => 1040 + format as u64,
             Self::Cut => 1050,
             Self::PasteLayer => 1051,
+            Self::Paste => 1052,
             Self::Copy => 1028,
             Self::CopyVisible => 1029,
             Self::Undo => 1005,

@@ -95,49 +95,24 @@ pub(super) fn edit(ui: &mut Ui, context: Context, actions: &mut Vec<Action>) {
         .id_salt("classic-edit-menu")
         .max_height(height)
         .show(ui, |ui| {
-            for (label, icon, key, shift) in [
-                ("Cut", Icon::Cut, Key::X, false),
-                ("Copy", Icon::Copy, Key::C, false),
-                ("Paste", Icon::Paste, Key::V, false),
-                ("Copy visible layers", Icon::CopyMerged, Key::C, true),
+            for (item, label) in [
+                (Action::Cut, "Cut"),
+                (Action::Copy, "Copy"),
+                (Action::Paste, "Paste"),
+                (Action::CopyVisible, "Copy visible layers"),
             ] {
-                if matches!(label, "Cut" | "Copy") {
-                    action(
-                        ui,
-                        context,
-                        actions,
-                        if label == "Cut" {
-                            Action::Cut
-                        } else {
-                            Action::Copy
-                        },
-                        label,
-                    );
-                    continue;
-                }
-                if shift {
+                if item == Action::CopyVisible {
                     ui.separator();
-                    action(ui, context, actions, Action::CopyVisible, label);
-                    continue;
                 }
-                unavailable(
-                    ui,
-                    label,
-                    icon,
-                    Some(KeyboardShortcut::new(
-                        Modifiers {
-                            shift,
-                            ..Modifiers::COMMAND
-                        },
-                        key,
-                    )),
-                    "Canvas clipboard operations are not available yet.",
-                );
+                action(ui, context, actions, item, label);
             }
             // Preserve existing working PaintCraft commands below the reference entries.
             ui.separator();
             for &item in paintcraft_ui::actions::EDIT {
-                if matches!(item, Action::Cut | Action::Copy | Action::CopyVisible) {
+                if matches!(
+                    item,
+                    Action::Cut | Action::Copy | Action::CopyVisible | Action::Paste
+                ) {
                     continue;
                 }
                 action(ui, context, actions, item, item.descriptor().label);

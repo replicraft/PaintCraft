@@ -7,6 +7,7 @@ fn native_history_capability_survives_empty_workspaces_but_respects_modals() {
         document_open: false,
         can_undo: false,
         can_redo: false,
+        can_paste_onto: false,
         can_save_all: false,
         can_recent: true,
         can_paste: false,

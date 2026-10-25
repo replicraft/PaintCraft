@@ -20,19 +20,17 @@ pub(super) fn show(
             ui.horizontal_top(|ui| {
                 group(ui, "Clipboard", |ui| {
                     ui.horizontal_top(|ui| {
-                        ui.add_enabled_ui(false, |ui| {
-                            super::legacy_controls::large_button(
-                                ui,
-                                context,
-                                Action::New,
-                                Icon::Paste,
-                                "Paste",
-                            )
-                            .on_disabled_hover_text(t!(
-                                ui.ctx(),
-                                "Canvas clipboard operations are not available yet.",
-                            ));
-                        });
+                        if super::legacy_controls::large_button(
+                            ui,
+                            context,
+                            Action::Paste,
+                            Icon::Paste,
+                            "Paste",
+                        )
+                        .clicked()
+                        {
+                            actions.push(Action::Paste);
+                        }
                         ui.vertical(|ui| {
                             for (caption, icon) in [("Cut", Icon::Cut), ("Copy", Icon::Copy)] {
                                 let response = ui.add_enabled(

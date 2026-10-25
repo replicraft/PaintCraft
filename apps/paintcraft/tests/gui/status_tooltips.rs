@@ -32,6 +32,7 @@ fn elided_classic_status_fields_show_one_complete_tooltip() {
                         can_redo: false,
                         can_recent: false,
                         can_paste: false,
+                        can_paste_onto: false,
                         can_save_all: false,
                         selection_active: true,
                         tool: paintcraft_tools::Tool::Pencil,

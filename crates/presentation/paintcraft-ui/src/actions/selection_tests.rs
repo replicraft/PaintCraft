@@ -8,6 +8,7 @@ fn context(frontend: Frontend) -> Context {
         can_redo: false,
         can_recent: false,
         can_paste: false,
+        can_paste_onto: false,
         can_save_all: false,
         selection_active: false,
         tool: Tool::Select,
@@ -301,4 +302,33 @@ fn paste_as_new_layer_requires_host_support_and_uses_its_explicit_shortcut() {
             Some(Action::PasteLayer)
         );
     }
+}
+
+#[test]
+fn ordinary_paste_requires_host_support_and_a_visible_existing_target() {
+    let base = context(Frontend::Classic);
+    assert!(!Action::Paste.enabled(base));
+    let allowed = Context {
+        can_paste_onto: true,
+        layer_index: Some(0),
+        layer_visible: true,
+        ..base
+    };
+    assert!(Action::Paste.enabled(allowed));
+    assert!(!Action::Paste.enabled(Context {
+        layer_visible: false,
+        ..allowed
+    }));
+    assert!(!Action::Paste.enabled(Context {
+        layer_index: None,
+        ..allowed
+    }));
+    assert!(!Action::Paste.enabled(Context {
+        blocked: true,
+        ..allowed
+    }));
+    assert_eq!(
+        Action::from_shortcut_for(Frontend::Classic, Key::V, Modifiers::COMMAND),
+        Some(Action::Paste)
+    );
 }

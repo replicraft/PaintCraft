@@ -43,6 +43,7 @@ fn save_all_requires_a_modified_document_and_an_unblocked_studio_workspace() {
         document_open: true,
         can_recent: false,
         can_paste: false,
+        can_paste_onto: false,
         can_save_all: true,
         can_undo: false,
         can_redo: false,
@@ -66,6 +67,7 @@ fn save_all_requires_a_modified_document_and_an_unblocked_studio_workspace() {
     };
     assert!(Action::SaveAll.enabled(context));
     assert!(!Action::SaveAll.enabled(Context {
+        can_paste_onto: false,
         can_save_all: false,
         ..context
     }));

@@ -21,7 +21,7 @@ impl Action {
             Self::Save | Self::SaveAll => Icon::Save,
             Self::Print => Icon::Print,
             Self::Cut => Icon::Cut,
-            Self::PasteLayer => Icon::Paste,
+            Self::Paste | Self::PasteLayer => Icon::Paste,
             Self::Copy => Icon::Copy,
             Self::CopyVisible => Icon::CopyMerged,
             Self::SaveAs | Self::Export | Self::ExportImage(_) => Icon::SaveAs,

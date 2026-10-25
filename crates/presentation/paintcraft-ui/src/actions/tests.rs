@@ -73,6 +73,7 @@ fn metadata_preserves_identity_and_context_gates_actions() {
         can_redo: true,
         can_recent: false,
         can_paste: false,
+        can_paste_onto: false,
         can_save_all: true,
         selection_active: true,
         tool: Tool::Brush,
