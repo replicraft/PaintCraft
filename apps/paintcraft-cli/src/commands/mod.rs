@@ -266,6 +266,7 @@ pub mod paste_image;
 pub mod pcx_options;
 pub mod render;
 pub mod schema;
+pub mod svg_options;
 
 pub mod mcp;
 
