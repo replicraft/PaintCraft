@@ -81,7 +81,7 @@ Completed shapes are raster transactions, not persistent editable vector objects
 The older Classic skins expose the same 23-entry gallery. Curved preset contours use
 bounded fixed-point flattenings, not a Windows pixel-fidelity guarantee.
 
-This is an early editor. Custom transforms, clipboard and recovery
+This is an early editor. Custom transforms, ordinary Paste and recovery
 are not connected yet. Unsupported actions report this in the status bar.
 The page requests the browser's
 unsaved-work confirmation before unloading. Browser policy controls whether that
@@ -97,23 +97,6 @@ remain work. Browser history uses raw snapshots; native Zstandard codecs remain
 native-only, while raw/LZ4 support compiles to WebAssembly. WebRunner presents the
 interface through wgpu, with WebGPU and WebGL enabled; document composition is
 currently CPU, not qualified GPU document rendering. No native services are used.
-
-## Run locally
-
-Use the pinned repository toolchain, then install the matching binding generator:
-
-```sh
-rustup target add wasm32-unknown-unknown
-cargo install wasm-bindgen-cli --version 0.2.129 --locked
-python3 apps/paintcraft-web/build.py
-python3 -m http.server 8080 --directory apps/paintcraft-web/dist
-```
-
-Open `http://localhost:8080`. Serve the generated files over HTTP, not `file://`.
-WebGPU typically requires localhost or HTTPS; WebGL availability depends on the
-browser and device. Initialization failures are displayed on the page. Generated
-files stay in the app-local ignored `dist/` directory. `cargo run` still starts
-the desktop app by default.
 
 ## Validation
 
@@ -160,3 +143,31 @@ brush gallery. Resize/skew remains a preview-only dialog on every host.
 Brushes use the same deterministic coverage and batch commands as desktop and CLI.
 See [brush media](../../docs/BRUSH_MEDIA.md) and
 [localization scope](../../docs/LOCALIZATION.md) for current behavior and limits.
+
+## Run and build
+
+Use Node.js 24. From the repository root:
+
+```sh
+npm --prefix apps/paintcraft-web ci
+npm --prefix apps/paintcraft-web run dev
+```
+
+Open http://localhost:8088/. To create the static production site:
+
+```sh
+npm --prefix apps/paintcraft-web run build
+```
+
+Astro and `vite-plugin-wasm` bundle the editor. The npm build prepares the pinned
+Rust/Wasm package automatically, bootstrapping Rust and wasm-bindgen if needed.
+The site is written to `apps/paintcraft-web/dist`; fonts come from the shared root
+assets and are verified before the editor starts. Run `npm run build:wasm` in this
+directory after changing Rust while the Astro dev server is running.
+
+## Cloudflare Pages
+
+Choose Astro, set the root directory to `apps/paintcraft-web`, build command to
+`npm run build`, output directory to `dist` and `NODE_VERSION` to `24`. CI also
+uploads the built site as a `paintcraft-web` artifact. Every asset is checked
+against the 25 MiB limit. See [deployment settings](../../docs/WEB_DEPLOYMENT.md).

@@ -43,10 +43,8 @@ cargo run --release -p paintcraft-cli -- --help
 Browser:
 
 ```sh
-rustup target add wasm32-unknown-unknown
-cargo install wasm-bindgen-cli --version 0.2.129 --locked
-python3 apps/paintcraft-web/build.py
-python3 -m http.server 8088 --directory apps/paintcraft-web/dist
+npm --prefix apps/paintcraft-web ci
+npm --prefix apps/paintcraft-web run dev
 ```
 
 Open [localhost:8088](http://localhost:8088).

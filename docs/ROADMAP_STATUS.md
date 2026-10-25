@@ -692,3 +692,14 @@ and history failures have independent raster/document evidence. Ordinary desktop
 browser Paste still needs floating preview/placement and host wiring; native
 profile/device/platform and physical-memory/latency qualification remain open.
 T14/T15/T17 stay partial.
+
+
+[Astro browser builds](WEB_DEPLOYMENT.md) now use `vite-plugin-wasm`, an npm
+build command, pinned Rust/binding preparation and a per-file Cloudflare Pages
+size check. Shared CJK fonts ship as verified static assets with their licenses;
+Selawik/Devanagari remain embedded. The largest production asset is 13,745,006
+bytes, below the 26,214,400-byte Pages limit. Local Astro startup, Japanese/Chinese
+UI, clipboard pixel/Undo regression and missing-font error handling pass in an
+isolated Chromium shell. CI is configured to upload a built site artifact; no
+Cloudflare deployment or Linux CI execution is claimed from these local checks.
+This does not complete the browser/frontend or public-release gates.
