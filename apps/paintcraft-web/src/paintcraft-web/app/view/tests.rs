@@ -129,3 +129,28 @@ fn grid_and_thumbnail_state_are_owned_by_each_frontend_workspace() {
     app.action(&ctx, Action::ChooseFrontend(Frontend::Classic));
     assert!(app.context().pixel_grid && app.context().thumbnail);
 }
+
+#[test]
+fn unavailable_fullscreen_reports_a_translatable_error_without_document_publication() {
+    for language in Language::ALL {
+        let mut h = harness(ClassicVariant::V11, language);
+        let ticket = h.state().editor.session.ticket();
+        fire(&mut h, ViewAction::FullScreen);
+        assert!(!h.state().context().fullscreen);
+        assert_eq!(h.state().message, crate::fullscreen::UNAVAILABLE);
+        assert_eq!(h.state().editor.session.ticket(), ticket);
+        if language != Language::English {
+            assert_ne!(
+                translate(language, crate::fullscreen::UNAVAILABLE),
+                crate::fullscreen::UNAVAILABLE
+            );
+        }
+        h.state_mut().message = "Ready".into();
+        h.run();
+        assert_eq!(
+            h.state().message,
+            "Ready",
+            "error notification is consumed once"
+        );
+    }
+}

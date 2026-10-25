@@ -297,3 +297,5 @@ the-document-changed-choose-the-image-again = El documento cambió; vuelve a ele
 import-cancelled = Importación cancelada.
 
 this-image-contains-unsupported-import-data = La imagen contiene datos de importación no compatibles.
+
+full-screen-is-unavailable-or-the-browser-denied-the-request = La pantalla completa no está disponible o el navegador ha rechazado la solicitud.

@@ -6,6 +6,9 @@ impl WebApp {
         let ctx = ui.ctx().clone();
         self.refresh_appearance(&ctx);
         if ctx.current_pass_index() == 0 {
+            if self.fullscreen.refresh(&ctx) {
+                self.message = crate::fullscreen::UNAVAILABLE.into();
+            }
             self.poll_files(&ctx);
             self.poll_copy(&ctx);
             self.poll_paste(&ctx);

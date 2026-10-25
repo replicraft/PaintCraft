@@ -297,3 +297,5 @@ the-document-changed-choose-the-image-again = दस्तावेज़ बद
 import-cancelled = आयात रद्द किया गया।
 
 this-image-contains-unsupported-import-data = इस चित्र में असमर्थित आयात डेटा है।
+
+full-screen-is-unavailable-or-the-browser-denied-the-request = पूर्ण स्क्रीन उपलब्ध नहीं है या ब्राउज़र ने अनुरोध अस्वीकार कर दिया है।

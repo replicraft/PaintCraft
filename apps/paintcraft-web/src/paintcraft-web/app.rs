@@ -30,6 +30,7 @@ pub struct WebApp {
     pub(crate) frontend: Frontend,
     pub(crate) studio: paintcraft_studio::Workspace,
     parked: Option<Box<interfaces::Parked>>,
+    fullscreen: crate::fullscreen::State,
     pub(crate) controls: Controls,
     pub(crate) editor: Editor,
     pub(crate) canvas: Canvas,
@@ -68,6 +69,7 @@ impl WebApp {
             frontend: Frontend::Classic,
             studio: Default::default(),
             parked: None,
+            fullscreen: Default::default(),
             controls: Controls {
                 tool: Tool::Brush,
                 options: ToolOptions::default(),
@@ -163,7 +165,7 @@ impl WebApp {
             can_crop_selection: self.selected_bounds().is_ok_and(|bounds| bounds.is_some()),
             status_bar: self.frontend == Frontend::Studio || self.preferences.status_bar,
             rulers: self.rulers_visible(),
-            fullscreen: false,
+            fullscreen: self.fullscreen.active(),
             auto_hide_toolbar: self.frontend == Frontend::Classic
                 && self.preferences.auto_hide_toolbar,
             thumbnail: self.workspace.thumbnail,
@@ -460,6 +462,23 @@ impl WebApp {
             )
         {
             self.cancel_paste(ctx);
+            return true;
+        }
+        if self.fullscreen.active()
+            && !self.blocked()
+            && !egui::Popup::is_any_open(ctx)
+            && matches!(
+                event,
+                egui::Event::Key {
+                    key: egui::Key::Escape,
+                    pressed: true,
+                    ..
+                }
+            )
+        {
+            self.editor.cancel_floating();
+            self.editor.tools.cancel_gesture();
+            self.fullscreen.exit(ctx);
             return true;
         }
         if self.blocked()

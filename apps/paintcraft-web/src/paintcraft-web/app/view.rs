@@ -36,7 +36,11 @@ impl WebApp {
             ViewAction::Octuple => self.zoom = 8.0,
             ViewAction::FitWindow => self.fit_canvas(),
             ViewAction::FitSelection => self.fit_selection(),
-            ViewAction::FullScreen => self.unsupported(Action::View(view)),
+            ViewAction::FullScreen => {
+                self.editor.cancel_floating();
+                self.editor.tools.cancel_gesture();
+                self.fullscreen.toggle(ctx);
+            }
         }
         if persist {
             self.persist_preferences();

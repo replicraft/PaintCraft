@@ -297,3 +297,5 @@ the-document-changed-choose-the-image-again = 文档已更改，请重新选择�
 import-cancelled = 已取消导入。
 
 this-image-contains-unsupported-import-data = 此图像包含不支持导入的数据。
+
+full-screen-is-unavailable-or-the-browser-denied-the-request = 无法使用全屏模式，或浏览器拒绝了请求。

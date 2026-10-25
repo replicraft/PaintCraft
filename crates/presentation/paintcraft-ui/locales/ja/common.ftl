@@ -297,3 +297,5 @@ the-document-changed-choose-the-image-again = ドキュメントが変更され�
 import-cancelled = 読み込みをキャンセルしました。
 
 this-image-contains-unsupported-import-data = この画像には読み込みに対応していないデータが含まれています。
+
+full-screen-is-unavailable-or-the-browser-denied-the-request = 全画面表示を利用できないか、ブラウザーがリクエストを拒否しました。
