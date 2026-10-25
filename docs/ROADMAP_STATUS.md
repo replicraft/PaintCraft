@@ -790,3 +790,19 @@ checkout. Native compositor interoperability, active-seat fidelity, X11,
 opaque acquisition deadlines and aggregate physical-memory/latency qualification
 remain unfinished; T14/T15/T19 remain partial. See
 [encoded read ownership and evidence](CLIPBOARD_READS.md).
+
+### X11 encoded clipboard follow-up
+
+Linux/FreeBSD X11 sessions now use the already-locked `x11rb` client for bounded
+direct/INCR PNG/TIFF reads, including incremental target discovery, owner checks
+and advertised timestamp validation. Private capacity admission precedes provider
+access; refused or malformed preferred data never falls back. Five portable
+tests and two actual isolated Xvfb tests cover the new transport. The full
+platform suite passes 87 tests with four explicit native checks ignored, and
+strict host/Linux/FreeBSD/Windows cross checks pass. Xvfb tests use private UUID
+selections and synthetic encoded transport payloads, not the user's clipboard or
+native pixel interchange. Linux CI is configured but has not run remotely from
+this checkout. Cross-application fidelity, Linux/FreeBSD runtime, native Wayland
+execution, acquisition deadlines and aggregate memory/latency remain unqualified.
+The broader T14/T15/T19 gates remain partial; see
+[clipboard read ownership and executed evidence](CLIPBOARD_READS.md).

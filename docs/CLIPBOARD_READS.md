@@ -4,7 +4,7 @@ The platform layer has a lazy asynchronous `ReadService` and an immutable
 encoded-image snapshot. The macOS adapter reads advertised PNG or classic TIFF
 without invoking an image decoder. The Windows adapter now captures registered
 PNG (`PNG` / `image/png`), packed `CF_DIBV5` / `CF_DIB`, or standard `CF_TIFF` through safe bounded raw APIs.
-The Wayland adapter on Linux/FreeBSD requests encoded PNG or TIFF streams.
+The Wayland and X11 adapters on Linux/FreeBSD request encoded PNG or TIFF streams.
 These adapters connect to [ordinary Paste](NATIVE_FLOATING_PASTE.md) and
 [Paste as new layer](CLIPBOARD_PASTE_LAYER.md), including bounded decoding and
 import-loss consent. A separate [browser reader](BROWSER_CLIPBOARD_PASTE.md)
@@ -13,11 +13,12 @@ supplies browser PNG data.
 Arboard remains the native write service. Its 3.7.0 public image getter decodes
 before returning pixels and cannot enforce PaintCraft's pre-decode pixel limit.
 Encoded native reads instead feed the existing bounded codecs. [Packed DIB decoding](DIB_CLIPBOARD.md) now runs in formats after capture;
-additional DIB variants and X11 reads remain unfinished.
+additional DIB variants and broader clipboard interoperability remain unfinished.
 `ReadService::supported()` identifies compiled macOS/Windows adapters and named
-Wayland sessions on Linux/FreeBSD; access can still fail at runtime. Windows and
-Wayland code is cross-compiled and remains unqualified for native clipboard
-interoperability.
+Wayland or X11 sessions on Linux/FreeBSD; access can still fail at runtime.
+Named Wayland sessions take priority over X11; acquisition failure does not
+silently switch backends. Windows/Wayland native interoperability and X11
+cross-application fidelity remain unqualified.
 
 ## Snapshot and admission
 
@@ -115,10 +116,51 @@ the payload lease; neither total RSS nor a whole-operation cancellation deadline
 is qualified.
 
 `Seat::Unspecified` provides a single-seat baseline, not verified active-seat
-selection for multi-seat systems. X11-only sessions and inherited
-`WAYLAND_SOCKET`-only sessions remain unsupported. No clipboard read occurs until
+selection for multi-seat systems. Inherited `WAYLAND_SOCKET`-only sessions remain
+unsupported by this adapter. X11-only sessions now use the separate reader below.
+No clipboard read occurs until
 an explicit Paste submission. The existing application pipeline performs bounded
 decode, loss consent and source-owned atomic placement after transport.
+
+## X11 selection ownership
+
+When `DISPLAY` is nonempty and no named Wayland session is present, the
+already-locked pure-Rust `x11rb` 0.13.2 client reads `CLIPBOARD`. It never requests
+`PRIMARY`, text, files, conversion side effects or execution. No Xlib dependency
+or unsafe workspace code is introduced. The implementation follows the
+[ICCCM selection and INCR conventions](https://xorg.freedesktop.org/archive/X11R7.7/doc/xorg-docs/icccm/icccm.html#incr_properties).
+
+Each explicit read has a fresh connection owning its invisible, unmapped
+InputOnly requestor windows. Every conversion uses a different window, a fresh
+server event timestamp and an initially absent property. Selection notifications
+must match requestor, selection, target, time and property. The owner window is
+pinned before target discovery and checked between conversions/data chunks and
+before final return. If `TIMESTAMP` is advertised, one nonzero 32-bit integer is
+captured and rechecked after image EOF. A changed/refused timestamp fails closed.
+An absent timestamp permits owner-window checking only. This is not a universal
+generation guarantee for a dishonest owner, same-window ABA changes or in-place
+changes that do not update the owner's timestamp.
+
+`TARGETS` is limited to 256 atoms. PNG is preferred over TIFF, which is selected
+only if PNG is absent. Preferred conversion/signature errors never fall back.
+Direct and incremental transfers are supported for image and metadata properties.
+GetProperty requests retrieve at most 32 KiB, use word-aligned offsets and validate
+actual type, format, item count, remaining length and partial-read continuity.
+An INCR length is a lower bound, not an allocation request. Whole-property
+deletion acknowledges a chunk; a correctly typed empty property terminates the
+stream. Unaligned final image bytes are preserved. Limits apply to aggregate
+bytes across all chunks, not just the first property or INCR hint.
+
+The existing private 64 MiB stream grant precedes connecting or requesting data.
+Only a complete signature-checked snapshot reaches the bounded decoder and
+existing atomic Paste pipeline. Cancellation, refusal, malformed properties,
+changed ownership and missing completion discard all partial bytes. Dropping the
+connection destroys its requestor windows on every path. Event waits check
+cancellation around 50 ms polls and expire after 30 seconds without the expected
+event. Connection setup, synchronous protocol replies and flushes remain opaque;
+the wait timeout is not a whole-operation deadline. Protocol reply buffers,
+metadata, the chunk buffer and allocator overlap remain outside the encoded
+payload lease. Whole-process RSS, cancellation tails and latency are unqualified.
 
 ## Asynchronous lifecycle
 
@@ -162,7 +204,7 @@ Logs are local in ignored `docs/validation/clipboard-read-2026-10-24/`.
 
 Desktop macOS and browser read/decode/loss-consent/placement are now connected.
 Windows PNG/TIFF and packed DIB transport is implemented and cross-compiled. Remaining: native
-Windows/Wayland execution, additional DIB variants, X11 reads, richer flavors and
+Windows/Wayland execution, additional DIB variants, richer flavors and
 metadata, exact internal-copy matching, permissions and cross-application/native
 reference qualification. This does not complete T17, frontend parity, browser
 conformance or release qualification.
@@ -201,3 +243,26 @@ pixel/DPI or physical-device qualification. Linux/FreeBSD release jobs now run
 the portable clipboard suite; those remote workflows have not run from this
 checkout. Raw local evidence is ignored under
 `docs/validation/wayland-clipboard-2026-10-25/`.
+
+The X11 follow-up passes 87 platform tests with all features (four explicit
+native checks ignored), strict host all-target Clippy, and Linux x86-64/ARM64,
+FreeBSD x86-64 and Windows x86-64/ARM64 cross checks. Independent property fixtures
+cover word offsets, final tails, incremental target lists, lower-bound and total
+limits, changed formats/types/counts and partial-property mutation.
+
+Two opt-in tests also pass against an isolated Xvfb server on macOS 14.7.2 arm64,
+using only private UUID selection names. They exercise direct and incremental
+100,011-byte image streams, incremental TARGETS, PNG priority, TIFF when PNG is
+absent, malformed preferred data, refused conversion, changed owner/timestamp,
+cancellation, exact transport bytes and shared-clone capacity release. These
+synthetic encoded payloads test transport, not codec or native pixel interchange.
+The server was extracted into temporary storage from official XQuartz 2.8.6,
+with its upstream release asset digest verified. Test socket/helper paths were
+relocated and binaries ad hoc signed; no installer/scripts, system integration,
+visible windows, TCP listener or user clipboard were used. Task-owned server
+files were removed afterward. Provenance and raw logs are ignored under
+`docs/validation/x11-clipboard-2026-10-25/`.
+
+CI now configures an isolated Xvfb run on Linux; that remote job has not run from
+this checkout. Actual Linux/FreeBSD execution, clipboard managers, cross-process
+application pixels/profiles/DPI and broader platform/release gates remain open.
