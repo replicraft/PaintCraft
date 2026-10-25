@@ -89,16 +89,31 @@ fn classic_file_exposes_native_print_and_keeps_unimplemented_actions_disabled() 
     }
     h.get_by_role_and_label(Role::Button, "Edit").hover();
     h.run();
-    assert_eq!(
-        h.query_all_by_label_contains("Copy")
-            .filter(|node| node.accesskit_node().role() == Role::Button
-                && !node.accesskit_node().is_disabled())
-            .count(),
-        1
-    );
-    for label in ["Cut", "Paste", "Copy visible layers"] {
-        assert!(h.get_by_label(label).accesskit_node().is_disabled());
+    for (label, key, enabled) in [
+        ("Cut", Key::X, true),
+        ("Copy", Key::C, true),
+        ("Paste", Key::V, false),
+    ] {
+        let shortcut = h.ctx.format_shortcut(&eframe::egui::KeyboardShortcut::new(
+            eframe::egui::Modifiers::COMMAND,
+            key,
+        ));
+        let label = format!("{label} {shortcut}");
+        assert_eq!(
+            h.get_by_role_and_label(Role::Button, "Edit")
+                .get_by_label(&label)
+                .accesskit_node()
+                .is_disabled(),
+            !enabled,
+            "{label}"
+        );
     }
+    assert!(
+        !h.get_by_role_and_label(Role::Button, "Edit")
+            .get_by_label_contains("Copy visible layers")
+            .accesskit_node()
+            .is_disabled()
+    );
     assert!(h.state().editor().document().same_semantics(&before));
     assert_eq!(h.state().editor().history_view().ticket, history);
     h.key_press(Key::Escape);

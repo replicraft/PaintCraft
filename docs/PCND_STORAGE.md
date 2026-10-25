@@ -116,4 +116,6 @@ The initial-version cleanup passes the full formats library/integration suite,
 35 CLI tests, 129 browser host tests, 362 desktop library tests, the Wasm target
 check, and formats/CLI Clippy. The broader desktop GUI suite reports 276 passes,
 64 ignored cases and two menu-test failures (copy availability and menu row
-reachability); it is not a fully passing UI qualification.
+reachability). Both assertions were subsequently updated for working clipboard
+actions and shortcut-bearing labels; the two focused reruns pass. The original
+broad run is retained as failing evidence, rather than relabeled as passing.

@@ -90,18 +90,16 @@ fn classic_main_menu_rows_use_full_icons_and_keep_lower_actions_reachable() {
         h.run();
         h.get_by_role_and_label(Role::Button, "Edit").click();
         h.run();
-        for label in ["Cut", "Copy", "Paste"] {
-            let row = if label == "Copy" {
-                h.query_all_by_label_contains(label)
-                    .find(|node| {
-                        node.accesskit_node().role() == Role::Button
-                            && !node.accesskit_node().is_disabled()
-                    })
-                    .expect("enabled Copy row with its shortcut")
-                    .rect()
-            } else {
-                h.get_by_role_and_label(Role::Button, label).rect()
-            };
+        for (label, key) in [("Cut", Key::X), ("Copy", Key::C), ("Paste", Key::V)] {
+            let shortcut = h.ctx.format_shortcut(&eframe::egui::KeyboardShortcut::new(
+                eframe::egui::Modifiers::COMMAND,
+                key,
+            ));
+            let label = format!("{label} {shortcut}");
+            let row = h
+                .get_by_role_and_label(Role::Button, "Edit")
+                .get_by_label(&label)
+                .rect();
             assert_eq!(row.height(), 38.0);
             assert!(has_full_icon(&h, row));
         }
