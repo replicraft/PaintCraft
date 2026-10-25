@@ -167,3 +167,63 @@ fn directory_order_is_independent_of_payload_order() {
     );
     assert_eq!(icons::decode_entry(&bytes, 1, 256).unwrap().entry.width, 16);
 }
+
+#[test]
+fn independent_fixtures_match_pillow_pixel_hashes_and_directory_metadata() {
+    use sha2::{Digest, Sha256};
+    let expected = [
+        (
+            17,
+            1,
+            "aa9775f00a4b994d9c0447ad60897a711adfd624a4bac5184fe1665ba93db65a",
+        ),
+        (
+            19,
+            4,
+            "f0e464a4bbe06fd6e3e9c485bd56d77cf4807a49ca30017c6f3c1e560726188e",
+        ),
+        (
+            21,
+            8,
+            "4bc5673638811c2f3378a77a6e3bf007367e0e8f08b41aaf2c301be9985c8651",
+        ),
+        (
+            23,
+            24,
+            "6a9bd8b9457260ad4f889b78a6d173898eef5c2dfd9d943812f981cffe32424b",
+        ),
+        (
+            25,
+            32,
+            "d8e88fece8aff8e001b897f1cc282e0afebf954b582de604800787a3a032a8d5",
+        ),
+        (
+            256,
+            32,
+            "4e6383d5d7945e7dc4169d662c4dffc74169f601af0cba5f0551c4c082e5e2b5",
+        ),
+    ];
+    for (bytes, cursor) in [
+        (&include_bytes!("icon-fixtures/mixed.ico")[..], false),
+        (&include_bytes!("icon-fixtures/mixed.cur")[..], true),
+    ] {
+        let directory = icons::inspect(bytes).unwrap();
+        assert_eq!(directory.entries.len(), expected.len());
+        for (index, &(size, depth, hash)) in expected.iter().enumerate() {
+            let decoded = icons::decode_entry(bytes, index as u16, 65536).unwrap();
+            assert_eq!((decoded.entry.width, decoded.entry.height), (size, size));
+            assert_eq!(decoded.entry.bits_per_pixel, depth);
+            assert_eq!(
+                Sha256::digest(&decoded.rgba)
+                    .iter()
+                    .map(|byte| format!("{byte:02x}"))
+                    .collect::<String>(),
+                hash
+            );
+            assert_eq!(
+                decoded.entry.hotspot,
+                cursor.then_some((index as u16, index as u16 + 1))
+            );
+        }
+    }
+}

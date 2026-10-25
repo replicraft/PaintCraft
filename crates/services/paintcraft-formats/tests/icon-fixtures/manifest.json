@@ -1,0 +1,38 @@
+{
+    "entries": [
+        {
+            "size": 17,
+            "depth": 1,
+            "rgba_sha256": "aa9775f00a4b994d9c0447ad60897a711adfd624a4bac5184fe1665ba93db65a"
+        },
+        {
+            "size": 19,
+            "depth": 4,
+            "rgba_sha256": "f0e464a4bbe06fd6e3e9c485bd56d77cf4807a49ca30017c6f3c1e560726188e"
+        },
+        {
+            "size": 21,
+            "depth": 8,
+            "rgba_sha256": "4bc5673638811c2f3378a77a6e3bf007367e0e8f08b41aaf2c301be9985c8651"
+        },
+        {
+            "size": 23,
+            "depth": 24,
+            "rgba_sha256": "6a9bd8b9457260ad4f889b78a6d173898eef5c2dfd9d943812f981cffe32424b"
+        },
+        {
+            "size": 25,
+            "depth": 32,
+            "rgba_sha256": "d8e88fece8aff8e001b897f1cc282e0afebf954b582de604800787a3a032a8d5"
+        },
+        {
+            "size": 256,
+            "depth": 32,
+            "rgba_sha256": "4e6383d5d7945e7dc4169d662c4dffc74169f601af0cba5f0551c4c082e5e2b5"
+        }
+    ],
+    "files": {
+        "mixed.ico": "b4beb7f932830bf9d0e0659ce18ddb04cc9a4896e7e327a28c6e15c0efc5d0b7",
+        "mixed.cur": "3fb7c36ab7ca8f0f1229d1ee570354e24c9ec9f69b4c9cab6e77a3a5b63e00ce"
+    }
+}
