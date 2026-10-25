@@ -153,6 +153,8 @@ fn external_resources_and_active_content_are_refused_before_rendering() {
         "<image href='https://example.invalid/image.png'/>",
         "<image href='data:image/svg+xml;base64,PHN2Zy8+'/>",
         "<rect fill='url(https://example.invalid/a)'/>",
+        "<rect fill='color(display-p3 1 0 0)'/>",
+        "<rect fill='var(--paint)'/>",
         "<style>@import 'https://example.invalid/style.css';</style>",
         r"<style>.x { fill:u\72l(https://example.invalid/a) }</style>",
         "<style>.x { fill:URL(/*comment*/'https://example.invalid/a') }</style>",

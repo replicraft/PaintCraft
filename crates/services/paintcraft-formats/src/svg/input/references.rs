@@ -2,9 +2,24 @@ use super::*;
 use usvg::roxmltree::NodeId;
 
 pub(super) fn css(value: &str) -> Result<()> {
-    if value.contains(['\\', '@']) || value.to_ascii_lowercase().contains("icc-color(") {
+    let lower = value.to_ascii_lowercase();
+    if value.contains(['\\', '@'])
+        || [
+            "icc-color(",
+            "color(",
+            "lab(",
+            "lch(",
+            "oklab(",
+            "oklch(",
+            "var(",
+            "calc(",
+            "env(",
+        ]
+        .iter()
+        .any(|function| lower.contains(function))
+    {
         return Err(unsupported(
-            "SVG CSS escapes, at-rules and external color profiles are not qualified",
+            "SVG CSS escapes, at-rules, advanced colors and computed values are not qualified",
         ));
     }
     urls(value)?;
@@ -91,6 +106,10 @@ pub(super) fn admit(
                     | "marker-end"
                     | "cursor"
                     | "color-profile"
+                    | "color"
+                    | "stop-color"
+                    | "flood-color"
+                    | "lighting-color"
             ) {
                 css(attr.value())?;
                 targets.extend(urls(attr.value())?);
