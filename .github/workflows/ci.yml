@@ -15,6 +15,7 @@ jobs:
       - run: rustc -Vv && cargo -V
       - run: python3 scripts/check_file_lengths.py
       - run: python3 scripts/check_translations.py
+      - run: python3 -m unittest discover -s scripts/tests -p 'test_package_*.py'
       - run: cargo fmt --all --check
       - run: cargo clippy --workspace --all-targets -- -D warnings
       - run: cargo test --workspace
