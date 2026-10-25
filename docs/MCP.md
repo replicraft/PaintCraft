@@ -39,6 +39,13 @@ Available tools:
 - `save_project`: save a layered PCND project.
 - `export_image`: export an image using its filename extension.
 
+PCX exports accept the optional `pcx_encoding` field: `rgb24` (default),
+`indexed-exact` (refuse more than 256 colors), or `indexed-256` (explicitly allow
+palette preparation). If colors actually change, include `palette-quantized` in
+`allow_losses`; transparency separately requires `alpha-discarded`. Palette
+options on another file format are rejected. Exact small palettes stay exact
+even when `indexed-256` is requested. Export never changes the open document.
+
 Coordinates are canvas pixels. Colors use `#RRGGBBAA`. Stroke and shape tools default to the top layer; `inspect_document` provides IDs for choosing another layer. Batch operations use the existing command schema, while the server supplies the current concurrency ticket.
 
 Save explicitly before disconnecting: the session is held in memory and ends with the server process. Replacing unsaved work requires `discard_changes: true`. Existing output files require `overwrite: true`, except saving back to the opened project, which checks its captured SHA-256 digest and rejects external changes. Image imports and exports use the CLI Studio format-admission profile. Importing a picture never binds project saves to that source image. Image exports require explicit `allow_losses` acknowledgements when flattening or another conversion would discard information. Exporting does not mark a project saved.

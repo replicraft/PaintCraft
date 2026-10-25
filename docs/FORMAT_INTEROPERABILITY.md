@@ -118,6 +118,25 @@ palette references are checked. Indexed output accepts explicit original indices
 and palette entries, including duplicate colors; it never silently quantizes RGBA.
 A user-facing indexed palette/quantization preview remains unfinished.
 
+CLI and MCP now additionally expose explicit indexed policies. CLI `render`
+accepts `--pcx-encoding rgb24|indexed-exact|indexed-256`; MCP `export_image` uses
+the equivalent optional `pcx_encoding` field. RGB24 stays the default. Exact
+indexed mode refuses over 256 post-matte colors; indexed-256 preserves exact
+small palettes and otherwise uses the existing `color_quant` NeuQuant backend.
+Only actual changed colors add `palette-quantized`; alpha loss remains separate.
+Wrong-format options fail before rendering/writing. Serial and parallel CLI
+exports match, and actual MCP tests preserve session state and original files.
+
+Preparation owns the exact palette/indices used by both its fitted nearest-sample
+preview API and the encoder. Independent Pillow 13.0.0 and FFmpeg 8.0.1 reopen
+the quantized result with exactly those preview pixels. Quantizer training is
+bounded to 32,768 evenly distributed source samples, with cancellation checks on
+both sides of the upstream call. This bounds training input, not wall-clock time
+or total process memory. Source/mapping/preview loops check cancellation in bounded
+chunks. Desktop/browser palette controls are still pending; their existing PCX
+option continues to produce RGB24. The RGB24 benchmark below does not measure
+these new indexed policies.
+
 The explicitly invoked Pillow 13.0.0 and FFmpeg 8.0.1 oracle reopens twelve exports
 across odd/even widths 1, 7, 63, 64, 65 and 257. All RGBA samples match; Pillow also
 retains every index byte and all palette entries/order. These checks establish the

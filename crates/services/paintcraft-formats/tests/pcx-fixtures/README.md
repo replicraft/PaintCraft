@@ -27,3 +27,11 @@ verify RLE/padding, exact white matte, loss consent, invalid inputs and cancella
 The public indexed writer takes explicit indices and palette entries. Studio's
 current export UI offers RGB24 only. Palette creation/quantization controls and
 original historical-application reopen tests remain separate requirements.
+
+`pcx_palette.rs` also tests explicit exact/quantized palette preparation, matching
+preview/encoder ownership, precise loss codes and cancellation. The optional
+`independent_decoders` test invokes `verify_palette.py` through the same Pillow
+Python variable; both Pillow and FFmpeg must decode exactly the prepared preview.
+It does not claim a lossless reduction of an image with more than 256 colors.
+CLI/MCP indexed options are connected; desktop/browser palette controls remain
+pending.
