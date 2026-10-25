@@ -38,6 +38,7 @@ Available tools:
 - `preview`: return a PNG preview, at most 256 pixels per side.
 - `save_project`: save a layered PCND project.
 - `export_image`: export an image using its filename extension.
+- `export_icons`: export a fresh multi-size ICO/CUR asset set with explicit sizes, PNG/bitmap encodings and cursor hotspots.
 
 For ICO/CUR import, provide a zero-based `entry` in `import_image`; no entry is
 selected automatically. For DCX, provide a zero-based `page` instead. The two
@@ -46,6 +47,30 @@ fields cannot be combined. Import reports losses that must be acknowledged in
 palette expansion uses `icon-palette-expanded`, and converting a cursor into a
 picture uses `cursor-hotspot-not-retained-in-flat-document`. The original source
 remains unchanged. CLI import uses the corresponding `--entry` or `--page` flags.
+
+`export_icons` takes `path`, an ordered `entries` array and optional `resampling`
+(`lanczos3` by default, or `nearest`). Each entry has `width`, `height`, `encoding`
+(`png` or `bitmap`) and, for CUR only, `hotspot: [x, y]`. Dimensions must be 1..256;
+CUR hotspots are required for every entry and use that entry's pixel coordinates.
+Each size is fitted independently from the original canvas, preserving its aspect
+ratio on transparent padding. `allow_losses` must include `icon-resized` when
+requested dimensions differ, plus `flatten` and `hidden-rgb` when applicable.
+Fully transparent bitmap entries require choosing PNG instead. This is a fresh
+export, not a preserving save of an imported multi-entry source. Export does not
+change the current document, saved state or history.
+
+The equivalent CLI command accepts repeated explicit entries:
+
+```sh
+paintcraft-cli export-icons painting.pcnd -o painting.ico \
+    --entry 16:png --entry 32:bitmap --entry 256:png --allow-loss icon-resized
+paintcraft-cli export-icons painting.pcnd -o pointer.cur \
+    --entry 32:png:7:9 --allow-loss icon-resized
+```
+
+Use `WIDTHxHEIGHT` instead of a single size for rectangular entries. Existing
+destinations require `--overwrite` / `overwrite: true`. CLI source digest guards
+use `--expect-input-sha256`. Desktop/browser icon export controls remain pending.
 
 PCX exports accept the optional `pcx_encoding` field: `rgb24` (default),
 `indexed-exact` (refuse more than 256 colors), or `indexed-256` (explicitly allow
