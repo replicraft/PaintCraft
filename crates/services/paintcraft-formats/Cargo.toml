@@ -21,6 +21,7 @@ flate2.workspace = true
 crc32fast.workspace = true
 pcx.workspace = true
 color_quant.workspace = true
+ico.workspace = true
 qoi.workspace = true
 tiff.workspace = true
 dds.workspace = true

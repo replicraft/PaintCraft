@@ -143,9 +143,11 @@ zune-jpegxl = { version = "0.5.2", default-features = false, features = ["std"] 
 zune-core = { version = "0.5.3", default-features = false, features = ["std"] }
 # Studio single-surface DDS adapter; no implicit Rayon pool.
 dds = { version = "0.2.0", default-features = false }
-# Legacy PCX import.
+# Legacy PCX import/export and explicit palette preparation.
 pcx = "0.2.5"
 color_quant = "1.1.0"
+# Icon/cursor directories with explicit entry selection and hotspot metadata.
+ico = "0.6.0"
 # Force RGBA QOI output; the facade may use its informative RGB header instead.
 qoi = "0.4.1"
 # Bounded DEFLATE payloads in converted PAINT documents.
