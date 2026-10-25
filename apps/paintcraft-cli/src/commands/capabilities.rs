@@ -54,6 +54,18 @@ pub fn run(a: Options, json: bool) -> Reply {
             }
             let mut rows = vec![
                 row(
+                    "ico.entry-set.write",
+                    "paintcraft.icons/explicit-rgba8-entry-set-v1",
+                    "fresh-write",
+                    "ico",
+                ),
+                row(
+                    "cur.entry-set.write",
+                    "paintcraft.icons/explicit-rgba8-entry-set-v1",
+                    "fresh-write",
+                    "ico",
+                ),
+                row(
                     "mcp.stdio.paint",
                     "paintcraft.mcp/ephemeral-v1",
                     "serve",
