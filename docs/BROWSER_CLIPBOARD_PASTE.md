@@ -2,8 +2,8 @@
 
 The browser editor now offers **Paste as new layer…** through the shared Edit
 menu and **Ctrl/Cmd+Shift+V** when the browser exposes image clipboard reads.
-Classic 7/10 expose the shortcut; Classic 11 also has the Edit menu item. Ordinary
-Paste/Ctrl+V and floating active-layer placement remain unfinished.
+Classic 7/10 expose the shortcut; Classic 11 also has the Edit menu item. [Ordinary Paste](FLOATING_PASTE.md) now supports private existing-layer placement
+through Ctrl/Cmd+V. Native ordinary Paste remains unfinished.
 
 The reader calls `navigator.clipboard.read()` directly from the user action,
 without ambient polling or changing permissions. It requests the first advertised

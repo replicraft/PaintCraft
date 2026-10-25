@@ -4,9 +4,10 @@ The editor now supports a frozen Paste draft and atomic insertion of its image a
 a new topmost layer. The CLI consumes this path through `paste-image`. The native macOS app also offers
 [Paste as new layer](CLIPBOARD_PASTE_LAYER.md), with position, optional canvas
 growth and import-loss consent. [Browser PNG Paste as new layer](BROWSER_CLIPBOARD_PASTE.md) is also connected.
-Ordinary Paste and profile-specific placement remain unfinished. This does not complete clipboard
+[Browser ordinary Paste](FLOATING_PASTE.md) is connected; native ordinary Paste
+and profile-specific parity remain unfinished. This does not complete clipboard
 support or the frontend roadmap. [Existing-layer placement](PASTE_ONTO.md) now has
-a separate engine/CLI consumer; ordinary frontend Paste remains unfinished.
+a separate engine/CLI consumer; native ordinary Paste remains unfinished.
 
 ## Command-line use
 

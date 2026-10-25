@@ -81,7 +81,7 @@ Completed shapes are raster transactions, not persistent editable vector objects
 The older Classic skins expose the same 23-entry gallery. Curved preset contours use
 bounded fixed-point flattenings, not a Windows pixel-fidelity guarantee.
 
-This is an early editor. Custom transforms, ordinary Paste and recovery
+This is an early editor. Custom transforms and recovery
 are not connected yet. Unsupported actions report this in the status bar.
 The page requests the browser's
 unsaved-work confirmation before unloading. Browser policy controls whether that
@@ -171,3 +171,7 @@ Choose Astro, set the root directory to `apps/paintcraft-web`, build command to
 `npm run build`, output directory to `dist` and `NODE_VERSION` to `24`. CI also
 uploads the built site as a `paintcraft-web` artifact. Every asset is checked
 against the 25 MiB limit. See [deployment settings](../../docs/WEB_DEPLOYMENT.md).
+
+Ordinary Paste uses Ctrl/Cmd+V and private positioning before Apply/Enter. Repeated
+drags keep frozen source pixels; Escape cancels and placement is one undoable
+existing-layer edit. See [placement and limits](../../docs/FLOATING_PASTE.md).

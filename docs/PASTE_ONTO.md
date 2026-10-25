@@ -2,9 +2,9 @@
 
 The shared editor now supports frozen external-image placement onto an existing
 visible layer, separately from [new-layer insertion](PASTE_IMAGES.md). The CLI
-consumes it through `paste-image --onto-layer`. Desktop/browser ordinary Paste
-and floating placement are still unfinished; this is their engine foundation,
-not a native Paint behavior claim.
+consumes it through `paste-image --onto-layer`. [Browser ordinary Paste](FLOATING_PASTE.md) now consumes it with private floating
+placement. Native ordinary Paste remains unfinished; this is not a native Paint
+behavior claim.
 
 ```sh
 paintcraft-cli paste-image drawing.pcnd picture.png --onto-layer LAYER_UUID -o combined.pcnd
@@ -80,6 +80,6 @@ capacity. CLI subprocesses save and reopen PCND output, compare inserted samples
 and verify source preservation, policy flags and invalid-target rejection.
 
 Logs are local in ignored `docs/validation/paste-onto-2026-10-24/`. The current
-macOS/browser new-layer clipboard workflows are unchanged. Ordinary Paste still
-needs frontend-specific floating preview/placement, control and boundary wiring,
-plus reference/device/platform qualification.
+macOS/browser new-layer clipboard workflows are unchanged. Native ordinary Paste still needs frontend-specific floating preview/placement,
+control and boundary wiring. Browser/reference/device/platform qualification
+remains partial.

@@ -703,3 +703,12 @@ UI, clipboard pixel/Undo regression and missing-font error handling pass in an
 isolated Chromium shell. CI is configured to upload a built site artifact; no
 Cloudflare deployment or Linux CI execution is claimed from these local checks.
 This does not complete the browser/frontend or public-release gates.
+
+
+[Browser ordinary Paste](FLOATING_PASTE.md) now has actual controls/shortcuts,
+private repeated dragging/nudging, ordered target-layer preview, explicit place/
+cancel, one atomic Undo entry and guarded source/target ownership. Host tests cover
+Classic 7/10/11 in English/Japanese; an isolated Chromium check covers actual Cmd+V,
+movement, exact copied-back committed pixels, Undo and cancellation. Native ordinary
+Paste, reference alpha/enlargement policy, other OS readers, other browser/device
+behavior and workers/physical-memory/latency qualification remain open.
