@@ -694,7 +694,7 @@ profile/device/platform and physical-memory/latency qualification remain open.
 T14/T15/T17 stay partial.
 
 
-[Astro browser builds](WEB_DEPLOYMENT.md) now use `vite-plugin-wasm`, an npm
+[Astro browser builds](WEB_DEPLOYMENT.md) now use `vite-plugin-wasm`, a pnpm
 build command, pinned Rust/binding preparation and a per-file Cloudflare Pages
 size check. Shared CJK fonts ship as verified static assets with their licenses;
 Selawik/Devanagari remain embedded. The largest production asset is 13,745,006

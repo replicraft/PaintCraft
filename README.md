@@ -43,8 +43,8 @@ cargo run --release -p paintcraft-cli -- --help
 Browser:
 
 ```sh
-npm --prefix apps/paintcraft-web ci
-npm --prefix apps/paintcraft-web run dev
+pnpm --dir apps/paintcraft-web install --frozen-lockfile
+pnpm --dir apps/paintcraft-web run dev
 ```
 
 Open [localhost:8088](http://localhost:8088).

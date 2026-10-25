@@ -146,29 +146,30 @@ See [brush media](../../docs/BRUSH_MEDIA.md) and
 
 ## Run and build
 
-Use Node.js 24. From the repository root:
+Use Node.js 24 and pnpm 12.10.1. From the repository root:
 
 ```sh
-npm --prefix apps/paintcraft-web ci
-npm --prefix apps/paintcraft-web run dev
+pnpm --dir apps/paintcraft-web install --frozen-lockfile
+pnpm --dir apps/paintcraft-web run dev
 ```
 
 Open http://localhost:8088/. To create the static production site:
 
 ```sh
-npm --prefix apps/paintcraft-web run build
+pnpm --dir apps/paintcraft-web run build
 ```
 
-Astro and `vite-plugin-wasm` bundle the editor. The npm build prepares the pinned
+Astro and `vite-plugin-wasm` bundle the editor. The pnpm build prepares the pinned
 Rust/Wasm package automatically, bootstrapping Rust and wasm-bindgen if needed.
 The site is written to `apps/paintcraft-web/dist`; fonts come from the shared root
-assets and are verified before the editor starts. Run `npm run build:wasm` in this
+assets and are verified before the editor starts. Run `pnpm run build:wasm` in this
 directory after changing Rust while the Astro dev server is running.
 
 ## Cloudflare Pages
 
 Choose Astro, set the root directory to `apps/paintcraft-web`, build command to
-`npm run build`, output directory to `dist` and `NODE_VERSION` to `24`. CI also
+`pnpm run build`, output directory to `dist`, `NODE_VERSION` to `24` and
+`PNPM_VERSION` to `12.10.1`. CI also
 uploads the built site as a `paintcraft-web` artifact. Every asset is checked
 against the 25 MiB limit. See [deployment settings](../../docs/WEB_DEPLOYMENT.md).
 
