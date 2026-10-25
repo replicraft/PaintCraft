@@ -28,7 +28,7 @@ impl App {
             && !egui::Popup::is_any_open(ui.ctx())
             && ui.input(|input| input.focused);
         self.studio.zoom.validate(&scope, enabled);
-        let scale = self.zoom / ppp;
+        let scale = self.zoom;
         if !enabled {
             return None;
         }
@@ -50,7 +50,6 @@ impl App {
             let doc = (pos - canvas.min) / scale;
             (doc.x, doc.y)
         };
-        let ppp = ui.ctx().pixels_per_point();
         match event {
             egui::Event::PointerButton {
                 pos,
@@ -81,9 +80,9 @@ impl App {
                                 (to.0 - from.0).abs().max(1.0),
                                 (to.1 - from.1).abs().max(1.0),
                             );
-                            let pixels = viewport.size() * ppp;
+                            let points = viewport.size();
                             (
-                                (pixels.x / size.x).min(pixels.y / size.y),
+                                (points.x / size.x).min(points.y / size.y),
                                 ((from.0 + to.0) * 0.5, (from.1 + to.1) * 0.5),
                             )
                         }
@@ -133,3 +132,7 @@ impl App {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "zoom_tool/tests.rs"]
+mod tests;

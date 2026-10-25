@@ -10,15 +10,26 @@ pub(super) struct StudioFit {
     fitted: f32,
 }
 
-fn fit_scale(available: Vec2, size: Vec2, ppp: f32) -> f32 {
-    ((available.x.max(1.0) / size.x.max(1.0)).min(available.y.max(1.0) / size.y.max(1.0)) * ppp)
+fn fit_scale(available: Vec2, size: Vec2) -> f32 {
+    (available.x.max(1.0) / size.x.max(1.0))
+        .min(available.y.max(1.0) / size.y.max(1.0))
         .clamp(ZOOM_MIN, ZOOM_MAX)
 }
 
 impl App {
-    fn visible_document_center(&self, ppp: f32) -> (f32, f32) {
+    /// Public zoom is logical UI points per document pixel. The shared View
+    /// contract takes physical pixels, so convert only at this boundary.
+    pub(super) fn canvas_view(&self, origin: (f32, f32), ppp: f32) -> View {
+        View::with_scale(origin, self.zoom * ppp, ppp)
+    }
+
+    pub(super) fn canvas_mip_level(&self, ppp: f32) -> u8 {
+        (-(self.zoom * ppp).log2()).floor().clamp(0.0, 20.0) as u8
+    }
+
+    fn visible_document_center(&self) -> (f32, f32) {
         if let (Some(viewport), Some(canvas)) = (self.canvas_viewport, self.canvas_rect) {
-            let point = (viewport.center() - canvas.min) * (ppp / self.zoom);
+            let point = (viewport.center() - canvas.min) * (1.0 / self.zoom);
             (
                 point.x.clamp(0.0, self.editor.document().canvas.0 as f32),
                 point.y.clamp(0.0, self.editor.document().canvas.1 as f32),
@@ -84,7 +95,7 @@ impl App {
                 .sum::<f32>()
         });
         if delta != 0.0 {
-            let center = self.visible_document_center(ctx.pixels_per_point());
+            let center = self.visible_document_center();
             self.set_zoom(
                 ctx,
                 self.zoom * 1.1_f32.powf(delta.clamp(-32.0, 32.0)),
@@ -139,8 +150,7 @@ impl App {
             ctx.request_repaint();
             return;
         }
-        let ppp = ctx.pixels_per_point();
-        let center = self.visible_document_center(ppp);
+        let center = self.visible_document_center();
         let zoom = match action {
             ViewAction::ZoomIn => paintcraft_ui::actions::stepped_zoom(self.zoom, true),
             ViewAction::ZoomOut => paintcraft_ui::actions::stepped_zoom(self.zoom, false),
@@ -187,7 +197,6 @@ impl App {
                         fit_scale(
                             viewport.size() - Vec2::new(clearance + 24.0, 24.0),
                             Vec2::new((area.x1 - area.x0) as f32, (area.y1 - area.y0) as f32),
-                            ppp,
                         )
                     },
                     |fit| fit.previous,
@@ -226,7 +235,7 @@ impl App {
     pub(super) fn draw_pixel_grid(&self, painter: &egui::Painter, canvas: Rect, view: &View) {
         // Keep one grid line per document-pixel boundary, only where four or
         // more physical pixels make cells legible. Enumerate visible lines only.
-        if self.zoom < 4.0 {
+        if view.zoom < 4.0 {
             return;
         }
         let visible = painter.clip_rect().intersect(canvas);
@@ -266,20 +275,13 @@ mod tests {
     use super::*;
 
     #[test]
-    fn fitting_is_bounded_and_accounts_for_physical_display_scale() {
+    fn fitting_is_bounded_in_logical_points() {
         assert_eq!(
-            fit_scale(Vec2::new(200.0, 100.0), Vec2::new(400.0, 400.0), 1.0),
+            fit_scale(Vec2::new(200.0, 100.0), Vec2::new(400.0, 400.0)),
             0.25
         );
-        assert_eq!(
-            fit_scale(Vec2::new(200.0, 100.0), Vec2::new(400.0, 400.0), 2.0),
-            0.5
-        );
-        assert_eq!(
-            fit_scale(Vec2::splat(1000.0), Vec2::splat(1.0), 1.0),
-            ZOOM_MAX
-        );
-        assert!(fit_scale(Vec2::splat(1.0), Vec2::splat(1048576.0), 1.0) >= ZOOM_MIN);
+        assert_eq!(fit_scale(Vec2::splat(1000.0), Vec2::splat(1.0)), ZOOM_MAX);
+        assert!(fit_scale(Vec2::splat(1.0), Vec2::splat(1048576.0)) >= ZOOM_MIN);
     }
 
     #[test]
@@ -287,8 +289,8 @@ mod tests {
         let mut app = App::new(None);
         app.editor = Editor::new_document(1048576, 1048576).unwrap();
         let ctx = egui::Context::default();
-        for ppp in [1.0, 2.0] {
-            app.zoom = 4.0 * ppp;
+        for ppp in [1.0, 1.5, 2.0] {
+            app.zoom = 4.0;
             let mut full = ctx.run_pass(egui::RawInput::default(), |ctx| {
                 let painter = ctx
                     .layer_painter(egui::LayerId::background())
@@ -299,7 +301,7 @@ mod tests {
                 app.draw_pixel_grid(
                     &painter,
                     Rect::from_min_size(Pos2::ZERO, Vec2::splat(4194304.0)),
-                    &View::with_scale((0.0, 0.0), app.zoom, ppp),
+                    &app.canvas_view((0.0, 0.0), ppp),
                 );
             });
             let lines: Vec<_> = full
@@ -354,3 +356,7 @@ mod tests {
 #[cfg(test)]
 #[path = "view/fit_tests.rs"]
 mod fit_tests;
+
+#[cfg(test)]
+#[path = "view/scale_tests.rs"]
+mod scale_tests;

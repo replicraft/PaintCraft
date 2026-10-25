@@ -82,11 +82,7 @@ impl App {
                 .any(|event| matches!(event, egui::Event::PointerMoved(_)))
         });
         if step.rebase && !moved {
-            let view = View::with_scale(
-                (rect.min.x, rect.min.y),
-                self.zoom,
-                ui.ctx().pixels_per_point(),
-            );
+            let view = self.canvas_view((rect.min.x, rect.min.y), ui.ctx().pixels_per_point());
             if let Some(at) = view.to_doc_subpixel((pointer.x, pointer.y)) {
                 self.editor.pointer_move_subpixel(at);
             }

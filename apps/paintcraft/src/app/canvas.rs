@@ -39,7 +39,7 @@ impl App {
         }
         let ppp = ui.ctx().pixels_per_point();
         let (w, h) = self.editor.document().canvas;
-        let size = View::with_scale((0.0, 0.0), self.zoom, ppp).canvas_size(w, h);
+        let size = self.canvas_view((0.0, 0.0), ppp).canvas_size(w, h);
         let id = egui::Id::unique(self.active_tab_id());
         let canvas_size = Vec2::new(size.0, size.1);
         match self.experience() {
@@ -98,7 +98,7 @@ impl App {
             .intersect(self.canvas_viewport.unwrap_or(ui.clip_rect()));
         self.canvas_viewport = Some(viewport);
         let visible_canvas = rect.intersect(viewport);
-        let view = View::with_scale((rect.min.x, rect.min.y), self.zoom, ppp);
+        let view = self.canvas_view((rect.min.x, rect.min.y), ppp);
         self.hover_doc = ui
             .input(|i| i.pointer.hover_pos())
             .filter(|p| visible_canvas.contains(*p) && controls.is_none_or(|r| !r.contains(*p)))
@@ -270,7 +270,7 @@ impl App {
                 && self.editor.document().canvas.0 <= 2048
                 && self.editor.document().canvas.1 <= 2048
                 // Magnified live painting must keep the smaller visible region.
-                && !(self.zoom > 1.0
+                && !(view.zoom > 1.0
                     && (self.editor.gesture_in_progress()
                         || self.editor.is_editing_text()
                         || self.editor.has_pending_edits()));
@@ -279,11 +279,7 @@ impl App {
             } else {
                 region
             };
-            let level = if small {
-                0
-            } else {
-                (-self.zoom.log2()).floor().clamp(0.0, 20.0) as u8
-            };
+            let level = if small { 0 } else { self.canvas_mip_level(ppp) };
             match paintcraft_render::display::DisplayRequest::new(
                 self.editor.document(),
                 region,

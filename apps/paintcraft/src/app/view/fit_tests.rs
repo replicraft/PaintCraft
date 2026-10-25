@@ -23,7 +23,6 @@ fn fit_toggles_exact_fractional_zoom_and_centers_without_changing_document_data(
         let fitted = fit_scale(
             Vec2::new(776.0, 576.0),
             Vec2::new(width as f32, height as f32),
-            1.0,
         );
         assert_eq!(app.zoom, fitted);
         assert_eq!(
