@@ -47,11 +47,16 @@ fn persisted_evidence_reacquires_the_same_attempt_without_repeating_replacement(
     let dir = scratch("resume-save");
     let path = dir.join("a.pcnd");
     let original = incomplete(&path);
-    let before = fs::metadata(&path).unwrap().ino();
+    assert_eq!(original.replacement, Replacement::Replaced, "{original:?}");
+    let before = fs::metadata(&path).unwrap();
     let resumed = reacquire(&original, &path);
     let checked = resumed.reconcile(ReconcileMode::ConfirmDurability).unwrap();
-    assert!(checked.outcome.is_success());
-    assert_eq!(fs::metadata(&path).unwrap().ino(), before);
+    let after = fs::metadata(&path).unwrap();
+    assert!(
+        checked.outcome.is_success(),
+        "{checked:?}; before: {before:?}; after: {after:?}"
+    );
+    assert_eq!(after.ino(), before.ino());
     for key in [
         "operation_id",
         "destination_id",
@@ -66,6 +71,14 @@ fn persisted_evidence_reacquires_the_same_attempt_without_repeating_replacement(
         );
     }
     fs::remove_dir_all(dir).unwrap();
+}
+
+#[test]
+#[ignore = "native filesystem timestamp stress"]
+fn persisted_evidence_reconciliation_survives_repeated_filesystem_barriers() {
+    for _ in 0..128 {
+        persisted_evidence_reacquires_the_same_attempt_without_repeating_replacement();
+    }
 }
 
 #[test]
