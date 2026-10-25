@@ -1,4 +1,6 @@
 //! Tool state machines produce intentions; the application publishes them.
+mod image_placement;
+pub use image_placement::ImagePlacement;
 pub mod commands;
 mod construction;
 mod contracts;
