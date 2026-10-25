@@ -20,7 +20,8 @@ LSREGISTER = "/System/Library/Frameworks/CoreServices.framework/Frameworks/Launc
 
 def metadata(version):
     """Use the same versioned metadata that build.rs embeds into the executable."""
-    return plistlib.loads(TEMPLATE.read_text().replace("@VERSION@", version).encode())
+    numeric = version.split("-")[0].split("+")[0]
+    return plistlib.loads(TEMPLATE.read_text().replace("@VERSION@", numeric).encode())
 
 
 def populate_bundle(binary, destination, version, launcher):
@@ -31,6 +32,8 @@ def populate_bundle(binary, destination, version, launcher):
     shutil.copy2(launcher, contents / "MacOS/paintcraft-launcher")
     (contents / "MacOS/paintcraft-launcher").chmod(0o755)
     shutil.copy2(ICON, contents / "Resources" / ICON.name)
+    shutil.copy2(ROOT / "LICENSE", contents / "Resources/LICENSE")
+    shutil.copy2(ROOT / "packaging/FONT_LICENSES.txt", contents / "Resources/FONT_LICENSES.txt")
     info = metadata(version)
     info["CFBundleExecutable"] = "paintcraft-launcher"
     with (contents / "Info.plist").open("wb") as stream:
@@ -114,8 +117,9 @@ def built_binary(debug):
     return Path(executable)
 
 
-def build_launcher(directory):
-    arch = {"arm64": "arm64", "x86_64": "x86_64"}.get(platform.machine())
+def build_launcher(directory, target=None):
+    arch = ({"aarch64-apple-darwin": "arm64", "x86_64-apple-darwin": "x86_64"}.get(target)
+            if target else {"arm64": "arm64", "x86_64": "x86_64"}.get(platform.machine()))
     if arch is None:
         raise ValueError("Unsupported native macOS launcher architecture")
     launcher = Path(directory) / "paintcraft-launcher"
@@ -124,6 +128,34 @@ def build_launcher(directory):
                     "-framework", "AppKit", str(TEMPLATE.with_name("Launcher.swift")),
                     "-o", str(launcher)], check=True)
     return launcher
+
+
+def sign_bundle(bundle):
+    for app in [bundle / "Contents/Helpers/PaintCraft Editor.app", bundle]:
+        subprocess.run(["/usr/bin/codesign", "--force", "--sign", "-", "--timestamp=none", str(app)], check=True)
+    subprocess.run(["/usr/bin/codesign", "--verify", "--deep", "--strict", str(bundle)], check=True)
+
+
+def release_archives(binary, output, version, target, name):
+    """The DMG and updater ZIP carry the exact same signed, thin app bundle."""
+    from package_release import write_checksum, write_update_archive
+    if sys.platform != "darwin":
+        raise ValueError("DMG packaging requires macOS")
+    with tempfile.TemporaryDirectory(prefix="paintcraft-dmg-") as directory:
+        root = Path(directory)
+        payload = root / "volume"
+        payload.mkdir()
+        app = payload / "PaintCraft.app"
+        populate_bundle(binary, app, version, build_launcher(root, target))
+        sign_bundle(app)
+        (payload / "Applications").symlink_to("/Applications", target_is_directory=True)
+        archive = output / (name + ".dmg")
+        subprocess.run(["/usr/bin/hdiutil", "create", "-volname", "PaintCraft",
+                        "-srcfolder", str(payload), "-format", "UDZO", "-ov", str(archive)], check=True)
+        subprocess.run(["/usr/bin/hdiutil", "verify", str(archive)], check=True)
+        write_checksum(archive)
+        write_update_archive(app, output / (name + "-update.zip"))
+    print(archive)
 
 
 def register(bundle):
@@ -155,8 +187,7 @@ def main(argv=None):
             launcher = build_launcher(directory)
             def prepare(stage):
                 populate_bundle(binary, stage, version, launcher)
-                for app in [stage / "Contents/Helpers/PaintCraft Editor.app", stage]:
-                    subprocess.run(["/usr/bin/codesign", "--force", "--sign", "-", "--timestamp=none", str(app)], check=True)
+                sign_bundle(stage)
             bundle = publish_bundle(args.output, prepare, args.replace)
         if args.install and install.absolute() != bundle:
             bundle = publish_bundle(install, lambda stage: shutil.copytree(bundle, stage), args.replace)

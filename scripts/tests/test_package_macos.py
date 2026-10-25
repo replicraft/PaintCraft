@@ -53,6 +53,8 @@ class BundleTests(unittest.TestCase):
         self.assertEqual(icon.read_bytes(), PACK.ICON.read_bytes())
         self.assertEqual(exported["UTTypeIconFile"], icon.name)
         self.assertEqual((contents / "Helpers/PaintCraft Editor.app/Contents/MacOS/paintcraft").read_bytes(), self.binary.read_bytes())
+        self.assertEqual((contents / "Resources/FONT_LICENSES.txt").read_bytes(),
+                         (PACK.ROOT / "packaging/FONT_LICENSES.txt").read_bytes())
         self.assertTrue((contents / "Helpers/PaintCraft Editor.app/Contents/MacOS/paintcraft").stat().st_mode & 0o111)
 
     def test_replacement_requires_explicit_flag_and_recognized_bundle(self):
@@ -102,14 +104,14 @@ class BundleTests(unittest.TestCase):
             code = PACK.main(["--binary", str(self.binary), "--output", str(self.destination)])
             self.assertEqual(code, 0)
             self.assertFalse(installed.exists())
-            self.assertEqual(len(run.call_args_list), 2)
+            self.assertEqual(len(run.call_args_list), 3)
             self.assertEqual(run.call_args.args[0][0], "/usr/bin/codesign")
             run.reset_mock()
             code = PACK.main(["--binary", str(self.binary), "--output", str(self.destination), "--replace", "--install", "--register"])
             self.assertEqual(code, 0)
             self.assertTrue(installed.exists())
             self.assertEqual(run.call_args.args[0], [PACK.LSREGISTER, "-f", str(installed)])
-            self.assertEqual(len(run.call_args_list), 3)
+            self.assertEqual(len(run.call_args_list), 4)
         self.assertEqual((installed / "Contents/Helpers/PaintCraft Editor.app/Contents/MacOS/paintcraft").read_bytes(), self.binary.read_bytes())
 
 

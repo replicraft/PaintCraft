@@ -5,3 +5,6 @@
 /docs/validation/
 
 /benchmarks/results/
+
+/dist/
+__pycache__/
