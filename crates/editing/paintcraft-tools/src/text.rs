@@ -38,6 +38,16 @@ impl TextRenderer {
             last: None,
         }
     }
+    /// Add a host-provided font and invalidate masks shaped with fallback faces.
+    pub fn load_font_data(&mut self, bytes: Vec<u8>) {
+        // Rebuild shaping and fallback caches too: a cached missing glyph must
+        // not survive arrival of the actual selected face.
+        let mut db = self.fonts.db().clone();
+        db.load_font_data(bytes);
+        self.fonts = FontSystem::new_with_locale_and_db(self.fonts.locale().into(), db);
+        self.last = None;
+        self.cache = SwashCache::new();
+    }
     pub fn database(&self) -> &Database {
         self.fonts.db()
     }

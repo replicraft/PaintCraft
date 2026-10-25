@@ -141,3 +141,25 @@ fn selected_text_background_and_grayscale_coverage_share_the_same_alpha_rules() 
         paintcraft_render::render_flat(&copy).unwrap()
     );
 }
+
+#[test]
+fn installing_a_font_invalidates_fallback_masks_and_shapes_with_the_new_face() {
+    use paintcraft_tools::text::{Database, FontSystem, TextRenderer};
+    let data = paintcraft_ui::fonts::bundled_data();
+    let mut db = Database::new();
+    db.load_font_data(data[0].to_vec());
+    let mut renderer = TextRenderer::new(FontSystem::new_with_locale_and_db("en-US".into(), db));
+    let style = TextOptions {
+        family: "Noto Sans Devanagari".into(),
+        points: 22,
+        ..Default::default()
+    };
+    let clip = paintcraft_core::types::Rect::new(0, 0, 256, 128).unwrap();
+    let before = renderer.rasterize("नमस्ते", &style, (8, 8), clip).unwrap();
+    assert!(renderer.cached("नमस्ते", &style, (8, 8), clip).is_some());
+    renderer.load_font_data(data[4].to_vec());
+    assert!(renderer.cached("नमस्ते", &style, (8, 8), clip).is_none());
+    let after = renderer.rasterize("नमस्ते", &style, (8, 8), clip).unwrap();
+    assert_ne!(before.spans, after.spans);
+    assert!(!after.spans.is_empty());
+}
