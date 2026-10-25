@@ -23,6 +23,8 @@ pcx.workspace = true
 color_quant.workspace = true
 ico.workspace = true
 ag-psd.workspace = true
+resvg = { workspace = true, features = ["text", "raster-images"] }
+base64.workspace = true
 qoi.workspace = true
 tiff.workspace = true
 dds.workspace = true

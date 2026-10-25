@@ -71,7 +71,7 @@ egui_kittest = "0.37.0"
 divan = "0.1.21"
 # Statistical sample/CSV export for reproducible partition comparisons.
 criterion = { version = "=0.8.2", default-features = false, features = ["cargo_bench_support", "csv_output"] }
-# Bundled SVG UI assets; path/gradient rendering without font or raster-image loading.
+# SVG renderer. UI assets use this baseline; document import opts into text/images.
 resvg = { version = "0.48.1", default-features = false }
 
 # Browser entry point and JavaScript bindings.
