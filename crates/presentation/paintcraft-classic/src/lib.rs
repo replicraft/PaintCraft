@@ -37,6 +37,7 @@ mod popup_layout;
 mod quick_access;
 mod ribbon;
 mod selection_menu;
+pub mod settings;
 mod shapes;
 pub mod skin_picker;
 mod slider_input;
