@@ -6,11 +6,13 @@ use std::sync::Arc;
 mod document;
 mod fonts;
 mod input;
+mod preview;
 mod resources;
 #[cfg(test)]
 mod tests;
 mod tree;
 pub use fonts::{FONT_BYTES_MAX, Fonts};
+pub use preview::Preview;
 
 pub const SOURCE_MAX: usize = 8 << 20;
 pub const PIXELS_MAX: u64 = 4_194_304;
