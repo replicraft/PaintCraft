@@ -394,3 +394,7 @@ save-a-lossless-qoi-picture-with-transparency = Salvar uma imagem QOI sem perdas
 save-a-pam-netpbm-picture-with-transparency = Salvar uma imagem PAM Netpbm com transparência.
 
 save-a-farbfeld-picture-with-exact-8-bit-colors-stored-as-16-bit-samples = Salvar uma imagem farbfeld com cores de 8 bits armazenadas exatamente como amostras de 16 bits.
+
+openraster-layer-opacity-will-be-rounded-to-8-bit-precision = A opacidade das camadas do OpenRaster será arredondada para uma precisão de 8 bits.
+
+openraster-print-resolution-will-not-be-retained-in-the-converted-copy = A resolução de impressão do OpenRaster não será mantida na cópia convertida.

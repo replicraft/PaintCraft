@@ -394,3 +394,7 @@ save-a-lossless-qoi-picture-with-transparency = पारदर्शिता �
 save-a-pam-netpbm-picture-with-transparency = पारदर्शिता के साथ PAM Netpbm चित्र सहेजें।
 
 save-a-farbfeld-picture-with-exact-8-bit-colors-stored-as-16-bit-samples = ऐसा farbfeld चित्र सहेजें जिसमें 8-बिट रंग ठीक उसी रूप में 16-बिट नमूनों के तौर पर संग्रहीत हों।
+
+openraster-layer-opacity-will-be-rounded-to-8-bit-precision = OpenRaster की परत की अपारदर्शिता को 8-बिट परिशुद्धता तक पूर्णांकित किया जाएगा।
+
+openraster-print-resolution-will-not-be-retained-in-the-converted-copy = बदली गई प्रति में OpenRaster का प्रिंट रिज़ॉल्यूशन नहीं रखा जाएगा।

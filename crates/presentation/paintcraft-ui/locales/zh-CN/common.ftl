@@ -394,3 +394,7 @@ save-a-lossless-qoi-picture-with-transparency = 保存支持透明度的无损 Q
 save-a-pam-netpbm-picture-with-transparency = 保存支持透明度的 Netpbm PAM 图片。
 
 save-a-farbfeld-picture-with-exact-8-bit-colors-stored-as-16-bit-samples = 保存 farbfeld 图片，将 8 位颜色精确存储为 16 位样本。
+
+openraster-layer-opacity-will-be-rounded-to-8-bit-precision = OpenRaster 图层的不透明度将舍入为 8 位精度。
+
+openraster-print-resolution-will-not-be-retained-in-the-converted-copy = 转换后的副本不会保留 OpenRaster 的打印分辨率。

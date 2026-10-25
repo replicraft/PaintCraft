@@ -394,3 +394,7 @@ save-a-lossless-qoi-picture-with-transparency = 透明度を保持する可逆�
 save-a-pam-netpbm-picture-with-transparency = 透明度を保持する Netpbm PAM 画像を保存します。
 
 save-a-farbfeld-picture-with-exact-8-bit-colors-stored-as-16-bit-samples = 8 ビットの色を正確な 16 ビットのサンプルとして格納する farbfeld 画像を保存します。
+
+openraster-layer-opacity-will-be-rounded-to-8-bit-precision = OpenRaster のレイヤーの不透明度は 8 ビット精度に丸められます。
+
+openraster-print-resolution-will-not-be-retained-in-the-converted-copy = 変換したコピーには OpenRaster の印刷解像度は保持されません。

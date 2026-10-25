@@ -36,6 +36,10 @@ pub fn import_loss_description(code: &str) -> Option<&'static str> {
         "pdn-metadata-ignored" => {
             "PDN metadata and background-layer lock properties will not be retained in the converted copy."
         }
+        "ora-opacity-quantized" => "OpenRaster layer opacity will be rounded to 8-bit precision.",
+        "ora-resolution-ignored" => {
+            "OpenRaster print resolution will not be retained in the converted copy."
+        }
         _ => return None,
     })
 }
@@ -49,6 +53,8 @@ mod tests {
             "pcx-metadata-ignored",
             "dcx-other-pages-not-imported",
             "pdn-metadata-ignored",
+            "ora-opacity-quantized",
+            "ora-resolution-ignored",
             "paint-layer-properties-unverified",
             "paint-canvas-fill-converted-to-layer",
             "paint-background-depth-reduced-to-8",
