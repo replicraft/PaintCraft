@@ -68,6 +68,12 @@ pub fn run(a: Options, json: bool) -> Reply {
                     "paintcraft-editor",
                 ),
                 row(
+                    "image.rgba8.paste-onto",
+                    POLICY,
+                    "paste-image",
+                    "paintcraft-editor",
+                ),
+                row(
                     "png.rgba8.write",
                     "png/rgba8-straight",
                     "fresh-write",
@@ -89,7 +95,7 @@ pub fn run(a: Options, json: bool) -> Reply {
             ]);
             (
                 value,
-                "pcnd read/write, batch v1 edit, flat render, image layer insertion, png write (none release-qualified)"
+                "pcnd read/write, batch v1 edit, flat render, image layer insertion/placement, png write (none release-qualified)"
                     .to_owned(),
             )
         }),

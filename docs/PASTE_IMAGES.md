@@ -5,7 +5,8 @@ a new topmost layer. The CLI consumes this path through `paste-image`. The nativ
 [Paste as new layer](CLIPBOARD_PASTE_LAYER.md), with position, optional canvas
 growth and import-loss consent. [Browser PNG Paste as new layer](BROWSER_CLIPBOARD_PASTE.md) is also connected.
 Ordinary Paste and profile-specific placement remain unfinished. This does not complete clipboard
-support or the frontend roadmap.
+support or the frontend roadmap. [Existing-layer placement](PASTE_ONTO.md) now has
+a separate engine/CLI consumer; ordinary frontend Paste remains unfinished.
 
 ## Command-line use
 

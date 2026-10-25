@@ -208,14 +208,122 @@ fn paste_image_discovery_reports_implementation_without_release_qualification() 
     assert_eq!(reply.code, 0);
     let value = reply.json();
     let rows = value.get("capabilities").unwrap().as_array().unwrap();
-    let row = rows
-        .iter()
-        .find(|row| {
-            row.get("capability").and_then(Value::as_str) == Some("image.rgba8.paste-layer")
-        })
-        .expect("Paste image capability");
-    assert_eq!(row.get("available"), Some(&Value::Bool(true)));
-    assert_eq!(row.get("enabled"), Some(&Value::Bool(true)));
-    assert_eq!(row.get("release_qualified"), Some(&Value::Bool(false)));
-    assert_eq!(text(row, &["operation"]), "paste-image");
+    for capability in ["image.rgba8.paste-layer", "image.rgba8.paste-onto"] {
+        let row = rows
+            .iter()
+            .find(|row| row.get("capability").and_then(Value::as_str) == Some(capability))
+            .expect("Paste capability");
+        assert_eq!(row.get("available"), Some(&Value::Bool(true)));
+        assert_eq!(row.get("enabled"), Some(&Value::Bool(true)));
+        assert_eq!(row.get("release_qualified"), Some(&Value::Bool(false)));
+        assert_eq!(text(row, &["operation"]), "paste-image");
+    }
+}
+
+#[test]
+fn real_cli_pastes_onto_an_existing_layer_with_explicit_blending_and_growth() {
+    let scratch = Scratch::new("paste-onto-layer");
+    let (input, image, doc, original, rgba) = fixture(&scratch);
+    let target = doc.roots[0].to_string();
+    for (blend, x, y, grow, canvas) in [
+        ("replace", "-1", "1", false, (4, 3)),
+        ("source-over", "1", "1", false, (4, 3)),
+        ("replace", "3", "2", true, (6, 4)),
+    ] {
+        let output = scratch.path(&format!("onto-{blend}-{x}.pcnd"));
+        let mut args = vec![
+            "paste-image",
+            &input,
+            &image,
+            "--onto-layer",
+            &target,
+            "--blend",
+            blend,
+            "--x",
+            x,
+            "--y",
+            y,
+            "-o",
+            &output,
+            "--json",
+        ];
+        if grow {
+            args.push("--expand-canvas");
+        }
+        let reply = run(&args);
+        assert_eq!(reply.code, 0, "{} {}", reply.stdout, reply.stderr);
+        assert_eq!(
+            text(&reply.json(), &["engine", "aliases", "pasted"]),
+            target
+        );
+        let reopened = paintcraft_formats::pcnd::read(&fs::read(&output).unwrap()).unwrap();
+        assert_eq!(reopened.roots, doc.roots);
+        assert_eq!(reopened.canvas, canvas);
+        let layer = &reopened.layers[&doc.roots[0]];
+        assert_eq!(layer.name, doc.layers[&doc.roots[0]].name);
+        let (ox, oy) = (x.parse::<i64>().unwrap(), y.parse::<i64>().unwrap());
+        for py in 0..2 {
+            for px in 0..3 {
+                let at = (py * 3 + px) * 4;
+                let src = Rgba(rgba[at..at + 4].try_into().unwrap());
+                let (dx, dy) = (ox + px as i64, oy + py as i64);
+                let dst = if doc.canvas_rect().contains(dx, dy) {
+                    Rgba([255; 4])
+                } else {
+                    Rgba::TRANSPARENT
+                };
+                let expected = if blend == "replace" {
+                    src
+                } else {
+                    src.source_over(dst)
+                };
+                assert_eq!(
+                    layer.raster.get(dx - layer.origin.0, dy - layer.origin.1),
+                    expected
+                );
+            }
+        }
+        assert_eq!(fs::read(&input).unwrap(), original);
+    }
+    // The implicit alpha policy is source-over; layer names are preserved.
+    let output = scratch.path("default-onto.pcnd");
+    let reply = run(&[
+        "paste-image",
+        &input,
+        &image,
+        "--onto-layer",
+        &target,
+        "-o",
+        &output,
+    ]);
+    assert_eq!(reply.code, 0, "{} {}", reply.stdout, reply.stderr);
+    let reopened = paintcraft_formats::pcnd::read(&fs::read(&output).unwrap()).unwrap();
+    assert_eq!(
+        reopened.layers[&doc.roots[0]].raster.get(0, 0),
+        Rgba([255; 4])
+    );
+}
+#[test]
+fn cli_existing_layer_flags_reject_ambiguous_or_invalid_targets_without_output() {
+    let scratch = Scratch::new("paste-onto-invalid");
+    let (input, image, _, original, _) = fixture(&scratch);
+    let output = scratch.path("never.pcnd");
+    for extra in [
+        vec!["--onto-layer", "not-a-uuid"],
+        vec!["--onto-layer", "00000000-0000-0000-0000-000000000000"],
+        vec!["--blend", "replace"],
+        vec![
+            "--onto-layer",
+            "00000000-0000-0000-0000-000000000000",
+            "--name",
+            "ignored",
+        ],
+    ] {
+        let mut args = vec!["paste-image", &input, &image, "-o", &output, "--json"];
+        args.extend(extra);
+        let reply = run(&args);
+        assert_ne!(reply.code, 0, "unexpected success {}", reply.stdout);
+        assert!(!std::path::Path::new(&output).exists());
+        assert_eq!(fs::read(&input).unwrap(), original);
+    }
 }

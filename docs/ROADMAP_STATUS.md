@@ -681,3 +681,14 @@ Undo entry. All 106 web tests pass; an isolated Chromium release-build check cov
 the actual shortcut, exact copied-back pasted pixels, Undo and denied reads.
 Ordinary Paste, active-layer/floating placement, other OS readers, other browsers
 and worker/physical-memory/latency qualification remain open. T14/T15/T17 stay partial.
+
+
+[Existing-layer image Paste](PASTE_ONTO.md) now provides source-bound COW raster
+preparation, complete changed-tile admission, explicit source-over/replace and RGB
+key policies, optional canvas growth and one guarded Undo entry. The CLI consumes
+it through `paste-image --onto-layer` with real PCND save/reopen checks. Negative
+positions, hidden RGB, finite defaults, unrelated layers, cancellation, resource
+and history failures have independent raster/document evidence. Ordinary desktop/
+browser Paste still needs floating preview/placement and host wiring; native
+profile/device/platform and physical-memory/latency qualification remain open.
+T14/T15/T17 stay partial.

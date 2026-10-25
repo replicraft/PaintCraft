@@ -20,6 +20,12 @@ pub struct Options {
     y: i64,
     #[arg(long, default_value = "Pasted image")]
     name: String,
+    /// Place onto this visible layer UUID instead of creating a new layer.
+    #[arg(long, conflicts_with = "name")]
+    onto_layer: Option<String>,
+    /// Existing-layer alpha policy (default: source-over).
+    #[arg(long, value_enum, requires = "onto_layer")]
+    blend: Option<Blend>,
     /// Grow right/down to contain the image. Default retains off-canvas pixels.
     #[arg(long)]
     expand_canvas: bool,
@@ -29,6 +35,11 @@ pub struct Options {
     losses: LossOptions,
     #[command(flatten)]
     output: Output,
+}
+#[derive(Clone, Copy, Debug, clap::ValueEnum)]
+pub enum Blend {
+    Replace,
+    SourceOver,
 }
 pub fn run(a: Options, json: bool) -> Reply {
     finish(
@@ -77,7 +88,18 @@ pub fn run(a: Options, json: bool) -> Reply {
                     PasteCanvas::Keep
                 },
             )?;
-            let engine = session.paste_image(&draft, &a.name)?;
+            let engine = if let Some(target) = &a.onto_layer {
+                let target = paintcraft_core::types::ids::parse_uuid(target).ok_or_else(|| {
+                    Error::new(ErrorCode::InputSchema, "--onto-layer requires a layer UUID")
+                })?;
+                let mode = match a.blend.unwrap_or(Blend::SourceOver) {
+                    Blend::Replace => paintcraft_core::types::policy::BlendMode::Replace,
+                    Blend::SourceOver => paintcraft_core::types::policy::BlendMode::SourceOver,
+                };
+                session.paste_image_onto(&draft, target, mode, None)?
+            } else {
+                session.paste_image(&draft, &a.name)?
+            };
             let ctx = Context {
                 operation: if same_file(&a.input, dest) {
                     "save"
