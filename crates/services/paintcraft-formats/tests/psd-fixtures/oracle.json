@@ -1,0 +1,49 @@
+{
+    "generator": "Python struct, zlib, arithmetic samples; no third-party artwork",
+    "layers_bottom_to_top": [
+        {
+            "name": "日本語 duplicate",
+            "origin": [
+                -1,
+                1
+            ],
+            "width": 3,
+            "height": 2,
+            "opacity": 127,
+            "visible": false,
+            "source_id": 71,
+            "rgba_sha256": "5538e75ef6ef58c3b735b425aa0764758d10f4f6b04370af5994bcf4d1af9962"
+        },
+        {
+            "name": "日本語 duplicate",
+            "origin": [
+                0,
+                0
+            ],
+            "width": 5,
+            "height": 3,
+            "opacity": 255,
+            "visible": true,
+            "source_id": 72,
+            "rgba_sha256": "a691b94f7886a91acececbad42340b996b02b08001fe490fcf99e8d7ab3e9aa5"
+        }
+    ],
+    "files": {
+        "composite-0.psd": "ea1947359d40f2ab248640940184ce0b7617ab4365e4c56effcc7bdc4785f13e",
+        "layers-0.psd": "e532ca176403a34a996a72dc7eb7eb52c8606412a6d8dae866a6fd87dd6051d5",
+        "composite-1.psd": "5ce6ff4e174cef04334934ce26212bf42cbff0648753cf531fe206d7bdc0650f",
+        "layers-1.psd": "d5141fb6307fc41cabd54fc0a86e53d9e994b782e9dd82ab3b4ff206b4a58e70",
+        "composite-2.psd": "11f30ae546c59e58de011e268d3ababe8c53bd1df9ceb6e3d8c437c43a38fafa",
+        "layers-2.psd": "81fe8ffa9329cfa511834dd4079e89f9cc98dcacd8da372fa7e550801db82f1e",
+        "composite-3.psd": "7f2fc1e5e503c679d741208e6216e47e2445e89ec5f9c786bf709ed97580cadf",
+        "layers-3.psd": "b8afc191b65a729b2a9803c4a78379cd0fc6395b682d1ecd7fe3fc8327756bed",
+        "composite-0.psb": "7997dce36524b6b1715d37d5c99f5c21aca49a221d6dfae5c5df166778a7b303",
+        "layers-0.psb": "9376635bc9f494137d3acf9bca30163ab00fef609cf3bf1bff7f7cc290686c14",
+        "composite-1.psb": "0cc1949c8c01934913172e609a045ba692f724645df5cce6b03fc2cc4cec1173",
+        "layers-1.psb": "5594f34773c6b7ce2d044bfdccbd07b6ae626da58d19c76c04c762eb63040379",
+        "composite-2.psb": "b7ed8a6f566d0c8b7d9ff946c16d6935e4881503d11063265d3fb01f20c765d3",
+        "layers-2.psb": "1e417c217af7fd44a1a02b824c2eacb2685271f4fe19fcbf28c6276db9f482fa",
+        "composite-3.psb": "8f3d86340b66e56c5587b704fed049a7791258747e59d53be9b77e19cd2945b2",
+        "layers-3.psb": "8c3f561926be32bc171190b7853c72994abdc100a7db5d72d2bea88a84c03007"
+    }
+}
