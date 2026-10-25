@@ -141,6 +141,8 @@ fn render_studio_workspace_for_review() {
 fn history_rows_jump_to_recorded_pixels_and_keep_redo_available() {
     let (mut h, dir) = studio_harness(true);
     with_layer(&mut h);
+    h.get_by_label("Pencil").click();
+    h.run();
     drag(&mut h, (180.0, 10.0), (240.0, 10.0));
     let first = h.state().editor().document_snapshot();
     drag(&mut h, (180.0, 30.0), (240.0, 30.0));

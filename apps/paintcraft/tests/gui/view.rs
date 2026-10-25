@@ -75,6 +75,8 @@ fn fit_selection_magnifies_and_scrolls_to_the_real_selected_rectangle() {
 fn fractional_zoom_paints_the_mapped_document_pixel_and_actual_size_restores_logical_pixel_scale() {
     let (mut h, dir) = studio_harness(false);
     with_layer(&mut h);
+    h.get_by_label("Pencil").click();
+    h.run();
     h.event(key(Key::Minus, Modifiers::COMMAND));
     h.run();
     let canvas = h.state().canvas_rect().unwrap();

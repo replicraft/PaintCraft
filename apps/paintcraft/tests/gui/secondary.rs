@@ -16,7 +16,8 @@ fn secondary_brush_preview_matches_publication_and_one_undo_restores_the_stroke(
     with_layer(&mut h);
     h.get_by_label("Color #FF0000").click_secondary();
     h.run();
-    h.get_by_label("Brush").click();
+    h.get_by_role_and_label(eframe::egui::Role::Button, "Brush")
+        .click();
     h.run();
     let a = at(&h, 180.0, 30.0);
     let b = at(&h, 240.0, 30.0);
@@ -47,6 +48,8 @@ fn secondary_brush_preview_matches_publication_and_one_undo_restores_the_stroke(
 fn unrelated_button_release_cannot_finalize_or_extend_the_active_gesture() {
     let (mut h, dir) = studio_harness(true);
     with_layer(&mut h);
+    h.get_by_label("Pencil").click();
+    h.run();
     h.get_by_label("Color #FF0000").click_secondary();
     h.run();
     let a = at(&h, 180.0, 40.0);
@@ -128,7 +131,8 @@ fn render_studio_secondary_stroke_for_review() {
     with_layer(&mut h);
     h.get_by_label("Color #FF0000").click_secondary();
     h.run();
-    h.get_by_label("Brush").click();
+    h.get_by_role_and_label(eframe::egui::Role::Button, "Brush")
+        .click();
     h.run();
     let a = at(&h, 180.0, 30.0);
     let b = at(&h, 240.0, 60.0);
