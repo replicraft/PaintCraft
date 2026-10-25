@@ -9,6 +9,7 @@ pub mod jxl;
 pub mod jxr;
 pub mod ora;
 pub mod pcnd;
+pub mod pcx;
 pub mod png;
 pub mod project_import;
 #[cfg(not(target_arch = "wasm32"))]
