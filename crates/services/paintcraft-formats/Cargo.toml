@@ -15,6 +15,7 @@ paintcraft-render.workspace = true
 
 crc32fast.workspace = true
 image.workspace = true
+dds.workspace = true
 jxl.workspace = true
 zune-jpegxl.workspace = true
 zune-core.workspace = true
