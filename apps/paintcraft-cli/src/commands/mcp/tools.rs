@@ -233,12 +233,17 @@ impl PaintingServer {
             }
             let format = ImageFormat::from_extension(&path)
                 .ok_or_else(|| invalid("unsupported image extension"))?;
+            if p.pcx_encoding.is_some() && format != ImageFormat::Pcx {
+                return Err(invalid("pcx_encoding requires PCX output"));
+            }
             let family = Family::from_id(format.name())
                 .ok_or_else(|| invalid("unregistered image format"))?;
             format_profile::Options::default().admit_export(family, &path)?;
             save::preflight(&path, p.overwrite)?;
             let doc = s.session()?.document();
-            let flat = export::export_flat(doc, format, 90, &p.allow_losses)?;
+            let mut options = export::FlatOptions::new(format, 90);
+            options.pcx_mode = p.pcx_encoding.unwrap_or_default().into();
+            let flat = export::export_flat_options(doc, options, &p.allow_losses)?;
             let ctx = Context {
                 operation: "export",
                 source_state: doc.state_id,

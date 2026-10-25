@@ -42,6 +42,8 @@ pub struct Save {
 pub struct Export {
     /// Extension selects the image codec, for example .png or .jpg.
     pub path: String,
+    /// PCX only. RGB24 is the default; indexed-256 requires consent for any changed colors.
+    pub pcx_encoding: Option<super::super::pcx_options::Encoding>,
     #[serde(default)]
     pub overwrite: bool,
     /// Explicitly acknowledged losses, such as flatten or lossy-jpeg.

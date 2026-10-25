@@ -262,6 +262,7 @@ pub mod import;
 pub mod inspect;
 pub mod new;
 pub mod paste_image;
+pub mod pcx_options;
 pub mod render;
 pub mod schema;
 

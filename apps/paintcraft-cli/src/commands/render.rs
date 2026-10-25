@@ -11,6 +11,9 @@ pub struct Options {
     format: Option<String>,
     #[arg(long, default_value_t = 90, value_parser = clap::value_parser!(u8).range(1..=100))]
     quality: u8,
+    /// PCX only: exact indexed colors or explicitly quantize to 256 colors.
+    #[arg(long, value_enum)]
+    pcx_encoding: Option<super::pcx_options::Encoding>,
     /// CPU render workers (one preserves the serial reference path).
     #[arg(long, default_value_t = 1, value_parser = clap::value_parser!(u16).range(1..=64))]
     render_workers: u16,
@@ -59,6 +62,12 @@ pub fn run(a: Options, json: bool) -> Reply {
             let input = &a.input;
             let dest = a.output.output.as_path();
             let format = output_format(a.format.as_deref(), dest)?;
+            if a.pcx_encoding.is_some() && format != ImageFormat::Pcx {
+                return Err(Error::new(
+                    ErrorCode::InputSchema,
+                    "--pcx-encoding requires PCX output",
+                ));
+            }
             let family =
                 paintcraft_formats::registry::Family::from_id(format.name()).ok_or_else(|| {
                     Error::new(
@@ -69,6 +78,8 @@ pub fn run(a: Options, json: bool) -> Reply {
             a.profile.admit_export(family, dest)?;
             let allowed = a.losses.allowed()?;
             let quality = a.quality;
+            let mut options = export::FlatOptions::new(format, quality);
+            options.pcx_mode = a.pcx_encoding.unwrap_or_default().into();
             if !(1..=100).contains(&quality) {
                 return Err(Error::new(
                     ErrorCode::InputSchema,
@@ -87,7 +98,7 @@ pub fn run(a: Options, json: bool) -> Reply {
             let doc = pcnd::read(&bytes)?;
             // Missing acknowledgements fail here, before anything is written.
             let flat = if a.render_workers == 1 {
-                export::export_flat(&doc, format, quality, &allowed)?
+                export::export_flat_options(&doc, options, &allowed)?
             } else {
                 let pool = rayon::ThreadPoolBuilder::new()
                     .num_threads(usize::from(a.render_workers))
@@ -99,7 +110,7 @@ pub fn run(a: Options, json: bool) -> Reply {
                             format!("cannot create export workers: {e}"),
                         )
                     })?;
-                export::export_flat_with(&doc, format, quality, &allowed, |doc| {
+                export::export_flat_options_with(&doc, options, &allowed, |doc| {
                     paintcraft_render::parallel::render_in_pool(
                         &pool,
                         doc,
