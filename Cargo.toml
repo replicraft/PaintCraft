@@ -4,6 +4,7 @@ members = [
     "crates/foundation/*",
     "crates/editing/*",
     "crates/services/*",
+    "crates/adapters/*",
     "crates/presentation/*",
     "apps/*",
 ]
@@ -34,6 +35,10 @@ paintcraft-render = { path = "crates/services/paintcraft-render" }
 paintcraft-runtime = { path = "crates/services/paintcraft-runtime" }
 paintcraft-formats = { path = "crates/services/paintcraft-formats" }
 paintcraft-platform = { path = "crates/services/paintcraft-platform" }
+
+# Native format adapters with bounded, inert parsers.
+paintcraft-pdn = { path = "crates/adapters/pdn-lib" }
+quick-xml = { version = "0.41.0", default-features = false }
 
 # Presentation: shared widgets and frontend skins/workspaces.
 paintcraft-ui = { path = "crates/presentation/paintcraft-ui" }
@@ -105,8 +110,12 @@ font8x8 = "0.3.1"
 cosmic-text = { version = "0.19.0", default-features = false, features = ["std", "swash", "shape-run-cache"] }
 
 # Standard image codecs and bounded binary header views.
-image = { version = "0.25.10", default-features = false, features = ["png", "bmp", "jpeg"] }
+image = { version = "0.25.10", default-features = false, features = ["png", "bmp", "jpeg", "gif", "tiff", "tga", "webp"] }
 zerocopy = { version = "0.8.63", features = ["derive"] }
+# JPEG XL adapters: pure Rust decoder and a separately scoped lossless writer.
+jxl = { version = "0.8.0", default-features = false }
+zune-jpegxl = { version = "0.5.2", default-features = false, features = ["std"] }
+zune-core = { version = "0.5.3", default-features = false, features = ["std"] }
 # Independent PNG fixture generation in tests.
 png = "0.18.1"
 
