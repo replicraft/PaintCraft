@@ -308,3 +308,89 @@ the-dib-has-no-declared-alpha-channel-its-pixels-will-be-imported-as-opaque = DI
 color-space-and-resolution-metadata-in-the-dib-will-not-be-retained = 不会保留 DIB 中的色彩空间和分辨率元数据。
 
 the-dib-alpha-mode-is-unspecified-colors-will-be-interpreted-as-straight-alpha = DIB 未指定 Alpha 模式。颜色将按直通 Alpha 解释。
+
+tiff-picture = TIFF 图片
+
+tga-picture = TGA 图片
+
+webp-picture = WebP 图片
+
+save-a-palette-picture-colors-and-transparency-may-be-reduced = 保存调色板图片。颜色和透明度可能会减少。
+
+save-a-single-page-tiff-picture-with-transparency = 保存保留透明度的单页 TIFF 图片。
+
+save-a-tga-picture-with-transparency = 保存保留透明度的 TGA 图片。
+
+save-a-lossless-webp-picture-with-transparency = 保存保留透明度的无损 WebP 图片。
+
+colors-will-be-reduced-to-a-gif-palette = 颜色将减少为 GIF 调色板中的颜色。
+
+partial-transparency-will-become-fully-transparent-or-opaque = 半透明部分将变为完全透明或不透明。
+
+choose-a-supported-image-filename-extension = 请选择支持的图片文件扩展名。
+
+choose-an-image-format-in-the-export-dialog = 在导出对话框中选择图片格式。
+
+import-image-more = 导入图片…
+
+import-image = 导入图片
+
+images-to-import = 要导入的图片
+
+pnm-comments-will-not-be-retained = 不会保留 PNM 注释。
+
+pcx-resolution-origin-and-header-metadata-will-not-be-retained = 不会保留 PCX 的分辨率、原点和文件头元数据。
+
+only-the-selected-dcx-page-will-be-imported = 仅导入所选的 DCX 页面。
+
+paint-layer-names-visibility-and-opacity-could-not-be-verified-the-converted-copy-uses-numbered-visible-layers-at-full-opacity = 无法验证 PAINT 图层名称、可见性和不透明度。转换后的副本将使用编号图层，全部显示且完全不透明。
+
+the-paint-canvas-fill-will-become-a-separate-background-layer-in-the-converted-copy = PAINT 画布填充将在转换后的副本中成为独立的背景图层。
+
+the-paint-background-color-will-be-reduced-from-16-bit-to-8-bit = PAINT 背景颜色将从 16 位降低为 8 位。
+
+jpeg-xl-picture = JPEG XL 图片
+
+dds-picture = DDS 图片
+
+avif-picture = AVIF 图片
+
+save-a-lossless-8-bit-jpeg-xl-picture-requires-at-least-two-pixels-per-side = 保存无损的 8 位 JPEG XL 图片。每边至少需要两个像素。
+
+save-an-uncompressed-single-surface-srgb-dds-picture-with-straight-alpha = 保存未压缩、单表面、非预乘透明度的 sRGB DDS 图片。
+
+save-a-lossy-8-bit-avif-picture-alpha-may-change-even-at-quality-100 = 保存有损的 8 位 AVIF 图片。即使质量为 100，透明度也可能改变。
+
+avif-quality = AVIF 质量
+
+avif-uses-lossy-compression-for-colors-and-transparency-even-at-quality-100 = 即使质量为 100，AVIF 也会对颜色和透明度进行有损压缩。
+
+avif-uses-lossy-compression = AVIF 使用有损压缩。
+
+transparency-may-change-during-avif-compression = AVIF 压缩可能会改变透明度。
+
+jpeg-xl-image = JPEG XL 图像
+
+dds-image = DDS 图像
+
+avif-image = AVIF 图像
+
+pdn-metadata-and-background-layer-lock-properties-will-not-be-retained-in-the-converted-copy = 转换后的副本不会保留 PDN 元数据和背景图层锁定属性。
+
+qoi-picture = QOI 图片
+
+pam-picture = PAM 图片
+
+farbfeld-picture = farbfeld 图片
+
+qoi-image = QOI 图像
+
+pam-image = PAM 图像
+
+farbfeld-image = farbfeld 图像
+
+save-a-lossless-qoi-picture-with-transparency = 保存支持透明度的无损 QOI 图片。
+
+save-a-pam-netpbm-picture-with-transparency = 保存支持透明度的 Netpbm PAM 图片。
+
+save-a-farbfeld-picture-with-exact-8-bit-colors-stored-as-16-bit-samples = 保存 farbfeld 图片，将 8 位颜色精确存储为 16 位样本。

@@ -14,6 +14,7 @@ pub use view::{VIEW, ViewAction, WORKSPACE_VIEW, ZOOM_MAX, ZOOM_MIN, stepped_zoo
 pub enum Action {
     New,
     Open,
+    ImportImage,
     RecentFiles,
     Save,
     SaveAs,
@@ -116,6 +117,7 @@ pub const FILE: &[Action] = &[
 pub const STUDIO_FILE: &[Action] = &[
     Action::New,
     Action::Open,
+    Action::ImportImage,
     Action::RecentFiles,
     Action::Save,
     Action::SaveAs,
@@ -157,6 +159,7 @@ impl Action {
             Self::Layer(_) | Self::View(_) => unreachable!(),
             Self::New => ("New", Some((Key::N, false))),
             Self::Open => ("Open…", Some((Key::O, false))),
+            Self::ImportImage => ("Import image…", None),
             Self::RecentFiles => ("Recent files", None),
             Self::Save => ("Save", Some((Key::S, false))),
             Self::SaveAs => ("Save as…", Some((Key::S, true))),
@@ -287,9 +290,10 @@ impl Action {
 
     pub fn available(self, frontend: Frontend) -> bool {
         match self {
-            Self::SaveAll | Self::FlattenImage | Self::SelectTool(Tool::Pan) => {
-                frontend == Frontend::Studio
-            }
+            Self::SaveAll
+            | Self::FlattenImage
+            | Self::ImportImage
+            | Self::SelectTool(Tool::Pan) => frontend == Frontend::Studio,
             Self::View(
                 ViewAction::StatusBar
                 | ViewAction::Rulers
@@ -306,6 +310,7 @@ impl Action {
             | Self::EditCustomColor(_)
             | Self::EditSecondaryCustomColor(_) => frontend == Frontend::Classic,
             Self::Layer(_) => frontend == Frontend::Studio,
+            Self::ExportImage(format) => format.available(frontend),
             _ => true,
         }
     }
@@ -318,6 +323,7 @@ impl Action {
             Self::Layer(action) => action.enabled(ctx),
             Self::View(action) => action.enabled(ctx),
             Self::New
+            | Self::ImportImage
             | Self::Open
             | Self::Interface
             | Self::CanvasDefaults
@@ -404,13 +410,20 @@ impl Action {
             Self::View(action) => action.activation_code(),
             Self::New => 1000,
             Self::Open => 1001,
+            Self::ImportImage => 1036,
             Self::RecentFiles => 1025,
             Self::Save => 1002,
             Self::SaveAs => 1003,
             Self::SaveAll => 1024,
             Self::Export => 1004,
             Self::Print => 1027,
-            Self::ExportImage(format) => 1040 + format as u64,
+            Self::ExportImage(format) => {
+                if (format as u64) < 10 {
+                    1040 + format as u64
+                } else {
+                    3000 + format as u64
+                }
+            }
             Self::Cut => 1050,
             Self::PasteLayer => 1051,
             Self::Paste => 1052,

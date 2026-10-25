@@ -308,3 +308,89 @@ the-dib-has-no-declared-alpha-channel-its-pixels-will-be-imported-as-opaque = Da
 color-space-and-resolution-metadata-in-the-dib-will-not-be-retained = Farbraum- und Auflösungsmetadaten des DIB werden nicht beibehalten.
 
 the-dib-alpha-mode-is-unspecified-colors-will-be-interpreted-as-straight-alpha = Der Alphamodus des DIB ist nicht angegeben. Farben werden als nicht vormultipliziert interpretiert.
+
+tiff-picture = TIFF-Bild
+
+tga-picture = TGA-Bild
+
+webp-picture = WebP-Bild
+
+save-a-palette-picture-colors-and-transparency-may-be-reduced = Ein Palettenbild speichern. Farben und Transparenz können reduziert werden.
+
+save-a-single-page-tiff-picture-with-transparency = Ein einseitiges TIFF-Bild mit Transparenz speichern.
+
+save-a-tga-picture-with-transparency = Ein TGA-Bild mit Transparenz speichern.
+
+save-a-lossless-webp-picture-with-transparency = Ein verlustfreies WebP-Bild mit Transparenz speichern.
+
+colors-will-be-reduced-to-a-gif-palette = Farben werden auf eine GIF-Palette reduziert.
+
+partial-transparency-will-become-fully-transparent-or-opaque = Teiltransparenz wird vollständig transparent oder undurchsichtig.
+
+choose-a-supported-image-filename-extension = Eine unterstützte Bilddateiendung auswählen.
+
+choose-an-image-format-in-the-export-dialog = Ein Bildformat im Exportdialog auswählen.
+
+import-image-more = Bild importieren…
+
+import-image = Bild importieren
+
+images-to-import = Zu importierende Bilder
+
+pnm-comments-will-not-be-retained = PNM-Kommentare werden nicht beibehalten.
+
+pcx-resolution-origin-and-header-metadata-will-not-be-retained = PCX-Auflösung, Ursprung und Metadaten im Dateikopf werden nicht beibehalten.
+
+only-the-selected-dcx-page-will-be-imported = Nur die ausgewählte DCX-Seite wird importiert.
+
+paint-layer-names-visibility-and-opacity-could-not-be-verified-the-converted-copy-uses-numbered-visible-layers-at-full-opacity = PAINT-Ebenennamen, Sichtbarkeit und Deckkraft konnten nicht überprüft werden. Die konvertierte Kopie verwendet nummerierte, sichtbare Ebenen mit voller Deckkraft.
+
+the-paint-canvas-fill-will-become-a-separate-background-layer-in-the-converted-copy = Die PAINT-Leinwandfüllung wird in der konvertierten Kopie zu einer separaten Hintergrundebene.
+
+the-paint-background-color-will-be-reduced-from-16-bit-to-8-bit = Die PAINT-Hintergrundfarbe wird von 16 Bit auf 8 Bit reduziert.
+
+jpeg-xl-picture = JPEG-XL-Bild
+
+dds-picture = DDS-Bild
+
+avif-picture = AVIF-Bild
+
+save-a-lossless-8-bit-jpeg-xl-picture-requires-at-least-two-pixels-per-side = Ein verlustfreies 8-Bit-JPEG-XL-Bild speichern. Jede Seite benötigt mindestens zwei Pixel.
+
+save-an-uncompressed-single-surface-srgb-dds-picture-with-straight-alpha = Ein unkomprimiertes sRGB-DDS-Bild mit einer Oberfläche und geradem Alpha speichern.
+
+save-a-lossy-8-bit-avif-picture-alpha-may-change-even-at-quality-100 = Ein verlustbehaftetes 8-Bit-AVIF-Bild speichern. Alpha kann sich auch bei Qualität 100 ändern.
+
+avif-quality = AVIF-Qualität
+
+avif-uses-lossy-compression-for-colors-and-transparency-even-at-quality-100 = AVIF komprimiert Farben und Transparenz auch bei Qualität 100 verlustbehaftet.
+
+avif-uses-lossy-compression = AVIF verwendet verlustbehaftete Kompression.
+
+transparency-may-change-during-avif-compression = Transparenz kann sich bei der AVIF-Kompression ändern.
+
+jpeg-xl-image = JPEG-XL-Datei
+
+dds-image = DDS-Datei
+
+avif-image = AVIF-Datei
+
+pdn-metadata-and-background-layer-lock-properties-will-not-be-retained-in-the-converted-copy = PDN-Metadaten und Sperreigenschaften der Hintergrundebene werden in der konvertierten Kopie nicht beibehalten.
+
+qoi-picture = QOI-Bild
+
+pam-picture = PAM-Bild
+
+farbfeld-picture = farbfeld-Bild
+
+qoi-image = QOI-Bild
+
+pam-image = PAM-Bild
+
+farbfeld-image = farbfeld-Bild
+
+save-a-lossless-qoi-picture-with-transparency = Ein verlustfreies QOI-Bild mit Transparenz speichern.
+
+save-a-pam-netpbm-picture-with-transparency = Ein Netpbm-PAM-Bild mit Transparenz speichern.
+
+save-a-farbfeld-picture-with-exact-8-bit-colors-stored-as-16-bit-samples = Ein farbfeld-Bild speichern, dessen 8-Bit-Farben exakt als 16-Bit-Werte gespeichert werden.

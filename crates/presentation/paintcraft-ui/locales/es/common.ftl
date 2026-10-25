@@ -308,3 +308,89 @@ the-dib-has-no-declared-alpha-channel-its-pixels-will-be-imported-as-opaque = El
 color-space-and-resolution-metadata-in-the-dib-will-not-be-retained = No se conservarán los metadatos de espacio de color y resolución del DIB.
 
 the-dib-alpha-mode-is-unspecified-colors-will-be-interpreted-as-straight-alpha = El modo alfa del DIB no está especificado. Los colores se interpretarán como alfa directo.
+
+tiff-picture = Imagen TIFF
+
+tga-picture = Imagen TGA
+
+webp-picture = Imagen WebP
+
+save-a-palette-picture-colors-and-transparency-may-be-reduced = Guardar una imagen con paleta. Los colores y la transparencia pueden reducirse.
+
+save-a-single-page-tiff-picture-with-transparency = Guardar una imagen TIFF de una página con transparencia.
+
+save-a-tga-picture-with-transparency = Guardar una imagen TGA con transparencia.
+
+save-a-lossless-webp-picture-with-transparency = Guardar una imagen WebP sin pérdida con transparencia.
+
+colors-will-be-reduced-to-a-gif-palette = Los colores se reducirán a una paleta GIF.
+
+partial-transparency-will-become-fully-transparent-or-opaque = La transparencia parcial se volverá completamente transparente u opaca.
+
+choose-a-supported-image-filename-extension = Elige una extensión de imagen compatible.
+
+choose-an-image-format-in-the-export-dialog = Elige un formato de imagen en el diálogo de exportación.
+
+import-image-more = Importar imagen…
+
+import-image = Importar imagen
+
+images-to-import = Imágenes para importar
+
+pnm-comments-will-not-be-retained = No se conservarán los comentarios de PNM.
+
+pcx-resolution-origin-and-header-metadata-will-not-be-retained = No se conservarán la resolución, el origen ni los metadatos de la cabecera de PCX.
+
+only-the-selected-dcx-page-will-be-imported = Solo se importará la página DCX seleccionada.
+
+paint-layer-names-visibility-and-opacity-could-not-be-verified-the-converted-copy-uses-numbered-visible-layers-at-full-opacity = No se pudieron verificar los nombres, la visibilidad ni la opacidad de las capas PAINT. La copia convertida usa capas numeradas y visibles con opacidad completa.
+
+the-paint-canvas-fill-will-become-a-separate-background-layer-in-the-converted-copy = El relleno del lienzo PAINT se convertirá en una capa de fondo independiente en la copia convertida.
+
+the-paint-background-color-will-be-reduced-from-16-bit-to-8-bit = El color de fondo PAINT se reducirá de 16 bits a 8 bits.
+
+jpeg-xl-picture = Imagen JPEG XL
+
+dds-picture = Imagen DDS
+
+avif-picture = Imagen AVIF
+
+save-a-lossless-8-bit-jpeg-xl-picture-requires-at-least-two-pixels-per-side = Guardar una imagen JPEG XL de 8 bits sin pérdida. Requiere al menos dos píxeles por lado.
+
+save-an-uncompressed-single-surface-srgb-dds-picture-with-straight-alpha = Guardar una imagen DDS sRGB sin comprimir, de una superficie y con alfa directo.
+
+save-a-lossy-8-bit-avif-picture-alpha-may-change-even-at-quality-100 = Guardar una imagen AVIF de 8 bits con pérdida. El alfa puede cambiar incluso con calidad 100.
+
+avif-quality = Calidad AVIF
+
+avif-uses-lossy-compression-for-colors-and-transparency-even-at-quality-100 = AVIF comprime con pérdida los colores y la transparencia, incluso con calidad 100.
+
+avif-uses-lossy-compression = AVIF usa compresión con pérdida.
+
+transparency-may-change-during-avif-compression = La transparencia puede cambiar durante la compresión AVIF.
+
+jpeg-xl-image = Archivo JPEG XL
+
+dds-image = Archivo DDS
+
+avif-image = Archivo AVIF
+
+pdn-metadata-and-background-layer-lock-properties-will-not-be-retained-in-the-converted-copy = La copia convertida no conservará los metadatos PDN ni las propiedades de bloqueo de la capa de fondo.
+
+qoi-picture = Imagen QOI
+
+pam-picture = Imagen PAM
+
+farbfeld-picture = Imagen farbfeld
+
+qoi-image = Imagen QOI
+
+pam-image = Imagen PAM
+
+farbfeld-image = Imagen farbfeld
+
+save-a-lossless-qoi-picture-with-transparency = Guardar una imagen QOI sin pérdida con transparencia.
+
+save-a-pam-netpbm-picture-with-transparency = Guardar una imagen PAM de Netpbm con transparencia.
+
+save-a-farbfeld-picture-with-exact-8-bit-colors-stored-as-16-bit-samples = Guardar una imagen farbfeld con colores de 8 bits almacenados exactamente como muestras de 16 bits.

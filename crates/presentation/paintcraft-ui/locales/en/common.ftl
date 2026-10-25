@@ -308,3 +308,89 @@ the-dib-has-no-declared-alpha-channel-its-pixels-will-be-imported-as-opaque = Th
 color-space-and-resolution-metadata-in-the-dib-will-not-be-retained = Color space and resolution metadata in the DIB will not be retained.
 
 the-dib-alpha-mode-is-unspecified-colors-will-be-interpreted-as-straight-alpha = The DIB alpha mode is unspecified. Colors will be interpreted as straight alpha.
+
+tiff-picture = TIFF picture
+
+tga-picture = TGA picture
+
+webp-picture = WebP picture
+
+save-a-palette-picture-colors-and-transparency-may-be-reduced = Save a palette picture. Colors and transparency may be reduced.
+
+save-a-single-page-tiff-picture-with-transparency = Save a single-page TIFF picture with transparency.
+
+save-a-tga-picture-with-transparency = Save a TGA picture with transparency.
+
+save-a-lossless-webp-picture-with-transparency = Save a lossless WebP picture with transparency.
+
+colors-will-be-reduced-to-a-gif-palette = Colors will be reduced to a GIF palette.
+
+partial-transparency-will-become-fully-transparent-or-opaque = Partial transparency will become fully transparent or opaque.
+
+choose-a-supported-image-filename-extension = Choose a supported image filename extension.
+
+choose-an-image-format-in-the-export-dialog = Choose an image format in the export dialog.
+
+import-image-more = Import image…
+
+import-image = Import image
+
+images-to-import = Images to import
+
+pnm-comments-will-not-be-retained = PNM comments will not be retained.
+
+pcx-resolution-origin-and-header-metadata-will-not-be-retained = PCX resolution, origin and header metadata will not be retained.
+
+only-the-selected-dcx-page-will-be-imported = Only the selected DCX page will be imported.
+
+paint-layer-names-visibility-and-opacity-could-not-be-verified-the-converted-copy-uses-numbered-visible-layers-at-full-opacity = PAINT layer names, visibility and opacity could not be verified. The converted copy uses numbered, visible layers at full opacity.
+
+the-paint-canvas-fill-will-become-a-separate-background-layer-in-the-converted-copy = The PAINT canvas fill will become a separate background layer in the converted copy.
+
+the-paint-background-color-will-be-reduced-from-16-bit-to-8-bit = The PAINT background color will be reduced from 16-bit to 8-bit.
+
+jpeg-xl-picture = JPEG XL picture
+
+dds-picture = DDS picture
+
+avif-picture = AVIF picture
+
+save-a-lossless-8-bit-jpeg-xl-picture-requires-at-least-two-pixels-per-side = Save a lossless 8-bit JPEG XL picture. Requires at least two pixels per side.
+
+save-an-uncompressed-single-surface-srgb-dds-picture-with-straight-alpha = Save an uncompressed, single-surface sRGB DDS picture with straight alpha.
+
+save-a-lossy-8-bit-avif-picture-alpha-may-change-even-at-quality-100 = Save a lossy 8-bit AVIF picture. Alpha may change, even at quality 100.
+
+avif-quality = AVIF quality
+
+avif-uses-lossy-compression-for-colors-and-transparency-even-at-quality-100 = AVIF uses lossy compression for colors and transparency, even at quality 100.
+
+avif-uses-lossy-compression = AVIF uses lossy compression.
+
+transparency-may-change-during-avif-compression = Transparency may change during AVIF compression.
+
+jpeg-xl-image = JPEG XL image
+
+dds-image = DDS image
+
+avif-image = AVIF image
+
+pdn-metadata-and-background-layer-lock-properties-will-not-be-retained-in-the-converted-copy = PDN metadata and background-layer lock properties will not be retained in the converted copy.
+
+qoi-picture = QOI picture
+
+pam-picture = PAM picture
+
+farbfeld-picture = farbfeld picture
+
+qoi-image = QOI image
+
+pam-image = PAM image
+
+farbfeld-image = farbfeld image
+
+save-a-lossless-qoi-picture-with-transparency = Save a lossless QOI picture with transparency.
+
+save-a-pam-netpbm-picture-with-transparency = Save a PAM Netpbm picture with transparency.
+
+save-a-farbfeld-picture-with-exact-8-bit-colors-stored-as-16-bit-samples = Save a farbfeld picture with exact 8-bit colors stored as 16-bit samples.

@@ -19,6 +19,51 @@ pub fn import_loss_description(code: &str) -> Option<&'static str> {
         "tiff-metadata-ignored" => "TIFF metadata will not be retained.",
         "tga-metadata-ignored" => "TGA metadata will not be retained.",
         "webp-metadata-ignored" => "WebP metadata will not be retained.",
+        "pnm-metadata-ignored" => "PNM comments will not be retained.",
+        "pcx-metadata-ignored" => {
+            "PCX resolution, origin and header metadata will not be retained."
+        }
+        "dcx-other-pages-not-imported" => "Only the selected DCX page will be imported.",
+        "paint-layer-properties-unverified" => {
+            "PAINT layer names, visibility and opacity could not be verified. The converted copy uses numbered, visible layers at full opacity."
+        }
+        "paint-canvas-fill-converted-to-layer" => {
+            "The PAINT canvas fill will become a separate background layer in the converted copy."
+        }
+        "paint-background-depth-reduced-to-8" => {
+            "The PAINT background color will be reduced from 16-bit to 8-bit."
+        }
+        "pdn-metadata-ignored" => {
+            "PDN metadata and background-layer lock properties will not be retained in the converted copy."
+        }
         _ => return None,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn extended_conversion_limitations_are_translated_in_every_language() {
+        for code in [
+            "pnm-metadata-ignored",
+            "pcx-metadata-ignored",
+            "dcx-other-pages-not-imported",
+            "pdn-metadata-ignored",
+            "paint-layer-properties-unverified",
+            "paint-canvas-fill-converted-to-layer",
+            "paint-background-depth-reduced-to-8",
+        ] {
+            let source = super::import_loss_description(code).unwrap();
+            for lang in crate::i18n::Language::ALL {
+                if lang != crate::i18n::Language::English {
+                    assert_ne!(
+                        crate::i18n::translate(lang, source),
+                        source,
+                        "{} {code}",
+                        lang.id()
+                    );
+                }
+            }
+        }
+    }
 }

@@ -308,3 +308,89 @@ the-dib-has-no-declared-alpha-channel-its-pixels-will-be-imported-as-opaque = DI
 color-space-and-resolution-metadata-in-the-dib-will-not-be-retained = DIB の色空間と解像度のメタデータは保持されません。
 
 the-dib-alpha-mode-is-unspecified-colors-will-be-interpreted-as-straight-alpha = DIB のアルファモードは未指定です。色を非乗算アルファとして解釈します。
+
+tiff-picture = TIFF 画像
+
+tga-picture = TGA 画像
+
+webp-picture = WebP 画像
+
+save-a-palette-picture-colors-and-transparency-may-be-reduced = パレット画像を保存します。色数や透明度が減る場合があります。
+
+save-a-single-page-tiff-picture-with-transparency = 透明度を保持する単一ページの TIFF 画像を保存します。
+
+save-a-tga-picture-with-transparency = 透明度を保持する TGA 画像を保存します。
+
+save-a-lossless-webp-picture-with-transparency = 透明度を保持する可逆圧縮の WebP 画像を保存します。
+
+colors-will-be-reduced-to-a-gif-palette = 色数が GIF パレットの範囲に減ります。
+
+partial-transparency-will-become-fully-transparent-or-opaque = 半透明の部分は完全に透明または不透明になります。
+
+choose-a-supported-image-filename-extension = 対応する画像の拡張子を選択してください。
+
+choose-an-image-format-in-the-export-dialog = エクスポート画面で画像形式を選択します。
+
+import-image-more = 画像をインポート…
+
+import-image = 画像をインポート
+
+images-to-import = インポートする画像
+
+pnm-comments-will-not-be-retained = PNM のコメントは保持されません。
+
+pcx-resolution-origin-and-header-metadata-will-not-be-retained = PCX の解像度、原点、ヘッダーのメタデータは保持されません。
+
+only-the-selected-dcx-page-will-be-imported = 選択した DCX のページのみを読み込みます。
+
+paint-layer-names-visibility-and-opacity-could-not-be-verified-the-converted-copy-uses-numbered-visible-layers-at-full-opacity = PAINT のレイヤー名、表示状態、不透明度は確認できませんでした。変換したコピーでは、番号付きのレイヤーをすべて表示し、不透明度を最大にします。
+
+the-paint-canvas-fill-will-become-a-separate-background-layer-in-the-converted-copy = PAINT のキャンバスの塗りつぶしは、変換したコピーで独立した背景レイヤーになります。
+
+the-paint-background-color-will-be-reduced-from-16-bit-to-8-bit = PAINT の背景色は 16 ビットから 8 ビットに変換されます。
+
+jpeg-xl-picture = JPEG XL 画像
+
+dds-picture = DDS 画像
+
+avif-picture = AVIF 画像
+
+save-a-lossless-8-bit-jpeg-xl-picture-requires-at-least-two-pixels-per-side = 可逆圧縮の 8 ビット JPEG XL 画像を保存します。各辺に 2 ピクセル以上が必要です。
+
+save-an-uncompressed-single-surface-srgb-dds-picture-with-straight-alpha = 非圧縮でストレートアルファの単一サーフェス sRGB DDS 画像を保存します。
+
+save-a-lossy-8-bit-avif-picture-alpha-may-change-even-at-quality-100 = 非可逆圧縮の 8 ビット AVIF 画像を保存します。品質 100 でもアルファ値が変わる場合があります。
+
+avif-quality = AVIF 品質
+
+avif-uses-lossy-compression-for-colors-and-transparency-even-at-quality-100 = AVIF は品質 100 でも色と透明度に非可逆圧縮を使用します。
+
+avif-uses-lossy-compression = AVIF は非可逆圧縮を使用します。
+
+transparency-may-change-during-avif-compression = AVIF 圧縮で透明度が変わる場合があります。
+
+jpeg-xl-image = JPEG XL 画像形式
+
+dds-image = DDS 画像形式
+
+avif-image = AVIF 画像形式
+
+pdn-metadata-and-background-layer-lock-properties-will-not-be-retained-in-the-converted-copy = 変換したコピーでは、PDN のメタデータと背景レイヤーのロック属性は保持されません。
+
+qoi-picture = QOI 画像
+
+pam-picture = PAM 画像
+
+farbfeld-picture = farbfeld 画像
+
+qoi-image = QOI 画像
+
+pam-image = PAM 画像
+
+farbfeld-image = farbfeld 画像
+
+save-a-lossless-qoi-picture-with-transparency = 透明度を保持する可逆圧縮の QOI 画像を保存します。
+
+save-a-pam-netpbm-picture-with-transparency = 透明度を保持する Netpbm PAM 画像を保存します。
+
+save-a-farbfeld-picture-with-exact-8-bit-colors-stored-as-16-bit-samples = 8 ビットの色を正確な 16 ビットのサンプルとして格納する farbfeld 画像を保存します。

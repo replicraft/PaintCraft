@@ -308,3 +308,89 @@ the-dib-has-no-declared-alpha-channel-its-pixels-will-be-imported-as-opaque = O 
 color-space-and-resolution-metadata-in-the-dib-will-not-be-retained = Os metadados de espaço de cor e resolução do DIB não serão preservados.
 
 the-dib-alpha-mode-is-unspecified-colors-will-be-interpreted-as-straight-alpha = O modo alfa do DIB não foi especificado. As cores serão interpretadas como alfa direto.
+
+tiff-picture = Imagem TIFF
+
+tga-picture = Imagem TGA
+
+webp-picture = Imagem WebP
+
+save-a-palette-picture-colors-and-transparency-may-be-reduced = Salvar uma imagem com paleta. As cores e a transparência podem ser reduzidas.
+
+save-a-single-page-tiff-picture-with-transparency = Salvar uma imagem TIFF de página única com transparência.
+
+save-a-tga-picture-with-transparency = Salvar uma imagem TGA com transparência.
+
+save-a-lossless-webp-picture-with-transparency = Salvar uma imagem WebP sem perdas com transparência.
+
+colors-will-be-reduced-to-a-gif-palette = As cores serão reduzidas a uma paleta GIF.
+
+partial-transparency-will-become-fully-transparent-or-opaque = A transparência parcial ficará totalmente transparente ou opaca.
+
+choose-a-supported-image-filename-extension = Escolha uma extensão de imagem compatível.
+
+choose-an-image-format-in-the-export-dialog = Escolha um formato de imagem na caixa de exportação.
+
+import-image-more = Importar imagem…
+
+import-image = Importar imagem
+
+images-to-import = Imagens para importar
+
+pnm-comments-will-not-be-retained = Os comentários PNM não serão mantidos.
+
+pcx-resolution-origin-and-header-metadata-will-not-be-retained = A resolução, a origem e os metadados do cabeçalho PCX não serão mantidos.
+
+only-the-selected-dcx-page-will-be-imported = Somente a página DCX selecionada será importada.
+
+paint-layer-names-visibility-and-opacity-could-not-be-verified-the-converted-copy-uses-numbered-visible-layers-at-full-opacity = Não foi possível verificar os nomes, a visibilidade e a opacidade das camadas PAINT. A cópia convertida usa camadas numeradas e visíveis com opacidade total.
+
+the-paint-canvas-fill-will-become-a-separate-background-layer-in-the-converted-copy = O preenchimento da tela PAINT se tornará uma camada de fundo separada na cópia convertida.
+
+the-paint-background-color-will-be-reduced-from-16-bit-to-8-bit = A cor de fundo PAINT será reduzida de 16 bits para 8 bits.
+
+jpeg-xl-picture = Imagem JPEG XL
+
+dds-picture = Imagem DDS
+
+avif-picture = Imagem AVIF
+
+save-a-lossless-8-bit-jpeg-xl-picture-requires-at-least-two-pixels-per-side = Salvar uma imagem JPEG XL de 8 bits sem perdas. Exige pelo menos dois pixels por lado.
+
+save-an-uncompressed-single-surface-srgb-dds-picture-with-straight-alpha = Salvar uma imagem DDS sRGB não compactada, com uma superfície e alfa direto.
+
+save-a-lossy-8-bit-avif-picture-alpha-may-change-even-at-quality-100 = Salvar uma imagem AVIF de 8 bits com perdas. O alfa pode mudar mesmo na qualidade 100.
+
+avif-quality = Qualidade AVIF
+
+avif-uses-lossy-compression-for-colors-and-transparency-even-at-quality-100 = AVIF usa compactação com perdas nas cores e na transparência, mesmo na qualidade 100.
+
+avif-uses-lossy-compression = AVIF usa compactação com perdas.
+
+transparency-may-change-during-avif-compression = A transparência pode mudar durante a compactação AVIF.
+
+jpeg-xl-image = Arquivo JPEG XL
+
+dds-image = Arquivo DDS
+
+avif-image = Arquivo AVIF
+
+pdn-metadata-and-background-layer-lock-properties-will-not-be-retained-in-the-converted-copy = A cópia convertida não manterá os metadados PDN nem as propriedades de bloqueio da camada de fundo.
+
+qoi-picture = Imagem QOI
+
+pam-picture = Imagem PAM
+
+farbfeld-picture = Imagem farbfeld
+
+qoi-image = Imagem QOI
+
+pam-image = Imagem PAM
+
+farbfeld-image = Imagem farbfeld
+
+save-a-lossless-qoi-picture-with-transparency = Salvar uma imagem QOI sem perdas com transparência.
+
+save-a-pam-netpbm-picture-with-transparency = Salvar uma imagem PAM Netpbm com transparência.
+
+save-a-farbfeld-picture-with-exact-8-bit-colors-stored-as-16-bit-samples = Salvar uma imagem farbfeld com cores de 8 bits armazenadas exatamente como amostras de 16 bits.

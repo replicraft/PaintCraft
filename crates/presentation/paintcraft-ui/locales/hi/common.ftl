@@ -308,3 +308,89 @@ the-dib-has-no-declared-alpha-channel-its-pixels-will-be-imported-as-opaque = DI
 color-space-and-resolution-metadata-in-the-dib-will-not-be-retained = DIB का रंग स्थान और रिज़ॉल्यूशन मेटाडेटा सुरक्षित नहीं रखा जाएगा।
 
 the-dib-alpha-mode-is-unspecified-colors-will-be-interpreted-as-straight-alpha = DIB का अल्फ़ा मोड निर्दिष्ट नहीं है। रंगों की व्याख्या सीधे अल्फ़ा के रूप में होगी।
+
+tiff-picture = TIFF चित्र
+
+tga-picture = TGA चित्र
+
+webp-picture = WebP चित्र
+
+save-a-palette-picture-colors-and-transparency-may-be-reduced = पैलेट वाला चित्र सहेजें। रंग और पारदर्शिता कम हो सकती है।
+
+save-a-single-page-tiff-picture-with-transparency = पारदर्शिता वाला एक-पृष्ठ TIFF चित्र सहेजें।
+
+save-a-tga-picture-with-transparency = पारदर्शिता वाला TGA चित्र सहेजें।
+
+save-a-lossless-webp-picture-with-transparency = पारदर्शिता वाला दोषरहित WebP चित्र सहेजें।
+
+colors-will-be-reduced-to-a-gif-palette = रंग GIF पैलेट तक सीमित कर दिए जाएँगे।
+
+partial-transparency-will-become-fully-transparent-or-opaque = आंशिक पारदर्शिता पूरी तरह पारदर्शी या अपारदर्शी हो जाएगी।
+
+choose-a-supported-image-filename-extension = समर्थित चित्र फ़ाइल एक्सटेंशन चुनें।
+
+choose-an-image-format-in-the-export-dialog = निर्यात संवाद में चित्र का प्रारूप चुनें।
+
+import-image-more = चित्र आयात करें…
+
+import-image = चित्र आयात करें
+
+images-to-import = आयात करने के लिए चित्र
+
+pnm-comments-will-not-be-retained = PNM टिप्पणियाँ सुरक्षित नहीं रखी जाएँगी।
+
+pcx-resolution-origin-and-header-metadata-will-not-be-retained = PCX का रिज़ॉल्यूशन, मूल बिंदु और हेडर मेटाडेटा सुरक्षित नहीं रखा जाएगा।
+
+only-the-selected-dcx-page-will-be-imported = केवल चुना गया DCX पृष्ठ आयात किया जाएगा।
+
+paint-layer-names-visibility-and-opacity-could-not-be-verified-the-converted-copy-uses-numbered-visible-layers-at-full-opacity = PAINT परतों के नाम, दृश्यता और अपारदर्शिता की पुष्टि नहीं हो सकी। परिवर्तित प्रति में क्रमांकित, दिखाई देने वाली परतें पूर्ण अपारदर्शिता के साथ होंगी।
+
+the-paint-canvas-fill-will-become-a-separate-background-layer-in-the-converted-copy = PAINT कैनवास का भरण परिवर्तित प्रति में एक अलग पृष्ठभूमि परत बनेगा।
+
+the-paint-background-color-will-be-reduced-from-16-bit-to-8-bit = PAINT पृष्ठभूमि का रंग 16-बिट से घटाकर 8-बिट किया जाएगा।
+
+jpeg-xl-picture = JPEG XL चित्र
+
+dds-picture = DDS चित्र
+
+avif-picture = AVIF चित्र
+
+save-a-lossless-8-bit-jpeg-xl-picture-requires-at-least-two-pixels-per-side = दोषरहित 8-बिट JPEG XL चित्र सहेजें। हर ओर कम से कम दो पिक्सेल चाहिए।
+
+save-an-uncompressed-single-surface-srgb-dds-picture-with-straight-alpha = सीधे अल्फ़ा वाला असंपीड़ित एक-सतह sRGB DDS चित्र सहेजें।
+
+save-a-lossy-8-bit-avif-picture-alpha-may-change-even-at-quality-100 = हानिपूर्ण 8-बिट AVIF चित्र सहेजें। गुणवत्ता 100 पर भी अल्फ़ा बदल सकता है।
+
+avif-quality = AVIF गुणवत्ता
+
+avif-uses-lossy-compression-for-colors-and-transparency-even-at-quality-100 = AVIF गुणवत्ता 100 पर भी रंग और पारदर्शिता का हानिपूर्ण संपीड़न करता है।
+
+avif-uses-lossy-compression = AVIF हानिपूर्ण संपीड़न का उपयोग करता है।
+
+transparency-may-change-during-avif-compression = AVIF संपीड़न के दौरान पारदर्शिता बदल सकती है।
+
+jpeg-xl-image = JPEG XL फ़ाइल
+
+dds-image = DDS फ़ाइल
+
+avif-image = AVIF फ़ाइल
+
+pdn-metadata-and-background-layer-lock-properties-will-not-be-retained-in-the-converted-copy = परिवर्तित प्रति में PDN मेटाडेटा और पृष्ठभूमि परत के लॉक गुण सुरक्षित नहीं रखे जाएँगे।
+
+qoi-picture = QOI चित्र
+
+pam-picture = PAM चित्र
+
+farbfeld-picture = farbfeld चित्र
+
+qoi-image = QOI छवि
+
+pam-image = PAM छवि
+
+farbfeld-image = farbfeld छवि
+
+save-a-lossless-qoi-picture-with-transparency = पारदर्शिता के साथ दोषरहित QOI चित्र सहेजें।
+
+save-a-pam-netpbm-picture-with-transparency = पारदर्शिता के साथ PAM Netpbm चित्र सहेजें।
+
+save-a-farbfeld-picture-with-exact-8-bit-colors-stored-as-16-bit-samples = ऐसा farbfeld चित्र सहेजें जिसमें 8-बिट रंग ठीक उसी रूप में 16-बिट नमूनों के तौर पर संग्रहीत हों।

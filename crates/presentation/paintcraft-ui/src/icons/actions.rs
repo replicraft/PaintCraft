@@ -16,7 +16,7 @@ impl Action {
         Some(match self {
             Self::Settings => Icon::Settings,
             Self::New => Icon::New,
-            Self::Open => Icon::Open,
+            Self::Open | Self::ImportImage => Icon::Open,
             Self::RecentFiles => Icon::Recent,
             Self::Save | Self::SaveAll => Icon::Save,
             Self::Print => Icon::Print,
