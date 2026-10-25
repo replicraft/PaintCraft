@@ -851,7 +851,7 @@ partial; [expected save guards](EXPECTED_SAVE.md) owns the implementation contra
 ### Format workflow delivery, 2026-10-25
 
 Desktop and browser now use operation-specific registry admission for Classic
-raster exports and 13 Studio flat exports. Explicit extended conversions preserve
+raster exports and 14 Studio flat exports. Explicit extended conversions preserve
 foreign originals and require reported loss consent. Historical PDN bitmap layers
 and the observed PAINT overlay subset import as unsaved layered copies; selected
 DCX pages require a separate choice. CLI and MCP apply the same admission policy.

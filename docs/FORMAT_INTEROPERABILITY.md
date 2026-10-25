@@ -9,10 +9,10 @@ Codec implementation, enabled frontend operations and release qualification are 
 Desktop and browser use the same frontend policy. CLI and MCP import/export operations also apply that policy, using an explicit frontend profile rather than inheriting every compiled codec. All foreign conversions require acknowledgment of their reported losses before publication. Failed, cancelled or stale conversions leave the existing document intact.
 
 - PCND is the native layered project format and the preserving Save destination.
-- Classic 7/10/11 open and export PNG, JPEG, BMP, still GIF and single-page TIFF. All Classic skins can explicitly import the admitted PCX subset. Classic 11 can explicitly import the admitted PAINT subset.
+- Classic 7/10/11 open and export PNG, JPEG, BMP, still GIF and single-page TIFF. CLI Classic profiles can explicitly import the admitted PCX subset; the Classic 11 CLI profile also admits the limited PAINT conversion. Desktop/browser Import image is currently a Studio action, so these headless allowances do not imply additional Classic menus.
 - Studio also opens TGA, still WebP and admitted single-surface DDS images, and opens the admitted historical PDN subset as a converted copy.
 - Studio's explicit Import image workflow adds QOI, Netpbm, farbfeld, PCX, selected DCX pages, flat OpenRaster layers and the admitted PAINT subset. These extended imports do not silently expand ordinary Open or Recent filters.
-- Studio offers **13 flat exports**: PNG, JPEG, BMP, GIF, TIFF, TGA, WebP, JPEG XL, DDS, AVIF, QOI, PAM and farbfeld. PAM output always uses `.pam`, never a `.ppm`, `.pgm`, `.pbm` or generic `.pnm` filename.
+- Studio offers **14 flat exports**: PNG, JPEG, BMP, GIF, TIFF, TGA, WebP, JPEG XL, DDS, AVIF, QOI, PAM, farbfeld and RGB24 PCX. PAM output always uses `.pam`, never a `.ppm`, `.pgm`, `.pbm` or generic `.pnm` filename.
 - DCX requires a page choice. Desktop/browser stage a page chooser before decoding and loss confirmation; CLI `import --page` and MCP `import_image` use an explicit zero-based page index. There is no implicit page-zero import.
 
 Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, GIF, TGA, DDS, TIFF, HEIF, WebP and AVIF. That inventory is not a claim that all those readers are enabled. PCND and qualified extended conversions are additional workflows. HEIF/HEIC writing and SVG export remain prohibited.
@@ -33,7 +33,7 @@ Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, 
 | QOI | Studio explicit Import and lossless RGBA8 Export | Strict complete raster/end marker and sRGB profile; linear declaration refused; exact alpha and hidden RGB retained by the codec |
 | Netpbm | Studio explicit P1 through P7 Import; PAM P7 RGBA8 Export only | Admitted max values 1, 255 or 65535 and recognized grayscale/RGB/alpha tuples; bounded 64 KiB header. High-depth import reduces to 8 bits; metadata loss explicit |
 | farbfeld | Studio explicit Import and lossless RGBA8 Export | Exact body length required; imports reduce 16-bit samples to 8 bits with explicit loss. Exports widen each 8-bit sample by multiplying by 257; this does not add high-depth editing |
-| PCX | Classic/Studio explicit Import only | Version 5 RLE: admitted packed 1/2/4/8-bit, planar 1-bit and RGB24 profiles; minimal even row padding; strict row/plane bounds. Palette and metadata loss explicit; older/ambiguous variants refused; no writer |
+| PCX | Classic/Studio explicit Import; Studio RGB24 flat Export | Version 5 RLE: admitted packed 1/2/4/8-bit, planar 1-bit and RGB24 profiles; minimal even row padding; strict row/plane bounds. Palette and metadata import loss explicit; older/ambiguous variants refused. RGB24 export composites alpha onto white with explicit loss consent. Exact indexed-8 writer API preserves supplied palette order/indices; palette export UI is not implemented |
 | DCX | Studio explicit selected-page Import only | Strict bounded page directory, at most 1023 pages; each page must satisfy PCX admission. Other pages are explicitly not imported; no writer |
 | PDN | Studio Open or explicit Import as a converted layered copy | Historical PDN3 normal-blend, same-sized full-canvas bitmap layers only; names/order/visibility/opacity/pixels retained, metadata loss explicit. No preserving or fresh writer |
 | PAINT | Studio and Classic 11 explicit Import as a converted layered copy | Observed MIF1 `iovl`/`unci` DEFLATE RGBA8 profile only; offsets/order retained, layers numbered/visible/full-opacity because source properties are unverified. Canvas fill becomes a layer, with depth loss when needed. No writer |
@@ -101,3 +101,33 @@ before loading the exported file. These startup failures are excluded compatibil
 evidence, not decoder failures. Writer admission stays unqualified; there is no
 frontend writer or foreign preserving-save claim. The opt-in bounded harness and
 its requirements are documented in `tests/ora-fixtures/README.md`.
+
+### PCX writer delivery, 2026-10-25
+
+The selected `pcx` 0.2.5 writer now powers Studio, CLI and MCP RGB24 export.
+Classic export filters remain unchanged. Native/browser export dialogs include the
+PCX choice and translated description in all seven languages. Transparency uses
+an exact white matte and requires `alpha-discarded` consent; exports leave source
+pixels, history and dirty state unchanged. No foreign preserving Save is offered.
+
+Both RGB24 and indexed-8 APIs admit at most 4,194,304 pixels, width 65,534, height
+65,535 and 64 MiB encoded output. Width 65,535 would overflow the codec's padded
+u16 row field and is rejected before entering it. Row padding, literal escape
+values, long RLE runs, source/index lengths, positive DPI, cancellation and invalid
+palette references are checked. Indexed output accepts explicit original indices
+and palette entries, including duplicate colors; it never silently quantizes RGBA.
+A user-facing indexed palette/quantization preview remains unfinished.
+
+The explicitly invoked Pillow 13.0.0 and FFmpeg 8.0.1 oracle reopens twelve exports
+across odd/even widths 1, 7, 63, 64, 65 and 257. All RGBA samples match; Pillow also
+retains every index byte and all palette entries/order. These checks establish the
+qualified codec subsets, not universal historical Paint/Paintbrush compatibility.
+
+The PCX benchmark adds sixteen encode/decode workload cells with 30 samples each.
+After independent Pillow/FFmpeg verification of the actual eight fixture files,
+Apple M1 Pro 1000×486 RGB24 export medians span 4.794 to 16.78 ms; decode medians
+span 6.409 to 11.33 ms. The dense-alpha export includes the white matte. These are
+codec baseline observations under uncontrolled host workload, not speedup or
+interactive-latency claims. Raw fixtures/hashes, allocation output, final timing
+log and excluded build/concurrent-run observations remain under ignored
+`benchmarks/results/pcx-writer-2026-10-25`.
