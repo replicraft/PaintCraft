@@ -4,6 +4,7 @@ pub mod avif;
 pub mod dcx;
 pub mod dds;
 pub mod export;
+pub mod icons;
 pub mod image;
 pub mod jxl;
 pub mod jxr;
