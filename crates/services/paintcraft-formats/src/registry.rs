@@ -210,6 +210,9 @@ pub fn capability(family: Family, operation: Operation, _platform: Platform) -> 
             Some("openraster-flat-png")
         }
         Family::Dcx if operation == Operation::ImportConvert => Some("pcx-dcx-page"),
+        Family::Ico | Family::Cur if operation == Operation::ImportConvert => {
+            Some("ico-selected-entry")
+        }
         Family::Qoi | Family::Pnm | Family::Farbfeld
             if matches!(operation, Operation::ImportConvert | Operation::ExportFlat) =>
         {
@@ -239,7 +242,9 @@ pub fn capability(family: Family, operation: Operation, _platform: Platform) -> 
             Family::Qoi | Family::Pnm | Family::Farbfeld | Family::Pcx => {
                 matches!(operation, Operation::ImportConvert | Operation::ExportFlat)
             }
-            Family::Paint | Family::Dcx | Family::Ora => operation == Operation::ImportConvert,
+            Family::Paint | Family::Dcx | Family::Ora | Family::Ico | Family::Cur => {
+                operation == Operation::ImportConvert
+            }
             Family::Jxl | Family::Avif => operation == Operation::ExportFlat,
             Family::Pdn => matches!(
                 operation,
@@ -269,13 +274,22 @@ pub fn admission(request: Request<'_>) -> Decision {
     let selected_page = request.family == Family::Dcx
         && request.operation == Operation::ImportConvert
         && request.variant == Some("dcx-selected-page");
+    let selected_entry = matches!(request.family, Family::Ico | Family::Cur)
+        && request.operation == Operation::ImportConvert
+        && request.variant == Some("icon-selected-entry");
+    if matches!(request.family, Family::Ico | Family::Cur)
+        && request.operation == Operation::ImportConvert
+        && !selected_entry
+    {
+        return Decision::TemporarilyUnavailable(Reason::VariantUnqualified);
+    }
     if request.family == Family::Dcx
         && request.operation == Operation::ImportConvert
         && !selected_page
     {
         return Decision::TemporarilyUnavailable(Reason::VariantUnqualified);
     }
-    if request.variant.is_some() && !selected_page {
+    if request.variant.is_some() && !selected_page && !selected_entry {
         return Decision::TemporarilyUnavailable(Reason::VariantUnqualified);
     }
     if request.family == Family::Pnm
@@ -387,6 +401,37 @@ pub fn admit_import_page(
     Ok(family)
 }
 
+/// ICO/CUR is an explicit asset-entry conversion, never an implicit largest
+/// image. Generic import discovery excludes it until a frontend has a selector.
+pub fn admit_import_entry(
+    frontend: Frontend,
+    filename: &str,
+    bytes: &[u8],
+    platform: Platform,
+    entry: u16,
+) -> Result<Family> {
+    let family = admit_input(
+        frontend,
+        filename,
+        bytes,
+        platform,
+        Operation::ImportConvert,
+        Some("icon-selected-entry"),
+    )?;
+    if !matches!(family, Family::Ico | Family::Cur)
+        || crate::icons::inspect(bytes)?
+            .entries
+            .get(usize::from(entry))
+            .is_none()
+    {
+        return Err(Error::new(
+            ErrorCode::InputSchema,
+            "icon entry index is out of range",
+        ));
+    }
+    Ok(family)
+}
+
 fn admit_input(
     frontend: Frontend,
     filename: &str,
@@ -450,6 +495,10 @@ pub fn sniff(bytes: &[u8]) -> Option<Family> {
         Some(Family::Psb)
     } else if bytes.starts_with(b"DDS ") {
         Some(Family::Dds)
+    } else if bytes.starts_with(&[0, 0, 1, 0]) {
+        Some(Family::Ico)
+    } else if bytes.starts_with(&[0, 0, 2, 0]) {
+        Some(Family::Cur)
     } else if bytes.starts_with(&987_654_321u32.to_le_bytes()) {
         Some(Family::Dcx)
     } else if bytes.starts_with(b"qoif") {

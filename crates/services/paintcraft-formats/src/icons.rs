@@ -5,6 +5,11 @@ mod payload;
 
 pub const ENTRIES_MAX: usize = 256;
 pub const ENCODED_BYTES_MAX: usize = 64 * 1024 * 1024;
+pub const KNOWN_IMPORT_LOSSES: &[&str] = &[
+    "icon-palette-expanded",
+    "icon-other-entries-not-imported",
+    "cursor-hotspot-not-retained-in-flat-document",
+];
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Kind {

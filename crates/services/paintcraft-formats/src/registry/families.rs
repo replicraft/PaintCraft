@@ -86,6 +86,8 @@ impl Family {
             Self::Ora => extension.eq_ignore_ascii_case("ora"),
             Self::Paint => extension.eq_ignore_ascii_case("paint"),
             Self::Dcx => extension.eq_ignore_ascii_case("dcx"),
+            Self::Ico => extension.eq_ignore_ascii_case("ico"),
+            Self::Cur => extension.eq_ignore_ascii_case("cur"),
             Self::Qoi => extension.eq_ignore_ascii_case("qoi"),
             Self::Farbfeld => extension.eq_ignore_ascii_case("ff"),
             Self::Pcx => extension.eq_ignore_ascii_case("pcx"),
