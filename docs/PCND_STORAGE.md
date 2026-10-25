@@ -6,9 +6,12 @@ even one changed pixel has a dense RGBA payload: 262,144 bytes for a full tile.
 Boundary tiles contain only their valid rows and columns. Hidden RGB under zero
 alpha counts as changed data and is preserved.
 
-The original canonical PCND writer stores those nondefault blocks raw. The optional
-compact writer compresses each block independently with Zstandard level 3 and a
-256 KiB maximum window, retaining raw bytes when compression would be larger.
+All normal desktop, browser and CLI project saves now use compact output. Each
+block can use exact RGBA runs: a two-byte run length followed by four color bytes.
+For example, a full tile with one isolated pixel typically needs three runs (18
+bytes), including the unchanged background. The browser uses these runs when they
+save space. Native builds additionally try Zstandard level 3 with a 256 KiB maximum
+window and choose the smaller encoding. Incompressible blocks remain raw.
 Chunks still use ordinary stored ZIP members, grouping blocks toward 4 MiB.
 
 ## Measured file sizes
@@ -21,28 +24,28 @@ fixture contains deterministic xorshift RGBA noise. All figures are bytes.
 | Document | Canonical file | Compact file | Raw pixel chunks | Compact pixel chunks |
 | --- | ---: | ---: | ---: | ---: |
 | Blank | 1,123 | 1,123 | 0 | 0 |
-| One changed pixel | 263,591 | 1,482 | 262,144 | 38 |
-| Eight sparse changed pixels | 1,946,936 | 3,189 | 1,944,000 | 304 |
+| One changed pixel | 263,591 | 1,467 | 262,144 | 18 |
+| Eight sparse changed pixels | 1,946,936 | 3,066 | 1,944,000 | 144 |
 | Dense noise | 1,946,931 | 1,946,931 | 1,944,000 | 1,944,000 |
 
-The one-pixel total file is about 178 times smaller; its pixel chunk is about
-6,899 times smaller. These examples measure storage, without a save-speed or
+The one-pixel total file is about 180 times smaller; its pixel chunk is about
+14,564 times smaller. These examples measure storage, without a save-speed or
 runtime-memory improvement claim. Photograph and artwork compression depends on
 their content. Compressing persistence does not change dense runtime tile storage.
 
 ## Compatibility and safety
 
-The existing [PCND v1 contract](temp/paintcraft-implementation-spec-v5-hyperfine/docs/features/NATIVE_PROJECT.md)
-already permits a raw block or one bounded Zstandard frame and hashes the decoded
-RGBA bytes. Compact output uses that existing encoding, preserving document IDs,
+The PCND block encodings are `raw`, `zstd`, and the new `rgba-runs`. Earlier builds
+cannot read run-encoded blocks. Compatibility with those unpublished builds is
+not retained. The reader hashes decoded RGBA bytes, preserving document IDs,
 StateIds, layer metadata, defaults, off-canvas layer content and hidden RGB.
 `write` and `write_to` remain the original canonical raw writer. Their specimen and
 conformance digests remain unchanged. Reading compact output and writing it
 canonically reproduces the original raw bytes.
 
-Native builds expose `write_compact`, `write_compact_to` and a checked streaming
-variant. The desktop's confirmed-save paths choose compact output. Encoding uses
-the locked native Zstandard library. Compression runs twice so the writer can
+Both native and browser builds expose `write_compact`, `write_compact_to` and a checked streaming
+variant. Normal project save paths choose compact output. Native Zstandard encoding uses
+the locked library. Compression runs twice so the writer can
 prepare descriptors before streaming chunks while retaining only bounded block
 scratch and one payload chunk. Compact bytes are reproducible with the pinned
 encoder; future compressor upgrades need independent byte-level qualification.
@@ -62,9 +65,16 @@ These checkpoints do not establish native wall-clock cancellation latency.
 Failures leave the source document unchanged; callers must discard an unsuccessful
 output sink rather than publish it as a saved file.
 
-The browser reads compact files but retains its canonical raw writer. Browser
-compact encoding is explicitly unavailable. Wasm compilation establishes decoder
-availability, while live browser/native filesystem qualification remains separate.
+The browser writes compact pixel runs and reads both run and Zstandard blocks.
+Run decoding admits the complete decoded tile set before allocation, checks each
+run against the remaining block extent, and rejects short, trailing or malformed
+records. A run has at most 65,536 pixels and a block has at most 262,144 decoded
+bytes. Hidden RGB is never normalized away.
+
+A 920-point sinusoidal pencil fixture across the 1000 × 486 canvas produces
+1,946,936 raw file bytes, a 6,281-byte native compact file, and 9,048 bytes of portable
+pixel payload before ZIP/JSON metadata. These are synthetic measurements, not a
+measurement of the user's screenshot file.
 
 Tests cover exact roundtrips and canonical digests, mixed raw/compressed boundary
 blocks, negative layer origins, hidden RGB, incompressible fallback, decoded quota

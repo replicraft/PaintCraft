@@ -4,7 +4,7 @@ use super::*;
 
 pub(super) fn encode(data: &[u8]) -> Vec<u8> {
     let mut output = Vec::new();
-    let mut pixels = data.chunks_exact(4).peekable();
+    let mut pixels = data.as_chunks::<4>().0.iter().peekable();
     while let Some(pixel) = pixels.next() {
         let mut count = 1u32;
         while count < 65_536 && pixels.peek().is_some_and(|next| *next == pixel) {
@@ -37,7 +37,7 @@ pub(super) fn decode(
             "cannot allocate decoded pixel runs",
         )
     })?;
-    for run in bytes.chunks_exact(6) {
+    for run in bytes.as_chunks::<6>().0 {
         check()?;
         let count = usize::from(u16::from_le_bytes([run[0], run[1]])) + 1;
         if count * 4 > length - output.len() {

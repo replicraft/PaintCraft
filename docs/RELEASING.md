@@ -17,7 +17,7 @@ Names start with `paintcraft-<version>-`. For version 0.1.0:
 | Linux | `linux-x64`, `linux-arm64` | `.deb`, `.rpm`, `.AppImage`, `.tar.gz` |
 | FreeBSD | `freebsd-x64` | `.tar.gz` |
 
-The assembled release has 19 downloads plus `SHA256SUMS.txt`. Each portable ZIP
+The assembled release has 26 downloads plus `SHA256SUMS.txt`. Each portable ZIP
 or tar archive includes the application, its license and bundled font notices.
 Fonts and interface assets are embedded in the executable. There are no source trees or build tools
 inside the downloads. The checksums describe the final downloadable bytes.
@@ -46,7 +46,7 @@ published from a pull request or a manual workflow run. No credentials are neede
 for local packaging; tag publication uses the job's repository token.
 
 The `assemble` job refuses a missing architecture, extra/stale asset, empty file,
-symlink or mismatched per-asset checksum. Only after all 19 checks succeed does
+symlink or mismatched per-asset checksum. Only after all 26 checks succeed does
 it write the sorted, LF-delimited `SHA256SUMS.txt` and remove intermediate checksum
 sidecars. It runs `sha256sum --check` independently before uploading the final set.
 
