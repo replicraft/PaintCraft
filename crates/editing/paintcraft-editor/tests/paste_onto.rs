@@ -339,3 +339,38 @@ fn late_history_denial_discards_all_private_tiles() {
     assert!(Arc::ptr_eq(&before, &s.snapshot()));
     assert_eq!(history, s.history_view());
 }
+
+#[test]
+fn exact_private_preview_needs_no_history_credit_and_matches_published_pixels() {
+    let mut s = session();
+    let before = s.snapshot();
+    let target = s.document().roots[0];
+    let mut d = PasteDraft::new(&s, image()).unwrap();
+    d.place((-1, 0), PasteCanvas::Keep).unwrap();
+    s.set_history_budget(0);
+    let history = s.history_view();
+    let preview = s
+        .preview_paste_image_onto(
+            &d,
+            target,
+            BlendMode::SourceOver,
+            None,
+            Admission::new(1 << 20),
+            &|| Ok(()),
+        )
+        .unwrap();
+    assert!(Arc::ptr_eq(&before, &s.snapshot()));
+    assert_eq!(history, s.history_view());
+    assert_eq!(
+        s.paste_image_onto(&d, target, BlendMode::SourceOver, None)
+            .unwrap_err()
+            .code,
+        ErrorCode::ResourceLimit
+    );
+    s.set_history_budget(64 << 20);
+    s.paste_image_onto(&d, target, BlendMode::SourceOver, None)
+        .unwrap();
+    assert_eq!(preview.canvas, s.document().canvas);
+    assert_eq!(preview.layers, s.document().layers);
+    assert_eq!(preview.roots, s.document().roots);
+}

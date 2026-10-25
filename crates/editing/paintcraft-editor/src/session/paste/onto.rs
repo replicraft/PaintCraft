@@ -34,6 +34,33 @@ impl Session {
         admission: Admission,
         check: &dyn Fn() -> Result<()>,
     ) -> Result<Receipt> {
+        let digest = onto_digest(draft, target, mode, key, check)?;
+        let staged = self.stage_paste_onto(draft, target, mode, key, admission, check)?;
+        self.commit_staged(staged, &digest, Label::Paste, check)
+    }
+    /// Exact private preview, sharing the paste kernel without adding history.
+    pub fn preview_paste_image_onto(
+        &self,
+        draft: &PasteDraft,
+        target: Uuid,
+        mode: BlendMode,
+        key: Option<Rgba>,
+        admission: Admission,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<paintcraft_document::Document> {
+        Ok(self
+            .stage_paste_onto(draft, target, mode, key, admission, check)?
+            .doc)
+    }
+    fn stage_paste_onto(
+        &self,
+        draft: &PasteDraft,
+        target: Uuid,
+        mode: BlendMode,
+        key: Option<Rgba>,
+        admission: Admission,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<crate::execute::Staged> {
         check()?;
         if self.history_ticket() != draft.source() {
             return Err(Error::new(
@@ -85,7 +112,6 @@ impl Session {
         {
             return Err(extent_error());
         }
-        let digest = onto_digest(draft, target, mode, key, check)?;
         let raster = plan.replay(&mut admission, check)?;
         check()?;
         let mut doc = (*self.doc).clone();
@@ -97,16 +123,11 @@ impl Session {
         let layer = doc.layers.get_mut(&target).expect("validated target");
         layer.raster = raster;
         layer.origin = (ox, oy);
-        self.commit_staged(
-            crate::execute::Staged {
-                doc,
-                selection,
-                aliases: BTreeMap::from([("pasted".into(), target)]),
-            },
-            &digest,
-            Label::Paste,
-            check,
-        )
+        Ok(crate::execute::Staged {
+            doc,
+            selection,
+            aliases: BTreeMap::from([("pasted".into(), target)]),
+        })
     }
 }
 impl Preparation {
