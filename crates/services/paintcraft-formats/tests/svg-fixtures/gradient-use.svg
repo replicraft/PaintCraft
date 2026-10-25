@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="24"><defs>
+      <linearGradient id="paint"><stop stop-color="#123456"/><stop offset="1" stop-color="#edcba9"/></linearGradient>
+      <rect id="tile" width="22" height="24"/>
+      </defs><style>.painted { fill: url(#paint); }</style>
+      <g class="painted"><use href="#tile"/><use href="#tile" x="26"/></g></svg>

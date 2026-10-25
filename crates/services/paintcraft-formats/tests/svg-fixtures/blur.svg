@@ -1,0 +1,2 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="32"><defs><filter id="blur" x="0" y="0" width="48" height="32" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="1.25"/></filter></defs>
+      <rect x="12" y="8" width="24" height="16" rx="4" fill="#ee5599" filter="url(#blur)"/></svg>

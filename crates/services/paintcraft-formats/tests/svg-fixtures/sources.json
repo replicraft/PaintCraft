@@ -1,0 +1,59 @@
+{
+    "generator": "Authored SVG, Python struct/zlib arithmetic PNG; no third-party artwork",
+    "files": [
+        {
+            "name": "aligned",
+            "width": 32,
+            "height": 16,
+            "source_sha256": "dc002a23c60d87ed100886741ec91b662200e78d631f65a1d459712568dbbe0b"
+        },
+        {
+            "name": "gradient-use",
+            "width": 48,
+            "height": 24,
+            "source_sha256": "152301e5f70863b85ea7e44833b85f3f9f26d8fbaf228cb51a72b70849e65420"
+        },
+        {
+            "name": "mask-clip",
+            "width": 32,
+            "height": 32,
+            "source_sha256": "8233d45e9286ec0b5888628cdff2ecd2545f7aacb295762e194287190090fbd4"
+        },
+        {
+            "name": "blur",
+            "width": 48,
+            "height": 32,
+            "source_sha256": "f3fc5dddf71e4b4b4e6c5ce885a9ca6319a68dbbe7df1f6c95c29a11e9054451"
+        },
+        {
+            "name": "curves",
+            "width": 64,
+            "height": 48,
+            "source_sha256": "d4f50af4a14f9ad46740e2ba32916893e1d69e0abfc4bd1f9a08c3fdb4ac1e65"
+        },
+        {
+            "name": "text",
+            "width": 128,
+            "height": 32,
+            "source_sha256": "3c400dd76fccf98d01b963fa11ae2bd7feeb3425ee605a824c0a5707cf3a4d06"
+        },
+        {
+            "name": "embedded",
+            "width": 16,
+            "height": 8,
+            "source_sha256": "40dd2105ea5464375e916ffe1863b66937b6dba0ef35e324f0d36fdd5c57fab0"
+        },
+        {
+            "name": "embedded-css",
+            "width": 16,
+            "height": 8,
+            "source_sha256": "07b225e7713547defcc8f569684fe0eed3876304813adcfe39824e794f9b5517"
+        },
+        {
+            "name": "embedded-css-smooth",
+            "width": 16,
+            "height": 8,
+            "source_sha256": "e1ff4c960c71fe49d94929e756730e84f8566eee7ca74f16d19b5303b400be14"
+        }
+    ]
+}
