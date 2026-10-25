@@ -22,6 +22,8 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Command {
+    /// Serve painting tools over the Model Context Protocol (stdio).
+    Mcp(commands::mcp::Options),
     /// Create a native document.
     New(commands::new::Options),
     /// Inspect a document and acquire its concurrency ticket.
@@ -43,6 +45,7 @@ enum Command {
 fn main() -> ExitCode {
     let cli = Cli::parse();
     let reply = match cli.command {
+        Command::Mcp(options) => return commands::mcp::run(options),
         Command::New(a) => commands::new::run(a, cli.json),
         Command::Inspect(a) => commands::inspect::run(a, cli.json),
         Command::Schema(a) => commands::schema::run(a, cli.json),

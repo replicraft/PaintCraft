@@ -258,3 +258,5 @@ pub mod new;
 pub mod paste_image;
 pub mod render;
 pub mod schema;
+
+pub mod mcp;
