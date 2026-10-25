@@ -298,3 +298,5 @@ mod exports;
 mod foreign;
 #[path = "mcp/icons.rs"]
 mod icons;
+#[path = "mcp/svg.rs"]
+mod svg;

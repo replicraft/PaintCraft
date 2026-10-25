@@ -7,6 +7,7 @@ pub struct State {
     pub session: Option<Session>,
     pub source: Option<(PathBuf, String)>,
     pub import_source: Option<PathBuf>,
+    pub import_resources: Vec<PathBuf>,
 }
 
 pub fn invalid(message: &str) -> Error {
@@ -20,6 +21,22 @@ pub fn core_json(value: &Value) -> Result<Json> {
         .map_err(|_| invalid("cannot serialize engine result"))
 }
 impl State {
+    pub fn protect_import_sources(&self, path: &Path) -> Result<()> {
+        if self
+            .import_source
+            .as_ref()
+            .is_some_and(|source| same_file(source, path))
+            || self
+                .import_resources
+                .iter()
+                .any(|source| same_file(source, path))
+        {
+            return Err(invalid(
+                "a converted project or export must not replace its original source or font resources",
+            ));
+        }
+        Ok(())
+    }
     pub fn session(&mut self) -> Result<&mut Session> {
         self.session
             .as_mut()
@@ -74,15 +91,7 @@ impl State {
         {
             return Err(invalid("project saves require a .pcnd filename"));
         }
-        if self
-            .import_source
-            .as_ref()
-            .is_some_and(|source| same_file(source, &path))
-        {
-            return Err(invalid(
-                "a converted project must not replace its original source",
-            ));
-        }
+        self.protect_import_sources(&path)?;
         let source = self.source.clone();
         let inplace = source
             .as_ref()

@@ -24,7 +24,7 @@ fn dcx() -> Vec<u8> {
     }
     bytes
 }
-fn protect_source(c: &mut Client, source: &Path, bytes: &[u8], losses: &[&str]) {
+pub(super) fn protect_source(c: &mut Client, source: &Path, bytes: &[u8], losses: &[&str]) {
     let state = c.ok("inspect_document", json!({}));
     for (ext, tool) in [("pcnd", "save_project"), ("png", "export_image")] {
         let alias = source.with_extension(format!("alias.{ext}"));

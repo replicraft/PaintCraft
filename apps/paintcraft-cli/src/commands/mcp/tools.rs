@@ -1,7 +1,7 @@
 use super::super::format_profile;
 use super::super::{
     BATCH_V2_SCHEMA, Context, INPUT_MAX, ImageFormat, POLICY, PathBuf, Rgba, Session, export,
-    image, new_document, pcnd, read_bounded, same_file, save, write_output,
+    image, new_document, pcnd, read_bounded, save, write_output,
 };
 use super::{
     PaintingServer,
@@ -33,6 +33,7 @@ impl PaintingServer {
             state.session = Some(session);
             state.source = None;
             state.import_source = None;
+            state.import_resources.clear();
             state.inspect()
         })
         .await
@@ -54,6 +55,7 @@ impl PaintingServer {
             state.session = Some(Session::new(doc));
             state.source = Some((path, sha));
             state.import_source = None;
+            state.import_resources.clear();
             state.inspect()
         })
         .await
@@ -64,25 +66,55 @@ impl PaintingServer {
     async fn import_image(&self, Parameters(p): Parameters<Import>) -> CallToolResult {
         self.work(move |state| {
             state.replace_allowed(p.discard_changes)?;
-            if p.page.is_some() && p.entry.is_some() {
-                return Err(invalid("page and entry cannot both be selected"));
+            if usize::from(p.page.is_some())
+                + usize::from(p.entry.is_some())
+                + usize::from(p.svg.is_some())
+                > 1
+            {
+                return Err(invalid(
+                    "page, entry and svg options are mutually exclusive",
+                ));
+            }
+            if let Some(svg) = &p.svg {
+                svg.options()?;
             }
             if let Some(code) = p.allow_losses.iter().find(|code| {
                 !image::KNOWN_IMPORT_LOSSES.contains(&code.as_str())
                     && !paintcraft_formats::project_import::KNOWN_LOSSES.contains(&code.as_str())
                     && !paintcraft_formats::icons::KNOWN_IMPORT_LOSSES.contains(&code.as_str())
+                    && !paintcraft_formats::svg::KNOWN_LOSSES.contains(&code.as_str())
             }) {
                 return Err(invalid(&format!("unknown import loss code {code:?}")));
             }
             let path = PathBuf::from(p.path);
-            let (bytes, sha) = read_bounded(&path, INPUT_MAX, "image")?;
+            let (bytes, sha) = read_bounded(
+                &path,
+                if p.svg.is_some() {
+                    paintcraft_formats::svg::SOURCE_MAX as u64
+                } else {
+                    INPUT_MAX
+                },
+                "image",
+            )?;
             let profile = format_profile::Options::default();
-            let family = match (p.page, p.entry) {
-                (Some(page), _) => profile.admit_import_page(&path, &bytes, page)?,
-                (_, Some(entry)) => profile.admit_import_entry(&path, &bytes, entry)?,
-                _ => profile.admit_import(&path, &bytes)?,
+            let family = if p.svg.is_some() {
+                profile.admit_import_svg(&path, &bytes)?
+            } else {
+                match (p.page, p.entry) {
+                    (Some(page), _) => profile.admit_import_page(&path, &bytes, page)?,
+                    (_, Some(entry)) => profile.admit_import_entry(&path, &bytes, entry)?,
+                    _ => profile.admit_import(&path, &bytes)?,
+                }
             };
-            let (doc, losses) = if paintcraft_formats::project_import::supports(family) {
+            let (doc, losses) = if let Some(svg) = &p.svg {
+                if !p.allow_losses.iter().any(|code| code == "svg-rasterized") {
+                    return Err(paintcraft_core::types::Error::new(
+                        paintcraft_core::types::ErrorCode::CapabilityUnsupported,
+                        "SVG rasterization requires svg-rasterized in allow_losses",
+                    ));
+                }
+                svg.convert(&bytes, &sha)?
+            } else if paintcraft_formats::project_import::supports(family) {
                 let converted = paintcraft_formats::project_import::decode_layered(
                     family,
                     &bytes,
@@ -134,6 +166,10 @@ impl PaintingServer {
             // A picture is not a native project binding: saving must not replace its source implicitly.
             state.source = None;
             state.import_source = Some(path);
+            state.import_resources = p
+                .svg
+                .map(|selection| selection.font_files)
+                .unwrap_or_default();
             state.inspect()
         })
         .await
@@ -235,14 +271,7 @@ impl PaintingServer {
     async fn export_image(&self, Parameters(p): Parameters<Export>) -> CallToolResult {
         self.work(move |s| {
             let path = PathBuf::from(p.path);
-            if s.import_source
-                .as_ref()
-                .is_some_and(|source| same_file(source, &path))
-            {
-                return Err(invalid(
-                    "an exported image must not replace its imported source",
-                ));
-            }
+            s.protect_import_sources(&path)?;
             let format = ImageFormat::from_extension(&path)
                 .ok_or_else(|| invalid("unsupported image extension"))?;
             if p.pcx_encoding.is_some() && format != ImageFormat::Pcx {

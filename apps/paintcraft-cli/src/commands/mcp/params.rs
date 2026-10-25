@@ -26,6 +26,8 @@ pub struct Import {
     pub page: Option<u16>,
     /// Explicit zero-based ICO/CUR entry. Required for icons/cursors; conflicts with page.
     pub entry: Option<u16>,
+    /// SVG/SVGZ only: explicit dimensions, optional DPI/fitting and font files.
+    pub svg: Option<super::super::svg_options::Selection>,
     /// Explicitly acknowledge source information that RGBA8 cannot preserve.
     #[serde(default)]
     pub allow_losses: Vec<String>,

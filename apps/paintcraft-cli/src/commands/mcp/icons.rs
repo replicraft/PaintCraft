@@ -64,14 +64,11 @@ impl PaintingServer {
         self.work(move |state| {
             icons::check_export_loss_codes(&p.allow_losses)?;
             let path = PathBuf::from(p.path);
+            state.protect_import_sources(&path)?;
             if state
-                .import_source
+                .source
                 .as_ref()
-                .is_some_and(|source| same_file(source, &path))
-                || state
-                    .source
-                    .as_ref()
-                    .is_some_and(|(source, _)| same_file(source, &path))
+                .is_some_and(|(source, _)| same_file(source, &path))
             {
                 return Err(invalid("an exported icon must not replace its source"));
             }
