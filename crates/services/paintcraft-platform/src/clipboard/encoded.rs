@@ -7,18 +7,32 @@ pub const MAX_ENCODED_BYTES: u64 = 64 << 20;
 pub enum Encoding {
     Png,
     Tiff,
+    Dib,
+    DibV5,
 }
 impl Encoding {
     pub fn mime(self) -> &'static str {
         match self {
             Self::Png => "image/png",
             Self::Tiff => "image/tiff",
+            Self::Dib | Self::DibV5 => "image/x-dib",
         }
     }
     fn matches(self, bytes: &[u8]) -> bool {
         match self {
             Self::Png => bytes.starts_with(b"\x89PNG\r\n\x1a\n"),
             Self::Tiff => bytes.starts_with(b"II*\0") || bytes.starts_with(b"MM\0*"),
+            Self::Dib | Self::DibV5 => bytes
+                .get(..4)
+                .and_then(|v| v.try_into().ok())
+                .map(u32::from_le_bytes)
+                .is_some_and(|size| {
+                    if self == Self::DibV5 {
+                        size == 124
+                    } else {
+                        matches!(size, 40 | 108 | 124)
+                    }
+                }),
         }
     }
 }

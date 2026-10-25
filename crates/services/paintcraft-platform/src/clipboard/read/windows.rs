@@ -1,4 +1,4 @@
-//! Encoded PNG/TIFF transport only. DIB and native image conversion are separate.
+//! Frozen encoded image transport; all DIB layout/pixel decoding stays in formats.
 use super::*;
 use crate::clipboard::Encoding;
 
@@ -22,7 +22,7 @@ fn capture(
     let &(format, encoding) = preferred
         .iter()
         .find(|(id, _)| formats.contains(id))
-        .ok_or("Clipboard does not contain an advertised PNG or TIFF image")?;
+        .ok_or("Clipboard does not contain an advertised supported image")?;
     let length = board.length(format)?;
     // GetClipboardData may realize a delayed format. Pin its generation after
     // the initial size query, not before legitimate provider rendering.
@@ -97,6 +97,8 @@ mod native {
                 &[
                     (png, Encoding::Png),
                     (mime_png, Encoding::Png),
+                    (clipboard_win::formats::CF_DIBV5, Encoding::DibV5),
+                    (clipboard_win::formats::CF_DIB, Encoding::Dib),
                     (clipboard_win::formats::CF_TIFF, Encoding::Tiff),
                 ],
                 budget,

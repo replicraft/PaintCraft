@@ -3,6 +3,8 @@ use std::cell::Cell;
 const PREFERRED: &[(u32, Encoding)] = &[
     (100, Encoding::Png),
     (101, Encoding::Png),
+    (17, Encoding::DibV5),
+    (8, Encoding::Dib),
     (6, Encoding::Tiff),
 ];
 struct Board {
@@ -125,7 +127,7 @@ fn admission_type_count_and_encoded_size_fail_before_copying() {
             1 => board.length = crate::clipboard::MAX_ENCODED_BYTES as usize + 1,
             2 => board.length = 0,
             3 => board.formats = (0..257).collect(),
-            _ => board.formats = vec![8, 17],
+            _ => board.formats = vec![99],
         }
         assert!(board.capture().is_err());
         assert_eq!(board.copied, 0);
@@ -153,4 +155,31 @@ fn delayed_realization_is_pinned_after_size_query_and_cancellation_never_exposes
         assert!(result.is_err());
         assert_eq!(budget.usage().reserved, 0);
     }
+}
+
+#[test]
+fn declared_dibv5_precedes_dib_and_tiff_without_decoding_or_reframing() {
+    for (formats, kind, size) in [
+        (vec![17, 8, 6], Encoding::DibV5, 124u32),
+        (vec![8, 6], Encoding::Dib, 40u32),
+    ] {
+        let mut board = Board::new();
+        board.formats = formats;
+        board.data = vec![0; size as usize];
+        board.data[..4].copy_from_slice(&size.to_le_bytes());
+        board.length = board.data.len();
+        let expected = board.data.clone();
+        let image = board.capture().unwrap();
+        assert_eq!(image.encoding(), kind);
+        assert_eq!(image.bytes(), expected);
+        assert_eq!(board.copied, 1);
+    }
+    let mut board = Board::new();
+    board.formats = vec![17, 8];
+    board.data = vec![0; 40];
+    board.data[..4].copy_from_slice(&40u32.to_le_bytes());
+    board.length = 40;
+    assert!(board.capture().is_err());
+    assert_eq!(board.copied, 1);
+    assert_eq!(board.budget.usage().reserved, 0);
 }

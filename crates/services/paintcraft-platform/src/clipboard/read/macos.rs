@@ -32,6 +32,7 @@ fn capture_board(
         let mime = NSString::from_str(match encoding {
             Encoding::Png => "public.png",
             Encoding::Tiff => "public.tiff",
+            Encoding::Dib | Encoding::DibV5 => return Err("DIB transport is Windows-only".into()),
         });
         // Ask only for an advertised type, avoiding native image conversion.
         if !types.containsObject(&mime) {

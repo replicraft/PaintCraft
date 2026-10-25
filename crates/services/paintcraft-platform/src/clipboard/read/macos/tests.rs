@@ -12,6 +12,7 @@ fn put(board: &NSPasteboard, kind: Encoding, bytes: &[u8]) {
     let mime = NSString::from_str(match kind {
         Encoding::Png => "public.png",
         Encoding::Tiff => "public.tiff",
+        Encoding::Dib | Encoding::DibV5 => panic!("DIB is not a macOS fixture flavor"),
     });
     assert!(
         board.setData_forType(Some(&NSData::with_bytes(bytes)), &mime),
