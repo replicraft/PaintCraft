@@ -40,6 +40,7 @@ pub struct WebApp {
     pub(crate) import_owner: Option<crate::importing::Owner>,
     form: Option<forms::Form>,
     pub(crate) message: String,
+    pub(crate) paste: crate::paste_ui::State,
     pub(crate) clipboard: crate::clipboard_ui::State,
 }
 
@@ -86,6 +87,7 @@ impl WebApp {
             import_owner: None,
             form: None,
             clipboard: Default::default(),
+            paste: Default::default(),
             message: warning.unwrap_or_else(|| {
                 "Ready - Save downloads a project copy; work stays in this tab".into()
             }),
@@ -93,7 +95,8 @@ impl WebApp {
     }
 
     pub(crate) fn blocked(&self) -> bool {
-        self.settings
+        self.paste.modal()
+            || self.settings
             || self.export_confirm.is_some()
             || self.confirm_replace.is_some()
             || self.files.busy
@@ -113,7 +116,9 @@ impl WebApp {
             can_undo: self.editor.session.undo_depth() > 0 || self.editor.has_text(),
             can_redo: self.editor.session.redo_depth() > 0,
             can_recent: false,
-            can_paste: false,
+            can_paste: crate::clipboard::read_supported()
+                && !self.paste.busy()
+                && !self.clipboard.busy(),
             can_save_all: false,
             selection_active: self.editor.session.selection()
                 != paintcraft_editor::execute::Selection::Inactive,
@@ -211,9 +216,7 @@ impl WebApp {
             Action::Copy => self.copy_requested(ctx),
             Action::Cut => self.cut_requested(ctx),
             Action::CopyVisible => self.copy_visible_requested(ctx),
-            Action::PasteLayer => {
-                self.message = t!(ctx, "Canvas clipboard operations are not available yet.")
-            }
+            Action::PasteLayer => self.paste_requested(ctx),
             Action::Crop => self.edit(Edit::CropToSelection),
             Action::EraseSelection => self.edit(Edit::EraseSelection {
                 color: paintcraft_tools::commands::canvas_color(self.editor.session.document()),
@@ -360,7 +363,7 @@ impl WebApp {
         }
     }
 
-    fn remember_canvas_size(&mut self, size: (u32, u32)) {
+    pub(crate) fn remember_canvas_size(&mut self, size: (u32, u32)) {
         if self.preferences.canvas.last != Some(size) {
             self.preferences.canvas.last = Some(size);
             self.persist_preferences();
@@ -402,6 +405,20 @@ impl WebApp {
     }
 
     pub(crate) fn keyboard_event(&mut self, ctx: &egui::Context, event: &egui::Event) -> bool {
+        if self.paste.busy()
+            && !self.paste.modal()
+            && matches!(
+                event,
+                egui::Event::Key {
+                    key: egui::Key::Escape,
+                    pressed: true,
+                    ..
+                }
+            )
+        {
+            self.cancel_paste(ctx);
+            return true;
+        }
         if self.blocked()
             || self.text.widget_owned_input
             || ctx.egui_wants_keyboard_input()
@@ -454,6 +471,7 @@ impl WebApp {
                         | egui::Key::U
                         | egui::Key::C
                         | egui::Key::X
+                        | egui::Key::V
                 )
             {
                 return false;
@@ -473,6 +491,7 @@ impl WebApp {
         if ctx.current_pass_index() == 0 {
             self.poll_files(&ctx);
             self.poll_copy(&ctx);
+            self.poll_paste(&ctx);
         }
         self.text.widget_owned_input =
             ctx.egui_wants_keyboard_input() || egui::Popup::is_any_open(&ctx);
@@ -545,6 +564,7 @@ impl WebApp {
         });
         self.dialogs(&ctx);
         self.show_form(&ctx);
+        self.paste_dialog(&ctx);
     }
 
     fn dialogs(&mut self, ctx: &egui::Context) {

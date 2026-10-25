@@ -8,6 +8,7 @@ mod files;
 mod floating_ui;
 mod importing;
 mod layers;
+mod paste_ui;
 mod preferences;
 mod selection_ui;
 mod text_ui;

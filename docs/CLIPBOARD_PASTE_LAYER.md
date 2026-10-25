@@ -7,8 +7,9 @@ its X/Y position, optionally grow the canvas right/down, and accept known import
 limitations before applying. Cancel or Escape leaves the document unchanged.
 
 This is a PaintCraft extension. Ordinary Paste/Cmd+V, active-layer placement,
-on-canvas dragging, browser image Paste and Windows/Linux/FreeBSD readers remain
-unfinished. The legacy Paste control stays disabled. Classic 7/10 expose the
+on-canvas dragging, Windows/Linux/FreeBSD readers remain
+unfinished. [Browser Paste as new layer](BROWSER_CLIPBOARD_PASTE.md) now connects
+the same transaction to supported browser PNG reads. The legacy Paste control stays disabled. Classic 7/10 expose the
 extension through the shortcut and native macOS Edit menu.
 
 ## Ownership and publication

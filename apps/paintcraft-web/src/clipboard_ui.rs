@@ -7,7 +7,7 @@ use paintcraft_ui::t;
 
 #[derive(Debug)]
 pub(crate) struct State {
-    budget: SharedBudget,
+    pub(crate) budget: SharedBudget,
     job: Option<clipboard::Job>,
     capture: Option<Capture>,
     last: Option<Capture>,
@@ -24,6 +24,11 @@ impl Default for State {
             activation: None,
             cut: None,
         }
+    }
+}
+impl State {
+    pub(crate) fn busy(&self) -> bool {
+        self.job.is_some()
     }
 }
 impl WebApp {
@@ -69,7 +74,8 @@ impl WebApp {
             return;
         }
         self.clipboard.activation = Some(ctx.cumulative_frame_nr());
-        if self.clipboard.job.is_some()
+        if self.paste.busy()
+            || self.clipboard.job.is_some()
             || self.blocked()
             || self.editor.tools.gesture_in_progress()
             || self.editor.tools.floating_selection().is_some()
