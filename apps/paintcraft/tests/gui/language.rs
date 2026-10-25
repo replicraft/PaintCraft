@@ -2,7 +2,7 @@ use super::*;
 use paintcraft::settings::{ClassicVariant, Experience, Settings};
 use paintcraft_ui::i18n::Language;
 #[test]
-fn japanese_settings_preview_cancel_and_apply_preserve_the_document_for_every_skin() {
+fn japanese_settings_stage_cancel_and_apply_preserve_the_document_for_every_skin() {
     for (experience, variant) in [
         (Experience::Classic, ClassicVariant::V7),
         (Experience::Classic, ClassicVariant::V10),
@@ -28,11 +28,11 @@ fn japanese_settings_preview_cancel_and_apply_preserve_the_document_for_every_sk
         h.get_by_label("日本語").click();
         h.run();
         h.run();
-        assert_eq!(paintcraft_ui::i18n::language(&h.ctx), Language::Japanese);
-        h.get_by_label("テキストの設定").click();
+        assert_eq!(paintcraft_ui::i18n::language(&h.ctx), Language::English);
+        h.get_by_label("Text preferences").click();
         h.run();
-        assert!(h.query_by_label("既定のフォント").is_some());
-        h.get_by_label("キャンセル").click();
+        assert!(h.query_by_label("Default font").is_some());
+        h.get_by_label("Cancel").click();
         h.run();
         assert_eq!(paintcraft_ui::i18n::language(&h.ctx), Language::English);
         assert_eq!(Settings::load(&dir).0.language, Language::English);
@@ -43,7 +43,7 @@ fn japanese_settings_preview_cancel_and_apply_preserve_the_document_for_every_sk
         h.get_by_label("日本語").click();
         h.run();
         h.run();
-        h.get_by_label("適用").click();
+        h.get_by_label("Apply").click();
         h.run();
         assert_eq!(Settings::load(&dir).0.language, Language::Japanese);
         assert!(h.state().editor().document().same_semantics(&doc));
@@ -141,7 +141,7 @@ fn japanese_classic_translates_tool_sizes_view_and_selection_menus() {
 
 #[test]
 fn all_language_choices_apply_persist_and_restore_in_classic_and_studio() {
-    use paintcraft_ui::i18n::{language, translate};
+    use paintcraft_ui::i18n::language;
     for experience in [Experience::Classic, Experience::Studio] {
         for selected in Language::ALL {
             let dir = scratch(&format!("locale-{}-{experience:?}", selected.id()));
@@ -162,8 +162,8 @@ fn all_language_choices_apply_persist_and_restore_in_classic_and_studio() {
             h.run();
             h.get_by_label(selected.name()).click();
             h.run();
-            assert_eq!(language(&h.ctx), selected);
-            h.get_by_label(&translate(selected, "Apply")).click();
+            assert_eq!(language(&h.ctx), Language::English);
+            h.get_by_label("Apply").click();
             h.run();
             assert_eq!(Settings::load(&dir).0.language, selected);
             assert!(h.state().editor().document().same_semantics(&original));

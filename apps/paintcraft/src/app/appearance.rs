@@ -128,14 +128,8 @@ impl App {
     pub(super) fn apply_style(&mut self, ctx: &egui::Context) {
         let v = self.variant();
         let experience = self.experience();
-        let appearance = match &self.confirm {
-            Some(Confirm::Settings(draft)) => draft.values.appearance,
-            _ => self.settings.appearance,
-        };
-        let language = match &self.confirm {
-            Some(Confirm::Settings(draft)) => draft.values.language,
-            _ => self.settings.language,
-        };
+        let appearance = self.settings.appearance;
+        let language = self.settings.language;
         set_language(ctx, language);
         let preferred = appearance.resolve(ctx.system_theme());
         let theme = if experience == Experience::Classic {

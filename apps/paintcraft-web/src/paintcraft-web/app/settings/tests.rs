@@ -1,6 +1,6 @@
 use super::*;
 use egui_kittest::{Harness, kittest::Queryable};
-use paintcraft_ui::i18n::{Language, language, translate};
+use paintcraft_ui::i18n::{Language, language};
 use std::sync::Arc;
 
 fn harness(variant: ClassicVariant, size: egui::Vec2) -> Harness<'static, WebApp> {
@@ -43,7 +43,7 @@ fn settings_match_desktop_navigation_and_cancel_restores_theme_for_every_skin_an
                 h.run();
                 h.get_by_label("Dark").click();
                 h.run();
-                assert_eq!(h.ctx.theme(), egui::Theme::Dark);
+                assert_eq!(h.ctx.theme(), egui::Theme::Light);
             } else {
                 assert!(h.query_by_label("Dark").is_none());
                 assert_eq!(h.ctx.theme(), egui::Theme::Light);
@@ -80,7 +80,7 @@ fn apply_adopts_theme_and_skin_without_document_history_or_pixels() {
     assert!(h.query_by_label("Dark").is_none());
     h.get_by_label(ClassicVariant::V10.name()).click();
     h.run();
-    assert_eq!(h.ctx.theme(), egui::Theme::Dark);
+    assert_eq!(h.ctx.theme(), egui::Theme::Light);
     h.get_by_label("Apply").click();
     h.run();
     assert_eq!(h.state().preferences.theme, Some(egui::Theme::Dark));
@@ -143,16 +143,15 @@ fn text_preferences_and_about_share_desktop_controls_and_preserve_pixels() {
     assert!(Arc::ptr_eq(&original, &h.state().editor.session.snapshot()));
 }
 #[test]
-fn cancelling_language_preview_keeps_saved_choices_and_restores_real_chrome() {
+fn cancelling_staged_language_keeps_saved_choices_and_real_chrome() {
     let mut h = harness(ClassicVariant::V11, egui::vec2(1360.0, 900.0));
     h.get_by_label("Language").click();
     h.run();
     h.get_by_label("日本語").click();
     h.run();
-    assert_eq!(language(&h.ctx), Language::Japanese);
+    assert_eq!(language(&h.ctx), Language::English);
     assert_eq!(h.state().preferences.language, Language::English);
-    h.get_by_label(&translate(Language::Japanese, "Cancel"))
-        .click();
+    h.get_by_label("Cancel").click();
     h.run();
     assert_eq!(language(&h.ctx), Language::English);
     assert_eq!(h.state().preferences.language, Language::English);
@@ -161,3 +160,38 @@ fn cancelling_language_preview_keeps_saved_choices_and_restores_real_chrome() {
             .is_some()
     );
 }
+
+#[test]
+fn skin_and_theme_are_staged_and_paint7_restores_the_preferred_theme_only_after_apply() {
+    let mut h = super::super::chrome_tests::harness(Frontend::Classic, ClassicVariant::V11, 1360.0);
+    let ticket = h.state().editor.session.ticket();
+    h.get_by_label("Settings…").click();
+    h.run();
+    h.get_by_label(ClassicVariant::V7.name()).click();
+    h.run();
+    assert_eq!(h.ctx.theme(), egui::Theme::Dark);
+    assert_eq!(h.state().variant, ClassicVariant::V11);
+    h.get_by_label("Cancel").click();
+    h.run();
+    assert_eq!(h.ctx.theme(), egui::Theme::Dark);
+    h.get_by_label("Settings…").click();
+    h.run();
+    h.get_by_label(ClassicVariant::V7.name()).click();
+    h.run();
+    h.get_by_label("Apply").click();
+    h.run();
+    assert_eq!(h.state().variant, ClassicVariant::V7);
+    assert_eq!(h.ctx.theme(), egui::Theme::Light);
+    h.get_by_label("Settings…").click();
+    h.run();
+    h.get_by_label(ClassicVariant::V11.name()).click();
+    h.run();
+    assert_eq!(h.ctx.theme(), egui::Theme::Light);
+    assert_eq!(h.state().variant, ClassicVariant::V7);
+    h.get_by_label("Apply").click();
+    h.run();
+    assert_eq!(h.ctx.theme(), egui::Theme::Dark);
+    assert_eq!(h.state().variant, ClassicVariant::V11);
+    assert_eq!(h.state().editor.session.ticket(), ticket);
+}
+

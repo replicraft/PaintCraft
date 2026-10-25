@@ -16,6 +16,12 @@ fn browser_language_changes_real_chrome_settings_and_keeps_document_pixels() {
     h.get_by_label("日本語").click();
     h.run();
     h.run();
+    assert_eq!(paintcraft_ui::i18n::language(&h.ctx), Language::English);
+    h.get_by_label("Apply").click();
+    h.run();
+    h.get_by_label(&translate(Language::Japanese, "Settings…"))
+        .click();
+    h.run();
     assert_eq!(paintcraft_ui::i18n::language(&h.ctx), Language::Japanese);
     assert!(
         h.query_by_label(&translate(Language::Japanese, "Dark"))
@@ -61,6 +67,11 @@ fn browser_offers_every_language_and_translates_actual_settings_chrome() {
             );
         }
         h.get_by_label(selected.name()).click();
+        h.run();
+        assert_eq!(language(&h.ctx), Language::English);
+        h.get_by_label("Apply").click();
+        h.run();
+        h.get_by_label(&translate(selected, "Settings…")).click();
         h.run();
         assert_eq!(language(&h.ctx), selected);
         h.get_by_label(&translate(selected, "Text preferences"))

@@ -68,3 +68,4 @@ about = 关于
 paintcraft-by-replicraft = PaintCraft by Replicraft
 
 paint-7-uses-light-mode-your-preferred-theme-returns-with-other-skins = Paint 7 使用浅色模式。切换到其他皮肤后将恢复你偏好的主题。
+changes-take-effect-when-you-select-apply = 选择“应用”后更改才会生效。

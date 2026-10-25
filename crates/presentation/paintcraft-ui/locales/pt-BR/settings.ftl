@@ -68,3 +68,4 @@ about = Sobre
 paintcraft-by-replicraft = PaintCraft by Replicraft
 
 paint-7-uses-light-mode-your-preferred-theme-returns-with-other-skins = O Paint 7 usa o modo claro. Seu tema preferido volta ao mudar de visual.
+changes-take-effect-when-you-select-apply = As alterações entram em vigor ao selecionar Aplicar.

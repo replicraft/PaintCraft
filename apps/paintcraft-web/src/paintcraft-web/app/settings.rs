@@ -9,18 +9,11 @@ pub(super) struct Draft {
     values: Preferences,
     page: Page,
     search: String,
-    original_theme: egui::ThemePreference,
 }
 impl WebApp {
     pub(super) fn refresh_appearance(&mut self, ctx: &egui::Context) {
-        let values = self
-            .settings_draft
-            .as_ref()
-            .map_or(&self.preferences, |draft| &draft.values);
-        let variant = self
-            .settings_draft
-            .as_ref()
-            .map_or(self.variant, |draft| draft.values.variant);
+        let values = &self.preferences;
+        let variant = self.variant;
         let preferred = values
             .theme
             .unwrap_or_else(|| ctx.system_theme().unwrap_or(egui::Theme::Light));
@@ -51,7 +44,6 @@ impl WebApp {
             values: self.preferences.clone(),
             page: Page::Appearance,
             search: String::new(),
-            original_theme: ctx.options(|options| options.theme_preference),
         });
     }
     pub(super) fn settings_dialog(&mut self, ctx: &egui::Context) {
@@ -79,7 +71,6 @@ impl WebApp {
         match response {
             Response::Cancel => {
                 self.settings = false;
-                ctx.set_theme(draft.original_theme);
                 set_language(ctx, self.preferences.language);
                 self.refresh_appearance(ctx);
             }
@@ -107,16 +98,6 @@ impl WebApp {
         }
         if response != Response::Pending {
             ctx.request_repaint();
-        }
-        if let Some(draft) = &self.settings_draft {
-            set_language(ctx, draft.values.language);
-            ctx.set_theme(
-                draft
-                    .values
-                    .theme
-                    .map_or(egui::ThemePreference::System, Into::into),
-            );
-            self.refresh_appearance(ctx);
         }
     }
 }
@@ -184,10 +165,7 @@ fn appearance(ui: &mut egui::Ui, values: &mut Preferences, classic: bool) {
         picker(ui, &mut values.language);
     });
     card(ui, "App theme", |ui| {
-        ui.weak(t!(
-            ui.ctx(),
-            "Preview the theme now. Apply saves your choice; Cancel restores it."
-        ));
+        ui.weak(t!(ui.ctx(), "Changes take effect when you select Apply."));
         if classic && values.variant == ClassicVariant::V7 {
             ui.label(t!(
                 ui.ctx(),

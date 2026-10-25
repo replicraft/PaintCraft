@@ -22,7 +22,7 @@ fn configured(
 }
 
 #[test]
-fn theme_preview_cancel_and_apply_preserve_document_and_survive_restart() {
+fn theme_staging_cancel_and_apply_preserve_document_and_survive_restart() {
     for experience in [Experience::Classic, Experience::Studio] {
         let (mut h, dir) = configured("preview", experience, Appearance::Light);
         let original = h.state().editor().document_snapshot();
@@ -31,12 +31,7 @@ fn theme_preview_cancel_and_apply_preserve_document_and_survive_restart() {
         h.run();
         h.get_by_label("Dark").click();
         h.run();
-        assert_eq!(h.ctx.theme(), eframe::egui::Theme::Dark);
-        let visuals = &h.ctx.style_of(eframe::egui::Theme::Dark).visuals;
-        assert!(
-            visuals.panel_fill.r() < 80 && visuals.window_fill.r() < 80,
-            "dark surfaces must follow the theme in both frontends"
-        );
+        assert_eq!(h.ctx.theme(), eframe::egui::Theme::Light);
         assert_eq!(std::fs::read(dir.join("settings.json")).unwrap(), saved);
         h.get_by_label("Cancel").click();
         h.run();
@@ -245,7 +240,7 @@ fn settings_pages_fit_small_windows_and_cancel_keeps_drafts_out_of_preferences_a
         h.run();
         h.get_by_label("Dark").click();
         h.run();
-        assert_eq!(h.ctx.theme(), eframe::egui::Theme::Dark);
+        assert_eq!(h.ctx.theme(), eframe::egui::Theme::Light);
         h.get_by_role_and_label(Role::Button, "Canvas").click();
         h.run();
         h.get_by_role_and_label(Role::SpinButton, "Default width")
@@ -294,8 +289,8 @@ fn narrow_settings_apply_persists_theme_and_canvas_defaults_without_resizing_the
     h.run();
     assert_eq!(
         h.ctx.theme(),
-        eframe::egui::Theme::Dark,
-        "theme must preview before Apply"
+        eframe::egui::Theme::Light,
+        "theme must stay unchanged before Apply"
     );
     h.get_by_role_and_label(Role::Button, "Canvas").click();
     h.run();
@@ -337,7 +332,7 @@ fn classic_settings_descriptions_remain_readable_against_their_actual_card_surfa
             let Shape::Text(text) = &shape.shape else {
                 continue;
             };
-            if !text.galley.job.text.starts_with("Preview the theme now.")
+            if !text.galley.job.text.starts_with("Changes take effect when")
                 && !text
                     .galley
                     .job
@@ -390,3 +385,4 @@ fn classic_settings_descriptions_remain_readable_against_their_actual_card_surfa
         0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b)
     }
 }
+

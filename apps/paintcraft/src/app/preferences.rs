@@ -1,4 +1,4 @@
-//! Application settings with reversible theme preview and explicit adoption.
+//! Application settings with staged choices and explicit adoption.
 use super::*;
 use paintcraft_classic::settings::{Page, Response, card};
 use paintcraft_ui::i18n::picker;
@@ -106,10 +106,7 @@ fn appearance(ui: &mut egui::Ui, values: &mut Settings) {
         picker(ui, &mut values.language);
     });
     card(ui, "App theme", |ui| {
-        ui.weak(t!(
-            ui.ctx(),
-            "Preview the theme now. Apply saves your choice; Cancel restores it.",
-        ));
+        ui.weak(t!(ui.ctx(), "Changes take effect when you select Apply.",));
         if values.experience == Experience::Classic
             && values.classic_variant == Some(ClassicVariant::V7)
         {
