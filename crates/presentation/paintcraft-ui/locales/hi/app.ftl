@@ -180,3 +180,8 @@ accept-import-limitations = आयात सीमाएँ स्वीका�
 drag-to-position-enter-places-escape-cancels = स्थान तय करने के लिए खींचें; Enter से रखें, Escape से रद्द करें।
 
 finish-placing-the-pasted-image-before-editing-or-saving = संपादन या सहेजने से पहले चिपकाई गई छवि को रखना पूरा करें।
+printing = प्रिंट हो रहा है
+preparing-the-document-or-waiting-for-the-print-dialog = दस्तावेज़ तैयार किया जा रहा है या प्रिंट संवाद की प्रतीक्षा है।
+print-dialog-closed = प्रिंट संवाद बंद हो गया।
+printing-is-unavailable-or-the-browser-denied-the-request = प्रिंट उपलब्ध नहीं है या ब्राउज़र ने अनुरोध अस्वीकार कर दिया।
+finish-text-composition-before-printing = प्रिंट करने से पहले पाठ लिखना पूरा करें।

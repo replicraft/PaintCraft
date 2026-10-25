@@ -12,6 +12,7 @@ impl WebApp {
             self.poll_files(&ctx);
             self.poll_copy(&ctx);
             self.poll_paste(&ctx);
+            self.poll_print();
         }
         self.text.widget_owned_input =
             ctx.egui_wants_keyboard_input() || egui::Popup::is_any_open(&ctx);
@@ -118,6 +119,7 @@ impl WebApp {
         self.show_thumbnail(&ctx);
         self.dialogs(&ctx);
         self.show_form(&ctx);
+        self.print_progress(&ctx);
         self.paste_dialog(&ctx);
     }
 }

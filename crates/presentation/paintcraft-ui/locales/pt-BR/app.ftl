@@ -180,3 +180,8 @@ accept-import-limitations = Aceitar limitações de importação
 drag-to-position-enter-places-escape-cancels = Arraste para posicionar; Enter aplica e Esc cancela.
 
 finish-placing-the-pasted-image-before-editing-or-saving = Conclua o posicionamento da imagem colada antes de editar ou salvar.
+printing = Imprimindo
+preparing-the-document-or-waiting-for-the-print-dialog = Preparando o documento ou aguardando a caixa de diálogo de impressão.
+print-dialog-closed = Caixa de diálogo de impressão fechada.
+printing-is-unavailable-or-the-browser-denied-the-request = A impressão não está disponível ou o navegador recusou a solicitação.
+finish-text-composition-before-printing = Conclua a digitação do texto antes de imprimir.

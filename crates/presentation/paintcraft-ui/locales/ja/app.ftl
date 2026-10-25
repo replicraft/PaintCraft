@@ -180,3 +180,8 @@ accept-import-limitations = 読み込み制限を受け入れる
 drag-to-position-enter-places-escape-cancels = ドラッグで位置を調整。Enter で配置、Escape でキャンセル。
 
 finish-placing-the-pasted-image-before-editing-or-saving = 編集や保存の前に、貼り付けた画像の配置を完了してください。
+printing = 印刷中
+preparing-the-document-or-waiting-for-the-print-dialog = ドキュメントを準備中、または印刷ダイアログの終了を待っています。
+print-dialog-closed = 印刷ダイアログを閉じました。
+printing-is-unavailable-or-the-browser-denied-the-request = 印刷を利用できないか、ブラウザーが要求を拒否しました。
+finish-text-composition-before-printing = 印刷する前に文字の変換を確定してください。

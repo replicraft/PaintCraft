@@ -180,3 +180,8 @@ accept-import-limitations = Accept import limitations
 drag-to-position-enter-places-escape-cancels = Drag to position; Enter places, Escape cancels.
 
 finish-placing-the-pasted-image-before-editing-or-saving = Finish placing the pasted image before editing or saving.
+printing = Printing
+preparing-the-document-or-waiting-for-the-print-dialog = Preparing the document or waiting for the print dialog.
+print-dialog-closed = Print dialog closed.
+printing-is-unavailable-or-the-browser-denied-the-request = Printing is unavailable or the browser denied the request.
+finish-text-composition-before-printing = Finish text composition before printing.

@@ -31,6 +31,7 @@ pub struct WebApp {
     pub(crate) studio: paintcraft_studio::Workspace,
     parked: Option<Box<interfaces::Parked>>,
     fullscreen: crate::fullscreen::State,
+    pub(crate) printer: crate::printing::State,
     pub(crate) controls: Controls,
     pub(crate) editor: Editor,
     pub(crate) canvas: Canvas,
@@ -70,6 +71,7 @@ impl WebApp {
             studio: Default::default(),
             parked: None,
             fullscreen: Default::default(),
+            printer: Default::default(),
             controls: Controls {
                 tool: Tool::Brush,
                 options: ToolOptions::default(),
@@ -112,7 +114,8 @@ impl WebApp {
     }
 
     pub(crate) fn blocked(&self) -> bool {
-        self.paste.modal()
+        self.printing_pending()
+            || self.paste.modal()
             || self.settings
             || self.export_confirm.is_some()
             || self.confirm_replace.is_some()
@@ -246,6 +249,7 @@ impl WebApp {
             return;
         }
         match action {
+            Action::Print => self.print_requested(ctx),
             Action::Copy => self.copy_requested(ctx),
             Action::Cut => self.cut_requested(ctx),
             Action::CopyVisible => self.copy_visible_requested(ctx),

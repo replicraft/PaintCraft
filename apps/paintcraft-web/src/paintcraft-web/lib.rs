@@ -12,6 +12,7 @@ mod importing;
 mod layers;
 mod paste_ui;
 mod preferences;
+mod printing;
 mod selection_ui;
 mod text_ui;
 pub use app::WebApp;

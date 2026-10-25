@@ -335,7 +335,7 @@ impl Action {
                 ctx.document_open && (!ctx.selection_active || ctx.can_crop_selection)
             }
             Self::Print => {
-                ctx.document_open && cfg!(target_os = "macos") && !cfg!(target_arch = "wasm32")
+                ctx.document_open && cfg!(any(target_os = "macos", target_arch = "wasm32"))
             }
             Self::RecentFiles => ctx.can_recent,
             Self::SaveAll => ctx.document_open && ctx.can_save_all,

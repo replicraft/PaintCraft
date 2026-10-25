@@ -180,3 +180,8 @@ accept-import-limitations = 接受导入限制
 drag-to-position-enter-places-escape-cancels = 拖动调整位置；Enter 放置，Escape 取消。
 
 finish-placing-the-pasted-image-before-editing-or-saving = 请先完成粘贴图像的放置，再编辑或保存。
+printing = 正在打印
+preparing-the-document-or-waiting-for-the-print-dialog = 正在准备文档或等待打印对话框关闭。
+print-dialog-closed = 打印对话框已关闭。
+printing-is-unavailable-or-the-browser-denied-the-request = 无法打印或浏览器拒绝了请求。
+finish-text-composition-before-printing = 请在打印前完成文字输入。
