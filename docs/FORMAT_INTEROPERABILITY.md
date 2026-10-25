@@ -37,7 +37,7 @@ Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, 
 | DCX | Studio explicit selected-page Import only | Strict bounded page directory, at most 1023 pages; each page must satisfy PCX admission. Other pages are explicitly not imported; no writer |
 | PDN | Studio Open or explicit Import as a converted layered copy | Historical PDN3 normal-blend, same-sized full-canvas bitmap layers only; names/order/visibility/opacity/pixels retained, metadata loss explicit. No preserving or fresh writer |
 | PAINT | Studio and Classic 11 explicit Import as a converted layered copy | Observed MIF1 `iovl`/`unci` DEFLATE RGBA8 profile only; offsets/order retained, layers numbered/visible/full-opacity because source properties are unverified. Canvas fill becomes a layer, with depth loss when needed. No writer |
-| ORA | Studio explicit Import as a converted layered copy | Flat Normal PNG layers with names, signed offsets, visibility, opacity and raw pixels; requires merged preview and thumbnail. Unsupported groups, blends, extensions, ZIP64 and resource variants refused. Fractional opacity is rounded to 8 bits and explicit print resolution is discarded with consent; no writer |
+| ORA | Studio explicit Import as a converted layered copy | Flat Normal PNG layers with names, signed offsets, visibility, opacity and raw pixels; requires merged preview and thumbnail. Unsupported groups, blends, extensions, ZIP64 and resource variants refused. Fractional opacity is rounded to 8 bits and explicit print resolution is discarded with consent; fresh writer implemented internally but not enabled pending external-application qualification |
 | JXR, HEIF | No enabled frontend operations | Selected/backend qualification remains; HEIF writing is prohibited |
 | PSD/PSB, SVG, ICO/CUR, EXR/HDR, JP2, MSP, ICNS | Not yet enabled | Registry inventory or work in progress is not usable format support |
 | ABR, ASE, CSH | Asset workflow policy only | Brush/palette/shape import/export implementations remain |
@@ -82,3 +82,22 @@ No PNG/JPEG backend has been switched to Zune, and no performance improvement is
 - Complete full browser/native reference and packaging matrices, worker failure and aggregate-memory accounting, and real-device cancellation/latency qualification.
 
 The implemented subsets advance the pack; they do not complete its full interoperability, preservation or release gates.
+
+### OpenRaster writer follow-up, 2026-10-25
+
+The fresh-copy writer now streams ZIP32 members with PNG layer pixels, Normal
+layer metadata, merged preview and a fitted, non-upscaled thumbnail. Unicode and
+XML whitespace roundtrip, all 256 layer-opacity values retain exact 8-bit values,
+and document-title omission requires the named loss acknowledgment before output.
+Geometry, root identity and metadata admission precede serialization; output and
+member budgets, cancellation and failed sinks discard private results. Standard
+unit tests, strict Clippy, real Wasm-target checking and an independently executed
+Python ZIP/XML/PNG oracle pass.
+
+The GIMP oracle must verify actual layer pixels/properties, edit layers, save to
+XCF and reopen those edits. Official SHA-256-verified macOS GIMP 3.0.6 and 3.0.8
+revision 1 reference packages stalled during bundled Python plugin initialization
+before loading the exported file. These startup failures are excluded compatibility
+evidence, not decoder failures. Writer admission stays unqualified; there is no
+frontend writer or foreign preserving-save claim. The opt-in bounded harness and
+its requirements are documented in `tests/ora-fixtures/README.md`.
