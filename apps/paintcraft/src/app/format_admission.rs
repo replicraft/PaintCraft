@@ -26,7 +26,7 @@ impl App {
 
     pub(super) fn admit_export_format(&self, path: &Path, format: ImageFormat) -> Result<()> {
         use paintcraft_formats::registry::{self, Operation, Request};
-        let family = Family::from_extension(format.name()).ok_or_else(|| {
+        let family = Family::from_id(format.name()).ok_or_else(|| {
             Error::new(
                 ErrorCode::CapabilityUnsupported,
                 "Unregistered export format",

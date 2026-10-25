@@ -52,6 +52,13 @@ families! {
     Csh=>"csh",["csh"];
 }
 impl Family {
+    /// Resolve a codec family identifier independently of its filename aliases.
+    pub fn from_id(id: &str) -> Option<Self> {
+        Self::ALL
+            .iter()
+            .copied()
+            .find(|family| family.id().eq_ignore_ascii_case(id))
+    }
     pub fn from_extension(extension: &str) -> Option<Self> {
         let extension = extension.strip_prefix('.').unwrap_or(extension);
         Self::ALL.iter().copied().find(|family| {

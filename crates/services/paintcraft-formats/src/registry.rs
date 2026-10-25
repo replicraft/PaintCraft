@@ -220,17 +220,28 @@ pub fn capability(family: Family, operation: Operation, _platform: Platform) -> 
         // PDN header inspection is not an image/project decode or write adapter.
         _ => None,
     };
-    let qualified = backend.is_some() && match family {
-        Family::Pcnd => project_operation,
-        Family::Png | Family::Jpeg | Family::Bmp => raster_operation,
-        Family::Gif | Family::Tiff | Family::Tga | Family::Webp | Family::Dds => matches!(operation,
-            Operation::Open | Operation::OpenRaster | Operation::ImportConvert | Operation::ExportFlat),
-        Family::Qoi | Family::Pnm | Family::Farbfeld => matches!(operation,Operation::ImportConvert | Operation::ExportFlat),
-        Family::Paint | Family::Pcx | Family::Dcx => operation == Operation::ImportConvert,
-        Family::Jxl | Family::Avif => operation == Operation::ExportFlat,
-        Family::Pdn => matches!(operation,Operation::Open | Operation::OpenProject | Operation::ImportConvert),
-        _ => false,
-    };
+    let qualified = backend.is_some()
+        && match family {
+            Family::Pcnd => project_operation,
+            Family::Png | Family::Jpeg | Family::Bmp => raster_operation,
+            Family::Gif | Family::Tiff | Family::Tga | Family::Webp | Family::Dds => matches!(
+                operation,
+                Operation::Open
+                    | Operation::OpenRaster
+                    | Operation::ImportConvert
+                    | Operation::ExportFlat
+            ),
+            Family::Qoi | Family::Pnm | Family::Farbfeld => {
+                matches!(operation, Operation::ImportConvert | Operation::ExportFlat)
+            }
+            Family::Paint | Family::Pcx | Family::Dcx => operation == Operation::ImportConvert,
+            Family::Jxl | Family::Avif => operation == Operation::ExportFlat,
+            Family::Pdn => matches!(
+                operation,
+                Operation::Open | Operation::OpenProject | Operation::ImportConvert
+            ),
+            _ => false,
+        };
     Capability {
         backend_available: backend.is_some(),
         qualified,
