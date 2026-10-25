@@ -1,22 +1,42 @@
 //! Bundled interface typography, independent of the host's installed fonts.
 
-pub const SELAWIK_REGULAR: &[u8] = include_bytes!("../../../../assets/fonts/selawik/selawk.ttf");
-pub const SELAWIK_BOLD: &[u8] = include_bytes!("../../../../assets/fonts/selawik/selawkb.ttf");
-pub const NOTO_SANS_JP: &[u8] =
+pub static SELAWIK_REGULAR: &[u8] = include_bytes!("../../../../assets/fonts/selawik/selawk.ttf");
+pub static SELAWIK_BOLD: &[u8] = include_bytes!("../../../../assets/fonts/selawik/selawkb.ttf");
+#[cfg(not(target_arch = "wasm32"))]
+pub static NOTO_SANS_JP: &[u8] =
     include_bytes!("../../../../assets/fonts/noto-sans-jp/NotoSansJP-Regular.otf");
-pub const NOTO_SANS_SC: &[u8] =
+#[cfg(not(target_arch = "wasm32"))]
+pub static NOTO_SANS_SC: &[u8] =
     include_bytes!("../../../../assets/fonts/noto-sans-sc/NotoSansSC-Regular.otf");
-pub const NOTO_SANS_DEVANAGARI: &[u8] =
+pub static NOTO_SANS_DEVANAGARI: &[u8] =
     include_bytes!("../../../../assets/fonts/noto-sans-devanagari/NotoSansDevanagari.ttf");
 
 /// The same portable font collection is used for interface and document text.
-pub const BUNDLED_DATA: [&[u8]; 5] = [
-    SELAWIK_REGULAR,
-    SELAWIK_BOLD,
-    NOTO_SANS_JP,
-    NOTO_SANS_SC,
-    NOTO_SANS_DEVANAGARI,
-];
+pub fn bundled_data() -> [&'static [u8]; 5] {
+    #[cfg(not(target_arch = "wasm32"))]
+    let cjk = [NOTO_SANS_JP, NOTO_SANS_SC];
+    #[cfg(target_arch = "wasm32")]
+    let cjk = web::FONTS
+        .data()
+        .expect("load browser CJK fonts before creating the editor");
+    [
+        SELAWIK_REGULAR,
+        SELAWIK_BOLD,
+        cjk[0],
+        cjk[1],
+        NOTO_SANS_DEVANAGARI,
+    ]
+}
+#[cfg(any(target_arch = "wasm32", test))]
+mod web;
+#[cfg(target_arch = "wasm32")]
+pub fn install_web_cjk_fonts(japanese: Vec<u8>, chinese: Vec<u8>) -> Result<(), &'static str> {
+    web::FONTS.install(japanese, chinese)
+}
+#[cfg(target_arch = "wasm32")]
+pub fn web_cjk_ready() -> bool {
+    web::FONTS.data().is_some()
+}
 pub const BUNDLED_FAMILIES: [&str; 4] = [
     "Noto Sans Devanagari",
     "Noto Sans JP",
@@ -37,11 +57,12 @@ pub fn install_for_locale(ctx: &egui::Context, locale: &str) {
 
 fn definitions(locale: &str) -> egui::FontDefinitions {
     let mut fonts = egui::FontDefinitions::default();
+    let data = bundled_data();
     for (name, bytes) in [
-        ("Selawik", SELAWIK_REGULAR),
-        ("Noto Sans JP", NOTO_SANS_JP),
-        ("Noto Sans SC", NOTO_SANS_SC),
-        ("Noto Sans Devanagari", NOTO_SANS_DEVANAGARI),
+        ("Selawik", data[0]),
+        ("Noto Sans JP", data[2]),
+        ("Noto Sans SC", data[3]),
+        ("Noto Sans Devanagari", data[4]),
     ] {
         fonts
             .font_data

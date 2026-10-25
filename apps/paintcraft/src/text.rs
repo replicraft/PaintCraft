@@ -6,7 +6,7 @@ use std::sync::{Arc, Mutex};
 pub(crate) type Shared = Arc<Mutex<TextRenderer>>;
 
 fn load_bundled(db: &mut Database) {
-    for bytes in paintcraft_ui::fonts::BUNDLED_DATA {
+    for bytes in paintcraft_ui::fonts::bundled_data() {
         db.load_font_data(bytes.to_vec());
     }
     db.set_sans_serif_family("Selawik");

@@ -31,6 +31,11 @@ mod text_tests;
 mod browser {
     use wasm_bindgen::prelude::*;
 
+    #[wasm_bindgen]
+    pub fn install_cjk_fonts(japanese: Vec<u8>, chinese: Vec<u8>) -> Result<(), JsValue> {
+        paintcraft_ui::fonts::install_web_cjk_fonts(japanese, chinese).map_err(JsValue::from_str)
+    }
+
     /// JavaScript retains this handle until the page is closed or destroyed.
     #[derive(Clone)]
     #[wasm_bindgen]
@@ -60,6 +65,9 @@ mod browser {
         }
 
         pub async fn start(&self, canvas: web_sys::HtmlCanvasElement) -> Result<(), JsValue> {
+            if !paintcraft_ui::fonts::web_cjk_ready() {
+                return Err(JsValue::from_str("Browser fonts have not been loaded"));
+            }
             self.runner
                 .start(
                     canvas,
