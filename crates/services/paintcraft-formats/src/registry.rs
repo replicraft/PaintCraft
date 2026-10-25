@@ -313,7 +313,9 @@ pub fn admit_open(
 
 /// Recognize signatures without invoking a decoder or trusting an extension.
 pub fn sniff(bytes: &[u8]) -> Option<Family> {
-    if bytes.starts_with(b"\x89PNG\r\n\x1a\n") {
+    if bytes.starts_with(b"PCND\x02\r\n\x1a") {
+        Some(Family::Pcnd)
+    } else if bytes.starts_with(b"\x89PNG\r\n\x1a\n") {
         Some(Family::Png)
     } else if bytes.starts_with(&[255, 216, 255]) {
         Some(Family::Jpeg)

@@ -1,6 +1,5 @@
-//! PCND v1: ZIP container with `manifest.json`, `document.json` and raw
-//! `data/chunk-NNNNNN.bin` blocks. The writer is canonical; the reader admits
-//! only what this build can edit and bounds every size before allocating.
+//! PCND: compact binary v2 user saves and canonical v1 ZIP fixtures.
+//! Readers admit only editable semantics and bound sizes before allocation.
 
 use std::collections::{HashMap, HashSet};
 
@@ -39,17 +38,18 @@ pub fn write(doc: &Document) -> Result<Vec<u8>> {
     Ok(bytes)
 }
 
+mod binary;
 mod compression;
 mod runs;
 mod writer;
 
 /// Canonical output with at most one 4 MiB payload chunk and one block in scratch.
 pub fn write_to(doc: &Document, sink: impl std::io::Write) -> Result<()> {
-    writer::write_to(doc, sink, false, &|| Ok(()))
+    writer::write_to(doc, sink, &|| Ok(()))
 }
 
-/// Smaller archives using lossless pixel runs on every platform and bounded
-/// Zstandard frames on native platforms, only where they save bytes.
+/// Compact binary v2 with inline tiles and lossless runs/LZ4 on every platform.
+/// Native builds also try bounded Zstandard, selecting only smaller payloads.
 /// Canonical `write` remains raw and byte-compatible with the published fixtures.
 pub fn write_compact(doc: &Document) -> Result<Vec<u8>> {
     let mut bytes = Vec::new();
@@ -68,7 +68,7 @@ pub fn write_compact_to_checked(
     sink: impl std::io::Write,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<()> {
-    writer::write_to(doc, sink, true, check)
+    binary::write(doc, sink, check)
 }
 
 fn codec(m: impl Into<String>) -> Error {
@@ -170,12 +170,16 @@ pub struct Manifest {
     pub required_features: Vec<String>,
     document_sha256: String,
     document_bytes: usize,
+    binary: bool,
 }
 
 impl Manifest {
     /// Refuse anything this build cannot edit: unknown versions, schemas or features.
     pub fn require_supported(&self) -> Result<()> {
-        if self.container_version != 1 {
+        if !matches!(
+            (self.container_version, self.binary),
+            (1, false) | (2, true)
+        ) {
             return Err(unsupported("unknown container version"));
         }
         if self.document_schema != "paintcraft.document/v1" {
@@ -233,6 +237,7 @@ fn parse_manifest(bytes: &[u8]) -> Result<Manifest> {
         required_features.push(f.to_owned());
     }
     Ok(Manifest {
+        binary: false,
         container_version: range(&m["container_version"], 1, 65_535, "container_version")?,
         document_schema: text(&m["document_schema"], "document_schema")?.to_owned(),
         required_features,
@@ -249,6 +254,9 @@ fn parse_manifest(bytes: &[u8]) -> Result<Manifest> {
 /// Bounded structural probe of a PCND file for open assessment. It never builds a
 /// document and never fails because a version or feature is merely unsupported.
 pub fn probe(bytes: &[u8]) -> Result<Manifest> {
+    if bytes.starts_with(binary::MAGIC) {
+        return binary::probe(bytes);
+    }
     let members = zip::read(bytes, ENTRIES_MAX, |name| match name {
         "manifest.json" => Some(MANIFEST_MAX),
         "document.json" => Some(DOCUMENT_MAX),
@@ -262,7 +270,7 @@ pub fn probe(bytes: &[u8]) -> Result<Manifest> {
     parse_manifest(&manifest.1)
 }
 
-/// Read a flat PCND v1 file into an editable document.
+/// Read a supported flat PCND 1 or PCND 2 file into an editable document.
 pub fn read(bytes: &[u8]) -> Result<Document> {
     read_with_limits(bytes, u64::MAX, STAGED_PIXELS_MAX)
 }
@@ -279,6 +287,9 @@ pub fn read_with_limits_checked(
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Document> {
     check()?;
+    if bytes.starts_with(binary::MAGIC) {
+        return binary::read(bytes, canvas_pixels, staged_pixels, check);
+    }
     let members = zip::read(bytes, ENTRIES_MAX, |name| match name {
         "manifest.json" => Some(MANIFEST_MAX),
         "document.json" => Some(DOCUMENT_MAX),

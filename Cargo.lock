@@ -3139,6 +3139,7 @@ dependencies = [
  "divan",
  "image",
  "jxl",
+ "lz4_flex",
  "paintcraft-commands",
  "paintcraft-core",
  "paintcraft-document",

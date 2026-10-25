@@ -21,6 +21,7 @@ jxl.workspace = true
 zune-jpegxl.workspace = true
 zune-core.workspace = true
 ruzstd.workspace = true
+lz4_flex.workspace = true
 zerocopy.workspace = true
 sha2.workspace = true
 uuid.workspace = true

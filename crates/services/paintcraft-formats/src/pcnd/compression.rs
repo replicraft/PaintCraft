@@ -3,7 +3,7 @@ use super::*;
 use std::{borrow::Cow, io::Read};
 
 #[cfg(not(target_arch = "wasm32"))]
-pub(super) struct Encoder(Option<zstd::bulk::Compressor<'static>>);
+pub(super) struct Encoder(Option<zstd::bulk::Compressor<'static>>, bool);
 #[cfg(target_arch = "wasm32")]
 pub(super) struct Encoder(bool);
 
@@ -27,23 +27,38 @@ impl Encoder {
             } else {
                 None
             };
-            Ok(Self(encoder))
+            Ok(Self(encoder, compact))
         }
         #[cfg(target_arch = "wasm32")]
         {
             Ok(Self(compact))
         }
     }
+    #[cfg(all(test, not(target_arch = "wasm32")))]
+    pub(super) fn portable() -> Self {
+        Self(None, true)
+    }
+
     pub fn block<'a>(&mut self, data: &'a [u8]) -> Result<(&'static str, Cow<'a, [u8]>)> {
         #[cfg(not(target_arch = "wasm32"))]
-        let compact = self.0.is_some();
+        let compact = self.1;
         #[cfg(target_arch = "wasm32")]
         let compact = self.0;
         let mut best = ("raw", Cow::Borrowed(data));
         if compact {
             let runs = super::runs::encode(data);
-            if runs.len() < data.len() {
+            let mut packed_runs = Vec::new();
+            packed_runs.extend_from_slice(&(runs.len() as u32).to_le_bytes());
+            packed_runs.extend_from_slice(&pack(&runs)?);
+            if runs.len() < best.1.len() {
                 best = ("rgba-runs", Cow::Owned(runs));
+            }
+            if packed_runs.len() < best.1.len() {
+                best = ("runs-lz4", Cow::Owned(packed_runs));
+            }
+            let packed = pack(data)?;
+            if packed.len() < best.1.len() {
+                best = ("lz4", Cow::Owned(packed));
             }
         }
         #[cfg(not(target_arch = "wasm32"))]
@@ -56,6 +71,65 @@ impl Encoder {
             }
         }
         Ok(best)
+    }
+}
+
+fn pack(data: &[u8]) -> Result<Vec<u8>> {
+    let length = lz4_flex::block::get_maximum_output_size(data.len());
+    let mut output = Vec::new();
+    output.try_reserve_exact(length).map_err(|_| {
+        Error::new(
+            ErrorCode::ResourceLimit,
+            "cannot allocate LZ4 encoder scratch",
+        )
+    })?;
+    output.resize(length, 0);
+    let used = lz4_flex::block::compress_into(data, &mut output)
+        .map_err(|_| codec("LZ4 encoding failed"))?;
+    output.truncate(used);
+    Ok(output)
+}
+
+/// Exact-length LZ4 decode without trusting an allocation prefix. Runs carry a
+/// separately bounded intermediate length (at most six bytes per decoded pixel).
+pub(super) fn decode_lz4(
+    bytes: &[u8],
+    length: usize,
+    runs: bool,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Vec<u8>> {
+    check()?;
+    if length == 0 || length > BLOCK_BYTES_MAX as usize || !length.is_multiple_of(4) {
+        return Err(codec("invalid LZ4 block extent"));
+    }
+    let (source, extent) = if runs {
+        let prefix = bytes
+            .get(..4)
+            .ok_or_else(|| codec("missing LZ4 run extent"))?;
+        let extent = u32::from_le_bytes(prefix.try_into().unwrap()) as usize;
+        if extent == 0 || extent > length / 4 * 6 || !extent.is_multiple_of(6) {
+            return Err(codec("invalid LZ4 run extent"));
+        }
+        (&bytes[4..], extent)
+    } else {
+        (bytes, length)
+    };
+    let mut output = Vec::new();
+    output
+        .try_reserve_exact(extent)
+        .map_err(|_| Error::new(ErrorCode::ResourceLimit, "cannot allocate LZ4 scratch"))?;
+    output.resize(extent, 0);
+    if lz4_flex::block::decompress_into(source, &mut output)
+        .map_err(|_| codec("invalid LZ4 block"))?
+        != extent
+    {
+        return Err(codec("incomplete LZ4 block"));
+    }
+    check()?;
+    if runs {
+        super::runs::decode(&output, length, check)
+    } else {
+        Ok(output)
     }
 }
 

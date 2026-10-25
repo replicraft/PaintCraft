@@ -1,13 +1,12 @@
-//! Streaming canonical/raw and optional compact v1 output.
+//! Streaming canonical raw v1 fixture output.
 use super::*;
 pub(super) fn write_to(
     doc: &Document,
     sink: impl std::io::Write,
-    compact: bool,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<()> {
     check()?;
-    let mut encoder = super::compression::Encoder::new(compact)?;
+    let mut encoder = super::compression::Encoder::new(false)?;
     let mut chunks: Vec<usize> = vec![0];
     let mut layer_records = Vec::new();
     for layer in doc.layers_in_order() {
