@@ -122,3 +122,6 @@ mod selection_move;
 
 #[path = "cli/clipboard_cut.rs"]
 mod clipboard_cut;
+
+#[path = "cli/paste_image.rs"]
+mod paste_image;

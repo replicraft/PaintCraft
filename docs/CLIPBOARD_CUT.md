@@ -2,7 +2,8 @@
 
 Cut is enabled in Classic 7/10/11 and Studio on desktop, and Classic in the browser.
 Use Edit > Cut, the older skins' Home > Cut button, or Ctrl/Cmd+X. Text widgets
-and editable text drafts retain input ownership. Paste remains unfinished.
+and editable text drafts retain input ownership. Canvas Paste remains unfinished;
+[shared image-placement foundations and CLI insertion](PASTE_IMAGES.md) are available.
 
 ## Source and acknowledgment
 

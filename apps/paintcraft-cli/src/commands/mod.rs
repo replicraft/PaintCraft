@@ -57,6 +57,9 @@ fn read_bounded(path: &Path, limit: u64, what: &str) -> Result<(Vec<u8>, String)
 
 /// `--expect-input-sha256` guards the exact acquired bytes before any parsing.
 fn guard(expected: Option<&str>, actual: &str) -> Result<()> {
+    guard_named(expected, actual, "--expect-input-sha256")
+}
+fn guard_named(expected: Option<&str>, actual: &str, flag: &str) -> Result<()> {
     let Some(expected) = expected else {
         return Ok(());
     };
@@ -67,13 +70,13 @@ fn guard(expected: Option<&str>, actual: &str) -> Result<()> {
     {
         return Err(Error::new(
             ErrorCode::InputSchema,
-            "--expect-input-sha256 must be 64 lowercase hex digits",
+            format!("{flag} must be 64 lowercase hex digits"),
         ));
     }
     if expected != actual {
         return Err(Error::new(
             ErrorCode::ConflictStaleBase,
-            "input bytes differ from --expect-input-sha256",
+            format!("input bytes differ from {flag}"),
         ));
     }
     Ok(())
@@ -237,5 +240,6 @@ pub mod format_profile;
 pub mod import;
 pub mod inspect;
 pub mod new;
+pub mod paste_image;
 pub mod render;
 pub mod schema;

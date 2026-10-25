@@ -93,8 +93,7 @@ Raw logs, the exact headless-shell isolation sources, screenshots, decoded pixel
 counts and the rerunnable runtime harness are local in ignored
 `docs/validation/clipboard-copy-2026-10-24/`.
 
-Paste needs admitted external pixels, floating placement and one atomic undoable
-transaction. Cut uses the source-bound transaction documented in [Clipboard Cut](CLIPBOARD_CUT.md). A CLI clipboard command, external flavor import, large-image
+Paste now has [admitted image drafts and atomic layer insertion](PASTE_IMAGES.md). External clipboard reads and frontend placement remain unfinished. Cut uses the source-bound transaction documented in [Clipboard Cut](CLIPBOARD_CUT.md). A CLI clipboard command, external flavor import, large-image
 placement policies, Safari/Firefox, actual OS cross-process behavior, Windows
 DIB/PNG alpha, Wayland/X11 and matched native Paint/Paint.NET behavior remain
 unqualified. This tranche does not complete the clipboard or frontend roadmap.

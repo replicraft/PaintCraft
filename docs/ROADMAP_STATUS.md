@@ -645,3 +645,12 @@ is available to CLI batches without an OS clipboard side effect. Independent
 pixel/cancellation tests, actual host controls, native worker tests and portable
 browser tests cover this tranche. Paste and platform/reference clipboard
 qualification remain; tool/frontend milestones stay partial.
+
+
+[External-image Paste foundations](PASTE_IMAGES.md) now provide source-bound
+unpublished placement, complete tile admission and one atomic undoable new-layer
+insertion, optionally growing the canvas. The CLI `paste-image` command uses this
+path with frozen/hash-guarded inputs, explicit loss consent and safe native output.
+Independent exact-pixel/cancellation and real CLI save/reopen tests cover it.
+Desktop/browser Paste controls remain disabled until clipboard reads and placement
+are connected; profile parity and the broader clipboard gate remain incomplete.

@@ -36,6 +36,8 @@ enum Command {
     Render(commands::render::Options),
     /// Import an image as a native document.
     Import(commands::import::Options),
+    /// Place an image file as a new layer, preserving the existing document.
+    PasteImage(commands::paste_image::Options),
 }
 
 fn main() -> ExitCode {
@@ -48,6 +50,7 @@ fn main() -> ExitCode {
         Command::Apply(a) => commands::apply::run(a, cli.json),
         Command::Render(a) => commands::render::run(a, cli.json),
         Command::Import(a) => commands::import::run(a, cli.json),
+        Command::PasteImage(a) => commands::paste_image::run(a, cli.json),
     };
     let _ = std::io::stdout().write_all(&reply.stdout);
     eprint!("{}", reply.stderr);
