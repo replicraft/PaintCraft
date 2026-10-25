@@ -1,8 +1,11 @@
-//! PAINT-01: bounded ISO box structure and byte-extent inspection.
+//! Bounded ISO box inspection and the observed layered PAINT item profile.
 //!
-//! An ISO/HEIF brand does not identify a Microsoft Paint project. No item
-//! graph, layer pixels, .paint decoder or writer is claimed by this module.
+//! An ISO/HEIF brand does not identify a Microsoft Paint project. Its item
+//! graph must be validated before pixels are decoded. The scoped layered decoder
+//! exposes unresolved layer-property diagnostics; no preserving writer is claimed.
 mod boxes;
+mod decode;
+pub use decode::{DecodeLimits, Decoded, DecodedLayer, Diagnostic, decode_layers};
 mod extents;
 pub use boxes::{BoxInfo, BoxTree, FileType, LayoutResolver, inspect, inspect_with_layout};
 pub use extents::{AliasPolicy, Extent, resolve_extent, validate_extents};

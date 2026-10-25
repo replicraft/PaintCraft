@@ -1,0 +1,49 @@
+{
+    "source_sha256": "a3e947fee374cca80e0e648152667109ac61b57808c9673eb806f52865f141f6",
+    "width": 333,
+    "height": 271,
+    "canvas_fill": [
+        27392,
+        27392,
+        27392,
+        65535
+    ],
+    "layers": [
+        {
+            "id": 1,
+            "raw_rgba_sha256": "e288e2acca6bf956be0e9425825db07c2a61f1454fa0c598a478c6a31c64d91e",
+            "bytes": 360972,
+            "origin": [
+                0,
+                0
+            ]
+        },
+        {
+            "id": 2,
+            "raw_rgba_sha256": "3144e443e13acabb1e3f314ee5f35bf584e529396df8c8ad947566c72ae78b1c",
+            "bytes": 360972,
+            "origin": [
+                0,
+                0
+            ]
+        },
+        {
+            "id": 3,
+            "raw_rgba_sha256": "3038d999fb638535386716b61ffd61ae4f8976e887aab3a44b5e99586771dc12",
+            "bytes": 360972,
+            "origin": [
+                0,
+                0
+            ]
+        },
+        {
+            "id": 4,
+            "raw_rgba_sha256": "057c6a5d7ad1fd8c7ae44caf4fe4ee75725e49c6f46ad77394ee8f05df8ef1de",
+            "bytes": 360972,
+            "origin": [
+                0,
+                0
+            ]
+        }
+    ]
+}
