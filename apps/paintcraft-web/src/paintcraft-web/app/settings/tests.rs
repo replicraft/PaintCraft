@@ -195,3 +195,37 @@ fn skin_and_theme_are_staged_and_paint7_restores_the_preferred_theme_only_after_
     assert_eq!(h.state().editor.session.ticket(), ticket);
 }
 
+#[test]
+fn mobile_brush_bars_can_be_hidden_after_apply_without_reserved_canvas_space() {
+    let mut h = super::super::chrome_tests::harness(Frontend::Classic, ClassicVariant::V11, 390.0);
+    let ticket = h.state().editor.session.ticket();
+    assert!(h.state().canvas.controls.is_some());
+    let ctx = h.ctx.clone();
+    h.state_mut().open_settings(&ctx);
+    h.run();
+    h.get_by_label("Show brush size and opacity bars")
+        .scroll_to_me();
+    h.run();
+    h.get_by_label("Show brush size and opacity bars").click();
+    h.run();
+    assert!(h.state().canvas.controls.is_some());
+    h.get_by_label("Cancel").click();
+    h.run();
+    assert!(h.state().canvas.controls.is_some());
+    h.state_mut().open_settings(&ctx);
+    h.run();
+    h.get_by_label("Show brush size and opacity bars")
+        .scroll_to_me();
+    h.run();
+    h.get_by_label("Show brush size and opacity bars").click();
+    h.run();
+    h.get_by_label("Apply").click();
+    h.run();
+    assert!(!h.state().preferences.show_tool_controls);
+    assert!(h.state().canvas.controls.is_none());
+    let previous = h.state().zoom;
+    h.state_mut().fit_canvas();
+    h.run();
+    assert!(h.state().zoom > previous);
+    assert_eq!(h.state().editor.session.ticket(), ticket);
+}

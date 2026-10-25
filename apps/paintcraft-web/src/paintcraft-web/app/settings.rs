@@ -11,6 +11,11 @@ pub(super) struct Draft {
     search: String,
 }
 impl WebApp {
+    pub(crate) fn tool_controls_visible(&self) -> bool {
+        self.frontend == paintcraft_ui::actions::Frontend::Classic
+            && self.variant == paintcraft_classic::ClassicVariant::V11
+            && self.preferences.show_tool_controls
+    }
     pub(super) fn refresh_appearance(&mut self, ctx: &egui::Context) {
         let values = &self.preferences;
         let variant = self.variant;
@@ -191,6 +196,14 @@ fn appearance(ui: &mut egui::Ui, values: &mut Preferences, classic: bool) {
             }
         });
     });
+    if classic {
+        card(ui, "Canvas controls", |ui| {
+            ui.checkbox(
+                &mut values.show_tool_controls,
+                t!(ui.ctx(), "Show brush size and opacity bars"),
+            );
+        });
+    }
 }
 fn canvas(ui: &mut egui::Ui, values: &mut Preferences) {
     card(ui, "New Classic canvas", |ui| {

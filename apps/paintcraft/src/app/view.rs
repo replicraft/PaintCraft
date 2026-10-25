@@ -173,9 +173,7 @@ impl App {
                 };
                 // Keep fitted content centered in the complete viewport while
                 // leaving room for Classic's floating controls on its left.
-                let clearance = if self.experience() == Experience::Classic
-                    && self.variant() == ClassicVariant::V11
-                {
+                let clearance = if self.tool_controls_visible() {
                     2.0 * paintcraft_classic::tool_controls::CANVAS_CLEARANCE
                 } else {
                     0.0

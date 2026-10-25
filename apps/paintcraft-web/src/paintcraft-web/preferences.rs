@@ -16,6 +16,7 @@ pub(crate) struct Preferences {
     pub rulers: bool,
     pub status_bar: bool,
     pub auto_hide_toolbar: bool,
+    pub show_tool_controls: bool,
     pub canvas: CanvasDefaults,
     pub variant: ClassicVariant,
     pub custom_colors: CustomColors,
@@ -30,6 +31,7 @@ impl Default for Preferences {
             rulers: false,
             status_bar: true,
             auto_hide_toolbar: false,
+            show_tool_controls: true,
             canvas: CanvasDefaults::default(),
             variant: ClassicVariant::DEFAULT,
             custom_colors: [None; 28],
@@ -113,6 +115,7 @@ impl Preferences {
             rulers: flag("rulers", false)?,
             status_bar: flag("status_bar", true)?,
             auto_hide_toolbar: flag("auto_hide_toolbar", false)?,
+            show_tool_controls: flag("show_tool_controls", true)?,
             editable_until_save,
             language,
             default_font,
@@ -130,6 +133,7 @@ impl Preferences {
             ("rulers", Value::Bool(self.rulers)),
             ("status_bar", Value::Bool(self.status_bar)),
             ("auto_hide_toolbar", Value::Bool(self.auto_hide_toolbar)),
+            ("show_tool_controls", Value::Bool(self.show_tool_controls)),
             ("default_font", Value::str(&self.default_font)),
             ("editable_until_save", Value::Bool(self.editable_until_save)),
             ("language", Value::str(self.language.id())),
@@ -226,12 +230,27 @@ mod tests {
         let Value::Object(ref mut object) = value else {
             unreachable!()
         };
-        for key in ["rulers", "status_bar", "auto_hide_toolbar"] {
+        for key in [
+            "rulers",
+            "status_bar",
+            "auto_hide_toolbar",
+            "show_tool_controls",
+        ] {
             object.remove(key);
         }
         let legacy = Preferences::parse(&json::canonical(&value)).unwrap();
-        assert!(!legacy.rulers && legacy.status_bar && !legacy.auto_hide_toolbar);
-        for key in ["rulers", "status_bar", "auto_hide_toolbar"] {
+        assert!(
+            !legacy.rulers
+                && legacy.status_bar
+                && !legacy.auto_hide_toolbar
+                && legacy.show_tool_controls
+        );
+        for key in [
+            "rulers",
+            "status_bar",
+            "auto_hide_toolbar",
+            "show_tool_controls",
+        ] {
             let mut malformed = value.clone();
             let Value::Object(ref mut object) = malformed else {
                 unreachable!()
@@ -252,6 +271,7 @@ mod tests {
         prefs.rulers = true;
         prefs.status_bar = false;
         prefs.auto_hide_toolbar = true;
+        prefs.show_tool_controls = false;
         prefs.theme = Some(Theme::Light);
         prefs.custom_colors[9] = Some(Rgba([32, 128, 255, 255]));
         assert_eq!(Preferences::parse(&prefs.bytes().unwrap()).unwrap(), prefs);

@@ -43,7 +43,7 @@ impl WebApp {
             return;
         };
         self.editor.tools.cancel_gesture();
-        let clearance = if self.variant == paintcraft_classic::ClassicVariant::V11 {
+        let clearance = if self.tool_controls_visible() {
             2.0 * paintcraft_classic::tool_controls::CANVAS_CLEARANCE
         } else {
             0.0
@@ -59,7 +59,7 @@ impl WebApp {
     }
     pub(crate) fn fit_canvas(&mut self) {
         let (w, h) = self.editor.session.document().canvas;
-        let clearance = if self.variant == paintcraft_classic::ClassicVariant::V11 {
+        let clearance = if self.tool_controls_visible() {
             2.0 * paintcraft_classic::tool_controls::CANVAS_CLEARANCE
         } else {
             0.0
@@ -79,8 +79,7 @@ impl WebApp {
                 (viewport.min + Vec2::splat(paintcraft_classic::RULER_SIZE)).min(viewport.max);
         }
         self.canvas.viewport = viewport.size();
-        let modern = self.frontend == paintcraft_ui::actions::Frontend::Classic
-            && self.variant == paintcraft_classic::ClassicVariant::V11;
+        let modern = self.tool_controls_visible();
         let enabled = !self.blocked();
         self.canvas.controls = if modern {
             paintcraft_classic::tool_controls::show(

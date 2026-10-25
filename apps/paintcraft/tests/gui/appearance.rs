@@ -386,3 +386,55 @@ fn classic_settings_descriptions_remain_readable_against_their_actual_card_surfa
     }
 }
 
+#[test]
+fn classic_brush_bar_visibility_is_staged_and_survives_restart_on_a_small_window() {
+    use eframe::egui::Role;
+    let (mut h, dir) = configured("brush-bars", Experience::Classic, Appearance::Light);
+    h.set_size(Vec2::new(390.0, 844.0));
+    h.run();
+    let ticket = h.state().editor().history_view().ticket;
+    assert!(
+        h.query_by_role_and_label(Role::Slider, "Tool size")
+            .is_some()
+    );
+    h.get_by_label("Settings…").click();
+    h.run();
+    h.get_by_label("Show brush size and opacity bars")
+        .scroll_to_me();
+    h.run();
+    h.get_by_label("Show brush size and opacity bars").click();
+    h.run();
+    assert!(Settings::load(&dir).0.classic_tool_controls);
+    h.get_by_label("Cancel").click();
+    h.run();
+    assert!(
+        h.query_by_role_and_label(Role::Slider, "Tool size")
+            .is_some()
+    );
+    h.get_by_label("Settings…").click();
+    h.run();
+    h.get_by_label("Show brush size and opacity bars")
+        .scroll_to_me();
+    h.run();
+    h.get_by_label("Show brush size and opacity bars").click();
+    h.run();
+    h.get_by_label("Apply").click();
+    h.run();
+    assert!(!Settings::load(&dir).0.classic_tool_controls);
+    assert!(
+        h.query_by_role_and_label(Role::Slider, "Tool size")
+            .is_none()
+    );
+    assert_eq!(h.state().editor().history_view().ticket, ticket);
+    drop(h);
+    let mut restarted = harness_with(App::new(None).with_settings(dir.clone()), 1.0, false);
+    restarted.set_size(Vec2::new(390.0, 844.0));
+    restarted.run();
+    assert!(
+        restarted
+            .query_by_role_and_label(Role::Slider, "Tool size")
+            .is_none()
+    );
+    drop(restarted);
+    std::fs::remove_dir_all(dir).unwrap();
+}

@@ -69,3 +69,5 @@ paintcraft-by-replicraft = PaintCraft by Replicraft
 
 paint-7-uses-light-mode-your-preferred-theme-returns-with-other-skins = Paint 7 हल्के मोड का उपयोग करता है। दूसरी स्किन पर आपकी पसंदीदा थीम वापस आ जाएगी।
 changes-take-effect-when-you-select-apply = लागू करें चुनने पर बदलाव लागू होंगे।
+canvas-controls = कैनवास नियंत्रण
+show-brush-size-and-opacity-bars = ब्रश के आकार और अपारदर्शिता की पट्टियाँ दिखाएँ

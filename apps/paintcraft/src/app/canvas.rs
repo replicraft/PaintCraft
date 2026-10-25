@@ -3,6 +3,11 @@
 use super::*;
 
 impl App {
+    pub(super) fn tool_controls_visible(&self) -> bool {
+        self.experience() == Experience::Classic
+            && self.variant() == ClassicVariant::V11
+            && self.settings.classic_tool_controls
+    }
     pub(super) fn canvas(&mut self, ui: &mut egui::Ui, first_pass: bool) {
         let mut viewport = ui.available_rect_before_wrap();
         if self.experience() == Experience::Classic && self.settings.classic_rulers {
@@ -10,26 +15,24 @@ impl App {
                 (viewport.min + Vec2::splat(paintcraft_classic::RULER_SIZE)).min(viewport.max);
         }
         let mut options = self.editor.options;
-        let controls =
-            if self.experience() == Experience::Classic && self.variant() == ClassicVariant::V11 {
-                paintcraft_classic::tool_controls::show(
-                    ui,
-                    egui::Id::unique(self.active_tab_id()),
-                    viewport,
-                    self.editor.tool,
-                    &mut options,
-                    !self.action_context().blocked,
-                )
-            } else {
-                None
-            };
+        let controls = if self.tool_controls_visible() {
+            paintcraft_classic::tool_controls::show(
+                ui,
+                egui::Id::unique(self.active_tab_id()),
+                viewport,
+                self.editor.tool,
+                &mut options,
+                !self.action_context().blocked,
+            )
+        } else {
+            None
+        };
         self.editor.options = options;
-        let left_clearance =
-            if self.experience() == Experience::Classic && self.variant() == ClassicVariant::V11 {
-                paintcraft_classic::tool_controls::CANVAS_CLEARANCE
-            } else {
-                0.0
-            };
+        let left_clearance = if self.tool_controls_visible() {
+            paintcraft_classic::tool_controls::CANVAS_CLEARANCE
+        } else {
+            0.0
+        };
         self.canvas_viewport = Some(viewport);
         if first_pass && self.initial_fit {
             self.initial_fit = false;

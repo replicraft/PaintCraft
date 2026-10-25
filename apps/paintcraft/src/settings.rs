@@ -38,6 +38,7 @@ pub struct Settings {
     pub classic_status_bar: bool,
     pub classic_rulers: bool,
     pub classic_toolbar_auto_hide: bool,
+    pub classic_tool_controls: bool,
     pub studio_overscroll: bool,
     pub studio_auto_scroll: bool,
     pub studio_layout: paintcraft_studio::layout::Layout,
@@ -56,6 +57,7 @@ impl Default for Settings {
             classic_status_bar: true,
             classic_rulers: false,
             classic_toolbar_auto_hide: false,
+            classic_tool_controls: true,
             studio_overscroll: true,
             studio_auto_scroll: true,
             studio_layout: Default::default(),
@@ -158,6 +160,11 @@ fn parse(bytes: &[u8]) -> Result<Settings, String> {
             Some(Value::Bool(value)) => *value,
             Some(_) => return Err("invalid Classic toolbar preference".into()),
         },
+        classic_tool_controls: match v.get("classic_tool_controls") {
+            None => true,
+            Some(Value::Bool(value)) => *value,
+            Some(_) => return Err("invalid Classic tool controls preference".into()),
+        },
         classic_rulers: match v.get("classic_rulers") {
             None => false,
             Some(Value::Bool(value)) => *value,
@@ -221,6 +228,10 @@ impl Settings {
             ("language", Value::str(self.language.id())),
             ("classic_status_bar", Value::Bool(self.classic_status_bar)),
             ("classic_rulers", Value::Bool(self.classic_rulers)),
+            (
+                "classic_tool_controls",
+                Value::Bool(self.classic_tool_controls),
+            ),
             ("studio_overscroll", Value::Bool(self.studio_overscroll)),
             ("studio_auto_scroll", Value::Bool(self.studio_auto_scroll)),
             ("studio_layout", studio::value(&self.studio_layout)),
@@ -439,9 +450,16 @@ mod tests {
         );
         assert!(parse(br#"{"schema":"paintcraft.settings/v2","experience":"classic","classic_toolbar_auto_hide":true}"#).unwrap().classic_toolbar_auto_hide);
         assert!(parse(br#"{"schema":"paintcraft.settings/v2","experience":"classic","classic_toolbar_auto_hide":"true"}"#).is_err());
+        assert!(
+            parse(br#"{"schema":"paintcraft.settings/v1"}"#)
+                .unwrap()
+                .classic_tool_controls
+        );
+        assert!(parse(br#"{"schema":"paintcraft.settings/v2","experience":"classic","classic_tool_controls":"false"}"#).is_err());
         let dir = scratch("toolbar-visibility");
         let settings = Settings {
             classic_toolbar_auto_hide: true,
+            classic_tool_controls: false,
             ..Default::default()
         };
         settings.save(&dir).unwrap();

@@ -140,7 +140,7 @@ mod tests {
                 let zoom = app.zoom;
                 app.dispatch_view_action(&egui::Context::default(), ViewAction::FitSelection);
                 if let Some(r) = bounds {
-                    let clearance = if app.variant() == ClassicVariant::V11 {
+                    let clearance = if app.tool_controls_visible() {
                         2.0 * paintcraft_classic::tool_controls::CANVAS_CLEARANCE
                     } else {
                         0.0

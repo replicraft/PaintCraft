@@ -152,6 +152,14 @@ fn appearance(ui: &mut egui::Ui, values: &mut Settings) {
             });
         });
     }
+    if values.experience == Experience::Classic {
+        card(ui, "Canvas controls", |ui| {
+            ui.checkbox(
+                &mut values.classic_tool_controls,
+                t!(ui.ctx(), "Show brush size and opacity bars"),
+            );
+        });
+    }
 }
 
 fn canvas(ui: &mut egui::Ui, values: &mut settings::CanvasDefaults, classic: bool) {
