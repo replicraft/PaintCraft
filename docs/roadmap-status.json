@@ -136,7 +136,7 @@
         "crates/services/paintcraft-formats/src/pcnd/compact_tests.rs",
         "crates/services/paintcraft-formats/src/pcnd/compression.rs"
       ],
-      "remaining_or_scope": "Canonical PCND and CLI round trips pass; full native subset/hostile-archive scope remains. Existing PCND v1 optional Zstandard blocks now have bounded portable decoding, native compact writing, canonical byte preservation, corruption/cancellation tests and scoped storage-size evidence. Desktop saves select compact output; browser encoding stays raw.",
+      "remaining_or_scope": "Initial binary PCND 1 is shared by raw conformance fixtures and compressed desktop/browser/CLI saves. Independent Python generation preserves batch results, IDs, selections, snapshots and render digests while adopting binary file digests. Full native subset and malformed-input qualification remain incomplete.",
       "acceptance": "Generated specimen plus malformed corpus; canonical writer reproduces the specimen and every vector PCND/render digest (NATIVE-09, CORE-08, DET-02); CLI-01..03; no GUI dependency."
     },
     {
@@ -715,8 +715,8 @@
       "evidence": [
         "docs/PCND_STORAGE.md"
       ],
-      "remaining_or_scope": "Benchmark justification, corruption tests and old-v1 corpus preserved. Compression of existing v1 blocks has scoped size/corruption evidence and does not establish justification for a different container or complete this study.",
-      "acceptance": "Benchmark justification, corruption tests and old-v1 corpus preserved. Compression of existing v1 blocks has scoped size/corruption evidence and does not establish justification for a different container or complete this study."
+      "remaining_or_scope": "Representative codec throughput/memory justification remains unqualified. Initial binary format size and corruption evidence exists; historical prototype artifacts are retained as evidence rather than supported production formats.",
+      "acceptance": "Representative codec throughput/memory justification remains unqualified. Initial binary format size and corruption evidence exists; historical prototype artifacts are retained as evidence rather than supported production formats."
     },
     {
       "id": "T25",
@@ -771,7 +771,7 @@
       "status": "partial",
       "evidence": ["crates/services/paintcraft-formats/src/pcnd.rs"],
       "remaining_or_scope": "Exact v1 admission and unsupported rejection exist; all VER cases and future preview modes remain unqualified.",
-      "acceptance": "VER-01..10; raw v1 fixture unchanged; unknown schema/features rejected; no automatic migration or new schema accepted from comparison alone."
+      "acceptance": "VER-01..10 against the adopted initial binary format, with independent raw fixtures, explicit future-version rejection and no automatic migration. Future schema/feature descriptors and preview modes remain unqualified."
     },
     {
       "id": "T30",

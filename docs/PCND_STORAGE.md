@@ -1,6 +1,6 @@
 # PCND storage
 
-Normal desktop, browser and CLI project saves now use **PCND 2**, a compact binary
+Normal desktop, browser and CLI project saves now use **PCND**, a compact binary
 stream. It stores canvas dimensions and layer defaults rather than allocating a
 canvas-sized pixel buffer. Only changed sparse tiles are written. There is no
 `document.json`, ZIP directory, repeated field names, chunk filename, or hexadecimal
@@ -16,7 +16,7 @@ opacity and the optional document title.
 
 Actual serialized 1000 × 486 test documents, in bytes:
 
-| Document | Previous normal compact save | PCND 2 |
+| Document | Previous normal compact save | Current PCND |
 |---|---:|---:|
 | Blank white canvas | 1,123 | 118 |
 | One changed pixel | 1,467 | 140 |
@@ -55,7 +55,7 @@ Integers use canonical unsigned LEB128; origins use ZigZag encoding. UUIDs occup
 16 bytes. Text has explicit byte and character bounds. The fixed semantic schema
 is flat raster layers, normal blend, finite canvas, straight sRGB RGBA8, 256-pixel
 tiles and `paintcraft.core/default-v1`. An incompatible semantic change requires a
-new container version. See [the wire layout](PCND_V2.md).
+new container version. See [the wire layout](PCND_FORMAT.md).
 
 The reader validates dimensions, UTF-8, flags, layer IDs, duplicate coordinates,
 encoded lengths, metadata limits and the complete tile allocation plan before
@@ -73,19 +73,23 @@ being interruptible midway through a call; no cancellation-latency claim is made
 
 ## Canonical fixtures and qualification
 
-`write` and `write_to` retain the original canonical PCND 1 ZIP output for the
-published conformance fixtures. `write_compact`, `write_compact_to` and the checked
-variant produce PCND 2. All normal application save paths select compact output.
-The reader still accepts the supported PCND 1 encodings. Reading a PCND 2 file and
-writing it canonically reproduces the original canonical fixture bytes exactly.
-Unpublished older PaintCraft builds cannot open PCND 2.
+`write` and `write_to` emit deterministic raw binary blocks for portable reference
+fixtures. `write_compact`, `write_compact_to` and the checked variant emit the same
+initial version-1 format with adaptive lossless tile compression. Every normal
+application save selects compact output. The reader accepts only this binary
+format; the unused ZIP codec and the prototype JSON/ZIP reader/writer are removed.
+
+The independent Python binary writer in `scripts/pcnd_reference.py` generates the
+live specimen and 42 persistence digests. Regeneration verifies that batch results,
+document IDs, state IDs, all snapshots, selections and rendered-pixel digests are
+unchanged. This intentionally replaces the unreleased prototype's file digests.
 
 Tests cover every field, Unicode and hidden RGB, boundary tiles, negative origins,
 incompressible fallback, portable/native interoperability, every byte corruption
 and truncation of a small fixture, forged invalid codec payloads, resource admission
 before inflation, malformed integer/string lengths, trailing data, partial writes,
 failing sinks and cancellation at every observed checkpoint. The canonical
-specimen and conformance digest tests remain unchanged.
+specimen and conformance digest tests use the initial binary layout.
 
 Raw measurements and production browser evidence are retained in ignored
 `docs/validation/ui-storage-polish-2026-10-24/`. Broader format conformance and
@@ -93,7 +97,7 @@ representative performance studies remain roadmap work.
 
 ## Production browser check
 
-The production Wasm build downloaded a blank 1000 × 486 project at 118 bytes and a
+Before the initial-version header cleanup, the production Wasm build downloaded a blank 1000 × 486 project at 118 bytes and a
 short horizontal pencil line at 140 bytes. An independent Python wire reader
 verified each whole-file SHA-256 and recovered exactly 192 contiguous black pixels
 on the white default, with an 18-byte run payload for the one touched tile.
@@ -102,3 +106,14 @@ clean; saving it again produced byte-identical output. The page title updated to
 `pencil.pcnd - PaintCraft`. This is a dedicated headless Chromium check, without
 physical mobile hardware or cross-browser qualification. The scripts, downloaded
 files, screenshots and oracle results are in the ignored evidence directory above.
+
+That browser recording used the unreleased version-2 header. It establishes the
+compression and browser workflow behavior; it does not independently qualify the
+version-1 production build. Current format tests cover the version-1 header and
+all preserved document fields.
+
+The initial-version cleanup passes the full formats library/integration suite,
+35 CLI tests, 129 browser host tests, 362 desktop library tests, the Wasm target
+check, and formats/CLI Clippy. The broader desktop GUI suite reports 276 passes,
+64 ignored cases and two menu-test failures (copy availability and menu row
+reachability); it is not a fully passing UI qualification.

@@ -44,12 +44,13 @@ are capability/correctness choices; BF03/BF25 comparative performance remains pe
 
 ## Streaming native encoder
 
-PCND `write_to` emits canonical stored-ZIP bytes through a backpressured `Write`
-sink. Pixel scratch retains one 4 MiB chunk and one raster block; document metadata,
-sorted block coordinates and the central directory are accounted separately. Directory
-scratch has an 8 MiB provisional cap. This remains the existing non-ZIP64 v1 subset.
-The in-memory convenience writer uses the same encoder. Partial-write, failing-sink,
-round-trip and conformance tests preserve canonical bytes. SAVE-09 is partial: process-wide memory admission and measured native backpressure remain pending.
+PCND `write_to` emits deterministic raw blocks in the initial binary format through
+a backpressured `Write` sink. Normal saves use the same wire layout with adaptive
+lossless tile compression. Pixel scratch retains one bounded tile and codec
+scratch; there is no ZIP directory or second payload-compression pass. Partial
+writes, failing sinks, full document round trips and independently generated
+conformance digests are tested. SAVE-09 remains partial: process-wide metadata
+admission and measured native backpressure remain pending.
 
 The desktop's explicit native save and CLI new/apply/import now stream directly to
 same-filesystem staging files. A byte-quota sink hashes accepted writes; bounded
@@ -288,7 +289,7 @@ remain T16 work. Current-app GPU previews can be exported with the ignored
 | Area | What | Evidence |
 |---|---|---|
 | Engine (T01, T04–T07) | Sparse RGBA8 layers (256×256 copy-on-write tiles, exact default pixel, hidden RGB preserved), immutable documents, deterministic UUIDv5 identifiers, atomic staged batches, semantic no-ops, linear recorded undo/redo | unit tests; 21 conformance vectors from the Python oracle |
-| Native format (T08, T29) | Canonical PCND 1 fixture writer and compact binary PCND 2 user saves, with bounded readers and exact preservation of the canonical specimen and vector digests; unsupported document semantics are refused | `pcnd.rs` tests, vector digests, [storage contract](PCND_STORAGE.md) |
+| Native format (T08, T29) | Initial binary PCND 1 format shared by raw conformance fixtures and compact user saves, with bounded readers and independent Python persistence digests; unsupported document semantics are refused | `pcnd.rs` tests, vector digests, [storage contract](PCND_STORAGE.md) |
 | Batch v2 | v1 plus `raster.stroke_path`, `raster.flood_fill`, `raster.shape`, `raster.contour`, `raster.text`, `layer.reorder`, `layer.duplicate`, `canvas.clear` (see below) | behavior tests, JSON-Schema grammar cases |
 | Image formats | PNG, BMP, JPEG import and export with named, acknowledged losses (flatten, hidden RGB, lossy JPEG, discarded alpha) | `image.rs`, `export.rs`, CLI tests |
 | Safe save and recovery (T10) | Streaming staging → atomic replace → bounded read-back; ordered native queue and file receipts; autosave checkpoints with per-session locks; recover, discard or ask later | platform `save.rs`, format `recovery.rs`, GUI tests |
@@ -363,11 +364,9 @@ Geometry definitions (the historical integer operations remain exact):
 
 ## Earlier differences and choices
 
-- **Own JSON and ZIP code.** `serde_json` accepts duplicate keys and cannot give the
-  required UTF-16 canonical key order. A small strict parser and a stored-only ZIP
-  reader/writer are used so every accepted input and every output byte is controlled. The
-  ZIP reader rejects ZIP64 (at most 65,534 members), compression, encryption and data
-  descriptors.
+- **Strict command JSON and binary projects.** The batch parser rejects duplicate
+  keys and preserves canonical UTF-16 key ordering. Native project files use the
+  initial bounded binary PCND layout; the unused ZIP prototype is removed.
 - **Integers only.** JSON numbers with a fraction or exponent are `input.schema`, even
   when integral (`1.0`). The Python oracle's validator accepts those.
 - **UUID matching.** Layer ids in a batch are compared as UUID values (upper case matches).

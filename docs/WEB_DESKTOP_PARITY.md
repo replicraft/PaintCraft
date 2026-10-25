@@ -105,7 +105,7 @@ requested placeholder; mobile and unknown devices retain manual platform links.
 The page currently uses English copy. Individual installer asset URLs and actual
 automatic file downloads are not connected yet.
 
-Browser, desktop and CLI normal saves now use [compact binary PCND 2](PCND_STORAGE.md).
+Browser, desktop and CLI normal saves now use [compact binary PCND](PCND_STORAGE.md).
 A production browser project was independently decoded and reopened through the
 file picker, then saved byte-identically. This does not close the remaining
 format breadth, native service, GPU composition or cross-browser roadmap gates.
