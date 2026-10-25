@@ -310,7 +310,46 @@ pub fn save_with_preparation(
     encode: impl FnOnce(&mut dyn Write) -> Result<(), Error>,
     prepare: impl FnOnce(&Outcome) -> Result<(), Error>,
 ) -> Outcome {
-    save_prepared_impl(dest, overwrite, byte_limit, encode, |_| Ok(()), prepare)
+    save_prepared_impl(
+        dest,
+        overwrite,
+        byte_limit,
+        None,
+        encode,
+        |_| Ok(()),
+        prepare,
+    )
+}
+
+/// Require the destination fingerprint observed before staging to match the
+/// caller's acquired bytes. This is not a filesystem CAS or a grant to follow
+/// a changed pathname/association. Existing late checks remain.
+pub fn save_with_expected_sha256(
+    dest: &Path,
+    overwrite: bool,
+    byte_limit: u64,
+    expected_sha256: &str,
+    encode: impl FnOnce(&mut dyn Write) -> Result<(), Error>,
+) -> Outcome {
+    if expected_sha256.len() != 64
+        || !expected_sha256
+            .bytes()
+            .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
+    {
+        return not_attempted(&Error::new(
+            ErrorCode::InputSchema,
+            "expected destination SHA-256 must be 64 lowercase hexadecimal characters",
+        ));
+    }
+    save_prepared_impl(
+        dest,
+        overwrite,
+        byte_limit,
+        Some(expected_sha256),
+        encode,
+        |_| Ok(()),
+        |_| Ok(()),
+    )
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -381,13 +420,16 @@ fn save_impl(
     encode: impl FnOnce(&mut dyn Write) -> Result<(), Error>,
     barrier: impl FnMut(Phase) -> std::io::Result<()>,
 ) -> Outcome {
-    save_prepared_impl(dest, overwrite, byte_limit, encode, barrier, |_| Ok(()))
+    save_prepared_impl(dest, overwrite, byte_limit, None, encode, barrier, |_| {
+        Ok(())
+    })
 }
 
 fn save_prepared_impl(
     dest: &Path,
     overwrite: bool,
     byte_limit: u64,
+    expected_sha256: Option<&str>,
     encode: impl FnOnce(&mut dyn Write) -> Result<(), Error>,
     mut barrier: impl FnMut(Phase) -> std::io::Result<()>,
     prepare: impl FnOnce(&Outcome) -> Result<(), Error>,
@@ -417,6 +459,11 @@ fn save_prepared_impl(
     };
     let dest = resolved.as_path();
     out.destination_id = Some(path_id(dest));
+    if expected_sha256.is_some_and(|hash| expected.as_ref().is_none_or(|value| value.hash != hash))
+    {
+        out.reasons.push("destination changed since input capture; reacquire the source or save to a separate output".into());
+        return out;
+    }
     let tmp = staging_path(dest);
     let staged = (|| -> Result<(String, u64), Error> {
         let file = OpenOptions::new()
@@ -576,5 +623,7 @@ fn io_error(error: std::io::Error) -> Error {
     )
 }
 
+#[cfg(test)]
+mod expected_tests;
 #[cfg(test)]
 mod tests;
