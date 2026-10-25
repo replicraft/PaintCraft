@@ -4,6 +4,7 @@ pub mod chrome;
 pub mod confirmation;
 pub mod entry_import;
 pub mod fonts;
+pub mod icon_export;
 pub mod icons;
 pub mod outbox;
 pub mod page_import;

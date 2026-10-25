@@ -24,7 +24,7 @@ impl Action {
             Self::Paste | Self::PasteLayer => Icon::Paste,
             Self::Copy => Icon::Copy,
             Self::CopyVisible => Icon::CopyMerged,
-            Self::SaveAs | Self::Export | Self::ExportImage(_) => Icon::SaveAs,
+            Self::SaveAs | Self::Export | Self::ExportIcons | Self::ExportImage(_) => Icon::SaveAs,
             Self::Close | Self::Exit => Icon::Close,
             Self::Undo => Icon::Undo,
             Self::Redo => Icon::Redo,
