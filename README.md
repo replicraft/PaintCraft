@@ -2,17 +2,14 @@
 
 A familiar place to draw, paint and edit images. Built in Rust.
 
-- Classic with Windows 7, 10 and 11 skins.
-- Studio with layers, document tabs, Save All and floating tool panels.
-- Pencil, eraser, fill, color picker and nine brush styles.
+- Windows 7, 10 and 11 Classic skins.
+- Studio with document tabs, Save All and floating panels.
+- Nine brushes, pencil, eraser, fill and color picker.
 - Shapes, curves and text.
-- Rectangular and free-form selections, inversion and delete.
-- Copy or cut selections, or copy the visible image.
-- Paste and position clipboard images, or paste as new layers (macOS and supported browsers).
-- Crop, rotate and flip.
-- Undo and redo.
-- Desktop recent files with one-click reopening.
-- Export format options and adjustable JPEG quality.
+- Rectangular and free-form selections, copy and cut.
+- Paste images onto the canvas or into new layers (macOS and supported browsers).
+- Layers, undo/redo, crop, rotate and flip.
+- Recent files with quick reopening.
 - Native printing on macOS.
 - Light and dark themes in seven languages.
 - Desktop, browser and command-line apps.
@@ -27,7 +24,7 @@ A familiar place to draw, paint and edit images. Built in Rust.
 
 ## File formats
 
-**PCND (`.pcnd`)** is PaintCraft's compact, lossless project format. It keeps layers, transparency and canvas size intact, compressing painted areas instead of storing every blank pixel individually. Save as PCND to keep working on your project.
+**PCND (`.pcnd`)** is PaintCraft's compact, lossless project format. It keeps layers, transparency and canvas size intact, while being compressed and lightweight. Save as PCND to keep working on your project.
 
 - **PNG (`.png`):** open and export, with transparency.
 - **JPEG (`.jpg`, `.jpeg`):** open and export, with adjustable export quality.
