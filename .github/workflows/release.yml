@@ -106,6 +106,9 @@ jobs:
         run: cargo test --locked -p paintcraft-formats --target ${{ matrix.target }} --lib image::dib
       - name: Test packaging on the native platform
         run: python -m unittest discover -s scripts/tests -p 'test_package_*.py'
+      - name: Install macOS DMG layout tool
+        if: runner.os == 'macOS'
+        run: python -m pip install dmgbuild==1.6.7
       - name: Package portable archives and macOS images
         run: python scripts/packaging/package_release.py package --version ${{ needs.version.outputs.version }} --target ${{ matrix.target }} --binary target/${{ matrix.target }}/release/${{ matrix.executable }} --output dist
       - name: Package headless CLI

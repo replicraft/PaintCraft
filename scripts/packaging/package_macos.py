@@ -148,14 +148,32 @@ def release_archives(binary, output, version, target, name):
         app = payload / "PaintCraft.app"
         populate_bundle(binary, app, version, build_launcher(root, target))
         sign_bundle(app)
-        (payload / "Applications").symlink_to("/Applications", target_is_directory=True)
         archive = output / (name + ".dmg")
-        subprocess.run(["/usr/bin/hdiutil", "create", "-volname", "PaintCraft",
-                        "-srcfolder", str(payload), "-format", "UDZO", "-ov", str(archive)], check=True)
-        subprocess.run(["/usr/bin/hdiutil", "verify", str(archive)], check=True)
+        build_disk_image(app, archive)
         write_checksum(archive)
         write_update_archive(app, output / (name + "-update.zip"))
     print(archive)
+
+
+def build_disk_image(app, archive):
+    """Use EarthCraft's drag-to-Applications Finder layout without altering the app."""
+    try:
+        import dmgbuild
+    except ImportError as error:
+        raise ValueError("macOS packaging requires python -m pip install dmgbuild==1.6.7") from error
+    dmgbuild.build_dmg(str(archive), "PaintCraft", settings={
+        "format": "UDZO",
+        "files": [str(app)],
+        "symlinks": {"Applications": "/Applications"},
+        "background": str(ROOT / "assets/packaging/macos/dmg-background.png"),
+        "window_rect": ((200, 200), (640, 270)),
+        "default_view": "icon-view",
+        "icon_size": 128,
+        "text_size": 14,
+        "icon_locations": {"PaintCraft.app": (150, 70), "Applications": (490, 70)},
+    })
+    # Do not hide .app extensions: changing FinderInfo invalidates strict signatures.
+    subprocess.run(["/usr/bin/hdiutil", "verify", str(archive)], check=True)
 
 
 def register(bundle):

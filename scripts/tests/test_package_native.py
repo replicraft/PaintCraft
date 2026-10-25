@@ -6,6 +6,7 @@ import subprocess
 import sys
 import tempfile
 import tomllib
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 import xml.etree.ElementTree as ET
@@ -120,9 +121,20 @@ class NativePackageTests(unittest.TestCase):
         calls = []
         def run(command, **kwargs):
             calls.append(command)
-            if command[0].endswith("hdiutil") and "create" in command:
-                Path(command[-1]).write_bytes(b"DMG command fixture")
+        def build_dmg(filename, volume_name, settings):
+            self.assertEqual(volume_name, "PaintCraft")
+            self.assertEqual(settings["window_rect"], ((200, 200), (640, 270)))
+            self.assertEqual(settings["icon_locations"],
+                             {"PaintCraft.app": (150, 70), "Applications": (490, 70)})
+            self.assertEqual(settings["symlinks"], {"Applications": "/Applications"})
+            self.assertEqual(settings["default_view"], "icon-view")
+            self.assertEqual(settings["icon_size"], 128)
+            self.assertTrue(Path(settings["background"]).is_file())
+            self.assertTrue(Path(settings["files"][0]).is_dir())
+            self.assertNotIn("hide_extensions", settings)
+            Path(filename).write_bytes(b"DMG command fixture")
         with patch.object(macos.sys, "platform", "darwin"), \
+             patch.dict(sys.modules, {"dmgbuild": SimpleNamespace(build_dmg=build_dmg)}), \
              patch.object(macos, "build_launcher", return_value=self.binary), \
              patch.object(macos.subprocess, "run", side_effect=run):
             macos.release_archives(self.binary, self.output, self.version, "aarch64-apple-darwin", "fixture")

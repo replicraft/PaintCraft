@@ -67,7 +67,9 @@ Windows packages are not Authenticode-signed.
 macOS requires 13.0 or newer. Apple Silicon and Intel use separate thin Rust
 binaries and matching Swift launchers on native runners. Both retain the existing
 Finder document-event launcher and `.pcnd` Launch Services declarations. DMGs
-contain `PaintCraft.app` and an Applications shortcut. The `-update.zip` contains
+use `dmgbuild==1.6.7` with EarthCraft's 640 × 270 Finder window, 128-pixel icons
+and arrow background, placing `PaintCraft.app` beside the Applications shortcut.
+The `-update.zip` contains
 that exact app, including its helper app, icon, metadata, signatures and executable
 permissions. It uses forward-slash archive paths on every host. Both bundles are
 ad-hoc signed and checked with `codesign --verify --deep --strict`; DMGs are checked

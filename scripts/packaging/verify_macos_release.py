@@ -12,6 +12,22 @@ import zipfile
 import package_release as release
 
 
+def verify_finder_layout(mount):
+    from ds_store import DSStore
+
+    with DSStore.open(str(mount / ".DS_Store"), "r") as store:
+        if store["PaintCraft.app"]["Iloc"] != (150, 70) or store["Applications"]["Iloc"] != (490, 70):
+            raise ValueError("DMG is missing the drag-to-Applications icon layout")
+        view = store["."]["icvp"]
+        if view["iconSize"] != 128 or view["backgroundType"] != 2:
+            raise ValueError("DMG is missing its large icons or arrow background")
+        window = store["."]["bwsp"]
+        if window["WindowBounds"] != "{{200, 200}, {640, 270}}" or window["ShowToolbar"]:
+            raise ValueError("DMG Finder window does not match the installer layout")
+    if not any(mount.glob(".background.*")):
+        raise ValueError("DMG arrow background is missing")
+
+
 def files(bundle):
     paths = list(bundle.rglob("*"))
     if any(path.is_symlink() for path in paths):
@@ -45,6 +61,7 @@ def verify(version, target, image, update):
         subprocess.run(["/usr/bin/hdiutil", "attach", "-readonly", "-nobrowse", "-mountpoint",
                         str(mount), str(image.resolve())], check=True)
         try:
+            verify_finder_layout(mount)
             installed = mount / "PaintCraft.app"
             subprocess.run(["/usr/bin/codesign", "--verify", "--deep", "--strict", str(installed)], check=True)
             if files(installed) != files(app):
