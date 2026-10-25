@@ -1,1 +1,6 @@
 /dist/
+
+/node_modules/
+/pkg/
+/.astro/
+/public/fonts/

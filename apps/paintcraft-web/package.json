@@ -1,0 +1,21 @@
+{
+  "name": "@paintcraft/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22.23.4" },
+  "scripts": {
+    "build:wasm": "node scripts/build-wasm.mjs",
+    "prebuild": "npm run build:wasm",
+    "build": "astro build",
+    "postbuild": "node scripts/check-assets.mjs",
+    "predev": "npm run build:wasm",
+    "dev": "astro dev --host 127.0.0.1 --port 8088",
+    "preview": "astro preview --host 127.0.0.1 --port 8088",
+    "test": "node --test scripts/*.test.mjs"
+  },
+  "devDependencies": {
+    "astro": "7.4.2",
+    "vite-plugin-wasm": "3.6.0"
+  }
+}

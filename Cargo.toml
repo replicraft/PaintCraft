@@ -141,6 +141,14 @@ all = { level = "warn", priority = -1 }
 [profile.release]
 debug = "line-tables-only"
 
+# Browser packaging profile; keep desktop release diagnostics unchanged.
+[profile.web-release]
+inherits = "release"
+debug = false
+strip = "symbols"
+lto = true
+codegen-units = 1
+
 # Keep raster/compositor hot loops responsive under the default desktop dev run.
 # Debug information, overflow checks and desktop/controller debuggability remain enabled.
 [profile.dev.package.paintcraft-raster]

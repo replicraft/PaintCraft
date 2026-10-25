@@ -9,7 +9,7 @@ MAX_LINES = 800
 # Documentation, manifests, fixtures and generated data have no source line cap.
 SOURCE_SUFFIXES = {
     ".rs", ".py", ".wgsl", ".glsl", ".vert", ".frag",
-    ".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs",
+    ".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs", ".astro",
     ".c", ".h", ".cc", ".cpp", ".hpp",
     ".sh", ".bash", ".zsh", ".html", ".css", ".scss",
 }

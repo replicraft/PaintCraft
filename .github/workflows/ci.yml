@@ -29,3 +29,23 @@ jobs:
           rustup target add wasm32-unknown-unknown
       - run: cargo check --locked -p paintcraft-web --target wasm32-unknown-unknown
       - run: cargo clippy --locked -p paintcraft-web --target wasm32-unknown-unknown -- -D warnings
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/wasm-bindgen
+          key: wasm-bindgen-${{ runner.os }}-${{ runner.arch }}-0.2.129
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: apps/paintcraft-web/package-lock.json
+      - run: npm ci
+        working-directory: apps/paintcraft-web
+      - run: npm test
+        working-directory: apps/paintcraft-web
+      - run: npm run build
+        working-directory: apps/paintcraft-web
+      - uses: actions/upload-artifact@v4
+        with:
+          name: paintcraft-web
+          path: apps/paintcraft-web/dist/
+          if-no-files-found: error
