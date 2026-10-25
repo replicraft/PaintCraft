@@ -10,6 +10,8 @@ use ::image::{DynamicImage, ImageDecoder, ImageEncoder};
 use paintcraft_core::types::{Error, ErrorCode, Result};
 use std::io::Cursor;
 
+mod dib;
+pub use dib::{DibKind, decode_dib_with_pixel_limit};
 mod gif;
 #[cfg(test)]
 mod raster_tests;
@@ -22,7 +24,10 @@ pub const DECODE_PIXELS_MAX: u64 = 268_435_456;
 const SIDE_MAX: u32 = 1_048_576;
 
 /// Source information the current RGBA8 import cannot retain.
-pub const KNOWN_IMPORT_LOSSES: [&str; 9] = [
+pub const KNOWN_IMPORT_LOSSES: [&str; 12] = [
+    "dib-alpha-unspecified",
+    "dib-alpha-mode-unspecified",
+    "dib-metadata-ignored",
     "depth-16-reduced-to-8",
     "icc-profile-ignored",
     "exif-metadata-ignored",
