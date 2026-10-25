@@ -36,7 +36,8 @@ inside the downloads. The checksums describe the final downloadable bytes.
 5. Push a matching `v<version>` tag when ready to publish. A tag that disagrees
    with Cargo fails before building. The tag run builds all platforms again,
    checks every asset and SHA-256 digest, creates/uploads a draft and then
-   publishes it with the authored notes. An existing published release is refused. Prerelease versions
+   publishes it with the authored notes followed by GitHub's generated notes.
+   An existing published release is refused. Prerelease versions
    produce prerelease downloads; MSI and Apple bundle metadata use the numeric
    major/minor/patch version. Use a new numeric version when upgrading an MSI.
 
@@ -44,6 +45,11 @@ Pull requests changing packaging also build the release matrix. Native build
 artifacts and the assembled set are retained for seven days. No release is
 published from a pull request or a manual workflow run. No credentials are needed
 for local packaging; tag publication uses the job's repository token.
+
+Like EarthCraft, release validation fetches the complete Git history and uses
+git-cliff 2.14.2 with `cliff.toml` to generate a grouped `CHANGELOG.md`.
+Download it from the separate `release-changelog-<version>` workflow artifact.
+The authored installation notes remain in `docs/releases/v<version>.md`.
 
 The `assemble` job refuses a missing architecture, extra/stale asset, empty file,
 symlink or mismatched per-asset checksum. Only after all 26 checks succeed does
