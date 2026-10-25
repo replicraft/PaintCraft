@@ -2,6 +2,8 @@
 use paintcraft_core::types::{Error, ErrorCode, Result};
 
 mod payload;
+mod write;
+pub use write::{WRITE_PIXELS_MAX, WriteEntry, WriteLimits, encode_entries};
 
 pub const ENTRIES_MAX: usize = 256;
 pub const ENCODED_BYTES_MAX: usize = 64 * 1024 * 1024;
@@ -206,13 +208,14 @@ pub fn decode_entry(bytes: &[u8], index: u16, pixels: u64) -> Result<Decoded> {
                 .0
                 .iter()
                 .any(|pixel| pixel[3] != 0);
-            let mask_clear = (0..entry.height as usize).all(|row| {
+            let mask_matches = (0..entry.height as usize).all(|row| {
                 let stride = entry.width.div_ceil(32) as usize * 4;
                 (0..entry.width as usize).all(|column| {
                     payload[xor_end + row * stride + column / 8] & (0x80 >> (column % 8)) == 0
+                        || payload[40 + (row * entry.width as usize + column) * 4 + 3] == 0
                 })
             });
-            if !alpha_present || !mask_clear {
+            if !alpha_present || !mask_matches {
                 return Err(unsupported(
                     "legacy or masked 32-bit icon alpha is not qualified",
                 ));
