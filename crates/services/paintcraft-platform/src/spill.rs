@@ -26,13 +26,13 @@ fn private_file(path: &Path) -> std::io::Result<File> {
     options.open(path)
 }
 fn private_directory(path: &Path) -> std::io::Result<()> {
-    let mut builder = fs::DirBuilder::new();
     #[cfg(unix)]
     {
         use std::os::unix::fs::DirBuilderExt;
-        builder.mode(0o700);
+        fs::DirBuilder::new().mode(0o700).create(path)
     }
-    builder.create(path)
+    #[cfg(not(unix))]
+    fs::create_dir(path)
 }
 fn storage(e: std::io::Error) -> Error {
     Error::new(
