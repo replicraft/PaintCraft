@@ -55,6 +55,7 @@ impl App {
         {
             app.editor.set_status(format!("Cannot open: {error}"));
         }
+        app.editor.select_tool(Tool::Brush);
         app
     }
 }

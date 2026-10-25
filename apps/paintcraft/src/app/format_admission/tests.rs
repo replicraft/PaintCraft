@@ -46,6 +46,34 @@ fn launch_settings_are_loaded_before_profile_admission() {
 }
 
 #[test]
+fn opening_a_launch_document_keeps_brush_selected_without_editing_its_pixels() {
+    let dir = scratch();
+    let png = image::encode(ImageFormat::Png, 1, 1, &[2, 3, 4, 255], 90).unwrap();
+    let editor = Editor::new_document(2, 3).unwrap();
+    let pcnd = paintcraft_formats::pcnd::write(editor.document()).unwrap();
+    for experience in [Experience::Classic, Experience::Studio] {
+        Settings {
+            experience,
+            ..Default::default()
+        }
+        .save(&dir)
+        .unwrap();
+        for (name, bytes, dimensions) in
+            [("image.png", &png, (1, 1)), ("native.pcnd", &pcnd, (2, 3))]
+        {
+            let path = dir.join(name);
+            std::fs::write(&path, bytes).unwrap();
+            let app = App::new_with_settings(Some(path), dir.clone());
+            assert_eq!(app.editor.tool, Tool::Brush);
+            assert_eq!(app.editor.document().canvas, dimensions);
+            assert_eq!(app.editor.undo_depth(), 0);
+            assert_eq!(std::fs::read(dir.join(name)).unwrap(), *bytes);
+        }
+    }
+    std::fs::remove_dir_all(dir).unwrap();
+}
+
+#[test]
 fn bounded_reader_checks_metadata_and_a_growing_stream_without_partial_publication() {
     assert_eq!(read_limited(&b"abcd"[..], 4).unwrap(), b"abcd");
     assert_eq!(
