@@ -1,5 +1,7 @@
 //! Acknowledged native image writes. The worker retains clipboard ownership.
 use paintcraft_core::types::clipboard::Image;
+mod encoded;
+pub use encoded::{EncodedImage, Encoding, MAX_ENCODED_BYTES};
 use std::borrow::Cow;
 use std::fmt;
 use std::panic::{AssertUnwindSafe, catch_unwind};
