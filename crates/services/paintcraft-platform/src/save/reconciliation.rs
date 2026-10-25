@@ -192,6 +192,8 @@ fn check_identity(open: &fs::Metadata, named: &fs::Metadata) -> std::io::Result<
     {
         Ok(())
     } else {
+        #[cfg(test)]
+        eprintln!("save identity changed: open={open:?}; named={named:?}");
         Err(changed())
     }
 }
@@ -208,6 +210,8 @@ fn check_revision(before: &fs::Metadata, after: &fs::Metadata) -> std::io::Resul
     {
         Ok(())
     } else {
+        #[cfg(test)]
+        eprintln!("save revision changed: before={before:?}; after={after:?}");
         Err(changed())
     }
 }
