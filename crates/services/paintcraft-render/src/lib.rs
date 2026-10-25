@@ -15,6 +15,7 @@ mod kernels;
 pub mod parallel;
 
 pub mod cache;
+pub mod clipboard;
 pub mod display;
 pub mod sampling;
 pub mod thumbnail;

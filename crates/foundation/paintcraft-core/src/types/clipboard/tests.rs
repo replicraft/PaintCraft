@@ -84,3 +84,33 @@ fn cancellation_at_every_checkpoint_releases_entire_private_attempt() {
     );
     assert_eq!(budget.usage().reserved, 0);
 }
+
+#[test]
+fn admitted_writer_is_zeroed_private_and_releases_partial_failures() {
+    let budget = SharedBudget::new(8);
+    let image = Image::from_writer(2, 1, &budget, &|| Ok(()), |pixels| {
+        assert_eq!(pixels, &[0; 8]);
+        pixels.copy_from_slice(&[1, 2, 3, 0, 4, 5, 6, 127]);
+        Ok(())
+    })
+    .unwrap();
+    let clone = image.clone();
+    assert_eq!(image.rgba(), &[1, 2, 3, 0, 4, 5, 6, 127]);
+    assert_eq!(budget.usage().reserved, 8);
+    assert!(
+        Image::from_writer(1, 1, &budget, &|| Ok(()), |_| panic!(
+            "denied writer called"
+        ))
+        .is_err()
+    );
+    drop(image);
+    assert_eq!(budget.usage().reserved, 8);
+    drop(clone);
+    let failure = Image::from_writer(2, 1, &budget, &|| Ok(()), |pixels| {
+        pixels[0] = 99;
+        Err(Error::new(ErrorCode::StorageFailed, "test"))
+    })
+    .unwrap_err();
+    assert_eq!(failure.code, ErrorCode::StorageFailed);
+    assert_eq!(budget.usage().reserved, 0);
+}

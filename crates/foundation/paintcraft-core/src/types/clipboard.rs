@@ -94,6 +94,51 @@ impl Image {
         })
     }
 
+    /// Admit a zeroed private output before invoking a fallible compositor.
+    /// No partial output escapes a failed writer or final cancellation check.
+    pub fn from_writer(
+        width: u32,
+        height: u32,
+        budget: &SharedBudget,
+        check: &dyn Fn() -> Result<()>,
+        write: impl FnOnce(&mut [u8]) -> Result<()>,
+    ) -> Result<Self> {
+        check()?;
+        let bytes = size(width, height)?;
+        let lease = budget.reserve(bytes as u64)?;
+        let mut rgba = Vec::new();
+        rgba.try_reserve_exact(bytes).map_err(|_| {
+            Error::new(
+                ErrorCode::ResourceLimit,
+                "Clipboard pixel allocation failed",
+            )
+        })?;
+        if rgba.capacity() as u64 > MAX_BYTES {
+            return Err(Error::new(
+                ErrorCode::ResourceLimit,
+                "Clipboard allocation exceeds the limit",
+            ));
+        }
+        let extra = if rgba.capacity() > bytes {
+            Some(budget.reserve((rgba.capacity() - bytes) as u64)?)
+        } else {
+            None
+        };
+        rgba.resize(bytes, 0);
+        check()?;
+        write(&mut rgba)?;
+        check()?;
+        Ok(Self {
+            width,
+            height,
+            payload: Arc::new(Payload {
+                rgba,
+                _lease: lease,
+                _extra: extra,
+            }),
+        })
+    }
+
     /// Take already-owned, unmultiplied RGBA bytes; charge their entire capacity.
     pub fn from_rgba(
         width: u32,
