@@ -132,7 +132,7 @@ font8x8 = "0.3.1"
 cosmic-text = { version = "0.19.0", default-features = false, features = ["std", "swash", "shape-run-cache"] }
 
 # Standard image codecs and bounded binary header views.
-image = { version = "0.25.10", default-features = false, features = ["png", "bmp", "jpeg", "gif", "tiff", "tga", "webp", "avif"] }
+image = { version = "0.25.10", default-features = false, features = ["png", "bmp", "jpeg", "gif", "tiff", "tga", "webp", "avif", "pnm", "ff"] }
 # Explicit TIFF alpha tags are unavailable through image's encoder facade.
 tiff = { version = "0.11.3", default-features = false }
 zerocopy = { version = "0.8.63", features = ["derive"] }
@@ -142,6 +142,12 @@ zune-jpegxl = { version = "0.5.2", default-features = false, features = ["std"] 
 zune-core = { version = "0.5.3", default-features = false, features = ["std"] }
 # Studio single-surface DDS adapter; no implicit Rayon pool.
 dds = { version = "0.2.0", default-features = false }
+# Legacy PCX import.
+pcx = "0.2.5"
+# Force RGBA QOI output; the facade may use its informative RGB header instead.
+qoi = "0.4.1"
+# Bounded DEFLATE payloads in converted PAINT documents.
+flate2 = { version = "1.1.10", default-features = false, features = ["rust_backend"] }
 # Independent PNG fixture generation in tests.
 png = "0.18.1"
 

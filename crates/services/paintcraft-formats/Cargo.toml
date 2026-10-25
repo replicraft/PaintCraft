@@ -11,9 +11,12 @@ publish.workspace = true
 paintcraft-core.workspace = true
 paintcraft-document.workspace = true
 paintcraft-raster.workspace = true
+paintcraft-paint.workspace = true
 paintcraft-render.workspace = true
 
 image.workspace = true
+pcx.workspace = true
+qoi.workspace = true
 tiff.workspace = true
 dds.workspace = true
 jxl.workspace = true

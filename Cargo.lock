@@ -3297,10 +3297,13 @@ dependencies = [
  "paintcraft-core",
  "paintcraft-document",
  "paintcraft-editor",
+ "paintcraft-paint",
  "paintcraft-platform",
  "paintcraft-raster",
  "paintcraft-render",
+ "pcx",
  "png",
+ "qoi",
  "ruzstd",
  "sha2",
  "tiff",
@@ -3332,15 +3335,20 @@ version = "0.1.0"
 name = "paintcraft-paint"
 version = "0.1.0"
 dependencies = [
+ "flate2",
  "paintcraft-core",
+ "sha2",
 ]
 
 [[package]]
 name = "paintcraft-pdn"
 version = "0.1.0"
 dependencies = [
+ "crc32fast",
+ "flate2",
  "paintcraft-core",
  "quick-xml",
+ "sha2",
 ]
 
 [[package]]
@@ -3510,6 +3518,15 @@ name = "pastey"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2ee67f1008b1ba2321834326597b8e186293b049a023cdef258527550b9935b4"
+
+[[package]]
+name = "pcx"
+version = "0.2.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dffa08d8cdb97709f15a9cf1bc0edd439a96e8c1d05687272b430b7a3cd8a64b"
+dependencies = [
+ "byteorder",
+]
 
 [[package]]
 name = "peniko"
@@ -3759,6 +3776,15 @@ name = "pxfm"
 version = "0.1.30"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d55d956fa96f5ec02be2e13af0e20391a5aa83d6a074e3ad368959d0fab299ea"
+
+[[package]]
+name = "qoi"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f6d64c71eb498fe9eae14ce4ec935c555749aef511cca85b5568910d6e48001"
+dependencies = [
+ "bytemuck",
+]
 
 [[package]]
 name = "quick-error"

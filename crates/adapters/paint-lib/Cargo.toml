@@ -1,6 +1,6 @@
 [package]
 name = "paintcraft-paint"
-description = "Bounded inert ISO box and extent inspection for Paint document qualification"
+description = "Bounded observed-profile layered Paint decoding and ISO container inspection"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -9,6 +9,10 @@ publish.workspace = true
 
 [dependencies]
 paintcraft-core.workspace = true
+flate2.workspace = true
 
 [lints]
 workspace = true
+
+[dev-dependencies]
+sha2.workspace = true
