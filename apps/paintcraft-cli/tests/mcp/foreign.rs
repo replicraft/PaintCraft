@@ -85,6 +85,12 @@ fn foreign_layers_require_exact_consent_and_cannot_overwrite_source_aliases() {
             vec![project_import::PDN_LOSS],
             2,
         ),
+        (
+            "source.ora",
+            root.join("../services/paintcraft-formats/tests/ora-fixtures/deflated.ora"),
+            vec!["ora-resolution-ignored"],
+            3,
+        ),
     ] {
         let source = folder.join(name);
         let bytes = fs::read(fixture).unwrap();

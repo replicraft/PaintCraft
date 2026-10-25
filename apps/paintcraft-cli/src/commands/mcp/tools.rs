@@ -77,7 +77,7 @@ impl PaintingServer {
                 Some(page) => profile.admit_import_page(&path, &bytes, page)?,
                 None => profile.admit_import(&path, &bytes)?,
             };
-            let (doc, losses) = if matches!(family, Family::Paint | Family::Pdn) {
+            let (doc, losses) = if matches!(family, Family::Paint | Family::Pdn | Family::Ora) {
                 let converted = paintcraft_formats::project_import::decode_layered(
                     family,
                     &bytes,

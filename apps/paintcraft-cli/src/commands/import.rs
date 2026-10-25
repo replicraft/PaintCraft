@@ -42,6 +42,7 @@ pub fn run(a: Options, json: bool) -> Reply {
                 family,
                 paintcraft_formats::registry::Family::Paint
                     | paintcraft_formats::registry::Family::Pdn
+                    | paintcraft_formats::registry::Family::Ora
             ) {
                 let converted = paintcraft_formats::project_import::decode_layered(
                     family,

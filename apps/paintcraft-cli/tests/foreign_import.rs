@@ -26,6 +26,12 @@ fn foreign_layered_import_keeps_layers_and_never_replaces_the_source() {
             project_import::PDN_LOSS.into(),
             2,
         ),
+        (
+            "source.ora",
+            root.join("../services/paintcraft-formats/tests/ora-fixtures/deflated.ora"),
+            "ora-resolution-ignored".into(),
+            3,
+        ),
     ] {
         let source = dir.join(name);
         let dest = source.with_file_name(format!("{name}.pcnd"));
