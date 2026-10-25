@@ -1,9 +1,10 @@
 # PaintCraft roadmap implementation status
 
-Desktop ordinary Paste now has an ordered existing-layer publication prerequisite:
-captured target/blend/key survive admission retries, cancellation and stale-source
-checks, with one-step Undo and file-barrier ordering. Native private placement,
-preview and controls remain unfinished. See [existing-layer Paste](PASTE_ONTO.md).
+[Desktop ordinary Paste](NATIVE_FLOATING_PASTE.md) now connects the native macOS
+reader to captured-target private placement, worker-rendered CPU/GPU previews,
+repeated dragging/nudging, Apply/Enter and Cancel/Escape/Undo, and one ordered
+history change. Other native OS read adapters and reference qualification remain
+unavailable or unfinished; T14/T15 stay partial.
 
 Latest Classic feedback: [implemented changes, validation scope and remaining
 selection/rotation/background-removal work](CLASSIC_FOLLOWUP.md). Full feature and
