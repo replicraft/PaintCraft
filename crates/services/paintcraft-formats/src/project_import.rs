@@ -16,13 +16,15 @@ pub const PAINT_LOSSES: [&str; 3] = [
 ];
 
 pub const PDN_LOSS: &str = "pdn-metadata-ignored";
-pub const KNOWN_LOSSES: [&str; 6] = [
+pub const KNOWN_LOSSES: [&str; 8] = [
     PAINT_LOSSES[0],
     PAINT_LOSSES[1],
     PAINT_LOSSES[2],
     PDN_LOSS,
     crate::ora::LOSSES[0],
     crate::ora::LOSSES[1],
+    "psd-metadata-ignored",
+    "psd-empty-layer-extent-normalized",
 ];
 
 #[derive(Debug)]
@@ -237,6 +239,16 @@ pub fn decode_pdn(
     })
 }
 
+/// Families handled by the private layered conversion path. This is dispatch
+/// information; callers must obtain frontend/operation admission separately.
+pub fn supports(family: crate::registry::Family) -> bool {
+    use crate::registry::Family;
+    matches!(
+        family,
+        Family::Paint | Family::Pdn | Family::Ora | Family::Psd | Family::Psb
+    )
+}
+
 pub fn decode_layered(
     family: crate::registry::Family,
     bytes: &[u8],
@@ -247,6 +259,20 @@ pub fn decode_layered(
         crate::registry::Family::Paint => decode_paint(bytes, pixel_limit, check),
         crate::registry::Family::Pdn => decode_pdn(bytes, pixel_limit, check),
         crate::registry::Family::Ora => decode_ora(bytes, pixel_limit, check),
+        crate::registry::Family::Psd | crate::registry::Family::Psb => {
+            let expected = if family == crate::registry::Family::Psd {
+                1u16
+            } else {
+                2
+            };
+            if bytes.get(..4) != Some(b"8BPS") || bytes.get(4..6) != Some(&expected.to_be_bytes()) {
+                return Err(Error::new(
+                    ErrorCode::CodecFailed,
+                    "Photoshop signature disagrees with admitted family",
+                ));
+            }
+            decode_psd(bytes, pixel_limit, check)
+        }
         _ => Err(Error::new(
             ErrorCode::CapabilityUnsupported,
             "no qualified layered conversion for this format",

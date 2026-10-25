@@ -1,10 +1,63 @@
-//! PSD/PSB conversion remains private until frontend admission is qualified.
+//! Explicit Studio PSD/PSB conversion keeps layers and never enables preserving Save.
 use paintcraft_core::types::{Error, ErrorCode};
 use paintcraft_formats::{pcnd, project_import};
 use std::cell::Cell;
 
 const PSD: &[u8] = include_bytes!("psd-fixtures/layers-3.psd");
 const PSB: &[u8] = include_bytes!("psd-fixtures/layers-1.psb");
+
+#[test]
+fn only_explicit_studio_import_is_admitted_on_both_platforms() {
+    use paintcraft_formats::registry::*;
+    for platform in [Platform::Native, Platform::Web] {
+        for (family, name, bytes) in [
+            (Family::Psd, "layers.psd", PSD),
+            (Family::Psb, "layers.psb", PSB),
+        ] {
+            assert_eq!(
+                admit_import(Frontend::Studio, name, bytes, platform).unwrap(),
+                family
+            );
+            assert!(
+                enabled_extensions(Frontend::Studio, Operation::ImportConvert, platform)
+                    .contains(&family.id())
+            );
+            for operation in [
+                Operation::Open,
+                Operation::OpenProject,
+                Operation::OpenRaster,
+                Operation::SavePreserving,
+                Operation::SaveAsCopy,
+                Operation::ExportFlat,
+            ] {
+                assert!(
+                    !admission(Request::new(Frontend::Studio, operation, family, platform))
+                        .available()
+                );
+            }
+            for classic in [
+                Frontend::ClassicV7,
+                Frontend::ClassicV10,
+                Frontend::ClassicV11,
+            ] {
+                assert!(admit_import(classic, name, bytes, platform).is_err());
+                assert!(
+                    !enabled_extensions(classic, Operation::ImportConvert, platform)
+                        .contains(&family.id())
+                );
+            }
+            let wrong_name = if family == Family::Psd {
+                "wrong.psb"
+            } else {
+                "wrong.psd"
+            };
+            assert!(admit_import(Frontend::Studio, wrong_name, bytes, platform).is_err());
+        }
+    }
+    use paintcraft_formats::registry::Family;
+    assert!(project_import::decode_layered(Family::Psd, PSB, 100, &|| Ok(())).is_err());
+    assert!(project_import::decode_layered(Family::Psb, PSD, 100, &|| Ok(())).is_err());
+}
 
 #[test]
 fn raster_layers_keep_order_names_origins_opacity_and_raw_samples_in_pcnd() {

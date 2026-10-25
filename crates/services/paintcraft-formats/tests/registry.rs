@@ -166,7 +166,10 @@ fn stock_extended_asset_and_native_project_operations_do_not_leak() {
                 family,
                 Platform::Native
             )),
-            if matches!(family, Family::Paint | Family::Ora) {
+            if matches!(
+                family,
+                Family::Paint | Family::Ora | Family::Psd | Family::Psb
+            ) {
                 Decision::Allowed
             } else {
                 Decision::TemporarilyUnavailable(Reason::BackendUnavailable)

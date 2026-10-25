@@ -206,6 +206,9 @@ pub fn capability(family: Family, operation: Operation, _platform: Platform) -> 
         Family::Paint if operation == Operation::ImportConvert => {
             Some("paintcraft-paint-iovl-unci")
         }
+        Family::Psd | Family::Psb if operation == Operation::ImportConvert => {
+            Some("ag-psd-rgb8-raster")
+        }
         Family::Ora if matches!(operation, Operation::ImportConvert | Operation::SaveAsCopy) => {
             Some("openraster-flat-png")
         }
@@ -248,7 +251,9 @@ pub fn capability(family: Family, operation: Operation, _platform: Platform) -> 
             Family::Ico | Family::Cur => {
                 matches!(operation, Operation::ImportConvert | Operation::SaveAsCopy)
             }
-            Family::Paint | Family::Dcx | Family::Ora => operation == Operation::ImportConvert,
+            Family::Paint | Family::Dcx | Family::Ora | Family::Psd | Family::Psb => {
+                operation == Operation::ImportConvert
+            }
             Family::Jxl | Family::Avif => operation == Operation::ExportFlat,
             Family::Pdn => matches!(
                 operation,
