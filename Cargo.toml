@@ -145,6 +145,7 @@ zune-core = { version = "0.5.3", default-features = false, features = ["std"] }
 dds = { version = "0.2.0", default-features = false }
 # Legacy PCX import.
 pcx = "0.2.5"
+color_quant = "1.1.0"
 # Force RGBA QOI output; the facade may use its informative RGB header instead.
 qoi = "0.4.1"
 # Bounded DEFLATE payloads in converted PAINT documents.
