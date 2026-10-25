@@ -11,7 +11,7 @@ import sys
 import tempfile
 import tomllib
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 TEMPLATE = ROOT / "apps/paintcraft/resources/macos/Info.plist.in"
 ICON = ROOT / "assets/paintcraft-icon.icns"
 BUNDLE_ID = "io.github.replicraft.PaintCraft"

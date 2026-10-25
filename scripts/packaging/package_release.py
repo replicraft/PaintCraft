@@ -13,7 +13,7 @@ import tempfile
 import tomllib
 import zipfile
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 TARGETS = {
     "x86_64-pc-windows-msvc": "windows-x64",
     "aarch64-pc-windows-msvc": "windows-arm64",

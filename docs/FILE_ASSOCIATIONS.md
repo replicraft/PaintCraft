@@ -6,7 +6,7 @@ for `.pcnd` documents. Running `cargo run` alone does not install that associati
 Build a local bundle from the repository root with Python 3.11 or later:
 
 ```sh
-python3 scripts/package_macos.py
+python3 scripts/packaging/package_macos.py
 ```
 
 The release executable, native Finder launcher and existing PaintCraft icon are placed in
@@ -19,7 +19,7 @@ the installed application does not require a compiler. macOS 13 or later is requ
 To install a copy in your own Applications folder and register it with macOS:
 
 ```sh
-python3 scripts/package_macos.py --install --register
+python3 scripts/packaging/package_macos.py --install --register
 ```
 
 Add `--replace` when updating an existing PaintCraft bundle. Replacement refuses

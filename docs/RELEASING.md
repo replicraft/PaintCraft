@@ -103,7 +103,7 @@ Build the native release executable with the appropriate Rust target first:
 
 ```sh
 cargo build --locked --release -p paintcraft --target aarch64-apple-darwin
-python3 scripts/package_release.py package --version 0.1.0 \
+python3 scripts/packaging/package_release.py package --version 0.1.0 \
   --target aarch64-apple-darwin \
   --binary target/aarch64-apple-darwin/release/paintcraft --output dist
 ```
@@ -113,18 +113,18 @@ header rather than assuming its filename describes its architecture. DMG
 creation requires macOS, Xcode command-line tools and disk-image access. It does
 not launch, install or register the app.
 
-For Linux, run `scripts/package_release.py package` for the tar archive, then
-`scripts/package_linux.py` with the same `--version`, `--target`, `--binary` and
+For Linux, run `scripts/packaging/package_release.py package` for the tar archive, then
+`scripts/packaging/package_linux.py` with the same `--version`, `--target`, `--binary` and
 `--output`. Install the pinned tools from the release-tools action first.
-Windows uses the archive command followed by `scripts/package_windows.py` after
+Windows uses the archive command followed by `scripts/packaging/package_windows.py` after
 installing WiX 5.0.2. Windows release builds must use
 `RUSTFLAGS=-C target-feature=+crt-static`, as in CI.
 
 Once every platform's files and `.sha256` sidecars are together:
 
 ```sh
-python3 scripts/package_release.py finalize --version 0.1.0 --output dist
-python3 scripts/package_release.py verify --version 0.1.0 --output dist
+python3 scripts/packaging/package_release.py finalize --version 0.1.0 --output dist
+python3 scripts/packaging/package_release.py verify --version 0.1.0 --output dist
 cd dist
 sha256sum --check SHA256SUMS.txt
 ```

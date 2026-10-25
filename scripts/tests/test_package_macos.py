@@ -11,7 +11,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-SPEC = importlib.util.spec_from_file_location("package_macos", Path(__file__).parents[1] / "package_macos.py")
+SPEC = importlib.util.spec_from_file_location("package_macos", Path(__file__).parents[1] / "packaging/package_macos.py")
 PACK = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(PACK)
 

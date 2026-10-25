@@ -6,10 +6,10 @@ on:
     paths:
       - '.github/workflows/release.yml'
       - '.github/actions/release-tools/**'
-      - 'scripts/package_*.py'
+      - 'scripts/packaging/**'
       - 'scripts/tests/test_package_*.py'
-      - 'scripts/verify_windows_install.ps1'
-      - 'scripts/verify_macos_release.py'
+      - 'scripts/packaging/verify_windows_install.ps1'
+      - 'scripts/packaging/verify_macos_release.py'
       - 'packaging/**'
       - 'assets/paintcraft-icon*'
       - 'apps/paintcraft/build.rs'
@@ -41,7 +41,7 @@ jobs:
       - id: version
         env:
           RELEASE_TAG: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
-        run: python scripts/package_release.py validate --tag "$RELEASE_TAG"
+        run: python scripts/packaging/package_release.py validate --tag "$RELEASE_TAG"
       - run: python -m unittest discover -s scripts/tests -p 'test_package_*.py'
       - run: python scripts/check_file_lengths.py
 
@@ -101,16 +101,16 @@ jobs:
       - name: Test packaging on the native platform
         run: python -m unittest discover -s scripts/tests -p 'test_package_*.py'
       - name: Package portable archives and macOS images
-        run: python scripts/package_release.py package --version ${{ needs.version.outputs.version }} --target ${{ matrix.target }} --binary target/${{ matrix.target }}/release/${{ matrix.executable }} --output dist
+        run: python scripts/packaging/package_release.py package --version ${{ needs.version.outputs.version }} --target ${{ matrix.target }} --binary target/${{ matrix.target }}/release/${{ matrix.executable }} --output dist
       - name: Verify macOS image and updater ZIP contain the identical signed app
         if: runner.os == 'macOS'
         shell: bash
-        run: python scripts/verify_macos_release.py --version ${{ needs.version.outputs.version }} --target ${{ matrix.target }} --dmg dist/*.dmg --update dist/*-update.zip
+        run: python scripts/packaging/verify_macos_release.py --version ${{ needs.version.outputs.version }} --target ${{ matrix.target }} --dmg dist/*.dmg --update dist/*-update.zip
       - uses: ./.github/actions/release-tools
         if: runner.os == 'Linux'
       - name: Package Linux installers
         if: runner.os == 'Linux'
-        run: python scripts/package_linux.py --version ${{ needs.version.outputs.version }} --target ${{ matrix.target }} --binary target/${{ matrix.target }}/release/paintcraft --output dist
+        run: python scripts/packaging/package_linux.py --version ${{ needs.version.outputs.version }} --target ${{ matrix.target }} --binary target/${{ matrix.target }}/release/paintcraft --output dist
       - name: Inspect Linux desktop integration and native packages
         if: runner.os == 'Linux'
         shell: bash
@@ -135,11 +135,11 @@ jobs:
         run: dotnet tool install --global wix --version 5.0.2 --allow-roll-forward
       - name: Package Windows MSI
         if: runner.os == 'Windows'
-        run: python scripts/package_windows.py --version ${{ needs.version.outputs.version }} --target ${{ matrix.target }} --binary target/${{ matrix.target }}/release/${{ matrix.executable }} --output dist
+        run: python scripts/packaging/package_windows.py --version ${{ needs.version.outputs.version }} --target ${{ matrix.target }} --binary target/${{ matrix.target }}/release/${{ matrix.executable }} --output dist
       - name: Verify MSI installation, repair and association cleanup
         if: runner.os == 'Windows'
         shell: pwsh
-        run: ./scripts/verify_windows_install.ps1 -Installer (Get-ChildItem dist/*.msi).FullName -Binary target/${{ matrix.target }}/release/paintcraft.exe
+        run: ./scripts/packaging/verify_windows_install.ps1 -Installer (Get-ChildItem dist/*.msi).FullName -Binary target/${{ matrix.target }}/release/paintcraft.exe
       - uses: actions/upload-artifact@v7
         with:
           name: paintcraft-${{ needs.version.outputs.version }}-${{ matrix.target }}
@@ -183,7 +183,7 @@ jobs:
             export CARGO_BUILD_JOBS=4 CARGO_INCREMENTAL=0
             cargo build --locked --release -p paintcraft --target x86_64-unknown-freebsd
             python3.13 -m unittest discover -s scripts/tests -p 'test_package_*.py'
-            python3.13 scripts/package_release.py package --version "$(python3.13 scripts/package_release.py validate)" --target x86_64-unknown-freebsd --binary "$CARGO_TARGET_DIR/x86_64-unknown-freebsd/release/paintcraft" --output dist
+            python3.13 scripts/packaging/package_release.py package --version "$(python3.13 scripts/packaging/package_release.py validate)" --target x86_64-unknown-freebsd --binary "$CARGO_TARGET_DIR/x86_64-unknown-freebsd/release/paintcraft" --output dist
             ldd "$CARGO_TARGET_DIR/x86_64-unknown-freebsd/release/paintcraft" | tee dependencies.txt
             if grep -q 'not found' dependencies.txt; then exit 1; fi
       - uses: actions/upload-artifact@v7
@@ -209,7 +209,7 @@ jobs:
           path: dist
           merge-multiple: true
       - name: Require every platform and generate SHA256SUMS.txt
-        run: python scripts/package_release.py finalize --version ${{ needs.version.outputs.version }} --output dist
+        run: python scripts/packaging/package_release.py finalize --version ${{ needs.version.outputs.version }} --output dist
       - name: Independently verify final checksums
         working-directory: dist
         run: sha256sum --check SHA256SUMS.txt
