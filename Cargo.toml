@@ -148,6 +148,8 @@ pcx = "0.2.5"
 color_quant = "1.1.0"
 # Icon/cursor directories with explicit entry selection and hotspot metadata.
 ico = "0.6.0"
+# Studio PSD/PSB layered conversion; named, preflighted subsets only.
+ag-psd = { version = "0.3.0", default-features = false }
 # Force RGBA QOI output; the facade may use its informative RGB header instead.
 qoi = "0.4.1"
 # Bounded DEFLATE payloads in converted PAINT documents.
