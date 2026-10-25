@@ -3294,6 +3294,7 @@ dependencies = [
  "paintcraft-input",
  "paintcraft-raster",
  "paintcraft-render",
+ "paintcraft-studio",
  "paintcraft-tools",
  "paintcraft-ui",
  "rfd",

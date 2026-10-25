@@ -8,6 +8,7 @@ mod documents;
 #[path = "floating_tests.rs"]
 mod floating_tests;
 mod forms;
+mod interfaces;
 #[cfg(test)]
 #[path = "lasso_tests.rs"]
 mod lasso_tests;
@@ -24,6 +25,9 @@ use paintcraft_ui::i18n::{set_language, tr_status};
 
 #[derive(Debug)]
 pub struct WebApp {
+    pub(crate) frontend: Frontend,
+    pub(crate) studio: paintcraft_studio::Workspace,
+    parked: Option<Box<interfaces::Parked>>,
     pub(crate) controls: Controls,
     pub(crate) editor: Editor,
     pub(crate) canvas: Canvas,
@@ -32,7 +36,7 @@ pub struct WebApp {
     name: String,
     pub(crate) zoom: f32,
     settings: bool,
-    applied_theme: egui::Theme,
+    applied_style: Option<(egui::Theme, ClassicVariant, Frontend)>,
     settings_draft: Option<settings::Draft>,
     preferences: crate::preferences::Preferences,
     export_confirm: Option<ImageExport>,
@@ -59,6 +63,9 @@ impl WebApp {
         paintcraft_ui::fonts::install_for_locale(ctx, preferences.language.id());
         paintcraft_ui::theme::apply(ctx, ctx.theme());
         Self {
+            frontend: Frontend::Classic,
+            studio: Default::default(),
+            parked: None,
             controls: Controls {
                 tool: Tool::Brush,
                 options: ToolOptions::default(),
@@ -75,7 +82,7 @@ impl WebApp {
             name: "Untitled".into(),
             zoom: 1.0,
             settings: false,
-            applied_theme: ctx.theme(),
+            applied_style: None,
             settings_draft: None,
             text: crate::text_ui::TextUi {
                 style: paintcraft_classic::TextOptions {
@@ -117,7 +124,7 @@ impl WebApp {
             .target
             .and_then(|id| doc.roots.iter().position(|root| *root == id));
         Context {
-            frontend: Frontend::Classic,
+            frontend: self.frontend,
             document_open: true,
             can_undo: self.editor.session.undo_depth() > 0 || self.editor.has_text(),
             can_redo: self.editor.session.redo_depth() > 0,
@@ -240,12 +247,20 @@ impl WebApp {
             Action::Paste => self.paste_current_requested(ctx),
             Action::Crop => self.edit(Edit::CropToSelection),
             Action::EraseSelection => self.edit(Edit::EraseSelection {
-                color: paintcraft_tools::commands::canvas_color(self.editor.session.document()),
+                color: self.clear_color(),
             }),
             Action::TransformImage(transform) => self.edit(Edit::TransformImage {
                 transform,
-                clear: paintcraft_tools::commands::canvas_color(self.editor.session.document()),
+                clear: self.clear_color(),
             }),
+            Action::ChooseFrontend(frontend) if frontend == self.frontend => (),
+            Action::ChooseFrontend(_) => {
+                if self.unsaved() {
+                    self.confirm_replace = Some(action);
+                } else {
+                    self.replace(ctx, action);
+                }
+            }
             Action::Settings | Action::Interface => {
                 self.editor.tools.cancel_gesture();
                 self.open_settings(ctx);
@@ -279,7 +294,7 @@ impl WebApp {
                 self.edit(Edit::Redo);
             }
             Action::ClearCanvas => self.edit(Edit::ClearCanvas {
-                color: paintcraft_tools::commands::canvas_color(self.editor.session.document()),
+                color: self.clear_color(),
             }),
             Action::Deselect => self.edit(Edit::Select { corners: None }),
             Action::InvertSelection => {
@@ -331,7 +346,11 @@ impl WebApp {
     }
 
     fn new_document(&mut self) {
-        let (width, height) = self.preferences.canvas.new_size();
+        let (width, height) = if self.frontend == Frontend::Studio {
+            (800, 600)
+        } else {
+            self.preferences.canvas.new_size()
+        };
         match Editor::new(width, height) {
             Ok(editor) => {
                 self.editor = editor;
@@ -348,15 +367,22 @@ impl WebApp {
     }
 
     fn replace(&mut self, ctx: &egui::Context, action: Action) {
-        if action == Action::Open {
+        if let Action::ChooseFrontend(frontend) = action {
+            self.switch_frontend(ctx, frontend);
+            self.confirm_replace = None;
+        } else if action == Action::Open {
             if self.files.busy {
                 return;
             }
             self.import_owner = Some(crate::importing::Owner::capture(self));
-            let frontend = match self.variant {
-                ClassicVariant::V7 => paintcraft_formats::registry::Frontend::ClassicV7,
-                ClassicVariant::V10 => paintcraft_formats::registry::Frontend::ClassicV10,
-                ClassicVariant::V11 => paintcraft_formats::registry::Frontend::ClassicV11,
+            let frontend = if self.frontend == Frontend::Studio {
+                paintcraft_formats::registry::Frontend::Studio
+            } else {
+                match self.variant {
+                    ClassicVariant::V7 => paintcraft_formats::registry::Frontend::ClassicV7,
+                    ClassicVariant::V10 => paintcraft_formats::registry::Frontend::ClassicV10,
+                    ClassicVariant::V11 => paintcraft_formats::registry::Frontend::ClassicV11,
+                }
             };
             self.files.open(ctx, frontend);
         } else {
@@ -385,7 +411,7 @@ impl WebApp {
     }
 
     pub(crate) fn remember_canvas_size(&mut self, size: (u32, u32)) {
-        if self.preferences.canvas.last != Some(size) {
+        if self.frontend == Frontend::Classic && self.preferences.canvas.last != Some(size) {
             self.preferences.canvas.last = Some(size);
             self.persist_preferences();
         }
@@ -520,25 +546,39 @@ impl WebApp {
             ctx.egui_wants_keyboard_input() || egui::Popup::is_any_open(&ctx);
         let context = self.context();
         egui::Panel::top("classic-chrome").show(ui, |ui| {
-            let actions = paintcraft_classic::chrome_with_text(
-                ui,
-                self.variant,
-                &mut self.controls,
-                &mut self.workspace,
-                context,
-                Some(paintcraft_classic::TextControls {
-                    options: &mut self.text.style,
-                    families: &self.text.families,
-                    search: &mut self.text.search,
-                    loading: false,
-                }),
-            );
+            let actions = if self.frontend == Frontend::Studio {
+                let mut actions =
+                    paintcraft_studio::toolbar(ui, &mut self.controls, &mut self.studio, context);
+                ui.horizontal(|ui| {
+                    actions.extend(paintcraft_ui::chrome::interface_changer(ui, context));
+                    if ui.button(t!(ui.ctx(), "Settings")).clicked() {
+                        actions.push(Action::Settings);
+                    }
+                });
+                self.studio.canvas_top = ui.min_rect().bottom();
+                actions
+            } else {
+                paintcraft_classic::chrome_with_text(
+                    ui,
+                    self.variant,
+                    &mut self.controls,
+                    &mut self.workspace,
+                    context,
+                    Some(paintcraft_classic::TextControls {
+                        options: &mut self.text.style,
+                        families: &self.text.families,
+                        search: &mut self.text.search,
+                        loading: false,
+                    }),
+                )
+            };
             for action in actions {
                 self.action(&ctx, action);
             }
         });
         self.paste_placement_bar(ui);
         let status_rect = egui::Panel::bottom("classic-status")
+            .frame(paintcraft_classic::status::frame(self.variant, ctx.theme()))
             .show(ui, |ui| {
                 let size = egui::vec2(
                     ui.available_width(),
@@ -548,6 +588,9 @@ impl WebApp {
             })
             .inner;
         self.text_chrome(ui);
+        if self.frontend == Frontend::Studio {
+            self.studio_windows(&ctx);
+        }
         self.layers(ui);
         egui::CentralPanel::default()
             .frame(egui::Frame::new().fill(paintcraft_classic::workspace_color(

@@ -13,9 +13,15 @@ pub(super) struct Draft {
 }
 impl WebApp {
     pub(super) fn refresh_appearance(&mut self, ctx: &egui::Context) {
-        if self.applied_theme != ctx.theme() {
-            self.applied_theme = ctx.theme();
-            paintcraft_ui::theme::apply(ctx, self.applied_theme);
+        let key = (ctx.theme(), self.variant, self.frontend);
+        if self.applied_style != Some(key) {
+            self.applied_style = Some(key);
+            paintcraft_ui::theme::apply(ctx, key.0);
+            if self.frontend == Frontend::Studio {
+                paintcraft_studio::apply_style_for_theme(ctx, key.0);
+            } else {
+                paintcraft_classic::apply_style_for_theme(ctx, self.variant, key.0);
+            }
             ctx.request_repaint();
         }
     }

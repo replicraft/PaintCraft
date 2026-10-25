@@ -1,8 +1,8 @@
 # Browser and desktop parity
 
 Full desktop parity is still in progress. The shared editor and Classic frontend
-cover many operations, but the browser currently exposes one Classic document
-workspace. This ledger distinguishes connected features from remaining work.
+cover many operations, but the browser now exposes separate Classic and Studio document
+workspaces. This ledger distinguishes connected features from remaining work.
 
 | Area | Browser state | Remaining work |
 | --- | --- | --- |
@@ -12,7 +12,7 @@ workspace. This ledger distinguishes connected features from remaining work.
 | Classic editing | Shared nine brush media, 23 shapes, fill, picker, text rasterization, masks, lasso, crop, five orientations and Undo/Redo | Arbitrary-angle/resampled transformations, effects and persistent editable objects remain broader roadmap work |
 | Clipboard | PNG read/write, Copy/Cut/Copy visible and private ordinary Paste/new-layer Paste | Other browser/device permissions and cross-application fidelity remain unqualified |
 | View and workspace controls | Canvas fit/actual/selection zoom, scroll, layers and tool controls | Pixel grid, rulers, status-bar toggle, toolbar auto-hide, fullscreen and thumbnail are not connected in the browser |
-| Frontends and documents | Classic 7, 10 and 11 skins; one active document | Studio, independent multi-document workspaces, tabs, Save All and history-panel workflows |
+| Frontends and documents | Classic 7, 10 and 11 skins; Studio toolbar, floating tools/colors and history, separate documents/history/views with a download/discard switch guard | Multiple documents within each workspace, tabs, Save All and remaining Studio navigation/parity workflows |
 | File adapters | Browser pickers, named project downloads, PNG/BMP/JPEG input and image export | Broader native codecs, format capabilities and export controls |
 | Runtime and recovery | Bounded synchronous browser editing; unload warning; preferences in local storage | Background preparation, larger document/resource handling, browser recovery/document persistence and GPU document composition |
 | Platform services | Browser file/clipboard interfaces and page title | Browser equivalents for applicable desktop services such as Print; native menu/OS registration stay platform-specific |

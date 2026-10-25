@@ -71,7 +71,8 @@ impl WebApp {
 
     pub(crate) fn canvas(&mut self, ui: &mut egui::Ui) {
         self.canvas.viewport = ui.available_size();
-        let modern = self.variant == paintcraft_classic::ClassicVariant::V11;
+        let modern = self.frontend == paintcraft_ui::actions::Frontend::Classic
+            && self.variant == paintcraft_classic::ClassicVariant::V11;
         let enabled = !self.blocked();
         self.canvas.controls = if modern {
             paintcraft_classic::tool_controls::show(
@@ -133,119 +134,133 @@ impl WebApp {
             }
         }
         let extent = self.editor.session.document().canvas;
-        paintcraft_classic::canvas::canvas(
-            ui,
-            egui::Id::unique("web-editor-canvas"),
-            Vec2::new(extent.0 as f32, extent.1 as f32) * self.zoom,
-            clearance,
-            |ui, response, painter| {
-                self.canvas.rect = Some(response.rect);
-                if let Some((x, y)) = self.canvas.pending_center.take() {
-                    let center = response.rect.min + Vec2::new(x, y) * self.zoom;
-                    ui.scroll_to_rect(
-                        Rect::from_center_size(center, Vec2::ZERO),
-                        Some(egui::Align::Center),
-                    );
-                }
-                response
-                    .widget_info(|| egui::WidgetInfo::labeled(egui::Role::Image, true, "Canvas"));
-                if ui.ctx().current_pass_index() == 0 {
-                    self.canvas_input(ui, &response);
-                }
-                self.refresh_texture(ui.ctx());
-                painter.rect_filled(response.rect, 0, Color32::WHITE);
-                if let Some(texture) = &self.canvas.texture {
-                    painter.image(
-                        texture.id(),
-                        response.rect,
-                        Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)),
-                        Color32::WHITE,
-                    );
-                }
-                self.text_overlay(ui, &painter, response.rect);
-                self.draw_mask_overlay(&painter, response.rect);
-                if let Some(Preview::SelectionPath { points }) = self.editor.tools.preview() {
-                    let path: Vec<_> = points
-                        .into_iter()
-                        .map(|p| response.rect.min + Vec2::new(p.0 as f32, p.1 as f32) * self.zoom)
-                        .collect();
-                    let ppp = ui.ctx().pixels_per_point();
-                    painter.add(egui::Shape::closed_line(
-                        path.clone(),
-                        egui::Stroke::new(3.0 / ppp, Color32::WHITE),
-                    ));
-                    painter.add(egui::Shape::closed_line(
-                        path,
-                        egui::Stroke::new(1.0 / ppp, Color32::BLACK),
-                    ));
-                }
-                let selection = match self.editor.tools.preview() {
-                    Some(Preview::Marquee { from, to }) => Some((from, (to.0 + 1, to.1 + 1))),
-                    _ => match self
-                        .visible_selection()
-                        .unwrap_or(paintcraft_raster::Selection::Empty)
+        let scope = self.studio_canvas_scope();
+        let studio = self.frontend == paintcraft_ui::actions::Frontend::Studio;
+        let size = Vec2::new(extent.0 as f32, extent.1 as f32) * self.zoom;
+        let paint = |ui: &mut egui::Ui, response: egui::Response, painter: egui::Painter| {
+            self.canvas.rect = Some(response.rect);
+            if let Some((x, y)) = self.canvas.pending_center.take() {
+                let center = response.rect.min + Vec2::new(x, y) * self.zoom;
+                ui.scroll_to_rect(
+                    Rect::from_center_size(center, Vec2::ZERO),
+                    Some(egui::Align::Center),
+                );
+            }
+            response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Image, true, "Canvas"));
+            if ui.ctx().current_pass_index() == 0 {
+                self.canvas_input(ui, &response);
+            }
+            self.refresh_texture(ui.ctx());
+            painter.rect_filled(response.rect, 0, Color32::WHITE);
+            if let Some(texture) = &self.canvas.texture {
+                painter.image(
+                    texture.id(),
+                    response.rect,
+                    Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)),
+                    Color32::WHITE,
+                );
+            }
+            self.text_overlay(ui, &painter, response.rect);
+            self.draw_mask_overlay(&painter, response.rect);
+            if let Some(Preview::SelectionPath { points }) = self.editor.tools.preview() {
+                let path: Vec<_> = points
+                    .into_iter()
+                    .map(|p| response.rect.min + Vec2::new(p.0 as f32, p.1 as f32) * self.zoom)
+                    .collect();
+                let ppp = ui.ctx().pixels_per_point();
+                painter.add(egui::Shape::closed_line(
+                    path.clone(),
+                    egui::Stroke::new(3.0 / ppp, Color32::WHITE),
+                ));
+                painter.add(egui::Shape::closed_line(
+                    path,
+                    egui::Stroke::new(1.0 / ppp, Color32::BLACK),
+                ));
+            }
+            let selection = match self.editor.tools.preview() {
+                Some(Preview::Marquee { from, to }) => Some((from, (to.0 + 1, to.1 + 1))),
+                _ => match self
+                    .visible_selection()
+                    .unwrap_or(paintcraft_raster::Selection::Empty)
+                {
+                    paintcraft_editor::execute::Selection::Rect(r) => {
+                        Some(((r.x0, r.y0), (r.x1, r.y1)))
+                    }
+                    _ => None,
+                },
+            };
+            if let Some((a, b)) = selection {
+                let rect = Rect::from_two_pos(
+                    response.rect.min + Vec2::new(a.0 as f32, a.1 as f32) * self.zoom,
+                    response.rect.min + Vec2::new(b.0 as f32, b.1 as f32) * self.zoom,
+                );
+                painter.rect_stroke(
+                    rect,
+                    0,
+                    egui::Stroke::new(1.0, Color32::from_rgb(0, 120, 215)),
+                    egui::StrokeKind::Inside,
+                );
+            }
+            if response.hovered()
+                && !self.blocked()
+                && ui
+                    .ctx()
+                    .pointer_hover_pos()
+                    .is_some_and(|pos| self.canvas.controls.is_none_or(|rect| !rect.contains(pos)))
+            {
+                ui.ctx()
+                    .set_cursor_icon(if self.controls.tool == Tool::Text {
+                        egui::CursorIcon::Text
+                    } else if self.controls.tool == Tool::Magnifier {
+                        egui::CursorIcon::ZoomIn
+                    } else if self
+                        .canvas
+                        .pointer
+                        .is_some_and(|point| self.selection_move_cursor(point))
                     {
-                        paintcraft_editor::execute::Selection::Rect(r) => {
-                            Some(((r.x0, r.y0), (r.x1, r.y1)))
-                        }
-                        _ => None,
-                    },
-                };
-                if let Some((a, b)) = selection {
-                    let rect = Rect::from_two_pos(
-                        response.rect.min + Vec2::new(a.0 as f32, a.1 as f32) * self.zoom,
-                        response.rect.min + Vec2::new(b.0 as f32, b.1 as f32) * self.zoom,
+                        egui::CursorIcon::Move
+                    } else {
+                        egui::CursorIcon::Crosshair
+                    });
+                if self.controls.tool == Tool::Eraser
+                    && let Some(pos) = ui.ctx().pointer_hover_pos()
+                {
+                    let rect = Rect::from_center_size(
+                        pos,
+                        Vec2::splat(self.controls.options.size as f32 * self.zoom),
                     );
                     painter.rect_stroke(
                         rect,
                         0,
-                        egui::Stroke::new(1.0, Color32::from_rgb(0, 120, 215)),
-                        egui::StrokeKind::Inside,
+                        egui::Stroke::new(2.0, Color32::WHITE),
+                        egui::StrokeKind::Middle,
+                    );
+                    painter.rect_stroke(
+                        rect,
+                        0,
+                        egui::Stroke::new(1.0, Color32::BLACK),
+                        egui::StrokeKind::Middle,
                     );
                 }
-                if response.hovered()
-                    && !self.blocked()
-                    && ui.ctx().pointer_hover_pos().is_some_and(|pos| {
-                        self.canvas.controls.is_none_or(|rect| !rect.contains(pos))
-                    })
-                {
-                    ui.ctx()
-                        .set_cursor_icon(if self.controls.tool == Tool::Text {
-                            egui::CursorIcon::Text
-                        } else if self.controls.tool == Tool::Magnifier {
-                            egui::CursorIcon::ZoomIn
-                        } else if self
-                            .canvas
-                            .pointer
-                            .is_some_and(|point| self.selection_move_cursor(point))
-                        {
-                            egui::CursorIcon::Move
-                        } else {
-                            egui::CursorIcon::Crosshair
-                        });
-                    if self.controls.tool == Tool::Eraser
-                        && let Some(pos) = ui.ctx().pointer_hover_pos()
-                    {
-                        let rect = Rect::from_center_size(
-                            pos,
-                            Vec2::splat(self.controls.options.size as f32 * self.zoom),
-                        );
-                        painter.rect_stroke(
-                            rect,
-                            0,
-                            egui::Stroke::new(2.0, Color32::WHITE),
-                            egui::StrokeKind::Middle,
-                        );
-                        painter.rect_stroke(
-                            rect,
-                            0,
-                            egui::Stroke::new(1.0, Color32::BLACK),
-                            egui::StrokeKind::Middle,
-                        );
-                    }
-                }
-            },
-        );
+            }
+        };
+        if studio {
+            paintcraft_studio::canvas::canvas_for_scope(
+                ui,
+                egui::Id::unique("web-studio-canvas"),
+                scope,
+                size,
+                paint,
+            );
+        } else {
+            paintcraft_classic::canvas::canvas(
+                ui,
+                egui::Id::unique("web-editor-canvas"),
+                size,
+                clearance,
+                paint,
+            );
+        }
     }
 
     fn refresh_texture(&mut self, ctx: &egui::Context) {
@@ -314,6 +329,24 @@ impl WebApp {
             self.editor.tools.cancel_gesture();
             return;
         }
+        if self.frontend == paintcraft_ui::actions::Frontend::Studio
+            && self.controls.tool == Tool::Pan
+        {
+            if response.dragged_by(egui::PointerButton::Primary) {
+                let delta = ui.input(|input| input.pointer.delta());
+                paintcraft_studio::canvas::pan_by(
+                    ui.ctx(),
+                    egui::Id::unique("web-studio-canvas"),
+                    self.studio_canvas_scope(),
+                    delta,
+                );
+                ui.ctx().request_repaint();
+            }
+            if response.hovered() {
+                ui.ctx().set_cursor_icon(egui::CursorIcon::Grab);
+            }
+            return;
+        }
         self.editor.tools.activate_tool(self.controls.tool);
         self.editor.validate_floating();
         self.editor.tools.color = self.controls.primary;
@@ -326,7 +359,11 @@ impl WebApp {
             self.editor.tools.options.picker_after = PickerAfter::Previous;
         }
         self.editor.tools.options.eraser_color =
-            paintcraft_tools::commands::canvas_color(self.editor.session.document());
+            if self.frontend == paintcraft_ui::actions::Frontend::Studio {
+                paintcraft_core::types::Rgba([0; 4])
+            } else {
+                paintcraft_tools::commands::canvas_color(self.editor.session.document())
+            };
         let rect = response.rect;
         let zoom = self.zoom;
         let point = |pos: Pos2| {
