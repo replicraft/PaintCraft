@@ -1,9 +1,13 @@
-//! Historical PDN3 envelope inspection into inert, borrowed DTOs.
+//! Historical PDN3 inspection and bounded typed-raster conversion.
 //!
-//! This is PDN-01 only: header hints are not verified document properties.
-//! Object graphs, compressed data, pixels and writers are not implemented or
-//! advertised. No .NET objects, constructors or assemblies are ever executed.
+//! The inspector returns untrusted header hints; the separate decoder validates
+//! an allowlisted inert graph and exact deferred pixel buffers. Preserving
+//! writers and general Paint.NET compatibility remain unqualified. No .NET
+//! objects, constructors or assemblies are ever executed.
 mod body;
+mod decode;
+mod nrbf;
+pub use decode::{DecodeLimits, Decoded, DecodedLayer, Diagnostic, decode_layers};
 mod xml;
 use paintcraft_core::types::{Error, ErrorCode, Result};
 use std::ops::Range;

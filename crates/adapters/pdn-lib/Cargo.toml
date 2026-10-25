@@ -1,6 +1,6 @@
 [package]
 name = "paintcraft-pdn"
-description = "Bounded inert inspection of historical Paint.NET PDN3 headers"
+description = "Bounded inert PDN3 typed-raster decoding and header inspection"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -10,6 +10,11 @@ publish.workspace = true
 [dependencies]
 paintcraft-core.workspace = true
 quick-xml.workspace = true
+flate2.workspace = true
+crc32fast.workspace = true
 
 [lints]
 workspace = true
+
+[dev-dependencies]
+sha2.workspace = true
