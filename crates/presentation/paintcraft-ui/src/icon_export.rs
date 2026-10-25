@@ -280,6 +280,7 @@ impl<K: PartialEq, P> Cache<K, P> {
         self.texture = None;
         self.selected = None;
         self.frame = Some(ctx.cumulative_frame_nr());
+        ctx.request_repaint();
         true
     }
     pub fn show(
@@ -315,6 +316,7 @@ impl<K: PartialEq, P> Cache<K, P> {
             ));
             self.selected = Some(selected);
             self.frame = Some(ui.ctx().cumulative_frame_nr());
+            ui.ctx().request_repaint();
         }
         ui.label(t!(ui.ctx(), "Export preview"));
         if let Some(texture) = &self.texture {
