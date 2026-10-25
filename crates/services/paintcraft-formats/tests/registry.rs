@@ -496,6 +496,26 @@ fn future_read_only_projects_and_assets_do_not_acquire_unsupported_writers() {
 }
 
 #[test]
+fn openraster_writer_implementation_does_not_bypass_external_qualification() {
+    for platform in [Platform::Native, Platform::Web] {
+        let implementation = capability(Family::Ora, Operation::SaveAsCopy, platform);
+        assert!(implementation.backend_available);
+        assert!(!implementation.qualified);
+        assert_eq!(
+            admission(Request::new(
+                Frontend::Studio,
+                Operation::SaveAsCopy,
+                Family::Ora,
+                platform
+            )),
+            Decision::TemporarilyUnavailable(Reason::VariantUnqualified)
+        );
+        assert!(!enabled(Frontend::Studio, Operation::SaveAsCopy, platform).contains(&Family::Ora));
+        assert!(!capability(Family::Ora, Operation::SavePreserving, platform).backend_available);
+    }
+}
+
+#[test]
 fn newly_enabled_flat_exports_never_advertise_preserving_save_targets() {
     for family in [Family::Gif, Family::Tiff, Family::Tga, Family::Webp] {
         for platform in [Platform::Native, Platform::Web] {

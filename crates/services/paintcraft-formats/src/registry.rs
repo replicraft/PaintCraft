@@ -206,7 +206,9 @@ pub fn capability(family: Family, operation: Operation, _platform: Platform) -> 
         Family::Paint if operation == Operation::ImportConvert => {
             Some("paintcraft-paint-iovl-unci")
         }
-        Family::Ora if operation == Operation::ImportConvert => Some("openraster-flat-png"),
+        Family::Ora if matches!(operation, Operation::ImportConvert | Operation::SaveAsCopy) => {
+            Some("openraster-flat-png")
+        }
         Family::Dcx if operation == Operation::ImportConvert => Some("pcx-dcx-page"),
         Family::Qoi | Family::Pnm | Family::Farbfeld
             if matches!(operation, Operation::ImportConvert | Operation::ExportFlat) =>
