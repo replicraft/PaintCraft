@@ -57,7 +57,7 @@ def native_package(version, target, binary, archive, temporary, format_name):
         files.pop(str(release.ROOT / "packaging/paintcraft.metainfo.xml"))
         files[str(metadata)] = f"usr/share/metainfo/{metadata.name}"
         config["deb"]["desktopTemplate"] = str(desktop)
-        config["appimage"] = {"files": files}
+        config.setdefault("appimage", {})["files"] = files
         env["APPIMAGE_EXTRACT_AND_RUN"] = "1"
     subprocess.run(["cargo", "packager", "--config", json.dumps(config)],
                    cwd=release.ROOT, env=env, check=True)
