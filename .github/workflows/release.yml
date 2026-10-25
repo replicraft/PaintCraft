@@ -20,6 +20,12 @@ on:
       - 'rust-toolchain.toml'
       - 'docs/RELEASING.md'
   workflow_dispatch:
+    inputs:
+      platform:
+        description: Platforms to build (FreeBSD-only runs upload its packages without publishing)
+        type: choice
+        default: all
+        options: [all, freebsd]
 
 permissions:
   contents: read
@@ -61,6 +67,7 @@ jobs:
 
   build:
     name: Build ${{ matrix.target }}
+    if: github.event_name != 'workflow_dispatch' || inputs.platform != 'freebsd'
     needs: version
     runs-on: ${{ matrix.os }}
     timeout-minutes: 90
