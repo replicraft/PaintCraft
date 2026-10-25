@@ -11,7 +11,7 @@ Desktop and browser use the same frontend policy. CLI and MCP import/export oper
 - PCND is the native layered project format and the preserving Save destination.
 - Classic 7/10/11 open and export PNG, JPEG, BMP, still GIF and single-page TIFF. All Classic skins can explicitly import the admitted PCX subset. Classic 11 can explicitly import the admitted PAINT subset.
 - Studio also opens TGA, still WebP and admitted single-surface DDS images, and opens the admitted historical PDN subset as a converted copy.
-- Studio's explicit Import image workflow adds QOI, Netpbm, farbfeld, PCX, selected DCX pages and the admitted PAINT subset. These extended imports do not silently expand ordinary Open or Recent filters.
+- Studio's explicit Import image workflow adds QOI, Netpbm, farbfeld, PCX, selected DCX pages, flat OpenRaster layers and the admitted PAINT subset. These extended imports do not silently expand ordinary Open or Recent filters.
 - Studio offers **13 flat exports**: PNG, JPEG, BMP, GIF, TIFF, TGA, WebP, JPEG XL, DDS, AVIF, QOI, PAM and farbfeld. PAM output always uses `.pam`, never a `.ppm`, `.pgm`, `.pbm` or generic `.pnm` filename.
 - DCX requires a page choice. Desktop/browser stage a page chooser before decoding and loss confirmation; CLI `import --page` and MCP `import_image` use an explicit zero-based page index. There is no implicit page-zero import.
 
@@ -37,8 +37,9 @@ Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, 
 | DCX | Studio explicit selected-page Import only | Strict bounded page directory, at most 1023 pages; each page must satisfy PCX admission. Other pages are explicitly not imported; no writer |
 | PDN | Studio Open or explicit Import as a converted layered copy | Historical PDN3 normal-blend, same-sized full-canvas bitmap layers only; names/order/visibility/opacity/pixels retained, metadata loss explicit. No preserving or fresh writer |
 | PAINT | Studio and Classic 11 explicit Import as a converted layered copy | Observed MIF1 `iovl`/`unci` DEFLATE RGBA8 profile only; offsets/order retained, layers numbered/visible/full-opacity because source properties are unverified. Canvas fill becomes a layer, with depth loss when needed. No writer |
+| ORA | Studio explicit Import as a converted layered copy | Flat Normal PNG layers with names, signed offsets, visibility, opacity and raw pixels; requires merged preview and thumbnail. Unsupported groups, blends, extensions, ZIP64 and resource variants refused. Fractional opacity is rounded to 8 bits and explicit print resolution is discarded with consent; no writer |
 | JXR, HEIF | No enabled frontend operations | Selected/backend qualification remains; HEIF writing is prohibited |
-| ORA, PSD/PSB, SVG, ICO/CUR, EXR/HDR, JP2, MSP, ICNS | Not yet enabled | Registry inventory or work in progress is not usable format support |
+| PSD/PSB, SVG, ICO/CUR, EXR/HDR, JP2, MSP, ICNS | Not yet enabled | Registry inventory or work in progress is not usable format support |
 | ABR, ASE, CSH | Asset workflow policy only | Brush/palette/shape import/export implementations remain |
 | RAW, PDF, KRA, XCF, animation, advanced DDS | Future profiles | No inherited Classic support or preserving-write claims |
 
@@ -60,6 +61,7 @@ Native and browser conversion dialogs retain source bytes and document ownership
 - Independent FFmpeg/libdav1d AVIF checks cover color and auxiliary alpha. Native and actual browser Wasm encode checks pass; writer availability does not imply reader availability.
 - JPEG XL has checked-in independently generated libjxl fixtures and selected decoder/encoder tests. A fresh external `djxl` reopen was not rerun for the latest facade wiring because the tool is unavailable and installed FFmpeg has no JPEG XL decoder. Generic JPEG XL Open remains disabled pending confinement and reader qualification.
 - PDN/PAINT adapter tests and `tests/project_import.rs` cover supported graph reconstruction, exact pixels/order/offsets, metadata/property losses, corruption, budgets, cancellation and PCND save/reopen. They do not establish arbitrary modern Paint.NET or Windows Paint compatibility.
+- OpenRaster fixtures are generated independently by Python standard-library ZIP and PNG code. Stored/DEFLATE tests verify layer hashes, XML entities, negative offsets, exact merged-preview composition and PCND roundtrip. Prefix truncation, every observed cancellation boundary, path traversal, CRC/header disagreement, symlinks, XML property refusals and resource limits are covered. Desktop/browser/CLI/MCP conversion tests pass. External GIMP/Krita reopening and writing remain unqualified.
 - Native/browser import, export and DCX page-dialog tests cover translated controls, explicit consent, stale owners and cancellation. CLI format-profile/foreign-import and MCP tests cover real command consumers, page options and loss acknowledgments. These headless checks do not replace live browser, native reference or cross-platform release testing.
 
 Latest specialist raw oracle outputs, tool versions and excluded outcomes are retained under ignored `docs/validation/format-specialists-2026-10-25`. Source tests and checked-in fixtures remain the reproducible default evidence. Optional external-tool tests are invoked separately and are not silently counted as default-suite passes.
@@ -75,7 +77,7 @@ No PNG/JPEG backend has been switched to Zune, and no performance improvement is
 ## Remaining interoperability work
 
 - Qualify JPEG XL reader confinement and cancellation tails, JXR independent comparisons and a decoder-only HEIF profile.
-- Finish and qualify extended document/asset adapters, including ORA, PSD/PSB, SVG rasterization with explicit dimensions/DPI, icons and Adobe resources. EXR/HDR require precision-aware storage/import gates; JP2 and historical MSP need dedicated evidence.
+- Finish and qualify extended document/asset adapters, including ORA groups and layered writing, PSD/PSB, SVG rasterization with explicit dimensions/DPI, icons and Adobe resources. EXR/HDR require precision-aware storage/import gates; JP2 and historical MSP need dedicated evidence.
 - Add separately qualified PDN/PAINT fresh and preserving writers, source-version coverage and original-application reopen evidence.
 - Complete full browser/native reference and packaging matrices, worker failure and aggregate-memory accounting, and real-device cancellation/latency qualification.
 
