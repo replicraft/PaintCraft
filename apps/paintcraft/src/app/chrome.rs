@@ -23,13 +23,17 @@ impl App {
             },
             document_open: self.document_count() > 0,
             can_undo: self.editor.undo_depth() > 0
+                || self.editor.has_image_paste()
                 || pending_text
                 || self.editor.has_pending_edits(),
             can_redo: (self.editor.redo_depth() > 0 || self.editor.has_pending_edits())
                 && !pending_text,
             can_recent: true,
             can_paste: self.paste.supported() && !self.paste.busy() && !self.clipboard.busy(),
-            can_paste_onto: false,
+            can_paste_onto: self.paste.supported()
+                && !self.paste.busy()
+                && !self.clipboard.busy()
+                && !self.editor.has_image_paste(),
             can_save_all: self.tab_close_wait.is_none()
                 && self.tab_save_close.is_none()
                 && (self.any_dirty_documents()
@@ -185,6 +189,7 @@ impl App {
                     | paintcraft_ui::chrome::Action::CopyVisible
                     | paintcraft_ui::chrome::Action::Cut
                     | paintcraft_ui::chrome::Action::PasteLayer
+                    | paintcraft_ui::chrome::Action::Paste
             ) {
                 self.editor.run_pending();
             }
@@ -192,6 +197,22 @@ impl App {
                 continue;
             }
             use paintcraft_ui::chrome::Action as Chrome;
+            if self.editor.has_image_paste() {
+                match action {
+                    Chrome::Undo => self.cancel_paste(ctx),
+                    Chrome::View(_) | Chrome::Settings => {}
+                    _ => {
+                        self.editor.set_status(t!(
+                            ctx,
+                            "Finish placing the pasted image before editing or saving."
+                        ));
+                        continue;
+                    }
+                }
+                if matches!(action, Chrome::Undo) {
+                    continue;
+                }
+            }
             match action {
                 Chrome::New => {
                     if self.experience() == Experience::Classic
@@ -212,10 +233,7 @@ impl App {
                 Chrome::Copy => self.copy_requested(ctx),
                 Chrome::Cut => self.cut_requested(ctx),
                 Chrome::PasteLayer => self.paste_layer_requested(ctx),
-                Chrome::Paste => self.editor.set_status(t!(
-                    ctx,
-                    "Canvas clipboard operations are not available yet."
-                )),
+                Chrome::Paste => self.paste_requested(ctx),
                 Chrome::CopyVisible => self.copy_source_requested(ctx, true),
                 Chrome::ExportImage(format) => self.export_image_requested(ctx, format),
                 Chrome::Undo => self.request(ctx, code::UNDO, Action::Undo),

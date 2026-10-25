@@ -112,6 +112,7 @@ impl App {
             // so it cannot resume or publish after the dialog is dismissed.
             self.editor.cancel_gesture();
         }
+        self.image_paste_bar(ui);
         let accept_input =
             first_pass && !self.action_context().blocked && !self.editor.painting_blocked();
         egui::CentralPanel::default()

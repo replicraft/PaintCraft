@@ -20,6 +20,8 @@ use std::sync::{
 mod decode;
 #[path = "paste/dialog.rs"]
 mod dialog;
+#[path = "paste/placement.rs"]
+mod placement;
 trait ReadJob {
     fn poll(&self) -> Option<Result<EncodedImage, String>>;
 }
@@ -54,6 +56,7 @@ struct Owner {
     revision: (Uuid, u64),
     document: Arc<paintcraft_document::Document>,
     frontend: Frontend,
+    target: Option<Uuid>,
 }
 impl Owner {
     fn capture(app: &App) -> Self {
@@ -62,6 +65,7 @@ impl Owner {
             revision: app.editor.render_key(),
             document: app.editor.document_snapshot(),
             frontend: app.format_frontend(),
+            target: None,
         }
     }
     fn current(&self, app: &App) -> bool {
@@ -70,6 +74,9 @@ impl Owner {
             && self.revision == app.editor.render_key()
             && Arc::ptr_eq(&self.document, &app.editor.document_snapshot())
             && self.frontend == app.format_frontend()
+            && self
+                .target
+                .is_none_or(|target| app.editor.target() == Some(target))
             && !app.has_document_drafts()
             && !app.editor.has_floating_selection()
             && !app.editor.is_constructing_shape()
@@ -139,6 +146,12 @@ fn encoded_budget() -> SharedBudget {
 }
 impl App {
     pub(super) fn paste_layer_requested(&mut self, ctx: &egui::Context) {
+        self.begin_clipboard_paste(ctx, false);
+    }
+    pub(super) fn paste_requested(&mut self, ctx: &egui::Context) {
+        self.begin_clipboard_paste(ctx, true);
+    }
+    fn begin_clipboard_paste(&mut self, ctx: &egui::Context, onto: bool) {
         if self.paste.busy() || self.clipboard.busy() || self.document_count() == 0 {
             return;
         }
@@ -149,6 +162,19 @@ impl App {
             self.editor
                 .set_status(t!(ctx, "Finish the current edit before pasting."));
             return;
+        }
+        let mut owner = Owner::capture(self);
+        if onto {
+            owner.target = self.editor.target().filter(|id| {
+                self.editor
+                    .document()
+                    .layers
+                    .get(id)
+                    .is_some_and(|layer| layer.visible)
+            });
+            if owner.target.is_none() {
+                return;
+            }
         }
         let result = (|| {
             if self.paste.reader.is_none() {
@@ -161,7 +187,7 @@ impl App {
                 .expect("reader")
                 .submit(encoded_budget(), ctx)?;
             Ok::<_, String>(Pending {
-                owner: Owner::capture(self),
+                owner,
                 cancelled: Arc::new(AtomicBool::new(false)),
                 stage: Stage::Read(job),
             })
@@ -175,6 +201,7 @@ impl App {
         }
     }
     pub(super) fn cancel_paste(&mut self, ctx: &egui::Context) {
+        self.editor.cancel_image_paste();
         if self.paste.busy() {
             let owner = self
                 .paste

@@ -385,6 +385,7 @@ fn private_gestures_text_and_pending_edits_refuse_clipboard_access_without_flush
         let before = app.editor.document_snapshot();
         let ticket = app.editor.history_view().ticket;
         app.dispatch_chrome(&ctx, vec![paintcraft_ui::actions::Action::PasteLayer]);
+        app.dispatch_chrome(&ctx, vec![paintcraft_ui::actions::Action::Paste]);
         assert_eq!(fake.calls.load(Ordering::SeqCst), 0);
         assert!(Arc::ptr_eq(&before, &app.editor.document_snapshot()));
         assert_eq!(ticket, app.editor.history_view().ticket);
@@ -392,4 +393,157 @@ fn private_gestures_text_and_pending_edits_refuse_clipboard_access_without_flush
             assert!(app.editor.has_pending_edits());
         }
     }
+}
+
+#[test]
+fn ordinary_paste_shortcut_dialog_nudge_apply_and_cancel_work_in_each_interface() {
+    use egui_kittest::{
+        Harness,
+        kittest::{NodeT, Queryable},
+    };
+    use paintcraft_ui::i18n::{Language, translate};
+    for (experience, skin) in [
+        (Experience::Classic, ClassicVariant::V7),
+        (Experience::Classic, ClassicVariant::V10),
+        (Experience::Classic, ClassicVariant::V11),
+        (Experience::Studio, ClassicVariant::V11),
+    ] {
+        for language in [Language::English, Language::Japanese] {
+            let (mut app, _, fake) = fixture();
+            app.settings.experience = experience;
+            app.settings.classic_variant = Some(skin);
+            app.settings.language = language;
+            *fake.outcome.lock().unwrap() = Some(Ok(encoded()));
+            let original = app.editor.document_snapshot();
+            let target = app.editor.target().unwrap();
+            let mut h = Harness::builder()
+                .with_size(Vec2::new(1360.0, 900.0))
+                .build_ui_state(|ui, app: &mut App| app.ui(ui), app);
+            h.run();
+            h.input_mut().events.push(egui::Event::Key {
+                key: egui::Key::V,
+                physical_key: None,
+                pressed: true,
+                repeat: false,
+                modifiers: egui::Modifiers::COMMAND,
+            });
+            h.step();
+            let deadline = std::time::Instant::now() + Duration::from_secs(5);
+            while h.state().paste.ready.is_none()
+                || h.query_all_by_label(&translate(language, "Paste"))
+                    .find(|n| {
+                        n.accesskit_node().role() == egui::Role::Button
+                            && !n.accesskit_node().is_disabled()
+                    })
+                    .is_none()
+            {
+                assert!(
+                    std::time::Instant::now() < deadline,
+                    "{}",
+                    h.state().editor.status()
+                );
+                h.step();
+                std::thread::yield_now();
+            }
+            let label = translate(language, "Paste");
+            h.query_all_by_label(&label)
+                .find(|n| {
+                    n.accesskit_node().role() == egui::Role::Button
+                        && !n.accesskit_node().is_disabled()
+                })
+                .unwrap()
+                .click();
+            h.run();
+            assert!(h.state().editor.has_image_paste());
+            assert!(Arc::ptr_eq(
+                &original,
+                &h.state().editor.document_snapshot()
+            ));
+            let initial = h.state().editor.image_paste_bounds().unwrap();
+            let canvas = h.state().canvas_rect.unwrap();
+            let scale = canvas.width() / h.state().editor.document().canvas.0 as f32;
+            let start = canvas.min + Vec2::splat(scale * 0.5);
+            let end = start + Vec2::new(scale, 0.0);
+            h.input_mut().events.extend([
+                egui::Event::PointerMoved(start),
+                egui::Event::PointerButton {
+                    pos: start,
+                    button: egui::PointerButton::Primary,
+                    pressed: true,
+                    modifiers: egui::Modifiers::NONE,
+                },
+            ]);
+            h.run();
+            h.input_mut().events.push(egui::Event::PointerMoved(end));
+            h.run();
+            h.input_mut().events.push(egui::Event::PointerButton {
+                pos: end,
+                button: egui::PointerButton::Primary,
+                pressed: false,
+                modifiers: egui::Modifiers::NONE,
+            });
+            h.run();
+            assert_eq!(
+                h.state().editor.image_paste_bounds().unwrap().x0,
+                initial.x0 + 1
+            );
+            assert!(Arc::ptr_eq(
+                &original,
+                &h.state().editor.document_snapshot()
+            ));
+            h.input_mut().events.push(egui::Event::Key {
+                key: egui::Key::ArrowRight,
+                physical_key: None,
+                pressed: true,
+                repeat: false,
+                modifiers: egui::Modifiers::NONE,
+            });
+            h.run();
+            assert_eq!(
+                h.state().editor.image_paste_bounds().unwrap().x0,
+                initial.x0 + 2
+            );
+            let cancel = skin == ClassicVariant::V7;
+            let label = translate(language, if cancel { "Cancel" } else { "Apply" });
+            h.query_all_by_label(&label)
+                .find(|n| !n.accesskit_node().is_disabled())
+                .unwrap()
+                .click();
+            h.run();
+            assert!(!h.state().editor.has_image_paste());
+            assert_eq!(h.state().editor.document().roots.len(), 1);
+            assert_eq!(h.state().editor.target(), Some(target));
+            if cancel {
+                assert!(Arc::ptr_eq(
+                    &original,
+                    &h.state().editor.document_snapshot()
+                ));
+            } else {
+                assert_eq!(h.state().editor.undo_depth(), 1);
+                let pixels = &h.state().editor.document().layers[&target].raster;
+                assert_eq!(pixels.get(4, 0), Rgba([90, 80, 70, 255]));
+            }
+            assert_eq!(fake.calls.load(Ordering::SeqCst), 1);
+        }
+    }
+}
+
+#[test]
+fn ordinary_paste_rejects_a_target_switch_while_the_clipboard_read_is_pending() {
+    let (mut app, ctx, fake) = fixture();
+    let first = app.editor.target().unwrap();
+    app.editor.request(88, Action::AddLayer);
+    app.editor.run_pending();
+    let second = app.editor.target().unwrap();
+    assert_ne!(first, second);
+    let original = app.editor.document_snapshot();
+    app.paste_requested(&ctx);
+    assert_eq!(fake.calls.load(Ordering::SeqCst), 1);
+    *fake.outcome.lock().unwrap() = Some(Ok(encoded()));
+    assert!(app.editor.set_target(first));
+    app.poll_paste(&ctx);
+    assert!(!app.paste.busy());
+    assert!(!app.editor.has_image_paste());
+    assert!(Arc::ptr_eq(&original, &app.editor.document_snapshot()));
+    assert_eq!(app.editor.target(), Some(first));
 }

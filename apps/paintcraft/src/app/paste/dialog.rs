@@ -19,8 +19,23 @@ impl App {
         let mut cancel = false;
         egui::Modal::new(egui::Id::unique("paste-image-layer")).show(ctx, |ui| {
             ui.set_width(400.0);
-            ui.heading(t!(ctx, "Paste as new layer…"));
-            ui.label(t!(ctx, "Pasting creates a new layer."));
+            let onto = ready.owner.target.is_some();
+            ui.heading(t!(
+                ctx,
+                if onto {
+                    "Paste"
+                } else {
+                    "Paste as new layer…"
+                }
+            ));
+            ui.label(t!(
+                ctx,
+                if onto {
+                    "Drag to position; Enter places, Escape cancels."
+                } else {
+                    "Pasting creates a new layer."
+                }
+            ));
             ui.horizontal(|ui| {
                 ui.label(t!(ctx, "Image size"));
                 ui.label(format!(
@@ -29,11 +44,13 @@ impl App {
                     ready.draft.image().height()
                 ));
             });
-            ui.horizontal(|ui| {
-                let label = ui.label(t!(ctx, "Name"));
-                ui.text_edit_singleline(&mut ready.name)
-                    .labelled_by(label.id);
-            });
+            if !onto {
+                ui.horizontal(|ui| {
+                    let label = ui.label(t!(ctx, "Name"));
+                    ui.text_edit_singleline(&mut ready.name)
+                        .labelled_by(label.id);
+                });
+            }
             ui.horizontal(|ui| {
                 let label = ui.label("X");
                 ui.add(egui::DragValue::new(&mut ready.origin.0).range(-1_048_576..=1_048_576))
@@ -43,7 +60,7 @@ impl App {
                     .labelled_by(label.id);
             });
             ui.checkbox(&mut ready.grow, t!(ctx, "Expand canvas to fit image"));
-            if !ready.grow {
+            if !ready.grow && !onto {
                 ui.label(t!(ctx, "Pixels outside the canvas stay in the new layer."));
             }
             let placement = ready.draft.place(
@@ -121,7 +138,17 @@ impl App {
             self.paste.ready = Some(ready);
             return;
         }
-        if let Err(error) = self.editor.start_paste(ready.draft, ready.name) {
+        let result = if ready.owner.target.is_some() {
+            let key = self
+                .editor
+                .options
+                .transparent_selection
+                .then_some(self.editor.secondary);
+            self.editor.begin_image_paste(ready.draft, key)
+        } else {
+            self.editor.start_paste(ready.draft, ready.name)
+        };
+        if let Err(error) = result {
             self.paste_error(ctx, &error.to_string());
         } else {
             self.remember_published_canvas_size();

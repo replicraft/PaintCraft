@@ -27,6 +27,9 @@ impl App {
         let popup_open = egui::Popup::is_any_open(&ctx);
         let picker_open = self.picking.is_some();
         for event in events {
+            if self.image_paste_keyboard(&ctx, &event, widget_focus || popup_open || picker_open) {
+                continue;
+            }
             let text_focus = self.document_count() > 0
                 && self.editor.is_editing_text()
                 && !widget_focus
