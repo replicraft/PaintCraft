@@ -2,6 +2,16 @@
 use std::{env, fs, path::PathBuf};
 
 fn main() {
+    println!("cargo:rerun-if-changed=../../assets/paintcraft-icon.ico");
+    if env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("windows") {
+        winresource::WindowsResource::new()
+            .set_icon("../../assets/paintcraft-icon.ico")
+            .set("ProductName", "PaintCraft")
+            .set("FileDescription", "PaintCraft")
+            .set("CompanyName", "Replicraft")
+            .compile()
+            .expect("compile Windows icon and version resources");
+    }
     println!("cargo:rerun-if-changed=resources/macos/Info.plist.in");
     if env::var("CARGO_CFG_TARGET_OS").as_deref() != Ok("macos") {
         return;

@@ -1,4 +1,8 @@
 //! `paintcraft`: the desktop application. The headless tool is `paintcraft-cli`.
+#![cfg_attr(
+    all(target_os = "windows", not(debug_assertions)),
+    windows_subsystem = "windows"
+)]
 
 use paintcraft::App;
 

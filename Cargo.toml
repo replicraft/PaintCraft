@@ -79,6 +79,8 @@ arboard = { version = "3.7.0", default-features = false, features = ["image-data
 fontdb = { version = "0.23.0", default-features = false, features = ["std", "fs"] }
 rfd = "0.17.2"
 raw-window-handle = "0.6.2"
+# Native Windows executable icon and version metadata.
+winresource = "0.1.34"
 
 # Explicit integer SIMD kernels; renderer enables only with its simd feature.
 wide = "1.7.1"
