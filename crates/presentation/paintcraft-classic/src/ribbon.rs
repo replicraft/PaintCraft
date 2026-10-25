@@ -72,21 +72,33 @@ pub(super) fn ribbon(
                 ui.separator();
                 group(ui, "Shapes", |ui| {
                     ui.horizontal_top(|ui| {
-                        super::shapes::gallery(ui, state, actions);
+                        let roomy = spacious(ui);
+                        if roomy {
+                            // Keep all columns visible at the first spacious breakpoint.
+                            ui.spacing_mut().item_spacing.x =
+                                if roomy_spacing(ui) { 12.0 } else { 6.0 };
+                        }
+                        let gallery = ui.scope(|ui| super::shapes::gallery(ui, state, actions));
                         ui.vertical(|ui| {
-                            if !spacious(ui) {
-                                // Three compact targets fit the shared caption baseline.
+                            if roomy {
+                                // Two 32-point targets with a 12-point gap share the gallery center.
+                                ui.add_space(
+                                    ((gallery.response.rect.height() - 76.0) / 2.0).max(0.0),
+                                );
+                                ui.spacing_mut().item_spacing.y = 12.0;
+                            } else {
                                 ui.spacing_mut().item_spacing.y = 3.0;
                             }
                             super::dropdowns::shape_paint(ui, state);
-                            if !spacious(ui) {
+                            if !roomy {
                                 super::stroke_size::show(ui, state, context);
                             }
                         });
-                        if spacious(ui) {
+                        if roomy {
                             ui.vertical(|ui| {
-                                // Center the 40-point button against the 84-point gallery.
-                                ui.add_space(22.0);
+                                ui.add_space(
+                                    ((gallery.response.rect.height() - 40.0) / 2.0).max(0.0),
+                                );
                                 super::stroke_size::show(ui, state, context);
                             });
                         }

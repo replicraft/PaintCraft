@@ -235,3 +235,44 @@ fn export_gallery_density_for_review() {
         std::fs::remove_dir_all(dir).unwrap();
     }
 }
+
+#[test]
+fn spacious_shape_controls_share_the_gallery_center_and_have_room_between_columns() {
+    for ppp in [1.0, 2.0] {
+        let mut h = harness_with(App::new(None), ppp, true);
+        h.set_size(Vec2::new(1600.0, 1000.0));
+        h.run();
+        let source = h.state().editor().document_snapshot();
+        let ticket = h.state().editor().history_view().ticket;
+        let outline = h.get_by_label("Shape outline").rect();
+        let fill = h.get_by_label("Shape fill").rect();
+        let size = h.get_by_label("Stroke size").rect();
+        let top = h.get_by_role_and_label(Role::Button, "Line").rect();
+        let bottom = h.get_by_role_and_label(Role::Button, "Right arrow").rect();
+        let gallery = h
+            .output()
+            .shapes
+            .iter()
+            .find_map(|shape| match &shape.shape {
+                eframe::egui::epaint::Shape::Rect(rect)
+                    if rect.brush.is_none()
+                        && rect.rect.contains_rect(top)
+                        && rect.rect.contains_rect(bottom)
+                        && rect.rect.width() < 200.0
+                        && rect.rect.height() < 110.0 =>
+                {
+                    Some(rect.rect)
+                }
+                _ => None,
+            })
+            .expect("shape gallery frame");
+        let gallery_center = gallery.center().y;
+        assert!(fill.top() - outline.bottom() >= 11.5);
+        assert!(outline.left() - gallery.right() >= 11.5);
+        assert!(size.left() - outline.right() >= 11.5);
+        assert!((outline.union(fill).center().y - gallery_center).abs() <= 3.0);
+        assert!((size.center().y - gallery_center).abs() <= 3.0);
+        assert!(h.state().editor().document().same_semantics(&source));
+        assert_eq!(h.state().editor().history_view().ticket, ticket);
+    }
+}

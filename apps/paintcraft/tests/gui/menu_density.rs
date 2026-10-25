@@ -41,8 +41,8 @@ fn classic_main_menu_rows_have_contiguous_hit_targets_and_readable_text() {
                     .get_by_label_contains(labels[1])
                     .rect()
             };
-            assert_eq!(first.height(), 40.0);
-            assert_eq!(second.height(), 40.0);
+            assert_eq!(first.height(), 38.0);
+            assert_eq!(second.height(), 38.0);
             assert_eq!(
                 second.top(),
                 first.bottom(),

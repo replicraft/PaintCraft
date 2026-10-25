@@ -449,6 +449,19 @@ pub fn menu_item_with_icon_style(
     icon_size: f32,
     icon_style: MenuIconStyle,
 ) -> bool {
+    menu_item_with_icon_style_and_gap(ui, action, ctx, label, icon_size, icon_style, None)
+}
+
+/// Override spacing for a specific menu without changing other action surfaces.
+pub fn menu_item_with_icon_style_and_gap(
+    ui: &mut egui::Ui,
+    action: Action,
+    ctx: Context,
+    label: &'static str,
+    icon_size: f32,
+    icon_style: MenuIconStyle,
+    icon_gap: Option<f32>,
+) -> bool {
     let descriptor = Descriptor {
         label,
         ..action.descriptor_for(ctx.frontend)
@@ -494,6 +507,9 @@ pub fn menu_item_with_icon_style(
             _ => egui::Button::new(title),
         }
     };
+    if let Some(gap) = icon_gap {
+        button = button.gap(gap);
+    }
     let shortcut = descriptor
         .shortcut
         .map(|shortcut| ui.ctx().format_shortcut(&shortcut));

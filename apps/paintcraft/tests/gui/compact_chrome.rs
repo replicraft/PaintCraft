@@ -93,7 +93,7 @@ fn classic_top_actions_and_settings_remain_reachable_in_narrow_windows() {
         ] {
             assert_eq!(
                 h.get_by_role_and_label(Role::Button, label).rect().height(),
-                if size.y < 420.0 { 32.0 } else { 36.0 }
+                if size.y < 420.0 { 30.0 } else { 34.0 }
             );
         }
         let text = h

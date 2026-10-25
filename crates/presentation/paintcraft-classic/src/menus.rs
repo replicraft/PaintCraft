@@ -135,7 +135,7 @@ pub(super) fn edit(ui: &mut Ui, context: Context, actions: &mut Vec<Action>) {
 
 fn layout(ui: &mut Ui) {
     ui.set_min_width(300.0);
-    ui.spacing_mut().interact_size.y = 40.0;
+    ui.spacing_mut().interact_size.y = 38.0;
     ui.spacing_mut().item_spacing.y = 0.0;
     let dark = ui.visuals().dark_mode;
     ui.visuals_mut().override_text_color =
@@ -155,13 +155,14 @@ fn action(
     item: Action,
     label: &'static str,
 ) {
-    if paintcraft_ui::actions::menu_item_with_icon_style(
+    if paintcraft_ui::actions::menu_item_with_icon_style_and_gap(
         ui,
         item,
         context,
         label,
         22.0,
         MenuIconStyle::ClassicOutline,
+        Some(14.0),
     ) {
         actions.push(item);
         ui.close();
@@ -183,7 +184,8 @@ fn unavailable(
             ui.visuals().strong_text_color(),
         ),
         label,
-    );
+    )
+    .gap(14.0);
     if let Some(shortcut) = shortcut {
         button = button.shortcut_text(ui.ctx().format_shortcut(&shortcut));
     }
@@ -281,13 +283,14 @@ pub(super) fn view(
             }
             ui.separator();
             let change_skin = if variant == ClassicVariant::V11 {
-                paintcraft_ui::actions::menu_item_with_icon_style(
+                paintcraft_ui::actions::menu_item_with_icon_style_and_gap(
                     ui,
                     Action::Interface,
                     context,
                     "Change Classic skin…",
                     22.0,
                     MenuIconStyle::ClassicOutline,
+                    Some(14.0),
                 )
             } else {
                 ui.button(t!(ui.ctx(), "Change Classic skin…")).clicked()
@@ -300,7 +303,7 @@ pub(super) fn view(
 }
 
 fn view_item(ui: &mut Ui, action: Action, context: Context, variant: ClassicVariant) -> bool {
-    paintcraft_ui::actions::menu_item_with_icon_style(
+    paintcraft_ui::actions::menu_item_with_icon_style_and_gap(
         ui,
         action,
         context,
@@ -325,6 +328,7 @@ fn view_item(ui: &mut Ui, action: Action, context: Context, variant: ClassicVari
         } else {
             MenuIconStyle::Colorful
         },
+        (variant == ClassicVariant::V11).then_some(14.0),
     )
 }
 
@@ -366,6 +370,7 @@ fn submenu(ui: &mut Ui, label: &str, icon: Icon, contents: impl FnOnce(&mut Ui))
             ),
             label,
         )
+        .gap(14.0)
         .right_text("    "),
     );
     ui.style_mut().visuals.widgets.inactive = inactive;
