@@ -22,6 +22,7 @@ pub enum Kind {
     InspectRecovery,
     SaveAs,
     Export,
+    ExportIcons,
 }
 #[derive(Debug)]
 pub struct Completion {
@@ -92,6 +93,10 @@ impl NativeDialogs {
                     extensions: extensions.iter().map(|ext| (*ext).into()).collect(),
                 })
                 .collect(),
+            Kind::ExportIcons => vec![Filter {
+                name: "Icon and cursor export".into(),
+                extensions: vec!["ico".into(), "cur".into()],
+            }],
         };
         self.request_with_filters(kind, suggested, &filters, label, wake);
     }
@@ -148,6 +153,7 @@ impl NativeDialogs {
             }
             Kind::SaveAs => dialog.set_title(label("Save PaintCraft document")),
             Kind::Export => dialog.set_title(label("Export image")),
+            Kind::ExportIcons => dialog.set_title(label("Icon and cursor export")),
         };
         for filter in filters {
             dialog = dialog.add_filter(label(&filter.name), &filter.extensions);
