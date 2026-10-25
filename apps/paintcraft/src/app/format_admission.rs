@@ -77,6 +77,10 @@ impl App {
 }
 
 pub(super) fn read_source(path: &Path) -> Result<Vec<u8>> {
+    read_source_bounded(path, SOURCE_BYTES)
+}
+pub(super) fn read_source_bounded(path: &Path, allowance: u64) -> Result<Vec<u8>> {
+    let allowance = allowance.min(SOURCE_BYTES);
     // Reject ordinary FIFOs/devices before opening; the post-open check remains
     // necessary. This does not promise race-proof traversal of a hostile filesystem.
     if !std::fs::metadata(path).map_err(storage)?.is_file() {
@@ -93,10 +97,10 @@ pub(super) fn read_source(path: &Path) -> Result<Vec<u8>> {
             "Image source must be a regular file",
         ));
     }
-    if metadata.len() > SOURCE_BYTES {
+    if metadata.len() > allowance {
         return Err(limit());
     }
-    read_limited(file, SOURCE_BYTES)
+    read_limited(file, allowance)
 }
 fn read_limited(reader: impl Read, limit: u64) -> Result<Vec<u8>> {
     let mut reader = reader.take(limit + 1);

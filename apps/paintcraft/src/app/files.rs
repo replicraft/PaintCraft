@@ -260,6 +260,25 @@ impl App {
             self.recent.remember(path);
             return Ok(());
         }
+        if convert
+            && path
+                .extension()
+                .and_then(|s| s.to_str())
+                .and_then(paintcraft_formats::registry::Family::from_extension)
+                == Some(paintcraft_formats::registry::Family::Svg)
+        {
+            if self.format_frontend() != paintcraft_formats::registry::Frontend::Studio {
+                return Err(paintcraft_core::types::Error::new(
+                    paintcraft_core::types::ErrorCode::CapabilityUnsupported,
+                    "SVG rasterization requires explicit Studio import",
+                ));
+            }
+            let bytes = crate::format_admission::read_source_bounded(
+                path,
+                paintcraft_formats::svg::SOURCE_MAX as u64,
+            )?;
+            return self.stage_svg_import(bytes, path.to_path_buf());
+        }
         let (bytes, binding) = crate::destination::acquire(path)?;
         if convert
             && matches!(
