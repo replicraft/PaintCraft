@@ -3,8 +3,10 @@
 //! is a separate capability and is not supplied by this adapter.
 mod archive;
 mod stack;
+mod write;
 use paintcraft_core::types::{Error, ErrorCode, Result};
 use std::borrow::Cow;
+pub use write::{TITLE_LOSS, encode_document, preflight, write_document_to};
 
 #[derive(Clone, Copy, Debug)]
 pub struct Limits {
