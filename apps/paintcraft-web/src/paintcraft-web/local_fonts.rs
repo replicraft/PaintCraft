@@ -3,6 +3,14 @@ use eframe::egui;
 use paintcraft_tools::text::TextRenderer;
 use paintcraft_ui::t;
 
+/// Request from the Text preferences navigation click, while activation is live.
+pub(crate) fn request_access(ctx: &egui::Context) {
+    #[cfg(target_arch = "wasm32")]
+    browser::enumerate(ctx, true);
+    #[cfg(not(target_arch = "wasm32"))]
+    let _ = ctx;
+}
+
 pub(crate) fn controls(ui: &mut egui::Ui) {
     #[cfg(target_arch = "wasm32")]
     {

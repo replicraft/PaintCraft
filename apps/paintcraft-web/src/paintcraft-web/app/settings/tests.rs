@@ -125,6 +125,8 @@ fn text_preferences_and_about_share_desktop_controls_and_preserve_pixels() {
     h.get_by_label("Text preferences").click();
     h.run();
     assert!(h.query_by_label("Default font").is_some());
+    assert_eq!(h.state().preferences.default_font, "Arial");
+    assert_eq!(h.state().text.style.family, "Arial");
     h.get_by_label("Keep text editable until save (prototype)")
         .click();
     h.run();

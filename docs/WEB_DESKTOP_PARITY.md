@@ -153,14 +153,15 @@ headless Chromium evidence rather than native Windows reference qualification.
 
 ## Settings typography and installed browser fonts
 
-Ordinary settings cards use 18-point headings; About retains its 22-point heading.
-Theme, skin and desktop interface radio rows use 20-point horizontal spacing and
-10-point wrapped-row spacing. Apply/Cancel behavior stays staged.
+Ordinary settings cards use 16-point headings; About retains its 22-point heading.
+Theme, skin and desktop interface radio rows use 28-point horizontal spacing and
+12-point wrapped-row spacing. Apply/Cancel behavior stays staged.
 
 Web Text preferences now offer **Load installed fonts**. The browser permission
-is requested only from that button; previously granted access is restored on
-startup. The family list merges installed and bundled fonts. Only the selected
-installed family is read, including its style faces, with a 32 MiB face / 64 MiB
+is requested when opening Text preferences or selecting that button; previously
+granted access is restored on startup. The family list merges installed and
+bundled fonts. Only the selected installed family is read, including its style
+faces, with a 32 MiB face / 64 MiB
 family limit. Font bytes stay in memory on the device and feed the same
 Cosmic Text/Swash document renderer. Fonts arriving asynchronously invalidate
 shaping, fallback masks and the canvas preview without publishing document edits.
