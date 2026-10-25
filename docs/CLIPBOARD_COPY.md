@@ -3,7 +3,10 @@
 Copy now works in native Classic 7/10/11 and Studio and in browser Classic.
 Use Edit > Copy or Ctrl/Cmd+C; historical Classic skins also expose the ribbon
 Copy button. Focused text widgets and text drafts keep keyboard ownership.
-Cut, Paste and Copy visible layers remain disabled pending their own transactions.
+Copy visible layers uses Edit > Copy visible layers or Ctrl/Cmd+Shift+C in
+Classic and Studio. The Windows 7/10 Home ribbons retain their active-layer Copy
+button; merged copy remains accessible through the shortcut and native Edit menu.
+Cut and Paste remain disabled pending their own transactions.
 
 ## Captured pixels
 
@@ -11,7 +14,11 @@ Copy takes the active layer's raw straight RGBA8 samples. An inactive selection
 copies the canvas area. A rectangle or mask copies its exact tight canvas-clipped
 bounds. Mask holes and samples outside the finite layer become transparent black;
 selected samples retain their exact alpha and hidden RGB. Layer opacity and other
-layers are not composited. An empty field cannot replace the clipboard.
+layers are not composited by ordinary Copy. Copy visible layers instead composes
+all visible roots in order with their layer opacity and the canonical straight-RGBA8
+rounding policy. It needs no active layer. It applies the same tight bounds and
+binary mask holes, without compositing the presentation checkerboard. An empty
+selection cannot replace the clipboard.
 
 The document, selection, clean state and history remain unchanged. Native capture
 pins an immutable source revision and runs on a separate thread. Copy refuses an
@@ -88,7 +95,7 @@ counts and the rerunnable runtime harness are local in ignored
 
 Paste needs admitted external pixels, floating placement and one atomic undoable
 transaction. Cut needs acknowledged clipboard ownership before a source-bound
-clear transaction. Copy visible layers, a CLI clipboard command, external flavor import, large-image
+clear transaction. A CLI clipboard command, external flavor import, large-image
 placement policies, Safari/Firefox, actual OS cross-process behavior, Windows
 DIB/PNG alpha, Wayland/X11 and matched native Paint/Paint.NET behavior remain
 unqualified. This tranche does not complete the clipboard or frontend roadmap.
@@ -109,3 +116,26 @@ strict deep signature and plist verification. Compiler disk exhaustion during
 intermediate validation was resolved by deleting only disposable native incremental
 caches; the successful retries disabled incremental compilation. No source assets,
 user clipboard contents or installed application preferences were changed.
+
+## Visible-layer capture follow-up, October 24, 2026
+
+The renderer writes the ordered composition directly into an admitted private
+clipboard image. Capacity beyond the requested size is charged before composition;
+no second full-canvas pixel allocation is needed. Mask clipping follows composition
+and checks cancellation. Failures and cancellation return no partial image.
+No performance improvement or physical-memory bound is claimed.
+
+An independent integer source-over oracle checks root order, partial alpha and
+opacity, negative layer origins, finite extents and hidden layers. Independent
+mask expectations check holes, tight bounds, canvas clipping and inversion.
+Every observed capture/composition/mask cancellation checkpoint is injected, and
+output reservations return to zero after rejection. Native asynchronous tests
+check frozen visible pixels, coalesced Copy/Shift+C input, unchanged source/history,
+and fake acknowledged writes. Actual Classic v11 and Studio controls run in
+English and Japanese without touching the OS clipboard. Browser tests cover
+no-active-layer merged copy, acknowledgment and both coalesced event orders.
+
+The earlier isolated Chromium run above qualifies the unchanged clipboard PNG
+adapter only; the merged command has portable host tests and a Wasm build/lint
+check, without a new browser runtime or native cross-application qualification.
+Local test logs are in ignored `docs/validation/clipboard-visible-2026-10-24/`.

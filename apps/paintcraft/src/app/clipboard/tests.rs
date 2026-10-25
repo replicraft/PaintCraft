@@ -152,7 +152,7 @@ fn cancelled_capture_does_not_submit_or_publish_and_empty_is_not_written() {
             app.active_tab_id(),
             app.editor.document_snapshot(),
             app.editor.selection(),
-            app.editor.target().unwrap(),
+            app.editor.target(),
             &ctx,
         )
         .unwrap();
@@ -166,7 +166,7 @@ fn cancelled_capture_does_not_submit_or_publish_and_empty_is_not_written() {
             app.active_tab_id(),
             app.editor.document_snapshot(),
             Selection::Empty,
-            app.editor.target().unwrap(),
+            app.editor.target(),
             &ctx,
         )
         .unwrap();
@@ -262,8 +262,7 @@ fn standalone_and_coalesced_copy_events_submit_once_and_text_drafts_keep_keyboar
     assert_eq!(app.editor.publications(), 0);
 }
 
-#[test]
-fn copy_controls_work_in_every_native_frontend_and_two_languages_with_acknowledged_status() {
+fn verify_controls(caption: &str) {
     use egui_kittest::Harness;
     use egui_kittest::kittest::{NodeT, Queryable};
     use paintcraft_ui::i18n::{Language, translate};
@@ -273,6 +272,14 @@ fn copy_controls_work_in_every_native_frontend_and_two_languages_with_acknowledg
         (Experience::Classic, ClassicVariant::V11),
         (Experience::Studio, ClassicVariant::V11),
     ] {
+        // Historical Home ribbons retain their reference Copy button; merged
+        // copy is reachable by the shared shortcut and native Edit menu.
+        if caption == "Copy visible layers"
+            && experience == Experience::Classic
+            && skin != ClassicVariant::V11
+        {
+            continue;
+        }
         for language in [Language::English, Language::Japanese] {
             let fake = Fake::default();
             let mut app = App::new(None);
@@ -293,13 +300,13 @@ fn copy_controls_work_in_every_native_frontend_and_two_languages_with_acknowledg
                 h.get_by_label(&edit).click();
                 h.run();
             }
-            let copy = translate(language, "Copy");
+            let copy = translate(language, caption);
             // Enabled menu atom labels also include the formatted shortcut.
             let control = h
                 .query_all_by_label_contains(&copy)
                 .find(|node| !node.accesskit_node().is_disabled())
                 .unwrap_or_else(|| {
-                    panic!("Missing enabled Copy: {experience:?} {skin:?} {language:?}")
+                    panic!("Missing enabled {caption}: {experience:?} {skin:?} {language:?}")
                 });
             assert!(
                 !control.accesskit_node().is_disabled(),
@@ -326,5 +333,65 @@ fn copy_controls_work_in_every_native_frontend_and_two_languages_with_acknowledg
             assert!(h.state().clipboard.last_capture.is_some());
             assert_eq!(h.state().editor.history_view().ticket, before);
         }
+    }
+}
+
+#[test]
+fn real_controls_work_in_every_native_frontend_and_two_languages_with_acknowledged_status() {
+    verify_controls("Copy");
+}
+
+#[test]
+fn merged_controls_work_in_classic_v11_and_studio_in_two_languages() {
+    verify_controls("Copy visible layers");
+}
+
+#[test]
+fn merged_shortcut_and_coalesced_copy_capture_visible_layers_not_active_hidden_layer() {
+    use paintcraft_core::types::policy::POLICY;
+    for coalesced in [false, true] {
+        let ctx = egui::Context::default();
+        let mut app = App::new(None);
+        let mut doc = paintcraft_document::new_document(
+            3,
+            2,
+            Some(paintcraft_core::types::Rgba([17, 44, 99, 255])),
+            0,
+            POLICY,
+        )
+        .unwrap();
+        let second = paintcraft_document::new_document(
+            3,
+            2,
+            Some(paintcraft_core::types::Rgba([255, 0, 0, 255])),
+            0,
+            POLICY,
+        )
+        .unwrap();
+        let mut layer = second.layers[&second.roots[0]].clone();
+        layer.visible = false;
+        doc.roots.push(layer.id);
+        doc.layers.insert(layer.id, layer);
+        app.editor = Editor::with_document(doc, None);
+        let fake = Fake::default();
+        app.clipboard.writer = Some(Box::new(fake.clone()));
+        let source = app.editor.document_snapshot();
+        let ticket = app.editor.history_view().ticket;
+        let mut key = copy_key();
+        if let egui::Event::Key { modifiers, .. } = &mut key {
+            modifiers.shift = true;
+        }
+        let events = if coalesced {
+            vec![egui::Event::Copy, key]
+        } else {
+            vec![key]
+        };
+        input(&mut app, &ctx, events);
+        wait_write(&mut app.clipboard, &ctx);
+        let images = fake.images.lock().unwrap();
+        assert_eq!(images.len(), 1);
+        assert_eq!(images[0].rgba(), [17, 44, 99, 255].repeat(6));
+        assert!(Arc::ptr_eq(&source, &app.editor.document_snapshot()));
+        assert_eq!(ticket, app.editor.history_view().ticket);
     }
 }

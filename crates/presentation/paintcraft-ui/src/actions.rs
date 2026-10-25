@@ -22,6 +22,7 @@ pub enum Action {
     Print,
     ExportImage(ImageExport),
     Copy,
+    CopyVisible,
     Undo,
     Redo,
     Interface,
@@ -115,6 +116,7 @@ pub const STUDIO_FILE: &[Action] = &[
 ];
 pub const EDIT: &[Action] = &[
     Action::Copy,
+    Action::CopyVisible,
     Action::Crop,
     Action::Undo,
     Action::Redo,
@@ -150,6 +152,7 @@ impl Action {
             Self::Print => ("Print…", Some((Key::P, false))),
             Self::ExportImage(format) => (format.label(), None),
             Self::Copy => ("Copy", Some((Key::C, false))),
+            Self::CopyVisible => ("Copy visible layers", Some((Key::C, true))),
             Self::Undo => ("Undo", Some((Key::Z, false))),
             Self::Redo => ("Redo", Some((Key::Y, false))),
             Self::ChooseFrontend(frontend) => (
@@ -308,6 +311,9 @@ impl Action {
                     && ctx.layer_visible
                     && (!ctx.selection_active || ctx.can_crop_selection)
             }
+            Self::CopyVisible => {
+                ctx.document_open && (!ctx.selection_active || ctx.can_crop_selection)
+            }
             Self::Print => {
                 ctx.document_open && cfg!(target_os = "macos") && !cfg!(target_arch = "wasm32")
             }
@@ -379,6 +385,7 @@ impl Action {
             Self::Print => 1027,
             Self::ExportImage(format) => 1040 + format as u64,
             Self::Copy => 1028,
+            Self::CopyVisible => 1029,
             Self::Undo => 1005,
             Self::Redo => 1006,
             Self::Interface => 1007,

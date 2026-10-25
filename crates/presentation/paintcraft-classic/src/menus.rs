@@ -107,6 +107,8 @@ pub(super) fn edit(ui: &mut Ui, context: Context, actions: &mut Vec<Action>) {
                 }
                 if shift {
                     ui.separator();
+                    action(ui, context, actions, Action::CopyVisible, label);
+                    continue;
                 }
                 unavailable(
                     ui,
@@ -125,7 +127,7 @@ pub(super) fn edit(ui: &mut Ui, context: Context, actions: &mut Vec<Action>) {
             // Preserve existing working PaintCraft commands below the reference entries.
             ui.separator();
             for &item in paintcraft_ui::actions::EDIT {
-                if item == Action::Copy {
+                if matches!(item, Action::Copy | Action::CopyVisible) {
                     continue;
                 }
                 action(ui, context, actions, item, item.descriptor().label);

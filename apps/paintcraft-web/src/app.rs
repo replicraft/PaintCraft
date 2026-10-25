@@ -208,6 +208,7 @@ impl WebApp {
         }
         match action {
             Action::Copy => self.copy_requested(ctx),
+            Action::CopyVisible => self.copy_visible_requested(ctx),
             Action::Crop => self.edit(Edit::CropToSelection),
             Action::EraseSelection => self.edit(Edit::EraseSelection {
                 color: paintcraft_tools::commands::canvas_color(self.editor.session.document()),
@@ -405,8 +406,22 @@ impl WebApp {
             return false;
         }
         if matches!(event, egui::Event::Copy) && !self.editor.tools.is_editing_text() {
-            if Action::Copy.enabled(self.context()) {
-                self.action(ctx, Action::Copy);
+            // Some integrations coalesce Copy with Ctrl/Cmd+Shift+C. Choose the
+            // richer action before either event claims this frame's activation.
+            let merged = ctx.input(|input| {
+                input.events.iter().any(|event| {
+                    matches!(event,
+                egui::Event::Key {key: egui::Key::C, pressed: true, modifiers, ..}
+                    if modifiers.matches_exact(egui::Modifiers::COMMAND | egui::Modifiers::SHIFT))
+                })
+            });
+            let action = if merged {
+                Action::CopyVisible
+            } else {
+                Action::Copy
+            };
+            if action.enabled(self.context()) {
+                self.action(ctx, action);
             }
             return true;
         }

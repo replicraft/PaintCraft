@@ -175,7 +175,10 @@ impl App {
         for action in self.chrome_outbox.drain() {
             // Earlier events in a coalesced frame may have queued an edit or
             // history move. Its result determines this action's enabled state.
-            if action != paintcraft_ui::chrome::Action::Copy {
+            if !matches!(
+                action,
+                paintcraft_ui::chrome::Action::Copy | paintcraft_ui::chrome::Action::CopyVisible
+            ) {
                 self.editor.run_pending();
             }
             if !action.enabled(self.action_context()) {
@@ -200,6 +203,7 @@ impl App {
                 Chrome::Export => self.export_requested(ctx),
                 Chrome::Print => self.print_requested(ctx),
                 Chrome::Copy => self.copy_requested(ctx),
+                Chrome::CopyVisible => self.copy_source_requested(ctx, true),
                 Chrome::ExportImage(format) => self.export_image_requested(ctx, format),
                 Chrome::Undo => self.request(ctx, code::UNDO, Action::Undo),
                 Chrome::Redo => self.request(ctx, code::REDO, Action::Redo),

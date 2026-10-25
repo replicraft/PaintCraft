@@ -28,9 +28,20 @@ impl WebApp {
     pub(crate) fn copy_requested(&mut self, ctx: &egui::Context) {
         self.copy_with(ctx, |image| clipboard::submit(ctx, image));
     }
+    pub(crate) fn copy_visible_requested(&mut self, ctx: &egui::Context) {
+        self.copy_source_with(ctx, true, |image| clipboard::submit(ctx, image));
+    }
     fn copy_with(
         &mut self,
         ctx: &egui::Context,
+        submit: impl FnOnce(Image) -> Result<clipboard::Job>,
+    ) {
+        self.copy_source_with(ctx, false, submit);
+    }
+    fn copy_source_with(
+        &mut self,
+        ctx: &egui::Context,
+        visible: bool,
         submit: impl FnOnce(Image) -> Result<clipboard::Job>,
     ) {
         if self.clipboard.activation == Some(ctx.cumulative_frame_nr()) {
@@ -47,25 +58,43 @@ impl WebApp {
             self.message = t!(ctx, "Finish the current edit before copying.");
             return;
         }
-        let Some(target) = self.editor.target.filter(|id| {
+        let target = self.editor.target.filter(|id| {
             self.editor
                 .session
                 .document()
                 .layers
                 .get(id)
                 .is_some_and(|layer| layer.visible)
-        }) else {
+        });
+        if !visible && target.is_none() {
             self.message = t!(ctx, "There are no selected pixels to copy.");
             return;
-        };
+        }
         let source = self.editor.session.snapshot();
-        let result = paintcraft_editor::clipboard::capture(
-            &source,
-            self.editor.session.selection(),
-            target,
-            &self.clipboard.budget,
-            &|| Ok(()),
-        );
+        let selection = self.editor.session.selection();
+        let result = if visible {
+            paintcraft_render::clipboard::capture_visible(
+                &source,
+                &selection,
+                &self.clipboard.budget,
+                &|| Ok(()),
+            )
+            .map(|image| {
+                image.map(|(image, origin)| Capture {
+                    image,
+                    origin,
+                    selection,
+                })
+            })
+        } else {
+            paintcraft_editor::clipboard::capture(
+                &source,
+                self.editor.session.selection(),
+                target.expect("validated target"),
+                &self.clipboard.budget,
+                &|| Ok(()),
+            )
+        };
         match result {
             Ok(Some(capture)) => match submit(capture.image.clone()) {
                 Ok(job) => {

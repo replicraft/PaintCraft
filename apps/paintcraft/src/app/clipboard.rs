@@ -66,7 +66,7 @@ impl State {
         owner: Uuid,
         document: Arc<paintcraft_document::Document>,
         selection: Selection,
-        target: Uuid,
+        target: Option<Uuid>,
         ctx: &egui::Context,
     ) -> Result<bool, String> {
         if self.pending.is_some() {
@@ -89,8 +89,23 @@ impl State {
                         Ok(())
                     }
                 };
-                let result = capture(&document, selection, target, &budget(), &check)
-                    .map_err(|e| e.to_string());
+                let result = match target {
+                    Some(target) => capture(&document, selection, target, &budget(), &check),
+                    None => paintcraft_render::clipboard::capture_visible(
+                        &document,
+                        &selection,
+                        &budget(),
+                        &check,
+                    )
+                    .map(|image| {
+                        image.map(|(image, origin)| Capture {
+                            image,
+                            origin,
+                            selection,
+                        })
+                    }),
+                }
+                .map_err(|e| e.to_string());
                 let _ = send.send(result);
                 wake.request_repaint();
             })
@@ -148,6 +163,10 @@ impl State {
 
 impl App {
     pub(super) fn copy_requested(&mut self, ctx: &egui::Context) {
+        self.copy_source_requested(ctx, false);
+    }
+
+    pub(super) fn copy_source_requested(&mut self, ctx: &egui::Context, visible: bool) {
         if self.document_count() == 0 || self.clipboard.pending.is_some() {
             return;
         }
@@ -163,16 +182,17 @@ impl App {
                 .set_status(t!(ctx, "Finish the current edit before copying."));
             return;
         }
-        let Some(target) = self.editor.target() else {
+        let target = self.editor.target();
+        if !visible && target.is_none() {
             self.editor
                 .set_status(t!(ctx, "There are no selected pixels to copy."));
             return;
-        };
+        }
         match self.clipboard.start(
             self.active_tab_id(),
             self.editor.document_snapshot(),
             self.editor.selection(),
-            target,
+            if visible { None } else { target },
             ctx,
         ) {
             Ok(true) => self.editor.set_status(t!(ctx, "Copying to clipboard…")),

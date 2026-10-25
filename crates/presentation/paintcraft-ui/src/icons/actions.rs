@@ -21,6 +21,7 @@ impl Action {
             Self::Save | Self::SaveAll => Icon::Save,
             Self::Print => Icon::Print,
             Self::Copy => Icon::Copy,
+            Self::CopyVisible => Icon::CopyMerged,
             Self::SaveAs | Self::Export | Self::ExportImage(_) => Icon::SaveAs,
             Self::Close | Self::Exit => Icon::Close,
             Self::Undo => Icon::Undo,

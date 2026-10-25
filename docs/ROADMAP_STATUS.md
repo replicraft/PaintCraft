@@ -622,3 +622,14 @@ The latest [floating selection tranche](FLOATING_SELECTIONS.md) adds frozen-sour
 
 
 [Clipboard Copy](CLIPBOARD_COPY.md) now has exact active-layer capture, asynchronous native writes, shared controls and acknowledged browser PNG writes. Isolated Chromium tests cover actual Copy and denied permission. Cut, Paste, Copy visible layers and native cross-application qualification remain open.
+
+
+Clipboard Copy now also offers **Copy visible layers** in native Classic/Studio
+and browser Classic. It captures canonical ordered composition inside exact
+selection bounds and holes, with capacity admission before composition, frozen
+sources and acknowledged writes. Classic v11/Studio expose Edit controls; older
+Classic ribbons retain their existing Copy button and support the shared merged
+shortcut/native menu. Independent pixel/cancellation oracles and host controls
+are covered in [Clipboard Copy](CLIPBOARD_COPY.md). Cut/Paste, external flavor
+import and native cross-application qualification remain open; this does not
+complete T14/T15/T17 or browser conformance.

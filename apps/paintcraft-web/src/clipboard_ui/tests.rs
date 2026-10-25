@@ -111,3 +111,70 @@ fn copy_event_and_shortcut_leave_custom_text_input_in_control() {
     assert!(app.clipboard.job.is_none());
     assert!(app.editor.tools.is_editing_text());
 }
+
+#[test]
+fn merged_capture_works_without_an_active_layer_and_waits_for_acknowledgment() {
+    let ctx = egui::Context::default();
+    let mut app = fixture(&ctx);
+    app.editor.target = None;
+    let source = app.editor.session.snapshot();
+    let ticket = app.editor.session.ticket();
+    let selection = app.editor.session.selection();
+    app.copy_source_with(&ctx, true, |image| {
+        assert_eq!((image.width(), image.height()), (3, 3));
+        assert_eq!(image.rgba(), vec![255; 36]);
+        Ok(clipboard::Job::completed(Ok(())))
+    });
+    assert!(app.clipboard.last.is_none());
+    app.poll_copy(&ctx);
+    assert_eq!(app.clipboard.last.as_ref().unwrap().origin, (2, 1));
+    assert!(Arc::ptr_eq(&source, &app.editor.session.snapshot()));
+    assert_eq!(ticket, app.editor.session.ticket());
+    assert_eq!(selection, app.editor.session.selection());
+}
+
+#[test]
+fn coalesced_merged_shortcut_keeps_merged_source_in_either_event_order() {
+    for copy_first in [false, true] {
+        let ctx = egui::Context::default();
+        let mut app = fixture(&ctx);
+        app.editor.target = None;
+        let depth = app.editor.session.undo_depth();
+        let key = egui::Event::Key {
+            key: egui::Key::C,
+            physical_key: None,
+            pressed: true,
+            repeat: false,
+            modifiers: egui::Modifiers::COMMAND | egui::Modifiers::SHIFT,
+        };
+        let events = if copy_first {
+            vec![egui::Event::Copy, key]
+        } else {
+            vec![key, egui::Event::Copy]
+        };
+        let mut output = ctx.run_ui(
+            egui::RawInput {
+                events,
+                ..Default::default()
+            },
+            |ui| {
+                for event in ui.input(|input| input.events.clone()) {
+                    assert!(app.keyboard_event(ui.ctx(), &event));
+                }
+            },
+        );
+        output.textures_delta.clear();
+        // Native test hosts cannot write a browser clipboard. Reaching this
+        // adapter proves merged copy was chosen despite the absent active layer.
+        assert!(
+            app.message.contains("Image clipboard is unavailable"),
+            "{}",
+            app.message
+        );
+        assert_eq!(
+            app.clipboard.activation,
+            Some(ctx.cumulative_frame_nr() - 1)
+        );
+        assert_eq!(app.editor.session.undo_depth(), depth);
+    }
+}

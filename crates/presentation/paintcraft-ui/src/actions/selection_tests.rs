@@ -197,3 +197,32 @@ fn copy_requires_a_visible_target_and_nonempty_field_and_shares_the_command_shor
         );
     }
 }
+
+#[test]
+fn merged_copy_requires_pixels_but_not_an_active_or_visible_layer() {
+    for frontend in [Frontend::Classic, Frontend::Studio] {
+        let ctx = context(frontend);
+        assert!(Action::CopyVisible.enabled(ctx));
+        assert!(!Action::CopyVisible.enabled(Context {
+            document_open: false,
+            ..ctx
+        }));
+        assert!(!Action::CopyVisible.enabled(Context {
+            blocked: true,
+            ..ctx
+        }));
+        assert!(!Action::CopyVisible.enabled(Context {
+            selection_active: true,
+            ..ctx
+        }));
+        assert!(Action::CopyVisible.enabled(Context {
+            selection_active: true,
+            can_crop_selection: true,
+            ..ctx
+        }));
+        assert_eq!(
+            Action::from_shortcut_for(frontend, Key::C, Modifiers::COMMAND | Modifiers::SHIFT),
+            Some(Action::CopyVisible)
+        );
+    }
+}
