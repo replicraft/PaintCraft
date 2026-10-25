@@ -36,7 +36,8 @@ pub struct WebApp {
     confirm_replace: Option<Action>,
     pub(crate) files: crate::files::Files,
     pub(crate) text: crate::text_ui::TextUi,
-    pending_import: Option<crate::files::Loaded>,
+    pub(crate) pending_import: Option<crate::importing::Pending>,
+    pub(crate) import_owner: Option<crate::importing::Owner>,
     form: Option<forms::Form>,
     pub(crate) message: String,
     pub(crate) clipboard: crate::clipboard_ui::State,
@@ -82,6 +83,7 @@ impl WebApp {
             confirm_replace: None,
             files: crate::files::Files::default(),
             pending_import: None,
+            import_owner: None,
             form: None,
             clipboard: Default::default(),
             message: warning.unwrap_or_else(|| {
@@ -317,6 +319,10 @@ impl WebApp {
 
     fn replace(&mut self, ctx: &egui::Context, action: Action) {
         if action == Action::Open {
+            if self.files.busy {
+                return;
+            }
+            self.import_owner = Some(crate::importing::Owner::capture(self));
             let frontend = match self.variant {
                 ClassicVariant::V7 => paintcraft_formats::registry::Frontend::ClassicV7,
                 ClassicVariant::V10 => paintcraft_formats::registry::Frontend::ClassicV10,
@@ -328,7 +334,7 @@ impl WebApp {
         }
     }
 
-    fn install(&mut self, loaded: crate::files::Loaded) {
+    pub(crate) fn install(&mut self, loaded: crate::files::Loaded) {
         match Editor::from_document(loaded.document) {
             Ok(editor) => {
                 self.editor = editor;
@@ -362,19 +368,22 @@ impl WebApp {
         }
     }
 
-    fn poll_files(&mut self) {
+    fn poll_files(&mut self, ctx: &egui::Context) {
         use crate::files::Outcome;
         match self.files.poll() {
-            Some(Ok(Outcome::Loaded(loaded))) if loaded.losses.is_empty() => self.install(loaded),
-            Some(Ok(Outcome::Loaded(loaded))) => self.pending_import = Some(loaded),
+            Some(Ok(Outcome::Loaded(loaded))) => self.accept_loaded(loaded, ctx),
             Some(Ok(Outcome::Cancelled)) => {
+                self.import_owner = None;
                 self.message = "File dialog cancelled; current document retained".into()
             }
             Some(Ok(Outcome::DownloadClosed)) => {
                 self.message =
                     "Download dialog closed - verify your copy; this tab remains unsaved".into()
             }
-            Some(Err(error)) => self.message = format!("File operation failed: {error}"),
+            Some(Err(error)) => {
+                self.import_owner = None;
+                self.message = format!("File operation failed: {error}");
+            }
             None => {}
         }
     }
@@ -431,7 +440,7 @@ impl WebApp {
     pub fn show(&mut self, ui: &mut egui::Ui) {
         let ctx = ui.ctx().clone();
         if ctx.current_pass_index() == 0 {
-            self.poll_files();
+            self.poll_files(&ctx);
             self.poll_copy(&ctx);
         }
         self.text.widget_owned_input =
@@ -528,19 +537,26 @@ impl WebApp {
             let mut cancel = false;
             egui::Modal::new(egui::Id::unique("web-import-losses")).show(ctx, |ui| {
                 ui.heading(t!(ui.ctx(), "Open with these import limitations?"));
-                for loss in &self.pending_import.as_ref().expect("pending import").losses {
-                    ui.label(loss);
+                for loss in &self
+                    .pending_import
+                    .as_ref()
+                    .expect("pending import")
+                    .loaded
+                    .losses
+                {
+                    if let Some(description) = paintcraft_ui::i18n::import_loss_description(loss) {
+                        ui.label(t!(ctx, description));
+                    }
                 }
                 ui.horizontal(|ui| {
                     accept = ui.button(t!(ui.ctx(), "Open image")).clicked();
                     cancel = ui.button(t!(ui.ctx(), "Cancel")).clicked();
                 });
             });
-            if accept && let Some(loaded) = self.pending_import.take() {
-                self.install(loaded);
-            }
-            if cancel {
-                self.pending_import = None;
+            if ctx.current_pass_index() == 0
+                && (accept || cancel || ctx.input(|input| input.key_pressed(egui::Key::Escape)))
+            {
+                self.resolve_import(ctx, accept);
             }
         }
         if let Some(mut format) = self.export_confirm {

@@ -55,14 +55,16 @@ impl Files {
         self.busy = true;
         let target = Rc::clone(&self.outcome);
         let ctx = ctx.clone();
+        let extensions = paintcraft_formats::registry::enabled_extensions(
+            frontend,
+            paintcraft_formats::registry::Operation::Open,
+            Platform::Web,
+        );
         wasm_bindgen_futures::spawn_local(async move {
             let result = async {
                 let Some(file) = rfd::AsyncFileDialog::new()
                     .set_title("Open PaintCraft document or image")
-                    .add_filter(
-                        "PaintCraft and images",
-                        &["pcnd", "png", "bmp", "jpg", "jpeg"],
-                    )
+                    .add_filter("PaintCraft and images", &extensions)
                     .pick_file()
                     .await
                 else {
@@ -184,7 +186,7 @@ fn decode(bytes: &[u8], name: String) -> Result<Loaded> {
 }
 
 #[cfg(any(target_arch = "wasm32", test))]
-fn decode_for_profile(bytes: &[u8], name: String, frontend: Frontend) -> Result<Loaded> {
+pub(crate) fn decode_for_profile(bytes: &[u8], name: String, frontend: Frontend) -> Result<Loaded> {
     if bytes.len() > FILE_BYTES {
         return Err(Error::new(
             ErrorCode::ResourceLimit,

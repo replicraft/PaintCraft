@@ -6,6 +6,7 @@ mod clipboard_ui;
 mod editor;
 mod files;
 mod floating_ui;
+mod importing;
 mod layers;
 mod preferences;
 mod selection_ui;
