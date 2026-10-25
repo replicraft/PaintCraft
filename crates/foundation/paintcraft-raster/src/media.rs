@@ -98,7 +98,7 @@ pub fn coverage(
         BrushMedia::CalligraphyBrush => (f64::from(size) / 20.0).clamp(0.35, 6.0),
         _ => (f64::from(size) / 8.0).clamp(0.5, 8.0),
     };
-    let mut dab = |cx: f64, cy: f64| -> Result<()> {
+    let mut dab = |cx: f64, cy: f64, tangent: (f64, f64)| -> Result<()> {
         let left = ((cx - radius - 1.0).floor() as i64).max(x0);
         let right = ((cx + radius + 1.0).ceil() as i64).min(x1);
         let top = ((cy - radius - 1.0).floor() as i64).max(y0);
@@ -122,8 +122,8 @@ pub fn coverage(
                     x as f64 + 0.5 - cx,
                     y as f64 + 0.5 - cy,
                     radius,
-                    x + clip.x0,
-                    y + clip.y0,
+                    (x + clip.x0, y + clip.y0),
+                    tangent,
                 );
                 let dest = &mut mask[(y - y0) as usize * width + (x - x0) as usize];
                 *dest = (*dest).max(alpha);
@@ -131,7 +131,19 @@ pub fn coverage(
         }
         Ok(())
     };
-    dab(local(points[0]).0, local(points[0]).1)?;
+    let direction = |a: (f64, f64), b: (f64, f64)| {
+        let length = (b.0 - a.0).hypot(b.1 - a.1);
+        if length > 0.0 {
+            ((b.0 - a.0) / length, (b.1 - a.1) / length)
+        } else {
+            (1.0, 0.0)
+        }
+    };
+    let start = local(points[0]);
+    let tangent = points
+        .get(1)
+        .map_or((1.0, 0.0), |&next| direction(start, local(next)));
+    dab(start.0, start.1, tangent)?;
     for pair in points.windows(2) {
         check()?;
         let (a, b) = (local(pair[0]), local(pair[1]));
@@ -154,7 +166,11 @@ pub fn coverage(
         for i in first..=last {
             check()?;
             let t = i as f64 / count as f64;
-            dab(a.0 + (b.0 - a.0) * t, a.1 + (b.1 - a.1) * t)?;
+            dab(
+                a.0 + (b.0 - a.0) * t,
+                a.1 + (b.1 - a.1) * t,
+                direction(a, b),
+            )?;
         }
     }
     let mut spans = Vec::new();
@@ -214,11 +230,16 @@ fn clipped_segment(
     (lo <= hi).then_some((lo, hi))
 }
 
-fn tip(media: BrushMedia, dx: f64, dy: f64, radius: f64, x: i64, y: i64) -> u8 {
-    let mut hash =
-        (x as u64).wrapping_mul(0x9e3779b97f4a7c15) ^ (y as u64).wrapping_mul(0xbf58476d1ce4e5b9);
-    hash = (hash ^ (hash >> 30)).wrapping_mul(0xbf58476d1ce4e5b9);
-    let grain = ((hash ^ (hash >> 27)) & 255) as f64 / 255.0;
+fn tip(
+    media: BrushMedia,
+    dx: f64,
+    dy: f64,
+    radius: f64,
+    position: (i64, i64),
+    tangent: (f64, f64),
+) -> u8 {
+    let (x, y) = position;
+    let grain = noise(x, y);
     let (distance, edge_scale) = match media {
         BrushMedia::CalligraphyBrush | BrushMedia::CalligraphyPen => {
             let (u, v) = (
@@ -266,33 +287,58 @@ fn tip(media: BrushMedia, dx: f64, dy: f64, radius: f64, x: i64, y: i64) -> u8 {
             }
         }
         BrushMedia::Oil => {
-            // Loaded paint stays continuous. Bristles and sparse pigment variation
-            // are strongest at the exposed edge, without expiring the gesture.
-            let bristle = x.rem_euclid(7) as f64 / 6.0;
-            let dry_edge = normalized.powi(3);
-            (0.90 + 0.10 * grain) * (1.0 - dry_edge * (0.12 + 0.28 * bristle))
+            // An opaque loaded center, with longitudinal bristle grooves only at
+            // the exposed edge. Groove direction follows the stroke, not world X.
+            let across = -dx * tangent.1 + dy * tangent.0;
+            let bristle = ((across * 2.4).cos() * 0.5 + 0.5).powi(2);
+            1.0 - normalized.powi(6) * (0.12 + 0.55 * bristle)
         }
         BrushMedia::Crayon => {
-            // Dense wax deposits with a few paper pits, not graphite stipple.
-            if grain < 0.006 {
+            // Wax follows coarse paper relief. Isolated pits are clustered into
+            // a few small flakes instead of peppering every part of the stroke.
+            let paper = paper_noise(x, y, 3);
+            if paper < 0.10 && grain < 0.70 {
                 0.0
             } else {
-                0.90 + grain * 0.10
+                0.80 + 0.20 * paper
             }
         }
-        BrushMedia::Marker => 0.97,
+        BrushMedia::Marker => 1.0,
         BrushMedia::NaturalPencil => {
-            if grain < 0.23 {
+            // Fine graphite with both grain and pressure variation across paper.
+            let paper = paper_noise(x, y, 2);
+            if grain < 0.16 {
                 0.0
             } else {
-                0.22 + grain * 0.50
+                (0.30 + 0.45 * grain) * (0.70 + 0.30 * paper)
             }
         }
         BrushMedia::Watercolor => {
-            // A translucent wash, with pigment pooling near its feathered edge.
-            (0.35 + 0.10 * grain) * (0.85 + 0.15 * normalized.powi(2))
+            // A wet, softly feathered wash. Correlated pigment variation avoids
+            // the previous spray-like noise. No distance-based paint depletion.
+            let pigment = paper_noise(x, y, 8);
+            (0.56 + 0.16 * pigment) * (1.0 - 0.60 * normalized.powi(4))
         }
         _ => 1.0,
     };
     (edge * density * 255.0).round().clamp(0.0, 255.0) as u8
+}
+
+// Stable paper-space texture keeps preview, final publication and retracing equal.
+fn noise(x: i64, y: i64) -> f64 {
+    let mut hash =
+        (x as u64).wrapping_mul(0x9e3779b97f4a7c15) ^ (y as u64).wrapping_mul(0xbf58476d1ce4e5b9);
+    hash = (hash ^ (hash >> 30)).wrapping_mul(0xbf58476d1ce4e5b9);
+    ((hash ^ (hash >> 27)) & 255) as f64 / 255.0
+}
+fn paper_noise(x: i64, y: i64, scale: i64) -> f64 {
+    let (cx, cy) = (x.div_euclid(scale), y.div_euclid(scale));
+    let smooth = |value: i64| {
+        let t = value.rem_euclid(scale) as f64 / scale as f64;
+        t * t * (3.0 - 2.0 * t)
+    };
+    let (tx, ty) = (smooth(x), smooth(y));
+    let top = noise(cx, cy) * (1.0 - tx) + noise(cx + 1, cy) * tx;
+    let bottom = noise(cx, cy + 1) * (1.0 - tx) + noise(cx + 1, cy + 1) * tx;
+    top * (1.0 - ty) + bottom * ty
 }

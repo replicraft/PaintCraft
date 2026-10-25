@@ -10,11 +10,11 @@ same coverage and transaction implementation.
 | Calligraphy brush | Broad diagonal nib with a pixel-wide antialiased edge |
 | Calligraphy pen | Finer opposing diagonal nib with the same edge treatment |
 | Airbrush | Discrete spray particles with radial density |
-| Oil brush | Continuous loaded pigment with bristle bands and a dry exposed edge |
-| Crayon | Dense wax coverage with sparse paper pits |
+| Oil brush | Opaque loaded center with bristle grooves following the stroke and feathered exposed edges |
+| Crayon | Dense wax over smoothly varying paper relief with sparse clustered pits |
 | Marker | Dark, broad felt nib with softened corners |
 | Natural pencil | Lighter graphite grain with more paper gaps than crayon |
-| Watercolor brush | Continuous translucent wash with granulation and edge pooling |
+| Watercolor brush | Continuous translucent wash with smoothly varying pigment and soft edges |
 
 These are PaintCraft media, not reference-qualified simulations of Microsoft
 Paint's material engine. The supplied interface screenshots establish the gallery
@@ -68,11 +68,13 @@ pixels. Document color and selection coverage still enter through the ordinary
 prepared paint transaction. Both media multiply the captured brush opacity once,
 just like every other medium.
 
-Marker interior coverage is 247/255 at full source opacity, compared with the
-previous 115/255. Its felt tip has softened corners. Crayon leaves about 0.8% of
-interior paper samples uncovered, with dense wax elsewhere. Natural pencil leaves
-about 23% uncovered and has a lighter graphite deposit. These are deterministic
-profile parameters, not benchmark measurements or native Paint equivalence claims.
+Marker interior coverage is now 255/255 at full source opacity; its felt tip has
+softened corners. Oil bristle direction follows each stroke segment, with a loaded
+center that does not dry out with distance. Reversing a segment preserves its
+groove phase. Crayon uses correlated paper relief and a few clustered pits rather
+than uniform salt-and-pepper noise. Natural pencil uses finer, lighter graphite
+texture. Watercolor uses smooth pigment variation and a soft radial falloff.
+These are deterministic PaintCraft profiles, not native Paint equivalence claims.
 Airbrush remains discrete, with its highest particle density toward the center.
 The broad and fine opposing calligraphy nibs resolve their edge distance in canvas
 pixels so the narrow nib does not collapse its antialiasing fringe.
@@ -96,3 +98,9 @@ a 510-pixel straight stroke, a curve, and a retraced straight stroke at size 18.
 It invokes the same raster coverage and integer source-over math used by the
 editor; the images are implementation evidence, not screenshots of Microsoft Paint.
 The output remains ignored validation data.
+
+Before/after contact sheets at 100%, 50% and 25% opacity, on white and transparent
+backgrounds, were rendered directly from the shared coverage kernels under
+`docs/validation/brush-rework-2026-10-24/`. Regression checks cover all nine media's
+opacity multiplication, identical retracing, long-stroke continuity, clipping,
+preview-prefix preservation and one-gesture undo semantics.
