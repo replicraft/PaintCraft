@@ -43,6 +43,7 @@ cargo run --release -p paintcraft-cli -- mcp
 - **Extra imports in Studio:** QOI, Netpbm, farbfeld and PCX, plus a selected DCX page or ICO/CUR entry.
 - **Icon export in Studio, CLI and MCP:** multi-size ICO/CUR files with PNG or bitmap entries and cursor hotspots.
 - **Layered imports:** Studio imports flat OpenRaster (`.ora`) layers and opens a limited historical Paint.NET (`.pdn`) subset as converted copies. Studio also imports a limited Windows Paint (`.paint`) subset. Save converted projects as PCND; writing PDN or PAINT is not supported.
+- **Photoshop imports in Studio:** basic PSD/PSB raster layers with names, positions, opacity and visibility. Save converted copies as PCND.
 
 Image exports flatten layers. Conversion prompts explain supported losses such as reduced color depth, palette changes or discarded metadata. See [format support and limits](docs/FORMAT_INTEROPERABILITY.md) for the supported subsets.
 

@@ -48,6 +48,22 @@ palette expansion uses `icon-palette-expanded`, and converting a cursor into a
 picture uses `cursor-hotspot-not-retained-in-flat-document`. The original source
 remains unchanged. CLI import uses the corresponding `--entry` or `--page` flags.
 
+`import_image` also converts the supported RGB8 Normal raster-layer subset of
+PSD/PSB into an unsaved layered project. Names, positions, visibility, opacity
+and alpha are retained. Acknowledge each reported loss in `allow_losses`, such
+as `psd-metadata-ignored`, `icc-profile-ignored` or
+`psd-empty-layer-extent-normalized`. Masks, groups, text, effects, clipping,
+non-Normal blends and high-depth files are refused. Save the converted copy as
+PCND; importing never permits replacing the original Photoshop source or its
+filesystem aliases. The equivalent CLI command is:
+
+```sh
+paintcraft-cli import drawing.psd -o converted.pcnd --allow-loss psd-metadata-ignored
+```
+
+Add any other reported loss codes explicitly. CLI Classic profiles refuse PSD
+and PSB imports; the default Studio profile supports this conversion.
+
 `export_icons` takes `path`, an ordered `entries` array and optional `resampling`
 (`lanczos3` by default, or `nearest`). Each entry has `width`, `height`, `encoding`
 (`png` or `bitmap`) and, for CUR only, `hotspot: [x, y]`. Dimensions must be 1..256;

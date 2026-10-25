@@ -40,7 +40,8 @@ Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, 
 | ORA | Studio explicit Import as a converted layered copy | Flat Normal PNG layers with names, signed offsets, visibility, opacity and raw pixels; requires merged preview and thumbnail. Unsupported groups, blends, extensions, ZIP64 and resource variants refused. Fractional opacity is rounded to 8 bits and explicit print resolution is discarded with consent; fresh writer implemented internally but not enabled pending external-application qualification |
 | JXR, HEIF | No enabled frontend operations | Selected/backend qualification remains; HEIF writing is prohibited |
 | ICO/CUR | Studio explicit selected-entry Import on desktop/browser; CLI `--entry` and MCP `entry`. Fresh multi-entry export in Studio desktop/browser, CLI `export-icons` and MCP `export_icons` | Reports every admitted entry and cursor hotspot before selection. Fresh exports use explicit sizes, RGBA PNG or 32-bit bitmap entries, independent aspect-ratio fitting, and per-entry CUR hotspots. Desktop/browser exports require a displayed preview and explicit loss consent; foreign preserving save remains unavailable |
-| PSD/PSB, SVG, EXR/HDR, JP2, MSP, ICNS | Not yet enabled | Registry inventory or work in progress is not usable format support |
+| PSD/PSB | Studio explicit Import on desktop/browser; CLI `import` and MCP `import_image` | RGB8 Normal raster-layer subset retains names, offsets, opacity, visibility and alpha. Metadata losses need explicit consent. Groups, masks, text, effects, clipping, high depth and foreign writing remain unavailable |
+| SVG, EXR/HDR, JP2, MSP, ICNS | Not yet enabled | Registry inventory or work in progress is not usable format support |
 | ABR, ASE, CSH | Asset workflow policy only | Brush/palette/shape import/export implementations remain |
 | RAW, PDF, KRA, XCF, animation, advanced DDS | Future profiles | No inherited Classic support or preserving-write claims |
 
@@ -88,11 +89,12 @@ Fresh ICO/CUR export uses the selected `ico` container library with explicit RGB
 
 The implemented subsets advance the pack; they do not complete its full interoperability, preservation or release gates.
 
-### PSD/PSB conversion backend, 2026-10-25
+### PSD/PSB conversion, 2026-10-25
 
-The selected `ag-psd` 0.3.0 now has a bounded preflight and private native-document
-conversion adapter. **Frontend import admission remains disabled.** This is
-backend progress, not a new format-picker or command-line capability yet.
+The selected `ag-psd` 0.3.0 has a bounded preflight and private native-document
+conversion adapter. Studio desktop/browser expose this through explicit Import;
+CLI `import` and MCP `import_image` use the same conversion. Ordinary Open,
+Classic profiles and foreign preserving/fresh writes remain unavailable.
 
 The initial profile accepts eight-bit RGB, Normal raster layers, explicit alpha,
 Unicode names, signed offsets, opacity and hidden state. Raw, PackBits RLE, ZIP
@@ -120,8 +122,22 @@ are in `crates/services/paintcraft-formats/tests/psd-fixtures/README.md`.
 Checks surround backend work and run between layer decodes. There is no upstream
 cancellation callback within a channel decode, and these checks do not establish
 a hard aggregate process-memory or cancellation-tail limit. Original Photoshop
-qualification, advanced layer semantics, metadata retention, translated loss
-consent and desktop/browser/CLI/MCP admission remain separate follow-up work.
+qualification, advanced layer semantics and fuller metadata retention remain
+separate follow-up work. All seven locales include the new loss descriptions.
+Headless English/Japanese tests exercise actual desktop/browser confirmation
+controls, cancellation, stale owners, unchanged history before consent, layer
+identity and PCND preservation. Real CLI and MCP protocol tests require named
+loss consent and reject writes through original-source filesystem aliases.
+
+The production Wasm build was also exercised in headless Chrome on 2026-10-25:
+Studio imported the ZIP-predicted PSD and RLE PSB fixtures through the browser
+picker, displayed the metadata confirmation, and downloaded 262-byte PCND copies.
+Both downloaded documents matched native CLI conversions byte-for-byte after
+canonical encoding, including every layer sample and document field. The browser
+reported no page errors. The built asset maximum was 17,438,894 bytes against the
+26,214,400-byte deployment limit. This verifies the local built application, not
+a deployed site or Photoshop behavior. Machine-readable outcomes remain under
+ignored `docs/validation/format-specialists-2026-10-25/psd-browser-results.json`.
 
 ### OpenRaster writer follow-up, 2026-10-25
 
