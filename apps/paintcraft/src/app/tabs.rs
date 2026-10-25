@@ -39,7 +39,7 @@ pub(super) struct DocumentState {
     pending_center: Option<(f32, f32)>,
     path_text: String,
     bound: Option<PathBuf>,
-    pending_save: Option<(PathBuf, Option<PathBuf>)>,
+    pending_save: Option<(PathBuf, crate::destination::Previous)>,
     pub(super) deferred_files: std::collections::VecDeque<editing::DeferredFile>,
     save_activation: Option<u64>,
     recovery_needs_init: bool,

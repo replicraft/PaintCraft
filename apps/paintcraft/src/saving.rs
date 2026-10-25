@@ -12,6 +12,7 @@ use paintcraft_runtime::io::{Limits, OrderedIo, Ticket};
 
 #[derive(Debug)]
 struct SaveRequest {
+    binding: Option<crate::destination::Binding>,
     session: Uuid,
     generation: u64,
     source: Uuid,
@@ -173,6 +174,17 @@ impl NativeSaving {
         let charge = snapshot_charge(&document)?;
         self.admit_save(charge)?;
         let snapshot = document.clone();
+        let binding = if operation == "save" {
+            editor.destination_binding().ok_or_else(|| {
+                Error::new(
+                    ErrorCode::ConflictStaleBase,
+                    "Choose Save As to authorize this destination",
+                )
+            })?
+        } else {
+            crate::destination::Binding::authorized()
+        };
+        let captured_binding = binding.clone();
         let destination = path.clone();
         let retention_directory = self.retention_directory.clone();
         let editor_session = self.session;
@@ -189,6 +201,7 @@ impl NativeSaving {
                         generation,
                         operation,
                     },
+                    Some(&captured_binding),
                 )
             },
             move || ctx.request_repaint(),
@@ -200,6 +213,7 @@ impl NativeSaving {
         self.pending.push(Pending {
             ticket,
             kind: PendingKind::Save(SaveRequest {
+                binding: Some(binding),
                 session: self.session,
                 generation,
                 source,
@@ -537,5 +551,7 @@ impl App {
         }
     }
 }
+#[cfg(test)]
+mod binding_tests;
 #[cfg(test)]
 mod tests;

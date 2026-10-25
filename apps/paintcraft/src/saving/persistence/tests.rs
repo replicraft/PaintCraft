@@ -112,6 +112,7 @@ fn retained_incomplete(app: &mut App, destination: PathBuf) -> u64 {
                         generation,
                         operation: "save-as",
                     },
+                    None,
                 )?
                 else {
                     panic!("configured retention is available")
@@ -129,6 +130,7 @@ fn retained_incomplete(app: &mut App, destination: PathBuf) -> u64 {
     saving.pending.push(Pending {
         ticket,
         kind: PendingKind::Save(SaveRequest {
+            binding: None,
             session,
             generation,
             source: snapshot.state_id,

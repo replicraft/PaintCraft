@@ -20,6 +20,7 @@ fn incomplete(app: &mut App, path: &Path) -> u64 {
     saving.pending.push(Pending {
         ticket,
         kind: PendingKind::Save(SaveRequest {
+            binding: None,
             session: saving.session,
             generation,
             source: snapshot.state_id,
@@ -280,6 +281,7 @@ fn a_worker_failure_retains_the_snapshot_without_inventing_replacement_evidence(
     saving.pending.push(Pending {
         ticket,
         kind: PendingKind::Save(SaveRequest {
+            binding: None,
             session: saving.session,
             generation: saving.generation,
             source: snapshot.state_id,

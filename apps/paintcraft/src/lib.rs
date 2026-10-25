@@ -17,6 +17,7 @@ pub mod controller;
 mod cpu_rendering;
 #[path = "app/cursor.rs"]
 mod cursor;
+mod destination;
 #[path = "app/editing.rs"]
 mod editing;
 #[path = "app/export_options.rs"]
@@ -264,7 +265,7 @@ pub struct App {
     window_title: String,
     /// The file this document was opened from or last saved to.
     bound: Option<PathBuf>,
-    pending_save: Option<(PathBuf, Option<PathBuf>)>,
+    pending_save: Option<(PathBuf, destination::Previous)>,
     deferred_files: std::collections::VecDeque<editing::DeferredFile>,
     saving: Option<saving::NativeSaving>,
     save_activation: Option<u64>,

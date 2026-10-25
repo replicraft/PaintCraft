@@ -204,7 +204,7 @@ impl App {
             self.recent.remember(path);
             return Ok(());
         }
-        let bytes = crate::format_admission::read_source(path)?;
+        let (bytes, binding) = crate::destination::acquire(path)?;
         let family = self.admit_open_source(path, &bytes)?;
         let (editor, bound, note) = if family != paintcraft_formats::registry::Family::Pcnd {
             let img = image::decode(&bytes)?;
@@ -230,10 +230,11 @@ impl App {
             (Editor::with_document(doc, None), None, note)
         } else {
             // Decode the same bounded acquisition; do not reopen an unbounded path.
-            let editor = Editor::with_document(
+            let mut editor = Editor::with_document(
                 paintcraft_formats::pcnd::read(&bytes)?,
                 Some(path.to_path_buf()),
             );
+            editor.bind_destination(Some(binding));
             (
                 editor,
                 Some(path.to_path_buf()),
@@ -430,7 +431,7 @@ impl App {
             });
             return;
         }
-        let previous = self.editor.path().map(Path::to_path_buf);
+        let previous = self.editor.file_association();
         self.editor.set_path(path.clone());
         self.pending_save = Some((path, previous));
         if self.editor.at_file_barrier() {

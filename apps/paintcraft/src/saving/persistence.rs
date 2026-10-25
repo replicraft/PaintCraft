@@ -13,6 +13,7 @@ pub(super) fn save_document(
     destination: &Path,
     recovery_directory: Option<&Path>,
     stamp: Stamp,
+    binding: Option<&crate::destination::Binding>,
 ) -> Result<Completion> {
     let retention = match recovery_directory {
         Some(directory) => match SavedAttempt::capture(directory, document, destination, stamp) {
@@ -21,17 +22,24 @@ pub(super) fn save_document(
         },
         None => None, // Deterministic/embedded harness without configured recovery.
     };
-    let mut outcome = save::save_with_preparation(
-        destination,
-        true,
-        save::STAGED_FILE_BYTES_MAX,
-        |sink| paintcraft_formats::pcnd::write_compact_to(document, sink),
-        |outcome| {
-            retention
-                .as_ref()
-                .map_or(Ok(()), |retained| retained.prepare(outcome))
-        },
-    );
+    let write = |expected: Option<&save::Expectation>| {
+        save::save_with_expectation_and_preparation(
+            destination,
+            true,
+            save::STAGED_FILE_BYTES_MAX,
+            expected,
+            |sink| paintcraft_formats::pcnd::write_compact_to(document, sink),
+            |outcome| {
+                retention
+                    .as_ref()
+                    .map_or(Ok(()), |retained| retained.prepare(outcome))
+            },
+        )
+    };
+    let mut outcome = match binding {
+        Some(binding) => binding.save(write),
+        None => write(None),
+    };
     if let Some(retained) = &retention
         && let Err(error) = retained.finish(&outcome)
     {

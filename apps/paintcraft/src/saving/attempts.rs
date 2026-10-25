@@ -244,6 +244,12 @@ impl App {
             .to_path_buf();
         saving.adopted_sequence = ticket.sequence();
         self.editor.set_path(path.clone());
+        self.editor.bind_destination(
+            request
+                .binding
+                .clone()
+                .or_else(|| crate::destination::Binding::from_outcome(outcome)),
+        );
         self.path_text = path.to_string_lossy().into_owned();
         self.bound = Some(path.clone());
         self.editor.acknowledge_saved_state(request.source);
@@ -282,6 +288,9 @@ impl App {
         attempt.checking = false;
         match result {
             Ok(Completion::Reconciled(checked)) => {
+                if let Some(binding) = &attempt.request.binding {
+                    binding.reconcile(&checked.outcome);
+                }
                 saving.remember_receipt(attempt.ticket, &attempt.request, &checked.outcome);
                 if checked.outcome.is_success() {
                     let adopted = self.adopt_saved_attempt(

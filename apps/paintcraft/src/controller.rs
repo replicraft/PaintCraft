@@ -12,6 +12,7 @@ pub(crate) mod background;
 mod canvas;
 #[path = "controller/dispatch.rs"]
 mod dispatch;
+mod files;
 mod floating;
 mod floating_feedback;
 #[path = "controller/history.rs"]
@@ -95,6 +96,7 @@ pub struct Editor {
     preview_queue_revision: paintcraft_tools::PreviewRevision,
     preview_cache: preview_cache::Cache,
     path: Option<PathBuf>,
+    destination: Option<crate::destination::Binding>,
     status: String,
     recovery: Option<Arc<Recovery>>,
     checkpointed: Option<(Uuid, u64)>,
@@ -128,19 +130,8 @@ impl Editor {
         Ok(e)
     }
 
-    pub fn open(path: &Path) -> Result<Editor> {
-        let bytes = std::fs::read(path).map_err(|e| {
-            paintcraft_core::types::Error::new(
-                paintcraft_core::types::ErrorCode::StorageFailed,
-                format!("cannot read file: {}", e.kind()),
-            )
-        })?;
-        let mut e = Editor::with_document(pcnd::read(&bytes)?, Some(path.to_path_buf()));
-        e.status = format!("Opened {}", path.display());
-        Ok(e)
-    }
-
-    /// An editor over an existing document, optionally bound to a file.
+    /// An editor over an existing document and optional authorized destination.
+    /// Use `open` for an existing file so its acquired content is guarded.
     pub fn with_document(doc: Document, path: Option<PathBuf>) -> Editor {
         let target = doc.roots.last().copied();
         let mut session = Session::new(doc);
@@ -173,6 +164,9 @@ impl Editor {
             preview_lineage: Uuid::new_v4(),
             preview_queue_revision: Default::default(),
             preview_cache: Default::default(),
+            destination: path
+                .as_ref()
+                .map(|_| crate::destination::Binding::authorized()),
             path,
             status: String::new(),
             recovery: None,
@@ -347,18 +341,6 @@ impl Editor {
 
     pub fn status(&self) -> &str {
         &self.status
-    }
-
-    pub fn path(&self) -> Option<&Path> {
-        self.path.as_deref()
-    }
-
-    pub fn set_path(&mut self, path: PathBuf) {
-        self.path = Some(path);
-    }
-
-    pub(crate) fn restore_path(&mut self, path: Option<PathBuf>) {
-        self.path = path;
     }
 
     pub(crate) fn take_save_outcome(&mut self) -> Option<bool> {
@@ -747,28 +729,6 @@ impl Editor {
     pub(crate) fn save_captured(&mut self) {
         if self.can_capture_file() {
             self.save();
-        }
-    }
-
-    fn save(&mut self) {
-        self.save_outcome = Some(false);
-        let Some(path) = self.path.clone() else {
-            self.status = "Choose a file name before saving".into();
-            return;
-        };
-        let outcome = save::save_with(&path, true, save::STAGED_FILE_BYTES_MAX, |sink| {
-            pcnd::write_compact_to(self.document(), sink)
-        });
-        if outcome.is_success() {
-            self.save_outcome = Some(true);
-            self.session.mark_saved();
-            self.status = match self.discard_checkpoint() {
-                Ok(()) => format!("Saved {}", path.display()),
-                Err(error) => format!("Saved {}; recovery cleanup failed: {error}", path.display()),
-            };
-        } else {
-            // Dirty state stays: an unconfirmed or unknown save is not a clean document.
-            self.status = format!("Not saved safely: {}", outcome.reasons.join("; "));
         }
     }
 }
