@@ -12,7 +12,9 @@ mod interfaces;
 #[cfg(test)]
 #[path = "lasso_tests.rs"]
 mod lasso_tests;
+mod presentation;
 mod settings;
+mod view;
 use crate::{
     canvas::Canvas,
     editor::{Editor, WHITE},
@@ -144,7 +146,7 @@ impl WebApp {
                 .and_then(|id| doc.layer(&id))
                 .is_some_and(|l| l.visible),
             zoom: self.zoom,
-            pixel_grid: false,
+            pixel_grid: self.canvas.pixel_grid,
             can_transform_image: !matches!(
                 self.editor.session.selection(),
                 paintcraft_raster::Selection::Mask(_) | paintcraft_raster::Selection::Empty
@@ -159,11 +161,12 @@ impl WebApp {
             },
             can_fit_selection: self.selected_bounds().is_ok_and(|bounds| bounds.is_some()),
             can_crop_selection: self.selected_bounds().is_ok_and(|bounds| bounds.is_some()),
-            status_bar: true,
-            rulers: false,
+            status_bar: self.frontend == Frontend::Studio || self.preferences.status_bar,
+            rulers: self.rulers_visible(),
             fullscreen: false,
-            auto_hide_toolbar: false,
-            thumbnail: false,
+            auto_hide_toolbar: self.frontend == Frontend::Classic
+                && self.preferences.auto_hide_toolbar,
+            thumbnail: self.workspace.thumbnail,
         }
     }
 
@@ -327,18 +330,7 @@ impl WebApp {
                     self.replace(ctx, action);
                 }
             }
-            Action::View(view) => match view {
-                ViewAction::SetZoom(percent) => self.zoom = percent as f32 / 10_000.0,
-                ViewAction::ZoomIn => self.zoom *= 1.25,
-                ViewAction::ZoomOut => self.zoom /= 1.25,
-                ViewAction::ActualSize => self.zoom = 1.0,
-                ViewAction::Double => self.zoom = 2.0,
-                ViewAction::Quadruple => self.zoom = 4.0,
-                ViewAction::Octuple => self.zoom = 8.0,
-                ViewAction::FitWindow => self.fit_canvas(),
-                ViewAction::FitSelection => self.fit_selection(),
-                _ => self.unsupported(action),
-            },
+            Action::View(view) => self.view_action(ctx, view),
             _ => self.unsupported(action),
         }
         self.zoom = self.zoom.clamp(0.125, 10.0);
@@ -535,100 +527,6 @@ impl WebApp {
             }
         }
         false
-    }
-
-    pub fn show(&mut self, ui: &mut egui::Ui) {
-        let ctx = ui.ctx().clone();
-        self.refresh_appearance(&ctx);
-        if ctx.current_pass_index() == 0 {
-            self.poll_files(&ctx);
-            self.poll_copy(&ctx);
-            self.poll_paste(&ctx);
-        }
-        self.text.widget_owned_input =
-            ctx.egui_wants_keyboard_input() || egui::Popup::is_any_open(&ctx);
-        let context = self.context();
-        egui::Panel::top("classic-chrome").show(ui, |ui| {
-            let actions = if self.frontend == Frontend::Studio {
-                let mut actions =
-                    paintcraft_studio::toolbar(ui, &mut self.controls, &mut self.studio, context);
-                ui.horizontal(|ui| {
-                    actions.extend(paintcraft_ui::chrome::interface_changer(ui, context));
-                    if ui.button(t!(ui.ctx(), "Settings")).clicked() {
-                        actions.push(Action::Settings);
-                    }
-                });
-                self.studio.canvas_top = ui.min_rect().bottom();
-                actions
-            } else {
-                paintcraft_classic::chrome_with_text(
-                    ui,
-                    self.variant,
-                    &mut self.controls,
-                    &mut self.workspace,
-                    context,
-                    Some(paintcraft_classic::TextControls {
-                        options: &mut self.text.style,
-                        families: &self.text.families,
-                        search: &mut self.text.search,
-                        loading: false,
-                    }),
-                )
-            };
-            for action in actions {
-                self.action(&ctx, action);
-            }
-        });
-        self.paste_placement_bar(ui);
-        let status_rect = egui::Panel::bottom("classic-status")
-            .frame(paintcraft_classic::status::frame(self.variant, ctx.theme()))
-            .show(ui, |ui| {
-                let size = egui::vec2(
-                    ui.available_width(),
-                    paintcraft_classic::status::height_for_skin(ui, self.variant, true),
-                );
-                ui.allocate_space(size).1
-            })
-            .inner;
-        self.text_chrome(ui);
-        if self.frontend == Frontend::Studio {
-            self.studio_windows(&ctx);
-        }
-        self.layers(ui);
-        egui::CentralPanel::default()
-            .frame(egui::Frame::new().fill(paintcraft_classic::workspace_color(
-                self.variant,
-                ctx.theme(),
-            )))
-            .show(ui, |ui| {
-                self.canvas(ui);
-            });
-        ui.scope_builder(egui::UiBuilder::new().max_rect(status_rect), |ui| {
-            let selection = self
-                .editor
-                .tools
-                .selection_preview_size(self.editor.session.document().canvas_rect())
-                .or_else(|| self.selected_dimensions());
-            let actions = paintcraft_classic::status::contents_for_skin(
-                ui,
-                self.variant,
-                paintcraft_classic::status::Status {
-                    message: &tr_status(ui.ctx(), &self.message),
-                    recovery: None,
-                    canvas: Some(self.editor.session.document().canvas),
-                    pointer: self.canvas.pointer,
-                    selection,
-                },
-                self.context(),
-                egui::Id::unique("web-zoom"),
-            );
-            for action in actions {
-                self.action(&ctx, action);
-            }
-        });
-        self.dialogs(&ctx);
-        self.show_form(&ctx);
-        self.paste_dialog(&ctx);
     }
 
     fn dialogs(&mut self, ctx: &egui::Context) {

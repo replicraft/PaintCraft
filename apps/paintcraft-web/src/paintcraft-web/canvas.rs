@@ -7,7 +7,8 @@ use paintcraft_tools::{Preview, PreviewRevision, Tool};
 
 #[derive(Default)]
 pub(crate) struct Canvas {
-    texture: Option<TextureHandle>,
+    pub(crate) texture: Option<TextureHandle>,
+    pub(crate) pixel_grid: bool,
     pub(crate) outline: paintcraft_raster::selection::OutlineCache,
     pub(crate) bounds: std::cell::RefCell<paintcraft_raster::selection::BoundsCache>,
     fitted: bool,
@@ -70,7 +71,14 @@ impl WebApp {
     }
 
     pub(crate) fn canvas(&mut self, ui: &mut egui::Ui) {
-        self.canvas.viewport = ui.available_size();
+        let mut viewport = ui.available_rect_before_wrap();
+        let rulers =
+            self.frontend == paintcraft_ui::actions::Frontend::Classic && self.rulers_visible();
+        if rulers {
+            viewport.min =
+                (viewport.min + Vec2::splat(paintcraft_classic::RULER_SIZE)).min(viewport.max);
+        }
+        self.canvas.viewport = viewport.size();
         let modern = self.frontend == paintcraft_ui::actions::Frontend::Classic
             && self.variant == paintcraft_classic::ClassicVariant::V11;
         let enabled = !self.blocked();
@@ -78,7 +86,7 @@ impl WebApp {
             paintcraft_classic::tool_controls::show(
                 ui,
                 egui::Id::unique("web-tool-options"),
-                ui.available_rect_before_wrap(),
+                viewport,
                 self.controls.tool,
                 &mut self.controls.options,
                 enabled,
@@ -158,6 +166,15 @@ impl WebApp {
                     response.rect,
                     Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)),
                     Color32::WHITE,
+                );
+            }
+            if self.canvas.pixel_grid {
+                paintcraft_ui::view::pixel_grid(
+                    &painter,
+                    response.rect,
+                    self.editor.session.document().canvas,
+                    self.zoom,
+                    ui.ctx().pixels_per_point(),
                 );
             }
             self.text_overlay(ui, &painter, response.rect);
@@ -250,6 +267,15 @@ impl WebApp {
                 egui::Id::unique("web-studio-canvas"),
                 scope,
                 size,
+                paint,
+            );
+        } else if rulers {
+            paintcraft_classic::canvas::ruled_canvas(
+                ui,
+                egui::Id::unique("web-editor-canvas"),
+                size,
+                extent,
+                clearance,
                 paint,
             );
         } else {

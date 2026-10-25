@@ -13,6 +13,9 @@ const BYTES_MAX: usize = 64 * 1024;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct Preferences {
+    pub rulers: bool,
+    pub status_bar: bool,
+    pub auto_hide_toolbar: bool,
     pub canvas: CanvasDefaults,
     pub variant: ClassicVariant,
     pub custom_colors: CustomColors,
@@ -24,6 +27,9 @@ pub(crate) struct Preferences {
 impl Default for Preferences {
     fn default() -> Self {
         Self {
+            rulers: false,
+            status_bar: true,
+            auto_hide_toolbar: false,
             canvas: CanvasDefaults::default(),
             variant: ClassicVariant::DEFAULT,
             custom_colors: [None; 28],
@@ -98,7 +104,15 @@ impl Preferences {
                 .and_then(Language::parse)
                 .ok_or("unknown language")?,
         };
+        let flag = |key: &str, default: bool| match value.get(key) {
+            None => Ok(default),
+            Some(Value::Bool(flag)) => Ok(*flag),
+            _ => Err(format!("invalid {key} preference")),
+        };
         Ok(Self {
+            rulers: flag("rulers", false)?,
+            status_bar: flag("status_bar", true)?,
+            auto_hide_toolbar: flag("auto_hide_toolbar", false)?,
             editable_until_save,
             language,
             default_font,
@@ -113,6 +127,9 @@ impl Preferences {
         let value = Value::object([
             ("schema", Value::str("paintcraft.web.preferences/v1")),
             ("canvas", self.canvas.value()),
+            ("rulers", Value::Bool(self.rulers)),
+            ("status_bar", Value::Bool(self.status_bar)),
+            ("auto_hide_toolbar", Value::Bool(self.auto_hide_toolbar)),
             ("default_font", Value::str(&self.default_font)),
             ("editable_until_save", Value::Bool(self.editable_until_save)),
             ("language", Value::str(self.language.id())),
@@ -204,6 +221,26 @@ fn storage() -> Result<web_sys::Storage, String> {
 mod tests {
     use super::*;
     #[test]
+    fn view_preferences_are_optional_for_existing_records_and_strictly_boolean() {
+        let mut value = json::parse(&Preferences::default().bytes().unwrap()).unwrap();
+        let Value::Object(ref mut object) = value else {
+            unreachable!()
+        };
+        for key in ["rulers", "status_bar", "auto_hide_toolbar"] {
+            object.remove(key);
+        }
+        let legacy = Preferences::parse(&json::canonical(&value)).unwrap();
+        assert!(!legacy.rulers && legacy.status_bar && !legacy.auto_hide_toolbar);
+        for key in ["rulers", "status_bar", "auto_hide_toolbar"] {
+            let mut malformed = value.clone();
+            let Value::Object(ref mut object) = malformed else {
+                unreachable!()
+            };
+            object.insert(key.into(), Value::str("true"));
+            assert!(Preferences::parse(&json::canonical(&malformed)).is_err());
+        }
+    }
+    #[test]
     fn preferences_round_trip_preserves_default_and_remembered_size_independently() {
         let mut prefs = Preferences::default();
         assert_eq!(prefs.canvas.new_size(), (1000, 486));
@@ -212,6 +249,9 @@ mod tests {
         prefs.variant = ClassicVariant::V7;
         prefs.default_font = "Example font".into();
         prefs.editable_until_save = true;
+        prefs.rulers = true;
+        prefs.status_bar = false;
+        prefs.auto_hide_toolbar = true;
         prefs.theme = Some(Theme::Light);
         prefs.custom_colors[9] = Some(Rgba([32, 128, 255, 255]));
         assert_eq!(Preferences::parse(&prefs.bytes().unwrap()).unwrap(), prefs);
