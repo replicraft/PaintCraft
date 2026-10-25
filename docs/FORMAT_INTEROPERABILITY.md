@@ -89,6 +89,50 @@ Fresh ICO/CUR export uses the selected `ico` container library with explicit RGB
 
 The implemented subsets advance the pack; they do not complete its full interoperability, preservation or release gates.
 
+### SVG rasterization backend, 2026-10-25
+
+The selected resvg/usvg 0.48.1 now has an explicit-size/DPI rasterization adapter
+in `paintcraft-formats::svg`. **SVG frontend admission remains disabled** until
+size/DPI controls, preview consent and CLI/MCP options are connected. This is
+backend progress, not an advertised Open or Import capability yet. Classic SVG
+access and SVG export remain denied.
+
+Preparation requires output dimensions, DPI and contain/stretch fitting. It
+accepts UTF-8 SVG or a single checked SVGZ gzip member, limits encoded and
+inflated source to 8 MiB, XML/expanded references to 16,384 nodes, nesting to 64,
+individual dimensions to 16,384 and output to 4,194,304 pixels. Paths, styles,
+text, font data, embedded images and filter complexity have additional admission
+limits. DTDs, processing instructions, scripts, animation, foreign renderable
+elements, external URLs/files, CSS escapes/at-rules, advanced color spaces and
+unqualified computed CSS values are refused.
+
+Fonts come only from explicitly supplied memory, with a 64 MiB/64-face allowance.
+No system font search runs inside the adapter. Family substitution is reported;
+missing glyphs refuse preparation. Embedded base64 PNG/JPEG/still GIF/WebP images
+pass the existing bounded raster reader, then become private metadata-free PNGs
+for resvg. Metadata/depth/palette losses from that conversion remain named. Both
+data and string resolvers deny everything outside the admitted image cache.
+The result is straight RGBA8 in encoded sRGB; source vector/text editability is
+lost and reported as `svg-rasterized`.
+
+Nine authored scenes have independent headless Chrome reference pixels and
+source/font hashes. Aligned geometry and nearest-sampled embedded pixels match
+exact RGBA. Six other scenes pass measured premultiplied-channel tolerance checks;
+their mean absolute differences range from 0.165365 to 1.783875 on an 8-bit scale.
+A ninth CSS-smooth discrepancy is retained separately because Chrome reports that
+value unsupported; it is not agreement evidence. The corpus found and now guards
+the usvg pixelated-presentation-attribute compatibility fix. Commands, per-scene
+statistics and limitations are in
+`crates/services/paintcraft-formats/tests/svg-fixtures/README.md`.
+
+Tests also cover truncated/corrupt/concatenated SVGZ, oversized expansion, XML
+budgets, cyclic/exponential references, filter limits, unsupported resources and
+cancellation at every adapter checkpoint. Render scratch/work estimates reject
+excessive jobs but do not impose a hard allocator/process limit. Upstream XML,
+font, image and rendering calls have no cooperative cancellation hook inside a
+call; no hard cancellation-tail or performance guarantee is claimed. These
+remaining confinement and frontend gates are still part of the roadmap.
+
 ### PSD/PSB conversion, 2026-10-25
 
 The selected `ag-psd` 0.3.0 has a bounded preflight and private native-document
