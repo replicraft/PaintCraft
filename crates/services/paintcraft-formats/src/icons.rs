@@ -4,7 +4,8 @@ use paintcraft_core::types::{Error, ErrorCode, Result};
 mod payload;
 mod prepare;
 pub use prepare::{
-    EntrySpec, Filter, KNOWN_EXPORT_LOSSES, Prepared, PreparedEntry, prepare_document,
+    EntrySpec, Filter, KNOWN_EXPORT_LOSSES, Prepared, PreparedEntry, check_export_loss_codes,
+    prepare_document,
 };
 mod write;
 pub use write::{WRITE_PIXELS_MAX, WriteEntry, WriteLimits, encode_entries};

@@ -4,6 +4,19 @@ use paintcraft_document::Document;
 
 pub const KNOWN_EXPORT_LOSSES: &[&str] = &["flatten", "hidden-rgb", "icon-resized"];
 
+pub fn check_export_loss_codes(allowed: &[String]) -> Result<()> {
+    if let Some(code) = allowed
+        .iter()
+        .find(|code| !KNOWN_EXPORT_LOSSES.contains(&code.as_str()))
+    {
+        return Err(Error::new(
+            ErrorCode::InputSchema,
+            format!("unknown icon export loss {code:?}"),
+        ));
+    }
+    Ok(())
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct EntrySpec {
     pub width: u32,
@@ -52,15 +65,7 @@ impl Prepared {
     }
     /// Encode the exact prepared preview buffers after every loss is accepted.
     pub fn encode(&self, allowed: &[String], check: &dyn Fn() -> Result<()>) -> Result<Vec<u8>> {
-        if let Some(code) = allowed
-            .iter()
-            .find(|code| !KNOWN_EXPORT_LOSSES.contains(&code.as_str()))
-        {
-            return Err(Error::new(
-                ErrorCode::InputSchema,
-                format!("unknown icon export loss {code:?}"),
-            ));
-        }
+        check_export_loss_codes(allowed)?;
         let missing: Vec<_> = self
             .losses
             .iter()

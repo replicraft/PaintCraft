@@ -151,6 +151,36 @@ fn layout_and_source_budgets_are_checked_before_rendering() {
 }
 
 #[test]
+fn every_document_loss_needs_consent_and_the_layered_source_stays_editable() {
+    let mut doc = paintcraft_document::import_image(1, 1, &[255, 0, 0, 255], "bottom").unwrap();
+    let top = paintcraft_document::import_image(1, 1, &[0, 255, 0, 0], "hidden-top").unwrap();
+    doc.roots.extend(top.roots);
+    doc.layers.extend(top.layers);
+    let before = pcnd::write_compact(&doc).unwrap();
+    let prepared = icons::prepare_document(
+        &doc,
+        Kind::Icon,
+        &[spec(1, 1)],
+        Filter::Nearest,
+        WriteLimits::default(),
+        &|| Ok(()),
+    )
+    .unwrap();
+    assert_eq!(prepared.losses(), ["flatten", "hidden-rgb"]);
+    assert!(prepared.encode(&[], &|| Ok(())).is_err());
+    assert!(prepared.encode(&["flatten".into()], &|| Ok(())).is_err());
+    let bytes = prepared
+        .encode(&["flatten".into(), "hidden-rgb".into()], &|| Ok(()))
+        .unwrap();
+    assert_eq!(
+        icons::decode_entry(&bytes, 0, 1).unwrap().rgba,
+        [255, 0, 0, 255]
+    );
+    assert_eq!(pcnd::write_compact(&doc).unwrap(), before);
+    assert_eq!(doc.roots.len(), 2);
+}
+
+#[test]
 fn preparation_cancellation_preserves_the_original_error_at_every_checkpoint() {
     let doc =
         paintcraft_document::new_document(2, 2, None, 0, paintcraft_document::POLICY).unwrap();
