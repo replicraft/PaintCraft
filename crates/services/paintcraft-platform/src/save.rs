@@ -60,6 +60,19 @@ pub struct Outcome {
 }
 
 impl Outcome {
+    pub fn operation_id(&self) -> Uuid {
+        self.operation_id
+    }
+    /// An expected version can advance only after an acknowledged replacement.
+    pub fn written_expectation(&self) -> Option<Expectation> {
+        if self.replacement != Replacement::Replaced {
+            return None;
+        }
+        Some(Expectation {
+            destination_id: self.destination_id.clone()?,
+            sha256: self.staged_sha256.clone()?,
+        })
+    }
     /// The namespace captured before encoding; callers must not re-resolve a late alias.
     pub fn resolved_destination(&self) -> Option<&Path> {
         self.attempt
@@ -331,11 +344,7 @@ pub fn save_with_expected_sha256(
     expected_sha256: &str,
     encode: impl FnOnce(&mut dyn Write) -> Result<(), Error>,
 ) -> Outcome {
-    if expected_sha256.len() != 64
-        || !expected_sha256
-            .bytes()
-            .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
-    {
+    if !valid_digest(expected_sha256) {
         return not_attempted(&Error::new(
             ErrorCode::InputSchema,
             "expected destination SHA-256 must be 64 lowercase hexadecimal characters",
@@ -345,11 +354,72 @@ pub fn save_with_expected_sha256(
         dest,
         overwrite,
         byte_limit,
-        Some(expected_sha256),
+        Some(Guard {
+            hash: expected_sha256,
+            namespace: None,
+        }),
         encode,
         |_| Ok(()),
         |_| Ok(()),
     )
+}
+
+/// Captured content in a resolved replacement namespace. This is a restriction
+/// on a caller-authorized write, not a transferable filesystem capability.
+#[derive(Clone, Debug)]
+pub struct Expectation {
+    pub destination_id: String,
+    pub sha256: String,
+}
+impl Expectation {
+    /// `resolved` must be the absolute namespace pinned before acquiring bytes.
+    /// Do not resolve it again here: a symlink may have changed after acquisition.
+    pub fn acquired(resolved: &Path, bytes: &[u8]) -> Self {
+        Self {
+            destination_id: path_id(resolved),
+            sha256: hex(&Sha256::digest(bytes)),
+        }
+    }
+}
+struct Guard<'a> {
+    hash: &'a str,
+    namespace: Option<&'a str>,
+}
+
+/// Content/namespace admission plus coordinator write-ahead preparation.
+/// `None` retains explicit Save As authorization and ordinary late checks.
+pub fn save_with_expectation_and_preparation(
+    dest: &Path,
+    overwrite: bool,
+    byte_limit: u64,
+    expected: Option<&Expectation>,
+    encode: impl FnOnce(&mut dyn Write) -> Result<(), Error>,
+    prepare: impl FnOnce(&Outcome) -> Result<(), Error>,
+) -> Outcome {
+    if expected.is_some_and(|value| !valid_digest(&value.sha256)) {
+        return not_attempted(&Error::new(
+            ErrorCode::InputSchema,
+            "invalid expected destination SHA-256",
+        ));
+    }
+    save_prepared_impl(
+        dest,
+        overwrite,
+        byte_limit,
+        expected.map(|value| Guard {
+            hash: &value.sha256,
+            namespace: Some(&value.destination_id),
+        }),
+        encode,
+        |_| Ok(()),
+        prepare,
+    )
+}
+fn valid_digest(value: &str) -> bool {
+    value.len() == 64
+        && value
+            .bytes()
+            .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -429,7 +499,7 @@ fn save_prepared_impl(
     dest: &Path,
     overwrite: bool,
     byte_limit: u64,
-    expected_sha256: Option<&str>,
+    expected_sha256: Option<Guard<'_>>,
     encode: impl FnOnce(&mut dyn Write) -> Result<(), Error>,
     mut barrier: impl FnMut(Phase) -> std::io::Result<()>,
     prepare: impl FnOnce(&Outcome) -> Result<(), Error>,
@@ -459,8 +529,20 @@ fn save_prepared_impl(
     };
     let dest = resolved.as_path();
     out.destination_id = Some(path_id(dest));
-    if expected_sha256.is_some_and(|hash| expected.as_ref().is_none_or(|value| value.hash != hash))
-    {
+    if expected_sha256.as_ref().is_some_and(|guard| {
+        guard
+            .namespace
+            .is_some_and(|id| out.destination_id.as_deref() != Some(id))
+    }) {
+        out.reasons
+            .push("destination namespace changed since input capture".into());
+        return out;
+    }
+    if expected_sha256.is_some_and(|guard| {
+        expected
+            .as_ref()
+            .is_none_or(|value| value.hash != guard.hash)
+    }) {
         out.reasons.push("destination changed since input capture; reacquire the source or save to a separate output".into());
         return out;
     }

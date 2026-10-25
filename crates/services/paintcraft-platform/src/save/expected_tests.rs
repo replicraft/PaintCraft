@@ -84,3 +84,47 @@ fn invalid_expectations_do_not_touch_destinations_or_invoke_encoders() {
         );
     }
 }
+
+#[test]
+fn namespace_guard_rejects_equal_content_in_a_different_destination_before_staging() {
+    let dir = tests::scratch("expected-namespace");
+    let a = dir.join("a.pcnd");
+    let b = dir.join("b.pcnd");
+    fs::write(&a, b"same bytes").unwrap();
+    fs::write(&b, b"same bytes").unwrap();
+    let a = fs::canonicalize(a).unwrap();
+    let expected = Expectation::acquired(&a, b"same bytes");
+    let out = save_with_expectation_and_preparation(
+        &b,
+        true,
+        1024,
+        Some(&expected),
+        |_| panic!("must not encode a different namespace"),
+        |_| panic!("must not prepare"),
+    );
+    assert_eq!(out.replacement, Replacement::NotReplaced);
+    assert!(out.reasons.iter().any(|r| r.contains("namespace changed")));
+    assert_eq!(fs::read(&b).unwrap(), b"same bytes");
+    assert_eq!(fs::read_dir(&dir).unwrap().count(), 2);
+    let mut prepared = false;
+    let out = save_with_expectation_and_preparation(
+        &a,
+        true,
+        1024,
+        Some(&expected),
+        |sink| sink.write_all(b"saved").map_err(io_error),
+        |outcome| {
+            assert_eq!(
+                outcome.staged_sha256.as_deref(),
+                Some(digest(b"saved").as_str())
+            );
+            prepared = true;
+            Ok(())
+        },
+    );
+    assert!(prepared && out.is_success());
+    let next = out.written_expectation().unwrap();
+    assert_eq!(next.sha256, digest(b"saved"));
+    assert_eq!(next.destination_id, expected.destination_id);
+    fs::remove_dir_all(dir).unwrap();
+}
