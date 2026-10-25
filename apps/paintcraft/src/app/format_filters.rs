@@ -28,7 +28,7 @@ impl App {
                     kind != Kind::Import
                         || registry::Family::from_extension(extension).is_some_and(|family| {
                             !family.is_project()
-                                || matches!(family, Family::Paint | Family::Pdn | Family::Ora)
+                                || paintcraft_formats::project_import::supports(family)
                         })
                 })
                 .map(str::to_owned)

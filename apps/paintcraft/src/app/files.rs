@@ -286,14 +286,7 @@ impl App {
                 &bytes,
                 paintcraft_formats::registry::Platform::Native,
             )?;
-            if family.is_project()
-                && !matches!(
-                    family,
-                    paintcraft_formats::registry::Family::Paint
-                        | paintcraft_formats::registry::Family::Pdn
-                        | paintcraft_formats::registry::Family::Ora
-                )
-            {
+            if family.is_project() && !paintcraft_formats::project_import::supports(family) {
                 return Err(paintcraft_core::types::Error::new(
                     paintcraft_core::types::ErrorCode::CapabilityUnsupported,
                     "Import image expects a raster picture",
@@ -303,12 +296,7 @@ impl App {
         } else {
             self.admit_open_source(path, &bytes)?
         };
-        if matches!(
-            family,
-            paintcraft_formats::registry::Family::Paint
-                | paintcraft_formats::registry::Family::Pdn
-                | paintcraft_formats::registry::Family::Ora
-        ) {
+        if paintcraft_formats::project_import::supports(family) {
             let converted = paintcraft_formats::project_import::decode_layered(
                 family,
                 &bytes,

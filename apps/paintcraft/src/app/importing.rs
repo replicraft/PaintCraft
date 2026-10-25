@@ -202,5 +202,8 @@ impl App {
 }
 
 #[cfg(test)]
+#[path = "importing/psd_tests.rs"]
+mod psd_tests;
+#[cfg(test)]
 #[path = "importing/tests.rs"]
 mod tests;
