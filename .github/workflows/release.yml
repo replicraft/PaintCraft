@@ -198,12 +198,14 @@ jobs:
         run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
           df -h .
-      - uses: actions/cache@v6
+      - uses: actions/cache/restore@v6
+        id: freebsd-cargo
         with:
           path: target/freebsd-cache
           key: freebsd14.5-rust1.99-${{ hashFiles('Cargo.lock') }}-${{ github.sha }}
           restore-keys: freebsd14.5-rust1.99-${{ hashFiles('Cargo.lock') }}-
       - name: Build and package inside FreeBSD
+        id: freebsd-vm
         uses: vmactions/freebsd-vm@v1
         with:
           release: '14.5'
@@ -219,19 +221,37 @@ jobs:
             export CARGO_HOME="$(pwd)/target/freebsd-cache/cargo"
             export CARGO_TARGET_DIR="$(pwd)/target/freebsd-cache/target"
             export CARGO_BUILD_JOBS=4 CARGO_INCREMENTAL=0
+            rm -f .freebsd-test-failure
             if [ "${{ inputs.platform }}" != freebsd-tests ]; then
               cargo build --locked --release -p paintcraft -p paintcraft-cli --target x86_64-unknown-freebsd
             fi
-            cargo test --locked -p paintcraft-platform --features clipboard --target x86_64-unknown-freebsd --lib
+            if ! cargo test --locked -p paintcraft-platform --features clipboard --target x86_64-unknown-freebsd --lib; then
+              printf '%s\n' 'FreeBSD native filesystem tests failed' > .freebsd-test-failure
+              exit 0
+            fi
             python3.13 -m unittest discover -s scripts/tests -p 'test_package_*.py'
             if [ "${{ inputs.platform }}" = freebsd-tests ]; then
-              cargo test --locked -p paintcraft-platform --features clipboard --target x86_64-unknown-freebsd --lib save::evidence::tests::persisted_evidence_reconciliation_survives_repeated_filesystem_barriers -- --ignored
+              if ! cargo test --locked -p paintcraft-platform --features clipboard --target x86_64-unknown-freebsd --lib save::evidence::tests::persisted_evidence_reconciliation_survives_repeated_filesystem_barriers -- --ignored; then
+                printf '%s\n' 'FreeBSD repeated save-recovery test failed' > .freebsd-test-failure
+              fi
               exit 0
             fi
             python3.13 scripts/packaging/package_release.py package --version "$(python3.13 scripts/packaging/package_release.py validate)" --target x86_64-unknown-freebsd --binary "$CARGO_TARGET_DIR/x86_64-unknown-freebsd/release/paintcraft" --output dist
             python3.13 scripts/packaging/package_cli.py --version "$(python3.13 scripts/packaging/package_release.py validate)" --target x86_64-unknown-freebsd --binary "$CARGO_TARGET_DIR/x86_64-unknown-freebsd/release/paintcraft-cli" --output dist
             ldd "$CARGO_TARGET_DIR/x86_64-unknown-freebsd/release/paintcraft" | tee dependencies.txt
             if grep -q 'not found' dependencies.txt; then exit 1; fi
+      - name: Retain compiled FreeBSD dependencies before reporting test failures
+        uses: actions/cache/save@v6
+        if: steps.freebsd-vm.outcome == 'success' && steps.freebsd-cargo.outputs.cache-hit != 'true'
+        with:
+          path: target/freebsd-cache
+          key: ${{ steps.freebsd-cargo.outputs.cache-primary-key }}
+      - name: Require passing FreeBSD native tests
+        run: |
+          if test -f .freebsd-test-failure; then
+            cat .freebsd-test-failure
+            exit 1
+          fi
       - uses: actions/upload-artifact@v7
         if: inputs.platform != 'freebsd-tests'
         with:
