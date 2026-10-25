@@ -20,7 +20,9 @@ impl App {
             return;
         }
         self.editor.cancel_gesture();
-        self.editor.commit_text();
+        if kind != Kind::Export {
+            self.editor.commit_text();
+        }
         let suggested = suggestion.unwrap_or_else(|| {
             if kind == Kind::Export {
                 PathBuf::from("untitled.png")
@@ -29,7 +31,21 @@ impl App {
             }
         });
         let owner = self.active_tab_id();
-        let filters = self.format_filters(kind);
+        let mut filters = self.format_filters(kind);
+        if kind == Kind::Export
+            && let Some(extension) = suggested
+                .extension()
+                .and_then(|extension| extension.to_str())
+            && let Some(index) = filters.iter().position(|filter| {
+                filter
+                    .extensions
+                    .iter()
+                    .any(|candidate| candidate.eq_ignore_ascii_case(extension))
+            })
+        {
+            let selected = filters.remove(index);
+            filters.insert(0, selected);
+        }
         let frontend = self.format_frontend();
         let source = (matches!(kind, Kind::Open | Kind::Import))
             .then(|| (self.editor.document_snapshot(), self.editor.render_key()));
@@ -39,6 +55,9 @@ impl App {
             self.dialog_owner = (owner != Uuid::nil()).then_some(owner);
             self.dialog_frontend = Some(frontend);
             self.dialog_source = source;
+            if kind == Kind::Export {
+                self.export_dialog_stamp = Some(self.editor.preview_stamp());
+            }
             let wake_ctx = ctx.clone();
             dialogs.request_with_filters(
                 kind,
@@ -76,6 +95,16 @@ impl App {
             self.export_dialog_quality.take().unwrap_or(90)
         } else {
             90
+        };
+        let pcx_encoding = if completion.kind == Kind::Export {
+            self.export_dialog_pcx.take().unwrap_or_default()
+        } else {
+            Default::default()
+        };
+        let export_stamp = if completion.kind == Kind::Export {
+            self.export_dialog_stamp.take()
+        } else {
+            None
         };
         if matches!(completion.kind, Kind::Open | Kind::Import)
             && completion.path.is_some()
@@ -124,6 +153,11 @@ impl App {
         let Some(path) = completion.path else {
             return;
         };
+        if export_stamp.is_some_and(|stamp| stamp != self.editor.preview_stamp()) {
+            self.editor
+                .set_status(t!(ctx, "The document changed; choose the image again."));
+            return;
+        }
         if completion.kind == Kind::SaveAs {
             self.path_text = path.to_string_lossy().into_owned();
         }
@@ -131,7 +165,13 @@ impl App {
             Kind::Open => self.open_selected(path),
             Kind::Import => self.import_selected(path),
             Kind::SaveAs => self.save_selected(ctx, path),
-            Kind::Export => self.export_selected_quality(path, jpeg_quality),
+            Kind::Export => self.export_selected_settings(
+                path,
+                export_options::Settings {
+                    jpeg_quality,
+                    pcx_encoding,
+                },
+            ),
             Kind::InspectRecovery => unreachable!("inspection completion handled separately"),
         }
     }
@@ -356,7 +396,22 @@ impl App {
         self.export_selected_quality(path, 90);
     }
 
+    #[cfg(test)]
     pub(super) fn export_selected_quality(&mut self, path: PathBuf, jpeg_quality: u8) {
+        self.export_selected_settings(
+            path,
+            export_options::Settings {
+                jpeg_quality,
+                ..Default::default()
+            },
+        );
+    }
+
+    pub(super) fn export_selected_settings(
+        &mut self,
+        path: PathBuf,
+        settings: export_options::Settings,
+    ) {
         if !self.editor.shape_file_ready() {
             return;
         }
@@ -364,15 +419,19 @@ impl App {
         self.editor.run_pending();
         if self.editing.is_some() {
             self.defer_file(
-                editing::FileRequest::Export(path, jpeg_quality),
+                editing::FileRequest::Export(path, settings),
                 token(&self.context, code::EXPORT),
             );
             return;
         }
-        self.plan_export_quality(path, jpeg_quality);
+        self.plan_export_settings(path, settings);
     }
 
-    pub(super) fn plan_export_quality(&mut self, path: PathBuf, jpeg_quality: u8) {
+    pub(super) fn plan_export_settings(
+        &mut self,
+        path: PathBuf,
+        settings: export_options::Settings,
+    ) {
         let Some(format) = ImageFormat::from_extension(&path) else {
             self.editor
                 .set_status("Choose a supported image filename extension.");
@@ -383,14 +442,16 @@ impl App {
             return;
         }
         let all: Vec<String> = KNOWN_LOSSES.iter().map(|l| (*l).to_owned()).collect();
-        match export::export_flat(self.editor.document(), format, jpeg_quality, &all) {
+        match export::export_flat_options(self.editor.document(), settings.options(format), &all) {
             Ok(plan) => {
                 self.confirm = Some(Confirm::Export {
                     exists: path.exists(),
                     path,
                     format,
                     losses: plan.losses,
-                    jpeg_quality,
+                    jpeg_quality: settings.jpeg_quality,
+                    pcx_encoding: settings.pcx_encoding,
+                    source: self.editor.preview_stamp(),
                 })
             }
             Err(e) => self.editor.set_status(format!("Cannot export: {e}")),
@@ -402,6 +463,7 @@ impl App {
         self.do_export_quality(path, format, losses, 90);
     }
 
+    #[cfg(test)]
     pub(super) fn do_export_quality(
         &mut self,
         path: &Path,
@@ -409,12 +471,31 @@ impl App {
         losses: &[String],
         jpeg_quality: u8,
     ) {
+        self.do_export_settings(
+            path,
+            format,
+            losses,
+            export_options::Settings {
+                jpeg_quality,
+                ..Default::default()
+            },
+        );
+    }
+
+    pub(super) fn do_export_settings(
+        &mut self,
+        path: &Path,
+        format: ImageFormat,
+        losses: &[String],
+        settings: export_options::Settings,
+    ) {
         if let Err(error) = self.admit_export_format(path, format) {
             self.editor.set_status(format!("Cannot export: {error}"));
             return;
         }
-        let result = export::export_flat(self.editor.document(), format, jpeg_quality, losses)
-            .map_err(|e| e.to_string());
+        let result =
+            export::export_flat_options(self.editor.document(), settings.options(format), losses)
+                .map_err(|e| e.to_string());
         let status = match result {
             Ok(flat) => {
                 let outcome = save::save(path, &flat.bytes, true);

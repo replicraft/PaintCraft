@@ -524,8 +524,30 @@ impl App {
                         format,
                         losses,
                         jpeg_quality,
+                        pcx_encoding,
+                        source,
                         ..
-                    } => self.do_export_quality(&path, format, &losses, jpeg_quality),
+                    } => {
+                        if source == self.editor.preview_stamp()
+                            && !self.editor.has_pending_edits()
+                            && !self.editor.is_editing_text()
+                        {
+                            self.do_export_settings(
+                                &path,
+                                format,
+                                &losses,
+                                export_options::Settings {
+                                    jpeg_quality,
+                                    pcx_encoding,
+                                },
+                            )
+                        } else {
+                            self.editor.set_status(t!(
+                                &ctx,
+                                "The document changed; choose the image again."
+                            ));
+                        }
+                    }
                 }
             }
             Some(Choice::Cancel) => self.confirm = None,

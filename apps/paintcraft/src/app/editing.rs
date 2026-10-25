@@ -5,7 +5,7 @@ use super::*;
 pub(super) enum FileRequest {
     Save(PathBuf),
     Print,
-    Export(PathBuf, u8),
+    Export(PathBuf, export_options::Settings),
 }
 #[derive(Debug)]
 pub(super) struct DeferredFile {
@@ -132,12 +132,12 @@ impl App {
                             self.capture_save(ctx, path);
                             self.editor.release_file_barrier(request.barrier);
                         }
-                        FileRequest::Export(path, jpeg_quality) => {
+                        FileRequest::Export(path, settings) => {
                             self.deferred_files
                                 .front_mut()
                                 .expect("deferred export")
                                 .started = true;
-                            self.plan_export_quality(path, jpeg_quality);
+                            self.plan_export_settings(path, settings);
                             if self.confirm.is_some() {
                                 original = id;
                                 self.reset_tab_presentation();

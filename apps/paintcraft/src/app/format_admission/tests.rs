@@ -133,7 +133,7 @@ fn manual_unqualified_exports_and_bad_launch_never_bind_or_replace_sources() {
     ] {
         let path = dir.join(name);
         std::fs::write(&path, b"sentinel").unwrap();
-        app.plan_export_quality(path.clone(), 90);
+        app.plan_export_settings(path.clone(), crate::export_options::Settings::default());
         assert!(app.confirm.is_none());
         app.do_export_quality(&path, format, &KNOWN_LOSSES.map(str::to_owned), 90);
         assert_eq!(std::fs::read(&path).unwrap(), b"sentinel");

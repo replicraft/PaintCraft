@@ -1,12 +1,47 @@
 //! Staged image encoder choices, followed by a native destination picker.
 use super::*;
+use paintcraft_ui::pcx_export::{self, Encoding};
 use paintcraft_ui::{actions::ImageExport, t};
+#[cfg(test)]
+#[path = "export_options/palette_tests.rs"]
+mod palette_tests;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct Settings {
+    pub jpeg_quality: u8,
+    pub pcx_encoding: Encoding,
+}
+impl Default for Settings {
+    fn default() -> Self {
+        Self {
+            jpeg_quality: 90,
+            pcx_encoding: Encoding::Rgb24,
+        }
+    }
+}
+impl Settings {
+    pub(crate) fn options(self, format: ImageFormat) -> export::FlatOptions {
+        let mut options = export::FlatOptions::new(format, self.jpeg_quality);
+        if format == ImageFormat::Pcx {
+            options.pcx_mode = mode(self.pcx_encoding);
+        }
+        options
+    }
+}
+fn mode(encoding: Encoding) -> paintcraft_formats::pcx::Mode {
+    match encoding {
+        Encoding::Rgb24 => paintcraft_formats::pcx::Mode::Rgb24,
+        Encoding::IndexedExact => paintcraft_formats::pcx::Mode::IndexedExact,
+        Encoding::Indexed256 => paintcraft_formats::pcx::Mode::Quantized256,
+    }
+}
 
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct Draft {
     owner: Uuid,
     format: ImageExport,
     jpeg_quality: u8,
+    pcx_encoding: Encoding,
 }
 
 impl App {
@@ -36,15 +71,18 @@ impl App {
             owner: self.active_tab_id(),
             format,
             jpeg_quality: 90,
+            pcx_encoding: Encoding::Rgb24,
         }));
     }
 
     pub(super) fn export_options_dialog(&mut self, ctx: &egui::Context, mut draft: Draft) {
         if draft.owner != self.active_tab_id() {
             self.confirm = None;
+            self.pcx_preview.clear();
             return;
         }
         let response = egui::Modal::new(egui::Id::unique("image-export-options")).show(ctx, |ui| {
+            let mut preview_ready = true;
             ui.set_width(380.0);
             ui.heading(t!(ctx, "Export image"));
             ui.label(t!(
@@ -65,6 +103,38 @@ impl App {
                     .labelled_by(label.id);
             });
             ui.label(t!(ctx, draft.format.description()));
+            if draft.format == ImageExport::Pcx {
+                pcx_export::controls(ui, &mut draft.pcx_encoding);
+                let editor = &self.editor;
+                preview_ready =
+                    self.pcx_preview
+                        .show(ui, (editor.preview_stamp(), draft.pcx_encoding), || {
+                            let doc = editor
+                                .export_snapshot()
+                                .map_err(|error| error.to_string())?;
+                            let rgba = paintcraft_render::render_flat(&doc)
+                                .map_err(|error| error.to_string())?;
+                            let prepared = paintcraft_formats::pcx::prepare_rgba(
+                                doc.canvas.0,
+                                doc.canvas.1,
+                                &rgba,
+                                mode(draft.pcx_encoding),
+                                &|| Ok(()),
+                            )
+                            .map_err(|error| error.to_string())?;
+                            let preview = prepared
+                                .preview(192, &|| Ok(()))
+                                .map_err(|error| error.to_string())?;
+                            Ok(pcx_export::Preview {
+                                width: preview.width,
+                                height: preview.height,
+                                rgba: preview.rgba,
+                                quantized: prepared.is_quantized(),
+                            })
+                        });
+            } else {
+                self.pcx_preview.clear();
+            }
             if let Some(label) = draft.format.quality_label() {
                 ui.add_space(8.0);
                 ui.add(egui::Slider::new(&mut draft.jpeg_quality, 1..=100).text(t!(ctx, label)));
@@ -91,7 +161,12 @@ impl App {
             ui.separator();
             ui.horizontal(|ui| {
                 let cancel = ui.button(t!(ctx, "Cancel")).clicked();
-                let accept = ui.button(t!(ctx, "Choose destination…")).clicked();
+                let accept = ui
+                    .add_enabled(
+                        preview_ready,
+                        egui::Button::new(t!(ctx, "Choose destination…")),
+                    )
+                    .clicked();
                 (cancel, accept)
             })
             .inner
@@ -102,8 +177,10 @@ impl App {
         let (cancel, accept) = response.inner;
         if cancel || response.should_close() {
             self.confirm = None;
+            self.pcx_preview.clear();
         } else if accept {
             self.confirm = None;
+            self.pcx_preview.clear();
             if self.dialogs.is_some() {
                 let suggested = self
                     .bound
@@ -111,12 +188,19 @@ impl App {
                     .unwrap_or_else(|| Path::new(&self.path_text))
                     .with_extension(draft.format.extension());
                 self.export_dialog_quality = Some(draft.jpeg_quality);
+                self.export_dialog_pcx = Some(draft.pcx_encoding);
                 self.request_dialog_suggested(ctx, Kind::Export, Some(suggested));
             } else {
                 // Headless callers supply an explicit destination with set_path_text.
                 let destination =
                     Path::new(&self.path_text).with_extension(draft.format.extension());
-                self.export_selected_quality(destination, draft.jpeg_quality);
+                self.export_selected_settings(
+                    destination,
+                    Settings {
+                        jpeg_quality: draft.jpeg_quality,
+                        pcx_encoding: draft.pcx_encoding,
+                    },
+                );
             }
         } else {
             self.confirm = Some(Confirm::ExportOptions(draft));
