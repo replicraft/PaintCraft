@@ -4,7 +4,10 @@ use super::*;
 fn ctrl_s_saves_safely_and_clears_the_unsaved_marker() {
     let dir = scratch("save");
     let file = dir.join("work.pcnd");
-    let mut h = harness_with(App::new(Some(file.clone())), 1.0, false);
+    let mut app = App::new(None);
+    assert!(app.editor().path().is_none());
+    app.set_path_text(&file.to_string_lossy());
+    let mut h = harness_with(app, 1.0, false);
     with_layer(&mut h);
     let p = at(&h, 3.0, 3.0);
     h.input_mut()
@@ -36,7 +39,14 @@ fn saving_over_an_unrelated_existing_file_needs_confirmation() {
     let file = dir.join("other.pcnd");
     std::fs::write(&file, b"precious").unwrap();
     // The path names a file that is not a valid document, so a fresh document is shown unbound.
-    let mut h = harness_with(App::new(Some(file.clone())), 1.0, false);
+    let mut app = App::new(Some(file.clone()));
+    assert!(
+        app.editor().path().is_none(),
+        "failed startup never binds the invalid source"
+    );
+    // Explicitly choose this unrelated file as a Save As destination.
+    app.set_path_text(&file.to_string_lossy());
+    let mut h = harness_with(app, 1.0, false);
     h.get_by_label("Save").click();
     h.run();
     assert_eq!(

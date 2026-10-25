@@ -56,17 +56,29 @@ fn close_shortcut_and_menu_leave_empty_workspace_where_new_shortcut_still_works(
 fn save_as_shortcut_never_falls_through_to_overwriting_the_bound_file() {
     let dir = scratch("shortcut-save-as");
     let file = dir.join("work.pcnd");
+    let document = paintcraft_document::new_document(
+        32,
+        32,
+        Some(Rgba([255; 4])),
+        514,
+        paintcraft_document::POLICY,
+    )
+    .unwrap();
+    let original = paintcraft_formats::pcnd::write(&document).unwrap();
+    std::fs::write(&file, &original).unwrap();
     let mut h = harness_with(App::new(Some(file.clone())), 1.0, true);
+    assert_eq!(h.state().editor().path(), Some(file.as_path()));
     with_layer(&mut h);
     // This harness has no native picker, so Save As can only be cancelled/no-op.
     h.event(key(Key::S, Modifiers::COMMAND | Modifiers::SHIFT));
     h.run();
-    assert!(!file.exists());
+    assert_eq!(std::fs::read(&file).unwrap(), original);
     assert!(h.state().editor().is_dirty());
     h.event(key_up(Key::S, Modifiers::COMMAND | Modifiers::SHIFT));
     h.event(key(Key::S, Modifiers::COMMAND));
     h.run();
     assert!(file.exists());
+    assert_ne!(std::fs::read(&file).unwrap(), original);
     assert!(!h.state().editor().is_dirty());
     std::fs::remove_dir_all(dir).unwrap();
 }
