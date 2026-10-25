@@ -27,7 +27,8 @@ impl App {
                 .filter(|extension| {
                     kind != Kind::Import
                         || registry::Family::from_extension(extension).is_some_and(|family| {
-                            !family.is_project() || matches!(family, Family::Paint | Family::Pdn)
+                            !family.is_project()
+                                || matches!(family, Family::Paint | Family::Pdn | Family::Ora)
                         })
                 })
                 .map(str::to_owned)

@@ -2,6 +2,45 @@ use super::*;
 use eframe::egui::Role;
 
 #[test]
+fn openraster_explicit_import_preserves_offsets_hidden_layers_and_original_source() {
+    let (mut h, dir) = super::studio::studio_harness(true);
+    let bytes = include_bytes!(
+        "../../../../crates/services/paintcraft-formats/tests/ora-fixtures/deflated.ora"
+    );
+    let path = dir.join("layers.ora");
+    std::fs::write(&path, bytes).unwrap();
+    let source = h.state().editor().document_snapshot();
+    for accept in [false, true] {
+        h.state_mut().set_path_text(&path.to_string_lossy());
+        h.get_by_role_and_label(Role::Button, "File").click();
+        h.run();
+        h.get_by_role_and_label(Role::Button, "File")
+            .get_by_label("Import image…")
+            .click();
+        h.run();
+        assert!(h.state().editor().document().same_semantics(&source));
+        assert!(
+            h.query_by_label(
+                "OpenRaster print resolution will not be retained in the converted copy."
+            )
+            .is_some()
+        );
+        h.get_by_label(if accept { "Open image" } else { "Cancel" })
+            .click();
+        h.run();
+    }
+    let doc = h.state().editor().document();
+    assert_eq!(doc.roots.len(), 3);
+    assert_eq!(doc.layers[&doc.roots[1]].origin, (1, 1));
+    assert!(!doc.layers[&doc.roots[2]].visible);
+    assert!(h.state().editor().path().is_none());
+    assert!(h.state().editor().is_dirty());
+    assert_eq!(std::fs::read(path).unwrap(), bytes);
+    drop(h);
+    std::fs::remove_dir_all(dir).unwrap();
+}
+
+#[test]
 fn studio_explicit_import_menu_creates_an_unbound_tab_and_retains_the_old_document() {
     let (mut h, dir) = super::studio::studio_harness(true);
     let path = dir.join("picture.qoi");

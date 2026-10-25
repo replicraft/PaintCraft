@@ -234,6 +234,7 @@ impl App {
                     family,
                     paintcraft_formats::registry::Family::Paint
                         | paintcraft_formats::registry::Family::Pdn
+                        | paintcraft_formats::registry::Family::Ora
                 )
             {
                 return Err(paintcraft_core::types::Error::new(
@@ -247,7 +248,9 @@ impl App {
         };
         if matches!(
             family,
-            paintcraft_formats::registry::Family::Paint | paintcraft_formats::registry::Family::Pdn
+            paintcraft_formats::registry::Family::Paint
+                | paintcraft_formats::registry::Family::Pdn
+                | paintcraft_formats::registry::Family::Ora
         ) {
             let converted = paintcraft_formats::project_import::decode_layered(
                 family,
