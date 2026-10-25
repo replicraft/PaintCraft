@@ -7,10 +7,12 @@ use paintcraft_render::render_flat;
 use crate::image::{self, ImageFormat};
 
 /// Loss codes a caller may acknowledge.
-pub const KNOWN_LOSSES: [&str; 7] = [
+pub const KNOWN_LOSSES: [&str; 9] = [
     "flatten",
     "hidden-rgb",
     "lossy-jpeg",
+    "lossy-avif",
+    "alpha-lossy",
     "alpha-discarded",
     "palette-quantized",
     "alpha-binarized",

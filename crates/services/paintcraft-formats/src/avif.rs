@@ -1,4 +1,4 @@
-//! Internal, encoder-only AVIF qualification. No file decoder or frontend route.
+//! Bounded encoder-only AVIF adapter; frontend admission is owned by the registry.
 //!
 //! The selected image/ravif path is lossy even at quality 100. Its public API
 //! cleans invisible RGB and uses the selected quality for alpha too. Input and
@@ -15,6 +15,19 @@ pub const ENCODE_BYTES_MAX: usize = 16 * 1024 * 1024;
 pub struct Encoded {
     pub bytes: Vec<u8>,
     pub losses: Vec<&'static str>,
+}
+
+/// Exact format losses after classifying source alpha and invisible RGB.
+/// Shared by the pre-publication export policy and the selected encoder.
+pub(crate) fn export_losses(has_alpha: bool, has_hidden_rgb: bool) -> Vec<&'static str> {
+    let mut losses = vec!["lossy-avif"];
+    if has_alpha {
+        losses.push("alpha-lossy");
+    }
+    if has_hidden_rgb {
+        losses.push("transparent-rgb-discarded");
+    }
+    losses
 }
 
 struct Output<'a> {
@@ -98,13 +111,7 @@ pub fn encode_rgba8(
             hidden |= sample[3] == 0 && sample[..3] != [0, 0, 0];
         }
     }
-    let mut losses = vec!["lossy-avif"];
-    if alpha {
-        losses.push("alpha-lossy");
-    }
-    if hidden {
-        losses.push("transparent-rgb-discarded");
-    }
+    let losses = export_losses(alpha, hidden);
     let mut output = Output {
         bytes: Vec::new(),
         failure: None,

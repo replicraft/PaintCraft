@@ -1,5 +1,5 @@
 //! Encoder-only AVIF interoperability, deliberately separate from file admission.
-use paintcraft_formats::avif;
+use paintcraft_formats::image::{self, ImageFormat};
 
 /// FFmpeg exposes AVIF alpha as a separate auxiliary AV1 stream. Merge it
 /// explicitly rather than accepting the opaque default stream as an alpha oracle.
@@ -21,10 +21,10 @@ fn ffmpeg_libdav1d_reopens_color_and_auxiliary_alpha() {
         let source: Vec<u8> = (0..width * height)
             .flat_map(|n| [80, 90, 100, if alpha { n as u8 } else { 255 }])
             .collect();
-        let encoded = avif::encode_rgba8(width, height, &source, 100, &|| Ok(())).unwrap();
+        let encoded = image::encode(ImageFormat::Avif, width, height, &source, 100).unwrap();
         let input = directory.0.join("image.avif");
         let output = directory.0.join("image.rgba");
-        std::fs::write(&input, &encoded.bytes).unwrap();
+        std::fs::write(&input, &encoded).unwrap();
         let mut command = std::process::Command::new("ffmpeg");
         command
             .args([
@@ -77,11 +77,12 @@ fn ffmpeg_libdav1d_reopens_color_and_auxiliary_alpha() {
             let path = std::path::PathBuf::from(path);
             std::fs::create_dir_all(&path).unwrap();
             let stem = if alpha { "alpha" } else { "opaque" };
-            std::fs::write(path.join(format!("{stem}.avif")), &encoded.bytes).unwrap();
+            std::fs::write(path.join(format!("{stem}.avif")), &encoded).unwrap();
             std::fs::write(path.join(format!("{stem}.source.rgba")), &source).unwrap();
             std::fs::write(path.join(format!("{stem}.decoded.rgba")), &decoded).unwrap();
         }
-        assert!(encoded.losses.contains(&"lossy-avif"));
-        assert_eq!(encoded.losses.contains(&"alpha-lossy"), alpha);
+        let losses = ImageFormat::Avif.export_losses_for_rgba(&source);
+        assert!(losses.contains(&"lossy-avif"));
+        assert_eq!(losses.contains(&"alpha-lossy"), alpha);
     }
 }

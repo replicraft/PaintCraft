@@ -87,7 +87,13 @@ fn external_libjxl_decodes_zune_writer_pixels_when_oracle_is_supplied() {
         let jxl = if sixteen {
             jxl::encode_rgba16(3, 2, &source16)
         } else {
-            jxl::encode_rgba8(3, 2, &source8)
+            paintcraft_formats::image::encode(
+                paintcraft_formats::image::ImageFormat::Jxl,
+                3,
+                2,
+                &source8,
+                100,
+            )
         }
         .unwrap();
         let input = base.join("input.jxl");
