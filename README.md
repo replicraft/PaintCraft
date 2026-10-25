@@ -5,6 +5,7 @@ A familiar place to draw, paint and edit images. Built in Rust.
 - Windows 7, 10 and 11 Classic skins.
 - Studio with document tabs, Save All and floating panels.
 - Desktop, browser and command-line apps.
+- [Painting tools for MCP clients](docs/MCP.md).
 - Nine brushes, pencil, eraser, fill and color picker.
 - Shapes, curves and text.
 - Rectangular and free-form selections, copy and cut.
