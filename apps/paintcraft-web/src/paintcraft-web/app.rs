@@ -10,6 +10,7 @@ mod forms;
 #[cfg(test)]
 #[path = "lasso_tests.rs"]
 mod lasso_tests;
+mod settings;
 use crate::{
     canvas::Canvas,
     editor::{Editor, WHITE},
@@ -18,7 +19,7 @@ use eframe::egui;
 use paintcraft_classic::{ClassicVariant, Controls, Workspace};
 use paintcraft_tools::{Action as Edit, Tool, ToolOptions};
 use paintcraft_ui::actions::{Action, Context, Frontend, ImageExport, ViewAction};
-use paintcraft_ui::i18n::{picker, set_language, tr_status};
+use paintcraft_ui::i18n::{set_language, tr_status};
 
 #[derive(Debug)]
 pub struct WebApp {
@@ -30,6 +31,8 @@ pub struct WebApp {
     name: String,
     pub(crate) zoom: f32,
     settings: bool,
+    applied_theme: egui::Theme,
+    settings_draft: Option<settings::Draft>,
     preferences: crate::preferences::Preferences,
     export_confirm: Option<ImageExport>,
     pub(crate) export_quality: u8,
@@ -71,6 +74,8 @@ impl WebApp {
             name: "Untitled".into(),
             zoom: 1.0,
             settings: false,
+            applied_theme: ctx.theme(),
+            settings_draft: None,
             text: crate::text_ui::TextUi {
                 style: paintcraft_classic::TextOptions {
                     family: preferences.default_font.clone(),
@@ -242,7 +247,7 @@ impl WebApp {
             }),
             Action::Settings | Action::Interface => {
                 self.editor.tools.cancel_gesture();
-                self.settings = true;
+                self.open_settings(ctx);
             }
             Action::ResizeSkew => self.begin_resize_skew(),
             Action::CanvasSize | Action::ImageProperties | Action::CanvasDefaults => {
@@ -507,6 +512,7 @@ impl WebApp {
 
     pub fn show(&mut self, ui: &mut egui::Ui) {
         let ctx = ui.ctx().clone();
+        self.refresh_appearance(&ctx);
         if ctx.current_pass_index() == 0 {
             self.poll_files(&ctx);
             self.poll_copy(&ctx);
@@ -651,52 +657,7 @@ impl WebApp {
                 });
             });
         }
-        if self.settings {
-            let previous_variant = self.variant;
-            let previous_language = self.preferences.language;
-            let mut theme_changed = false;
-            let previous_font = self.preferences.default_font.clone();
-            egui::Window::new(t!(ctx, "Web settings")).open(&mut self.settings).resizable(false).show(ctx, |ui| {
-                picker(ui, &mut self.preferences.language);
-                let mut dark = ctx.theme() == egui::Theme::Dark;
-                if ui.checkbox(&mut dark, t!(ui.ctx(), "Dark mode")).changed() {
-                    let theme = if dark { egui::Theme::Dark } else { egui::Theme::Light };
-                    ctx.set_theme(theme); paintcraft_ui::theme::apply(ctx,theme);
-                    self.preferences.theme = Some(theme); theme_changed = true;
-                }
-                egui::ComboBox::from_label(t!(ui.ctx(), "Classic skin")).selected_text(self.variant.name()).show_ui(ui, |ui| {
-                    for variant in ClassicVariant::ALL { ui.selectable_value(&mut self.variant,variant,variant.name()); }
-                });
-                ui.separator();
-                ui.heading(t!(ui.ctx(), "Text preferences"));
-                ui.label(t!(ui.ctx(), "Default font"));
-                paintcraft_classic::font_family(ui, &mut self.preferences.default_font, &self.text.families, &mut self.text.search, false);
-                ui.label(t!(ui.ctx(), "Preferences are stored in this browser when storage is available. Document pixels are not stored."));
-                ui.label(t!(ui.ctx(), "Browser limits: 4 megapixels, 8192 points per stroke; 64 MiB history budget (older entries may be trimmed)."));
-                ui.separator();
-                ui.heading(t!(ui.ctx(), "About"));
-                ui.label(t!(ui.ctx(), "PaintCraft by Replicraft"));
-                ui.label(format!("v{}", env!("CARGO_PKG_VERSION")));
-            });
-            if previous_language != self.preferences.language {
-                set_language(ctx, self.preferences.language);
-            }
-            if previous_font != self.preferences.default_font {
-                self.text
-                    .style
-                    .family
-                    .clone_from(&self.preferences.default_font);
-                self.sync_text();
-            }
-            if theme_changed
-                || previous_variant != self.variant
-                || previous_font != self.preferences.default_font
-                || previous_language != self.preferences.language
-            {
-                self.preferences.variant = self.variant;
-                self.persist_preferences();
-            }
-        }
+        self.settings_dialog(ctx);
     }
 }
 

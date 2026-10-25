@@ -1,7 +1,7 @@
 use crate::WebApp;
 use eframe::egui::{Role, Vec2};
 use egui_kittest::{Harness, kittest::Queryable};
-use paintcraft_ui::i18n::Language;
+use paintcraft_ui::i18n::{Language, translate};
 #[test]
 fn browser_language_changes_real_chrome_settings_and_keeps_document_pixels() {
     let mut h = Harness::builder()
@@ -17,9 +17,15 @@ fn browser_language_changes_real_chrome_settings_and_keeps_document_pixels() {
     h.run();
     h.run();
     assert_eq!(paintcraft_ui::i18n::language(&h.ctx), Language::Japanese);
-    assert!(h.query_by_label("既定のフォント").is_some());
-    assert!(h.query_by_label("ダークモード").is_some());
+    assert!(
+        h.query_by_label(&translate(Language::Japanese, "Dark"))
+            .is_some()
+    );
     assert!(h.query_by_label("クラシックのスキン").is_some());
+    h.get_by_label(&translate(Language::Japanese, "Text preferences"))
+        .click();
+    h.run();
+    assert!(h.query_by_label("既定のフォント").is_some());
     assert!(h.query_by_role_and_label(Role::Label, "図形").is_some());
     assert!(
         h.query_by_role_and_label(Role::Button, "ファイル")
@@ -36,7 +42,7 @@ fn browser_language_changes_real_chrome_settings_and_keeps_document_pixels() {
 
 #[test]
 fn browser_offers_every_language_and_translates_actual_settings_chrome() {
-    use paintcraft_ui::i18n::{language, translate};
+    use paintcraft_ui::i18n::language;
     for selected in Language::ALL {
         let mut h = Harness::builder()
             .with_size(Vec2::new(1360.0, 900.0))
@@ -57,13 +63,17 @@ fn browser_offers_every_language_and_translates_actual_settings_chrome() {
         h.get_by_label(selected.name()).click();
         h.run();
         assert_eq!(language(&h.ctx), selected);
+        h.get_by_label(&translate(selected, "Text preferences"))
+            .click();
+        h.run();
         assert!(
             h.query_by_label(&translate(selected, "Default font"))
                 .is_some(),
             "{}",
             selected.id()
         );
-        assert!(h.query_by_label(&translate(selected, "About")).is_some());
+        h.get_by_label(&translate(selected, "About")).click();
+        h.run();
         assert!(h.query_by_label("PaintCraft by Replicraft").is_some());
         assert!(
             h.query_by_label(&format!("v{}", env!("CARGO_PKG_VERSION")))

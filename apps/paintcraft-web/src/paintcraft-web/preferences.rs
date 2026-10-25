@@ -18,6 +18,7 @@ pub(crate) struct Preferences {
     pub custom_colors: CustomColors,
     pub theme: Option<Theme>,
     pub default_font: String,
+    pub editable_until_save: bool,
     pub language: Language,
 }
 impl Default for Preferences {
@@ -28,6 +29,7 @@ impl Default for Preferences {
             custom_colors: [None; 28],
             theme: None,
             default_font: "Selawik".into(),
+            editable_until_save: false,
             language: Default::default(),
         }
     }
@@ -84,6 +86,11 @@ impl Preferences {
                 .ok_or("invalid default font")?
                 .to_owned(),
         };
+        let editable_until_save = match value.get("editable_until_save") {
+            None => false,
+            Some(Value::Bool(value)) => *value,
+            _ => return Err("invalid text editing preference".into()),
+        };
         let language = match value.get("language") {
             None => Default::default(),
             Some(value) => value
@@ -92,6 +99,7 @@ impl Preferences {
                 .ok_or("unknown language")?,
         };
         Ok(Self {
+            editable_until_save,
             language,
             default_font,
             canvas,
@@ -106,6 +114,7 @@ impl Preferences {
             ("schema", Value::str("paintcraft.web.preferences/v1")),
             ("canvas", self.canvas.value()),
             ("default_font", Value::str(&self.default_font)),
+            ("editable_until_save", Value::Bool(self.editable_until_save)),
             ("language", Value::str(self.language.id())),
             ("skin", Value::str(self.variant.id())),
             (
@@ -131,6 +140,10 @@ impl Preferences {
         let bytes = json::canonical(&value);
         Self::parse(&bytes)?;
         Ok(bytes)
+    }
+
+    pub fn validate(&self) -> Result<(), String> {
+        self.bytes().map(|_| ())
     }
 
     pub fn load() -> (Self, Option<String>) {
@@ -198,6 +211,7 @@ mod tests {
         prefs.canvas.last = Some((900, 700));
         prefs.variant = ClassicVariant::V7;
         prefs.default_font = "Example font".into();
+        prefs.editable_until_save = true;
         prefs.theme = Some(Theme::Light);
         prefs.custom_colors[9] = Some(Rgba([32, 128, 255, 255]));
         assert_eq!(Preferences::parse(&prefs.bytes().unwrap()).unwrap(), prefs);
@@ -214,6 +228,7 @@ mod tests {
             unreachable!()
         };
         object.remove("default_font");
+        object.remove("editable_until_save");
         assert_eq!(
             Preferences::parse(&json::canonical(&value))
                 .unwrap()

@@ -29,7 +29,7 @@ fn editor_uses_classic_chrome_and_exposes_remaining_unsupported_actions_honestly
     assert!(harness.query_by_label("Layer 2").is_some());
     harness.get_by_label("Settings…").click();
     harness.run();
-    harness.get_by_label("Dark mode").click();
+    harness.get_by_label("Dark").click();
     harness.run();
     assert_eq!(harness.ctx.theme(), egui::Theme::Dark);
 }
