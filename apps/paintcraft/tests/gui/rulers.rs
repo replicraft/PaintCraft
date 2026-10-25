@@ -20,6 +20,8 @@ fn rulers_reserve_viewport_space_persist_and_preserve_document_pixel_mapping() {
         .save(&dir)
         .unwrap();
         let mut h = harness_with(App::new(None).with_settings(dir.clone()), ppp, true);
+        h.get_by_label("Pencil").click();
+        h.run();
         let base = h.state().editor().document_snapshot();
         let viewport = h.state().canvas_viewport().unwrap();
         let depth = h.state().editor().undo_depth();
@@ -45,8 +47,10 @@ fn rulers_reserve_viewport_space_persist_and_preserve_document_pixel_mapping() {
         h.run();
         assert!(h.state().editor().document().same_semantics(&base));
         let origin = h.state().canvas_rect().unwrap().min;
-        let a = origin + Vec2::splat(20.5) / ppp;
-        let b = origin + Vec2::new(30.5, 20.5) / ppp;
+        let scale = h.state().canvas_rect().unwrap().width()
+            / h.state().editor().document().canvas.0 as f32;
+        let a = origin + Vec2::splat(20.5) * scale;
+        let b = origin + Vec2::new(30.5, 20.5) * scale;
         h.input_mut().events.extend([
             Event::PointerMoved(a),
             press(a),

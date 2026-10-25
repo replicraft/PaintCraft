@@ -103,6 +103,7 @@ fn japanese_classic_translates_tool_sizes_view_and_selection_menus() {
     use eframe::egui::Role;
     let dir = scratch("japanese-menu-sweep");
     Settings {
+        classic_variant: Some(ClassicVariant::V11),
         language: Language::Japanese,
         ..Default::default()
     }
@@ -111,6 +112,10 @@ fn japanese_classic_translates_tool_sizes_view_and_selection_menus() {
     let mut h = harness_with(App::new(None).with_settings(dir.clone()), 1.0, false);
     h.set_size(Vec2::new(1360.0, 900.0));
     h.run();
+    assert!(!h.state().picker_open());
+    h.get_by_role_and_label(Role::Button, "鉛筆").click();
+    h.run();
+    assert_eq!(h.state().editor().tool, paintcraft_tools::Tool::Pencil);
     assert!(
         h.query_by_role_and_label(Role::Image, "鉛筆のサイズ")
             .is_some()

@@ -154,7 +154,21 @@ fn long_layer_names_keep_classic_properties_fixed_and_have_one_full_name_tooltip
             style.interaction.show_tooltips_only_when_still = false;
         });
         let field = h.get_by_label("Layer name").rect();
-        let opacity = h.get_by_label("Opacity").rect();
+        let layer_opacity = |h: &Harness<App>| {
+            let field = h.get_by_label("Layer name").rect();
+            let fields: Vec<_> = h
+                .query_all_by_role_and_label(Role::SpinButton, "Opacity")
+                .map(|node| node.rect())
+                .filter(|rect| (rect.left() - field.left()).abs() < 0.1)
+                .collect();
+            assert_eq!(
+                fields.len(),
+                1,
+                "unique opacity editor in the layer property column"
+            );
+            fields[0]
+        };
+        let opacity = layer_opacity(&h);
         let height = if size.y < 650.0 { 32.0 } else { 40.0 };
         assert_eq!(field.height(), height);
         assert_eq!(opacity.height(), height);
@@ -209,7 +223,7 @@ fn long_layer_names_keep_classic_properties_fixed_and_have_one_full_name_tooltip
             field,
             "long names must not move the editor below the panel"
         );
-        assert_eq!(h.get_by_label("Opacity").rect(), opacity);
+        assert_eq!(layer_opacity(&h), opacity);
         assert!(field.max.y <= size.y && field.max.x <= size.x);
         let status_label = format!("Drawing on: {name}");
         let status = h.get_by_role_and_label(Role::Label, &status_label);

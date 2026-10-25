@@ -189,7 +189,7 @@ fn classic_selection_menu_has_aligned_rows_safe_previews_and_reachable_actions()
             assert!(h.query_by_label("Rectangular selection").is_none());
             assert!(h.state().editor().options.transparent_selection);
             assert!(h.state().editor().document().same_semantics(&snapshot));
-            assert_eq!(h.state().editor().tool, paintcraft_tools::Tool::Pencil);
+            assert_eq!(h.state().editor().tool, paintcraft_tools::Tool::Brush);
             assert_eq!(h.state().editor().selection(), Selection::Inactive);
             assert_eq!(h.state().editor().history_view().ticket, ticket);
             open(&mut h);
@@ -202,7 +202,7 @@ fn classic_selection_menu_has_aligned_rows_safe_previews_and_reachable_actions()
             h.run();
             assert!(!h.state().editor().options.transparent_selection);
             assert!(h.state().editor().document().same_semantics(&snapshot));
-            assert_eq!(h.state().editor().tool, paintcraft_tools::Tool::Pencil);
+            assert_eq!(h.state().editor().tool, paintcraft_tools::Tool::Brush);
             assert_eq!(h.state().editor().history_view().ticket, ticket);
         }
         open(&mut h);
@@ -338,7 +338,7 @@ fn selection_popup_uses_neutral_selected_rows_with_accent_indicators_and_native_
         open(&mut h);
         assert_eq!(
             h.state().editor().tool,
-            paintcraft_tools::Tool::Pencil,
+            paintcraft_tools::Tool::Brush,
             "opening the mode menu must not activate Select"
         );
         assert_eq!(
@@ -346,7 +346,7 @@ fn selection_popup_uses_neutral_selected_rows_with_accent_indicators_and_native_
                 .accesskit_node()
                 .toggled(),
             Some(eframe::egui::accesskit::Toggled::True),
-            "Rectangle remains the selected mode while Pencil is active"
+            "Rectangle remains the selected mode while Brush is active"
         );
         h.event(Event::PointerMoved(Pos2::new(4.0, 4.0)));
         h.run();
@@ -415,7 +415,7 @@ fn export_selection_row_surfaces() {
                 .unwrap();
             h.key_press(Key::Escape);
             h.run();
-            assert_eq!(h.state().editor().tool, paintcraft_tools::Tool::Pencil);
+            assert_eq!(h.state().editor().tool, paintcraft_tools::Tool::Brush);
             assert!(h.state().editor().document().same_semantics(&snapshot));
             assert_eq!(h.state().editor().history_view().ticket, ticket);
             drop(h);

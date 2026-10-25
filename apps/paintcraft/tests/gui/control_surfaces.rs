@@ -73,6 +73,8 @@ fn classic_selected_controls_have_neutral_state_surfaces_without_changing_text_s
         let mut h = harness_with(App::new(None).with_settings(dir.clone()), ppp, true);
         h.set_size(Vec2::new(1360.0, 900.0));
         h.run();
+        h.get_by_role_and_label(Role::Button, "Pencil").click();
+        h.run();
         let snapshot = h.state().editor().document_snapshot();
         let ticket = h.state().editor().history_view().ticket;
         h.event(Event::PointerMoved(Pos2::new(4.0, 4.0)));
@@ -160,6 +162,8 @@ fn export_classic_control_surfaces() {
         .unwrap();
         let mut h = harness_with(App::new(None).with_settings(dir.clone()), 1.0, false);
         h.set_size(Vec2::new(1360.0, 900.0));
+        h.run();
+        h.get_by_role_and_label(Role::Button, "Pencil").click();
         h.run();
         let snapshot = h.state().editor().document_snapshot();
         let ticket = h.state().editor().history_view().ticket;

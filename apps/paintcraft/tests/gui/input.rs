@@ -4,6 +4,8 @@ use super::*;
 fn one_click_is_one_transaction_and_the_texture_shows_it() {
     let mut h = harness();
     with_layer(&mut h);
+    h.get_by_label("Pencil").click();
+    h.run();
     let before = publications(&h);
     h.event(Event::PointerMoved(at(&h, 10.0, 20.0)));
     h.step();
@@ -183,14 +185,14 @@ fn undo_and_redo_by_keyboard_and_button_each_run_once() {
 }
 
 #[test]
-fn canvas_pixels_are_actual_pixels_at_any_display_scale() {
-    for (ppp, expect) in [(1.0f32, (1000.0f32, 486.0f32)), (2.0, (500.0, 243.0))] {
+fn actual_size_is_one_logical_point_per_document_pixel_at_any_display_scale() {
+    for ppp in [1.0, 1.5, 2.0] {
         let h = harness_with(App::new(None), ppp, false);
         let r = h.state().canvas_rect().unwrap();
         assert_eq!(
             (r.width(), r.height()),
-            expect,
-            "ppp {ppp}: one document pixel per physical pixel"
+            (1000.0, 486.0),
+            "ppp {ppp}: one document pixel per logical point"
         );
     }
     let mut h = harness();
@@ -205,6 +207,8 @@ fn canvas_pixels_are_actual_pixels_at_any_display_scale() {
 fn zoomed_clicks_hit_the_right_document_pixel() {
     let mut h = harness();
     with_layer(&mut h);
+    h.get_by_label("Pencil").click();
+    h.run();
     // Establish a document-centered view before magnifying. The floating tool
     // rail deliberately reserves space in this narrow, layer-panel workspace.
     h.get_by_label("Zoom to window").click();
@@ -234,6 +238,8 @@ fn gui_and_core_produce_identical_pixels_for_the_same_stroke() {
 
     let mut h = harness();
     with_layer(&mut h);
+    h.get_by_label("Pencil").click();
+    h.run();
     // Across both tile edges: x = 127/128 and x = 255/256.
     let pts = [(100.0f32, 10.0f32), (300.0, 200.0), (120.0, 300.0)];
     let first = at(&h, pts[0].0, pts[0].1);

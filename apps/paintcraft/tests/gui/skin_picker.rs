@@ -181,6 +181,8 @@ fn skin_picker_blocks_background_edits_history_and_shortcuts_until_dismissed() {
         let mut h = harness_with(App::new(None).with_settings(dir.clone()), ppp, true);
         h.set_size(Vec2::new(1360.0, 900.0));
         h.run();
+        h.get_by_label("Pencil").click();
+        h.run();
         let start = at(&h, 10.5, 10.5);
         h.input_mut()
             .events

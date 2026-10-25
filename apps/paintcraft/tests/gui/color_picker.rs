@@ -30,6 +30,7 @@ fn click_canvas(h: &mut Harness<App>, x: f32, y: f32, button: eframe::egui::Poin
 fn classic_picker_samples_primary_or_secondary_returns_to_previous_tool_and_never_edits() {
     for ppp in [1.0, 2.0] {
         let mut h = harness_with(App::new(None), ppp, true);
+        let original_tool = h.state().editor().tool;
         h.get_by_label("Color #ED1C24").click();
         h.run();
         click_canvas(&mut h, 40.0, 50.0, eframe::egui::PointerButton::Primary);
@@ -47,13 +48,13 @@ fn classic_picker_samples_primary_or_secondary_returns_to_previous_tool_and_neve
         click_canvas(&mut h, 40.0, 50.0, eframe::egui::PointerButton::Primary);
         assert_eq!(h.state().editor().color, Rgba([237, 28, 36, 255]));
         assert_eq!(h.state().editor().secondary, secondary);
-        assert_eq!(h.state().editor().tool, Tool::Pencil);
+        assert_eq!(h.state().editor().tool, original_tool);
         h.get_by_role_and_label(Role::Button, "Color picker")
             .click();
         h.run();
         click_canvas(&mut h, 40.0, 50.0, eframe::egui::PointerButton::Secondary);
         assert_eq!(h.state().editor().secondary, Rgba([237, 28, 36, 255]));
-        assert_eq!(h.state().editor().tool, Tool::Pencil);
+        assert_eq!(h.state().editor().tool, original_tool);
         h.get_by_role_and_label(Role::Button, "Color picker")
             .click();
         h.run();

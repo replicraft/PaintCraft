@@ -38,6 +38,8 @@ fn ctrl_and_command_wheel_zoom_the_canvas_once_without_changing_ui_scale_or_docu
 fn pencil_size_has_an_easy_slider_and_is_captured_for_the_whole_stroke() {
     let mut h = classic();
     with_layer(&mut h);
+    h.get_by_label("Pencil").click();
+    h.run();
     h.get_by_label("Tool size").set_value_accesskit(12.0);
     h.run();
     let a = at(&h, 50.0, 50.0);
