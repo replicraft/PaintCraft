@@ -47,7 +47,7 @@ fn completion_is_pending_until_acknowledged_and_delivered_only_once() {
     complete.complete(Ok(()));
     assert!(job.try_result().unwrap().is_ok());
     assert!(job.try_result().is_none());
-    let mut job = Job::completed(Err(Error::new(
+    let mut job: Job = Job::completed(Err(Error::new(
         ErrorCode::StorageFailed,
         "permission denied in fake adapter",
     )));
@@ -61,4 +61,16 @@ fn headless_host_never_claims_a_browser_clipboard_write() {
     let source = image(1, 1, vec![20, 40, 60, 128]);
     let error = submit(&eframe::egui::Context::default(), source).unwrap_err();
     assert_eq!(error.code, ErrorCode::CapabilityUnsupported);
+}
+
+#[test]
+fn dropped_receiver_retires_late_image_and_its_capacity() {
+    let budget = SharedBudget::new(64);
+    let image = Image::from_rgba(1, 1, vec![1, 2, 3, 4], &budget, &|| Ok(())).unwrap();
+    let (job, complete) = channel::<Image>();
+    assert!(complete.live());
+    drop(job);
+    assert!(!complete.live());
+    complete.complete(Ok(image));
+    assert_eq!(budget.usage().reserved, 0);
 }

@@ -7,38 +7,43 @@ const MAX_PIXELS: u64 = crate::editor::MAX_PIXELS;
 const ENCODED_BYTES: usize = 32 << 20;
 
 #[derive(Debug)]
-pub(crate) struct Job {
-    outcome: Rc<RefCell<Option<Result<()>>>>,
+pub(crate) struct Job<T = ()> {
+    outcome: Rc<RefCell<Option<Result<T>>>>,
 }
-impl Job {
+impl<T> Job<T> {
     #[cfg(test)]
-    pub(crate) fn completed(result: Result<()>) -> Self {
+    pub(crate) fn completed(result: Result<T>) -> Self {
         let (job, completion) = channel();
         completion.complete(result);
         job
     }
     /// Pending and previously consumed jobs return None. Hosts keep at most one job.
-    pub(crate) fn try_result(&mut self) -> Option<Result<()>> {
+    pub(crate) fn try_result(&mut self) -> Option<Result<T>> {
         self.outcome.borrow_mut().take()
     }
 }
 #[cfg(any(target_arch = "wasm32", test))]
 #[derive(Debug)]
-struct Completion(Rc<RefCell<Option<Result<()>>>>);
+struct Completion<T>(std::rc::Weak<RefCell<Option<Result<T>>>>);
 #[cfg(any(target_arch = "wasm32", test))]
-impl Completion {
-    fn complete(self, result: Result<()>) {
-        *self.0.borrow_mut() = Some(result);
+impl<T> Completion<T> {
+    fn live(&self) -> bool {
+        self.0.strong_count() != 0
+    }
+    fn complete(self, result: Result<T>) {
+        if let Some(outcome) = self.0.upgrade() {
+            *outcome.borrow_mut() = Some(result);
+        }
     }
 }
 #[cfg(any(target_arch = "wasm32", test))]
-fn channel() -> (Job, Completion) {
+fn channel<T>() -> (Job<T>, Completion<T>) {
     let outcome = Rc::new(RefCell::new(None));
     (
         Job {
             outcome: outcome.clone(),
         },
-        Completion(outcome),
+        Completion(Rc::downgrade(&outcome)),
     )
 }
 fn validate(image: &Image) -> Result<()> {
@@ -173,3 +178,6 @@ pub(crate) fn submit(_ctx: &eframe::egui::Context, image: Image) -> Result<Job> 
 }
 #[cfg(test)]
 mod tests;
+
+mod read;
+pub(crate) use read::{Decoded, read, read_supported};
