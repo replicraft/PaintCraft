@@ -153,6 +153,7 @@ fn classic_defaults_and_remembered_canvas_size_survive_restart_without_editing_t
     settings.save(&dir).unwrap();
     let mut h = harness_with(App::new(None).with_settings(dir.clone()), 2.0, true);
     assert_eq!(h.state().editor().document().canvas, (800, 600));
+    assert_eq!(h.state().editor().tool, paintcraft_tools::Tool::Brush);
     let original = h.state().editor().document_snapshot();
     dialog(&mut h, "Canvas size…");
     h.get_by_label("Width").set_value_accesskit(900.0);
@@ -186,7 +187,13 @@ fn classic_defaults_and_remembered_canvas_size_survive_restart_without_editing_t
         Rgba([255; 4]),
         "expanded background is white and editable"
     );
-    let point = h.state().canvas_rect().unwrap().min + Vec2::new(850.5, 650.5) / 2.0;
+    h.get_by_label("Pencil").click();
+    h.run();
+    h.get_by_label("Zoom to window").click();
+    h.run();
+    let canvas = h.state().canvas_rect().unwrap();
+    let point = canvas.min + Vec2::new(850.5, 650.5) * (canvas.width() / 900.0);
+    assert!(h.state().canvas_viewport().unwrap().contains(point));
     h.input_mut()
         .events
         .extend([Event::PointerMoved(point), press(point), release(point)]);
@@ -212,6 +219,7 @@ fn classic_defaults_and_remembered_canvas_size_survive_restart_without_editing_t
     assert!(!h.state().editor().is_dirty());
     let restarted = App::new(None).with_settings(dir.clone());
     assert_eq!(restarted.editor().document().canvas, (640, 480));
+    assert_eq!(restarted.editor().tool, paintcraft_tools::Tool::Brush);
     let saved = Settings::load(&dir).0;
     assert_eq!(saved.canvas.last, Some((900, 700)));
     dialog(&mut h, "Default canvas size…");

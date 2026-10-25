@@ -21,7 +21,10 @@ impl App {
             };
             if self.editor.document().canvas != size {
                 match Editor::new_document(size.0, size.1) {
-                    Ok(editor) => self.publish_editor(editor),
+                    Ok(mut editor) => {
+                        editor.select_tool(self.editor.tool);
+                        self.publish_editor(editor);
+                    }
                     Err(e) => self
                         .editor
                         .set_status(format!("Cannot create preferred canvas: {e}")),
