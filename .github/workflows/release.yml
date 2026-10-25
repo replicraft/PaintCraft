@@ -96,8 +96,11 @@ jobs:
           toolchain: '1.99.0'
           targets: ${{ matrix.target }}
       - uses: Swatinem/rust-cache@v2
+        env:
+          CACHE_ON_FAILURE: 'true'
         with:
           key: release-gpu-${{ matrix.target }}
+          save-if: ${{ !cancelled() }}
       - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
