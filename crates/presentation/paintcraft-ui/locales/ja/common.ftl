@@ -398,3 +398,9 @@ save-a-farbfeld-picture-with-exact-8-bit-colors-stored-as-16-bit-samples = 8 ビ
 openraster-layer-opacity-will-be-rounded-to-8-bit-precision = OpenRaster のレイヤーの不透明度は 8 ビット精度に丸められます。
 
 openraster-print-resolution-will-not-be-retained-in-the-converted-copy = 変換したコピーには OpenRaster の印刷解像度は保持されません。
+
+pcx-picture = PCX 画像
+
+pcx-image = PCX 画像
+
+save-a-24-bit-pcx-picture-transparent-pixels-are-placed-on-white = 24 ビットの PCX 画像を保存します。透明なピクセルは白で合成されます。

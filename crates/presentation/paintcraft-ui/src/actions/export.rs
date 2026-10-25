@@ -15,9 +15,10 @@ pub enum ImageExport {
     Qoi = 10,
     Pam = 11,
     Farbfeld = 12,
+    Pcx = 13,
 }
 impl ImageExport {
-    pub const ALL: [Self; 13] = [
+    pub const ALL: [Self; 14] = [
         Self::Png,
         Self::Jpeg,
         Self::Bmp,
@@ -31,6 +32,7 @@ impl ImageExport {
         Self::Qoi,
         Self::Pam,
         Self::Farbfeld,
+        Self::Pcx,
     ];
     /// Presentation inventory only. The host must still perform format admission.
     pub fn available(self, frontend: super::Frontend) -> bool {
@@ -45,6 +47,7 @@ impl ImageExport {
                     | Self::Qoi
                     | Self::Pam
                     | Self::Farbfeld
+                    | Self::Pcx
             )
     }
     pub fn extension(self) -> &'static str {
@@ -62,6 +65,7 @@ impl ImageExport {
             Self::Qoi => "qoi",
             Self::Pam => "pam",
             Self::Farbfeld => "ff",
+            Self::Pcx => "pcx",
         }
     }
     pub fn name(self) -> &'static str {
@@ -79,6 +83,7 @@ impl ImageExport {
             Self::Qoi => "QOI",
             Self::Pam => "PAM",
             Self::Farbfeld => "farbfeld",
+            Self::Pcx => "PCX",
         }
     }
     pub fn label(self) -> &'static str {
@@ -96,6 +101,7 @@ impl ImageExport {
             Self::Qoi => "QOI picture",
             Self::Pam => "PAM picture",
             Self::Farbfeld => "farbfeld picture",
+            Self::Pcx => "PCX picture",
         }
     }
     pub fn description(self) -> &'static str {
@@ -119,6 +125,7 @@ impl ImageExport {
             Self::Farbfeld => {
                 "Save a farbfeld picture with exact 8-bit colors stored as 16-bit samples."
             }
+            Self::Pcx => "Save a 24-bit PCX picture. Transparent pixels are placed on white.",
         }
     }
     pub fn quality_label(self) -> Option<&'static str> {
@@ -143,6 +150,7 @@ impl ImageExport {
             Self::Qoi => "image/qoi",
             Self::Pam => "image/x-portable-arbitrarymap",
             Self::Farbfeld => "image/x-farbfeld",
+            Self::Pcx => "image/x-pcx",
         }
     }
 }

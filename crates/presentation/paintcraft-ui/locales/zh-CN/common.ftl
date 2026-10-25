@@ -398,3 +398,9 @@ save-a-farbfeld-picture-with-exact-8-bit-colors-stored-as-16-bit-samples = 保�
 openraster-layer-opacity-will-be-rounded-to-8-bit-precision = OpenRaster 图层的不透明度将舍入为 8 位精度。
 
 openraster-print-resolution-will-not-be-retained-in-the-converted-copy = 转换后的副本不会保留 OpenRaster 的打印分辨率。
+
+pcx-picture = PCX 图片
+
+pcx-image = PCX 图像
+
+save-a-24-bit-pcx-picture-transparent-pixels-are-placed-on-white = 保存 24 位 PCX 图片。透明像素将合成到白色背景上。

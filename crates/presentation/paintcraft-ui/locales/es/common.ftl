@@ -398,3 +398,9 @@ save-a-farbfeld-picture-with-exact-8-bit-colors-stored-as-16-bit-samples = Guard
 openraster-layer-opacity-will-be-rounded-to-8-bit-precision = La opacidad de las capas de OpenRaster se redondeará a una precisión de 8 bits.
 
 openraster-print-resolution-will-not-be-retained-in-the-converted-copy = La resolución de impresión de OpenRaster no se conservará en la copia convertida.
+
+pcx-picture = Imagen PCX
+
+pcx-image = Imagen PCX
+
+save-a-24-bit-pcx-picture-transparent-pixels-are-placed-on-white = Guarda una imagen PCX de 24 bits. Los píxeles transparentes se colocan sobre blanco.
