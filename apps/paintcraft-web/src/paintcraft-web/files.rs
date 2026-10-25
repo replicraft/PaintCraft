@@ -236,7 +236,7 @@ fn encode_quality(
         .bytes);
     }
     let mut writer = Limited(Vec::new());
-    pcnd::write_to(document, &mut writer)?;
+    pcnd::write_compact_to(document, &mut writer)?;
     Ok(writer.0)
 }
 

@@ -195,3 +195,27 @@ fn corrupt_compressed_archive_is_rejected_and_decoded_quota_is_checked_before_in
     );
     assert!(read(&compact).unwrap().same_semantics(&doc));
 }
+
+#[test]
+fn pencil_doodle_payload_is_small_on_the_portable_browser_codec() {
+    let mut points = Vec::new();
+    for x in 30..950 {
+        points.push((x, 200 + ((x as f64 / 35.0).sin() * 70.0) as i64));
+    }
+    let doc = painted(&points);
+    let raw = write(&doc).unwrap();
+    let compact = write_compact(&doc).unwrap();
+    let portable_payload: usize = doc
+        .layers_in_order()
+        .flat_map(|layer| layer.raster.blocks_iter())
+        .map(|(_, _, _, _, bytes)| runs::encode(&bytes).len().min(bytes.len()))
+        .sum();
+    assert!(read(&compact).unwrap().same_semantics(&doc));
+    assert!(portable_payload < 20_000);
+    println!(
+        "pencil-doodle: raw_file={} native_file={} portable_payload={}",
+        raw.len(),
+        compact.len(),
+        portable_payload
+    );
+}

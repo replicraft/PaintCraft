@@ -40,6 +40,7 @@ pub fn write(doc: &Document) -> Result<Vec<u8>> {
 }
 
 mod compression;
+mod runs;
 mod writer;
 
 /// Canonical output with at most one 4 MiB payload chunk and one block in scratch.
@@ -47,7 +48,8 @@ pub fn write_to(doc: &Document, sink: impl std::io::Write) -> Result<()> {
     writer::write_to(doc, sink, false, &|| Ok(()))
 }
 
-/// Smaller v1 archives using bounded Zstandard frames only where they save bytes.
+/// Smaller archives using lossless pixel runs on every platform and bounded
+/// Zstandard frames on native platforms, only where they save bytes.
 /// Canonical `write` remains raw and byte-compatible with the published fixtures.
 pub fn write_compact(doc: &Document) -> Result<Vec<u8>> {
     let mut bytes = Vec::new();
@@ -152,7 +154,7 @@ struct BlockRef {
     len: usize,
     sha: String,
     decoded: usize,
-    compressed: bool,
+    encoding: String,
 }
 
 struct LayerRec {
@@ -461,14 +463,15 @@ pub fn read_with_limits_checked(
             if decoded != expect {
                 return Err(codec("decoded_bytes does not match the block extent"));
             }
-            let compressed = match text(&b["encoding"], "encoding")? {
-                "raw" if stored == decoded => false,
+            let encoding = text(&b["encoding"], "encoding")?;
+            match encoding {
+                "raw" if stored == decoded => (),
                 "raw" => {
                     return Err(codec(
                         "raw block stored length differs from its decoded length",
                     ));
                 }
-                "zstd" => true,
+                "zstd" | "rgba-runs" => (),
                 _ => return Err(codec("unknown block encoding")),
             };
             let entry = text(&b["entry"], "entry")?;
@@ -483,7 +486,7 @@ pub fn read_with_limits_checked(
                 len: stored as usize,
                 sha: sha_hex(&b["sha256"], "block sha256")?,
                 decoded: decoded as usize,
-                compressed,
+                encoding: encoding.to_owned(),
             });
         }
         let layer = Layer {
@@ -546,11 +549,16 @@ pub fn read_with_limits_checked(
             seen.push((b.offset, end, b.sha.clone()));
             let stored = &chunk[b.offset..end];
             let decoded;
-            let data = if b.compressed {
-                decoded = compression::decode(stored, b.decoded, check)?;
-                decoded.as_slice()
-            } else {
-                stored
+            let data = match b.encoding.as_str() {
+                "zstd" => {
+                    decoded = compression::decode(stored, b.decoded, check)?;
+                    decoded.as_slice()
+                }
+                "rgba-runs" => {
+                    decoded = runs::decode(stored, b.decoded, check)?;
+                    decoded.as_slice()
+                }
+                _ => stored,
             };
             if sha(data) != b.sha {
                 return Err(codec("block SHA-256 mismatch"));

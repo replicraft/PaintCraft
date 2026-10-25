@@ -5,7 +5,7 @@ use std::{borrow::Cow, io::Read};
 #[cfg(not(target_arch = "wasm32"))]
 pub(super) struct Encoder(Option<zstd::bulk::Compressor<'static>>);
 #[cfg(target_arch = "wasm32")]
-pub(super) struct Encoder;
+pub(super) struct Encoder(bool);
 
 impl Encoder {
     pub fn new(compact: bool) -> Result<Self> {
@@ -31,26 +31,31 @@ impl Encoder {
         }
         #[cfg(target_arch = "wasm32")]
         {
-            if compact {
-                Err(unsupported(
-                    "compact PCND writing is unavailable in this browser build",
-                ))
-            } else {
-                Ok(Self)
-            }
+            Ok(Self(compact))
         }
     }
     pub fn block<'a>(&mut self, data: &'a [u8]) -> Result<(&'static str, Cow<'a, [u8]>)> {
+        #[cfg(not(target_arch = "wasm32"))]
+        let compact = self.0.is_some();
+        #[cfg(target_arch = "wasm32")]
+        let compact = self.0;
+        let mut best = ("raw", Cow::Borrowed(data));
+        if compact {
+            let runs = super::runs::encode(data);
+            if runs.len() < data.len() {
+                best = ("rgba-runs", Cow::Owned(runs));
+            }
+        }
         #[cfg(not(target_arch = "wasm32"))]
         if let Some(encoder) = &mut self.0 {
             let compressed = encoder
                 .compress(data)
                 .map_err(|_| codec("native block compression failed"))?;
-            if compressed.len() < data.len() {
-                return Ok(("zstd", Cow::Owned(compressed)));
+            if compressed.len() < best.1.len() {
+                best = ("zstd", Cow::Owned(compressed));
             }
         }
-        Ok(("raw", Cow::Borrowed(data)))
+        Ok(best)
     }
 }
 
@@ -179,10 +184,11 @@ mod tests {
 
     fn encoded() -> (Vec<u8>, Vec<u8>) {
         let source = vec![71; 262_144];
-        let mut encoder = Encoder::new(true).unwrap();
-        let (kind, bytes) = encoder.block(&source).unwrap();
-        assert_eq!(kind, "zstd");
-        let bytes = bytes.into_owned();
+        let mut encoder = zstd::bulk::Compressor::new(3).unwrap();
+        encoder
+            .set_parameter(zstd::zstd_safe::CParameter::ChecksumFlag(true))
+            .unwrap();
+        let bytes = encoder.compress(&source).unwrap();
         (source, bytes)
     }
     fn raw_frame(source: &[u8]) -> Vec<u8> {

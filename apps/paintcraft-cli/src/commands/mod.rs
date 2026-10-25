@@ -175,7 +175,7 @@ fn write_native(
     ctx: &Context<'_>,
 ) -> (Value, bool, String) {
     let outcome = save::save_with(dest, overwrite, save::STAGED_FILE_BYTES_MAX, |sink| {
-        pcnd::write_to(document, sink)
+        pcnd::write_compact_to(document, sink)
     });
     finish_output(dest, ctx, outcome)
 }
