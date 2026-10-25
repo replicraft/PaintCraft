@@ -20,9 +20,19 @@ on:
       - 'rust-toolchain.toml'
       - 'docs/RELEASING.md'
   workflow_dispatch:
+    inputs:
+      artifacts-run:
+        description: Optional completed release run whose successful platform artifacts should be reused
+        type: string
+        default: ''
+      publish-tag:
+        description: Existing tag to publish when reusing artifacts (leave empty for build-only runs)
+        type: string
+        default: ''
 
 permissions:
   contents: read
+  actions: read
 concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -42,16 +52,25 @@ jobs:
           python-version: '3.13'
       - id: version
         env:
-          RELEASE_TAG: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+          RELEASE_TAG: ${{ inputs.publish-tag || (github.ref_type == 'tag' && github.ref_name) || '' }}
         run: python scripts/packaging/package_release.py validate --tag "$RELEASE_TAG"
+      - name: Verify artifact provenance and all required platform builds
+        if: inputs.artifacts-run != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN: ${{ inputs.artifacts-run }}
+          RELEASE_TAG: ${{ inputs.publish-tag }}
+        run: python scripts/packaging/verify_release_run.py --repo "$GITHUB_REPOSITORY" --run "$SOURCE_RUN" --tag "$RELEASE_TAG"
       - run: python -m unittest discover -s scripts/tests -p 'test_package_*.py'
       - run: python scripts/check_file_lengths.py
       - name: Generate complete changelog
+        if: inputs.artifacts-run == ''
         uses: orhun/git-cliff-action@v4
         with:
           version: v2.14.2
           args: --output CHANGELOG.md
       - uses: actions/upload-artifact@v7
+        if: inputs.artifacts-run == ''
         with:
           name: release-changelog-${{ steps.version.outputs.version }}
           path: CHANGELOG.md
@@ -61,6 +80,7 @@ jobs:
 
   build:
     name: Build ${{ matrix.target }}
+    if: inputs.artifacts-run == ''
     needs: version
     runs-on: ${{ matrix.os }}
     timeout-minutes: 90
@@ -183,6 +203,7 @@ jobs:
   assemble:
     name: Verify complete release and checksums
     needs: [version, build]
+    if: ${{ !cancelled() && needs.version.result == 'success' && (needs.build.result == 'success' || needs.build.result == 'skipped') }}
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v7
@@ -194,6 +215,8 @@ jobs:
           pattern: paintcraft-${{ needs.version.outputs.version }}-*
           path: dist
           merge-multiple: true
+          run-id: ${{ inputs.artifacts-run || github.run_id }}
+          github-token: ${{ github.token }}
       - name: Require every platform and generate SHA256SUMS.txt
         run: python scripts/packaging/package_release.py finalize --version ${{ needs.version.outputs.version }} --output dist
       - name: Independently verify final checksums
@@ -210,10 +233,11 @@ jobs:
   publish:
     name: Publish complete GitHub release
     needs: [version, assemble]
-    if: github.event_name == 'push' && github.ref_type == 'tag'
+    if: (github.event_name == 'push' && github.ref_type == 'tag') || (github.event_name == 'workflow_dispatch' && inputs.artifacts-run != '' && inputs.publish-tag != '')
     runs-on: ubuntu-22.04
     permissions:
       contents: write
+      actions: read
     steps:
       - uses: actions/checkout@v7
       - uses: actions/download-artifact@v8
@@ -224,12 +248,14 @@ jobs:
         with:
           name: release-changelog-${{ needs.version.outputs.version }}
           path: release-notes
+          run-id: ${{ inputs.artifacts-run || github.run_id }}
+          github-token: ${{ github.token }}
       - name: Publish after every platform succeeds
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ inputs.publish-tag || github.ref_name }}
           RELEASE_VERSION: ${{ needs.version.outputs.version }}
         run: |
           set -euo pipefail

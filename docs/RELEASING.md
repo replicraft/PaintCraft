@@ -42,8 +42,16 @@ inside the downloads. The checksums describe the final downloadable bytes.
 
 Pull requests changing packaging also build the release matrix. Native build
 artifacts and the assembled set are retained for seven days. No release is
-published from a pull request or a manual workflow run. No credentials are needed
+published from a pull request or a build-only manual workflow run. No credentials are needed
 for local packaging; tag publication uses the job's repository token.
+
+To reuse completed builds, run the Release workflow with `artifacts-run` set to
+the source run ID and `publish-tag` set to its existing version tag. Every required
+platform build must have succeeded at that exact tagged commit. The workflow
+skips compilation, downloads those artifacts, checks the complete current package
+set and publishes it with the tagged changelog. This supports removing an obsolete
+target without repeating successful builds; it cannot reuse binaries for a
+different source commit.
 
 Like EarthCraft, release validation fetches the complete Git history and uses
 git-cliff 2.14.2 with `cliff.toml` to generate a grouped `CHANGELOG.md`.
