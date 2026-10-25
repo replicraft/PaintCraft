@@ -247,6 +247,7 @@ pub struct App {
     preview_start_revision: u64,
     /// CPU-backed flat display; native GPU surfaces deliberately have no host copy.
     rendered: Vec<u8>,
+    /// Logical UI points per document pixel; 1.0 is 100% on every display scale.
     zoom: f32,
     studio_fit: Option<view::StudioFit>,
     initial_fit: bool,
@@ -414,6 +415,7 @@ impl App {
             app.path_text = "untitled.pcnd".into();
             app.editor.set_status(format!("Cannot open: {e}"));
         }
+        app.editor.select_tool(Tool::Brush);
         app
     }
 
