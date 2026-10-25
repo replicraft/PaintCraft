@@ -3,6 +3,9 @@
 use crate::editor::MAX_PIXELS;
 use paintcraft_core::types::{Error, ErrorCode, Result};
 use paintcraft_document::Document;
+use paintcraft_formats::registry::Frontend;
+#[cfg(any(target_arch = "wasm32", test))]
+use paintcraft_formats::registry::{Family, Platform};
 #[cfg(any(target_arch = "wasm32", test))]
 use paintcraft_formats::{image, pcnd};
 use paintcraft_ui::actions::ImageExport;
@@ -45,7 +48,7 @@ impl Files {
     }
 
     #[cfg(target_arch = "wasm32")]
-    pub fn open(&mut self, ctx: &eframe::egui::Context) {
+    pub fn open(&mut self, ctx: &eframe::egui::Context, frontend: Frontend) {
         if self.busy {
             return;
         }
@@ -78,7 +81,11 @@ impl Files {
                         Error::new(ErrorCode::StorageFailed, "Browser file read failed")
                     })?;
                 let bytes = js_sys::Uint8Array::new(&buffer).to_vec();
-                Ok(Outcome::Loaded(decode(&bytes, file.file_name())?))
+                Ok(Outcome::Loaded(decode_for_profile(
+                    &bytes,
+                    file.file_name(),
+                    frontend,
+                )?))
             }
             .await;
             *target.borrow_mut() = Some(result);
@@ -88,7 +95,7 @@ impl Files {
     }
 
     #[cfg(not(target_arch = "wasm32"))]
-    pub fn open(&mut self, _ctx: &eframe::egui::Context) {
+    pub fn open(&mut self, _ctx: &eframe::egui::Context, _frontend: Frontend) {
         *self.outcome.borrow_mut() = Some(Err(Error::new(
             ErrorCode::CapabilityUnsupported,
             "File picking is available in the browser build",
@@ -171,15 +178,21 @@ impl Files {
     }
 }
 
-#[cfg(any(target_arch = "wasm32", test))]
+#[cfg(test)]
 fn decode(bytes: &[u8], name: String) -> Result<Loaded> {
+    decode_for_profile(bytes, name, Frontend::ClassicV11)
+}
+
+#[cfg(any(target_arch = "wasm32", test))]
+fn decode_for_profile(bytes: &[u8], name: String, frontend: Frontend) -> Result<Loaded> {
     if bytes.len() > FILE_BYTES {
         return Err(Error::new(
             ErrorCode::ResourceLimit,
             "Browser input limit is 64 MiB",
         ));
     }
-    if bytes.starts_with(b"PK") {
+    let family = paintcraft_formats::registry::admit_open(frontend, &name, bytes, Platform::Web)?;
+    if family == Family::Pcnd {
         return Ok(Loaded {
             document: pcnd::read_with_limits(bytes, MAX_PIXELS, MAX_PIXELS * 4)?,
             name,
@@ -212,6 +225,25 @@ fn encode_quality(
             ImageExport::Jpeg => image::ImageFormat::Jpeg,
             ImageExport::Bmp => image::ImageFormat::Bmp,
         };
+        // Every currently exposed browser export is shared by all Classic skins.
+        // Any future addition must capture the active profile before widening this enum.
+        use paintcraft_formats::registry::{self, Operation, Request};
+        let family = Family::from_extension(format.name()).ok_or_else(|| {
+            Error::new(
+                ErrorCode::CapabilityUnsupported,
+                "Unregistered export format",
+            )
+        })?;
+        let request = Request::new(
+            Frontend::ClassicV11,
+            Operation::ExportFlat,
+            family,
+            Platform::Web,
+        );
+        let decision = registry::admission(request);
+        if !decision.available() {
+            decision.require_allowed(request)?;
+        }
         return Ok(paintcraft_formats::export::export_flat(
             document,
             format,
@@ -248,6 +280,40 @@ impl std::io::Write for Limited {
 mod tests {
     use super::*;
     use crate::editor::{Editor, WHITE};
+    #[test]
+    fn frozen_frontend_profile_controls_browser_decode_before_import() {
+        let png = image::encode(image::ImageFormat::Png, 1, 1, &[12, 34, 56, 0], 90).unwrap();
+        for frontend in [
+            Frontend::ClassicV7,
+            Frontend::ClassicV10,
+            Frontend::ClassicV11,
+        ] {
+            let loaded = decode_for_profile(&png, "image.png".into(), frontend).unwrap();
+            assert_eq!(loaded.document.canvas, (1, 1));
+            for name in [
+                "fake.svg",
+                "fake.pdn",
+                "fake.psd",
+                "mismatch.jpg",
+                "unknown.xyz",
+            ] {
+                assert!(
+                    decode_for_profile(&png, name.into(), frontend).is_err(),
+                    "{frontend:?}/{name}"
+                );
+            }
+            assert!(decode_for_profile(b"PK\x03\x04", "unknown.zip".into(), frontend).is_err());
+            assert!(decode_for_profile(b"PK\x03\x04", "invalid.pcnd".into(), frontend).is_err());
+        }
+        // The captured argument, rather than later preferences, is the authority.
+        let frontend = Frontend::ClassicV7;
+        assert!(
+            decode_for_profile(&png, "fake.webp".into(), frontend)
+                .unwrap_err()
+                .message
+                .contains("ClassicV7")
+        );
+    }
     #[test]
     fn project_preserves_layers_and_png_preserves_flat_pixels() {
         let mut editor = Editor::new(24, 16).unwrap();

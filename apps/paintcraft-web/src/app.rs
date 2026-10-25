@@ -317,7 +317,12 @@ impl WebApp {
 
     fn replace(&mut self, ctx: &egui::Context, action: Action) {
         if action == Action::Open {
-            self.files.open(ctx);
+            let frontend = match self.variant {
+                ClassicVariant::V7 => paintcraft_formats::registry::Frontend::ClassicV7,
+                ClassicVariant::V10 => paintcraft_formats::registry::Frontend::ClassicV10,
+                ClassicVariant::V11 => paintcraft_formats::registry::Frontend::ClassicV11,
+            };
+            self.files.open(ctx, frontend);
         } else {
             self.new_document();
         }
