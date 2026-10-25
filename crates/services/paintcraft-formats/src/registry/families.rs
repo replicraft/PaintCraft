@@ -86,6 +86,9 @@ impl Family {
             Self::Ora => extension.eq_ignore_ascii_case("ora"),
             Self::Psd => extension.eq_ignore_ascii_case("psd"),
             Self::Psb => extension.eq_ignore_ascii_case("psb"),
+            Self::Svg => ["svg", "svgz"]
+                .iter()
+                .any(|ext| ext.eq_ignore_ascii_case(extension)),
             Self::Paint => extension.eq_ignore_ascii_case("paint"),
             Self::Dcx => extension.eq_ignore_ascii_case("dcx"),
             Self::Ico => extension.eq_ignore_ascii_case("ico"),

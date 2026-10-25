@@ -171,6 +171,8 @@ fn stock_extended_asset_and_native_project_operations_do_not_leak() {
                 Family::Paint | Family::Ora | Family::Psd | Family::Psb
             ) {
                 Decision::Allowed
+            } else if family == Family::Svg {
+                Decision::TemporarilyUnavailable(Reason::VariantUnqualified)
             } else {
                 Decision::TemporarilyUnavailable(Reason::BackendUnavailable)
             }

@@ -3,6 +3,7 @@
 use paintcraft_core::types::{Error, ErrorCode, Result};
 use resvg::{tiny_skia, usvg};
 use std::sync::Arc;
+mod document;
 mod fonts;
 mod input;
 mod resources;
@@ -16,6 +17,24 @@ pub const PIXELS_MAX: u64 = 4_194_304;
 pub const SIDE_MAX: u32 = 16384;
 const NODES_MAX: u32 = 16384;
 const DEPTH_MAX: usize = 64;
+pub const KNOWN_LOSSES: [&str; 2] = ["svg-rasterized", "svg-font-substituted"];
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct SourceInfo {
+    pub compressed: bool,
+    pub has_text: bool,
+}
+/// Validate an explicit SVG candidate before selecting rasterization options.
+/// This never resolves a font, decodes an image or runs the renderer.
+pub fn inspect_source(bytes: &[u8], check: &dyn Fn() -> Result<()>) -> Result<SourceInfo> {
+    let source = input::source(bytes, check)?;
+    let xml = input::parse(&source, check)?;
+    let inventory = input::inspect(&xml, check)?;
+    Ok(SourceInfo {
+        compressed: bytes.starts_with(&[31, 139]),
+        has_text: inventory.has_text,
+    })
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Fit {
@@ -30,17 +49,22 @@ pub struct Options {
     pub fit: Fit,
 }
 impl Options {
-    fn admit(self, pixel_limit: u64) -> Result<()> {
-        if self.width == 0
-            || self.height == 0
-            || self.width > SIDE_MAX
+    pub fn admit(self, pixel_limit: u64) -> Result<()> {
+        if self.width == 0 || self.height == 0 {
+            return Err(Error::new(
+                ErrorCode::InputSchema,
+                "SVG output width and height must be positive",
+            ));
+        }
+        if self.width > SIDE_MAX
             || self.height > SIDE_MAX
             || u64::from(self.width) * u64::from(self.height) > pixel_limit.min(PIXELS_MAX)
         {
             return Err(resource("SVG output exceeds rasterization pixel allowance"));
         }
         if !self.dpi.is_finite() || !(1.0..=2400.0).contains(&self.dpi) {
-            return Err(unsupported(
+            return Err(Error::new(
+                ErrorCode::InputSchema,
                 "SVG rasterization DPI must be between 1 and 2400",
             ));
         }
@@ -62,12 +86,13 @@ impl std::fmt::Debug for Prepared {
             .finish_non_exhaustive()
     }
 }
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq)]
 pub struct Raster {
     pub width: u32,
     pub height: u32,
     pub rgba: Vec<u8>,
     pub losses: Vec<String>,
+    options: Options,
 }
 impl Prepared {
     pub fn losses(&self) -> &[String] {
@@ -103,6 +128,7 @@ impl Prepared {
             height: self.options.height,
             rgba,
             losses: self.losses.clone(),
+            options: self.options,
         })
     }
 }

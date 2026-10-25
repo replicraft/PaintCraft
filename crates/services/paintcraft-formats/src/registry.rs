@@ -5,7 +5,9 @@ use paintcraft_core::types::{Error, ErrorCode, Result};
 mod families;
 pub use families::Family;
 mod policy;
+mod svg;
 pub use policy::STUDIO_STOCK;
+pub use svg::admit_import_svg;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Frontend {
@@ -213,6 +215,7 @@ pub fn capability(family: Family, operation: Operation, _platform: Platform) -> 
             Some("openraster-flat-png")
         }
         Family::Dcx if operation == Operation::ImportConvert => Some("pcx-dcx-page"),
+        Family::Svg if operation == Operation::ImportConvert => Some("resvg-srgb-raster"),
         Family::Ico | Family::Cur if operation == Operation::ImportConvert => {
             Some("ico-selected-entry")
         }
@@ -255,6 +258,7 @@ pub fn capability(family: Family, operation: Operation, _platform: Platform) -> 
                 operation == Operation::ImportConvert
             }
             Family::Jxl | Family::Avif => operation == Operation::ExportFlat,
+            Family::Svg => operation == Operation::ImportConvert,
             Family::Pdn => matches!(
                 operation,
                 Operation::Open | Operation::OpenProject | Operation::ImportConvert
@@ -289,6 +293,15 @@ pub fn admission(request: Request<'_>) -> Decision {
     let fresh_entry_set = matches!(request.family, Family::Ico | Family::Cur)
         && request.operation == Operation::SaveAsCopy
         && request.variant == Some("icon-fresh-entry-set");
+    let svg_rasterization = request.family == Family::Svg
+        && request.operation == Operation::ImportConvert
+        && request.variant == Some("svg-rasterize-explicit");
+    if request.family == Family::Svg
+        && request.operation == Operation::ImportConvert
+        && !svg_rasterization
+    {
+        return Decision::TemporarilyUnavailable(Reason::VariantUnqualified);
+    }
     if matches!(request.family, Family::Ico | Family::Cur)
         && request.operation == Operation::SaveAsCopy
         && !fresh_entry_set
@@ -307,7 +320,12 @@ pub fn admission(request: Request<'_>) -> Decision {
     {
         return Decision::TemporarilyUnavailable(Reason::VariantUnqualified);
     }
-    if request.variant.is_some() && !selected_page && !selected_entry && !fresh_entry_set {
+    if request.variant.is_some()
+        && !selected_page
+        && !selected_entry
+        && !fresh_entry_set
+        && !svg_rasterization
+    {
         return Decision::TemporarilyUnavailable(Reason::VariantUnqualified);
     }
     if request.family == Family::Pnm
@@ -325,7 +343,10 @@ pub fn admission(request: Request<'_>) -> Decision {
     if !capability.qualified {
         return Decision::TemporarilyUnavailable(Reason::VariantUnqualified);
     }
-    if request.needs_preflight || (request.operation.is_write() && request.family != Family::Pcnd) {
+    if request.needs_preflight
+        || svg_rasterization
+        || (request.operation.is_write() && request.family != Family::Pcnd)
+    {
         return Decision::AllowedWithPreflight(Reason::ConvertRequiresConsent);
     }
     Decision::Allowed

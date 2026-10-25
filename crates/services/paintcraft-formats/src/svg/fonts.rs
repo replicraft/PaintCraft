@@ -25,6 +25,19 @@ impl Default for Fonts {
     }
 }
 impl Fonts {
+    /// Shared root assets, also used by the desktop/browser UI. Extra fonts must
+    /// already be acquired by an authorized caller; SVG content cannot open them.
+    pub fn with_bundled(additional: &[&[u8]], check: &dyn Fn() -> Result<()>) -> Result<Self> {
+        if additional.len() > 30 {
+            return Err(resource("SVG font inventory exceeds allowance"));
+        }
+        let mut data: Vec<&[u8]> = vec![
+            include_bytes!("../../../../../assets/fonts/selawik/selawk.ttf"),
+            include_bytes!("../../../../../assets/fonts/selawik/selawkb.ttf"),
+        ];
+        data.extend_from_slice(additional);
+        Self::from_data(&data, "Selawik", check)
+    }
     pub fn from_data(
         data: &[&[u8]],
         default_family: &str,
