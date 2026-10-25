@@ -292,5 +292,7 @@ fn image_import_requires_loss_consent_preserves_failures_and_keeps_source_unboun
     std::fs::remove_dir_all(folder).unwrap();
 }
 
+#[path = "mcp/exports.rs"]
+mod exports;
 #[path = "mcp/foreign.rs"]
 mod foreign;

@@ -287,6 +287,7 @@ fn studio_specialist_exports_require_named_losses_and_refuse_classic_routes() {
         (ImageFormat::Jxl, "jxl"),
         (ImageFormat::Dds, "dds"),
         (ImageFormat::Avif, "avif"),
+        (ImageFormat::Pcx, "pcx"),
     ] {
         let output = dir.join(format!("output.{extension}"));
         let args = [
@@ -301,11 +302,18 @@ fn studio_specialist_exports_require_named_losses_and_refuse_classic_routes() {
             output.to_str().unwrap(),
         ];
         let result = run(&args);
-        if format == ImageFormat::Avif {
+        if matches!(format, ImageFormat::Avif | ImageFormat::Pcx) {
             assert_eq!(result.status.code(), Some(3));
             assert!(!output.exists());
             let mut acknowledged = args.to_vec();
-            acknowledged.extend(["--allow-loss", "lossy-avif,alpha-lossy"]);
+            acknowledged.extend([
+                "--allow-loss",
+                if format == ImageFormat::Pcx {
+                    "alpha-discarded"
+                } else {
+                    "lossy-avif,alpha-lossy"
+                },
+            ]);
             assert!(run(&acknowledged).status.success());
         } else {
             assert!(
