@@ -63,3 +63,6 @@ scroll-past-the-edge-of-the-image-overscroll = Über den Bildrand hinaus scrolle
 move-small-images-halfway-offscreen-and-large-image-edges-to-the-viewport-center = Kleine Bilder halb aus dem Bildschirm und Ränder großer Bilder bis zur Mitte des Ansichtsbereichs verschieben.
 auto-scroll = Automatisch scrollen
 scroll-automatically-while-dragging-near-the-edge-of-the-canvas-viewport = Beim Ziehen am Rand des sichtbaren Zeichenbereichs automatisch scrollen.
+
+about = Über
+paintcraft-by-replicraft = PaintCraft by Replicraft

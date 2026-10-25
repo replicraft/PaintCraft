@@ -63,3 +63,6 @@ scroll-past-the-edge-of-the-image-overscroll = छवि के किनार�
 move-small-images-halfway-offscreen-and-large-image-edges-to-the-viewport-center = छोटी छवियों को आधा स्क्रीन से बाहर और बड़ी छवियों के किनारों को व्यूपोर्ट के बीच तक ले जाएँ।
 auto-scroll = स्वचालित स्क्रॉल
 scroll-automatically-while-dragging-near-the-edge-of-the-canvas-viewport = कैनवास के दृश्य क्षेत्र के किनारे के पास खींचते समय अपने आप स्क्रॉल करें।
+
+about = परिचय
+paintcraft-by-replicraft = PaintCraft by Replicraft

@@ -286,8 +286,17 @@ fn narrow_settings_apply_persists_theme_and_canvas_defaults_without_resizing_the
     let document = h.state().editor().document_snapshot();
     h.get_by_label("Settings…").click();
     h.run();
+    h.get_by_label("Dark").scroll_to_me();
+    h.run();
+    let dark = h.get_by_label("Dark").rect();
+    assert!(h.ctx.content_rect().contains_rect(dark), "dark={dark:?}");
     h.get_by_label("Dark").click();
     h.run();
+    assert_eq!(
+        h.ctx.theme(),
+        eframe::egui::Theme::Dark,
+        "theme must preview before Apply"
+    );
     h.get_by_role_and_label(Role::Button, "Canvas").click();
     h.run();
     h.get_by_role_and_label(Role::SpinButton, "Default width")

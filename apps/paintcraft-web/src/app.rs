@@ -608,6 +608,10 @@ impl WebApp {
                 paintcraft_classic::font_family(ui, &mut self.preferences.default_font, &self.text.families, &mut self.text.search, false);
                 ui.label(t!(ui.ctx(), "Preferences are stored in this browser when storage is available. Document pixels are not stored."));
                 ui.label(t!(ui.ctx(), "Browser limits: 4 megapixels, 8192 points per stroke; 64 MiB history budget (older entries may be trimmed)."));
+                ui.separator();
+                ui.heading(t!(ui.ctx(), "About"));
+                ui.label(t!(ui.ctx(), "PaintCraft by Replicraft"));
+                ui.label(format!("v{}", env!("CARGO_PKG_VERSION")));
             });
             if previous_language != self.preferences.language {
                 set_language(ctx, self.preferences.language);

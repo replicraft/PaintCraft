@@ -34,6 +34,7 @@ fn classic_settings_uses_consistent_controls_and_close_cancels_preview() {
             "Appearance",
             "Canvas",
             "Text preferences",
+            "About",
             "Apply",
             "Cancel",
             "Close settings",
@@ -70,6 +71,7 @@ fn classic_settings_uses_consistent_controls_and_close_cancels_preview() {
             "Appearance",
             "Canvas",
             "Text preferences",
+            "About",
             "Apply",
             "Cancel",
         ] {
@@ -91,7 +93,12 @@ fn classic_settings_uses_consistent_controls_and_close_cancels_preview() {
                 text.galley.job.sections[0].format.font_id.size, 16.0,
                 "{label}"
             );
-            if size.x > 1000.0 && matches!(label, "Appearance" | "Canvas" | "Text preferences") {
+            if size.x > 1000.0
+                && matches!(
+                    label,
+                    "Appearance" | "Canvas" | "Text preferences" | "About"
+                )
+            {
                 assert!(h.output().shapes.iter().any(|shape|matches!(&shape.shape,Shape::Rect(image)
                     if image.brush.is_some() && rect.contains_rect(image.rect) && image.rect.size()==Vec2::splat(22.0)
                         && image.rect.right()<text.pos.x)),"{label} icon precedes its label");
@@ -204,5 +211,52 @@ fn export_classic_settings_surfaces() {
             drop(h);
             std::fs::remove_dir_all(dir).unwrap();
         }
+    }
+}
+
+#[test]
+fn settings_about_identifies_paintcraft_without_changing_document_or_preferences() {
+    for (language, about, settings, cancel) in [
+        ("en", "About", "Settings…", "Cancel"),
+        ("ja", "このアプリについて", "設定…", "キャンセル"),
+    ] {
+        let dir = scratch("settings-about");
+        Settings {
+            language: paintcraft_ui::i18n::Language::parse(language).unwrap(),
+            classic_variant: Some(ClassicVariant::V11),
+            ..Default::default()
+        }
+        .save(&dir)
+        .unwrap();
+        let saved = std::fs::read(dir.join("settings.json")).unwrap();
+        let mut h = harness_with(App::new(None).with_settings(dir.clone()), 1.0, true);
+        if language == "ja" {
+            h.set_size(Vec2::new(360.0, 360.0));
+        }
+        h.run();
+        let source = h.state().editor().document_snapshot();
+        let ticket = h.state().editor().history_view().ticket;
+        h.get_by_label(settings).click();
+        h.run();
+        h.get_by_role_and_label(Role::Button, about).scroll_to_me();
+        h.run();
+        assert!(
+            h.ctx
+                .content_rect()
+                .contains_rect(h.get_by_role_and_label(Role::Button, about).rect())
+        );
+        h.get_by_role_and_label(Role::Button, about).focus();
+        h.run();
+        h.key_press(Key::Space);
+        h.run();
+        h.get_by_role_and_label(Role::Label, "PaintCraft by Replicraft");
+        h.get_by_role_and_label(Role::Label, &format!("v{}", env!("CARGO_PKG_VERSION")));
+        h.get_by_role_and_label(Role::Button, cancel).click();
+        h.run();
+        assert!(h.state().editor().document().same_semantics(&source));
+        assert_eq!(h.state().editor().history_view().ticket, ticket);
+        assert_eq!(std::fs::read(dir.join("settings.json")).unwrap(), saved);
+        drop(h);
+        std::fs::remove_dir_all(dir).unwrap();
     }
 }

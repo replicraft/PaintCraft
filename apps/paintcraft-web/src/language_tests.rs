@@ -63,6 +63,12 @@ fn browser_offers_every_language_and_translates_actual_settings_chrome() {
             "{}",
             selected.id()
         );
+        assert!(h.query_by_label(&translate(selected, "About")).is_some());
+        assert!(h.query_by_label("PaintCraft by Replicraft").is_some());
+        assert!(
+            h.query_by_label(&format!("v{}", env!("CARGO_PKG_VERSION")))
+                .is_some()
+        );
         assert!(
             h.state()
                 .editor

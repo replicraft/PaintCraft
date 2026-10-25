@@ -10,6 +10,7 @@ enum Page {
     Interface,
     Canvas,
     Text,
+    About,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -187,6 +188,7 @@ fn navigation(ui: &mut egui::Ui, current: &mut Page, sidebar: bool, classic: boo
         (Page::Interface, "User Interface", Icon::Settings),
         (Page::Canvas, "Canvas", Icon::CanvasSize),
         (Page::Text, "Text preferences", Icon::Text),
+        (Page::About, "About", Icon::Settings),
     ] {
         if classic && page == Page::Interface {
             continue;
@@ -195,12 +197,14 @@ fn navigation(ui: &mut egui::Ui, current: &mut Page, sidebar: bool, classic: boo
         let label = localized_label.as_str();
         let image = if classic {
             match page {
-                Page::Appearance | Page::Interface => paintcraft_ui::icons::classic_menu_image(
-                    ui.ctx(),
-                    icon,
-                    22.0,
-                    ui.visuals().strong_text_color(),
-                ),
+                Page::Appearance | Page::Interface | Page::About => {
+                    paintcraft_ui::icons::classic_menu_image(
+                        ui.ctx(),
+                        icon,
+                        22.0,
+                        ui.visuals().strong_text_color(),
+                    )
+                }
                 Page::Canvas => paintcraft_ui::icons::classic_status_image(
                     ui.ctx(),
                     icon,
@@ -260,6 +264,10 @@ fn content(
             .max_height(height).auto_shrink([false, false]).show(ui, |ui| {
                 match draft.page {
                     Page::Appearance => appearance(ui, &mut draft.values),
+                    Page::About => card(ui, "About", |ui| {
+                        ui.label(t!(ui.ctx(), "PaintCraft by Replicraft"));
+                        ui.label(format!("v{}", env!("CARGO_PKG_VERSION")));
+                    }),
                     Page::Interface => card(ui, "Canvas navigation", |ui| {
                         ui.checkbox(&mut draft.values.studio_auto_scroll, t!(ui.ctx(), "Auto-scroll"));
                         ui.label(t!(ui.ctx(), "Scroll automatically while dragging near the edge of the canvas viewport."));
