@@ -17,6 +17,12 @@ pub struct Completion {
     pub kind: Kind,
     pub path: Option<PathBuf>,
 }
+/// The host supplies its qualified frontend inventory; this crate owns only OS UI.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Filter {
+    pub name: String,
+    pub extensions: Vec<String>,
+}
 #[derive(Debug)]
 pub struct NativeDialogs {
     builder: rfd::AsyncFileDialog,
@@ -53,8 +59,61 @@ impl NativeDialogs {
         label: impl Fn(&str) -> String,
         wake: impl FnOnce() + Send + 'static,
     ) {
+        let filters = match kind {
+            Kind::Open => vec![Filter {
+                name: "Images and PaintCraft documents".into(),
+                extensions: ["pcnd", "png", "bmp", "jpg", "jpeg"]
+                    .map(str::to_owned)
+                    .into(),
+            }],
+            Kind::InspectRecovery | Kind::SaveAs => vec![Filter {
+                name: "PaintCraft document".into(),
+                extensions: vec!["pcnd".into()],
+            }],
+            Kind::Export => export_filters(suggested)
+                .into_iter()
+                .map(|(name, extensions)| Filter {
+                    name: name.into(),
+                    extensions: extensions.iter().map(|ext| (*ext).into()).collect(),
+                })
+                .collect(),
+        };
+        self.request_with_filters(kind, suggested, &filters, label, wake);
+    }
+    pub fn request_with_filters(
+        &mut self,
+        kind: Kind,
+        suggested: Option<&Path>,
+        filters: &[Filter],
+        label: impl Fn(&str) -> String,
+        wake: impl FnOnce() + Send + 'static,
+    ) {
         if self.pending {
             return;
+        }
+        if filters.is_empty()
+            || filters.iter().any(|filter| {
+                filter.extensions.is_empty()
+                    || filter.extensions.iter().any(|ext| {
+                        ext.is_empty() || !ext.bytes().all(|byte| byte.is_ascii_alphanumeric())
+                    })
+            })
+        {
+            return;
+        }
+        let mut filters = filters.to_vec();
+        if kind == Kind::Export
+            && let Some(extension) = suggested
+                .and_then(Path::extension)
+                .and_then(|ext| ext.to_str())
+            && let Some(index) = filters.iter().position(|filter| {
+                filter
+                    .extensions
+                    .iter()
+                    .any(|ext| ext.eq_ignore_ascii_case(extension))
+            })
+        {
+            filters.swap(0, index);
         }
         let mut dialog = self.builder.clone();
         if let Some(path) = suggested {
@@ -65,33 +124,18 @@ impl NativeDialogs {
                 dialog = dialog.set_file_name(name.to_string_lossy());
             }
         }
-        let export_filters = export_filters(suggested);
-        let fallback_extension = if kind == Kind::SaveAs {
-            "pcnd"
-        } else {
-            export_filters[0].1[0]
-        };
+        let fallback_extension = filters[0].extensions[0].clone();
         dialog = match kind {
-            Kind::Open => dialog
-                .set_title(label("Open image or PaintCraft document"))
-                .add_filter(
-                    label("Images and PaintCraft documents"),
-                    &["pcnd", "png", "bmp", "jpg", "jpeg"],
-                ),
-            Kind::InspectRecovery => dialog
-                .set_title(label("Locate the destination of an incomplete save"))
-                .add_filter(label("PaintCraft document"), &["pcnd"]),
-            Kind::SaveAs => dialog
-                .set_title(label("Save PaintCraft document"))
-                .add_filter(label("PaintCraft document"), &["pcnd"]),
-            Kind::Export => {
-                let mut dialog = dialog.set_title(label("Export image"));
-                for (name, extensions) in export_filters {
-                    dialog = dialog.add_filter(label(name), extensions);
-                }
-                dialog
+            Kind::Open => dialog.set_title(label("Open image or PaintCraft document")),
+            Kind::InspectRecovery => {
+                dialog.set_title(label("Locate the destination of an incomplete save"))
             }
+            Kind::SaveAs => dialog.set_title(label("Save PaintCraft document")),
+            Kind::Export => dialog.set_title(label("Export image")),
         };
+        for filter in filters {
+            dialog = dialog.add_filter(label(&filter.name), &filter.extensions);
+        }
         self.pending = true;
         let sender = self.sender.clone();
         std::thread::spawn(move || {
