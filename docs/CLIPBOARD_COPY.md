@@ -6,7 +6,7 @@ Copy button. Focused text widgets and text drafts keep keyboard ownership.
 Copy visible layers uses Edit > Copy visible layers or Ctrl/Cmd+Shift+C in
 Classic and Studio. The Windows 7/10 Home ribbons retain their active-layer Copy
 button; merged copy remains accessible through the shortcut and native Edit menu.
-Cut and Paste remain disabled pending their own transactions.
+Cut now uses an [acknowledged, source-bound removal transaction](CLIPBOARD_CUT.md). Paste remains disabled.
 
 ## Captured pixels
 
@@ -94,8 +94,7 @@ counts and the rerunnable runtime harness are local in ignored
 `docs/validation/clipboard-copy-2026-10-24/`.
 
 Paste needs admitted external pixels, floating placement and one atomic undoable
-transaction. Cut needs acknowledged clipboard ownership before a source-bound
-clear transaction. A CLI clipboard command, external flavor import, large-image
+transaction. Cut uses the source-bound transaction documented in [Clipboard Cut](CLIPBOARD_CUT.md). A CLI clipboard command, external flavor import, large-image
 placement policies, Safari/Firefox, actual OS cross-process behavior, Windows
 DIB/PNG alpha, Wayland/X11 and matched native Paint/Paint.NET behavior remain
 unqualified. This tranche does not complete the clipboard or frontend roadmap.
