@@ -10,6 +10,7 @@ A familiar place to draw, paint and edit images. Built in Rust.
 - Copy selections to the clipboard.
 - Crop, rotate and flip.
 - Undo, redo, editable projects and PNG, BMP and JPEG images.
+- Open still GIF and single-page TIFF pictures.
 - Desktop recent files with one-click reopening.
 - Export format options and adjustable JPEG quality.
 - Native printing on macOS.

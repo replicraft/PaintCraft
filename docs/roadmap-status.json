@@ -452,6 +452,7 @@
       "depends_on": ["T10", "T14"],
       "status": "partial",
       "evidence": [
+        "docs/FORMAT_INTEROPERABILITY.md",
         "docs/CLIPBOARD_COPY.md",
         "docs/FLOATING_SELECTIONS.md",
         "docs/COLOR_PICKER.md", "crates/services/paintcraft-render/tests/sampling.rs",
@@ -545,9 +546,15 @@
       "milestone": "M3",
       "title": "PDN and PAINT compatibility",
       "depends_on": ["T03", "T08", "T30"],
-      "status": "not-started",
-      "evidence": [],
-      "remaining_or_scope": "Read/write/metadata tested independently; malicious parsing bounds; no .NET deserialization/runtime. Fresh creation and source-preserving rewrite qualify independently; retain source bindings across repeated saves.",
+      "status": "partial",
+      "evidence": [
+        "docs/FORMAT_INTEROPERABILITY.md",
+        "crates/adapters/pdn-lib/README.md",
+        "crates/adapters/pdn-lib/src/tests.rs",
+        "crates/adapters/paint-lib/README.md",
+        "crates/adapters/paint-lib/src/tests.rs"
+      ],
+      "remaining_or_scope": "Bounded inert historical PDN3 XML/body-header inspection and ISO box/extent inspection now have malformed-input, resource-limit and cancellation tests. Header hints and shared container brands do not prove a decoded document. No .NET objects are executed. Remaining: NRBF/item/property graph reconstruction, actual layered pixel decoding, source-version fixtures, metadata relationships, private staging/publication and preserving/fresh writers. Native writer qualification requires reopen in pinned original Windows applications, beyond PaintCraft self-roundtrips; repeated saves must retain source bindings.",
       "acceptance": "Read/write/metadata tested independently; malicious parsing bounds; no .NET deserialization/runtime. Fresh creation and source-preserving rewrite qualify independently; retain source bindings across repeated saves."
     },
     {
@@ -567,6 +574,7 @@
       "depends_on": ["T12", "T14", "T17"],
       "status": "partial",
       "evidence": [
+        "docs/FORMAT_INTEROPERABILITY.md",
         "docs/CLIPBOARD_COPY.md",
         "docs/FLOATING_SELECTIONS.md",
         "docs/RECENT_FILES.md",
@@ -662,6 +670,7 @@
       ],
       "status": "not-started",
       "evidence": [
+        "docs/FORMAT_INTEROPERABILITY.md",
         "crates/editing/paintcraft-editor/tests/contours.rs",
         "crates/editing/paintcraft-tools/tests/construction.rs",
         "apps/paintcraft-web/src/construction_tests.rs",
