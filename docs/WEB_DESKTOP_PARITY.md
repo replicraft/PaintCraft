@@ -78,3 +78,35 @@ F11 entry/exit with its browser default prevented, Escape exit, external exit,
 menu checkmarks and caught request rejection without runtime exceptions. Evidence
 is in ignored `docs/validation/browser-fullscreen-2026-10-24/`. This is scoped
 Chromium evidence; broader browser/device qualification remains open.
+
+## Narrow layouts, themes and project storage
+
+Studio's browser Interface and Settings controls now occupy the upper right,
+matching Classic and the desktop host. Settings use distinct Appearance,
+Interface and About icons, 22-point section headings, and a GitHub link that opens
+in a new tab. Paint 7 forces a light presentation in Classic while retaining the
+preferred system/light/dark setting; leaving that skin resolves the retained
+preference again. Studio remains free to use its preferred theme.
+
+On narrow screens, Interface becomes an accessible icon button and the zoom row
+fits the available width. All seven languages retain reachable header controls
+at 320 × 568. The Classic canvas supports queued panning, and the browser maps
+middle-button dragging, Space-dragging and two-finger touch movement to frontend
+navigation. Space remains text input while using the Text tool. Touch gestures
+beginning over another UI layer do not pan the canvas. Both canvas edges remain
+reachable after shrinking a zoomed desktop window to phone width. A production
+390-pixel-wide headless browser check also exercised actual two-finger input.
+Physical touch hardware and broader browser support remain unqualified.
+
+The browser offers a localized Download for desktop CTA, with a compact entry
+inside Interface on small screens. It opens `/download` in a new tab. The page
+detects desktop platforms and opens `replicraft/paintcraft/releases/latest` as the
+requested placeholder; mobile and unknown devices retain manual platform links.
+The page currently uses English copy. Individual installer asset URLs and actual
+automatic file downloads are not connected yet.
+
+Browser, desktop and CLI normal saves now use [compact binary PCND 2](PCND_STORAGE.md).
+A production browser project was independently decoded and reopened through the
+file picker, then saved byte-identically. This does not close the remaining
+format breadth, native service, GPU composition or cross-browser roadmap gates.
+Evidence is in ignored `docs/validation/ui-storage-polish-2026-10-24/`.

@@ -90,3 +90,15 @@ specimen and conformance digest tests remain unchanged.
 Raw measurements and production browser evidence are retained in ignored
 `docs/validation/ui-storage-polish-2026-10-24/`. Broader format conformance and
 representative performance studies remain roadmap work.
+
+## Production browser check
+
+The production Wasm build downloaded a blank 1000 × 486 project at 118 bytes and a
+short horizontal pencil line at 140 bytes. An independent Python wire reader
+verified each whole-file SHA-256 and recovered exactly 192 contiguous black pixels
+on the white default, with an 18-byte run payload for the one touched tile.
+Reopening that download through the real browser file picker left the document
+clean; saving it again produced byte-identical output. The page title updated to
+`pencil.pcnd - PaintCraft`. This is a dedicated headless Chromium check, without
+physical mobile hardware or cross-browser qualification. The scripts, downloaded
+files, screenshots and oracle results are in the ignored evidence directory above.

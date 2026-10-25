@@ -738,3 +738,23 @@ fallback, external-exit state synchronization and localized permission failures.
 Actual headless Chromium production checks and helper/host regressions pass.
 See [browser fullscreen validation scope](WEB_DESKTOP_PARITY.md#browser-fullscreen).
 Broader T22 conformance and browser/device qualification remain open.
+
+### UI and compact-save follow-up
+
+Settings now have distinct section icons, larger headings and the product GitHub
+link. Paint 7 uses light mode without overwriting the preferred theme; switching
+away restores it. Studio's browser host controls match Classic's upper-right
+placement. Narrow header/zoom layouts and temporary mouse/two-finger canvas
+panning are connected. The browser's desktop download route uses latest-release
+placeholders, pending individual release asset links.
+
+Normal project saves use binary PCND 2 with bounded portable LZ4/run compression
+and optional native Zstandard. A blank 1000 × 486 project measures 118 bytes, and a
+real browser pencil-line project measures 140 bytes. Independent decoding and
+browser reopen/save checks preserve pixels and metadata. Canonical PCND 1 fixture
+digests remain unchanged. These implementation checks do not complete the broader
+T22 browser conformance or T24 representative codec/performance study gates.
+
+Oil now tapers in load and width, and crayon leaves more clustered paper breaks.
+Shared opacity, clipping, preview/release and undo tests pass. Contact sheets are
+implementation evidence, without a native Paint material-engine equivalence claim.

@@ -288,7 +288,7 @@ remain T16 work. Current-app GPU previews can be exported with the ignored
 | Area | What | Evidence |
 |---|---|---|
 | Engine (T01, T04–T07) | Sparse RGBA8 layers (256×256 copy-on-write tiles, exact default pixel, hidden RGB preserved), immutable documents, deterministic UUIDv5 identifiers, atomic staged batches, semantic no-ops, linear recorded undo/redo | unit tests; 21 conformance vectors from the Python oracle |
-| Native format (T08, T29) | Canonical PCND v1 writer (byte-identical to the specimen) and bounded reader; unknown version, schema, feature, encoding or group is `capability.unsupported`, never editable | `pcnd.rs` tests, vector digests |
+| Native format (T08, T29) | Canonical PCND 1 fixture writer and compact binary PCND 2 user saves, with bounded readers and exact preservation of the canonical specimen and vector digests; unsupported document semantics are refused | `pcnd.rs` tests, vector digests, [storage contract](PCND_STORAGE.md) |
 | Batch v2 | v1 plus `raster.stroke_path`, `raster.flood_fill`, `raster.shape`, `raster.contour`, `raster.text`, `layer.reorder`, `layer.duplicate`, `canvas.clear` (see below) | behavior tests, JSON-Schema grammar cases |
 | Image formats | PNG, BMP, JPEG import and export with named, acknowledged losses (flatten, hidden RGB, lossy JPEG, discarded alpha) | `image.rs`, `export.rs`, CLI tests |
 | Safe save and recovery (T10) | Streaming staging → atomic replace → bounded read-back; ordered native queue and file receipts; autosave checkpoints with per-session locks; recover, discard or ask later | platform `save.rs`, format `recovery.rs`, GUI tests |
