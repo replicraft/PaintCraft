@@ -31,6 +31,7 @@ pub enum Label {
     TransformSelection,
     MoveSelection,
     Cut,
+    Paste,
 }
 
 impl Label {
@@ -58,6 +59,7 @@ impl Label {
             Self::TransformSelection => "Transform selection",
             Self::MoveSelection => "Move selection",
             Self::Cut => "Cut",
+            Self::Paste => "Paste",
         }
     }
 }

@@ -142,6 +142,14 @@ impl Preparation {
         let receipt = self
             .session
             .apply_checked_with_admission(batch, admission, &check)?;
+        self.finish_edit(receipt, check)
+    }
+
+    pub(super) fn finish_edit(
+        self,
+        receipt: Receipt,
+        check: impl Fn() -> Result<()>,
+    ) -> Result<PreparedEdit> {
         check()?;
         Ok(PreparedEdit {
             base: self.base,

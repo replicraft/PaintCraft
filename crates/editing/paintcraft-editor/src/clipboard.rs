@@ -148,3 +148,6 @@ impl CutSource {
 
 #[cfg(test)]
 mod cut_tests;
+
+mod paste;
+pub use paste::{PasteCanvas, PasteDraft};

@@ -15,14 +15,13 @@ paintcraft-history.workspace = true
 paintcraft-raster.workspace = true
 
 uuid.workspace = true
+sha2.workspace = true
 
 [dev-dependencies]
 paintcraft-platform.workspace = true
 criterion.workspace = true
 crc32fast.workspace = true
 paintcraft-render.workspace = true
-
-sha2.workspace = true
 
 [[bench]]
 name = "history"

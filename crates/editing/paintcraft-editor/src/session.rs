@@ -25,6 +25,7 @@ pub use paintcraft_history::{
 use paintcraft_history::{History, Snapshot};
 
 mod history;
+mod paste;
 mod preparation;
 mod residency;
 pub use history::{HistoryTicket, HistoryView};
@@ -264,13 +265,23 @@ impl Session {
                 "The current publication differs from the requested base.",
             ));
         }
-        let mut staged = execute_with_admission_checked(
+        let staged = execute_with_admission_checked(
             &self.doc,
             self.selection.clone(),
             batch,
             admission.constrain_pixels(self.staged_pixels),
             &check,
         )?;
+        self.commit_staged(staged, &batch.digest, history::label(batch), check)
+    }
+
+    fn commit_staged(
+        &mut self,
+        mut staged: crate::execute::Staged,
+        digest: &str,
+        label: paintcraft_history::Label,
+        check: impl Fn() -> Result<()>,
+    ) -> Result<Receipt> {
         check()?;
         let content_changed = !staged.doc.same_semantics(&self.doc);
         if !content_changed
@@ -289,10 +300,9 @@ impl Session {
         let next_epoch = self.next_epoch()?;
         let base = self.doc.state_id.to_string();
         if content_changed {
-            staged.doc.state_id = deterministic_id(&["state", &base, &batch.digest]);
+            staged.doc.state_id = deterministic_id(&["state", &base, digest]);
         }
-        let history_id =
-            deterministic_id(&["history", &base, &self.epoch.to_string(), &batch.digest]);
+        let history_id = deterministic_id(&["history", &base, &self.epoch.to_string(), digest]);
         let doc = Arc::new(staged.doc);
         // The single publication point: document, selection, history and epoch together.
         self.history.record_labeled_checked(
@@ -301,7 +311,7 @@ impl Session {
                 selection: staged.selection.clone(),
                 history_id: Some(history_id),
             },
-            history::label(batch),
+            label,
             check,
         )?;
         self.doc = doc;
