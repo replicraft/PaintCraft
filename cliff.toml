@@ -4,7 +4,7 @@ body = """
 ## {{ version | default(value="Unreleased") }}
 {% for group, commits in commits | group_by(attribute="group") %}
 ### {{ group }}
-{% for commit in commits %}
+{% for commit in commits -%}
 - {{ commit.message | split(pat="\n") | first }} ({{ commit.id | truncate(length=7, end="") }})
 {% endfor %}
 {% endfor %}
@@ -16,6 +16,8 @@ conventional_commits = true
 filter_unconventional = false
 tag_pattern = '^v[0-9]+\.[0-9]+\.[0-9]+(?:[-+].*)?$'
 sort_commits = "oldest"
+# Include descriptive history as well as Conventional Commits. Explicit historical
+# exceptions cover subjects whose intent cannot be inferred from their first verb.
 commit_parsers = [
     { message = "^Merge (pull request|branch|remote-tracking branch)", skip = true },
     { message = "^feat", group = "Features" },
@@ -24,5 +26,67 @@ commit_parsers = [
     { message = "^refactor", group = "Refactoring" },
     { message = "^docs?", group = "Documentation" },
     { message = "^(ci|build|test|chore|style)", group = "Maintenance" },
+
+    { sha = "ceb3a618056feb03073985884d1533dc712c1330", group = "Fixes" },
+    { sha = "4294efebb7cace7cc7f16a57926694c7891ebe2c", group = "Fixes" },
+    { sha = "d081138faa4e3068344a24bd4e19b3335679ac40", group = "Fixes" },
+    { sha = "afdeb37042fdce3772c601a6ede816bc520449bb", group = "Fixes" },
+    { sha = "fc70950fdbe2a0c68a37922d6f178c5f73285291", group = "Fixes" },
+    { sha = "23cb262cc3852b30b5ba8fdae6d81a339bf969fb", group = "Fixes" },
+    { sha = "b402ad859801cd06aa4105117df9716def4dc99a", group = "Fixes" },
+    { sha = "a9fd940ffd81d769fab4bf27a3a628b60743c754", group = "Fixes" },
+    { sha = "4542486d252b2ccf3e13b7e0a190a05b12d952ff", group = "Fixes" },
+    { sha = "babeee292777e604a5dad051519e1d756ebfece3", group = "Features" },
+    { sha = "17d9a1bd3648f302ea940bd1871925ff518922a0", group = "Features" },
+    { sha = "c071e4a149d0daa0dc9f986628267de0d8710522", group = "Features" },
+    { sha = "89da690b26f5d1a57f878f5d36625503d28a73c1", group = "Features" },
+    { sha = "0bc67cdbce41cadba43c61b5715ba180894ac471", group = "Features" },
+    { sha = "0907c5e27187016eba2b3086ccc0ce7400e5a1a7", group = "Features" },
+    { sha = "6b8a27a648e45aa6c2299cddf11dde1a819c86d1", group = "Features" },
+    { sha = "68d74488cc0880fe6e9e974ec3aeeb9fef588ab8", group = "Features" },
+    { sha = "36132cbd4667f5a0d8bc3eeb8ba26fd5cc1cc4f2", group = "Features" },
+    { sha = "805c457382837ab015e2b19e5be58b30aadf29bd", group = "Features" },
+    { sha = "3eeca8635cd535d3b560cd9bc862c7f1af295802", group = "Documentation" },
+    { sha = "db6bdf429a13b46ebd6e3afab2565293796d8168", group = "Documentation" },
+    { sha = "addabc079a48ee83f42b7845c0e61028e4f30a9f", group = "Documentation" },
+    { sha = "127e4c9f29f10290674f98724ca1351f7dce5d2a", group = "Maintenance" },
+    { sha = "945f225b82d366bacc1bb8966d53ddd45fc6f00c", group = "Maintenance" },
+    { sha = "f89b4a67de42a7962df6789be1415897d51c6961", group = "Maintenance" },
+    { sha = "cdb0d7ba5e2b9afc661476387216d4b8812b7073", group = "Maintenance" },
+    { sha = "d56412554f8786c41e80e61af5171fb4d535f722", group = "Maintenance" },
+    { sha = "79104cf7a83686340ceeea07a164c63e8f0fb8a7", group = "Maintenance" },
+    { sha = "96376bd2971eb03cba5d23cce7694852755823fa", group = "Maintenance" },
+    { sha = "8aedf44bee8b1da449e588643289d975cfd8d782", group = "Maintenance" },
+    { sha = "db260ebaca0e1afead4fe602573842dbb2e442ea", group = "Maintenance" },
+    { sha = "e8bdb1cb495e4069308dc1317c1284d34180e517", group = "Maintenance" },
+    { sha = "b2836427617e1f1401b45fc806309ce29db511a5", group = "Maintenance" },
+    { sha = "10e14ca31fda4e1cff8799924c9b7352480624d8", group = "Maintenance" },
+    { sha = "571b04a55a763a7b6b1daf1769bb908e2fd7a899", group = "Refactoring" },
+    { sha = "6de3da1418587eeefe888657ba75495c82e0dacb", group = "Refactoring" },
+    { sha = "7f4aefda83656b86fc58ad5b78f7f827138d23c1", group = "Refactoring" },
+    { sha = "4154d925bd91bed48384a6cde919b237dc02a2cf", group = "Refactoring" },
+    { sha = "049a7f282529293aab7b727b47ec87c8b2da50b9", group = "Refactoring" },
+    { sha = "b9635cb467caf0cca7306d1d5f71d182ce1fc72a", group = "Refactoring" },
+    { sha = "40be7e6763f2b56241992841cba96b6ac492936d", group = "Performance" },
+    { sha = "5f3e9759acdccbfa8c5b76c715d24d31234e3760", group = "Performance" },
+    { sha = "e00c7ea7f80119ef3182efbddef9198616826aea", group = "Performance" },
+    { sha = "06f51fa236d9b751c76786a260efa30fc6c539a2", group = "Performance" },
+    { sha = "f76a75b627d925f61842a37686a9b530a1a45c8e", group = "Performance" },
+    { sha = "52242d04d7a5dd2a9254b4a967b2fd74953bbec6", group = "Performance" },
+    { sha = "69daadf5167f23dd09810ccf0201f760ac6e52e7", group = "Performance" },
+    { sha = "5e7f1f297deb7cc2d103a9ec17e76034d8409a34", group = "Performance" },
+    { sha = "031eff29376606a944a07e84c2e129841a298e7c", group = "Performance" },
+    { sha = "1c9afaf30e10aa4cef911b91866ae0e985fb0f6f", group = "Performance" },
+    { sha = "fe847ceec83c9ca59f647b079a71345ea38d9650", group = "Performance" },
+    { message = "(?i)^(Refine|Match|Align|Center|Polish|Join|Round|Increase|Enlarge|Improve|Auto-hide|Complete Japanese|Complete language|ui(?:\\([^)]*\\))?:)\\b", group = "Fixes" },
+    { message = "(?i)^(Document|Record|Describe|Explain|Evaluate|Capture .* (?:and |with )?(?:record|document)|Refresh .* (?:captures|screenshots)|Simplify README|Reconcile roadmap|Correct the CLI test count|Update the README|.*README|Losslessly optimize README)\\b", group = "Documentation" },
+    { message = "(?i)^(Test|Verify|Qualify|Cross-check|Simulate|Prove|Cover|Vendor|Initial commit|Ignore|Pin|Run .*tests|Synchronize worker start|Update .* (?:checks|regressions)|Preserve menu geometry checks|Package|Generate release changelogs|Fit FreeBSD|Enforce the 800-line)\\b", group = "Maintenance" },
+    { message = "(?i)^(bench(?:\\([^)]*\\))?:|Benchmark|Measure|Compare|Reuse|Keep magnified|Use exact widened SIMD|Fit Classic on opening|Compress|Compact)\\b", group = "Performance" },
+    { message = "(?i)^(Split|Separate|Organize|Extract|Consolidate|Unify|Import locale|Move (?:filesystem|native format|platform availability)|Replace CLI|Make core|Use the t macro|Share bundled desktop)\\b", group = "Refactoring" },
+    { message = "(?i)^(Fix|Correct|Detect|Avoid|Deduplicate|Invalidate|Prevent|Protect|Refuse|Respect|Honor|Guard|Check captured|Preserve|Keep|Restore|Reject|Fence|Resolve|Return|Retry|Cancel|Retire|Quarantine|Wait|Discard|Filter|Patch|Handle|Transfer|Bound|Reserve|Reprice|Reclaim)\\b", group = "Fixes" },
+    { message = "(?i)^(Add|Enable|Expose|Connect|Create|Support|Implement|Integrate|Define|Derive|Prepare|Compile|Render|Present|Give|Refine|Match|Align|Translate|Localize|Bundle|Persist|Show|Allow|Admit|Capture (?:Windows|bounded|exact)|Read|Write|Load|Request|Require|Acquire|Track|Stage|Use|Stream|Route|Save|Retain|Make|Build|Bring|Carry|Center|Complete|Toggle|Reopen|Own|Erase|Gate|Model|Map|Open|Polish|Zoom|Rebuild|Remove|Join|Round|Embed|Identify|Distinguish|Increase|Enlarge|Auto-hide|Leave|Improve|Apply|Wake|Price|Lease|Combine|Propagate|Observe|Attach|Batch|Recycle|Produce|Extend|Plan|Consume|Allocate|Resume|Represent|Claim|Discover|Journal|Replay)\\b", group = "Features" },
+    { message = "^(ui|web|desktop|editor|raster|classic|tools|render|commands|icons)(\\([^)]*\\))?:", group = "Features" },
+    { message = "^release:", group = "Documentation" },
+    { message = "^bench(\\([^)]*\\))?:", group = "Performance" },
     { message = ".*", group = "Other changes" },
 ]

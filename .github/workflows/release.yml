@@ -261,6 +261,10 @@ jobs:
         with:
           name: paintcraft-release-${{ needs.version.outputs.version }}
           path: dist
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-changelog-${{ needs.version.outputs.version }}
+          path: release-notes
       - name: Publish after every platform succeeds
         shell: bash
         env:
@@ -273,13 +277,18 @@ jobs:
           cd dist
           sha256sum --check SHA256SUMS.txt
           cd ..
+          {
+            cat "docs/releases/v$RELEASE_VERSION.md"
+            printf '\n\n'
+            cat release-notes/CHANGELOG.md
+          } > release-body.md
           if gh release view "$RELEASE_TAG" --json isDraft > release.json; then
             if ! jq -e '.isDraft == true' release.json > /dev/null; then
               echo '::error::Release already published; use a new version tag.'
               exit 1
             fi
           else
-            gh release create "$RELEASE_TAG" --verify-tag --draft --generate-notes --notes-file "docs/releases/v$RELEASE_VERSION.md" --title "PaintCraft $RELEASE_TAG"
+            gh release create "$RELEASE_TAG" --verify-tag --draft --notes-file release-body.md --title "PaintCraft $RELEASE_TAG"
           fi
           gh release upload "$RELEASE_TAG" dist/* --clobber
           gh release view "$RELEASE_TAG" --json assets --jq '.assets[].name' | sort > uploaded.txt
@@ -287,4 +296,4 @@ jobs:
           diff -u expected.txt uploaded.txt
           prerelease=false
           if [[ "$RELEASE_VERSION" == *-* ]]; then prerelease=true; fi
-          gh release edit "$RELEASE_TAG" --draft=false --prerelease="$prerelease"
+          gh release edit "$RELEASE_TAG" --draft=false --prerelease="$prerelease" --notes-file release-body.md

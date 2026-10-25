@@ -36,7 +36,7 @@ inside the downloads. The checksums describe the final downloadable bytes.
 5. Push a matching `v<version>` tag when ready to publish. A tag that disagrees
    with Cargo fails before building. The tag run builds all platforms again,
    checks every asset and SHA-256 digest, creates/uploads a draft and then
-   publishes it with the authored notes followed by GitHub's generated notes.
+   publishes it with the authored notes followed by the grouped git-cliff changelog.
    An existing published release is refused. Prerelease versions
    produce prerelease downloads; MSI and Apple bundle metadata use the numeric
    major/minor/patch version. Use a new numeric version when upgrading an MSI.
@@ -50,6 +50,12 @@ Like EarthCraft, release validation fetches the complete Git history and uses
 git-cliff 2.14.2 with `cliff.toml` to generate a grouped `CHANGELOG.md`.
 Download it from the separate `release-changelog-<version>` workflow artifact.
 The authored installation notes remain in `docs/releases/v<version>.md`.
+`cliff.toml` classifies descriptive commits as well as Conventional Commits, with
+explicit exceptions for historical subjects whose intent is ambiguous. Keep the
+root `CHANGELOG.md` updated with `git-cliff --output CHANGELOG.md` when preparing
+release notes. Check that every release commit appears once and none fall under
+"Other changes" before publishing. Note-only corrections after a tag can update
+the GitHub release body without rebuilding the application downloads.
 
 The `assemble` job refuses a missing architecture, extra/stale asset, empty file,
 symlink or mismatched per-asset checksum. Only after all 26 checks succeed does
