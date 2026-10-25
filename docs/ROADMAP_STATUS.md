@@ -722,3 +722,12 @@ regressions, browser host tests and actual isolated Chromium file/title/reload
 workflows pass. The parity ledger records the still-unconnected workspace/view,
 format, runtime/recovery, Studio and platform-adapter work; this does not complete
 browser/desktop parity or the roadmap.
+
+
+Browser display controls now connect pixel grid, Classic rulers, status-bar
+visibility, automatic toolbar hiding and the live thumbnail. Grid painting is
+shared with desktop; presentation toggles preserve serialized pixels and history
+in all Classic skins. Visibility preferences round-trip through browser storage,
+while grid/thumbnail state remains separate for Classic and Studio. See
+[the parity ledger](WEB_DESKTOP_PARITY.md). T22 conformance remains not-started:
+its native-equivalent fixture, interruption and multi-browser gates are still open.

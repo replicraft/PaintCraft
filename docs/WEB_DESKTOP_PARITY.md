@@ -11,7 +11,7 @@ workspaces. This ledger distinguishes connected features from remaining work.
 | Document identity | Open shows the photo/project name in the tab title; requested project downloads use the same basename and update that title; New restores Untitled | The browser cannot observe a name changed in the browser's own download destination UI |
 | Classic editing | Shared nine brush media, 23 shapes, fill, picker, text rasterization, masks, lasso, crop, five orientations and Undo/Redo | Arbitrary-angle/resampled transformations, effects and persistent editable objects remain broader roadmap work |
 | Clipboard | PNG read/write, Copy/Cut/Copy visible and private ordinary Paste/new-layer Paste | Other browser/device permissions and cross-application fidelity remain unqualified |
-| View and workspace controls | Canvas fit/actual/selection zoom, scroll, layers and tool controls | Pixel grid, rulers, status-bar toggle, toolbar auto-hide, fullscreen and thumbnail are not connected in the browser |
+| View and workspace controls | Canvas fit/actual/selection zoom, scroll, layers, tool controls, shared pixel grid, Classic rulers, persistent status/toolbar visibility and live thumbnail | Fullscreen and broader Studio navigation parity remain open |
 | Frontends and documents | Classic 7, 10 and 11 skins; Studio toolbar, floating tools/colors and history, separate documents/history/views with a download/discard switch guard | Multiple documents within each workspace, tabs, Save All and remaining Studio navigation/parity workflows |
 | File adapters | Browser pickers, lossless compact PCND downloads, PNG/BMP/JPEG input and image export | Broader native codecs, format capabilities and export controls |
 | Runtime and recovery | Bounded synchronous browser editing; unload warning; preferences in local storage | Background preparation, larger document/resource handling, browser recovery/document persistence and GPU document composition |
@@ -42,3 +42,20 @@ exceptions were recorded. Artifacts are local in ignored
 This evidence covers these settings/identity workflows, not the unfinished parity
 rows, other browsers/devices, native appearance on physical Windows, remote CI or
 a Cloudflare deployment.
+
+## Browser display controls
+
+Pixel grid uses the same clipped overlay as desktop and never reads or changes
+raster storage. Classic rulers use the shared scrolling canvas geometry. Status
+bar and automatic toolbar visibility choices persist in browser preferences;
+older preference records retain their original defaults. Grid and thumbnail
+visibility belong to each frontend workspace. The thumbnail displays the current
+prepared canvas texture, including private paint, shape and text previews.
+
+Host tests exercise all three Classic skins in English and Japanese, actual menu
+hide/reveal behavior, translated ruler/thumbnail labels, strict preference parsing,
+and unchanged canonical document bytes/history tickets. The existing desktop
+high-DPI grid regression also passes against the shared overlay. Production
+headless-browser checks also verify actual reload restoration of rulers and
+status/toolbar visibility. Runtime evidence is in ignored
+`docs/validation/browser-view-controls-2026-10-24/`.
