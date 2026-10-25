@@ -278,8 +278,8 @@ fn content(ui: &mut egui::Ui, context: Context, actions: &mut Vec<Action>, pane:
                 ui.available_width(),
                 Icon::Print,
                 "Print…",
-                Action::Print.enabled(context),
                 false,
+                Action::Print.enabled(context),
             );
             dispatch(ui, response, Action::Print, actions);
             for title in ["Page setup…", "Print preview"] {

@@ -274,3 +274,35 @@ fn export_classic_file_and_edit_menus() {
         }
     }
 }
+
+#[test]
+fn historical_print_rows_use_the_same_host_capability_as_the_shortcut() {
+    use paintcraft::settings::{ClassicVariant, Settings};
+    for variant in [ClassicVariant::V7, ClassicVariant::V10] {
+        let dir = scratch("historical-print-capability");
+        Settings {
+            classic_variant: Some(variant),
+            ..Default::default()
+        }
+        .save(&dir)
+        .unwrap();
+        let mut h = harness_with(App::new(None).with_settings(dir.clone()), 1.0, true);
+        let ticket = h.state().editor().history_view().ticket;
+        file(&mut h);
+        h.get_by_role_and_label(Role::Button, "File")
+            .get_by_label("Print")
+            .click();
+        h.run();
+        let print = h
+            .get_by_role_and_label(Role::Button, "File")
+            .get_by_label("Print…");
+        assert_eq!(
+            print.accesskit_node().is_disabled(),
+            !cfg!(target_os = "macos")
+        );
+        // Availability inspection must never open a real print dialog.
+        assert_eq!(h.state().editor().history_view().ticket, ticket);
+        drop(h);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+}
