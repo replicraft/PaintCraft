@@ -46,6 +46,7 @@ tradeoffs and experiment priorities for SIMD, containers, parsers, caches and er
 | Typed errors | thiserror 2.0.21 | Core Error and JsonError derive standard error/display implementations; stable codes, error/v1 and CLI exit mapping preserved. Anyhow reserved for a concrete host-only context boundary |
 | CLI | Clap | Integrated, command modules and end-to-end tests |
 | File dialogs | rfd | Integrated for Open, Save As and Export |
+| Clipboard | arboard 3.7.0 writes; objc2 0.6.5, AppKit/Foundation 0.3.2 encoded reads | Optional native platform feature; acknowledged writes retained. Capacity-admitted, version-checked macOS PNG/TIFF transport and cancellation/lifecycle tests now exist, including a private-pasteboard native check. Read/decode/placement UI integration and other OS/browser readers remain unfinished. Existing locked Objective-C dependencies are now direct/workspace-inherited; no CLI dependency or performance/release qualification. [Scope](CLIPBOARD_READS.md) |
 | macOS menus | muda 0.21.2, default features disabled | Optional platform menus feature; desktop action routing and guarded Quit, no CLI dependency |
 | Installed fonts | fontdb 0.23.0 | Shared with Cosmic Text to avoid a second database/version; standard installed-family enumeration; native std/fs plus Cosmic memmap/std features |
 | Standard image codecs | image | Integrated baseline, 0.25.10 with only PNG/BMP/JPEG; strict admission and loss reporting remain in PaintCraft |

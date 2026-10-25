@@ -1,6 +1,6 @@
 [package]
 name = "paintcraft-platform"
-description = "Native dialogs and filesystem replacement adapters"
+description = "Native dialogs, clipboard and filesystem adapters"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -10,7 +10,7 @@ publish.workspace = true
 [features]
 default = []
 printing = []
-clipboard = ["dep:arboard"]
+clipboard = ["dep:arboard", "dep:objc2", "dep:objc2-app-kit", "dep:objc2-foundation"]
 menus = ["dep:muda"]
 fonts = ["dep:fontdb"]
 dialogs = ["dep:rfd", "dep:raw-window-handle", "dep:pollster"]
@@ -27,6 +27,9 @@ sha2.workspace = true
 uuid.workspace = true
 
 [target.'cfg(target_os = "macos")'.dependencies]
+objc2 = { workspace = true, optional = true }
+objc2-app-kit = { workspace = true, optional = true }
+objc2-foundation = { workspace = true, optional = true }
 muda = { workspace = true, optional = true }
 
 [lints]

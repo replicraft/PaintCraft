@@ -1,7 +1,9 @@
-//! Acknowledged native image writes. The worker retains clipboard ownership.
+//! Native writes and bounded encoded reads with acknowledged completion.
 use paintcraft_core::types::clipboard::Image;
 mod encoded;
+mod read;
 pub use encoded::{EncodedImage, Encoding, MAX_ENCODED_BYTES};
+pub use read::ReadService;
 use std::borrow::Cow;
 use std::fmt;
 use std::panic::{AssertUnwindSafe, catch_unwind};
@@ -44,6 +46,28 @@ struct Lease {
     released: AtomicBool,
 }
 impl Lease {
+    fn acquire(state: &Arc<State>) -> Result<Arc<Self>, String> {
+        if state.closed.load(Ordering::Acquire) || state.poisoned.load(Ordering::Acquire) {
+            return Err("Clipboard service is unavailable".into());
+        }
+        state
+            .busy
+            .compare_exchange(false, true, Ordering::AcqRel, Ordering::Acquire)
+            .map_err(|_| "A clipboard operation is already pending".to_owned())?;
+        // A previous job may have poisoned the worker while this submission
+        // waited to acquire the slot. Recheck after acquiring ownership.
+        if state.poisoned.load(Ordering::Acquire) || state.closed.load(Ordering::Acquire) {
+            state.busy.store(false, Ordering::Release);
+            return Err("Clipboard service is unavailable".into());
+        }
+        Ok(Arc::new(Self {
+            state: state.clone(),
+            cancelled: AtomicBool::new(false),
+            done: AtomicBool::new(false),
+            retired: AtomicBool::new(false),
+            released: AtomicBool::new(false),
+        }))
+    }
     fn cancelled(&self) -> bool {
         self.cancelled.load(Ordering::Acquire) || self.state.closed.load(Ordering::Acquire)
     }
@@ -116,27 +140,7 @@ impl ClipboardService {
         image: Image,
         wake: impl FnOnce() + Send + 'static,
     ) -> Result<Job, String> {
-        if self.state.closed.load(Ordering::Acquire) || self.state.poisoned.load(Ordering::Acquire)
-        {
-            return Err("Clipboard service is unavailable".into());
-        }
-        self.state
-            .busy
-            .compare_exchange(false, true, Ordering::AcqRel, Ordering::Acquire)
-            .map_err(|_| "A clipboard write is already pending".to_owned())?;
-        // A previous job may have poisoned the worker while this submission
-        // waited to acquire the slot. Recheck after acquiring ownership.
-        if self.state.poisoned.load(Ordering::Acquire) {
-            self.state.busy.store(false, Ordering::Release);
-            return Err("Clipboard service is unavailable".into());
-        }
-        let lease = Arc::new(Lease {
-            state: self.state.clone(),
-            cancelled: AtomicBool::new(false),
-            done: AtomicBool::new(false),
-            retired: AtomicBool::new(false),
-            released: AtomicBool::new(false),
-        });
+        let lease = Lease::acquire(&self.state)?;
         let (reply, receiver) = mpsc::channel();
         let request = Request {
             image,
@@ -169,21 +173,21 @@ impl Drop for ClipboardService {
     }
 }
 
-/// A successful result acknowledges the native write, never just its submission.
-/// Cancellation cannot undo an opaque OS call already in progress, but suppresses
-/// its acknowledgement, so callers must not delete source pixels after cancelling.
+/// A successful result acknowledges a completed native operation, never just
+/// submission. A read result remains untrusted encoded data requiring codec
+/// admission. Cancellation suppresses success even during an opaque OS call.
 #[derive(Debug)]
-pub struct Job {
-    receiver: mpsc::Receiver<Result<(), String>>,
+pub struct Job<T = ()> {
+    receiver: mpsc::Receiver<Result<T, String>>,
     lease: Arc<Lease>,
     consumed: AtomicBool,
 }
-impl Job {
+impl<T> Job<T> {
     pub fn cancel(&self) {
         self.lease.cancelled.store(true, Ordering::Release);
     }
 
-    pub fn try_result(&self) -> Option<Result<(), String>> {
+    pub fn try_result(&self) -> Option<Result<T, String>> {
         if self.consumed.load(Ordering::Acquire) {
             return None;
         }
@@ -197,7 +201,7 @@ impl Job {
         };
         self.consumed.store(true, Ordering::Release);
         let result = if self.lease.cancelled() {
-            Err("Clipboard write cancelled".into())
+            Err("Clipboard operation cancelled".into())
         } else {
             result
         };
@@ -205,7 +209,7 @@ impl Job {
         Some(result)
     }
 }
-impl Drop for Job {
+impl<T> Drop for Job<T> {
     fn drop(&mut self) {
         self.cancel();
         self.lease.retire();

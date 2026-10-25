@@ -654,3 +654,13 @@ path with frozen/hash-guarded inputs, explicit loss consent and safe native outp
 Independent exact-pixel/cancellation and real CLI save/reopen tests cover it.
 Desktop/browser Paste controls remain disabled until clipboard reads and placement
 are connected; profile parity and the broader clipboard gate remain incomplete.
+
+
+[Encoded native clipboard reads](CLIPBOARD_READS.md) now provide a lazy cancellable
+service and capacity-admitted immutable snapshots. The macOS PNG/TIFF adapter
+checks exact advertised types, bounded encoded size and pasteboard generation
+before exposing bytes. Portable lifecycle tests and a separately executed private
+native-pasteboard test pass without accessing the general clipboard. Intel is
+cross-compile checked only. Decoder/loss consent and native/browser placement are
+not connected yet; Paste controls remain disabled and other OS read adapters are
+unfinished. Clipboard and frontend gates remain partial.

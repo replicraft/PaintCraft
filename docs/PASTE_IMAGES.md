@@ -1,7 +1,7 @@
 # External-image Paste foundations
 
 The editor now supports a frozen Paste draft and atomic insertion of its image as
-a new topmost layer. The CLI consumes this path through `paste-image`. Desktop and
+a new topmost layer. The CLI consumes this path through `paste-image`. A [bounded encoded macOS reader](CLIPBOARD_READS.md) now exists. Desktop and
 browser canvas Paste controls remain disabled: clipboard reads, interactive
 placement, oversized-image choices and profile-specific paste behavior are still
 work. This tranche does not complete clipboard support or the frontend roadmap.
