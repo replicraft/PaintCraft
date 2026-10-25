@@ -285,3 +285,17 @@ there-are-no-selected-pixels-to-copy = コピーする選択ピクセルがあ�
 copying-to-clipboard-more = クリップボードにコピー中…
 copied-to-clipboard = クリップボードにコピーしました。
 clipboard-copy-failed = クリップボードへのコピーに失敗しました
+
+high-depth-samples-will-be-reduced-from-16-bit-to-8-bit = 高精度のサンプルは16ビットから8ビットに変換されます。
+icc-color-profiles-will-not-be-retained = ICCカラープロファイルは保持されません。
+exif-metadata-will-not-be-retained = EXIFメタデータは保持されません。
+only-the-first-animation-frame-will-be-imported = アニメーションの最初のフレームのみが読み込まれます。
+palette-entries-will-be-expanded-to-rgba-pixels = パレットの項目はRGBAピクセルに変換されます。
+gif-metadata-will-not-be-retained = GIFメタデータは保持されません。
+tiff-metadata-will-not-be-retained = TIFFメタデータは保持されません。
+tga-metadata-will-not-be-retained = TGAメタデータは保持されません。
+webp-metadata-will-not-be-retained = WebPメタデータは保持されません。
+the-document-changed-choose-the-image-again = ドキュメントが変更されました。画像をもう一度選択してください。
+import-cancelled = 読み込みをキャンセルしました。
+
+this-image-contains-unsupported-import-data = この画像には読み込みに対応していないデータが含まれています。

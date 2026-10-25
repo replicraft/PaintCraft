@@ -285,3 +285,17 @@ there-are-no-selected-pixels-to-copy = कॉपी करने के लि�
 copying-to-clipboard-more = क्लिपबोर्ड पर कॉपी हो रहा है…
 copied-to-clipboard = क्लिपबोर्ड पर कॉपी किया गया।
 clipboard-copy-failed = क्लिपबोर्ड पर कॉपी करना विफल हुआ
+
+high-depth-samples-will-be-reduced-from-16-bit-to-8-bit = नमूनों की गहराई 16-बिट से घटाकर 8-बिट की जाएगी।
+icc-color-profiles-will-not-be-retained = ICC रंग प्रोफ़ाइल सुरक्षित नहीं रहेंगी।
+exif-metadata-will-not-be-retained = EXIF मेटाडेटा सुरक्षित नहीं रहेगा।
+only-the-first-animation-frame-will-be-imported = एनिमेशन का केवल पहला फ़्रेम आयात होगा।
+palette-entries-will-be-expanded-to-rgba-pixels = पैलेट के रंग RGBA पिक्सेल में बदले जाएंगे।
+gif-metadata-will-not-be-retained = GIF मेटाडेटा सुरक्षित नहीं रहेगा।
+tiff-metadata-will-not-be-retained = TIFF मेटाडेटा सुरक्षित नहीं रहेगा।
+tga-metadata-will-not-be-retained = TGA मेटाडेटा सुरक्षित नहीं रहेगा।
+webp-metadata-will-not-be-retained = WebP मेटाडेटा सुरक्षित नहीं रहेगा।
+the-document-changed-choose-the-image-again = दस्तावेज़ बदल गया है; चित्र फिर से चुनें।
+import-cancelled = आयात रद्द किया गया।
+
+this-image-contains-unsupported-import-data = इस चित्र में असमर्थित आयात डेटा है।

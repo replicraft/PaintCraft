@@ -285,3 +285,17 @@ there-are-no-selected-pixels-to-copy = 没有可复制的选中像素。
 copying-to-clipboard-more = 正在复制到剪贴板…
 copied-to-clipboard = 已复制到剪贴板。
 clipboard-copy-failed = 复制到剪贴板失败
+
+high-depth-samples-will-be-reduced-from-16-bit-to-8-bit = 高位深采样将从 16 位降低为 8 位。
+icc-color-profiles-will-not-be-retained = 不会保留 ICC 色彩配置文件。
+exif-metadata-will-not-be-retained = 不会保留 EXIF 元数据。
+only-the-first-animation-frame-will-be-imported = 仅导入动画的第一帧。
+palette-entries-will-be-expanded-to-rgba-pixels = 调色板条目将转换为 RGBA 像素。
+gif-metadata-will-not-be-retained = 不会保留 GIF 元数据。
+tiff-metadata-will-not-be-retained = 不会保留 TIFF 元数据。
+tga-metadata-will-not-be-retained = 不会保留 TGA 元数据。
+webp-metadata-will-not-be-retained = 不会保留 WebP 元数据。
+the-document-changed-choose-the-image-again = 文档已更改，请重新选择图像。
+import-cancelled = 已取消导入。
+
+this-image-contains-unsupported-import-data = 此图像包含不支持导入的数据。

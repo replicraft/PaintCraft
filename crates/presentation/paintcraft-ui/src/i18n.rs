@@ -4,6 +4,8 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 
 pub(crate) mod catalogs;
+mod import_losses;
+pub use import_losses::import_loss_description;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub enum Language {

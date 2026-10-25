@@ -285,3 +285,17 @@ there-are-no-selected-pixels-to-copy = Es sind keine Pixel zum Kopieren ausgewä
 copying-to-clipboard-more = Wird in die Zwischenablage kopiert…
 copied-to-clipboard = In die Zwischenablage kopiert.
 clipboard-copy-failed = Kopieren in die Zwischenablage fehlgeschlagen
+
+high-depth-samples-will-be-reduced-from-16-bit-to-8-bit = Farbtiefe wird von 16 Bit auf 8 Bit reduziert.
+icc-color-profiles-will-not-be-retained = ICC-Farbprofile werden nicht beibehalten.
+exif-metadata-will-not-be-retained = EXIF-Metadaten werden nicht beibehalten.
+only-the-first-animation-frame-will-be-imported = Nur das erste Animationsbild wird importiert.
+palette-entries-will-be-expanded-to-rgba-pixels = Paletteneinträge werden in RGBA-Pixel umgewandelt.
+gif-metadata-will-not-be-retained = GIF-Metadaten werden nicht beibehalten.
+tiff-metadata-will-not-be-retained = TIFF-Metadaten werden nicht beibehalten.
+tga-metadata-will-not-be-retained = TGA-Metadaten werden nicht beibehalten.
+webp-metadata-will-not-be-retained = WebP-Metadaten werden nicht beibehalten.
+the-document-changed-choose-the-image-again = Das Dokument wurde geändert. Wählen Sie das Bild erneut.
+import-cancelled = Import abgebrochen.
+
+this-image-contains-unsupported-import-data = Dieses Bild enthält nicht unterstützte Importdaten.
