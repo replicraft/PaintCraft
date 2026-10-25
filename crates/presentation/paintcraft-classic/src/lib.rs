@@ -248,6 +248,13 @@ pub fn apply_style_for_theme(ctx: &egui::Context, v: ClassicVariant, theme: egui
             style.visuals.selection.bg_fill = Color32::from_rgb(204, 232, 255);
             style.visuals.selection.stroke = egui::Stroke::new(1.0, Color32::from_rgb(0, 120, 215));
         }
+        if v == ClassicVariant::V7 && theme == egui::Theme::Dark {
+            style.visuals.panel_fill = Color32::from_rgb(38, 53, 73);
+            style.visuals.window_fill = Color32::from_rgb(38, 53, 73);
+            style.visuals.selection.bg_fill = Color32::from_rgb(105, 83, 40);
+            style.visuals.selection.stroke =
+                egui::Stroke::new(1.0, Color32::from_rgb(226, 187, 92));
+        }
         if v == ClassicVariant::V7 && theme == egui::Theme::Light {
             style.visuals.panel_fill = Color32::from_rgb(233, 238, 247);
             style.visuals.selection.bg_fill = Color32::from_rgb(255, 232, 166);
@@ -263,14 +270,21 @@ pub fn apply_style_for_theme(ctx: &egui::Context, v: ClassicVariant, theme: egui
 fn menu_layout(ui: &mut egui::Ui, variant: ClassicVariant) {
     if variant == ClassicVariant::V11 {
         ui.set_min_width(260.0);
-        ui.spacing_mut().interact_size.y = 32.0;
+        ui.spacing_mut().interact_size.y = 34.0;
+        ui.spacing_mut().button_padding = egui::vec2(12.0, 7.0);
     }
 }
 
 /// Windows 7's blue-gray workspace surrounds the centered document.
 pub fn workspace_color(variant: ClassicVariant, theme: egui::Theme) -> Color32 {
-    if variant == ClassicVariant::V7 && theme == egui::Theme::Light {
-        Color32::from_rgb(190, 205, 222)
+    if variant == ClassicVariant::V7 {
+        if theme == egui::Theme::Light {
+            Color32::from_rgb(190, 205, 222)
+        } else {
+            Color32::from_rgb(25, 38, 55)
+        }
+    } else if variant == ClassicVariant::V10 && theme == egui::Theme::Light {
+        Color32::from_rgb(207, 213, 226)
     } else {
         paintcraft_ui::theme::workspace(theme)
     }

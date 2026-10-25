@@ -228,14 +228,20 @@ pub(super) fn show(
         } else {
             super::legacy_ribbon::show(ui, variant, state, workspace, context, &mut actions);
         }
-        if variant == ClassicVariant::V7 && !ui.visuals().dark_mode {
+        if variant == ClassicVariant::V7 {
             let rect = egui::Rect::from_min_max(
                 bounds.min,
                 egui::pos2(bounds.right(), ui.min_rect().bottom()),
             );
             let mut mesh = egui::epaint::Mesh::default();
-            let top = Color32::from_rgb(250, 252, 255);
-            let bottom = Color32::from_rgb(223, 233, 246);
+            let (top, bottom) = if ui.visuals().dark_mode {
+                (Color32::from_rgb(47, 64, 88), Color32::from_rgb(32, 47, 67))
+            } else {
+                (
+                    Color32::from_rgb(250, 252, 255),
+                    Color32::from_rgb(223, 233, 246),
+                )
+            };
             for (point, color) in [
                 (rect.left_top(), top),
                 (rect.right_top(), top),

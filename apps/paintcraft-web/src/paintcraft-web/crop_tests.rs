@@ -208,7 +208,7 @@ fn historical_rotate_popup_maps_pixels_and_undoes_in_both_languages() {
                     h.run();
                     let caption = label(name);
                     let row = h.get_by_role_and_label(Role::Button, &caption);
-                    assert!(row.rect().height() <= 26.0);
+                    assert!((28.0..=32.0).contains(&row.rect().height()));
                     row.click();
                     h.run();
                     assert!(h.query_by_role_and_label(Role::Button, &caption).is_none());

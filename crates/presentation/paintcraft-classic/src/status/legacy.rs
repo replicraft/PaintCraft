@@ -16,6 +16,19 @@ pub(super) fn contents(
     context: Context,
     id: egui::Id,
 ) -> Vec<Action> {
+    let top = ui.max_rect().top();
+    ui.painter().hline(
+        ui.max_rect().x_range(),
+        top,
+        egui::Stroke::new(
+            1.0,
+            if ui.visuals().dark_mode {
+                egui::Color32::from_gray(75)
+            } else {
+                egui::Color32::from_rgb(184, 195, 211)
+            },
+        ),
+    );
     ui.spacing_mut().interact_size.y = 20.0;
     ui.spacing_mut().item_spacing = Vec2::new(4.0, 0.0);
     ui.style_mut()

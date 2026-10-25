@@ -203,6 +203,9 @@ pub fn color_edit(ui: &mut egui::Ui, label: &str, value: &mut Rgba) {
 pub fn interface_changer(ui: &mut egui::Ui, context: crate::actions::Context) -> Vec<Action> {
     let mut actions = Vec::new();
     ui.menu_button(t!(ui.ctx(), "Interface"), |ui| {
+        ui.set_min_width(200.0);
+        ui.spacing_mut().button_padding = egui::vec2(12.0, 7.0);
+        ui.spacing_mut().interact_size.y = 32.0;
         for frontend in [
             crate::actions::Frontend::Classic,
             crate::actions::Frontend::Studio,

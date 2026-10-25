@@ -6,7 +6,13 @@ use paintcraft_ui::t;
 impl App {
     pub(super) fn status_bar(&mut self, ui: &mut egui::Ui) -> Option<egui::Rect> {
         let ctx = ui.ctx().clone();
+        let frame = if self.experience() == Experience::Classic {
+            paintcraft_classic::status::frame(self.variant(), ctx.theme())
+        } else {
+            egui::Frame::side_top_panel(ui.style())
+        };
         egui::Panel::bottom("status")
+            .frame(frame)
             .show(ui, |ui| {
                 if self.experience() == Experience::Classic {
                     let size = Vec2::new(

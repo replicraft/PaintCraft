@@ -93,6 +93,8 @@ pub(super) fn button(
 pub(super) fn menu_config() -> egui::containers::menu::MenuConfig {
     egui::containers::menu::MenuConfig::new().style(|style: &mut egui::Style| {
         egui::containers::menu::menu_style(style);
+        style.spacing.button_padding = Vec2::new(10.0, 5.0);
+        style.spacing.interact_size.y = 28.0;
         style.visuals.menu_corner_radius = egui::CornerRadius::ZERO;
         for widget in [
             &mut style.visuals.widgets.inactive,
@@ -184,7 +186,7 @@ pub(super) fn menu_row(
     let response = button(
         ui,
         variant,
-        egui::Button::new(" ").min_size(Vec2::new(ui.available_width().max(220.0), 24.0)),
+        egui::Button::new(" ").min_size(Vec2::new(ui.available_width().max(232.0), 28.0)),
         false,
     );
     let accessible = t!(ui.ctx(), accessible);
@@ -221,7 +223,7 @@ pub(super) fn menu_row(
         }
     }
     ui.painter().text(
-        response.rect.left_center() + Vec2::new(32.0, 0.0),
+        response.rect.left_center() + Vec2::new(38.0, 0.0),
         egui::Align2::LEFT_CENTER,
         t!(ui.ctx(), label),
         egui::FontId::proportional(12.0),
