@@ -38,16 +38,34 @@ fn schema(message: &str) -> Error {
     Error::new(ErrorCode::InputSchema, message)
 }
 
-fn preflight(kind: Kind, entries: &[WriteEntry<'_>], limits: WriteLimits) -> Result<()> {
+pub(super) fn admit_layout(
+    kind: Kind,
+    width: u32,
+    height: u32,
+    hotspot: Option<(u16, u16)>,
+) -> Result<u64> {
+    if !(1..=256).contains(&width) || !(1..=256).contains(&height) {
+        return Err(schema("icon output dimensions must be between 1 and 256"));
+    }
+    match (kind, hotspot) {
+        (Kind::Icon, None) => {}
+        (Kind::Cursor, Some((x, y))) if u32::from(x) < width && u32::from(y) < height => {}
+        _ => {
+            return Err(schema(
+                "icon output hotspot missing, unexpected, or outside entry",
+            ));
+        }
+    }
+    Ok(u64::from(width) * u64::from(height))
+}
+
+pub(super) fn preflight(kind: Kind, entries: &[WriteEntry<'_>], limits: WriteLimits) -> Result<()> {
     if entries.is_empty() || entries.len() > limits.entries.min(ENTRIES_MAX) {
         return Err(resource("icon output entry count outside writer budget"));
     }
     let mut pixels = 0u64;
     for entry in entries {
-        if !(1..=256).contains(&entry.width) || !(1..=256).contains(&entry.height) {
-            return Err(schema("icon output dimensions must be between 1 and 256"));
-        }
-        let count = u64::from(entry.width) * u64::from(entry.height);
+        let count = admit_layout(kind, entry.width, entry.height, entry.hotspot)?;
         pixels += count;
         if pixels > limits.pixels.min(WRITE_PIXELS_MAX) {
             return Err(resource(
@@ -56,16 +74,6 @@ fn preflight(kind: Kind, entries: &[WriteEntry<'_>], limits: WriteLimits) -> Res
         }
         if entry.rgba.len() as u64 != count * 4 {
             return Err(schema("icon output RGBA length contradicts dimensions"));
-        }
-        match (kind, entry.hotspot) {
-            (Kind::Icon, None) => {}
-            (Kind::Cursor, Some((x, y)))
-                if u32::from(x) < entry.width && u32::from(y) < entry.height => {}
-            _ => {
-                return Err(schema(
-                    "icon output hotspot missing, unexpected, or outside entry",
-                ));
-            }
         }
         if entry.encoding == Encoding::Bitmap
             && entry
