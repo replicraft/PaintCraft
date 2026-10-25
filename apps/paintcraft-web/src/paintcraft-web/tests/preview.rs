@@ -31,5 +31,12 @@ fn editor_uses_classic_chrome_and_exposes_remaining_unsupported_actions_honestly
     harness.run();
     harness.get_by_label("Dark").click();
     harness.run();
+    assert_eq!(
+        harness.ctx.theme(),
+        egui::Theme::Light,
+        "theme stays staged until Apply"
+    );
+    harness.get_by_label("Apply").click();
+    harness.run();
     assert_eq!(harness.ctx.theme(), egui::Theme::Dark);
 }
