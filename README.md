@@ -5,7 +5,7 @@ A familiar place to draw, paint and edit images. Built in Rust.
 - Windows 7, 10 and 11 Classic skins.
 - Studio with document tabs, Save All and floating panels.
 - Desktop, browser and command-line apps.
-- [Painting tools for MCP clients](docs/MCP.md).
+- **MCP support:** let AI assistants paint, edit layers, preview images and save projects.
 - Nine brushes, pencil, eraser, fill and color picker.
 - Shapes, curves and text.
 - Rectangular and free-form selections, copy and cut.
@@ -22,6 +22,16 @@ A familiar place to draw, paint and edit images. Built in Rust.
 | Classic, Windows 10 | Classic, Windows 7 |
 | --- | --- |
 | ![PaintCraft Classic, Windows 10](assets/repo/classic-windows-10.png) | ![PaintCraft Classic, Windows 7](assets/repo/classic-windows-7.png) |
+
+## Paint with MCP
+
+Connect your MCP client to PaintCraft to create canvases, paint with brushes and shapes, edit layers, undo changes, import pictures and save or export the result.
+
+```sh
+cargo run --release -p paintcraft-cli -- mcp
+```
+
+[Set up your MCP client](docs/MCP.md). Each connection works on its own headless document.
 
 ## File formats
 
