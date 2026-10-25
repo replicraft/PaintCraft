@@ -368,6 +368,9 @@ impl WebApp {
 
     fn replace(&mut self, ctx: &egui::Context, action: Action) {
         if let Action::ChooseFrontend(frontend) = action {
+            if self.confirm_replace == Some(action) && self.unsaved() {
+                self.new_document();
+            }
             self.switch_frontend(ctx, frontend);
             self.confirm_replace = None;
         } else if action == Action::Open {

@@ -10,29 +10,48 @@ impl WebApp {
             return;
         }
         let blocked = self.blocked() || self.paste.is_placing();
-        let actions = egui::Panel::right("web-layers")
-            .default_size(240.0)
-            .show(ui, |ui| {
-                ui.add_enabled_ui(!blocked, |ui| {
+        let editor = &self.editor;
+        let classic = self.frontend == paintcraft_ui::actions::Frontend::Classic;
+        let draw = |ui: &mut egui::Ui| {
+            ui.add_enabled_ui(!blocked, |ui| {
+                if classic {
                     layers::style(ui);
-                    let doc = self.editor.session.document();
-                    let rows: Vec<_> = doc
-                        .roots
-                        .iter()
-                        .rev()
-                        .map(|id| &doc.layers[id])
-                        .map(|layer| layers::Layer {
-                            id: layer.id,
-                            name: layer.name.as_str(),
-                            visible: layer.visible,
-                            preview: layers::Preview::Unavailable,
-                        })
-                        .collect();
-                    layers::panel(ui, &rows, self.editor.target, &mut Vec::new())
-                })
-                .inner
+                }
+                let doc = editor.session.document();
+                let rows: Vec<_> = doc
+                    .roots
+                    .iter()
+                    .rev()
+                    .map(|id| &doc.layers[id])
+                    .map(|layer| layers::Layer {
+                        id: layer.id,
+                        name: layer.name.as_str(),
+                        visible: layer.visible,
+                        preview: layers::Preview::Unavailable,
+                    })
+                    .collect();
+                layers::panel(ui, &rows, editor.target, &mut Vec::new())
             })
-            .inner;
+            .inner
+        };
+        let actions = if self.frontend == paintcraft_ui::actions::Frontend::Studio {
+            let mut actions = Vec::new();
+            paintcraft_studio::layers_window(
+                ui.ctx(),
+                &mut self.studio.layers,
+                self.studio.canvas_top,
+                |ui| {
+                    ui.set_max_height(300.0);
+                    actions = draw(ui);
+                },
+            );
+            actions
+        } else {
+            egui::Panel::right("web-layers")
+                .default_size(240.0)
+                .show(ui, draw)
+                .inner
+        };
         for action in actions {
             if !matches!(action, Action::Close) && !self.finish_text() {
                 continue;
@@ -41,6 +60,9 @@ impl WebApp {
             let op = match action {
                 Action::Close => {
                     self.workspace.layers = false;
+                    if self.frontend == paintcraft_ui::actions::Frontend::Studio {
+                        self.studio.layers = false;
+                    }
                     continue;
                 }
                 Action::Select(layer) => {

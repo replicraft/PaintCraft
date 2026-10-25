@@ -178,5 +178,12 @@ mod tests {
         );
         app.replace(&ctx, Action::ChooseFrontend(Frontend::Studio));
         assert_eq!(app.editor.session.history_ticket().owner, studio);
+        app.action(&ctx, Action::ChooseFrontend(Frontend::Classic));
+        assert_eq!(
+            app.editor.session.undo_depth(),
+            0,
+            "discarded edits must not return"
+        );
+        assert_ne!(app.editor.session.history_ticket().owner, classic);
     }
 }
