@@ -135,6 +135,7 @@ impl WebApp {
             }
             let digest = paintcraft_document::hex(&Sha256::digest(pending.source.bytes.as_slice()));
             Ok(Loaded {
+                converted_copy: true,
                 document: paintcraft_document::import_image(
                     decoded.width,
                     decoded.height,

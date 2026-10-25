@@ -427,13 +427,9 @@ impl WebApp {
     }
 
     pub(crate) fn install(&mut self, loaded: crate::files::Loaded) {
-        let converted = loaded
-            .losses
-            .iter()
-            .any(|loss| paintcraft_formats::project_import::KNOWN_LOSSES.contains(&loss.as_str()));
         match Editor::from_document(loaded.document) {
             Ok(mut editor) => {
-                if converted {
+                if loaded.converted_copy {
                     editor.session.mark_unsaved();
                 }
                 self.editor = editor;

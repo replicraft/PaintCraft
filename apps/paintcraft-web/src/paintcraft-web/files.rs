@@ -18,6 +18,7 @@ const FILE_BYTES: usize = 64 * 1024 * 1024;
 
 #[derive(Debug)]
 pub(crate) struct Loaded {
+    pub converted_copy: bool,
     pub document: Document,
     pub name: String,
     pub losses: Vec<String>,
@@ -78,7 +79,8 @@ impl Files {
         .filter(|extension| {
             !convert
                 || Family::from_extension(extension).is_some_and(|family| {
-                    !family.is_project() || matches!(family, Family::Paint | Family::Pdn)
+                    !family.is_project()
+                        || matches!(family, Family::Paint | Family::Pdn | Family::Ora)
                 })
         })
         .collect();
@@ -216,18 +218,22 @@ fn decode_input(bytes: &[u8], name: String, frontend: Frontend, convert: bool) -
     } else {
         paintcraft_formats::registry::admit_open(frontend, &name, bytes, Platform::Web)?
     };
-    if convert && family.is_project() && !matches!(family, Family::Paint | Family::Pdn) {
+    if convert
+        && family.is_project()
+        && !matches!(family, Family::Paint | Family::Pdn | Family::Ora)
+    {
         return Err(Error::new(
             ErrorCode::CapabilityUnsupported,
             "Import image expects a raster picture",
         ));
     }
-    if matches!(family, Family::Paint | Family::Pdn) {
+    if matches!(family, Family::Paint | Family::Pdn | Family::Ora) {
         let converted =
             paintcraft_formats::project_import::decode_layered(family, bytes, MAX_PIXELS, &|| {
                 Ok(())
             })?;
         return Ok(Loaded {
+            converted_copy: true,
             document: converted.document,
             name,
             losses: converted.losses,
@@ -235,6 +241,7 @@ fn decode_input(bytes: &[u8], name: String, frontend: Frontend, convert: bool) -
     }
     if family == Family::Pcnd {
         return Ok(Loaded {
+            converted_copy: false,
             document: pcnd::read_with_limits(bytes, MAX_PIXELS, MAX_PIXELS * 4)?,
             name,
             losses: Vec::new(),
@@ -243,6 +250,7 @@ fn decode_input(bytes: &[u8], name: String, frontend: Frontend, convert: bool) -
     let image = image::decode_with_pixel_limit(bytes, MAX_PIXELS)?;
     let sha = paintcraft_document::hex(&Sha256::digest(bytes));
     Ok(Loaded {
+        converted_copy: convert,
         document: paintcraft_document::import_image(image.width, image.height, &image.rgba, &sha)?,
         name,
         losses: image.losses,

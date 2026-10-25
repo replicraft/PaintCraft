@@ -4,6 +4,7 @@ use eframe::egui;
 
 fn loaded() -> Loaded {
     Loaded {
+        converted_copy: false,
         document: Editor::new(2, 1).unwrap().session.document().clone(),
         name: "new.png".into(),
         losses: vec!["depth-16-reduced-to-8".into()],
