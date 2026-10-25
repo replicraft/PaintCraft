@@ -1,7 +1,30 @@
 //! File association and synchronous saves; asynchronous coordination lives in saving.
 use super::*;
+use paintcraft_core::types::Error;
 
 impl Editor {
+    /// Prepare editable text privately for an export preview without publication.
+    pub(crate) fn export_snapshot(&self) -> Result<Arc<Document>> {
+        if !self.can_capture_file() || self.has_floating_selection() || self.is_constructing_shape()
+        {
+            return Err(Error::new(
+                paintcraft_core::types::ErrorCode::InputSchema,
+                "Finish pending edits before preparing an export preview",
+            ));
+        }
+        let Some(action) = self.tools.pending_text_action() else {
+            return Ok(self.session.snapshot());
+        };
+        let preview = background::preview(&action);
+        let Some(batch) = self.prepare_preview(preview).build(|| Ok(()))? else {
+            return Ok(self.session.snapshot());
+        };
+        Ok(self
+            .session
+            .preparation()?
+            .apply(&batch, || Ok(()))?
+            .document_snapshot())
+    }
     pub fn open(path: &Path) -> Result<Editor> {
         let (bytes, binding) = crate::destination::acquire(path)?;
         let mut e = Editor::with_document(pcnd::read(&bytes)?, Some(path.to_path_buf()));
@@ -69,5 +92,33 @@ impl Editor {
             // Dirty state stays: an unconfirmed or unknown save is not a clean document.
             self.status = format!("Not saved safely: {}", outcome.reasons.join("; "));
         }
+    }
+}
+
+#[cfg(test)]
+mod export_preview_tests {
+    use super::*;
+    #[test]
+    fn export_snapshot_keeps_text_private_and_matches_actual_placement() {
+        let mut editor = Editor::new_document(160, 64).unwrap();
+        editor.select_tool(Tool::Text);
+        editor.pointer_down((4, 4));
+        editor.pointer_up();
+        editor.type_text("Ink");
+        assert!(editor.is_editing_text());
+        let original = editor.document_snapshot();
+        let ticket = editor.history_view().ticket;
+        let copy = editor.export_snapshot().unwrap();
+        assert!(!copy.same_semantics(&original));
+        assert!(Arc::ptr_eq(&original, &editor.document_snapshot()));
+        assert_eq!(editor.history_view().ticket, ticket);
+        assert!(editor.is_editing_text());
+        let preview = paintcraft_render::render_flat(&copy).unwrap();
+        editor.commit_text();
+        editor.run_pending();
+        assert_eq!(
+            paintcraft_render::render_flat(editor.document()).unwrap(),
+            preview
+        );
     }
 }
