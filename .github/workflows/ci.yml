@@ -43,6 +43,8 @@ jobs:
           cache-dependency-path: apps/paintcraft-web/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
         working-directory: apps/paintcraft-web
+      - run: pnpm run format:check
+        working-directory: apps/paintcraft-web
       - run: pnpm test
         working-directory: apps/paintcraft-web
       - run: pnpm run build

@@ -1,0 +1,29 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.6.2/schema.json",
+	"files": {
+		"includes": [
+			"src/lib/**",
+			"src/pages/**",
+			"src/styles/**",
+			"scripts/**",
+			"astro.config.mjs",
+			"package.json",
+			"biome.jsonc"
+		]
+	},
+	"formatter": {
+		"indentStyle": "tab",
+		"indentWidth": 4
+	},
+	"javascript": {
+		"formatter": {
+			"quoteStyle": "single"
+		}
+	},
+	"html": {
+		"experimentalFullSupportEnabled": true,
+		"formatter": {
+			"enabled": true
+		}
+	}
+}

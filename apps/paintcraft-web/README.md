@@ -159,11 +159,16 @@ Open http://localhost:8088/. To create the static production site:
 pnpm --dir apps/paintcraft-web run build
 ```
 
-Astro and `vite-plugin-wasm` bundle the editor. The pnpm build prepares the pinned
+Astro and `vite-plugin-wasm` bundle the editor.
+Rust sources and tests live in `src/paintcraft-web/`, separately from Astro pages
+and JavaScript. The pnpm build prepares the pinned
 Rust/Wasm package automatically, bootstrapping Rust and wasm-bindgen if needed.
 The site is written to `apps/paintcraft-web/dist`; fonts come from the shared root
 assets and are verified before the editor starts. Run `pnpm run build:wasm` in this
 directory after changing Rust while the Astro dev server is running.
+
+Run `pnpm run format` in this directory to format the browser source and build
+scripts with Biome; `pnpm run format:check` checks the same files in CI.
 
 ## Cloudflare Pages
 

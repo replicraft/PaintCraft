@@ -1,19 +1,24 @@
 {
-  "name": "@paintcraft/web",
-  "version": "0.1.0",
-  "private": true,
-  "type": "module",
-  "packageManager": "pnpm@12.10.1",
-  "engines": { "node": ">=22.23.4" },
-  "scripts": {
-    "build:wasm": "node scripts/build-wasm.mjs",
-    "build": "pnpm run build:wasm && astro build && node scripts/check-assets.mjs",
-    "dev": "pnpm run build:wasm && astro dev --host 127.0.0.1 --port 8088",
-    "preview": "astro preview --host 127.0.0.1 --port 8088",
-    "test": "node --test scripts/*.test.mjs"
-  },
-  "devDependencies": {
-    "astro": "7.4.2",
-    "vite-plugin-wasm": "3.6.0"
-  }
+	"name": "@paintcraft/web",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"packageManager": "pnpm@12.10.1",
+	"engines": {
+		"node": ">=22.23.4"
+	},
+	"scripts": {
+		"build:wasm": "node scripts/build-wasm.mjs",
+		"build": "pnpm run build:wasm && astro build && node scripts/check-assets.mjs",
+		"dev": "pnpm run build:wasm && astro dev --host 127.0.0.1 --port 8088",
+		"preview": "astro preview --host 127.0.0.1 --port 8088",
+		"test": "node --test scripts/*.test.mjs",
+		"format": "biome format --write .",
+		"format:check": "biome format ."
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.6.2",
+		"astro": "7.4.2",
+		"vite-plugin-wasm": "3.6.0"
+	}
 }
