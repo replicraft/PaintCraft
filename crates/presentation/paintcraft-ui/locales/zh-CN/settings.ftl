@@ -71,3 +71,10 @@ paint-7-uses-light-mode-your-preferred-theme-returns-with-other-skins = Paint 7 
 changes-take-effect-when-you-select-apply = 选择“应用”后更改才会生效。
 canvas-controls = 画布控件
 show-brush-size-and-opacity-bars = 显示画笔大小和不透明度滑条
+
+load-installed-fonts = 加载已安装的字体
+this-browser-does-not-support-installed-font-access-bundled-fonts-are-available = 此浏览器不支持访问已安装的字体。可以使用内置字体。
+allow-font-access-to-use-installed-fonts = 请允许访问以使用已安装的字体。
+installed-fonts-are-available = 已安装的字体可用。
+font-access-was-denied-or-is-unavailable-you-can-try-again = 字体访问被拒绝或不可用。请重试。
+the-selected-font-could-not-be-loaded-choose-another-font-or-reload-to-try-again = 无法加载所选字体。请选择其他字体或重新加载页面。

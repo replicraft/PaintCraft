@@ -71,3 +71,10 @@ paint-7-uses-light-mode-your-preferred-theme-returns-with-other-skins = Paint 7 
 changes-take-effect-when-you-select-apply = Changes take effect when you select Apply.
 canvas-controls = Canvas controls
 show-brush-size-and-opacity-bars = Show brush size and opacity bars
+
+load-installed-fonts = Load installed fonts
+this-browser-does-not-support-installed-font-access-bundled-fonts-are-available = This browser does not support installed font access. Bundled fonts are available.
+allow-font-access-to-use-installed-fonts = Allow font access to use installed fonts.
+installed-fonts-are-available = Installed fonts are available.
+font-access-was-denied-or-is-unavailable-you-can-try-again = Font access was denied or is unavailable. You can try again.
+the-selected-font-could-not-be-loaded-choose-another-font-or-reload-to-try-again = The selected font could not be loaded. Choose another font or reload to try again.

@@ -5,6 +5,12 @@ impl WebApp {
     pub fn show(&mut self, ui: &mut egui::Ui) {
         let ctx = ui.ctx().clone();
         self.refresh_appearance(&ctx);
+        crate::local_fonts::refresh(&ctx, &self.text.style.family, &mut self.text.families);
+        let font_generation = crate::local_fonts::generation();
+        if self.text.font_generation != font_generation {
+            self.text.font_generation = font_generation;
+            self.canvas.invalidate();
+        }
         if ctx.current_pass_index() == 0 {
             if self.fullscreen.refresh(&ctx) {
                 self.message = crate::fullscreen::UNAVAILABLE.into();

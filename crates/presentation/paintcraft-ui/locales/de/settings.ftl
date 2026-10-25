@@ -71,3 +71,10 @@ paint-7-uses-light-mode-your-preferred-theme-returns-with-other-skins = Paint 7 
 changes-take-effect-when-you-select-apply = Änderungen werden erst mit Anwenden übernommen.
 canvas-controls = Leinwandbedienelemente
 show-brush-size-and-opacity-bars = Leisten für Pinselgröße und Deckkraft anzeigen
+
+load-installed-fonts = Installierte Schriftarten laden
+this-browser-does-not-support-installed-font-access-bundled-fonts-are-available = Dieser Browser unterstützt keinen Zugriff auf installierte Schriftarten. Mitgelieferte Schriftarten sind verfügbar.
+allow-font-access-to-use-installed-fonts = Erlaube den Zugriff auf installierte Schriftarten.
+installed-fonts-are-available = Installierte Schriftarten sind verfügbar.
+font-access-was-denied-or-is-unavailable-you-can-try-again = Der Schriftzugriff wurde verweigert oder ist nicht verfügbar. Versuche es erneut.
+the-selected-font-could-not-be-loaded-choose-another-font-or-reload-to-try-again = Die gewählte Schriftart konnte nicht geladen werden. Wähle eine andere oder lade die Seite neu.

@@ -301,3 +301,5 @@ this-image-contains-unsupported-import-data = この画像には読み込みに�
 full-screen-is-unavailable-or-the-browser-denied-the-request = 全画面表示を利用できないか、ブラウザーがリクエストを拒否しました。
 
 download-for-desktop = デスクトップ版をダウンロード
+
+enter-for-a-new-line-cmd-ctrl-enter-to-place-escape-to-cancel = Enterで改行 · Cmd/Ctrl+Enterで確定 · Escapeで取り消し

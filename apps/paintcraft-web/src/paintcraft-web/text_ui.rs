@@ -10,6 +10,7 @@ pub(crate) struct TextUi {
     pub style: TextOptions,
     pub(crate) search: String,
     pub(crate) families: Vec<String>,
+    pub(crate) font_generation: u64,
     pub preedit: String,
     pub widget_owned_input: bool,
     pub selected_all: bool,
@@ -17,8 +18,12 @@ pub(crate) struct TextUi {
 impl Default for TextUi {
     fn default() -> Self {
         Self {
-            style: TextOptions::default(),
+            style: TextOptions {
+                family: "Arial".into(),
+                ..TextOptions::default()
+            },
             search: String::new(),
+            font_generation: 0,
             families: paintcraft_ui::fonts::BUNDLED_FAMILIES
                 .iter()
                 .map(|name| (*name).into())
@@ -104,18 +109,40 @@ impl WebApp {
             return;
         }
         let enabled = !self.blocked();
-        egui::Panel::top("web-text-options").show(ui,|ui| {
-            ui.add_enabled_ui(enabled,|ui| {
+        egui::Panel::top("web-text-options").show(ui, |ui| {
+            ui.add_enabled_ui(enabled, |ui| {
                 if self.variant == paintcraft_classic::ClassicVariant::V11 {
-                    paintcraft_classic::text_options(ui,&mut self.text.style,&self.text.families,&mut self.text.search,false);
+                    paintcraft_classic::text_options(
+                        ui,
+                        &mut self.text.style,
+                        &self.text.families,
+                        &mut self.text.search,
+                        false,
+                    );
                 }
                 ui.horizontal_wrapped(|ui| {
-                    ui.label(t!(ui.ctx(), "Bundled Selawik · Enter for a new line · Cmd/Ctrl+Enter to place · Escape to cancel"));
-                    if ui.add_enabled(self.editor.tools.is_editing_text() && self.text.preedit.is_empty(),egui::Button::new(t!(ui.ctx(), "Place text"))).clicked() {
+                    ui.label(t!(
+                        ui.ctx(),
+                        "Enter for a new line · Cmd/Ctrl+Enter to place · Escape to cancel"
+                    ));
+                    if ui
+                        .add_enabled(
+                            self.editor.tools.is_editing_text() && self.text.preedit.is_empty(),
+                            egui::Button::new(t!(ui.ctx(), "Place text")),
+                        )
+                        .clicked()
+                    {
                         self.finish_text();
                     }
-                    if ui.add_enabled(self.editor.tools.is_editing_text(),egui::Button::new(t!(ui.ctx(), "Cancel text"))).clicked() {
-                        self.editor.tools.cancel_text();self.text.preedit.clear();
+                    if ui
+                        .add_enabled(
+                            self.editor.tools.is_editing_text(),
+                            egui::Button::new(t!(ui.ctx(), "Cancel text")),
+                        )
+                        .clicked()
+                    {
+                        self.editor.tools.cancel_text();
+                        self.text.preedit.clear();
                     }
                 });
             });

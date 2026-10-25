@@ -301,3 +301,5 @@ this-image-contains-unsupported-import-data = This image contains unsupported im
 full-screen-is-unavailable-or-the-browser-denied-the-request = Full screen is unavailable or the browser denied the request.
 
 download-for-desktop = Download for desktop
+
+enter-for-a-new-line-cmd-ctrl-enter-to-place-escape-to-cancel = Enter for a new line · Cmd/Ctrl+Enter to place · Escape to cancel

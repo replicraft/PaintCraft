@@ -71,3 +71,10 @@ paint-7-uses-light-mode-your-preferred-theme-returns-with-other-skins = Paint 7 
 changes-take-effect-when-you-select-apply = 「適用」を選択すると変更が反映されます。
 canvas-controls = キャンバスのコントロール
 show-brush-size-and-opacity-bars = ブラシのサイズと不透明度のバーを表示
+
+load-installed-fonts = インストール済みフォントを読み込む
+this-browser-does-not-support-installed-font-access-bundled-fonts-are-available = このブラウザーはインストール済みフォントへのアクセスに対応していません。同梱フォントを使用できます。
+allow-font-access-to-use-installed-fonts = インストール済みフォントを使うにはアクセスを許可してください。
+installed-fonts-are-available = インストール済みフォントを使用できます。
+font-access-was-denied-or-is-unavailable-you-can-try-again = フォントへのアクセスが拒否されたか利用できません。もう一度お試しください。
+the-selected-font-could-not-be-loaded-choose-another-font-or-reload-to-try-again = 選択したフォントを読み込めませんでした。別のフォントを選ぶか、ページを再読み込みしてください。

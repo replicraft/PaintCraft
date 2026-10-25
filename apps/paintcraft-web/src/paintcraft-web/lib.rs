@@ -10,6 +10,7 @@ mod floating_ui;
 mod fullscreen;
 mod importing;
 mod layers;
+mod local_fonts;
 mod paste_ui;
 mod preferences;
 mod printing;

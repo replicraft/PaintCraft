@@ -32,10 +32,12 @@ impl Editor {
         style: &TextOptions,
         at: (i64, i64),
     ) -> Result<Arc<TextMask>> {
-        self.fonts
+        let mut renderer = self
+            .fonts
             .try_borrow_mut()
-            .map_err(|_| Error::new(ErrorCode::InvariantViolation, "Text renderer is busy"))?
-            .rasterize(text, style, at, self.session.document().canvas_rect())
+            .map_err(|_| Error::new(ErrorCode::InvariantViolation, "Text renderer is busy"))?;
+        crate::local_fonts::prepare(&mut renderer, &style.family)?;
+        renderer.rasterize(text, style, at, self.session.document().canvas_rect())
     }
 
     pub(super) fn text_operations(&self, action: &Action) -> Result<Vec<Value>> {

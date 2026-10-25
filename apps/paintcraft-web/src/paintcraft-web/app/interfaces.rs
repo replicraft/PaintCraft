@@ -98,7 +98,13 @@ impl WebApp {
                     secondary: WHITE,
                 },
                 workspace: Workspace::default(),
-                text: crate::text_ui::TextUi::default(),
+                text: crate::text_ui::TextUi {
+                    style: paintcraft_core::types::text::TextOptions {
+                        family: self.preferences.default_font.clone(),
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                },
                 name: "Untitled".into(),
                 zoom: 1.0,
             })

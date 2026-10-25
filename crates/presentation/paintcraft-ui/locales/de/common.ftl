@@ -301,3 +301,5 @@ this-image-contains-unsupported-import-data = Dieses Bild enthält nicht unterst
 full-screen-is-unavailable-or-the-browser-denied-the-request = Der Vollbildmodus ist nicht verfügbar oder der Browser hat die Anfrage abgelehnt.
 
 download-for-desktop = Für den Desktop herunterladen
+
+enter-for-a-new-line-cmd-ctrl-enter-to-place-escape-to-cancel = Eingabe für eine neue Zeile · Cmd/Strg+Eingabe zum Platzieren · Escape zum Abbrechen

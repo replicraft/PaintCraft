@@ -36,7 +36,7 @@ impl Default for Preferences {
             variant: ClassicVariant::DEFAULT,
             custom_colors: [None; 28],
             theme: None,
-            default_font: "Selawik".into(),
+            default_font: "Arial".into(),
             editable_until_save: false,
             language: Default::default(),
         }
@@ -87,7 +87,7 @@ impl Preferences {
             };
         }
         let default_font = match value.get("default_font") {
-            None => "Selawik".to_owned(),
+            None => "Arial".to_owned(),
             Some(value) => value
                 .as_str()
                 .filter(|name| !name.is_empty() && name.len() <= 256)
@@ -293,7 +293,7 @@ mod tests {
             Preferences::parse(&json::canonical(&value))
                 .unwrap()
                 .default_font,
-            "Selawik"
+            "Arial"
         );
         for invalid in [Value::Null, Value::str(""), Value::str("x".repeat(257))] {
             let Value::Object(ref mut object) = value else {

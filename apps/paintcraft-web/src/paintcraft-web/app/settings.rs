@@ -154,6 +154,7 @@ fn text(ui: &mut egui::Ui, draft: &mut Draft, fonts: &[String]) {
             "{ $count } available font families",
             &[("count", fonts.len().to_string())]
         ));
+        crate::local_fonts::controls(ui);
         ui.checkbox(
             &mut draft.values.editable_until_save,
             t!(ui.ctx(), "Keep text editable until save (prototype)"),

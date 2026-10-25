@@ -71,3 +71,10 @@ paint-7-uses-light-mode-your-preferred-theme-returns-with-other-skins = Paint 7 
 changes-take-effect-when-you-select-apply = Los cambios se aplican al seleccionar Aplicar.
 canvas-controls = Controles del lienzo
 show-brush-size-and-opacity-bars = Mostrar las barras de tamaño y opacidad del pincel
+
+load-installed-fonts = Cargar fuentes instaladas
+this-browser-does-not-support-installed-font-access-bundled-fonts-are-available = Este navegador no permite acceder a las fuentes instaladas. Puedes usar las fuentes incluidas.
+allow-font-access-to-use-installed-fonts = Permite el acceso para usar las fuentes instaladas.
+installed-fonts-are-available = Las fuentes instaladas están disponibles.
+font-access-was-denied-or-is-unavailable-you-can-try-again = Se denegó el acceso a las fuentes o no está disponible. Puedes intentarlo de nuevo.
+the-selected-font-could-not-be-loaded-choose-another-font-or-reload-to-try-again = No se pudo cargar la fuente seleccionada. Elige otra o recarga la página.

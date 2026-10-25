@@ -71,3 +71,10 @@ paint-7-uses-light-mode-your-preferred-theme-returns-with-other-skins = Paint 7 
 changes-take-effect-when-you-select-apply = लागू करें चुनने पर बदलाव लागू होंगे।
 canvas-controls = कैनवास नियंत्रण
 show-brush-size-and-opacity-bars = ब्रश के आकार और अपारदर्शिता की पट्टियाँ दिखाएँ
+
+load-installed-fonts = इंस्टॉल किए गए फ़ॉन्ट लोड करें
+this-browser-does-not-support-installed-font-access-bundled-fonts-are-available = यह ब्राउज़र इंस्टॉल किए गए फ़ॉन्ट तक पहुँच का समर्थन नहीं करता। शामिल फ़ॉन्ट उपलब्ध हैं।
+allow-font-access-to-use-installed-fonts = इंस्टॉल किए गए फ़ॉन्ट उपयोग करने के लिए पहुँच की अनुमति दें।
+installed-fonts-are-available = इंस्टॉल किए गए फ़ॉन्ट उपलब्ध हैं।
+font-access-was-denied-or-is-unavailable-you-can-try-again = फ़ॉन्ट तक पहुँच अस्वीकृत है या उपलब्ध नहीं है। फिर से प्रयास करें।
+the-selected-font-could-not-be-loaded-choose-another-font-or-reload-to-try-again = चुना गया फ़ॉन्ट लोड नहीं हुआ। दूसरा फ़ॉन्ट चुनें या पृष्ठ फिर से लोड करें।
