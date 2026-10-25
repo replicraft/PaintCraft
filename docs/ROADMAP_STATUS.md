@@ -818,3 +818,19 @@ late conflicts, matching content, invalid expectations and both commands.
 Native desktop binding integration, namespace/alias authority, noncooperating
 writer races and filesystem qualification remain unfinished. T32 stays partial;
 see [captured-content guards](EXPECTED_SAVE.md).
+
+### Desktop expected-binding follow-up
+
+Desktop Open now captures expected content and a pinned namespace. Queued
+implicit Saves share a binding advanced by the I/O worker before UI completion,
+preserving valid FIFO writes while refusing external replacements/deletions.
+Save As adopts a new binding only under the existing session/generation/sequence
+guards; synchronous failure restores the old binding. Unknown/panicked writes
+disable their binding, and live reconciliation cannot regress a later expected
+version. Imported/recovered documents gain no original-file write authority.
+The platform checks the expected namespace and content before write-ahead
+preparation. Three binding tests, six coordinator tests and platform namespace
+cases pass, along with 388 desktop, 91 platform, 105 formats and 39 CLI tests.
+Native filesystem/provider qualification, existing Save As target preconditions,
+dedicated conflict choices and final-check/rename races remain open. T32 stays
+partial; [expected save guards](EXPECTED_SAVE.md) owns the implementation contract.

@@ -856,6 +856,10 @@
       "depends_on": ["T07", "T08"],
       "status": "partial",
       "evidence": [
+        "apps/paintcraft/src/destination.rs",
+        "apps/paintcraft/src/destination/tests.rs",
+        "apps/paintcraft/src/saving/binding_tests.rs",
+        "apps/paintcraft/src/controller/files.rs",
         "docs/EXPECTED_SAVE.md",
         "crates/services/paintcraft-platform/src/save/expected_tests.rs",
         "apps/paintcraft-cli/tests/cli/in_place_conflict.rs",
@@ -877,7 +881,7 @@
         "apps/paintcraft/src/saving/resumed.rs",
         "apps/paintcraft/src/saving/resumed/tests.rs"
       ],
-      "remaining_or_scope": "Stable receipt IDs, sequences, binding guards, alias checks and live/resumed reconciliation pass; native reacquisition validates path-free persisted evidence and isolates historical outcomes from current document adoption; open-to-save conflict guards, diagnostics/repair and filesystem qualification remain. In-place CLI apply/paste-image saves now capture Save intent before source acquisition and require the acquired input SHA-256 to match the destination before staging. Platform tests and real-process FIFO replacement/deletion cases preserve external bytes, successful private engine results and truthful non-replacement receipts. Desktop open-to-save binding advancement, namespace/alias authority, final-check/rename races and broader filesystem qualification remain unfinished.",
+      "remaining_or_scope": "Stable receipt IDs, sequences, binding guards, alias checks and live/resumed reconciliation pass; native reacquisition validates path-free persisted evidence and isolates historical outcomes from current document adoption; broader namespace authorization, conflict diagnostics/repair and filesystem qualification remain. In-place CLI apply/paste-image saves now capture Save intent before source acquisition and require the acquired input SHA-256 to match the destination before staging. Platform tests and real-process FIFO replacement/deletion cases preserve external bytes, successful private engine results and truthful non-replacement receipts. Desktop open-to-save bindings are now integrated as described below; broader namespace/alias authority, final-check/rename races and filesystem qualification remain unfinished. Desktop Open now captures exact acquired content and a pinned namespace. Per-association shared bindings advance on acknowledged worker replacement before UI completion, preserving queued Save order. Save As adopts a new binding under existing session/generation/sequence guards; synchronous failure restores the original guard. Unknown/panicked writes disable their binding, live reconciliation is operation-ID guarded, and recovery/imports retain no original-file authority. Binding/coordinator/namespace tests and full desktop/platform/formats/CLI regressions pass. Dedicated conflict controls, existing Save As target preconditions and native filesystem/provider qualification remain unfinished.",
       "acceptance": "FILE-01..10; injected failures on both sides of replace/barrier; no false aborted receipt after a known side effect; native alias and filesystem qualification."
     },
     {
