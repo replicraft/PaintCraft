@@ -28,12 +28,10 @@ fn historical_selection_menu_has_compact_sections_and_executes_real_delete_and_u
                     harness_with(App::new(None).with_settings(dir.clone()), ppp, ppp == 2.0);
                 h.set_size(Vec2::new(1360.0, 900.0));
                 h.run();
-                let logical = |v: f32| (v + 0.5) / ppp - 0.5;
-                drag(
-                    &mut h,
-                    (logical(30.0), logical(30.0)),
-                    (logical(36.0), logical(30.0)),
-                );
+                h.get_by_role_and_label(Role::Button, &translate(language, "Pencil"))
+                    .click();
+                h.run();
+                drag(&mut h, (30.0, 30.0), (36.0, 30.0));
                 assert_eq!(top_pixel(&h, 32, 30), Rgba([0, 0, 0, 255]));
                 let snapshot = h.state().editor().document_snapshot();
                 let ticket = h.state().editor().history_view().ticket;

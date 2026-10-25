@@ -12,7 +12,9 @@ fn clear_button_routes_once_at_each_display_scale_and_restores_the_image_on_undo
         .save(&dir)
         .unwrap();
         let mut h = harness_with(App::new(None).with_settings(dir.clone()), ppp, true);
-        let point = h.state().canvas_rect().unwrap().min + Vec2::splat(5.5 / ppp);
+        h.get_by_label("Pencil").click();
+        h.run();
+        let point = h.state().canvas_rect().unwrap().min + Vec2::splat(5.5);
         h.input_mut()
             .events
             .extend([Event::PointerMoved(point), press(point), release(point)]);

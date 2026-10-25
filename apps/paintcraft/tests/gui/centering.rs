@@ -17,15 +17,17 @@ fn every_classic_variant_centers_small_canvases_at_each_display_scale() {
             .save(&dir)
             .unwrap();
             let mut h = harness_with(App::new(None).with_settings(dir.clone()), ppp, true);
+            h.get_by_label("Pencil").click();
+            h.run();
             let canvas = h.state().canvas_rect().unwrap();
             let viewport = h.state().canvas_viewport().unwrap();
             assert!(
                 (canvas.center() - viewport.center()).length() < 2.0,
                 "{variant:?} at {ppp}: {canvas:?} within {viewport:?}"
             );
-            assert_eq!(canvas.width() * ppp, 320.0);
+            assert_eq!(canvas.width(), 320.0);
             let before = publications(&h);
-            let point = canvas.min + Vec2::new(20.5, 30.5) / ppp;
+            let point = canvas.min + Vec2::new(20.5, 30.5);
             h.input_mut()
                 .events
                 .extend([Event::PointerMoved(point), press(point), release(point)]);

@@ -76,13 +76,13 @@ fn studio_keyboard_pan_has_exact_screen_steps_at_each_dpi_and_inverse_zoom_motio
             for (keycode, count, zoom) in [(Key::Minus, 3, 0.125), (Key::Plus, 7, 16.0)] {
                 zoom_steps(&mut h, keycode, count);
                 let before = h.state().canvas_rect().unwrap();
-                assert!((before.width() * ppp / source.canvas.0 as f32 - zoom).abs() < 0.01);
+                assert!((before.width() / source.canvas.0 as f32 - zoom).abs() < 0.01);
                 chord(&mut h, Key::ArrowRight, false);
                 let after = h.state().canvas_rect().unwrap();
                 let document_motion =
                     (after.min.x - before.min.x) / (before.width() / source.canvas.0 as f32);
                 assert!(
-                    (document_motion + 1.0 / zoom).abs() < 0.001,
+                    (document_motion + 1.0 / (zoom * ppp)).abs() < 0.001,
                     "{document_motion} at {zoom}"
                 );
             }

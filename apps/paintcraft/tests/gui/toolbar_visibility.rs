@@ -91,9 +91,13 @@ fn auto_hiding_holds_canvas_mapping_through_coalesced_presses_and_releases() {
     for ppp in [1.0, 2.0] {
         let dir = scratch("toolbar-gesture");
         let mut h = harness_with(app(&dir, true), ppp, true);
+        h.get_by_role_and_label(Role::Button, "View").hover();
+        h.run();
+        h.get_by_role_and_label(Role::Button, "Pencil").click();
+        h.run();
         let before = publications(&h);
         let point = |h: &Harness<App>, x: f32, y: f32| {
-            h.state().canvas_rect().unwrap().min + Vec2::new((x + 0.5) / ppp, (y + 0.5) / ppp)
+            h.state().canvas_rect().unwrap().min + Vec2::new(x + 0.5, y + 0.5)
         };
         let p = point(&h, 100.0, 100.0);
         h.input_mut()

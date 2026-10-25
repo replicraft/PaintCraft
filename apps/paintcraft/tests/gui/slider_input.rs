@@ -45,7 +45,7 @@ fn classic_zoom_slider_accepts_a_coalesced_endpoint_click_without_history() {
                 .events
                 .extend([Event::PointerMoved(point), press(point), release(point)]);
             h.run();
-            assert!((h.state().canvas_rect().unwrap().width() * ppp - width).abs() < 0.1);
+            assert!((h.state().canvas_rect().unwrap().width() - width).abs() < 0.1);
         }
         assert!(h.state().editor().document().same_semantics(&snapshot));
         assert_eq!(h.state().editor().history_view().ticket, ticket);
@@ -78,7 +78,7 @@ fn classic_slider_keyboard_steps_match_single_and_repeated_layouts() {
             results.push((
                 h.state().editor().options.size,
                 h.state().editor().options.brush_opacity,
-                h.state().canvas_rect().unwrap().width() * ppp,
+                h.state().canvas_rect().unwrap().width(),
             ));
             assert!(h.state().editor().document().same_semantics(&snapshot));
             assert_eq!(h.state().editor().history_view().ticket, ticket);

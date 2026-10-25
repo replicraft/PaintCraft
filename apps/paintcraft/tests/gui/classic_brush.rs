@@ -19,8 +19,8 @@ fn classic_round_brush_retains_subpixel_motion_and_antialiasing_after_release() 
             let base = h.state().editor().document_snapshot();
             let depth = h.state().editor().undo_depth();
             let origin = h.state().canvas_rect().unwrap().min;
-            let a = origin + Vec2::new(80.125, 60.75) / ppp;
-            let b = origin + Vec2::new(80.75, 60.75) / ppp;
+            let a = origin + Vec2::new(80.125, 60.75);
+            let b = origin + Vec2::new(80.75, 60.75);
             h.input_mut()
                 .events
                 .extend([Event::PointerMoved(a), press(a), Event::PointerMoved(b)]);
@@ -40,10 +40,23 @@ fn classic_round_brush_retains_subpixel_motion_and_antialiasing_after_release() 
                 "motion inside a pixel must survive"
             );
             let preview = h.state().rendered().to_vec();
+            let preview_region = h.state().rendered_region().unwrap();
             assert!(h.state().editor().document().same_semantics(&base));
             h.event(release(b));
             h.run();
-            assert_eq!(h.state().rendered(), preview);
+            assert_eq!(
+                paintcraft_render::render_region(h.state().editor().document(), preview_region)
+                    .unwrap(),
+                preview,
+            );
+            assert_eq!(
+                h.state().rendered(),
+                paintcraft_render::render_region(
+                    h.state().editor().document(),
+                    h.state().rendered_region().unwrap()
+                )
+                .unwrap(),
+            );
             assert_eq!(h.state().editor().undo_depth(), depth + 1);
             assert!((57..65).any(|y| (77..85).any(|x| {
                 let a = top_pixel(&h, x, y).a();
@@ -54,7 +67,19 @@ fn classic_round_brush_retains_subpixel_motion_and_antialiasing_after_release() 
             assert!(h.state().editor().document().same_semantics(&base));
             h.get_by_label("Redo").click();
             h.run();
-            assert_eq!(h.state().rendered(), preview);
+            assert_eq!(
+                paintcraft_render::render_region(h.state().editor().document(), preview_region)
+                    .unwrap(),
+                preview,
+            );
+            assert_eq!(
+                h.state().rendered(),
+                paintcraft_render::render_region(
+                    h.state().editor().document(),
+                    h.state().rendered_region().unwrap()
+                )
+                .unwrap(),
+            );
             std::fs::remove_dir_all(dir).unwrap();
         }
     }
@@ -74,8 +99,8 @@ fn brush_opacity_previews_release_exactly_zero_is_noop_and_eraser_still_erases()
         assert_eq!(h.state().editor().options.brush_opacity, 50);
         assert!(h.state().editor().document().same_semantics(&original));
         let origin = h.state().canvas_rect().unwrap().min;
-        let a = origin + Vec2::new(50.125, 70.75) / ppp;
-        let b = origin + Vec2::new(80.75, 70.125) / ppp;
+        let a = origin + Vec2::new(50.125, 70.75);
+        let b = origin + Vec2::new(80.75, 70.125);
         h.input_mut().events.extend([
             Event::PointerMoved(a),
             press(a),
@@ -84,10 +109,23 @@ fn brush_opacity_previews_release_exactly_zero_is_noop_and_eraser_still_erases()
         ]);
         h.run();
         let preview = h.state().rendered().to_vec();
+        let preview_region = h.state().rendered_region().unwrap();
         assert!(h.state().editor().document().same_semantics(&original));
         h.event(release(a));
         h.run();
-        assert_eq!(h.state().rendered(), preview);
+        assert_eq!(
+            paintcraft_render::render_region(h.state().editor().document(), preview_region)
+                .unwrap(),
+            preview,
+        );
+        assert_eq!(
+            h.state().rendered(),
+            paintcraft_render::render_region(
+                h.state().editor().document(),
+                h.state().rendered_region().unwrap()
+            )
+            .unwrap(),
+        );
         assert_eq!(top_pixel(&h, 65, 70), Rgba([0, 0, 0, 128]));
         assert!((67..74).any(|y| (47..85).any(|x| {
             let alpha = top_pixel(&h, x, y).a();

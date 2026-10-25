@@ -25,7 +25,7 @@ fn historical_status_zoom_controls_work_at_both_scales_without_document_edits() 
                 h.get_by_label(&label("Canvas zoom"))
                     .set_value_accesskit(200.0);
                 h.run();
-                assert!((h.state().canvas_rect().unwrap().width() * ppp - 2000.0).abs() < 0.1);
+                assert!((h.state().canvas_rect().unwrap().width() - 2000.0).abs() < 0.1);
                 h.get_by_label(&label("Zoom percentage")).click();
                 h.run();
                 h.key_combination_modifiers(Modifiers::COMMAND, &[Key::A]);
@@ -34,7 +34,7 @@ fn historical_status_zoom_controls_work_at_both_scales_without_document_edits() 
                 h.run();
                 h.key_press(Key::Enter);
                 h.run();
-                assert!((h.state().canvas_rect().unwrap().width() * ppp - 730.0).abs() < 0.1);
+                assert!((h.state().canvas_rect().unwrap().width() - 730.0).abs() < 0.1);
                 assert!(h.state().editor().document().same_semantics(&source));
                 assert_eq!(h.state().editor().history_view().ticket, ticket);
                 drop(h);

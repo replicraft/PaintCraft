@@ -63,12 +63,7 @@ fn historical_shape_paint_rows_show_selection_and_change_real_shape_pixels() {
                     h.key_press(Key::Escape);
                     h.run();
                 }
-                let logical = |n: f32| (n + 0.5) / ppp - 0.5;
-                drag(
-                    &mut h,
-                    (logical(50.0), logical(50.0)),
-                    (logical(80.0), logical(80.0)),
-                );
+                drag(&mut h, (50.0, 50.0), (80.0, 80.0));
                 assert_eq!(top_pixel(&h, 65, 65), Rgba([255; 4]));
                 assert_eq!(top_pixel(&h, 50, 65), Rgba([0, 0, 0, 255]));
                 h.get_by_role_and_label(Role::Button, &label("Undo"))
@@ -80,11 +75,7 @@ fn historical_shape_paint_rows_show_selection_and_change_real_shape_pixels() {
                 h.get_by_role_and_label(Role::Button, &label("No outline"))
                     .click();
                 h.run();
-                drag(
-                    &mut h,
-                    (logical(50.0), logical(50.0)),
-                    (logical(80.0), logical(80.0)),
-                );
+                drag(&mut h, (50.0, 50.0), (80.0, 80.0));
                 assert_eq!(top_pixel(&h, 65, 65), Rgba([0, 0, 0, 255]));
                 h.get_by_role_and_label(Role::Button, &label("Undo"))
                     .click();

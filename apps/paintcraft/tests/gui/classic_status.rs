@@ -71,7 +71,7 @@ fn classic_status_fields_and_zoom_stay_reachable_without_changing_document_state
         h.run_steps(8);
         assert_eq!(h.get_by_label("Zoom percentage").rect(), zoom);
         // A pointer move updates its coordinates even without another input event.
-        let point = h.state().canvas_rect().unwrap().min + Vec2::new(20.5, 10.5) / ppp;
+        let point = h.state().canvas_rect().unwrap().min + Vec2::new(20.5, 10.5);
         h.event(Event::PointerMoved(point));
         h.step();
         assert!(h.query_by_label("Cursor position: 20, 10 px").is_some());

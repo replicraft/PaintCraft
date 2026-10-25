@@ -72,7 +72,7 @@ fn fit_selection_magnifies_and_scrolls_to_the_real_selected_rectangle() {
 }
 
 #[test]
-fn fractional_zoom_paints_the_mapped_document_pixel_and_actual_size_restores_physical_pixels() {
+fn fractional_zoom_paints_the_mapped_document_pixel_and_actual_size_restores_logical_pixel_scale() {
     let (mut h, dir) = studio_harness(false);
     with_layer(&mut h);
     h.event(key(Key::Minus, Modifiers::COMMAND));
@@ -118,7 +118,7 @@ fn fitting_large_documents_and_actual_size_work_at_multiple_display_scales() {
         assert_eq!(publications(&h), before);
         h.event(key(Key::Num0, Modifiers::COMMAND));
         h.run();
-        assert_eq!(h.state().canvas_rect().unwrap().width(), 1600.0 / ppp);
+        assert_eq!(h.state().canvas_rect().unwrap().width(), 1600.0);
         assert!(!h.state().editor().is_dirty());
         std::fs::remove_dir_all(dir).unwrap();
     }
@@ -190,7 +190,7 @@ fn large_canvas_renders_only_visible_pixels_at_each_dpi_and_zoom() {
             let visible = rect.intersect(h.state().canvas_viewport().unwrap());
             let view = paintcraft_ui::view::View::with_scale(
                 (rect.min.x, rect.min.y),
-                2.0_f32.powi(step),
+                2.0_f32.powi(step) * ppp,
                 ppp,
             );
             assert_eq!(
