@@ -178,3 +178,5 @@ fn coalesced_merged_shortcut_keeps_merged_source_in_either_event_order() {
         assert_eq!(app.editor.session.undo_depth(), depth);
     }
 }
+
+mod cut;

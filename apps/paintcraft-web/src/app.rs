@@ -208,6 +208,7 @@ impl WebApp {
         }
         match action {
             Action::Copy => self.copy_requested(ctx),
+            Action::Cut => self.cut_requested(ctx),
             Action::CopyVisible => self.copy_visible_requested(ctx),
             Action::Crop => self.edit(Edit::CropToSelection),
             Action::EraseSelection => self.edit(Edit::EraseSelection {
@@ -405,6 +406,12 @@ impl WebApp {
         {
             return false;
         }
+        if matches!(event, egui::Event::Cut) && !self.editor.tools.is_editing_text() {
+            if Action::Cut.enabled(self.context()) {
+                self.action(ctx, Action::Cut);
+            }
+            return true;
+        }
         if matches!(event, egui::Event::Copy) && !self.editor.tools.is_editing_text() {
             // Some integrations coalesce Copy with Ctrl/Cmd+Shift+C. Choose the
             // richer action before either event claims this frame's activation.
@@ -437,7 +444,12 @@ impl WebApp {
                 && modifiers.command
                 && matches!(
                     key,
-                    egui::Key::A | egui::Key::B | egui::Key::I | egui::Key::U | egui::Key::C
+                    egui::Key::A
+                        | egui::Key::B
+                        | egui::Key::I
+                        | egui::Key::U
+                        | egui::Key::C
+                        | egui::Key::X
                 )
             {
                 return false;

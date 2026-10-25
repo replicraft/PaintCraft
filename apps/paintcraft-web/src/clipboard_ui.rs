@@ -2,7 +2,7 @@
 use crate::{app::WebApp, clipboard};
 use eframe::egui;
 use paintcraft_core::types::{Result, clipboard::Image, resources::SharedBudget};
-use paintcraft_editor::clipboard::Capture;
+use paintcraft_editor::clipboard::{Capture, CutSource};
 use paintcraft_ui::t;
 
 #[derive(Debug)]
@@ -12,6 +12,7 @@ pub(crate) struct State {
     capture: Option<Capture>,
     last: Option<Capture>,
     activation: Option<u64>,
+    cut: Option<CutSource>,
 }
 impl Default for State {
     fn default() -> Self {
@@ -21,6 +22,7 @@ impl Default for State {
             capture: None,
             last: None,
             activation: None,
+            cut: None,
         }
     }
 }
@@ -30,6 +32,16 @@ impl WebApp {
     }
     pub(crate) fn copy_visible_requested(&mut self, ctx: &egui::Context) {
         self.copy_source_with(ctx, true, |image| clipboard::submit(ctx, image));
+    }
+    pub(crate) fn cut_requested(&mut self, ctx: &egui::Context) {
+        self.cut_with(ctx, |image| clipboard::submit(ctx, image));
+    }
+    fn cut_with(
+        &mut self,
+        ctx: &egui::Context,
+        submit: impl FnOnce(Image) -> Result<clipboard::Job>,
+    ) {
+        self.clipboard_with(ctx, false, true, submit);
     }
     fn copy_with(
         &mut self,
@@ -44,6 +56,15 @@ impl WebApp {
         visible: bool,
         submit: impl FnOnce(Image) -> Result<clipboard::Job>,
     ) {
+        self.clipboard_with(ctx, visible, false, submit);
+    }
+    fn clipboard_with(
+        &mut self,
+        ctx: &egui::Context,
+        visible: bool,
+        cut: bool,
+        submit: impl FnOnce(Image) -> Result<clipboard::Job>,
+    ) {
         if self.clipboard.activation == Some(ctx.cumulative_frame_nr()) {
             return;
         }
@@ -51,6 +72,8 @@ impl WebApp {
         if self.clipboard.job.is_some()
             || self.blocked()
             || self.editor.tools.gesture_in_progress()
+            || self.editor.tools.floating_selection().is_some()
+            || self.editor.tools.is_constructing_shape()
             || self.editor.tools.is_editing_text()
             || !self.text.preedit.is_empty()
             || ctx.egui_wants_keyboard_input()
@@ -70,6 +93,22 @@ impl WebApp {
             self.message = t!(ctx, "There are no selected pixels to copy.");
             return;
         }
+        let cut = if cut {
+            let clear = paintcraft_tools::commands::canvas_color(self.editor.session.document());
+            match CutSource::new(
+                &self.editor.session,
+                target.expect("validated target"),
+                clear,
+            ) {
+                Ok(cut) => Some(cut),
+                Err(error) => {
+                    self.message = format!("{}: {error}", t!(ctx, "Clipboard copy failed"));
+                    return;
+                }
+            }
+        } else {
+            None
+        };
         let source = self.editor.session.snapshot();
         let selection = self.editor.session.selection();
         let result = if visible {
@@ -100,6 +139,7 @@ impl WebApp {
                 Ok(job) => {
                     self.clipboard.job = Some(job);
                     self.clipboard.capture = Some(capture);
+                    self.clipboard.cut = cut;
                     self.message = t!(ctx, "Copying to clipboard…");
                 }
                 Err(error) => {
@@ -122,12 +162,44 @@ impl WebApp {
                 Ok(()) => {
                     self.clipboard.last = self.clipboard.capture.take();
                     self.message = t!(ctx, "Copied to clipboard.");
+                    if let Some(cut) = self.clipboard.cut.take() {
+                        let safe = !self.blocked()
+                            && !self.editor.tools.gesture_in_progress()
+                            && self.editor.tools.floating_selection().is_none()
+                            && !self.editor.tools.is_constructing_shape()
+                            && !self.editor.tools.is_editing_text()
+                            && self.text.preedit.is_empty();
+                        match cut.removal_batch(&self.editor.session, self.editor.target) {
+                            Ok(batch) if safe => {
+                                self.message = match self.editor.session.apply(&batch) {
+                                    Ok(_) => t!(ctx, "Cut"),
+                                    Err(error) => {
+                                        format!("{}: {error}", t!(ctx, "Clipboard cut failed"))
+                                    }
+                                };
+                            }
+                            _ => {
+                                self.message = t!(
+                                    ctx,
+                                    "Copied, but Cut was cancelled because the source changed."
+                                )
+                            }
+                        }
+                    }
                 }
                 Err(error) => {
+                    self.clipboard.cut = None;
                     self.clipboard.capture = None;
                     self.message = format!("{}: {error}", t!(ctx, "Clipboard copy failed"));
                 }
             }
+        }
+    }
+    pub(crate) fn cancel_clipboard_cut(&mut self, ctx: &egui::Context) {
+        if self.clipboard.cut.take().is_some() {
+            self.clipboard.job = None;
+            self.clipboard.capture = None;
+            self.message = t!(ctx, "Cut cancelled; the canvas was not changed.");
         }
     }
 }

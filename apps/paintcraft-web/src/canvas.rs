@@ -351,7 +351,10 @@ impl WebApp {
                             }
                         }
                         egui::Key::Backspace => self.editor.tools.remove_shape_vertex(),
-                        egui::Key::Escape => self.editor.tools.cancel_gesture(),
+                        egui::Key::Escape => {
+                            self.cancel_clipboard_cut(ui.ctx());
+                            self.editor.tools.cancel_gesture();
+                        }
                         _ => {}
                     }
                 }
