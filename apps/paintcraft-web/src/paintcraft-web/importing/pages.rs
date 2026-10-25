@@ -1,4 +1,4 @@
-//! Explicit DCX selection retains encoded input and the picker owner's source.
+//! Explicit DCX page or ICO/CUR entry selection retains input and picker owner.
 use super::*;
 use crate::editor::MAX_PIXELS;
 use eframe::egui;
@@ -7,6 +7,7 @@ use paintcraft_formats::{
     dcx,
     registry::{self, Family, Frontend, Platform},
 };
+use paintcraft_ui::entry_import;
 use paintcraft_ui::page_import::{self, Page, Response};
 use sha2::{Digest, Sha256};
 
@@ -15,6 +16,7 @@ pub(crate) struct Source {
     bytes: Arc<Vec<u8>>,
     name: String,
     pages: Vec<Page>,
+    entries: Option<Vec<entry_import::Entry>>,
     profile: Frontend,
 }
 impl Source {
@@ -26,15 +28,43 @@ impl Source {
                 "Browser input limit is 64 MiB",
             ));
         }
+        let family = registry::sniff(&bytes);
         if profile != Frontend::Studio
-            || name.rsplit('.').next().and_then(Family::from_extension) != Some(Family::Dcx)
+            || !matches!(family, Some(Family::Dcx | Family::Ico | Family::Cur))
+            || name.rsplit('.').next().and_then(Family::from_extension) != family
         {
             return Err(Error::new(
                 ErrorCode::CapabilityUnsupported,
-                "DCX requires an explicit Studio page import",
+                "page or entry selection requires explicit Studio import",
             ));
         }
-        let directory = dcx::inspect(&bytes)?;
+        let entries = if matches!(family, Some(Family::Ico | Family::Cur)) {
+            Some(
+                paintcraft_formats::icons::inspect(&bytes)?
+                    .entries
+                    .into_iter()
+                    .map(|entry| entry_import::Entry {
+                        index: entry.index,
+                        width: entry.width,
+                        height: entry.height,
+                        encoding: if entry.encoding == paintcraft_formats::icons::Encoding::Png {
+                            "PNG"
+                        } else {
+                            "DIB"
+                        },
+                        depth: entry.bits_per_pixel,
+                        hotspot: entry.hotspot,
+                    })
+                    .collect(),
+            )
+        } else {
+            None
+        };
+        let directory = if entries.is_none() {
+            dcx::inspect(&bytes)?
+        } else {
+            Vec::new()
+        };
         let mut pages = Vec::new();
         pages
             .try_reserve_exact(directory.len())
@@ -48,6 +78,7 @@ impl Source {
             bytes: Arc::new(bytes),
             name,
             pages,
+            entries,
             profile,
         })
     }
@@ -87,14 +118,25 @@ impl WebApp {
             self.message = t!(ctx, "The document changed; choose the image again.");
             return;
         }
-        let response = page_import::dialog(
-            ctx,
-            &pending.source.name,
-            &pending.source.pages,
-            &mut pending.selected,
-            MAX_PIXELS,
-            pending.error.as_deref(),
-        );
+        let response = if let Some(entries) = &pending.source.entries {
+            entry_import::dialog(
+                ctx,
+                &pending.source.name,
+                entries,
+                &mut pending.selected,
+                MAX_PIXELS,
+                pending.error.as_deref(),
+            )
+        } else {
+            page_import::dialog(
+                ctx,
+                &pending.source.name,
+                &pending.source.pages,
+                &mut pending.selected,
+                MAX_PIXELS,
+                pending.error.as_deref(),
+            )
+        };
         self.pending_pages = Some(pending);
         match response {
             Response::Pending => {}
@@ -115,16 +157,41 @@ impl WebApp {
             return;
         }
         let result = (|| {
-            registry::admit_import_page(
-                pending.source.profile,
-                &pending.source.name,
-                &pending.source.bytes,
-                Platform::Web,
-                index,
-            )?;
-            let decoded = dcx::decode_page(&pending.source.bytes, index, MAX_PIXELS)?;
-            if decoded
-                .losses
+            let digest = paintcraft_document::hex(&Sha256::digest(pending.source.bytes.as_slice()));
+            let (document, losses) = if pending.source.entries.is_some() {
+                registry::admit_import_entry(
+                    pending.source.profile,
+                    &pending.source.name,
+                    &pending.source.bytes,
+                    Platform::Web,
+                    index,
+                )?;
+                let decoded = paintcraft_formats::icons::decode_entry(
+                    &pending.source.bytes,
+                    index,
+                    MAX_PIXELS,
+                )?;
+                (decoded.document(&digest)?, decoded.losses)
+            } else {
+                registry::admit_import_page(
+                    pending.source.profile,
+                    &pending.source.name,
+                    &pending.source.bytes,
+                    Platform::Web,
+                    index,
+                )?;
+                let decoded = dcx::decode_page(&pending.source.bytes, index, MAX_PIXELS)?;
+                (
+                    paintcraft_document::import_image(
+                        decoded.width,
+                        decoded.height,
+                        &decoded.rgba,
+                        &digest,
+                    )?,
+                    decoded.losses,
+                )
+            };
+            if losses
                 .iter()
                 .any(|loss| paintcraft_ui::i18n::import_loss_description(loss).is_none())
             {
@@ -133,17 +200,11 @@ impl WebApp {
                     "unknown page import loss",
                 ));
             }
-            let digest = paintcraft_document::hex(&Sha256::digest(pending.source.bytes.as_slice()));
             Ok(Loaded {
                 converted_copy: true,
-                document: paintcraft_document::import_image(
-                    decoded.width,
-                    decoded.height,
-                    &decoded.rgba,
-                    &digest,
-                )?,
+                document,
                 name: pending.source.name.clone(),
-                losses: decoded.losses,
+                losses,
             })
         })();
         match result {
@@ -161,5 +222,8 @@ impl WebApp {
     }
 }
 
+#[cfg(test)]
+#[path = "pages/icon_tests.rs"]
+mod icon_tests;
 #[cfg(test)]
 mod tests;

@@ -87,6 +87,7 @@ impl Files {
         .collect();
         if convert && frontend == Frontend::Studio {
             extensions.push("dcx");
+            extensions.extend(["ico", "cur"]);
         }
         wasm_bindgen_futures::spawn_local(async move {
             let result = async {
@@ -111,7 +112,12 @@ impl Files {
                         Error::new(ErrorCode::StorageFailed, "Browser file read failed")
                     })?;
                 let bytes = js_sys::Uint8Array::new(&buffer).to_vec();
-                if convert && paintcraft_formats::registry::sniff(&bytes) == Some(Family::Dcx) {
+                if convert
+                    && matches!(
+                        paintcraft_formats::registry::sniff(&bytes),
+                        Some(Family::Dcx | Family::Ico | Family::Cur)
+                    )
+                {
                     return Ok(Outcome::Pages(crate::importing::pages::Source::new(
                         bytes,
                         file.file_name(),
