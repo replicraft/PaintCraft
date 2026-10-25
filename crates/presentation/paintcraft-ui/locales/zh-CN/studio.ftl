@@ -49,3 +49,12 @@ import-one-page-as-a-picture-other-pages-remain-in-the-source-file = 将一页�
 format-page-number-width-height-px = 第 { $number } 页：{ $width } × { $height } 像素
 this-page-exceeds-the-canvas-size-limit = 此页面超出画布大小限制。
 import-selected-page = 导入所选页面
+
+choose-an-icon-or-cursor-entry = 选择图标或光标条目
+import-one-entry-as-a-picture-other-entries-remain-in-the-source-file = 将一个条目导入为图片。其他条目保留在源文件中。
+format-entry-number-width-height-px-encoding-depth-bits = 条目 { $number }：{ $width } × { $height } px，{ $encoding }，{ $depth } 位
+format-hotspot-x-y = 热点：{ $x }，{ $y }
+this-entry-exceeds-the-canvas-size-limit = 此条目超出了画布大小限制。
+import-selected-entry = 导入所选条目
+only-the-selected-icon-or-cursor-entry-will-be-imported = 仅导入所选的图标或光标条目。
+the-cursor-hotspot-will-not-be-retained-in-the-picture = 图片中不会保留光标热点。

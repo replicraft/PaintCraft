@@ -2,6 +2,7 @@
 pub mod actions;
 pub mod chrome;
 pub mod confirmation;
+pub mod entry_import;
 pub mod fonts;
 pub mod icons;
 pub mod outbox;

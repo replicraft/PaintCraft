@@ -49,3 +49,12 @@ import-one-page-as-a-picture-other-pages-remain-in-the-source-file = 1ページ�
 format-page-number-width-height-px = ページ { $number }: { $width } × { $height } px
 this-page-exceeds-the-canvas-size-limit = このページはキャンバスのサイズ制限を超えています。
 import-selected-page = 選択したページを読み込む
+
+choose-an-icon-or-cursor-entry = アイコンまたはカーソルの項目を選択
+import-one-entry-as-a-picture-other-entries-remain-in-the-source-file = 1 つの項目を画像として読み込みます。他の項目は元のファイルに残ります。
+format-entry-number-width-height-px-encoding-depth-bits = 項目 { $number }: { $width } × { $height } px、{ $encoding }、{ $depth } ビット
+format-hotspot-x-y = ホットスポット: { $x }, { $y }
+this-entry-exceeds-the-canvas-size-limit = この項目はキャンバスのサイズ制限を超えています。
+import-selected-entry = 選択した項目を読み込む
+only-the-selected-icon-or-cursor-entry-will-be-imported = 選択したアイコンまたはカーソルの項目のみが読み込まれます。
+the-cursor-hotspot-will-not-be-retained-in-the-picture = カーソルのホットスポットは画像に保持されません。

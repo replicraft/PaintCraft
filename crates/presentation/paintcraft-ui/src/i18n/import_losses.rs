@@ -15,6 +15,13 @@ pub fn import_loss_description(code: &str) -> Option<&'static str> {
         "exif-metadata-ignored" => "EXIF metadata will not be retained.",
         "animation-first-frame-only" => "Only the first animation frame will be imported.",
         "palette-indices-expanded" => "Palette entries will be expanded to RGBA pixels.",
+        "icon-palette-expanded" => "Palette entries will be expanded to RGBA pixels.",
+        "icon-other-entries-not-imported" => {
+            "Only the selected icon or cursor entry will be imported."
+        }
+        "cursor-hotspot-not-retained-in-flat-document" => {
+            "The cursor hotspot will not be retained in the picture."
+        }
         "gif-metadata-ignored" => "GIF metadata will not be retained.",
         "tiff-metadata-ignored" => "TIFF metadata will not be retained.",
         "tga-metadata-ignored" => "TGA metadata will not be retained.",
@@ -50,6 +57,9 @@ mod tests {
     fn extended_conversion_limitations_are_translated_in_every_language() {
         for code in [
             "pnm-metadata-ignored",
+            "icon-palette-expanded",
+            "icon-other-entries-not-imported",
+            "cursor-hotspot-not-retained-in-flat-document",
             "pcx-metadata-ignored",
             "dcx-other-pages-not-imported",
             "pdn-metadata-ignored",

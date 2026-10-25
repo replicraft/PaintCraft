@@ -49,3 +49,12 @@ import-one-page-as-a-picture-other-pages-remain-in-the-source-file = Eine Seite 
 format-page-number-width-height-px = Seite { $number }: { $width } × { $height } px
 this-page-exceeds-the-canvas-size-limit = Diese Seite überschreitet die Größenbegrenzung der Leinwand.
 import-selected-page = Ausgewählte Seite importieren
+
+choose-an-icon-or-cursor-entry = Symbol- oder Mauszeigereintrag auswählen
+import-one-entry-as-a-picture-other-entries-remain-in-the-source-file = Einen Eintrag als Bild importieren. Andere Einträge bleiben in der Quelldatei.
+format-entry-number-width-height-px-encoding-depth-bits = Eintrag { $number }: { $width } × { $height } px, { $encoding }, { $depth } Bit
+format-hotspot-x-y = Aktiver Punkt: { $x }, { $y }
+this-entry-exceeds-the-canvas-size-limit = Dieser Eintrag überschreitet die Größenbeschränkung der Zeichenfläche.
+import-selected-entry = Ausgewählten Eintrag importieren
+only-the-selected-icon-or-cursor-entry-will-be-imported = Nur der ausgewählte Symbol- oder Mauszeigereintrag wird importiert.
+the-cursor-hotspot-will-not-be-retained-in-the-picture = Der aktive Punkt des Mauszeigers bleibt im Bild nicht erhalten.

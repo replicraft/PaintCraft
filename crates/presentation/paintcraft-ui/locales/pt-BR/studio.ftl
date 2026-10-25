@@ -49,3 +49,12 @@ import-one-page-as-a-picture-other-pages-remain-in-the-source-file = Importe uma
 format-page-number-width-height-px = Página { $number }: { $width } × { $height } px
 this-page-exceeds-the-canvas-size-limit = Esta página excede o limite de tamanho da tela.
 import-selected-page = Importar página selecionada
+
+choose-an-icon-or-cursor-entry = Escolher uma entrada de ícone ou cursor
+import-one-entry-as-a-picture-other-entries-remain-in-the-source-file = Importar uma entrada como imagem. As outras entradas permanecem no arquivo de origem.
+format-entry-number-width-height-px-encoding-depth-bits = Entrada { $number }: { $width } × { $height } px, { $encoding }, { $depth } bits
+format-hotspot-x-y = Ponto ativo: { $x }, { $y }
+this-entry-exceeds-the-canvas-size-limit = Esta entrada excede o limite de tamanho da tela.
+import-selected-entry = Importar entrada selecionada
+only-the-selected-icon-or-cursor-entry-will-be-imported = Somente a entrada de ícone ou cursor selecionada será importada.
+the-cursor-hotspot-will-not-be-retained-in-the-picture = O ponto ativo do cursor não será mantido na imagem.

@@ -49,3 +49,12 @@ import-one-page-as-a-picture-other-pages-remain-in-the-source-file = एक प�
 format-page-number-width-height-px = पृष्ठ { $number }: { $width } × { $height } px
 this-page-exceeds-the-canvas-size-limit = यह पृष्ठ कैनवास की आकार सीमा से अधिक है।
 import-selected-page = चयनित पृष्ठ आयात करें
+
+choose-an-icon-or-cursor-entry = आइकन या कर्सर प्रविष्टि चुनें
+import-one-entry-as-a-picture-other-entries-remain-in-the-source-file = एक प्रविष्टि को चित्र के रूप में आयात करें। अन्य प्रविष्टियाँ मूल फ़ाइल में रहेंगी।
+format-entry-number-width-height-px-encoding-depth-bits = प्रविष्टि { $number }: { $width } × { $height } px, { $encoding }, { $depth } बिट
+format-hotspot-x-y = सक्रिय बिंदु: { $x }, { $y }
+this-entry-exceeds-the-canvas-size-limit = यह प्रविष्टि कैनवास के आकार की सीमा से अधिक है।
+import-selected-entry = चुनी हुई प्रविष्टि आयात करें
+only-the-selected-icon-or-cursor-entry-will-be-imported = केवल चुनी हुई आइकन या कर्सर प्रविष्टि आयात की जाएगी।
+the-cursor-hotspot-will-not-be-retained-in-the-picture = कर्सर का सक्रिय बिंदु चित्र में सुरक्षित नहीं रहेगा।
