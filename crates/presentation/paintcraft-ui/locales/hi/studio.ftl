@@ -42,3 +42,10 @@ format-close-document-number = दस्तावेज़ { $number } बंद
 alpha = अल्फ़ा
 
 flatten-image = छवि समतल करें
+
+choose-a-page-to-import = आयात करने के लिए पृष्ठ चुनें
+format-dcx-pages-count = DCX पृष्ठ: { $count }
+import-one-page-as-a-picture-other-pages-remain-in-the-source-file = एक पृष्ठ को चित्र के रूप में आयात करें। अन्य पृष्ठ स्रोत फ़ाइल में बने रहते हैं।
+format-page-number-width-height-px = पृष्ठ { $number }: { $width } × { $height } px
+this-page-exceeds-the-canvas-size-limit = यह पृष्ठ कैनवास की आकार सीमा से अधिक है।
+import-selected-page = चयनित पृष्ठ आयात करें

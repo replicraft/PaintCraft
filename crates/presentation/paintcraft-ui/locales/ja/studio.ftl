@@ -42,3 +42,10 @@ format-close-document-number = ドキュメント{ $number }を閉じる
 alpha = アルファ
 
 flatten-image = 画像を統合
+
+choose-a-page-to-import = 読み込むページを選択
+format-dcx-pages-count = DCXのページ数: { $count }
+import-one-page-as-a-picture-other-pages-remain-in-the-source-file = 1ページを画像として読み込みます。他のページは元のファイルに保持されます。
+format-page-number-width-height-px = ページ { $number }: { $width } × { $height } px
+this-page-exceeds-the-canvas-size-limit = このページはキャンバスのサイズ制限を超えています。
+import-selected-page = 選択したページを読み込む

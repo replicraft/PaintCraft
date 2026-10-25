@@ -5,6 +5,7 @@ pub mod confirmation;
 pub mod fonts;
 pub mod icons;
 pub mod outbox;
+pub mod page_import;
 pub mod view;
 pub mod widgets;
 

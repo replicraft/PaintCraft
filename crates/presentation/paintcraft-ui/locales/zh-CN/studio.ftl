@@ -42,3 +42,10 @@ format-close-document-number = 关闭文档 { $number }
 alpha = 透明度
 
 flatten-image = 拼合图像
+
+choose-a-page-to-import = 选择要导入的页面
+format-dcx-pages-count = DCX 页数：{ $count }
+import-one-page-as-a-picture-other-pages-remain-in-the-source-file = 将一页导入为图像。其他页面仍保留在源文件中。
+format-page-number-width-height-px = 第 { $number } 页：{ $width } × { $height } 像素
+this-page-exceeds-the-canvas-size-limit = 此页面超出画布大小限制。
+import-selected-page = 导入所选页面

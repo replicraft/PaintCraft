@@ -42,3 +42,10 @@ format-close-document-number = Cerrar documento { $number }
 alpha = Alfa
 
 flatten-image = Acoplar imagen
+
+choose-a-page-to-import = Elegir una página para importar
+format-dcx-pages-count = Páginas DCX: { $count }
+import-one-page-as-a-picture-other-pages-remain-in-the-source-file = Importa una página como imagen. Las demás páginas permanecen en el archivo original.
+format-page-number-width-height-px = Página { $number }: { $width } × { $height } px
+this-page-exceeds-the-canvas-size-limit = Esta página supera el límite de tamaño del lienzo.
+import-selected-page = Importar página seleccionada

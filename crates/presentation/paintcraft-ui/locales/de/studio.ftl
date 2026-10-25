@@ -42,3 +42,10 @@ format-close-document-number = Dokument { $number } schließen
 alpha = Alpha
 
 flatten-image = Bild zusammenführen
+
+choose-a-page-to-import = Zu importierende Seite auswählen
+format-dcx-pages-count = DCX-Seiten: { $count }
+import-one-page-as-a-picture-other-pages-remain-in-the-source-file = Eine Seite als Bild importieren. Andere Seiten bleiben in der Quelldatei.
+format-page-number-width-height-px = Seite { $number }: { $width } × { $height } px
+this-page-exceeds-the-canvas-size-limit = Diese Seite überschreitet die Größenbegrenzung der Leinwand.
+import-selected-page = Ausgewählte Seite importieren

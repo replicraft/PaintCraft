@@ -42,3 +42,10 @@ format-close-document-number = Close document { $number }
 alpha = Alpha
 
 flatten-image = Flatten image
+
+choose-a-page-to-import = Choose a page to import
+format-dcx-pages-count = DCX pages: { $count }
+import-one-page-as-a-picture-other-pages-remain-in-the-source-file = Import one page as a picture. Other pages remain in the source file.
+format-page-number-width-height-px = Page { $number }: { $width } × { $height } px
+this-page-exceeds-the-canvas-size-limit = This page exceeds the canvas size limit.
+import-selected-page = Import selected page
