@@ -154,3 +154,29 @@ cut-cancelled-the-canvas-was-not-changed = Se canceló Cortar; el lienzo no camb
 clipboard-cut-failed = Error al cortar al portapapeles
 
 cut-changed-nothing = Cortar no cambió nada
+
+paste-as-new-layer-more = Pegar como capa nueva…
+
+finish-the-current-edit-before-pasting = Termina la edición actual antes de pegar.
+
+reading-clipboard-more = Leyendo el portapapeles…
+
+clipboard-paste-failed = Error al pegar desde el portapapeles
+
+the-document-changed-paste-again = El documento cambió; vuelve a pegar.
+
+paste-cancelled = Pegado cancelado.
+
+pasted-image = Imagen pegada
+
+pasting-creates-a-new-layer = Al pegar se crea una capa nueva.
+
+expand-canvas-to-fit-image = Ampliar el lienzo para ajustar la imagen
+
+pixels-outside-the-canvas-stay-in-the-new-layer = Los píxeles fuera del lienzo permanecen en la capa nueva.
+
+choose-a-valid-image-position-and-canvas-size = Elige una posición de imagen y un tamaño de lienzo válidos.
+
+paste-with-these-import-limitations = ¿Pegar con estas limitaciones de importación?
+
+accept-import-limitations = Aceptar las limitaciones de importación

@@ -154,3 +154,29 @@ cut-cancelled-the-canvas-was-not-changed = Recortar cancelado; a tela não foi a
 clipboard-cut-failed = Falha ao recortar para a área de transferência
 
 cut-changed-nothing = Recortar não alterou nada
+
+paste-as-new-layer-more = Colar como nova camada…
+
+finish-the-current-edit-before-pasting = Conclua a edição atual antes de colar.
+
+reading-clipboard-more = Lendo a área de transferência…
+
+clipboard-paste-failed = Falha ao colar da área de transferência
+
+the-document-changed-paste-again = O documento mudou; cole novamente.
+
+paste-cancelled = Colagem cancelada.
+
+pasted-image = Imagem colada
+
+pasting-creates-a-new-layer = A colagem cria uma nova camada.
+
+expand-canvas-to-fit-image = Expandir a tela para caber a imagem
+
+pixels-outside-the-canvas-stay-in-the-new-layer = Os pixels fora da tela permanecem na nova camada.
+
+choose-a-valid-image-position-and-canvas-size = Escolha uma posição de imagem e um tamanho de tela válidos.
+
+paste-with-these-import-limitations = Colar com estas limitações de importação?
+
+accept-import-limitations = Aceitar limitações de importação

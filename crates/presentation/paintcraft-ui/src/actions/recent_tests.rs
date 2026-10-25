@@ -9,6 +9,7 @@ fn native_history_capability_survives_empty_workspaces_but_respects_modals() {
         can_redo: false,
         can_save_all: false,
         can_recent: true,
+        can_paste: false,
         selection_active: false,
         tool: Tool::Brush,
         blocked: false,
@@ -35,6 +36,7 @@ fn native_history_capability_survives_empty_workspaces_but_respects_modals() {
         assert!(Action::RecentFiles.enabled(context));
         assert!(!Action::RecentFiles.enabled(Context {
             can_recent: false,
+            can_paste: false,
             ..context
         }));
         assert!(!Action::RecentFiles.enabled(Context {

@@ -154,3 +154,29 @@ cut-cancelled-the-canvas-was-not-changed = Cut cancelled; the canvas was not cha
 clipboard-cut-failed = Clipboard cut failed
 
 cut-changed-nothing = Cut changed nothing
+
+paste-as-new-layer-more = Paste as new layer…
+
+finish-the-current-edit-before-pasting = Finish the current edit before pasting.
+
+reading-clipboard-more = Reading clipboard…
+
+clipboard-paste-failed = Clipboard paste failed
+
+the-document-changed-paste-again = The document changed; paste again.
+
+paste-cancelled = Paste cancelled.
+
+pasted-image = Pasted image
+
+pasting-creates-a-new-layer = Pasting creates a new layer.
+
+expand-canvas-to-fit-image = Expand canvas to fit image
+
+pixels-outside-the-canvas-stay-in-the-new-layer = Pixels outside the canvas stay in the new layer.
+
+choose-a-valid-image-position-and-canvas-size = Choose a valid image position and canvas size.
+
+paste-with-these-import-limitations = Paste with these import limitations?
+
+accept-import-limitations = Accept import limitations

@@ -154,3 +154,29 @@ cut-cancelled-the-canvas-was-not-changed = 剪切已取消；画布未更改。
 clipboard-cut-failed = 剪切到剪贴板失败
 
 cut-changed-nothing = 剪切未产生更改
+
+paste-as-new-layer-more = 粘贴为新图层…
+
+finish-the-current-edit-before-pasting = 请先完成当前编辑再粘贴。
+
+reading-clipboard-more = 正在读取剪贴板…
+
+clipboard-paste-failed = 从剪贴板粘贴失败
+
+the-document-changed-paste-again = 文档已更改；请重新粘贴。
+
+paste-cancelled = 已取消粘贴。
+
+pasted-image = 粘贴的图像
+
+pasting-creates-a-new-layer = 粘贴将创建新图层。
+
+expand-canvas-to-fit-image = 扩展画布以容纳图像
+
+pixels-outside-the-canvas-stay-in-the-new-layer = 画布外的像素会保留在新图层中。
+
+choose-a-valid-image-position-and-canvas-size = 请选择有效的图像位置和画布大小。
+
+paste-with-these-import-limitations = 是否接受以下导入限制并粘贴？
+
+accept-import-limitations = 接受导入限制

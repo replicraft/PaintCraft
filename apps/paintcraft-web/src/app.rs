@@ -113,6 +113,7 @@ impl WebApp {
             can_undo: self.editor.session.undo_depth() > 0 || self.editor.has_text(),
             can_redo: self.editor.session.redo_depth() > 0,
             can_recent: false,
+            can_paste: false,
             can_save_all: false,
             selection_active: self.editor.session.selection()
                 != paintcraft_editor::execute::Selection::Inactive,
@@ -210,6 +211,9 @@ impl WebApp {
             Action::Copy => self.copy_requested(ctx),
             Action::Cut => self.cut_requested(ctx),
             Action::CopyVisible => self.copy_visible_requested(ctx),
+            Action::PasteLayer => {
+                self.message = t!(ctx, "Canvas clipboard operations are not available yet.")
+            }
             Action::Crop => self.edit(Edit::CropToSelection),
             Action::EraseSelection => self.edit(Edit::EraseSelection {
                 color: paintcraft_tools::commands::canvas_color(self.editor.session.document()),

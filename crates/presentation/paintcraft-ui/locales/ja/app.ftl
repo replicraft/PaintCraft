@@ -154,3 +154,29 @@ cut-cancelled-the-canvas-was-not-changed = 切り取りをキャンセルしま�
 clipboard-cut-failed = クリップボードへの切り取りに失敗しました
 
 cut-changed-nothing = 切り取りによる変更はありません
+
+paste-as-new-layer-more = 新しいレイヤーとして貼り付け…
+
+finish-the-current-edit-before-pasting = 貼り付ける前に現在の編集を完了してください。
+
+reading-clipboard-more = クリップボードを読み込み中…
+
+clipboard-paste-failed = クリップボードからの貼り付けに失敗しました
+
+the-document-changed-paste-again = ドキュメントが変更されました。もう一度貼り付けてください。
+
+paste-cancelled = 貼り付けをキャンセルしました。
+
+pasted-image = 貼り付けた画像
+
+pasting-creates-a-new-layer = 貼り付けると新しいレイヤーが作成されます。
+
+expand-canvas-to-fit-image = 画像に合わせてキャンバスを拡張
+
+pixels-outside-the-canvas-stay-in-the-new-layer = キャンバスの外のピクセルも新しいレイヤーに保持されます。
+
+choose-a-valid-image-position-and-canvas-size = 有効な画像の位置とキャンバスサイズを選択してください。
+
+paste-with-these-import-limitations = 次の読み込み制限を受け入れて貼り付けますか？
+
+accept-import-limitations = 読み込み制限を受け入れる

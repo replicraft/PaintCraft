@@ -119,6 +119,7 @@ mod tests {
             can_undo: false,
             can_redo: false,
             can_recent: false,
+            can_paste: false,
             can_save_all: false,
             selection_active: false,
             tool: Tool::Pencil,

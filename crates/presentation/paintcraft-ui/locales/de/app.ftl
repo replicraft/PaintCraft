@@ -154,3 +154,29 @@ cut-cancelled-the-canvas-was-not-changed = Ausschneiden abgebrochen; die Leinwan
 clipboard-cut-failed = Ausschneiden über die Zwischenablage fehlgeschlagen
 
 cut-changed-nothing = Ausschneiden hat nichts geändert
+
+paste-as-new-layer-more = Als neue Ebene einfügen…
+
+finish-the-current-edit-before-pasting = Beenden Sie die aktuelle Bearbeitung vor dem Einfügen.
+
+reading-clipboard-more = Zwischenablage wird gelesen…
+
+clipboard-paste-failed = Einfügen aus der Zwischenablage fehlgeschlagen
+
+the-document-changed-paste-again = Das Dokument wurde geändert. Bitte erneut einfügen.
+
+paste-cancelled = Einfügen abgebrochen.
+
+pasted-image = Eingefügtes Bild
+
+pasting-creates-a-new-layer = Beim Einfügen wird eine neue Ebene erstellt.
+
+expand-canvas-to-fit-image = Leinwand an das Bild anpassen
+
+pixels-outside-the-canvas-stay-in-the-new-layer = Pixel außerhalb der Leinwand bleiben in der neuen Ebene erhalten.
+
+choose-a-valid-image-position-and-canvas-size = Wählen Sie eine gültige Bildposition und Leinwandgröße.
+
+paste-with-these-import-limitations = Mit diesen Einschränkungen importieren?
+
+accept-import-limitations = Importeinschränkungen akzeptieren

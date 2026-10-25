@@ -7,6 +7,7 @@ fn context(frontend: Frontend) -> Context {
         can_undo: false,
         can_redo: false,
         can_recent: false,
+        can_paste: false,
         can_save_all: false,
         selection_active: false,
         tool: Tool::Select,
@@ -265,6 +266,39 @@ fn cut_uses_the_active_layer_and_exact_selection_admission() {
         assert_eq!(
             Action::from_shortcut_for(frontend, Key::X, Modifiers::COMMAND),
             Some(Action::Cut)
+        );
+    }
+}
+
+#[test]
+fn paste_as_new_layer_requires_host_support_and_uses_its_explicit_shortcut() {
+    for frontend in [Frontend::Classic, Frontend::Studio] {
+        let base = context(frontend);
+        assert!(!Action::PasteLayer.enabled(base));
+        let allowed = Context {
+            can_paste: true,
+            ..base
+        };
+        assert!(Action::PasteLayer.enabled(allowed));
+        assert!(Action::PasteLayer.enabled(Context {
+            selection_active: true,
+            ..allowed
+        }));
+        assert!(!Action::PasteLayer.enabled(Context {
+            document_open: false,
+            ..allowed
+        }));
+        assert!(!Action::PasteLayer.enabled(Context {
+            blocked: true,
+            ..allowed
+        }));
+        assert_eq!(
+            Action::from_shortcut_for(frontend, Key::V, Modifiers::COMMAND | Modifiers::SHIFT),
+            Some(Action::PasteLayer)
+        );
+        assert_ne!(
+            Action::from_shortcut_for(frontend, Key::V, Modifiers::COMMAND),
+            Some(Action::PasteLayer)
         );
     }
 }

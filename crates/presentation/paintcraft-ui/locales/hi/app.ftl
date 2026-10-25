@@ -154,3 +154,29 @@ cut-cancelled-the-canvas-was-not-changed = कट रद्द कर दिय�
 clipboard-cut-failed = क्लिपबोर्ड में कट करना विफल रहा
 
 cut-changed-nothing = कट करने से कुछ नहीं बदला
+
+paste-as-new-layer-more = नई परत के रूप में पेस्ट करें…
+
+finish-the-current-edit-before-pasting = पेस्ट करने से पहले वर्तमान संपादन पूरा करें।
+
+reading-clipboard-more = क्लिपबोर्ड पढ़ा जा रहा है…
+
+clipboard-paste-failed = क्लिपबोर्ड से पेस्ट करना विफल रहा
+
+the-document-changed-paste-again = दस्तावेज़ बदल गया; फिर से पेस्ट करें।
+
+paste-cancelled = पेस्ट रद्द किया गया।
+
+pasted-image = पेस्ट की गई छवि
+
+pasting-creates-a-new-layer = पेस्ट करने से एक नई परत बनती है।
+
+expand-canvas-to-fit-image = छवि के अनुसार कैनवस बढ़ाएँ
+
+pixels-outside-the-canvas-stay-in-the-new-layer = कैनवस के बाहर के पिक्सेल नई परत में बने रहते हैं।
+
+choose-a-valid-image-position-and-canvas-size = छवि की मान्य स्थिति और कैनवस का आकार चुनें।
+
+paste-with-these-import-limitations = क्या इन आयात सीमाओं के साथ पेस्ट करना है?
+
+accept-import-limitations = आयात सीमाएँ स्वीकार करें
