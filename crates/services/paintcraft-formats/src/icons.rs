@@ -192,6 +192,9 @@ pub fn decode_entry(bytes: &[u8], index: u16, pixels: u64) -> Result<Decoded> {
     let rgba = if entry.encoding == Encoding::Png {
         let decoded = crate::image::decode_with_pixel_limit(payload, pixels)?;
         losses.extend(decoded.losses);
+        if payload[25] == 3 {
+            losses.push("icon-palette-expanded".into());
+        }
         decoded.rgba
     } else {
         // Upstream ignores the AND mask for 32-bit DIBs. Until the legacy alpha

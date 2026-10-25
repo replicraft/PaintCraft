@@ -243,3 +243,32 @@ fn selected_entries_have_distinct_deterministic_document_identity() {
         first.document("same-source-hash").unwrap().document_id
     );
 }
+
+#[test]
+fn png_palette_expansion_requires_the_same_loss_as_bitmap_palettes() {
+    let mut png = Vec::new();
+    {
+        let mut encoder = png::Encoder::new(&mut png, 2, 1);
+        encoder.set_color(png::ColorType::Indexed);
+        encoder.set_depth(png::BitDepth::Eight);
+        encoder.set_palette(vec![10, 20, 30, 40, 50, 60]);
+        encoder.set_trns(vec![0, 127]);
+        encoder
+            .write_header()
+            .unwrap()
+            .write_image_data(&[0, 1])
+            .unwrap();
+    }
+    let mut bytes = vec![0; 22];
+    bytes[2..4].copy_from_slice(&1u16.to_le_bytes());
+    bytes[4..6].copy_from_slice(&1u16.to_le_bytes());
+    bytes[6..9].copy_from_slice(&[2, 1, 2]);
+    bytes[10..12].copy_from_slice(&1u16.to_le_bytes());
+    bytes[12..14].copy_from_slice(&8u16.to_le_bytes());
+    bytes[14..18].copy_from_slice(&(png.len() as u32).to_le_bytes());
+    bytes[18..22].copy_from_slice(&22u32.to_le_bytes());
+    bytes.extend(png);
+    let decoded = icons::decode_entry(&bytes, 0, 2).unwrap();
+    assert_eq!(decoded.rgba, [10, 20, 30, 0, 40, 50, 60, 127]);
+    assert_eq!(decoded.losses, ["icon-palette-expanded"]);
+}
