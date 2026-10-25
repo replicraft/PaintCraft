@@ -1,0 +1,17 @@
+# PDN-01: historical PDN3 envelope inspection
+
+This private Rust crate inspects the historical PDN3 header and returns inert metadata hints plus borrowed input spans. It does not decode document objects or pixels, decompress gzip, or write PDN files. A successful inspection does not prove the body is valid or establish compatibility with any modern Paint.NET build. It must not enable editable Open or preserving Save.
+
+The verified envelope starts with `PDN3`, followed by a three-byte little-endian UTF-8 XML byte length. The XML root is `pdnImage`; recognized hints are `width`, `height`, `layers`, and optional `savedWithVersion`. After the XML, the `00 01` deferred-data marker is separate from the following NRBF serialization header. A `1f 8b` prefix identifies the historical gzip branch. Header hints must eventually be compared with the actual decoded graph before document creation or pixel allocation.
+
+Primary evidence:
+
+- Historical original Paint.NET `Document.cs`, preserved at [OpenPDN commit cca476b0df2a2f70996e6b9486ec45327631568c](https://github.com/rivy/OpenPDN/blob/cca476b0df2a2f70996e6b9486ec45327631568c/src/Data/Document.cs): `MagicBytes`, `FromStream`, `SaveToStream`, and `PrepareHeader`. This establishes the historical framing and attribute names. No implementation text or external fixture was copied into this crate.
+- Current official [Document.FromStream](https://paintdotnet.github.io/apidocs/api/PaintDotNet.Document.FromStream.html) and [Header](https://paintdotnet.github.io/apidocs/api/PaintDotNet.Document.Header.html) API docs identify the document interface, but do not specify modern on-disk object layouts. They do not qualify a modern graph decoder.
+- Microsoft's [MS-NRBF SerializationHeaderRecord](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-nrbf/a7e578d3-400a-4249-9424-7529d10d1b3c) defines the 17-byte serialization header and protocol version 1.0. Only these inert fields are inspected; no objects, constructors, type loading, CLR or BinaryFormatter are executed.
+- [RFC 1952](https://www.rfc-editor.org/rfc/rfc1952) defines gzip framing. The inspector bounds optional header fields and requires space for compressed bytes and trailer, but does not validate compressed data, either CRC, concatenated members or decompressed NRBF.
+- [XML 1.0 Fifth Edition](https://www.w3.org/TR/xml/) supplies character/name syntax. `quick-xml` parses structure and attributes; document types, external/custom entities and processing instructions are refused. No referenced path, URL, thumbnail or metadata payload is opened.
+
+Injected limits cover source/header bytes, XML depth/elements/attributes, attribute size, dimensions, pixel count and declared layers. Cancellation runs during header processing and bounded gzip header scanning. The source remains borrowed; no full input or thumbnail copy is created. Application version text remains an untrusted string, not a compatibility assertion. Unknown root attributes and child XML are flagged and retained only in the original borrowed XML span.
+
+Tests author synthetic envelopes directly from the documented framing, including Unicode metadata, complete NRBF headers, malformed XML, truncations, hostile entities, unknown variants, resource limits and cancellation. These synthetic bodies are deliberately not claims of valid editable Paint.NET documents. Original files from pinned Paint.NET builds and a complete inert graph parser remain required before PDN-02/03 qualification; original-application reopen remains mandatory for any future writer.
