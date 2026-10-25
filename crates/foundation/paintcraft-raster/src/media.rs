@@ -92,8 +92,13 @@ pub fn coverage(
         .map_err(|_| limit())?;
     mask.resize(width * height, 0u8);
     let mut work = 0u64;
-    let spacing = (f64::from(size) / 8.0).clamp(0.5, 8.0);
-    let mut dab = |cx: f64, cy: f64, travel: f64| -> Result<()> {
+    // Thin nibs need closer dabs so their exposed edge does not scallop.
+    let spacing = match media {
+        BrushMedia::CalligraphyPen => (f64::from(size) / 32.0).clamp(0.25, 4.0),
+        BrushMedia::CalligraphyBrush => (f64::from(size) / 20.0).clamp(0.35, 6.0),
+        _ => (f64::from(size) / 8.0).clamp(0.5, 8.0),
+    };
+    let mut dab = |cx: f64, cy: f64| -> Result<()> {
         let left = ((cx - radius - 1.0).floor() as i64).max(x0);
         let right = ((cx + radius + 1.0).ceil() as i64).min(x1);
         let top = ((cy - radius - 1.0).floor() as i64).max(y0);
@@ -107,13 +112,8 @@ pub fn coverage(
         if work > DAB_PIXELS_MAX {
             return Err(limit());
         }
-        // Artistic media run out of paint along a gesture. Travel is
-        // measured before viewport clipping, preserving its phase.
-        let charge = match media {
-            BrushMedia::Oil => (1.0 - travel / (f64::from(size) * 8.0)).clamp(0.0, 1.0),
-            BrushMedia::Watercolor => (1.0 - travel / (f64::from(size) * 6.0)).clamp(0.0, 1.0),
-            _ => 1.0,
-        };
+        // Pigment is capped over the whole gesture, not depleted by path length.
+        // Texture and exposed tip edges supply the dry-bristle transition.
         for y in top..bottom {
             check()?;
             for x in left..right {
@@ -125,21 +125,17 @@ pub fn coverage(
                     x + clip.x0,
                     y + clip.y0,
                 );
-                let alpha = (f64::from(alpha) * charge).round() as u8;
                 let dest = &mut mask[(y - y0) as usize * width + (x - x0) as usize];
                 *dest = (*dest).max(alpha);
             }
         }
         Ok(())
     };
-    dab(local(points[0]).0, local(points[0]).1, 0.0)?;
-    let mut travel = 0.0;
+    dab(local(points[0]).0, local(points[0]).1)?;
     for pair in points.windows(2) {
         check()?;
         let (a, b) = (local(pair[0]), local(pair[1]));
         let length = (b.0 - a.0).hypot(b.1 - a.1);
-        let start = travel;
-        travel += length;
         let Some((lo, hi)) = clipped_segment(
             a,
             b,
@@ -158,11 +154,7 @@ pub fn coverage(
         for i in first..=last {
             check()?;
             let t = i as f64 / count as f64;
-            dab(
-                a.0 + (b.0 - a.0) * t,
-                a.1 + (b.1 - a.1) * t,
-                start + length * t,
-            )?;
+            dab(a.0 + (b.0 - a.0) * t, a.1 + (b.1 - a.1) * t)?;
         }
     }
     let mut spans = Vec::new();
@@ -227,7 +219,7 @@ fn tip(media: BrushMedia, dx: f64, dy: f64, radius: f64, x: i64, y: i64) -> u8 {
         (x as u64).wrapping_mul(0x9e3779b97f4a7c15) ^ (y as u64).wrapping_mul(0xbf58476d1ce4e5b9);
     hash = (hash ^ (hash >> 30)).wrapping_mul(0xbf58476d1ce4e5b9);
     let grain = ((hash ^ (hash >> 27)) & 255) as f64 / 255.0;
-    let distance = match media {
+    let (distance, edge_scale) = match media {
         BrushMedia::CalligraphyBrush | BrushMedia::CalligraphyPen => {
             let (u, v) = (
                 (dx + dy) * std::f64::consts::FRAC_1_SQRT_2,
@@ -238,39 +230,68 @@ fn tip(media: BrushMedia, dx: f64, dy: f64, radius: f64, x: i64, y: i64) -> u8 {
             } else {
                 (u, v)
             };
-            (u * u + (v / 0.24).powi(2)).sqrt()
+            let narrow = if media == BrushMedia::CalligraphyPen {
+                0.18
+            } else {
+                0.30
+            };
+            // A broad, angled nib for the brush and a finer opposing pen nib.
+            let distance = u.hypot(v / narrow);
+            // Convert elliptical distance to screen-space distance near the nib
+            // boundary, keeping its antialias fringe a full pixel wide.
+            let gradient = if distance > 0.0 {
+                u.hypot(v / (narrow * narrow)) / distance
+            } else {
+                1.0
+            };
+            (distance, gradient)
         }
-        BrushMedia::Marker => dx.abs().max(dy.abs() / 0.6),
-        _ => dx.hypot(dy),
+        BrushMedia::Marker => {
+            // A broad felt tip with softened corners rather than a circular pen.
+            let qx = (dx.abs() - radius * 0.82).max(0.0);
+            let qy = (dy.abs() - radius * 0.42).max(0.0);
+            (qx.hypot(qy) + radius * 0.82, 1.0)
+        }
+        _ => (dx.hypot(dy), 1.0),
     };
-    let edge = (radius + 0.5 - distance).clamp(0.0, 1.0);
+    let edge = (0.5 + (radius - distance) / edge_scale).clamp(0.0, 1.0);
     let normalized = (distance / radius).min(1.0);
     let density = match media {
         BrushMedia::Airbrush => {
             // Discrete spray particles, rather than a uniformly translucent disc.
-            if grain < (1.0 - normalized * normalized).powi(2) * 0.48 {
+            if grain < (1.0 - normalized * normalized).powi(2) * 0.60 {
                 1.0
             } else {
                 0.0
             }
         }
-        BrushMedia::Oil => 0.65 + 0.35 * ((x.rem_euclid(5) as f64) / 4.0),
+        BrushMedia::Oil => {
+            // Loaded paint stays continuous. Bristles and sparse pigment variation
+            // are strongest at the exposed edge, without expiring the gesture.
+            let bristle = x.rem_euclid(7) as f64 / 6.0;
+            let dry_edge = normalized.powi(3);
+            (0.90 + 0.10 * grain) * (1.0 - dry_edge * (0.12 + 0.28 * bristle))
+        }
         BrushMedia::Crayon => {
-            if grain < 0.18 {
+            // Dense wax deposits with a few paper pits, not graphite stipple.
+            if grain < 0.006 {
                 0.0
             } else {
-                0.35 + grain * 0.6
+                0.90 + grain * 0.10
             }
         }
-        BrushMedia::Marker => 0.45,
+        BrushMedia::Marker => 0.97,
         BrushMedia::NaturalPencil => {
-            if grain < 0.3 {
+            if grain < 0.23 {
                 0.0
             } else {
-                grain * 0.8
+                0.22 + grain * 0.50
             }
         }
-        BrushMedia::Watercolor => (0.16 + 0.18 * grain) * (0.7 + 0.3 * normalized),
+        BrushMedia::Watercolor => {
+            // A translucent wash, with pigment pooling near its feathered edge.
+            (0.35 + 0.10 * grain) * (0.85 + 0.15 * normalized.powi(2))
+        }
         _ => 1.0,
     };
     (edge * density * 255.0).round().clamp(0.0, 255.0) as u8

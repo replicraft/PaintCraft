@@ -74,22 +74,83 @@ fn invalid_requests_scratch_overflow_and_cancellation_fail_before_publication() 
 }
 
 #[test]
-fn artistic_strokes_deplete_and_spray_has_discrete_particles() {
-    let clip = Rect::new(0, 0, 320, 64).unwrap();
+fn loaded_paint_remains_continuous_and_only_feathers_at_exposed_edges() {
+    let clip = Rect::new(0, 0, 640, 64).unwrap();
     for media in [BrushMedia::Oil, BrushMedia::Watercolor] {
-        let stroke = pixels(media, &[(16, 32), (300, 32)], clip);
-        let early: u64 = (12..=20)
-            .filter_map(|x| stroke.get(&(x, 32)))
-            .map(|&a| u64::from(a))
-            .sum();
-        let late: u64 = (200..=208)
-            .filter_map(|x| stroke.get(&(x, 32)))
-            .map(|&a| u64::from(a))
-            .sum();
-        assert!(early > 0);
-        assert_eq!(late, 0, "{media:?} should run out along a long stroke");
+        let stroke = pixels(media, &[(16, 32), (620, 32)], clip);
+        for x in 16..=620 {
+            assert!(
+                stroke.get(&(x, 32)).copied().unwrap_or(0) >= 75,
+                "{media:?} x={x}"
+            );
+        }
+        let middle = stroke[&(300, 32)];
+        let edge = stroke.get(&(300, 24)).copied().unwrap_or(0);
+        assert!(middle > edge, "{media:?} must taper at the exposed edge");
+        // A return along the same line neither reloads nor darkens its pigment.
+        assert_eq!(
+            stroke,
+            pixels(media, &[(16, 32), (620, 32), (16, 32)], clip)
+        );
     }
+}
+
+#[test]
+fn marker_is_dark_and_crayon_has_fewer_paper_pits_than_graphite() {
+    let clip = Rect::new(0, 0, 320, 64).unwrap();
+    let path = [(16, 32), (300, 32)];
+    let marker = pixels(BrushMedia::Marker, &path, clip);
+    assert!((24..290).all(|x| marker[&(x, 32)] >= 245));
+    let crayon = pixels(BrushMedia::Crayon, &path, clip);
+    let pencil = pixels(BrushMedia::NaturalPencil, &path, clip);
+    let area: Vec<_> = (24..290)
+        .flat_map(|x| (29..36).map(move |y| (x, y)))
+        .collect();
+    let missing = |map: &BTreeMap<_, _>| area.iter().filter(|p| !map.contains_key(*p)).count();
+    let mean = |map: &BTreeMap<_, u8>| {
+        area.iter()
+            .map(|p| u64::from(*map.get(p).unwrap_or(&0)))
+            .sum::<u64>()
+            / area.len() as u64
+    };
+    assert!((area.len() / 300..area.len() / 50).contains(&missing(&crayon)));
+    assert!(missing(&pencil) > missing(&crayon) * 10);
+    assert!(mean(&crayon) > mean(&pencil) + 90);
     let spray = pixels(BrushMedia::Airbrush, &[(16, 32)], clip);
     assert!(spray.values().any(|&alpha| alpha == 255));
     assert!((12..=20).any(|x| !spray.contains_key(&(x, 32))));
+}
+
+#[test]
+fn preview_prefix_grows_without_repainting_previous_coverage() {
+    let clip = Rect::new(0, 0, 160, 80).unwrap();
+    for medium in BrushMedia::ALL.into_iter().skip(1) {
+        let prefix = pixels(medium, &[(12, 30), (70, 30)], clip);
+        let full = pixels(medium, &[(12, 30), (70, 30), (140, 60)], clip);
+        assert!(
+            prefix
+                .iter()
+                .all(|(p, alpha)| full.get(p).is_some_and(|next| next >= alpha)),
+            "{medium:?}"
+        );
+        // Points behind the new segment's footprint remain exactly unchanged.
+        for (&p, &alpha) in prefix.iter().filter(|((x, _), _)| *x < 60) {
+            assert_eq!(full[&p], alpha, "{medium:?} at {p:?}");
+        }
+    }
+}
+
+#[test]
+fn angled_nibs_do_not_leave_periodic_pits_along_straight_edges() {
+    let clip = Rect::new(0, 0, 160, 64).unwrap();
+    for medium in [BrushMedia::CalligraphyBrush, BrushMedia::CalligraphyPen] {
+        let stroke = pixels(medium, &[(10, 30), (140, 30)], clip);
+        for y in 20..40 {
+            let row: Vec<_> = (30..120)
+                .map(|x| stroke.get(&(x, y)).copied().unwrap_or(0))
+                .collect();
+            let variation = row.iter().max().unwrap() - row.iter().min().unwrap();
+            assert!(variation <= 16, "{medium:?} y={y} variation={variation}");
+        }
+    }
 }

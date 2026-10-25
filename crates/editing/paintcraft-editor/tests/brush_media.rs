@@ -89,3 +89,64 @@ fn each_medium_parses_executes_clips_undoes_and_preserves_hidden_rgb() {
         assert!(execute::execute(&doc, Selection::Inactive, &invalid).is_err());
     }
 }
+
+#[test]
+fn all_nine_brushes_multiply_selected_opacity_once_even_at_the_end_of_long_strokes() {
+    let doc = new_document(640, 64, Some(Rgba([11, 22, 33, 0])), 0, POLICY).unwrap();
+    let id = doc.roots[0];
+    let selection = Selection::Rect(Rect::new(20, 16, 600, 32).unwrap());
+    for media in BrushMedia::ALL {
+        let mut batch = Batch {
+            version: 2,
+            policy: POLICY.into(),
+            base_state: doc.state_id,
+            base_epoch: 0,
+            seed: None,
+            digest: "0".repeat(64),
+            operations: vec![Op::StrokePath {
+                layer: paintcraft_commands::LayerRef::Id(id),
+                points: vec![(16, 32), (620, 32), (16, 32)],
+                color: Rgba([80, 40, 20, 255]),
+                mode: Mode::SourceOver,
+                size: 16,
+                round: true,
+                smooth: media == BrushMedia::Plain,
+                media,
+                point_scale: 1,
+            }],
+        };
+        let full = execute::execute(&doc, selection.clone(), &batch).unwrap();
+        for alpha in [0, 64, 128, 255] {
+            let Op::StrokePath { color, .. } = &mut batch.operations[0] else {
+                unreachable!()
+            };
+            color.0[3] = alpha;
+            let result = execute::execute(&doc, selection.clone(), &batch).unwrap();
+            for y in 0..64 {
+                for x in 0..640 {
+                    let source = full.doc.layers[&id].raster.get(x, y);
+                    let actual = result.doc.layers[&id].raster.get(x, y);
+                    let expected = ((u16::from(source.a()) * u16::from(alpha) + 127) / 255) as u8;
+                    // Plain uses exact 16-sample coverage before integer alpha
+                    // rounding. Its quantized 8-bit reference can differ by one.
+                    assert!(
+                        actual.a().abs_diff(expected) <= u8::from(media == BrushMedia::Plain),
+                        "{media:?} alpha={alpha} at {x},{y}"
+                    );
+                    assert_eq!(
+                        &actual.0[..3],
+                        if actual.a() == 0 {
+                            &[11, 22, 33]
+                        } else {
+                            &[80, 40, 20]
+                        }
+                    );
+                }
+            }
+            if matches!(media, BrushMedia::Oil | BrushMedia::Watercolor) && alpha > 0 {
+                assert!((300..600).all(|x| result.doc.layers[&id].raster.get(x, 32).a() > 0));
+            }
+        }
+        assert_eq!(doc.layers[&id].raster.get(300, 32), Rgba([11, 22, 33, 0]));
+    }
+}
