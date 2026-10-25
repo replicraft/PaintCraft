@@ -424,3 +424,7 @@ pcx-preview-is-unavailable-reduce-the-image-size-or-choose-rgb24 = PCX preview i
 export-preview = Export preview
 
 palette-conversion-changes-colors-exporting-accepts-this-color-loss = Palette conversion changes colors. Exporting accepts this color loss.
+
+photoshop-metadata-and-layer-protection-settings-will-not-be-retained-in-the-converted-copy = Photoshop metadata and layer protection settings will not be retained in the converted copy.
+
+empty-photoshop-layer-extents-will-become-at-least-one-transparent-pixel-in-the-converted-copy = Empty Photoshop layer extents will become at least one transparent pixel in the converted copy.

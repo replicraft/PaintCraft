@@ -424,3 +424,7 @@ pcx-preview-is-unavailable-reduce-the-image-size-or-choose-rgb24 = PCX のプレ
 export-preview = エクスポートのプレビュー
 
 palette-conversion-changes-colors-exporting-accepts-this-color-loss = パレットへの変換により色が変わります。エクスポートすると、この色の変更に同意したことになります。
+
+photoshop-metadata-and-layer-protection-settings-will-not-be-retained-in-the-converted-copy = 変換したコピーには、Photoshop のメタデータとレイヤーの保護設定は保持されません。
+
+empty-photoshop-layer-extents-will-become-at-least-one-transparent-pixel-in-the-converted-copy = 変換したコピーでは、空の Photoshop レイヤーは少なくとも 1 ピクセルの透明な領域になります。

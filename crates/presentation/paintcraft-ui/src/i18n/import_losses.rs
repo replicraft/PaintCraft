@@ -47,6 +47,12 @@ pub fn import_loss_description(code: &str) -> Option<&'static str> {
         "ora-resolution-ignored" => {
             "OpenRaster print resolution will not be retained in the converted copy."
         }
+        "psd-metadata-ignored" => {
+            "Photoshop metadata and layer protection settings will not be retained in the converted copy."
+        }
+        "psd-empty-layer-extent-normalized" => {
+            "Empty Photoshop layer extents will become at least one transparent pixel in the converted copy."
+        }
         _ => return None,
     })
 }
@@ -65,6 +71,8 @@ mod tests {
             "pdn-metadata-ignored",
             "ora-opacity-quantized",
             "ora-resolution-ignored",
+            "psd-metadata-ignored",
+            "psd-empty-layer-extent-normalized",
             "paint-layer-properties-unverified",
             "paint-canvas-fill-converted-to-layer",
             "paint-background-depth-reduced-to-8",

@@ -424,3 +424,7 @@ pcx-preview-is-unavailable-reduce-the-image-size-or-choose-rgb24 = A prévia PCX
 export-preview = Prévia de exportação
 
 palette-conversion-changes-colors-exporting-accepts-this-color-loss = A conversão de paleta altera as cores. Ao exportar, você aceita essa perda de cor.
+
+photoshop-metadata-and-layer-protection-settings-will-not-be-retained-in-the-converted-copy = Os metadados do Photoshop e as configurações de proteção das camadas não serão mantidos na cópia convertida.
+
+empty-photoshop-layer-extents-will-become-at-least-one-transparent-pixel-in-the-converted-copy = As camadas vazias do Photoshop ocuparão pelo menos um pixel transparente na cópia convertida.

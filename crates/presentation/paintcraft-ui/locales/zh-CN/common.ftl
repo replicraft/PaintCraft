@@ -424,3 +424,7 @@ pcx-preview-is-unavailable-reduce-the-image-size-or-choose-rgb24 = PCX 预览不
 export-preview = 导出预览
 
 palette-conversion-changes-colors-exporting-accepts-this-color-loss = 调色板转换会改变颜色。导出即表示接受这些颜色损失。
+
+photoshop-metadata-and-layer-protection-settings-will-not-be-retained-in-the-converted-copy = 转换后的副本不会保留 Photoshop 元数据和图层保护设置。
+
+empty-photoshop-layer-extents-will-become-at-least-one-transparent-pixel-in-the-converted-copy = 在转换后的副本中，空 Photoshop 图层的范围将至少为一个透明像素。

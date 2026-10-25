@@ -424,3 +424,7 @@ pcx-preview-is-unavailable-reduce-the-image-size-or-choose-rgb24 = PCX पूर
 export-preview = निर्यात पूर्वावलोकन
 
 palette-conversion-changes-colors-exporting-accepts-this-color-loss = पैलेट में बदलने से रंग बदलते हैं। निर्यात करके आप रंगों की इस हानि को स्वीकार करते हैं।
+
+photoshop-metadata-and-layer-protection-settings-will-not-be-retained-in-the-converted-copy = बदली गई कॉपी में Photoshop का मेटाडेटा और लेयर सुरक्षा सेटिंग नहीं रखी जाएँगी।
+
+empty-photoshop-layer-extents-will-become-at-least-one-transparent-pixel-in-the-converted-copy = बदली गई कॉपी में खाली Photoshop लेयर का क्षेत्र कम से कम एक पारदर्शी पिक्सेल होगा।
