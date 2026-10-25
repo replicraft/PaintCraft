@@ -25,6 +25,48 @@ pub(super) const FIXTURES: [[&[u8]; 8]; 2] = [
 ];
 
 #[test]
+fn selected_backend_pixels_match_the_independent_oracle() {
+    for fixtures in FIXTURES {
+        for (index, bytes) in fixtures.into_iter().enumerate() {
+            let decoded = decode(bytes, PIXELS_MAX, &|| Ok(())).unwrap();
+            assert_eq!((decoded.width, decoded.height), (5, 3));
+            if index < 4 {
+                assert_eq!(decoded.layers.len(), 2);
+                for (layer, seed) in decoded.layers.iter().zip([9usize, 51]) {
+                    let count = layer.info.width as usize * layer.info.height as usize * 4;
+                    let expected: Vec<_> = (0..count)
+                        .map(|i| ((seed + i * 29 + (i / 4) * 7) % 256) as u8)
+                        .collect();
+                    assert_eq!(layer.rgba, expected);
+                }
+                assert_eq!(decoded.layers[0].info.origin, (-1, 1));
+                assert_eq!(
+                    (
+                        decoded.layers[0].info.opacity,
+                        decoded.layers[0].info.visible
+                    ),
+                    (127, false)
+                );
+            } else {
+                assert_eq!(decoded.layers.len(), 1);
+                let expected: Vec<_> = (0..15)
+                    .flat_map(|pixel| {
+                        (0..4).map(move |channel| {
+                            if channel == 3 {
+                                255
+                            } else {
+                                ((channel * 15 + pixel) * 13 + 17) as u8
+                            }
+                        })
+                    })
+                    .collect();
+                assert_eq!(decoded.layers[0].rgba, expected);
+            }
+        }
+    }
+}
+
+#[test]
 fn independently_verified_raw_rle_zip_and_prediction_psd_and_psb() {
     for (version, fixtures) in FIXTURES.iter().enumerate() {
         for (index, bytes) in fixtures.iter().enumerate() {

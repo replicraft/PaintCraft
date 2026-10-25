@@ -3,7 +3,9 @@
 use paintcraft_core::types::{Error, ErrorCode, Result};
 use std::ops::Range;
 mod channels;
+mod decode;
 mod scan;
+pub use decode::{Decoded, DecodedLayer, decode};
 #[cfg(test)]
 mod tests;
 
@@ -37,6 +39,7 @@ pub struct Inspection {
     pub layers: Vec<LayerInfo>,
     pub losses: Vec<String>,
     resources: Range<usize>,
+    composite: usize,
 }
 fn malformed(message: &str) -> Error {
     Error::new(ErrorCode::CodecFailed, message)

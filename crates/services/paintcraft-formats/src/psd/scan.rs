@@ -193,6 +193,7 @@ pub(super) fn inspect(
             "PSD extra alpha/spot channels are not qualified",
         ));
     }
+    let composite = c.pos;
     channels::admit(
         c.take(c.remaining())?,
         width,
@@ -207,5 +208,6 @@ pub(super) fn inspect(
         layers,
         losses,
         resources,
+        composite,
     })
 }
