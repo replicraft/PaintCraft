@@ -37,13 +37,13 @@ cargo run --release -p paintcraft-cli -- mcp
 
 **PCND (`.pcnd`)** is PaintCraft's compact, lossless project format. It keeps layers, transparency and canvas size intact, while being compressed and lightweight. Save as PCND to keep working on your project.
 
-- **PNG (`.png`):** open and export, with transparency.
-- **JPEG (`.jpg`, `.jpeg`):** open and export, with adjustable export quality.
-- **BMP (`.bmp`):** open and export.
-- **GIF (`.gif`):** open still images.
-- **TIFF (`.tif`, `.tiff`):** open single-page images.
+- **Classic and Studio:** open and export PNG, JPEG, BMP, still GIF and single-page TIFF.
+- **Studio:** also open and export TGA, still WebP and supported single-surface DDS images.
+- **Studio exports:** lossless JPEG XL, lossy AVIF, QOI, PAM and farbfeld. JPEG XL and AVIF opening is not available yet.
+- **Extra imports:** QOI, Netpbm, farbfeld and PCX, plus an explicitly selected DCX page in Studio. Classic also imports PCX.
+- **Layered imports:** Studio opens a limited historical Paint.NET (`.pdn`) subset as converted copies. Studio and Classic 11 can import a limited Windows Paint (`.paint`) subset. Save converted projects as PCND; writing PDN or PAINT is not supported.
 
-Image exports flatten layers into one picture.
+Image exports flatten layers. Conversion prompts explain supported losses such as reduced color depth, palette changes or discarded metadata. See [format support and limits](docs/FORMAT_INTEROPERABILITY.md) for the supported subsets.
 
 ## Install
 
