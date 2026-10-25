@@ -109,8 +109,7 @@ impl Files {
         .filter(|extension| {
             !convert
                 || Family::from_extension(extension).is_some_and(|family| {
-                    !family.is_project()
-                        || matches!(family, Family::Paint | Family::Pdn | Family::Ora)
+                    !family.is_project() || paintcraft_formats::project_import::supports(family)
                 })
         })
         .collect();
@@ -255,16 +254,13 @@ fn decode_input(bytes: &[u8], name: String, frontend: Frontend, convert: bool) -
     } else {
         paintcraft_formats::registry::admit_open(frontend, &name, bytes, Platform::Web)?
     };
-    if convert
-        && family.is_project()
-        && !matches!(family, Family::Paint | Family::Pdn | Family::Ora)
-    {
+    if convert && family.is_project() && !paintcraft_formats::project_import::supports(family) {
         return Err(Error::new(
             ErrorCode::CapabilityUnsupported,
             "Import image expects a raster picture",
         ));
     }
-    if matches!(family, Family::Paint | Family::Pdn | Family::Ora) {
+    if paintcraft_formats::project_import::supports(family) {
         let converted =
             paintcraft_formats::project_import::decode_layered(family, bytes, MAX_PIXELS, &|| {
                 Ok(())
@@ -654,6 +650,9 @@ mod specialist_exports;
 #[cfg(test)]
 #[path = "files/foreign_import.rs"]
 mod foreign_import;
+#[cfg(test)]
+#[path = "files/psd_tests.rs"]
+mod psd_tests;
 
 pub(crate) fn pcx_mode(
     encoding: paintcraft_ui::pcx_export::Encoding,
