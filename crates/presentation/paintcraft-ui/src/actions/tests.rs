@@ -95,6 +95,41 @@ fn metadata_preserves_identity_and_context_gates_actions() {
         auto_hide_toolbar: false,
         thumbnail: false,
     };
+    assert!(!Action::FlattenImage.enabled(context));
+    let layered = Context {
+        document_open: true,
+        layer_count: 2,
+        ..context
+    };
+    assert!(Action::FlattenImage.enabled(layered));
+    assert!(!Action::FlattenImage.enabled(Context {
+        layer_count: 1,
+        ..layered
+    }));
+    assert!(!Action::FlattenImage.enabled(Context {
+        frontend: Frontend::Classic,
+        ..layered
+    }));
+    assert!(!Action::FlattenImage.enabled(Context {
+        blocked: true,
+        ..layered
+    }));
+    assert_eq!(
+        Action::from_shortcut_for(
+            Frontend::Studio,
+            Key::F,
+            Modifiers::COMMAND | Modifiers::SHIFT
+        ),
+        Some(Action::FlattenImage)
+    );
+    assert_eq!(
+        Action::from_shortcut_for(
+            Frontend::Classic,
+            Key::F,
+            Modifiers::COMMAND | Modifiers::SHIFT
+        ),
+        None
+    );
     let ids: std::collections::HashSet<_> = FILE
         .iter()
         .chain(EDIT)

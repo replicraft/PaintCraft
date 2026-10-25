@@ -35,6 +35,7 @@ pub enum Action {
     ResizeSkew,
     ImageProperties,
     ClearCanvas,
+    FlattenImage,
     Crop,
     EraseSelection,
     TransformImage(Transform),
@@ -186,6 +187,7 @@ impl Action {
             Self::ResizeSkew => ("Resize and skew", None),
             Self::ImageProperties => ("Image properties", Some((Key::E, false))),
             Self::ClearCanvas => ("Clear Canvas", None),
+            Self::FlattenImage => ("Flatten image", Some((Key::F, true))),
             Self::Crop => ("Crop", None),
             Self::EraseSelection => ("Delete", None),
             Self::TransformImage(t) => (
@@ -285,7 +287,9 @@ impl Action {
 
     pub fn available(self, frontend: Frontend) -> bool {
         match self {
-            Self::SaveAll | Self::SelectTool(Tool::Pan) => frontend == Frontend::Studio,
+            Self::SaveAll | Self::FlattenImage | Self::SelectTool(Tool::Pan) => {
+                frontend == Frontend::Studio
+            }
             Self::View(
                 ViewAction::StatusBar
                 | ViewAction::Rulers
@@ -341,6 +345,7 @@ impl Action {
             }
             Self::RecentFiles => ctx.can_recent,
             Self::SaveAll => ctx.document_open && ctx.can_save_all,
+            Self::FlattenImage => ctx.document_open && ctx.layer_count > 1,
             Self::Undo => ctx.document_open && ctx.can_undo,
             Self::Redo => ctx.document_open && ctx.can_redo,
             Self::Deselect => ctx.document_open && ctx.selection_active,
@@ -383,7 +388,7 @@ impl Action {
         FILE.iter()
             .chain(EDIT)
             .copied()
-            .chain([Self::Settings, Self::ImageProperties])
+            .chain([Self::Settings, Self::ImageProperties, Self::FlattenImage])
             .chain(LAYERS.iter().copied().map(Self::Layer))
             .chain(VIEW.iter().copied().map(Self::View))
             .find(|a| {
@@ -423,6 +428,7 @@ impl Action {
             Self::ResizeSkew => 1020,
             Self::ImageProperties => 1021,
             Self::ClearCanvas => 1018,
+            Self::FlattenImage => 1035,
             Self::Crop => 1022,
             Self::EraseSelection => 1023,
             Self::TransformImage(t) => 1030 + t as u64,

@@ -40,3 +40,5 @@ format-history-number-title = Verlauf { $number }: { $title }
 format-document-number-title = Dokument { $number }: { $title }
 format-close-document-number = Dokument { $number } schließen
 alpha = Alpha
+
+flatten-image = Bild zusammenführen

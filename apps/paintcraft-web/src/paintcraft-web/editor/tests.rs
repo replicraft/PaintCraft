@@ -227,3 +227,48 @@ fn invalid_resize_and_unchanged_cropped_layer_leave_session_unchanged() {
     assert_eq!(e.session.undo_depth(), 0);
     assert!(e.session.document().same_semantics(&before));
 }
+
+#[test]
+fn flatten_retargets_preserves_pixels_and_restores_layers_on_undo() {
+    let mut editor = Editor::new(32, 24).unwrap();
+    editor
+        .commit(vec![Value::object([
+            ("op", Value::str("layer.add")),
+            ("ref", Value::str("layer")),
+            ("name", Value::str("Overlay")),
+            ("width", Value::Int(32)),
+            ("height", Value::Int(24)),
+            (
+                "origin",
+                Value::object([("x", Value::Int(0)), ("y", Value::Int(0))]),
+            ),
+            ("default_pixel", Value::str("#00000000")),
+        ])])
+        .unwrap();
+    editor
+        .apply(Action::Fill {
+            layer: editor.target.unwrap(),
+            at: (1, 1),
+            color: Rgba([20, 70, 180, 127]),
+            tolerance: 0,
+        })
+        .unwrap();
+    let source = editor.session.snapshot();
+    let expected = paintcraft_render::render_flat(&source).unwrap();
+    let depth = editor.session.undo_depth();
+    editor.apply(Action::FlattenImage).unwrap();
+    assert_eq!(editor.session.document().roots.len(), 1);
+    assert_eq!(
+        editor.target,
+        editor.session.document().roots.last().copied()
+    );
+    assert_eq!(editor.session.undo_depth(), depth + 1);
+    assert_eq!(
+        paintcraft_render::render_flat(editor.session.document()).unwrap(),
+        expected
+    );
+    editor.apply(Action::Undo).unwrap();
+    assert!(editor.session.document().same_semantics(&source));
+    editor.apply(Action::Redo).unwrap();
+    assert_eq!(editor.session.document().roots.len(), 1);
+}

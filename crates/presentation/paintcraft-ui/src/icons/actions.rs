@@ -40,6 +40,7 @@ impl Action {
             Self::ResizeSkew => Icon::Resize,
             Self::ImageProperties => Icon::ImageProperties,
             Self::ClearCanvas => Icon::ClearCanvas,
+            Self::FlattenImage => Icon::Layers,
             Self::Crop => Icon::Crop,
             Self::EraseSelection => Icon::DeleteLayer,
             Self::TransformImage(t) => match t {

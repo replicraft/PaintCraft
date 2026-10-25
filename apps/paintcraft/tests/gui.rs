@@ -414,3 +414,6 @@ mod recent;
 
 #[path = "gui/lasso.rs"]
 mod lasso;
+
+#[path = "gui/flatten.rs"]
+mod flatten;

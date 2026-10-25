@@ -40,3 +40,5 @@ format-history-number-title = इतिहास { $number }: { $title }
 format-document-number-title = दस्तावेज़ { $number }: { $title }
 format-close-document-number = दस्तावेज़ { $number } बंद करें
 alpha = अल्फ़ा
+
+flatten-image = छवि समतल करें

@@ -268,6 +268,8 @@ pub enum Action {
         width: u32,
         height: u32,
     },
+    /// Replace the visible composition with one layer; retain recorded Undo.
+    FlattenImage,
     AddLayer,
     DuplicateLayer {
         layer: Uuid,

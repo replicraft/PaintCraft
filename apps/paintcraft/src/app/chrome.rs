@@ -277,6 +277,13 @@ impl App {
                     };
                     self.request(ctx, code::CLEAR_CANVAS, Action::ClearCanvas { color });
                 }
+                Chrome::FlattenImage => {
+                    if self.ime_composing {
+                        continue;
+                    }
+                    self.editor.commit_text();
+                    self.request(ctx, action.activation_code(), Action::FlattenImage);
+                }
                 Chrome::ResizeSkew => self.begin_resize_skew(),
                 Chrome::Crop => self.request(ctx, code::CROP, Action::CropToSelection),
                 Chrome::EraseSelection => {

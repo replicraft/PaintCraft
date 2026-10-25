@@ -13,6 +13,7 @@ mod canvas;
 #[path = "controller/dispatch.rs"]
 mod dispatch;
 mod files;
+mod flatten;
 mod floating;
 mod floating_feedback;
 #[path = "controller/history.rs"]
@@ -549,6 +550,7 @@ impl Editor {
                 }
             }
             Action::ClearCanvas { color } => self.clear_canvas(color),
+            Action::FlattenImage => self.flatten_image(),
             Action::Stroke(stroke) => self.stroke(&stroke),
             Action::Fill {
                 layer,

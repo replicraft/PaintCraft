@@ -40,3 +40,5 @@ format-history-number-title = 履歴{ $number }: { $title }
 format-document-number-title = ドキュメント{ $number }: { $title }
 format-close-document-number = ドキュメント{ $number }を閉じる
 alpha = アルファ
+
+flatten-image = 画像を統合

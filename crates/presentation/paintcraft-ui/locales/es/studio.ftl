@@ -40,3 +40,5 @@ format-history-number-title = Historial { $number }: { $title }
 format-document-number-title = Documento { $number }: { $title }
 format-close-document-number = Cerrar documento { $number }
 alpha = Alfa
+
+flatten-image = Acoplar imagen

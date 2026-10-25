@@ -307,6 +307,11 @@ impl WebApp {
                 self.editor.tools.cancel_gesture();
                 self.edit(Edit::Redo);
             }
+            Action::FlattenImage => {
+                if self.finish_text() {
+                    self.edit(Edit::FlattenImage);
+                }
+            }
             Action::ClearCanvas => self.edit(Edit::ClearCanvas {
                 color: self.clear_color(),
             }),

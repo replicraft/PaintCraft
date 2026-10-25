@@ -29,6 +29,10 @@ pub(super) fn show(ui: &mut egui::Ui, context: Context, actions: &mut Vec<Action
             }
         }
         ui.separator();
+        if paintcraft_ui::actions::menu_item(ui, Action::FlattenImage, context) {
+            actions.push(Action::FlattenImage);
+            ui.close();
+        }
         if paintcraft_ui::actions::menu_item(ui, Action::ClearCanvas, context) {
             actions.push(Action::ClearCanvas);
             ui.close();

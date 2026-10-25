@@ -249,6 +249,15 @@ impl Editor {
                     ),
                 ]),
             }]),
+            Action::FlattenImage => {
+                self.tools.cancel_gesture();
+                let receipt = self
+                    .session
+                    .flatten(|doc, check| paintcraft_render::render_cancellable(doc, check))?;
+                self.target = receipt.aliases.get("flattened").copied().or(self.target);
+                self.retarget();
+                Ok(())
+            }
             Action::ClearCanvas { color } => {
                 self.cancel();
                 self.commit(vec![Value::object([

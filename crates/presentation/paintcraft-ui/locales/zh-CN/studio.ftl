@@ -40,3 +40,5 @@ format-history-number-title = 历史记录 { $number }：{ $title }
 format-document-number-title = 文档 { $number }：{ $title }
 format-close-document-number = 关闭文档 { $number }
 alpha = 透明度
+
+flatten-image = 拼合图像
