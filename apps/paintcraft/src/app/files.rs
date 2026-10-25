@@ -256,6 +256,17 @@ impl App {
         }
         let (bytes, binding) = crate::destination::acquire(path)?;
         if convert
+            && matches!(
+                paintcraft_formats::registry::sniff(&bytes),
+                Some(
+                    paintcraft_formats::registry::Family::Ico
+                        | paintcraft_formats::registry::Family::Cur
+                )
+            )
+        {
+            return self.stage_icon_import(bytes, path.to_path_buf());
+        }
+        if convert
             && paintcraft_formats::registry::sniff(&bytes)
                 == Some(paintcraft_formats::registry::Family::Dcx)
         {

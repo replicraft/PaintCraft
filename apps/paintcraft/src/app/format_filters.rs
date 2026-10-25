@@ -36,6 +36,7 @@ impl App {
             }];
             if kind == Kind::Import && frontend == registry::Frontend::Studio {
                 filters[0].extensions.push("dcx".into());
+                filters[0].extensions.extend(["ico".into(), "cur".into()]);
             }
             return filters;
         }

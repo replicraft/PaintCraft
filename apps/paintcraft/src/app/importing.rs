@@ -6,16 +6,19 @@ use paintcraft_ui::{i18n::import_loss_description, t};
 
 #[path = "importing/dcx.rs"]
 mod dcx;
+#[path = "importing/icons.rs"]
+mod icons;
 
 enum Candidate {
     Pages(dcx::Pages),
+    Entries(icons::Entries),
     Raster(image::Decoded),
     Layered(paintcraft_formats::project_import::Converted),
 }
 impl Candidate {
     fn losses(&self) -> &[String] {
         match self {
-            Self::Pages(_) => &[],
+            Self::Pages(_) | Self::Entries(_) => &[],
             Self::Raster(image) => &image.losses,
             Self::Layered(project) => &project.losses,
         }
@@ -113,7 +116,10 @@ impl App {
                 .set_status(t!(ctx, "The document changed; choose the image again."));
             return;
         }
-        if matches!(pending.candidate, Candidate::Pages(_)) {
+        if matches!(
+            pending.candidate,
+            Candidate::Pages(_) | Candidate::Entries(_)
+        ) {
             self.pending_import = Some(pending);
             self.confirm = Some(Confirm::ImportLosses);
             return;
@@ -125,7 +131,9 @@ impl App {
                     import_image(image.width, image.height, &image.rgba, &pending.digest)?
                 }
                 Candidate::Layered(project) => project.document,
-                Candidate::Pages(_) => unreachable!("page selection is resolved separately"),
+                Candidate::Pages(_) | Candidate::Entries(_) => {
+                    unreachable!("entry selection is resolved separately")
+                }
             };
             let mut editor = Editor::with_document(document, None);
             if converted {
@@ -150,6 +158,14 @@ impl App {
         }
     }
     pub(super) fn import_dialog(&mut self, ctx: &egui::Context) {
+        if self
+            .pending_import
+            .as_ref()
+            .is_some_and(|pending| matches!(pending.candidate, Candidate::Entries(_)))
+        {
+            self.icon_entry_dialog(ctx);
+            return;
+        }
         if self
             .pending_import
             .as_ref()
