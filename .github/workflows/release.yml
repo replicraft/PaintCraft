@@ -98,6 +98,9 @@ jobs:
         run: '"RUSTFLAGS=-C target-feature=+crt-static" >> $env:GITHUB_ENV'
       - name: Build release with GPU rendering
         run: cargo build --locked --release -p paintcraft -p paintcraft-cli --target ${{ matrix.target }}
+      - name: Test Windows clipboard transport and lifecycle
+        if: runner.os == 'Windows'
+        run: cargo test --locked -p paintcraft-platform --features clipboard --target ${{ matrix.target }} --lib
       - name: Test packaging on the native platform
         run: python -m unittest discover -s scripts/tests -p 'test_package_*.py'
       - name: Package portable archives and macOS images
