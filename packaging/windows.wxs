@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="PaintCraft" Manufacturer="Replicraft" Version="$(var.Version)"
+           Scope="perMachine" UpgradeCode="67fca40e-0081-48a1-a395-7044c149044d">
+    <MajorUpgrade AllowSameVersionUpgrades="yes"
+                  DowngradeErrorMessage="A newer PaintCraft version is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+    <Icon Id="PaintCraftIcon" SourceFile="$(var.Icon)" />
+    <Property Id="ARPPRODUCTICON" Value="PaintCraftIcon" />
+    <Property Id="ARPHELPLINK" Value="https://github.com/replicraft/PaintCraft" />
+    <StandardDirectory Id="ProgramFiles6432Folder">
+      <Directory Id="INSTALLFOLDER" Name="PaintCraft">
+        <Component Id="Application" Guid="*" Bitness="always64">
+          <File Id="PaintCraftExe" Source="$(var.Binary)" Name="paintcraft.exe" KeyPath="yes">
+            <Shortcut Id="LaunchPaintCraft" Name="PaintCraft" Directory="ProgramMenuFolder"
+                      Advertise="yes" WorkingDirectory="INSTALLFOLDER" Icon="PaintCraftIcon" />
+          </File>
+          <File Id="License" Source="$(var.License)" Name="LICENSE.txt" />
+          <File Id="FontLicenses" Source="$(var.FontLicenses)" Name="FONT_LICENSES.txt" />
+        </Component>
+        <Component Id="PcndAssociation" Guid="*" Bitness="always64">
+          <RegistryValue Root="HKLM" Key="Software\Classes\PaintCraft.Document" Type="string"
+                         Value="PaintCraft Document" KeyPath="yes" />
+          <RegistryValue Root="HKLM" Key="Software\Classes\PaintCraft.Document\DefaultIcon"
+                         Type="string" Value="&quot;[#PaintCraftExe]&quot;,0" />
+          <RegistryValue Root="HKLM" Key="Software\Classes\PaintCraft.Document\shell\open\command"
+                         Type="string" Value="&quot;[#PaintCraftExe]&quot; &quot;%1&quot;" />
+          <RegistryValue Root="HKLM" Key="Software\Classes\.pcnd" Type="string" Value="PaintCraft.Document" />
+          <RegistryValue Root="HKLM" Key="Software\Classes\.pcnd" Name="Content Type"
+                         Type="string" Value="application/x-paintcraft" />
+          <RegistryValue Root="HKLM" Key="Software\Classes\.pcnd\OpenWithProgids"
+                         Name="PaintCraft.Document" Type="string" Value="" />
+          <RegistryValue Root="HKLM" Key="Software\Classes\Applications\paintcraft.exe"
+                         Name="FriendlyAppName" Type="string" Value="PaintCraft" />
+          <RegistryValue Root="HKLM" Key="Software\Classes\Applications\paintcraft.exe\SupportedTypes"
+                         Name=".pcnd" Type="string" Value="" />
+          <RegistryValue Root="HKLM" Key="Software\Classes\Applications\paintcraft.exe\shell\open\command"
+                         Type="string" Value="&quot;[#PaintCraftExe]&quot; &quot;%1&quot;" />
+          <RegistryValue Root="HKLM" Key="Software\Replicraft\PaintCraft\Capabilities"
+                         Name="ApplicationName" Type="string" Value="PaintCraft" />
+          <RegistryValue Root="HKLM" Key="Software\Replicraft\PaintCraft\Capabilities"
+                         Name="ApplicationDescription" Type="string" Value="PaintCraft image editor" />
+          <RegistryValue Root="HKLM" Key="Software\Replicraft\PaintCraft\Capabilities\FileAssociations"
+                         Name=".pcnd" Type="string" Value="PaintCraft.Document" />
+          <RegistryValue Root="HKLM" Key="Software\RegisteredApplications" Name="PaintCraft"
+                         Type="string" Value="Software\Replicraft\PaintCraft\Capabilities" />
+        </Component>
+      </Directory>
+    </StandardDirectory>
+    <StandardDirectory Id="ProgramMenuFolder" />
+    <Feature Id="MainFeature" Title="PaintCraft" Level="1">
+      <ComponentRef Id="Application" />
+      <ComponentRef Id="PcndAssociation" />
+    </Feature>
+  </Package>
+</Wix>
