@@ -170,6 +170,15 @@ fn preflight() {
                 ImageFormat::Jpeg => {
                     assert!(decoded.rgba.as_chunks::<4>().0.iter().all(|p| p[3] == 255))
                 }
+                ImageFormat::Qoi
+                | ImageFormat::Pnm
+                | ImageFormat::Farbfeld
+                | ImageFormat::Pcx
+                | ImageFormat::Jxl
+                | ImageFormat::Dds
+                | ImageFormat::Avif => {
+                    panic!("additional formats need dedicated independent benchmark fixtures")
+                }
             }
         }
     }

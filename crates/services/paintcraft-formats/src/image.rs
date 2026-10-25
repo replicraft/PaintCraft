@@ -1,4 +1,4 @@
-//! Flat PNG, BMP, JPEG, still GIF and single-page TIFF with explicit loss reporting.
+//! Scoped raster conversion with bounded codec dispatch and explicit loss reporting.
 //!
 //! Decoders read only a declared subset, check every dimension against the
 //! decode budget before allocating, and say what they could not keep. Nothing
@@ -12,6 +12,10 @@ use std::io::Cursor;
 
 mod dib;
 pub use dib::{DibKind, decode_dib_with_pixel_limit};
+mod extended;
+mod specialist;
+pub use extended::ENCODE_PIXELS_MAX as EXTENDED_ENCODE_PIXELS_MAX;
+pub(crate) use extended::inspect_pcx;
 mod gif;
 #[cfg(test)]
 mod raster_tests;
@@ -24,7 +28,7 @@ pub const DECODE_PIXELS_MAX: u64 = 268_435_456;
 const SIDE_MAX: u32 = 1_048_576;
 
 /// Source information the current RGBA8 import cannot retain.
-pub const KNOWN_IMPORT_LOSSES: [&str; 12] = [
+pub const KNOWN_IMPORT_LOSSES: [&str; 15] = [
     "dib-alpha-unspecified",
     "dib-alpha-mode-unspecified",
     "dib-metadata-ignored",
@@ -37,6 +41,9 @@ pub const KNOWN_IMPORT_LOSSES: [&str; 12] = [
     "tiff-metadata-ignored",
     "tga-metadata-ignored",
     "webp-metadata-ignored",
+    "pnm-metadata-ignored",
+    "pcx-metadata-ignored",
+    "dcx-other-pages-not-imported",
 ];
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -48,6 +55,13 @@ pub enum ImageFormat {
     Tiff,
     Tga,
     WebP,
+    Qoi,
+    Pnm,
+    Farbfeld,
+    Pcx,
+    Jxl,
+    Dds,
+    Avif,
 }
 
 impl ImageFormat {
@@ -64,6 +78,29 @@ impl ImageFormat {
             Some(ImageFormat::Tiff)
         } else if bytes.starts_with(b"RIFF") && bytes.get(8..12) == Some(b"WEBP") {
             Some(ImageFormat::WebP)
+        } else if bytes.starts_with(b"qoif") {
+            Some(ImageFormat::Qoi)
+        } else if bytes.starts_with(b"farbfeld") {
+            Some(ImageFormat::Farbfeld)
+        } else if bytes.len() >= 3
+            && bytes[0] == b'P'
+            && matches!(bytes[1], b'1'..=b'7')
+            && bytes[2].is_ascii_whitespace()
+        {
+            Some(ImageFormat::Pnm)
+        } else if bytes.len() >= 4
+            && bytes[0] == 10
+            && matches!(bytes[1], 0 | 2 | 3 | 4 | 5)
+            && bytes[2] <= 1
+            && matches!(bytes[3], 1 | 2 | 4 | 8)
+        {
+            Some(ImageFormat::Pcx)
+        } else if crate::jxl::sniff(bytes) {
+            Some(ImageFormat::Jxl)
+        } else if crate::dds::sniff(bytes) {
+            Some(ImageFormat::Dds)
+        } else if specialist::sniff_avif(bytes) {
+            Some(ImageFormat::Avif)
         } else if tga::sniff(bytes) {
             Some(ImageFormat::Tga)
         } else {
@@ -81,6 +118,13 @@ impl ImageFormat {
             "tif" | "tiff" => Some(ImageFormat::Tiff),
             "tga" => Some(ImageFormat::Tga),
             "webp" => Some(ImageFormat::WebP),
+            "qoi" => Some(ImageFormat::Qoi),
+            "pnm" | "pbm" | "pgm" | "ppm" | "pam" => Some(ImageFormat::Pnm),
+            "ff" => Some(ImageFormat::Farbfeld),
+            "pcx" => Some(ImageFormat::Pcx),
+            "jxl" => Some(ImageFormat::Jxl),
+            "dds" => Some(ImageFormat::Dds),
+            "avif" => Some(ImageFormat::Avif),
             _ => None,
         }
     }
@@ -94,11 +138,27 @@ impl ImageFormat {
             ImageFormat::Tiff => "TIFF",
             ImageFormat::Tga => "TGA",
             ImageFormat::WebP => "WebP",
+            ImageFormat::Qoi => "QOI",
+            ImageFormat::Pnm => "PNM",
+            ImageFormat::Farbfeld => "farbfeld",
+            ImageFormat::Pcx => "PCX",
+            ImageFormat::Jxl => "JXL",
+            ImageFormat::Dds => "DDS",
+            ImageFormat::Avif => "AVIF",
         }
     }
 
     /// Precise losses for actual straight RGBA8 export samples.
     pub fn export_losses_for_rgba(self, rgba: &[u8]) -> Vec<&'static str> {
+        if self == Self::Avif {
+            return crate::avif::export_losses(
+                rgba.as_chunks::<4>().0.iter().any(|p| p[3] != 255),
+                rgba.as_chunks::<4>()
+                    .0
+                    .iter()
+                    .any(|p| p[3] == 0 && p[..3] != [0, 0, 0]),
+            );
+        }
         if self != Self::Gif {
             return self.export_losses(rgba.as_chunks::<4>().0.iter().any(|p| p[3] != 255));
         }
@@ -130,7 +190,14 @@ impl ImageFormat {
             | ImageFormat::Bmp
             | ImageFormat::Tiff
             | ImageFormat::Tga
-            | ImageFormat::WebP => Vec::new(),
+            | ImageFormat::WebP
+            | ImageFormat::Qoi
+            | ImageFormat::Pnm
+            | ImageFormat::Farbfeld
+            | ImageFormat::Pcx
+            | ImageFormat::Jxl
+            | ImageFormat::Dds => Vec::new(),
+            ImageFormat::Avif => crate::avif::export_losses(has_transparency, has_transparency),
             ImageFormat::Gif => {
                 let mut losses = vec!["palette-quantized"];
                 if has_transparency {
@@ -222,6 +289,20 @@ pub fn decode_with_pixel_limit(bytes: &[u8], pixels: u64) -> Result<Decoded> {
             "encoded image exceeds the input budget",
         ));
     }
+    if format == ImageFormat::Dds {
+        return specialist::decode_dds(bytes, pixels);
+    }
+    if matches!(format, ImageFormat::Jxl | ImageFormat::Avif) {
+        return Err(unsupported(
+            "this specialist raster decoder is not enabled in the image facade",
+        ));
+    }
+    if format == ImageFormat::Qoi {
+        return extended::decode_qoi(bytes, pixels);
+    }
+    if format == ImageFormat::Pcx {
+        return extended::decode_pcx(bytes, pixels);
+    }
     if format == ImageFormat::Png {
         let decoder = ::image::codecs::png::PngDecoder::with_limits(
             Cursor::new(bytes),
@@ -240,12 +321,15 @@ pub fn decode_with_pixel_limit(bytes: &[u8], pixels: u64) -> Result<Decoded> {
         ImageFormat::Tiff => tiff::admit(bytes, pixels)?,
         ImageFormat::Tga => tga::admit(bytes, pixels)?,
         ImageFormat::WebP => webp::admit(bytes, pixels)?,
+        ImageFormat::Pnm => extended::admit_pnm(bytes, pixels)?,
+        ImageFormat::Farbfeld => extended::admit_farbfeld(bytes, pixels)?,
         _ => Vec::new(),
     };
     if format == ImageFormat::Bmp {
         admit_bmp(bytes)?;
     }
-    let mut reader = ::image::ImageReader::with_format(Cursor::new(bytes), external_format(format));
+    let mut reader =
+        ::image::ImageReader::with_format(Cursor::new(bytes), external_format(format)?);
     reader.limits(decode_limits(pixels));
     decode_pixels(
         reader.into_decoder().map_err(image_error)?,
@@ -316,8 +400,8 @@ fn decode_pixels(
     })
 }
 
-fn external_format(format: ImageFormat) -> ::image::ImageFormat {
-    match format {
+fn external_format(format: ImageFormat) -> Result<::image::ImageFormat> {
+    Ok(match format {
         ImageFormat::Png => ::image::ImageFormat::Png,
         ImageFormat::Bmp => ::image::ImageFormat::Bmp,
         ImageFormat::Jpeg => ::image::ImageFormat::Jpeg,
@@ -325,7 +409,16 @@ fn external_format(format: ImageFormat) -> ::image::ImageFormat {
         ImageFormat::Tiff => ::image::ImageFormat::Tiff,
         ImageFormat::Tga => ::image::ImageFormat::Tga,
         ImageFormat::WebP => ::image::ImageFormat::WebP,
-    }
+        ImageFormat::Qoi => ::image::ImageFormat::Qoi,
+        ImageFormat::Pnm => ::image::ImageFormat::Pnm,
+        ImageFormat::Farbfeld => ::image::ImageFormat::Farbfeld,
+        ImageFormat::Jxl | ImageFormat::Dds | ImageFormat::Avif => {
+            return Err(unsupported(
+                "specialist raster requires its selected codec route",
+            ));
+        }
+        ImageFormat::Pcx => return Err(unsupported("PCX requires its selected dedicated codec")),
+    })
 }
 
 pub fn encode(
@@ -334,6 +427,32 @@ pub fn encode(
     height: u32,
     rgba: &[u8],
     jpeg_quality: u8,
+) -> Result<Vec<u8>> {
+    encode_checked(format, width, height, rgba, jpeg_quality, &|| Ok(()))
+}
+
+/// Encode privately, checking cancellation around all codecs and at the selected
+/// specialist adapters' checkpoints. Opaque compression loops remain non-preemptible.
+pub fn encode_checked(
+    format: ImageFormat,
+    width: u32,
+    height: u32,
+    rgba: &[u8],
+    quality: u8,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Vec<u8>> {
+    check()?;
+    let bytes = encode_inner(format, width, height, rgba, quality, check)?;
+    check()?;
+    Ok(bytes)
+}
+fn encode_inner(
+    format: ImageFormat,
+    width: u32,
+    height: u32,
+    rgba: &[u8],
+    jpeg_quality: u8,
+    check: &dyn Fn() -> Result<()>,
 ) -> Result<Vec<u8>> {
     check_size(u64::from(width), u64::from(height))?;
     if rgba.len() as u64 != u64::from(width) * u64::from(height) * 4 {
@@ -344,6 +463,13 @@ pub fn encode(
     }
     let mut out = Vec::new();
     match format {
+        ImageFormat::Jxl | ImageFormat::Dds | ImageFormat::Avif => {
+            return specialist::encode(format, width, height, rgba, jpeg_quality, check);
+        }
+        ImageFormat::Qoi | ImageFormat::Pnm | ImageFormat::Farbfeld => {
+            return extended::encode(format, width, height, rgba, check);
+        }
+        ImageFormat::Pcx => return Err(unsupported("PCX writing is not qualified")),
         ImageFormat::Gif => return gif::encode(width, height, rgba),
         ImageFormat::Tiff => return tiff::encode(width, height, rgba),
         ImageFormat::Tga => return tga::encode(width, height, rgba),
