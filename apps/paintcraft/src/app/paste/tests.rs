@@ -1,9 +1,9 @@
 use super::*;
 use std::sync::Mutex;
 #[derive(Clone)]
-struct Fake {
-    outcome: Arc<Mutex<Option<Result<EncodedImage, String>>>>,
-    calls: Arc<std::sync::atomic::AtomicUsize>,
+pub(super) struct Fake {
+    pub(super) outcome: Arc<Mutex<Option<Result<EncodedImage, String>>>>,
+    pub(super) calls: Arc<std::sync::atomic::AtomicUsize>,
 }
 impl ReadJob for Fake {
     fn poll(&self) -> Option<Result<EncodedImage, String>> {
@@ -23,7 +23,7 @@ impl Reader for Fake {
         Ok(Box::new(self.clone()))
     }
 }
-fn fixture() -> (App, egui::Context, Fake) {
+pub(super) fn fixture() -> (App, egui::Context, Fake) {
     let ctx = egui::Context::default();
     let mut app = App::new(None);
     app.editor = Editor::new_document(4, 3).unwrap();
@@ -55,7 +55,7 @@ fn encoded() -> EncodedImage {
     )
     .unwrap()
 }
-fn ready(app: &mut App, ctx: &egui::Context) {
+pub(super) fn ready(app: &mut App, ctx: &egui::Context) {
     let deadline = std::time::Instant::now() + Duration::from_secs(5);
     while app.paste.pending.is_some() {
         app.poll_paste(ctx);
@@ -308,7 +308,7 @@ fn actual_controls_and_shortcut_stage_then_commit_or_cancel_in_each_skin_and_two
                     repeat: false,
                     modifiers: egui::Modifiers::COMMAND | egui::Modifiers::SHIFT,
                 });
-                h.run();
+                h.step();
             } else {
                 let edit = translate(language, "Edit");
                 h.get_by_label(&edit).click();
@@ -319,10 +319,14 @@ fn actual_controls_and_shortcut_stage_then_commit_or_cancel_in_each_skin_and_two
                     .find(|node| !node.accesskit_node().is_disabled())
                     .expect("enabled Paste as new layer");
                 control.click();
-                h.run();
+                h.step();
             }
             let deadline = std::time::Instant::now() + Duration::from_secs(5);
-            while h.state().paste.ready.is_none() {
+            while h.state().paste.ready.is_none()
+                || !h
+                    .query_all_by_label(&translate(language, "Paste"))
+                    .any(|n| !n.accesskit_node().is_disabled())
+            {
                 assert!(
                     std::time::Instant::now() < deadline,
                     "{}",

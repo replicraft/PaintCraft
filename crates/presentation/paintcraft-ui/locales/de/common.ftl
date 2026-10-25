@@ -303,3 +303,8 @@ full-screen-is-unavailable-or-the-browser-denied-the-request = Der Vollbildmodus
 download-for-desktop = Für den Desktop herunterladen
 
 enter-for-a-new-line-cmd-ctrl-enter-to-place-escape-to-cancel = Eingabe für eine neue Zeile · Cmd/Strg+Eingabe zum Platzieren · Escape zum Abbrechen
+
+the-dib-has-no-declared-alpha-channel-its-pixels-will-be-imported-as-opaque = Das DIB hat keinen deklarierten Alphakanal. Seine Pixel werden undurchsichtig importiert.
+color-space-and-resolution-metadata-in-the-dib-will-not-be-retained = Farbraum- und Auflösungsmetadaten des DIB werden nicht beibehalten.
+
+the-dib-alpha-mode-is-unspecified-colors-will-be-interpreted-as-straight-alpha = Der Alphamodus des DIB ist nicht angegeben. Farben werden als nicht vormultipliziert interpretiert.

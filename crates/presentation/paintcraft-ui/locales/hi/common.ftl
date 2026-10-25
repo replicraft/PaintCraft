@@ -303,3 +303,8 @@ full-screen-is-unavailable-or-the-browser-denied-the-request = पूर्ण �
 download-for-desktop = डेस्कटॉप के लिए डाउनलोड करें
 
 enter-for-a-new-line-cmd-ctrl-enter-to-place-escape-to-cancel = नई पंक्ति के लिए Enter · रखने के लिए Cmd/Ctrl+Enter · रद्द करने के लिए Escape
+
+the-dib-has-no-declared-alpha-channel-its-pixels-will-be-imported-as-opaque = DIB में अल्फ़ा चैनल निर्दिष्ट नहीं है; पिक्सेल अपारदर्शी रूप में आयात होंगे।
+color-space-and-resolution-metadata-in-the-dib-will-not-be-retained = DIB का रंग स्थान और रिज़ॉल्यूशन मेटाडेटा सुरक्षित नहीं रखा जाएगा।
+
+the-dib-alpha-mode-is-unspecified-colors-will-be-interpreted-as-straight-alpha = DIB का अल्फ़ा मोड निर्दिष्ट नहीं है। रंगों की व्याख्या सीधे अल्फ़ा के रूप में होगी।

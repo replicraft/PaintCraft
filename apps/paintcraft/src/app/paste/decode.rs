@@ -18,12 +18,32 @@ pub(super) fn source(
         }
     };
     check()?;
-    let path = match encoded.encoding() {
-        Encoding::Png => "clipboard.png",
-        Encoding::Tiff => "clipboard.tiff",
+    let decoded = match encoded.encoding() {
+        Encoding::Dib | Encoding::DibV5 => {
+            let request = registry::Request::new(
+                frontend,
+                registry::Operation::Open,
+                registry::Family::Bmp,
+                Platform::Native,
+            );
+            registry::admission(request).require_allowed(request)?;
+            let kind = if encoded.encoding() == Encoding::DibV5 {
+                image::DibKind::DibV5
+            } else {
+                image::DibKind::Dib
+            };
+            image::decode_dib_with_pixel_limit(encoded.bytes(), kind, MAX_PIXELS, &check)?
+        }
+        Encoding::Png | Encoding::Tiff => {
+            let path = if encoded.encoding() == Encoding::Png {
+                "clipboard.png"
+            } else {
+                "clipboard.tiff"
+            };
+            registry::admit_open(frontend, path, encoded.bytes(), Platform::Native)?;
+            image::decode_with_pixel_limit(encoded.bytes(), MAX_PIXELS)?
+        }
     };
-    registry::admit_open(frontend, path, encoded.bytes(), Platform::Native)?;
-    let decoded = image::decode_with_pixel_limit(encoded.bytes(), MAX_PIXELS)?;
     check()?;
     if decoded
         .losses

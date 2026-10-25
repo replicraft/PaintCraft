@@ -307,3 +307,7 @@ impl App {
 #[cfg(test)]
 #[path = "paste/tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "paste/dib_tests.rs"]
+mod dib_tests;

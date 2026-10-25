@@ -303,3 +303,8 @@ full-screen-is-unavailable-or-the-browser-denied-the-request = A tela cheia não
 download-for-desktop = Baixar para desktop
 
 enter-for-a-new-line-cmd-ctrl-enter-to-place-escape-to-cancel = Enter para uma nova linha · Cmd/Ctrl+Enter para inserir · Escape para cancelar
+
+the-dib-has-no-declared-alpha-channel-its-pixels-will-be-imported-as-opaque = O DIB não tem canal alfa declarado; os pixels serão importados como opacos.
+color-space-and-resolution-metadata-in-the-dib-will-not-be-retained = Os metadados de espaço de cor e resolução do DIB não serão preservados.
+
+the-dib-alpha-mode-is-unspecified-colors-will-be-interpreted-as-straight-alpha = O modo alfa do DIB não foi especificado. As cores serão interpretadas como alfa direto.

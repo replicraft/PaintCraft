@@ -303,3 +303,8 @@ full-screen-is-unavailable-or-the-browser-denied-the-request = 全画面表示�
 download-for-desktop = デスクトップ版をダウンロード
 
 enter-for-a-new-line-cmd-ctrl-enter-to-place-escape-to-cancel = Enterで改行 · Cmd/Ctrl+Enterで確定 · Escapeで取り消し
+
+the-dib-has-no-declared-alpha-channel-its-pixels-will-be-imported-as-opaque = DIB にアルファチャンネルが指定されていないため、ピクセルを不透明として読み込みます。
+color-space-and-resolution-metadata-in-the-dib-will-not-be-retained = DIB の色空間と解像度のメタデータは保持されません。
+
+the-dib-alpha-mode-is-unspecified-colors-will-be-interpreted-as-straight-alpha = DIB のアルファモードは未指定です。色を非乗算アルファとして解釈します。

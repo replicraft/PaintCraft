@@ -303,3 +303,8 @@ full-screen-is-unavailable-or-the-browser-denied-the-request = 无法使用全�
 download-for-desktop = 下载桌面版
 
 enter-for-a-new-line-cmd-ctrl-enter-to-place-escape-to-cancel = Enter 换行 · Cmd/Ctrl+Enter 放置 · Escape 取消
+
+the-dib-has-no-declared-alpha-channel-its-pixels-will-be-imported-as-opaque = DIB 未声明 Alpha 通道，其像素将作为不透明像素导入。
+color-space-and-resolution-metadata-in-the-dib-will-not-be-retained = 不会保留 DIB 中的色彩空间和分辨率元数据。
+
+the-dib-alpha-mode-is-unspecified-colors-will-be-interpreted-as-straight-alpha = DIB 未指定 Alpha 模式。颜色将按直通 Alpha 解释。
