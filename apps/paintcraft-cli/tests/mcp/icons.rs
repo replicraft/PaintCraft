@@ -36,6 +36,10 @@ fn icon_entry_import_is_atomic_and_source_is_guarded() {
             true
         );
         assert_eq!(c.ok("inspect_document", json!({})), loaded);
+        let icon_alias = folder.join(format!("{suffix}-alias.ico"));
+        fs::hard_link(&source, &icon_alias).unwrap();
+        assert_eq!(c.call("export_icons", json!({"path":icon_alias,"overwrite":true,"entries":[{"width":16,"height":16,"encoding":"png"}],"allow_losses":["icon-resized"]}))["isError"], true);
+        assert_eq!(c.ok("inspect_document", json!({})), loaded);
         let output = folder.join(format!("{suffix}.pcnd"));
         c.ok("save_project", json!({"path":output}));
         let doc = pcnd::read(&fs::read(output).unwrap()).unwrap();
@@ -48,6 +52,57 @@ fn icon_entry_import_is_atomic_and_source_is_guarded() {
             );
         }
         assert_eq!(fs::read(source).unwrap(), bytes);
+    }
+    drop(c);
+    fs::remove_dir_all(folder).unwrap();
+}
+
+#[test]
+fn explicit_icon_export_requires_consent_and_preserves_project_and_destinations() {
+    let folder =
+        std::env::temp_dir().join(format!("paintcraft-mcp-icon-export-{}", std::process::id()));
+    fs::create_dir_all(&folder).unwrap();
+    let mut c = Client::new();
+    c.ok(
+        "create_canvas",
+        json!({"width":2,"height":1,"background":"#FF0000FF"}),
+    );
+    let source = folder.join("source.pcnd");
+    c.ok("save_project", json!({"path":source}));
+    let source_bytes = fs::read(&source).unwrap();
+    let before = c.ok("inspect_document", json!({}));
+    for suffix in ["ico", "cur"] {
+        let path = folder.join(format!("output.{suffix}"));
+        fs::write(&path, b"existing destination").unwrap();
+        let entries = if suffix == "ico" {
+            json!([{"width":16,"height":16,"encoding":"png"},{"width":32,"height":32,"encoding":"bitmap"}])
+        } else {
+            json!([{"width":16,"height":16,"encoding":"png","hotspot":[3,7]},{"width":32,"height":32,"encoding":"bitmap","hotspot":[9,11]}])
+        };
+        for request in [
+            json!({"path":path,"entries":entries,"overwrite":true}),
+            json!({"path":path,"entries":[],"overwrite":true,"allow_losses":["icon-resized"]}),
+            json!({"path":path,"entries":[{"width":257,"height":1,"encoding":"png"}],"overwrite":true,"allow_losses":["icon-resized"]}),
+            json!({"path":path,"entries":entries,"overwrite":true,"allow_losses":["lossy-jpeg"]}),
+        ] {
+            assert_eq!(c.call("export_icons", request)["isError"], true);
+            assert_eq!(c.ok("inspect_document", json!({})), before);
+            assert_eq!(fs::read(&path).unwrap(), b"existing destination");
+        }
+        c.ok("export_icons", json!({"path":path,"entries":entries,"overwrite":true,"resampling":"nearest","allow_losses":["icon-resized"]}));
+        assert_eq!(c.ok("inspect_document", json!({})), before);
+        let bytes = fs::read(&path).unwrap();
+        for (index, size) in [(0, 16), (1, 32)] {
+            let decoded = icons::decode_entry(&bytes, index, 65536).unwrap();
+            assert_eq!((decoded.entry.width, decoded.entry.height), (size, size));
+            let offset = (size / 4 * size * 4) as usize;
+            assert_eq!(&decoded.rgba[offset..offset + 4], &[255, 0, 0, 255]);
+        }
+        assert_eq!(fs::read(&source).unwrap(), source_bytes);
+        fs::remove_file(&path).unwrap();
+        fs::hard_link(&source, &path).unwrap();
+        assert_eq!(c.call("export_icons", json!({"path":path,"entries":entries,"overwrite":true,"allow_losses":["icon-resized"]}))["isError"], true);
+        assert_eq!(fs::read(&source).unwrap(), source_bytes);
     }
     drop(c);
     fs::remove_dir_all(folder).unwrap();

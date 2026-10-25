@@ -288,6 +288,6 @@ impl ServerHandler for PaintingServer {
 
 impl PaintingServer {
     pub(super) fn router() -> rmcp::handler::server::router::tool::ToolRouter<Self> {
-        Self::tool_router()
+        Self::tool_router() + Self::icon_router()
     }
 }
