@@ -83,7 +83,13 @@ fn guard_named(expected: Option<&str>, actual: &str, flag: &str) -> Result<()> {
 }
 
 fn same_file(a: &Path, b: &Path) -> bool {
-    matches!((a.canonicalize(), b.canonicalize()), (Ok(x), Ok(y)) if x == y)
+    if matches!((a.canonicalize(), b.canonicalize()), (Ok(x), Ok(y)) if x == y) {
+        return true;
+    }
+    // The identity library opens both paths. Never open a FIFO or device merely
+    // to compare it: that can consume an input handshake or block a command.
+    matches!((a.metadata(), b.metadata()), (Ok(x), Ok(y)) if x.is_file() && y.is_file())
+        && same_file::is_same_file(a, b).unwrap_or(false)
 }
 
 fn finish(json: bool, result: Result<Written>) -> Reply {
