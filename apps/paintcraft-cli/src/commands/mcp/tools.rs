@@ -96,15 +96,7 @@ impl PaintingServer {
                     entry,
                     image::DECODE_PIXELS_MAX,
                 )?;
-                (
-                    paintcraft_document::import_image(
-                        decoded.entry.width,
-                        decoded.entry.height,
-                        &decoded.rgba,
-                        &sha,
-                    )?,
-                    decoded.losses,
-                )
+                (decoded.document(&sha)?, decoded.losses)
             } else {
                 profile.reject_project_import(family)?;
                 let decoded = if let Some(page) = p.page {

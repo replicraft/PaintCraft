@@ -158,6 +158,18 @@ pub struct Decoded {
     pub rgba: Vec<u8>,
     pub losses: Vec<String>,
 }
+impl Decoded {
+    /// Entry selection contributes to document identity, even for duplicate sizes.
+    /// This does not acknowledge conversion losses or publish any editor state.
+    pub fn document(&self, source_sha256: &str) -> Result<paintcraft_document::Document> {
+        paintcraft_document::import_image(
+            self.entry.width,
+            self.entry.height,
+            &self.rgba,
+            &format!("{source_sha256}:icon-entry:{}", self.entry.index),
+        )
+    }
+}
 
 /// Decode an explicitly selected zero-based entry, never an implicit largest size.
 /// Only the selected payload is copied into the upstream directory reader.

@@ -227,3 +227,19 @@ fn independent_fixtures_match_pillow_pixel_hashes_and_directory_metadata() {
         }
     }
 }
+
+#[test]
+fn selected_entries_have_distinct_deterministic_document_identity() {
+    let bytes = fixture(false);
+    let first = icons::decode_entry(&bytes, 0, 65536).unwrap();
+    let second = icons::decode_entry(&bytes, 1, 65536).unwrap();
+    let a = first.document("same-source-hash").unwrap();
+    let b = second.document("same-source-hash").unwrap();
+    assert_ne!(a.document_id, b.document_id);
+    assert_ne!(a.state_id, b.state_id);
+    assert_ne!(a.roots, b.roots);
+    assert_eq!(
+        a.document_id,
+        first.document("same-source-hash").unwrap().document_id
+    );
+}

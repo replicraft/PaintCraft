@@ -62,15 +62,7 @@ pub fn run(a: Options, json: bool) -> Reply {
                     entry,
                     image::DECODE_PIXELS_MAX,
                 )?;
-                (
-                    import_image(
-                        decoded.entry.width,
-                        decoded.entry.height,
-                        &decoded.rgba,
-                        &sha,
-                    )?,
-                    decoded.losses,
-                )
+                (decoded.document(&sha)?, decoded.losses)
             } else {
                 a.profile.reject_project_import(family)?;
                 let img = if let Some(page) = a.page {
