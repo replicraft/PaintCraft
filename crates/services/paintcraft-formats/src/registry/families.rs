@@ -72,6 +72,20 @@ impl Family {
                 .any(|ext| ext.eq_ignore_ascii_case(extension)),
             Self::Bmp => extension.eq_ignore_ascii_case("bmp"),
             Self::Gif => extension.eq_ignore_ascii_case("gif"),
+            Self::Jxl => extension.eq_ignore_ascii_case("jxl"),
+            Self::Dds => extension.eq_ignore_ascii_case("dds"),
+            Self::Avif => extension.eq_ignore_ascii_case("avif"),
+            Self::Pdn => extension.eq_ignore_ascii_case("pdn"),
+            Self::Paint => extension.eq_ignore_ascii_case("paint"),
+            Self::Dcx => extension.eq_ignore_ascii_case("dcx"),
+            Self::Qoi => extension.eq_ignore_ascii_case("qoi"),
+            Self::Farbfeld => extension.eq_ignore_ascii_case("ff"),
+            Self::Pcx => extension.eq_ignore_ascii_case("pcx"),
+            Self::Pnm => ["pnm", "pbm", "pgm", "ppm", "pam"]
+                .iter()
+                .any(|ext| ext.eq_ignore_ascii_case(extension)),
+            Self::Tga => extension.eq_ignore_ascii_case("tga"),
+            Self::Webp => extension.eq_ignore_ascii_case("webp"),
             Self::Tiff => ["tif", "tiff"]
                 .iter()
                 .any(|ext| ext.eq_ignore_ascii_case(extension)),

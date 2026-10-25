@@ -15,26 +15,58 @@ fn qualified_discovery_is_separate_from_stock_inventory_and_backend_candidates()
     assert_eq!(
         enabled_extensions(Frontend::Studio, Operation::Open, Platform::Native),
         vec![
-            "pcnd", "png", "jpg", "jpeg", "jpe", "jfif", "bmp", "gif", "tif", "tiff"
+            "pcnd", "png", "jpg", "jpeg", "jpe", "jfif", "bmp", "pdn", "gif", "webp", "tif",
+            "tiff", "tga", "dds"
         ]
     );
     for platform in [Platform::Native, Platform::Web] {
         for frontend in FRONTENDS {
-            assert_eq!(
-                enabled(frontend, Operation::Open, platform),
-                vec![
+            let mut open = vec![
+                Family::Pcnd,
+                Family::Png,
+                Family::Jpeg,
+                Family::Bmp,
+                Family::Gif,
+                Family::Tiff,
+            ];
+            let mut export = vec![
+                Family::Png,
+                Family::Jpeg,
+                Family::Bmp,
+                Family::Gif,
+                Family::Tiff,
+            ];
+            if frontend == Frontend::Studio {
+                open = vec![
                     Family::Pcnd,
                     Family::Png,
                     Family::Jpeg,
                     Family::Bmp,
+                    Family::Pdn,
                     Family::Gif,
-                    Family::Tiff
-                ]
-            );
-            assert_eq!(
-                enabled(frontend, Operation::ExportFlat, platform),
-                vec![Family::Png, Family::Jpeg, Family::Bmp]
-            );
+                    Family::Webp,
+                    Family::Tiff,
+                    Family::Tga,
+                    Family::Dds,
+                ];
+                export = vec![
+                    Family::Png,
+                    Family::Jpeg,
+                    Family::Bmp,
+                    Family::Gif,
+                    Family::Webp,
+                    Family::Tiff,
+                    Family::Tga,
+                    Family::Dds,
+                    Family::Avif,
+                    Family::Jxl,
+                    Family::Qoi,
+                    Family::Pnm,
+                    Family::Farbfeld,
+                ];
+            }
+            assert_eq!(enabled(frontend, Operation::Open, platform), open);
+            assert_eq!(enabled(frontend, Operation::ExportFlat, platform), export);
             for family in Family::ALL {
                 let qualified = capability(*family, Operation::Open, platform).qualified;
                 assert_eq!(
@@ -47,6 +79,10 @@ fn qualified_discovery_is_separate_from_stock_inventory_and_backend_candidates()
                             | Family::Bmp
                             | Family::Gif
                             | Family::Tiff
+                            | Family::Tga
+                            | Family::Webp
+                            | Family::Dds
+                            | Family::Pdn
                     )
                 );
             }
@@ -112,7 +148,6 @@ fn stock_extended_asset_and_native_project_operations_do_not_leak() {
         Family::Psd,
         Family::Psb,
         Family::Ora,
-        Family::Qoi,
     ] {
         assert_eq!(
             admission(Request::new(
@@ -130,7 +165,11 @@ fn stock_extended_asset_and_native_project_operations_do_not_leak() {
                 family,
                 Platform::Native
             )),
-            Decision::TemporarilyUnavailable(Reason::BackendUnavailable)
+            if family == Family::Paint {
+                Decision::Allowed
+            } else {
+                Decision::TemporarilyUnavailable(Reason::BackendUnavailable)
+            }
         );
     }
     for family in [Family::Abr, Family::Ase, Family::Csh] {
@@ -367,11 +406,14 @@ fn baseline_qualified_rasters_dispatch_to_actual_bounded_adapters() {
 
 #[test]
 fn internal_codec_presence_is_operation_specific_and_does_not_qualify_frontends() {
-    for family in [Family::Tga, Family::Webp, Family::Jxl, Family::Dds] {
+    for family in [Family::Jxl, Family::Dds] {
         for operation in [Operation::OpenRaster, Operation::ExportFlat] {
             let capability = capability(family, operation, Platform::Native);
             assert!(capability.backend_available);
-            assert!(!capability.qualified);
+            assert_eq!(
+                capability.qualified,
+                family == Family::Dds || operation == Operation::ExportFlat
+            );
         }
     }
     assert_eq!(
@@ -384,21 +426,19 @@ fn internal_codec_presence_is_operation_specific_and_does_not_qualify_frontends(
     );
     assert!(!capability(Family::Avif, Operation::OpenRaster, Platform::Native).backend_available);
     assert!(capability(Family::Avif, Operation::ExportFlat, Platform::Native).backend_available);
-    assert!(!capability(Family::Pdn, Operation::OpenProject, Platform::Native).backend_available);
+    assert!(capability(Family::Pdn, Operation::OpenProject, Platform::Native).backend_available);
     assert!(
         !capability(Family::Pdn, Operation::SavePreserving, Platform::Native).backend_available
     );
     for family in [Family::Gif, Family::Tiff] {
         assert!(capability(family, Operation::OpenRaster, Platform::Native).qualified);
-        assert!(!capability(family, Operation::ExportFlat, Platform::Native).qualified);
+        assert!(capability(family, Operation::ExportFlat, Platform::Native).qualified);
     }
 }
 
 #[test]
 fn future_studio_workflows_are_explicit_and_unavailable_rather_than_stock_formats() {
     for family in [
-        Family::Pnm,
-        Family::Farbfeld,
         Family::Icns,
         Family::Raw,
         Family::Pdf,
@@ -453,4 +493,80 @@ fn future_read_only_projects_and_assets_do_not_acquire_unsupported_writers() {
         )),
         Decision::Denied(Reason::UnsupportedOperation)
     );
+}
+
+#[test]
+fn newly_enabled_flat_exports_never_advertise_preserving_save_targets() {
+    for family in [Family::Gif, Family::Tiff, Family::Tga, Family::Webp] {
+        for platform in [Platform::Native, Platform::Web] {
+            assert!(capability(family, Operation::ExportFlat, platform).qualified);
+            assert!(!capability(family, Operation::SavePreserving, platform).qualified);
+            assert!(!capability(family, Operation::SaveAsCopy, platform).qualified);
+        }
+    }
+}
+
+#[test]
+fn extended_rasters_require_explicit_conversion_and_never_offer_preserving_save() {
+    for family in [Family::Qoi, Family::Pnm, Family::Farbfeld, Family::Pcx] {
+        for platform in [Platform::Native, Platform::Web] {
+            assert_eq!(
+                admission(Request::new(
+                    Frontend::Studio,
+                    Operation::Open,
+                    family,
+                    platform
+                )),
+                Decision::RequiresExplicitImport
+            );
+            assert!(
+                admission(Request::new(
+                    Frontend::Studio,
+                    Operation::ImportConvert,
+                    family,
+                    platform
+                ))
+                .available()
+            );
+            for operation in [Operation::SavePreserving, Operation::SaveAsCopy] {
+                assert!(
+                    !admission(Request::new(Frontend::Studio, operation, family, platform))
+                        .available()
+                );
+            }
+        }
+    }
+    assert_eq!(
+        admit_import(Frontend::Studio, "sample.qoi", b"qoif", Platform::Native).unwrap(),
+        Family::Qoi
+    );
+    assert!(admit_open(Frontend::Studio, "sample.qoi", b"qoif", Platform::Native).is_err());
+    assert!(
+        admit_import(
+            Frontend::ClassicV11,
+            "sample.qoi",
+            b"qoif",
+            Platform::Native
+        )
+        .is_err()
+    );
+}
+
+#[test]
+fn netpbm_writing_is_pam_only_and_new_export_aliases_are_discoverable() {
+    let extensions = enabled_extensions(Frontend::Studio, Operation::ExportFlat, Platform::Native);
+    for extension in ["qoi", "pam", "ff"] {
+        assert!(extensions.contains(&extension));
+    }
+    for extension in ["pnm", "ppm", "pgm", "pbm"] {
+        assert!(!extensions.contains(&extension));
+        let mut request = Request::new(
+            Frontend::Studio,
+            Operation::ExportFlat,
+            Family::Pnm,
+            Platform::Native,
+        );
+        request.extension = Some(extension);
+        assert!(!admission(request).available());
+    }
 }

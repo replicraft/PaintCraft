@@ -195,6 +195,24 @@ pub fn capability(family: Family, operation: Operation, _platform: Platform) -> 
         {
             Some("image-rgba8")
         }
+        Family::Pdn
+            if matches!(
+                operation,
+                Operation::Open | Operation::OpenProject | Operation::ImportConvert
+            ) =>
+        {
+            Some("paintcraft-pdn-pdn3-rgba8")
+        }
+        Family::Paint if operation == Operation::ImportConvert => {
+            Some("paintcraft-paint-iovl-unci")
+        }
+        Family::Dcx if operation == Operation::ImportConvert => Some("pcx-dcx-page"),
+        Family::Qoi | Family::Pnm | Family::Farbfeld
+            if matches!(operation, Operation::ImportConvert | Operation::ExportFlat) =>
+        {
+            Some("image-extended-rgba8")
+        }
+        Family::Pcx if operation == Operation::ImportConvert => Some("pcx-rgba8"),
         Family::Jxl if raster_operation && operation.is_write() => Some("zune-jpegxl"),
         Family::Jxl if raster_operation => Some("jxl-rs"),
         Family::Dds if raster_operation => Some("paintcraft-dds-rgba8"),
@@ -202,15 +220,17 @@ pub fn capability(family: Family, operation: Operation, _platform: Platform) -> 
         // PDN header inspection is not an image/project decode or write adapter.
         _ => None,
     };
-    let qualified = backend.is_some()
-        && (matches!(
-            family,
-            Family::Pcnd | Family::Png | Family::Jpeg | Family::Bmp
-        ) || (matches!(family, Family::Gif | Family::Tiff)
-            && matches!(
-                operation,
-                Operation::Open | Operation::OpenRaster | Operation::ImportConvert
-            )));
+    let qualified = backend.is_some() && match family {
+        Family::Pcnd => project_operation,
+        Family::Png | Family::Jpeg | Family::Bmp => raster_operation,
+        Family::Gif | Family::Tiff | Family::Tga | Family::Webp | Family::Dds => matches!(operation,
+            Operation::Open | Operation::OpenRaster | Operation::ImportConvert | Operation::ExportFlat),
+        Family::Qoi | Family::Pnm | Family::Farbfeld => matches!(operation,Operation::ImportConvert | Operation::ExportFlat),
+        Family::Paint | Family::Pcx | Family::Dcx => operation == Operation::ImportConvert,
+        Family::Jxl | Family::Avif => operation == Operation::ExportFlat,
+        Family::Pdn => matches!(operation,Operation::Open | Operation::OpenProject | Operation::ImportConvert),
+        _ => false,
+    };
     Capability {
         backend_available: backend.is_some(),
         qualified,
@@ -230,7 +250,24 @@ pub fn admission(request: Request<'_>) -> Decision {
             return Decision::TemporarilyUnavailable(Reason::VariantUnqualified);
         }
     }
-    if request.variant.is_some() {
+    let selected_page = request.family == Family::Dcx
+        && request.operation == Operation::ImportConvert
+        && request.variant == Some("dcx-selected-page");
+    if request.family == Family::Dcx
+        && request.operation == Operation::ImportConvert
+        && !selected_page
+    {
+        return Decision::TemporarilyUnavailable(Reason::VariantUnqualified);
+    }
+    if request.variant.is_some() && !selected_page {
+        return Decision::TemporarilyUnavailable(Reason::VariantUnqualified);
+    }
+    if request.family == Family::Pnm
+        && request.operation.is_write()
+        && request
+            .extension
+            .is_some_and(|ext| !ext.trim_start_matches('.').eq_ignore_ascii_case("pam"))
+    {
         return Decision::TemporarilyUnavailable(Reason::VariantUnqualified);
     }
     let capability = capability(request.family, request.operation, request.platform);
@@ -287,22 +324,88 @@ pub fn admit_open(
     bytes: &[u8],
     platform: Platform,
 ) -> Result<Family> {
+    admit_input(frontend, filename, bytes, platform, Operation::Open, None)
+}
+
+/// Explicit conversion import has its own frontend policy and picker inventory.
+/// It still validates signatures/suffixes and never enables a preserving save.
+pub fn admit_import(
+    frontend: Frontend,
+    filename: &str,
+    bytes: &[u8],
+    platform: Platform,
+) -> Result<Family> {
+    admit_input(
+        frontend,
+        filename,
+        bytes,
+        platform,
+        Operation::ImportConvert,
+        None,
+    )
+}
+
+/// DCX import is available only with an explicit selected page. It is excluded
+/// from ordinary pickers until a page selector exists in that frontend.
+pub fn admit_import_page(
+    frontend: Frontend,
+    filename: &str,
+    bytes: &[u8],
+    platform: Platform,
+    page: u16,
+) -> Result<Family> {
+    let family = admit_input(
+        frontend,
+        filename,
+        bytes,
+        platform,
+        Operation::ImportConvert,
+        Some("dcx-selected-page"),
+    )?;
+    if family != Family::Dcx || crate::dcx::inspect(bytes)?.get(usize::from(page)).is_none() {
+        return Err(Error::new(
+            ErrorCode::InputSchema,
+            "DCX page index is out of range",
+        ));
+    }
+    Ok(family)
+}
+
+fn admit_input(
+    frontend: Frontend,
+    filename: &str,
+    bytes: &[u8],
+    platform: Platform,
+    operation: Operation,
+    variant: Option<&str>,
+) -> Result<Family> {
     let extension = filename
         .rsplit(['/', '\\'])
         .next()
         .and_then(|name| name.rsplit_once('.').map(|(_, ext)| ext));
     let hint = extension.and_then(Family::from_extension);
     if let Some(family) = hint {
-        let request = Request::new(frontend, Operation::Open, family, platform);
+        let request = Request::new(frontend, operation, family, platform);
         // Refuse foreign projects/vectors before content acquisition or codec fallback.
         if let Some(decision) = policy::deny(request) {
             decision.require_allowed(request)?;
         }
     }
-    let sniffed = sniff(bytes)
-        .ok_or_else(|| Reason::InvalidSignature.error(hint, frontend, Operation::Open))?;
-    let mut request = Request::new(frontend, Operation::Open, sniffed, platform);
+    // MIF1 is shared with HEIF. A .paint suffix chooses a conversion candidate,
+    // never proves layer semantics; the strict item/pixel decoder still must run.
+    let paint_candidate = operation == Operation::ImportConvert
+        && hint == Some(Family::Paint)
+        && bytes.len() >= 16
+        && bytes.get(4..12) == Some(b"ftypmif1");
+    let sniffed = if paint_candidate {
+        Some(Family::Paint)
+    } else {
+        sniff(bytes)
+    }
+    .ok_or_else(|| Reason::InvalidSignature.error(hint, frontend, operation))?;
+    let mut request = Request::new(frontend, operation, sniffed, platform);
     request.extension = extension;
+    request.variant = variant;
     admission(request).require_allowed(request)?;
     Ok(sniffed)
 }
@@ -321,18 +424,36 @@ pub fn sniff(bytes: &[u8]) -> Option<Family> {
         Some(Family::Gif)
     } else if bytes.starts_with(b"II\x2a\0") || bytes.starts_with(b"MM\0\x2a") {
         Some(Family::Tiff)
+    } else if bytes.starts_with(b"PDN3") {
+        Some(Family::Pdn)
     } else if bytes.starts_with(b"8BPS\0\x01") {
         Some(Family::Psd)
     } else if bytes.starts_with(b"8BPS\0\x02") {
         Some(Family::Psb)
     } else if bytes.starts_with(b"DDS ") {
         Some(Family::Dds)
+    } else if bytes.starts_with(&987_654_321u32.to_le_bytes()) {
+        Some(Family::Dcx)
     } else if bytes.starts_with(b"qoif") {
         Some(Family::Qoi)
+    } else if bytes.starts_with(b"farbfeld") {
+        Some(Family::Farbfeld)
+    } else if matches!(bytes.get(..2), Some([b'P', b'1'..=b'7']))
+        && bytes.get(2).is_some_and(u8::is_ascii_whitespace)
+    {
+        Some(Family::Pnm)
+    } else if bytes.len() >= 128
+        && bytes[0] == 0x0a
+        && bytes[2] == 1
+        && matches!(bytes[3], 1 | 2 | 4 | 8)
+    {
+        Some(Family::Pcx)
     } else if bytes.starts_with(b"%PDF-") {
         Some(Family::Pdf)
     } else if bytes.starts_with(b"RIFF") && bytes.get(8..12) == Some(b"WEBP") {
         Some(Family::Webp)
+    } else if crate::image::ImageFormat::sniff(bytes) == Some(crate::image::ImageFormat::Tga) {
+        Some(Family::Tga)
     } else {
         None
     }

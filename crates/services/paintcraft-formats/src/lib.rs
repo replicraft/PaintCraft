@@ -1,12 +1,15 @@
 //! Serialization boundaries: native projects and explicitly scoped raster codecs.
 
 pub mod avif;
+pub mod dcx;
 pub mod dds;
 pub mod export;
 pub mod image;
 pub mod jxl;
+pub mod jxr;
 pub mod pcnd;
 pub mod png;
+pub mod project_import;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod recovery;
 pub mod registry;
