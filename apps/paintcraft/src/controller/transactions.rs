@@ -144,6 +144,41 @@ impl Editor {
         draft: paintcraft_editor::clipboard::PasteDraft,
         name: String,
     ) -> Result<()> {
+        self.start_paste_destination(draft, super::retry::PasteDestination::NewLayer(name))
+    }
+
+    /// Publish a frozen clipboard placement onto the captured active layer.
+    /// The UI must finish private positioning before invoking this transaction.
+    pub fn start_paste_onto(
+        &mut self,
+        draft: paintcraft_editor::clipboard::PasteDraft,
+        target: Uuid,
+        blend: paintcraft_core::types::policy::BlendMode,
+        key: Option<Rgba>,
+    ) -> Result<()> {
+        if self.target != Some(target) {
+            return Err(paintcraft_core::types::Error::new(
+                paintcraft_core::types::ErrorCode::ConflictStaleBase,
+                "Paste target changed",
+            ));
+        }
+        self.start_paste_destination(
+            draft,
+            super::retry::PasteDestination::ExistingLayer { target, blend, key },
+        )
+    }
+
+    fn start_paste_destination(
+        &mut self,
+        draft: paintcraft_editor::clipboard::PasteDraft,
+        destination: super::retry::PasteDestination,
+    ) -> Result<()> {
+        if self.has_pending_edits() || self.file_barrier.is_some() {
+            return Err(paintcraft_core::types::Error::new(
+                paintcraft_core::types::ErrorCode::ConflictStaleBase,
+                "Finish pending edits before pasting",
+            ));
+        }
         if draft.source() != self.session.history_ticket() {
             return Err(paintcraft_core::types::Error::new(
                 paintcraft_core::types::ErrorCode::ConflictStaleBase,
@@ -158,7 +193,7 @@ impl Editor {
                     super::retry::prepare_paste(
                         preparation,
                         Arc::new(draft),
-                        name,
+                        destination,
                         admission,
                         || cancellation.check(),
                     )
@@ -166,7 +201,14 @@ impl Editor {
             });
             self.dispatch_initial(task, "Paste".into(), "", Some("pasted"));
         } else {
-            let receipt = self.session.paste_image(&draft, &name)?;
+            let receipt = match destination {
+                super::retry::PasteDestination::NewLayer(name) => {
+                    self.session.paste_image(&draft, &name)?
+                }
+                super::retry::PasteDestination::ExistingLayer { target, blend, key } => {
+                    self.session.paste_image_onto(&draft, target, blend, key)?
+                }
+            };
             self.accept_edit(&receipt, "Paste", Some("pasted"), before_canvas);
         }
         Ok(())

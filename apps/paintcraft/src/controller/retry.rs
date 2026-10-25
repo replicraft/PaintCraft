@@ -11,8 +11,21 @@ use paintcraft_raster::Admission;
 #[derive(Clone, Debug)]
 enum Request {
     Edit(Arc<Batch>),
-    Paste(Arc<paintcraft_editor::clipboard::PasteDraft>, String),
+    Paste(
+        Arc<paintcraft_editor::clipboard::PasteDraft>,
+        PasteDestination,
+    ),
     Navigation(background::NavigationRequest),
+}
+/// Frozen placement policy retained unchanged across admission retries.
+#[derive(Clone, Debug)]
+pub(super) enum PasteDestination {
+    NewLayer(String),
+    ExistingLayer {
+        target: Uuid,
+        blend: paintcraft_core::types::policy::BlendMode,
+        key: Option<Rgba>,
+    },
 }
 #[derive(Clone, Debug)]
 struct Realms {
@@ -71,16 +84,28 @@ pub(super) fn prepare_batch(
 pub(super) fn prepare_paste(
     preparation: Preparation,
     draft: Arc<paintcraft_editor::clipboard::PasteDraft>,
-    name: String,
+    destination: PasteDestination,
     admission: Admission,
     check: impl Fn() -> Result<()>,
 ) -> Result<Completion> {
     let base = preparation.history_ticket();
     let realms = Realms::capture(&admission);
-    let result = preparation
-        .paste_image(&draft, &name, admission, &check)
-        .map(Completion::Edit);
-    defer_failure(base, Request::Paste(draft, name), result, realms, check)
+    let result = match &destination {
+        PasteDestination::NewLayer(name) => {
+            preparation.paste_image(&draft, name, admission, &check)
+        }
+        PasteDestination::ExistingLayer { target, blend, key } => {
+            preparation.paste_image_onto(&draft, *target, *blend, *key, admission, &check)
+        }
+    }
+    .map(Completion::Edit);
+    defer_failure(
+        base,
+        Request::Paste(draft, destination),
+        result,
+        realms,
+        check,
+    )
 }
 pub(super) fn prepare_navigation(
     preparation: Preparation,
@@ -212,8 +237,8 @@ impl Editor {
                 let check = || cancellation.check();
                 match request {
                     Request::Edit(batch) => prepare_batch(preparation, batch, admission, check),
-                    Request::Paste(draft, name) => {
-                        prepare_paste(preparation, draft, name, admission, check)
+                    Request::Paste(draft, destination) => {
+                        prepare_paste(preparation, draft, destination, admission, check)
                     }
                     Request::Navigation(request) => {
                         prepare_navigation(preparation, request, admission, check)
@@ -253,3 +278,7 @@ mod navigation_tests;
 #[cfg(test)]
 #[path = "retry/metadata_tests.rs"]
 mod metadata_tests;
+
+#[cfg(test)]
+#[path = "retry/paste_tests.rs"]
+mod paste_tests;
