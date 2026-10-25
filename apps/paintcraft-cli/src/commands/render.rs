@@ -3,6 +3,8 @@ use super::*;
 #[derive(clap::Args, Debug)]
 pub struct Options {
     input: PathBuf,
+    #[command(flatten)]
+    profile: super::format_profile::Options,
     #[arg(long)]
     expect_input_sha256: Option<String>,
     #[arg(long, value_parser = ["png", "bmp", "jpeg", "jpg"])]
@@ -46,6 +48,14 @@ pub fn run(a: Options, json: bool) -> Reply {
             let input = &a.input;
             let dest = a.output.output.as_path();
             let format = output_format(a.format.as_deref(), dest)?;
+            let family = paintcraft_formats::registry::Family::from_extension(format.name())
+                .ok_or_else(|| {
+                    Error::new(
+                        ErrorCode::CapabilityUnsupported,
+                        "Unregistered export format",
+                    )
+                })?;
+            a.profile.admit_export(family, dest)?;
             let allowed = a.losses.allowed()?;
             let quality = a.quality;
             if !(1..=100).contains(&quality) {
@@ -57,6 +67,12 @@ pub fn run(a: Options, json: bool) -> Reply {
             save::preflight(dest, a.output.overwrite)?;
             let (bytes, sha) = read_bounded(input, INPUT_MAX, "input")?;
             guard(a.expect_input_sha256.as_deref(), &sha)?;
+            if a.profile.admit_open(input, &bytes)? != paintcraft_formats::registry::Family::Pcnd {
+                return Err(Error::new(
+                    ErrorCode::CapabilityUnsupported,
+                    "Render expects a PCND project",
+                ));
+            }
             let doc = pcnd::read(&bytes)?;
             // Missing acknowledgements fail here, before anything is written.
             let flat = if a.render_workers == 1 {

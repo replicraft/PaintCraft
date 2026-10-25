@@ -4,6 +4,8 @@ use super::*;
 pub struct Options {
     input: PathBuf,
     #[command(flatten)]
+    profile: super::format_profile::Options,
+    #[command(flatten)]
     losses: LossOptions,
     #[command(flatten)]
     output: Output,
@@ -18,6 +20,8 @@ pub fn run(a: Options, json: bool) -> Reply {
             let allowed = a.losses.allowed_for(&image::KNOWN_IMPORT_LOSSES)?;
             save::preflight(dest, a.output.overwrite)?;
             let (bytes, sha) = read_bounded(input, INPUT_MAX, "input")?;
+            let family = a.profile.admit_open(input, &bytes)?;
+            a.profile.reject_project_import(family)?;
             let img = image::decode(&bytes)?;
             if let Some(l) = img.losses.iter().find(|l| !allowed.contains(l)) {
                 return Err(Error::new(

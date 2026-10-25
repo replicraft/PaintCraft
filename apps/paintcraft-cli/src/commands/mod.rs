@@ -233,6 +233,7 @@ impl LossOptions {
 }
 pub mod apply;
 pub mod capabilities;
+pub mod format_profile;
 pub mod import;
 pub mod inspect;
 pub mod new;
