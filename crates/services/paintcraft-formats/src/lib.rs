@@ -1,5 +1,7 @@
-//! Serialization boundaries: the PCND native container and PNG output.
+//! Serialization boundaries: native projects and explicitly scoped raster codecs.
 
+pub mod dds;
+pub mod avif;
 pub mod export;
 pub mod image;
 pub mod jxl;
