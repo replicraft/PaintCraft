@@ -131,3 +131,44 @@ impl Editor {
         Ok(())
     }
 }
+
+impl Editor {
+    pub(crate) fn paste_draft(
+        &self,
+        image: paintcraft_core::types::clipboard::Image,
+    ) -> Result<paintcraft_editor::clipboard::PasteDraft> {
+        paintcraft_editor::clipboard::PasteDraft::new(&self.session, image)
+    }
+    pub(crate) fn start_paste(
+        &mut self,
+        draft: paintcraft_editor::clipboard::PasteDraft,
+        name: String,
+    ) -> Result<()> {
+        if draft.source() != self.session.history_ticket() {
+            return Err(paintcraft_core::types::Error::new(
+                paintcraft_core::types::ErrorCode::ConflictStaleBase,
+                "Paste source changed",
+            ));
+        }
+        let before_canvas = self.document().canvas;
+        if let Some(service) = &self.editing {
+            let admission = service.admission(u64::MAX);
+            let task = self.session.preparation().map(|preparation| {
+                Box::new(move |cancellation: paintcraft_runtime::Cancellation| {
+                    super::retry::prepare_paste(
+                        preparation,
+                        Arc::new(draft),
+                        name,
+                        admission,
+                        || cancellation.check(),
+                    )
+                }) as super::dispatch::Task
+            });
+            self.dispatch_initial(task, "Paste".into(), "", Some("pasted"));
+        } else {
+            let receipt = self.session.paste_image(&draft, &name)?;
+            self.accept_edit(&receipt, "Paste", Some("pasted"), before_canvas);
+        }
+        Ok(())
+    }
+}

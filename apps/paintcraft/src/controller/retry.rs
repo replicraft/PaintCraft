@@ -11,6 +11,7 @@ use paintcraft_raster::Admission;
 #[derive(Clone, Debug)]
 enum Request {
     Edit(Arc<Batch>),
+    Paste(Arc<paintcraft_editor::clipboard::PasteDraft>, String),
     Navigation(background::NavigationRequest),
 }
 #[derive(Clone, Debug)]
@@ -66,6 +67,20 @@ pub(super) fn prepare_batch(
         .apply_with_admission(&batch, admission, &check)
         .map(Completion::Edit);
     defer_failure(base, Request::Edit(batch), result, realms, check)
+}
+pub(super) fn prepare_paste(
+    preparation: Preparation,
+    draft: Arc<paintcraft_editor::clipboard::PasteDraft>,
+    name: String,
+    admission: Admission,
+    check: impl Fn() -> Result<()>,
+) -> Result<Completion> {
+    let base = preparation.history_ticket();
+    let realms = Realms::capture(&admission);
+    let result = preparation
+        .paste_image(&draft, &name, admission, &check)
+        .map(Completion::Edit);
+    defer_failure(base, Request::Paste(draft, name), result, realms, check)
 }
 pub(super) fn prepare_navigation(
     preparation: Preparation,
@@ -197,6 +212,9 @@ impl Editor {
                 let check = || cancellation.check();
                 match request {
                     Request::Edit(batch) => prepare_batch(preparation, batch, admission, check),
+                    Request::Paste(draft, name) => {
+                        prepare_paste(preparation, draft, name, admission, check)
+                    }
                     Request::Navigation(request) => {
                         prepare_navigation(preparation, request, admission, check)
                     }
