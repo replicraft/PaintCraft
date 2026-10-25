@@ -24,6 +24,7 @@ use tile::Tile;
 
 use paintcraft_core::types::{Error, ErrorCode, Rect, Result, Rgba};
 
+mod ingest;
 mod rows;
 mod uniform;
 pub use rows::RowSpan;
