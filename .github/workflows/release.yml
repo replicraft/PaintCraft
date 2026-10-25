@@ -208,8 +208,8 @@ jobs:
         with:
           release: '14.5'
           cache-after-prepare: false
-          cpu: 2
-          mem: 4096
+          cpu: 4
+          mem: 12288
           prepare: |
             pkg install -y curl git pkgconf python313 libxkbcommon wayland libX11 libXcursor libXrandr libXi libxcb mesa-libs vulkan-loader
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain 1.99.0
@@ -218,7 +218,7 @@ jobs:
             . "$HOME/.cargo/env"
             export CARGO_HOME="$(pwd)/target/freebsd-cache/cargo"
             export CARGO_TARGET_DIR="$(pwd)/target/freebsd-cache/target"
-            export CARGO_BUILD_JOBS=2 CARGO_INCREMENTAL=0
+            export CARGO_BUILD_JOBS=4 CARGO_INCREMENTAL=0
             cargo build --locked --release -p paintcraft -p paintcraft-cli --target x86_64-unknown-freebsd
             cargo test --locked -p paintcraft-platform --features clipboard --target x86_64-unknown-freebsd --lib
             python3.13 -m unittest discover -s scripts/tests -p 'test_package_*.py'
