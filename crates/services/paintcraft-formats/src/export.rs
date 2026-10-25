@@ -26,6 +26,30 @@ pub struct FlatExport {
     pub losses: Vec<String>,
 }
 
+#[derive(Clone, Copy, Debug)]
+pub struct FlatOptions {
+    pub format: ImageFormat,
+    pub quality: u8,
+    pub pcx_mode: crate::pcx::Mode,
+}
+impl FlatOptions {
+    pub fn new(format: ImageFormat, quality: u8) -> Self {
+        Self {
+            format,
+            quality,
+            pcx_mode: crate::pcx::Mode::Rgb24,
+        }
+    }
+}
+
+pub fn export_flat_options(
+    doc: &Document,
+    options: FlatOptions,
+    allowed: &[String],
+) -> Result<FlatExport> {
+    export_flat_options_with(doc, options, allowed, render_flat)
+}
+
 /// Reject unknown loss codes up front, before any work.
 pub fn check_loss_codes(codes: &[String]) -> Result<()> {
     match codes.iter().find(|c| !KNOWN_LOSSES.contains(&c.as_str())) {
@@ -61,7 +85,27 @@ pub fn export_flat_with(
     allowed: &[String],
     render: impl FnOnce(&Document) -> Result<Vec<u8>>,
 ) -> Result<FlatExport> {
+    export_flat_options_with(doc, FlatOptions::new(format, jpeg_quality), allowed, render)
+}
+
+pub fn export_flat_options_with(
+    doc: &Document,
+    options: FlatOptions,
+    allowed: &[String],
+    render: impl FnOnce(&Document) -> Result<Vec<u8>>,
+) -> Result<FlatExport> {
+    let FlatOptions {
+        format,
+        quality: jpeg_quality,
+        pcx_mode,
+    } = options;
     check_loss_codes(allowed)?;
+    if format != ImageFormat::Pcx && pcx_mode != crate::pcx::Mode::Rgb24 {
+        return Err(Error::new(
+            ErrorCode::InputSchema,
+            "PCX encoding options require PCX output",
+        ));
+    }
     let rgba = render(doc)?;
     if rgba.len() as u128 != u128::from(doc.canvas.0) * u128::from(doc.canvas.1) * 4 {
         return Err(Error::new(
@@ -82,6 +126,23 @@ pub fn export_flat_with(
             .into_iter()
             .map(str::to_owned),
     );
+    let prepared = if format == ImageFormat::Pcx && pcx_mode != crate::pcx::Mode::Rgb24 {
+        Some(crate::pcx::prepare_rgba(
+            doc.canvas.0,
+            doc.canvas.1,
+            &rgba,
+            pcx_mode,
+            &|| Ok(()),
+        )?)
+    } else {
+        None
+    };
+    if prepared
+        .as_ref()
+        .is_some_and(|prepared| prepared.is_quantized())
+    {
+        losses.push("palette-quantized".into());
+    }
     let missing: Vec<&str> = losses
         .iter()
         .filter(|l| !allowed.contains(l))
@@ -98,7 +159,11 @@ pub fn export_flat_with(
             ),
         ));
     }
-    let bytes = image::encode(format, doc.canvas.0, doc.canvas.1, &rgba, jpeg_quality)?;
+    let bytes = if let Some(prepared) = prepared {
+        prepared.encode(&|| Ok(()))?
+    } else {
+        image::encode(format, doc.canvas.0, doc.canvas.1, &rgba, jpeg_quality)?
+    };
     Ok(FlatExport { bytes, losses })
 }
 
