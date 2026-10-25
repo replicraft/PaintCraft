@@ -71,6 +71,10 @@ impl Family {
                 .iter()
                 .any(|ext| ext.eq_ignore_ascii_case(extension)),
             Self::Bmp => extension.eq_ignore_ascii_case("bmp"),
+            Self::Gif => extension.eq_ignore_ascii_case("gif"),
+            Self::Tiff => ["tif", "tiff"]
+                .iter()
+                .any(|ext| ext.eq_ignore_ascii_case(extension)),
             _ => false,
         }
     }

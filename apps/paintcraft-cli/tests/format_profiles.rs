@@ -104,3 +104,75 @@ fn frontend_flags_share_admission_and_keep_the_existing_json_envelope() {
     assert!(!output.exists());
     fs::remove_dir_all(dir).unwrap();
 }
+
+#[test]
+fn gif_and_tiff_read_profiles_require_loss_acknowledgement_without_enabling_exports() {
+    use paintcraft_formats::image::{self, ImageFormat};
+    let dir = std::env::temp_dir().join(format!(
+        "paintcraft-qualified-read-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    fs::create_dir_all(&dir).unwrap();
+    let allowed = image::KNOWN_IMPORT_LOSSES.join(",");
+    for (format, extension) in [(ImageFormat::Gif, "gif"), (ImageFormat::Tiff, "tiff")] {
+        let bytes = image::encode(format, 2, 1, &[255, 0, 0, 255, 0, 255, 0, 255], 90).unwrap();
+        let source = dir.join(format!("image.{extension}"));
+        fs::write(&source, &bytes).unwrap();
+        let decoded = image::decode(&bytes).unwrap();
+        assert!(!decoded.losses.is_empty());
+        for profile in ["classic-v7", "classic-v10", "classic-v11", "studio"] {
+            let destination = dir.join(format!("{profile}-{extension}.pcnd"));
+            let result = run(&[
+                "--json",
+                "import",
+                source.to_str().unwrap(),
+                "--frontend",
+                profile,
+                "-o",
+                destination.to_str().unwrap(),
+            ]);
+            assert_eq!(result.status.code(), Some(3));
+            assert!(!destination.exists());
+            let result = run(&[
+                "--json",
+                "import",
+                source.to_str().unwrap(),
+                "--frontend",
+                profile,
+                "--allow-loss",
+                &allowed,
+                "-o",
+                destination.to_str().unwrap(),
+            ]);
+            assert!(
+                result.status.success(),
+                "{}",
+                String::from_utf8_lossy(&result.stdout)
+            );
+            let doc = paintcraft_formats::pcnd::read(&fs::read(&destination).unwrap()).unwrap();
+            let layer = &doc.layers[&doc.roots[0]];
+            assert_eq!(layer.raster.get(0, 0).0.as_slice(), &decoded.rgba[..4]);
+            let rejected = dir.join(format!("{profile}-export.{extension}"));
+            assert_eq!(
+                run(&[
+                    "--json",
+                    "render",
+                    destination.to_str().unwrap(),
+                    "--frontend",
+                    profile,
+                    "-o",
+                    rejected.to_str().unwrap()
+                ])
+                .status
+                .code(),
+                Some(3)
+            );
+            assert!(!rejected.exists());
+        }
+    }
+    fs::remove_dir_all(dir).unwrap();
+}

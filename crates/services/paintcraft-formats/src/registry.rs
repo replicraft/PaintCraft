@@ -164,22 +164,57 @@ pub struct Capability {
     pub backend: Option<&'static str>,
 }
 pub fn capability(family: Family, operation: Operation, _platform: Platform) -> Capability {
-    let qualified = matches!(
-        family,
-        Family::Pcnd | Family::Png | Family::Jpeg | Family::Bmp
-    ) && !matches!(operation, Operation::ImportAsset | Operation::ExportAsset);
+    let raster_operation = matches!(
+        operation,
+        Operation::Open
+            | Operation::OpenRaster
+            | Operation::ImportConvert
+            | Operation::SavePreserving
+            | Operation::SaveAsCopy
+            | Operation::ExportFlat
+    );
+    let project_operation = matches!(
+        operation,
+        Operation::Open
+            | Operation::OpenProject
+            | Operation::ImportConvert
+            | Operation::SavePreserving
+            | Operation::SaveAsCopy
+    );
+    let backend = match family {
+        Family::Tiff if raster_operation && operation.is_write() => Some("tiff-rgba8"),
+        Family::Pcnd if project_operation => Some("paintcraft-pcnd-v1"),
+        Family::Png
+        | Family::Jpeg
+        | Family::Bmp
+        | Family::Gif
+        | Family::Tiff
+        | Family::Tga
+        | Family::Webp
+            if raster_operation =>
+        {
+            Some("image-rgba8")
+        }
+        Family::Jxl if raster_operation && operation.is_write() => Some("zune-jpegxl"),
+        Family::Jxl if raster_operation => Some("jxl-rs"),
+        Family::Dds if raster_operation => Some("paintcraft-dds-rgba8"),
+        Family::Avif if raster_operation && operation.is_write() => Some("image-ravif"),
+        // PDN header inspection is not an image/project decode or write adapter.
+        _ => None,
+    };
+    let qualified = backend.is_some()
+        && (matches!(
+            family,
+            Family::Pcnd | Family::Png | Family::Jpeg | Family::Bmp
+        ) || (matches!(family, Family::Gif | Family::Tiff)
+            && matches!(
+                operation,
+                Operation::Open | Operation::OpenRaster | Operation::ImportConvert
+            )));
     Capability {
-        // GIF/TIFF adapters may be present before their operation/profile tests
-        // qualify discovery. Backend presence alone never enables a family.
-        backend_available: qualified || matches!(family, Family::Gif | Family::Tiff),
+        backend_available: backend.is_some(),
         qualified,
-        backend: match family {
-            Family::Pcnd => Some("paintcraft-pcnd-v1"),
-            Family::Png | Family::Jpeg | Family::Bmp | Family::Gif | Family::Tiff => {
-                Some("image-rgba8")
-            }
-            _ => None,
-        },
+        backend,
     }
 }
 

@@ -14,13 +14,22 @@ fn qualified_discovery_is_separate_from_stock_inventory_and_backend_candidates()
     assert!(!STUDIO_STOCK.contains(&Family::Pcnd));
     assert_eq!(
         enabled_extensions(Frontend::Studio, Operation::Open, Platform::Native),
-        vec!["pcnd", "png", "jpg", "jpeg", "jpe", "jfif", "bmp"]
+        vec![
+            "pcnd", "png", "jpg", "jpeg", "jpe", "jfif", "bmp", "gif", "tif", "tiff"
+        ]
     );
     for platform in [Platform::Native, Platform::Web] {
         for frontend in FRONTENDS {
             assert_eq!(
                 enabled(frontend, Operation::Open, platform),
-                vec![Family::Pcnd, Family::Png, Family::Jpeg, Family::Bmp]
+                vec![
+                    Family::Pcnd,
+                    Family::Png,
+                    Family::Jpeg,
+                    Family::Bmp,
+                    Family::Gif,
+                    Family::Tiff
+                ]
             );
             assert_eq!(
                 enabled(frontend, Operation::ExportFlat, platform),
@@ -32,7 +41,12 @@ fn qualified_discovery_is_separate_from_stock_inventory_and_backend_candidates()
                     qualified,
                     matches!(
                         family,
-                        Family::Pcnd | Family::Png | Family::Jpeg | Family::Bmp
+                        Family::Pcnd
+                            | Family::Png
+                            | Family::Jpeg
+                            | Family::Bmp
+                            | Family::Gif
+                            | Family::Tiff
                     )
                 );
             }
@@ -316,7 +330,7 @@ fn approved_family_metadata_and_aliases_are_unique_not_support_claims() {
 }
 
 #[test]
-fn every_qualified_raster_dispatches_to_an_actual_bounded_adapter() {
+fn baseline_qualified_rasters_dispatch_to_actual_bounded_adapters() {
     use paintcraft_formats::image::{self, ImageFormat};
     for (family, format, suffix) in [
         (Family::Png, ImageFormat::Png, "png"),
@@ -341,6 +355,35 @@ fn every_qualified_raster_dispatches_to_an_actual_bounded_adapter() {
             }
             assert!(image::decode_with_pixel_limit(&bytes, 1).is_err());
         }
+    }
+}
+
+#[test]
+fn internal_codec_presence_is_operation_specific_and_does_not_qualify_frontends() {
+    for family in [Family::Tga, Family::Webp, Family::Jxl, Family::Dds] {
+        for operation in [Operation::OpenRaster, Operation::ExportFlat] {
+            let capability = capability(family, operation, Platform::Native);
+            assert!(capability.backend_available);
+            assert!(!capability.qualified);
+        }
+    }
+    assert_eq!(
+        capability(Family::Jxl, Operation::OpenRaster, Platform::Native).backend,
+        Some("jxl-rs")
+    );
+    assert_eq!(
+        capability(Family::Jxl, Operation::ExportFlat, Platform::Native).backend,
+        Some("zune-jpegxl")
+    );
+    assert!(!capability(Family::Avif, Operation::OpenRaster, Platform::Native).backend_available);
+    assert!(capability(Family::Avif, Operation::ExportFlat, Platform::Native).backend_available);
+    assert!(!capability(Family::Pdn, Operation::OpenProject, Platform::Native).backend_available);
+    assert!(
+        !capability(Family::Pdn, Operation::SavePreserving, Platform::Native).backend_available
+    );
+    for family in [Family::Gif, Family::Tiff] {
+        assert!(capability(family, Operation::OpenRaster, Platform::Native).qualified);
+        assert!(!capability(family, Operation::ExportFlat, Platform::Native).qualified);
     }
 }
 
