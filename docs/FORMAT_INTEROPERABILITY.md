@@ -88,6 +88,41 @@ Fresh ICO/CUR export uses the selected `ico` container library with explicit RGB
 
 The implemented subsets advance the pack; they do not complete its full interoperability, preservation or release gates.
 
+### PSD/PSB conversion backend, 2026-10-25
+
+The selected `ag-psd` 0.3.0 now has a bounded preflight and private native-document
+conversion adapter. **Frontend import admission remains disabled.** This is
+backend progress, not a new format-picker or command-line capability yet.
+
+The initial profile accepts eight-bit RGB, Normal raster layers, explicit alpha,
+Unicode names, signed offsets, opacity and hidden state. Raw, PackBits RLE, ZIP
+and ZIP prediction channels are checked for exact decoded size before library
+decoding. Admission caps encoded input at 64 MiB, metadata at 1 MiB, layers at
+256, and both canvas pixels and aggregate normalized layer pixels at 4,194,304.
+Masks, groups, clipping, text, effects, non-Normal blending, extra channels,
+non-default fill opacity, high depth and unsupported metadata extensions are
+refused. Image resources are bounded and omitted from the private decoder view;
+their loss is reported, with ICC omission identified separately. Source numeric
+layer IDs are remapped to deterministic native UUIDs using file digest and record
+index. No foreign preserving Save or writer is enabled.
+
+Layered sources use their actual editable raster pixels, not the merged preview.
+Layerless sources become a single composite layer. A private representation
+adapter uses the selected library's ZIP channel decoder for single-stream merged
+previews that its whole-file reader cannot directly read. Original bytes remain
+unchanged. The sixteen independently authored PSD/PSB fixtures were verified with
+psd-tools 1.26.0 and Pillow 13.0.0, including exact layer and composite pixels.
+Tests cover those fixtures, every truncated prefix, oversized ZIP expansion,
+malformed RLE, budget failures, unsupported semantics, cancellation at every
+conversion checkpoint and exact PCND roundtrips. Fixture provenance and commands
+are in `crates/services/paintcraft-formats/tests/psd-fixtures/README.md`.
+
+Checks surround backend work and run between layer decodes. There is no upstream
+cancellation callback within a channel decode, and these checks do not establish
+a hard aggregate process-memory or cancellation-tail limit. Original Photoshop
+qualification, advanced layer semantics, metadata retention, translated loss
+consent and desktop/browser/CLI/MCP admission remain separate follow-up work.
+
 ### OpenRaster writer follow-up, 2026-10-25
 
 The fresh-copy writer now streams ZIP32 members with PNG layer pixels, Normal
