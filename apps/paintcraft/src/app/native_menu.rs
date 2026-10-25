@@ -53,6 +53,7 @@ fn shortcut(action: Chrome, frontend: Frontend) -> Option<&'static str> {
         Chrome::Close => "meta+KeyW",
         Chrome::ImageProperties if frontend == Frontend::Classic => "meta+KeyE",
         Chrome::Undo => "meta+KeyZ",
+        Chrome::PasteLayer => "meta+shift+KeyV",
         Chrome::Redo => "meta+shift+KeyZ",
         Chrome::SelectAll => "meta+KeyA",
         Chrome::Deselect => "meta+KeyD",

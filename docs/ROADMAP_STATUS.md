@@ -652,8 +652,8 @@ unpublished placement, complete tile admission and one atomic undoable new-layer
 insertion, optionally growing the canvas. The CLI `paste-image` command uses this
 path with frozen/hash-guarded inputs, explicit loss consent and safe native output.
 Independent exact-pixel/cancellation and real CLI save/reopen tests cover it.
-Desktop/browser Paste controls remain disabled until clipboard reads and placement
-are connected; profile parity and the broader clipboard gate remain incomplete.
+The native macOS host now connects this path through explicit Paste as new layer.
+Ordinary Paste, browser support and profile parity remain incomplete.
 
 
 [Encoded native clipboard reads](CLIPBOARD_READS.md) now provide a lazy cancellable
@@ -661,6 +661,15 @@ service and capacity-admitted immutable snapshots. The macOS PNG/TIFF adapter
 checks exact advertised types, bounded encoded size and pasteboard generation
 before exposing bytes. Portable lifecycle tests and a separately executed private
 native-pasteboard test pass without accessing the general clipboard. Intel is
-cross-compile checked only. Decoder/loss consent and native/browser placement are
-not connected yet; Paste controls remain disabled and other OS read adapters are
-unfinished. Clipboard and frontend gates remain partial.
+cross-compile checked only. Native macOS decoding, loss consent and new-layer placement are now connected.
+Ordinary Paste, browser placement and other OS read adapters remain unfinished.
+Clipboard and frontend gates remain partial.
+
+
+[Paste as new layer](CLIPBOARD_PASTE_LAYER.md) adds an explicit macOS Edit action
+and Cmd+Shift+V shortcut. Bounded asynchronous decode stages a source-bound draft;
+position, canvas growth and known loss consent precede one undoable publication.
+Fake-reader host tests cover controls in Classic 7/10/11 and Studio in English and
+Japanese, failures, stale sources, cancellation and capacity retry. These tests
+do not exercise the general OS clipboard or establish native Paint parity.
+Ordinary Paste, browser/other-OS reads and on-canvas placement remain unfinished.

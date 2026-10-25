@@ -1,10 +1,11 @@
 # External-image Paste foundations
 
 The editor now supports a frozen Paste draft and atomic insertion of its image as
-a new topmost layer. The CLI consumes this path through `paste-image`. A [bounded encoded macOS reader](CLIPBOARD_READS.md) now exists. Desktop and
-browser canvas Paste controls remain disabled: clipboard reads, interactive
-placement, oversized-image choices and profile-specific paste behavior are still
-work. This tranche does not complete clipboard support or the frontend roadmap.
+a new topmost layer. The CLI consumes this path through `paste-image`. The native macOS app also offers
+[Paste as new layer](CLIPBOARD_PASTE_LAYER.md), with position, optional canvas
+growth and import-loss consent. Ordinary Paste, browser image Paste and
+profile-specific placement remain unfinished. This does not complete clipboard
+support or the frontend roadmap.
 
 ## Command-line use
 
@@ -99,8 +100,7 @@ preservation, reject hash mismatches/invalid growth/image-output aliases, and
 require explicit consent for 16-bit reduction. Existing transaction conformance,
 v2 grammar, detached preparation and history regressions remain checked.
 
-Interactive/native/browser Paste, external flavor enumeration and signature
-policy, clipboard ownership changes during read, richer profile/DPI conversion,
+Ordinary Paste, browser/other-OS reads, richer profile/DPI conversion,
 active-layer paste, full oversized-image choices, internal exact-copy matching,
 cross-application/native reference behavior and performance qualification remain
 unfinished. Local validation is in ignored

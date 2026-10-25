@@ -2,9 +2,9 @@
 
 The platform layer now has a lazy asynchronous `ReadService` and an immutable
 encoded-image snapshot. Its macOS adapter reads advertised PNG or classic TIFF
-bytes without invoking an image decoder. Desktop/browser Paste controls remain
-disabled until read results, decoder/loss admission and interactive placement are
-connected to the [shared Paste draft](PASTE_IMAGES.md).
+bytes without invoking an image decoder. The native macOS app connects this reader to
+[Paste as new layer](CLIPBOARD_PASTE_LAYER.md), including bounded decoding and
+import-loss consent. Ordinary Paste and browser image Paste remain unavailable.
 
 The existing arboard write service is retained. Arboard 3.7.0's public image getter
 decodes before returning pixels; it does not expose PaintCraft's pre-decode pixel

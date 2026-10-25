@@ -66,7 +66,8 @@ impl App {
                         self.editor.type_text("\n");
                     }
                     egui::Key::Backspace if text_focus => self.editor.backspace(),
-                    egui::Key::C | egui::Key::X if modifiers.command && text_focus => {}
+                    egui::Key::C | egui::Key::X | egui::Key::V
+                        if modifiers.command && text_focus => {}
                     _ if repeat => {}
                     egui::Key::Enter if modifiers.command && text_focus => {
                         self.editor.commit_text();
@@ -80,6 +81,7 @@ impl App {
                     egui::Key::Z | egui::Key::H if text_focus && !modifiers.command => {}
                     egui::Key::Escape => {
                         self.cancel_clipboard_cut(&ctx);
+                        self.cancel_paste(&ctx);
                         if self.fullscreen && !text_focus && !self.editor.gesture_in_progress() {
                             self.dispatch_chrome(
                                 &ctx,

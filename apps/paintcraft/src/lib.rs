@@ -46,6 +46,8 @@ mod layers;
 mod native_menu;
 #[path = "app/pan_tool.rs"]
 mod pan_tool;
+#[path = "app/paste.rs"]
+mod paste;
 #[path = "app/preferences.rs"]
 mod preferences;
 #[path = "app/printing.rs"]
@@ -144,6 +146,7 @@ const STUDIO_SIZE: (u32, u32) = (320, 320);
 
 #[derive(Clone, Debug, PartialEq)]
 enum Confirm {
+    PasteLayer,
     ImportLosses,
     Settings(preferences::SettingsDraft),
     SwitchInterface(Experience),
@@ -225,6 +228,7 @@ pub struct App {
     dialogs: Option<NativeDialogs>,
     printer: paintcraft_platform::printing::PrintService,
     clipboard: clipboard::State,
+    paste: paste::State,
     pending_import: Option<importing::Pending>,
     dialog_owner: Option<Uuid>,
     dialog_frontend: Option<paintcraft_formats::registry::Frontend>,
@@ -351,6 +355,7 @@ impl App {
             dialogs: None,
             printer: Default::default(),
             clipboard: Default::default(),
+            paste: Default::default(),
             pending_import: None,
             dialog_owner: None,
             dialog_frontend: None,

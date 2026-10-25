@@ -396,7 +396,7 @@
       "depends_on": ["T09", "T12", "T31"],
       "status": "partial",
       "evidence": [
-        "docs/CLIPBOARD_COPY.md", "docs/CLIPBOARD_CUT.md", "docs/PASTE_IMAGES.md", "docs/CLIPBOARD_READS.md",
+        "docs/CLIPBOARD_COPY.md", "docs/CLIPBOARD_CUT.md", "docs/PASTE_IMAGES.md", "docs/CLIPBOARD_READS.md", "docs/CLIPBOARD_PASTE_LAYER.md",
         "docs/FLOATING_SELECTIONS.md",
         "docs/COLOR_PICKER.md", "crates/services/paintcraft-render/tests/sampling.rs",
         "apps/paintcraft/src/controller/picker/tests.rs", "apps/paintcraft/tests/gui/color_picker.rs",
@@ -453,7 +453,7 @@
       "status": "partial",
       "evidence": [
         "docs/FORMAT_INTEROPERABILITY.md",
-        "docs/CLIPBOARD_COPY.md", "docs/CLIPBOARD_CUT.md", "docs/PASTE_IMAGES.md", "docs/CLIPBOARD_READS.md",
+        "docs/CLIPBOARD_COPY.md", "docs/CLIPBOARD_CUT.md", "docs/PASTE_IMAGES.md", "docs/CLIPBOARD_READS.md", "docs/CLIPBOARD_PASTE_LAYER.md",
         "docs/FLOATING_SELECTIONS.md",
         "docs/COLOR_PICKER.md", "crates/services/paintcraft-render/tests/sampling.rs",
         "apps/paintcraft/src/controller/picker/tests.rs", "apps/paintcraft/tests/gui/color_picker.rs",
@@ -575,7 +575,7 @@
       "status": "partial",
       "evidence": [
         "docs/FORMAT_INTEROPERABILITY.md",
-        "docs/CLIPBOARD_COPY.md", "docs/CLIPBOARD_CUT.md", "docs/PASTE_IMAGES.md", "docs/CLIPBOARD_READS.md",
+        "docs/CLIPBOARD_COPY.md", "docs/CLIPBOARD_CUT.md", "docs/PASTE_IMAGES.md", "docs/CLIPBOARD_READS.md", "docs/CLIPBOARD_PASTE_LAYER.md",
         "docs/FLOATING_SELECTIONS.md",
         "docs/RECENT_FILES.md",
         "apps/paintcraft/src/app/recent.rs",

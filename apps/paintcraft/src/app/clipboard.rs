@@ -56,12 +56,16 @@ pub(super) struct State {
     last_capture: Option<Capture>,
 }
 
-fn budget() -> SharedBudget {
+pub(super) fn budget() -> SharedBudget {
     static BUDGET: OnceLock<SharedBudget> = OnceLock::new();
     BUDGET.get_or_init(|| SharedBudget::new(128 << 20)).clone()
 }
 
 impl State {
+    pub(super) fn busy(&self) -> bool {
+        self.pending.is_some()
+    }
+
     fn start(
         &mut self,
         owner: Uuid,
@@ -182,7 +186,7 @@ impl App {
     }
 
     fn clipboard_requested(&mut self, ctx: &egui::Context, visible: bool, cut: bool) {
-        if self.document_count() == 0 || self.clipboard.pending.is_some() {
+        if self.document_count() == 0 || self.clipboard.pending.is_some() || self.paste.busy() {
             return;
         }
         if ctx.egui_wants_keyboard_input()
@@ -272,7 +276,7 @@ impl App {
             ctx.request_repaint_after(Duration::from_millis(50));
         }
     }
-    fn clipboard_status(&mut self, owner: Uuid, message: String) {
+    pub(super) fn clipboard_status(&mut self, owner: Uuid, message: String) {
         if owner == self.active_tab_id() {
             self.editor.set_status(message);
         } else if let Some(state) = self

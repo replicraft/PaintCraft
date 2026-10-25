@@ -8,6 +8,7 @@ A familiar place to draw, paint and edit images. Built in Rust.
 - Shapes, curves and text.
 - Rectangular and free-form selections, inversion and delete.
 - Copy or cut selections, or copy the visible image.
+- Paste clipboard images as new layers on macOS.
 - Crop, rotate and flip.
 - Undo, redo, editable projects and PNG, BMP and JPEG images.
 - Open still GIF and single-page TIFF pictures.

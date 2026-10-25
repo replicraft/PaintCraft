@@ -54,6 +54,7 @@ impl App {
             self.poll_dialog(&ctx);
             self.poll_print(&ctx);
             self.poll_clipboard(&ctx);
+            self.poll_paste(&ctx);
             if !self.closing_workspace
                 && self.confirm.is_none()
                 && self.tab_closing.is_none()

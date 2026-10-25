@@ -28,6 +28,7 @@ impl App {
             can_redo: (self.editor.redo_depth() > 0 || self.editor.has_pending_edits())
                 && !pending_text,
             can_recent: true,
+            can_paste: self.paste.supported() && !self.paste.busy() && !self.clipboard.busy(),
             can_save_all: self.tab_close_wait.is_none()
                 && self.tab_save_close.is_none()
                 && (self.any_dirty_documents()
@@ -180,6 +181,7 @@ impl App {
                 paintcraft_ui::chrome::Action::Copy
                     | paintcraft_ui::chrome::Action::CopyVisible
                     | paintcraft_ui::chrome::Action::Cut
+                    | paintcraft_ui::chrome::Action::PasteLayer
             ) {
                 self.editor.run_pending();
             }
@@ -206,6 +208,7 @@ impl App {
                 Chrome::Print => self.print_requested(ctx),
                 Chrome::Copy => self.copy_requested(ctx),
                 Chrome::Cut => self.cut_requested(ctx),
+                Chrome::PasteLayer => self.paste_layer_requested(ctx),
                 Chrome::CopyVisible => self.copy_source_requested(ctx, true),
                 Chrome::ExportImage(format) => self.export_image_requested(ctx, format),
                 Chrome::Undo => self.request(ctx, code::UNDO, Action::Undo),
@@ -316,6 +319,10 @@ impl App {
     }
 
     pub(super) fn confirm_dialog(&mut self, ui: &mut egui::Ui) {
+        if self.confirm == Some(Confirm::PasteLayer) {
+            self.paste_layer_dialog(ui.ctx());
+            return;
+        }
         if self.confirm == Some(Confirm::ImportLosses) {
             self.import_dialog(ui.ctx());
             return;
@@ -357,7 +364,7 @@ impl App {
             return;
         }
         let (title, text, go) = match &confirm {
-            Confirm::ImportLosses | Confirm::RecentFiles | Confirm::ExportOptions(_) | Confirm::Settings(_) | Confirm::SwitchInterface(_) | Confirm::Colors(_) | Confirm::Canvas(_) | Confirm::ResizeSkew(_) | Confirm::LayerProperties(_) => unreachable!("properties handled above"),
+            Confirm::PasteLayer | Confirm::ImportLosses | Confirm::RecentFiles | Confirm::ExportOptions(_) | Confirm::Settings(_) | Confirm::SwitchInterface(_) | Confirm::Colors(_) | Confirm::Canvas(_) | Confirm::ResizeSkew(_) | Confirm::LayerProperties(_) => unreachable!("properties handled above"),
             Confirm::DiscardForNew
             | Confirm::DiscardForOpen(_)
             | Confirm::DiscardForRecovery(_)
@@ -440,7 +447,8 @@ impl App {
             Some(Choice::Accept) => {
                 self.confirm = None;
                 match confirm {
-                    Confirm::ImportLosses
+                    Confirm::PasteLayer
+                    | Confirm::ImportLosses
                     | Confirm::RecentFiles
                     | Confirm::ExportOptions(_)
                     | Confirm::Settings(_)
