@@ -10,8 +10,7 @@ A familiar place to draw, paint and edit images. Built in Rust.
 - Copy or cut selections, or copy the visible image.
 - Paste and position clipboard images, or paste as new layers (macOS and supported browsers).
 - Crop, rotate and flip.
-- Undo, redo, editable projects and PNG, BMP and JPEG images.
-- Open still GIF and single-page TIFF pictures.
+- Undo and redo.
 - Desktop recent files with one-click reopening.
 - Export format options and adjustable JPEG quality.
 - Native printing on macOS.
@@ -25,6 +24,18 @@ A familiar place to draw, paint and edit images. Built in Rust.
 | Classic, Windows 10 | Classic, Windows 7 |
 | --- | --- |
 | ![PaintCraft Classic, Windows 10](assets/repo/classic-windows-10.png) | ![PaintCraft Classic, Windows 7](assets/repo/classic-windows-7.png) |
+
+## File formats
+
+**PCND (`.pcnd`)** is PaintCraft's compact, lossless project format. It keeps layers, transparency and canvas size intact, compressing painted areas instead of storing every blank pixel individually. Save as PCND to keep working on your project.
+
+- **PNG (`.png`):** open and export, with transparency.
+- **JPEG (`.jpg`, `.jpeg`):** open and export, with adjustable export quality.
+- **BMP (`.bmp`):** open and export.
+- **GIF (`.gif`):** open still images.
+- **TIFF (`.tif`, `.tiff`):** open single-page images.
+
+Image exports flatten layers into one picture.
 
 ## Install
 
