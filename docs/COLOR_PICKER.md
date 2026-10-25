@@ -83,7 +83,7 @@ new pixel/palette persistence from this feature.
   restoration. Studio tests use a real layered PCND, hidden active layer, all
   settings categories, Ctrl-image override and a 51 × 51 sample. The full GUI suite
   passes 219 tests (45 ignored); the final ownership changes also have targeted
-  guard/GUI checks. The [web test](../apps/paintcraft-web/src/picker_tests.rs)
+  guard/GUI checks. The [web test](../apps/paintcraft-web/src/paintcraft-web/picker_tests.rs)
   verifies clean-document sampling and control synchronization without changing
   the selection/history; all 49 web tests pass. Shared render/tool/UI suites,
   strict workspace/wasm Clippy, formatting and source-length checks pass.

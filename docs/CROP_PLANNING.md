@@ -59,7 +59,7 @@ Source checks:
   batches, exact history, no-op and pre-allocation peak denial.
 - [Native GUI](../apps/paintcraft/tests/gui/crop.rs),
   [native worker](../apps/paintcraft/src/app/editing/tests.rs) and
-  [web](../apps/paintcraft-web/src/crop_tests.rs): real selection/action routing,
+  [web](../apps/paintcraft-web/src/paintcraft-web/crop_tests.rs): real selection/action routing,
   publication, raw samples, Undo and authored-size preferences.
 - [CLI](../apps/paintcraft-cli/tests/cli/crop.rs): batch, project round trip and
   PNG output with explicit hidden-RGB-loss acknowledgement.

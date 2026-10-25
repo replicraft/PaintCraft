@@ -1342,7 +1342,7 @@ transforms, workers/recovery and GPU document composition remain unfinished.
 Classic web text now shares desktop's Cosmic Text/Swash rasterizer and toolbar,
 using bundled Selawik. One draft remains editable through copy downloads; placing
 it creates an undoable raster edit. Failed placement, focus loss and cancelled
-dialogs retain the draft. See [text interaction tests](../apps/paintcraft-web/src/text_tests.rs).
+dialogs retain the draft. See [text interaction tests](../apps/paintcraft-web/src/paintcraft-web/text_tests.rs).
 Arbitrary caret/range editing, persistent editable objects, native preference
 semantics and hardware IME qualification remain incomplete.
 

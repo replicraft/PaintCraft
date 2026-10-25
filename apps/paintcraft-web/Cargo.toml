@@ -8,6 +8,7 @@ license-file.workspace = true
 publish.workspace = true
 
 [lib]
+path = "src/paintcraft-web/lib.rs"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
@@ -41,3 +42,7 @@ egui_kittest = { workspace = true, features = ["eframe"] }
 
 [lints]
 workspace = true
+
+[[test]]
+name = "preview"
+path = "src/paintcraft-web/tests/preview.rs"

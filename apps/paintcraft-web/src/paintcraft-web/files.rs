@@ -460,7 +460,7 @@ mod tests {
 }
 
 #[cfg(target_arch = "wasm32")]
-#[wasm_bindgen::prelude::wasm_bindgen(module = "/download.js")]
+#[wasm_bindgen::prelude::wasm_bindgen(module = "/src/lib/download.js")]
 extern "C" {
     #[wasm_bindgen::prelude::wasm_bindgen(js_name = downloadCopy)]
     fn download_copy(

@@ -144,7 +144,7 @@ copy without publishing the draft; explicit placement supports Undo/Redo. Native
 font discovery still lives in the desktop app. Forty-two web tests, 254 native
 tests (8 ignored), preparation tests and strict native/wasm checks pass. An isolated
 browser confirmed draft/download/placement pixel equality, Undo and PCND reopening.
-See [text interaction tests](../apps/paintcraft-web/src/text_tests.rs). Arbitrary caret
+See [text interaction tests](../apps/paintcraft-web/src/paintcraft-web/text_tests.rs). Arbitrary caret
 editing, multiple editable objects, the native editable-until-save preference,
 missing-glyph fallback and real IME qualification remain work. T15 stays partial;
 T22 stays not-started.

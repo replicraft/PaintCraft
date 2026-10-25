@@ -84,7 +84,7 @@ limits still apply. These are logical limits, not physical memory or latency cla
   the parser.
 - [Native GUI](../apps/paintcraft/tests/gui/transforms.rs),
   [worker](../apps/paintcraft/src/app/editing/tests.rs) and
-  [web](../apps/paintcraft-web/src/crop_tests.rs) exercise real controls, one-step
+  [web](../apps/paintcraft-web/src/paintcraft-web/crop_tests.rs) exercise real controls, one-step
   publication, Undo, target selection, whole-canvas pixels and authored-size policy.
   The full native suite passes 258 library tests (8 ignored) and 217 GUI tests
   (45 ignored); web passes 48 tests. Foundation/editor and shared UI/tool suites,
