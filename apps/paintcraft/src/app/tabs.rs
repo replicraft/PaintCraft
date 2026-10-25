@@ -193,6 +193,7 @@ impl App {
             .checked_add(1)
             .expect("preview revision exhausted");
         self.rendered_preview = None;
+        self.rendered_image_paste = None;
         self.texture = None;
         self.gpu_texture = None;
         self.texture_key = None;

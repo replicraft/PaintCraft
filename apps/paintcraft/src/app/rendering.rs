@@ -122,20 +122,27 @@ impl App {
                     | Preview::Text { .. }
             )
         });
-        let owner = preview.as_ref().map(|_| self.editor.preview_owner());
+        let image_paste = self.editor.image_paste_revision();
+        let paste_changed = image_paste != self.rendered_image_paste;
+        let owner =
+            (preview.is_some() || image_paste.is_some()).then(|| self.editor.preview_owner());
         let owner_changed = owner != self.preview_gesture;
         let same_snapshot = match (&self.rendered_preview, &preview) {
             (Some(old), Some(new)) => Arc::ptr_eq(old, new),
             (None, None) => true,
             _ => false,
         };
-        if owner_changed || (!same_snapshot && self.rendered_preview != preview) {
+        if owner_changed || paste_changed || (!same_snapshot && self.rendered_preview != preview) {
             let revision = self
                 .preview_revision
                 .checked_add(1)
                 .expect("preview revision exhausted");
             if owner_changed
-                || !preserves_preview_progress(self.rendered_preview.as_deref(), preview.as_deref())
+                || (image_paste.is_none()
+                    && !preserves_preview_progress(
+                        self.rendered_preview.as_deref(),
+                        preview.as_deref(),
+                    ))
             {
                 self.preview_start_revision = revision;
             }
@@ -143,6 +150,7 @@ impl App {
             self.preview_revision = revision;
         }
         self.rendered_preview = preview;
+        self.rendered_image_paste = image_paste;
         let key = self.presentation_key();
         self.retry_reclaimed_render();
         while let Some((handle, result)) = self.renderer.as_mut().and_then(Executor::poll) {
@@ -199,7 +207,8 @@ impl App {
             return;
         }
         let keep_preview = self.pending_frame.is_some_and(|(pending_key, _)| {
-            self.accept_render_key(pending_key) && self.rendered_preview.is_some()
+            self.accept_render_key(pending_key)
+                && (self.rendered_preview.is_some() || self.rendered_image_paste.is_some())
         });
         if let Some(renderer) = &mut self.renderer {
             if let Some((pending_key, handle)) = self.pending_frame {
@@ -211,7 +220,7 @@ impl App {
                 self.pending_frame = None;
             }
             let doc = self.editor.document_snapshot();
-            let preparation = self.editor.capture_preview(self.rendered_preview.clone());
+            let mut preparation = self.editor.capture_preview(self.rendered_preview.clone());
             let selection = self.editor.selection();
             let tiles = doc
                 .layers
@@ -247,10 +256,15 @@ impl App {
                 reservation,
                 move |cancel| {
                     cancel.check()?;
+                    let image = preparation.build_paste(&|| cancel.check())?;
                     let batch = preparation.build(|| cancel.check())?;
-                    let is_preview = batch.is_some();
+                    let is_preview = image.is_some() || batch.is_some();
                     let staged;
-                    let doc = if let Some(batch) = batch {
+                    let doc = if let Some(image) = image {
+                        cpu.clear_geometry();
+                        staged = image;
+                        &staged
+                    } else if let Some(batch) = batch {
                         staged = cpu.stage(&doc, selection, &batch, &|| cancel.check())?.doc;
                         &staged
                     } else {
@@ -338,11 +352,15 @@ impl App {
             ctx.request_repaint_after(Duration::from_millis(16));
             return;
         }
-        let pixels = self
-            .editor
-            .capture_preview(self.rendered_preview.clone())
-            .build(|| Ok(()))
-            .and_then(|batch| match batch {
+        let mut preparation = self.editor.capture_preview(self.rendered_preview.clone());
+        let pixels = (|| {
+            if let Some(image) = preparation.build_paste(&|| Ok(()))? {
+                self.cpu_renderer.clear_geometry();
+                return self
+                    .cpu_renderer
+                    .render_display(&image, key.3, key.4, true, || Ok(()));
+            }
+            match preparation.build(|| Ok(()))? {
                 Some(batch) => self
                     .cpu_renderer
                     .stage(
@@ -362,7 +380,8 @@ impl App {
                     false,
                     || Ok(()),
                 ),
-            });
+            }
+        })();
         self.install_render(ctx, key, pixels);
     }
 
@@ -385,7 +404,7 @@ impl App {
     pub(super) fn accept_render_key(&self, key: RenderKey) -> bool {
         let current = self.presentation_key();
         key == current
-            || (self.rendered_preview.is_some()
+            || ((self.rendered_preview.is_some() || self.rendered_image_paste.is_some())
                 && key.0 == current.0
                 && key.1 == current.1
                 && key.3 == current.3
@@ -566,3 +585,7 @@ mod display_tests;
 #[cfg(test)]
 #[path = "rendering/shape_scheduling_tests.rs"]
 mod shape_scheduling_tests;
+
+#[cfg(test)]
+#[path = "rendering/image_paste_tests.rs"]
+mod image_paste_tests;
