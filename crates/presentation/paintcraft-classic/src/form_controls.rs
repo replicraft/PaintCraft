@@ -5,8 +5,6 @@ use egui::{Color32, Stroke, Ui};
 /// chrome or modal actions. Both the control fill and its surrounding card stay
 /// distinguishable from the boundary in light and dark themes.
 pub fn style(ui: &mut Ui) {
-    ui.spacing_mut().button_padding = egui::vec2(10.0, 6.0);
-    ui.spacing_mut().interact_size.y = ui.spacing().interact_size.y.max(30.0);
     let dark = ui.visuals().dark_mode;
     let accent = ui.visuals().selection.stroke.color;
     let idle = crate::control_surface::fill(ui, false, false);

@@ -44,7 +44,7 @@ fn historical_shape_paint_rows_show_selection_and_change_real_shape_pixels() {
                     h.run();
                     let caption = label(choice);
                     let row = h.get_by_role_and_label(Role::Button, &caption);
-                    assert!(row.rect().height() <= 26.0);
+                    assert!((28.0..=32.0).contains(&row.rect().height()));
                     row.click();
                     h.run();
                     assert!(h.query_by_role_and_label(Role::Button, &caption).is_none());

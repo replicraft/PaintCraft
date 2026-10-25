@@ -56,9 +56,9 @@ fn historical_selection_menu_has_compact_sections_and_executes_real_delete_and_u
                     "Deselect",
                 ] {
                     let rect = h.get_by_role_and_label(Role::Button, &label(name)).rect();
-                    assert_eq!(rect.height(), 24.0);
+                    assert_eq!(rect.height(), 28.0);
                     assert!(
-                        rect.width() >= 220.0 && rect.width() <= 224.0,
+                        rect.width() >= 232.0 && rect.width() <= 236.0,
                         "{name}: {rect:?}"
                     );
                     assert!(rect.top() >= bottom);

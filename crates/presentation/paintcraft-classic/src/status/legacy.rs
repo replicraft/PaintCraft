@@ -83,7 +83,7 @@ fn zoom(
                 .filter(|draft| draft.zoom == context.zoom)
                 .unwrap_or_else(|| Draft {
                     zoom: context.zoom,
-                    text: format!("{}%", context.zoom * 100.0),
+                    text: crate::zoom::percentage_text(context.zoom),
                 });
             let response = ui.add_enabled(
                 !context.blocked,
@@ -106,7 +106,7 @@ fn zoom(
                 if !cancel && let Some(value) = crate::zoom::percent(&draft.text) {
                     actions.push(Action::View(ViewAction::SetZoom(value)));
                 }
-                draft.text = format!("{}%", context.zoom * 100.0);
+                draft.text = crate::zoom::percentage_text(context.zoom);
                 response.surrender_focus();
             }
             ui.data_mut(|data| data.insert_temp(draft_id, draft));

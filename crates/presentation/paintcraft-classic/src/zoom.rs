@@ -26,7 +26,7 @@ pub(super) fn percent(text: &str) -> Option<u32> {
     (value.is_finite() && (12.5..=1000.0).contains(&value)).then(|| (value * 100.0).round() as u32)
 }
 
-fn percentage_text(zoom: f32) -> String {
+pub(super) fn percentage_text(zoom: f32) -> String {
     let text = format!("{:.2}", zoom * 100.0);
     format!("{}%", text.trim_end_matches('0').trim_end_matches('.'))
 }
@@ -116,6 +116,8 @@ mod tests {
     use super::*;
     #[test]
     fn percent_entry_rejects_partial_invalid_and_out_of_range_values() {
+        assert_eq!(percentage_text(1.0479999), "104.8%");
+        assert_eq!(percentage_text(1.0), "100%");
         assert_eq!(percent("73%"), Some(7300));
         assert_eq!(percent("12.5"), Some(1250));
         assert_eq!(percent(" 1000 % "), Some(100000));
