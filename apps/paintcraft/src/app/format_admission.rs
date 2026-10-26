@@ -184,6 +184,20 @@ pub(super) fn acquire_resource_source(path: &Path, allowance: u64) -> Result<Res
 }
 /// Probe only the signature under the generic allowance; a selected DDS keeps this descriptor.
 pub(super) fn acquire_if_dds(path: &Path) -> Result<Option<ResourceSource>> {
+    acquire_if_signature(path, b"DDS ", paintcraft_formats::dds::BYTES_MAX as u64)
+}
+pub(super) fn acquire_if_ora(path: &Path) -> Result<Option<ResourceSource>> {
+    acquire_if_signature(
+        path,
+        b"PK\x03\x04",
+        paintcraft_formats::ora::CONVERSION_BYTES_MAX as u64,
+    )
+}
+fn acquire_if_signature(
+    path: &Path,
+    wanted: &[u8; 4],
+    allowance: u64,
+) -> Result<Option<ResourceSource>> {
     use std::io::{Seek, SeekFrom};
     let mut file = open_source(path, SOURCE_BYTES)?;
     let mut signature = [0; 4];
@@ -192,10 +206,9 @@ pub(super) fn acquire_if_dds(path: &Path) -> Result<Option<ResourceSource>> {
         Err(error) if error.kind() == std::io::ErrorKind::UnexpectedEof => return Ok(None),
         Err(error) => return Err(storage(error)),
     }
-    if &signature != b"DDS " {
+    if &signature != wanted {
         return Ok(None);
     }
-    let allowance = paintcraft_formats::dds::BYTES_MAX as u64;
     if file.metadata().map_err(storage)?.len() > allowance {
         return Err(limit());
     }

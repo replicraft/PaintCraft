@@ -16,6 +16,8 @@ mod icons;
 mod msp;
 #[path = "importing/native_codec.rs"]
 mod native_codec;
+#[path = "importing/ora.rs"]
+mod ora;
 #[path = "importing/svg.rs"]
 mod svg;
 pub(super) use svg::FontPick;
@@ -42,7 +44,7 @@ impl Candidate {
         }
     }
 }
-struct RasterSource {
+struct CapturedSource {
     identity: crate::destination::SourceIdentity,
     bytes: u64,
     sha256: [u8; 32],
@@ -58,7 +60,7 @@ pub(super) struct Pending {
     dirty: bool,
     convert: bool,
     auxiliary_sources: Vec<crate::destination::SourceGuard>,
-    raster_source: Option<RasterSource>,
+    captured_source: Option<CapturedSource>,
 }
 impl Pending {
     pub(super) fn input_guards(&self) -> Vec<&crate::destination::SourceGuard> {
@@ -130,7 +132,7 @@ impl App {
             dirty: self.editor.is_dirty(),
             convert,
             auxiliary_sources: Vec::new(),
-            raster_source: None,
+            captured_source: None,
         });
         self.confirm = Some(Confirm::ImportLosses);
         Ok(())
@@ -163,7 +165,7 @@ impl App {
             return;
         }
         let result = (|| {
-            if let Some(source) = &pending.raster_source {
+            if let Some(source) = &pending.captured_source {
                 source.identity.verify_bytes(
                     &pending.path,
                     source.bytes,

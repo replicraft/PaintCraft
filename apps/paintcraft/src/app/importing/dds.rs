@@ -49,7 +49,7 @@ impl App {
         if !image.losses.is_empty() {
             self.stage_import(image, path.to_path_buf(), hex(&sha256), convert)?;
             let pending = self.pending_import.as_mut().unwrap();
-            pending.raster_source = Some(RasterSource {
+            pending.captured_source = Some(CapturedSource {
                 identity: source.identity,
                 bytes: source.bytes.len() as u64,
                 sha256,
