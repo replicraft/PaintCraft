@@ -43,11 +43,11 @@ Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, 
 | PSD/PSB | Studio explicit Import on desktop/browser; CLI `import` and MCP `import_image` | RGB8 Normal raster-layer subset retains names, offsets, opacity, visibility and alpha. Metadata losses need explicit consent. Groups, masks, text, effects, clipping, high depth and foreign writing remain unavailable |
 | SVG/SVGZ | Studio desktop/browser Import; CLI `import` with `--svg-width`/`--svg-height`; MCP `import_image` with `svg` options | Explicit size/DPI/fitting and rasterization consent. Studio previews use bundled fonts and additional font files; CLI/MCP accept outline fonts too. No Classic access, ordinary Open or SVG export |
 | MSP | Explicit Studio import/exact export in desktop, browser, CLI and MCP; headless Classic legacy import | DanM raw and admitted LinS row-RLE profile with independent Pillow pixel checks. Named metadata consent and frozen native source protection; no ordinary Classic Open, preserving MSP Save, hidden threshold/matte or MSP2 writer |
-| ICNS | Internal bounded PNG-entry reader and eight-type fresh writer; no public workflow yet | Explicit logical size/Retina density and entry index; excluded small 1x PNG native readbacks retained. Canonical legacy 16/32 writing, selected-entry consumers and original application display qualification remain |
+| ICNS | Internal bounded PNG and small RGB/mask profile reader; eight-type PNG fresh writer; no public workflow yet | Explicit logical size/Retina density and entry index; independent legacy fixtures and excluded native observations retained. Legacy writer candidates remain refused; canonical ARGB, selected-entry consumers and application display qualification remain |
 | EXR/HDR, JP2 | Not yet enabled | Registry inventory or work in progress is not usable format support |
 | ASE | Studio Palettes dialog; CLI `palette inspect` / `palette export`; MCP `inspect_palette` / `export_palette` | Flat groups, exact names/order/models/types and finite f32 values. RGB/gray tool-color adoption is explicit; CMYK/LAB conversion, persistent catalogs and Adobe qualification remain |
 | ABR | Studio desktop/browser selection and bounded native-static R8 painting; CLI/MCP inspection and painting | Exact sample masks, pattern channels, signed bounds and original ordered payloads retained. Up to 256 presets per admitted library; unsupported dynamics, textures, transforms and precision reduction are refused. Full preset behavior and original-application qualification remain; no ABR export or ordinary image Open |
-| CSH | Studio Shape resources dialog with explicit numeric placement; CLI `shape inspect` / `shape export`; MCP `inspect_shapes` / `export_shapes` | Retains bounds, names, IDs and exact ordered path records. Supported single closed paths rasterize with curves and explicit consent in Studio. Drag placement, multiple/open paths, Boolean placement and broader interoperability remain |
+| CSH | Studio Shape resources dialog with numeric placement and a canvas drag tool; CLI `shape inspect` / `shape export`; MCP `inspect_shapes` / `export_shapes` | Retains bounds, names, IDs and exact ordered path records. Supported single closed paths rasterize with curves and explicit consent in Studio. Multiple/open paths, Boolean placement and broader interoperability remain |
 | RAW, PDF, KRA, XCF, animation, advanced DDS | Future profiles | No inherited Classic support or preserving-write claims |
 
 QOI, PAM and farbfeld writers admit at most 4,194,304 pixels and 64 MiB encoded output. Their bounded private output is discarded on failure or cancellation. These checks do not constitute a hard aggregate resident-memory or codec scratch-memory limit.
@@ -316,10 +316,26 @@ substitution is performed. The [fixture/oracle record](../crates/services/paintc
 retains source/output/tool hashes, positive results and negative observations.
 Source specimens total less than 36 KiB; no application-icon data is duplicated.
 
-Seven focused ICNS tests and existing ICO/CUR regression tests pass. The public
+The reader additionally admits exact small `is32`/`il32` raw or three-channel
+RLE RGB paired unambiguously with exact `s8mk`/`l8mk` alpha. Packet extents are
+checked before pixel allocation; legal leading zero packets are never guessed
+away. Independent fixtures and Pillow preserve exact RGBA. Raw interpretations
+have divergent native RGB evidence, and native RLE extraction drops its final
+packet while alpha stays exact. Candidate writing is exercised privately but
+production legacy writing is refused. Apple-own opaque writer controls also
+preserve all wire pixels then lose the last blue pixel on extraction. Partial
+and zero-alpha controls retain association/hidden-RGB differences separately;
+canonical `ic04`/`ic05` ARGB decoding/writing remains unqualified.
+
+The directory overrides the selected library's incorrect `ic05` Retina label
+using Apple's SDK `IconStorage.h`: `ic04` is16@1 and `ic05`32@1, distinct from
+modern `ic11`16@2. These ARGB payloads remain inert; descriptor accuracy does
+not enable decoding. Eleven focused ICNS tests and existing ICO/CUR regression
+tests pass. The public
 registry remains unavailable until explicit selected-entry consumers, immutable
 source/save guards and fresh export options are qualified. Canonical 16/32 at 1x
-output requires a separately qualified legacy RGB/RLE-plus-mask path. Preserving
+output remains blocked on native/ARGB qualification rather than a type/density
+substitution. Preserving
 Save, Classic normal Open and broader historical encodings remain unqualified.
 
 ### Historical MSP conversion workflows, 2026-10-25
@@ -446,7 +462,7 @@ CLI `shape inspect` and MCP `inspect_shapes` expose original bounds, ordered
 records and exact normalized signed integers. `shape export` and `export_shapes`
 write a fresh resource copy, separate from a painting's save acknowledgement.
 Typed inspection is documented by `schema shape-inspection`. Resource
-editing, drag placement, multiple/open/Boolean-path placement, persistent
+editing, multiple/open/Boolean-path placement, persistent
 catalogs, broader interoperability and original-application qualification remain
 for F14.
 
@@ -464,8 +480,15 @@ one closed path with 2..=256 cubic knots, None/Combine operation, empty initial
 fill and even/odd or nonzero filling. Multiple paths, open paths, other Boolean
 operations, clipboard placement metadata and out-of-range controls are visibly
 refused. The original library is retained unchanged for resource export.
-This numeric form is an incremental placement workflow, not the forthcoming
-select-preset-and-drag tool UX or complete CSH placement support.
+A separate **Use as shape tool…** review previews the selected preset and requests
+consent for raster conversion on each future drag. Studio then draws the preset
+with a drag box, live filled preview, current color, backwards drags and Shift
+square constraints. Resource/library identity, preset index, conversion policy,
+color and target are captured with the gesture, so preview and release resolve
+the same request. An explicit stock-tool selection leaves the resource tool;
+returning from the color picker restores its exact retained source. Temporary
+Space-pan does not replace the tool. Neither placement workflow completes the
+unsupported CSH geometry profiles.
 
 The existing tiny-skia filler receives normalized coordinates multiplied by the
 chosen target dimensions through f64 and then f32. Original bounds origins stay
@@ -473,28 +496,46 @@ metadata; the chosen X/Y defines painting position. Anti-aliased coverage is
 clipped to the local target box, then translated and clipped to canvas, layer
 and current selection before existing source-over mask execution. Pixels outside
 the local box are absent from the converted mask; original paths remain exact.
-Preview/configuration, resource epoch/index, document owner and target are bound
-together, and changes require a new preview/approval. Shape placement is one
+For numeric placement, preview/configuration, resource epoch/index, document
+owner and target are bound together; changes require a new preview/approval. Shape placement is one
 Shape undo entry; first-layer creation is atomic and ineffective masks leave no
 layer/history. Native acquired input identities follow accepted placements
 through saved documents, other tabs and parked workspaces, including resource
 replacement and renamed source aliases.
+The adopted drag preset retains its immutable source independently of the
+currently browsed library. Cancelling a new review, stale resource callbacks or
+switching to Classic cannot adopt the wrong resource. Stock rectangle styling
+is hidden while the custom preset is selected. Browser drag requests admit at
+most 262,144 output pixels and 4096 per side before allocation; oversized
+requests fail visibly in full, without downsampling or incomplete masks.
+Native drag preview and publication resolve on the existing workers. Browser
+drag conversion remains synchronous; the smaller pixel bound is not a latency
+or hard-memory guarantee.
 
 Caller budgets declare pixmap scratch and path input, capacity-owned span
 storage, preview bytes and a retained frontend-copy lease. Arc clones share
 storage charges. These are bounded ownership declarations, not a hard process
 RSS limit; tiny-skia fill cannot be cancelled internally. Ten backend tests,
 three Shape and five Brush editor regressions, shared builder/metadata tests,
-two shared widget tests, four native placement tests and five browser shape
-workflow tests pass. English/Japanese controls and all seven catalogs are
-covered. Strict host frontend/editor/format checks and a production Wasm build
+two shared widget tests, seven native placement/review tests and seven browser
+shape workflow tests pass. Additional native/browser controller tests cover
+worker preview equivalence, picker ownership, hidden targets, cancellation and
+whole-request browser pixel limits. Four shared resource-gesture tests cover
+captured identity, Shift, backwards boxes and view-only pan. Full host suites
+pass 458 native tests (9 ignored) and 185 browser tests. English/Japanese
+controls and all seven catalogs are covered. Strict host frontend/editor/format checks and a production Wasm build
 pass. Headless Chrome exercised CSH upload, unsupported assessment, a 64 × 48
 cubic preview, consent, placement, Undo/Redo and a 789-byte PCND download with no
 page errors. The downloaded project reopened through CLI; 2,400 independently
 calculated interior pixels matched, recovered alpha area was 1840.494 against
 analytic 1843.2 with tolerance 8, and the canvas outside the target box stayed
-unchanged. See [CSH placement policy](CSH_PLACEMENT.md) for precise limits and
-remaining work. This is focused workflow evidence, not original Adobe rendering
+unchanged. A second production run exercised separate tool adoption, a live
+canvas drag, Escape cancellation, exact preview/release crops, Undo/Redo and an
+801-byte PCND download without page errors. Its observed (99, 80), 64 × 47 box
+matched 2,340 analytic interior pixels, area 1801.365 versus 1804.8 (tolerance 8),
+and unchanged pixels outside the box. The Wasm hash and scripts are recorded
+with the ignored local evidence. See [CSH placement policy](CSH_PLACEMENT.md)
+for precise limits and remaining work. This is focused workflow evidence, not original Adobe rendering
 parity or full release qualification.
 
 ### SVG/SVGZ rasterization, 2026-10-25
