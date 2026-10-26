@@ -88,7 +88,7 @@ fn default_v7_refuses_encoder_argv_and_new_frame_without_changing_its_record() {
 }
 #[cfg(feature = "jxr-encode")]
 #[test]
-fn private_record_exactly_declares_encoder_and_all_seven_existing_imports() {
+fn private_record_preserves_seven_imports_and_declares_writer_read_separately() {
     const {
         assert!(cfg!(all(
             feature = "float-codecs",
@@ -104,10 +104,14 @@ fn private_record_exactly_declares_encoder_and_all_seven_existing_imports() {
         1
     );
     assert_eq!(
-        wire::candidate::IMPORT_VARIANTS,
+        &wire::candidate::IMPORT_VARIANTS[..7],
         decode::QUALIFIED_FLOAT_IMPORT_VARIANTS
     );
-    assert_eq!(wire::candidate::IMPORT_VARIANTS.len(), 7);
+    assert_eq!(wire::candidate::IMPORT_VARIANTS.len(), 8);
+    assert_eq!(
+        wire::candidate::IMPORT_VARIANTS[7],
+        wire::candidate::WRITER_IMPORT_VARIANT
+    );
     assert_eq!(
         wire::candidate::EXPORT_VARIANTS,
         [wire::candidate::EXPORT_VARIANT]
