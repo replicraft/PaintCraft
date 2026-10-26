@@ -43,13 +43,13 @@ fn admit(path: &Path, frontend: registry::Frontend, operation: Operation) -> Res
         decision.require_allowed(request)
     }
 }
-fn acquire(input: &Input) -> Result<(Palette, String)> {
-    admit(
-        &input.input,
-        input.profile.frontend.into(),
-        Operation::ImportAsset,
-    )?;
-    if !std::fs::metadata(&input.input)
+pub(super) fn acquire(
+    path: &Path,
+    expected: Option<&str>,
+    frontend: registry::Frontend,
+) -> Result<(Palette, String)> {
+    admit(path, frontend, Operation::ImportAsset)?;
+    if !std::fs::metadata(path)
         .map_err(|e| storage("cannot inspect palette", &e))?
         .is_file()
     {
@@ -58,7 +58,7 @@ fn acquire(input: &Input) -> Result<(Palette, String)> {
             "palette input must be a regular file",
         ));
     }
-    let file = File::open(&input.input).map_err(|e| storage("cannot read palette", &e))?;
+    let file = File::open(path).map_err(|e| storage("cannot read palette", &e))?;
     let metadata = file
         .metadata()
         .map_err(|e| storage("cannot inspect palette", &e))?;
@@ -85,7 +85,7 @@ fn acquire(input: &Input) -> Result<(Palette, String)> {
         ));
     }
     let sha = hex(&Sha256::digest(&bytes));
-    guard(input.expect_input_sha256.as_deref(), &sha)?;
+    guard(expected, &sha)?;
     Ok((ase::decode(&bytes, &|| Ok(()))?, sha))
 }
 fn swatch(value: &Swatch) -> Value {
@@ -115,7 +115,7 @@ fn swatch(value: &Swatch) -> Value {
         ),
     ])
 }
-fn inspection(palette: &Palette, sha: &str) -> Value {
+pub(super) fn inspection(palette: &Palette, sha: &str) -> Value {
     Value::object([
         ("schema", Value::str("paintcraft.palette-inspection/v1")),
         ("resource_type", Value::str("palette")),
@@ -151,7 +151,11 @@ pub fn run(options: Options, json: bool) -> Reply {
         Command::Inspect(input) => bare(
             json,
             (|| {
-                let (palette, sha) = acquire(&input)?;
+                let (palette, sha) = acquire(
+                    &input.input,
+                    input.expect_input_sha256.as_deref(),
+                    input.profile.frontend.into(),
+                )?;
                 let mut lines = vec![format!("ASE palette: {} swatches", palette.swatch_count())];
                 for entry in palette.entries() {
                     match entry {
@@ -171,44 +175,51 @@ pub fn run(options: Options, json: bool) -> Reply {
         ),
         Command::Export(export) => finish(
             json,
-            (|| {
-                let frontend = export.input.profile.frontend.into();
-                // Output and frontend policy precede source acquisition and codecs.
-                admit(&export.output.output, frontend, Operation::ExportAsset)?;
-                if same_file(&export.input.input, &export.output.output) {
-                    return Err(Error::new(
-                        ErrorCode::InputSchema,
-                        "palette export must not replace its source",
-                    ));
-                }
-                let (palette, sha) = acquire(&export.input)?;
-                let bytes = ase::encode(&palette, &|| Ok(()))?;
-                let context = Context {
-                    operation: "export-asset",
-                    // This receipt records a frozen palette resource, not a document.
-                    source_state: deterministic_id(&["palette", "ase", &sha]),
-                    source_sha256: Some(sha.clone()),
-                    losses_acknowledged: vec![],
-                    destination: &export.output.output,
-                };
-                let outcome = save::save_with(
-                    &export.output.output,
-                    export.output.overwrite,
-                    ase::BYTES_MAX as u64,
-                    |sink| {
-                        sink.write_all(&bytes)
-                            .map_err(|e| storage("cannot stage palette", &e))
-                    },
-                );
-                let (receipt, ok, summary) =
-                    finish_output(&export.output.output, &context, outcome);
-                Ok(Written {
-                    engine: Some(inspection(&palette, &sha)),
-                    receipt,
-                    ok,
-                    summary,
-                })
-            })(),
+            export_copy(
+                &export.input.input,
+                &export.output.output,
+                export.output.overwrite,
+                export.input.expect_input_sha256.as_deref(),
+                export.input.profile.frontend.into(),
+            ),
         ),
     }
+}
+
+pub(super) fn export_copy(
+    input: &Path,
+    output: &Path,
+    overwrite: bool,
+    expected: Option<&str>,
+    frontend: registry::Frontend,
+) -> Result<Written> {
+    // Output and frontend policy precede source acquisition and codecs.
+    admit(output, frontend, Operation::ExportAsset)?;
+    if same_file(input, output) {
+        return Err(Error::new(
+            ErrorCode::InputSchema,
+            "palette export must not replace its source",
+        ));
+    }
+    let (palette, sha) = acquire(input, expected, frontend)?;
+    let bytes = ase::encode(&palette, &|| Ok(()))?;
+    let context = Context {
+        operation: "export-asset",
+        // This receipt records a frozen palette resource, not a document.
+        source_state: deterministic_id(&["palette", "ase", &sha]),
+        source_sha256: Some(sha.clone()),
+        losses_acknowledged: vec![],
+        destination: output,
+    };
+    let outcome = save::save_with(output, overwrite, ase::BYTES_MAX as u64, |sink| {
+        sink.write_all(&bytes)
+            .map_err(|e| storage("cannot stage palette", &e))
+    });
+    let (receipt, ok, summary) = finish_output(output, &context, outcome);
+    Ok(Written {
+        engine: Some(inspection(&palette, &sha)),
+        receipt,
+        ok,
+        summary,
+    })
 }

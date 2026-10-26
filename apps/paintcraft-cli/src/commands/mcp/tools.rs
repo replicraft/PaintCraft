@@ -323,12 +323,12 @@ impl ServerHandler for PaintingServer {
     fn get_info(&self) -> ServerConfig {
         ServerConfig::new(ServerCapabilities::builder().enable_tools().build())
             .with_server_info(Implementation::new("paintcraft", env!("CARGO_PKG_VERSION")))
-            .with_instructions("Headless PaintCraft session, separate from desktop windows. Create or open a project first. Coordinates are canvas pixels; colors are #RRGGBBAA. Edits are atomic and undoable. Save explicitly before disconnecting. File paths are local to the server. Never retry a mutation automatically after losing its response.")
+            .with_instructions("Headless PaintCraft session, separate from desktop windows. Painting tools require a project; palette inspection/export work independently. Coordinates are canvas pixels; colors are #RRGGBBAA. Edits are atomic and undoable. Save explicitly before disconnecting. File paths are local to the server. Never retry a mutation automatically after losing its response.")
     }
 }
 
 impl PaintingServer {
     pub(super) fn router() -> rmcp::handler::server::router::tool::ToolRouter<Self> {
-        Self::tool_router() + Self::icon_router()
+        Self::tool_router() + Self::icon_router() + Self::palette_router()
     }
 }
