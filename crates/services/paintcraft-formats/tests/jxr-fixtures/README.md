@@ -128,3 +128,32 @@ admits only HEIF/JXL codes; code 3 is explicitly native-only. Packaging now carr
 the exact Microsoft redistribution notice as `JPEGXR_LICENSE.txt` with the
 newly linked native helper. The metadata/license discrepancy above remains
 recorded; no package-metadata label is substituted for the distributed notice.
+
+## Physical-density assessment, 2026-10-26
+
+`jxr::assess_import` retains exact raw resolution Option<f32bits>, effective
+per-axis density and whether that effective value was inferred. T.832 A.7.25/26
+(printed page 172/PDF page 191) defines omitted or zero resolution as 96 pixels per
+inch. Raw zero/negative-zero bits and absence remain distinct from that inferred
+value; source headers are not rewritten. The assessment always requires
+`jxr-resolution-not-retained` for a flat PaintCraft import because its document
+model does not preserve that physical-density information. It rejects nonfinite
+or negative density and unknown color metadata before decoding rather than
+claiming those refused fields were discarded.
+
+`rgb8-dpi96x144.jxr` is repository-authored metadata on the original owned 4x3
+fixture, with identical entropy bytes. `generate_resolution.py` changes only the
+two FLOAT density values and reopens the result through the original pinned C
+JXRLib executable. [resolution-oracle.json](resolution-oracle.json) records exact
+source, encoded, unchanged-entropy, tool and independent decoded-pixel hashes.
+Both that oracle and the isolated selected decoder retain every RGB sample.
+
+```sh
+python3 crates/services/paintcraft-formats/tests/jxr-fixtures/generate_resolution.py \
+    /path/to/pinned-jxr-reference
+cargo test -p paintcraft-formats --lib jxr::import --offline --locked
+cargo test -p paintcraft-codec-worker --test native_jxr --offline --locked
+```
+
+This assessment is source preflight and consent information. It does not itself
+activate a frontend, import a document, or qualify JXR writing/browser decoding.

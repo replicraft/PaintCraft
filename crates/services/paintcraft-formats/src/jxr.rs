@@ -1,8 +1,11 @@
 //! Bounded JPEG XR header inspection, not an enabled image decoder.
 //!
-//! The selected experimental codec is exercised only by an explicit native
-//! developer qualification test. Header admission does not validate entropy data
-//! or provide a safe allocation boundary around the upstream decoder.
+//! The selected experimental codec executes inside the private isolated native
+//! helper, with independent developer qualification. There is no inline or public
+//! image reader. Header admission does not validate entropy data or bound upstream
+//! allocation by itself.
+mod import;
+pub use import::{ImportAssessment, KNOWN_IMPORT_LOSSES, Resolution, assess_import};
 use paintcraft_core::types::{Error, ErrorCode, Result};
 
 pub const INPUT_BYTES_MAX: usize = 64 << 20;
