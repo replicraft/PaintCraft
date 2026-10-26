@@ -1,6 +1,7 @@
 use super::*;
 use std::sync::atomic::{AtomicBool, Ordering};
 pub const FONT_BYTES_MAX: usize = 64 << 20;
+pub const FONT_FILES_MAX: usize = 32;
 const BUNDLED: [&[u8]; 2] = [
     include_bytes!("../../../../../assets/fonts/selawik/selawk.ttf"),
     include_bytes!("../../../../../assets/fonts/selawik/selawkb.ttf"),
@@ -38,7 +39,7 @@ impl Fonts {
     /// Shared root assets, also used by the desktop/browser UI. Extra fonts must
     /// already be acquired by an authorized caller; SVG content cannot open them.
     pub fn with_bundled(additional: &[&[u8]], check: &dyn Fn() -> Result<()>) -> Result<Self> {
-        if additional.len() > 30 {
+        if additional.len() > FONT_FILES_MAX - BUNDLED.len() {
             return Err(resource("SVG font inventory exceeds allowance"));
         }
         let mut data: Vec<&[u8]> = BUNDLED.to_vec();
@@ -50,7 +51,7 @@ impl Fonts {
         default_family: &str,
         check: &dyn Fn() -> Result<()>,
     ) -> Result<Self> {
-        if data.len() > 32 || default_family.len() > 256 {
+        if data.len() > FONT_FILES_MAX || default_family.len() > 256 {
             return Err(resource("SVG font inventory exceeds allowance"));
         }
         let mut bytes = 0usize;

@@ -1,4 +1,38 @@
 use super::*;
+#[path = "../../../tests/support/svg_fonts.rs"]
+mod fixture;
+
+#[test]
+fn explicit_custom_family_changes_real_text_pixels_and_removes_substitution_loss() {
+    let font = fixture::font();
+    let bundled = Fonts::with_bundled(&[], &|| Ok(())).unwrap();
+    let custom = Fonts::with_bundled(&[&font], &|| Ok(())).unwrap();
+    let options = Options {
+        width: 128,
+        height: 48,
+        dpi: 96.0,
+        fit: Fit::Contain,
+    };
+    let render = |fonts| {
+        prepare(fixture::TEXT, options, fonts, PIXELS_MAX, &|| Ok(()))
+            .unwrap()
+            .render(&|| Ok(()))
+            .unwrap()
+    };
+    let before = render(&bundled);
+    let after = render(&custom);
+    assert!(before.losses.contains(&"svg-font-substituted".into()));
+    assert!(!after.losses.contains(&"svg-font-substituted".into()));
+    assert_ne!(before.rgba, after.rgba);
+    assert!(
+        after
+            .rgba
+            .as_chunks::<4>()
+            .0
+            .iter()
+            .any(|pixel| pixel[3] > 0)
+    );
+}
 
 #[test]
 fn collection_face_inventory_is_bounded_before_upstream_reservation() {

@@ -11,7 +11,7 @@ mod resources;
 #[cfg(test)]
 mod tests;
 mod tree;
-pub use fonts::{FONT_BYTES_MAX, Fonts};
+pub use fonts::{FONT_BYTES_MAX, FONT_FILES_MAX, Fonts};
 pub use preview::Preview;
 
 pub const SOURCE_MAX: usize = 8 << 20;
