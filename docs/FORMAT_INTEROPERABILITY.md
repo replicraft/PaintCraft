@@ -260,6 +260,11 @@ cover reciprocal resource exports, cancellation, late alias retargeting and
 documents parked in other tabs/frontends. These guards retain loaded paths and
 compare current file identities; they do not retain an original inode identity
 after the source is renamed or establish race-proof filesystem traversal.
+If a project save was queued first, adopting an overlapping resource source is
+refused until that write finishes, including writes owned by other tabs. The
+earlier authorized save still completes; the previous resource stays loaded.
+Unrelated resource imports remain available. The pending-save rejection is
+translated in all seven languages.
 
 CLI `shape inspect` and MCP `inspect_shapes` expose original bounds, ordered
 records and exact normalized signed integers. `shape export` and `export_shapes`

@@ -128,6 +128,7 @@ impl App {
     }
     pub(super) fn install_shape(&mut self, bytes: &[u8], path: PathBuf) -> Result<()> {
         admit(self.format_frontend(), &path, Operation::ImportAsset)?;
+        self.guard_asset_adoption(&path)?;
         let library = csh::decode(bytes, &|| Ok(()))?;
         let view = widget::Resource {
             name: path

@@ -119,3 +119,5 @@ the-shape-changed-choose-the-file-again = आकृति बदल गई ह�
 format-could-not-import-the-shape-detail = आकृति आयात नहीं की जा सकी: { $detail }
 
 format-could-not-export-the-shape-detail = आकृति निर्यात नहीं की जा सकी: { $detail }
+
+the-resource-source-has-a-pending-project-save-wait-for-it-to-finish-and-import-again = संसाधन की स्रोत फ़ाइल पर प्रोजेक्ट सहेजना लंबित है। इसके पूरा होने पर फिर से आयात करें।

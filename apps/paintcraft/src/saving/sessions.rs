@@ -35,6 +35,15 @@ impl SessionState {
 }
 
 impl NativeSaving {
+    /// Resource adoption must not acquire a source already targeted by an
+    /// admitted project write, regardless of which tab owns that write.
+    pub(crate) fn has_pending_write_to(&self, path: &Path) -> bool {
+        self.pending.iter().any(|pending| {
+            matches!(&pending.kind, PendingKind::Save(request)
+                if crate::tabs::same_destination(&request.path, path)
+                    || crate::destination::same_file(&request.path, path))
+        })
+    }
     pub(crate) fn other_pending_destination(&self, path: &Path) -> bool {
         self.pending.iter().any(|p|matches!(&p.kind,PendingKind::Save(r) if r.session!=self.session && crate::tabs::same_destination(&r.path,path)))
     }

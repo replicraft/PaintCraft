@@ -2,11 +2,28 @@
 use super::*;
 use paintcraft_core::types::{Error, ErrorCode, Result};
 use paintcraft_formats::registry::{Family, Frontend, Platform};
+use paintcraft_ui::t;
 use std::io::Read;
 
 const SOURCE_BYTES: u64 = 512 << 20;
 
 impl App {
+    pub(super) fn guard_asset_adoption(&self, path: &Path) -> Result<()> {
+        if self
+            .saving
+            .as_ref()
+            .is_some_and(|saving| saving.has_pending_write_to(path))
+        {
+            return Err(Error::new(
+                ErrorCode::ConflictStaleBase,
+                t!(
+                    &self.context,
+                    "The resource source has a pending project save. Wait for it to finish and import again."
+                ),
+            ));
+        }
+        Ok(())
+    }
     pub(super) fn asset_source_paths(&self) -> impl Iterator<Item = &Path> {
         self.palettes
             .source_path()

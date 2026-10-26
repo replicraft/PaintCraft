@@ -119,3 +119,5 @@ the-shape-changed-choose-the-file-again = Die Form wurde geändert; wählen Sie 
 format-could-not-import-the-shape-detail = Form konnte nicht importiert werden: { $detail }
 
 format-could-not-export-the-shape-detail = Form konnte nicht exportiert werden: { $detail }
+
+the-resource-source-has-a-pending-project-save-wait-for-it-to-finish-and-import-again = Für die Quelldatei der Ressource ist ein Speichervorgang ausstehend. Warten Sie, bis er abgeschlossen ist, und importieren Sie erneut.

@@ -119,3 +119,5 @@ the-shape-changed-choose-the-file-again = 形状已更改；请重新选择文�
 format-could-not-import-the-shape-detail = 无法导入形状：{ $detail }
 
 format-could-not-export-the-shape-detail = 无法导出形状：{ $detail }
+
+the-resource-source-has-a-pending-project-save-wait-for-it-to-finish-and-import-again = 资源源文件有待完成的项目保存操作。请等待保存完成后重新导入。

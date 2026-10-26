@@ -146,6 +146,7 @@ impl App {
     }
     pub(super) fn install_palette(&mut self, bytes: &[u8], path: PathBuf) -> Result<()> {
         admit(self.format_frontend(), &path, Operation::ImportAsset)?;
+        self.guard_asset_adoption(&path)?;
         let palette = ase::decode(bytes, &|| Ok(()))?;
         let mut rows = Vec::new();
         for entry in palette.entries() {

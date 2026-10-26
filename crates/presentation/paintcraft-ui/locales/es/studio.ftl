@@ -119,3 +119,5 @@ the-shape-changed-choose-the-file-again = La forma cambió; vuelve a elegir el a
 format-could-not-import-the-shape-detail = No se pudo importar la forma: { $detail }
 
 format-could-not-export-the-shape-detail = No se pudo exportar la forma: { $detail }
+
+the-resource-source-has-a-pending-project-save-wait-for-it-to-finish-and-import-again = Hay un guardado de proyecto pendiente en el archivo de origen del recurso. Espera a que termine y vuelve a importar.

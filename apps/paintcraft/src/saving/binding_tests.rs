@@ -268,3 +268,149 @@ fn live_reconciliation_retains_the_guard_for_later_implicit_saves() {
     assert_eq!(fs::read(path).unwrap(), b"external after reconciliation");
     fs::remove_dir_all(dir).unwrap();
 }
+
+#[cfg(unix)]
+#[test]
+fn resource_adoption_refuses_a_source_targeted_by_an_already_queued_project_save() {
+    use paintcraft_ui::{
+        actions::Action as UiAction,
+        i18n::{self, Language},
+    };
+    const MESSAGE: &str =
+        "The resource source has a pending project save. Wait for it to finish and import again.";
+    for shape in [false, true] {
+        for other_tab in [false, true] {
+            let dir = scratch();
+            let mut app = app();
+            app.settings.experience = Experience::Studio;
+            let (extension, bytes): (_, &[u8]) = if shape {
+                (
+                    "csh",
+                    include_bytes!(
+                        "../../../../crates/services/paintcraft-formats/tests/csh-fixtures/paths.csh"
+                    ),
+                )
+            } else {
+                (
+                    "ase",
+                    include_bytes!(
+                        "../../../../crates/services/paintcraft-formats/tests/ase-fixtures/mixed.ase"
+                    ),
+                )
+            };
+            let old = dir.join(format!("old.{extension}"));
+            let source = dir.join(format!("new.{extension}"));
+            let target = dir.join("chosen.pcnd");
+            fs::write(&old, bytes).unwrap();
+            fs::write(&source, bytes).unwrap();
+            if shape {
+                app.install_shape(bytes, old.clone()).unwrap();
+            } else {
+                app.install_palette(bytes, old.clone()).unwrap();
+            }
+            std::os::unix::fs::symlink(&source, &target).unwrap();
+            let (signal, ticket) = gate(&mut app);
+            let ctx = egui::Context::default();
+            app.save_selected(&ctx, target.clone());
+            let Some(Confirm::ReplaceFile(path)) = app.confirm.take() else {
+                panic!("expected replacement review");
+            };
+            app.do_save(&ctx, path);
+            if other_tab {
+                app.add_document_tab(Editor::new_document(2, 2).unwrap(), &ctx)
+                    .unwrap();
+            }
+            assert!(app.saving.as_ref().unwrap().pending());
+            let action = if shape {
+                UiAction::ShapeResources
+            } else {
+                UiAction::Palettes
+            };
+            assert!(
+                action.enabled(app.action_context()),
+                "UI does not globally gate imports on saves"
+            );
+            let mut results = Vec::new();
+            for language in Language::ALL {
+                i18n::set_language(&app.context, language);
+                let adoption = if shape {
+                    app.begin_shapes();
+                    app.install_shape(bytes, source.clone())
+                } else {
+                    app.begin_palettes();
+                    app.install_palette(bytes, source.clone())
+                };
+                results.push((language, adoption));
+            }
+            release(&mut app, signal, ticket);
+            assert!(
+                fs::read(&source).unwrap().starts_with(b"PCND"),
+                "the earlier authorized save must complete"
+            );
+            for (language, result) in results {
+                let error = result.expect_err(
+                    "adopted a resource whose source the queued project save then replaced",
+                );
+                assert_eq!(error.code, ErrorCode::ConflictStaleBase);
+                assert_eq!(error.message, i18n::translate(language, MESSAGE));
+                if language != Language::English {
+                    assert_ne!(error.message, MESSAGE);
+                }
+            }
+            assert_eq!(
+                app.asset_source_paths().collect::<Vec<_>>(),
+                [old.as_path()]
+            );
+            assert_eq!(fs::read(&old).unwrap(), bytes);
+            fs::remove_dir_all(dir).unwrap();
+        }
+    }
+}
+
+#[test]
+fn resource_adoption_remains_available_while_an_unrelated_project_save_is_queued() {
+    for shape in [false, true] {
+        let dir = scratch();
+        let mut app = app();
+        app.settings.experience = Experience::Studio;
+        let (extension, bytes): (_, &[u8]) = if shape {
+            (
+                "csh",
+                include_bytes!(
+                    "../../../../crates/services/paintcraft-formats/tests/csh-fixtures/paths.csh"
+                ),
+            )
+        } else {
+            (
+                "ase",
+                include_bytes!(
+                    "../../../../crates/services/paintcraft-formats/tests/ase-fixtures/mixed.ase"
+                ),
+            )
+        };
+        let source = dir.join(format!("unrelated.{extension}"));
+        let target = dir.join("painting.pcnd");
+        fs::write(&source, bytes).unwrap();
+        let (signal, ticket) = gate(&mut app);
+        let ctx = egui::Context::default();
+        app.save_selected(&ctx, target.clone());
+        let snapshot = app.editor.document_snapshot();
+        let adoption = if shape {
+            app.begin_shapes();
+            app.install_shape(bytes, source.clone())
+        } else {
+            app.begin_palettes();
+            app.install_palette(bytes, source.clone())
+        };
+        release(&mut app, signal, ticket);
+        adoption.unwrap();
+        assert_eq!(
+            app.asset_source_paths().collect::<Vec<_>>(),
+            [source.as_path()]
+        );
+        assert_eq!(fs::read(&source).unwrap(), bytes);
+        assert!(fs::read(&target).unwrap().starts_with(b"PCND"));
+        assert!(Arc::ptr_eq(&snapshot, &app.editor.document_snapshot()));
+        fs::remove_dir_all(dir).unwrap();
+    }
+}

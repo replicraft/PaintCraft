@@ -119,3 +119,5 @@ the-shape-changed-choose-the-file-again = The shape changed; choose the file aga
 format-could-not-import-the-shape-detail = Could not import the shape: { $detail }
 
 format-could-not-export-the-shape-detail = Could not export the shape: { $detail }
+
+the-resource-source-has-a-pending-project-save-wait-for-it-to-finish-and-import-again = The resource source has a pending project save. Wait for it to finish and import again.

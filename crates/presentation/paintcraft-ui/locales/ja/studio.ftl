@@ -119,3 +119,5 @@ the-shape-changed-choose-the-file-again = シェイプが変更されました�
 format-could-not-import-the-shape-detail = シェイプを読み込めませんでした: { $detail }
 
 format-could-not-export-the-shape-detail = シェイプを書き出せませんでした: { $detail }
+
+the-resource-source-has-a-pending-project-save-wait-for-it-to-finish-and-import-again = リソースの読み込み元にプロジェクトを保存中です。完了してからもう一度読み込んでください。
