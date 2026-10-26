@@ -1,4 +1,8 @@
-//! Shared native codec-helper envelopes. Parsing never publishes state.
+//! Shared isolated codec-worker envelopes. Parsing never publishes state.
+#[cfg(feature = "heif-codec")]
+mod decode;
+#[cfg(feature = "heif-codec")]
+pub use decode::execute;
 use paintcraft_core::types::{Error, ErrorCode, Result};
 pub const INPUT_BYTES_MAX: usize = 64 << 20;
 pub const PIXELS_MAX: u64 = 4_194_304;

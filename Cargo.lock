@@ -3297,7 +3297,6 @@ dependencies = [
 name = "paintcraft-codec-worker"
 version = "0.1.0"
 dependencies = [
- "heic-decoder",
  "libc",
  "paintcraft-core",
  "paintcraft-formats",

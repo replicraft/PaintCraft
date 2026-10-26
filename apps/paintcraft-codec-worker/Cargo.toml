@@ -10,7 +10,6 @@ publish.workspace = true
 [dependencies]
 paintcraft-core.workspace = true
 paintcraft-formats = { workspace = true, features = ["heif-codec"] }
-heic-decoder.workspace = true
 rayon.workspace = true
 libc.workspace = true
 
