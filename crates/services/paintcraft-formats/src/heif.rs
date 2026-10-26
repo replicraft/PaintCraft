@@ -3,6 +3,8 @@
 //! Container dimensions/depth are declarations; they do not establish agreement
 //! with every coded SPS or cap decoder reference/scratch allocations. No pixel
 //! decoding, color conversion, grid assembly or transform application occurs.
+#[cfg(feature = "heif-codec")]
+pub mod admission;
 mod metadata;
 mod payloads;
 mod properties;
@@ -10,6 +12,7 @@ mod properties;
 mod qualification;
 #[cfg(test)]
 mod tests;
+pub mod wire;
 use paintcraft_core::types::{Error, ErrorCode, Result};
 use paintcraft_paint::{BoxInfo, BoxTree, Layout};
 pub use payloads::{Grid, Payload};

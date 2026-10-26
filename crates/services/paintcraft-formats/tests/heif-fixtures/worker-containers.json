@@ -1,0 +1,17 @@
+{
+    "provenance": "Owned test-only HEIF wrappers emitted by heif::qualification::export_owned_worker_fixtures_when_requested; elementary HEVC oracle is oracle.json. HEIF wrapper interoperability is not independently qualified.",
+    "fixtures": {
+        "primary.heic": {
+            "sha256": "34cf2f30db9bbef2174fc82f8582d0ad45ad5174d47ce54a15bc1cbb56b19e16",
+            "bytes": 1000
+        },
+        "grid.heic": {
+            "sha256": "2c86f986602b8ad6f331f33bdded69f119baf28bdb8d2095b2ec3411f2b4f31d",
+            "bytes": 1103
+        },
+        "alpha.heic": {
+            "sha256": "bb51245082c1f323c3b8841fcedfed3445ca92b288cc448c1748267388c463ea",
+            "bytes": 1066
+        }
+    }
+}

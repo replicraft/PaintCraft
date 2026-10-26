@@ -317,3 +317,25 @@ fn trusted_primary_grid_and_alpha_decode_match_independent_gray_samples() {
         }
     }
 }
+
+/// Owned HEIF wrappers around independently encoded elementary fixtures. This
+/// opt-in writer is test infrastructure, never a HEIF writer capability.
+#[test]
+fn export_owned_worker_fixtures_when_requested() {
+    let Some(directory) = std::env::var_os("PAINTCRAFT_HEIF_FIXTURE_OUTPUT") else {
+        return;
+    };
+    let directory = std::path::PathBuf::from(directory);
+    for (name, grid, alpha) in [
+        ("primary.heic", false, false),
+        ("grid.heic", true, false),
+        ("alpha.heic", false, true),
+    ] {
+        let mut file = std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(directory.join(name))
+            .unwrap();
+        std::io::Write::write_all(&mut file, &source(grid, alpha)).unwrap();
+    }
+}
