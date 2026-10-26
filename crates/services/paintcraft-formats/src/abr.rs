@@ -5,11 +5,15 @@
 //! its convenience brush model omits descriptor fields or narrows alpha.
 mod descriptor;
 mod normalize;
+mod pattern;
 mod preflight;
 #[cfg(test)]
 mod tests;
 
 use paintcraft_core::types::{Error, ErrorCode, Result};
+pub use pattern::{
+    Channel, ColorMode, ConvertedPreview, Pattern, PreviewUnavailable, Samples, Slot,
+};
 
 pub const BYTES_MAX: usize = 16 << 20;
 /// Private raw-16 backend views may expand compressed source masks. This is a
@@ -51,6 +55,7 @@ pub enum SectionKind {
     Samples,
     Descriptors,
     Hierarchy,
+    Patterns,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -67,6 +72,7 @@ pub struct Library {
     samples: Vec<Sample>,
     brushes: Vec<ag_psd::abr::Brush>,
     sections: Vec<Section>,
+    patterns: Vec<Pattern>,
 }
 impl Library {
     pub fn version(&self) -> (u16, u16) {
@@ -83,10 +89,13 @@ impl Library {
     pub fn sections(&self) -> &[Section] {
         &self.sections
     }
+    pub fn patterns(&self) -> &[Pattern] {
+        &self.patterns
+    }
 }
 
 pub fn decode(bytes: &[u8], check: &dyn Fn() -> Result<()>) -> Result<Library> {
-    let prepared = preflight::inspect(bytes, check)?;
+    let mut prepared = preflight::inspect(bytes, check)?;
     let backend_view = normalize::view(bytes, &prepared, check)?;
     check()?;
     let decoded = ag_psd::abr::read_abr(&backend_view, &Default::default())
@@ -123,12 +132,16 @@ pub fn decode(bytes: &[u8], check: &dyn Fn() -> Result<()>) -> Result<Library> {
             return Err(invalid("ABR backend sample pixels disagree with preflight"));
         }
     }
+    for pattern in &mut prepared.patterns {
+        pattern::verify(pattern, check)?;
+    }
     Ok(Library {
         version: prepared.version,
         minor_version: prepared.minor_version,
         samples: prepared.samples,
         brushes: decoded.brushes,
         sections: prepared.sections,
+        patterns: prepared.patterns,
     })
 }
 

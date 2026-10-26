@@ -3,6 +3,7 @@ import hashlib
 import json
 import struct
 from pathlib import Path
+from patterns import fixtures as pattern_fixtures
 
 ROOT = Path(__file__).parent
 
@@ -82,6 +83,9 @@ def main():
                 [0, 1, 255, 256, 32769, 65535], minor)) + section("desc", desc) + section("samp",
                 sample("raw-8", 8, 0, [0, 1, 127, 128, 254, 255], minor) + sample("raw-16", 16, 0,
                 [0, 1, 255, 256, 32769, 65535], minor)) + section("phry", hierarchy)
+    for name, records in pattern_fixtures().items():
+        files[f"{name}.abr"] = struct.pack(">HH", 6, 1) + section("samp", sample("raw-8", 8, 0,
+                [0, 1, 127, 128, 254, 255], 1)) + section("patt", records) + section("desc", desc) + section("phry", hierarchy)
     manifest = {"generator": "generate.py, Python standard library", "license": "MIT, repository-authored", "files": {}}
     for name, data in files.items():
         (ROOT / name).write_bytes(data)

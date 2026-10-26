@@ -21,6 +21,34 @@
         "rle16-v10.abr": {
             "bytes": 1776,
             "sha256": "53a38303a8328e1208624e18eeca4cb06ab0cf26bf2a7c81ad690d5d7e510945"
+        },
+        "patterns.abr": {
+            "bytes": 2748,
+            "sha256": "bd50d3d0c3467bdad0da6aca9e97a9bb3bc47a59dd0c814595086f9c2b1ac6d9"
+        },
+        "indexed-no-extra.abr": {
+            "bytes": 1852,
+            "sha256": "e052537d2db399b4f72b35bf307c052385bc4aeb5143f54069896f2cb79c56f6"
+        },
+        "indexed-extra3.abr": {
+            "bytes": 1860,
+            "sha256": "4bc9ab7e55fdb7f505ab093e72409017c0f6d359222763dd19d961f6d3b43bbf"
+        },
+        "auxiliary.abr": {
+            "bytes": 1192,
+            "sha256": "a5ff6ddd51386513d4bb867aaee7906fec14dd6040e08bab964ec7e5f3ccb149"
+        },
+        "missing-color.abr": {
+            "bytes": 1100,
+            "sha256": "fe72d29f1cf8a76305048c6922f85e54f7997a52d8d584674baa6c1d78b9b948"
+        },
+        "empty-color.abr": {
+            "bytes": 1100,
+            "sha256": "be3b12b7bc83975c86f364f5dc6da6247d9d908a37b262fe76d9f03e42b9980e"
+        },
+        "user-mask.abr": {
+            "bytes": 1172,
+            "sha256": "8359ad7e3a176306f3ad2ff881e27385165f30ca16e7adf9909b958178090cb3"
         }
     }
 }

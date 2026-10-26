@@ -24,10 +24,14 @@ pub(super) fn view<'a>(
     let mut samples = prepared.samples.iter();
     for section in &prepared.sections {
         check()?;
+        if section.kind == SectionKind::Patterns {
+            continue;
+        }
         let key: &[u8; 4] = match section.kind {
             SectionKind::Samples => b"samp",
             SectionKind::Descriptors => b"desc",
             SectionKind::Hierarchy => b"phry",
+            SectionKind::Patterns => b"patt",
         };
         result.extend_from_slice(b"8BIM");
         result.extend_from_slice(key);
@@ -85,6 +89,9 @@ fn size(prepared: &Prepared, check: &dyn Fn() -> Result<()>) -> Result<usize> {
     let mut samples = prepared.samples.iter();
     for section in &prepared.sections {
         check()?;
+        if section.kind == SectionKind::Patterns {
+            continue;
+        }
         let mut length = section.payload.len();
         if section.kind == SectionKind::Samples {
             length = 0;

@@ -42,6 +42,7 @@ pub(super) struct Prepared {
     pub samples: Vec<Sample>,
     pub sections: Vec<Section>,
     pub normalize: bool,
+    pub patterns: Vec<Pattern>,
 }
 pub(super) fn inspect(bytes: &[u8], check: &dyn Fn() -> Result<()>) -> Result<Prepared> {
     check()?;
@@ -63,9 +64,11 @@ pub(super) fn inspect(bytes: &[u8], check: &dyn Fn() -> Result<()>) -> Result<Pr
         samples: Vec::new(),
         sections: Vec::new(),
         normalize: false,
+        patterns: Vec::new(),
     };
     let mut pixels = 0;
     let mut descriptor_budget = descriptor::Budget::default();
+    let mut pattern_budget = pattern::Budget::default();
     while source.pos < bytes.len() {
         check()?;
         if prepared.sections.len() == SECTIONS_MAX {
@@ -106,9 +109,16 @@ pub(super) fn inspect(bytes: &[u8], check: &dyn Fn() -> Result<()>) -> Result<Pr
                 }
             }
             b"patt" => {
-                return Err(unsupported(
-                    "ABR embedded patterns require bounded pattern qualification",
-                ));
+                pattern::inspect(
+                    &mut section,
+                    &mut pattern_budget,
+                    &mut prepared.patterns,
+                    check,
+                )?;
+                // Patterns are verified through individual bounded RGB8 views,
+                // rather than the whole-file reader's lossy pattern path.
+                prepared.normalize = true;
+                SectionKind::Patterns
             }
             _ => return Err(unsupported("unknown ABR section kind")),
         };
@@ -199,7 +209,7 @@ pub(super) fn sample(
         depth == 16 && compression == 1,
     ))
 }
-fn rle(
+pub(super) fn rle(
     source: &mut Cursor<'_>,
     width: usize,
     height: usize,

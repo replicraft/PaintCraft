@@ -166,9 +166,11 @@ fn dangerous_dimensions_depths_sections_and_counts_fail_before_backend() {
             ErrorCode::CapabilityUnsupported
         );
     }
-    assert_eq!(
-        decode(&section(b"patt", &[]), &|| Ok(())).unwrap_err().code,
-        ErrorCode::CapabilityUnsupported
+    assert!(
+        decode(&section(b"patt", &[]), &|| Ok(()))
+            .unwrap()
+            .patterns()
+            .is_empty()
     );
     assert!(decode(&section(b"oops", &[]), &|| Ok(())).is_err());
     let mut crossing = sample([0, 0, 1, 1], 8, 0, &[0]);
