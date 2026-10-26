@@ -5,6 +5,8 @@
 //! decoding, color conversion, grid assembly or transform application occurs.
 #[cfg(feature = "heif-codec")]
 pub mod admission;
+mod import;
+pub use import::{COLOR_POLICY, ImportAssessment, KNOWN_IMPORT_LOSSES, assess_import};
 mod metadata;
 mod payloads;
 mod properties;
