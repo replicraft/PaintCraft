@@ -67,7 +67,7 @@ def main():
     fixture_env = {**env, 'PAINTCRAFT_PALETTE_FIXTURES': str(output / 'fixtures')}
     run([str(bench), '--test'], output / 'correctness.log', fixture_env)
     oracle = ROOT / 'crates/services/paintcraft-formats/tests/ase-fixtures/benchmark_oracle.py'
-    oracle_args = [str(args.oracle_python.resolve()), str(oracle), '--fixtures', str(output / 'fixtures')]
+    oracle_args = [str(args.oracle_python.absolute()), str(oracle), '--fixtures', str(output / 'fixtures')]
     run(oracle_args, output / 'independent-fixture-oracle.json')
     (output / 'exports').mkdir()
     commands = []
