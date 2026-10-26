@@ -15,19 +15,8 @@ pub fn encode_v1(
             "MSP packed extent disagrees with dimensions",
         ));
     }
-    let mut words = [0u16; 16];
-    words[0] = u16::from_le_bytes(*b"Da");
-    words[1] = u16::from_le_bytes(*b"nM");
-    words[2] = width as u16;
-    words[3] = height as u16;
-    words[4..8].fill(1);
-    words[8] = width as u16;
-    words[9] = height as u16;
-    words[12] = words.iter().fold(0, |sum, word| sum ^ word);
     let mut bytes = buffer(32 + packed.len())?;
-    for word in words {
-        bytes.extend(word.to_le_bytes());
-    }
+    bytes.extend_from_slice(&header(width, height, *b"DanM"));
     for chunk in packed.chunks(65536) {
         check()?;
         bytes.extend_from_slice(chunk);
@@ -38,6 +27,15 @@ pub fn encode_v1(
 /// Fresh encoding only when the caller already supplied exact opaque black or
 /// white pixels. Alpha removal, thresholding and dithering are never implicit.
 pub fn encode_v1_rgba_exact(
+    width: u32,
+    height: u32,
+    rgba: &[u8],
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Vec<u8>> {
+    let packed = pack_rgba_exact(width, height, rgba, check)?;
+    encode_v1(width, height, &packed, check)
+}
+pub(super) fn pack_rgba_exact(
     width: u32,
     height: u32,
     rgba: &[u8],
@@ -68,5 +66,23 @@ pub fn encode_v1_rgba_exact(
             }
         }
     }
-    encode_v1(width, height, &packed, check)
+    check()?;
+    Ok(packed)
+}
+
+pub(super) fn header(width: u32, height: u32, magic: [u8; 4]) -> [u8; 32] {
+    let mut words = [0u16; 16];
+    words[0] = u16::from_le_bytes([magic[0], magic[1]]);
+    words[1] = u16::from_le_bytes([magic[2], magic[3]]);
+    words[2] = width as u16;
+    words[3] = height as u16;
+    words[4..8].fill(1);
+    words[8] = width as u16;
+    words[9] = height as u16;
+    words[12] = words.iter().fold(0, |sum, word| sum ^ word);
+    let mut bytes = [0; 32];
+    for (word, slot) in words.into_iter().zip(bytes.as_chunks_mut::<2>().0) {
+        *slot = word.to_le_bytes();
+    }
+    bytes
 }

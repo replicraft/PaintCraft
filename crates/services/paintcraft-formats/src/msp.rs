@@ -1,11 +1,14 @@
 //! Historical Windows Paint monochrome rasters, distinct from modern `.paint`.
-//! Internal qualified profile; no public registry or frontend activation here.
+//! Registry/frontend admission is owned by the shared facade; MSP2 fresh output
+//! is separately qualified and does not enable source-preserving Save.
 mod decode;
 mod encode;
+mod encode_v2;
 #[cfg(test)]
 mod tests;
 pub use decode::{decode, inspect};
 pub use encode::{encode_v1, encode_v1_rgba_exact};
+pub use encode_v2::{V2WritePlan, encode_v2, encode_v2_rgba_exact, preflight_v2};
 use paintcraft_core::types::{Error, ErrorCode, Result};
 pub const BYTES_MAX: usize = 16 << 20;
 pub const PIXELS_MAX: u64 = 4_194_304;
