@@ -1,0 +1,169 @@
+{
+    "python": "3.14.0 (v3.14.0:ebf955df7a8, Oct  7 2025, 08:20:14) [Clang 16.0.0 (clang-1600.0.26.6)]",
+    "psd_tools": "1.26.0",
+    "pillow": "13.0.0",
+    "profile_sha256": "384b832de3412066743b52a75ee906b6fb9fb8d9e09e936fc2c43223815c6e0a",
+    "files": [
+        {
+            "file": "layers.psd",
+            "sha256": "18143a072e0d747632b5420caac653b5ce7d7f7dd505c02c04da0220d48e3d7f",
+            "layers": [
+                {
+                    "name": "Background",
+                    "sha256": "673f579fd4558390ed2fbc35f6674e76f43488794a0571a97e9278d62295dda4"
+                },
+                {
+                    "name": "\u65e5\u672c\u8a9e \ud83d\ude00 & ink\tline\nnext",
+                    "sha256": "fe2b84ccfb2a708b7f78ff0fe4c860042e12f4189feb69b36070fad8a0d49737"
+                },
+                {
+                    "name": "Hidden",
+                    "sha256": "7a7bf454c5f3cb1b9d9a20f81417f98d976fe3b3dd52c1b9968f02e89e7e8a2f"
+                }
+            ],
+            "cached_preview": {
+                "maximum_channel_error": 0,
+                "maximum_rgb_error_alpha_nonzero": 0,
+                "opaque_backdrop_maximum_error": {
+                    "0": 0,
+                    "255": 0
+                },
+                "different_channels": 0,
+                "maximum_rgb_error": 0,
+                "maximum_alpha_error": 0,
+                "sha256": "b9ab523f4f328e250ee9fc690c7ffa0cc8187bc83d832703b1188f4b3320a44b",
+                "expected_sha256": "b9ab523f4f328e250ee9fc690c7ffa0cc8187bc83d832703b1188f4b3320a44b"
+            },
+            "recomposed_layers": {
+                "maximum_channel_error": 0,
+                "maximum_rgb_error_alpha_nonzero": 0,
+                "opaque_backdrop_maximum_error": {
+                    "0": 0,
+                    "255": 0
+                },
+                "different_channels": 0,
+                "maximum_rgb_error": 0,
+                "maximum_alpha_error": 0,
+                "sha256": "b9ab523f4f328e250ee9fc690c7ffa0cc8187bc83d832703b1188f4b3320a44b",
+                "expected_sha256": "b9ab523f4f328e250ee9fc690c7ffa0cc8187bc83d832703b1188f4b3320a44b"
+            }
+        },
+        {
+            "file": "layers.psb",
+            "sha256": "7d2fe9bd8331ddfcb90d9fee36fce3c92bc9876df96caeab280a6a3f7876b44e",
+            "layers": [
+                {
+                    "name": "Background",
+                    "sha256": "673f579fd4558390ed2fbc35f6674e76f43488794a0571a97e9278d62295dda4"
+                },
+                {
+                    "name": "\u65e5\u672c\u8a9e \ud83d\ude00 & ink\tline\nnext",
+                    "sha256": "fe2b84ccfb2a708b7f78ff0fe4c860042e12f4189feb69b36070fad8a0d49737"
+                },
+                {
+                    "name": "Hidden",
+                    "sha256": "7a7bf454c5f3cb1b9d9a20f81417f98d976fe3b3dd52c1b9968f02e89e7e8a2f"
+                }
+            ],
+            "cached_preview": {
+                "maximum_channel_error": 0,
+                "maximum_rgb_error_alpha_nonzero": 0,
+                "opaque_backdrop_maximum_error": {
+                    "0": 0,
+                    "255": 0
+                },
+                "different_channels": 0,
+                "maximum_rgb_error": 0,
+                "maximum_alpha_error": 0,
+                "sha256": "b9ab523f4f328e250ee9fc690c7ffa0cc8187bc83d832703b1188f4b3320a44b",
+                "expected_sha256": "b9ab523f4f328e250ee9fc690c7ffa0cc8187bc83d832703b1188f4b3320a44b"
+            },
+            "recomposed_layers": {
+                "maximum_channel_error": 0,
+                "maximum_rgb_error_alpha_nonzero": 0,
+                "opaque_backdrop_maximum_error": {
+                    "0": 0,
+                    "255": 0
+                },
+                "different_channels": 0,
+                "maximum_rgb_error": 0,
+                "maximum_alpha_error": 0,
+                "sha256": "b9ab523f4f328e250ee9fc690c7ffa0cc8187bc83d832703b1188f4b3320a44b",
+                "expected_sha256": "b9ab523f4f328e250ee9fc690c7ffa0cc8187bc83d832703b1188f4b3320a44b"
+            }
+        },
+        {
+            "file": "alpha-boundaries.psd",
+            "sha256": "b1fe09b8bdec6f39ad7c28cb564a119c40d0c8abe881ea847ec4d6b304a80f2b",
+            "layers": [
+                {
+                    "name": "Image",
+                    "sha256": "d305c0cdb805b4880f18c37d76b0358c0fcf60faae35dafeca6913545c480535"
+                }
+            ],
+            "cached_preview": {
+                "maximum_channel_error": 60,
+                "maximum_rgb_error_alpha_nonzero": 60,
+                "opaque_backdrop_maximum_error": {
+                    "0": 1,
+                    "255": 1
+                },
+                "different_channels": 12,
+                "maximum_rgb_error": 60,
+                "maximum_alpha_error": 0,
+                "sha256": "143385285de7007a47a61583ba3a91fbd6bc2865c24c72e7a167f48175b597ed",
+                "expected_sha256": "89d0efe22427d2cb123b0cccfd069b243b2181c3e13eaff754f0bfcf055fe6b0"
+            },
+            "recomposed_layers": {
+                "maximum_channel_error": 255,
+                "maximum_rgb_error_alpha_nonzero": 0,
+                "opaque_backdrop_maximum_error": {
+                    "0": 0,
+                    "255": 0
+                },
+                "different_channels": 3,
+                "maximum_rgb_error": 255,
+                "maximum_alpha_error": 0,
+                "sha256": "4fbbdd586b0b3b2f475e454483e662037623b97822750df2dc939a7c34f0f9d9",
+                "expected_sha256": "89d0efe22427d2cb123b0cccfd069b243b2181c3e13eaff754f0bfcf055fe6b0"
+            }
+        },
+        {
+            "file": "alpha-boundaries.psb",
+            "sha256": "2970d3de196c3965066a682e7c9312d84ec58a2a9ede5906791dbf28f211d2dc",
+            "layers": [
+                {
+                    "name": "Image",
+                    "sha256": "d305c0cdb805b4880f18c37d76b0358c0fcf60faae35dafeca6913545c480535"
+                }
+            ],
+            "cached_preview": {
+                "maximum_channel_error": 60,
+                "maximum_rgb_error_alpha_nonzero": 60,
+                "opaque_backdrop_maximum_error": {
+                    "0": 1,
+                    "255": 1
+                },
+                "different_channels": 12,
+                "maximum_rgb_error": 60,
+                "maximum_alpha_error": 0,
+                "sha256": "143385285de7007a47a61583ba3a91fbd6bc2865c24c72e7a167f48175b597ed",
+                "expected_sha256": "89d0efe22427d2cb123b0cccfd069b243b2181c3e13eaff754f0bfcf055fe6b0"
+            },
+            "recomposed_layers": {
+                "maximum_channel_error": 255,
+                "maximum_rgb_error_alpha_nonzero": 0,
+                "opaque_backdrop_maximum_error": {
+                    "0": 0,
+                    "255": 0
+                },
+                "different_channels": 3,
+                "maximum_rgb_error": 255,
+                "maximum_alpha_error": 0,
+                "sha256": "4fbbdd586b0b3b2f475e454483e662037623b97822750df2dc939a7c34f0f9d9",
+                "expected_sha256": "89d0efe22427d2cb123b0cccfd069b243b2181c3e13eaff754f0bfcf055fe6b0"
+            }
+        }
+    ],
+    "scope": "Independent raw layers/profile and separately measured cache/render; no Photoshop qualification"
+}
