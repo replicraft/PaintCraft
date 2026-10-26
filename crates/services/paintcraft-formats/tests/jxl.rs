@@ -39,19 +39,21 @@ fn lossless_rgba16_preserves_native_endian_sample_values_without_downcast() {
     assert!(!info.floating_point);
     let decoded = jxl::decode_with_pixel_limit(&encoded, 6).unwrap();
     assert_eq!(decoded.samples, Samples::Rgba16(samples.clone()));
-    let mut transparent = samples;
-    transparent[3] = 256;
     assert_eq!(
-        jxl::encode_rgba16(2, 3, &transparent).unwrap_err().code,
-        ErrorCode::CapabilityUnsupported
+        encoded,
+        include_bytes!("jxl-fixtures/opaque16-zune-0.5.2.jxl")
     );
 }
 #[test]
-fn input_output_geometry_and_single_dimension_writer_limits_are_explicit() {
-    for (w, h) in [(1, 1), (1, 5), (5, 1)] {
+fn input_output_geometry_and_resource_limits_are_explicit() {
+    for (w, h) in [(0, 0), (0, 1), (1, 0)] {
         assert_eq!(
-            jxl::encode_rgba8(w, h, &rgba(w, h)).unwrap_err().code,
-            ErrorCode::CapabilityUnsupported
+            jxl::encode_rgba8(w, h, &[]).unwrap_err().code,
+            ErrorCode::CodecFailed
+        );
+        assert_eq!(
+            jxl::encode_rgba16(w, h, &[]).unwrap_err().code,
+            ErrorCode::CodecFailed
         );
     }
     assert_eq!(
@@ -110,4 +112,85 @@ fn every_truncation_of_small_codestream_is_rejected() {
             encoded.len()
         );
     }
+}
+
+#[test]
+fn single_axis_and_nonopaque_rgba16_preserve_all_samples_and_dimensions() {
+    for (width, height) in [(1, 1), (1, 6), (6, 1), (3, 2), (255, 257)] {
+        let rgba16: Vec<u16> = (0..width * height)
+            .flat_map(|i| {
+                [
+                    ((i * 997 + 257) % 65536) as u16,
+                    ((i * 5001 + 32768) % 65536) as u16,
+                    (65535 - i % 65536) as u16,
+                    [0, 1, 256, 32768, 65534, 65535][i as usize % 6],
+                ]
+            })
+            .collect();
+        let rgba8: Vec<_> = rgba16.iter().map(|v| (v >> 8) as u8).collect();
+        let frozen = rgba16.clone();
+        let frozen8 = rgba8.clone();
+        for sixteen in [false, true] {
+            let encoded = if sixteen {
+                jxl::encode_rgba16(width, height, &rgba16)
+            } else {
+                jxl::encode_rgba8(width, height, &rgba8)
+            }
+            .unwrap();
+            let info =
+                jxl::inspect_checked(&encoded, u64::from(width) * u64::from(height), &|| Ok(()))
+                    .unwrap();
+            assert_eq!((info.width, info.height), (width, height));
+            assert_eq!(info.bits_per_sample, if sixteen { 16 } else { 8 });
+            assert!(!info.associated_alpha);
+            let decoded =
+                jxl::decode_with_pixel_limit(&encoded, u64::from(width) * u64::from(height))
+                    .unwrap();
+            assert_eq!(
+                decoded.samples,
+                if sixteen {
+                    Samples::Rgba16(rgba16.clone())
+                } else {
+                    Samples::Rgba8(rgba8.clone())
+                }
+            );
+            assert!(decoded.losses.is_empty());
+        }
+        assert_eq!(rgba16, frozen);
+        assert_eq!(rgba8, frozen8);
+    }
+}
+#[test]
+fn nonopaque_rgba16_cancellation_and_malformed_inputs_return_no_output() {
+    let source = [257, 32768, 65535, 1];
+    for checkpoint in [0, 1, 2] {
+        let calls = Cell::new(0);
+        let check = || {
+            let n = calls.get();
+            calls.set(n + 1);
+            if n >= checkpoint {
+                Err(Error::new(
+                    ErrorCode::OperationCancelled,
+                    "test cancellation",
+                ))
+            } else {
+                Ok(())
+            }
+        };
+        assert_eq!(
+            jxl::encode_rgba16_checked(1, 1, &source, &check)
+                .unwrap_err()
+                .code,
+            ErrorCode::OperationCancelled
+        );
+        assert_eq!(source, [257, 32768, 65535, 1]);
+    }
+    assert_eq!(
+        jxl::encode_rgba16(1, 1, &source[..3]).unwrap_err().code,
+        ErrorCode::CodecFailed
+    );
+    assert_eq!(
+        jxl::encode_rgba16(65536, 65536, &[]).unwrap_err().code,
+        ErrorCode::ResourceLimit
+    );
 }

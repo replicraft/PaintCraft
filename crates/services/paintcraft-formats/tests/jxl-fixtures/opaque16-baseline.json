@@ -1,0 +1,36 @@
+{
+  "firstparty_encode_sha256": "2d0addca9598be61fa91c73a6a654fc808d0ef6eb0ab128a60ca7bdea9118ef1",
+  "baseline_sha256": "cd89382a4f133a5cc62f1675df30713a4960002055a73590c3c01d02f26d5659",
+  "source_u16": [
+    0,
+    0,
+    65535,
+    65535,
+    257,
+    5001,
+    64538,
+    65535,
+    514,
+    10002,
+    63541,
+    65535,
+    771,
+    15003,
+    62544,
+    65535,
+    1028,
+    20004,
+    61547,
+    65535,
+    1285,
+    25005,
+    60550,
+    65535
+  ],
+  "dimensions": [
+    2,
+    3
+  ],
+  "generator": "PaintCraft first-party encode_rgba16 before removal of dimension and nonopaque-alpha refusals, using pinned zune-jpegxl0.5.2-paintcraft1 opaqueRGB16 path",
+  "claim": "Exact-output regression baseline, not an independently encoded reader fixture"
+}

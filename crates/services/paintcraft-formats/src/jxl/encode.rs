@@ -48,13 +48,6 @@ fn encode(
             "JPEG XL source sample length does not match dimensions",
         ));
     }
-    // This is an upstream 0.5.2 restriction, not a format restriction. Do not
-    // pad dimensions or advertise the single-row/column profile as qualified.
-    if width <= 1 || height <= 1 {
-        return Err(unsupported(
-            "JPEG XL encoder does not support single-row or single-column images",
-        ));
-    }
     let options =
         EncoderOptions::new(width as usize, height as usize, colorspace, depth).set_num_threads(1);
     let mut sink = Sink {
@@ -94,9 +87,9 @@ pub fn encode_rgba8_checked(
 pub fn encode_rgba16(width: u32, height: u32, samples: &[u16]) -> Result<Vec<u8>> {
     encode_rgba16_checked(width, height, samples, &|| Ok(()))
 }
-/// Opaque u16 RGBA is staged as RGB16 in native endian, as required by the
-/// upstream encoder. Non-opaque 16-bit alpha is refused because version 0.5.2
-/// incorrectly declares its alpha plane as 8-bit.
+/// Native-endian integer samples retain straight 16-bit alpha. Opaque input
+/// keeps the established RGB16 codestream path; the reviewed encoder patch
+/// writes explicit 16-bit alpha metadata for non-opaque RGBA16.
 pub fn encode_rgba16_checked(
     width: u32,
     height: u32,
@@ -116,12 +109,16 @@ pub fn encode_rgba16_checked(
         .iter()
         .any(|pixel| pixel[3] != u16::MAX)
     {
-        return Err(unsupported(
-            "JPEG XL encoder cannot preserve non-opaque 16-bit alpha",
-        ));
+        return encode(
+            width,
+            height,
+            samples.as_bytes(),
+            BitDepth::Sixteen,
+            ColorSpace::RGBA,
+            check,
+        );
     }
-    // zune-jpegxl 0.5.2 declares alpha as 8-bit even for RGBA16. The
-    // qualified opaque profile encodes RGB16 and reconstructs opaque alpha.
+    // Preserve the existing opaque profile's output bytes and staging layout.
     let mut rgb = allocated::<u16>(count / 4 * 3)?;
     for (source, destination) in samples
         .as_chunks::<4>()

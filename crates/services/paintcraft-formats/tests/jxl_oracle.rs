@@ -28,7 +28,7 @@ fn independent_libjxl_rgba16_preserves_partial_alpha_and_hidden_color() {
     );
 }
 #[test]
-fn independent_single_pixel_decodes_even_though_zune_writer_refuses_it() {
+fn independent_single_pixel_decodes_with_exact_alpha() {
     let decoded =
         jxl::decode_with_pixel_limit(include_bytes!("jxl-fixtures/single.jxl"), 1).unwrap();
     assert_eq!((decoded.width, decoded.height), (1, 1));
@@ -166,4 +166,94 @@ fn container_metadata_and_box_count_admission_precede_pixel_decode() {
         jxl::decode_with_pixel_limit(&metadata, 6).unwrap_err().code,
         ErrorCode::ResourceLimit
     );
+}
+
+#[test]
+#[ignore = "requires independent djxl in PAINTCRAFT_DJXL; optional PAINTCRAFT_JXL_ORACLE_OUTPUT retains evidence"]
+fn external_libjxl_decodes_firstparty_single_axis_and_full_rgba16_samples() {
+    let executable = std::env::var_os("PAINTCRAFT_DJXL").expect("supply pinned independent djxl");
+    let retained = std::env::var_os("PAINTCRAFT_JXL_ORACLE_OUTPUT");
+    let base = retained
+        .as_ref()
+        .map(std::path::PathBuf::from)
+        .unwrap_or_else(|| {
+            std::env::temp_dir().join(format!(
+                "paintcraft-jxl-edges-{}-{}",
+                std::process::id(),
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_nanos()
+            ))
+        });
+    std::fs::create_dir(&base).expect("oracle output directory must be fresh");
+    for (width, height) in [(1, 1), (1, 6), (6, 1), (3, 2), (255, 257)] {
+        let source16: Vec<u16> = (0..width * height)
+            .flat_map(|i| {
+                [
+                    ((i * 997 + 257) % 65536) as u16,
+                    ((i * 5001 + 32768) % 65536) as u16,
+                    (65535 - i % 65536) as u16,
+                    [0, 1, 256, 32768, 65534, 65535][i as usize % 6],
+                ]
+            })
+            .collect();
+        let source8: Vec<u8> = source16.iter().map(|v| (v >> 8) as u8).collect();
+        for sixteen in [false, true] {
+            let depth = if sixteen { 16 } else { 8 };
+            let encoded = if sixteen {
+                jxl::encode_rgba16(width, height, &source16)
+            } else {
+                jxl::encode_rgba8(width, height, &source8)
+            }
+            .unwrap();
+            let name = format!("{width}x{height}-rgba{depth}");
+            let input = base.join(format!("{name}.jxl"));
+            let output = base.join(format!("{name}.png"));
+            std::fs::write(&input, &encoded).unwrap();
+            let expected = if sixteen {
+                source16
+                    .iter()
+                    .flat_map(|v| v.to_ne_bytes())
+                    .collect::<Vec<_>>()
+            } else {
+                source8.clone()
+            };
+            std::fs::write(base.join(format!("{name}.raw")), expected).unwrap();
+            let result = std::process::Command::new(&executable)
+                .arg(&input)
+                .arg(&output)
+                .args([
+                    "--bits_per_sample",
+                    &depth.to_string(),
+                    "--num_threads",
+                    "1",
+                ])
+                .output()
+                .unwrap();
+            let mut log = result.stdout;
+            log.extend_from_slice(&result.stderr);
+            std::fs::write(base.join(format!("{name}.djxl.log")), &log).unwrap();
+            assert!(
+                result.status.success(),
+                "{name}: {}",
+                String::from_utf8_lossy(&log)
+            );
+            let decoded = image::load_from_memory(&std::fs::read(output).unwrap()).unwrap();
+            assert_eq!((decoded.width(), decoded.height()), (width, height));
+            let selected =
+                jxl::decode_with_pixel_limit(&encoded, u64::from(width) * u64::from(height))
+                    .unwrap();
+            if sixteen {
+                assert_eq!(decoded.to_rgba16().into_raw(), source16, "{name}");
+                assert_eq!(selected.samples, Samples::Rgba16(source16.clone()));
+            } else {
+                assert_eq!(decoded.to_rgba8().into_raw(), source8, "{name}");
+                assert_eq!(selected.samples, Samples::Rgba8(source8.clone()));
+            }
+        }
+    }
+    if retained.is_none() {
+        std::fs::remove_dir_all(base).unwrap();
+    }
 }
