@@ -6,6 +6,7 @@ mod float;
 mod import;
 mod jxr_encode;
 mod launch;
+mod writer_import;
 use super::*;
 pub use float::{float_max_resident_bytes, float_reservation_bytes, float_resident_bytes};
 pub use import::{AdoptedImport, PreparedImport};
@@ -67,6 +68,18 @@ impl Job {
         launch: impl FnOnce(Launch<'_>, &dyn Fn() -> Result<()>) -> Result<Vec<u8>>,
         consume: impl FnOnce(&Request, Frame<'_>, S, [u8; 32], &dyn Fn() -> Result<()>) -> Result<T>,
     ) -> Result<T> {
+        self.consume_profile(false, host_check, current_owner, select, launch, consume)
+    }
+    #[allow(clippy::too_many_arguments)] // One shared supervisor; mode is selected by typed preparation only.
+    fn consume_profile<T, S>(
+        self,
+        writer: bool,
+        host_check: &dyn Fn() -> Result<()>,
+        current_owner: &dyn Fn() -> Result<Owner>,
+        select: impl FnOnce(&[u8], u64, &dyn Fn() -> Result<()>) -> Result<(Codec, S)>,
+        launch: impl FnOnce(Launch<'_>, &dyn Fn() -> Result<()>) -> Result<Vec<u8>>,
+        consume: impl FnOnce(&Request, Frame<'_>, S, [u8; 32], &dyn Fn() -> Result<()>) -> Result<T>,
+    ) -> Result<T> {
         if self.deadline.is_zero() || self.deadline > Duration::from_secs(120) {
             return Err(Error::new(
                 ErrorCode::InputSchema,
@@ -115,9 +128,17 @@ impl Job {
         let request = Request::capture_for(codec, Arc::new(source), self.owner, self.pixels)?;
         self.identity
             .verify_bytes(&self.input, self.length, &request.header.sha256, &check)?;
-        let helper = installed_helper(codec, &self.application_version, &check)?;
+        let helper = if writer {
+            writer_import::Helper::writer(&self.application_version, &check)?
+        } else {
+            writer_import::Helper::Legacy(installed_helper(
+                codec,
+                &self.application_version,
+                &check,
+            )?)
+        };
         let executable = helper.checked_executable(&check)?;
-        let backing = launch::Backing::new(&request, &check)?;
+        let backing = launch::Backing::selected(&request, writer, &check)?;
         let remaining = self
             .deadline
             .checked_sub(start.elapsed())

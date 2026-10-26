@@ -17,17 +17,32 @@ pub(super) struct Backing {
 }
 impl Backing {
     pub fn new(request: &Request, check: &dyn Fn() -> Result<()>) -> Result<Self> {
+        Self::selected(request, false, check)
+    }
+    pub(super) fn selected(
+        request: &Request,
+        writer: bool,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<Self> {
         if request.header.codec != Codec::JxrRgb8 {
             return Ok(Self {
                 source: None,
                 arguments: Vec::new(),
             });
         }
-        crate::jxr::inspect_checked(
-            request.source.as_slice(),
-            u64::from(request.header.pixels),
-            check,
-        )?;
+        if writer {
+            crate::jxr::assess_writer_import(
+                request.source.as_slice(),
+                u64::from(request.header.pixels),
+                check,
+            )?;
+        } else {
+            crate::jxr::inspect_checked(
+                request.source.as_slice(),
+                u64::from(request.header.pixels),
+                check,
+            )?;
+        }
         let source = PrivateSource::create(
             request.source.as_slice(),
             "jxr",
@@ -41,7 +56,11 @@ impl Backing {
             check,
         )?;
         let arguments = vec![
-            OsString::from("--jxr-source"),
+            OsString::from(if writer {
+                "--jxr-writer-source"
+            } else {
+                "--jxr-source"
+            }),
             source.path().as_os_str().to_owned(),
         ];
         Ok(Self {

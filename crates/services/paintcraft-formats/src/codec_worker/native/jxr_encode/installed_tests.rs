@@ -290,6 +290,7 @@ fn installed_fixture() {
         drop(prepared);
         assert_eq!(budget.usage().reserved, 0);
     }
+    super::super::writer_import::qualify(&root);
     for during in 0..5 {
         let expected = owner();
         let current = Cell::new(expected);

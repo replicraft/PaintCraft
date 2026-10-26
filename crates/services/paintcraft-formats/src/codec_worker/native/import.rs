@@ -39,6 +39,7 @@ pub(super) enum PreparedProfile {
     },
     Jxl,
     Jxr(crate::jxr::ImportAssessment),
+    JxrWriter(crate::jxr::ImportAssessment),
     Heif(crate::heif::ImportAssessment),
     Avif(crate::avif::ImportAssessment),
     AvifSdr(crate::avif::sdr::ImportAssessment),
@@ -49,14 +50,14 @@ impl PreparedProfile {
             Self::Jxl | Self::Heif(_) | Self::Avif(_) | Self::AvifSdr(_) | Self::Float { .. } => {
                 None
             }
-            Self::Jxr(assessment) => Some(assessment),
+            Self::Jxr(assessment) | Self::JxrWriter(assessment) => Some(assessment),
         }
     }
     fn losses(&self) -> &[&'static str] {
         match self {
             Self::Jxl => &[],
             Self::Float { assessment, .. } => assessment.assessment().losses(),
-            Self::Jxr(assessment) => assessment.losses(),
+            Self::Jxr(assessment) | Self::JxrWriter(assessment) => assessment.losses(),
             Self::Heif(assessment) => assessment.losses(),
             Self::Avif(assessment) => assessment.losses(),
             Self::AvifSdr(assessment) => assessment.losses(),
@@ -66,7 +67,9 @@ impl PreparedProfile {
         match self {
             Self::Jxl => {}
             Self::Float { assessment, .. } => assessment.assessment().require_losses(allowed)?,
-            Self::Jxr(assessment) => assessment.require_losses(allowed)?,
+            Self::Jxr(assessment) | Self::JxrWriter(assessment) => {
+                assessment.require_losses(allowed)?
+            }
             Self::Heif(assessment) => assessment.require_losses(allowed)?,
             Self::Avif(assessment) => assessment.require_losses(allowed)?,
             Self::AvifSdr(assessment) => assessment.require_losses(allowed)?,
@@ -129,6 +132,7 @@ impl Job {
         launch: impl FnOnce(Launch<'_>, &dyn Fn() -> Result<()>) -> Result<Vec<u8>>,
     ) -> Result<PreparedImport> {
         self.prepare_selected(
+            false,
             residency,
             lease,
             host_check,
@@ -155,6 +159,7 @@ impl Job {
             ));
         }
         self.prepare_selected(
+            false,
             residency,
             lease,
             host_check,
@@ -172,8 +177,10 @@ impl Job {
             launch,
         )
     }
-    fn prepare_selected(
+    #[allow(clippy::too_many_arguments)] // Closed profile selection shares all resident adoption logic.
+    pub(super) fn prepare_selected(
         self,
+        writer: bool,
         residency: SharedBudget,
         lease: ResourceLease,
         host_check: &dyn Fn() -> Result<()>,
@@ -202,7 +209,8 @@ impl Job {
         let length = self.length;
         let owner = self.owner;
         let fixed_codec = self.codec;
-        let (document, sha256, profile) = self.consume_selected(
+        let (document, sha256, profile) = self.consume_profile(
+            writer,
             host_check,
             current_owner,
             |bytes, pixels, check| {
@@ -224,7 +232,12 @@ impl Job {
                 let profile = match request.header.codec {
                     Codec::JxlRgba8 => PreparedProfile::Jxl,
                     Codec::JxrRgb8 => {
-                        let assessment = crate::jxr::assess_import(
+                        let assess = if writer {
+                            crate::jxr::assess_writer_import
+                        } else {
+                            crate::jxr::assess_import
+                        };
+                        let assessment = assess(
                             request.source.as_slice(),
                             u64::from(request.header.pixels),
                             check,
@@ -237,7 +250,11 @@ impl Job {
                                 "JXR frame geometry or opacity differs from admitted RGB8 source",
                             ));
                         }
-                        PreparedProfile::Jxr(assessment)
+                        if writer {
+                            PreparedProfile::JxrWriter(assessment)
+                        } else {
+                            PreparedProfile::Jxr(assessment)
+                        }
                     }
                     Codec::AvifSrgb8 => {
                         let assessment = match selected {
@@ -396,6 +413,9 @@ impl PreparedImport {
                 unreachable!("private float profile requires a float codec")
             }
             PreparedProfile::Jxr(_) => NATIVE_JXR_IMPORT_VARIANT,
+            PreparedProfile::JxrWriter(_) => {
+                super::super::jxr_encode::candidate::WRITER_IMPORT_VARIANT
+            }
             PreparedProfile::Heif(_) => NATIVE_HEIF_IMPORT_VARIANT,
             PreparedProfile::Avif(_) => NATIVE_AVIF_IMPORT_VARIANT,
             PreparedProfile::AvifSdr(_) => NATIVE_AVIF_SDR_IMPORT_VARIANT,
@@ -455,7 +475,9 @@ impl PreparedImport {
         let (jxr_assessment, heif_assessment, avif_assessment, avif_sdr_assessment) =
             match self.profile {
                 PreparedProfile::Jxl | PreparedProfile::Float { .. } => (None, None, None, None),
-                PreparedProfile::Jxr(assessment) => (Some(assessment), None, None, None),
+                PreparedProfile::Jxr(assessment) | PreparedProfile::JxrWriter(assessment) => {
+                    (Some(assessment), None, None, None)
+                }
                 PreparedProfile::Heif(assessment) => (None, Some(assessment), None, None),
                 PreparedProfile::Avif(assessment) => (None, None, Some(assessment), None),
                 PreparedProfile::AvifSdr(assessment) => (None, None, None, Some(assessment)),
