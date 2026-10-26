@@ -1,4 +1,4 @@
-//! Actual copied V6 helper qualification, using headless egui controls only.
+//! Actual copied V6/V7 helper qualification, using headless egui controls only.
 use super::*;
 #[test]
 fn selected_profile_admission_keeps_frontends_extensions_and_codec_distinct() {
@@ -115,7 +115,7 @@ fn save_reopen_and_guard_source(
     assert_eq!(fs::read(alias).unwrap(), original);
 }
 #[test]
-#[ignore = "requires a copied installation with the exact real AVIF SDR V6 helper"]
+#[ignore = "requires a copied installation with the exact real AVIF SDR V6/V7 helper"]
 fn fixture_real_installed_avif_sdr_review() {
     let root = std::env::current_exe()
         .unwrap()

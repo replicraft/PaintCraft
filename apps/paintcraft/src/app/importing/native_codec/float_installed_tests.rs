@@ -378,3 +378,97 @@ fn fixture_real_installed_float_preserves_nonempty_project_on_cancel_stale_and_s
         }
     }
 }
+
+/// Test-only artifact injection stages a real installation. Production discovers
+/// exclusively from its running executable, without an environment/PATH override.
+#[test]
+#[ignore = "requires PAINTCRAFT_V7_HELPER pointing to the final qualified V7 artifact"]
+fn copied_final_v7_helper_qualifies_float_and_existing_native_imports() {
+    use paintcraft_core::types::json;
+    use std::process::Command;
+    let helper =
+        PathBuf::from(std::env::var_os("PAINTCRAFT_V7_HELPER").expect("final V7 artifact path"));
+    let base = std::env::var_os("PAINTCRAFT_FLOAT_UI_EVIDENCE")
+        .map(PathBuf::from)
+        .unwrap_or_else(std::env::temp_dir);
+    let evidence = base.join(format!("final-descriptor-{}", Uuid::new_v4()));
+    let root = evidence.join("installation");
+    fs::create_dir_all(&root).unwrap();
+    let root = root.canonicalize().unwrap();
+    let current = std::env::current_exe().unwrap();
+    let application = root.join(current.file_name().unwrap());
+    fs::copy(current, &application).unwrap();
+    let helper_name = if cfg!(windows) {
+        "paintcraft-codec-worker.exe"
+    } else {
+        "paintcraft-codec-worker"
+    };
+    let installed = root.join(helper_name);
+    fs::copy(helper, &installed).unwrap();
+    let target = match (std::env::consts::OS, std::env::consts::ARCH) {
+        ("macos", "aarch64") => "aarch64-apple-darwin",
+        ("macos", "x86_64") => "x86_64-apple-darwin",
+        ("linux", "aarch64") if cfg!(target_env = "gnu") => "aarch64-unknown-linux-gnu",
+        ("linux", "x86_64") if cfg!(target_env = "gnu") => "x86_64-unknown-linux-gnu",
+        ("windows", "aarch64") if cfg!(target_env = "msvc") => "aarch64-pc-windows-msvc",
+        ("windows", "x86_64") if cfg!(target_env = "msvc") => "x86_64-pc-windows-msvc",
+        _ => panic!("supported release target required"),
+    };
+    let manifest = super::super::fixture_manifest::manifest(
+        &installed,
+        target,
+        Some(wire::NATIVE_HDR_SDR_IMPORT_VARIANT),
+    );
+    assert_eq!(
+        manifest.get("profile").and_then(|v| v.as_str()),
+        Some(wire::FLOAT_NATIVE_PROFILE)
+    );
+    assert_eq!(
+        manifest
+            .get("qualified_import_variants")
+            .and_then(|v| v.as_array())
+            .unwrap()
+            .len(),
+        7
+    );
+    fs::write(
+        root.join("paintcraft-codec-worker.json"),
+        json::canonical(&manifest),
+    )
+    .unwrap();
+    println!("Final V7 App installation: {}", root.display());
+    for test in [
+        "importing::native_codec::float::installed_tests::fixture_real_installed_float_settings_preview_and_adoption",
+        "importing::native_codec::float::installed_tests::fixture_real_installed_float_preserves_nonempty_project_on_cancel_stale_and_source_change",
+        "importing::native_codec::installed_tests::fixture_real_installed_jxl",
+        "importing::native_codec::installed_tests::fixture_running_helper_cancel",
+        "importing::native_codec::jxr_installed_tests::fixture_real_installed_jxr_review",
+        "importing::native_codec::heif_installed_tests::fixture_real_installed_heif_review",
+        "importing::native_codec::avif_installed_tests::fixture_real_installed_avif_review",
+        "importing::native_codec::avif_sdr_installed_tests::fixture_real_installed_avif_sdr_review",
+    ] {
+        let output = Command::new(&application)
+            .args([
+                "--exact",
+                test,
+                "--ignored",
+                "--nocapture",
+                "--test-threads=1",
+            ])
+            .output()
+            .unwrap();
+        let name = test.rsplit("::").next().unwrap();
+        let mut log = output.stdout.clone();
+        log.extend(&output.stderr);
+        fs::write(evidence.join(format!("{name}.log")), &log).unwrap();
+        assert!(
+            output.status.success()
+                && String::from_utf8_lossy(&output.stdout).contains("test result: ok. 1 passed"),
+            "{test}: {}",
+            String::from_utf8_lossy(&log)
+        );
+        println!("Final V7 App fixture passed: {name}");
+    }
+    // Keep the complete installation, inputs, generated PCND files and logs for
+    // inspection, including any failed child rather than deleting its evidence.
+}

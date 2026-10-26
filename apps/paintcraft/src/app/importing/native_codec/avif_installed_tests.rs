@@ -1,4 +1,4 @@
-//! Actual installed V5 helper and headless Studio controls, without OS windows.
+//! Actual installed V5/V6/V7 helper and headless Studio controls, without OS windows.
 use super::tests::{app as make_app, draw, retire};
 use super::*;
 use egui_kittest::{
