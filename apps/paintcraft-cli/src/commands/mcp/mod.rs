@@ -1,6 +1,7 @@
 //! Ephemeral headless painting session. Stdout belongs exclusively to MCP.
 mod brushes;
 mod dcx;
+mod floats;
 mod icns;
 mod icons;
 mod layered;

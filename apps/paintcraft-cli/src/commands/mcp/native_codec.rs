@@ -32,7 +32,7 @@ impl Drop for RpcLife {
         self.0.store(true, Ordering::Release);
     }
 }
-fn owner(state: &State, empty: wire::Owner) -> wire::Owner {
+pub(super) fn owner(state: &State, empty: wire::Owner) -> wire::Owner {
     state.session.as_ref().map_or(empty, |session| {
         let history = session.history_ticket();
         wire::Owner {
@@ -110,7 +110,7 @@ fn admit(
 
 type Launch =
     Box<dyn FnOnce(wire::native::Launch<'_>, &dyn Fn() -> Result<()>) -> Result<Vec<u8>> + Send>;
-fn preparation_budget() -> SharedBudget {
+pub(super) fn preparation_budget() -> SharedBudget {
     static PREPARATION: OnceLock<SharedBudget> = OnceLock::new();
     PREPARATION
         .get_or_init(|| SharedBudget::new(512 << 20))
