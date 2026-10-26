@@ -1,4 +1,4 @@
-//! Bounded AVIF writer and physical container inspection; no enabled decoder.
+//! Bounded AVIF export and explicitly qualified native identity import admission.
 //!
 //! The selected image/ravif path is lossy even at quality 100. Its public API
 //! cleans invisible RGB and uses the selected quality for alpha too. Input and
@@ -8,6 +8,7 @@ mod graph;
 mod import;
 mod inspect;
 mod properties;
+pub mod sdr;
 mod sequence;
 pub use admission::{ALPHA_AUXILIARY_TYPE, Admitted, CodedItem, admit_srgb8};
 use image::ImageEncoder;

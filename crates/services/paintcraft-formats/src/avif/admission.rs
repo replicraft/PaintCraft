@@ -20,6 +20,11 @@ pub struct Admitted<'a> {
     pub primary: CodedItem<'a>,
     pub alpha: Option<CodedItem<'a>>,
 }
+#[derive(Clone, Copy)]
+pub(super) enum ColorPolicy {
+    Identity,
+    Ycbcr709,
+}
 fn once<T>(slot: &mut Option<T>, value: T) -> Result<()> {
     if slot.replace(value).is_some() {
         return Err(invalid("Duplicate AVIF associated semantic property"));
@@ -29,6 +34,7 @@ fn once<T>(slot: &mut Option<T>, value: T) -> Result<()> {
 fn coded<'a>(
     item: Item<'a, Property<'a>>,
     alpha: bool,
+    policy: ColorPolicy,
     pixels: u64,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<CodedItem<'a>> {
@@ -111,19 +117,38 @@ fn coded<'a>(
                 "AVIF requires an explicit full-range straight 8-bit alpha auxiliary",
             ));
         }
-    } else if auxiliary.is_some()
-        || color != Some((1, 13, 0, true))
-        || sequence.profile != 1
-        || sequence.monochrome
-        || !sequence.full_range
-        || sequence.subsampling_x
-        || sequence.subsampling_y
-        || sequence.chroma_position != 0
-        || (sequence.primaries, sequence.transfer, sequence.matrix) != (1, 13, 0)
-    {
-        return Err(unsupported(
-            "AVIF initial color profile requires explicit full-range identity sRGB8 4:4:4",
-        ));
+    } else {
+        let accepted = match policy {
+            ColorPolicy::Identity => {
+                color == Some((1, 13, 0, true))
+                    && sequence.profile == 1
+                    && !sequence.monochrome
+                    && sequence.full_range
+                    && !sequence.subsampling_x
+                    && !sequence.subsampling_y
+                    && sequence.chroma_position == 0
+                    && (sequence.primaries, sequence.transfer, sequence.matrix) == (1, 13, 0)
+            }
+            ColorPolicy::Ycbcr709 => {
+                let geometry = if sequence.subsampling_x && sequence.subsampling_y {
+                    sequence.profile == 0 && matches!(sequence.chroma_position, 1 | 2)
+                } else {
+                    sequence.profile == 1
+                        && !sequence.subsampling_x
+                        && !sequence.subsampling_y
+                        && sequence.chroma_position == 0
+                };
+                geometry
+                    && !sequence.monochrome
+                    && color == Some((1, 13, 1, sequence.full_range))
+                    && (sequence.primaries, sequence.transfer, sequence.matrix) == (1, 13, 1)
+            }
+        };
+        if auxiliary.is_some() || !accepted {
+            return Err(unsupported(
+                "AVIF color does not match the selected explicit profile",
+            ));
+        }
     }
     Ok(CodedItem {
         id: item.id,
@@ -145,6 +170,14 @@ pub fn admit_srgb8<'a>(
     bytes: &'a [u8],
     pixels: u64,
     check: &dyn Fn() -> Result<()>,
+) -> Result<Admitted<'a>> {
+    admit_with_policy(bytes, pixels, check, ColorPolicy::Identity)
+}
+pub(super) fn admit_with_policy<'a>(
+    bytes: &'a [u8],
+    pixels: u64,
+    check: &dyn Fn() -> Result<()>,
+    policy: ColorPolicy,
 ) -> Result<Admitted<'a>> {
     let graph = graph::inspect(bytes, pixels, check)?;
     if !(1..=2).contains(&graph.items.len()) {
@@ -179,7 +212,7 @@ pub fn admit_srgb8<'a>(
     for item in graph.items {
         check()?;
         let is_alpha = item.id != graph.primary_id;
-        let item = coded(item, is_alpha, pixels, check)?;
+        let item = coded(item, is_alpha, policy, pixels, check)?;
         if is_alpha {
             alpha = Some(item);
         } else {
