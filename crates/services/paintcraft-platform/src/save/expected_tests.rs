@@ -128,3 +128,34 @@ fn namespace_guard_rejects_equal_content_in_a_different_destination_before_stagi
     assert_eq!(next.destination_id, expected.destination_id);
     fs::remove_dir_all(dir).unwrap();
 }
+
+#[test]
+fn expected_content_and_failed_preparation_preserve_staged_outcome_and_destination() {
+    let dir = tests::scratch("expected-content-preparation");
+    let dest = dir.join("image.pcnd");
+    fs::write(&dest, b"old bytes").unwrap();
+    let out = save_with_expected_sha256_and_preparation(
+        &dest,
+        true,
+        1024,
+        &digest(b"old bytes"),
+        |sink| sink.write_all(b"new bytes").map_err(io_error),
+        |staged| {
+            assert_eq!(
+                staged.staged_sha256.as_deref(),
+                Some(digest(b"new bytes").as_str())
+            );
+            assert_eq!(staged.replacement, Replacement::NotReplaced);
+            Err(Error::new(
+                ErrorCode::ConflictStaleBase,
+                "source guard refused",
+            ))
+        },
+    );
+    assert_eq!(out.replacement, Replacement::NotReplaced);
+    assert!(!out.is_success());
+    assert_eq!(out.staged_sha256, Some(digest(b"new bytes")));
+    assert_eq!(fs::read(&dest).unwrap(), b"old bytes");
+    assert_eq!(fs::read_dir(&dir).unwrap().count(), 1);
+    fs::remove_dir_all(dir).unwrap();
+}

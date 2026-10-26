@@ -345,6 +345,26 @@ pub fn save_with_expected_sha256(
     expected_sha256: &str,
     encode: impl FnOnce(&mut dyn Write) -> Result<(), Error>,
 ) -> Outcome {
+    save_with_expected_sha256_and_preparation(
+        dest,
+        overwrite,
+        byte_limit,
+        expected_sha256,
+        encode,
+        |_| Ok(()),
+    )
+}
+
+/// Expected-content admission with the same post-staging preparation checkpoint.
+/// A failed callback preserves the existing destination and staged outcome facts.
+pub fn save_with_expected_sha256_and_preparation(
+    dest: &Path,
+    overwrite: bool,
+    byte_limit: u64,
+    expected_sha256: &str,
+    encode: impl FnOnce(&mut dyn Write) -> Result<(), Error>,
+    prepare: impl FnOnce(&Outcome) -> Result<(), Error>,
+) -> Outcome {
     if !valid_digest(expected_sha256) {
         return not_attempted(&Error::new(
             ErrorCode::InputSchema,
@@ -361,7 +381,7 @@ pub fn save_with_expected_sha256(
         }),
         encode,
         |_| Ok(()),
-        |_| Ok(()),
+        prepare,
     )
 }
 
