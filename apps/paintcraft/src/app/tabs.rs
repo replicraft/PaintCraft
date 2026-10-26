@@ -40,6 +40,7 @@ pub(super) struct DocumentState {
     path_text: String,
     bound: Option<PathBuf>,
     imported_source: Option<PathBuf>,
+    auxiliary_sources: Vec<crate::destination::SourceGuard>,
     pending_save: Option<(PathBuf, crate::destination::Previous)>,
     pub(super) deferred_files: std::collections::VecDeque<editing::DeferredFile>,
     save_activation: Option<u64>,
@@ -63,6 +64,7 @@ impl DocumentState {
             path_text: "untitled.pcnd".into(),
             bound: None,
             imported_source: None,
+            auxiliary_sources: Vec::new(),
             pending_save: None,
             deferred_files: Default::default(),
             save_activation: None,
@@ -87,6 +89,7 @@ impl DocumentState {
         std::mem::swap(&mut self.path_text, &mut app.path_text);
         std::mem::swap(&mut self.bound, &mut app.bound);
         std::mem::swap(&mut self.imported_source, &mut app.imported_source);
+        std::mem::swap(&mut self.auxiliary_sources, &mut app.auxiliary_sources);
         std::mem::swap(&mut self.pending_save, &mut app.pending_save);
         std::mem::swap(&mut self.deferred_files, &mut app.deferred_files);
         std::mem::swap(&mut self.save_activation, &mut app.save_activation);
@@ -486,8 +489,24 @@ impl WorkspaceDocuments {
 }
 
 impl App {
-    /// Export must not replace document or resource sources, including parked tabs.
-    pub(super) fn protected_source_paths(&self) -> Vec<&Path> {
+    pub(super) fn auxiliary_source_guards(&self) -> Vec<&crate::destination::SourceGuard> {
+        let mut sources: Vec<_> = self.auxiliary_sources.iter().collect();
+        if let Some(pending) = &self.pending_import {
+            sources.extend(pending.input_guards());
+        }
+        for state in self.tabs.iter().filter_map(|tab| tab.state.as_ref()) {
+            sources.extend(&state.auxiliary_sources);
+        }
+        if let Some(workspace) = &self.other_workspace {
+            sources.extend(&workspace.active.auxiliary_sources);
+            for state in workspace.tabs.iter().filter_map(|tab| tab.state.as_ref()) {
+                sources.extend(&state.auxiliary_sources);
+            }
+        }
+        sources
+    }
+    /// Painting associations include inactive tabs and the other workspace.
+    pub(super) fn document_source_paths(&self) -> Vec<&Path> {
         fn add<'a>(state: &'a DocumentState, sources: &mut Vec<&'a Path>) {
             sources.extend(state.bound.as_deref());
             sources.extend(state.imported_source.as_deref());
@@ -495,7 +514,6 @@ impl App {
         let mut sources = Vec::new();
         sources.extend(self.bound.as_deref());
         sources.extend(self.imported_source.as_deref());
-        sources.extend(self.asset_source_paths());
         for state in self.tabs.iter().filter_map(|tab| tab.state.as_ref()) {
             add(state, &mut sources);
         }

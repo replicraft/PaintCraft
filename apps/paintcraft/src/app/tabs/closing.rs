@@ -63,6 +63,8 @@ impl App {
             }
             self.active_tab = 0;
             self.bound = None;
+            self.imported_source = None;
+            self.auxiliary_sources.clear();
             self.path_text = "untitled.pcnd".into();
             self.pending_save = None;
             self.deferred_files.clear();

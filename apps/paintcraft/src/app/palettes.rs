@@ -228,25 +228,9 @@ impl App {
             } else {
                 admit(self.format_frontend(), &path, Operation::ExportAsset)?;
                 self.guard_export_destination(&path)?;
-                if self
-                    .protected_source_paths()
-                    .into_iter()
-                    .any(|source| crate::destination::same_file(source, &path))
-                {
-                    return Err(Error::new(
-                        ErrorCode::InputSchema,
-                        "palette export must not replace an open document source",
-                    ));
-                }
-                let source = pick.source.as_ref().ok_or_else(|| {
+                pick.source.as_ref().ok_or_else(|| {
                     Error::new(ErrorCode::InputSchema, "missing palette export source")
                 })?;
-                if crate::destination::same_file(&source.source, &path) {
-                    return Err(Error::new(
-                        ErrorCode::InputSchema,
-                        "palette export must not replace its source",
-                    ));
-                }
                 let expected = match std::fs::symlink_metadata(&path) {
                     Ok(_) => {
                         let resolved = std::fs::canonicalize(&path)

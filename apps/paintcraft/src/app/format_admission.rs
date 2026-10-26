@@ -30,31 +30,63 @@ impl App {
         }
         Ok(())
     }
-    fn asset_identity_matches(&self, path: &Path) -> Result<bool> {
-        for identity in self
+    fn source_destination_matches(&self, path: &Path, documents: bool) -> Result<bool> {
+        let document_sources = if documents {
+            self.document_source_paths()
+        } else {
+            Vec::new()
+        };
+        if self
+            .asset_source_paths()
+            .chain(document_sources.iter().copied())
+            .any(|source| crate::tabs::same_destination(source, path))
+        {
+            return Ok(true);
+        }
+        let mut identities = self
             .palettes
             .source_identity()
             .into_iter()
             .chain(self.shapes.source_identity())
-        {
-            if identity.matches_path(path)? {
-                return Ok(true);
-            }
+            .chain(
+                self.auxiliary_source_guards()
+                    .into_iter()
+                    .map(|source| &source.identity),
+            )
+            .peekable();
+        if identities.peek().is_none() && document_sources.is_empty() {
+            return Ok(false);
         }
-        Ok(false)
+        // Capture the destination once for all loaded and parked owners.
+        let Some(candidate) = crate::destination::SourceIdentity::existing_destination(path)?
+        else {
+            return Ok(false);
+        };
+        if identities.any(|identity| identity.matches(&candidate)) {
+            return Ok(true);
+        }
+        // Ordinary painting associations retain their existing current-path
+        // comparison. Only acquired SVG/resource inputs have frozen identities.
+        Ok(document_sources.into_iter().any(|source| {
+            crate::destination::SourceIdentity::existing_destination(source)
+                .ok()
+                .flatten()
+                .is_some_and(|identity| identity.matches(&candidate))
+        }))
     }
     pub(super) fn asset_source_paths(&self) -> impl Iterator<Item = &Path> {
         self.palettes
             .source_path()
             .into_iter()
             .chain(self.shapes.source_path())
+            .chain(
+                self.auxiliary_source_guards()
+                    .into_iter()
+                    .map(|source| source.path.as_path()),
+            )
     }
     pub(super) fn guard_save_destination(&self, path: &Path) -> Result<()> {
-        if self.asset_identity_matches(path)?
-            || self
-                .asset_source_paths()
-                .any(|source| protected_destination(source, path))
-        {
+        if self.source_destination_matches(path, false)? {
             return Err(Error::new(
                 ErrorCode::InputSchema,
                 "a project save must not replace a loaded resource source",
@@ -63,12 +95,7 @@ impl App {
         Ok(())
     }
     pub(super) fn guard_export_destination(&self, path: &Path) -> Result<()> {
-        if self.asset_identity_matches(path)?
-            || self
-                .protected_source_paths()
-                .into_iter()
-                .any(|source| protected_destination(source, path))
-        {
+        if self.source_destination_matches(path, true)? {
             return Err(Error::new(
                 ErrorCode::InputSchema,
                 "an exported file must not replace an open document or loaded resource source",
@@ -128,12 +155,6 @@ impl App {
         app.editor.select_tool(Tool::Brush);
         app
     }
-}
-
-fn protected_destination(source: &Path, path: &Path) -> bool {
-    // Namespace comparison also protects the selected source path if it was
-    // deleted. Identity comparison additionally catches regular-file hard links.
-    crate::tabs::same_destination(source, path) || crate::destination::same_file(source, path)
 }
 
 pub(super) fn read_source(path: &Path) -> Result<Vec<u8>> {

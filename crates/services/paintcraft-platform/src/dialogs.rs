@@ -27,6 +27,7 @@ pub enum Kind {
     ExportPalette,
     ImportShape,
     ExportShape,
+    ImportSvgFont,
 }
 #[derive(Debug)]
 pub struct Completion {
@@ -105,6 +106,10 @@ impl NativeDialogs {
                 name: "Adobe custom shapes".into(),
                 extensions: vec!["csh".into()],
             }],
+            Kind::ImportSvgFont => vec![Filter {
+                name: "Font files".into(),
+                extensions: ["ttf", "otf", "ttc", "otc"].map(str::to_owned).into(),
+            }],
             Kind::ImportPalette | Kind::ExportPalette => vec![Filter {
                 name: "Adobe Swatch Exchange palette".into(),
                 extensions: vec!["ase".into()],
@@ -170,6 +175,7 @@ impl NativeDialogs {
             Kind::ExportPalette => dialog.set_title(label("Export palette")),
             Kind::ImportShape => dialog.set_title(label("Import shapes")),
             Kind::ExportShape => dialog.set_title(label("Export shapes")),
+            Kind::ImportSvgFont => dialog.set_title(label("Add font files")),
         };
         for filter in filters {
             dialog = dialog.add_filter(label(&filter.name), &filter.extensions);
@@ -185,6 +191,7 @@ impl NativeDialogs {
                         | Kind::InspectRecovery
                         | Kind::ImportPalette
                         | Kind::ImportShape
+                        | Kind::ImportSvgFont
                 ) {
                     dialog.pick_file().await
                 } else {
@@ -201,6 +208,7 @@ impl NativeDialogs {
                         | Kind::InspectRecovery
                         | Kind::ImportPalette
                         | Kind::ImportShape
+                        | Kind::ImportSvgFont
                 )
             {
                 path.set_extension(fallback_extension);

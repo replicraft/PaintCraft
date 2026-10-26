@@ -10,11 +10,12 @@ mod dcx;
 mod icons;
 #[path = "importing/svg.rs"]
 mod svg;
+pub(super) use svg::FontPick;
 
 enum Candidate {
     Pages(dcx::Pages),
     Entries(icons::Entries),
-    Svg(svg::Source),
+    Svg(Box<svg::Source>),
     Raster(image::Decoded),
     Layered(paintcraft_formats::project_import::Converted),
 }
@@ -37,8 +38,16 @@ pub(super) struct Pending {
     frontend: Frontend,
     dirty: bool,
     convert: bool,
+    auxiliary_sources: Vec<crate::destination::SourceGuard>,
 }
 impl Pending {
+    pub(super) fn input_guards(&self) -> Vec<&crate::destination::SourceGuard> {
+        let mut inputs: Vec<_> = self.auxiliary_sources.iter().collect();
+        if let Candidate::Svg(source) = &self.candidate {
+            inputs.extend(source.input_guards());
+        }
+        inputs
+    }
     fn current(&self, app: &App) -> bool {
         app.active_tab_id() == self.owner
             && app.editor.render_key() == self.ticket
@@ -100,6 +109,7 @@ impl App {
             frontend: self.format_frontend(),
             dirty: self.editor.is_dirty(),
             convert,
+            auxiliary_sources: Vec::new(),
         });
         self.confirm = Some(Confirm::ImportLosses);
         Ok(())
@@ -145,6 +155,7 @@ impl App {
             self.install(editor)?;
             self.bound = None;
             self.imported_source = Some(pending.path.clone());
+            self.auxiliary_sources = pending.auxiliary_sources;
             self.path_text = pending
                 .path
                 .with_extension("pcnd")

@@ -11,6 +11,11 @@ use uuid::Uuid;
 /// without permitting inode reuse while a resource still owns it.
 #[derive(Debug)]
 pub(crate) struct SourceIdentity(same_file::Handle);
+#[derive(Debug)]
+pub(crate) struct SourceGuard {
+    pub path: PathBuf,
+    pub identity: SourceIdentity,
+}
 impl SourceIdentity {
     pub(crate) fn from_file(file: std::fs::File) -> Result<Self> {
         same_file::Handle::from_file(file)
@@ -21,20 +26,25 @@ impl SourceIdentity {
         self.0.as_file()
     }
     pub(crate) fn matches_path(&self, path: &Path) -> Result<bool> {
+        Ok(Self::existing_destination(path)?.is_some_and(|candidate| self.matches(&candidate)))
+    }
+    pub(crate) fn matches(&self, other: &Self) -> bool {
+        self.0 == other.0
+    }
+    pub(crate) fn existing_destination(path: &Path) -> Result<Option<Self>> {
         let metadata = match path.metadata() {
             Ok(metadata) => metadata,
-            Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(false),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
             Err(error) => return Err(identity_error(error)),
         };
         if !metadata.is_file() {
-            return Ok(false);
+            return Ok(None);
         }
         let file = std::fs::File::open(path).map_err(identity_error)?;
         if !file.metadata().map_err(identity_error)?.is_file() {
-            return Ok(false);
+            return Ok(None);
         }
-        let candidate = same_file::Handle::from_file(file).map_err(identity_error)?;
-        Ok(self.0 == candidate)
+        Self::from_file(file).map(Some)
     }
 }
 fn identity_error(error: std::io::Error) -> Error {

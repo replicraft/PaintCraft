@@ -81,6 +81,10 @@ impl App {
         ctx: &egui::Context,
         completion: paintcraft_platform::dialogs::Completion,
     ) {
+        if completion.kind == Kind::ImportSvgFont {
+            self.complete_svg_font_picker(ctx, completion.path);
+            return;
+        }
         if matches!(completion.kind, Kind::ImportShape | Kind::ExportShape) {
             self.complete_shape_picker(ctx, completion.kind, completion.path);
             return;
@@ -186,6 +190,7 @@ impl App {
             ),
             Kind::InspectRecovery => unreachable!("inspection completion handled separately"),
             Kind::ExportIcons => unreachable!("icon completion handled separately"),
+            Kind::ImportSvgFont => unreachable!("SVG font completion handled separately"),
             Kind::ImportShape | Kind::ExportShape => {
                 unreachable!("shape completion handled separately")
             }
@@ -244,6 +249,7 @@ impl App {
         }
         self.editor = editor;
         self.imported_source = None;
+        self.auxiliary_sources.clear();
         self.studio_fit = None;
         self.initial_fit = true;
         self.texture_key = None;
@@ -287,11 +293,11 @@ impl App {
                     "SVG rasterization requires explicit Studio import",
                 ));
             }
-            let bytes = crate::format_admission::read_source_bounded(
+            let source = crate::format_admission::acquire_resource_source(
                 path,
                 paintcraft_formats::svg::SOURCE_MAX as u64,
             )?;
-            return self.stage_svg_import(bytes, path.to_path_buf());
+            return self.stage_svg_import_acquired(source, path.to_path_buf());
         }
         let (bytes, binding) = crate::destination::acquire(path)?;
         if convert

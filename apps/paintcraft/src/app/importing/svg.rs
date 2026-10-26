@@ -5,13 +5,50 @@ use paintcraft_formats::{
     svg,
 };
 use paintcraft_ui::svg_import::{self, Response};
+#[path = "svg/fonts.rs"]
+mod fonts;
+
+#[derive(Debug)]
+pub(crate) struct FontPick {
+    source: Uuid,
+    files: Uuid,
+}
+struct FontFile {
+    bytes: Vec<u8>,
+    source: crate::destination::SourceGuard,
+}
 
 pub(super) struct Source {
+    id: Uuid,
+    font_files: Uuid,
+    additional: Vec<FontFile>,
     bytes: Vec<u8>,
     fonts: Option<svg::Fonts>,
     state: svg_import::State<paintcraft_formats::project_import::Converted>,
 }
+impl Source {
+    pub(super) fn input_guards(&self) -> impl Iterator<Item = &crate::destination::SourceGuard> {
+        self.additional.iter().map(|font| &font.source)
+    }
+}
 impl App {
+    pub(crate) fn stage_svg_import_acquired(
+        &mut self,
+        source: crate::format_admission::ResourceSource,
+        path: PathBuf,
+    ) -> Result<()> {
+        self.guard_asset_adoption(&path, Some(&source.identity))?;
+        self.stage_svg_import(source.bytes, path.clone())?;
+        self.pending_import
+            .as_mut()
+            .unwrap()
+            .auxiliary_sources
+            .push(crate::destination::SourceGuard {
+                path,
+                identity: source.identity,
+            });
+        Ok(())
+    }
     pub(crate) fn stage_svg_import(&mut self, bytes: Vec<u8>, path: PathBuf) -> Result<()> {
         registry::admit_import_svg(
             self.format_frontend(),
@@ -21,11 +58,14 @@ impl App {
         )?;
         let digest = hex(&Sha256::digest(&bytes));
         self.stage_candidate(
-            Candidate::Svg(Source {
+            Candidate::Svg(Box::new(Source {
+                id: Uuid::new_v4(),
+                font_files: Uuid::new_v4(),
+                additional: Vec::new(),
                 bytes,
                 fonts: None,
                 state: Default::default(),
-            }),
+            })),
             path,
             digest,
             true,
@@ -50,7 +90,19 @@ impl App {
             .file_name()
             .unwrap_or_default()
             .to_string_lossy();
+        source.sync_fonts(self.svg_font_picker.as_ref());
         match source.state.dialog(ctx, &name) {
+            Response::AddFonts => {
+                if let Err(error) = self.request_svg_font_picker(ctx, source.id, source.font_files)
+                {
+                    source.state.font_failure(t!(
+                        ctx,
+                        "Could not add font files: { $detail }",
+                        detail = error
+                    ));
+                }
+            }
+            Response::RemoveFont(index) => source.remove_font(index),
             Response::Preview(config) => {
                 let result = (|| {
                     let options = svg::Options {
@@ -64,11 +116,7 @@ impl App {
                     };
                     options.admit(image::DECODE_PIXELS_MAX)?;
                     if source.fonts.is_none() {
-                        source.fonts = Some(svg::Fonts::from_data(
-                            &paintcraft_ui::fonts::bundled_data(),
-                            "Selawik",
-                            &|| Ok(()),
-                        )?);
+                        source.fonts = Some(source.build_fonts(None)?);
                     }
                     let raster = svg::prepare(
                         &source.bytes,
@@ -106,6 +154,11 @@ impl App {
             }
             Response::Import => {
                 if let Some(converted) = source.state.take(ctx) {
+                    pending.auxiliary_sources.extend(
+                        std::mem::take(&mut source.additional)
+                            .into_iter()
+                            .map(|font| font.source),
+                    );
                     pending.candidate = Candidate::Layered(converted);
                     self.pending_import = Some(pending);
                     self.resolve_import(ctx, true);
