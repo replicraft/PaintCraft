@@ -578,3 +578,6 @@ fn alternate_profiles_reject_bad_variant_marker_cancellation_and_contracts() {
 mod three;
 
 mod four;
+
+#[path = "tests/encoder.rs"]
+mod encoder;

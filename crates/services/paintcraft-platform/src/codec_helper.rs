@@ -5,7 +5,11 @@
 //! must have the same trust as the running application; publisher/code signatures
 //! are not verified here. A checked path is not atomic execution-by-handle, and
 //! observed-change checks do not eliminate concurrent traversal/write/spawn races.
+mod encode;
 mod files;
+pub use encode::{
+    EncoderContract, VerifiedEncoderHelper, discover_encoder, for_application_encoder,
+};
 mod target;
 use crate::source::SourceIdentity;
 use files::{Pinned, inspect, read_manifest};
@@ -271,6 +275,35 @@ fn verify_set(
             ));
         }
     }
+    verify_selected(application, target, check, |value| {
+        let contract = contracts
+            .iter()
+            .copied()
+            .find(|candidate| {
+                value.get("profile").and_then(Value::as_str) == Some(candidate.profile)
+            })
+            .ok_or_else(|| {
+                unavailable("Installed helper profile is not one of the host's known contracts")
+            })?;
+        if value.as_object().is_none_or(|fields| fields.len() != 10)
+            || value.get("schema_version").and_then(Value::as_i64) != Some(2)
+        {
+            return Err(unavailable(
+                "Installed decoder manifest schema/fields differ",
+            ));
+        }
+        Ok(contract)
+    })
+}
+/// One bounded acquisition and verification path for both typed capabilities.
+/// The private selector enforces its complete schema before any binary checks.
+fn verify_selected<'a>(
+    application: &Path,
+    target: Target,
+    check: &dyn Fn() -> Result<()>,
+    select: impl FnOnce(&Value) -> Result<Contract<'a>>,
+) -> Result<VerifiedHelper> {
+    check()?;
     plain_path(application)?;
     let app = files::open(application, EXECUTABLE_BYTES_MAX)?;
     target.verify(&app)?;
@@ -298,20 +331,11 @@ fn verify_set(
     let (manifest_pin, bytes) = read_manifest(&manifest, MANIFEST_BYTES_MAX, check)?;
     let value = paintcraft_core::types::json::parse(&bytes)
         .map_err(|_| unavailable("Installed helper manifest is not strict JSON"))?;
-    let contract = contracts
-        .iter()
-        .copied()
-        .find(|candidate| value.get("profile").and_then(Value::as_str) == Some(candidate.profile))
-        .ok_or_else(|| {
-            unavailable("Installed helper profile is not one of the host's known contracts")
-        })?;
-    let expected_fields = 10;
-    if value.as_object().is_none_or(|v| v.len() != expected_fields)
-        || value.get("schema_version").and_then(Value::as_i64) != Some(2)
-        || value
-            .get("embedded_build_record_verified")
-            .and_then(Value::as_bool)
-            != Some(true)
+    let contract = select(&value)?;
+    if value
+        .get("embedded_build_record_verified")
+        .and_then(Value::as_bool)
+        != Some(true)
         || value.get("application_version").and_then(Value::as_str)
             != Some(contract.application_version)
         || value.get("protocol_version").and_then(Value::as_i64)
