@@ -16,6 +16,8 @@ from rational_oracle import rgb as rational_rgb
 from libheif_oracle import decode as libheif_decode
 
 ODD = len(sys.argv) > 2 and sys.argv[2] == "odd"
+ANONYMOUS = len(sys.argv) > 2 and sys.argv[2] == "anonymous"
+ITEM_NAME = b"" if ANONYMOUS else b"owned"
 WIDTH, HEIGHT = (33, 25) if ODD else (32, 24)
 OUTPUT = Path(sys.argv[1])
 OUTPUT.mkdir(parents=True, exist_ok=True)
@@ -77,7 +79,7 @@ def container(stream, chroma, matrix, full_range, alpha=None):
     offset = 0
     for index, data in enumerate(streams, 1):
         is_alpha = index == 2
-        items.append(full(b"infe", u16(index) + u16(0) + b"hvc1" + b"owned\0", 2, int(is_alpha)))
+        items.append(full(b"infe", u16(index) + u16(0) + b"hvc1" + ITEM_NAME + b"\0", 2, int(is_alpha)))
         base = len(props)
         props += [
             full(b"ispe", u32(WIDTH) + u32(HEIGHT)),

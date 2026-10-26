@@ -90,3 +90,11 @@ Primary references:
 This prerequisite does not enable HEIF document import or writing. Selected SPS
 parsing remains confined to the existing isolated worker boundary; bounded source
 inspection does not by itself bound upstream reference/scratch allocations.
+
+`anonymous-identity444-alpha.heic` is a separate valid wrapper with empty primary
+and alpha item names. Run `generate.py /private/tmp/new-empty-output anonymous`
+to reproduce it. `anonymous-oracle.json` proves its unchanged HEVC elementary
+bytes and identical independent libheif RGB/alpha against the named identity
+fixture. It qualifies the no-metadata-loss case without rewriting encoded pixels.
+Named wrappers separately report `heif-item-names-not-retained`, since source item
+labels in a receipt do not mean they are stored in the converted document.

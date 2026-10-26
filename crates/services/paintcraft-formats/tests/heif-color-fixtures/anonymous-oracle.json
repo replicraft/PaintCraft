@@ -1,0 +1,86 @@
+{
+    "name": "identity444-alpha",
+    "size": [
+        32,
+        24
+    ],
+    "mode": "RGBA",
+    "stride": 128,
+    "source_sha256": "bd452730be183afdd58877c67c62dc32a87bc17a5c649c3bd4f5331e76e12024",
+    "authored_samples_sha256": "0d352c3090cb5c2fbf17fa6829b6b1933ea9a07e438d630fad52780a302dbcde",
+    "ffmpeg_native_differences_from_authored": 0,
+    "libheif_pixels_sha256": "1c39feb75f4ba31cb6639a84f7140b6bd7c9f8b7c151fbb51df9bc65e2395398",
+    "encode_command": [
+        "ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-f",
+        "rawvideo",
+        "-pixel_format",
+        "gbrp",
+        "-video_size",
+        "32x24",
+        "-i",
+        "/private/tmp/paintcraft-heif-color-oracle-anonymous/identity444.raw",
+        "-frames:v",
+        "1",
+        "-c:v",
+        "libx265",
+        "-x265-params",
+        "lossless=1:colorprim=1:transfer=13:colormatrix=0:range=full:repeat-headers=1:keyint=1:bframes=0:pools=none:frame-threads=1:wpp=0:log-level=error",
+        "-f",
+        "hevc",
+        "/private/tmp/paintcraft-heif-color-oracle-anonymous/identity444.h265"
+    ],
+    "rgb_command": [
+        "ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-i",
+        "/private/tmp/paintcraft-heif-color-oracle-anonymous/identity444.h265",
+        "-frames:v",
+        "1",
+        "-f",
+        "rawvideo",
+        "-pix_fmt",
+        "rgb24",
+        "-"
+    ],
+    "ffmpeg_rgb_sha256": "0edc1cdb2521da4a8b12bacb03de34b8e394d4c943709df874955ee9f6aab3ef",
+    "rational_rgb_sha256": "0edc1cdb2521da4a8b12bacb03de34b8e394d4c943709df874955ee9f6aab3ef",
+    "libheif_bilinear_sha256": "1c39feb75f4ba31cb6639a84f7140b6bd7c9f8b7c151fbb51df9bc65e2395398",
+    "nclx": [
+        1,
+        13,
+        0,
+        true
+    ],
+    "alpha": true,
+    "generation_mode": "anonymous",
+    "named_hevc_elementary_sha256": "6ea92cdc868c42538d7d2f2978e4249a865c3d855258ddadac7cf3c8bbc2b09f",
+    "anonymous_hevc_elementary_sha256": "6ea92cdc868c42538d7d2f2978e4249a865c3d855258ddadac7cf3c8bbc2b09f",
+    "oracle_versions": {
+        "pillow_heif": "1.1.1",
+        "pillow": "12.0.0",
+        "libheif": {
+            "libheif": "1.20.2",
+            "HEIF": "x265 HEVC encoder (4.1+1-1d117be)",
+            "AVIF": "",
+            "encoders": {
+                "x265": "x265 HEVC encoder (4.1+1-1d117be)",
+                "mask": "mask"
+            },
+            "decoders": {
+                "libde265": "libde265 HEVC decoder, version 1.0.16"
+            }
+        },
+        "ffmpeg": "ffmpeg version 8.0.1 Copyright (c) 2000-2025 the FFmpeg developers",
+        "native_library_sha256": {
+            "libheif.1.20.2.dylib": "b15db05586f646d35b4a618f4f6583b798e7005defd6ba95158b2da0835ddb59",
+            "libx265.215.dylib": "e2715e8d2cb1244ddfe0423197ab642abac4e107fa95ef887fb8bea2e17b5b69",
+            "libde265.dylib": "9ea2939ebeb9d1c31d4b192b31b22b415ef460b3968cdb07e1a2ba3d73b2f9f5"
+        }
+    }
+}
