@@ -18,6 +18,7 @@ pub mod jxl;
 pub mod jxr;
 pub mod msp;
 pub mod ora;
+pub mod paint;
 pub mod pcnd;
 pub mod pcx;
 pub mod pdn;
