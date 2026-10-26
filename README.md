@@ -45,6 +45,7 @@ cargo run --release -p paintcraft-cli -- mcp
 - **HEIC/HEIF import:** native Studio, CLI and MCP can import supported sRGB pictures with transparency after reviewing any color or metadata losses.
 - **AVIF import:** native Studio, CLI and MCP can import supported sRGB pictures with transparency from a complete installation.
 - **Extra imports in Studio:** QOI, Netpbm, farbfeld and PCX, plus a selected DCX page or ICO/CUR entry.
+- **DCX export:** save a single-page copy through the native CLI or MCP.
 - **Historical MSP:** import monochrome Paint pictures in Studio, CLI and MCP; export exact opaque black-and-white MSP1 copies.
 - **Icon export in Studio, CLI and MCP:** multi-size ICO/CUR files with PNG or bitmap entries and cursor hotspots.
 - **Apple icons:** import a chosen ICNS entry and export new icon sets with explicit sizes and Retina scale in Studio, CLI and MCP.

@@ -1,9 +1,10 @@
 # AVIF decoder qualification status
 
 As of 2026-10-26, native Studio **Import image…**, CLI and native MCP support
-`native-avif-srgb8-worker-v1` through the verified AVIF-enabled V5 helper.
-The first reader covers explicit identity sRGB8 still pictures with optional
-same-size straight auxiliary alpha. This is a qualified subset, not full AVIF
+`native-avif-srgb8-worker-v1` and `native-avif-sdr-ycbcr8-worker-v1` through
+verified native helpers. Identity sources accept exact V5 or V6; the SDR YCbCr
+profile requires V6. Both cover still pictures with optional same-size straight
+auxiliary alpha. This is a qualified subset, not full AVIF
 parity. The existing lossy ravif export path is unchanged.
 
 ## Admitted source and conversion policy
@@ -29,8 +30,18 @@ Limits are 64 MiB input, 4 MiB metadata, 4096 boxes, depth 8, 1024 properties,
 one admitted sequence and combined-frame OBU per coded item. Missing or unused
 properties, metadata disagreement, sequences, film grain, super-resolution,
 render-size changes, derived images/grids, transforms, premultiplication, ICC,
-HDR/deep precision and SDR YCbCr profiles are refused. The physical-container
+HDR/deep precision and unqualified color/chroma profiles are refused. The physical-container
 inventory API alone does not qualify a source for decoding.
+
+The additional SDR profile requires explicit BT.709 primaries/matrix (1), sRGB
+transfer (13), 8-bit full or limited range, and 4:4:4 or 4:2:0. Subsampled sources
+require explicit vertical or colocated chroma positions; unknown positions are
+refused. The sealed family selector classifies the same acquired source once,
+then requires frontend/variant admission before helper discovery or launch.
+There is no retry through another decoder after a parse or decode failure.
+Range expansion, declared-origin bilinear reconstruction with edge extension,
+rounding and clipping follow the independently checked policy. Every SDR source
+requires `avif-color-reconstruction` consent, including unnamed pictures.
 
 Nonempty primary or alpha names require `avif-item-names-not-retained` consent:
 they remain in the source assessment receipt, not PCND metadata. An unnamed
@@ -47,16 +58,18 @@ aliases. These checks do not eliminate arbitrary filesystem races.
 
 ## Helper contract and delivery
 
-Code 5 requires the exact `BUILD_V5_AVIF` record, `AVIF_NATIVE_PROFILE`, schema 2
-manifest and four-entry qualified variant set. A V4 helper cannot decode this
-profile; non-AVIF jobs accept either exact known contract. Verification does not
+Code 5 accepts exact V5 or V6 contracts. Code 6 requires `BUILD_V6_AVIF_SDR`,
+`AVIF_SDR_NATIVE_PROFILE`, schema 2 and its exact five-entry variant set. V4
+cannot decode either AVIF profile; V5 remains an identity-only compatibility
+route. Non-AVIF jobs accept the finite compatible contracts. Verification does not
 retry another contract after integrity failure. Standalone binaries or incomplete
 installations fail closed. Ordinary Open, Classic, browser AVIF reads, foreign
 preserving Save and broader source profiles remain unavailable.
 
-Normal helper builds enable `avif-codec` by default; only explicit
-`--no-default-features` builds produce V4 for compatibility checks. Native
-release and source-installer builds also request `paintcraft-codec-worker/avif-codec` and
+Normal helper builds enable `avif-sdr-codec` by default; explicit
+`--no-default-features` builds produce V4, while adding `--features avif-codec`
+produces V5 for identity-only compatibility checks. Native
+release and source-installer builds also request `paintcraft-codec-worker/avif-sdr-codec` and
 bundle the helper, manifest, JPEG XR notice and exact dav1d COPYING notice. The
 complete CLI installer verifies and installs that payload; source mode builds
 both CLI and helper before using the same installation transaction. Actual local
@@ -78,9 +91,8 @@ libdav1d readback independently checks container/plane assembly, not a second
 codec engine. Raw sequence level 31 is retained; the FFprobe level-23 diagnostic
 is recorded separately rather than changing source declarations to match it.
 
-Helper test suites pass with both feature configurations: 29 tests
-with AVIF enabled (8 private fixtures ignored by default), and 24 without (3
-ignored). Successful qualification requires normal process exit as well as a
+The V6 helper suite passes 38 tests (8 private fixtures ignored by default);
+separate V5 and V4 compatibility runs remain recorded. Successful qualification requires normal process exit as well as a
 complete response. Actual quota child fixtures exercise context, tile-scratch
 and picture allocation failures; malformed, mismatched, cancelled and stale
 requests do not publish pixels.
@@ -89,13 +101,38 @@ Actual copied V5 Studio tests pass 12 English/Japanese cases: named approval,
 cancel, changed source and draft staleness, plus unnamed opaque/alpha adoption.
 They preserve a nonempty previous document on refusal, reopen saved PCND with
 exact independent RGBA, release transient/resident charges and refuse renamed
-source aliases after Save. Installed CLI/MCP tests pass 12 cases across V5,
-including existing JXL/JXR/HEIF regressions; the V4 regression passes 10 with the
-two V5-only AVIF cases skipped. Missing/unknown consent, wrong V4 manifest,
+source aliases after Save. The historical installed CLI/MCP suite passed 12 V5 cases; that historical
+V4 run passed 10 with two AVIF cases skipped. The expanded current suite has
+14 cases, including two SDR cases. V6 passed all 14; current serial V4 passed
+10 and explicitly skipped four AVIF cases (59.14 seconds). A concurrent V5 run passed 10 cases and
+hit the unchanged gray-HEIF and unnamed-HEIF 10-second deadlines. Both passed
+individual unchanged replays (5.27 and 4.49 seconds); the subsequent complete
+serial V5 replay passed all 12 cases (68.31 seconds). The original concurrent
+failure is preserved, not relabeled as a passing full run; simultaneous-load
+deadline qualification remains unresolved. Missing/unknown consent, wrong V4 manifest,
 missing helper, cancellation and source guards are exercised through real routes.
 
-Next is common SDR YCbCr qualification with explicit range/matrix/chroma policy
-and independent RGB/alpha references. Broader metadata, HDR, grids, browser
+SDR qualification includes 24 owned layout/range/parity/alpha combinations.
+Pinned libaom produces/independently decodes the coded planes; exact Fraction
+range/matrix/chroma reconstruction provides expected RGBA independently of the
+selected dav1d converter. Sources and references are retained under
+`tests/avif-sdr-fixtures`, including unknown-position refusals.
+
+Actual copied V6 Studio qualification passes 18 English/Japanese cases: named
+approval/cancel/changed source/draft/foreign frontend/tab guards, unnamed 4:2:0
+alpha and 4:4:4 reconstruction consent, and unknown-siting refusal. Every case
+preserves or deliberately replaces a nonempty prior document. Imported and
+reopened PCND pixels match the Fraction references exactly; renamed/hardlinked
+source overwrite after saving remains blocked. The same App change passes all
+12 existing V5 identity cases. Evidence is retained at
+`docs/validation/avif-sdr-studio-2026-10-26/qualification.json` with actual helper,
+App and source hashes. The first V6 test-harness profile-name assertion failure
+is preserved separately from the successful proof.
+
+Native CLI qualification covers all 24 combinations and actual named consent;
+MCP tests cover adoption and refusal/source/session guards. These are local
+Apple-silicon observations, not six-target clean-install execution.
+Broader metadata, HDR, grids, browser
 execution, hostile corpora, latency/whole-operation benchmarks and six-target
 installation evidence remain separate work. The
 [AVIF specification](https://aomediacodec.github.io/av1-avif/v1.2.0.html) covers

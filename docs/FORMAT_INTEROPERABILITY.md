@@ -18,7 +18,7 @@ Desktop and browser share the frontend registry, with platform-specific qualific
 - Studio explicitly imports the narrow metadata-free sRGB8 JPEG XL profile through a verified packaged native helper or the bounded browser Worker. CLI and native MCP use the native route. Ordinary Open and Classic JPEG XL reads remain denied; strict profiles without conversion losses do not invent an approval prompt.
 - Native Studio, CLI and native MCP explicitly import the qualified opaque RGB8 JPEG XR profile with mandatory print-resolution loss consent. Studio displays the actual picture and effective horizontal/vertical DPI before approval. Ordinary Open, browser and Classic JPEG XR reads remain denied.
 - Native Studio, CLI and native MCP explicitly import the qualified direct-primary HEIF sRGB8 color/straight-alpha profile. Actual YCbCr reconstruction and nonempty item-name losses require consent; an unnamed identity-color source has no conversion-loss prompt. Ordinary Open, browser, Classic and all HEIF writing remain denied.
-- Native Studio, CLI and native MCP explicitly import the qualified identity sRGB8 AVIF still/straight-alpha profile through the AVIF-enabled V5 helper. Nonempty source item names require consent. Ordinary Open, browser and Classic reads remain denied.
+- Native Studio, CLI and native MCP explicitly import the qualified identity sRGB8 and explicit SDR YCbCr AVIF still/straight-alpha profiles. SDR requires the verified V6 helper and reconstruction consent; identity remains compatible with V5. Nonempty source item names also require consent. Ordinary Open, browser and Classic reads remain denied.
 
 Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, GIF, TGA, DDS, TIFF, HEIF, WebP and AVIF. That inventory is not a claim that all those readers are enabled. PCND and qualified extended conversions are additional workflows. HEIF/HEIC writing and SVG export remain prohibited.
 
@@ -34,7 +34,7 @@ Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, 
 | WebP | Studio still Open and lossless RGBA8 Export | Animation and unqualified extensions refused; import metadata losses explicit |
 | DDS | Studio single-surface Open and exact RGBA8 Export | Reader admits RGBA/BGRA/BC1/BC2/BC3 with explicit sRGB transfer and straight or opaque alpha only. Linear/unspecified transfer, associated/unknown alpha, mipmaps, arrays, cubes and volumes refused. Writer emits uncompressed DX10 RGBA8 sRGB straight alpha |
 | JPEG XL | Studio lossless RGBA8 Export; native Studio/CLI/MCP explicit Import for `native-jxl-srgb8-worker-v1`; browser Studio explicit Import for `web-jxl-srgb8-worker-quarantine-v1` | Both readers require metadata-free static identity-oriented straight sRGB8, at most 64 MiB input and 4,194,304 pixels. Native import requires the matching packaged helper/schema 2 manifest. Browser import uses the production isolated Worker and persistent quarantine on uncertain completion. Ordinary Open and Classic reads remain denied. Export retains its minimum two pixels per side and 64 MiB output limit |
-| AVIF | Studio lossy RGBA8 Export; native Studio/CLI/MCP explicit Import for `native-avif-srgb8-worker-v1` | Reader: reduced-still explicit identity sRGB8 4:4:4 plus optional straight monochrome alpha, at most 64 MiB input and 4,194,304 pixels, through exact V5 helper/manifest. Named item loss requires consent. SDR YCbCr, HDR, grids, browser/Classic/Open and preserving Save remain denied. Export is lossy even at quality 100, may change alpha/hidden RGB, and retains its 1,048,576 pixels, 4096 per side and 16 MiB output limits |
+| AVIF | Studio lossy RGBA8 Export; native Studio/CLI/MCP explicit Import for identity sRGB8 and SDR YCbCr variants | Reader: reduced-still identity 4:4:4 or explicit BT.709/sRGB8 full/limited-range 4:4:4 or 4:2:0 with qualified vertical/colocated siting, optional straight alpha, at most 64 MiB input and 4,194,304 pixels. SDR requires exact V6 helper/manifest and reconstruction consent; identity accepts V5/V6. Named item loss also requires consent. Unknown 4:2:0 siting, HDR, grids, browser/Classic/Open and preserving Save remain denied. Export is lossy even at quality 100, may change alpha/hidden RGB, and retains its 1,048,576 pixels, 4096 per side and 16 MiB output limits |
 | QOI | Studio explicit Import and lossless RGBA8 Export | Strict complete raster/end marker and sRGB profile; linear declaration refused; exact alpha and hidden RGB retained by the codec |
 | Netpbm | Studio explicit P1 through P7 Import; PAM P7 RGBA8 Export only | Admitted max values 1, 255 or 65535 and recognized grayscale/RGB/alpha tuples; bounded 64 KiB header. High-depth import reduces to 8 bits; metadata loss explicit |
 | farbfeld | Studio explicit Import and lossless RGBA8 Export | Exact body length required; imports reduce 16-bit samples to 8 bits with explicit loss. Exports widen each 8-bit sample by multiplying by 257; this does not add high-depth editing |
@@ -101,11 +101,11 @@ are wider than the enabled subsets above. The next work is ordered by usable
 consumer paths and prerequisites, rather than treating every candidate as a dependency:
 
 1. **Extend isolated-reader qualification across supported platforms.** The narrow browser JPEG XL consumer now has actual production picker, adoption, PCND reopen and failure evidence below. Extend native JXL/JXR release-platform installation coverage and cross-browser qualification separately; browser quarantine is a logical failure policy, not a synchronous Worker-stop or aggregate physical-memory guarantee.
-2. **Extend common AVIF SDR readers, then remaining stock profiles.** The native identity sRGB8/straight-alpha profile below is implemented and independently checked, not full stock parity. Next qualify common SDR YCbCr range/matrix/chroma layouts with explicit reconstruction and independent RGB/alpha oracles; keep HDR, grids, transforms and browser execution separate. HEIF has its narrow native color import below, while broader camera/grid/ICC/HDR/deep-color and browser profiles remain unqualified. The existing isolated helper and bounded preflight must remain the reader boundary; enabling `image`'s separate native feature alone is insufficient. HEIF writing remains prohibited.
+2. **Close the finite qualified stock profiles, then remaining required integrations.** Native identity sRGB8 and explicit SDR YCbCr AVIF profiles now have independently checked decoder/consumer routes, not full stock parity. V6 adds full/limited-range 4:4:4 and qualified 4:2:0 with reconstruction consent; unknown siting, HDR, grids, transforms and browser execution remain separate. HEIF has its narrow native color import below, while broader camera/grid/ICC/HDR/deep-color and browser profiles remain unqualified. The existing isolated helper and bounded preflight must remain the reader boundary; enabling `image`'s separate native feature alone is insufficient. HEIF writing remains prohibited.
 3. **Implement and qualify layered writes.** PDN has a bounded internal typed PDN3 writer and native layered-copy preparation; public and preserving writes still await actual Paint.NET open/edit/resave. PAINT now also has an internal bounded typed writer, immutable native preparation and gated CLI/MCP fresh-copy routes; public/preserving Windows Paint qualification is still required. Its UI-name, visibility and opacity extensions remain unqualified. ORA's internal writer is not publicly enabled; groups and original-application qualification remain. PSD/PSB now have a bounded internal fresh RGB8 Normal raster-layer writer with independent psd-tools/Pillow checks; public layered export still awaits actual Photoshop open/edit/resave qualification. Groups, masks, text, effects and high-depth output remain unsupported. JPEG XR writing is also unimplemented; its new reader does not qualify it.
-4. **Qualify bounded EXR/HDR decoding and explicit SDR conversion, then evaluate JP2.** The implemented precision policy names Clip or Reinhard-per-channel, exposure, source-space assignment, alpha convention and nonfinite/negative handling with explicit losses. Bounded Radiance preflight preserves as-stored calibration provenance and refuses malformed packets before decoder allocation. Optional private `hdr-codec` uses existing image HDR behind sealed preflight; it is not a public reader or a confinement boundary. Zune HDR 0.5.2 failed retained exponent-wrap probes and is not adopted. Native isolated HDR execution, broader orientations, explicit preview/consent and actual frontend adoption remain; EXR now has bounded single-part RGB[A] HALF/FLOAT preflight and optional private `exr-codec` decoding checked against official OpenEXR references; isolated execution, source assignment when metadata is unresolved, conversion preview/consent and consumer adoption remain. The pack's `exr` and OpenJPEG choices remain candidates requiring live-profile qualification; JP2 also requires codec packaging and independent lossless/lossy/color/depth evidence.
-5. **Complete specific remaining profiles instead of widening labels.** This includes DCX multi-page consumer workflows, MSP2 writing and original historical-app evidence; animation/multipage and high-depth TIFF; advanced DDS surfaces/mips; additional JXL/JXR profiles; full ABR dynamics/pattern behavior, ASE CMYK/LAB color adoption and CSH multiple/open/Boolean paths. Foreign preserving Save remains a separate gate throughout.
-6. **Keep later P3 imports distinct from initial-format parity.** RAW, selected PDF pages, KRA/XCF and the animation model remain future capabilities. They need their own bounded services, source/loss policies and real reference consumers; compiling a library is insufficient.
+4. **Close isolated EXR/HDR conversion and actual consumers.** The implemented precision policy names Clip or Reinhard-per-channel, exposure, source-space assignment, alpha convention and nonfinite/negative handling with explicit losses. Bounded Radiance preflight preserves as-stored calibration provenance and refuses malformed packets before decoder allocation. Optional private `hdr-codec` uses existing image HDR behind sealed preflight; it is not a public reader or a confinement boundary. Zune HDR 0.5.2 failed retained exponent-wrap probes and is not adopted. The private `float_import` pipeline now binds source/header/geometry/settings, prepares RGBA8 previews and requires exact digest/loss consent, including the retained-linear-alpha versus encoded-editor compositing limitation. It is not native isolated execution or frontend adoption. Native isolated HDR execution, broader orientations and actual frontend preview/adoption remain; EXR now has bounded single-part RGB[A] HALF/FLOAT preflight and optional private `exr-codec` decoding checked against official OpenEXR references; isolated execution, source assignment when metadata is unresolved, conversion preview/consent and consumer adoption remain. Pinned `exr` 1.74.2 is adopted only through the optional private decoder with Rayon disabled; its source-bound conversion still needs isolated execution and frontend qualification. OpenJPEG remains a candidate; JP2 belongs to deferred F7 work and is not an initial-release or pre-performance dependency.
+5. **Defer broader profiles without widening labels.** This includes DCX multi-page consumer workflows, MSP2 consumer workflows and original historical-app evidence; animation/multipage and high-depth TIFF; advanced DDS surfaces/mips; additional JXL/JXR profiles; full ABR dynamics/pattern behavior, ASE CMYK/LAB color adoption and CSH multiple/open/Boolean paths. Foreign preserving Save remains a separate gate throughout.
+6. **Keep optional F7 imports distinct from initial-format parity.** JP2, RAW, selected PDF pages, KRA/XCF and the animation model remain future capabilities. They need their own bounded services, source/loss policies and real reference consumers; compiling a library is insufficient.
 7. **Close the delivery gates for each implemented profile.** Complete the pack's hostile-input fuzzing, independent reference/version matrices, reproducible codec and whole-operation benchmark exports, failure/cancellation-tail tests and installed-helper/packaging coverage on all six release targets. Local controlled fixtures and headless UI tests do not establish general original-application compatibility or a hard aggregate-memory guarantee.
 
 Current codec adoption is intentional and narrower than the candidate inventory:
@@ -228,8 +228,8 @@ platform or real-device latency. Broader JPEG XR profiles remain separate work; 
 
 Native Studio **Import image…**, CLI and native MCP `import_image` admit
 `native-heif-srgb8-worker-v1` for `.heic`, `.heif` and `.hif`. Input is at most
-64 MiB and 4,194,304 pixels. The same-build isolated helper, exact known V4 or
-AVIF-enabled V5 record and matching schema 2 manifest are required. Each manifest
+64 MiB and 4,194,304 pixels. The same-build isolated helper, exact known V4,
+AVIF-enabled V5 or SDR-enabled V6 record and matching schema 2 manifest are required. Each manifest
 lists its finite variant set, including this independently qualified HEIF route. Bare Open, Classic,
 browser HEIF reads, preserving Save and all HEIF writing remain denied.
 
@@ -297,9 +297,10 @@ physical-RSS/filesystem sandbox guarantee is claimed.
 ### Native AVIF identity sRGB8 document conversion, 2026-10-26
 
 Native Studio **Import image…**, CLI and native MCP `import_image` admit only
-`native-avif-srgb8-worker-v1` through the AVIF-enabled `BUILD_V5_AVIF` helper,
-exact `AVIF_NATIVE_PROFILE` and schema 2 four-variant manifest. V4 refuses AVIF;
-existing JXL/JXR/HEIF jobs accept either exact known contract. Integrity failure
+`native-avif-srgb8-worker-v1` through a verified AVIF-enabled V5 or V6 helper,
+the corresponding exact profile and schema 2 variant set: V5 uses
+`AVIF_NATIVE_PROFILE` with four entries; V6 uses `AVIF_SDR_NATIVE_PROFILE` with
+five. V4 refuses AVIF; existing JXL/JXR/HEIF jobs accept exact V4/V5/V6 contracts. Integrity failure
 does not trigger another decoder or helper-profile attempt. Complete packages
 and CLI installers include the helper, manifest and JPEG XR/dav1d notices.
 
@@ -340,19 +341,46 @@ Losses from the ravif encoder's original RGBA input remain separate evidence.
 Actual copied V5 Studio qualification passes 12 English/Japanese cases spanning
 named consent/cancel/source changes/draft staleness and unnamed opaque/alpha
 adoption, nonempty prior documents, exact PCND reopening, lease retirement and
-source aliases after Save. Full V5 installed CLI/MCP qualification passes 12
-cases including existing codec regressions; V4 passes its 10 existing cases and
-skips two V5-only AVIF tests. The helper suites pass 29 feature-on and 24
-feature-off tests, with private fixtures separately ignored. Actual local
+source aliases after Save. The historical V5 installed CLI/MCP suite passed 12 cases; its historical V4
+run passed 10 and skipped two AVIF cases. The expanded current suite has 14
+cases, including two SDR cases: V6 passed all 14. A concurrent V5 run passed 10
+and hit two existing HEIF deadlines; both unchanged cases passed individually,
+and the complete serial V5 replay passed all 12 (68.31 seconds). Current serial
+V4 passed 10 and explicitly skipped four AVIF cases (59.14 seconds). The original
+concurrent failure remains recorded; simultaneous-load deadline qualification is
+not established. The V6
+helper suite passes 38 tests, with private fixtures explicitly ignored. Actual local
 Apple-silicon source and archive installs also pass AVIF CLI/MCP import and PCND
 save. Synthetic six-target package checks and configured release jobs are not
 six-target execution or clean-install evidence.
 
-Ordinary Open, Classic/browser readers, foreign preserving Save, SDR YCbCr,
-ICC, HDR/deep precision, grids, transforms, premultiplication and broader metadata
-remain refused. Common SDR YCbCr is the next reader increment, not completion
-of full AVIF interoperability. See [AVIF qualification](AVIF_QUALIFICATION.md)
+Ordinary Open, Classic/browser readers, foreign preserving Save, unknown chroma
+siting, ICC, HDR/deep precision, grids, transforms, premultiplication and broader
+metadata remain refused. The separately qualified SDR increment below does not
+complete full AVIF interoperability. See [AVIF qualification](AVIF_QUALIFICATION.md)
 for bounds, allocation scope, independent provenance and remaining gates.
+
+### Native AVIF SDR YCbCr import, 2026-10-26
+
+The exact `native-avif-sdr-ycbcr8-worker-v1` native Studio/CLI/MCP route uses the
+verified V6 helper. It admits explicit BT.709 primaries/matrix, sRGB transfer,
+8-bit full/limited range and 4:4:4 or explicit vertical/colocated 4:2:0, plus
+optional same-size straight alpha. Unknown 4:2:0 positions remain refused. The
+same-FD family selector seals source classification once and requires exact
+frontend admission before helper discovery/launch. Identity code 5 remains
+compatible with V5/V6; there is no decoder-error fallback.
+
+Every SDR import requires actual range/chroma reconstruction consent; named
+items additionally require name-loss consent. Native Studio reuses the visible
+preview and source/draft/session/tab/frontend guards. Eighteen actual copied V6
+English/Japanese cases passed, including nonempty-document preservation, exact
+Fraction RGBA, saved-PCND reopen and renamed/hardlinked source guards. All twelve
+V5 identity App cases passed unchanged. CLI checks all 24 layout/range/parity/alpha
+combinations and named consent; MCP checks actual adoption/refusal/source/session
+behavior. These local Apple-silicon checks do not establish six-target execution.
+See [AVIF qualification](AVIF_QUALIFICATION.md) and its independent fixture and
+ignored raw-proof links. Browser, Classic, ordinary Open and preserving Save are
+unchanged.
 
 ### Adobe Swatch Exchange assets, 2026-10-25
 
