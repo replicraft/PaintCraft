@@ -2,6 +2,10 @@
     "generator": "generate.py, Python standard library",
     "license": "MIT, repository-authored fixtures",
     "files": {
+        "placement.csh": {
+            "bytes": 969,
+            "sha256": "2776a62ff3576b2c84c7eb6b85d9a2c29428c0a93d74917bc02aa1f6188e7185"
+        },
         "paths.csh": {
             "bytes": 1482,
             "sha256": "661300760cc4cfa1374d37ff864df132731a76b49d9301999d1226adc81bc7a3"

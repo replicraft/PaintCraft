@@ -6,7 +6,12 @@ contains five shapes, duplicate names/IDs, Japanese/non-BMP names, nonzero bound
 all five operation states, both even/odd encodings, nonzero fill, open/closed
 subpaths, linked/unlinked knots, fractional/negative coordinates, clipboard and
 initial-fill records. It has 45 ordered records, 10 subpaths and 20 knots.
-`empty.csh` contains no shapes. `sources.json` records byte counts and hashes;
+`empty.csh` contains no shapes. `placement.csh` independently packs an
+integer rectangle, a genuine two-knot cubic lens with a curved closing edge,
+a subtract preset and a multiple-subpath preset. Placement tests use an analytic
+interior oracle for the lens, exact rectangle pixels, orientation, fill rules and
+explicit refusal of the latter two unsupported presets. These checks do not
+claim Adobe rendering parity. `sources.json` records byte counts and hashes;
 `expected.json` states all decoded geometry/metadata for the optional reader.
 
 The wire representation follows the selected Rust `ag-psd` 0.3.0 CSH container

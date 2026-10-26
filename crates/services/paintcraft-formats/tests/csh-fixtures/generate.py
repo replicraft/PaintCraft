@@ -58,9 +58,38 @@ def generate():
     return bytes(data), {"shapes": expected}
 
 
+def placement():
+    """Small explicit geometry specimens, authored independently of Rust writers."""
+    unit = 1 << 24
+    rectangle = [((0, 0), (0, 0), (0, 0)), ((1, 0), (1, 0), (1, 0)),
+                 ((1, 1), (1, 1), (1, 1)), ((0, 1), (0, 1), (0, 1))]
+    lens = [((0, 1), (0, .5), (0, 0)), ((1, 0), (1, .5), (1, 1))]
+    specimens = [("Rectangle", "rectangle", [19, 23, 27, 31], 1, [rectangle]),
+                 ("Cubic lens", "lens", [100, 200, 132, 232], -1, [lens]),
+                 ("Subtract lens", "subtract-lens", [0, 0, 32, 32], 2, [lens]),
+                 ("Multiple paths", "multiple", [0, 0, 32, 32], 1, [rectangle, lens])]
+    data = bytearray(b"cush" + struct.pack(">II", 2, len(specimens)))
+    for name, identifier, bounds, operation, paths in specimens:
+        encoded = (name + "\0").encode("utf-16be")
+        data.extend(struct.pack(">I", len(encoded) // 2) + encoded)
+        while len(data) % 4:
+            data.append(0)
+        identifier = identifier.encode()
+        body = bytearray(bytes([len(identifier)]) + identifier + struct.pack(">IIII", *bounds))
+        body.extend(record(6))
+        body.extend(record(8, struct.pack(">H", 0)))
+        for knots in paths:
+            body.extend(record(0, struct.pack(">HhH", len(knots), operation, 1)))
+            for points in knots:
+                wire = [round(value * unit) for x, y in points for value in (y, x)]
+                body.extend(record(2, struct.pack(">6i", *wire)))
+        data.extend(struct.pack(">II", 1, len(body)) + body)
+    return bytes(data)
+
+
 if __name__ == "__main__":
     mixed, expected = generate()
-    files = {"paths.csh": mixed, "empty.csh": b"cush" + struct.pack(">II", 2, 0)}
+    files = {"placement.csh": placement(), "paths.csh": mixed, "empty.csh": b"cush" + struct.pack(">II", 2, 0)}
     manifest = {"generator": "generate.py, Python standard library",
                 "license": "MIT, repository-authored fixtures", "files": {}}
     for name, data in files.items():
