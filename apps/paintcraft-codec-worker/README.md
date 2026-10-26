@@ -1,7 +1,7 @@
 # Native decoder isolation helper
 
 This is a real single-request executable, currently used by headless qualification
-tests. It is **not installed or invoked by public image-open routes**. HEIF writing
+tests. Complete native packages include it, but **public image-open routes do not invoke it**. HEIF writing
 remains prohibited. A native helper alone does not qualify HEIF browser support.
 
 The caller passes an explicit absolute executable path to the existing runtime
@@ -54,8 +54,9 @@ is unchanged. This package explicitly denies unsafe except in the documented
 allocator module and mirrors the other workspace lints. The reference pack allows
 narrow audited, tested unsafe interfaces where necessary.
 
-Remaining public-reader gates include native installation/signature/version
-verification and packaging, OS containment policy beyond this Rust heap boundary,
+Remaining public-reader gates include installed helper discovery and integrity/
+version verification at dispatch, actual installer/platform qualification,
+OS containment policy beyond this Rust heap boundary,
 actual WebWorker cancellation/memory parity, cross-platform qualification and
 independent full-container/color/depth oracles. Merely compiling this helper does
 not satisfy those gates. No release scripts or GUI entrypoints install it yet.
@@ -67,3 +68,40 @@ first acquire an appropriate resident lease. Frontend installation/publication
 must implement that handoff before retaining pixels. Windows uses the safe
 `CREATE_NO_WINDOW` command flag; Windows device verification is still required
 before claiming that all release launch paths avoid visible windows.
+
+
+## Native package layout and provenance
+
+The release workflow builds desktop, CLI and codec worker in one locked Cargo
+invocation for each target. Packagers require a regular, matching-architecture
+sibling helper and inspect a referenced build record containing the helper's
+actual Cargo version, protocol and fixed heap ceiling. Wrong/stale/missing build
+records refuse packaging without executing foreign-target binaries. A matching
+record is consistency evidence, **not a cryptographic identity guarantee**.
+Runtime protocol/version matching and trusted installation validation are still
+required before any decoder dispatch.
+
+Portable desktop/CLI ZIP and tar archives carry the helper and
+`paintcraft-codec-worker.json` beside the main executable. The macOS editor's
+nested `Contents/MacOS` directory holds both; the helper is ad-hoc signed first,
+then its signed-byte SHA-256 is written to the manifest before sealing editor and
+outer bundle signatures. The exact signed app is carried in both DMG/update ZIP.
+MSI installs both files beside `paintcraft.exe`; its disposable-runner verification
+checks install/repair hashes and that uninstall removes helper and manifest.
+Linux packages place the executable in `usr/bin` and manifest in
+`usr/share/paintcraft`. AppImage verification checks both payload paths.
+
+The manifest records the verified embedded version, target, helper SHA-256,
+protocol, heap ceiling and an explicit disabled public-reader flag. Native
+packaging tests use synthetic executable headers to inspect all six target
+layouts and command payloads; they do not replace real Windows/Linux installers
+or independent HEIF container interoperability. A real Apple Silicon helper has
+also been stripped and ad-hoc signed locally, with its build record and final
+manifest checked afterward. Developer-ID signing/notarization is not established
+by that ad-hoc signature check.
+
+The standalone Windows desktop `.exe` is intentionally helper-free. Copying only
+a CLI executable, and current CLI `cargo install` scripts, also omit the helper.
+These routes must not gain helper-dependent readers just because another package
+ships it; missing/foreign/stale helpers must fail closed. Archive/install formats
+retain their existing release names and checksum inventory.
