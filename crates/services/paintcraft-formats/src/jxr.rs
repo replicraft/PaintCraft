@@ -2,8 +2,9 @@
 //!
 //! The narrow RGB8 profile is imported explicitly by Studio through the isolated
 //! native helper and mandatory resolution-loss consent. There is no inline reader,
-//! generic Open, browser decoder or writer. Header admission alone does not validate
-//! entropy data or bound upstream allocation.
+//! generic Open, browser decoder or public writer. Private fresh encoding has a
+//! separate typed worker path. Header admission alone does not validate entropy
+//! data or bound upstream allocation.
 mod import;
 pub use import::{ImportAssessment, KNOWN_IMPORT_LOSSES, Resolution, assess_import};
 use paintcraft_core::types::{Error, ErrorCode, Result};
