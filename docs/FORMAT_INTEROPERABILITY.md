@@ -44,7 +44,8 @@ Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, 
 | SVG/SVGZ | Studio desktop/browser Import; CLI `import` with `--svg-width`/`--svg-height`; MCP `import_image` with `svg` options | Explicit size/DPI/fitting and rasterization consent. Studio previews use bundled fonts; CLI/MCP also accept additional outline fonts. No Classic access, ordinary Open or SVG export |
 | EXR/HDR, JP2, MSP, ICNS | Not yet enabled | Registry inventory or work in progress is not usable format support |
 | ASE | Studio Palettes dialog; CLI `palette inspect` / `palette export`; MCP `inspect_palette` / `export_palette` | Flat groups, exact names/order/models/types and finite f32 values. RGB/gray tool-color adoption is explicit; CMYK/LAB conversion, persistent catalogs and Adobe qualification remain |
-| ABR, CSH | Asset workflow policy only | Brush/shape import/export implementations remain |
+| ABR | Asset workflow policy only | Brush import implementation remains |
+| CSH | Internal checked resource reader; no public workflow yet | Retains bounds, names, IDs and exact ordered path records. Shape export, Studio/CLI/MCP integration and independent interoperability qualification remain |
 | RAW, PDF, KRA, XCF, animation, advanced DDS | Future profiles | No inherited Classic support or preserving-write claims |
 
 QOI, PAM and farbfeld writers admit at most 4,194,304 pixels and 64 MiB encoded output. Their bounded private output is discarded on failure or cancellation. These checks do not constitute a hard aggregate resident-memory or codec scratch-memory limit.
@@ -157,6 +158,28 @@ Criterion decode/encode session medians span 1.146–1.174 ms / 0.948–0.984 ms
 complete CLI inspection/export span 9.77–13.72 ms / 20.44–30.57 ms. All 480
 measured CLI executions succeeded. The ranges retain slower sessions and are
 observations of these resource workflows, not speedup or interactive guarantees.
+
+### CSH resource reader, 2026-10-25
+
+The internal CSH adapter preflights the complete source before invoking the
+selected `ag-psd` 0.3.0 reader. Its typed resource keeps original unsigned
+top/left/bottom/right bounds, Unicode names, ASCII IDs, Boolean operations,
+open/closed subpaths, linked/unlinked knots, initial fill and clipboard records.
+Normalized coordinates retain their exact signed 8.24 integers. The adapter
+cross-checks decoded geometry against the backend rather than replacing it with
+an approximate raster. The [Adobe path specification](https://www.adobe.com/devnet-apps/photoshop/fileformatashtml/)
+documents the coordinate and record representation.
+
+The current admitted profile is CSH version 2, shape version 1, at most 4 MiB,
+256 shapes, 65,536 aggregate path records, 1,024 UTF-16 units per name and
+256 KiB aggregate encoded name bytes. Truncated extents, invalid UTF-16,
+inverted unsigned bounds, inconsistent knot counts/topology, unknown operations,
+unsupported flags, nonzero reserved data and repeated control records are
+refused. Duplicate names/IDs and record order are retained. These input and
+structure allowances do not prove a hard allocator or cancellation-tail bound.
+The reader is not registered for any public operation yet. Export, resource
+editing/placement, previews, frontend integration, independent-reader evidence
+and original-application qualification remain required for F14.
 
 ### SVG/SVGZ rasterization, 2026-10-25
 

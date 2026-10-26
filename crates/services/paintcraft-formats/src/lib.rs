@@ -2,6 +2,7 @@
 
 pub mod ase;
 pub mod avif;
+pub mod csh;
 pub mod dcx;
 pub mod dds;
 pub mod export;
