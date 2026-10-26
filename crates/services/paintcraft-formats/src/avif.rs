@@ -4,12 +4,14 @@
 //! cleans invisible RGB and uses the selected quality for alpha too. Input and
 //! returned bytes have hard ceilings; codec-owned scratch is not an RSS budget.
 mod inspect;
+mod sequence;
 use image::ImageEncoder;
 pub use inspect::{
     Av1Configuration, Container, INPUT_BYTES_MAX, INSPECT_PIXELS_MAX, METADATA_BYTES_MAX,
     SpatialExtent, inspect_container,
 };
 use paintcraft_core::types::{Error, ErrorCode, Result};
+pub use sequence::{Sequence, inspect_sequence};
 use std::io::{self, Write};
 
 pub const ENCODE_PIXELS_MAX: u64 = 1_048_576;
