@@ -1,4 +1,5 @@
 //! Frozen acquired file identities shared by native resource consumers.
+mod capture;
 use paintcraft_core::types::{Error, ErrorCode, Result};
 use std::{path::Path, sync::Arc};
 
