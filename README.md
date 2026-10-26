@@ -45,7 +45,7 @@ cargo run --release -p paintcraft-cli -- mcp
 - **Layered imports:** Studio imports flat OpenRaster (`.ora`) layers and opens a limited historical Paint.NET (`.pdn`) subset as converted copies. Studio also imports a limited Windows Paint (`.paint`) subset. Save converted projects as PCND; writing PDN or PAINT is not supported.
 - **Photoshop imports in Studio:** basic PSD/PSB raster layers with names, positions, opacity and visibility. Save converted copies as PCND.
 - **SVG/SVGZ:** import a picture at your chosen size, DPI and fitting in Studio, CLI or MCP.
-- **Palettes in CLI and MCP:** inspect and export Adobe Swatch Exchange (`.ase`) colors and groups.
+- **Palettes:** import/export Adobe Swatch Exchange (`.ase`) in Studio, CLI and MCP.
 
 Image exports flatten layers. Conversion prompts explain supported losses such as reduced color depth, palette changes or discarded metadata. See [format support and limits](docs/FORMAT_INTEROPERABILITY.md) for the supported subsets.
 

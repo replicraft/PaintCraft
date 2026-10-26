@@ -43,7 +43,7 @@ Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, 
 | PSD/PSB | Studio explicit Import on desktop/browser; CLI `import` and MCP `import_image` | RGB8 Normal raster-layer subset retains names, offsets, opacity, visibility and alpha. Metadata losses need explicit consent. Groups, masks, text, effects, clipping, high depth and foreign writing remain unavailable |
 | SVG/SVGZ | Studio desktop/browser Import; CLI `import` with `--svg-width`/`--svg-height`; MCP `import_image` with `svg` options | Explicit size/DPI/fitting and rasterization consent. Studio previews use bundled fonts; CLI/MCP also accept additional outline fonts. No Classic access, ordinary Open or SVG export |
 | EXR/HDR, JP2, MSP, ICNS | Not yet enabled | Registry inventory or work in progress is not usable format support |
-| ASE | CLI `palette inspect` / `palette export`; MCP `inspect_palette` / `export_palette` | Flat groups, exact names/order/models/types and finite f32 values. Separate asset operations only; desktop/browser controls and Adobe application qualification remain |
+| ASE | Studio Palettes dialog; CLI `palette inspect` / `palette export`; MCP `inspect_palette` / `export_palette` | Flat groups, exact names/order/models/types and finite f32 values. RGB/gray tool-color adoption is explicit; CMYK/LAB conversion, persistent catalogs and Adobe qualification remain |
 | ABR, CSH | Asset workflow policy only | Brush/shape import/export implementations remain |
 | RAW, PDF, KRA, XCF, animation, advanced DDS | Future profiles | No inherited Classic support or preserving-write claims |
 
@@ -118,9 +118,36 @@ MCP stdio tests cover destination refusal, malformed/oversized input, policy
 before acquisition and unchanged painting/history/dirty state. These commands
 do not create a document, adopt a project destination or acknowledge a painting
 as saved. Classic and all ordinary image/project Open, conversion and Save
-routes remain denied for ASE. Desktop/browser palette controls, original Adobe
-reopen evidence and workload benchmarks remain pending; this is a functional
-baseline, not complete F14 or release qualification.
+routes remain denied for ASE.
+
+Studio desktop/browser now share a translated Palettes dialog, available in
+File and the Colors window. It displays groups, names, model/type and channel
+values, with virtualized rows. Picking normalized RGB/gray explicitly rounds
+to an opaque 8-bit sRGB primary/secondary tool color. CMYK, LAB and out-of-range
+samples remain retained/exportable but cannot be picked without color-managed
+conversion. The imported resource is frozen separately from document state and
+survives closing/reopening the dialog; it is not yet a persistent asset catalog.
+
+Desktop import/export uses parented native rfd pickers. Export retains prepared
+palette bytes during destination selection, checks the resource generation and
+frontend, refuses source aliases including open documents in other tabs/parked
+workspaces, and uses the bounded expectation-checked save coordinator. Browser
+file reads are capped at 1 MiB and late picker results are generation-checked;
+export requests a download without adopting a project destination or changing
+the title/dirty flag. Failed or cancelled imports keep the previous palette.
+English/Japanese headless controls and a 390 × 640 layout check pass. All seven
+locale catalogs include the new controls and adoption-policy text.
+
+The local production Wasm build was exercised in headless Chrome: importing
+`mixed.ase`, exporting its copy and picking an RGB swatch succeeded without page
+errors. The 282-byte download matched the original exactly (SHA-256
+`3b3b96a8bd4ab40fe22829e9bef3ae868b61d51c1a2a41aec81416013d6788bf`), including
+all model/type/channel values verified by the independent parser. The title
+remained `Untitled - PaintCraft` and dirty stayed false; the selected tool color
+became `[64,128,255,255]` while the canvas remained unchanged. This single scene
+does not qualify every platform or original Adobe application. Color-managed
+adoption, persistent catalogs, original-app reopen evidence and workload
+benchmarks remain pending; this is not complete F14 or release qualification.
 
 ### SVG/SVGZ rasterization, 2026-10-25
 

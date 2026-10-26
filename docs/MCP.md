@@ -62,9 +62,12 @@ paintcraft-cli palette export colors.ase -o copy.ase
 paintcraft-cli schema palette-inspection
 ```
 
-ASE desktop/browser palette controls, CMYK/LAB display conversion and original
-Adobe application qualification remain separate work. Image Open/Import does
-not treat palette assets as pictures.
+Studio desktop and browser expose palette import/export through File > Palettes
+and the Colors window's Palettes button. Picking a normalized RGB or gray swatch
+copies its rounded 8-bit sRGB color into the selected primary/secondary tool
+color. Palette values stay unchanged. CMYK/LAB display conversion and original
+Adobe application qualification remain separate work. Image Open/Import does not
+treat palette assets as pictures.
 
 For ICO/CUR import, provide a zero-based `entry` in `import_image`; no entry is
 selected automatically. For DCX, provide a zero-based `page` instead. The two
