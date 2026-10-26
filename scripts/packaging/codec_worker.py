@@ -4,8 +4,9 @@ import mmap
 import shutil
 
 MANIFEST = "paintcraft-codec-worker.json"
-BUILD_PREFIX = b"PAINTCRAFT_CODEC_WORKER_BUILD_V2\0"
-BUILD_SUFFIX = b"\0PCDEC002\0HEAP268435456\0STDIN_PARENT_LEASE1\0END_CODEC_WORKER_BUILD\0"
+NOTICE = "JPEGXR_LICENSE.txt"
+BUILD_PREFIX = b"PAINTCRAFT_CODEC_WORKER_BUILD_V3\0"
+BUILD_SUFFIX = b"\0PCDEC002\0HEAP268435456\0STDIN_PARENT_LEASE1\0JXR_PRIVATE_SOURCE1\0END_CODEC_WORKER_BUILD\0"
 
 
 def verify_build_record(helper, version):
@@ -60,7 +61,7 @@ def metadata(directory, version, target):
         "executable": helper.name,
         "sha256": release.digest(helper),
         "protocol_version": 2,
-        "profile": "internal-heif-gray8-jxl-rgba8-parent-lease1",
+        "profile": "internal-heif-gray8-jxl-rgba8-jxr-rgb8-private-source1-parent-lease1",
         "requested_heap_ceiling_bytes": 256 << 20,
         "public_reader_enabled": False,
     }
@@ -80,6 +81,11 @@ def copy(binary, directory, version, target=None):
     destination = directory / filename(target)
     if destination.is_symlink():
         raise ValueError("Refusing symlink helper destination")
+    notice = directory / NOTICE
+    if notice.is_symlink():
+        raise ValueError("Refusing symlink codec notice destination")
+    import package_release as release
+    shutil.copy2(release.ROOT / "packaging" / NOTICE, notice)
     shutil.copy2(helper, destination)
     destination.chmod(0o755)
     write_manifest(directory, version, target)
@@ -87,6 +93,10 @@ def copy(binary, directory, version, target=None):
 
 
 def verify_manifest(directory, version, target):
+    import package_release as release
+    notice = directory / NOTICE
+    if not notice.is_file() or notice.is_symlink() or notice.read_bytes() != (release.ROOT / "packaging" / NOTICE).read_bytes():
+        raise ValueError("Codec dependency notice is missing or changed")
     path = directory / MANIFEST
     if not path.is_file() or path.is_symlink():
         raise ValueError("Codec helper manifest must be a regular file")

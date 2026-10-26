@@ -50,6 +50,7 @@ class NativePackageTests(unittest.TestCase):
             self.assertIn(f"Binary={self.binary.resolve()}", command)
             self.assertTrue(any(value.startswith("CodecWorker=") for value in command))
             self.assertTrue(any(value.startswith("CodecManifest=") for value in command))
+            self.assertTrue(any(value.startswith("CodecNotice=") for value in command))
             self.assertEqual(command[-1], str(release.ROOT / "packaging/windows.wxs"))
             self.assertTrue((self.output / f"paintcraft-{self.version}-windows-{architecture}.msi.sha256").is_file())
 
@@ -77,6 +78,7 @@ class NativePackageTests(unittest.TestCase):
                     config = json.loads(command[-1])
                     self.assertEqual(config["targetTriple"], target)
                     self.assertEqual(config["formats"], [kind])
+                    self.assertIn("usr/share/licenses/paintcraft/JPEGXR_LICENSE.txt", config["appimage" if kind == "appimage" else "deb"]["files"].values())
                     self.assertIn("usr/share/mime/packages/paintcraft.xml",
                                   config["appimage" if kind == "appimage" else "deb"]["files"].values())
                     for source in config["deb"]["files"]:

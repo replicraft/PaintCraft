@@ -35,14 +35,17 @@ class CodecWorkerTests(unittest.TestCase):
             self.assertEqual(metadata["application_version"], self.version)
             self.assertEqual(metadata["target"], target)
             self.assertEqual(metadata["protocol_version"], 2)
-            self.assertEqual(metadata["profile"], "internal-heif-gray8-jxl-rgba8-parent-lease1")
+            self.assertEqual(metadata["profile"], "internal-heif-gray8-jxl-rgba8-jxr-rgb8-private-source1-parent-lease1")
             self.assertEqual(metadata["requested_heap_ceiling_bytes"], 256 << 20)
             self.assertTrue(metadata["embedded_build_record_verified"])
             self.assertFalse(metadata["public_reader_enabled"])
+            self.assertEqual((destination / codec_worker.NOTICE).read_bytes(),
+                             (release.ROOT / "crates/services/paintcraft-formats/tests/jxr-fixtures/JXRLib-LICENSE.md").read_bytes())
             codec_worker.verify_manifest(destination, self.version, target)
             helper.write_bytes(helper.read_bytes() + b"changed executable")
             with self.assertRaises(ValueError):
                 codec_worker.verify_manifest(destination, self.version, target)
+
 
     def test_missing_wrong_architecture_stale_version_protocol_and_heap_refuse(self):
         correct = self.helper.read_bytes()
@@ -50,8 +53,9 @@ class CodecWorkerTests(unittest.TestCase):
                     correct.replace(self.version.encode(), b"999.0.0"),
                     correct.replace(b"PCDEC002", b"PCDEC003"),
                     correct.replace(b"HEAP268435456", b"HEAP268435457"),
-                    correct.replace(b"BUILD_V2", b"BUILD_V1"),
-                    correct.replace(b"STDIN_PARENT_LEASE1", b"STDIN_PARENT_LEASE0")]:
+                    correct.replace(b"BUILD_V3", b"BUILD_V2"),
+                    correct.replace(b"STDIN_PARENT_LEASE1", b"STDIN_PARENT_LEASE0"),
+                    correct.replace(b"JXR_PRIVATE_SOURCE1", b"JXR_PRIVATE_SOURCE0")]:
             self.helper.write_bytes(bad)
             with self.assertRaises(ValueError):
                 codec_worker.prepare(self.binary, self.version, self.target)
@@ -81,6 +85,28 @@ class CodecWorkerTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             codec_worker.copy(self.binary, output, self.version, self.target)
         self.assertEqual(foreign.read_bytes(), original)
+
+    def test_missing_changed_and_symlinked_notice_are_refused_without_foreign_writes(self):
+        destination = self.root / "notice-output"
+        destination.mkdir()
+        codec_worker.copy(self.binary, destination, self.version, self.target)
+        notice = destination / codec_worker.NOTICE
+        expected = notice.read_bytes()
+        notice.write_bytes(b"changed notice")
+        with self.assertRaises(ValueError):
+            codec_worker.verify_manifest(destination, self.version, self.target)
+        notice.unlink()
+        with self.assertRaises(ValueError):
+            codec_worker.verify_manifest(destination, self.version, self.target)
+        foreign = self.root / "foreign-notice"
+        foreign.write_bytes(expected)
+        try:
+            notice.symlink_to(foreign)
+        except OSError:
+            self.skipTest("symlink privilege unavailable")
+        with self.assertRaises(ValueError):
+            codec_worker.copy(self.binary, destination, self.version, self.target)
+        self.assertEqual(foreign.read_bytes(), expected)
 
     def test_cli_and_desktop_workflow_share_one_helper_cargo_build(self):
         workflow = (release.ROOT / ".github/workflows/release.yml").read_text()

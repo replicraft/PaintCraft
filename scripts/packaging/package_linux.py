@@ -19,6 +19,7 @@ ARCHITECTURES = ("x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu")
 def desktop_files():
     return {
         str(release.ROOT / "LICENSE"): "usr/share/licenses/paintcraft/LICENSE",
+        str(release.ROOT / "packaging" / codec_worker.NOTICE): "usr/share/licenses/paintcraft/" + codec_worker.NOTICE,
         str(release.ROOT / "packaging/FONT_LICENSES.txt"): "usr/share/licenses/paintcraft/FONT_LICENSES.txt",
         str(release.ROOT / "packaging/paintcraft.metainfo.xml"): f"usr/share/metainfo/{APP_ID}.metainfo.xml",
         str(release.ROOT / "packaging/paintcraft-mime.xml"): "usr/share/mime/packages/paintcraft.xml",
@@ -84,6 +85,7 @@ def rpm(version, target, binary, archive, temporary):
     assets[0]["source"] = str(binary.resolve())
     helper = codec_worker.copy(binary, temporary, version, target)
     assets.extend([
+        {"source": str(release.ROOT / "packaging" / codec_worker.NOTICE), "dest": "/usr/share/licenses/paintcraft/" + codec_worker.NOTICE, "mode": "644"},
         {"source": str(helper), "dest": "/usr/bin/paintcraft-codec-worker", "mode": "755"},
         {"source": str(temporary / codec_worker.MANIFEST), "dest": "/usr/share/paintcraft/" + codec_worker.MANIFEST, "mode": "644"},
     ])

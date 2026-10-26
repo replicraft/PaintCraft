@@ -16,6 +16,7 @@
                       Advertise="yes" WorkingDirectory="INSTALLFOLDER" Icon="PaintCraftIcon" />
           </File>
           <File Id="CodecWorker" Source="$(var.CodecWorker)" Name="paintcraft-codec-worker.exe" />
+          <File Id="CodecNotice" Source="$(var.CodecNotice)" Name="JPEGXR_LICENSE.txt" />
           <File Id="CodecManifest" Source="$(var.CodecManifest)" Name="paintcraft-codec-worker.json" />
           <File Id="License" Source="$(var.License)" Name="LICENSE.txt" />
           <File Id="FontLicenses" Source="$(var.FontLicenses)" Name="FONT_LICENSES.txt" />
