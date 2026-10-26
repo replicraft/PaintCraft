@@ -3443,6 +3443,7 @@ dependencies = [
  "raw-window-handle",
  "rfd",
  "rustix 1.1.5",
+ "same-file",
  "sha2",
  "uuid",
  "wl-clipboard-rs",

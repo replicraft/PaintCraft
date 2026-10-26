@@ -16,3 +16,6 @@ pub mod printing;
 
 #[cfg(feature = "clipboard")]
 pub mod clipboard;
+
+#[cfg(not(target_arch = "wasm32"))]
+pub mod source;

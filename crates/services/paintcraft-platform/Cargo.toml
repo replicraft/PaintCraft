@@ -35,6 +35,9 @@ rfd = { workspace = true, optional = true }
 sha2.workspace = true
 uuid.workspace = true
 
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+same-file.workspace = true
+
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2 = { workspace = true, optional = true }
 objc2-app-kit = { workspace = true, optional = true }

@@ -7,51 +7,11 @@ use std::{
 };
 use uuid::Uuid;
 
-/// Keep the actual acquired file open so its identity survives rename/unlink
-/// without permitting inode reuse while a resource still owns it.
-#[derive(Debug)]
-pub(crate) struct SourceIdentity(same_file::Handle);
-#[derive(Debug)]
+pub(crate) use paintcraft_platform::source::SourceIdentity;
+#[derive(Clone, Debug)]
 pub(crate) struct SourceGuard {
     pub path: PathBuf,
     pub identity: SourceIdentity,
-}
-impl SourceIdentity {
-    pub(crate) fn from_file(file: std::fs::File) -> Result<Self> {
-        same_file::Handle::from_file(file)
-            .map(Self)
-            .map_err(identity_error)
-    }
-    pub(crate) fn file(&self) -> &std::fs::File {
-        self.0.as_file()
-    }
-    pub(crate) fn matches_path(&self, path: &Path) -> Result<bool> {
-        Ok(Self::existing_destination(path)?.is_some_and(|candidate| self.matches(&candidate)))
-    }
-    pub(crate) fn matches(&self, other: &Self) -> bool {
-        self.0 == other.0
-    }
-    pub(crate) fn existing_destination(path: &Path) -> Result<Option<Self>> {
-        let metadata = match path.metadata() {
-            Ok(metadata) => metadata,
-            Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
-            Err(error) => return Err(identity_error(error)),
-        };
-        if !metadata.is_file() {
-            return Ok(None);
-        }
-        let file = std::fs::File::open(path).map_err(identity_error)?;
-        if !file.metadata().map_err(identity_error)?.is_file() {
-            return Ok(None);
-        }
-        Self::from_file(file).map(Some)
-    }
-}
-fn identity_error(error: std::io::Error) -> Error {
-    Error::new(
-        ErrorCode::StorageFailed,
-        format!("Cannot inspect file identity: {}", error.kind()),
-    )
 }
 
 #[derive(Clone, Debug)]
