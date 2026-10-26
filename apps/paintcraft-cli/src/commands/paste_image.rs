@@ -55,24 +55,29 @@ pub fn run(a: Options, json: bool) -> Reply {
                 ));
             }
             let in_place = same_file(&a.input, dest);
-            let (document_bytes, sha) = read_bounded(&a.input, INPUT_MAX, "input")?;
+            let (document_bytes, sha, project_identity) =
+                read_regular_or_bounded(&a.input, INPUT_MAX, "input")?;
             guard(a.expect_input_sha256.as_deref(), &sha)?;
-            let (image_bytes, image_sha, source_identity) = if a
+            let captured_limit = a
                 .image
                 .extension()
                 .and_then(|ext| ext.to_str())
                 .and_then(paintcraft_formats::registry::Family::from_extension)
-                == Some(paintcraft_formats::registry::Family::Msp)
-            {
-                let (bytes, sha, identity) = read_captured(
-                    &a.image,
-                    paintcraft_formats::msp::BYTES_MAX as u64,
-                    "MSP image",
-                )?;
+                .and_then(|family| match family {
+                    paintcraft_formats::registry::Family::Msp => {
+                        Some(paintcraft_formats::msp::BYTES_MAX)
+                    }
+                    paintcraft_formats::registry::Family::Dds => {
+                        Some(paintcraft_formats::dds::BYTES_MAX)
+                    }
+                    _ => None,
+                });
+            let (image_bytes, image_sha, source_identity) = if let Some(limit) = captured_limit {
+                let (bytes, sha, identity) =
+                    read_captured(&a.image, limit as u64, "captured image")?;
                 (bytes, sha, Some(identity))
             } else {
-                let (bytes, sha, identity) = read_captured(&a.image, 64 << 20, "image")?;
-                (bytes, sha, Some(identity))
+                read_regular_or_bounded(&a.image, 64 << 20, "image")?
             };
             guard_named(
                 a.expect_image_sha256.as_deref(),
@@ -81,6 +86,17 @@ pub fn run(a: Options, json: bool) -> Reply {
             )?;
             let mut session = Session::new(pcnd::read(&document_bytes)?);
             let family = a.profile.admit_import(&a.image, &image_bytes)?;
+            if matches!(
+                family,
+                paintcraft_formats::registry::Family::Dds
+                    | paintcraft_formats::registry::Family::Msp
+            ) && source_identity.is_none()
+            {
+                return Err(Error::new(
+                    ErrorCode::InputSchema,
+                    "DDS/MSP paste requires a captured regular source",
+                ));
+            }
             a.profile.reject_project_import(family)?;
             let decoded = image::decode_with_pixel_limit(&image_bytes, MAX_PIXELS)?;
             if let Some(loss) = decoded.losses.iter().find(|loss| !allowed.contains(loss)) {
@@ -137,15 +153,55 @@ pub fn run(a: Options, json: bool) -> Reply {
             }
             if family == paintcraft_formats::registry::Family::Dds {
                 use sha2::{Digest, Sha256};
-                source_identity.as_ref().unwrap().verify_bytes(
-                    &a.image,
-                    image_bytes.len() as u64,
-                    &Sha256::digest(&image_bytes).into(),
-                    &|| Ok(()),
-                )?;
+                source_identity
+                    .as_ref()
+                    .ok_or_else(|| {
+                        Error::new(
+                            ErrorCode::InputSchema,
+                            "DDS paste requires a captured regular source",
+                        )
+                    })?
+                    .verify_bytes(
+                        &a.image,
+                        image_bytes.len() as u64,
+                        &Sha256::digest(&image_bytes).into(),
+                        &|| Ok(()),
+                    )?;
             }
             let (receipt, ok, summary) =
-                write_native(dest, a.output.overwrite, session.document(), &ctx);
+                write_native_guarded(dest, a.output.overwrite, session.document(), &ctx, || {
+                    if let Some(project_identity) = &project_identity {
+                        if !in_place && project_identity.matches_path(dest)? {
+                            return Err(Error::new(
+                                ErrorCode::InputSchema,
+                                "copy output cannot replace the captured source project",
+                            ));
+                        }
+                        project_identity.verify_bytes(
+                            &a.input,
+                            document_bytes.len() as u64,
+                            &Sha256::digest(&document_bytes).into(),
+                            &|| Ok(()),
+                        )?;
+                    }
+                    if let Some(identity) = &source_identity {
+                        if identity.matches_path(dest)? {
+                            return Err(Error::new(
+                                ErrorCode::InputSchema,
+                                "output cannot replace the captured source image",
+                            ));
+                        }
+                        if family == paintcraft_formats::registry::Family::Dds {
+                            identity.verify_bytes(
+                                &a.image,
+                                image_bytes.len() as u64,
+                                &Sha256::digest(&image_bytes).into(),
+                                &|| Ok(()),
+                            )?;
+                        }
+                    }
+                    Ok(())
+                });
             Ok(Written {
                 engine: Some(engine.to_value()),
                 receipt,

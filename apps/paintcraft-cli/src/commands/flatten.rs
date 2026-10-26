@@ -17,7 +17,8 @@ pub fn run(options: Options, json: bool) -> Reply {
             let dest = options.output.output.as_path();
             save::preflight(dest, options.output.overwrite)?;
             let in_place = same_file(&options.input, dest);
-            let (bytes, sha) = read_bounded(&options.input, INPUT_MAX, "input")?;
+            let (bytes, sha, identity) =
+                read_regular_or_bounded(&options.input, INPUT_MAX, "input")?;
             guard(options.expect_input_sha256.as_deref(), &sha)?;
             if format_profile::Options::default().admit_open(&options.input, &bytes)?
                 != paintcraft_formats::registry::Family::Pcnd
@@ -37,8 +38,29 @@ pub fn run(options: Options, json: bool) -> Reply {
                 losses_acknowledged: vec![],
                 destination: dest,
             };
-            let (receipt, ok, summary) =
-                write_native(dest, options.output.overwrite, session.document(), &ctx);
+            let (receipt, ok, summary) = write_native_guarded(
+                dest,
+                options.output.overwrite,
+                session.document(),
+                &ctx,
+                || {
+                    if let Some(identity) = &identity {
+                        if !in_place && identity.matches_path(dest)? {
+                            return Err(Error::new(
+                                ErrorCode::InputSchema,
+                                "copy output cannot replace the captured source project",
+                            ));
+                        }
+                        identity.verify_bytes(
+                            &options.input,
+                            bytes.len() as u64,
+                            &Sha256::digest(&bytes).into(),
+                            &|| Ok(()),
+                        )?;
+                    }
+                    Ok(())
+                },
+            );
             Ok(Written {
                 engine: Some(engine.to_value()),
                 receipt,

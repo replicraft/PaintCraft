@@ -105,7 +105,7 @@ pub fn run(a: Options, json: bool) -> Reply {
                 let (bytes, sha, identity) = read_captured(input, limit as u64, "captured input")?;
                 (bytes, sha, Some(identity))
             } else {
-                let (bytes, sha, identity) = read_captured(
+                read_regular_or_bounded(
                     input,
                     if svg.is_some() {
                         paintcraft_formats::svg::SOURCE_MAX as u64
@@ -113,8 +113,7 @@ pub fn run(a: Options, json: bool) -> Reply {
                         INPUT_MAX
                     },
                     "input",
-                )?;
-                (bytes, sha, Some(identity))
+                )?
             };
             let family = if svg.is_some() {
                 a.profile.admit_import_svg(input, &bytes)?
@@ -125,7 +124,18 @@ pub fn run(a: Options, json: bool) -> Reply {
                     _ => a.profile.admit_import(input, &bytes)?,
                 }
             };
-            let (doc, losses) = if let Some(selection) = svg {
+            if matches!(
+                family,
+                paintcraft_formats::registry::Family::Dds
+                    | paintcraft_formats::registry::Family::Msp
+            ) && source_identity.is_none()
+            {
+                return Err(Error::new(
+                    ErrorCode::InputSchema,
+                    "DDS/MSP import requires a captured regular source",
+                ));
+            }
+            let (doc, losses) = if let Some(selection) = &svg {
                 if !allowed.iter().any(|code| code == "svg-rasterized") {
                     return Err(Error::new(
                         ErrorCode::CapabilityUnsupported,
@@ -209,7 +219,29 @@ pub fn run(a: Options, json: bool) -> Reply {
                     "conversion output must not replace its captured imported source",
                 ));
             }
-            let (receipt, ok, summary) = write_native(dest, a.output.overwrite, &doc, &ctx);
+            let (receipt, ok, summary) =
+                write_native_guarded(dest, a.output.overwrite, &doc, &ctx, || {
+                    if let Some(selection) = &svg {
+                        selection.protect_output(dest)?;
+                    }
+                    if let Some(identity) = &source_identity {
+                        if identity.matches_path(dest)? {
+                            return Err(Error::new(
+                                ErrorCode::InputSchema,
+                                "conversion output must not replace its captured imported source",
+                            ));
+                        }
+                        if family == paintcraft_formats::registry::Family::Dds {
+                            identity.verify_bytes(
+                                input,
+                                bytes.len() as u64,
+                                &Sha256::digest(&bytes).into(),
+                                &|| Ok(()),
+                            )?;
+                        }
+                    }
+                    Ok(())
+                });
             Ok(Written {
                 engine: None,
                 receipt,

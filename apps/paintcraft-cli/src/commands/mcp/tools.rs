@@ -1,7 +1,7 @@
 use super::super::format_profile;
 use super::super::{
     BATCH_V2_SCHEMA, Context, INPUT_MAX, ImageFormat, POLICY, PathBuf, Rgba, Session, export,
-    image, new_document, pcnd, read_captured, save,
+    image, new_document, pcnd, read_captured, read_regular_or_bounded, save,
 };
 use super::{
     PaintingServer,
@@ -151,12 +151,11 @@ impl PaintingServer {
                 let (bytes,sha,identity)=read_captured(&path,limit as u64,"captured image")?;
                 (bytes,sha,Some(identity))
             } else {
-                let (bytes, sha, identity) = read_captured(
+                read_regular_or_bounded(
                     &path,
                     if p.svg.is_some() {paintcraft_formats::svg::SOURCE_MAX as u64} else {INPUT_MAX},
                     "image",
-                )?;
-                (bytes,sha,Some(identity))
+                )?
             };
             let family = if p.svg.is_some() {
                 profile.admit_import_svg(&path, &bytes)?
@@ -167,6 +166,9 @@ impl PaintingServer {
                     _ => profile.admit_import(&path, &bytes)?,
                 }
             };
+            if matches!(family, Family::Dds | Family::Msp) && source_identity.is_none() {
+                return Err(invalid("DDS/MSP import requires a captured regular source"));
+            }
             let mut icns_entry = None;
             let (doc, losses) = if let Some(svg) = &p.svg {
                 if !p.allow_losses.iter().any(|code| code == "svg-rasterized") {

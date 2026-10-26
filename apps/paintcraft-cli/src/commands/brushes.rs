@@ -223,7 +223,8 @@ pub fn run(options: Options, json: bool) -> Reply {
                 let budget = SharedBudget::new(BUDGET_BYTES);
                 let preset =
                     loaded.adopt(p.preset, &p.policy, p.allow_spacing_quantization, &budget)?;
-                let (bytes, sha) = read_bounded(&p.project, INPUT_MAX, "project")?;
+                let (bytes, sha, project_identity) =
+                    read_regular_or_bounded(&p.project, INPUT_MAX, "project")?;
                 guard(p.expect_input_sha256.as_deref(), &sha)?;
                 let mut session = Session::new(pcnd::read(&bytes)?);
                 let (points, _) = read_bounded(&p.points, 4 << 20, "brush points")?;
@@ -239,12 +240,9 @@ pub fn run(options: Options, json: bool) -> Reply {
                     layer_id: p.layer_id,
                 };
                 let receipt = paint(&mut session, &preset, stroke, &budget)?;
+                let in_place = same_file(&p.project, &p.output.output);
                 let ctx = Context {
-                    operation: if same_file(&p.project, &p.output.output) {
-                        "save"
-                    } else {
-                        "save-as"
-                    },
+                    operation: if in_place { "save" } else { "save-as" },
                     source_state: session.document().state_id,
                     source_sha256: Some(sha),
                     losses_acknowledged: if p.allow_spacing_quantization {
@@ -254,11 +252,38 @@ pub fn run(options: Options, json: bool) -> Reply {
                     },
                     destination: &p.output.output,
                 };
-                let (file, ok, summary) = write_native(
+                let (file, ok, summary) = write_native_guarded(
                     &p.output.output,
                     p.output.overwrite,
                     session.document(),
                     &ctx,
+                    || {
+                        let candidate =
+                            paintcraft_platform::source::SourceIdentity::existing_destination(
+                                &p.output.output,
+                            )?;
+                        if loaded.protects(&p.output.output, candidate.as_ref()) {
+                            return Err(Error::new(
+                                ErrorCode::InputSchema,
+                                "painting output must not replace brush source",
+                            ));
+                        }
+                        if let Some(project_identity) = &project_identity {
+                            if !in_place && project_identity.matches_path(&p.output.output)? {
+                                return Err(Error::new(
+                                    ErrorCode::InputSchema,
+                                    "copy output cannot replace the captured source project",
+                                ));
+                            }
+                            project_identity.verify_bytes(
+                                &p.project,
+                                bytes.len() as u64,
+                                &Sha256::digest(&bytes).into(),
+                                &|| Ok(()),
+                            )?;
+                        }
+                        Ok(())
+                    },
                 );
                 Ok(Written {
                     engine: Some(receipt.to_value()),

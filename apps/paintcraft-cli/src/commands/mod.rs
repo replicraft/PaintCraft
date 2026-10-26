@@ -55,6 +55,26 @@ fn read_bounded(path: &Path, limit: u64, what: &str) -> Result<(Vec<u8>, String)
     Ok((bytes, sha))
 }
 
+/// Preserve bounded stream inputs while retaining identities for regular files.
+/// A classified profile may still require the returned captured identity.
+fn read_regular_or_bounded(
+    path: &Path,
+    limit: u64,
+    what: &str,
+) -> Result<(
+    Vec<u8>,
+    String,
+    Option<paintcraft_platform::source::SourceIdentity>,
+)> {
+    if path.metadata().map_err(|e| storage(what, &e))?.is_file() {
+        let (bytes, sha, identity) = read_captured(path, limit, what)?;
+        Ok((bytes, sha, Some(identity)))
+    } else {
+        let (bytes, sha) = read_bounded(path, limit, what)?;
+        Ok((bytes, sha, None))
+    }
+}
+
 /// Acquire a regular native resource and retain the same opened identity used
 /// for decoding. Scoped users can keep this across conversion and output guards.
 fn read_captured(
@@ -213,32 +233,8 @@ fn write_output(
     finish_output(dest, ctx, outcome)
 }
 
-fn write_native(
-    dest: &Path,
-    overwrite: bool,
-    document: &paintcraft_document::Document,
-    ctx: &Context<'_>,
-) -> (Value, bool, String) {
-    let encode = |sink: &mut dyn std::io::Write| pcnd::write_compact_to(document, sink);
-    let outcome = if ctx.operation == "save" {
-        match ctx.source_sha256.as_deref() {
-            Some(expected) => save::save_with_expected_sha256(
-                dest,
-                overwrite,
-                save::STAGED_FILE_BYTES_MAX,
-                expected,
-                encode,
-            ),
-            None => save::not_attempted(&Error::new(
-                ErrorCode::ConflictStaleBase,
-                "in-place output requires the captured source digest",
-            )),
-        }
-    } else {
-        save::save_with(dest, overwrite, save::STAGED_FILE_BYTES_MAX, encode)
-    };
-    finish_output(dest, ctx, outcome)
-}
+mod native_save;
+use native_save::{write_native, write_native_guarded};
 
 fn finish_output(dest: &Path, ctx: &Context<'_>, outcome: Outcome) -> (Value, bool, String) {
     let summary = if outcome.is_success() {

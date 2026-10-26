@@ -156,7 +156,10 @@ impl State {
         let inplace = source
             .as_ref()
             .is_some_and(|(old, _)| same_file(old, &path));
-        let session = self.session()?;
+        let session = self
+            .session
+            .as_ref()
+            .ok_or_else(|| invalid("create or open a document first"))?;
         let ctx = Context {
             operation: if inplace { "save" } else { "save-as" },
             source_state: session.document().state_id,
@@ -164,7 +167,19 @@ impl State {
             losses_acknowledged: vec![],
             destination: &path,
         };
-        let (receipt, ok, _) = write_native(&path, overwrite || inplace, session.document(), &ctx);
+        let (receipt, ok, _) = write_native_guarded(
+            &path,
+            overwrite || inplace,
+            session.document(),
+            &ctx,
+            || {
+                if inplace {
+                    self.protect_import_sources(&path)
+                } else {
+                    self.protect_copy_sources(&path)
+                }
+            },
+        );
         let result = core_json(&receipt)?;
         if ok {
             let sha = result
@@ -172,7 +187,7 @@ impl State {
                 .and_then(Json::as_str)
                 .ok_or_else(|| invalid("saved receipt is missing its digest"))?
                 .to_owned();
-            session.mark_saved();
+            self.session()?.mark_saved();
             // Publication already succeeded. Failure to capture the resulting
             // binding cannot undo that fact: keep the truthful durable receipt,
             // and let copy guards fail closed until the project is reopened.
