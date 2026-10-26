@@ -6,6 +6,7 @@ mod construction;
 mod contracts;
 mod floating;
 pub mod sampled_brush;
+mod sampled_gesture;
 pub use floating::{FloatingOptions, FloatingSelection};
 pub mod navigation;
 pub use contracts::*;
@@ -46,6 +47,9 @@ struct Gesture {
     color: Rgba,
     fill: Rgba,
     options: ToolOptions,
+    sampled_source: Option<Uuid>,
+    sampled_failure: bool,
+    sampled: Option<(paintcraft_raster::sampled_brush::SampledTip, u32)>,
     points: Vec<(i64, i64)>,
     point_scale: u32,
     constrain_shape: bool,
@@ -59,6 +63,9 @@ pub struct ToolState {
     pub secondary: Rgba,
     pub tool: Tool,
     pub options: ToolOptions,
+    pub sampled_source: Option<Uuid>,
+    pub sampled_name: Option<String>,
+    pub sampled_tip: Option<(paintcraft_raster::sampled_brush::SampledTip, u32)>,
     previous_tool: Tool,
     gesture: Option<Gesture>,
     floating: Option<FloatingSelection>,
@@ -75,6 +82,9 @@ impl Default for ToolState {
             secondary: Rgba([255; 4]),
             tool: Tool::Pencil,
             options: ToolOptions::default(),
+            sampled_source: None,
+            sampled_name: None,
+            sampled_tip: None,
             previous_tool: Tool::Pencil,
             gesture: None,
             floating: None,
@@ -166,6 +176,11 @@ impl ToolState {
             color,
             fill,
             options: self.options,
+            sampled_source: self.sampled_source,
+            sampled_failure: false,
+            sampled: (self.tool == Tool::Brush)
+                .then(|| self.sampled_tip.clone())
+                .flatten(),
             points: vec![at],
             point_scale: 1,
             constrain_shape: false,
@@ -186,7 +201,7 @@ impl ToolState {
         self.pointer_down_button(layer, (at.0.div_euclid(256), at.1.div_euclid(256)), button);
         if let Some(g) = &mut self.gesture
             && g.tool == Tool::Brush
-            && g.options.round
+            && (g.options.round || g.sampled.is_some())
         {
             g.point_scale = 256;
             g.points[0] = at;
@@ -306,6 +321,9 @@ impl ToolState {
             return draft.view(false).map(Preview::Contour);
         }
         let g = self.gesture.as_ref()?;
+        if g.sampled.is_some() {
+            return Self::sampled_gesture(g).ok().map(Preview::SampledStroke);
+        }
         let (first, last) = geometry::endpoints(g.tool, &g.points, g.constrain_shape);
         Some(match g.tool {
             Tool::Pencil | Tool::Brush | Tool::Eraser => {
@@ -444,6 +462,14 @@ impl ToolState {
         let Some(g) = &mut self.gesture else { return };
         match g.tool {
             Tool::Pencil | Tool::Brush | Tool::Eraser => {
+                if g.sampled.is_some()
+                    && g.points.last() != Some(&doc_point)
+                    && g.points.len() >= paintcraft_raster::sampled_brush::POINTS_MAX
+                {
+                    g.sampled_failure = true;
+                    self.preview_revision.advance();
+                    return;
+                }
                 if g.points.last() != Some(&doc_point)
                     && g.points.len() < POINTS_PER_OP * OPS_PER_BATCH
                 {
@@ -486,6 +512,17 @@ impl ToolState {
         }
         let g = self.gesture.take()?;
         self.preview_revision.advance();
+        if g.sampled.is_some() {
+            return Some((
+                g.token,
+                match Self::sampled_gesture(&g) {
+                    Ok(stroke) => Action::SampledStroke(stroke),
+                    Err(_) => Action::ToolFailure(
+                        "Sampled brush stroke cancelled: point or coordinate limit exceeded.",
+                    ),
+                },
+            ));
+        }
         let (first, last) = geometry::endpoints(g.tool, &g.points, g.constrain_shape);
         let action = match g.tool {
             Tool::Pencil | Tool::Brush | Tool::Eraser => {

@@ -206,6 +206,8 @@ pub struct ColorPick {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Action {
+    ToolFailure(&'static str),
+    SampledStroke(crate::sampled_brush::SampledStroke),
     MoveSelection {
         layer: Uuid,
         offset: (i64, i64),
@@ -314,6 +316,7 @@ pub enum Action {
 /// What the UI should draw for an unpublished gesture.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Preview {
+    SampledStroke(crate::sampled_brush::SampledStroke),
     MoveSelection {
         layer: Uuid,
         offset: (i64, i64),

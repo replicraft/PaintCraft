@@ -7,8 +7,9 @@ use paintcraft_core::types::{
 use paintcraft_raster::sampled_brush::{self, Coverage, SampledTip};
 use uuid::Uuid;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct SampledStroke {
+    resource_id: Option<Uuid>,
     layer: Uuid,
     color: Rgba,
     tip: SampledTip,
@@ -31,6 +32,40 @@ impl ResolvedSampledStroke {
     }
     pub fn layer(&self) -> Uuid {
         self.layer
+    }
+    pub fn operations_with_first_layer(
+        &self,
+        canvas: (u32, u32),
+        check: &impl Fn() -> Result<()>,
+    ) -> Result<Vec<Value>> {
+        let mut operations = self.operations(check)?;
+        if operations.is_empty() {
+            return Ok(operations);
+        }
+        for operation in &mut operations {
+            if let Value::Object(fields) = operation {
+                fields.insert(
+                    "layer_ref".into(),
+                    Value::object([("ref", Value::str("sampled-first"))]),
+                );
+            }
+        }
+        operations.insert(
+            0,
+            Value::object([
+                ("op", Value::str("layer.add")),
+                ("ref", Value::str("sampled-first")),
+                ("name", Value::str("Layer 1")),
+                ("width", Value::Int(canvas.0.into())),
+                ("height", Value::Int(canvas.1.into())),
+                (
+                    "origin",
+                    Value::object([("x", Value::Int(0)), ("y", Value::Int(0))]),
+                ),
+                ("default_pixel", Value::str("#00000000")),
+            ]),
+        );
+        Ok(operations)
     }
     pub fn operations(&self, check: &impl Fn() -> Result<()>) -> Result<Vec<Value>> {
         crate::commands::mask_operations(self.layer, self.color, self.coverage.spans(), check)
@@ -55,6 +90,7 @@ impl SampledStroke {
         }
         validate_point(at, point_scale)?;
         Ok(Self {
+            resource_id: None,
             layer,
             color,
             tip,
@@ -62,6 +98,13 @@ impl SampledStroke {
             point_scale,
             spacing_q8,
         })
+    }
+    pub fn with_resource_id(mut self, id: Uuid) -> Self {
+        self.resource_id = Some(id);
+        self
+    }
+    pub fn resource_id(&self) -> Option<Uuid> {
+        self.resource_id
     }
     pub fn append(&mut self, point: (i64, i64)) -> Result<()> {
         validate_point(point, self.point_scale)?;
@@ -81,6 +124,29 @@ impl SampledStroke {
             )
         })?;
         self.points.push(point);
+        Ok(())
+    }
+    pub fn admit_work(&self, allowance: u64) -> Result<()> {
+        let factor = 256 / u128::from(self.point_scale);
+        let length = self
+            .points
+            .windows(2)
+            .try_fold(0u128, |total, pair| {
+                total.checked_add(
+                    u128::from(pair[0].0.abs_diff(pair[1].0))
+                        + u128::from(pair[0].1.abs_diff(pair[1].1)),
+                )
+            })
+            .ok_or_else(|| invalid("sampled work overflow"))?
+            * factor;
+        let dabs = 1 + length / u128::from(self.spacing_q8);
+        let work = dabs * u128::from(self.tip.width() + 2) * u128::from(self.tip.height() + 2);
+        if work > u128::from(allowance) {
+            return Err(Error::new(
+                ErrorCode::ResourceLimit,
+                "Sampled brush stroke exceeds the browser work limit. Use shorter strokes or a smaller original tip.",
+            ));
+        }
         Ok(())
     }
     pub fn tip(&self) -> &SampledTip {
