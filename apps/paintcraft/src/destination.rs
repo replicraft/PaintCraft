@@ -7,6 +7,43 @@ use std::{
 };
 use uuid::Uuid;
 
+/// Keep the actual acquired file open so its identity survives rename/unlink
+/// without permitting inode reuse while a resource still owns it.
+#[derive(Debug)]
+pub(crate) struct SourceIdentity(same_file::Handle);
+impl SourceIdentity {
+    pub(crate) fn from_file(file: std::fs::File) -> Result<Self> {
+        same_file::Handle::from_file(file)
+            .map(Self)
+            .map_err(identity_error)
+    }
+    pub(crate) fn file(&self) -> &std::fs::File {
+        self.0.as_file()
+    }
+    pub(crate) fn matches_path(&self, path: &Path) -> Result<bool> {
+        let metadata = match path.metadata() {
+            Ok(metadata) => metadata,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(false),
+            Err(error) => return Err(identity_error(error)),
+        };
+        if !metadata.is_file() {
+            return Ok(false);
+        }
+        let file = std::fs::File::open(path).map_err(identity_error)?;
+        if !file.metadata().map_err(identity_error)?.is_file() {
+            return Ok(false);
+        }
+        let candidate = same_file::Handle::from_file(file).map_err(identity_error)?;
+        Ok(self.0 == candidate)
+    }
+}
+fn identity_error(error: std::io::Error) -> Error {
+    Error::new(
+        ErrorCode::StorageFailed,
+        format!("Cannot inspect file identity: {}", error.kind()),
+    )
+}
+
 #[derive(Clone, Debug)]
 pub(crate) struct Binding(Arc<Mutex<State>>);
 #[derive(Debug)]

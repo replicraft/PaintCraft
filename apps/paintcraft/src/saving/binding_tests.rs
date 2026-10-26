@@ -304,9 +304,9 @@ fn resource_adoption_refuses_a_source_targeted_by_an_already_queued_project_save
             fs::write(&old, bytes).unwrap();
             fs::write(&source, bytes).unwrap();
             if shape {
-                app.install_shape(bytes, old.clone()).unwrap();
+                app.install_shape(old.clone()).unwrap();
             } else {
-                app.install_palette(bytes, old.clone()).unwrap();
+                app.install_palette(old.clone()).unwrap();
             }
             std::os::unix::fs::symlink(&source, &target).unwrap();
             let (signal, ticket) = gate(&mut app);
@@ -335,10 +335,10 @@ fn resource_adoption_refuses_a_source_targeted_by_an_already_queued_project_save
                 i18n::set_language(&app.context, language);
                 let adoption = if shape {
                     app.begin_shapes();
-                    app.install_shape(bytes, source.clone())
+                    app.install_shape(source.clone())
                 } else {
                     app.begin_palettes();
-                    app.install_palette(bytes, source.clone())
+                    app.install_palette(source.clone())
                 };
                 results.push((language, adoption));
             }
@@ -362,6 +362,7 @@ fn resource_adoption_refuses_a_source_targeted_by_an_already_queued_project_save
                 [old.as_path()]
             );
             assert_eq!(fs::read(&old).unwrap(), bytes);
+            drop(app);
             fs::remove_dir_all(dir).unwrap();
         }
     }
@@ -397,10 +398,10 @@ fn resource_adoption_remains_available_while_an_unrelated_project_save_is_queued
         let snapshot = app.editor.document_snapshot();
         let adoption = if shape {
             app.begin_shapes();
-            app.install_shape(bytes, source.clone())
+            app.install_shape(source.clone())
         } else {
             app.begin_palettes();
-            app.install_palette(bytes, source.clone())
+            app.install_palette(source.clone())
         };
         release(&mut app, signal, ticket);
         adoption.unwrap();
@@ -411,6 +412,7 @@ fn resource_adoption_remains_available_while_an_unrelated_project_save_is_queued
         assert_eq!(fs::read(&source).unwrap(), bytes);
         assert!(fs::read(&target).unwrap().starts_with(b"PCND"));
         assert!(Arc::ptr_eq(&snapshot, &app.editor.document_snapshot()));
+        drop(app);
         fs::remove_dir_all(dir).unwrap();
     }
 }

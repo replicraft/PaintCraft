@@ -30,10 +30,10 @@ fn loaded(root: &Path, shape: bool) -> (App, PathBuf, &'static [u8]) {
     app.editor = Editor::new_document(2, 2).unwrap();
     if shape {
         app.begin_shapes();
-        app.install_shape(bytes, source.clone()).unwrap();
+        app.install_shape(source.clone()).unwrap();
     } else {
         app.begin_palettes();
-        app.install_palette(bytes, source.clone()).unwrap();
+        app.install_palette(source.clone()).unwrap();
     }
     app.confirm = None;
     (app, source, bytes)
@@ -105,6 +105,7 @@ fn project_save_as_does_not_replace_a_loaded_resource_through_a_symlink() {
         );
         assert!(app.bound.is_none());
         assert!(Arc::ptr_eq(&snapshot, &app.editor.document_snapshot()));
+        drop(app);
         std::fs::remove_dir_all(root).unwrap();
     }
 }
@@ -147,6 +148,7 @@ fn confirmed_image_export_does_not_replace_a_loaded_resource_through_a_symlink()
             bytes,
             "resource alias was replaced"
         );
+        drop(app);
         std::fs::remove_dir_all(root).unwrap();
     }
 }
@@ -183,6 +185,7 @@ fn project_save_and_flat_export_refuse_direct_resource_paths_and_hard_links() {
             assert_eq!(std::fs::read(&source).unwrap(), bytes);
             assert!(Arc::ptr_eq(&snapshot, &app.editor.document_snapshot()));
             assert_eq!(app.editor.history_view().ticket, ticket);
+            drop(app);
             std::fs::remove_dir_all(root).unwrap();
         }
     }
@@ -218,6 +221,7 @@ fn unrelated_loaded_resources_do_not_deny_normal_bound_project_saves() {
                 .same_semantics(app.editor.document())
         );
         assert_eq!(std::fs::read(&source).unwrap(), bytes);
+        drop(app);
         std::fs::remove_dir_all(root).unwrap();
     }
 }
@@ -247,6 +251,7 @@ fn confirmation_rechecks_a_destination_retargeted_to_a_loaded_resource() {
             assert_eq!(std::fs::read(&path).unwrap(), bytes);
             assert!(app.bound.is_none());
             assert!(Arc::ptr_eq(&snapshot, &app.editor.document_snapshot()));
+            drop(app);
             std::fs::remove_dir_all(root).unwrap();
         }
     }
@@ -280,6 +285,7 @@ fn cancelled_replacements_preserve_loaded_resource_sources_and_document_state() 
             );
             assert!(Arc::ptr_eq(&snapshot, &app.editor.document_snapshot()));
             assert_eq!(app.editor.history_view().ticket, ticket);
+            drop(app);
             std::fs::remove_dir_all(root).unwrap();
         }
     }
@@ -320,6 +326,7 @@ fn flat_export_protects_document_sources_in_other_tabs_and_parked_workspaces() {
             assert_eq!(std::fs::read(&source).unwrap(), bytes);
             assert_eq!(std::fs::read(&alias).unwrap(), bytes);
             assert!(Arc::ptr_eq(&snapshot, &app.editor.document_snapshot()));
+            drop(app);
             std::fs::remove_dir_all(root).unwrap();
         }
     }
@@ -331,7 +338,7 @@ fn resource_source_paths_remain_protected_while_studio_documents_are_parked() {
     let (mut app, palette, _) = loaded(&root, false);
     let shape = root.join("second.csh");
     std::fs::write(&shape, CSH).unwrap();
-    app.install_shape(CSH, shape.clone()).unwrap();
+    app.install_shape(shape.clone()).unwrap();
     let mut parked = tabs::WorkspaceDocuments::new((2, 2), false);
     parked.swap(&mut app);
     app.other_workspace = Some(Box::new(parked));
@@ -350,6 +357,7 @@ fn resource_source_paths_remain_protected_while_studio_documents_are_parked() {
         assert_eq!(std::fs::read(image).unwrap(), bytes);
         assert!(app.bound.is_none());
     }
+    drop(app);
     std::fs::remove_dir_all(root).unwrap();
 }
 
@@ -364,6 +372,118 @@ fn a_missing_resource_source_path_is_not_recreated_as_a_project() {
         settle(&mut app, &ctx);
         assert!(!source.exists());
         assert!(app.bound.is_none());
+        drop(app);
+        std::fs::remove_dir_all(root).unwrap();
+    }
+}
+
+#[cfg(unix)]
+#[test]
+fn renamed_resource_identity_is_protected_from_project_save_as_aliases() {
+    for shape in [false, true] {
+        let root = scratch();
+        let (mut app, source, bytes) = loaded(&root, shape);
+        let moved = root.join("moved-resource.bin");
+        std::fs::rename(&source, &moved).unwrap();
+        let alias = root.join("painting.pcnd");
+        std::os::unix::fs::symlink(&moved, &alias).unwrap();
+        let ctx = egui::Context::default();
+        app.save_selected(&ctx, alias.clone());
+        confirm_save_if_offered(&mut app, &ctx);
+        settle(&mut app, &ctx);
+        assert_eq!(
+            std::fs::read(&moved).unwrap(),
+            bytes,
+            "renamed loaded resource was replaced"
+        );
+        assert_eq!(std::fs::read(&alias).unwrap(), bytes);
+        drop(app);
+        std::fs::remove_dir_all(root).unwrap();
+    }
+}
+
+#[cfg(unix)]
+#[test]
+fn renamed_resource_identity_is_protected_from_flat_image_export_aliases() {
+    for shape in [false, true] {
+        let root = scratch();
+        let (mut app, source, bytes) = loaded(&root, shape);
+        let moved = root.join("moved-resource.bin");
+        std::fs::rename(&source, &moved).unwrap();
+        let alias = root.join("picture.png");
+        std::os::unix::fs::symlink(&moved, &alias).unwrap();
+        app.do_export(&alias, ImageFormat::Png, &KNOWN_LOSSES.map(str::to_owned));
+        assert_eq!(
+            std::fs::read(&moved).unwrap(),
+            bytes,
+            "renamed loaded resource was replaced"
+        );
+        assert_eq!(std::fs::read(&alias).unwrap(), bytes);
+        drop(app);
+        std::fs::remove_dir_all(root).unwrap();
+    }
+}
+
+#[test]
+fn renamed_resource_identity_is_protected_through_new_hard_link_names() {
+    for shape in [false, true] {
+        let root = scratch();
+        let (mut app, source, bytes) = loaded(&root, shape);
+        let moved = root.join("moved-resource.bin");
+        std::fs::rename(&source, &moved).unwrap();
+        // Reusing the old namespace must not discard ownership of the old file.
+        std::fs::write(&source, b"unrelated replacement at old name").unwrap();
+        let project = root.join("project.pcnd");
+        let image = root.join("image.png");
+        std::fs::hard_link(&moved, &project).unwrap();
+        std::fs::hard_link(&moved, &image).unwrap();
+        let ctx = egui::Context::default();
+        app.save_selected(&ctx, project.clone());
+        confirm_save_if_offered(&mut app, &ctx);
+        app.do_export(&image, ImageFormat::Png, &KNOWN_LOSSES.map(str::to_owned));
+        assert_eq!(std::fs::read(&project).unwrap(), bytes);
+        assert_eq!(std::fs::read(&image).unwrap(), bytes);
+        assert_eq!(
+            std::fs::read(&source).unwrap(),
+            b"unrelated replacement at old name"
+        );
+        assert!(app.bound.is_none());
+        drop(app);
+        std::fs::remove_dir_all(root).unwrap();
+    }
+}
+
+#[cfg(unix)]
+#[test]
+fn unreadable_renamed_resource_cannot_bypass_identity_admission() {
+    use std::os::unix::fs::PermissionsExt;
+    for shape in [false, true] {
+        let root = scratch();
+        let (mut app, source, bytes) = loaded(&root, shape);
+        let moved = root.join("moved-resource.bin");
+        std::fs::rename(&source, &moved).unwrap();
+        let alias = root.join("choice.pcnd");
+        std::os::unix::fs::symlink(&moved, &alias).unwrap();
+        std::fs::set_permissions(&moved, std::fs::Permissions::from_mode(0o000)).unwrap();
+        assert!(moved.metadata().unwrap().is_file());
+        assert_eq!(
+            std::fs::File::open(&alias).unwrap_err().kind(),
+            std::io::ErrorKind::PermissionDenied
+        );
+        app.save_selected(&egui::Context::default(), alias.clone());
+        assert!(
+            app.confirm.is_none(),
+            "comparison failure must not authorize replacement review"
+        );
+        assert!(app.editor.status().contains("storage.failed"));
+        assert!(app.bound.is_none());
+        // The lower-level coordinator also refuses this unreadable file because
+        // its required original-content fingerprint cannot be acquired.
+        let outcome = save::save(&alias, b"must not replace", true);
+        assert!(!outcome.is_success());
+        std::fs::set_permissions(&moved, std::fs::Permissions::from_mode(0o600)).unwrap();
+        assert_eq!(std::fs::read(&moved).unwrap(), bytes);
+        drop(app);
         std::fs::remove_dir_all(root).unwrap();
     }
 }

@@ -8,7 +8,17 @@ fn app(path: &Path) -> App {
     let mut app = App::new(None);
     app.settings.experience = Experience::Studio;
     app.begin_shapes();
-    app.install_shape(SOURCE, path.to_path_buf()).unwrap();
+    let path = if path.is_absolute() {
+        path.to_path_buf()
+    } else {
+        let root =
+            std::env::temp_dir().join(format!("paintcraft-shape-fixture-{}", Uuid::new_v4()));
+        std::fs::create_dir(&root).unwrap();
+        let source = root.join(path.file_name().unwrap());
+        std::fs::write(&source, SOURCE).unwrap();
+        source
+    };
+    app.install_shape(path).unwrap();
     app
 }
 #[test]
@@ -89,6 +99,7 @@ fn native_shape_picker_routes_preserve_sources_and_refuse_stale_results() {
     app.shapes.picker = Some(app.capture_shape_picker(Kind::ImportShape).unwrap());
     app.complete_shape_picker(&ctx, Kind::ImportShape, None);
     assert!(Arc::ptr_eq(&loaded, app.shapes.loaded.as_ref().unwrap()));
+    drop(loaded);
     for stale in 0..3 {
         std::fs::write(&output, b"existing file").unwrap();
         app.settings.experience = Experience::Studio;
@@ -97,30 +108,31 @@ fn native_shape_picker_routes_preserve_sources_and_refuse_stale_results() {
         match stale {
             0 => app.settings.experience = Experience::Classic,
             1 => app.shapes.epoch = Uuid::new_v4(),
-            _ => app.install_shape(SOURCE, source.clone()).unwrap(),
+            _ => app.install_shape(source.clone()).unwrap(),
         }
         app.complete_shape_picker(&ctx, Kind::ExportShape, Some(output.clone()));
         assert_eq!(std::fs::read(&output).unwrap(), b"existing file");
     }
     assert!(Arc::ptr_eq(&before, &app.editor.document_snapshot()));
+    drop(app);
     std::fs::remove_dir_all(root).unwrap();
 }
 #[test]
 fn shape_failures_do_not_replace_the_previous_resource_or_create_a_document() {
     let mut app = app(Path::new("source.csh"));
     let original = app.shapes.loaded.clone().unwrap();
+    let broken = app
+        .shapes
+        .source_path()
+        .unwrap()
+        .with_file_name("broken.csh");
     for bytes in [b"cush".as_slice(), &SOURCE[..SOURCE.len() - 1]] {
-        assert!(
-            app.install_shape(bytes, PathBuf::from("broken.csh"))
-                .is_err()
-        );
+        std::fs::write(&broken, bytes).unwrap();
+        assert!(app.install_shape(broken.clone()).is_err());
         assert!(Arc::ptr_eq(&original, app.shapes.loaded.as_ref().unwrap()));
     }
     app.settings.experience = Experience::Classic;
-    assert!(
-        app.install_shape(SOURCE, PathBuf::from("source.csh"))
-            .is_err()
-    );
+    assert!(app.install_shape(PathBuf::from("source.csh")).is_err());
 }
 #[cfg(unix)]
 #[test]
@@ -171,7 +183,7 @@ fn shape_export_cannot_replace_a_loaded_palette_resource_alias() {
     std::fs::write(&palette, colors).unwrap();
     std::fs::hard_link(&palette, &alias).unwrap();
     let mut app = app(&shape);
-    app.install_palette(colors, palette.clone()).unwrap();
+    app.install_palette(palette.clone()).unwrap();
     let before = app.editor.document_snapshot();
     app.shapes.picker = Some(app.capture_shape_picker(Kind::ExportShape).unwrap());
     app.complete_dialog(
@@ -187,5 +199,39 @@ fn shape_export_cannot_replace_a_loaded_palette_resource_alias() {
     assert_eq!(std::fs::read(&shape).unwrap(), SOURCE);
     assert!(Arc::ptr_eq(&before, &app.editor.document_snapshot()));
     assert_eq!(app.asset_source_paths().count(), 2);
+    drop(app);
+    std::fs::remove_dir_all(root).unwrap();
+}
+
+#[cfg(unix)]
+#[test]
+fn shape_bytes_and_frozen_identity_stay_from_one_acquisition_after_namespace_replacement() {
+    let root =
+        std::env::temp_dir().join(format!("paintcraft-shape-acquisition-{}", Uuid::new_v4()));
+    std::fs::create_dir(&root).unwrap();
+    let selected = root.join("selected.csh");
+    let moved = root.join("moved.csh");
+    let alias = root.join("picture.png");
+    std::fs::write(&selected, SOURCE).unwrap();
+    let acquired =
+        crate::format_admission::acquire_resource_source(&selected, csh::BYTES_MAX as u64).unwrap();
+    std::fs::rename(&selected, &moved).unwrap();
+    let empty = include_bytes!(
+        "../../../../../crates/services/paintcraft-formats/tests/csh-fixtures/empty.csh"
+    );
+    std::fs::write(&selected, empty).unwrap();
+    let mut app = App::new(None);
+    app.settings.experience = Experience::Studio;
+    app.install_shape_source(acquired, selected.clone())
+        .unwrap();
+    assert_eq!(
+        app.shapes.loaded.as_ref().unwrap().library,
+        csh::decode(SOURCE, &|| Ok(())).unwrap()
+    );
+    std::os::unix::fs::symlink(&moved, &alias).unwrap();
+    app.do_export(&alias, ImageFormat::Png, &KNOWN_LOSSES.map(str::to_owned));
+    assert_eq!(std::fs::read(&moved).unwrap(), SOURCE);
+    assert_eq!(std::fs::read(&selected).unwrap(), empty);
+    drop(app);
     std::fs::remove_dir_all(root).unwrap();
 }

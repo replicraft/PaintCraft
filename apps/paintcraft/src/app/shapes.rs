@@ -13,6 +13,7 @@ struct Loaded {
     library: csh::Library,
     view: widget::Resource,
     source: PathBuf,
+    identity: crate::destination::SourceIdentity,
 }
 #[derive(Debug)]
 struct Pick {
@@ -32,6 +33,9 @@ pub(super) struct State {
 impl State {
     pub(super) fn source_path(&self) -> Option<&Path> {
         self.loaded.as_ref().map(|loaded| loaded.source.as_path())
+    }
+    pub(super) fn source_identity(&self) -> Option<&crate::destination::SourceIdentity> {
+        self.loaded.as_ref().map(|loaded| &loaded.identity)
     }
 }
 fn admit(frontend: registry::Frontend, path: &Path, operation: Operation) -> Result<()> {
@@ -126,10 +130,21 @@ impl App {
             ));
         }
     }
-    pub(super) fn install_shape(&mut self, bytes: &[u8], path: PathBuf) -> Result<()> {
+    pub(super) fn install_shape(&mut self, path: PathBuf) -> Result<()> {
         admit(self.format_frontend(), &path, Operation::ImportAsset)?;
-        self.guard_asset_adoption(&path)?;
-        let library = csh::decode(bytes, &|| Ok(()))?;
+        self.guard_asset_adoption(&path, None)?;
+        let acquired =
+            crate::format_admission::acquire_resource_source(&path, csh::BYTES_MAX as u64)?;
+        self.install_shape_source(acquired, path)
+    }
+    fn install_shape_source(
+        &mut self,
+        acquired: crate::format_admission::ResourceSource,
+        path: PathBuf,
+    ) -> Result<()> {
+        admit(self.format_frontend(), &path, Operation::ImportAsset)?;
+        self.guard_asset_adoption(&path, Some(&acquired.identity))?;
+        let library = csh::decode(&acquired.bytes, &|| Ok(()))?;
         let view = widget::Resource {
             name: path
                 .file_name()
@@ -143,6 +158,7 @@ impl App {
             library,
             view,
             source: path,
+            identity: acquired.identity,
         }));
         self.shapes.error = None;
         self.shapes.selected = 0;
@@ -181,9 +197,7 @@ impl App {
         let result: Result<()> = (|| {
             if kind == Kind::ImportShape {
                 admit(self.format_frontend(), &path, Operation::ImportAsset)?;
-                let bytes =
-                    crate::format_admission::read_source_bounded(&path, csh::BYTES_MAX as u64)?;
-                self.install_shape(&bytes, path)?;
+                self.install_shape(path)?;
             } else {
                 admit(self.format_frontend(), &path, Operation::ExportAsset)?;
                 self.guard_export_destination(&path)?;

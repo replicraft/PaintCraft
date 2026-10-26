@@ -13,6 +13,7 @@ struct Loaded {
     palette: ase::Palette,
     view: widget::Resource,
     source: PathBuf,
+    identity: crate::destination::SourceIdentity,
 }
 #[derive(Debug)]
 struct Pick {
@@ -31,6 +32,9 @@ pub(super) struct State {
 impl State {
     pub(super) fn source_path(&self) -> Option<&Path> {
         self.loaded.as_ref().map(|loaded| loaded.source.as_path())
+    }
+    pub(super) fn source_identity(&self) -> Option<&crate::destination::SourceIdentity> {
+        self.loaded.as_ref().map(|loaded| &loaded.identity)
     }
 }
 fn swatch(color: &ase::Swatch) -> widget::Row {
@@ -144,10 +148,21 @@ impl App {
             ));
         }
     }
-    pub(super) fn install_palette(&mut self, bytes: &[u8], path: PathBuf) -> Result<()> {
+    pub(super) fn install_palette(&mut self, path: PathBuf) -> Result<()> {
         admit(self.format_frontend(), &path, Operation::ImportAsset)?;
-        self.guard_asset_adoption(&path)?;
-        let palette = ase::decode(bytes, &|| Ok(()))?;
+        self.guard_asset_adoption(&path, None)?;
+        let acquired =
+            crate::format_admission::acquire_resource_source(&path, ase::BYTES_MAX as u64)?;
+        self.install_palette_source(acquired, path)
+    }
+    fn install_palette_source(
+        &mut self,
+        acquired: crate::format_admission::ResourceSource,
+        path: PathBuf,
+    ) -> Result<()> {
+        admit(self.format_frontend(), &path, Operation::ImportAsset)?;
+        self.guard_asset_adoption(&path, Some(&acquired.identity))?;
+        let palette = ase::decode(&acquired.bytes, &|| Ok(()))?;
         let mut rows = Vec::new();
         for entry in palette.entries() {
             match entry {
@@ -171,6 +186,7 @@ impl App {
             palette,
             view,
             source: path,
+            identity: acquired.identity,
         }));
         self.palettes.error = None;
         Ok(())
@@ -208,9 +224,7 @@ impl App {
         let result: Result<()> = (|| {
             if kind == Kind::ImportPalette {
                 admit(self.format_frontend(), &path, Operation::ImportAsset)?;
-                let bytes =
-                    crate::format_admission::read_source_bounded(&path, ase::BYTES_MAX as u64)?;
-                self.install_palette(&bytes, path)?;
+                self.install_palette(path)?;
             } else {
                 admit(self.format_frontend(), &path, Operation::ExportAsset)?;
                 self.guard_export_destination(&path)?;

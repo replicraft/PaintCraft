@@ -8,11 +8,17 @@ use std::io::Read;
 const SOURCE_BYTES: u64 = 512 << 20;
 
 impl App {
-    pub(super) fn guard_asset_adoption(&self, path: &Path) -> Result<()> {
+    pub(super) fn guard_asset_adoption(
+        &self,
+        path: &Path,
+        identity: Option<&crate::destination::SourceIdentity>,
+    ) -> Result<()> {
         if self
             .saving
             .as_ref()
-            .is_some_and(|saving| saving.has_pending_write_to(path))
+            .map(|saving| saving.has_pending_write_to(path, identity))
+            .transpose()?
+            .unwrap_or(false)
         {
             return Err(Error::new(
                 ErrorCode::ConflictStaleBase,
@@ -24,6 +30,19 @@ impl App {
         }
         Ok(())
     }
+    fn asset_identity_matches(&self, path: &Path) -> Result<bool> {
+        for identity in self
+            .palettes
+            .source_identity()
+            .into_iter()
+            .chain(self.shapes.source_identity())
+        {
+            if identity.matches_path(path)? {
+                return Ok(true);
+            }
+        }
+        Ok(false)
+    }
     pub(super) fn asset_source_paths(&self) -> impl Iterator<Item = &Path> {
         self.palettes
             .source_path()
@@ -31,9 +50,10 @@ impl App {
             .chain(self.shapes.source_path())
     }
     pub(super) fn guard_save_destination(&self, path: &Path) -> Result<()> {
-        if self
-            .asset_source_paths()
-            .any(|source| protected_destination(source, path))
+        if self.asset_identity_matches(path)?
+            || self
+                .asset_source_paths()
+                .any(|source| protected_destination(source, path))
         {
             return Err(Error::new(
                 ErrorCode::InputSchema,
@@ -43,10 +63,11 @@ impl App {
         Ok(())
     }
     pub(super) fn guard_export_destination(&self, path: &Path) -> Result<()> {
-        if self
-            .protected_source_paths()
-            .into_iter()
-            .any(|source| protected_destination(source, path))
+        if self.asset_identity_matches(path)?
+            || self
+                .protected_source_paths()
+                .into_iter()
+                .any(|source| protected_destination(source, path))
         {
             return Err(Error::new(
                 ErrorCode::InputSchema,
@@ -120,6 +141,23 @@ pub(super) fn read_source(path: &Path) -> Result<Vec<u8>> {
 }
 pub(super) fn read_source_bounded(path: &Path, allowance: u64) -> Result<Vec<u8>> {
     let allowance = allowance.min(SOURCE_BYTES);
+    read_limited(open_source(path, allowance)?, allowance)
+}
+
+#[derive(Debug)]
+pub(super) struct ResourceSource {
+    pub(super) bytes: Vec<u8>,
+    pub(super) identity: crate::destination::SourceIdentity,
+}
+pub(super) fn acquire_resource_source(path: &Path, allowance: u64) -> Result<ResourceSource> {
+    let allowance = allowance.min(SOURCE_BYTES);
+    let identity = crate::destination::SourceIdentity::from_file(open_source(path, allowance)?)?;
+    // Read through the exact retained handle. Never reopen a path to attach an
+    // identity after decoding bytes acquired from a different file.
+    let bytes = read_limited(identity.file(), allowance)?;
+    Ok(ResourceSource { bytes, identity })
+}
+fn open_source(path: &Path, allowance: u64) -> Result<std::fs::File> {
     // Reject ordinary FIFOs/devices before opening; the post-open check remains
     // necessary. This does not promise race-proof traversal of a hostile filesystem.
     if !std::fs::metadata(path).map_err(storage)?.is_file() {
@@ -139,7 +177,7 @@ pub(super) fn read_source_bounded(path: &Path, allowance: u64) -> Result<Vec<u8>
     if metadata.len() > allowance {
         return Err(limit());
     }
-    read_limited(file, allowance)
+    Ok(file)
 }
 fn read_limited(reader: impl Read, limit: u64) -> Result<Vec<u8>> {
     let mut reader = reader.take(limit + 1);
