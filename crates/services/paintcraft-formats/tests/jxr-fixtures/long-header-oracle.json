@@ -1,0 +1,54 @@
+{
+    "schema": 1,
+    "purpose": "owned compact long-header fresh-output fixtures; public importer still refuses",
+    "source_commit": "d328e5731d4440554598dced94a1fb5cc29b2674",
+    "encoder_package": "jpegxr-pure-rs 0.1.0 with reviewed paintcraft1 patch at source_commit",
+    "encoder_api": "encode_pixels_to_seekable; PixelFormat::rgb8; Encoder::new fixed lossless; cap65536; empty Cursor<Vec<u8>>; all RGB bytes255",
+    "probe_sha256": "7f6c4f3750cc258018c89e0542c3e00ae3877ef9068788256d702e048654f325",
+    "probe_source_sha256": "3759d69080e17f732ef17347126b45ba35b4ade8d2498426573e96293b8ca313",
+    "C_reference": {
+        "package": "jpegxr",
+        "version": "0.3.1",
+        "cargo_vcs_commit": "3e8b298304cd8a42e773afb0af5cf57bd49549c4",
+        "archive_sha256": "20a0328c45484d19035d80b72eaadaefa374ff3f4b07737b6ad426587c890fbf",
+        "compiler": "Apple clang version 16.0.0 (clang-1600.0.26.6)",
+        "executable_sha256": "8e3b71db2c53c5db5f988b8755946a30ac1070b7a6c0a8ffa6933d34d26b95ce",
+        "harness_sha256": "8d72fd7974180531e29e69ade9051ac6927e13522959b3b69e082bb3585f4c89"
+    },
+    "deadline_seconds": 10,
+    "platform": "macOS14.7.2 arm64 release",
+    "fixtures": [
+        {
+            "file": "white-rgb8-4096x1.jxr",
+            "width": 4096,
+            "height": 1,
+            "encoded_bytes": 380,
+            "sha256": "3daca47fb9f17639b615ccd62da6077b31301f2a8621993099ab639cc14c105c",
+            "C_decoded_rgb_bytes": 12288,
+            "C_decoded_rgb_sha256": "2a32d9a94209e87b46358ff2151efee07dea13d3171a3dfb4331dede6e060479",
+            "all_RGB_bytes": 255,
+            "C_exit": 0,
+            "stream_first22_hex": "574d50484f544f001100407100000fff000000006000",
+            "raw_resolution_bits": [
+                0,
+                0
+            ]
+        },
+        {
+            "file": "white-rgb8-1x4096.jxr",
+            "width": 1,
+            "height": 4096,
+            "encoded_bytes": 380,
+            "sha256": "d59aa20a21e497a7e15f70b814673a94e7a9e099992980fb6666916d85444ad7",
+            "C_decoded_rgb_bytes": 12288,
+            "C_decoded_rgb_sha256": "2a32d9a94209e87b46358ff2151efee07dea13d3171a3dfb4331dede6e060479",
+            "all_RGB_bytes": 255,
+            "C_exit": 0,
+            "stream_first22_hex": "574d50484f544f00110040710000000000000fff6000",
+            "raw_resolution_bits": [
+                0,
+                0
+            ]
+        }
+    ]
+}

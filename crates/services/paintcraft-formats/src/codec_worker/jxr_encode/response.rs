@@ -36,7 +36,7 @@ fn fresh(
     if bytes.is_empty() || bytes.len() as u64 > layout.encoded_cap {
         return Err(resource("JXR encode output cap"));
     }
-    let inspection = crate::jxr::inspect_checked(bytes, PIXELS_MAX, check)?;
+    let inspection = crate::jxr::inspect_fresh_rgb8_checked(bytes, PIXELS_MAX, check)?;
     if (inspection.width, inspection.height) != (layout.width, layout.height)
         || inspection.container_version != 1
         || inspection.resolution_x_bits != Some(0)

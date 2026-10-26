@@ -157,3 +157,33 @@ cargo test -p paintcraft-codec-worker --test native_jxr --offline --locked
 
 This assessment is source preflight and consent information. It does not itself
 activate a frontend, import a document, or qualify JXR writing/browser decoding.
+
+## Fresh-output-only long geometry fixtures
+
+`white-rgb8-4096x1.jxr` and `white-rgb8-1x4096.jxr` are PaintCraft-owned
+constant-white RGB8 vectors, 380 encoded bytes each. The unchanged selected
+vendored encoder at committed source `d328e5731d4440554598dced94a1fb5cc29b2674`
+authored them through `PixelFormat::rgb8()`, `Encoder::new()` and
+`encode_pixels_to_seekable`, with an empty caller-owned memory cursor and a
+65,536-byte cap. All 12,288 source RGB bytes per vector are 255; no source image
+or encoded bytes were patched. `long-header-oracle.json` records exact fixture,
+source, generator executable/source and untouched pinned C-oracle identities.
+The C tool reopened each complete file and returned every original RGB byte.
+These are local macOS 14.7.2 Apple Silicon release-codec checks, not Windows or
+all-target qualification.
+
+Both files carry `SHORT_HEADER_FLAG=0`, BE32 width-minus-one/height-minus-one at
+codestream offsets 12/16 and the unchanged image-plane prefix at offset 20.
+[ITU-T T.832 (01/2012), Table 20 and 8.3.11/8.3.21–22](https://www.itu.int/rec/dologin_pub.asp?id=T-REC-T.832-201201-S!!PDF-E&lang=e&type=items)
+specifies the geometry field sizes. `LONG_WORD_FLAG` independently describes
+coefficient-range semantics. The selected encoder chooses nonabbreviated headers
+when either macroblock dimension exceeds 255.
+
+Only the crate-private fresh-output inspection profile accepts these exact
+long-header forms. Public import inspection still refuses them; metadata, flags,
+color, alpha and resource limits are unchanged. Unit tests bind these bytes to
+fresh response validation and public reader refusal, plus truncated/overflowing
+geometry, alternate flags, plane mismatch and cancellation checks. Header tests
+do not decode entropy; the independent C results provide the pixel evidence.
+The much larger stopped optimized matrix and its phase-probe files remain
+private evidence, including the original empty-response failure.

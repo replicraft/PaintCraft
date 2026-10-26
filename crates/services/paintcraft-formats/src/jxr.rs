@@ -74,6 +74,26 @@ pub fn inspect_checked(
     pixels: u64,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Inspection> {
+    inspect_profile(bytes, pixels, check, HeaderProfile::ShortOnly)
+}
+/// Fresh encoder output only; this does not broaden public import admission.
+pub(crate) fn inspect_fresh_rgb8_checked(
+    bytes: &[u8],
+    pixels: u64,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Inspection> {
+    inspect_profile(bytes, pixels, check, HeaderProfile::FreshOutput)
+}
+enum HeaderProfile {
+    ShortOnly,
+    FreshOutput,
+}
+fn inspect_profile(
+    bytes: &[u8],
+    pixels: u64,
+    check: &dyn Fn() -> Result<()>,
+    profile: HeaderProfile,
+) -> Result<Inspection> {
     check()?;
     if bytes.len() > INPUT_BYTES_MAX {
         return Err(resource("JPEG XR exceeds encoded input limit"));
@@ -193,19 +213,32 @@ pub fn inspect_checked(
     if take(stream, 0, 8)? != b"WMPHOTO\0" {
         return Err(invalid("invalid JPEG XR codestream signature"));
     }
-    // Admission subset: v1.1, spatial, no tiles/orientation/index/overlap,
-    // abbreviated sizes, no window/alpha, RGB eight-bit source.
-    if take(stream, 8, 4)? != [0x11, 0x00, 0xc0, 0x71] {
-        return Err(unsupported("JPEG XR codestream mode is not qualified"));
-    }
-    let sw = u32::from(u16::from_be_bytes(take(stream, 12, 2)?.try_into().unwrap())) + 1;
-    let sh = u32::from(u16::from_be_bytes(take(stream, 14, 2)?.try_into().unwrap())) + 1;
+    // Fixed v1.1 spatial RGB8 flags: no tiles/orientation/index/overlap,
+    // window or alpha. Only fresh output additionally admits SHORT_HEADER_FLAG=0.
+    // T.832 Table 20, 8.3.11 and 8.3.21–22: it selects 32-bit geometry;
+    // LONG_WORD_FLAG remains one and has separate coefficient-range semantics.
+    let (sw, sh, plane) = match (take(stream, 8, 4)?, profile) {
+        ([0x11, 0x00, 0xc0, 0x71], _) => (
+            u32::from(u16::from_be_bytes(take(stream, 12, 2)?.try_into().unwrap())) + 1,
+            u32::from(u16::from_be_bytes(take(stream, 14, 2)?.try_into().unwrap())) + 1,
+            16,
+        ),
+        ([0x11, 0x00, 0x40, 0x71], HeaderProfile::FreshOutput) => {
+            let dimension = |offset| {
+                u32::from_be_bytes(take(stream, offset, 4)?.try_into().unwrap())
+                    .checked_add(1)
+                    .ok_or_else(|| invalid("JPEG XR codestream dimension overflows"))
+            };
+            (dimension(12)?, dimension(16)?, 20)
+        }
+        _ => return Err(unsupported("JPEG XR codestream mode is not qualified")),
+    };
     if (sw, sh) != (width, height) {
         return Err(invalid(
             "JPEG XR codestream dimensions disagree with container",
         ));
     }
-    if take(stream, 16, 2)? != [0x60, 0x00] {
+    if take(stream, plane, 2)? != [0x60, 0x00] {
         return Err(unsupported(
             "JPEG XR image-plane color model is not qualified",
         ));

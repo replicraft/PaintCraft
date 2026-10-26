@@ -121,3 +121,102 @@ fn every_inspection_checkpoint_can_cancel_without_calling_a_codec() {
         assert_eq!(err.code, ErrorCode::OperationCancelled);
     }
 }
+
+const LONG_WIDE: &[u8] = include_bytes!("../../tests/jxr-fixtures/white-rgb8-4096x1.jxr");
+const LONG_TALL: &[u8] = include_bytes!("../../tests/jxr-fixtures/white-rgb8-1x4096.jxr");
+#[test]
+fn fresh_long_geometry_does_not_broaden_public_import() {
+    for (bytes, size) in [(LONG_WIDE, (4096, 1)), (LONG_TALL, (1, 4096))] {
+        let header = inspect_fresh_rgb8_checked(bytes, 1_048_576, &|| Ok(())).unwrap();
+        assert_eq!((header.width, header.height), size);
+        assert_eq!(
+            &bytes[header.image_offset + 8..header.image_offset + 12],
+            &[0x11, 0, 0x40, 0x71]
+        );
+        assert_eq!(
+            inspect_checked(bytes, PIXELS_MAX, &|| Ok(()))
+                .unwrap_err()
+                .code,
+            ErrorCode::CapabilityUnsupported
+        );
+    }
+    for bytes in [SMALL, EDGE] {
+        let old = inspect_checked(bytes, PIXELS_MAX, &|| Ok(())).unwrap();
+        let fresh = inspect_fresh_rgb8_checked(bytes, PIXELS_MAX, &|| Ok(())).unwrap();
+        assert_eq!(
+            (old.width, old.height, old.image_offset, old.image_bytes),
+            (
+                fresh.width,
+                fresh.height,
+                fresh.image_offset,
+                fresh.image_bytes
+            )
+        );
+    }
+}
+#[test]
+fn long_dimensions_flags_bounds_and_plane_remain_exact() {
+    let offset = inspect_fresh_rgb8_checked(LONG_WIDE, PIXELS_MAX, &|| Ok(()))
+        .unwrap()
+        .image_offset;
+    for field_offset in [12, 16] {
+        let mut bytes = LONG_WIDE.to_vec();
+        bytes[offset + field_offset..offset + field_offset + 4].fill(0xff);
+        let error = inspect_fresh_rgb8_checked(&bytes, PIXELS_MAX, &|| Ok(())).unwrap_err();
+        assert_eq!(error.code, ErrorCode::CodecFailed);
+        assert!(error.message.contains("overflows"));
+        bytes[offset + field_offset..offset + field_offset + 4]
+            .copy_from_slice(&1u32.to_be_bytes());
+        assert!(inspect_fresh_rgb8_checked(&bytes, PIXELS_MAX, &|| Ok(())).is_err());
+    }
+    // Every other single-bit alteration of the fixed flags is refused. Flipping
+    // SHORT_HEADER_FLAG alone also cannot reinterpret these 32-bit dimensions.
+    for index in 8..12 {
+        for bit in 0..8 {
+            let mut bytes = LONG_WIDE.to_vec();
+            bytes[offset + index] ^= 1 << bit;
+            assert!(inspect_fresh_rgb8_checked(&bytes, PIXELS_MAX, &|| Ok(())).is_err());
+        }
+    }
+    let mut bytes = LONG_WIDE.to_vec();
+    bytes[offset + 20] ^= 1;
+    assert!(inspect_fresh_rgb8_checked(&bytes, PIXELS_MAX, &|| Ok(())).is_err());
+    assert_eq!(
+        inspect_fresh_rgb8_checked(LONG_WIDE, 4095, &|| Ok(()))
+            .unwrap_err()
+            .code,
+        ErrorCode::ResourceLimit
+    );
+    let mut bytes = LONG_WIDE.to_vec();
+    let width = field(&bytes, 0xbc80);
+    set(&mut bytes, width + 8, 65_537);
+    assert_eq!(
+        inspect_fresh_rgb8_checked(&bytes, PIXELS_MAX, &|| Ok(()))
+            .unwrap_err()
+            .code,
+        ErrorCode::ResourceLimit
+    );
+}
+#[test]
+fn long_header_truncation_and_cancellation_are_checked() {
+    let offset = inspect_fresh_rgb8_checked(LONG_WIDE, PIXELS_MAX, &|| Ok(()))
+        .unwrap()
+        .image_offset;
+    for end in 0..LONG_WIDE.len() {
+        assert!(inspect_fresh_rgb8_checked(&LONG_WIDE[..end], PIXELS_MAX, &|| Ok(())).is_err());
+    }
+    // Make the declared payload end match each truncated header, so rejection
+    // also exercises the bounded geometry/plane reads rather than only the IFD.
+    for length in 0..22 {
+        let mut bytes = LONG_WIDE.to_vec();
+        let size = field(&bytes, 0xbcc1);
+        set(&mut bytes, size + 8, length as u32);
+        bytes.truncate(offset + length);
+        assert!(inspect_fresh_rgb8_checked(&bytes, PIXELS_MAX, &|| Ok(())).is_err());
+    }
+    let error = inspect_fresh_rgb8_checked(LONG_WIDE, PIXELS_MAX, &|| {
+        Err(Error::new(ErrorCode::OperationCancelled, "cancel"))
+    })
+    .unwrap_err();
+    assert_eq!(error.code, ErrorCode::OperationCancelled);
+}

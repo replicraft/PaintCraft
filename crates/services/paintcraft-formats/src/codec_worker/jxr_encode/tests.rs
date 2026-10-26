@@ -535,3 +535,41 @@ fn interrupted_io_polls_cancellation_before_retrying() {
         ErrorCode::OperationCancelled
     );
 }
+
+#[test]
+fn fresh_long_header_response_is_validated_without_enabling_reader() {
+    for (bytes, w, h) in [
+        (
+            include_bytes!("../../../tests/jxr-fixtures/white-rgb8-4096x1.jxr").as_slice(),
+            4096,
+            1,
+        ),
+        (
+            include_bytes!("../../../tests/jxr-fixtures/white-rgb8-1x4096.jxr").as_slice(),
+            1,
+            4096,
+        ),
+    ] {
+        let request = Request::capture(
+            Layout::new(w, h, ENCODED_BYTES_MAX).unwrap(),
+            Arc::new(vec![255; w as usize * h as usize * 3]),
+            owner(),
+            &|| Ok(()),
+        )
+        .unwrap();
+        let mut output = Vec::new();
+        write_success(request.header(), bytes, 123, &mut output, &|| Ok(())).unwrap();
+        let frame = decode_response(&output, request.header(), owner(), &|| Ok(())).unwrap();
+        assert_eq!(frame.bytes(), bytes);
+        assert_eq!(
+            (frame.inspection().width, frame.inspection().height),
+            (w, h)
+        );
+        assert_eq!(
+            crate::jxr::inspect_checked(bytes, PIXELS_MAX, &|| Ok(()))
+                .unwrap_err()
+                .code,
+            ErrorCode::CapabilityUnsupported
+        );
+    }
+}

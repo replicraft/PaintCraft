@@ -121,6 +121,23 @@ mod tests {
         }
     }
     #[test]
+    fn actual_encoder_retains_independently_qualified_long_header_files() {
+        use paintcraft_formats::codec_worker::Owner;
+        use std::sync::Arc;
+        for (w, h, expected) in [
+            (4096, 1, include_bytes!("../../../crates/services/paintcraft-formats/tests/jxr-fixtures/white-rgb8-4096x1.jxr").as_slice()),
+            (1, 4096, include_bytes!("../../../crates/services/paintcraft-formats/tests/jxr-fixtures/white-rgb8-1x4096.jxr").as_slice()),
+        ] {
+            let request = wire::Request::capture(
+                wire::Layout::new(w, h, 65536).unwrap(),
+                Arc::new(vec![255; w as usize * h as usize * 3]),
+                Owner { session: uuid::Uuid::new_v4(), state: uuid::Uuid::new_v4(), epoch: 1, frontend: 3 },
+                &|| Ok(()),
+            ).unwrap();
+            assert_eq!(encoded(&request).unwrap(), expected);
+        }
+    }
+    #[test]
     fn public_adapter_callback_fault_stays_io() {
         let mut sink = Cursor::new(Vec::new());
         let result = jpegxr::Encoder::new().encode_pixels_to_seekable(
