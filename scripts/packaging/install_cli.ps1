@@ -1,5 +1,5 @@
-# Install the CLI from this checkout. Requires the project's Rust toolchain.
+# Install the full verified CLI archive. Requires Python 3.12 or newer.
 $ErrorActionPreference = 'Stop'
 $paintcraftRoot = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
-& cargo install --locked --path (Join-Path $paintcraftRoot 'apps/paintcraft-cli') @args
+& python (Join-Path $paintcraftRoot 'scripts/packaging/install_cli.py') @args
 exit $LASTEXITCODE

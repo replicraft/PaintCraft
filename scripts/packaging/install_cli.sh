@@ -1,5 +1,5 @@
 #!/bin/sh
-# Install the CLI from this checkout. Requires the project's Rust toolchain.
+# Install the full verified CLI archive. Requires Python 3.12 or newer.
 set -eu
 paintcraft_root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
-exec cargo install --locked --path "$paintcraft_root/apps/paintcraft-cli" "$@"
+exec python3 "$paintcraft_root/scripts/packaging/install_cli.py" "$@"
