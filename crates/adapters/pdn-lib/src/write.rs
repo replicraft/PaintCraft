@@ -66,65 +66,40 @@ fn mul(a: usize, b: usize) -> Result<usize> {
     a.checked_mul(b)
         .ok_or_else(|| resource("PDN write size overflow"))
 }
-/// Validate the complete source before any output or codec allocation.
-pub fn preflight_write(
-    doc: &RasterDocument<'_>,
+/// Price only the supported geometry, layer count and aggregate name bytes.
+/// This does not validate pixels, metadata, producer fields or source semantics.
+pub fn estimate_write(
+    width: u32,
+    height: u32,
+    name_bytes: &[usize],
     limits: &WriteLimits,
-    check: &dyn Fn() -> Result<()>,
 ) -> Result<WritePlan> {
-    check()?;
-    if doc.width == 0
-        || doc.height == 0
-        || doc.width > 32768
-        || doc.height > 32768
-        || doc.layers.is_empty()
-    {
+    if width == 0 || height == 0 || width > 32768 || height > 32768 || name_bytes.is_empty() {
         return Err(unsupported(
             "PDN writer needs explicit 1..32768 full-canvas bitmap geometry",
         ));
     }
-    if doc.layers.len() > limits.layers.min(64) {
+    if name_bytes.len() > limits.layers.min(64) {
         return Err(resource("PDN writer layer allowance"));
     }
-    if !doc.metadata.is_empty() || doc.saved_with.iter().any(|value| *value > i32::MAX as u32) {
-        return Err(unsupported(
-            "PDN writer cannot retain supplied metadata or version fields",
-        ));
-    }
-    let pixels = u64::from(doc.width) * u64::from(doc.height);
+    let pixels = u64::from(width) * u64::from(height);
     if pixels
-        .checked_mul(doc.layers.len() as u64)
+        .checked_mul(name_bytes.len() as u64)
         .is_none_or(|n| n > limits.pixels.min(4_194_304))
     {
         return Err(resource("PDN writer aggregate pixel allowance"));
     }
-    let layer_bytes = usize::try_from(
-        pixels
-            .checked_mul(4)
-            .ok_or_else(|| resource("PDN pixel size overflow"))?,
-    )
-    .map_err(|_| resource("PDN pixels exceed address space"))?;
-    let source_bytes = mul(layer_bytes, doc.layers.len())?;
-    let mut metadata = add(4096, mul(doc.layers.len(), 8192)?)?;
-    for layer in doc.layers {
-        check()?;
-        if (layer.width, layer.height) != (doc.width, doc.height) || layer.rgba.len() != layer_bytes
-        {
-            return Err(unsupported(
-                "PDN writer does not pad, clip or resize layer geometry",
-            ));
-        }
-        if !layer.metadata.is_empty() {
-            return Err(unsupported(
-                "PDN writer cannot retain source layer metadata",
-            ));
-        }
-        if layer.name.len() > 4096 || layer.name.contains('\0') {
+    let layer_bytes =
+        usize::try_from(pixels * 4).map_err(|_| resource("PDN pixels exceed address space"))?;
+    let source_bytes = mul(layer_bytes, name_bytes.len())?;
+    let mut metadata = add(4096, mul(name_bytes.len(), 8192)?)?;
+    for name in name_bytes {
+        if *name > 4096 {
             return Err(unsupported(
                 "PDN writer layer name outside initial UTF-8 profile",
             ));
         }
-        metadata = add(metadata, layer.name.len())?;
+        metadata = add(metadata, *name)?;
     }
     if metadata > limits.metadata_bytes.min(1 << 20) {
         return Err(resource("PDN writer metadata allowance"));
@@ -133,7 +108,7 @@ pub fn preflight_write(
     // >=31 KiB nonfinal dynamic blocks, stored-block fallback, and <=256 KiB
     // input per gzip member. Output::put also enforces this ceiling during IO;
     // changed backend growth is a resource error, never an unbounded Vec grow.
-    let chunks = mul(layer_bytes.div_ceil(CHUNK), doc.layers.len())?;
+    let chunks = mul(layer_bytes.div_ceil(CHUNK), name_bytes.len())?;
     let output_capacity = add(add(mul(source_bytes, 2)?, mul(chunks, 1032)?)?, metadata)?;
     if output_capacity > limits.encoded_bytes.min(64 << 20) {
         return Err(resource("PDN writer encoded allowance"));
@@ -152,6 +127,49 @@ pub fn preflight_write(
         transient_bytes,
     })
 }
+/// Validate the complete typed source before any output or codec allocation.
+pub fn preflight_write(
+    doc: &RasterDocument<'_>,
+    limits: &WriteLimits,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<WritePlan> {
+    check()?;
+    if doc.layers.len() > 64 {
+        return Err(resource("PDN writer layer allowance"));
+    }
+    if !doc.metadata.is_empty() || doc.saved_with.iter().any(|value| *value > i32::MAX as u32) {
+        return Err(unsupported(
+            "PDN writer cannot retain supplied metadata or version fields",
+        ));
+    }
+    let mut names = [0usize; 64];
+    for (index, layer) in doc.layers.iter().enumerate() {
+        names[index] = layer.name.len();
+    }
+    let plan = estimate_write(doc.width, doc.height, &names[..doc.layers.len()], limits)?;
+    let layer_bytes = plan.source_bytes / doc.layers.len();
+    for layer in doc.layers {
+        check()?;
+        if (layer.width, layer.height) != (doc.width, doc.height) || layer.rgba.len() != layer_bytes
+        {
+            return Err(unsupported(
+                "PDN writer does not pad, clip or resize layer geometry",
+            ));
+        }
+        if !layer.metadata.is_empty() {
+            return Err(unsupported(
+                "PDN writer cannot retain source layer metadata",
+            ));
+        }
+        if layer.name.contains('\0') {
+            return Err(unsupported(
+                "PDN writer layer name outside initial UTF-8 profile",
+            ));
+        }
+    }
+    Ok(plan)
+}
+
 struct Output {
     bytes: Vec<u8>,
     limit: usize,

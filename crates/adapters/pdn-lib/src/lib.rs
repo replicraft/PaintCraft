@@ -13,8 +13,8 @@ mod xml;
 use paintcraft_core::types::{Error, ErrorCode, Result};
 use std::ops::Range;
 pub use write::{
-    RasterDocument, RasterLayer, WriteLimits, WritePlan, encode_document, preflight_write,
-    write_document_to,
+    RasterDocument, RasterLayer, WriteLimits, WritePlan, encode_document, estimate_write,
+    preflight_write, write_document_to,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
