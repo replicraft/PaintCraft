@@ -41,7 +41,7 @@ Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, 
 | JXR, HEIF | No enabled frontend operations | Selected/backend qualification remains; HEIF writing is prohibited |
 | ICO/CUR | Studio explicit selected-entry Import on desktop/browser; CLI `--entry` and MCP `entry`. Fresh multi-entry export in Studio desktop/browser, CLI `export-icons` and MCP `export_icons` | Reports every admitted entry and cursor hotspot before selection. Fresh exports use explicit sizes, RGBA PNG or 32-bit bitmap entries, independent aspect-ratio fitting, and per-entry CUR hotspots. Desktop/browser exports require a displayed preview and explicit loss consent; foreign preserving save remains unavailable |
 | PSD/PSB | Studio explicit Import on desktop/browser; CLI `import` and MCP `import_image` | RGB8 Normal raster-layer subset retains names, offsets, opacity, visibility and alpha. Metadata losses need explicit consent. Groups, masks, text, effects, clipping, high depth and foreign writing remain unavailable |
-| SVG/SVGZ | CLI `import` with `--svg-width`/`--svg-height`; MCP `import_image` with `svg` options | Explicit rasterization consent; chosen DPI/fitting and additional outline fonts. Desktop/browser controls remain pending. No Classic access, ordinary Open or SVG export |
+| SVG/SVGZ | Studio desktop/browser Import; CLI `import` with `--svg-width`/`--svg-height`; MCP `import_image` with `svg` options | Explicit size/DPI/fitting and rasterization consent. Studio previews use bundled fonts; CLI/MCP also accept additional outline fonts. No Classic access, ordinary Open or SVG export |
 | EXR/HDR, JP2, MSP, ICNS | Not yet enabled | Registry inventory or work in progress is not usable format support |
 | ABR, ASE, CSH | Asset workflow policy only | Brush/palette/shape import/export implementations remain |
 | RAW, PDF, KRA, XCF, animation, advanced DDS | Future profiles | No inherited Classic support or preserving-write claims |
@@ -94,9 +94,10 @@ The implemented subsets advance the pack; they do not complete its full interope
 
 The selected resvg/usvg 0.48.1 now has an explicit-size/DPI rasterization adapter
 in `paintcraft-formats::svg`. CLI `import` and MCP `import_image` now expose it
-through explicit size/DPI options and named rasterization-loss consent. **Studio
-desktop/browser controls remain pending.** Generic import discovery and ordinary
-Open never guess SVG parameters. Classic SVG access and SVG export remain denied.
+through explicit size/DPI options and named rasterization-loss consent. Studio
+desktop/browser Import now opens shared size/DPI/fitting controls and requires a
+preview and conversion consent. Generic import discovery and ordinary Open never
+guess SVG parameters. Classic SVG access and SVG export remain denied.
 
 Preparation requires output dimensions, DPI and contain/stretch fitting. It
 accepts UTF-8 SVG or a single checked SVGZ gzip member, limits encoded and
@@ -131,6 +132,25 @@ named loss consent, shared fonts, supplied Japanese fonts, unchanged failure
 state and source/font alias protection after saving. Incompatible profiles and
 missing SVG parameters are refused before source acquisition.
 
+Studio's controls start at an explicit 512 × 512 pixels, 96 DPI, preserving aspect
+ratio on transparent padding. They use the shared root Selawik and Noto fonts;
+additional font-file selection is currently available only in CLI/MCP. Preview
+work runs only when requested, samples the full selected raster, and retains the
+exact private converted document for import. Changing options clears the preview
+and consent. Import remains disabled until the preview has been displayed and
+the user accepts the reported conversion losses. Cancellation or a changed
+document/profile cannot publish the prepared copy. Native SVG acquisition and
+browser file-size checks use the 8 MiB SVG source allowance before loading bytes.
+
+Headless English/Japanese controls tests cover desktop and browser hosts; a
+390 × 640 browser-host test verifies reachable consent and visible footer buttons.
+A local production Wasm build was checked in headless Chrome: explicit Studio
+Import of `aligned.svg`, preview, consent, updated title and PCND download all
+succeeded without page errors. At 512 × 512, 96 DPI and contain fitting, its
+177-byte downloaded PCND was byte-identical to the native CLI output (SHA-256
+`2143ab6e67f775b5e207da858c0084b150380394cc3da46ca00a2412bcfc81bd`).
+This single browser scene is workflow evidence, not full browser/OS qualification.
+
 Nine authored scenes have independent headless Chrome reference pixels and
 source/font hashes. Aligned geometry and nearest-sampled embedded pixels match
 exact RGBA. Six other scenes pass measured premultiplied-channel tolerance checks;
@@ -147,7 +167,9 @@ cancellation at every adapter checkpoint. Render scratch/work estimates reject
 excessive jobs but do not impose a hard allocator/process limit. Upstream XML,
 font, image and rendering calls have no cooperative cancellation hook inside a
 call; no hard cancellation-tail or performance guarantee is claimed. These
-remaining confinement and frontend gates are still part of the roadmap.
+remaining confinement, font-selection and platform qualification gates are still
+part of the roadmap. Studio preview preparation currently runs synchronously;
+no UI latency guarantee is claimed for an admitted complex source.
 
 ### PSD/PSB conversion, 2026-10-25
 
