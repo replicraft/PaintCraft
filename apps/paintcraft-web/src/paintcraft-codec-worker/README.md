@@ -4,7 +4,8 @@ This thin Wasm binding calls the same `paintcraft_formats::codec_worker::execute
 implementation and protocol2 as the native helper. It initializes no editor, GPU,
 UI, filesystem adapter or second decoder engine. Host workspace checks build an
 empty binding module; `wasm32` builds expose the actual Worker functions. HEIF
-writing and public HEIF/JXL readers remain disabled.
+writing remains prohibited. Browser HEIF/JXL reader workflows remain disabled;
+native Studio JXL explicit imports are qualified separately.
 
 Build with `pnpm --dir apps/paintcraft-web run build:codec-worker`; the ignored
 `codec-worker-pkg` contains generated bindings, Wasm and Cargo-derived build
@@ -37,7 +38,7 @@ must be covered by the application's resident/admission policy before activation
 A retained document needs a resident lease **before** releasing its prepared
 result. Failure returns no partial frame and requests Worker termination.
 If stop/completion is uncertain (deadline, cancellation, stale owner, invalid
-response, message failure or trap), the module enters an explicit quarantine:
+response, constructor attempt, message failure or trap), the module enters an explicit quarantine:
 it retains its whole logical charge and refuses subsequent jobs until realm
 teardown. No timer clears quarantine or pretends to acknowledge reaping. Validated
 success and canonical, identity-checked completed codec refusals have returned from
@@ -77,8 +78,43 @@ only its stated lower-level guarantees.
 Run Node checks with `pnpm --dir apps/paintcraft-web test`. For the explicit
 headless smoke, set `PLAYWRIGHT_MODULE` to an existing Playwright ES module and
 run `pnpm --dir apps/paintcraft-web run test:codec-worker-browser --pkg path`.
-No Playwright package is shipped or added as a runtime dependency. Qualification
-uses private localhost/Chrome profiles, never the editor or user's browser data.
-The normal UI does not import this controller yet; production bundling/CSP,
-installed-host version capture, resident handoff, disposition of post-terminate
-execution and broader engine/platform qualification remain activation gates.
+No Playwright package is shipped or added as a runtime dependency. The primitive smoke
+uses private localhost/Chrome profiles without starting the editor or using the
+user's browser data.
+The normal production build now bundles the real lean Worker and Wasm in Vite's
+hashed asset graph. `main.js` creates a typed service object; `WebHandle` checks
+its captured Rust application version/protocol before retaining it. This avoids
+wasm-bindgen snippet copies with unresolved relative module imports. There is
+still no public image-picker gate or document adoption workflow.
+
+The app route's production CSP permits same-origin module Workers and Wasm
+compilation while blocking blob Workers. It does not apply to `/download`, whose
+release lookup and automatic download remain independent. Actual headless Chrome
+production checks verified the six independent RGBA samples, unsupported-depth
+refusal, version checks, memory growth refusal, CJK startup, cancel/stale quarantine,
+PCND download bytes while quarantined, and the desktop download page. The recorded
+2026-10-26 build contains 25 assets (largest 18,873,157 bytes) and a 1,734,486-byte
+lean Wasm module; these are measurements, not immutable size promises. Browser/CDP
+metadata and raw results live locally in ignored
+`docs/validation/codec-worker-2026-10-26/production-proof/attempt-*/production.json`,
+with source/artifact hashes, per-attempt source snapshots and failure records.
+
+Run the actual production check after `pnpm --dir apps/paintcraft-web build`:
+set `PLAYWRIGHT_MODULE` to the existing Playwright module and run
+`node apps/paintcraft-web/scripts/codec-production-browser.mjs`. It uses a private
+headless browser/server and no user profile. It reports public reader and
+execution-stop qualification as false. This does not replace or weaken the
+failed execution-stop regression above.
+
+File-backed admission checks File.size before arrayBuffer and freezes the owner
+before any file read. The logical declaration includes source/capture/request
+copies, response/GUI-pixel copies and padded tile handoff space. A stuck File read
+or WebCrypto digest cannot be joined or stopped by this API: logical cancellation
+or deadline returns promptly but quarantines the charge until realm teardown.
+Known completed read failures may release; constructor attempts are uncertain.
+Canonical codec refusals release only with validator-owned proof for that exact
+captured request. Public Error flags, abort reasons and replayed refusals cannot
+forge that proof, and held Errors retain only an opaque token, not source pixels.
+
+Resident adoption, user-facing reload/discard policy, actual picker integration
+and workflow failure tests remain necessary before any browser reader is enabled.
