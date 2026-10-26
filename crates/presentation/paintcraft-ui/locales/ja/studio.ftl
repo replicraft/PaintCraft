@@ -364,3 +364,6 @@ this-image-contains-invalid-color-or-transparency-values-and-cannot-be-converted
 this-image-is-opaque-use-source-metadata-for-transparency = この画像は不透明です。透明度には元画像のメタデータを使用してください。
 
 only-the-full-size-dds-image-will-be-imported-its-smaller-mip-levels-will-stay-in-the-source-file = DDSの元の大きさの画像のみを取り込みます。小さいミップレベルは元のファイルに残ります。
+
+layer-groups-their-names-and-separate-group-visibility-controls-will-not-be-kept-their-current-visibility-is-applied-to-the-layers = レイヤーグループ、その名前、グループごとの表示設定は保持されません。現在の表示状態が各レイヤーに適用されます。
+background-color = 背景色

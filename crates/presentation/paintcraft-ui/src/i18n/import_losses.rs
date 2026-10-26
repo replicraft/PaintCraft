@@ -1,6 +1,9 @@
 //! Friendly source descriptions shared by image import confirmations.
 pub fn import_loss_description(code: &str) -> Option<&'static str> {
     Some(match code {
+        "ora-group-structure-not-retained" => {
+            "Layer groups, their names, and separate group visibility controls will not be kept. Their current visibility is applied to the layers."
+        }
         "dib-alpha-unspecified" => {
             "The DIB has no declared alpha channel; its pixels will be imported as opaque."
         }
@@ -117,6 +120,7 @@ mod tests {
     fn extended_conversion_limitations_are_translated_in_every_language() {
         for code in [
             "dds-other-mips-not-imported",
+            "ora-group-structure-not-retained",
             "hdr-precision-reduced-to-8",
             "hdr-tone-mapped",
             "hdr-highlights-clipped",

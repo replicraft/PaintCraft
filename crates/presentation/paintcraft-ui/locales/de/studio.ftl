@@ -364,3 +364,6 @@ this-image-contains-invalid-color-or-transparency-values-and-cannot-be-converted
 this-image-is-opaque-use-source-metadata-for-transparency = Dieses Bild ist undurchsichtig. Für Transparenz die Quellmetadaten verwenden.
 
 only-the-full-size-dds-image-will-be-imported-its-smaller-mip-levels-will-stay-in-the-source-file = Nur das DDS-Bild in voller Größe wird importiert. Kleinere Mip-Stufen bleiben in der Quelldatei.
+
+layer-groups-their-names-and-separate-group-visibility-controls-will-not-be-kept-their-current-visibility-is-applied-to-the-layers = Ebenengruppen, ihre Namen und ihre separaten Sichtbarkeitsregler werden nicht beibehalten. Ihre aktuelle Sichtbarkeit wird auf die Ebenen angewendet.
+background-color = Hintergrundfarbe

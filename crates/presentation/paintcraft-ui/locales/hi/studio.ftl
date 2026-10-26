@@ -364,3 +364,6 @@ this-image-contains-invalid-color-or-transparency-values-and-cannot-be-converted
 this-image-is-opaque-use-source-metadata-for-transparency = यह चित्र अपारदर्शी है। पारदर्शिता के लिए स्रोत मेटाडेटा उपयोग करें।
 
 only-the-full-size-dds-image-will-be-imported-its-smaller-mip-levels-will-stay-in-the-source-file = केवल पूर्ण आकार का DDS चित्र आयात होगा। छोटे मिप स्तर स्रोत फ़ाइल में रहेंगे।
+
+layer-groups-their-names-and-separate-group-visibility-controls-will-not-be-kept-their-current-visibility-is-applied-to-the-layers = परत समूह, उनके नाम और समूह की दृश्यता के अलग नियंत्रण नहीं रखे जाएंगे। उनकी वर्तमान दृश्यता परतों पर लागू की जाएगी।
+background-color = पृष्ठभूमि का रंग

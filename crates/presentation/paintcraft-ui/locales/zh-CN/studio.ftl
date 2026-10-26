@@ -364,3 +364,6 @@ this-image-contains-invalid-color-or-transparency-values-and-cannot-be-converted
 this-image-is-opaque-use-source-metadata-for-transparency = 此图片不透明。透明度请选择使用源元数据。
 
 only-the-full-size-dds-image-will-be-imported-its-smaller-mip-levels-will-stay-in-the-source-file = 仅导入完整尺寸的DDS图片。较小的Mip层级将保留在源文件中。
+
+layer-groups-their-names-and-separate-group-visibility-controls-will-not-be-kept-their-current-visibility-is-applied-to-the-layers = 不会保留图层组、组名和单独的组可见性控制。它们当前的可见性将应用于各图层。
+background-color = 背景颜色
