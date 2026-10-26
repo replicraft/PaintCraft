@@ -113,11 +113,15 @@ pub fn run(a: Options, json: bool) -> Reply {
                             if family == Family::Avif {
                                 let profiles: &[&str] =
                                     if variant == codec_worker::NATIVE_AVIF_SDR_IMPORT_VARIANT {
-                                        &[codec_worker::AVIF_SDR_NATIVE_PROFILE]
+                                        &[
+                                            codec_worker::AVIF_SDR_NATIVE_PROFILE,
+                                            codec_worker::FLOAT_NATIVE_PROFILE,
+                                        ]
                                     } else {
                                         &[
                                             codec_worker::AVIF_NATIVE_PROFILE,
                                             codec_worker::AVIF_SDR_NATIVE_PROFILE,
+                                            codec_worker::FLOAT_NATIVE_PROFILE,
                                         ]
                                     };
                                 // Keep the old field as explanatory minimum compatibility.
