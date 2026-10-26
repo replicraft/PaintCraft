@@ -47,6 +47,35 @@ impl ImportAssessment {
     pub fn losses(&self) -> &'static [&'static str] {
         KNOWN_IMPORT_LOSSES
     }
+    /// Stable receipt values distinguish encoded bits from normative inference.
+    pub fn to_value(&self) -> paintcraft_core::types::json::Value {
+        use paintcraft_core::types::json::Value;
+        fn resolution(value: Resolution) -> Value {
+            Value::object([
+                (
+                    "raw_f32_bits",
+                    value
+                        .raw_bits
+                        .map_or(Value::Null, |bits| Value::str(format!("{bits:08x}"))),
+                ),
+                (
+                    "effective_f32_bits",
+                    Value::str(format!("{:08x}", value.effective_bits)),
+                ),
+                ("inferred_96_dpi", Value::Bool(value.inferred_96)),
+            ])
+        }
+        Value::object([
+            ("color_policy", Value::str(self.color_policy())),
+            ("resolution_x", resolution(self.resolution_x())),
+            ("resolution_y", resolution(self.resolution_y())),
+            (
+                "losses",
+                Value::Array(self.losses().iter().copied().map(Value::str).collect()),
+            ),
+            ("preserving_save", Value::Bool(false)),
+        ])
+    }
     pub fn require_losses(&self, allowed: &[String]) -> Result<()> {
         if let Some(code) = allowed
             .iter()
