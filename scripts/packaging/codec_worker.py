@@ -66,6 +66,13 @@ def metadata(directory, version, target):
     import package_release as release
     helper = directory / filename(target)
     release.validate_package_input(version, target, helper)
+    return installed_metadata(directory, version, target)
+
+
+def installed_metadata(directory, version, target):
+    import package_release as release
+    helper = directory / filename(target)
+    release.validate_binary(target, helper)
     profile, variants = verify_build_record(helper, version)
     return {
         "schema_version": 2,
@@ -108,6 +115,13 @@ def copy(binary, directory, version, target=None):
 
 
 def verify_manifest(directory, version, target):
+    # Packaging retains its checkout-version requirement.
+    import package_release as release
+    release.validate_package_input(version, target, directory / filename(target))
+    verify_installed_manifest(directory, version, target)
+
+
+def verify_installed_manifest(directory, version, target):
     import package_release as release
     for name in NOTICES:
         notice = directory / name
@@ -116,5 +130,6 @@ def verify_manifest(directory, version, target):
     path = directory / MANIFEST
     if not path.is_file() or path.is_symlink():
         raise ValueError("Codec helper manifest must be a regular file")
-    if json.loads(path.read_text(encoding="utf-8")) != metadata(directory, version, target):
+    expected = installed_metadata(directory, version, target)
+    if json.loads(path.read_text(encoding="utf-8")) != expected:
         raise ValueError("Codec helper manifest does not match packaged executable")

@@ -64,6 +64,12 @@ def release_notes(version):
 def validate_package_input(version, target, binary):
     if version != workspace_version() or target not in TARGETS:
         raise ValueError("Package version or target does not match the release contract")
+    validate_binary(target, binary)
+
+
+def validate_binary(target, binary):
+    if target not in TARGETS:
+        raise ValueError("Unknown native executable target")
     if not binary.is_file() or binary.is_symlink():
         raise ValueError(f"Release binary must be a regular file: {binary}")
     with binary.open("rb") as stream:
