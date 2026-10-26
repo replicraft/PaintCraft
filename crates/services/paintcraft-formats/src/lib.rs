@@ -9,6 +9,7 @@ pub mod dcx;
 pub mod dds;
 pub mod export;
 pub mod heif;
+pub mod icns;
 pub mod icons;
 pub mod image;
 pub mod jxl;
