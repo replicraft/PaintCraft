@@ -5,6 +5,7 @@ use paintcraft_document::Document;
 use paintcraft_render::render_flat;
 
 use crate::image::{self, ImageFormat};
+pub mod jxr;
 
 /// Loss codes a caller may acknowledge.
 pub const KNOWN_LOSSES: [&str; 9] = [
@@ -119,21 +120,7 @@ pub fn export_flat_options_with_check(
             "PCX encoding options require PCX output",
         ));
     }
-    let rgba = render(doc)?;
-    check()?;
-    if rgba.len() as u128 != u128::from(doc.canvas.0) * u128::from(doc.canvas.1) * 4 {
-        return Err(Error::new(
-            ErrorCode::InvariantViolation,
-            "export renderer returned an invalid pixel buffer",
-        ));
-    }
-    let mut losses: Vec<String> = Vec::new();
-    if doc.roots.len() > 1 {
-        losses.push("flatten".into());
-    }
-    if doc.layers.values().any(|l| l.raster.has_hidden_rgb()) {
-        losses.push("hidden-rgb".into());
-    }
+    let FlatComposite { rgba, mut losses } = prepare_composite(doc, render, check)?;
     losses.extend(
         format
             .export_losses_for_rgba(&rgba)
@@ -157,22 +144,7 @@ pub fn export_flat_options_with_check(
     {
         losses.push("palette-quantized".into());
     }
-    let missing: Vec<&str> = losses
-        .iter()
-        .filter(|l| !allowed.contains(l))
-        .map(String::as_str)
-        .collect();
-    if !missing.is_empty() {
-        return Err(Error::new(
-            ErrorCode::CapabilityUnsupported,
-            format!(
-                "{} export would lose: {}; acknowledge with --allow-loss {}",
-                format.name(),
-                missing.join(", "),
-                missing.join(",")
-            ),
-        ));
-    }
+    require_losses(format.name(), &losses, allowed)?;
     let bytes = if let Some(prepared) = prepared {
         prepared.encode(check)?
     } else {
@@ -186,6 +158,53 @@ pub fn export_flat_options_with_check(
         )?
     };
     Ok(FlatExport { bytes, losses })
+}
+
+/// One immutable render and the same format-independent losses used by all flat exports.
+struct FlatComposite {
+    rgba: Vec<u8>,
+    losses: Vec<String>,
+}
+fn prepare_composite(
+    doc: &Document,
+    render: impl FnOnce(&Document) -> Result<Vec<u8>>,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<FlatComposite> {
+    let rgba = render(doc)?;
+    check()?;
+    if rgba.len() as u128 != u128::from(doc.canvas.0) * u128::from(doc.canvas.1) * 4 {
+        return Err(Error::new(
+            ErrorCode::InvariantViolation,
+            "export renderer returned an invalid pixel buffer",
+        ));
+    }
+    let mut losses: Vec<String> = Vec::new();
+    if doc.roots.len() > 1 {
+        losses.push("flatten".into());
+    }
+    if doc.layers.values().any(|l| l.raster.has_hidden_rgb()) {
+        losses.push("hidden-rgb".into());
+    }
+    Ok(FlatComposite { rgba, losses })
+}
+fn require_losses(label: &str, losses: &[String], allowed: &[String]) -> Result<()> {
+    let missing: Vec<&str> = losses
+        .iter()
+        .filter(|l| !allowed.contains(l))
+        .map(String::as_str)
+        .collect();
+    if !missing.is_empty() {
+        return Err(Error::new(
+            ErrorCode::CapabilityUnsupported,
+            format!(
+                "{} export would lose: {}; acknowledge with --allow-loss {}",
+                label,
+                missing.join(", "),
+                missing.join(",")
+            ),
+        ));
+    }
+    Ok(())
 }
 
 #[cfg(test)]
