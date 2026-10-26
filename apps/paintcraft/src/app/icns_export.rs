@@ -149,13 +149,14 @@ impl App {
                     }) {
                         state.draft.accepted = false;
                     }
-                    let ready = state.cache.show_bounded(
-                        ui,
-                        state.draft.selected,
-                        1024,
-                        "Export preview",
-                        frame,
-                    );
+                    let ready = config.valid()
+                        && state.cache.show_bounded(
+                            ui,
+                            state.draft.selected,
+                            1024,
+                            "Export preview",
+                            frame,
+                        );
                     let consent = state.cache.value().is_some_and(|prepared| {
                         preview::consent(ui, prepared.losses(), &mut state.draft.accepted)
                     });
@@ -332,7 +333,7 @@ impl App {
         self.editor.set_status(if outcome.is_success() {
             format!("Exported {}", path.display())
         } else {
-            format!("Not exported safely: {}", outcome.reasons.join("; "))
+            format!("Cannot export: {}", outcome.reasons.join("; "))
         });
     }
 }

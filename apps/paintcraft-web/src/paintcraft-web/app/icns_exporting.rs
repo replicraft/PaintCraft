@@ -133,13 +133,14 @@ impl WebApp {
                         {
                             state.draft.accepted = false;
                         }
-                        let ready = state.cache.show_bounded(
-                            ui,
-                            state.draft.selected,
-                            1024,
-                            "Export preview",
-                            frame,
-                        );
+                        let ready = config.valid()
+                            && state.cache.show_bounded(
+                                ui,
+                                state.draft.selected,
+                                1024,
+                                "Export preview",
+                                frame,
+                            );
                         let consent = state.cache.value().is_some_and(|prepared| {
                             preview::consent(ui, prepared.losses(), &mut state.draft.accepted)
                         });
