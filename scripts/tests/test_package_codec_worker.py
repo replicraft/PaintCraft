@@ -39,7 +39,7 @@ class CodecWorkerTests(unittest.TestCase):
             self.assertEqual(metadata["requested_heap_ceiling_bytes"], 256 << 20)
             self.assertTrue(metadata["embedded_build_record_verified"])
             self.assertEqual(metadata["schema_version"], 2)
-            self.assertEqual(metadata["qualified_import_variants"], ["native-jxl-srgb8-worker-v1"])
+            self.assertEqual(metadata["qualified_import_variants"], ["native-jxl-srgb8-worker-v1", "native-jxr-srgb8-worker-v1"])
             self.assertEqual((destination / codec_worker.NOTICE).read_bytes(),
                              (release.ROOT / "crates/services/paintcraft-formats/tests/jxr-fixtures/JXRLib-LICENSE.md").read_bytes())
             codec_worker.verify_manifest(destination, self.version, target)

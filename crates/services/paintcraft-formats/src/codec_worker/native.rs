@@ -93,7 +93,7 @@ impl Job {
                 protocol_version: PROTOCOL_VERSION,
                 profile: NATIVE_PROFILE,
                 requested_heap_ceiling_bytes: HEAP_BYTES,
-                qualified_import_variants: &[NATIVE_JXL_IMPORT_VARIANT],
+                qualified_import_variants: QUALIFIED_NATIVE_IMPORT_VARIANTS,
                 build_marker: BUILD_RECORD_MARKER,
                 build_record: &record,
             },

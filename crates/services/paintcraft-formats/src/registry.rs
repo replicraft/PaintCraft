@@ -166,7 +166,7 @@ pub struct Capability {
     pub qualified: bool,
     pub backend: Option<&'static str>,
 }
-pub fn capability(family: Family, operation: Operation, _platform: Platform) -> Capability {
+pub fn capability(family: Family, operation: Operation, platform: Platform) -> Capability {
     let raster_operation = matches!(
         operation,
         Operation::Open
@@ -243,6 +243,9 @@ pub fn capability(family: Family, operation: Operation, _platform: Platform) -> 
         Family::Pcx if matches!(operation, Operation::ImportConvert | Operation::ExportFlat) => {
             Some("pcx-rgba8")
         }
+        Family::Jxr if operation == Operation::ImportConvert && platform == Platform::Native => {
+            Some("jpegxr-pure-rs-isolated-rgb8")
+        }
         Family::Jxl if raster_operation && operation.is_write() => Some("zune-jpegxl"),
         Family::Jxl if raster_operation => Some("jxl-rs"),
         Family::Dds if raster_operation => Some("paintcraft-dds-rgba8"),
@@ -306,6 +309,11 @@ pub fn admission(request: Request<'_>) -> Decision {
         && request.frontend == Frontend::Studio
         && request.platform == Platform::Native
         && request.variant == Some(crate::codec_worker::NATIVE_JXL_IMPORT_VARIANT);
+    let native_jxr_import = request.family == Family::Jxr
+        && request.operation == Operation::ImportConvert
+        && request.frontend == Frontend::Studio
+        && request.platform == Platform::Native
+        && request.variant == Some(crate::codec_worker::NATIVE_JXR_IMPORT_VARIANT);
     let selected_page = request.family == Family::Dcx
         && request.operation == Operation::ImportConvert
         && request.variant == Some("dcx-selected-page");
@@ -348,6 +356,7 @@ pub fn admission(request: Request<'_>) -> Decision {
         && !fresh_entry_set
         && !svg_rasterization
         && !native_jxl_import
+        && !native_jxr_import
     {
         return Decision::TemporarilyUnavailable(Reason::VariantUnqualified);
     }
@@ -363,10 +372,11 @@ pub fn admission(request: Request<'_>) -> Decision {
     if !capability.backend_available || !request.backend_available {
         return Decision::TemporarilyUnavailable(Reason::BackendUnavailable);
     }
-    if !capability.qualified && !native_jxl_import {
+    if !capability.qualified && !native_jxl_import && !native_jxr_import {
         return Decision::TemporarilyUnavailable(Reason::VariantUnqualified);
     }
     if request.needs_preflight
+        || native_jxr_import
         || svg_rasterization
         || (request.operation.is_write() && request.family != Family::Pcnd)
     {
@@ -566,6 +576,8 @@ pub fn sniff(bytes: &[u8]) -> Option<Family> {
         Some(Family::Psd)
     } else if bytes.starts_with(b"8BPS\0\x02") {
         Some(Family::Psb)
+    } else if crate::jxr::sniff(bytes) {
+        Some(Family::Jxr)
     } else if bytes.starts_with(b"DDS ") {
         Some(Family::Dds)
     } else if bytes.len() >= 8 && bytes.starts_with(b"icns") {
