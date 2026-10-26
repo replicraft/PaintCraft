@@ -112,3 +112,74 @@ fn layered_paint_conversion_preserves_source_until_consent_and_remains_unbound()
     assert!(app.editor.session.is_dirty());
     assert_eq!(app.editor.session.document().canvas, (333, 271));
 }
+
+#[test]
+fn browser_msp_extended_import_and_exact_export_keep_pixels_require_metadata_consent_and_leave_project_unbound()
+ {
+    const SOURCE: &[u8] = include_bytes!(
+        "../../../../../crates/services/paintcraft-formats/tests/msp-fixtures/raw-9.msp"
+    );
+    assert!(decode_for_profile(SOURCE, "legacy.msp".into(), Frontend::Studio).is_err());
+    let loaded = decode_input(SOURCE, "legacy.msp".into(), Frontend::Studio, true).unwrap();
+    assert!(loaded.converted_copy);
+    assert_eq!(loaded.losses, ["msp-metadata-ignored"]);
+    let snapshot = loaded.document.clone();
+    let bytes = encode_options_for_profile(
+        &loaded.document,
+        Some(ImageExport::Msp),
+        90,
+        Frontend::Studio,
+        paintcraft_ui::pcx_export::Encoding::Rgb24,
+    )
+    .unwrap();
+    assert_eq!(&bytes[..4], b"DanM");
+    assert!(snapshot.same_semantics(&loaded.document));
+    assert_eq!(
+        image::decode(&bytes).unwrap().rgba,
+        image::decode(SOURCE).unwrap().rgba
+    );
+    assert!(
+        encode_options_for_profile(
+            &loaded.document,
+            Some(ImageExport::Msp),
+            90,
+            Frontend::ClassicV11,
+            paintcraft_ui::pcx_export::Encoding::Rgb24
+        )
+        .is_err()
+    );
+    for pixel in [
+        paintcraft_core::types::Rgba([12, 34, 56, 255]),
+        paintcraft_core::types::Rgba([0; 4]),
+    ] {
+        let doc =
+            paintcraft_document::new_document(2, 2, Some(pixel), 0, paintcraft_document::POLICY)
+                .unwrap();
+        assert!(
+            encode_options_for_profile(
+                &doc,
+                Some(ImageExport::Msp),
+                90,
+                Frontend::Studio,
+                paintcraft_ui::pcx_export::Encoding::Rgb24
+            )
+            .is_err()
+        );
+    }
+    let ctx = eframe::egui::Context::default();
+    let mut app = WebApp::new(&ctx);
+    app.frontend = paintcraft_ui::actions::Frontend::Studio;
+    let before = app.editor.session.snapshot();
+    for accept in [false, true] {
+        let loaded = decode_input(SOURCE, "legacy.msp".into(), Frontend::Studio, true).unwrap();
+        app.import_owner = Some(Owner::capture(&app));
+        app.accept_loaded(loaded, &ctx);
+        assert!(std::sync::Arc::ptr_eq(
+            &before,
+            &app.editor.session.snapshot()
+        ));
+        app.resolve_import(&ctx, accept);
+    }
+    assert_eq!(app.editor.session.document().canvas, (9, 3));
+    assert!(app.editor.session.is_dirty());
+}

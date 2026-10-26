@@ -108,10 +108,13 @@ impl Files {
         )
         .into_iter()
         .filter(|extension| {
-            !convert
-                || Family::from_extension(extension).is_some_and(|family| {
-                    !family.is_project() || paintcraft_formats::project_import::supports(family)
-                })
+            (!convert
+                || frontend == Frontend::Studio
+                || Family::from_extension(extension) != Some(Family::Msp))
+                && (!convert
+                    || Family::from_extension(extension).is_some_and(|family| {
+                        !family.is_project() || paintcraft_formats::project_import::supports(family)
+                    }))
         })
         .collect();
         if convert && frontend == Frontend::Studio {
@@ -350,6 +353,7 @@ fn encode_options_for_profile(
             ImageExport::Pam => image::ImageFormat::Pnm,
             ImageExport::Farbfeld => image::ImageFormat::Farbfeld,
             ImageExport::Pcx => image::ImageFormat::Pcx,
+            ImageExport::Msp => image::ImageFormat::Msp,
         };
         // The captured frontend determines admission before rendering or encoding.
         use paintcraft_formats::registry::{self, Operation, Request};
@@ -503,10 +507,12 @@ mod tests {
         )
         .unwrap();
         let state = document.state_id;
-        for format in ImageExport::ALL
-            .into_iter()
-            .filter(|format| !matches!(format, ImageExport::Jxl | ImageExport::Avif))
-        {
+        for format in ImageExport::ALL.into_iter().filter(|format| {
+            !matches!(
+                format,
+                ImageExport::Jxl | ImageExport::Avif | ImageExport::Msp
+            )
+        }) {
             let bytes = encode(&document, Some(format)).unwrap();
             assert_eq!(
                 image::ImageFormat::sniff(&bytes).unwrap().name(),
