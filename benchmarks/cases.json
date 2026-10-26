@@ -278,5 +278,47 @@
       "deoptimized scalar baseline",
       "target-cpu=native as generic target evidence"
     ]
+  },
+  {
+    "id": "BF25",
+    "title": "Codec implementation routes",
+    "choice": "codecs",
+    "activation_tasks": [
+      "T08",
+      "T20"
+    ],
+    "status": "locally-measured-partial",
+    "tier": "process",
+    "hyperfine_required": true,
+    "hyperfine_role": "decision",
+    "adapter_path": "benchmarks/tools/run_palette_assets.py",
+    "result_artifacts": [
+      "docs/FORMAT_INTEROPERABILITY.md",
+      "docs/benchmarks/palette-assets-2026-10-25/BASELINE.md"
+    ],
+    "variants": [
+      "selected ag-psd 0.3.0 finite-f32 ASE baseline; no replacement comparison yet"
+    ],
+    "workloads": [
+      "empty and mixed-model palette resources",
+      "grouped 256/4096 swatches with Unicode names",
+      "complete CLI inspection and durable fresh-copy export"
+    ],
+    "correctness_gates": [
+      "exact groups names models types and channel bits in an independent parser",
+      "bounded preflight and supported asset operations only",
+      "source immutability and complete output teardown"
+    ],
+    "supplementary_metrics": [
+      "calibrated raw Criterion samples",
+      "Divan allocation-profiled tables",
+      "Hyperfine process RSS CPU and file sizes"
+    ],
+    "invalid_comparisons": [
+      "different precision metadata quality or operations as equivalent work",
+      "process RSS as an adapter heap budget",
+      "palette throughput as interactive brush latency",
+      "single-backend baseline as a codec optimization winner"
+    ]
   }
 ]

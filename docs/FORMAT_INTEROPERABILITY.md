@@ -146,8 +146,17 @@ all model/type/channel values verified by the independent parser. The title
 remained `Untitled - PaintCraft` and dirty stayed false; the selected tool color
 became `[64,128,255,255]` while the canvas remained unchanged. This single scene
 does not qualify every platform or original Adobe application. Color-managed
-adoption, persistent catalogs, original-app reopen evidence and workload
-benchmarks remain pending; this is not complete F14 or release qualification.
+adoption, persistent catalogs and original-app reopen evidence remain pending;
+this is not complete F14 or release qualification.
+
+The [ASE workload baseline](benchmarks/palette-assets-2026-10-25/BASELINE.md)
+now retains calibrated Criterion samples, Divan allocation statistics and
+three Hyperfine CLI sessions. Independent pre/postflight checks cover all
+4,358 swatches in the four workloads. On the local Apple M1 Pro, the 4096-color
+Criterion decode/encode session medians span 1.146–1.174 ms / 0.948–0.984 ms;
+complete CLI inspection/export span 9.77–13.72 ms / 20.44–30.57 ms. All 480
+measured CLI executions succeeded. The ranges retain slower sessions and are
+observations of these resource workflows, not speedup or interactive guarantees.
 
 ### SVG/SVGZ rasterization, 2026-10-25
 

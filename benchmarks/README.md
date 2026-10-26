@@ -25,6 +25,14 @@ python3 benchmarks/tools/run_hyperfine.py --config <config.json> --output <new-d
 Divan is a development-only statistical harness selected for parameterized inputs
 and allocation profiling. Criterion is an acceptable alternative; this selection
 does not claim the harness itself is faster. See the [official API](https://docs.rs/divan/0.1.21/divan/).
+
+The [ASE palette baseline](../docs/benchmarks/palette-assets-2026-10-25/BASELINE.md)
+adds real resource-codec workloads under BF25: Criterion calibrated raw samples,
+Divan allocation statistics, and complete CLI inspection/durable export through
+Hyperfine. `tools/run_palette_assets.py` requires optimized build receipts and
+independent preflight; it prints a plan unless `--execute` is supplied. Its
+results do not claim an optimized replacement or original Adobe qualification.
+
 Application runs require at least 20 repetitions and 3 warmups, with three
 independent sessions including reverse order before a selection decision. Record
 optimized binary, lockfile and generator identities and all applicable memory
