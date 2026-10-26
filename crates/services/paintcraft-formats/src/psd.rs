@@ -5,13 +5,19 @@ use std::ops::Range;
 mod channels;
 mod decode;
 mod scan;
+mod write;
 pub use decode::{Decoded, DecodedLayer, decode};
+pub use write::{
+    TITLE_LOSS, WriteLimits, WritePlan, encode_document, preflight, write_document_to,
+};
 #[cfg(test)]
 mod tests;
 
 pub const ENCODED_MAX: usize = 64 << 20;
 pub const PIXELS_MAX: u64 = 4_194_304;
 pub const LAYERS_MAX: usize = 256;
+/// Shared PSD reader/fresh-writer allowance in UTF-16 code units.
+pub const LAYER_NAME_UTF16_MAX: usize = 1024;
 const METADATA_MAX: usize = 1 << 20;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

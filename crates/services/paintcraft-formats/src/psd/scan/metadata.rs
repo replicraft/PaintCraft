@@ -74,7 +74,7 @@ pub(super) fn layer(
         match &key {
             b"luni" => {
                 let count = p.u32()? as usize;
-                if count > 1024 {
+                if count > LAYER_NAME_UTF16_MAX {
                     return Err(resource("PSD layer name exceeds import allowance"));
                 }
                 let utf16 = p
