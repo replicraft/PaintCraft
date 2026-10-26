@@ -47,7 +47,7 @@ impl Installation {
         fs::copy(&source, &helper).unwrap();
         let manifest = root.join("paintcraft-codec-worker.json");
         let value = Value::object([
-            ("schema_version", Value::Int(1)),
+            ("schema_version", Value::Int(2)),
             ("embedded_build_record_verified", Value::Bool(true)),
             ("application_version", Value::str(env!("CARGO_PKG_VERSION"))),
             ("target", Value::str(target())),
@@ -65,7 +65,10 @@ impl Installation {
                 "requested_heap_ceiling_bytes",
                 Value::Int(wire::HEAP_BYTES as i64),
             ),
-            ("public_reader_enabled", Value::Bool(false)),
+            (
+                "qualified_import_variants",
+                Value::Array(vec![Value::str(wire::NATIVE_JXL_IMPORT_VARIANT)]),
+            ),
         ]);
         fs::write(&manifest, json::canonical(&value)).unwrap();
         Self {
@@ -156,10 +159,54 @@ fn installed_actual_helper_dispatches_independent_jxl_and_heif_fixtures_without_
         Some(2)
     );
     assert_eq!(
-        value.get("public_reader_enabled").and_then(Value::as_bool),
-        Some(false)
+        value.get("reader_route").and_then(Value::as_str),
+        Some("internal-qualification")
     );
     assert_eq!(fs::read(&input).unwrap(), heif);
+    let jxr = include_bytes!(
+        "../../../crates/services/paintcraft-formats/tests/jxr-fixtures/rgb8-4x3.jxr"
+    );
+    let input = installation.fixture("source.jxr", jxr);
+    let (exit, value) = installation.run(&input, "jxr", &[]);
+    assert_eq!(exit, 0, "{value:?}");
+    assert_eq!(value.get("width").and_then(Value::as_i64), Some(4));
+    assert_eq!(value.get("height").and_then(Value::as_i64), Some(3));
+    let expected: Vec<u8> = (0..3)
+        .flat_map(|y| {
+            (0..4).flat_map(move |x| {
+                [
+                    (x * 47 + y * 13) % 256,
+                    (x * 47 + y * 13 + 71) % 256,
+                    (x * 47 + y * 13 + 142) % 256,
+                    255,
+                ]
+                .map(|v| v as u8)
+            })
+        })
+        .collect();
+    assert_eq!(
+        value.get("samples_sha256").and_then(Value::as_str),
+        Some(hex(&Sha256::digest(expected)).as_str())
+    );
+    assert_eq!(
+        value.get("source_color_policy").and_then(Value::as_str),
+        Some("t832-uint-rgb-absent-context-default-srgb")
+    );
+    assert_eq!(
+        value
+            .get("source_resolution_f32_bits")
+            .and_then(|v| v.get("x"))
+            .and_then(Value::as_str),
+        Some("00000000")
+    );
+    assert_eq!(
+        value
+            .get("source_resolution_f32_bits")
+            .and_then(|v| v.get("y"))
+            .and_then(Value::as_str),
+        Some("00000000")
+    );
+    assert_eq!(fs::read(&input).unwrap(), jxr);
 }
 #[test]
 fn missing_stale_or_changed_helper_and_source_guards_fail_closed() {

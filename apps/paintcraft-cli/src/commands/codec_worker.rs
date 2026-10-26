@@ -1,5 +1,6 @@
 //! Internal qualification consumer. Normal image Open/import stays registry-gated.
 use super::*;
+mod jxr_launch;
 use paintcraft_formats::codec_worker as wire;
 use paintcraft_platform::source::SourceIdentity;
 use paintcraft_runtime::{Executor, Limits, process};
@@ -9,12 +10,14 @@ use uuid::Uuid;
 enum Codec {
     Heif,
     Jxl,
+    Jxr,
 }
 impl Codec {
     fn wire(self) -> wire::Codec {
         match self {
             Self::Heif => wire::Codec::HeifGray8,
             Self::Jxl => wire::Codec::JxlRgba8,
+            Self::Jxr => wire::Codec::JxrRgb8,
         }
     }
 }
@@ -54,7 +57,11 @@ pub(super) fn owner() -> wire::Owner {
         frontend: 3,
     }
 }
-fn metadata(request: &wire::Request, frame: wire::Frame<'_>, helper_sha: [u8; 32]) -> Value {
+fn metadata(
+    request: &wire::Request,
+    frame: wire::Frame<'_>,
+    helper_sha: [u8; 32],
+) -> Result<Value> {
     let (model, pixels, alpha, encoding) = match frame.pixels {
         wire::Pixels::SrgbRgba8(rgba) => {
             ("srgb-rgba8", rgba, None, Value::str("srgb-straight-rgba8"))
@@ -75,10 +82,42 @@ fn metadata(request: &wire::Request, frame: wire::Frame<'_>, helper_sha: [u8; 32
             ]),
         ),
     };
-    Value::object([
+    let source_jxr = if request.header.codec == wire::Codec::JxrRgb8 {
+        Some(paintcraft_formats::jxr::inspect_checked(
+            request.source.as_slice(),
+            u64::from(request.header.pixels),
+            &|| Ok(()),
+        )?)
+    } else {
+        None
+    };
+    Ok(Value::object([
         ("schema", Value::str("paintcraft.codec-inspection/v1")),
+        (
+            "source_color_policy",
+            source_jxr.map_or(Value::Null, |_| {
+                Value::str(paintcraft_formats::jxr::COLOR_POLICY)
+            }),
+        ),
+        (
+            "source_resolution_f32_bits",
+            source_jxr.map_or(Value::Null, |info| {
+                Value::object([
+                    (
+                        "x",
+                        info.resolution_x_bits
+                            .map_or(Value::Null, |value| Value::str(format!("{value:08x}"))),
+                    ),
+                    (
+                        "y",
+                        info.resolution_y_bits
+                            .map_or(Value::Null, |value| Value::str(format!("{value:08x}"))),
+                    ),
+                ])
+            }),
+        ),
         ("qualification", Value::str("internal-native-only")),
-        ("public_reader_enabled", Value::Bool(false)),
+        ("reader_route", Value::str("internal-qualification")),
         ("width", Value::Int(i64::from(frame.width))),
         ("height", Value::Int(i64::from(frame.height))),
         ("model", Value::str(model)),
@@ -90,7 +129,7 @@ fn metadata(request: &wire::Request, frame: wire::Frame<'_>, helper_sha: [u8; 32
         ),
         ("source_sha256", Value::str(hex(&request.header.sha256))),
         ("helper_sha256", Value::str(hex(&helper_sha))),
-    ])
+    ]))
 }
 pub(super) fn with_frame<T>(
     options: Options,
@@ -121,6 +160,9 @@ pub(super) fn with_frame<T>(
         &|| cancel.check(),
         &current_owner,
         |executable, request, remaining, check| {
+            if request.header.codec == wire::Codec::JxrRgb8 {
+                return jxr_launch::run(executable, request, remaining, check);
+            }
             process::run_parent_lease(
                 executable,
                 &[],
@@ -154,7 +196,7 @@ fn inspect(
         captured_owner,
         cancel,
         current_owner,
-        |request, frame, helper_sha, _| Ok(metadata(request, frame, helper_sha)),
+        |request, frame, helper_sha, _| metadata(request, frame, helper_sha),
     )
 }
 pub fn run(options: Options, json: bool) -> Reply {
@@ -199,10 +241,7 @@ pub fn run(options: Options, json: bool) -> Reply {
                 }
                 std::thread::sleep(Duration::from_millis(2));
             };
-            Ok((
-                value,
-                "Internal native codec inspection completed; public reader remains disabled".into(),
-            ))
+            Ok((value, "Internal native codec inspection completed".into()))
         })(),
     )
 }
