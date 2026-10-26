@@ -148,6 +148,7 @@ fn installed_helper(
     let legacy_record = native_build_record(version)?;
     let avif_record = native_avif_build_record(version)?;
     let sdr_record = native_avif_sdr_build_record(version)?;
+    let float_record = native_float_build_record(version)?;
     let base = codec_helper::Contract {
         application_version: version,
         protocol_version: PROTOCOL_VERSION,
@@ -175,11 +176,23 @@ fn installed_helper(
         build_marker: AVIF_SDR_BUILD_RECORD_MARKER,
         build_record: &sdr_record,
     };
+    let float = codec_helper::Contract {
+        application_version: version,
+        protocol_version: PROTOCOL_VERSION,
+        profile: FLOAT_NATIVE_PROFILE,
+        requested_heap_ceiling_bytes: HEAP_BYTES,
+        qualified_import_variants: QUALIFIED_AVIF_SDR_IMPORT_VARIANTS,
+        build_marker: FLOAT_BUILD_RECORD_MARKER,
+        build_record: &float_record,
+    };
     match codec {
-        Codec::AvifSdr8 => codec_helper::discover(sdr, check),
-        Codec::AvifSrgb8 => codec_helper::discover_compatible(avif, sdr, check),
-        _ => codec_helper::discover_compatible_three(base, avif, sdr, check),
+        Codec::HdrSdr8 | Codec::ExrSdr8 => codec_helper::discover(float, check),
+        Codec::AvifSdr8 => codec_helper::discover_compatible(sdr, float, check),
+        Codec::AvifSrgb8 => codec_helper::discover_compatible_three(avif, sdr, float, check),
+        _ => codec_helper::discover_compatible_four(base, avif, sdr, float, check),
     }
 }
+#[cfg(test)]
+mod compatibility_tests;
 #[cfg(test)]
 mod tests;
