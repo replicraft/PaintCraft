@@ -93,3 +93,127 @@ fn exact_schema3_and_separate_capability_refuse_legacy_forgery_and_changed_field
     fs::write(&installation.manifest, [b' '; 8193]).unwrap();
     assert!(verify_encoder(&installation.app, contract, installation.target, &|| Ok(())).is_err());
 }
+
+#[test]
+fn schema3_contract_enforces_host_selected_eight_imports_without_assuming_seven() {
+    const EIGHT: &[&str] = &[
+        "one",
+        "two",
+        "three",
+        "four",
+        "five",
+        "six",
+        "seven",
+        "writer-read",
+    ];
+    let installation = Installation::new(Target::MacArm, false);
+    let mut contract = encoder_contract();
+    contract.decode.qualified_import_variants = EIGHT;
+    contract.validate().unwrap();
+    let mut value = manifest(&installation);
+    set(&mut value, "qualified_import_variants", array(EIGHT));
+    let selected = contract.select(&value).unwrap();
+    assert_eq!(selected.qualified_import_variants, EIGHT);
+    // Full import/profile/build verification still occurs in verify_selected;
+    // this schema selector alone never creates either sealed capability.
+    write(&installation, &value);
+    assert!(verify_encoder(&installation.app, contract, installation.target, &|| Ok(())).is_err());
+    contract.qualified_export_variants = &["same", "same"];
+    assert!(contract.validate().is_err());
+    contract.qualified_export_variants = &[];
+    assert!(contract.validate().is_err());
+}
+
+#[test]
+fn sealed_schema3_decoder_checks_full_installation_and_exact_eighth_variant() {
+    use crate::codec_helper::decode::verify_decoder;
+    const EIGHT: &[&str] = &[
+        "one",
+        "two",
+        "three",
+        "four",
+        "five",
+        "six",
+        "seven",
+        "writer-read",
+    ];
+    let installation = Installation::new(Target::MacArm, false);
+    let mut contract = encoder_contract();
+    contract.decode.qualified_import_variants = EIGHT;
+    let mut helper = binary(installation.target);
+    helper.truncate(helper.len() - RECORD.len());
+    helper.extend_from_slice(ENCODE_RECORD);
+    fs::write(&installation.helper, &helper).unwrap();
+    let mut exact = manifest(&installation);
+    set(&mut exact, "qualified_import_variants", array(EIGHT));
+    write(&installation, &exact);
+    let verified =
+        verify_decoder(&installation.app, contract, installation.target, &|| Ok(())).unwrap();
+    assert_eq!(
+        verified.checked_executable(&|| Ok(())).unwrap(),
+        installation.helper
+    );
+    assert_eq!(verified.sha256(), <[u8; 32]>::from(Sha256::digest(&helper)));
+    assert!(
+        installation.verify().is_err(),
+        "schema2 discovery must refuse schema3"
+    );
+    for (key, changed) in [
+        (
+            "qualified_import_variants",
+            array(&[
+                "one", "two", "three", "four", "five", "six", "seven", "unknown",
+            ]),
+        ),
+        (
+            "qualified_import_variants",
+            array(&[
+                "two",
+                "one",
+                "three",
+                "four",
+                "five",
+                "six",
+                "seven",
+                "writer-read",
+            ]),
+        ),
+        ("profile", Value::str("another-private-profile")),
+        ("qualified_export_variants", array(&["another-export"])),
+        ("schema_version", Value::Int(2)),
+    ] {
+        let mut changed_manifest = exact.clone();
+        set(&mut changed_manifest, key, changed);
+        write(&installation, &changed_manifest);
+        assert_eq!(
+            verify_decoder(&installation.app, contract, installation.target, &|| Ok(()))
+                .unwrap_err()
+                .code,
+            ErrorCode::CapabilityUnsupported,
+            "{key}"
+        );
+    }
+    // Matching file SHA cannot substitute for the required exact mode record.
+    *helper.last_mut().unwrap() ^= 1;
+    fs::write(&installation.helper, &helper).unwrap();
+    set(
+        &mut exact,
+        "sha256",
+        Value::str(hex(&Sha256::digest(&helper))),
+    );
+    write(&installation, &exact);
+    assert_eq!(
+        verify_decoder(&installation.app, contract, installation.target, &|| Ok(()))
+            .unwrap_err()
+            .code,
+        ErrorCode::CapabilityUnsupported
+    );
+    let mut invalid = contract;
+    invalid.decode.qualified_import_variants = &["same", "same"];
+    assert_eq!(
+        verify_decoder(&installation.app, invalid, installation.target, &|| Ok(()))
+            .unwrap_err()
+            .code,
+        ErrorCode::InputSchema
+    );
+}

@@ -5,7 +5,9 @@
 //! must have the same trust as the running application; publisher/code signatures
 //! are not verified here. A checked path is not atomic execution-by-handle, and
 //! observed-change checks do not eliminate concurrent traversal/write/spawn races.
+mod decode;
 mod encode;
+pub use decode::{VerifiedSchema3DecoderHelper, discover_decoder, for_application_decoder};
 mod files;
 pub use encode::{
     EncoderContract, VerifiedEncoderHelper, discover_encoder, for_application_encoder,
@@ -31,6 +33,7 @@ pub struct Contract<'a> {
     pub protocol_version: u16,
     pub profile: &'a str,
     pub requested_heap_ceiling_bytes: u64,
+    /// Generic bounded manifest-contract capacity, independent of any candidate profile.
     pub qualified_import_variants: &'a [&'a str],
     pub build_marker: &'a [u8],
     pub build_record: &'a [u8],

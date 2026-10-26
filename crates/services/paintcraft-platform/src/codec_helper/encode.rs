@@ -7,16 +7,22 @@ pub struct EncoderContract<'a> {
     pub qualified_export_variants: &'a [&'a str],
 }
 impl<'a> EncoderContract<'a> {
-    fn validate(self) -> Result<()> {
+    pub(super) fn validate(self) -> Result<()> {
         self.decode.validate()?;
         if self.encode_protocol_version != 1
             || self.decode.protocol_version != 2
-            || self.decode.qualified_import_variants.len() != 7
-            || self.qualified_export_variants.len() != 1
+            || self.qualified_export_variants.is_empty()
+            || self.qualified_export_variants.len() > 8
             || self
                 .qualified_export_variants
                 .iter()
-                .any(|variant| variant.is_empty() || variant.len() > 128 || !variant.is_ascii())
+                .enumerate()
+                .any(|(index, variant)| {
+                    variant.is_empty()
+                        || variant.len() > 128
+                        || !variant.is_ascii()
+                        || self.qualified_export_variants[..index].contains(variant)
+                })
         {
             return Err(Error::new(
                 ErrorCode::InputSchema,
@@ -25,7 +31,7 @@ impl<'a> EncoderContract<'a> {
         }
         Ok(())
     }
-    fn select(self, value: &Value) -> Result<Contract<'a>> {
+    pub(super) fn select(self, value: &Value) -> Result<Contract<'a>> {
         if value.as_object().is_none_or(|fields| fields.len() != 12)
             || value.get("schema_version").and_then(Value::as_i64) != Some(3)
             || value.get("encode_protocol_version").and_then(Value::as_i64)
