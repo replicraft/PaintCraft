@@ -60,6 +60,8 @@ Image exports flatten layers. Conversion prompts explain supported losses such a
 
 See [Releases](https://github.com/replicraft/PaintCraft/releases) for packaged downloads and installation notes. Choose the build for your operating system and processor. On macOS, open the DMG and drag PaintCraft to Applications. On Windows, use the MSI or extract the portable ZIP.
 
+The [CLI installer](docs/RELEASING.md#headless-cli-distribution) installs the command line app and its required files together. It requires Python 3.12 or newer and also supports building from source.
+
 ## Run
 
 Desktop:

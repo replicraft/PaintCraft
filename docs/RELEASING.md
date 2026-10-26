@@ -166,9 +166,38 @@ and their hashes are included in `SHA256SUMS.txt`. They are separate from deskto
 Extract all archive files together into a directory on your PATH, keeping the
 helper, manifest and notices beside the CLI. The Unix archives preserve executable permissions.
 
-To build and install from a checkout, use `sh scripts/packaging/install_cli.sh` on Unix or
-`./scripts/packaging/install_cli.ps1` on Windows. These scripts require Rust and forward Cargo
-install arguments, for example `--root /your/install/prefix`. They do not download or install Rust.
-These source-install scripts install only the CLI. Qualified native codec imports
-also require the verified helper and manifest supplied in release archives;
-installing a sibling executable alone does not establish a valid installation.
+From a checkout, run `sh scripts/packaging/install_cli.sh` on Unix or
+`./scripts/packaging/install_cli.ps1` on Windows. Python 3.12 or newer is required.
+The default downloads the latest stable complete CLI archive and `SHA256SUMS.txt`
+from the official GitHub release, checks the archive digest and verifies the helper's
+architecture, embedded build contract, manifest and license files before installation.
+These checks provide integrity against the published checksums, not an independent
+release signature. Incomplete older archives are refused; use `--source` until a
+release containing the helper is published.
+
+All files are installed together under an owned private prefix's `bin` directory.
+The defaults are `~/.local/share/paintcraft-cli/bin` on Unix and
+`%LOCALAPPDATA%/PaintCraft/cli/bin` on Windows. Add that complete directory to PATH;
+the installer prints its path and never edits shell profiles or system settings.
+Use `--prefix /your/private/prefix` to choose a real directory owned by you, or
+`--version 0.1.0` to select a published version. Existing foreign files, symlinked
+paths and incompatible installations are refused. Updates stage a complete verified
+payload before replacing the old directory; failed publication restores the old
+installation, or retains its directory for manual recovery if restoration also fails.
+If removing the old files fails after publication, installation still succeeds
+and prints the retained directory's location for cleanup.
+Do not run another installer while `.install-lock` is present; inspect any leftover
+lock and recovery directory after an interrupted process.
+
+`--source` builds this checkout's CLI **and AVIF-enabled helper** using the locked
+Rust dependencies, a native C compiler, Meson 1.12.1 and Ninja 1.13.2. It generates
+the exact manifest, bundles both decoder notices and installs through the same
+archive validation and transaction. It does not invoke `cargo install` or install
+Rust or build tools for you. Source builds use the checkout's version and cannot
+be combined with `--version` or `--archive`.
+
+For offline installation, supply `--archive PATH --checksums PATH --version VERSION`
+for an official complete archive and its `SHA256SUMS.txt`. The checksum and full
+payload checks are identical to the default download route. Tests use only temporary
+private prefixes; synthetic archive checks for six targets do not qualify native
+execution on the other systems.
