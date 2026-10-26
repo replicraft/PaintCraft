@@ -43,7 +43,8 @@ Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, 
 | PSD/PSB | Studio explicit Import on desktop/browser; CLI `import` and MCP `import_image` | RGB8 Normal raster-layer subset retains names, offsets, opacity, visibility and alpha. Metadata losses need explicit consent. Groups, masks, text, effects, clipping, high depth and foreign writing remain unavailable |
 | SVG/SVGZ | Studio desktop/browser Import; CLI `import` with `--svg-width`/`--svg-height`; MCP `import_image` with `svg` options | Explicit size/DPI/fitting and rasterization consent. Studio previews use bundled fonts and additional font files; CLI/MCP accept outline fonts too. No Classic access, ordinary Open or SVG export |
 | MSP | Explicit Studio import/exact export in desktop, browser, CLI and MCP; headless Classic legacy import | DanM raw and admitted LinS row-RLE profile with independent Pillow pixel checks. Named metadata consent and frozen native source protection; no ordinary Classic Open, preserving MSP Save, hidden threshold/matte or MSP2 writer |
-| EXR/HDR, JP2, ICNS | Not yet enabled | Registry inventory or work in progress is not usable format support |
+| ICNS | Internal bounded PNG-entry reader and eight-type fresh writer; no public workflow yet | Explicit logical size/Retina density and entry index; excluded small 1x PNG native readbacks retained. Canonical legacy 16/32 writing, selected-entry consumers and original application display qualification remain |
+| EXR/HDR, JP2 | Not yet enabled | Registry inventory or work in progress is not usable format support |
 | ASE | Studio Palettes dialog; CLI `palette inspect` / `palette export`; MCP `inspect_palette` / `export_palette` | Flat groups, exact names/order/models/types and finite f32 values. RGB/gray tool-color adoption is explicit; CMYK/LAB conversion, persistent catalogs and Adobe qualification remain |
 | ABR | Studio desktop/browser selection and bounded native-static R8 painting; CLI/MCP inspection and painting | Exact sample masks, pattern channels, signed bounds and original ordered payloads retained. Up to 256 presets per admitted library; unsupported dynamics, textures, transforms and precision reduction are refused. Full preset behavior and original-application qualification remain; no ABR export or ordinary image Open |
 | CSH | Studio Shape resources dialog; CLI `shape inspect` / `shape export`; MCP `inspect_shapes` / `export_shapes` | Retains bounds, names, IDs and exact ordered path records. Studio previews outlines without changing the painting. Shape placement, broader interoperability and original-application qualification remain |
@@ -293,6 +294,33 @@ static adoption, pointer preview/release screen-pixel equality, Undo/Redo and
 PCND download check with no page errors. The downloaded project reopened and
 rendered through the CLI. This is focused workflow evidence, not full release
 qualification or an independent Photoshop rendering comparison.
+
+### ICNS internal backend increment, 2026-10-25
+
+Pinned `icns` 0.5.0 is used only for admitted container/type handling; optional
+PNG/JPEG2000 features are disabled. PNG pixel work reuses the existing image
+codec and shared ICO/CUR preflight, with separately bounded ICNS sRGB/EXIF
+metadata. Whole-file lengths, ordered records, optional TOC, image dimensions,
+CRCs, opaque metadata and aggregate budgets are checked before upstream reads.
+Directory entries keep logical size, Retina scale, physical size and source
+record index separate; duplicate types remain ordered. Unsupported legacy/JPEG
+2000 entries stay inert and cannot be selected through another size/type.
+
+The reader has exact independent Pillow 13.0.0 evidence for eleven modern PNG
+types. Fresh writing currently admits eight conventional PNG types with exact
+Pillow and native Apple `iconutil` pixel hashes, including alpha/hidden RGB.
+Isolated probes on macOS 14.7.2 arm64 demonstrate small 1x PNG exclusions:
+`icp4` changes all 256 pixels and 192 alpha values, `icp5` all 1024 and 768,
+and an isolated `icp6` produces 48x48 instead of requested 64x64. No type/density
+substitution is performed. The [fixture/oracle record](../crates/services/paintcraft-formats/tests/icns-fixtures/README.md)
+retains source/output/tool hashes, positive results and negative observations.
+Source specimens total less than 36 KiB; no application-icon data is duplicated.
+
+Seven focused ICNS tests and existing ICO/CUR regression tests pass. The public
+registry remains unavailable until explicit selected-entry consumers, immutable
+source/save guards and fresh export options are qualified. Canonical 16/32 at 1x
+output requires a separately qualified legacy RGB/RLE-plus-mask path. Preserving
+Save, Classic normal Open and broader historical encodings remain unqualified.
 
 ### Historical MSP conversion workflows, 2026-10-25
 
