@@ -380,8 +380,9 @@ metadata-free, static, identity-oriented, original-profile straight sRGB RGBA8,
 including hidden RGB and alpha, up to 4,194,304 pixels. ICC, container metadata,
 high depth, preview/animation and other unqualified profiles are refused. This
 requires the same-build packaged codec helper and matching schema 2 manifest;
-helper-free installations fail closed. Generic image Open, Classic, browser JXL
-reads and HEIF document imports remain separate and unavailable.
+helper-free installations fail closed. Generic image Open and Classic JXL reads
+remain unavailable. The browser has its own separately qualified explicit JXL
+import; native HEIF conversion is described below.
 
 The server captures the current Session owner/state/epoch, keeps decoded work
 private, and validates the source identity and cancellation before adoption. RPC
@@ -412,3 +413,42 @@ Imported pixels become an unsaved document with the same resident ownership,
 cancellation and captured-source alias protections as JPEG XL. This is explicit
 conversion, not preserving Save or normal image Open. Classic, browser import,
 alpha/deep precision and JPEG XR export remain unavailable.
+
+## Native HEIC/HEIF import
+
+`import_image` accepts `.heic`, `.heif` and `.hif` through the native Studio
+`native-heif-srgb8-worker-v1` profile. It supports directly coded explicit sRGB8
+color with optional straight8 alpha, up to 4,194,304 pixels and 64 MiB input.
+Matching NCLX/VUI declarations are required: identity GBR 4:4:4 or matrix-1
+YCbCr 4:4:4/4:2:0, with the qualified ranges and type-0 chroma siting. ICC,
+unlabelled color, derived images/grids, transforms, deep/HDR samples and other
+unqualified metadata are refused. The matching packaged helper is required.
+
+Pass the losses actually reported by the source:
+
+```json
+{
+    "path": "/pictures/source.heic",
+    "allow_losses": [
+        "heif-color-reconstruction",
+        "heif-item-names-not-retained"
+    ]
+}
+```
+
+YCbCr reconstruction reports the first loss for range expansion, RGB8
+rounding/clipping and, for 4:2:0, bilinear chroma interpolation. Nonempty primary
+or alpha item names report the second loss because they are not stored in PCND.
+An unnamed full-range identity source has neither loss and accepts an empty
+`allow_losses`. Names, source SHA, exact NCLX/range/chroma/alpha declarations and
+reconstruction policy remain in the conversion receipt; receipt retention does
+not imply document metadata preservation. Missing or unknown consent leaves the
+current document unchanged. Set `discard_changes` when intentionally replacing
+an existing dirty MCP document, as with other imports.
+
+Imported documents use the existing resident ownership, cancellation and
+captured-source alias protections. Saving a converted PCND cannot overwrite its
+renamed or hardlinked source. Generic Open, Classic/browser HEIF reads,
+preserving Save and HEIF export remain unavailable. See the
+[format ledger](FORMAT_INTEROPERABILITY.md#native-heif-srgb8-document-conversion-2026-10-26)
+for the independently qualified policy and retained decoder disagreements.

@@ -1,255 +1,150 @@
 # Native decoder isolation helper
 
-This is a real single-request executable used by bounded native Studio JXL
-conversion in the CLI and MCP server. Complete native packages include it;
-ordinary image Open and browser readers remain separate, unqualified routes. HEIF writing
-remains prohibited. A native helper alone does not qualify HEIF browser support.
+Complete native installations use this executable for explicitly qualified Studio
+JPEG XL, JPEG XR and HEIF conversions. Desktop, CLI and MCP consumers share the
+same verified native dispatch, captured-source guards and resident document
+adoption. This does not enable generic image Open, Classic readers, HEIF writing
+or browser use of this executable. The separately qualified Studio browser JPEG
+XL Import uses `web-jxl-srgb8-worker-quarantine-v1` and a WebWorker, with its own
+transport and qualification; it does not use a native helper manifest.
 
-The caller passes an explicit absolute executable path to the existing runtime
-process supervisor. There is no PATH lookup, inherited environment, filesystem
-source path, network address or shell command in the request. The versioned binary
-protocol captures immutable bytes, their SHA-256, a random request nonce, document
-session/state/epoch and frontend. Responses must match every capture and the
-application version, requested codec and sample model, then pass plane length/profile checks. These checks return
-private native planes; no document, save path or source ownership is adopted.
-The application publication thread must sample its current owner again.
+## Qualified native sample profiles
 
-The HEIF internal profile is a single base-layer monochrome8 IDR per coded
-image, including checked primary selection, direct grid order and auxiliary alpha.
-All coded SPS dimensions, hvcC/pixi/ispe declarations, grid coverage, full-range
-CICP and alpha depth/association must agree. ICC, display transforms, premultiplied
-alpha, high depth, RGB/YCbCr and unqualified slice variants fail closed. Decoding
-returns the decoder's native Y/opacity samples directly; optional RGB conversion
-APIs are never called and no sRGB label is invented.
+| Worker code | Meaning | Document route |
+| --- | --- | --- |
+| 1 | Native gray8 Y and optional opacity, original CICP retained | Internal HEIF diagnostics only; no guessed sRGB interpretation |
+| 2 | Metadata-free straight sRGB RGBA8 JPEG XL | `native-jxl-srgb8-worker-v1` |
+| 3 | Strict unsigned RGB8 JPEG XR, T.832 default-sRGB policy after refusing embedded color contexts | `native-jxr-srgb8-worker-v1` |
+| 4 | Explicitly declared sRGB8 HEIF color and optional straight alpha | `native-heif-srgb8-worker-v1` |
 
-The selected pinned `heic-decoder` 0.1.1 parser/decoder executes **inside this
-process**. Its audited SPS parser is a prerequisite, not a hostile-input sandbox.
-PPS/frame errors and decoder panic do not run in the GUI. The helper starts a
-single-thread Rayon pool; upstream source has no other explicit thread spawn.
-The host supervisor bounds input/output, enforces cancellation/deadlines, kills
-and waits for the child, and joins its two pipe threads before returning. Partial
-output from a failed child is discarded. The trusted helper must not spawn
-subprocesses or delegate inherited pipe handles; this supervisor kills the exact
-child, not an arbitrary process tree.
+All profiles are bounded to 4,194,304 pixels. A selected library compiling does
+not admit its other profiles or grant an encoder capability.
 
-A fixed 256 MiB allocator ceiling applies from process startup. This is **live
-requested Rust heap memory**, not physical RSS: allocator overhead, thread stacks,
-loaded code, mappings and direct native allocation are outside that metric. The
-parent reservation includes this exact ceiling, captured input, maximum output
-and protocol overhead. It never uses reported usage to pretend a smaller heap
-ceiling was enforced. The response reports a high-water snapshot during response
-preparation, not final process-exit RSS.
+HEIF color requires matching explicit NCLX and coded VUI declarations: primaries
+1, transfer 13, full-range identity GBR 4:4:4, or matrix 1 YCbCr 4:4:4/4:2:0 at
+full or limited range. The qualified 4:2:0 siting is type 0, with bilinear
+reconstruction, outermost-sample extension and round/clamp to RGB8. Odd 4:4:4
+edges are qualified; odd 4:2:0, shifted conformance crops and derived color images
+are refused. ICC, unlabelled color, HDR/deep samples, premultiplication, display
+transforms, extra image/metadata items and unknown import properties are refused.
+Every admitted coded image has one qualified base-layer still IDR. The selected
+`heic-decoder` 0.1.1 SPS parser and frame decoder execute only inside the helper.
 
-The helper's only unsafe module forwards `GlobalAlloc` to `System`, maintaining
-checked CAS accounting for allocation, zeroing and reallocation. Rejected charges
-never wrap or temporarily expose capacity; underlying failures roll back charges
-and preserve valid old realloc pointers. Failure exits immediately with status75
-through `_exit`, without allocating a message, invoking destructors or raising a
-Rust OOM abort. The supervisor maps this status to `ResourceLimit`. Tests cover the
-old subtraction-underflow race, overflow/refusal, system allocation failure,
-reallocation growth/shrink, concurrent accounting and actual child exit/reaping.
+The helper crosschecks actual decoded dimensions, precision, plane extents,
+chroma sampling, color metadata and alpha against admission before converting.
+The parent separately validates the response model/extent and binds its bounded
+container assessment to the exact captured source SHA before allocating document
+tiles. The parent does not invoke the selected SPS parser; that stays isolated.
 
-The separate executable is necessary to keep its global allocator and narrow
-unsafe policy exception out of GUI/CLI libraries. Workspace `unsafe_code=forbid`
-is unchanged. This package explicitly denies unsafe except in the documented
-allocator module and mirrors the other workspace lints. The reference pack allows
-narrow audited, tested unsafe interfaces where necessary.
+YCbCr conversion requires `heif-color-reconstruction` consent, describing range
+expansion, rounding/clipping and, for 4:2:0, interpolation. Nonempty primary or
+alpha item names additionally require `heif-item-names-not-retained`: receipt
+retention does not mean those labels are stored in PCND. An unnamed full-range
+identity container has neither loss. Source NCLX/range/chroma/alpha declarations,
+item names and SHA remain explicit in conversion receipts. Alpha is exact and
+RGB checks include alpha-zero pixels. Converted documents are unsaved PCND copies,
+not source-preserving HEIF saves.
 
-Remaining public-reader gates include installed helper discovery and integrity/
-version verification at dispatch, actual installer/platform qualification,
-OS containment policy beyond this Rust heap boundary,
-actual WebWorker cancellation/memory parity, cross-platform qualification and
-independent full-container/color/depth oracles. Merely compiling this helper does
-not satisfy those gates. Public GUI/CLI image-open entrypoints do not discover or invoke it yet.
+JXR requires `jxr-resolution-not-retained` consent, including the normative
+96-DPI default when resolution is absent or zero. Receipts distinguish raw source
+resolution bits from effective density and inferred defaults. ICC, metadata,
+alpha/deep precision and other unqualified JXR forms remain refused. No JPEG XR
+or HEIF writer is provided.
 
-The transient reservation remains charged through child completion and until the
-caller consumes/discards the result. It is **not** an automatic resident-budget
-transfer: a consumer that retains decoded planes after result consumption must
-first acquire an appropriate resident lease. Frontend installation/publication
-must implement that handoff before retaining pixels. Windows uses the safe
-`CREATE_NO_WINDOW` command flag; Windows device verification is still required
-before claiming that all release launch paths avoid visible windows.
+## Dispatch, ownership and supervision
 
+The host locates only a same-build helper relative to its own installation, never
+through PATH or a format-selected executable. Platform verification checks bounded
+schema 2 JSON, declared OS/architecture, the referenced build record, streaming
+SHA and retained executable/manifest identities before and after dispatch. These
+are observed-byte consistency checks, not publisher authentication, an atomic
+filesystem snapshot or elimination of the path-based spawn race. Installation
+files require the same trust as the application.
 
-## Native package layout and provenance
+Protocol 2 captures immutable source bytes, SHA-256, a random request nonce and
+Session/state/epoch/frontend ownership. Every response must match those values,
+application version, codec, sample model and exact bounded payload length. Partial
+or failed results do not publish. Prepared results retain their transient charge
+until adoption/discard; adopted document tiles carry their existing resident
+leases through history and snapshots. GUI review is tied to a captured result,
+an actually visible prior-frame preview, explicit loss consent and current
+editing state. Source changes, cancellation or stale ownership refuse adoption.
+Saving converted output cannot replace the captured source, including renamed
+files and hardlink aliases.
 
-The release workflow builds desktop, CLI and codec worker in one locked Cargo
-invocation for each target. Packagers require a regular, matching-architecture
-sibling helper and inspect a referenced build record containing the helper's
-actual Cargo version, protocol and fixed heap ceiling. Wrong/stale/missing build
-records refuse packaging without executing foreign-target binaries. A matching
-record is consistency evidence, **not a cryptographic identity guarantee**.
-Runtime protocol/version matching and trusted installation validation are still
-required before any decoder dispatch.
+The injected runtime supervisor uses an explicit absolute executable path,
+bounded I/O and a deadline. It kills/reaps the child and joins both pipe threads
+before returning, including cancellation and callback unwind. The helper starts
+the existing single-thread Rayon pool; no new renderer or thread pool is added.
+The trusted child must not delegate inherited pipes or spawn descendants: the
+supervisor controls its exact child, not an arbitrary process tree.
 
-Portable desktop/CLI ZIP and tar archives carry the helper and
-`paintcraft-codec-worker.json` beside the main executable. The macOS editor's
-nested `Contents/MacOS` directory holds both; the helper is ad-hoc signed first,
-then its signed-byte SHA-256 is written to the manifest before sealing editor and
-outer bundle signatures. The exact signed app is carried in both DMG/update ZIP.
-MSI installs both files beside `paintcraft.exe`; its disposable-runner verification
-checks install/repair hashes and that uninstall removes helper and manifest.
-Linux packages place the executable in `usr/bin` and manifest in
-`usr/share/paintcraft`. AppImage verification checks both payload paths.
+Native build record `BUILD_V4` includes `STDIN_PARENT_LEASE1` and
+`JXR_PRIVATE_SOURCE1`; binary protocol 2 is unchanged. The supervisor retains its
+sole stdin writer after the exact request. EOF, I/O failure or an extra byte makes
+the helper watchdog exit without allocation (status 76). This is parent-liveness
+evidence, not a synchronous parent-death join or a job-object sandbox. Forwarded
+writer handles would invalidate its sole-writer premise.
 
-The manifest records the verified embedded version, target, helper SHA-256,
-protocol, heap ceiling and schema 2 `qualified_import_variants`, currently only
-`native-jxl-srgb8-worker-v1`. HEIF, JXR and browser readers are absent. Native
-packaging tests use synthetic executable headers to inspect all six target
-layouts and command payloads; they do not replace real Windows/Linux installers
-or independent HEIF container interoperability. A real Apple Silicon helper has
-also been stripped and ad-hoc signed locally, with its build record and final
-manifest checked afterward. Developer-ID signing/notarization is not established
-by that ad-hoc signature check.
+JXR alone uses a parent-owned random private backing file, byte-checked against
+the captured request before and after selected decoder use. The shared Launch
+service owns it until supervised reap, then explicitly closes it. No host has a
+duplicate scratch adapter or selected shared-temp convenience decoder. Parent
+death can orphan private temporary files; no hard disk quota or Windows ACL
+parity is claimed.
 
-The standalone Windows desktop `.exe` is intentionally helper-free. Copying only
-a CLI executable, and current CLI `cargo install` scripts, also omit the helper.
-These routes must not gain helper-dependent readers just because another package
-ships it; missing/foreign/stale helpers must fail closed. Archive/install formats
-retain their existing release names and checksum inventory.
+## Memory boundary and packages
 
+The default qualified paths use a fixed 256-MiB live requested Rust heap ceiling
+from process startup. Checked accounting covers allocation, zeroing and realloc;
+refusal exits directly with status 75, mapped to `ResourceLimit`. This excludes
+physical RSS, allocator overhead, stacks, mappings and direct native allocations.
+Optional codec experiments require their own allocation qualification. The parent
+reserves this fixed child ceiling plus captured source, bounded output and its
+existing verification/document preparation declarations; reported peak never
+justifies charging a smaller ceiling. A response peak is a preparation snapshot,
+not process-exit RSS. There is no OS filesystem or network sandbox claim.
 
-## JPEG XL internal native profile
+Release builds compile desktop, CLI and helper together under the lockfile.
+Portable archives place helper and manifest beside the application. macOS nests
+them in `Contents/MacOS`; Linux packages use `usr/bin` and
+`usr/share/paintcraft`. MSI installs helper and manifest beside the desktop
+executable. Packagers reject missing, stale, wrong-target or mismatched embedded
+records without executing foreign binaries. macOS ad-hoc signing is reflected in
+the final manifest SHA; it is not Developer-ID signing or notarization.
 
-The same executable and supervisor now also handle an explicitly selected JPEG XL
-request. Shared `paintcraft_formats::codec_worker` protocol 2 uses `PCDEC002` /
-`PCPIX002` envelopes and binds the response codec to the captured request. Typed
-pixel payloads distinguish native HEIF gray/opacity from integer sRGB RGBA8;
-responses cannot relabel either model as the other. Parent output reservation
-covers four bytes per pixel plus bounded version/error framing for either codec.
-The embedded helper build record and packaging manifest also require protocol 2,
-so an earlier helper refuses the new package contract instead of being invoked.
+Schema 2 `qualified_import_variants` lists the three exact native variants above.
+Standalone copied executables and helper-free installs fail closed. Packages
+containing the helper include `JPEGXR_LICENSE.txt`, reproducing the selected
+JPEG XR dependency's actual required Microsoft notice rather than relying on its
+different Cargo license label.
 
-The pinned selected `jxl` 0.8.0 decoder is from
-[libjxl/jxl-rs](https://github.com/libjxl/jxl-rs), source revision
-`9a08ca643fd2d01f803dd0be6a5bebc9cc11e597` in its published VCS record,
-BSD-3-Clause. The existing adapter uses the upstream event API, Main5 profile,
-sample allowance, unpremultiplied output and our sequential task runner. Its
-`BasicInfo` event makes original color profile/depth/alpha metadata available;
-there is no custom allocator or comprehensive upstream scratch budget exposed.
-This internal stage relies on fixed-heap subprocess execution for hostile input;
-it does not establish a complete OS sandbox. ICC/header scratch may allocate **before** a subtype is refused.
-No subprocess or production thread spawn was found in the decoder source; its
-thread-scoped buffer splitter code is under the upstream test module. Its work
-runner is sequential here, separate from the one-thread HEIF Rayon pool.
+## Qualification
 
-The initial JXL worker profile accepts original-profile, identity-oriented,
-static integer RGB sRGB8 with optional straight alpha and no preview or discarded
-container metadata. ICC, linear/HDR, 16-bit/float, XYB requiring profile conversion,
-associated alpha, animation and non-alpha extra channels refuse before PaintCraft
-allocates output planes. Existing broader internal adapter behavior is unchanged.
-Native helper tests compare exact channels, hidden RGB and partial alpha against
-checked-in independent `cjxl` 0.12.0 fixtures, also covering one pixel, malformed
-inputs, explicit cross-codec rejection, limits, cancellation and deadlines.
+Owned HEIF fixtures use independent FFmpeg/libx265 encoding, exact FFmpeg and
+libheif native-plane readback, libheif container/alpha decoding, and an independent
+exact-rational RGB reference. The declared PaintCraft bilinear policy matches
+FFmpeg within 1 RGB code value; identity RGB and alpha are exact. libheif's 4:2:0
+RGB reconstruction differs substantially on these patterns, even with its forced
+bilinear option. Those original outputs remain negative evidence, not a widened
+rounding tolerance or universal application-parity claim. See the
+[HEIF color fixtures](../../crates/services/paintcraft-formats/tests/heif-color-fixtures/README.md).
+JPEG XL uses owned independent `cjxl` specimens; JPEG XR uses owned original C
+JXRLib encode/decode specimens. Actual copied-installation CLI/MCP and headless
+native UI tests exercise PCND reopening, loss consent, source aliases,
+cancellation, stale owners and helper failures. They do not replace real
+Windows/Linux installer/device checks, broad adversarial corpora or additional
+original-application/color/depth qualification.
 
-This is internal native qualification, not public JXL Open support. Browser
-WebWorker execution, installed-helper dispatch/integrity policy, broader adversarial
-corpora and platform qualification remain separate gates. Existing JXL exports
-retain their current qualified lossless writer subset.
-
-## Installed native dispatch qualification
-
-The native platform adapter now locates the helper only relative to the running
-application: adjacent executable/manifest for portable CLI, desktop and nested
-macOS editor bundles; Linux `bin` plus `share/paintcraft` manifest. It never searches
-PATH or accepts a format-selected executable. The host supplies the format contract,
-and the platform layer checks strict bounded manifest JSON, the released host
-environment/target declaration, executable OS/architecture headers, actual
-embedded build record, streaming SHA and retained file
-identities. It rechecks helper and manifest before returning a launch path and
-after the subprocess. These observed-byte consistency checks do not authenticate
-a publisher, lock writers, provide an atomic filesystem snapshot or eliminate the
-path-based spawn race. Installation files require the same trust as the app.
-
-The hidden developer `codec-inspect` CLI command is a real consumer of that
-verified path and the existing Executor/process supervisor. Use a complete
-packaged CLI installation, not a helper-free standalone executable:
+The hidden developer diagnostics remain separate from document admission:
 
 ```sh
 paintcraft-cli --json codec-inspect source.jxl --codec jxl
 paintcraft-cli --json codec-inspect source.heic --codec heif
+paintcraft-cli --json import source.heic --frontend studio --output converted.pcnd \
+    --allow-loss heif-color-reconstruction,heif-item-names-not-retained
 ```
 
-It admits fixed child heap, parent source/output and IO verification slack before
-capturing source bytes from the acquired descriptor. Concurrent cloned identities
-use positional reads. Source identity/hash and response owner/source/codec/version
-are checked before a bounded diagnostic is reported. Hashes and native gray/CICP
-metadata are returned without creating or saving a document or assigning HEIF an
-invented sRGB interpretation. Pixel/source/admission/deadline limits and source
-SHA expectations can reject the whole job; no partial result is reported.
-
-Tests copy the actual CLI/helper into private installation directories and run
-that copied CLI with independently encoded JXL/HEIF fixtures. They also reject
-missing/stale/changed helpers, inadequate admission, source SHA conflicts and pixel
-limits. Platform tests separately cover synthetic headers for all six release
-targets, symlink/FIFO rejection, file identity replacement, bounded records and
-concurrent same-descriptor captures. Workspace tests build the real helper;
-focused CLI installation tests require it to be built first.
-
-The CLI and MCP Studio explicit-import routes select the narrowly qualified
-`native-jxl-srgb8-worker-v1` profile. The hidden diagnostic composition can also
-write a new PCND copy:
-
-```sh
-paintcraft-cli --json codec-import source.jxl --output converted.pcnd
-```
-
-It accepts only the worker's metadata-free straight sRGB RGBA8 profile, preserving
-hidden RGB and alpha in one editable Image layer. Metadata, ICC, depth and other
-unqualified variants are refused rather than silently converted. Receipts mark
-the decoder profile, actual reader route and a new PCND copy. Normal CLI `import`
-and MCP `import_image` use the exact native variant; ordinary Open, Classic and
-browser reads remain denied. Desktop GUI adoption is qualified separately.
-
-For CLI conversion, the existing Executor reservation is retained by the prepared document through
-PCND staging, final source/owner checks, publication and document destruction.
-Its logical declaration includes the fixed decoder heap, captured source/output,
-up to 64MiB of padded tiles plus 17MiB of tile-index/writer slack and 1MiB of IO slack;
-this is not an allocation-enforced cap on the host/native writer or physical RSS.
-The guard rejects captured-source aliases, changed source content, foreign owners
-and helper failures. Installed-CLI tests verify the independent six-pixel oracle
-and preserve sources/existing destinations on refusal. MCP instead hands the
-validated document into its existing resident tile realm: tile-owned leases survive
-Session/history snapshots, while reaped-child and private-buffer preparation
-capacity is released at adoption. This is not filesystem, process-tree or physical
-RSS containment.
-
-Native
-transport BUILD_V3 / STDIN_PARENT_LEASE1 keeps the supervisor's sole stdin writer
-open after the exact bounded request; EOF, IO failure or an extra byte makes a
-separate helper watchdog exit without allocating (status76). The request reader
-releases its stdin lock before starting that watchdog. Shared binary protocol v2
-and browser transport are unchanged. Packaging checks this native build record
-and the matching parent-lease1 profile, rejecting old EOF-framed helper records.
-
-Actual parent-process kill tests on this macOS host observed the sleeping child
-close its inherited output after losing the pipe lease. The same test is portable
-to Windows/Unix but has not been executed on Windows here. This is a liveness
-mechanism, not a synchronous parent-death join or a descendant/job-object sandbox;
-forwarded or inherited writer handles would invalidate its sole-writer premise.
-While the parent is alive, supervisor cleanup kills/reaps then joins both pipe
-workers even if a check callback panics. Requested heap is not physical RSS or
-filesystem/process containment.
-
-## Private JPEG XR qualification
-
-The helper's native-only code 3 uses pinned `jpegxr-pure-rs` 0.1.0 inside the same
-256 MiB requested-heap and parent-lease process. It admits only the strict RGB8
-header profile, verifies all post-init precision/order/dimension declarations,
-and compares a parent-owned private `.jxr` backing file byte-for-byte with the
-captured request before opening the selected decoder. The helper has no shared-
-temp convenience decoder path. The parent owns the random private source until
-supervised child reap, then explicitly closes it; parent death can leave a temp
-orphan. No OS filesystem sandbox, Windows ACL parity or hard disk quota is claimed.
-
-The RGB color policy is T.832 Annex C.2's default for UINT RGB lacking all embedded
-color contexts; layout alone is not treated as a color declaration. Private CLI
-inspection reports that policy and exact source resolution bits. JXR public
-Open/import, browser decoding, fresh export, preserving Save and broader
-ICC/alpha/HDR profiles remain disabled. See the [independent qualification](../../crates/services/paintcraft-formats/tests/jxr-fixtures/README.md#private-native-worker-qualification-2026-10-26).
-
-The native build-record marker is now `BUILD_V3` and requires
-`JXR_PRIVATE_SOURCE1`; the binary transport remains protocol 2. Browser allowed
-codec codes stay unchanged. All native packages containing this helper also
-include `JPEGXR_LICENSE.txt`, reproducing the selected dependency's actual
-Microsoft notice rather than relying on its different Cargo license label.
+The `--codec heif` diagnostic deliberately remains native gray code 1. Color
+conversion is selected through the explicit import route, never by relabeling
+those gray diagnostic samples sRGB.
