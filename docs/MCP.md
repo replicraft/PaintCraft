@@ -39,6 +39,32 @@ Available tools:
 - `save_project`: save a layered PCND project.
 - `export_image`: export an image using its filename extension.
 - `export_icons`: export a fresh multi-size ICO/CUR asset set with explicit sizes, PNG/bitmap encodings and cursor hotspots.
+- `inspect_palette`: inspect an ASE palette resource without creating or editing a painting.
+- `export_palette`: write a fresh ASE palette copy while retaining groups, names, color models, swatch types and precise channel values.
+
+Palette tools work without an open document. They never edit the painting,
+history, dirty flag or project save binding. For example:
+
+```json
+{"name":"inspect_palette","arguments":{"path":"/absolute/path/colors.ase"}}
+{"name":"export_palette","arguments":{"input":"/absolute/path/colors.ase","path":"/absolute/path/copy.ase","overwrite":false}}
+```
+
+Use `expect_input_sha256` to require the exact source digest returned by
+inspection. Output must be a distinct `.ase` file; filesystem aliases of the
+palette and the painting's protected sources are refused. Inspection's
+`channels_f32_be` fields contain hexadecimal IEEE754 f32 bits, preserving the
+source values without RGB conversion. The equivalent CLI commands are:
+
+```sh
+paintcraft-cli palette inspect colors.ase --json
+paintcraft-cli palette export colors.ase -o copy.ase
+paintcraft-cli schema palette-inspection
+```
+
+ASE desktop/browser palette controls, CMYK/LAB display conversion and original
+Adobe application qualification remain separate work. Image Open/Import does
+not treat palette assets as pictures.
 
 For ICO/CUR import, provide a zero-based `entry` in `import_image`; no entry is
 selected automatically. For DCX, provide a zero-based `page` instead. The two

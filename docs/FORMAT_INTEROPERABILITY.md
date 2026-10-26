@@ -43,7 +43,8 @@ Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, 
 | PSD/PSB | Studio explicit Import on desktop/browser; CLI `import` and MCP `import_image` | RGB8 Normal raster-layer subset retains names, offsets, opacity, visibility and alpha. Metadata losses need explicit consent. Groups, masks, text, effects, clipping, high depth and foreign writing remain unavailable |
 | SVG/SVGZ | Studio desktop/browser Import; CLI `import` with `--svg-width`/`--svg-height`; MCP `import_image` with `svg` options | Explicit size/DPI/fitting and rasterization consent. Studio previews use bundled fonts; CLI/MCP also accept additional outline fonts. No Classic access, ordinary Open or SVG export |
 | EXR/HDR, JP2, MSP, ICNS | Not yet enabled | Registry inventory or work in progress is not usable format support |
-| ABR, ASE, CSH | Asset workflow policy only | Brush/palette/shape import/export implementations remain |
+| ASE | CLI `palette inspect` / `palette export`; MCP `inspect_palette` / `export_palette` | Flat groups, exact names/order/models/types and finite f32 values. Separate asset operations only; desktop/browser controls and Adobe application qualification remain |
+| ABR, CSH | Asset workflow policy only | Brush/shape import/export implementations remain |
 | RAW, PDF, KRA, XCF, animation, advanced DDS | Future profiles | No inherited Classic support or preserving-write claims |
 
 QOI, PAM and farbfeld writers admit at most 4,194,304 pixels and 64 MiB encoded output. Their bounded private output is discarded on failure or cancellation. These checks do not constitute a hard aggregate resident-memory or codec scratch-memory limit.
@@ -89,6 +90,37 @@ Fresh ICO/CUR export uses the selected `ico` container library with explicit RGB
 - Complete full browser/native reference and packaging matrices, worker failure and aggregate-memory accounting, and real-device cancellation/latency qualification.
 
 The implemented subsets advance the pack; they do not complete its full interoperability, preservation or release gates.
+
+### Adobe Swatch Exchange assets, 2026-10-25
+
+The selected `ag-psd` 0.3.0 now reads and writes bounded ASE 1.0 palette
+resources. A complete preflight verifies exact block extents, strict UTF-16
+names and terminators, known models/types and balanced flat groups before the
+upstream reader runs. Nested groups, unknown block data, suffixes and nonfinite
+channels are refused. Admission limits are 1 MiB encoded data, 8192 blocks,
+4096 swatches, 1024 groups, 1024 UTF-16 units per name and 256 KiB aggregate
+name data. Checks surround codec calls and run per resource item; they are not
+a hard upstream allocation or intra-call cancellation boundary.
+
+RGB, CMYK, Gray and LAB channels retain their finite f32 bits. This operation
+does not interpret profiles or convert colors to display RGB. Root/group order,
+duplicate names, empty groups, Global/Spot/Normal types, Japanese/non-BMP names
+and negative zero are covered by authored fixtures. An independent `swatch`
+0.4.0 parser verified all six mixed-fixture swatches and actual CLI export,
+including every channel bit. A separately `swatch`-written fixture is checked
+by the Rust decoder and writer. Provenance, commands and limits live in
+`crates/services/paintcraft-formats/tests/ase-fixtures/README.md`.
+
+CLI and MCP inspect typed resources and safely write fresh ASE copies with
+input SHA guards, source-alias protection and bounded staging. Resource
+inspection has a published `palette-inspection` schema. Real subprocess and
+MCP stdio tests cover destination refusal, malformed/oversized input, policy
+before acquisition and unchanged painting/history/dirty state. These commands
+do not create a document, adopt a project destination or acknowledge a painting
+as saved. Classic and all ordinary image/project Open, conversion and Save
+routes remain denied for ASE. Desktop/browser palette controls, original Adobe
+reopen evidence and workload benchmarks remain pending; this is a functional
+baseline, not complete F14 or release qualification.
 
 ### SVG/SVGZ rasterization, 2026-10-25
 
