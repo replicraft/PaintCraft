@@ -56,6 +56,7 @@ pub fn dialog(
             ui.label(&resource.name);
             egui::ScrollArea::vertical()
                 .id_salt("palette-resource-rows")
+                .auto_shrink([false, false])
                 .max_height((ctx.viewport_rect().height() - 280.0).clamp(90.0, 420.0))
                 .show_rows(ui, 48.0, resource.rows.len(), |ui, range| {
                     for index in range {
@@ -108,16 +109,14 @@ fn swatch_row(ui: &mut egui::Ui, swatch: &Swatch, enabled: bool) -> Option<[u8; 
             picked = swatch.rgba;
         }
         ui.vertical(|ui| {
-            ui.add(egui::Label::new(&title).truncate())
-                .on_hover_text(&title);
+            ui.add(egui::Label::new(&title).truncate());
             let detail = format!(
                 "{} · {} · {}",
                 swatch.model,
                 t!(ui.ctx(), swatch.kind),
                 swatch.components
             );
-            ui.add(egui::Label::new(egui::RichText::new(&detail).small()).truncate())
-                .on_hover_text(detail);
+            ui.add(egui::Label::new(egui::RichText::new(&detail).small()).truncate());
         });
     });
     picked
