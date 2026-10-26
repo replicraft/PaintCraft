@@ -495,3 +495,6 @@ fn installed_mcp_native_jxl_adoption_and_source_guards() {
 
 #[path = "installed_codec_worker/jxr.rs"]
 mod jxr;
+
+#[path = "installed_codec_worker/heif.rs"]
+mod heif;
