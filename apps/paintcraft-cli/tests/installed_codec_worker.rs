@@ -267,7 +267,7 @@ fn import(
     reply.status.code().unwrap()
 }
 #[test]
-fn installed_jxl_document_composition_preserves_exact_pixels_and_normal_registry_gate() {
+fn installed_jxl_document_composition_preserves_exact_pixels_and_scoped_import_gate() {
     let installation = Installation::new();
     let bytes =
         include_bytes!("../../../crates/services/paintcraft-formats/tests/jxl-fixtures/rgba8.jxl");
@@ -302,9 +302,10 @@ fn installed_jxl_document_composition_preserves_exact_pixels_and_normal_registry
             &denied,
             &["--frontend", "studio"]
         ),
-        3
+        0
     );
-    assert!(!denied.exists());
+    assert!(denied.exists());
+    fs::remove_file(&denied).unwrap();
     assert_eq!(
         import(
             &installation,

@@ -52,6 +52,40 @@ pub fn run(a: Options, json: bool) -> Reply {
                     }
                 }
             }
+            // A qualified variant does not turn on the generic family reader.
+            if a.frontend
+                .is_none_or(|profile| matches!(profile, super::format_profile::Profile::Studio))
+            {
+                use paintcraft_formats::{
+                    codec_worker,
+                    registry::{self, Family, Frontend, Operation, Platform, Request},
+                };
+                let mut request = Request::new(
+                    Frontend::Studio,
+                    Operation::ImportConvert,
+                    Family::Jxl,
+                    Platform::Native,
+                );
+                request.variant = Some(codec_worker::NATIVE_JXL_IMPORT_VARIANT);
+                if registry::admission(request).available() {
+                    let mut value = row(
+                        "jxl.rgba8.import",
+                        "frontend/studio",
+                        "import",
+                        "jxl-rs/native-worker",
+                    );
+                    if let Value::Object(fields) = &mut value {
+                        fields.insert(
+                            "variant".into(),
+                            Value::str(codec_worker::NATIVE_JXL_IMPORT_VARIANT),
+                        );
+                        fields.insert("platform".into(), Value::str("native"));
+                        fields.insert("installation_preflight_required".into(), Value::Bool(true));
+                        fields.insert("runtime_installation_verified".into(), Value::Bool(false));
+                    }
+                    frontend_rows.push(value);
+                }
+            }
             let mut rows = vec![
                 row(
                     "csh.shapes.read",

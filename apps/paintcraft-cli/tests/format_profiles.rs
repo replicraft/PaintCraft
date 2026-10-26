@@ -344,3 +344,36 @@ fn studio_specialist_exports_require_named_losses_and_refuse_classic_routes() {
     }
     fs::remove_dir_all(dir).unwrap();
 }
+
+#[test]
+fn capabilities_report_exact_native_jxl_variant_without_generic_read_claim() {
+    use paintcraft_core::types::json::Value;
+    for profile in ["studio", "classic-v7", "classic-v10", "classic-v11"] {
+        let output = run(&["--json", "capabilities", "--frontend", profile]);
+        assert!(output.status.success());
+        let value = json::parse(&output.stdout).unwrap();
+        let rows = value.get("capabilities").and_then(Value::as_array).unwrap();
+        let variants: Vec<_> = rows
+            .iter()
+            .filter(|row| {
+                row.get("variant").and_then(Value::as_str)
+                    == Some(paintcraft_formats::codec_worker::NATIVE_JXL_IMPORT_VARIANT)
+            })
+            .collect();
+        assert_eq!(variants.len(), usize::from(profile == "studio"));
+        if let Some(row) = variants.first() {
+            assert_eq!(row.get("operation").and_then(Value::as_str), Some("import"));
+            assert_eq!(row.get("platform").and_then(Value::as_str), Some("native"));
+            assert_eq!(
+                row.get("installation_preflight_required")
+                    .and_then(Value::as_bool),
+                Some(true)
+            );
+        }
+        assert!(
+            !rows
+                .iter()
+                .any(|row| row.get("capability").and_then(Value::as_str) == Some("jxl.rgba8.read"))
+        );
+    }
+}

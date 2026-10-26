@@ -301,6 +301,11 @@ pub fn admission(request: Request<'_>) -> Decision {
             return Decision::TemporarilyUnavailable(Reason::VariantUnqualified);
         }
     }
+    let native_jxl_import = request.family == Family::Jxl
+        && request.operation == Operation::ImportConvert
+        && request.frontend == Frontend::Studio
+        && request.platform == Platform::Native
+        && request.variant == Some(crate::codec_worker::NATIVE_JXL_IMPORT_VARIANT);
     let selected_page = request.family == Family::Dcx
         && request.operation == Operation::ImportConvert
         && request.variant == Some("dcx-selected-page");
@@ -342,6 +347,7 @@ pub fn admission(request: Request<'_>) -> Decision {
         && !selected_entry
         && !fresh_entry_set
         && !svg_rasterization
+        && !native_jxl_import
     {
         return Decision::TemporarilyUnavailable(Reason::VariantUnqualified);
     }
@@ -357,7 +363,7 @@ pub fn admission(request: Request<'_>) -> Decision {
     if !capability.backend_available || !request.backend_available {
         return Decision::TemporarilyUnavailable(Reason::BackendUnavailable);
     }
-    if !capability.qualified {
+    if !capability.qualified && !native_jxl_import {
         return Decision::TemporarilyUnavailable(Reason::VariantUnqualified);
     }
     if request.needs_preflight

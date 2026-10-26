@@ -77,6 +77,7 @@ impl Options {
             Family::Jxl,
             Platform::Native,
         );
+        request.variant = Some(paintcraft_formats::codec_worker::NATIVE_JXL_IMPORT_VARIANT);
         request.extension = path.extension().and_then(|value| value.to_str());
         let decision = registry::admission(request);
         if decision.available() {

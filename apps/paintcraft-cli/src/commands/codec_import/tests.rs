@@ -65,7 +65,11 @@ fn prepared_document_retains_charge_across_executor_drop_and_staged_publication(
     };
     let mut foreign = owner;
     foreign.epoch += 1;
-    assert!(prepared.save(&output, || Ok(foreign)).is_err());
+    assert!(
+        prepared
+            .save(&output, || Ok(foreign), "internal-qualification")
+            .is_err()
+    );
     assert!(!output.output.exists());
     assert!(
         prepared
@@ -74,7 +78,8 @@ fn prepared_document_retains_charge_across_executor_drop_and_staged_publication(
                     output: input.clone(),
                     overwrite: true
                 },
-                || Ok(owner)
+                || Ok(owner),
+                "internal-qualification"
             )
             .is_err()
     );
@@ -85,11 +90,15 @@ fn prepared_document_retains_charge_across_executor_drop_and_staged_publication(
         overwrite: false,
     };
     let failed = prepared
-        .save(&staged, || {
-            let count = queries.get();
-            queries.set(count + 1);
-            Ok(if count == 0 { owner } else { foreign })
-        })
+        .save(
+            &staged,
+            || {
+                let count = queries.get();
+                queries.set(count + 1);
+                Ok(if count == 0 { owner } else { foreign })
+            },
+            "internal-qualification",
+        )
         .unwrap();
     assert!(!failed.ok);
     assert!(!staged.output.exists());
@@ -102,25 +111,28 @@ fn prepared_document_retains_charge_across_executor_drop_and_staged_publication(
                     output: alias.clone(),
                     overwrite: true
                 },
-                || Ok(owner)
+                || Ok(owner),
+                "internal-qualification"
             )
             .is_err()
     );
     assert_eq!(fs::read(alias).unwrap(), b"source");
-    let written = prepared.save(&output, || Ok(owner)).unwrap();
+    let written = prepared
+        .save(&output, || Ok(owner), "internal-qualification")
+        .unwrap();
     assert!(written.ok);
     let engine = written.engine.as_ref().unwrap();
     assert_eq!(
-        engine.get("qualification").and_then(Value::as_str),
-        Some("internal-native-only")
+        engine.get("decoder_profile").and_then(Value::as_str),
+        Some(wire::NATIVE_JXL_IMPORT_VARIANT)
     );
     assert_eq!(
         engine.get("conversion").and_then(Value::as_str),
         Some("new-pcnd-copy")
     );
     assert_eq!(
-        engine.get("public_reader_enabled").and_then(Value::as_bool),
-        Some(false)
+        engine.get("reader_route").and_then(Value::as_str),
+        Some("internal-qualification")
     );
     let document = pcnd::read(&fs::read(&output.output).unwrap()).unwrap();
     assert_eq!(document.canvas, (1, 1));
@@ -134,7 +146,8 @@ fn prepared_document_retains_charge_across_executor_drop_and_staged_publication(
                     output: root.join("changed.pcnd"),
                     overwrite: false
                 },
-                || Ok(owner)
+                || Ok(owner),
+                "internal-qualification"
             )
             .is_err()
     );

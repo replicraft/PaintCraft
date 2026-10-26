@@ -61,6 +61,7 @@ impl Prepared {
         &self,
         output: &Output,
         current_owner: impl Fn() -> Result<wire::Owner>,
+        reader_route: &str,
     ) -> Result<Written> {
         self.check(&output.output, current_owner()?)?;
         let check = || self.check_owner(current_owner()?);
@@ -84,9 +85,12 @@ impl Prepared {
         let (receipt, ok, summary) = finish_output(&output.output, &ctx, outcome);
         Ok(Written {
             engine: Some(Value::object([
-                ("qualification", Value::str("internal-native-only")),
+                (
+                    "decoder_profile",
+                    Value::str(wire::NATIVE_JXL_IMPORT_VARIANT),
+                ),
                 ("conversion", Value::str("new-pcnd-copy")),
-                ("public_reader_enabled", Value::Bool(false)),
+                ("reader_route", Value::str(reader_route)),
                 ("discarded_metadata", Value::Bool(false)),
             ])),
             receipt,
@@ -158,7 +162,12 @@ fn prepare(
         },
     )
 }
-fn convert(input: &Path, output: &Output, expected: Option<String>) -> Result<Written> {
+fn convert(
+    input: &Path,
+    output: &Output,
+    expected: Option<String>,
+    reader_route: &str,
+) -> Result<Written> {
     if same_file(input, &output.output) {
         return Err(Error::new(
             ErrorCode::InputSchema,
@@ -201,7 +210,7 @@ fn convert(input: &Path, output: &Output, expected: Option<String>) -> Result<Wr
     };
     // The prepared result owns the original runtime reservation through all
     // encoding, source/owner checks, staged publication, and document destruction.
-    prepared.save(output, || Ok(owner))
+    prepared.save(output, || Ok(owner), reader_route)
 }
 /// Normal import has no bypass: deny unavailable/profile-incompatible reads
 /// before opening source bytes or starting a helper. Registry remains unchanged.
@@ -211,7 +220,7 @@ pub(super) fn qualified(
     profile: &super::format_profile::Options,
 ) -> Result<Written> {
     profile.admit_import_jxl_path(input)?;
-    convert(input, output, None)
+    convert(input, output, None, "native-studio-import")
 }
 /// Explicit hidden developer qualification, not a stock import/open capability.
 pub fn run(options: Options, json: bool) -> Reply {
@@ -227,7 +236,12 @@ pub fn run(options: Options, json: bool) -> Reply {
                     "Internal codec import qualification is Studio-only",
                 ));
             }
-            convert(&options.input, &options.output, options.expect_input_sha256)
+            convert(
+                &options.input,
+                &options.output,
+                options.expect_input_sha256,
+                "internal-qualification",
+            )
         })(),
     )
 }
