@@ -51,6 +51,10 @@ XML and `System.Version`; this does not claim Paint.NET produced the files.
 Generated pixels/names/records and the qualification harness are covered by the
 repository license. No upstream source is vendored for this qualification.
 
+Ordinary CI re-encodes these one/two/64-layer models and checks exact equality
+with the immutable independently verified files. Only optional file writing is
+environment-gated; it still uses `create_new` and never overwrites proof.
+
 The typed writer requires explicit full-canvas straight RGBA8 layers, bottom to
 top, Normal blend, names, visibility, 8-bit opacity and background-role flags.
 It never infers the background role, pads, clips, resizes or flattens. Document

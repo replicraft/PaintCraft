@@ -229,12 +229,11 @@ fn every_cancellation_checkpoint_and_failed_staged_sink_discard_private_output()
 }
 #[test]
 fn export_owned_qualification_vectors_only_when_requested() {
-    let Some(folder) = std::env::var_os("PAINTCRAFT_PDN_WRITER_OUTPUT") else {
-        return;
-    };
-    let folder = std::path::PathBuf::from(folder);
-    assert!(folder.is_dir());
-    assert_eq!(std::fs::read_dir(&folder).unwrap().count(), 0);
+    let folder = std::env::var_os("PAINTCRAFT_PDN_WRITER_OUTPUT").map(std::path::PathBuf::from);
+    if let Some(folder) = &folder {
+        assert!(folder.is_dir());
+        assert_eq!(std::fs::read_dir(folder).unwrap().count(), 0);
+    }
     for count in [1usize, 2, 64] {
         let pixels: Vec<Vec<u8>> = (0..count)
             .map(|layer| (0..24).map(|i| (i * 37 + layer * 53) as u8).collect())
@@ -260,12 +259,24 @@ fn export_owned_qualification_vectors_only_when_requested() {
             metadata: &[],
         };
         let bytes = pdn::encode_document(&doc, &WriteLimits::default(), &|| Ok(())).unwrap();
-        let mut file = std::fs::OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(folder.join(format!("layers-{count}.pdn")))
-            .unwrap();
-        file.write_all(&bytes).unwrap();
+        let qualified: &[u8] = match count {
+            1 => include_bytes!("fixtures/writer/layers-1.pdn"),
+            2 => include_bytes!("fixtures/writer/layers-2.pdn"),
+            64 => include_bytes!("fixtures/writer/layers-64.pdn"),
+            _ => unreachable!(),
+        };
+        assert!(
+            bytes.as_slice() == qualified,
+            "qualified {count}-layer byte drift"
+        );
+        if let Some(folder) = &folder {
+            let mut file = std::fs::OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(folder.join(format!("layers-{count}.pdn")))
+                .unwrap();
+            file.write_all(&bytes).unwrap();
+        }
     }
 }
 #[test]
