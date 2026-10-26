@@ -4,10 +4,12 @@
 //! kill/reap supervisor. This module never launches arbitrary PATH-selected code.
 mod float;
 mod import;
+mod jxr_encode;
 mod launch;
 use super::*;
 pub use float::{float_max_resident_bytes, float_reservation_bytes, float_resident_bytes};
 pub use import::{AdoptedImport, PreparedImport};
+pub use jxr_encode::{JxrEncodeJob, JxrEncodeLaunch, PreparedJxrEncode};
 pub use launch::Launch;
 use paintcraft_core::types::policy::hex;
 use paintcraft_platform::{codec_helper, source::SourceIdentity};

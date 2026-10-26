@@ -35,6 +35,9 @@ mod tests {
         assert!(record.starts_with(BUILD_RECORD_MARKER));
         assert_eq!(record, BUILD_RECORD);
         assert!(record.len() <= 512);
+        let maximum_version = build_record(&"v".repeat(64)).unwrap();
+        assert_eq!(maximum_version.len(), 412);
+        assert!(maximum_version.len() <= 512);
         assert_eq!(
             IMPORT_VARIANTS,
             super::super::super::QUALIFIED_FLOAT_IMPORT_VARIANTS
