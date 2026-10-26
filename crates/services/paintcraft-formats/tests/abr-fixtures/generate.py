@@ -65,6 +65,42 @@ def sample(identifier, depth, compressed, values, minor):
     return struct.pack(">I", len(body)) + body + b"\0" * (-len(body) % 4)
 
 
+def native_presets():
+    def brush(name, changes=(), extra=(), sample_id="raw-8"):
+        fields = {name: (name, kind, value) for name, kind, value in [
+            unit("Dmtr", "#Pxl", 3), unit("Angl", "#Ang", 0),
+            unit("Rndn", "#Prc", 100), unit("Spcn", "#Prc", 100),
+            ("Intr", "bool", b"\1"), ("sampledData", "TEXT", text(sample_id))]}
+        fields.update({name: (name, kind, value) for name, kind, value in changes})
+        return b"Objc" + descriptor("brush", [("Nm  ", "TEXT", text(name)),
+            ("Brsh", "Objc", descriptor("sampledBrush", list(fields.values()))),
+            unit("Spcn", "#Prc", 100), ("useBrushSize", "bool", b"\1"), *extra])
+    dynamics = descriptor("brVr", [("bVTy", "long", struct.pack(">i", 2)),
+        ("fStp", "long", struct.pack(">i", 25)), unit("jitter", "#Prc", 0),
+        unit("Mnm ", "#Prc", 0)])
+    presets = [brush("Native exact"), brush("Q8 spacing", [unit("Spcn", "#Prc", 10)]),
+        brush("High depth", sample_id="raw-16"), brush("Missing", sample_id="absent"),
+        brush("Size override", [unit("Dmtr", "#Pxl", 6)]),
+        brush("Rotation", [unit("Angl", "#Ang", 15)]),
+        brush("Roundness", [unit("Rndn", "#Prc", 80)]),
+        brush("Flip", [("flipX", "bool", b"\1")]),
+        brush("No spacing", [("Intr", "bool", b"\0")]),
+        brush("Wet", extra=[("Wtdg", "bool", b"\1")]),
+        brush("Noise", extra=[("Nose", "bool", b"\1")]),
+        brush("Texture flag without descriptor", extra=[("useTexture", "bool", b"\1")]),
+        brush("Future", extra=[("futureOwnedField", "bool", b"\1")]),
+        brush("Pressure", extra=[("useTipDynamics", "bool", b"\1"),
+            ("szVr", "Objc", dynamics), ("angleDynamics", "Objc", dynamics),
+            ("roundnessDynamics", "Objc", dynamics), unit("tiltScale", "#Prc", 0),
+            unit("minimumDiameter", "#Prc", 0), unit("minimumRoundness", "#Prc", 0)]),
+        brush("Empty native", sample_id="empty-8")]
+    desc = struct.pack(">I", 16) + descriptor("null", [("Brsh", "VlLs", struct.pack(">I", len(presets)) + b"".join(presets))])
+    samples = sample("raw-8", 8, 0, [0, 1, 127, 128, 254, 255], 1)
+    samples += sample("raw-16", 16, 0, [0, 1, 255, 256, 32769, 65535], 1)
+    samples += sample("empty-8", 8, 0, [0] * 6, 1)
+    return struct.pack(">HH", 6, 1) + section("samp", samples) + section("desc", desc)
+
+
 def main():
     brushes = [preset("computedBrush", "Owned computed 🚀", [unit("Hrdn", "#Prc", 60)]),
                preset("sampledBrush", "Owned sampled", [("sampledData", "TEXT", text("raw-8")),
@@ -77,6 +113,7 @@ def main():
                 + sample("raw-16", 16, 0, [0, 1, 255, 256, 32769, 65535], 1)) + section("desc", desc) + section("phry", hierarchy),
         "samples-v10.abr": struct.pack(">HH", 10, 2) + section("samp", sample("raw-8", 8, 0, [0, 1, 127, 128, 254, 255], 2)),
         "empty.abr": struct.pack(">HH", 6, 1),
+        "native-presets.abr": native_presets(),
     }
     for major, minor in [(6, 1), (10, 2)]:
         files[f"rle16-v{major}.abr"] = struct.pack(">HH", major, minor) + section("samp", sample("rle-16", 16, 1,

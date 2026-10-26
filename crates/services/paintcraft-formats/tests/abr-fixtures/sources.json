@@ -14,6 +14,10 @@
             "bytes": 4,
             "sha256": "7ed8f861286320c196afbb4f31d9efb6f4bd3a9f8d79513faa0df6b74820e041"
         },
+        "native-presets.abr": {
+            "bytes": 5104,
+            "sha256": "94fd194fa0c253d66107b7701b15203188b6324e2b8080587b15ac0c1262962f"
+        },
         "rle16-v6.abr": {
             "bytes": 1012,
             "sha256": "ad402be35bc9a5366c3a83898eaef7c9e3f319dc986f08a8027553ff27fa5aa9"

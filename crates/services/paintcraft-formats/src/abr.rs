@@ -3,6 +3,7 @@
 //! Complete structural admission precedes the selected ag-psd reader. Original
 //! section bytes and full-precision sample masks remain available even where
 //! its convenience brush model omits descriptor fields or narrows alpha.
+pub mod adoption;
 mod descriptor;
 mod normalize;
 mod pattern;
