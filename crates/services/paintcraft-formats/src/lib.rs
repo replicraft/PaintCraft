@@ -25,3 +25,5 @@ pub mod save_recovery;
 pub mod svg;
 #[cfg(not(target_arch = "wasm32"))]
 pub use paintcraft_platform::save;
+
+pub mod heif;
