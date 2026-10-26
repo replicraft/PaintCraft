@@ -6,6 +6,20 @@ portable archive and complete-release checks used by
 PaintCraft retains GPU rendering in every desktop build. It uses the locked Cargo
 dependencies and Rust 1.99.0 from `rust-toolchain.toml`.
 
+Native release builds explicitly enable `paintcraft-codec-worker/avif-codec`.
+The pinned dav1d source is built statically with Meson 1.12.1 and Ninja 1.13.2;
+no installed decoder library is used. Windows builds select the native MSVC
+compiler and static C runtime. Each runner executes actual helper and installed
+CLI/MCP tests before packaging. These workflow changes still require execution
+on all six targets; local Apple-silicon checks do not qualify the other targets.
+
+Packaging reads the helper's embedded build record without executing it, then
+writes an exact manifest for either V4 or AVIF-enabled V5. It refuses mixed,
+stale or malformed records. Desktop and CLI packages include the helper,
+manifest, `JPEGXR_LICENSE.txt` and `DAV1D_LICENSE.txt`. Portable archives keep
+these beside the executable. Linux system packages place notices under
+`/usr/share/licenses/paintcraft` and the manifest under `/usr/share/paintcraft`.
+
 ## Downloads
 
 Names start with `paintcraft-<version>-`. For version 0.1.0:
@@ -145,11 +159,16 @@ sha256sum --check SHA256SUMS.txt
 
 ### Headless CLI distribution
 
-Each of the seven native targets also produces a separate `paintcraft-cli-<version>-<platform>.zip`
-(Windows) or `.tar.gz` (macOS, Linux). These archives contain the CLI and license,
+Each of the six native targets also produces a separate `paintcraft-cli-<version>-<platform>.zip`
+(Windows) or `.tar.gz` (macOS, Linux). These archives contain the CLI, its helper,
+manifest and licenses,
 and their hashes are included in `SHA256SUMS.txt`. They are separate from desktop installers.
-Extract the binary into a directory on your PATH; the Unix archives preserve executable permissions.
+Extract all archive files together into a directory on your PATH, keeping the
+helper, manifest and notices beside the CLI. The Unix archives preserve executable permissions.
 
 To build and install from a checkout, use `sh scripts/packaging/install_cli.sh` on Unix or
 `./scripts/packaging/install_cli.ps1` on Windows. These scripts require Rust and forward Cargo
 install arguments, for example `--root /your/install/prefix`. They do not download or install Rust.
+These source-install scripts install only the CLI. Qualified native codec imports
+also require the verified helper and manifest supplied in release archives;
+installing a sibling executable alone does not establish a valid installation.
