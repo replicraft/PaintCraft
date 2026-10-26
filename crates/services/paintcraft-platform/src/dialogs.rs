@@ -23,6 +23,8 @@ pub enum Kind {
     SaveAs,
     Export,
     ExportIcons,
+    ImportPalette,
+    ExportPalette,
 }
 #[derive(Debug)]
 pub struct Completion {
@@ -97,6 +99,10 @@ impl NativeDialogs {
                 name: "Icon and cursor export".into(),
                 extensions: vec!["ico".into(), "cur".into()],
             }],
+            Kind::ImportPalette | Kind::ExportPalette => vec![Filter {
+                name: "Adobe Swatch Exchange palette".into(),
+                extensions: vec!["ase".into()],
+            }],
         };
         self.request_with_filters(kind, suggested, &filters, label, wake);
     }
@@ -154,6 +160,8 @@ impl NativeDialogs {
             Kind::SaveAs => dialog.set_title(label("Save PaintCraft document")),
             Kind::Export => dialog.set_title(label("Export image")),
             Kind::ExportIcons => dialog.set_title(label("Icon and cursor export")),
+            Kind::ImportPalette => dialog.set_title(label("Import palette")),
+            Kind::ExportPalette => dialog.set_title(label("Export palette")),
         };
         for filter in filters {
             dialog = dialog.add_filter(label(&filter.name), &filter.extensions);
@@ -162,7 +170,10 @@ impl NativeDialogs {
         let sender = self.sender.clone();
         std::thread::spawn(move || {
             let file = pollster::block_on(async {
-                if matches!(kind, Kind::Open | Kind::Import | Kind::InspectRecovery) {
+                if matches!(
+                    kind,
+                    Kind::Open | Kind::Import | Kind::InspectRecovery | Kind::ImportPalette
+                ) {
                     dialog.pick_file().await
                 } else {
                     dialog.save_file().await
@@ -171,7 +182,10 @@ impl NativeDialogs {
             let mut path = file.map(|f| f.path().to_path_buf());
             if let Some(path) = &mut path
                 && path.extension().is_none()
-                && !matches!(kind, Kind::Open | Kind::Import | Kind::InspectRecovery)
+                && !matches!(
+                    kind,
+                    Kind::Open | Kind::Import | Kind::InspectRecovery | Kind::ImportPalette
+                )
             {
                 path.set_extension(fallback_extension);
             }

@@ -484,3 +484,26 @@ impl WorkspaceDocuments {
         app.reset_tab_presentation();
     }
 }
+
+impl App {
+    /// Resource export must not replace a source parked in another tab/frontend.
+    pub(super) fn protected_source_paths(&self) -> Vec<&Path> {
+        fn add<'a>(state: &'a DocumentState, sources: &mut Vec<&'a Path>) {
+            sources.extend(state.bound.as_deref());
+            sources.extend(state.imported_source.as_deref());
+        }
+        let mut sources = Vec::new();
+        sources.extend(self.bound.as_deref());
+        sources.extend(self.imported_source.as_deref());
+        for state in self.tabs.iter().filter_map(|tab| tab.state.as_ref()) {
+            add(state, &mut sources);
+        }
+        if let Some(workspace) = &self.other_workspace {
+            add(&workspace.active, &mut sources);
+            for state in workspace.tabs.iter().filter_map(|tab| tab.state.as_ref()) {
+                add(state, &mut sources);
+            }
+        }
+        sources
+    }
+}

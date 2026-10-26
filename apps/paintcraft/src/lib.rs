@@ -47,6 +47,8 @@ mod layers;
 #[cfg(target_os = "macos")]
 #[path = "app/native_menu.rs"]
 mod native_menu;
+#[path = "app/palettes.rs"]
+mod palettes;
 #[path = "app/pan_tool.rs"]
 mod pan_tool;
 #[path = "app/paste.rs"]
@@ -159,6 +161,7 @@ enum Confirm {
     RecentFiles,
     ExportOptions(export_options::Draft),
     IconExport,
+    Palettes,
     LayerProperties(layers::PropertiesDraft),
     DiscardForNew,
     DiscardForOpen(PathBuf),
@@ -238,6 +241,7 @@ pub struct App {
     pending_import: Option<importing::Pending>,
     imported_source: Option<PathBuf>,
     icon_export: Option<icon_export::State>,
+    palettes: palettes::State,
     dialog_owner: Option<Uuid>,
     dialog_frontend: Option<paintcraft_formats::registry::Frontend>,
     dialog_source: Option<(Arc<paintcraft_document::Document>, (Uuid, u64))>,
@@ -374,6 +378,7 @@ impl App {
             pending_import: None,
             imported_source: None,
             icon_export: None,
+            palettes: Default::default(),
             dialog_owner: None,
             dialog_frontend: None,
             dialog_source: None,
