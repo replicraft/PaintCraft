@@ -135,3 +135,47 @@ font-changes-need-a-new-preview-and-approval-other-external-files-stay-blocked =
 loading-fonts-more = Carregando fontes…
 
 format-could-not-add-font-files-detail = Não foi possível adicionar os arquivos de fonte: { $detail }
+
+brush-resources = Recursos de pincéis
+
+brush-resources-more = Recursos de pincéis…
+
+import-brushes = Importar pincéis
+
+import-brushes-more = Importar pincéis…
+
+adobe-brushes = Pincéis Adobe
+
+import-adobe-brushes-and-choose-a-supported-static-tip-your-painting-changes-only-when-you-draw = Importe pincéis Adobe e escolha uma ponta estática compatível. A pintura só muda quando você desenha.
+
+format-selected-brush-name = Pincel selecionado: { $name }
+
+format-tip-size-width-height-px = Tamanho da ponta: { $width } × { $height } px
+
+static-tips-paint-at-their-original-size-brush-size-and-photoshop-dynamics-are-not-applied = Pontas estáticas pintam no tamanho original. O tamanho do pincel e a dinâmica do Photoshop não são aplicados.
+
+i-accept-the-small-change-to-brush-spacing = Aceito a pequena alteração no espaçamento do pincel.
+
+use-this-brush = Usar este pincel
+
+this-preset-cannot-be-used-as-a-static-brush = Esta predefinição não pode ser usada como pincel estático.
+
+use-standard-brushes = Usar pincéis padrão
+
+format-could-not-import-brushes-detail = Não foi possível importar os pincéis: { $detail }
+
+format-could-not-use-this-brush-detail = Não foi possível usar este pincel: { $detail }
+
+an-unambiguous-sampled-tip-is-required = É necessária uma ponta amostrada identificada sem ambiguidade.
+
+this-tip-uses-unsupported-mask-precision = Esta ponta usa uma precisão de máscara incompatível.
+
+this-preset-transforms-the-original-tip = Esta predefinição transforma a ponta original.
+
+this-preset-uses-unsupported-spacing = Esta predefinição usa espaçamento incompatível.
+
+this-preset-includes-unsupported-brush-behavior = Esta predefinição inclui comportamento de pincel incompatível.
+
+sampled-brush-stroke-cancelled-point-or-coordinate-limit-exceeded = Traço cancelado: limite de pontos ou coordenadas excedido.
+
+sampled-brush-stroke-exceeds-the-browser-work-limit-use-shorter-strokes-or-a-smaller-original-tip = O traço excede o limite de processamento do navegador. Use traços mais curtos ou uma ponta de tamanho original menor.

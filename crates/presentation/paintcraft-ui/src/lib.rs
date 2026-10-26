@@ -1,5 +1,6 @@
 //! Shared application widgets, view mapping and exactly-once action delivery.
 pub mod actions;
+pub mod brush_resources;
 pub mod chrome;
 pub mod confirmation;
 pub mod entry_import;

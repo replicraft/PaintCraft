@@ -135,3 +135,47 @@ font-changes-need-a-new-preview-and-approval-other-external-files-stay-blocked =
 loading-fonts-more = フォントを読み込み中…
 
 format-could-not-add-font-files-detail = フォントファイルを追加できませんでした: { $detail }
+
+brush-resources = ブラシ素材
+
+brush-resources-more = ブラシ素材…
+
+import-brushes = ブラシを読み込む
+
+import-brushes-more = ブラシを読み込む…
+
+adobe-brushes = Adobe ブラシ
+
+import-adobe-brushes-and-choose-a-supported-static-tip-your-painting-changes-only-when-you-draw = Adobe ブラシを読み込み、対応する静的ブラシ先端を選びます。描画するまで画像は変更されません。
+
+format-selected-brush-name = 選択中のブラシ: { $name }
+
+format-tip-size-width-height-px = 先端サイズ: { $width } × { $height } px
+
+static-tips-paint-at-their-original-size-brush-size-and-photoshop-dynamics-are-not-applied = 静的ブラシ先端は元のサイズで描画されます。ブラシサイズや Photoshop の動的効果は適用されません。
+
+i-accept-the-small-change-to-brush-spacing = ブラシ間隔のわずかな変更に同意します。
+
+use-this-brush = このブラシを使う
+
+this-preset-cannot-be-used-as-a-static-brush = このプリセットは静的ブラシとして使用できません。
+
+use-standard-brushes = 標準ブラシを使う
+
+format-could-not-import-brushes-detail = ブラシを読み込めませんでした: { $detail }
+
+format-could-not-use-this-brush-detail = このブラシを使用できませんでした: { $detail }
+
+an-unambiguous-sampled-tip-is-required = 一意に識別できるサンプル先端が必要です。
+
+this-tip-uses-unsupported-mask-precision = この先端のマスク精度には対応していません。
+
+this-preset-transforms-the-original-tip = このプリセットは元の先端を変形します。
+
+this-preset-uses-unsupported-spacing = このプリセットの間隔には対応していません。
+
+this-preset-includes-unsupported-brush-behavior = このプリセットには未対応のブラシ動作が含まれます。
+
+sampled-brush-stroke-cancelled-point-or-coordinate-limit-exceeded = サンプルブラシの描画を中止しました。点数または座標の上限を超えました。
+
+sampled-brush-stroke-exceeds-the-browser-work-limit-use-shorter-strokes-or-a-smaller-original-tip = サンプルブラシの描画がブラウザーの処理上限を超えました。短い線か、元のサイズが小さい先端を使用してください。

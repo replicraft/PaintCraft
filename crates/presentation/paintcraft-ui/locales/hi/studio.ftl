@@ -135,3 +135,47 @@ font-changes-need-a-new-preview-and-approval-other-external-files-stay-blocked =
 loading-fonts-more = फ़ॉन्ट लोड हो रहे हैं…
 
 format-could-not-add-font-files-detail = फ़ॉन्ट फ़ाइलें नहीं जोड़ी जा सकीं: { $detail }
+
+brush-resources = ब्रश संसाधन
+
+brush-resources-more = ब्रश संसाधन…
+
+import-brushes = ब्रश आयात करें
+
+import-brushes-more = ब्रश आयात करें…
+
+adobe-brushes = Adobe ब्रश
+
+import-adobe-brushes-and-choose-a-supported-static-tip-your-painting-changes-only-when-you-draw = Adobe ब्रश आयात करें और समर्थित स्थिर नोक चुनें। चित्र केवल आपके बनाने पर बदलता है।
+
+format-selected-brush-name = चुना गया ब्रश: { $name }
+
+format-tip-size-width-height-px = नोक का आकार: { $width } × { $height } px
+
+static-tips-paint-at-their-original-size-brush-size-and-photoshop-dynamics-are-not-applied = स्थिर नोक मूल आकार में चित्र बनाती है। ब्रश का आकार और Photoshop की गतिशील सेटिंग लागू नहीं होतीं।
+
+i-accept-the-small-change-to-brush-spacing = मैं ब्रश अंतराल के छोटे बदलाव को स्वीकार करता हूँ।
+
+use-this-brush = इस ब्रश का उपयोग करें
+
+this-preset-cannot-be-used-as-a-static-brush = यह प्रीसेट स्थिर ब्रश के रूप में उपयोग नहीं किया जा सकता।
+
+use-standard-brushes = मानक ब्रश का उपयोग करें
+
+format-could-not-import-brushes-detail = ब्रश आयात नहीं हो सके: { $detail }
+
+format-could-not-use-this-brush-detail = यह ब्रश उपयोग नहीं हो सका: { $detail }
+
+an-unambiguous-sampled-tip-is-required = स्पष्ट रूप से पहचानी गई नमूना नोक आवश्यक है।
+
+this-tip-uses-unsupported-mask-precision = यह नोक असमर्थित मास्क परिशुद्धता उपयोग करती है।
+
+this-preset-transforms-the-original-tip = यह प्रीसेट मूल नोक को बदलता है।
+
+this-preset-uses-unsupported-spacing = यह प्रीसेट असमर्थित अंतराल उपयोग करता है।
+
+this-preset-includes-unsupported-brush-behavior = इस प्रीसेट में असमर्थित ब्रश व्यवहार है।
+
+sampled-brush-stroke-cancelled-point-or-coordinate-limit-exceeded = नमूना ब्रश स्ट्रोक रद्द: बिंदु या निर्देशांक सीमा पार हुई।
+
+sampled-brush-stroke-exceeds-the-browser-work-limit-use-shorter-strokes-or-a-smaller-original-tip = नमूना ब्रश स्ट्रोक ब्राउज़र की कार्य सीमा पार करता है। छोटे स्ट्रोक या छोटे मूल आकार की नोक उपयोग करें।

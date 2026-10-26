@@ -135,3 +135,47 @@ font-changes-need-a-new-preview-and-approval-other-external-files-stay-blocked =
 loading-fonts-more = 正在加载字体…
 
 format-could-not-add-font-files-detail = 无法添加字体文件：{ $detail }
+
+brush-resources = 画笔资源
+
+brush-resources-more = 画笔资源…
+
+import-brushes = 导入画笔
+
+import-brushes-more = 导入画笔…
+
+adobe-brushes = Adobe 画笔
+
+import-adobe-brushes-and-choose-a-supported-static-tip-your-painting-changes-only-when-you-draw = 导入 Adobe 画笔并选择受支持的静态笔尖。只有绘画时才会更改图像。
+
+format-selected-brush-name = 所选画笔：{ $name }
+
+format-tip-size-width-height-px = 笔尖大小：{ $width } × { $height } 像素
+
+static-tips-paint-at-their-original-size-brush-size-and-photoshop-dynamics-are-not-applied = 静态笔尖以原始大小绘画，不应用画笔大小或 Photoshop 动态效果。
+
+i-accept-the-small-change-to-brush-spacing = 我接受画笔间距的细微变化。
+
+use-this-brush = 使用此画笔
+
+this-preset-cannot-be-used-as-a-static-brush = 此预设不能用作静态画笔。
+
+use-standard-brushes = 使用标准画笔
+
+format-could-not-import-brushes-detail = 无法导入画笔：{ $detail }
+
+format-could-not-use-this-brush-detail = 无法使用此画笔：{ $detail }
+
+an-unambiguous-sampled-tip-is-required = 需要能够唯一识别的采样笔尖。
+
+this-tip-uses-unsupported-mask-precision = 此笔尖使用不支持的蒙版精度。
+
+this-preset-transforms-the-original-tip = 此预设会变换原始笔尖。
+
+this-preset-uses-unsupported-spacing = 此预设使用不支持的间距。
+
+this-preset-includes-unsupported-brush-behavior = 此预设包含不支持的画笔行为。
+
+sampled-brush-stroke-cancelled-point-or-coordinate-limit-exceeded = 采样画笔笔划已取消：超出点数或坐标限制。
+
+sampled-brush-stroke-exceeds-the-browser-work-limit-use-shorter-strokes-or-a-smaller-original-tip = 采样画笔笔划超出浏览器处理限制。请使用更短的笔划或原始尺寸更小的笔尖。

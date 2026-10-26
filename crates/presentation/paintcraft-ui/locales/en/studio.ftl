@@ -135,3 +135,47 @@ font-changes-need-a-new-preview-and-approval-other-external-files-stay-blocked =
 loading-fonts-more = Loading fonts…
 
 format-could-not-add-font-files-detail = Could not add font files: { $detail }
+
+brush-resources = Brush resources
+
+brush-resources-more = Brush resources…
+
+import-brushes = Import brushes
+
+import-brushes-more = Import brushes…
+
+adobe-brushes = Adobe brushes
+
+import-adobe-brushes-and-choose-a-supported-static-tip-your-painting-changes-only-when-you-draw = Import Adobe brushes and choose a supported static tip. Your painting changes only when you draw.
+
+format-selected-brush-name = Selected brush: { $name }
+
+format-tip-size-width-height-px = Tip size: { $width } × { $height } px
+
+static-tips-paint-at-their-original-size-brush-size-and-photoshop-dynamics-are-not-applied = Static tips paint at their original size. Brush size and Photoshop dynamics are not applied.
+
+i-accept-the-small-change-to-brush-spacing = I accept the small change to brush spacing.
+
+use-this-brush = Use this brush
+
+this-preset-cannot-be-used-as-a-static-brush = This preset cannot be used as a static brush.
+
+use-standard-brushes = Use standard brushes
+
+format-could-not-import-brushes-detail = Could not import brushes: { $detail }
+
+format-could-not-use-this-brush-detail = Could not use this brush: { $detail }
+
+an-unambiguous-sampled-tip-is-required = An unambiguous sampled tip is required.
+
+this-tip-uses-unsupported-mask-precision = This tip uses unsupported mask precision.
+
+this-preset-transforms-the-original-tip = This preset transforms the original tip.
+
+this-preset-uses-unsupported-spacing = This preset uses unsupported spacing.
+
+this-preset-includes-unsupported-brush-behavior = This preset includes unsupported brush behavior.
+
+sampled-brush-stroke-cancelled-point-or-coordinate-limit-exceeded = Sampled brush stroke cancelled: point or coordinate limit exceeded.
+
+sampled-brush-stroke-exceeds-the-browser-work-limit-use-shorter-strokes-or-a-smaller-original-tip = Sampled brush stroke exceeds the browser work limit. Use shorter strokes or a smaller original tip.

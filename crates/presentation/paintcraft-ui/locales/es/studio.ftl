@@ -135,3 +135,47 @@ font-changes-need-a-new-preview-and-approval-other-external-files-stay-blocked =
 loading-fonts-more = Cargando fuentes…
 
 format-could-not-add-font-files-detail = No se pudieron añadir los archivos de fuentes: { $detail }
+
+brush-resources = Recursos de pinceles
+
+brush-resources-more = Recursos de pinceles…
+
+import-brushes = Importar pinceles
+
+import-brushes-more = Importar pinceles…
+
+adobe-brushes = Pinceles de Adobe
+
+import-adobe-brushes-and-choose-a-supported-static-tip-your-painting-changes-only-when-you-draw = Importa pinceles de Adobe y elige una punta estática compatible. La imagen solo cambia cuando dibujas.
+
+format-selected-brush-name = Pincel seleccionado: { $name }
+
+format-tip-size-width-height-px = Tamaño de punta: { $width } × { $height } px
+
+static-tips-paint-at-their-original-size-brush-size-and-photoshop-dynamics-are-not-applied = Las puntas estáticas pintan a su tamaño original. No se aplican el tamaño del pincel ni la dinámica de Photoshop.
+
+i-accept-the-small-change-to-brush-spacing = Acepto el pequeño cambio en el espaciado del pincel.
+
+use-this-brush = Usar este pincel
+
+this-preset-cannot-be-used-as-a-static-brush = Este ajuste no puede usarse como pincel estático.
+
+use-standard-brushes = Usar pinceles estándar
+
+format-could-not-import-brushes-detail = No se pudieron importar los pinceles: { $detail }
+
+format-could-not-use-this-brush-detail = No se pudo usar este pincel: { $detail }
+
+an-unambiguous-sampled-tip-is-required = Se necesita una punta muestreada sin ambigüedades.
+
+this-tip-uses-unsupported-mask-precision = Esta punta usa una precisión de máscara no compatible.
+
+this-preset-transforms-the-original-tip = Este ajuste transforma la punta original.
+
+this-preset-uses-unsupported-spacing = Este ajuste usa un espaciado no compatible.
+
+this-preset-includes-unsupported-brush-behavior = Este ajuste incluye un comportamiento de pincel no compatible.
+
+sampled-brush-stroke-cancelled-point-or-coordinate-limit-exceeded = Trazo cancelado: se superó el límite de puntos o coordenadas.
+
+sampled-brush-stroke-exceeds-the-browser-work-limit-use-shorter-strokes-or-a-smaller-original-tip = El trazo supera el límite de trabajo del navegador. Usa trazos más cortos o una punta de menor tamaño original.

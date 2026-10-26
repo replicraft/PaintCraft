@@ -135,3 +135,47 @@ font-changes-need-a-new-preview-and-approval-other-external-files-stay-blocked =
 loading-fonts-more = Schriften werden geladen…
 
 format-could-not-add-font-files-detail = Schriftdateien konnten nicht hinzugefügt werden: { $detail }
+
+brush-resources = Pinselressourcen
+
+brush-resources-more = Pinselressourcen…
+
+import-brushes = Pinsel importieren
+
+import-brushes-more = Pinsel importieren…
+
+adobe-brushes = Adobe-Pinsel
+
+import-adobe-brushes-and-choose-a-supported-static-tip-your-painting-changes-only-when-you-draw = Importiere Adobe-Pinsel und wähle eine unterstützte statische Spitze. Das Bild ändert sich erst beim Zeichnen.
+
+format-selected-brush-name = Ausgewählter Pinsel: { $name }
+
+format-tip-size-width-height-px = Spitzengröße: { $width } × { $height } px
+
+static-tips-paint-at-their-original-size-brush-size-and-photoshop-dynamics-are-not-applied = Statische Spitzen malen in Originalgröße. Pinselgröße und Photoshop-Dynamik werden nicht angewendet.
+
+i-accept-the-small-change-to-brush-spacing = Ich akzeptiere die kleine Änderung des Pinselabstands.
+
+use-this-brush = Diesen Pinsel verwenden
+
+this-preset-cannot-be-used-as-a-static-brush = Diese Vorgabe kann nicht als statischer Pinsel verwendet werden.
+
+use-standard-brushes = Standardpinsel verwenden
+
+format-could-not-import-brushes-detail = Pinsel konnten nicht importiert werden: { $detail }
+
+format-could-not-use-this-brush-detail = Dieser Pinsel konnte nicht verwendet werden: { $detail }
+
+an-unambiguous-sampled-tip-is-required = Eine eindeutig zugeordnete abgetastete Spitze ist erforderlich.
+
+this-tip-uses-unsupported-mask-precision = Die Maskengenauigkeit dieser Spitze wird nicht unterstützt.
+
+this-preset-transforms-the-original-tip = Diese Vorgabe verändert die Originalspitze.
+
+this-preset-uses-unsupported-spacing = Der Abstand dieser Vorgabe wird nicht unterstützt.
+
+this-preset-includes-unsupported-brush-behavior = Diese Vorgabe enthält nicht unterstütztes Pinselverhalten.
+
+sampled-brush-stroke-cancelled-point-or-coordinate-limit-exceeded = Pinselstrich abgebrochen: Punkt- oder Koordinatenlimit überschritten.
+
+sampled-brush-stroke-exceeds-the-browser-work-limit-use-shorter-strokes-or-a-smaller-original-tip = Der Pinselstrich überschreitet das Verarbeitungslimit des Browsers. Verwende kürzere Striche oder eine kleinere Originalspitze.
