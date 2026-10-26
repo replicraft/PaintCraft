@@ -140,11 +140,13 @@ jobs:
         shell: pwsh
         run: '"RUSTFLAGS=-C target-feature=+crt-static" >> $env:GITHUB_ENV'
       - name: Build release with GPU rendering
-        run: cargo build --locked --release -p paintcraft -p paintcraft-cli -p paintcraft-codec-worker --target ${{ matrix.target }} --features paintcraft-codec-worker/avif-sdr-codec
+        run: cargo build --locked --release -p paintcraft -p paintcraft-cli -p paintcraft-codec-worker --target ${{ matrix.target }} --features paintcraft-codec-worker/float-codecs
       - name: Qualify the native decoder helper and installed consumers
+        env:
+          PAINTCRAFT_V7_HELPER: ${{ github.workspace }}/target/${{ matrix.target }}/release/paintcraft-codec-worker${{ runner.os == 'Windows' && '.exe' || '' }}
         run: |
-          cargo test --locked --release -p paintcraft-codec-worker --features avif-sdr-codec --target ${{ matrix.target }} --tests
-          cargo test --locked --release -p paintcraft-cli --target ${{ matrix.target }} --test installed_codec_worker -- --include-ignored
+          cargo test --locked --release -p paintcraft-codec-worker --features float-codecs --target ${{ matrix.target }} --tests -- --test-threads=1
+          cargo test --locked --release -p paintcraft-cli --target ${{ matrix.target }} --test installed_codec_worker -- --include-ignored --test-threads=1
       - name: Test native clipboard transport and lifecycle
         if: runner.os == 'Windows' || runner.os == 'Linux'
         run: cargo test --locked -p paintcraft-platform --features clipboard --target ${{ matrix.target }} --lib
