@@ -8,6 +8,7 @@ pub mod csh;
 pub mod dcx;
 pub mod dds;
 pub mod export;
+pub mod exr;
 pub mod heif;
 pub mod icns;
 pub mod icons;
