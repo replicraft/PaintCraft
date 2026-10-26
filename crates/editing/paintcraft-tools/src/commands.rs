@@ -432,3 +432,112 @@ pub fn move_selection(
             .collect(),
     ))
 }
+
+/// A first resolved mask and its transparent layer publish in one transaction.
+pub fn first_layer_mask_operations(
+    canvas: (u32, u32),
+    color: Rgba,
+    spans: &[paintcraft_core::types::text::MaskSpan],
+    alias: &str,
+    layer_name: &str,
+    check: &impl Fn() -> Result<()>,
+) -> Result<Vec<Value>> {
+    let mut operations = mask_operations(Uuid::nil(), color, spans, check)?;
+    if operations.is_empty() {
+        return Ok(operations);
+    }
+    for operation in &mut operations {
+        if let Value::Object(fields) = operation {
+            fields.insert(
+                "layer_ref".into(),
+                Value::object([("ref", Value::str(alias))]),
+            );
+        }
+    }
+    operations.insert(
+        0,
+        Value::object([
+            ("op", Value::str("layer.add")),
+            ("ref", Value::str(alias)),
+            ("name", Value::str(layer_name)),
+            ("width", Value::Int(canvas.0.into())),
+            ("height", Value::Int(canvas.1.into())),
+            ("origin", point((0, 0))),
+            ("default_pixel", Value::str("#00000000")),
+        ]),
+    );
+    check()?;
+    Ok(operations)
+}
+#[cfg(test)]
+mod first_layer_tests {
+    use super::*;
+    #[test]
+    fn shared_first_layer_builder_preserves_brush_and_shape_aliases_and_names() {
+        use paintcraft_core::types::{resources::SharedBudget, text::MaskSpan};
+        let coverage = [MaskSpan {
+            x0: 1,
+            x1: 1,
+            y: 1,
+            coverage: 255,
+        }];
+        let color = Rgba([1, 2, 3, 255]);
+        let shape =
+            first_layer_mask_operations((8, 8), color, &coverage, "shape-first", "Shape", &|| {
+                Ok(())
+            })
+            .unwrap();
+        assert_eq!(shape[0].get("name").and_then(Value::as_str), Some("Shape"));
+        assert_eq!(
+            shape[1]
+                .get("layer_ref")
+                .and_then(|v| v.get("ref"))
+                .and_then(Value::as_str),
+            Some("shape-first")
+        );
+        let budget = SharedBudget::new(1 << 20);
+        let tip = paintcraft_raster::sampled_brush::SampledTip::from_alpha(
+            1,
+            1,
+            (0, 0),
+            &[255],
+            &budget,
+            &|| Ok(()),
+        )
+        .unwrap();
+        let brush =
+            crate::sampled_brush::SampledStroke::begin(Uuid::nil(), color, tip, (1, 1), 1, 256)
+                .unwrap()
+                .finish(
+                    paintcraft_core::types::Rect::new(0, 0, 8, 8).unwrap(),
+                    &budget,
+                    &|| Ok(()),
+                )
+                .unwrap()
+                .operations_with_first_layer((8, 8), &|| Ok(()))
+                .unwrap();
+        assert_eq!(
+            brush[0].get("name").and_then(Value::as_str),
+            Some("Layer 1")
+        );
+        assert_eq!(
+            brush[1]
+                .get("layer_ref")
+                .and_then(|v| v.get("ref"))
+                .and_then(Value::as_str),
+            Some("sampled-first")
+        );
+        assert!(
+            first_layer_mask_operations(
+                (8, 8),
+                Rgba::TRANSPARENT,
+                &coverage,
+                "shape-first",
+                "Shape",
+                &|| Ok(())
+            )
+            .unwrap()
+            .is_empty()
+        );
+    }
+}

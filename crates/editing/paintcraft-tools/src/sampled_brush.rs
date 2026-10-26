@@ -38,35 +38,16 @@ impl ResolvedSampledStroke {
         canvas: (u32, u32),
         check: &impl Fn() -> Result<()>,
     ) -> Result<Vec<Value>> {
-        let mut operations = self.operations(check)?;
-        if operations.is_empty() {
-            return Ok(operations);
-        }
-        for operation in &mut operations {
-            if let Value::Object(fields) = operation {
-                fields.insert(
-                    "layer_ref".into(),
-                    Value::object([("ref", Value::str("sampled-first"))]),
-                );
-            }
-        }
-        operations.insert(
-            0,
-            Value::object([
-                ("op", Value::str("layer.add")),
-                ("ref", Value::str("sampled-first")),
-                ("name", Value::str("Layer 1")),
-                ("width", Value::Int(canvas.0.into())),
-                ("height", Value::Int(canvas.1.into())),
-                (
-                    "origin",
-                    Value::object([("x", Value::Int(0)), ("y", Value::Int(0))]),
-                ),
-                ("default_pixel", Value::str("#00000000")),
-            ]),
-        );
-        Ok(operations)
+        crate::commands::first_layer_mask_operations(
+            canvas,
+            self.color,
+            self.coverage.spans(),
+            "sampled-first",
+            "Layer 1",
+            check,
+        )
     }
+
     pub fn operations(&self, check: &impl Fn() -> Result<()>) -> Result<Vec<Value>> {
         crate::commands::mask_operations(self.layer, self.color, self.coverage.spans(), check)
     }
