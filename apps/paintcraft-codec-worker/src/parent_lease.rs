@@ -61,6 +61,13 @@ mod tests {
             send.send(true).unwrap();
         });
         assert!(!receive.recv_timeout(Duration::from_secs(5)).unwrap());
+        assert!(
+            matches!(
+                receive.recv_timeout(Duration::from_millis(100)),
+                Err(mpsc::RecvTimeoutError::Timeout)
+            ),
+            "child must remain alive while sole parent writer is held"
+        );
         parent.0.kill().unwrap();
         parent.0.wait().unwrap();
         // The sleeping child inherited this output pipe. EOF is observed only
@@ -90,7 +97,11 @@ mod tests {
             .unwrap();
         // ChildStdin remains owned here while waiting. Killing this real parent
         // closes the sole writer on Unix and Windows without cooperative cleanup.
+        // Child::wait closes Child.stdin, so move the sole writer out first.
+        // Retain it until wait returns; only actual parent death closes it here.
+        let writer = child.stdin.take().unwrap();
         let _ = child.wait();
+        drop(writer);
     }
     #[test]
     #[ignore = "subprocess lease fixture: invoked only by lifecycle tests"]
