@@ -1,8 +1,9 @@
-// Internal primitive only: public HEIF/JXL reader routes remain disabled.
+// Isolated browser service; UI reader admission is qualified separately.
 import {
 	capture,
 	encodeRequest,
 	decodeResponse,
+	isCompletedRefusal,
 	ownerBytes,
 	matchesOwner,
 	refusal,
@@ -36,8 +37,10 @@ function reserve(bytes) {
 		}
 	};
 }
-export async function decodeInWorker({
+async function decodeAdmitted({
 	source,
+	sourceLength,
+	readSource,
 	owner,
 	codec,
 	pixels,
@@ -69,29 +72,36 @@ export async function decodeInWorker({
 	)
 		throw refusal('InputSchema', 'Invalid codec Worker lifetime policy');
 	if (
-		!(source instanceof Uint8Array) ||
-		!source.length ||
-		source.length > INPUT_BYTES_MAX
+		!Number.isSafeInteger(sourceLength) ||
+		sourceLength < 1 ||
+		sourceLength > INPUT_BYTES_MAX
 	)
 		throw refusal('ResourceLimit', 'Codec source allowance');
 	if (signal?.aborted)
 		throw refusal('OperationCancelled', 'Codec Worker cancelled');
 	const started = performance.now();
-	const expectedOwner = ownerBytes(owner);
+	const capturedOwner = Object.freeze({ ...owner });
+	const expectedOwner = ownerBytes(capturedOwner);
 	const release = reserve(
 		LINEAR_MEMORY_BYTES +
-			source.length * 2 +
+			sourceLength * 3 +
 			REQUEST_HEADER +
-			OUTPUT_BYTES_MAX +
+			OUTPUT_BYTES_MAX * 2 +
+			65 * 1024 * 1024 +
 			65536,
 	);
 	let worker;
+	let attemptedWorker = false;
+	let captured;
 	let completed = false;
+	let unknownAsync = false;
+	const cancelled = () =>
+		signal?.reason?.code === 'ConflictStaleBase'
+			? refusal('ConflictStaleBase', 'Codec Worker owner changed')
+			: refusal('OperationCancelled', 'Codec Worker cancelled');
 	try {
-		const captured = await capture(source, owner, codec, pixels);
 		function check() {
-			if (signal?.aborted)
-				throw refusal('OperationCancelled', 'Codec Worker cancelled');
+			if (signal?.aborted) throw cancelled();
 			if (!matchesOwner(currentOwner(), expectedOwner))
 				throw refusal(
 					'ConflictStaleBase',
@@ -103,7 +113,57 @@ export async function decodeInWorker({
 					'Codec Worker deadline exceeded',
 				);
 		}
+		// File reads and WebCrypto digests have no join/cancel API. Return logical
+		// cancellation promptly, retaining the whole declaration if still pending.
+		async function awaitBounded(operation) {
+			let pending = true;
+			const settled = Promise.resolve(operation).then(
+				(value) => {
+					pending = false;
+					return value;
+				},
+				(error) => {
+					pending = false;
+					throw error;
+				},
+			);
+			let interval, timer, abort;
+			const stopped = new Promise((_, reject) => {
+				abort = () => {
+					try {
+						check();
+					} catch (error) {
+						reject(error);
+					}
+				};
+				interval = setInterval(abort, 10);
+				timer = setTimeout(
+					abort,
+					Math.max(0, deadlineMs - (performance.now() - started)),
+				);
+				signal?.addEventListener('abort', abort, { once: true });
+				abort();
+			});
+			try {
+				return await Promise.race([settled, stopped]);
+			} catch (error) {
+				if (pending) unknownAsync = true;
+				throw error;
+			} finally {
+				clearInterval(interval);
+				clearTimeout(timer);
+				signal?.removeEventListener('abort', abort);
+			}
+		}
 		check();
+		if (readSource) source = await awaitBounded(readSource());
+		if (!(source instanceof Uint8Array) || source.length !== sourceLength)
+			throw refusal('ResourceLimit', 'Codec source length changed');
+		captured = await awaitBounded(
+			capture(source, capturedOwner, codec, pixels),
+		);
+		check();
+		attemptedWorker = true;
 		worker = createWorker();
 		const frame = await new Promise((resolve, reject) => {
 			let timer;
@@ -116,7 +176,7 @@ export async function decodeInWorker({
 				reject(error);
 			}
 			function cancel() {
-				fail(refusal('OperationCancelled', 'Codec Worker cancelled'));
+				fail(cancelled());
 			}
 			timer = setInterval(() => {
 				try {
@@ -166,7 +226,12 @@ export async function decodeInWorker({
 		// result. A retained document needs a separate resident lease first.
 		return Object.freeze({ ...frame, release });
 	} catch (error) {
-		if (worker && !completed && !error?.codecCompleted) {
+		if (
+			unknownAsync ||
+			(attemptedWorker &&
+				!completed &&
+				!isCompletedRefusal(error, captured))
+		) {
 			// terminate() is not a join. Retain this module's charge forever,
 			// refusing later jobs until realm teardown rather than inventing
 			// a timer-based reclamation acknowledgement.
@@ -179,4 +244,23 @@ export async function decodeInWorker({
 	} finally {
 		worker?.terminate();
 	}
+}
+
+export function decodeInWorker(options) {
+	if (!(options.source instanceof Uint8Array))
+		return Promise.reject(
+			refusal('InputSchema', 'Codec source must be bytes'),
+		);
+	return decodeAdmitted({ ...options, sourceLength: options.source.length });
+}
+export function decodeFileInWorker({ file, ...options }) {
+	if (!(file instanceof File))
+		return Promise.reject(
+			refusal('InputSchema', 'Codec source must be a File'),
+		);
+	return decodeAdmitted({
+		...options,
+		sourceLength: file.size,
+		readSource: async () => new Uint8Array(await file.arrayBuffer()),
+	});
 }

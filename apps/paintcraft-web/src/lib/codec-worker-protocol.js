@@ -7,6 +7,30 @@ export const OUTPUT_BYTES_MAX = PIXELS_MAX * 4 + RESPONSE_HEADER + 4096 + 64;
 export const LINEAR_MEMORY_BYTES = 256 * 1024 * 1024;
 const text = new TextEncoder();
 const decoder = new TextDecoder('utf-8', { fatal: true });
+// Proof belongs to the validator and exact request object. Opaque tokens avoid
+// retaining the potentially64MiB captured source through a caller-held Error.
+const requestProofs = new WeakMap();
+const completedRefusals = new WeakMap();
+export function isCompletedRefusal(error, captured) {
+	if (
+		!captured ||
+		(typeof error !== 'object' && typeof error !== 'function') ||
+		error === null
+	)
+		return false;
+	const proof = requestProofs.get(captured);
+	return proof !== undefined && completedRefusals.get(error) === proof;
+}
+function completedRefusal(error, captured) {
+	let proof = requestProofs.get(captured);
+	if (!proof) {
+		proof = {};
+		requestProofs.set(captured, proof);
+	}
+	completedRefusals.set(error, proof);
+	return Object.assign(error, { codecCompleted: true });
+}
+
 export function refusal(code, message) {
 	return Object.assign(new Error(message), { code });
 }
@@ -148,7 +172,7 @@ export function decodeResponse(bytes, captured, currentOwner, version) {
 			height === 0 &&
 			primary === 0 &&
 			opacity === 0, 'Codec failure carries pixels');
-		throw Object.assign(
+		throw completedRefusal(
 			refusal(
 				[
 					'',
@@ -159,7 +183,7 @@ export function decodeResponse(bytes, captured, currentOwner, version) {
 				][status],
 				decoder.decode(bytes.subarray(RESPONSE_HEADER + versionBytes)),
 			),
-			{ codecCompleted: true },
+			captured,
 		);
 	}
 	const pixels = width * height,

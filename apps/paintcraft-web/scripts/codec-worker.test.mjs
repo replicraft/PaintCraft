@@ -342,7 +342,7 @@ test('validated canonical completed refusal releases charge and permits another 
 	assert.equal(codecWorkerBudget().reservedBytes, 0);
 	assert.equal(codecWorkerBudget().quarantined, false);
 });
-test('failure before Worker creation releases logical admission immediately', async () => {
+test('Worker constructor attempt failure quarantines without inventing completion', async () => {
 	const { decodeInWorker, codecWorkerBudget } = await import(
 		'../src/lib/codec-worker.js?create-failure'
 	);
@@ -361,6 +361,275 @@ test('failure before Worker creation releases logical admission immediately', as
 			}),
 		/no Worker/,
 	);
+	assert.ok(codecWorkerBudget().reservedBytes > 0);
+	assert.equal(codecWorkerBudget().quarantined, true);
+});
+
+test('File size is admitted before arrayBuffer and read failure releases pre-worker charge', async () => {
+	const { decodeFileInWorker, codecWorkerBudget } = await import(
+		`../src/lib/codec-worker.js?file-admission=${Date.now()}`
+	);
+	let reads = 0;
+	class Oversized extends File {
+		get size() {
+			return 64 * 1024 * 1024 + 1;
+		}
+		async arrayBuffer() {
+			reads++;
+			throw new Error('must not read');
+		}
+	}
+	await assert.rejects(
+		decodeFileInWorker({
+			file: new Oversized([], 'big.jxl'),
+			owner,
+			codec: 2,
+			pixels: 1,
+			currentOwner: () => owner,
+			applicationVersion: manifest.version,
+		}),
+		{ code: 'ResourceLimit' },
+	);
+	assert.equal(reads, 0);
+	assert.equal(codecWorkerBudget().reservedBytes, 0);
+	class Unreadable extends File {
+		get size() {
+			return 1;
+		}
+		async arrayBuffer() {
+			reads++;
+			throw new Error('unreadable');
+		}
+	}
+	await assert.rejects(
+		decodeFileInWorker({
+			file: new Unreadable([], 'read.jxl'),
+			owner,
+			codec: 2,
+			pixels: 1,
+			currentOwner: () => owner,
+			applicationVersion: manifest.version,
+		}),
+		/unreadable/,
+	);
+	assert.equal(reads, 1);
 	assert.equal(codecWorkerBudget().reservedBytes, 0);
 	assert.equal(codecWorkerBudget().quarantined, false);
+});
+
+test('hung File read cancels logically without releasing unjoined admission', async () => {
+	const { decodeFileInWorker, codecWorkerBudget } = await import(
+		`../src/lib/codec-worker.js?hung-file=${Date.now()}`
+	);
+	class Hung extends File {
+		get size() {
+			return 1;
+		}
+		arrayBuffer() {
+			return new Promise(() => {});
+		}
+	}
+	const abort = new AbortController();
+	const start = performance.now();
+	const pending = decodeFileInWorker({
+		file: new Hung([], 'hung.jxl'),
+		owner,
+		codec: 2,
+		pixels: 1,
+		currentOwner: () => owner,
+		applicationVersion: manifest.version,
+		signal: abort.signal,
+	});
+	abort.abort();
+	await assert.rejects(pending, { code: 'OperationCancelled' });
+	assert.ok(performance.now() - start < 1000);
+	assert.ok(codecWorkerBudget().quarantined);
+	assert.ok(codecWorkerBudget().reservedBytes > 0);
+});
+test('hung digest expires logically and quarantines instead of pretending reclamation', async () => {
+	const { decodeInWorker, codecWorkerBudget } = await import(
+		`../src/lib/codec-worker.js?hung-digest=${Date.now()}`
+	);
+	const original = crypto.subtle.digest;
+	crypto.subtle.digest = () => new Promise(() => {});
+	try {
+		await assert.rejects(
+			decodeInWorker({
+				source: new Uint8Array([1]),
+				owner,
+				codec: 2,
+				pixels: 1,
+				currentOwner: () => owner,
+				applicationVersion: manifest.version,
+				deadlineMs: 10,
+			}),
+			{ code: 'ResourceLimit' },
+		);
+		assert.ok(codecWorkerBudget().quarantined);
+		assert.ok(codecWorkerBudget().reservedBytes > 0);
+	} finally {
+		crypto.subtle.digest = original;
+	}
+});
+
+test('bridge checks captured owner instead of rebinding it and invalidates only owner changes', async () => {
+	const { createCodecService } = await import('../src/lib/codec-bridge.js');
+	const service = createCodecService(manifest.version);
+	service.setOwner(owner);
+	let reads = 0;
+	class Hung extends File {
+		get size() {
+			return 1;
+		}
+		arrayBuffer() {
+			reads++;
+			return new Promise(() => {});
+		}
+	}
+	const file = new Hung([], 'hung.jxl');
+	await assert.rejects(service.decodeFile(file, { ...owner, epoch: 18n }), {
+		code: 'ConflictStaleBase',
+	});
+	assert.equal(reads, 0);
+	const pending = service.decodeFile(file, owner);
+	service.setOwner({ ...owner });
+	let completed = false;
+	pending.catch(() => {
+		completed = true;
+	});
+	await new Promise((resolve) => setTimeout(resolve, 20));
+	assert.equal(completed, false);
+	service.setOwner({ ...owner, epoch: 18n });
+	await assert.rejects(pending, { code: 'ConflictStaleBase' });
+	assert.ok(service.budget().quarantined);
+	await assert.rejects(service.decodeFile(file, owner), {
+		code: 'ResourceLimit',
+	});
+});
+
+test('File admission freezes owner before asynchronous file read', async () => {
+	const { decodeFileInWorker } = await import(
+		`../src/lib/codec-worker.js?frozen-file-owner=${Date.now()}`
+	);
+	let finish;
+	class Delayed extends File {
+		get size() {
+			return 1;
+		}
+		arrayBuffer() {
+			return new Promise((resolve) => (finish = resolve));
+		}
+	}
+	const captured = { ...owner };
+	const pending = decodeFileInWorker({
+		file: new Delayed([], 'owner.jxl'),
+		owner: captured,
+		codec: 2,
+		pixels: 1,
+		currentOwner: () => owner,
+		applicationVersion: manifest.version,
+		createWorker: () => ({
+			terminate() {},
+			postMessage({ bytes }) {
+				const header = new Uint8Array(bytes).slice(0, 112);
+				assert.deepEqual(header.subarray(23, 64), ownerBytes(owner));
+				queueMicrotask(() =>
+					this.onmessage({
+						data: {
+							kind: 'result',
+							bytes: response({ header }).buffer,
+						},
+					}),
+				);
+			},
+		}),
+	});
+	captured.epoch = 18n;
+	finish(new Uint8Array([1]).buffer);
+	const prepared = await pending;
+	prepared.release();
+});
+
+test('completion proof is private to the validated request and cannot be forged or replayed', async () => {
+	const { isCompletedRefusal } = await import(
+		'../src/lib/codec-worker-protocol.js'
+	);
+	const previous = await capture(new Uint8Array([1]), owner, 2, 1);
+	const original = response(previous);
+	const version = new TextEncoder().encode(manifest.version);
+	const failure = new Uint8Array(RESPONSE_HEADER + version.length);
+	failure.set(original.subarray(0, RESPONSE_HEADER));
+	failure[10] = 1;
+	failure.fill(0, 12, 38);
+	failure[38] = version.length;
+	failure.set(version, RESPONSE_HEADER);
+	let old;
+	try {
+		decodeResponse(failure, previous, owner, manifest.version);
+	} catch (error) {
+		old = error;
+	}
+	assert.ok(isCompletedRefusal(old, previous));
+	const next = await capture(new Uint8Array([1]), owner, 2, 1);
+	assert.equal(isCompletedRefusal(old, next), false);
+	assert.equal(isCompletedRefusal({ codecCompleted: true }, next), false);
+	for (const mode of ['abort', 'postMessage', 'owner', 'constructor']) {
+		const { decodeInWorker, codecWorkerBudget } = await import(
+			`../src/lib/codec-worker.js?spoof-${mode}=${Date.now()}`
+		);
+		const abort = new AbortController();
+		let notify,
+			ownerThrows = false;
+		const ready = new Promise((resolve) => (notify = resolve));
+		const pending = decodeInWorker({
+			source: new Uint8Array([1]),
+			owner,
+			codec: 2,
+			pixels: 1,
+			applicationVersion: manifest.version,
+			signal: abort.signal,
+			currentOwner: () => {
+				if (ownerThrows) throw old;
+				return owner;
+			},
+			createWorker: () => {
+				if (mode === 'constructor') throw old;
+				return {
+					terminate() {},
+					postMessage({ bytes }) {
+						if (mode === 'postMessage') throw old;
+						notify();
+						if (mode === 'owner') {
+							ownerThrows = true;
+							queueMicrotask(() =>
+								this.onmessage({
+									data: {
+										kind: 'result',
+										bytes: response({
+											header: new Uint8Array(bytes).slice(
+												0,
+												112,
+											),
+										}).buffer,
+									},
+								}),
+							);
+						}
+					},
+				};
+			},
+		});
+		if (mode === 'abort') {
+			await ready;
+			abort.abort(
+				Object.assign(new Error('stale'), {
+					code: 'ConflictStaleBase',
+					codecCompleted: true,
+				}),
+			);
+		}
+		await assert.rejects(pending);
+		assert.ok(codecWorkerBudget().quarantined, mode);
+		assert.ok(codecWorkerBudget().reservedBytes > 0, mode);
+	}
 });
