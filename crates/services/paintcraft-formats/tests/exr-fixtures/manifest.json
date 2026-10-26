@@ -1,0 +1,110 @@
+{
+    "oracle": "OpenEXR 3.5.2",
+    "numpy": "2.4.3",
+    "fixtures": [
+        {
+            "file": "half-rgb-none.exr",
+            "width": 3,
+            "height": 2,
+            "origin": [
+                0,
+                0
+            ],
+            "alpha": false,
+            "compression": 0,
+            "sha256": "b1439437348d17e3914ad504a21e19d5f2aad271efb9cc9a96843078926b316e",
+            "reference_sha256": "80eaf63f41a5edd759193c3cda7214ffea597ed2a7a759da8b63b8dab7939d1b"
+        },
+        {
+            "file": "half-rgba-rle.exr",
+            "width": 3,
+            "height": 2,
+            "origin": [
+                -7,
+                11
+            ],
+            "alpha": true,
+            "compression": 1,
+            "sha256": "1ebeaa3bd1ce6d864a3d52285cc687e51317891dfb1ce1179cfbd8d237227a0a",
+            "reference_sha256": "3a48eebeeaabf615cc536a8eaf018d586eaaed50d28699f9f039bb83b627f6a2"
+        },
+        {
+            "file": "float-rgb-zips.exr",
+            "width": 3,
+            "height": 2,
+            "origin": [
+                12,
+                -9
+            ],
+            "alpha": false,
+            "compression": 2,
+            "sha256": "663623112f6b9be0b47f64c8e45de3075681d01231bbdafc873a693571a25654",
+            "reference_sha256": "80eaf63f41a5edd759193c3cda7214ffea597ed2a7a759da8b63b8dab7939d1b"
+        },
+        {
+            "file": "float-rgba-zip.exr",
+            "width": 3,
+            "height": 17,
+            "origin": [
+                -7,
+                -11
+            ],
+            "alpha": true,
+            "compression": 3,
+            "sha256": "8592de581ba43a4808ca0e6412372a7b6ab633974942b7319d5ab57d2ed8248f",
+            "reference_sha256": "314f184b44e78a2eb83bda4e8e4148e0cf82d2b48cc1daf6c27025808cc09f2a"
+        },
+        {
+            "file": "interop-rec709.exr",
+            "width": 3,
+            "height": 2,
+            "origin": [
+                0,
+                0
+            ],
+            "alpha": false,
+            "compression": 0,
+            "sha256": "3890b62fc6f90f67e4ea9b0865f2463ae2ccf516331ba1dc9980648061fd45e8",
+            "reference_sha256": "80eaf63f41a5edd759193c3cda7214ffea597ed2a7a759da8b63b8dab7939d1b"
+        },
+        {
+            "file": "unlabelled.exr",
+            "width": 3,
+            "height": 2,
+            "origin": [
+                0,
+                0
+            ],
+            "alpha": false,
+            "compression": 0,
+            "sha256": "68b5729fbc3dc6a9e0c1479e0e01aa80c9bcf493e90ae3dd4ef92fd7cb22b1cf",
+            "reference_sha256": "80eaf63f41a5edd759193c3cda7214ffea597ed2a7a759da8b63b8dab7939d1b"
+        },
+        {
+            "file": "unknown-chromaticities.exr",
+            "width": 3,
+            "height": 2,
+            "origin": [
+                0,
+                0
+            ],
+            "alpha": false,
+            "compression": 0,
+            "sha256": "69ab74fddad5bcf6540342fc18254299d6e419819f652685625b219b16f4e7aa",
+            "reference_sha256": "80eaf63f41a5edd759193c3cda7214ffea597ed2a7a759da8b63b8dab7939d1b"
+        },
+        {
+            "file": "conflicting-color.exr",
+            "width": 3,
+            "height": 2,
+            "origin": [
+                0,
+                0
+            ],
+            "alpha": false,
+            "compression": 0,
+            "sha256": "550e5342523f239b57605f0b9ab3cd94e2e7d5f8a78d1f6e72b8e817c8bbbd25",
+            "reference_sha256": "80eaf63f41a5edd759193c3cda7214ffea597ed2a7a759da8b63b8dab7939d1b"
+        }
+    ]
+}
