@@ -1,0 +1,23 @@
+[package]
+name = "paintcraft-web-codec-worker"
+description = "Thin isolated Wasm codec binding without editor services"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license-file.workspace = true
+publish.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+paintcraft-core.workspace = true
+paintcraft-formats = { workspace = true, features = ["heif-codec"] }
+rayon.workspace = true
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen.workspace = true
+uuid = { workspace = true, features = ["js"] }
+
+[lints]
+workspace = true

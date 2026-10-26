@@ -4,3 +4,5 @@
 /pkg/
 /.astro/
 /public/fonts/
+
+/codec-worker-pkg/

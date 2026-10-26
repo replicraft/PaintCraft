@@ -7,6 +7,7 @@ members = [
     "crates/adapters/*",
     "crates/presentation/*",
     "apps/*",
+    "apps/paintcraft-web/src/paintcraft-codec-worker",
 ]
 default-members = ["apps/paintcraft"]
 
@@ -154,7 +155,7 @@ ag-psd = { version = "0.3.0", default-features = false }
 qoi = "0.4.1"
 # Bounded DEFLATE payloads in converted PAINT documents.
 flate2 = { version = "1.1.10", default-features = false, features = ["rust_backend"] }
-# HEIF qualification/isolated native helper only; public reader/writer disabled.
+# HEIF qualification/isolated native and Wasm workers; public reader/writer disabled.
 heic-decoder = { version = "=0.1.1", default-features = false, features = ["internals"] }
 # Native codec helper uses only _exit for nonallocating quota/system-OOM exit.
 libc = { version = "0.2.191", default-features = false }

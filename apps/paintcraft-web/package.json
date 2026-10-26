@@ -14,7 +14,9 @@
 		"preview": "astro preview --host 127.0.0.1 --port 8088",
 		"test": "node --test scripts/*.test.mjs",
 		"format": "biome format --write .",
-		"format:check": "biome format ."
+		"format:check": "biome format .",
+		"build:codec-worker": "node scripts/build-codec-worker.mjs",
+		"test:codec-worker-browser": "node scripts/codec-worker-browser.mjs"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.6.2",
