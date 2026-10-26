@@ -189,7 +189,8 @@ fn preflight() {
                         assert_eq!(*actual, expected);
                     }
                 }
-                ImageFormat::Qoi
+                ImageFormat::Msp
+                | ImageFormat::Qoi
                 | ImageFormat::Pnm
                 | ImageFormat::Farbfeld
                 | ImageFormat::Jxl
