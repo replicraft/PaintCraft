@@ -1,0 +1,514 @@
+{
+  "schema_version": 1,
+  "aggregate": {
+    "file": "HDR_EXR_LICENSES_V1.txt",
+    "sha256": "a39105e754a3e3f468440d1145eac626bf60e85f33d819b65ab8e50fb708a7c1",
+    "byte_length": 33463,
+    "text_encoding": "UTF-8; original embedded license line endings retained"
+  },
+  "qualification_status": "exact license/copyright text provenance verified against locked crate archives and pinned upstream Git blobs; runtime qualification is recorded separately",
+  "cargo_lock_sha256": "cc0ff9b05391b0af587ee6c24d4f04df1874b64f127e8554acc9ee8cc216ff89",
+  "probe": {
+    "command": [
+      "cargo",
+      "tree",
+      "--locked",
+      "--offline",
+      "-p",
+      "paintcraft-codec-worker",
+      "--no-default-features",
+      "--edges",
+      "normal",
+      "--prefix",
+      "none",
+      "--format",
+      "{p}|{l}"
+    ],
+    "baseline_features": "avif-sdr-codec",
+    "optional_features": "float-codecs",
+    "normalized_duplicate_suffix": " (*)",
+    "dependency_edges": "normal (build/dev edges excluded)",
+    "target_delta": {
+      "aarch64-apple-darwin": [
+        "bit_field v0.10.3|Apache-2.0/MIT",
+        "exr v1.74.2|BSD-3-Clause",
+        "lebe v0.5.3|BSD-3-Clause",
+        "libm v0.2.16|MIT",
+        "num-complex v0.4.6|MIT OR Apache-2.0",
+        "pulp v0.22.3|MIT",
+        "pulp-wasm-simd-flag v0.1.1|MIT",
+        "reborrow v0.5.5|MIT",
+        "zune-inflate v0.2.54|MIT OR Apache-2.0 OR Zlib"
+      ],
+      "x86_64-apple-darwin": [
+        "bit_field v0.10.3|Apache-2.0/MIT",
+        "exr v1.74.2|BSD-3-Clause",
+        "lebe v0.5.3|BSD-3-Clause",
+        "libm v0.2.16|MIT",
+        "num-complex v0.4.6|MIT OR Apache-2.0",
+        "pulp v0.22.3|MIT",
+        "pulp-wasm-simd-flag v0.1.1|MIT",
+        "raw-cpuid v11.6.0|MIT",
+        "reborrow v0.5.5|MIT",
+        "zune-inflate v0.2.54|MIT OR Apache-2.0 OR Zlib"
+      ],
+      "x86_64-pc-windows-msvc": [
+        "bit_field v0.10.3|Apache-2.0/MIT",
+        "exr v1.74.2|BSD-3-Clause",
+        "lebe v0.5.3|BSD-3-Clause",
+        "libm v0.2.16|MIT",
+        "num-complex v0.4.6|MIT OR Apache-2.0",
+        "pulp v0.22.3|MIT",
+        "pulp-wasm-simd-flag v0.1.1|MIT",
+        "raw-cpuid v11.6.0|MIT",
+        "reborrow v0.5.5|MIT",
+        "zune-inflate v0.2.54|MIT OR Apache-2.0 OR Zlib"
+      ],
+      "aarch64-pc-windows-msvc": [
+        "bit_field v0.10.3|Apache-2.0/MIT",
+        "exr v1.74.2|BSD-3-Clause",
+        "lebe v0.5.3|BSD-3-Clause",
+        "libm v0.2.16|MIT",
+        "num-complex v0.4.6|MIT OR Apache-2.0",
+        "pulp v0.22.3|MIT",
+        "pulp-wasm-simd-flag v0.1.1|MIT",
+        "reborrow v0.5.5|MIT",
+        "zune-inflate v0.2.54|MIT OR Apache-2.0 OR Zlib"
+      ],
+      "x86_64-unknown-linux-gnu": [
+        "bit_field v0.10.3|Apache-2.0/MIT",
+        "exr v1.74.2|BSD-3-Clause",
+        "lebe v0.5.3|BSD-3-Clause",
+        "libm v0.2.16|MIT",
+        "num-complex v0.4.6|MIT OR Apache-2.0",
+        "pulp v0.22.3|MIT",
+        "pulp-wasm-simd-flag v0.1.1|MIT",
+        "raw-cpuid v11.6.0|MIT",
+        "reborrow v0.5.5|MIT",
+        "zune-inflate v0.2.54|MIT OR Apache-2.0 OR Zlib"
+      ],
+      "aarch64-unknown-linux-gnu": [
+        "bit_field v0.10.3|Apache-2.0/MIT",
+        "exr v1.74.2|BSD-3-Clause",
+        "lebe v0.5.3|BSD-3-Clause",
+        "libm v0.2.16|MIT",
+        "num-complex v0.4.6|MIT OR Apache-2.0",
+        "pulp v0.22.3|MIT",
+        "pulp-wasm-simd-flag v0.1.1|MIT",
+        "reborrow v0.5.5|MIT",
+        "zune-inflate v0.2.54|MIT OR Apache-2.0 OR Zlib"
+      ]
+    }
+  },
+  "packages": [
+    {
+      "name": "image",
+      "version": "0.25.10",
+      "role": "reused-existing-dependency",
+      "declared_license": "MIT OR Apache-2.0",
+      "selected_license": "MIT",
+      "cargo_lock_checksum": "85ab80394333c02fe689eaf900ab500fbd0c2213da414687ebf995a65d5a6104",
+      "archive_sha256_verified": true,
+      "archive_url": "https://static.crates.io/crates/image/image-0.25.10.crate",
+      "repository": "https://github.com/image-rs/image",
+      "source_commit": "76e57184f22772dad1138e96954e57945406b15e",
+      "path_in_vcs": "",
+      "cargo_vcs_info_sha256": "f231a3e6ec6fd66ebd2522b6a118982bf468ba1b07c96a1778edfa135936a693",
+      "introduced_on_targets": [],
+      "texts": [
+        {
+          "label": "LICENSE-MIT",
+          "sha256": "c77a4cf9da729987d0fe7ccd811e3bd27393914ddf3d23467c18cc22954513b3",
+          "byte_length": 1036,
+          "aggregate_byte_offset": 800,
+          "origin": "checksum-verified-crate-archive",
+          "archive_path": "image-0.25.10/LICENSE-MIT",
+          "source_url": "https://static.crates.io/crates/image/image-0.25.10.crate"
+        }
+      ]
+    },
+    {
+      "name": "half",
+      "version": "2.7.1",
+      "role": "reused-existing-dependency",
+      "declared_license": "MIT OR Apache-2.0",
+      "selected_license": "MIT",
+      "cargo_lock_checksum": "6ea2d84b969582b4b1864a92dc5d27cd2b77b622a8d79306834f1be5ba20d84b",
+      "archive_sha256_verified": true,
+      "archive_url": "https://static.crates.io/crates/half/half-2.7.1.crate",
+      "repository": "https://github.com/VoidStarKat/half-rs",
+      "source_commit": "8cc891f3e4aad956eca7fa79b1f42f87ecd141ae",
+      "path_in_vcs": "",
+      "cargo_vcs_info_sha256": "c6edc1660d23a3319db7917273499c815e8bbdea7d7e8c571343053a0acced82",
+      "introduced_on_targets": [],
+      "texts": [
+        {
+          "label": "LICENSE-MIT",
+          "sha256": "508a77d2e7b51d98adeed32648ad124b7b30241a8e70b2e72c99f92d8e5874d1",
+          "byte_length": 1036,
+          "aggregate_byte_offset": 2155,
+          "origin": "checksum-verified-crate-archive",
+          "archive_path": "half-2.7.1/LICENSE-MIT",
+          "source_url": "https://static.crates.io/crates/half/half-2.7.1.crate"
+        }
+      ]
+    },
+    {
+      "name": "exr",
+      "version": "1.74.2",
+      "role": "optional-feature-dependency-delta",
+      "declared_license": "BSD-3-Clause",
+      "selected_license": "BSD-3-Clause",
+      "cargo_lock_checksum": "711fe42c9964295e01ee3fba3f9fe0e1d24b98886950d68efe81b1c76e21adf3",
+      "archive_sha256_verified": true,
+      "archive_url": "https://static.crates.io/crates/exr/exr-1.74.2.crate",
+      "repository": "https://github.com/johannesvollmer/exrs",
+      "source_commit": "719d14e57bc6be8db98d8ebdc0b0872bec3cfea7",
+      "path_in_vcs": "",
+      "cargo_vcs_info_sha256": "ce84042c8332624a4bc337c9f41dfe3772ccea73c78d1007b8abab0e63505629",
+      "introduced_on_targets": [
+        "aarch64-apple-darwin",
+        "x86_64-apple-darwin",
+        "x86_64-pc-windows-msvc",
+        "aarch64-pc-windows-msvc",
+        "x86_64-unknown-linux-gnu",
+        "aarch64-unknown-linux-gnu"
+      ],
+      "texts": [
+        {
+          "label": "LICENSE.md",
+          "sha256": "97e4d3aa7a9e8ac31979c16ca8bb2b628a9cb72c3362185ad2bf4ad77f43551f",
+          "byte_length": 3566,
+          "aggregate_byte_offset": 3513,
+          "origin": "checksum-verified-crate-archive",
+          "archive_path": "exr-1.74.2/LICENSE.md",
+          "source_url": "https://static.crates.io/crates/exr/exr-1.74.2.crate"
+        }
+      ]
+    },
+    {
+      "name": "bit_field",
+      "version": "0.10.3",
+      "role": "optional-feature-dependency-delta",
+      "declared_license": "Apache-2.0/MIT",
+      "selected_license": "MIT",
+      "cargo_lock_checksum": "1e4b40c7323adcfc0a41c4b88143ed58346ff65a288fc144329c5c45e05d70c6",
+      "archive_sha256_verified": true,
+      "archive_url": "https://static.crates.io/crates/bit_field/bit_field-0.10.3.crate",
+      "repository": "https://github.com/phil-opp/rust-bit-field",
+      "source_commit": "d2d5f13f8f1cac1c9d68db5021fd729d7f68d173",
+      "path_in_vcs": "",
+      "cargo_vcs_info_sha256": "573774b7807d4fa8a37ad54632555921e45b7b1a58f9029f7fac46013d16c9bd",
+      "introduced_on_targets": [
+        "aarch64-apple-darwin",
+        "x86_64-apple-darwin",
+        "x86_64-pc-windows-msvc",
+        "aarch64-pc-windows-msvc",
+        "x86_64-unknown-linux-gnu",
+        "aarch64-unknown-linux-gnu"
+      ],
+      "texts": [
+        {
+          "label": "LICENSE-MIT",
+          "sha256": "2346961b4509d62a2f1c9327f84c64958593d84d9c3d87dd8fee45e3de1a9a58",
+          "byte_length": 1084,
+          "aggregate_byte_offset": 7402,
+          "origin": "checksum-verified-crate-archive",
+          "archive_path": "bit_field-0.10.3/LICENSE-MIT",
+          "source_url": "https://static.crates.io/crates/bit_field/bit_field-0.10.3.crate"
+        }
+      ]
+    },
+    {
+      "name": "lebe",
+      "version": "0.5.3",
+      "role": "optional-feature-dependency-delta",
+      "declared_license": "BSD-3-Clause",
+      "selected_license": "BSD-3-Clause",
+      "cargo_lock_checksum": "7a79a3332a6609480d7d0c9eab957bca6b455b91bb84e66d19f5ff66294b85b8",
+      "archive_sha256_verified": true,
+      "archive_url": "https://static.crates.io/crates/lebe/lebe-0.5.3.crate",
+      "repository": "https://github.com/johannesvollmer/lebe",
+      "source_commit": "e2b5de9247fae60813646870d76295e9df6d02b8",
+      "path_in_vcs": "",
+      "cargo_vcs_info_sha256": "e9a720f62c05e8d492661f1e075512c8cc44e24c06437f68112c208a1ef697bb",
+      "introduced_on_targets": [
+        "aarch64-apple-darwin",
+        "x86_64-apple-darwin",
+        "x86_64-pc-windows-msvc",
+        "aarch64-pc-windows-msvc",
+        "x86_64-unknown-linux-gnu",
+        "aarch64-unknown-linux-gnu"
+      ],
+      "texts": [
+        {
+          "label": "LICENSE-BSD-3-Clause",
+          "sha256": "f1b2855ae21da69e0a02499e13f57f3be92db7abbbffe9a89f33e04e9e21ec81",
+          "byte_length": 1529,
+          "aggregate_byte_offset": 8818,
+          "origin": "checksum-verified-crate-archive",
+          "archive_path": "lebe-0.5.3/LICENSE-BSD-3-Clause",
+          "source_url": "https://static.crates.io/crates/lebe/lebe-0.5.3.crate"
+        }
+      ]
+    },
+    {
+      "name": "libm",
+      "version": "0.2.16",
+      "role": "optional-feature-dependency-delta",
+      "declared_license": "MIT",
+      "selected_license": "MIT",
+      "cargo_lock_checksum": "b6d2cec3eae94f9f509c767b45932f1ada8350c4bdb85af2fcab4a3c14807981",
+      "archive_sha256_verified": true,
+      "archive_url": "https://static.crates.io/crates/libm/libm-0.2.16.crate",
+      "repository": "https://github.com/rust-lang/compiler-builtins",
+      "source_commit": "dfd2203a4d6110820ad7bb65cafe1bf331a03a3d",
+      "path_in_vcs": "libm",
+      "cargo_vcs_info_sha256": "c4af01b6d9f9aeba821535464ed43af66b84c3aac39efc562d368dc0c600be74",
+      "introduced_on_targets": [
+        "aarch64-apple-darwin",
+        "x86_64-apple-darwin",
+        "x86_64-pc-windows-msvc",
+        "aarch64-pc-windows-msvc",
+        "x86_64-unknown-linux-gnu",
+        "aarch64-unknown-linux-gnu"
+      ],
+      "texts": [
+        {
+          "label": "LICENSE.txt",
+          "sha256": "3823dda7cf046602f4b4e77ec8e227863dc4736037cc85bb33d9f19febe16bb7",
+          "byte_length": 14088,
+          "aggregate_byte_offset": 10653,
+          "origin": "checksum-verified-crate-archive",
+          "archive_path": "libm-0.2.16/LICENSE.txt",
+          "source_url": "https://static.crates.io/crates/libm/libm-0.2.16.crate"
+        }
+      ]
+    },
+    {
+      "name": "num-complex",
+      "version": "0.4.6",
+      "role": "optional-feature-dependency-delta",
+      "declared_license": "MIT OR Apache-2.0",
+      "selected_license": "MIT",
+      "cargo_lock_checksum": "73f88a1307638156682bada9d7604135552957b7818057dcef22705b4d509495",
+      "archive_sha256_verified": true,
+      "archive_url": "https://static.crates.io/crates/num-complex/num-complex-0.4.6.crate",
+      "repository": "https://github.com/rust-num/num-complex",
+      "source_commit": "91fdc06356c0c868cb88b5a180859023c57e6e50",
+      "path_in_vcs": "",
+      "cargo_vcs_info_sha256": "3e14caa2d42b6625eea726f2ad2b3cbb8c024b074dc6e426195cfb9f9d834999",
+      "introduced_on_targets": [
+        "aarch64-apple-darwin",
+        "x86_64-apple-darwin",
+        "x86_64-pc-windows-msvc",
+        "aarch64-pc-windows-msvc",
+        "x86_64-unknown-linux-gnu",
+        "aarch64-unknown-linux-gnu"
+      ],
+      "texts": [
+        {
+          "label": "LICENSE-MIT",
+          "sha256": "6485b8ed310d3f0340bf1ad1f47645069ce4069dcc6bb46c7d5c6faf41de1fdb",
+          "byte_length": 1071,
+          "aggregate_byte_offset": 25067,
+          "origin": "checksum-verified-crate-archive",
+          "archive_path": "num-complex-0.4.6/LICENSE-MIT",
+          "source_url": "https://static.crates.io/crates/num-complex/num-complex-0.4.6.crate"
+        }
+      ]
+    },
+    {
+      "name": "pulp",
+      "version": "0.22.3",
+      "role": "optional-feature-dependency-delta",
+      "declared_license": "MIT",
+      "selected_license": "MIT",
+      "cargo_lock_checksum": "046aa45b989642ec2e4717c8e72d677b13edd831a4d3b6cf37d9a3e54912496a",
+      "archive_sha256_verified": true,
+      "archive_url": "https://static.crates.io/crates/pulp/pulp-0.22.3.crate",
+      "repository": "https://github.com/sarah-quinones/pulp/",
+      "source_commit": "5eb07fd7b68edf0a5e19f71737d315f72a510295",
+      "path_in_vcs": "pulp",
+      "cargo_vcs_info_sha256": "4b6715e3609e046e93b850d4b966ebf2323cf412c61aab80f4abcf3821e0673e",
+      "introduced_on_targets": [
+        "aarch64-apple-darwin",
+        "x86_64-apple-darwin",
+        "x86_64-pc-windows-msvc",
+        "aarch64-pc-windows-msvc",
+        "x86_64-unknown-linux-gnu",
+        "aarch64-unknown-linux-gnu"
+      ],
+      "texts": [
+        {
+          "label": "LICENSE",
+          "sha256": "d64f878c89bd5f1e5ada7e4aad57690b122727cf5229b7b87ea1980c188da1d9",
+          "byte_length": 1062,
+          "aggregate_byte_offset": 26440,
+          "origin": "checksum-verified-crate-archive",
+          "archive_path": "pulp-0.22.3/LICENSE",
+          "source_url": "https://static.crates.io/crates/pulp/pulp-0.22.3.crate"
+        }
+      ]
+    },
+    {
+      "name": "pulp-wasm-simd-flag",
+      "version": "0.1.1",
+      "role": "optional-feature-dependency-delta",
+      "declared_license": "MIT",
+      "selected_license": "MIT",
+      "cargo_lock_checksum": "1d8f70e07b9c3962945a74e59ca1c511bba65b6419468acc217c457d93f3c740",
+      "archive_sha256_verified": true,
+      "archive_url": "https://static.crates.io/crates/pulp-wasm-simd-flag/pulp-wasm-simd-flag-0.1.1.crate",
+      "repository": "https://github.com/sarah-quinones/pulp/",
+      "source_commit": "5eb07fd7b68edf0a5e19f71737d315f72a510295",
+      "path_in_vcs": "pulp-wasm-simd-flag",
+      "cargo_vcs_info_sha256": "30cddf6acb10cad6c23f1ef7ac18d435c25aa2f72c114c5d974fc39c04999d1c",
+      "introduced_on_targets": [
+        "aarch64-apple-darwin",
+        "x86_64-apple-darwin",
+        "x86_64-pc-windows-msvc",
+        "aarch64-pc-windows-msvc",
+        "x86_64-unknown-linux-gnu",
+        "aarch64-unknown-linux-gnu"
+      ],
+      "texts": [
+        {
+          "label": "LICENSE (repository root)",
+          "sha256": "d64f878c89bd5f1e5ada7e4aad57690b122727cf5229b7b87ea1980c188da1d9",
+          "byte_length": 1062,
+          "aggregate_byte_offset": 27836,
+          "origin": "pinned-upstream-file",
+          "source_url": "https://raw.githubusercontent.com/sarah-quinones/pulp/5eb07fd7b68edf0a5e19f71737d315f72a510295/LICENSE",
+          "repository_path": "LICENSE",
+          "upstream_git_blob_sha1": "84e3f4435bfe437a7e2a1db5f6d701ffd0638fae",
+          "upstream_git_tree_url": "https://api.github.com/repos/sarah-quinones/pulp/git/trees/5eb07fd7b68edf0a5e19f71737d315f72a510295",
+          "upstream_git_blob_verified": true
+        }
+      ]
+    },
+    {
+      "name": "raw-cpuid",
+      "version": "11.6.0",
+      "role": "optional-feature-dependency-delta",
+      "declared_license": "MIT",
+      "selected_license": "MIT",
+      "cargo_lock_checksum": "498cd0dc59d73224351ee52a95fee0f1a617a2eae0e7d9d720cc622c73a54186",
+      "archive_sha256_verified": true,
+      "archive_url": "https://static.crates.io/crates/raw-cpuid/raw-cpuid-11.6.0.crate",
+      "repository": "https://github.com/gz/rust-cpuid",
+      "source_commit": "aefadf7dd8d9e37ad94171d617158cad2133f3f7",
+      "path_in_vcs": "",
+      "cargo_vcs_info_sha256": "28d60e0505494134470fd1eb02680fc1d0d665e49cf55eae773f9c6dd8bab2f4",
+      "introduced_on_targets": [
+        "x86_64-apple-darwin",
+        "x86_64-pc-windows-msvc",
+        "x86_64-unknown-linux-gnu"
+      ],
+      "texts": [
+        {
+          "label": "LICENSE.md",
+          "sha256": "cdd45f4d0c552c3a51725728215919e0dedb1e1af250f130e7c2d60eef6721fe",
+          "byte_length": 1080,
+          "aggregate_byte_offset": 29208,
+          "origin": "checksum-verified-crate-archive",
+          "archive_path": "raw-cpuid-11.6.0/LICENSE.md",
+          "source_url": "https://static.crates.io/crates/raw-cpuid/raw-cpuid-11.6.0.crate"
+        }
+      ]
+    },
+    {
+      "name": "reborrow",
+      "version": "0.5.5",
+      "role": "optional-feature-dependency-delta",
+      "declared_license": "MIT",
+      "selected_license": "MIT",
+      "cargo_lock_checksum": "03251193000f4bd3b042892be858ee50e8b3719f2b08e5833ac4353724632430",
+      "archive_sha256_verified": true,
+      "archive_url": "https://static.crates.io/crates/reborrow/reborrow-0.5.5.crate",
+      "repository": "https://github.com/sarah-ek/reborrow/",
+      "source_commit": "6688d1cce5f1155791a30012a127b34119c4179b",
+      "path_in_vcs": "reborrow",
+      "cargo_vcs_info_sha256": "99eba669f3eb49bd93201436fdc0fa59046a33cb6ae16e1674731095229b2b85",
+      "introduced_on_targets": [
+        "aarch64-apple-darwin",
+        "x86_64-apple-darwin",
+        "x86_64-pc-windows-msvc",
+        "aarch64-pc-windows-msvc",
+        "x86_64-unknown-linux-gnu",
+        "aarch64-unknown-linux-gnu"
+      ],
+      "texts": [
+        {
+          "label": "LICENSE",
+          "sha256": "bf5a93d1014429b43e01c57d45bea928748fbf37d059306145a1a0a91aec2014",
+          "byte_length": 1062,
+          "aggregate_byte_offset": 30594,
+          "origin": "checksum-verified-crate-archive",
+          "archive_path": "reborrow-0.5.5/LICENSE",
+          "source_url": "https://static.crates.io/crates/reborrow/reborrow-0.5.5.crate"
+        }
+      ]
+    },
+    {
+      "name": "zune-inflate",
+      "version": "0.2.54",
+      "role": "optional-feature-dependency-delta",
+      "declared_license": "MIT OR Apache-2.0 OR Zlib",
+      "selected_license": "Zlib",
+      "cargo_lock_checksum": "73ab332fe2f6680068f3582b16a24f90ad7096d5d39b974d1c0aff0125116f02",
+      "archive_sha256_verified": true,
+      "archive_url": "https://static.crates.io/crates/zune-inflate/zune-inflate-0.2.54.crate",
+      "repository": "https://github.com/etemesi254/zune-image",
+      "source_commit": "69502ce83fdfecdd0beefd677e2abb3781b29d98",
+      "path_in_vcs": "zune-inflate",
+      "cargo_vcs_info_sha256": "1aa1fe13706244305622b464deb9216c9bd081ba93f6b43a97034b6d21db6273",
+      "introduced_on_targets": [
+        "aarch64-apple-darwin",
+        "x86_64-apple-darwin",
+        "x86_64-pc-windows-msvc",
+        "aarch64-pc-windows-msvc",
+        "x86_64-unknown-linux-gnu",
+        "aarch64-unknown-linux-gnu"
+      ],
+      "texts": [
+        {
+          "label": "src/lib.rs copyright and license header",
+          "sha256": "0c6d164b892a8c1ab08b6338eb9198198dc667286dc919381596f58620ee0115",
+          "byte_length": 159,
+          "aggregate_byte_offset": 32021,
+          "origin": "checksum-verified-crate-archive",
+          "archive_path": "zune-inflate-0.2.54/src/lib.rs",
+          "source_url": "https://static.crates.io/crates/zune-inflate/zune-inflate-0.2.54.crate",
+          "source_file_sha256": "ee2b5b58f48ee36835bd4e312a26dace36be39d1c4af956f4e2e04d0620667f9",
+          "source_byte_offset": 0,
+          "source_byte_length": 159
+        },
+        {
+          "label": "LICENSE.md",
+          "sha256": "e870d7fd7819a9f0453c62798cb52ae95d148a8c91dc2de1d983f997143c72de",
+          "byte_length": 384,
+          "aggregate_byte_offset": 32219,
+          "origin": "pinned-upstream-file",
+          "source_url": "https://raw.githubusercontent.com/etemesi254/zune-image/69502ce83fdfecdd0beefd677e2abb3781b29d98/LICENSE.md",
+          "repository_path": "LICENSE.md",
+          "upstream_git_blob_sha1": "ee9ce454f54f6dfd13d10218af4178f07497fde0",
+          "upstream_git_tree_url": "https://api.github.com/repos/etemesi254/zune-image/git/trees/69502ce83fdfecdd0beefd677e2abb3781b29d98",
+          "upstream_git_blob_verified": true
+        },
+        {
+          "label": "LICENSE-ZLIB",
+          "sha256": "7fa429541e55b1509909e058f2d21a37467e4958ec713b357f6e0cf9dc4ee352",
+          "byte_length": 818,
+          "aggregate_byte_offset": 32644,
+          "origin": "pinned-upstream-file",
+          "source_url": "https://raw.githubusercontent.com/etemesi254/zune-image/69502ce83fdfecdd0beefd677e2abb3781b29d98/LICENSE-ZLIB",
+          "repository_path": "LICENSE-ZLIB",
+          "upstream_git_blob_sha1": "582ec653390adaf4893b71f3e113a6ac4d392463",
+          "upstream_git_tree_url": "https://api.github.com/repos/etemesi254/zune-image/git/trees/69502ce83fdfecdd0beefd677e2abb3781b29d98",
+          "upstream_git_blob_verified": true
+        }
+      ]
+    }
+  ]
+}
