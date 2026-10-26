@@ -84,7 +84,29 @@ pub fn toolbar(
     ui.add_enabled_ui(context.document_open, |ui| {
         crate::shapes::picker(ui, state, &mut actions);
         crate::selection::options(ui, state);
-        options(ui, state, &mut actions);
+        if state.tool == paintcraft_tools::Tool::Brush
+            && let Some((name, (width, height))) = &workspace.sampled_brush
+        {
+            ui.horizontal_wrapped(|ui| {
+                ui.label(t!(ui.ctx(), "Selected brush: { $name }", name = name));
+                ui.label(t!(
+                    ui.ctx(),
+                    "Tip size: { $width } × { $height } px",
+                    width = *width,
+                    height = *height
+                ));
+                ui.add(
+                    egui::Slider::new(&mut state.options.brush_opacity, 0..=100)
+                        .text(t!(ui.ctx(), "Brush opacity"))
+                        .suffix("%"),
+                );
+                if ui.button(t!(ui.ctx(), "Brush resources…")).clicked() {
+                    actions.push(Action::BrushResources);
+                }
+            });
+        } else {
+            options(ui, state, &mut actions);
+        }
         paintcraft_ui::chrome::picker_options(ui, state);
     });
     actions

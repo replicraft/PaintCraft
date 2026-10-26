@@ -38,6 +38,8 @@ pub(crate) use strokes::PreviewPreparation;
 mod residency;
 #[path = "controller/retry.rs"]
 mod retry;
+#[path = "controller/sampled_brush.rs"]
+mod sampled_brush;
 #[path = "controller/strokes.rs"]
 mod strokes;
 #[path = "controller/text.rs"]
@@ -78,6 +80,7 @@ pub struct Editor {
     session: Session,
     canvas_size_edit: Option<(u32, u32)>,
     tools: ToolState,
+    pub(crate) adopted_brush: Option<paintcraft_formats::abr::adoption::AdoptedPreset>,
     floating_source: Option<floating::Source>,
     image_paste: Option<image_paste::Placing>,
     floating_commit_on_release: bool,
@@ -148,6 +151,7 @@ impl Editor {
             canvas_size_edit: None,
             tools: ToolState::default(),
             floating_source: None,
+            adopted_brush: None,
             image_paste: None,
             floating_commit_on_release: true,
             text_renderer: None,
@@ -552,6 +556,8 @@ impl Editor {
             Action::ClearCanvas { color } => self.clear_canvas(color),
             Action::FlattenImage => self.flatten_image(),
             Action::Stroke(stroke) => self.stroke(&stroke),
+            Action::ToolFailure(message) => self.status = message.into(),
+            Action::SampledStroke(stroke) => self.sampled_stroke(stroke),
             Action::Fill {
                 layer,
                 at,

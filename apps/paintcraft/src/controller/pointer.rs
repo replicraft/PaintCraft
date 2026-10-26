@@ -57,13 +57,22 @@ impl Editor {
         ) {
             (Tool::Select | Tool::ColorPicker, t) => t.unwrap_or_else(Uuid::nil),
             (_, Some(layer)) => layer,
+            (Tool::Brush, None)
+                if self.tools.sampled_tip.is_some() && self.document().layers.is_empty() =>
+            {
+                Uuid::nil()
+            }
             (_, None) => {
                 self.status = "No editing target: add or choose a layer".into();
                 return;
             }
         };
         if !matches!(self.tool, Tool::Select | Tool::ColorPicker)
-            && !self.document().layers[&layer].visible
+            && self
+                .document()
+                .layers
+                .get(&layer)
+                .is_some_and(|layer| !layer.visible)
         {
             self.status = "The target layer is hidden; show it or choose another layer".into();
             return;

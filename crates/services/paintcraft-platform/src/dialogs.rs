@@ -26,6 +26,7 @@ pub enum Kind {
     ImportPalette,
     ExportPalette,
     ImportShape,
+    ImportBrush,
     ExportShape,
     ImportSvgFont,
 }
@@ -102,6 +103,10 @@ impl NativeDialogs {
                 name: "Icon and cursor export".into(),
                 extensions: vec!["ico".into(), "cur".into()],
             }],
+            Kind::ImportBrush => vec![Filter {
+                name: "Adobe brushes".into(),
+                extensions: vec!["abr".into()],
+            }],
             Kind::ImportShape | Kind::ExportShape => vec![Filter {
                 name: "Adobe custom shapes".into(),
                 extensions: vec!["csh".into()],
@@ -173,6 +178,7 @@ impl NativeDialogs {
             Kind::ExportIcons => dialog.set_title(label("Icon and cursor export")),
             Kind::ImportPalette => dialog.set_title(label("Import palette")),
             Kind::ExportPalette => dialog.set_title(label("Export palette")),
+            Kind::ImportBrush => dialog.set_title(label("Import brushes")),
             Kind::ImportShape => dialog.set_title(label("Import shapes")),
             Kind::ExportShape => dialog.set_title(label("Export shapes")),
             Kind::ImportSvgFont => dialog.set_title(label("Add font files")),
@@ -190,6 +196,7 @@ impl NativeDialogs {
                         | Kind::Import
                         | Kind::InspectRecovery
                         | Kind::ImportPalette
+                        | Kind::ImportBrush
                         | Kind::ImportShape
                         | Kind::ImportSvgFont
                 ) {
@@ -207,6 +214,7 @@ impl NativeDialogs {
                         | Kind::Import
                         | Kind::InspectRecovery
                         | Kind::ImportPalette
+                        | Kind::ImportBrush
                         | Kind::ImportShape
                         | Kind::ImportSvgFont
                 )

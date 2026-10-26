@@ -2,6 +2,8 @@
 mod appearance;
 #[path = "app/auto_scroll.rs"]
 mod auto_scroll;
+#[path = "app/brushes.rs"]
+mod brushes;
 #[path = "app/canvas.rs"]
 mod canvas;
 #[path = "app/canvas_settings.rs"]
@@ -165,6 +167,7 @@ enum Confirm {
     IconExport,
     Palettes,
     Shapes,
+    Brushes,
     LayerProperties(layers::PropertiesDraft),
     DiscardForNew,
     DiscardForOpen(PathBuf),
@@ -248,6 +251,7 @@ pub struct App {
     icon_export: Option<icon_export::State>,
     palettes: palettes::State,
     shapes: shapes::State,
+    brushes: brushes::State,
     dialog_owner: Option<Uuid>,
     dialog_frontend: Option<paintcraft_formats::registry::Frontend>,
     dialog_source: Option<(Arc<paintcraft_document::Document>, (Uuid, u64))>,
@@ -388,6 +392,7 @@ impl App {
             icon_export: None,
             palettes: Default::default(),
             shapes: Default::default(),
+            brushes: Default::default(),
             dialog_owner: None,
             dialog_frontend: None,
             dialog_source: None,

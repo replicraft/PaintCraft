@@ -8,6 +8,23 @@ use paintcraft_tools::{BlendMode, Stroke, commands::stroke_operations};
 mod tests;
 
 impl Editor {
+    pub fn sampled_brush_name(&self) -> Option<&str> {
+        self.tools.sampled_name.as_deref()
+    }
+    pub fn set_sampled_source(&mut self, id: Option<Uuid>) {
+        self.tools.sampled_source = id;
+    }
+    pub fn set_sampled_brush_name(&mut self, name: Option<String>) {
+        self.tools.sampled_name = name;
+    }
+    pub fn use_sampled_tip(
+        &mut self,
+        tip: Option<(paintcraft_raster::sampled_brush::SampledTip, u32)>,
+    ) {
+        self.cancel_gesture();
+        self.tools.sampled_tip = tip;
+        self.select_tool(Tool::Brush);
+    }
     pub(super) fn contour(&mut self, contour: &paintcraft_tools::Contour) {
         if self.editing.is_some() {
             self.start_tool_plan(Preview::Contour(contour.clone()), "Shape");
@@ -33,6 +50,7 @@ impl Editor {
             preview,
             ticket: self.session.ticket(),
             canvas: self.document().canvas_rect(),
+            empty: self.document().layers.is_empty(),
             fonts: self.text_renderer.clone(),
             paste: self.capture_image_paste(),
         }
@@ -73,6 +91,7 @@ pub(crate) struct PreviewPreparation {
     preview: Option<Arc<Preview>>,
     ticket: paintcraft_editor::session::Ticket,
     canvas: paintcraft_core::types::Rect,
+    empty: bool,
     fonts: Option<crate::text::Shared>,
     paste: Option<super::image_paste::Captured>,
 }
@@ -113,6 +132,24 @@ impl PreviewPreparation {
             )?],
             Some(Preview::Contour(contour)) => vec![paintcraft_tools::commands::contour(contour)],
             Some(Preview::Path(stroke)) => stroke_operations(stroke, &check)?,
+            Some(Preview::SampledStroke(stroke)) => {
+                let resolved = stroke.preview(
+                    self.canvas,
+                    &paintcraft_core::types::resources::SharedBudget::new(256 << 20),
+                    &check,
+                )?;
+                if resolved.coverage().is_empty() {
+                    return Ok(None);
+                }
+                if self.empty {
+                    resolved.operations_with_first_layer(
+                        (self.canvas.width() as u32, self.canvas.height() as u32),
+                        &check,
+                    )?
+                } else {
+                    resolved.operations(&check)?
+                }
+            }
             Some(Preview::Paths(strokes)) => {
                 let mut operations = Vec::new();
                 for stroke in strokes {

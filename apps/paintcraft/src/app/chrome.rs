@@ -112,6 +112,12 @@ impl App {
             primary: self.editor.color,
             secondary: self.editor.secondary,
         };
+        self.studio.sampled_brush = self.editor.adopted_brush.as_ref().map(|adopted| {
+            (
+                self.editor.sampled_brush_name().unwrap_or("").into(),
+                (adopted.tip().width(), adopted.tip().height()),
+            )
+        });
         let action_context = self.action_context();
         self.classic.custom_colors = self.settings.custom_colors;
         let text_before = self.settings.text.clone();
@@ -245,6 +251,7 @@ impl App {
                 Chrome::ExportImage(format) => self.export_image_requested(ctx, format),
                 Chrome::ExportIcons => self.begin_icon_export(),
                 Chrome::Palettes => self.begin_palettes(),
+                Chrome::BrushResources => self.begin_brushes(),
                 Chrome::ShapeResources => self.begin_shapes(),
                 Chrome::Undo => self.request(ctx, code::UNDO, Action::Undo),
                 Chrome::Redo => self.request(ctx, code::REDO, Action::Redo),
@@ -361,6 +368,10 @@ impl App {
     }
 
     pub(super) fn confirm_dialog(&mut self, ui: &mut egui::Ui) {
+        if self.confirm == Some(Confirm::Brushes) {
+            self.brush_dialog(ui.ctx());
+            return;
+        }
         if self.confirm == Some(Confirm::Shapes) {
             self.shape_dialog(ui.ctx());
             return;
@@ -418,7 +429,7 @@ impl App {
             return;
         }
         let (title, text, go) = match &confirm {
-            Confirm::Shapes | Confirm::Palettes | Confirm::PasteLayer | Confirm::ImportLosses | Confirm::RecentFiles | Confirm::ExportOptions(_) | Confirm::IconExport | Confirm::Settings(_) | Confirm::SwitchInterface(_) | Confirm::Colors(_) | Confirm::Canvas(_) | Confirm::ResizeSkew(_) | Confirm::LayerProperties(_) => unreachable!("properties handled above"),
+            Confirm::Brushes | Confirm::Shapes | Confirm::Palettes | Confirm::PasteLayer | Confirm::ImportLosses | Confirm::RecentFiles | Confirm::ExportOptions(_) | Confirm::IconExport | Confirm::Settings(_) | Confirm::SwitchInterface(_) | Confirm::Colors(_) | Confirm::Canvas(_) | Confirm::ResizeSkew(_) | Confirm::LayerProperties(_) => unreachable!("properties handled above"),
             Confirm::DiscardForNew
             | Confirm::DiscardForOpen(_)
             | Confirm::DiscardForRecovery(_)
@@ -510,6 +521,7 @@ impl App {
                     | Confirm::ImportLosses
                     | Confirm::RecentFiles
                     | Confirm::ExportOptions(_)
+                    | Confirm::Brushes
                     | Confirm::Shapes
                     | Confirm::Palettes
                     | Confirm::IconExport

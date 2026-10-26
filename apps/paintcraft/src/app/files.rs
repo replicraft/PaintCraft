@@ -81,6 +81,10 @@ impl App {
         ctx: &egui::Context,
         completion: paintcraft_platform::dialogs::Completion,
     ) {
+        if completion.kind == Kind::ImportBrush {
+            self.complete_brush_picker(ctx, completion.path);
+            return;
+        }
         if completion.kind == Kind::ImportSvgFont {
             self.complete_svg_font_picker(ctx, completion.path);
             return;
@@ -190,6 +194,7 @@ impl App {
             ),
             Kind::InspectRecovery => unreachable!("inspection completion handled separately"),
             Kind::ExportIcons => unreachable!("icon completion handled separately"),
+            Kind::ImportBrush => unreachable!("brush completion handled separately"),
             Kind::ImportSvgFont => unreachable!("SVG font completion handled separately"),
             Kind::ImportShape | Kind::ExportShape => {
                 unreachable!("shape completion handled separately")
