@@ -73,6 +73,12 @@ pub fn run(a: Options, json: bool) -> Reply {
                         "jxr.rgb8.import",
                         "jpegxr-pure-rs/native-worker",
                     ),
+                    (
+                        Family::Heif,
+                        codec_worker::NATIVE_HEIF_IMPORT_VARIANT,
+                        "heif.srgb8.import",
+                        "heic-decoder/native-worker",
+                    ),
                 ] {
                     let mut request = Request::new(
                         Frontend::Studio,

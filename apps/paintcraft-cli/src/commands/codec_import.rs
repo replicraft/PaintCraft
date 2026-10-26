@@ -1,4 +1,4 @@
-//! Native composition for exact Studio JXL/JXR import variants and private diagnostics.
+//! Native composition for exact Studio JXL/JXR/HEIF import variants and private diagnostics.
 use super::*;
 use paintcraft_core::types::resources::ResourceLease;
 use paintcraft_formats::codec_worker as wire;
@@ -33,10 +33,27 @@ struct Prepared {
     owner: wire::Owner,
     cancel: paintcraft_runtime::Cancellation,
     assessment: Option<paintcraft_formats::jxr::ImportAssessment>,
+    heif_assessment: Option<paintcraft_formats::heif::ImportAssessment>,
     // Last field: document and acquired resources drop before the runtime charge.
     _lease: ResourceLease,
 }
 impl Prepared {
+    fn losses(&self) -> Vec<String> {
+        let losses = self
+            .assessment
+            .as_ref()
+            .map(|value| value.losses())
+            .or_else(|| self.heif_assessment.as_ref().map(|value| value.losses()))
+            .unwrap_or(&[]);
+        losses.iter().map(|code| (*code).to_owned()).collect()
+    }
+    fn source_assessment(&self) -> Value {
+        self.assessment
+            .as_ref()
+            .map(|value| value.to_value())
+            .or_else(|| self.heif_assessment.as_ref().map(|value| value.to_value()))
+            .unwrap_or(Value::Null)
+    }
     fn check_owner(&self, owner: wire::Owner) -> Result<()> {
         self.cancel.check()?;
         if self.owner != owner {
@@ -82,16 +99,7 @@ impl Prepared {
             operation: "save-as",
             source_state: self.document.state_id,
             source_sha256: Some(hex(&self.sha)),
-            losses_acknowledged: self
-                .assessment
-                .as_ref()
-                .map_or_else(Vec::new, |assessment| {
-                    assessment
-                        .losses()
-                        .iter()
-                        .map(|code| (*code).to_owned())
-                        .collect()
-                }),
+            losses_acknowledged: self.losses(),
             destination: &output.output,
         };
         let (receipt, ok, summary) = finish_output(&output.output, &ctx, outcome);
@@ -99,7 +107,9 @@ impl Prepared {
             engine: Some(Value::object([
                 (
                     "decoder_profile",
-                    Value::str(if self.assessment.is_some() {
+                    Value::str(if self.heif_assessment.is_some() {
+                        wire::NATIVE_HEIF_IMPORT_VARIANT
+                    } else if self.assessment.is_some() {
                         wire::NATIVE_JXR_IMPORT_VARIANT
                     } else {
                         wire::NATIVE_JXL_IMPORT_VARIANT
@@ -107,13 +117,16 @@ impl Prepared {
                 ),
                 ("conversion", Value::str("new-pcnd-copy")),
                 ("reader_route", Value::str(reader_route)),
-                ("discarded_metadata", Value::Bool(self.assessment.is_some())),
                 (
-                    "source_assessment",
-                    self.assessment
-                        .as_ref()
-                        .map_or(Value::Null, |assessment| assessment.to_value()),
+                    "discarded_metadata",
+                    Value::Bool(
+                        self.assessment.is_some()
+                            || self.heif_assessment.as_ref().is_some_and(|value| {
+                                value.losses().contains(&"heif-item-names-not-retained")
+                            }),
+                    ),
                 ),
+                ("source_assessment", self.source_assessment()),
             ])),
             receipt,
             ok,
@@ -163,6 +176,7 @@ fn prepare(
         owner,
         cancel,
         assessment: adopted.jxr_assessment,
+        heif_assessment: adopted.heif_assessment,
         _lease: lease,
     })
 }
@@ -181,10 +195,11 @@ fn convert(
     {
         Some(paintcraft_formats::registry::Family::Jxl) => wire::Codec::JxlRgba8,
         Some(paintcraft_formats::registry::Family::Jxr) => wire::Codec::JxrRgb8,
+        Some(paintcraft_formats::registry::Family::Heif) => wire::Codec::HeifSrgb8,
         _ => {
             return Err(Error::new(
                 ErrorCode::CapabilityUnsupported,
-                "Native codec import requires a qualified JXL/JXR filename",
+                "Native codec import requires a qualified JXL/JXR/HEIF filename",
             ));
         }
     };
@@ -277,9 +292,13 @@ pub fn run(options: Options, json: bool) -> Reply {
                 &options.output,
                 options.expect_input_sha256,
                 "internal-qualification",
-                &options
-                    .losses
-                    .allowed_for(paintcraft_formats::jxr::KNOWN_IMPORT_LOSSES)?,
+                &options.losses.allowed_for(
+                    &[
+                        paintcraft_formats::jxr::KNOWN_IMPORT_LOSSES,
+                        paintcraft_formats::heif::KNOWN_IMPORT_LOSSES,
+                    ]
+                    .concat(),
+                )?,
             )
         })(),
     )

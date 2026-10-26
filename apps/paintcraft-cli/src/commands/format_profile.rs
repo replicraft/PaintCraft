@@ -83,10 +83,11 @@ impl Options {
         let variant = match family {
             Family::Jxl => paintcraft_formats::codec_worker::NATIVE_JXL_IMPORT_VARIANT,
             Family::Jxr => paintcraft_formats::codec_worker::NATIVE_JXR_IMPORT_VARIANT,
+            Family::Heif => paintcraft_formats::codec_worker::NATIVE_HEIF_IMPORT_VARIANT,
             _ => {
                 return Err(Error::new(
                     ErrorCode::CapabilityUnsupported,
-                    "Native codec input requires JXL/JXR",
+                    "Native codec input requires JXL/JXR/HEIF",
                 ));
             }
         };
@@ -101,7 +102,7 @@ impl Options {
         match registry::admission(request) {
             registry::Decision::Allowed => Ok(()),
             registry::Decision::AllowedWithPreflight(registry::Reason::ConvertRequiresConsent)
-                if family == Family::Jxr =>
+                if matches!(family, Family::Jxr | Family::Heif) =>
             {
                 Ok(())
             }

@@ -55,6 +55,7 @@ pub fn run(a: Options, json: bool) -> Reply {
                 .chain(paintcraft_formats::icons::KNOWN_IMPORT_LOSSES.iter())
                 .chain(paintcraft_formats::icns::KNOWN_IMPORT_LOSSES.iter())
                 .chain(paintcraft_formats::jxr::KNOWN_IMPORT_LOSSES.iter())
+                .chain(paintcraft_formats::heif::KNOWN_IMPORT_LOSSES.iter())
                 .chain(paintcraft_formats::svg::KNOWN_LOSSES.iter())
                 .copied()
                 .collect();
@@ -70,6 +71,7 @@ pub fn run(a: Options, json: bool) -> Reply {
                             family,
                             paintcraft_formats::registry::Family::Jxl
                                 | paintcraft_formats::registry::Family::Jxr
+                                | paintcraft_formats::registry::Family::Heif
                         )
                     })
             {
