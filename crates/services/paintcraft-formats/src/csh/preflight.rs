@@ -120,9 +120,10 @@ pub(super) fn inspect(bytes: &[u8], check: &dyn Fn() -> Result<()>) -> Result<Ve
                         3 => Some(Operation::Intersect),
                         _ => return Err(invalid("unknown CSH Boolean operation")),
                     };
-                    let nonzero_fill = match body.u16()? {
-                        0 => false,
-                        2 => true,
+                    let fill_rule = match body.u16()? {
+                        0 => PathFillRule::EvenOddLegacy,
+                        1 => PathFillRule::EvenOdd,
+                        2 => PathFillRule::NonZero,
                         _ => return Err(invalid("unsupported CSH path flags")),
                     };
                     body.zeros(18)?;
@@ -132,7 +133,7 @@ pub(super) fn inspect(bytes: &[u8], check: &dyn Fn() -> Result<()>) -> Result<Ve
                         open,
                         knots,
                         operation,
-                        nonzero_fill,
+                        fill_rule,
                     }
                 }
                 1 | 2 | 4 | 5 => {

@@ -85,7 +85,7 @@ fn record_bytes(record: &Record) -> [u8; 26] {
             open,
             knots,
             operation,
-            nonzero_fill,
+            fill_rule,
         } => {
             result[2..4].copy_from_slice(&knots.to_be_bytes());
             let operation: i16 = match operation {
@@ -96,7 +96,12 @@ fn record_bytes(record: &Record) -> [u8; 26] {
                 Some(Operation::Intersect) => 3,
             };
             result[4..6].copy_from_slice(&operation.to_be_bytes());
-            result[6..8].copy_from_slice(&(if *nonzero_fill { 2u16 } else { 0 }).to_be_bytes());
+            let flags: u16 = match fill_rule {
+                PathFillRule::EvenOddLegacy => 0,
+                PathFillRule::EvenOdd => 1,
+                PathFillRule::NonZero => 2,
+            };
+            result[6..8].copy_from_slice(&flags.to_be_bytes());
             if *open { 3 } else { 0 }
         }
         Record::Knot {

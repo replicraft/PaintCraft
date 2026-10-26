@@ -25,6 +25,14 @@ pub enum Operation {
     Intersect,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PathFillRule {
+    /// Older files use zero for even/odd; retain it without canonicalization.
+    EvenOddLegacy,
+    EvenOdd,
+    NonZero,
+}
+
 /// Ordered records retain path topology and the document-level fill records
 /// that the selected backend otherwise omits from its public representation.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -33,7 +41,7 @@ pub enum Record {
         open: bool,
         knots: u16,
         operation: Option<Operation>,
-        nonzero_fill: bool,
+        fill_rule: PathFillRule,
     },
     Knot {
         open: bool,

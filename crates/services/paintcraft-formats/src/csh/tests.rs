@@ -74,7 +74,7 @@ fn retains_unicode_bounds_fill_records_and_exact_signed_coordinates() {
             open: false,
             knots: 2,
             operation: Some(Operation::Combine),
-            nonzero_fill: true,
+            fill_rule: PathFillRule::NonZero,
         }
     );
     assert_eq!(
@@ -257,12 +257,12 @@ fn constructed_resources_retain_boolean_operations_extreme_bounds_and_bits() {
         for record in &mut shape.records {
             if let Record::Subpath {
                 operation: value,
-                nonzero_fill,
+                fill_rule,
                 ..
             } = record
             {
                 *value = operation;
-                *nonzero_fill = false;
+                *fill_rule = PathFillRule::EvenOdd;
             }
         }
         shapes.push(shape);
@@ -273,6 +273,24 @@ fn constructed_resources_retain_boolean_operations_extreme_bounds_and_bits() {
         decode(&encode(&resource, &|| Ok(())).unwrap(), &|| Ok(())).unwrap(),
         resource
     );
+}
+
+#[test]
+fn both_even_odd_wire_flags_and_nonzero_fill_roundtrip_without_canonicalization() {
+    for (flag, expected) in [
+        (0u16, PathFillRule::EvenOddLegacy),
+        (1, PathFillRule::EvenOdd),
+        (2, PathFillRule::NonZero),
+    ] {
+        let mut path = subpath(false, 0);
+        path[6..8].copy_from_slice(&flag.to_be_bytes());
+        let library = decode(&file(&[path.clone()]), &|| Ok(())).unwrap();
+        assert!(
+            matches!(library.shapes()[0].records[0], Record::Subpath { fill_rule, .. } if fill_rule == expected)
+        );
+        let output = encode(&library, &|| Ok(())).unwrap();
+        assert_eq!(&output[output.len() - 26..], path);
+    }
 }
 
 #[test]

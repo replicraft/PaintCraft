@@ -18,7 +18,7 @@ pub(super) fn shape(
                 open,
                 knots: count,
                 operation,
-                nonzero_fill,
+                fill_rule,
             } => {
                 let path = paths.next().ok_or_else(fail)?;
                 let expected = match operation {
@@ -32,7 +32,7 @@ pub(super) fn shape(
                     || path.operation != expected
                     || path.knots.len() != usize::from(*count)
                     || path.fill_rule
-                        != if *nonzero_fill {
+                        != if *fill_rule == PathFillRule::NonZero {
                             FillRule::NonZero
                         } else {
                             FillRule::EvenOdd
