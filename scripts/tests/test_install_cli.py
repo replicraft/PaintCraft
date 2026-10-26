@@ -320,11 +320,16 @@ class InstallTests(unittest.TestCase):
             temporary.mkdir()
             metadata = subprocess.CompletedProcess([], 0, stdout=json.dumps({"target_directory": str(target_directory)}))
             with patch.object(install.subprocess, "run", return_value=metadata) as run:
+                if contract == "v5":
+                    with self.assertRaisesRegex(ValueError, "complete V6"):
+                        install.source_archive(temporary, self.target)
+                    self.assertEqual(list(temporary.iterdir()), [])
+                    continue
                 archive, sums, version = install.source_archive(temporary, self.target)
             command = run.call_args_list[0].args[0]
             self.assertIn("paintcraft-cli", command)
             self.assertIn("paintcraft-codec-worker", command)
-            self.assertIn("paintcraft-codec-worker/avif-codec", command)
+            self.assertIn("paintcraft-codec-worker/avif-sdr-codec", command)
             self.assertIn("--locked", command)
             self.assertEqual(version, self.version)
             destination = self.install(archive, sums, self.root / ("source-prefix-" + contract))

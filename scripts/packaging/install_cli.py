@@ -244,13 +244,13 @@ def source_archive(temporary, target):
     version = release.workspace_version()
     subprocess.run(["cargo", "build", "--locked", "--release", "--target", target,
                     "-p", "paintcraft-cli", "-p", "paintcraft-codec-worker",
-                    "--features", "paintcraft-codec-worker/avif-codec"], cwd=release.ROOT, check=True)
+                    "--features", "paintcraft-codec-worker/avif-sdr-codec"], cwd=release.ROOT, check=True)
     result = subprocess.run(["cargo", "metadata", "--format-version", "1", "--no-deps", "--locked"],
                             cwd=release.ROOT, check=True, capture_output=True, text=True)
     binary = Path(json.loads(result.stdout)["target_directory"]) / target / "release" / executable(target)
     profile, _ = codec_worker.verify_build_record(binary.parent / codec_worker.filename(target), version)
-    if profile not in (codec_worker.AVIF_PROFILE, codec_worker.AVIF_SDR_PROFILE):
-        raise ValueError("Source install requires the AVIF-enabled helper")
+    if profile != codec_worker.AVIF_SDR_PROFILE:
+        raise ValueError("Source install requires the complete V6 AVIF helper")
     archive = package_cli.package(version, target, binary, temporary)
     sums = temporary / "SHA256SUMS.txt"
     sums.write_bytes(release.checksum_line(archive))

@@ -161,7 +161,7 @@ class CodecWorkerTests(unittest.TestCase):
     def test_cli_and_desktop_workflow_share_one_helper_cargo_build(self):
         workflow = (release.ROOT / ".github/workflows/release.yml").read_text()
         self.assertIn("-p paintcraft -p paintcraft-cli -p paintcraft-codec-worker --target", workflow)
-        self.assertIn("--features paintcraft-codec-worker/avif-codec", workflow)
+        self.assertIn("--features paintcraft-codec-worker/avif-sdr-codec", workflow)
         self.assertIn("meson==1.12.1 ninja==1.13.2", workflow)
         self.assertIn("--test installed_codec_worker -- --include-ignored", workflow)
 
