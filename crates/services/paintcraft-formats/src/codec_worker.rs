@@ -25,6 +25,34 @@ pub const RESPONSE_HEADER: usize = 136;
 pub const OUTPUT_BYTES_MAX: usize = PIXELS_MAX as usize * 4 + RESPONSE_HEADER + 4096 + 64;
 pub const REQUEST_MAGIC: &[u8; 8] = b"PCDEC002";
 pub const PROTOCOL_VERSION: u16 = 2;
+pub const NATIVE_PROFILE: &str = "internal-heif-gray8-jxl-rgba8";
+pub const BUILD_RECORD_MARKER: &[u8] = b"PAINTCRAFT_CODEC_WORKER_BUILD_V1\0";
+/// Expected native build bytes, provided to the OS verifier at composition.
+pub fn native_build_record(version: &str) -> Result<Vec<u8>> {
+    if version.is_empty() || version.len() > 64 || !version.is_ascii() {
+        return Err(Error::new(
+            ErrorCode::InputSchema,
+            "Invalid codec application version",
+        ));
+    }
+    let mut bytes = BUILD_RECORD_MARKER.to_vec();
+    bytes.extend(version.as_bytes());
+    bytes.push(0);
+    bytes.extend(REQUEST_MAGIC);
+    bytes.push(0);
+    bytes.extend(format!("HEAP{HEAP_BYTES}").as_bytes());
+    bytes.extend(b"\0END_CODEC_WORKER_BUILD\0");
+    Ok(bytes)
+}
+/// Reserve the fixed native child ceiling and parent buffers before reading the
+/// pre-admitted source. Verification/source IO slack is added by the host.
+pub fn reservation_bytes_for_input(length: u64) -> Result<u64> {
+    if length == 0 || length > INPUT_BYTES_MAX as u64 {
+        return Err(resource("worker source allowance"));
+    }
+    Ok(HEAP_BYTES + length + OUTPUT_BYTES_MAX as u64 + 65536)
+}
+
 const RESPONSE_MAGIC: &[u8; 8] = b"PCPIX002";
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[repr(u8)]
