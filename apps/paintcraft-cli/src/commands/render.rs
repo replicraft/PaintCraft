@@ -7,7 +7,7 @@ pub struct Options {
     profile: super::format_profile::Options,
     #[arg(long)]
     expect_input_sha256: Option<String>,
-    #[arg(long, value_parser = ["png", "bmp", "jpeg", "jpg", "gif", "tiff", "tif", "tga", "webp", "jxl", "dds", "avif", "qoi", "pam", "ff", "pcx"])]
+    #[arg(long, value_parser = ["png", "bmp", "jpeg", "jpg", "gif", "tiff", "tif", "tga", "webp", "jxl", "dds", "avif", "qoi", "pam", "ff", "pcx", "msp"])]
     format: Option<String>,
     #[arg(long, default_value_t = 90, value_parser = clap::value_parser!(u8).range(1..=100))]
     quality: u8,
@@ -39,9 +39,10 @@ fn output_format(format: Option<&str>, dest: &Path) -> Result<ImageFormat> {
         "pam" => Ok(ImageFormat::Pnm),
         "ff" => Ok(ImageFormat::Farbfeld),
         "pcx" => Ok(ImageFormat::Pcx),
+        "msp" => Ok(ImageFormat::Msp),
         _ => Err(Error::new(
             ErrorCode::InputSchema,
-            "--format must be png, bmp, jpeg, gif, tiff, tga, webp, jxl, dds, avif, qoi, pam, ff or pcx",
+            "--format must be png, bmp, jpeg, gif, tiff, tga, webp, jxl, dds, avif, qoi, pam, ff, pcx or msp",
         )),
     });
     match by_name {

@@ -55,6 +55,45 @@ fn read_bounded(path: &Path, limit: u64, what: &str) -> Result<(Vec<u8>, String)
     Ok((bytes, sha))
 }
 
+/// Acquire a regular native resource and retain the same opened identity used
+/// for decoding. Scoped users can keep this across conversion and output guards.
+fn read_captured(
+    path: &Path,
+    limit: u64,
+    what: &str,
+) -> Result<(Vec<u8>, String, paintcraft_platform::source::SourceIdentity)> {
+    if !path.metadata().map_err(|e| storage(what, &e))?.is_file() {
+        return Err(Error::new(
+            ErrorCode::StorageFailed,
+            "resource source must be a regular file",
+        ));
+    }
+    let identity = paintcraft_platform::source::SourceIdentity::from_file(
+        File::open(path).map_err(|e| storage(what, &e))?,
+    )?;
+    let metadata = identity.file().metadata().map_err(|e| storage(what, &e))?;
+    if !metadata.is_file() || metadata.len() > limit {
+        return Err(Error::new(
+            ErrorCode::ResourceLimit,
+            "resource source exceeds input allowance",
+        ));
+    }
+    let mut bytes = Vec::new();
+    identity
+        .file()
+        .take(limit + 1)
+        .read_to_end(&mut bytes)
+        .map_err(|e| storage(what, &e))?;
+    if bytes.len() as u64 > limit {
+        return Err(Error::new(
+            ErrorCode::ResourceLimit,
+            "resource source exceeds input allowance",
+        ));
+    }
+    let sha = hex(&Sha256::digest(&bytes));
+    Ok((bytes, sha, identity))
+}
+
 /// `--expect-input-sha256` guards the exact acquired bytes before any parsing.
 fn guard(expected: Option<&str>, actual: &str) -> Result<()> {
     guard_named(expected, actual, "--expect-input-sha256")

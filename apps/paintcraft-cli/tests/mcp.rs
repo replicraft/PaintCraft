@@ -308,3 +308,6 @@ mod shapes;
 
 #[path = "mcp/brushes.rs"]
 mod brushes;
+
+#[path = "mcp/msp.rs"]
+mod msp;

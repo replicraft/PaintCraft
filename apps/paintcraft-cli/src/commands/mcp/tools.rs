@@ -1,7 +1,7 @@
 use super::super::format_profile;
 use super::super::{
     BATCH_V2_SCHEMA, Context, INPUT_MAX, ImageFormat, POLICY, PathBuf, Rgba, Session, export,
-    image, new_document, pcnd, read_bounded, save, write_output,
+    image, new_document, pcnd, read_bounded, read_captured, save, write_output,
 };
 use super::{
     PaintingServer,
@@ -33,6 +33,7 @@ impl PaintingServer {
             state.session = Some(session);
             state.source = None;
             state.import_source = None;
+            state.import_identity = None;
             state.import_resources.clear();
             state.brush_sources.clear();
             state.inspect()
@@ -56,6 +57,7 @@ impl PaintingServer {
             state.session = Some(Session::new(doc));
             state.source = Some((path, sha));
             state.import_source = None;
+            state.import_identity = None;
             state.import_resources.clear();
             state.brush_sources.clear();
             state.inspect()
@@ -102,7 +104,10 @@ impl PaintingServer {
                     "SVG import requires explicit width and height in svg options",
                 ));
             }
-            let (bytes, sha) = read_bounded(
+            let (bytes,sha,source_identity)=if path.extension().and_then(|ext|ext.to_str()).and_then(Family::from_extension)==Some(Family::Msp) {
+                let (bytes,sha,identity)=read_captured(&path,paintcraft_formats::msp::BYTES_MAX as u64,"MSP image")?;(bytes,sha,Some(identity))
+            } else {
+                let (bytes, sha) = read_bounded(
                 &path,
                 if p.svg.is_some() {
                     paintcraft_formats::svg::SOURCE_MAX as u64
@@ -111,6 +116,8 @@ impl PaintingServer {
                 },
                 "image",
             )?;
+                (bytes,sha,None)
+            };
             let family = if p.svg.is_some() {
                 profile.admit_import_svg(&path, &bytes)?
             } else {
@@ -180,12 +187,17 @@ impl PaintingServer {
             // A picture is not a native project binding: saving must not replace its source implicitly.
             state.source = None;
             state.import_source = Some(path);
+            state.import_identity = source_identity;
             state.brush_sources.clear();
             state.import_resources = p
                 .svg
                 .map(|selection| selection.font_files)
                 .unwrap_or_default();
-            state.inspect()
+            if family==Family::Msp {
+                let mut value=state.inspection()?;
+                value["conversion"]=json!({"source_sha256":sha,"losses_acknowledged":losses,"source_lineage_adopted":false,"source_format":"msp","preserving_save":false});
+                Ok(super::state::reply(value))
+            } else {state.inspect()}
         })
         .await
     }

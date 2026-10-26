@@ -7,6 +7,7 @@ pub struct State {
     pub session: Option<Session>,
     pub source: Option<(PathBuf, String)>,
     pub import_source: Option<PathBuf>,
+    pub import_identity: Option<paintcraft_platform::source::SourceIdentity>,
     pub import_resources: Vec<PathBuf>,
     pub selected_brush: Option<super::brushes::Selected>,
     pub brush_sources: Vec<std::sync::Arc<super::super::brushes::Loaded>>,
@@ -26,6 +27,13 @@ impl State {
     pub fn protect_import_sources(&self, path: &Path) -> Result<()> {
         // One fail-closed identity snapshot across every retained brush source.
         let candidate = paintcraft_platform::source::SourceIdentity::existing_destination(path)?;
+        if self.import_identity.as_ref().is_some_and(|source| {
+            candidate
+                .as_ref()
+                .is_some_and(|candidate| source.matches(candidate))
+        }) {
+            return Err(invalid("output must not replace the captured MSP input"));
+        }
         if self
             .selected_brush
             .as_ref()
@@ -65,14 +73,17 @@ impl State {
         Ok(())
     }
     pub fn inspect(&mut self) -> Result<CallToolResult> {
+        Ok(reply(self.inspection()?))
+    }
+    pub fn inspection(&mut self) -> Result<Json> {
         let session = self.session()?;
         let doc = session.document();
-        Ok(reply(json!({
+        Ok(json!({
             "document_id":doc.document_id.to_string(), "state_id":doc.state_id.to_string(),
             "width":doc.canvas.0,"height":doc.canvas.1,"dirty":session.is_dirty(),
             "undo_depth":session.undo_depth(),"redo_depth":session.redo_depth(),
             "layers":doc.layers_in_order().map(|l|json!({"id":l.id.to_string(),"name":l.name,"visible":l.visible,"opacity":l.opacity})).collect::<Vec<_>>()
-        })))
+        }))
     }
     pub fn layer(&mut self, id: Option<String>) -> Result<Json> {
         let id = id

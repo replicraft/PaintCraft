@@ -58,15 +58,30 @@ pub fn run(a: Options, json: bool) -> Reply {
                 .collect();
             let allowed = a.losses.allowed_for(&known)?;
             save::preflight(dest, a.output.overwrite)?;
-            let (bytes, sha) = read_bounded(
-                input,
-                if svg.is_some() {
-                    paintcraft_formats::svg::SOURCE_MAX as u64
-                } else {
-                    INPUT_MAX
-                },
-                "input",
-            )?;
+            let (bytes, sha, source_identity) = if input
+                .extension()
+                .and_then(|ext| ext.to_str())
+                .and_then(paintcraft_formats::registry::Family::from_extension)
+                == Some(paintcraft_formats::registry::Family::Msp)
+            {
+                let (bytes, sha, identity) = read_captured(
+                    input,
+                    paintcraft_formats::msp::BYTES_MAX as u64,
+                    "MSP input",
+                )?;
+                (bytes, sha, Some(identity))
+            } else {
+                let (bytes, sha) = read_bounded(
+                    input,
+                    if svg.is_some() {
+                        paintcraft_formats::svg::SOURCE_MAX as u64
+                    } else {
+                        INPUT_MAX
+                    },
+                    "input",
+                )?;
+                (bytes, sha, None)
+            };
             let family = if svg.is_some() {
                 a.profile.admit_import_svg(input, &bytes)?
             } else {
@@ -124,6 +139,17 @@ pub fn run(a: Options, json: bool) -> Reply {
                 losses_acknowledged: losses,
                 destination: dest,
             };
+            if source_identity
+                .as_ref()
+                .map(|identity| identity.matches_path(dest))
+                .transpose()?
+                .unwrap_or(false)
+            {
+                return Err(Error::new(
+                    ErrorCode::InputSchema,
+                    "conversion output must not replace its captured MSP source",
+                ));
+            }
             let (receipt, ok, summary) = write_native(dest, a.output.overwrite, &doc, &ctx);
             Ok(Written {
                 engine: None,
