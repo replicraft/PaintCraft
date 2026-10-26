@@ -370,5 +370,5 @@ paintcraft-cli export-icns painting.pcnd -o copy.icns --type ic11 --type ic12 \
 ```
 
 ICNS normal image Open, preserving Save, generic flat export and Classic routes
-remain unavailable. See [the format ledger](FORMAT_INTEROPERABILITY.md#icns-internal-backend-increment-2026-10-25)
+remain unavailable. See [the format ledger](FORMAT_INTEROPERABILITY.md#icns-selected-entry-conversion-and-fresh-export-2026-10-26)
 for the bounded profiles and independent positive/negative evidence.

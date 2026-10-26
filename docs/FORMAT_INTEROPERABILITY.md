@@ -1,6 +1,6 @@
 # Format interoperability implementation
 
-This ledger follows `docs/temp/paintcraft-format-interoperability-classic-studio-v3` alongside the canonical editor and PCND specifications. It records implemented operations as of 2026-10-25, not completion of the entire planning pack.
+This ledger follows `docs/temp/paintcraft-format-interoperability-classic-studio-v3` alongside the canonical editor and PCND specifications. It records implemented operations as of 2026-10-26, not completion of the entire planning pack.
 
 Codec implementation, enabled frontend operations and release qualification are separate gates. `paintcraft_formats::registry` controls discovery and admission; individual adapters enforce their narrower file profiles and resource limits. A listed format does not imply support for every variant, metadata field or original application version.
 
@@ -14,6 +14,7 @@ Desktop and browser use the same frontend policy. CLI and MCP import/export oper
 - Studio's explicit Import image workflow adds QOI, Netpbm, farbfeld, PCX, historical monochrome MSP, selected DCX pages, flat OpenRaster layers and the admitted PAINT subset. These extended imports do not silently expand ordinary Open or Recent filters.
 - Studio offers **15 flat exports**: PNG, JPEG, BMP, GIF, TIFF, TGA, WebP, JPEG XL, DDS, AVIF, QOI, PAM, farbfeld, PCX with RGB24 or indexed palettes, and exact opaque black/white MSP1. PAM output always uses `.pam`, never a `.ppm`, `.pgm`, `.pbm` or generic `.pnm` filename.
 - DCX requires a page choice. Desktop/browser stage a page chooser before decoding and loss confirmation; CLI `import --page` and MCP `import_image` use an explicit zero-based page index. There is no implicit page-zero import.
+- ICNS import requires a specific entry with logical size, Retina scale and physical pixels shown separately. Studio desktop/browser preview and review import/export losses; fresh export offers only eight qualified PNG types. CLI/MCP use the same explicit entry/type policy; ordinary Open and preserving ICNS Save stay denied.
 
 Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, GIF, TGA, DDS, TIFF, HEIF, WebP and AVIF. That inventory is not a claim that all those readers are enabled. PCND and qualified extended conversions are additional workflows. HEIF/HEIC writing and SVG export remain prohibited.
 
@@ -43,7 +44,7 @@ Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, 
 | PSD/PSB | Studio explicit Import on desktop/browser; CLI `import` and MCP `import_image` | RGB8 Normal raster-layer subset retains names, offsets, opacity, visibility and alpha. Metadata losses need explicit consent. Groups, masks, text, effects, clipping, high depth and foreign writing remain unavailable |
 | SVG/SVGZ | Studio desktop/browser Import; CLI `import` with `--svg-width`/`--svg-height`; MCP `import_image` with `svg` options | Explicit size/DPI/fitting and rasterization consent. Studio previews use bundled fonts and additional font files; CLI/MCP accept outline fonts too. No Classic access, ordinary Open or SVG export |
 | MSP | Explicit Studio import/exact export in desktop, browser, CLI and MCP; headless Classic legacy import | DanM raw and admitted LinS row-RLE profile with independent Pillow pixel checks. Named metadata consent and frozen native source protection; no ordinary Classic Open, preserving MSP Save, hidden threshold/matte or MSP2 writer |
-| ICNS | Internal bounded PNG and small RGB/mask profile reader; eight-type PNG fresh writer; no public workflow yet | Explicit logical size/Retina density and entry index; independent legacy fixtures and excluded native observations retained. Legacy writer candidates remain refused; canonical ARGB, selected-entry consumers and application display qualification remain |
+| ICNS | Studio desktop/browser explicit selected-entry Import and fresh typed export; CLI `inspect-icns` / `import --entry` / `export-icns`; MCP `inspect_icns` / `import_image` / `export_icns` | Admitted PNG and small RGB/mask readers; eight explicit PNG output types. Logical size, Retina scale and physical pixels stay distinct. Displayed preview and loss consent required in Studio. No ordinary Open, preserving Save, Classic access, legacy writer or canonical ARGB support; native readback exclusions remain |
 | EXR/HDR, JP2 | Not yet enabled | Registry inventory or work in progress is not usable format support |
 | ASE | Studio Palettes dialog; CLI `palette inspect` / `palette export`; MCP `inspect_palette` / `export_palette` | Flat groups, exact names/order/models/types and finite f32 values. RGB/gray tool-color adoption is explicit; CMYK/LAB conversion, persistent catalogs and Adobe qualification remain |
 | ABR | Studio desktop/browser selection and bounded native-static R8 painting; CLI/MCP inspection and painting | Exact sample masks, pattern channels, signed bounds and original ordered payloads retained. Up to 256 presets per admitted library; unsupported dynamics, textures, transforms and precision reduction are refused. Full preset behavior and original-application qualification remain; no ABR export or ordinary image Open |
@@ -295,7 +296,7 @@ PCND download check with no page errors. The downloaded project reopened and
 rendered through the CLI. This is focused workflow evidence, not full release
 qualification or an independent Photoshop rendering comparison.
 
-### ICNS internal backend increment, 2026-10-25
+### ICNS selected-entry conversion and fresh export, 2026-10-26
 
 Pinned `icns` 0.5.0 is used only for admitted container/type handling; optional
 PNG/JPEG2000 features are disabled. PNG pixel work reuses the existing image
@@ -314,7 +315,8 @@ Isolated probes on macOS 14.7.2 arm64 demonstrate small 1x PNG exclusions:
 and an isolated `icp6` produces 48x48 instead of requested 64x64. No type/density
 substitution is performed. The [fixture/oracle record](../crates/services/paintcraft-formats/tests/icns-fixtures/README.md)
 retains source/output/tool hashes, positive results and negative observations.
-Source specimens total less than 36 KiB; no application-icon data is duplicated.
+Repository-authored specimens keep PNG and small RGB/mask profiles independent;
+no application-icon data is duplicated.
 
 The reader additionally admits exact small `is32`/`il32` raw or three-channel
 RLE RGB paired unambiguously with exact `s8mk`/`l8mk` alpha. Packet extents are
@@ -330,13 +332,64 @@ canonical `ic04`/`ic05` ARGB decoding/writing remains unqualified.
 The directory overrides the selected library's incorrect `ic05` Retina label
 using Apple's SDK `IconStorage.h`: `ic04` is16@1 and `ic05`32@1, distinct from
 modern `ic11`16@2. These ARGB payloads remain inert; descriptor accuracy does
-not enable decoding. Eleven focused ICNS tests and existing ICO/CUR regression
-tests pass. The public
-registry remains unavailable until explicit selected-entry consumers, immutable
-source/save guards and fresh export options are qualified. Canonical 16/32 at 1x
-output remains blocked on native/ARGB qualification rather than a type/density
-substitution. Preserving
-Save, Classic normal Open and broader historical encodings remain unqualified.
+not enable decoding. The incomplete ImageIO investigation remains excluded;
+its stalled ARGB control is not positive native-display evidence. Canonical
+16/32 at 1x output remains blocked on native/ARGB qualification rather than a
+type/density substitution.
+
+Studio desktop/browser **Import image…** now lists the admitted directory with
+original record index, type tag, logical dimensions, display scale, physical
+pixel dimensions and encoding. No entry is chosen automatically. Unqualified
+entries remain visible and disabled. A chosen entry must be decoded into a
+private preview, actually displayed in an earlier frame, and accepted with
+explicit import-loss consent before replacing the painting. Changing entries
+invalidates preview/approval; stale document/frontend owners and cancellation
+cannot publish. The imported painting is a dirty, unbound converted copy;
+metadata, other entries and logical size/density are explicitly not retained.
+
+Native acquisition keeps the exact opened file used for bounded decoding.
+Pending import and installed document owners retain its frozen identity and
+path, including after normal PCND saves, renames, other tabs and parked
+workspaces. Actual project-save/image-export routes refuse aliases of these
+inputs. Normal saves to a distinct bound PCND remain available. This is source
+ownership protection, not race-proof traversal on arbitrary filesystems.
+Browser uploads grant no ability to overwrite the original file.
+
+**Export Apple icon…** in Studio and the CLI/MCP fresh-export operations accept
+only explicit `ic07`, `ic08`, `ic09`, `ic11`, `ic12`, `ic13`, `ic14` and `ic10`
+PNG types. Those are respectively 128/256/512 at 1x and 16/32/128/256/512 at 2x.
+The UI initially selects none. There is no inferred Retina substitution or
+legacy-writer choice. Up to eight distinct types, 4,194,304 source/aggregate
+output pixels and 64 MiB encoded output are admitted. Each entry is fitted
+independently from the original canvas with transparent aspect-ratio padding
+and explicit nearest/Lanczos3 filtering. Retained preview RGBA buffers are the
+ones encoded after displayed-preview and flatten/hidden-RGB/resize loss consent.
+Native export uses a parented picker, source/owner checks and destination
+fingerprinting; a changed source/destination or cancellation cannot acknowledge
+a painting save. Browser export downloads immediately and leaves painting name,
+history and dirty state unchanged. Original ICNS preserving Save, normal Open,
+generic flat export and Classic routes remain denied.
+
+Focused consumers cover six native import/export tests and five browser tests,
+including English/Japanese controls, exact density-selected pixels, disabled
+unsupported choices, stale/cancelled reviews, changed export options, renamed
+source aliases, late source ownership and destination replacement. Full host
+runs pass 464 native tests (9 ignored) and 189 browser tests, followed by a
+focused unqualified-entry refusal test; strict checks,
+seven-language catalogs and production Wasm build pass.
+
+A headless Chrome production run imported `ic11` explicitly as 16 logical pixels
+at 2x with 32 physical pixels, required preview/loss consent, then exported a
+53,055-byte `ic07`+`ic11` fresh set and a 726-byte editable PCND. Unapproved
+import/export attempts stayed inactive, asset download kept the painting title
+and dirty state, and there were no page errors. A separate standard-library
+parser checked downloaded ICNS lengths, TOC, PNG CRCs and physical type sizes;
+all 1,024 unscaled `ic11` RGBA pixels matched the reopened PCND render and the
+original source pixels after the disclosed transparent-hidden-RGB loss.
+Source/Wasm hashes, screenshots, harness and verifier are retained in ignored
+`docs/validation/format-specialists-2026-10-25/icns/`. These workflow checks do
+not establish general Apple application/display compatibility, exact independent
+resampling at every size or full release qualification.
 
 ### Historical MSP conversion workflows, 2026-10-25
 

@@ -1,5 +1,6 @@
 //! Bounded PNG and small RGB/mask profile ICNS resources, explicit density.
-//! Internal backend qualification; no registry/consumer activation yet.
+//! Explicit Studio selected-entry conversion and qualified typed PNG fresh output.
+//! CLI/MCP consumers use the shared profile; preserving Save remains unavailable.
 mod legacy;
 mod prepare;
 pub use prepare::{Prepared, PreparedEntry, prepare_document};

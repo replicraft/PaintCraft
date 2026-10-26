@@ -43,6 +43,7 @@ cargo run --release -p paintcraft-cli -- mcp
 - **Extra imports in Studio:** QOI, Netpbm, farbfeld and PCX, plus a selected DCX page or ICO/CUR entry.
 - **Historical MSP:** import monochrome Paint pictures in Studio, CLI and MCP; export exact opaque black-and-white MSP1 copies.
 - **Icon export in Studio, CLI and MCP:** multi-size ICO/CUR files with PNG or bitmap entries and cursor hotspots.
+- **Apple icons:** import a chosen ICNS entry and export new icon sets with explicit sizes and Retina scale in Studio, CLI and MCP.
 - **Layered imports:** Studio imports flat OpenRaster (`.ora`) layers and opens a limited historical Paint.NET (`.pdn`) subset as converted copies. Studio also imports a limited Windows Paint (`.paint`) subset. Save converted projects as PCND; writing PDN or PAINT is not supported.
 - **Photoshop imports in Studio:** basic PSD/PSB raster layers with names, positions, opacity and visibility. Save converted copies as PCND.
 - **SVG/SVGZ:** import a picture at your chosen size, DPI and fitting, with your own font files, in Studio, CLI or MCP.
