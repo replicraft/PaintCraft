@@ -6,10 +6,14 @@ portable archive and complete-release checks used by
 PaintCraft retains GPU rendering in every desktop build. It uses the locked Cargo
 dependencies and Rust 1.99.0 from `rust-toolchain.toml`.
 
-Native release builds explicitly enable `paintcraft-codec-worker/avif-codec`.
+Normal helper builds enable `avif-codec` by default. Native release builds also
+explicitly request `paintcraft-codec-worker/avif-codec`; a V4 compatibility
+helper requires `--no-default-features`.
 The pinned dav1d source is built statically with Meson 1.12.1 and Ninja 1.13.2;
 no installed decoder library is used. Windows builds select the native MSVC
-compiler and static C runtime. Each runner executes actual helper and installed
+compiler; release Rust flags request `crt-static` and the C build matches with
+Meson `b_vscrt=mt`. Normal/source builds without that target feature use `md`,
+so the Rust and C runtime choices agree. Each runner executes actual helper and installed
 CLI/MCP tests before packaging. These workflow changes still require execution
 on all six targets; local Apple-silicon checks do not qualify the other targets.
 

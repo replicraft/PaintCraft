@@ -1,7 +1,7 @@
 # Native decoder isolation helper
 
 Complete native installations use this executable for explicitly qualified Studio
-JPEG XL, JPEG XR and HEIF conversions. Desktop, CLI and MCP consumers share the
+JPEG XL, JPEG XR, HEIF and AVIF conversions. Desktop, CLI and MCP consumers share the
 same verified native dispatch, captured-source guards and resident document
 adoption. This does not enable generic image Open, Classic readers, HEIF writing
 or browser use of this executable. The separately qualified Studio browser JPEG
@@ -16,6 +16,7 @@ transport and qualification; it does not use a native helper manifest.
 | 2 | Metadata-free straight sRGB RGBA8 JPEG XL | `native-jxl-srgb8-worker-v1` |
 | 3 | Strict unsigned RGB8 JPEG XR, T.832 default-sRGB policy after refusing embedded color contexts | `native-jxr-srgb8-worker-v1` |
 | 4 | Explicitly declared sRGB8 HEIF color and optional straight alpha | `native-heif-srgb8-worker-v1` |
+| 5 | Reduced-still identity sRGB8 AVIF 4:4:4 with optional straight monochrome alpha | `native-avif-srgb8-worker-v1`, V5 required |
 
 All profiles are bounded to 4,194,304 pixels. A selected library compiling does
 not admit its other profiles or grant an encoder capability.
@@ -51,6 +52,16 @@ resolution bits from effective density and inferred defaults. ICC, metadata,
 alpha/deep precision and other unqualified JXR forms remain refused. No JPEG XR
 or HEIF writer is provided.
 
+AVIF requires explicit matching AV1/container declarations: profile-1 8-bit
+full-range identity GBR 4:4:4, primaries 1 and transfer 13. Its optional alpha is
+same-size profile-0 full-range 8-bit monochrome with CICP 2/2/2 and a straight
+auxiliary link. GBR planes are reordered exactly; coded RGB at alpha zero is
+retained. Nonempty names require `avif-item-names-not-retained` consent; unnamed
+identity imports have no invented color-conversion loss. Names, exact source
+SHA, geometry and coded/container declarations remain in receipts. SDR YCbCr,
+ICC, HDR/deep precision, grids, transforms, premultiplication and browser reads
+remain refused. See [AVIF qualification](../../docs/AVIF_QUALIFICATION.md).
+
 ## Dispatch, ownership and supervision
 
 The host locates only a same-build helper relative to its own installation, never
@@ -79,8 +90,12 @@ the existing single-thread Rayon pool; no new renderer or thread pool is added.
 The trusted child must not delegate inherited pipes or spawn descendants: the
 supervisor controls its exact child, not an arbitrary process tree.
 
-Native build record `BUILD_V4` includes `STDIN_PARENT_LEASE1` and
-`JXR_PRIVATE_SOURCE1`; binary protocol 2 is unchanged. The supervisor retains its
+Two finite native contracts are recognized. `BUILD_V4` qualifies JXL/JXR/HEIF;
+`BUILD_V5_AVIF` additionally requires the pinned static decoder token
+`AVIF_DAV1D154_ALLOC1_ASM0_8BIT1` and exact four-variant manifest. AVIF requires
+V5; other codecs accept either verified contract, with no retry after integrity
+failure. Both include `STDIN_PARENT_LEASE1` and `JXR_PRIVATE_SOURCE1`; binary
+protocol 2 is unchanged. The supervisor retains its
 sole stdin writer after the exact request. EOF, I/O failure or an extra byte makes
 the helper watchdog exit without allocation (status 76). This is parent-liveness
 evidence, not a synchronous parent-death join or a job-object sandbox. Forwarded
@@ -98,14 +113,24 @@ parity is claimed.
 The default qualified paths use a fixed 256-MiB live requested Rust heap ceiling
 from process startup. Checked accounting covers allocation, zeroing and realloc;
 refusal exits directly with status 75, mapped to `ResourceLimit`. This excludes
-physical RSS, allocator overhead, stacks, mappings and direct native allocations.
-Optional codec experiments require their own allocation qualification. The parent
+physical RSS, allocator overhead, stacks, mappings and unaccounted native allocations.
+The AVIF feature statically builds pinned dav1d 1.5.4 with a small audited allocation
+shim: decoder context, scratch and picture requests, including headers/padding,
+use that same heap once. C ABI failures cannot unwind. Libc internals and thread
+stacks remain outside this requested-allocation boundary. Threads and frame delay
+are fixed to one; the pixel limit is set before decoding. The parent
 reserves this fixed child ceiling plus captured source, bounded output and its
 existing verification/document preparation declarations; reported peak never
 justifies charging a smaller ceiling. A response peak is a preparation snapshot,
 not process-exit RSS. There is no OS filesystem or network sandbox claim.
 
-Release builds compile desktop, CLI and helper together under the lockfile.
+Release builds compile desktop, CLI and helper together under the lockfile and
+explicitly enable `paintcraft-codec-worker/avif-codec`. Meson 1.12.1 and Ninja
+1.13.2 build the pinned source without a system-library fallback. On Windows,
+Meson uses `b_vscrt=mt` exactly when Rust target features include `crt-static`;
+otherwise it uses `md`. Release flags select the static mode, while normal and
+source builds follow their actual Rust target configuration. Six-target
+execution remains unverified until CI runs.
 Portable archives place helper and manifest beside the application. macOS nests
 them in `Contents/MacOS`; Linux packages use `usr/bin` and
 `usr/share/paintcraft`. MSI installs helper and manifest beside the desktop
@@ -113,11 +138,14 @@ executable. Packagers reject missing, stale, wrong-target or mismatched embedded
 records without executing foreign binaries. macOS ad-hoc signing is reflected in
 the final manifest SHA; it is not Developer-ID signing or notarization.
 
-Schema 2 `qualified_import_variants` lists the three exact native variants above.
+Schema 2 `qualified_import_variants` lists exactly three native variants for V4
+or four for V5.
 Standalone copied executables and helper-free installs fail closed. Packages
 containing the helper include `JPEGXR_LICENSE.txt`, reproducing the selected
 JPEG XR dependency's actual required Microsoft notice rather than relying on its
-different Cargo license label.
+different Cargo license label. `DAV1D_LICENSE.txt` reproduces the pinned decoder's
+COPYING notice. The CLI archive and source installers keep helper, manifest and
+notices together and verify them before publication.
 
 ## Qualification
 
@@ -130,7 +158,10 @@ bilinear option. Those original outputs remain negative evidence, not a widened
 rounding tolerance or universal application-parity claim. See the
 [HEIF color fixtures](../../crates/services/paintcraft-formats/tests/heif-color-fixtures/README.md).
 JPEG XL uses owned independent `cjxl` specimens; JPEG XR uses owned original C
-JXRLib encode/decode specimens. Actual copied-installation CLI/MCP and headless
+JXRLib encode/decode specimens. AVIF native planes and assembled opaque/alpha
+RGBA match pinned independent libaom 3.15.2 exactly, with separate writer-loss
+evidence. Actual V5 Studio tests cover 12 English/Japanese cases; installed
+CLI/MCP tests cover consent, PCND reopen, cancellation and renamed source aliases. Actual copied-installation CLI/MCP and headless
 native UI tests exercise PCND reopening, loss consent, source aliases,
 cancellation, stale owners and helper failures. They do not replace real
 Windows/Linux installer/device checks, broad adversarial corpora or additional
@@ -148,3 +179,28 @@ paintcraft-cli --json import source.heic --frontend studio --output converted.pc
 The `--codec heif` diagnostic deliberately remains native gray code 1. Color
 conversion is selected through the explicit import route, never by relabeling
 those gray diagnostic samples sRGB.
+
+## Build and compatibility checks
+
+Normal builds include the V5 AVIF decoder and require the native C compiler,
+Meson 1.12.1, Ninja 1.13.2 and Python 3.12 or newer:
+
+```sh
+cargo build --locked -p paintcraft-cli -p paintcraft-codec-worker
+cargo test --locked -p paintcraft-codec-worker --tests
+cargo test --locked -p paintcraft-cli --test installed_codec_worker -- --include-ignored
+```
+
+The explicitly feature-free build retains V4 compatibility. Its installed tests
+skip the two V5-only AVIF cases. Restore the normal helper when finished:
+
+```sh
+cargo test --locked -p paintcraft-codec-worker --no-default-features --tests
+cargo test --locked -p paintcraft-cli --test installed_codec_worker
+cargo build --locked -p paintcraft-codec-worker
+```
+
+The complete CLI source installer builds and installs both native binaries,
+manifest and notices with `sh scripts/packaging/install_cli.sh --source` (or
+`./scripts/packaging/install_cli.ps1 --source` on Windows). These local commands
+do not replace actual release execution on all six targets.
