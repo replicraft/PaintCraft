@@ -1,0 +1,44 @@
+{
+    "node": "v24.10.0",
+    "image_magick": "ImageMagick 7.1.2-32 Q8 wasm32 ad98b244c:20260927 https://imagemagick.org",
+    "wrapper_sha256": "cf1db24f7e63f560118ef434fd581dc9ef66ad099dc417184765cd6076fb4a1b",
+    "wasm_sha256": "b7d6710436b150dc5bd1ca04d80b6b7614c54854d7470f888f7e69a2a41b00e4",
+    "results": [
+        {
+            "filename": "cli-rgb24.dcx",
+            "sha256": "85f76b1c5f1f2517e92e0ae8c172bdbe0ec40b60417aa8657db99ec9416c77db",
+            "exact_whole_container_pixels": true,
+            "exact_palette_and_indices": false
+        },
+        {
+            "filename": "cli-indexed-exact.dcx",
+            "sha256": "b2378cdfe8394081a5a842968b0159693b99bb6a9891bf004a3072b949743d07",
+            "exact_whole_container_pixels": true,
+            "exact_palette_and_indices": true
+        },
+        {
+            "filename": "cli-quantized256.dcx",
+            "sha256": "b2378cdfe8394081a5a842968b0159693b99bb6a9891bf004a3072b949743d07",
+            "exact_whole_container_pixels": true,
+            "exact_palette_and_indices": true
+        },
+        {
+            "filename": "mcp-rgb24.dcx",
+            "sha256": "85f76b1c5f1f2517e92e0ae8c172bdbe0ec40b60417aa8657db99ec9416c77db",
+            "exact_whole_container_pixels": true,
+            "exact_palette_and_indices": false
+        },
+        {
+            "filename": "mcp-indexed-exact.dcx",
+            "sha256": "b2378cdfe8394081a5a842968b0159693b99bb6a9891bf004a3072b949743d07",
+            "exact_whole_container_pixels": true,
+            "exact_palette_and_indices": true
+        },
+        {
+            "filename": "mcp-quantized256.dcx",
+            "sha256": "b2378cdfe8394081a5a842968b0159693b99bb6a9891bf004a3072b949743d07",
+            "exact_whole_container_pixels": true,
+            "exact_palette_and_indices": true
+        }
+    ]
+}

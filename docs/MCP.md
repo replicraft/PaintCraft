@@ -516,3 +516,15 @@ foreign preserving Save remain denied. Lossy AVIF export is a separate workflow.
 The [AVIF qualification record](AVIF_QUALIFICATION.md) distinguishes bit-exact
 independent libaom reference pixels, actual local Studio/CLI/MCP and private-prefix
 installation checks from unexecuted six-target release and broader-profile work.
+
+
+`export_dcx` writes one document composite as a fresh `.dcx` copy. Choose an
+explicit `pcx_mode`: `rgb24`, `indexed-exact` or `quantized256`. Actual flatten,
+hidden RGB, alpha-discarded and palette-quantized losses require `allow_losses`.
+It preserves the session and dirty state, guards retained native/foreign source
+aliases, and uses staged atomic output. It does not map layers to pages or enable
+preserving Save. CLI equivalent:
+
+```sh
+paintcraft-cli export-dcx painting.pcnd --pcx-mode indexed-exact --output copy.dcx
+```

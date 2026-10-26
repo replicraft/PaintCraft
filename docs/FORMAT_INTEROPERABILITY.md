@@ -39,7 +39,7 @@ Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, 
 | Netpbm | Studio explicit P1 through P7 Import; PAM P7 RGBA8 Export only | Admitted max values 1, 255 or 65535 and recognized grayscale/RGB/alpha tuples; bounded 64 KiB header. High-depth import reduces to 8 bits; metadata loss explicit |
 | farbfeld | Studio explicit Import and lossless RGBA8 Export | Exact body length required; imports reduce 16-bit samples to 8 bits with explicit loss. Exports widen each 8-bit sample by multiplying by 257; this does not add high-depth editing |
 | PCX | Classic/Studio explicit Import; Studio RGB24 flat Export | Version 5 RLE: admitted packed 1/2/4/8-bit, planar 1-bit and RGB24 profiles; minimal even row padding; strict row/plane bounds. Palette and metadata import loss explicit; older/ambiguous variants refused. RGB24 export composites alpha onto white with explicit loss consent. Exact indexed-8 writer API preserves supplied palette order/indices; desktop/browser controls offer RGB24, exact indexed colors or explicit 256-color conversion with a preview |
-| DCX | Studio explicit selected-page Import only | Strict bounded page directory, at most 1023 pages; each page must satisfy PCX admission. Other pages are explicitly not imported; no writer |
+| DCX | Studio selected-page Import; native CLI/MCP explicit single-page fresh copy | Strict bounded directory and typed RGB24/indexed8 multi-page backend; headless fresh copy uses one document composite and explicit PCX pixel policy. No preserving Save or desktop/browser export controls |
 | PDN | Studio Open or explicit Import as a converted layered copy | Historical PDN3 normal-blend, same-sized full-canvas bitmap layers only; names/order/visibility/opacity/pixels retained, metadata loss explicit. No preserving/public fresh writer; internal typed PDN3 writer and bounded native preparation are implemented, pending original-app qualification |
 | PAINT | Studio and Classic 11 explicit Import as a converted layered copy | Observed MIF1 `iovl`/`unci` DEFLATE RGBA8 profile only; offsets/order retained, layers numbered/visible/full-opacity because source properties are unverified. Canvas fill becomes a layer, with depth loss when needed. Internal fresh writer and gated layered-copy preparation exist; public/preserving writes await Windows Paint qualification |
 | ORA | Studio explicit Import as a converted layered copy | Flat Normal PNG layers with names, signed offsets, visibility, opacity and raw pixels; requires merged preview and thumbnail. Unsupported groups, blends, extensions, ZIP64 and resource variants refused. Fractional opacity is rounded to 8 bits and explicit print resolution is discarded with consent; fresh writer implemented internally but not enabled pending external-application qualification |
@@ -104,7 +104,7 @@ consumer paths and prerequisites, rather than treating every candidate as a depe
 2. **Extend common AVIF SDR readers, then remaining stock profiles.** The native identity sRGB8/straight-alpha profile below is implemented and independently checked, not full stock parity. Next qualify common SDR YCbCr range/matrix/chroma layouts with explicit reconstruction and independent RGB/alpha oracles; keep HDR, grids, transforms and browser execution separate. HEIF has its narrow native color import below, while broader camera/grid/ICC/HDR/deep-color and browser profiles remain unqualified. The existing isolated helper and bounded preflight must remain the reader boundary; enabling `image`'s separate native feature alone is insufficient. HEIF writing remains prohibited.
 3. **Implement and qualify layered writes.** PDN has a bounded internal typed PDN3 writer and native layered-copy preparation; public and preserving writes still await actual Paint.NET open/edit/resave. PAINT now also has an internal bounded typed writer, immutable native preparation and gated CLI/MCP fresh-copy routes; public/preserving Windows Paint qualification is still required. Its UI-name, visibility and opacity extensions remain unqualified. ORA's internal writer is not publicly enabled; groups and original-application qualification remain. PSD/PSB now have a bounded internal fresh RGB8 Normal raster-layer writer with independent psd-tools/Pillow checks; public layered export still awaits actual Photoshop open/edit/resave qualification. Groups, masks, text, effects and high-depth output remain unsupported. JPEG XR writing is also unimplemented; its new reader does not qualify it.
 4. **Qualify bounded EXR/HDR decoding and explicit SDR conversion, then evaluate JP2.** The implemented precision policy names Clip or Reinhard-per-channel, exposure, source-space assignment, alpha convention and nonfinite/negative handling with explicit losses. Bounded Radiance preflight preserves as-stored calibration provenance and refuses malformed packets before decoder allocation. Optional private `hdr-codec` uses existing image HDR behind sealed preflight; it is not a public reader or a confinement boundary. Zune HDR 0.5.2 failed retained exponent-wrap probes and is not adopted. Native isolated HDR execution, broader orientations, explicit preview/consent and actual frontend adoption remain; EXR now has bounded single-part RGB[A] HALF/FLOAT preflight and optional private `exr-codec` decoding checked against official OpenEXR references; isolated execution, source assignment when metadata is unresolved, conversion preview/consent and consumer adoption remain. The pack's `exr` and OpenJPEG choices remain candidates requiring live-profile qualification; JP2 also requires codec packaging and independent lossless/lossy/color/depth evidence.
-5. **Complete specific remaining profiles instead of widening labels.** This includes DCX writing, MSP2 writing and original historical-app evidence; animation/multipage and high-depth TIFF; advanced DDS surfaces/mips; additional JXL/JXR profiles; full ABR dynamics/pattern behavior, ASE CMYK/LAB color adoption and CSH multiple/open/Boolean paths. Foreign preserving Save remains a separate gate throughout.
+5. **Complete specific remaining profiles instead of widening labels.** This includes DCX multi-page consumer workflows, MSP2 writing and original historical-app evidence; animation/multipage and high-depth TIFF; advanced DDS surfaces/mips; additional JXL/JXR profiles; full ABR dynamics/pattern behavior, ASE CMYK/LAB color adoption and CSH multiple/open/Boolean paths. Foreign preserving Save remains a separate gate throughout.
 6. **Keep later P3 imports distinct from initial-format parity.** RAW, selected PDF pages, KRA/XCF and the animation model remain future capabilities. They need their own bounded services, source/loss policies and real reference consumers; compiling a library is insufficient.
 7. **Close the delivery gates for each implemented profile.** Complete the pack's hostile-input fuzzing, independent reference/version matrices, reproducible codec and whole-operation benchmark exports, failure/cancellation-tail tests and installed-helper/packaging coverage on all six release targets. Local controlled fixtures and headless UI tests do not establish general original-application compatibility or a hard aggregate-memory guarantee.
 
@@ -1290,3 +1290,34 @@ four failure-preserved PCND downloads, including alpha 0/1/127/128/254/255 and
 hidden RGB. Host tests separately
 exercise full Rust owner changes and response-frame corruption. This is evidence
 for the stated profile in one actual browser, not cross-browser conformance.
+
+
+### DCX fresh copies, 2026-10-26
+
+The bounded typed DCX writer emits 1..1023 ordered independent PCX pages using the
+selected PCX encoders, with complete page validation before encoding. Aggregate
+pixels, output, offsets and logical transient storage are bounded; supplied palette
+order and exact indices are retained. This is not a document-page or animation model.
+
+Native Studio CLI `export-dcx` and MCP `export_dcx` prepare exactly one document
+composite through the existing PCX flat-export policy. An explicit `rgb24`,
+`indexed-exact` or `quantized256` mode is required. Actual flatten, hidden RGB,
+white-matte alpha removal and palette-quantization losses require acknowledgment.
+Captured PCND input identity and the MCP retained native-source identity protect
+renamed/hardlinked inputs; the existing staged-save publication barrier rechecks
+source aliases after encoding. Copies leave document/dirty state unchanged. MCP cancellation and dropped-request
+lifetime checks run during preparation, staged chunks and publication, separately
+from filesystem identity checks.
+Generic Open, preserving Save, Classic stock support and browser exports remain
+unchanged; desktop/browser have no new DCX export controls.
+
+Untouched ImageMagick 7.1.2-32 Q8 independently decodes all nine typed RGB/indexed/
+mixed pages, preserving distinct palettes, duplicate-color index identity, order,
+DPI and exact RGB. It also independently verifies all six actual CLI/MCP production
+outputs. Pillow 13.0.0 verifies every bounded PCX page and RGB DCX pages, but its
+whole-DCX earlier indexed-page EOF palette lookup produces wrong colors. That
+negative evidence remains recorded; fixtures were not changed to hide it.
+See `tests/dcx-fixtures/writer/README.md` in the formats crate and
+`apps/paintcraft-cli/tests/dcx-consumer-fixtures/README.md` for hashes, raw reports,
+reproduction commands and admitted limits. Independent consumer evidence does not
+claim every historical application or arbitrary PCX profile compatibility.

@@ -227,6 +227,7 @@ pub fn capability(family: Family, operation: Operation, platform: Platform) -> C
             Some("openraster-flat-png")
         }
         Family::Dcx if operation == Operation::ImportConvert => Some("pcx-dcx-page"),
+        Family::Dcx if operation == Operation::SaveAsCopy => Some("pcx-dcx-single-page-copy"),
         Family::Svg if operation == Operation::ImportConvert => Some("resvg-srgb-raster"),
         Family::Icns if operation == Operation::ImportConvert => Some("icns-selected-entry"),
         Family::Icns if operation == Operation::SaveAsCopy => Some("icns-fresh-png-entry-set"),
@@ -336,6 +337,11 @@ pub fn admission(request: Request<'_>) -> Decision {
         && request.frontend == Frontend::Studio
         && request.platform == Platform::Web
         && request.variant == Some(WEB_JXL_IMPORT_VARIANT);
+    let fresh_dcx_page = request.family == Family::Dcx
+        && request.operation == Operation::SaveAsCopy
+        && request.frontend == Frontend::Studio
+        && request.platform == Platform::Native
+        && request.variant == Some(crate::dcx::EXPORT_VARIANT);
     let selected_page = request.family == Family::Dcx
         && request.operation == Operation::ImportConvert
         && request.variant == Some("dcx-selected-page");
@@ -374,6 +380,7 @@ pub fn admission(request: Request<'_>) -> Decision {
     }
     if request.variant.is_some()
         && !selected_page
+        && !fresh_dcx_page
         && !selected_entry
         && !fresh_entry_set
         && !svg_rasterization
@@ -398,6 +405,7 @@ pub fn admission(request: Request<'_>) -> Decision {
         return Decision::TemporarilyUnavailable(Reason::BackendUnavailable);
     }
     if !capability.qualified
+        && !fresh_dcx_page
         && !native_jxl_import
         && !web_jxl_import
         && !native_jxr_import

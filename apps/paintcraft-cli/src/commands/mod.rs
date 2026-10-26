@@ -296,6 +296,7 @@ impl LossOptions {
 }
 pub mod apply;
 pub mod capabilities;
+pub mod export_dcx;
 pub mod export_icns;
 pub mod export_icons;
 pub mod export_layered;
