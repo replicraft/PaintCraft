@@ -255,7 +255,12 @@ mod tests {
             assert_eq!(admitted.primary.id, 1);
             assert_eq!(
                 admitted.primary.byte_len,
-                admitted.primary.parts.iter().map(|p| p.len()).sum()
+                admitted
+                    .primary
+                    .parts
+                    .iter()
+                    .map(|p| p.len())
+                    .sum::<usize>()
             );
             assert_eq!(admitted.alpha.is_some(), alpha);
             if let Some(item) = admitted.alpha {

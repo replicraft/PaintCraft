@@ -22,3 +22,11 @@ pub fn admit_ycbcr8<'a>(
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(feature = "heif-codec")]
+mod color;
+#[cfg(feature = "heif-codec")]
+pub use color::reconstruct;
+
+mod work;
+pub use work::{WorkLayout, work_layout};
