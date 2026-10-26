@@ -44,8 +44,8 @@ Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, 
 | SVG/SVGZ | Studio desktop/browser Import; CLI `import` with `--svg-width`/`--svg-height`; MCP `import_image` with `svg` options | Explicit size/DPI/fitting and rasterization consent. Studio previews use bundled fonts; CLI/MCP also accept additional outline fonts. No Classic access, ordinary Open or SVG export |
 | EXR/HDR, JP2, MSP, ICNS | Not yet enabled | Registry inventory or work in progress is not usable format support |
 | ASE | Studio Palettes dialog; CLI `palette inspect` / `palette export`; MCP `inspect_palette` / `export_palette` | Flat groups, exact names/order/models/types and finite f32 values. RGB/gray tool-color adoption is explicit; CMYK/LAB conversion, persistent catalogs and Adobe qualification remain |
-| ABR | Asset workflow policy only | Brush import implementation remains |
-| CSH | Internal checked resource reader/writer; no public workflow yet | Retains bounds, names, IDs and exact ordered path records. Studio/CLI/MCP integration and independent interoperability qualification remain |
+| ABR | Internal checked resource reader; no public workflow yet | Exact 8/16-bit sample masks, signed bounds and original descriptor/hierarchy payloads retained. Embedded patterns, 16-bit PackBits, brush-engine adoption and public Studio/CLI/MCP import remain |
+| CSH | Studio Shape resources dialog; CLI `shape inspect` / `shape export`; MCP `inspect_shapes` / `export_shapes` | Retains bounds, names, IDs and exact ordered path records. Studio previews outlines without changing the painting. Shape placement, broader interoperability and original-application qualification remain |
 | RAW, PDF, KRA, XCF, animation, advanced DDS | Future profiles | No inherited Classic support or preserving-write claims |
 
 QOI, PAM and farbfeld writers admit at most 4,194,304 pixels and 64 MiB encoded output. Their bounded private output is discarded on failure or cancellation. These checks do not constitute a hard aggregate resident-memory or codec scratch-memory limit.
@@ -159,6 +159,39 @@ complete CLI inspection/export span 9.77–13.72 ms / 20.44–30.57 ms. All 480
 measured CLI executions succeeded. The ranges retain slower sessions and are
 observations of these resource workflows, not speedup or interactive guarantees.
 
+### ABR resource reader, 2026-10-25
+
+The internal `paintcraft-formats::abr` adapter preflights the complete admitted
+source before invoking selected `ag-psd` 0.3.0. ABR versions 6/7/9/10, minor 1/2,
+admit raw/PackBits 8-bit sample masks and raw 16-bit masks. Signed origins, IDs
+and full-precision mask values survive independently of the backend's narrowed
+8-bit convenience view. The selected parser also supplies computed/sampled and
+other recognized brush metadata; this does not install or render those brushes.
+
+Bounded Action Descriptor walks cover `desc` and `phry` sections before upstream
+tree allocation. Complete ordered section payloads remain available, including
+unknown fields or hierarchy content omitted/defaulted by the parsed brush model.
+Encoded path/alias values remain inert metadata; the reader never follows them.
+The resource operation does not publish a document or mutate editor tools,
+history or preferences. No public format capability is enabled yet.
+
+Admission allows 16 MiB of source, 64 sections, 256 samples, 16,384 pixels per
+dimension, 4,194,304 pixels per sample and 16,777,216 aggregate sample pixels.
+Descriptor limits include 32,768 aggregate counted items/values, depth 16,
+4,096 UTF-16 units per string or ASCII bytes per key/alias, 1 MiB of aggregate
+text and 4 MiB of aggregate raw blobs. These checks prevent known unchecked
+extent, sample-allocation and PackBits-packet paths from reaching the selected
+decoder. They do not prove a hard allocator or cooperative cancellation-tail
+bound during upstream calls.
+
+The [owned fixture suite](../crates/services/paintcraft-formats/tests/abr-fixtures/README.md)
+has ten focused tests and a successful Node.js 24.10.0 / upstream JavaScript
+`ag-psd` 33.0.0 source-fixture check. The JavaScript reader and Rust port share
+lineage; this is cross-language evidence, not independent-algorithm or original
+Adobe qualification. Embedded `patt`, legacy ABR 1/2, 16-bit PackBits, previews,
+actual brush adoption/rendering, public frontend import and wider qualification
+remain required. ABR export is outside the import-only asset policy.
+
 ### CSH resource adapter, 2026-10-25
 
 The internal CSH adapter preflights the complete source before invoking the
@@ -191,9 +224,34 @@ JavaScript `ag-psd` 33.0.0 reader reopened both source specimens and fresh Rust
 exports and matched all expected metadata/geometry values. A separate wire
 comparison checked exact bounds and record bytes. This is additional
 implementation evidence from the same library ancestry, not independent-lineage
-or Adobe application qualification. This adapter is not registered for any
-public operation yet. Resource editing/placement, previews, frontend integration,
-broader interoperability and original-application qualification remain for F14.
+or Adobe application qualification.
+
+Studio's **File > Shape resources** dialog imports and exports a complete library,
+browses individual shapes and previews their cubic path outlines. The explanation
+that fill and Boolean operations are preserved but not rendered in the preview
+is visible in all seven languages. Selecting a shape changes only the preview;
+it does not publish document pixels, dirty the painting or create an undo entry.
+Previews above 4,096 knots are explicitly unavailable; exact resource data stays
+available for export. The native picker is parented and protects the original
+resource and open document source paths, including other tabs and parked
+workspaces. Stale picker results are refused. Browser import likewise rejects
+stale callbacks and exports a fresh download without changing document title or
+save state. Ordinary image Open and Save do not accept CSH.
+
+CLI `shape inspect` and MCP `inspect_shapes` expose original bounds, ordered
+records and exact normalized signed integers. `shape export` and `export_shapes`
+write a fresh resource copy, separate from a painting's save acknowledgement.
+Typed inspection is documented by `schema shape-inspection`. Resource
+editing/placement, filled Boolean previews, persistent catalogs, broader
+interoperability and original-application qualification remain for F14.
+
+The local optimized Wasm build passed a headless Chrome import/select/preview/
+download check. Its 1,466-byte fresh export reopened with the optional upstream
+reader and matched the source geometry and metadata; the painting stayed
+`Untitled - PaintCraft` with dirty state false. Ten focused shared/native/browser
+tests cover cubic control geometry, English/Japanese controls, narrow layout,
+source protection and stale/cancelled imports. These checks do not qualify
+original Adobe applications or promise interaction latency.
 
 ### SVG/SVGZ rasterization, 2026-10-25
 

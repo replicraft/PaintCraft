@@ -46,6 +46,7 @@ cargo run --release -p paintcraft-cli -- mcp
 - **Photoshop imports in Studio:** basic PSD/PSB raster layers with names, positions, opacity and visibility. Save converted copies as PCND.
 - **SVG/SVGZ:** import a picture at your chosen size, DPI and fitting in Studio, CLI or MCP.
 - **Palettes:** import/export Adobe Swatch Exchange (`.ase`) in Studio, CLI and MCP.
+- **Custom shape resources:** import/export Adobe custom shapes (`.csh`) in Studio, CLI and MCP, with outline previews in Studio.
 
 Image exports flatten layers. Conversion prompts explain supported losses such as reduced color depth, palette changes or discarded metadata. See [format support and limits](docs/FORMAT_INTEROPERABILITY.md) for the supported subsets.
 
