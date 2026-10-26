@@ -193,6 +193,9 @@ impl Binding {
             alpha,
         })
     }
+    pub(crate) fn effective_alpha(&self) -> SourceAlpha {
+        self.alpha
+    }
     pub fn size(&self) -> (u32, u32) {
         (self.width, self.height)
     }
@@ -457,6 +460,18 @@ pub fn convert(
         rgba.push(byte);
     }
     check()?;
+    let losses = classify_losses(&binding, statistics);
+    Ok(Converted {
+        rgba,
+        binding,
+        statistics,
+        losses,
+        _account: account,
+    })
+}
+
+/// Shared policy classification; transport validation checks statistic bounds.
+pub(crate) fn classify_losses(binding: &Binding, statistics: Statistics) -> Vec<&'static str> {
     let mut losses = vec![KNOWN_LOSSES[0]];
     if binding.settings.curve == Curve::ReinhardPerChannel {
         losses.push("hdr-tone-mapped");
@@ -484,13 +499,7 @@ pub fn convert(
     if binding.space != LinearSpace::Rec709D65 {
         losses.push("hdr-color-space-converted");
     }
-    Ok(Converted {
-        rgba,
-        binding,
-        statistics,
-        losses,
-        _account: account,
-    })
+    losses
 }
 
 #[cfg(test)]

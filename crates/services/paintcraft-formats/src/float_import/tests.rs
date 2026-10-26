@@ -141,6 +141,43 @@ fn actual_decode_conversion_matches_independent_external_float_oracles_and_refus
             "{id}"
         );
 
+        let plan = if family == "hdr" {
+            plan_hdr(
+                &source,
+                precision::PIXELS_MAX,
+                choice,
+                budget.clone(),
+                &|| Ok(()),
+            )
+        } else {
+            plan_exr(
+                &source,
+                precision::PIXELS_MAX,
+                choice,
+                budget.clone(),
+                &|| Ok(()),
+            )
+        }
+        .unwrap();
+        let report = wire::Report::decode(&prepared.report().encode()).unwrap();
+        let checked = plan
+            .accept_report(
+                report,
+                prepared.assessment().binding().size(),
+                prepared.preview_rgba(),
+                &|| Ok(()),
+            )
+            .unwrap();
+        assert_eq!(
+            checked.assessment().to_value(),
+            prepared.assessment().to_value(),
+            "parent-only reconstruction {id}"
+        );
+        assert_eq!(
+            checked.assessment().digest(),
+            prepared.assessment().digest()
+        );
+        drop(checked);
         let expected = load(root().join(field(case, "expected_rgba_file").unwrap()));
         assert_eq!(prepared.preview_rgba(), expected, "{id}");
         assert_eq!(
@@ -483,5 +520,174 @@ fn retained_linear_partial_alpha_reports_actual_encoded_editor_blending_limit() 
         ErrorCode::CapabilityUnsupported
     );
     drop(flattened);
+    assert_eq!(budget.usage().reserved, 0);
+}
+#[test]
+fn host_reconstruction_refuses_wrong_stats_dimensions_alpha_source_settings_and_output() {
+    let fixtures = root().parent().unwrap().to_path_buf();
+    let source = load(fixtures.join("radiance-fixtures/literal-2x2.hdr"));
+    let budget = SharedBudget::new(64 << 20);
+    let settings = Settings {
+        negative: precision::Negative::ClipToBlack,
+        ..Settings::default()
+    };
+    let prepared = prepare_hdr(&source, 4, settings, budget.clone(), &|| Ok(())).unwrap();
+    let baseline = budget.usage().reserved;
+    for mode in 0..10 {
+        let input = if mode == 8 {
+            load(fixtures.join("radiance-fixtures/calibrated-2x2.hdr"))
+        } else {
+            source.clone()
+        };
+        let mut choice = settings;
+        if mode == 9 {
+            choice.exposure_milli_ev = 1000;
+        }
+        let plan = plan_hdr(&input, 4, choice, budget.clone(), &|| Ok(())).unwrap();
+        let mut report = prepared.report().encode();
+        let mut rgba = prepared.preview_rgba().to_vec();
+        let mut size = (2, 2);
+        match mode {
+            0 => size = (1, 4),
+            1 => {
+                rgba.pop();
+            }
+            2 => rgba[3] = 0,
+            3 => rgba[0] ^= 1,
+            4 => report[16] ^= 1,
+            5 => report[48..56].copy_from_slice(&13u64.to_be_bytes()),
+            6 => report[80..88].copy_from_slice(&1u64.to_be_bytes()),
+            7 => report[88..96].copy_from_slice(&1u64.to_be_bytes()),
+            _ => {}
+        }
+        if mode == 2 || mode == 5 {
+            // Forge a matching canonical digest too: semantic validation must
+            // reject impossible alpha/counts independently of digest mismatch.
+            let mut receipt = prepared.assessment().to_value();
+            let Value::Object(ref mut fields) = receipt else {
+                panic!("receipt")
+            };
+            if mode == 2 {
+                fields.insert(
+                    "rgba_sha256".into(),
+                    Value::str(hex(&Sha256::digest(&rgba))),
+                );
+            } else {
+                let Value::Object(statistics) = fields.get_mut("statistics").unwrap() else {
+                    panic!("stats")
+                };
+                statistics.insert("negative_source_samples".into(), Value::Int(13));
+            }
+            let mut hash = Sha256::new();
+            hash.update(b"PaintCraft float import assessment v1\0");
+            hash.update(json::canonical(&receipt));
+            report[16..48].copy_from_slice(&hash.finalize());
+        }
+        assert_eq!(
+            plan.accept_report(wire::Report::decode(&report).unwrap(), size, &rgba, &|| Ok(
+                ()
+            ))
+            .unwrap_err()
+            .code,
+            ErrorCode::CodecFailed,
+            "mode{mode}"
+        );
+        assert_eq!(budget.usage().reserved, baseline);
+    }
+    drop(prepared);
+    assert_eq!(budget.usage().reserved, 0);
+    let huge = vec![0; plan::INPUT_BYTES_MAX + 1];
+    assert_eq!(
+        plan_hdr(&huge, 1, Settings::default(), budget.clone(), &|| Ok(()))
+            .unwrap_err()
+            .code,
+        ErrorCode::ResourceLimit
+    );
+}
+#[test]
+fn source_partial_alpha_near_endpoints_rehydrates_even_when_output_is_zero_or_opaque() {
+    let mut source = load(
+        root()
+            .parent()
+            .unwrap()
+            .join("exr-fixtures/float-rgba-special.exr"),
+    );
+    let admitted = crate::exr::inspect(&source, 6, &|| Ok(())).unwrap();
+    let table = admitted.raw_header().len();
+    let names = admitted
+        .header()
+        .channels
+        .iter()
+        .map(|c| c.name.to_owned())
+        .collect::<Vec<_>>();
+    let offsets = (0..2)
+        .map(|row| {
+            u64::from_le_bytes(
+                source[table + row * 8..table + row * 8 + 8]
+                    .try_into()
+                    .unwrap(),
+            ) as usize
+        })
+        .collect::<Vec<_>>();
+    for offset in offsets {
+        for (index, name) in names.iter().enumerate() {
+            for x in 0..3 {
+                let value = if name == "A" {
+                    if x % 2 == 0 { 0.0001f32 } else { 0.9999 }
+                } else {
+                    0.0
+                };
+                let at = offset + 8 + (index * 3 + x) * 4;
+                source[at..at + 4].copy_from_slice(&value.to_le_bytes());
+            }
+        }
+    }
+    let budget = SharedBudget::new(64 << 20);
+    let prepared =
+        prepare_exr(&source, 6, Settings::default(), budget.clone(), &|| Ok(())).unwrap();
+    assert_eq!(prepared.assessment().retained_partial_alpha_pixels(), 6);
+    assert_eq!(prepared.statistics().alpha_samples_quantized, 6);
+    assert!(
+        prepared
+            .preview_rgba()
+            .as_chunks::<4>()
+            .0
+            .iter()
+            .all(|p| p[3] == 0 || p[3] == 255)
+    );
+    let plan = plan_exr(&source, 6, Settings::default(), budget.clone(), &|| Ok(())).unwrap();
+    let checked = plan
+        .accept_report(prepared.report(), (3, 2), prepared.preview_rgba(), &|| {
+            Ok(())
+        })
+        .unwrap();
+    assert_eq!(
+        checked.assessment().digest(),
+        prepared.assessment().digest()
+    );
+    drop(checked);
+    let plan = plan_exr(&source, 6, Settings::default(), budget.clone(), &|| Ok(())).unwrap();
+    let mut report = prepared.report().encode();
+    report[88..96].copy_from_slice(&5u64.to_be_bytes());
+    let mut receipt = prepared.assessment().to_value();
+    let Value::Object(ref mut fields) = receipt else {
+        panic!("receipt")
+    };
+    fields.insert("retained_partial_alpha_pixels".into(), Value::Int(5));
+    let mut hash = Sha256::new();
+    hash.update(b"PaintCraft float import assessment v1\0");
+    hash.update(json::canonical(&receipt));
+    report[16..48].copy_from_slice(&hash.finalize());
+
+    assert!(
+        plan.accept_report(
+            wire::Report::decode(&report).unwrap(),
+            (3, 2),
+            prepared.preview_rgba(),
+            &|| Ok(())
+        )
+        .is_err()
+    );
+    drop(prepared);
     assert_eq!(budget.usage().reserved, 0);
 }

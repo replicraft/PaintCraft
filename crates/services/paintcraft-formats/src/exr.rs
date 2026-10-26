@@ -18,11 +18,9 @@ pub struct Inspection<'a> {
     source: &'a [u8],
     sha256: [u8; 32],
     chunks: u32,
-    #[cfg(feature = "exr-codec")]
     header_end: usize,
 }
 impl Inspection<'_> {
-    #[cfg(feature = "exr-codec")]
     pub(crate) fn raw_header(&self) -> &[u8] {
         &self.source[..self.header_end]
     }
@@ -111,7 +109,6 @@ pub fn inspect<'a>(
         ));
     }
     let header = header::parse(&mut bytes, pixels, check)?;
-    #[cfg(feature = "exr-codec")]
     let header_end = bytes.at;
     let chunks = chunks::validate(&mut bytes, &header, check)?;
     let mut hash = Sha256::new();
@@ -125,7 +122,6 @@ pub fn inspect<'a>(
         source,
         sha256: hash.finalize().into(),
         chunks,
-        #[cfg(feature = "exr-codec")]
         header_end,
     })
 }

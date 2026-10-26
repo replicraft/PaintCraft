@@ -1,7 +1,9 @@
 //! Private float-source conversion preparation only. Digest consent binds these
 //! bytes/settings/results; filesystem freshness and editor-owner publication
 //! remain caller/native Job responsibilities. No worker or frontend enabled.
+mod plan;
 mod sources;
+pub mod wire;
 use crate::precision::{self, Binding, Converted, Settings};
 use paintcraft_core::types::{
     Error, ErrorCode, Result,
@@ -9,7 +11,10 @@ use paintcraft_core::types::{
     policy::hex,
     resources::{AllocationClass, BudgetAccount, SharedBudget},
 };
+pub use plan::{SourcePlan, WorkerAssessment};
 use sha2::{Digest, Sha256};
+pub use sources::plan_exr;
+pub use sources::plan_hdr;
 #[cfg(feature = "exr-codec")]
 pub use sources::prepare_exr;
 #[cfg(feature = "hdr-codec")]
@@ -153,7 +158,7 @@ impl Assessment {
         self.digest
     }
 
-    fn require_losses(&self, allowed: &[String]) -> Result<()> {
+    pub fn require_losses(&self, allowed: &[String]) -> Result<()> {
         if allowed.iter().any(|v| {
             !KNOWN_LOSSES.contains(&v.as_str()) && !precision::KNOWN_LOSSES.contains(&v.as_str())
         }) {
@@ -189,6 +194,9 @@ impl Prepared {
     /// independently revalidate the source/editor owner at publication.
     pub fn preview_rgba(&self) -> &[u8] {
         self.converted.rgba()
+    }
+    pub fn report(&self) -> wire::Report {
+        wire::Report::from_prepared(self)
     }
     pub fn statistics(&self) -> precision::Statistics {
         self.converted.statistics()
@@ -252,25 +260,15 @@ fn source(
         account,
     ))
 }
+#[cfg(any(feature = "hdr-codec", feature = "exr-codec"))]
 fn finish(
-    binding: Binding,
-    source: Source,
-    metadata: BudgetAccount,
+    plan: SourcePlan,
     samples: &[f32],
-    mut losses: Vec<&'static str>,
     budget: SharedBudget,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Prepared> {
-    let converted = precision::convert(binding.clone(), samples, budget, check)?;
-    for loss in converted.losses() {
-        if !losses.contains(loss) {
-            losses.push(loss);
-        }
-    }
-    let retained_partial_alpha_pixels = if binding.settings().alpha_output
-        == precision::AlphaOutput::Preserve
-        && source.channels.iter().any(|(name, _)| *name == "A")
-    {
+    let converted = precision::convert(plan.binding.clone(), samples, budget, check)?;
+    let partial = if plan.retains_alpha() {
         let mut count = 0;
         for (index, pixel) in samples.as_chunks::<4>().0.iter().enumerate() {
             if index % 1024 == 0 {
@@ -284,35 +282,14 @@ fn finish(
     } else {
         0
     };
-    if retained_partial_alpha_pixels > 0 {
-        losses.push("hdr-linear-alpha-compositing-changed");
-    }
-    check()?;
-    let mut rgba_hash = Sha256::new();
-    for chunk in converted.rgba().chunks(64 << 10) {
-        check()?;
-        rgba_hash.update(chunk);
-    }
-    let rgba_sha256 = rgba_hash.finalize().into();
-    let mut assessment = Assessment {
-        binding,
-        source,
-        losses,
-        rgba_sha256,
-        digest: [0; 32],
-        statistics: converted.statistics(),
-        retained_partial_alpha_pixels,
-    };
-    let mut hash = Sha256::new();
-    hash.update(b"PaintCraft float import assessment v1\0");
-    hash.update(json::canonical(&assessment.to_value()));
-    assessment.digest = hash.finalize().into();
-    check()?;
+    let statistics = converted.statistics();
+    let assessment = plan.assessment(statistics, partial, converted.rgba(), check)?;
     Ok(Prepared {
         converted,
-        assessment,
-        _metadata: metadata,
+        assessment: assessment.assessment,
+        _metadata: assessment._metadata,
     })
 }
+
 #[cfg(all(test, feature = "hdr-codec", feature = "exr-codec"))]
 mod tests;

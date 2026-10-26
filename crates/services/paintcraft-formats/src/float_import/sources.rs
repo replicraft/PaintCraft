@@ -1,13 +1,11 @@
 use super::*;
-#[cfg(feature = "hdr-codec")]
-pub fn prepare_hdr(
-    bytes: &[u8],
+fn capture_hdr<'a>(
+    bytes: &'a [u8],
     pixels: u64,
     settings: Settings,
     budget: SharedBudget,
     check: &dyn Fn() -> Result<()>,
-) -> Result<Prepared> {
-    let _scratch = scratch(&budget)?;
+) -> Result<(SourcePlan, crate::radiance::Inspection<'a>)> {
     let admitted = crate::radiance::inspect(bytes, pixels, check)?;
     let header = admitted.header();
     let binding = Binding::new(
@@ -38,26 +36,25 @@ pub fn prepare_hdr(
     if header.pixel_aspect != 1.0 {
         losses.push("hdr-pixel-aspect-normalized");
     }
-    let decoded = crate::radiance::decode::decode(&admitted, budget.clone(), check)?;
-    finish(
-        binding,
-        source,
-        metadata,
-        decoded.samples(),
-        losses,
-        budget,
-        check,
-    )
+    Ok((
+        SourcePlan {
+            binding,
+            source,
+            base_losses: losses,
+            _metadata: metadata,
+            budget,
+        },
+        admitted,
+    ))
 }
-#[cfg(feature = "exr-codec")]
-pub fn prepare_exr(
-    bytes: &[u8],
+
+fn capture_exr<'a>(
+    bytes: &'a [u8],
     pixels: u64,
     settings: Settings,
     budget: SharedBudget,
-    check: &(dyn Fn() -> Result<()> + Sync),
-) -> Result<Prepared> {
-    let _scratch = scratch(&budget)?;
+    check: &dyn Fn() -> Result<()>,
+) -> Result<(SourcePlan, crate::exr::Inspection<'a>)> {
     let admitted = crate::exr::inspect(bytes, pixels, check)?;
     let header = admitted.header();
     let binding = Binding::new(
@@ -126,14 +123,67 @@ pub fn prepare_exr(
     }) {
         losses.push("hdr-metadata-not-retained");
     }
+    Ok((
+        SourcePlan {
+            binding,
+            source,
+            base_losses: losses,
+            _metadata: metadata,
+            budget,
+        },
+        admitted,
+    ))
+}
+
+pub fn plan_hdr(
+    bytes: &[u8],
+    pixels: u64,
+    settings: Settings,
+    budget: SharedBudget,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<SourcePlan> {
+    plan::allowance(bytes, pixels)?;
+    let _scratch = scratch(&budget)?;
+    let (plan, _inspection) =
+        capture_hdr(bytes, pixels.min(plan::PIXELS_MAX), settings, budget, check)?;
+    Ok(plan)
+}
+pub fn plan_exr(
+    bytes: &[u8],
+    pixels: u64,
+    settings: Settings,
+    budget: SharedBudget,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<SourcePlan> {
+    plan::allowance(bytes, pixels)?;
+    let _scratch = scratch(&budget)?;
+    let (plan, _inspection) =
+        capture_exr(bytes, pixels.min(plan::PIXELS_MAX), settings, budget, check)?;
+    Ok(plan)
+}
+#[cfg(feature = "hdr-codec")]
+pub fn prepare_hdr(
+    bytes: &[u8],
+    pixels: u64,
+    settings: Settings,
+    budget: SharedBudget,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Prepared> {
+    let _scratch = scratch(&budget)?;
+    let (plan, admitted) = capture_hdr(bytes, pixels, settings, budget.clone(), check)?;
+    let decoded = crate::radiance::decode::decode(&admitted, budget.clone(), check)?;
+    finish(plan, decoded.samples(), budget, check)
+}
+#[cfg(feature = "exr-codec")]
+pub fn prepare_exr(
+    bytes: &[u8],
+    pixels: u64,
+    settings: Settings,
+    budget: SharedBudget,
+    check: &(dyn Fn() -> Result<()> + Sync),
+) -> Result<Prepared> {
+    let _scratch = scratch(&budget)?;
+    let (plan, admitted) = capture_exr(bytes, pixels, settings, budget.clone(), check)?;
     let decoded = crate::exr::decode::decode(&admitted, budget.clone(), check)?;
-    finish(
-        binding,
-        source,
-        metadata,
-        decoded.samples(),
-        losses,
-        budget,
-        check,
-    )
+    finish(plan, decoded.samples(), budget, check)
 }

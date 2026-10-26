@@ -9,7 +9,6 @@ pub mod dcx;
 pub mod dds;
 pub mod export;
 pub mod exr;
-#[cfg(any(feature = "exr-codec", feature = "hdr-codec"))]
 pub mod float_import;
 pub mod heif;
 pub mod icns;
