@@ -28,6 +28,7 @@ pub(crate) struct Loaded {
 pub(crate) enum Outcome {
     Loaded(Loaded),
     Pages(crate::importing::pages::Source),
+    Svg(crate::importing::svg::Source),
     Cancelled,
     DownloadRequested {
         owner: uuid::Uuid,
@@ -116,6 +117,7 @@ impl Files {
         if convert && frontend == Frontend::Studio {
             extensions.push("dcx");
             extensions.extend(["ico", "cur"]);
+            extensions.extend(["svg", "svgz"]);
         }
         wasm_bindgen_futures::spawn_local(async move {
             let result = async {
@@ -127,10 +129,25 @@ impl Files {
                 else {
                     return Ok(Outcome::Cancelled);
                 };
-                if file.inner().size() > FILE_BYTES as f64 {
+                let name = file.file_name();
+                let svg = convert
+                    && name.rsplit('.').next().and_then(Family::from_extension)
+                        == Some(Family::Svg);
+                if svg && frontend != Frontend::Studio {
+                    return Err(Error::new(
+                        ErrorCode::CapabilityUnsupported,
+                        "SVG rasterization requires explicit Studio import",
+                    ));
+                }
+                let allowance = if svg {
+                    paintcraft_formats::svg::SOURCE_MAX
+                } else {
+                    FILE_BYTES
+                };
+                if file.inner().size() > allowance as f64 {
                     return Err(Error::new(
                         ErrorCode::ResourceLimit,
-                        "Browser input limit is 64 MiB",
+                        format!("Browser input exceeds {allowance} bytes"),
                     ));
                 }
                 // FileHandle::read unwraps read failures; use the fallible browser API.
@@ -140,6 +157,11 @@ impl Files {
                         Error::new(ErrorCode::StorageFailed, "Browser file read failed")
                     })?;
                 let bytes = js_sys::Uint8Array::new(&buffer).to_vec();
+                if svg {
+                    return Ok(Outcome::Svg(crate::importing::svg::Source::new(
+                        bytes, name, frontend,
+                    )?));
+                }
                 if convert
                     && matches!(
                         paintcraft_formats::registry::sniff(&bytes),

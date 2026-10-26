@@ -57,6 +57,7 @@ pub struct WebApp {
     pub(crate) text: crate::text_ui::TextUi,
     pub(crate) pending_import: Option<crate::importing::Pending>,
     pub(crate) pending_pages: Option<crate::importing::pages::Pending>,
+    pub(crate) pending_svg: Option<crate::importing::svg::Pending>,
     pub(crate) import_owner: Option<crate::importing::Owner>,
     form: Option<forms::Form>,
     pub(crate) message: String,
@@ -115,6 +116,7 @@ impl WebApp {
             files: crate::files::Files::default(),
             pending_import: None,
             pending_pages: None,
+            pending_svg: None,
             import_owner: None,
             form: None,
             clipboard: Default::default(),
@@ -162,6 +164,7 @@ impl WebApp {
             || self.files.busy
             || self.pending_import.is_some()
             || self.pending_pages.is_some()
+            || self.pending_svg.is_some()
             || self.form.is_some()
     }
 
@@ -473,6 +476,7 @@ impl WebApp {
         match self.files.poll() {
             Some(Ok(Outcome::Loaded(loaded))) => self.accept_loaded(loaded, ctx),
             Some(Ok(Outcome::Pages(source))) => self.accept_pages(source, ctx),
+            Some(Ok(Outcome::Svg(source))) => self.accept_svg(source, ctx),
             Some(Ok(Outcome::Cancelled)) => {
                 self.import_owner = None;
                 self.message = "File dialog cancelled; current document retained".into()
@@ -618,6 +622,10 @@ impl WebApp {
                     if ui.button(t!(ui.ctx(), "Cancel")).clicked() { self.confirm_replace = None; }
                 });
             });
+        }
+        if self.pending_svg.is_some() {
+            self.svg_import_dialog(ctx);
+            return;
         }
         if self.pending_pages.is_some() {
             self.page_dialog(ctx);

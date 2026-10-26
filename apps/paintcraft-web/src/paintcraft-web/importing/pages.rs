@@ -92,7 +92,10 @@ pub(crate) struct Pending {
 }
 impl WebApp {
     pub(crate) fn accept_pages(&mut self, source: Source, ctx: &egui::Context) {
-        if self.pending_pages.is_some() || self.pending_import.is_some() {
+        if self.pending_pages.is_some()
+            || self.pending_import.is_some()
+            || self.pending_svg.is_some()
+        {
             return;
         }
         let Some(owner) = self.import_owner.take().filter(|owner| owner.current(self)) else {

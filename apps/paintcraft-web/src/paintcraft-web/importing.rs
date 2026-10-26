@@ -1,5 +1,6 @@
 //! Import consent belongs to the document/profile captured before the picker.
 pub(crate) mod pages;
+pub(crate) mod svg;
 use crate::{app::WebApp, files::Loaded};
 use paintcraft_classic::ClassicVariant;
 use paintcraft_document::Document;
