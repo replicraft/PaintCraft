@@ -6,7 +6,7 @@ Codec implementation, enabled frontend operations and release qualification are 
 
 ## Available workflows
 
-Desktop and browser share the frontend registry, with platform-specific qualification for each operation. Native-only JPEG XR, HEIF and AVIF imports therefore do not imply browser readers; JPEG XL has its own explicitly qualified browser import. CLI and MCP import/export operations also apply that registry, using an explicit frontend profile rather than inheriting every compiled codec. All foreign conversions require acknowledgment of their reported losses before publication. Failed, cancelled or stale conversions leave the existing document intact.
+Desktop and browser share the frontend registry, with platform-specific qualification for each operation. Native-only JPEG XR, HEIF, AVIF and HDR/EXR conversions therefore do not imply browser readers; JPEG XL has its own explicitly qualified browser import. CLI and MCP import/export operations also apply that registry, using an explicit frontend profile rather than inheriting every compiled codec. All foreign conversions require acknowledgment of their reported losses before publication. Failed, cancelled or stale conversions leave the existing document intact.
 
 - PCND is the native layered project format and the preserving Save destination.
 - Classic 7/10/11 open and export PNG, JPEG, BMP, still GIF and single-page TIFF. CLI Classic profiles can explicitly import the admitted PCX and MSP subsets; the Classic 11 CLI profile also admits the limited PAINT conversion. Desktop/browser Import image is currently a Studio action, so these headless allowances do not imply additional Classic menus.
@@ -18,7 +18,8 @@ Desktop and browser share the frontend registry, with platform-specific qualific
 - Studio explicitly imports the narrow metadata-free sRGB8 JPEG XL profile through a verified packaged native helper or the bounded browser Worker. CLI and native MCP use the native route. Ordinary Open and Classic JPEG XL reads remain denied; strict profiles without conversion losses do not invent an approval prompt.
 - Native Studio, CLI and native MCP explicitly import the qualified opaque RGB8 JPEG XR profile with mandatory print-resolution loss consent. Studio displays the actual picture and effective horizontal/vertical DPI before approval. Ordinary Open, browser and Classic JPEG XR reads remain denied.
 - Native Studio, CLI and native MCP explicitly import the qualified direct-primary HEIF sRGB8 color/straight-alpha profile. Actual YCbCr reconstruction and nonempty item-name losses require consent; an unnamed identity-color source has no conversion-loss prompt. Ordinary Open, browser, Classic and all HEIF writing remain denied.
-- Native Studio, CLI and native MCP explicitly import the qualified identity sRGB8 and explicit SDR YCbCr AVIF still/straight-alpha profiles. SDR requires the verified V6 helper and reconstruction consent; identity remains compatible with V5. Nonempty source item names also require consent. Ordinary Open, browser and Classic reads remain denied.
+- Native Studio, CLI and native MCP explicitly import the qualified identity sRGB8 and explicit SDR YCbCr AVIF still/straight-alpha profiles. SDR requires a verified V6/V7 helper and reconstruction consent; identity accepts V5/V6/V7. Nonempty source item names also require consent. Ordinary Open, browser and Classic reads remain denied.
+- Native Studio, CLI and native MCP convert the admitted Radiance HDR and OpenEXR subsets to 8-bit sRGB with explicit exposure, curve, source/alpha interpretation and actual loss consent. Studio reviews the immutable picture before adoption; CLI/MCP inspect first and require the exact source and assessment hashes for import. This is not HDR editing or preserving foreign Save.
 
 Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, GIF, TGA, DDS, TIFF, HEIF, WebP and AVIF. That inventory is not a claim that all those readers are enabled. PCND and qualified extended conversions are additional workflows. HEIF/HEIC writing and SVG export remain prohibited.
 
@@ -34,7 +35,7 @@ Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, 
 | WebP | Studio still Open and lossless RGBA8 Export | Animation and unqualified extensions refused; import metadata losses explicit |
 | DDS | Studio single-surface Open and exact RGBA8 Export | Reader admits RGBA/BGRA/BC1/BC2/BC3 with explicit sRGB transfer and straight or opaque alpha only. Linear/unspecified transfer, associated/unknown alpha, mipmaps, arrays, cubes and volumes refused. Writer emits uncompressed DX10 RGBA8 sRGB straight alpha |
 | JPEG XL | Studio lossless RGBA8 Export; native Studio/CLI/MCP explicit Import for `native-jxl-srgb8-worker-v1`; browser Studio explicit Import for `web-jxl-srgb8-worker-quarantine-v1` | Both readers require metadata-free static identity-oriented straight sRGB8, at most 64 MiB input and 4,194,304 pixels. Native import requires the matching packaged helper/schema 2 manifest. Browser import uses the production isolated Worker and persistent quarantine on uncertain completion. Ordinary Open and Classic reads remain denied. Export retains its minimum two pixels per side and 64 MiB output limit |
-| AVIF | Studio lossy RGBA8 Export; native Studio/CLI/MCP explicit Import for identity sRGB8 and SDR YCbCr variants | Reader: reduced-still identity 4:4:4 or explicit BT.709/sRGB8 full/limited-range 4:4:4 or 4:2:0 with qualified vertical/colocated siting, optional straight alpha, at most 64 MiB input and 4,194,304 pixels. SDR requires exact V6 helper/manifest and reconstruction consent; identity accepts V5/V6. Named item loss also requires consent. Unknown 4:2:0 siting, HDR, grids, browser/Classic/Open and preserving Save remain denied. Export is lossy even at quality 100, may change alpha/hidden RGB, and retains its 1,048,576 pixels, 4096 per side and 16 MiB output limits |
+| AVIF | Studio lossy RGBA8 Export; native Studio/CLI/MCP explicit Import for identity sRGB8 and SDR YCbCr variants | Reader: reduced-still identity 4:4:4 or explicit BT.709/sRGB8 full/limited-range 4:4:4 or 4:2:0 with qualified vertical/colocated siting, optional straight alpha, at most 64 MiB input and 4,194,304 pixels. SDR requires an exact V6/V7 helper/manifest and reconstruction consent; identity accepts V5/V6/V7. Named item loss also requires consent. Unknown 4:2:0 siting, HDR, grids, browser/Classic/Open and preserving Save remain denied. Export is lossy even at quality 100, may change alpha/hidden RGB, and retains its 1,048,576 pixels, 4096 per side and 16 MiB output limits |
 | QOI | Studio explicit Import and lossless RGBA8 Export | Strict complete raster/end marker and sRGB profile; linear declaration refused; exact alpha and hidden RGB retained by the codec |
 | Netpbm | Studio explicit P1 through P7 Import; PAM P7 RGBA8 Export only | Admitted max values 1, 255 or 65535 and recognized grayscale/RGB/alpha tuples; bounded 64 KiB header. High-depth import reduces to 8 bits; metadata loss explicit |
 | farbfeld | Studio explicit Import and lossless RGBA8 Export | Exact body length required; imports reduce 16-bit samples to 8 bits with explicit loss. Exports widen each 8-bit sample by multiplying by 257; this does not add high-depth editing |
@@ -50,7 +51,8 @@ Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, 
 | SVG/SVGZ | Studio desktop/browser Import; CLI `import` with `--svg-width`/`--svg-height`; MCP `import_image` with `svg` options | Explicit size/DPI/fitting and rasterization consent. Studio previews use bundled fonts and additional font files; CLI/MCP accept outline fonts too. No Classic access, ordinary Open or SVG export |
 | MSP | Explicit Studio import/exact export in desktop, browser, CLI and MCP; headless Classic legacy import | DanM raw and admitted LinS row-RLE profile with independent Pillow pixel checks. Named metadata consent and frozen native source protection; no ordinary Classic Open, preserving MSP Save, hidden threshold/matte or MSP2 writer |
 | ICNS | Studio desktop/browser explicit selected-entry Import and fresh typed export; CLI `inspect-icns` / `import --entry` / `export-icns`; MCP `inspect_icns` / `import_image` / `export_icns` | Admitted PNG and small RGB/mask readers; eight explicit PNG output types. Logical size, Retina scale and physical pixels stay distinct. Displayed preview and loss consent required in Studio. No ordinary Open, preserving Save, Classic access, legacy writer or canonical ARGB support; native readback exclusions remain |
-| EXR/HDR, JP2 | Not yet enabled | Explicit SDR conversion policy and bounded Radiance header/packet preflight exist; optional private `hdr-codec` candidate qualification is separate from an isolated, usable reader. EXR has an optional private selected-decoder qualification adapter; public EXR/JP2 decoding remains unavailable |
+| EXR/HDR | Native Studio explicit conversion; CLI `inspect-float` / `import-float`; MCP `inspect_float` / `import_float` | Verified final V7 helper, at most 16 MiB source and 1,048,576 pixels. Admitted RGBE or single-part scanline RGB[A] HALF/FLOAT becomes 8-bit sRGB under explicit settings and actual loss consent. No ordinary Open, Classic/browser conversion, HDR editing, foreign writer or preserving Save; broader source profiles remain unqualified |
+| JP2 | Not yet enabled | OpenJPEG remains a candidate; deferred F7 import requires its own bounded decoder, color/loss policy and independent consumer qualification |
 | ASE | Studio Palettes dialog; CLI `palette inspect` / `palette export`; MCP `inspect_palette` / `export_palette` | Flat groups, exact names/order/models/types and finite f32 values. RGB/gray tool-color adoption is explicit; CMYK/LAB conversion, persistent catalogs and Adobe qualification remain |
 | ABR | Studio desktop/browser selection and bounded native-static R8 painting; CLI/MCP inspection and painting | Exact sample masks, pattern channels, signed bounds and original ordered payloads retained. Up to 256 presets per admitted library; unsupported dynamics, textures, transforms and precision reduction are refused. Full preset behavior and original-application qualification remain; no ABR export or ordinary image Open |
 | CSH | Studio Shape resources dialog with numeric placement and a canvas drag tool; CLI `shape inspect` / `shape export`; MCP `inspect_shapes` / `export_shapes` | Retains bounds, names, IDs and exact ordered path records. Supported single closed paths rasterize with curves and explicit consent in Studio. Multiple/open paths, Boolean placement and broader interoperability remain |
@@ -103,8 +105,8 @@ consumer paths and prerequisites, rather than treating every candidate as a depe
 1. **Extend isolated-reader qualification across supported platforms.** The narrow browser JPEG XL consumer now has actual production picker, adoption, PCND reopen and failure evidence below. Extend native JXL/JXR release-platform installation coverage and cross-browser qualification separately; browser quarantine is a logical failure policy, not a synchronous Worker-stop or aggregate physical-memory guarantee.
 2. **Close the finite qualified stock profiles, then remaining required integrations.** Native identity sRGB8 and explicit SDR YCbCr AVIF profiles now have independently checked decoder/consumer routes, not full stock parity. V6 adds full/limited-range 4:4:4 and qualified 4:2:0 with reconstruction consent; unknown siting, HDR, grids, transforms and browser execution remain separate. HEIF has its narrow native color import below, while broader camera/grid/ICC/HDR/deep-color and browser profiles remain unqualified. The existing isolated helper and bounded preflight must remain the reader boundary; enabling `image`'s separate native feature alone is insufficient. HEIF writing remains prohibited.
 3. **Implement and qualify layered writes.** PDN has a bounded internal typed PDN3 writer and native layered-copy preparation; public and preserving writes still await actual Paint.NET open/edit/resave. PAINT now also has an internal bounded typed writer, immutable native preparation and gated CLI/MCP fresh-copy routes; public/preserving Windows Paint qualification is still required. Its UI-name, visibility and opacity extensions remain unqualified. ORA's internal writer is not publicly enabled; groups and original-application qualification remain. PSD/PSB now have a bounded internal fresh RGB8 Normal raster-layer writer with independent psd-tools/Pillow checks; public layered export still awaits actual Photoshop open/edit/resave qualification. Groups, masks, text, effects and high-depth output remain unsupported. JPEG XR writing is also unimplemented; its new reader does not qualify it.
-4. **Close isolated EXR/HDR conversion and actual consumers.** The implemented precision policy names Clip or Reinhard-per-channel, exposure, source-space assignment, alpha convention and nonfinite/negative handling with explicit losses. Bounded Radiance preflight preserves as-stored calibration provenance and refuses malformed packets before decoder allocation. Optional private `hdr-codec` uses existing image HDR behind sealed preflight; it is not a public reader or a confinement boundary. Zune HDR 0.5.2 failed retained exponent-wrap probes and is not adopted. The private `float_import` pipeline now binds source/header/geometry/settings, prepares RGBA8 previews and requires exact digest/loss consent, including the retained-linear-alpha versus encoded-editor compositing limitation. It is not native isolated execution or frontend adoption. Native isolated HDR execution, broader orientations and actual frontend preview/adoption remain; EXR now has bounded single-part RGB[A] HALF/FLOAT preflight and optional private `exr-codec` decoding checked against official OpenEXR references; isolated execution, source assignment when metadata is unresolved, conversion preview/consent and consumer adoption remain. Pinned `exr` 1.74.2 is adopted only through the optional private decoder with Rayon disabled; its source-bound conversion still needs isolated execution and frontend qualification. OpenJPEG remains a candidate; JP2 belongs to deferred F7 work and is not an initial-release or pre-performance dependency.
-5. **Defer broader profiles without widening labels.** This includes DCX multi-page consumer workflows, MSP2 consumer workflows and original historical-app evidence; animation/multipage and high-depth TIFF; advanced DDS surfaces/mips; additional JXL/JXR profiles; full ABR dynamics/pattern behavior, ASE CMYK/LAB color adoption and CSH multiple/open/Boolean paths. Foreign preserving Save remains a separate gate throughout.
+4. **Extend qualified HDR/EXR conversion and distribution evidence.** Native isolated conversion, actual Studio preview/adoption and CLI/MCP inspection/import now work for the bounded profiles below. The final V7 helper uses selected image HDR and pinned `exr` 1.74.2 with Rayon disabled; standalone in-process qualification adapters are not the product isolation boundary. Explicit settings, digest-bound actual losses and the retained-linear-alpha compositing limitation remain required. Broader Radiance orientations/XYZE, EXR tiled/deep/multipart or differing windows, additional compression/color profiles and high-depth editing remain unsupported; their implementation and qualification cannot be inferred from the narrow route. All six native release targets and broader original-file/reference matrices still need execution. Zune HDR 0.5.2 failed retained exponent-wrap probes and is not adopted. JP2 remains deferred F7 work, not an implemented conversion or an initial-release dependency.
+5. **Complete remaining required profiles without widening labels.** Narrow subsets do not close the pack's broader format requirements. In particular, `TEXTURE_ICON_VECTOR.md` requires initial 2D top-mip DDS import with an explicit warning for omitted mip levels/array faces; rejecting every mip chain does not satisfy that target. Qualified BC export, mip policy and additional JXL/JXR profiles still need their specified implementation and evidence. Track DCX multi-page consumers, MSP2 consumers, original historical-app evidence, TIFF precision/pages, ABR dynamics/pattern behavior, ASE color adoption and CSH path variants against their individual contracts; being unimplemented is not a basis for calling a requirement optional. Explicitly future animation/multipage editing remains distinct from current single-image conversion. Foreign preserving Save remains a separate gate throughout.
 6. **Keep optional F7 imports distinct from initial-format parity.** JP2, RAW, selected PDF pages, KRA/XCF and the animation model remain future capabilities. They need their own bounded services, source/loss policies and real reference consumers; compiling a library is insufficient.
 7. **Close the delivery gates for each implemented profile.** Complete the pack's hostile-input fuzzing, independent reference/version matrices, reproducible codec and whole-operation benchmark exports, failure/cancellation-tail tests and installed-helper/packaging coverage on all six release targets. Local controlled fixtures and headless UI tests do not establish general original-application compatibility or a hard aggregate-memory guarantee.
 
@@ -113,11 +115,63 @@ Current codec adoption is intentional and narrower than the candidate inventory:
 `ico`, `icns`, `ag-psd`, `resvg`, `jxl` and `zune-jpegxl` paths where active.
 The isolated AVIF helper statically builds pinned dav1d 1.5.4 behind its explicit
 feature and charged allocation boundary; it does not add a system decoder fallback.
-Zune-first PNG/JPEG/facade routing, `libheif`, `exr` and OpenJPEG have not been
-adopted merely because the pack lists them. Changing a working backend still
+Zune-first PNG/JPEG/facade routing, `libheif` and OpenJPEG have not been
+adopted merely because the pack lists them. The qualified native float helper
+does adopt `exr` for its admitted scanline profile. Changing a working backend still
 requires matching correctness cases and measured evidence, not a dependency-only switch.
 
 The implemented subsets advance the pack; they do not complete its full interoperability, preservation or release gates.
+
+### Native HDR/EXR conversion, 2026-10-26
+
+The exact native Studio variants are `native-hdr-sdr8-worker-v1` and
+`native-exr-sdr8-worker-v1`. They require the final V7 helper, matching schema 2
+manifest and seven-variant list; older V4/V5/V6 and historical private V7
+descriptors do not authorize float conversion. Input is at most 16 MiB and
+1,048,576 pixels, with each side at most 65,536. Radiance admits RGBE in `-Y +X`
+orientation with bounded packets. EXR admits v2 single-part increasing scanlines,
+RGB[A] HALF/FLOAT channels, equal data/display windows and NONE/RLE/ZIPS/ZIP.
+Unsupported structures and unresolved interpretations fail closed.
+
+Conversion requires explicit Clip or Reinhard-per-channel, exposure in milli-EV,
+negative-sample handling, and alpha preservation or linear-light flattening over
+an explicit backdrop. Source-space or alpha assignments are explicit when needed.
+Radiance uses the declared lower-edge RGBE representative and as-stored calibration;
+EXR alpha defaults to the premultiplied convention unless explicitly overridden.
+Nonfinite samples and out-of-range alpha are refused. Additive color at zero
+alpha requires explicit linear-light flattening; preserve does not silently discard it. Assessment retains the bounded raw header, source facts,
+settings, actual statistics, output hash and complete actual loss list. Header
+receipt retention does not imply PCND metadata preservation. Partial alpha also
+reports the encoded-sRGB editor versus scene-linear compositing limitation.
+
+Studio displays the prepared immutable picture and settings with explicit loss
+approval before publication. CLI/MCP inspection is read-only; import repeats the
+same settings and requires raw source SHA256, assessment SHA256 and every actual
+loss. Captured same-file identity, cancellation and editor-owner checks protect
+publication; failed review/import leaves prior dirty/saved state intact. CLI writes
+a staged fresh PCND copy, and MCP adopts an unsaved document. Ordinary Open,
+Classic/browser conversion and foreign preserving Save remain denied.
+
+Independent references cover seventeen cases: twelve exact converted RGBA buffers
+and five expected policy refusals. Official OpenEXR-reopened floats and independent
+Radiance lower-edge samples feed a separate Decimal100/NumPy conversion oracle,
+never the Rust decoder or conversion implementation. Actual local Studio
+English/Japanese review and failure tests, worker/parent process tests, and raw-layer
+PCND reopen checks exercise the qualified path. The final dev/archive installation
+passed all seventeen CLI/MCP cases and source/cancel/rollback controls. The separate
+optimized `aarch64-apple-darwin` source archive, installed through the real CLI
+installer, passed those same cases in 3.76 seconds and guards in 0.58 seconds.
+Its CLI SHA256 is `33dccc52d90d34be83c5f8f18b05c73588107c0f7a9314503a4beb44d657e1a8`
+and helper SHA256 is `24a014c300a3b8050b50afa4e71d1391c2949446b12bae7583a2ca48017ce29d`.
+These are local correctness observations, not a performance comparison or six-target
+release proof. The earlier private-profile timeout and successful isolated replay
+remain separate evidence; the product deadline was not raised.
+
+See `crates/services/paintcraft-formats/src/float_import/README.md` and
+`tests/float-import-fixtures/README.md` for source policy, accounting and oracle
+provenance. Logical allocation admission and supervised process termination do not
+prove a hard aggregate RSS limit or arbitrary hostile-code sandbox. Original-file
+coverage, broader required profiles and cross-platform release qualification remain.
 
 ### Native JPEG XL document import, 2026-10-26
 
@@ -229,7 +283,7 @@ platform or real-device latency. Broader JPEG XR profiles remain separate work; 
 Native Studio **Import image…**, CLI and native MCP `import_image` admit
 `native-heif-srgb8-worker-v1` for `.heic`, `.heif` and `.hif`. Input is at most
 64 MiB and 4,194,304 pixels. The same-build isolated helper, exact known V4,
-AVIF-enabled V5 or SDR-enabled V6 record and matching schema 2 manifest are required. Each manifest
+AVIF-enabled V5, SDR-enabled V6 or final V7 record and matching schema 2 manifest are required. Each manifest
 lists its finite variant set, including this independently qualified HEIF route. Bare Open, Classic,
 browser HEIF reads, preserving Save and all HEIF writing remain denied.
 
@@ -297,10 +351,11 @@ physical-RSS/filesystem sandbox guarantee is claimed.
 ### Native AVIF identity sRGB8 document conversion, 2026-10-26
 
 Native Studio **Import image…**, CLI and native MCP `import_image` admit only
-`native-avif-srgb8-worker-v1` through a verified AVIF-enabled V5 or V6 helper,
+`native-avif-srgb8-worker-v1` through a verified AVIF-enabled V5/V6/V7 helper,
 the corresponding exact profile and schema 2 variant set: V5 uses
 `AVIF_NATIVE_PROFILE` with four entries; V6 uses `AVIF_SDR_NATIVE_PROFILE` with
-five. V4 refuses AVIF; existing JXL/JXR/HEIF jobs accept exact V4/V5/V6 contracts. Integrity failure
+five; final V7 uses `FLOAT_NATIVE_PROFILE` with seven. V4 refuses AVIF; existing
+JXL/JXR/HEIF jobs accept exact V4/V5/V6/V7 contracts. Integrity failure
 does not trigger another decoder or helper-profile attempt. Complete packages
 and CLI installers include the helper, manifest and JPEG XR/dav1d notices.
 
@@ -363,12 +418,12 @@ for bounds, allocation scope, independent provenance and remaining gates.
 ### Native AVIF SDR YCbCr import, 2026-10-26
 
 The exact `native-avif-sdr-ycbcr8-worker-v1` native Studio/CLI/MCP route uses the
-verified V6 helper. It admits explicit BT.709 primaries/matrix, sRGB transfer,
+verified V6/V7 helper. It admits explicit BT.709 primaries/matrix, sRGB transfer,
 8-bit full/limited range and 4:4:4 or explicit vertical/colocated 4:2:0, plus
 optional same-size straight alpha. Unknown 4:2:0 positions remain refused. The
 same-FD family selector seals source classification once and requires exact
 frontend admission before helper discovery/launch. Identity code 5 remains
-compatible with V5/V6; there is no decoder-error fallback.
+compatible with V5/V6/V7; there is no decoder-error fallback.
 
 Every SDR import requires actual range/chroma reconstruction consent; named
 items additionally require name-loss consent. Native Studio reuses the visible
