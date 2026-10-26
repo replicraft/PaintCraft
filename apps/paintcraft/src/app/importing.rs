@@ -6,6 +6,8 @@ use paintcraft_ui::{i18n::import_loss_description, t};
 
 #[path = "importing/dcx.rs"]
 mod dcx;
+#[path = "importing/dds.rs"]
+mod dds;
 #[path = "importing/icns.rs"]
 mod icns;
 #[path = "importing/icons.rs"]
@@ -40,6 +42,11 @@ impl Candidate {
         }
     }
 }
+struct RasterSource {
+    identity: crate::destination::SourceIdentity,
+    bytes: u64,
+    sha256: [u8; 32],
+}
 pub(super) struct Pending {
     candidate: Candidate,
     path: PathBuf,
@@ -51,6 +58,7 @@ pub(super) struct Pending {
     dirty: bool,
     convert: bool,
     auxiliary_sources: Vec<crate::destination::SourceGuard>,
+    raster_source: Option<RasterSource>,
 }
 impl Pending {
     pub(super) fn input_guards(&self) -> Vec<&crate::destination::SourceGuard> {
@@ -122,6 +130,7 @@ impl App {
             dirty: self.editor.is_dirty(),
             convert,
             auxiliary_sources: Vec::new(),
+            raster_source: None,
         });
         self.confirm = Some(Confirm::ImportLosses);
         Ok(())
@@ -154,7 +163,17 @@ impl App {
             return;
         }
         let result = (|| {
-            let converted = pending.convert || matches!(&pending.candidate, Candidate::Layered(_));
+            if let Some(source) = &pending.raster_source {
+                source.identity.verify_bytes(
+                    &pending.path,
+                    source.bytes,
+                    &source.sha256,
+                    &|| Ok(()),
+                )?;
+            }
+            let converted = pending.convert
+                || matches!(&pending.candidate, Candidate::Layered(_))
+                || matches!(&pending.candidate, Candidate::Raster(image) if image.format == ImageFormat::Dds && !image.losses.is_empty());
             let document = match pending.candidate {
                 Candidate::Raster(image) => {
                     import_image(image.width, image.height, &image.rgba, &pending.digest)?

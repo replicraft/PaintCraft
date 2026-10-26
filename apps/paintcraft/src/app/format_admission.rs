@@ -182,6 +182,28 @@ pub(super) fn acquire_resource_source(path: &Path, allowance: u64) -> Result<Res
     let bytes = read_limited(identity.file(), allowance)?;
     Ok(ResourceSource { bytes, identity })
 }
+/// Probe only the signature under the generic allowance; a selected DDS keeps this descriptor.
+pub(super) fn acquire_if_dds(path: &Path) -> Result<Option<ResourceSource>> {
+    use std::io::{Seek, SeekFrom};
+    let mut file = open_source(path, SOURCE_BYTES)?;
+    let mut signature = [0; 4];
+    match file.read_exact(&mut signature) {
+        Ok(()) => {}
+        Err(error) if error.kind() == std::io::ErrorKind::UnexpectedEof => return Ok(None),
+        Err(error) => return Err(storage(error)),
+    }
+    if &signature != b"DDS " {
+        return Ok(None);
+    }
+    let allowance = paintcraft_formats::dds::BYTES_MAX as u64;
+    if file.metadata().map_err(storage)?.len() > allowance {
+        return Err(limit());
+    }
+    file.seek(SeekFrom::Start(0)).map_err(storage)?;
+    let identity = crate::destination::SourceIdentity::from_file(file)?;
+    let bytes = read_limited(identity.file(), allowance)?;
+    Ok(Some(ResourceSource { bytes, identity }))
+}
 fn open_source(path: &Path, allowance: u64) -> Result<std::fs::File> {
     // Reject ordinary FIFOs/devices before opening; the post-open check remains
     // necessary. This does not promise race-proof traversal of a hostile filesystem.

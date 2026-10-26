@@ -387,6 +387,9 @@ impl App {
             )?;
             return self.stage_icns_import_acquired(source, path.to_path_buf());
         }
+        if self.try_open_dds_source(path, convert)? {
+            return Ok(());
+        }
         let (bytes, binding) = crate::destination::acquire(path)?;
         if convert
             && matches!(
