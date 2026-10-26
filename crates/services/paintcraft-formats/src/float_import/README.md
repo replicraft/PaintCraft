@@ -26,4 +26,31 @@ Independent end-to-end expected pixels live in `tests/float-import-fixtures`. Th
 
 The compositing limitation is confirmed against the actual editor `Rgba::source_over` API. Scene-linear premultiplied RGB .25 with alpha .5 becomes straight sRGB [188,188,188] with A128 when transparency is retained; the current encoded-u8 source-over compositor produces [94,94,94] over black. Explicit scene-linear flattening over black instead produces [137,137,137] with A255 and no retained-alpha compositing limitation. The generic precision conversion and editor compositor are unchanged. The assessment reports this difference instead of implying preservation of source compositing.
 
-Final validation: five targeted float-import tests cover all seventeen independent reference cases and the actual compositor counterexample. `cargo test -p paintcraft-formats --features exr-codec,hdr-codec --lib float_import:: --offline --locked` and the corresponding `cargo clippy --lib --tests -- -D warnings` pass, as do scoped Rust formatting and diff checks. The independent oracle source/golden hashes and the exact-once entrypoint guard are checked.
+Historical initial-preparation validation: five targeted float-import tests covered all seventeen independent reference cases and the actual compositor counterexample. `cargo test -p paintcraft-formats --features exr-codec,hdr-codec --lib float_import:: --offline --locked` and the corresponding `cargo clippy --lib --tests -- -D warnings` pass, as do scoped Rust formatting and diff checks. The independent oracle source/golden hashes and the exact-once entrypoint guard are checked.
+
+## Parent source plan and finite payloads
+
+Pure `plan_hdr` / `plan_exr`, `SourcePlan`, `WorkerAssessment` and `wire` are available without either decoder feature. Planning runs bounded structural inspection and creates the exact Binding/header/source-loss description, never floating-point decoding. The initial private parent profile is limited to 16 MiB source and 1,048,576 pixels; this narrower worker prerequisite does not replace the standalone decoder qualification bounds or define permanent format support. Actual `prepare_hdr` / `prepare_exr` remain feature-gated.
+
+`wire::encode_settings` and `decode_settings` use exactly 32 bytes, with no implicit child defaults:
+
+| Offsets | Meaning |
+| --- | --- |
+| 0..8 | `PCFLTS01` magic |
+| 8..10 | big-endian schema 1 |
+| 10, 11 | Clip/Reinhard and Reject/ClipToBlack finite tags |
+| 12, 13, 14 | Preserve/Flatten, optional source space and optional alpha assignment |
+| 15 | zero reserved byte |
+| 16..20 | signed big-endian exposure milli-EV, -16000..16000 |
+| 20..23 | flatten backdrop RGB; all zero for Preserve |
+| 23..32 | zero reserved bytes |
+
+A `Report` encodes exactly 96 bytes: `PCFLTR01` at 0..8, schema1 at 8..10, zero reserved bytes at 10..16, assessment digest at 16..48, five big-endian u64 statistics at 48..88 in Statistics declaration order, and retained original partial-alpha count at 88..96. Unknown tags, versions, reserved/inactive values and wrong byte lengths refuse. This defines no active worker opcode or helper profile.
+
+`SourcePlan::accept_report` accepts only the expected dimensions and exact RGBA extent. It bounds RGB statistics by three times the source pixel count, alpha statistics by pixel count, checks policy-dependent zero values and opaque output, then derives required losses with the same classifier used by actual conversion. The parent constructs the raw source metadata and canonical assessment itself and compares the child's digest. No worker JSON or arbitrary worker loss list can replace those source facts. Original float statistics are bounded semantic reports from the qualified decoder, not independently decoded proofs on the host.
+
+The source partial-alpha count is not the output count of A1..254: values near zero or one can quantize to A0 or A255. The validator requires output-partial count no greater than retained source-partial count, and alpha quantization count no greater than retained source-partial count. Opaque/flattened output requires both zero. Additive-zero-alpha statistics are permitted only for effective premultiplied alpha with explicit flattening. Tests cover near-endpoint alpha and impossible semantic reports even when a matching canonical digest is forged.
+
+The accepted WorkerAssessment retains metadata admission; the matching RGBA storage and source/file/editor freshness guards remain the caller's responsibility. Reconstruction declares transient metadata/digest scratch before allocating receipts. No default codec feature, PCDEC002 header, legacy codec, browser route or helper build contract changes in this layer.
+
+Current source-plan/payload validation: nine targeted float-import tests pass, including reconstruction against the seventeen independent fixtures, finite settings/report checks, matching-digest semantic forgeries and near-zero/near-one alpha. Three precision-policy tests pass after extracting the shared loss classifier. Strict Clippy passes with both decoder features and without either feature; default, HDR-only and EXR-only checks pass. This remains a qualified-worker reconstruction seam: the host bounds and binds reported original-float statistics without independently decoding them. No native worker opcode, default helper or public format gate is enabled by this foundation.
