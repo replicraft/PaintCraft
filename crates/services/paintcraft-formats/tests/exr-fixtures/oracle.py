@@ -17,6 +17,8 @@ for name, dtype, compression, alpha, origin, rows in [
     ('float-rgb-zips', np.float32, OpenEXR.ZIPS_COMPRESSION, False, (12, -9), 2),
     ('float-rgba-zip', np.float32, OpenEXR.ZIP_COMPRESSION, True, (-7, -11), 17),
     ('interop-rec709', np.float32, OpenEXR.NO_COMPRESSION, False, (0, 0), 2),
+    ('mixed-rgba-zip', None, OpenEXR.ZIP_COMPRESSION, True, (-2, 7), 17),
+    ('float-rgba-special', np.float32, OpenEXR.NO_COMPRESSION, True, (0, 0), 2),
     ('unlabelled', np.float32, OpenEXR.NO_COMPRESSION, False, (0, 0), 2),
     ('unknown-chromaticities', np.float32, OpenEXR.NO_COMPRESSION, False, (0, 0), 2),
     ('conflicting-color', np.float32, OpenEXR.NO_COMPRESSION, False, (0, 0), 2),
@@ -27,7 +29,12 @@ for name, dtype, compression, alpha, origin, rows in [
         values = [((x + 3*y + index*2) % 13 - 3) / 4 for y in range(rows) for x in range(width)]
         if channel == 'A':
             values = [0.0, 0.25, 1.0] * rows
-        channels[channel] = np.array(values, dtype=dtype).reshape(rows, width)
+        if name == 'float-rgba-special' and channel == 'R':
+            values = [-0.5, float('inf'), float('nan')] * rows
+        if name == 'float-rgba-special' and channel == 'A':
+            values = [0.0, 2.0, -1.0] * rows
+        channel_dtype = dtype if dtype is not None else (np.float16 if channel in 'RA' else np.float32)
+        channels[channel] = np.array(values, dtype=channel_dtype).reshape(rows, width)
     header = {'compression': compression, 'type': OpenEXR.scanlineimage,
               'dataWindow': (np.array(origin, dtype=np.int32), np.array((origin[0]+width-1, origin[1]+rows-1), dtype=np.int32)),
               'displayWindow': (np.array(origin, dtype=np.int32), np.array((origin[0]+width-1, origin[1]+rows-1), dtype=np.int32)),
@@ -49,7 +56,8 @@ for name, dtype, compression, alpha, origin, rows in [
         for x in range(width):
             for channel in ('RGBA' if alpha else 'RGB'):
                 actual = float(reopened.channels()[channel].pixels[y, x])
-                assert actual == float(expected[channel][y, x])
+                original = float(expected[channel][y, x])
+                assert actual == original or (np.isnan(actual) and np.isnan(original))
                 raw.extend(struct.pack('<f', actual))
     golden = root / (name + '.f32le')
     golden.write_bytes(raw)

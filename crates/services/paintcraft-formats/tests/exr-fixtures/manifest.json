@@ -68,6 +68,32 @@
             "reference_sha256": "80eaf63f41a5edd759193c3cda7214ffea597ed2a7a759da8b63b8dab7939d1b"
         },
         {
+            "file": "mixed-rgba-zip.exr",
+            "width": 3,
+            "height": 17,
+            "origin": [
+                -2,
+                7
+            ],
+            "alpha": true,
+            "compression": 3,
+            "sha256": "afd060b8bfd9812b3045a4142e60a209afec2123d1bdb90434d7345853485b87",
+            "reference_sha256": "314f184b44e78a2eb83bda4e8e4148e0cf82d2b48cc1daf6c27025808cc09f2a"
+        },
+        {
+            "file": "float-rgba-special.exr",
+            "width": 3,
+            "height": 2,
+            "origin": [
+                0,
+                0
+            ],
+            "alpha": true,
+            "compression": 0,
+            "sha256": "72ba74cce6ce0fce3f1355c717cc9efafe05561beabca6ce1d24a18ae95896d6",
+            "reference_sha256": "1313441cbaef5ac8b7801a505af24f2f561965f25c269bf4e42de4e99df82cd9"
+        },
+        {
             "file": "unlabelled.exr",
             "width": 3,
             "height": 2,
