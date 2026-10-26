@@ -46,6 +46,8 @@ enum Command {
     PasteImage(commands::paste_image::Options),
     /// Inspect and exchange palettes as assets, independently of image documents.
     Palette(commands::palette::Options),
+    /// Inspect and exchange custom shape libraries as resources, independently of images.
+    Shape(commands::shapes::Options),
 }
 
 fn main() -> ExitCode {
@@ -63,6 +65,7 @@ fn main() -> ExitCode {
         Command::Import(a) => commands::import::run(a, cli.json),
         Command::PasteImage(a) => commands::paste_image::run(a, cli.json),
         Command::Palette(a) => commands::palette::run(a, cli.json),
+        Command::Shape(a) => commands::shapes::run(a, cli.json),
     };
     let _ = std::io::stdout().write_all(&reply.stdout);
     eprint!("{}", reply.stderr);

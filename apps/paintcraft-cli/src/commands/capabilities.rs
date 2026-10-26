@@ -54,6 +54,18 @@ pub fn run(a: Options, json: bool) -> Reply {
             }
             let mut rows = vec![
                 row(
+                    "csh.shapes.read",
+                    "paintcraft.csh/exact-i32-ordered-records-v1",
+                    "import-asset",
+                    "ag-psd-csh-exact-i32",
+                ),
+                row(
+                    "csh.shapes.write",
+                    "paintcraft.csh/exact-i32-ordered-records-v1",
+                    "export-asset",
+                    "ag-psd-csh-exact-i32",
+                ),
+                row(
                     "ase.palette.read",
                     "paintcraft.ase/finite-f32-flat-groups-v1",
                     "import-asset",

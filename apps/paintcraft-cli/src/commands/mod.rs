@@ -272,3 +272,5 @@ pub mod svg_options;
 pub mod mcp;
 
 pub mod flatten;
+
+pub mod shapes;

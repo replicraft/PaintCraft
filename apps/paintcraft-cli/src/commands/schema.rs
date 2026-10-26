@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(clap::Args, Debug)]
 pub struct Options {
-    #[arg(value_parser = ["batch", "batch-v2", "palette-inspection"])]
+    #[arg(value_parser = ["batch", "batch-v2", "palette-inspection", "shape-inspection"])]
     schema: String,
 }
 
@@ -11,6 +11,9 @@ pub fn run(a: Options, _json: bool) -> Reply {
     bare(
         true,
         (|| {
+            if a.schema == "shape-inspection" {
+                return Ok((shapes::schema()?, String::new()));
+            }
             let text = match a.schema.as_str() {
                 "batch" => BATCH_SCHEMA,
                 "batch-v2" => BATCH_V2_SCHEMA,
