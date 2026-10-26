@@ -12,6 +12,7 @@ mod exporting;
 #[path = "floating_tests.rs"]
 mod floating_tests;
 mod forms;
+mod icns_exporting;
 mod icon_exporting;
 mod interfaces;
 #[cfg(test)]
@@ -52,6 +53,7 @@ pub struct WebApp {
     preferences: crate::preferences::Preferences,
     export_confirm: Option<ImageExport>,
     icon_export: Option<icon_exporting::State>,
+    icns_export: Option<icns_exporting::State>,
     palettes: palettes::State,
     shapes: shapes::State,
     brushes: brushes::State,
@@ -62,6 +64,7 @@ pub struct WebApp {
     pub(crate) files: crate::files::Files,
     pub(crate) text: crate::text_ui::TextUi,
     pub(crate) pending_import: Option<crate::importing::Pending>,
+    pub(crate) pending_icns: Option<crate::importing::icns::Pending>,
     pub(crate) pending_pages: Option<crate::importing::pages::Pending>,
     pub(crate) pending_svg: Option<crate::importing::svg::Pending>,
     pub(crate) import_owner: Option<crate::importing::Owner>,
@@ -115,6 +118,7 @@ impl WebApp {
             preferences,
             export_confirm: None,
             icon_export: None,
+            icns_export: None,
             palettes: Default::default(),
             shapes: Default::default(),
             brushes: Default::default(),
@@ -125,6 +129,7 @@ impl WebApp {
             files: crate::files::Files::default(),
             pending_import: None,
             pending_pages: None,
+            pending_icns: None,
             pending_svg: None,
             import_owner: None,
             form: None,
@@ -169,12 +174,14 @@ impl WebApp {
             || self.settings
             || self.export_confirm.is_some()
             || self.icon_export.is_some()
+            || self.icns_export.is_some()
             || self.palettes.open
             || self.brushes.open
             || self.shapes.open
             || self.confirm_replace.is_some()
             || self.files.busy
             || self.pending_import.is_some()
+            || self.pending_icns.is_some()
             || self.pending_pages.is_some()
             || self.pending_svg.is_some()
             || self.form.is_some()
@@ -300,6 +307,7 @@ impl WebApp {
                 | Action::Export
                 | Action::ExportImage(_)
                 | Action::ExportIcons
+                | Action::ExportIcns
         ) && !self.floating_file_ready()
         {
             return;
@@ -314,6 +322,7 @@ impl WebApp {
                 | Action::Export
                 | Action::ExportImage(_)
                 | Action::ExportIcons
+                | Action::ExportIcns
         ) && self.editor.tools.is_constructing_shape()
         {
             self.message = paintcraft_tools::FINISH_SHAPE_BEFORE_FILE.into();
@@ -402,6 +411,7 @@ impl WebApp {
                 self.export_confirm = Some(format);
             }
             Action::ExportIcons => self.begin_icon_export(),
+            Action::ExportIcns => self.begin_icns_export(),
             Action::Palettes => self.begin_palettes(),
             Action::BrushResources => self.begin_brushes(),
             Action::ShapeResources => self.begin_shapes(),
@@ -499,6 +509,7 @@ impl WebApp {
         use crate::files::Outcome;
         match self.files.poll() {
             Some(Ok(Outcome::Loaded(loaded))) => self.accept_loaded(loaded, ctx),
+            Some(Ok(Outcome::Icns(source))) => self.accept_icns(source, ctx),
             Some(Ok(Outcome::Pages(source))) => self.accept_pages(source, ctx),
             Some(Ok(Outcome::Svg(source))) => self.accept_svg(source, ctx),
             Some(Ok(Outcome::Cancelled)) => {
@@ -659,6 +670,10 @@ impl WebApp {
                 });
             });
         }
+        if self.pending_icns.is_some() {
+            self.icns_import_dialog(ctx);
+            return;
+        }
         if self.pending_svg.is_some() {
             self.svg_import_dialog(ctx);
             return;
@@ -696,6 +711,7 @@ impl WebApp {
         }
         self.export_dialog(ctx);
         self.icon_export_dialog(ctx);
+        self.icns_export_dialog(ctx);
         self.settings_dialog(ctx);
     }
 }

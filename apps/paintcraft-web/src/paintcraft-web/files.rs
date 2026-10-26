@@ -28,6 +28,7 @@ pub(crate) struct Loaded {
 pub(crate) enum Outcome {
     Loaded(Loaded),
     Pages(crate::importing::pages::Source),
+    Icns(crate::importing::icns::Source),
     Svg(crate::importing::svg::Source),
     Cancelled,
     DownloadRequested {
@@ -59,11 +60,21 @@ impl Files {
         name: &str,
         owner: uuid::Uuid,
     ) {
+        self.download_asset_as(ctx, bytes, name, "image/x-icon", owner);
+    }
+    pub fn download_asset_as(
+        &mut self,
+        ctx: &eframe::egui::Context,
+        bytes: &[u8],
+        name: &str,
+        mime: &str,
+        owner: uuid::Uuid,
+    ) {
         if self.busy {
             return;
         }
         #[cfg(target_arch = "wasm32")]
-        let result = download_copy(bytes, name, "image/x-icon")
+        let result = download_copy(bytes, name, mime)
             .map(|()| Outcome::DownloadRequested {
                 owner,
                 project_name: None,
@@ -71,7 +82,7 @@ impl Files {
             .map_err(|_| Error::new(ErrorCode::StorageFailed, "Browser download failed"));
         #[cfg(not(target_arch = "wasm32"))]
         let result = {
-            let _ = (bytes, name, owner);
+            let _ = (bytes, name, mime, owner);
             Err(Error::new(
                 ErrorCode::CapabilityUnsupported,
                 "Downloads are available in the browser build",
@@ -119,7 +130,7 @@ impl Files {
         .collect();
         if convert && frontend == Frontend::Studio {
             extensions.push("dcx");
-            extensions.extend(["ico", "cur"]);
+            extensions.extend(["ico", "cur", "icns"]);
             extensions.extend(["svg", "svgz"]);
         }
         wasm_bindgen_futures::spawn_local(async move {
@@ -163,6 +174,13 @@ impl Files {
                 if svg {
                     return Ok(Outcome::Svg(crate::importing::svg::Source::new(
                         bytes, name, frontend,
+                    )?));
+                }
+                if convert && paintcraft_formats::registry::sniff(&bytes) == Some(Family::Icns) {
+                    return Ok(Outcome::Icns(crate::importing::icns::Source::new(
+                        bytes,
+                        file.file_name(),
+                        frontend,
                     )?));
                 }
                 if convert

@@ -92,7 +92,8 @@ pub(crate) struct Pending {
 }
 impl WebApp {
     pub(crate) fn accept_pages(&mut self, source: Source, ctx: &egui::Context) {
-        if self.pending_pages.is_some()
+        if self.pending_icns.is_some()
+            || self.pending_pages.is_some()
             || self.pending_import.is_some()
             || self.pending_svg.is_some()
         {

@@ -45,6 +45,7 @@ impl WebApp {
     pub(crate) fn accept_svg(&mut self, source: Source, ctx: &egui::Context) {
         let owner = self.import_owner.take();
         if self.pending_import.is_some()
+            || self.pending_icns.is_some()
             || self.pending_pages.is_some()
             || self.pending_svg.is_some()
         {
