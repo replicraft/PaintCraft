@@ -4,11 +4,15 @@
 //! with every coded SPS or cap decoder reference/scratch allocations. No pixel
 //! decoding, color conversion, grid assembly or transform application occurs.
 mod metadata;
+mod payloads;
 mod properties;
+#[cfg(test)]
+mod qualification;
 #[cfg(test)]
 mod tests;
 use paintcraft_core::types::{Error, ErrorCode, Result};
 use paintcraft_paint::{BoxInfo, BoxTree, Layout};
+pub use payloads::{Grid, Payload};
 pub use properties::{Color, Property};
 
 pub const INPUT_BYTES_MAX: usize = 64 << 20;
@@ -23,6 +27,7 @@ pub struct Item<'a> {
     pub kind: [u8; 4],
     pub name: &'a str,
     pub hidden: bool,
+    pub payload: Option<Payload<'a>>,
     /// Association order is retained; transformations are not applied.
     pub properties: Vec<Association<'a>>,
 }
@@ -247,7 +252,7 @@ pub fn inspect_checked<'a>(
     let iprp = unique_child(&tree, meta, *b"iprp")?
         .ok_or_else(|| invalid("HEIF image properties are missing"))?;
     properties::associations(&tree, iprp, &mut items, pixels.min(PIXELS_MAX), check)?;
-    let result = Inspection {
+    let mut result = Inspection {
         primary_id,
         items,
         references,
@@ -264,6 +269,9 @@ pub fn inspect_checked<'a>(
         ));
     }
     metadata::validate_links(&result, check)?;
+    if let Some(iloc) = unique_child(&tree, meta, *b"iloc")? {
+        payloads::resolve(bytes, &tree, meta, iloc, &mut result, check)?;
+    }
     check()?;
     Ok(result)
 }

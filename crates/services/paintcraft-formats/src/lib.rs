@@ -7,6 +7,7 @@ pub mod csh;
 pub mod dcx;
 pub mod dds;
 pub mod export;
+pub mod heif;
 pub mod icons;
 pub mod image;
 pub mod jxl;
@@ -25,5 +26,3 @@ pub mod save_recovery;
 pub mod svg;
 #[cfg(not(target_arch = "wasm32"))]
 pub use paintcraft_platform::save;
-
-pub mod heif;

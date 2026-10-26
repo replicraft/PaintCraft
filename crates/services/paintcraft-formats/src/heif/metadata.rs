@@ -117,6 +117,7 @@ pub(super) fn items<'a>(
                 kind,
                 name,
                 hidden: flags == 1,
+                payload: None,
                 properties: Vec::new(),
             },
             ITEMS_MAX,

@@ -1,13 +1,13 @@
 //! Authored BMFF item metadata, not HEVC bitstreams or pixel-decoder evidence.
 use super::*;
 use std::cell::Cell;
-fn bx(kind: &[u8; 4], payload: &[u8]) -> Vec<u8> {
+pub(super) fn bx(kind: &[u8; 4], payload: &[u8]) -> Vec<u8> {
     let mut out = ((payload.len() + 8) as u32).to_be_bytes().to_vec();
     out.extend(kind);
     out.extend(payload);
     out
 }
-fn fb(kind: &[u8; 4], version: u8, flags: u32, payload: &[u8]) -> Vec<u8> {
+pub(super) fn fb(kind: &[u8; 4], version: u8, flags: u32, payload: &[u8]) -> Vec<u8> {
     let mut out = vec![
         version,
         ((flags >> 16) & 255) as u8,
@@ -17,10 +17,10 @@ fn fb(kind: &[u8; 4], version: u8, flags: u32, payload: &[u8]) -> Vec<u8> {
     out.extend(payload);
     bx(kind, &out)
 }
-fn extent(w: u32, h: u32) -> Vec<u8> {
+pub(super) fn extent(w: u32, h: u32) -> Vec<u8> {
     fb(b"ispe", 0, 0, &[w.to_be_bytes(), h.to_be_bytes()].concat())
 }
-fn config() -> Vec<u8> {
+pub(super) fn config() -> Vec<u8> {
     let mut out = vec![0; 23];
     out[0] = 1;
     out[16] = 1;
@@ -29,14 +29,14 @@ fn config() -> Vec<u8> {
     out.extend([33, 0, 1, 0, 2, 66, 1]);
     bx(b"hvcC", &out)
 }
-fn item(id: u16, kind: &[u8; 4], hidden: bool) -> Vec<u8> {
+pub(super) fn item(id: u16, kind: &[u8; 4], hidden: bool) -> Vec<u8> {
     let mut body = id.to_be_bytes().to_vec();
     body.extend([0, 0]);
     body.extend(kind);
     body.extend(format!("item-{id}\0").bytes());
     fb(b"infe", 2, u32::from(hidden), &body)
 }
-fn links(kind: &[u8; 4], from: u16, to: &[u16]) -> Vec<u8> {
+pub(super) fn links(kind: &[u8; 4], from: u16, to: &[u16]) -> Vec<u8> {
     let mut body = from.to_be_bytes().to_vec();
     body.extend((to.len() as u16).to_be_bytes());
     for id in to {
@@ -44,7 +44,7 @@ fn links(kind: &[u8; 4], from: u16, to: &[u16]) -> Vec<u8> {
     }
     bx(kind, &body)
 }
-fn file(
+pub(super) fn file(
     primary: u16,
     items: &[Vec<u8>],
     properties: &[Vec<u8>],
