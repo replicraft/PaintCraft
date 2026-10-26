@@ -28,7 +28,7 @@ pub const DECODE_PIXELS_MAX: u64 = 268_435_456;
 const SIDE_MAX: u32 = 1_048_576;
 
 /// Source information the current RGBA8 import cannot retain.
-pub const KNOWN_IMPORT_LOSSES: [&str; 15] = [
+pub const KNOWN_IMPORT_LOSSES: [&str; 16] = [
     "dib-alpha-unspecified",
     "dib-alpha-mode-unspecified",
     "dib-metadata-ignored",
@@ -43,6 +43,7 @@ pub const KNOWN_IMPORT_LOSSES: [&str; 15] = [
     "webp-metadata-ignored",
     "pnm-metadata-ignored",
     "pcx-metadata-ignored",
+    "msp-metadata-ignored",
     "dcx-other-pages-not-imported",
 ];
 
@@ -59,6 +60,7 @@ pub enum ImageFormat {
     Pnm,
     Farbfeld,
     Pcx,
+    Msp,
     Jxl,
     Dds,
     Avif,
@@ -80,6 +82,8 @@ impl ImageFormat {
             Some(ImageFormat::WebP)
         } else if bytes.starts_with(b"qoif") {
             Some(ImageFormat::Qoi)
+        } else if bytes.starts_with(b"DanM") || bytes.starts_with(b"LinS") {
+            Some(ImageFormat::Msp)
         } else if bytes.starts_with(b"farbfeld") {
             Some(ImageFormat::Farbfeld)
         } else if bytes.len() >= 3
@@ -122,6 +126,7 @@ impl ImageFormat {
             "pnm" | "pbm" | "pgm" | "ppm" | "pam" => Some(ImageFormat::Pnm),
             "ff" => Some(ImageFormat::Farbfeld),
             "pcx" => Some(ImageFormat::Pcx),
+            "msp" => Some(ImageFormat::Msp),
             "jxl" => Some(ImageFormat::Jxl),
             "dds" => Some(ImageFormat::Dds),
             "avif" => Some(ImageFormat::Avif),
@@ -142,6 +147,7 @@ impl ImageFormat {
             ImageFormat::Pnm => "PNM",
             ImageFormat::Farbfeld => "farbfeld",
             ImageFormat::Pcx => "PCX",
+            ImageFormat::Msp => "MSP",
             ImageFormat::Jxl => "JXL",
             ImageFormat::Dds => "DDS",
             ImageFormat::Avif => "AVIF",
@@ -195,7 +201,8 @@ impl ImageFormat {
             | ImageFormat::Pnm
             | ImageFormat::Farbfeld
             | ImageFormat::Jxl
-            | ImageFormat::Dds => Vec::new(),
+            | ImageFormat::Dds
+            | ImageFormat::Msp => Vec::new(),
             ImageFormat::Pcx => {
                 if has_transparency {
                     vec!["alpha-discarded"]
@@ -305,6 +312,23 @@ pub fn decode_with_pixel_limit(bytes: &[u8], pixels: u64) -> Result<Decoded> {
     }
     if format == ImageFormat::Qoi {
         return extended::decode_qoi(bytes, pixels);
+    }
+    if format == ImageFormat::Msp {
+        let header = crate::msp::inspect(bytes, &|| Ok(()))?;
+        if u64::from(header.width()) * u64::from(header.height()) > pixels {
+            return Err(Error::new(
+                ErrorCode::ResourceLimit,
+                "MSP exceeds caller pixel allowance",
+            ));
+        }
+        let bitmap = crate::msp::decode(bytes, &|| Ok(()))?;
+        return Ok(Decoded {
+            format,
+            width: header.width(),
+            height: header.height(),
+            rgba: bitmap.rgba(&|| Ok(()))?,
+            losses: vec!["msp-metadata-ignored".into()],
+        });
     }
     if format == ImageFormat::Pcx {
         return extended::decode_pcx(bytes, pixels);
@@ -423,7 +447,11 @@ fn external_format(format: ImageFormat) -> Result<::image::ImageFormat> {
                 "specialist raster requires its selected codec route",
             ));
         }
-        ImageFormat::Pcx => return Err(unsupported("PCX requires its selected dedicated codec")),
+        ImageFormat::Pcx | ImageFormat::Msp => {
+            return Err(unsupported(
+                "legacy raster requires its selected dedicated codec",
+            ));
+        }
     })
 }
 
@@ -476,6 +504,7 @@ fn encode_inner(
             return extended::encode(format, width, height, rgba, check);
         }
         ImageFormat::Pcx => return crate::pcx::encode_rgba(width, height, rgba, check),
+        ImageFormat::Msp => return crate::msp::encode_v1_rgba_exact(width, height, rgba, check),
         ImageFormat::Gif => return gif::encode(width, height, rgba),
         ImageFormat::Tiff => return tiff::encode(width, height, rgba),
         ImageFormat::Tga => return tga::encode(width, height, rgba),

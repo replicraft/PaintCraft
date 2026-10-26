@@ -96,6 +96,7 @@ impl Family {
             Self::Qoi => extension.eq_ignore_ascii_case("qoi"),
             Self::Farbfeld => extension.eq_ignore_ascii_case("ff"),
             Self::Pcx => extension.eq_ignore_ascii_case("pcx"),
+            Self::Msp => extension.eq_ignore_ascii_case("msp"),
             Self::Abr => extension.eq_ignore_ascii_case("abr"),
             Self::Ase => extension.eq_ignore_ascii_case("ase"),
             Self::Csh => extension.eq_ignore_ascii_case("csh"),

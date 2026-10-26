@@ -185,6 +185,9 @@ pub fn capability(family: Family, operation: Operation, _platform: Platform) -> 
             | Operation::SaveAsCopy
     );
     let backend = match family {
+        Family::Msp if matches!(operation, Operation::ImportConvert | Operation::ExportFlat) => {
+            Some("paintcraft-msp-monochrome-v1")
+        }
         Family::Abr if operation == Operation::ImportAsset => Some("ag-psd-abr-static-tip-v1"),
         Family::Ase if matches!(operation, Operation::ImportAsset | Operation::ExportAsset) => {
             Some("ag-psd-ase-finite-f32")
@@ -256,7 +259,7 @@ pub fn capability(family: Family, operation: Operation, _platform: Platform) -> 
                     | Operation::ImportConvert
                     | Operation::ExportFlat
             ),
-            Family::Qoi | Family::Pnm | Family::Farbfeld | Family::Pcx => {
+            Family::Qoi | Family::Pnm | Family::Farbfeld | Family::Pcx | Family::Msp => {
                 matches!(operation, Operation::ImportConvert | Operation::ExportFlat)
             }
             Family::Ico | Family::Cur => {
@@ -552,6 +555,8 @@ pub fn sniff(bytes: &[u8]) -> Option<Family> {
         Some(Family::Cur)
     } else if bytes.starts_with(&987_654_321u32.to_le_bytes()) {
         Some(Family::Dcx)
+    } else if bytes.starts_with(b"DanM") || bytes.starts_with(b"LinS") {
+        Some(Family::Msp)
     } else if bytes.starts_with(b"qoif") {
         Some(Family::Qoi)
     } else if bytes.starts_with(b"farbfeld") {
