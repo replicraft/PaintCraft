@@ -415,7 +415,8 @@ impl App {
         let overlay = snapshot.as_deref().filter(|preview| {
             !matches!(
                 preview,
-                Preview::SampledStroke(_)
+                Preview::ResourceShape(_)
+                    | Preview::SampledStroke(_)
                     | Preview::Path(_)
                     | Preview::Paths(_)
                     | Preview::Shape { .. }
@@ -425,7 +426,8 @@ impl App {
         });
         match overlay.cloned() {
             Some(
-                Preview::SampledStroke(_)
+                Preview::ResourceShape(_)
+                | Preview::SampledStroke(_)
                 | Preview::Path(_)
                 | Preview::Paths(_)
                 | Preview::Shape { .. }

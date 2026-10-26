@@ -36,6 +36,8 @@ pub(crate) use preview_cache::Stamp as PreviewStamp;
 pub(crate) use strokes::PreviewPreparation;
 #[path = "controller/residency.rs"]
 mod residency;
+#[path = "controller/resource_shape.rs"]
+mod resource_shape;
 #[path = "controller/retry.rs"]
 mod retry;
 #[path = "controller/sampled_brush.rs"]
@@ -82,6 +84,7 @@ pub struct Editor {
     session: Session,
     canvas_size_edit: Option<(u32, u32)>,
     tools: ToolState,
+    resource_shape: Option<resource_shape::Captured>,
     pub(crate) adopted_brush: Option<paintcraft_formats::abr::adoption::AdoptedPreset>,
     floating_source: Option<floating::Source>,
     image_paste: Option<image_paste::Placing>,
@@ -154,6 +157,7 @@ impl Editor {
             tools: ToolState::default(),
             floating_source: None,
             adopted_brush: None,
+            resource_shape: None,
             image_paste: None,
             floating_commit_on_release: true,
             text_renderer: None,
@@ -560,6 +564,7 @@ impl Editor {
             Action::Stroke(stroke) => self.stroke(&stroke),
             Action::ToolFailure(message) => self.status = message.into(),
             Action::SampledStroke(stroke) => self.sampled_stroke(stroke),
+            Action::ResourceShape(shape) => self.resource_shape_stroke(shape),
             Action::Fill {
                 layer,
                 at,

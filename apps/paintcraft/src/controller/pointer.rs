@@ -57,6 +57,13 @@ impl Editor {
         ) {
             (Tool::Select | Tool::ColorPicker, t) => t.unwrap_or_else(Uuid::nil),
             (_, Some(layer)) => layer,
+            (Tool::Rect, None)
+                if self.tools.resource_shape.is_some()
+                    && self.document().layers.is_empty()
+                    && self.document().roots.is_empty() =>
+            {
+                Uuid::nil()
+            }
             (Tool::Brush, None)
                 if self.tools.sampled_tip.is_some() && self.document().layers.is_empty() =>
             {

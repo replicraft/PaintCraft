@@ -7,11 +7,13 @@ use paintcraft_formats::{
     save,
 };
 use paintcraft_ui::{shape_assets as widget, t};
+use sha2::{Digest, Sha256};
 #[path = "shapes/placement.rs"]
 mod placement;
 
 #[derive(Debug)]
 struct Loaded {
+    id: Uuid,
     library: Arc<csh::Library>,
     view: widget::Resource,
     source: PathBuf,
@@ -165,6 +167,14 @@ impl App {
         };
         self.shapes.epoch = Uuid::new_v4();
         self.shapes.loaded = Some(Arc::new(Loaded {
+            id: paintcraft_core::types::ids::deterministic_id(&[
+                "shape-library",
+                "csh",
+                &Sha256::digest(&acquired.bytes)
+                    .iter()
+                    .map(|b| format!("{b:02x}"))
+                    .collect::<String>(),
+            ]),
             library,
             view,
             source: path,
@@ -295,6 +305,15 @@ impl App {
             self.shapes.error.as_deref(),
             self.shapes.selected,
         ) {
+            widget::Response::UseTool => {
+                if let Err(error) = self.begin_shape_tool() {
+                    self.shapes.error = Some(t!(
+                        ctx,
+                        "Could not place the shape: { $detail }",
+                        detail = error
+                    ));
+                }
+            }
             widget::Response::Place => {
                 if let Err(error) = self.begin_shape_placement() {
                     self.shapes.error = Some(t!(

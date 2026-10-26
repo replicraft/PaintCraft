@@ -250,3 +250,173 @@ fn placed_shape_sources_follow_saved_documents_other_tabs_and_separate_workspace
     drop(h);
     std::fs::remove_dir_all(root).unwrap();
 }
+fn adopt_drag(h: &mut Harness<App>, lang: Language) {
+    h.get_by_role_and_label(egui::Role::Button, &translate(lang, "Use as shape tool…"))
+        .scroll_to_me();
+    h.run();
+    h.get_by_role_and_label(egui::Role::Button, &translate(lang, "Use as shape tool…"))
+        .click();
+    h.run();
+    preview(h, lang);
+    h.get_by_role_and_label(egui::Role::Button, &translate(lang, "Use as shape tool"))
+        .click();
+    h.run();
+    assert!(h.state().editor.resource_shape_name().is_none());
+    h.get_by_role_and_label(
+        egui::Role::CheckBox,
+        &translate(lang, "I accept converting each drawn shape to pixels."),
+    )
+    .scroll_to_me();
+    h.run();
+    h.get_by_role_and_label(
+        egui::Role::CheckBox,
+        &translate(lang, "I accept converting each drawn shape to pixels."),
+    )
+    .click();
+    h.run();
+    h.get_by_role_and_label(egui::Role::Button, &translate(lang, "Use as shape tool"))
+        .click();
+    h.run();
+    assert!(h.state().editor.resource_shape_name().is_some());
+}
+#[test]
+fn translated_drag_tool_adoption_retains_preview_pixels_and_one_shape_undo() {
+    for lang in [Language::English, Language::Japanese] {
+        let (mut h, root, _) = setup(lang, None);
+        h.run();
+        let before = h.state().editor.document_snapshot();
+        adopt_drag(&mut h, lang);
+        assert!(Arc::ptr_eq(&before, &h.state().editor.document_snapshot()));
+        assert!(!h.state().editor.is_dirty());
+        let e = &mut h.state_mut().editor;
+        e.color = Rgba([200, 40, 10, 128]);
+        e.pointer_down((1, 3));
+        e.pointer_move((-2, 1));
+        let preview = paintcraft_editor::execute::execute(
+            e.document(),
+            e.selection(),
+            &e.preview_batch().unwrap().unwrap(),
+        )
+        .unwrap()
+        .doc;
+        let pixels = paintcraft_render::render_flat(&preview).unwrap();
+        e.pointer_up();
+        e.run_pending();
+        assert_eq!(
+            paintcraft_render::render_flat(e.document()).unwrap(),
+            pixels
+        );
+        assert_eq!(e.undo_depth(), 1);
+        assert_eq!(
+            e.history_view().entries.last().unwrap().label.text(),
+            "Shape"
+        );
+        let layer = e.document().roots[0];
+        for y in 0..8 {
+            for x in 0..8 {
+                assert_eq!(
+                    e.document().layers[&layer].raster.get(x, y),
+                    if x < 2 && (1..4).contains(&y) {
+                        Rgba([200, 40, 10, 128])
+                    } else {
+                        Rgba::TRANSPARENT
+                    }
+                );
+            }
+        }
+        e.request(950, Action::Undo);
+        e.run_pending();
+        assert!(e.document().layers.is_empty());
+        e.request(951, Action::Redo);
+        e.run_pending();
+        assert_eq!(
+            paintcraft_render::render_flat(e.document()).unwrap(),
+            pixels
+        );
+        drop(h);
+        std::fs::remove_dir_all(root).unwrap();
+    }
+}
+#[test]
+fn adopted_drag_source_survives_library_replacement_rename_tabs_and_workspace() {
+    let (mut h, root, source) = setup(Language::English, None);
+    h.run();
+    adopt_drag(&mut h, Language::English);
+    let old_name = h.state().editor.resource_shape_name().unwrap().to_owned();
+    let replacement = root.join("replacement.csh");
+    std::fs::write(&replacement, SOURCE).unwrap();
+    h.state_mut().install_shape(replacement).unwrap();
+    let moved = root.join("moved.csh");
+    std::fs::rename(source, &moved).unwrap();
+    assert_eq!(
+        h.state().editor.resource_shape_name(),
+        Some(old_name.as_str())
+    );
+    h.state_mut().editor.pointer_down((1, 1));
+    h.state_mut().editor.pointer_move((3, 3));
+    h.state_mut().editor.pointer_up();
+    h.state_mut().editor.run_pending();
+    assert_eq!(h.state().editor.undo_depth(), 1);
+    let ctx = h.ctx.clone();
+    let project = root.join("painting.pcnd");
+    h.state_mut().save_selected(&ctx, project.clone());
+    h.state_mut().editor.run_pending();
+    h.state_mut().finish_save();
+    assert!(project.is_file());
+    for location in 0..3 {
+        let app = h.state_mut();
+        match location {
+            1 => app
+                .add_document_tab(Editor::new_document(2, 2).unwrap(), &ctx)
+                .unwrap(),
+            2 => {
+                let mut parked = tabs::WorkspaceDocuments::new((2, 2), false);
+                parked.swap(app);
+                app.other_workspace = Some(Box::new(parked));
+                app.settings.experience = Experience::Classic;
+                assert!(app.editor.resource_shape_name().is_none());
+            }
+            _ => {}
+        }
+        let alias = root.join(format!("drag-{location}.png"));
+        std::fs::hard_link(&moved, &alias).unwrap();
+        app.do_export(&alias, ImageFormat::Png, &KNOWN_LOSSES.map(str::to_owned));
+        assert_eq!(std::fs::read(alias).unwrap(), SOURCE);
+        let alias = root.join(format!("drag-{location}.pcnd"));
+        std::fs::hard_link(&moved, &alias).unwrap();
+        app.save_selected(&ctx, alias.clone());
+        assert_eq!(std::fs::read(alias).unwrap(), SOURCE);
+    }
+    drop(h);
+    std::fs::remove_dir_all(root).unwrap();
+}
+#[test]
+fn cancelled_stale_or_unsupported_drag_review_keeps_previous_tool_and_document() {
+    let (mut h, root, _) = setup(Language::English, None);
+    h.run();
+    adopt_drag(&mut h, Language::English);
+    let before = h.state().editor.document_snapshot();
+    let old = h.state().editor.resource_shape_name().unwrap().to_owned();
+    h.state_mut().begin_shapes();
+    h.state_mut().shapes.selected = 1;
+    h.state_mut().begin_shape_tool().unwrap();
+    h.run();
+    preview(&mut h, Language::English);
+    h.get_by_role_and_label(egui::Role::Button, "Cancel")
+        .click();
+    h.run();
+    assert!(h.state().shapes.placement.is_none());
+    assert_eq!(h.state().editor.resource_shape_name(), Some(old.as_str()));
+    h.state_mut().begin_shape_tool().unwrap();
+    h.run();
+    preview(&mut h, Language::English);
+    h.state_mut().shapes.selected = 2;
+    h.run();
+    assert!(h.state().shapes.placement.is_none());
+    assert!(h.state_mut().begin_shape_tool().is_err());
+    assert!(Arc::ptr_eq(&before, &h.state().editor.document_snapshot()));
+    assert_eq!(h.state().editor.undo_depth(), 0);
+    assert_eq!(h.state().editor.resource_shape_name(), Some(old.as_str()));
+    drop(h);
+    std::fs::remove_dir_all(root).unwrap();
+}

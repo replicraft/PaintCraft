@@ -50,7 +50,8 @@ impl Editor {
         }
     }
     pub(super) fn accept_pick(&mut self, result: Picked) -> Result<()> {
-        if self.session.history_ticket() != result.base
+        if !self.resource_shape_owner(result.pick.return_resource_shape)
+            || self.session.history_ticket() != result.base
             || !self.tools.can_apply_color_pick(&result.pick)
         {
             return Err(paintcraft_core::types::Error::new(

@@ -410,6 +410,7 @@ pub(super) fn preview(action: &Action) -> Option<Preview> {
         Action::Contour(contour) => Some(Preview::Contour(contour.clone())),
         Action::Stroke(stroke) => Some(Preview::Path(stroke.clone())),
         Action::SampledStroke(stroke) => Some(Preview::SampledStroke(stroke.clone())),
+        Action::ResourceShape(shape) => Some(Preview::ResourceShape(*shape)),
         Action::Shape {
             layer,
             tool,

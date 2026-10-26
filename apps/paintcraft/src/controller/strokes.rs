@@ -46,7 +46,22 @@ impl Editor {
     }
 
     pub(crate) fn capture_preview(&self, preview: Option<Arc<Preview>>) -> PreviewPreparation {
+        let shape_target_valid = match preview.as_deref() {
+            Some(Preview::ResourceShape(shape)) => {
+                (self.document().layers.is_empty()
+                    && self.document().roots.is_empty()
+                    && shape.layer.is_nil())
+                    || self
+                        .document()
+                        .layers
+                        .get(&shape.layer)
+                        .is_some_and(|layer| layer.visible)
+            }
+            _ => true,
+        };
         PreviewPreparation {
+            resource_shape: self.resource_shape.clone(),
+            shape_target_valid,
             preview,
             ticket: self.session.ticket(),
             canvas: self.document().canvas_rect(),
@@ -94,6 +109,8 @@ pub(crate) struct PreviewPreparation {
     empty: bool,
     fonts: Option<crate::text::Shared>,
     paste: Option<super::image_paste::Captured>,
+    resource_shape: Option<super::resource_shape::Captured>,
+    shape_target_valid: bool,
 }
 impl PreviewPreparation {
     pub(crate) fn build_paste(
@@ -132,6 +149,23 @@ impl PreviewPreparation {
             )?],
             Some(Preview::Contour(contour)) => vec![paintcraft_tools::commands::contour(contour)],
             Some(Preview::Path(stroke)) => stroke_operations(stroke, &check)?,
+            Some(Preview::ResourceShape(shape)) => {
+                if !self.shape_target_valid {
+                    return Err(paintcraft_core::types::Error::new(
+                        paintcraft_core::types::ErrorCode::TargetInvalid,
+                        "Choose a visible raster layer before placing a shape",
+                    ));
+                }
+                self.resource_shape
+                    .as_ref()
+                    .ok_or_else(|| {
+                        paintcraft_core::types::Error::new(
+                            paintcraft_core::types::ErrorCode::ConflictStaleBase,
+                            "The selected custom shape is no longer available",
+                        )
+                    })?
+                    .operations(*shape, self.canvas, self.empty, &check)?
+            }
             Some(Preview::SampledStroke(stroke)) => {
                 let resolved = stroke.preview(
                     self.canvas,

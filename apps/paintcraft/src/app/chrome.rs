@@ -112,6 +112,7 @@ impl App {
             primary: self.editor.color,
             secondary: self.editor.secondary,
         };
+        self.studio.resource_shape = self.editor.resource_shape_name().map(str::to_owned);
         self.studio.sampled_brush = self.editor.adopted_brush.as_ref().map(|adopted| {
             (
                 self.editor.sampled_brush_name().unwrap_or("").into(),
