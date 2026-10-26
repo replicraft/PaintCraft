@@ -2,6 +2,7 @@
 import argparse
 import csv
 import hashlib
+import importlib.metadata
 import json
 from pathlib import Path
 import swatch
@@ -36,6 +37,7 @@ if __name__ == '__main__':
     parser.add_argument('--fixtures', type=Path, required=True)
     parser.add_argument('--exports', type=Path)
     args = parser.parse_args()
+    assert importlib.metadata.version('swatch') == '0.4.0', 'use the pinned independent oracle'
     checked = []
     with (args.fixtures / 'fixtures.csv').open() as source:
         for row in csv.DictReader(source):
