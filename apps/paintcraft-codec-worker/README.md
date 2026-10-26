@@ -231,3 +231,47 @@ Packaging and private-prefix validators retain exact V4/V5/V6 compatibility and
 both decoder notices. Source installation requires the complete V6 output.
 V4 and V5 return a canonical unsupported response for code6. Browser and Classic
 reading remain unavailable; archive checks do not qualify six-target execution.
+
+
+## Private float conversion qualification
+
+The opt-in `float-codecs` feature builds a distinct V7 helper for HDR and EXR
+conversion. Normal builds remain V6. V7 retains the same five public import
+variants; neither float codec has a public reader route or installer promotion.
+
+Code 7 (Radiance) and code 8 (OpenEXR) accept exactly 32 canonical settings bytes
+followed by at most 16 MiB of original source, with a 1,048,576-pixel allowance.
+The unchanged PCDEC002 header binds the entire envelope. The source assessment
+separately binds the original image bytes, source metadata, settings, numeric
+statistics and output digest. Success carries the application version, a fixed
+96-byte report and straight RGBA8. Old codec responses retain their original
+layout. Unknown options, reserved bytes, bad lengths, quota declarations and
+response owner/version/dimension mismatches fail closed.
+
+The worker reuses the existing precision conversion, optional bounded HDR/EXR
+decoders, 256 MiB requested-allocation ceiling, parent stdin lease and kill/reap
+supervisor. This ceiling does not measure physical RSS or stack usage. Parent
+report reconstruction checks metadata, bounded statistics and canonical digests;
+it does not independently decode original floating-point samples. Filesystem
+freshness, editor ownership, resident adoption and user consent remain caller
+responsibilities, not properties of the binary envelope.
+
+Qualification commands (serial execution avoids conflating concurrent latency
+with codec correctness):
+
+```sh
+cargo test -p paintcraft-codec-worker --features float-codecs --offline --locked -- --test-threads=1
+cargo test -p paintcraft-codec-worker --no-default-features --offline --locked --test native_float --test native_avif --test native_avif_sdr --test native_heif -- --test-threads=1
+cargo test -p paintcraft-codec-worker --no-default-features --features avif-codec --offline --locked --test native_float --test native_avif --test native_avif_sdr --test native_heif -- --test-threads=1
+```
+
+The V7 suite passed 40 tests with eight explicitly ignored external/qualification
+tests. Its float cases compare all 17 independent reference scenarios (12
+successful conversions and five refusals), reconstruct the parent assessment,
+and check malformed envelopes, response binding, quotas, cancellation and
+deadlines. Lease-EOF termination is exercised after a complete request without
+claiming a precisely observed mid-decode phase. The shared parent-death test
+holds its sole stdin writer outside `Child::wait`, proves no premature EOF, then
+observes child termination after killing the parent. Earlier evidence that kept
+stdin inside `Child` was insufficient because `wait` closes that handle; the
+corrected fixture is separate from the production watchdog implementation.
