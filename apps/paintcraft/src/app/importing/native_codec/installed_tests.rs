@@ -75,11 +75,18 @@ fn copied_installed_helper_adopts_exact_pixels_and_refuses_stale_owners() {
         "importing::native_codec::installed_tests::fixture_real_installed_jxl",
         "importing::native_codec::installed_tests::fixture_running_helper_cancel",
         "importing::native_codec::jxr_installed_tests::fixture_real_installed_jxr_review",
+        "importing::native_codec::heif_installed_tests::fixture_real_installed_heif_review",
     ] {
         let output = Command::new(&child)
             .args(["--exact", test, "--ignored", "--nocapture"])
             .output()
             .unwrap();
+        assert!(
+            String::from_utf8_lossy(&output.stdout).contains("test result: ok. 1 passed"),
+            "Expected one actual fixture for {test}: {} {}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
         assert!(
             output.status.success(),
             "{} {}",

@@ -70,6 +70,15 @@ impl App {
             Box::new(launch),
         )
     }
+    pub(crate) fn stage_native_heif(&mut self, path: PathBuf) -> Result<()> {
+        self.stage_native_codec(
+            path,
+            Family::Heif,
+            wire::Codec::HeifSrgb8,
+            wire::NATIVE_HEIF_IMPORT_VARIANT,
+            Box::new(launch),
+        )
+    }
     fn stage_native_codec(
         &mut self,
         path: PathBuf,
@@ -89,7 +98,7 @@ impl App {
         match registry::admission(request) {
             registry::Decision::Allowed => {}
             registry::Decision::AllowedWithPreflight(registry::Reason::ConvertRequiresConsent)
-                if family == Family::Jxr => {}
+                if matches!(family, Family::Jxr | Family::Heif) => {}
             other => other.require_allowed(request)?,
         }
         if self.pending_import.is_some()
@@ -321,3 +330,7 @@ mod review;
 #[cfg(test)]
 #[path = "native_codec/jxr_installed_tests.rs"]
 mod jxr_installed_tests;
+
+#[cfg(test)]
+#[path = "native_codec/heif_installed_tests.rs"]
+mod heif_installed_tests;

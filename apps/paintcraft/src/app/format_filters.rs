@@ -43,6 +43,9 @@ impl App {
                 filters[0].extensions.push("jxl".into());
                 filters[0]
                     .extensions
+                    .extend(["heic".into(), "heif".into(), "hif".into()]);
+                filters[0]
+                    .extensions
                     .extend(["jxr".into(), "wdp".into(), "wmp".into()]);
                 filters[0]
                     .extensions

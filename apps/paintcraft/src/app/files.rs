@@ -301,6 +301,15 @@ impl App {
         {
             return self.stage_native_jxr(path.to_path_buf());
         }
+        if convert
+            && path
+                .extension()
+                .and_then(|value| value.to_str())
+                .and_then(paintcraft_formats::registry::Family::from_extension)
+                == Some(paintcraft_formats::registry::Family::Heif)
+        {
+            return self.stage_native_heif(path.to_path_buf());
+        }
         if !convert
             && self.experience() == Experience::Studio
             && let Some(id) = self.tab_bound_to_path(path)
