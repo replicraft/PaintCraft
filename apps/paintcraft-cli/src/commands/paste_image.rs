@@ -57,7 +57,23 @@ pub fn run(a: Options, json: bool) -> Reply {
             let in_place = same_file(&a.input, dest);
             let (document_bytes, sha) = read_bounded(&a.input, INPUT_MAX, "input")?;
             guard(a.expect_input_sha256.as_deref(), &sha)?;
-            let (image_bytes, image_sha) = read_bounded(&a.image, 64 << 20, "image")?;
+            let (image_bytes, image_sha, source_identity) = if a
+                .image
+                .extension()
+                .and_then(|ext| ext.to_str())
+                .and_then(paintcraft_formats::registry::Family::from_extension)
+                == Some(paintcraft_formats::registry::Family::Msp)
+            {
+                let (bytes, sha, identity) = read_captured(
+                    &a.image,
+                    paintcraft_formats::msp::BYTES_MAX as u64,
+                    "MSP image",
+                )?;
+                (bytes, sha, Some(identity))
+            } else {
+                let (bytes, sha) = read_bounded(&a.image, 64 << 20, "image")?;
+                (bytes, sha, None)
+            };
             guard_named(
                 a.expect_image_sha256.as_deref(),
                 &image_sha,
@@ -108,6 +124,17 @@ pub fn run(a: Options, json: bool) -> Reply {
                 losses_acknowledged: decoded.losses,
                 destination: dest,
             };
+            if source_identity
+                .as_ref()
+                .map(|identity| identity.matches_path(dest))
+                .transpose()?
+                .unwrap_or(false)
+            {
+                return Err(Error::new(
+                    ErrorCode::InputSchema,
+                    "output cannot replace the captured MSP source image",
+                ));
+            }
             let (receipt, ok, summary) =
                 write_native(dest, a.output.overwrite, session.document(), &ctx);
             Ok(Written {
