@@ -6,6 +6,7 @@ pub(super) enum FileRequest {
     Save(PathBuf),
     Print,
     ExportIcons,
+    ExportIcns,
     Export(PathBuf, export_options::Settings),
 }
 #[derive(Debug)]
@@ -128,6 +129,17 @@ impl App {
                                 .expect("deferred icon export")
                                 .started = true;
                             self.capture_icon_export();
+                            if self.confirm.is_some() {
+                                original = id;
+                                self.reset_tab_presentation();
+                            }
+                        }
+                        FileRequest::ExportIcns => {
+                            self.deferred_files
+                                .front_mut()
+                                .expect("deferred icon export")
+                                .started = true;
+                            self.capture_icns_export();
                             if self.confirm.is_some() {
                                 original = id;
                                 self.reset_tab_presentation();

@@ -34,6 +34,8 @@ mod format_filters;
 mod gpu_display;
 #[path = "app/history.rs"]
 mod history;
+#[path = "app/icns_export.rs"]
+mod icns_export;
 #[path = "app/icon_export.rs"]
 mod icon_export;
 #[path = "app/importing.rs"]
@@ -165,6 +167,7 @@ enum Confirm {
     RecentFiles,
     ExportOptions(export_options::Draft),
     IconExport,
+    IcnsExport,
     Palettes,
     Shapes,
     Brushes,
@@ -249,6 +252,7 @@ pub struct App {
     auxiliary_sources: Vec<destination::SourceGuard>,
     svg_font_picker: Option<importing::FontPick>,
     icon_export: Option<icon_export::State>,
+    icns_export: Option<icns_export::State>,
     palettes: palettes::State,
     shapes: shapes::State,
     brushes: brushes::State,
@@ -390,6 +394,7 @@ impl App {
             auxiliary_sources: Vec::new(),
             svg_font_picker: None,
             icon_export: None,
+            icns_export: None,
             palettes: Default::default(),
             shapes: Default::default(),
             brushes: Default::default(),

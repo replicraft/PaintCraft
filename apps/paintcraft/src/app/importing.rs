@@ -6,6 +6,8 @@ use paintcraft_ui::{i18n::import_loss_description, t};
 
 #[path = "importing/dcx.rs"]
 mod dcx;
+#[path = "importing/icns.rs"]
+mod icns;
 #[path = "importing/icons.rs"]
 mod icons;
 #[path = "importing/msp.rs"]
@@ -17,6 +19,7 @@ pub(super) use svg::FontPick;
 enum Candidate {
     Pages(dcx::Pages),
     Entries(icons::Entries),
+    Icns(Box<icns::Source>),
     Svg(Box<svg::Source>),
     Raster(image::Decoded),
     Layered(paintcraft_formats::project_import::Converted),
@@ -24,7 +27,7 @@ enum Candidate {
 impl Candidate {
     fn losses(&self) -> &[String] {
         match self {
-            Self::Pages(_) | Self::Entries(_) | Self::Svg(_) => &[],
+            Self::Pages(_) | Self::Entries(_) | Self::Icns(_) | Self::Svg(_) => &[],
             Self::Raster(image) => &image.losses,
             Self::Layered(project) => &project.losses,
         }
@@ -133,7 +136,7 @@ impl App {
         }
         if matches!(
             pending.candidate,
-            Candidate::Pages(_) | Candidate::Entries(_) | Candidate::Svg(_)
+            Candidate::Pages(_) | Candidate::Entries(_) | Candidate::Icns(_) | Candidate::Svg(_)
         ) {
             self.pending_import = Some(pending);
             self.confirm = Some(Confirm::ImportLosses);
@@ -146,7 +149,10 @@ impl App {
                     import_image(image.width, image.height, &image.rgba, &pending.digest)?
                 }
                 Candidate::Layered(project) => project.document,
-                Candidate::Pages(_) | Candidate::Entries(_) | Candidate::Svg(_) => {
+                Candidate::Pages(_)
+                | Candidate::Entries(_)
+                | Candidate::Icns(_)
+                | Candidate::Svg(_) => {
                     unreachable!("entry selection is resolved separately")
                 }
             };
@@ -175,6 +181,14 @@ impl App {
         }
     }
     pub(super) fn import_dialog(&mut self, ctx: &egui::Context) {
+        if self
+            .pending_import
+            .as_ref()
+            .is_some_and(|pending| matches!(pending.candidate, Candidate::Icns(_)))
+        {
+            self.icns_import_dialog(ctx);
+            return;
+        }
         if self
             .pending_import
             .as_ref()

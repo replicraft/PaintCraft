@@ -97,6 +97,10 @@ impl App {
             self.complete_palette_picker(ctx, completion.kind, completion.path);
             return;
         }
+        if completion.kind == Kind::ExportIcns {
+            self.complete_icns_picker(ctx, completion.path);
+            return;
+        }
         if completion.kind == Kind::ExportIcons {
             self.complete_icon_picker(ctx, completion.path);
             return;
@@ -193,7 +197,9 @@ impl App {
                 },
             ),
             Kind::InspectRecovery => unreachable!("inspection completion handled separately"),
-            Kind::ExportIcons => unreachable!("icon completion handled separately"),
+            Kind::ExportIcns | Kind::ExportIcons => {
+                unreachable!("icon completion handled separately")
+            }
             Kind::ImportBrush => unreachable!("brush completion handled separately"),
             Kind::ImportSvgFont => unreachable!("SVG font completion handled separately"),
             Kind::ImportShape | Kind::ExportShape => {
@@ -316,6 +322,19 @@ impl App {
                 paintcraft_formats::msp::BYTES_MAX as u64,
             )?;
             return self.stage_msp_import_acquired(source, path.to_path_buf());
+        }
+        if convert
+            && path
+                .extension()
+                .and_then(|ext| ext.to_str())
+                .and_then(paintcraft_formats::registry::Family::from_extension)
+                == Some(paintcraft_formats::registry::Family::Icns)
+        {
+            let source = crate::format_admission::acquire_resource_source(
+                path,
+                paintcraft_formats::icns::BYTES_MAX as u64,
+            )?;
+            return self.stage_icns_import_acquired(source, path.to_path_buf());
         }
         let (bytes, binding) = crate::destination::acquire(path)?;
         if convert

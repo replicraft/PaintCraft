@@ -251,6 +251,7 @@ impl App {
                 Chrome::CopyVisible => self.copy_source_requested(ctx, true),
                 Chrome::ExportImage(format) => self.export_image_requested(ctx, format),
                 Chrome::ExportIcons => self.begin_icon_export(),
+                Chrome::ExportIcns => self.begin_icns_export(),
                 Chrome::Palettes => self.begin_palettes(),
                 Chrome::BrushResources => self.begin_brushes(),
                 Chrome::ShapeResources => self.begin_shapes(),
@@ -401,6 +402,10 @@ impl App {
             self.recent_files_dialog(&ctx);
             return;
         }
+        if confirm == Confirm::IcnsExport {
+            self.icns_export_dialog(&ctx);
+            return;
+        }
         if confirm == Confirm::IconExport {
             self.icon_export_dialog(&ctx);
             return;
@@ -430,7 +435,7 @@ impl App {
             return;
         }
         let (title, text, go) = match &confirm {
-            Confirm::Brushes | Confirm::Shapes | Confirm::Palettes | Confirm::PasteLayer | Confirm::ImportLosses | Confirm::RecentFiles | Confirm::ExportOptions(_) | Confirm::IconExport | Confirm::Settings(_) | Confirm::SwitchInterface(_) | Confirm::Colors(_) | Confirm::Canvas(_) | Confirm::ResizeSkew(_) | Confirm::LayerProperties(_) => unreachable!("properties handled above"),
+            Confirm::Brushes | Confirm::Shapes | Confirm::Palettes | Confirm::PasteLayer | Confirm::ImportLosses | Confirm::RecentFiles | Confirm::ExportOptions(_) | Confirm::IcnsExport | Confirm::IconExport | Confirm::Settings(_) | Confirm::SwitchInterface(_) | Confirm::Colors(_) | Confirm::Canvas(_) | Confirm::ResizeSkew(_) | Confirm::LayerProperties(_) => unreachable!("properties handled above"),
             Confirm::DiscardForNew
             | Confirm::DiscardForOpen(_)
             | Confirm::DiscardForRecovery(_)
@@ -525,6 +530,7 @@ impl App {
                     | Confirm::Brushes
                     | Confirm::Shapes
                     | Confirm::Palettes
+                    | Confirm::IcnsExport
                     | Confirm::IconExport
                     | Confirm::Settings(_)
                     | Confirm::SwitchInterface(_)
