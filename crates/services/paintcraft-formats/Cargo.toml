@@ -8,11 +8,13 @@ license-file.workspace = true
 publish.workspace = true
 
 [features]
+exr-codec = ["dep:exr"]
 # Private qualification only; no registry/frontend reader route.
 hdr-codec = ["image/hdr"]
 heif-codec = ["dep:heic-decoder"]
 
 [dependencies]
+exr = { workspace = true, optional = true }
 heic-decoder = { workspace = true, optional = true }
 paintcraft-core.workspace = true
 paintcraft-document.workspace = true

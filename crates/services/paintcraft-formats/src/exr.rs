@@ -1,6 +1,8 @@
 //! Private bounded EXR admission only. No decoder or public reader enabled.
 mod channels;
 mod chunks;
+#[cfg(feature = "exr-codec")]
+pub mod decode;
 mod header;
 pub use channels::{Channel, SampleType};
 pub use header::{Attribute, Header};

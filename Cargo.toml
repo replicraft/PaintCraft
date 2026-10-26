@@ -135,6 +135,8 @@ cosmic-text = { version = "0.19.0", default-features = false, features = ["std",
 
 # Standard image codecs and bounded binary header views.
 image = { version = "0.25.10", default-features = false, features = ["png", "bmp", "jpeg", "gif", "tiff", "tga", "webp", "avif", "pnm", "ff"] }
+# Private EXR float qualification; no implicit Rayon pool.
+exr = { version = "=1.74.2", default-features = false }
 # Explicit TIFF alpha tags are unavailable through image's encoder facade.
 tiff = { version = "0.11.3", default-features = false }
 zerocopy = { version = "0.8.63", features = ["derive"] }
