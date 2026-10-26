@@ -60,15 +60,28 @@ fn run(r: &Request, check: &dyn Fn() -> Result<()>) -> Result<process::Output> {
 }
 #[test]
 fn independent_rgb8_pixels_color_policy_and_exact_metadata_survive_actual_worker() {
-    for (source, width, height) in [(SMALL, 4, 3), (EDGE, 17, 19)] {
+    for (source, width, height, xbits, ybits) in [
+        (SMALL, 4, 3, 0, 0),
+        (EDGE, 17, 19, 0, 0),
+        (
+            include_bytes!(
+                "../../../crates/services/paintcraft-formats/tests/jxr-fixtures/rgb8-dpi96x144.jxr"
+            )
+            .as_slice(),
+            4,
+            3,
+            96f32.to_bits(),
+            144f32.to_bits(),
+        ),
+    ] {
         let info = jxr::inspect_checked(source, wire::PIXELS_MAX, &|| Ok(())).unwrap();
         assert_eq!(
             jxr::COLOR_POLICY,
             "t832-uint-rgb-absent-context-default-srgb"
         );
         assert_eq!((info.width, info.height), (width, height));
-        assert_eq!(info.resolution_x_bits, Some(0));
-        assert_eq!(info.resolution_y_bits, Some(0));
+        assert_eq!(info.resolution_x_bits, Some(xbits));
+        assert_eq!(info.resolution_y_bits, Some(ybits));
         let r = request(source, wire::PIXELS_MAX);
         let output = run(&r, &|| Ok(())).unwrap();
         let frame = wire::decode(&output.bytes, &r, r.header.owner).unwrap();

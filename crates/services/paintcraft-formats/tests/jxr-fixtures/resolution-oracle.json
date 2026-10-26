@@ -1,0 +1,26 @@
+{
+    "license": "MIT, repository-authored metadata and original owned gradient",
+    "reference": "original C JXRLib, pinned source/provenance in oracle.json",
+    "reference_executable_sha256": "8e3b71db2c53c5db5f988b8755946a30ac1070b7a6c0a8ffa6933d34d26b95ce",
+    "host": "macOS-14.7.2-arm64-arm-64bit-Mach-O",
+    "source": "rgb8-4x3.jxr",
+    "source_sha256": "eeaec009ebcde9e6a17c9b103715d9e3e53e8711cd6924a5bb82dfa753b2f9e8",
+    "fixture": "rgb8-dpi96x144.jxr",
+    "encoded_sha256": "40405353ea5f21b725020c7297666524b7f5a05b477995419c5a7a6a06276822",
+    "unchanged_entropy_sha256": "85b41b6067b9913cd9cbe8a86e719900156d5482d0ef4f24e2d7169975c1cd87",
+    "metadata_changes": [
+        {
+            "tag": "bc82",
+            "original_f32_bits": "00000000",
+            "authored_f32_bits": "42c00000"
+        },
+        {
+            "tag": "bc83",
+            "original_f32_bits": "00000000",
+            "authored_f32_bits": "43100000"
+        }
+    ],
+    "independent_c_decoded_rgb_sha256": "77ccf6c13e62966c63415c996facb83c95b4208c7c053b95cbb9c632dbf5d0b5",
+    "independent_c_pixels_exact": true,
+    "primary_resolution_semantics": "ITU-T T.832(2012) A.7.25/26, printed page 172: explicit positive pixels/inch; zero/absent infer 96"
+}
