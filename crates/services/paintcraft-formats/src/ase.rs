@@ -27,6 +27,24 @@ pub enum Color {
     Lab([f32; 3]),
 }
 impl Color {
+    /// Explicit swatch adoption policy: normalized RGB/Gray is interpreted as
+    /// encoded sRGB and rounded to eight bits. This never changes the resource.
+    /// CMYK/LAB and out-of-range samples require a color-managed conversion.
+    pub fn srgba8(self) -> Option<[u8; 4]> {
+        let rgb = match self {
+            Self::Rgb(rgb) => rgb,
+            Self::Gray(gray) => [gray; 3],
+            _ => return None,
+        };
+        if rgb
+            .iter()
+            .any(|v| !v.is_finite() || !(0.0..=1.0).contains(v))
+        {
+            return None;
+        }
+        let [r, g, b] = rgb.map(|v| (v * 255.0).round() as u8);
+        Some([r, g, b, 255])
+    }
     pub fn model(self) -> &'static str {
         match self {
             Self::Rgb(_) => "RGB",
@@ -59,6 +77,12 @@ pub struct Palette {
     entries: Vec<Entry>,
 }
 impl Palette {
+    pub fn swatches(&self) -> impl Iterator<Item = &Swatch> {
+        self.entries.iter().flat_map(|entry| match entry {
+            Entry::Swatch(swatch) => std::slice::from_ref(swatch),
+            Entry::Group { swatches, .. } => swatches.as_slice(),
+        })
+    }
     /// Reject invalid resources before the codec allocates its write buffer.
     /// Finite source f32 values are retained exactly, without color conversion.
     pub fn new(entries: Vec<Entry>, check: &dyn Fn() -> Result<()>) -> Result<Self> {

@@ -2,6 +2,27 @@ use super::*;
 use std::cell::Cell;
 const MIXED: &[u8] = include_bytes!("../../tests/ase-fixtures/mixed.ase");
 const EMPTY: &[u8] = include_bytes!("../../tests/ase-fixtures/empty.ase");
+#[test]
+fn explicit_rgb_adoption_is_bounded_and_leaves_source_values_untouched() {
+    let palette = decode(MIXED, &|| Ok(())).unwrap();
+    let colors: Vec<_> = palette.swatches().map(|s| s.color.srgba8()).collect();
+    assert_eq!(
+        colors,
+        [
+            Some([255, 0, 0, 255]),
+            Some([64, 128, 255, 255]),
+            None,
+            None,
+            Some([191, 191, 191, 255]),
+            Some([0, 0, 0, 255])
+        ]
+    );
+    assert_eq!(encode(&palette, &|| Ok(())).unwrap(), MIXED);
+    for value in [f32::NAN, f32::INFINITY, -0.001, 1.001] {
+        assert!(Color::Gray(value).srgba8().is_none());
+        assert!(Color::Rgb([0.0, value, 1.0]).srgba8().is_none());
+    }
+}
 fn block(kind: u16, payload: &[u8]) -> Vec<u8> {
     [
         kind.to_be_bytes().as_slice(),
