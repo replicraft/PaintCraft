@@ -28,6 +28,7 @@ pub const OUTPUT_BYTES_MAX: usize = PIXELS_MAX as usize * 4 + RESPONSE_HEADER + 
 pub const REQUEST_MAGIC: &[u8; 8] = b"PCDEC002";
 pub const PROTOCOL_VERSION: u16 = 2;
 pub const NATIVE_JXL_IMPORT_VARIANT: &str = "native-jxl-srgb8-worker-v1";
+pub const NATIVE_AVIF_SDR_IMPORT_VARIANT: &str = "native-avif-sdr-ycbcr8-worker-v1";
 pub const NATIVE_AVIF_IMPORT_VARIANT: &str = "native-avif-srgb8-worker-v1";
 pub const NATIVE_HEIF_IMPORT_VARIANT: &str = "native-heif-srgb8-worker-v1";
 pub const NATIVE_JXR_IMPORT_VARIANT: &str = "native-jxr-srgb8-worker-v1";
@@ -47,6 +48,27 @@ pub const QUALIFIED_AVIF_IMPORT_VARIANTS: &[&str] = &[
     NATIVE_HEIF_IMPORT_VARIANT,
     NATIVE_AVIF_IMPORT_VARIANT,
 ];
+pub const AVIF_SDR_NATIVE_PROFILE: &str = "native-heif-gray8-heif-srgb8-jxl-rgba8-jxr-rgb8-avif-srgb8-ycbcr8-dav1d154-alloc1-private-source1-parent-lease1";
+pub const AVIF_SDR_BUILD_RECORD_MARKER: &[u8] = b"PAINTCRAFT_CODEC_WORKER_BUILD_V6_AVIF_SDR\0";
+pub const QUALIFIED_AVIF_SDR_IMPORT_VARIANTS: &[&str] = &[
+    NATIVE_JXL_IMPORT_VARIANT,
+    NATIVE_JXR_IMPORT_VARIANT,
+    NATIVE_HEIF_IMPORT_VARIANT,
+    NATIVE_AVIF_IMPORT_VARIANT,
+    NATIVE_AVIF_SDR_IMPORT_VARIANT,
+];
+pub fn native_avif_sdr_build_record(version: &str) -> Result<Vec<u8>> {
+    if version.is_empty() || version.len() > 64 || !version.is_ascii() {
+        return Err(Error::new(
+            ErrorCode::InputSchema,
+            "Invalid codec application version",
+        ));
+    }
+    let mut bytes = AVIF_SDR_BUILD_RECORD_MARKER.to_vec();
+    bytes.extend(version.as_bytes());
+    bytes.extend(b"\0PCDEC002\0HEAP268435456\0STDIN_PARENT_LEASE1\0JXR_PRIVATE_SOURCE1\0AVIF_DAV1D154_ALLOC1_ASM0_8BIT1\0AVIF_SDR709_YUV444_420_CSP12_WORK1\0END_CODEC_WORKER_BUILD\0");
+    Ok(bytes)
+}
 pub fn native_avif_build_record(version: &str) -> Result<Vec<u8>> {
     if version.is_empty() || version.len() > 64 || !version.is_ascii() {
         return Err(Error::new(
@@ -94,12 +116,13 @@ pub enum Codec {
     JxrRgb8 = 3,
     HeifSrgb8 = 4,
     AvifSrgb8 = 5,
+    AvifSdr8 = 6,
 }
 impl Codec {
     fn side_limit(self) -> u32 {
         match self {
             Self::HeifGray8 | Self::HeifSrgb8 => 16384,
-            Self::JxlRgba8 | Self::JxrRgb8 | Self::AvifSrgb8 => 65536,
+            Self::JxlRgba8 | Self::JxrRgb8 | Self::AvifSrgb8 | Self::AvifSdr8 => 65536,
         }
     }
     fn decode(value: u8) -> Result<Self> {
@@ -109,6 +132,7 @@ impl Codec {
             3 if !cfg!(target_arch = "wasm32") => Ok(Self::JxrRgb8),
             4 if !cfg!(target_arch = "wasm32") => Ok(Self::HeifSrgb8),
             5 if !cfg!(target_arch = "wasm32") => Ok(Self::AvifSrgb8),
+            6 if !cfg!(target_arch = "wasm32") => Ok(Self::AvifSdr8),
             _ => Err(unsupported("worker codec request is not supported")),
         }
     }
@@ -145,7 +169,10 @@ impl Request {
         pixels: u64,
     ) -> Result<Self> {
         if cfg!(target_arch = "wasm32")
-            && matches!(codec, Codec::JxrRgb8 | Codec::HeifSrgb8 | Codec::AvifSrgb8)
+            && matches!(
+                codec,
+                Codec::JxrRgb8 | Codec::HeifSrgb8 | Codec::AvifSrgb8 | Codec::AvifSdr8
+            )
         {
             return Err(unsupported("Requested codec worker is native-only"));
         }
@@ -253,7 +280,10 @@ impl Header {
         let nonce = r.uuid()?;
         let sha256 = r.take()?;
         if cfg!(target_arch = "wasm32")
-            && matches!(codec, Codec::JxrRgb8 | Codec::HeifSrgb8 | Codec::AvifSrgb8)
+            && matches!(
+                codec,
+                Codec::JxrRgb8 | Codec::HeifSrgb8 | Codec::AvifSrgb8 | Codec::AvifSdr8
+            )
         {
             return Err(unsupported("Requested codec worker is native-only"));
         }
@@ -368,7 +398,11 @@ pub fn success(request: Header, result: Success<'_>, peak: u64) -> Result<Vec<u8
             },
         ) => (gray, alpha, encoding, 1),
         (
-            Codec::JxlRgba8 | Codec::JxrRgb8 | Codec::HeifSrgb8 | Codec::AvifSrgb8,
+            Codec::JxlRgba8
+            | Codec::JxrRgb8
+            | Codec::HeifSrgb8
+            | Codec::AvifSrgb8
+            | Codec::AvifSdr8,
             Pixels::SrgbRgba8(rgba),
         ) => (
             rgba,
@@ -570,7 +604,11 @@ pub fn decode_with_header<'a>(
                 encoding,
             }
         }
-        Codec::JxlRgba8 | Codec::JxrRgb8 | Codec::HeifSrgb8 | Codec::AvifSrgb8 => {
+        Codec::JxlRgba8
+        | Codec::JxrRgb8
+        | Codec::HeifSrgb8
+        | Codec::AvifSrgb8
+        | Codec::AvifSdr8 => {
             if y as u64 != pixels * 4
                 || a != 0
                 || alpha_flag != 0

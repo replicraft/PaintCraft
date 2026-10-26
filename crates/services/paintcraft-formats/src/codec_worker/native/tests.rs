@@ -91,3 +91,52 @@ fn invalid_avif_host_build_contract_cannot_launch_or_adopt() {
     assert_eq!(error.code, ErrorCode::InputSchema);
     std::fs::remove_file(path).unwrap();
 }
+
+#[test]
+fn private_sdr_job_cannot_dispatch_through_existing_installed_contracts() {
+    let root = std::env::temp_dir().join(format!("paintcraft-private-sdr-job-{}", Uuid::new_v4()));
+    std::fs::create_dir(&root).unwrap();
+    let path = root.join("source.avif");
+    std::fs::write(&path, b"source").unwrap();
+    let owner = Owner {
+        session: Uuid::new_v4(),
+        state: Uuid::new_v4(),
+        epoch: 1,
+        frontend: 3,
+    };
+    for stale in [false, true] {
+        let job = Job {
+            input: path.clone(),
+            identity: SourceIdentity::existing_destination(&path)
+                .unwrap()
+                .unwrap(),
+            length: 6,
+            codec: Codec::AvifSdr8,
+            owner,
+            pixels: 1,
+            deadline: Duration::from_secs(1),
+            application_version: env!("CARGO_PKG_VERSION").into(),
+            expected_sha256: None,
+        };
+        let mut current = owner;
+        current.epoch += u64::from(stale);
+        let error = job
+            .consume::<()>(
+                &|| Ok(()),
+                &|| Ok(current),
+                |_, _| panic!("unadmitted SDR job must not launch"),
+                |_, _, _, _| panic!("unadmitted SDR job must not consume"),
+            )
+            .unwrap_err();
+        assert_eq!(
+            error.code,
+            if stale {
+                ErrorCode::ConflictStaleBase
+            } else {
+                ErrorCode::CapabilityUnsupported
+            }
+        );
+        assert_eq!(std::fs::read(&path).unwrap(), b"source");
+    }
+    std::fs::remove_dir_all(root).unwrap();
+}

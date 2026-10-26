@@ -62,6 +62,11 @@ impl Job {
             Ok(())
         };
         check()?;
+        if self.codec == Codec::AvifSdr8 {
+            return Err(unsupported(
+                "SDR AVIF native installation contract is not yet admitted",
+            ));
+        }
         let source = self
             .identity
             .capture_bytes(self.length, INPUT_BYTES_MAX as u64, &check)?;
