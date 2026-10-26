@@ -354,3 +354,11 @@ the-source-image-origin-will-be-moved-to-the-canvas-origin = 元画像の原点�
 rgbe-samples-use-the-lower-edge-of-each-stored-value-interval-not-the-radiance-midpoint = RGBE値にはRadianceの中間値ではなく、保存範囲の下限を使用します。
 
 retained-partial-transparency-will-blend-in-encoded-srgb-in-this-editor-which-differs-from-linear-light-source-compositing = 保持した半透明部分は、このエディターではsRGB値で合成され、元画像のリニア光での合成と異なります。
+
+this-image-needs-an-explicit-negative-value-policy-choose-clipping-to-continue = この画像には負の値の処理方法が必要です。続行するにはクリップを選択してください。
+
+this-image-contains-additive-transparent-color-choose-a-background-to-flatten-it = この画像には透明な加算色が含まれています。背景色を選択して統合してください。
+
+this-image-contains-invalid-color-or-transparency-values-and-cannot-be-converted = この画像には無効な色または透明度の値があり、変換できません。
+
+this-image-is-opaque-use-source-metadata-for-transparency = この画像は不透明です。透明度には元画像のメタデータを使用してください。

@@ -354,3 +354,11 @@ the-source-image-origin-will-be-moved-to-the-canvas-origin = El origen de la ima
 rgbe-samples-use-the-lower-edge-of-each-stored-value-interval-not-the-radiance-midpoint = RGBE usa el límite inferior de cada intervalo guardado, no el punto medio de Radiance.
 
 retained-partial-transparency-will-blend-in-encoded-srgb-in-this-editor-which-differs-from-linear-light-source-compositing = La transparencia parcial se mezclará en sRGB codificado, distinto de la composición lineal de origen.
+
+this-image-needs-an-explicit-negative-value-policy-choose-clipping-to-continue = Esta imagen necesita una política para valores negativos. Elige recortar para continuar.
+
+this-image-contains-additive-transparent-color-choose-a-background-to-flatten-it = Esta imagen contiene color transparente aditivo. Elige un fondo para acoplarla.
+
+this-image-contains-invalid-color-or-transparency-values-and-cannot-be-converted = Esta imagen contiene valores de color o transparencia no válidos y no se puede convertir.
+
+this-image-is-opaque-use-source-metadata-for-transparency = Esta imagen es opaca. Usa los metadatos de origen para la transparencia.

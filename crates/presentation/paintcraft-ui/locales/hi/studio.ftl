@@ -354,3 +354,11 @@ the-source-image-origin-will-be-moved-to-the-canvas-origin = स्रोत च
 rgbe-samples-use-the-lower-edge-of-each-stored-value-interval-not-the-radiance-midpoint = RGBE संग्रहीत अंतराल का निचला मान उपयोग करता है, Radiance मध्यबिंदु नहीं।
 
 retained-partial-transparency-will-blend-in-encoded-srgb-in-this-editor-which-differs-from-linear-light-source-compositing = रखी गई आंशिक पारदर्शिता संपादक में एन्कोडेड sRGB में मिलेगी, जो स्रोत के लीनियर मिश्रण से अलग है।
+
+this-image-needs-an-explicit-negative-value-policy-choose-clipping-to-continue = इस चित्र के ऋणात्मक मानों के लिए नीति चाहिए। जारी रखने के लिए क्लिप चुनें।
+
+this-image-contains-additive-transparent-color-choose-a-background-to-flatten-it = इस चित्र में योगात्मक पारदर्शी रंग है। समतल करने के लिए पृष्ठभूमि चुनें।
+
+this-image-contains-invalid-color-or-transparency-values-and-cannot-be-converted = इस चित्र में अमान्य रंग या पारदर्शिता मान हैं और इसे बदला नहीं जा सकता।
+
+this-image-is-opaque-use-source-metadata-for-transparency = यह चित्र अपारदर्शी है। पारदर्शिता के लिए स्रोत मेटाडेटा उपयोग करें।

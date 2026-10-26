@@ -354,3 +354,11 @@ the-source-image-origin-will-be-moved-to-the-canvas-origin = 源图片原点将�
 rgbe-samples-use-the-lower-edge-of-each-stored-value-interval-not-the-radiance-midpoint = RGBE样本使用存储区间的下边界，而非Radiance中点。
 
 retained-partial-transparency-will-blend-in-encoded-srgb-in-this-editor-which-differs-from-linear-light-source-compositing = 保留的半透明在本编辑器中以编码sRGB混合，与源线性光合成不同。
+
+this-image-needs-an-explicit-negative-value-policy-choose-clipping-to-continue = 此图片需要明确的负值处理策略。请选择裁剪以继续。
+
+this-image-contains-additive-transparent-color-choose-a-background-to-flatten-it = 此图片包含加性透明颜色。请选择背景以合成图片。
+
+this-image-contains-invalid-color-or-transparency-values-and-cannot-be-converted = 此图片包含无效的颜色或透明度值，无法转换。
+
+this-image-is-opaque-use-source-metadata-for-transparency = 此图片不透明。透明度请选择使用源元数据。

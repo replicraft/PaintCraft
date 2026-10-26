@@ -354,3 +354,11 @@ the-source-image-origin-will-be-moved-to-the-canvas-origin = The source image or
 rgbe-samples-use-the-lower-edge-of-each-stored-value-interval-not-the-radiance-midpoint = RGBE samples use the lower edge of each stored value interval, not the Radiance midpoint.
 
 retained-partial-transparency-will-blend-in-encoded-srgb-in-this-editor-which-differs-from-linear-light-source-compositing = Retained partial transparency will blend in encoded sRGB in this editor, which differs from linear-light source compositing.
+
+this-image-needs-an-explicit-negative-value-policy-choose-clipping-to-continue = This image needs an explicit negative-value policy. Choose clipping to continue.
+
+this-image-contains-additive-transparent-color-choose-a-background-to-flatten-it = This image contains additive transparent color. Choose a background to flatten it.
+
+this-image-contains-invalid-color-or-transparency-values-and-cannot-be-converted = This image contains invalid color or transparency values and cannot be converted.
+
+this-image-is-opaque-use-source-metadata-for-transparency = This image is opaque. Use source metadata for transparency.
