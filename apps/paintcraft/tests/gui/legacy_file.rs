@@ -116,8 +116,17 @@ fn historical_save_as_choices_export_real_formats_only_after_confirmation() {
 }
 
 #[test]
-fn historical_file_panel_scrolls_reopens_and_never_enables_unimplemented_codecs() {
-    for variant in [ClassicVariant::V7, ClassicVariant::V10] {
+fn historical_file_panel_scrolls_reopens_dispatches_gif_and_refuses_studio_webp() {
+    for (variant, frontend) in [
+        (
+            ClassicVariant::V7,
+            paintcraft_formats::registry::Frontend::ClassicV7,
+        ),
+        (
+            ClassicVariant::V10,
+            paintcraft_formats::registry::Frontend::ClassicV10,
+        ),
+    ] {
         let dir = scratch("historical-file-layout");
         Settings {
             classic_variant: Some(variant),
@@ -136,7 +145,34 @@ fn historical_file_panel_scrolls_reopens_and_never_enables_unimplemented_codecs(
         h.run();
         h.get_by_label("GIF picture").scroll_to_me();
         h.run();
-        assert!(h.get_by_label("GIF picture").accesskit_node().is_disabled());
+        assert!(!h.get_by_label("GIF picture").accesskit_node().is_disabled());
+        assert!(h.query_by_label("WebP picture").is_none());
+        assert!(
+            !paintcraft_formats::registry::admission(paintcraft_formats::registry::Request::new(
+                frontend,
+                paintcraft_formats::registry::Operation::ExportFlat,
+                paintcraft_formats::registry::Family::Webp,
+                paintcraft_formats::registry::Platform::Native,
+            ),)
+            .available()
+        );
+        let before = h.state().editor().document_snapshot();
+        let ticket = h.state().editor().history_view().ticket;
+        h.get_by_role_and_label(eframe::egui::Role::Button, "GIF picture")
+            .click();
+        h.run();
+        h.get_by_label("Choose destination…");
+        h.get_by_role_and_label(eframe::egui::Role::Button, "Cancel")
+            .click();
+        h.run();
+        assert!(h.state().editor().document().same_semantics(&before));
+        assert_eq!(h.state().editor().history_view().ticket, ticket);
+        h.get_by_role_and_label(eframe::egui::Role::Button, "File")
+            .click();
+        h.run();
+        h.get_by_role_and_label(eframe::egui::Role::Button, "Save as")
+            .click();
+        h.run();
         h.get_by_label("PaintCraft project").scroll_to_me();
         h.run();
         let rect = h.get_by_label("PaintCraft project").rect();
