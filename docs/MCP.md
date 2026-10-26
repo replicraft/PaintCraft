@@ -517,6 +517,50 @@ The [AVIF qualification record](AVIF_QUALIFICATION.md) distinguishes bit-exact
 independent libaom reference pixels, actual local Studio/CLI/MCP and private-prefix
 installation checks from unexecuted six-target release and broader-profile work.
 
+## HDR/EXR conversion
+
+Use `inspect_float` to review a supported `.hdr` or `.exr` source without changing
+the current painting. A complete native installation with the matching V7 helper
+is required. Inputs are limited to 16 MiB and 1,048,576 pixels; this converts to
+8-bit sRGB rather than retaining an HDR editing document.
+
+Every request supplies explicit settings, for example:
+
+```json
+{
+    "path": "/pictures/source.hdr",
+    "settings": {
+        "curve": "reinhard-per-channel",
+        "exposure_milli_ev": 0,
+        "negative": "reject",
+        "alpha_output": "preserve"
+    }
+}
+```
+
+Choose `clip` or `reinhard-per-channel`, exposure from -16000 through 16000
+milli-EV, and `reject` or `clip-to-black` for negative samples. To flatten alpha,
+use `"alpha_output": "flatten"` with an explicit `"srgb_background": [R, G, B]`;
+the backdrop is refused for preserve. Optional `source_assignment` is
+`linear-rec709-d65` or `linear-radiance-nominal-ee`; optional `alpha_assignment`
+is `premultiplied` or `straight`. Assignments must explicitly match the intended source interpretation.
+Unsupported or ambiguous sources are refused unless an admitted explicit
+assignment resolves them.
+
+Inspection returns the raw source SHA256, assessment SHA256, conversion
+statistics and actual losses. Pass both hashes as `expect_input_sha256` and
+`expect_assessment_sha256` to `import_float`, repeat the exact settings, and
+acknowledge every reported loss in `allow_losses`. Reinspect after changing the
+source or settings. Set `discard_changes` only when intentionally replacing a
+dirty painting. Missing consent, stale hashes, cancellation or source changes
+leave the existing painting and saved binding unchanged.
+
+CLI equivalents are `inspect-float` and `import-float`, with explicit
+`--float-*` settings; import writes a fresh PCND copy. Native Studio offers the
+same conversion with a preview. Classic, browser import, ordinary Open and
+preserving HDR/EXR Save remain unavailable.
+
+## DCX export
 
 `export_dcx` writes one document composite as a fresh `.dcx` copy. Choose an
 explicit `pcx_mode`: `rgb24`, `indexed-exact` or `quantized256`. Actual flatten,

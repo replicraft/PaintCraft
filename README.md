@@ -44,6 +44,7 @@ cargo run --release -p paintcraft-cli -- mcp
 - **JPEG XR import:** native Studio, CLI and MCP can import supported RGB pictures after reviewing the print-resolution loss.
 - **HEIC/HEIF import:** native Studio, CLI and MCP can import supported sRGB pictures with transparency after reviewing any color or metadata losses.
 - **AVIF import:** native Studio, CLI and MCP can import supported sRGB pictures with transparency from a complete installation.
+- **HDR/EXR conversion:** preview supported pictures in native Studio; CLI and MCP offer the same exposure and tone settings for conversion to 8-bit images.
 - **Extra imports in Studio:** QOI, Netpbm, farbfeld and PCX, plus a selected DCX page or ICO/CUR entry.
 - **DCX export:** save a single-page copy through the native CLI or MCP.
 - **Historical MSP:** import monochrome Paint pictures in Studio, CLI and MCP; export exact opaque black-and-white MSP1 copies.
