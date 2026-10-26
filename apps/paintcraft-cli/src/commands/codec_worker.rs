@@ -35,6 +35,18 @@ pub struct Options {
     #[arg(long)]
     expect_input_sha256: Option<String>,
 }
+impl Options {
+    pub(super) fn jxl(input: PathBuf, expected: Option<String>) -> Self {
+        Self {
+            input,
+            codec: Codec::Jxl,
+            pixels: wire::PIXELS_MAX,
+            deadline_ms: 10000,
+            memory_limit: 512 << 20,
+            expect_input_sha256: expected,
+        }
+    }
+}
 /// Conservative logical parent IO/verification slack; not a physical RSS cap.
 const VERIFICATION_SLACK: u64 = 1 << 20;
 fn contract<'a>(record: &'a [u8]) -> codec_helper::Contract<'a> {
@@ -48,7 +60,7 @@ fn contract<'a>(record: &'a [u8]) -> codec_helper::Contract<'a> {
         build_record: record,
     }
 }
-fn owner() -> wire::Owner {
+pub(super) fn owner() -> wire::Owner {
     wire::Owner {
         session: Uuid::new_v4(),
         state: Uuid::new_v4(),
@@ -94,14 +106,20 @@ fn metadata(request: &wire::Request, frame: wire::Frame<'_>, helper_sha: [u8; 32
         ("helper_sha256", Value::str(hex(&helper_sha))),
     ])
 }
-fn inspect(
+pub(super) fn with_frame<T>(
     options: Options,
     identity: SourceIdentity,
     length: u64,
     captured_owner: wire::Owner,
     cancel: paintcraft_runtime::Cancellation,
     current_owner: impl Fn() -> Result<wire::Owner>,
-) -> Result<Value> {
+    consume: impl FnOnce(
+        &wire::Request,
+        wire::Frame<'_>,
+        [u8; 32],
+        &dyn Fn() -> Result<()>,
+    ) -> Result<T>,
+) -> Result<T> {
     let start = Instant::now();
     let deadline = Duration::from_millis(options.deadline_ms);
     let check = || {
@@ -161,7 +179,28 @@ fn inspect(
     check()?;
     // Hash/report while the existing runtime reservation is still held. No raw
     // planes/source or document escape result consumption without a resident lease.
-    Ok(metadata(&request, frame, helper.sha256()))
+    let prepared = consume(&request, frame, helper.sha256(), &check)?;
+    identity.verify_bytes(&options.input, length, &request.header.sha256, &check)?;
+    check()?;
+    Ok(prepared)
+}
+fn inspect(
+    options: Options,
+    identity: SourceIdentity,
+    length: u64,
+    captured_owner: wire::Owner,
+    cancel: paintcraft_runtime::Cancellation,
+    current_owner: impl Fn() -> Result<wire::Owner>,
+) -> Result<Value> {
+    with_frame(
+        options,
+        identity,
+        length,
+        captured_owner,
+        cancel,
+        current_owner,
+        |request, frame, helper_sha, _| Ok(metadata(request, frame, helper_sha)),
+    )
 }
 pub fn run(options: Options, json: bool) -> Reply {
     bare(
