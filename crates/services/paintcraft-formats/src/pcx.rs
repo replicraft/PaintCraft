@@ -28,6 +28,29 @@ fn geometry(width: u32, height: u32, dpi: (u16, u16)) -> Result<(usize, usize)> 
     Ok((width as usize, height as usize))
 }
 
+/// Shared selected-writer bound; prices layout only, never validates pixel data.
+pub(crate) fn encoded_capacity(
+    width: u32,
+    height: u32,
+    dpi: (u16, u16),
+    indexed: bool,
+) -> Result<usize> {
+    let (w, h) = geometry(width, height, dpi)?;
+    let planes = if indexed { 1usize } else { 3 };
+    let bound = (w + (w & 1))
+        .checked_mul(h)
+        .and_then(|n| n.checked_mul(planes * 2))
+        .and_then(|n| n.checked_add(128 + if indexed { 769 } else { 0 }))
+        .ok_or_else(|| Error::new(ErrorCode::ResourceLimit, "PCX encoded size overflow"))?;
+    if bound > BYTES_MAX {
+        return Err(Error::new(
+            ErrorCode::ResourceLimit,
+            "PCX encoded size exceeds allowance",
+        ));
+    }
+    Ok(bound)
+}
+
 struct Output<'a> {
     bytes: Vec<u8>,
     failure: Option<Error>,
@@ -113,7 +136,7 @@ pub fn encode_rgb(
             "PCX RGB input length does not match dimensions",
         ));
     }
-    let mut output = Output::new(128 + (w + (w & 1)) * h * 3 * 2, check)?;
+    let mut output = Output::new(encoded_capacity(width, height, dpi, false)?, check)?;
     let result = (|| {
         let mut writer = ::pcx::WriterRgb::new(&mut output, (width as u16, height as u16), dpi)?;
         for row in rgb.chunks_exact(w * 3) {
@@ -161,7 +184,7 @@ pub fn encode_indexed(
             "PCX indices or palette do not match the declared image",
         ));
     }
-    let mut output = Output::new(128 + (w + (w & 1)) * h * 2 + 769, check)?;
+    let mut output = Output::new(encoded_capacity(width, height, dpi, true)?, check)?;
     let result = (|| {
         let mut writer =
             ::pcx::WriterPaletted::new(&mut output, (width as u16, height as u16), dpi)?;

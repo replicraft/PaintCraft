@@ -3,9 +3,13 @@
 use crate::image::{self, Decoded};
 use paintcraft_core::types::{Error, ErrorCode, Result};
 
-const DIRECTORY_BYTES: usize = 4 + 1024 * 4;
-const MAGIC: u32 = 987_654_321;
+pub const DIRECTORY_BYTES: usize = 4 + 1024 * 4;
+pub const MAGIC: u32 = 987_654_321;
 pub const PAGES_MAX: usize = 1023;
+mod write;
+pub use write::{
+    PagePixels, WriteLimits, WritePage, WritePlan, encode_pages, preflight_write, write_pages_to,
+};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Page {
