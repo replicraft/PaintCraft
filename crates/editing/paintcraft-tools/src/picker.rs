@@ -4,7 +4,6 @@ use paintcraft_core::types::picker::PickerAfter;
 impl ToolState {
     /// Explicit activation also invalidates late picker results on re-selection.
     pub fn choose_tool(&mut self, tool: Tool) {
-        self.resource_shape = None;
         if self.floating.is_some() {
             self.cancel_gesture();
         }
@@ -13,17 +12,19 @@ impl ToolState {
         } else {
             self.activate_tool(tool);
         }
+        self.resource_shape = None;
     }
     /// Synchronize tool state without advancing its revision every layout frame.
     pub fn activate_tool(&mut self, tool: Tool) {
         if self.tool != tool {
-            self.resource_shape = None;
             if self.floating.is_some() {
                 self.cancel_gesture();
             }
             if self.tool != Tool::ColorPicker {
                 self.previous_tool = self.tool;
+                self.previous_resource_shape = self.resource_shape;
             }
+            self.resource_shape = None;
             self.tool = tool;
             self.preview_revision.advance();
         }
@@ -37,6 +38,9 @@ impl ToolState {
             button: g.button,
             source: g.options.picker_source,
             size: g.options.picker_size,
+            return_resource_shape: (g.options.picker_after == PickerAfter::Previous)
+                .then_some(g.return_resource_shape)
+                .flatten(),
             return_to: match g.options.picker_after {
                 PickerAfter::Stay => None,
                 PickerAfter::Previous => Some(g.return_tool),
@@ -67,6 +71,7 @@ impl ToolState {
             && let Some(tool) = pick.return_to
         {
             self.activate_tool(tool);
+            self.resource_shape = pick.return_resource_shape;
         }
         true
     }

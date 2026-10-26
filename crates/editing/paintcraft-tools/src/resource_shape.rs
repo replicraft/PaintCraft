@@ -179,4 +179,35 @@ mod tests {
         tools.activate_tool(Tool::Pencil);
         assert!(tools.resource_shape.is_none());
     }
+    #[test]
+    fn previous_picker_restores_exact_shape_and_view_pan_does_not_replace_it() {
+        use paintcraft_core::types::picker::PickerAfter;
+        let mut tools = ToolState::default();
+        tools.select_resource_shape(reference(2));
+        let mut pan = navigation::PanGesture::default();
+        pan.begin(7, navigation::PanButton::Primary, (1.0, 2.0));
+        assert_eq!(pan.move_to(&7, (4.0, 8.0)), Some((3.0, 6.0)));
+        pan.cancel();
+        assert_eq!(tools.resource_shape, Some(reference(2)));
+        tools.options.picker_after = PickerAfter::Previous;
+        tools.choose_tool(Tool::ColorPicker);
+        tools.pointer_down(Uuid::nil(), (0, 0));
+        let Some((_, Action::PickColor(pick))) = tools.pointer_up() else {
+            panic!("picker action")
+        };
+        assert_eq!(pick.return_resource_shape, Some(reference(2)));
+        assert!(tools.apply_picked_color(&pick, Rgba([10, 20, 30, 255])));
+        assert_eq!(tools.tool, Tool::Rect);
+        assert_eq!(tools.resource_shape, Some(reference(2)));
+        tools.choose_tool(Tool::ColorPicker);
+        tools.pointer_down(Uuid::nil(), (0, 0));
+        let Some((_, Action::PickColor(stale))) = tools.pointer_up() else {
+            panic!("picker action")
+        };
+        tools.select_resource_shape(reference(3));
+        assert!(!tools.apply_picked_color(&stale, Rgba([1; 4])));
+        assert_eq!(tools.resource_shape, Some(reference(3)));
+        tools.choose_tool(Tool::Rect);
+        assert!(tools.resource_shape.is_none());
+    }
 }

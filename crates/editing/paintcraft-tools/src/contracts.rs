@@ -202,6 +202,7 @@ pub struct ColorPick {
     pub source: paintcraft_core::types::picker::SampleSource,
     pub size: paintcraft_core::types::picker::SampleSize,
     pub return_to: Option<Tool>,
+    pub return_resource_shape: Option<crate::resource_shape::Reference>,
 }
 
 #[derive(Clone, Debug, PartialEq)]

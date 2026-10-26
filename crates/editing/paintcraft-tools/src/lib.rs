@@ -56,6 +56,7 @@ struct Gesture {
     point_scale: u32,
     constrain_shape: bool,
     return_tool: Tool,
+    return_resource_shape: Option<resource_shape::Reference>,
 }
 
 #[derive(Debug)]
@@ -70,6 +71,7 @@ pub struct ToolState {
     pub sampled_name: Option<String>,
     pub sampled_tip: Option<(paintcraft_raster::sampled_brush::SampledTip, u32)>,
     previous_tool: Tool,
+    previous_resource_shape: Option<resource_shape::Reference>,
     gesture: Option<Gesture>,
     floating: Option<FloatingSelection>,
     construction: Option<construction::Construction>,
@@ -90,6 +92,7 @@ impl Default for ToolState {
             sampled_name: None,
             sampled_tip: None,
             previous_tool: Tool::Pencil,
+            previous_resource_shape: None,
             gesture: None,
             floating: None,
             construction: None,
@@ -192,6 +195,7 @@ impl ToolState {
             point_scale: 1,
             constrain_shape: false,
             return_tool: self.previous_tool,
+            return_resource_shape: self.previous_resource_shape,
         });
         if matches!(self.tool, Tool::Polygon | Tool::Curve) {
             self.construction = Some(construction::Construction::new(
