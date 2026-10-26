@@ -265,22 +265,32 @@ fn linked_helper_contains_cross_target_packaging_build_record() {
         "\0PCDEC002\0HEAP268435456\0STDIN_PARENT_LEASE1\0JXR_PRIVATE_SOURCE1\0END_CODEC_WORKER_BUILD\0"
     )
     .as_bytes();
-    #[cfg(feature = "avif-codec")]
+    #[cfg(all(feature = "avif-codec", not(feature = "avif-sdr-codec")))]
     let record = concat!(
         "PAINTCRAFT_CODEC_WORKER_BUILD_V5_AVIF\0",
         env!("CARGO_PKG_VERSION"),
         "\0PCDEC002\0HEAP268435456\0STDIN_PARENT_LEASE1\0JXR_PRIVATE_SOURCE1\0AVIF_DAV1D154_ALLOC1_ASM0_8BIT1\0END_CODEC_WORKER_BUILD\0"
     )
     .as_bytes();
+    #[cfg(feature = "avif-sdr-codec")]
+    let record = concat!(
+        "PAINTCRAFT_CODEC_WORKER_BUILD_V6_AVIF_SDR\0", env!("CARGO_PKG_VERSION"),
+        "\0PCDEC002\0HEAP268435456\0STDIN_PARENT_LEASE1\0JXR_PRIVATE_SOURCE1\0AVIF_DAV1D154_ALLOC1_ASM0_8BIT1\0AVIF_SDR709_YUV444_420_CSP12_WORK1\0END_CODEC_WORKER_BUILD\0",
+    ).as_bytes();
     #[cfg(not(feature = "avif-codec"))]
     assert_eq!(
         record,
         wire::native_build_record(env!("CARGO_PKG_VERSION")).unwrap()
     );
-    #[cfg(feature = "avif-codec")]
+    #[cfg(all(feature = "avif-codec", not(feature = "avif-sdr-codec")))]
     assert_eq!(
         record,
         wire::native_avif_build_record(env!("CARGO_PKG_VERSION")).unwrap()
+    );
+    #[cfg(feature = "avif-sdr-codec")]
+    assert_eq!(
+        record,
+        wire::native_avif_sdr_build_record(env!("CARGO_PKG_VERSION")).unwrap()
     );
     assert!(
         bytes

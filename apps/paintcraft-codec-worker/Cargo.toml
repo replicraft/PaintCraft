@@ -10,6 +10,7 @@ publish.workspace = true
 [features]
 default = ["avif-codec"]
 avif-codec = []
+avif-sdr-codec = ["avif-codec"]
 
 [build-dependencies]
 sha2.workspace = true

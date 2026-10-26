@@ -204,3 +204,30 @@ The complete CLI source installer builds and installs both native binaries,
 manifest and notices with `sh scripts/packaging/install_cli.sh --source` (or
 `./scripts/packaging/install_cli.ps1 --source` on Windows). These local commands
 do not replace actual release execution on all six targets.
+
+## Private SDR producer qualification
+
+`--features avif-sdr-codec` is an opt-in V6/code6 producer for separately
+qualified SDR YCbCr experiments. It preserves code5 identity behavior, uses the
+new `native-avif-sdr-ycbcr8-worker-v1` identifier, and declares source/native
+planes/i32 staging/RGBA/converter work before C decoding. It accepts only the
+private explicit 8-bit matrix-1/sRGB 4:4:4 or 4:2:0 CSP_VERTICAL/COLOCATED policy
+proved by the [owned SDR fixtures](../../crates/services/paintcraft-formats/tests/avif-sdr-fixtures/README.md).
+V4 and V5 emit a canonical unsupported response for code6.
+
+The exact `BUILD_V6_AVIF_SDR` record adds the pinned allocation and
+`AVIF_SDR709_YUV444_420_CSP12_WORK1` tokens and a five-variant set. This producer
+is not yet accepted by installed native Job/adoption or packaging; no Studio,
+CLI, MCP or registry reader is enabled for it. An opt-in executable is not a
+replacement for the normal verified V5 installation.
+
+```sh
+cargo test --locked -p paintcraft-codec-worker --features avif-sdr-codec \
+    --test native_avif_sdr
+cargo build --locked -p paintcraft-codec-worker
+```
+
+The final command restores the normal V5 helper after private tests. Public
+admission needs its own exact source/color/siting/range assessment, actual
+reconstruction/name-loss consent, installed source/owner/PCND consumer checks
+and delivery qualification. It must never retry another decoder after failure.
