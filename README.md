@@ -41,6 +41,7 @@ cargo run --release -p paintcraft-cli -- mcp
 - **Studio:** also open and export TGA, still WebP and supported single-surface DDS images.
 - **Studio exports:** lossless JPEG XL, lossy AVIF, QOI, PAM, farbfeld and PCX with optional 256-color palettes and a preview. AVIF opening is not available yet.
 - **JPEG XL import:** native Studio, CLI and MCP can import supported still pictures. Browser import is not available yet.
+- **JPEG XR import:** native Studio, CLI and MCP can import supported RGB pictures after reviewing the print-resolution loss.
 - **Extra imports in Studio:** QOI, Netpbm, farbfeld and PCX, plus a selected DCX page or ICO/CUR entry.
 - **Historical MSP:** import monochrome Paint pictures in Studio, CLI and MCP; export exact opaque black-and-white MSP1 copies.
 - **Icon export in Studio, CLI and MCP:** multi-size ICO/CUR files with PNG or bitmap entries and cursor hotspots.

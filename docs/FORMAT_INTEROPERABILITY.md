@@ -6,7 +6,7 @@ Codec implementation, enabled frontend operations and release qualification are 
 
 ## Available workflows
 
-Desktop and browser share the frontend registry, with platform-specific qualification for each operation. Native-only JPEG XL import therefore does not imply a browser reader. CLI and MCP import/export operations also apply that registry, using an explicit frontend profile rather than inheriting every compiled codec. All foreign conversions require acknowledgment of their reported losses before publication. Failed, cancelled or stale conversions leave the existing document intact.
+Desktop and browser share the frontend registry, with platform-specific qualification for each operation. Native-only JPEG XL and JPEG XR imports therefore do not imply browser readers. CLI and MCP import/export operations also apply that registry, using an explicit frontend profile rather than inheriting every compiled codec. All foreign conversions require acknowledgment of their reported losses before publication. Failed, cancelled or stale conversions leave the existing document intact.
 
 - PCND is the native layered project format and the preserving Save destination.
 - Classic 7/10/11 open and export PNG, JPEG, BMP, still GIF and single-page TIFF. CLI Classic profiles can explicitly import the admitted PCX and MSP subsets; the Classic 11 CLI profile also admits the limited PAINT conversion. Desktop/browser Import image is currently a Studio action, so these headless allowances do not imply additional Classic menus.
@@ -16,6 +16,7 @@ Desktop and browser share the frontend registry, with platform-specific qualific
 - DCX requires a page choice. Desktop/browser stage a page chooser before decoding and loss confirmation; CLI `import --page` and MCP `import_image` use an explicit zero-based page index. There is no implicit page-zero import.
 - ICNS import requires a specific entry with logical size, Retina scale and physical pixels shown separately. Studio desktop/browser preview and review import/export losses; fresh export offers only eight qualified PNG types. CLI/MCP use the same explicit entry/type policy; ordinary Open and preserving ICNS Save stay denied.
 - Native Studio, CLI and native MCP explicitly import the narrow metadata-free sRGB8 JPEG XL profile through the verified packaged helper. Ordinary Open, browser and Classic JPEG XL reads remain denied; strict profiles without conversion losses do not invent an approval prompt.
+- Native Studio, CLI and native MCP explicitly import the qualified opaque RGB8 JPEG XR profile with mandatory print-resolution loss consent. Studio displays the actual picture and effective horizontal/vertical DPI before approval. Ordinary Open, browser and Classic JPEG XR reads remain denied.
 
 Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, GIF, TGA, DDS, TIFF, HEIF, WebP and AVIF. That inventory is not a claim that all those readers are enabled. PCND and qualified extended conversions are additional workflows. HEIF/HEIC writing and SVG export remain prohibited.
 
@@ -40,7 +41,8 @@ Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, 
 | PDN | Studio Open or explicit Import as a converted layered copy | Historical PDN3 normal-blend, same-sized full-canvas bitmap layers only; names/order/visibility/opacity/pixels retained, metadata loss explicit. No preserving or fresh writer |
 | PAINT | Studio and Classic 11 explicit Import as a converted layered copy | Observed MIF1 `iovl`/`unci` DEFLATE RGBA8 profile only; offsets/order retained, layers numbered/visible/full-opacity because source properties are unverified. Canvas fill becomes a layer, with depth loss when needed. No writer |
 | ORA | Studio explicit Import as a converted layered copy | Flat Normal PNG layers with names, signed offsets, visibility, opacity and raw pixels; requires merged preview and thumbnail. Unsupported groups, blends, extensions, ZIP64 and resource variants refused. Fractional opacity is rounded to 8 bits and explicit print resolution is discarded with consent; fresh writer implemented internally but not enabled pending external-application qualification |
-| JXR, HEIF | No enabled frontend operations | Selected/backend qualification remains; HEIF writing is prohibited |
+| JPEG XR | Native Studio explicit Import, CLI and native MCP `import_image` for `native-jxr-srgb8-worker-v1`, with `.jxr`, `.wdp` or `.wmp` aliases | Strict unsigned opaque RGB8, at most 64 MiB input and 4,194,304 pixels, through the verified same-build helper. Print resolution is discarded only with consent, including inferred 96 dpi. No ordinary Open, Classic/browser read, export or preserving Save |
+| HEIF | No enabled frontend operations | Decoder qualification remains; HEIF writing is prohibited |
 | ICO/CUR | Studio explicit selected-entry Import on desktop/browser; CLI `--entry` and MCP `entry`. Fresh multi-entry export in Studio desktop/browser, CLI `export-icons` and MCP `export_icons` | Reports every admitted entry and cursor hotspot before selection. Fresh exports use explicit sizes, RGBA PNG or 32-bit bitmap entries, independent aspect-ratio fitting, and per-entry CUR hotspots. Desktop/browser exports require a displayed preview and explicit loss consent; foreign preserving save remains unavailable |
 | PSD/PSB | Studio explicit Import on desktop/browser; CLI `import` and MCP `import_image` | RGB8 Normal raster-layer subset retains names, offsets, opacity, visibility and alpha. Metadata losses need explicit consent. Groups, masks, text, effects, clipping, high depth and foreign writing remain unavailable |
 | SVG/SVGZ | Studio desktop/browser Import; CLI `import` with `--svg-width`/`--svg-height`; MCP `import_image` with `svg` options | Explicit size/DPI/fitting and rasterization consent. Studio previews use bundled fonts and additional font files; CLI/MCP accept outline fonts too. No Classic access, ordinary Open or SVG export |
@@ -89,7 +91,7 @@ The ICO/CUR adapter admits at most 256 entries and 64 MiB of encoded input. It c
 
 Fresh ICO/CUR export uses the selected `ico` container library with explicit RGBA PNG and 32-bit bitmap payloads. The 2026-10-25 Pillow 13.0.0 check matched all 24 exported entry buffers, including fully transparent and opaque PNGs; it separately verified cursor hotspots and bitmap masks. Preparation renders one immutable source, fits each requested size independently onto transparent padding, and offers nearest or premultiplied encoded-sRGB Lanczos3 resampling. Source and aggregate destination admission are each at most 4,194,304 pixels; output is at most 64 MiB and 256 entries. Resize, flattening and hidden-RGB loss need explicit consent before encoding. CLI/MCP retain source, destination, state and history guards. Studio desktop/browser share translated entry controls, transparency previews and cursor hotspot markers. A changed source or configuration requires a new displayed preview and renewed loss consent. Native export retains the previewed bytes through a parented rfd picker and verifies an existing destination fingerprint before replacement; imported source provenance follows its document across tabs. Browser export downloads immediately without changing the project name or saved state. Fully transparent bitmap output, original Windows application qualification and foreign preserving save remain pending. No hard upstream scratch-memory, cancellation-tail or performance guarantee is claimed.
 
-- Extend native JPEG XL profile/installation coverage and cancellation-tail qualification; separately qualify browser JPEG XL adoption, JXR independent comparisons and a decoder-only HEIF profile.
+- Extend native JPEG XL profile/installation coverage and cancellation-tail qualification; separately qualify browser JPEG XL adoption, broader JXR independent comparisons and a decoder-only HEIF profile.
 - Finish and qualify extended document/asset adapters, including ORA groups and layered writing, PSD/PSB, SVG rasterization with explicit dimensions/DPI, legacy icon alpha and Adobe resources. EXR/HDR require precision-aware storage/import gates; JP2 needs dedicated codec evidence; historical MSP still needs original-application qualification and separately qualified MSP2 writing.
 - Add separately qualified PDN/PAINT fresh and preserving writers, source-version coverage and original-application reopen evidence.
 - Complete full browser/native reference and packaging matrices, worker failure and aggregate-memory accounting, and real-device cancellation/latency qualification.
@@ -105,8 +107,8 @@ at most 64 MiB and 4,194,304 pixels. ICC/custom profiles, container metadata,
 high depth, preview/animation and other unqualified forms are refused. The
 matching same-build helper and schema 2 manifest must explicitly list the
 qualified variant; missing/inconsistent helpers fail closed. Ordinary Open,
-Classic, generic/browser JXL reads and HEIF/JXR document conversion remain
-separate, denied profiles. Export remains the independent lossless RGBA8 path.
+Classic, generic/browser JXL reads and HEIF document conversion remain
+separate, denied profiles. JPEG XR has its own qualified conversion below. Export remains the independent lossless RGBA8 path.
 
 Desktop keeps the existing editing Executor and resident realm. It acquires an
 input identity/metadata before submission, then captures bytes only inside an
@@ -144,6 +146,63 @@ and the copied real-helper qualifier and both child fixtures pass again.
 No native app window is launched. This is focused installed-helper workflow
 qualification; broader native installation/OS and real-device latency matrices,
 additional source profiles and a browser consumer remain open.
+
+### Native JPEG XR document conversion, 2026-10-26
+
+Native Studio **Import image…**, CLI and native MCP `import_image` admit the
+explicit `native-jxr-srgb8-worker-v1` variant for `.jxr`, `.wdp` and `.wmp`.
+This is a single-frame unsigned opaque RGB8 profile, with absent color context
+interpreted using the T.832 default sRGB policy. ICC/EXIF/unknown fields, alpha,
+high depth, orientation/transforms, tiled/frequency/windowed streams and other
+unqualified forms are refused. Admission is at most 64 MiB encoded input and
+4,194,304 pixels. The matching same-build helper and schema 2 manifest must
+qualify both native import variants. There is no inline decoder, ordinary Open,
+Classic/browser reader, JPEG XR export or foreign preserving Save.
+
+Every conversion requires `jxr-resolution-not-retained` consent because the
+flat document does not keep physical print density. The captured assessment and
+CLI/MCP receipts retain exact original per-axis IEEE bits separately from
+effective density and provenance. T.832 A.7.25/26 assigns 96 dpi when a source
+axis is absent or numeric zero; this is reported as inferred default density,
+not as a physical value of zero. Explicit positive values remain distinct.
+Unknown loss codes and missing consent fail before publication.
+
+Studio previews the immutable prepared picture, shows effective horizontal and
+vertical DPI with translated default labels, and requires a prior actually
+visible preview frame and an explicit loss checkbox before **Open image**.
+The preview texture is a nearest-sampled thumbnail bounded by 1024 pixels per
+side and the adapter limit; the imported document remains full size. A declared
+metadata reservation covers the full flat RGBA buffer, thumbnail and ColorImage
+copy before allocation and stays held through approval or cancellation. This
+excludes graphics-driver allocations and is not a hard physical-memory limit.
+JPEG XL keeps its existing automatic adoption without an empty consent prompt.
+
+JPEG XR reuses the existing admitted editing Executor, private native codec job,
+parent-lease process supervision, retained preparation/resident leases and
+same-acquired-file source identity. Tab, Session owner/state/epoch, base document,
+frontend, dirty/draft and source verification remain binding through adoption.
+Cancel, stale ownership or changed source bytes discard private results and
+leave the prior document intact. The acquired source identity follows an
+adopted converted document and protects renamed/hardlinked source aliases from
+image export or project-save replacement; normal PCND Save remains available.
+These are logical ownership guards, not arbitrary filesystem TOCTOU protection
+or a general operating-system sandbox guarantee.
+
+Qualification uses the repository-owned 4×3 gradient independently reopened by
+the original C JXRLib, including authored 96×144 dpi and zero-field/inferred-96
+variants. The copied installed-helper App test exercises eight real headless
+English/Japanese review cases: approval, cancellation, source replacement after
+preview and a new text draft after consent. It checks exact 12-pixel RGB output,
+opaque alpha, translated default density, preview-reservation release and source
+rename/alias refusal. The same run repeats the existing JPEG XL and running
+helper cancellation fixtures. The default native suite passes 469 tests with
+13 explicitly ignored fixtures; strict all-target checks and all seven locale
+catalogs pass. Seven installed CLI/MCP tests additionally cover exact density
+receipts, absent/unknown consent, converted PCND save, source aliases,
+cancellation and missing helpers. This qualifies the controlled profile and
+consumer paths, not broad original-application compatibility, every release
+platform or real-device latency. Broader JPEG XR profiles and HEIF decoding
+remain separate work.
 
 ### Adobe Swatch Exchange assets, 2026-10-25
 

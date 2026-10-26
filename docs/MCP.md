@@ -381,7 +381,7 @@ including hidden RGB and alpha, up to 4,194,304 pixels. ICC, container metadata,
 high depth, preview/animation and other unqualified profiles are refused. This
 requires the same-build packaged codec helper and matching schema 2 manifest;
 helper-free installations fail closed. Generic image Open, Classic, browser JXL
-reads and HEIF/JXR document imports remain separate and unavailable.
+reads and HEIF document imports remain separate and unavailable.
 
 The server captures the current Session owner/state/epoch, keeps decoded work
 private, and validates the source identity and cancellation before adoption. RPC
@@ -390,3 +390,25 @@ The imported document is unsaved; its intrinsic resident tile leases survive
 history and snapshots. Saving or exporting cannot replace the captured source,
 including a hardlink alias. This process isolation is not a physical-RSS,
 filesystem or descendant-process sandbox.
+
+## Native JPEG XR import
+
+`import_image` accepts `.jxr`, `.wdp` and `.wmp` through the native Studio
+`native-jxr-srgb8-worker-v1` profile: single-image unsigned RGB8 without alpha,
+ICC, EXIF, orientation or other unqualified metadata. The qualified absent-color-
+context profile follows T.832's default sRGB rule. Dimensions are bounded to
+4,194,304 pixels; tiled, windowed and other unsupported forms are refused.
+The same-build helper and matching schema 2 manifest are required.
+
+Pass `"allow_losses": ["jxr-resolution-not-retained"]` to acknowledge that the
+new document does not retain physical pixel density. Consent is required even
+when the source omits density or declares zero: T.832 infers 96 DPI in those
+cases. The conversion receipt preserves the original resolution bits separately
+from each effective density and its inferred-default flag, plus the color policy,
+source SHA, decoder profile and acknowledged loss. Missing or unknown loss
+consent leaves the current document unchanged.
+
+Imported pixels become an unsaved document with the same resident ownership,
+cancellation and captured-source alias protections as JPEG XL. This is explicit
+conversion, not preserving Save or normal image Open. Classic, browser import,
+alpha/deep precision and JPEG XR export remain unavailable.
