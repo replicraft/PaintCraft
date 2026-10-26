@@ -8,6 +8,8 @@ use paintcraft_formats::{
 };
 use paintcraft_ui::svg_import::{self, Response};
 use sha2::{Digest, Sha256};
+use std::{cell::RefCell, rc::Rc};
+mod fonts;
 
 #[derive(Debug)]
 pub(crate) struct Source {
@@ -29,6 +31,11 @@ impl Source {
 }
 #[derive(Debug)]
 pub(crate) struct Pending {
+    id: uuid::Uuid,
+    font_files: uuid::Uuid,
+    additional: Vec<fonts::FontFile>,
+    font_busy: bool,
+    font_inbox: Rc<RefCell<fonts::Inbox>>,
     source: Source,
     owner: Owner,
     fonts: Option<svg::Fonts>,
@@ -52,6 +59,11 @@ impl WebApp {
             return;
         }
         self.pending_svg = Some(Pending {
+            id: uuid::Uuid::new_v4(),
+            font_files: uuid::Uuid::new_v4(),
+            additional: Vec::new(),
+            font_busy: false,
+            font_inbox: Default::default(),
             source,
             owner,
             fonts: None,
@@ -66,7 +78,11 @@ impl WebApp {
             self.message = t!(ctx, "The document changed; choose the image again.");
             return;
         }
+        pending.accept_fonts(ctx);
+        pending.sync_fonts();
         match pending.state.dialog(ctx, &pending.source.name) {
+            Response::AddFonts => pending.pick_fonts(ctx),
+            Response::RemoveFont(index) => pending.remove_font(index),
             Response::Preview(config) => {
                 let result = (|| {
                     let options = svg::Options {
@@ -80,11 +96,7 @@ impl WebApp {
                     };
                     options.admit(crate::editor::MAX_PIXELS)?;
                     if pending.fonts.is_none() {
-                        pending.fonts = Some(svg::Fonts::from_data(
-                            &paintcraft_ui::fonts::bundled_data(),
-                            "Selawik",
-                            &|| Ok(()),
-                        )?);
+                        pending.fonts = Some(pending.build_fonts(&[])?);
                     }
                     let raster = svg::prepare(
                         &pending.source.bytes,
