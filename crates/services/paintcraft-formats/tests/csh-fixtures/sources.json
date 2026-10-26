@@ -1,0 +1,14 @@
+{
+    "generator": "generate.py, Python standard library",
+    "license": "MIT, repository-authored fixtures",
+    "files": {
+        "paths.csh": {
+            "bytes": 1482,
+            "sha256": "661300760cc4cfa1374d37ff864df132731a76b49d9301999d1226adc81bc7a3"
+        },
+        "empty.csh": {
+            "bytes": 12,
+            "sha256": "6d3b83f33566a3025e2b2ad1801b2a7779492d0b03aa917b646fe65a347b8285"
+        }
+    }
+}

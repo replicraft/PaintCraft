@@ -1,0 +1,372 @@
+{
+    "shapes": [
+        {
+            "name": "形 / Shape 🚀",
+            "id": "duplicate-id",
+            "width": 200,
+            "height": 100,
+            "paths": [
+                {
+                    "open": false,
+                    "knots": [
+                        {
+                            "linked": true,
+                            "points": [
+                                200.0,
+                                -5.9604644775390625e-06,
+                                1.1920928955078125e-05,
+                                50.0,
+                                0.0,
+                                -100.0
+                            ]
+                        },
+                        {
+                            "linked": false,
+                            "points": [
+                                200.0,
+                                -5.9604644775390625e-06,
+                                1.1920928955078125e-05,
+                                50.0,
+                                0.0,
+                                -100.0
+                            ]
+                        }
+                    ],
+                    "fillRule": "even-odd"
+                },
+                {
+                    "open": true,
+                    "knots": [
+                        {
+                            "linked": true,
+                            "points": [
+                                200.0,
+                                -5.9604644775390625e-06,
+                                1.1920928955078125e-05,
+                                50.0,
+                                0.0,
+                                -100.0
+                            ]
+                        },
+                        {
+                            "linked": false,
+                            "points": [
+                                200.0,
+                                -5.9604644775390625e-06,
+                                1.1920928955078125e-05,
+                                50.0,
+                                0.0,
+                                -100.0
+                            ]
+                        }
+                    ],
+                    "fillRule": "even-odd"
+                }
+            ],
+            "fillStartsWithAllPixels": false,
+            "clipboard": {
+                "top": 0.0,
+                "left": 0.25,
+                "bottom": 1.0,
+                "right": 1.0,
+                "resolution": 72.0
+            }
+        },
+        {
+            "name": "形 / Shape 🚀",
+            "id": "duplicate-id",
+            "width": 201,
+            "height": 101,
+            "paths": [
+                {
+                    "open": false,
+                    "knots": [
+                        {
+                            "linked": true,
+                            "points": [
+                                201.0,
+                                -6.020069122314453e-06,
+                                1.1980533599853516e-05,
+                                50.5,
+                                0.0,
+                                -101.0
+                            ]
+                        },
+                        {
+                            "linked": false,
+                            "points": [
+                                201.0,
+                                -6.020069122314453e-06,
+                                1.1980533599853516e-05,
+                                50.5,
+                                0.0,
+                                -101.0
+                            ]
+                        }
+                    ],
+                    "fillRule": "even-odd",
+                    "operation": "exclude"
+                },
+                {
+                    "open": true,
+                    "knots": [
+                        {
+                            "linked": true,
+                            "points": [
+                                201.0,
+                                -6.020069122314453e-06,
+                                1.1980533599853516e-05,
+                                50.5,
+                                0.0,
+                                -101.0
+                            ]
+                        },
+                        {
+                            "linked": false,
+                            "points": [
+                                201.0,
+                                -6.020069122314453e-06,
+                                1.1980533599853516e-05,
+                                50.5,
+                                0.0,
+                                -101.0
+                            ]
+                        }
+                    ],
+                    "fillRule": "even-odd",
+                    "operation": "exclude"
+                }
+            ],
+            "fillStartsWithAllPixels": true,
+            "clipboard": {
+                "top": 0.0,
+                "left": 0.25,
+                "bottom": 1.0,
+                "right": 1.0,
+                "resolution": 72.0
+            }
+        },
+        {
+            "name": "Shape 2",
+            "id": "shape-2",
+            "width": 202,
+            "height": 102,
+            "paths": [
+                {
+                    "open": false,
+                    "knots": [
+                        {
+                            "linked": true,
+                            "points": [
+                                202.0,
+                                -6.079673767089844e-06,
+                                1.2040138244628906e-05,
+                                51.0,
+                                0.0,
+                                -102.0
+                            ]
+                        },
+                        {
+                            "linked": false,
+                            "points": [
+                                202.0,
+                                -6.079673767089844e-06,
+                                1.2040138244628906e-05,
+                                51.0,
+                                0.0,
+                                -102.0
+                            ]
+                        }
+                    ],
+                    "fillRule": "non-zero",
+                    "operation": "combine"
+                },
+                {
+                    "open": true,
+                    "knots": [
+                        {
+                            "linked": true,
+                            "points": [
+                                202.0,
+                                -6.079673767089844e-06,
+                                1.2040138244628906e-05,
+                                51.0,
+                                0.0,
+                                -102.0
+                            ]
+                        },
+                        {
+                            "linked": false,
+                            "points": [
+                                202.0,
+                                -6.079673767089844e-06,
+                                1.2040138244628906e-05,
+                                51.0,
+                                0.0,
+                                -102.0
+                            ]
+                        }
+                    ],
+                    "fillRule": "non-zero",
+                    "operation": "combine"
+                }
+            ],
+            "fillStartsWithAllPixels": false,
+            "clipboard": {
+                "top": 0.0,
+                "left": 0.25,
+                "bottom": 1.0,
+                "right": 1.0,
+                "resolution": 72.0
+            }
+        },
+        {
+            "name": "Shape 3",
+            "id": "shape-3",
+            "width": 203,
+            "height": 103,
+            "paths": [
+                {
+                    "open": false,
+                    "knots": [
+                        {
+                            "linked": true,
+                            "points": [
+                                203.0,
+                                -6.139278411865234e-06,
+                                1.2099742889404297e-05,
+                                51.5,
+                                0.0,
+                                -103.0
+                            ]
+                        },
+                        {
+                            "linked": false,
+                            "points": [
+                                203.0,
+                                -6.139278411865234e-06,
+                                1.2099742889404297e-05,
+                                51.5,
+                                0.0,
+                                -103.0
+                            ]
+                        }
+                    ],
+                    "fillRule": "even-odd",
+                    "operation": "subtract"
+                },
+                {
+                    "open": true,
+                    "knots": [
+                        {
+                            "linked": true,
+                            "points": [
+                                203.0,
+                                -6.139278411865234e-06,
+                                1.2099742889404297e-05,
+                                51.5,
+                                0.0,
+                                -103.0
+                            ]
+                        },
+                        {
+                            "linked": false,
+                            "points": [
+                                203.0,
+                                -6.139278411865234e-06,
+                                1.2099742889404297e-05,
+                                51.5,
+                                0.0,
+                                -103.0
+                            ]
+                        }
+                    ],
+                    "fillRule": "even-odd",
+                    "operation": "subtract"
+                }
+            ],
+            "fillStartsWithAllPixels": true,
+            "clipboard": {
+                "top": 0.0,
+                "left": 0.25,
+                "bottom": 1.0,
+                "right": 1.0,
+                "resolution": 72.0
+            }
+        },
+        {
+            "name": "Shape 4",
+            "id": "shape-4",
+            "width": 204,
+            "height": 104,
+            "paths": [
+                {
+                    "open": false,
+                    "knots": [
+                        {
+                            "linked": true,
+                            "points": [
+                                204.0,
+                                -6.198883056640625e-06,
+                                1.2159347534179688e-05,
+                                52.0,
+                                0.0,
+                                -104.0
+                            ]
+                        },
+                        {
+                            "linked": false,
+                            "points": [
+                                204.0,
+                                -6.198883056640625e-06,
+                                1.2159347534179688e-05,
+                                52.0,
+                                0.0,
+                                -104.0
+                            ]
+                        }
+                    ],
+                    "fillRule": "even-odd",
+                    "operation": "intersect"
+                },
+                {
+                    "open": true,
+                    "knots": [
+                        {
+                            "linked": true,
+                            "points": [
+                                204.0,
+                                -6.198883056640625e-06,
+                                1.2159347534179688e-05,
+                                52.0,
+                                0.0,
+                                -104.0
+                            ]
+                        },
+                        {
+                            "linked": false,
+                            "points": [
+                                204.0,
+                                -6.198883056640625e-06,
+                                1.2159347534179688e-05,
+                                52.0,
+                                0.0,
+                                -104.0
+                            ]
+                        }
+                    ],
+                    "fillRule": "even-odd",
+                    "operation": "intersect"
+                }
+            ],
+            "fillStartsWithAllPixels": false,
+            "clipboard": {
+                "top": 0.0,
+                "left": 0.25,
+                "bottom": 1.0,
+                "right": 1.0,
+                "resolution": 72.0
+            }
+        }
+    ]
+}

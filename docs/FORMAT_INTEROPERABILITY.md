@@ -185,9 +185,15 @@ instead. Name terminators/padding are canonicalized. Constructed resources pass
 the same wire validation, and every export is decoded and compared with its
 typed source before bytes are returned. Tests cover all Boolean operations,
 extreme bounds, record byte equality and cancellation at every checkpoint.
-This adapter is not registered for any public operation yet. Resource
-editing/placement, previews, frontend integration, independent-reader evidence
-and original-application qualification remain required for F14.
+The owned [CSH specimens and optional oracle](../crates/services/paintcraft-formats/tests/csh-fixtures/README.md)
+now exercise five shapes, 45 records, 10 subpaths and 20 knots. The upstream
+JavaScript `ag-psd` 33.0.0 reader reopened both source specimens and fresh Rust
+exports and matched all expected metadata/geometry values. A separate wire
+comparison checked exact bounds and record bytes. This is additional
+implementation evidence from the same library ancestry, not independent-lineage
+or Adobe application qualification. This adapter is not registered for any
+public operation yet. Resource editing/placement, previews, frontend integration,
+broader interoperability and original-application qualification remain for F14.
 
 ### SVG/SVGZ rasterization, 2026-10-25
 
