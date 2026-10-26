@@ -504,3 +504,7 @@ msp-device-settings-and-header-metadata-will-not-be-retained = MSP のデバイ�
 msp-picture = MSP 画像
 
 save-a-historical-monochrome-msp-picture-pixels-must-already-be-opaque-black-or-white = 従来形式のモノクロ MSP 画像を保存します。ピクセルは不透明な黒または白である必要があります。
+
+icns-container-metadata-will-not-be-kept-in-the-imported-picture = 読み込んだ画像には ICNS コンテナーのメタデータは保持されません。
+
+the-icon-s-logical-size-and-retina-density-will-not-be-kept-in-the-imported-picture = 読み込んだ画像にはアイコンの論理サイズと Retina の密度は保持されません。

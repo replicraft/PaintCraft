@@ -30,6 +30,12 @@ pub fn import_loss_description(code: &str) -> Option<&'static str> {
         "pcx-metadata-ignored" => {
             "PCX resolution, origin and header metadata will not be retained."
         }
+        "icns-metadata-ignored" => {
+            "ICNS container metadata will not be kept in the imported picture."
+        }
+        "icon-density-not-retained-in-flat-document" => {
+            "The icon's logical size and Retina density will not be kept in the imported picture."
+        }
         "msp-metadata-ignored" => "MSP device settings and header metadata will not be retained.",
         "dcx-other-pages-not-imported" => "Only the selected DCX page will be imported.",
         "paint-layer-properties-unverified" => {
@@ -73,6 +79,8 @@ mod tests {
             "cursor-hotspot-not-retained-in-flat-document",
             "pcx-metadata-ignored",
             "msp-metadata-ignored",
+            "icns-metadata-ignored",
+            "icon-density-not-retained-in-flat-document",
             "dcx-other-pages-not-imported",
             "pdn-metadata-ignored",
             "ora-opacity-quantized",

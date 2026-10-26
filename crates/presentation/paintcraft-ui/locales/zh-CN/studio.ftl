@@ -245,3 +245,35 @@ custom-shape-size-or-position-exceeds-the-drawing-limit = 自定义形状的大�
 the-selected-custom-shape-is-no-longer-available = 所选的自定义形状已不可用
 
 custom-shape-tool-selected = 已选择自定义形状工具。
+
+choose-an-apple-icon-entry = 选择 Apple 图标条目
+
+choose-one-entry-explicitly-pixel-size-logical-size-and-display-scale-are-different-properties = 请明确选择一个条目。像素大小、逻辑大小和显示缩放比例是不同的属性。
+
+format-entry-number-tag = 条目 { $number }：{ $tag }
+
+format-logical-size-width-height-display-scale-scale = 逻辑大小：{ $width } × { $height }，显示缩放：{ $scale }×
+
+format-pixel-size-width-height-px = 像素大小：{ $width } × { $height } px
+
+format-record-number-encoding = 记录 { $number }：{ $encoding }
+
+this-entry-s-encoding-cannot-be-imported-yet = 目前尚无法导入此条目的编码格式。
+
+choose-each-icon-type-explicitly-equal-pixel-sizes-can-have-different-display-scales = 请明确选择每种图标类型。相同的像素大小可能具有不同的显示缩放比例。
+
+format-tag-logical-logical-at-scale-pixels-pixels-px = { $tag }：{ $logical } × { $logical }，{ $scale }×，{ $pixels } × { $pixels } px
+
+choose-at-least-one-supported-icon-type = 请至少选择一种支持的图标类型。
+
+preview-entry = 预览条目
+
+apple-icon-export = 导出 Apple 图标
+
+export-apple-icon-more = 导出 Apple 图标…
+
+rgb-and-transparency-mask = RGB 和透明度蒙版
+
+compressed-rgb-and-transparency-mask = 压缩 RGB 和透明度蒙版
+
+unsupported-encoding = 不支持的编码格式

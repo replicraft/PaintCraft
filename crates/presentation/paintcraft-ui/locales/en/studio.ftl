@@ -245,3 +245,35 @@ custom-shape-size-or-position-exceeds-the-drawing-limit = Custom shape size or p
 the-selected-custom-shape-is-no-longer-available = The selected custom shape is no longer available
 
 custom-shape-tool-selected = Custom shape tool selected.
+
+choose-an-apple-icon-entry = Choose an Apple icon entry
+
+choose-one-entry-explicitly-pixel-size-logical-size-and-display-scale-are-different-properties = Choose one entry explicitly. Pixel size, logical size and display scale are different properties.
+
+format-entry-number-tag = Entry { $number }: { $tag }
+
+format-logical-size-width-height-display-scale-scale = Logical size: { $width } × { $height }, display scale: { $scale }×
+
+format-pixel-size-width-height-px = Pixel size: { $width } × { $height } px
+
+format-record-number-encoding = Record { $number }: { $encoding }
+
+this-entry-s-encoding-cannot-be-imported-yet = This entry's encoding cannot be imported yet.
+
+choose-each-icon-type-explicitly-equal-pixel-sizes-can-have-different-display-scales = Choose each icon type explicitly. Equal pixel sizes can have different display scales.
+
+format-tag-logical-logical-at-scale-pixels-pixels-px = { $tag }: { $logical } × { $logical } at { $scale }×, { $pixels } × { $pixels } px
+
+choose-at-least-one-supported-icon-type = Choose at least one supported icon type.
+
+preview-entry = Preview entry
+
+apple-icon-export = Apple icon export
+
+export-apple-icon-more = Export Apple icon…
+
+rgb-and-transparency-mask = RGB and transparency mask
+
+compressed-rgb-and-transparency-mask = Compressed RGB and transparency mask
+
+unsupported-encoding = Unsupported encoding

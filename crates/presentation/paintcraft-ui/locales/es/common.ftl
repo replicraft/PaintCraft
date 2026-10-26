@@ -504,3 +504,7 @@ msp-device-settings-and-header-metadata-will-not-be-retained = No se conservará
 msp-picture = Imagen MSP
 
 save-a-historical-monochrome-msp-picture-pixels-must-already-be-opaque-black-or-white = Guarda una imagen MSP monocroma histórica. Los píxeles ya deben ser negros o blancos y opacos.
+
+icns-container-metadata-will-not-be-kept-in-the-imported-picture = Los metadatos del contenedor ICNS no se conservarán en la imagen importada.
+
+the-icon-s-logical-size-and-retina-density-will-not-be-kept-in-the-imported-picture = El tamaño lógico y la densidad Retina del icono no se conservarán en la imagen importada.

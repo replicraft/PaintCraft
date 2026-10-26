@@ -245,3 +245,35 @@ custom-shape-size-or-position-exceeds-the-drawing-limit = El tamaño o la posici
 the-selected-custom-shape-is-no-longer-available = La forma personalizada seleccionada ya no está disponible
 
 custom-shape-tool-selected = Herramienta de forma personalizada seleccionada.
+
+choose-an-apple-icon-entry = Elige una entrada de icono de Apple
+
+choose-one-entry-explicitly-pixel-size-logical-size-and-display-scale-are-different-properties = Elige una entrada explícitamente. El tamaño en píxeles, el tamaño lógico y la escala de pantalla son propiedades diferentes.
+
+format-entry-number-tag = Entrada { $number }: { $tag }
+
+format-logical-size-width-height-display-scale-scale = Tamaño lógico: { $width } × { $height }, escala de pantalla: { $scale }×
+
+format-pixel-size-width-height-px = Tamaño en píxeles: { $width } × { $height } px
+
+format-record-number-encoding = Registro { $number }: { $encoding }
+
+this-entry-s-encoding-cannot-be-imported-yet = La codificación de esta entrada aún no se puede importar.
+
+choose-each-icon-type-explicitly-equal-pixel-sizes-can-have-different-display-scales = Elige cada tipo de icono explícitamente. Un mismo tamaño en píxeles puede tener diferentes escalas de pantalla.
+
+format-tag-logical-logical-at-scale-pixels-pixels-px = { $tag }: { $logical } × { $logical } a { $scale }×, { $pixels } × { $pixels } px
+
+choose-at-least-one-supported-icon-type = Elige al menos un tipo de icono compatible.
+
+preview-entry = Entrada de vista previa
+
+apple-icon-export = Exportación de icono de Apple
+
+export-apple-icon-more = Exportar icono de Apple…
+
+rgb-and-transparency-mask = RGB y máscara de transparencia
+
+compressed-rgb-and-transparency-mask = RGB comprimido y máscara de transparencia
+
+unsupported-encoding = Codificación no compatible

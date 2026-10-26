@@ -245,3 +245,35 @@ custom-shape-size-or-position-exceeds-the-drawing-limit = Größe oder Position 
 the-selected-custom-shape-is-no-longer-available = Die ausgewählte eigene Form ist nicht mehr verfügbar
 
 custom-shape-tool-selected = Werkzeug für eigene Formen ausgewählt.
+
+choose-an-apple-icon-entry = Einen Apple-Symboleintrag auswählen
+
+choose-one-entry-explicitly-pixel-size-logical-size-and-display-scale-are-different-properties = Wähle einen Eintrag aus. Pixelgröße, logische Größe und Anzeigeskalierung sind unterschiedliche Eigenschaften.
+
+format-entry-number-tag = Eintrag { $number }: { $tag }
+
+format-logical-size-width-height-display-scale-scale = Logische Größe: { $width } × { $height }, Anzeigeskalierung: { $scale }×
+
+format-pixel-size-width-height-px = Pixelgröße: { $width } × { $height } px
+
+format-record-number-encoding = Datensatz { $number }: { $encoding }
+
+this-entry-s-encoding-cannot-be-imported-yet = Die Kodierung dieses Eintrags kann noch nicht importiert werden.
+
+choose-each-icon-type-explicitly-equal-pixel-sizes-can-have-different-display-scales = Wähle jeden Symboltyp ausdrücklich aus. Gleiche Pixelgrößen können unterschiedliche Anzeigeskalierungen haben.
+
+format-tag-logical-logical-at-scale-pixels-pixels-px = { $tag }: { $logical } × { $logical } bei { $scale }×, { $pixels } × { $pixels } px
+
+choose-at-least-one-supported-icon-type = Wähle mindestens einen unterstützten Symboltyp aus.
+
+preview-entry = Vorschaueintrag
+
+apple-icon-export = Apple-Symbolexport
+
+export-apple-icon-more = Apple-Symbol exportieren…
+
+rgb-and-transparency-mask = RGB und Transparenzmaske
+
+compressed-rgb-and-transparency-mask = Komprimiertes RGB und Transparenzmaske
+
+unsupported-encoding = Nicht unterstützte Kodierung

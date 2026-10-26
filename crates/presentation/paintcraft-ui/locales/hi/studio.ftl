@@ -245,3 +245,35 @@ custom-shape-size-or-position-exceeds-the-drawing-limit = कस्टम आक
 the-selected-custom-shape-is-no-longer-available = चयनित कस्टम आकृति अब उपलब्ध नहीं है
 
 custom-shape-tool-selected = कस्टम आकृति उपकरण चुना गया।
+
+choose-an-apple-icon-entry = Apple आइकन प्रविष्टि चुनें
+
+choose-one-entry-explicitly-pixel-size-logical-size-and-display-scale-are-different-properties = एक प्रविष्टि स्पष्ट रूप से चुनें। पिक्सेल आकार, तार्किक आकार और प्रदर्शन स्केल अलग-अलग गुण हैं।
+
+format-entry-number-tag = प्रविष्टि { $number }: { $tag }
+
+format-logical-size-width-height-display-scale-scale = तार्किक आकार: { $width } × { $height }, प्रदर्शन स्केल: { $scale }×
+
+format-pixel-size-width-height-px = पिक्सेल आकार: { $width } × { $height } px
+
+format-record-number-encoding = रिकॉर्ड { $number }: { $encoding }
+
+this-entry-s-encoding-cannot-be-imported-yet = इस प्रविष्टि की एन्कोडिंग अभी आयात नहीं की जा सकती।
+
+choose-each-icon-type-explicitly-equal-pixel-sizes-can-have-different-display-scales = हर आइकन प्रकार स्पष्ट रूप से चुनें। समान पिक्सेल आकारों के प्रदर्शन स्केल अलग हो सकते हैं।
+
+format-tag-logical-logical-at-scale-pixels-pixels-px = { $tag }: { $logical } × { $logical }, { $scale }× पर, { $pixels } × { $pixels } px
+
+choose-at-least-one-supported-icon-type = कम से कम एक समर्थित आइकन प्रकार चुनें।
+
+preview-entry = पूर्वावलोकन प्रविष्टि
+
+apple-icon-export = Apple आइकन निर्यात
+
+export-apple-icon-more = Apple आइकन निर्यात करें…
+
+rgb-and-transparency-mask = RGB और पारदर्शिता मास्क
+
+compressed-rgb-and-transparency-mask = संपीड़ित RGB और पारदर्शिता मास्क
+
+unsupported-encoding = असमर्थित एन्कोडिंग

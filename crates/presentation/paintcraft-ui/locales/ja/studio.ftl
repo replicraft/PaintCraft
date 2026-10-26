@@ -245,3 +245,35 @@ custom-shape-size-or-position-exceeds-the-drawing-limit = カスタム図形の�
 the-selected-custom-shape-is-no-longer-available = 選択したカスタム図形は利用できなくなりました
 
 custom-shape-tool-selected = カスタム図形ツールを選択しました。
+
+choose-an-apple-icon-entry = Apple アイコンの項目を選択
+
+choose-one-entry-explicitly-pixel-size-logical-size-and-display-scale-are-different-properties = 項目を明示的に選択してください。ピクセルサイズ、論理サイズ、表示倍率はそれぞれ異なります。
+
+format-entry-number-tag = 項目 { $number }: { $tag }
+
+format-logical-size-width-height-display-scale-scale = 論理サイズ: { $width } × { $height }、表示倍率: { $scale } 倍
+
+format-pixel-size-width-height-px = ピクセルサイズ: { $width } × { $height } px
+
+format-record-number-encoding = レコード { $number }: { $encoding }
+
+this-entry-s-encoding-cannot-be-imported-yet = この項目のエンコード形式はまだ読み込めません。
+
+choose-each-icon-type-explicitly-equal-pixel-sizes-can-have-different-display-scales = 各アイコンの種類を明示的に選択してください。同じピクセルサイズでも表示倍率が異なる場合があります。
+
+format-tag-logical-logical-at-scale-pixels-pixels-px = { $tag }: { $logical } × { $logical }、{ $scale } 倍、{ $pixels } × { $pixels } px
+
+choose-at-least-one-supported-icon-type = 対応するアイコンの種類を 1 つ以上選択してください。
+
+preview-entry = プレビューする項目
+
+apple-icon-export = Apple アイコンの書き出し
+
+export-apple-icon-more = Apple アイコンを書き出す…
+
+rgb-and-transparency-mask = RGB と透明度マスク
+
+compressed-rgb-and-transparency-mask = 圧縮 RGB と透明度マスク
+
+unsupported-encoding = 未対応のエンコード形式

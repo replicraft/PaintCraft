@@ -504,3 +504,7 @@ msp-device-settings-and-header-metadata-will-not-be-retained = 不会保留 MSP 
 msp-picture = MSP 图片
 
 save-a-historical-monochrome-msp-picture-pixels-must-already-be-opaque-black-or-white = 保存旧式单色 MSP 图片。像素必须已是不透明的黑色或白色。
+
+icns-container-metadata-will-not-be-kept-in-the-imported-picture = 导入的图片不会保留 ICNS 容器元数据。
+
+the-icon-s-logical-size-and-retina-density-will-not-be-kept-in-the-imported-picture = 导入的图片不会保留图标的逻辑大小和 Retina 像素密度。
