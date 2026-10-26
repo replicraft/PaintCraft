@@ -512,3 +512,5 @@ the-icon-s-logical-size-and-retina-density-will-not-be-kept-in-the-imported-pict
 the-jpeg-xr-picture-s-print-resolution-will-not-be-kept = 不会保留 JPEG XR 图片的打印分辨率。
 
 default-96-dpi = 默认值（96 dpi）
+
+convert-ycbcr-to-8-bit-srgb-with-rounding-and-clipping-4-2-0-uses-bilinear-chroma-interpolation = 将 YCbCr 转换为 8 位 sRGB，并进行舍入和裁剪；4:2:0 使用双线性色度插值。

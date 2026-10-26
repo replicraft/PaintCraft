@@ -512,3 +512,5 @@ the-icon-s-logical-size-and-retina-density-will-not-be-kept-in-the-imported-pict
 the-jpeg-xr-picture-s-print-resolution-will-not-be-kept = JPEG XR 画像の印刷解像度は保持されません。
 
 default-96-dpi = 既定値（96 dpi）
+
+convert-ycbcr-to-8-bit-srgb-with-rounding-and-clipping-4-2-0-uses-bilinear-chroma-interpolation = YCbCr を丸めとクリッピングを伴う 8 ビット sRGB に変換します。4:2:0 では双線形クロマ補間を使用します。

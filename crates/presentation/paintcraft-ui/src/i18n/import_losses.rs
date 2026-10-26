@@ -65,6 +65,9 @@ pub fn import_loss_description(code: &str) -> Option<&'static str> {
         "svg-font-substituted" => {
             "Unavailable SVG font families will be replaced with bundled fonts."
         }
+        "heif-color-reconstruction" => {
+            "Convert YCbCr to 8-bit sRGB with rounding and clipping; 4:2:0 uses bilinear chroma interpolation."
+        }
         _ => return None,
     })
 }
@@ -82,6 +85,7 @@ mod tests {
             "msp-metadata-ignored",
             "icns-metadata-ignored",
             "jxr-resolution-not-retained",
+            "heif-color-reconstruction",
             "icon-density-not-retained-in-flat-document",
             "dcx-other-pages-not-imported",
             "pdn-metadata-ignored",

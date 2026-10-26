@@ -512,3 +512,5 @@ the-icon-s-logical-size-and-retina-density-will-not-be-kept-in-the-imported-pict
 the-jpeg-xr-picture-s-print-resolution-will-not-be-kept = A resolução de impressão da imagem JPEG XR não será mantida.
 
 default-96-dpi = Padrão (96 dpi)
+
+convert-ycbcr-to-8-bit-srgb-with-rounding-and-clipping-4-2-0-uses-bilinear-chroma-interpolation = Converter YCbCr para sRGB de 8 bits com arredondamento e recorte; 4:2:0 usa interpolação bilinear de croma.
