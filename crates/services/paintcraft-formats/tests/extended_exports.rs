@@ -104,12 +104,7 @@ fn every_observed_writer_cancellation_discards_private_output_and_limits_are_adm
             ErrorCode::ResourceLimit
         );
     }
-    assert_eq!(
-        image::encode(ImageFormat::Pcx, 3, 2, &rgba, 90)
-            .unwrap_err()
-            .code,
-        ErrorCode::CapabilityUnsupported
-    );
+    // Adopted PCX RGB24 writing has dedicated pcx_write/pcx_palette coverage.
 }
 #[test]
 fn document_export_still_requires_hidden_rgb_and_flatten_loss_consent() {

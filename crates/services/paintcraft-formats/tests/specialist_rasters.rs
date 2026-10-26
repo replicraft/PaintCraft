@@ -212,12 +212,10 @@ fn checked_facade_cancellation_never_returns_encoded_bytes_and_adapter_limits_st
             );
         }
     }
-    assert_eq!(
-        image::encode(ImageFormat::Jxl, 1, 2, &[255; 8], 90)
-            .unwrap_err()
-            .code,
-        ErrorCode::CapabilityUnsupported
-    );
+    let one_axis = image::encode(ImageFormat::Jxl, 1, 2, &[255; 8], 90).unwrap();
+    let decoded = jxl::decode_with_pixel_limit(&one_axis, 2).unwrap();
+    assert_eq!((decoded.width, decoded.height), (1, 2));
+    assert_eq!(decoded.samples, jxl::Samples::Rgba8(vec![255; 8]));
     assert_eq!(
         image::encode(ImageFormat::Avif, 3, 2, &pixels, 0)
             .unwrap_err()
