@@ -1,0 +1,124 @@
+{
+    "status": "independent controlled-fixture qualification; not a public decoder gate",
+    "host": "macOS-14.7.2-arm64-arm-64bit-Mach-O",
+    "reference": {
+        "library": "libaom",
+        "version": "3.15.2",
+        "commit": "af3dc9aadc793c1b00edc003e3fc19a44fdeb574",
+        "archive_url": "https://aomedia.googlesource.com/aom/+archive/af3dc9aadc793c1b00edc003e3fc19a44fdeb574.tar.gz",
+        "archive_sha256": "01d2e7a4a04a4c57d33eba487ff00f5cea29932d95a848de760d800adb8054a2",
+        "options": [
+            "AOM_TARGET_CPU=generic",
+            "ENABLE_DOCS=OFF",
+            "ENABLE_EXAMPLES=OFF",
+            "ENABLE_TESTS=OFF",
+            "ENABLE_TOOLS=OFF",
+            "CONFIG_AV1_ENCODER=0",
+            "CONFIG_AV1_DECODER=1",
+            "BUILD_SHARED_LIBS=OFF",
+            "CMAKE_BUILD_TYPE=Release"
+        ],
+        "decoder_threads": 1,
+        "executable_sha256": "deb8b2772c85697b4de6b951c7922bb89be5dd329743c2e708790a09f5d08a44",
+        "harness_sha256": "985a643d0dabab61ac1092bc7e3e1df8153dc4a7b051adf699669cf71abb976e"
+    },
+    "selected": {
+        "library": "dav1d",
+        "version": "1.5.4",
+        "commit": "54706fc6bc0cdecab7e9593974a4039cc038fca7",
+        "planes": "exact equality to libaom for all three coded items"
+    },
+    "encoder_versions": {
+        "image": "0.25.10",
+        "rav1e": "0.8.1",
+        "ravif": "0.13.0"
+    },
+    "level_diagnostic": "Raw AV1 sequence and av1C level_index are 31; FFprobe reports 23 via dav1d reduced-header major-level normalization. The source bits are authoritative. Native bridge reconstructs reduced and non-reduced level fields separately.",
+    "comparison": [
+        {
+            "reference": "libaom",
+            "version": "v3.15.2",
+            "width": 16,
+            "height": 16,
+            "depth": 8,
+            "monochrome": false,
+            "subsampling_x": 0,
+            "subsampling_y": 0,
+            "primaries": 1,
+            "transfer": 13,
+            "matrix": 0,
+            "full_range": true,
+            "item": "opaque-primary",
+            "raw_planes_sha256": "32334b191fd31786ed5798f7ad75329fdb4e0a89eef8afe86f529cbf41731ac4",
+            "plane_bytes": 768,
+            "coded_sha256": "e63b4f4316e9bbabc5c641d7a76cc8a9dc91239002b67e7b5630d781b7344718"
+        },
+        {
+            "reference": "libaom",
+            "version": "v3.15.2",
+            "width": 16,
+            "height": 16,
+            "depth": 8,
+            "monochrome": false,
+            "subsampling_x": 0,
+            "subsampling_y": 0,
+            "primaries": 1,
+            "transfer": 13,
+            "matrix": 0,
+            "full_range": true,
+            "item": "alpha-primary",
+            "raw_planes_sha256": "32334b191fd31786ed5798f7ad75329fdb4e0a89eef8afe86f529cbf41731ac4",
+            "plane_bytes": 768,
+            "coded_sha256": "e63b4f4316e9bbabc5c641d7a76cc8a9dc91239002b67e7b5630d781b7344718"
+        },
+        {
+            "reference": "libaom",
+            "version": "v3.15.2",
+            "width": 16,
+            "height": 16,
+            "depth": 8,
+            "monochrome": true,
+            "subsampling_x": 1,
+            "subsampling_y": 1,
+            "primaries": 2,
+            "transfer": 2,
+            "matrix": 2,
+            "full_range": true,
+            "item": "alpha-alpha",
+            "raw_planes_sha256": "42d2067b7fbaf7afc736b89df8ebfc31a2b9ccd942eeadec5efa594804b3d46f",
+            "plane_bytes": 768,
+            "coded_sha256": "b63f1922c6d89f915548da5c1ee3594ae475e7c44bc54fb4d867f3aca5620fed"
+        }
+    ],
+    "fixtures": [
+        {
+            "file": "opaque.avif",
+            "encoded_sha256": "d17eb0071cbd75e9c6bf00a87b50fb9ffa68d19d616d630ce58feefbdb380824",
+            "golden": "opaque.libaom.rgba",
+            "rgba_sha256": "f6fc1dd5a1a9a2f6adc13d07b46f2556a4a4fb3ac303cdcedc1bf26c0b17f2dc",
+            "rgba_bytes": 1024,
+            "decode_exact_to_ffmpeg_plane_assembly": true,
+            "encoder_input_vs_decoded_max_rgb_error_visible": 0,
+            "encoder_input_vs_decoded_max_alpha_error": 0,
+            "note": "Encoding loss is distinct from exact decoding of the resulting AVIF; source invisible RGB may have been discarded by ravif."
+        },
+        {
+            "file": "alpha.avif",
+            "encoded_sha256": "db7a44c37e8336bab7ed4cadee430e1b579cbcf1f1b5fa5d088cf11cba27a61d",
+            "golden": "alpha.libaom.rgba",
+            "rgba_sha256": "5eafdc10cd24b96114e5f25d2267585f1179cc5e5c6c039213b8a13017742bec",
+            "rgba_bytes": 1024,
+            "decode_exact_to_ffmpeg_plane_assembly": true,
+            "encoder_input_vs_decoded_max_rgb_error_visible": 0,
+            "encoder_input_vs_decoded_max_alpha_error": 0,
+            "note": "Encoding loss is distinct from exact decoding of the resulting AVIF; source invisible RGB may have been discarded by ravif."
+        }
+    ],
+    "reproduction": [
+        "Build the pinned archive using the recorded CMake options and cmake --build -j 4.",
+        "Compile libaom_oracle.c against the resulting static libaom.a and its matching headers.",
+        "Run PAINTCRAFT_AVIF_ORACLE_DIR=<directory> cargo test -p paintcraft-codec-worker --features avif-codec fixture_export_owned_native_planes --bin paintcraft-codec-worker -- --ignored.",
+        "Run the oracle on opaque-primary.obu, alpha-primary.obu and alpha-alpha.obu; compare each three-slot plane buffer with its .dav1d.planes output.",
+        "Identity RGB assembly is [plane2[i], plane0[i], plane1[i], alpha[i] or255]. Compare with the committed .libaom.rgba files."
+    ]
+}
