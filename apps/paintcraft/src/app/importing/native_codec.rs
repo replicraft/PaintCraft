@@ -398,3 +398,7 @@ mod avif_installed_tests;
 #[cfg(test)]
 #[path = "native_codec/avif_sdr_installed_tests.rs"]
 mod avif_sdr_installed_tests;
+
+#[cfg(test)]
+#[path = "native_codec/fixture_manifest.rs"]
+mod fixture_manifest;

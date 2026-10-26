@@ -1,12 +1,11 @@
 //! Explicit installed-helper qualification. These tests never create an OS window.
 use super::tests::{INPUT, app as make_app, draw, retire};
 use super::*;
-use sha2::{Digest, Sha256};
 use std::{fs, process::Command, time::Instant};
 #[test]
 #[ignore = "requires a built real native helper; stages a copied headless test executable"]
 fn copied_installed_helper_adopts_exact_pixels_and_refuses_stale_owners() {
-    use paintcraft_core::types::json::{self, Value};
+    use paintcraft_core::types::json;
     let root = std::env::temp_dir().join(format!("paintcraft-jxl-installed-{}", Uuid::new_v4()));
     fs::create_dir(&root).unwrap();
     let root = root.canonicalize().unwrap();
@@ -30,42 +29,13 @@ fn copied_installed_helper_adopts_exact_pixels_and_refuses_stale_owners() {
     let target = match (std::env::consts::OS, std::env::consts::ARCH) {
         ("macos", "aarch64") => "aarch64-apple-darwin",
         ("macos", "x86_64") => "x86_64-apple-darwin",
-        ("linux", "aarch64") => "aarch64-unknown-linux-gnu",
-        ("linux", "x86_64") => "x86_64-unknown-linux-gnu",
-        ("windows", "aarch64") => "aarch64-pc-windows-msvc",
-        ("windows", "x86_64") => "x86_64-pc-windows-msvc",
+        ("linux", "aarch64") if cfg!(target_env = "gnu") => "aarch64-unknown-linux-gnu",
+        ("linux", "x86_64") if cfg!(target_env = "gnu") => "x86_64-unknown-linux-gnu",
+        ("windows", "aarch64") if cfg!(target_env = "msvc") => "aarch64-pc-windows-msvc",
+        ("windows", "x86_64") if cfg!(target_env = "msvc") => "x86_64-pc-windows-msvc",
         _ => panic!("release target required"),
     };
-    let manifest = Value::object([
-        ("schema_version", Value::Int(2)),
-        ("embedded_build_record_verified", Value::Bool(true)),
-        ("application_version", Value::str(env!("CARGO_PKG_VERSION"))),
-        ("target", Value::str(target)),
-        ("executable", Value::str(helper_name)),
-        (
-            "sha256",
-            Value::str(hex(&Sha256::digest(fs::read(installed).unwrap()))),
-        ),
-        (
-            "protocol_version",
-            Value::Int(wire::PROTOCOL_VERSION.into()),
-        ),
-        ("profile", Value::str(wire::NATIVE_PROFILE)),
-        (
-            "requested_heap_ceiling_bytes",
-            Value::Int(wire::HEAP_BYTES as i64),
-        ),
-        (
-            "qualified_import_variants",
-            Value::Array(
-                wire::QUALIFIED_NATIVE_IMPORT_VARIANTS
-                    .iter()
-                    .copied()
-                    .map(Value::str)
-                    .collect(),
-            ),
-        ),
-    ]);
+    let manifest = super::fixture_manifest::manifest(&installed, target, None);
     fs::write(
         root.join("paintcraft-codec-worker.json"),
         json::canonical(&manifest),

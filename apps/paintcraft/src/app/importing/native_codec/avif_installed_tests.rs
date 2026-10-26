@@ -10,8 +10,7 @@ use std::{fs, time::Instant};
 #[test]
 #[ignore = "requires a built AVIF-enabled native helper; stages a copied headless test executable"]
 fn copied_avif_helper_runs_english_japanese_review_and_failure_guards() {
-    use paintcraft_core::types::json::{self, Value};
-    use sha2::{Digest, Sha256};
+    use paintcraft_core::types::json;
     let root = std::env::temp_dir().join(format!("paintcraft-avif-installed-{}", Uuid::new_v4()));
     fs::create_dir(&root).unwrap();
     let root = root.canonicalize().unwrap();
@@ -44,36 +43,11 @@ fn copied_avif_helper_runs_english_japanese_review_and_failure_guards() {
         ("windows", "x86_64") if cfg!(target_env = "msvc") => "x86_64-pc-windows-msvc",
         _ => panic!("supported release target required"),
     };
-    let manifest = Value::object([
-        ("schema_version", Value::Int(2)),
-        ("embedded_build_record_verified", Value::Bool(true)),
-        ("application_version", Value::str(env!("CARGO_PKG_VERSION"))),
-        ("target", Value::str(target)),
-        ("executable", Value::str(helper_name)),
-        (
-            "sha256",
-            Value::str(hex(&Sha256::digest(fs::read(&installed).unwrap()))),
-        ),
-        (
-            "protocol_version",
-            Value::Int(wire::PROTOCOL_VERSION.into()),
-        ),
-        ("profile", Value::str(wire::AVIF_NATIVE_PROFILE)),
-        (
-            "requested_heap_ceiling_bytes",
-            Value::Int(wire::HEAP_BYTES as i64),
-        ),
-        (
-            "qualified_import_variants",
-            Value::Array(
-                wire::QUALIFIED_AVIF_IMPORT_VARIANTS
-                    .iter()
-                    .copied()
-                    .map(Value::str)
-                    .collect(),
-            ),
-        ),
-    ]);
+    let manifest = super::fixture_manifest::manifest(
+        &installed,
+        target,
+        Some(wire::NATIVE_AVIF_IMPORT_VARIANT),
+    );
     fs::write(
         root.join("paintcraft-codec-worker.json"),
         json::canonical(&manifest),
