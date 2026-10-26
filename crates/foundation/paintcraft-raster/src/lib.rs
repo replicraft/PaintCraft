@@ -9,3 +9,4 @@ pub use raster::*;
 pub use selection::Selection;
 
 pub mod media;
+pub mod sampled_brush;
