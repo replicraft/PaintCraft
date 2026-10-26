@@ -1,6 +1,8 @@
 //! Bounded workers prepare results; only the caller may publish them.
 //! Reservations remain charged until completion is consumed, including cancellation.
 mod admission;
+#[cfg(not(target_arch = "wasm32"))]
+pub mod process;
 mod submission;
 pub use admission::{BudgetUsage, SharedBudget};
 pub use submission::RejectedSubmission;
