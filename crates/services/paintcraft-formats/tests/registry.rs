@@ -62,6 +62,7 @@ fn qualified_discovery_is_separate_from_stock_inventory_and_backend_candidates()
                     Family::Jxl,
                     Family::Pcx,
                     Family::Qoi,
+                    Family::Msp,
                     Family::Pnm,
                     Family::Farbfeld,
                 ];
@@ -446,7 +447,6 @@ fn internal_codec_presence_is_operation_specific_and_does_not_qualify_frontends(
 #[test]
 fn future_studio_workflows_are_explicit_and_unavailable_rather_than_stock_formats() {
     for family in [
-        Family::Icns,
         Family::Raw,
         Family::Pdf,
         Family::Kra,
@@ -474,6 +474,51 @@ fn future_studio_workflows_are_explicit_and_unavailable_rather_than_stock_format
         assert!(
             !enabled(Frontend::Studio, Operation::ImportConvert, Platform::Native)
                 .contains(&family)
+        );
+    }
+}
+
+#[test]
+fn icns_has_a_selected_entry_backend_but_no_implicit_open_or_import() {
+    let bytes = include_bytes!("icns-fixtures/modern.icns");
+    for platform in [Platform::Native, Platform::Web] {
+        assert!(capability(Family::Icns, Operation::ImportConvert, platform).backend_available);
+        assert_eq!(
+            admission(Request::new(
+                Frontend::Studio,
+                Operation::Open,
+                Family::Icns,
+                platform
+            )),
+            Decision::RequiresExplicitImport,
+        );
+        let mut request = Request::new(
+            Frontend::Studio,
+            Operation::ImportConvert,
+            Family::Icns,
+            platform,
+        );
+        assert_eq!(
+            admission(request),
+            Decision::TemporarilyUnavailable(Reason::VariantUnqualified)
+        );
+        assert!(!enabled(Frontend::Studio, Operation::Open, platform).contains(&Family::Icns));
+        assert!(
+            !enabled(Frontend::Studio, Operation::ImportConvert, platform).contains(&Family::Icns)
+        );
+        request.variant = Some("icon-selected-entry");
+        assert_eq!(admission(request), Decision::Allowed);
+        request.needs_preflight = true;
+        assert_eq!(
+            admission(request),
+            Decision::AllowedWithPreflight(Reason::ConvertRequiresConsent)
+        );
+        assert_eq!(
+            admit_import_entry(Frontend::Studio, "modern.icns", bytes, platform, 6).unwrap(),
+            Family::Icns
+        );
+        assert!(
+            admit_import_entry(Frontend::Studio, "modern.icns", bytes, platform, u16::MAX).is_err()
         );
     }
 }
