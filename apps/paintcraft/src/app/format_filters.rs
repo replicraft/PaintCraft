@@ -41,6 +41,16 @@ impl App {
             if kind == Kind::Import && frontend == registry::Frontend::Studio {
                 filters[0].extensions.push("dcx".into());
                 filters[0].extensions.push("jxl".into());
+                let mut avif = registry::Request::new(
+                    frontend,
+                    Operation::ImportConvert,
+                    Family::Avif,
+                    Platform::Native,
+                );
+                avif.variant = Some(paintcraft_formats::codec_worker::NATIVE_AVIF_IMPORT_VARIANT);
+                if registry::admission(avif).available() {
+                    filters[0].extensions.push("avif".into());
+                }
                 filters[0]
                     .extensions
                     .extend(["heic".into(), "heif".into(), "hif".into()]);

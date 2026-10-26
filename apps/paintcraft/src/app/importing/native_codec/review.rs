@@ -81,6 +81,19 @@ impl Review {
                 });
             }
         }
+        if let Some(assessment) = prepared.avif_assessment() {
+            for (label, name) in [
+                ("Image name", Some(assessment.primary_name())),
+                ("Transparency name", assessment.alpha_name()),
+            ] {
+                if let Some(name) = name.filter(|name| !name.is_empty()) {
+                    ui.horizontal(|ui| {
+                        ui.label(t!(&ctx, label));
+                        ui.add(egui::Label::new(name).truncate());
+                    });
+                }
+            }
+        }
         for loss in prepared.losses() {
             if let Some(description) = import_loss_description(loss) {
                 ui.label(t!(&ctx, description));

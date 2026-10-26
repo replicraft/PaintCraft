@@ -79,6 +79,15 @@ impl App {
             Box::new(launch),
         )
     }
+    pub(crate) fn stage_native_avif(&mut self, path: PathBuf) -> Result<()> {
+        self.stage_native_codec(
+            path,
+            Family::Avif,
+            wire::Codec::AvifSrgb8,
+            wire::NATIVE_AVIF_IMPORT_VARIANT,
+            Box::new(launch),
+        )
+    }
     fn stage_native_codec(
         &mut self,
         path: PathBuf,
@@ -98,7 +107,7 @@ impl App {
         match registry::admission(request) {
             registry::Decision::Allowed => {}
             registry::Decision::AllowedWithPreflight(registry::Reason::ConvertRequiresConsent)
-                if matches!(family, Family::Jxr | Family::Heif) => {}
+                if matches!(family, Family::Jxr | Family::Heif | Family::Avif) => {}
             other => other.require_allowed(request)?,
         }
         if self.pending_import.is_some()
@@ -334,3 +343,7 @@ mod jxr_installed_tests;
 #[cfg(test)]
 #[path = "native_codec/heif_installed_tests.rs"]
 mod heif_installed_tests;
+
+#[cfg(test)]
+#[path = "native_codec/avif_installed_tests.rs"]
+mod avif_installed_tests;
