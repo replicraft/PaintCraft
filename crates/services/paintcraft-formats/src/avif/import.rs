@@ -7,11 +7,11 @@ use sha2::{Digest, Sha256};
 pub const KNOWN_IMPORT_LOSSES: &[&str] = &["avif-item-names-not-retained"];
 pub const COLOR_POLICY: &str = "avif-explicit-identity-srgb8-straight-alpha-v1";
 #[derive(Clone, Debug, PartialEq, Eq)]
-struct Image {
-    id: u32,
-    name: String,
-    sequence: Sequence,
-    coded_bytes: u64,
+pub(super) struct Image {
+    pub(super) id: u32,
+    pub(super) name: String,
+    pub(super) sequence: Sequence,
+    pub(super) coded_bytes: u64,
 }
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ImportAssessment {
@@ -89,39 +89,16 @@ impl ImportAssessment {
         Ok(())
     }
     pub fn to_value(&self) -> Value {
-        fn image(value: &Image) -> Value {
-            let seq = &value.sequence;
-            Value::object([
-                ("item_id", Value::Int(i64::from(value.id))),
-                ("item_name", Value::str(&value.name)),
-                ("width", Value::Int(i64::from(seq.width))),
-                ("height", Value::Int(i64::from(seq.height))),
-                ("coded_bytes", Value::Int(value.coded_bytes as i64)),
-                ("sequence_profile", Value::Int(i64::from(seq.profile))),
-                ("sequence_level_index", Value::Int(i64::from(seq.level))),
-                ("sample_depth", Value::Int(i64::from(seq.bit_depth))),
-                ("monochrome", Value::Bool(seq.monochrome)),
-                ("subsampling_x", Value::Bool(seq.subsampling_x)),
-                ("subsampling_y", Value::Bool(seq.subsampling_y)),
-                (
-                    "chroma_position",
-                    Value::Int(i64::from(seq.chroma_position)),
-                ),
-                ("primaries", Value::Int(i64::from(seq.primaries))),
-                ("transfer", Value::Int(i64::from(seq.transfer))),
-                ("matrix", Value::Int(i64::from(seq.matrix))),
-                ("full_range", Value::Bool(seq.full_range)),
-                ("still_picture", Value::Bool(true)),
-                ("reduced_still_picture_header", Value::Bool(true)),
-            ])
-        }
         Value::object([
             ("source_sha256", Value::str(hex(&self.sha256))),
             ("source_bytes", Value::Int(self.source_len as i64)),
             ("width", Value::Int(i64::from(self.size().0))),
             ("height", Value::Int(i64::from(self.size().1))),
-            ("primary", image(&self.primary)),
-            ("alpha", self.alpha.as_ref().map_or(Value::Null, image)),
+            ("primary", image_value(&self.primary)),
+            (
+                "alpha",
+                self.alpha.as_ref().map_or(Value::Null, image_value),
+            ),
             ("straight_alpha", Value::Bool(self.alpha())),
             ("color_policy", Value::str(COLOR_POLICY)),
             (
@@ -136,7 +113,34 @@ impl ImportAssessment {
         ])
     }
 }
-fn image(value: CodedItem<'_>) -> Result<Image> {
+pub(super) fn image_value(value: &Image) -> Value {
+    let seq = &value.sequence;
+    Value::object([
+        ("item_id", Value::Int(i64::from(value.id))),
+        ("item_name", Value::str(&value.name)),
+        ("width", Value::Int(i64::from(seq.width))),
+        ("height", Value::Int(i64::from(seq.height))),
+        ("coded_bytes", Value::Int(value.coded_bytes as i64)),
+        ("sequence_profile", Value::Int(i64::from(seq.profile))),
+        ("sequence_level_index", Value::Int(i64::from(seq.level))),
+        ("sample_depth", Value::Int(i64::from(seq.bit_depth))),
+        ("monochrome", Value::Bool(seq.monochrome)),
+        ("subsampling_x", Value::Bool(seq.subsampling_x)),
+        ("subsampling_y", Value::Bool(seq.subsampling_y)),
+        (
+            "chroma_position",
+            Value::Int(i64::from(seq.chroma_position)),
+        ),
+        ("primaries", Value::Int(i64::from(seq.primaries))),
+        ("transfer", Value::Int(i64::from(seq.transfer))),
+        ("matrix", Value::Int(i64::from(seq.matrix))),
+        ("full_range", Value::Bool(seq.full_range)),
+        ("still_picture", Value::Bool(true)),
+        ("reduced_still_picture_header", Value::Bool(true)),
+    ])
+}
+
+pub(super) fn image(value: CodedItem<'_>) -> Result<Image> {
     let mut name = String::new();
     name.try_reserve_exact(value.name.len())
         .map_err(|_| Error::new(ErrorCode::ResourceLimit, "AVIF item name allocation"))?;
