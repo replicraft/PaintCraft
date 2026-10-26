@@ -200,7 +200,7 @@ fn actual_v6_producer_preserves_source_budget_and_cancellation_boundaries() {
     assert_eq!(valid.source.as_slice(), bytes);
 }
 
-#[cfg(feature = "avif-sdr-codec")]
+#[cfg(all(feature = "avif-sdr-codec", not(feature = "float-codecs")))]
 #[test]
 fn actual_v6_build_record_is_unique_and_does_not_claim_legacy_profiles() {
     let bytes = std::fs::read(env!("CARGO_BIN_EXE_paintcraft-codec-worker")).unwrap();

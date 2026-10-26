@@ -9,6 +9,7 @@ publish.workspace = true
 
 [features]
 default = ["avif-sdr-codec"]
+float-codecs = ["avif-sdr-codec", "paintcraft-formats/hdr-codec", "paintcraft-formats/exr-codec"]
 avif-codec = []
 avif-sdr-codec = ["avif-codec"]
 

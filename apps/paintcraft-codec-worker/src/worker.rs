@@ -35,6 +35,18 @@ pub fn run(jxr_source: Option<&std::path::Path>) -> Result<()> {
             crate::jxr::execute(header, &source, path, &|| crate::HEAP.peak() as u64)
         } else if jxr_source.is_some() {
             Err(invalid("Private JXR path supplied for another codec"))
+        } else if header.codec.is_float() {
+            #[cfg(feature = "float-codecs")]
+            {
+                wire::float::execute(header, &source, &|| crate::HEAP.peak() as u64)
+            }
+            #[cfg(not(feature = "float-codecs"))]
+            {
+                Err(Error::new(
+                    ErrorCode::CapabilityUnsupported,
+                    "Private float decoder profile is not built",
+                ))
+            }
         } else if header.codec == wire::Codec::AvifSdr8 {
             #[cfg(feature = "avif-sdr-codec")]
             {
