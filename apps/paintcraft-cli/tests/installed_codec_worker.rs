@@ -1,5 +1,5 @@
-//! Real copied CLI + helper + manifest installations. Normal image import stays
-//! disabled; build both packages first (workspace tests already do this).
+//! Real copied CLI + helper + manifest installations for qualified Studio imports.
+//! Build both packages first; V5-only AVIF cases require explicit execution.
 #![cfg(any(
     target_os = "macos",
     all(target_os = "linux", target_env = "gnu"),
@@ -45,6 +45,18 @@ impl Installation {
         let helper = root.join(name);
         fs::copy(cli_source, &cli).unwrap();
         fs::copy(&source, &helper).unwrap();
+        let helper_bytes = fs::read(&helper).unwrap();
+        let avif = helper_bytes
+            .windows(wire::AVIF_BUILD_RECORD_MARKER.len())
+            .any(|bytes| bytes == wire::AVIF_BUILD_RECORD_MARKER);
+        let (profile, variants): (&str, &[&str]) = if avif {
+            (
+                wire::AVIF_NATIVE_PROFILE,
+                wire::QUALIFIED_AVIF_IMPORT_VARIANTS,
+            )
+        } else {
+            (wire::NATIVE_PROFILE, wire::QUALIFIED_NATIVE_IMPORT_VARIANTS)
+        };
         let manifest = root.join("paintcraft-codec-worker.json");
         let value = Value::object([
             ("schema_version", Value::Int(2)),
@@ -60,7 +72,7 @@ impl Installation {
                 "protocol_version",
                 Value::Int(i64::from(wire::PROTOCOL_VERSION)),
             ),
-            ("profile", Value::str(wire::NATIVE_PROFILE)),
+            ("profile", Value::str(profile)),
             (
                 "requested_heap_ceiling_bytes",
                 Value::Int(wire::HEAP_BYTES as i64),
@@ -68,7 +80,7 @@ impl Installation {
             (
                 "qualified_import_variants",
                 Value::Array(
-                    wire::QUALIFIED_NATIVE_IMPORT_VARIANTS
+                    variants
                         .iter()
                         .map(|variant| Value::str(*variant))
                         .collect(),
@@ -498,3 +510,6 @@ mod jxr;
 
 #[path = "installed_codec_worker/heif.rs"]
 mod heif;
+
+#[path = "installed_codec_worker/avif.rs"]
+mod avif;

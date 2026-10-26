@@ -31,7 +31,7 @@ fn pixels(path: &Path, reference: &[u8], width: u32, height: u32, identity: bool
         assert_eq!(actual[3], [0, 1, 127, 128, 254, 255][(x + y) % 6]);
     }
 }
-fn convert(
+pub(super) fn convert(
     installation: &Installation,
     input: &Path,
     output: &Path,
