@@ -10,7 +10,7 @@ fn contract() -> Contract<'static> {
         protocol_version: 2,
         profile: "internal-heif-gray8-jxl-rgba8",
         requested_heap_ceiling_bytes: 256 << 20,
-        public_reader_enabled: false,
+        qualified_import_variants: &["qualified-test-reader"],
         build_marker: MARKER,
         build_record: RECORD,
     }
@@ -109,7 +109,7 @@ impl Installation {
     }
     fn metadata(&self) -> Value {
         Value::object([
-            ("schema_version", Value::Int(1)),
+            ("schema_version", Value::Int(2)),
             ("embedded_build_record_verified", Value::Bool(true)),
             ("application_version", Value::str("0.1.0")),
             ("target", Value::str(self.target.triple())),
@@ -121,7 +121,10 @@ impl Installation {
             ("protocol_version", Value::Int(2)),
             ("profile", Value::str("internal-heif-gray8-jxl-rgba8")),
             ("requested_heap_ceiling_bytes", Value::Int(256 << 20)),
-            ("public_reader_enabled", Value::Bool(false)),
+            (
+                "qualified_import_variants",
+                Value::Array(vec![Value::str("qualified-test-reader")]),
+            ),
         ])
     }
     fn refresh(&self) {
@@ -199,7 +202,10 @@ fn strict_manifest_fields_digest_duplicates_and_quotas_are_enforced() {
     for (key, value) in [
         ("application_version", Value::str("0.2.0")),
         ("protocol_version", Value::Int(3)),
-        ("public_reader_enabled", Value::Bool(true)),
+        (
+            "qualified_import_variants",
+            Value::Array(vec![Value::str("foreign-reader")]),
+        ),
         ("target", Value::str("aarch64-unknown-linux-gnu")),
         ("sha256", Value::str("0".repeat(64))),
     ] {
@@ -368,4 +374,43 @@ fn every_build_marker_occurrence_must_be_complete_and_match_the_contract() {
         f.refresh();
         assert!(f.verify().is_err());
     }
+}
+
+#[test]
+fn qualified_variants_are_exact_bounded_and_old_schema_is_not_admitted() {
+    let f = Installation::new(Target::LinuxX64, true);
+    for variants in [
+        Value::Array(vec![]),
+        Value::Array(vec![
+            Value::str("qualified-test-reader"),
+            Value::str("qualified-test-reader"),
+        ]),
+        Value::Array(vec![
+            Value::str("qualified-test-reader"),
+            Value::str("foreign-reader"),
+        ]),
+        Value::Array(vec![Value::Int(1)]),
+        Value::Array(vec![Value::str("qualified-test-reader"); 9]),
+    ] {
+        let Value::Object(mut fields) = f.metadata() else {
+            panic!()
+        };
+        fields.insert("qualified_import_variants".into(), variants);
+        fs::write(&f.manifest, json::canonical(&Value::Object(fields))).unwrap();
+        assert!(f.verify().is_err());
+    }
+    let Value::Object(mut fields) = f.metadata() else {
+        panic!()
+    };
+    fields.insert("schema_version".into(), Value::Int(1));
+    fields.remove("qualified_import_variants");
+    fields.insert("public_reader_enabled".into(), Value::Bool(false));
+    fs::write(&f.manifest, json::canonical(&Value::Object(fields))).unwrap();
+    assert!(f.verify().is_err());
+    let mut expected = contract();
+    expected.qualified_import_variants = &["duplicate", "duplicate"];
+    assert_eq!(
+        expected.validate().unwrap_err().code,
+        ErrorCode::InputSchema
+    );
 }

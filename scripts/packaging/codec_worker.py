@@ -54,7 +54,7 @@ def metadata(directory, version, target):
     release.validate_package_input(version, target, helper)
     verify_build_record(helper, version)
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "embedded_build_record_verified": True,
         "application_version": version,
         "target": target,
@@ -63,7 +63,7 @@ def metadata(directory, version, target):
         "protocol_version": 2,
         "profile": "internal-heif-gray8-jxl-rgba8-jxr-rgb8-private-source1-parent-lease1",
         "requested_heap_ceiling_bytes": 256 << 20,
-        "public_reader_enabled": False,
+        "qualified_import_variants": ["native-jxl-srgb8-worker-v1"],
     }
 
 

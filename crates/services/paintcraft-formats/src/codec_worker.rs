@@ -27,6 +27,7 @@ pub const RESPONSE_HEADER: usize = 136;
 pub const OUTPUT_BYTES_MAX: usize = PIXELS_MAX as usize * 4 + RESPONSE_HEADER + 4096 + 64;
 pub const REQUEST_MAGIC: &[u8; 8] = b"PCDEC002";
 pub const PROTOCOL_VERSION: u16 = 2;
+pub const NATIVE_JXL_IMPORT_VARIANT: &str = "native-jxl-srgb8-worker-v1";
 pub const NATIVE_PROFILE: &str =
     "internal-heif-gray8-jxl-rgba8-jxr-rgb8-private-source1-parent-lease1";
 pub const BUILD_RECORD_MARKER: &[u8] = b"PAINTCRAFT_CODEC_WORKER_BUILD_V3\0";

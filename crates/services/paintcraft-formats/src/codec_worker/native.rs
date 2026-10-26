@@ -1,4 +1,4 @@
-//! Native qualification composition, not stock reader activation. The caller
+//! Verified native composition; callers perform exact-profile admission. The caller
 //! admits source/output/helper bytes before invoking this service, retains its
 //! existing resource lease through consume/publication, and supplies the actual
 //! kill/reap supervisor. This module never launches arbitrary PATH-selected code.
@@ -90,7 +90,7 @@ impl Job {
                 protocol_version: PROTOCOL_VERSION,
                 profile: NATIVE_PROFILE,
                 requested_heap_ceiling_bytes: HEAP_BYTES,
-                public_reader_enabled: false,
+                qualified_import_variants: &[NATIVE_JXL_IMPORT_VARIANT],
                 build_marker: BUILD_RECORD_MARKER,
                 build_record: &record,
             },

@@ -27,7 +27,7 @@ pub struct Contract<'a> {
     pub protocol_version: u16,
     pub profile: &'a str,
     pub requested_heap_ceiling_bytes: u64,
-    pub public_reader_enabled: bool,
+    pub qualified_import_variants: &'a [&'a str],
     pub build_marker: &'a [u8],
     pub build_record: &'a [u8],
 }
@@ -38,6 +38,17 @@ impl Contract<'_> {
             || !self.application_version.is_ascii()
             || self.profile.is_empty()
             || self.profile.len() > 128
+            || self.qualified_import_variants.len() > 8
+            || self
+                .qualified_import_variants
+                .iter()
+                .enumerate()
+                .any(|(index, variant)| {
+                    variant.is_empty()
+                        || variant.len() > 128
+                        || !variant.is_ascii()
+                        || self.qualified_import_variants[..index].contains(variant)
+                })
             || self.protocol_version == 0
             || self.requested_heap_ceiling_bytes == 0
             || self.requested_heap_ceiling_bytes > i64::MAX as u64
@@ -170,7 +181,7 @@ fn verify(
         .map_err(|_| unavailable("Installed helper manifest is not strict JSON"))?;
     let expected_fields = 10;
     if value.as_object().is_none_or(|v| v.len() != expected_fields)
-        || value.get("schema_version").and_then(Value::as_i64) != Some(1)
+        || value.get("schema_version").and_then(Value::as_i64) != Some(2)
         || value
             .get("embedded_build_record_verified")
             .and_then(Value::as_bool)
@@ -186,8 +197,16 @@ fn verify(
             .get("requested_heap_ceiling_bytes")
             .and_then(Value::as_i64)
             != Some(contract.requested_heap_ceiling_bytes as i64)
-        || value.get("public_reader_enabled").and_then(Value::as_bool)
-            != Some(contract.public_reader_enabled)
+        || value
+            .get("qualified_import_variants")
+            .and_then(Value::as_array)
+            .is_none_or(|variants| {
+                variants.len() != contract.qualified_import_variants.len()
+                    || variants
+                        .iter()
+                        .zip(contract.qualified_import_variants)
+                        .any(|(actual, expected)| actual.as_str() != Some(*expected))
+            })
     {
         return Err(unavailable(
             "Installed helper manifest does not match host contract",
