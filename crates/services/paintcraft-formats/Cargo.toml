@@ -42,6 +42,7 @@ paintcraft-platform.workspace = true
 zstd.workspace = true
 
 [dev-dependencies]
+heic-decoder.workspace = true
 divan.workspace = true
 criterion.workspace = true
 png.workspace = true

@@ -2110,6 +2110,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
 
 [[package]]
+name = "heic-decoder"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "61c012c388f9a8e5f2e611d67cfca513d4735fd298b648a9c5a61859e34d9bcf"
+dependencies = [
+ "rayon",
+ "thiserror 2.0.21",
+]
+
+[[package]]
 name = "hermit-abi"
 version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3337,6 +3347,7 @@ dependencies = [
  "dds",
  "divan",
  "flate2",
+ "heic-decoder",
  "ico",
  "image",
  "jpegxr-pure-rs",
