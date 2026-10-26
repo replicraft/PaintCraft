@@ -57,6 +57,20 @@ jobs:
       - run: cargo fmt --all --check
       - run: cargo clippy --workspace --all-targets -- -D warnings
       - run: cargo test --workspace
+      - name: Check the isolated stable parser harness
+        if: runner.os == 'Linux'
+        run: |
+          python3 fuzz/check_lock.py
+          python3 -m unittest discover -s fuzz -p test_check_lock.py
+          cargo fmt --manifest-path fuzz/Cargo.toml --check
+          cargo clippy --manifest-path fuzz/Cargo.toml --locked --all-targets --target-dir target -- -D warnings
+          cargo test --manifest-path fuzz/Cargo.toml --locked --target-dir target
+          cargo build --manifest-path fuzz/Cargo.toml --locked --bin replay --target-dir target
+      - name: Replay the checked parser seeds on stable Rust
+        if: runner.os == 'Linux'
+        run: |
+          python3 fuzz/replay_smoke.py --replay target/debug/replay
+          python3 fuzz/check_lock.py
   x11-clipboard:
     runs-on: ubuntu-latest
     steps:
