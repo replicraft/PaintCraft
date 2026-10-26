@@ -79,6 +79,12 @@ pub fn run(a: Options, json: bool) -> Reply {
                         "heif.srgb8.import",
                         "heic-decoder/native-worker",
                     ),
+                    (
+                        Family::Avif,
+                        codec_worker::NATIVE_AVIF_IMPORT_VARIANT,
+                        "avif.srgb8.import",
+                        "dav1d/native-worker",
+                    ),
                 ] {
                     let mut request = Request::new(
                         Frontend::Studio,
@@ -98,6 +104,12 @@ pub fn run(a: Options, json: bool) -> Reply {
                             );
                             fields
                                 .insert("runtime_installation_verified".into(), Value::Bool(false));
+                            if family == Family::Avif {
+                                fields.insert(
+                                    "required_helper_profile".into(),
+                                    Value::str(codec_worker::AVIF_NATIVE_PROFILE),
+                                );
+                            }
                         }
                         frontend_rows.push(value);
                     }
