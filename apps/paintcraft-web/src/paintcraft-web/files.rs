@@ -592,7 +592,7 @@ mod tests {
 #[wasm_bindgen::prelude::wasm_bindgen(module = "/src/lib/download.js")]
 extern "C" {
     #[wasm_bindgen::prelude::wasm_bindgen(catch, js_name = downloadCopy)]
-    fn download_copy(
+    pub(crate) fn download_copy(
         bytes: &[u8],
         name: &str,
         mime: &str,

@@ -16,6 +16,7 @@ mod interfaces;
 #[cfg(test)]
 #[path = "lasso_tests.rs"]
 mod lasso_tests;
+mod palettes;
 mod presentation;
 mod settings;
 mod view;
@@ -49,6 +50,7 @@ pub struct WebApp {
     preferences: crate::preferences::Preferences,
     export_confirm: Option<ImageExport>,
     icon_export: Option<icon_exporting::State>,
+    palettes: palettes::State,
     pub(crate) export_quality: u8,
     pub(crate) export_pcx_encoding: paintcraft_ui::pcx_export::Encoding,
     pcx_preview: paintcraft_ui::pcx_export::Cache<String>,
@@ -109,6 +111,7 @@ impl WebApp {
             preferences,
             export_confirm: None,
             icon_export: None,
+            palettes: Default::default(),
             export_quality: 90,
             export_pcx_encoding: Default::default(),
             pcx_preview: Default::default(),
@@ -160,6 +163,7 @@ impl WebApp {
             || self.settings
             || self.export_confirm.is_some()
             || self.icon_export.is_some()
+            || self.palettes.open
             || self.confirm_replace.is_some()
             || self.files.busy
             || self.pending_import.is_some()
@@ -381,6 +385,7 @@ impl WebApp {
                 self.export_confirm = Some(format);
             }
             Action::ExportIcons => self.begin_icon_export(),
+            Action::Palettes => self.begin_palettes(),
             Action::Save | Action::SaveAs => {
                 self.editor.tools.cancel_gesture();
                 self.download(ctx, false);
@@ -608,6 +613,10 @@ impl WebApp {
     }
 
     fn dialogs(&mut self, ctx: &egui::Context) {
+        if self.palettes.open {
+            self.palette_dialog(ctx);
+            return;
+        }
         if self.confirm_replace.is_some() {
             egui::Modal::new(egui::Id::unique("web-new-unsaved")).show(ctx, |ui| {
                 ui.heading(t!(ui.ctx(), "Discard unsaved changes?"));
