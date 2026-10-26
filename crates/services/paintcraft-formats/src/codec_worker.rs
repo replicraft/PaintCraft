@@ -5,6 +5,7 @@ mod decode;
 pub mod native;
 #[cfg(feature = "heif-codec")]
 pub use decode::execute;
+pub mod float;
 use paintcraft_core::types::{Error, ErrorCode, Result};
 pub const INPUT_BYTES_MAX: usize = 64 << 20;
 pub const PIXELS_MAX: u64 = 4_194_304;
@@ -27,6 +28,8 @@ pub const RESPONSE_HEADER: usize = 136;
 pub const OUTPUT_BYTES_MAX: usize = PIXELS_MAX as usize * 4 + RESPONSE_HEADER + 4096 + 64;
 pub const REQUEST_MAGIC: &[u8; 8] = b"PCDEC002";
 pub const PROTOCOL_VERSION: u16 = 2;
+pub const NATIVE_HDR_SDR_IMPORT_VARIANT: &str = "native-hdr-sdr8-worker-v1";
+pub const NATIVE_EXR_SDR_IMPORT_VARIANT: &str = "native-exr-sdr8-worker-v1";
 pub const NATIVE_JXL_IMPORT_VARIANT: &str = "native-jxl-srgb8-worker-v1";
 pub const NATIVE_AVIF_SDR_IMPORT_VARIANT: &str = "native-avif-sdr-ycbcr8-worker-v1";
 pub const NATIVE_AVIF_IMPORT_VARIANT: &str = "native-avif-srgb8-worker-v1";
@@ -57,6 +60,21 @@ pub const QUALIFIED_AVIF_SDR_IMPORT_VARIANTS: &[&str] = &[
     NATIVE_AVIF_IMPORT_VARIANT,
     NATIVE_AVIF_SDR_IMPORT_VARIANT,
 ];
+pub const FLOAT_NATIVE_PROFILE: &str =
+    "private-native-v7-hdr-exr-sdr8-settings32-report96-16mib-1mp-parent-lease1";
+pub const FLOAT_BUILD_RECORD_MARKER: &[u8] = b"PAINTCRAFT_CODEC_WORKER_BUILD_V7_FLOAT\0";
+pub fn native_float_build_record(version: &str) -> Result<Vec<u8>> {
+    if version.is_empty() || version.len() > 64 || !version.is_ascii() {
+        return Err(Error::new(
+            ErrorCode::InputSchema,
+            "Invalid codec application version",
+        ));
+    }
+    let mut bytes = FLOAT_BUILD_RECORD_MARKER.to_vec();
+    bytes.extend(version.as_bytes());
+    bytes.extend(b"\0PCDEC002\0HEAP268435456\0STDIN_PARENT_LEASE1\0JXR_PRIVATE_SOURCE1\0AVIF_DAV1D154_ALLOC1_ASM0_8BIT1\0AVIF_SDR709_YUV444_420_CSP12_WORK1\0FLOAT_SETTINGS32_REPORT96_INPUT16777216_PIXELS1048576\0END_CODEC_WORKER_BUILD\0");
+    Ok(bytes)
+}
 pub fn native_avif_sdr_build_record(version: &str) -> Result<Vec<u8>> {
     if version.is_empty() || version.len() > 64 || !version.is_ascii() {
         return Err(Error::new(
@@ -117,12 +135,36 @@ pub enum Codec {
     HeifSrgb8 = 4,
     AvifSrgb8 = 5,
     AvifSdr8 = 6,
+    HdrSdr8 = 7,
+    ExrSdr8 = 8,
 }
 impl Codec {
+    pub fn is_float(self) -> bool {
+        matches!(self, Self::HdrSdr8 | Self::ExrSdr8)
+    }
+    fn input_limit(self) -> usize {
+        if self.is_float() {
+            float::INPUT_BYTES_MAX
+        } else {
+            INPUT_BYTES_MAX
+        }
+    }
+    fn pixel_limit(self) -> u64 {
+        if self.is_float() {
+            float::PIXELS_MAX
+        } else {
+            PIXELS_MAX
+        }
+    }
     fn side_limit(self) -> u32 {
         match self {
             Self::HeifGray8 | Self::HeifSrgb8 => 16384,
-            Self::JxlRgba8 | Self::JxrRgb8 | Self::AvifSrgb8 | Self::AvifSdr8 => 65536,
+            Self::JxlRgba8
+            | Self::JxrRgb8
+            | Self::AvifSrgb8
+            | Self::AvifSdr8
+            | Self::HdrSdr8
+            | Self::ExrSdr8 => 65536,
         }
     }
     fn decode(value: u8) -> Result<Self> {
@@ -133,6 +175,8 @@ impl Codec {
             4 if !cfg!(target_arch = "wasm32") => Ok(Self::HeifSrgb8),
             5 if !cfg!(target_arch = "wasm32") => Ok(Self::AvifSrgb8),
             6 if !cfg!(target_arch = "wasm32") => Ok(Self::AvifSdr8),
+            7 if !cfg!(target_arch = "wasm32") => Ok(Self::HdrSdr8),
+            8 if !cfg!(target_arch = "wasm32") => Ok(Self::ExrSdr8),
             _ => Err(unsupported("worker codec request is not supported")),
         }
     }
@@ -171,7 +215,12 @@ impl Request {
         if cfg!(target_arch = "wasm32")
             && matches!(
                 codec,
-                Codec::JxrRgb8 | Codec::HeifSrgb8 | Codec::AvifSrgb8 | Codec::AvifSdr8
+                Codec::JxrRgb8
+                    | Codec::HeifSrgb8
+                    | Codec::AvifSrgb8
+                    | Codec::AvifSdr8
+                    | Codec::HdrSdr8
+                    | Codec::ExrSdr8
             )
         {
             return Err(unsupported("Requested codec worker is native-only"));
@@ -179,7 +228,10 @@ impl Request {
         if owner.frontend != 3 {
             return Err(unsupported("native codec worker is Studio-only"));
         }
-        if source.is_empty() || source.len() > INPUT_BYTES_MAX || pixels == 0 || pixels > PIXELS_MAX
+        if source.is_empty()
+            || source.len() > codec.input_limit()
+            || pixels == 0
+            || pixels > codec.pixel_limit()
         {
             return Err(resource("native codec worker request allowance"));
         }
@@ -197,7 +249,7 @@ impl Request {
         })
     }
     pub fn reservation_bytes(&self) -> u64 {
-        HEAP_BYTES + self.header.length + OUTPUT_BYTES_MAX as u64 + 65536
+        HEAP_BYTES + self.header.length + output_limit(self.header.codec) as u64 + 65536
     }
     pub fn segments(&self) -> Vec<Arc<Vec<u8>>> {
         vec![Arc::new(self.header.encode()), self.source.clone()]
@@ -282,7 +334,12 @@ impl Header {
         if cfg!(target_arch = "wasm32")
             && matches!(
                 codec,
-                Codec::JxrRgb8 | Codec::HeifSrgb8 | Codec::AvifSrgb8 | Codec::AvifSdr8
+                Codec::JxrRgb8
+                    | Codec::HeifSrgb8
+                    | Codec::AvifSrgb8
+                    | Codec::AvifSdr8
+                    | Codec::HdrSdr8
+                    | Codec::ExrSdr8
             )
         {
             return Err(unsupported("Requested codec worker is native-only"));
@@ -291,9 +348,10 @@ impl Header {
             return Err(unsupported("native codec worker is Studio-only"));
         }
         if pixels == 0
-            || u64::from(pixels) > PIXELS_MAX
+            || u64::from(pixels) > codec.pixel_limit()
             || length == 0
-            || length > INPUT_BYTES_MAX as u64
+            || codec.is_float() && length <= crate::float_import::wire::SETTINGS_BYTES as u64
+            || length > codec.input_limit() as u64
         {
             return Err(resource("worker input declaration exceeds allowance"));
         }
@@ -339,12 +397,21 @@ pub struct Frame<'a> {
     pub pixels: Pixels<'a>,
     /// Requested-heap snapshot during response preparation, never RSS.
     pub heap_peak: u64,
+    /// New private float codecs require SourcePlan validation before adoption.
+    pub float_report: Option<crate::float_import::wire::Report>,
 }
 #[derive(Debug)]
 pub struct Success<'a> {
     pub width: u32,
     pub height: u32,
     pub pixels: Pixels<'a>,
+}
+pub fn output_limit(codec: Codec) -> usize {
+    if codec.is_float() {
+        float::OUTPUT_BYTES_MAX
+    } else {
+        OUTPUT_BYTES_MAX
+    }
 }
 #[allow(clippy::too_many_arguments)] // Fixed-width wire fields, not caller configuration.
 fn response_header(
@@ -424,7 +491,7 @@ pub fn success(request: Header, result: Success<'_>, peak: u64) -> Result<Vec<u8
         || result.height == 0
         || result.width > request.codec.side_limit()
         || result.height > request.codec.side_limit()
-        || pixels > PIXELS_MAX
+        || pixels > request.codec.pixel_limit()
         || pixels > u64::from(request.pixels)
         || y as u64 != pixels * channels
         || a != 0 && a != y
@@ -500,7 +567,7 @@ pub fn decode_with_header<'a>(
             "worker document/frontend owner changed",
         ));
     }
-    if bytes.len() < RESPONSE_HEADER || bytes.len() > OUTPUT_BYTES_MAX {
+    if bytes.len() < RESPONSE_HEADER || bytes.len() > output_limit(request.codec) {
         return Err(resource("worker output size allowance"));
     }
     let mut r = Reader { bytes, pos: 0 };
@@ -580,13 +647,25 @@ pub fn decode_with_header<'a>(
         || height == 0
         || width > request.codec.side_limit()
         || height > request.codec.side_limit()
-        || pixels > PIXELS_MAX
+        || pixels > request.codec.pixel_limit()
         || pixels > u64::from(request.pixels)
-        || detail != 0
+        || detail
+            != if request.codec.is_float() {
+                crate::float_import::wire::REPORT_BYTES
+            } else {
+                0
+            }
     {
         return Err(invalid("worker output dimensions/detail"));
     }
-    let payload = &body[version..];
+    let float_report = if request.codec.is_float() {
+        Some(crate::float_import::wire::Report::decode(
+            &body[version..version + detail],
+        )?)
+    } else {
+        None
+    };
+    let payload = &body[version + detail..];
     let pixels = match request.codec {
         Codec::HeifGray8 => {
             if y as u64 != pixels
@@ -608,7 +687,9 @@ pub fn decode_with_header<'a>(
         | Codec::JxrRgb8
         | Codec::HeifSrgb8
         | Codec::AvifSrgb8
-        | Codec::AvifSdr8 => {
+        | Codec::AvifSdr8
+        | Codec::HdrSdr8
+        | Codec::ExrSdr8 => {
             if y as u64 != pixels * 4
                 || a != 0
                 || alpha_flag != 0
@@ -630,6 +711,7 @@ pub fn decode_with_header<'a>(
         height,
         pixels,
         heap_peak: peak,
+        float_report,
     })
 }
 

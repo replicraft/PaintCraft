@@ -157,6 +157,7 @@ fn captured_heif_frame_geometry_hash_extent_and_opacity_are_checked_before_tiles
             height: 24,
             pixels: Pixels::SrgbRgba8(pixels),
             heap_peak: 0,
+            float_report: None,
         }
     }
     heif_profile(&request, &frame(&rgba, 32), &|| Ok(())).unwrap();

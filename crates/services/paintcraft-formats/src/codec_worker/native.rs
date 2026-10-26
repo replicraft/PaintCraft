@@ -41,6 +41,11 @@ impl Job {
         launch: impl FnOnce(Launch<'_>, &dyn Fn() -> Result<()>) -> Result<Vec<u8>>,
         consume: impl FnOnce(&Request, Frame<'_>, [u8; 32], &dyn Fn() -> Result<()>) -> Result<T>,
     ) -> Result<T> {
+        if self.codec.is_float() {
+            return Err(unsupported(
+                "Private float codecs require the typed settings path",
+            ));
+        }
         let codec = self.codec;
         self.consume_selected(
             host_check,
