@@ -28,8 +28,21 @@ pub struct Output {
 struct Running {
     child: Child,
     reaped: bool,
+    writer: Option<thread::JoinHandle<()>>,
+    reader: Option<thread::JoinHandle<()>>,
 }
 impl Running {
+    fn join_pipes(&mut self) -> bool {
+        let writer = self
+            .writer
+            .take()
+            .is_none_or(|thread| thread.join().is_ok());
+        let reader = self
+            .reader
+            .take()
+            .is_none_or(|thread| thread.join().is_ok());
+        writer && reader
+    }
     fn stop(&mut self) -> std::io::Result<ExitStatus> {
         let _ = self.child.kill();
         let status = self.child.wait()?;
@@ -48,6 +61,9 @@ impl Drop for Running {
             let _ = self.child.kill();
             let _ = self.child.wait();
         }
+        // Always stop/reap before joining: either pipe may be blocked on the
+        // child. This also runs when the caller's check callback unwinds.
+        self.join_pipes();
     }
 }
 fn failure(message: impl Into<String>) -> Error {
@@ -111,6 +127,8 @@ pub fn run(
     let mut running = Running {
         child,
         reaped: false,
+        writer: None,
+        reader: None,
     };
     let mut stdin = running
         .child
@@ -124,56 +142,60 @@ pub fn run(
         .ok_or_else(|| failure("worker stdout missing"))?;
     let (tx, rx) = mpsc::sync_channel(2);
     let writer_tx = tx.clone();
-    let writer = thread::Builder::new()
-        .name("paintcraft-worker-input".into())
-        .spawn(move || {
-            let result = (|| {
-                for bytes in input {
-                    stdin.write_all(&bytes)?;
-                }
-                stdin.flush()
-            })();
-            drop(stdin);
-            let _ = writer_tx.send(Event::Input(result));
-        })
-        .map_err(|_| resource("cannot start worker input pipe"))?;
-    let reader = match thread::Builder::new()
-        .name("paintcraft-worker-output".into())
-        .spawn(move || {
-            let result = (|| {
-                let mut bytes = Vec::new();
-                let mut block = [0; 8192];
-                loop {
-                    let count = stdout
-                        .read(&mut block)
-                        .map_err(|e| failure(format!("cannot read worker output: {e}")))?;
-                    if count == 0 {
-                        break;
+    running.writer = Some(
+        thread::Builder::new()
+            .name("paintcraft-worker-input".into())
+            .spawn(move || {
+                let result = (|| {
+                    for bytes in input {
+                        stdin.write_all(&bytes)?;
                     }
-                    if bytes
-                        .len()
-                        .checked_add(count)
-                        .is_none_or(|size| size > limits.output_bytes)
-                    {
-                        return Err(resource("worker output exceeds allowance"));
+                    stdin.flush()
+                })();
+                drop(stdin);
+                let _ = writer_tx.send(Event::Input(result));
+            })
+            .map_err(|_| resource("cannot start worker input pipe"))?,
+    );
+    running.reader = Some(
+        match thread::Builder::new()
+            .name("paintcraft-worker-output".into())
+            .spawn(move || {
+                let result = (|| {
+                    let mut bytes = Vec::new();
+                    let mut block = [0; 8192];
+                    loop {
+                        let count = stdout
+                            .read(&mut block)
+                            .map_err(|e| failure(format!("cannot read worker output: {e}")))?;
+                        if count == 0 {
+                            break;
+                        }
+                        if bytes
+                            .len()
+                            .checked_add(count)
+                            .is_none_or(|size| size > limits.output_bytes)
+                        {
+                            return Err(resource("worker output exceeds allowance"));
+                        }
+                        bytes
+                            .try_reserve_exact(count)
+                            .map_err(|_| resource("worker output allocation failed"))?;
+                        bytes.extend_from_slice(&block[..count]);
                     }
-                    bytes
-                        .try_reserve_exact(count)
-                        .map_err(|_| resource("worker output allocation failed"))?;
-                    bytes.extend_from_slice(&block[..count]);
-                }
-                Ok(bytes)
-            })();
-            drop(stdout);
-            let _ = tx.send(Event::Output(result));
-        }) {
-        Ok(reader) => reader,
-        Err(_) => {
-            let _ = running.stop();
-            let _ = writer.join();
-            return Err(resource("cannot start worker output pipe"));
-        }
-    };
+                    Ok(bytes)
+                })();
+                drop(stdout);
+                let _ = tx.send(Event::Output(result));
+            }) {
+            Ok(reader) => reader,
+            Err(_) => {
+                let _ = running.stop();
+                running.join_pipes();
+                return Err(resource("cannot start worker output pipe"));
+            }
+        },
+    );
     let result = (|| {
         let mut output = None;
         let mut input_finished = false;
@@ -248,9 +270,7 @@ pub fn run(
     } else {
         None
     };
-    let write_joined = writer.join();
-    let read_joined = reader.join();
-    if write_joined.is_err() || read_joined.is_err() {
+    if !running.join_pipes() {
         return Err(failure("native worker pipe thread failed"));
     }
     if let Some(status) = stopped {
