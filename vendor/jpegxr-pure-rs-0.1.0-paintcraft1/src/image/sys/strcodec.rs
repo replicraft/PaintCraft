@@ -2864,18 +2864,28 @@ mod tests {
 // Private synchronous adapter. The encoder must be destroyed within `encode`;
 // neither WMPStream nor its erased borrowed context may escape that closure.
 // No extern-C callback is involved: WMPStream uses Rust function pointers.
+#[derive(Debug)]
+pub(crate) enum OutputFault {
+    Limit,
+    Io(std::io::Error),
+}
+impl From<std::io::Error> for OutputFault {
+    fn from(error: std::io::Error) -> Self {
+        Self::Io(error)
+    }
+}
 struct BorrowedOutput<'a, W, C> {
     sink: &'a mut W,
     check: &'a mut C,
     position: u64,
     extent: u64,
     maximum: u64,
-    first_error: Option<std::io::Error>,
+    first_error: Option<OutputFault>,
 }
 impl<W: Write + Seek, C: FnMut() -> std::io::Result<()>> BorrowedOutput<'_, W, C> {
-    fn fail(&mut self, error: std::io::Error) -> WmpError {
+    fn fail(&mut self, error: impl Into<OutputFault>) -> WmpError {
         if self.first_error.is_none() {
-            self.first_error = Some(error);
+            self.first_error = Some(error.into());
         }
         WmpError::FileIO
     }
@@ -2894,7 +2904,7 @@ impl<W: Write + Seek, C: FnMut() -> std::io::Result<()>> BorrowedOutput<'_, W, C
             .position
             .checked_add(bytes.len() as u64)
             .filter(|end| *end <= self.maximum)
-            .ok_or_else(|| self.fail(std::io::Error::other("JPEG XR output extent limit")))?;
+            .ok_or_else(|| self.fail(OutputFault::Limit))?;
         // On an inner partial write failure this is a conservative high-water
         // bound. Sticky failure prevents any more sink operations afterward.
         self.extent = self.extent.max(end);
@@ -2909,7 +2919,7 @@ impl<W: Write + Seek, C: FnMut() -> std::io::Result<()>> BorrowedOutput<'_, W, C
     fn seek(&mut self, position: u64) -> Result<(), WmpError> {
         self.poll()?;
         if position > self.maximum {
-            return Err(self.fail(std::io::Error::other("JPEG XR seek extent limit")));
+            return Err(self.fail(OutputFault::Limit));
         }
         match output_catch(|| self.sink.seek(SeekFrom::Start(position))) {
             Ok(actual) if actual == position => {
@@ -2935,14 +2945,15 @@ pub(crate) unsafe fn with_ws_output<W: Write + Seek, C: FnMut() -> std::io::Resu
     maximum: u64,
     check: &mut C,
     encode: impl FnOnce(&mut WMPStream) -> Result<T, WmpError>,
-) -> std::io::Result<Result<T, WmpError>> {
+) -> Result<Result<T, WmpError>, OutputFault> {
     output_catch(&mut *check)?;
     let initial = output_catch(|| sink.stream_position())?;
     if initial != 0 {
         return Err(std::io::Error::new(
             std::io::ErrorKind::InvalidInput,
             "JPEG XR sink must start at zero",
-        ));
+        )
+        .into());
     }
     output_catch(&mut *check)?;
     let length = output_catch(|| sink.seek(SeekFrom::End(0)))?;
@@ -2954,7 +2965,8 @@ pub(crate) unsafe fn with_ws_output<W: Write + Seek, C: FnMut() -> std::io::Resu
         return Err(std::io::Error::new(
             std::io::ErrorKind::InvalidInput,
             "JPEG XR sink must be empty",
-        ));
+        )
+        .into());
     }
     let mut context = BorrowedOutput {
         sink,
@@ -3028,7 +3040,7 @@ mod borrowed_output_tests {
         maximum: u64,
         check: &mut C,
         encode: impl FnOnce(&mut WMPStream) -> Result<T, WmpError>,
-    ) -> std::io::Result<Result<T, WmpError>> {
+    ) -> Result<Result<T, WmpError>, OutputFault> {
         unsafe { with_ws_output(sink, maximum, check, encode) }
     }
     #[test]
@@ -3043,7 +3055,7 @@ mod borrowed_output_tests {
             // Even a codec that swallowed both callback errors must fail.
             Ok(())
         });
-        assert!(result.is_err());
+        assert!(matches!(result, Err(OutputFault::Limit)));
         assert_eq!(sink.into_inner(), [1, 9, 3, 4]);
     }
     #[test]
@@ -3060,7 +3072,120 @@ mod borrowed_output_tests {
                 Ok(())
             },
         );
-        assert!(result.is_err());
+        assert!(matches!(result, Err(OutputFault::Limit)));
+        assert!(sink.into_inner().is_empty());
+    }
+    #[test]
+    fn exact_limit_and_zero_limit_do_not_invent_faults() {
+        for maximum in [0, 4] {
+            let mut sink = Cursor::new(Vec::new());
+            let result = output(&mut sink, maximum, &mut || Ok(()), |stream| unsafe {
+                stream.Write.unwrap()(stream, &vec![7; maximum as usize])?;
+                stream.SetPos.unwrap()(stream, 0)?;
+                Ok(())
+            });
+            assert!(matches!(result, Ok(Ok(()))));
+            assert_eq!(sink.into_inner(), vec![7; maximum as usize]);
+        }
+    }
+    struct FaultSink {
+        inner: Cursor<Vec<u8>>,
+        operation: &'static str,
+    }
+    impl Write for FaultSink {
+        fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+            if self.operation == "panic" {
+                panic!("sink write panic");
+            }
+            if self.operation == "write" {
+                return Err(std::io::Error::other("JPEG XR output extent limit"));
+            }
+            self.inner.write(bytes)
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            if self.operation == "flush" {
+                return Err(std::io::Error::other("JPEG XR output extent limit"));
+            }
+            Ok(())
+        }
+    }
+    impl Seek for FaultSink {
+        fn seek(&mut self, position: SeekFrom) -> std::io::Result<u64> {
+            // Permit the initial empty-position checks, then fail codec seek.
+            if self.operation == "seek" && position == SeekFrom::Start(1) {
+                return Err(std::io::Error::other("JPEG XR output extent limit"));
+            }
+            self.inner.seek(position)
+        }
+    }
+    #[test]
+    fn generic_io_faults_and_first_fault_survive_cleanup() {
+        for operation in ["write", "seek", "flush", "panic"] {
+            let mut sink = FaultSink {
+                inner: Cursor::new(Vec::new()),
+                operation,
+            };
+            let mut polls = 0;
+            let result = output(
+                &mut sink,
+                4,
+                &mut || {
+                    polls += 1;
+                    Ok(())
+                },
+                |stream| unsafe {
+                    if operation == "seek" {
+                        assert!(stream.SetPos.unwrap()(stream, 1).is_err());
+                    } else if operation == "write" || operation == "panic" {
+                        assert!(stream.Write.unwrap()(stream, &[1]).is_err());
+                    }
+                    if operation != "flush" {
+                        // A later quota violation cannot replace an earlier IO fault.
+                        assert!(stream.SetPos.unwrap()(stream, 5).is_err());
+                    }
+                    Ok(())
+                },
+            );
+            assert!(
+                matches!(result, Err(OutputFault::Io(error)) if error.kind() == std::io::ErrorKind::Other)
+            );
+            assert!(polls >= 3);
+            assert!(sink.inner.into_inner().is_empty());
+        }
+    }
+    #[test]
+    fn typed_limit_precedes_later_callback_or_flush_fault() {
+        let mut sink = FaultSink {
+            inner: Cursor::new(Vec::new()),
+            operation: "flush",
+        };
+        let failed = std::cell::Cell::new(false);
+        let result = output(
+            &mut sink,
+            0,
+            &mut || {
+                if failed.get() {
+                    panic!("must not poll after first limit")
+                }
+                Ok(())
+            },
+            |stream| unsafe {
+                assert!(stream.Write.unwrap()(stream, &[1]).is_err());
+                assert!(stream.SetPos.unwrap()(stream, 1).is_err());
+                failed.set(true);
+                Ok(())
+            },
+        );
+        assert!(matches!(result, Err(OutputFault::Limit)));
+        assert!(sink.inner.into_inner().is_empty());
+    }
+    #[test]
+    fn callback_panic_is_io_not_limit() {
+        let mut sink = Cursor::new(Vec::new());
+        let result = output(&mut sink, 4, &mut || panic!("callback panic"), |_| Ok(()));
+        assert!(
+            matches!(result, Err(OutputFault::Io(error)) if error.kind() == std::io::ErrorKind::Other)
+        );
         assert!(sink.into_inner().is_empty());
     }
     #[test]
@@ -3095,7 +3220,9 @@ mod borrowed_output_tests {
             },
             |_| Ok(()),
         );
-        assert_eq!(result.unwrap_err().kind(), std::io::ErrorKind::Interrupted);
+        assert!(
+            matches!(result, Err(OutputFault::Io(error)) if error.kind() == std::io::ErrorKind::Interrupted)
+        );
         assert!(sink.into_inner().is_empty());
     }
 }

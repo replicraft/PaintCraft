@@ -5,6 +5,13 @@ use std::io::{Cursor, Read, Write};
 fn codec(message: impl Into<String>) -> Error {
     Error::new(ErrorCode::CodecFailed, message)
 }
+fn encoder_error(error: jpegxr::Error) -> Error {
+    let code = match error {
+        jpegxr::Error::OutputLimit => ErrorCode::ResourceLimit,
+        _ => ErrorCode::CodecFailed,
+    };
+    Error::new(code, format!("JXR encoder refused output: {error}"))
+}
 fn encoded(request: &wire::Request) -> Result<Vec<u8>> {
     let header = request.header();
     let layout = header.layout();
@@ -32,9 +39,9 @@ fn encoded(request: &wire::Request) -> Result<Vec<u8>> {
     // The selected API takes an immutable source; retain a post-codec binding
     // check as well. The parent independently retains its original RGB capture.
     header.verify_rgb(request.rgb(), &|| Ok(()))?;
-    // Error::Io currently includes both quota and callback failures. Do not infer
-    // ResourceLimit by matching untyped error text; all such failures refuse.
-    result.map_err(|error| codec(format!("JXR encoder refused output: {error}")))?;
+    // Only the adapter's typed output extent fault is a quota refusal. Sink IO,
+    // cancellation callbacks and recovered panics remain ordinary codec failures.
+    result.map_err(encoder_error)?;
     Ok(sink.into_inner())
 }
 pub fn run() -> Result<()> {
@@ -80,4 +87,68 @@ pub fn run() -> Result<()> {
     stdout
         .flush()
         .map_err(|_| codec("JXR response pipe closed"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn actual_fixed_encoder_exact_cap_succeeds_and_one_byte_less_is_typed() {
+        use paintcraft_formats::codec_worker::Owner;
+        use std::sync::Arc;
+        let rgb = Arc::new((0..36).map(|index| (index * 71) as u8).collect());
+        let make = |cap| {
+            wire::Request::capture(
+                wire::Layout::new(4, 3, cap).unwrap(),
+                Arc::clone(&rgb),
+                Owner {
+                    session: uuid::Uuid::new_v4(),
+                    state: uuid::Uuid::new_v4(),
+                    epoch: 1,
+                    frontend: 3,
+                },
+                &|| Ok(()),
+            )
+            .unwrap()
+        };
+        let reference = encoded(&make(1 << 20)).unwrap();
+        assert_eq!(encoded(&make(reference.len() as u64)).unwrap(), reference);
+        for cap in [1, reference.len() as u64 - 1] {
+            assert_eq!(
+                encoded(&make(cap)).unwrap_err().code,
+                ErrorCode::ResourceLimit
+            );
+        }
+    }
+    #[test]
+    fn public_adapter_callback_fault_stays_io() {
+        let mut sink = Cursor::new(Vec::new());
+        let result = jpegxr::Encoder::new().encode_pixels_to_seekable(
+            1,
+            1,
+            jpegxr::PixelFormat::rgb8().unwrap(),
+            &[17, 83, 249],
+            3,
+            &mut sink,
+            1024,
+            &mut || Err(std::io::Error::other("JPEG XR output extent limit")),
+        );
+        assert!(matches!(result, Err(jpegxr::Error::Io(_))));
+        assert!(sink.into_inner().is_empty());
+    }
+    #[test]
+    fn only_typed_output_limit_is_a_quota_error() {
+        assert_eq!(
+            encoder_error(jpegxr::Error::OutputLimit).code,
+            ErrorCode::ResourceLimit
+        );
+        for kind in [
+            std::io::ErrorKind::Other,
+            std::io::ErrorKind::Interrupted,
+            std::io::ErrorKind::OutOfMemory,
+        ] {
+            let error = jpegxr::Error::Io(std::io::Error::new(kind, "JPEG XR output extent limit"));
+            assert_eq!(encoder_error(error).code, ErrorCode::CodecFailed);
+        }
+    }
 }

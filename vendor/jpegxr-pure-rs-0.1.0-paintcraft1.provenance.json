@@ -8,7 +8,7 @@
     "archive_sha256": "be1bfea78bcd73aa67dfce7cdd22902e4e6ac06b387a5dea4f225f52525e8590",
     "archive_bytes": 193741,
     "patch_file": "jpegxr-pure-rs-0.1.0-paintcraft1.patch",
-    "patch_sha256": "274411f407f4afe64ab4af6ebc70f23540d9702115911e53e768087b38d49cb6",
+    "patch_sha256": "60a4c54ee28ad79a24cb330906c385ced2895a34eda96e2ce55ab9ebb4278e75",
     "changed_files": [
         "src/api.rs",
         "src/image/sys/strcodec.rs"
@@ -122,9 +122,9 @@
             "upstream_sha256": "a9a9dda667a1b21c04fe088f505ed5b52c96457d54f305a1596e1c67a14ad71f",
             "upstream_bytes": 21583,
             "upstream_lines": 730,
-            "sha256": "92751b87e8d8a6686d028164e83f5c776dcf1fc2476f752793b12b64a644cc36",
-            "bytes": 24139,
-            "lines": 782
+            "sha256": "2c4dc151d80d3e9cbc78b196051f8837f1ad273943e5e338bbc70e7d428d00e3",
+            "bytes": 24603,
+            "lines": 790
         },
         "src/bin/jpegxr.rs": {
             "upstream_sha256": "1ad3653d13bf96734c4df862ab0a6eb8d338fd229bbcbbb7b66cc561ad330ad6",
@@ -370,9 +370,9 @@
             "upstream_sha256": "b158159291d9b187f6752a5b5808774542b6ebc4ac014e10b0ec6f675d83f70c",
             "upstream_bytes": 97477,
             "upstream_lines": 2862,
-            "sha256": "ccaeccbfcf81e50b89505f84d2ee78b06dd9669a13cbcc4e75cf04e81cdbf3e8",
-            "bytes": 106462,
-            "lines": 3101
+            "sha256": "017b02ebc5398ed58a1ef2c260bc9d258c4db03a0b01e93ece9ccc4d979969f3",
+            "bytes": 111011,
+            "lines": 3228
         },
         "src/image/sys/windowsmediaphoto.rs": {
             "upstream_sha256": "71cfa5da48092186a726082b8f3ee5315cfee23a020c922072f06aa9a4af2463",

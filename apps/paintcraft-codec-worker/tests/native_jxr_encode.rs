@@ -154,8 +154,8 @@ fn fixed_lossless_output_roundtrips_protocol_and_cap_refuses_without_partial_fil
             &|| Ok(()),
         )
         .unwrap_err();
-        // Vendored IO does not yet distinguish cap from other sink failures.
-        assert_eq!(error.code, ErrorCode::CodecFailed);
+        // Only the typed capped-sink fault is a resource refusal.
+        assert_eq!(error.code, ErrorCode::ResourceLimit);
         assert_eq!(&output.bytes[20..28], &[0; 8]);
     }
 }

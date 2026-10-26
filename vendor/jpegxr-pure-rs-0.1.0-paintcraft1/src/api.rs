@@ -19,6 +19,8 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub enum Error {
     Codec(WmpError),
     Io(std::io::Error),
+    /// The caller-provided maximum output extent was exceeded.
+    OutputLimit,
     InvalidPixelFormat,
     InvalidDimensions,
     InvalidStride,
@@ -31,6 +33,7 @@ impl std::fmt::Display for Error {
         match self {
             Error::Codec(err) => write!(f, "JPEG-XR codec error: {err}"),
             Error::Io(err) => write!(f, "I/O error: {err}"),
+            Error::OutputLimit => f.write_str("JPEG-XR output extent limit"),
             Error::InvalidPixelFormat => f.write_str("invalid JPEG-XR pixel format"),
             Error::InvalidDimensions => f.write_str("invalid image dimensions"),
             Error::InvalidStride => f.write_str("invalid image stride"),
@@ -551,6 +554,7 @@ impl Encoder {
     /// Every stream operation checks cancellation and the maximum seek/write extent.
     /// On failure the sink may contain a bounded partial result; the caller must
     /// discard it. Cancellation is checked at stream boundaries, not CPU preemption.
+    /// OutputLimit is distinct from sink/check IO errors, including ErrorKind::Other.
     pub fn encode_pixels_to_seekable<W: Write + Seek, C: FnMut() -> std::io::Result<()>>(
         &self,
         width: u32,
@@ -589,7 +593,11 @@ impl Encoder {
                 drop(encoder);
                 Ok(())
             })
-        }?;
+        }
+        .map_err(|fault| match fault {
+            crate::image::sys::strcodec::OutputFault::Limit => Error::OutputLimit,
+            crate::image::sys::strcodec::OutputFault::Io(error) => Error::Io(error),
+        })?;
         result.map_err(Error::Codec)
     }
 
