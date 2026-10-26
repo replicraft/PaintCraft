@@ -1,6 +1,8 @@
 //! Frozen acquired file identities shared by native resource consumers.
 mod capture;
+mod private;
 use paintcraft_core::types::{Error, ErrorCode, Result};
+pub use private::PrivateSource;
 use std::{path::Path, sync::Arc};
 
 /// Keep the actual acquired file open so its identity survives rename/unlink
