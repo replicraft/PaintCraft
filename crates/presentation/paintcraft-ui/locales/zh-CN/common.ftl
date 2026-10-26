@@ -510,3 +510,5 @@ icns-container-metadata-will-not-be-kept-in-the-imported-picture = 导入的图�
 the-icon-s-logical-size-and-retina-density-will-not-be-kept-in-the-imported-picture = 导入的图片不会保留图标的逻辑大小和 Retina 像素密度。
 
 the-jpeg-xr-picture-s-print-resolution-will-not-be-kept = 不会保留 JPEG XR 图片的打印分辨率。
+
+default-96-dpi = 默认值（96 dpi）

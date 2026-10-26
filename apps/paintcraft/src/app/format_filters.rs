@@ -43,6 +43,9 @@ impl App {
                 filters[0].extensions.push("jxl".into());
                 filters[0]
                     .extensions
+                    .extend(["jxr".into(), "wdp".into(), "wmp".into()]);
+                filters[0]
+                    .extensions
                     .extend(["ico".into(), "cur".into(), "icns".into()]);
                 filters[0].extensions.extend(["svg".into(), "svgz".into()]);
             }

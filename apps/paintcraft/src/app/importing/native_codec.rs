@@ -16,6 +16,8 @@ pub(super) struct Source {
     stamp: controller::PreviewStamp,
     job: Option<controller::background::ImportPending>,
     prepared: Option<PreparedImport>,
+    review: Option<review::Review>,
+    preview_budget: paintcraft_runtime::SharedBudget,
 }
 fn owner(app: &App) -> wire::Owner {
     let mut owner = app.editor.native_import_owner();
@@ -51,15 +53,45 @@ impl App {
         self.stage_native_jxl_with_launch(path, Box::new(launch))
     }
     fn stage_native_jxl_with_launch(&mut self, path: PathBuf, launch: Launch) -> Result<()> {
+        self.stage_native_codec(
+            path,
+            Family::Jxl,
+            wire::Codec::JxlRgba8,
+            wire::NATIVE_JXL_IMPORT_VARIANT,
+            launch,
+        )
+    }
+    pub(crate) fn stage_native_jxr(&mut self, path: PathBuf) -> Result<()> {
+        self.stage_native_codec(
+            path,
+            Family::Jxr,
+            wire::Codec::JxrRgb8,
+            wire::NATIVE_JXR_IMPORT_VARIANT,
+            Box::new(launch),
+        )
+    }
+    fn stage_native_codec(
+        &mut self,
+        path: PathBuf,
+        family: Family,
+        codec: wire::Codec,
+        variant: &str,
+        launch: Launch,
+    ) -> Result<()> {
         let mut request = Request::new(
             self.format_frontend(),
             Operation::ImportConvert,
-            Family::Jxl,
+            family,
             Platform::Native,
         );
         request.extension = path.extension().and_then(|value| value.to_str());
-        request.variant = Some(wire::NATIVE_JXL_IMPORT_VARIANT);
-        registry::admission(request).require_allowed(request)?;
+        request.variant = Some(variant);
+        match registry::admission(request) {
+            registry::Decision::Allowed => {}
+            registry::Decision::AllowedWithPreflight(registry::Reason::ConvertRequiresConsent)
+                if family == Family::Jxr => {}
+            other => other.require_allowed(request)?,
+        }
         if self.pending_import.is_some()
             || self.has_document_drafts()
             || self.editor.has_pending_edits()
@@ -91,6 +123,7 @@ impl App {
             )
         })?;
         let residency = service.import_residency();
+        let preview_budget = service.metadata_budget();
         let captured = owner(self);
         let input = path.clone();
         let job_identity = identity.clone();
@@ -103,14 +136,14 @@ impl App {
                 input,
                 identity: job_identity,
                 length,
-                codec: wire::Codec::JxlRgba8,
+                codec,
                 owner: captured,
                 pixels: wire::PIXELS_MAX,
                 deadline: Duration::from_secs(10),
                 application_version: env!("CARGO_PKG_VERSION").into(),
                 expected_sha256: None,
             }
-            .prepare_jxl(residency, lease, &check, &|| Ok(captured), launch)
+            .prepare_import(residency, lease, &check, &|| Ok(captured), launch)
         })?;
         self.stage_candidate(
             Candidate::NativeCodec(Box::new(Source {
@@ -118,6 +151,8 @@ impl App {
                 stamp: self.editor.preview_stamp(),
                 job: Some(job),
                 prepared: None,
+                review: None,
+                preview_budget,
             })),
             path.clone(),
             String::new(),
@@ -153,7 +188,29 @@ impl App {
         if let Some(result) = source.job.as_ref().and_then(|job| job.poll()) {
             source.job = None;
             match result {
-                Ok(prepared) => source.prepared = Some(prepared),
+                Ok(prepared) => {
+                    if !prepared.losses().is_empty() {
+                        if prepared
+                            .losses()
+                            .iter()
+                            .any(|loss| import_loss_description(loss).is_none())
+                        {
+                            self.confirm = None;
+                            self.editor
+                                .set_status("Cannot open: Unrecognized codec import limitation");
+                            return;
+                        }
+                        match review::Review::new(ctx, &prepared, source.preview_budget.clone()) {
+                            Ok(review) => source.review = Some(review),
+                            Err(error) => {
+                                self.confirm = None;
+                                self.editor.set_status(format!("Cannot open: {error}"));
+                                return;
+                            }
+                        }
+                    }
+                    source.prepared = Some(prepared);
+                }
                 Err(error) => {
                     self.confirm = None;
                     self.editor.set_status(format!("Cannot open: {error}"));
@@ -161,6 +218,7 @@ impl App {
                 }
             }
         }
+        let mut accept = false;
         let response = egui::Modal::new(egui::Id::unique("native-codec-import")).show(ctx, |ui| {
             ui.heading(t!(ctx, "Import image"));
             ui.add(
@@ -180,6 +238,12 @@ impl App {
                 });
                 ctx.request_repaint_after(Duration::from_millis(16));
             }
+            if let (Some(review), Some(prepared)) = (&mut source.review, &source.prepared) {
+                let ready = review.show(ui, prepared);
+                accept = ui
+                    .add_enabled(ready, egui::Button::new(t!(ctx, "Open image")))
+                    .clicked();
+            }
             ui.button(t!(ctx, "Cancel")).clicked()
         });
         if ctx.current_pass_index() != 0 {
@@ -192,7 +256,12 @@ impl App {
             self.editor.set_status(t!(ctx, "Import cancelled."));
             return;
         }
-        if source.prepared.is_some() {
+        if source
+            .prepared
+            .as_ref()
+            .is_some_and(|prepared| prepared.losses().is_empty())
+            || accept
+        {
             let result = (|| {
                 if !source.current(self) {
                     return Err(Error::new(
@@ -203,7 +272,17 @@ impl App {
                 let prepared = source.prepared.take().ok_or_else(|| {
                     Error::new(ErrorCode::ConflictStaleBase, "Codec import is not ready")
                 })?;
-                let adopted = prepared.adopt(&|| Ok(()), &|| Ok(owner(self)))?;
+                let losses: Vec<String> = if accept {
+                    prepared
+                        .losses()
+                        .iter()
+                        .map(|loss| (*loss).into())
+                        .collect()
+                } else {
+                    Vec::new()
+                };
+                let adopted =
+                    prepared.adopt_with_losses(&losses, &|| Ok(()), &|| Ok(owner(self)))?;
                 self.guard_asset_adoption(&adopted.input, Some(&adopted.identity))?;
                 let mut editor = Editor::with_document(adopted.document, None);
                 editor.invalidate_saved_state();
@@ -235,3 +314,10 @@ mod installed_tests;
 #[cfg(test)]
 #[path = "native_codec/tests.rs"]
 mod tests;
+
+#[path = "native_codec/review.rs"]
+mod review;
+
+#[cfg(test)]
+#[path = "native_codec/jxr_installed_tests.rs"]
+mod jxr_installed_tests;

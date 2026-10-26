@@ -510,3 +510,5 @@ icns-container-metadata-will-not-be-kept-in-the-imported-picture = 読み込ん�
 the-icon-s-logical-size-and-retina-density-will-not-be-kept-in-the-imported-picture = 読み込んだ画像にはアイコンの論理サイズと Retina の密度は保持されません。
 
 the-jpeg-xr-picture-s-print-resolution-will-not-be-kept = JPEG XR 画像の印刷解像度は保持されません。
+
+default-96-dpi = 既定値（96 dpi）

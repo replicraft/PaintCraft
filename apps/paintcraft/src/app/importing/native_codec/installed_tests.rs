@@ -57,7 +57,13 @@ fn copied_installed_helper_adopts_exact_pixels_and_refuses_stale_owners() {
         ),
         (
             "qualified_import_variants",
-            Value::Array(vec![Value::str(wire::NATIVE_JXL_IMPORT_VARIANT)]),
+            Value::Array(
+                wire::QUALIFIED_NATIVE_IMPORT_VARIANTS
+                    .iter()
+                    .copied()
+                    .map(Value::str)
+                    .collect(),
+            ),
         ),
     ]);
     fs::write(
@@ -68,6 +74,7 @@ fn copied_installed_helper_adopts_exact_pixels_and_refuses_stale_owners() {
     for test in [
         "importing::native_codec::installed_tests::fixture_real_installed_jxl",
         "importing::native_codec::installed_tests::fixture_running_helper_cancel",
+        "importing::native_codec::jxr_installed_tests::fixture_real_installed_jxr_review",
     ] {
         let output = Command::new(&child)
             .args(["--exact", test, "--ignored", "--nocapture"])

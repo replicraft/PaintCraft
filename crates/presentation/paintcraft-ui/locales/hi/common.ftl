@@ -510,3 +510,5 @@ icns-container-metadata-will-not-be-kept-in-the-imported-picture = आयात�
 the-icon-s-logical-size-and-retina-density-will-not-be-kept-in-the-imported-picture = आयातित चित्र में आइकन का तार्किक आकार और Retina घनत्व नहीं रखा जाएगा।
 
 the-jpeg-xr-picture-s-print-resolution-will-not-be-kept = JPEG XR चित्र का प्रिंट रिज़ॉल्यूशन बनाए नहीं रखा जाएगा।
+
+default-96-dpi = डिफ़ॉल्ट (96 dpi)

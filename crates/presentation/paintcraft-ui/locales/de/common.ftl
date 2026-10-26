@@ -510,3 +510,5 @@ icns-container-metadata-will-not-be-kept-in-the-imported-picture = ICNS-Containe
 the-icon-s-logical-size-and-retina-density-will-not-be-kept-in-the-imported-picture = Die logische Symbolgröße und Retina-Dichte werden im importierten Bild nicht beibehalten.
 
 the-jpeg-xr-picture-s-print-resolution-will-not-be-kept = Die Druckauflösung des JPEG-XR-Bildes wird nicht beibehalten.
+
+default-96-dpi = Standard (96 dpi)
