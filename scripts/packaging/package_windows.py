@@ -26,6 +26,7 @@ def package(version, target, binary, output):
                         "-d", f"CodecWorker={helper}",
                         "-d", f"CodecManifest={Path(directory) / codec_worker.MANIFEST}",
                         "-d", f"CodecNotice={Path(directory) / codec_worker.NOTICE}",
+                        "-d", f"AvifCodecNotice={Path(directory) / codec_worker.AVIF_NOTICE}",
                         "-d", f"Icon={release.ROOT / 'assets/paintcraft-icon.ico'}",
                         "-d", f"License={release.ROOT / 'LICENSE'}", "-o", str(installer),
                         "-d", f"FontLicenses={release.ROOT / 'packaging/FONT_LICENSES.txt'}",

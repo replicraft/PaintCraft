@@ -109,9 +109,35 @@ class CodecWorkerTests(unittest.TestCase):
             codec_worker.copy(self.binary, destination, self.version, self.target)
         self.assertEqual(foreign.read_bytes(), expected)
 
+    def test_avif_contract_and_license_are_exact_and_ambiguous_markers_refuse(self):
+        original = self.helper.read_bytes()
+        v5 = original.replace(codec_worker.BUILD_PREFIX, codec_worker.AVIF_BUILD_PREFIX).replace(codec_worker.BUILD_SUFFIX, codec_worker.AVIF_BUILD_SUFFIX)
+        self.helper.write_bytes(v5)
+        destination = self.root / "avif-output"
+        destination.mkdir()
+        codec_worker.copy(self.binary, destination, self.version, self.target)
+        metadata = json.loads((destination / codec_worker.MANIFEST).read_bytes())
+        self.assertEqual(metadata["profile"], codec_worker.AVIF_PROFILE)
+        self.assertEqual(metadata["qualified_import_variants"], codec_worker.NATIVE_VARIANTS + ["native-avif-srgb8-worker-v1"])
+        self.assertEqual((destination / codec_worker.AVIF_NOTICE).read_bytes(), (release.ROOT / "apps/paintcraft-codec-worker/vendor/dav1d/COPYING").read_bytes())
+        codec_worker.verify_manifest(destination, self.version, self.target)
+        for invalid in [v5 + codec_worker.BUILD_PREFIX, v5.replace(b"ALLOC1", b"ALLOC0"),
+                        v5.replace(b"DAV1D154", b"DAV1D130")]:
+            self.helper.write_bytes(invalid)
+            with self.assertRaises(ValueError):
+                codec_worker.prepare(self.binary, self.version, self.target)
+        for invalid_notice in [b"", b"wrong license"]:
+            (destination / codec_worker.AVIF_NOTICE).write_bytes(invalid_notice)
+            with self.assertRaises(ValueError):
+                codec_worker.verify_manifest(destination, self.version, self.target)
+
     def test_cli_and_desktop_workflow_share_one_helper_cargo_build(self):
         workflow = (release.ROOT / ".github/workflows/release.yml").read_text()
         self.assertIn("-p paintcraft -p paintcraft-cli -p paintcraft-codec-worker --target", workflow)
+        self.assertIn("--features paintcraft-codec-worker/avif-codec", workflow)
+        self.assertIn("meson==1.12.1 ninja==1.13.2", workflow)
+        self.assertIn("--test installed_codec_worker -- --include-ignored", workflow)
+        self.assertIn('setup.arg("-Db_vscrt=mt")', (release.ROOT / "apps/paintcraft-codec-worker/build.rs").read_text())
 
 
 if __name__ == "__main__":

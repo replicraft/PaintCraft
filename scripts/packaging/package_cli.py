@@ -22,7 +22,7 @@ def package(version, target, binary, output):
         helper = codec_worker.copy(binary, payload, version, target)
         files = [(binary, executable), (release.ROOT / "LICENSE", "LICENSE"),
                  (helper, helper.name), (payload / codec_worker.MANIFEST, codec_worker.MANIFEST),
-                 (payload / codec_worker.NOTICE, codec_worker.NOTICE)]
+                 *[(payload / name, name) for name in codec_worker.NOTICES]]
         if windows:
             with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as stream:
                 for source, destination in files:
