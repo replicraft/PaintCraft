@@ -330,15 +330,16 @@ fn installed_fixture() {
             },
         )
         .unwrap_err();
-        // The approved private child maps the selected API's untyped Io error
-        // (cap refusal or callback failure) to CodecFailed. A typed sink-error
-        // API remains separate followup; do not infer ResourceLimit from text.
+        // Seekcap2 reports the selected API's typed OutputLimit as ResourceLimit.
+        // Other backend/transport corruption stays CodecFailed; never classify
+        // a failure by matching arbitrary diagnostic text.
         assert_eq!(
             error.code,
             match during {
-                0 | 4 => ErrorCode::CodecFailed,
+                0 => ErrorCode::ResourceLimit,
                 1 => ErrorCode::OperationCancelled,
                 2 | 3 => ErrorCode::ConflictStaleBase,
+                4 => ErrorCode::CodecFailed,
                 _ => unreachable!(),
             }
         );
