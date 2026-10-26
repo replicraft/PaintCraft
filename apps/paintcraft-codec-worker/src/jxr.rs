@@ -42,14 +42,34 @@ fn verify_file(path: &Path, source: &[u8]) -> Result<()> {
     }
     Ok(())
 }
+/// Closed argv-selected contract; ordinary requests always use PublicImport.
+#[derive(Clone, Copy, Debug)]
+pub(crate) enum Profile {
+    PublicImport,
+    #[cfg(feature = "jxr-encode")]
+    WriterOutput,
+}
+fn admit(header: wire::Header, source: &[u8], profile: Profile) -> Result<jxr::Inspection> {
+    if header.codec != wire::Codec::JxrRgb8 {
+        return Err(invalid("JXR source mode requires the JXR codec"));
+    }
+    header.verify_source(source)?;
+    match profile {
+        Profile::PublicImport => jxr::inspect_checked(source, u64::from(header.pixels), &|| Ok(())),
+        #[cfg(feature = "jxr-encode")]
+        Profile::WriterOutput => {
+            Ok(jxr::assess_writer_import(source, u64::from(header.pixels), &|| Ok(()))?.source())
+        }
+    }
+}
 pub fn execute(
     header: wire::Header,
     source: &[u8],
     path: &Path,
+    profile: Profile,
     peak: &dyn Fn() -> u64,
 ) -> Result<Vec<u8>> {
-    header.verify_source(source)?;
-    let info = jxr::inspect_checked(source, u64::from(header.pixels), &|| Ok(()))?;
+    let info = admit(header, source, profile)?;
     verify_file(path, source)?;
     // Audited open -> factory -> create_ws_file_owned(Read) -> decoder Initialize.
     // None of these calls uses the upstream shared-temp convenience APIs.
@@ -114,4 +134,69 @@ pub fn execute(
         },
         peak(),
     )
+}
+
+#[cfg(all(test, feature = "jxr-encode"))]
+mod tests {
+    use super::*;
+    use std::sync::Arc;
+    fn request(source: &[u8]) -> wire::Request {
+        wire::Request::capture_for(
+            wire::Codec::JxrRgb8,
+            Arc::new(source.to_vec()),
+            wire::Owner {
+                session: uuid::Uuid::new_v4(),
+                state: uuid::Uuid::new_v4(),
+                epoch: 1,
+                frontend: 3,
+            },
+            1_048_576,
+        )
+        .unwrap()
+    }
+    #[test]
+    fn explicit_writer_mode_admits_long_geometry_without_changing_legacy() {
+        const WIDE: &[u8] = include_bytes!(
+            "../../../crates/services/paintcraft-formats/tests/jxr-fixtures/white-rgb8-4096x1.jxr"
+        );
+        const TALL: &[u8] = include_bytes!(
+            "../../../crates/services/paintcraft-formats/tests/jxr-fixtures/white-rgb8-1x4096.jxr"
+        );
+        for source in [WIDE, TALL] {
+            let request = request(source);
+            assert!(admit(request.header, source, Profile::WriterOutput).is_ok());
+            assert_eq!(
+                admit(request.header, source, Profile::PublicImport)
+                    .unwrap_err()
+                    .code,
+                ErrorCode::CapabilityUnsupported
+            );
+            let mut changed = source.to_vec();
+            changed[0] ^= 1;
+            assert!(admit(request.header, &changed, Profile::WriterOutput).is_err());
+            let mut header = request.header;
+            header.codec = wire::Codec::JxlRgba8;
+            assert!(admit(header, source, Profile::WriterOutput).is_err());
+        }
+    }
+    #[test]
+    fn writer_mode_refuses_source_metadata_and_smaller_pixel_budget() {
+        let source = include_bytes!(
+            "../../../crates/services/paintcraft-formats/tests/jxr-fixtures/rgb8-dpi96x144.jxr"
+        );
+        let captured = request(source);
+        assert!(admit(captured.header, source, Profile::PublicImport).is_ok());
+        assert!(admit(captured.header, source, Profile::WriterOutput).is_err());
+        let source = include_bytes!(
+            "../../../crates/services/paintcraft-formats/tests/jxr-fixtures/white-rgb8-4096x1.jxr"
+        );
+        let mut header = request(source).header;
+        header.pixels = 4095;
+        assert_eq!(
+            admit(header, source, Profile::WriterOutput)
+                .unwrap_err()
+                .code,
+            ErrorCode::ResourceLimit
+        );
+    }
 }

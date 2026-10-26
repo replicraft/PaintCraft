@@ -6,6 +6,13 @@ fn invalid(message: &str) -> Error {
     Error::new(ErrorCode::CodecFailed, message)
 }
 pub fn run(jxr_source: Option<&std::path::Path>) -> Result<()> {
+    run_profile(jxr_source, crate::jxr::Profile::PublicImport)
+}
+#[cfg(feature = "jxr-encode")]
+pub fn run_writer(path: &std::path::Path) -> Result<()> {
+    run_profile(Some(path), crate::jxr::Profile::WriterOutput)
+}
+fn run_profile(jxr_source: Option<&std::path::Path>, profile: crate::jxr::Profile) -> Result<()> {
     rayon::ThreadPoolBuilder::new()
         .num_threads(1)
         .build_global()
@@ -32,7 +39,9 @@ pub fn run(jxr_source: Option<&std::path::Path>) -> Result<()> {
         if header.codec == wire::Codec::JxrRgb8 {
             let path =
                 jxr_source.ok_or_else(|| invalid("JXR needs parent-owned private source path"))?;
-            crate::jxr::execute(header, &source, path, &|| crate::HEAP.peak() as u64)
+            crate::jxr::execute(header, &source, path, profile, &|| {
+                crate::HEAP.peak() as u64
+            })
         } else if jxr_source.is_some() {
             Err(invalid("Private JXR path supplied for another codec"))
         } else if header.codec.is_float() {

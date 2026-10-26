@@ -53,6 +53,10 @@ fn main() {
     let result = match args.as_slice() {
         #[cfg(feature = "jxr-encode")]
         [flag] if flag == "--jxr-encode" => jxr_encode::run(),
+        #[cfg(feature = "jxr-encode")]
+        [flag, path] if flag == "--jxr-writer-source" => {
+            worker::run_writer(std::path::Path::new(path))
+        }
         [] => worker::run(None),
         [flag, path] if flag == "--jxr-source" => worker::run(Some(std::path::Path::new(path))),
         _ => std::process::exit(2),
