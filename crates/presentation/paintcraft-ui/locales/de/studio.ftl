@@ -179,3 +179,45 @@ this-preset-includes-unsupported-brush-behavior = Diese Vorgabe enthält nicht u
 sampled-brush-stroke-cancelled-point-or-coordinate-limit-exceeded = Pinselstrich abgebrochen: Punkt- oder Koordinatenlimit überschritten.
 
 sampled-brush-stroke-exceeds-the-browser-work-limit-use-shorter-strokes-or-a-smaller-original-tip = Der Pinselstrich überschreitet das Verarbeitungslimit des Browsers. Verwende kürzere Striche oder eine kleinere Originalspitze.
+
+place-custom-shape = Eigene Form platzieren
+
+place-shape = Form platzieren
+
+place-shape-more = Form platzieren…
+
+shape-preview = Formvorschau
+
+i-accept-converting-this-shape-to-pixels = Ich akzeptiere die Umwandlung dieser Form in Pixel.
+
+this-shape-becomes-pixels-at-the-chosen-size-its-original-vector-resource-stays-unchanged = Diese Form wird in der gewählten Größe in Pixel umgewandelt. Ihre ursprüngliche Vektorressource bleibt unverändert.
+
+curves-may-look-slightly-different-from-the-original-shape = Kurven können etwas anders aussehen als in der ursprünglichen Form.
+
+canvas-edges-and-the-current-selection-clip-the-placed-shape = Leinwandränder und die aktuelle Auswahl beschneiden die platzierte Form.
+
+choose-a-valid-position-and-size-within-the-placement-limits = Wähle eine gültige Position und Größe innerhalb der Platzierungsgrenzen.
+
+format-could-not-place-the-shape-detail = Die Form konnte nicht platziert werden: { $detail }
+
+the-document-changed-choose-the-shape-again = Das Dokument wurde geändert; wähle die Form erneut.
+
+shape-placed = Form platziert.
+
+this-shape-has-unsupported-path-geometry = Die Pfadgeometrie dieser Form wird nicht unterstützt.
+
+shapes-with-multiple-paths-cannot-be-placed-yet = Formen mit mehreren Pfaden können noch nicht platziert werden.
+
+open-paths-cannot-be-placed-yet = Offene Pfade können noch nicht platziert werden.
+
+this-shape-uses-unsupported-boolean-operations = Diese Form verwendet nicht unterstützte boolesche Operationen.
+
+shapes-that-fill-the-outside-area-cannot-be-placed-yet = Formen, die den Außenbereich füllen, können noch nicht platziert werden.
+
+this-shape-includes-unsupported-placement-metadata = Diese Form enthält nicht unterstützte Platzierungsmetadaten.
+
+this-shape-s-control-points-exceed-the-placement-limits = Die Kontrollpunkte dieser Form überschreiten die Platzierungsgrenzen.
+
+x = X
+
+y = Y

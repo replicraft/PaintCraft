@@ -179,3 +179,45 @@ this-preset-includes-unsupported-brush-behavior = This preset includes unsupport
 sampled-brush-stroke-cancelled-point-or-coordinate-limit-exceeded = Sampled brush stroke cancelled: point or coordinate limit exceeded.
 
 sampled-brush-stroke-exceeds-the-browser-work-limit-use-shorter-strokes-or-a-smaller-original-tip = Sampled brush stroke exceeds the browser work limit. Use shorter strokes or a smaller original tip.
+
+place-custom-shape = Place custom shape
+
+place-shape = Place shape
+
+place-shape-more = Place shape…
+
+shape-preview = Shape preview
+
+i-accept-converting-this-shape-to-pixels = I accept converting this shape to pixels.
+
+this-shape-becomes-pixels-at-the-chosen-size-its-original-vector-resource-stays-unchanged = This shape becomes pixels at the chosen size. Its original vector resource stays unchanged.
+
+curves-may-look-slightly-different-from-the-original-shape = Curves may look slightly different from the original shape.
+
+canvas-edges-and-the-current-selection-clip-the-placed-shape = Canvas edges and the current selection clip the placed shape.
+
+choose-a-valid-position-and-size-within-the-placement-limits = Choose a valid position and size within the placement limits.
+
+format-could-not-place-the-shape-detail = Could not place the shape: { $detail }
+
+the-document-changed-choose-the-shape-again = The document changed; choose the shape again.
+
+shape-placed = Shape placed.
+
+this-shape-has-unsupported-path-geometry = This shape has unsupported path geometry.
+
+shapes-with-multiple-paths-cannot-be-placed-yet = Shapes with multiple paths cannot be placed yet.
+
+open-paths-cannot-be-placed-yet = Open paths cannot be placed yet.
+
+this-shape-uses-unsupported-boolean-operations = This shape uses unsupported Boolean operations.
+
+shapes-that-fill-the-outside-area-cannot-be-placed-yet = Shapes that fill the outside area cannot be placed yet.
+
+this-shape-includes-unsupported-placement-metadata = This shape includes unsupported placement metadata.
+
+this-shape-s-control-points-exceed-the-placement-limits = This shape's control points exceed the placement limits.
+
+x = X
+
+y = Y

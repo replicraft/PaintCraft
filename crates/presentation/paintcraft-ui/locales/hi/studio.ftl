@@ -179,3 +179,45 @@ this-preset-includes-unsupported-brush-behavior = इस प्रीसेट �
 sampled-brush-stroke-cancelled-point-or-coordinate-limit-exceeded = नमूना ब्रश स्ट्रोक रद्द: बिंदु या निर्देशांक सीमा पार हुई।
 
 sampled-brush-stroke-exceeds-the-browser-work-limit-use-shorter-strokes-or-a-smaller-original-tip = नमूना ब्रश स्ट्रोक ब्राउज़र की कार्य सीमा पार करता है। छोटे स्ट्रोक या छोटे मूल आकार की नोक उपयोग करें।
+
+place-custom-shape = कस्टम आकृति रखें
+
+place-shape = आकृति रखें
+
+place-shape-more = आकृति रखें…
+
+shape-preview = आकृति पूर्वावलोकन
+
+i-accept-converting-this-shape-to-pixels = मैं इस आकृति को पिक्सेल में बदलना स्वीकार करता हूँ।
+
+this-shape-becomes-pixels-at-the-chosen-size-its-original-vector-resource-stays-unchanged = यह आकृति चुने हुए आकार में पिक्सेल बनती है। मूल वेक्टर संसाधन अपरिवर्तित रहता है।
+
+curves-may-look-slightly-different-from-the-original-shape = वक्र मूल आकृति से थोड़े अलग दिख सकते हैं।
+
+canvas-edges-and-the-current-selection-clip-the-placed-shape = कैनवास के किनारे और वर्तमान चयन रखी गई आकृति को काटते हैं।
+
+choose-a-valid-position-and-size-within-the-placement-limits = रखने की सीमा के भीतर मान्य स्थान और आकार चुनें।
+
+format-could-not-place-the-shape-detail = आकृति नहीं रखी जा सकी: { $detail }
+
+the-document-changed-choose-the-shape-again = दस्तावेज़ बदल गया; आकृति फिर चुनें।
+
+shape-placed = आकृति रखी गई।
+
+this-shape-has-unsupported-path-geometry = इस आकृति की पथ ज्यामिति समर्थित नहीं है।
+
+shapes-with-multiple-paths-cannot-be-placed-yet = एकाधिक पथ वाली आकृतियाँ अभी नहीं रखी जा सकतीं।
+
+open-paths-cannot-be-placed-yet = खुले पथ अभी नहीं रखे जा सकते।
+
+this-shape-uses-unsupported-boolean-operations = यह आकृति असमर्थित बूलियन संक्रियाएँ उपयोग करती है।
+
+shapes-that-fill-the-outside-area-cannot-be-placed-yet = बाहरी क्षेत्र भरने वाली आकृतियाँ अभी नहीं रखी जा सकतीं।
+
+this-shape-includes-unsupported-placement-metadata = इस आकृति में असमर्थित स्थान मेटाडेटा है।
+
+this-shape-s-control-points-exceed-the-placement-limits = इस आकृति के नियंत्रण बिंदु रखने की सीमा पार करते हैं।
+
+x = X
+
+y = Y

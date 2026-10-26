@@ -179,3 +179,45 @@ this-preset-includes-unsupported-brush-behavior = 此预设包含不支持的画
 sampled-brush-stroke-cancelled-point-or-coordinate-limit-exceeded = 采样画笔笔划已取消：超出点数或坐标限制。
 
 sampled-brush-stroke-exceeds-the-browser-work-limit-use-shorter-strokes-or-a-smaller-original-tip = 采样画笔笔划超出浏览器处理限制。请使用更短的笔划或原始尺寸更小的笔尖。
+
+place-custom-shape = 放置自定义形状
+
+place-shape = 放置形状
+
+place-shape-more = 放置形状…
+
+shape-preview = 形状预览
+
+i-accept-converting-this-shape-to-pixels = 我接受将此形状转换为像素。
+
+this-shape-becomes-pixels-at-the-chosen-size-its-original-vector-resource-stays-unchanged = 此形状将按所选大小转换为像素，原始矢量资源保持不变。
+
+curves-may-look-slightly-different-from-the-original-shape = 曲线外观可能与原始形状略有不同。
+
+canvas-edges-and-the-current-selection-clip-the-placed-shape = 画布边缘和当前选区会裁剪放置的形状。
+
+choose-a-valid-position-and-size-within-the-placement-limits = 请在放置限制内选择有效的位置和大小。
+
+format-could-not-place-the-shape-detail = 无法放置形状：{ $detail }
+
+the-document-changed-choose-the-shape-again = 文档已更改，请重新选择形状。
+
+shape-placed = 形状已放置。
+
+this-shape-has-unsupported-path-geometry = 此形状具有不支持的路径几何形状。
+
+shapes-with-multiple-paths-cannot-be-placed-yet = 暂不支持放置具有多条路径的形状。
+
+open-paths-cannot-be-placed-yet = 暂不支持放置开放路径。
+
+this-shape-uses-unsupported-boolean-operations = 此形状使用不支持的布尔运算。
+
+shapes-that-fill-the-outside-area-cannot-be-placed-yet = 暂不支持放置填充外部区域的形状。
+
+this-shape-includes-unsupported-placement-metadata = 此形状包含不支持的放置元数据。
+
+this-shape-s-control-points-exceed-the-placement-limits = 此形状的控制点超出放置限制。
+
+x = X
+
+y = Y

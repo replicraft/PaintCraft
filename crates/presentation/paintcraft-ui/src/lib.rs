@@ -12,6 +12,7 @@ pub mod page_import;
 pub mod palette;
 pub mod pcx_export;
 pub mod shape_assets;
+pub mod shape_placement;
 pub mod svg_import;
 pub mod view;
 pub mod widgets;

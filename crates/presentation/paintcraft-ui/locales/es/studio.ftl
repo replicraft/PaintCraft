@@ -179,3 +179,45 @@ this-preset-includes-unsupported-brush-behavior = Este ajuste incluye un comport
 sampled-brush-stroke-cancelled-point-or-coordinate-limit-exceeded = Trazo cancelado: se superó el límite de puntos o coordenadas.
 
 sampled-brush-stroke-exceeds-the-browser-work-limit-use-shorter-strokes-or-a-smaller-original-tip = El trazo supera el límite de trabajo del navegador. Usa trazos más cortos o una punta de menor tamaño original.
+
+place-custom-shape = Colocar forma personalizada
+
+place-shape = Colocar forma
+
+place-shape-more = Colocar forma…
+
+shape-preview = Vista previa de la forma
+
+i-accept-converting-this-shape-to-pixels = Acepto convertir esta forma en píxeles.
+
+this-shape-becomes-pixels-at-the-chosen-size-its-original-vector-resource-stays-unchanged = Esta forma se convierte en píxeles al tamaño elegido. Su recurso vectorial original no cambia.
+
+curves-may-look-slightly-different-from-the-original-shape = Las curvas pueden verse ligeramente distintas a la forma original.
+
+canvas-edges-and-the-current-selection-clip-the-placed-shape = Los bordes del lienzo y la selección actual recortan la forma colocada.
+
+choose-a-valid-position-and-size-within-the-placement-limits = Elige una posición y un tamaño válidos dentro de los límites de colocación.
+
+format-could-not-place-the-shape-detail = No se pudo colocar la forma: { $detail }
+
+the-document-changed-choose-the-shape-again = El documento cambió; vuelve a elegir la forma.
+
+shape-placed = Forma colocada.
+
+this-shape-has-unsupported-path-geometry = Esta forma tiene una geometría de trazado no compatible.
+
+shapes-with-multiple-paths-cannot-be-placed-yet = Todavía no se pueden colocar formas con varios trazados.
+
+open-paths-cannot-be-placed-yet = Todavía no se pueden colocar trazados abiertos.
+
+this-shape-uses-unsupported-boolean-operations = Esta forma usa operaciones booleanas no compatibles.
+
+shapes-that-fill-the-outside-area-cannot-be-placed-yet = Todavía no se pueden colocar formas que rellenan el área exterior.
+
+this-shape-includes-unsupported-placement-metadata = Esta forma incluye metadatos de colocación no compatibles.
+
+this-shape-s-control-points-exceed-the-placement-limits = Los puntos de control de esta forma superan los límites de colocación.
+
+x = X
+
+y = Y

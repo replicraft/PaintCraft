@@ -14,6 +14,7 @@ pub struct Shape {
     pub width: u32,
     pub height: u32,
     pub paths: Vec<Path>,
+    pub placement_restrictions: Vec<&'static str>,
 }
 #[derive(Clone, Debug)]
 pub struct Resource {
@@ -27,6 +28,7 @@ pub enum Response {
     Import,
     Export,
     Select(usize),
+    Place,
 }
 
 pub fn dialog(
@@ -37,11 +39,19 @@ pub fn dialog(
     selected: usize,
 ) -> Response {
     let mut response = Response::Pending;
-    egui::Modal::new(egui::Id::unique("studio-shape-assets")).show(ctx, |ui| {
-        ui.set_width(520.0_f32.min((ctx.viewport_rect().width() - 48.0).max(220.0)));
+    let width = 520.0_f32.min((ctx.viewport_rect().width() - 48.0).max(220.0));
+    let frame = egui::Frame::popup(&ctx.style_of(ctx.theme()));
+    let id = egui::Id::unique("studio-shape-assets");
+    let area = egui::Modal::default_area(id)
+        .anchor(egui::Align2::CENTER_TOP, egui::vec2(0.0, 24.0))
+        .default_width(width + frame.total_margin().sum().x)
+        .default_height((ctx.viewport_rect().height() - 48.0).max(160.0));
+    egui::Modal::new(id).area(area).frame(frame).show(ctx, |ui| {
+        ui.set_width(width);
         ui.heading(t!(ctx, "Shape resources"));
         egui::ScrollArea::vertical()
             .id_salt("shape-resource-dialog")
+            .auto_shrink([false,false])
             .max_height((ctx.viewport_rect().height() - 160.0).max(120.0))
             .show(ui, |ui| {
                 ui.add_enabled_ui(!busy, |ui| {
@@ -84,6 +94,8 @@ pub fn dialog(
                         ui.label(t!(ctx, "Outline preview"));
                         ui.label(t!(ctx, "Fill and Boolean operations are preserved in the resource; this preview shows outlines only."));
                         preview(ui, shape);
+                        for reason in &shape.placement_restrictions{ui.label(t!(ctx,*reason));}
+                        if ui.add_enabled(!busy&&shape.placement_restrictions.is_empty(),egui::Button::new(t!(ctx,"Place shape…"))).clicked(){response=Response::Place;}
                     }
                 } else {
                     ui.label(t!(ctx, "Import an Adobe custom shapes file to browse its shape presets."));
@@ -186,6 +198,7 @@ mod tests {
                             id: "curve".into(),
                             width: 200,
                             height: 100,
+                            placement_restrictions: vec![],
                             paths: vec![Path {
                                 open,
                                 knots: vec![

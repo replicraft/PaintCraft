@@ -179,3 +179,45 @@ this-preset-includes-unsupported-brush-behavior = このプリセットには未
 sampled-brush-stroke-cancelled-point-or-coordinate-limit-exceeded = サンプルブラシの描画を中止しました。点数または座標の上限を超えました。
 
 sampled-brush-stroke-exceeds-the-browser-work-limit-use-shorter-strokes-or-a-smaller-original-tip = サンプルブラシの描画がブラウザーの処理上限を超えました。短い線か、元のサイズが小さい先端を使用してください。
+
+place-custom-shape = カスタム図形を配置
+
+place-shape = 図形を配置
+
+place-shape-more = 図形を配置…
+
+shape-preview = 図形のプレビュー
+
+i-accept-converting-this-shape-to-pixels = この図形をピクセルに変換することに同意します。
+
+this-shape-becomes-pixels-at-the-chosen-size-its-original-vector-resource-stays-unchanged = この図形は指定したサイズでピクセルになります。元のベクター素材は変更されません。
+
+curves-may-look-slightly-different-from-the-original-shape = 曲線の見た目は元の図形とわずかに異なる場合があります。
+
+canvas-edges-and-the-current-selection-clip-the-placed-shape = 配置した図形はキャンバスの端と現在の選択範囲で切り取られます。
+
+choose-a-valid-position-and-size-within-the-placement-limits = 配置の制限内で有効な位置とサイズを指定してください。
+
+format-could-not-place-the-shape-detail = 図形を配置できませんでした: { $detail }
+
+the-document-changed-choose-the-shape-again = ドキュメントが変更されました。図形を選び直してください。
+
+shape-placed = 図形を配置しました。
+
+this-shape-has-unsupported-path-geometry = この図形のパス形状には対応していません。
+
+shapes-with-multiple-paths-cannot-be-placed-yet = 複数のパスを持つ図形はまだ配置できません。
+
+open-paths-cannot-be-placed-yet = 開いたパスはまだ配置できません。
+
+this-shape-uses-unsupported-boolean-operations = この図形は未対応のブール演算を使用しています。
+
+shapes-that-fill-the-outside-area-cannot-be-placed-yet = 外側の領域を塗りつぶす図形はまだ配置できません。
+
+this-shape-includes-unsupported-placement-metadata = この図形には未対応の配置メタデータが含まれています。
+
+this-shape-s-control-points-exceed-the-placement-limits = この図形の制御点が配置の制限を超えています。
+
+x = X
+
+y = Y
