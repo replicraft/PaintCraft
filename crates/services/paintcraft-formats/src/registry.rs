@@ -227,6 +227,8 @@ pub fn capability(family: Family, operation: Operation, _platform: Platform) -> 
         }
         Family::Dcx if operation == Operation::ImportConvert => Some("pcx-dcx-page"),
         Family::Svg if operation == Operation::ImportConvert => Some("resvg-srgb-raster"),
+        Family::Icns if operation == Operation::ImportConvert => Some("icns-selected-entry"),
+        Family::Icns if operation == Operation::SaveAsCopy => Some("icns-fresh-png-entry-set"),
         Family::Ico | Family::Cur if operation == Operation::ImportConvert => {
             Some("ico-selected-entry")
         }
@@ -262,7 +264,7 @@ pub fn capability(family: Family, operation: Operation, _platform: Platform) -> 
             Family::Qoi | Family::Pnm | Family::Farbfeld | Family::Pcx | Family::Msp => {
                 matches!(operation, Operation::ImportConvert | Operation::ExportFlat)
             }
-            Family::Ico | Family::Cur => {
+            Family::Ico | Family::Cur | Family::Icns => {
                 matches!(operation, Operation::ImportConvert | Operation::SaveAsCopy)
             }
             Family::Paint | Family::Dcx | Family::Ora | Family::Psd | Family::Psb => {
@@ -302,10 +304,10 @@ pub fn admission(request: Request<'_>) -> Decision {
     let selected_page = request.family == Family::Dcx
         && request.operation == Operation::ImportConvert
         && request.variant == Some("dcx-selected-page");
-    let selected_entry = matches!(request.family, Family::Ico | Family::Cur)
+    let selected_entry = matches!(request.family, Family::Ico | Family::Cur | Family::Icns)
         && request.operation == Operation::ImportConvert
         && request.variant == Some("icon-selected-entry");
-    let fresh_entry_set = matches!(request.family, Family::Ico | Family::Cur)
+    let fresh_entry_set = matches!(request.family, Family::Ico | Family::Cur | Family::Icns)
         && request.operation == Operation::SaveAsCopy
         && request.variant == Some("icon-fresh-entry-set");
     let svg_rasterization = request.family == Family::Svg
@@ -317,13 +319,13 @@ pub fn admission(request: Request<'_>) -> Decision {
     {
         return Decision::TemporarilyUnavailable(Reason::VariantUnqualified);
     }
-    if matches!(request.family, Family::Ico | Family::Cur)
+    if matches!(request.family, Family::Ico | Family::Cur | Family::Icns)
         && request.operation == Operation::SaveAsCopy
         && !fresh_entry_set
     {
         return Decision::TemporarilyUnavailable(Reason::VariantUnqualified);
     }
-    if matches!(request.family, Family::Ico | Family::Cur)
+    if matches!(request.family, Family::Ico | Family::Cur | Family::Icns)
         && request.operation == Operation::ImportConvert
         && !selected_entry
     {
@@ -455,7 +457,7 @@ pub fn admit_import_page(
     Ok(family)
 }
 
-/// ICO/CUR is an explicit asset-entry conversion, never an implicit largest
+/// ICO/CUR/ICNS is an explicit asset-entry conversion, never an implicit largest
 /// image. Generic import discovery excludes it until a frontend has a selector.
 pub fn admit_import_entry(
     frontend: Frontend,
@@ -472,7 +474,18 @@ pub fn admit_import_entry(
         Operation::ImportConvert,
         Some("icon-selected-entry"),
     )?;
-    if !matches!(family, Family::Ico | Family::Cur)
+    if family == Family::Icns {
+        let directory = crate::icns::inspect(bytes, &|| Ok(()))?;
+        let selected = directory.entries.get(usize::from(entry)).ok_or_else(|| {
+            Error::new(ErrorCode::InputSchema, "ICNS entry index is out of range")
+        })?;
+        if selected.encoding == crate::icns::Encoding::Unqualified {
+            return Err(Error::new(
+                ErrorCode::CapabilityUnsupported,
+                "ICNS selected entry encoding or mask pairing is unqualified",
+            ));
+        }
+    } else if !matches!(family, Family::Ico | Family::Cur)
         || crate::icons::inspect(bytes)?
             .entries
             .get(usize::from(entry))
@@ -549,6 +562,8 @@ pub fn sniff(bytes: &[u8]) -> Option<Family> {
         Some(Family::Psb)
     } else if bytes.starts_with(b"DDS ") {
         Some(Family::Dds)
+    } else if bytes.len() >= 8 && bytes.starts_with(b"icns") {
+        Some(Family::Icns)
     } else if bytes.starts_with(&[0, 0, 1, 0]) {
         Some(Family::Ico)
     } else if bytes.starts_with(&[0, 0, 2, 0]) {

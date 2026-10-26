@@ -91,6 +91,7 @@ impl Family {
                 .any(|ext| ext.eq_ignore_ascii_case(extension)),
             Self::Paint => extension.eq_ignore_ascii_case("paint"),
             Self::Dcx => extension.eq_ignore_ascii_case("dcx"),
+            Self::Icns => extension.eq_ignore_ascii_case("icns"),
             Self::Ico => extension.eq_ignore_ascii_case("ico"),
             Self::Cur => extension.eq_ignore_ascii_case("cur"),
             Self::Qoi => extension.eq_ignore_ascii_case("qoi"),
