@@ -45,7 +45,7 @@ Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, 
 | JPEG XR | Native Studio explicit Import, CLI and native MCP `import_image` for `native-jxr-srgb8-worker-v1`, with `.jxr`, `.wdp` or `.wmp` aliases | Strict unsigned opaque RGB8, at most 64 MiB input and 4,194,304 pixels, through the verified same-build helper. Print resolution is discarded only with consent, including inferred 96 dpi. No ordinary Open, Classic/browser read, export or preserving Save |
 | HEIF/HEIC | Native Studio explicit Import, CLI and native MCP `import_image` for `native-heif-srgb8-worker-v1`, with `.heic`, `.heif` or `.hif` aliases | Direct-primary explicit sRGB8 color and optional straight8 alpha through the verified helper. YCbCr reconstruction and nonempty source item names require their actual loss consent. No ordinary Open, Classic/browser read, grid/ICC/HDR/deep color, preserving Save or HEIF writing |
 | ICO/CUR | Studio explicit selected-entry Import on desktop/browser; CLI `--entry` and MCP `entry`. Fresh multi-entry export in Studio desktop/browser, CLI `export-icons` and MCP `export_icons` | Reports every admitted entry and cursor hotspot before selection. Fresh exports use explicit sizes, RGBA PNG or 32-bit bitmap entries, independent aspect-ratio fitting, and per-entry CUR hotspots. Desktop/browser exports require a displayed preview and explicit loss consent; foreign preserving save remains unavailable |
-| PSD/PSB | Studio explicit Import on desktop/browser; CLI `import` and MCP `import_image` | RGB8 Normal raster-layer subset retains names, offsets, opacity, visibility and alpha. Metadata losses need explicit consent. Groups, masks, text, effects, clipping, high depth and foreign writing remain unavailable |
+| PSD/PSB | Studio explicit Import on desktop/browser; CLI `import` and MCP `import_image` | RGB8 Normal raster-layer subset retains names, offsets, opacity, visibility and alpha. Metadata losses need explicit consent. Groups, masks, text, effects, clipping and high depth remain unavailable. Internal fresh RGB8 layered writer has independent raw-layer/profile proof; public writing remains disabled pending original-application qualification |
 | SVG/SVGZ | Studio desktop/browser Import; CLI `import` with `--svg-width`/`--svg-height`; MCP `import_image` with `svg` options | Explicit size/DPI/fitting and rasterization consent. Studio previews use bundled fonts and additional font files; CLI/MCP accept outline fonts too. No Classic access, ordinary Open or SVG export |
 | MSP | Explicit Studio import/exact export in desktop, browser, CLI and MCP; headless Classic legacy import | DanM raw and admitted LinS row-RLE profile with independent Pillow pixel checks. Named metadata consent and frozen native source protection; no ordinary Classic Open, preserving MSP Save, hidden threshold/matte or MSP2 writer |
 | ICNS | Studio desktop/browser explicit selected-entry Import and fresh typed export; CLI `inspect-icns` / `import --entry` / `export-icns`; MCP `inspect_icns` / `import_image` / `export_icns` | Admitted PNG and small RGB/mask readers; eight explicit PNG output types. Logical size, Retina scale and physical pixels stay distinct. Displayed preview and loss consent required in Studio. No ordinary Open, preserving Save, Classic access, legacy writer or canonical ARGB support; native readback exclusions remain |
@@ -101,7 +101,7 @@ consumer paths and prerequisites, rather than treating every candidate as a depe
 
 1. **Extend isolated-reader qualification across supported platforms.** The narrow browser JPEG XL consumer now has actual production picker, adoption, PCND reopen and failure evidence below. Extend native JXL/JXR release-platform installation coverage and cross-browser qualification separately; browser quarantine is a logical failure policy, not a synchronous Worker-stop or aggregate physical-memory guarantee.
 2. **Close missing stock readers, starting with AVIF.** AVIF is export-only. HEIF now has the narrow native color import below; its broader camera/grid/ICC/HDR/deep-color and browser profiles remain unqualified. The current `image` `avif` feature enables the ravif writer, while its separate native decoder feature would add mp4parse/dav1d. Decode-before-limit behavior requires bounded preflight and isolated execution, independent color/alpha/metadata oracles, actual consumers and packaged dependencies before admission. A native AVIF profile is the next proposed independent increment; this audit does not enable it. HEIF writing remains prohibited.
-3. **Implement and qualify layered writes.** PDN/PAINT have restricted readers but no fresh or preserving writers; original Paint.NET/Windows Paint open/edit/resave evidence is still required. ORA's internal writer is not publicly enabled; groups and original-application qualification remain. PSD/PSB imports do not imply qualified layered export or preservation of groups, masks, text, effects or high-depth data. JPEG XR writing is also unimplemented; its new reader does not qualify it.
+3. **Implement and qualify layered writes.** PDN/PAINT have restricted readers but no fresh or preserving writers; original Paint.NET/Windows Paint open/edit/resave evidence is still required. ORA's internal writer is not publicly enabled; groups and original-application qualification remain. PSD/PSB now have a bounded internal fresh RGB8 Normal raster-layer writer with independent psd-tools/Pillow checks; public layered export still awaits actual Photoshop open/edit/resave qualification. Groups, masks, text, effects and high-depth output remain unsupported. JPEG XR writing is also unimplemented; its new reader does not qualify it.
 4. **Define precision conversion before adding EXR/HDR, then evaluate JP2.** These families have no enabled adapters or selected decoder dependencies in the current manifest. EXR/HDR require a documented linear/HDR-to-RGBA8 transfer, range/tone and nonfinite-sample policy with explicit losses, rather than silently clipping high-depth pixels. The pack's `exr`, Zune HDR and OpenJPEG choices remain candidates requiring live-profile qualification; JP2 also requires codec packaging and independent lossless/lossy/color/depth evidence.
 5. **Complete specific remaining profiles instead of widening labels.** This includes DCX writing, MSP2 writing and original historical-app evidence; animation/multipage and high-depth TIFF; advanced DDS surfaces/mips; additional JXL/JXR profiles; full ABR dynamics/pattern behavior, ASE CMYK/LAB color adoption and CSH multiple/open/Boolean paths. Foreign preserving Save remains a separate gate throughout.
 6. **Keep later P3 imports distinct from initial-format parity.** RAW, selected PDF pages, KRA/XCF and the animation model remain future capabilities. They need their own bounded services, source/loss policies and real reference consumers; compiling a library is insufficient.
@@ -902,7 +902,10 @@ decoding. Admission caps encoded input at 64 MiB, metadata at 1 MiB, layers at
 Masks, groups, clipping, text, effects, non-Normal blending, extra channels,
 non-default fill opacity, high depth and unsupported metadata extensions are
 refused. Image resources are bounded and omitted from the private decoder view;
-their loss is reported, with ICC omission identified separately. Source numeric
+their loss is reported, with ICC omission identified separately. The sole unnamed
+ICC resource is recognized without an omission loss only when its bytes exactly
+match the reviewed shared sRGB2014 profile; mutated, other, named or duplicate ICC
+resources retain explicit ICC-loss handling. Source numeric
 layer IDs are remapped to deterministic native UUIDs using file digest and record
 index. No foreign preserving Save or writer is enabled.
 
@@ -936,6 +939,49 @@ reported no page errors. The built asset maximum was 17,438,894 bytes against th
 26,214,400-byte deployment limit. This verifies the local built application, not
 a deployed site or Photoshop behavior. Machine-readable outcomes remain under
 ignored `docs/validation/format-specialists-2026-10-25/psd-browser-results.json`.
+
+### Internal fresh PSD/PSB writer qualification, 2026-10-26
+
+The existing PSD owner now writes a bounded fresh RGB8 Normal raster-layer
+subset through selected `ag-psd` 0.3.0. PSD and PSB are explicit choices. Raw
+layer pixels, alpha (including hidden RGB), Unicode names, signed offsets, stack
+order, visibility and all 256 opacity values are retained. No layer trimming or
+inferred background conversion is allowed. A small framing-checked adapter
+inserts the unchanged shared sRGB2014 ICC resource 1039; it does not replace the
+selected layer/image serializer. An actual native document title requires
+`psd-document-title-not-exported` acknowledgment.
+
+Preflight checks the complete layer inventory, names (at most 1024 UTF-16 units),
+bounds and aggregate storage before model or sink work. Limits include 256
+layers, 4,194,304 canvas pixels and aggregate layer pixels, 64 MiB encoded output
+and a default 512 MiB logical transient declaration. These declarations include
+model copies, PackBits scratch and output growth; they are not an allocator/RSS
+cap. Cancellation surrounds the selected library call and checks bounded copy
+chunks; it is not cooperative inside that call. Staged-sink errors and logical
+library panics discard private results. Consumers must still compose source and
+owner checks with atomic publication.
+
+Four owned PSD/PSB specimens were read independently by psd-tools 1.26.0 and
+Pillow 13.0.0. Every raw layer sample/property and embedded ICC byte matches the
+source vectors. Opaque composites are exact. For the partial-alpha fixture,
+the decoded merged cache has exact alpha but RGB error up to 60 at low alpha;
+its displayed error over opaque black or white is at most 1. Fresh recomposition
+of the exact editable layers differs only in RGB at alpha zero; visible RGB,
+alpha and opaque-backdrop output are exact. These measured cache/consumer
+results are retained, not rewritten or presented as whole-file losslessness.
+Source provenance, separate metrics and reproducible commands are in
+`crates/services/paintcraft-formats/tests/psd-fixtures/README.md`.
+
+Production CLI `export-layered` and MCP `export_layered` fresh-copy consumers
+compose this writer with captured-source protection, loss preflight, staged
+atomic output and operation receipts. They leave document/history/dirty state
+unchanged. The registry qualification gate runs before input acquisition or
+output staging and currently refuses these routes; title-loss consent is not a
+bypass. This is implementation and internal qualification, not enabled public
+export. Foreign preserving writes remain denied. Actual Photoshop open/edit/resave is
+still a required gate, and groups, masks, text, effects, foreign blend modes and
+high-depth output remain unsupported. PDN/PAINT writers remain pending; this
+increment does not replace those ordered gaps or establish GIMP qualification.
 
 ### OpenRaster writer follow-up, 2026-10-25
 
