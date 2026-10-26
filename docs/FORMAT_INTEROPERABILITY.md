@@ -47,7 +47,7 @@ Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, 
 | EXR/HDR, JP2 | Not yet enabled | Registry inventory or work in progress is not usable format support |
 | ASE | Studio Palettes dialog; CLI `palette inspect` / `palette export`; MCP `inspect_palette` / `export_palette` | Flat groups, exact names/order/models/types and finite f32 values. RGB/gray tool-color adoption is explicit; CMYK/LAB conversion, persistent catalogs and Adobe qualification remain |
 | ABR | Studio desktop/browser selection and bounded native-static R8 painting; CLI/MCP inspection and painting | Exact sample masks, pattern channels, signed bounds and original ordered payloads retained. Up to 256 presets per admitted library; unsupported dynamics, textures, transforms and precision reduction are refused. Full preset behavior and original-application qualification remain; no ABR export or ordinary image Open |
-| CSH | Studio Shape resources dialog; CLI `shape inspect` / `shape export`; MCP `inspect_shapes` / `export_shapes` | Retains bounds, names, IDs and exact ordered path records. Studio previews outlines without changing the painting. Shape placement, broader interoperability and original-application qualification remain |
+| CSH | Studio Shape resources dialog with explicit numeric placement; CLI `shape inspect` / `shape export`; MCP `inspect_shapes` / `export_shapes` | Retains bounds, names, IDs and exact ordered path records. Supported single closed paths rasterize with curves and explicit consent in Studio. Drag placement, multiple/open paths, Boolean placement and broader interoperability remain |
 | RAW, PDF, KRA, XCF, animation, advanced DDS | Future profiles | No inherited Classic support or preserving-write claims |
 
 QOI, PAM and farbfeld writers admit at most 4,194,304 pixels and 64 MiB encoded output. Their bounded private output is discarded on failure or cancellation. These checks do not constitute a hard aggregate resident-memory or codec scratch-memory limit.
@@ -410,8 +410,8 @@ or Adobe application qualification.
 
 Studio's **File > Shape resources** dialog imports and exports a complete library,
 browses individual shapes and previews their cubic path outlines. The explanation
-that fill and Boolean operations are preserved but not rendered in the preview
-is visible in all seven languages. Selecting a shape changes only the preview;
+that fill and Boolean operations are preserved but not rendered in that outline
+gallery is visible in all seven languages. Selecting a shape changes only the preview;
 it does not publish document pixels, dirty the painting or create an undo entry.
 Previews above 4,096 knots are explicitly unavailable; exact resource data stays
 available for export. The native picker is parented and protects the original
@@ -446,8 +446,9 @@ CLI `shape inspect` and MCP `inspect_shapes` expose original bounds, ordered
 records and exact normalized signed integers. `shape export` and `export_shapes`
 write a fresh resource copy, separate from a painting's save acknowledgement.
 Typed inspection is documented by `schema shape-inspection`. Resource
-editing/placement, filled Boolean previews, persistent catalogs, broader
-interoperability and original-application qualification remain for F14.
+editing, drag placement, multiple/open/Boolean-path placement, persistent
+catalogs, broader interoperability and original-application qualification remain
+for F14.
 
 The local optimized Wasm build passed a headless Chrome import/select/preview/
 download check. Its 1,466-byte fresh export reopened with the optional upstream
@@ -456,6 +457,45 @@ reader and matched the source geometry and metadata; the painting stayed
 tests cover cubic control geometry, English/Japanese controls, narrow layout,
 source protection and stale/cancelled imports. These checks do not qualify
 original Adobe applications or promise interaction latency.
+
+A separate **Place shape…** form now provides X/Y, positive width/height, fill
+color, an actual filled-mask preview and explicit conversion consent. It admits
+one closed path with 2..=256 cubic knots, None/Combine operation, empty initial
+fill and even/odd or nonzero filling. Multiple paths, open paths, other Boolean
+operations, clipboard placement metadata and out-of-range controls are visibly
+refused. The original library is retained unchanged for resource export.
+This numeric form is an incremental placement workflow, not the forthcoming
+select-preset-and-drag tool UX or complete CSH placement support.
+
+The existing tiny-skia filler receives normalized coordinates multiplied by the
+chosen target dimensions through f64 and then f32. Original bounds origins stay
+metadata; the chosen X/Y defines painting position. Anti-aliased coverage is
+clipped to the local target box, then translated and clipped to canvas, layer
+and current selection before existing source-over mask execution. Pixels outside
+the local box are absent from the converted mask; original paths remain exact.
+Preview/configuration, resource epoch/index, document owner and target are bound
+together, and changes require a new preview/approval. Shape placement is one
+Shape undo entry; first-layer creation is atomic and ineffective masks leave no
+layer/history. Native acquired input identities follow accepted placements
+through saved documents, other tabs and parked workspaces, including resource
+replacement and renamed source aliases.
+
+Caller budgets declare pixmap scratch and path input, capacity-owned span
+storage, preview bytes and a retained frontend-copy lease. Arc clones share
+storage charges. These are bounded ownership declarations, not a hard process
+RSS limit; tiny-skia fill cannot be cancelled internally. Ten backend tests,
+three Shape and five Brush editor regressions, shared builder/metadata tests,
+two shared widget tests, four native placement tests and five browser shape
+workflow tests pass. English/Japanese controls and all seven catalogs are
+covered. Strict host frontend/editor/format checks and a production Wasm build
+pass. Headless Chrome exercised CSH upload, unsupported assessment, a 64 × 48
+cubic preview, consent, placement, Undo/Redo and a 789-byte PCND download with no
+page errors. The downloaded project reopened through CLI; 2,400 independently
+calculated interior pixels matched, recovered alpha area was 1840.494 against
+analytic 1843.2 with tolerance 8, and the canvas outside the target box stayed
+unchanged. See [CSH placement policy](CSH_PLACEMENT.md) for precise limits and
+remaining work. This is focused workflow evidence, not original Adobe rendering
+parity or full release qualification.
 
 ### SVG/SVGZ rasterization, 2026-10-25
 
