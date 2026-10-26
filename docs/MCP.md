@@ -23,6 +23,13 @@ Configure your MCP client with the absolute path to that binary:
 
 The server uses stdio. Its stdout contains only MCP messages. It runs with your account's local file access; connect clients you trust.
 
+`export_layered` is registered for explicit fresh PSD/PSB copies but currently
+returns a capability refusal: the original Photoshop open/re-edit qualification
+required by the format plan is not yet recorded. Acknowledging title loss cannot
+bypass that registry gate. It does not flatten, change dirty state or enable
+foreign preserving Save. The CLI `export-layered --format psd|psb` uses the same
+gate. The implemented staged-copy path is tested separately from public enablement.
+
 Available tools:
 
 - `create_canvas`: create a document with a white or specified background.

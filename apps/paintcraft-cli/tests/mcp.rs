@@ -17,7 +17,7 @@ fn painting_history_atomicity_preview_and_guarded_files() {
     let png = folder.join("painting.png");
     let mut c = Client::at(std::path::Path::new(env!("CARGO_BIN_EXE_paintcraft-cli")));
     let tools = c.request("tools/list", json!({}));
-    assert_eq!(tools["tools"].as_array().unwrap().len(), 23);
+    assert_eq!(tools["tools"].as_array().unwrap().len(), 24);
     assert_eq!(c.call("inspect_document", json!({}))["isError"], true);
     c.ok("create_canvas", json!({"width":32,"height":24}));
     c.ok("paint_stroke",json!({"points":[{"x":2,"y":4},{"x":20,"y":4}],"color":"#FF0000FF","size":1,"brush":"round"}));

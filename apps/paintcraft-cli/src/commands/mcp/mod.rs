@@ -2,6 +2,7 @@
 mod brushes;
 mod icns;
 mod icons;
+mod layered;
 mod native_codec;
 mod palettes;
 mod params;

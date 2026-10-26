@@ -50,6 +50,8 @@ enum Command {
     ExportIcons(commands::export_icons::Options),
     /// Export explicit qualified ICNS PNG types with logical size and Retina density.
     ExportIcns(commands::export_icns::Options),
+    /// Export a fresh layered copy, subject to registry writer qualification.
+    ExportLayered(commands::export_layered::Options),
     /// Import an image as a native document.
     Import(commands::import::Options),
     /// Place an image file as a new layer, preserving the existing document.
@@ -78,6 +80,7 @@ fn main() -> ExitCode {
         Command::Render(a) => commands::render::run(a, cli.json),
         Command::ExportIcons(a) => commands::export_icons::run(a, cli.json),
         Command::ExportIcns(a) => commands::export_icns::run(a, cli.json),
+        Command::ExportLayered(a) => commands::export_layered::run(a, cli.json),
         Command::Import(a) => commands::import::run(a, cli.json),
         Command::PasteImage(a) => commands::paste_image::run(a, cli.json),
         Command::Palette(a) => commands::palette::run(a, cli.json),

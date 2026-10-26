@@ -42,6 +42,12 @@ pub struct WritePlan {
     pub transient_bytes: u64,
     pub losses: Vec<String>,
 }
+impl WritePlan {
+    /// Resolve only the named losses from this exact preflight before staging.
+    pub fn require_consent(&self, allowed: &[String]) -> Result<()> {
+        consent(self, allowed)
+    }
+}
 fn sum(a: u64, b: u64) -> Result<u64> {
     a.checked_add(b)
         .ok_or_else(|| resource("PSD writer size overflow"))
