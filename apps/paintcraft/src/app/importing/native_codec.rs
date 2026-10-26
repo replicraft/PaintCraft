@@ -1,4 +1,4 @@
-//! Isolated JXL conversion retains App ownership and existing editing admission.
+//! Isolated native conversion retains App ownership and existing editing admission.
 use super::*;
 use paintcraft_formats::{
     codec_worker::{
@@ -113,7 +113,7 @@ impl App {
             .prepare_jxl(residency, lease, &check, &|| Ok(captured), launch)
         })?;
         self.stage_candidate(
-            Candidate::NativeJxl(Box::new(Source {
+            Candidate::NativeCodec(Box::new(Source {
                 owner: captured,
                 stamp: self.editor.preview_stamp(),
                 job: Some(job),
@@ -130,7 +130,7 @@ impl App {
             .push(crate::destination::SourceGuard { path, identity });
         Ok(())
     }
-    pub(super) fn native_jxl_dialog(&mut self, ctx: &egui::Context) {
+    pub(super) fn native_codec_dialog(&mut self, ctx: &egui::Context) {
         let Some(mut pending) = self.pending_import.take() else {
             return;
         };
@@ -140,7 +140,7 @@ impl App {
                 .set_status(t!(ctx, "The document changed; choose the image again."));
             return;
         }
-        let Candidate::NativeJxl(source) = &mut pending.candidate else {
+        let Candidate::NativeCodec(source) = &mut pending.candidate else {
             self.pending_import = Some(pending);
             return;
         };
@@ -161,7 +161,7 @@ impl App {
                 }
             }
         }
-        let response = egui::Modal::new(egui::Id::unique("native-jxl-import")).show(ctx, |ui| {
+        let response = egui::Modal::new(egui::Id::unique("native-codec-import")).show(ctx, |ui| {
             ui.heading(t!(ctx, "Import image"));
             ui.add(
                 egui::Label::new(
@@ -230,8 +230,8 @@ impl App {
     }
 }
 #[cfg(test)]
-#[path = "native_jxl/installed_tests.rs"]
+#[path = "native_codec/installed_tests.rs"]
 mod installed_tests;
 #[cfg(test)]
-#[path = "native_jxl/tests.rs"]
+#[path = "native_codec/tests.rs"]
 mod tests;

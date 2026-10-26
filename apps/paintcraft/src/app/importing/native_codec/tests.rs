@@ -25,7 +25,7 @@ pub(super) fn retire(app: &App) {
 }
 pub(super) fn draw(app: &mut App) {
     let ctx = app.context.clone();
-    let mut output = ctx.run_ui(Default::default(), |ui| app.native_jxl_dialog(ui.ctx()));
+    let mut output = ctx.run_ui(Default::default(), |ui| app.native_codec_dialog(ui.ctx()));
     output.textures_delta.clear();
 }
 #[test]

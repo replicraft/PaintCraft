@@ -12,8 +12,8 @@ mod icns;
 mod icons;
 #[path = "importing/msp.rs"]
 mod msp;
-#[path = "importing/native_jxl.rs"]
-mod native_jxl;
+#[path = "importing/native_codec.rs"]
+mod native_codec;
 #[path = "importing/svg.rs"]
 mod svg;
 pub(super) use svg::FontPick;
@@ -22,7 +22,7 @@ enum Candidate {
     Pages(dcx::Pages),
     Entries(icons::Entries),
     Icns(Box<icns::Source>),
-    NativeJxl(Box<native_jxl::Source>),
+    NativeCodec(Box<native_codec::Source>),
     Svg(Box<svg::Source>),
     Raster(image::Decoded),
     Layered(paintcraft_formats::project_import::Converted),
@@ -33,7 +33,7 @@ impl Candidate {
             Self::Pages(_)
             | Self::Entries(_)
             | Self::Icns(_)
-            | Self::NativeJxl(_)
+            | Self::NativeCodec(_)
             | Self::Svg(_) => &[],
             Self::Raster(image) => &image.losses,
             Self::Layered(project) => &project.losses,
@@ -146,7 +146,7 @@ impl App {
             Candidate::Pages(_)
                 | Candidate::Entries(_)
                 | Candidate::Icns(_)
-                | Candidate::NativeJxl(_)
+                | Candidate::NativeCodec(_)
                 | Candidate::Svg(_)
         ) {
             self.pending_import = Some(pending);
@@ -163,7 +163,7 @@ impl App {
                 Candidate::Pages(_)
                 | Candidate::Entries(_)
                 | Candidate::Icns(_)
-                | Candidate::NativeJxl(_)
+                | Candidate::NativeCodec(_)
                 | Candidate::Svg(_) => {
                     unreachable!("entry selection is resolved separately")
                 }
@@ -196,9 +196,9 @@ impl App {
         if self
             .pending_import
             .as_ref()
-            .is_some_and(|pending| matches!(pending.candidate, Candidate::NativeJxl(_)))
+            .is_some_and(|pending| matches!(pending.candidate, Candidate::NativeCodec(_)))
         {
-            self.native_jxl_dialog(ctx);
+            self.native_codec_dialog(ctx);
             return;
         }
         if self

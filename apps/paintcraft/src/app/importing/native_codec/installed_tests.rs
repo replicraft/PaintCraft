@@ -66,8 +66,8 @@ fn copied_installed_helper_adopts_exact_pixels_and_refuses_stale_owners() {
     )
     .unwrap();
     for test in [
-        "importing::native_jxl::installed_tests::fixture_real_installed_jxl",
-        "importing::native_jxl::installed_tests::fixture_running_helper_cancel",
+        "importing::native_codec::installed_tests::fixture_real_installed_jxl",
+        "importing::native_codec::installed_tests::fixture_running_helper_cancel",
     ] {
         let output = Command::new(&child)
             .args(["--exact", test, "--ignored", "--nocapture"])
@@ -86,7 +86,7 @@ fn prepared(app: &mut App) {
     let end = Instant::now() + Duration::from_secs(15);
     loop {
         let pending = app.pending_import.as_mut().expect("pending import");
-        let Candidate::NativeJxl(source) = &mut pending.candidate else {
+        let Candidate::NativeCodec(source) = &mut pending.candidate else {
             panic!("JXL candidate")
         };
         if let Some(result) = source.job.as_ref().and_then(|job| job.poll()) {
