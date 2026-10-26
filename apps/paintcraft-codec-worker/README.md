@@ -16,7 +16,8 @@ transport and qualification; it does not use a native helper manifest.
 | 2 | Metadata-free straight sRGB RGBA8 JPEG XL | `native-jxl-srgb8-worker-v1` |
 | 3 | Strict unsigned RGB8 JPEG XR, T.832 default-sRGB policy after refusing embedded color contexts | `native-jxr-srgb8-worker-v1` |
 | 4 | Explicitly declared sRGB8 HEIF color and optional straight alpha | `native-heif-srgb8-worker-v1` |
-| 5 | Reduced-still identity sRGB8 AVIF 4:4:4 with optional straight monochrome alpha | `native-avif-srgb8-worker-v1`, V5 required |
+| 5 | Reduced-still identity sRGB8 AVIF 4:4:4 with optional straight monochrome alpha | `native-avif-srgb8-worker-v1`, V5 or V6 required |
+| 6 | Explicit BT.709/sRGB8 AVIF 4:4:4 or sited 4:2:0 with optional straight alpha | `native-avif-sdr-ycbcr8-worker-v1`, V6 required |
 
 All profiles are bounded to 4,194,304 pixels. A selected library compiling does
 not admit its other profiles or grant an encoder capability.
@@ -52,15 +53,16 @@ resolution bits from effective density and inferred defaults. ICC, metadata,
 alpha/deep precision and other unqualified JXR forms remain refused. No JPEG XR
 or HEIF writer is provided.
 
-AVIF requires explicit matching AV1/container declarations: profile-1 8-bit
+Code5 AVIF requires explicit matching AV1/container declarations: profile-1 8-bit
 full-range identity GBR 4:4:4, primaries 1 and transfer 13. Its optional alpha is
 same-size profile-0 full-range 8-bit monochrome with CICP 2/2/2 and a straight
 auxiliary link. GBR planes are reordered exactly; coded RGB at alpha zero is
 retained. Nonempty names require `avif-item-names-not-retained` consent; unnamed
 identity imports have no invented color-conversion loss. Names, exact source
-SHA, geometry and coded/container declarations remain in receipts. SDR YCbCr,
-ICC, HDR/deep precision, grids, transforms, premultiplication and browser reads
-remain refused. See [AVIF qualification](../../docs/AVIF_QUALIFICATION.md).
+SHA, geometry and coded/container declarations remain in receipts. Code6
+separately qualifies the explicit SDR policy below and always requires
+`avif-color-reconstruction` consent. ICC, HDR/deep precision, grids, transforms,
+premultiplication and browser reads remain refused. See [AVIF qualification](../../docs/AVIF_QUALIFICATION.md).
 
 ## Dispatch, ownership and supervision
 
@@ -126,7 +128,7 @@ justifies charging a smaller ceiling. A response peak is a preparation snapshot,
 not process-exit RSS. There is no OS filesystem or network sandbox claim.
 
 Release builds compile desktop, CLI and helper together under the lockfile and
-explicitly enable `paintcraft-codec-worker/avif-codec`. Meson 1.12.1 and Ninja
+explicitly enable `paintcraft-codec-worker/avif-sdr-codec`. Meson 1.12.1 and Ninja
 1.13.2 build the pinned source without a system-library fallback. On Windows,
 Meson uses `b_vscrt=mt` exactly when Rust target features include `crt-static`;
 otherwise it uses `md`. Release flags select the static mode, while normal and
@@ -183,7 +185,7 @@ those gray diagnostic samples sRGB.
 
 ## Build and compatibility checks
 
-Normal builds include the V5 AVIF decoder and require the native C compiler,
+Normal builds include the V6 identity and qualified SDR AVIF decoder and require the native C compiler,
 Meson 1.12.1, Ninja 1.13.2 and Python 3.12 or newer:
 
 ```sh
@@ -193,9 +195,12 @@ cargo test --locked -p paintcraft-cli --test installed_codec_worker -- --include
 ```
 
 The explicitly feature-free build retains V4 compatibility. Its installed tests
-skip the two V5-only AVIF cases. Restore the normal helper when finished:
+skip the four AVIF cases. V5 identity-only compatibility additionally enables
+`avif-codec` with defaults disabled. Restore the normal helper when finished:
 
 ```sh
+cargo test --locked -p paintcraft-codec-worker --no-default-features --features avif-codec --tests
+cargo test --locked -p paintcraft-cli --test installed_codec_worker -- --include-ignored --skip avif_sdr::
 cargo test --locked -p paintcraft-codec-worker --no-default-features --tests
 cargo test --locked -p paintcraft-cli --test installed_codec_worker
 cargo build --locked -p paintcraft-codec-worker
@@ -206,32 +211,23 @@ manifest and notices with `sh scripts/packaging/install_cli.sh --source` (or
 `./scripts/packaging/install_cli.ps1 --source` on Windows). These local commands
 do not replace actual release execution on all six targets.
 
-## Private SDR producer qualification
+## SDR decoder qualification
 
-`--features avif-sdr-codec` is an opt-in V6/code6 producer for separately
-qualified SDR YCbCr experiments. It preserves code5 identity behavior, uses the
-new `native-avif-sdr-ycbcr8-worker-v1` identifier, and declares source/native
-planes/i32 staging/RGBA/converter work before C decoding. It accepts only the
-private explicit 8-bit matrix-1/sRGB 4:4:4 or 4:2:0 CSP_VERTICAL/COLOCATED policy
-proved by the [owned SDR fixtures](../../crates/services/paintcraft-formats/tests/avif-sdr-fixtures/README.md).
-V4 and V5 emit a canonical unsupported response for code6.
+Normal V6/code6 builds preserve code5 identity behavior and use the distinct
+`native-avif-sdr-ycbcr8-worker-v1` profile. They declare source/native planes,
+i32 staging, RGBA and converter work before C decoding. This accepts only
+explicit 8-bit matrix-1/sRGB 4:4:4 or 4:2:0 CSP_VERTICAL/COLOCATED, full or limited
+range, with optional same-size straight alpha. The
+[owned SDR fixtures](../../crates/services/paintcraft-formats/tests/avif-sdr-fixtures/README.md)
+retain independent native-plane and rational RGB evidence. Unknown chroma
+position, other matrices, HDR and derived images remain refused.
 
 The exact `BUILD_V6_AVIF_SDR` record adds the pinned allocation and
-`AVIF_SDR709_YUV444_420_CSP12_WORK1` tokens and a five-variant set. Installed native Job/adoption verifies this exact contract, source-bound
-assessment and reconstruction/name consent. Packaging and private-prefix
-installation validators recognize V4, V5 and V6 without executing foreign
-binaries, require their exact ordered variant sets and retain both decoder
-notices. These archive checks do not prove execution on all six targets. No
-Studio, CLI, MCP or registry SDR reader is enabled yet. An opt-in executable is not a
-replacement for the normal verified V5 installation.
-
-```sh
-cargo test --locked -p paintcraft-codec-worker --features avif-sdr-codec \
-    --test native_avif_sdr
-cargo build --locked -p paintcraft-codec-worker
-```
-
-The final command restores the normal V5 helper after private tests. Public
-admission needs its own exact source/color/siting/range assessment, actual
-reconstruction/name-loss consent, installed source/owner/PCND consumer checks
-and delivery qualification. It must never retry another decoder after failure.
+`AVIF_SDR709_YUV444_420_CSP12_WORK1` tokens and a five-variant set. Installed
+native Job/adoption verifies that contract, source-bound assessment and actual
+reconstruction/name consent. Source-family selection validates captured bytes
+before admission and helper discovery; it never retries a decoder after failure.
+Packaging and private-prefix validators retain exact V4/V5/V6 compatibility and
+both decoder notices. Source installation requires the complete V6 output.
+V4 and V5 return a canonical unsupported response for code6. Browser and Classic
+reading remain unavailable; archive checks do not qualify six-target execution.

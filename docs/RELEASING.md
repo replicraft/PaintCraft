@@ -6,9 +6,10 @@ portable archive and complete-release checks used by
 PaintCraft retains GPU rendering in every desktop build. It uses the locked Cargo
 dependencies and Rust 1.99.0 from `rust-toolchain.toml`.
 
-Normal helper builds enable `avif-codec` by default. Native release builds also
-explicitly request `paintcraft-codec-worker/avif-codec`; a V4 compatibility
-helper requires `--no-default-features`.
+Normal helper builds enable `avif-sdr-codec` by default. Native release builds also
+explicitly request `paintcraft-codec-worker/avif-sdr-codec`; a V4 compatibility
+helper requires `--no-default-features`; V5 identity-only compatibility uses
+`--no-default-features --features avif-codec`.
 The pinned dav1d source is built statically with Meson 1.12.1 and Ninja 1.13.2;
 no installed decoder library is used. Windows builds select the native MSVC
 compiler; release Rust flags request `crt-static` and the C build matches with
@@ -18,7 +19,7 @@ CLI/MCP tests before packaging. These workflow changes still require execution
 on all six targets; local Apple-silicon checks do not qualify the other targets.
 
 Packaging reads the helper's embedded build record without executing it, then
-writes an exact manifest for either V4 or AVIF-enabled V5. It refuses mixed,
+writes an exact manifest for V4, identity-only V5 or complete V6. It refuses mixed,
 stale or malformed records. Desktop and CLI packages include the helper,
 manifest, `JPEGXR_LICENSE.txt` and `DAV1D_LICENSE.txt`. Portable archives keep
 these beside the executable. Linux system packages place notices under
