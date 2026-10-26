@@ -415,7 +415,16 @@ pub fn error(request: Header, error: &Error, peak: u64) -> Result<Vec<u8>> {
 /// Owner is sampled again by the caller on its publication thread. A match here
 /// releases only a PRIVATE native plane view, never a document or saved state.
 pub fn decode<'a>(bytes: &'a [u8], request: &Request, current: Owner) -> Result<Frame<'a>> {
-    if current != request.header.owner {
+    decode_with_header(bytes, &request.header, current)
+}
+/// Validate an immutable captured header without retaining a second whole source.
+/// Callers must bind this header to their own captured source/owner/nonce first.
+pub fn decode_with_header<'a>(
+    bytes: &'a [u8],
+    request: &Header,
+    current: Owner,
+) -> Result<Frame<'a>> {
+    if current != request.owner {
         return Err(Error::new(
             ErrorCode::ConflictStaleBase,
             "worker document/frontend owner changed",
@@ -428,7 +437,7 @@ pub fn decode<'a>(bytes: &'a [u8], request: &Request, current: Owner) -> Result<
     if r.take::<8>()? != *RESPONSE_MAGIC || r.u16()? != PROTOCOL_VERSION || r.u8()? > 4 {
         return Err(invalid("worker response protocol"));
     }
-    if Codec::decode(r.u8()?)? != request.header.codec {
+    if Codec::decode(r.u8()?)? != request.codec {
         return Err(invalid("worker response protocol"));
     }
     let status = bytes[10];
@@ -453,10 +462,7 @@ pub fn decode<'a>(bytes: &'a [u8], request: &Request, current: Owner) -> Result<
     let owner = r.owner()?;
     let nonce = r.uuid()?;
     let sha256 = r.take::<32>()?;
-    if owner != request.header.owner
-        || nonce != request.header.nonce
-        || sha256 != request.header.sha256
-    {
+    if owner != request.owner || nonce != request.nonce || sha256 != request.sha256 {
         return Err(Error::new(
             ErrorCode::ConflictStaleBase,
             "worker source/job identity changed",
@@ -502,16 +508,16 @@ pub fn decode<'a>(bytes: &'a [u8], request: &Request, current: Owner) -> Result<
     let pixels = u64::from(width) * u64::from(height);
     if width == 0
         || height == 0
-        || width > request.header.codec.side_limit()
-        || height > request.header.codec.side_limit()
+        || width > request.codec.side_limit()
+        || height > request.codec.side_limit()
         || pixels > PIXELS_MAX
-        || pixels > u64::from(request.header.pixels)
+        || pixels > u64::from(request.pixels)
         || detail != 0
     {
         return Err(invalid("worker output dimensions/detail"));
     }
     let payload = &body[version..];
-    let pixels = match request.header.codec {
+    let pixels = match request.codec {
         Codec::HeifGray8 => {
             if y as u64 != pixels
                 || a != if alpha_flag == 1 { y } else { 0 }

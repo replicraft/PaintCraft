@@ -224,3 +224,43 @@ fn largest_rgba_payload_and_version_fit_the_reserved_output_allowance() {
     assert_eq!(frame.pixels, Pixels::SrgbRgba8(&rgba));
     assert!(r.reservation_bytes() >= HEAP_BYTES + bytes.len() as u64 + r.source.len() as u64);
 }
+
+#[test]
+fn header_only_validation_matches_request_and_rejects_all_identity_and_length_changes() {
+    let request = request();
+    let output = response(&request);
+    let original = decode(&output, &request, request.header.owner).unwrap();
+    let header = decode_with_header(&output, &request.header, request.header.owner).unwrap();
+    assert_eq!(
+        (
+            original.width,
+            original.height,
+            original.pixels,
+            original.heap_peak
+        ),
+        (header.width, header.height, header.pixels, header.heap_peak)
+    );
+    for offset in [47, 88, 104, RESPONSE_HEADER, 36, 28] {
+        let mut changed = output.clone();
+        changed[offset] ^= 1;
+        let expected = decode(&changed, &request, request.header.owner).unwrap_err();
+        assert_eq!(
+            decode_with_header(&changed, &request.header, request.header.owner)
+                .unwrap_err()
+                .code,
+            expected.code
+        );
+    }
+    let mut short = output.clone();
+    short.pop();
+    assert!(decode_with_header(&short, &request.header, request.header.owner).is_err());
+    let mut foreign = request.header.owner;
+    foreign.epoch += 1;
+    assert!(decode_with_header(&output, &request.header, foreign).is_err());
+    let mut wrong = request.header;
+    wrong.nonce = Uuid::new_v4();
+    assert!(decode_with_header(&output, &wrong, request.header.owner).is_err());
+    wrong = request.header;
+    wrong.sha256[0] ^= 1;
+    assert!(decode_with_header(&output, &wrong, request.header.owner).is_err());
+}
