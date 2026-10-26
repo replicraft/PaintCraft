@@ -174,6 +174,42 @@ pub fn run(a: Options, json: bool) -> Reply {
                     }
                 }
             }
+            if a.frontend
+                .is_none_or(|profile| matches!(profile, super::format_profile::Profile::Studio))
+            {
+                use paintcraft_formats::{
+                    ora,
+                    registry::{self, Family, Frontend, Operation, Platform, Request},
+                };
+                let mut request = Request::new(
+                    Frontend::Studio,
+                    Operation::ImportConvert,
+                    Family::Ora,
+                    Platform::Native,
+                );
+                request.variant = Some(ora::NEUTRAL_GROUP_IMPORT_VARIANT);
+                if registry::admission(request).available() {
+                    let mut value = row(
+                        "ora.neutral-auto.rgba8.import",
+                        "frontend/studio",
+                        "import",
+                        "quick-xml/png/converted-copy",
+                    );
+                    if let Value::Object(fields) = &mut value {
+                        fields.insert(
+                            "variant".into(),
+                            Value::str(ora::NEUTRAL_GROUP_IMPORT_VARIANT),
+                        );
+                        fields.insert("platform".into(), Value::str("native"));
+                        fields.insert("captured_regular_source_required".into(), Value::Bool(true));
+                        fields.insert(
+                            "legacy_stream_profile".into(),
+                            Value::str("flat-normal-png"),
+                        );
+                    }
+                    frontend_rows.push(value);
+                }
+            }
             let mut rows = vec![
                 row(
                     "csh.shapes.read",

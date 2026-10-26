@@ -105,7 +105,7 @@ pub fn run(a: Options, json: bool) -> Reply {
                 let (bytes, sha, identity) = read_captured(input, limit as u64, "captured input")?;
                 (bytes, sha, Some(identity))
             } else {
-                read_regular_or_bounded(
+                read_conversion_source(
                     input,
                     if svg.is_some() {
                         paintcraft_formats::svg::SOURCE_MAX as u64
@@ -144,12 +144,24 @@ pub fn run(a: Options, json: bool) -> Reply {
                 }
                 selection.convert(&bytes, &sha)?
             } else if paintcraft_formats::project_import::supports(family) {
-                let converted = paintcraft_formats::project_import::decode_layered(
-                    family,
-                    &bytes,
-                    4_194_304,
-                    &|| Ok(()),
-                )?;
+                let converted = if family == paintcraft_formats::registry::Family::Ora
+                    && source_identity.is_some()
+                {
+                    a.profile.admit_import_ora(input, &bytes)?;
+                    paintcraft_formats::project_import::decode_ora_with_neutral_groups(
+                        &bytes,
+                        4_194_304,
+                        &|| Ok(()),
+                    )?
+                } else {
+                    // Streams choose the existing strict flat profile before decoding, never fallback.
+                    paintcraft_formats::project_import::decode_layered(
+                        family,
+                        &bytes,
+                        4_194_304,
+                        &|| Ok(()),
+                    )?
+                };
                 (converted.document, converted.losses)
             } else if family == paintcraft_formats::registry::Family::Icns {
                 let entry = a.entry.ok_or_else(|| {
@@ -187,7 +199,10 @@ pub fn run(a: Options, json: bool) -> Reply {
                     format!("import would lose {loss}; acknowledge with --allow-loss {loss}"),
                 ));
             }
-            if family == paintcraft_formats::registry::Family::Dds {
+            if family == paintcraft_formats::registry::Family::Dds
+                || (family == paintcraft_formats::registry::Family::Ora
+                    && source_identity.is_some())
+            {
                 let identity = source_identity.as_ref().ok_or_else(|| {
                     Error::new(
                         ErrorCode::InputSchema,
@@ -231,7 +246,11 @@ pub fn run(a: Options, json: bool) -> Reply {
                                 "conversion output must not replace its captured imported source",
                             ));
                         }
-                        if family == paintcraft_formats::registry::Family::Dds {
+                        if matches!(
+                            family,
+                            paintcraft_formats::registry::Family::Dds
+                                | paintcraft_formats::registry::Family::Ora
+                        ) {
                             identity.verify_bytes(
                                 input,
                                 bytes.len() as u64,

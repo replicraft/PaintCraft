@@ -1,6 +1,8 @@
 //! The CLI commands. Each returns what to print and how to exit; nothing here
 //! calls `process::exit`.
 
+mod import_source;
+use import_source::read_conversion_source;
 use std::fs::File;
 use std::io::Read as _;
 use std::path::{Path, PathBuf};

@@ -1,7 +1,7 @@
 use super::super::format_profile;
 use super::super::{
     BATCH_V2_SCHEMA, Context, INPUT_MAX, ImageFormat, POLICY, PathBuf, Rgba, Session, export,
-    image, new_document, pcnd, read_captured, read_regular_or_bounded, save,
+    image, new_document, pcnd, read_captured, read_conversion_source, save,
 };
 use super::{
     PaintingServer,
@@ -151,7 +151,7 @@ impl PaintingServer {
                 let (bytes,sha,identity)=read_captured(&path,limit as u64,"captured image")?;
                 (bytes,sha,Some(identity))
             } else {
-                read_regular_or_bounded(
+                read_conversion_source(
                     &path,
                     if p.svg.is_some() {paintcraft_formats::svg::SOURCE_MAX as u64} else {INPUT_MAX},
                     "image",
@@ -179,12 +179,13 @@ impl PaintingServer {
                 }
                 svg.convert(&bytes, &sha)?
             } else if paintcraft_formats::project_import::supports(family) {
-                let converted = paintcraft_formats::project_import::decode_layered(
-                    family,
-                    &bytes,
-                    4_194_304,
-                    &|| Ok(()),
-                )?;
+                let converted=if family==Family::Ora && source_identity.is_some() {
+                    profile.admit_import_ora(&path,&bytes)?;
+                    paintcraft_formats::project_import::decode_ora_with_neutral_groups(&bytes,4_194_304,&check)?
+                } else {
+                    // Legacy streams use the flat profile upfront; no decoder-error fallback.
+                    paintcraft_formats::project_import::decode_layered(family,&bytes,4_194_304,&check)?
+                };
                 (converted.document, converted.losses)
             } else if family == Family::Icns {
                 let entry=p.entry.ok_or_else(||invalid("ICNS import requires an explicit entry"))?;
@@ -231,7 +232,7 @@ impl PaintingServer {
                 ));
             }
             check()?;
-            if family == Family::Dds {
+            if family == Family::Dds || (family==Family::Ora && source_identity.is_some()) {
                 let identity = source_identity.as_ref().ok_or_else(|| invalid("DDS import requires a captured .dds source"))?;
                 identity.verify_bytes(&path, bytes.len() as u64, &Sha256::digest(&bytes).into(), &check)?;
             }
@@ -242,15 +243,19 @@ impl PaintingServer {
             state.source = None;
             state.project_identity = None;
             state.import_source = Some(path);
+            let ora_variant=(family==Family::Ora && source_identity.is_some()).then_some(paintcraft_formats::ora::NEUTRAL_GROUP_IMPORT_VARIANT);
             state.import_identity = source_identity;
             state.brush_sources.clear();
             state.import_resources = p
                 .svg
                 .map(|selection| selection.font_files)
                 .unwrap_or_default();
-            if matches!(family,Family::Msp|Family::Icns|Family::Dds) {
+            if matches!(family,Family::Msp|Family::Icns|Family::Dds|Family::Ora) {
                 let mut value=state.inspection()?;
                 value["conversion"]=json!({"source_sha256":sha,"losses_acknowledged":losses,"source_lineage_adopted":false,"source_format":family.id(),"icns_entry":icns_entry.map(|entry|json!({"index":entry.index,"record":entry.record,"tag":String::from_utf8_lossy(&entry.tag),"width":entry.width,"height":entry.height,"logical_width":entry.logical_width,"logical_height":entry.logical_height,"scale":entry.scale})),"preserving_save":false});
+                if let Some(variant) = ora_variant {
+                    value["conversion"]["profile_variant"] = json!(variant);
+                }
                 Ok(super::state::reply(value))
             } else {state.inspect()}
         })

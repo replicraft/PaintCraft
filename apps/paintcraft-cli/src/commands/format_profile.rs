@@ -44,6 +44,14 @@ impl Options {
             Platform::Native,
         )
     }
+    pub fn admit_import_ora(&self, path: &std::path::Path, bytes: &[u8]) -> Result<Family> {
+        registry::admit_import_ora(
+            self.frontend.into(),
+            &path.to_string_lossy(),
+            bytes,
+            Platform::Native,
+        )
+    }
     pub fn admit_import_svg(&self, path: &std::path::Path, bytes: &[u8]) -> Result<Family> {
         registry::admit_import_svg(
             self.frontend.into(),
