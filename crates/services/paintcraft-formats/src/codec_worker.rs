@@ -28,6 +28,7 @@ pub const OUTPUT_BYTES_MAX: usize = PIXELS_MAX as usize * 4 + RESPONSE_HEADER + 
 pub const REQUEST_MAGIC: &[u8; 8] = b"PCDEC002";
 pub const PROTOCOL_VERSION: u16 = 2;
 pub const NATIVE_JXL_IMPORT_VARIANT: &str = "native-jxl-srgb8-worker-v1";
+pub const NATIVE_HEIF_IMPORT_VARIANT: &str = "native-heif-srgb8-worker-v1";
 pub const NATIVE_JXR_IMPORT_VARIANT: &str = "native-jxr-srgb8-worker-v1";
 pub const QUALIFIED_NATIVE_IMPORT_VARIANTS: &[&str] =
     &[NATIVE_JXL_IMPORT_VARIANT, NATIVE_JXR_IMPORT_VARIANT];

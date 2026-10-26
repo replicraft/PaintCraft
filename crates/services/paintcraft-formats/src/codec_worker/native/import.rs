@@ -26,28 +26,60 @@ pub struct AdoptedImport {
     pub identity: SourceIdentity,
     pub sha256: [u8; 32],
     pub jxr_assessment: Option<crate::jxr::ImportAssessment>,
+    pub heif_assessment: Option<crate::heif::ImportAssessment>,
 }
 #[derive(Debug)]
 enum PreparedProfile {
     Jxl,
     Jxr(crate::jxr::ImportAssessment),
+    Heif(crate::heif::ImportAssessment),
 }
 impl PreparedProfile {
     fn jxr(&self) -> Option<&crate::jxr::ImportAssessment> {
         match self {
-            Self::Jxl => None,
+            Self::Jxl | Self::Heif(_) => None,
             Self::Jxr(assessment) => Some(assessment),
         }
     }
     fn losses(&self) -> &'static [&'static str] {
-        self.jxr().map_or(&[], |assessment| assessment.losses())
+        match self {
+            Self::Jxl => &[],
+            Self::Jxr(assessment) => assessment.losses(),
+            Self::Heif(assessment) => assessment.losses(),
+        }
     }
     fn require_losses(&self, allowed: &[String]) -> Result<()> {
-        if let Self::Jxr(assessment) = self {
-            assessment.require_losses(allowed)?;
+        match self {
+            Self::Jxl => {}
+            Self::Jxr(assessment) => assessment.require_losses(allowed)?,
+            Self::Heif(assessment) => assessment.require_losses(allowed)?,
         }
         Ok(())
     }
+}
+fn heif_profile(
+    request: &Request,
+    frame: &Frame<'_>,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<crate::heif::ImportAssessment> {
+    let assessment = crate::heif::assess_import(
+        request.source.as_slice(),
+        u64::from(request.header.pixels),
+        check,
+    )?;
+    let Pixels::SrgbRgba8(rgba) = frame.pixels else {
+        return Err(unsupported("HEIF frame lacks sRGB RGBA8 interpretation"));
+    };
+    if assessment.sha256() != request.header.sha256
+        || assessment.size() != (frame.width, frame.height)
+        || rgba.len() as u64 != u64::from(frame.width) * u64::from(frame.height) * 4
+        || (!assessment.alpha() && rgba.as_chunks::<4>().0.iter().any(|pixel| pixel[3] != 255))
+    {
+        return Err(invalid(
+            "HEIF frame differs from captured source declarations",
+        ));
+    }
+    Ok(assessment)
 }
 impl Job {
     /// Caller must use the existing host resident realm and a sufficiently sized
@@ -68,8 +100,8 @@ impl Job {
         }
         self.prepare_import(residency, lease, host_check, current_owner, launch)
     }
-    /// Prepare only the assigned sRGB JXL or strict default-sRGB RGB8 JXR
-    /// profile. Native HEIF gray/color planes cannot enter this conversion.
+    /// Prepare only qualified sRGB JXL, default-sRGB RGB8 JXR, or explicit-sRGB
+    /// HEIF color. Native HEIF gray planes have no document interpretation.
     pub fn prepare_import(
         self,
         residency: SharedBudget,
@@ -78,7 +110,10 @@ impl Job {
         current_owner: &dyn Fn() -> Result<Owner>,
         launch: impl FnOnce(Launch<'_>, &dyn Fn() -> Result<()>) -> Result<Vec<u8>>,
     ) -> Result<PreparedImport> {
-        if !matches!(self.codec, Codec::JxlRgba8 | Codec::JxrRgb8) {
+        if !matches!(
+            self.codec,
+            Codec::JxlRgba8 | Codec::JxrRgb8 | Codec::HeifSrgb8
+        ) {
             return Err(unsupported(
                 "Native samples have no qualified document color interpretation",
             ));
@@ -114,6 +149,9 @@ impl Job {
                             ));
                         }
                         PreparedProfile::Jxr(assessment)
+                    }
+                    Codec::HeifSrgb8 => {
+                        PreparedProfile::Heif(heif_profile(request, &frame, check)?)
                     }
                     _ => {
                         return Err(unsupported(
@@ -158,6 +196,13 @@ impl PreparedImport {
     pub fn jxr_assessment(&self) -> Option<&crate::jxr::ImportAssessment> {
         self.profile.jxr()
     }
+    pub fn heif_assessment(&self) -> Option<&crate::heif::ImportAssessment> {
+        if let PreparedProfile::Heif(assessment) = &self.profile {
+            Some(assessment)
+        } else {
+            None
+        }
+    }
     pub fn losses(&self) -> &'static [&'static str] {
         self.profile.losses()
     }
@@ -165,6 +210,7 @@ impl PreparedImport {
         match self.profile {
             PreparedProfile::Jxl => NATIVE_JXL_IMPORT_VARIANT,
             PreparedProfile::Jxr(_) => NATIVE_JXR_IMPORT_VARIANT,
+            PreparedProfile::Heif(_) => NATIVE_HEIF_IMPORT_VARIANT,
         }
     }
     /// Revalidate before the host installs a new Session/tab. On refusal the old
@@ -201,17 +247,22 @@ impl PreparedImport {
         check()?;
         // Moving the document preserves each tile's resident BudgetLease. Only
         // preparation scratch is retired; there is no uncharged pixel interval.
+        let (jxr_assessment, heif_assessment) = match self.profile {
+            PreparedProfile::Jxl => (None, None),
+            PreparedProfile::Jxr(assessment) => (Some(assessment), None),
+            PreparedProfile::Heif(assessment) => (None, Some(assessment)),
+        };
         Ok(AdoptedImport {
             document: self.document,
             input: self.input,
             identity: self.identity,
             sha256: self.sha256,
-            jxr_assessment: match self.profile {
-                PreparedProfile::Jxl => None,
-                PreparedProfile::Jxr(assessment) => Some(assessment),
-            },
+            jxr_assessment,
+            heif_assessment,
         })
     }
 }
+#[cfg(test)]
+mod heif_tests;
 #[cfg(test)]
 mod tests;
