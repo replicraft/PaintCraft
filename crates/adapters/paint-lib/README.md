@@ -49,3 +49,17 @@ oracle. Negative tests cover graph mutations, unknown properties, cycles,
 aliases, metadata/data bounds, malformed DEFLATE, truncation, output limits and
 cancellation. The sample does not establish support for unobserved Paint builds,
 unknown layer properties or the writer exit gate.
+
+## Internal fresh writer
+
+The typed `encode_document` / `write_document_to` path now constructs the observed
+`iovl`/raw-DEFLATE `unci` profile independently. It retains exact RGBA8 layers,
+individual sizes, signed placement, literal item names and canvas fill16. Hidden
+layers, non-full per-layer opacity and unsupported metadata are refused. It does
+not claim UI layer-name semantics or preserving Save. Public writing remains
+closed until actual Windows Paint qualification.
+
+Owned fixtures were independently checked with Python structure/zlib and the
+unchanged pinned C# reader compiled privately for net10. The C# reader retains
+pixels/geometry but its high-level fill8 narrowing and UTF-8-name decoding
+limitations remain explicit. See [writer provenance, commands and bounds](tests/fixtures/README.md).

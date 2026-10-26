@@ -1,0 +1,321 @@
+{
+    "python": "3.14.0",
+    "zlib": "1.2.12",
+    "upstream_commit": "e35312bec8e8a09c6a209d2dc0110b885e48c945",
+    "upstream_archive_sha256": "6661e83b496d8f7606bf4b96a7e7a51e405a09d82924ba2e2270518b6b7dc503",
+    "reference_target": "unchanged net8 source compiled for installed net10 runtime; not Windows Paint",
+    "baseline_source_sha256": "a3e947fee374cca80e0e648152667109ac61b57808c9673eb806f52865f141f6",
+    "baseline": {
+        "runtime": "10.0.12",
+        "framework": ".NET 10.0.12",
+        "architecture": "Arm64",
+        "width": 333,
+        "height": 271,
+        "canvas_fill8": [
+            107,
+            107,
+            107,
+            255
+        ],
+        "canvas_fill16": [
+            27392,
+            27392,
+            27392,
+            65535
+        ],
+        "overlay_flags": 0,
+        "layers": [
+            {
+                "name": "",
+                "width": 333,
+                "height": 271,
+                "origin": [
+                    0,
+                    0
+                ],
+                "rgba_sha256": "e288e2acca6bf956be0e9425825db07c2a61f1454fa0c598a478c6a31c64d91e"
+            },
+            {
+                "name": "",
+                "width": 333,
+                "height": 271,
+                "origin": [
+                    0,
+                    0
+                ],
+                "rgba_sha256": "3144e443e13acabb1e3f314ee5f35bf584e529396df8c8ad947566c72ae78b1c"
+            },
+            {
+                "name": "",
+                "width": 333,
+                "height": 271,
+                "origin": [
+                    0,
+                    0
+                ],
+                "rgba_sha256": "3038d999fb638535386716b61ffd61ae4f8976e887aab3a44b5e99586771dc12"
+            },
+            {
+                "name": "",
+                "width": 333,
+                "height": 271,
+                "origin": [
+                    0,
+                    0
+                ],
+                "rgba_sha256": "057c6a5d7ad1fd8c7ae44caf4fe4ee75725e49c6f46ad77394ee8f05df8ef1de"
+            }
+        ]
+    },
+    "results": [
+        {
+            "filename": "narrow.paint",
+            "sha256": "0b1ec0416544d6ef07c79e2230bea41737a1bee1a84a626fbdb8e4fb2faf67f5",
+            "canvas": [
+                9,
+                7
+            ],
+            "fill16": [
+                4660,
+                43981,
+                32512,
+                65535
+            ],
+            "wide_overlay": false,
+            "layers": [
+                {
+                    "name": "literal 日本語🙂",
+                    "width": 3,
+                    "height": 2,
+                    "origin": [
+                        1,
+                        -2
+                    ],
+                    "rgba_sha256": "d305c0cdb805b4880f18c37d76b0358c0fcf60faae35dafeca6913545c480535"
+                },
+                {
+                    "name": "second literal",
+                    "width": 2,
+                    "height": 3,
+                    "origin": [
+                        -3,
+                        4
+                    ],
+                    "rgba_sha256": "937113687b43c6fd4692f01a796b65cf32634322e15845cbe4a13d2cc6056819"
+                }
+            ],
+            "csharp": {
+                "runtime": "10.0.12",
+                "framework": ".NET 10.0.12",
+                "architecture": "Arm64",
+                "width": 9,
+                "height": 7,
+                "canvas_fill8": [
+                    18,
+                    171,
+                    127,
+                    255
+                ],
+                "canvas_fill16": [
+                    4660,
+                    43981,
+                    32512,
+                    65535
+                ],
+                "overlay_flags": 0,
+                "layers": [
+                    {
+                        "name": "literal æ¥æ¬èªð",
+                        "width": 3,
+                        "height": 2,
+                        "origin": [
+                            1,
+                            -2
+                        ],
+                        "rgba_sha256": "d305c0cdb805b4880f18c37d76b0358c0fcf60faae35dafeca6913545c480535"
+                    },
+                    {
+                        "name": "second literal",
+                        "width": 2,
+                        "height": 3,
+                        "origin": [
+                            -3,
+                            4
+                        ],
+                        "rgba_sha256": "937113687b43c6fd4692f01a796b65cf32634322e15845cbe4a13d2cc6056819"
+                    }
+                ]
+            },
+            "reference_limitations": [
+                "high-level fill loses low eight bits",
+                "UTF-8 name bytes decoded as ASCII characters"
+            ]
+        },
+        {
+            "filename": "wide.paint",
+            "sha256": "e18a9af693f19534eed4b67acb4dfebbbb6e011e275ee6713f9a016d49d74ba8",
+            "canvas": [
+                65536,
+                1
+            ],
+            "fill16": [
+                4660,
+                43981,
+                32512,
+                65535
+            ],
+            "wide_overlay": true,
+            "layers": [
+                {
+                    "name": "literal 日本語🙂",
+                    "width": 3,
+                    "height": 2,
+                    "origin": [
+                        60000,
+                        -70000
+                    ],
+                    "rgba_sha256": "d305c0cdb805b4880f18c37d76b0358c0fcf60faae35dafeca6913545c480535"
+                },
+                {
+                    "name": "second literal",
+                    "width": 2,
+                    "height": 3,
+                    "origin": [
+                        -3,
+                        4
+                    ],
+                    "rgba_sha256": "937113687b43c6fd4692f01a796b65cf32634322e15845cbe4a13d2cc6056819"
+                }
+            ],
+            "csharp": {
+                "runtime": "10.0.12",
+                "framework": ".NET 10.0.12",
+                "architecture": "Arm64",
+                "width": 65536,
+                "height": 1,
+                "canvas_fill8": [
+                    18,
+                    171,
+                    127,
+                    255
+                ],
+                "canvas_fill16": [
+                    4660,
+                    43981,
+                    32512,
+                    65535
+                ],
+                "overlay_flags": 1,
+                "layers": [
+                    {
+                        "name": "literal æ¥æ¬èªð",
+                        "width": 3,
+                        "height": 2,
+                        "origin": [
+                            60000,
+                            -70000
+                        ],
+                        "rgba_sha256": "d305c0cdb805b4880f18c37d76b0358c0fcf60faae35dafeca6913545c480535"
+                    },
+                    {
+                        "name": "second literal",
+                        "width": 2,
+                        "height": 3,
+                        "origin": [
+                            -3,
+                            4
+                        ],
+                        "rgba_sha256": "937113687b43c6fd4692f01a796b65cf32634322e15845cbe4a13d2cc6056819"
+                    }
+                ]
+            },
+            "reference_limitations": [
+                "high-level fill loses low eight bits",
+                "UTF-8 name bytes decoded as ASCII characters"
+            ]
+        },
+        {
+            "filename": "extreme.paint",
+            "sha256": "5d545a6bd2dd5050fcbaf598d58969dcf56aa28b7361e7a7c074c24757436863",
+            "canvas": [
+                9,
+                7
+            ],
+            "fill16": [
+                4660,
+                43981,
+                32512,
+                65535
+            ],
+            "wide_overlay": true,
+            "layers": [
+                {
+                    "name": "literal 日本語🙂",
+                    "width": 3,
+                    "height": 2,
+                    "origin": [
+                        -2147483648,
+                        2147483647
+                    ],
+                    "rgba_sha256": "d305c0cdb805b4880f18c37d76b0358c0fcf60faae35dafeca6913545c480535"
+                },
+                {
+                    "name": "second literal",
+                    "width": 2,
+                    "height": 3,
+                    "origin": [
+                        -3,
+                        4
+                    ],
+                    "rgba_sha256": "937113687b43c6fd4692f01a796b65cf32634322e15845cbe4a13d2cc6056819"
+                }
+            ],
+            "csharp": {
+                "runtime": "10.0.12",
+                "framework": ".NET 10.0.12",
+                "architecture": "Arm64",
+                "width": 9,
+                "height": 7,
+                "canvas_fill8": [
+                    18,
+                    171,
+                    127,
+                    255
+                ],
+                "canvas_fill16": [
+                    4660,
+                    43981,
+                    32512,
+                    65535
+                ],
+                "overlay_flags": 1,
+                "layers": [
+                    {
+                        "name": "literal æ¥æ¬èªð",
+                        "width": 3,
+                        "height": 2,
+                        "origin": [
+                            -2147483648,
+                            2147483647
+                        ],
+                        "rgba_sha256": "d305c0cdb805b4880f18c37d76b0358c0fcf60faae35dafeca6913545c480535"
+                    },
+                    {
+                        "name": "second literal",
+                        "width": 2,
+                        "height": 3,
+                        "origin": [
+                            -3,
+                            4
+                        ],
+                        "rgba_sha256": "937113687b43c6fd4692f01a796b65cf32634322e15845cbe4a13d2cc6056819"
+                    }
+                ]
+            },
+            "reference_limitations": [
+                "high-level fill loses low eight bits",
+                "UTF-8 name bytes decoded as ASCII characters"
+            ]
+        }
+    ]
+}
