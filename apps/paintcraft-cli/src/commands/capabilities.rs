@@ -60,30 +60,41 @@ pub fn run(a: Options, json: bool) -> Reply {
                     codec_worker,
                     registry::{self, Family, Frontend, Operation, Platform, Request},
                 };
-                let mut request = Request::new(
-                    Frontend::Studio,
-                    Operation::ImportConvert,
-                    Family::Jxl,
-                    Platform::Native,
-                );
-                request.variant = Some(codec_worker::NATIVE_JXL_IMPORT_VARIANT);
-                if registry::admission(request).available() {
-                    let mut value = row(
+                for (family, variant, id, backend) in [
+                    (
+                        Family::Jxl,
+                        codec_worker::NATIVE_JXL_IMPORT_VARIANT,
                         "jxl.rgba8.import",
-                        "frontend/studio",
-                        "import",
                         "jxl-rs/native-worker",
+                    ),
+                    (
+                        Family::Jxr,
+                        codec_worker::NATIVE_JXR_IMPORT_VARIANT,
+                        "jxr.rgb8.import",
+                        "jpegxr-pure-rs/native-worker",
+                    ),
+                ] {
+                    let mut request = Request::new(
+                        Frontend::Studio,
+                        Operation::ImportConvert,
+                        family,
+                        Platform::Native,
                     );
-                    if let Value::Object(fields) = &mut value {
-                        fields.insert(
-                            "variant".into(),
-                            Value::str(codec_worker::NATIVE_JXL_IMPORT_VARIANT),
-                        );
-                        fields.insert("platform".into(), Value::str("native"));
-                        fields.insert("installation_preflight_required".into(), Value::Bool(true));
-                        fields.insert("runtime_installation_verified".into(), Value::Bool(false));
+                    request.variant = Some(variant);
+                    if registry::admission(request).available() {
+                        let mut value = row(id, "frontend/studio", "import", backend);
+                        if let Value::Object(fields) = &mut value {
+                            fields.insert("variant".into(), Value::str(variant));
+                            fields.insert("platform".into(), Value::str("native"));
+                            fields.insert(
+                                "installation_preflight_required".into(),
+                                Value::Bool(true),
+                            );
+                            fields
+                                .insert("runtime_installation_verified".into(), Value::Bool(false));
+                        }
+                        frontend_rows.push(value);
                     }
-                    frontend_rows.push(value);
                 }
             }
             let mut rows = vec![

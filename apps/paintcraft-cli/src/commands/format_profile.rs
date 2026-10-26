@@ -69,21 +69,43 @@ impl Options {
             decision.require_allowed(request)
         }
     }
-    /// Availability only, before source allocation/worker startup.
-    pub fn admit_import_jxl_path(&self, path: &std::path::Path) -> Result<()> {
+    pub fn admit_import_native_path(&self, path: &std::path::Path) -> Result<()> {
+        let family = path
+            .extension()
+            .and_then(|ext| ext.to_str())
+            .and_then(Family::from_extension)
+            .ok_or_else(|| {
+                Error::new(
+                    ErrorCode::InputSchema,
+                    "Native codec filename is not qualified",
+                )
+            })?;
+        let variant = match family {
+            Family::Jxl => paintcraft_formats::codec_worker::NATIVE_JXL_IMPORT_VARIANT,
+            Family::Jxr => paintcraft_formats::codec_worker::NATIVE_JXR_IMPORT_VARIANT,
+            _ => {
+                return Err(Error::new(
+                    ErrorCode::CapabilityUnsupported,
+                    "Native codec input requires JXL/JXR",
+                ));
+            }
+        };
         let mut request = Request::new(
             self.frontend.into(),
             Operation::ImportConvert,
-            Family::Jxl,
+            family,
             Platform::Native,
         );
-        request.variant = Some(paintcraft_formats::codec_worker::NATIVE_JXL_IMPORT_VARIANT);
-        request.extension = path.extension().and_then(|value| value.to_str());
-        let decision = registry::admission(request);
-        if decision.available() {
-            Ok(())
-        } else {
-            decision.require_allowed(request)
+        request.extension = path.extension().and_then(|ext| ext.to_str());
+        request.variant = Some(variant);
+        match registry::admission(request) {
+            registry::Decision::Allowed => Ok(()),
+            registry::Decision::AllowedWithPreflight(registry::Reason::ConvertRequiresConsent)
+                if family == Family::Jxr =>
+            {
+                Ok(())
+            }
+            decision => decision.require_allowed(request),
         }
     }
     pub fn admit_import_page(

@@ -1,4 +1,4 @@
-//! Native composition for the exact Studio JXL import variant and private diagnostics.
+//! Native composition for exact Studio JXL/JXR import variants and private diagnostics.
 use super::*;
 use paintcraft_core::types::resources::ResourceLease;
 use paintcraft_formats::codec_worker as wire;
@@ -13,6 +13,8 @@ pub struct Options {
     expect_input_sha256: Option<String>,
     #[command(flatten)]
     profile: super::format_profile::Options,
+    #[command(flatten)]
+    losses: LossOptions,
     #[command(flatten)]
     output: Output,
 }
@@ -30,6 +32,7 @@ struct Prepared {
     sha: [u8; 32],
     owner: wire::Owner,
     cancel: paintcraft_runtime::Cancellation,
+    assessment: Option<paintcraft_formats::jxr::ImportAssessment>,
     // Last field: document and acquired resources drop before the runtime charge.
     _lease: ResourceLease,
 }
@@ -79,7 +82,16 @@ impl Prepared {
             operation: "save-as",
             source_state: self.document.state_id,
             source_sha256: Some(hex(&self.sha)),
-            losses_acknowledged: Vec::new(),
+            losses_acknowledged: self
+                .assessment
+                .as_ref()
+                .map_or_else(Vec::new, |assessment| {
+                    assessment
+                        .losses()
+                        .iter()
+                        .map(|code| (*code).to_owned())
+                        .collect()
+                }),
             destination: &output.output,
         };
         let (receipt, ok, summary) = finish_output(&output.output, &ctx, outcome);
@@ -87,11 +99,21 @@ impl Prepared {
             engine: Some(Value::object([
                 (
                     "decoder_profile",
-                    Value::str(wire::NATIVE_JXL_IMPORT_VARIANT),
+                    Value::str(if self.assessment.is_some() {
+                        wire::NATIVE_JXR_IMPORT_VARIANT
+                    } else {
+                        wire::NATIVE_JXL_IMPORT_VARIANT
+                    }),
                 ),
                 ("conversion", Value::str("new-pcnd-copy")),
                 ("reader_route", Value::str(reader_route)),
-                ("discarded_metadata", Value::Bool(false)),
+                ("discarded_metadata", Value::Bool(self.assessment.is_some())),
+                (
+                    "source_assessment",
+                    self.assessment
+                        .as_ref()
+                        .map_or(Value::Null, |assessment| assessment.to_value()),
+                ),
             ])),
             receipt,
             ok,
@@ -110,64 +132,63 @@ fn reservation(length: u64) -> Result<u64> {
         })
 }
 fn prepare(
-    input: PathBuf,
-    expected: Option<String>,
-    identity: SourceIdentity,
-    length: u64,
-    owner: wire::Owner,
+    job: wire::native::Job,
+    allowed: Vec<String>,
     cancel: paintcraft_runtime::Cancellation,
     current_owner: impl Fn() -> Result<wire::Owner>,
 ) -> Result<Prepared> {
+    let length = job.length;
+    let owner = job.owner;
     let lease = cancel.resource_lease().ok_or_else(|| {
         Error::new(
             ErrorCode::ResourceLimit,
             "Codec import requires retained admission",
         )
     })?;
-    let captured_cancel = cancel.clone();
-    let captured_identity = identity.clone();
-    let captured_input = input.clone();
-    super::codec_worker::with_frame(
-        super::codec_worker::Options::jxl(input, expected),
-        identity,
+    let check = || cancel.check();
+    let prepared = job.prepare_import(
+        paintcraft_runtime::SharedBudget::new(DOCUMENT_BYTES),
+        lease.clone(),
+        &check,
+        &current_owner,
+        super::codec_worker::launch,
+    )?;
+    let adopted = prepared.adopt_with_losses(&allowed, &check, &current_owner)?;
+    Ok(Prepared {
+        document: adopted.document,
+        identity: adopted.identity,
+        input: adopted.input,
         length,
+        sha: adopted.sha256,
         owner,
         cancel,
-        current_owner,
-        |request, frame, _, check| {
-            let wire::Pixels::SrgbRgba8(rgba) = frame.pixels else {
-                return Err(Error::new(
-                    ErrorCode::CapabilityUnsupported,
-                    "Only qualified straight sRGB RGBA8 can become a document",
-                ));
-            };
-            let document = paintcraft_document::import_image_checked(
-                frame.width,
-                frame.height,
-                rgba,
-                &hex(&request.header.sha256),
-                check,
-            )?;
-            check()?;
-            Ok(Prepared {
-                document,
-                identity: captured_identity,
-                input: captured_input,
-                length,
-                sha: request.header.sha256,
-                owner,
-                cancel: captured_cancel,
-                _lease: lease,
-            })
-        },
-    )
+        assessment: adopted.jxr_assessment,
+        _lease: lease,
+    })
 }
+
 fn convert(
     input: &Path,
     output: &Output,
     expected: Option<String>,
     reader_route: &str,
+    allowed: &[String],
 ) -> Result<Written> {
+    let codec = match input
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .and_then(paintcraft_formats::registry::Family::from_extension)
+    {
+        Some(paintcraft_formats::registry::Family::Jxl) => wire::Codec::JxlRgba8,
+        Some(paintcraft_formats::registry::Family::Jxr) => wire::Codec::JxrRgb8,
+        _ => {
+            return Err(Error::new(
+                ErrorCode::CapabilityUnsupported,
+                "Native codec import requires a qualified JXL/JXR filename",
+            ));
+        }
+    };
+    let allowed = allowed.to_vec();
     if same_file(input, &output.output) {
         return Err(Error::new(
             ErrorCode::InputSchema,
@@ -196,9 +217,22 @@ fn convert(
     let handle = executor.submit(
         reservation(length)?,
         move |cancel| {
-            prepare(input, expected, identity, length, owner, cancel, || {
-                Ok(owner)
-            })
+            prepare(
+                wire::native::Job {
+                    input,
+                    identity,
+                    length,
+                    codec,
+                    owner,
+                    pixels: wire::PIXELS_MAX,
+                    deadline: Duration::from_secs(10),
+                    application_version: env!("CARGO_PKG_VERSION").into(),
+                    expected_sha256: expected,
+                },
+                allowed,
+                cancel,
+                || Ok(owner),
+            )
         },
         || {},
     )?;
@@ -219,9 +253,10 @@ pub(super) fn qualified(
     input: &Path,
     output: &Output,
     profile: &super::format_profile::Options,
+    allowed: &[String],
 ) -> Result<Written> {
-    profile.admit_import_jxl_path(input)?;
-    convert(input, output, None, "native-studio-import")
+    profile.admit_import_native_path(input)?;
+    convert(input, output, None, "native-studio-import", allowed)
 }
 /// Explicit hidden developer qualification, not a stock import/open capability.
 pub fn run(options: Options, json: bool) -> Reply {
@@ -242,6 +277,9 @@ pub fn run(options: Options, json: bool) -> Reply {
                 &options.output,
                 options.expect_input_sha256,
                 "internal-qualification",
+                &options
+                    .losses
+                    .allowed_for(paintcraft_formats::jxr::KNOWN_IMPORT_LOSSES)?,
             )
         })(),
     )

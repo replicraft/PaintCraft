@@ -45,6 +45,7 @@ fn prepared_document_retains_charge_across_executor_drop_and_staged_publication(
                     sha,
                     owner,
                     cancel: cancel.clone(),
+                    assessment: None,
                     _lease: cancel.resource_lease().unwrap(),
                 })
             },

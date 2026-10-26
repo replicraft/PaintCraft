@@ -34,18 +34,6 @@ pub struct Options {
     #[arg(long)]
     expect_input_sha256: Option<String>,
 }
-impl Options {
-    pub(super) fn jxl(input: PathBuf, expected: Option<String>) -> Self {
-        Self {
-            input,
-            codec: Codec::Jxl,
-            pixels: wire::PIXELS_MAX,
-            deadline_ms: 10000,
-            memory_limit: 512 << 20,
-            expect_input_sha256: expected,
-        }
-    }
-}
 /// Conservative logical parent IO/verification slack; not a physical RSS cap.
 const VERIFICATION_SLACK: u64 = 1 << 20;
 pub(super) fn owner() -> wire::Owner {
@@ -155,26 +143,26 @@ pub(super) fn with_frame<T>(
         application_version: env!("CARGO_PKG_VERSION").into(),
         expected_sha256: options.expect_input_sha256,
     }
-    .consume(
-        &|| cancel.check(),
-        &current_owner,
-        |launch, check| {
-            process::run_parent_lease(
-                launch.executable,
-                launch.arguments,
-                launch.request.segments(),
-                process::Limits {
-                    input_bytes: wire::INPUT_BYTES_MAX + wire::REQUEST_HEADER,
-                    output_bytes: wire::OUTPUT_BYTES_MAX,
-                    deadline: launch.remaining,
-                    resource_exit_code: Some(wire::RESOURCE_EXIT),
-                },
-                check,
-            )
-            .map(|output| output.bytes)
+    .consume(&|| cancel.check(), &current_owner, launch, consume)
+}
+
+pub(super) fn launch(
+    launch: wire::native::Launch<'_>,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Vec<u8>> {
+    process::run_parent_lease(
+        launch.executable,
+        launch.arguments,
+        launch.request.segments(),
+        process::Limits {
+            input_bytes: wire::INPUT_BYTES_MAX + wire::REQUEST_HEADER,
+            output_bytes: wire::OUTPUT_BYTES_MAX,
+            deadline: launch.remaining,
+            resource_exit_code: Some(wire::RESOURCE_EXIT),
         },
-        consume,
+        check,
     )
+    .map(|output| output.bytes)
 }
 
 fn inspect(
