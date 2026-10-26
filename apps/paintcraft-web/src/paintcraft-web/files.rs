@@ -316,10 +316,18 @@ fn decode_input(bytes: &[u8], name: String, frontend: Frontend, convert: bool) -
         ));
     }
     if paintcraft_formats::project_import::supports(family) {
-        let converted =
+        let converted = if family == Family::Ora && convert {
+            paintcraft_formats::registry::admit_import_ora(frontend, &name, bytes, Platform::Web)?;
+            paintcraft_formats::project_import::decode_ora_with_neutral_groups(
+                bytes,
+                MAX_PIXELS,
+                &|| Ok(()),
+            )?
+        } else {
             paintcraft_formats::project_import::decode_layered(family, bytes, MAX_PIXELS, &|| {
                 Ok(())
-            })?;
+            })?
+        };
         return Ok(Loaded {
             converted_copy: true,
             document: converted.document,
@@ -740,3 +748,7 @@ mod dds_tests;
 #[cfg(test)]
 #[path = "files/jxl_tests.rs"]
 mod jxl_tests;
+
+#[cfg(test)]
+#[path = "files/ora_tests.rs"]
+mod ora_tests;
