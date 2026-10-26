@@ -146,6 +146,31 @@ pub fn discover_compatible(
     let application = std::env::current_exe().map_err(storage)?;
     for_application_compatible(&application, primary, alternate, check)
 }
+/// Admit one of exactly three caller-owned release-compatible profiles. The
+/// bounded manifest selects once; failed verification never tries another one.
+pub fn discover_compatible_three(
+    first: Contract<'_>,
+    second: Contract<'_>,
+    third: Contract<'_>,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<VerifiedHelper> {
+    let application = std::env::current_exe().map_err(storage)?;
+    for_application_compatible_three(&application, first, second, third, check)
+}
+pub fn for_application_compatible_three(
+    application: &Path,
+    first: Contract<'_>,
+    second: Contract<'_>,
+    third: Contract<'_>,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<VerifiedHelper> {
+    verify_set(
+        application,
+        &[first, second, third],
+        Target::current()?,
+        check,
+    )
+}
 pub fn for_application_compatible(
     application: &Path,
     primary: Contract<'_>,
@@ -185,14 +210,33 @@ fn verify_known(
     target: Target,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<VerifiedHelper> {
+    match alternate {
+        Some(alternate) => verify_set(application, &[contract, alternate], target, check),
+        None => verify_set(application, &[contract], target, check),
+    }
+}
+fn verify_set(
+    application: &Path,
+    contracts: &[Contract<'_>],
+    target: Target,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<VerifiedHelper> {
     check()?;
-    contract.validate()?;
-    if let Some(alternate) = alternate {
-        alternate.validate()?;
-        if contract.profile == alternate.profile
-            || contract.application_version != alternate.application_version
-            || contract.protocol_version != alternate.protocol_version
-            || contract.requested_heap_ceiling_bytes != alternate.requested_heap_ceiling_bytes
+    if !(1..=3).contains(&contracts.len()) {
+        return Err(Error::new(
+            ErrorCode::InputSchema,
+            "Invalid installed helper contract count",
+        ));
+    }
+    let first = contracts[0];
+    for (index, contract) in contracts.iter().copied().enumerate() {
+        contract.validate()?;
+        if contracts[..index]
+            .iter()
+            .any(|prior| prior.profile == contract.profile)
+            || first.application_version != contract.application_version
+            || first.protocol_version != contract.protocol_version
+            || first.requested_heap_ceiling_bytes != contract.requested_heap_ceiling_bytes
         {
             return Err(Error::new(
                 ErrorCode::InputSchema,
@@ -227,17 +271,13 @@ fn verify_known(
     let (manifest_pin, bytes) = read_manifest(&manifest, MANIFEST_BYTES_MAX, check)?;
     let value = paintcraft_core::types::json::parse(&bytes)
         .map_err(|_| unavailable("Installed helper manifest is not strict JSON"))?;
-    let contract = if value.get("profile").and_then(Value::as_str) == Some(contract.profile) {
-        contract
-    } else if let Some(alternate) = alternate
-        .filter(|candidate| value.get("profile").and_then(Value::as_str) == Some(candidate.profile))
-    {
-        alternate
-    } else {
-        return Err(unavailable(
-            "Installed helper profile is not one of the host's known contracts",
-        ));
-    };
+    let contract = contracts
+        .iter()
+        .copied()
+        .find(|candidate| value.get("profile").and_then(Value::as_str) == Some(candidate.profile))
+        .ok_or_else(|| {
+            unavailable("Installed helper profile is not one of the host's known contracts")
+        })?;
     let expected_fields = 10;
     if value.as_object().is_none_or(|v| v.len() != expected_fields)
         || value.get("schema_version").and_then(Value::as_i64) != Some(2)

@@ -574,3 +574,5 @@ fn alternate_profiles_reject_bad_variant_marker_cancellation_and_contracts() {
         ErrorCode::InputSchema
     );
 }
+
+mod three;
