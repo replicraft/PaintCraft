@@ -137,7 +137,6 @@ class CodecWorkerTests(unittest.TestCase):
         self.assertIn("--features paintcraft-codec-worker/avif-codec", workflow)
         self.assertIn("meson==1.12.1 ninja==1.13.2", workflow)
         self.assertIn("--test installed_codec_worker -- --include-ignored", workflow)
-        self.assertIn('setup.arg("-Db_vscrt=mt")', (release.ROOT / "apps/paintcraft-codec-worker/build.rs").read_text())
 
 
 if __name__ == "__main__":

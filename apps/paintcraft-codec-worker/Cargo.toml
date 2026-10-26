@@ -8,6 +8,7 @@ license-file.workspace = true
 publish.workspace = true
 
 [features]
+default = ["avif-codec"]
 avif-codec = []
 
 [build-dependencies]

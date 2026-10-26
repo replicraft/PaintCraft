@@ -155,8 +155,16 @@ fn main() {
         "-Denable_examples=false",
         "-Dbitdepths=8",
     ]);
-    if cfg!(windows) {
-        setup.arg("-Db_vscrt=mt");
+    if env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("windows") {
+        let static_crt = env::var("CARGO_CFG_TARGET_FEATURE")
+            .unwrap_or_default()
+            .split(',')
+            .any(|feature| feature == "crt-static");
+        setup.arg(if static_crt {
+            "-Db_vscrt=mt"
+        } else {
+            "-Db_vscrt=md"
+        });
     }
     run(&mut setup);
     changed(&compiler_marker, &compiler);
