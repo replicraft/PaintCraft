@@ -1,0 +1,2 @@
+# Preserve the exact upstream license bytes and their intentional whitespace.
+HDR_EXR_LICENSES_V1.txt -text -whitespace
