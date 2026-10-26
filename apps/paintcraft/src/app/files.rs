@@ -286,6 +286,21 @@ impl App {
         if convert
             && path
                 .extension()
+                .and_then(|v| v.to_str())
+                .and_then(paintcraft_formats::registry::Family::from_extension)
+                .is_some_and(|family| {
+                    matches!(
+                        family,
+                        paintcraft_formats::registry::Family::Hdr
+                            | paintcraft_formats::registry::Family::Exr
+                    )
+                })
+        {
+            return self.stage_native_float(path.to_path_buf());
+        }
+        if convert
+            && path
+                .extension()
                 .and_then(|value| value.to_str())
                 .and_then(paintcraft_formats::registry::Family::from_extension)
                 == Some(paintcraft_formats::registry::Family::Jxl)

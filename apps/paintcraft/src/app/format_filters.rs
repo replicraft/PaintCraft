@@ -41,6 +41,30 @@ impl App {
             if kind == Kind::Import && frontend == registry::Frontend::Studio {
                 filters[0].extensions.push("dcx".into());
                 filters[0].extensions.push("jxl".into());
+                for (family, extension, variant) in [
+                    (
+                        Family::Hdr,
+                        "hdr",
+                        paintcraft_formats::codec_worker::NATIVE_HDR_SDR_IMPORT_VARIANT,
+                    ),
+                    (
+                        Family::Exr,
+                        "exr",
+                        paintcraft_formats::codec_worker::NATIVE_EXR_SDR_IMPORT_VARIANT,
+                    ),
+                ] {
+                    let mut request = registry::Request::new(
+                        frontend,
+                        Operation::ImportConvert,
+                        family,
+                        Platform::Native,
+                    );
+                    request.extension = Some(extension);
+                    request.variant = Some(variant);
+                    if registry::admission(request).available() {
+                        filters[0].extensions.push(extension.into());
+                    }
+                }
                 let mut avif = registry::Request::new(
                     frontend,
                     Operation::ImportConvert,

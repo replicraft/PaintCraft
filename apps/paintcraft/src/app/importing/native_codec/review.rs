@@ -8,6 +8,7 @@ pub(super) struct Review {
     size: egui::Vec2,
     shown: Option<u64>,
     consent: bool,
+    pub(super) float_digest: Option<[u8; 32]>,
 }
 impl Review {
     pub(super) fn new(
@@ -15,7 +16,9 @@ impl Review {
         prepared: &PreparedImport,
         budget: SharedBudget,
     ) -> Result<Self> {
-        Self::from_document(ctx, prepared.document(), budget)
+        let mut review = Self::from_document(ctx, prepared.document(), budget)?;
+        review.float_digest = prepared.float_assessment().map(|value| value.digest());
+        Ok(review)
     }
     fn from_document(
         ctx: &egui::Context,
@@ -61,6 +64,7 @@ impl Review {
             size: egui::vec2(width as f32, height as f32),
             shown: None,
             consent: false,
+            float_digest: None,
         })
     }
     pub(super) fn show(&mut self, ui: &mut egui::Ui, prepared: &PreparedImport) -> bool {

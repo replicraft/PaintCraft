@@ -18,6 +18,7 @@ pub(super) struct Source {
     prepared: Option<PreparedImport>,
     review: Option<review::Review>,
     preview_budget: paintcraft_runtime::SharedBudget,
+    float: Option<float::Options>,
 }
 fn owner(app: &App) -> wire::Owner {
     let mut owner = app.editor.native_import_owner();
@@ -39,8 +40,12 @@ fn launch(launch: wire::native::Launch<'_>, check: &dyn Fn() -> Result<()>) -> R
         launch.arguments,
         launch.request.segments(),
         process::Limits {
-            input_bytes: wire::INPUT_BYTES_MAX + wire::REQUEST_HEADER,
-            output_bytes: wire::OUTPUT_BYTES_MAX,
+            input_bytes: if launch.request.header.codec.is_float() {
+                wire::float::INPUT_BYTES_MAX
+            } else {
+                wire::INPUT_BYTES_MAX
+            } + wire::REQUEST_HEADER,
+            output_bytes: wire::output_limit(launch.request.header.codec),
             deadline: launch.remaining,
             resource_exit_code: Some(wire::RESOURCE_EXIT),
         },
@@ -218,6 +223,7 @@ impl App {
                 prepared: None,
                 review: None,
                 preview_budget,
+                float: None,
             })),
             path.clone(),
             String::new(),
@@ -254,7 +260,7 @@ impl App {
             source.job = None;
             match result {
                 Ok(prepared) => {
-                    if !prepared.losses().is_empty() {
+                    if !prepared.losses().is_empty() || source.float.is_some() {
                         if prepared
                             .losses()
                             .iter()
@@ -277,46 +283,101 @@ impl App {
                     source.prepared = Some(prepared);
                 }
                 Err(error) => {
-                    self.confirm = None;
-                    self.editor.set_status(format!("Cannot open: {error}"));
-                    return;
+                    if let Some(options) = &mut source.float {
+                        options.error = Some(error);
+                    } else {
+                        self.confirm = None;
+                        self.editor.set_status(format!("Cannot open: {error}"));
+                        return;
+                    }
                 }
             }
         }
         let mut accept = false;
+        #[cfg(test)]
+        let mut content_rect = egui::Rect::NOTHING;
+        let is_float = source.float.is_some();
         let response = egui::Modal::new(egui::Id::unique("native-codec-import")).show(ctx, |ui| {
-            ui.heading(t!(ctx, "Import image"));
-            ui.add(
-                egui::Label::new(
-                    pending
-                        .path
-                        .file_name()
-                        .unwrap_or_default()
-                        .to_string_lossy(),
-                )
-                .truncate(),
-            );
-            if source.prepared.is_none() {
+            let mut ready = false;
+            let mut body = |ui: &mut egui::Ui| {
+                ui.heading(t!(ctx, "Import image"));
+                ui.add(
+                    egui::Label::new(
+                        pending
+                            .path
+                            .file_name()
+                            .unwrap_or_default()
+                            .to_string_lossy(),
+                    )
+                    .truncate(),
+                );
+                if is_float {
+                    self.float_options(ui, source);
+                }
+                if source.job.is_some() {
+                    ui.horizontal(|ui| {
+                        ui.spinner();
+                        ui.label(t!(ctx, "Preparing picture…"));
+                    });
+                    ctx.request_repaint_after(Duration::from_millis(16));
+                }
+                if let (Some(review), Some(prepared)) = (&mut source.review, &source.prepared) {
+                    ready = review.show(ui, prepared);
+                }
+            };
+            if is_float {
+                // Fix the viewport from the settings-only frame onward. A later
+                // preview cannot leave controls outside a cached, tiny modal.
+                let height = (ctx.content_rect().height() - 160.0).clamp(180.0, 760.0);
+                ui.set_width((ctx.content_rect().width() - 80.0).clamp(240.0, 600.0));
+                egui::ScrollArea::vertical()
+                    .id_salt("float-review-content")
+                    .max_height(height)
+                    .min_scrolled_height(height)
+                    .auto_shrink([false, false])
+                    .show(ui, body);
+                #[cfg(test)]
+                {
+                    content_rect = ui.min_rect();
+                }
+                ui.separator();
                 ui.horizontal(|ui| {
-                    ui.spinner();
-                    ui.label(t!(ctx, "Preparing picture…"));
-                });
-                ctx.request_repaint_after(Duration::from_millis(16));
+                    accept = ui
+                        .add_enabled(ready, egui::Button::new(t!(ctx, "Open image")))
+                        .clicked();
+                    ui.button(t!(ctx, "Cancel")).clicked()
+                })
+                .inner
+            } else {
+                body(ui);
+                if source.review.is_some() {
+                    accept = ui
+                        .add_enabled(ready, egui::Button::new(t!(ctx, "Open image")))
+                        .clicked();
+                }
+                ui.button(t!(ctx, "Cancel")).clicked()
             }
-            if let (Some(review), Some(prepared)) = (&mut source.review, &source.prepared) {
-                let ready = review.show(ui, prepared);
-                accept = ui
-                    .add_enabled(ready, egui::Button::new(t!(ctx, "Open image")))
-                    .clicked();
-            }
-            ui.button(t!(ctx, "Cancel")).clicked()
         });
         if ctx.current_pass_index() != 0 {
             ctx.request_repaint();
             self.pending_import = Some(pending);
             return;
         }
-        if response.inner || response.should_close() {
+        let should_close = response.should_close();
+        if response.inner || should_close {
+            #[cfg(test)]
+            if source.float.is_some() {
+                println!(
+                    "float-modal-close frame={} cancel={} close={} backdrop={} rect={:?} content={:?} pointer={:?}",
+                    ctx.cumulative_frame_nr(),
+                    response.inner,
+                    should_close,
+                    response.backdrop_response.clicked(),
+                    response.response.rect,
+                    content_rect,
+                    ctx.input(|input| input.pointer.interact_pos())
+                );
+            }
             self.confirm = None;
             self.editor.set_status(t!(ctx, "Import cancelled."));
             return;
@@ -324,7 +385,7 @@ impl App {
         if source
             .prepared
             .as_ref()
-            .is_some_and(|prepared| prepared.losses().is_empty())
+            .is_some_and(|prepared| prepared.losses().is_empty() && source.float.is_none())
             || accept
         {
             let result = (|| {
@@ -346,8 +407,18 @@ impl App {
                 } else {
                     Vec::new()
                 };
-                let adopted =
-                    prepared.adopt_with_losses(&losses, &|| Ok(()), &|| Ok(owner(self)))?;
+                let adopted = if prepared.float_assessment().is_some() {
+                    let digest = source
+                        .review
+                        .as_ref()
+                        .and_then(|review| review.float_digest)
+                        .ok_or_else(|| {
+                            Error::new(ErrorCode::InputSchema, "Float preview consent is missing")
+                        })?;
+                    prepared.adopt_float(digest, &losses, &|| Ok(()), &|| Ok(owner(self)))?
+                } else {
+                    prepared.adopt_with_losses(&losses, &|| Ok(()), &|| Ok(owner(self)))?
+                };
                 self.guard_asset_adoption(&adopted.input, Some(&adopted.identity))?;
                 let mut editor = Editor::with_document(adopted.document, None);
                 editor.invalidate_saved_state();
@@ -402,3 +473,6 @@ mod avif_sdr_installed_tests;
 #[cfg(test)]
 #[path = "native_codec/fixture_manifest.rs"]
 mod fixture_manifest;
+
+#[path = "native_codec/float.rs"]
+mod float;
