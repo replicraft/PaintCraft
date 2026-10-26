@@ -1,0 +1,122 @@
+[
+    {
+        "file": "literal-2x2.hdr",
+        "bytes": 61,
+        "sha256": "0e5c71e9b6f3f2db3b79b9c1600eddca6d492ce5d762bec46c15f5d9a8f9aad0",
+        "width": 2,
+        "height": 2,
+        "expected_error": null
+    },
+    {
+        "file": "calibrated-2x2.hdr",
+        "bytes": 150,
+        "sha256": "412688608e5ed3a8bcbde48f67f6526525958d183c77614bcc3569c40f39aa73",
+        "width": 2,
+        "height": 2,
+        "expected_error": null
+    },
+    {
+        "file": "explicit-rec709.hdr",
+        "bytes": 107,
+        "sha256": "a8609b643e5341e63cea47bddd752a9ac46dd6382c2e420c04c56ecd6c897861",
+        "width": 2,
+        "height": 2,
+        "expected_error": null
+    },
+    {
+        "file": "near-rec709-unresolved.hdr",
+        "bytes": 110,
+        "sha256": "bf546bc98fad2a8a42376088a25c0ffffe96849823bdd773a71496627b1a77b9",
+        "width": 2,
+        "height": 2,
+        "expected_error": null
+    },
+    {
+        "file": "rounded-ee-unresolved.hdr",
+        "bytes": 107,
+        "sha256": "244af4f1cb53c334ef47f74a2e55b9ad8f53ef3c91d89a1ceb91576a55764f2c",
+        "width": 2,
+        "height": 2,
+        "expected_error": null
+    },
+    {
+        "file": "legacy-repeat-8.hdr",
+        "bytes": 53,
+        "sha256": "8053bb75c5e45742f5c5097e3a024b8d2150270c3a5959c89b95007a621f893e",
+        "width": 8,
+        "height": 1,
+        "expected_error": null
+    },
+    {
+        "file": "legacy-zero-low-digit-257.hdr",
+        "bytes": 59,
+        "sha256": "a3ed49ce3e80df6c5836ac853b11ae0ab4c57a86192fded0bd78b5f68dea8994",
+        "width": 257,
+        "height": 1,
+        "expected_error": null
+    },
+    {
+        "file": "modern-rle-8x2.hdr",
+        "bytes": 97,
+        "sha256": "03167a19fa6d01320aad2bd3cab5882fb462db2788199a186cbc54b4049e4d97",
+        "width": 8,
+        "height": 2,
+        "expected_error": null
+    },
+    {
+        "file": "wrong-modern-width.hdr",
+        "bytes": 57,
+        "sha256": "94291020dbf8130a13797552b3127911885c26bdd176101ce3ff682b07f15d76",
+        "width": 8,
+        "height": 1,
+        "expected_error": "CodecFailed"
+    },
+    {
+        "file": "zero-modern-run.hdr",
+        "bytes": 58,
+        "sha256": "85f8bd305c4b92045def6f014dce60157f20a8be82a32100e93a1885b972a0eb",
+        "width": 8,
+        "height": 1,
+        "expected_error": "CodecFailed"
+    },
+    {
+        "file": "oversized-modern-run.hdr",
+        "bytes": 57,
+        "sha256": "6e5753c256f72d0d00b039d37ff583751056a541c2a7d702ed3e643202fc1466",
+        "width": 8,
+        "height": 1,
+        "expected_error": "CodecFailed"
+    },
+    {
+        "file": "truncated-modern-literal.hdr",
+        "bytes": 57,
+        "sha256": "b8975ec7820373cca0889b0dbbdd90c5cbd1fc0cd0589e53d2d075005fbaeb46",
+        "width": 8,
+        "height": 1,
+        "expected_error": "CodecFailed"
+    },
+    {
+        "file": "overflow-legacy-zero-chain.hdr",
+        "bytes": 89,
+        "sha256": "9d08cbdc480a5750b938cca11433af71489818a1b255cc53c505bc453d227228",
+        "width": 2,
+        "height": 1,
+        "expected_error": "CapabilityUnsupported"
+    },
+    {
+        "file": "legacy-marker-collision.hdr",
+        "bytes": 49,
+        "sha256": "fc2d222e47ef7544326fdb4e4abcaf7a28e2efcb79bc5a1003ba1d9d6e26efc2",
+        "width": 1,
+        "height": 1,
+        "expected_error": "CapabilityUnsupported"
+    },
+    {
+        "file": "nonstandard-orientation.hdr",
+        "bytes": 49,
+        "sha256": "62f3c3773a7c43396739234f3a63a10d0cd990cafeffeceaba8c6df5fbeb52d1",
+        "width": 1,
+        "height": 1,
+        "expected_error": "CapabilityUnsupported"
+    }
+]
