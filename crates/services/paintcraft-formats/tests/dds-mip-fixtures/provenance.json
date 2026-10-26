@@ -1,0 +1,155 @@
+{
+  "generator": "generate.py; Python struct, no dds crate or PaintCraft decoder",
+  "oracle": "Pillow 13.0.0",
+  "dimensions": [
+    [
+      7,
+      5
+    ],
+    [
+      3,
+      2
+    ],
+    [
+      1,
+      1
+    ]
+  ],
+  "colors": [
+    "red",
+    "green",
+    "blue"
+  ],
+  "files": [
+    {
+      "file": "legacy-rgba.dds",
+      "sha256": "522136fae547b0feb33b28c54441172b37f2d8e6950e429d45ad77da185566c8",
+      "level_lengths": [
+        140,
+        24,
+        4
+      ],
+      "oracle_rgba_sha256": "244dc7e30d00d6e8e17d8940b95797a7e99283b9c66051e4b3d510c312ba1b1d"
+    },
+    {
+      "file": "legacy-bgra.dds",
+      "sha256": "27bf9d32f80b25592a5409c64da1b37fdc82673764590b3f24525f927dfa0d02",
+      "level_lengths": [
+        140,
+        24,
+        4
+      ],
+      "oracle_rgba_sha256": "244dc7e30d00d6e8e17d8940b95797a7e99283b9c66051e4b3d510c312ba1b1d"
+    },
+    {
+      "file": "legacy-bc1.dds",
+      "sha256": "d275185538029dc1fc8d9fb5d025d8d9c93f0b99110ce32c7e5f9c0acd8df7b4",
+      "level_lengths": [
+        32,
+        8,
+        8
+      ],
+      "oracle_rgba_sha256": "244dc7e30d00d6e8e17d8940b95797a7e99283b9c66051e4b3d510c312ba1b1d"
+    },
+    {
+      "file": "legacy-bc2.dds",
+      "sha256": "40b1e60ca0ac5a16f2e77aa46b6d5e775dc35625fed090525af5dcf261e03fbf",
+      "level_lengths": [
+        64,
+        16,
+        16
+      ],
+      "oracle_rgba_sha256": "244dc7e30d00d6e8e17d8940b95797a7e99283b9c66051e4b3d510c312ba1b1d"
+    },
+    {
+      "file": "legacy-bc3.dds",
+      "sha256": "612bc2df1c4873258823541b491600e9635b6165a0078225f7fb73c27bd58eac",
+      "level_lengths": [
+        64,
+        16,
+        16
+      ],
+      "oracle_rgba_sha256": "244dc7e30d00d6e8e17d8940b95797a7e99283b9c66051e4b3d510c312ba1b1d"
+    },
+    {
+      "file": "dx10-rgba.dds",
+      "sha256": "142d49777a67adefcd6170d4e59650fef9496e342622ae29621d1a4383f3ee80",
+      "level_lengths": [
+        140,
+        24,
+        4
+      ],
+      "oracle_rgba_sha256": "244dc7e30d00d6e8e17d8940b95797a7e99283b9c66051e4b3d510c312ba1b1d"
+    },
+    {
+      "file": "dx10-bgra.dds",
+      "sha256": "bc68b8adb67b3561818e76a298d2482a6617a76deee3a3aafc61a56816814a59",
+      "level_lengths": [
+        140,
+        24,
+        4
+      ],
+      "oracle_rgba_sha256": "unsupported-by-Pillow; independent-format-layout-expected-only"
+    },
+    {
+      "file": "dx10-bc1.dds",
+      "sha256": "450a7a5b1a406012de5b9179041b4fa3191070e351315ef9d2473e8cd7e5fd1b",
+      "level_lengths": [
+        32,
+        8,
+        8
+      ],
+      "oracle_rgba_sha256": "244dc7e30d00d6e8e17d8940b95797a7e99283b9c66051e4b3d510c312ba1b1d"
+    },
+    {
+      "file": "dx10-bc2.dds",
+      "sha256": "9a9644fe6ee45b0d7d3a827c7e2acf8e27736b9539b1db75e58173dc362b084d",
+      "level_lengths": [
+        64,
+        16,
+        16
+      ],
+      "oracle_rgba_sha256": "244dc7e30d00d6e8e17d8940b95797a7e99283b9c66051e4b3d510c312ba1b1d"
+    },
+    {
+      "file": "dx10-bc3.dds",
+      "sha256": "198e0445fc167ca2258d3fbd95892271947a8bcd0a38cca37294fbfa8d3a05c6",
+      "level_lengths": [
+        64,
+        16,
+        16
+      ],
+      "oracle_rgba_sha256": "244dc7e30d00d6e8e17d8940b95797a7e99283b9c66051e4b3d510c312ba1b1d"
+    },
+    {
+      "file": "dx10-bc1-srgb.dds",
+      "sha256": "bc0822a1ecbbd07a6340ab6d09d7e57d291f3c6c774a0b0d8045140aed985c94",
+      "level_lengths": [
+        32,
+        8,
+        8
+      ],
+      "oracle_rgba_sha256": "unsupported-by-Pillow; independent-format-layout-expected-only"
+    },
+    {
+      "file": "dx10-bc2-srgb.dds",
+      "sha256": "e93493894bbbf4644500b6225d36680dea1c3fe3c5d93ffab42081d6668ff700",
+      "level_lengths": [
+        64,
+        16,
+        16
+      ],
+      "oracle_rgba_sha256": "unsupported-by-Pillow; independent-format-layout-expected-only"
+    },
+    {
+      "file": "dx10-bc3-srgb.dds",
+      "sha256": "d6927635394e3226067f84d3442aa4358182fc8a32b3c2a3f0859dfa2c2fd15d",
+      "level_lengths": [
+        64,
+        16,
+        16
+      ],
+      "oracle_rgba_sha256": "unsupported-by-Pillow; independent-format-layout-expected-only"
+    }
+  ]
+}

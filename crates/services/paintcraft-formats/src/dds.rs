@@ -1,10 +1,16 @@
-//! Scoped single-surface DDS decoding; no frontend capability promotion.
+//! Scoped DDS decoding; no frontend capability promotion.
 //!
 //! Raw channel precision and transfer/alpha hints remain explicit. Texture
-//! arrays, mipmaps, cubemaps, volumes and unsupported precision are refused.
+//! arrays, cubemaps, volumes and unsupported precision are refused. Ordinary
+//! APIs require one level; the explicit top-mip API inventories and omits tails.
 mod encode;
 mod input;
+mod mip;
 pub use encode::{encode_rgba8, encode_rgba8_checked};
+pub use mip::{
+    DecodedTopMip, MipInspection, MipLevel, OTHER_MIPS_LOSS, decode_top_mip_checked,
+    inspect_top_mip_checked,
+};
 #[cfg(test)]
 mod tests;
 use ::dds::{
@@ -63,6 +69,9 @@ fn codec(message: impl Into<String>) -> Error {
     Error::new(ErrorCode::CodecFailed, message)
 }
 fn admit(header: &Header, pixels: u64) -> Result<Inspection> {
+    admit_profile(header, pixels, false)
+}
+fn admit_profile(header: &Header, pixels: u64, allow_mips: bool) -> Result<Inspection> {
     let width = header.width();
     let height = header.height();
     if width == 0 || height == 0 {
@@ -78,7 +87,7 @@ fn admit(header: &Header, pixels: u64) -> Result<Inspection> {
         || header.is_volume()
         || header.is_cube_map()
         || header.array_size() != 1
-        || header.mipmap_count().get() != 1
+        || (!allow_mips && header.mipmap_count().get() != 1)
     {
         return Err(unsupported(
             "DDS mipmaps, arrays, cubemaps and volumes are not qualified",
@@ -153,6 +162,15 @@ fn prepare<'a, 'b>(
     pixels: u64,
     control: &'b Control<'b>,
 ) -> Result<(Decoder<Input<'a, 'b>>, Inspection)> {
+    let (decoder, plan) = prepare_profile(bytes, pixels, control, false)?;
+    Ok((decoder, plan.image))
+}
+fn prepare_profile<'a, 'b>(
+    bytes: &'a [u8],
+    pixels: u64,
+    control: &'b Control<'b>,
+    allow_mips: bool,
+) -> Result<(Decoder<Input<'a, 'b>>, MipInspection)> {
     (control.check)()?;
     if bytes.len() > BYTES_MAX {
         return Err(resource("DDS exceeds the input byte limit"));
@@ -168,8 +186,12 @@ fn prepare<'a, 'b>(
         .map_err(|e| control.error(codec(format!("DDS header is invalid: {e}"))))?;
     // Preserve strict refusal even when an older writer forgets the flag;
     // the library otherwise normalizes an unflagged mip count to one.
-    if u32::from_le_bytes(bytes[28..32].try_into().unwrap()) > 1 {
+    let raw_mips = u32::from_le_bytes(bytes[28..32].try_into().unwrap());
+    if raw_mips > 1 && !allow_mips {
         return Err(unsupported("DDS mipmaps require a texture import workflow"));
+    }
+    if allow_mips {
+        mip::admit_count(bytes, &header, raw_mips)?;
     }
     if u32::from_le_bytes(bytes[112..116].try_into().unwrap()) != 0 {
         return Err(unsupported(
@@ -184,7 +206,7 @@ fn prepare<'a, 'b>(
             "DDS reserved resource or alpha flags are not qualified",
         ));
     }
-    let info = admit(&header, pixels)?;
+    let info = admit_profile(&header, pixels, allow_mips)?;
     let mut decoder = Decoder::from_header(input, header).map_err(|e| control.map(e))?;
     decoder.options.memory_limit = WORKSPACE_BYTES_MAX;
     if !decoder.layout().is_texture() {
@@ -197,11 +219,13 @@ fn prepare<'a, 'b>(
         .len()
         .checked_sub(body_offset)
         .ok_or_else(|| codec("Truncated DDS header"))?;
-    if decoder.layout().data_len() != body_bytes as u64 {
-        return Err(codec(
-            "DDS data length does not exactly match its single surface",
-        ));
-    }
+    let plan = mip::layout(
+        decoder.layout(),
+        info,
+        body_offset,
+        body_bytes,
+        control.check,
+    )?;
     let flags = u32::from_le_bytes(bytes[8..12].try_into().unwrap());
     let pitch = u32::from_le_bytes(bytes[20..24].try_into().unwrap());
     match info.encoding {
@@ -211,7 +235,7 @@ fn prepare<'a, 'b>(
             return Err(unsupported("Padded DDS row pitch is not qualified"));
         }
         Encoding::Bc1 | Encoding::Bc2 | Encoding::Bc3
-            if flags & 0x80000 != 0 && u64::from(pitch) != body_bytes as u64 =>
+            if flags & 0x80000 != 0 && u64::from(pitch) != plan.levels[0].byte_len =>
         {
             return Err(codec(
                 "DDS compressed linear size does not match its surface",
@@ -220,7 +244,7 @@ fn prepare<'a, 'b>(
         _ => {}
     }
     (control.check)()?;
-    Ok((decoder, info))
+    Ok((decoder, plan))
 }
 pub fn inspect_checked(
     bytes: &[u8],
@@ -241,6 +265,22 @@ pub fn decode_checked(
 ) -> Result<Decoded> {
     let control = Control::new(check);
     let (mut decoder, info) = prepare(bytes, pixels, &control)?;
+    let mut rgba = read_rgba(&mut decoder, info, &control)?;
+    if !decoder.is_done() {
+        return Err(codec("DDS decoder did not consume exactly one surface"));
+    }
+    if !decoder.into_reader().remaining.is_empty() {
+        return Err(codec("DDS decoder left trailing surface bytes"));
+    }
+    finish_alpha(&mut rgba, info, check)?;
+    Ok(Decoded { info, rgba })
+}
+
+fn read_rgba(
+    decoder: &mut Decoder<Input<'_, '_>>,
+    info: Inspection,
+    control: &Control<'_>,
+) -> Result<Vec<u8>> {
     let count = usize::try_from(u64::from(info.width) * u64::from(info.height) * 4)
         .map_err(|_| resource("DDS output length exceeds target address space"))?;
     if count > BYTES_MAX {
@@ -253,12 +293,9 @@ pub fn decode_checked(
     let view = ImageViewMut::new(&mut rgba, decoder.main_size(), ColorFormat::RGBA_U8)
         .ok_or_else(|| codec("DDS output geometry is invalid"))?;
     decoder.read_surface(view).map_err(|e| control.map(e))?;
-    if !decoder.is_done() {
-        return Err(codec("DDS decoder did not consume exactly one surface"));
-    }
-    if !decoder.into_reader().remaining.is_empty() {
-        return Err(codec("DDS decoder left trailing surface bytes"));
-    }
+    Ok(rgba)
+}
+fn finish_alpha(rgba: &mut [u8], info: Inspection, check: &dyn Fn() -> Result<()>) -> Result<()> {
     if info.alpha == SourceAlpha::Opaque {
         for (index, pixel) in rgba.as_chunks_mut::<4>().0.iter_mut().enumerate() {
             if index.is_multiple_of(1024) {
@@ -268,5 +305,5 @@ pub fn decode_checked(
         }
     }
     check()?;
-    Ok(Decoded { info, rgba })
+    Ok(())
 }

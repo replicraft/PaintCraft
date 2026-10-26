@@ -1,0 +1,9 @@
+# Independent DDS mip-chain vectors
+
+`generate.py` authors DDS headers, RGB565 blocks and channel bytes using Python's standard `struct`, without PaintCraft or the Rust `dds` library. Run from the repository root with Pillow 13.0.0 (`docs/validation/format-specialists-2026-10-25/oracle-requirements.txt`). The committed `provenance.json` records source hashes, level lengths and independent top-pixel hashes.
+
+The thirteen legacy/DX10 RGBA8, BGRA8, BC1, BC2 and BC3 sources contain 7×5 red, 3×2 green and 1×1 blue levels. They exercise odd dimensions, compressed block rounding, full-chain ordering, straight-alpha DX10 metadata, sRGB RGBA/BGRA and both sRGB/linear BC metadata. `top.rgba` is 35 independently authored red RGBA pixels. Pillow confirms nine top-level outputs exactly. Pillow does not implement DXGI 91/72/75/78 (BGRA/BC sRGB); those four cases have explicit unsupported oracle results and independent byte-channel/block expectations, not an external-decoder success claim.
+
+Header and block definitions: [DDS programming guide](https://learn.microsoft.com/en-us/windows/win32/direct3ddds/dx-graphics-dds-pguide), [DDS_HEADER](https://learn.microsoft.com/en-us/windows/win32/direct3ddds/dds-header), and [BC1–BC3 block descriptions](https://learn.microsoft.com/en-us/windows/win32/direct3d10/d3d10-graphics-programming-guide-resources-block-compression). All fixture bytes are authored for this repository.
+
+The backend validates the complete encoded chain's structural lengths before allocating top pixels. It decodes only level zero: it does not claim semantic/entropy validation of omitted lower levels. Tests prove the unread tail remains borrowed source bytes, lower-level bytes cannot change top pixels, and missing/trailing tail bytes are refused. Existing strict DDS APIs continue refusing these multi-level sources until callers select the explicit conversion API and handle its loss.
