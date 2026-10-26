@@ -129,7 +129,7 @@ mod tests {
         std::fs::rename(&source, &moved).unwrap();
         std::fs::hard_link(&moved, &alias).unwrap();
         let original = std::fs::metadata(&moved).unwrap().permissions();
-        std::fs::set_permissions(&moved, std::fs::Permissions::from_mode(0)).unwrap();
+        std::fs::set_permissions(&moved, std::fs::Permissions::from_mode(0o0)).unwrap();
         let denied = state.protect_import_sources(&alias);
         let readable = std::fs::File::open(&alias).is_ok();
         std::fs::set_permissions(&moved, original).unwrap();
