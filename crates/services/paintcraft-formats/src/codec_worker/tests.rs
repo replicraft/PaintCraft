@@ -18,13 +18,15 @@ fn response(r: &Request) -> Vec<u8> {
         Success {
             width: 2,
             height: 1,
-            gray: &[0, 255],
-            alpha: Some(&[17, 243]),
-            encoding: NativeEncoding {
-                primaries: 2,
-                transfer: 2,
-                matrix: 2,
-                full_range: true,
+            pixels: Pixels::NativeGray8 {
+                gray: &[0, 255],
+                alpha: Some(&[17, 243]),
+                encoding: NativeEncoding {
+                    primaries: 2,
+                    transfer: 2,
+                    matrix: 2,
+                    full_range: true,
+                },
             },
         },
         4096,
@@ -45,10 +47,18 @@ fn exact_protocol_round_trip_preserves_native_planes_and_capture() {
         RESPONSE_HEADER + env!("CARGO_PKG_VERSION").len() + 4
     );
     let frame = decode(&out, &r, r.header.owner).unwrap();
-    assert_eq!(frame.gray, [0, 255]);
-    assert_eq!(frame.alpha.unwrap(), [17, 243]);
+    let Pixels::NativeGray8 {
+        gray,
+        alpha,
+        encoding,
+    } = frame.pixels
+    else {
+        panic!()
+    };
+    assert_eq!(gray, [0, 255]);
+    assert_eq!(alpha.unwrap(), [17, 243]);
     assert_eq!(frame.heap_peak, 4096);
-    assert_eq!(frame.encoding.matrix, 2);
+    assert_eq!(encoding.matrix, 2);
 }
 #[test]
 fn foreign_source_job_document_frontend_and_epoch_are_refused() {
@@ -138,4 +148,79 @@ fn framed_failures_preserve_error_codes_and_never_carry_pixels() {
     let mut illegal = response(&r);
     illegal[10] = 2;
     assert!(decode(&illegal, &r, r.header.owner).is_err());
+}
+
+#[test]
+fn explicit_codec_binds_sample_model_and_prevents_cross_codec_confusion() {
+    let mut r = request();
+    r.header.codec = Codec::JxlRgba8;
+    let bytes = success(
+        r.header,
+        Success {
+            width: 2,
+            height: 1,
+            pixels: Pixels::SrgbRgba8(&[10, 20, 30, 0, 40, 50, 60, 137]),
+        },
+        17,
+    )
+    .unwrap();
+    let frame = decode(&bytes, &r, r.header.owner).unwrap();
+    assert_eq!(
+        frame.pixels,
+        Pixels::SrgbRgba8(&[10, 20, 30, 0, 40, 50, 60, 137])
+    );
+    let mut foreign = r.clone();
+    foreign.header.codec = Codec::HeifGray8;
+    assert!(decode(&bytes, &foreign, foreign.header.owner).is_err());
+    assert!(
+        success(
+            foreign.header,
+            Success {
+                width: 2,
+                height: 1,
+                pixels: Pixels::SrgbRgba8(&[0; 8])
+            },
+            0
+        )
+        .is_err()
+    );
+    for offset in [20, 22, 24, 26, 27, 32] {
+        let mut changed = bytes.clone();
+        changed[offset] ^= 1;
+        assert!(
+            decode(&changed, &r, r.header.owner).is_err(),
+            "profile offset{offset}"
+        );
+    }
+    let failure = error(
+        r.header,
+        &Error::new(ErrorCode::CapabilityUnsupported, "ICC conversion disabled"),
+        17,
+    )
+    .unwrap();
+    assert_eq!(
+        decode(&failure, &r, r.header.owner).unwrap_err().code,
+        ErrorCode::CapabilityUnsupported
+    );
+}
+#[test]
+fn largest_rgba_payload_and_version_fit_the_reserved_output_allowance() {
+    let mut r = request();
+    r.header.codec = Codec::JxlRgba8;
+    r.header.pixels = PIXELS_MAX as u32;
+    let rgba = vec![137; PIXELS_MAX as usize * 4];
+    let bytes = success(
+        r.header,
+        Success {
+            width: 2048,
+            height: 2048,
+            pixels: Pixels::SrgbRgba8(&rgba),
+        },
+        16 << 20,
+    )
+    .unwrap();
+    assert!(bytes.len() <= OUTPUT_BYTES_MAX);
+    let frame = decode(&bytes, &r, r.header.owner).unwrap();
+    assert_eq!(frame.pixels, Pixels::SrgbRgba8(&rgba));
+    assert!(r.reservation_bytes() >= HEAP_BYTES + bytes.len() as u64 + r.source.len() as u64);
 }

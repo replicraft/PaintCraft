@@ -12,7 +12,6 @@ mod properties;
 mod qualification;
 #[cfg(test)]
 mod tests;
-pub mod wire;
 use paintcraft_core::types::{Error, ErrorCode, Result};
 use paintcraft_paint::{BoxInfo, BoxTree, Layout};
 pub use payloads::{Grid, Payload};

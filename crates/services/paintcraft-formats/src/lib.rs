@@ -3,6 +3,7 @@
 pub mod abr;
 pub mod ase;
 pub mod avif;
+pub mod codec_worker;
 pub mod csh;
 pub mod dcx;
 pub mod dds;

@@ -1,5 +1,16 @@
-//! Fixed-width, versioned native-gray protocol. Parsing never publishes state.
-use super::*;
+//! Shared native codec-helper envelopes. Parsing never publishes state.
+use paintcraft_core::types::{Error, ErrorCode, Result};
+pub const INPUT_BYTES_MAX: usize = 64 << 20;
+pub const PIXELS_MAX: u64 = 4_194_304;
+fn invalid(message: &str) -> Error {
+    Error::new(ErrorCode::CodecFailed, message)
+}
+fn resource(message: &str) -> Error {
+    Error::new(ErrorCode::ResourceLimit, message)
+}
+fn unsupported(message: &str) -> Error {
+    Error::new(ErrorCode::CapabilityUnsupported, message)
+}
 use sha2::{Digest, Sha256};
 use std::sync::Arc;
 use uuid::Uuid;
@@ -7,9 +18,31 @@ pub const HEAP_BYTES: u64 = 256 << 20;
 pub const RESOURCE_EXIT: i32 = 75;
 pub const REQUEST_HEADER: usize = 112;
 pub const RESPONSE_HEADER: usize = 136;
-pub const OUTPUT_BYTES_MAX: usize = PIXELS_MAX as usize * 2 + RESPONSE_HEADER + 4096 + 64;
-const REQUEST_MAGIC: &[u8; 8] = b"PCHEIF01";
-const RESPONSE_MAGIC: &[u8; 8] = b"PCGRAY01";
+pub const OUTPUT_BYTES_MAX: usize = PIXELS_MAX as usize * 4 + RESPONSE_HEADER + 4096 + 64;
+pub const REQUEST_MAGIC: &[u8; 8] = b"PCDEC002";
+pub const PROTOCOL_VERSION: u16 = 2;
+const RESPONSE_MAGIC: &[u8; 8] = b"PCPIX002";
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(u8)]
+pub enum Codec {
+    HeifGray8 = 1,
+    JxlRgba8 = 2,
+}
+impl Codec {
+    fn side_limit(self) -> u32 {
+        match self {
+            Self::HeifGray8 => 16384,
+            Self::JxlRgba8 => 65536,
+        }
+    }
+    fn decode(value: u8) -> Result<Self> {
+        match value {
+            1 => Ok(Self::HeifGray8),
+            2 => Ok(Self::JxlRgba8),
+            _ => Err(unsupported("worker codec request is not supported")),
+        }
+    }
+}
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Owner {
     pub session: Uuid,
@@ -19,6 +52,7 @@ pub struct Owner {
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Header {
+    pub codec: Codec,
     pub nonce: Uuid,
     pub owner: Owner,
     pub sha256: [u8; 32],
@@ -32,16 +66,25 @@ pub struct Request {
 }
 impl Request {
     pub fn capture(source: Arc<Vec<u8>>, owner: Owner, pixels: u64) -> Result<Self> {
+        Self::capture_for(Codec::HeifGray8, source, owner, pixels)
+    }
+    pub fn capture_for(
+        codec: Codec,
+        source: Arc<Vec<u8>>,
+        owner: Owner,
+        pixels: u64,
+    ) -> Result<Self> {
         if owner.frontend != 3 {
-            return Err(unsupported("HEIF worker is Studio-only"));
+            return Err(unsupported("native codec worker is Studio-only"));
         }
         if source.is_empty() || source.len() > INPUT_BYTES_MAX || pixels == 0 || pixels > PIXELS_MAX
         {
-            return Err(resource("HEIF worker request allowance"));
+            return Err(resource("native codec worker request allowance"));
         }
         let sha256 = Sha256::digest(source.as_slice()).into();
         Ok(Self {
             header: Header {
+                codec,
                 nonce: Uuid::new_v4(),
                 owner,
                 sha256,
@@ -111,8 +154,8 @@ impl Header {
     pub fn encode(&self) -> Vec<u8> {
         let mut out = Vec::with_capacity(REQUEST_HEADER);
         out.extend(REQUEST_MAGIC);
-        out.extend(1u16.to_be_bytes());
-        out.push(1);
+        out.extend(PROTOCOL_VERSION.to_be_bytes());
+        out.push(self.codec as u8);
         out.extend(self.pixels.to_be_bytes());
         out.extend(self.length.to_be_bytes());
         owner_bytes(&mut out, self.owner);
@@ -125,16 +168,17 @@ impl Header {
             return Err(invalid("worker request header length"));
         }
         let mut r = Reader { bytes, pos: 0 };
-        if r.take::<8>()? != *REQUEST_MAGIC || r.u16()? != 1 || r.u8()? != 1 {
+        if r.take::<8>()? != *REQUEST_MAGIC || r.u16()? != PROTOCOL_VERSION {
             return Err(unsupported("worker request protocol"));
         }
+        let codec = Codec::decode(r.u8()?)?;
         let pixels = r.u32()?;
         let length = r.u64()?;
         let owner = r.owner()?;
         let nonce = r.uuid()?;
         let sha256 = r.take()?;
         if owner.frontend != 3 {
-            return Err(unsupported("HEIF worker is Studio-only"));
+            return Err(unsupported("native codec worker is Studio-only"));
         }
         if pixels == 0
             || u64::from(pixels) > PIXELS_MAX
@@ -144,6 +188,7 @@ impl Header {
             return Err(resource("worker input declaration exceeds allowance"));
         }
         Ok(Self {
+            codec,
             nonce,
             owner,
             sha256,
@@ -167,24 +212,29 @@ pub struct NativeEncoding {
     pub matrix: u16,
     pub full_range: bool,
 }
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Pixels<'a> {
+    NativeGray8 {
+        gray: &'a [u8],
+        alpha: Option<&'a [u8]>,
+        encoding: NativeEncoding,
+    },
+    /// Integer IEC sRGB with straight alpha, four bytes per pixel.
+    SrgbRgba8(&'a [u8]),
+}
 #[derive(Debug)]
 pub struct Frame<'a> {
     pub width: u32,
     pub height: u32,
-    pub gray: &'a [u8],
-    pub alpha: Option<&'a [u8]>,
-    pub encoding: NativeEncoding,
-    /// Requested-heap high-water snapshot during response preparation, not RSS
-    /// or a final process-exit measurement. Never used to shrink admission.
+    pub pixels: Pixels<'a>,
+    /// Requested-heap snapshot during response preparation, never RSS.
     pub heap_peak: u64,
 }
 #[derive(Debug)]
 pub struct Success<'a> {
     pub width: u32,
     pub height: u32,
-    pub gray: &'a [u8],
-    pub alpha: Option<&'a [u8]>,
-    pub encoding: NativeEncoding,
+    pub pixels: Pixels<'a>,
 }
 #[allow(clippy::too_many_arguments)] // Fixed-width wire fields, not caller configuration.
 fn response_header(
@@ -204,9 +254,9 @@ fn response_header(
     }
     let mut out = Vec::with_capacity(RESPONSE_HEADER);
     out.extend(RESPONSE_MAGIC);
-    out.extend(1u16.to_be_bytes());
+    out.extend(PROTOCOL_VERSION.to_be_bytes());
     out.push(status);
-    out.push(1);
+    out.push(request.codec as u8);
     out.extend(width.to_be_bytes());
     out.extend(height.to_be_bytes());
     out.push(u8::from(a != 0));
@@ -228,15 +278,38 @@ fn response_header(
 /// smaller per-request heap number is represented or claimed to be enforced.
 pub fn success(request: Header, result: Success<'_>, peak: u64) -> Result<Vec<u8>> {
     let version = env!("CARGO_PKG_VERSION").as_bytes();
-    let y = result.gray.len();
-    let a = result.alpha.map_or(0, <[u8]>::len);
+    let (primary, alpha, encoding, channels) = match (request.codec, result.pixels) {
+        (
+            Codec::HeifGray8,
+            Pixels::NativeGray8 {
+                gray,
+                alpha,
+                encoding,
+            },
+        ) => (gray, alpha, encoding, 1),
+        (Codec::JxlRgba8, Pixels::SrgbRgba8(rgba)) => (
+            rgba,
+            None,
+            NativeEncoding {
+                primaries: 1,
+                transfer: 13,
+                matrix: 0,
+                full_range: true,
+            },
+            4,
+        ),
+        _ => return Err(invalid("worker response codec/sample model mismatch")),
+    };
+    let y = primary.len();
+    let a = alpha.map_or(0, <[u8]>::len);
     let pixels = u64::from(result.width) * u64::from(result.height);
     if result.width == 0
         || result.height == 0
-        || result.width > 16384
-        || result.height > 16384
+        || result.width > request.codec.side_limit()
+        || result.height > request.codec.side_limit()
+        || pixels > PIXELS_MAX
         || pixels > u64::from(request.pixels)
-        || y as u64 != pixels
+        || y as u64 != pixels * channels
         || a != 0 && a != y
     {
         return Err(invalid("worker success dimensions/plane lengths"));
@@ -246,7 +319,7 @@ pub fn success(request: Header, result: Success<'_>, peak: u64) -> Result<Vec<u8
         0,
         result.width,
         result.height,
-        result.encoding,
+        encoding,
         y,
         a,
         0,
@@ -256,8 +329,8 @@ pub fn success(request: Header, result: Success<'_>, peak: u64) -> Result<Vec<u8
     out.try_reserve(version.len() + y + a)
         .map_err(|_| resource("worker response allocation failed"))?;
     out.extend(version);
-    out.extend(result.gray);
-    if let Some(alpha) = result.alpha {
+    out.extend(primary);
+    if let Some(alpha) = alpha {
         out.extend(alpha);
     }
     Ok(out)
@@ -305,7 +378,10 @@ pub fn decode<'a>(bytes: &'a [u8], request: &Request, current: Owner) -> Result<
         return Err(resource("worker output size allowance"));
     }
     let mut r = Reader { bytes, pos: 0 };
-    if r.take::<8>()? != *RESPONSE_MAGIC || r.u16()? != 1 || r.u8()? > 4 || r.u8()? != 1 {
+    if r.take::<8>()? != *RESPONSE_MAGIC || r.u16()? != PROTOCOL_VERSION || r.u8()? > 4 {
+        return Err(invalid("worker response protocol"));
+    }
+    if Codec::decode(r.u8()?)? != request.header.codec {
         return Err(invalid("worker response protocol"));
     }
     let status = bytes[10];
@@ -379,26 +455,53 @@ pub fn decode<'a>(bytes: &'a [u8], request: &Request, current: Owner) -> Result<
     let pixels = u64::from(width) * u64::from(height);
     if width == 0
         || height == 0
-        || width > 16384
-        || height > 16384
+        || width > request.header.codec.side_limit()
+        || height > request.header.codec.side_limit()
+        || pixels > PIXELS_MAX
         || pixels > u64::from(request.header.pixels)
-        || y as u64 != pixels
-        || a != if alpha_flag == 1 { y } else { 0 }
         || detail != 0
-        || !encoding.full_range
-        || !matches!(encoding.primaries, 1 | 2)
-        || !matches!(encoding.transfer, 2 | 13)
-        || !matches!(encoding.matrix, 0..=2)
     {
-        return Err(invalid("worker native-gray profile/plane declarations"));
+        return Err(invalid("worker output dimensions/detail"));
     }
     let payload = &body[version..];
+    let pixels = match request.header.codec {
+        Codec::HeifGray8 => {
+            if y as u64 != pixels
+                || a != if alpha_flag == 1 { y } else { 0 }
+                || !encoding.full_range
+                || !matches!(encoding.primaries, 1 | 2)
+                || !matches!(encoding.transfer, 2 | 13)
+                || !matches!(encoding.matrix, 0..=2)
+            {
+                return Err(invalid("worker native-gray profile/plane declarations"));
+            }
+            Pixels::NativeGray8 {
+                gray: &payload[..y],
+                alpha: (a != 0).then_some(&payload[y..]),
+                encoding,
+            }
+        }
+        Codec::JxlRgba8 => {
+            if y as u64 != pixels * 4
+                || a != 0
+                || alpha_flag != 0
+                || encoding
+                    != (NativeEncoding {
+                        primaries: 1,
+                        transfer: 13,
+                        matrix: 0,
+                        full_range: true,
+                    })
+            {
+                return Err(invalid("worker sRGB RGBA8 profile/plane declarations"));
+            }
+            Pixels::SrgbRgba8(payload)
+        }
+    };
     Ok(Frame {
         width,
         height,
-        gray: &payload[..y],
-        alpha: (a != 0).then_some(&payload[y..]),
-        encoding,
+        pixels,
         heap_peak: peak,
     })
 }
