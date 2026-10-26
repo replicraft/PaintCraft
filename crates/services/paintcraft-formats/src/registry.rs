@@ -244,6 +244,9 @@ pub fn capability(family: Family, operation: Operation, platform: Platform) -> C
         Family::Pcx if matches!(operation, Operation::ImportConvert | Operation::ExportFlat) => {
             Some("pcx-rgba8")
         }
+        Family::Heif if operation == Operation::ImportConvert && platform == Platform::Native => {
+            Some("heic-decoder-isolated-srgb8")
+        }
         Family::Jxr if operation == Operation::ImportConvert && platform == Platform::Native => {
             Some("jpegxr-pure-rs-isolated-rgb8")
         }
@@ -315,6 +318,11 @@ pub fn admission(request: Request<'_>) -> Decision {
         && request.frontend == Frontend::Studio
         && request.platform == Platform::Native
         && request.variant == Some(crate::codec_worker::NATIVE_JXR_IMPORT_VARIANT);
+    let native_heif_import = request.family == Family::Heif
+        && request.operation == Operation::ImportConvert
+        && request.frontend == Frontend::Studio
+        && request.platform == Platform::Native
+        && request.variant == Some(crate::codec_worker::NATIVE_HEIF_IMPORT_VARIANT);
     let web_jxl_import = request.family == Family::Jxl
         && request.operation == Operation::ImportConvert
         && request.frontend == Frontend::Studio
@@ -364,6 +372,7 @@ pub fn admission(request: Request<'_>) -> Decision {
         && !native_jxl_import
         && !web_jxl_import
         && !native_jxr_import
+        && !native_heif_import
     {
         return Decision::TemporarilyUnavailable(Reason::VariantUnqualified);
     }
@@ -383,11 +392,13 @@ pub fn admission(request: Request<'_>) -> Decision {
         && !native_jxl_import
         && !web_jxl_import
         && !native_jxr_import
+        && !native_heif_import
     {
         return Decision::TemporarilyUnavailable(Reason::VariantUnqualified);
     }
     if request.needs_preflight
         || native_jxr_import
+        || native_heif_import
         || svg_rasterization
         || (request.operation.is_write() && request.family != Family::Pcnd)
     {
@@ -587,6 +598,8 @@ pub fn sniff(bytes: &[u8]) -> Option<Family> {
         Some(Family::Psd)
     } else if bytes.starts_with(b"8BPS\0\x02") {
         Some(Family::Psb)
+    } else if crate::heif::has_signature(bytes) {
+        Some(Family::Heif)
     } else if crate::jxr::sniff(bytes) {
         Some(Family::Jxr)
     } else if bytes.starts_with(b"DDS ") {

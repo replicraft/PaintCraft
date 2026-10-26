@@ -74,6 +74,50 @@ impl Inspection<'_> {
     }
 }
 use crate::item_graph::{full, invalid, layout, push, resource, unique_child, unsupported};
+/// Recognize HEVC-specific brands only; MIF1 alone is shared with `.paint`
+/// and does not establish HEIF image semantics. No decoder or allocation runs.
+pub fn has_signature(bytes: &[u8]) -> bool {
+    if bytes.get(4..8) != Some(b"ftyp") {
+        return false;
+    }
+    let Some(size) = bytes
+        .get(..4)
+        .map(|value| u32::from_be_bytes(value.try_into().unwrap()))
+    else {
+        return false;
+    };
+    let (header, length) = if size == 1 {
+        let Some(value) = bytes.get(8..16) else {
+            return false;
+        };
+        let Ok(length) = usize::try_from(u64::from_be_bytes(value.try_into().unwrap())) else {
+            return false;
+        };
+        (16, length)
+    } else if size == 0 {
+        (8, bytes.len())
+    } else {
+        (8, size as usize)
+    };
+    if length < header + 8
+        || length > bytes.len()
+        || length > header + 8 + 64 * 4
+        || (length - header) % 4 != 0
+    {
+        return false;
+    }
+    let brand = |value: &[u8]| {
+        [b"heic", b"heix", b"hevc", b"hevx"]
+            .iter()
+            .any(|brand| value == *brand)
+    };
+    brand(&bytes[header..header + 4])
+        || bytes[header + 8..length]
+            .as_chunks::<4>()
+            .0
+            .iter()
+            .any(|value| brand(value))
+}
 /// Inspect the explicit primary item and item/property/reference graph. Values
 /// are borrowed wherever possible. Unknown essential properties fail closed.
 /// This is a prerequisite to SPS/decoder qualification, never decode admission.

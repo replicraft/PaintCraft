@@ -30,8 +30,11 @@ pub const PROTOCOL_VERSION: u16 = 2;
 pub const NATIVE_JXL_IMPORT_VARIANT: &str = "native-jxl-srgb8-worker-v1";
 pub const NATIVE_HEIF_IMPORT_VARIANT: &str = "native-heif-srgb8-worker-v1";
 pub const NATIVE_JXR_IMPORT_VARIANT: &str = "native-jxr-srgb8-worker-v1";
-pub const QUALIFIED_NATIVE_IMPORT_VARIANTS: &[&str] =
-    &[NATIVE_JXL_IMPORT_VARIANT, NATIVE_JXR_IMPORT_VARIANT];
+pub const QUALIFIED_NATIVE_IMPORT_VARIANTS: &[&str] = &[
+    NATIVE_JXL_IMPORT_VARIANT,
+    NATIVE_JXR_IMPORT_VARIANT,
+    NATIVE_HEIF_IMPORT_VARIANT,
+];
 pub const NATIVE_PROFILE: &str =
     "internal-heif-gray8-heif-srgb8-jxl-rgba8-jxr-rgb8-private-source1-parent-lease1";
 pub const BUILD_RECORD_MARKER: &[u8] = b"PAINTCRAFT_CODEC_WORKER_BUILD_V4\0";

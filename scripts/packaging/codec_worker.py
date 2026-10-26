@@ -63,7 +63,7 @@ def metadata(directory, version, target):
         "protocol_version": 2,
         "profile": "internal-heif-gray8-heif-srgb8-jxl-rgba8-jxr-rgb8-private-source1-parent-lease1",
         "requested_heap_ceiling_bytes": 256 << 20,
-        "qualified_import_variants": ["native-jxl-srgb8-worker-v1", "native-jxr-srgb8-worker-v1"],
+        "qualified_import_variants": ["native-jxl-srgb8-worker-v1", "native-jxr-srgb8-worker-v1", "native-heif-srgb8-worker-v1"],
     }
 
 

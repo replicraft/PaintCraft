@@ -83,6 +83,9 @@ impl Family {
             Self::Jxr => ["jxr", "wdp", "wmp"]
                 .iter()
                 .any(|candidate| extension.eq_ignore_ascii_case(candidate)),
+            Self::Heif => ["heic", "heif", "hif"]
+                .iter()
+                .any(|candidate| extension.eq_ignore_ascii_case(candidate)),
             Self::Dds => extension.eq_ignore_ascii_case("dds"),
             Self::Avif => extension.eq_ignore_ascii_case("avif"),
             Self::Pdn => extension.eq_ignore_ascii_case("pdn"),
