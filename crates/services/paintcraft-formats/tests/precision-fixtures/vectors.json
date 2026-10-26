@@ -1,0 +1,661 @@
+{
+    "oracle": "Python Decimal100, separate NumPy matrix solve",
+    "numpy_version": "2.4.2",
+    "radiance_to_rec709_d65": [
+        [
+            "1.164474939040518762359696782801382851068337210839205448862039076825938709105943124775631500837472023",
+            "-0.1565466170015769804181356697543121771697098542139513825946152877176515364639769099346787768266726140",
+            "-0.0079283220389417819415611130470706738986273566252540662674237891082871726419662148409527240107994093"
+        ],
+        [
+            "0.007598768784493493536987958867534796060355348152250206588100714819675500297294141360037408710908359654",
+            "0.9930151959268700810423195604112023740424750015022548986543831590706980420940103814856183076309068240",
+            "-0.00061396471136357457930751927873717010283034965450510524248387389037354239130452284565571634181518437"
+        ],
+        [
+            "0.00355391473290039165029418419798024229175657551034474767938729776704370432710783100059070635687306426",
+            "0.0182169223647726784355526093958632838146944884850251570632207069911613512396812747097780884576740148",
+            "0.9782291629023269299141532064061564738935489360046300952573919952417949444332108942896312051854529215"
+        ]
+    ],
+    "cases": [
+        {
+            "id": "clip-white-is-white",
+            "space": "rec709",
+            "alpha": "opaque",
+            "curve": "clip",
+            "negative": "reject",
+            "exposure_milli_ev": 0,
+            "sample_bits": [
+                "3f800000",
+                "3f800000",
+                "3f800000"
+            ],
+            "rgba8": [
+                255,
+                255,
+                255,
+                255
+            ]
+        },
+        {
+            "id": "explicit-reinhard-white-is-188",
+            "space": "rec709",
+            "alpha": "opaque",
+            "curve": "reinhard",
+            "negative": "reject",
+            "exposure_milli_ev": 0,
+            "sample_bits": [
+                "3f800000",
+                "3f800000",
+                "3f800000"
+            ],
+            "rgba8": [
+                188,
+                188,
+                188,
+                255
+            ]
+        },
+        {
+            "id": "srgb-transfer-boundary",
+            "space": "rec709",
+            "alpha": "opaque",
+            "curve": "clip",
+            "negative": "reject",
+            "exposure_milli_ev": 0,
+            "sample_bits": [
+                "00000000",
+                "3b4d2e1c",
+                "3e3851ec"
+            ],
+            "rgba8": [
+                0,
+                10,
+                118,
+                255
+            ]
+        },
+        {
+            "id": "clip-highlights",
+            "space": "rec709",
+            "alpha": "opaque",
+            "curve": "clip",
+            "negative": "reject",
+            "exposure_milli_ev": 0,
+            "sample_bits": [
+                "3e3851ec",
+                "40000000",
+                "40800000"
+            ],
+            "rgba8": [
+                118,
+                255,
+                255,
+                255
+            ]
+        },
+        {
+            "id": "reinhard-highlights",
+            "space": "rec709",
+            "alpha": "opaque",
+            "curve": "reinhard",
+            "negative": "reject",
+            "exposure_milli_ev": 0,
+            "sample_bits": [
+                "3e3851ec",
+                "40000000",
+                "40800000"
+            ],
+            "rgba8": [
+                109,
+                213,
+                231,
+                255
+            ]
+        },
+        {
+            "id": "radiance-neutral-adaptation",
+            "space": "radiance",
+            "alpha": "opaque",
+            "curve": "clip",
+            "negative": "reject",
+            "exposure_milli_ev": 0,
+            "sample_bits": [
+                "3e3851ec",
+                "3e3851ec",
+                "3e3851ec"
+            ],
+            "rgba8": [
+                118,
+                118,
+                118,
+                255
+            ]
+        },
+        {
+            "id": "radiance-red",
+            "space": "radiance",
+            "alpha": "opaque",
+            "curve": "clip",
+            "negative": "clip",
+            "exposure_milli_ev": 0,
+            "sample_bits": [
+                "3f800000",
+                "00000000",
+                "00000000"
+            ],
+            "rgba8": [
+                255,
+                21,
+                12,
+                255
+            ]
+        },
+        {
+            "id": "radiance-green",
+            "space": "radiance",
+            "alpha": "opaque",
+            "curve": "clip",
+            "negative": "clip",
+            "exposure_milli_ev": 0,
+            "sample_bits": [
+                "00000000",
+                "3f800000",
+                "00000000"
+            ],
+            "rgba8": [
+                0,
+                254,
+                37,
+                255
+            ]
+        },
+        {
+            "id": "radiance-blue",
+            "space": "radiance",
+            "alpha": "opaque",
+            "curve": "clip",
+            "negative": "clip",
+            "exposure_milli_ev": 0,
+            "sample_bits": [
+                "00000000",
+                "00000000",
+                "3f800000"
+            ],
+            "rgba8": [
+                0,
+                0,
+                253,
+                255
+            ]
+        },
+        {
+            "id": "radiance-user-overrides-source",
+            "space": "radiance",
+            "alpha": "opaque",
+            "curve": "clip",
+            "negative": "reject",
+            "exposure_milli_ev": 0,
+            "sample_bits": [
+                "00000000",
+                "3f800000",
+                "00000000"
+            ],
+            "assignment": "rec709",
+            "rgba8": [
+                0,
+                255,
+                0,
+                255
+            ]
+        },
+        {
+            "id": "unlabelled-refuses-guess",
+            "space": "unspecified",
+            "alpha": "opaque",
+            "curve": "clip",
+            "negative": "reject",
+            "exposure_milli_ev": 0,
+            "sample_bits": [
+                "3e3851ec",
+                "3e3851ec",
+                "3e3851ec"
+            ],
+            "error": "CapabilityUnsupported"
+        },
+        {
+            "id": "unlabelled-explicit-user-assignment",
+            "space": "unspecified",
+            "alpha": "opaque",
+            "curve": "clip",
+            "negative": "reject",
+            "exposure_milli_ev": 0,
+            "sample_bits": [
+                "3e3851ec",
+                "3e3851ec",
+                "3e3851ec"
+            ],
+            "assignment": "rec709",
+            "rgba8": [
+                118,
+                118,
+                118,
+                255
+            ]
+        },
+        {
+            "id": "premultiplied-unassociation",
+            "space": "rec709",
+            "alpha": "premultiplied",
+            "curve": "clip",
+            "negative": "reject",
+            "exposure_milli_ev": 0,
+            "sample_bits": [
+                "3e800000",
+                "3e000000",
+                "00000000",
+                "3f000000"
+            ],
+            "rgba8": [
+                188,
+                137,
+                0,
+                128
+            ]
+        },
+        {
+            "id": "zero-alpha-additive-refuses-preserve",
+            "space": "rec709",
+            "alpha": "premultiplied",
+            "curve": "clip",
+            "negative": "reject",
+            "exposure_milli_ev": 0,
+            "sample_bits": [
+                "3e800000",
+                "00000000",
+                "00000000",
+                "00000000"
+            ],
+            "error": "CapabilityUnsupported"
+        },
+        {
+            "id": "zero-alpha-additive-black",
+            "space": "rec709",
+            "alpha": "premultiplied",
+            "curve": "clip",
+            "negative": "reject",
+            "exposure_milli_ev": 0,
+            "sample_bits": [
+                "3e800000",
+                "00000000",
+                "00000000",
+                "00000000"
+            ],
+            "background": [
+                0,
+                0,
+                0
+            ],
+            "rgba8": [
+                137,
+                0,
+                0,
+                255
+            ]
+        },
+        {
+            "id": "zero-alpha-additive-white",
+            "space": "rec709",
+            "alpha": "premultiplied",
+            "curve": "clip",
+            "negative": "reject",
+            "exposure_milli_ev": 0,
+            "sample_bits": [
+                "3e800000",
+                "00000000",
+                "00000000",
+                "00000000"
+            ],
+            "background": [
+                255,
+                255,
+                255
+            ],
+            "rgba8": [
+                255,
+                255,
+                255,
+                255
+            ]
+        },
+        {
+            "id": "premultiplied-transparent-black",
+            "space": "rec709",
+            "alpha": "premultiplied",
+            "curve": "clip",
+            "negative": "reject",
+            "exposure_milli_ev": 0,
+            "sample_bits": [
+                "00000000",
+                "00000000",
+                "00000000",
+                "00000000"
+            ],
+            "rgba8": [
+                0,
+                0,
+                0,
+                0
+            ]
+        },
+        {
+            "id": "straight-hidden-rgb",
+            "space": "rec709",
+            "alpha": "straight",
+            "curve": "clip",
+            "negative": "reject",
+            "exposure_milli_ev": 0,
+            "sample_bits": [
+                "3e800000",
+                "3f000000",
+                "3f800000",
+                "00000000"
+            ],
+            "rgba8": [
+                137,
+                188,
+                255,
+                0
+            ]
+        },
+        {
+            "id": "user-declares-straight",
+            "space": "rec709",
+            "alpha": "premultiplied",
+            "curve": "clip",
+            "negative": "reject",
+            "exposure_milli_ev": 0,
+            "sample_bits": [
+                "3e800000",
+                "3e000000",
+                "00000000",
+                "3f000000"
+            ],
+            "alpha_assignment": "straight",
+            "rgba8": [
+                137,
+                99,
+                0,
+                128
+            ]
+        },
+        {
+            "id": "user-declares-premultiplied",
+            "space": "rec709",
+            "alpha": "straight",
+            "curve": "clip",
+            "negative": "reject",
+            "exposure_milli_ev": 0,
+            "sample_bits": [
+                "3e800000",
+                "3e000000",
+                "00000000",
+                "3f000000"
+            ],
+            "alpha_assignment": "premultiplied",
+            "rgba8": [
+                188,
+                137,
+                0,
+                128
+            ]
+        },
+        {
+            "id": "negative-source-refused",
+            "space": "rec709",
+            "alpha": "opaque",
+            "curve": "clip",
+            "negative": "reject",
+            "exposure_milli_ev": 0,
+            "sample_bits": [
+                "bdcccccd",
+                "3e800000",
+                "00000000"
+            ],
+            "error": "CapabilityUnsupported"
+        },
+        {
+            "id": "negative-source-explicit-clip",
+            "space": "rec709",
+            "alpha": "opaque",
+            "curve": "clip",
+            "negative": "clip",
+            "exposure_milli_ev": 0,
+            "sample_bits": [
+                "bdcccccd",
+                "3e800000",
+                "00000000"
+            ],
+            "rgba8": [
+                0,
+                137,
+                0,
+                255
+            ]
+        },
+        {
+            "id": "exposure-minus-16",
+            "space": "rec709",
+            "alpha": "opaque",
+            "curve": "clip",
+            "negative": "reject",
+            "exposure_milli_ev": -16000,
+            "sample_bits": [
+                "3f800000",
+                "3f000000",
+                "3e800000"
+            ],
+            "rgba8": [
+                0,
+                0,
+                0,
+                255
+            ]
+        },
+        {
+            "id": "exposure-plus-16",
+            "space": "rec709",
+            "alpha": "opaque",
+            "curve": "clip",
+            "negative": "reject",
+            "exposure_milli_ev": 16000,
+            "sample_bits": [
+                "3f800000",
+                "3f000000",
+                "3e800000"
+            ],
+            "rgba8": [
+                255,
+                255,
+                255,
+                255
+            ]
+        },
+        {
+            "id": "fractional-exposure",
+            "space": "rec709",
+            "alpha": "opaque",
+            "curve": "clip",
+            "negative": "reject",
+            "exposure_milli_ev": 500,
+            "sample_bits": [
+                "3dcccccd",
+                "3e3851ec",
+                "3e800000"
+            ],
+            "rgba8": [
+                105,
+                138,
+                160,
+                255
+            ]
+        },
+        {
+            "id": "float-range-does-not-overflow-reinhard",
+            "space": "rec709",
+            "alpha": "opaque",
+            "curve": "reinhard",
+            "negative": "reject",
+            "exposure_milli_ev": 16000,
+            "sample_bits": [
+                "7f61b1e6",
+                "7149f2ca",
+                "3f800000"
+            ],
+            "rgba8": [
+                255,
+                255,
+                255,
+                255
+            ]
+        },
+        {
+            "id": "sub-byte-alpha-is-explicitly-quantized",
+            "space": "rec709",
+            "alpha": "premultiplied",
+            "curve": "reinhard",
+            "negative": "reject",
+            "exposure_milli_ev": 0,
+            "sample_bits": [
+                "7149f2ca",
+                "3e800000",
+                "00000000",
+                "000116c2"
+            ],
+            "rgba8": [
+                255,
+                255,
+                0,
+                0
+            ]
+        },
+        {
+            "id": "nonfinite-rgb-nan",
+            "space": "rec709",
+            "alpha": "opaque",
+            "curve": "clip",
+            "negative": "reject",
+            "exposure_milli_ev": 0,
+            "sample_bits": [
+                "7fc00000",
+                "00000000",
+                "00000000"
+            ],
+            "error": "CapabilityUnsupported"
+        },
+        {
+            "id": "nonfinite-alpha-nan",
+            "space": "rec709",
+            "alpha": "premultiplied",
+            "curve": "clip",
+            "negative": "reject",
+            "exposure_milli_ev": 0,
+            "sample_bits": [
+                "00000000",
+                "00000000",
+                "00000000",
+                "7fc00000"
+            ],
+            "error": "CapabilityUnsupported"
+        },
+        {
+            "id": "nonfinite-rgb-positive-infinity",
+            "space": "rec709",
+            "alpha": "opaque",
+            "curve": "clip",
+            "negative": "reject",
+            "exposure_milli_ev": 0,
+            "sample_bits": [
+                "7f800000",
+                "00000000",
+                "00000000"
+            ],
+            "error": "CapabilityUnsupported"
+        },
+        {
+            "id": "nonfinite-alpha-positive-infinity",
+            "space": "rec709",
+            "alpha": "premultiplied",
+            "curve": "clip",
+            "negative": "reject",
+            "exposure_milli_ev": 0,
+            "sample_bits": [
+                "00000000",
+                "00000000",
+                "00000000",
+                "7f800000"
+            ],
+            "error": "CapabilityUnsupported"
+        },
+        {
+            "id": "nonfinite-rgb-negative-infinity",
+            "space": "rec709",
+            "alpha": "opaque",
+            "curve": "clip",
+            "negative": "reject",
+            "exposure_milli_ev": 0,
+            "sample_bits": [
+                "ff800000",
+                "00000000",
+                "00000000"
+            ],
+            "error": "CapabilityUnsupported"
+        },
+        {
+            "id": "nonfinite-alpha-negative-infinity",
+            "space": "rec709",
+            "alpha": "premultiplied",
+            "curve": "clip",
+            "negative": "reject",
+            "exposure_milli_ev": 0,
+            "sample_bits": [
+                "00000000",
+                "00000000",
+                "00000000",
+                "ff800000"
+            ],
+            "error": "CapabilityUnsupported"
+        },
+        {
+            "id": "out-of-range-alpha-negative",
+            "space": "rec709",
+            "alpha": "straight",
+            "curve": "clip",
+            "negative": "reject",
+            "exposure_milli_ev": 0,
+            "sample_bits": [
+                "3dcccccd",
+                "00000000",
+                "00000000",
+                "bc23d70a"
+            ],
+            "error": "CapabilityUnsupported"
+        },
+        {
+            "id": "out-of-range-alpha-above-one",
+            "space": "rec709",
+            "alpha": "straight",
+            "curve": "clip",
+            "negative": "reject",
+            "exposure_milli_ev": 0,
+            "sample_bits": [
+                "3dcccccd",
+                "00000000",
+                "00000000",
+                "3f8147ae"
+            ],
+            "error": "CapabilityUnsupported"
+        }
+    ]
+}
