@@ -23,6 +23,7 @@ pub mod png;
 pub mod precision;
 pub mod project_import;
 pub mod psd;
+pub mod radiance;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod recovery;
 pub mod registry;
