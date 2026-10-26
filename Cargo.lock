@@ -3291,6 +3291,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "paintcraft-codec-worker"
+version = "0.1.0"
+dependencies = [
+ "heic-decoder",
+ "libc",
+ "paintcraft-core",
+ "paintcraft-formats",
+ "paintcraft-runtime",
+ "rayon",
+ "uuid",
+]
+
+[[package]]
 name = "paintcraft-commands"
 version = "0.1.0"
 dependencies = [

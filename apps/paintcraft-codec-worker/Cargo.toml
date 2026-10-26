@@ -1,0 +1,29 @@
+[package]
+name = "paintcraft-codec-worker"
+description = "Single-request isolated native decoder helper"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license-file.workspace = true
+publish.workspace = true
+
+[dependencies]
+paintcraft-core.workspace = true
+paintcraft-formats = { workspace = true, features = ["heif-codec"] }
+heic-decoder.workspace = true
+rayon.workspace = true
+libc.workspace = true
+
+[dev-dependencies]
+paintcraft-runtime.workspace = true
+uuid.workspace = true
+
+# Deliberate executable-only exception: the global allocator's System forwarding
+# needs unsafe. Existing workspace crates retain forbid; only allocator.rs allows
+# unsafe here. All other helper code is denied, and the other workspace lints match.
+[lints.rust]
+unsafe_code = "deny"
+missing_debug_implementations = "warn"
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }
