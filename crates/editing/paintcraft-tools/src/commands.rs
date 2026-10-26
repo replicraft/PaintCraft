@@ -242,34 +242,50 @@ pub fn font_text(
         ]));
     }
     check()?;
-    if !mask.spans.is_empty() {
-        ops.push(Value::object([
-            ("op", Value::str("raster.mask_spans")),
-            ("layer_ref", layer_ref(layer)),
-            ("color", Value::str(color.to_hex())),
-            (
-                "spans",
-                Value::Array(
-                    mask.spans
-                        .iter()
-                        .enumerate()
-                        .map(|(index, s)| {
-                            if index % 256 == 0 {
-                                check()?;
-                            }
-                            Ok(Value::Array(vec![
-                                Value::Int(s.x0),
-                                Value::Int(s.y),
-                                Value::Int(s.x1),
-                                Value::Int(i64::from(s.coverage)),
-                            ]))
-                        })
-                        .collect::<Result<Vec<_>>>()?,
-                ),
-            ),
-        ]));
-    }
+    ops.extend(mask_operations(layer, color, &mask.spans, check)?);
     Ok(ops)
+}
+
+/// Shared resolved-mask publication for text and immutable sampled brushes.
+/// Empty coverage is a no-op, never an invalid empty mask command or history edit.
+pub fn mask_operations(
+    layer: Uuid,
+    color: Rgba,
+    spans: &[paintcraft_core::types::text::MaskSpan],
+    check: &impl Fn() -> Result<()>,
+) -> Result<Vec<Value>> {
+    check()?;
+    if spans.is_empty() || color.a() == 0 {
+        return Ok(Vec::new());
+    }
+    if spans.len() > 262_144 {
+        return Err(paintcraft_core::types::Error::new(
+            paintcraft_core::types::ErrorCode::ResourceLimit,
+            "resolved mask span allowance exceeded",
+        ));
+    }
+    let rows = spans
+        .iter()
+        .enumerate()
+        .map(|(index, span)| {
+            if index.is_multiple_of(256) {
+                check()?;
+            }
+            Ok(Value::Array(vec![
+                Value::Int(span.x0),
+                Value::Int(span.y),
+                Value::Int(span.x1),
+                Value::Int(i64::from(span.coverage)),
+            ]))
+        })
+        .collect::<Result<Vec<_>>>()?;
+    check()?;
+    Ok(vec![Value::object([
+        ("op", Value::str("raster.mask_spans")),
+        ("layer_ref", layer_ref(layer)),
+        ("color", Value::str(color.to_hex())),
+        ("spans", Value::Array(rows)),
+    ])])
 }
 
 fn rect_value(r: paintcraft_core::types::Rect) -> Value {

@@ -5,6 +5,7 @@ pub mod commands;
 mod construction;
 mod contracts;
 mod floating;
+pub mod sampled_brush;
 pub use floating::{FloatingOptions, FloatingSelection};
 pub mod navigation;
 pub use contracts::*;
