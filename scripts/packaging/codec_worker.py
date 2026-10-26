@@ -2,11 +2,14 @@
 import json
 import mmap
 import shutil
+import re
 
 MANIFEST = "paintcraft-codec-worker.json"
 NOTICE = "JPEGXR_LICENSE.txt"
 AVIF_NOTICE = "DAV1D_LICENSE.txt"
-NOTICES = (NOTICE, AVIF_NOTICE)
+NOTICES = (NOTICE, AVIF_NOTICE)  # Exact historical V4/V5/V6 payloads.
+FLOAT_NOTICE = "HDR_EXR_LICENSES_V1.txt"
+MANIFEST_MAX = 65536
 BUILD_PREFIX = b"PAINTCRAFT_CODEC_WORKER_BUILD_V4\0"
 BUILD_SUFFIX = b"\0PCDEC002\0HEAP268435456\0STDIN_PARENT_LEASE1\0JXR_PRIVATE_SOURCE1\0END_CODEC_WORKER_BUILD\0"
 
@@ -19,6 +22,66 @@ AVIF_SDR_BUILD_SUFFIX = b"\0PCDEC002\0HEAP268435456\0STDIN_PARENT_LEASE1\0JXR_PR
 AVIF_SDR_PROFILE = "native-heif-gray8-heif-srgb8-jxl-rgba8-jxr-rgb8-avif-srgb8-ycbcr8-dav1d154-alloc1-private-source1-parent-lease1"
 NATIVE_VARIANTS = ["native-jxl-srgb8-worker-v1", "native-jxr-srgb8-worker-v1", "native-heif-srgb8-worker-v1"]
 
+FLOAT_BUILD_PREFIX = b"PAINTCRAFT_CODEC_WORKER_BUILD_V7_FLOAT\0"
+FLOAT_BUILD_SUFFIX = b"\0PCDEC002\0HEAP268435456\0STDIN_PARENT_LEASE1\0JXR_PRIVATE_SOURCE1\0AVIF_DAV1D154_ALLOC1_ASM0_8BIT1\0AVIF_SDR709_YUV444_420_CSP12_WORK1\0FLOAT_SETTINGS32_REPORT96_INPUT16777216_PIXELS1048576\0END_CODEC_WORKER_BUILD\0"
+FLOAT_PROFILE = "native-v7-hdr-exr-sdr8-settings32-report96-16mib-1mp-parent-lease1"
+FLOAT_VARIANTS = NATIVE_VARIANTS + ["native-avif-srgb8-worker-v1", "native-avif-sdr-ycbcr8-worker-v1", "native-hdr-sdr8-worker-v1", "native-exr-sdr8-worker-v1"]
+
+
+def variants(profile):
+    known = {NATIVE_PROFILE: NATIVE_VARIANTS,
+             AVIF_PROFILE: NATIVE_VARIANTS + ["native-avif-srgb8-worker-v1"],
+             AVIF_SDR_PROFILE: FLOAT_VARIANTS[:5], FLOAT_PROFILE: FLOAT_VARIANTS}
+    if profile not in known:
+        raise ValueError("Unknown codec qualification profile")
+    return known[profile]
+
+
+def notices(profile):
+    variants(profile)  # Never infer compatibility from a version ordering.
+    return NOTICES + ((FLOAT_NOTICE,) if profile == FLOAT_PROFILE else ())
+
+
+def parse_manifest(data):
+    import package_release as release
+    def unique(pairs):
+        value = {}
+        for key, item in pairs:
+            if key in value:
+                raise ValueError("Duplicate helper manifest field")
+            value[key] = item
+        return value
+    if len(data) > MANIFEST_MAX:
+        raise ValueError("Codec helper manifest exceeds its allowance")
+    value = json.loads(data, object_pairs_hook=unique)
+    fields = {"schema_version", "embedded_build_record_verified", "application_version", "target", "executable", "sha256", "protocol_version", "profile", "requested_heap_ceiling_bytes", "qualified_import_variants"}
+    if not isinstance(value, dict) or set(value) != fields:
+        raise ValueError("Codec helper manifest fields differ from exact schema")
+    profile = value["profile"]
+    if not isinstance(profile, str):
+        raise ValueError("Invalid codec helper profile")
+    expected = variants(profile)
+    version = value["application_version"]
+    target = value["target"]
+    if (type(value["schema_version"]) is not int or value["schema_version"] != 2
+            or value["embedded_build_record_verified"] is not True
+            or not isinstance(version, str) or not version or len(version) > 64 or not version.isascii()
+            or not isinstance(target, str) or target not in release.TARGETS
+            or value["executable"] != filename(target)
+            or not isinstance(value["sha256"], str) or not re.fullmatch("[0-9a-f]{64}", value["sha256"])
+            or type(value["protocol_version"]) is not int or value["protocol_version"] != 2
+            or type(value["requested_heap_ceiling_bytes"]) is not int or value["requested_heap_ceiling_bytes"] != 256 << 20
+            or value["qualified_import_variants"] != expected):
+        raise ValueError("Codec helper manifest differs from exact qualification contract")
+    return value
+
+
+def read_manifest(directory):
+    path = directory / MANIFEST
+    if not path.is_file() or path.is_symlink() or path.stat().st_size > MANIFEST_MAX:
+        raise ValueError("Codec helper manifest must be a bounded regular file")
+    return parse_manifest(path.read_bytes())
+
 
 def verify_build_record(helper, version):
     # No foreign executable is launched. The referenced Cargo-version record
@@ -27,7 +90,8 @@ def verify_build_record(helper, version):
                  (AVIF_BUILD_PREFIX, AVIF_BUILD_SUFFIX, AVIF_PROFILE,
                   NATIVE_VARIANTS + ["native-avif-srgb8-worker-v1"]),
                  (AVIF_SDR_BUILD_PREFIX, AVIF_SDR_BUILD_SUFFIX, AVIF_SDR_PROFILE,
-                  NATIVE_VARIANTS + ["native-avif-srgb8-worker-v1", "native-avif-sdr-ycbcr8-worker-v1"])]
+                  NATIVE_VARIANTS + ["native-avif-srgb8-worker-v1", "native-avif-sdr-ycbcr8-worker-v1"]),
+                 (FLOAT_BUILD_PREFIX, FLOAT_BUILD_SUFFIX, FLOAT_PROFILE, FLOAT_VARIANTS)]
     with helper.open("rb") as stream:
         with mmap.mmap(stream.fileno(), 0, access=mmap.ACCESS_READ) as image:
             found = [contract for contract in contracts if image.find(contract[0]) >= 0]
@@ -108,7 +172,8 @@ def copy(binary, directory, version, target=None):
     if destination.is_symlink():
         raise ValueError("Refusing symlink helper destination")
     import package_release as release
-    for name in NOTICES:
+    profile, _ = verify_build_record(helper, version)
+    for name in notices(profile):
         notice = directory / name
         if notice.is_symlink():
             raise ValueError("Refusing symlink codec notice destination")
@@ -128,13 +193,14 @@ def verify_manifest(directory, version, target):
 
 def verify_installed_manifest(directory, version, target):
     import package_release as release
-    for name in NOTICES:
+    expected = installed_metadata(directory, version, target)
+    if read_manifest(directory) != expected:
+        raise ValueError("Codec helper manifest does not match packaged executable")
+    for name in notices(expected["profile"]):
         notice = directory / name
         if not notice.is_file() or notice.is_symlink() or notice.read_bytes() != (release.ROOT / "packaging" / name).read_bytes():
             raise ValueError("Codec dependency notice is missing or changed")
-    path = directory / MANIFEST
-    if not path.is_file() or path.is_symlink():
-        raise ValueError("Codec helper manifest must be a regular file")
-    expected = installed_metadata(directory, version, target)
-    if json.loads(path.read_text(encoding="utf-8")) != expected:
-        raise ValueError("Codec helper manifest does not match packaged executable")
+
+
+def installed_notices(directory):
+    return notices(read_manifest(directory)["profile"])

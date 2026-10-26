@@ -53,9 +53,9 @@ def executable(target):
     return "paintcraft-cli.exe" if "windows" in target else "paintcraft-cli"
 
 
-def payload_names(target):
+def payload_names(target, profile=codec_worker.NATIVE_PROFILE):
     return {executable(target), codec_worker.filename(target), codec_worker.MANIFEST,
-            "LICENSE", *codec_worker.NOTICES}
+            "LICENSE", *codec_worker.notices(profile)}
 
 
 def download(url, destination, limit):
@@ -122,12 +122,14 @@ def verify_checksum(archive, checksums):
 
 
 def extract(archive, directory, target):
-    expected, seen, total = payload_names(target), set(), 0
+    expected, seen, total = payload_names(target, codec_worker.FLOAT_PROFILE), set(), 0
 
     def member(name, size, regular, source):
         nonlocal total
         if name not in expected or name in seen or not regular or size < 0 or size > FILE_MAX:
             raise ValueError("CLI archive contains an unexpected, duplicate or unsafe entry")
+        if name == codec_worker.MANIFEST and size > codec_worker.MANIFEST_MAX:
+            raise ValueError("Codec helper manifest exceeds its allowance")
         if name not in (executable(target), codec_worker.filename(target)) and size > METADATA_MAX:
             raise ValueError("CLI archive metadata exceeds its allowance")
         total += size
@@ -159,6 +161,7 @@ def extract(archive, directory, target):
                     raise ValueError("CLI archive entries must be regular files")
                 with stream.extractfile(entry) as source:
                     member(entry.name, entry.size, True, source)
+    expected = payload_names(target, codec_worker.read_manifest(directory)["profile"])
     if seen != expected:
         raise ValueError("CLI archive is missing required helper, manifest or license files")
 
@@ -170,7 +173,7 @@ def is_link(path):
 def verify_payload(directory, version, target):
     if is_link(directory) or not directory.is_dir():
         raise ValueError("CLI installation must be a regular directory")
-    if {entry.name for entry in directory.iterdir()} != payload_names(target):
+    if {entry.name for entry in directory.iterdir()} != payload_names(target, codec_worker.read_manifest(directory)["profile"]):
         raise ValueError("Refusing to replace a directory containing foreign or incomplete files")
     for entry in directory.iterdir():
         if is_link(entry) or not entry.is_file():
@@ -218,7 +221,7 @@ def install(archive, checksums, version, target, prefix):
                 manifest = destination / codec_worker.MANIFEST
                 if is_link(destination) or is_link(manifest) or not manifest.is_file() or manifest.stat().st_size > METADATA_MAX:
                     raise ValueError("Existing CLI directory is not a verified installation")
-                old = json.loads(manifest.read_bytes())
+                old = codec_worker.read_manifest(destination)
                 verify_payload(destination, checked_version(old["application_version"]), target)
                 os.replace(destination, backup)
             try:
@@ -244,13 +247,13 @@ def source_archive(temporary, target):
     version = release.workspace_version()
     subprocess.run(["cargo", "build", "--locked", "--release", "--target", target,
                     "-p", "paintcraft-cli", "-p", "paintcraft-codec-worker",
-                    "--features", "paintcraft-codec-worker/avif-sdr-codec"], cwd=release.ROOT, check=True)
+                    "--features", "paintcraft-codec-worker/float-codecs"], cwd=release.ROOT, check=True)
     result = subprocess.run(["cargo", "metadata", "--format-version", "1", "--no-deps", "--locked"],
                             cwd=release.ROOT, check=True, capture_output=True, text=True)
     binary = Path(json.loads(result.stdout)["target_directory"]) / target / "release" / executable(target)
     profile, _ = codec_worker.verify_build_record(binary.parent / codec_worker.filename(target), version)
-    if profile != codec_worker.AVIF_SDR_PROFILE:
-        raise ValueError("Source install requires the complete V6 AVIF helper")
+    if profile != codec_worker.FLOAT_PROFILE:
+        raise ValueError("Source install requires the complete qualified V7 HDR/EXR helper")
     archive = package_cli.package(version, target, binary, temporary)
     sums = temporary / "SHA256SUMS.txt"
     sums.write_bytes(release.checksum_line(archive))
@@ -267,7 +270,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--prefix", type=Path, default=default_prefix(), help="Owned installation prefix; all files are kept under its bin directory")
     parser.add_argument("--version", help="Published version; default is latest stable")
-    parser.add_argument("--source", action="store_true", help="Build this checkout's CLI and AVIF-enabled helper (requires Rust, a C compiler, Meson and Ninja)")
+    parser.add_argument("--source", action="store_true", help="Build this checkout's CLI and complete HDR/EXR-enabled helper (requires Rust, a C compiler, Meson and Ninja)")
     parser.add_argument("--archive", type=Path, help="Install a previously downloaded complete archive")
     parser.add_argument("--checksums", type=Path, help="SHA256SUMS.txt for --archive")
     args = parser.parse_args(argv)
