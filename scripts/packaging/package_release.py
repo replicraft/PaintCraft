@@ -13,6 +13,8 @@ import tempfile
 import tomllib
 import zipfile
 
+import codec_worker
+
 ROOT = Path(__file__).resolve().parents[2]
 TARGETS = {
     "x86_64-pc-windows-msvc": "windows-x64",
@@ -117,14 +119,14 @@ def write_update_archive(app, archive):
 def portable_tar_entry(info):
     # Windows hosts do not expose Unix executable bits. Set the archive mode
     # explicitly, independent of where the packager is tested.
-    info.mode = 0o755 if info.name == "paintcraft" else 0o644
+    info.mode = 0o755 if info.name in ("paintcraft", "paintcraft-codec-worker") else 0o644
     info.uid = info.gid = 0
     info.uname = info.gname = ""
     return info
 
 
 def package(version, target, binary, output):
-    validate_package_input(version, target, binary)
+    codec_worker.prepare(binary, version, target)
     output = output.resolve()
     output.mkdir(parents=True, exist_ok=True)
     name = f"paintcraft-{version}-{TARGETS[target]}"
@@ -138,6 +140,7 @@ def package(version, target, binary, output):
         executable = payload / ("paintcraft.exe" if "windows" in target else "paintcraft")
         shutil.copy2(binary, executable)
         executable.chmod(0o755)
+        codec_worker.copy(binary, payload, version, target)
         shutil.copy2(ROOT / "LICENSE", payload / "LICENSE")
         shutil.copy2(ROOT / "packaging/FONT_LICENSES.txt", payload / "FONT_LICENSES.txt")
         if "windows" in target:

@@ -1,5 +1,6 @@
 """Archive, architecture and checksum contracts, without running fixture binaries."""
 import contextlib
+import json
 import hashlib
 import io
 from pathlib import Path
@@ -16,9 +17,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "packaging"))
 import package_release as release
 import package_macos as macos
 import package_cli as cli
+import codec_worker
 
 
-def executable(path, target):
+def executable(path, target, with_helper=True):
     if "apple" in target:
         cpu = 0x0100000C if target.startswith("aarch64") else 0x01000007
         header = struct.pack("<II", 0xFEEDFACF, cpu) + bytes(56)
@@ -33,7 +35,11 @@ def executable(path, target):
         header[:6] = b"\x7fELF\x02\x01"
         header[7] = 0
         struct.pack_into("<H", header, 18, 183 if target.startswith("aarch64") else 62)
+    if path.name == codec_worker.filename(target):
+        header += codec_worker.BUILD_PREFIX + release.workspace_version().encode("ascii") + codec_worker.BUILD_SUFFIX
     path.write_bytes(header)
+    if with_helper and path.name != codec_worker.filename(target):
+        executable(path.parent / codec_worker.filename(target), target, False)
     return path
 
 
@@ -114,13 +120,13 @@ class ReleaseTests(unittest.TestCase):
             if "windows" in target:
                 archive = self.output / (name + "-portable.zip")
                 with zipfile.ZipFile(archive) as stream:
-                    self.assertEqual(set(stream.namelist()), {"paintcraft.exe", "LICENSE", "FONT_LICENSES.txt"})
+                    self.assertEqual(set(stream.namelist()), {"paintcraft.exe", "LICENSE", "FONT_LICENSES.txt", "paintcraft-codec-worker.exe", codec_worker.MANIFEST})
                     self.assertEqual(stream.read("paintcraft.exe"), self.binary.read_bytes())
                 self.assertEqual((self.output / (name + ".exe")).read_bytes(), self.binary.read_bytes())
             else:
                 archive = self.output / (name + ".tar.gz")
                 with tarfile.open(archive) as stream:
-                    self.assertEqual(set(stream.getnames()), {"paintcraft", "LICENSE", "FONT_LICENSES.txt"})
+                    self.assertEqual(set(stream.getnames()), {"paintcraft", "LICENSE", "FONT_LICENSES.txt", "paintcraft-codec-worker", codec_worker.MANIFEST})
                     self.assertEqual(stream.extractfile("paintcraft").read(), self.binary.read_bytes())
                     self.assertEqual(stream.getmember("paintcraft").mode & 0o777, 0o755)
             self.assertEqual(archive.with_name(archive.name + ".sha256").read_bytes(),
@@ -164,11 +170,11 @@ class ReleaseTests(unittest.TestCase):
             self.assertIn(archive.name, release.expected_assets(self.version))
             if "windows" in target:
                 with zipfile.ZipFile(archive) as stream:
-                    self.assertEqual(set(stream.namelist()), {"paintcraft-cli.exe", "LICENSE"})
+                    self.assertEqual(set(stream.namelist()), {"paintcraft-cli.exe", "LICENSE", "paintcraft-codec-worker.exe", codec_worker.MANIFEST})
                     self.assertEqual(stream.read("paintcraft-cli.exe"), binary.read_bytes())
             else:
                 with tarfile.open(archive) as stream:
-                    self.assertEqual(set(stream.getnames()), {"paintcraft-cli", "LICENSE"})
+                    self.assertEqual(set(stream.getnames()), {"paintcraft-cli", "LICENSE", "paintcraft-codec-worker", codec_worker.MANIFEST})
                     self.assertEqual(stream.getmember("paintcraft-cli").mode, 0o755)
                     self.assertEqual(stream.extractfile("paintcraft-cli").read(), binary.read_bytes())
             self.assertEqual(archive.with_name(archive.name + ".sha256").read_bytes(),
