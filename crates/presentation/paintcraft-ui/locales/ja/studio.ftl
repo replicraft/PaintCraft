@@ -121,3 +121,17 @@ format-could-not-import-the-shape-detail = シェイプを読み込めません�
 format-could-not-export-the-shape-detail = シェイプを書き出せませんでした: { $detail }
 
 the-resource-source-has-a-pending-project-save-wait-for-it-to-finish-and-import-again = リソースの読み込み元にプロジェクトを保存中です。完了してからもう一度読み込んでください。
+
+add-font-files-more = フォントファイルを追加…
+
+add-font-files = フォントファイルを追加
+
+font-files = フォントファイル
+
+output-is-a-picture-with-transparency-text-uses-bundled-fonts-and-the-font-files-you-add-below = 出力は透明度を持つ画像です。テキストには付属フォントと下で追加するフォントファイルを使用します。
+
+font-changes-need-a-new-preview-and-approval-other-external-files-stay-blocked = フォントを変更した場合は、新しいプレビューと承認が必要です。その他の外部ファイルは読み込まれません。
+
+loading-fonts-more = フォントを読み込み中…
+
+format-could-not-add-font-files-detail = フォントファイルを追加できませんでした: { $detail }

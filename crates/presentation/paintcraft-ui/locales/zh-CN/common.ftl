@@ -496,3 +496,5 @@ format-could-not-import-the-palette-detail = 无法导入调色板：{ $detail }
 format-could-not-export-the-palette-detail = 无法导出调色板：{ $detail }
 
 palette-download-requested = 已请求下载调色板。
+
+remove = 移除

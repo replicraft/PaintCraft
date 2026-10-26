@@ -496,3 +496,5 @@ format-could-not-import-the-palette-detail = पैलेट आयात नह
 format-could-not-export-the-palette-detail = पैलेट निर्यात नहीं हो सका: { $detail }
 
 palette-download-requested = पैलेट डाउनलोड का अनुरोध किया गया।
+
+remove = हटाएँ

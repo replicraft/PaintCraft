@@ -496,3 +496,5 @@ format-could-not-import-the-palette-detail = Não foi possível importar a palet
 format-could-not-export-the-palette-detail = Não foi possível exportar a paleta: { $detail }
 
 palette-download-requested = Download da paleta solicitado.
+
+remove = Remover

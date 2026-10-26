@@ -30,17 +30,28 @@ pub enum Response {
     Preview(Config),
     Import,
     Cancel,
+    AddFonts,
+    RemoveFont(usize),
+}
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct FontKey {
+    pub source: u128,
+    pub files: u128,
 }
 /// A preview and the exact private output it represents share one configuration.
 /// Changing controls clears consent and prevents publication of the old output.
 pub struct State<P> {
     pub config: Config,
     pub accepted: bool,
-    prepared: Option<(Config, P)>,
+    prepared: Option<(Config, FontKey, P)>,
     texture: Option<egui::TextureHandle>,
     losses: Vec<String>,
     shown: Option<u64>,
     error: Option<String>,
+    font_key: FontKey,
+    font_names: Vec<String>,
+    font_busy: bool,
+    font_error: Option<String>,
 }
 impl<P> Default for State<P> {
     fn default() -> Self {
@@ -52,6 +63,10 @@ impl<P> Default for State<P> {
             losses: Vec::new(),
             shown: None,
             error: None,
+            font_key: Default::default(),
+            font_names: Vec::new(),
+            font_busy: false,
+            font_error: None,
         }
     }
 }
@@ -64,6 +79,21 @@ impl<P> std::fmt::Debug for State<P> {
     }
 }
 impl<P> State<P> {
+    /// Names are display data. Source/file-set identities bind the exact font
+    /// bytes, so adding a different file with the same name still clears consent.
+    pub fn set_font_files(&mut self, key: FontKey, names: Vec<String>, busy: bool) {
+        if self.font_key != key {
+            self.clear();
+            self.font_key = key;
+            self.font_error = None;
+        }
+        self.font_names = names;
+        self.font_busy = busy;
+    }
+    pub fn font_failure(&mut self, error: String) {
+        self.font_error = Some(error);
+        self.font_busy = false;
+    }
     fn clear(&mut self) {
         self.prepared = None;
         self.texture = None;
@@ -99,7 +129,7 @@ impl<P> State<P> {
             egui::ColorImage::from_rgba_unmultiplied([size[0] as usize, size[1] as usize], rgba),
             egui::TextureOptions::NEAREST,
         ));
-        self.prepared = Some((config, prepared));
+        self.prepared = Some((config, self.font_key, prepared));
         self.losses = losses;
         ctx.request_repaint();
         true
@@ -110,10 +140,11 @@ impl<P> State<P> {
     }
     fn ready(&self, ctx: &egui::Context) -> bool {
         self.accepted
+            && !self.font_busy
             && self
                 .prepared
                 .as_ref()
-                .is_some_and(|(key, _)| *key == self.config)
+                .is_some_and(|(config, key, _)| *config == self.config && *key == self.font_key)
             && self.texture.is_some()
             && self
                 .shown
@@ -123,7 +154,7 @@ impl<P> State<P> {
         if !self.ready(ctx) {
             return None;
         }
-        let prepared = self.prepared.take().map(|(_, value)| value);
+        let prepared = self.prepared.take().map(|(_, _, value)| value);
         self.clear();
         prepared
     }
@@ -153,12 +184,30 @@ impl<P> State<P> {
                                 ui.selectable_value(&mut self.config.fit, fit, t!(ctx, fit_label(fit)));
                             }
                         });
-                    ui.label(t!(ctx, "Output is an sRGB picture with transparency. Text uses bundled fonts; external resources are disabled."));
+                    ui.label(t!(ctx, "Output is a picture with transparency. Text uses bundled fonts and the font files you add below."));
+                    ui.add_enabled_ui(!self.font_busy, |ui| {
+                        if ui.button(t!(ctx, "Add font files…")).clicked() {
+                            response = Response::AddFonts;
+                        }
+                        for (index, name) in self.font_names.iter().enumerate() {
+                            ui.push_id(index, |ui| {
+                                ui.horizontal(|ui| {
+                                    if ui.button(t!(ctx, "Remove")).clicked() {
+                                        response = Response::RemoveFont(index);
+                                    }
+                                    ui.add(egui::Label::new(name).truncate());
+                                });
+                            });
+                        }
+                    });
+                    if self.font_busy { ui.spinner(); ui.label(t!(ctx, "Loading fonts…")); }
+                    if let Some(error) = &self.font_error { ui.colored_label(ui.visuals().error_fg_color, error); }
+                    ui.label(t!(ctx, "Font changes need a new preview and approval. Other external files stay blocked."));
                     ui.label(t!(ctx, "Choose up to 4,194,304 output pixels, then update the preview. Changing options requires a new preview and consent."));
-                    if before != self.config || self.prepared.as_ref().is_some_and(|(key, _)| *key != self.config) {
+                    if before != self.config || self.prepared.as_ref().is_some_and(|(config, key, _)| *config != self.config || *key != self.font_key) {
                         self.clear();
                     }
-                    if ui.button(t!(ctx, "Update preview")).clicked() {
+                    if ui.add_enabled(!self.font_busy, egui::Button::new(t!(ctx, "Update preview"))).clicked() {
                         self.clear();
                         response = Response::Preview(self.config);
                     }
@@ -218,6 +267,84 @@ fn fit_label(fit: Fit) -> &'static str {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn changing_source_or_font_bytes_requires_a_new_preview_even_with_identical_names() {
+        let ctx = egui::Context::default();
+        let mut state = State::default();
+        let names = vec!["font.ttf".into()];
+        state.set_font_files(
+            FontKey {
+                source: 1,
+                files: 2,
+            },
+            names.clone(),
+            false,
+        );
+        let install = |state: &mut State<u8>| {
+            state.install(
+                &ctx,
+                state.config,
+                7,
+                [1, 1],
+                &[0; 4],
+                vec!["svg-rasterized".into()],
+            );
+            for _ in 0..3 {
+                let mut output = ctx.run_ui(Default::default(), |ui| {
+                    state.dialog(ui.ctx(), "image.svg");
+                });
+                output.textures_delta.clear();
+            }
+            state.accepted = true;
+        };
+        install(&mut state);
+        state.set_font_files(
+            FontKey {
+                source: 1,
+                files: 2,
+            },
+            names.clone(),
+            true,
+        );
+        assert!(state.take(&ctx).is_none());
+        assert!(
+            state.accepted,
+            "starting a picker does not discard existing consent"
+        );
+        state.set_font_files(
+            FontKey {
+                source: 1,
+                files: 2,
+            },
+            names.clone(),
+            false,
+        );
+        assert!(
+            state.ready(&ctx),
+            "cancelled picking restores the same approved preview"
+        );
+        state.set_font_files(
+            FontKey {
+                source: 1,
+                files: 3,
+            },
+            names.clone(),
+            false,
+        );
+        assert!(!state.accepted);
+        assert!(state.take(&ctx).is_none());
+        install(&mut state);
+        state.set_font_files(
+            FontKey {
+                source: 4,
+                files: 3,
+            },
+            names,
+            false,
+        );
+        assert!(!state.accepted);
+        assert!(state.take(&ctx).is_none());
+    }
     #[test]
     fn output_requires_displayed_preview_consent_and_unchanged_options() {
         let ctx = egui::Context::default();

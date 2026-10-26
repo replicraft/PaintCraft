@@ -121,3 +121,17 @@ format-could-not-import-the-shape-detail = आकृति आयात नह�
 format-could-not-export-the-shape-detail = आकृति निर्यात नहीं की जा सकी: { $detail }
 
 the-resource-source-has-a-pending-project-save-wait-for-it-to-finish-and-import-again = संसाधन की स्रोत फ़ाइल पर प्रोजेक्ट सहेजना लंबित है। इसके पूरा होने पर फिर से आयात करें।
+
+add-font-files-more = फ़ॉन्ट फ़ाइलें जोड़ें…
+
+add-font-files = फ़ॉन्ट फ़ाइलें जोड़ें
+
+font-files = फ़ॉन्ट फ़ाइलें
+
+output-is-a-picture-with-transparency-text-uses-bundled-fonts-and-the-font-files-you-add-below = आउटपुट पारदर्शिता वाली तस्वीर है। पाठ में शामिल फ़ॉन्ट और नीचे जोड़ी गई फ़ॉन्ट फ़ाइलें उपयोग होती हैं।
+
+font-changes-need-a-new-preview-and-approval-other-external-files-stay-blocked = फ़ॉन्ट बदलने पर नया पूर्वावलोकन और स्वीकृति ज़रूरी है। अन्य बाहरी फ़ाइलें अवरुद्ध रहती हैं।
+
+loading-fonts-more = फ़ॉन्ट लोड हो रहे हैं…
+
+format-could-not-add-font-files-detail = फ़ॉन्ट फ़ाइलें नहीं जोड़ी जा सकीं: { $detail }

@@ -121,3 +121,17 @@ format-could-not-import-the-shape-detail = Could not import the shape: { $detail
 format-could-not-export-the-shape-detail = Could not export the shape: { $detail }
 
 the-resource-source-has-a-pending-project-save-wait-for-it-to-finish-and-import-again = The resource source has a pending project save. Wait for it to finish and import again.
+
+add-font-files-more = Add font files…
+
+add-font-files = Add font files
+
+font-files = Font files
+
+output-is-a-picture-with-transparency-text-uses-bundled-fonts-and-the-font-files-you-add-below = Output is a picture with transparency. Text uses bundled fonts and the font files you add below.
+
+font-changes-need-a-new-preview-and-approval-other-external-files-stay-blocked = Font changes need a new preview and approval. Other external files stay blocked.
+
+loading-fonts-more = Loading fonts…
+
+format-could-not-add-font-files-detail = Could not add font files: { $detail }

@@ -121,3 +121,17 @@ format-could-not-import-the-shape-detail = 无法导入形状：{ $detail }
 format-could-not-export-the-shape-detail = 无法导出形状：{ $detail }
 
 the-resource-source-has-a-pending-project-save-wait-for-it-to-finish-and-import-again = 资源源文件有待完成的项目保存操作。请等待保存完成后重新导入。
+
+add-font-files-more = 添加字体文件…
+
+add-font-files = 添加字体文件
+
+font-files = 字体文件
+
+output-is-a-picture-with-transparency-text-uses-bundled-fonts-and-the-font-files-you-add-below = 输出为带透明度的图片。文字使用内置字体和下方添加的字体文件。
+
+font-changes-need-a-new-preview-and-approval-other-external-files-stay-blocked = 更改字体后需要重新预览并确认。其他外部文件仍被阻止。
+
+loading-fonts-more = 正在加载字体…
+
+format-could-not-add-font-files-detail = 无法添加字体文件：{ $detail }

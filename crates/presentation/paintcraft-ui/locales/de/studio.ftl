@@ -121,3 +121,17 @@ format-could-not-import-the-shape-detail = Form konnte nicht importiert werden: 
 format-could-not-export-the-shape-detail = Form konnte nicht exportiert werden: { $detail }
 
 the-resource-source-has-a-pending-project-save-wait-for-it-to-finish-and-import-again = Für die Quelldatei der Ressource ist ein Speichervorgang ausstehend. Warten Sie, bis er abgeschlossen ist, und importieren Sie erneut.
+
+add-font-files-more = Schriftdateien hinzufügen…
+
+add-font-files = Schriftdateien hinzufügen
+
+font-files = Schriftdateien
+
+output-is-a-picture-with-transparency-text-uses-bundled-fonts-and-the-font-files-you-add-below = Die Ausgabe ist ein Bild mit Transparenz. Text verwendet mitgelieferte Schriften und unten hinzugefügte Schriftdateien.
+
+font-changes-need-a-new-preview-and-approval-other-external-files-stay-blocked = Schriftänderungen erfordern eine neue Vorschau und Zustimmung. Andere externe Dateien bleiben gesperrt.
+
+loading-fonts-more = Schriften werden geladen…
+
+format-could-not-add-font-files-detail = Schriftdateien konnten nicht hinzugefügt werden: { $detail }

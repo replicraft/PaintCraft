@@ -121,3 +121,17 @@ format-could-not-import-the-shape-detail = Não foi possível importar a forma: 
 format-could-not-export-the-shape-detail = Não foi possível exportar a forma: { $detail }
 
 the-resource-source-has-a-pending-project-save-wait-for-it-to-finish-and-import-again = Há um salvamento de projeto pendente no arquivo de origem do recurso. Aguarde a conclusão e importe novamente.
+
+add-font-files-more = Adicionar arquivos de fonte…
+
+add-font-files = Adicionar arquivos de fonte
+
+font-files = Arquivos de fonte
+
+output-is-a-picture-with-transparency-text-uses-bundled-fonts-and-the-font-files-you-add-below = O resultado é uma imagem com transparência. O texto usa as fontes incluídas e os arquivos adicionados abaixo.
+
+font-changes-need-a-new-preview-and-approval-other-external-files-stay-blocked = Alterar fontes exige uma nova prévia e aprovação. Outros arquivos externos continuam bloqueados.
+
+loading-fonts-more = Carregando fontes…
+
+format-could-not-add-font-files-detail = Não foi possível adicionar os arquivos de fonte: { $detail }

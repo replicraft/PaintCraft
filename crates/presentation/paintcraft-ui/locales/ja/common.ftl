@@ -496,3 +496,5 @@ format-could-not-import-the-palette-detail = パレットを読み込めませ�
 format-could-not-export-the-palette-detail = パレットを書き出せませんでした: { $detail }
 
 palette-download-requested = パレットのダウンロードを開始しました。
+
+remove = 取り除く
