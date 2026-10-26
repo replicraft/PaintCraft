@@ -2,7 +2,7 @@
 //! subprocess/source/output work stays private until final owner/cancel checks.
 use super::{
     super::*,
-    state::{State, reply},
+    state::{State, core_json, reply},
 };
 use paintcraft_formats::codec_worker::{
     self as wire,
@@ -18,7 +18,6 @@ use std::{
     time::Duration,
 };
 
-pub(super) const VARIANT: &str = wire::NATIVE_JXL_IMPORT_VARIANT;
 pub(super) type Check = Arc<dyn Fn() -> Result<()> + Send + Sync>;
 /// Dropping an RPC future invalidates publication even if spawn_blocking keeps
 /// running. The worker still drains cancellation/reap before releasing its lease.
@@ -44,23 +43,61 @@ fn owner(state: &State, empty: wire::Owner) -> wire::Owner {
         }
     })
 }
-fn admit(path: &Path) -> Result<()> {
+fn profile(
+    path: &Path,
+) -> Result<(
+    paintcraft_formats::registry::Family,
+    wire::Codec,
+    &'static str,
+)> {
+    use paintcraft_formats::registry::Family;
+    match path
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .and_then(Family::from_extension)
+    {
+        Some(Family::Jxl) => Ok((
+            Family::Jxl,
+            wire::Codec::JxlRgba8,
+            wire::NATIVE_JXL_IMPORT_VARIANT,
+        )),
+        Some(Family::Jxr) => Ok((
+            Family::Jxr,
+            wire::Codec::JxrRgb8,
+            wire::NATIVE_JXR_IMPORT_VARIANT,
+        )),
+        _ => Err(Error::new(
+            ErrorCode::CapabilityUnsupported,
+            "Native codec import requires JXL/JXR",
+        )),
+    }
+}
+fn admit(
+    path: &Path,
+) -> Result<(
+    paintcraft_formats::registry::Family,
+    wire::Codec,
+    &'static str,
+)> {
     use paintcraft_formats::registry::{self, Family, Frontend, Operation, Platform, Request};
+    let (family, codec, variant) = profile(path)?;
     let mut request = Request::new(
         Frontend::Studio,
         Operation::ImportConvert,
-        Family::Jxl,
+        family,
         Platform::Native,
     );
-    request.extension = path.extension().and_then(|value| value.to_str());
-    request.variant = Some(VARIANT);
-    let decision = registry::admission(request);
-    if decision.available() {
-        Ok(())
-    } else {
-        decision.require_allowed(request)
+    request.extension = path.extension().and_then(|ext| ext.to_str());
+    request.variant = Some(variant);
+    match registry::admission(request) {
+        registry::Decision::Allowed => {}
+        registry::Decision::AllowedWithPreflight(registry::Reason::ConvertRequiresConsent)
+            if family == Family::Jxr => {}
+        decision => decision.require_allowed(request)?,
     }
+    Ok((family, codec, variant))
 }
+
 type Launch =
     Box<dyn FnOnce(wire::native::Launch<'_>, &dyn Fn() -> Result<()>) -> Result<Vec<u8>> + Send>;
 fn preparation_budget() -> SharedBudget {
@@ -87,6 +124,7 @@ fn launch(launch: wire::native::Launch<'_>, check: &dyn Fn() -> Result<()>) -> R
 fn prepare(
     path: &Path,
     captured: wire::Owner,
+    codec: wire::Codec,
     check: Check,
     launch: Launch,
 ) -> Result<PreparedImport> {
@@ -130,14 +168,14 @@ fn prepare(
                 input,
                 identity,
                 length,
-                codec: wire::Codec::JxlRgba8,
+                codec,
                 owner: captured,
                 pixels: wire::PIXELS_MAX,
                 deadline: Duration::from_secs(10),
                 application_version: env!("CARGO_PKG_VERSION").into(),
                 expected_sha256: None,
             }
-            .prepare_jxl(residency, lease, &check, &|| Ok(captured), launch)
+            .prepare_import(residency, lease, &check, &|| Ok(captured), launch)
         },
         || {},
     )?;
@@ -161,17 +199,19 @@ fn prepare(
 pub(super) fn import(
     state: &mut State,
     path: &Path,
+    allowed: &[String],
     check: Check,
 ) -> Result<rmcp::model::CallToolResult> {
-    import_with_launch(state, path, check, Box::new(launch))
+    import_with_launch(state, path, allowed, check, Box::new(launch))
 }
 fn import_with_launch(
     state: &mut State,
     path: &Path,
+    allowed: &[String],
     check: Check,
     launch: Launch,
 ) -> Result<rmcp::model::CallToolResult> {
-    admit(path)?;
+    let (family, codec, _) = admit(path)?;
     let empty = wire::Owner {
         session: uuid::Uuid::new_v4(),
         state: uuid::Uuid::new_v4(),
@@ -179,8 +219,18 @@ fn import_with_launch(
         frontend: 3,
     };
     let captured = owner(state, empty);
-    let prepared = prepare(path, captured, check.clone(), launch)?;
-    let adopted = prepared.adopt(&*check, &|| Ok(owner(state, empty)))?;
+    let prepared = prepare(path, captured, codec, check.clone(), launch)?;
+    let decoder_profile = prepared.decoder_profile();
+    let actual_losses: Vec<String> = prepared
+        .losses()
+        .iter()
+        .map(|code| (*code).to_owned())
+        .collect();
+    let assessment = prepared
+        .jxr_assessment()
+        .map(|assessment| core_json(&assessment.to_value()))
+        .transpose()?;
+    let adopted = prepared.adopt_with_losses(allowed, &*check, &|| Ok(owner(state, empty)))?;
     let mut session = Session::new(adopted.document);
     session.mark_unsaved();
     check()?;
@@ -197,8 +247,8 @@ fn import_with_launch(
     state.import_resources.clear();
     state.brush_sources.clear();
     let mut value = state.inspection()?;
-    value["conversion"] = serde_json::json!({"source_sha256":hex(&adopted.sha256),"source_format":"jxl",
-        "decoder_profile":VARIANT,"source_lineage_adopted":false,"preserving_save":false,"losses_acknowledged":[]});
+    value["conversion"] = serde_json::json!({"source_sha256":hex(&adopted.sha256),"source_format":family.id(),
+        "decoder_profile":decoder_profile,"source_lineage_adopted":false,"preserving_save":false,"losses_acknowledged":actual_losses,"source_assessment":assessment});
     Ok(reply(value))
 }
 

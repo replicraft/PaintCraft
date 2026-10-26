@@ -46,7 +46,7 @@ fn copied_installed_real_helper_cancellation_preserves_mcp_session_and_retires_c
         "application_version":env!("CARGO_PKG_VERSION"),"target":target,"executable":helper_name,
         "sha256":hex(&Sha256::digest(fs::read(&installed).unwrap())),"protocol_version":wire::PROTOCOL_VERSION,
         "profile":wire::NATIVE_PROFILE,"requested_heap_ceiling_bytes":wire::HEAP_BYTES,
-        "qualified_import_variants":[VARIANT]});
+        "qualified_import_variants":wire::QUALIFIED_NATIVE_IMPORT_VARIANTS});
     fs::write(
         root.join("paintcraft-codec-worker.json"),
         manifest.to_string(),
@@ -106,6 +106,7 @@ fn fixture_cancelled_import() {
     let error = import_with_launch(
         &mut state,
         &input,
+        &[],
         check,
         Box::new(move |launch, check| {
             // Real verified helper waits for its missing source while the retained

@@ -67,7 +67,12 @@ impl Installation {
             ),
             (
                 "qualified_import_variants",
-                Value::Array(vec![Value::str(wire::NATIVE_JXL_IMPORT_VARIANT)]),
+                Value::Array(
+                    wire::QUALIFIED_NATIVE_IMPORT_VARIANTS
+                        .iter()
+                        .map(|variant| Value::str(*variant))
+                        .collect(),
+                ),
             ),
         ]);
         fs::write(&manifest, json::canonical(&value)).unwrap();
@@ -487,3 +492,6 @@ fn installed_mcp_native_jxl_adoption_and_source_guards() {
     );
     assert_eq!(client.ok("inspect_document", json!({})), stable);
 }
+
+#[path = "installed_codec_worker/jxr.rs"]
+mod jxr;

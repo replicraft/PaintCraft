@@ -94,16 +94,17 @@ impl PaintingServer {
                     && !paintcraft_formats::project_import::KNOWN_LOSSES.contains(&code.as_str())
                     && !paintcraft_formats::icons::KNOWN_IMPORT_LOSSES.contains(&code.as_str())
                     && !paintcraft_formats::icns::KNOWN_IMPORT_LOSSES.contains(&code.as_str())
+                    && !paintcraft_formats::jxr::KNOWN_IMPORT_LOSSES.contains(&code.as_str())
                     && !paintcraft_formats::svg::KNOWN_LOSSES.contains(&code.as_str())
             }) {
                 return Err(invalid(&format!("unknown import loss code {code:?}")));
             }
             let path = PathBuf::from(p.path);
-            if path.extension().and_then(|ext| ext.to_str()).and_then(Family::from_extension) == Some(Family::Jxl) {
+            if path.extension().and_then(|ext| ext.to_str()).and_then(Family::from_extension) .is_some_and(|family|matches!(family,Family::Jxl|Family::Jxr)) {
                 if p.page.is_some() || p.entry.is_some() || p.svg.is_some() {
-                    return Err(invalid("JXL import does not accept page, entry or SVG options"));
+                    return Err(invalid("Native JXL/JXR import does not accept page, entry or SVG options"));
                 }
-                return super::native_codec::import(state, &path, std::sync::Arc::new(move || {
+                return super::native_codec::import(state, &path,&p.allow_losses, std::sync::Arc::new(move || {
                     if cancellation.is_cancelled() || dropped.load(std::sync::atomic::Ordering::Acquire) {
                         Err(paintcraft_core::types::Error::new(paintcraft_core::types::ErrorCode::OperationCancelled,"MCP codec import cancelled"))
                     } else { Ok(()) }
