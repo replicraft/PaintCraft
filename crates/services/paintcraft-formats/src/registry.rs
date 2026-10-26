@@ -251,6 +251,12 @@ pub fn capability(family: Family, operation: Operation, platform: Platform) -> C
         Family::Avif if operation == Operation::ImportConvert && platform == Platform::Native => {
             Some("dav1d-isolated-srgb8")
         }
+        Family::Hdr if operation == Operation::ImportConvert && platform == Platform::Native => {
+            Some("radiance-isolated-sdr8-settings32-report96")
+        }
+        Family::Exr if operation == Operation::ImportConvert && platform == Platform::Native => {
+            Some("exr-isolated-sdr8-settings32-report96")
+        }
         Family::Jxr if operation == Operation::ImportConvert && platform == Platform::Native => {
             Some("jpegxr-pure-rs-isolated-rgb8")
         }
@@ -336,6 +342,19 @@ pub fn admission(request: Request<'_>) -> Decision {
             Some(crate::codec_worker::NATIVE_AVIF_IMPORT_VARIANT)
                 | Some(crate::codec_worker::NATIVE_AVIF_SDR_IMPORT_VARIANT)
         );
+    let native_float_import = request.operation == Operation::ImportConvert
+        && request.frontend == Frontend::Studio
+        && request.platform == Platform::Native
+        && matches!(
+            (request.family, request.variant),
+            (
+                Family::Hdr,
+                Some(crate::codec_worker::NATIVE_HDR_SDR_IMPORT_VARIANT)
+            ) | (
+                Family::Exr,
+                Some(crate::codec_worker::NATIVE_EXR_SDR_IMPORT_VARIANT)
+            )
+        );
     let web_jxl_import = request.family == Family::Jxl
         && request.operation == Operation::ImportConvert
         && request.frontend == Frontend::Studio
@@ -393,6 +412,7 @@ pub fn admission(request: Request<'_>) -> Decision {
         && !native_jxr_import
         && !native_heif_import
         && !native_avif_import
+        && !native_float_import
     {
         return Decision::TemporarilyUnavailable(Reason::VariantUnqualified);
     }
@@ -415,6 +435,7 @@ pub fn admission(request: Request<'_>) -> Decision {
         && !native_jxr_import
         && !native_heif_import
         && !native_avif_import
+        && !native_float_import
     {
         return Decision::TemporarilyUnavailable(Reason::VariantUnqualified);
     }
@@ -422,6 +443,7 @@ pub fn admission(request: Request<'_>) -> Decision {
         || native_jxr_import
         || native_heif_import
         || native_avif_import
+        || native_float_import
         || svg_rasterization
         || (request.operation.is_write() && request.family != Family::Pcnd)
     {
