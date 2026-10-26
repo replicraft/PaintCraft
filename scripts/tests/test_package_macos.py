@@ -11,6 +11,10 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "packaging"))
+from test_package_release import executable
+import package_release as release
+
 SPEC = importlib.util.spec_from_file_location("package_macos", Path(__file__).parents[1] / "packaging/package_macos.py")
 PACK = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(PACK)
@@ -21,19 +25,20 @@ class BundleTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory(prefix="paintcraft-package-test-")
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
+        self.version = release.workspace_version()
         self.binary = self.root / "executable with spaces"
-        self.binary.write_bytes(b"fixture executable; never launched")
+        executable(self.binary, "aarch64-apple-darwin")
         self.destination = self.root / "PaintCraft.app"
 
     def prepare(self, destination):
-        PACK.populate_bundle(self.binary, destination, "0.1.0", self.binary)
+        PACK.populate_bundle(self.binary, destination, self.version, self.binary)
 
     def test_owned_pcnd_type_and_editor_registration_share_existing_icon(self):
         PACK.publish_bundle(self.destination, self.prepare)
         contents = self.destination / "Contents"
         info = plistlib.loads((contents / "Info.plist").read_bytes())
         self.assertEqual(info["CFBundleIdentifier"], PACK.BUNDLE_ID)
-        self.assertEqual(info["CFBundleVersion"], "0.1.0")
+        self.assertEqual(info["CFBundleVersion"], self.version.split("-")[0].split("+")[0])
         self.assertEqual(info["CFBundleExecutable"], "paintcraft-launcher")
         editor = contents / "Helpers/PaintCraft Editor.app/Contents"
         child = plistlib.loads((editor / "Info.plist").read_bytes())
@@ -107,14 +112,14 @@ class BundleTests(unittest.TestCase):
             code = PACK.main(["--binary", str(self.binary), "--output", str(self.destination)])
             self.assertEqual(code, 0)
             self.assertFalse(installed.exists())
-            self.assertEqual(len(run.call_args_list), 3)
+            self.assertEqual(len(run.call_args_list), 4)
             self.assertEqual(run.call_args.args[0][0], "/usr/bin/codesign")
             run.reset_mock()
             code = PACK.main(["--binary", str(self.binary), "--output", str(self.destination), "--replace", "--install", "--register"])
             self.assertEqual(code, 0)
             self.assertTrue(installed.exists())
             self.assertEqual(run.call_args.args[0], [PACK.LSREGISTER, "-f", str(installed)])
-            self.assertEqual(len(run.call_args_list), 4)
+            self.assertEqual(len(run.call_args_list), 5)
         self.assertEqual((installed / "Contents/Helpers/PaintCraft Editor.app/Contents/MacOS/paintcraft").read_bytes(), self.binary.read_bytes())
 
 
@@ -145,9 +150,14 @@ class NativeLauncherTests(unittest.TestCase):
                 + "DispatchQueue.main.asyncAfter(deadline: .now()+3) { exit(0) }\napp.run()\n")
             subprocess.run(["/usr/bin/xcrun", "swiftc", "-module-cache-path", str(root / "swift-module-cache"),
                             str(source), "-o", str(dummy)], check=True)
+            helper_source = root / "DummyHelper.swift"
+            record = "PAINTCRAFT_CODEC_WORKER_BUILD_V1\0" + release.workspace_version() + "\0PCHEIF01\0HEAP268435456\0END_CODEC_WORKER_BUILD\0"
+            helper_source.write_text("import Foundation\nlet record = " + json.dumps(record).replace("\\u0000", "\\0") + "\nFileHandle.standardOutput.write(record.data(using: .utf8)!)\n")
+            subprocess.run(["/usr/bin/xcrun", "swiftc", "-module-cache-path", str(root / "swift-module-cache"),
+                            str(helper_source), "-o", str(root / "paintcraft-codec-worker")], check=True)
             launcher = PACK.build_launcher(root)
             bundle = root / "PaintCraft Association Test.app"
-            PACK.populate_bundle(dummy, bundle, "0.1.0", launcher)
+            PACK.populate_bundle(dummy, bundle, release.workspace_version(), launcher)
             metadata = bundle / "Contents/Info.plist"
             info = plistlib.loads(metadata.read_bytes())
             info["CFBundleIdentifier"] = "io.github.replicraft.PaintCraft.association-test." + uuid.uuid4().hex

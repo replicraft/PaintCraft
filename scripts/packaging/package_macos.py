@@ -11,6 +11,8 @@ import sys
 import tempfile
 import tomllib
 
+import codec_worker
+
 ROOT = Path(__file__).resolve().parents[2]
 TEMPLATE = ROOT / "apps/paintcraft/resources/macos/Info.plist.in"
 ICON = ROOT / "assets/paintcraft-icon.icns"
@@ -25,6 +27,7 @@ def metadata(version):
 
 
 def populate_bundle(binary, destination, version, launcher):
+    codec_worker.prepare(binary, version)
     destination = Path(destination)
     contents = destination / "Contents"
     (contents / "MacOS").mkdir(parents=True)
@@ -47,6 +50,7 @@ def populate_bundle(binary, destination, version, launcher):
     (editor / "Resources").mkdir()
     shutil.copy2(binary, executable)
     executable.chmod(executable.stat().st_mode | 0o111)
+    codec_worker.copy(binary, executable.parent, version)
     shutil.copy2(ICON, editor / "Resources" / ICON.name)
     editor_info = metadata(version)
     editor_info["CFBundleIdentifier"] = BUNDLE_ID + ".editor"
@@ -99,7 +103,7 @@ def publish_bundle(destination, prepare, replace=False):
 
 
 def built_binary(debug):
-    command = ["cargo", "build", "-p", "paintcraft", "--message-format=json-render-diagnostics"]
+    command = ["cargo", "build", "-p", "paintcraft", "-p", "paintcraft-codec-worker", "--message-format=json-render-diagnostics"]
     if not debug:
         command.append("--release")
     process = subprocess.run(command, cwd=ROOT, capture_output=True, text=True, check=False)
@@ -131,6 +135,14 @@ def build_launcher(directory, target=None):
 
 
 def sign_bundle(bundle):
+    editor = bundle / "Contents/Helpers/PaintCraft Editor.app/Contents"
+    helper = editor / "MacOS/paintcraft-codec-worker"
+    subprocess.run(["/usr/bin/codesign", "--force", "--sign", "-", "--timestamp=none", str(helper)], check=True)
+    with (editor / "MacOS" / codec_worker.MANIFEST).open(encoding="utf-8") as stream:
+        manifest = json.load(stream)
+    # Signing changes Mach-O bytes. Hash the signed helper before sealing the
+    # editor and then outer app, so their signatures protect this exact manifest.
+    codec_worker.write_manifest(helper.parent, manifest["application_version"], manifest["target"])
     for app in [bundle / "Contents/Helpers/PaintCraft Editor.app", bundle]:
         subprocess.run(["/usr/bin/codesign", "--force", "--sign", "-", "--timestamp=none", str(app)], check=True)
     subprocess.run(["/usr/bin/codesign", "--verify", "--deep", "--strict", str(bundle)], check=True)

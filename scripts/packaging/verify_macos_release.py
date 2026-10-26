@@ -9,6 +9,7 @@ import sys
 import tempfile
 import zipfile
 
+import codec_worker
 import package_release as release
 
 
@@ -52,10 +53,14 @@ def verify(version, target, image, update):
         app = extracted / "PaintCraft.app"
         subprocess.run(["/usr/bin/codesign", "--verify", "--deep", "--strict", str(app)], check=True)
         for binary in (app / "Contents/MacOS/paintcraft-launcher",
-                       app / "Contents/Helpers/PaintCraft Editor.app/Contents/MacOS/paintcraft"):
+                       app / "Contents/Helpers/PaintCraft Editor.app/Contents/MacOS/paintcraft",
+                       app / "Contents/Helpers/PaintCraft Editor.app/Contents/MacOS/paintcraft-codec-worker"):
             release.validate_package_input(version, target, binary)
             if binary.stat().st_mode & 0o111 != 0o111:
                 raise ValueError(f"Updater ZIP lost executable permissions: {binary}")
+        helper_directory = app / "Contents/Helpers/PaintCraft Editor.app/Contents/MacOS"
+        codec_worker.prepare(helper_directory / "paintcraft", version, target)
+        codec_worker.verify_manifest(helper_directory, version, target)
         mount = root / "mounted"
         mount.mkdir()
         subprocess.run(["/usr/bin/hdiutil", "attach", "-readonly", "-nobrowse", "-mountpoint",
@@ -70,7 +75,7 @@ def verify(version, target, image, update):
                 raise ValueError("DMG is missing its Applications shortcut")
         finally:
             subprocess.run(["/usr/bin/hdiutil", "detach", str(mount)], check=True)
-    print(f"Verified {target}: identical signed DMG/ZIP app, both executable architectures and permissions")
+    print(f"Verified {target}: identical signed DMG/ZIP app, all executable architectures, helper manifest and permissions")
 
 
 def main():
