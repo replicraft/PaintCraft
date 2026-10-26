@@ -161,7 +161,8 @@ impl Request<'_> {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Capability {
     pub backend_available: bool,
-    /// Qualified only for the bounded RGBA8 adapter subset, not every file variant.
+    /// Qualified only for the bounded adapter profile, not every file variant
+    /// or the separate cross-platform release gates.
     pub qualified: bool,
     pub backend: Option<&'static str>,
 }
@@ -184,6 +185,9 @@ pub fn capability(family: Family, operation: Operation, _platform: Platform) -> 
             | Operation::SaveAsCopy
     );
     let backend = match family {
+        Family::Ase if matches!(operation, Operation::ImportAsset | Operation::ExportAsset) => {
+            Some("ag-psd-ase-finite-f32")
+        }
         Family::Tiff if raster_operation && operation.is_write() => Some("tiff-rgba8"),
         Family::Pcnd if project_operation => Some("paintcraft-pcnd-v1"),
         Family::Png
@@ -259,6 +263,7 @@ pub fn capability(family: Family, operation: Operation, _platform: Platform) -> 
             }
             Family::Jxl | Family::Avif => operation == Operation::ExportFlat,
             Family::Svg => operation == Operation::ImportConvert,
+            Family::Ase => matches!(operation, Operation::ImportAsset | Operation::ExportAsset),
             Family::Pdn => matches!(
                 operation,
                 Operation::Open | Operation::OpenProject | Operation::ImportConvert

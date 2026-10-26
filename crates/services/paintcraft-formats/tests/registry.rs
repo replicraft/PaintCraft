@@ -188,14 +188,15 @@ fn stock_extended_asset_and_native_project_operations_do_not_leak() {
             )),
             Decision::Denied(Reason::UnsupportedOperation)
         );
-        assert!(
-            !admission(Request::new(
+        assert_eq!(
+            admission(Request::new(
                 Frontend::Studio,
                 Operation::ImportAsset,
                 family,
                 Platform::Native
             ))
-            .available()
+            .available(),
+            family == Family::Ase
         );
     }
     assert_eq!(
