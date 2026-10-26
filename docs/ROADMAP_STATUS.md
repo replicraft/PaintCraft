@@ -1,5 +1,12 @@
 # PaintCraft roadmap implementation status
 
+Current requested order is to finish the
+[file-format interoperability work](FORMAT_INTEROPERABILITY.md), then adopt
+`docs/temp/paintcraft-2d-performance-implementation-pack` in stages, beginning
+with its staged-adoption and performance contracts. The performance pack is
+queued work, not a claim of implementation or measured gains; it does not
+replace the canonical 37-task roadmap or transplant new contracts wholesale.
+
 [Flatten Image](FLATTEN_IMAGE.md) now works in desktop/browser Studio, CLI and
 MCP as one recorded transaction. It retains the visible composition, selection,
 title and document identity; Undo restores hidden/off-canvas source data as well
