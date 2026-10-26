@@ -19,3 +19,6 @@ pub mod clipboard;
 
 #[cfg(not(target_arch = "wasm32"))]
 pub mod source;
+
+#[cfg(not(target_arch = "wasm32"))]
+pub mod codec_helper;
