@@ -157,6 +157,33 @@ pub fn discover_compatible_three(
     let application = std::env::current_exe().map_err(storage)?;
     for_application_compatible_three(&application, first, second, third, check)
 }
+/// Admit exactly four host-owned release-compatible contracts, selecting once
+/// from the bounded manifest before integrity verification. Never retry failures.
+pub fn discover_compatible_four(
+    first: Contract<'_>,
+    second: Contract<'_>,
+    third: Contract<'_>,
+    fourth: Contract<'_>,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<VerifiedHelper> {
+    let application = std::env::current_exe().map_err(storage)?;
+    for_application_compatible_four(&application, first, second, third, fourth, check)
+}
+pub fn for_application_compatible_four(
+    application: &Path,
+    first: Contract<'_>,
+    second: Contract<'_>,
+    third: Contract<'_>,
+    fourth: Contract<'_>,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<VerifiedHelper> {
+    verify_set(
+        application,
+        &[first, second, third, fourth],
+        Target::current()?,
+        check,
+    )
+}
 pub fn for_application_compatible_three(
     application: &Path,
     first: Contract<'_>,
@@ -222,7 +249,7 @@ fn verify_set(
     check: &dyn Fn() -> Result<()>,
 ) -> Result<VerifiedHelper> {
     check()?;
-    if !(1..=3).contains(&contracts.len()) {
+    if !(1..=4).contains(&contracts.len()) {
         return Err(Error::new(
             ErrorCode::InputSchema,
             "Invalid installed helper contract count",
