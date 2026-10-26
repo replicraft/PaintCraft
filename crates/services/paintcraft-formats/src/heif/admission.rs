@@ -1,6 +1,9 @@
-//! Production header admission for the isolated native-gray worker only. The
-//! decoder must still execute under its process allocator/deadline boundary.
+//! Header admission for isolated HEIF worker profiles. Native gray is wired;
+//! explicit color remains internally qualified until its consumer gates pass.
+//! Decoder and parameter parsing require the process allocator/deadline boundary.
 use super::*;
+mod color;
+pub use color::{ColorAdmitted, admit_srgb8};
 use heic_decoder::hevc::{nal::parse_nal_header, params::parse_sps};
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Encoding {
@@ -37,6 +40,8 @@ struct Coded {
     size: (u32, u32),
     raw_pixels: u64,
     encoding: Option<Encoding>,
+    chroma: u32,
+    chroma_location: Option<u32>,
 }
 fn map(error: heic_decoder::HeifError) -> Error {
     match error {
@@ -133,6 +138,14 @@ fn cropped_size(
     Ok((width, height))
 }
 fn coded(item: &Item<'_>, pixels: u64, check: &dyn Fn() -> Result<()>) -> Result<Coded> {
+    coded_profile(item, pixels, check, false)
+}
+fn coded_profile(
+    item: &Item<'_>,
+    pixels: u64,
+    check: &dyn Fn() -> Result<()>,
+    color: bool,
+) -> Result<Coded> {
     let (luma, chroma, format, bytes) = item
         .properties
         .iter()
@@ -151,10 +164,19 @@ fn coded(item: &Item<'_>, pixels: u64, check: &dyn Fn() -> Result<()>) -> Result
             }
         })
         .ok_or_else(|| invalid("missing HEVC configuration"))?;
-    if luma != 8 || chroma != 8 || format != 0 {
-        return Err(unsupported(
-            "isolated HEIF profile currently supports native monochrome8 only",
-        ));
+    if luma != 8
+        || chroma != 8
+        || if color {
+            !matches!(format, 1 | 3)
+        } else {
+            format != 0
+        }
+    {
+        return Err(unsupported(if color {
+            "isolated HEIF color requires 8-bit 4:4:4 or 4:2:0"
+        } else {
+            "isolated HEIF gray requires native monochrome8"
+        }));
     }
     let mut r = metadata::Reader::new(bytes);
     let header = r.take(23)?;
@@ -162,6 +184,7 @@ fn coded(item: &Item<'_>, pixels: u64, check: &dyn Fn() -> Result<()>) -> Result
     let mut vps = false;
     let mut pps = false;
     let mut raw_pixels = 0u64;
+    let mut sampling = None;
     for _ in 0..header[22] {
         check()?;
         let kind = r.u8()? & 63;
@@ -184,9 +207,13 @@ fn coded(item: &Item<'_>, pixels: u64, check: &dyn Fn() -> Result<()>) -> Result
                     let rbsp = heic_decoder::bitreader::strip_emulation_prevention(body);
                     let s = parse_sps(&rbsp).map_err(map)?;
                     check()?;
-                    if s.bit_depth_luma != 8 || s.bit_depth_chroma != 8 || s.chroma_format_idc != 0
+                    if s.bit_depth_luma != 8
+                        || s.bit_depth_chroma != 8
+                        || s.chroma_format_idc != u32::from(format)
                     {
-                        return Err(unsupported("coded SPS is not native monochrome8"));
+                        return Err(unsupported(
+                            "coded SPS precision/chroma differs from admitted configuration",
+                        ));
                     }
                     let raw = u64::from(s.pic_width_in_luma_samples)
                         * u64::from(s.pic_height_in_luma_samples);
@@ -202,14 +229,17 @@ fn coded(item: &Item<'_>, pixels: u64, check: &dyn Fn() -> Result<()>) -> Result
                         s.pic_height_in_luma_samples,
                         s.conformance_window,
                     )?;
+                    if color {
+                        color::geometry(size, u32::from(format))?;
+                    }
                     if spatial(item)? != size {
                         return Err(invalid("ispe disagrees with coded SPS crop"));
                     }
                     for property in &item.properties {
                         if let Property::PixelInformation { bits } = property.property
-                            && bits != [8]
+                            && bits != if color { &[8, 8, 8][..] } else { &[8][..] }
                         {
-                            return Err(invalid("pixi disagrees with coded monochrome8 SPS"));
+                            return Err(invalid("pixi disagrees with coded 8-bit SPS"));
                         }
                     }
                     let encoding = s.color_info.map(|c| Encoding {
@@ -218,7 +248,29 @@ fn coded(item: &Item<'_>, pixels: u64, check: &dyn Fn() -> Result<()>) -> Result
                         matrix: c.matrix_coefficients,
                         full_range: c.full_range,
                     });
-                    let encoding = profile(item, encoding)?;
+                    let encoding = if color {
+                        color::profile(item, encoding)?
+                    } else {
+                        profile(item, encoding)?
+                    };
+                    if color && encoding.matrix == 0 && format != 3 {
+                        return Err(unsupported("HEIF identity matrix requires 4:4:4"));
+                    }
+                    if color && (s.conformance_window[0] != 0 || s.conformance_window[2] != 0) {
+                        return Err(unsupported(
+                            "HEIF shifted conformance crop is not qualified",
+                        ));
+                    }
+                    if color && format == 1 && s.chroma_location.unwrap_or(0) != 0 {
+                        return Err(unsupported("HEIF 4:2:0 chroma siting is not qualified"));
+                    }
+                    let current_sampling = (s.chroma_format_idc, s.chroma_location);
+                    if sampling.is_some_and(|previous| previous != current_sampling) {
+                        return Err(unsupported(
+                            "multiple incompatible SPS sampling declarations",
+                        ));
+                    }
+                    sampling = Some(current_sampling);
                     if found.is_some_and(|prior: (u32, u32, Encoding)| {
                         prior != (size.0, size.1, encoding)
                     }) {
@@ -245,6 +297,8 @@ fn coded(item: &Item<'_>, pixels: u64, check: &dyn Fn() -> Result<()>) -> Result
         size: (w, h),
         raw_pixels,
         encoding: Some(encoding),
+        chroma: u32::from(format),
+        chroma_location: sampling.and_then(|value| value.1),
     })
 }
 struct Cursor<'a, 'b> {
@@ -381,6 +435,8 @@ fn image_info(
                     size: (data.width, data.height),
                     raw_pixels: 0,
                     encoding: Some(encoding),
+                    chroma: first.map_or(0, |value| value.chroma),
+                    chroma_location: first.and_then(|value| value.chroma_location),
                 });
             }
             b"iden" => {
