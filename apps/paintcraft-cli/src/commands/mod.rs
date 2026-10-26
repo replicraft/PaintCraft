@@ -300,6 +300,8 @@ pub mod export_dcx;
 pub mod export_icns;
 pub mod export_icons;
 pub mod export_layered;
+#[cfg(test)]
+pub mod float_options;
 pub mod format_profile;
 pub mod import;
 pub mod inspect;
