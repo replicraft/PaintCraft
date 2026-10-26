@@ -103,7 +103,7 @@ def publish_bundle(destination, prepare, replace=False):
 
 
 def built_binary(debug):
-    command = ["cargo", "build", "-p", "paintcraft", "-p", "paintcraft-codec-worker", "--message-format=json-render-diagnostics"]
+    command = ["cargo", "build", "-p", "paintcraft", "-p", "paintcraft-codec-worker", "--features", "paintcraft-codec-worker/float-codecs", "--message-format=json-render-diagnostics"]
     if not debug:
         command.append("--release")
     process = subprocess.run(command, cwd=ROOT, capture_output=True, text=True, check=False)
@@ -143,6 +143,7 @@ def sign_bundle(bundle):
     # Signing changes Mach-O bytes. Hash the signed helper before sealing the
     # editor and then outer app, so their signatures protect this exact manifest.
     codec_worker.write_manifest(helper.parent, manifest["application_version"], manifest["target"])
+    codec_worker.verify_manifest(helper.parent, manifest["application_version"], manifest["target"])
     for app in [bundle / "Contents/Helpers/PaintCraft Editor.app", bundle]:
         subprocess.run(["/usr/bin/codesign", "--force", "--sign", "-", "--timestamp=none", str(app)], check=True)
     subprocess.run(["/usr/bin/codesign", "--verify", "--deep", "--strict", str(bundle)], check=True)

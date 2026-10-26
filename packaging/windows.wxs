@@ -18,6 +18,9 @@
           <File Id="CodecWorker" Source="$(var.CodecWorker)" Name="paintcraft-codec-worker.exe" />
           <File Id="CodecNotice" Source="$(var.CodecNotice)" Name="JPEGXR_LICENSE.txt" />
           <File Id="AvifCodecNotice" Source="$(var.AvifCodecNotice)" Name="DAV1D_LICENSE.txt" />
+          <?ifdef FloatCodecNotice?>
+          <File Id="FloatCodecNotice" Source="$(var.FloatCodecNotice)" Name="HDR_EXR_LICENSES_V1.txt" />
+          <?endif?>
           <File Id="CodecManifest" Source="$(var.CodecManifest)" Name="paintcraft-codec-worker.json" />
           <File Id="License" Source="$(var.License)" Name="LICENSE.txt" />
           <File Id="FontLicenses" Source="$(var.FontLicenses)" Name="FONT_LICENSES.txt" />

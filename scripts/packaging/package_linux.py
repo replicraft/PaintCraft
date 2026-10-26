@@ -16,10 +16,10 @@ APP_ID = "io.github.replicraft.PaintCraft"
 ARCHITECTURES = ("x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu")
 
 
-def desktop_files():
+def desktop_files(notices=codec_worker.NOTICES):
     return {
         str(release.ROOT / "LICENSE"): "usr/share/licenses/paintcraft/LICENSE",
-        **{str(release.ROOT / "packaging" / name): "usr/share/licenses/paintcraft/" + name for name in codec_worker.NOTICES},
+        **{str(release.ROOT / "packaging" / name): "usr/share/licenses/paintcraft/" + name for name in notices},
         str(release.ROOT / "packaging/FONT_LICENSES.txt"): "usr/share/licenses/paintcraft/FONT_LICENSES.txt",
         str(release.ROOT / "packaging/paintcraft.metainfo.xml"): f"usr/share/metainfo/{APP_ID}.metainfo.xml",
         str(release.ROOT / "packaging/paintcraft-mime.xml"): "usr/share/mime/packages/paintcraft.xml",
@@ -31,7 +31,7 @@ def configuration(version, target, binary, output, format_name, helper, worker_m
     config.update(version=version, targetTriple=target, outDir=str(output.resolve()),
                   binaries=[{"path": str(binary.resolve()), "main": True}, {"path": str(helper), "main": False}], formats=[format_name])
     config["icons"] = [str(release.ROOT / "assets/paintcraft-icon.iconset/icon_256x256.png")]
-    files = desktop_files()
+    files = desktop_files(codec_worker.installed_notices(helper.parent))
     files[str(worker_manifest)] = "usr/share/paintcraft/" + codec_worker.MANIFEST
     config["deb"].update(desktopTemplate=str(release.ROOT / "packaging/paintcraft.desktop"),
                          files=files)
@@ -61,7 +61,7 @@ def native_package(version, target, binary, archive, temporary, format_name):
         metadata = temporary / f"{APP_ID}.metainfo.xml"
         metadata.write_text((release.ROOT / "packaging/paintcraft.metainfo.xml").read_text()
                             .replace("paintcraft.desktop", desktop.name), encoding="utf-8")
-        files = desktop_files()
+        files = desktop_files(codec_worker.installed_notices(helper.parent))
         files[str(worker_manifest)] = "usr/share/paintcraft/" + codec_worker.MANIFEST
         files.pop(str(release.ROOT / "packaging/paintcraft.metainfo.xml"))
         files[str(metadata)] = f"usr/share/metainfo/{metadata.name}"
@@ -85,7 +85,7 @@ def rpm(version, target, binary, archive, temporary):
     assets[0]["source"] = str(binary.resolve())
     helper = codec_worker.copy(binary, temporary, version, target)
     assets.extend([
-        *[{"source": str(release.ROOT / "packaging" / name), "dest": "/usr/share/licenses/paintcraft/" + name, "mode": "644"} for name in codec_worker.NOTICES],
+        *[{"source": str(release.ROOT / "packaging" / name), "dest": "/usr/share/licenses/paintcraft/" + name, "mode": "644"} for name in codec_worker.installed_notices(helper.parent)],
         {"source": str(helper), "dest": "/usr/bin/paintcraft-codec-worker", "mode": "755"},
         {"source": str(temporary / codec_worker.MANIFEST), "dest": "/usr/share/paintcraft/" + codec_worker.MANIFEST, "mode": "644"},
     ])
