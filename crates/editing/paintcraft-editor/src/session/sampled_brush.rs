@@ -14,9 +14,18 @@ impl Preparation {
         self.apply_mask_stroke_with_admission(batch, admission, check)
     }
     pub fn apply_mask_stroke_with_admission(
+        self,
+        batch: &Batch,
+        admission: Admission,
+        check: impl Fn() -> Result<()>,
+    ) -> Result<PreparedEdit> {
+        self.apply_mask_with_label(batch, admission, paintcraft_history::Label::Brush, check)
+    }
+    pub(super) fn apply_mask_with_label(
         mut self,
         batch: &Batch,
         admission: Admission,
+        label: paintcraft_history::Label,
         check: impl Fn() -> Result<()>,
     ) -> Result<PreparedEdit> {
         check()?;
@@ -27,15 +36,12 @@ impl Preparation {
         {
             return Err(Error::new(
                 ErrorCode::InputSchema,
-                "sampled stroke preparation requires resolved mask operations",
+                "shape or brush preparation requires resolved mask operations",
             ));
         }
-        let receipt = self.session.apply_checked_with_admission_label(
-            batch,
-            admission,
-            paintcraft_history::Label::Brush,
-            &check,
-        )?;
+        let receipt = self
+            .session
+            .apply_checked_with_admission_label(batch, admission, label, &check)?;
         self.finish_edit(receipt, check)
     }
 }
@@ -53,9 +59,23 @@ impl Preparation {
         self.apply_initial_mask_stroke_with_admission(batch, admission, check)
     }
     pub fn apply_initial_mask_stroke_with_admission(
+        self,
+        batch: &Batch,
+        admission: Admission,
+        check: impl Fn() -> Result<()>,
+    ) -> Result<PreparedEdit> {
+        self.apply_initial_mask_with_label(
+            batch,
+            admission,
+            paintcraft_history::Label::Brush,
+            check,
+        )
+    }
+    pub(super) fn apply_initial_mask_with_label(
         mut self,
         batch: &Batch,
         admission: Admission,
+        label: paintcraft_history::Label,
         check: impl Fn() -> Result<()>,
     ) -> Result<PreparedEdit> {
         use paintcraft_commands::{LayerRef, Op};
@@ -101,18 +121,15 @@ impl Preparation {
         {
             return self.no_change(check);
         }
-        let receipt = self.session.commit_staged(
-            staged,
-            &batch.digest,
-            paintcraft_history::Label::Brush,
-            &check,
-        )?;
+        let receipt = self
+            .session
+            .commit_staged(staged, &batch.digest, label, &check)?;
         self.finish_edit(receipt, check)
     }
 }
 fn initial_schema() -> Error {
     Error::new(
         ErrorCode::InputSchema,
-        "initial sampled stroke requires one transparent canvas-sized first layer followed only by masks for its alias",
+        "initial resolved mask requires one transparent canvas-sized first layer followed only by masks for its alias",
     )
 }

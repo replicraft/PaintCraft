@@ -30,6 +30,7 @@ mod paste;
 mod preparation;
 mod residency;
 mod sampled_brush;
+mod shape_mask;
 pub use history::{HistoryTicket, HistoryView};
 pub use preparation::{Preparation, PreparedEdit, PreparedNavigation};
 pub use residency::PreparedHistoryMaintenance;
