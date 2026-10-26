@@ -498,3 +498,9 @@ format-could-not-export-the-palette-detail = पैलेट निर्या�
 palette-download-requested = पैलेट डाउनलोड का अनुरोध किया गया।
 
 remove = हटाएँ
+
+msp-device-settings-and-header-metadata-will-not-be-retained = MSP उपकरण सेटिंग और हेडर मेटाडेटा सुरक्षित नहीं रखे जाएंगे।
+
+msp-picture = MSP चित्र
+
+save-a-historical-monochrome-msp-picture-pixels-must-already-be-opaque-black-or-white = पुराना एकवर्णी MSP चित्र सहेजें। पिक्सेल पहले से अपारदर्शी काले या सफेद होने चाहिए।

@@ -498,3 +498,9 @@ format-could-not-export-the-palette-detail = No se pudo exportar la paleta: { $d
 palette-download-requested = Descarga de la paleta solicitada.
 
 remove = Quitar
+
+msp-device-settings-and-header-metadata-will-not-be-retained = No se conservarán los ajustes del dispositivo ni los metadatos de cabecera MSP.
+
+msp-picture = Imagen MSP
+
+save-a-historical-monochrome-msp-picture-pixels-must-already-be-opaque-black-or-white = Guarda una imagen MSP monocroma histórica. Los píxeles ya deben ser negros o blancos y opacos.

@@ -498,3 +498,9 @@ format-could-not-export-the-palette-detail = 无法导出调色板：{ $detail }
 palette-download-requested = 已请求下载调色板。
 
 remove = 移除
+
+msp-device-settings-and-header-metadata-will-not-be-retained = 不会保留 MSP 设备设置和文件头元数据。
+
+msp-picture = MSP 图片
+
+save-a-historical-monochrome-msp-picture-pixels-must-already-be-opaque-black-or-white = 保存旧式单色 MSP 图片。像素必须已是不透明的黑色或白色。

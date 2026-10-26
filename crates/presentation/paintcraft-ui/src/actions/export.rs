@@ -16,9 +16,10 @@ pub enum ImageExport {
     Pam = 11,
     Farbfeld = 12,
     Pcx = 13,
+    Msp = 14,
 }
 impl ImageExport {
-    pub const ALL: [Self; 14] = [
+    pub const ALL: [Self; 15] = [
         Self::Png,
         Self::Jpeg,
         Self::Bmp,
@@ -33,6 +34,7 @@ impl ImageExport {
         Self::Pam,
         Self::Farbfeld,
         Self::Pcx,
+        Self::Msp,
     ];
     /// Presentation inventory only. The host must still perform format admission.
     pub fn available(self, frontend: super::Frontend) -> bool {
@@ -48,6 +50,7 @@ impl ImageExport {
                     | Self::Pam
                     | Self::Farbfeld
                     | Self::Pcx
+                    | Self::Msp
             )
     }
     pub fn extension(self) -> &'static str {
@@ -66,6 +69,7 @@ impl ImageExport {
             Self::Pam => "pam",
             Self::Farbfeld => "ff",
             Self::Pcx => "pcx",
+            Self::Msp => "msp",
         }
     }
     pub fn name(self) -> &'static str {
@@ -84,6 +88,7 @@ impl ImageExport {
             Self::Pam => "PAM",
             Self::Farbfeld => "farbfeld",
             Self::Pcx => "PCX",
+            Self::Msp => "MSP",
         }
     }
     pub fn label(self) -> &'static str {
@@ -102,6 +107,7 @@ impl ImageExport {
             Self::Pam => "PAM picture",
             Self::Farbfeld => "farbfeld picture",
             Self::Pcx => "PCX picture",
+            Self::Msp => "MSP picture",
         }
     }
     pub fn description(self) -> &'static str {
@@ -126,6 +132,9 @@ impl ImageExport {
                 "Save a farbfeld picture with exact 8-bit colors stored as 16-bit samples."
             }
             Self::Pcx => "Save a 24-bit PCX picture. Transparent pixels are placed on white.",
+            Self::Msp => {
+                "Save a historical monochrome MSP picture. Pixels must already be opaque black or white."
+            }
         }
     }
     pub fn quality_label(self) -> Option<&'static str> {
@@ -151,6 +160,7 @@ impl ImageExport {
             Self::Pam => "image/x-portable-arbitrarymap",
             Self::Farbfeld => "image/x-farbfeld",
             Self::Pcx => "image/x-pcx",
+            Self::Msp => "image/x-msp",
         }
     }
 }

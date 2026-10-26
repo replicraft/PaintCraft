@@ -30,6 +30,7 @@ pub fn import_loss_description(code: &str) -> Option<&'static str> {
         "pcx-metadata-ignored" => {
             "PCX resolution, origin and header metadata will not be retained."
         }
+        "msp-metadata-ignored" => "MSP device settings and header metadata will not be retained.",
         "dcx-other-pages-not-imported" => "Only the selected DCX page will be imported.",
         "paint-layer-properties-unverified" => {
             "PAINT layer names, visibility and opacity could not be verified. The converted copy uses numbered, visible layers at full opacity."
@@ -71,6 +72,7 @@ mod tests {
             "icon-other-entries-not-imported",
             "cursor-hotspot-not-retained-in-flat-document",
             "pcx-metadata-ignored",
+            "msp-metadata-ignored",
             "dcx-other-pages-not-imported",
             "pdn-metadata-ignored",
             "ora-opacity-quantized",

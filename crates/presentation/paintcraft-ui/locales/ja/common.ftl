@@ -498,3 +498,9 @@ format-could-not-export-the-palette-detail = パレットを書き出せませ�
 palette-download-requested = パレットのダウンロードを開始しました。
 
 remove = 取り除く
+
+msp-device-settings-and-header-metadata-will-not-be-retained = MSP のデバイス設定とヘッダーメタデータは保持されません。
+
+msp-picture = MSP 画像
+
+save-a-historical-monochrome-msp-picture-pixels-must-already-be-opaque-black-or-white = 従来形式のモノクロ MSP 画像を保存します。ピクセルは不透明な黒または白である必要があります。
