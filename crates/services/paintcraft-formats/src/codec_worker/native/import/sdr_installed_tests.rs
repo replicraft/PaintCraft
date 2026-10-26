@@ -117,6 +117,7 @@ fn copied_installed_v6_sdr_job_executes_and_adopts_real_source_with_consent() {
 #[derive(Clone, Copy)]
 enum During {
     None,
+    Family,
     CancelSupervision,
     SourceAfterChild,
     OwnerAfterChild,
@@ -153,7 +154,7 @@ fn prepare_actual(
                     ..owner
                 })
             };
-            Job {
+            let job = Job {
                 input: path.clone(),
                 identity,
                 length,
@@ -163,8 +164,8 @@ fn prepare_actual(
                 deadline: Duration::from_secs(10),
                 application_version: env!("CARGO_PKG_VERSION").into(),
                 expected_sha256: None,
-            }
-            .prepare_import(resident, lease, &check, &current, |launch, check| {
+            };
+            let launch = |launch: Launch<'_>, check: &dyn Fn() -> Result<()>| {
                 let checks = AtomicUsize::new(0);
                 let live_check = || {
                     check()?;
@@ -199,7 +200,26 @@ fn prepare_actual(
                     _ => {}
                 }
                 Ok(output.bytes)
-            })
+            };
+            if matches!(during, During::Family) {
+                job.prepare_avif_family(
+                    resident,
+                    lease,
+                    &check,
+                    &current,
+                    |selected, assessment| {
+                        assert!(matches!(
+                            (selected, assessment),
+                            (Codec::AvifSrgb8, crate::avif::FamilyAssessment::Identity(_))
+                                | (Codec::AvifSdr8, crate::avif::FamilyAssessment::Sdr(_))
+                        ));
+                        Ok(())
+                    },
+                    launch,
+                )
+            } else {
+                job.prepare_import(resident, lease, &check, &current, launch)
+            }
         },
         || {},
     )?;
@@ -371,12 +391,12 @@ fn installed_v6_sdr_job_fixture() {
         fs::write(&path, fixture(&format!("{name}.avif"))).unwrap();
         let pending = prepare_actual(
             &path,
-            Codec::AvifSdr8,
+            Codec::AvifSrgb8,
             owner,
             epoch.clone(),
             resident.clone(),
             transient.clone(),
-            During::None,
+            During::Family,
         )
         .unwrap();
         assert_eq!(pending.losses(), [COLOR]);
@@ -418,7 +438,11 @@ fn installed_v6_sdr_job_fixture() {
             epoch.clone(),
             resident.clone(),
             transient.clone(),
-            During::None,
+            if codec == Codec::AvifSrgb8 {
+                During::Family
+            } else {
+                During::None
+            },
         )
         .unwrap();
         assert!(pending.losses().is_empty());

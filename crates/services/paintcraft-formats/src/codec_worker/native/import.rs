@@ -119,6 +119,63 @@ impl Job {
         current_owner: &dyn Fn() -> Result<Owner>,
         launch: impl FnOnce(Launch<'_>, &dyn Fn() -> Result<()>) -> Result<Vec<u8>>,
     ) -> Result<PreparedImport> {
+        self.prepare_selected(
+            residency,
+            lease,
+            host_check,
+            current_owner,
+            |_, _, _| Ok(None),
+            launch,
+        )
+    }
+    /// Explicit family selection from the same acquired source bytes. The caller
+    /// must admit the selected frontend/variant before helper discovery or launch.
+    /// This does not enable any registry route or retry failed decoding.
+    pub fn prepare_avif_family(
+        self,
+        residency: SharedBudget,
+        lease: ResourceLease,
+        host_check: &dyn Fn() -> Result<()>,
+        current_owner: &dyn Fn() -> Result<Owner>,
+        admit: impl FnOnce(Codec, &crate::avif::FamilyAssessment) -> Result<()>,
+        launch: impl FnOnce(Launch<'_>, &dyn Fn() -> Result<()>) -> Result<Vec<u8>>,
+    ) -> Result<PreparedImport> {
+        if !matches!(self.codec, Codec::AvifSrgb8 | Codec::AvifSdr8) {
+            return Err(unsupported(
+                "AVIF family selection requires an explicit AVIF job",
+            ));
+        }
+        self.prepare_selected(
+            residency,
+            lease,
+            host_check,
+            current_owner,
+            |bytes, pixels, check| {
+                let selected = crate::avif::assess_family(bytes, pixels, check)?;
+                let codec = match &selected {
+                    crate::avif::FamilyAssessment::Identity(_) => Codec::AvifSrgb8,
+                    crate::avif::FamilyAssessment::Sdr(_) => Codec::AvifSdr8,
+                };
+                admit(codec, &selected)?;
+                check()?;
+                Ok(Some(selected))
+            },
+            launch,
+        )
+    }
+    fn prepare_selected(
+        self,
+        residency: SharedBudget,
+        lease: ResourceLease,
+        host_check: &dyn Fn() -> Result<()>,
+        current_owner: &dyn Fn() -> Result<Owner>,
+        select: impl FnOnce(
+            &[u8],
+            u64,
+            &dyn Fn() -> Result<()>,
+        ) -> Result<Option<crate::avif::FamilyAssessment>>,
+        launch: impl FnOnce(Launch<'_>, &dyn Fn() -> Result<()>) -> Result<Vec<u8>>,
+    ) -> Result<PreparedImport> {
         if !matches!(
             self.codec,
             Codec::JxlRgba8
@@ -135,11 +192,21 @@ impl Job {
         let identity = self.identity.clone();
         let length = self.length;
         let owner = self.owner;
-        let (document, sha256, profile) = self.consume(
+        let fixed_codec = self.codec;
+        let (document, sha256, profile) = self.consume_selected(
             host_check,
             current_owner,
+            |bytes, pixels, check| {
+                let selected = select(bytes, pixels, check)?;
+                let codec = match &selected {
+                    Some(crate::avif::FamilyAssessment::Identity(_)) => Codec::AvifSrgb8,
+                    Some(crate::avif::FamilyAssessment::Sdr(_)) => Codec::AvifSdr8,
+                    None => fixed_codec,
+                };
+                Ok((codec, selected))
+            },
             launch,
-            |request, frame, _, check| {
+            |request, frame, selected, _, check| {
                 let Pixels::SrgbRgba8(rgba) = frame.pixels else {
                     return Err(unsupported(
                         "Native gray encoding has no assigned document color conversion",
@@ -164,11 +231,17 @@ impl Job {
                         PreparedProfile::Jxr(assessment)
                     }
                     Codec::AvifSrgb8 => {
-                        let assessment = crate::avif::assess_import(
-                            request.source.as_slice(),
-                            u64::from(request.header.pixels),
-                            check,
-                        )?;
+                        let assessment = match selected {
+                            Some(crate::avif::FamilyAssessment::Identity(assessment)) => assessment,
+                            Some(_) => {
+                                return Err(invalid("AVIF selected assessment/profile mismatch"));
+                            }
+                            None => crate::avif::assess_import(
+                                request.source.as_slice(),
+                                u64::from(request.header.pixels),
+                                check,
+                            )?,
+                        };
                         if assessment.sha256() != request.header.sha256
                             || assessment.size() != (frame.width, frame.height)
                             || (!assessment.alpha()
@@ -181,11 +254,17 @@ impl Job {
                         PreparedProfile::Avif(assessment)
                     }
                     Codec::AvifSdr8 => {
-                        let assessment = crate::avif::sdr::assess_import(
-                            request.source.as_slice(),
-                            u64::from(request.header.pixels),
-                            check,
-                        )?;
+                        let assessment = match selected {
+                            Some(crate::avif::FamilyAssessment::Sdr(assessment)) => assessment,
+                            Some(_) => {
+                                return Err(invalid("AVIF selected assessment/profile mismatch"));
+                            }
+                            None => crate::avif::sdr::assess_import(
+                                request.source.as_slice(),
+                                u64::from(request.header.pixels),
+                                check,
+                            )?,
+                        };
                         if assessment.sha256() != request.header.sha256
                             || assessment.source_len() != request.header.length
                             || assessment.size() != (frame.width, frame.height)
@@ -331,6 +410,8 @@ impl PreparedImport {
         })
     }
 }
+#[cfg(test)]
+mod family_tests;
 #[cfg(test)]
 mod heif_tests;
 #[cfg(test)]

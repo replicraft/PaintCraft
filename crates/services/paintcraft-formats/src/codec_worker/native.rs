@@ -41,6 +41,23 @@ impl Job {
         launch: impl FnOnce(Launch<'_>, &dyn Fn() -> Result<()>) -> Result<Vec<u8>>,
         consume: impl FnOnce(&Request, Frame<'_>, [u8; 32], &dyn Fn() -> Result<()>) -> Result<T>,
     ) -> Result<T> {
+        let codec = self.codec;
+        self.consume_selected(
+            host_check,
+            current_owner,
+            |_, _, _| Ok((codec, ())),
+            launch,
+            |request, frame, _, hash, check| consume(request, frame, hash, check),
+        )
+    }
+    fn consume_selected<T, S>(
+        self,
+        host_check: &dyn Fn() -> Result<()>,
+        current_owner: &dyn Fn() -> Result<Owner>,
+        select: impl FnOnce(&[u8], u64, &dyn Fn() -> Result<()>) -> Result<(Codec, S)>,
+        launch: impl FnOnce(Launch<'_>, &dyn Fn() -> Result<()>) -> Result<Vec<u8>>,
+        consume: impl FnOnce(&Request, Frame<'_>, S, [u8; 32], &dyn Fn() -> Result<()>) -> Result<T>,
+    ) -> Result<T> {
         if self.deadline.is_zero() || self.deadline > Duration::from_secs(120) {
             return Err(Error::new(
                 ErrorCode::InputSchema,
@@ -65,8 +82,8 @@ impl Job {
         let source = self
             .identity
             .capture_bytes(self.length, INPUT_BYTES_MAX as u64, &check)?;
-        let request = Request::capture_for(self.codec, Arc::new(source), self.owner, self.pixels)?;
         if let Some(expected) = &self.expected_sha256 {
+            let captured_sha256 = Sha256::digest(&source);
             if expected.len() != 64
                 || !expected
                     .bytes()
@@ -77,16 +94,19 @@ impl Job {
                     "Expected input SHA-256 must be lowercase hexadecimal",
                 ));
             }
-            if *expected != hex(&request.header.sha256) {
+            if *expected != hex(&captured_sha256) {
                 return Err(Error::new(
                     ErrorCode::ConflictStaleBase,
                     "Captured codec source digest changed",
                 ));
             }
         }
+        let (codec, selected) = select(&source, self.pixels, &check)?;
+        check()?;
+        let request = Request::capture_for(codec, Arc::new(source), self.owner, self.pixels)?;
         self.identity
             .verify_bytes(&self.input, self.length, &request.header.sha256, &check)?;
-        let helper = installed_helper(self.codec, &self.application_version, &check)?;
+        let helper = installed_helper(codec, &self.application_version, &check)?;
         let executable = helper.checked_executable(&check)?;
         let backing = launch::Backing::new(&request, &check)?;
         let remaining = self
@@ -103,7 +123,7 @@ impl Job {
             .verify_bytes(&self.input, self.length, &request.header.sha256, &check)?;
         let frame = decode(&output, &request, current_owner()?)?;
         check()?;
-        let prepared = consume(&request, frame, helper.sha256(), &check)?;
+        let prepared = consume(&request, frame, selected, helper.sha256(), &check)?;
         // Consumption may build a document or hash planes. Recheck after that
         // work, before any prepared value leaves the admitted host job.
         helper.checked_executable(&check)?;
