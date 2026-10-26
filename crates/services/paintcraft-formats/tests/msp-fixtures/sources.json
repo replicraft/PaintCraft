@@ -1,0 +1,68 @@
+{
+    "license": "MIT, repository-authored pixel content and wire specimens",
+    "files": {
+        "raw-1.msp": {
+            "bytes": 34,
+            "sha256": "9f04d54949e3fef3372716115f2e630c3decc1e45f3059c0579e0aedcc5b2acc",
+            "width": 1,
+            "height": 2,
+            "packed_hex": "8000",
+            "rgba_sha256": "c9fa5b8296e4465091d7112f785f5909b7201afda9b98c3fffae87244919f114",
+            "provenance": "standard-library owned wire packing"
+        },
+        "raw-7.msp": {
+            "bytes": 35,
+            "sha256": "9d6b35b5e859dcece21ce285317c96c39ef0ae34f2dfcc27d67b1c83c5a4a869",
+            "width": 7,
+            "height": 3,
+            "packed_hex": "aa55fe",
+            "rgba_sha256": "b00ebb09731d1b9215b630d467896aab4604d3d6c1647f8ff91d9ea06e209590",
+            "provenance": "standard-library owned wire packing"
+        },
+        "raw-9.msp": {
+            "bytes": 38,
+            "sha256": "873357bd0f04fcfeb59e048193a55563d398b390e551891e05062442b24bebab",
+            "width": 9,
+            "height": 3,
+            "packed_hex": "8080ffff5555",
+            "rgba_sha256": "bbcd6d33a2b5739de948fdb8185fdbd1fb1f85f0ced33db3d85e2f3094c1066f",
+            "provenance": "standard-library owned wire packing"
+        },
+        "raw-257.msp": {
+            "bytes": 98,
+            "sha256": "478b781f77b4057bb19aa6e8339c6322ad04e95a150ebe85f3013c181e658514",
+            "width": 257,
+            "height": 2,
+            "packed_hex": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa80555555555555555555555555555555555555555555555555555555555555555501",
+            "rgba_sha256": "0e124490f73c165b86334a50ffbf455bbc4f115b2e7302c32468ded74c7f5074",
+            "provenance": "standard-library owned wire packing"
+        },
+        "rle-9.msp": {
+            "bytes": 47,
+            "sha256": "64b52bf28d91d79f5315d60486f50dee22fec6cbfa7e97d2b4e17f8d3972bb79",
+            "width": 9,
+            "height": 3,
+            "packed_hex": "8080ffff5555",
+            "rgba_sha256": "bbcd6d33a2b5739de948fdb8185fdbd1fb1f85f0ced33db3d85e2f3094c1066f",
+            "provenance": "owned literal/repeat packets"
+        },
+        "rle-2048.msp": {
+            "bytes": 47,
+            "sha256": "597c4386f419659ed08af1d6531236d07572acb524a55a350c87f5fa8f3b6358",
+            "width": 2048,
+            "height": 2,
+            "packed_hex": "5555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555558000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+            "rgba_sha256": "696c0599f3365581513272e542c4bc366cd4b01013ec4ef8d44991b563430d67",
+            "provenance": "owned 255-byte repeats and adjacent row boundaries"
+        },
+        "pillow-7.msp": {
+            "bytes": 35,
+            "sha256": "1daf130a7a18d1105a42830480067c7847898dd8771e16908e549256f2f29c5c",
+            "width": 7,
+            "height": 3,
+            "packed_hex": "aa54fe",
+            "rgba_sha256": "b00ebb09731d1b9215b630d467896aab4604d3d6c1647f8ff91d9ea06e209590",
+            "provenance": "Pillow 13.0.0 fresh writer, owned 7x3 pixels; see pillow_fixture.py"
+        }
+    }
+}
