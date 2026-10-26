@@ -1,0 +1,84 @@
+{
+    "python": "3.14.0",
+    "pillow": "13.0.0",
+    "plugin_sha256": "8e28773c59bae649f034c22b68d64ae4cdc9c26605947e34114e254dd458f8e6",
+    "results": [
+        {
+            "filename": "tail-1.msp",
+            "bytes": 40,
+            "sha256": "bc8fd516cf5e5e700e6bc707d0dbf932cd5de970d811c0138e533096bbcf7b0e",
+            "packed_sha256": "e65aceb89baab6ddba7f8ff28bdaf5da68026060445be6ac268c138d9a959b3f",
+            "rgba_sha256": "c9fa5b8296e4465091d7112f785f5909b7201afda9b98c3fffae87244919f114",
+            "width": 1,
+            "height": 2,
+            "packets": {
+                "literal": 2,
+                "repeat": 0
+            },
+            "row_lengths": [
+                2,
+                2
+            ],
+            "exact_packed_including_tail": true,
+            "exact_pillow_visible_rgba": true
+        },
+        {
+            "filename": "tail-9.msp",
+            "bytes": 47,
+            "sha256": "99cafb37cc4c6c253df4d3e69c465d10edf77327e56f5e064147dad16b69ccca",
+            "packed_sha256": "6afab37fe0b701039873271a04d11994d2a5b7f68366bbbedb2a098ccb1dbacc",
+            "rgba_sha256": "624b09d3aa5fe43a67dc94b637796aba87ef183af99984b338453c31372a6705",
+            "width": 9,
+            "height": 3,
+            "packets": {
+                "literal": 3,
+                "repeat": 0
+            },
+            "row_lengths": [
+                3,
+                3,
+                3
+            ],
+            "exact_packed_including_tail": true,
+            "exact_pillow_visible_rgba": true
+        },
+        {
+            "filename": "runs-2048.msp",
+            "bytes": 306,
+            "sha256": "febe39f118876a1f9299e0c0b0a208bc4159a9ef967bd066345eca06e6710056",
+            "packed_sha256": "63c0a5dfbac3e3d69436d7c0751fc1ab1bb2f6020be6fbcee588ae5df4ddb93e",
+            "rgba_sha256": "66c8447cb43666c260f5d109071bda8b95dced42aa1903e375a6a2bb55cc0d61",
+            "width": 2048,
+            "height": 3,
+            "packets": {
+                "literal": 4,
+                "repeat": 2
+            },
+            "row_lengths": [
+                5,
+                5,
+                258
+            ],
+            "exact_packed_including_tail": true,
+            "exact_pillow_visible_rgba": true
+        },
+        {
+            "filename": "wide-65535.msp",
+            "bytes": 8259,
+            "sha256": "57b48648e71be8ca3bc2841d35d2787ba6d2f8ae783865e81ec765db28c03a4c",
+            "packed_sha256": "25df2449b2e5a35fea14e02a7158e283801a1069c9f84631b9a9dacb2f809a7f",
+            "rgba_sha256": "da7e651b555446b20a7bfaeef54d65acc4bf55e9435ef6439ea3bd628e84a5b8",
+            "width": 65535,
+            "height": 1,
+            "packets": {
+                "literal": 33,
+                "repeat": 0
+            },
+            "row_lengths": [
+                8225
+            ],
+            "exact_packed_including_tail": true,
+            "exact_pillow_visible_rgba": true
+        }
+    ]
+}
