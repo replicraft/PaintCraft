@@ -1,3 +1,4 @@
+import { createCodecService } from './codec-bridge.js';
 const status = document.getElementById('loading');
 let app;
 try {
@@ -11,6 +12,7 @@ try {
 	app = new WebHandle();
 	window.paintcraft = app;
 	await app.start(document.getElementById('paintcraft'));
+	app.install_codec_service(createCodecService(app.application_version()));
 	status.hidden = true;
 	window.addEventListener('beforeunload', (event) => {
 		if (app.is_dirty()) {

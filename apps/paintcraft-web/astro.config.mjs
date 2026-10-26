@@ -6,5 +6,6 @@ export default defineConfig({
 	devToolbar: { enabled: false },
 	vite: {
 		plugins: [wasm()],
+		worker: { format: 'es' },
 	},
 });

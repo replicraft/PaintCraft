@@ -1,12 +1,17 @@
 ---
 // @ts-ignore
 import '../styles/global.css';
+const appCsp =
+	"default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self'; connect-src 'self'; img-src 'self' blob: data:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'";
 ---
 
 <!doctype html>
 <html lang="en">
 	<head>
 		<meta charset="utf-8">
+		{import.meta.env.PROD && (
+			<meta http-equiv="Content-Security-Policy" content={appCsp}>
+		)}
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<title>Untitled - PaintCraft</title>
 		<link rel="icon" href="./favicon.ico" sizes="16x16 32x32 48x48 256x256">
