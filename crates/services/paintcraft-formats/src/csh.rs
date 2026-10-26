@@ -2,7 +2,8 @@
 //!
 //! Coordinates retain their signed 8.24 wire values, rather than a pixel or
 //! floating-point approximation. The selected codec is invoked only after
-//! complete structural validation. Public asset workflows are not enabled yet.
+//! complete structural validation. Placement is a separate explicit raster conversion.
+pub mod placement;
 mod preflight;
 #[cfg(test)]
 mod tests;
