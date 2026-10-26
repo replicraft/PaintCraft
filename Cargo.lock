@@ -3289,6 +3289,7 @@ dependencies = [
  "paintcraft-formats",
  "paintcraft-platform",
  "paintcraft-render",
+ "paintcraft-runtime",
  "paintcraft-tools",
  "png",
  "rayon",
@@ -3300,6 +3301,7 @@ dependencies = [
  "serde_json",
  "sha2",
  "tokio",
+ "uuid",
 ]
 
 [[package]]

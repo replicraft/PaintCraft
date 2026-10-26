@@ -315,3 +315,5 @@ pub mod flatten;
 pub mod shapes;
 
 pub mod brushes;
+
+pub mod codec_worker;

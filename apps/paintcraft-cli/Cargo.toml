@@ -20,6 +20,8 @@ paintcraft-tools.workspace = true
 paintcraft-formats.workspace = true
 paintcraft-render.workspace = true
 paintcraft-platform.workspace = true
+paintcraft-runtime.workspace = true
+uuid.workspace = true
 
 clap.workspace = true
 rayon.workspace = true
