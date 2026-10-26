@@ -288,3 +288,69 @@ jpeg-xl-importing-is-paused-for-this-tab-download-your-project-then-reload-this-
 image-name = Image name
 
 transparency-name = Transparency name
+
+convert-to-an-8-bit-srgb-picture-preview-before-importing = Convert to an 8-bit sRGB picture. Preview before importing.
+
+source-color-space = Source color space
+
+use-source-metadata = Use source metadata
+
+linear-rec-709-d65 = Linear Rec.709 / D65
+
+linear-radiance-equal-energy-white = Linear Radiance / equal-energy white
+
+source-transparency = Source transparency
+
+premultiplied-alpha = Premultiplied alpha
+
+straight-alpha = Straight alpha
+
+tone-mapping = Tone mapping
+
+clip-to-display-range = Clip to display range
+
+reinhard-per-channel = Reinhard per channel
+
+exposure-ev = Exposure (EV)
+
+negative-samples = Negative samples
+
+refuse-negative-samples = Refuse negative samples
+
+clip-negative-samples-to-black = Clip negative samples to black
+
+flatten-transparency-onto-a-color = Flatten transparency onto a color
+
+choose-the-image-s-source-color-space-before-conversion = Choose the image's source color space before conversion
+
+could-not-prepare-this-conversion-adjust-the-settings-or-choose-another-image = Could not prepare this conversion. Adjust the settings or choose another image.
+
+prepare-preview = Prepare preview
+
+floating-point-samples-will-be-reduced-to-8-bit-precision = Floating-point samples will be reduced to 8-bit precision.
+
+reinhard-tone-mapping-will-be-applied-to-each-color-channel = Reinhard tone mapping will be applied to each color channel.
+
+highlights-outside-the-display-range-will-be-clipped = Highlights outside the display range will be clipped.
+
+negative-color-values-will-be-clipped-to-black = Negative color values will be clipped to black.
+
+the-chosen-source-color-space-overrides-or-supplies-the-image-interpretation = The chosen source color space overrides or supplies the image interpretation.
+
+the-chosen-alpha-convention-overrides-the-source-transparency-interpretation = The chosen alpha convention overrides the source transparency interpretation.
+
+transparency-will-be-flattened-onto-the-chosen-color-in-linear-light = Transparency will be flattened onto the chosen color in linear light.
+
+transparency-will-be-rounded-to-8-bit-precision = Transparency will be rounded to 8-bit precision.
+
+source-colors-will-be-converted-to-display-srgb = Source colors will be converted to display sRGB.
+
+original-header-metadata-will-not-be-retained-in-the-new-picture = Original header metadata will not be retained in the new picture.
+
+the-source-pixel-aspect-ratio-will-be-replaced-with-square-pixels = The source pixel aspect ratio will be replaced with square pixels.
+
+the-source-image-origin-will-be-moved-to-the-canvas-origin = The source image origin will be moved to the canvas origin.
+
+rgbe-samples-use-the-lower-edge-of-each-stored-value-interval-not-the-radiance-midpoint = RGBE samples use the lower edge of each stored value interval, not the Radiance midpoint.
+
+retained-partial-transparency-will-blend-in-encoded-srgb-in-this-editor-which-differs-from-linear-light-source-compositing = Retained partial transparency will blend in encoded sRGB in this editor, which differs from linear-light source compositing.

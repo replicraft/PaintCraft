@@ -288,3 +288,69 @@ jpeg-xl-importing-is-paused-for-this-tab-download-your-project-then-reload-this-
 image-name = Nombre de imagen
 
 transparency-name = Nombre de transparencia
+
+convert-to-an-8-bit-srgb-picture-preview-before-importing = Convertir a una imagen sRGB de 8 bits. Revísala antes de importar.
+
+source-color-space = Espacio de color de origen
+
+use-source-metadata = Usar metadatos de origen
+
+linear-rec-709-d65 = Rec.709 lineal / D65
+
+linear-radiance-equal-energy-white = Radiance lineal / blanco equienergético
+
+source-transparency = Transparencia de origen
+
+premultiplied-alpha = Alfa premultiplicado
+
+straight-alpha = Alfa directo
+
+tone-mapping = Mapeo de tonos
+
+clip-to-display-range = Recortar al rango de visualización
+
+reinhard-per-channel = Reinhard por canal
+
+exposure-ev = Exposición (EV)
+
+negative-samples = Valores negativos
+
+refuse-negative-samples = Rechazar valores negativos
+
+clip-negative-samples-to-black = Recortar valores negativos a negro
+
+flatten-transparency-onto-a-color = Acoplar transparencia sobre un color
+
+choose-the-image-s-source-color-space-before-conversion = Elige el espacio de color de origen antes de convertir
+
+could-not-prepare-this-conversion-adjust-the-settings-or-choose-another-image = No se pudo preparar la conversión. Ajusta las opciones o elige otra imagen.
+
+prepare-preview = Preparar vista previa
+
+floating-point-samples-will-be-reduced-to-8-bit-precision = Los valores de coma flotante se reducirán a 8 bits.
+
+reinhard-tone-mapping-will-be-applied-to-each-color-channel = Se aplicará Reinhard a cada canal de color.
+
+highlights-outside-the-display-range-will-be-clipped = Se recortarán las luces fuera del rango visible.
+
+negative-color-values-will-be-clipped-to-black = Los valores de color negativos se recortarán a negro.
+
+the-chosen-source-color-space-overrides-or-supplies-the-image-interpretation = El espacio de color elegido determina la interpretación de la imagen.
+
+the-chosen-alpha-convention-overrides-the-source-transparency-interpretation = La convención alfa elegida determina la interpretación de transparencia.
+
+transparency-will-be-flattened-onto-the-chosen-color-in-linear-light = La transparencia se acoplará al color elegido en luz lineal.
+
+transparency-will-be-rounded-to-8-bit-precision = La transparencia se redondeará a 8 bits.
+
+source-colors-will-be-converted-to-display-srgb = Los colores de origen se convertirán a sRGB.
+
+original-header-metadata-will-not-be-retained-in-the-new-picture = Los metadatos originales no se conservarán en la nueva imagen.
+
+the-source-pixel-aspect-ratio-will-be-replaced-with-square-pixels = La proporción de píxel original se reemplazará por píxeles cuadrados.
+
+the-source-image-origin-will-be-moved-to-the-canvas-origin = El origen de la imagen se moverá al origen del lienzo.
+
+rgbe-samples-use-the-lower-edge-of-each-stored-value-interval-not-the-radiance-midpoint = RGBE usa el límite inferior de cada intervalo guardado, no el punto medio de Radiance.
+
+retained-partial-transparency-will-blend-in-encoded-srgb-in-this-editor-which-differs-from-linear-light-source-compositing = La transparencia parcial se mezclará en sRGB codificado, distinto de la composición lineal de origen.

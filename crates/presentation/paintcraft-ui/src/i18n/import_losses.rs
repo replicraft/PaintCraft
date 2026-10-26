@@ -74,6 +74,36 @@ pub fn import_loss_description(code: &str) -> Option<&'static str> {
         "avif-item-names-not-retained" => {
             "AVIF image item names are not retained in the new document."
         }
+        "hdr-precision-reduced-to-8" => {
+            "Floating-point samples will be reduced to 8-bit precision."
+        }
+        "hdr-tone-mapped" => "Reinhard tone mapping will be applied to each color channel.",
+        "hdr-highlights-clipped" => "Highlights outside the display range will be clipped.",
+        "hdr-negative-values-clipped" => "Negative color values will be clipped to black.",
+        "hdr-source-space-assigned" => {
+            "The chosen source color space overrides or supplies the image interpretation."
+        }
+        "hdr-alpha-convention-assigned" => {
+            "The chosen alpha convention overrides the source transparency interpretation."
+        }
+        "hdr-alpha-flattened" => {
+            "Transparency will be flattened onto the chosen color in linear light."
+        }
+        "hdr-alpha-quantized" => "Transparency will be rounded to 8-bit precision.",
+        "hdr-color-space-converted" => "Source colors will be converted to display sRGB.",
+        "hdr-metadata-not-retained" => {
+            "Original header metadata will not be retained in the new picture."
+        }
+        "hdr-pixel-aspect-normalized" => {
+            "The source pixel aspect ratio will be replaced with square pixels."
+        }
+        "exr-origin-normalized" => "The source image origin will be moved to the canvas origin.",
+        "hdr-rgbe-lower-edge-representative" => {
+            "RGBE samples use the lower edge of each stored value interval, not the Radiance midpoint."
+        }
+        "hdr-linear-alpha-compositing-changed" => {
+            "Retained partial transparency will blend in encoded sRGB in this editor, which differs from linear-light source compositing."
+        }
         _ => return None,
     })
 }
@@ -83,6 +113,20 @@ mod tests {
     #[test]
     fn extended_conversion_limitations_are_translated_in_every_language() {
         for code in [
+            "hdr-precision-reduced-to-8",
+            "hdr-tone-mapped",
+            "hdr-highlights-clipped",
+            "hdr-negative-values-clipped",
+            "hdr-source-space-assigned",
+            "hdr-alpha-convention-assigned",
+            "hdr-alpha-flattened",
+            "hdr-alpha-quantized",
+            "hdr-color-space-converted",
+            "hdr-metadata-not-retained",
+            "hdr-pixel-aspect-normalized",
+            "exr-origin-normalized",
+            "hdr-rgbe-lower-edge-representative",
+            "hdr-linear-alpha-compositing-changed",
             "pnm-metadata-ignored",
             "icon-palette-expanded",
             "icon-other-entries-not-imported",

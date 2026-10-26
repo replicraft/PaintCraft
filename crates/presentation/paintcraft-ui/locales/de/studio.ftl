@@ -288,3 +288,69 @@ jpeg-xl-importing-is-paused-for-this-tab-download-your-project-then-reload-this-
 image-name = Bildname
 
 transparency-name = Transparenzname
+
+convert-to-an-8-bit-srgb-picture-preview-before-importing = In ein 8-Bit-sRGB-Bild umwandeln. Vor dem Import prüfen.
+
+source-color-space = Quellfarbraum
+
+use-source-metadata = Quellmetadaten verwenden
+
+linear-rec-709-d65 = Lineares Rec.709 / D65
+
+linear-radiance-equal-energy-white = Lineares Radiance / energiegleiches Weiß
+
+source-transparency = Quelltransparenz
+
+premultiplied-alpha = Vormultipliziertes Alpha
+
+straight-alpha = Gerades Alpha
+
+tone-mapping = Tonwertabbildung
+
+clip-to-display-range = Auf Anzeigebereich begrenzen
+
+reinhard-per-channel = Reinhard pro Kanal
+
+exposure-ev = Belichtung (EV)
+
+negative-samples = Negative Werte
+
+refuse-negative-samples = Negative Werte ablehnen
+
+clip-negative-samples-to-black = Negative Werte auf Schwarz begrenzen
+
+flatten-transparency-onto-a-color = Transparenz auf einer Farbe reduzieren
+
+choose-the-image-s-source-color-space-before-conversion = Vor der Umwandlung den Quellfarbraum wählen
+
+could-not-prepare-this-conversion-adjust-the-settings-or-choose-another-image = Umwandlung konnte nicht vorbereitet werden. Einstellungen ändern oder anderes Bild wählen.
+
+prepare-preview = Vorschau vorbereiten
+
+floating-point-samples-will-be-reduced-to-8-bit-precision = Gleitkommawerte werden auf 8 Bit reduziert.
+
+reinhard-tone-mapping-will-be-applied-to-each-color-channel = Reinhard-Tonwertabbildung wird auf jeden Farbkanal angewendet.
+
+highlights-outside-the-display-range-will-be-clipped = Lichter außerhalb des Anzeigebereichs werden begrenzt.
+
+negative-color-values-will-be-clipped-to-black = Negative Farbwerte werden auf Schwarz begrenzt.
+
+the-chosen-source-color-space-overrides-or-supplies-the-image-interpretation = Der gewählte Quellfarbraum bestimmt die Bildinterpretation.
+
+the-chosen-alpha-convention-overrides-the-source-transparency-interpretation = Die gewählte Alpha-Konvention bestimmt die Transparenzinterpretation.
+
+transparency-will-be-flattened-onto-the-chosen-color-in-linear-light = Transparenz wird im linearen Licht auf der gewählten Farbe reduziert.
+
+transparency-will-be-rounded-to-8-bit-precision = Transparenz wird auf 8 Bit gerundet.
+
+source-colors-will-be-converted-to-display-srgb = Quellfarben werden in Anzeige-sRGB umgewandelt.
+
+original-header-metadata-will-not-be-retained-in-the-new-picture = Ursprüngliche Kopfmetadaten werden im neuen Bild nicht beibehalten.
+
+the-source-pixel-aspect-ratio-will-be-replaced-with-square-pixels = Das Quellpixel-Seitenverhältnis wird durch quadratische Pixel ersetzt.
+
+the-source-image-origin-will-be-moved-to-the-canvas-origin = Der Bildursprung wird zum Leinwandursprung verschoben.
+
+rgbe-samples-use-the-lower-edge-of-each-stored-value-interval-not-the-radiance-midpoint = RGBE-Werte verwenden die Unterkante des Speicherintervalls statt des Radiance-Mittelpunkts.
+
+retained-partial-transparency-will-blend-in-encoded-srgb-in-this-editor-which-differs-from-linear-light-source-compositing = Erhaltene Teiltransparenz wird hier in kodiertem sRGB gemischt und weicht von linearer Quellkomposition ab.

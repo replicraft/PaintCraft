@@ -288,3 +288,69 @@ jpeg-xl-importing-is-paused-for-this-tab-download-your-project-then-reload-this-
 image-name = 图像名称
 
 transparency-name = 透明度名称
+
+convert-to-an-8-bit-srgb-picture-preview-before-importing = 转换为8位sRGB图片。导入前请预览。
+
+source-color-space = 源色彩空间
+
+use-source-metadata = 使用源元数据
+
+linear-rec-709-d65 = 线性Rec.709 / D65
+
+linear-radiance-equal-energy-white = 线性Radiance / 等能白点
+
+source-transparency = 源透明度
+
+premultiplied-alpha = 预乘Alpha
+
+straight-alpha = 直通Alpha
+
+tone-mapping = 色调映射
+
+clip-to-display-range = 裁剪到显示范围
+
+reinhard-per-channel = 逐通道Reinhard
+
+exposure-ev = 曝光（EV）
+
+negative-samples = 负样本值
+
+refuse-negative-samples = 拒绝负样本值
+
+clip-negative-samples-to-black = 将负样本值裁剪为黑色
+
+flatten-transparency-onto-a-color = 将透明度合成到指定颜色
+
+choose-the-image-s-source-color-space-before-conversion = 转换前请选择图片的源色彩空间
+
+could-not-prepare-this-conversion-adjust-the-settings-or-choose-another-image = 无法准备转换。请调整设置或选择其他图片。
+
+prepare-preview = 准备预览
+
+floating-point-samples-will-be-reduced-to-8-bit-precision = 浮点样本将转换为8位精度。
+
+reinhard-tone-mapping-will-be-applied-to-each-color-channel = 将对每个颜色通道应用Reinhard色调映射。
+
+highlights-outside-the-display-range-will-be-clipped = 将裁剪显示范围外的高光。
+
+negative-color-values-will-be-clipped-to-black = 负颜色值将裁剪为黑色。
+
+the-chosen-source-color-space-overrides-or-supplies-the-image-interpretation = 将按所选源色彩空间解释图片。
+
+the-chosen-alpha-convention-overrides-the-source-transparency-interpretation = 将按所选Alpha约定解释源透明度。
+
+transparency-will-be-flattened-onto-the-chosen-color-in-linear-light = 透明度将在线性光下合成到所选颜色。
+
+transparency-will-be-rounded-to-8-bit-precision = 透明度将舍入到8位精度。
+
+source-colors-will-be-converted-to-display-srgb = 源颜色将转换为显示sRGB。
+
+original-header-metadata-will-not-be-retained-in-the-new-picture = 新图片不会保留原始头部元数据。
+
+the-source-pixel-aspect-ratio-will-be-replaced-with-square-pixels = 源像素纵横比将替换为方形像素。
+
+the-source-image-origin-will-be-moved-to-the-canvas-origin = 源图片原点将移动到画布原点。
+
+rgbe-samples-use-the-lower-edge-of-each-stored-value-interval-not-the-radiance-midpoint = RGBE样本使用存储区间的下边界，而非Radiance中点。
+
+retained-partial-transparency-will-blend-in-encoded-srgb-in-this-editor-which-differs-from-linear-light-source-compositing = 保留的半透明在本编辑器中以编码sRGB混合，与源线性光合成不同。

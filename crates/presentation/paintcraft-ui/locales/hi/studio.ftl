@@ -288,3 +288,69 @@ jpeg-xl-importing-is-paused-for-this-tab-download-your-project-then-reload-this-
 image-name = छवि का नाम
 
 transparency-name = पारदर्शिता का नाम
+
+convert-to-an-8-bit-srgb-picture-preview-before-importing = 8-बिट sRGB चित्र में बदलें। आयात से पहले पूर्वावलोकन देखें।
+
+source-color-space = स्रोत रंग स्थान
+
+use-source-metadata = स्रोत मेटाडेटा उपयोग करें
+
+linear-rec-709-d65 = लीनियर Rec.709 / D65
+
+linear-radiance-equal-energy-white = लीनियर Radiance / समान-ऊर्जा श्वेत
+
+source-transparency = स्रोत पारदर्शिता
+
+premultiplied-alpha = पूर्वगुणित अल्फ़ा
+
+straight-alpha = सीधा अल्फ़ा
+
+tone-mapping = टोन मैपिंग
+
+clip-to-display-range = प्रदर्शन सीमा तक काटें
+
+reinhard-per-channel = प्रति चैनल Reinhard
+
+exposure-ev = एक्सपोज़र (EV)
+
+negative-samples = ऋणात्मक नमूने
+
+refuse-negative-samples = ऋणात्मक नमूने अस्वीकार करें
+
+clip-negative-samples-to-black = ऋणात्मक नमूनों को काला करें
+
+flatten-transparency-onto-a-color = रंग पर पारदर्शिता समतल करें
+
+choose-the-image-s-source-color-space-before-conversion = बदलने से पहले चित्र का स्रोत रंग स्थान चुनें
+
+could-not-prepare-this-conversion-adjust-the-settings-or-choose-another-image = रूपांतरण तैयार नहीं हो सका। सेटिंग बदलें या दूसरा चित्र चुनें।
+
+prepare-preview = पूर्वावलोकन तैयार करें
+
+floating-point-samples-will-be-reduced-to-8-bit-precision = फ़्लोटिंग-पॉइंट नमूने 8-बिट में बदलेंगे।
+
+reinhard-tone-mapping-will-be-applied-to-each-color-channel = हर रंग चैनल पर Reinhard टोन मैपिंग लगेगी।
+
+highlights-outside-the-display-range-will-be-clipped = प्रदर्शन सीमा से बाहर चमकीले भाग काटे जाएंगे।
+
+negative-color-values-will-be-clipped-to-black = ऋणात्मक रंग मान काले में बदलेंगे।
+
+the-chosen-source-color-space-overrides-or-supplies-the-image-interpretation = चुना गया स्रोत रंग स्थान चित्र की व्याख्या तय करेगा।
+
+the-chosen-alpha-convention-overrides-the-source-transparency-interpretation = चुना अल्फ़ा प्रकार स्रोत पारदर्शिता की व्याख्या बदलेगा।
+
+transparency-will-be-flattened-onto-the-chosen-color-in-linear-light = पारदर्शिता लीनियर प्रकाश में चुने रंग पर समतल होगी।
+
+transparency-will-be-rounded-to-8-bit-precision = पारदर्शिता 8-बिट में पूर्णांकित होगी।
+
+source-colors-will-be-converted-to-display-srgb = स्रोत रंग प्रदर्शन sRGB में बदलेंगे।
+
+original-header-metadata-will-not-be-retained-in-the-new-picture = मूल हेडर मेटाडेटा नए चित्र में नहीं रहेगा।
+
+the-source-pixel-aspect-ratio-will-be-replaced-with-square-pixels = स्रोत पिक्सेल अनुपात वर्गाकार पिक्सेल में बदलेगा।
+
+the-source-image-origin-will-be-moved-to-the-canvas-origin = स्रोत चित्र का मूल कैनवास के मूल पर जाएगा।
+
+rgbe-samples-use-the-lower-edge-of-each-stored-value-interval-not-the-radiance-midpoint = RGBE संग्रहीत अंतराल का निचला मान उपयोग करता है, Radiance मध्यबिंदु नहीं।
+
+retained-partial-transparency-will-blend-in-encoded-srgb-in-this-editor-which-differs-from-linear-light-source-compositing = रखी गई आंशिक पारदर्शिता संपादक में एन्कोडेड sRGB में मिलेगी, जो स्रोत के लीनियर मिश्रण से अलग है।

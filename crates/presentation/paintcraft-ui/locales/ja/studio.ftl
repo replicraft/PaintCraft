@@ -288,3 +288,69 @@ jpeg-xl-importing-is-paused-for-this-tab-download-your-project-then-reload-this-
 image-name = 画像名
 
 transparency-name = 透明部分の名前
+
+convert-to-an-8-bit-srgb-picture-preview-before-importing = 8ビットsRGB画像に変換します。取り込む前にプレビューしてください。
+
+source-color-space = 元画像の色空間
+
+use-source-metadata = 元画像のメタデータを使用
+
+linear-rec-709-d65 = リニアRec.709 / D65
+
+linear-radiance-equal-energy-white = リニアRadiance / 等エネルギー白色
+
+source-transparency = 元画像の透明度
+
+premultiplied-alpha = 乗算済みアルファ
+
+straight-alpha = 非乗算アルファ
+
+tone-mapping = トーンマッピング
+
+clip-to-display-range = 表示範囲にクリップ
+
+reinhard-per-channel = チャンネルごとのReinhard
+
+exposure-ev = 露出（EV）
+
+negative-samples = 負のサンプル値
+
+refuse-negative-samples = 負のサンプル値を拒否
+
+clip-negative-samples-to-black = 負のサンプル値を黒にクリップ
+
+flatten-transparency-onto-a-color = 指定色で透明部分を統合
+
+choose-the-image-s-source-color-space-before-conversion = 変換する前に元画像の色空間を選択してください
+
+could-not-prepare-this-conversion-adjust-the-settings-or-choose-another-image = 変換を準備できません。設定を変更するか、別の画像を選択してください。
+
+prepare-preview = プレビューを準備
+
+floating-point-samples-will-be-reduced-to-8-bit-precision = 浮動小数点の値を8ビット精度に変換します。
+
+reinhard-tone-mapping-will-be-applied-to-each-color-channel = 各カラーチャンネルにReinhardトーンマッピングを適用します。
+
+highlights-outside-the-display-range-will-be-clipped = 表示範囲外のハイライトをクリップします。
+
+negative-color-values-will-be-clipped-to-black = 負の色の値を黒にクリップします。
+
+the-chosen-source-color-space-overrides-or-supplies-the-image-interpretation = 選択した色空間で元画像を解釈します。
+
+the-chosen-alpha-convention-overrides-the-source-transparency-interpretation = 選択したアルファ形式で元画像の透明度を解釈します。
+
+transparency-will-be-flattened-onto-the-chosen-color-in-linear-light = リニア光で指定色に透明部分を統合します。
+
+transparency-will-be-rounded-to-8-bit-precision = 透明度を8ビット精度に丸めます。
+
+source-colors-will-be-converted-to-display-srgb = 元画像の色を表示用sRGBに変換します。
+
+original-header-metadata-will-not-be-retained-in-the-new-picture = 元のヘッダーメタデータは新しい画像に保持されません。
+
+the-source-pixel-aspect-ratio-will-be-replaced-with-square-pixels = 元画像のピクセル縦横比を正方形に変更します。
+
+the-source-image-origin-will-be-moved-to-the-canvas-origin = 元画像の原点をキャンバスの原点に移動します。
+
+rgbe-samples-use-the-lower-edge-of-each-stored-value-interval-not-the-radiance-midpoint = RGBE値にはRadianceの中間値ではなく、保存範囲の下限を使用します。
+
+retained-partial-transparency-will-blend-in-encoded-srgb-in-this-editor-which-differs-from-linear-light-source-compositing = 保持した半透明部分は、このエディターではsRGB値で合成され、元画像のリニア光での合成と異なります。
