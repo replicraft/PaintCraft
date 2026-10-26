@@ -1,0 +1,8 @@
+# Exact upstream and patch bytes are provenance on every platform.
+jpegxr-pure-rs-0.1.0-paintcraft1/** -text
+jpegxr-pure-rs-0.1.0-paintcraft1.patch -text -whitespace
+jpegxr-pure-rs-0.1.0-paintcraft1.provenance.json -text
+
+# Preserve only these inherited upstream whitespace bytes; verification is exact.
+# Original upstream README has an intentional retained blank line at EOF.
+jpegxr-pure-rs-0.1.0-paintcraft1/README.md -whitespace

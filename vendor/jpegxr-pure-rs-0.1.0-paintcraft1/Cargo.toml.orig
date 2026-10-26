@@ -1,0 +1,39 @@
+[package]
+name = "jpegxr-pure-rs"
+version = "0.1.0"
+edition = "2021"
+description = "Pure Rust JPEG-XR decoder/encoder translated from JXRLib"
+license = "BSD-3-Clause"
+autotests = false
+readme = "README.md"
+repository = "https://github.com/henriksson-lab/jpegxr-pure-rs"
+homepage = "https://github.com/henriksson-lab/jpegxr-pure-rs"
+documentation = "https://docs.rs/jpegxr-pure-rs"
+keywords = ["jpegxr", "jxr", "image", "codec"]
+categories = ["multimedia::images", "encoding", "parser-implementations"]
+include = [
+    "/Cargo.toml",
+    "/README.md",
+    "/LICENSE.md",
+    "/examples/**",
+    "/src/**",
+]
+
+[lib]
+name = "jpegxr"
+path = "src/lib.rs"
+
+[dependencies]
+libc = "0.2"
+
+[dev-dependencies]
+original_jpegxr = { package = "jpegxr", version = "0.3.1" }
+
+[features]
+default = []
+cli = []
+
+[[bin]]
+name = "jpegxr"
+path = "src/bin/jpegxr.rs"
+required-features = ["cli"]

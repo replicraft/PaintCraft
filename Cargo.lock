@@ -2406,8 +2406,6 @@ dependencies = [
 [[package]]
 name = "jpegxr-pure-rs"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "be1bfea78bcd73aa67dfce7cdd22902e4e6ac06b387a5dea4f225f52525e8590"
 dependencies = [
  "libc",
 ]

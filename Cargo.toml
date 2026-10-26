@@ -10,6 +10,8 @@ members = [
     "apps/paintcraft-web/src/paintcraft-codec-worker",
 ]
 default-members = ["apps/paintcraft"]
+# Third-party codec source has its own manifest and provenance controls.
+exclude = ["vendor/jpegxr-pure-rs-0.1.0-paintcraft1"]
 
 [workspace.package]
 version = "0.1.0"
@@ -163,8 +165,9 @@ flate2 = { version = "1.1.10", default-features = false, features = ["rust_backe
 heic-decoder = { version = "=0.1.1", default-features = false, features = ["internals"] }
 # Native codec helper uses only _exit for nonallocating quota/system-OOM exit.
 libc = { version = "0.2.191", default-features = false }
-# Selected experimental JXR backend; isolated native worker and qualification only.
-jpegxr = { package = "jpegxr-pure-rs", version = "=0.1.0", default-features = false }
+# Pinned JXR source with reviewed RGB8/capped-sink API; isolated native use only.
+# Exact upstream/patch inventory: vendor/jpegxr-pure-rs-0.1.0-paintcraft1.provenance.json.
+jpegxr = { package = "jpegxr-pure-rs", path = "vendor/jpegxr-pure-rs-0.1.0-paintcraft1", version = "=0.1.0", default-features = false }
 # Independent PNG fixture generation in tests.
 png = "0.18.1"
 

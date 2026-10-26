@@ -4,6 +4,8 @@
 import subprocess
 from pathlib import Path
 
+from verify_jpegxr_vendor import verify as verify_jpegxr_vendor
+
 ROOT = Path(__file__).resolve().parent.parent
 MAX_LINES = 800
 # Documentation, manifests, fixtures and generated data have no source line cap.
@@ -16,6 +18,11 @@ SOURCE_SUFFIXES = {
 
 
 def main():
+    try:
+        inherited = verify_jpegxr_vendor(ROOT)
+    except (OSError, ValueError, KeyError, TypeError) as error:
+        print(f"Third-party source verification failed: {error}")
+        return 1
     paths = subprocess.check_output(
         ["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z"],
         cwd=ROOT,
@@ -25,6 +32,8 @@ def main():
         if not raw:
             continue
         relative = raw.decode("utf-8")
+        if relative in inherited:
+            continue  # Exact reviewed upstream bytes, never a directory exemption.
         path = ROOT / relative
         if path.suffix not in SOURCE_SUFFIXES or not path.is_file():
             continue
@@ -37,7 +46,10 @@ def main():
     if failures:
         print("\n".join(failures))
         return 1
-    print("Repository source code files are within the 800-line limit.")
+    print(
+        "Repository-owned source files are within the 800-line limit "
+        f"({len(inherited)} verified upstream exceptions)."
+    )
     return 0
 
 
