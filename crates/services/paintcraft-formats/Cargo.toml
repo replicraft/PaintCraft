@@ -26,6 +26,7 @@ crc32fast.workspace = true
 pcx.workspace = true
 color_quant.workspace = true
 ico.workspace = true
+icns.workspace = true
 ag-psd.workspace = true
 resvg = { workspace = true, features = ["text", "raster-images"] }
 base64.workspace = true
