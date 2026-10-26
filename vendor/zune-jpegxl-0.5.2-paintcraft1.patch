@@ -1,0 +1,44 @@
+--- a/src/encoder.rs
++++ b/src/encoder.rs
+@@ -1056,10 +1056,10 @@
+     /// Err(e): The error incase one is encountered
+     ///
+     pub fn encode<T: ZByteWriterTrait>(&self, sink: T) -> Result<usize, JxlEncodeErrors> {
+-        if self.options.width() <= 1 {
++        if self.options.width() == 0 {
+             return Err(JxlEncodeErrors::ZeroDimension("width"));
+         }
+-        if self.options.height() <= 1 {
++        if self.options.height() == 0 {
+             return Err(JxlEncodeErrors::ZeroDimension("height"));
+         }
+         let depth = self.options.depth();
+@@ -1475,7 +1475,7 @@
+         output.put_bits(1, 0);
+ 
+         let mut write_header = |size: usize, add_ration: bool| {
+-            assert!(size > 1 && size < (1 << 30));
++            assert!(size >= 1 && size < (1 << 30));
+             if size - 1 < (1 << 9) {
+                 output.put_bits(2, 0);
+                 output.put_bits(9, (size - 1) as u64);
+@@ -1517,7 +1517,18 @@
+         }
+         if have_alpha {
+             output.put_bits(2, 1); // extra channel
+-            output.put_bits(1, 1); // all default (8 bit alpha)
++            if depth == BitDepth::Eight {
++                output.put_bits(1, 1); // default straight 8-bit alpha
++            } else {
++                output.put_bits(1, 0); // explicit extra-channel information
++                output.put_bits(2, 0); // type Alpha
++                output.put_bits(1, 0); // integer samples
++                output.put_bits(2, 3); // BitsOffset(6, 1)
++                output.put_bits(6, 15); // 16-bit alpha
++                output.put_bits(2, 0); // dim_shift = 0
++                output.put_bits(2, 0); // empty channel name
++                output.put_bits(1, 0); // straight (not associated) alpha
++            }
+         } else {
+             output.put_bits(2, 0); // no extra channel
+         }

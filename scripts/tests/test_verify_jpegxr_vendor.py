@@ -29,6 +29,11 @@ class VendorVerification(unittest.TestCase):
             shutil.copyfile(source, Path(str(self.source) + suffix))
         shutil.copyfile(vendor.ROOT / "vendor/.gitattributes",
                         self.root / "vendor/.gitattributes")
+        # The generic checker verifies both vendors; preserve the other fixture too.
+        jxl = "vendor/zune-jpegxl-0.5.2-paintcraft1"
+        shutil.copytree(vendor.ROOT / jxl, self.root / jxl)
+        for suffix in [".patch", ".provenance.json"]:
+            shutil.copyfile(vendor.ROOT / (jxl + suffix), self.root / (jxl + suffix))
         (self.root / "packaging").mkdir()
         shutil.copyfile(vendor.ROOT / "packaging/JPEGXR_LICENSE.txt",
                         self.root / "packaging/JPEGXR_LICENSE.txt")

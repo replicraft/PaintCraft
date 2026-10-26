@@ -1,0 +1,146 @@
+{
+    "schema": 1,
+    "package": "zune-jpegxl",
+    "version": "0.5.2",
+    "local_revision": "paintcraft1",
+    "upstream_commit": "a019244c4a8a4eb713e85fa77f9e18f841d6271b",
+    "upstream_vcs_dirty": true,
+    "archive_url": "https://static.crates.io/crates/zune-jpegxl/zune-jpegxl-0.5.2.crate",
+    "archive_sha256": "cba11ecd07cc23351500e840ae03841b7e4997923ec8e4832ee3ae199ea0b6b4",
+    "archive_bytes": 24906,
+    "patch_file": "zune-jpegxl-0.5.2-paintcraft1.patch",
+    "patch_sha256": "ee275a9b4ded66ae0f5eb53b644af59e21025969e882ad82fddd9055b5c0f667",
+    "changed_files": [
+        "src/encoder.rs"
+    ],
+    "licenses": {
+        "LICENSE-APACHE": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+        "LICENSE-MIT": "d30047bca3b516639339a3c279bb84c3483124fb5a9dafe3c75056a85090e745",
+        "LICENSE-ZLIB": "d201d14804d3bcd3b944147173175e4abfbd838b7c8069b6bd3452496bf13e6c"
+    },
+    "line_exemptions": [
+        "src/encoder.rs"
+    ],
+    "files": {
+        ".cargo_vcs_info.json": {
+            "sha256": "727bae81fcc3633fd3d4c52b13ab6868119ea38f9e81f2dec1710bd3ce57ed99",
+            "bytes": 131,
+            "lines": 7,
+            "upstream_sha256": "727bae81fcc3633fd3d4c52b13ab6868119ea38f9e81f2dec1710bd3ce57ed99",
+            "upstream_bytes": 131,
+            "upstream_lines": 7
+        },
+        "Cargo.lock": {
+            "sha256": "626ccc229d8c8a837f49c0d26d8c0858e8f991ad17a172f5e443715cfb7c2674",
+            "bytes": 596,
+            "lines": 25,
+            "upstream_sha256": "626ccc229d8c8a837f49c0d26d8c0858e8f991ad17a172f5e443715cfb7c2674",
+            "upstream_bytes": 596,
+            "upstream_lines": 25
+        },
+        "Cargo.toml": {
+            "sha256": "bc6a17573e55a40aa5f7d985a99595b9e08b1d1cd2f683f8e0348a0b0041e7cf",
+            "bytes": 1236,
+            "lines": 51,
+            "upstream_sha256": "bc6a17573e55a40aa5f7d985a99595b9e08b1d1cd2f683f8e0348a0b0041e7cf",
+            "upstream_bytes": 1236,
+            "upstream_lines": 51
+        },
+        "Cargo.toml.orig": {
+            "sha256": "4e5366f928f5715b4c3898bac866c594741b7c72b732d5ee9af7796d94b2a8fe",
+            "bytes": 692,
+            "lines": 24,
+            "upstream_sha256": "4e5366f928f5715b4c3898bac866c594741b7c72b732d5ee9af7796d94b2a8fe",
+            "upstream_bytes": 692,
+            "upstream_lines": 24
+        },
+        "LICENSE-APACHE": {
+            "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+            "bytes": 11357,
+            "lines": 201,
+            "upstream_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+            "upstream_bytes": 11357,
+            "upstream_lines": 201
+        },
+        "LICENSE-MIT": {
+            "sha256": "d30047bca3b516639339a3c279bb84c3483124fb5a9dafe3c75056a85090e745",
+            "bytes": 1073,
+            "lines": 21,
+            "upstream_sha256": "d30047bca3b516639339a3c279bb84c3483124fb5a9dafe3c75056a85090e745",
+            "upstream_bytes": 1073,
+            "upstream_lines": 21
+        },
+        "LICENSE-ZLIB": {
+            "sha256": "d201d14804d3bcd3b944147173175e4abfbd838b7c8069b6bd3452496bf13e6c",
+            "bytes": 859,
+            "lines": 19,
+            "upstream_sha256": "d201d14804d3bcd3b944147173175e4abfbd838b7c8069b6bd3452496bf13e6c",
+            "upstream_bytes": 859,
+            "upstream_lines": 19
+        },
+        "README.md": {
+            "sha256": "a9ac42636ec073f2c33b31b35aa7bbbcc9dfa7bf4cbfbb63ff10cac8738fc2ab",
+            "bytes": 774,
+            "lines": 39,
+            "upstream_sha256": "a9ac42636ec073f2c33b31b35aa7bbbcc9dfa7bf4cbfbb63ff10cac8738fc2ab",
+            "upstream_bytes": 774,
+            "upstream_lines": 39
+        },
+        "src/bit_depth.rs": {
+            "sha256": "f87f169fc775c20366eca5541f34eeee89fb31856ff7cea20ecf98a276a18455",
+            "bytes": 6065,
+            "lines": 211,
+            "upstream_sha256": "f87f169fc775c20366eca5541f34eeee89fb31856ff7cea20ecf98a276a18455",
+            "upstream_bytes": 6065,
+            "upstream_lines": 211
+        },
+        "src/bit_writer.rs": {
+            "sha256": "07ac8c4dfdd756d33d61d119d91109e5a4d3b3f1abed8d1a71e9e9fce1eee352",
+            "bytes": 8060,
+            "lines": 251,
+            "upstream_sha256": "07ac8c4dfdd756d33d61d119d91109e5a4d3b3f1abed8d1a71e9e9fce1eee352",
+            "upstream_bytes": 8060,
+            "upstream_lines": 251
+        },
+        "src/color_convert.rs": {
+            "sha256": "71a820f9fe3478211c92771acdc8b88d8a78f92a5862a33fdab71ce2ee6bb55b",
+            "bytes": 4997,
+            "lines": 180,
+            "upstream_sha256": "71a820f9fe3478211c92771acdc8b88d8a78f92a5862a33fdab71ce2ee6bb55b",
+            "upstream_bytes": 4997,
+            "upstream_lines": 180
+        },
+        "src/encoder.rs": {
+            "sha256": "c2ee59c23ed513e0d340adce0d668fdc061781ddc2c0b19fc9d5ba389dfac462",
+            "bytes": 54198,
+            "lines": 1637,
+            "upstream_sha256": "dbf03414838e3505c0672f16649f98d371a5ff1e3455bea76f5a70dacbb997a4",
+            "upstream_bytes": 53619,
+            "upstream_lines": 1626
+        },
+        "src/errors.rs": {
+            "sha256": "723392db756f03989fa3c387bbb0b18b2e01b5dbf0105c632224e065d972d2fe",
+            "bytes": 2971,
+            "lines": 94,
+            "upstream_sha256": "723392db756f03989fa3c387bbb0b18b2e01b5dbf0105c632224e065d972d2fe",
+            "upstream_bytes": 2971,
+            "upstream_lines": 94
+        },
+        "src/lib.rs": {
+            "sha256": "7a359e3533c2525889a0deb998c7e0867408d0e5846e272d3beba84a3417b9e4",
+            "bytes": 2860,
+            "lines": 96,
+            "upstream_sha256": "7a359e3533c2525889a0deb998c7e0867408d0e5846e272d3beba84a3417b9e4",
+            "upstream_bytes": 2860,
+            "upstream_lines": 96
+        }
+    },
+    "authored_files": {
+        "rustfmt.toml": {
+            "sha256": "3025e466e14d8ac54e5371397434f79be4976b5bf3faf64e36c5e941980a0cf2",
+            "bytes": 30,
+            "lines": 1
+        }
+    },
+    "formatting_policy": "Package-local stable rustfmt preservation only; exact inherited source and visible authored encoder delta remain hash verified."
+}

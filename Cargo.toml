@@ -11,7 +11,10 @@ members = [
 ]
 default-members = ["apps/paintcraft"]
 # Third-party codec source has its own manifest and provenance controls.
-exclude = ["vendor/jpegxr-pure-rs-0.1.0-paintcraft1"]
+exclude = [
+    "vendor/jpegxr-pure-rs-0.1.0-paintcraft1",
+    "vendor/zune-jpegxl-0.5.2-paintcraft1",
+]
 
 [workspace.package]
 version = "0.1.0"
@@ -144,7 +147,8 @@ tiff = { version = "0.11.3", default-features = false }
 zerocopy = { version = "0.8.63", features = ["derive"] }
 # JPEG XL adapters: pure Rust decoder and a separately scoped lossless writer.
 jxl = { version = "0.8.0", default-features = false }
-zune-jpegxl = { version = "0.5.2", default-features = false, features = ["std"] }
+# Exact upstream source plus reviewed size/alpha metadata fixes; see vendor provenance.
+zune-jpegxl = { version = "=0.5.2", path = "vendor/zune-jpegxl-0.5.2-paintcraft1", default-features = false, features = ["std"] }
 zune-core = { version = "0.5.3", default-features = false, features = ["std"] }
 # Studio single-surface DDS adapter; no implicit Rayon pool.
 dds = { version = "0.2.0", default-features = false }

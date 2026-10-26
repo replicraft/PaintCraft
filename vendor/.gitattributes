@@ -6,3 +6,12 @@ jpegxr-pure-rs-0.1.0-paintcraft1.provenance.json -text
 # Preserve only these inherited upstream whitespace bytes; verification is exact.
 # Original upstream README has an intentional retained blank line at EOF.
 jpegxr-pure-rs-0.1.0-paintcraft1/README.md -whitespace
+
+# JPEG XL retains its exact selected release bytes and reviewed patch.
+zune-jpegxl-0.5.2-paintcraft1/** -text
+zune-jpegxl-0.5.2-paintcraft1.patch -text -whitespace
+zune-jpegxl-0.5.2-paintcraft1.provenance.json -text
+# Retain only these hash-verified upstream trailing whitespace bytes.
+zune-jpegxl-0.5.2-paintcraft1/src/encoder.rs -whitespace
+zune-jpegxl-0.5.2-paintcraft1/src/lib.rs -whitespace
+zune-jpegxl-0.5.2-paintcraft1/src/bit_depth.rs -whitespace
