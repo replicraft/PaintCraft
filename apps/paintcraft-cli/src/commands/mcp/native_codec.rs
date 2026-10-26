@@ -1,4 +1,4 @@
-//! One narrowly admitted native JXL conversion. State is locked throughout;
+//! Narrowly admitted native JXL/JXR/HEIF conversions. State is locked throughout;
 //! subprocess/source/output work stays private until final owner/cancel checks.
 use super::{
     super::*,
@@ -66,9 +66,14 @@ fn profile(
             wire::Codec::JxrRgb8,
             wire::NATIVE_JXR_IMPORT_VARIANT,
         )),
+        Some(Family::Heif) => Ok((
+            Family::Heif,
+            wire::Codec::HeifSrgb8,
+            wire::NATIVE_HEIF_IMPORT_VARIANT,
+        )),
         _ => Err(Error::new(
             ErrorCode::CapabilityUnsupported,
-            "Native codec import requires JXL/JXR",
+            "Native codec import requires JXL/JXR/HEIF",
         )),
     }
 }
@@ -92,7 +97,7 @@ fn admit(
     match registry::admission(request) {
         registry::Decision::Allowed => {}
         registry::Decision::AllowedWithPreflight(registry::Reason::ConvertRequiresConsent)
-            if family == Family::Jxr => {}
+            if matches!(family, Family::Jxr | Family::Heif) => {}
         decision => decision.require_allowed(request)?,
     }
     Ok((family, codec, variant))
@@ -228,7 +233,13 @@ fn import_with_launch(
         .collect();
     let assessment = prepared
         .jxr_assessment()
-        .map(|assessment| core_json(&assessment.to_value()))
+        .map(|assessment| assessment.to_value())
+        .or_else(|| {
+            prepared
+                .heif_assessment()
+                .map(|assessment| assessment.to_value())
+        })
+        .map(|value| core_json(&value))
         .transpose()?;
     let adopted = prepared.adopt_with_losses(allowed, &*check, &|| Ok(owner(state, empty)))?;
     let mut session = Session::new(adopted.document);
