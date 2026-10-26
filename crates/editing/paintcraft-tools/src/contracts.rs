@@ -208,6 +208,7 @@ pub struct ColorPick {
 pub enum Action {
     ToolFailure(&'static str),
     SampledStroke(crate::sampled_brush::SampledStroke),
+    ResourceShape(crate::resource_shape::Placement),
     MoveSelection {
         layer: Uuid,
         offset: (i64, i64),
@@ -317,6 +318,7 @@ pub enum Action {
 #[derive(Clone, Debug, PartialEq)]
 pub enum Preview {
     SampledStroke(crate::sampled_brush::SampledStroke),
+    ResourceShape(crate::resource_shape::Placement),
     MoveSelection {
         layer: Uuid,
         offset: (i64, i64),

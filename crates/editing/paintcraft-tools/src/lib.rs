@@ -5,6 +5,7 @@ pub mod commands;
 mod construction;
 mod contracts;
 mod floating;
+pub mod resource_shape;
 pub mod sampled_brush;
 mod sampled_gesture;
 pub use floating::{FloatingOptions, FloatingSelection};
@@ -47,6 +48,7 @@ struct Gesture {
     color: Rgba,
     fill: Rgba,
     options: ToolOptions,
+    resource_shape: Option<resource_shape::Reference>,
     sampled_source: Option<Uuid>,
     sampled_failure: bool,
     sampled: Option<(paintcraft_raster::sampled_brush::SampledTip, u32)>,
@@ -63,6 +65,7 @@ pub struct ToolState {
     pub secondary: Rgba,
     pub tool: Tool,
     pub options: ToolOptions,
+    pub resource_shape: Option<resource_shape::Reference>,
     pub sampled_source: Option<Uuid>,
     pub sampled_name: Option<String>,
     pub sampled_tip: Option<(paintcraft_raster::sampled_brush::SampledTip, u32)>,
@@ -82,6 +85,7 @@ impl Default for ToolState {
             secondary: Rgba([255; 4]),
             tool: Tool::Pencil,
             options: ToolOptions::default(),
+            resource_shape: None,
             sampled_source: None,
             sampled_name: None,
             sampled_tip: None,
@@ -176,6 +180,9 @@ impl ToolState {
             color,
             fill,
             options: self.options,
+            resource_shape: (self.tool == Tool::Rect)
+                .then_some(self.resource_shape)
+                .flatten(),
             sampled_source: self.sampled_source,
             sampled_failure: false,
             sampled: (self.tool == Tool::Brush)
@@ -321,6 +328,9 @@ impl ToolState {
             return draft.view(false).map(Preview::Contour);
         }
         let g = self.gesture.as_ref()?;
+        if g.resource_shape.is_some() {
+            return Some(Preview::ResourceShape(Self::resource_shape_gesture(g)));
+        }
         if g.sampled.is_some() {
             return Self::sampled_gesture(g).ok().map(Preview::SampledStroke);
         }
@@ -512,6 +522,12 @@ impl ToolState {
         }
         let g = self.gesture.take()?;
         self.preview_revision.advance();
+        if g.resource_shape.is_some() {
+            return Some((
+                g.token,
+                Action::ResourceShape(Self::resource_shape_gesture(&g)),
+            ));
+        }
         if g.sampled.is_some() {
             return Some((
                 g.token,
