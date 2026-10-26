@@ -1,12 +1,9 @@
 //! Internal qualification consumer. Normal image Open/import stays registry-gated.
 use super::*;
 use paintcraft_formats::codec_worker as wire;
-use paintcraft_platform::{codec_helper, source::SourceIdentity};
+use paintcraft_platform::source::SourceIdentity;
 use paintcraft_runtime::{Executor, Limits, process};
-use std::{
-    sync::Arc,
-    time::{Duration, Instant},
-};
+use std::time::Duration;
 use uuid::Uuid;
 #[derive(Clone, Copy, Debug, clap::ValueEnum)]
 enum Codec {
@@ -49,17 +46,6 @@ impl Options {
 }
 /// Conservative logical parent IO/verification slack; not a physical RSS cap.
 const VERIFICATION_SLACK: u64 = 1 << 20;
-fn contract<'a>(record: &'a [u8]) -> codec_helper::Contract<'a> {
-    codec_helper::Contract {
-        application_version: env!("CARGO_PKG_VERSION"),
-        protocol_version: wire::PROTOCOL_VERSION,
-        profile: wire::NATIVE_PROFILE,
-        requested_heap_ceiling_bytes: wire::HEAP_BYTES,
-        public_reader_enabled: false,
-        build_marker: wire::BUILD_RECORD_MARKER,
-        build_record: record,
-    }
-}
 pub(super) fn owner() -> wire::Owner {
     wire::Owner {
         session: Uuid::new_v4(),
@@ -120,70 +106,39 @@ pub(super) fn with_frame<T>(
         &dyn Fn() -> Result<()>,
     ) -> Result<T>,
 ) -> Result<T> {
-    let start = Instant::now();
-    let deadline = Duration::from_millis(options.deadline_ms);
-    let check = || {
-        cancel.check()?;
-        if current_owner()? != captured_owner {
-            return Err(Error::new(
-                ErrorCode::ConflictStaleBase,
-                "Codec inspection owner changed",
-            ));
-        }
-        if start.elapsed() >= deadline {
-            return Err(Error::new(
-                ErrorCode::ResourceLimit,
-                "Codec inspection deadline exceeded",
-            ));
-        }
-        Ok(())
-    };
-    check()?;
-    let bytes = identity.capture_bytes(length, wire::INPUT_BYTES_MAX as u64, &check)?;
-    let request = wire::Request::capture_for(
-        options.codec.wire(),
-        Arc::new(bytes),
-        captured_owner,
-        options.pixels,
-    )?;
-    guard(
-        options.expect_input_sha256.as_deref(),
-        &hex(&request.header.sha256),
-    )?;
-    identity.verify_bytes(&options.input, length, &request.header.sha256, &check)?;
-    let record = wire::native_build_record(env!("CARGO_PKG_VERSION"))?;
-    // Only current_exe-driven discovery, never a user/format-selected code path.
-    let helper = codec_helper::discover(contract(&record), &check)?;
-    let executable = helper.checked_executable(&check)?;
-    let remaining = deadline.checked_sub(start.elapsed()).ok_or_else(|| {
-        Error::new(
-            ErrorCode::ResourceLimit,
-            "Codec inspection deadline exceeded",
-        )
-    })?;
-    let output = process::run_parent_lease(
-        executable,
-        &[],
-        request.segments(),
-        process::Limits {
-            input_bytes: wire::INPUT_BYTES_MAX + wire::REQUEST_HEADER,
-            output_bytes: wire::OUTPUT_BYTES_MAX,
-            deadline: remaining,
-            resource_exit_code: Some(wire::RESOURCE_EXIT),
+    wire::native::Job {
+        input: options.input,
+        identity,
+        length,
+        codec: options.codec.wire(),
+        owner: captured_owner,
+        pixels: options.pixels,
+        deadline: Duration::from_millis(options.deadline_ms),
+        application_version: env!("CARGO_PKG_VERSION").into(),
+        expected_sha256: options.expect_input_sha256,
+    }
+    .consume(
+        &|| cancel.check(),
+        &current_owner,
+        |executable, request, remaining, check| {
+            process::run_parent_lease(
+                executable,
+                &[],
+                request.segments(),
+                process::Limits {
+                    input_bytes: wire::INPUT_BYTES_MAX + wire::REQUEST_HEADER,
+                    output_bytes: wire::OUTPUT_BYTES_MAX,
+                    deadline: remaining,
+                    resource_exit_code: Some(wire::RESOURCE_EXIT),
+                },
+                check,
+            )
+            .map(|output| output.bytes)
         },
-        &check,
-    )?;
-    helper.checked_executable(&check)?;
-    identity.verify_bytes(&options.input, length, &request.header.sha256, &check)?;
-    let frame = wire::decode(&output.bytes, &request, current_owner()?)?;
-    check()?;
-    // Hash/report while the existing runtime reservation is still held. No raw
-    // planes/source or document escape result consumption without a resident lease.
-    let prepared = consume(&request, frame, helper.sha256(), &check)?;
-    identity.verify_bytes(&options.input, length, &request.header.sha256, &check)?;
-    check()?;
-    Ok(prepared)
+        consume,
+    )
 }
+
 fn inspect(
     options: Options,
     identity: SourceIdentity,

@@ -1,6 +1,8 @@
 //! Shared isolated codec-worker envelopes. Parsing never publishes state.
 #[cfg(feature = "heif-codec")]
 mod decode;
+#[cfg(not(target_arch = "wasm32"))]
+pub mod native;
 #[cfg(feature = "heif-codec")]
 pub use decode::execute;
 use paintcraft_core::types::{Error, ErrorCode, Result};
