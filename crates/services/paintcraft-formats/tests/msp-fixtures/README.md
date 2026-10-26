@@ -1,8 +1,11 @@
 # Historical MSP fixtures
 
-This internal backend handles an initial monochrome profile of Windows Paint
-`.msp`, independently of modern layered `.paint`. No registry capability, Open
-filter, CLI/MCP operation or frontend import/export is enabled by this work.
+This backend handles an initial monochrome profile of Windows Paint `.msp`,
+independently of modern layered `.paint`. The shared facade now supports explicit
+Studio import and exact MSP1 export in desktop/browser, CLI and MCP workflows.
+Headless Classic profiles retain an explicit legacy CLI import route; normal
+Classic Open/Save filters and preserving MSP Save remain unavailable. See
+[workflow qualification](../../../../../docs/FORMAT_INTEROPERABILITY.md#historical-msp-conversion-workflows-2026-10-25).
 
 ## Evidence and admitted profile
 
@@ -46,9 +49,11 @@ zero-length-row handling remain unqualified.
 
 All codec APIs take borrowed bytes and return owned values. They perform no
 filesystem writes or document publication, so callers retain the original source
-unchanged on failures or cancellation. Future frontend activation must add the
-existing frozen-source save guards, metadata/conversion receipts and explicit
-legacy workflow. These are bounded input/allocation declarations and cooperative
+unchanged on failures or cancellation. Native and MCP consumers attach existing
+frozen-source save guards to the same opened source used for decoding; CLI holds
+that identity for import/placement commands. All imports require named metadata
+consent and use converted-copy receipts. Browser exports download fresh copies.
+No implicit original-file association or preserving MSP Save is created. These are bounded input/allocation declarations and cooperative
 checkpoints, not allocator/RSS interception or a measured cancellation-tail bound.
 
 ## Fixture provenance

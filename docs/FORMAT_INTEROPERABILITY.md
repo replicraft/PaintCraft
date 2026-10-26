@@ -9,10 +9,10 @@ Codec implementation, enabled frontend operations and release qualification are 
 Desktop and browser use the same frontend policy. CLI and MCP import/export operations also apply that policy, using an explicit frontend profile rather than inheriting every compiled codec. All foreign conversions require acknowledgment of their reported losses before publication. Failed, cancelled or stale conversions leave the existing document intact.
 
 - PCND is the native layered project format and the preserving Save destination.
-- Classic 7/10/11 open and export PNG, JPEG, BMP, still GIF and single-page TIFF. CLI Classic profiles can explicitly import the admitted PCX subset; the Classic 11 CLI profile also admits the limited PAINT conversion. Desktop/browser Import image is currently a Studio action, so these headless allowances do not imply additional Classic menus.
+- Classic 7/10/11 open and export PNG, JPEG, BMP, still GIF and single-page TIFF. CLI Classic profiles can explicitly import the admitted PCX and MSP subsets; the Classic 11 CLI profile also admits the limited PAINT conversion. Desktop/browser Import image is currently a Studio action, so these headless allowances do not imply additional Classic menus.
 - Studio also opens TGA, still WebP and admitted single-surface DDS images, and opens the admitted historical PDN subset as a converted copy.
-- Studio's explicit Import image workflow adds QOI, Netpbm, farbfeld, PCX, selected DCX pages, flat OpenRaster layers and the admitted PAINT subset. These extended imports do not silently expand ordinary Open or Recent filters.
-- Studio offers **14 flat exports**: PNG, JPEG, BMP, GIF, TIFF, TGA, WebP, JPEG XL, DDS, AVIF, QOI, PAM, farbfeld and PCX with RGB24 or indexed palettes. PAM output always uses `.pam`, never a `.ppm`, `.pgm`, `.pbm` or generic `.pnm` filename.
+- Studio's explicit Import image workflow adds QOI, Netpbm, farbfeld, PCX, historical monochrome MSP, selected DCX pages, flat OpenRaster layers and the admitted PAINT subset. These extended imports do not silently expand ordinary Open or Recent filters.
+- Studio offers **15 flat exports**: PNG, JPEG, BMP, GIF, TIFF, TGA, WebP, JPEG XL, DDS, AVIF, QOI, PAM, farbfeld, PCX with RGB24 or indexed palettes, and exact opaque black/white MSP1. PAM output always uses `.pam`, never a `.ppm`, `.pgm`, `.pbm` or generic `.pnm` filename.
 - DCX requires a page choice. Desktop/browser stage a page chooser before decoding and loss confirmation; CLI `import --page` and MCP `import_image` use an explicit zero-based page index. There is no implicit page-zero import.
 
 Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, GIF, TGA, DDS, TIFF, HEIF, WebP and AVIF. That inventory is not a claim that all those readers are enabled. PCND and qualified extended conversions are additional workflows. HEIF/HEIC writing and SVG export remain prohibited.
@@ -42,7 +42,7 @@ Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, 
 | ICO/CUR | Studio explicit selected-entry Import on desktop/browser; CLI `--entry` and MCP `entry`. Fresh multi-entry export in Studio desktop/browser, CLI `export-icons` and MCP `export_icons` | Reports every admitted entry and cursor hotspot before selection. Fresh exports use explicit sizes, RGBA PNG or 32-bit bitmap entries, independent aspect-ratio fitting, and per-entry CUR hotspots. Desktop/browser exports require a displayed preview and explicit loss consent; foreign preserving save remains unavailable |
 | PSD/PSB | Studio explicit Import on desktop/browser; CLI `import` and MCP `import_image` | RGB8 Normal raster-layer subset retains names, offsets, opacity, visibility and alpha. Metadata losses need explicit consent. Groups, masks, text, effects, clipping, high depth and foreign writing remain unavailable |
 | SVG/SVGZ | Studio desktop/browser Import; CLI `import` with `--svg-width`/`--svg-height`; MCP `import_image` with `svg` options | Explicit size/DPI/fitting and rasterization consent. Studio previews use bundled fonts and additional font files; CLI/MCP accept outline fonts too. No Classic access, ordinary Open or SVG export |
-| MSP | Internal bounded monochrome reader and fresh MSP1 writer; no public workflow yet | DanM raw and admitted LinS row-RLE profile with independent Pillow pixel checks. Explicit opaque black/white input only; ambiguous empty RLE rows, MSP2 writing and original Windows Paint qualification remain |
+| MSP | Explicit Studio import/exact export in desktop, browser, CLI and MCP; headless Classic legacy import | DanM raw and admitted LinS row-RLE profile with independent Pillow pixel checks. Named metadata consent and frozen native source protection; no ordinary Classic Open, preserving MSP Save, hidden threshold/matte or MSP2 writer |
 | EXR/HDR, JP2, ICNS | Not yet enabled | Registry inventory or work in progress is not usable format support |
 | ASE | Studio Palettes dialog; CLI `palette inspect` / `palette export`; MCP `inspect_palette` / `export_palette` | Flat groups, exact names/order/models/types and finite f32 values. RGB/gray tool-color adoption is explicit; CMYK/LAB conversion, persistent catalogs and Adobe qualification remain |
 | ABR | Studio desktop/browser selection and bounded native-static R8 painting; CLI/MCP inspection and painting | Exact sample masks, pattern channels, signed bounds and original ordered payloads retained. Up to 256 presets per admitted library; unsupported dynamics, textures, transforms and precision reduction are refused. Full preset behavior and original-application qualification remain; no ABR export or ordinary image Open |
@@ -87,7 +87,7 @@ The ICO/CUR adapter admits at most 256 entries and 64 MiB of encoded input. It c
 Fresh ICO/CUR export uses the selected `ico` container library with explicit RGBA PNG and 32-bit bitmap payloads. The 2026-10-25 Pillow 13.0.0 check matched all 24 exported entry buffers, including fully transparent and opaque PNGs; it separately verified cursor hotspots and bitmap masks. Preparation renders one immutable source, fits each requested size independently onto transparent padding, and offers nearest or premultiplied encoded-sRGB Lanczos3 resampling. Source and aggregate destination admission are each at most 4,194,304 pixels; output is at most 64 MiB and 256 entries. Resize, flattening and hidden-RGB loss need explicit consent before encoding. CLI/MCP retain source, destination, state and history guards. Studio desktop/browser share translated entry controls, transparency previews and cursor hotspot markers. A changed source or configuration requires a new displayed preview and renewed loss consent. Native export retains the previewed bytes through a parented rfd picker and verifies an existing destination fingerprint before replacement; imported source provenance follows its document across tabs. Browser export downloads immediately without changing the project name or saved state. Fully transparent bitmap output, original Windows application qualification and foreign preserving save remain pending. No hard upstream scratch-memory, cancellation-tail or performance guarantee is claimed.
 
 - Qualify JPEG XL reader confinement and cancellation tails, JXR independent comparisons and a decoder-only HEIF profile.
-- Finish and qualify extended document/asset adapters, including ORA groups and layered writing, PSD/PSB, SVG rasterization with explicit dimensions/DPI, legacy icon alpha and Adobe resources. EXR/HDR require precision-aware storage/import gates; JP2 and historical MSP need dedicated evidence.
+- Finish and qualify extended document/asset adapters, including ORA groups and layered writing, PSD/PSB, SVG rasterization with explicit dimensions/DPI, legacy icon alpha and Adobe resources. EXR/HDR require precision-aware storage/import gates; JP2 needs dedicated codec evidence; historical MSP still needs original-application qualification and separately qualified MSP2 writing.
 - Add separately qualified PDN/PAINT fresh and preserving writers, source-version coverage and original-application reopen evidence.
 - Complete full browser/native reference and packaging matrices, worker failure and aggregate-memory accounting, and real-device cancellation/latency qualification.
 
@@ -294,7 +294,7 @@ PCND download check with no page errors. The downloaded project reopened and
 rendered through the CLI. This is focused workflow evidence, not full release
 qualification or an independent Photoshop rendering comparison.
 
-### Historical MSP internal codec, 2026-10-25
+### Historical MSP conversion workflows, 2026-10-25
 
 The internal `paintcraft-formats::msp` module handles an initial historical
 monochrome profile, distinct from modern layered `.paint`. `DanM` raw rows and
@@ -316,9 +316,35 @@ refusal, cancellation and mutations. See [fixtures, provenance and exact profile
 The primary Pillow implementation documents zero-length MSP2 rows as inferred
 white-fill; this profile refuses them. Original historical Windows Paint and a
 complete normative Microsoft specification were unavailable, so original-program
-compatibility remains unqualified. MSP2 writing, explicit monochrome conversion
-controls and frontend frozen-source/save receipts remain work. No public registry,
-normal Classic Open or Studio/CLI/MCP activation is enabled yet.
+compatibility remains unqualified. MSP2 writing and explicit threshold/dither/matte
+conversion controls remain work.
+
+The shared image facade and profile gates support explicit Studio import and
+fresh flat export on native/browser, CLI and MCP paths. CLI `import --frontend`
+also supports each Classic profile's explicit legacy conversion route, without
+adding MSP to normal Classic Open or Save filters. Preserving MSP Save and Save
+As are unavailable. Every import reports `msp-metadata-ignored`; native/browser
+confirmation and CLI/MCP loss acknowledgements precede publication. The converted
+copy is an unsaved native document. CLI file receipts and MCP conversion details
+identify source bytes and metadata consent without binding the original MSP.
+
+Native pending/installed conversions and MCP sessions retain `SourceIdentity`
+from the same opened file used for decoding. Existing source guards protect
+renamed and hard-linked originals across Save As and export; save copies do not
+clear the retained input guard. CLI import and external-image placement retain
+that identity throughout their individual command. Browser downloads produce
+fresh copies and do not adopt the input as a writable project. Tests cover real
+CLI/MCP conversions, consent/failure preservation, same-source aliases after
+rename, source guards after project Save As, exact Studio export and color/alpha
+refusal. Native tests exercise the actual export path; browser consent/encoder
+regressions and an actual wasm32 target check pass. All seven locales include
+MSP metadata consent and export labels. See [MCP and CLI examples](MCP.md#historical-msp-pictures).
+
+The source-header/bitplane codec remains separately callable without document
+publication. Export accepts only already opaque black or white output pixels;
+acknowledging an unrelated loss never grants an implicit threshold or matte.
+Existing flatten/hidden-RGB loss policy still applies. These gates qualify the
+bounded format profile, not every historical specimen or original application.
 
 ### CSH resource adapter, 2026-10-25
 
