@@ -1,5 +1,7 @@
 """Native package command and integration metadata checks without installers."""
 import json
+import hashlib
+import zipfile
 from pathlib import Path
 import plistlib
 import subprocess
@@ -46,6 +48,8 @@ class NativePackageTests(unittest.TestCase):
             command = run.call_args.args[0]
             self.assertEqual(command[:4], ["wix", "build", "-arch", architecture])
             self.assertIn(f"Binary={self.binary.resolve()}", command)
+            self.assertTrue(any(value.startswith("CodecWorker=") for value in command))
+            self.assertTrue(any(value.startswith("CodecManifest=") for value in command))
             self.assertEqual(command[-1], str(release.ROOT / "packaging/windows.wxs"))
             self.assertTrue((self.output / f"paintcraft-{self.version}-windows-{architecture}.msi.sha256").is_file())
 
@@ -81,7 +85,7 @@ class NativePackageTests(unittest.TestCase):
                         self.assertEqual(kwargs["env"]["APPIMAGE_EXTRACT_AND_RUN"], "1")
                         self.assertIn("libxkbcommon*.so.*", config["appimage"]["libs"])
                         self.assertIn("libX11*.so.*", config["appimage"]["libs"])
-                        self.assertEqual(len(config["binaries"]), 2)
+                        self.assertEqual(len(config["binaries"]), 3)
                         launcher = Path(config["binaries"][0]["path"])
                         self.assertIn('"$@"', launcher.read_text())
                         desktop = Path(config["deb"]["desktopTemplate"]).read_text()
@@ -99,6 +103,8 @@ class NativePackageTests(unittest.TestCase):
             self.assertEqual(data["assets"][0]["source"], str(self.binary.resolve()))
             destinations = {asset["dest"] for asset in data["assets"]}
             self.assertIn("/usr/share/mime/packages/paintcraft.xml", destinations)
+            self.assertIn("/usr/bin/paintcraft-codec-worker", destinations)
+            self.assertIn("/usr/share/paintcraft/paintcraft-codec-worker.json", destinations)
             self.assertIn("/usr/share/applications/paintcraft.desktop", destinations)
             self.assertIn("/usr/share/licenses/paintcraft/LICENSE", destinations)
             for asset in data["assets"]:
@@ -121,6 +127,9 @@ class NativePackageTests(unittest.TestCase):
         calls = []
         def run(command, **kwargs):
             calls.append(command)
+            if command[0].endswith("codesign") and Path(command[-1]).name == "paintcraft-codec-worker":
+                helper = Path(command[-1])
+                helper.write_bytes(helper.read_bytes() + b"signed helper fixture")
         def build_dmg(filename, volume_name, settings):
             self.assertEqual(volume_name, "PaintCraft")
             self.assertEqual(settings["window_rect"], ((200, 200), (640, 270)))
@@ -140,7 +149,14 @@ class NativePackageTests(unittest.TestCase):
             macos.release_archives(self.binary, self.output, self.version, "aarch64-apple-darwin", "fixture")
         self.assertTrue((self.output / "fixture.dmg.sha256").exists())
         self.assertTrue((self.output / "fixture-update.zip.sha256").exists())
-        self.assertEqual(sum(command[0].endswith("codesign") for command in calls), 3)
+        self.assertEqual(sum(command[0].endswith("codesign") for command in calls), 4)
+        self.assertTrue(calls[0][-1].endswith("/MacOS/paintcraft-codec-worker"))
+        with zipfile.ZipFile(self.output / "fixture-update.zip") as archive:
+            directory = "PaintCraft.app/Contents/Helpers/PaintCraft Editor.app/Contents/MacOS/"
+            helper = archive.read(directory + "paintcraft-codec-worker")
+            manifest = json.loads(archive.read(directory + "paintcraft-codec-worker.json"))
+            self.assertTrue(helper.endswith(b"signed helper fixture"))
+            self.assertEqual(manifest["sha256"], hashlib.sha256(helper).hexdigest())
         self.assertTrue(any("verify" in command and command[0].endswith("hdiutil") for command in calls))
 
 

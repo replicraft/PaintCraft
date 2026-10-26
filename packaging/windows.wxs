@@ -15,6 +15,8 @@
             <Shortcut Id="LaunchPaintCraft" Name="PaintCraft" Directory="ProgramMenuFolder"
                       Advertise="yes" WorkingDirectory="INSTALLFOLDER" Icon="PaintCraftIcon" />
           </File>
+          <File Id="CodecWorker" Source="$(var.CodecWorker)" Name="paintcraft-codec-worker.exe" />
+          <File Id="CodecManifest" Source="$(var.CodecManifest)" Name="paintcraft-codec-worker.json" />
           <File Id="License" Source="$(var.License)" Name="LICENSE.txt" />
           <File Id="FontLicenses" Source="$(var.FontLicenses)" Name="FONT_LICENSES.txt" />
         </Component>

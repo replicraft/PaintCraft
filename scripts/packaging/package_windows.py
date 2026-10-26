@@ -3,26 +3,32 @@
 import argparse
 from pathlib import Path
 import subprocess
+import tempfile
 
+import codec_worker
 import package_release as release
 
 ARCHITECTURES = {"x86_64-pc-windows-msvc": "x64", "aarch64-pc-windows-msvc": "arm64"}
 
 
 def package(version, target, binary, output):
-    release.validate_package_input(version, target, binary)
+    codec_worker.prepare(binary, version, target)
     if target not in ARCHITECTURES:
         raise ValueError(f"Unsupported MSI architecture: {target}")
     output = output.resolve()
     output.mkdir(parents=True, exist_ok=True)
     installer = output / f"paintcraft-{version}-{release.TARGETS[target]}.msi"
     numeric = version.split("-")[0].split("+")[0]
-    subprocess.run(["wix", "build", "-arch", ARCHITECTURES[target], "-pdbtype", "none",
-                    "-d", f"Version={numeric}", "-d", f"Binary={binary.resolve()}",
-                    "-d", f"Icon={release.ROOT / 'assets/paintcraft-icon.ico'}",
-                    "-d", f"License={release.ROOT / 'LICENSE'}", "-o", str(installer),
-                    "-d", f"FontLicenses={release.ROOT / 'packaging/FONT_LICENSES.txt'}",
-                    str(release.ROOT / "packaging/windows.wxs")], check=True)
+    with tempfile.TemporaryDirectory(prefix="paintcraft-msi-helper-") as directory:
+        helper = codec_worker.copy(binary, Path(directory), version, target)
+        subprocess.run(["wix", "build", "-arch", ARCHITECTURES[target], "-pdbtype", "none",
+                        "-d", f"Version={numeric}", "-d", f"Binary={binary.resolve()}",
+                        "-d", f"CodecWorker={helper}",
+                        "-d", f"CodecManifest={Path(directory) / codec_worker.MANIFEST}",
+                        "-d", f"Icon={release.ROOT / 'assets/paintcraft-icon.ico'}",
+                        "-d", f"License={release.ROOT / 'LICENSE'}", "-o", str(installer),
+                        "-d", f"FontLicenses={release.ROOT / 'packaging/FONT_LICENSES.txt'}",
+                        str(release.ROOT / "packaging/windows.wxs")], check=True)
     release.write_checksum(installer)
     print(installer)
 
