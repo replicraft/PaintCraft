@@ -2,6 +2,7 @@
 //!
 //! Distinct magic prevents an encoded file from masquerading as decoded RGBA.
 //! Caller admits source/output buffers; these pure types do not publish state.
+pub mod candidate;
 mod request;
 mod response;
 use super::{HEAP_BYTES, Owner, invalid, resource, unsupported};
