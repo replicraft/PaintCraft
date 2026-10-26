@@ -44,7 +44,7 @@ impl Editor {
                 Ok(())
             })();
             if let Err(error) = result {
-                self.status = format!("Brush not prepared: {error}");
+                self.status = format!("Stroke not prepared: {error}");
             }
         }
     }
