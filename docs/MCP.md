@@ -572,3 +572,20 @@ preserving Save. CLI equivalent:
 ```sh
 paintcraft-cli export-dcx painting.pcnd --pcx-mode indexed-exact --output copy.dcx
 ```
+
+### OpenRaster group conversion
+
+Studio `import_image` accepts flat OpenRaster layers and a bounded neutral-group
+subset as a new unsaved PCND project. Grouped files must explicitly use Normal
+blending, full opacity and `isolation="auto"`. The
+`ora-group-structure-not-retained` acknowledgement accepts losing group hierarchy,
+group names and separate group visibility controls; current ancestor visibility
+is applied to the imported layers. This is a converted copy, not editable groups
+or preserving ORA Save. Unsupported semantics are refused even when hidden.
+
+Regular source files are captured once and revalidated before publication.
+The original source identity remains protected after PCND Save and rename,
+including hardlink aliases. Canonical `.ora` and extensionless recognized archives
+use the same policy. Legacy bounded stream snapshots retain the old flat-only
+profile; grouped streams are refused. Missing consent, dirty-project refusal,
+source changes and invalid profiles leave the current project untouched.
