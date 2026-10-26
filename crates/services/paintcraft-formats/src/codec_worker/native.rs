@@ -2,9 +2,11 @@
 //! admits source/output/helper bytes before invoking this service, retains its
 //! existing resource lease through consume/publication, and supplies the actual
 //! kill/reap supervisor. This module never launches arbitrary PATH-selected code.
+mod float;
 mod import;
 mod launch;
 use super::*;
+pub use float::{float_max_resident_bytes, float_reservation_bytes, float_resident_bytes};
 pub use import::{AdoptedImport, PreparedImport};
 pub use launch::Launch;
 use paintcraft_core::types::policy::hex;

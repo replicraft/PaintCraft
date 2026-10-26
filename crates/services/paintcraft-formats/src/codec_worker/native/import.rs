@@ -6,16 +6,16 @@ use paintcraft_raster::Admission;
 
 #[derive(Debug)]
 pub struct PreparedImport {
-    document: Document,
-    input: PathBuf,
-    identity: SourceIdentity,
-    length: u64,
-    sha256: [u8; 32],
-    owner: Owner,
-    profile: PreparedProfile,
+    pub(super) document: Document,
+    pub(super) input: PathBuf,
+    pub(super) identity: SourceIdentity,
+    pub(super) length: u64,
+    pub(super) sha256: [u8; 32],
+    pub(super) owner: Owner,
+    pub(super) profile: PreparedProfile,
     // The dead helper/source/output charge stays held until adoption or discard.
     // Document drops first on stale/error, before this final preparation charge.
-    _lease: ResourceLease,
+    pub(super) _lease: ResourceLease,
 }
 /// Adopted tile leases are intrinsic to the document and all shared snapshots;
 /// this result does not retain the dead child's 256MiB preparation reservation.
@@ -28,10 +28,15 @@ pub struct AdoptedImport {
     pub jxr_assessment: Option<crate::jxr::ImportAssessment>,
     pub heif_assessment: Option<crate::heif::ImportAssessment>,
     pub avif_assessment: Option<crate::avif::ImportAssessment>,
+    pub float_assessment: Option<Arc<crate::float_import::WorkerAssessment>>,
     pub avif_sdr_assessment: Option<crate::avif::sdr::ImportAssessment>,
 }
 #[derive(Debug)]
-enum PreparedProfile {
+pub(super) enum PreparedProfile {
+    Float {
+        codec: Codec,
+        assessment: Arc<crate::float_import::WorkerAssessment>,
+    },
     Jxl,
     Jxr(crate::jxr::ImportAssessment),
     Heif(crate::heif::ImportAssessment),
@@ -41,13 +46,16 @@ enum PreparedProfile {
 impl PreparedProfile {
     fn jxr(&self) -> Option<&crate::jxr::ImportAssessment> {
         match self {
-            Self::Jxl | Self::Heif(_) | Self::Avif(_) | Self::AvifSdr(_) => None,
+            Self::Jxl | Self::Heif(_) | Self::Avif(_) | Self::AvifSdr(_) | Self::Float { .. } => {
+                None
+            }
             Self::Jxr(assessment) => Some(assessment),
         }
     }
-    fn losses(&self) -> &'static [&'static str] {
+    fn losses(&self) -> &[&'static str] {
         match self {
             Self::Jxl => &[],
+            Self::Float { assessment, .. } => assessment.assessment().losses(),
             Self::Jxr(assessment) => assessment.losses(),
             Self::Heif(assessment) => assessment.losses(),
             Self::Avif(assessment) => assessment.losses(),
@@ -57,6 +65,7 @@ impl PreparedProfile {
     fn require_losses(&self, allowed: &[String]) -> Result<()> {
         match self {
             Self::Jxl => {}
+            Self::Float { assessment, .. } => assessment.assessment().require_losses(allowed)?,
             Self::Jxr(assessment) => assessment.require_losses(allowed)?,
             Self::Heif(assessment) => assessment.require_losses(allowed)?,
             Self::Avif(assessment) => assessment.require_losses(allowed)?,
@@ -317,6 +326,31 @@ impl Job {
     }
 }
 impl PreparedImport {
+    pub fn float_assessment(&self) -> Option<&crate::float_import::Assessment> {
+        match &self.profile {
+            PreparedProfile::Float { assessment, .. } => Some(assessment.assessment()),
+            _ => None,
+        }
+    }
+    /// Float consent binds the exact captured source, settings and worker pixels.
+    pub fn adopt_float(
+        self,
+        expected_digest: [u8; 32],
+        allowed: &[String],
+        host_check: &dyn Fn() -> Result<()>,
+        current_owner: &dyn Fn() -> Result<Owner>,
+    ) -> Result<AdoptedImport> {
+        let assessment = self
+            .float_assessment()
+            .ok_or_else(|| unsupported("Float adoption requires a float result"))?;
+        if assessment.digest() != expected_digest {
+            return Err(Error::new(
+                ErrorCode::InputSchema,
+                "Float import assessment/settings changed since consent",
+            ));
+        }
+        self.adopt_checked(allowed, host_check, current_owner)
+    }
     pub fn document(&self) -> &Document {
         &self.document
     }
@@ -344,12 +378,23 @@ impl PreparedImport {
             None
         }
     }
-    pub fn losses(&self) -> &'static [&'static str] {
+    pub fn losses(&self) -> &[&'static str] {
         self.profile.losses()
     }
     pub fn decoder_profile(&self) -> &'static str {
         match self.profile {
             PreparedProfile::Jxl => NATIVE_JXL_IMPORT_VARIANT,
+            PreparedProfile::Float {
+                codec: Codec::HdrSdr8,
+                ..
+            } => NATIVE_HDR_SDR_IMPORT_VARIANT,
+            PreparedProfile::Float {
+                codec: Codec::ExrSdr8,
+                ..
+            } => NATIVE_EXR_SDR_IMPORT_VARIANT,
+            PreparedProfile::Float { .. } => {
+                unreachable!("private float profile requires a float codec")
+            }
             PreparedProfile::Jxr(_) => NATIVE_JXR_IMPORT_VARIANT,
             PreparedProfile::Heif(_) => NATIVE_HEIF_IMPORT_VARIANT,
             PreparedProfile::Avif(_) => NATIVE_AVIF_IMPORT_VARIANT,
@@ -373,6 +418,19 @@ impl PreparedImport {
         host_check: &dyn Fn() -> Result<()>,
         current_owner: &dyn Fn() -> Result<Owner>,
     ) -> Result<AdoptedImport> {
+        if self.float_assessment().is_some() {
+            return Err(unsupported(
+                "Float adoption requires assessment digest and losses",
+            ));
+        }
+        self.adopt_checked(allowed, host_check, current_owner)
+    }
+    fn adopt_checked(
+        self,
+        allowed: &[String],
+        host_check: &dyn Fn() -> Result<()>,
+        current_owner: &dyn Fn() -> Result<Owner>,
+    ) -> Result<AdoptedImport> {
         let check = || {
             host_check()?;
             if current_owner()? != self.owner {
@@ -390,9 +448,13 @@ impl PreparedImport {
         check()?;
         // Moving the document preserves each tile's resident BudgetLease. Only
         // preparation scratch is retired; there is no uncharged pixel interval.
+        let float_assessment = match &self.profile {
+            PreparedProfile::Float { assessment, .. } => Some(assessment.clone()),
+            _ => None,
+        };
         let (jxr_assessment, heif_assessment, avif_assessment, avif_sdr_assessment) =
             match self.profile {
-                PreparedProfile::Jxl => (None, None, None, None),
+                PreparedProfile::Jxl | PreparedProfile::Float { .. } => (None, None, None, None),
                 PreparedProfile::Jxr(assessment) => (Some(assessment), None, None, None),
                 PreparedProfile::Heif(assessment) => (None, Some(assessment), None, None),
                 PreparedProfile::Avif(assessment) => (None, None, Some(assessment), None),
@@ -407,6 +469,7 @@ impl PreparedImport {
             heif_assessment,
             avif_assessment,
             avif_sdr_assessment,
+            float_assessment,
         })
     }
 }
