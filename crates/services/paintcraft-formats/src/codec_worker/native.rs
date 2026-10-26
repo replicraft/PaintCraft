@@ -41,11 +41,6 @@ impl Job {
         launch: impl FnOnce(Launch<'_>, &dyn Fn() -> Result<()>) -> Result<Vec<u8>>,
         consume: impl FnOnce(&Request, Frame<'_>, [u8; 32], &dyn Fn() -> Result<()>) -> Result<T>,
     ) -> Result<T> {
-        if self.codec == Codec::AvifSrgb8 {
-            return Err(unsupported(
-                "AVIF requires a separately verified AVIF-enabled helper contract",
-            ));
-        }
         if self.deadline.is_zero() || self.deadline > Duration::from_secs(120) {
             return Err(Error::new(
                 ErrorCode::InputSchema,
@@ -91,19 +86,7 @@ impl Job {
         }
         self.identity
             .verify_bytes(&self.input, self.length, &request.header.sha256, &check)?;
-        let record = native_build_record(&self.application_version)?;
-        let helper = codec_helper::discover(
-            codec_helper::Contract {
-                application_version: &self.application_version,
-                protocol_version: PROTOCOL_VERSION,
-                profile: NATIVE_PROFILE,
-                requested_heap_ceiling_bytes: HEAP_BYTES,
-                qualified_import_variants: QUALIFIED_NATIVE_IMPORT_VARIANTS,
-                build_marker: BUILD_RECORD_MARKER,
-                build_record: &record,
-            },
-            &check,
-        )?;
+        let helper = installed_helper(self.codec, &self.application_version, &check)?;
         let executable = helper.checked_executable(&check)?;
         let backing = launch::Backing::new(&request, &check)?;
         let remaining = self
@@ -128,6 +111,37 @@ impl Job {
             .verify_bytes(&self.input, self.length, &request.header.sha256, &check)?;
         check()?;
         Ok(prepared)
+    }
+}
+fn installed_helper(
+    codec: Codec,
+    version: &str,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<codec_helper::VerifiedHelper> {
+    let legacy_record = native_build_record(version)?;
+    let avif_record = native_avif_build_record(version)?;
+    let base = codec_helper::Contract {
+        application_version: version,
+        protocol_version: PROTOCOL_VERSION,
+        profile: NATIVE_PROFILE,
+        requested_heap_ceiling_bytes: HEAP_BYTES,
+        qualified_import_variants: QUALIFIED_NATIVE_IMPORT_VARIANTS,
+        build_marker: BUILD_RECORD_MARKER,
+        build_record: &legacy_record,
+    };
+    let avif = codec_helper::Contract {
+        application_version: version,
+        protocol_version: PROTOCOL_VERSION,
+        profile: AVIF_NATIVE_PROFILE,
+        requested_heap_ceiling_bytes: HEAP_BYTES,
+        qualified_import_variants: QUALIFIED_AVIF_IMPORT_VARIANTS,
+        build_marker: AVIF_BUILD_RECORD_MARKER,
+        build_record: &avif_record,
+    };
+    if codec == Codec::AvifSrgb8 {
+        codec_helper::discover(avif, check)
+    } else {
+        codec_helper::discover_compatible(base, avif, check)
     }
 }
 #[cfg(test)]

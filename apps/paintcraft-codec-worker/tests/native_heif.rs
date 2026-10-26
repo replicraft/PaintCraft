@@ -258,15 +258,29 @@ fn linked_helper_contains_cross_target_packaging_build_record() {
     assert_eq!(&header[8..10], &2u16.to_be_bytes());
     assert_eq!(wire::HEAP_BYTES, 268435456);
     let bytes = std::fs::read(env!("CARGO_BIN_EXE_paintcraft-codec-worker")).unwrap();
+    #[cfg(not(feature = "avif-codec"))]
     let record = concat!(
         "PAINTCRAFT_CODEC_WORKER_BUILD_V4\0",
         env!("CARGO_PKG_VERSION"),
         "\0PCDEC002\0HEAP268435456\0STDIN_PARENT_LEASE1\0JXR_PRIVATE_SOURCE1\0END_CODEC_WORKER_BUILD\0"
     )
     .as_bytes();
+    #[cfg(feature = "avif-codec")]
+    let record = concat!(
+        "PAINTCRAFT_CODEC_WORKER_BUILD_V5_AVIF\0",
+        env!("CARGO_PKG_VERSION"),
+        "\0PCDEC002\0HEAP268435456\0STDIN_PARENT_LEASE1\0JXR_PRIVATE_SOURCE1\0AVIF_DAV1D154_ALLOC1_ASM0_8BIT1\0END_CODEC_WORKER_BUILD\0"
+    )
+    .as_bytes();
+    #[cfg(not(feature = "avif-codec"))]
     assert_eq!(
         record,
         wire::native_build_record(env!("CARGO_PKG_VERSION")).unwrap()
+    );
+    #[cfg(feature = "avif-codec")]
+    assert_eq!(
+        record,
+        wire::native_avif_build_record(env!("CARGO_PKG_VERSION")).unwrap()
     );
     assert!(
         bytes

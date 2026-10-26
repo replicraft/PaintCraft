@@ -16,12 +16,19 @@ static HEAP: allocator::Limited<std::alloc::System, true> = allocator::Limited::
 // Referenced read-only build record survives linker GC/stripping and can be
 // checked without executing a foreign target. This is not a signature.
 const _: () = assert!(paintcraft_formats::codec_worker::HEAP_BYTES == 268435456);
+#[cfg(not(feature = "avif-codec"))]
 static BUILD_RECORD: &[u8] = concat!(
     "PAINTCRAFT_CODEC_WORKER_BUILD_V4\0",
     env!("CARGO_PKG_VERSION"),
     "\0PCDEC002\0HEAP268435456\0STDIN_PARENT_LEASE1\0JXR_PRIVATE_SOURCE1\0END_CODEC_WORKER_BUILD\0",
 )
 .as_bytes();
+#[cfg(feature = "avif-codec")]
+static BUILD_RECORD: &[u8] = concat!(
+    "PAINTCRAFT_CODEC_WORKER_BUILD_V5_AVIF\0",
+    env!("CARGO_PKG_VERSION"),
+    "\0PCDEC002\0HEAP268435456\0STDIN_PARENT_LEASE1\0JXR_PRIVATE_SOURCE1\0AVIF_DAV1D154_ALLOC1_ASM0_8BIT1\0END_CODEC_WORKER_BUILD\0",
+).as_bytes();
 fn main() {
     std::hint::black_box(BUILD_RECORD);
     let args: Vec<_> = std::env::args_os().skip(1).collect();

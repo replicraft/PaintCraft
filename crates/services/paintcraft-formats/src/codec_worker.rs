@@ -28,6 +28,7 @@ pub const OUTPUT_BYTES_MAX: usize = PIXELS_MAX as usize * 4 + RESPONSE_HEADER + 
 pub const REQUEST_MAGIC: &[u8; 8] = b"PCDEC002";
 pub const PROTOCOL_VERSION: u16 = 2;
 pub const NATIVE_JXL_IMPORT_VARIANT: &str = "native-jxl-srgb8-worker-v1";
+pub const NATIVE_AVIF_IMPORT_VARIANT: &str = "native-avif-srgb8-worker-v1";
 pub const NATIVE_HEIF_IMPORT_VARIANT: &str = "native-heif-srgb8-worker-v1";
 pub const NATIVE_JXR_IMPORT_VARIANT: &str = "native-jxr-srgb8-worker-v1";
 pub const QUALIFIED_NATIVE_IMPORT_VARIANTS: &[&str] = &[
@@ -38,6 +39,26 @@ pub const QUALIFIED_NATIVE_IMPORT_VARIANTS: &[&str] = &[
 pub const NATIVE_PROFILE: &str =
     "internal-heif-gray8-heif-srgb8-jxl-rgba8-jxr-rgb8-private-source1-parent-lease1";
 pub const BUILD_RECORD_MARKER: &[u8] = b"PAINTCRAFT_CODEC_WORKER_BUILD_V4\0";
+pub const AVIF_NATIVE_PROFILE: &str = "native-heif-gray8-heif-srgb8-jxl-rgba8-jxr-rgb8-avif-srgb8-dav1d154-alloc1-private-source1-parent-lease1";
+pub const AVIF_BUILD_RECORD_MARKER: &[u8] = b"PAINTCRAFT_CODEC_WORKER_BUILD_V5_AVIF\0";
+pub const QUALIFIED_AVIF_IMPORT_VARIANTS: &[&str] = &[
+    NATIVE_JXL_IMPORT_VARIANT,
+    NATIVE_JXR_IMPORT_VARIANT,
+    NATIVE_HEIF_IMPORT_VARIANT,
+    NATIVE_AVIF_IMPORT_VARIANT,
+];
+pub fn native_avif_build_record(version: &str) -> Result<Vec<u8>> {
+    if version.is_empty() || version.len() > 64 || !version.is_ascii() {
+        return Err(Error::new(
+            ErrorCode::InputSchema,
+            "Invalid codec application version",
+        ));
+    }
+    let mut bytes = AVIF_BUILD_RECORD_MARKER.to_vec();
+    bytes.extend(version.as_bytes());
+    bytes.extend(b"\0PCDEC002\0HEAP268435456\0STDIN_PARENT_LEASE1\0JXR_PRIVATE_SOURCE1\0AVIF_DAV1D154_ALLOC1_ASM0_8BIT1\0END_CODEC_WORKER_BUILD\0");
+    Ok(bytes)
+}
 /// Expected native build bytes, provided to the OS verifier at composition.
 pub fn native_build_record(version: &str) -> Result<Vec<u8>> {
     if version.is_empty() || version.len() > 64 || !version.is_ascii() {
