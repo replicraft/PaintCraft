@@ -1,0 +1,26 @@
+{
+    "encoder": "ffmpeg 8.0.1 libx265",
+    "flags": "lossless=1:repeat-headers=1:keyint=1:bframes=0:pools=none:frame-threads=1:wpp=0:log-level=error",
+    "color_range": "pc",
+    "verification": "ffmpeg independently decoded both raw HEVC streams back to the exact authored gray8 bytes",
+    "fixtures": [
+        {
+            "file": "gray32x24.h265",
+            "width": 32,
+            "height": 24,
+            "sample_format": "gray8",
+            "pattern": "(x * 7 + y * 11) % 256",
+            "sha256": "d7338f56cd2b4dae9cc1a42ec55cff7d2ae31d6461123fb6251d0e7413883b02",
+            "raw_gray_sha256": "2f7c22b8a227f529e1a1e65bc101471bff7f1e97a5098a3700532c12f486b375"
+        },
+        {
+            "file": "constant32x24.h265",
+            "width": 32,
+            "height": 24,
+            "sample_format": "gray8",
+            "pattern": "17",
+            "sha256": "9c82c0079bedd49a40d40cecb62f776d55a86d106bc4b2631c23150a0d055625",
+            "raw_gray_sha256": "64a1f801ca78fdcbd66c928295abfb70048e31583a13a57b98af8cb9ee7fd162"
+        }
+    ]
+}
