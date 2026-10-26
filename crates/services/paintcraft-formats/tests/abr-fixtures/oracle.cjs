@@ -73,6 +73,23 @@ for (const [name, receipt] of Object.entries(manifest.files)) {
 	const bytes = fs.readFileSync(path.join(__dirname, name));
 	assert.equal(bytes.length, receipt.bytes);
 	assert.equal(crypto.createHash("sha256").update(bytes).digest("hex"), receipt.sha256);
+	if (name === "native-presets.abr") {
+		const library = readAbr(bytes);
+		assert.equal(library.brushes.length, 15);
+		assert.equal(library.samples.length, 3);
+		assert.deepEqual([...library.samples[0].alpha], [0, 1, 127, 128, 254, 255]);
+		assert.deepEqual([...library.samples[2].alpha], [0, 0, 0, 0, 0, 0]);
+		assert.equal(library.brushes[0].shape.sampledData, "raw-8");
+		assert.equal(library.brushes[0].shape.size, 3);
+		assert.equal(library.brushes[0].shape.angle, 0);
+		assert.equal(library.brushes[0].shape.roundness, 1);
+		assert.equal(library.brushes[0].shape.spacing, 1);
+		assert.equal(library.brushes[1].shape.spacing, 0.1);
+		assert.equal(library.brushes[13].shapeDynamics.sizeDynamics.control, "pen pressure");
+		console.log(JSON.stringify({ name, bytes: bytes.length, sha256: receipt.sha256,
+			oracle: "ag-psd 33.0.0", qualification: "owned static-preset metadata and alpha reader check; no renderer parity claim" }));
+		continue;
+	}
 	if (name === "indexed-extra3.abr") {
 		// The upstream palette heuristic mistakes the retained word 3 for the
 		// VMAL version. Independent psd-tools verifies this specimen instead.

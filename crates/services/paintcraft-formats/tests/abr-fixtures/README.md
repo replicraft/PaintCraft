@@ -2,7 +2,9 @@
 
 The internal reader uses selected `ag-psd` 0.3.0 after a complete structural
 preflight. ABR resources are not image documents, and this implementation does
-not register public Open, import, brush adoption or export operations. Parsed
+not register public Open, import or export operations. The explicit native-grid
+backend adoption subset is documented in [sampled brush qualification](../../../../../docs/SAMPLED_BRUSHES.md);
+Studio pointer/UI integration remains pending. Parsed
 presets alone do not implement Photoshop brush behavior in PaintCraft.
 
 ## Admitted profile
@@ -87,7 +89,7 @@ memory, parser confinement or cancellation-tail guarantee. Checks surround
 upstream calls and run throughout preflight; upstream decoding has no internal
 cooperative cancellation callback. CMYK/other pattern color models, one-bit or
 ZIP/predictive pattern channels, ambiguous preview layouts, legacy ABR 1/2,
-actual brush rendering/adoption and original-application
+full preset rendering, Studio UI adoption and original-application
 qualification remain unimplemented or unqualified. ABR export is outside the
 requested import-only asset policy.
 
@@ -100,6 +102,7 @@ implementation source is copied. `sources.json` records byte counts and SHA-256.
 | Fixture | Bytes | Coverage |
 | --- | ---: | --- |
 | `empty.abr` | 4 | Empty version-6/minor-1 resource |
+| `native-presets.abr` | See `sources.json` | Fifteen static-tip policy candidates: exact R8 mask, spacing consent, high depth, missing sample, transforms, active pressure/texture/wet/noise, unknown fields and empty tip |
 | `samples-v6.abr` | 992 | Raw/PackBits 8-bit and raw 16-bit masks, negative origin, computed/sampled brush descriptors, Unicode/non-BMP preset name, unknown retained field and hierarchy metadata |
 | `samples-v10.abr` | 316 | Minor-2 sample layout with its longer header |
 | `rle16-v6.abr` | 1012 | Minor-1 16-bit PackBits, byte runs crossing sample boundaries, no-ops, low bits, nonzero opaque header data and multiple sample sections separated by metadata |
