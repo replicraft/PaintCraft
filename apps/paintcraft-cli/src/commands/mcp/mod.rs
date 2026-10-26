@@ -2,6 +2,7 @@
 mod icons;
 mod palettes;
 mod params;
+mod shapes;
 mod state;
 mod tools;
 

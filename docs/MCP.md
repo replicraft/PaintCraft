@@ -41,6 +41,8 @@ Available tools:
 - `export_icons`: export a fresh multi-size ICO/CUR asset set with explicit sizes, PNG/bitmap encodings and cursor hotspots.
 - `inspect_palette`: inspect an ASE palette resource without creating or editing a painting.
 - `export_palette`: write a fresh ASE palette copy while retaining groups, names, color models, swatch types and precise channel values.
+- `inspect_shapes`: inspect a CSH custom shape library, including exact bounds and ordered path records.
+- `export_shapes`: write a fresh CSH resource copy without editing or adopting the open document.
 
 Palette tools work without an open document. They never edit the painting,
 history, dirty flag or project save binding. For example:
@@ -68,6 +70,53 @@ copies its rounded 8-bit sRGB color into the selected primary/secondary tool
 color. Palette values stay unchanged. CMYK/LAB display conversion and original
 Adobe application qualification remain separate work. Image Open/Import does not
 treat palette assets as pictures.
+
+## Custom shape resources
+
+`inspect_shapes` and `export_shapes` exchange Photoshop custom shape libraries
+as Studio resources. They work without a painting and never change document
+pixels, layers, history, dirty state or the project save binding. Inspection
+returns `paintcraft.shape-inspection/v1`, including:
+
+- Shape names and original IDs, retaining duplicate IDs in their original order.
+- Original unsigned `bounds_tlbr` values, including the origin.
+- Ordered subpath, knot, fill-rule, initial-fill and clipboard records.
+- Exact signed normalized 8.24 `points_i32` coordinates in
+  `[x0, y0, x1, y1, x2, y2]` order, without floating-point or pixel rounding.
+- Open/closed and linked/unlinked flags, knot counts, nullable path operations
+  (`exclude`, `combine`, `subtract`, `intersect`), and distinct legacy even/odd,
+  even/odd and nonzero path-fill flags. An absent
+  source operation is explicit JSON `null`.
+
+Clipboard `values_i32` retain `[top, left, bottom, right, resolution]` in signed
+8.24 units. `source_sha256` identifies the exact acquired bytes; pass it as
+`expect_input_sha256` to guard a later inspection or export.
+
+```json
+{"name":"inspect_shapes","arguments":{"path":"/absolute/path/shapes.csh"}}
+{"name":"export_shapes","arguments":{"input":"/absolute/path/shapes.csh","path":"/absolute/path/copy.csh","overwrite":false}}
+```
+
+The equivalent CLI commands and complete typed JSON schema are:
+
+```sh
+paintcraft-cli shape inspect shapes.csh --json
+paintcraft-cli shape export shapes.csh -o copy.csh
+paintcraft-cli schema shape-inspection
+```
+
+Only the Studio profile admits these resource operations. The bounded profile
+supports CSH version 2 / shape version 1, up to 4 MiB, 256 shapes and 65,536
+ordered records, with null-free ASCII IDs and validated unsigned bounds and
+reserved fields. Unsupported flags, record kinds and inconsistent topology are
+refused. Fresh exports retain the admitted resource semantics; name
+padding and terminators may be canonicalized. Output requires a distinct `.csh`
+path, and existing files require explicit overwrite. Filesystem aliases of the
+resource and the painting's protected sources are refused. Export receipts
+identify the resource, never acknowledge a document save or adopt its lineage.
+These operations do not open CSH as an image or place shapes into the painting.
+The owned fixtures and upstream-reader checks do not establish Adobe application
+or cross-platform release qualification.
 
 For ICO/CUR import, provide a zero-based `entry` in `import_image`; no entry is
 selected automatically. For DCX, provide a zero-based `page` instead. The two
@@ -130,8 +179,9 @@ paintcraft-cli import drawing.svg -o converted.pcnd \
 
 Repeat `--svg-font /path/to/font.ttf` for additional fonts. Acknowledge any other
 reported metadata or font-substitution losses explicitly. Classic CLI profiles
-refuse SVG before reading its content. Desktop/browser SVG controls remain
-pending; these options do not enable ordinary SVG Open or SVG export.
+refuse SVG before reading its content. Studio desktop/browser Import provides
+explicit dimensions, DPI and fitting controls, preview and loss consent. These
+options do not enable ordinary SVG Open or SVG export.
 
 `export_icons` takes `path`, an ordered `entries` array and optional `resampling`
 (`lanczos3` by default, or `nearest`). Each entry has `width`, `height`, `encoding`
