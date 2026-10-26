@@ -1,0 +1,61 @@
+--- a/src/mem.h
++++ b/src/mem.h
+@@ -74,9 +74,7 @@
+     Dav1dMemPoolBuffer *buf;
+     int ref_cnt;
+     int end;
+-#if TRACK_HEAP_ALLOCATIONS
+     enum AllocationType type;
+-#endif
+ } Dav1dMemPool;
+ 
+ // TODO: Move this to a common location?
+@@ -128,12 +126,17 @@
+ void dav1d_free_aligned(void *ptr);
+ void dav1d_log_alloc_stats(Dav1dContext *c);
+ #else
+-#define dav1d_mem_pool_init(type, pool) dav1d_mem_pool_init(pool)
+-#define dav1d_malloc(type, sz) malloc(sz)
+-#define dav1d_realloc(type, ptr, sz) realloc(ptr, sz)
+-#define dav1d_alloc_aligned(type, sz, align) dav1d_alloc_aligned_internal(sz, align)
+-#define dav1d_free(ptr) free(ptr)
+-#define dav1d_free_aligned(ptr) dav1d_free_aligned_internal(ptr)
++/* PaintCraft pinned-build boundary. C allocator layout/lifetime is owned by
++ * the executable's charged Rust shim; no system-allocator fallback exists. */
++void *paintcraft_dav1d_alloc(size_t size, size_t alignment, unsigned kind);
++void *paintcraft_dav1d_realloc(void *pointer, size_t size, unsigned kind);
++void paintcraft_dav1d_free(void *pointer);
++#define dav1d_malloc(type, sz) paintcraft_dav1d_alloc(sz, 16, type)
++#define dav1d_realloc(type, ptr, sz) paintcraft_dav1d_realloc(ptr, sz, type)
++#define dav1d_free(ptr) paintcraft_dav1d_free(ptr)
++#define dav1d_alloc_aligned(type, sz, align) paintcraft_dav1d_alloc(sz, align, type)
++#define dav1d_free_aligned(ptr) paintcraft_dav1d_free(ptr)
++
+ #endif /* TRACK_HEAP_ALLOCATIONS */
+ 
+ void dav1d_mem_pool_push(Dav1dMemPool *pool, void *ptr);
+--- a/src/mem.c
++++ b/src/mem.c
+@@ -280,9 +280,7 @@
+             pool->buf = NULL;
+             pool->ref_cnt = 1;
+             pool->end = 0;
+-#if TRACK_HEAP_ALLOCATIONS
+             pool->type = type;
+-#endif
+             *ppool = pool;
+             return 0;
+         }
+--- a/src/ref.h
++++ b/src/ref.h
+@@ -45,9 +45,7 @@
+     void *user_data;
+ };
+ 
+-#if !TRACK_HEAP_ALLOCATIONS
+-#define dav1d_ref_create(type, size) dav1d_ref_create(size)
+-#endif
++/* PaintCraft preserves allocation type arguments without statistics. */
+ 
+ Dav1dRef *dav1d_ref_create(enum AllocationType type, size_t size);
+ Dav1dRef *dav1d_ref_create_using_pool(Dav1dMemPool *pool, size_t size);

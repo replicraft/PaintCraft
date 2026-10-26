@@ -3,6 +3,8 @@
 #[cfg(target_arch = "wasm32")]
 compile_error!("native codec helper is not a WebWorker implementation");
 mod allocator;
+#[cfg(feature = "avif-codec")]
+mod avif;
 mod jxr;
 mod parent_lease;
 mod worker;
