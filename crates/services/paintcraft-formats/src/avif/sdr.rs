@@ -30,3 +30,6 @@ pub use color::reconstruct;
 
 mod work;
 pub use work::{WorkLayout, work_layout};
+
+mod import;
+pub use import::{COLOR_POLICY, ImportAssessment, KNOWN_IMPORT_LOSSES, assess_import};
