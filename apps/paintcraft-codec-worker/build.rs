@@ -1,4 +1,4 @@
-//! Optional pinned C decoder build. Default packaged helpers are unchanged.
+//! Optional pinned C decoder build, explicitly enabled by native release builds.
 use sha2::{Digest, Sha256};
 use std::{
     env, fs,
@@ -155,6 +155,9 @@ fn main() {
         "-Denable_examples=false",
         "-Dbitdepths=8",
     ]);
+    if cfg!(windows) {
+        setup.arg("-Db_vscrt=mt");
+    }
     run(&mut setup);
     changed(&compiler_marker, &compiler);
     run(Command::new("ninja")

@@ -123,6 +123,13 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
+      - name: Install pinned native decoder build tools
+        run: python -m pip install meson==1.12.1 ninja==1.13.2
+      - name: Select the native Windows C compiler
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: ${{ matrix.target == 'aarch64-pc-windows-msvc' && 'arm64' || 'x64' }}
       - name: Install Linux build and packaging libraries
         if: runner.os == 'Linux'
         run: |
@@ -133,7 +140,11 @@ jobs:
         shell: pwsh
         run: '"RUSTFLAGS=-C target-feature=+crt-static" >> $env:GITHUB_ENV'
       - name: Build release with GPU rendering
-        run: cargo build --locked --release -p paintcraft -p paintcraft-cli -p paintcraft-codec-worker --target ${{ matrix.target }}
+        run: cargo build --locked --release -p paintcraft -p paintcraft-cli -p paintcraft-codec-worker --target ${{ matrix.target }} --features paintcraft-codec-worker/avif-codec
+      - name: Qualify the native decoder helper and installed consumers
+        run: |
+          cargo test --locked --release -p paintcraft-codec-worker --features avif-codec --target ${{ matrix.target }} --tests
+          cargo test --locked --release -p paintcraft-cli --target ${{ matrix.target }} --test installed_codec_worker -- --include-ignored
       - name: Test native clipboard transport and lifecycle
         if: runner.os == 'Windows' || runner.os == 'Linux'
         run: cargo test --locked -p paintcraft-platform --features clipboard --target ${{ matrix.target }} --lib
