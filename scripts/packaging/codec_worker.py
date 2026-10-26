@@ -5,7 +5,7 @@ import shutil
 
 MANIFEST = "paintcraft-codec-worker.json"
 NOTICE = "JPEGXR_LICENSE.txt"
-BUILD_PREFIX = b"PAINTCRAFT_CODEC_WORKER_BUILD_V3\0"
+BUILD_PREFIX = b"PAINTCRAFT_CODEC_WORKER_BUILD_V4\0"
 BUILD_SUFFIX = b"\0PCDEC002\0HEAP268435456\0STDIN_PARENT_LEASE1\0JXR_PRIVATE_SOURCE1\0END_CODEC_WORKER_BUILD\0"
 
 
@@ -61,7 +61,7 @@ def metadata(directory, version, target):
         "executable": helper.name,
         "sha256": release.digest(helper),
         "protocol_version": 2,
-        "profile": "internal-heif-gray8-jxl-rgba8-jxr-rgb8-private-source1-parent-lease1",
+        "profile": "internal-heif-gray8-heif-srgb8-jxl-rgba8-jxr-rgb8-private-source1-parent-lease1",
         "requested_heap_ceiling_bytes": 256 << 20,
         "qualified_import_variants": ["native-jxl-srgb8-worker-v1", "native-jxr-srgb8-worker-v1"],
     }

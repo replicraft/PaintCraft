@@ -35,7 +35,7 @@ class CodecWorkerTests(unittest.TestCase):
             self.assertEqual(metadata["application_version"], self.version)
             self.assertEqual(metadata["target"], target)
             self.assertEqual(metadata["protocol_version"], 2)
-            self.assertEqual(metadata["profile"], "internal-heif-gray8-jxl-rgba8-jxr-rgb8-private-source1-parent-lease1")
+            self.assertEqual(metadata["profile"], "internal-heif-gray8-heif-srgb8-jxl-rgba8-jxr-rgb8-private-source1-parent-lease1")
             self.assertEqual(metadata["requested_heap_ceiling_bytes"], 256 << 20)
             self.assertTrue(metadata["embedded_build_record_verified"])
             self.assertEqual(metadata["schema_version"], 2)
@@ -54,7 +54,7 @@ class CodecWorkerTests(unittest.TestCase):
                     correct.replace(self.version.encode(), b"999.0.0"),
                     correct.replace(b"PCDEC002", b"PCDEC003"),
                     correct.replace(b"HEAP268435456", b"HEAP268435457"),
-                    correct.replace(b"BUILD_V3", b"BUILD_V2"),
+                    correct.replace(b"BUILD_V4", b"BUILD_V3"),
                     correct.replace(b"STDIN_PARENT_LEASE1", b"STDIN_PARENT_LEASE0"),
                     correct.replace(b"JXR_PRIVATE_SOURCE1", b"JXR_PRIVATE_SOURCE0")]:
             self.helper.write_bytes(bad)
