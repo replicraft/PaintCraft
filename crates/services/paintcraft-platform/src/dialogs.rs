@@ -23,6 +23,7 @@ pub enum Kind {
     SaveAs,
     Export,
     ExportIcons,
+    ExportIcns,
     ImportPalette,
     ExportPalette,
     ImportShape,
@@ -99,6 +100,10 @@ impl NativeDialogs {
                     extensions: extensions.iter().map(|ext| (*ext).into()).collect(),
                 })
                 .collect(),
+            Kind::ExportIcns => vec![Filter {
+                name: "Apple icon export".into(),
+                extensions: vec!["icns".into()],
+            }],
             Kind::ExportIcons => vec![Filter {
                 name: "Icon and cursor export".into(),
                 extensions: vec!["ico".into(), "cur".into()],
@@ -176,6 +181,7 @@ impl NativeDialogs {
             Kind::SaveAs => dialog.set_title(label("Save PaintCraft document")),
             Kind::Export => dialog.set_title(label("Export image")),
             Kind::ExportIcons => dialog.set_title(label("Icon and cursor export")),
+            Kind::ExportIcns => dialog.set_title(label("Apple icon export")),
             Kind::ImportPalette => dialog.set_title(label("Import palette")),
             Kind::ExportPalette => dialog.set_title(label("Export palette")),
             Kind::ImportBrush => dialog.set_title(label("Import brushes")),

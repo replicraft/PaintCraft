@@ -21,6 +21,7 @@ pub enum Action {
     SaveAll,
     Export,
     ExportIcons,
+    ExportIcns,
     Palettes,
     ShapeResources,
     BrushResources,
@@ -128,6 +129,7 @@ pub const STUDIO_FILE: &[Action] = &[
     Action::SaveAll,
     Action::Export,
     Action::ExportIcons,
+    Action::ExportIcns,
     Action::Palettes,
     Action::ShapeResources,
     Action::BrushResources,
@@ -174,6 +176,7 @@ impl Action {
             Self::SaveAll => ("Save All", None),
             Self::Export => ("Export…", None),
             Self::ExportIcons => ("Export icon or cursor…", None),
+            Self::ExportIcns => ("Export Apple icon…", None),
             Self::Palettes => ("Palettes…", None),
             Self::BrushResources => ("Brush resources…", None),
             Self::ShapeResources => ("Shape resources…", None),
@@ -323,6 +326,7 @@ impl Action {
             | Self::EditSecondaryCustomColor(_) => frontend == Frontend::Classic,
             Self::Layer(_)
             | Self::ExportIcons
+            | Self::ExportIcns
             | Self::Palettes
             | Self::ShapeResources
             | Self::BrushResources => frontend == Frontend::Studio,
@@ -436,6 +440,7 @@ impl Action {
             Self::SaveAll => 1024,
             Self::Export => 1004,
             Self::ExportIcons => 4000,
+            Self::ExportIcns => 4004,
             Self::BrushResources => 4003,
             Self::Palettes => 4001,
             Self::ShapeResources => 4002,
