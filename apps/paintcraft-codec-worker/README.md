@@ -9,11 +9,11 @@ process supervisor. There is no PATH lookup, inherited environment, filesystem
 source path, network address or shell command in the request. The versioned binary
 protocol captures immutable bytes, their SHA-256, a random request nonce, document
 session/state/epoch and frontend. Responses must match every capture and the
-application version, then pass plane length/profile checks. These checks return
+application version, requested codec and sample model, then pass plane length/profile checks. These checks return
 private native planes; no document, save path or source ownership is adopted.
 The application publication thread must sample its current owner again.
 
-The initial internal profile is a single base-layer monochrome8 IDR per coded
+The HEIF internal profile is a single base-layer monochrome8 IDR per coded
 image, including checked primary selection, direct grid order and auxiliary alpha.
 All coded SPS dimensions, hvcC/pixi/ispe declarations, grid coverage, full-range
 CICP and alpha depth/association must agree. ICC, display transforms, premultiplied
@@ -59,7 +59,7 @@ version verification at dispatch, actual installer/platform qualification,
 OS containment policy beyond this Rust heap boundary,
 actual WebWorker cancellation/memory parity, cross-platform qualification and
 independent full-container/color/depth oracles. Merely compiling this helper does
-not satisfy those gates. No release scripts or GUI entrypoints install it yet.
+not satisfy those gates. Public GUI/CLI image-open entrypoints do not discover or invoke it yet.
 
 The transient reservation remains charged through child completion and until the
 caller consumes/discards the result. It is **not** an automatic resident-budget
@@ -105,3 +105,42 @@ a CLI executable, and current CLI `cargo install` scripts, also omit the helper.
 These routes must not gain helper-dependent readers just because another package
 ships it; missing/foreign/stale helpers must fail closed. Archive/install formats
 retain their existing release names and checksum inventory.
+
+
+## JPEG XL internal native profile
+
+The same executable and supervisor now also handle an explicitly selected JPEG XL
+request. Shared `paintcraft_formats::codec_worker` protocol2 uses `PCDEC002` /
+`PCPIX002` envelopes and binds the response codec to the captured request. Typed
+pixel payloads distinguish native HEIF gray/opacity from integer sRGB RGBA8;
+responses cannot relabel either model as the other. Parent output reservation
+covers four bytes per pixel plus bounded version/error framing for either codec.
+The embedded helper build record and packaging manifest also require protocol2,
+so an earlier helper refuses the new package contract instead of being invoked.
+
+The pinned selected `jxl` 0.8.0 decoder is from
+[libjxl/jxl-rs](https://github.com/libjxl/jxl-rs), source revision
+`9a08ca643fd2d01f803dd0be6a5bebc9cc11e597` in its published VCS record,
+BSD-3-Clause. The existing adapter uses the upstream event API, Main5 profile,
+sample allowance, unpremultiplied output and our sequential task runner. Its
+`BasicInfo` event makes original color profile/depth/alpha metadata available;
+there is no custom allocator or comprehensive upstream scratch budget exposed.
+This internal stage relies on fixed-heap subprocess execution for hostile input;
+it does not establish a complete OS sandbox. ICC/header scratch may allocate **before** a subtype is refused.
+No subprocess or production thread spawn was found in the decoder source; its
+thread-scoped buffer splitter code is under the upstream test module. Its work
+runner is sequential here, separate from the one-thread HEIF Rayon pool.
+
+The initial JXL worker profile accepts original-profile, identity-oriented,
+static integer RGB sRGB8 with optional straight alpha and no preview or discarded
+container metadata. ICC, linear/HDR, 16-bit/float, XYB requiring profile conversion,
+associated alpha, animation and non-alpha extra channels refuse before PaintCraft
+allocates output planes. Existing broader internal adapter behavior is unchanged.
+Native helper tests compare exact channels, hidden RGB and partial alpha against
+checked-in independent `cjxl` 0.12.0 fixtures, also covering one pixel, malformed
+inputs, explicit cross-codec rejection, limits, cancellation and deadlines.
+
+This is internal native qualification, not public JXL Open support. Browser
+WebWorker execution, installed-helper dispatch/integrity policy, broader adversarial
+corpora and platform qualification remain separate gates. Existing JXL exports
+retain their current qualified lossless writer subset.

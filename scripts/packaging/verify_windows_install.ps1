@@ -28,7 +28,7 @@ function Verify-Installed {
         throw 'Installed decoder helper differs from the release helper'
     }
     $manifest = Get-Content $manifestPath -Raw | ConvertFrom-Json
-    if ($manifest.schema_version -ne 1 -or $manifest.protocol_version -ne 1 -or
+    if ($manifest.schema_version -ne 1 -or $manifest.protocol_version -ne 2 -or
         $manifest.executable -ne 'paintcraft-codec-worker.exe' -or $manifest.public_reader_enabled -ne $false -or
         $manifest.sha256 -ne (Get-FileHash $helper -Algorithm SHA256).Hash) {
         throw 'Installed helper manifest does not match executable/protocol'

@@ -151,7 +151,7 @@ class NativeLauncherTests(unittest.TestCase):
             subprocess.run(["/usr/bin/xcrun", "swiftc", "-module-cache-path", str(root / "swift-module-cache"),
                             str(source), "-o", str(dummy)], check=True)
             helper_source = root / "DummyHelper.swift"
-            record = "PAINTCRAFT_CODEC_WORKER_BUILD_V1\0" + release.workspace_version() + "\0PCHEIF01\0HEAP268435456\0END_CODEC_WORKER_BUILD\0"
+            record = "PAINTCRAFT_CODEC_WORKER_BUILD_V1\0" + release.workspace_version() + "\0PCDEC002\0HEAP268435456\0END_CODEC_WORKER_BUILD\0"
             helper_source.write_text("import Foundation\nlet record = " + json.dumps(record).replace("\\u0000", "\\0") + "\nFileHandle.standardOutput.write(record.data(using: .utf8)!)\n")
             subprocess.run(["/usr/bin/xcrun", "swiftc", "-module-cache-path", str(root / "swift-module-cache"),
                             str(helper_source), "-o", str(root / "paintcraft-codec-worker")], check=True)
