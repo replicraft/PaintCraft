@@ -48,6 +48,8 @@ enum Command {
     Palette(commands::palette::Options),
     /// Inspect and exchange custom shape libraries as resources, independently of images.
     Shape(commands::shapes::Options),
+    /// Inspect ABR assets or paint with an explicitly qualified native static tip.
+    Brush(commands::brushes::Options),
 }
 
 fn main() -> ExitCode {
@@ -66,6 +68,7 @@ fn main() -> ExitCode {
         Command::PasteImage(a) => commands::paste_image::run(a, cli.json),
         Command::Palette(a) => commands::palette::run(a, cli.json),
         Command::Shape(a) => commands::shapes::run(a, cli.json),
+        Command::Brush(a) => commands::brushes::run(a, cli.json),
     };
     let _ = std::io::stdout().write_all(&reply.stdout);
     eprint!("{}", reply.stderr);

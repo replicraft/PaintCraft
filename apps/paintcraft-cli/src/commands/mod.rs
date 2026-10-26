@@ -274,3 +274,5 @@ pub mod mcp;
 pub mod flatten;
 
 pub mod shapes;
+
+pub mod brushes;

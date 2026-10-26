@@ -15,8 +15,11 @@ path = "src/main.rs"
 paintcraft-core.workspace = true
 paintcraft-document.workspace = true
 paintcraft-editor.workspace = true
+paintcraft-commands.workspace = true
+paintcraft-tools.workspace = true
 paintcraft-formats.workspace = true
 paintcraft-render.workspace = true
+paintcraft-platform.workspace = true
 
 clap.workspace = true
 rayon.workspace = true
