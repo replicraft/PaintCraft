@@ -452,3 +452,47 @@ i-accept-these-import-changes = मैं आयात के इन बदल�
 svg-vectors-and-text-will-become-pixels-in-a-single-picture-layer = SVG वेक्टर और पाठ एक चित्र परत में पिक्सेल बन जाएँगे।
 
 unavailable-svg-font-families-will-be-replaced-with-bundled-fonts = अनुपलब्ध SVG फ़ॉन्ट परिवार शामिल फ़ॉन्ट से बदले जाएँगे।
+
+palettes = पैलेट
+
+palettes-more = पैलेट…
+
+import-palette-more = पैलेट आयात करें…
+
+export-palette-more = पैलेट निर्यात करें…
+
+import-palette = पैलेट आयात करें
+
+export-palette = पैलेट निर्यात करें
+
+picking-a-swatch-copies-an-8-bit-srgb-color-original-palette-values-stay-unchanged = नमूना चुनने पर 8-बिट sRGB रंग कॉपी होता है। मूल पैलेट के मान अपरिवर्तित रहते हैं।
+
+cmyk-lab-and-out-of-range-colors-need-color-managed-conversion-and-cannot-be-picked-yet = CMYK, LAB और सीमा से बाहर के रंगों के लिए रंग-प्रबंधित रूपांतरण आवश्यक है; अभी इन्हें नहीं चुन सकते।
+
+unnamed-swatch = बिना नाम का नमूना
+
+import-an-adobe-swatch-exchange-palette-to-browse-its-colors-and-groups = रंग और समूह देखने के लिए Adobe Swatch Exchange पैलेट आयात करें।
+
+global-color = वैश्विक रंग
+
+spot-color = स्पॉट रंग
+
+process-color = प्रक्रिया रंग
+
+adobe-swatch-exchange-palette = Adobe Swatch Exchange पैलेट
+
+palette-imported = पैलेट आयात हो गया।
+
+palette-exported = पैलेट निर्यात हो गया।
+
+palette-import-cancelled = पैलेट आयात रद्द किया गया।
+
+palette-export-cancelled = पैलेट निर्यात रद्द किया गया।
+
+the-palette-changed-choose-the-file-again = पैलेट बदल गया है; फ़ाइल फिर से चुनें।
+
+format-could-not-import-the-palette-detail = पैलेट आयात नहीं हो सका: { $detail }
+
+format-could-not-export-the-palette-detail = पैलेट निर्यात नहीं हो सका: { $detail }
+
+palette-download-requested = पैलेट डाउनलोड का अनुरोध किया गया।

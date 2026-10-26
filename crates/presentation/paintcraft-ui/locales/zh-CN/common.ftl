@@ -452,3 +452,47 @@ i-accept-these-import-changes = 我同意这些导入更改。
 svg-vectors-and-text-will-become-pixels-in-a-single-picture-layer = SVG 矢量和文字将转换为单个图像图层中的像素。
 
 unavailable-svg-font-families-will-be-replaced-with-bundled-fonts = 不可用的 SVG 字体系列将替换为内置字体。
+
+palettes = 调色板
+
+palettes-more = 调色板…
+
+import-palette-more = 导入调色板…
+
+export-palette-more = 导出调色板…
+
+import-palette = 导入调色板
+
+export-palette = 导出调色板
+
+picking-a-swatch-copies-an-8-bit-srgb-color-original-palette-values-stay-unchanged = 选取色样会复制一个 8 位 sRGB 颜色。原始调色板数值保持不变。
+
+cmyk-lab-and-out-of-range-colors-need-color-managed-conversion-and-cannot-be-picked-yet = CMYK、LAB 和超出范围的颜色需要经过色彩管理转换，暂时无法选取。
+
+unnamed-swatch = 未命名色样
+
+import-an-adobe-swatch-exchange-palette-to-browse-its-colors-and-groups = 导入 Adobe Swatch Exchange 调色板以浏览其颜色和分组。
+
+global-color = 全局色
+
+spot-color = 专色
+
+process-color = 印刷色
+
+adobe-swatch-exchange-palette = Adobe Swatch Exchange 调色板
+
+palette-imported = 调色板已导入。
+
+palette-exported = 调色板已导出。
+
+palette-import-cancelled = 已取消导入调色板。
+
+palette-export-cancelled = 已取消导出调色板。
+
+the-palette-changed-choose-the-file-again = 调色板已更改，请重新选择文件。
+
+format-could-not-import-the-palette-detail = 无法导入调色板：{ $detail }
+
+format-could-not-export-the-palette-detail = 无法导出调色板：{ $detail }
+
+palette-download-requested = 已请求下载调色板。

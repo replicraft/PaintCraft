@@ -452,3 +452,47 @@ i-accept-these-import-changes = I accept these import changes.
 svg-vectors-and-text-will-become-pixels-in-a-single-picture-layer = SVG vectors and text will become pixels in a single picture layer.
 
 unavailable-svg-font-families-will-be-replaced-with-bundled-fonts = Unavailable SVG font families will be replaced with bundled fonts.
+
+palettes = Palettes
+
+palettes-more = Palettes…
+
+import-palette-more = Import palette…
+
+export-palette-more = Export palette…
+
+import-palette = Import palette
+
+export-palette = Export palette
+
+picking-a-swatch-copies-an-8-bit-srgb-color-original-palette-values-stay-unchanged = Picking a swatch copies an 8-bit sRGB color. Original palette values stay unchanged.
+
+cmyk-lab-and-out-of-range-colors-need-color-managed-conversion-and-cannot-be-picked-yet = CMYK, LAB and out-of-range colors need color-managed conversion and cannot be picked yet.
+
+unnamed-swatch = Unnamed swatch
+
+import-an-adobe-swatch-exchange-palette-to-browse-its-colors-and-groups = Import an Adobe Swatch Exchange palette to browse its colors and groups.
+
+global-color = Global color
+
+spot-color = Spot color
+
+process-color = Process color
+
+adobe-swatch-exchange-palette = Adobe Swatch Exchange palette
+
+palette-imported = Palette imported.
+
+palette-exported = Palette exported.
+
+palette-import-cancelled = Palette import cancelled.
+
+palette-export-cancelled = Palette export cancelled.
+
+the-palette-changed-choose-the-file-again = The palette changed; choose the file again.
+
+format-could-not-import-the-palette-detail = Could not import the palette: { $detail }
+
+format-could-not-export-the-palette-detail = Could not export the palette: { $detail }
+
+palette-download-requested = Palette download requested.

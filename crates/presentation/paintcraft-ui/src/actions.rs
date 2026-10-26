@@ -21,6 +21,7 @@ pub enum Action {
     SaveAll,
     Export,
     ExportIcons,
+    Palettes,
     Print,
     ExportImage(ImageExport),
     Cut,
@@ -125,6 +126,7 @@ pub const STUDIO_FILE: &[Action] = &[
     Action::SaveAll,
     Action::Export,
     Action::ExportIcons,
+    Action::Palettes,
     Action::Print,
     Action::Close,
 ];
@@ -168,6 +170,7 @@ impl Action {
             Self::SaveAll => ("Save All", None),
             Self::Export => ("Export…", None),
             Self::ExportIcons => ("Export icon or cursor…", None),
+            Self::Palettes => ("Palettes…", None),
             Self::Print => ("Print…", Some((Key::P, false))),
             Self::ExportImage(format) => (format.label(), None),
             Self::Cut => ("Cut", Some((Key::X, false))),
@@ -312,7 +315,7 @@ impl Action {
             | Self::EditSecondaryColors
             | Self::EditCustomColor(_)
             | Self::EditSecondaryCustomColor(_) => frontend == Frontend::Classic,
-            Self::Layer(_) | Self::ExportIcons => frontend == Frontend::Studio,
+            Self::Layer(_) | Self::ExportIcons | Self::Palettes => frontend == Frontend::Studio,
             Self::ExportImage(format) => format.available(frontend),
             _ => true,
         }
@@ -326,6 +329,7 @@ impl Action {
             Self::Layer(action) => action.enabled(ctx),
             Self::View(action) => action.enabled(ctx),
             Self::New
+            | Self::Palettes
             | Self::ImportImage
             | Self::Open
             | Self::Interface
@@ -420,6 +424,7 @@ impl Action {
             Self::SaveAll => 1024,
             Self::Export => 1004,
             Self::ExportIcons => 4000,
+            Self::Palettes => 4001,
             Self::Print => 1027,
             Self::ExportImage(format) => {
                 if (format as u64) < 10 {

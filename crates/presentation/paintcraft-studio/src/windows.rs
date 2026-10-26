@@ -80,6 +80,9 @@ pub fn floating_controls(
             ui.push_id(state_id, |ui| {
                 ui.set_width(310.0);
                 crate::colors::controls(ui, state, workspace);
+                if ui.button(t!(ui.ctx(), "Palettes…")).clicked() {
+                    actions.push(Action::Palettes);
+                }
             });
         });
     workspace.colors = colors_open;

@@ -452,3 +452,47 @@ i-accept-these-import-changes = 読み込みによるこれらの変更に同意
 svg-vectors-and-text-will-become-pixels-in-a-single-picture-layer = SVGのベクターとテキストは、1つの画像レイヤーのピクセルに変換されます。
 
 unavailable-svg-font-families-will-be-replaced-with-bundled-fonts = 利用できないSVGフォントは、同梱フォントに置き換えられます。
+
+palettes = パレット
+
+palettes-more = パレット…
+
+import-palette-more = パレットを読み込む…
+
+export-palette-more = パレットを書き出す…
+
+import-palette = パレットを読み込む
+
+export-palette = パレットを書き出す
+
+picking-a-swatch-copies-an-8-bit-srgb-color-original-palette-values-stay-unchanged = スウォッチを選ぶと8ビットのsRGB色がコピーされます。元のパレットの値は変わりません。
+
+cmyk-lab-and-out-of-range-colors-need-color-managed-conversion-and-cannot-be-picked-yet = CMYK、LAB、範囲外の色にはカラーマネジメントによる変換が必要なため、まだ選べません。
+
+unnamed-swatch = 名前のないスウォッチ
+
+import-an-adobe-swatch-exchange-palette-to-browse-its-colors-and-groups = Adobe Swatch Exchangeパレットを読み込むと、色とグループを表示できます。
+
+global-color = グローバルカラー
+
+spot-color = 特色
+
+process-color = プロセスカラー
+
+adobe-swatch-exchange-palette = Adobe Swatch Exchangeパレット
+
+palette-imported = パレットを読み込みました。
+
+palette-exported = パレットを書き出しました。
+
+palette-import-cancelled = パレットの読み込みをキャンセルしました。
+
+palette-export-cancelled = パレットの書き出しをキャンセルしました。
+
+the-palette-changed-choose-the-file-again = パレットが変更されました。ファイルをもう一度選んでください。
+
+format-could-not-import-the-palette-detail = パレットを読み込めませんでした: { $detail }
+
+format-could-not-export-the-palette-detail = パレットを書き出せませんでした: { $detail }
+
+palette-download-requested = パレットのダウンロードを開始しました。

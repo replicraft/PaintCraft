@@ -452,3 +452,47 @@ i-accept-these-import-changes = Acepto estos cambios de importación.
 svg-vectors-and-text-will-become-pixels-in-a-single-picture-layer = Los vectores y el texto SVG se convertirán en píxeles en una sola capa de imagen.
 
 unavailable-svg-font-families-will-be-replaced-with-bundled-fonts = Las familias de fuentes SVG no disponibles se sustituirán por fuentes incluidas.
+
+palettes = Paletas
+
+palettes-more = Paletas…
+
+import-palette-more = Importar paleta…
+
+export-palette-more = Exportar paleta…
+
+import-palette = Importar paleta
+
+export-palette = Exportar paleta
+
+picking-a-swatch-copies-an-8-bit-srgb-color-original-palette-values-stay-unchanged = Elegir una muestra copia un color sRGB de 8 bits. Los valores originales de la paleta se conservan.
+
+cmyk-lab-and-out-of-range-colors-need-color-managed-conversion-and-cannot-be-picked-yet = Los colores CMYK, LAB y fuera de rango requieren conversión con gestión de color y aún no se pueden elegir.
+
+unnamed-swatch = Muestra sin nombre
+
+import-an-adobe-swatch-exchange-palette-to-browse-its-colors-and-groups = Importa una paleta Adobe Swatch Exchange para ver sus colores y grupos.
+
+global-color = Color global
+
+spot-color = Tinta plana
+
+process-color = Color de proceso
+
+adobe-swatch-exchange-palette = Paleta Adobe Swatch Exchange
+
+palette-imported = Paleta importada.
+
+palette-exported = Paleta exportada.
+
+palette-import-cancelled = Importación de paleta cancelada.
+
+palette-export-cancelled = Exportación de paleta cancelada.
+
+the-palette-changed-choose-the-file-again = La paleta cambió; elige el archivo de nuevo.
+
+format-could-not-import-the-palette-detail = No se pudo importar la paleta: { $detail }
+
+format-could-not-export-the-palette-detail = No se pudo exportar la paleta: { $detail }
+
+palette-download-requested = Descarga de la paleta solicitada.

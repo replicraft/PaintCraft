@@ -60,7 +60,8 @@ impl Action {
                     Icon::FlipVertical
                 }
             },
-            Self::EditColors
+            Self::Palettes
+            | Self::EditColors
             | Self::EditSecondaryColors
             | Self::EditCustomColor(_)
             | Self::EditSecondaryCustomColor(_) => Icon::EditColors,
