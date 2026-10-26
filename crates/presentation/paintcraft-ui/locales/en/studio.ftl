@@ -277,3 +277,5 @@ rgb-and-transparency-mask = RGB and transparency mask
 compressed-rgb-and-transparency-mask = Compressed RGB and transparency mask
 
 unsupported-encoding = Unsupported encoding
+
+preparing-picture-more = Preparing picture…

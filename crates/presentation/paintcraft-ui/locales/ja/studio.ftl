@@ -277,3 +277,5 @@ rgb-and-transparency-mask = RGB と透明度マスク
 compressed-rgb-and-transparency-mask = 圧縮 RGB と透明度マスク
 
 unsupported-encoding = 未対応のエンコード形式
+
+preparing-picture-more = 画像を準備しています…

@@ -277,3 +277,5 @@ rgb-and-transparency-mask = RGB और पारदर्शिता मास�
 compressed-rgb-and-transparency-mask = संपीड़ित RGB और पारदर्शिता मास्क
 
 unsupported-encoding = असमर्थित एन्कोडिंग
+
+preparing-picture-more = चित्र तैयार किया जा रहा है…

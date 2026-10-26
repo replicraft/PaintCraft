@@ -277,3 +277,5 @@ rgb-and-transparency-mask = RGB 和透明度蒙版
 compressed-rgb-and-transparency-mask = 压缩 RGB 和透明度蒙版
 
 unsupported-encoding = 不支持的编码格式
+
+preparing-picture-more = 正在准备图片…

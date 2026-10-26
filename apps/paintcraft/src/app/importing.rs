@@ -12,6 +12,8 @@ mod icns;
 mod icons;
 #[path = "importing/msp.rs"]
 mod msp;
+#[path = "importing/native_jxl.rs"]
+mod native_jxl;
 #[path = "importing/svg.rs"]
 mod svg;
 pub(super) use svg::FontPick;
@@ -20,6 +22,7 @@ enum Candidate {
     Pages(dcx::Pages),
     Entries(icons::Entries),
     Icns(Box<icns::Source>),
+    NativeJxl(Box<native_jxl::Source>),
     Svg(Box<svg::Source>),
     Raster(image::Decoded),
     Layered(paintcraft_formats::project_import::Converted),
@@ -27,7 +30,11 @@ enum Candidate {
 impl Candidate {
     fn losses(&self) -> &[String] {
         match self {
-            Self::Pages(_) | Self::Entries(_) | Self::Icns(_) | Self::Svg(_) => &[],
+            Self::Pages(_)
+            | Self::Entries(_)
+            | Self::Icns(_)
+            | Self::NativeJxl(_)
+            | Self::Svg(_) => &[],
             Self::Raster(image) => &image.losses,
             Self::Layered(project) => &project.losses,
         }
@@ -136,7 +143,11 @@ impl App {
         }
         if matches!(
             pending.candidate,
-            Candidate::Pages(_) | Candidate::Entries(_) | Candidate::Icns(_) | Candidate::Svg(_)
+            Candidate::Pages(_)
+                | Candidate::Entries(_)
+                | Candidate::Icns(_)
+                | Candidate::NativeJxl(_)
+                | Candidate::Svg(_)
         ) {
             self.pending_import = Some(pending);
             self.confirm = Some(Confirm::ImportLosses);
@@ -152,6 +163,7 @@ impl App {
                 Candidate::Pages(_)
                 | Candidate::Entries(_)
                 | Candidate::Icns(_)
+                | Candidate::NativeJxl(_)
                 | Candidate::Svg(_) => {
                     unreachable!("entry selection is resolved separately")
                 }
@@ -181,6 +193,14 @@ impl App {
         }
     }
     pub(super) fn import_dialog(&mut self, ctx: &egui::Context) {
+        if self
+            .pending_import
+            .as_ref()
+            .is_some_and(|pending| matches!(pending.candidate, Candidate::NativeJxl(_)))
+        {
+            self.native_jxl_dialog(ctx);
+            return;
+        }
         if self
             .pending_import
             .as_ref()

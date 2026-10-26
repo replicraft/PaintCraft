@@ -283,6 +283,15 @@ impl App {
         path: &Path,
         convert: bool,
     ) -> paintcraft_core::types::Result<()> {
+        if convert
+            && path
+                .extension()
+                .and_then(|value| value.to_str())
+                .and_then(paintcraft_formats::registry::Family::from_extension)
+                == Some(paintcraft_formats::registry::Family::Jxl)
+        {
+            return self.stage_native_jxl(path.to_path_buf());
+        }
         if !convert
             && self.experience() == Experience::Studio
             && let Some(id) = self.tab_bound_to_path(path)
