@@ -139,3 +139,34 @@ fn actual_native_refuses_budget_source_mismatch_corruption_and_cancel() {
     .unwrap_err();
     assert_eq!(error.code, ErrorCode::OperationCancelled);
 }
+
+#[cfg(feature = "avif-codec")]
+#[test]
+fn v5_identity_code5_refuses_private_ycbcr_candidates_without_publishing_pixels() {
+    let root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../../crates/services/paintcraft-formats/tests/avif-sdr-fixtures");
+    for size in ["even", "odd"] {
+        for (layout, siting) in [
+            ("444", "fullchroma"),
+            ("420", "vertical"),
+            ("420", "colocated"),
+        ] {
+            for range in ["full", "limited"] {
+                for alpha in ["", "-alpha"] {
+                    let name = format!("{layout}-{siting}-{range}-{size}{alpha}.avif");
+                    let source = std::fs::read(root.join(&name)).unwrap();
+                    let request = request(&source, wire::PIXELS_MAX);
+                    let response = run(&request, &|| Ok(())).unwrap();
+                    assert!(response.status.success(), "{name}: {:?}", response.status);
+                    assert_eq!(
+                        wire::decode(&response.bytes, &request, request.header.owner)
+                            .unwrap_err()
+                            .code,
+                        ErrorCode::CapabilityUnsupported,
+                        "{name}: new SDR candidate must not widen v1"
+                    );
+                }
+            }
+        }
+    }
+}

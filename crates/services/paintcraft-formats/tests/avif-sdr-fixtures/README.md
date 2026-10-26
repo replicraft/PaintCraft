@@ -76,3 +76,31 @@ actual local invocations and initial failures belong in ignored validation logs.
 The initial CLI/Y4M attempt was rejected for a vertical input label mismatch;
 no stream was patched or metadata relaxed to hide that failure. The explicit C
 encoder is the successful producer used here.
+
+## Selected decoder and reconstruction evidence
+
+The private selected-decoder qualifier passes all 24 admitted candidate forms.
+Actual charged dav1d 1.5.4 native planes match the independently decoded libaom
+planes byte for byte. Reusing `heic-decoder` 0.1.1's existing matrix/range/bilinear
+converter with the explicit AV1 origins matches every exact-Fraction RGBA value
+in these fixtures, with **zero** differing RGB channels and exact alpha. The
+alpha cases include 42 nonzero hidden-RGB pixels at alpha zero for even geometry
+and 37 for odd geometry. This is controlled-fixture evidence for that declared
+float32 policy, not a claim that all possible rounded values are universally
+identical across applications.
+
+`selected-proof.json` records the exact commands, source hashes and per-case
+results. Four focused tests exercise selected native-plane/RGBA equality,
+plane-length and alpha disagreement, cancellation during staging and after
+conversion, explicit large-buffer accounting, and forged lengths/profiles.
+The existing code5 subprocess suite passes its identity/cancellation cases and
+refuses all 24 new YCbCr candidates with a canonical unsupported response and
+normal exit. No new public reader or helper protocol is enabled by these checks.
+
+The work declaration counts source bytes, three native byte-plane slots for
+each decoded item, **four bytes per staged i32 sample**, RGBA, converter axes,
+read flags and conservative row buffers. The existing combined Rust/C child
+heap cap remains charged once; host source/output buffers are separate. These
+large-buffer capacities exclude allocator overhead, stacks and RSS, and do not
+qualify calls outside the isolated helper. An eventual new helper path must use
+the declaration before native decode and retain the existing owner/source guards.

@@ -1,0 +1,202 @@
+{
+  "scope": "Private precursor, actual selected dav1d FFI plus existing HEIF converter; no public SDR variant enabled",
+  "decoder": {
+    "name": "dav1d",
+    "version": "1.5.4",
+    "commit": "54706fc6bc0cdecab7e9593974a4039cc038fca7"
+  },
+  "converter": {
+    "name": "heic-decoder",
+    "version": "0.1.1",
+    "method": "DecodedImage::to_rgba8",
+    "policy": "Explicit matrix1 full/limited range; bilinear AV1 CSP_VERTICAL(0,0.5)/COLOCATED(0,0), outer-edge extension, float32 RGB8 rounding/clipping"
+  },
+  "reference": "Pinned libaom 3.15.2 native planes plus independent Python Fraction RGBA",
+  "independent_oracle_sha256": "0d4fe6d3711714fdf63550f2774c4b441bb8340525b732d1ae4b809623cb4fae",
+  "commands": [
+    "cargo test -p paintcraft-codec-worker --locked --bin paintcraft-codec-worker avif::sdr_tests -- --nocapture",
+    "cargo test -p paintcraft-codec-worker --locked --test native_avif"
+  ],
+  "results": {
+    "selected_decoder_color_tests": 4,
+    "actual_code5_protocol_tests": 3,
+    "native_planes_exact_for_all_cases": true,
+    "public_identity_v1_refuses_all_24_candidates": true
+  },
+  "source_sha256": {
+    "apps/paintcraft-codec-worker/src/avif/sdr_tests.rs": "4999ce98104b13f8a1417a5983c4af9f2d49b5bd9d27ffe9323cb023acdeeb04",
+    "apps/paintcraft-codec-worker/src/avif/execute.rs": "4ae070dab7c40677c581e25da7c24fcc84fcd7364146f6a60a1e65dcf3a70641",
+    "crates/services/paintcraft-formats/src/avif/sdr/color.rs": "a43e83704ef20f85d242e6a296b4043311c4a9972ed10860deae1b60abd62034",
+    "crates/services/paintcraft-formats/src/avif/sdr/work.rs": "d005c83fdb0e8696fa2ba7f7607e467599954a3feb79bb7275d08dd930c99c47"
+  },
+  "cases": [
+    {
+      "case": "444-fullchroma-full-even",
+      "max_rgb_difference": 0,
+      "differing_rgb_channels": 0,
+      "alpha_exact": true,
+      "nonzero_hidden_rgb_pixels": 0
+    },
+    {
+      "case": "444-fullchroma-full-even-alpha",
+      "max_rgb_difference": 0,
+      "differing_rgb_channels": 0,
+      "alpha_exact": true,
+      "nonzero_hidden_rgb_pixels": 42
+    },
+    {
+      "case": "444-fullchroma-limited-even",
+      "max_rgb_difference": 0,
+      "differing_rgb_channels": 0,
+      "alpha_exact": true,
+      "nonzero_hidden_rgb_pixels": 0
+    },
+    {
+      "case": "444-fullchroma-limited-even-alpha",
+      "max_rgb_difference": 0,
+      "differing_rgb_channels": 0,
+      "alpha_exact": true,
+      "nonzero_hidden_rgb_pixels": 42
+    },
+    {
+      "case": "420-vertical-full-even",
+      "max_rgb_difference": 0,
+      "differing_rgb_channels": 0,
+      "alpha_exact": true,
+      "nonzero_hidden_rgb_pixels": 0
+    },
+    {
+      "case": "420-vertical-full-even-alpha",
+      "max_rgb_difference": 0,
+      "differing_rgb_channels": 0,
+      "alpha_exact": true,
+      "nonzero_hidden_rgb_pixels": 42
+    },
+    {
+      "case": "420-vertical-limited-even",
+      "max_rgb_difference": 0,
+      "differing_rgb_channels": 0,
+      "alpha_exact": true,
+      "nonzero_hidden_rgb_pixels": 0
+    },
+    {
+      "case": "420-vertical-limited-even-alpha",
+      "max_rgb_difference": 0,
+      "differing_rgb_channels": 0,
+      "alpha_exact": true,
+      "nonzero_hidden_rgb_pixels": 42
+    },
+    {
+      "case": "420-colocated-full-even",
+      "max_rgb_difference": 0,
+      "differing_rgb_channels": 0,
+      "alpha_exact": true,
+      "nonzero_hidden_rgb_pixels": 0
+    },
+    {
+      "case": "420-colocated-full-even-alpha",
+      "max_rgb_difference": 0,
+      "differing_rgb_channels": 0,
+      "alpha_exact": true,
+      "nonzero_hidden_rgb_pixels": 42
+    },
+    {
+      "case": "420-colocated-limited-even",
+      "max_rgb_difference": 0,
+      "differing_rgb_channels": 0,
+      "alpha_exact": true,
+      "nonzero_hidden_rgb_pixels": 0
+    },
+    {
+      "case": "420-colocated-limited-even-alpha",
+      "max_rgb_difference": 0,
+      "differing_rgb_channels": 0,
+      "alpha_exact": true,
+      "nonzero_hidden_rgb_pixels": 42
+    },
+    {
+      "case": "444-fullchroma-full-odd",
+      "max_rgb_difference": 0,
+      "differing_rgb_channels": 0,
+      "alpha_exact": true,
+      "nonzero_hidden_rgb_pixels": 0
+    },
+    {
+      "case": "444-fullchroma-full-odd-alpha",
+      "max_rgb_difference": 0,
+      "differing_rgb_channels": 0,
+      "alpha_exact": true,
+      "nonzero_hidden_rgb_pixels": 37
+    },
+    {
+      "case": "444-fullchroma-limited-odd",
+      "max_rgb_difference": 0,
+      "differing_rgb_channels": 0,
+      "alpha_exact": true,
+      "nonzero_hidden_rgb_pixels": 0
+    },
+    {
+      "case": "444-fullchroma-limited-odd-alpha",
+      "max_rgb_difference": 0,
+      "differing_rgb_channels": 0,
+      "alpha_exact": true,
+      "nonzero_hidden_rgb_pixels": 37
+    },
+    {
+      "case": "420-vertical-full-odd",
+      "max_rgb_difference": 0,
+      "differing_rgb_channels": 0,
+      "alpha_exact": true,
+      "nonzero_hidden_rgb_pixels": 0
+    },
+    {
+      "case": "420-vertical-full-odd-alpha",
+      "max_rgb_difference": 0,
+      "differing_rgb_channels": 0,
+      "alpha_exact": true,
+      "nonzero_hidden_rgb_pixels": 37
+    },
+    {
+      "case": "420-vertical-limited-odd",
+      "max_rgb_difference": 0,
+      "differing_rgb_channels": 0,
+      "alpha_exact": true,
+      "nonzero_hidden_rgb_pixels": 0
+    },
+    {
+      "case": "420-vertical-limited-odd-alpha",
+      "max_rgb_difference": 0,
+      "differing_rgb_channels": 0,
+      "alpha_exact": true,
+      "nonzero_hidden_rgb_pixels": 37
+    },
+    {
+      "case": "420-colocated-full-odd",
+      "max_rgb_difference": 0,
+      "differing_rgb_channels": 0,
+      "alpha_exact": true,
+      "nonzero_hidden_rgb_pixels": 0
+    },
+    {
+      "case": "420-colocated-full-odd-alpha",
+      "max_rgb_difference": 0,
+      "differing_rgb_channels": 0,
+      "alpha_exact": true,
+      "nonzero_hidden_rgb_pixels": 37
+    },
+    {
+      "case": "420-colocated-limited-odd",
+      "max_rgb_difference": 0,
+      "differing_rgb_channels": 0,
+      "alpha_exact": true,
+      "nonzero_hidden_rgb_pixels": 0
+    },
+    {
+      "case": "420-colocated-limited-odd-alpha",
+      "max_rgb_difference": 0,
+      "differing_rgb_channels": 0,
+      "alpha_exact": true,
+      "nonzero_hidden_rgb_pixels": 37
+    }
+  ]
+}

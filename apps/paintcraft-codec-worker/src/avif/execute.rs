@@ -5,7 +5,7 @@ use paintcraft_formats::{avif, codec_worker as wire};
 fn invalid(message: &str) -> Error {
     Error::new(ErrorCode::CodecFailed, message)
 }
-fn decode_item(item: &avif::CodedItem<'_>) -> Result<ffi::Decoded> {
+pub(super) fn decode_item(item: &avif::CodedItem<'_>) -> Result<ffi::Decoded> {
     let mut coded = Vec::new();
     coded.try_reserve_exact(item.byte_len).map_err(|_| {
         Error::new(
