@@ -65,7 +65,7 @@ pub fn import_loss_description(code: &str) -> Option<&'static str> {
         "svg-font-substituted" => {
             "Unavailable SVG font families will be replaced with bundled fonts."
         }
-        "heif-color-reconstruction" => {
+        "heif-color-reconstruction" | "avif-color-reconstruction" => {
             "Convert YCbCr to 8-bit sRGB with rounding and clipping; 4:2:0 uses bilinear chroma interpolation."
         }
         "heif-item-names-not-retained" => {
@@ -94,6 +94,7 @@ mod tests {
             "heif-color-reconstruction",
             "heif-item-names-not-retained",
             "avif-item-names-not-retained",
+            "avif-color-reconstruction",
             "icon-density-not-retained-in-flat-document",
             "dcx-other-pages-not-imported",
             "pdn-metadata-ignored",
