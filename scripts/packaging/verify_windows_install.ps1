@@ -27,11 +27,9 @@ function Verify-Installed {
     if ((Get-FileHash $helper -Algorithm SHA256).Hash -ne (Get-FileHash $CodecWorker -Algorithm SHA256).Hash) {
         throw 'Installed decoder helper differs from the release helper'
     }
-    $manifest = Get-Content $manifestPath -Raw | ConvertFrom-Json
-    if ($manifest.schema_version -ne 1 -or $manifest.protocol_version -ne 2 -or
-        $manifest.executable -ne 'paintcraft-codec-worker.exe' -or $manifest.public_reader_enabled -ne $false -or
-        $manifest.sha256 -ne (Get-FileHash $helper -Algorithm SHA256).Hash) {
-        throw 'Installed helper manifest does not match executable/protocol'
+    & python (Join-Path $PSScriptRoot 'verify_windows_payload.py') --binary $Binary --directory $directory
+    if ($LASTEXITCODE -ne 0) {
+        throw 'Installed helper payload failed canonical manifest and notice verification'
     }
     $progId = (Get-Item 'HKLM:\Software\Classes\.pcnd').GetValue('')
     if ($progId -ne 'PaintCraft.Document') { throw 'Missing .pcnd ProgID' }
