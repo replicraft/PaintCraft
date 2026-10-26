@@ -161,7 +161,7 @@ flate2 = { version = "1.1.10", default-features = false, features = ["rust_backe
 heic-decoder = { version = "=0.1.1", default-features = false, features = ["internals"] }
 # Native codec helper uses only _exit for nonallocating quota/system-OOM exit.
 libc = { version = "0.2.191", default-features = false }
-# Native-only developer qualification of the selected experimental JXR backend.
+# Selected experimental JXR backend; isolated native worker and qualification only.
 jpegxr = { package = "jpegxr-pure-rs", version = "=0.1.0", default-features = false }
 # Independent PNG fixture generation in tests.
 png = "0.18.1"

@@ -3308,9 +3308,11 @@ dependencies = [
 name = "paintcraft-codec-worker"
 version = "0.1.0"
 dependencies = [
+ "jpegxr-pure-rs",
  "libc",
  "paintcraft-core",
  "paintcraft-formats",
+ "paintcraft-platform",
  "paintcraft-runtime",
  "rayon",
  "uuid",

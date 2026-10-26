@@ -12,8 +12,10 @@ paintcraft-core.workspace = true
 paintcraft-formats = { workspace = true, features = ["heif-codec"] }
 rayon.workspace = true
 libc.workspace = true
+jpegxr.workspace = true
 
 [dev-dependencies]
+paintcraft-platform.workspace = true
 paintcraft-runtime.workspace = true
 uuid.workspace = true
 
