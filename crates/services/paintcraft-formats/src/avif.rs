@@ -1,9 +1,14 @@
-//! Bounded encoder-only AVIF adapter; frontend admission is owned by the registry.
+//! Bounded AVIF writer and physical container inspection; no enabled decoder.
 //!
 //! The selected image/ravif path is lossy even at quality 100. Its public API
 //! cleans invisible RGB and uses the selected quality for alpha too. Input and
 //! returned bytes have hard ceilings; codec-owned scratch is not an RSS budget.
+mod inspect;
 use image::ImageEncoder;
+pub use inspect::{
+    Av1Configuration, Container, INPUT_BYTES_MAX, INSPECT_PIXELS_MAX, METADATA_BYTES_MAX,
+    SpatialExtent, inspect_container,
+};
 use paintcraft_core::types::{Error, ErrorCode, Result};
 use std::io::{self, Write};
 
