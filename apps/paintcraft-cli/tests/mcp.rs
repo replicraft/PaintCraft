@@ -1,81 +1,11 @@
 //! Real stdio protocol and pixel/file contracts, without launching a window.
 use serde_json::{Value, json};
-use std::{
-    io::{BufRead, BufReader, Write},
-    process::{Child, ChildStdin, Command, Stdio},
-    sync::mpsc,
-    time::Duration,
-};
-
-struct Client {
-    child: Child,
-    stdin: ChildStdin,
-    messages: mpsc::Receiver<Value>,
-    next: u64,
-}
+#[path = "support/mcp_client.rs"]
+mod mcp_client;
+use mcp_client::Client;
 impl Client {
     fn new() -> Self {
-        let mut child = Command::new(env!("CARGO_BIN_EXE_paintcraft-cli"))
-            .arg("mcp")
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::inherit())
-            .spawn()
-            .unwrap();
-        let stdin = child.stdin.take().unwrap();
-        let stdout = child.stdout.take().unwrap();
-        let (tx, messages) = mpsc::channel();
-        std::thread::spawn(move || {
-            for line in BufReader::new(stdout).lines() {
-                let line = line.unwrap();
-                let value = serde_json::from_str(&line).expect("stdout must contain only JSON-RPC");
-                if tx.send(value).is_err() {
-                    break;
-                }
-            }
-        });
-        let mut client = Self {
-            child,
-            stdin,
-            messages,
-            next: 0,
-        };
-        let initialized = client.request("initialize",json!({"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"painting-test","version":"1"}}));
-        assert_eq!(initialized["serverInfo"]["name"], "paintcraft");
-        client.send(json!({"jsonrpc":"2.0","method":"notifications/initialized"}));
-        client
-    }
-    fn send(&mut self, message: Value) {
-        writeln!(self.stdin, "{message}").unwrap();
-        self.stdin.flush().unwrap();
-    }
-    fn request(&mut self, method: &str, params: Value) -> Value {
-        self.next += 1;
-        self.send(json!({"jsonrpc":"2.0","id":self.next,"method":method,"params":params}));
-        loop {
-            let message = self
-                .messages
-                .recv_timeout(Duration::from_secs(30))
-                .expect("MCP response timed out");
-            if message["id"] == self.next {
-                assert!(message.get("error").is_none(), "{message}");
-                return message["result"].clone();
-            }
-        }
-    }
-    fn call(&mut self, name: &str, args: Value) -> Value {
-        self.request("tools/call", json!({"name":name,"arguments":args}))
-    }
-    fn ok(&mut self, name: &str, args: Value) -> Value {
-        let result = self.call(name, args);
-        assert_ne!(result["isError"], true, "{result}");
-        serde_json::from_str(result["content"][0]["text"].as_str().unwrap()).unwrap()
-    }
-}
-impl Drop for Client {
-    fn drop(&mut self) {
-        let _ = self.child.kill();
-        let _ = self.child.wait();
+        Self::at(std::path::Path::new(env!("CARGO_BIN_EXE_paintcraft-cli")))
     }
 }
 
@@ -85,7 +15,7 @@ fn painting_history_atomicity_preview_and_guarded_files() {
     std::fs::create_dir_all(&folder).unwrap();
     let project = folder.join("painting.pcnd");
     let png = folder.join("painting.png");
-    let mut c = Client::new();
+    let mut c = Client::at(std::path::Path::new(env!("CARGO_BIN_EXE_paintcraft-cli")));
     let tools = c.request("tools/list", json!({}));
     assert_eq!(tools["tools"].as_array().unwrap().len(), 23);
     assert_eq!(c.call("inspect_document", json!({}))["isError"], true);
@@ -220,7 +150,7 @@ fn image_import_requires_loss_consent_preserves_failures_and_keeps_source_unboun
             .unwrap();
     }
     std::fs::write(&source, &encoded).unwrap();
-    let mut c = Client::new();
+    let mut c = Client::at(std::path::Path::new(env!("CARGO_BIN_EXE_paintcraft-cli")));
     let original = c.ok("create_canvas", json!({"width":4,"height":3}));
     assert_eq!(
         c.call("import_image", json!({"path":source}))["isError"],

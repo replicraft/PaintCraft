@@ -403,3 +403,87 @@ fn installed_composition_alias_codec_source_and_helper_failures_preserve_all_fil
     assert_eq!(fs::read(&output).unwrap(), b"keep existing destination");
     assert_eq!(fs::read(&input).unwrap(), bytes);
 }
+
+#[path = "support/mcp_client.rs"]
+mod mcp_client;
+#[test]
+fn installed_mcp_native_jxl_adoption_and_source_guards() {
+    use serde_json::json;
+    let installation = Installation::new();
+    let bytes =
+        include_bytes!("../../../crates/services/paintcraft-formats/tests/jxl-fixtures/rgba8.jxl");
+    let input = installation.fixture("source.jxl", bytes);
+    let project = installation.root.join("converted.pcnd");
+    let mut client = mcp_client::Client::at(&installation.cli);
+    client.ok("create_canvas", json!({"width":12,"height":9}));
+    let before = client.ok("inspect_document", json!({}));
+    assert_eq!(
+        client.call("import_image", json!({"path":input}))["isError"],
+        true
+    );
+    assert_eq!(client.ok("inspect_document", json!({})), before);
+    let imported = client.ok("import_image", json!({"path":input,"discard_changes":true}));
+    assert_eq!(imported["width"], 3);
+    assert_eq!(imported["height"], 2);
+    assert_eq!(imported["dirty"], true);
+    assert_eq!(
+        imported["conversion"]["decoder_profile"],
+        wire::NATIVE_JXL_IMPORT_VARIANT
+    );
+    let source_alias = installation.root.join("source-alias.pcnd");
+    fs::hard_link(&input, &source_alias).unwrap();
+    assert_eq!(
+        client.call(
+            "save_project",
+            json!({"path":source_alias,"overwrite":true})
+        )["isError"],
+        true
+    );
+    assert_eq!(
+        client.call(
+            "export_image",
+            json!({"path":input,"overwrite":true,"allow_losses":["flatten"]})
+        )["isError"],
+        true
+    );
+    client.ok("save_project", json!({"path":project}));
+    let document = paintcraft_formats::pcnd::read(&fs::read(&project).unwrap()).unwrap();
+    assert_eq!(document.canvas, (3, 2));
+    assert_eq!(
+        document
+            .layers_in_order()
+            .next()
+            .unwrap()
+            .raster
+            .get(0, 0)
+            .0,
+        [10, 20, 30, 0]
+    );
+    assert_eq!(fs::read(&input).unwrap(), bytes);
+    let stable = client.ok("inspect_document", json!({}));
+    client.cancel_call("import_image", json!({"path":input,"discard_changes":true}));
+    assert_eq!(
+        client.ok("inspect_document", json!({})),
+        stable,
+        "cancelled RPC must not publish a replacement"
+    );
+
+    let unsupported = installation.fixture(
+        "high-depth.jxl",
+        include_bytes!("../../../crates/services/paintcraft-formats/tests/jxl-fixtures/rgba16.jxl"),
+    );
+    assert_eq!(
+        client.call(
+            "import_image",
+            json!({"path":unsupported,"discard_changes":true})
+        )["isError"],
+        true
+    );
+    assert_eq!(client.ok("inspect_document", json!({})), stable);
+    fs::remove_file(&installation.helper).unwrap();
+    assert_eq!(
+        client.call("import_image", json!({"path":input,"discard_changes":true}))["isError"],
+        true
+    );
+    assert_eq!(client.ok("inspect_document", json!({})), stable);
+}

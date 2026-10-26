@@ -3288,6 +3288,7 @@ dependencies = [
  "paintcraft-editor",
  "paintcraft-formats",
  "paintcraft-platform",
+ "paintcraft-raster",
  "paintcraft-render",
  "paintcraft-runtime",
  "paintcraft-tools",

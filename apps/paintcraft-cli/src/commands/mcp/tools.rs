@@ -67,7 +67,14 @@ impl PaintingServer {
     #[tool(
         description = "Import a local picture into a new unsaved project using the CLI Studio format profile. Missing loss acknowledgements or decoding failures preserve the current document. Use allow_losses to explicitly accept reported conversion losses."
     )]
-    async fn import_image(&self, Parameters(p): Parameters<Import>) -> CallToolResult {
+    async fn import_image(
+        &self,
+        Parameters(p): Parameters<Import>,
+        context: rmcp::service::RequestContext<rmcp::RoleServer>,
+    ) -> CallToolResult {
+        let life = super::native_codec::RpcLife::new();
+        let dropped = life.0.clone();
+        let cancellation = context.ct.clone();
         self.work(move |state| {
             state.replace_allowed(p.discard_changes)?;
             if usize::from(p.page.is_some())
@@ -92,6 +99,16 @@ impl PaintingServer {
                 return Err(invalid(&format!("unknown import loss code {code:?}")));
             }
             let path = PathBuf::from(p.path);
+            if path.extension().and_then(|ext| ext.to_str()).and_then(Family::from_extension) == Some(Family::Jxl) {
+                if p.page.is_some() || p.entry.is_some() || p.svg.is_some() {
+                    return Err(invalid("JXL import does not accept page, entry or SVG options"));
+                }
+                return super::native_codec::import(state, &path, std::sync::Arc::new(move || {
+                    if cancellation.is_cancelled() || dropped.load(std::sync::atomic::Ordering::Acquire) {
+                        Err(paintcraft_core::types::Error::new(paintcraft_core::types::ErrorCode::OperationCancelled,"MCP codec import cancelled"))
+                    } else { Ok(()) }
+                }));
+            }
             let profile = format_profile::Options::default();
             if p.svg.is_some() {
                 profile.admit_import_svg_path(&path)?;
