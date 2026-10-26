@@ -5,6 +5,7 @@ import io
 import json
 import os
 import shutil
+import stat
 import subprocess
 import sys
 import tarfile
@@ -208,11 +209,17 @@ class InstallTests(unittest.TestCase):
     def test_duplicate_or_nonregular_archive_entries_are_refused(self):
         archive, sums = self.archive()
         original = archive.read_bytes()
-        with tarfile.open(archive, "w:gz") as stream:
-            entry = tarfile.TarInfo("paintcraft-cli")
-            entry.type = tarfile.SYMTYPE
-            entry.linkname = "../foreign"
-            stream.addfile(entry)
+        if archive.suffix == ".zip":
+            with zipfile.ZipFile(archive, "w") as stream:
+                entry = zipfile.ZipInfo("paintcraft-cli.exe")
+                entry.external_attr = (stat.S_IFLNK | 0o777) << 16
+                stream.writestr(entry, "../foreign")
+        else:
+            with tarfile.open(archive, "w:gz") as stream:
+                entry = tarfile.TarInfo("paintcraft-cli")
+                entry.type = tarfile.SYMTYPE
+                entry.linkname = "../foreign"
+                stream.addfile(entry)
         sums.write_bytes(release.checksum_line(archive))
         with self.assertRaises(ValueError):
             self.install(archive, sums)
@@ -306,6 +313,17 @@ class InstallTests(unittest.TestCase):
         self.assertEqual(version, self.version)
         destination = self.install(archive, sums)
         self.assertEqual({p.name for p in destination.iterdir()}, install.payload_names(self.target))
+
+    @unittest.skipUnless(os.name == "nt", "actual PowerShell wrapper")
+    def test_real_powershell_wrapper_offline_install_keeps_complete_payload(self):
+        archive, sums = self.archive()
+        prefix = self.root / "powershell-prefix"
+        output = subprocess.run(["pwsh", "-NoProfile", "-File", str(release.ROOT / "scripts/packaging/install_cli.ps1"),
+                                 "--prefix", str(prefix), "--archive", str(archive),
+                                 "--checksums", str(sums), "--version", self.version],
+                                capture_output=True, text=True)
+        self.assertEqual(output.returncode, 0, output.stderr)
+        self.assertEqual({p.name for p in (prefix / "bin").iterdir()}, install.payload_names(self.target))
 
     def test_real_shell_wrapper_offline_install_never_edits_profile_or_global_path(self):
         if os.name == "nt":
