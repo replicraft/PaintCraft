@@ -452,3 +452,47 @@ renamed or hardlinked source. Generic Open, Classic/browser HEIF reads,
 preserving Save and HEIF export remain unavailable. See the
 [format ledger](FORMAT_INTEROPERABILITY.md#native-heif-srgb8-document-conversion-2026-10-26)
 for the independently qualified policy and retained decoder disagreements.
+
+## Native AVIF import
+
+`import_image` accepts `.avif` through the native Studio
+`native-avif-srgb8-worker-v1` profile. It requires a complete installation with
+the exact AVIF-enabled V5 helper and schema 2 manifest. A V4/helper-free
+installation refuses this operation; an integrity error never selects another
+helper contract. Normal helper builds now include AVIF. Use an explicitly
+`--no-default-features` helper only for V4 compatibility tests.
+
+The initial reader supports directly coded reduced-still identity sRGB8 4:4:4
+and optional same-size straight 8-bit monochrome alpha, at most 64 MiB input
+and 4,194,304 pixels. Explicit coded/container color declarations must agree:
+primary profile 1, full-range primaries 1/transfer 13/matrix 0; alpha profile 0,
+full-range CICP 2/2/2 with the straight auxiliary link. Native GBR is reordered
+exactly, retaining coded RGB at alpha zero. SDR YCbCr, ICC, HDR/deep precision,
+grids, transforms, premultiplication and broader metadata remain refused.
+
+For named primary or alpha items, pass the actual name-loss acknowledgment:
+
+```json
+{
+    "path": "/pictures/source.avif",
+    "allow_losses": ["avif-item-names-not-retained"]
+}
+```
+
+Names are retained in the conversion assessment receipt, not PCND metadata.
+An unnamed identity picture has no conversion loss and accepts an empty
+`allow_losses`. Missing or unknown consent, cancellation and stale source/owner
+results do not replace the current document. As with other imports, use
+`discard_changes` to intentionally replace an existing dirty MCP document.
+
+The shared isolated native job and resident adoption service retain the exact
+captured source identity. After PCND Save, renamed/hardlinked source aliases
+remain protected against project Save As and image export. Receipts include
+exact source SHA, item/sequence/color/alpha declarations, acknowledged losses
+and `native-avif-srgb8-worker-v1`; the new document is an unsaved project copy,
+not a preserving AVIF binding. Normal Open, Classic/browser AVIF reads and
+foreign preserving Save remain denied. Lossy AVIF export is a separate workflow.
+
+The [AVIF qualification record](AVIF_QUALIFICATION.md) distinguishes bit-exact
+independent libaom reference pixels, actual local Studio/CLI/MCP and private-prefix
+installation checks from unexecuted six-target release and broader-profile work.

@@ -1,4 +1,4 @@
-//! Narrowly admitted native JXL/JXR/HEIF conversions. State is locked throughout;
+//! Narrowly admitted native JXL/JXR/HEIF/AVIF conversions. State is locked throughout;
 //! subprocess/source/output work stays private until final owner/cancel checks.
 use super::{
     super::*,
@@ -66,6 +66,11 @@ fn profile(
             wire::Codec::JxrRgb8,
             wire::NATIVE_JXR_IMPORT_VARIANT,
         )),
+        Some(Family::Avif) => Ok((
+            Family::Avif,
+            wire::Codec::AvifSrgb8,
+            wire::NATIVE_AVIF_IMPORT_VARIANT,
+        )),
         Some(Family::Heif) => Ok((
             Family::Heif,
             wire::Codec::HeifSrgb8,
@@ -73,7 +78,7 @@ fn profile(
         )),
         _ => Err(Error::new(
             ErrorCode::CapabilityUnsupported,
-            "Native codec import requires JXL/JXR/HEIF",
+            "Native codec import requires JXL/JXR/HEIF/AVIF",
         )),
     }
 }
@@ -97,7 +102,7 @@ fn admit(
     match registry::admission(request) {
         registry::Decision::Allowed => {}
         registry::Decision::AllowedWithPreflight(registry::Reason::ConvertRequiresConsent)
-            if matches!(family, Family::Jxr | Family::Heif) => {}
+            if matches!(family, Family::Jxr | Family::Heif | Family::Avif) => {}
         decision => decision.require_allowed(request)?,
     }
     Ok((family, codec, variant))
@@ -237,6 +242,11 @@ fn import_with_launch(
         .or_else(|| {
             prepared
                 .heif_assessment()
+                .map(|assessment| assessment.to_value())
+        })
+        .or_else(|| {
+            prepared
+                .avif_assessment()
                 .map(|assessment| assessment.to_value())
         })
         .map(|value| core_json(&value))
