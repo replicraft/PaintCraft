@@ -43,6 +43,7 @@ zstd.workspace = true
 
 [dev-dependencies]
 divan.workspace = true
+criterion.workspace = true
 png.workspace = true
 paintcraft-commands.workspace = true
 paintcraft-editor.workspace = true
@@ -56,6 +57,10 @@ harness = false
 
 [[bench]]
 name = "palette_assets"
+harness = false
+
+[[bench]]
+name = "palette_samples"
 harness = false
 
 [target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]

@@ -3333,6 +3333,7 @@ dependencies = [
  "base64",
  "color_quant",
  "crc32fast",
+ "criterion",
  "dds",
  "divan",
  "flate2",
