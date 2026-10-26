@@ -104,3 +104,13 @@ heap cap remains charged once; host source/output buffers are separate. These
 large-buffer capacities exclude allocator overhead, stacks and RSS, and do not
 qualify calls outside the isolated helper. An eventual new helper path must use
 the declaration before native decode and retain the existing owner/source guards.
+
+## Named-source assessment cases
+
+`python3 named.py` makes `named-primary.avif`, `named-alpha.avif` and
+`named-both.avif` from the existing odd limited-range vertical-alpha source.
+It adds only the stated item-name metadata and adjusts the finite offsets;
+coded `mdat` bytes are asserted identical. `named-oracle.json` records source,
+producer, coded-payload and output hashes. Native pixels therefore use the same
+independent odd vertical limited-alpha reference. These cases check that name
+loss accompanies reconstruction only when a primary or alpha name is present.

@@ -1,0 +1,27 @@
+{
+  "source": "420-vertical-limited-odd-alpha.avif",
+  "source_sha256": "fe30b154d43e8483cded8b676509b2fcc1b28458e822952c93535d130d25433c",
+  "coded_mdat_sha256": "7d48792261d01693fd25b16017a735857f58494d84fe5a132d9c9e2b05bea107",
+  "producer_sha256": "2655521dfb0f23f6b661d8b62805fcf435f8d492251b09b7dba6129facb33037",
+  "command": "python3 named.py",
+  "fixtures": [
+    {
+      "file": "named-primary.avif",
+      "primary_name": "Color image",
+      "alpha_name": "",
+      "sha256": "4e5833be5fe03f28d61f540bc28bbebca7eb3ba924b05b542bd01413515ba3d6"
+    },
+    {
+      "file": "named-alpha.avif",
+      "primary_name": "",
+      "alpha_name": "Alpha mask",
+      "sha256": "58413b9f3da194ccf5d5686ed5f3d0a1a7937e9e43027e797a0bccf0fdcb4601"
+    },
+    {
+      "file": "named-both.avif",
+      "primary_name": "Color image",
+      "alpha_name": "Alpha mask",
+      "sha256": "5adec5e22159769102086221ba145c72f633aa1e792de4c44d4f20e8c00588b4"
+    }
+  ]
+}
