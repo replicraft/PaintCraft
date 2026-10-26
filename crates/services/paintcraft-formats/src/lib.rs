@@ -13,6 +13,7 @@ pub mod icons;
 pub mod image;
 pub mod jxl;
 pub mod jxr;
+pub mod msp;
 pub mod ora;
 pub mod pcnd;
 pub mod pcx;
