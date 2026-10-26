@@ -193,3 +193,132 @@ fn browser_stale_resource_invalid_options_cancellation_and_noop_keep_history_ato
     assert_eq!(h.state().editor.session.undo_depth(), 0);
     assert!(h.state().editor.session.document().layers.is_empty());
 }
+fn adopt_drag(h: &mut Harness<WebApp>, lang: Language) {
+    h.get_by_role_and_label(egui::Role::Button, &translate(lang, "Use as shape tool…"))
+        .scroll_to_me();
+    h.run();
+    h.get_by_role_and_label(egui::Role::Button, &translate(lang, "Use as shape tool…"))
+        .click();
+    h.run();
+    preview(h, lang);
+    h.get_by_role_and_label(egui::Role::Button, &translate(lang, "Use as shape tool"))
+        .click();
+    h.run();
+    assert!(h.state().editor.resource_shape_name().is_none());
+    h.get_by_role_and_label(
+        egui::Role::CheckBox,
+        &translate(lang, "I accept converting each drawn shape to pixels."),
+    )
+    .scroll_to_me();
+    h.run();
+    h.get_by_role_and_label(
+        egui::Role::CheckBox,
+        &translate(lang, "I accept converting each drawn shape to pixels."),
+    )
+    .click();
+    h.run();
+    h.get_by_role_and_label(egui::Role::Button, &translate(lang, "Use as shape tool"))
+        .click();
+    h.run();
+    assert!(h.state().editor.resource_shape_name().is_some());
+}
+#[test]
+fn browser_drag_adoption_matches_native_pixels_and_retains_original_resource_after_replacement() {
+    use paintcraft_core::types::Rgba;
+    for lang in [Language::English, Language::Japanese] {
+        let mut h = setup(lang);
+        h.run();
+        let before = h.state().editor.session.snapshot();
+        let name = h.state().name.clone();
+        adopt_drag(&mut h, lang);
+        assert!(Arc::ptr_eq(&before, &h.state().editor.session.snapshot()));
+        assert!(!h.state().editor.session.is_dirty());
+        let old = h.state().editor.resource_shape_name().unwrap().to_owned();
+        h.state_mut().begin_shapes();
+        let ctx = h.ctx.clone();
+        let epoch = h.state().shapes.epoch;
+        h.state_mut().accept_shape(
+            &ctx,
+            epoch,
+            Loaded::new(SOURCE, "replacement.csh".into()).map(Some),
+        );
+        assert_eq!(h.state().editor.resource_shape_name(), Some(old.as_str()));
+        let e = &mut h.state_mut().editor;
+        e.tools.color = Rgba([200, 40, 10, 128]);
+        e.tools.pointer_down(uuid::Uuid::nil(), (1, 3));
+        e.tools.pointer_move((-2, 1));
+        let preview = e.display_document().unwrap().unwrap();
+        let pixels = paintcraft_render::render_flat(&preview).unwrap();
+        let (_, action) = e.tools.pointer_up().unwrap();
+        e.apply(action).unwrap();
+        assert_eq!(
+            paintcraft_render::render_flat(e.session.document()).unwrap(),
+            pixels
+        );
+        assert_eq!(e.session.undo_depth(), 1);
+        assert_eq!(
+            e.session
+                .history_view()
+                .entries
+                .last()
+                .unwrap()
+                .label
+                .text(),
+            "Shape"
+        );
+        let layer = e.session.document().roots[0];
+        for y in 0..8 {
+            for x in 0..8 {
+                assert_eq!(
+                    e.session.document().layers[&layer].raster.get(x, y),
+                    if x < 2 && (1..4).contains(&y) {
+                        Rgba([200, 40, 10, 128])
+                    } else {
+                        Rgba::TRANSPARENT
+                    }
+                );
+            }
+        }
+        e.apply(paintcraft_tools::Action::Undo).unwrap();
+        assert!(e.session.document().layers.is_empty());
+        e.apply(paintcraft_tools::Action::Redo).unwrap();
+        assert_eq!(
+            paintcraft_render::render_flat(e.session.document()).unwrap(),
+            pixels
+        );
+        assert_eq!(h.state().name, name);
+    }
+}
+#[test]
+fn browser_cancelled_stale_review_and_classic_workspace_preserve_separate_shape_ownership() {
+    let mut h = setup(Language::English);
+    h.run();
+    adopt_drag(&mut h, Language::English);
+    let before = h.state().editor.session.snapshot();
+    let old = h.state().editor.resource_shape_name().unwrap().to_owned();
+    h.state_mut().begin_shapes();
+    h.state_mut().shapes.selected = 1;
+    h.state_mut().begin_shape_tool().unwrap();
+    h.run();
+    preview(&mut h, Language::English);
+    h.get_by_role_and_label(egui::Role::Button, "Cancel")
+        .click();
+    h.run();
+    assert!(h.state().shapes.placement.is_none());
+    assert_eq!(h.state().editor.resource_shape_name(), Some(old.as_str()));
+    h.state_mut().begin_shape_tool().unwrap();
+    h.run();
+    preview(&mut h, Language::English);
+    h.state_mut().shapes.selected = 2;
+    h.run();
+    assert!(h.state().shapes.placement.is_none());
+    assert!(h.state_mut().begin_shape_tool().is_err());
+    assert!(Arc::ptr_eq(&before, &h.state().editor.session.snapshot()));
+    let ctx = h.ctx.clone();
+    h.state_mut().switch_frontend(&ctx, Frontend::Classic);
+    assert!(h.state().editor.resource_shape_name().is_none());
+    assert!(h.state().editor.tools.resource_shape.is_none());
+    h.state_mut().switch_frontend(&ctx, Frontend::Studio);
+    assert_eq!(h.state().editor.resource_shape_name(), Some(old.as_str()));
+    assert!(Arc::ptr_eq(&before, &h.state().editor.session.snapshot()));
+}

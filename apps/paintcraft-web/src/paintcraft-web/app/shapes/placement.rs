@@ -12,6 +12,7 @@ struct Prepared {
 #[derive(Debug)]
 pub(super) struct Draft {
     source: Arc<Loaded>,
+    tool_review: bool,
     index: usize,
     resource_epoch: uuid::Uuid,
     base: Arc<paintcraft_document::Document>,
@@ -85,6 +86,7 @@ impl WebApp {
         };
         self.shapes.invalidate();
         self.shapes.placement = Some(Draft {
+            tool_review: false,
             source,
             index,
             resource_epoch: self.shapes.epoch,
@@ -96,6 +98,19 @@ impl WebApp {
         });
         Ok(())
     }
+    pub(super) fn begin_shape_tool(&mut self) -> Result<()> {
+        self.begin_shape_placement()?;
+        let draft = self.shapes.placement.as_mut().expect("new shape review");
+        draft.tool_review = true;
+        let factor = 128.0 / f64::from(draft.state.config.width.max(draft.state.config.height));
+        draft.state.config.width = (f64::from(draft.state.config.width) * factor)
+            .floor()
+            .max(1.0) as u32;
+        draft.state.config.height = (f64::from(draft.state.config.height) * factor)
+            .floor()
+            .max(1.0) as u32;
+        Ok(())
+    }
     pub(super) fn shape_placement_dialog(&mut self, ctx: &egui::Context) {
         let Some(mut draft) = self.shapes.placement.take() else {
             return;
@@ -105,7 +120,12 @@ impl WebApp {
             return;
         }
         let name = draft.source.library.shapes()[draft.index].name.clone();
-        match draft.state.dialog(ctx, &name, limits()) {
+        let response = if draft.tool_review {
+            draft.state.tool_dialog(ctx, &name, limits())
+        } else {
+            draft.state.dialog(ctx, &name, limits())
+        };
+        match response {
             Response::Pending => {}
             Response::Cancel => return,
             Response::Preview(config) => {
@@ -148,15 +168,32 @@ impl WebApp {
             Response::Place => {
                 let config = draft.state.config;
                 if let Some(prepared) = draft.state.take(ctx, limits()) {
-                    match self.editor.place_shape_mask(
-                        prepared.raster,
-                        config,
-                        draft.budget.clone(),
-                    ) {
+                    let result = if draft.tool_review {
+                        self.editor.use_resource_shape(
+                            paintcraft_tools::resource_shape::Reference {
+                                library: draft.source.id,
+                                preset: draft.index,
+                                policy: Policy::CubicFillV1.id(),
+                            },
+                            draft.source.library.clone(),
+                            name.clone(),
+                        )
+                    } else {
+                        self.editor
+                            .place_shape_mask(prepared.raster, config, draft.budget.clone())
+                    };
+                    match result {
                         Ok(()) => {
+                            if draft.tool_review {
+                                self.controls.tool = paintcraft_tools::Tool::Rect;
+                            }
                             self.shapes.open = false;
                             self.canvas.invalidate();
-                            self.message = t!(ctx, "Shape placed.");
+                            self.message = if draft.tool_review {
+                                t!(ctx, "Custom shape tool selected.")
+                            } else {
+                                t!(ctx, "Shape placed.")
+                            };
                             return;
                         }
                         Err(error) => draft.state.fail(t!(

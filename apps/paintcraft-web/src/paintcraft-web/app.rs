@@ -266,7 +266,10 @@ impl WebApp {
                 }
             }
             Err(error) => {
-                self.message = if error.message.starts_with("Sampled brush stroke") {
+                self.message = if error.message.starts_with("Sampled brush stroke")
+                    || error.message.starts_with("Custom shape size")
+                    || error.message == "The selected custom shape is no longer available"
+                {
                     paintcraft_ui::i18n::translate(self.preferences.language, &error.message)
                 } else {
                     format!("Edit failed: {error}")

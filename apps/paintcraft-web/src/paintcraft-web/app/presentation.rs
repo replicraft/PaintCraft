@@ -22,6 +22,7 @@ impl WebApp {
         }
         self.text.widget_owned_input =
             ctx.egui_wants_keyboard_input() || egui::Popup::is_any_open(&ctx);
+        self.studio.resource_shape = self.editor.resource_shape_name().map(str::to_owned);
         self.studio.sampled_brush = self.editor.adopted_brush.as_ref().map(|adopted| {
             (
                 self.editor.tools.sampled_name.clone().unwrap_or_default(),

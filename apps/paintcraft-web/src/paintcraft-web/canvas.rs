@@ -316,7 +316,10 @@ impl WebApp {
                 // Never leave a failed speculative image presented as committed.
                 self.editor.cancel_floating();
                 self.editor.tools.cancel_gesture();
-                self.message = if error.message.starts_with("Sampled brush stroke") {
+                self.message = if error.message.starts_with("Sampled brush stroke")
+                    || error.message.starts_with("Custom shape size")
+                    || error.message == "The selected custom shape is no longer available"
+                {
                     paintcraft_ui::t!(ctx, &error.message)
                 } else {
                     format!("Preview unavailable: {error}")
@@ -477,9 +480,13 @@ impl WebApp {
                             continue;
                         }
                         let layer = self.editor.target.unwrap_or(uuid::Uuid::nil());
-                        if (self.controls.tool == Tool::Brush
-                            && self.editor.tools.sampled_tip.is_some()
-                            && self.editor.session.document().layers.is_empty())
+                        if (self.controls.tool == Tool::Rect
+                            && self.editor.tools.resource_shape.is_some()
+                            && self.editor.session.document().layers.is_empty()
+                            && self.editor.session.document().roots.is_empty())
+                            || (self.controls.tool == Tool::Brush
+                                && self.editor.tools.sampled_tip.is_some()
+                                && self.editor.session.document().layers.is_empty())
                             || matches!(self.controls.tool, Tool::Select | Tool::ColorPicker)
                             || self
                                 .editor

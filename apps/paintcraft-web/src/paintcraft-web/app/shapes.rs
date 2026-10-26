@@ -6,11 +6,13 @@ use paintcraft_formats::{
     registry::{self, Family, Operation, Platform, Request},
 };
 use paintcraft_ui::{shape_assets as widget, t};
+use sha2::{Digest, Sha256};
 use std::{cell::RefCell, rc::Rc, sync::Arc};
 mod placement;
 
 #[derive(Debug)]
 struct Loaded {
+    id: uuid::Uuid,
     library: Arc<csh::Library>,
     view: widget::Resource,
 }
@@ -36,7 +38,18 @@ impl Loaded {
             name,
             shapes: library.shapes().iter().map(shape_view).collect(),
         };
-        Ok(Self { library, view })
+        Ok(Self {
+            library,
+            view,
+            id: paintcraft_core::types::ids::deterministic_id(&[
+                "shape-library",
+                "csh",
+                &Sha256::digest(bytes)
+                    .iter()
+                    .map(|b| format!("{b:02x}"))
+                    .collect::<String>(),
+            ]),
+        })
     }
 }
 #[derive(Debug, Default)]
@@ -224,6 +237,15 @@ impl WebApp {
             self.shapes.error.as_deref(),
             self.shapes.selected,
         ) {
+            widget::Response::UseTool => {
+                if let Err(error) = self.begin_shape_tool() {
+                    self.shapes.error = Some(t!(
+                        ctx,
+                        "Could not place the shape: { $detail }",
+                        detail = error
+                    ));
+                }
+            }
             widget::Response::Place => {
                 if let Err(error) = self.begin_shape_placement() {
                     self.shapes.error = Some(t!(

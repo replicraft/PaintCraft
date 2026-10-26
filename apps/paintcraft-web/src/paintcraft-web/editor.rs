@@ -1,5 +1,6 @@
 //! Browser-owned session. Raster algorithms and history remain in shared crates.
 mod floating;
+mod resource_shape;
 mod sampled_brush;
 mod shape_mask;
 mod text;
@@ -23,6 +24,7 @@ pub(crate) struct Editor {
     pub tools: ToolState,
     pub target: Option<Uuid>,
     fonts: std::cell::RefCell<paintcraft_tools::text::TextRenderer>,
+    resource_shape: Option<resource_shape::Captured>,
     pub(crate) adopted_brush: Option<paintcraft_formats::abr::adoption::AdoptedPreset>,
     floating_source: Option<floating::Source>,
 }
@@ -61,6 +63,7 @@ impl Editor {
             fonts: text::fonts(),
             floating_source: None,
             adopted_brush: None,
+            resource_shape: None,
         })
     }
 
@@ -178,6 +181,12 @@ impl Editor {
                     pick.size,
                     || Ok(()),
                 )?;
+                if !self.resource_shape_owner(pick.return_resource_shape) {
+                    return Err(Error::new(
+                        ErrorCode::ConflictStaleBase,
+                        "The selected custom shape is no longer available",
+                    ));
+                }
                 self.tools.apply_picked_color(&pick, color);
                 Ok(())
             }
@@ -216,6 +225,7 @@ impl Editor {
             }
             Action::ToolFailure(message) => Err(Error::new(ErrorCode::ResourceLimit, message)),
             Action::SampledStroke(stroke) => self.commit_sampled(stroke),
+            Action::ResourceShape(shape) => self.commit_resource_shape(shape),
             Action::Stroke(stroke) => {
                 self.commit(commands::stroke_operations(&stroke, &|| Ok(()))?)
             }
@@ -336,6 +346,7 @@ impl Editor {
             Some(Preview::Contour(contour)) => vec![commands::contour(&contour)],
             Some(Preview::Path(stroke)) => commands::stroke_operations(&stroke, &|| Ok(()))?,
             Some(Preview::SampledStroke(stroke)) => self.sampled_operations(&stroke)?,
+            Some(Preview::ResourceShape(shape)) => self.resource_shape_operations(shape)?,
             Some(Preview::Shape {
                 layer,
                 tool,
