@@ -48,6 +48,7 @@ impl App {
             .source_identity()
             .into_iter()
             .chain(self.shapes.source_identity())
+            .chain(self.shapes.pending_source_identity())
             .chain(self.brushes.source_identity())
             .chain(
                 self.auxiliary_source_guards()
@@ -80,6 +81,7 @@ impl App {
             .source_path()
             .into_iter()
             .chain(self.shapes.source_path())
+            .chain(self.shapes.pending_source_path())
             .chain(self.brushes.source_path())
             .chain(
                 self.auxiliary_source_guards()

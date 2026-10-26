@@ -7,10 +7,12 @@ use paintcraft_formats::{
     save,
 };
 use paintcraft_ui::{shape_assets as widget, t};
+#[path = "shapes/placement.rs"]
+mod placement;
 
 #[derive(Debug)]
 struct Loaded {
-    library: csh::Library,
+    library: Arc<csh::Library>,
     view: widget::Resource,
     source: PathBuf,
     identity: crate::destination::SourceIdentity,
@@ -29,8 +31,15 @@ pub(super) struct State {
     picker: Option<Pick>,
     error: Option<String>,
     selected: usize,
+    placement: Option<placement::Draft>,
 }
 impl State {
+    pub(super) fn pending_source_path(&self) -> Option<&Path> {
+        self.placement.as_ref().map(|draft| draft.source_path())
+    }
+    pub(super) fn pending_source_identity(&self) -> Option<&crate::destination::SourceIdentity> {
+        self.placement.as_ref().map(|draft| draft.source_identity())
+    }
     pub(super) fn source_path(&self) -> Option<&Path> {
         self.loaded.as_ref().map(|loaded| loaded.source.as_path())
     }
@@ -53,6 +62,7 @@ impl App {
         if self.experience() != Experience::Studio {
             return;
         }
+        self.shapes.placement = None;
         self.shapes.epoch = Uuid::new_v4();
         self.shapes.picker = None;
         self.shapes.error = None;
@@ -144,7 +154,7 @@ impl App {
     ) -> Result<()> {
         admit(self.format_frontend(), &path, Operation::ImportAsset)?;
         self.guard_asset_adoption(&path, Some(&acquired.identity))?;
-        let library = csh::decode(&acquired.bytes, &|| Ok(()))?;
+        let library = Arc::new(csh::decode(&acquired.bytes, &|| Ok(()))?);
         let view = widget::Resource {
             name: path
                 .file_name()
@@ -271,6 +281,11 @@ impl App {
         if self.experience() != Experience::Studio {
             self.confirm = None;
             self.shapes.picker = None;
+            self.shapes.placement = None;
+            return;
+        }
+        if self.shapes.placement.is_some() {
+            self.shape_placement_dialog(ctx);
             return;
         }
         match widget::dialog(
@@ -280,6 +295,15 @@ impl App {
             self.shapes.error.as_deref(),
             self.shapes.selected,
         ) {
+            widget::Response::Place => {
+                if let Err(error) = self.begin_shape_placement() {
+                    self.shapes.error = Some(t!(
+                        ctx,
+                        "Could not place the shape: { $detail }",
+                        detail = error
+                    ));
+                }
+            }
             widget::Response::Pending => {}
             widget::Response::Close => {
                 self.confirm = None;
@@ -314,9 +338,39 @@ fn shape_view(shape: &csh::Shape) -> widget::Shape {
         width: shape.bounds[3] - shape.bounds[1],
         height: shape.bounds[2] - shape.bounds[0],
         paths,
+        placement_restrictions: placement_restrictions(shape),
     }
 }
 
 #[cfg(test)]
 #[path = "shapes/tests.rs"]
 mod tests;
+
+fn placement_restrictions(shape: &csh::Shape) -> Vec<&'static str> {
+    match csh::placement::assess(shape, &|| Ok(())) {
+        Err(_) => vec!["This shape has unsupported path geometry."],
+        Ok(assessment) => assessment
+            .unsupported()
+            .iter()
+            .map(|reason| match reason {
+                csh::placement::Unsupported::MultiplePaths => {
+                    "Shapes with multiple paths cannot be placed yet."
+                }
+                csh::placement::Unsupported::OpenPath => "Open paths cannot be placed yet.",
+                csh::placement::Unsupported::BooleanOperation => {
+                    "This shape uses unsupported Boolean operations."
+                }
+                csh::placement::Unsupported::InitialFill => {
+                    "Shapes that fill the outside area cannot be placed yet."
+                }
+                csh::placement::Unsupported::Clipboard => {
+                    "This shape includes unsupported placement metadata."
+                }
+                csh::placement::Unsupported::CoordinateRange => {
+                    "This shape's control points exceed the placement limits."
+                }
+                _ => "This shape has unsupported path geometry.",
+            })
+            .collect(),
+    }
+}

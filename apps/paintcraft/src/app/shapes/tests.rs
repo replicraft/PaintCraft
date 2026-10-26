@@ -58,8 +58,8 @@ fn translated_native_shape_selection_previews_without_editing_the_document() {
         assert_eq!(h.state().editor.history_view().ticket, ticket);
         assert_eq!(h.state().editor.is_dirty(), dirty);
         assert_eq!(
-            h.state().shapes.loaded.as_ref().unwrap().library,
-            csh::decode(SOURCE, &|| Ok(())).unwrap()
+            h.state().shapes.loaded.as_ref().unwrap().library.as_ref(),
+            &csh::decode(SOURCE, &|| Ok(())).unwrap()
         );
         h.get_by_role_and_label(egui::Role::Button, &translate(language, "Close"))
             .click();
@@ -225,8 +225,8 @@ fn shape_bytes_and_frozen_identity_stay_from_one_acquisition_after_namespace_rep
     app.install_shape_source(acquired, selected.clone())
         .unwrap();
     assert_eq!(
-        app.shapes.loaded.as_ref().unwrap().library,
-        csh::decode(SOURCE, &|| Ok(())).unwrap()
+        app.shapes.loaded.as_ref().unwrap().library.as_ref(),
+        &csh::decode(SOURCE, &|| Ok(())).unwrap()
     );
     std::os::unix::fs::symlink(&moved, &alias).unwrap();
     app.do_export(&alias, ImageFormat::Png, &KNOWN_LOSSES.map(str::to_owned));

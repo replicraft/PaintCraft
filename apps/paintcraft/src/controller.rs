@@ -40,6 +40,8 @@ mod residency;
 mod retry;
 #[path = "controller/sampled_brush.rs"]
 mod sampled_brush;
+#[path = "controller/shape_mask.rs"]
+mod shape_mask;
 #[path = "controller/strokes.rs"]
 mod strokes;
 #[path = "controller/text.rs"]
