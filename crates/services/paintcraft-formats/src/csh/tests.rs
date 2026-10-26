@@ -119,6 +119,10 @@ fn multiple_shapes_use_absolute_file_alignment_and_keep_duplicate_ids() {
     let parsed = decode(&bytes, &|| Ok(())).unwrap();
     assert_eq!(parsed.shapes().len(), 2);
     assert_eq!(parsed.shapes()[0], parsed.shapes()[1]);
+    assert_eq!(
+        decode(&encode(&parsed, &|| Ok(())).unwrap(), &|| Ok(())).unwrap(),
+        parsed
+    );
 }
 #[test]
 fn malformed_topology_unknown_selectors_and_discarded_data_are_refused() {
@@ -188,7 +192,13 @@ fn resource_allowances_are_checked_before_backend_allocation() {
 #[test]
 fn cancellation_is_polled_during_records_and_before_backend() {
     let bytes = sample();
-    for stop in 0..14 {
+    let total = Cell::new(0);
+    decode(&bytes, &|| {
+        total.set(total.get() + 1);
+        Ok(())
+    })
+    .unwrap();
+    for stop in 0..total.get() {
         let calls = Cell::new(0);
         let result = decode(&bytes, &|| {
             let n = calls.get();
@@ -207,5 +217,107 @@ fn cancellation_is_polled_during_records_and_before_backend() {
             ErrorCode::OperationCancelled,
             "checkpoint {stop}"
         );
+    }
+}
+
+#[test]
+fn fresh_writer_preserves_all_ordered_record_bytes_and_nonzero_origin() {
+    let source = sample();
+    let library = decode(&source, &|| Ok(())).unwrap();
+    let output = encode(&library, &|| Ok(())).unwrap();
+    // Name terminators are canonicalized; the entire record stream is exact.
+    assert_eq!(
+        &output[output.len() - 9 * 26..],
+        &source[source.len() - 9 * 26..]
+    );
+    assert_eq!(decode(&output, &|| Ok(())).unwrap(), library);
+    assert_eq!(
+        encode(&decode(&output, &|| Ok(())).unwrap(), &|| Ok(())).unwrap(),
+        output
+    );
+    assert_eq!(
+        encode(&Library::new(vec![], &|| Ok(())).unwrap(), &|| Ok(())).unwrap(),
+        b"cush\0\0\0\x02\0\0\0\0"
+    );
+}
+
+#[test]
+fn constructed_resources_retain_boolean_operations_extreme_bounds_and_bits() {
+    let original = decode(&sample(), &|| Ok(())).unwrap();
+    let mut shapes = Vec::new();
+    for operation in [
+        None,
+        Some(Operation::Exclude),
+        Some(Operation::Combine),
+        Some(Operation::Subtract),
+        Some(Operation::Intersect),
+    ] {
+        let mut shape = original.shapes()[0].clone();
+        shape.bounds = [u32::MAX - 1, 1, u32::MAX, u32::MAX];
+        for record in &mut shape.records {
+            if let Record::Subpath {
+                operation: value,
+                nonzero_fill,
+                ..
+            } = record
+            {
+                *value = operation;
+                *nonzero_fill = false;
+            }
+        }
+        shapes.push(shape);
+    }
+    let resource = Library::new(shapes.clone(), &|| Ok(())).unwrap();
+    assert_eq!(resource.shapes(), shapes);
+    assert_eq!(
+        decode(&encode(&resource, &|| Ok(())).unwrap(), &|| Ok(())).unwrap(),
+        resource
+    );
+}
+
+#[test]
+fn constructed_resources_cannot_bypass_wire_validation() {
+    let original = decode(&sample(), &|| Ok(())).unwrap();
+    let base = &original.shapes()[0];
+    let mut bad = base.clone();
+    bad.records[0] = Record::FillRule(42);
+    assert!(Library::new(vec![bad], &|| Ok(())).is_err());
+    let mut bad = base.clone();
+    bad.records.remove(4);
+    assert!(Library::new(vec![bad], &|| Ok(())).is_err());
+    for id in ["a".repeat(256), "é".into(), "a\0b".into()] {
+        let mut bad = base.clone();
+        bad.id = id;
+        assert!(Library::new(vec![bad], &|| Ok(())).is_err());
+    }
+    for name in ["a".repeat(NAME_UNITS_MAX + 1), "a\0b".into()] {
+        let mut bad = base.clone();
+        bad.name = name;
+        assert!(Library::new(vec![bad], &|| Ok(())).is_err());
+    }
+    assert!(Library::new(vec![base.clone(); SHAPES_MAX + 1], &|| Ok(())).is_err());
+}
+
+#[test]
+fn every_writer_checkpoint_can_cancel_without_returning_partial_output() {
+    let resource = decode(&sample(), &|| Ok(())).unwrap();
+    let total = Cell::new(0);
+    encode(&resource, &|| {
+        total.set(total.get() + 1);
+        Ok(())
+    })
+    .unwrap();
+    for stop in 0..total.get() {
+        let calls = Cell::new(0);
+        let result = encode(&resource, &|| {
+            let current = calls.get();
+            calls.set(current + 1);
+            if current == stop {
+                Err(Error::new(ErrorCode::OperationCancelled, "test"))
+            } else {
+                Ok(())
+            }
+        });
+        assert_eq!(result.unwrap_err().code, ErrorCode::OperationCancelled);
     }
 }

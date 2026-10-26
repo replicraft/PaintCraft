@@ -45,7 +45,7 @@ Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, 
 | EXR/HDR, JP2, MSP, ICNS | Not yet enabled | Registry inventory or work in progress is not usable format support |
 | ASE | Studio Palettes dialog; CLI `palette inspect` / `palette export`; MCP `inspect_palette` / `export_palette` | Flat groups, exact names/order/models/types and finite f32 values. RGB/gray tool-color adoption is explicit; CMYK/LAB conversion, persistent catalogs and Adobe qualification remain |
 | ABR | Asset workflow policy only | Brush import implementation remains |
-| CSH | Internal checked resource reader; no public workflow yet | Retains bounds, names, IDs and exact ordered path records. Shape export, Studio/CLI/MCP integration and independent interoperability qualification remain |
+| CSH | Internal checked resource reader/writer; no public workflow yet | Retains bounds, names, IDs and exact ordered path records. Studio/CLI/MCP integration and independent interoperability qualification remain |
 | RAW, PDF, KRA, XCF, animation, advanced DDS | Future profiles | No inherited Classic support or preserving-write claims |
 
 QOI, PAM and farbfeld writers admit at most 4,194,304 pixels and 64 MiB encoded output. Their bounded private output is discarded on failure or cancellation. These checks do not constitute a hard aggregate resident-memory or codec scratch-memory limit.
@@ -159,7 +159,7 @@ complete CLI inspection/export span 9.77–13.72 ms / 20.44–30.57 ms. All 480
 measured CLI executions succeeded. The ranges retain slower sessions and are
 observations of these resource workflows, not speedup or interactive guarantees.
 
-### CSH resource reader, 2026-10-25
+### CSH resource adapter, 2026-10-25
 
 The internal CSH adapter preflights the complete source before invoking the
 selected `ag-psd` 0.3.0 reader. Its typed resource keeps original unsigned
@@ -177,7 +177,15 @@ inverted unsigned bounds, inconsistent knot counts/topology, unknown operations,
 unsupported flags, nonzero reserved data and repeated control records are
 refused. Duplicate names/IDs and record order are retained. These input and
 structure allowances do not prove a hard allocator or cancellation-tail bound.
-The reader is not registered for any public operation yet. Export, resource
+The fresh writer uses selected `ag-psd` container/name/ID headers with an exact
+ordered-record body adapter: the upstream path writer omits selector 6, reorders
+control records, resets the origin and converts coordinates through pixel-space
+floats. PaintCraft retains the original bounds and signed fixed-point values
+instead. Name terminators/padding are canonicalized. Constructed resources pass
+the same wire validation, and every export is decoded and compared with its
+typed source before bytes are returned. Tests cover all Boolean operations,
+extreme bounds, record byte equality and cancellation at every checkpoint.
+This adapter is not registered for any public operation yet. Resource
 editing/placement, previews, frontend integration, independent-reader evidence
 and original-application qualification remain required for F14.
 

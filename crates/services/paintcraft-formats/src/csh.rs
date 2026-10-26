@@ -7,6 +7,7 @@ mod preflight;
 #[cfg(test)]
 mod tests;
 mod verify;
+mod writer;
 
 use paintcraft_core::types::{Error, ErrorCode, Result};
 
@@ -60,9 +61,24 @@ pub struct Library {
     shapes: Vec<Shape>,
 }
 impl Library {
+    pub fn new(shapes: Vec<Shape>, check: &dyn Fn() -> Result<()>) -> Result<Self> {
+        // Constructed and imported assets share complete structural validation.
+        decode(&writer::encode(&shapes, check)?, check)
+    }
     pub fn shapes(&self) -> &[Shape] {
         &self.shapes
     }
+}
+
+/// Write a fresh resource without changing bounds or quantizing its knots.
+/// Source name padding/terminators are canonicalized; resource semantics remain.
+pub fn encode(library: &Library, check: &dyn Fn() -> Result<()>) -> Result<Vec<u8>> {
+    let bytes = writer::encode(&library.shapes, check)?;
+    let verified = decode(&bytes, check)?;
+    if verified != *library {
+        return Err(invalid("CSH export changed resource semantics"));
+    }
+    Ok(bytes)
 }
 
 pub fn decode(bytes: &[u8], check: &dyn Fn() -> Result<()>) -> Result<Library> {
