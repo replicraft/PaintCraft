@@ -1,0 +1,19 @@
+{
+    "generator": "generate.py, Python standard library",
+    "license": "MIT, repository-authored fixtures",
+    "files": {
+        "mixed.ase": {
+            "bytes": 282,
+            "sha256": "3b3b96a8bd4ab40fe22829e9bef3ae868b61d51c1a2a41aec81416013d6788bf"
+        },
+        "empty.ase": {
+            "bytes": 12,
+            "sha256": "0a445495ef3249746bbc21f372ba08d50730c163f4d7c92366cdfdfaea326e24"
+        },
+        "swatch-generated.ase": {
+            "bytes": 128,
+            "sha256": "8720fd2ad75c81810208dd6e7f86bb6b89cfdecddf1081b21b0dc94808280cfb",
+            "generator": "swatch 0.4.0 via oracle.py --write-fixture"
+        }
+    }
+}
