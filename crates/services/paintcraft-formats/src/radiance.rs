@@ -1,6 +1,8 @@
 //! Bounded Radiance RGBE header/packet admission, never an enabled decoder.
 //! Stored values already contain header exposure/correction adjustments; no
 //! metadata is silently applied or undone by inspection.
+#[cfg(feature = "hdr-codec")]
+pub mod decode;
 mod header;
 mod packets;
 pub use header::{Header, Record};
@@ -15,6 +17,8 @@ pub const PIXELS_MAX: u64 = 4_194_304;
 #[derive(Debug)]
 pub struct Inspection<'a> {
     header: Header<'a>,
+    #[cfg(feature = "hdr-codec")]
+    body: &'a [u8],
     packets: Summary,
     sha256: [u8; 32],
 }
@@ -64,6 +68,8 @@ pub fn inspect<'a>(
     }
     check()?;
     Ok(Inspection {
+        #[cfg(feature = "hdr-codec")]
+        body: &bytes[header.data_offset..],
         header,
         packets,
         sha256: hash.finalize().into(),

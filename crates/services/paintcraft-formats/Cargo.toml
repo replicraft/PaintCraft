@@ -8,6 +8,8 @@ license-file.workspace = true
 publish.workspace = true
 
 [features]
+# Private qualification only; no registry/frontend reader route.
+hdr-codec = ["image/hdr"]
 heif-codec = ["dep:heic-decoder"]
 
 [dependencies]
