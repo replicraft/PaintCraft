@@ -131,6 +131,33 @@ class CodecWorkerTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 codec_worker.verify_manifest(destination, self.version, self.target)
 
+    def test_sdr_contract_is_exact_for_all_target_archives_without_executing_them(self):
+        for target in release.TARGETS:
+            with self.subTest(target=target):
+                executable(self.binary, target)
+                helper = self.root / codec_worker.filename(target)
+                v6 = helper.read_bytes().replace(codec_worker.BUILD_PREFIX, codec_worker.AVIF_SDR_BUILD_PREFIX).replace(codec_worker.BUILD_SUFFIX, codec_worker.AVIF_SDR_BUILD_SUFFIX)
+                helper.write_bytes(v6)
+                destination = self.root / (target + "-sdr")
+                destination.mkdir()
+                codec_worker.copy(self.binary, destination, self.version, target)
+                metadata = json.loads((destination / codec_worker.MANIFEST).read_bytes())
+                self.assertEqual(metadata["profile"], codec_worker.AVIF_SDR_PROFILE)
+                self.assertEqual(metadata["qualified_import_variants"], codec_worker.NATIVE_VARIANTS + ["native-avif-srgb8-worker-v1", "native-avif-sdr-ycbcr8-worker-v1"])
+                codec_worker.verify_manifest(destination, self.version, target)
+                for bad in [v6 + codec_worker.AVIF_BUILD_PREFIX, v6 + codec_worker.BUILD_PREFIX,
+                            v6.replace(b"CSP12_WORK1", b"CSP12_WORK0"),
+                            v6.replace(b"YUV444_420", b"YUV444_422"),
+                            v6.replace(b"ALLOC1", b"ALLOC0")]:
+                    helper.write_bytes(bad)
+                    with self.assertRaises(ValueError):
+                        codec_worker.prepare(self.binary, self.version, target)
+                manifest = destination / codec_worker.MANIFEST
+                for bad in [metadata["qualified_import_variants"][:-1], list(reversed(metadata["qualified_import_variants"]))]:
+                    manifest.write_text(json.dumps({**metadata, "qualified_import_variants": bad}))
+                    with self.assertRaises(ValueError):
+                        codec_worker.verify_manifest(destination, self.version, target)
+
     def test_cli_and_desktop_workflow_share_one_helper_cargo_build(self):
         workflow = (release.ROOT / ".github/workflows/release.yml").read_text()
         self.assertIn("-p paintcraft -p paintcraft-cli -p paintcraft-codec-worker --target", workflow)

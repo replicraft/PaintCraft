@@ -90,11 +90,12 @@ the existing single-thread Rayon pool; no new renderer or thread pool is added.
 The trusted child must not delegate inherited pipes or spawn descendants: the
 supervisor controls its exact child, not an arbitrary process tree.
 
-Two finite native contracts are recognized. `BUILD_V4` qualifies JXL/JXR/HEIF;
+Three finite native contracts are recognized. `BUILD_V4` qualifies JXL/JXR/HEIF;
 `BUILD_V5_AVIF` additionally requires the pinned static decoder token
-`AVIF_DAV1D154_ALLOC1_ASM0_8BIT1` and exact four-variant manifest. AVIF requires
-V5; other codecs accept either verified contract, with no retry after integrity
-failure. Both include `STDIN_PARENT_LEASE1` and `JXR_PRIVATE_SOURCE1`; binary
+`AVIF_DAV1D154_ALLOC1_ASM0_8BIT1` and exact four-variant manifest. The private
+`BUILD_V6_AVIF_SDR` adds the reconstruction token and fifth variant described
+below. Identity AVIF requires V5 or V6; SDR requires V6; other codecs accept
+all three verified contracts, with no retry after integrity failure. All include `STDIN_PARENT_LEASE1` and `JXR_PRIVATE_SOURCE1`; binary
 protocol 2 is unchanged. The supervisor retains its
 sole stdin writer after the exact request. EOF, I/O failure or an extra byte makes
 the helper watchdog exit without allocation (status 76). This is parent-liveness
@@ -139,7 +140,7 @@ records without executing foreign binaries. macOS ad-hoc signing is reflected in
 the final manifest SHA; it is not Developer-ID signing or notarization.
 
 Schema 2 `qualified_import_variants` lists exactly three native variants for V4
-or four for V5.
+or four for V5, or five for the opt-in V6 build.
 Standalone copied executables and helper-free installs fail closed. Packages
 containing the helper include `JPEGXR_LICENSE.txt`, reproducing the selected
 JPEG XR dependency's actual required Microsoft notice rather than relying on its
@@ -216,9 +217,12 @@ proved by the [owned SDR fixtures](../../crates/services/paintcraft-formats/test
 V4 and V5 emit a canonical unsupported response for code6.
 
 The exact `BUILD_V6_AVIF_SDR` record adds the pinned allocation and
-`AVIF_SDR709_YUV444_420_CSP12_WORK1` tokens and a five-variant set. This producer
-is not yet accepted by installed native Job/adoption or packaging; no Studio,
-CLI, MCP or registry reader is enabled for it. An opt-in executable is not a
+`AVIF_SDR709_YUV444_420_CSP12_WORK1` tokens and a five-variant set. Installed native Job/adoption verifies this exact contract, source-bound
+assessment and reconstruction/name consent. Packaging and private-prefix
+installation validators recognize V4, V5 and V6 without executing foreign
+binaries, require their exact ordered variant sets and retain both decoder
+notices. These archive checks do not prove execution on all six targets. No
+Studio, CLI, MCP or registry SDR reader is enabled yet. An opt-in executable is not a
 replacement for the normal verified V5 installation.
 
 ```sh

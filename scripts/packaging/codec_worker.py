@@ -14,6 +14,9 @@ AVIF_BUILD_PREFIX = b"PAINTCRAFT_CODEC_WORKER_BUILD_V5_AVIF\0"
 AVIF_BUILD_SUFFIX = b"\0PCDEC002\0HEAP268435456\0STDIN_PARENT_LEASE1\0JXR_PRIVATE_SOURCE1\0AVIF_DAV1D154_ALLOC1_ASM0_8BIT1\0END_CODEC_WORKER_BUILD\0"
 NATIVE_PROFILE = "internal-heif-gray8-heif-srgb8-jxl-rgba8-jxr-rgb8-private-source1-parent-lease1"
 AVIF_PROFILE = "native-heif-gray8-heif-srgb8-jxl-rgba8-jxr-rgb8-avif-srgb8-dav1d154-alloc1-private-source1-parent-lease1"
+AVIF_SDR_BUILD_PREFIX = b"PAINTCRAFT_CODEC_WORKER_BUILD_V6_AVIF_SDR\0"
+AVIF_SDR_BUILD_SUFFIX = b"\0PCDEC002\0HEAP268435456\0STDIN_PARENT_LEASE1\0JXR_PRIVATE_SOURCE1\0AVIF_DAV1D154_ALLOC1_ASM0_8BIT1\0AVIF_SDR709_YUV444_420_CSP12_WORK1\0END_CODEC_WORKER_BUILD\0"
+AVIF_SDR_PROFILE = "native-heif-gray8-heif-srgb8-jxl-rgba8-jxr-rgb8-avif-srgb8-ycbcr8-dav1d154-alloc1-private-source1-parent-lease1"
 NATIVE_VARIANTS = ["native-jxl-srgb8-worker-v1", "native-jxr-srgb8-worker-v1", "native-heif-srgb8-worker-v1"]
 
 
@@ -22,7 +25,9 @@ def verify_build_record(helper, version):
     # survives stripping; a sibling filename alone proves no version identity.
     contracts = [(BUILD_PREFIX, BUILD_SUFFIX, NATIVE_PROFILE, NATIVE_VARIANTS),
                  (AVIF_BUILD_PREFIX, AVIF_BUILD_SUFFIX, AVIF_PROFILE,
-                  NATIVE_VARIANTS + ["native-avif-srgb8-worker-v1"])]
+                  NATIVE_VARIANTS + ["native-avif-srgb8-worker-v1"]),
+                 (AVIF_SDR_BUILD_PREFIX, AVIF_SDR_BUILD_SUFFIX, AVIF_SDR_PROFILE,
+                  NATIVE_VARIANTS + ["native-avif-srgb8-worker-v1", "native-avif-sdr-ycbcr8-worker-v1"])]
     with helper.open("rb") as stream:
         with mmap.mmap(stream.fileno(), 0, access=mmap.ACCESS_READ) as image:
             found = [contract for contract in contracts if image.find(contract[0]) >= 0]

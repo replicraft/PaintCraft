@@ -249,7 +249,7 @@ def source_archive(temporary, target):
                             cwd=release.ROOT, check=True, capture_output=True, text=True)
     binary = Path(json.loads(result.stdout)["target_directory"]) / target / "release" / executable(target)
     profile, _ = codec_worker.verify_build_record(binary.parent / codec_worker.filename(target), version)
-    if profile != codec_worker.AVIF_PROFILE:
+    if profile not in (codec_worker.AVIF_PROFILE, codec_worker.AVIF_SDR_PROFILE):
         raise ValueError("Source install requires the AVIF-enabled helper")
     archive = package_cli.package(version, target, binary, temporary)
     sums = temporary / "SHA256SUMS.txt"

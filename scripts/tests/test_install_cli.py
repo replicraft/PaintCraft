@@ -30,14 +30,17 @@ class InstallTests(unittest.TestCase):
         self.version = release.workspace_version()
         self.target = install.native_target()
 
-    def archive(self, target=None, stem="fixture"):
+    def archive(self, target=None, stem="fixture", contract="v5"):
         target = target or self.target
         directory = self.root / stem
         directory.mkdir()
         binary = directory / install.executable(target)
         executable(binary, target)
         helper = directory / codec_worker.filename(target)
-        helper.write_bytes(helper.read_bytes().replace(codec_worker.BUILD_PREFIX, codec_worker.AVIF_BUILD_PREFIX).replace(codec_worker.BUILD_SUFFIX, codec_worker.AVIF_BUILD_SUFFIX))
+        if contract != "v4":
+            prefix, suffix = ((codec_worker.AVIF_SDR_BUILD_PREFIX, codec_worker.AVIF_SDR_BUILD_SUFFIX)
+                              if contract == "v6" else (codec_worker.AVIF_BUILD_PREFIX, codec_worker.AVIF_BUILD_SUFFIX))
+            helper.write_bytes(helper.read_bytes().replace(codec_worker.BUILD_PREFIX, prefix).replace(codec_worker.BUILD_SUFFIX, suffix))
         output = directory / "archives"
         archive = package_cli.package(self.version, target, binary, output)
         sums = output / "SHA256SUMS.txt"
@@ -80,6 +83,18 @@ class InstallTests(unittest.TestCase):
                 self.assertEqual(json.loads((destination / codec_worker.MANIFEST).read_bytes())["profile"], codec_worker.AVIF_PROFILE)
                 if os.name != "nt":
                     self.assertEqual((destination / install.executable(target)).stat().st_mode & 0o777, 0o755)
+
+    def test_finite_contract_upgrades_and_downgrades_keep_complete_verified_payload(self):
+        for target in release.TARGETS:
+            prefix = self.root / (target + "-finite-prefix")
+            for number, (contract, profile) in enumerate([("v4", codec_worker.NATIVE_PROFILE), ("v5", codec_worker.AVIF_PROFILE),
+                                      ("v6", codec_worker.AVIF_SDR_PROFILE), ("v5", codec_worker.AVIF_PROFILE)]):
+                with self.subTest(target=target, contract=contract):
+                    archive, sums = self.archive(target, target + "-" + contract + "-" + str(number), contract)
+                    destination = self.install(archive, sums, prefix, target)
+                    codec_worker.verify_installed_manifest(destination, self.version, target)
+                    self.assertEqual(json.loads((destination / codec_worker.MANIFEST).read_bytes())["profile"], profile)
+                    self.assertEqual({p.name for p in destination.iterdir()}, install.payload_names(target))
 
     def test_bad_checksum_and_incomplete_foreign_or_incompatible_payload_preserve_install(self):
         archive, sums = self.archive()
@@ -293,26 +308,27 @@ class InstallTests(unittest.TestCase):
             codec_worker.verify_manifest(destination, future, self.target)
 
     def test_source_build_packages_both_binaries_with_avif_and_exact_notices(self):
-        archive, sums = self.archive()
-        binary_dir = archive.parent.parent
-        target_directory = self.root / "cargo-target"
-        built = target_directory / self.target / "release"
-        built.mkdir(parents=True)
-        for name in (install.executable(self.target), codec_worker.filename(self.target)):
-            shutil.copy2(binary_dir / name, built / name)
-        temporary = self.root / "source-output"
-        temporary.mkdir()
-        metadata = subprocess.CompletedProcess([], 0, stdout=json.dumps({"target_directory": str(target_directory)}))
-        with patch.object(install.subprocess, "run", return_value=metadata) as run:
-            archive, sums, version = install.source_archive(temporary, self.target)
-        command = run.call_args_list[0].args[0]
-        self.assertIn("paintcraft-cli", command)
-        self.assertIn("paintcraft-codec-worker", command)
-        self.assertIn("paintcraft-codec-worker/avif-codec", command)
-        self.assertIn("--locked", command)
-        self.assertEqual(version, self.version)
-        destination = self.install(archive, sums)
-        self.assertEqual({p.name for p in destination.iterdir()}, install.payload_names(self.target))
+        for contract in ["v5", "v6"]:
+            archive, sums = self.archive(stem="source-" + contract, contract=contract)
+            binary_dir = archive.parent.parent
+            target_directory = self.root / ("cargo-target-" + contract)
+            built = target_directory / self.target / "release"
+            built.mkdir(parents=True)
+            for name in (install.executable(self.target), codec_worker.filename(self.target)):
+                shutil.copy2(binary_dir / name, built / name)
+            temporary = self.root / ("source-output-" + contract)
+            temporary.mkdir()
+            metadata = subprocess.CompletedProcess([], 0, stdout=json.dumps({"target_directory": str(target_directory)}))
+            with patch.object(install.subprocess, "run", return_value=metadata) as run:
+                archive, sums, version = install.source_archive(temporary, self.target)
+            command = run.call_args_list[0].args[0]
+            self.assertIn("paintcraft-cli", command)
+            self.assertIn("paintcraft-codec-worker", command)
+            self.assertIn("paintcraft-codec-worker/avif-codec", command)
+            self.assertIn("--locked", command)
+            self.assertEqual(version, self.version)
+            destination = self.install(archive, sums, self.root / ("source-prefix-" + contract))
+            self.assertEqual({p.name for p in destination.iterdir()}, install.payload_names(self.target))
 
     @unittest.skipUnless(os.name == "nt", "actual PowerShell wrapper")
     def test_real_powershell_wrapper_offline_install_keeps_complete_payload(self):
