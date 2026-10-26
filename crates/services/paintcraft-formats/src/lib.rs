@@ -1,5 +1,6 @@
 //! Serialization boundaries: native projects and explicitly scoped raster codecs.
 
+pub mod abr;
 pub mod ase;
 pub mod avif;
 pub mod csh;

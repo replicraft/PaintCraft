@@ -1,0 +1,18 @@
+{
+    "generator": "generate.py, Python standard library",
+    "license": "MIT, repository-authored",
+    "files": {
+        "samples-v6.abr": {
+            "bytes": 992,
+            "sha256": "aaab14c8392e56d76f19e965adadf7305e02cfcf480ab1614cc35f190ec0f391"
+        },
+        "samples-v10.abr": {
+            "bytes": 316,
+            "sha256": "555fb0dc810ba0dfc73db109d3b0b5d91da89d20ce793dc5b18cb031b1294254"
+        },
+        "empty.abr": {
+            "bytes": 4,
+            "sha256": "7ed8f861286320c196afbb4f31d9efb6f4bd3a9f8d79513faa0df6b74820e041"
+        }
+    }
+}
