@@ -1,0 +1,23 @@
+{
+    "negative_top_level_color_options": {
+        "yuv420-limited.h265": "3413d8e4f80bb15208fe80a32d2b27011d76d34ed1dd16723e3bb861f88bbd31",
+        "yuv444-limited.h265": "81375cde7cfb0f9beeaaa01e7f6f577e37dbfbd59ec8259b36aa442a2e201050",
+        "identity444.h265": "ce0194d9d223db2be3a09a3dbd298dc62364ba55f3a206d4b360d101a1ec21e7",
+        "yuv444-full.h265": "59dfe0bea782099cb4129cb27c86af67f69f8cda05decc21a04fd9cb62fbd83d",
+        "alpha8.h265": "605614affafe560f4f8e3d1da37c5d839e77686d98d9a613aad5a309630db062",
+        "yuv420-full.h265": "bee2a1936a910cc5d95ba3bd76deb624fd4f832d6f801af83ee8601f96521b91"
+    },
+    "negative_note": "FFmpeg top-level color options produced native sample differences despite lossless encoder setting. Original negative streams retained privately; final encoder uses x265 explicit VUI params and no top-level color options, unchanged authored samples. FFmpeg8.0.1 mov demux also rejected the earlier gray HEIF wrappers: moov atom not found. Elementary readback is not independent container qualification.",
+    "native_differences_from_authored": {
+        "identity444": 0,
+        "identity444-alpha": 0,
+        "yuv444-full": 2145,
+        "yuv444-full-alpha": 2145,
+        "yuv444-limited": 2052,
+        "yuv444-limited-alpha": 2052,
+        "yuv420-full": 1105,
+        "yuv420-full-alpha": 1105,
+        "yuv420-limited": 1017,
+        "yuv420-limited-alpha": 1017
+    }
+}
