@@ -169,3 +169,36 @@ fn palette_export_protects_sources_in_current_other_tab_and_parked_workspaces() 
     }
     std::fs::remove_dir_all(root).unwrap();
 }
+
+#[test]
+fn palette_export_cannot_replace_a_loaded_shape_resource_alias() {
+    let root = std::env::temp_dir().join(format!("paintcraft-cross-resource-{}", Uuid::new_v4()));
+    std::fs::create_dir(&root).unwrap();
+    let palette = root.join("palette.ase");
+    let shape = root.join("shape.csh");
+    let alias = root.join("shape-alias.ase");
+    let shapes = include_bytes!(
+        "../../../../../crates/services/paintcraft-formats/tests/csh-fixtures/paths.csh"
+    );
+    std::fs::write(&palette, SOURCE).unwrap();
+    std::fs::write(&shape, shapes).unwrap();
+    std::fs::hard_link(&shape, &alias).unwrap();
+    let mut app = app(&palette);
+    app.install_shape(shapes, shape.clone()).unwrap();
+    let before = app.editor.document_snapshot();
+    app.palettes.picker = Some(app.capture_palette_picker(Kind::ExportPalette).unwrap());
+    app.complete_dialog(
+        &egui::Context::default(),
+        paintcraft_platform::dialogs::Completion {
+            kind: Kind::ExportPalette,
+            path: Some(alias.clone()),
+        },
+    );
+    assert!(app.palettes.error.is_some());
+    assert_eq!(std::fs::read(&alias).unwrap(), shapes);
+    assert_eq!(std::fs::read(&shape).unwrap(), shapes);
+    assert_eq!(std::fs::read(&palette).unwrap(), SOURCE);
+    assert!(Arc::ptr_eq(&before, &app.editor.document_snapshot()));
+    assert_eq!(app.asset_source_paths().count(), 2);
+    std::fs::remove_dir_all(root).unwrap();
+}

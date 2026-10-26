@@ -571,6 +571,10 @@ impl App {
         if path.as_os_str().is_empty() {
             return;
         }
+        if let Err(error) = self.guard_save_destination(&path) {
+            self.editor.set_status(format!("Cannot save: {error}"));
+            return;
+        }
         if self.other_document_destination(&path) {
             self.confirm = Some(Confirm::ReplaceSharedFile(path));
             return;
@@ -583,6 +587,10 @@ impl App {
     }
 
     pub(super) fn do_save(&mut self, ctx: &egui::Context, path: PathBuf) {
+        if let Err(error) = self.guard_save_destination(&path) {
+            self.editor.set_status(format!("Cannot save: {error}"));
+            return;
+        }
         if !self.editor.shape_file_ready() {
             return;
         }
@@ -597,6 +605,12 @@ impl App {
     }
 
     pub(super) fn capture_save(&mut self, ctx: &egui::Context, path: PathBuf) {
+        // Recheck after a confirmation or deferred editor transaction. The
+        // destination may have become an alias of a loaded resource meanwhile.
+        if let Err(error) = self.guard_save_destination(&path) {
+            self.editor.set_status(format!("Cannot save: {error}"));
+            return;
+        }
         if let Some((id, source)) = &mut self.tab_save_close
             && self
                 .tabs

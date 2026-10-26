@@ -29,6 +29,11 @@ pub(super) struct State {
     error: Option<String>,
     selected: usize,
 }
+impl State {
+    pub(super) fn source_path(&self) -> Option<&Path> {
+        self.loaded.as_ref().map(|loaded| loaded.source.as_path())
+    }
+}
 fn admit(frontend: registry::Frontend, path: &Path, operation: Operation) -> Result<()> {
     let mut request = Request::new(frontend, operation, Family::Csh, Platform::Native);
     request.extension = Some(path.extension().and_then(|s| s.to_str()).unwrap_or(""));

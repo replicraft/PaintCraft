@@ -251,6 +251,16 @@ workspaces. Stale picker results are refused. Browser import likewise rejects
 stale callbacks and exports a fresh download without changing document title or
 save state. Ordinary image Open and Save do not accept CSH.
 
+Native destination admission also protects currently loaded ASE/CSH sources from
+project Save As, flat image exports and exports of the other resource kind.
+Checks cover source path namespaces and current hard-link/symlink aliases, and
+run again after replacement confirmation and deferred save preparation. Normal
+Save to the painting's own bound PCND file remains allowed. Route-level tests
+cover reciprocal resource exports, cancellation, late alias retargeting and
+documents parked in other tabs/frontends. These guards retain loaded paths and
+compare current file identities; they do not retain an original inode identity
+after the source is renamed or establish race-proof filesystem traversal.
+
 CLI `shape inspect` and MCP `inspect_shapes` expose original bounds, ordered
 records and exact normalized signed integers. `shape export` and `export_shapes`
 write a fresh resource copy, separate from a painting's save acknowledgement.

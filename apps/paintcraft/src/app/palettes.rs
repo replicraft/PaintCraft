@@ -28,6 +28,11 @@ pub(super) struct State {
     picker: Option<Pick>,
     error: Option<String>,
 }
+impl State {
+    pub(super) fn source_path(&self) -> Option<&Path> {
+        self.loaded.as_ref().map(|loaded| loaded.source.as_path())
+    }
+}
 fn swatch(color: &ase::Swatch) -> widget::Row {
     widget::Row::Swatch(widget::Swatch {
         name: color.name.clone(),

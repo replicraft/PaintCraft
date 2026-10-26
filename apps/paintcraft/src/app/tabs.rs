@@ -486,7 +486,7 @@ impl WorkspaceDocuments {
 }
 
 impl App {
-    /// Resource export must not replace a source parked in another tab/frontend.
+    /// Export must not replace document or resource sources, including parked tabs.
     pub(super) fn protected_source_paths(&self) -> Vec<&Path> {
         fn add<'a>(state: &'a DocumentState, sources: &mut Vec<&'a Path>) {
             sources.extend(state.bound.as_deref());
@@ -495,6 +495,7 @@ impl App {
         let mut sources = Vec::new();
         sources.extend(self.bound.as_deref());
         sources.extend(self.imported_source.as_deref());
+        sources.extend(self.asset_source_paths());
         for state in self.tabs.iter().filter_map(|tab| tab.state.as_ref()) {
             add(state, &mut sources);
         }

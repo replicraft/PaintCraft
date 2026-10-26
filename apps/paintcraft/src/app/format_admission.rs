@@ -7,17 +7,33 @@ use std::io::Read;
 const SOURCE_BYTES: u64 = 512 << 20;
 
 impl App {
-    pub(super) fn guard_export_destination(&self, path: &Path) -> Result<()> {
-        if self
-            .bound
-            .as_deref()
+    pub(super) fn asset_source_paths(&self) -> impl Iterator<Item = &Path> {
+        self.palettes
+            .source_path()
             .into_iter()
-            .chain(self.imported_source.as_deref())
-            .any(|source| crate::destination::same_file(source, path))
+            .chain(self.shapes.source_path())
+    }
+    pub(super) fn guard_save_destination(&self, path: &Path) -> Result<()> {
+        if self
+            .asset_source_paths()
+            .any(|source| protected_destination(source, path))
         {
             return Err(Error::new(
                 ErrorCode::InputSchema,
-                "an exported image must not replace its source",
+                "a project save must not replace a loaded resource source",
+            ));
+        }
+        Ok(())
+    }
+    pub(super) fn guard_export_destination(&self, path: &Path) -> Result<()> {
+        if self
+            .protected_source_paths()
+            .into_iter()
+            .any(|source| protected_destination(source, path))
+        {
+            return Err(Error::new(
+                ErrorCode::InputSchema,
+                "an exported file must not replace an open document or loaded resource source",
             ));
         }
         Ok(())
@@ -74,6 +90,12 @@ impl App {
         app.editor.select_tool(Tool::Brush);
         app
     }
+}
+
+fn protected_destination(source: &Path, path: &Path) -> bool {
+    // Namespace comparison also protects the selected source path if it was
+    // deleted. Identity comparison additionally catches regular-file hard links.
+    crate::tabs::same_destination(source, path) || crate::destination::same_file(source, path)
 }
 
 pub(super) fn read_source(path: &Path) -> Result<Vec<u8>> {
@@ -144,6 +166,9 @@ fn limit() -> Error {
     )
 }
 
+#[cfg(test)]
+#[path = "format_admission/asset_destinations.rs"]
+mod asset_destinations;
 #[cfg(test)]
 #[path = "format_admission/tests.rs"]
 mod tests;
