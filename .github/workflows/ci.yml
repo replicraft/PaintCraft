@@ -19,6 +19,10 @@ jobs:
         with:
           key: native-filesystem
       - run: cargo test --locked -p paintcraft-platform --lib
+      - name: Test native worker lifetime, pipe cleanup and parent-death lease
+        run: cargo test --locked -p paintcraft-runtime --lib process::tests
+      - name: Test actual native codec helper and independent sample fixtures
+        run: cargo test --locked -p paintcraft-codec-worker --tests
       - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
