@@ -35,6 +35,7 @@ struct Prepared {
     assessment: Option<paintcraft_formats::jxr::ImportAssessment>,
     heif_assessment: Option<paintcraft_formats::heif::ImportAssessment>,
     avif_assessment: Option<paintcraft_formats::avif::ImportAssessment>,
+    avif_sdr_assessment: Option<paintcraft_formats::avif::sdr::ImportAssessment>,
     // Last field: document and acquired resources drop before the runtime charge.
     _lease: ResourceLease,
 }
@@ -46,6 +47,11 @@ impl Prepared {
             .map(|value| value.losses())
             .or_else(|| self.heif_assessment.as_ref().map(|value| value.losses()))
             .or_else(|| self.avif_assessment.as_ref().map(|value| value.losses()))
+            .or_else(|| {
+                self.avif_sdr_assessment
+                    .as_ref()
+                    .map(|value| value.losses())
+            })
             .unwrap_or(&[]);
         losses.iter().map(|code| (*code).to_owned()).collect()
     }
@@ -55,6 +61,11 @@ impl Prepared {
             .map(|value| value.to_value())
             .or_else(|| self.heif_assessment.as_ref().map(|value| value.to_value()))
             .or_else(|| self.avif_assessment.as_ref().map(|value| value.to_value()))
+            .or_else(|| {
+                self.avif_sdr_assessment
+                    .as_ref()
+                    .map(|value| value.to_value())
+            })
             .unwrap_or(Value::Null)
     }
     fn check_owner(&self, owner: wire::Owner) -> Result<()> {
@@ -114,6 +125,8 @@ impl Prepared {
                         wire::NATIVE_HEIF_IMPORT_VARIANT
                     } else if self.assessment.is_some() {
                         wire::NATIVE_JXR_IMPORT_VARIANT
+                    } else if self.avif_sdr_assessment.is_some() {
+                        wire::NATIVE_AVIF_SDR_IMPORT_VARIANT
                     } else if self.avif_assessment.is_some() {
                         wire::NATIVE_AVIF_IMPORT_VARIANT
                     } else {
@@ -128,6 +141,9 @@ impl Prepared {
                         self.assessment.is_some()
                             || self.heif_assessment.as_ref().is_some_and(|value| {
                                 value.losses().contains(&"heif-item-names-not-retained")
+                            })
+                            || self.avif_sdr_assessment.as_ref().is_some_and(|value| {
+                                value.losses().contains(&"avif-item-names-not-retained")
                             })
                             || self.avif_assessment.as_ref().is_some_and(|value| {
                                 value.losses().contains(&"avif-item-names-not-retained")
@@ -157,6 +173,7 @@ fn prepare(
     allowed: Vec<String>,
     cancel: paintcraft_runtime::Cancellation,
     current_owner: impl Fn() -> Result<wire::Owner>,
+    frontend: super::format_profile::Profile,
 ) -> Result<Prepared> {
     let length = job.length;
     let owner = job.owner;
@@ -167,13 +184,28 @@ fn prepare(
         )
     })?;
     let check = || cancel.check();
-    let prepared = job.prepare_import(
-        paintcraft_runtime::SharedBudget::new(DOCUMENT_BYTES),
-        lease.clone(),
-        &check,
-        &current_owner,
-        super::codec_worker::launch,
-    )?;
+    let residency = paintcraft_runtime::SharedBudget::new(DOCUMENT_BYTES);
+    let prepared = if job.codec == wire::Codec::AvifSrgb8 {
+        let source = job.input.clone();
+        job.prepare_avif_family(
+            residency,
+            lease.clone(),
+            &check,
+            &current_owner,
+            |codec, _| {
+                super::format_profile::Options { frontend }.admit_import_avif_codec(&source, codec)
+            },
+            super::codec_worker::launch,
+        )
+    } else {
+        job.prepare_import(
+            residency,
+            lease.clone(),
+            &check,
+            &current_owner,
+            super::codec_worker::launch,
+        )
+    }?;
     let adopted = prepared.adopt_with_losses(&allowed, &check, &current_owner)?;
     Ok(Prepared {
         document: adopted.document,
@@ -186,6 +218,7 @@ fn prepare(
         assessment: adopted.jxr_assessment,
         heif_assessment: adopted.heif_assessment,
         avif_assessment: adopted.avif_assessment,
+        avif_sdr_assessment: adopted.avif_sdr_assessment,
         _lease: lease,
     })
 }
@@ -196,6 +229,7 @@ fn convert(
     expected: Option<String>,
     reader_route: &str,
     allowed: &[String],
+    frontend: super::format_profile::Profile,
 ) -> Result<Written> {
     let codec = match input
         .extension()
@@ -257,6 +291,7 @@ fn convert(
                 allowed,
                 cancel,
                 || Ok(owner),
+                frontend,
             )
         },
         || {},
@@ -281,7 +316,14 @@ pub(super) fn qualified(
     allowed: &[String],
 ) -> Result<Written> {
     profile.admit_import_native_path(input)?;
-    convert(input, output, None, "native-studio-import", allowed)
+    convert(
+        input,
+        output,
+        None,
+        "native-studio-import",
+        allowed,
+        profile.frontend,
+    )
 }
 /// Explicit hidden developer qualification, not a stock import/open capability.
 pub fn run(options: Options, json: bool) -> Reply {
@@ -307,9 +349,11 @@ pub fn run(options: Options, json: bool) -> Reply {
                         paintcraft_formats::jxr::KNOWN_IMPORT_LOSSES,
                         paintcraft_formats::heif::KNOWN_IMPORT_LOSSES,
                         paintcraft_formats::avif::KNOWN_IMPORT_LOSSES,
+                        paintcraft_formats::avif::sdr::KNOWN_IMPORT_LOSSES,
                     ]
                     .concat(),
                 )?,
+                options.profile.frontend,
             )
         })(),
     )

@@ -57,6 +57,7 @@ pub fn run(a: Options, json: bool) -> Reply {
                 .chain(paintcraft_formats::jxr::KNOWN_IMPORT_LOSSES.iter())
                 .chain(paintcraft_formats::heif::KNOWN_IMPORT_LOSSES.iter())
                 .chain(paintcraft_formats::avif::KNOWN_IMPORT_LOSSES.iter())
+                .chain(paintcraft_formats::avif::sdr::KNOWN_IMPORT_LOSSES.iter())
                 .chain(paintcraft_formats::svg::KNOWN_LOSSES.iter())
                 .copied()
                 .collect();

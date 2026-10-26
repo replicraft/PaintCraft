@@ -92,6 +92,35 @@ impl Options {
                 ));
             }
         };
+        self.admit_import_native_variant(path, family, variant)
+    }
+    pub fn admit_import_avif_codec(
+        &self,
+        path: &std::path::Path,
+        codec: paintcraft_formats::codec_worker::Codec,
+    ) -> Result<()> {
+        let variant = match codec {
+            paintcraft_formats::codec_worker::Codec::AvifSrgb8 => {
+                paintcraft_formats::codec_worker::NATIVE_AVIF_IMPORT_VARIANT
+            }
+            paintcraft_formats::codec_worker::Codec::AvifSdr8 => {
+                paintcraft_formats::codec_worker::NATIVE_AVIF_SDR_IMPORT_VARIANT
+            }
+            _ => {
+                return Err(Error::new(
+                    ErrorCode::CapabilityUnsupported,
+                    "Unqualified AVIF selected codec",
+                ));
+            }
+        };
+        self.admit_import_native_variant(path, Family::Avif, variant)
+    }
+    pub fn admit_import_native_variant(
+        &self,
+        path: &std::path::Path,
+        family: Family,
+        variant: &str,
+    ) -> Result<()> {
         let mut request = Request::new(
             self.frontend.into(),
             Operation::ImportConvert,

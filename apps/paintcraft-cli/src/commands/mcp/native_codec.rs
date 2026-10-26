@@ -174,7 +174,8 @@ fn prepare(
                 cancel.check()?;
                 worker_check()
             };
-            Job {
+            let source = input.clone();
+            let job = Job {
                 input,
                 identity,
                 length,
@@ -184,8 +185,22 @@ fn prepare(
                 deadline: Duration::from_secs(10),
                 application_version: env!("CARGO_PKG_VERSION").into(),
                 expected_sha256: None,
+            };
+            if codec == wire::Codec::AvifSrgb8 {
+                job.prepare_avif_family(
+                    residency,
+                    lease,
+                    &check,
+                    &|| Ok(captured),
+                    |selected, _| {
+                        super::super::format_profile::Options::default()
+                            .admit_import_avif_codec(&source, selected)
+                    },
+                    launch,
+                )
+            } else {
+                job.prepare_import(residency, lease, &check, &|| Ok(captured), launch)
             }
-            .prepare_import(residency, lease, &check, &|| Ok(captured), launch)
         },
         || {},
     )?;
@@ -247,6 +262,11 @@ fn import_with_launch(
         .or_else(|| {
             prepared
                 .avif_assessment()
+                .map(|assessment| assessment.to_value())
+        })
+        .or_else(|| {
+            prepared
+                .avif_sdr_assessment()
                 .map(|assessment| assessment.to_value())
         })
         .map(|value| core_json(&value))

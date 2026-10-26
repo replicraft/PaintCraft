@@ -42,11 +42,31 @@ fn copied_installed_real_helper_cancellation_preserves_mcp_session_and_retires_c
         ("windows", "x86_64") => "x86_64-pc-windows-msvc",
         _ => panic!("release host required"),
     };
+    let bytes = fs::read(&installed).unwrap();
+    let (profile, variants) = if bytes
+        .windows(wire::AVIF_SDR_BUILD_RECORD_MARKER.len())
+        .any(|part| part == wire::AVIF_SDR_BUILD_RECORD_MARKER)
+    {
+        (
+            wire::AVIF_SDR_NATIVE_PROFILE,
+            wire::QUALIFIED_AVIF_SDR_IMPORT_VARIANTS,
+        )
+    } else if bytes
+        .windows(wire::AVIF_BUILD_RECORD_MARKER.len())
+        .any(|part| part == wire::AVIF_BUILD_RECORD_MARKER)
+    {
+        (
+            wire::AVIF_NATIVE_PROFILE,
+            wire::QUALIFIED_AVIF_IMPORT_VARIANTS,
+        )
+    } else {
+        (wire::NATIVE_PROFILE, wire::QUALIFIED_NATIVE_IMPORT_VARIANTS)
+    };
     let manifest = serde_json::json!({"schema_version":2,"embedded_build_record_verified":true,
         "application_version":env!("CARGO_PKG_VERSION"),"target":target,"executable":helper_name,
         "sha256":hex(&Sha256::digest(fs::read(&installed).unwrap())),"protocol_version":wire::PROTOCOL_VERSION,
-        "profile":wire::NATIVE_PROFILE,"requested_heap_ceiling_bytes":wire::HEAP_BYTES,
-        "qualified_import_variants":wire::QUALIFIED_NATIVE_IMPORT_VARIANTS});
+        "profile":profile,"requested_heap_ceiling_bytes":wire::HEAP_BYTES,
+        "qualified_import_variants":variants});
     fs::write(
         root.join("paintcraft-codec-worker.json"),
         manifest.to_string(),

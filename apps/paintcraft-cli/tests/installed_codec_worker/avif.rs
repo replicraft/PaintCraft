@@ -13,10 +13,12 @@ macro_rules! fixture {
 fn installation() -> Installation {
     let installation = Installation::new();
     let manifest = json::parse(&fs::read(&installation.manifest).unwrap()).unwrap();
-    assert_eq!(
-        manifest.get("profile").and_then(Value::as_str),
-        Some(wire::AVIF_NATIVE_PROFILE),
-        "Build paintcraft-codec-worker with --features avif-codec first"
+    assert!(
+        matches!(
+            manifest.get("profile").and_then(Value::as_str),
+            Some(wire::AVIF_NATIVE_PROFILE) | Some(wire::AVIF_SDR_NATIVE_PROFILE)
+        ),
+        "Build an actual V5 or V6 AVIF helper first"
     );
     installation
 }

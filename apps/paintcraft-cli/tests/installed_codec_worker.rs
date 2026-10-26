@@ -49,7 +49,15 @@ impl Installation {
         let avif = helper_bytes
             .windows(wire::AVIF_BUILD_RECORD_MARKER.len())
             .any(|bytes| bytes == wire::AVIF_BUILD_RECORD_MARKER);
-        let (profile, variants): (&str, &[&str]) = if avif {
+        let sdr = helper_bytes
+            .windows(wire::AVIF_SDR_BUILD_RECORD_MARKER.len())
+            .any(|bytes| bytes == wire::AVIF_SDR_BUILD_RECORD_MARKER);
+        let (profile, variants): (&str, &[&str]) = if sdr {
+            (
+                wire::AVIF_SDR_NATIVE_PROFILE,
+                wire::QUALIFIED_AVIF_SDR_IMPORT_VARIANTS,
+            )
+        } else if avif {
             (
                 wire::AVIF_NATIVE_PROFILE,
                 wire::QUALIFIED_AVIF_IMPORT_VARIANTS,
@@ -513,3 +521,6 @@ mod heif;
 
 #[path = "installed_codec_worker/avif.rs"]
 mod avif;
+
+#[path = "installed_codec_worker/avif_sdr.rs"]
+mod avif_sdr;

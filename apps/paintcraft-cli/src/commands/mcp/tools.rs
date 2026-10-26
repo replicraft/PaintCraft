@@ -99,6 +99,7 @@ impl PaintingServer {
                     && !paintcraft_formats::jxr::KNOWN_IMPORT_LOSSES.contains(&code.as_str())
                     && !paintcraft_formats::heif::KNOWN_IMPORT_LOSSES.contains(&code.as_str())
                     && !paintcraft_formats::avif::KNOWN_IMPORT_LOSSES.contains(&code.as_str())
+                    && !paintcraft_formats::avif::sdr::KNOWN_IMPORT_LOSSES.contains(&code.as_str())
                     && !paintcraft_formats::svg::KNOWN_LOSSES.contains(&code.as_str())
             }) {
                 return Err(invalid(&format!("unknown import loss code {code:?}")));
