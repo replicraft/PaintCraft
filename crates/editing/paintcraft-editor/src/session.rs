@@ -264,6 +264,18 @@ impl Session {
         check: impl Fn() -> Result<()>,
     ) -> Result<Receipt> {
         check()?;
+        self.validate_batch_base(batch)?;
+        let staged = execute_with_admission_checked(
+            &self.doc,
+            self.selection.clone(),
+            batch,
+            admission.constrain_pixels(self.staged_pixels),
+            &check,
+        )?;
+        self.commit_staged(staged, &batch.digest, label, check)
+    }
+
+    fn validate_batch_base(&self, batch: &Batch) -> Result<()> {
         if batch.policy != POLICY {
             return Err(Error::new(
                 ErrorCode::PolicyUnknown,
@@ -276,14 +288,7 @@ impl Session {
                 "The current publication differs from the requested base.",
             ));
         }
-        let staged = execute_with_admission_checked(
-            &self.doc,
-            self.selection.clone(),
-            batch,
-            admission.constrain_pixels(self.staged_pixels),
-            &check,
-        )?;
-        self.commit_staged(staged, &batch.digest, label, check)
+        Ok(())
     }
 
     fn commit_staged(

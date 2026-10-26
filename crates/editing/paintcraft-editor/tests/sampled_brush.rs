@@ -232,3 +232,133 @@ fn empty_coverage_is_not_a_dirty_document_or_history_entry() {
     assert_eq!(session.undo_depth(), depth);
     assert!(!session.is_dirty());
 }
+
+#[test]
+fn first_sampled_stroke_is_one_atomic_layer_and_brush_edit_with_no_empty_layer_noop() {
+    use paintcraft_core::types::text::MaskSpan;
+    fn initial(session: &Session, alpha: u8, x: i64) -> Batch {
+        batch(
+            session,
+            vec![
+                Op::LayerAdd {
+                    alias: "first".into(),
+                    name: "Layer 1".into(),
+                    width: 8,
+                    height: 8,
+                    origin: (0, 0),
+                    default: Rgba::TRANSPARENT,
+                },
+                Op::MaskSpans {
+                    layer: LayerRef::Alias("first".into()),
+                    color: Rgba([11, 22, 33, alpha]),
+                    spans: vec![MaskSpan {
+                        y: 2,
+                        x0: x,
+                        x1: x,
+                        coverage: 255,
+                    }],
+                },
+            ],
+        )
+    }
+    let mut session = Session::new(new_document(8, 8, None, 0, POLICY).unwrap());
+    let before = session.snapshot();
+    let paint = initial(&session, 255, 3);
+    let denied = session
+        .preparation()
+        .unwrap()
+        .apply_initial_mask_stroke_with_admission(
+            &paint,
+            paintcraft_raster::Admission::new(0),
+            || Ok(()),
+        );
+    assert_eq!(denied.unwrap_err().code, ErrorCode::ResourceLimit);
+    assert!(session.document().same_semantics(&before));
+    assert_eq!(session.undo_depth(), 0);
+    let calls = Cell::new(0);
+    drop(
+        session
+            .preparation()
+            .unwrap()
+            .apply_initial_mask_stroke(&paint, || {
+                calls.set(calls.get() + 1);
+                Ok(())
+            })
+            .unwrap(),
+    );
+    for stop in 1..=calls.get() {
+        let seen = Cell::new(0);
+        let result = session
+            .preparation()
+            .unwrap()
+            .apply_initial_mask_stroke(&paint, || {
+                seen.set(seen.get() + 1);
+                if seen.get() == stop {
+                    Err(Error::new(ErrorCode::OperationCancelled, "test"))
+                } else {
+                    Ok(())
+                }
+            });
+        assert_eq!(result.unwrap_err().code, ErrorCode::OperationCancelled);
+        assert!(session.document().same_semantics(&before));
+        assert_eq!(session.undo_depth(), 0);
+    }
+    for (alpha, x) in [(0, 3), (255, 30)] {
+        let noop = initial(&session, alpha, x);
+        let prepared = session
+            .preparation()
+            .unwrap()
+            .apply_initial_mask_stroke(&noop, || Ok(()))
+            .unwrap();
+        assert!(
+            !session
+                .publish_prepared(prepared, || Ok(()))
+                .unwrap()
+                .committed
+        );
+        assert!(session.document().same_semantics(&before));
+        assert_eq!(session.undo_depth(), 0);
+    }
+    let mut wrong = paint.clone();
+    if let Op::LayerAdd { default, .. } = &mut wrong.operations[0] {
+        *default = Rgba([255; 4]);
+    }
+    assert_eq!(
+        session
+            .preparation()
+            .unwrap()
+            .apply_initial_mask_stroke(&wrong, || Ok(()))
+            .unwrap_err()
+            .code,
+        ErrorCode::InputSchema
+    );
+    let prepared = session
+        .preparation()
+        .unwrap()
+        .apply_initial_mask_stroke(&paint, || Ok(()))
+        .unwrap();
+    session.publish_prepared(prepared, || Ok(())).unwrap();
+    assert_eq!(session.document().layers.len(), 1);
+    let id = session.document().roots[0];
+    assert_eq!(
+        session.document().layers[&id].raster.get(3, 2),
+        Rgba([11, 22, 33, 255])
+    );
+    assert_eq!(session.undo_depth(), 1);
+    assert_eq!(
+        session.history_view().entries.last().unwrap().label,
+        Label::Brush
+    );
+    let after = session.snapshot();
+    session.undo().unwrap();
+    assert!(session.document().same_semantics(&before));
+    session.redo().unwrap();
+    assert!(session.document().same_semantics(&after));
+    assert!(
+        session
+            .preparation()
+            .unwrap()
+            .apply_initial_mask_stroke(&initial(&session, 255, 4), || Ok(()))
+            .is_err()
+    );
+}
