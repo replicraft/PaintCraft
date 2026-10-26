@@ -1,0 +1,148 @@
+{
+    "node": "v24.10.0",
+    "package": "@imagemagick/magick-wasm",
+    "version": "0.0.44",
+    "image_magick": "ImageMagick 7.1.2-32 Q8 wasm32 ad98b244c:20260927 https://imagemagick.org",
+    "quantum_depth": 8,
+    "archive_sha256": "808e876ed849de942b47dec268d4a8059e68fc2470aa895266bb36754eb968a7",
+    "wrapper_sha256": "cf1db24f7e63f560118ef434fd581dc9ef66ad099dc417184765cd6076fb4a1b",
+    "wasm_sha256": "b7d6710436b150dc5bd1ca04d80b6b7614c54854d7470f888f7e69a2a41b00e4",
+    "corrupt_first_offset_refused": true,
+    "results": [
+        {
+            "filename": "rgb.dcx",
+            "file_sha256": "c25067863081a408e64306a457d76421e725895f9294249f4152791d261021ff",
+            "pages": [
+                {
+                    "page": 0,
+                    "width": 3,
+                    "height": 2,
+                    "dpi": [
+                        72,
+                        144
+                    ],
+                    "indexed": false,
+                    "rgb_sha256": "fcbf2fefb20a3264857d21135f769e7a6b34331b3de07d215c603bd563d19345",
+                    "palette_sha256": null,
+                    "index_sha256": null
+                },
+                {
+                    "page": 1,
+                    "width": 65,
+                    "height": 2,
+                    "dpi": [
+                        73,
+                        145
+                    ],
+                    "indexed": false,
+                    "rgb_sha256": "0fe5397f8bb56fafa8c894eb43ea1782cad6f232afb363f8eee4334c170bd2bf",
+                    "palette_sha256": null,
+                    "index_sha256": null
+                },
+                {
+                    "page": 2,
+                    "width": 1,
+                    "height": 5,
+                    "dpi": [
+                        74,
+                        146
+                    ],
+                    "indexed": false,
+                    "rgb_sha256": "2fd9961e90636a8a7d0157460c74b8bcf727899691714c69c13c987ecdefaef6",
+                    "palette_sha256": null,
+                    "index_sha256": null
+                }
+            ]
+        },
+        {
+            "filename": "indexed.dcx",
+            "file_sha256": "ae13006b823d52c699fd407dbea4ffad1cc68dc7f3338ac429dd360d2b676b81",
+            "pages": [
+                {
+                    "page": 0,
+                    "width": 3,
+                    "height": 2,
+                    "dpi": [
+                        72,
+                        144
+                    ],
+                    "indexed": true,
+                    "rgb_sha256": "1cd103ee4f472a98de7ebc25a4ccc996feb373c0953a875e2ee4cc1f04c93b93",
+                    "palette_sha256": "c93ca264f6d3e81bd7cb4c11e7369dcd86de4df98443d2bf9dbc4fafa6e281ea",
+                    "index_sha256": "9ea568c53d241c8cfaa603f4507a427c088d42df335b90f6d7c7de9752e26d5c"
+                },
+                {
+                    "page": 1,
+                    "width": 65,
+                    "height": 2,
+                    "dpi": [
+                        73,
+                        145
+                    ],
+                    "indexed": true,
+                    "rgb_sha256": "a3e436f08418665fb6f2dc44c2d8953aa626455bd21096bc6451ebcc9263c0d4",
+                    "palette_sha256": "dc72284df7823dc0dc3a58185a2de3188861275da3ec427d9e0e14c4c2459843",
+                    "index_sha256": "59780655ef6cfd6fe5f8d82d4a9fce2097cbc402d0714204d20797b16a002e8c"
+                },
+                {
+                    "page": 2,
+                    "width": 1,
+                    "height": 5,
+                    "dpi": [
+                        74,
+                        146
+                    ],
+                    "indexed": true,
+                    "rgb_sha256": "d446f8946652a773ccae565c1338f942ae74080c954081a1b08de662ce837383",
+                    "palette_sha256": "26016fbf1ee33be8d1020a6cd0027e8c412a7a288d31b46fb7e4e58ef5e0c145",
+                    "index_sha256": "b15354cbed41a04d0e386c87f5282e8a089976b1afa3fdedb489d53aa227a07d"
+                }
+            ]
+        },
+        {
+            "filename": "mixed.dcx",
+            "file_sha256": "01dadbe490c176c7fd8565f18b4e0fc60afa819678783abad16d1e7ff8e9c7c3",
+            "pages": [
+                {
+                    "page": 0,
+                    "width": 3,
+                    "height": 2,
+                    "dpi": [
+                        72,
+                        144
+                    ],
+                    "indexed": true,
+                    "rgb_sha256": "1cd103ee4f472a98de7ebc25a4ccc996feb373c0953a875e2ee4cc1f04c93b93",
+                    "palette_sha256": "c93ca264f6d3e81bd7cb4c11e7369dcd86de4df98443d2bf9dbc4fafa6e281ea",
+                    "index_sha256": "9ea568c53d241c8cfaa603f4507a427c088d42df335b90f6d7c7de9752e26d5c"
+                },
+                {
+                    "page": 1,
+                    "width": 65,
+                    "height": 2,
+                    "dpi": [
+                        73,
+                        145
+                    ],
+                    "indexed": false,
+                    "rgb_sha256": "0fe5397f8bb56fafa8c894eb43ea1782cad6f232afb363f8eee4334c170bd2bf",
+                    "palette_sha256": null,
+                    "index_sha256": null
+                },
+                {
+                    "page": 2,
+                    "width": 1,
+                    "height": 5,
+                    "dpi": [
+                        74,
+                        146
+                    ],
+                    "indexed": true,
+                    "rgb_sha256": "d446f8946652a773ccae565c1338f942ae74080c954081a1b08de662ce837383",
+                    "palette_sha256": "26016fbf1ee33be8d1020a6cd0027e8c412a7a288d31b46fb7e4e58ef5e0c145",
+                    "index_sha256": "b15354cbed41a04d0e386c87f5282e8a089976b1afa3fdedb489d53aa227a07d"
+                }
+            ]
+        }
+    ]
+}

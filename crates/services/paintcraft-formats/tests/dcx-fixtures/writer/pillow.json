@@ -1,0 +1,78 @@
+{
+    "python": "3.14.0",
+    "pillow": "13.0.0",
+    "results": [
+        {
+            "filename": "rgb.dcx",
+            "sha256": "c25067863081a408e64306a457d76421e725895f9294249f4152791d261021ff",
+            "pages": [
+                {
+                    "page": 0,
+                    "bounded_pcx_exact": true,
+                    "whole_dcx_rgb_mismatched_channels": 0,
+                    "expected_rgb_sha256": "fcbf2fefb20a3264857d21135f769e7a6b34331b3de07d215c603bd563d19345"
+                },
+                {
+                    "page": 1,
+                    "bounded_pcx_exact": true,
+                    "whole_dcx_rgb_mismatched_channels": 0,
+                    "expected_rgb_sha256": "0fe5397f8bb56fafa8c894eb43ea1782cad6f232afb363f8eee4334c170bd2bf"
+                },
+                {
+                    "page": 2,
+                    "bounded_pcx_exact": true,
+                    "whole_dcx_rgb_mismatched_channels": 0,
+                    "expected_rgb_sha256": "2fd9961e90636a8a7d0157460c74b8bcf727899691714c69c13c987ecdefaef6"
+                }
+            ]
+        },
+        {
+            "filename": "indexed.dcx",
+            "sha256": "ae13006b823d52c699fd407dbea4ffad1cc68dc7f3338ac429dd360d2b676b81",
+            "pages": [
+                {
+                    "page": 0,
+                    "bounded_pcx_exact": true,
+                    "whole_dcx_rgb_mismatched_channels": 18,
+                    "expected_rgb_sha256": "1cd103ee4f472a98de7ebc25a4ccc996feb373c0953a875e2ee4cc1f04c93b93"
+                },
+                {
+                    "page": 1,
+                    "bounded_pcx_exact": true,
+                    "whole_dcx_rgb_mismatched_channels": 390,
+                    "expected_rgb_sha256": "a3e436f08418665fb6f2dc44c2d8953aa626455bd21096bc6451ebcc9263c0d4"
+                },
+                {
+                    "page": 2,
+                    "bounded_pcx_exact": true,
+                    "whole_dcx_rgb_mismatched_channels": 0,
+                    "expected_rgb_sha256": "d446f8946652a773ccae565c1338f942ae74080c954081a1b08de662ce837383"
+                }
+            ]
+        },
+        {
+            "filename": "mixed.dcx",
+            "sha256": "01dadbe490c176c7fd8565f18b4e0fc60afa819678783abad16d1e7ff8e9c7c3",
+            "pages": [
+                {
+                    "page": 0,
+                    "bounded_pcx_exact": true,
+                    "whole_dcx_rgb_mismatched_channels": 18,
+                    "expected_rgb_sha256": "1cd103ee4f472a98de7ebc25a4ccc996feb373c0953a875e2ee4cc1f04c93b93"
+                },
+                {
+                    "page": 1,
+                    "bounded_pcx_exact": true,
+                    "whole_dcx_rgb_mismatched_channels": 0,
+                    "expected_rgb_sha256": "0fe5397f8bb56fafa8c894eb43ea1782cad6f232afb363f8eee4334c170bd2bf"
+                },
+                {
+                    "page": 2,
+                    "bounded_pcx_exact": true,
+                    "whole_dcx_rgb_mismatched_channels": 0,
+                    "expected_rgb_sha256": "d446f8946652a773ccae565c1338f942ae74080c954081a1b08de662ce837383"
+                }
+            ]
+        }
+    ]
+}
