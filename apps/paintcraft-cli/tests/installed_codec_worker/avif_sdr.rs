@@ -1,4 +1,4 @@
-//! Actual V6 processes; independent libaom planes and Fraction RGB references.
+//! Actual V6/V7 processes; independent libaom planes and Fraction RGB references.
 use super::*;
 use serde_json::json;
 const COLOR: &str = "avif-color-reconstruction";
@@ -16,10 +16,12 @@ fn installation() -> Installation {
     let installed = Installation::new();
     let value: serde_json::Value =
         serde_json::from_slice(&fs::read(&installed.manifest).unwrap()).unwrap();
-    assert_eq!(
-        value["profile"],
-        wire::AVIF_SDR_NATIVE_PROFILE,
-        "Build the actual helper with --features avif-sdr-codec"
+    assert!(
+        matches!(
+            value["profile"].as_str(),
+            Some(wire::AVIF_SDR_NATIVE_PROFILE) | Some(wire::FLOAT_NATIVE_PROFILE)
+        ),
+        "Build the actual V6/V7 SDR-capable helper; V4/V5 remain unsupported"
     );
     installed
 }
@@ -41,7 +43,7 @@ fn pixels(path: &Path, expected: &[u8], size: (u32, u32)) {
     }
 }
 #[test]
-#[ignore = "requires actual opt-in V6 helper beside CLI"]
+#[ignore = "requires an actual V6/V7 SDR-capable helper beside CLI"]
 fn installed_v6_cli_sdr_profiles_consent_and_exact_fraction_pcnd() {
     let installed = installation();
     let mut cases = 0;
@@ -122,7 +124,7 @@ fn installed_v6_cli_sdr_profiles_consent_and_exact_fraction_pcnd() {
     assert!(!installed.root.join("classic.pcnd").exists());
 }
 #[test]
-#[ignore = "requires actual opt-in V6 helper beside CLI"]
+#[ignore = "requires an actual V6/V7 SDR-capable helper beside CLI"]
 fn installed_v6_mcp_sdr_consent_cancel_source_owner_and_exact_pcnd() {
     let installed = installation();
     let mut client = mcp_client::Client::at(&installed.cli);
@@ -178,18 +180,27 @@ fn installed_v6_mcp_sdr_consent_cancel_source_owner_and_exact_pcnd() {
     );
     assert_eq!(client.ok("inspect_document", json!({})), stable);
     let manifest = fs::read(&installed.manifest).unwrap();
-    let mut wrong: serde_json::Value = serde_json::from_slice(&manifest).unwrap();
-    wrong["profile"] = json!(wire::AVIF_NATIVE_PROFILE);
-    wrong["qualified_import_variants"] = json!(wire::QUALIFIED_AVIF_IMPORT_VARIANTS);
-    fs::write(&installed.manifest, serde_json::to_vec(&wrong).unwrap()).unwrap();
-    assert_eq!(
-        client.call(
-            "import_image",
-            json!({"path":renamed,"discard_changes":true,"allow_losses":[COLOR,NAMES]})
-        )["isError"],
-        true
-    );
-    assert_eq!(client.ok("inspect_document", json!({})), stable);
+    for (profile, variants) in [
+        (wire::NATIVE_PROFILE, wire::QUALIFIED_NATIVE_IMPORT_VARIANTS),
+        (
+            wire::AVIF_NATIVE_PROFILE,
+            wire::QUALIFIED_AVIF_IMPORT_VARIANTS,
+        ),
+    ] {
+        let mut wrong: serde_json::Value = serde_json::from_slice(&manifest).unwrap();
+        wrong["profile"] = json!(profile);
+        wrong["qualified_import_variants"] = json!(variants);
+        fs::write(&installed.manifest, serde_json::to_vec(&wrong).unwrap()).unwrap();
+        assert_eq!(
+            client.call(
+                "import_image",
+                json!({"path":renamed,"discard_changes":true,"allow_losses":[COLOR,NAMES]})
+            )["isError"],
+            true,
+            "SDR must refuse {profile}"
+        );
+        assert_eq!(client.ok("inspect_document", json!({})), stable);
+    }
     fs::write(&installed.manifest, manifest).unwrap();
     fs::remove_file(&installed.helper).unwrap();
     assert_eq!(

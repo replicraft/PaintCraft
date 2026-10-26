@@ -1,5 +1,5 @@
 //! Real copied CLI + helper + manifest installations for qualified Studio imports.
-//! Build both packages first; V5-only AVIF cases require explicit execution.
+//! Build both packages first; specialist cases require explicit execution.
 #![cfg(any(
     target_os = "macos",
     all(target_os = "linux", target_env = "gnu"),
@@ -62,7 +62,7 @@ impl Installation {
         let (profile, variants): (&str, &[&str]) = if float {
             (
                 wire::FLOAT_NATIVE_PROFILE,
-                wire::QUALIFIED_AVIF_SDR_IMPORT_VARIANTS,
+                wire::QUALIFIED_FLOAT_IMPORT_VARIANTS,
             )
         } else if sdr {
             (
@@ -108,6 +108,50 @@ impl Installation {
             ),
         ]);
         fs::write(&manifest, json::canonical(&value)).unwrap();
+        Self {
+            root,
+            cli,
+            helper,
+            manifest,
+        }
+    }
+    /// Run the producer-installed payload in place; only fixture/output scratch
+    /// belongs to Drop. Float tests never tamper with the supplied installation.
+    fn from_installed(directory: &Path) -> Self {
+        let root = std::env::temp_dir().join(format!(
+            "paintcraft-archive-dispatch-{}",
+            uuid::Uuid::new_v4()
+        ));
+        fs::create_dir(&root).unwrap();
+        let directory = directory.canonicalize().unwrap();
+        let cli = directory.join(if cfg!(windows) {
+            "paintcraft-cli.exe"
+        } else {
+            "paintcraft-cli"
+        });
+        let helper = directory.join(if cfg!(windows) {
+            "paintcraft-codec-worker.exe"
+        } else {
+            "paintcraft-codec-worker"
+        });
+        let manifest = directory.join("paintcraft-codec-worker.json");
+        let value: serde_json::Value =
+            serde_json::from_slice(&fs::read(&manifest).unwrap()).unwrap();
+        assert_eq!(value["profile"], wire::FLOAT_NATIVE_PROFILE);
+        assert_eq!(
+            value["qualified_import_variants"],
+            serde_json::json!(wire::QUALIFIED_FLOAT_IMPORT_VARIANTS)
+        );
+        assert_eq!(
+            value["sha256"],
+            hex(&Sha256::digest(fs::read(&helper).unwrap()))
+        );
+        assert!(cli.is_file());
+        eprintln!(
+            "final-installed cli_sha256={} helper_sha256={}",
+            hex(&Sha256::digest(fs::read(&cli).unwrap())),
+            value["sha256"]
+        );
         Self {
             root,
             cli,

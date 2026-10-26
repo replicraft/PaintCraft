@@ -2,6 +2,22 @@
 use super::mcp_client::Client;
 use super::*;
 use serde_json::Value as Json;
+fn installation() -> Installation {
+    if let Some(directory) = std::env::var_os("PAINTCRAFT_V7_INSTALLATION") {
+        return Installation::from_installed(&PathBuf::from(directory));
+    }
+    let helper = PathBuf::from(
+        std::env::var_os("PAINTCRAFT_V7_HELPER").expect("final V7 helper or archive installation"),
+    );
+    let value = Installation::with_helper(Some(&helper));
+    let metadata: Json = serde_json::from_slice(&fs::read(&value.manifest).unwrap()).unwrap();
+    assert_eq!(metadata["profile"], wire::FLOAT_NATIVE_PROFILE);
+    assert_eq!(
+        metadata["qualified_import_variants"],
+        serde_json::json!(wire::QUALIFIED_FLOAT_IMPORT_VARIANTS)
+    );
+    value
+}
 fn formats() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../crates/services/paintcraft-formats/tests")
 }
@@ -87,12 +103,9 @@ fn pixels(path: &Path, expected: &[u8]) {
     }
 }
 #[test]
-#[ignore = "requires immutable PAINTCRAFT_V7_HELPER and qualified temporary native float gates"]
+#[ignore = "requires final PAINTCRAFT_V7_INSTALLATION or PAINTCRAFT_V7_HELPER"]
 fn actual_cli_and_mcp_float_inspection_import_match_all_independent_cases() {
-    let helper = PathBuf::from(
-        std::env::var_os("PAINTCRAFT_V7_HELPER").expect("immutable opt-in V7 helper"),
-    );
-    let app = Installation::with_helper(Some(&helper));
+    let app = installation();
     let manifest: Json = serde_json::from_slice(
         &fs::read(formats().join("float-import-fixtures/manifest.json")).unwrap(),
     )
@@ -211,10 +224,9 @@ fn actual_cli_and_mcp_float_inspection_import_match_all_independent_cases() {
 }
 
 #[test]
-#[ignore = "requires immutable PAINTCRAFT_V7_HELPER and qualified native float gates"]
+#[ignore = "requires final PAINTCRAFT_V7_INSTALLATION or PAINTCRAFT_V7_HELPER"]
 fn actual_float_source_guards_cancel_and_rollback_preserve_prior_workspace() {
-    let helper = PathBuf::from(std::env::var_os("PAINTCRAFT_V7_HELPER").unwrap());
-    let app = Installation::with_helper(Some(&helper));
+    let app = installation();
     let manifest: Json = serde_json::from_slice(
         &fs::read(formats().join("float-import-fixtures/manifest.json")).unwrap(),
     )

@@ -1,4 +1,4 @@
-//! Explicit V5 installed-helper qualification; build the optional helper first.
+//! Identity AVIF installed-helper qualification through finite V5/V6/V7 profiles.
 use super::*;
 use serde_json::json;
 const LOSS: &str = "avif-item-names-not-retained";
@@ -16,9 +16,11 @@ fn installation() -> Installation {
     assert!(
         matches!(
             manifest.get("profile").and_then(Value::as_str),
-            Some(wire::AVIF_NATIVE_PROFILE) | Some(wire::AVIF_SDR_NATIVE_PROFILE)
+            Some(wire::AVIF_NATIVE_PROFILE)
+                | Some(wire::AVIF_SDR_NATIVE_PROFILE)
+                | Some(wire::FLOAT_NATIVE_PROFILE)
         ),
-        "Build an actual V5 or V6 AVIF helper first"
+        "Build an actual V5, V6 or V7 AVIF-capable helper first"
     );
     installation
 }
@@ -35,7 +37,7 @@ fn pixels(path: &Path, expected: &[u8]) {
     }
 }
 #[test]
-#[ignore = "requires the actual optional V5 AVIF helper alongside the CLI"]
+#[ignore = "requires an actual V5/V6/V7 AVIF-capable helper alongside the CLI"]
 fn installed_cli_avif_consent_and_independent_libaom_pixels() {
     let installation = installation();
     for (name, source, expected, named) in [
@@ -88,7 +90,7 @@ fn installed_cli_avif_consent_and_independent_libaom_pixels() {
     }
 }
 #[test]
-#[ignore = "requires the actual optional V5 AVIF helper alongside the CLI"]
+#[ignore = "requires an actual V5/V6/V7 AVIF-capable helper alongside the CLI"]
 fn installed_mcp_avif_consent_cancel_and_renamed_source_guard() {
     let installation = installation();
     let mut client = mcp_client::Client::at(&installation.cli);
