@@ -24,6 +24,9 @@ struct Installation {
 }
 impl Installation {
     fn new() -> Self {
+        Self::with_helper(None)
+    }
+    fn with_helper(selected_helper: Option<&Path>) -> Self {
         let root = std::env::temp_dir().join(format!(
             "paintcraft-installed-dispatch-{}",
             uuid::Uuid::new_v4()
@@ -36,7 +39,8 @@ impl Installation {
         } else {
             "paintcraft-codec-worker"
         };
-        let source = cli_source.parent().unwrap().join(name);
+        let default_source = cli_source.parent().unwrap().join(name);
+        let source = selected_helper.unwrap_or(&default_source);
         assert!(
             source.is_file(),
             "Build the real helper first: cargo build -p paintcraft-codec-worker; full workspace tests build it automatically"
@@ -44,7 +48,7 @@ impl Installation {
         let cli = root.join(cli_source.file_name().unwrap());
         let helper = root.join(name);
         fs::copy(cli_source, &cli).unwrap();
-        fs::copy(&source, &helper).unwrap();
+        fs::copy(source, &helper).unwrap();
         let helper_bytes = fs::read(&helper).unwrap();
         let avif = helper_bytes
             .windows(wire::AVIF_BUILD_RECORD_MARKER.len())
@@ -52,7 +56,15 @@ impl Installation {
         let sdr = helper_bytes
             .windows(wire::AVIF_SDR_BUILD_RECORD_MARKER.len())
             .any(|bytes| bytes == wire::AVIF_SDR_BUILD_RECORD_MARKER);
-        let (profile, variants): (&str, &[&str]) = if sdr {
+        let float = helper_bytes
+            .windows(wire::FLOAT_BUILD_RECORD_MARKER.len())
+            .any(|bytes| bytes == wire::FLOAT_BUILD_RECORD_MARKER);
+        let (profile, variants): (&str, &[&str]) = if float {
+            (
+                wire::FLOAT_NATIVE_PROFILE,
+                wire::QUALIFIED_AVIF_SDR_IMPORT_VARIANTS,
+            )
+        } else if sdr {
             (
                 wire::AVIF_SDR_NATIVE_PROFILE,
                 wire::QUALIFIED_AVIF_SDR_IMPORT_VARIANTS,
@@ -524,3 +536,6 @@ mod avif;
 
 #[path = "installed_codec_worker/avif_sdr.rs"]
 mod avif_sdr;
+
+#[path = "installed_codec_worker/float.rs"]
+mod float;
