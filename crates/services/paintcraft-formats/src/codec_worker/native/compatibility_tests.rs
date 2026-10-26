@@ -50,7 +50,7 @@ fn manifest(helper: &Path) -> Value {
         (
             "qualified_import_variants",
             Value::Array(
-                QUALIFIED_AVIF_SDR_IMPORT_VARIANTS
+                QUALIFIED_FLOAT_IMPORT_VARIANTS
                     .iter()
                     .map(|v| Value::str(*v))
                     .collect(),
@@ -303,6 +303,12 @@ fn installed_v7_legacy_fixture() {
     });
     for (field, value) in [
         ("profile", Value::str("unknown-future-v8")),
+        (
+            "profile",
+            Value::str(
+                "private-native-v7-hdr-exr-sdr8-settings32-report96-16mib-1mp-parent-lease1",
+            ),
+        ),
         ("sha256", Value::str("0".repeat(64))),
         ("qualified_import_variants", Value::Array(vec![])),
         ("profile", Value::str(AVIF_SDR_NATIVE_PROFILE)),

@@ -145,7 +145,7 @@ fn copied_installed_v7_float_job() {
         (
             "qualified_import_variants",
             Value::Array(
-                QUALIFIED_AVIF_SDR_IMPORT_VARIANTS
+                QUALIFIED_FLOAT_IMPORT_VARIANTS
                     .iter()
                     .map(|v| Value::str(*v))
                     .collect(),

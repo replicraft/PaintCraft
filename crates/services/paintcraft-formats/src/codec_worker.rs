@@ -61,7 +61,17 @@ pub const QUALIFIED_AVIF_SDR_IMPORT_VARIANTS: &[&str] = &[
     NATIVE_AVIF_SDR_IMPORT_VARIANT,
 ];
 pub const FLOAT_NATIVE_PROFILE: &str =
-    "private-native-v7-hdr-exr-sdr8-settings32-report96-16mib-1mp-parent-lease1";
+    "native-v7-hdr-exr-sdr8-settings32-report96-16mib-1mp-parent-lease1";
+/// Exact final V7 qualification descriptor; historical private manifests refuse.
+pub const QUALIFIED_FLOAT_IMPORT_VARIANTS: &[&str] = &[
+    NATIVE_JXL_IMPORT_VARIANT,
+    NATIVE_JXR_IMPORT_VARIANT,
+    NATIVE_HEIF_IMPORT_VARIANT,
+    NATIVE_AVIF_IMPORT_VARIANT,
+    NATIVE_AVIF_SDR_IMPORT_VARIANT,
+    NATIVE_HDR_SDR_IMPORT_VARIANT,
+    NATIVE_EXR_SDR_IMPORT_VARIANT,
+];
 pub const FLOAT_BUILD_RECORD_MARKER: &[u8] = b"PAINTCRAFT_CODEC_WORKER_BUILD_V7_FLOAT\0";
 pub fn native_float_build_record(version: &str) -> Result<Vec<u8>> {
     if version.is_empty() || version.len() > 64 || !version.is_ascii() {

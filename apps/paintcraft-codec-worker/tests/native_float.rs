@@ -257,6 +257,7 @@ fn v7_refuses_malformed_request_response_owner_shapes_and_quota_declarations() {
         assert!(!bytes.windows(marker.len()).any(|v| v == marker));
     }
     assert_eq!(wire::QUALIFIED_AVIF_SDR_IMPORT_VARIANTS.len(), 5);
+    assert_eq!(wire::QUALIFIED_FLOAT_IMPORT_VARIANTS.len(), 7);
 }
 #[cfg(feature = "float-codecs")]
 #[test]

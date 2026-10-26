@@ -150,7 +150,7 @@ impl Job {
                 protocol_version: PROTOCOL_VERSION,
                 profile: FLOAT_NATIVE_PROFILE,
                 requested_heap_ceiling_bytes: HEAP_BYTES,
-                qualified_import_variants: QUALIFIED_AVIF_SDR_IMPORT_VARIANTS,
+                qualified_import_variants: QUALIFIED_FLOAT_IMPORT_VARIANTS,
                 build_marker: FLOAT_BUILD_RECORD_MARKER,
                 build_record: &record,
             },
