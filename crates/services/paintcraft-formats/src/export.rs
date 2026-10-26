@@ -94,6 +94,19 @@ pub fn export_flat_options_with(
     allowed: &[String],
     render: impl FnOnce(&Document) -> Result<Vec<u8>>,
 ) -> Result<FlatExport> {
+    export_flat_options_with_check(doc, options, allowed, render, &|| Ok(()))
+}
+
+/// Preserve the shared flat policy while checking caller cancellation in conversion
+/// and encoding. A caller-owned renderer must check during its own work.
+pub fn export_flat_options_with_check(
+    doc: &Document,
+    options: FlatOptions,
+    allowed: &[String],
+    render: impl FnOnce(&Document) -> Result<Vec<u8>>,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<FlatExport> {
+    check()?;
     let FlatOptions {
         format,
         quality: jpeg_quality,
@@ -107,6 +120,7 @@ pub fn export_flat_options_with(
         ));
     }
     let rgba = render(doc)?;
+    check()?;
     if rgba.len() as u128 != u128::from(doc.canvas.0) * u128::from(doc.canvas.1) * 4 {
         return Err(Error::new(
             ErrorCode::InvariantViolation,
@@ -132,7 +146,7 @@ pub fn export_flat_options_with(
             doc.canvas.1,
             &rgba,
             pcx_mode,
-            &|| Ok(()),
+            check,
         )?)
     } else {
         None
@@ -160,9 +174,16 @@ pub fn export_flat_options_with(
         ));
     }
     let bytes = if let Some(prepared) = prepared {
-        prepared.encode(&|| Ok(()))?
+        prepared.encode(check)?
     } else {
-        image::encode(format, doc.canvas.0, doc.canvas.1, &rgba, jpeg_quality)?
+        image::encode_checked(
+            format,
+            doc.canvas.0,
+            doc.canvas.1,
+            &rgba,
+            jpeg_quality,
+            check,
+        )?
     };
     Ok(FlatExport { bytes, losses })
 }

@@ -6,7 +6,9 @@ use paintcraft_core::types::{Error, ErrorCode, Result};
 pub const DIRECTORY_BYTES: usize = 4 + 1024 * 4;
 pub const MAGIC: u32 = 987_654_321;
 pub const PAGES_MAX: usize = 1023;
+mod prepare;
 mod write;
+pub use prepare::{DocumentLimits, PreparedDocument, prepare_document, prepare_document_with};
 pub use write::{
     PagePixels, WriteLimits, WritePage, WritePlan, encode_pages, preflight_write, write_pages_to,
 };
