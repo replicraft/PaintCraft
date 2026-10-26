@@ -16,8 +16,10 @@ transport and qualification; it does not use a native helper manifest.
 | 2 | Metadata-free straight sRGB RGBA8 JPEG XL | `native-jxl-srgb8-worker-v1` |
 | 3 | Strict unsigned RGB8 JPEG XR, T.832 default-sRGB policy after refusing embedded color contexts | `native-jxr-srgb8-worker-v1` |
 | 4 | Explicitly declared sRGB8 HEIF color and optional straight alpha | `native-heif-srgb8-worker-v1` |
-| 5 | Reduced-still identity sRGB8 AVIF 4:4:4 with optional straight monochrome alpha | `native-avif-srgb8-worker-v1`, V5 or V6 required |
-| 6 | Explicit BT.709/sRGB8 AVIF 4:4:4 or sited 4:2:0 with optional straight alpha | `native-avif-sdr-ycbcr8-worker-v1`, V6 required |
+| 5 | Reduced-still identity sRGB8 AVIF 4:4:4 with optional straight monochrome alpha | `native-avif-srgb8-worker-v1`, V5, V6 or V7 required |
+| 6 | Explicit BT.709/sRGB8 AVIF 4:4:4 or sited 4:2:0 with optional straight alpha | `native-avif-sdr-ycbcr8-worker-v1`, V6 or V7 required |
+| 7 | Explicit Radiance RGBE-to-SDR conversion with bound settings/report | `native-hdr-sdr8-worker-v1`, final V7 required |
+| 8 | Explicit OpenEXR-to-SDR conversion with bound settings/report | `native-exr-sdr8-worker-v1`, final V7 required |
 
 All profiles are bounded to 4,194,304 pixels. A selected library compiling does
 not admit its other profiles or grant an encoder capability.
@@ -96,7 +98,7 @@ Three finite native contracts are recognized. `BUILD_V4` qualifies JXL/JXR/HEIF;
 `BUILD_V5_AVIF` additionally requires the pinned static decoder token
 `AVIF_DAV1D154_ALLOC1_ASM0_8BIT1` and exact four-variant manifest. The private
 `BUILD_V6_AVIF_SDR` adds the reconstruction token and fifth variant described
-below. Identity AVIF requires V5 or V6; SDR requires V6; other codecs accept
+below. Identity AVIF accepts V5/V6/V7; SDR accepts V6/V7; other codecs accept
 all three verified contracts, with no retry after integrity failure. All include `STDIN_PARENT_LEASE1` and `JXR_PRIVATE_SOURCE1`; binary
 protocol 2 is unchanged. The supervisor retains its
 sole stdin writer after the exact request. EOF, I/O failure or an extra byte makes
@@ -128,7 +130,7 @@ justifies charging a smaller ceiling. A response peak is a preparation snapshot,
 not process-exit RSS. There is no OS filesystem or network sandbox claim.
 
 Release builds compile desktop, CLI and helper together under the lockfile and
-explicitly enable `paintcraft-codec-worker/avif-sdr-codec`. Meson 1.12.1 and Ninja
+explicitly enable `paintcraft-codec-worker/float-codecs`. Meson 1.12.1 and Ninja
 1.13.2 build the pinned source without a system-library fallback. On Windows,
 Meson uses `b_vscrt=mt` exactly when Rust target features include `crt-static`;
 otherwise it uses `md`. Release flags select the static mode, while normal and
@@ -142,7 +144,7 @@ records without executing foreign binaries. macOS ad-hoc signing is reflected in
 the final manifest SHA; it is not Developer-ID signing or notarization.
 
 Schema 2 `qualified_import_variants` lists exactly three native variants for V4
-or four for V5, or five for the opt-in V6 build.
+or four for V5, five for V6, or seven for final qualified V7.
 Standalone copied executables and helper-free installs fail closed. Packages
 containing the helper include `JPEGXR_LICENSE.txt`, reproducing the selected
 JPEG XR dependency's actual required Microsoft notice rather than relying on its
@@ -185,7 +187,7 @@ those gray diagnostic samples sRGB.
 
 ## Build and compatibility checks
 
-Normal builds include the V6 identity and qualified SDR AVIF decoder and require the native C compiler,
+Normal builds include the final V7 HDR/EXR conversion helper and its legacy decoders and require the native C compiler,
 Meson 1.12.1, Ninja 1.13.2 and Python 3.12 or newer:
 
 ```sh
@@ -228,16 +230,14 @@ native Job/adoption verifies that contract, source-bound assessment and actual
 reconstruction/name consent. Source-family selection validates captured bytes
 before admission and helper discovery; it never retries a decoder after failure.
 Packaging and private-prefix validators retain exact V4/V5/V6 compatibility and
-both decoder notices. Source installation requires the complete V6 output.
+both decoder notices. Source installation requires the complete final V7 output.
 V4 and V5 return a canonical unsupported response for code6. Browser and Classic
 reading remain unavailable; archive checks do not qualify six-target execution.
 
 
 ## Private float conversion qualification
 
-The opt-in `float-codecs` feature builds a distinct V7 helper for HDR and EXR
-conversion. Normal builds remain V6. V7 retains the same five public import
-variants; neither float codec has a public reader route or installer promotion.
+The initial opt-in `float-codecs` qualification built a private V7 helper for HDR and EXR conversion while normal builds remained V6. That historical snapshot declared five variants and did not promote installers. Its original logs/hash remain historical evidence; final production manifests use the separate exact seven-variant descriptor below.
 
 Code 7 (Radiance) and code 8 (OpenEXR) accept exactly 32 canonical settings bytes
 followed by at most 16 MiB of original source, with a 1,048,576-pixel allowance.
@@ -275,3 +275,16 @@ holds its sole stdin writer outside `Child::wait`, proves no premature EOF, then
 observes child termination after killing the parent. Earlier evidence that kept
 stdin inside `Child` was insufficient because `wait` closes that handle; the
 corrected fixture is separate from the production watchdog implementation.
+
+
+## Final V7 qualification descriptor and distribution
+
+Normal builds now enable `float-codecs`, retaining the immutable V7 build record, PCDEC002 protocol 2 and manifest schema 2. The exact profile is `native-v7-hdr-exr-sdr8-settings32-report96-16mib-1mp-parent-lease1`. Its ordered seven import variants are the V6 five followed by `native-hdr-sdr8-worker-v1` and `native-exr-sdr8-worker-v1`. Native gray remains an internal operation, not an eighth document import variant. Historical private V7 manifests are refused; no profile ordering admits unknown versions or retries integrity failures.
+
+Final V7 packages require JPEGXR, dav1d and `HDR_EXR_LICENSES_V1.txt` notices. Exact legacy V4/V5/V6 payloads retain their original two notices. CLI archive extraction bounds the manifest and metadata before validating the exact profile-dependent file set, then verifies executable records/hashes/notices before atomic installation. Source installation explicitly builds `float-codecs` and requires final V7. Compatibility-only V6 builds use `--no-default-features --features avif-sdr-codec`; V5 uses `--no-default-features --features avif-codec`, and V4 uses `--no-default-features`.
+
+The final descriptor does not alter exposure, alpha, negative-value, tone-mapping, source-space or report semantics. Original private qualification logs are not final-distribution evidence. Final consumer/package proof and native OS release checks are recorded separately.
+
+Local final-descriptor qualification on Apple silicon passed the default worker matrix (40 tests, eight ignored; test-build helper `80aecb8e9db50085716a7de69f7ff840b016f5fa0d58978155f647bff40e840a`). A separate actual optimized source build and canonical archive/private-prefix installation produced helper `24a014c300a3b8050b50afa4e71d1391c2949446b12bae7583a2ca48017ce29d` and CLI `33dccc52d90d34be83c5f8f18b05c73588107c0f7a9314503a4beb44d657e1a8`. Against those installed optimized binaries, CLI/MCP passed all seventeen independent scenarios plus source/cancellation/rollback guards; native-parent preparation passed twelve exact RGBA/PCND cases and five refusals; legacy discovery passed all six existing operations and unknown/private/forged-manifest refusals. The worker test-build hash and distributed optimized-helper hash are recorded separately.
+
+Actual local ad-hoc signing of a separate optimized helper copy also passed canonical post-sign manifest verification. This does not establish a complete signed GUI bundle, DMG, MSI, Linux package integration or execution on the other five native targets. Those remain release-workflow/OS gates; no release or tag is implied by local qualification.

@@ -6,10 +6,11 @@ portable archive and complete-release checks used by
 PaintCraft retains GPU rendering in every desktop build. It uses the locked Cargo
 dependencies and Rust 1.99.0 from `rust-toolchain.toml`.
 
-Normal helper builds enable `avif-sdr-codec` by default. Native release builds also
-explicitly request `paintcraft-codec-worker/avif-sdr-codec`; a V4 compatibility
+Normal helper builds enable `float-codecs` by default. Native release builds also
+explicitly request `paintcraft-codec-worker/float-codecs`; a V4 compatibility
 helper requires `--no-default-features`; V5 identity-only compatibility uses
-`--no-default-features --features avif-codec`.
+`--no-default-features --features avif-codec`; V6 uses
+`--no-default-features --features avif-sdr-codec`.
 The pinned dav1d source is built statically with Meson 1.12.1 and Ninja 1.13.2;
 no installed decoder library is used. Windows builds select the native MSVC
 compiler; release Rust flags request `crt-static` and the C build matches with
@@ -19,9 +20,10 @@ CLI/MCP tests before packaging. These workflow changes still require execution
 on all six targets; local Apple-silicon checks do not qualify the other targets.
 
 Packaging reads the helper's embedded build record without executing it, then
-writes an exact manifest for V4, identity-only V5 or complete V6. It refuses mixed,
+writes an exact manifest for V4, identity-only V5, complete V6 or final qualified V7. It refuses mixed,
 stale or malformed records. Desktop and CLI packages include the helper,
-manifest, `JPEGXR_LICENSE.txt` and `DAV1D_LICENSE.txt`. Portable archives keep
+manifest, `JPEGXR_LICENSE.txt` and `DAV1D_LICENSE.txt`; final V7 also includes
+`HDR_EXR_LICENSES_V1.txt`. Portable archives keep
 these beside the executable. Linux system packages place notices under
 `/usr/share/licenses/paintcraft` and the manifest under `/usr/share/paintcraft`.
 
@@ -194,9 +196,9 @@ and prints the retained directory's location for cleanup.
 Do not run another installer while `.install-lock` is present; inspect any leftover
 lock and recovery directory after an interrupted process.
 
-`--source` builds this checkout's CLI **and AVIF-enabled helper** using the locked
+`--source` builds this checkout's CLI **and complete HDR/EXR-enabled helper** using the locked
 Rust dependencies, a native C compiler, Meson 1.12.1 and Ninja 1.13.2. It generates
-the exact manifest, bundles both decoder notices and installs through the same
+the exact manifest, bundles the profile-required codec notices and installs through the same
 archive validation and transaction. It does not invoke `cargo install` or install
 Rust or build tools for you. Source builds use the checkout's version and cannot
 be combined with `--version` or `--archive`.
@@ -206,3 +208,10 @@ for an official complete archive and its `SHA256SUMS.txt`. The checksum and full
 payload checks are identical to the default download route. Tests use only temporary
 private prefixes; synthetic archive checks for six targets do not qualify native
 execution on the other systems.
+
+
+Final V7 uses the exact nonprivate seven-variant qualification descriptor and the unchanged V7 record/protocol/schema. Its required notices add `HDR_EXR_LICENSES_V1.txt`; legacy V4/V5/V6 archive and installation payload sets remain unchanged. Private V7 manifests are unsupported. Source installation requires the complete final V7 helper. Preserve explicit `--no-default-features` when building historical V4/V5/V6 compatibility helpers.
+
+A local copied-helper or private-prefix proof does not establish native execution on the other five targets, MSI installation/repair, Linux package integration, signed macOS bundle behavior, or original-application file events. Require the actual native release workflow and its platform validators before claiming those results. Signing rewrites Mach-O bytes; regenerate and canonically verify the helper manifest after signing, before sealing the enclosing applications.
+
+Local final-V7 distribution qualification used a real locked optimized source build, canonical CLI archive and actual archive-installer command into an owned temporary prefix. Installed CLI/MCP pixel/consent/source/cancellation/rollback checks and native-parent/legacy helper checks passed. Separate helper-signing verification regenerated the manifest over actual signed bytes. These results qualify that local artifact only; the six-target workflow, full desktop installers and original GUI OS integration gates above remain required before release-readiness claims.
