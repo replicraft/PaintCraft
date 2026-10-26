@@ -247,6 +247,9 @@ pub fn capability(family: Family, operation: Operation, platform: Platform) -> C
         Family::Heif if operation == Operation::ImportConvert && platform == Platform::Native => {
             Some("heic-decoder-isolated-srgb8")
         }
+        Family::Avif if operation == Operation::ImportConvert && platform == Platform::Native => {
+            Some("dav1d-isolated-srgb8")
+        }
         Family::Jxr if operation == Operation::ImportConvert && platform == Platform::Native => {
             Some("jpegxr-pure-rs-isolated-rgb8")
         }
@@ -323,6 +326,11 @@ pub fn admission(request: Request<'_>) -> Decision {
         && request.frontend == Frontend::Studio
         && request.platform == Platform::Native
         && request.variant == Some(crate::codec_worker::NATIVE_HEIF_IMPORT_VARIANT);
+    let native_avif_import = request.family == Family::Avif
+        && request.operation == Operation::ImportConvert
+        && request.frontend == Frontend::Studio
+        && request.platform == Platform::Native
+        && request.variant == Some(crate::codec_worker::NATIVE_AVIF_IMPORT_VARIANT);
     let web_jxl_import = request.family == Family::Jxl
         && request.operation == Operation::ImportConvert
         && request.frontend == Frontend::Studio
@@ -373,6 +381,7 @@ pub fn admission(request: Request<'_>) -> Decision {
         && !web_jxl_import
         && !native_jxr_import
         && !native_heif_import
+        && !native_avif_import
     {
         return Decision::TemporarilyUnavailable(Reason::VariantUnqualified);
     }
@@ -393,12 +402,14 @@ pub fn admission(request: Request<'_>) -> Decision {
         && !web_jxl_import
         && !native_jxr_import
         && !native_heif_import
+        && !native_avif_import
     {
         return Decision::TemporarilyUnavailable(Reason::VariantUnqualified);
     }
     if request.needs_preflight
         || native_jxr_import
         || native_heif_import
+        || native_avif_import
         || svg_rasterization
         || (request.operation.is_write() && request.family != Family::Pcnd)
     {
