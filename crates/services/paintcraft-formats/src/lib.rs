@@ -19,6 +19,7 @@ pub mod msp;
 pub mod ora;
 pub mod pcnd;
 pub mod pcx;
+pub mod pdn;
 pub mod png;
 pub mod precision;
 pub mod project_import;
