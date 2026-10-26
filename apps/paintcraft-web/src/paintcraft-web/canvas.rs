@@ -316,7 +316,11 @@ impl WebApp {
                 // Never leave a failed speculative image presented as committed.
                 self.editor.cancel_floating();
                 self.editor.tools.cancel_gesture();
-                self.message = format!("Preview unavailable: {error}");
+                self.message = if error.message.starts_with("Sampled brush stroke") {
+                    paintcraft_ui::t!(ctx, &error.message)
+                } else {
+                    format!("Preview unavailable: {error}")
+                };
                 match paintcraft_render::render_flat(self.editor.session.document()) {
                     Ok(pixels) => pixels,
                     Err(error) => {
@@ -473,7 +477,10 @@ impl WebApp {
                             continue;
                         }
                         let layer = self.editor.target.unwrap_or(uuid::Uuid::nil());
-                        if matches!(self.controls.tool, Tool::Select | Tool::ColorPicker)
+                        if (self.controls.tool == Tool::Brush
+                            && self.editor.tools.sampled_tip.is_some()
+                            && self.editor.session.document().layers.is_empty())
+                            || matches!(self.controls.tool, Tool::Select | Tool::ColorPicker)
                             || self
                                 .editor
                                 .session

@@ -22,6 +22,12 @@ impl WebApp {
         }
         self.text.widget_owned_input =
             ctx.egui_wants_keyboard_input() || egui::Popup::is_any_open(&ctx);
+        self.studio.sampled_brush = self.editor.adopted_brush.as_ref().map(|adopted| {
+            (
+                self.editor.tools.sampled_name.clone().unwrap_or_default(),
+                (adopted.tip().width(), adopted.tip().height()),
+            )
+        });
         let context = self.context();
         let chrome = egui::Panel::top("classic-chrome").show(ui, |ui| {
             let actions = if self.frontend == Frontend::Studio {

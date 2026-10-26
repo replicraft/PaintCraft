@@ -1,5 +1,6 @@
 //! Browser-owned session. Raster algorithms and history remain in shared crates.
 mod floating;
+mod sampled_brush;
 mod text;
 use paintcraft_commands::Batch;
 use paintcraft_core::types::{Error, ErrorCode, Result, Rgba, json::Value};
@@ -21,6 +22,7 @@ pub(crate) struct Editor {
     pub tools: ToolState,
     pub target: Option<Uuid>,
     fonts: std::cell::RefCell<paintcraft_tools::text::TextRenderer>,
+    pub(crate) adopted_brush: Option<paintcraft_formats::abr::adoption::AdoptedPreset>,
     floating_source: Option<floating::Source>,
 }
 
@@ -57,6 +59,7 @@ impl Editor {
             tools,
             fonts: text::fonts(),
             floating_source: None,
+            adopted_brush: None,
         })
     }
 
@@ -210,6 +213,8 @@ impl Editor {
                     self.commit(operations)
                 }
             }
+            Action::ToolFailure(message) => Err(Error::new(ErrorCode::ResourceLimit, message)),
+            Action::SampledStroke(stroke) => self.commit_sampled(stroke),
             Action::Stroke(stroke) => {
                 self.commit(commands::stroke_operations(&stroke, &|| Ok(()))?)
             }
@@ -329,6 +334,7 @@ impl Editor {
             }
             Some(Preview::Contour(contour)) => vec![commands::contour(&contour)],
             Some(Preview::Path(stroke)) => commands::stroke_operations(&stroke, &|| Ok(()))?,
+            Some(Preview::SampledStroke(stroke)) => self.sampled_operations(&stroke)?,
             Some(Preview::Shape {
                 layer,
                 tool,

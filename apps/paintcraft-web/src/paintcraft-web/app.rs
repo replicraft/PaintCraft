@@ -1,5 +1,6 @@
 //! Browser integration of shared Classic presentation and editor services.
 use paintcraft_ui::t;
+mod brushes;
 #[cfg(test)]
 mod chrome_tests;
 #[cfg(test)]
@@ -53,6 +54,7 @@ pub struct WebApp {
     icon_export: Option<icon_exporting::State>,
     palettes: palettes::State,
     shapes: shapes::State,
+    brushes: brushes::State,
     pub(crate) export_quality: u8,
     pub(crate) export_pcx_encoding: paintcraft_ui::pcx_export::Encoding,
     pcx_preview: paintcraft_ui::pcx_export::Cache<String>,
@@ -115,6 +117,7 @@ impl WebApp {
             icon_export: None,
             palettes: Default::default(),
             shapes: Default::default(),
+            brushes: Default::default(),
             export_quality: 90,
             export_pcx_encoding: Default::default(),
             pcx_preview: Default::default(),
@@ -167,6 +170,7 @@ impl WebApp {
             || self.export_confirm.is_some()
             || self.icon_export.is_some()
             || self.palettes.open
+            || self.brushes.open
             || self.shapes.open
             || self.confirm_replace.is_some()
             || self.files.busy
@@ -261,7 +265,13 @@ impl WebApp {
                     "Ready".into()
                 }
             }
-            Err(error) => self.message = format!("Edit failed: {error}"),
+            Err(error) => {
+                self.message = if error.message.starts_with("Sampled brush stroke") {
+                    paintcraft_ui::i18n::translate(self.preferences.language, &error.message)
+                } else {
+                    format!("Edit failed: {error}")
+                }
+            }
         }
     }
 
@@ -390,6 +400,7 @@ impl WebApp {
             }
             Action::ExportIcons => self.begin_icon_export(),
             Action::Palettes => self.begin_palettes(),
+            Action::BrushResources => self.begin_brushes(),
             Action::ShapeResources => self.begin_shapes(),
             Action::Save | Action::SaveAs => {
                 self.editor.tools.cancel_gesture();
@@ -618,6 +629,10 @@ impl WebApp {
     }
 
     fn dialogs(&mut self, ctx: &egui::Context) {
+        if self.brushes.open {
+            self.brush_dialog(ctx);
+            return;
+        }
         if self.shapes.open {
             self.shape_dialog(ctx);
             return;
