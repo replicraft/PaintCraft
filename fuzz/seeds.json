@@ -1,0 +1,118 @@
+{
+    "schema": "paintcraft.fuzz-seeds/v1",
+    "provenance": "Owned or existing pinned-reference fixtures; each source directory retains its original provenance. Corpus generation copies exact checked-in bytes and verifies SHA-256. Unqualified sources remain useful negative seeds.",
+    "seeds": [
+        {
+            "target": "avif",
+            "name": "identity-opaque.avif",
+            "source": "crates/services/paintcraft-formats/tests/avif-fixtures/opaque.avif",
+            "bytes": 307,
+            "sha256": "d17eb0071cbd75e9c6bf00a87b50fb9ffa68d19d616d630ce58feefbdb380824"
+        },
+        {
+            "target": "avif",
+            "name": "identity-alpha.avif",
+            "source": "crates/services/paintcraft-formats/tests/avif-fixtures/alpha.avif",
+            "bytes": 509,
+            "sha256": "db7a44c37e8336bab7ed4cadee430e1b579cbcf1f1b5fa5d088cf11cba27a61d"
+        },
+        {
+            "target": "avif",
+            "name": "sdr-named.avif",
+            "source": "crates/services/paintcraft-formats/tests/avif-sdr-fixtures/named-both.avif",
+            "bytes": 1122,
+            "sha256": "5adec5e22159769102086221ba145c72f633aa1e792de4c44d4f20e8c00588b4"
+        },
+        {
+            "target": "avif",
+            "name": "unknown-siting.avif",
+            "source": "crates/services/paintcraft-formats/tests/avif-sdr-fixtures/420-unknown-full-odd-alpha.avif",
+            "bytes": 1101,
+            "sha256": "8f7d88fded9d09d3a621d31a8bbe6d218e21d2d3b90dff34fd83eb32b8a87e04"
+        },
+        {
+            "target": "heif",
+            "name": "identity-alpha.heic",
+            "source": "crates/services/paintcraft-formats/tests/heif-color-fixtures/identity444-alpha.heic",
+            "bytes": 2939,
+            "sha256": "d5be4060e546be5c082903f2079a5034c18b452f74019007f56cb4825f008e2f"
+        },
+        {
+            "target": "heif",
+            "name": "420-limited.heic",
+            "source": "crates/services/paintcraft-formats/tests/heif-color-fixtures/yuv420-limited-alpha.heic",
+            "bytes": 2022,
+            "sha256": "57b64fba133658ffe9fb1eb3d556fd3ac9ff8afd2641a947696504b4c1c90458"
+        },
+        {
+            "target": "heif",
+            "name": "grid.heic",
+            "source": "crates/services/paintcraft-formats/tests/heif-fixtures/grid.heic",
+            "bytes": 1103,
+            "sha256": "2c86f986602b8ad6f331f33bdded69f119baf28bdb8d2095b2ec3411f2b4f31d"
+        },
+        {
+            "target": "paint",
+            "name": "narrow.paint",
+            "source": "crates/adapters/paint-lib/tests/fixtures/writer/narrow.paint",
+            "bytes": 645,
+            "sha256": "0b1ec0416544d6ef07c79e2230bea41737a1bee1a84a626fbdb8e4fb2faf67f5"
+        },
+        {
+            "target": "paint",
+            "name": "wide.paint",
+            "source": "crates/adapters/paint-lib/tests/fixtures/writer/wide.paint",
+            "bytes": 657,
+            "sha256": "e18a9af693f19534eed4b67acb4dfebbbb6e011e275ee6713f9a016d49d74ba8"
+        },
+        {
+            "target": "paint",
+            "name": "observed.paint",
+            "source": "crates/adapters/paint-lib/tests/fixtures/mspaintlib-sample.paint",
+            "bytes": 76535,
+            "sha256": "a3e947fee374cca80e0e648152667109ac61b57808c9673eb806f52865f141f6"
+        },
+        {
+            "target": "pdn",
+            "name": "one-layer.pdn",
+            "source": "crates/adapters/pdn-lib/tests/fixtures/paintdotjs-1-layer.pdn",
+            "bytes": 3074,
+            "sha256": "ceb65149e16686fd3383102789e5bad15715275482b073bcb485c6c3d39b43d4"
+        },
+        {
+            "target": "pdn",
+            "name": "two-layer.pdn",
+            "source": "crates/adapters/pdn-lib/tests/fixtures/paintdotjs-2-layer.pdn",
+            "bytes": 3394,
+            "sha256": "c30d43f95dfbcef153ae76f5577e71f8feffad61519cb67de298da4299ec7725"
+        },
+        {
+            "target": "pdn",
+            "name": "owned-writer.pdn",
+            "source": "crates/adapters/pdn-lib/tests/fixtures/writer/layers-2.pdn",
+            "bytes": 3240,
+            "sha256": "918095925154d57dbfffaac173cb17a24d88760b0b6c92a0dc72a4f87b00790f"
+        },
+        {
+            "target": "dcx",
+            "name": "indexed.dcx",
+            "source": "crates/services/paintcraft-formats/tests/dcx-fixtures/writer/indexed.dcx",
+            "bytes": 6989,
+            "sha256": "ae13006b823d52c699fd407dbea4ffad1cc68dc7f3338ac429dd360d2b676b81"
+        },
+        {
+            "target": "dcx",
+            "name": "rgb.dcx",
+            "source": "crates/services/paintcraft-formats/tests/dcx-fixtures/writer/rgb.dcx",
+            "bytes": 4917,
+            "sha256": "c25067863081a408e64306a457d76421e725895f9294249f4152791d261021ff"
+        },
+        {
+            "target": "dcx",
+            "name": "mixed.dcx",
+            "source": "crates/services/paintcraft-formats/tests/dcx-fixtures/writer/mixed.dcx",
+            "bytes": 6414,
+            "sha256": "01dadbe490c176c7fd8565f18b4e0fc60afa819678783abad16d1e7ff8e9c7c3"
+        }
+    ]
+}

@@ -1,0 +1,65 @@
+[package]
+name = "paintcraft-container-fuzz"
+version = "0.1.0"
+publish = false
+edition = "2024"
+
+[package.metadata]
+cargo-fuzz = true
+
+[workspace]
+members = ["."]
+
+[features]
+fuzzing = ["dep:libfuzzer-sys"]
+
+[dependencies]
+libfuzzer-sys = { version = "=0.4.13", optional = true }
+paintcraft-core = { path = "../crates/foundation/paintcraft-core" }
+paintcraft-formats = { path = "../crates/services/paintcraft-formats" }
+paintcraft-paint = { path = "../crates/adapters/paint-lib" }
+paintcraft-pdn = { path = "../crates/adapters/pdn-lib" }
+
+[[bin]]
+name = "replay"
+path = "src/bin/replay.rs"
+
+[[bin]]
+name = "avif"
+path = "fuzz_targets/avif.rs"
+test = false
+doc = false
+bench = false
+required-features = ["fuzzing"]
+
+[[bin]]
+name = "heif"
+path = "fuzz_targets/heif.rs"
+test = false
+doc = false
+bench = false
+required-features = ["fuzzing"]
+
+[[bin]]
+name = "paint"
+path = "fuzz_targets/paint.rs"
+test = false
+doc = false
+bench = false
+required-features = ["fuzzing"]
+
+[[bin]]
+name = "pdn"
+path = "fuzz_targets/pdn.rs"
+test = false
+doc = false
+bench = false
+required-features = ["fuzzing"]
+
+[[bin]]
+name = "dcx"
+path = "fuzz_targets/dcx.rs"
+test = false
+doc = false
+bench = false
+required-features = ["fuzzing"]
