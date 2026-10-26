@@ -1,7 +1,7 @@
 //! Registry-controlled fresh layered export; never a preserving save.
 use super::super::{
     PathBuf,
-    export_layered::{self, Background, Format, Geometry},
+    export_layered::{self, Background, Format, Geometry, PaintNames},
     same_file,
 };
 use super::{
@@ -25,6 +25,10 @@ struct Export {
     pdn_background: Option<Background>,
     /// Exact by default; materialize explicitly places/pads each layer with loss consent.
     pdn_geometry: Option<Geometry>,
+    /// PAINT requires explicit exact 16-bit RGBA fill; zero clear preserves native composition.
+    paint_canvas_fill: Option<[u16; 4]>,
+    /// PAINT cannot promise UI-name metadata mapping; require empty names or acknowledge omission.
+    paint_names: Option<PaintNames>,
     #[serde(default)]
     overwrite: bool,
     #[serde(default)]
@@ -33,13 +37,18 @@ struct Export {
 #[tool_router(router=layered_router,vis="pub(super)")]
 impl PaintingServer {
     #[tool(
-        description = "Export a fresh PSD/PSB/PDN layered copy, only when its registry writer qualification is available. Does not flatten or clear dirty state. Preserving Save is unavailable. Currently refused pending required original-application qualification; loss consent cannot override that gate."
+        description = "Export a fresh PSD/PSB/PDN/PAINT layered copy, only when its registry writer qualification is available. Does not flatten or clear dirty state. Preserving Save is unavailable. Currently refused pending required original-application qualification; loss consent cannot override that gate."
     )]
     async fn export_layered(&self, Parameters(p): Parameters<Export>) -> CallToolResult {
         self.work(move |state| {
             let path = PathBuf::from(p.path);
             export_layered::admit(Frontend::Studio, p.format, &path)?;
-            let target = p.format.target(p.pdn_background, p.pdn_geometry)?;
+            let target = p.format.target(
+                p.pdn_background,
+                p.pdn_geometry,
+                p.paint_canvas_fill,
+                p.paint_names,
+            )?;
             let protect = || {
                 state.protect_copy_sources(&path)?;
                 if state

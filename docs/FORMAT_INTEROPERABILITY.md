@@ -41,7 +41,7 @@ Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, 
 | PCX | Classic/Studio explicit Import; Studio RGB24 flat Export | Version 5 RLE: admitted packed 1/2/4/8-bit, planar 1-bit and RGB24 profiles; minimal even row padding; strict row/plane bounds. Palette and metadata import loss explicit; older/ambiguous variants refused. RGB24 export composites alpha onto white with explicit loss consent. Exact indexed-8 writer API preserves supplied palette order/indices; desktop/browser controls offer RGB24, exact indexed colors or explicit 256-color conversion with a preview |
 | DCX | Studio explicit selected-page Import only | Strict bounded page directory, at most 1023 pages; each page must satisfy PCX admission. Other pages are explicitly not imported; no writer |
 | PDN | Studio Open or explicit Import as a converted layered copy | Historical PDN3 normal-blend, same-sized full-canvas bitmap layers only; names/order/visibility/opacity/pixels retained, metadata loss explicit. No preserving/public fresh writer; internal typed PDN3 writer and bounded native preparation are implemented, pending original-app qualification |
-| PAINT | Studio and Classic 11 explicit Import as a converted layered copy | Observed MIF1 `iovl`/`unci` DEFLATE RGBA8 profile only; offsets/order retained, layers numbered/visible/full-opacity because source properties are unverified. Canvas fill becomes a layer, with depth loss when needed. No writer |
+| PAINT | Studio and Classic 11 explicit Import as a converted layered copy | Observed MIF1 `iovl`/`unci` DEFLATE RGBA8 profile only; offsets/order retained, layers numbered/visible/full-opacity because source properties are unverified. Canvas fill becomes a layer, with depth loss when needed. Internal fresh writer and gated layered-copy preparation exist; public/preserving writes await Windows Paint qualification |
 | ORA | Studio explicit Import as a converted layered copy | Flat Normal PNG layers with names, signed offsets, visibility, opacity and raw pixels; requires merged preview and thumbnail. Unsupported groups, blends, extensions, ZIP64 and resource variants refused. Fractional opacity is rounded to 8 bits and explicit print resolution is discarded with consent; fresh writer implemented internally but not enabled pending external-application qualification |
 | JPEG XR | Native Studio explicit Import, CLI and native MCP `import_image` for `native-jxr-srgb8-worker-v1`, with `.jxr`, `.wdp` or `.wmp` aliases | Strict unsigned opaque RGB8, at most 64 MiB input and 4,194,304 pixels, through the verified same-build helper. Print resolution is discarded only with consent, including inferred 96 dpi. No ordinary Open, Classic/browser read, export or preserving Save |
 | HEIF/HEIC | Native Studio explicit Import, CLI and native MCP `import_image` for `native-heif-srgb8-worker-v1`, with `.heic`, `.heif` or `.hif` aliases | Direct-primary explicit sRGB8 color and optional straight8 alpha through the verified helper. YCbCr reconstruction and nonempty source item names require their actual loss consent. No ordinary Open, Classic/browser read, grid/ICC/HDR/deep color, preserving Save or HEIF writing |
@@ -102,7 +102,7 @@ consumer paths and prerequisites, rather than treating every candidate as a depe
 
 1. **Extend isolated-reader qualification across supported platforms.** The narrow browser JPEG XL consumer now has actual production picker, adoption, PCND reopen and failure evidence below. Extend native JXL/JXR release-platform installation coverage and cross-browser qualification separately; browser quarantine is a logical failure policy, not a synchronous Worker-stop or aggregate physical-memory guarantee.
 2. **Extend common AVIF SDR readers, then remaining stock profiles.** The native identity sRGB8/straight-alpha profile below is implemented and independently checked, not full stock parity. Next qualify common SDR YCbCr range/matrix/chroma layouts with explicit reconstruction and independent RGB/alpha oracles; keep HDR, grids, transforms and browser execution separate. HEIF has its narrow native color import below, while broader camera/grid/ICC/HDR/deep-color and browser profiles remain unqualified. The existing isolated helper and bounded preflight must remain the reader boundary; enabling `image`'s separate native feature alone is insufficient. HEIF writing remains prohibited.
-3. **Implement and qualify layered writes.** PDN has a bounded internal typed PDN3 writer and native layered-copy preparation; public and preserving writes still await actual Paint.NET open/edit/resave. PAINT has a restricted reader but no writer; its Windows Paint qualification is still required. ORA's internal writer is not publicly enabled; groups and original-application qualification remain. PSD/PSB now have a bounded internal fresh RGB8 Normal raster-layer writer with independent psd-tools/Pillow checks; public layered export still awaits actual Photoshop open/edit/resave qualification. Groups, masks, text, effects and high-depth output remain unsupported. JPEG XR writing is also unimplemented; its new reader does not qualify it.
+3. **Implement and qualify layered writes.** PDN has a bounded internal typed PDN3 writer and native layered-copy preparation; public and preserving writes still await actual Paint.NET open/edit/resave. PAINT now also has an internal bounded typed writer, immutable native preparation and gated CLI/MCP fresh-copy routes; public/preserving Windows Paint qualification is still required. Its UI-name, visibility and opacity extensions remain unqualified. ORA's internal writer is not publicly enabled; groups and original-application qualification remain. PSD/PSB now have a bounded internal fresh RGB8 Normal raster-layer writer with independent psd-tools/Pillow checks; public layered export still awaits actual Photoshop open/edit/resave qualification. Groups, masks, text, effects and high-depth output remain unsupported. JPEG XR writing is also unimplemented; its new reader does not qualify it.
 4. **Qualify bounded EXR/HDR decoding and explicit SDR conversion, then evaluate JP2.** The implemented precision policy names Clip or Reinhard-per-channel, exposure, source-space assignment, alpha convention and nonfinite/negative handling with explicit losses. Bounded Radiance preflight preserves as-stored calibration provenance and refuses malformed packets before decoder allocation. Optional private `hdr-codec` uses existing image HDR behind sealed preflight; it is not a public reader or a confinement boundary. Zune HDR 0.5.2 failed retained exponent-wrap probes and is not adopted. Native isolated HDR execution, broader orientations, explicit preview/consent and actual frontend adoption remain; EXR now has bounded single-part RGB[A] HALF/FLOAT preflight and optional private `exr-codec` decoding checked against official OpenEXR references; isolated execution, source assignment when metadata is unresolved, conversion preview/consent and consumer adoption remain. The pack's `exr` and OpenJPEG choices remain candidates requiring live-profile qualification; JP2 also requires codec packaging and independent lossless/lossy/color/depth evidence.
 5. **Complete specific remaining profiles instead of widening labels.** This includes DCX writing, MSP2 writing and original historical-app evidence; animation/multipage and high-depth TIFF; advanced DDS surfaces/mips; additional JXL/JXR profiles; full ABR dynamics/pattern behavior, ASE CMYK/LAB color adoption and CSH multiple/open/Boolean paths. Foreign preserving Save remains a separate gate throughout.
 6. **Keep later P3 imports distinct from initial-format parity.** RAW, selected PDF pages, KRA/XCF and the animation model remain future capabilities. They need their own bounded services, source/loss policies and real reference consumers; compiling a library is insufficient.
@@ -1043,8 +1043,8 @@ output staging and currently refuses these routes; title-loss consent is not a
 bypass. This is implementation and internal qualification, not enabled public
 export. Foreign preserving writes remain denied. Actual Photoshop open/edit/resave is
 still a required gate, and groups, masks, text, effects, foreign blend modes and
-high-depth output remain unsupported. PDN now has a separately qualified internal writer; PAINT writing remains
-pending. These increments do not complete original-application qualification.
+high-depth output remain unsupported. PDN now has a separately qualified internal writer; PAINT also has an internal writer; public writing remains pending. These
+increments do not complete original-application qualification.
 
 ### Internal fresh PDN3 writer and native preparation, 2026-10-26
 
@@ -1099,8 +1099,65 @@ second MCP text block. **The registry still refuses public PDN writing.** Tests
 exercise post-admission staged copies separately and prove that public CLI/MCP
 requests, even with loss consent, cannot bypass missing qualification. Actual
 pinned Paint.NET open/edit/resave remains required; the secondary JavaScript
-oracle does not satisfy that gate. PAINT writing and newer PDN schemas remain
+oracle does not satisfy that gate. PAINT public qualification and newer PDN schemas remain
 separate unfinished work. No broad layered-format completion is claimed.
+
+### Internal fresh PAINT writer and native preparation, 2026-10-26
+
+The existing `paint-lib` independently writes the observed MIF1 primary-`iovl`
+profile with raw-DEFLATE `unci` layers. New deterministic IDs/boxes, essential
+property associations and non-overlapping data extents are built from staged
+sizes, not patched upstream templates. Layer dimensions, signed placement,
+ordered raw RGBA8 (including hidden RGB), literal item names and all 16 canvas-fill
+bits are retained. `nclx` explicitly declares full-range sRGB (1/13/0), while
+`cmpd`/`uncC` identify unsigned RGBA8 components and BGRA byte order. There are
+only `dimg` references, with no `prem` association. Those packet declarations and
+the audited reference default support the straight-alpha profile; returned C#
+bytes alone are not used to infer color/alpha semantics. Visibility/opacity or
+unknown metadata extensions are refused rather than fabricated.
+
+Independent Python box/extent/property/zlib checks and unchanged pinned
+mspaintlib C# sources read three owned specimens with differing layer sizes,
+16/32-bit overlay fields, wide/extreme signed offsets, all alpha boundaries and
+exact raw fill16. The C# sources target net8 upstream but were compiled privately
+for available SDK 10.0.401/runtime 10.0.12; no .NET dependency is added to the
+product. Original `IovlItem.Parse` retains fill16. The high-level reference
+`CanvasFill` narrows to eight bits, and its ASCII-name reader corrupts UTF-8 item
+names. Those negative limitations are retained; source/wire names and samples
+were not changed to force parity. Python independently verifies correct UTF-8
+bytes. Exact source hashes, reference controls, reproducible commands and logical
+storage audit are in `crates/adapters/paint-lib/tests/fixtures/README.md`.
+Ordinary CI binds current encoder output to these independently verified bytes.
+
+Native preparation inventories every Document/Layer field and freezes its own
+raw layer buffers, original extents/origins and explicit policies. It never
+clips, pads, resamples or flattens. Hidden/non-full-opacity layers and signed32
+overflow are refused. Source and prepared aggregate pixels, resident tile bytes,
+encoder/output storage and combined logical transient memory are bounded before
+allocation. Current caps include 64 layers, 4,194,304 canvas pixels and aggregate
+layer pixels, and 64 MiB private encoded output. These declarations are not an
+allocator/RSS cap or hard cancellation-latency guarantee. Checks surround bounded
+row/codec/staged-copy work; immutable buffers and publication source guards remain
+in force through the existing atomic save coordinator.
+
+The native model has no separate canvas-fill property. Explicit transparent
+black preserves its clear composition; another RGBA16 fill adds background
+behavior and requires `paint-canvas-fill-assigned`. UI names use an explicit
+`require-empty` or `omit` policy. Actual nonempty name omission requires
+`paint-layer-names-not-retained`; the adapter does not guess that an `infe` item
+name is a Windows Paint UI name. Actual title omission requires
+`paint-document-title-not-exported`. Clear fill and empty names incur no invented
+loss. The preparation report carries exact fill16, name policy/count and retained
+geometry alongside the unchanged file-operation receipt.
+
+CLI `export-layered --format paint` and MCP `export_layered` now have those
+explicit options and a real staged-copy path. Tests cover exact raw pixels and
+positions, fill16, loss refusals, source aliases after rename, source/history
+preservation, cancellation rollback and cleanup. **The unchanged registry still
+refuses public PAINT writing.** Actual Windows Paint open/edit/resave remains
+unproven, including UI metadata and build-specific semantics. The independent
+reference checks do not satisfy that original-application gate. This is bounded
+backend/consumer preparation, not completion of PAINT or the layered-format pack.
 
 ### OpenRaster writer follow-up, 2026-10-25
 

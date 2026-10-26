@@ -25,7 +25,7 @@ fn post_admission_copy_retains_layers_and_does_not_mutate_source() {
         let dest = folder.join(format!("copy.{}", format.family().id()));
         let (_, ok, summary, _) = write_copy(
             &doc,
-            format.target(None, None).unwrap(),
+            format.target(None, None, None, None).unwrap(),
             &dest,
             false,
             &[],
@@ -141,7 +141,7 @@ fn every_profile_requires_qualification_and_preserving_save_stays_denied() {
         Frontend::ClassicV10,
         Frontend::ClassicV11,
     ] {
-        for format in [Format::Psd, Format::Psb, Format::Pdn] {
+        for format in [Format::Psd, Format::Psb, Format::Pdn, Format::Paint] {
             let path = PathBuf::from(format!("copy.{}", format.family().id()));
             assert!(admit(frontend, format, &path).is_err());
             assert!(
@@ -252,7 +252,12 @@ fn pdn_staged_copy_records_explicit_policy_and_keeps_hidden_rgb_and_source_state
     doc.title = Some("source title".into());
     let before = pcnd::write(&doc).unwrap();
     let target = Format::Pdn
-        .target(Some(Background::Ordinary), Some(Geometry::Exact))
+        .target(
+            Some(Background::Ordinary),
+            Some(Geometry::Exact),
+            None,
+            None,
+        )
         .unwrap();
     assert!(write_copy(&doc, target, &dest, false, &[], None, &|| Ok(())).is_err());
     assert!(!dest.exists());
@@ -305,15 +310,179 @@ fn pdn_staged_copy_records_explicit_policy_and_keeps_hidden_rgb_and_source_state
 }
 #[test]
 fn pdn_roles_are_explicit_and_pdn_only_options_do_not_apply_to_psd() {
-    assert!(Format::Pdn.target(None, None).is_err());
+    assert!(Format::Pdn.target(None, None, None, None).is_err());
     assert!(
         Format::Psd
-            .target(Some(Background::Ordinary), None)
+            .target(Some(Background::Ordinary), None, None, None)
             .is_err()
     );
     assert!(
         Format::Psb
-            .target(None, Some(Geometry::Materialize))
+            .target(None, Some(Geometry::Materialize), None, None)
             .is_err()
+    );
+}
+#[test]
+fn paint_staged_copy_retains_individual_geometry_and_source_identity_with_explicit_losses() {
+    let folder = folder();
+    let source = folder.join("source.pcnd");
+    let moved = folder.join("moved.pcnd");
+    let dest = folder.join("copy.paint");
+    let mut original = new_document(9, 7, Some(Rgba([10, 20, 30, 0])), 4, POLICY).unwrap();
+    original.title = Some("source title".into());
+    let first = original.layers.get_mut(&original.roots[0]).unwrap();
+    first.raster = paintcraft_raster::RasterLayer::new(2, 1, Rgba([10, 20, 30, 0]));
+    first.origin = (60000, -70000);
+    let id = uuid::Uuid::from_u128(123);
+    original.roots.push(id);
+    original.layers.insert(
+        id,
+        paintcraft_document::Layer {
+            id,
+            name: "second UI".into(),
+            origin: (-3, 4),
+            visible: true,
+            opacity: 255,
+            raster: paintcraft_raster::RasterLayer::new(1, 2, Rgba([40, 50, 60, 1])),
+        },
+    );
+    let before = pcnd::write(&original).unwrap();
+    fs::write(&source, &before).unwrap();
+    let (bytes, sha, identity) = read_captured(&source, INPUT_MAX, "source").unwrap();
+    let doc = pcnd::read(&bytes).unwrap();
+    fs::rename(&source, &moved).unwrap();
+    let target = Format::Paint
+        .target(
+            None,
+            None,
+            Some([0x1234, 0xabcd, 0x7f00, 65535]),
+            Some(PaintNames::Omit),
+        )
+        .unwrap();
+    let allowed = vec![
+        paint::TITLE_LOSS.into(),
+        paint::NAMES_LOSS.into(),
+        paint::FILL_LOSS.into(),
+    ];
+    let protect = || {
+        if identity.matches_path(&dest)? {
+            Err(Error::new(
+                ErrorCode::InputSchema,
+                "captured source project",
+            ))
+        } else {
+            Ok(())
+        }
+    };
+    fs::hard_link(&moved, &dest).unwrap();
+    assert!(
+        write_copy(
+            &doc,
+            target,
+            &dest,
+            true,
+            &allowed,
+            Some(sha.clone()),
+            &protect
+        )
+        .is_err()
+    );
+    assert_eq!(fs::read(&moved).unwrap(), before);
+    fs::remove_file(&dest).unwrap();
+    assert!(write_copy(&doc, target, &dest, false, &[], Some(sha.clone()), &protect).is_err());
+    assert!(!dest.exists());
+    let (receipt, ok, summary, preparation) =
+        write_copy(&doc, target, &dest, false, &allowed, Some(sha), &protect).unwrap();
+    assert!(ok, "{summary}");
+    assert_eq!(
+        preparation.unwrap().get("canvas_fill16"),
+        Some(&Value::Array(
+            [0x1234, 0xabcd, 0x7f00, 65535].map(Value::Int).to_vec()
+        ))
+    );
+    assert_eq!(
+        receipt.get("source_lineage_adopted"),
+        Some(&Value::Bool(false))
+    );
+    let converted = paintcraft_formats::project_import::decode_paint(
+        &fs::read(&dest).unwrap(),
+        100,
+        &|| Ok(()),
+    )
+    .unwrap();
+    assert_eq!(converted.document.roots.len(), 3);
+    for (index, (position, size, pixel)) in [
+        ((60000, -70000), (2, 1), Rgba([10, 20, 30, 0])),
+        ((-3, 4), (1, 2), Rgba([40, 50, 60, 1])),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let layer = &converted.document.layers[&converted.document.roots[index + 1]];
+        assert_eq!(layer.origin, position);
+        assert_eq!((layer.raster.width(), layer.raster.height()), size);
+        for y in 0..size.1 {
+            for x in 0..size.0 {
+                assert_eq!(layer.raster.get(i64::from(x), i64::from(y)), pixel);
+            }
+        }
+    }
+    assert_eq!(pcnd::write(&doc).unwrap(), before);
+    let count = Cell::new(0);
+    write_copy(&doc, target, &dest, true, &allowed, None, &|| {
+        count.set(count.get() + 1);
+        protect()
+    })
+    .unwrap();
+    for stop in 1..=count.get() {
+        fs::write(&dest, b"original output").unwrap();
+        let calls = Cell::new(0);
+        let _ = write_copy(&doc, target, &dest, true, &allowed, None, &|| {
+            calls.set(calls.get() + 1);
+            if calls.get() == stop {
+                Err(Error::new(ErrorCode::OperationCancelled, "cancelled"))
+            } else {
+                protect()
+            }
+        });
+        assert_eq!(fs::read(&dest).unwrap(), b"original output");
+        assert_eq!(fs::read(&moved).unwrap(), before);
+        assert_eq!(fs::read_dir(&folder).unwrap().count(), 2);
+    }
+    fs::remove_dir_all(folder).unwrap();
+}
+#[test]
+fn paint_requires_explicit_fill_and_names_and_rejects_foreign_policies() {
+    assert!(
+        Format::Paint
+            .target(None, None, None, Some(PaintNames::Omit))
+            .is_err()
+    );
+    assert!(
+        Format::Paint
+            .target(None, None, Some([0; 4]), None)
+            .is_err()
+    );
+    assert!(
+        Format::Pdn
+            .target(Some(Background::Ordinary), None, Some([0; 4]), None)
+            .is_err()
+    );
+    assert!(
+        Format::Paint
+            .target(
+                Some(Background::Ordinary),
+                None,
+                Some([0; 4]),
+                Some(PaintNames::Omit)
+            )
+            .is_err()
+    );
+    assert!(parse_paint_fill("0,0,0").is_err());
+    assert!(parse_paint_fill("0,0,0,65536").is_err());
+    assert!(parse_paint_fill("0,0,0,0,0").is_err());
+    assert_eq!(
+        parse_paint_fill("4660,43981,32512,65535").unwrap(),
+        [0x1234, 0xabcd, 0x7f00, 65535]
     );
 }

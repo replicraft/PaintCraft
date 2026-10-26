@@ -23,11 +23,11 @@ Configure your MCP client with the absolute path to that binary:
 
 The server uses stdio. Its stdout contains only MCP messages. It runs with your account's local file access; connect clients you trust.
 
-`export_layered` is registered for explicit fresh PSD/PSB/PDN copies but currently
-returns a capability refusal: the original Photoshop/Paint.NET open/re-edit qualification
+`export_layered` is registered for explicit fresh PSD/PSB/PDN/PAINT copies but currently
+returns a capability refusal: the original Photoshop/Paint.NET/Windows Paint open/re-edit qualification
 required by the format plan is not yet recorded. Acknowledging title loss cannot
 bypass that registry gate. It does not flatten, change dirty state or enable
-foreign preserving Save. The CLI `export-layered --format psd|psb|pdn` uses the same
+foreign preserving Save. The CLI `export-layered --format psd|psb|pdn|paint` uses the same
 gate. The implemented staged-copy path is tested separately from public enablement.
 PDN requires an explicit `pdn_background` choice (`ordinary` or `bottom`);
 `pdn_geometry` is `exact` by default, with explicit `materialize` for layer
@@ -36,6 +36,12 @@ outside-canvas losses require their named acknowledgments. Ordinary native layer
 do not incur a fabricated background-role loss. Policy/counts accompany successful
 internal preparation without changing the file-operation receipt. These options
 cannot override the current public capability refusal.
+PAINT likewise requires explicit `paint_canvas_fill` (four integers in 0..65535,
+RGBA order) and `paint_names` (`require-empty` or `omit`). The CLI fill option is
+`--paint-canvas-fill 0,0,0,0`. Transparent clear retains native composition; other
+fill, actual name omission and title omission require their named consent. Layer
+sizes/origins and hidden RGB remain exact; hidden/non-full-opacity layers are
+refused instead of silently baked. No item-name/UI-name equivalence is assumed.
 
 Available tools:
 

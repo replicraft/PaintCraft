@@ -9,7 +9,7 @@ fn cli_requires_writer_qualification_before_acquiring_input_or_touching_output()
     let folder =
         std::env::temp_dir().join(format!("paintcraft-cli-layered-{}", uuid::Uuid::new_v4()));
     fs::create_dir(&folder).unwrap();
-    for format in ["psd", "psb", "pdn"] {
+    for format in ["psd", "psb", "pdn", "paint"] {
         let output = folder.join(format!("copy.{format}"));
         fs::write(&output, b"original").unwrap();
         let result = Command::new(env!("CARGO_BIN_EXE_paintcraft-cli"))
@@ -28,7 +28,7 @@ fn cli_requires_writer_qualification_before_acquiring_input_or_touching_output()
         assert!(text.contains("capability.unsupported"), "{text}");
         assert_eq!(fs::read(&output).unwrap(), b"original");
     }
-    assert_eq!(fs::read_dir(&folder).unwrap().count(), 3);
+    assert_eq!(fs::read_dir(&folder).unwrap().count(), 4);
     fs::remove_dir_all(folder).unwrap();
 }
 #[test]
@@ -58,8 +58,44 @@ fn mcp_denial_preserves_document_history_dirty_state_and_existing_destination() 
     assert_eq!(denied["isError"], true);
     assert!(denied.to_string().contains("capability.unsupported"));
     assert_eq!(fs::read(&pdn_path).unwrap(), b"original pdn");
+    let paint_path = folder.join("copy.paint");
+    fs::write(&paint_path, b"original paint").unwrap();
+    let denied=client.call("export_layered",json!({"path":paint_path,"format":"paint","paint_canvas_fill":[0,0,0,0],"paint_names":"omit","overwrite":true,"allow_losses":["paint-layer-names-not-retained"]}));
+    assert_eq!(denied["isError"], true);
+    assert!(denied.to_string().contains("capability.unsupported"));
+    assert_eq!(fs::read(&paint_path).unwrap(), b"original paint");
     assert_eq!(client.ok("inspect_document", json!({})), before);
     assert_eq!(fs::read(&path).unwrap(), b"original");
-    assert_eq!(fs::read_dir(&folder).unwrap().count(), 2);
+    assert_eq!(fs::read_dir(&folder).unwrap().count(), 3);
     fs::remove_dir_all(folder).unwrap();
+}
+
+#[test]
+fn explicit_paint_cli_flags_parse_but_do_not_override_qualification() {
+    let result = Command::new(env!("CARGO_BIN_EXE_paintcraft-cli"))
+        .args([
+            "export-layered",
+            "missing.pcnd",
+            "--format",
+            "paint",
+            "--paint-canvas-fill",
+            "0,0,0,0",
+            "--paint-names",
+            "omit",
+            "-o",
+            "missing-copy.paint",
+            "--allow-loss",
+            "paint-layer-names-not-retained",
+            "--json",
+        ])
+        .output()
+        .unwrap();
+    assert!(!result.status.success());
+    let text = String::from_utf8(result.stdout).unwrap();
+    assert!(
+        text.contains("capability.unsupported"),
+        "{text} {}",
+        String::from_utf8_lossy(&result.stderr)
+    );
+    assert!(!std::path::Path::new("missing-copy.paint").exists());
 }
