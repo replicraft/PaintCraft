@@ -279,3 +279,8 @@ compressed-rgb-and-transparency-mask = Compressed RGB and transparency mask
 unsupported-encoding = Unsupported encoding
 
 preparing-picture-more = Preparing picture…
+
+importing-jpeg-xl = Importing JPEG XL
+jpeg-xl-imported-as-an-editable-project-copy = JPEG XL imported as an editable project copy.
+jpeg-xl-import-failed-the-current-document-was-kept = JPEG XL import failed; the current document was kept.
+jpeg-xl-importing-is-paused-for-this-tab-download-your-project-then-reload-this-tab-to-try-again = JPEG XL importing is paused for this tab. Download your project, then reload this tab to try again.

@@ -279,3 +279,8 @@ compressed-rgb-and-transparency-mask = संपीड़ित RGB और प�
 unsupported-encoding = असमर्थित एन्कोडिंग
 
 preparing-picture-more = चित्र तैयार किया जा रहा है…
+
+importing-jpeg-xl = JPEG XL आयात किया जा रहा है
+jpeg-xl-imported-as-an-editable-project-copy = JPEG XL को संपादन योग्य प्रोजेक्ट की कॉपी के रूप में आयात किया गया।
+jpeg-xl-import-failed-the-current-document-was-kept = JPEG XL आयात विफल रहा; मौजूदा दस्तावेज़ सुरक्षित रखा गया है।
+jpeg-xl-importing-is-paused-for-this-tab-download-your-project-then-reload-this-tab-to-try-again = इस टैब में JPEG XL आयात रुका हुआ है। प्रोजेक्ट डाउनलोड करें, फिर दोबारा कोशिश करने के लिए यह टैब फिर से लोड करें।

@@ -279,3 +279,8 @@ compressed-rgb-and-transparency-mask = 压缩 RGB 和透明度蒙版
 unsupported-encoding = 不支持的编码格式
 
 preparing-picture-more = 正在准备图片…
+
+importing-jpeg-xl = 正在导入 JPEG XL
+jpeg-xl-imported-as-an-editable-project-copy = 已将 JPEG XL 导入为可编辑的项目副本。
+jpeg-xl-import-failed-the-current-document-was-kept = JPEG XL 导入失败；已保留当前文档。
+jpeg-xl-importing-is-paused-for-this-tab-download-your-project-then-reload-this-tab-to-try-again = 此标签页中的 JPEG XL 导入已暂停。请下载项目，然后重新加载此标签页以重试。

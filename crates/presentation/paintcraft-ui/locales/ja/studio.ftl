@@ -279,3 +279,8 @@ compressed-rgb-and-transparency-mask = 圧縮 RGB と透明度マスク
 unsupported-encoding = 未対応のエンコード形式
 
 preparing-picture-more = 画像を準備しています…
+
+importing-jpeg-xl = JPEG XL をインポート中
+jpeg-xl-imported-as-an-editable-project-copy = JPEG XL を編集可能なプロジェクトのコピーとしてインポートしました。
+jpeg-xl-import-failed-the-current-document-was-kept = JPEG XL のインポートに失敗しました。現在のドキュメントは保持されました。
+jpeg-xl-importing-is-paused-for-this-tab-download-your-project-then-reload-this-tab-to-try-again = このタブでは JPEG XL のインポートを一時停止しています。プロジェクトをダウンロードしてから、このタブを再読み込みして再試行してください。
