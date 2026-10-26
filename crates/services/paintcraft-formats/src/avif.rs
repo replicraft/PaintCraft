@@ -4,7 +4,9 @@
 //! cleans invisible RGB and uses the selected quality for alpha too. Input and
 //! returned bytes have hard ceilings; codec-owned scratch is not an RSS budget.
 mod admission;
+mod family;
 mod graph;
+pub use family::{FamilyAssessment, assess_family};
 mod import;
 mod inspect;
 mod properties;

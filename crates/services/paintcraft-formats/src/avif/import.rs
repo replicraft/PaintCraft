@@ -162,6 +162,13 @@ pub fn assess_import(
     check: &dyn Fn() -> Result<()>,
 ) -> Result<ImportAssessment> {
     let admitted = admit_srgb8(bytes, pixels, check)?;
+    from_admitted(bytes, admitted, check)
+}
+pub(super) fn from_admitted(
+    bytes: &[u8],
+    admitted: crate::avif::Admitted<'_>,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<ImportAssessment> {
     let primary = image(admitted.primary)?;
     let alpha = admitted.alpha.map(image).transpose()?;
     let mut hash = Sha256::new();

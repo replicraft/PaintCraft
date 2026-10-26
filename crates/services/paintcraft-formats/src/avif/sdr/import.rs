@@ -120,6 +120,13 @@ pub fn assess_import(
     check: &dyn Fn() -> Result<()>,
 ) -> Result<ImportAssessment> {
     let admitted = admit_ycbcr8(bytes, pixels, check)?;
+    from_admitted(bytes, admitted, check)
+}
+pub(in crate::avif) fn from_admitted(
+    bytes: &[u8],
+    admitted: crate::avif::Admitted<'_>,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<ImportAssessment> {
     work_layout(&admitted, bytes.len() as u64)?;
     let primary = image(admitted.primary)?;
     let alpha = admitted.alpha.map(image).transpose()?;

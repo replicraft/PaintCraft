@@ -24,6 +24,7 @@ pub struct Admitted<'a> {
 pub(super) enum ColorPolicy {
     Identity,
     Ycbcr709,
+    Family,
 }
 fn once<T>(slot: &mut Option<T>, value: T) -> Result<()> {
     if slot.replace(value).is_some() {
@@ -118,7 +119,15 @@ fn coded<'a>(
             ));
         }
     } else {
-        let accepted = match policy {
+        let selected = match policy {
+            ColorPolicy::Family => match sequence.matrix {
+                0 => ColorPolicy::Identity,
+                1 => ColorPolicy::Ycbcr709,
+                _ => return Err(unsupported("AVIF matrix has no qualified family profile")),
+            },
+            other => other,
+        };
+        let accepted = match selected {
             ColorPolicy::Identity => {
                 color == Some((1, 13, 0, true))
                     && sequence.profile == 1
@@ -129,6 +138,7 @@ fn coded<'a>(
                     && sequence.chroma_position == 0
                     && (sequence.primaries, sequence.transfer, sequence.matrix) == (1, 13, 0)
             }
+            ColorPolicy::Family => unreachable!("family selection resolved above"),
             ColorPolicy::Ycbcr709 => {
                 let geometry = if sequence.subsampling_x && sequence.subsampling_y {
                     sequence.profile == 0 && matches!(sequence.chroma_position, 1 | 2)
