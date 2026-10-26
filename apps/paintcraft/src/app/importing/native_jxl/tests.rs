@@ -55,7 +55,7 @@ fn native_jxl_profiles_drafts_input_extent_and_admission_fail_before_any_publica
     assert_eq!(
         app.stage_native_jxl_with_launch(
             path.clone(),
-            Box::new(|_, _, _, _| panic!("unadmitted import must never launch"))
+            Box::new(|_, _| panic!("unadmitted import must never launch"))
         )
         .unwrap_err()
         .code,

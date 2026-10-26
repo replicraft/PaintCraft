@@ -35,7 +35,7 @@ impl Job {
         lease: ResourceLease,
         host_check: &dyn Fn() -> Result<()>,
         current_owner: &dyn Fn() -> Result<Owner>,
-        launch: impl FnOnce(&Path, &Request, Duration, &dyn Fn() -> Result<()>) -> Result<Vec<u8>>,
+        launch: impl FnOnce(Launch<'_>, &dyn Fn() -> Result<()>) -> Result<Vec<u8>>,
     ) -> Result<PreparedImport> {
         if self.codec != Codec::JxlRgba8 {
             return Err(unsupported(

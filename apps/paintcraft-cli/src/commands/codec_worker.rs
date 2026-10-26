@@ -1,6 +1,5 @@
 //! Internal qualification consumer. Normal image Open/import stays registry-gated.
 use super::*;
-mod jxr_launch;
 use paintcraft_formats::codec_worker as wire;
 use paintcraft_platform::source::SourceIdentity;
 use paintcraft_runtime::{Executor, Limits, process};
@@ -159,18 +158,15 @@ pub(super) fn with_frame<T>(
     .consume(
         &|| cancel.check(),
         &current_owner,
-        |executable, request, remaining, check| {
-            if request.header.codec == wire::Codec::JxrRgb8 {
-                return jxr_launch::run(executable, request, remaining, check);
-            }
+        |launch, check| {
             process::run_parent_lease(
-                executable,
-                &[],
-                request.segments(),
+                launch.executable,
+                launch.arguments,
+                launch.request.segments(),
                 process::Limits {
                     input_bytes: wire::INPUT_BYTES_MAX + wire::REQUEST_HEADER,
                     output_bytes: wire::OUTPUT_BYTES_MAX,
-                    deadline: remaining,
+                    deadline: launch.remaining,
                     resource_exit_code: Some(wire::RESOURCE_EXIT),
                 },
                 check,

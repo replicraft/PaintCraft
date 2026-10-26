@@ -61,29 +61,23 @@ fn admit(path: &Path) -> Result<()> {
         decision.require_allowed(request)
     }
 }
-type Launch = Box<
-    dyn FnOnce(&Path, &wire::Request, Duration, &dyn Fn() -> Result<()>) -> Result<Vec<u8>> + Send,
->;
+type Launch =
+    Box<dyn FnOnce(wire::native::Launch<'_>, &dyn Fn() -> Result<()>) -> Result<Vec<u8>> + Send>;
 fn preparation_budget() -> SharedBudget {
     static PREPARATION: OnceLock<SharedBudget> = OnceLock::new();
     PREPARATION
         .get_or_init(|| SharedBudget::new(512 << 20))
         .clone()
 }
-fn launch(
-    executable: &Path,
-    request: &wire::Request,
-    deadline: Duration,
-    check: &dyn Fn() -> Result<()>,
-) -> Result<Vec<u8>> {
+fn launch(launch: wire::native::Launch<'_>, check: &dyn Fn() -> Result<()>) -> Result<Vec<u8>> {
     process::run_parent_lease(
-        executable,
-        &[],
-        request.segments(),
+        launch.executable,
+        launch.arguments,
+        launch.request.segments(),
         process::Limits {
             input_bytes: wire::INPUT_BYTES_MAX + wire::REQUEST_HEADER,
             output_bytes: wire::OUTPUT_BYTES_MAX,
-            deadline,
+            deadline: launch.remaining,
             resource_exit_code: Some(wire::RESOURCE_EXIT),
         },
         check,

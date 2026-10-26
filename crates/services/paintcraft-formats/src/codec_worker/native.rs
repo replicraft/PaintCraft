@@ -3,8 +3,10 @@
 //! existing resource lease through consume/publication, and supplies the actual
 //! kill/reap supervisor. This module never launches arbitrary PATH-selected code.
 mod import;
+mod launch;
 use super::*;
 pub use import::{AdoptedImport, PreparedImport};
+pub use launch::Launch;
 use paintcraft_core::types::policy::hex;
 use paintcraft_platform::{codec_helper, source::SourceIdentity};
 use std::{
@@ -27,7 +29,8 @@ pub struct Job {
     pub expected_sha256: Option<String>,
 }
 impl Job {
-    /// Launch receives only the verified installation path and captured request.
+    /// Launch borrows the verified installation path, captured request and
+    /// service-owned arguments/backing; ordinary codecs receive no arguments.
     /// It must bound pipe IO, retain the sole stdin parent lease, and terminate,
     /// reap and join IO workers on every return/unwind before its caller's lease
     /// can drop. An arbitrary spawn/read-to-end callback violates this contract.
@@ -35,7 +38,7 @@ impl Job {
         self,
         host_check: &dyn Fn() -> Result<()>,
         current_owner: &dyn Fn() -> Result<Owner>,
-        launch: impl FnOnce(&Path, &Request, Duration, &dyn Fn() -> Result<()>) -> Result<Vec<u8>>,
+        launch: impl FnOnce(Launch<'_>, &dyn Fn() -> Result<()>) -> Result<Vec<u8>>,
         consume: impl FnOnce(&Request, Frame<'_>, [u8; 32], &dyn Fn() -> Result<()>) -> Result<T>,
     ) -> Result<T> {
         if self.deadline.is_zero() || self.deadline > Duration::from_secs(120) {
@@ -97,11 +100,13 @@ impl Job {
             &check,
         )?;
         let executable = helper.checked_executable(&check)?;
+        let backing = launch::Backing::new(&request, &check)?;
         let remaining = self
             .deadline
             .checked_sub(start.elapsed())
             .ok_or_else(|| resource("Codec job deadline exceeded"))?;
-        let output = launch(executable, &request, remaining, &check)?;
+        // Backing stays owned across the injected kill/reap supervisor.
+        let output = backing.invoke(executable, &request, remaining, &check, launch)?;
         if output.len() > OUTPUT_BYTES_MAX {
             return Err(resource("Native codec output exceeds allowance"));
         }

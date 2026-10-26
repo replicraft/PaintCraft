@@ -40,7 +40,7 @@ fn stale_owner_and_cancel_are_rejected_before_source_or_helper_access() {
                     }
                 },
                 &|| Ok(foreign),
-                |_, _, _, _| panic!("stale job must not launch"),
+                |_, _| panic!("stale job must not launch"),
                 |_, _, _, _| panic!("stale job must not consume"),
             )
             .unwrap_err();

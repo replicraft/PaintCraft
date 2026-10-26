@@ -107,17 +107,17 @@ fn fixture_cancelled_import() {
         &mut state,
         &input,
         check,
-        Box::new(move |executable, request, deadline, check| {
+        Box::new(move |launch, check| {
             // Real verified helper waits for its missing source while the retained
             // parent lease remains open. Second supervisor check occurs after spawn.
             process::run_parent_lease(
-                executable,
-                &[],
-                vec![Arc::new(request.header.encode().to_vec())],
+                launch.executable,
+                launch.arguments,
+                vec![Arc::new(launch.request.header.encode().to_vec())],
                 process::Limits {
                     input_bytes: wire::INPUT_BYTES_MAX + wire::REQUEST_HEADER,
                     output_bytes: wire::OUTPUT_BYTES_MAX,
-                    deadline,
+                    deadline: launch.remaining,
                     resource_exit_code: Some(wire::RESOURCE_EXIT),
                 },
                 &|| {
