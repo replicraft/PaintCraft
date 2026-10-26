@@ -44,7 +44,7 @@ Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, 
 | SVG/SVGZ | Studio desktop/browser Import; CLI `import` with `--svg-width`/`--svg-height`; MCP `import_image` with `svg` options | Explicit size/DPI/fitting and rasterization consent. Studio previews use bundled fonts and additional font files; CLI/MCP accept outline fonts too. No Classic access, ordinary Open or SVG export |
 | EXR/HDR, JP2, MSP, ICNS | Not yet enabled | Registry inventory or work in progress is not usable format support |
 | ASE | Studio Palettes dialog; CLI `palette inspect` / `palette export`; MCP `inspect_palette` / `export_palette` | Flat groups, exact names/order/models/types and finite f32 values. RGB/gray tool-color adoption is explicit; CMYK/LAB conversion, persistent catalogs and Adobe qualification remain |
-| ABR | CLI/MCP inspection and bounded native-static R8 painting; Studio controls pending | Exact sample masks, pattern channels, signed bounds and original ordered payloads retained. Up to 256 presets per admitted library; unsupported dynamics, textures, transforms and precision reduction are refused. Full preset behavior and original-application qualification remain; no ABR export or ordinary image Open |
+| ABR | Studio desktop/browser selection and bounded native-static R8 painting; CLI/MCP inspection and painting | Exact sample masks, pattern channels, signed bounds and original ordered payloads retained. Up to 256 presets per admitted library; unsupported dynamics, textures, transforms and precision reduction are refused. Full preset behavior and original-application qualification remain; no ABR export or ordinary image Open |
 | CSH | Studio Shape resources dialog; CLI `shape inspect` / `shape export`; MCP `inspect_shapes` / `export_shapes` | Retains bounds, names, IDs and exact ordered path records. Studio previews outlines without changing the painting. Shape placement, broader interoperability and original-application qualification remain |
 | RAW, PDF, KRA, XCF, animation, advanced DDS | Future profiles | No inherited Classic support or preserving-write claims |
 
@@ -233,8 +233,7 @@ masks. JavaScript preview vectors agree for five qualified patterns; its optiona
 palette-word ambiguity and guessed channel roles are retained as explicit
 qualification limits. This is not original Adobe qualification. Other pattern
 color models, one-bit/ZIP/predictive channels, ambiguous preview layouts, legacy
-ABR 1/2, full preset behavior, Studio frontend adoption and wider qualification
-remain required. ABR export is outside the import-only asset policy.
+ABR 1/2, full preset behavior and wider qualification remain required. ABR export is outside the import-only asset policy.
 
 The [native sampled-brush backend](SAMPLED_BRUSHES.md) separately admits exact
 R8, native-size static sampled presets under an explicit PaintCraft policy.
@@ -245,8 +244,10 @@ the existing mask executor with preview/publication and Undo/Redo checks. The
 additional fifteen-candidate fixture has a successful upstream JavaScript
 metadata/mask check, with the same shared-lineage limitation. Raster/tool/editor
 checks separately cover independent dense pixels, resource bounds, cancellation,
-no-op history and captured preview/release equality. Studio pointer/UI routing is
-pending; these checks do not establish Photoshop brush-rendering parity.
+no-op history and captured preview/release equality. Studio desktop and browser
+now expose resource import, individual preset assessment, explicit static-tip
+adoption and pointer painting. These checks do not establish Photoshop
+brush-rendering parity.
 
 CLI `brush inspect` and `brush paint`, plus MCP `inspect_brushes`, `adopt_brush`
 and `paint_sampled_stroke`, expose this bounded static-tip policy. Typed
@@ -264,6 +265,33 @@ MCP tests verify independent source-mask pixels, failed adoption preservation,
 spacing consent, no-op history, Undo/Redo and protected source files. See
 [workflow examples](MCP.md#imported-brush-resources). No Classic image Open,
 ABR export or Photoshop rendering-parity claim is enabled.
+
+Studio keeps stock brushes separate from imported native-size tips. The selected
+name and original size replace generic size/media controls; opacity remains
+available. Spacing conversion needs per-selection approval. Changing a selection
+or loading a new library resets approval; invalid/cancelled/stale imports keep
+prior resources and painting unchanged. The adopted immutable library stays
+owned by its document when the resource library is replaced. Native acquired
+source guards also follow document tabs/workspaces and protect rename/hard-link
+aliases from project saves and image/resource exports. New documents and Classic
+workspaces do not inherit Studio's adopted tip. These are ownership guards, not
+an arbitrary-filesystem TOCTOU guarantee.
+
+Desktop sampled coverage prepares on the existing editing worker. Browser
+coverage follows the existing synchronous editor architecture, with a conservative
+upfront limit of 1,048,576 dab-support pixel visits for each preview/commit. Its
+integer L1 path-length bound can refuse work that the exact Euclidean sampler
+would admit; accepted strokes retain the exact sampler and are never truncated
+or resized. This limit is not a wall-clock or intra-call cancellation guarantee.
+A rejected preview cancels the gesture and returns to the published picture.
+Focused tests cover translated desktop selection, exact preview/release samples,
+blank-document layer+stroke atomicity, opacity/no-op history, cancellation,
+stale/resource replacement, browser refusal and native protected input aliases.
+A local production Wasm build passed a headless Chrome ABR upload, explicit
+static adoption, pointer preview/release screen-pixel equality, Undo/Redo and
+PCND download check with no page errors. The downloaded project reopened and
+rendered through the CLI. This is focused workflow evidence, not full release
+qualification or an independent Photoshop rendering comparison.
 
 ### CSH resource adapter, 2026-10-25
 

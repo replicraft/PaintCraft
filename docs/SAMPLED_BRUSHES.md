@@ -5,8 +5,18 @@ immutable native-size R8 tip. Raster coverage, captured tool gestures and the
 existing atomic mask executor are exercised together by owned pixel fixtures.
 CLI and MCP inspect/adopt/painting workflows use these same contracts; see
 [Painting with MCP](MCP.md#imported-brush-resources).
-Studio resource selection, UI preview and pointer routing are still pending;
-this is not a claim that Studio currently installs or uses imported presets.
+Studio desktop and browser now import resource libraries, show individual preset
+assessment and explicitly select supported static tips for pointer painting.
+Spacing conversion needs fresh approval when the selection changes. Imported
+tips show their name and original dimensions instead of stock size/media
+controls; opacity still applies. Resource selection does not mutate the painting.
+Native source identities follow adopted documents across tabs/workspaces and
+library replacement. Classic workspaces keep separate stock tool state.
+Browser coverage is synchronous, conservatively bounded to 1,048,576
+dab-support pixel visits per preview/commit before rasterization. This can
+refuse strokes the global backend would allow; accepted masks remain exact,
+with no truncated strokes or silent resizing. No browser latency or intra-call
+cancellation guarantee is claimed.
 
 ## Explicit native-grid policy
 
