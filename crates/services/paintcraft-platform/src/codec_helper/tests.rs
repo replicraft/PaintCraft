@@ -414,3 +414,163 @@ fn qualified_variants_are_exact_bounded_and_old_schema_is_not_admitted() {
         ErrorCode::InputSchema
     );
 }
+
+const ALT_MARKER: &[u8] = b"PAINTCRAFT_CODEC_WORKER_BUILD_V5_TEST\0";
+const ALT_RECORD: &[u8] = b"PAINTCRAFT_CODEC_WORKER_BUILD_V5_TEST\0\x30.1.0\0PCDEC002\0HEAP268435456\0AVIF_ALLOC1\0END_CODEC_WORKER_BUILD\0";
+fn alternate() -> Contract<'static> {
+    Contract {
+        profile: "charged-avif-test",
+        qualified_import_variants: &["qualified-test-reader", "qualified-avif-reader"],
+        build_marker: ALT_MARKER,
+        build_record: ALT_RECORD,
+        ..contract()
+    }
+}
+fn install_alternate(value: &Installation) {
+    let mut bytes = binary(value.target);
+    bytes.truncate(128);
+    bytes.extend(ALT_RECORD);
+    fs::write(&value.helper, bytes).unwrap();
+    let mut metadata = value.metadata();
+    let Value::Object(map) = &mut metadata else {
+        unreachable!()
+    };
+    map.insert("profile".into(), Value::str(alternate().profile));
+    map.insert(
+        "qualified_import_variants".into(),
+        Value::Array(
+            alternate()
+                .qualified_import_variants
+                .iter()
+                .map(|v| Value::str(*v))
+                .collect(),
+        ),
+    );
+    fs::write(&value.manifest, json::canonical(&metadata)).unwrap();
+}
+#[test]
+fn finite_profiles_select_before_integrity_checks_and_do_not_fallback() {
+    for target in [
+        Target::MacArm,
+        Target::MacX64,
+        Target::WinArm,
+        Target::WinX64,
+        Target::LinuxArm,
+        Target::LinuxX64,
+    ] {
+        let value = Installation::new(target, false);
+        verify_known(
+            &value.app,
+            contract(),
+            Some(alternate()),
+            target,
+            &|| Ok(()),
+        )
+        .unwrap();
+        assert!(
+            verify(&value.app, alternate(), target, &|| Ok(())).is_err(),
+            "base helper cannot satisfy AVIF-only contract"
+        );
+        install_alternate(&value);
+        verify_known(
+            &value.app,
+            contract(),
+            Some(alternate()),
+            target,
+            &|| Ok(()),
+        )
+        .unwrap();
+        verify(&value.app, alternate(), target, &|| Ok(())).unwrap();
+        assert!(verify(&value.app, contract(), target, &|| Ok(())).is_err());
+        fs::OpenOptions::new()
+            .append(true)
+            .open(&value.helper)
+            .unwrap()
+            .write_all(b"changed")
+            .unwrap();
+        let error = verify_known(
+            &value.app,
+            contract(),
+            Some(alternate()),
+            target,
+            &|| Ok(()),
+        )
+        .unwrap_err();
+        assert!(error.message.contains("SHA-256"), "{}", error.message);
+    }
+}
+#[test]
+fn alternate_profiles_reject_bad_variant_marker_cancellation_and_contracts() {
+    let value = Installation::new(Target::current().unwrap(), false);
+    install_alternate(&value);
+    let mut metadata = json::parse(&fs::read(&value.manifest).unwrap()).unwrap();
+    let Value::Object(map) = &mut metadata else {
+        unreachable!()
+    };
+    map.insert(
+        "qualified_import_variants".into(),
+        Value::Array(vec![Value::str("qualified-test-reader")]),
+    );
+    fs::write(&value.manifest, json::canonical(&metadata)).unwrap();
+    assert!(
+        verify_known(
+            &value.app,
+            contract(),
+            Some(alternate()),
+            value.target,
+            &|| Ok(())
+        )
+        .is_err()
+    );
+    install_alternate(&value);
+    let mut bytes = binary(value.target);
+    bytes.truncate(128);
+    bytes.extend(RECORD);
+    fs::write(&value.helper, bytes).unwrap();
+    let mut metadata = json::parse(&fs::read(&value.manifest).unwrap()).unwrap();
+    let Value::Object(map) = &mut metadata else {
+        unreachable!()
+    };
+    map.insert(
+        "sha256".into(),
+        Value::str(hex(&Sha256::digest(fs::read(&value.helper).unwrap()))),
+    );
+    fs::write(&value.manifest, json::canonical(&metadata)).unwrap();
+    assert!(
+        verify_known(
+            &value.app,
+            contract(),
+            Some(alternate()),
+            value.target,
+            &|| Ok(())
+        )
+        .is_err(),
+        "AVIF manifest cannot bless a base build record"
+    );
+    install_alternate(&value);
+    let error = verify_known(
+        &value.app,
+        contract(),
+        Some(alternate()),
+        value.target,
+        &|| Err(Error::new(ErrorCode::OperationCancelled, "cancel")),
+    )
+    .unwrap_err();
+    assert_eq!(error.code, ErrorCode::OperationCancelled);
+    let incompatible = Contract {
+        requested_heap_ceiling_bytes: 128 << 20,
+        ..alternate()
+    };
+    assert_eq!(
+        verify_known(
+            &value.app,
+            contract(),
+            Some(incompatible),
+            value.target,
+            &|| Ok(())
+        )
+        .unwrap_err()
+        .code,
+        ErrorCode::InputSchema
+    );
+}

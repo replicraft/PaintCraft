@@ -134,6 +134,32 @@ pub fn discover(contract: Contract<'_>, check: &dyn Fn() -> Result<()>) -> Resul
     let application = std::env::current_exe().map_err(storage)?;
     for_application(&application, contract, check)
 }
+/// Admit exactly one of two caller-owned compatible profiles. Selection happens
+/// from the bounded manifest BEFORE binary verification, never as a retry after
+/// integrity, resource or cancellation failure. Profiles must share release,
+/// protocol and heap contracts; imported files cannot supply either contract.
+pub fn discover_compatible(
+    primary: Contract<'_>,
+    alternate: Contract<'_>,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<VerifiedHelper> {
+    let application = std::env::current_exe().map_err(storage)?;
+    for_application_compatible(&application, primary, alternate, check)
+}
+pub fn for_application_compatible(
+    application: &Path,
+    primary: Contract<'_>,
+    alternate: Contract<'_>,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<VerifiedHelper> {
+    verify_known(
+        application,
+        primary,
+        Some(alternate),
+        Target::current()?,
+        check,
+    )
+}
 /// `application` must be the host-owned executable path, not an imported file or
 /// user-selected helper. Exposed for composition and deterministic installation
 /// tests; matching architecture is the compiled application's target.
@@ -150,8 +176,30 @@ fn verify(
     target: Target,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<VerifiedHelper> {
+    verify_known(application, contract, None, target, check)
+}
+fn verify_known(
+    application: &Path,
+    contract: Contract<'_>,
+    alternate: Option<Contract<'_>>,
+    target: Target,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<VerifiedHelper> {
     check()?;
     contract.validate()?;
+    if let Some(alternate) = alternate {
+        alternate.validate()?;
+        if contract.profile == alternate.profile
+            || contract.application_version != alternate.application_version
+            || contract.protocol_version != alternate.protocol_version
+            || contract.requested_heap_ceiling_bytes != alternate.requested_heap_ceiling_bytes
+        {
+            return Err(Error::new(
+                ErrorCode::InputSchema,
+                "Incompatible installed helper profiles",
+            ));
+        }
+    }
     plain_path(application)?;
     let app = files::open(application, EXECUTABLE_BYTES_MAX)?;
     target.verify(&app)?;
@@ -179,6 +227,17 @@ fn verify(
     let (manifest_pin, bytes) = read_manifest(&manifest, MANIFEST_BYTES_MAX, check)?;
     let value = paintcraft_core::types::json::parse(&bytes)
         .map_err(|_| unavailable("Installed helper manifest is not strict JSON"))?;
+    let contract = if value.get("profile").and_then(Value::as_str) == Some(contract.profile) {
+        contract
+    } else if let Some(alternate) = alternate
+        .filter(|candidate| value.get("profile").and_then(Value::as_str) == Some(candidate.profile))
+    {
+        alternate
+    } else {
+        return Err(unavailable(
+            "Installed helper profile is not one of the host's known contracts",
+        ));
+    };
     let expected_fields = 10;
     if value.as_object().is_none_or(|v| v.len() != expected_fields)
         || value.get("schema_version").and_then(Value::as_i64) != Some(2)
