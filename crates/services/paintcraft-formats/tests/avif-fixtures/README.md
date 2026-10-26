@@ -44,3 +44,16 @@ Professional/profile 2 permits 8/10-bit 4:2:2: parsing that declaration does not
 qualify a color conversion. The initial admitted profile is narrower: direct
 reduced still-picture identity sRGB8/profile 1 plus optional straight full-range
 monochrome/profile 0 alpha.
+
+## Item-name assessment fixtures
+
+`named-opaque.avif` (318 bytes, SHA-256
+`637cf4c73dd1b2b5715e035632a707d2517a7763185c25dd1bac7d76fb86e5a6`)
+and `named-alpha.avif` (530 bytes, SHA-256
+`26a78f6afc14e6d2839bddfc4f2deb44d34851a13d2175b2689fd01d498a0c5a`)
+derive from the corresponding original fixture by setting the primary `infe`
+name to `Color image`, the auxiliary name to `Alpha mask`, increasing enclosing
+box sizes and adjusting absolute `iloc` offsets. Coded AV1 bytes are unchanged;
+the assessment regression compares both primary and alpha coded parts exactly.
+They exercise source-digest binding and precise `avif-item-names-not-retained`
+consent. No color-conversion loss is invented for identity GBR reordering.
