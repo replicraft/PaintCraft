@@ -15,7 +15,7 @@ static HEAP: allocator::Limited<std::alloc::System, true> = allocator::Limited::
 // checked without executing a foreign target. This is not a signature.
 const _: () = assert!(paintcraft_formats::codec_worker::HEAP_BYTES == 268435456);
 static BUILD_RECORD: &[u8] = concat!(
-    "PAINTCRAFT_CODEC_WORKER_BUILD_V3\0",
+    "PAINTCRAFT_CODEC_WORKER_BUILD_V4\0",
     env!("CARGO_PKG_VERSION"),
     "\0PCDEC002\0HEAP268435456\0STDIN_PARENT_LEASE1\0JXR_PRIVATE_SOURCE1\0END_CODEC_WORKER_BUILD\0",
 )

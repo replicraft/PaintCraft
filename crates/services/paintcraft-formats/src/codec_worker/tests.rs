@@ -264,3 +264,59 @@ fn header_only_validation_matches_request_and_rejects_all_identity_and_length_ch
     wrong.sha256[0] ^= 1;
     assert!(decode_with_header(&output, &wrong, request.header.owner).is_err());
 }
+
+#[test]
+fn heif_color_code4_is_native_only_and_requires_the_explicit_rgba_model() {
+    let mut r = request();
+    r.header.codec = Codec::HeifSrgb8;
+    let captured = Request::capture_for(Codec::HeifSrgb8, r.source.clone(), r.header.owner, 16);
+    if cfg!(target_arch = "wasm32") {
+        assert!(captured.is_err());
+        assert!(Header::decode(&r.header.encode()).is_err());
+        return;
+    }
+    assert!(captured.is_ok());
+    assert_eq!(Header::decode(&r.header.encode()).unwrap(), r.header);
+    let rgba = [1, 2, 3, 0, 4, 5, 6, 255];
+    let out = success(
+        r.header,
+        Success {
+            width: 2,
+            height: 1,
+            pixels: Pixels::SrgbRgba8(&rgba),
+        },
+        4096,
+    )
+    .unwrap();
+    assert_eq!(
+        decode(&out, &r, r.header.owner).unwrap().pixels,
+        Pixels::SrgbRgba8(&rgba)
+    );
+    let mut invalid = out.clone();
+    invalid[22] = 2; // Primaries1 becomes unspecified2.
+    assert!(decode(&invalid, &r, r.header.owner).is_err());
+    invalid = out;
+    invalid.pop();
+    assert!(decode(&invalid, &r, r.header.owner).is_err());
+    assert!(
+        success(
+            r.header,
+            Success {
+                width: 2,
+                height: 1,
+                pixels: Pixels::NativeGray8 {
+                    gray: &[0, 255],
+                    alpha: None,
+                    encoding: NativeEncoding {
+                        primaries: 1,
+                        transfer: 13,
+                        matrix: 0,
+                        full_range: true
+                    }
+                }
+            },
+            4096
+        )
+        .is_err()
+    );
+}

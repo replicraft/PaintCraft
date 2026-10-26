@@ -1,5 +1,6 @@
 //! Shared codec execution, ONLY for a bounded isolated native process or Wasm
 //! Worker. This function supplies no allocator/deadline boundary of its own.
+mod heif_color;
 use super::{self as wire, invalid};
 use crate::{heif::admission, jxl};
 use paintcraft_core::types::{Error, ErrorCode, Result};
@@ -81,6 +82,7 @@ pub fn execute(header: wire::Header, source: &[u8], peak: &dyn Fn() -> u64) -> R
     header.verify_source(source)?;
     match header.codec {
         wire::Codec::HeifGray8 => decode_heif(header, source, peak),
+        wire::Codec::HeifSrgb8 => heif_color::execute(header, source, peak),
         wire::Codec::JxrRgb8 => Err(Error::new(
             ErrorCode::CapabilityUnsupported,
             "JXR requires the native private-source worker",
