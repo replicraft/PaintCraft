@@ -24,14 +24,10 @@ pub fn run() -> Result<()> {
     input
         .read_exact(&mut source)
         .map_err(|_| invalid("truncated source"))?;
-    let mut tail = [0];
-    if input
-        .read(&mut tail)
-        .map_err(|_| invalid("source framing"))?
-        != 0
-    {
-        return Err(invalid("extra source bytes"));
-    }
+    // Release the global stdin lock before the watchdog acquires it. Keeping
+    // this lock across decode would hide parent death until decode completed.
+    drop(input);
+    crate::parent_lease::start()?;
     let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         wire::execute(header, &source, &|| crate::HEAP.peak() as u64)
     }))

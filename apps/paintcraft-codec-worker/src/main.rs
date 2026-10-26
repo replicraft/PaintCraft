@@ -3,6 +3,7 @@
 #[cfg(target_arch = "wasm32")]
 compile_error!("native codec helper is not a WebWorker implementation");
 mod allocator;
+mod parent_lease;
 mod worker;
 #[global_allocator]
 static HEAP: allocator::Limited<std::alloc::System, true> = allocator::Limited::new(
@@ -13,9 +14,9 @@ static HEAP: allocator::Limited<std::alloc::System, true> = allocator::Limited::
 // checked without executing a foreign target. This is not a signature.
 const _: () = assert!(paintcraft_formats::codec_worker::HEAP_BYTES == 268435456);
 static BUILD_RECORD: &[u8] = concat!(
-    "PAINTCRAFT_CODEC_WORKER_BUILD_V1\0",
+    "PAINTCRAFT_CODEC_WORKER_BUILD_V2\0",
     env!("CARGO_PKG_VERSION"),
-    "\0PCDEC002\0HEAP268435456\0END_CODEC_WORKER_BUILD\0",
+    "\0PCDEC002\0HEAP268435456\0STDIN_PARENT_LEASE1\0END_CODEC_WORKER_BUILD\0",
 )
 .as_bytes();
 fn main() {

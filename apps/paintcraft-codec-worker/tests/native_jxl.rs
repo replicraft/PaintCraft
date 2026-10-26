@@ -31,7 +31,7 @@ fn limits() -> Limits {
     }
 }
 fn run(r: &Request) -> process::Output {
-    process::run(
+    process::run_parent_lease(
         Path::new(env!("CARGO_BIN_EXE_paintcraft-codec-worker")),
         &[],
         r.segments(),
@@ -126,7 +126,7 @@ fn cancellation_and_deadline_still_kill_the_shared_decoder_process() {
     use std::sync::atomic::{AtomicUsize, Ordering};
     let r = request(RGBA, 6);
     let polls = AtomicUsize::new(0);
-    let result = process::run(
+    let result = process::run_parent_lease(
         Path::new(env!("CARGO_BIN_EXE_paintcraft-codec-worker")),
         &[],
         r.segments(),
@@ -145,7 +145,7 @@ fn cancellation_and_deadline_still_kill_the_shared_decoder_process() {
         ..limits()
     };
     assert_eq!(
-        process::run(
+        process::run_parent_lease(
             Path::new(env!("CARGO_BIN_EXE_paintcraft-codec-worker")),
             &[],
             r.segments(),

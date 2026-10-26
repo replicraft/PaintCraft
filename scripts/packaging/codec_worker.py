@@ -4,8 +4,8 @@ import mmap
 import shutil
 
 MANIFEST = "paintcraft-codec-worker.json"
-BUILD_PREFIX = b"PAINTCRAFT_CODEC_WORKER_BUILD_V1\0"
-BUILD_SUFFIX = b"\0PCDEC002\0HEAP268435456\0END_CODEC_WORKER_BUILD\0"
+BUILD_PREFIX = b"PAINTCRAFT_CODEC_WORKER_BUILD_V2\0"
+BUILD_SUFFIX = b"\0PCDEC002\0HEAP268435456\0STDIN_PARENT_LEASE1\0END_CODEC_WORKER_BUILD\0"
 
 
 def verify_build_record(helper, version):
@@ -60,7 +60,7 @@ def metadata(directory, version, target):
         "executable": helper.name,
         "sha256": release.digest(helper),
         "protocol_version": 2,
-        "profile": "internal-heif-gray8-jxl-rgba8",
+        "profile": "internal-heif-gray8-jxl-rgba8-parent-lease1",
         "requested_heap_ceiling_bytes": 256 << 20,
         "public_reader_enabled": False,
     }

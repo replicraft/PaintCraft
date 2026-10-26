@@ -143,7 +143,7 @@ fn inspect(
             "Codec inspection deadline exceeded",
         )
     })?;
-    let output = process::run(
+    let output = process::run_parent_lease(
         executable,
         &[],
         request.segments(),

@@ -55,13 +55,18 @@ impl<A, const EXIT_ON_FAILURE: bool> Limited<A, EXIT_ON_FAILURE> {
         }
     }
 }
+/// Terminate this dedicated executable without allocation, locks or unwinding.
+/// Used for both allocator refusal and loss of the supervising parent's pipe.
+pub(crate) fn nonallocating_exit(status: i32) -> ! {
+    // SAFETY: no pointer/lifetime invariants are needed to terminate this process.
+    // No destructors or buffered logging run, even when another thread holds locks.
+    unsafe { libc::_exit(status) }
+}
 /// A fixed, allocation-free status. _exit skips Rust/C destructors and buffered
 /// logging, so failure while holding allocator/stdout locks cannot deadlock.
 fn refused<const EXIT: bool>() -> *mut u8 {
     if EXIT {
-        // SAFETY: terminating this dedicated process needs no pointer or
-        // lifetime invariants. No code or destructor resumes after this call.
-        unsafe { libc::_exit(75) }
+        nonallocating_exit(75)
     } else {
         ptr::null_mut()
     }
