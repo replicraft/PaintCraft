@@ -6,6 +6,7 @@ pub mod native;
 #[cfg(feature = "heif-codec")]
 pub use decode::execute;
 pub mod float;
+pub mod jxr_encode;
 use paintcraft_core::types::{Error, ErrorCode, Result};
 pub const INPUT_BYTES_MAX: usize = 64 << 20;
 pub const PIXELS_MAX: u64 = 4_194_304;
