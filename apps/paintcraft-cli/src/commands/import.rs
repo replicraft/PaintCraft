@@ -6,7 +6,7 @@ pub struct Options {
     /// Explicit zero-based page for a DCX import; never selects a page implicitly.
     #[arg(long, conflicts_with = "entry")]
     page: Option<u16>,
-    /// Explicit zero-based ICO/CUR entry; never selects the largest image implicitly.
+    /// Explicit zero-based ICO/CUR/ICNS entry; never selects the largest image implicitly.
     #[arg(long)]
     entry: Option<u16>,
     #[command(flatten)]
@@ -53,6 +53,7 @@ pub fn run(a: Options, json: bool) -> Reply {
                 .iter()
                 .chain(paintcraft_formats::project_import::KNOWN_LOSSES.iter())
                 .chain(paintcraft_formats::icons::KNOWN_IMPORT_LOSSES.iter())
+                .chain(paintcraft_formats::icns::KNOWN_IMPORT_LOSSES.iter())
                 .chain(paintcraft_formats::svg::KNOWN_LOSSES.iter())
                 .copied()
                 .collect();
@@ -73,17 +74,20 @@ pub fn run(a: Options, json: bool) -> Reply {
                 }
                 return super::codec_import::qualified(input, &a.output, &a.profile);
             }
-            let (bytes, sha, source_identity) = if input
+            let (bytes, sha, source_identity) = if let Some(limit) = input
                 .extension()
                 .and_then(|ext| ext.to_str())
                 .and_then(paintcraft_formats::registry::Family::from_extension)
-                == Some(paintcraft_formats::registry::Family::Msp)
-            {
-                let (bytes, sha, identity) = read_captured(
-                    input,
-                    paintcraft_formats::msp::BYTES_MAX as u64,
-                    "MSP input",
-                )?;
+                .and_then(|family| match family {
+                    paintcraft_formats::registry::Family::Msp => {
+                        Some(paintcraft_formats::msp::BYTES_MAX)
+                    }
+                    paintcraft_formats::registry::Family::Icns => {
+                        Some(paintcraft_formats::icns::BYTES_MAX)
+                    }
+                    _ => None,
+                }) {
+                let (bytes, sha, identity) = read_captured(input, limit as u64, "captured input")?;
                 (bytes, sha, Some(identity))
             } else {
                 let (bytes, sha) = read_bounded(
@@ -122,6 +126,17 @@ pub fn run(a: Options, json: bool) -> Reply {
                     &|| Ok(()),
                 )?;
                 (converted.document, converted.losses)
+            } else if family == paintcraft_formats::registry::Family::Icns {
+                let entry = a.entry.ok_or_else(|| {
+                    Error::new(ErrorCode::InputSchema, "ICNS requires an explicit entry")
+                })?;
+                let decoded = paintcraft_formats::icns::decode_entry(
+                    &bytes,
+                    entry,
+                    image::DECODE_PIXELS_MAX,
+                    &|| Ok(()),
+                )?;
+                (decoded.document(&sha)?, decoded.losses)
             } else if let Some(entry) = a.entry {
                 let decoded = paintcraft_formats::icons::decode_entry(
                     &bytes,
@@ -162,7 +177,7 @@ pub fn run(a: Options, json: bool) -> Reply {
             {
                 return Err(Error::new(
                     ErrorCode::InputSchema,
-                    "conversion output must not replace its captured MSP source",
+                    "conversion output must not replace its captured imported source",
                 ));
             }
             let (receipt, ok, summary) = write_native(dest, a.output.overwrite, &doc, &ctx);

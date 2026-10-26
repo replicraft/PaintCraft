@@ -36,6 +36,8 @@ enum Command {
     New(commands::new::Options),
     /// Inspect a document and acquire its concurrency ticket.
     Inspect(commands::inspect::Options),
+    /// List ICNS entries with explicit logical sizes, Retina density and qualification.
+    InspectIcns(commands::inspect_icns::Options),
     /// Print an automation JSON schema.
     Schema(commands::schema::Options),
     /// Report implemented capabilities and qualification status.
@@ -46,6 +48,8 @@ enum Command {
     Render(commands::render::Options),
     /// Export explicit ICO/CUR entries with independent sizes and encodings.
     ExportIcons(commands::export_icons::Options),
+    /// Export explicit qualified ICNS PNG types with logical size and Retina density.
+    ExportIcns(commands::export_icns::Options),
     /// Import an image as a native document.
     Import(commands::import::Options),
     /// Place an image file as a new layer, preserving the existing document.
@@ -67,11 +71,13 @@ fn main() -> ExitCode {
         Command::Flatten(a) => commands::flatten::run(a, cli.json),
         Command::New(a) => commands::new::run(a, cli.json),
         Command::Inspect(a) => commands::inspect::run(a, cli.json),
+        Command::InspectIcns(a) => commands::inspect_icns::run(a, cli.json),
         Command::Schema(a) => commands::schema::run(a, cli.json),
         Command::Capabilities(a) => commands::capabilities::run(a, cli.json),
         Command::Apply(a) => commands::apply::run(a, cli.json),
         Command::Render(a) => commands::render::run(a, cli.json),
         Command::ExportIcons(a) => commands::export_icons::run(a, cli.json),
+        Command::ExportIcns(a) => commands::export_icns::run(a, cli.json),
         Command::Import(a) => commands::import::run(a, cli.json),
         Command::PasteImage(a) => commands::paste_image::run(a, cli.json),
         Command::Palette(a) => commands::palette::run(a, cli.json),

@@ -296,10 +296,12 @@ impl LossOptions {
 }
 pub mod apply;
 pub mod capabilities;
+pub mod export_icns;
 pub mod export_icons;
 pub mod format_profile;
 pub mod import;
 pub mod inspect;
+pub mod inspect_icns;
 pub mod new;
 pub mod palette;
 pub mod paste_image;
