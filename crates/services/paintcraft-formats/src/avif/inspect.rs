@@ -25,6 +25,7 @@ pub struct Av1Configuration<'a> {
     pub monochrome: bool,
     pub subsampling_x: bool,
     pub subsampling_y: bool,
+    pub chroma_position: u8,
     /// Borrowed config OBUs, not parsed or passed to a decoder by inspection.
     pub config_obus: &'a [u8],
 }
@@ -75,7 +76,7 @@ fn unique(tree: &BoxTree<'_>, parent: Option<usize>, kind: [u8; 4]) -> Result<us
     }
     Ok(index)
 }
-fn av1_configuration(index: u16, bytes: &[u8]) -> Result<Av1Configuration<'_>> {
+pub(super) fn av1_configuration(index: u16, bytes: &[u8]) -> Result<Av1Configuration<'_>> {
     let header = bytes
         .get(..4)
         .ok_or_else(|| invalid("Truncated AVIF AV1 configuration"))?;
@@ -109,6 +110,7 @@ fn av1_configuration(index: u16, bytes: &[u8]) -> Result<Av1Configuration<'_>> {
         monochrome: header[2] & 0x10 != 0,
         subsampling_x: header[2] & 8 != 0,
         subsampling_y: header[2] & 4 != 0,
+        chroma_position: header[2] & 3,
         config_obus: &bytes[4..],
     })
 }

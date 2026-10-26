@@ -3,8 +3,12 @@
 //! The selected image/ravif path is lossy even at quality 100. Its public API
 //! cleans invisible RGB and uses the selected quality for alpha too. Input and
 //! returned bytes have hard ceilings; codec-owned scratch is not an RSS budget.
+mod admission;
+mod graph;
 mod inspect;
+mod properties;
 mod sequence;
+pub use admission::{ALPHA_AUXILIARY_TYPE, Admitted, CodedItem, admit_srgb8};
 use image::ImageEncoder;
 pub use inspect::{
     Av1Configuration, Container, INPUT_BYTES_MAX, INSPECT_PIXELS_MAX, METADATA_BYTES_MAX,
