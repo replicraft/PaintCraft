@@ -2,6 +2,7 @@
 use super::*;
 use paintcraft_formats::registry::{self, Family, Operation, Platform};
 use paintcraft_platform::dialogs::Filter;
+use paintcraft_ui::t;
 
 impl App {
     pub(super) fn format_filters(&self, kind: Kind) -> Vec<Filter> {
@@ -68,11 +69,15 @@ impl App {
                     Family::Pnm => "PAM image",
                     Family::Farbfeld => "farbfeld image",
                     Family::Pcx => "PCX image",
-                    Family::Msp => "MSP image",
+                    Family::Msp => "MSP picture",
                     _ => return None,
                 };
                 Some(Filter {
-                    name: name.into(),
+                    name: if family == Family::Msp {
+                        t!(&self.context, name)
+                    } else {
+                        name.into()
+                    },
                     extensions: family
                         .extensions()
                         .iter()
