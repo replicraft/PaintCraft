@@ -242,3 +242,23 @@ fn unsupported_profile_uses_canonical_protocol_refusal_not_generic_exit() {
         ErrorCode::CapabilityUnsupported
     );
 }
+
+#[test]
+fn linked_helper_contains_cross_target_packaging_build_record() {
+    let header = request(PRIMARY).header.encode();
+    assert_eq!(&header[..8], b"PCHEIF01");
+    assert_eq!(&header[8..10], &1u16.to_be_bytes());
+    assert_eq!(wire::HEAP_BYTES, 268435456);
+    let bytes = std::fs::read(env!("CARGO_BIN_EXE_paintcraft-codec-worker")).unwrap();
+    let record = concat!(
+        "PAINTCRAFT_CODEC_WORKER_BUILD_V1\0",
+        env!("CARGO_PKG_VERSION"),
+        "\0PCHEIF01\0HEAP268435456\0END_CODEC_WORKER_BUILD\0"
+    )
+    .as_bytes();
+    assert!(
+        bytes
+            .windows(record.len())
+            .any(|candidate| candidate == record)
+    );
+}
