@@ -91,6 +91,18 @@ pub fn run(a: Options, json: bool) -> Reply {
                         "avif.sdr-ycbcr8.import",
                         "dav1d/native-worker",
                     ),
+                    (
+                        Family::Hdr,
+                        codec_worker::NATIVE_HDR_SDR_IMPORT_VARIANT,
+                        "hdr.sdr8.import",
+                        "image-hdr/native-worker",
+                    ),
+                    (
+                        Family::Exr,
+                        codec_worker::NATIVE_EXR_SDR_IMPORT_VARIANT,
+                        "exr.sdr8.import",
+                        "exr/native-worker",
+                    ),
                 ] {
                     let mut request = Request::new(
                         Frontend::Studio,
@@ -110,7 +122,22 @@ pub fn run(a: Options, json: bool) -> Reply {
                             );
                             fields
                                 .insert("runtime_installation_verified".into(), Value::Bool(false));
-                            if family == Family::Avif {
+                            if matches!(family, Family::Hdr | Family::Exr) {
+                                fields.insert(
+                                    "required_helper_profile".into(),
+                                    Value::str(codec_worker::FLOAT_NATIVE_PROFILE),
+                                );
+                                fields.insert(
+                                    "required_helper_profile_is_minimum".into(),
+                                    Value::Bool(false),
+                                );
+                                fields.insert(
+                                    "accepted_helper_profiles".into(),
+                                    Value::Array(vec![Value::str(
+                                        codec_worker::FLOAT_NATIVE_PROFILE,
+                                    )]),
+                                );
+                            } else if family == Family::Avif {
                                 let profiles: &[&str] =
                                     if variant == codec_worker::NATIVE_AVIF_SDR_IMPORT_VARIANT {
                                         &[
