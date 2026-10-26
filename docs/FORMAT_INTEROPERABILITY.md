@@ -42,7 +42,8 @@ Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, 
 | ICO/CUR | Studio explicit selected-entry Import on desktop/browser; CLI `--entry` and MCP `entry`. Fresh multi-entry export in Studio desktop/browser, CLI `export-icons` and MCP `export_icons` | Reports every admitted entry and cursor hotspot before selection. Fresh exports use explicit sizes, RGBA PNG or 32-bit bitmap entries, independent aspect-ratio fitting, and per-entry CUR hotspots. Desktop/browser exports require a displayed preview and explicit loss consent; foreign preserving save remains unavailable |
 | PSD/PSB | Studio explicit Import on desktop/browser; CLI `import` and MCP `import_image` | RGB8 Normal raster-layer subset retains names, offsets, opacity, visibility and alpha. Metadata losses need explicit consent. Groups, masks, text, effects, clipping, high depth and foreign writing remain unavailable |
 | SVG/SVGZ | Studio desktop/browser Import; CLI `import` with `--svg-width`/`--svg-height`; MCP `import_image` with `svg` options | Explicit size/DPI/fitting and rasterization consent. Studio previews use bundled fonts and additional font files; CLI/MCP accept outline fonts too. No Classic access, ordinary Open or SVG export |
-| EXR/HDR, JP2, MSP, ICNS | Not yet enabled | Registry inventory or work in progress is not usable format support |
+| MSP | Internal bounded monochrome reader and fresh MSP1 writer; no public workflow yet | DanM raw and admitted LinS row-RLE profile with independent Pillow pixel checks. Explicit opaque black/white input only; ambiguous empty RLE rows, MSP2 writing and original Windows Paint qualification remain |
+| EXR/HDR, JP2, ICNS | Not yet enabled | Registry inventory or work in progress is not usable format support |
 | ASE | Studio Palettes dialog; CLI `palette inspect` / `palette export`; MCP `inspect_palette` / `export_palette` | Flat groups, exact names/order/models/types and finite f32 values. RGB/gray tool-color adoption is explicit; CMYK/LAB conversion, persistent catalogs and Adobe qualification remain |
 | ABR | Studio desktop/browser selection and bounded native-static R8 painting; CLI/MCP inspection and painting | Exact sample masks, pattern channels, signed bounds and original ordered payloads retained. Up to 256 presets per admitted library; unsupported dynamics, textures, transforms and precision reduction are refused. Full preset behavior and original-application qualification remain; no ABR export or ordinary image Open |
 | CSH | Studio Shape resources dialog; CLI `shape inspect` / `shape export`; MCP `inspect_shapes` / `export_shapes` | Retains bounds, names, IDs and exact ordered path records. Studio previews outlines without changing the painting. Shape placement, broader interoperability and original-application qualification remain |
@@ -292,6 +293,32 @@ static adoption, pointer preview/release screen-pixel equality, Undo/Redo and
 PCND download check with no page errors. The downloaded project reopened and
 rendered through the CLI. This is focused workflow evidence, not full release
 qualification or an independent Photoshop rendering comparison.
+
+### Historical MSP internal codec, 2026-10-25
+
+The internal `paintcraft-formats::msp` module handles an initial historical
+monochrome profile, distinct from modern layered `.paint`. `DanM` raw rows and
+`LinS` encoded-length row maps undergo complete checksum, extent and packet
+validation before pixel allocation. Every nonzero encoded row must expand
+exactly to its byte-aligned packed width; the reader never follows arbitrary
+row offsets. Limits are 16 MiB source, positive 16-bit dimensions and 4,194,304
+pixels. Original header words and unused packed tail bits remain available;
+RGBA expansion explicitly maps bits to opaque black/white without device/aspect
+scaling. Fresh MSP1 output accepts packed bits or already opaque black/white
+RGBA. Thresholding, dithering, alpha removal and source-header preservation are
+not implicit.
+
+Seven owned specimens, including one separately Pillow-written image, pass
+independent Pillow 13.0.0 pixel checks. All seven fresh Rust-written copies also
+pass that reader. Seven focused Rust tests cover exact pixels/header metadata,
+odd widths, long RLE packets, truncation, checksum/size/map failures, conversion
+refusal, cancellation and mutations. See [fixtures, provenance and exact profile](../crates/services/paintcraft-formats/tests/msp-fixtures/README.md).
+The primary Pillow implementation documents zero-length MSP2 rows as inferred
+white-fill; this profile refuses them. Original historical Windows Paint and a
+complete normative Microsoft specification were unavailable, so original-program
+compatibility remains unqualified. MSP2 writing, explicit monochrome conversion
+controls and frontend frozen-source/save receipts remain work. No public registry,
+normal Classic Open or Studio/CLI/MCP activation is enabled yet.
 
 ### CSH resource adapter, 2026-10-25
 
