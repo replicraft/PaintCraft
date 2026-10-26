@@ -9,6 +9,9 @@ pub const INPUT_BYTES_MAX: usize = 64 << 20;
 pub const METADATA_BYTES_MAX: usize = 256 << 10;
 pub const PIXELS_MAX: u64 = 4_194_304;
 const ENTRIES_MAX: usize = 128;
+/// ITU-T T.832(2012), AnnexC.2: default only after explicit/other color context
+/// is absent. The inspected profile refuses ICC, COLOR_SPACE and PTM_COLOR_INFO.
+pub const COLOR_POLICY: &str = "t832-uint-rgb-absent-context-default-srgb";
 const RGB8_GUID: [u8; 16] = [
     0x24, 0xc3, 0xdd, 0x6f, 0x03, 0x4e, 0xfe, 0x4b, 0xb1, 0x85, 0x3d, 0x77, 0x76, 0x8d, 0xc9, 0x0d,
 ];
@@ -21,6 +24,9 @@ pub struct Inspection {
     pub image_offset: usize,
     pub image_bytes: usize,
     pub container_version: u8,
+    /// Exact f32 source bits; no density conversion is performed.
+    pub resolution_x_bits: Option<u32>,
+    pub resolution_y_bits: Option<u32>,
 }
 fn invalid(message: &str) -> Error {
     Error::new(ErrorCode::CodecFailed, message)
@@ -93,6 +99,7 @@ pub fn inspect_checked(
     }
     let mut seen = [0u16; ENTRIES_MAX];
     let (mut width, mut height, mut offset, mut length, mut guid) = (None, None, None, None, None);
+    let (mut resolution_x_bits, mut resolution_y_bits) = (None, None);
     for i in 0..count {
         check()?;
         let pos = ifd + 2 + i * 12;
@@ -141,6 +148,11 @@ pub fn inspect_checked(
             0xbc82 | 0xbc83 => {
                 if ty != 11 || n != 1 {
                     return Err(invalid("invalid JPEG XR resolution field"));
+                }
+                if tag == 0xbc82 {
+                    resolution_x_bits = Some(value);
+                } else {
+                    resolution_y_bits = Some(value);
                 }
                 let value = f32::from_bits(value);
                 if !value.is_finite() || value < 0.0 {
@@ -201,6 +213,8 @@ pub fn inspect_checked(
         image_offset,
         image_bytes,
         container_version: bytes[3],
+        resolution_x_bits,
+        resolution_y_bits,
     })
 }
 
