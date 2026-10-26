@@ -62,11 +62,6 @@ impl Job {
             Ok(())
         };
         check()?;
-        if self.codec == Codec::AvifSdr8 {
-            return Err(unsupported(
-                "SDR AVIF native installation contract is not yet admitted",
-            ));
-        }
         let source = self
             .identity
             .capture_bytes(self.length, INPUT_BYTES_MAX as u64, &check)?;
@@ -125,6 +120,7 @@ fn installed_helper(
 ) -> Result<codec_helper::VerifiedHelper> {
     let legacy_record = native_build_record(version)?;
     let avif_record = native_avif_build_record(version)?;
+    let sdr_record = native_avif_sdr_build_record(version)?;
     let base = codec_helper::Contract {
         application_version: version,
         protocol_version: PROTOCOL_VERSION,
@@ -143,10 +139,19 @@ fn installed_helper(
         build_marker: AVIF_BUILD_RECORD_MARKER,
         build_record: &avif_record,
     };
-    if codec == Codec::AvifSrgb8 {
-        codec_helper::discover(avif, check)
-    } else {
-        codec_helper::discover_compatible(base, avif, check)
+    let sdr = codec_helper::Contract {
+        application_version: version,
+        protocol_version: PROTOCOL_VERSION,
+        profile: AVIF_SDR_NATIVE_PROFILE,
+        requested_heap_ceiling_bytes: HEAP_BYTES,
+        qualified_import_variants: QUALIFIED_AVIF_SDR_IMPORT_VARIANTS,
+        build_marker: AVIF_SDR_BUILD_RECORD_MARKER,
+        build_record: &sdr_record,
+    };
+    match codec {
+        Codec::AvifSdr8 => codec_helper::discover(sdr, check),
+        Codec::AvifSrgb8 => codec_helper::discover_compatible(avif, sdr, check),
+        _ => codec_helper::discover_compatible_three(base, avif, sdr, check),
     }
 }
 #[cfg(test)]

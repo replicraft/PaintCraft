@@ -28,6 +28,7 @@ pub struct AdoptedImport {
     pub jxr_assessment: Option<crate::jxr::ImportAssessment>,
     pub heif_assessment: Option<crate::heif::ImportAssessment>,
     pub avif_assessment: Option<crate::avif::ImportAssessment>,
+    pub avif_sdr_assessment: Option<crate::avif::sdr::ImportAssessment>,
 }
 #[derive(Debug)]
 enum PreparedProfile {
@@ -35,11 +36,12 @@ enum PreparedProfile {
     Jxr(crate::jxr::ImportAssessment),
     Heif(crate::heif::ImportAssessment),
     Avif(crate::avif::ImportAssessment),
+    AvifSdr(crate::avif::sdr::ImportAssessment),
 }
 impl PreparedProfile {
     fn jxr(&self) -> Option<&crate::jxr::ImportAssessment> {
         match self {
-            Self::Jxl | Self::Heif(_) | Self::Avif(_) => None,
+            Self::Jxl | Self::Heif(_) | Self::Avif(_) | Self::AvifSdr(_) => None,
             Self::Jxr(assessment) => Some(assessment),
         }
     }
@@ -49,6 +51,7 @@ impl PreparedProfile {
             Self::Jxr(assessment) => assessment.losses(),
             Self::Heif(assessment) => assessment.losses(),
             Self::Avif(assessment) => assessment.losses(),
+            Self::AvifSdr(assessment) => assessment.losses(),
         }
     }
     fn require_losses(&self, allowed: &[String]) -> Result<()> {
@@ -57,6 +60,7 @@ impl PreparedProfile {
             Self::Jxr(assessment) => assessment.require_losses(allowed)?,
             Self::Heif(assessment) => assessment.require_losses(allowed)?,
             Self::Avif(assessment) => assessment.require_losses(allowed)?,
+            Self::AvifSdr(assessment) => assessment.require_losses(allowed)?,
         }
         Ok(())
     }
@@ -104,8 +108,9 @@ impl Job {
         }
         self.prepare_import(residency, lease, host_check, current_owner, launch)
     }
-    /// Prepare qualified JXL/JXR/HEIF or the charged identity-sRGB AVIF profile
-    /// with optional straight alpha. Native gray planes have no interpretation.
+    /// Prepare an explicitly selected qualified sample profile. Identity AVIF
+    /// and SDR AVIF remain distinct codecs and source assessments; the latter
+    /// always requires reconstruction consent. Gray planes have no interpretation.
     pub fn prepare_import(
         self,
         residency: SharedBudget,
@@ -116,7 +121,11 @@ impl Job {
     ) -> Result<PreparedImport> {
         if !matches!(
             self.codec,
-            Codec::JxlRgba8 | Codec::JxrRgb8 | Codec::HeifSrgb8 | Codec::AvifSrgb8
+            Codec::JxlRgba8
+                | Codec::JxrRgb8
+                | Codec::HeifSrgb8
+                | Codec::AvifSrgb8
+                | Codec::AvifSdr8
         ) {
             return Err(unsupported(
                 "Native samples have no qualified document color interpretation",
@@ -170,6 +179,24 @@ impl Job {
                             ));
                         }
                         PreparedProfile::Avif(assessment)
+                    }
+                    Codec::AvifSdr8 => {
+                        let assessment = crate::avif::sdr::assess_import(
+                            request.source.as_slice(),
+                            u64::from(request.header.pixels),
+                            check,
+                        )?;
+                        if assessment.sha256() != request.header.sha256
+                            || assessment.source_len() != request.header.length
+                            || assessment.size() != (frame.width, frame.height)
+                            || (!assessment.alpha()
+                                && rgba.as_chunks::<4>().0.iter().any(|pixel| pixel[3] != 255))
+                        {
+                            return Err(invalid(
+                                "AVIF SDR frame differs from captured source declarations",
+                            ));
+                        }
+                        PreparedProfile::AvifSdr(assessment)
                     }
                     Codec::HeifSrgb8 => {
                         PreparedProfile::Heif(heif_profile(request, &frame, check)?)
@@ -231,6 +258,13 @@ impl PreparedImport {
             None
         }
     }
+    pub fn avif_sdr_assessment(&self) -> Option<&crate::avif::sdr::ImportAssessment> {
+        if let PreparedProfile::AvifSdr(assessment) = &self.profile {
+            Some(assessment)
+        } else {
+            None
+        }
+    }
     pub fn losses(&self) -> &'static [&'static str] {
         self.profile.losses()
     }
@@ -240,6 +274,7 @@ impl PreparedImport {
             PreparedProfile::Jxr(_) => NATIVE_JXR_IMPORT_VARIANT,
             PreparedProfile::Heif(_) => NATIVE_HEIF_IMPORT_VARIANT,
             PreparedProfile::Avif(_) => NATIVE_AVIF_IMPORT_VARIANT,
+            PreparedProfile::AvifSdr(_) => NATIVE_AVIF_SDR_IMPORT_VARIANT,
         }
     }
     /// Revalidate before the host installs a new Session/tab. On refusal the old
@@ -276,12 +311,14 @@ impl PreparedImport {
         check()?;
         // Moving the document preserves each tile's resident BudgetLease. Only
         // preparation scratch is retired; there is no uncharged pixel interval.
-        let (jxr_assessment, heif_assessment, avif_assessment) = match self.profile {
-            PreparedProfile::Jxl => (None, None, None),
-            PreparedProfile::Jxr(assessment) => (Some(assessment), None, None),
-            PreparedProfile::Heif(assessment) => (None, Some(assessment), None),
-            PreparedProfile::Avif(assessment) => (None, None, Some(assessment)),
-        };
+        let (jxr_assessment, heif_assessment, avif_assessment, avif_sdr_assessment) =
+            match self.profile {
+                PreparedProfile::Jxl => (None, None, None, None),
+                PreparedProfile::Jxr(assessment) => (Some(assessment), None, None, None),
+                PreparedProfile::Heif(assessment) => (None, Some(assessment), None, None),
+                PreparedProfile::Avif(assessment) => (None, None, Some(assessment), None),
+                PreparedProfile::AvifSdr(assessment) => (None, None, None, Some(assessment)),
+            };
         Ok(AdoptedImport {
             document: self.document,
             input: self.input,
@@ -290,10 +327,13 @@ impl PreparedImport {
             jxr_assessment,
             heif_assessment,
             avif_assessment,
+            avif_sdr_assessment,
         })
     }
 }
 #[cfg(test)]
 mod heif_tests;
+#[cfg(test)]
+mod sdr_installed_tests;
 #[cfg(test)]
 mod tests;

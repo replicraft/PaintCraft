@@ -57,6 +57,7 @@ criterion.workspace = true
 png.workspace = true
 paintcraft-commands.workspace = true
 paintcraft-editor.workspace = true
+paintcraft-runtime.workspace = true
 
 [lints]
 workspace = true

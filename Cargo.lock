@@ -3432,6 +3432,7 @@ dependencies = [
  "paintcraft-platform",
  "paintcraft-raster",
  "paintcraft-render",
+ "paintcraft-runtime",
  "pcx",
  "png",
  "qoi",

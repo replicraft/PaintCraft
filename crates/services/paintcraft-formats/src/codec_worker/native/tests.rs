@@ -93,7 +93,7 @@ fn invalid_avif_host_build_contract_cannot_launch_or_adopt() {
 }
 
 #[test]
-fn private_sdr_job_cannot_dispatch_through_existing_installed_contracts() {
+fn sdr_job_does_not_dispatch_without_an_exact_installed_v6_contract() {
     let root = std::env::temp_dir().join(format!("paintcraft-private-sdr-job-{}", Uuid::new_v4()));
     std::fs::create_dir(&root).unwrap();
     let path = root.join("source.avif");
@@ -124,8 +124,8 @@ fn private_sdr_job_cannot_dispatch_through_existing_installed_contracts() {
             .consume::<()>(
                 &|| Ok(()),
                 &|| Ok(current),
-                |_, _| panic!("unadmitted SDR job must not launch"),
-                |_, _, _, _| panic!("unadmitted SDR job must not consume"),
+                |_, _| panic!("SDR job without a V6 installation must not launch"),
+                |_, _, _, _| panic!("SDR job without a V6 installation must not consume"),
             )
             .unwrap_err();
         assert_eq!(
