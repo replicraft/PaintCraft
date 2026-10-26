@@ -12,6 +12,7 @@ pub mod heif;
 pub mod icns;
 pub mod icons;
 pub mod image;
+mod item_graph;
 pub mod jxl;
 pub mod jxr;
 pub mod msp;

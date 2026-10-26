@@ -12,59 +12,22 @@ mod properties;
 mod qualification;
 #[cfg(test)]
 mod tests;
-use paintcraft_core::types::{Error, ErrorCode, Result};
-use paintcraft_paint::{BoxInfo, BoxTree, Layout};
-pub use payloads::{Grid, Payload};
+pub use crate::item_graph::{Grid, Payload};
+#[cfg(test)]
+use paintcraft_core::types::ErrorCode;
+use paintcraft_core::types::{Error, Result};
+use paintcraft_paint::{BoxInfo, BoxTree};
 pub use properties::{Color, Property};
 
-pub const INPUT_BYTES_MAX: usize = 64 << 20;
-pub const METADATA_BYTES_MAX: usize = 4 << 20;
-pub const ITEMS_MAX: usize = 256;
-pub const PROPERTIES_MAX: usize = 1024;
-pub const LINKS_MAX: usize = 4096;
+pub use crate::item_graph::{
+    INPUT_BYTES_MAX, ITEMS_MAX, LINKS_MAX, METADATA_BYTES_MAX, PROPERTIES_MAX,
+};
+pub type Item<'a> = crate::item_graph::Item<'a, Property<'a>>;
+pub type Association<'a> = crate::item_graph::Association<Property<'a>>;
+pub use crate::item_graph::Reference;
+pub type Inspection<'a> = crate::item_graph::Inspection<'a, Property<'a>>;
 pub const PIXELS_MAX: u64 = 4_194_304;
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Item<'a> {
-    pub id: u32,
-    pub kind: [u8; 4],
-    pub name: &'a str,
-    pub hidden: bool,
-    pub payload: Option<Payload<'a>>,
-    /// Association order is retained; transformations are not applied.
-    pub properties: Vec<Association<'a>>,
-}
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Association<'a> {
-    pub index: u16,
-    pub essential: bool,
-    pub property: Property<'a>,
-}
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Reference {
-    pub kind: [u8; 4],
-    pub from: u32,
-    /// Original order, including the raster order of grid tiles.
-    pub to: Vec<u32>,
-}
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Inspection<'a> {
-    pub primary_id: u32,
-    pub items: Vec<Item<'a>>,
-    pub references: Vec<Reference>,
-}
 impl Inspection<'_> {
-    pub fn primary(&self) -> Option<&Item<'_>> {
-        self.item(self.primary_id)
-    }
-    pub fn item(&self, id: u32) -> Option<&Item<'_>> {
-        self.items.iter().find(|item| item.id == id)
-    }
-    pub fn references(&self, kind: [u8; 4], from: u32) -> Option<&[u32]> {
-        self.references
-            .iter()
-            .find(|r| r.kind == kind && r.from == from)
-            .map(|r| r.to.as_slice())
-    }
     fn primary_source(&self, id: u32) -> bool {
         let mut current = self.primary_id;
         for _ in 0..=16 {
@@ -108,82 +71,7 @@ impl Inspection<'_> {
         })
     }
 }
-fn invalid(message: &str) -> Error {
-    Error::new(ErrorCode::CodecFailed, message)
-}
-fn unsupported(message: &str) -> Error {
-    Error::new(ErrorCode::CapabilityUnsupported, message)
-}
-fn resource(message: &str) -> Error {
-    Error::new(ErrorCode::ResourceLimit, message)
-}
-fn push<T>(values: &mut Vec<T>, value: T, limit: usize) -> Result<()> {
-    if values.len() >= limit {
-        return Err(resource("HEIF collection exceeds allowance"));
-    }
-    values
-        .try_reserve(1)
-        .map_err(|_| resource("HEIF inspection allocation failed"))?;
-    values.push(value);
-    Ok(())
-}
-fn full(body: &[u8]) -> Result<(u8, u32, &[u8])> {
-    let p = body
-        .get(..4)
-        .ok_or_else(|| invalid("truncated HEIF full box"))?;
-    Ok((p[0], u32::from_be_bytes([0, p[1], p[2], p[3]]), &body[4..]))
-}
-fn layout(info: &BoxInfo<'_>, parent: Option<[u8; 4]>) -> Result<Layout> {
-    let prefix = match (&info.kind, parent) {
-        (b"meta", None) => {
-            if full(info.payload)?.0 != 0 || full(info.payload)?.1 != 0 {
-                return Err(unsupported("HEIF meta version/flags"));
-            }
-            4
-        }
-        (b"iprp", Some(p)) if p == *b"meta" => 0,
-        (b"ipco", Some(p)) if p == *b"iprp" => 0,
-        (b"iinf", Some(p)) if p == *b"meta" => {
-            let (v, f, _) = full(info.payload)?;
-            if f != 0 || v > 1 {
-                return Err(unsupported("HEIF item inventory version/flags"));
-            }
-            if v == 0 { 6 } else { 8 }
-        }
-        (b"iref", Some(p)) if p == *b"meta" => {
-            let (v, f, _) = full(info.payload)?;
-            if f != 0 || v > 1 {
-                return Err(unsupported("HEIF reference version/flags"));
-            }
-            4
-        }
-        _ => return Ok(Layout::Opaque),
-    };
-    Ok(Layout::Children {
-        prefix_bytes: prefix,
-    })
-}
-fn children<'t, 'a>(
-    tree: &'t BoxTree<'a>,
-    parent: usize,
-) -> impl Iterator<Item = (usize, &'t BoxInfo<'a>)> {
-    tree.boxes
-        .iter()
-        .enumerate()
-        .filter(move |(_, b)| b.parent == Some(parent))
-}
-fn unique_child(tree: &BoxTree<'_>, parent: usize, kind: [u8; 4]) -> Result<Option<usize>> {
-    let mut matches = tree
-        .boxes
-        .iter()
-        .enumerate()
-        .filter(|(_, b)| b.parent == Some(parent) && b.kind == kind);
-    let found = matches.next().map(|(i, _)| i);
-    if matches.next().is_some() {
-        return Err(invalid("duplicate HEIF metadata box"));
-    }
-    Ok(found)
-}
+use crate::item_graph::{full, invalid, layout, push, resource, unique_child, unsupported};
 /// Inspect the explicit primary item and item/property/reference graph. Values
 /// are borrowed wherever possible. Unknown essential properties fail closed.
 /// This is a prerequisite to SPS/decoder qualification, never decode admission.
