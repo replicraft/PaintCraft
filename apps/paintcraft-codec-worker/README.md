@@ -144,3 +144,48 @@ This is internal native qualification, not public JXL Open support. Browser
 WebWorker execution, installed-helper dispatch/integrity policy, broader adversarial
 corpora and platform qualification remain separate gates. Existing JXL exports
 retain their current qualified lossless writer subset.
+
+## Installed native dispatch qualification
+
+The native platform adapter now locates the helper only relative to the running
+application: adjacent executable/manifest for portable CLI, desktop and nested
+macOS editor bundles; Linux `bin` plus `share/paintcraft` manifest. It never searches
+PATH or accepts a format-selected executable. The host supplies the format contract,
+and the platform layer checks strict bounded manifest JSON, the released host
+environment/target declaration, executable OS/architecture headers, actual
+embedded build record, streaming SHA and retained file
+identities. It rechecks helper and manifest before returning a launch path and
+after the subprocess. These observed-byte consistency checks do not authenticate
+a publisher, lock writers, provide an atomic filesystem snapshot or eliminate the
+path-based spawn race. Installation files require the same trust as the app.
+
+The hidden developer `codec-inspect` CLI command is a real consumer of that
+verified path and the existing Executor/process supervisor. Use a complete
+packaged CLI installation, not a helper-free standalone executable:
+
+```sh
+paintcraft-cli --json codec-inspect source.jxl --codec jxl
+paintcraft-cli --json codec-inspect source.heic --codec heif
+```
+
+It admits fixed child heap, parent source/output and IO verification slack before
+capturing source bytes from the acquired descriptor. Concurrent cloned identities
+use positional reads. Source identity/hash and response owner/source/codec/version
+are checked before a bounded diagnostic is reported. Hashes and native gray/CICP
+metadata are returned without creating or saving a document or assigning HEIF an
+invented sRGB interpretation. Pixel/source/admission/deadline limits and source
+SHA expectations can reject the whole job; no partial result is reported.
+
+Tests copy the actual CLI/helper into private installation directories and run
+that copied CLI with independently encoded JXL/HEIF fixtures. They also reject
+missing/stale/changed helpers, inadequate admission, source SHA conflicts and pixel
+limits. Platform tests separately cover synthetic headers for all six release
+targets, symlink/FIFO rejection, file identity replacement, bounded records and
+concurrent same-descriptor captures. Workspace tests build the real helper;
+focused CLI installation tests require it to be built first.
+
+This is not public Studio Open/import activation. Source/destination guarding and
+resident admission through a real import/save remain integration work. Parent
+death/Windows orphan disposition and OS containment remain unqualified: native
+kill+wait controls the child while the parent is alive, and requested heap is not
+physical RSS or a filesystem/process sandbox.
