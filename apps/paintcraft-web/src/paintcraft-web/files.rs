@@ -338,7 +338,8 @@ fn decode_input(bytes: &[u8], name: String, frontend: Frontend, convert: bool) -
     let image = image::decode_with_pixel_limit(bytes, MAX_PIXELS)?;
     let sha = paintcraft_document::hex(&Sha256::digest(bytes));
     Ok(Loaded {
-        converted_copy: convert,
+        converted_copy: convert
+            || (image.format == image::ImageFormat::Dds && !image.losses.is_empty()),
         document: paintcraft_document::import_image(image.width, image.height, &image.rgba, &sha)?,
         name,
         losses: image.losses,
@@ -731,3 +732,7 @@ fn encode_quality_for_profile(
 ) -> Result<Vec<u8>> {
     encode_options_for_profile(document, format, quality, frontend, Default::default())
 }
+
+#[cfg(test)]
+#[path = "files/dds_tests.rs"]
+mod dds_tests;
