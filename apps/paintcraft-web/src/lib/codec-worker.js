@@ -5,6 +5,7 @@ import {
 	decodeResponse,
 	isCompletedRefusal,
 	ownerBytes,
+	nonceBytes,
 	matchesOwner,
 	refusal,
 	LINEAR_MEMORY_BYTES,
@@ -30,11 +31,16 @@ function reserve(bytes) {
 		);
 	reserved = bytes;
 	let released = false;
-	return () => {
-		if (!released && !quarantined) {
-			released = true;
-			reserved = 0;
-		}
+	return {
+		release() {
+			if (!released && !quarantined) {
+				released = true;
+				reserved = 0;
+			}
+		},
+		quarantine() {
+			if (!released) quarantined = 'CodecFailed';
+		},
 	};
 }
 async function decodeAdmitted({
@@ -42,6 +48,7 @@ async function decodeAdmitted({
 	sourceLength,
 	readSource,
 	owner,
+	nonce,
 	codec,
 	pixels,
 	signal,
@@ -82,7 +89,8 @@ async function decodeAdmitted({
 	const started = performance.now();
 	const capturedOwner = Object.freeze({ ...owner });
 	const expectedOwner = ownerBytes(capturedOwner);
-	const release = reserve(
+	if (nonce !== undefined) nonceBytes(nonce);
+	const lease = reserve(
 		LINEAR_MEMORY_BYTES +
 			sourceLength * 3 +
 			REQUEST_HEADER +
@@ -90,9 +98,11 @@ async function decodeAdmitted({
 			65 * 1024 * 1024 +
 			65536,
 	);
+	const release = lease.release;
 	let worker;
 	let attemptedWorker = false;
 	let captured;
+	let responseBytes;
 	let completed = false;
 	let unknownAsync = false;
 	const cancelled = () =>
@@ -160,7 +170,14 @@ async function decodeAdmitted({
 		if (!(source instanceof Uint8Array) || source.length !== sourceLength)
 			throw refusal('ResourceLimit', 'Codec source length changed');
 		captured = await awaitBounded(
-			capture(source, capturedOwner, codec, pixels),
+			capture(
+				source,
+				capturedOwner,
+				codec,
+				pixels,
+				globalThis.crypto,
+				nonce,
+			),
 		);
 		check();
 		attemptedWorker = true;
@@ -200,8 +217,9 @@ async function decodeAdmitted({
 							'CodecFailed',
 							'Isolated codec Worker returned no valid result',
 						);
+					responseBytes = new Uint8Array(data.bytes);
 					const frame = decodeResponse(
-						new Uint8Array(data.bytes),
+						responseBytes,
 						captured,
 						currentOwner(),
 						applicationVersion,
@@ -224,7 +242,16 @@ async function decodeAdmitted({
 		});
 		// Keep admission charged until the caller consumes/discards this private
 		// result. A retained document needs a separate resident lease first.
-		return Object.freeze({ ...frame, release });
+		return Object.freeze({
+			...frame,
+			release,
+			responseBytes,
+			requestHeader: captured.header.slice(),
+			sourceSha256: captured.header.slice(80, 112),
+			quarantine() {
+				lease.quarantine();
+			},
+		});
 	} catch (error) {
 		if (
 			unknownAsync ||

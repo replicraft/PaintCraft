@@ -49,6 +49,9 @@ function uuid(value) {
 		Number.parseInt(pair, 16),
 	);
 }
+export function nonceBytes(value) {
+	return uuid(value);
+}
 export function ownerBytes(owner) {
 	if (!owner || owner.frontend !== 3)
 		throw refusal('CapabilityUnsupported', 'Codec Worker is Studio-only');
@@ -85,6 +88,7 @@ export async function capture(
 	codec,
 	pixels,
 	crypto = globalThis.crypto,
+	nonce,
 ) {
 	if (
 		!(source instanceof Uint8Array) ||
@@ -107,7 +111,12 @@ export async function capture(
 	view.setUint32(11, pixels);
 	view.setBigUint64(15, BigInt(frozen.length));
 	header.set(ownerBytes(owner), 23);
-	header.set(crypto.getRandomValues(new Uint8Array(16)), 64);
+	header.set(
+		nonce === undefined
+			? crypto.getRandomValues(new Uint8Array(16))
+			: nonceBytes(nonce),
+		64,
+	);
 	header.set(
 		new Uint8Array(await crypto.subtle.digest('SHA-256', frozen)),
 		80,

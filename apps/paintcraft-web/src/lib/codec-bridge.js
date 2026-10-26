@@ -26,7 +26,7 @@ export function createCodecService(applicationVersion) {
 		cancel() {
 			active?.abort();
 		},
-		async decodeFile(file, capturedOwner, pixels = PIXELS_MAX) {
+		async decodeFile(file, capturedOwner, pixels = PIXELS_MAX, nonce) {
 			if (codecWorkerBudget().quarantined)
 				throw refusal('ResourceLimit', 'Codec service needs a reload');
 			if (active)
@@ -47,6 +47,7 @@ export function createCodecService(applicationVersion) {
 					file,
 					owner: capturedOwner,
 					codec: 2,
+					nonce,
 					pixels,
 					signal: abort.signal,
 					currentOwner: () => owner,

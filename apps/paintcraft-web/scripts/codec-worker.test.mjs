@@ -633,3 +633,46 @@ test('completion proof is private to the validated request and cannot be forged 
 		assert.ok(codecWorkerBudget().reservedBytes > 0, mode);
 	}
 });
+
+test('Rust nonce and raw response receipt bind handoff; integrity refusal keeps its lease', async () => {
+	const { decodeInWorker, codecWorkerBudget } = await import(
+		`../src/lib/codec-worker.js?handoff=${Date.now()}`
+	);
+	const nonce = '00000000-0000-4000-8000-000000000099';
+	const prepared = await decodeInWorker({
+		source: new Uint8Array([1]),
+		owner,
+		nonce,
+		codec: 2,
+		pixels: 1,
+		applicationVersion: manifest.version,
+		currentOwner: () => owner,
+		createWorker: () => ({
+			terminate() {},
+			postMessage({ bytes }) {
+				const header = new Uint8Array(bytes).slice(0, 112);
+				queueMicrotask(() =>
+					this.onmessage({
+						data: {
+							kind: 'result',
+							bytes: response({ header }).buffer,
+						},
+					}),
+				);
+			},
+		}),
+	});
+	assert.equal(
+		Buffer.from(prepared.requestHeader.subarray(64, 80)).toString('hex'),
+		nonce.replaceAll('-', ''),
+	);
+	assert.deepEqual(
+		prepared.requestHeader.subarray(80, 112),
+		prepared.sourceSha256,
+	);
+	assert.equal(prepared.responseBytes.buffer, prepared.rgba.buffer);
+	prepared.quarantine();
+	prepared.release();
+	assert.ok(codecWorkerBudget().quarantined);
+	assert.ok(codecWorkerBudget().reservedBytes > 0);
+});
