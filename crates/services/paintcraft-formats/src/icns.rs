@@ -1,5 +1,6 @@
-//! Bounded modern PNG ICNS resources, distinct logical size and Retina density.
+//! Bounded PNG and small RGB/mask profile ICNS resources, explicit density.
 //! Internal backend qualification; no registry/consumer activation yet.
+mod legacy;
 mod read;
 #[cfg(test)]
 mod tests;
@@ -24,6 +25,8 @@ pub const KNOWN_IMPORT_LOSSES: &[&str] = &[
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Encoding {
     Png,
+    LegacyRaw,
+    LegacyRle,
     Unqualified,
 }
 #[derive(Clone, Debug, PartialEq, Eq)]

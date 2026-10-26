@@ -1,7 +1,9 @@
-/// Explicit ICNS PNG element types. Equal physical pixel sizes do not select
+/// Explicit ICNS element types. Equal physical pixel sizes do not select
 /// the same logical icon or density, and no automatic type inference occurs.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum IconType {
+    Legacy16,
+    Legacy32,
     Size16,
     Size32,
     Size64,
@@ -15,7 +17,9 @@ pub enum IconType {
     Retina512,
 }
 impl IconType {
-    pub const ALL: [Self; 11] = [
+    pub const ALL: [Self; 13] = [
+        Self::Legacy16,
+        Self::Legacy32,
         Self::Size16,
         Self::Size32,
         Self::Size64,
@@ -28,8 +32,21 @@ impl IconType {
         Self::Retina256,
         Self::Retina512,
     ];
-    /// Standard PNG types with exact typed readback through Apple iconutil on
-    /// the qualification host. Small1xPNG types have separate reader evidence.
+    pub const MODERN: [Self; 11] = [
+        Self::Size16,
+        Self::Size32,
+        Self::Size64,
+        Self::Size128,
+        Self::Size256,
+        Self::Size512,
+        Self::Retina16,
+        Self::Retina32,
+        Self::Retina128,
+        Self::Retina256,
+        Self::Retina512,
+    ];
+    /// Fresh PNG types with exact native typed readback. Legacy RGB/mask
+    /// writer candidates remain unqualified and are not admitted here.
     pub const WRITABLE: [Self; 8] = [
         Self::Size128,
         Self::Size256,
@@ -45,6 +62,8 @@ impl IconType {
     }
     pub fn tag(self) -> [u8; 4] {
         *match self {
+            Self::Legacy16 => b"is32",
+            Self::Legacy32 => b"il32",
             Self::Size16 => b"icp4",
             Self::Size32 => b"icp5",
             Self::Size64 => b"icp6",
@@ -63,8 +82,8 @@ impl IconType {
     }
     pub fn logical_size(self) -> u32 {
         match self {
-            Self::Size16 | Self::Retina16 => 16,
-            Self::Size32 | Self::Retina32 => 32,
+            Self::Legacy16 | Self::Size16 | Self::Retina16 => 16,
+            Self::Legacy32 | Self::Size32 | Self::Retina32 => 32,
             Self::Size64 => 64,
             Self::Size128 | Self::Retina128 => 128,
             Self::Size256 | Self::Retina256 => 256,
@@ -73,7 +92,9 @@ impl IconType {
     }
     pub fn scale(self) -> u32 {
         match self {
-            Self::Size16
+            Self::Legacy16
+            | Self::Legacy32
+            | Self::Size16
             | Self::Size32
             | Self::Size64
             | Self::Size128

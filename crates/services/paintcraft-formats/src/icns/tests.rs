@@ -38,7 +38,7 @@ fn owned_modern_entries_match_independent_pixel_formulas_and_preserve_every_logi
     assert_eq!(directory.entries.len(), 11);
     assert_eq!(directory.records.len(), 12);
     assert_eq!(directory.records[0].tag, *b"TOC ");
-    for (index, kind) in IconType::ALL.into_iter().enumerate() {
+    for (index, kind) in IconType::MODERN.into_iter().enumerate() {
         let entry = &directory.entries[index];
         assert_eq!(entry.tag, kind.tag());
         assert_eq!(
@@ -132,12 +132,12 @@ fn inert_header_metadata_and_bounded_png_exif_srgb_are_retained_without_weakenin
 #[test]
 fn selected_library_fresh_writer_keeps_explicit_types_rgba_and_hidden_rgb_for_independent_readback()
 {
-    let images: Vec<_> = IconType::ALL
+    let images: Vec<_> = IconType::MODERN
         .into_iter()
         .enumerate()
         .map(|(index, kind)| pixels(kind.pixel_size(), index as u8 + 1))
         .collect();
-    let entries: Vec<_> = IconType::ALL
+    let entries: Vec<_> = IconType::MODERN
         .into_iter()
         .zip(&images)
         .filter(|(kind, _)| kind.writable())
@@ -307,5 +307,270 @@ fn deterministic_bit_mutations_do_not_panic_or_cross_unchecked_ranges() {
                     .is_ok()
             );
         }
+    }
+}
+
+#[test]
+fn legacy_raw_rle_and_exact_masks_preserve_independent_pixels_and_source() {
+    for (tag, mask, side) in [(*b"is32", *b"s8mk", 16), (*b"il32", *b"l8mk", 32)] {
+        let rgba = pixels(side, 9);
+        let raw: Vec<_> = rgba
+            .as_chunks::<4>()
+            .0
+            .iter()
+            .flat_map(|pixel| pixel[..3].iter().copied())
+            .collect();
+        let alpha: Vec<_> = rgba
+            .as_chunks::<4>()
+            .0
+            .iter()
+            .map(|pixel| pixel[3])
+            .collect();
+        // Independent literal-only channel packet encoding, not selected writer.
+        let mut rle = Vec::new();
+        for channel in 0..3 {
+            let values: Vec<_> = rgba
+                .as_chunks::<4>()
+                .0
+                .iter()
+                .map(|pixel| pixel[channel])
+                .collect();
+            for chunk in values.chunks(128) {
+                rle.push((chunk.len() - 1) as u8);
+                rle.extend(chunk);
+            }
+        }
+        for (payload, encoding) in [(&raw, Encoding::LegacyRaw), (&rle, Encoding::LegacyRle)] {
+            let bytes = container(&[(mask, &alpha), (tag, payload)]);
+            let original = bytes.clone();
+            let directory = inspect(&bytes, &|| Ok(())).unwrap();
+            assert_eq!(directory.entries[0].encoding, encoding);
+            assert_eq!(directory.entries[0].scale, 1);
+            assert_eq!(
+                decode_entry(&bytes, 0, PIXELS_MAX, &|| Ok(()))
+                    .unwrap()
+                    .rgba,
+                rgba
+            );
+            assert_eq!(bytes, original);
+        }
+        let kind = if side == 16 {
+            IconType::Legacy16
+        } else {
+            IconType::Legacy32
+        };
+        let encoded =
+            write::encode_legacy_candidate(&[WriteEntry { kind, rgba: &rgba }], &|| Ok(()))
+                .unwrap();
+        assert_eq!(
+            decode_entry(&encoded, 0, PIXELS_MAX, &|| Ok(()))
+                .unwrap()
+                .rgba,
+            rgba
+        );
+        if let Some(path) = std::env::var_os("PAINTCRAFT_ICNS_ORACLE_DIR") {
+            std::fs::write(
+                std::path::Path::new(&path).join(format!("legacy-{side}.icns")),
+                encoded,
+            )
+            .unwrap();
+            std::fs::write(
+                std::path::Path::new(&path).join(format!("raw-{side}.icns")),
+                container(&[(tag, &raw), (mask, &alpha)]),
+            )
+            .unwrap();
+        }
+    }
+}
+#[test]
+fn legacy_packets_masks_ambiguity_limits_and_cancel_are_fail_closed() {
+    let alpha = [255; 256];
+    // Every channel: two literal zeros followed by runs 130 and 124. Initial
+    // four zero bytes are legal packets; never treat them as a guessed header.
+    let mut rle = vec![0, 0, 0, 0, 255, 7, 249, 8];
+    for _ in 0..2 {
+        rle.extend([255, 9, 251, 10]);
+    }
+    let good = container(&[(*b"is32", &rle), (*b"s8mk", &alpha)]);
+    let decoded = decode_entry(&good, 0, 256, &|| Ok(())).unwrap();
+    assert_eq!(&decoded.rgba[..8], &[0, 9, 9, 255, 0, 9, 9, 255]);
+    assert_eq!(decoded.rgba[8], 7);
+    for badstream in [
+        &rle[..rle.len() - 1],
+        &[rle.as_slice(), &[0]].concat(),
+        &[255, 0, 255, 0][..],
+    ] {
+        assert!(
+            inspect(
+                &container(&[(*b"is32", badstream), (*b"s8mk", &alpha)]),
+                &|| Ok(())
+            )
+            .is_err()
+        );
+    }
+    assert!(
+        inspect(
+            &container(&[(*b"is32", &rle), (*b"s8mk", &alpha[..255])]),
+            &|| Ok(())
+        )
+        .is_err()
+    );
+    for records in [
+        vec![(*b"is32", rle.as_slice())],
+        vec![
+            (*b"is32", rle.as_slice()),
+            (*b"s8mk", alpha.as_slice()),
+            (*b"s8mk", alpha.as_slice()),
+        ],
+        vec![
+            (*b"is32", rle.as_slice()),
+            (*b"is32", rle.as_slice()),
+            (*b"s8mk", alpha.as_slice()),
+        ],
+    ] {
+        let bytes = container(&records);
+        assert_eq!(
+            inspect(&bytes, &|| Ok(())).unwrap().entries[0].encoding,
+            Encoding::Unqualified
+        );
+        assert!(decode_entry(&bytes, 0, 256, &|| Ok(())).is_err());
+    }
+    assert_eq!(
+        decode_entry(&good, 0, 255, &|| Ok(())).unwrap_err().code,
+        ErrorCode::ResourceLimit
+    );
+    let calls = Cell::new(0);
+    decode_entry(&good, 0, 256, &|| {
+        calls.set(calls.get() + 1);
+        Ok(())
+    })
+    .unwrap();
+    for stop in 1..=calls.get() {
+        let count = Cell::new(0);
+        let result = decode_entry(&good, 0, 256, &|| {
+            count.set(count.get() + 1);
+            if count.get() == stop {
+                Err(Error::new(ErrorCode::OperationCancelled, "stop"))
+            } else {
+                Ok(())
+            }
+        });
+        assert_eq!(result.unwrap_err().code, ErrorCode::OperationCancelled);
+    }
+}
+
+#[test]
+fn independently_authored_legacy_fixtures_and_ambiguous_writer_length() {
+    for (bytes, side, encoding) in [
+        (
+            include_bytes!("../../tests/icns-fixtures/legacy-raw-16.icns").as_slice(),
+            16,
+            Encoding::LegacyRaw,
+        ),
+        (
+            include_bytes!("../../tests/icns-fixtures/legacy-rle-16.icns").as_slice(),
+            16,
+            Encoding::LegacyRle,
+        ),
+        (
+            include_bytes!("../../tests/icns-fixtures/legacy-raw-32.icns").as_slice(),
+            32,
+            Encoding::LegacyRaw,
+        ),
+        (
+            include_bytes!("../../tests/icns-fixtures/legacy-rle-32.icns").as_slice(),
+            32,
+            Encoding::LegacyRle,
+        ),
+    ] {
+        let directory = inspect(bytes, &|| Ok(())).unwrap();
+        assert_eq!(directory.entries[0].encoding, encoding);
+        assert_eq!(
+            decode_entry(bytes, 0, PIXELS_MAX, &|| Ok(())).unwrap().rgba,
+            pixels(side, 9)
+        );
+    }
+    assert_eq!(
+        encode_entries(
+            &[WriteEntry {
+                kind: IconType::Legacy16,
+                rgba: &pixels(16, 9)
+            }],
+            &|| Ok(())
+        )
+        .unwrap_err()
+        .code,
+        ErrorCode::CapabilityUnsupported
+    );
+    // A four-pixel repeat and 252 literals encode to exactly256bytes per
+    // channel in the selected encoder: ambiguous with raw3*N. Emit literalRLE.
+    let rgba: Vec<_> = (0..256)
+        .flat_map(|index| {
+            let value = if index < 4 {
+                0
+            } else {
+                ((index - 4) % 251 + 1) as u8
+            };
+            [value, value, value, 255]
+        })
+        .collect();
+    let bytes = write::encode_legacy_candidate(
+        &[WriteEntry {
+            kind: IconType::Legacy16,
+            rgba: &rgba,
+        }],
+        &|| Ok(()),
+    )
+    .unwrap();
+    assert_eq!(
+        inspect(&bytes, &|| Ok(())).unwrap().entries[0].encoding,
+        Encoding::LegacyRle
+    );
+    assert_eq!(decode_entry(&bytes, 0, 256, &|| Ok(())).unwrap().rgba, rgba);
+    cancellation(|check| {
+        write::encode_legacy_candidate(
+            &[WriteEntry {
+                kind: IconType::Legacy16,
+                rgba: &rgba,
+            }],
+            check,
+        )
+    });
+}
+
+#[test]
+fn primary_apple_argb_descriptors_do_not_inherit_selected_library_retina_error() {
+    let bytes = container(&[(*b"ic04", b"ARGB"), (*b"ic05", b"ARGB")]);
+    let directory = inspect(&bytes, &|| Ok(())).unwrap();
+    for (entry, side) in directory.entries.iter().zip([16, 32]) {
+        assert_eq!(
+            (
+                entry.width,
+                entry.height,
+                entry.logical_width,
+                entry.logical_height,
+                entry.scale
+            ),
+            (side, side, side, side, 1)
+        );
+        assert_eq!(entry.encoding, Encoding::Unqualified);
+    }
+    let modern = inspect(MODERN, &|| Ok(())).unwrap();
+    let retina = modern
+        .entries
+        .iter()
+        .find(|entry| entry.tag == *b"ic11")
+        .unwrap();
+    assert_eq!(
+        (retina.width, retina.logical_width, retina.scale),
+        (32, 16, 2)
+    );
+    for index in [0, 1] {
+        assert_eq!(
+            decode_entry(&bytes, index, PIXELS_MAX, &|| Ok(()))
+                .unwrap_err()
+                .code,
+            ErrorCode::CapabilityUnsupported
+        );
     }
 }

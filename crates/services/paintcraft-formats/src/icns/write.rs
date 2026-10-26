@@ -37,22 +37,36 @@ impl Write for Output<'_> {
         Ok(())
     }
 }
-/// Fresh PNG-only ICNS output, preserving requested logical size/Retina type and
-/// exact supplied RGBA (including hidden RGB). No resize/type choice is implicit.
+/// Fresh qualified PNG ICNS output, preserving explicit logical size/Retina
+/// type and exact supplied RGBA, including hidden RGB. Legacy output is refused.
+/// No resize or type choice is implicit.
 pub fn encode_entries(
     entries: &[WriteEntry<'_>],
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Vec<u8>> {
+    if entries
+        .iter()
+        .any(|entry| legacy::mask_tag(entry.kind.tag()).is_some())
+    {
+        return Err(unsupported(
+            "ICNS legacy writer remains unqualified after native RGB readback differences",
+        ));
+    }
+    encode_candidate(entries, check)
+}
+/// Same bounded candidate implementation is exercised by qualification tests;
+/// production entry point above refuses unqualified legacy output.
+fn encode_candidate(entries: &[WriteEntry<'_>], check: &dyn Fn() -> Result<()>) -> Result<Vec<u8>> {
     check()?;
-    if entries.is_empty() || entries.len() > IconType::WRITABLE.len() {
+    if entries.is_empty() || entries.len() > 10 {
         return Err(Error::new(
             ErrorCode::InputSchema,
-            "ICNS output needs 1..8 distinct modern PNG types",
+            "ICNS output needs 1..10 distinct qualified types",
         ));
     }
     let mut pixels = 0u64;
     for (index, entry) in entries.iter().enumerate() {
-        if !entry.kind.writable() {
+        if !entry.kind.writable() && legacy::mask_tag(entry.kind.tag()).is_none() {
             return Err(unsupported(
                 "ICNS PNG output at 16/32/64 logical pixels and 1x lacks exact native readback; select an explicitly qualified type",
             ));
@@ -77,10 +91,12 @@ pub fn encode_entries(
         }
     }
     let mut family = ::icns::IconFamily::new();
-    let mut total = 8 + 8 + entries.len() * 8;
-    let mut toc = allocation(entries.len() * 8)?;
     for entry in entries {
         check()?;
+        if legacy::mask_tag(entry.kind.tag()).is_some() {
+            family.elements.extend(legacy::encode(entry, check)?);
+            continue;
+        }
         let side = entry.kind.pixel_size();
         let png = crate::image::encode_checked(
             crate::image::ImageFormat::Png,
@@ -94,16 +110,20 @@ pub fn encode_entries(
             return Err(limit("ICNS encoded PNG allowance exceeded"));
         }
         crate::icons::inspect_icns_png(&png, side, side)?;
-        total = total
-            .checked_add(png.len() + 8)
-            .filter(|total| *total <= BYTES_MAX)
-            .ok_or_else(|| limit("ICNS output byte allowance exceeded"))?;
-        toc.extend(entry.kind.tag());
-        toc.extend(((png.len() + 8) as u32).to_be_bytes());
         family.elements.push(::icns::IconElement::new(
             ::icns::OSType(entry.kind.tag()),
             png,
         ));
+    }
+    let mut total = 8 + 8 + family.elements.len() * 8;
+    let mut toc = allocation(family.elements.len() * 8)?;
+    for element in &family.elements {
+        total = total
+            .checked_add(element.data.len() + 8)
+            .filter(|total| *total <= BYTES_MAX)
+            .ok_or_else(|| limit("ICNS output byte allowance exceeded"))?;
+        toc.extend(element.ostype.0);
+        toc.extend(((element.data.len() + 8) as u32).to_be_bytes());
     }
     family
         .elements
@@ -124,4 +144,12 @@ pub fn encode_entries(
     }
     inspect(&output.bytes, check)?;
     Ok(output.bytes)
+}
+
+#[cfg(test)]
+pub(super) fn encode_legacy_candidate(
+    entries: &[WriteEntry<'_>],
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Vec<u8>> {
+    encode_candidate(entries, check)
 }

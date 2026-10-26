@@ -1,6 +1,6 @@
 use super::*;
 use std::io::Cursor;
-/// Complete container and admitted PNG preflight, without pixel allocations.
+/// Complete container and admitted PNG/RGB preflight, without pixel allocations.
 /// Unqualified legacy/JPEG2000 image records remain identified and inert; they
 /// cannot be selected as PNGs or silently replaced by another same-size entry.
 pub fn inspect(bytes: &[u8], check: &dyn Fn() -> Result<()>) -> Result<Directory> {
@@ -38,11 +38,19 @@ pub fn inspect(bytes: &[u8], check: &dyn Fn() -> Result<()>) -> Result<Directory
         if let Some(kind) =
             ::icns::IconType::from_ostype(::icns::OSType(tag)).filter(|kind| !kind.is_mask())
         {
-            let (width, height, scale) = (
-                kind.pixel_width(),
-                kind.pixel_height(),
-                kind.pixel_density(),
-            );
+            // Apple IconStorage.h names ic04/ic05 as16/32-pixel ARGB.
+            // icns0.5 mislabels ic05 as16@2; do not inherit that density.
+            let (width, height, logical_width, logical_height, scale) = match &tag {
+                b"ic04" => (16, 16, 16, 16, 1),
+                b"ic05" => (32, 32, 32, 32, 1),
+                _ => (
+                    kind.pixel_width(),
+                    kind.pixel_height(),
+                    kind.screen_width(),
+                    kind.screen_height(),
+                    kind.pixel_density(),
+                ),
+            };
             pixels = pixels
                 .checked_add(u64::from(width) * u64::from(height))
                 .filter(|value| *value <= PIXELS_MAX)
@@ -50,19 +58,20 @@ pub fn inspect(bytes: &[u8], check: &dyn Fn() -> Result<()>) -> Result<Directory
             if payload.len() > ENTRY_BYTES_MAX {
                 return Err(limit("ICNS image payload allowance exceeded"));
             }
-            let encoding =
-                if IconType::from_tag(tag).is_some() && payload.starts_with(b"\x89PNG\r\n\x1a\n") {
-                    crate::icons::inspect_icns_png(payload, width, height)?;
-                    Encoding::Png
-                } else {
-                    Encoding::Unqualified
-                };
+            let encoding = if IconType::MODERN.iter().any(|kind| kind.tag() == tag)
+                && payload.starts_with(b"\x89PNG\r\n\x1a\n")
+            {
+                crate::icons::inspect_icns_png(payload, width, height)?;
+                Encoding::Png
+            } else {
+                Encoding::Unqualified
+            };
             directory.entries.push(Entry {
                 index: directory.entries.len() as u16,
                 record: directory.records.len() as u16,
                 tag,
-                logical_width: kind.screen_width(),
-                logical_height: kind.screen_height(),
+                logical_width,
+                logical_height,
                 scale,
                 width,
                 height,
@@ -85,6 +94,7 @@ pub fn inspect(bytes: &[u8], check: &dyn Fn() -> Result<()>) -> Result<Directory
         return Err(unsupported("ICNS contains no recognized image entries"));
     }
     toc(bytes, &directory)?;
+    legacy::qualify(bytes, &mut directory, check)?;
     check()?;
     Ok(directory)
 }
@@ -157,15 +167,29 @@ pub fn decode_entry(
             "ICNS selected entry outside directory",
         )
     })?;
-    if entry.encoding != Encoding::Png {
+    if entry.encoding == Encoding::Unqualified {
         return Err(unsupported(
-            "ICNS selected entry is not a qualified modern PNG",
+            "ICNS selected entry encoding or mask pairing is unqualified",
         ));
     }
     if u64::from(entry.width) * u64::from(entry.height) > pixels {
         return Err(limit("ICNS selected entry exceeds caller pixel allowance"));
     }
     let family = selected_family(bytes, &directory, check)?;
+    if matches!(entry.encoding, Encoding::LegacyRaw | Encoding::LegacyRle) {
+        return Ok(Decoded {
+            entry: entry.clone(),
+            rgba: legacy::decode(bytes, &directory, entry, check)?,
+            losses: if directory.entries.len() > 1 {
+                vec![
+                    "icns-metadata-ignored".into(),
+                    "icon-other-entries-not-imported".into(),
+                ]
+            } else {
+                vec!["icns-metadata-ignored".into()]
+            },
+        });
+    }
     let payload = &family.elements[usize::from(entry.record)].data;
     check()?;
     let decoded = crate::image::decode_with_pixel_limit(payload, pixels)?;
