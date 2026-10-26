@@ -1,0 +1,316 @@
+{
+    "oracle": "external float files -> Python Decimal100 + independent NumPy color matrix",
+    "policy_oracle_sha256": "dfa12804b3a8f108da3305ea3fb9dcc35245b1084c4e218d2241b5094a9e7b80",
+    "cases": [
+        {
+            "id": "hdr-clip",
+            "family": "hdr",
+            "file": "literal-2x2.hdr",
+            "source_sha256": "0e5c71e9b6f3f2db3b79b9c1600eddca6d492ce5d762bec46c15f5d9a8f9aad0",
+            "external_float_file": "radiance-fixtures/literal-2x2.lower-edge.f32le",
+            "external_float_sha256": "2789199d6e94e3ded7a6a85d454065d58cc980960273289bc88ab5502fff5b8d",
+            "settings": {
+                "space": "radiance",
+                "alpha": "opaque",
+                "curve": "clip",
+                "negative": "clip",
+                "exposure_milli_ev": 0
+            },
+            "expected_error": null,
+            "expected_rgba_file": "hdr-clip.rgba",
+            "rgba_sha256": "964b656a7c7ec8b4e5a404b3da1f8ef65ff0af22353fd468fc639171044019d4"
+        },
+        {
+            "id": "hdr-reinhard",
+            "family": "hdr",
+            "file": "literal-2x2.hdr",
+            "source_sha256": "0e5c71e9b6f3f2db3b79b9c1600eddca6d492ce5d762bec46c15f5d9a8f9aad0",
+            "external_float_file": "radiance-fixtures/literal-2x2.lower-edge.f32le",
+            "external_float_sha256": "2789199d6e94e3ded7a6a85d454065d58cc980960273289bc88ab5502fff5b8d",
+            "settings": {
+                "space": "radiance",
+                "alpha": "opaque",
+                "curve": "reinhard",
+                "negative": "clip",
+                "exposure_milli_ev": 0
+            },
+            "expected_error": null,
+            "expected_rgba_file": "hdr-reinhard.rgba",
+            "rgba_sha256": "211c47e0e157f997d19827f8437227043962c83d5bb33912d34bd2970fb916eb"
+        },
+        {
+            "id": "hdr-calibrated-as-stored",
+            "family": "hdr",
+            "file": "calibrated-2x2.hdr",
+            "source_sha256": "412688608e5ed3a8bcbde48f67f6526525958d183c77614bcc3569c40f39aa73",
+            "external_float_file": "radiance-fixtures/calibrated-2x2.lower-edge.f32le",
+            "external_float_sha256": "2789199d6e94e3ded7a6a85d454065d58cc980960273289bc88ab5502fff5b8d",
+            "settings": {
+                "space": "radiance",
+                "alpha": "opaque",
+                "curve": "clip",
+                "negative": "clip",
+                "exposure_milli_ev": 0
+            },
+            "expected_error": null,
+            "expected_rgba_file": "hdr-calibrated-as-stored.rgba",
+            "rgba_sha256": "964b656a7c7ec8b4e5a404b3da1f8ef65ff0af22353fd468fc639171044019d4"
+        },
+        {
+            "id": "hdr-extremes",
+            "family": "hdr",
+            "file": "exponents-10x1.hdr",
+            "source_sha256": "2778bfdfd18a07c504c1f3d05c5cc0b68cee6d0b941249c93cfbbef75335bfd2",
+            "external_float_file": "radiance-fixtures/exponents-10x1.lower-edge.f32le",
+            "external_float_sha256": "d14c4c2967219f04ba156e0813fc06bf7fad46ee4e4bfed5f11f56c556f455c6",
+            "settings": {
+                "space": "radiance",
+                "alpha": "opaque",
+                "curve": "clip",
+                "negative": "clip",
+                "exposure_milli_ev": 0
+            },
+            "expected_error": null,
+            "expected_rgba_file": "hdr-extremes.rgba",
+            "rgba_sha256": "1fccafcc6de05d5bdbf1e1550ae33332d7acb91fd91e8a7ccc7e869db3b6808d"
+        },
+        {
+            "id": "hdr-aspect-normalization",
+            "family": "hdr",
+            "file": "aspect-2.hdr",
+            "source_sha256": "e11978c1dee421bbc7064154a447b12d52b82d036b9f15ee5baae00596e11f9e",
+            "external_float_file": "radiance-fixtures/literal-2x2.lower-edge.f32le",
+            "external_float_sha256": "2789199d6e94e3ded7a6a85d454065d58cc980960273289bc88ab5502fff5b8d",
+            "settings": {
+                "space": "radiance",
+                "alpha": "opaque",
+                "curve": "clip",
+                "negative": "clip",
+                "exposure_milli_ev": 0
+            },
+            "expected_error": null,
+            "expected_rgba_file": "hdr-aspect-normalization.rgba",
+            "rgba_sha256": "964b656a7c7ec8b4e5a404b3da1f8ef65ff0af22353fd468fc639171044019d4"
+        },
+        {
+            "id": "hdr-unresolved-refusal",
+            "family": "hdr",
+            "file": "near-rec709-unresolved.hdr",
+            "source_sha256": "bf546bc98fad2a8a42376088a25c0ffffe96849823bdd773a71496627b1a77b9",
+            "external_float_file": "radiance-fixtures/near-rec709-unresolved.lower-edge.f32le",
+            "external_float_sha256": "2789199d6e94e3ded7a6a85d454065d58cc980960273289bc88ab5502fff5b8d",
+            "settings": {
+                "space": "unspecified",
+                "alpha": "opaque",
+                "curve": "clip",
+                "negative": "clip",
+                "exposure_milli_ev": 0
+            },
+            "expected_error": "CapabilityUnsupported"
+        },
+        {
+            "id": "hdr-explicit-source",
+            "family": "hdr",
+            "file": "near-rec709-unresolved.hdr",
+            "source_sha256": "bf546bc98fad2a8a42376088a25c0ffffe96849823bdd773a71496627b1a77b9",
+            "external_float_file": "radiance-fixtures/near-rec709-unresolved.lower-edge.f32le",
+            "external_float_sha256": "2789199d6e94e3ded7a6a85d454065d58cc980960273289bc88ab5502fff5b8d",
+            "settings": {
+                "space": "unspecified",
+                "alpha": "opaque",
+                "curve": "clip",
+                "negative": "clip",
+                "exposure_milli_ev": 1000,
+                "assignment": "rec709"
+            },
+            "expected_error": null,
+            "expected_rgba_file": "hdr-explicit-source.rgba",
+            "rgba_sha256": "9e68da845968a3ddaafc0e3c61a016ceddba81a22a88fddf414ae631999d298d"
+        },
+        {
+            "id": "exr-clip",
+            "family": "exr",
+            "file": "half-rgb-none.exr",
+            "source_sha256": "b1439437348d17e3914ad504a21e19d5f2aad271efb9cc9a96843078926b316e",
+            "external_float_file": "exr-fixtures/half-rgb-none.f32le",
+            "external_float_sha256": "80eaf63f41a5edd759193c3cda7214ffea597ed2a7a759da8b63b8dab7939d1b",
+            "settings": {
+                "space": "rec709",
+                "alpha": "opaque",
+                "curve": "clip",
+                "negative": "clip",
+                "exposure_milli_ev": 0
+            },
+            "expected_error": null,
+            "expected_rgba_file": "exr-clip.rgba",
+            "rgba_sha256": "12a9434f07fb4f637c33abbd8abdc41650881deb1b4ed9777250ee1c792bd607"
+        },
+        {
+            "id": "exr-reinhard",
+            "family": "exr",
+            "file": "float-rgb-zips.exr",
+            "source_sha256": "663623112f6b9be0b47f64c8e45de3075681d01231bbdafc873a693571a25654",
+            "external_float_file": "exr-fixtures/float-rgb-zips.f32le",
+            "external_float_sha256": "80eaf63f41a5edd759193c3cda7214ffea597ed2a7a759da8b63b8dab7939d1b",
+            "settings": {
+                "space": "rec709",
+                "alpha": "opaque",
+                "curve": "reinhard",
+                "negative": "clip",
+                "exposure_milli_ev": -1000
+            },
+            "expected_error": null,
+            "expected_rgba_file": "exr-reinhard.rgba",
+            "rgba_sha256": "0745cf70001129a7a73b591fad2d037dda134be68d59b7101b4631da1fe31992"
+        },
+        {
+            "id": "exr-negative-refusal",
+            "family": "exr",
+            "file": "half-rgb-none.exr",
+            "source_sha256": "b1439437348d17e3914ad504a21e19d5f2aad271efb9cc9a96843078926b316e",
+            "external_float_file": "exr-fixtures/half-rgb-none.f32le",
+            "external_float_sha256": "80eaf63f41a5edd759193c3cda7214ffea597ed2a7a759da8b63b8dab7939d1b",
+            "settings": {
+                "space": "rec709",
+                "alpha": "opaque",
+                "curve": "clip",
+                "negative": "reject",
+                "exposure_milli_ev": 0
+            },
+            "expected_error": "CapabilityUnsupported"
+        },
+        {
+            "id": "exr-alpha-additive-refusal",
+            "family": "exr",
+            "file": "half-rgba-rle.exr",
+            "source_sha256": "1ebeaa3bd1ce6d864a3d52285cc687e51317891dfb1ce1179cfbd8d237227a0a",
+            "external_float_file": "exr-fixtures/half-rgba-rle.f32le",
+            "external_float_sha256": "3a48eebeeaabf615cc536a8eaf018d586eaaed50d28699f9f039bb83b627f6a2",
+            "settings": {
+                "space": "rec709",
+                "alpha": "premultiplied",
+                "curve": "clip",
+                "negative": "clip",
+                "exposure_milli_ev": 0
+            },
+            "expected_error": "CapabilityUnsupported"
+        },
+        {
+            "id": "exr-alpha-explicit-flatten",
+            "family": "exr",
+            "file": "half-rgba-rle.exr",
+            "source_sha256": "1ebeaa3bd1ce6d864a3d52285cc687e51317891dfb1ce1179cfbd8d237227a0a",
+            "external_float_file": "exr-fixtures/half-rgba-rle.f32le",
+            "external_float_sha256": "3a48eebeeaabf615cc536a8eaf018d586eaaed50d28699f9f039bb83b627f6a2",
+            "settings": {
+                "space": "rec709",
+                "alpha": "premultiplied",
+                "curve": "clip",
+                "negative": "clip",
+                "exposure_milli_ev": 0,
+                "background": [
+                    255,
+                    255,
+                    255
+                ]
+            },
+            "expected_error": null,
+            "expected_rgba_file": "exr-alpha-explicit-flatten.rgba",
+            "rgba_sha256": "8f83f7b188fe0224a5b37968b95d3c874d11c82d855521c28188627cbe8acd5f"
+        },
+        {
+            "id": "exr-alpha-explicit-straight",
+            "family": "exr",
+            "file": "mixed-rgba-zip.exr",
+            "source_sha256": "afd060b8bfd9812b3045a4142e60a209afec2123d1bdb90434d7345853485b87",
+            "external_float_file": "exr-fixtures/mixed-rgba-zip.f32le",
+            "external_float_sha256": "314f184b44e78a2eb83bda4e8e4148e0cf82d2b48cc1daf6c27025808cc09f2a",
+            "settings": {
+                "space": "rec709",
+                "alpha": "premultiplied",
+                "curve": "clip",
+                "negative": "clip",
+                "exposure_milli_ev": 0,
+                "alpha_assignment": "straight"
+            },
+            "expected_error": null,
+            "expected_rgba_file": "exr-alpha-explicit-straight.rgba",
+            "rgba_sha256": "1dbf24e0a10d3ad72f138c80ce98cb2f0b03c5a3e08b86c6b344bcf98d098ab9"
+        },
+        {
+            "id": "exr-unresolved-refusal",
+            "family": "exr",
+            "file": "unlabelled.exr",
+            "source_sha256": "68b5729fbc3dc6a9e0c1479e0e01aa80c9bcf493e90ae3dd4ef92fd7cb22b1cf",
+            "external_float_file": "exr-fixtures/unlabelled.f32le",
+            "external_float_sha256": "80eaf63f41a5edd759193c3cda7214ffea597ed2a7a759da8b63b8dab7939d1b",
+            "settings": {
+                "space": "unspecified",
+                "alpha": "opaque",
+                "curve": "clip",
+                "negative": "clip",
+                "exposure_milli_ev": 0
+            },
+            "expected_error": "CapabilityUnsupported"
+        },
+        {
+            "id": "exr-explicit-source",
+            "family": "exr",
+            "file": "unlabelled.exr",
+            "source_sha256": "68b5729fbc3dc6a9e0c1479e0e01aa80c9bcf493e90ae3dd4ef92fd7cb22b1cf",
+            "external_float_file": "exr-fixtures/unlabelled.f32le",
+            "external_float_sha256": "80eaf63f41a5edd759193c3cda7214ffea597ed2a7a759da8b63b8dab7939d1b",
+            "settings": {
+                "space": "unspecified",
+                "alpha": "opaque",
+                "curve": "clip",
+                "negative": "clip",
+                "exposure_milli_ev": 0,
+                "assignment": "rec709"
+            },
+            "expected_error": null,
+            "expected_rgba_file": "exr-explicit-source.rgba",
+            "rgba_sha256": "12a9434f07fb4f637c33abbd8abdc41650881deb1b4ed9777250ee1c792bd607"
+        },
+        {
+            "id": "exr-explicit-unknown-color",
+            "family": "exr",
+            "file": "unknown-chromaticities.exr",
+            "source_sha256": "69ab74fddad5bcf6540342fc18254299d6e419819f652685625b219b16f4e7aa",
+            "external_float_file": "exr-fixtures/unknown-chromaticities.f32le",
+            "external_float_sha256": "80eaf63f41a5edd759193c3cda7214ffea597ed2a7a759da8b63b8dab7939d1b",
+            "settings": {
+                "space": "unspecified",
+                "alpha": "opaque",
+                "curve": "clip",
+                "negative": "clip",
+                "exposure_milli_ev": 0,
+                "assignment": "radiance"
+            },
+            "expected_error": null,
+            "expected_rgba_file": "exr-explicit-unknown-color.rgba",
+            "rgba_sha256": "24e39fc500137f852b3fa87346dca2babb9b731851f77563c695f6252af3fad8"
+        },
+        {
+            "id": "exr-special-refusal",
+            "family": "exr",
+            "file": "float-rgba-special.exr",
+            "source_sha256": "72ba74cce6ce0fce3f1355c717cc9efafe05561beabca6ce1d24a18ae95896d6",
+            "external_float_file": "exr-fixtures/float-rgba-special.f32le",
+            "external_float_sha256": "1313441cbaef5ac8b7801a505af24f2f561965f25c269bf4e42de4e99df82cd9",
+            "settings": {
+                "space": "rec709",
+                "alpha": "premultiplied",
+                "curve": "clip",
+                "negative": "clip",
+                "exposure_milli_ev": 0,
+                "background": [
+                    255,
+                    255,
+                    255
+                ]
+            },
+            "expected_error": "CapabilityUnsupported"
+        }
+    ]
+}

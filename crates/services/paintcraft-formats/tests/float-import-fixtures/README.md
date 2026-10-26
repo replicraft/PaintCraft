@@ -1,0 +1,11 @@
+# Independent float import expectations
+
+`reference.py` reads the existing independent Radiance RGBE lower-edge float32 files and official OpenEXR-reopened float32 files. It applies the separate Decimal100 precision oracle and independently checked NumPy color matrix to those external samples. The selected Rust HDR/EXR decoders and Rust conversion implementation never generate expected output.
+
+The generator asserts its entrypoint marker exists exactly once, then executes only that oracle's definitions, excluding its fixture-writing entrypoint, and records its source hash. Ordinary Rust tests compare that recorded hash to the current independent oracle source and verify each golden RGBA file's hash. Every case records both the original source hash and external float-reference hash. Existing external files are immutable inputs. The owned `aspect-2.hdr` changes only the source header's pixel aspect, using the independent original literal float samples. Run in the existing isolated NumPy environment to reproduce the manifest and twelve RGBA8 expectations for seventeen success/refusal cases.
+
+Cases cover both Clip and explicit Reinhard-per-channel, positive/negative exposure, Radiance as-stored calibration, exponent extremes, explicit source assignment and unresolved-color refusal, negative-value refusal/clipping, premultiplied additive-alpha refusal, explicit linear-light flattening, explicit straight-alpha override, nonfinite/invalid-alpha refusal and physical pixel-aspect normalization. Separate Rust tests verify both formats' aspect handling, retained signed origins, exact consent/settings binding and resource lifetime while decoded floats and RGBA coexist.
+
+These reference files qualify private preparation only. They do not enable format registry routes, process isolation, UI preview, filesystem freshness or editor-owner publication. The source/metadata/accounting contract is documented in `src/float_import/README.md`.
+
+A separate actual-editor regression binds the retained partial-alpha count and encoded-sRGB destination blending limitation, proving [188,188,188,A128] becomes [94,94,94] over black in the current compositor while explicit linear flattening yields [137,137,137,A255]. This is distinct from alpha quantization and does not alter the seventeen independent expected conversions.
