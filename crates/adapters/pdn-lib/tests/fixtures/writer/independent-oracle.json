@@ -1,0 +1,568 @@
+{
+    "node": "v24.10.0",
+    "ms_nrbf_js": "0.1.0",
+    "ms_nrbf_js_archive_sha256": "b6d3d34f8484e0be472452708b8c4bb1f0f436aa6a8a520c5539778ce4d34c1d",
+    "ms_nrbf_js_archive_integrity": "sha512-2Zt3EA2Fafzq517Sh6MFgdCYbGyRz8lmFMKaywJF3PDVARaIhXUIWGnAq+opOG9ox+aVFDUeQ/yeUUAVJJ2J3A==",
+    "paintdotjs_commit": "6fe29faa80fd3a51e84fd97ab8d7ba03b9e637a7",
+    "paintdotjs_codec_sha256": "e8f302d1d1f2b28e7c9c904ee2b1a69b093c331078b9b8f4b3fbf11e28cf4bf7",
+    "scope": "independent inert graph and original decoder pixel conversion, no canvas rendering or original Paint.NET qualification",
+    "results": [
+        {
+            "filename": "layers-1.pdn",
+            "file_sha256": "d5af72400f102603a4ea0411158db6d880552b20a3085c9bd0901d8dfde3c116",
+            "bytes": 2081,
+            "layers": [
+                {
+                    "index": 0,
+                    "name": "Layer 0 日本語🙂",
+                    "visible": true,
+                    "opacity": 1,
+                    "is_background": true,
+                    "rgba_sha256": "eb3097ff63f4087bc6277ef1b22e381eb80ee0f8fed266c9a3f30fb9cd3d7d9d"
+                }
+            ]
+        },
+        {
+            "filename": "layers-2.pdn",
+            "file_sha256": "918095925154d57dbfffaac173cb17a24d88760b0b6c92a0dc72a4f87b00790f",
+            "bytes": 3240,
+            "layers": [
+                {
+                    "index": 0,
+                    "name": "Layer 0 日本語🙂",
+                    "visible": true,
+                    "opacity": 1,
+                    "is_background": true,
+                    "rgba_sha256": "eb3097ff63f4087bc6277ef1b22e381eb80ee0f8fed266c9a3f30fb9cd3d7d9d"
+                },
+                {
+                    "index": 1,
+                    "name": "Layer 1 日本語🙂",
+                    "visible": false,
+                    "opacity": 128,
+                    "is_background": false,
+                    "rgba_sha256": "2b06bddf526273b6366dfc927b1796a2864205ae728094f800f452bd9ae4582c"
+                }
+            ]
+        },
+        {
+            "filename": "layers-64.pdn",
+            "file_sha256": "6f0b4001156a58ccb2499855479340bf5a9f5f364b415729d072ee2a4acafc9e",
+            "bytes": 75153,
+            "layers": [
+                {
+                    "index": 0,
+                    "name": "Layer 0 日本語🙂",
+                    "visible": true,
+                    "opacity": 1,
+                    "is_background": true,
+                    "rgba_sha256": "eb3097ff63f4087bc6277ef1b22e381eb80ee0f8fed266c9a3f30fb9cd3d7d9d"
+                },
+                {
+                    "index": 1,
+                    "name": "Layer 1 日本語🙂",
+                    "visible": false,
+                    "opacity": 128,
+                    "is_background": false,
+                    "rgba_sha256": "2b06bddf526273b6366dfc927b1796a2864205ae728094f800f452bd9ae4582c"
+                },
+                {
+                    "index": 2,
+                    "name": "Layer 2 日本語🙂",
+                    "visible": true,
+                    "opacity": 255,
+                    "is_background": false,
+                    "rgba_sha256": "75232e5dcf1de0654c96d6235ddcf249a421510e292c37b03b97cb67c3d30808"
+                },
+                {
+                    "index": 3,
+                    "name": "Layer 3 日本語🙂",
+                    "visible": false,
+                    "opacity": 126,
+                    "is_background": false,
+                    "rgba_sha256": "7ee90a21c9e8c31b1fd1a7ccdde2d1b020fbb04e27bafa7c61d2bf741353b9b2"
+                },
+                {
+                    "index": 4,
+                    "name": "Layer 4 日本語🙂",
+                    "visible": true,
+                    "opacity": 253,
+                    "is_background": false,
+                    "rgba_sha256": "7852d8fb7f9c600a0c0dabc1c183592abb912cba2ed0e4754d92c58b5d251bbf"
+                },
+                {
+                    "index": 5,
+                    "name": "Layer 5 日本語🙂",
+                    "visible": false,
+                    "opacity": 124,
+                    "is_background": false,
+                    "rgba_sha256": "5e08dad7a13cec21d7be45ffb9b9e59390fe89aa9504490c3880e56ab54eb995"
+                },
+                {
+                    "index": 6,
+                    "name": "Layer 6 日本語🙂",
+                    "visible": true,
+                    "opacity": 251,
+                    "is_background": false,
+                    "rgba_sha256": "f053f250fb78148d1c1615bbcf65851d1212125e309b5650433c0ce4b52d7818"
+                },
+                {
+                    "index": 7,
+                    "name": "Layer 7 日本語🙂",
+                    "visible": false,
+                    "opacity": 122,
+                    "is_background": false,
+                    "rgba_sha256": "fd9e70c9a62b1c652db827f7d23ed65b5de64e01defddd8a04b2cf442c1cbd73"
+                },
+                {
+                    "index": 8,
+                    "name": "Layer 8 日本語🙂",
+                    "visible": true,
+                    "opacity": 249,
+                    "is_background": false,
+                    "rgba_sha256": "fb1139529029f9a2bb525bd12cd783968ef4c1654e45adb32e60c912e3dc0b8f"
+                },
+                {
+                    "index": 9,
+                    "name": "Layer 9 日本語🙂",
+                    "visible": false,
+                    "opacity": 120,
+                    "is_background": false,
+                    "rgba_sha256": "e188225246fdb10f0f859c56509a03aed48fea5891b0b60a419d7e4480b32b4d"
+                },
+                {
+                    "index": 10,
+                    "name": "Layer 10 日本語🙂",
+                    "visible": true,
+                    "opacity": 247,
+                    "is_background": false,
+                    "rgba_sha256": "4c91246a8f82eb433860009eea8c6f5fd40b9f4107044293e2844b7970777817"
+                },
+                {
+                    "index": 11,
+                    "name": "Layer 11 日本語🙂",
+                    "visible": false,
+                    "opacity": 118,
+                    "is_background": false,
+                    "rgba_sha256": "b1819b4fed22d27275c5e01c9c733d76671e7cbb8fd3807093d1118b28360392"
+                },
+                {
+                    "index": 12,
+                    "name": "Layer 12 日本語🙂",
+                    "visible": true,
+                    "opacity": 245,
+                    "is_background": false,
+                    "rgba_sha256": "b5a1da8ef846c580b2dd46cd0f0f476b3f3c1e57323484f02e251755193a7c18"
+                },
+                {
+                    "index": 13,
+                    "name": "Layer 13 日本語🙂",
+                    "visible": false,
+                    "opacity": 116,
+                    "is_background": false,
+                    "rgba_sha256": "57c64a5553c70878b1fa188da045db16b09f715265106920bbaeaeb4b68e3b0d"
+                },
+                {
+                    "index": 14,
+                    "name": "Layer 14 日本語🙂",
+                    "visible": true,
+                    "opacity": 243,
+                    "is_background": false,
+                    "rgba_sha256": "61efc54476cbd2a76ff0c8146aca97834e2c1015e12ee2a24a24350647bea6d0"
+                },
+                {
+                    "index": 15,
+                    "name": "Layer 15 日本語🙂",
+                    "visible": false,
+                    "opacity": 114,
+                    "is_background": false,
+                    "rgba_sha256": "8fb2ec836023836540bf6cb370602fcc0a929ae87386c1536ae72da228c9588d"
+                },
+                {
+                    "index": 16,
+                    "name": "Layer 16 日本語🙂",
+                    "visible": true,
+                    "opacity": 241,
+                    "is_background": false,
+                    "rgba_sha256": "e6caca42f014f588213699e841723e218952da23e445a7ae78b842ac375f9c91"
+                },
+                {
+                    "index": 17,
+                    "name": "Layer 17 日本語🙂",
+                    "visible": false,
+                    "opacity": 112,
+                    "is_background": false,
+                    "rgba_sha256": "d83eb4ffd11a520155aa81f67cdf20558c0c9e88a8e05d25f4ddf14258ff94cb"
+                },
+                {
+                    "index": 18,
+                    "name": "Layer 18 日本語🙂",
+                    "visible": true,
+                    "opacity": 239,
+                    "is_background": false,
+                    "rgba_sha256": "38d25914e693444576d95006149528c7e93eb1999537970156cc05a8833b0540"
+                },
+                {
+                    "index": 19,
+                    "name": "Layer 19 日本語🙂",
+                    "visible": false,
+                    "opacity": 110,
+                    "is_background": false,
+                    "rgba_sha256": "147e910049903c2d8b2d7b642872d7cb9d32b252028cb5e216c6d58d3c741816"
+                },
+                {
+                    "index": 20,
+                    "name": "Layer 20 日本語🙂",
+                    "visible": true,
+                    "opacity": 237,
+                    "is_background": false,
+                    "rgba_sha256": "d92002190bdc731358e3b4104fdd635b3440f41968337b796114b11a858a2c0c"
+                },
+                {
+                    "index": 21,
+                    "name": "Layer 21 日本語🙂",
+                    "visible": false,
+                    "opacity": 108,
+                    "is_background": false,
+                    "rgba_sha256": "a8e2c9cd137016ad8480056af2709ca74a290717baafb2c6f49ead2456b78c48"
+                },
+                {
+                    "index": 22,
+                    "name": "Layer 22 日本語🙂",
+                    "visible": true,
+                    "opacity": 235,
+                    "is_background": false,
+                    "rgba_sha256": "82f4a6c16aac72a8aaff9e37ca12d68f65f943c1ad35898ec3b1615be02baab8"
+                },
+                {
+                    "index": 23,
+                    "name": "Layer 23 日本語🙂",
+                    "visible": false,
+                    "opacity": 106,
+                    "is_background": false,
+                    "rgba_sha256": "80b64cbe586ad6f4b7f791e3b43025e2557bcb5d9ae799471204e0780053d5ce"
+                },
+                {
+                    "index": 24,
+                    "name": "Layer 24 日本語🙂",
+                    "visible": true,
+                    "opacity": 233,
+                    "is_background": false,
+                    "rgba_sha256": "0ad436bc32baefe0ece77aa5d793dccd302bdd780ec301a581b4e9ef4ccfe417"
+                },
+                {
+                    "index": 25,
+                    "name": "Layer 25 日本語🙂",
+                    "visible": false,
+                    "opacity": 104,
+                    "is_background": false,
+                    "rgba_sha256": "9bf324dbc7bdd284ec587f9d895ede0febb46cda12465a2ffe49cab441e70611"
+                },
+                {
+                    "index": 26,
+                    "name": "Layer 26 日本語🙂",
+                    "visible": true,
+                    "opacity": 231,
+                    "is_background": false,
+                    "rgba_sha256": "0408ee58ff4695a272e363b047a6a803761444277d14561574831bf84c1e8e13"
+                },
+                {
+                    "index": 27,
+                    "name": "Layer 27 日本語🙂",
+                    "visible": false,
+                    "opacity": 102,
+                    "is_background": false,
+                    "rgba_sha256": "7fe57c1cc306931ce2c20d234b4cd0d1f64dd79dc40621ac9eb124e46b4ee956"
+                },
+                {
+                    "index": 28,
+                    "name": "Layer 28 日本語🙂",
+                    "visible": true,
+                    "opacity": 229,
+                    "is_background": false,
+                    "rgba_sha256": "a8b87ef0d3b44c0338050a8c842637c1080d83246390551b1262682e5931b109"
+                },
+                {
+                    "index": 29,
+                    "name": "Layer 29 日本語🙂",
+                    "visible": false,
+                    "opacity": 100,
+                    "is_background": false,
+                    "rgba_sha256": "083bad943ea34a220e5bf14f65e690a0077cfb053ce15ff0c9f2ee86795fd016"
+                },
+                {
+                    "index": 30,
+                    "name": "Layer 30 日本語🙂",
+                    "visible": true,
+                    "opacity": 227,
+                    "is_background": false,
+                    "rgba_sha256": "af9efb4c5583990ce7f417f0b9998ca03518383923710dea33e39d4e5f78523b"
+                },
+                {
+                    "index": 31,
+                    "name": "Layer 31 日本語🙂",
+                    "visible": false,
+                    "opacity": 98,
+                    "is_background": false,
+                    "rgba_sha256": "0e65a57f7127799e0e2ebac3c86f95672c5f01df3426fb92893d6af22b1c696e"
+                },
+                {
+                    "index": 32,
+                    "name": "Layer 32 日本語🙂",
+                    "visible": true,
+                    "opacity": 225,
+                    "is_background": false,
+                    "rgba_sha256": "34dd08503cd9afbbc6ba8f626547dfde9129fa05113d6a74fbad73583d018ccb"
+                },
+                {
+                    "index": 33,
+                    "name": "Layer 33 日本語🙂",
+                    "visible": false,
+                    "opacity": 96,
+                    "is_background": false,
+                    "rgba_sha256": "a8d78e3597ff43f280d9a70b1c2f37a13c0856f57a12ca0ecf63eefb5fdb6927"
+                },
+                {
+                    "index": 34,
+                    "name": "Layer 34 日本語🙂",
+                    "visible": true,
+                    "opacity": 223,
+                    "is_background": false,
+                    "rgba_sha256": "5d14b9bd989738b7c4d89219af49de18562759cdfa190b7792618ed17727475f"
+                },
+                {
+                    "index": 35,
+                    "name": "Layer 35 日本語🙂",
+                    "visible": false,
+                    "opacity": 94,
+                    "is_background": false,
+                    "rgba_sha256": "9cd20a91b701f70376eff9d159bc8a2d8e17abe3da400d8e97016ba33f8066fb"
+                },
+                {
+                    "index": 36,
+                    "name": "Layer 36 日本語🙂",
+                    "visible": true,
+                    "opacity": 221,
+                    "is_background": false,
+                    "rgba_sha256": "7f7b01292e2716b84e20b5c58ac17e8a7cdaecdcb3d5db77c53c0dd67271f3ec"
+                },
+                {
+                    "index": 37,
+                    "name": "Layer 37 日本語🙂",
+                    "visible": false,
+                    "opacity": 92,
+                    "is_background": false,
+                    "rgba_sha256": "aca5470b64b8fae0f7a4bb8006990e164a0a3702d478956d666807ca6eb28274"
+                },
+                {
+                    "index": 38,
+                    "name": "Layer 38 日本語🙂",
+                    "visible": true,
+                    "opacity": 219,
+                    "is_background": false,
+                    "rgba_sha256": "2a26d14301f708a4d3b9f186d1f51e0c880883d38260cb5617fca267f04449b5"
+                },
+                {
+                    "index": 39,
+                    "name": "Layer 39 日本語🙂",
+                    "visible": false,
+                    "opacity": 90,
+                    "is_background": false,
+                    "rgba_sha256": "37f79b7d5858499cc3892f84c335cbdd61a08679b8e7d41fcd7ec61c605ce063"
+                },
+                {
+                    "index": 40,
+                    "name": "Layer 40 日本語🙂",
+                    "visible": true,
+                    "opacity": 217,
+                    "is_background": false,
+                    "rgba_sha256": "d52609ee164304848c42c06ef500fca5e699a7efe46bf0496773882a9430777f"
+                },
+                {
+                    "index": 41,
+                    "name": "Layer 41 日本語🙂",
+                    "visible": false,
+                    "opacity": 88,
+                    "is_background": false,
+                    "rgba_sha256": "8e4c7b6118e1a5290430fa026562bc31e6663c33ccb2c9b7bd8c2699edbbc7c3"
+                },
+                {
+                    "index": 42,
+                    "name": "Layer 42 日本語🙂",
+                    "visible": true,
+                    "opacity": 215,
+                    "is_background": false,
+                    "rgba_sha256": "f6c7ec3042fff92cb9ff7e78e01d04b4c427eb9713b29dfdfd74480333e363d8"
+                },
+                {
+                    "index": 43,
+                    "name": "Layer 43 日本語🙂",
+                    "visible": false,
+                    "opacity": 86,
+                    "is_background": false,
+                    "rgba_sha256": "853f1a423724b9865832f8a998ceddcd3296595fd4d2d52f1217a3887cc648ac"
+                },
+                {
+                    "index": 44,
+                    "name": "Layer 44 日本語🙂",
+                    "visible": true,
+                    "opacity": 213,
+                    "is_background": false,
+                    "rgba_sha256": "eaba811b824d67c23a44c3c7dd148447b6e3187da316df8c6b3fd71e10d806b8"
+                },
+                {
+                    "index": 45,
+                    "name": "Layer 45 日本語🙂",
+                    "visible": false,
+                    "opacity": 84,
+                    "is_background": false,
+                    "rgba_sha256": "6bfd5b207e7a21d55c27f566b9b1d2db3a75d6f8d8698cc9abf8bbb83dffc39f"
+                },
+                {
+                    "index": 46,
+                    "name": "Layer 46 日本語🙂",
+                    "visible": true,
+                    "opacity": 211,
+                    "is_background": false,
+                    "rgba_sha256": "bdae48fe12d3a27dca48c3da27a5e187dbee5b5f3fcce888928c80c4ded4db09"
+                },
+                {
+                    "index": 47,
+                    "name": "Layer 47 日本語🙂",
+                    "visible": false,
+                    "opacity": 82,
+                    "is_background": false,
+                    "rgba_sha256": "8c2648e17283402a1f9aca451ed1384e59d60eaec84e6952ed85b6581e529959"
+                },
+                {
+                    "index": 48,
+                    "name": "Layer 48 日本語🙂",
+                    "visible": true,
+                    "opacity": 209,
+                    "is_background": false,
+                    "rgba_sha256": "a7a554cf9e279c798502d33ba6ab7b43c0f99734730c784c2fb3c5445ca46277"
+                },
+                {
+                    "index": 49,
+                    "name": "Layer 49 日本語🙂",
+                    "visible": false,
+                    "opacity": 80,
+                    "is_background": false,
+                    "rgba_sha256": "a67f3dd54139c3cc24d5bcbbef13aa5023edff9c635061d8bc1444e92c68129c"
+                },
+                {
+                    "index": 50,
+                    "name": "Layer 50 日本語🙂",
+                    "visible": true,
+                    "opacity": 207,
+                    "is_background": false,
+                    "rgba_sha256": "fcfb915980a51e37eadf09542af73a963e4197494746a56cc059e7fc3ff03464"
+                },
+                {
+                    "index": 51,
+                    "name": "Layer 51 日本語🙂",
+                    "visible": false,
+                    "opacity": 78,
+                    "is_background": false,
+                    "rgba_sha256": "d9bf11fc9ac65c8b8d13e77b1310706302cf52a2139e3966350a80b9e4f708e4"
+                },
+                {
+                    "index": 52,
+                    "name": "Layer 52 日本語🙂",
+                    "visible": true,
+                    "opacity": 205,
+                    "is_background": false,
+                    "rgba_sha256": "d0cf9b75a0d22da59dfafdc482c6f03810496fe830a55b6bc6df19f1df7fe9bf"
+                },
+                {
+                    "index": 53,
+                    "name": "Layer 53 日本語🙂",
+                    "visible": false,
+                    "opacity": 76,
+                    "is_background": false,
+                    "rgba_sha256": "437ed2e68957821078a40fc228d122c9cb20f0230a7fde7454731c1021c010b2"
+                },
+                {
+                    "index": 54,
+                    "name": "Layer 54 日本語🙂",
+                    "visible": true,
+                    "opacity": 203,
+                    "is_background": false,
+                    "rgba_sha256": "33a0dcd6d151965f33d71e92f1ece482243866b02c311478c60ac23b506995c3"
+                },
+                {
+                    "index": 55,
+                    "name": "Layer 55 日本語🙂",
+                    "visible": false,
+                    "opacity": 74,
+                    "is_background": false,
+                    "rgba_sha256": "fcd218f1ffe65831c73e7112d3dfb4122aa4d5a1ec9df7016a797936e854ec98"
+                },
+                {
+                    "index": 56,
+                    "name": "Layer 56 日本語🙂",
+                    "visible": true,
+                    "opacity": 201,
+                    "is_background": false,
+                    "rgba_sha256": "43579f610c0440b36e83a75859056838be289c3415b00200337541920d8772ec"
+                },
+                {
+                    "index": 57,
+                    "name": "Layer 57 日本語🙂",
+                    "visible": false,
+                    "opacity": 72,
+                    "is_background": false,
+                    "rgba_sha256": "64f7b9fae0fb114518ad05e8085cbc88a4cfc4031af002c8dad45b74ca985edf"
+                },
+                {
+                    "index": 58,
+                    "name": "Layer 58 日本語🙂",
+                    "visible": true,
+                    "opacity": 199,
+                    "is_background": false,
+                    "rgba_sha256": "3cbe7e77392609b87a0cbb67af8a7a57977e424758c3e5bf05ed45a4006a4685"
+                },
+                {
+                    "index": 59,
+                    "name": "Layer 59 日本語🙂",
+                    "visible": false,
+                    "opacity": 70,
+                    "is_background": false,
+                    "rgba_sha256": "64b973f7cf7c76d54328ac371b5243b9f9514d93eb256a5e6c5fa8c168b1fbc5"
+                },
+                {
+                    "index": 60,
+                    "name": "Layer 60 日本語🙂",
+                    "visible": true,
+                    "opacity": 197,
+                    "is_background": false,
+                    "rgba_sha256": "68c33c555f696549b0b30c5d67c401c62e16ece9482932ca9cd9270bee18e1e5"
+                },
+                {
+                    "index": 61,
+                    "name": "Layer 61 日本語🙂",
+                    "visible": false,
+                    "opacity": 68,
+                    "is_background": false,
+                    "rgba_sha256": "e28ab47dbed05ba7edffc277a8cb0a6401acf78725883df66ba01076c7970170"
+                },
+                {
+                    "index": 62,
+                    "name": "Layer 62 日本語🙂",
+                    "visible": true,
+                    "opacity": 195,
+                    "is_background": false,
+                    "rgba_sha256": "dcb2414bcd52b33e585cbdbe5f1c98dd81231a64b6961d1504cb5d8d3c2a5088"
+                },
+                {
+                    "index": 63,
+                    "name": "Layer 63 日本語🙂",
+                    "visible": false,
+                    "opacity": 66,
+                    "is_background": false,
+                    "rgba_sha256": "23c7b48100a142072d8f750d7bb2e34d72cc46e6ac263c54a1a0b36fec0aa5da"
+                }
+            ]
+        }
+    ]
+}

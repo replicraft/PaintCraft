@@ -39,3 +39,136 @@ NRBF record definitions come from Microsoft's
 [MS-NRBF](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-nrbf/5acd9dc4-1439-433a-8d53-eb2922a142d8).
 No heuristic scan for plausible pixel headers is used: the parser returns the
 exact MessageEnd boundary and reconstructs the typed buffer identities first.
+
+## Internal fresh PDN3 bitmap writer, 2026-10-26
+
+`writer/layers-{1,2,64}.pdn` are original PaintCraft-written 3×2 arithmetic
+specimens, not Paint.NET-generated reference documents. They use independently
+serialized inert NRBF records, not patched copies of the original templates.
+The class and assembly identities target the same observed Paint.NET 5.1.12
+schema documented above. The literal producer fields are `0.1.0.0` in both the
+XML and `System.Version`; this does not claim Paint.NET produced the files.
+Generated pixels/names/records and the qualification harness are covered by the
+repository license. No upstream source is vendored for this qualification.
+
+The typed writer requires explicit full-canvas straight RGBA8 layers, bottom to
+top, Normal blend, names, visibility, 8-bit opacity and background-role flags.
+It never infers the background role, pads, clips, resizes or flattens. Document
+and layer metadata inputs must be explicitly empty; nonempty values are refused
+before output allocation. A document façade must separately name actual losses
+and cannot treat this API as permission to discard source metadata or offsets.
+The initial profile admits 1–64 layers, dimensions 1–32768, at most 4,194,304
+aggregate pixels, at most 4096 UTF-8 bytes per NUL-free layer name, a 1 MiB
+metadata declaration and 64 MiB private output. Producer components must fit
+nonnegative Int32. Caller limits may tighten these caps. No `.pdn` preserving
+Save, public writer capability or original-application compatibility is enabled.
+
+Every gzip member receives at most 262,144 BGRA bytes. Source conversion checks
+cancellation between bounded chunks, deflate receives at most 65,536 bytes per
+call, and checks surround finishing each member. Private staged-sink copying
+also checks bounded chunks. A selected compression call has no internal callback;
+these checks do not establish a hard cancellation-tail limit. Failed/cancelled
+encoding returns no output; destination publication remains caller-owned.
+
+### Independent evidence
+
+The read-only `verify_writer.mjs` executes the unchanged pinned
+`PdnDocumentCodec.decode` with `ms-nrbf-js` 0.1.0, the actual decoder dependency
+in the pinned PaintDotJS lockfile. Its Node 24.10.0 result is recorded in
+`writer/independent-oracle.json`. Before evaluation the harness verifies the
+codec source SHA-256 and a sorted filename/NUL/bytes/NUL digest of every decoder
+`dist/*.js` file. It verifies exact document/library/class identities, circular
+references, layer counts, full-canvas dimensions/stride, deferred-memory flags,
+producer versions, names, visibility, all emitted opacities, background roles,
+Normal blend mode and every original RGBA sample including hidden RGB. The
+one/two/64-layer files and source hashes remain unchanged by verification.
+
+The only environment adapters provide DOM/ImageData backing storage without
+canvas premultiplication, standard Node compression/response globals, and the
+Normal blend enum. They do not patch NRBF decoding, deferred block discovery,
+BGRA conversion or source samples. This proves independent parsing and byte
+conversion, not browser rendering or Paint.NET behavior. The initial harness
+omitted the standard `Response` global and failed pixel decoding; supplying that
+global made the unchanged files pass. Original diagnostics remain in private
+qualification logs.
+
+Pinned qualification sources:
+
+- PaintDotJS commit `6fe29faa80fd3a51e84fd97ab8d7ba03b9e637a7`,
+  [codec](https://github.com/LabyStudio/paintdotjs/blob/6fe29faa80fd3a51e84fd97ab8d7ba03b9e637a7/js/src/io/PdnDocumentCodec.js)
+  SHA-256 `e8f302d1d1f2b28e7c9c904ee2b1a69b093c331078b9b8f4b3fbf11e28cf4bf7`.
+- Its [lockfile](https://github.com/LabyStudio/paintdotjs/blob/6fe29faa80fd3a51e84fd97ab8d7ba03b9e637a7/package-lock.json)
+  selects `ms-nrbf-js` 0.1.0. The npm archive SHA-256 is
+  `b6d3d34f8484e0be472452708b8c4bb1f0f436aa6a8a520c5539778ce4d34c1d`;
+  original SHA-512 integrity and decoder JavaScript tree hash are in the oracle.
+- Historical OpenPDN commit `cca476b0df2a2f70996e6b9486ec45327631568c`
+  `MemoryBlock.cs`/`DeferredFormatter.cs`, linked above, supplies independent
+  deferred-chunk framing evidence. Microsoft's MS-NRBF defines the inert
+  serialization records. Neither source establishes modern application fidelity.
+
+Reproduce into an existing empty temporary output directory, then run the
+independent reader without overwriting checked-in proof files:
+
+```sh
+task_dir="$(mktemp -d)"
+mkdir "$task_dir/vectors"
+PAINTCRAFT_PDN_WRITER_OUTPUT="$task_dir/vectors" \
+    cargo test -p paintcraft-pdn --test write \
+    export_owned_qualification_vectors_only_when_requested --offline --locked
+curl -fsSL https://raw.githubusercontent.com/LabyStudio/paintdotjs/6fe29faa80fd3a51e84fd97ab8d7ba03b9e637a7/js/src/io/PdnDocumentCodec.js \
+    -o "$task_dir/PdnDocumentCodec.js"
+curl -fsSL https://registry.npmjs.org/ms-nrbf-js/-/ms-nrbf-js-0.1.0.tgz \
+    -o "$task_dir/nrbf.tgz"
+python3 - "$task_dir/nrbf.tgz" <<'PY'
+import hashlib, pathlib, sys
+archive = pathlib.Path(sys.argv[1]).read_bytes()
+assert hashlib.sha256(archive).hexdigest() == "b6d3d34f8484e0be472452708b8c4bb1f0f436aa6a8a520c5539778ce4d34c1d"
+PY
+tar -xzf "$task_dir/nrbf.tgz" -C "$task_dir"
+node crates/adapters/pdn-lib/tests/fixtures/verify_writer.mjs \
+    "$task_dir/vectors" "$task_dir/PdnDocumentCodec.js" "$task_dir/package"
+```
+
+To verify checked-in specimens, pass `crates/adapters/pdn-lib/tests/fixtures/writer`
+as the first harness argument. The harness only reads inputs and prints JSON.
+An actual pinned Paint.NET open/edit/resave remains required. The current host's
+ordinary application locations have no Paint.NET installation; no Windows
+reference-app run is claimed. Secondary JavaScript checks do not replace that
+gate. Additional schemas, blend modes, layer offsets, metadata preservation and
+newer Paint.NET profiles remain separate work.
+
+### Logical codec/storage audit
+
+Selected product versions are `flate2` 1.1.10 and `miniz_oxide` 0.9.1; the CLI
+feature graph uses `rust_backend`. Cargo also contains miniz 0.8.9 for unrelated
+edges; that is not the audited PDN compressor. The lockfile crate checksums pin
+these sources. The relevant code is
+[flate2's miniz wrapper](https://docs.rs/crate/flate2/1.1.10/source/src/ffi/miniz_oxide.rs),
+[its IO buffer](https://docs.rs/crate/flate2/1.1.10/source/src/zio.rs),
+and miniz's [core](https://docs.rs/crate/miniz_oxide/0.9.1/source/src/deflate/core.rs)
+and [buffer definitions](https://docs.rs/crate/miniz_oxide/0.9.1/source/src/deflate/buffer.rs).
+
+On the qualified 64-bit host, `size_of::<CompressorOxide>()` is 65,712 bytes,
+including the 65,536-byte inline LZ code array and pointer/scalar fields. Its
+separate dictionary is 33,026 bytes, two hash chains are 65,536 bytes each,
+local output is 85,196 bytes, Huffman tables total 4,320 bytes, and flate2's IO
+buffer is 32,768 bytes: 352,094 bytes before small wrappers/header and temporary
+initialization/stack storage. The declared 1 MiB codec allowance leaves headroom
+for those fixed structures; BGRA input scratch and output storage are counted
+separately. This is a reviewed logical allowance, not a global allocator/RSS cap,
+a cross-platform measured maximum or interception of OS allocation aborts.
+
+Each member reserves twice its raw size plus 1024 bytes; chunk headers and the
+conservative NRBF/name/header allowance are added separately. In the selected
+miniz path, Huffman symbols have at most 15 bits, match coding does not exceed
+15 bits per source byte, nonfinal dynamic blocks require at least 31 KiB of
+input, and expanded blocks can fall back to stored encoding. The additional
+reservation covers the bounded code tables, end code and gzip framing for a
+member of at most 256 KiB. The private `Output` independently enforces the
+reserved ceiling before each append; changed backend growth produces a resource
+error instead of growing the vector beyond the declared allowance. No universal
+DEFLATE-size guarantee for different backends/features is claimed. Tests include
+an incompressible 1 MiB multi-member image whose compressed output actually grows,
+as well as exact multichunk decoding, every observed cancellation checkpoint,
+all 256 opacity values, 64 layers and failed staged sinks. All original source
+slices remain unchanged.
