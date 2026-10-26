@@ -390,3 +390,32 @@ fn shared_utf16_name_boundary_is_enforced_before_model_or_sink_work() {
         }
     }
 }
+#[test]
+fn exact_fresh_srgb_profile_does_not_invent_an_import_loss() {
+    let doc = document();
+    for version in [Version::Psd, Version::Psb] {
+        let source =
+            psd::encode_document(&doc, version, &WriteLimits::default(), &[], &|| Ok(())).unwrap();
+        assert!(
+            psd::inspect(&source, 100, &|| Ok(()))
+                .unwrap()
+                .losses
+                .is_empty()
+        );
+        let converted = project_import::decode_psd(&source, 100, &|| Ok(())).unwrap();
+        assert!(converted.losses.is_empty());
+        let mut changed = source.clone();
+        changed[46 + 100] ^= 1;
+        assert_eq!(
+            psd::inspect(&changed, 100, &|| Ok(())).unwrap().losses,
+            ["icc-profile-ignored"]
+        );
+        assert_eq!(
+            project_import::decode_psd(&changed, 100, &|| Ok(()))
+                .unwrap()
+                .losses,
+            ["icc-profile-ignored"]
+        );
+        compare(&doc, &changed, version);
+    }
+}

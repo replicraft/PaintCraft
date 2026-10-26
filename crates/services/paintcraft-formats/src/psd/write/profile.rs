@@ -1,7 +1,6 @@
 //! A single Adobe1039 image resource that the selected public model cannot emit.
 //! No layer/channel/composite data is serialized or normalized here.
 use super::*;
-pub const SRGB_PROFILE: &[u8] = include_bytes!("../../../../../../assets/profiles/sRGB2014.icc");
 pub(super) const RESOURCE_BYTES: usize = 12 + SRGB_PROFILE.len() + (SRGB_PROFILE.len() % 2);
 fn framing(bytes: &[u8], version: Version, check: &dyn Fn() -> Result<()>) -> Result<()> {
     let length_bytes = if version == Version::Psb { 8 } else { 4 };

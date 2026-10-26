@@ -19,6 +19,8 @@ pub const LAYERS_MAX: usize = 256;
 /// Shared PSD reader/fresh-writer allowance in UTF-16 code units.
 pub const LAYER_NAME_UTF16_MAX: usize = 1024;
 const METADATA_MAX: usize = 1 << 20;
+// Exact reviewed source profile; compare inert bytes, never execute an ICC parser.
+const SRGB_PROFILE: &[u8] = include_bytes!("../../../../assets/profiles/sRGB2014.icc");
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Version {

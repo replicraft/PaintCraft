@@ -9,6 +9,7 @@ pub(super) fn resources(
         return Err(resource("PSD image resources exceed metadata allowance"));
     }
     let mut c = Cursor::new(data);
+    let mut saw_icc = false;
     while c.remaining() > 0 {
         check()?;
         if c.take(4)? != b"8BIM" {
@@ -21,7 +22,12 @@ pub(super) fn resources(
         let payload = c.section(false)?;
         c.zeros(payload.len() % 2)?;
         if id == 1039 {
-            loss(losses, "icc-profile-ignored");
+            // Native documents already use encoded sRGB. Only this exact reviewed
+            // unnamed single profile has no unhandled semantics to discard.
+            if payload != SRGB_PROFILE || name_len != 0 || saw_icc {
+                loss(losses, "icc-profile-ignored");
+            }
+            saw_icc = true;
         } else {
             loss(losses, "psd-metadata-ignored");
         }
@@ -144,4 +150,48 @@ pub(super) fn layer(
         ));
     }
     Ok((name, id))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    fn block(id: u16, name: &[u8], payload: &[u8]) -> Vec<u8> {
+        let mut out = b"8BIM".to_vec();
+        out.extend(id.to_be_bytes());
+        out.push(name.len() as u8);
+        out.extend(name);
+        if !(name.len() + 1).is_multiple_of(2) {
+            out.push(0);
+        }
+        out.extend((payload.len() as u32).to_be_bytes());
+        out.extend(payload);
+        if !payload.len().is_multiple_of(2) {
+            out.push(0);
+        }
+        out
+    }
+    fn losses(bytes: &[u8]) -> Vec<String> {
+        let mut losses = Vec::new();
+        resources(bytes, &mut losses, &|| Ok(())).unwrap();
+        losses
+    }
+    #[test]
+    fn exact_srgb_is_recognized_without_suppressing_other_icc_or_metadata_losses() {
+        let known = block(1039, b"", SRGB_PROFILE);
+        assert!(losses(&known).is_empty());
+        let mut changed = SRGB_PROFILE.to_vec();
+        changed[100] ^= 1;
+        for resource in [
+            block(1039, b"", &changed),
+            block(1039, b"", b"otherprofile"),
+            block(1039, b"label", SRGB_PROFILE),
+            [known.clone(), known.clone()].concat(),
+        ] {
+            assert_eq!(losses(&resource), ["icc-profile-ignored"]);
+        }
+        assert_eq!(
+            losses(&[known, block(1060, b"", b"metadata")].concat()),
+            ["psd-metadata-ignored"]
+        );
+    }
 }
