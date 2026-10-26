@@ -85,6 +85,12 @@ pub fn run(a: Options, json: bool) -> Reply {
                         "avif.srgb8.import",
                         "dav1d/native-worker",
                     ),
+                    (
+                        Family::Avif,
+                        codec_worker::NATIVE_AVIF_SDR_IMPORT_VARIANT,
+                        "avif.sdr-ycbcr8.import",
+                        "dav1d/native-worker",
+                    ),
                 ] {
                     let mut request = Request::new(
                         Frontend::Studio,
@@ -107,7 +113,13 @@ pub fn run(a: Options, json: bool) -> Reply {
                             if family == Family::Avif {
                                 fields.insert(
                                     "required_helper_profile".into(),
-                                    Value::str(codec_worker::AVIF_NATIVE_PROFILE),
+                                    Value::str(
+                                        if variant == codec_worker::NATIVE_AVIF_SDR_IMPORT_VARIANT {
+                                            codec_worker::AVIF_SDR_NATIVE_PROFILE
+                                        } else {
+                                            codec_worker::AVIF_NATIVE_PROFILE
+                                        },
+                                    ),
                                 );
                             }
                         }

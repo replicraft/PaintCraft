@@ -25,6 +25,7 @@ fn avif_native_studio_conversion_is_variant_bound_and_export_stays_independent()
                 for variant in [
                     None,
                     Some(wire::NATIVE_AVIF_IMPORT_VARIANT),
+                    Some(wire::NATIVE_AVIF_SDR_IMPORT_VARIANT),
                     Some(wire::NATIVE_HEIF_IMPORT_VARIANT),
                     Some("guess-rgb"),
                 ] {
@@ -34,7 +35,11 @@ fn avif_native_studio_conversion_is_variant_bound_and_export_stays_independent()
                     let import = frontend == Frontend::Studio
                         && platform == Platform::Native
                         && operation == Operation::ImportConvert
-                        && variant == Some(wire::NATIVE_AVIF_IMPORT_VARIANT);
+                        && matches!(
+                            variant,
+                            Some(wire::NATIVE_AVIF_IMPORT_VARIANT)
+                                | Some(wire::NATIVE_AVIF_SDR_IMPORT_VARIANT)
+                        );
                     let export = frontend == Frontend::Studio
                         && operation == Operation::ExportFlat
                         && variant.is_none();

@@ -331,7 +331,11 @@ pub fn admission(request: Request<'_>) -> Decision {
         && request.operation == Operation::ImportConvert
         && request.frontend == Frontend::Studio
         && request.platform == Platform::Native
-        && request.variant == Some(crate::codec_worker::NATIVE_AVIF_IMPORT_VARIANT);
+        && matches!(
+            request.variant,
+            Some(crate::codec_worker::NATIVE_AVIF_IMPORT_VARIANT)
+                | Some(crate::codec_worker::NATIVE_AVIF_SDR_IMPORT_VARIANT)
+        );
     let web_jxl_import = request.family == Family::Jxl
         && request.operation == Operation::ImportConvert
         && request.frontend == Frontend::Studio

@@ -429,3 +429,56 @@ fn capabilities_report_avif_exact_native_import_with_required_v5_preflight() {
         assert!(!rows.iter().any(|row| row.get("capability").and_then(Value::as_str) == Some("avif.rgba8.read")));
     }
 }
+
+#[test]
+fn capabilities_report_avif_sdr_exact_native_import_with_required_v6_preflight() {
+    use paintcraft_core::types::json::Value;
+    use paintcraft_formats::codec_worker as wire;
+    for profile in [
+        None,
+        Some("studio"),
+        Some("classic-v7"),
+        Some("classic-v10"),
+        Some("classic-v11"),
+    ] {
+        let mut args = vec!["--json", "capabilities"];
+        if let Some(profile) = profile {
+            args.extend(["--frontend", profile]);
+        }
+        let output = run(&args);
+        assert!(output.status.success());
+        let value = json::parse(&output.stdout).unwrap();
+        let rows = value.get("capabilities").and_then(Value::as_array).unwrap();
+        let variants: Vec<_> = rows
+            .iter()
+            .filter(|row| {
+                row.get("variant").and_then(Value::as_str)
+                    == Some(wire::NATIVE_AVIF_SDR_IMPORT_VARIANT)
+            })
+            .collect();
+        assert_eq!(
+            variants.len(),
+            usize::from(profile.is_none_or(|value| value == "studio"))
+        );
+        if let Some(row) = variants.first() {
+            for (key, expected) in [
+                ("capability", "avif.sdr-ycbcr8.import"),
+                ("profile", "frontend/studio"),
+                ("operation", "import"),
+                ("backend_id", "dav1d/native-worker"),
+                ("platform", "native"),
+                ("required_helper_profile", wire::AVIF_SDR_NATIVE_PROFILE),
+            ] {
+                assert_eq!(row.get(key).and_then(Value::as_str), Some(expected));
+            }
+            for (key, expected) in [
+                ("installation_preflight_required", true),
+                ("runtime_installation_verified", false),
+                ("release_qualified", false),
+            ] {
+                assert_eq!(row.get(key).and_then(Value::as_bool), Some(expected));
+            }
+        }
+        assert!(!rows.iter().any(|row| row.get("capability").and_then(Value::as_str) == Some("avif.rgba8.read")));
+    }
+}
