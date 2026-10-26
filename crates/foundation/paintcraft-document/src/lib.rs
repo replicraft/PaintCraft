@@ -167,6 +167,20 @@ pub fn import_image_checked(
     source_sha256: &str,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Document> {
+    let mut admission =
+        paintcraft_raster::Admission::new(paintcraft_core::types::policy::STAGED_PIXELS_MAX);
+    import_image_with_admission_checked(width, height, rgba, source_sha256, &mut admission, check)
+}
+/// Import into the caller's existing tile-residency realm. Every populated tile
+/// owns that charge through subsequent document snapshots, history and sessions.
+pub fn import_image_with_admission_checked(
+    width: u32,
+    height: u32,
+    rgba: &[u8],
+    source_sha256: &str,
+    admission: &mut paintcraft_raster::Admission,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Document> {
     check()?;
     if !(1..=CANVAS_SIDE_MAX).contains(&width) || !(1..=CANVAS_SIDE_MAX).contains(&height) {
         return Err(Error::new(
@@ -174,16 +188,8 @@ pub fn import_image_checked(
             "image dimensions out of range",
         ));
     }
-    let mut admission =
-        paintcraft_raster::Admission::new(paintcraft_core::types::policy::STAGED_PIXELS_MAX);
-    let raster = RasterLayer::from_rgba_checked(
-        width,
-        height,
-        Rgba::TRANSPARENT,
-        rgba,
-        &mut admission,
-        check,
-    )?;
+    let raster =
+        RasterLayer::from_rgba_checked(width, height, Rgba::TRANSPARENT, rgba, admission, check)?;
     check()?;
     Ok(imported_document(width, height, raster, source_sha256))
 }
