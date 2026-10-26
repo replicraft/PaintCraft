@@ -4,7 +4,7 @@ use super::{
 };
 use ::jxl::api::{
     AlphaMode, Event, ExtraChannel, JxlBitDepth, JxlColorEncoding, JxlColorProfile, JxlDecoder,
-    JxlDecoderOptions, JxlOutputBuffer, JxlPixelFormat,
+    JxlDecoderOptions, JxlOutputBuffer, JxlPixelFormat, Orientation,
 };
 use zerocopy::IntoBytes;
 
@@ -116,6 +116,25 @@ pub fn decode_checked(
     pixels: u64,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Decoded> {
+    decode_profile(bytes, pixels, check, false)
+}
+/// Narrow native helper profile. Invoke only inside the fixed-heap, killable
+/// codec worker: upstream header/ICC scratch may allocate before BasicInfo.
+/// Unsupported precision and container metadata are refused before allocating
+/// PaintCraft's output planes, not before all upstream scratch allocations.
+pub fn decode_worker_rgba8_checked(
+    bytes: &[u8],
+    pixels: u64,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Decoded> {
+    decode_profile(bytes, pixels, check, true)
+}
+fn decode_profile(
+    bytes: &[u8],
+    pixels: u64,
+    check: &dyn Fn() -> Result<()>,
+    worker_rgba8: bool,
+) -> Result<Decoded> {
     let metadata = container::inspect(bytes, check)?;
     let execution = Execution::new(check);
     let mut input = Input {
@@ -156,6 +175,20 @@ pub fn decode_checked(
                 }
                 let inspected = header(&decoder, metadata, pixels)?;
                 admit_profile(&decoder, &inspected)?;
+                if worker_rgba8
+                    && (inspected.bits_per_sample != 8
+                        || metadata
+                        || decoder.basic_info().is_some_and(|basic| {
+                            basic.orientation != Orientation::Identity
+                                || basic.preview_size.is_some()
+                                || !basic.uses_original_profile
+                        })
+                        || !matches!(decoder.embedded_color_profile(), Some(JxlColorProfile::Simple(encoding)) if *encoding == JxlColorEncoding::srgb(false)))
+                {
+                    return Err(unsupported(
+                        "Isolated JPEG XL profile requires 8-bit sRGB without discarded container metadata",
+                    ));
+                }
                 let count =
                     admit_size(inspected.width as usize, inspected.height as usize, pixels)?;
                 let format = if inspected.bits_per_sample == 16 {

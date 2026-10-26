@@ -10,7 +10,9 @@ mod decode;
 mod encode;
 mod execution;
 
-pub use decode::{decode_checked, decode_with_pixel_limit, inspect_checked};
+pub use decode::{
+    decode_checked, decode_with_pixel_limit, decode_worker_rgba8_checked, inspect_checked,
+};
 pub use encode::{encode_rgba8, encode_rgba8_checked, encode_rgba16, encode_rgba16_checked};
 use paintcraft_core::types::{Error, ErrorCode, Result};
 
