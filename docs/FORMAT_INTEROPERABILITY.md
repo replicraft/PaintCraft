@@ -41,10 +41,10 @@ Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, 
 | JXR, HEIF | No enabled frontend operations | Selected/backend qualification remains; HEIF writing is prohibited |
 | ICO/CUR | Studio explicit selected-entry Import on desktop/browser; CLI `--entry` and MCP `entry`. Fresh multi-entry export in Studio desktop/browser, CLI `export-icons` and MCP `export_icons` | Reports every admitted entry and cursor hotspot before selection. Fresh exports use explicit sizes, RGBA PNG or 32-bit bitmap entries, independent aspect-ratio fitting, and per-entry CUR hotspots. Desktop/browser exports require a displayed preview and explicit loss consent; foreign preserving save remains unavailable |
 | PSD/PSB | Studio explicit Import on desktop/browser; CLI `import` and MCP `import_image` | RGB8 Normal raster-layer subset retains names, offsets, opacity, visibility and alpha. Metadata losses need explicit consent. Groups, masks, text, effects, clipping, high depth and foreign writing remain unavailable |
-| SVG/SVGZ | Studio desktop/browser Import; CLI `import` with `--svg-width`/`--svg-height`; MCP `import_image` with `svg` options | Explicit size/DPI/fitting and rasterization consent. Studio previews use bundled fonts; CLI/MCP also accept additional outline fonts. No Classic access, ordinary Open or SVG export |
+| SVG/SVGZ | Studio desktop/browser Import; CLI `import` with `--svg-width`/`--svg-height`; MCP `import_image` with `svg` options | Explicit size/DPI/fitting and rasterization consent. Studio previews use bundled fonts and additional font files; CLI/MCP accept outline fonts too. No Classic access, ordinary Open or SVG export |
 | EXR/HDR, JP2, MSP, ICNS | Not yet enabled | Registry inventory or work in progress is not usable format support |
 | ASE | Studio Palettes dialog; CLI `palette inspect` / `palette export`; MCP `inspect_palette` / `export_palette` | Flat groups, exact names/order/models/types and finite f32 values. RGB/gray tool-color adoption is explicit; CMYK/LAB conversion, persistent catalogs and Adobe qualification remain |
-| ABR | Internal checked resource reader; no public workflow yet | Exact sample masks, RGB/gray/indexed pattern channels, signed bounds and original ordered payloads retained. Pattern previews report conversion or unavailable channel/palette metadata. Other pattern color/compression profiles, brush-engine adoption and public Studio/CLI/MCP import remain |
+| ABR | Internal checked reader and explicit native-static R8 adoption backend; no public workflow yet | Exact sample masks, RGB/gray/indexed pattern channels, signed bounds and original ordered payloads retained. Pattern previews report conversion or unavailable channel/palette metadata. Static-tip adoption preserves source and refuses unsupported features; Studio UI routing, full preset behavior and public Studio/CLI/MCP import remain |
 | CSH | Studio Shape resources dialog; CLI `shape inspect` / `shape export`; MCP `inspect_shapes` / `export_shapes` | Retains bounds, names, IDs and exact ordered path records. Studio previews outlines without changing the painting. Shape placement, broader interoperability and original-application qualification remain |
 | RAW, PDF, KRA, XCF, animation, advanced DDS | Future profiles | No inherited Classic support or preserving-write claims |
 
@@ -222,7 +222,7 @@ decoder. They do not prove a hard allocator or cooperative cancellation-tail
 bound during upstream calls.
 
 The [owned fixture suite](../crates/services/paintcraft-formats/tests/abr-fixtures/README.md)
-has twenty-one focused tests and successful Node.js 24.10.0 / upstream JavaScript
+has twenty-six focused tests and successful Node.js 24.10.0 / upstream JavaScript
 `ag-psd` 33.0.0 checks for the initial five source specimens and both Rust-generated private
 raw-16 views. The public JavaScript channel decoder verifies every low bit;
 metadata, signed bounds and opaque headers also match the compressed sources.
@@ -233,8 +233,20 @@ masks. JavaScript preview vectors agree for five qualified patterns; its optiona
 palette-word ambiguity and guessed channel roles are retained as explicit
 qualification limits. This is not original Adobe qualification. Other pattern
 color models, one-bit/ZIP/predictive channels, ambiguous preview layouts, legacy
-ABR 1/2, actual brush adoption/rendering, public frontend import and wider qualification
+ABR 1/2, full preset behavior, public frontend import and wider qualification
 remain required. ABR export is outside the import-only asset policy.
+
+The [native sampled-brush backend](SAMPLED_BRUSHES.md) separately admits exact
+R8, native-size static sampled presets under an explicit PaintCraft policy.
+Original descriptors and samples remain in the adopted immutable resource;
+unsupported transforms, dynamics, textures and high depth are refused, while Q8
+spacing conversion requires acknowledgement. Owned wire pixels render through
+the existing mask executor with preview/publication and Undo/Redo checks. The
+additional fifteen-candidate fixture has a successful upstream JavaScript
+metadata/mask check, with the same shared-lineage limitation. Raster/tool/editor
+checks separately cover independent dense pixels, resource bounds, cancellation,
+no-op history and captured preview/release equality. Studio pointer/UI routing is
+pending; these checks do not establish Photoshop brush-rendering parity.
 
 ### CSH resource adapter, 2026-10-25
 
@@ -362,17 +374,36 @@ state and source/font alias protection after saving. Incompatible profiles and
 missing SVG parameters are refused before source acquisition.
 
 Studio's controls start at an explicit 512 × 512 pixels, 96 DPI, preserving aspect
-ratio on transparent padding. They use the shared root Selawik and Noto fonts;
-additional font-file selection is currently available only in CLI/MCP. Preview
+ratio on transparent padding. They use the shared root Selawik and Noto fonts and accept additional outline
+font files. Desktop adds one file per selection; the browser can add several at
+once. The five bundled files count toward the 32-file, 64-face and 64 MiB total
+allowances, leaving up to 27 additional files. A rejected or cancelled selection
+keeps the previous font set and approved preview. Successful addition or removal
+clears the preview and consent; pending font selection disables Import. Preview
 work runs only when requested, samples the full selected raster, and retains the
 exact private converted document for import. Changing options clears the preview
 and consent. Import remains disabled until the preview has been displayed and
 the user accepts the reported conversion losses. Cancellation or a changed
 document/profile cannot publish the prepared copy. Native SVG acquisition and
 browser file-size checks use the 8 MiB SVG source allowance before loading bytes.
+Native SVG and added font inputs retain identities acquired from the same open
+files as their decoded bytes. These source guards protect pending previews and
+follow converted documents through tabs and interface workspaces, including
+renamed input files. Closing their owning document releases them. Raw font data
+and font databases are dropped after raster import. This is source ownership
+protection, not an arbitrary-filesystem TOCTOU guarantee or qualification of
+other foreign formats after source renames.
 
 Headless English/Japanese controls tests cover desktop and browser hosts; a
 390 × 640 browser-host test verifies reachable consent and visible footer buttons.
+Additional font-file tests render a renamed outline font, verify changed glyph
+pixels and removed substitution loss, and cover stale/cancelled/malformed
+selections without changing the painting. Native route tests exercise pending
+input protection, source rename aliases, normal bound saving, other tabs and
+parked workspaces, and New/Open/Close ownership. A production Wasm font-upload
+flow in headless Chrome verifies invalidated approval, fresh consent, updated
+title and PCND download with no page errors. These are focused workflow checks,
+not full platform release qualification.
 A local production Wasm build was checked in headless Chrome: explicit Studio
 Import of `aligned.svg`, preview, consent, updated title and PCND download all
 succeeded without page errors. At 512 × 512, 96 DPI and contain fitting, its

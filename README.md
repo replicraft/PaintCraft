@@ -44,7 +44,7 @@ cargo run --release -p paintcraft-cli -- mcp
 - **Icon export in Studio, CLI and MCP:** multi-size ICO/CUR files with PNG or bitmap entries and cursor hotspots.
 - **Layered imports:** Studio imports flat OpenRaster (`.ora`) layers and opens a limited historical Paint.NET (`.pdn`) subset as converted copies. Studio also imports a limited Windows Paint (`.paint`) subset. Save converted projects as PCND; writing PDN or PAINT is not supported.
 - **Photoshop imports in Studio:** basic PSD/PSB raster layers with names, positions, opacity and visibility. Save converted copies as PCND.
-- **SVG/SVGZ:** import a picture at your chosen size, DPI and fitting in Studio, CLI or MCP.
+- **SVG/SVGZ:** import a picture at your chosen size, DPI and fitting, with your own font files, in Studio, CLI or MCP.
 - **Palettes:** import/export Adobe Swatch Exchange (`.ase`) in Studio, CLI and MCP.
 - **Custom shape resources:** import/export Adobe custom shapes (`.csh`) in Studio, CLI and MCP, with outline previews in Studio.
 
