@@ -110,3 +110,19 @@ fn native_encoding_never_guesses_icc_limited_range_hdr_or_transform_semantics() 
     }
     assert!(profile(value.item(7).unwrap(), None).is_err());
 }
+
+#[test]
+fn conformance_crop_subtraction_is_checked_independently_of_upstream_parser() {
+    assert_eq!(cropped_size(32, 24, [1, 2, 3, 4]).unwrap(), (29, 17));
+    for crop in [
+        [33, 0, 0, 0],
+        [31, 2, 0, 0],
+        [32, 0, 0, 0],
+        [0, 0, 25, 0],
+        [0, 0, 23, 2],
+        [0, 0, 24, 0],
+        [u32::MAX, u32::MAX, 0, 0],
+    ] {
+        assert!(cropped_size(32, 24, crop).is_err());
+    }
+}

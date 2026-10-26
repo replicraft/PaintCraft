@@ -115,6 +115,23 @@ fn profile(item: &Item<'_>, fallback: Option<Encoding>) -> Result<Encoding> {
     }
     Ok(color)
 }
+fn cropped_size(
+    width: u32,
+    height: u32,
+    [left, right, top, bottom]: [u32; 4],
+) -> Result<(u32, u32)> {
+    let width = width
+        .checked_sub(left)
+        .and_then(|n| n.checked_sub(right))
+        .filter(|n| *n != 0)
+        .ok_or_else(|| invalid("HEVC horizontal conformance crop exceeds coded width"))?;
+    let height = height
+        .checked_sub(top)
+        .and_then(|n| n.checked_sub(bottom))
+        .filter(|n| *n != 0)
+        .ok_or_else(|| invalid("HEVC vertical conformance crop exceeds coded height"))?;
+    Ok((width, height))
+}
 fn coded(item: &Item<'_>, pixels: u64, check: &dyn Fn() -> Result<()>) -> Result<Coded> {
     let (luma, chroma, format, bytes) = item
         .properties
@@ -180,11 +197,11 @@ fn coded(item: &Item<'_>, pixels: u64, check: &dyn Fn() -> Result<()>) -> Result
                         return Err(resource("coded SPS dimensions exceed allowance"));
                     }
                     raw_pixels = raw_pixels.max(raw);
-                    let [left, right, top, bottom] = s.conformance_window;
-                    let size = (
-                        s.pic_width_in_luma_samples - left - right,
-                        s.pic_height_in_luma_samples - top - bottom,
-                    );
+                    let size = cropped_size(
+                        s.pic_width_in_luma_samples,
+                        s.pic_height_in_luma_samples,
+                        s.conformance_window,
+                    )?;
                     if spatial(item)? != size {
                         return Err(invalid("ispe disagrees with coded SPS crop"));
                     }
