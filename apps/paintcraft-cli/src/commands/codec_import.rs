@@ -1,4 +1,4 @@
-//! Native composition for exact Studio JXL/JXR/HEIF import variants and private diagnostics.
+//! Native composition for exact Studio JXL/JXR/HEIF/AVIF import variants and private diagnostics.
 use super::*;
 use paintcraft_core::types::resources::ResourceLease;
 use paintcraft_formats::codec_worker as wire;
@@ -34,6 +34,7 @@ struct Prepared {
     cancel: paintcraft_runtime::Cancellation,
     assessment: Option<paintcraft_formats::jxr::ImportAssessment>,
     heif_assessment: Option<paintcraft_formats::heif::ImportAssessment>,
+    avif_assessment: Option<paintcraft_formats::avif::ImportAssessment>,
     // Last field: document and acquired resources drop before the runtime charge.
     _lease: ResourceLease,
 }
@@ -44,6 +45,7 @@ impl Prepared {
             .as_ref()
             .map(|value| value.losses())
             .or_else(|| self.heif_assessment.as_ref().map(|value| value.losses()))
+            .or_else(|| self.avif_assessment.as_ref().map(|value| value.losses()))
             .unwrap_or(&[]);
         losses.iter().map(|code| (*code).to_owned()).collect()
     }
@@ -52,6 +54,7 @@ impl Prepared {
             .as_ref()
             .map(|value| value.to_value())
             .or_else(|| self.heif_assessment.as_ref().map(|value| value.to_value()))
+            .or_else(|| self.avif_assessment.as_ref().map(|value| value.to_value()))
             .unwrap_or(Value::Null)
     }
     fn check_owner(&self, owner: wire::Owner) -> Result<()> {
@@ -111,6 +114,8 @@ impl Prepared {
                         wire::NATIVE_HEIF_IMPORT_VARIANT
                     } else if self.assessment.is_some() {
                         wire::NATIVE_JXR_IMPORT_VARIANT
+                    } else if self.avif_assessment.is_some() {
+                        wire::NATIVE_AVIF_IMPORT_VARIANT
                     } else {
                         wire::NATIVE_JXL_IMPORT_VARIANT
                     }),
@@ -123,6 +128,9 @@ impl Prepared {
                         self.assessment.is_some()
                             || self.heif_assessment.as_ref().is_some_and(|value| {
                                 value.losses().contains(&"heif-item-names-not-retained")
+                            })
+                            || self.avif_assessment.as_ref().is_some_and(|value| {
+                                value.losses().contains(&"avif-item-names-not-retained")
                             }),
                     ),
                 ),
@@ -177,6 +185,7 @@ fn prepare(
         cancel,
         assessment: adopted.jxr_assessment,
         heif_assessment: adopted.heif_assessment,
+        avif_assessment: adopted.avif_assessment,
         _lease: lease,
     })
 }
@@ -196,10 +205,11 @@ fn convert(
         Some(paintcraft_formats::registry::Family::Jxl) => wire::Codec::JxlRgba8,
         Some(paintcraft_formats::registry::Family::Jxr) => wire::Codec::JxrRgb8,
         Some(paintcraft_formats::registry::Family::Heif) => wire::Codec::HeifSrgb8,
+        Some(paintcraft_formats::registry::Family::Avif) => wire::Codec::AvifSrgb8,
         _ => {
             return Err(Error::new(
                 ErrorCode::CapabilityUnsupported,
-                "Native codec import requires a qualified JXL/JXR/HEIF filename",
+                "Native codec import requires a qualified JXL/JXR/HEIF/AVIF filename",
             ));
         }
     };
@@ -296,6 +306,7 @@ pub fn run(options: Options, json: bool) -> Reply {
                     &[
                         paintcraft_formats::jxr::KNOWN_IMPORT_LOSSES,
                         paintcraft_formats::heif::KNOWN_IMPORT_LOSSES,
+                        paintcraft_formats::avif::KNOWN_IMPORT_LOSSES,
                     ]
                     .concat(),
                 )?,

@@ -84,10 +84,11 @@ impl Options {
             Family::Jxl => paintcraft_formats::codec_worker::NATIVE_JXL_IMPORT_VARIANT,
             Family::Jxr => paintcraft_formats::codec_worker::NATIVE_JXR_IMPORT_VARIANT,
             Family::Heif => paintcraft_formats::codec_worker::NATIVE_HEIF_IMPORT_VARIANT,
+            Family::Avif => paintcraft_formats::codec_worker::NATIVE_AVIF_IMPORT_VARIANT,
             _ => {
                 return Err(Error::new(
                     ErrorCode::CapabilityUnsupported,
-                    "Native codec input requires JXL/JXR/HEIF",
+                    "Native codec input requires JXL/JXR/HEIF/AVIF",
                 ));
             }
         };
@@ -102,7 +103,7 @@ impl Options {
         match registry::admission(request) {
             registry::Decision::Allowed => Ok(()),
             registry::Decision::AllowedWithPreflight(registry::Reason::ConvertRequiresConsent)
-                if matches!(family, Family::Jxr | Family::Heif) =>
+                if matches!(family, Family::Jxr | Family::Heif | Family::Avif) =>
             {
                 Ok(())
             }

@@ -56,6 +56,7 @@ pub fn run(a: Options, json: bool) -> Reply {
                 .chain(paintcraft_formats::icns::KNOWN_IMPORT_LOSSES.iter())
                 .chain(paintcraft_formats::jxr::KNOWN_IMPORT_LOSSES.iter())
                 .chain(paintcraft_formats::heif::KNOWN_IMPORT_LOSSES.iter())
+                .chain(paintcraft_formats::avif::KNOWN_IMPORT_LOSSES.iter())
                 .chain(paintcraft_formats::svg::KNOWN_LOSSES.iter())
                 .copied()
                 .collect();
@@ -72,13 +73,14 @@ pub fn run(a: Options, json: bool) -> Reply {
                             paintcraft_formats::registry::Family::Jxl
                                 | paintcraft_formats::registry::Family::Jxr
                                 | paintcraft_formats::registry::Family::Heif
+                                | paintcraft_formats::registry::Family::Avif
                         )
                     })
             {
                 if a.page.is_some() || a.entry.is_some() {
                     return Err(Error::new(
                         ErrorCode::InputSchema,
-                        "Native JXL/JXR import does not support page/entry selection",
+                        "Native codec import does not support page/entry selection",
                     ));
                 }
                 return super::codec_import::qualified(input, &a.output, &a.profile, &allowed);

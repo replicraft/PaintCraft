@@ -47,6 +47,7 @@ fn prepared_document_retains_charge_across_executor_drop_and_staged_publication(
                     cancel: cancel.clone(),
                     assessment: None,
                     heif_assessment: None,
+                    avif_assessment: None,
                     _lease: cancel.resource_lease().unwrap(),
                 })
             },
