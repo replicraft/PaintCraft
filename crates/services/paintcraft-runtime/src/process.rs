@@ -6,7 +6,7 @@ use std::{
     ffi::OsString,
     io::{Read, Write},
     path::Path,
-    process::{Child, Command, ExitStatus, Stdio},
+    process::{Child, ChildStdin, Command, ExitStatus, Stdio},
     sync::{Arc, mpsc},
     thread,
     time::{Duration, Instant},
@@ -30,6 +30,7 @@ struct Running {
     reaped: bool,
     writer: Option<thread::JoinHandle<()>>,
     reader: Option<thread::JoinHandle<()>>,
+    stdin_lease: Option<ChildStdin>,
 }
 impl Running {
     fn join_pipes(&mut self) -> bool {
@@ -87,6 +88,29 @@ pub fn run(
     limits: Limits,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Output> {
+    run_inner(executable, args, input, limits, check, false)
+}
+/// Codec transport only: keep stdin open and silent after writing the exact
+/// request. A compatible helper watches this sole writer for parent death.
+/// Installation/build-contract verification must happen before selecting this
+/// mode; an EOF-framed ordinary tool would wait until its deadline instead.
+pub fn run_parent_lease(
+    executable: &Path,
+    args: &[OsString],
+    input: Vec<Arc<Vec<u8>>>,
+    limits: Limits,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Output> {
+    run_inner(executable, args, input, limits, check, true)
+}
+fn run_inner(
+    executable: &Path,
+    args: &[OsString],
+    input: Vec<Arc<Vec<u8>>>,
+    limits: Limits,
+    check: &dyn Fn() -> Result<()>,
+    parent_lease: bool,
+) -> Result<Output> {
     check()?;
     if !executable.is_absolute()
         || limits.input_bytes == 0
@@ -129,6 +153,7 @@ pub fn run(
         reaped: false,
         writer: None,
         reader: None,
+        stdin_lease: None,
     };
     let mut stdin = running
         .child
@@ -152,8 +177,8 @@ pub fn run(
                     }
                     stdin.flush()
                 })();
-                drop(stdin);
-                let _ = writer_tx.send(Event::Input(result));
+                let lease = (parent_lease && result.is_ok()).then_some(stdin);
+                let _ = writer_tx.send(Event::Input(result, lease));
             })
             .map_err(|_| resource("cannot start worker input pipe"))?,
     );
@@ -206,7 +231,8 @@ pub fn run(
                 return Err(resource("native worker deadline exceeded"));
             }
             match rx.recv_timeout(Duration::from_millis(5)) {
-                Ok(Event::Input(result)) => {
+                Ok(Event::Input(result, lease)) => {
+                    running.stdin_lease = lease;
                     // A capped helper can exit before consuming its input. Wait
                     // for its exit status before classifying this broken pipe.
                     input_error = result.err();
@@ -290,7 +316,7 @@ pub fn run(
     result
 }
 enum Event {
-    Input(std::io::Result<()>),
+    Input(std::io::Result<()>, Option<ChildStdin>),
     Output(Result<Vec<u8>>),
 }
 #[cfg(test)]

@@ -242,6 +242,7 @@ fn running_drop_reaps_child_before_joining_both_workers_on_unwind() {
                 reaped: false,
                 writer: None,
                 reader: None,
+                stdin_lease: None,
             };
             let done = completed.clone();
             running.writer = Some(thread::spawn(move || {
@@ -257,4 +258,88 @@ fn running_drop_reaps_child_before_joining_both_workers_on_unwind() {
     });
     assert!(result.is_err());
     assert_eq!(completed.load(Ordering::Acquire), 2);
+}
+
+#[test]
+fn retained_parent_lease_keeps_stdin_open_until_child_completes() {
+    let output = run_parent_lease(
+        &std::env::current_exe().unwrap(),
+        &args("process::tests::child_exact_input"),
+        vec![Arc::new(vec![42])],
+        limits(),
+        &|| Ok(()),
+    )
+    .unwrap();
+    assert!(
+        output
+            .bytes
+            .windows(13)
+            .any(|bytes| bytes == b"LEASE_IS_OPEN")
+    );
+}
+#[test]
+#[ignore = "bounded parent-lease transport fixture"]
+fn child_exact_input() {
+    let mut byte = [0];
+    std::io::stdin().read_exact(&mut byte).unwrap();
+    assert_eq!(byte, [42]);
+    // A separate read remains blocked while the supervisor holds the lease.
+    let (send, receive) = mpsc::channel();
+    thread::spawn(move || {
+        let result = std::io::stdin().read(&mut byte);
+        let _ = send.send(result);
+    });
+    assert!(matches!(
+        receive.recv_timeout(Duration::from_millis(30)),
+        Err(mpsc::RecvTimeoutError::Timeout)
+    ));
+    std::io::stdout().write_all(b"LEASE_IS_OPEN").unwrap();
+    // Returning from a test would make libtest wait for no threads but retaining
+    // stdin in this fixture is deliberate. Exit models the real helper main.
+    std::process::exit(0);
+}
+
+#[test]
+fn executor_panic_cleanup_retains_charge_until_consumed_without_pipe_source_leak() {
+    use crate::{Executor, Limits as PoolLimits};
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    let source = Arc::new(vec![1; 1 << 20]);
+    let input = source.clone();
+    let (send, receive) = mpsc::channel();
+    let mut executor = Executor::new(PoolLimits {
+        workers: 1,
+        pending_jobs: 1,
+        transient_bytes: 2 << 20,
+    })
+    .unwrap();
+    let handle = executor
+        .submit(
+            1 << 20,
+            move |_| {
+                let checks = AtomicUsize::new(0);
+                run_parent_lease(
+                    &std::env::current_exe().unwrap(),
+                    &args("process::tests::child_stall"),
+                    vec![input],
+                    limits(),
+                    &|| {
+                        assert_eq!(
+                            checks.fetch_add(1, Ordering::Relaxed),
+                            0,
+                            "owner check panic"
+                        );
+                        Ok(())
+                    },
+                )
+            },
+            move || {
+                send.send(()).unwrap();
+            },
+        )
+        .unwrap();
+    receive.recv_timeout(Duration::from_secs(5)).unwrap();
+    assert_eq!(executor.reserved_bytes(), 1 << 20);
+    assert_eq!(Arc::strong_count(&source), 1);
+    assert!(executor.poll_for(handle).unwrap().is_err());
+    assert_eq!(executor.reserved_bytes(), 0);
 }
