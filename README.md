@@ -47,6 +47,7 @@ cargo run --release -p paintcraft-cli -- mcp
 - **SVG/SVGZ:** import a picture at your chosen size, DPI and fitting, with your own font files, in Studio, CLI or MCP.
 - **Palettes:** import/export Adobe Swatch Exchange (`.ase`) in Studio, CLI and MCP.
 - **Custom shape resources:** import/export Adobe custom shapes (`.csh`) in Studio, CLI and MCP, with outline previews in Studio.
+- **ABR brushes in CLI and MCP:** inspect presets and paint with supported static tips. Studio controls are in progress.
 
 Image exports flatten layers. Conversion prompts explain supported losses such as reduced color depth, palette changes or discarded metadata. See [format support and limits](docs/FORMAT_INTEROPERABILITY.md) for the supported subsets.
 

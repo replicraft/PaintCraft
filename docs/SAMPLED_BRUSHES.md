@@ -3,6 +3,8 @@
 PaintCraft has a bounded backend for adopting an admitted ABR preset into an
 immutable native-size R8 tip. Raster coverage, captured tool gestures and the
 existing atomic mask executor are exercised together by owned pixel fixtures.
+CLI and MCP inspect/adopt/painting workflows use these same contracts; see
+[Painting with MCP](MCP.md#imported-brush-resources).
 Studio resource selection, UI preview and pointer routing are still pending;
 this is not a claim that Studio currently installs or uses imported presets.
 
@@ -34,8 +36,11 @@ Preview and release resolve the same captured tip, points, layer, color and
 spacing. Commands use the existing mask schema and executor. The editor's
 mask-only preparation wrapper supplies a Brush history label through the same
 admission, execution and publication path; ordinary text masks retain their Text
-label. Empty coverage and zero color opacity create no effective publication or
-history entry. Cancellation, rejected resource admission, stale preparations and
+label. For an empty document, a strict initial-layer preparation admits only a
+transparent canvas-sized first layer followed by masks targeting its alias.
+Creation and painting share one transaction; ineffective coverage discards the
+staged layer. Empty coverage and zero color opacity create no effective publication
+or history entry. Cancellation, rejected resource admission, stale preparations and
 non-mask batches cannot partially publish a brush stroke.
 
 ## Admission and unsupported features

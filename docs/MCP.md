@@ -219,3 +219,58 @@ Coordinates are canvas pixels. Colors use `#RRGGBBAA`. Stroke and shape tools de
 Save explicitly before disconnecting: the session is held in memory and ends with the server process. Replacing unsaved work requires `discard_changes: true`. Existing output files require `overwrite: true`, except saving back to the opened project, which checks its captured SHA-256 digest and rejects external changes. Image imports and exports use the CLI Studio format-admission profile. Importing a picture never binds project saves to that source image. Image exports require explicit `allow_losses` acknowledgements when flattening or another conversion would discard information. Exporting does not mark a project saved.
 
 A failed batch publishes no changes. Losing a connection after sending a mutation leaves its outcome uncertain; do not automatically retry it. This initial server does not provide durable request deduplication or recovery across process restarts.
+
+## Imported brush resources
+
+`inspect_brushes` reports ordered ABR preset names, native-static eligibility,
+unsupported features and required spacing conversions without creating or
+changing a painting. Inspection publishes `paintcraft.brush-inspection/v1`, with
+a discoverable typed JSON schema, and admits at most 256 presets per library.
+`adopt_brush` selects an ephemeral imported preset under
+explicit `native-grid-v1` policy. It retains the acquired source and exact R8
+tip; selection alone changes no document, history, dirty flag or save binding.
+A failed adoption preserves the previous selected brush.
+
+```json
+{"name":"inspect_brushes","arguments":{"path":"/absolute/path/brushes.abr"}}
+{"name":"adopt_brush","arguments":{"path":"/absolute/path/brushes.abr","preset":0,"policy":"native-grid-v1","allow_spacing_quantization":false}}
+{"name":"paint_sampled_stroke","arguments":{"points":[[24,32],[48,48]],"color":"#204080FF","point_scale":1}}
+```
+
+Painting uses captured integer `[x,y]` points, a selected or topmost raster layer
+and the existing atomic mask executor. A blank project gains its first transparent
+canvas-sized layer and stroke in one Brush history entry. Undo removes both;
+zero-opacity, empty or fully clipped coverage leaves no first layer or history
+entry. `point_scale` may be 1 or 256; color alpha controls opacity once. A
+`layer_id` can select an existing layer explicitly.
+
+The native static policy preserves sample dimensions, uses Q8 translations,
+integer Q32 path spacing and maximum coverage union. It is not Photoshop brush
+parity. Higher-depth masks, computed tips, size/angle/roundness/flip overrides,
+active dynamics, pressure behavior, texture/dual brushes and unknown fields are
+refused, rather than approximated as stock brushes. Non-exact Q8 spacing requires
+`allow_spacing_quantization: true`. See [sampled brush qualification](SAMPLED_BRUSHES.md)
+for the exact policy and resource limits.
+
+The MCP session protects selected and painted brush source identities from
+save/export, including renamed files and hard-link aliases. It retains at most
+sixteen distinct painted source resources in a document workspace; replacing the
+document releases those workspace references. Source identity is acquired from
+the same open file used for decoding. Existing destination identity errors fail
+closed; nonregular destinations are not opened for identity comparison.
+
+The equivalent CLI workflow is:
+
+```sh
+paintcraft-cli brush inspect brushes.abr --json
+paintcraft-cli schema brush-inspection
+paintcraft-cli brush paint drawing.pcnd --brush brushes.abr --preset 0 \
+    --policy native-grid-v1 --points points.json --color '#204080FF' \
+    -o painted.pcnd
+```
+
+`points.json` contains `[[24,32],[48,48]]` in this example. Use
+`--allow-spacing-quantization` only after inspecting the reported conversion.
+`--expect-brush-sha256` guards the brush bytes, and `--expect-input-sha256` guards
+the project bytes. Studio is the supported asset profile; Classic and ordinary
+image Open/Import do not treat ABR files as images. ABR export is unsupported.

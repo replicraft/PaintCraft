@@ -44,7 +44,7 @@ Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, 
 | SVG/SVGZ | Studio desktop/browser Import; CLI `import` with `--svg-width`/`--svg-height`; MCP `import_image` with `svg` options | Explicit size/DPI/fitting and rasterization consent. Studio previews use bundled fonts and additional font files; CLI/MCP accept outline fonts too. No Classic access, ordinary Open or SVG export |
 | EXR/HDR, JP2, MSP, ICNS | Not yet enabled | Registry inventory or work in progress is not usable format support |
 | ASE | Studio Palettes dialog; CLI `palette inspect` / `palette export`; MCP `inspect_palette` / `export_palette` | Flat groups, exact names/order/models/types and finite f32 values. RGB/gray tool-color adoption is explicit; CMYK/LAB conversion, persistent catalogs and Adobe qualification remain |
-| ABR | Internal checked reader and explicit native-static R8 adoption backend; no public workflow yet | Exact sample masks, RGB/gray/indexed pattern channels, signed bounds and original ordered payloads retained. Pattern previews report conversion or unavailable channel/palette metadata. Static-tip adoption preserves source and refuses unsupported features; Studio UI routing, full preset behavior and public Studio/CLI/MCP import remain |
+| ABR | CLI/MCP inspection and bounded native-static R8 painting; Studio controls pending | Exact sample masks, pattern channels, signed bounds and original ordered payloads retained. Up to 256 presets per admitted library; unsupported dynamics, textures, transforms and precision reduction are refused. Full preset behavior and original-application qualification remain; no ABR export or ordinary image Open |
 | CSH | Studio Shape resources dialog; CLI `shape inspect` / `shape export`; MCP `inspect_shapes` / `export_shapes` | Retains bounds, names, IDs and exact ordered path records. Studio previews outlines without changing the painting. Shape placement, broader interoperability and original-application qualification remain |
 | RAW, PDF, KRA, XCF, animation, advanced DDS | Future profiles | No inherited Classic support or preserving-write claims |
 
@@ -233,7 +233,7 @@ masks. JavaScript preview vectors agree for five qualified patterns; its optiona
 palette-word ambiguity and guessed channel roles are retained as explicit
 qualification limits. This is not original Adobe qualification. Other pattern
 color models, one-bit/ZIP/predictive channels, ambiguous preview layouts, legacy
-ABR 1/2, full preset behavior, public frontend import and wider qualification
+ABR 1/2, full preset behavior, Studio frontend adoption and wider qualification
 remain required. ABR export is outside the import-only asset policy.
 
 The [native sampled-brush backend](SAMPLED_BRUSHES.md) separately admits exact
@@ -247,6 +247,23 @@ metadata/mask check, with the same shared-lineage limitation. Raster/tool/editor
 checks separately cover independent dense pixels, resource bounds, cancellation,
 no-op history and captured preview/release equality. Studio pointer/UI routing is
 pending; these checks do not establish Photoshop brush-rendering parity.
+
+CLI `brush inspect` and `brush paint`, plus MCP `inspect_brushes`, `adopt_brush`
+and `paint_sampled_stroke`, expose this bounded static-tip policy. Typed
+`paintcraft.brush-inspection/v1` output and `schema brush-inspection` enumerate
+preset capabilities and required conversions. Libraries admit at most 256
+presets before repeated descriptor assessment. Inspection and selection do not
+change document/history/save binding; actual painting uses the same captured tip
+and atomic mask executor. Empty documents gain their first transparent layer and
+stroke in one undoable Brush edit, while ineffective coverage leaves no layer.
+The MCP session retains at most sixteen distinct painted source versions,
+coalescing repeated adoption by exact digest and frozen file identity. Selected
+and painted sources remain protected across rename/hard-link aliases and source
+replacement; destination identity failures reject the write. CLI and real stdio
+MCP tests verify independent source-mask pixels, failed adoption preservation,
+spacing consent, no-op history, Undo/Redo and protected source files. See
+[workflow examples](MCP.md#imported-brush-resources). No Classic image Open,
+ABR export or Photoshop rendering-parity claim is enabled.
 
 ### CSH resource adapter, 2026-10-25
 
