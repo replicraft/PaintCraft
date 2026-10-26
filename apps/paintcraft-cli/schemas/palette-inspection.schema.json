@@ -1,0 +1,180 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "urn:paintcraft:schema:palette-inspection-v1",
+	"title": "PaintCraft ASE palette resource inspection",
+	"description": "Finite channel values are eight hexadecimal digits holding their big-endian IEEE754 f32 bits, without color conversion. This is a palette resource, not a document.",
+	"type": "object",
+	"additionalProperties": false,
+	"required": [
+		"schema",
+		"resource_type",
+		"resource_id",
+		"source_sha256",
+		"swatches",
+		"entries"
+	],
+	"properties": {
+		"schema": {
+			"const": "paintcraft.palette-inspection/v1"
+		},
+		"resource_type": {
+			"const": "palette"
+		},
+		"resource_id": {
+			"type": "string",
+			"format": "uuid"
+		},
+		"source_sha256": {
+			"type": "string",
+			"pattern": "^[0-9a-f]{64}$"
+		},
+		"swatches": {
+			"type": "integer",
+			"minimum": 0,
+			"maximum": 4096
+		},
+		"entries": {
+			"type": "array",
+			"maxItems": 8192,
+			"items": {
+				"oneOf": [
+					{
+						"type": "object",
+						"additionalProperties": false,
+						"required": [
+							"swatch"
+						],
+						"properties": {
+							"swatch": {
+								"$ref": "#/$defs/swatch"
+							}
+						}
+					},
+					{
+						"type": "object",
+						"additionalProperties": false,
+						"required": [
+							"group",
+							"swatches"
+						],
+						"properties": {
+							"group": {
+								"type": "string",
+								"maxLength": 1024
+							},
+							"swatches": {
+								"type": "array",
+								"maxItems": 4096,
+								"items": {
+									"$ref": "#/$defs/swatch"
+								}
+							}
+						}
+					}
+				]
+			}
+		}
+	},
+	"$defs": {
+		"swatch": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"name",
+				"kind",
+				"model",
+				"channels_f32_be"
+			],
+			"properties": {
+				"name": {
+					"type": "string",
+					"maxLength": 1024
+				},
+				"kind": {
+					"enum": [
+						"global",
+						"spot",
+						"process"
+					]
+				},
+				"model": {
+					"enum": [
+						"RGB",
+						"CMYK",
+						"Gray",
+						"LAB"
+					]
+				},
+				"channels_f32_be": {
+					"type": "array",
+					"items": {
+						"type": "string",
+						"pattern": "^[0-9a-f]{8}$"
+					},
+					"minItems": 1,
+					"maxItems": 4
+				}
+			},
+			"allOf": [
+				{
+					"if": {
+						"properties": {
+							"model": {
+								"enum": [
+									"RGB",
+									"LAB"
+								]
+							}
+						}
+					},
+					"then": {
+						"properties": {
+							"channels_f32_be": {
+								"minItems": 3,
+								"maxItems": 3
+							}
+						}
+					}
+				},
+				{
+					"if": {
+						"properties": {
+							"model": {
+								"enum": [
+									"CMYK"
+								]
+							}
+						}
+					},
+					"then": {
+						"properties": {
+							"channels_f32_be": {
+								"minItems": 4,
+								"maxItems": 4
+							}
+						}
+					}
+				},
+				{
+					"if": {
+						"properties": {
+							"model": {
+								"enum": [
+									"Gray"
+								]
+							}
+						}
+					},
+					"then": {
+						"properties": {
+							"channels_f32_be": {
+								"minItems": 1,
+								"maxItems": 1
+							}
+						}
+					}
+				}
+			]
+		}
+	}
+}

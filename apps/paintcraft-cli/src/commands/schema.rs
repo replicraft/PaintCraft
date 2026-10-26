@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(clap::Args, Debug)]
 pub struct Options {
-    #[arg(value_parser = ["batch", "batch-v2"])]
+    #[arg(value_parser = ["batch", "batch-v2", "palette-inspection"])]
     schema: String,
 }
 
@@ -14,11 +14,11 @@ pub fn run(a: Options, _json: bool) -> Reply {
             let text = match a.schema.as_str() {
                 "batch" => BATCH_SCHEMA,
                 "batch-v2" => BATCH_V2_SCHEMA,
+                "palette-inspection" => {
+                    include_str!("../../schemas/palette-inspection.schema.json")
+                }
                 _ => {
-                    return Err(Error::new(
-                        ErrorCode::InputSchema,
-                        "only `schema batch` and `schema batch-v2` exist",
-                    ));
+                    return Err(Error::new(ErrorCode::InputSchema, "unknown CLI schema"));
                 }
             };
             Ok((

@@ -44,6 +44,8 @@ enum Command {
     Import(commands::import::Options),
     /// Place an image file as a new layer, preserving the existing document.
     PasteImage(commands::paste_image::Options),
+    /// Inspect and exchange palettes as assets, independently of image documents.
+    Palette(commands::palette::Options),
 }
 
 fn main() -> ExitCode {
@@ -60,6 +62,7 @@ fn main() -> ExitCode {
         Command::ExportIcons(a) => commands::export_icons::run(a, cli.json),
         Command::Import(a) => commands::import::run(a, cli.json),
         Command::PasteImage(a) => commands::paste_image::run(a, cli.json),
+        Command::Palette(a) => commands::palette::run(a, cli.json),
     };
     let _ = std::io::stdout().write_all(&reply.stdout);
     eprint!("{}", reply.stderr);

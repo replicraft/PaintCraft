@@ -54,6 +54,18 @@ pub fn run(a: Options, json: bool) -> Reply {
             }
             let mut rows = vec![
                 row(
+                    "ase.palette.read",
+                    "paintcraft.ase/finite-f32-flat-groups-v1",
+                    "import-asset",
+                    "ag-psd-ase-finite-f32",
+                ),
+                row(
+                    "ase.palette.write",
+                    "paintcraft.ase/finite-f32-flat-groups-v1",
+                    "export-asset",
+                    "ag-psd-ase-finite-f32",
+                ),
+                row(
                     "ico.entry-set.write",
                     "paintcraft.icons/explicit-rgba8-entry-set-v1",
                     "fresh-write",
