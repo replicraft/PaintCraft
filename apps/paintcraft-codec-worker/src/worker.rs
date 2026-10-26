@@ -5,7 +5,7 @@ use std::io::{Read, Write};
 fn invalid(message: &str) -> Error {
     Error::new(ErrorCode::CodecFailed, message)
 }
-pub fn run() -> Result<()> {
+pub fn run(jxr_source: Option<&std::path::Path>) -> Result<()> {
     rayon::ThreadPoolBuilder::new()
         .num_threads(1)
         .build_global()
@@ -29,7 +29,15 @@ pub fn run() -> Result<()> {
     drop(input);
     crate::parent_lease::start()?;
     let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        wire::execute(header, &source, &|| crate::HEAP.peak() as u64)
+        if header.codec == wire::Codec::JxrRgb8 {
+            let path =
+                jxr_source.ok_or_else(|| invalid("JXR needs parent-owned private source path"))?;
+            crate::jxr::execute(header, &source, path, &|| crate::HEAP.peak() as u64)
+        } else if jxr_source.is_some() {
+            Err(invalid("Private JXR path supplied for another codec"))
+        } else {
+            wire::execute(header, &source, &|| crate::HEAP.peak() as u64)
+        }
     }))
     .unwrap_or_else(|_| Err(invalid("isolated decoder panic")));
     let output = match result {

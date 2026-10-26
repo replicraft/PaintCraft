@@ -27,8 +27,9 @@ pub const RESPONSE_HEADER: usize = 136;
 pub const OUTPUT_BYTES_MAX: usize = PIXELS_MAX as usize * 4 + RESPONSE_HEADER + 4096 + 64;
 pub const REQUEST_MAGIC: &[u8; 8] = b"PCDEC002";
 pub const PROTOCOL_VERSION: u16 = 2;
-pub const NATIVE_PROFILE: &str = "internal-heif-gray8-jxl-rgba8-parent-lease1";
-pub const BUILD_RECORD_MARKER: &[u8] = b"PAINTCRAFT_CODEC_WORKER_BUILD_V2\0";
+pub const NATIVE_PROFILE: &str =
+    "internal-heif-gray8-jxl-rgba8-jxr-rgb8-private-source1-parent-lease1";
+pub const BUILD_RECORD_MARKER: &[u8] = b"PAINTCRAFT_CODEC_WORKER_BUILD_V3\0";
 /// Expected native build bytes, provided to the OS verifier at composition.
 pub fn native_build_record(version: &str) -> Result<Vec<u8>> {
     if version.is_empty() || version.len() > 64 || !version.is_ascii() {
@@ -43,7 +44,7 @@ pub fn native_build_record(version: &str) -> Result<Vec<u8>> {
     bytes.extend(REQUEST_MAGIC);
     bytes.push(0);
     bytes.extend(format!("HEAP{HEAP_BYTES}").as_bytes());
-    bytes.extend(b"\0STDIN_PARENT_LEASE1\0END_CODEC_WORKER_BUILD\0");
+    bytes.extend(b"\0STDIN_PARENT_LEASE1\0JXR_PRIVATE_SOURCE1\0END_CODEC_WORKER_BUILD\0");
     Ok(bytes)
 }
 /// Reserve the fixed native child ceiling and parent buffers before reading the
@@ -61,18 +62,20 @@ const RESPONSE_MAGIC: &[u8; 8] = b"PCPIX002";
 pub enum Codec {
     HeifGray8 = 1,
     JxlRgba8 = 2,
+    JxrRgb8 = 3,
 }
 impl Codec {
     fn side_limit(self) -> u32 {
         match self {
             Self::HeifGray8 => 16384,
-            Self::JxlRgba8 => 65536,
+            Self::JxlRgba8 | Self::JxrRgb8 => 65536,
         }
     }
     fn decode(value: u8) -> Result<Self> {
         match value {
             1 => Ok(Self::HeifGray8),
             2 => Ok(Self::JxlRgba8),
+            3 if !cfg!(target_arch = "wasm32") => Ok(Self::JxrRgb8),
             _ => Err(unsupported("worker codec request is not supported")),
         }
     }
@@ -108,6 +111,9 @@ impl Request {
         owner: Owner,
         pixels: u64,
     ) -> Result<Self> {
+        if cfg!(target_arch = "wasm32") && codec == Codec::JxrRgb8 {
+            return Err(unsupported("JXR worker is native-only"));
+        }
         if owner.frontend != 3 {
             return Err(unsupported("native codec worker is Studio-only"));
         }
@@ -211,6 +217,9 @@ impl Header {
         let owner = r.owner()?;
         let nonce = r.uuid()?;
         let sha256 = r.take()?;
+        if cfg!(target_arch = "wasm32") && codec == Codec::JxrRgb8 {
+            return Err(unsupported("JXR worker is native-only"));
+        }
         if owner.frontend != 3 {
             return Err(unsupported("native codec worker is Studio-only"));
         }
@@ -321,7 +330,7 @@ pub fn success(request: Header, result: Success<'_>, peak: u64) -> Result<Vec<u8
                 encoding,
             },
         ) => (gray, alpha, encoding, 1),
-        (Codec::JxlRgba8, Pixels::SrgbRgba8(rgba)) => (
+        (Codec::JxlRgba8 | Codec::JxrRgb8, Pixels::SrgbRgba8(rgba)) => (
             rgba,
             None,
             NativeEncoding {
@@ -515,7 +524,7 @@ pub fn decode<'a>(bytes: &'a [u8], request: &Request, current: Owner) -> Result<
                 encoding,
             }
         }
-        Codec::JxlRgba8 => {
+        Codec::JxlRgba8 | Codec::JxrRgb8 => {
             if y as u64 != pixels * 4
                 || a != 0
                 || alpha_flag != 0

@@ -85,6 +85,9 @@ test('actual Wasm declaration permits exactly one defined unshared bounded memor
 		assert.throws(() => memoryLimits(bytes));
 });
 test('capture freezes source before digest and protocol checks owner, source and codec', async () => {
+	await assert.rejects(capture(new Uint8Array([1]), owner, 3, 1), {
+		code: 'CapabilityUnsupported',
+	});
 	const source = new Uint8Array([1, 2, 3]);
 	const pending = capture(source, owner, 2, 1);
 	source[0] = 99;

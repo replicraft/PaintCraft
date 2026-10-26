@@ -81,6 +81,10 @@ pub fn execute(header: wire::Header, source: &[u8], peak: &dyn Fn() -> u64) -> R
     header.verify_source(source)?;
     match header.codec {
         wire::Codec::HeifGray8 => decode_heif(header, source, peak),
+        wire::Codec::JxrRgb8 => Err(Error::new(
+            ErrorCode::CapabilityUnsupported,
+            "JXR requires the native private-source worker",
+        )),
         wire::Codec::JxlRgba8 => {
             let image =
                 jxl::decode_worker_rgba8_checked(source, u64::from(header.pixels), &|| Ok(()))?;

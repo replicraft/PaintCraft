@@ -259,9 +259,9 @@ fn linked_helper_contains_cross_target_packaging_build_record() {
     assert_eq!(wire::HEAP_BYTES, 268435456);
     let bytes = std::fs::read(env!("CARGO_BIN_EXE_paintcraft-codec-worker")).unwrap();
     let record = concat!(
-        "PAINTCRAFT_CODEC_WORKER_BUILD_V2\0",
+        "PAINTCRAFT_CODEC_WORKER_BUILD_V3\0",
         env!("CARGO_PKG_VERSION"),
-        "\0PCDEC002\0HEAP268435456\0STDIN_PARENT_LEASE1\0END_CODEC_WORKER_BUILD\0"
+        "\0PCDEC002\0HEAP268435456\0STDIN_PARENT_LEASE1\0JXR_PRIVATE_SOURCE1\0END_CODEC_WORKER_BUILD\0"
     )
     .as_bytes();
     assert_eq!(
