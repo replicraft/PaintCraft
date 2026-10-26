@@ -1,7 +1,8 @@
 # Native decoder isolation helper
 
-This is a real single-request executable, currently used by headless qualification
-tests. Complete native packages include it, but **public image-open routes do not invoke it**. HEIF writing
+This is a real single-request executable used by bounded native Studio JXL
+conversion in the CLI and MCP server. Complete native packages include it;
+ordinary image Open and browser readers remain separate, unqualified routes. HEIF writing
 remains prohibited. A native helper alone does not qualify HEIF browser support.
 
 The caller passes an explicit absolute executable path to the existing runtime
@@ -92,7 +93,8 @@ Linux packages place the executable in `usr/bin` and manifest in
 `usr/share/paintcraft`. AppImage verification checks both payload paths.
 
 The manifest records the verified embedded version, target, helper SHA-256,
-protocol, heap ceiling and an explicit disabled public-reader flag. Native
+protocol, heap ceiling and schema 2 `qualified_import_variants`, currently only
+`native-jxl-srgb8-worker-v1`. HEIF, JXR and browser readers are absent. Native
 packaging tests use synthetic executable headers to inspect all six target
 layouts and command payloads; they do not replace real Windows/Linux installers
 or independent HEIF container interoperability. A real Apple Silicon helper has
@@ -110,12 +112,12 @@ retain their existing release names and checksum inventory.
 ## JPEG XL internal native profile
 
 The same executable and supervisor now also handle an explicitly selected JPEG XL
-request. Shared `paintcraft_formats::codec_worker` protocol2 uses `PCDEC002` /
+request. Shared `paintcraft_formats::codec_worker` protocol 2 uses `PCDEC002` /
 `PCPIX002` envelopes and binds the response codec to the captured request. Typed
 pixel payloads distinguish native HEIF gray/opacity from integer sRGB RGBA8;
 responses cannot relabel either model as the other. Parent output reservation
 covers four bytes per pixel plus bounded version/error framing for either codec.
-The embedded helper build record and packaging manifest also require protocol2,
+The embedded helper build record and packaging manifest also require protocol 2,
 so an earlier helper refuses the new package contract instead of being invoked.
 
 The pinned selected `jxl` 0.8.0 decoder is from
@@ -184,8 +186,9 @@ targets, symlink/FIFO rejection, file identity replacement, bounded records and
 concurrent same-descriptor captures. Workspace tests build the real helper;
 focused CLI installation tests require it to be built first.
 
-This is not public Studio Open/import activation. The hidden qualification
-composition can now write a new PCND copy:
+The CLI and MCP Studio explicit-import routes select the narrowly qualified
+`native-jxl-srgb8-worker-v1` profile. The hidden diagnostic composition can also
+write a new PCND copy:
 
 ```sh
 paintcraft-cli --json codec-import source.jxl --output converted.pcnd
@@ -194,21 +197,25 @@ paintcraft-cli --json codec-import source.jxl --output converted.pcnd
 It accepts only the worker's metadata-free straight sRGB RGBA8 profile, preserving
 hidden RGB and alpha in one editable Image layer. Metadata, ICC, depth and other
 unqualified variants are refused rather than silently converted. Receipts mark
-this as internal qualification and a new PCND copy. Normal `import` still consults
-the unchanged registry and refuses JXL reads.
+the decoder profile, actual reader route and a new PCND copy. Normal CLI `import`
+and MCP `import_image` use the exact native variant; ordinary Open, Classic and
+browser reads remain denied. Desktop GUI adoption is qualified separately.
 
-The existing Executor reservation is retained by the prepared document through
+For CLI conversion, the existing Executor reservation is retained by the prepared document through
 PCND staging, final source/owner checks, publication and document destruction.
 Its logical declaration includes the fixed decoder heap, captured source/output,
 up to 64MiB of padded tiles plus 17MiB of tile-index/writer slack and 1MiB of IO slack;
 this is not an allocation-enforced cap on the host/native writer or physical RSS.
 The guard rejects captured-source aliases, changed source content, foreign owners
 and helper failures. Installed-CLI tests verify the independent six-pixel oracle
-and preserve sources/existing destinations on refusal. Public OS admission and
-containment policy remain release gates.
+and preserve sources/existing destinations on refusal. MCP instead hands the
+validated document into its existing resident tile realm: tile-owned leases survive
+Session/history snapshots, while reaped-child and private-buffer preparation
+capacity is released at adoption. This is not filesystem, process-tree or physical
+RSS containment.
 
 Native
-transport BUILD_V2 / STDIN_PARENT_LEASE1 keeps the supervisor's sole stdin writer
+transport BUILD_V3 / STDIN_PARENT_LEASE1 keeps the supervisor's sole stdin writer
 open after the exact bounded request; EOF, IO failure or an extra byte makes a
 separate helper watchdog exit without allocating (status76). The request reader
 releases its stdin lock before starting that watchdog. Shared binary protocol v2
@@ -223,3 +230,26 @@ forwarded or inherited writer handles would invalidate its sole-writer premise.
 While the parent is alive, supervisor cleanup kills/reaps then joins both pipe
 workers even if a check callback panics. Requested heap is not physical RSS or
 filesystem/process containment.
+
+## Private JPEG XR qualification
+
+The helper's native-only code 3 uses pinned `jpegxr-pure-rs` 0.1.0 inside the same
+256 MiB requested-heap and parent-lease process. It admits only the strict RGB8
+header profile, verifies all post-init precision/order/dimension declarations,
+and compares a parent-owned private `.jxr` backing file byte-for-byte with the
+captured request before opening the selected decoder. The helper has no shared-
+temp convenience decoder path. The parent owns the random private source until
+supervised child reap, then explicitly closes it; parent death can leave a temp
+orphan. No OS filesystem sandbox, Windows ACL parity or hard disk quota is claimed.
+
+The RGB color policy is T.832 Annex C.2's default for UINT RGB lacking all embedded
+color contexts; layout alone is not treated as a color declaration. Private CLI
+inspection reports that policy and exact source resolution bits. JXR public
+Open/import, browser decoding, fresh export, preserving Save and broader
+ICC/alpha/HDR profiles remain disabled. See the [independent qualification](../../crates/services/paintcraft-formats/tests/jxr-fixtures/README.md#private-native-worker-qualification-2026-10-26).
+
+The native build-record marker is now `BUILD_V3` and requires
+`JXR_PRIVATE_SOURCE1`; the binary transport remains protocol 2. Browser allowed
+codec codes stay unchanged. All native packages containing this helper also
+include `JPEGXR_LICENSE.txt`, reproducing the selected dependency's actual
+Microsoft notice rather than relying on its different Cargo license label.

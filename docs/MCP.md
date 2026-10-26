@@ -372,3 +372,21 @@ paintcraft-cli export-icns painting.pcnd -o copy.icns --type ic11 --type ic12 \
 ICNS normal image Open, preserving Save, generic flat export and Classic routes
 remain unavailable. See [the format ledger](FORMAT_INTEROPERABILITY.md#icns-selected-entry-conversion-and-fresh-export-2026-10-26)
 for the bounded profiles and independent positive/negative evidence.
+
+## Native JPEG XL import
+
+`import_image` accepts the native Studio `native-jxl-srgb8-worker-v1` profile:
+metadata-free, static, identity-oriented, original-profile straight sRGB RGBA8,
+including hidden RGB and alpha, up to 4,194,304 pixels. ICC, container metadata,
+high depth, preview/animation and other unqualified profiles are refused. This
+requires the same-build packaged codec helper and matching schema 2 manifest;
+helper-free installations fail closed. Generic image Open, Classic, browser JXL
+reads and HEIF/JXR document imports remain separate and unavailable.
+
+The server captures the current Session owner/state/epoch, keeps decoded work
+private, and validates the source identity and cancellation before adoption. RPC
+cancellation drains the child supervisor before retiring preparation capacity.
+The imported document is unsaved; its intrinsic resident tile leases survive
+history and snapshots. Saving or exporting cannot replace the captured source,
+including a hardlink alias. This process isolation is not a physical-RSS,
+filesystem or descendant-process sandbox.
