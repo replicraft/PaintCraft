@@ -300,11 +300,13 @@ pub mod export_dcx;
 pub mod export_icns;
 pub mod export_icons;
 pub mod export_layered;
-#[cfg(test)]
+pub mod float_job;
 pub mod float_options;
 pub mod format_profile;
 pub mod import;
+pub mod import_float;
 pub mod inspect;
+pub mod inspect_float;
 pub mod inspect_icns;
 pub mod new;
 pub mod palette;

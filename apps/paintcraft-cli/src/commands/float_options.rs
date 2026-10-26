@@ -1,6 +1,8 @@
 //! One finite CLI/MCP settings DTO; no format route, decoder or implicit policy.
 use paintcraft_core::types::{Error, ErrorCode, Result};
-use paintcraft_formats::{float_import::wire, precision};
+#[cfg(test)]
+use paintcraft_formats::float_import::wire;
+use paintcraft_formats::precision;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -130,6 +132,7 @@ impl Selection {
             }),
         })
     }
+    #[cfg(test)]
     pub fn wire(self) -> Result<[u8; wire::SETTINGS_BYTES]> {
         wire::encode_settings(self.settings()?)
     }

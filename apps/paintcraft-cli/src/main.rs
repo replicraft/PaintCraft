@@ -38,6 +38,10 @@ enum Command {
     Inspect(commands::inspect::Options),
     /// List ICNS entries with explicit logical sizes, Retina density and qualification.
     InspectIcns(commands::inspect_icns::Options),
+    /// Inspect an explicitly configured float-to-SDR conversion without adoption.
+    InspectFloat(commands::inspect_float::Options),
+    /// Import a digest-approved float conversion as a fresh PCND project.
+    ImportFloat(commands::import_float::Options),
     /// Print an automation JSON schema.
     Schema(commands::schema::Options),
     /// Report implemented capabilities and qualification status.
@@ -76,6 +80,8 @@ fn main() -> ExitCode {
         Command::New(a) => commands::new::run(a, cli.json),
         Command::Inspect(a) => commands::inspect::run(a, cli.json),
         Command::InspectIcns(a) => commands::inspect_icns::run(a, cli.json),
+        Command::InspectFloat(a) => commands::inspect_float::run(a, cli.json),
+        Command::ImportFloat(a) => commands::import_float::run(a, cli.json),
         Command::Schema(a) => commands::schema::run(a, cli.json),
         Command::Capabilities(a) => commands::capabilities::run(a, cli.json),
         Command::Apply(a) => commands::apply::run(a, cli.json),
