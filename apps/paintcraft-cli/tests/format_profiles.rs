@@ -408,6 +408,22 @@ fn capabilities_report_avif_exact_native_import_with_required_v5_preflight() {
             usize::from(profile.is_none_or(|value| value == "studio"))
         );
         if let Some(row) = variants.first() {
+            let accepted: Vec<_> = row
+                .get("accepted_helper_profiles")
+                .and_then(Value::as_array)
+                .unwrap()
+                .iter()
+                .map(|profile| profile.as_str().expect("explicit profile string"))
+                .collect();
+            assert_eq!(
+                accepted.as_slice(),
+                &[wire::AVIF_NATIVE_PROFILE, wire::AVIF_SDR_NATIVE_PROFILE]
+            );
+            assert_eq!(
+                row.get("required_helper_profile_is_minimum")
+                    .and_then(Value::as_bool),
+                Some(true)
+            );
             for (key, expected) in [
                 ("capability", "avif.srgb8.import"),
                 ("profile", "frontend/studio"),
@@ -461,6 +477,19 @@ fn capabilities_report_avif_sdr_exact_native_import_with_required_v6_preflight()
             usize::from(profile.is_none_or(|value| value == "studio"))
         );
         if let Some(row) = variants.first() {
+            let accepted: Vec<_> = row
+                .get("accepted_helper_profiles")
+                .and_then(Value::as_array)
+                .unwrap()
+                .iter()
+                .map(|profile| profile.as_str().expect("explicit profile string"))
+                .collect();
+            assert_eq!(accepted.as_slice(), &[wire::AVIF_SDR_NATIVE_PROFILE]);
+            assert_eq!(
+                row.get("required_helper_profile_is_minimum")
+                    .and_then(Value::as_bool),
+                Some(true)
+            );
             for (key, expected) in [
                 ("capability", "avif.sdr-ycbcr8.import"),
                 ("profile", "frontend/studio"),

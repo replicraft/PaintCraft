@@ -111,14 +111,30 @@ pub fn run(a: Options, json: bool) -> Reply {
                             fields
                                 .insert("runtime_installation_verified".into(), Value::Bool(false));
                             if family == Family::Avif {
+                                let profiles: &[&str] =
+                                    if variant == codec_worker::NATIVE_AVIF_SDR_IMPORT_VARIANT {
+                                        &[codec_worker::AVIF_SDR_NATIVE_PROFILE]
+                                    } else {
+                                        &[
+                                            codec_worker::AVIF_NATIVE_PROFILE,
+                                            codec_worker::AVIF_SDR_NATIVE_PROFILE,
+                                        ]
+                                    };
+                                // Keep the old field as explanatory minimum compatibility.
+                                // Only this finite array authorizes known contracts; no
+                                // ordering rule accepts a hypothetical newer profile.
                                 fields.insert(
                                     "required_helper_profile".into(),
-                                    Value::str(
-                                        if variant == codec_worker::NATIVE_AVIF_SDR_IMPORT_VARIANT {
-                                            codec_worker::AVIF_SDR_NATIVE_PROFILE
-                                        } else {
-                                            codec_worker::AVIF_NATIVE_PROFILE
-                                        },
+                                    Value::str(profiles[0]),
+                                );
+                                fields.insert(
+                                    "required_helper_profile_is_minimum".into(),
+                                    Value::Bool(true),
+                                );
+                                fields.insert(
+                                    "accepted_helper_profiles".into(),
+                                    Value::Array(
+                                        profiles.iter().copied().map(Value::str).collect(),
                                     ),
                                 );
                             }
