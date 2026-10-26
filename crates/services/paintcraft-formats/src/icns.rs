@@ -1,6 +1,8 @@
 //! Bounded PNG and small RGB/mask profile ICNS resources, explicit density.
 //! Internal backend qualification; no registry/consumer activation yet.
 mod legacy;
+mod prepare;
+pub use prepare::{Prepared, PreparedEntry, prepare_document};
 mod read;
 #[cfg(test)]
 mod tests;

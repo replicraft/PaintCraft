@@ -138,6 +138,48 @@ pub fn prepare_document(
     {
         return Err(resource("icon output set exceeds preparation budget"));
     }
+    let sizes: Vec<_> = specs.iter().map(|spec| (spec.width, spec.height)).collect();
+    let (buffers, losses) = prepare_pixels(doc, &sizes, filter, check)?;
+    let entries: Vec<_> = specs
+        .iter()
+        .copied()
+        .zip(buffers)
+        .map(|(spec, rgba)| PreparedEntry { spec, rgba })
+        .collect();
+    let borrowed: Vec<_> = entries.iter().map(PreparedEntry::borrowed).collect();
+    write::preflight(kind, &borrowed, limits)?;
+    check()?;
+    Ok(Prepared {
+        kind,
+        entries,
+        losses,
+        limits,
+    })
+}
+
+/// Shared fitted pixel preparation for explicit ICO/CUR and ICNS entry sets.
+/// Type/density selection and encoding admission remain with each container.
+pub(crate) fn prepare_pixels(
+    doc: &Document,
+    sizes: &[(u32, u32)],
+    filter: Filter,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<(Vec<Vec<u8>>, Vec<String>)> {
+    if sizes.is_empty() || sizes.len() > ENTRIES_MAX {
+        return Err(resource(
+            "icon output entry count outside preparation budget",
+        ));
+    }
+    let mut pixels = 0u64;
+    for &(width, height) in sizes {
+        if width == 0 || height == 0 {
+            return Err(resource("empty icon output dimensions"));
+        }
+        pixels = pixels
+            .checked_add(u64::from(width) * u64::from(height))
+            .filter(|count| *count <= WRITE_PIXELS_MAX)
+            .ok_or_else(|| resource("icon output set exceeds preparation pixel budget"))?;
+    }
     if doc.canvas.0 == 0
         || doc.canvas.1 == 0
         || u64::from(doc.canvas.0) * u64::from(doc.canvas.1) > WRITE_PIXELS_MAX
@@ -157,20 +199,17 @@ pub fn prepare_document(
     {
         losses.push("hidden-rgb".into());
     }
-    if specs
-        .iter()
-        .any(|spec| (spec.width, spec.height) != doc.canvas)
-    {
+    if sizes.iter().any(|size| *size != doc.canvas) {
         losses.push("icon-resized".into());
     }
-    let mut entries = allocate(specs.len())?;
+    let mut entries = allocate(sizes.len())?;
     let mut premultiplied = None;
-    for &spec in specs {
+    for &(target_width, target_height) in sizes {
         check()?;
-        let (width, height) = fit(doc.canvas, (spec.width, spec.height));
-        let mut fitted = allocate(spec.width as usize * spec.height as usize * 4)?;
-        fitted.resize(spec.width as usize * spec.height as usize * 4, 0u8);
-        let offset = ((spec.width - width) / 2, (spec.height - height) / 2);
+        let (width, height) = fit(doc.canvas, (target_width, target_height));
+        let mut fitted = allocate(target_width as usize * target_height as usize * 4)?;
+        fitted.resize(target_width as usize * target_height as usize * 4, 0u8);
+        let offset = ((target_width - width) / 2, (target_height - height) / 2);
         let sampled = if filter == Filter::Lanczos3 && (width, height) != doc.canvas {
             if premultiplied.is_none() {
                 premultiplied = Some(premultiply(&rgba, doc.canvas, check)?);
@@ -197,21 +236,14 @@ pub fn prepare_document(
                         [((u64::from(sy) * u64::from(doc.canvas.0) + u64::from(sx)) * 4) as usize..]
                         [..4]
                 };
-                let target = (((y + offset.1) * spec.width + x + offset.0) * 4) as usize;
+                let target = (((y + offset.1) * target_width + x + offset.0) * 4) as usize;
                 fitted[target..target + 4].copy_from_slice(pixel);
             }
         }
-        entries.push(PreparedEntry { spec, rgba: fitted });
+        entries.push(fitted);
     }
-    let borrowed: Vec<_> = entries.iter().map(PreparedEntry::borrowed).collect();
-    write::preflight(kind, &borrowed, limits)?;
     check()?;
-    Ok(Prepared {
-        kind,
-        entries,
-        losses,
-        limits,
-    })
+    Ok((entries, losses))
 }
 
 fn premultiply(
