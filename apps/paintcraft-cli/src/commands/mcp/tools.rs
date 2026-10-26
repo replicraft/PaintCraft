@@ -86,6 +86,7 @@ impl PaintingServer {
                 !image::KNOWN_IMPORT_LOSSES.contains(&code.as_str())
                     && !paintcraft_formats::project_import::KNOWN_LOSSES.contains(&code.as_str())
                     && !paintcraft_formats::icons::KNOWN_IMPORT_LOSSES.contains(&code.as_str())
+                    && !paintcraft_formats::icns::KNOWN_IMPORT_LOSSES.contains(&code.as_str())
                     && !paintcraft_formats::svg::KNOWN_LOSSES.contains(&code.as_str())
             }) {
                 return Err(invalid(&format!("unknown import loss code {code:?}")));
@@ -104,18 +105,21 @@ impl PaintingServer {
                     "SVG import requires explicit width and height in svg options",
                 ));
             }
-            let (bytes,sha,source_identity)=if path.extension().and_then(|ext|ext.to_str()).and_then(Family::from_extension)==Some(Family::Msp) {
-                let (bytes,sha,identity)=read_captured(&path,paintcraft_formats::msp::BYTES_MAX as u64,"MSP image")?;(bytes,sha,Some(identity))
+            let captured_limit = path.extension().and_then(|ext|ext.to_str())
+                .and_then(Family::from_extension).and_then(|family|match family {
+                    Family::Msp=>Some(paintcraft_formats::msp::BYTES_MAX),
+                    Family::Icns=>Some(paintcraft_formats::icns::BYTES_MAX),
+                    _=>None,
+                });
+            let (bytes,sha,source_identity) = if let Some(limit)=captured_limit {
+                let (bytes,sha,identity)=read_captured(&path,limit as u64,"captured image")?;
+                (bytes,sha,Some(identity))
             } else {
                 let (bytes, sha) = read_bounded(
-                &path,
-                if p.svg.is_some() {
-                    paintcraft_formats::svg::SOURCE_MAX as u64
-                } else {
-                    INPUT_MAX
-                },
-                "image",
-            )?;
+                    &path,
+                    if p.svg.is_some() {paintcraft_formats::svg::SOURCE_MAX as u64} else {INPUT_MAX},
+                    "image",
+                )?;
                 (bytes,sha,None)
             };
             let family = if p.svg.is_some() {
@@ -127,6 +131,7 @@ impl PaintingServer {
                     _ => profile.admit_import(&path, &bytes)?,
                 }
             };
+            let mut icns_entry = None;
             let (doc, losses) = if let Some(svg) = &p.svg {
                 if !p.allow_losses.iter().any(|code| code == "svg-rasterized") {
                     return Err(paintcraft_core::types::Error::new(
@@ -143,6 +148,12 @@ impl PaintingServer {
                     &|| Ok(()),
                 )?;
                 (converted.document, converted.losses)
+            } else if family == Family::Icns {
+                let entry=p.entry.ok_or_else(||invalid("ICNS import requires an explicit entry"))?;
+                let decoded=paintcraft_formats::icns::decode_entry(&bytes,entry,image::DECODE_PIXELS_MAX,&||Ok(()))?;
+                let document=decoded.document(&sha)?;
+                icns_entry=Some(decoded.entry);
+                (document,decoded.losses)
             } else if let Some(entry) = p.entry {
                 let decoded = paintcraft_formats::icons::decode_entry(
                     &bytes,
@@ -193,9 +204,9 @@ impl PaintingServer {
                 .svg
                 .map(|selection| selection.font_files)
                 .unwrap_or_default();
-            if family==Family::Msp {
+            if matches!(family,Family::Msp|Family::Icns) {
                 let mut value=state.inspection()?;
-                value["conversion"]=json!({"source_sha256":sha,"losses_acknowledged":losses,"source_lineage_adopted":false,"source_format":"msp","preserving_save":false});
+                value["conversion"]=json!({"source_sha256":sha,"losses_acknowledged":losses,"source_lineage_adopted":false,"source_format":family.id(),"icns_entry":icns_entry.map(|entry|json!({"index":entry.index,"record":entry.record,"tag":String::from_utf8_lossy(&entry.tag),"width":entry.width,"height":entry.height,"logical_width":entry.logical_width,"logical_height":entry.logical_height,"scale":entry.scale})),"preserving_save":false});
                 Ok(super::state::reply(value))
             } else {state.inspect()}
         })
@@ -346,6 +357,7 @@ impl PaintingServer {
     pub(super) fn router() -> rmcp::handler::server::router::tool::ToolRouter<Self> {
         Self::tool_router()
             + Self::icon_router()
+            + Self::icns_router()
             + Self::palette_router()
             + Self::shapes_router()
             + Self::brush_router()

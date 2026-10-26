@@ -32,7 +32,9 @@ impl State {
                 .as_ref()
                 .is_some_and(|candidate| source.matches(candidate))
         }) {
-            return Err(invalid("output must not replace the captured MSP input"));
+            return Err(invalid(
+                "output must not replace the captured imported image",
+            ));
         }
         if self
             .selected_brush

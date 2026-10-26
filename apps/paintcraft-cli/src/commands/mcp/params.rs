@@ -24,7 +24,7 @@ pub struct Import {
     pub path: String,
     /// Explicit zero-based DCX page. Required for DCX; omit for other formats.
     pub page: Option<u16>,
-    /// Explicit zero-based ICO/CUR entry. Required for icons/cursors; conflicts with page.
+    /// Explicit zero-based ICO/CUR/ICNS entry. Required for icon imports; conflicts with page.
     pub entry: Option<u16>,
     /// SVG/SVGZ only: explicit dimensions, optional DPI/fitting and font files.
     pub svg: Option<super::super::svg_options::Selection>,
