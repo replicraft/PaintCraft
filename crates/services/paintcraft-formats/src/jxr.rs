@@ -6,7 +6,9 @@
 //! separate typed worker path. Header admission alone does not validate entropy
 //! data or bound upstream allocation.
 mod import;
-pub use import::{ImportAssessment, KNOWN_IMPORT_LOSSES, Resolution, assess_import};
+pub use import::{
+    ImportAssessment, KNOWN_IMPORT_LOSSES, Resolution, assess_import, assess_writer_import,
+};
 use paintcraft_core::types::{Error, ErrorCode, Result};
 
 pub const INPUT_BYTES_MAX: usize = 64 << 20;
@@ -83,6 +85,27 @@ pub(crate) fn inspect_fresh_rgb8_checked(
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Inspection> {
     inspect_profile(bytes, pixels, check, HeaderProfile::FreshOutput)
+}
+/// Private writer-compatible RGB8 admission; never used by the existing reader.
+/// Structural admission does not authenticate an originating encoder.
+pub fn inspect_writer_rgb8_checked(
+    bytes: &[u8],
+    pixels: u64,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Inspection> {
+    let source = inspect_fresh_rgb8_checked(bytes, pixels.min(1_048_576), check)?;
+    if source.container_version != 1
+        || source.resolution_x_bits != Some(0)
+        || source.resolution_y_bits != Some(0)
+        || source.width > 65_536
+        || source.height > 65_536
+    {
+        return Err(unsupported(
+            "JXR source is outside the writer-compatible RGB8 subset",
+        ));
+    }
+    check()?;
+    Ok(source)
 }
 enum HeaderProfile {
     ShortOnly,

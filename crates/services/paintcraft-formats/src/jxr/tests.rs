@@ -220,3 +220,41 @@ fn long_header_truncation_and_cancellation_are_checked() {
     .unwrap_err();
     assert_eq!(error.code, ErrorCode::OperationCancelled);
 }
+
+#[test]
+fn private_writer_assessment_is_explicit_and_keeps_density_and_geometry_bounds() {
+    for bytes in [SMALL, LONG_WIDE, LONG_TALL] {
+        let assessment = assess_writer_import(bytes, 1_048_576, &|| Ok(())).unwrap();
+        assert_eq!(assessment.losses(), &["jxr-resolution-not-retained"]);
+        assert!(assessment.require_losses(&[]).is_err());
+        assert_eq!(assessment.source().resolution_x_bits, Some(0));
+        assert_eq!(assessment.source().resolution_y_bits, Some(0));
+    }
+    assert!(assess_import(LONG_WIDE, PIXELS_MAX, &|| Ok(())).is_err());
+    for bits in [(-0f32).to_bits(), 96f32.to_bits()] {
+        let mut bytes = SMALL.to_vec();
+        let pos = field(&bytes, 0xbc82);
+        set(&mut bytes, pos + 8, bits);
+        assert!(assess_import(&bytes, PIXELS_MAX, &|| Ok(())).is_ok());
+        assert!(assess_writer_import(&bytes, PIXELS_MAX, &|| Ok(())).is_err());
+    }
+    let mut bytes = SMALL.to_vec();
+    bytes[3] = 0;
+    assert!(assess_import(&bytes, PIXELS_MAX, &|| Ok(())).is_ok());
+    assert!(assess_writer_import(&bytes, PIXELS_MAX, &|| Ok(())).is_err());
+    assert_eq!(
+        assess_writer_import(LONG_WIDE, 4095, &|| Ok(()))
+            .unwrap_err()
+            .code,
+        ErrorCode::ResourceLimit
+    );
+    assert_eq!(
+        assess_writer_import(SMALL, PIXELS_MAX, &|| Err(Error::new(
+            ErrorCode::OperationCancelled,
+            "cancel"
+        )))
+        .unwrap_err()
+        .code,
+        ErrorCode::OperationCancelled
+    );
+}

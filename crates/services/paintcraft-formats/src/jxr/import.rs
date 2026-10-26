@@ -106,6 +106,20 @@ pub fn assess_import(
         resolution_y: Resolution::from_bits(source.resolution_y_bits),
     })
 }
+/// Explicit private writer-compatible assessment. The established short-header
+/// assessment remains unchanged; callers must separately verify its helper mode.
+pub fn assess_writer_import(
+    bytes: &[u8],
+    pixels: u64,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<ImportAssessment> {
+    let source = inspect_writer_rgb8_checked(bytes, pixels, check)?;
+    Ok(ImportAssessment {
+        source,
+        resolution_x: Resolution::from_bits(source.resolution_x_bits),
+        resolution_y: Resolution::from_bits(source.resolution_y_bits),
+    })
+}
 #[cfg(test)]
 mod tests {
     use super::*;
