@@ -6,11 +6,12 @@ use paintcraft_formats::{
     registry::{self, Family, Operation, Platform, Request},
 };
 use paintcraft_ui::{shape_assets as widget, t};
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, rc::Rc, sync::Arc};
+mod placement;
 
 #[derive(Debug)]
 struct Loaded {
-    library: csh::Library,
+    library: Arc<csh::Library>,
     view: widget::Resource,
 }
 impl Loaded {
@@ -24,7 +25,13 @@ impl Loaded {
         );
         request.extension = Some(name.rsplit('.').next().unwrap_or(""));
         registry::admission(request).require_allowed(request)?;
-        let library = csh::decode(bytes, &|| Ok(()))?;
+        if name.len() > 4096 {
+            return Err(Error::new(
+                ErrorCode::ResourceLimit,
+                "CSH filename exceeds allowance",
+            ));
+        }
+        let library = Arc::new(csh::decode(bytes, &|| Ok(()))?);
         let view = widget::Resource {
             name,
             shapes: library.shapes().iter().map(shape_view).collect(),
@@ -41,7 +48,8 @@ struct Inbox {
 pub(super) struct State {
     pub(super) open: bool,
     epoch: uuid::Uuid,
-    loaded: Option<Loaded>,
+    loaded: Option<Arc<Loaded>>,
+    placement: Option<placement::Draft>,
     busy: bool,
     error: Option<String>,
     selected: usize,
@@ -49,6 +57,7 @@ pub(super) struct State {
 }
 impl State {
     fn invalidate(&mut self) {
+        self.placement = None;
         self.epoch = uuid::Uuid::new_v4();
         self.busy = false;
         *self.inbox.borrow_mut() = Inbox {
@@ -78,7 +87,7 @@ impl WebApp {
         self.shapes.busy = false;
         match result {
             Ok(Some(loaded)) => {
-                self.shapes.loaded = Some(loaded);
+                self.shapes.loaded = Some(Arc::new(loaded));
                 self.shapes.selected = 0;
                 self.shapes.error = None;
                 self.message = t!(ctx, "Shape imported.");
@@ -204,6 +213,10 @@ impl WebApp {
         if let Some(result) = result {
             self.accept_shape(ctx, self.shapes.epoch, result);
         }
+        if self.shapes.placement.is_some() {
+            self.shape_placement_dialog(ctx);
+            return;
+        }
         match widget::dialog(
             ctx,
             self.shapes.loaded.as_ref().map(|source| &source.view),
@@ -211,6 +224,15 @@ impl WebApp {
             self.shapes.error.as_deref(),
             self.shapes.selected,
         ) {
+            widget::Response::Place => {
+                if let Err(error) = self.begin_shape_placement() {
+                    self.shapes.error = Some(t!(
+                        ctx,
+                        "Could not place the shape: { $detail }",
+                        detail = error
+                    ));
+                }
+            }
             widget::Response::Pending => {}
             widget::Response::Close => {
                 self.shapes.open = false;
@@ -258,8 +280,38 @@ fn shape_view(shape: &csh::Shape) -> widget::Shape {
         width: shape.bounds[3] - shape.bounds[1],
         height: shape.bounds[2] - shape.bounds[0],
         paths,
+        placement_restrictions: placement_restrictions(shape),
     }
 }
 
 #[cfg(test)]
 mod tests;
+
+fn placement_restrictions(shape: &csh::Shape) -> Vec<&'static str> {
+    match csh::placement::assess(shape, &|| Ok(())) {
+        Err(_) => vec!["This shape has unsupported path geometry."],
+        Ok(assessment) => assessment
+            .unsupported()
+            .iter()
+            .map(|reason| match reason {
+                csh::placement::Unsupported::MultiplePaths => {
+                    "Shapes with multiple paths cannot be placed yet."
+                }
+                csh::placement::Unsupported::OpenPath => "Open paths cannot be placed yet.",
+                csh::placement::Unsupported::BooleanOperation => {
+                    "This shape uses unsupported Boolean operations."
+                }
+                csh::placement::Unsupported::InitialFill => {
+                    "Shapes that fill the outside area cannot be placed yet."
+                }
+                csh::placement::Unsupported::Clipboard => {
+                    "This shape includes unsupported placement metadata."
+                }
+                csh::placement::Unsupported::CoordinateRange => {
+                    "This shape's control points exceed the placement limits."
+                }
+                _ => "This shape has unsupported path geometry.",
+            })
+            .collect(),
+    }
+}

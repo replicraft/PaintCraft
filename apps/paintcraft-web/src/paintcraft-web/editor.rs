@@ -1,6 +1,7 @@
 //! Browser-owned session. Raster algorithms and history remain in shared crates.
 mod floating;
 mod sampled_brush;
+mod shape_mask;
 mod text;
 use paintcraft_commands::Batch;
 use paintcraft_core::types::{Error, ErrorCode, Result, Rgba, json::Value};

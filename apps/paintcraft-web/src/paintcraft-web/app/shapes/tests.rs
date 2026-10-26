@@ -55,8 +55,8 @@ fn translated_browser_shape_selection_preserves_document_history_and_title() {
         assert_eq!(h.state().editor.session.ticket(), ticket);
         assert_eq!(h.state().editor.session.is_dirty(), dirty);
         assert_eq!(
-            h.state().shapes.loaded.as_ref().unwrap().library,
-            csh::decode(SOURCE, &|| Ok(())).unwrap()
+            h.state().shapes.loaded.as_ref().unwrap().library.as_ref(),
+            &csh::decode(SOURCE, &|| Ok(())).unwrap()
         );
         h.get_by_role_and_label(egui::Role::Button, &translate(language, "Close"))
             .click();
