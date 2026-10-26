@@ -6,7 +6,7 @@ Codec implementation, enabled frontend operations and release qualification are 
 
 ## Available workflows
 
-Desktop and browser share the frontend registry, with platform-specific qualification for each operation. Native-only JPEG XL and JPEG XR imports therefore do not imply browser readers. CLI and MCP import/export operations also apply that registry, using an explicit frontend profile rather than inheriting every compiled codec. All foreign conversions require acknowledgment of their reported losses before publication. Failed, cancelled or stale conversions leave the existing document intact.
+Desktop and browser share the frontend registry, with platform-specific qualification for each operation. Native-only JPEG XR imports therefore do not imply browser readers; JPEG XL has its own explicitly qualified browser import. CLI and MCP import/export operations also apply that registry, using an explicit frontend profile rather than inheriting every compiled codec. All foreign conversions require acknowledgment of their reported losses before publication. Failed, cancelled or stale conversions leave the existing document intact.
 
 - PCND is the native layered project format and the preserving Save destination.
 - Classic 7/10/11 open and export PNG, JPEG, BMP, still GIF and single-page TIFF. CLI Classic profiles can explicitly import the admitted PCX and MSP subsets; the Classic 11 CLI profile also admits the limited PAINT conversion. Desktop/browser Import image is currently a Studio action, so these headless allowances do not imply additional Classic menus.
@@ -15,7 +15,7 @@ Desktop and browser share the frontend registry, with platform-specific qualific
 - Studio offers **15 flat exports**: PNG, JPEG, BMP, GIF, TIFF, TGA, WebP, JPEG XL, DDS, AVIF, QOI, PAM, farbfeld, PCX with RGB24 or indexed palettes, and exact opaque black/white MSP1. PAM output always uses `.pam`, never a `.ppm`, `.pgm`, `.pbm` or generic `.pnm` filename.
 - DCX requires a page choice. Desktop/browser stage a page chooser before decoding and loss confirmation; CLI `import --page` and MCP `import_image` use an explicit zero-based page index. There is no implicit page-zero import.
 - ICNS import requires a specific entry with logical size, Retina scale and physical pixels shown separately. Studio desktop/browser preview and review import/export losses; fresh export offers only eight qualified PNG types. CLI/MCP use the same explicit entry/type policy; ordinary Open and preserving ICNS Save stay denied.
-- Native Studio, CLI and native MCP explicitly import the narrow metadata-free sRGB8 JPEG XL profile through the verified packaged helper. Ordinary Open, browser and Classic JPEG XL reads remain denied; strict profiles without conversion losses do not invent an approval prompt.
+- Studio explicitly imports the narrow metadata-free sRGB8 JPEG XL profile through a verified packaged native helper or the bounded browser Worker. CLI and native MCP use the native route. Ordinary Open and Classic JPEG XL reads remain denied; strict profiles without conversion losses do not invent an approval prompt.
 - Native Studio, CLI and native MCP explicitly import the qualified opaque RGB8 JPEG XR profile with mandatory print-resolution loss consent. Studio displays the actual picture and effective horizontal/vertical DPI before approval. Ordinary Open, browser and Classic JPEG XR reads remain denied.
 
 Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, GIF, TGA, DDS, TIFF, HEIF, WebP and AVIF. That inventory is not a claim that all those readers are enabled. PCND and qualified extended conversions are additional workflows. HEIF/HEIC writing and SVG export remain prohibited.
@@ -31,7 +31,7 @@ Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, 
 | TGA | Studio integer raster Open and lossless RGBA8 Export | Admitted orientation, RLE and palette profiles only; palette/metadata losses explicit |
 | WebP | Studio still Open and lossless RGBA8 Export | Animation and unqualified extensions refused; import metadata losses explicit |
 | DDS | Studio single-surface Open and exact RGBA8 Export | Reader admits RGBA/BGRA/BC1/BC2/BC3 with explicit sRGB transfer and straight or opaque alpha only. Linear/unspecified transfer, associated/unknown alpha, mipmaps, arrays, cubes and volumes refused. Writer emits uncompressed DX10 RGBA8 sRGB straight alpha |
-| JPEG XL | Studio lossless RGBA8 Export; native Studio explicit Import, CLI and native MCP `import_image` for `native-jxl-srgb8-worker-v1` | Import requires the matching packaged helper/schema 2 manifest and a metadata-free static identity-oriented straight sRGB8 profile. At most 64 MiB input and 4,194,304 pixels. Browser, ordinary Open and Classic reads remain denied. Export retains its minimum two pixels per side and 64 MiB output limit |
+| JPEG XL | Studio lossless RGBA8 Export; native Studio/CLI/MCP explicit Import for `native-jxl-srgb8-worker-v1`; browser Studio explicit Import for `web-jxl-srgb8-worker-quarantine-v1` | Both readers require metadata-free static identity-oriented straight sRGB8, at most 64 MiB input and 4,194,304 pixels. Native import requires the matching packaged helper/schema 2 manifest. Browser import uses the production isolated Worker and persistent quarantine on uncertain completion. Ordinary Open and Classic reads remain denied. Export retains its minimum two pixels per side and 64 MiB output limit |
 | AVIF | Studio lossy RGBA8 Export only, adjustable quality | Lossy even at quality 100; alpha may change and transparent RGB may be discarded. At most 1,048,576 pixels, 4096 per side and 16 MiB encoded output. No decoder enabled |
 | QOI | Studio explicit Import and lossless RGBA8 Export | Strict complete raster/end marker and sRGB profile; linear declaration refused; exact alpha and hidden RGB retained by the codec |
 | Netpbm | Studio explicit P1 through P7 Import; PAM P7 RGBA8 Export only | Admitted max values 1, 255 or 65535 and recognized grayscale/RGB/alpha tuples; bounded 64 KiB header. High-depth import reduces to 8 bits; metadata loss explicit |
@@ -98,7 +98,7 @@ and [36-family target matrix](temp/paintcraft-format-interoperability-classic-st
 are wider than the enabled subsets above. The next work is ordered by usable
 consumer paths and prerequisites, rather than treating every candidate as a dependency:
 
-1. **Finish the active browser JPEG XL consumer gate.** Production Worker/Wasm assets and typed isolation infrastructure do not themselves enable browser image import. Validate real UI adoption, cancellation, stale owners, installed asset discovery and document/source handoff before changing that registry gate. Extend native JXL/JXR release-platform installation coverage separately.
+1. **Extend isolated-reader qualification across supported platforms.** The narrow browser JPEG XL consumer now has actual production picker, adoption, PCND reopen and failure evidence below. Extend native JXL/JXR release-platform installation coverage and cross-browser qualification separately; browser quarantine is a logical failure policy, not a synchronous Worker-stop or aggregate physical-memory guarantee.
 2. **Close missing stock readers, starting with AVIF.** AVIF is export-only; HEIF remains disabled despite internal qualification. The current `image` `avif` feature enables the ravif writer, while its separate native decoder feature would add mp4parse/dav1d. Decode-before-limit behavior requires bounded preflight and isolated execution, independent color/alpha/metadata oracles, actual consumers and packaged dependencies before admission. A native AVIF profile is the next proposed independent increment; this audit does not enable it. HEIF writing remains prohibited.
 3. **Implement and qualify layered writes.** PDN/PAINT have restricted readers but no fresh or preserving writers; original Paint.NET/Windows Paint open/edit/resave evidence is still required. ORA's internal writer is not publicly enabled; groups and original-application qualification remain. PSD/PSB imports do not imply qualified layered export or preservation of groups, masks, text, effects or high-depth data. JPEG XR writing is also unimplemented; its new reader does not qualify it.
 4. **Define precision conversion before adding EXR/HDR, then evaluate JP2.** These families have no enabled adapters or selected decoder dependencies in the current manifest. EXR/HDR require a documented linear/HDR-to-RGBA8 transfer, range/tone and nonfinite-sample policy with explicit losses, rather than silently clipping high-depth pixels. The pack's `exr`, Zune HDR and OpenJPEG choices remain candidates requiring live-profile qualification; JP2 also requires codec packaging and independent lossless/lossy/color/depth evidence.
@@ -124,8 +124,8 @@ at most 64 MiB and 4,194,304 pixels. ICC/custom profiles, container metadata,
 high depth, preview/animation and other unqualified forms are refused. The
 matching same-build helper and schema 2 manifest must explicitly list the
 qualified variant; missing/inconsistent helpers fail closed. Ordinary Open,
-Classic, generic/browser JXL reads and HEIF document conversion remain
-separate, denied profiles. JPEG XR has its own qualified conversion below. Export remains the independent lossless RGBA8 path.
+Classic and generic JXL reads remain denied; the explicit browser profile below
+is separately qualified. HEIF document conversion remains denied. JPEG XR has its own qualified conversion below. Export remains the independent lossless RGBA8 path.
 
 Desktop keeps the existing editing Executor and resident realm. It acquires an
 input identity/metadata before submission, then captures bytes only inside an
@@ -956,3 +956,45 @@ preview, cancellation and native output. Picker/source guards, browser encoder
 output, independent palette-preview comparisons, font/catalog coverage and strict
 Clippy pass. Production Wasm/Astro builds pass; these checks do not establish
 Windows reference UI fidelity, every device or original Paintbrush compatibility.
+
+### Browser JPEG XL document import, 2026-10-26
+
+Studio **Import image…** admits only `web-jxl-srgb8-worker-quarantine-v1`,
+using the same metadata-free static, identity-oriented original sRGB8 decoder
+profile as native JXL. Classic and ordinary Open remain denied. The public rfd
+File is retained, and its size is checked before reading; at most 64 MiB input
+and 4,194,304 pixels are admitted. Vite owns the real lean Worker/Wasm assets.
+The Worker has a 256 MiB linear-memory maximum; this is not a browser RSS cap.
+
+The picker captures the complete Rust Session/document/frontend/draft owner.
+Rust independently binds response owner, nonce, source digest/length, dimensions,
+application version and exact pixel payload to the captured request. Document
+assembly charges padded tiles to the existing resident realm before releasing
+the validated preparation. Adoption creates a new dirty project, keeps user
+tool preferences and begins with no imported undo history. PCND downloads use
+a project suffix and retain exact straight RGBA, including hidden RGB. A browser
+download never claims disk persistence or marks the tab saved.
+
+Cancellation, stale ownership, traps and malformed responses leave the current
+project intact. When completion cannot be proved, the tab retains its logical
+codec reservation and refuses further codec jobs until reload. A persistent
+message explains how to download the project first; ordinary PCND saving remains
+available. A validated completed profile refusal releases the reservation and
+permits retry. Worker termination has no join/reclamation API: this policy does
+not establish synchronous execution stop, physical memory reclamation or a hard
+aggregate browser memory bound. Earlier failed execution-stop probes remain
+preserved; this workflow does not change their conclusions.
+
+The production `scripts/jxl-production-browser.mjs` proof exercised actual
+Studio upload, new-document adoption, empty Undo, PCND download and clean reopen;
+unsupported 16-bit refusal followed by valid retry; UI cancellation, service-owner
+invalidation, trap and malformed Worker response. Each failure scenario first
+opened the nonempty independent 3×2 PCND project. Each uncertain failure retained
+its charge, refused a new Worker and still downloaded that project. Chrome
+155.0.8059.85/CDP metadata, production asset/source hashes and screenshots are
+retained in `docs/validation/jxl-browser-2026-10-26/attempt-sHaPOK/`. Independent
+fixture samples were checked after the imported, empty-Undo, reopened and all
+four failure-preserved PCND downloads, including alpha 0/1/127/128/254/255 and
+hidden RGB. Host tests separately
+exercise full Rust owner changes and response-frame corruption. This is evidence
+for the stated profile in one actual browser, not cross-browser conformance.

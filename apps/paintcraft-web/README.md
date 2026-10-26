@@ -188,3 +188,41 @@ against the 25 MiB limit. See [deployment settings](../../docs/WEB_DEPLOYMENT.md
 Ordinary Paste uses Ctrl/Cmd+V and private positioning before Apply/Enter. Repeated
 drags keep frozen source pixels; Escape cancels and placement is one undoable
 existing-layer edit. See [placement and limits](../../docs/FLOATING_PASTE.md).
+
+## Studio JPEG XL import
+
+Studio's **Import image…** reads metadata-free still JPEG XL images with
+identity orientation and original straight sRGB8 color, including alpha and
+hidden RGB. Input is limited to 64 MiB and 4,194,304 pixels. High depth, ICC,
+animation, previews and unqualified metadata are refused. Ordinary Open and
+Classic do not admit JPEG XL. An imported image becomes a new dirty project;
+saving downloads an editable PCND copy.
+
+A lean isolated Worker uses the existing decoder and a 256 MiB Wasm
+linear-memory maximum. Source size is checked before browser file IO. Full
+document ownership, nonce, source hash, application version and response pixels
+are validated before resident tile admission and adoption.
+
+Cancel, stale ownership and malformed/trapped Workers preserve the existing
+project. Uncertain completion pauses codec imports in this tab and keeps their
+logical reservation. Download the project, then reload to try again; there is
+no reset that pretends execution has stopped. Ordinary PCND saving still works.
+Validated completed profile refusal permits retry. Browser termination does not
+prove synchronous execution stop, reclaimed memory or a hard aggregate RSS cap.
+
+Run the real production picker proof after building:
+
+```sh
+PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs \
+CODEC_EVIDENCE_DIR=/absolute/path/to/ignored/evidence \
+node scripts/jxl-production-browser.mjs
+```
+
+Every attempt preserves source/asset hashes, browser/CDP version and raw results
+in a unique directory. The 2026-10-26 Chrome 155 proof exercised adoption, empty
+Undo, PCND download/reopen, unsupported-depth retry, cancellation, stale service
+ownership, trap and malformed response. Every failure started from the reopened
+nonempty 3×2 project. Exact fixture pixels in all seven project downloads,
+including the four failure-preserved projects, passed the explicit Rust artifact
+oracle. See the
+[qualification ledger](../../docs/FORMAT_INTEROPERABILITY.md#browser-jpeg-xl-document-import-2026-10-26).
