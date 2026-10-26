@@ -185,7 +185,19 @@ concurrent same-descriptor captures. Workspace tests build the real helper;
 focused CLI installation tests require it to be built first.
 
 This is not public Studio Open/import activation. Source/destination guarding and
-resident admission through a real import/save remain integration work. Parent
-death/Windows orphan disposition and OS containment remain unqualified: native
-kill+wait controls the child while the parent is alive, and requested heap is not
-physical RSS or a filesystem/process sandbox.
+resident admission through a real import/save remain integration work. Native
+transport BUILD_V2 / STDIN_PARENT_LEASE1 keeps the supervisor's sole stdin writer
+open after the exact bounded request; EOF, IO failure or an extra byte makes a
+separate helper watchdog exit without allocating (status76). The request reader
+releases its stdin lock before starting that watchdog. Shared binary protocol v2
+and browser transport are unchanged. Packaging checks this native build record
+and the matching parent-lease1 profile, rejecting old EOF-framed helper records.
+
+Actual parent-process kill tests on this macOS host observed the sleeping child
+close its inherited output after losing the pipe lease. The same test is portable
+to Windows/Unix but has not been executed on Windows here. This is a liveness
+mechanism, not a synchronous parent-death join or a descendant/job-object sandbox;
+forwarded or inherited writer handles would invalidate its sole-writer premise.
+While the parent is alive, supervisor cleanup kills/reaps then joins both pipe
+workers even if a check callback panics. Requested heap is not physical RSS or
+filesystem/process containment.
