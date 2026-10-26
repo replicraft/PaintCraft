@@ -5,6 +5,9 @@ use paintcraft_core::types::{Error, ErrorCode};
 use paintcraft_editor::session::{HistoryTicket, PreparedEdit, PreparedNavigation};
 use paintcraft_runtime::{Cancellation, Executor, JobHandle, Limits};
 use std::sync::Mutex;
+#[path = "background/import.rs"]
+mod import;
+pub(crate) use import::ImportPending;
 
 // Provisional preparation admission, not allocator/RSS accounting. The service
 // admits one transaction across all documents, including unconsumed results.
@@ -12,6 +15,7 @@ const PREPARATION_CHARGE: u64 = 2 << 30;
 #[derive(Debug)]
 pub(super) enum Completion {
     Edit(PreparedEdit),
+    CodecImport(Box<paintcraft_formats::codec_worker::native::PreparedImport>),
     Pick(Box<picker::Picked>),
     Deferred(Box<retry::Deferred>),
     Navigation(PreparedNavigation),
@@ -371,6 +375,10 @@ impl Editor {
                     self.retarget();
                 }),
             Ok(Completion::Deferred(_)) => unreachable!("deferred edits were retained above"),
+            Ok(Completion::CodecImport(_)) => Err(Error::new(
+                ErrorCode::InvariantViolation,
+                "Codec import completion belongs to the application",
+            )),
             Ok(Completion::Maintenance(_)) => Err(Error::new(
                 ErrorCode::InvariantViolation,
                 "maintenance result routed to edit consumer",
