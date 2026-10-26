@@ -43,25 +43,8 @@ fn copied_installed_real_helper_cancellation_preserves_mcp_session_and_retires_c
         _ => panic!("release host required"),
     };
     let bytes = fs::read(&installed).unwrap();
-    let (profile, variants) = if bytes
-        .windows(wire::AVIF_SDR_BUILD_RECORD_MARKER.len())
-        .any(|part| part == wire::AVIF_SDR_BUILD_RECORD_MARKER)
-    {
-        (
-            wire::AVIF_SDR_NATIVE_PROFILE,
-            wire::QUALIFIED_AVIF_SDR_IMPORT_VARIANTS,
-        )
-    } else if bytes
-        .windows(wire::AVIF_BUILD_RECORD_MARKER.len())
-        .any(|part| part == wire::AVIF_BUILD_RECORD_MARKER)
-    {
-        (
-            wire::AVIF_NATIVE_PROFILE,
-            wire::QUALIFIED_AVIF_IMPORT_VARIANTS,
-        )
-    } else {
-        (wire::NATIVE_PROFILE, wire::QUALIFIED_NATIVE_IMPORT_VARIANTS)
-    };
+    let (profile, variants) = helper_contract(&bytes, env!("CARGO_PKG_VERSION"))
+        .expect("copied helper must have one exact current V4/V5/V6/V7 contract");
     let manifest = serde_json::json!({"schema_version":2,"embedded_build_record_verified":true,
         "application_version":env!("CARGO_PKG_VERSION"),"target":target,"executable":helper_name,
         "sha256":hex(&Sha256::digest(fs::read(&installed).unwrap())),"protocol_version":wire::PROTOCOL_VERSION,
@@ -161,4 +144,105 @@ fn fixture_cancelled_import() {
         0,
         "job retires only after supervisor returns reaped/joined"
     );
+}
+
+fn helper_contract(bytes: &[u8], version: &str) -> Option<(&'static str, &'static [&'static str])> {
+    let records = [
+        (
+            wire::BUILD_RECORD_MARKER,
+            wire::native_build_record(version).ok()?,
+            wire::NATIVE_PROFILE,
+            wire::QUALIFIED_NATIVE_IMPORT_VARIANTS,
+        ),
+        (
+            wire::AVIF_BUILD_RECORD_MARKER,
+            wire::native_avif_build_record(version).ok()?,
+            wire::AVIF_NATIVE_PROFILE,
+            wire::QUALIFIED_AVIF_IMPORT_VARIANTS,
+        ),
+        (
+            wire::AVIF_SDR_BUILD_RECORD_MARKER,
+            wire::native_avif_sdr_build_record(version).ok()?,
+            wire::AVIF_SDR_NATIVE_PROFILE,
+            wire::QUALIFIED_AVIF_SDR_IMPORT_VARIANTS,
+        ),
+        (
+            wire::FLOAT_BUILD_RECORD_MARKER,
+            wire::native_float_build_record(version).ok()?,
+            wire::FLOAT_NATIVE_PROFILE,
+            wire::QUALIFIED_FLOAT_IMPORT_VARIANTS,
+        ),
+    ];
+    let mut result = None;
+    for (marker, record, profile, variants) in records {
+        let positions = bytes
+            .windows(marker.len())
+            .enumerate()
+            .filter_map(|(at, value)| (value == marker).then_some(at))
+            .collect::<Vec<_>>();
+        if positions.is_empty() {
+            continue;
+        }
+        if result.is_some()
+            || positions
+                .iter()
+                .any(|at| bytes.get(*at..*at + record.len()) != Some(record.as_slice()))
+        {
+            return None;
+        }
+        result = Some((profile, variants));
+    }
+    result
+}
+
+#[test]
+fn copied_helper_contract_accepts_exact_finite_records_and_refuses_corrupt_or_mixed() {
+    let version = env!("CARGO_PKG_VERSION");
+    for (record, expected) in [
+        (
+            wire::native_build_record(version).unwrap(),
+            wire::NATIVE_PROFILE,
+        ),
+        (
+            wire::native_avif_build_record(version).unwrap(),
+            wire::AVIF_NATIVE_PROFILE,
+        ),
+        (
+            wire::native_avif_sdr_build_record(version).unwrap(),
+            wire::AVIF_SDR_NATIVE_PROFILE,
+        ),
+        (
+            wire::native_float_build_record(version).unwrap(),
+            wire::FLOAT_NATIVE_PROFILE,
+        ),
+    ] {
+        let (profile, variants) = helper_contract(&record, version).unwrap();
+        assert_eq!(profile, expected);
+        if profile == wire::FLOAT_NATIVE_PROFILE {
+            assert_eq!(variants, wire::QUALIFIED_FLOAT_IMPORT_VARIANTS);
+            assert_eq!(variants.len(), 7);
+            assert!(variants.contains(&wire::NATIVE_HDR_SDR_IMPORT_VARIANT));
+            assert!(variants.contains(&wire::NATIVE_EXR_SDR_IMPORT_VARIANT));
+        }
+        let mut duplicate = record.clone();
+        duplicate.extend(&record);
+        assert_eq!(helper_contract(&duplicate, version).unwrap().0, expected);
+        let mut corrupted_duplicate = record.clone();
+        let mut corrupted = record.clone();
+        *corrupted.last_mut().unwrap() ^= 1;
+        corrupted_duplicate.extend(corrupted);
+        assert!(helper_contract(&corrupted_duplicate, version).is_none());
+        let mut truncated_duplicate = record.clone();
+        truncated_duplicate.extend(&record[..record.len() - 1]);
+        assert!(helper_contract(&truncated_duplicate, version).is_none());
+        assert!(helper_contract(&record[..record.len() - 1], version).is_none());
+        assert!(helper_contract(&record, "different-version").is_none());
+    }
+    let mut mixed = wire::native_build_record(version).unwrap();
+    mixed.extend(wire::native_avif_sdr_build_record(version).unwrap());
+    assert!(helper_contract(&mixed, version).is_none());
+    let mut mixed_float = wire::native_avif_sdr_build_record(version).unwrap();
+    mixed_float.extend(wire::native_float_build_record(version).unwrap());
+    assert!(helper_contract(&mixed_float, version).is_none());
+    assert!(helper_contract(b"unrelated", version).is_none());
 }
