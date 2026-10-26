@@ -1,4 +1,4 @@
-//! Actual native composition, kept internal until registry/runtime gates qualify.
+//! Native composition for the exact Studio JXL import variant and private diagnostics.
 use super::*;
 use paintcraft_core::types::resources::ResourceLease;
 use paintcraft_formats::codec_worker as wire;
@@ -213,7 +213,8 @@ fn convert(
     prepared.save(output, || Ok(owner), reader_route)
 }
 /// Normal import has no bypass: deny unavailable/profile-incompatible reads
-/// before opening source bytes or starting a helper. Registry remains unchanged.
+/// before opening source bytes or starting a helper; only the exact native
+/// Studio import variant is qualified.
 pub(super) fn qualified(
     input: &Path,
     output: &Output,
