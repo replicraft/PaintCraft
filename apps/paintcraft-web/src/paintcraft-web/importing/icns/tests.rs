@@ -139,3 +139,44 @@ fn browser_changed_entry_cancel_stale_owner_and_classic_callbacks_cannot_import_
     assert!(Source::new(SOURCE.to_vec(), "source.icns".into(), Frontend::ClassicV11).is_err());
     assert!(Source::new(SOURCE.to_vec(), "source.png".into(), Frontend::Studio).is_err());
 }
+#[test]
+fn browser_unqualified_icns_entry_stays_disabled_without_automatic_fallback() {
+    let mut h = setup(Language::English);
+    let ctx = h.ctx.clone();
+    let source=Source::new(include_bytes!("../../../../../../crates/services/paintcraft-formats/tests/icns-fixtures/mixed-jp2.icns").to_vec(),"mixed-jp2.icns".into(),Frontend::Studio).unwrap();
+    let before = h.state().editor.session.snapshot();
+    h.state_mut().pending_icns = None;
+    let owner = Owner::capture(h.state());
+    h.state_mut().import_owner = Some(owner);
+    h.state_mut().accept_icns(source, &ctx);
+    h.run();
+    let label = "Entry 2: ic08";
+    assert!(
+        h.get_by_role_and_label(eframe::egui::Role::RadioButton, label)
+            .accesskit_node()
+            .is_disabled()
+    );
+    h.get_by_role_and_label(eframe::egui::Role::RadioButton, label)
+        .click();
+    h.run();
+    assert!(
+        h.state()
+            .pending_icns
+            .as_ref()
+            .unwrap()
+            .state
+            .selected
+            .is_none()
+    );
+    assert!(
+        h.get_by_label("Update preview")
+            .accesskit_node()
+            .is_disabled()
+    );
+    assert!(
+        h.get_by_label("Import selected entry")
+            .accesskit_node()
+            .is_disabled()
+    );
+    assert!(Arc::ptr_eq(&before, &h.state().editor.session.snapshot()));
+}
