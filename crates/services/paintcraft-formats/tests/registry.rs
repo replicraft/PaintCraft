@@ -196,7 +196,7 @@ fn stock_extended_asset_and_native_project_operations_do_not_leak() {
                 Platform::Native
             ))
             .available(),
-            matches!(family, Family::Ase | Family::Csh)
+            matches!(family, Family::Abr | Family::Ase | Family::Csh)
         );
     }
     assert_eq!(

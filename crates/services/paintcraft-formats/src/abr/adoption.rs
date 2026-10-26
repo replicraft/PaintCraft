@@ -10,6 +10,9 @@ use paintcraft_core::types::resources::SharedBudget;
 use paintcraft_raster::sampled_brush::{self, SampledTip};
 use std::sync::Arc;
 
+/// Frontend assessment inventory allowance; assessment revisits source descriptors.
+pub const PRESETS_MAX: usize = 256;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum StaticTipPolicy {
     NativeGridV1,

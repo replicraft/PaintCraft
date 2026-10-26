@@ -185,6 +185,7 @@ pub fn capability(family: Family, operation: Operation, _platform: Platform) -> 
             | Operation::SaveAsCopy
     );
     let backend = match family {
+        Family::Abr if operation == Operation::ImportAsset => Some("ag-psd-abr-static-tip-v1"),
         Family::Ase if matches!(operation, Operation::ImportAsset | Operation::ExportAsset) => {
             Some("ag-psd-ase-finite-f32")
         }
@@ -266,6 +267,7 @@ pub fn capability(family: Family, operation: Operation, _platform: Platform) -> 
             }
             Family::Jxl | Family::Avif => operation == Operation::ExportFlat,
             Family::Svg => operation == Operation::ImportConvert,
+            Family::Abr => operation == Operation::ImportAsset,
             Family::Ase | Family::Csh => {
                 matches!(operation, Operation::ImportAsset | Operation::ExportAsset)
             }
