@@ -316,4 +316,5 @@ pub mod shapes;
 
 pub mod brushes;
 
+pub mod codec_import;
 pub mod codec_worker;

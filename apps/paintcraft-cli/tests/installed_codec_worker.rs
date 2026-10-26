@@ -196,3 +196,162 @@ fn missing_stale_or_changed_helper_and_source_guards_fail_closed() {
     assert_eq!(exit, 3);
 }
 use std::io::Write;
+
+fn import(
+    installation: &Installation,
+    command: &str,
+    input: &Path,
+    output: &Path,
+    flags: &[&str],
+) -> i32 {
+    let reply = Command::new(&installation.cli)
+        .args(["--json", command])
+        .arg(input)
+        .arg("--output")
+        .arg(output)
+        .args(flags)
+        .output()
+        .unwrap();
+    assert!(
+        !reply.stdout.is_empty(),
+        "{}",
+        String::from_utf8_lossy(&reply.stderr)
+    );
+    reply.status.code().unwrap()
+}
+#[test]
+fn installed_jxl_document_composition_preserves_exact_pixels_and_normal_registry_gate() {
+    let installation = Installation::new();
+    let bytes =
+        include_bytes!("../../../crates/services/paintcraft-formats/tests/jxl-fixtures/rgba8.jxl");
+    let input = installation.fixture("painting.jxl", bytes);
+    let output = installation.root.join("painting.pcnd");
+    assert_eq!(
+        import(&installation, "codec-import", &input, &output, &[]),
+        0
+    );
+    let document = paintcraft_formats::pcnd::read(&fs::read(&output).unwrap()).unwrap();
+    assert_eq!(document.canvas, (3, 2));
+    assert_eq!(document.roots.len(), 1);
+    let raster = &document.layers_in_order().next().unwrap().raster;
+    let expected = [
+        [10, 20, 30, 0],
+        [40, 50, 60, 1],
+        [70, 80, 90, 127],
+        [100, 110, 120, 128],
+        [130, 140, 150, 254],
+        [160, 170, 180, 255],
+    ];
+    for (index, pixel) in expected.into_iter().enumerate() {
+        assert_eq!(raster.get((index % 3) as i64, (index / 3) as i64).0, pixel);
+    }
+    assert_eq!(fs::read(&input).unwrap(), bytes);
+    let denied = installation.root.join("stock.pcnd");
+    assert_eq!(
+        import(
+            &installation,
+            "import",
+            &input,
+            &denied,
+            &["--frontend", "studio"]
+        ),
+        3
+    );
+    assert!(!denied.exists());
+    assert_eq!(
+        import(
+            &installation,
+            "codec-import",
+            &input,
+            &denied,
+            &["--frontend", "classic-v11"]
+        ),
+        3
+    );
+    assert!(!denied.exists());
+}
+#[test]
+fn installed_composition_alias_codec_source_and_helper_failures_preserve_all_files() {
+    let installation = Installation::new();
+    let bytes =
+        include_bytes!("../../../crates/services/paintcraft-formats/tests/jxl-fixtures/rgba8.jxl");
+    let input = installation.fixture("painting.jxl", bytes);
+    assert_eq!(
+        import(
+            &installation,
+            "codec-import",
+            &input,
+            &input,
+            &["--overwrite"]
+        ),
+        2
+    );
+    let alias = installation.root.join("alias.pcnd");
+    fs::hard_link(&input, &alias).unwrap();
+    assert_eq!(
+        import(
+            &installation,
+            "codec-import",
+            &input,
+            &alias,
+            &["--overwrite"]
+        ),
+        2
+    );
+    assert_eq!(fs::read(&alias).unwrap(), bytes);
+    let output = installation.fixture("existing.pcnd", b"keep existing destination");
+    let bad = installation.fixture(
+        "bad.jxl",
+        include_bytes!("../../../crates/services/paintcraft-formats/tests/jxl-fixtures/rgba16.jxl"),
+    );
+    assert_eq!(
+        import(
+            &installation,
+            "codec-import",
+            &bad,
+            &output,
+            &["--overwrite"]
+        ),
+        3
+    );
+    assert_eq!(fs::read(&output).unwrap(), b"keep existing destination");
+    let mut metadata = bytes.to_vec();
+    metadata.extend([0, 0, 0, 12, b'E', b'x', b'i', b'f', 0, 0, 0, 0]);
+    let metadata_source = installation.fixture("metadata.jxl", &metadata);
+    assert_eq!(
+        import(
+            &installation,
+            "codec-import",
+            &metadata_source,
+            &output,
+            &["--overwrite"]
+        ),
+        3
+    );
+    assert_eq!(fs::read(&output).unwrap(), b"keep existing destination");
+    let bad_hash = "0".repeat(64);
+    assert_eq!(
+        import(
+            &installation,
+            "codec-import",
+            &input,
+            &output,
+            &["--overwrite", "--expect-input-sha256", &bad_hash]
+        ),
+        4
+    );
+    assert_eq!(fs::read(&output).unwrap(), b"keep existing destination");
+    fs::remove_file(&installation.helper).unwrap();
+    assert_eq!(
+        import(
+            &installation,
+            "codec-import",
+            &input,
+            &output,
+            &["--overwrite"]
+        ),
+        3
+    );
+    assert_eq!(fs::read(&output).unwrap(), b"keep existing destination");
+    assert_eq!(fs::read(&input).unwrap(), bytes);
+}

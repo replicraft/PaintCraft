@@ -25,6 +25,9 @@ enum Command {
     /// Inspect private bounded worker output without enabling image import.
     #[command(hide = true)]
     CodecInspect(commands::codec_worker::Options),
+    /// Qualify private native JXL document import; not a stock format capability.
+    #[command(hide = true)]
+    CodecImport(commands::codec_import::Options),
     /// Serve painting tools over the Model Context Protocol (stdio).
     Mcp(commands::mcp::Options),
     /// Flatten a layered project into its visible canvas composition.
@@ -58,6 +61,7 @@ enum Command {
 fn main() -> ExitCode {
     let cli = Cli::parse();
     let reply = match cli.command {
+        Command::CodecImport(options) => commands::codec_import::run(options, cli.json),
         Command::CodecInspect(options) => commands::codec_worker::run(options, cli.json),
         Command::Mcp(options) => return commands::mcp::run(options),
         Command::Flatten(a) => commands::flatten::run(a, cli.json),

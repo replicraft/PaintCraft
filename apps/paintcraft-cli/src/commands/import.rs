@@ -58,6 +58,21 @@ pub fn run(a: Options, json: bool) -> Reply {
                 .collect();
             let allowed = a.losses.allowed_for(&known)?;
             save::preflight(dest, a.output.overwrite)?;
+            if svg.is_none()
+                && input
+                    .extension()
+                    .and_then(|ext| ext.to_str())
+                    .and_then(paintcraft_formats::registry::Family::from_extension)
+                    == Some(paintcraft_formats::registry::Family::Jxl)
+            {
+                if a.page.is_some() || a.entry.is_some() {
+                    return Err(Error::new(
+                        ErrorCode::InputSchema,
+                        "JXL does not support page/entry selection",
+                    ));
+                }
+                return super::codec_import::qualified(input, &a.output, &a.profile);
+            }
             let (bytes, sha, source_identity) = if input
                 .extension()
                 .and_then(|ext| ext.to_str())

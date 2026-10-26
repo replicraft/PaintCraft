@@ -69,6 +69,22 @@ impl Options {
             decision.require_allowed(request)
         }
     }
+    /// Availability only, before source allocation/worker startup.
+    pub fn admit_import_jxl_path(&self, path: &std::path::Path) -> Result<()> {
+        let mut request = Request::new(
+            self.frontend.into(),
+            Operation::ImportConvert,
+            Family::Jxl,
+            Platform::Native,
+        );
+        request.extension = path.extension().and_then(|value| value.to_str());
+        let decision = registry::admission(request);
+        if decision.available() {
+            Ok(())
+        } else {
+            decision.require_allowed(request)
+        }
+    }
     pub fn admit_import_page(
         &self,
         path: &std::path::Path,
