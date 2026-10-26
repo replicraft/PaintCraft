@@ -7,9 +7,14 @@ mod boxes;
 mod decode;
 pub use decode::{DecodeLimits, Decoded, DecodedLayer, Diagnostic, decode_layers};
 mod extents;
+mod write;
 pub use boxes::{BoxInfo, BoxTree, FileType, LayoutResolver, inspect, inspect_with_layout};
 pub use extents::{AliasPolicy, Extent, resolve_extent, validate_extents};
 use paintcraft_core::types::{Error, ErrorCode, Result};
+pub use write::{
+    WriteDocument, WriteLayer, WriteLimits, WritePlan, encode_document, preflight_write,
+    write_document_to,
+};
 
 #[derive(Clone, Copy, Debug)]
 pub struct Limits {
