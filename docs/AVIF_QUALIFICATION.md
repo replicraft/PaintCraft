@@ -1,8 +1,10 @@
 # AVIF decoder qualification status
 
-As of 2026-10-26, AVIF remains **export-only**. No decoder dependency, helper
-codec, manifest qualification, registry read gate or frontend consumer is enabled
-by this work. The existing lossy ravif writer is unchanged.
+As of 2026-10-26, AVIF remains **export-only** in the product. An optional private
+native decoder build and allocation boundary now exist for qualification; no
+public AVIF manifest contract, registry read gate or frontend consumer is enabled.
+The intended first public reader covers RGB8 still pictures with optional straight
+auxiliary alpha. The existing lossy ravif writer is unchanged.
 
 ## Container prerequisite
 
@@ -24,7 +26,7 @@ The next parser step must resolve primary-item identity, finite `iloc` extents,
 HEIF. AVIF-specific code must then validate AV1 sequence/frame/color declarations
 against the actual primary item. No codec may trust unassociated `ispe` sizes.
 
-## Decoder and allocation audit
+## Initial image/binding audit (historical)
 
 The locally selected `image` 0.25.10 manifest separates `avif` (ravif encoding)
 from `avif-native` (mp4parse plus dav1d). Its `AvifDecoder::new` parses and decodes
@@ -48,13 +50,13 @@ for every native allocation or separately proven process-level memory
 containment on each target. Crash isolation alone is insufficient. No such
 containment is claimed here.
 
-## Packaging audit
+## Initial binding packaging audit (historical)
 
 The audited dav1d-sys 0.8.2 build probes system dav1d >=1.3.0. Its optional
 internal build fetches tag 1.3.0 and runs Meson/Ninja for a static library. The
 build script has no explicit PaintCraft six-target cross-compilation contract.
 A host-installed library is not evidence that a release artifact contains the
-right architecture or runtime dependencies. No native build was attempted:
+right architecture or runtime dependencies. At that audit stage no native build had been attempted:
 
 | Release target | Decoder build and clean-install evidence |
 | --- | --- |
@@ -62,8 +64,9 @@ right architecture or runtime dependencies. No native build was attempted:
 | macOS x86-64 and Apple silicon | Not established |
 | Linux x86-64 and ARM64 | Not established |
 
-Sources were downloaded only into `/private/tmp` for inspection; no Cargo
-manifest or lockfile changed. Archive SHA-256 values are:
+That initial audit downloaded sources only into `/private/tmp` and changed no
+Cargo files. The later optional static build below adds a vendored archive and
+worker build dependency. Historical audit archive SHA-256 values are:
 
 | Source archive | SHA-256 |
 | --- | --- |
@@ -73,9 +76,9 @@ manifest or lockfile changed. Archive SHA-256 values are:
 
 ## Gate to an actual consumer
 
-1. Complete bounded item/AV1 preflight and an explicit initial still RGB8/color
-   profile. Keep alpha, HDR, grids, sequences and broader color variants visible
-   as unsupported until separately qualified; never silently discard them.
+1. Complete bounded item/AV1 preflight for still RGB8 with optional straight
+   auxiliary alpha and an explicit color policy. Keep HDR, grids, sequences and
+   broader variants unsupported until qualified; never silently discard them.
 2. Prove native allocation containment and deterministic settings, then package
    and independently reopen real decoder outputs on the supported targets.
 3. Reuse the existing isolated helper, typed private prepared import, retained
@@ -89,3 +92,25 @@ manifest or lockfile changed. Archive SHA-256 values are:
 Five focused inspection tests cover actual current-writer containers, all-prefix
 truncation, non-primary property identity, configuration errors, resource limits
 and cancellation. They qualify only this prerequisite, not AVIF image import.
+
+### Static-build follow-up
+
+The binding-default 1.3.0 audit above is historical evidence, not the selected
+shipping version. The private worker qualification feature now pins upstream
+**1.5.4**, immutable commit `54706fc6bc0cdecab7e9593974a4039cc038fca7`, with source
+and license under `apps/paintcraft-codec-worker/vendor/dav1d`. Upstream
+[release notes](https://github.com/videolan/dav1d/blob/1.5.4/NEWS) include fixes
+newer than 1.3.0; the build neither probes a system library nor downloads sources.
+The small allocation/tagging diff is `native/dav1d-allocation.patch`. Its selected
+C-only build routes decoder-owned allocations through the existing worker heap,
+including headers/padding. This is requested-allocation accounting, excluding
+libc internals, thread stacks, allocator overhead and physical RSS. Public AVIF
+import and six-target packaging remain unqualified; the native decoder notice
+must be bundled before enabling any release build.
+
+On the local Apple-silicon host, four focused native boundary tests pass; their
+four private child fixtures verify decoder-allocation retirement and actual
+context, tile-scratch and picture quota exits through the same worker heap.
+Touched-build and explicit compiler-environment rebuilds pass with pristine
+source hashes checked again. These are private backend checks, not an enabled
+AVIF import or cross-target release qualification.
