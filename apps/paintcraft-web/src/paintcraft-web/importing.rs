@@ -1,5 +1,7 @@
 //! Import consent belongs to the document/profile captured before the picker.
 pub(crate) mod icns;
+#[cfg_attr(not(target_arch = "wasm32"), allow(dead_code))]
+pub(crate) mod jxl;
 pub(crate) mod pages;
 pub(crate) mod svg;
 use crate::{app::WebApp, files::Loaded};
@@ -9,9 +11,10 @@ use paintcraft_editor::session::Ticket;
 use paintcraft_ui::t;
 use std::sync::Arc;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub(crate) struct Owner {
     base: Arc<Document>,
+    session_owner: uuid::Uuid,
     ticket: Ticket,
     variant: ClassicVariant,
     frontend: paintcraft_ui::actions::Frontend,
@@ -21,14 +24,25 @@ impl Owner {
     pub fn capture(app: &WebApp) -> Self {
         Self {
             base: app.editor.session.snapshot(),
+            session_owner: app.editor.session.history_ticket().owner,
             ticket: app.editor.session.ticket(),
             variant: app.variant,
             frontend: app.frontend,
             dirty: app.editor.session.is_dirty(),
         }
     }
+    #[cfg_attr(not(target_arch = "wasm32"), allow(dead_code))]
+    pub(crate) fn wire(&self) -> paintcraft_formats::codec_worker::Owner {
+        paintcraft_formats::codec_worker::Owner {
+            session: self.session_owner,
+            state: self.ticket.state_id,
+            epoch: self.ticket.publication_epoch,
+            frontend: 3,
+        }
+    }
     pub fn current(&self, app: &WebApp) -> bool {
-        Arc::ptr_eq(&self.base, &app.editor.session.snapshot())
+        self.session_owner == app.editor.session.history_ticket().owner
+            && Arc::ptr_eq(&self.base, &app.editor.session.snapshot())
             && self.ticket == app.editor.session.ticket()
             && self.variant == app.variant
             && self.frontend == app.frontend

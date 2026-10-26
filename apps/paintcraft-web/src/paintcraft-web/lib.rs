@@ -112,6 +112,12 @@ mod browser {
             if self.codec.borrow().is_some() {
                 return Err(JsValue::from_str("Codec service already installed"));
             }
+            let value: &JsValue = service.as_ref();
+            self.runner
+                .app_mut::<super::WebApp>()
+                .ok_or_else(|| JsValue::from_str("Editor not started"))?
+                .jxl
+                .attach(value.clone());
             *self.codec.borrow_mut() = Some(service);
             Ok(())
         }

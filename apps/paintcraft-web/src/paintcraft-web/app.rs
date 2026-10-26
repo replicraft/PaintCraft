@@ -67,6 +67,7 @@ pub struct WebApp {
     pub(crate) pending_icns: Option<crate::importing::icns::Pending>,
     pub(crate) pending_pages: Option<crate::importing::pages::Pending>,
     pub(crate) pending_svg: Option<crate::importing::svg::Pending>,
+    pub(crate) jxl: crate::importing::jxl::State,
     pub(crate) import_owner: Option<crate::importing::Owner>,
     form: Option<forms::Form>,
     pub(crate) message: String,
@@ -132,6 +133,7 @@ impl WebApp {
             pending_icns: None,
             pending_svg: None,
             import_owner: None,
+            jxl: Default::default(),
             form: None,
             clipboard: Default::default(),
             paste: Default::default(),
@@ -179,6 +181,7 @@ impl WebApp {
             || self.brushes.open
             || self.shapes.open
             || self.confirm_replace.is_some()
+            || self.jxl.busy()
             || self.files.busy
             || self.pending_import.is_some()
             || self.pending_icns.is_some()
@@ -481,15 +484,19 @@ impl WebApp {
                 if loaded.converted_copy {
                     editor.session.mark_unsaved();
                 }
-                self.editor = editor;
-                self.canvas = Canvas::default();
-                self.text.preedit.clear();
-                self.name = loaded.name;
-                self.update_title();
-                self.message = format!("Opened {}", self.name);
+                self.install_import_editor(editor, loaded.name);
             }
             Err(error) => self.message = format!("Open failed: {error}"),
         }
+    }
+
+    pub(crate) fn install_import_editor(&mut self, editor: Editor, name: String) {
+        self.editor = editor;
+        self.canvas = Canvas::default();
+        self.text.preedit.clear();
+        self.name = name;
+        self.update_title();
+        self.message = format!("Opened {}", self.name);
     }
 
     fn persist_preferences(&mut self) {
@@ -509,6 +516,8 @@ impl WebApp {
         use crate::files::Outcome;
         match self.files.poll() {
             Some(Ok(Outcome::Loaded(loaded))) => self.accept_loaded(loaded, ctx),
+            #[cfg(target_arch = "wasm32")]
+            Some(Ok(Outcome::Jxl(source))) => self.accept_jxl(source, ctx),
             Some(Ok(Outcome::Icns(source))) => self.accept_icns(source, ctx),
             Some(Ok(Outcome::Pages(source))) => self.accept_pages(source, ctx),
             Some(Ok(Outcome::Svg(source))) => self.accept_svg(source, ctx),
@@ -669,6 +678,9 @@ impl WebApp {
                     if ui.button(t!(ui.ctx(), "Cancel")).clicked() { self.confirm_replace = None; }
                 });
             });
+        }
+        if self.jxl_dialog(ctx) {
+            return;
         }
         if self.pending_icns.is_some() {
             self.icns_import_dialog(ctx);

@@ -16,6 +16,7 @@ impl WebApp {
                 self.message = crate::fullscreen::UNAVAILABLE.into();
             }
             self.poll_files(&ctx);
+            self.poll_jxl(&ctx);
             self.poll_copy(&ctx);
             self.poll_paste(&ctx);
             self.poll_print();
@@ -77,6 +78,7 @@ impl WebApp {
                 self.action(&ctx, action);
             }
         });
+        self.jxl_panel(ui);
         self.paste_placement_bar(ui);
         let status_rect =
             (self.frontend == Frontend::Studio || self.preferences.status_bar).then(|| {

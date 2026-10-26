@@ -27,6 +27,8 @@ pub(crate) struct Loaded {
 #[cfg_attr(not(target_arch = "wasm32"), allow(dead_code))]
 pub(crate) enum Outcome {
     Loaded(Loaded),
+    #[cfg(target_arch = "wasm32")]
+    Jxl(crate::importing::jxl::Source),
     Pages(crate::importing::pages::Source),
     Icns(crate::importing::icns::Source),
     Svg(crate::importing::svg::Source),
@@ -130,6 +132,9 @@ impl Files {
         .collect();
         if convert && frontend == Frontend::Studio {
             extensions.push("dcx");
+            if crate::importing::jxl::admit("image.jxl").is_ok() {
+                extensions.push("jxl");
+            }
             extensions.extend(["ico", "cur", "icns"]);
             extensions.extend(["svg", "svgz"]);
         }
@@ -144,6 +149,13 @@ impl Files {
                     return Ok(Outcome::Cancelled);
                 };
                 let name = file.file_name();
+                if convert
+                    && frontend == Frontend::Studio
+                    && name.rsplit('.').next().and_then(Family::from_extension) == Some(Family::Jxl)
+                {
+                    return crate::importing::jxl::Source::new(file.inner().clone())
+                        .map(Outcome::Jxl);
+                }
                 let svg = convert
                     && name.rsplit('.').next().and_then(Family::from_extension)
                         == Some(Family::Svg);
