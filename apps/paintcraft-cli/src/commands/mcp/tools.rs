@@ -34,6 +34,7 @@ impl PaintingServer {
             state.source = None;
             state.import_source = None;
             state.import_resources.clear();
+            state.brush_sources.clear();
             state.inspect()
         })
         .await
@@ -56,6 +57,7 @@ impl PaintingServer {
             state.source = Some((path, sha));
             state.import_source = None;
             state.import_resources.clear();
+            state.brush_sources.clear();
             state.inspect()
         })
         .await
@@ -178,6 +180,7 @@ impl PaintingServer {
             // A picture is not a native project binding: saving must not replace its source implicitly.
             state.source = None;
             state.import_source = Some(path);
+            state.brush_sources.clear();
             state.import_resources = p
                 .svg
                 .map(|selection| selection.font_files)
@@ -329,6 +332,10 @@ impl ServerHandler for PaintingServer {
 
 impl PaintingServer {
     pub(super) fn router() -> rmcp::handler::server::router::tool::ToolRouter<Self> {
-        Self::tool_router() + Self::icon_router() + Self::palette_router() + Self::shapes_router()
+        Self::tool_router()
+            + Self::icon_router()
+            + Self::palette_router()
+            + Self::shapes_router()
+            + Self::brush_router()
     }
 }

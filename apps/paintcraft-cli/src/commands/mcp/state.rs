@@ -8,6 +8,8 @@ pub struct State {
     pub source: Option<(PathBuf, String)>,
     pub import_source: Option<PathBuf>,
     pub import_resources: Vec<PathBuf>,
+    pub selected_brush: Option<super::brushes::Selected>,
+    pub brush_sources: Vec<std::sync::Arc<super::super::brushes::Loaded>>,
 }
 
 pub fn invalid(message: &str) -> Error {
@@ -22,6 +24,20 @@ pub fn core_json(value: &Value) -> Result<Json> {
 }
 impl State {
     pub fn protect_import_sources(&self, path: &Path) -> Result<()> {
+        // One fail-closed identity snapshot across every retained brush source.
+        let candidate = paintcraft_platform::source::SourceIdentity::existing_destination(path)?;
+        if self
+            .selected_brush
+            .as_ref()
+            .is_some_and(|selected| selected.loaded.protects(path, candidate.as_ref()))
+            || self
+                .brush_sources
+                .iter()
+                .any(|source| source.protects(path, candidate.as_ref()))
+        {
+            return Err(invalid("output must not replace an adopted brush source"));
+        }
+
         if self
             .import_source
             .as_ref()
