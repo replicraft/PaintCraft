@@ -25,6 +25,8 @@ pub enum Kind {
     ExportIcons,
     ImportPalette,
     ExportPalette,
+    ImportShape,
+    ExportShape,
 }
 #[derive(Debug)]
 pub struct Completion {
@@ -99,6 +101,10 @@ impl NativeDialogs {
                 name: "Icon and cursor export".into(),
                 extensions: vec!["ico".into(), "cur".into()],
             }],
+            Kind::ImportShape | Kind::ExportShape => vec![Filter {
+                name: "Adobe custom shapes".into(),
+                extensions: vec!["csh".into()],
+            }],
             Kind::ImportPalette | Kind::ExportPalette => vec![Filter {
                 name: "Adobe Swatch Exchange palette".into(),
                 extensions: vec!["ase".into()],
@@ -162,6 +168,8 @@ impl NativeDialogs {
             Kind::ExportIcons => dialog.set_title(label("Icon and cursor export")),
             Kind::ImportPalette => dialog.set_title(label("Import palette")),
             Kind::ExportPalette => dialog.set_title(label("Export palette")),
+            Kind::ImportShape => dialog.set_title(label("Import shapes")),
+            Kind::ExportShape => dialog.set_title(label("Export shapes")),
         };
         for filter in filters {
             dialog = dialog.add_filter(label(&filter.name), &filter.extensions);
@@ -172,7 +180,11 @@ impl NativeDialogs {
             let file = pollster::block_on(async {
                 if matches!(
                     kind,
-                    Kind::Open | Kind::Import | Kind::InspectRecovery | Kind::ImportPalette
+                    Kind::Open
+                        | Kind::Import
+                        | Kind::InspectRecovery
+                        | Kind::ImportPalette
+                        | Kind::ImportShape
                 ) {
                     dialog.pick_file().await
                 } else {
@@ -184,7 +196,11 @@ impl NativeDialogs {
                 && path.extension().is_none()
                 && !matches!(
                     kind,
-                    Kind::Open | Kind::Import | Kind::InspectRecovery | Kind::ImportPalette
+                    Kind::Open
+                        | Kind::Import
+                        | Kind::InspectRecovery
+                        | Kind::ImportPalette
+                        | Kind::ImportShape
                 )
             {
                 path.set_extension(fallback_extension);

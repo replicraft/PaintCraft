@@ -81,6 +81,10 @@ impl App {
         ctx: &egui::Context,
         completion: paintcraft_platform::dialogs::Completion,
     ) {
+        if matches!(completion.kind, Kind::ImportShape | Kind::ExportShape) {
+            self.complete_shape_picker(ctx, completion.kind, completion.path);
+            return;
+        }
         if matches!(completion.kind, Kind::ImportPalette | Kind::ExportPalette) {
             self.complete_palette_picker(ctx, completion.kind, completion.path);
             return;
@@ -182,6 +186,9 @@ impl App {
             ),
             Kind::InspectRecovery => unreachable!("inspection completion handled separately"),
             Kind::ExportIcons => unreachable!("icon completion handled separately"),
+            Kind::ImportShape | Kind::ExportShape => {
+                unreachable!("shape completion handled separately")
+            }
             Kind::ImportPalette | Kind::ExportPalette => {
                 unreachable!("palette completion handled separately")
             }

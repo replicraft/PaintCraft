@@ -73,6 +73,8 @@ mod saving;
 #[path = "app/selection_ui.rs"]
 mod selection_ui;
 pub mod settings;
+#[path = "app/shapes.rs"]
+mod shapes;
 #[path = "app/status.rs"]
 mod status;
 #[path = "app/studio_canvas.rs"]
@@ -162,6 +164,7 @@ enum Confirm {
     ExportOptions(export_options::Draft),
     IconExport,
     Palettes,
+    Shapes,
     LayerProperties(layers::PropertiesDraft),
     DiscardForNew,
     DiscardForOpen(PathBuf),
@@ -242,6 +245,7 @@ pub struct App {
     imported_source: Option<PathBuf>,
     icon_export: Option<icon_export::State>,
     palettes: palettes::State,
+    shapes: shapes::State,
     dialog_owner: Option<Uuid>,
     dialog_frontend: Option<paintcraft_formats::registry::Frontend>,
     dialog_source: Option<(Arc<paintcraft_document::Document>, (Uuid, u64))>,
@@ -379,6 +383,7 @@ impl App {
             imported_source: None,
             icon_export: None,
             palettes: Default::default(),
+            shapes: Default::default(),
             dialog_owner: None,
             dialog_frontend: None,
             dialog_source: None,
