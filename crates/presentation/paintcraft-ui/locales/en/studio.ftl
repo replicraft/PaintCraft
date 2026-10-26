@@ -77,3 +77,45 @@ nearest-neighbor = Nearest neighbor
 entry-dimensions-will-change-to-fit-the-selected-sizes = Entry dimensions will change to fit the selected sizes.
 i-accept-these-export-changes = I accept these export changes.
 icon-preview-is-unavailable-check-the-entry-settings-or-reduce-the-canvas-size = Icon preview is unavailable. Check the entry settings or reduce the canvas size.
+
+shape-resources = Shape resources
+
+shape-resources-more = Shape resources…
+
+import-shapes-more = Import shapes…
+
+export-shapes-more = Export shapes…
+
+import-shapes = Import shapes
+
+export-shapes = Export shapes
+
+adobe-custom-shapes = Adobe custom shapes
+
+unnamed-shape = Unnamed shape
+
+outline-preview = Outline preview
+
+browse-and-export-custom-shape-resources-selecting-a-preview-does-not-change-your-painting = Browse and export custom shape resources. Selecting a preview does not change your painting.
+
+fill-and-boolean-operations-are-preserved-in-the-resource-this-preview-shows-outlines-only = Fill and Boolean operations are preserved in the resource; this preview shows outlines only.
+
+import-an-adobe-custom-shapes-file-to-browse-its-shape-presets = Import an Adobe custom shapes file to browse its shape presets.
+
+this-shape-is-too-complex-to-preview-its-original-paths-are-preserved = This shape is too complex to preview. Its original paths are preserved.
+
+shape-imported = Shape imported.
+
+shape-exported = Shape exported.
+
+shape-import-cancelled = Shape import cancelled.
+
+shape-export-cancelled = Shape export cancelled.
+
+shape-download-requested = Shape download requested.
+
+the-shape-changed-choose-the-file-again = The shape changed; choose the file again.
+
+format-could-not-import-the-shape-detail = Could not import the shape: { $detail }
+
+format-could-not-export-the-shape-detail = Could not export the shape: { $detail }

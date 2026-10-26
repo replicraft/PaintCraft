@@ -77,3 +77,45 @@ nearest-neighbor = 最近邻
 entry-dimensions-will-change-to-fit-the-selected-sizes = 条目尺寸将调整为所选大小。
 i-accept-these-export-changes = 我接受这些导出更改。
 icon-preview-is-unavailable-check-the-entry-settings-or-reduce-the-canvas-size = 图标预览不可用。请检查条目设置或缩小画布。
+
+shape-resources = 形状资源
+
+shape-resources-more = 形状资源…
+
+import-shapes-more = 导入形状…
+
+export-shapes-more = 导出形状…
+
+import-shapes = 导入形状
+
+export-shapes = 导出形状
+
+adobe-custom-shapes = Adobe 自定义形状
+
+unnamed-shape = 未命名形状
+
+outline-preview = 轮廓预览
+
+browse-and-export-custom-shape-resources-selecting-a-preview-does-not-change-your-painting = 浏览并导出自定义形状资源。选择预览不会更改绘画。
+
+fill-and-boolean-operations-are-preserved-in-the-resource-this-preview-shows-outlines-only = 资源会保留填充和布尔运算；此预览仅显示轮廓。
+
+import-an-adobe-custom-shapes-file-to-browse-its-shape-presets = 导入 Adobe 自定义形状文件以浏览形状预设。
+
+this-shape-is-too-complex-to-preview-its-original-paths-are-preserved = 此形状过于复杂，无法预览。原始路径已保留。
+
+shape-imported = 形状已导入。
+
+shape-exported = 形状已导出。
+
+shape-import-cancelled = 已取消形状导入。
+
+shape-export-cancelled = 已取消形状导出。
+
+shape-download-requested = 已请求下载形状。
+
+the-shape-changed-choose-the-file-again = 形状已更改；请重新选择文件。
+
+format-could-not-import-the-shape-detail = 无法导入形状：{ $detail }
+
+format-could-not-export-the-shape-detail = 无法导出形状：{ $detail }

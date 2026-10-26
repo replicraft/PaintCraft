@@ -77,3 +77,45 @@ nearest-neighbor = Vecino más cercano
 entry-dimensions-will-change-to-fit-the-selected-sizes = Las dimensiones de las entradas cambiarán para ajustarse a los tamaños seleccionados.
 i-accept-these-export-changes = Acepto estos cambios de exportación.
 icon-preview-is-unavailable-check-the-entry-settings-or-reduce-the-canvas-size = La vista previa del icono no está disponible. Comprueba los ajustes de las entradas o reduce el tamaño del lienzo.
+
+shape-resources = Recursos de formas
+
+shape-resources-more = Recursos de formas…
+
+import-shapes-more = Importar formas…
+
+export-shapes-more = Exportar formas…
+
+import-shapes = Importar formas
+
+export-shapes = Exportar formas
+
+adobe-custom-shapes = Formas personalizadas de Adobe
+
+unnamed-shape = Forma sin nombre
+
+outline-preview = Vista previa del contorno
+
+browse-and-export-custom-shape-resources-selecting-a-preview-does-not-change-your-painting = Explora y exporta formas personalizadas. Seleccionar una vista previa no cambia tu dibujo.
+
+fill-and-boolean-operations-are-preserved-in-the-resource-this-preview-shows-outlines-only = El relleno y las operaciones booleanas se conservan; esta vista previa solo muestra contornos.
+
+import-an-adobe-custom-shapes-file-to-browse-its-shape-presets = Importa un archivo de formas personalizadas de Adobe para explorar sus ajustes.
+
+this-shape-is-too-complex-to-preview-its-original-paths-are-preserved = Esta forma es demasiado compleja para la vista previa. Sus trazados originales se conservan.
+
+shape-imported = Forma importada.
+
+shape-exported = Forma exportada.
+
+shape-import-cancelled = Importación de forma cancelada.
+
+shape-export-cancelled = Exportación de forma cancelada.
+
+shape-download-requested = Descarga de forma solicitada.
+
+the-shape-changed-choose-the-file-again = La forma cambió; vuelve a elegir el archivo.
+
+format-could-not-import-the-shape-detail = No se pudo importar la forma: { $detail }
+
+format-could-not-export-the-shape-detail = No se pudo exportar la forma: { $detail }

@@ -60,6 +60,7 @@ impl Action {
                     Icon::FlipVertical
                 }
             },
+            Self::ShapeResources => Icon::Rectangle,
             Self::Palettes
             | Self::EditColors
             | Self::EditSecondaryColors

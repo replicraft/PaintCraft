@@ -77,3 +77,45 @@ nearest-neighbor = Nächster Nachbar
 entry-dimensions-will-change-to-fit-the-selected-sizes = Die Eintragsabmessungen werden an die ausgewählten Größen angepasst.
 i-accept-these-export-changes = Ich akzeptiere diese Änderungen beim Export.
 icon-preview-is-unavailable-check-the-entry-settings-or-reduce-the-canvas-size = Symbolvorschau nicht verfügbar. Prüfen Sie die Eintragseinstellungen oder verkleinern Sie die Zeichenfläche.
+
+shape-resources = Formressourcen
+
+shape-resources-more = Formressourcen…
+
+import-shapes-more = Formen importieren…
+
+export-shapes-more = Formen exportieren…
+
+import-shapes = Formen importieren
+
+export-shapes = Formen exportieren
+
+adobe-custom-shapes = Adobe eigene Formen
+
+unnamed-shape = Unbenannte Form
+
+outline-preview = Konturvorschau
+
+browse-and-export-custom-shape-resources-selecting-a-preview-does-not-change-your-painting = Eigene Formen durchsuchen und exportieren. Die Vorschauauswahl ändert Ihr Bild nicht.
+
+fill-and-boolean-operations-are-preserved-in-the-resource-this-preview-shows-outlines-only = Füllungen und boolesche Operationen bleiben erhalten; diese Vorschau zeigt nur Konturen.
+
+import-an-adobe-custom-shapes-file-to-browse-its-shape-presets = Importieren Sie eine Adobe-Formdatei, um ihre Formvorgaben zu durchsuchen.
+
+this-shape-is-too-complex-to-preview-its-original-paths-are-preserved = Diese Form ist für die Vorschau zu komplex. Ihre ursprünglichen Pfade bleiben erhalten.
+
+shape-imported = Form importiert.
+
+shape-exported = Form exportiert.
+
+shape-import-cancelled = Formimport abgebrochen.
+
+shape-export-cancelled = Formexport abgebrochen.
+
+shape-download-requested = Formdownload angefordert.
+
+the-shape-changed-choose-the-file-again = Die Form wurde geändert; wählen Sie die Datei erneut.
+
+format-could-not-import-the-shape-detail = Form konnte nicht importiert werden: { $detail }
+
+format-could-not-export-the-shape-detail = Form konnte nicht exportiert werden: { $detail }

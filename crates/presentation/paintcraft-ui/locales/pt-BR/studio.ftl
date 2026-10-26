@@ -77,3 +77,45 @@ nearest-neighbor = Vizinho mais próximo
 entry-dimensions-will-change-to-fit-the-selected-sizes = As dimensões das entradas serão alteradas para os tamanhos selecionados.
 i-accept-these-export-changes = Aceito estas alterações de exportação.
 icon-preview-is-unavailable-check-the-entry-settings-or-reduce-the-canvas-size = A prévia do ícone não está disponível. Verifique as configurações das entradas ou reduza o tamanho da tela.
+
+shape-resources = Recursos de formas
+
+shape-resources-more = Recursos de formas…
+
+import-shapes-more = Importar formas…
+
+export-shapes-more = Exportar formas…
+
+import-shapes = Importar formas
+
+export-shapes = Exportar formas
+
+adobe-custom-shapes = Formas personalizadas do Adobe
+
+unnamed-shape = Forma sem nome
+
+outline-preview = Prévia do contorno
+
+browse-and-export-custom-shape-resources-selecting-a-preview-does-not-change-your-painting = Explore e exporte formas personalizadas. Selecionar uma prévia não altera sua pintura.
+
+fill-and-boolean-operations-are-preserved-in-the-resource-this-preview-shows-outlines-only = O preenchimento e as operações booleanas são preservados; esta prévia mostra apenas contornos.
+
+import-an-adobe-custom-shapes-file-to-browse-its-shape-presets = Importe um arquivo de formas personalizadas do Adobe para explorar suas predefinições.
+
+this-shape-is-too-complex-to-preview-its-original-paths-are-preserved = Esta forma é complexa demais para a prévia. Seus caminhos originais são preservados.
+
+shape-imported = Forma importada.
+
+shape-exported = Forma exportada.
+
+shape-import-cancelled = Importação de forma cancelada.
+
+shape-export-cancelled = Exportação de forma cancelada.
+
+shape-download-requested = Download de forma solicitado.
+
+the-shape-changed-choose-the-file-again = A forma mudou; escolha o arquivo novamente.
+
+format-could-not-import-the-shape-detail = Não foi possível importar a forma: { $detail }
+
+format-could-not-export-the-shape-detail = Não foi possível exportar a forma: { $detail }

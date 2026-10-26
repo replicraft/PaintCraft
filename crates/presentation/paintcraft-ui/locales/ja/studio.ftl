@@ -77,3 +77,45 @@ nearest-neighbor = 最近傍法
 entry-dimensions-will-change-to-fit-the-selected-sizes = 選択したサイズに合わせて項目の寸法が変更されます。
 i-accept-these-export-changes = これらの書き出し時の変更に同意します。
 icon-preview-is-unavailable-check-the-entry-settings-or-reduce-the-canvas-size = アイコンをプレビューできません。項目の設定を確認するか、キャンバスのサイズを小さくしてください。
+
+shape-resources = シェイプリソース
+
+shape-resources-more = シェイプリソース…
+
+import-shapes-more = シェイプを読み込む…
+
+export-shapes-more = シェイプを書き出す…
+
+import-shapes = シェイプを読み込む
+
+export-shapes = シェイプを書き出す
+
+adobe-custom-shapes = Adobe カスタムシェイプ
+
+unnamed-shape = 名前のないシェイプ
+
+outline-preview = 輪郭プレビュー
+
+browse-and-export-custom-shape-resources-selecting-a-preview-does-not-change-your-painting = カスタムシェイプを閲覧・書き出しできます。プレビューを選んでも画像は変更されません。
+
+fill-and-boolean-operations-are-preserved-in-the-resource-this-preview-shows-outlines-only = 塗りつぶしとブール演算はリソースに保持されます。このプレビューには輪郭のみ表示されます。
+
+import-an-adobe-custom-shapes-file-to-browse-its-shape-presets = Adobe カスタムシェイプファイルを読み込み、シェイププリセットを閲覧できます。
+
+this-shape-is-too-complex-to-preview-its-original-paths-are-preserved = このシェイプは複雑すぎるためプレビューできません。元のパスは保持されています。
+
+shape-imported = シェイプを読み込みました。
+
+shape-exported = シェイプを書き出しました。
+
+shape-import-cancelled = シェイプの読み込みをキャンセルしました。
+
+shape-export-cancelled = シェイプの書き出しをキャンセルしました。
+
+shape-download-requested = シェイプのダウンロードを開始しました。
+
+the-shape-changed-choose-the-file-again = シェイプが変更されました。ファイルを選び直してください。
+
+format-could-not-import-the-shape-detail = シェイプを読み込めませんでした: { $detail }
+
+format-could-not-export-the-shape-detail = シェイプを書き出せませんでした: { $detail }

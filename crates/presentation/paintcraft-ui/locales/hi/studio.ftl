@@ -77,3 +77,45 @@ nearest-neighbor = निकटतम पड़ोसी
 entry-dimensions-will-change-to-fit-the-selected-sizes = चुने हुए आकारों के अनुसार प्रविष्टियों के आयाम बदलेंगे।
 i-accept-these-export-changes = मैं निर्यात के इन बदलावों को स्वीकार करता हूँ।
 icon-preview-is-unavailable-check-the-entry-settings-or-reduce-the-canvas-size = आइकन का पूर्वावलोकन उपलब्ध नहीं है। प्रविष्टि की सेटिंग जाँचें या कैनवास का आकार घटाएँ।
+
+shape-resources = आकृति संसाधन
+
+shape-resources-more = आकृति संसाधन…
+
+import-shapes-more = आकृतियाँ आयात करें…
+
+export-shapes-more = आकृतियाँ निर्यात करें…
+
+import-shapes = आकृतियाँ आयात करें
+
+export-shapes = आकृतियाँ निर्यात करें
+
+adobe-custom-shapes = Adobe कस्टम आकृतियाँ
+
+unnamed-shape = बिना नाम की आकृति
+
+outline-preview = रूपरेखा पूर्वावलोकन
+
+browse-and-export-custom-shape-resources-selecting-a-preview-does-not-change-your-painting = कस्टम आकृतियाँ देखें और निर्यात करें। पूर्वावलोकन चुनने से आपकी पेंटिंग नहीं बदलती।
+
+fill-and-boolean-operations-are-preserved-in-the-resource-this-preview-shows-outlines-only = भरण और बूलियन ऑपरेशन संसाधन में सुरक्षित रहते हैं; यह पूर्वावलोकन केवल रूपरेखा दिखाता है।
+
+import-an-adobe-custom-shapes-file-to-browse-its-shape-presets = आकृति प्रीसेट देखने के लिए Adobe कस्टम आकृति फ़ाइल आयात करें।
+
+this-shape-is-too-complex-to-preview-its-original-paths-are-preserved = यह आकृति पूर्वावलोकन के लिए बहुत जटिल है। इसके मूल पथ सुरक्षित हैं।
+
+shape-imported = आकृति आयात की गई।
+
+shape-exported = आकृति निर्यात की गई।
+
+shape-import-cancelled = आकृति आयात रद्द किया गया।
+
+shape-export-cancelled = आकृति निर्यात रद्द किया गया।
+
+shape-download-requested = आकृति डाउनलोड का अनुरोध किया गया।
+
+the-shape-changed-choose-the-file-again = आकृति बदल गई है; फ़ाइल फिर चुनें।
+
+format-could-not-import-the-shape-detail = आकृति आयात नहीं की जा सकी: { $detail }
+
+format-could-not-export-the-shape-detail = आकृति निर्यात नहीं की जा सकी: { $detail }
