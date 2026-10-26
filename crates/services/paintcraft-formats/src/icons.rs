@@ -10,6 +10,12 @@ pub use prepare::{
 mod write;
 pub use write::{WRITE_PIXELS_MAX, WriteEntry, WriteLimits, encode_entries};
 
+/// Shared structural PNG admission; ICNS additionally retains bounded inert
+/// sRGB/EXIF metadata. ICO/CUR retain their existing narrower chunk profile.
+pub(crate) fn inspect_icns_png(data: &[u8], width: u32, height: u32) -> Result<()> {
+    payload::png_with_metadata(data, width, height).map(|_| ())
+}
+
 pub const ENTRIES_MAX: usize = 256;
 pub const ENCODED_BYTES_MAX: usize = 64 * 1024 * 1024;
 pub const KNOWN_IMPORT_LOSSES: &[&str] = &[

@@ -10,13 +10,33 @@ pub(super) fn inspect(data: &[u8], width: u32, height: u32) -> Result<(Encoding,
 }
 
 fn png(data: &[u8], width: u32, height: u32) -> Result<(Encoding, u16, u32)> {
+    png_options(data, width, height, false)
+}
+pub(super) fn png_with_metadata(
+    data: &[u8],
+    width: u32,
+    height: u32,
+) -> Result<(Encoding, u16, u32)> {
+    png_options(data, width, height, true)
+}
+fn png_options(
+    data: &[u8],
+    width: u32,
+    height: u32,
+    metadata: bool,
+) -> Result<(Encoding, u16, u32)> {
     let mut offset = 8usize;
     let mut depth = None;
     let mut colors = 0;
     let mut image_data = false;
     let mut data_ended = false;
     let mut transparency = false;
+    let (mut srgb, mut exif, mut chunks) = (false, false, 0usize);
     while offset < data.len() {
+        chunks += 1;
+        if metadata && chunks > 8192 {
+            return Err(unsupported("ICNS PNG chunk allowance exceeded"));
+        }
         let header = data
             .get(offset..offset + 8)
             .ok_or_else(|| malformed("truncated icon PNG chunk"))?;
@@ -76,6 +96,18 @@ fn png(data: &[u8], width: u32, height: u32) -> Result<(Encoding, u16, u32)> {
                     return Err(malformed("invalid icon PNG transparency order"));
                 }
                 transparency = true;
+            }
+            b"sRGB" if metadata => {
+                if srgb || image_data || !matches!(body, [0..=3]) {
+                    return Err(malformed("invalid ICNS PNG sRGB declaration"));
+                }
+                srgb = true;
+            }
+            b"eXIf" if metadata => {
+                if exif || image_data || body.len() > 65536 {
+                    return Err(unsupported("ICNS PNG EXIF profile or allowance"));
+                }
+                exif = true;
             }
             b"IDAT" => {
                 if data_ended {
