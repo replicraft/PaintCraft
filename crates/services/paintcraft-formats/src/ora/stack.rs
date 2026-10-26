@@ -1,9 +1,11 @@
 //! Strict baseline XML; no execution, DTD, external entities or extensions.
 use super::*;
+mod tree;
 use quick_xml::{
     Reader, XmlVersion,
     events::{BytesStart, Event},
 };
+use tree::{Kind, Tree};
 pub(super) struct Layer {
     pub src: String,
     pub name: String,
@@ -17,6 +19,7 @@ pub(super) struct Stack {
     pub title: Option<String>,
     pub resolution: Option<(u32, u32)>,
     pub layers: Vec<Layer>,
+    pub groups: usize,
     pub losses: Vec<String>,
 }
 pub(super) fn xml_char(c: char) -> bool {
@@ -127,6 +130,23 @@ pub(super) fn parse(
     budget: &Budget,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Stack> {
+    parse_policy(bytes, limits, budget, false, check)
+}
+pub(super) fn parse_neutral_groups(
+    bytes: &[u8],
+    limits: &Limits,
+    budget: &Budget,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Stack> {
+    parse_policy(bytes, limits, budget, true, check)
+}
+fn parse_policy(
+    bytes: &[u8],
+    limits: &Limits,
+    budget: &Budget,
+    allow_groups: bool,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Stack> {
     if bytes.len() > limits.xml_bytes {
         return Err(resource("ORA XML exceeds byte allowance"));
     }
@@ -148,7 +168,24 @@ pub(super) fn parse(
     let mut title = None;
     let mut xres = None;
     let mut yres = None;
-    let mut layers = budget.vector(limits.layers.min(limits.xml_bytes / 8))?;
+    // The default flat reader retains its original single collector/allocation.
+    let mut tree = if allow_groups {
+        Some(Tree::new(limits, budget)?)
+    } else {
+        None
+    };
+    let mut open = if allow_groups {
+        budget.vector(limits.depth.min(64))?
+    } else {
+        Vec::new()
+    };
+    let mut flat = if allow_groups {
+        Vec::new()
+    } else {
+        budget.vector(limits.layers.min(limits.xml_bytes / 8))?
+    };
+    let mut leaves = 0;
+    let mut group_version = false;
     let mut losses = Vec::new();
     let mut events = 0usize;
     loop {
@@ -163,7 +200,9 @@ pub(super) fn parse(
                 let depth = match state {
                     0 => 1,
                     1 => 2,
+                    2 if allow_groups => open.len() + 2,
                     2 => 3,
+                    _ if allow_groups => open.len() + 3,
                     _ => 4,
                 };
                 if depth > limits.depth.min(64) {
@@ -184,7 +223,9 @@ pub(super) fn parse(
                                     if ["0.0.1", "0.0.2", "0.0.3", "0.0.4", "0.0.5", "0.0.6"]
                                         .contains(&value.as_str()) =>
                                 {
-                                    version = true
+                                    version = true;
+                                    group_version =
+                                        ["0.0.4", "0.0.5", "0.0.6"].contains(&value.as_str());
                                 }
                                 _ => {
                                     return Err(unsupported(
@@ -202,13 +243,37 @@ pub(super) fn parse(
                         if !values.is_empty() || empty {
                             return Err(unsupported("ORA requires a nonempty neutral root stack"));
                         }
+                        if let Some(tree) = &mut tree {
+                            open.push(tree.push(None, Kind::Root)?);
+                        }
                         state = 2;
                     }
+                    (2, b"stack") if allow_groups => {
+                        if !group_version {
+                            return Err(unsupported(
+                                "ORA passthrough groups require version 0.0.4 to 0.0.6",
+                            ));
+                        }
+                        let group = tree::group(values)?;
+                        let tree = tree
+                            .as_mut()
+                            .ok_or_else(|| malformed("Missing ORA group collector"))?;
+                        let index = tree.push(open.last().copied(), Kind::Group(group))?;
+                        if !empty {
+                            open.push(index);
+                        }
+                    }
                     (2, b"layer") => {
-                        if layers.len() >= limits.layers {
+                        if leaves >= limits.layers {
                             return Err(resource("ORA layer count exceeds allowance"));
                         }
-                        layers.push(layer(values, &mut losses)?);
+                        let layer = layer(values, &mut losses)?;
+                        if let Some(tree) = &mut tree {
+                            tree.push(open.last().copied(), Kind::Layer(layer))?;
+                        } else {
+                            flat.push(layer);
+                        }
+                        leaves += 1;
                         state = if empty { 2 } else { 3 };
                     }
                     _ => {
@@ -221,6 +286,12 @@ pub(super) fn parse(
             Event::End(end) => {
                 state = match (state, end.name().as_ref()) {
                     (3, b"layer") => 2,
+                    (2, b"stack") if allow_groups => {
+                        if open.pop().is_none() {
+                            return Err(malformed("Unexpected ORA stack end"));
+                        }
+                        if open.is_empty() { 4 } else { 2 }
+                    }
                     (2, b"stack") => 4,
                     (4, b"image") => 5,
                     _ => return Err(malformed("Unexpected ORA XML end tag")),
@@ -269,7 +340,7 @@ pub(super) fn parse(
             }
         }
     }
-    if state != 5 || layers.is_empty() {
+    if state != 5 || leaves == 0 {
         return Err(malformed("Incomplete or empty ORA layer stack"));
     }
     let (width, height) = (
@@ -295,12 +366,21 @@ pub(super) fn parse(
             ));
         }
     };
+    let (layers, groups) = if let Some(tree) = tree {
+        tree.flatten(leaves, budget, check)?
+    } else {
+        (flat, 0)
+    };
+    if groups > 0 {
+        loss(&mut losses, GROUP_STRUCTURE_LOSS);
+    }
     Ok(Stack {
         width,
         height,
         title,
         resolution,
         layers,
+        groups,
         losses,
     })
 }
@@ -315,6 +395,34 @@ mod tests {
             &Budget::new(8 << 20),
             &|| Ok(()),
         )
+    }
+    #[test]
+    fn original_flat_metadata_allowance_does_not_pay_for_group_storage() {
+        let xml = br#"<image version="0.0.6" w="1" h="1"><stack><layer src="data/a.png"/></stack></image>"#;
+        // Previous flat collector: one Layer, three 16-entry attribute vectors,
+        // and 29 text bytes. No source-tree/open-frame/second-layer allocation.
+        let previous = if std::mem::size_of::<usize>() == 8 {
+            2397
+        } else {
+            1217
+        };
+        let limits = Limits {
+            layers: 1,
+            metadata_bytes: previous,
+            ..Limits::default()
+        };
+        let budget = Budget::new(previous);
+        let parsed = parse(xml, &limits, &budget, &|| Ok(())).unwrap();
+        assert_eq!(parsed.layers.len(), 1);
+        assert_eq!(parsed.groups, 0);
+        assert_eq!(budget.used.get(), previous);
+        assert_eq!(
+            parse_neutral_groups(xml, &limits, &Budget::new(previous), &|| Ok(()))
+                .err()
+                .unwrap()
+                .code,
+            ErrorCode::ResourceLimit
+        );
     }
     #[test]
     fn fractional_opacity_is_explicit_and_xml_entities_are_inert() {

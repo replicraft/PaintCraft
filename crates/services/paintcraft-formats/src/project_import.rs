@@ -6,7 +6,7 @@ use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 mod ora;
 mod psd;
-pub use ora::decode_ora;
+pub use ora::{decode_ora, decode_ora_with_neutral_groups};
 pub use psd::decode_psd;
 
 pub const PAINT_LOSSES: [&str; 3] = [

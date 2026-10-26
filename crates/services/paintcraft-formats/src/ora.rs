@@ -64,6 +64,12 @@ pub struct Decoded {
     pub layers: Vec<DecodedLayer>,
     pub losses: Vec<String>,
 }
+/// Backend-only group conversion loss; not admitted by generic frontend imports.
+pub const GROUP_STRUCTURE_LOSS: &str = "ora-group-structure-not-retained";
+pub(crate) struct GroupCopy {
+    pub decoded: Decoded,
+    pub merged: Option<Vec<u8>>,
+}
 pub const LOSSES: [&str; 2] = ["ora-opacity-quantized", "ora-resolution-ignored"];
 
 /// A dispatch hint only. Full ZIP, XML and PNG admission remains mandatory.
@@ -171,6 +177,21 @@ pub fn decode_layers(
     limits: &Limits,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Decoded> {
+    Ok(decode_policy(bytes, limits, false, check)?.decoded)
+}
+pub(crate) fn decode_neutral_groups(
+    bytes: &[u8],
+    limits: &Limits,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<GroupCopy> {
+    decode_policy(bytes, limits, true, check)
+}
+fn decode_policy(
+    bytes: &[u8],
+    limits: &Limits,
+    allow_groups: bool,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<GroupCopy> {
     check()?;
     let budget = Budget::new(limits.metadata_bytes);
     let archive = archive::Archive::parse(bytes, limits, &budget, check)?;
@@ -191,7 +212,11 @@ pub fn decode_layers(
         return Err(resource("ORA XML exceeds byte allowance"));
     }
     let xml = archive.read(stack_index, limits, check)?;
-    let mut stack = stack::parse(&xml, limits, &budget, check)?;
+    let mut stack = if allow_groups {
+        stack::parse_neutral_groups(&xml, limits, &budget, check)?
+    } else {
+        stack::parse(&xml, limits, &budget, check)?
+    };
     let merged = archive.index("mergedimage.png")?;
     let thumbnail = archive.index("Thumbnails/thumbnail.png")?;
     let mut used = budget.vector(archive.entries.len())?;
@@ -247,6 +272,7 @@ pub fn decode_layers(
         return Err(malformed("ORA thumbnail exceeds the baseline PNG profile"));
     }
 
+    let thumbnail_pixels = u64::from(w) * u64::from(h);
     let mut encoded: Vec<(usize, Cow<'_, [u8]>)> = budget.vector(sources.len())?;
     for index in sources {
         check()?;
@@ -274,9 +300,27 @@ pub fn decode_layers(
         }
         plans.push((encoded_index, width, height));
     }
+    if stack.groups > 0 {
+        let comparison = u64::from(stack.width)
+            .checked_mul(u64::from(stack.height))
+            .and_then(|n| n.checked_mul(8))
+            .and_then(|n| n.checked_add(aggregate.checked_mul(4)?));
+        let preview_peak = u64::from(stack.width)
+            .checked_mul(u64::from(stack.height))
+            .and_then(|n| n.checked_add(thumbnail_pixels))
+            .and_then(|n| n.checked_mul(4));
+        if comparison.is_none_or(|n| n > limits.decoded_bytes as u64)
+            || preview_peak.is_none_or(|n| n > limits.decoded_bytes as u64)
+        {
+            return Err(resource(
+                "ORA group layers/merged/render pixels exceed decoded allowance",
+            ));
+        }
+    }
+    let mut projection = None;
     // All canonical layer geometry is admitted before even temporary preview
     // pixel buffers are created. Preview decoding is sequential and discarded.
-    for preview in [&merged_bytes, &thumb] {
+    for (index, preview) in [&merged_bytes, &thumb].into_iter().enumerate() {
         check()?;
         let decoded = crate::image::decode_with_pixel_limit(preview, limits.pixels)?;
         if decoded
@@ -285,6 +329,9 @@ pub fn decode_layers(
             .any(|code| code == "animation-first-frame-only")
         {
             return Err(unsupported("ORA previews must be static PNG images"));
+        }
+        if stack.groups > 0 && index == 0 {
+            projection = Some(decoded.rgba);
         }
         check()?;
     }
@@ -328,12 +375,19 @@ pub fn decode_layers(
     // OpenRaster lists its top layer first; PaintCraft roots are bottom to top.
     layers.reverse();
     check()?;
-    Ok(Decoded {
-        width: stack.width,
-        height: stack.height,
-        title: stack.title,
-        resolution: stack.resolution,
-        layers,
-        losses: stack.losses,
+    Ok(GroupCopy {
+        decoded: Decoded {
+            width: stack.width,
+            height: stack.height,
+            title: stack.title,
+            resolution: stack.resolution,
+            layers,
+            losses: stack.losses,
+        },
+        merged: projection,
     })
 }
+
+#[cfg(test)]
+#[path = "ora/group_tests.rs"]
+mod group_tests;

@@ -6,6 +6,23 @@ pub fn decode_ora(
     pixel_limit: u64,
     check: &dyn Fn() -> Result<()>,
 ) -> Result<Converted> {
+    convert(bytes, pixel_limit, false, check)
+}
+/// Backend-only converted copy. Generic ORA dispatch still rejects every group.
+/// Neutral auto groups lose their names, hierarchy and separate visibility controls.
+pub fn decode_ora_with_neutral_groups(
+    bytes: &[u8],
+    pixel_limit: u64,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Converted> {
+    convert(bytes, pixel_limit, true, check)
+}
+fn convert(
+    bytes: &[u8],
+    pixel_limit: u64,
+    allow_groups: bool,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Converted> {
     let limit = pixel_limit.min(4_194_304);
     let limits = crate::ora::Limits {
         archive_bytes: 64 << 20,
@@ -14,10 +31,16 @@ pub fn decode_ora(
         entry_bytes: 32 << 20,
         layers: 256,
         pixels: limit,
-        decoded_bytes: usize::try_from(limit.saturating_mul(4)).unwrap_or(usize::MAX),
+        decoded_bytes: usize::try_from(limit.saturating_mul(if allow_groups { 12 } else { 4 }))
+            .unwrap_or(usize::MAX),
         ..Default::default()
     };
-    let source = crate::ora::decode_layers(bytes, &limits, check)?;
+    let (source, projection) = if allow_groups {
+        let prepared = crate::ora::decode_neutral_groups(bytes, &limits, check)?;
+        (prepared.decoded, prepared.merged)
+    } else {
+        (crate::ora::decode_layers(bytes, &limits, check)?, None)
+    };
     let mut hash = Sha256::new();
     for chunk in bytes.chunks(65536) {
         check()?;
@@ -67,15 +90,26 @@ pub fn decode_ora(
         );
     }
     check()?;
+    let document = Document {
+        document_id: identity("document", ""),
+        state_id: identity("state", ""),
+        canvas: (source.width, source.height),
+        roots,
+        layers,
+        title: source.title,
+    };
+    if let Some(expected) = projection {
+        let rendered = paintcraft_render::render_cancellable(&document, check)?;
+        if rendered != expected {
+            return Err(Error::new(
+                ErrorCode::CapabilityUnsupported,
+                "ORA neutral group conversion differs from its merged rendering/projection profile",
+            ));
+        }
+    }
+    check()?;
     Ok(Converted {
-        document: Document {
-            document_id: identity("document", ""),
-            state_id: identity("state", ""),
-            canvas: (source.width, source.height),
-            roots,
-            layers,
-            title: source.title,
-        },
+        document,
         losses: source.losses,
     })
 }

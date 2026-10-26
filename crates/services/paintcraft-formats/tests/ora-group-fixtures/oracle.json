@@ -1,0 +1,101 @@
+{
+    "generator": "Python3 zipfile/zlib and independent Fraction source-over per leaf",
+    "group_names_xml_order": [
+        "日本語 outer",
+        "Duplicate",
+        "Duplicate"
+    ],
+    "layers_bottom_to_top": [
+        {
+            "name": "Back",
+            "width": 3,
+            "height": 2,
+            "origin": [
+                0,
+                0
+            ],
+            "effective_visible": true,
+            "rgba_sha256": "11cd1b4e268990c2e53eadeed2ac553118c2006b59361d974f2011c21b9cef33"
+        },
+        {
+            "name": "Mid",
+            "width": 3,
+            "height": 2,
+            "origin": [
+                0,
+                0
+            ],
+            "effective_visible": true,
+            "rgba_sha256": "ff01ee28a239ce68d3f5700da8586cfeabc66cbfeb9c69317f47139d70ab4051"
+        },
+        {
+            "name": "Child visible but ancestor hidden",
+            "width": 1,
+            "height": 1,
+            "origin": [
+                0,
+                0
+            ],
+            "effective_visible": false,
+            "rgba_sha256": "7a7bf454c5f3cb1b9d9a20f81417f98d976fe3b3dd52c1b9968f02e89e7e8a2f"
+        },
+        {
+            "name": "Child hidden",
+            "width": 1,
+            "height": 1,
+            "origin": [
+                2,
+                1
+            ],
+            "effective_visible": false,
+            "rgba_sha256": "f7f9e13d8ace3958b3fee2a2cbfa1d16dc90523b4ea4fd124c8e3aba6a872401"
+        },
+        {
+            "name": "Bright",
+            "width": 2,
+            "height": 2,
+            "origin": [
+                -1,
+                0
+            ],
+            "effective_visible": true,
+            "rgba_sha256": "51a5f88411a9ac30540573804b3d20999f5e510e908844b19b4f283bf9df8cfd"
+        },
+        {
+            "name": "Fore",
+            "width": 2,
+            "height": 2,
+            "origin": [
+                1,
+                -1
+            ],
+            "effective_visible": true,
+            "rgba_sha256": "1c81e4733c4835c53828b2f53693a6e11cdf487d78aa9a09b545e6db14041591"
+        }
+    ],
+    "files": {
+        "default-isolate.ora": "2c49d0036a790c1a212375030f2af464a9c435963ac3759de19c49a629dce7de",
+        "different-projection.ora": "e5cb96681d3cee2f2fc9b413e9b4ecf78a677bc2bb6b5f9e604991bd3f261dbb",
+        "explicit-isolate.ora": "04f3f825110379c8d7b4a0ec6791fd1263ae2972bcb191124d61799584822958",
+        "exponent-one.ora": "1e39eb87698a26e6aa9f68d2079c37c08cd1c846d8da7b4bea13d89cc845ec57",
+        "flat.ora": "582fa0da59d20e54bc4862c137c1142b1d27422a1603a892dbe215dda70eca3a",
+        "group-blend.ora": "23a6ae9ac3b0d8afd8de5e4d795a3b1e2064d6a8bee70031d4bf589fbd9fa507",
+        "group-offset.ora": "8ae226ab2087c954332f24ffb8430646331a4779b036d304ceb5d1c290b24278",
+        "half-opacity.ora": "18b564ad0d9253f7ab8b05c930510a4e36ca91770d973d78ff2fbfc4f7994786",
+        "hidden-isolate.ora": "4ee09083f8285790cb1a1410c20d13f4a1a06f5c9026e488cdb8f2aeca3fb6bb",
+        "hidden-unknown.ora": "1c2294b752eca49b3f0897d4bf9108d68438a84f04d4230ed07e0b3e4bf5906a",
+        "large-thumbnail.ora": "7b9ae4e62441c25fbaea2fc7143d251f4838888453cd6c2cff0409b07af19fad",
+        "layer-0.rgba": "11cd1b4e268990c2e53eadeed2ac553118c2006b59361d974f2011c21b9cef33",
+        "layer-1.rgba": "ff01ee28a239ce68d3f5700da8586cfeabc66cbfeb9c69317f47139d70ab4051",
+        "layer-2.rgba": "7a7bf454c5f3cb1b9d9a20f81417f98d976fe3b3dd52c1b9968f02e89e7e8a2f",
+        "layer-3.rgba": "f7f9e13d8ace3958b3fee2a2cbfa1d16dc90523b4ea4fd124c8e3aba6a872401",
+        "layer-4.rgba": "51a5f88411a9ac30540573804b3d20999f5e510e908844b19b4f283bf9df8cfd",
+        "layer-5.rgba": "1c81e4733c4835c53828b2f53693a6e11cdf487d78aa9a09b545e6db14041591",
+        "leaf-blend.ora": "1b3b6501f569d287d1568bb76b3e4726ee22ea8f14138bb74a9c11b109092161",
+        "merged.rgba": "0528123151f1618da42120ddac568ebc3087137607ed9294c1e02a1313bb83fa",
+        "near-one.ora": "fd9b1e72e3ab34ba89210746eae450e618296c2e8f1c0c9d4fb6f68895670dcb",
+        "neutral.ora": "ce5b72616fb4950951916271f7cd413402865c457e00510a4ee21e0c1cba2011",
+        "old-version.ora": "3b01c4a5fdc03cf067b8864f56ae6cbabd66c93e35e6c7dcfa272a1a935dbe25",
+        "policy-before-pixels.ora": "e66b863bded241bc9b93f11cb9af144e43aadc2c7db9344930f92646facbf676"
+    }
+}
