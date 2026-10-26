@@ -77,25 +77,29 @@ fn dimensions(width: u32, height: u32, limits: &WriteLimits) -> Result<u64> {
     }
     Ok(pixels)
 }
-/// Admit the full source before allocating metadata, BGRA, codec or output.
-pub fn preflight_write(
-    doc: &WriteDocument<'_>,
+/// Resource-only heterogeneous layout; no pixel/metadata semantic authority.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct WriteLayout {
+    pub width: u32,
+    pub height: u32,
+    pub origin: (i32, i32),
+    pub item_name_bytes: usize,
+}
+/// Price supported geometry/count/name bytes before materializing pixel storage.
+pub fn estimate_write(
+    width: u32,
+    height: u32,
+    layers: &[WriteLayout],
     limits: &WriteLimits,
-    check: &dyn Fn() -> Result<()>,
 ) -> Result<WritePlan> {
-    check()?;
-    dimensions(doc.width, doc.height, limits)?;
-    if doc.layers.is_empty() || doc.layers.len() > limits.layers.min(64) {
+    dimensions(width, height, limits)?;
+    if layers.is_empty() || layers.len() > limits.layers.min(64) {
         return Err(resource("PAINT write needs 1..64 admitted layers"));
     }
-    if !doc.metadata.is_empty() {
-        return Err(unsupported("PAINT document metadata is unqualified"));
-    }
     let mut pixels = 0u64;
-    let mut metadata = add(4096, mul(doc.layers.len(), 512)?)?;
-    let mut wide = doc.width > u16::MAX as u32 || doc.height > u16::MAX as u32;
-    for layer in doc.layers {
-        check()?;
+    let mut metadata = add(4096, mul(layers.len(), 512)?)?;
+    let mut wide = width > u16::MAX as u32 || height > u16::MAX as u32;
+    for layer in layers {
         let count = dimensions(layer.width, layer.height, limits)?;
         pixels = pixels
             .checked_add(count)
@@ -103,18 +107,10 @@ pub fn preflight_write(
         if pixels > limits.pixels.min(4_194_304) {
             return Err(resource("PAINT aggregate write pixel allowance"));
         }
-        if count * 4 != layer.rgba.len() as u64 {
-            return Err(malformed("PAINT layer RGBA length disagrees with geometry"));
-        }
-        if !layer.visible || layer.opacity != 255 || !layer.metadata.is_empty() {
-            return Err(unsupported(
-                "PAINT visibility, opacity or metadata extensions are unqualified",
-            ));
-        }
-        if layer.item_name.len() > 1024 || layer.item_name.contains('\0') {
+        if layer.item_name_bytes > 1024 {
             return Err(unsupported("PAINT item name outside UTF-8 profile"));
         }
-        metadata = add(metadata, layer.item_name.len())?;
+        metadata = add(metadata, layer.item_name_bytes)?;
         wide |= i16::try_from(layer.origin.0).is_err() || i16::try_from(layer.origin.1).is_err();
     }
     if metadata > limits.metadata_bytes.min(1 << 20) {
@@ -125,7 +121,7 @@ pub fn preflight_write(
     // Selected miniz15-bit coding/stored fallback; hard append checks enforce
     // the reservation independently of this conservative growth declaration.
     let output_capacity = add(
-        add(mul(source_bytes, 2)?, mul(doc.layers.len(), 1024)?)?,
+        add(mul(source_bytes, 2)?, mul(layers.len(), 1024)?)?,
         metadata,
     )?;
     if output_capacity > limits.encoded_bytes.min(64 << 20) {
@@ -146,6 +142,44 @@ pub fn preflight_write(
         wide_overlay: wide,
     })
 }
+/// Admit the complete typed source before metadata, BGRA, codec or output allocation.
+pub fn preflight_write(
+    doc: &WriteDocument<'_>,
+    limits: &WriteLimits,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<WritePlan> {
+    check()?;
+    if doc.layers.len() > 64 {
+        return Err(resource("PAINT write needs 1..64 admitted layers"));
+    }
+    if !doc.metadata.is_empty() {
+        return Err(unsupported("PAINT document metadata is unqualified"));
+    }
+    let mut layouts = [WriteLayout::default(); 64];
+    for (index, layer) in doc.layers.iter().enumerate() {
+        check()?;
+        let count = dimensions(layer.width, layer.height, limits)?;
+        if count * 4 != layer.rgba.len() as u64 {
+            return Err(malformed("PAINT layer RGBA length disagrees with geometry"));
+        }
+        if !layer.visible || layer.opacity != 255 || !layer.metadata.is_empty() {
+            return Err(unsupported(
+                "PAINT visibility, opacity or metadata extensions are unqualified",
+            ));
+        }
+        if layer.item_name.len() > 1024 || layer.item_name.contains('\0') {
+            return Err(unsupported("PAINT item name outside UTF-8 profile"));
+        }
+        layouts[index] = WriteLayout {
+            width: layer.width,
+            height: layer.height,
+            origin: layer.origin,
+            item_name_bytes: layer.item_name.len(),
+        };
+    }
+    estimate_write(doc.width, doc.height, &layouts[..doc.layers.len()], limits)
+}
+
 struct Output {
     bytes: Vec<u8>,
     limit: usize,

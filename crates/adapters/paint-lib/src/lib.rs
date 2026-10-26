@@ -12,8 +12,8 @@ pub use boxes::{BoxInfo, BoxTree, FileType, LayoutResolver, inspect, inspect_wit
 pub use extents::{AliasPolicy, Extent, resolve_extent, validate_extents};
 use paintcraft_core::types::{Error, ErrorCode, Result};
 pub use write::{
-    WriteDocument, WriteLayer, WriteLimits, WritePlan, encode_document, preflight_write,
-    write_document_to,
+    WriteDocument, WriteLayer, WriteLayout, WriteLimits, WritePlan, encode_document,
+    estimate_write, preflight_write, write_document_to,
 };
 
 #[derive(Clone, Copy, Debug)]
