@@ -71,8 +71,8 @@ pub fn run(a: Options, json: bool) -> Reply {
                 )?;
                 (bytes, sha, Some(identity))
             } else {
-                let (bytes, sha) = read_bounded(&a.image, 64 << 20, "image")?;
-                (bytes, sha, None)
+                let (bytes, sha, identity) = read_captured(&a.image, 64 << 20, "image")?;
+                (bytes, sha, Some(identity))
             };
             guard_named(
                 a.expect_image_sha256.as_deref(),
@@ -132,8 +132,17 @@ pub fn run(a: Options, json: bool) -> Reply {
             {
                 return Err(Error::new(
                     ErrorCode::InputSchema,
-                    "output cannot replace the captured MSP source image",
+                    "output cannot replace the captured source image",
                 ));
+            }
+            if family == paintcraft_formats::registry::Family::Dds {
+                use sha2::{Digest, Sha256};
+                source_identity.as_ref().unwrap().verify_bytes(
+                    &a.image,
+                    image_bytes.len() as u64,
+                    &Sha256::digest(&image_bytes).into(),
+                    &|| Ok(()),
+                )?;
             }
             let (receipt, ok, summary) =
                 write_native(dest, a.output.overwrite, session.document(), &ctx);

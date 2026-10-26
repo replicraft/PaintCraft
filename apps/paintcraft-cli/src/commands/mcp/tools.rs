@@ -1,7 +1,7 @@
 use super::super::format_profile;
 use super::super::{
     BATCH_V2_SCHEMA, Context, INPUT_MAX, ImageFormat, POLICY, PathBuf, Rgba, Session, export,
-    image, new_document, pcnd, read_bounded, read_captured, save,
+    image, new_document, pcnd, read_captured, save,
 };
 use super::{
     PaintingServer,
@@ -16,6 +16,7 @@ use rmcp::{
     tool, tool_router,
 };
 use serde_json::json;
+use sha2::{Digest, Sha256};
 
 #[tool_router]
 impl PaintingServer {
@@ -120,6 +121,12 @@ impl PaintingServer {
                     } else { Ok(()) }
                 }));
             }
+            let check = || {
+                if cancellation.is_cancelled() || dropped.load(std::sync::atomic::Ordering::Acquire) {
+                    Err(paintcraft_core::types::Error::new(paintcraft_core::types::ErrorCode::OperationCancelled, "MCP image import cancelled"))
+                } else { Ok(()) }
+            };
+            check()?;
             let profile = format_profile::Options::default();
             if p.svg.is_some() {
                 profile.admit_import_svg_path(&path)?;
@@ -137,18 +144,19 @@ impl PaintingServer {
                 .and_then(Family::from_extension).and_then(|family|match family {
                     Family::Msp=>Some(paintcraft_formats::msp::BYTES_MAX),
                     Family::Icns=>Some(paintcraft_formats::icns::BYTES_MAX),
+                    Family::Dds=>Some(paintcraft_formats::dds::BYTES_MAX),
                     _=>None,
                 });
             let (bytes,sha,source_identity) = if let Some(limit)=captured_limit {
                 let (bytes,sha,identity)=read_captured(&path,limit as u64,"captured image")?;
                 (bytes,sha,Some(identity))
             } else {
-                let (bytes, sha) = read_bounded(
+                let (bytes, sha, identity) = read_captured(
                     &path,
                     if p.svg.is_some() {paintcraft_formats::svg::SOURCE_MAX as u64} else {INPUT_MAX},
                     "image",
                 )?;
-                (bytes,sha,None)
+                (bytes,sha,Some(identity))
             };
             let family = if p.svg.is_some() {
                 profile.admit_import_svg(&path, &bytes)?
@@ -220,6 +228,11 @@ impl PaintingServer {
                     ),
                 ));
             }
+            check()?;
+            if family == Family::Dds {
+                let identity = source_identity.as_ref().ok_or_else(|| invalid("DDS import requires a captured .dds source"))?;
+                identity.verify_bytes(&path, bytes.len() as u64, &Sha256::digest(&bytes).into(), &check)?;
+            }
             let mut session = Session::new(doc);
             session.mark_unsaved();
             state.session = Some(session);
@@ -233,7 +246,7 @@ impl PaintingServer {
                 .svg
                 .map(|selection| selection.font_files)
                 .unwrap_or_default();
-            if matches!(family,Family::Msp|Family::Icns) {
+            if matches!(family,Family::Msp|Family::Icns|Family::Dds) {
                 let mut value=state.inspection()?;
                 value["conversion"]=json!({"source_sha256":sha,"losses_acknowledged":losses,"source_lineage_adopted":false,"source_format":family.id(),"icns_entry":icns_entry.map(|entry|json!({"index":entry.index,"record":entry.record,"tag":String::from_utf8_lossy(&entry.tag),"width":entry.width,"height":entry.height,"logical_width":entry.logical_width,"logical_height":entry.logical_height,"scale":entry.scale})),"preserving_save":false});
                 Ok(super::state::reply(value))

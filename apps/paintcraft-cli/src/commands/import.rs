@@ -97,12 +97,15 @@ pub fn run(a: Options, json: bool) -> Reply {
                     paintcraft_formats::registry::Family::Icns => {
                         Some(paintcraft_formats::icns::BYTES_MAX)
                     }
+                    paintcraft_formats::registry::Family::Dds => {
+                        Some(paintcraft_formats::dds::BYTES_MAX)
+                    }
                     _ => None,
                 }) {
                 let (bytes, sha, identity) = read_captured(input, limit as u64, "captured input")?;
                 (bytes, sha, Some(identity))
             } else {
-                let (bytes, sha) = read_bounded(
+                let (bytes, sha, identity) = read_captured(
                     input,
                     if svg.is_some() {
                         paintcraft_formats::svg::SOURCE_MAX as u64
@@ -111,7 +114,7 @@ pub fn run(a: Options, json: bool) -> Reply {
                     },
                     "input",
                 )?;
-                (bytes, sha, None)
+                (bytes, sha, Some(identity))
             };
             let family = if svg.is_some() {
                 a.profile.admit_import_svg(input, &bytes)?
@@ -173,6 +176,20 @@ pub fn run(a: Options, json: bool) -> Reply {
                     ErrorCode::CapabilityUnsupported,
                     format!("import would lose {loss}; acknowledge with --allow-loss {loss}"),
                 ));
+            }
+            if family == paintcraft_formats::registry::Family::Dds {
+                let identity = source_identity.as_ref().ok_or_else(|| {
+                    Error::new(
+                        ErrorCode::InputSchema,
+                        "DDS import requires a captured .dds source",
+                    )
+                })?;
+                identity.verify_bytes(
+                    input,
+                    bytes.len() as u64,
+                    &Sha256::digest(&bytes).into(),
+                    &|| Ok(()),
+                )?;
             }
             let ctx = Context {
                 operation: "save-as",
