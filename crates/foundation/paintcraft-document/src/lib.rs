@@ -155,6 +155,44 @@ pub fn import_image(width: u32, height: u32, rgba: &[u8], source_sha256: &str) -
     let mut adm =
         paintcraft_raster::Admission::new(paintcraft_core::types::policy::STAGED_PIXELS_MAX);
     let raster = RasterLayer::from_rgba(width, height, Rgba::TRANSPARENT, rgba, &mut adm)?;
+    Ok(imported_document(width, height, raster, source_sha256))
+}
+
+/// Construct private imported pixels with cancellation throughout tile admission
+/// and copying. The caller retains its resource lease through publication.
+pub fn import_image_checked(
+    width: u32,
+    height: u32,
+    rgba: &[u8],
+    source_sha256: &str,
+    check: &dyn Fn() -> Result<()>,
+) -> Result<Document> {
+    check()?;
+    if !(1..=CANVAS_SIDE_MAX).contains(&width) || !(1..=CANVAS_SIDE_MAX).contains(&height) {
+        return Err(Error::new(
+            ErrorCode::InputSchema,
+            "image dimensions out of range",
+        ));
+    }
+    let mut admission =
+        paintcraft_raster::Admission::new(paintcraft_core::types::policy::STAGED_PIXELS_MAX);
+    let raster = RasterLayer::from_rgba_checked(
+        width,
+        height,
+        Rgba::TRANSPARENT,
+        rgba,
+        &mut admission,
+        check,
+    )?;
+    check()?;
+    Ok(imported_document(width, height, raster, source_sha256))
+}
+fn imported_document(
+    width: u32,
+    height: u32,
+    raster: RasterLayer,
+    source_sha256: &str,
+) -> Document {
     let id = deterministic_id(&["layer", "import", source_sha256]);
     let layer = Layer {
         id,
@@ -164,14 +202,14 @@ pub fn import_image(width: u32, height: u32, rgba: &[u8], source_sha256: &str) -
         opacity: 255,
         raster,
     };
-    Ok(Document {
+    Document {
         document_id: deterministic_id(&["document", "import", source_sha256]),
         state_id: deterministic_id(&["state", "import", source_sha256]),
         canvas: (width, height),
         roots: vec![id],
         layers: HashMap::from([(id, layer)]),
         title: None,
-    })
+    }
 }
 
 pub use paintcraft_core::types::policy::hex;
@@ -289,3 +327,6 @@ mod tests {
         assert!(!a.same_semantics(&b));
     }
 }
+
+#[cfg(test)]
+mod import_tests;
