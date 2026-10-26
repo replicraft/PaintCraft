@@ -48,6 +48,37 @@ fn launch(launch: wire::native::Launch<'_>, check: &dyn Fn() -> Result<()>) -> R
     )
     .map(|output| output.bytes)
 }
+fn admit_avif_profile(
+    frontend: registry::Frontend,
+    extension: Option<&str>,
+    codec: wire::Codec,
+) -> Result<()> {
+    let variant = match codec {
+        wire::Codec::AvifSrgb8 => wire::NATIVE_AVIF_IMPORT_VARIANT,
+        wire::Codec::AvifSdr8 => wire::NATIVE_AVIF_SDR_IMPORT_VARIANT,
+        _ => {
+            return Err(Error::new(
+                ErrorCode::InvariantViolation,
+                "Unexpected selected AVIF codec",
+            ));
+        }
+    };
+    let mut request = Request::new(
+        frontend,
+        Operation::ImportConvert,
+        Family::Avif,
+        Platform::Native,
+    );
+    request.extension = extension;
+    request.variant = Some(variant);
+    match registry::admission(request) {
+        registry::Decision::Allowed
+        | registry::Decision::AllowedWithPreflight(registry::Reason::ConvertRequiresConsent) => {
+            Ok(())
+        }
+        decision => decision.require_allowed(request),
+    }
+}
 impl App {
     pub(crate) fn stage_native_jxl(&mut self, path: PathBuf) -> Result<()> {
         self.stage_native_jxl_with_launch(path, Box::new(launch))
@@ -143,6 +174,11 @@ impl App {
         let residency = service.import_residency();
         let preview_budget = service.metadata_budget();
         let captured = owner(self);
+        let frontend = self.format_frontend();
+        let extension = path
+            .extension()
+            .and_then(|value| value.to_str())
+            .map(str::to_owned);
         let input = path.clone();
         let job_identity = identity.clone();
         let job = service.submit_import(move |cancel| {
@@ -150,7 +186,7 @@ impl App {
                 Error::new(ErrorCode::ResourceLimit, "Native codec admission missing")
             })?;
             let check = || cancel.check();
-            Job {
+            let job = Job {
                 input,
                 identity: job_identity,
                 length,
@@ -160,8 +196,19 @@ impl App {
                 deadline: Duration::from_secs(10),
                 application_version: env!("CARGO_PKG_VERSION").into(),
                 expected_sha256: None,
+            };
+            if family == Family::Avif {
+                job.prepare_avif_family(
+                    residency,
+                    lease,
+                    &check,
+                    &|| Ok(captured),
+                    |selected, _| admit_avif_profile(frontend, extension.as_deref(), selected),
+                    launch,
+                )
+            } else {
+                job.prepare_import(residency, lease, &check, &|| Ok(captured), launch)
             }
-            .prepare_import(residency, lease, &check, &|| Ok(captured), launch)
         })?;
         self.stage_candidate(
             Candidate::NativeCodec(Box::new(Source {
@@ -347,3 +394,7 @@ mod heif_installed_tests;
 #[cfg(test)]
 #[path = "native_codec/avif_installed_tests.rs"]
 mod avif_installed_tests;
+
+#[cfg(test)]
+#[path = "native_codec/avif_sdr_installed_tests.rs"]
+mod avif_sdr_installed_tests;

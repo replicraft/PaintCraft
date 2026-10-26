@@ -81,11 +81,16 @@ impl Review {
                 });
             }
         }
-        if let Some(assessment) = prepared.avif_assessment() {
-            for (label, name) in [
-                ("Image name", Some(assessment.primary_name())),
-                ("Transparency name", assessment.alpha_name()),
-            ] {
+        let avif_names = prepared
+            .avif_assessment()
+            .map(|value| (value.primary_name(), value.alpha_name()))
+            .or_else(|| {
+                prepared
+                    .avif_sdr_assessment()
+                    .map(|value| (value.primary_name(), value.alpha_name()))
+            });
+        if let Some((primary, alpha)) = avif_names {
+            for (label, name) in [("Image name", Some(primary)), ("Transparency name", alpha)] {
                 if let Some(name) = name.filter(|name| !name.is_empty()) {
                     ui.horizontal(|ui| {
                         ui.label(t!(&ctx, label));
