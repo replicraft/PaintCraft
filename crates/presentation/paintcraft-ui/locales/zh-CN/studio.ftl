@@ -362,3 +362,5 @@ this-image-contains-additive-transparent-color-choose-a-background-to-flatten-it
 this-image-contains-invalid-color-or-transparency-values-and-cannot-be-converted = 此图片包含无效的颜色或透明度值，无法转换。
 
 this-image-is-opaque-use-source-metadata-for-transparency = 此图片不透明。透明度请选择使用源元数据。
+
+only-the-full-size-dds-image-will-be-imported-its-smaller-mip-levels-will-stay-in-the-source-file = 仅导入完整尺寸的DDS图片。较小的Mip层级将保留在源文件中。

@@ -39,6 +39,9 @@ pub fn import_loss_description(code: &str) -> Option<&'static str> {
         }
         "msp-metadata-ignored" => "MSP device settings and header metadata will not be retained.",
         "dcx-other-pages-not-imported" => "Only the selected DCX page will be imported.",
+        "dds-other-mips-not-imported" => {
+            "Only the full-size DDS image will be imported. Its smaller mip levels will stay in the source file."
+        }
         "paint-layer-properties-unverified" => {
             "PAINT layer names, visibility and opacity could not be verified. The converted copy uses numbered, visible layers at full opacity."
         }
@@ -113,6 +116,7 @@ mod tests {
     #[test]
     fn extended_conversion_limitations_are_translated_in_every_language() {
         for code in [
+            "dds-other-mips-not-imported",
             "hdr-precision-reduced-to-8",
             "hdr-tone-mapped",
             "hdr-highlights-clipped",

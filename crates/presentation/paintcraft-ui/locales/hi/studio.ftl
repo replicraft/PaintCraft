@@ -362,3 +362,5 @@ this-image-contains-additive-transparent-color-choose-a-background-to-flatten-it
 this-image-contains-invalid-color-or-transparency-values-and-cannot-be-converted = इस चित्र में अमान्य रंग या पारदर्शिता मान हैं और इसे बदला नहीं जा सकता।
 
 this-image-is-opaque-use-source-metadata-for-transparency = यह चित्र अपारदर्शी है। पारदर्शिता के लिए स्रोत मेटाडेटा उपयोग करें।
+
+only-the-full-size-dds-image-will-be-imported-its-smaller-mip-levels-will-stay-in-the-source-file = केवल पूर्ण आकार का DDS चित्र आयात होगा। छोटे मिप स्तर स्रोत फ़ाइल में रहेंगे।

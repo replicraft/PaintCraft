@@ -362,3 +362,5 @@ this-image-contains-additive-transparent-color-choose-a-background-to-flatten-it
 this-image-contains-invalid-color-or-transparency-values-and-cannot-be-converted = この画像には無効な色または透明度の値があり、変換できません。
 
 this-image-is-opaque-use-source-metadata-for-transparency = この画像は不透明です。透明度には元画像のメタデータを使用してください。
+
+only-the-full-size-dds-image-will-be-imported-its-smaller-mip-levels-will-stay-in-the-source-file = DDSの元の大きさの画像のみを取り込みます。小さいミップレベルは元のファイルに残ります。

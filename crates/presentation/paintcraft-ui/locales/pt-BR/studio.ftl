@@ -362,3 +362,5 @@ this-image-contains-additive-transparent-color-choose-a-background-to-flatten-it
 this-image-contains-invalid-color-or-transparency-values-and-cannot-be-converted = Esta imagem contém valores de cor ou transparência inválidos e não pode ser convertida.
 
 this-image-is-opaque-use-source-metadata-for-transparency = Esta imagem é opaca. Use os metadados de origem para transparência.
+
+only-the-full-size-dds-image-will-be-imported-its-smaller-mip-levels-will-stay-in-the-source-file = Somente a imagem DDS em tamanho completo será importada. Os níveis mip menores permanecerão no arquivo de origem.
