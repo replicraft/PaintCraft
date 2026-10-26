@@ -3,8 +3,12 @@ use paintcraft_container_fuzz::{INPUT_MAX, Outcome, Target, classify, exercise};
 use std::{env, fs, io::Read, path::PathBuf};
 fn main() {
     let mut args = env::args().skip(1);
-    let target = Target::parse(&args.next().expect("target: avif/heif/paint/pdn/dcx"))
-        .expect("unknown target");
+    let target = Target::parse(
+        &args
+            .next()
+            .expect("target: avif/heif/paint/pdn/dcx/radiance/exr"),
+    )
+    .expect("unknown target");
     let iterations: usize = args
         .next()
         .expect("mutation count per seed")

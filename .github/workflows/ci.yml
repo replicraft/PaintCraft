@@ -61,7 +61,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           python3 fuzz/check_lock.py
-          python3 -m unittest discover -s fuzz -p test_check_lock.py
+          python3 -m unittest discover -s fuzz -p 'test_*.py'
           cargo fmt --manifest-path fuzz/Cargo.toml --check
           cargo clippy --manifest-path fuzz/Cargo.toml --locked --all-targets --target-dir target -- -D warnings
           cargo test --manifest-path fuzz/Cargo.toml --locked --target-dir target

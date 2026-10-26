@@ -113,6 +113,62 @@
             "source": "crates/services/paintcraft-formats/tests/dcx-fixtures/writer/mixed.dcx",
             "bytes": 6414,
             "sha256": "01dadbe490c176c7fd8565f18b4e0fc60afa819678783abad16d1e7ff8e9c7c3"
+        },
+        {
+            "target": "radiance",
+            "name": "literal-2x2.hdr",
+            "source": "crates/services/paintcraft-formats/tests/radiance-fixtures/literal-2x2.hdr",
+            "bytes": 61,
+            "sha256": "0e5c71e9b6f3f2db3b79b9c1600eddca6d492ce5d762bec46c15f5d9a8f9aad0"
+        },
+        {
+            "target": "radiance",
+            "name": "modern-rle-8x2.hdr",
+            "source": "crates/services/paintcraft-formats/tests/radiance-fixtures/modern-rle-8x2.hdr",
+            "bytes": 97,
+            "sha256": "03167a19fa6d01320aad2bd3cab5882fb462db2788199a186cbc54b4049e4d97"
+        },
+        {
+            "target": "radiance",
+            "name": "legacy-zero-low-digit-257.hdr",
+            "source": "crates/services/paintcraft-formats/tests/radiance-fixtures/legacy-zero-low-digit-257.hdr",
+            "bytes": 59,
+            "sha256": "a3ed49ce3e80df6c5836ac853b11ae0ab4c57a86192fded0bd78b5f68dea8994"
+        },
+        {
+            "target": "radiance",
+            "name": "zero-modern-run.hdr",
+            "source": "crates/services/paintcraft-formats/tests/radiance-fixtures/zero-modern-run.hdr",
+            "bytes": 58,
+            "sha256": "85f8bd305c4b92045def6f014dce60157f20a8be82a32100e93a1885b972a0eb"
+        },
+        {
+            "target": "exr",
+            "name": "half-rgb-none.exr",
+            "source": "crates/services/paintcraft-formats/tests/exr-fixtures/half-rgb-none.exr",
+            "bytes": 537,
+            "sha256": "b1439437348d17e3914ad504a21e19d5f2aad271efb9cc9a96843078926b316e"
+        },
+        {
+            "target": "exr",
+            "name": "half-rgba-rle.exr",
+            "source": "crates/services/paintcraft-formats/tests/exr-fixtures/half-rgba-rle.exr",
+            "bytes": 551,
+            "sha256": "1ebeaa3bd1ce6d864a3d52285cc687e51317891dfb1ce1179cfbd8d237227a0a"
+        },
+        {
+            "target": "exr",
+            "name": "float-rgba-zip.exr",
+            "source": "crates/services/paintcraft-formats/tests/exr-fixtures/float-rgba-zip.exr",
+            "bytes": 757,
+            "sha256": "8592de581ba43a4808ca0e6412372a7b6ab633974942b7319d5ab57d2ed8248f"
+        },
+        {
+            "target": "exr",
+            "name": "mixed-rgba-zip.exr",
+            "source": "crates/services/paintcraft-formats/tests/exr-fixtures/mixed-rgba-zip.exr",
+            "bytes": 803,
+            "sha256": "afd060b8bfd9812b3045a4142e60a209afec2123d1bdb90434d7345853485b87"
         }
     ]
 }

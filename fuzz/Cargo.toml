@@ -63,3 +63,19 @@ test = false
 doc = false
 bench = false
 required-features = ["fuzzing"]
+
+[[bin]]
+name = "radiance"
+path = "fuzz_targets/radiance.rs"
+test = false
+doc = false
+bench = false
+required-features = ["fuzzing"]
+
+[[bin]]
+name = "exr"
+path = "fuzz_targets/exr.rs"
+test = false
+doc = false
+bench = false
+required-features = ["fuzzing"]

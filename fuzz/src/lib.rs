@@ -12,6 +12,8 @@ pub enum Target {
     Paint,
     Pdn,
     Dcx,
+    Radiance,
+    Exr,
 }
 impl Target {
     pub fn parse(value: &str) -> Option<Self> {
@@ -21,6 +23,8 @@ impl Target {
             "paint" => Self::Paint,
             "pdn" => Self::Pdn,
             "dcx" => Self::Dcx,
+            "radiance" => Self::Radiance,
+            "exr" => Self::Exr,
             _ => return None,
         })
     }
@@ -69,6 +73,12 @@ pub fn exercise(target: Target, bytes: &[u8]) -> Result<()> {
         }
         Target::Heif => {
             paintcraft_formats::heif::inspect_checked(bytes, PIXELS_MAX, &check)?;
+        }
+        Target::Radiance => {
+            paintcraft_formats::radiance::inspect(bytes, PIXELS_MAX, &check)?;
+        }
+        Target::Exr => {
+            paintcraft_formats::exr::inspect(bytes, PIXELS_MAX, &check)?;
         }
         Target::Paint => {
             let limits = paintcraft_paint::DecodeLimits {
@@ -156,5 +166,68 @@ mod tests {
         );
         assert_eq!(classify(exercise(Target::Dcx, source)), Outcome::Accepted);
         assert_eq!(classify(exercise(Target::Dcx, &[])), Outcome::Rejected);
+    }
+    const HDR: &[u8] = include_bytes!(
+        "../../crates/services/paintcraft-formats/tests/radiance-fixtures/modern-rle-8x2.hdr"
+    );
+    const EXR: &[u8] = include_bytes!(
+        "../../crates/services/paintcraft-formats/tests/exr-fixtures/mixed-rgba-zip.exr"
+    );
+    #[test]
+    fn float_inspectors_keep_independent_positive_and_malformed_controls() {
+        assert!(matches!(Target::parse("radiance"), Some(Target::Radiance)));
+        assert!(matches!(Target::parse("exr"), Some(Target::Exr)));
+        for (target, source) in [(Target::Radiance, HDR), (Target::Exr, EXR)] {
+            assert_eq!(classify(exercise(target, source)), Outcome::Accepted);
+            for length in [0, 1, source.len() - 1] {
+                assert_eq!(
+                    classify(exercise(target, &source[..length])),
+                    Outcome::Rejected
+                );
+            }
+            let oversized = vec![0; INPUT_MAX + 1];
+            assert_eq!(
+                exercise(target, &oversized).unwrap_err().code,
+                ErrorCode::ResourceLimit
+            );
+        }
+    }
+    #[test]
+    fn float_inspector_pixel_limits_are_not_bypassed() {
+        let wide_hdr = b"#?RADIANCE\nFORMAT=32-bit_rle_rgbe\n\n-Y 1 +X 16385\n";
+        assert_eq!(
+            exercise(Target::Radiance, wide_hdr).unwrap_err().code,
+            ErrorCode::ResourceLimit
+        );
+        // Change only the two trusted fixture windows, preserving their equality.
+        // The declared width now exceeds the harness pixel cap before chunk work.
+        let inspected = paintcraft_formats::exr::inspect(EXR, PIXELS_MAX, &|| Ok(())).unwrap();
+        let mut wide_exr = EXR.to_vec();
+        let mut windows = 0;
+        for attribute in &inspected.header().attributes {
+            if matches!(attribute.name, "dataWindow" | "displayWindow") {
+                let start = attribute.value.as_ptr() as usize - EXR.as_ptr() as usize;
+                let xmin = i32::from_le_bytes(attribute.value[..4].try_into().unwrap());
+                wide_exr[start + 8..start + 12]
+                    .copy_from_slice(&(xmin + PIXELS_MAX as i32).to_le_bytes());
+                windows += 1;
+            }
+        }
+        assert_eq!(windows, 2);
+        assert_eq!(
+            exercise(Target::Exr, &wide_exr).unwrap_err().code,
+            ErrorCode::ResourceLimit
+        );
+    }
+    #[test]
+    fn callback_allowance_rejects_a_valid_but_work_heavy_radiance_inventory() {
+        let mut many_rows = b"#?RADIANCE\nFORMAT=32-bit_rle_rgbe\n\n-Y 8192 +X 1\n".to_vec();
+        many_rows.resize(many_rows.len() + 8192 * 4, 0);
+        assert!(many_rows.len() <= INPUT_MAX);
+        assert!(paintcraft_formats::radiance::inspect(&many_rows, PIXELS_MAX, &|| Ok(())).is_ok());
+        assert_eq!(
+            exercise(Target::Radiance, &many_rows).unwrap_err().code,
+            ErrorCode::ResourceLimit
+        );
     }
 }

@@ -20,7 +20,7 @@ def main():
             data = stream.read(MAX_INPUT + 1)
         if len(data) > MAX_INPUT or len(data) != seed["bytes"] or hashlib.sha256(data).hexdigest() != seed["sha256"]:
             raise ValueError(f"Seed provenance mismatch: {source}")
-        if seed["target"] not in {"avif", "heif", "paint", "pdn", "dcx"} or Path(seed["name"]).name != seed["name"]:
+        if seed["target"] not in {"avif", "heif", "paint", "pdn", "dcx", "radiance", "exr"} or Path(seed["name"]).name != seed["name"]:
             raise ValueError("Invalid target or corpus filename")
         directory = corpus / seed["target"]
         if directory.is_symlink():
