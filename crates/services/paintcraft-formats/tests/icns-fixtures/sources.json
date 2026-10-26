@@ -1,0 +1,241 @@
+{
+    "license": "MIT, repository-authored wire/pixel content",
+    "generator": "Python standard library",
+    "files": {
+        "modern.icns": {
+            "bytes": 32106,
+            "sha256": "f25446c8984c8ea9293dc483867605c6154038107712e5d1392323380867ae83",
+            "entries": [
+                {
+                    "tag": "icp4",
+                    "logical": 16,
+                    "scale": 1,
+                    "side": 16,
+                    "seed": 1,
+                    "rgba_sha256": "228660243249036fc88ebab62e69ba00aeb3a81201ef7ff8e6c8cc1b454d0837",
+                    "qualified": true
+                },
+                {
+                    "tag": "icp5",
+                    "logical": 32,
+                    "scale": 1,
+                    "side": 32,
+                    "seed": 2,
+                    "rgba_sha256": "feb84a7f7a188153c1a6ed5550e347d7a6788ea2a9a0f8f3e401421823152f99",
+                    "qualified": true
+                },
+                {
+                    "tag": "icp6",
+                    "logical": 64,
+                    "scale": 1,
+                    "side": 64,
+                    "seed": 3,
+                    "rgba_sha256": "7b03c6df386763f63a509b133ed11d41e566dd9387e9d7552e0bb3ccf43db241",
+                    "qualified": true
+                },
+                {
+                    "tag": "ic07",
+                    "logical": 128,
+                    "scale": 1,
+                    "side": 128,
+                    "seed": 4,
+                    "rgba_sha256": "cbecc0791e25cd45773aa5ff8d8ba3d794d31c3c24fcfc218e5cb355cd184821",
+                    "qualified": true
+                },
+                {
+                    "tag": "ic08",
+                    "logical": 256,
+                    "scale": 1,
+                    "side": 256,
+                    "seed": 5,
+                    "rgba_sha256": "f39bfd7935c21beca25147e3cd708e72103e18171a148b3361f75500bb929d3a",
+                    "qualified": true
+                },
+                {
+                    "tag": "ic09",
+                    "logical": 512,
+                    "scale": 1,
+                    "side": 512,
+                    "seed": 6,
+                    "rgba_sha256": "ab74b3fafdd0803512de02be7292d8fc3c931807e77a4eab5a00656e49c3221f",
+                    "qualified": true
+                },
+                {
+                    "tag": "ic11",
+                    "logical": 16,
+                    "scale": 2,
+                    "side": 32,
+                    "seed": 7,
+                    "rgba_sha256": "a7a266c16312b691af08c43ef7affedec7d16b8ef05a0f6fcc0264b8a88d7db3",
+                    "qualified": true
+                },
+                {
+                    "tag": "ic12",
+                    "logical": 32,
+                    "scale": 2,
+                    "side": 64,
+                    "seed": 8,
+                    "rgba_sha256": "6c70659cae4a4355350b52eb1e609d15c9456da7aed2f7b2ffc6d8ff57a70898",
+                    "qualified": true
+                },
+                {
+                    "tag": "ic13",
+                    "logical": 128,
+                    "scale": 2,
+                    "side": 256,
+                    "seed": 9,
+                    "rgba_sha256": "409c18a24dc9e18d324485c41a21a95b38d285967fcc7c0badef780cde2461b8",
+                    "qualified": true
+                },
+                {
+                    "tag": "ic14",
+                    "logical": 256,
+                    "scale": 2,
+                    "side": 512,
+                    "seed": 10,
+                    "rgba_sha256": "8dd581fa20cfdaa054aa038a9fc8371aa08546d55ae80cc5889f82fbeba048e5",
+                    "qualified": true
+                },
+                {
+                    "tag": "ic10",
+                    "logical": 512,
+                    "scale": 2,
+                    "side": 1024,
+                    "seed": 11,
+                    "rgba_sha256": "5e8986439ecaa6eab87b0ed7ff43e756ca3edd291afb392385bbf6eea3237fe5",
+                    "qualified": true
+                }
+            ]
+        },
+        "isolated-icp4.icns": {
+            "bytes": 283,
+            "sha256": "07bc7123944467ac81996b41dac9be0c8d0dd26f621f6d5d46bc001cf139c5c2",
+            "entries": [
+                {
+                    "tag": "icp4",
+                    "logical": 16,
+                    "scale": 1,
+                    "side": 16,
+                    "seed": 1,
+                    "rgba_sha256": "228660243249036fc88ebab62e69ba00aeb3a81201ef7ff8e6c8cc1b454d0837",
+                    "qualified": true
+                }
+            ]
+        },
+        "isolated-icp5.icns": {
+            "bytes": 325,
+            "sha256": "ea8eb168c874adaded39da2d2c74f922d040769df6bcbb0ef2174a3bd892c13b",
+            "entries": [
+                {
+                    "tag": "icp5",
+                    "logical": 32,
+                    "scale": 1,
+                    "side": 32,
+                    "seed": 2,
+                    "rgba_sha256": "feb84a7f7a188153c1a6ed5550e347d7a6788ea2a9a0f8f3e401421823152f99",
+                    "qualified": true
+                }
+            ]
+        },
+        "isolated-icp6.icns": {
+            "bytes": 416,
+            "sha256": "acb7efc1818f630e93bc055b1d8f22026fe2bb8c085e2d7cbe41646adadb0250",
+            "entries": [
+                {
+                    "tag": "icp6",
+                    "logical": 64,
+                    "scale": 1,
+                    "side": 64,
+                    "seed": 3,
+                    "rgba_sha256": "7b03c6df386763f63a509b133ed11d41e566dd9387e9d7552e0bb3ccf43db241",
+                    "qualified": true
+                }
+            ]
+        },
+        "duplicates.icns": {
+            "bytes": 643,
+            "sha256": "d5080608de241e8bffca9144faf75ff4a0e6bf5b1310810e8bb999b5b8bd2da5",
+            "entries": [
+                {
+                    "tag": "icp5",
+                    "logical": 32,
+                    "scale": 1,
+                    "side": 32,
+                    "seed": 2,
+                    "rgba_sha256": "feb84a7f7a188153c1a6ed5550e347d7a6788ea2a9a0f8f3e401421823152f99",
+                    "qualified": true
+                },
+                {
+                    "tag": "icp5",
+                    "logical": 32,
+                    "scale": 1,
+                    "side": 32,
+                    "seed": 8,
+                    "rgba_sha256": "074e4cc89153a8ccd420222377395b7c832d67b65a6a4659f72d5362832228bc",
+                    "qualified": true
+                }
+            ]
+        },
+        "metadata.icns": {
+            "bytes": 433,
+            "sha256": "0a1cc385c0dc40250a96ec38577fc28017b6f912aed0f29485179822393d5e3a",
+            "entries": [
+                {
+                    "tag": "icp4",
+                    "logical": 16,
+                    "scale": 1,
+                    "side": 16,
+                    "seed": 3,
+                    "rgba_sha256": "7883101b72bbb9d4f8af1cfae32f043c0a7c4f03f9cc7d8c34acfce326a00642",
+                    "qualified": true
+                }
+            ]
+        },
+        "mixed-legacy.icns": {
+            "bytes": 1084,
+            "sha256": "24357e889767e2a22946e72c8fae07def865e656dca8850824f10aa1c0cf7617",
+            "entries": [
+                {
+                    "tag": "icp4",
+                    "logical": 16,
+                    "scale": 1,
+                    "side": 16,
+                    "seed": 3,
+                    "rgba_sha256": "7883101b72bbb9d4f8af1cfae32f043c0a7c4f03f9cc7d8c34acfce326a00642",
+                    "qualified": true
+                },
+                {
+                    "tag": "is32",
+                    "logical": 16,
+                    "scale": 1,
+                    "side": 16,
+                    "qualified": false,
+                    "reason": "legacy RGB/mask behavior unqualified"
+                }
+            ]
+        },
+        "mixed-jp2.icns": {
+            "bytes": 328,
+            "sha256": "3254251d86823ec72ea916bb0bbadf09f85600fd6bb94e8636c237d6279de64f",
+            "entries": [
+                {
+                    "tag": "icp4",
+                    "logical": 16,
+                    "scale": 1,
+                    "side": 16,
+                    "seed": 3,
+                    "rgba_sha256": "7883101b72bbb9d4f8af1cfae32f043c0a7c4f03f9cc7d8c34acfce326a00642",
+                    "qualified": true
+                },
+                {
+                    "tag": "ic08",
+                    "logical": 256,
+                    "scale": 1,
+                    "side": 256,
+                    "qualified": false,
+                    "reason": "inert unqualified compressed payload, never decoded"
+                }
+            ]
+        }
+    }
+}

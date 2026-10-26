@@ -1,0 +1,327 @@
+{
+    "architecture": "arm64",
+    "qualification_date": "2026-10-25",
+    "macos": "14.7.2",
+    "tool": "/usr/bin/iconutil",
+    "tool_sha256": "716676e3fc6a731e8904c36d672edbc5403a15597e2ba696c301661e3fe494b6",
+    "pixel_reader": "Pillow 13.0.0",
+    "cases": [
+        {
+            "source": "fixtures/isolated-icp4.icns",
+            "source_sha256": "07bc7123944467ac81996b41dac9be0c8d0dd26f621f6d5d46bc001cf139c5c2",
+            "exit": 0,
+            "stderr": "",
+            "fresh_writer": false,
+            "exported_files": [
+                "icon_16x16.png"
+            ],
+            "entries": [
+                {
+                    "type": "icp4",
+                    "logical": 16,
+                    "scale": 1,
+                    "expected_file": "icon_16x16.png",
+                    "expected_rgba_sha256": "228660243249036fc88ebab62e69ba00aeb3a81201ef7ff8e6c8cc1b454d0837",
+                    "actual_size": [
+                        16,
+                        16
+                    ],
+                    "actual_rgba_sha256": "7caa6b78f7633ea7b479445214b93e4a665aa0113f93183f742cf974d23ec95a",
+                    "status": "different",
+                    "changed_pixels": 256,
+                    "changed_alpha_pixels": 192,
+                    "first_expected_rgba": [
+                        31,
+                        13,
+                        19,
+                        0
+                    ],
+                    "first_actual_rgba": [
+                        80,
+                        90,
+                        169,
+                        255
+                    ]
+                }
+            ],
+            "exported_images": [
+                {
+                    "file": "icon_16x16.png",
+                    "size": [
+                        16,
+                        16
+                    ],
+                    "rgba_sha256": "7caa6b78f7633ea7b479445214b93e4a665aa0113f93183f742cf974d23ec95a"
+                }
+            ]
+        },
+        {
+            "source": "fixtures/isolated-icp5.icns",
+            "source_sha256": "ea8eb168c874adaded39da2d2c74f922d040769df6bcbb0ef2174a3bd892c13b",
+            "exit": 0,
+            "stderr": "",
+            "fresh_writer": false,
+            "exported_files": [
+                "icon_32x32.png"
+            ],
+            "entries": [
+                {
+                    "type": "icp5",
+                    "logical": 32,
+                    "scale": 1,
+                    "expected_file": "icon_32x32.png",
+                    "expected_rgba_sha256": "feb84a7f7a188153c1a6ed5550e347d7a6788ea2a9a0f8f3e401421823152f99",
+                    "actual_size": [
+                        32,
+                        32
+                    ],
+                    "actual_rgba_sha256": "080aba3da2db24cb4b0773d93a2fa132053d5c9942d0de43aaaf60af30daa7f6",
+                    "status": "different",
+                    "changed_pixels": 1024,
+                    "changed_alpha_pixels": 768,
+                    "first_expected_rgba": [
+                        62,
+                        26,
+                        38,
+                        0
+                    ],
+                    "first_actual_rgba": [
+                        80,
+                        0,
+                        0,
+                        255
+                    ]
+                }
+            ],
+            "exported_images": [
+                {
+                    "file": "icon_32x32.png",
+                    "size": [
+                        32,
+                        32
+                    ],
+                    "rgba_sha256": "080aba3da2db24cb4b0773d93a2fa132053d5c9942d0de43aaaf60af30daa7f6"
+                }
+            ]
+        },
+        {
+            "source": "fixtures/isolated-icp6.icns",
+            "source_sha256": "acb7efc1818f630e93bc055b1d8f22026fe2bb8c085e2d7cbe41646adadb0250",
+            "exit": 0,
+            "stderr": "",
+            "fresh_writer": false,
+            "exported_files": [
+                "icon_48x48.png"
+            ],
+            "entries": [
+                {
+                    "type": "icp6",
+                    "logical": 64,
+                    "scale": 1,
+                    "expected_file": "icon_64x64.png",
+                    "expected_rgba_sha256": "7b03c6df386763f63a509b133ed11d41e566dd9387e9d7552e0bb3ccf43db241",
+                    "status": "requested logical size/density not exported"
+                }
+            ],
+            "exported_images": [
+                {
+                    "file": "icon_48x48.png",
+                    "size": [
+                        48,
+                        48
+                    ],
+                    "rgba_sha256": "a888d4058101acb849fea36a67694e3e6b123d2371809b9317d7fee6989c531c"
+                }
+            ]
+        },
+        {
+            "source": "fresh/modern.icns",
+            "source_sha256": "44ff62b7b91188db3f0e3564f68ff4126a414d8606d8b9c83f7899de778a8601",
+            "exit": 0,
+            "stderr": "",
+            "fresh_writer": true,
+            "exported_files": [
+                "icon_128x128.png",
+                "icon_128x128@2x.png",
+                "icon_16x16@2x.png",
+                "icon_256x256.png",
+                "icon_256x256@2x.png",
+                "icon_32x32@2x.png",
+                "icon_512x512.png",
+                "icon_512x512@2x.png"
+            ],
+            "entries": [
+                {
+                    "type": "ic07",
+                    "logical": 128,
+                    "scale": 1,
+                    "expected_file": "icon_128x128.png",
+                    "expected_rgba_sha256": "cbecc0791e25cd45773aa5ff8d8ba3d794d31c3c24fcfc218e5cb355cd184821",
+                    "actual_size": [
+                        128,
+                        128
+                    ],
+                    "actual_rgba_sha256": "cbecc0791e25cd45773aa5ff8d8ba3d794d31c3c24fcfc218e5cb355cd184821",
+                    "status": "exact"
+                },
+                {
+                    "type": "ic08",
+                    "logical": 256,
+                    "scale": 1,
+                    "expected_file": "icon_256x256.png",
+                    "expected_rgba_sha256": "f39bfd7935c21beca25147e3cd708e72103e18171a148b3361f75500bb929d3a",
+                    "actual_size": [
+                        256,
+                        256
+                    ],
+                    "actual_rgba_sha256": "f39bfd7935c21beca25147e3cd708e72103e18171a148b3361f75500bb929d3a",
+                    "status": "exact"
+                },
+                {
+                    "type": "ic09",
+                    "logical": 512,
+                    "scale": 1,
+                    "expected_file": "icon_512x512.png",
+                    "expected_rgba_sha256": "ab74b3fafdd0803512de02be7292d8fc3c931807e77a4eab5a00656e49c3221f",
+                    "actual_size": [
+                        512,
+                        512
+                    ],
+                    "actual_rgba_sha256": "ab74b3fafdd0803512de02be7292d8fc3c931807e77a4eab5a00656e49c3221f",
+                    "status": "exact"
+                },
+                {
+                    "type": "ic11",
+                    "logical": 16,
+                    "scale": 2,
+                    "expected_file": "icon_16x16@2x.png",
+                    "expected_rgba_sha256": "a7a266c16312b691af08c43ef7affedec7d16b8ef05a0f6fcc0264b8a88d7db3",
+                    "actual_size": [
+                        32,
+                        32
+                    ],
+                    "actual_rgba_sha256": "a7a266c16312b691af08c43ef7affedec7d16b8ef05a0f6fcc0264b8a88d7db3",
+                    "status": "exact"
+                },
+                {
+                    "type": "ic12",
+                    "logical": 32,
+                    "scale": 2,
+                    "expected_file": "icon_32x32@2x.png",
+                    "expected_rgba_sha256": "6c70659cae4a4355350b52eb1e609d15c9456da7aed2f7b2ffc6d8ff57a70898",
+                    "actual_size": [
+                        64,
+                        64
+                    ],
+                    "actual_rgba_sha256": "6c70659cae4a4355350b52eb1e609d15c9456da7aed2f7b2ffc6d8ff57a70898",
+                    "status": "exact"
+                },
+                {
+                    "type": "ic13",
+                    "logical": 128,
+                    "scale": 2,
+                    "expected_file": "icon_128x128@2x.png",
+                    "expected_rgba_sha256": "409c18a24dc9e18d324485c41a21a95b38d285967fcc7c0badef780cde2461b8",
+                    "actual_size": [
+                        256,
+                        256
+                    ],
+                    "actual_rgba_sha256": "409c18a24dc9e18d324485c41a21a95b38d285967fcc7c0badef780cde2461b8",
+                    "status": "exact"
+                },
+                {
+                    "type": "ic14",
+                    "logical": 256,
+                    "scale": 2,
+                    "expected_file": "icon_256x256@2x.png",
+                    "expected_rgba_sha256": "8dd581fa20cfdaa054aa038a9fc8371aa08546d55ae80cc5889f82fbeba048e5",
+                    "actual_size": [
+                        512,
+                        512
+                    ],
+                    "actual_rgba_sha256": "8dd581fa20cfdaa054aa038a9fc8371aa08546d55ae80cc5889f82fbeba048e5",
+                    "status": "exact"
+                },
+                {
+                    "type": "ic10",
+                    "logical": 512,
+                    "scale": 2,
+                    "expected_file": "icon_512x512@2x.png",
+                    "expected_rgba_sha256": "5e8986439ecaa6eab87b0ed7ff43e756ca3edd291afb392385bbf6eea3237fe5",
+                    "actual_size": [
+                        1024,
+                        1024
+                    ],
+                    "actual_rgba_sha256": "5e8986439ecaa6eab87b0ed7ff43e756ca3edd291afb392385bbf6eea3237fe5",
+                    "status": "exact"
+                }
+            ],
+            "exported_images": [
+                {
+                    "file": "icon_128x128.png",
+                    "size": [
+                        128,
+                        128
+                    ],
+                    "rgba_sha256": "cbecc0791e25cd45773aa5ff8d8ba3d794d31c3c24fcfc218e5cb355cd184821"
+                },
+                {
+                    "file": "icon_128x128@2x.png",
+                    "size": [
+                        256,
+                        256
+                    ],
+                    "rgba_sha256": "409c18a24dc9e18d324485c41a21a95b38d285967fcc7c0badef780cde2461b8"
+                },
+                {
+                    "file": "icon_16x16@2x.png",
+                    "size": [
+                        32,
+                        32
+                    ],
+                    "rgba_sha256": "a7a266c16312b691af08c43ef7affedec7d16b8ef05a0f6fcc0264b8a88d7db3"
+                },
+                {
+                    "file": "icon_256x256.png",
+                    "size": [
+                        256,
+                        256
+                    ],
+                    "rgba_sha256": "f39bfd7935c21beca25147e3cd708e72103e18171a148b3361f75500bb929d3a"
+                },
+                {
+                    "file": "icon_256x256@2x.png",
+                    "size": [
+                        512,
+                        512
+                    ],
+                    "rgba_sha256": "8dd581fa20cfdaa054aa038a9fc8371aa08546d55ae80cc5889f82fbeba048e5"
+                },
+                {
+                    "file": "icon_32x32@2x.png",
+                    "size": [
+                        64,
+                        64
+                    ],
+                    "rgba_sha256": "6c70659cae4a4355350b52eb1e609d15c9456da7aed2f7b2ffc6d8ff57a70898"
+                },
+                {
+                    "file": "icon_512x512.png",
+                    "size": [
+                        512,
+                        512
+                    ],
+                    "rgba_sha256": "ab74b3fafdd0803512de02be7292d8fc3c931807e77a4eab5a00656e49c3221f"
+                },
+                {
+                    "file": "icon_512x512@2x.png",
+                    "size": [
+                        1024,
+                        1024
+                    ],
+                    "rgba_sha256": "5e8986439ecaa6eab87b0ed7ff43e756ca3edd291afb392385bbf6eea3237fe5"
+                }
+            ]
+        }
+    ]
+}
