@@ -16,13 +16,14 @@ pub const PAINT_LOSSES: [&str; 3] = [
 ];
 
 pub const PDN_LOSS: &str = "pdn-metadata-ignored";
-pub const KNOWN_LOSSES: [&str; 8] = [
+pub const KNOWN_LOSSES: [&str; 9] = [
     PAINT_LOSSES[0],
     PAINT_LOSSES[1],
     PAINT_LOSSES[2],
     PDN_LOSS,
     crate::ora::LOSSES[0],
     crate::ora::LOSSES[1],
+    crate::ora::GROUP_STRUCTURE_LOSS,
     "psd-metadata-ignored",
     "psd-empty-layer-extent-normalized",
 ];

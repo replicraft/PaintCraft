@@ -124,7 +124,7 @@ fn default_public_paths_still_refuse_groups_and_existing_flat_identity_is_unchan
         ErrorCode::CapabilityUnsupported
     );
     assert!(!ora::LOSSES.contains(&ora::GROUP_STRUCTURE_LOSS));
-    assert!(!project_import::KNOWN_LOSSES.contains(&ora::GROUP_STRUCTURE_LOSS));
+    assert!(project_import::KNOWN_LOSSES.contains(&ora::GROUP_STRUCTURE_LOSS));
     for bytes in [
         FLAT,
         include_bytes!("ora-fixtures/stored.ora"),

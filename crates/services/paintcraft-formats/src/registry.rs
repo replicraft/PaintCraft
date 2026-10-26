@@ -360,6 +360,10 @@ pub fn admission(request: Request<'_>) -> Decision {
         && request.frontend == Frontend::Studio
         && request.platform == Platform::Web
         && request.variant == Some(WEB_JXL_IMPORT_VARIANT);
+    let neutral_ora_copy = request.family == Family::Ora
+        && request.operation == Operation::ImportConvert
+        && request.frontend == Frontend::Studio
+        && request.variant == Some(crate::ora::NEUTRAL_GROUP_IMPORT_VARIANT);
     let fresh_dcx_page = request.family == Family::Dcx
         && request.operation == Operation::SaveAsCopy
         && request.frontend == Frontend::Studio
@@ -407,6 +411,7 @@ pub fn admission(request: Request<'_>) -> Decision {
         && !selected_entry
         && !fresh_entry_set
         && !svg_rasterization
+        && !neutral_ora_copy
         && !native_jxl_import
         && !web_jxl_import
         && !native_jxr_import
@@ -445,6 +450,7 @@ pub fn admission(request: Request<'_>) -> Decision {
         || native_avif_import
         || native_float_import
         || svg_rasterization
+        || neutral_ora_copy
         || (request.operation.is_write() && request.family != Family::Pcnd)
     {
         return Decision::AllowedWithPreflight(Reason::ConvertRequiresConsent);
@@ -512,6 +518,32 @@ pub fn admit_import(
         Operation::ImportConvert,
         None,
     )
+}
+
+/// Explicit converted ORA copy; ordinary Open and baseline decoder dispatch stay separate.
+pub fn admit_import_ora(
+    frontend: Frontend,
+    filename: &str,
+    bytes: &[u8],
+    platform: Platform,
+) -> Result<Family> {
+    // Baseline signature/suffix policy still applies; availability below requires
+    // the caller's actual decoder preflight and loss consent before publication.
+    let family = admit_import(frontend, filename, bytes, platform)?;
+    if family != Family::Ora {
+        return Err(Reason::InvalidSignature.error(
+            Some(Family::Ora),
+            frontend,
+            Operation::ImportConvert,
+        ));
+    }
+    let mut request = Request::new(frontend, Operation::ImportConvert, Family::Ora, platform);
+    request.variant = Some(crate::ora::NEUTRAL_GROUP_IMPORT_VARIANT);
+    let decision = admission(request);
+    if !decision.available() {
+        decision.require_allowed(request)?;
+    }
+    Ok(family)
 }
 
 /// DCX import is available only with an explicit selected page. It is excluded

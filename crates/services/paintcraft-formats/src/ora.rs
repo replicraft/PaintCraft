@@ -64,7 +64,9 @@ pub struct Decoded {
     pub layers: Vec<DecodedLayer>,
     pub losses: Vec<String>,
 }
-/// Backend-only group conversion loss; not admitted by generic frontend imports.
+/// Group conversion requires its explicitly qualified import variant.
+pub const NEUTRAL_GROUP_IMPORT_VARIANT: &str = "ora-neutral-auto-flat-copy-v1";
+pub const CONVERSION_BYTES_MAX: usize = 64 << 20;
 pub const GROUP_STRUCTURE_LOSS: &str = "ora-group-structure-not-retained";
 pub(crate) struct GroupCopy {
     pub decoded: Decoded,
