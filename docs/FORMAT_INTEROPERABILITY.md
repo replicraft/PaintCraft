@@ -44,7 +44,7 @@ Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, 
 | SVG/SVGZ | Studio desktop/browser Import; CLI `import` with `--svg-width`/`--svg-height`; MCP `import_image` with `svg` options | Explicit size/DPI/fitting and rasterization consent. Studio previews use bundled fonts; CLI/MCP also accept additional outline fonts. No Classic access, ordinary Open or SVG export |
 | EXR/HDR, JP2, MSP, ICNS | Not yet enabled | Registry inventory or work in progress is not usable format support |
 | ASE | Studio Palettes dialog; CLI `palette inspect` / `palette export`; MCP `inspect_palette` / `export_palette` | Flat groups, exact names/order/models/types and finite f32 values. RGB/gray tool-color adoption is explicit; CMYK/LAB conversion, persistent catalogs and Adobe qualification remain |
-| ABR | Internal checked resource reader; no public workflow yet | Exact raw/PackBits 8/16-bit sample masks, signed bounds and original descriptor/hierarchy payloads retained. Embedded patterns, brush-engine adoption and public Studio/CLI/MCP import remain |
+| ABR | Internal checked resource reader; no public workflow yet | Exact sample masks, RGB/gray/indexed pattern channels, signed bounds and original ordered payloads retained. Pattern previews report conversion or unavailable channel/palette metadata. Other pattern color/compression profiles, brush-engine adoption and public Studio/CLI/MCP import remain |
 | CSH | Studio Shape resources dialog; CLI `shape inspect` / `shape export`; MCP `inspect_shapes` / `export_shapes` | Retains bounds, names, IDs and exact ordered path records. Studio previews outlines without changing the painting. Shape placement, broader interoperability and original-application qualification remain |
 | RAW, PDF, KRA, XCF, animation, advanced DDS | Future profiles | No inherited Classic support or preserving-write claims |
 
@@ -170,13 +170,40 @@ other recognized brush metadata; this does not install or render those brushes.
 
 The selected Rust reader lacks 16-bit PackBits. After exact byte-row decoding,
 the adapter gives it an equivalent private raw-16 view, admitted at no more than
-48 MiB before allocation. Only those compressed sample records are rewritten;
+48 MiB before allocation. Only those compressed sample records are rewritten,
+and admitted pattern sections are handled separately as described below;
 IDs, opaque header data, signed bounds and depth stay exact, while unaffected
 sample records and all descriptor/hierarchy payloads are copied verbatim.
 Each emitted replacement is decoded and compared with every original `u16`
 before the selected library performs its metadata/high-byte check. Returned
 resource sections retain the original compressed payloads. This private decoder
 view is not a user-visible ABR writer and never changes the acquired file.
+
+Embedded `patt` resources now retain exact RGB/gray/indexed channels as eight-bit,
+sixteen-bit or finite f32 bit patterns, with raw/PackBits decoding, partial
+rectangles, palettes, optional palette words and original unwritten/empty-written
+slot positions. They remain separate from explicitly converted informational
+RGBA8 previews. Canonical previews reduce 16-bit values by rounded division by
+257 and clamp/round finite float values, reporting both conversions. Missing
+color slots, extra color/spot slots or a written user mask produce an explicit
+unavailable-preview reason instead of guessing roles by written ordinal. The
+last sheet-mask slot alone supplies optional alpha. Original source planes and
+ordered pattern payloads remain unchanged, and resources are immutable.
+Optional four-byte indexed palette tails are preserved opaquely and always
+disable previews, including zero tails. Adobe defines color-count/transparency
+fields for the separate ACT format but not these pattern bytes; neither ignoring
+them nor applying ACT semantics is qualified by the source-channel checks.
+
+Because the pinned pattern reader omits alpha and narrows source precision,
+original `patt` sections never reach its whole-file path. Canonical preview views
+use the selected writer/reader under complete framing/packet admission; original
+alpha is handled from its separately retained source channel. Pattern admission
+allows 64 records, 4,194,304 pixels each, 16,777,216 aggregate pixels, 66 slots
+per record, 16,777,216 aggregate channel values and 64 MiB of decoded channel
+bytes. Private converted pattern views have conservative encoded bounds of
+36 MiB each and 144 MiB aggregate, admitted before upstream work and processed
+one at a time. None of these allowances proves physical peak memory, color-managed
+display, native rendering parity or brush-engine adoption.
 
 Bounded Action Descriptor walks cover `desc` and `phry` sections before upstream
 tree allocation. Complete ordered section payloads remain available, including
@@ -195,14 +222,18 @@ decoder. They do not prove a hard allocator or cooperative cancellation-tail
 bound during upstream calls.
 
 The [owned fixture suite](../crates/services/paintcraft-formats/tests/abr-fixtures/README.md)
-has thirteen focused tests and successful Node.js 24.10.0 / upstream JavaScript
-`ag-psd` 33.0.0 checks for five source specimens and both Rust-generated private
+has twenty-one focused tests and successful Node.js 24.10.0 / upstream JavaScript
+`ag-psd` 33.0.0 checks for the initial five source specimens and both Rust-generated private
 raw-16 views. The public JavaScript channel decoder verifies every low bit;
 metadata, signed bounds and opaque headers also match the compressed sources.
-The JavaScript reader and Rust port share
-lineage; this is cross-language evidence, not independent-algorithm or original
-Adobe qualification. Embedded `patt`, legacy ABR 1/2, previews,
-actual brush adoption/rendering, public frontend import and wider qualification
+The JavaScript reader and Rust port share lineage. Independent `psd-tools`
+1.26.0 additionally verifies 45 exact array slots across ten patterns in six
+owned specimens, including 16/f32 bits, alpha, palettes, holes and auxiliary/user
+masks. JavaScript preview vectors agree for five qualified patterns; its optional
+palette-word ambiguity and guessed channel roles are retained as explicit
+qualification limits. This is not original Adobe qualification. Other pattern
+color models, one-bit/ZIP/predictive channels, ambiguous preview layouts, legacy
+ABR 1/2, actual brush adoption/rendering, public frontend import and wider qualification
 remain required. ABR export is outside the import-only asset policy.
 
 ### CSH resource adapter, 2026-10-25
@@ -257,9 +288,16 @@ Checks cover source path namespaces and current hard-link/symlink aliases, and
 run again after replacement confirmation and deferred save preparation. Normal
 Save to the painting's own bound PCND file remains allowed. Route-level tests
 cover reciprocal resource exports, cancellation, late alias retargeting and
-documents parked in other tabs/frontends. These guards retain loaded paths and
-compare current file identities; they do not retain an original inode identity
-after the source is renamed or establish race-proof filesystem traversal.
+documents parked in other tabs/frontends. Resource acquisition retains a
+read-only native handle to the exact regular file used for the bounded byte
+read. Save/export admission compares that frozen identity as well as the
+selected namespace, so renaming a loaded source or replacing its old name does
+not remove protection of the acquired file. Existing regular destinations whose
+identity cannot be compared are refused; ordinary FIFOs/devices are not opened
+for comparison. Tests cover real renamed-source Save As/PNG writes, new hard
+links, namespace replacement between acquisition and decoding, permission
+failure, cancellation and normal painting saves. These checks do not establish
+race-proof filesystem traversal or qualify every target filesystem.
 If a project save was queued first, adopting an overlapping resource source is
 refused until that write finishes, including writes owned by other tabs. The
 earlier authorized save still completes; the previous resource stays loaded.

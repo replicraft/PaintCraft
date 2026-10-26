@@ -7,7 +7,8 @@ const upstream = process.argv[2];
 if (!upstream) throw new Error("Usage: node oracle.cjs <ag-psd package directory>");
 const root = path.resolve(upstream);
 assert.equal(require(path.join(root, "package.json")).version, "33.0.0");
-const { readAbr } = require(path.join(root, "dist/abr.js"));
+const { readAbr: readAbrBackend } = require(path.join(root, "dist/abr.js"));
+const readAbr = (bytes) => readAbrBackend(bytes, { throwForMissingFeatures: true });
 const { createReader, readDataRLE } = require(path.join(root, "dist/psdReader.js"));
 const normalizedDirectory = process.argv[3];
 const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, "sources.json"), "utf8"));
@@ -72,11 +73,46 @@ for (const [name, receipt] of Object.entries(manifest.files)) {
 	const bytes = fs.readFileSync(path.join(__dirname, name));
 	assert.equal(bytes.length, receipt.bytes);
 	assert.equal(crypto.createHash("sha256").update(bytes).digest("hex"), receipt.sha256);
+	if (name === "indexed-extra3.abr") {
+		// The upstream palette heuristic mistakes the retained word 3 for the
+		// VMAL version. Independent psd-tools verifies this specimen instead.
+		assert.throws(() => readAbr(bytes));
+		console.log(JSON.stringify({ name, oracle: "ag-psd 33.0.0", qualification: "upstream palette-word ambiguity retained as a known limitation" }));
+		continue;
+	}
 	const library = readAbr(bytes);
-	const counts = name === "empty.abr" ? [0, 0] : name === "samples-v10.abr" ? [1, 0] : [3, 2];
+	const patternFile = ["patterns.abr", "indexed-no-extra.abr", "auxiliary.abr", "missing-color.abr", "empty-color.abr", "user-mask.abr"].includes(name);
+	const counts = patternFile ? [1, 2] : name === "empty.abr" ? [0, 0] : name === "samples-v10.abr" ? [1, 0] : [3, 2];
 	assert.equal(library.samples.length, counts[0]);
 	assert.equal(library.brushes.length, counts[1]);
-	assert.equal(library.patterns.length, 0);
+	assert.equal(library.patterns.length, patternFile ? name === "patterns.abr" ? 5 : 1 : 0);
+	if (name === "patterns.abr") {
+		const expected = {
+			rgb8: [10, 100, 200, 0, 20, 110, 210, 64, 30, 120, 220, 128, 40, 130, 230, 255],
+			gray16: [0, 0, 0, 0, 1, 1, 1, 0, 128, 128, 128, 128, 255, 255, 255, 255],
+			float32: [0, 64, 255, 255, 128, 191, 0, 128, 255, 255, 32, 64, 0, 0, 223, 0],
+			partial: [0, 10, 100, 255, 1, 20, 110, 0, 2, 30, 120, 64, 0, 40, 130, 255, 3, 50, 140, 128, 4, 60, 150, 255],
+		};
+		for (const pattern of library.patterns) {
+			if (pattern.id === "indexed8") {
+				// Ignoring the optional palette tail is not qualified by Adobe's
+				// pattern specification; retain data, but do not claim a preview.
+				console.log(JSON.stringify({ name, pattern: pattern.id, previewQualified: false,
+					qualification: "opaque palette metadata; source slots checked with psd-tools" }));
+			} else {
+				assert.deepEqual([...pattern.data], expected[pattern.id]);
+			}
+			assert.equal(pattern.x, -3);
+			assert.equal(pattern.y, 4);
+			assert.deepEqual(pattern.bounds, { x: 7, y: 5, w: pattern.id === "partial" ? 3 : 2, h: 2 });
+		}
+	} else if (name === "indexed-no-extra.abr") {
+		assert.deepEqual([...library.patterns[0].data], [11, 22, 33, 255, 200, 100, 50, 128, 200, 100, 50, 64, 11, 22, 33, 0]);
+	} else if (patternFile) {
+		// The upstream reader guesses roles by written ordinal here. PaintCraft
+		// deliberately exposes no preview; independent psd-tools checks slots.
+		console.log(JSON.stringify({ name, previewQualified: false, qualification: "exact slots checked separately; ambiguous roles are not rendered" }));
+	}
 	for (const sample of library.samples) {
 		assert.deepEqual(sample.bounds, { x: -1, y: -2, w: 3, h: 2 });
 		const expected = { "raw-8": [0, 1, 127, 128, 254, 255], "rle-8": [0, 1, 255, 127, 127, 127],
@@ -120,5 +156,8 @@ for (const [name, receipt] of Object.entries(manifest.files)) {
 			qualification: "equivalent private raw16 decoder view, every low bit and header verified" }));
 	}
 	console.log(JSON.stringify({ name, bytes: bytes.length, samples: counts[0], brushes: counts[1],
-		sha256: receipt.sha256, oracle: "ag-psd 33.0.0", qualification: "owned-fixture reader interoperability" }));
+		sha256: receipt.sha256, oracle: "ag-psd 33.0.0",
+		qualification: patternFile && !["patterns.abr", "indexed-no-extra.abr"].includes(name)
+			? "metadata reader only; ambiguous preview unavailable; exact slots use psd-tools"
+			: "owned-fixture reader interoperability" }));
 }
