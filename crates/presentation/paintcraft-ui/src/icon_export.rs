@@ -279,7 +279,7 @@ impl<K: PartialEq, P> Cache<K, P> {
         self.prepared = prepare().ok();
         self.texture = None;
         self.selected = None;
-        self.frame = Some(ctx.cumulative_frame_nr());
+        self.frame = None;
         ctx.request_repaint();
         true
     }
@@ -287,6 +287,18 @@ impl<K: PartialEq, P> Cache<K, P> {
         &mut self,
         ui: &mut egui::Ui,
         selected: usize,
+        frame: impl for<'a> Fn(&'a P, usize) -> Option<Frame<'a>>,
+    ) -> bool {
+        self.show_bounded(ui, selected, 256, "Export preview", frame)
+    }
+    /// ICNS may explicitly preview qualified entries up to 1024 physical pixels.
+    /// Existing ICO/CUR callers retain their original 256-pixel allowance.
+    pub fn show_bounded(
+        &mut self,
+        ui: &mut egui::Ui,
+        selected: usize,
+        side_max: u32,
+        label: &'static str,
         frame: impl for<'a> Fn(&'a P, usize) -> Option<Frame<'a>>,
     ) -> bool {
         let Some(frame) = self
@@ -299,8 +311,8 @@ impl<K: PartialEq, P> Cache<K, P> {
         };
         if frame.width == 0
             || frame.height == 0
-            || frame.width > 256
-            || frame.height > 256
+            || frame.width > side_max.min(1024)
+            || frame.height > side_max.min(1024)
             || frame.rgba.len() as u64 != u64::from(frame.width) * u64::from(frame.height) * 4
         {
             return false;
@@ -315,10 +327,10 @@ impl<K: PartialEq, P> Cache<K, P> {
                 egui::TextureOptions::NEAREST,
             ));
             self.selected = Some(selected);
-            self.frame = Some(ui.ctx().cumulative_frame_nr());
+            self.frame = None;
             ui.ctx().request_repaint();
         }
-        ui.label(t!(ui.ctx(), "Export preview"));
+        ui.label(t!(ui.ctx(), label));
         if let Some(texture) = &self.texture {
             let size = egui::vec2(frame.width as f32, frame.height as f32);
             let scale = 160.0 / size.x.max(size.y);
@@ -348,6 +360,10 @@ impl<K: PartialEq, P> Cache<K, P> {
                 egui::Rect::from_min_max(egui::Pos2::ZERO, egui::pos2(1.0, 1.0)),
                 egui::Color32::WHITE,
             );
+            if self.frame.is_none() && ui.is_rect_visible(rect) {
+                self.frame = Some(ui.ctx().cumulative_frame_nr());
+                ui.ctx().request_repaint();
+            }
             if let Some((x, y)) = frame.hotspot {
                 let point = rect.min
                     + rect.size()
@@ -366,13 +382,83 @@ impl<K: PartialEq, P> Cache<K, P> {
                 );
             }
         }
-        self.frame != Some(ui.ctx().cumulative_frame_nr())
+        self.frame
+            .is_some_and(|frame| frame < ui.ctx().cumulative_frame_nr())
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn offscreen_preview_does_not_count_as_displayed_before_consent() {
+        let ctx = egui::Context::default();
+        let mut cache: Cache<u8, Vec<u8>> = Cache::default();
+        for (offscreen, expected) in [(true, false), (true, false), (false, false), (false, true)] {
+            let mut observed = Vec::new();
+            let mut output = ctx.run_ui(
+                egui::RawInput {
+                    screen_rect: Some(egui::Rect::from_min_size(
+                        egui::Pos2::ZERO,
+                        egui::vec2(400.0, 240.0),
+                    )),
+                    ..Default::default()
+                },
+                |ui| {
+                    cache.update(ui.ctx(), 1, || Ok(vec![255; 32 * 32 * 4]));
+                    if offscreen {
+                        ui.add_space(600.0);
+                    }
+                    observed.push(cache.show_bounded(
+                        ui,
+                        0,
+                        1024,
+                        "Import preview",
+                        |pixels, _| {
+                            Some(Frame {
+                                width: 32,
+                                height: 32,
+                                rgba: pixels,
+                                hotspot: None,
+                            })
+                        },
+                    ));
+                },
+            );
+            output.textures_delta.clear();
+            assert!(!observed.is_empty());
+            assert!(observed.iter().all(|ready| *ready == expected));
+        }
+    }
+    #[test]
+    fn explicit_large_icon_preview_does_not_expand_existing_ico_allowance() {
+        let ctx = egui::Context::default();
+        let mut cache: Cache<u8, Vec<u8>> = Cache::default();
+        for expected in [false, true] {
+            let mut observed = Vec::new();
+            let mut output = ctx.run_ui(Default::default(), |ui| {
+                cache.update(ui.ctx(), 1, || Ok(vec![255; 512 * 512 * 4]));
+                assert!(!cache.show(ui, 0, |pixels, _| Some(Frame {
+                    width: 512,
+                    height: 512,
+                    rgba: pixels,
+                    hotspot: None
+                })));
+                observed.push(
+                    cache.show_bounded(ui, 0, 1024, "Import preview", |pixels, _| {
+                        Some(Frame {
+                            width: 512,
+                            height: 512,
+                            rgba: pixels,
+                            hotspot: None,
+                        })
+                    }),
+                );
+            });
+            output.textures_delta.clear();
+            assert!(observed.iter().all(|ready| *ready == expected));
+        }
+    }
     #[test]
     fn controls_and_consent_are_translated_in_every_language() {
         for language in crate::i18n::Language::ALL
