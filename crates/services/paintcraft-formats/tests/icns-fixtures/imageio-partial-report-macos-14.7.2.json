@@ -1,0 +1,142 @@
+{
+    "system": "macOS14.7.2 arm64",
+    "sdk": "15.2",
+    "IconStorage.h_sha256": "9e7cfa1f851c62884fc95c972b0437574fe6432bbc1c05af371de6e5e5fb61c6",
+    "binary_sha256": "f12c2b8150ae8cd7b9c081f2aa54c1c3b4cd3f86c7498dadff1ee7d23638deb8",
+    "source_sha256": "9f15c5c322e553c6b5ddefa2bcf6daed0b5f2e4d7160d0297b60ea9829c04d27",
+    "qualification": "Partial artifacts only; partial-alpha ARGB decoding stalled. No complete ARGB association qualification.",
+    "opaque_artifacts": [
+        {
+            "source": "opaque.icns",
+            "source_sha256": "63375eca5b5df27adf69f2ee414fd77dfef1fdcdfcc99fa10509e3c8cafee938",
+            "image_index": 8,
+            "size": [
+                32,
+                32
+            ],
+            "artifact_kind": "provider",
+            "bytes": 4096,
+            "sha256": "3336a0bf941656ac239c51df2715dc4079362b630dbc184d912ecbfe4e2547b7",
+            "expected_sha256": "3336a0bf941656ac239c51df2715dc4079362b630dbc184d912ecbfe4e2547b7",
+            "exact_opaque_rgba": true
+        },
+        {
+            "source": "opaque.icns",
+            "source_sha256": "63375eca5b5df27adf69f2ee414fd77dfef1fdcdfcc99fa10509e3c8cafee938",
+            "image_index": 8,
+            "size": [
+                32,
+                32
+            ],
+            "artifact_kind": "rgba",
+            "bytes": 4096,
+            "sha256": "3336a0bf941656ac239c51df2715dc4079362b630dbc184d912ecbfe4e2547b7",
+            "expected_sha256": "3336a0bf941656ac239c51df2715dc4079362b630dbc184d912ecbfe4e2547b7",
+            "exact_opaque_rgba": true
+        },
+        {
+            "source": "opaque.icns",
+            "source_sha256": "63375eca5b5df27adf69f2ee414fd77dfef1fdcdfcc99fa10509e3c8cafee938",
+            "image_index": 9,
+            "size": [
+                16,
+                16
+            ],
+            "artifact_kind": "provider",
+            "bytes": 1024,
+            "sha256": "b962028d88df7b1c32a66ba52ece46848ef1ddd0d7e98d7c4b9f1580e907a844",
+            "expected_sha256": "b962028d88df7b1c32a66ba52ece46848ef1ddd0d7e98d7c4b9f1580e907a844",
+            "exact_opaque_rgba": true
+        },
+        {
+            "source": "opaque.icns",
+            "source_sha256": "63375eca5b5df27adf69f2ee414fd77dfef1fdcdfcc99fa10509e3c8cafee938",
+            "image_index": 9,
+            "size": [
+                16,
+                16
+            ],
+            "artifact_kind": "rgba",
+            "bytes": 1024,
+            "sha256": "b962028d88df7b1c32a66ba52ece46848ef1ddd0d7e98d7c4b9f1580e907a844",
+            "expected_sha256": "b962028d88df7b1c32a66ba52ece46848ef1ddd0d7e98d7c4b9f1580e907a844",
+            "exact_opaque_rgba": true
+        },
+        {
+            "source": "opaque.iconset/icon_16x16.png",
+            "source_sha256": "9723e3172bc8423b0c3b2dcce4580207dbe9e1cb188d6885e79b8871e4da9c5a",
+            "image_index": 0,
+            "size": [
+                16,
+                16
+            ],
+            "artifact_kind": "provider",
+            "bytes": 1024,
+            "sha256": "b962028d88df7b1c32a66ba52ece46848ef1ddd0d7e98d7c4b9f1580e907a844",
+            "exact_opaque_rgba": true
+        },
+        {
+            "source": "opaque.iconset/icon_16x16.png",
+            "source_sha256": "9723e3172bc8423b0c3b2dcce4580207dbe9e1cb188d6885e79b8871e4da9c5a",
+            "image_index": 0,
+            "size": [
+                16,
+                16
+            ],
+            "artifact_kind": "rgba",
+            "bytes": 1024,
+            "sha256": "b962028d88df7b1c32a66ba52ece46848ef1ddd0d7e98d7c4b9f1580e907a844",
+            "exact_opaque_rgba": true
+        }
+    ],
+    "partial_probe": {
+        "source_sha256": "b3038d6556d09d36f676488cb8e08815ef3659fa8ceac48dc0460785adc15ae9",
+        "source_count": 10,
+        "decoded_indices": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+        ],
+        "last_log": "DECODE 8; no image returned",
+        "last_successful_image": {
+            "index": 7,
+            "size": [
+                32,
+                32
+            ],
+            "bits_per_pixel": 32,
+            "bits_per_component": 8,
+            "bytes_per_row": 128,
+            "bitmap_info": 3,
+            "alpha_info": 3,
+            "raw_length": 4096
+        }
+    },
+    "live_process_observation": {
+        "pids": [
+            579,
+            96023,
+            97927
+        ],
+        "handles": [
+            22688,
+            54524,
+            57775
+        ],
+        "state": "UEs",
+        "termination": "TERM and KILL sent; no terminal result. Do not claim shutdown.",
+        "observed_cpu_percent": 0,
+        "observed_rss_approx_mib_each": 6
+    },
+    "swift_probe": {
+        "handle": 80613,
+        "exit": 255,
+        "failure": "JIT session error: Symbols not found: _$sSo12CGContextRefa12CoreGraphicsE4draw_2in8byTilingySo07CGImageB0a_So6CGRectVSbtF"
+    },
+    "sandbox_observation": "iconutil -c icns returned Invalid Iconset within sandbox; identical owned iconset succeeded outside sandbox. Legacy extraction differences reproduced outside sandbox."
+}

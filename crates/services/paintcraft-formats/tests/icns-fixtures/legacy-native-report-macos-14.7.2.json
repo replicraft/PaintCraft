@@ -1,0 +1,875 @@
+{
+    "system": "macOS-14.7.2-arm64-arm-64bit-Mach-O",
+    "python": "3.14.0",
+    "pillow": "13.0.0",
+    "iconutil_sha256": "716676e3fc6a731e8904c36d672edbc5403a15597e2ba696c301661e3fe494b6",
+    "results": [
+        {
+            "source": "legacy-raw-16.icns",
+            "source_sha256": "6cd46280137250d0cd58255f639e3d507c6f75e40ceb1d17b0487bdc4bb76ff3",
+            "pillow_exact_rgba": true,
+            "native_returncode": 0,
+            "native_stderr": "",
+            "outputs": [
+                {
+                    "name": "icon_16x16.png",
+                    "size": [
+                        16,
+                        16
+                    ],
+                    "rgba_sha256": "a683a1478ad5687a06793bf638bf21142b538c838a61203a4f471a81a4c85580",
+                    "different_pixels": 256,
+                    "different_alpha": 0,
+                    "different_visible_rgb": 192,
+                    "different_hidden_rgb": 64,
+                    "first_differences": [
+                        {
+                            "index": 0,
+                            "expected": [
+                                23,
+                                117,
+                                171,
+                                0
+                            ],
+                            "actual": [
+                                117,
+                                204,
+                                23,
+                                0
+                            ]
+                        },
+                        {
+                            "index": 1,
+                            "expected": [
+                                40,
+                                117,
+                                172,
+                                64
+                            ],
+                            "actual": [
+                                171,
+                                172,
+                                23,
+                                64
+                            ]
+                        },
+                        {
+                            "index": 2,
+                            "expected": [
+                                57,
+                                117,
+                                173,
+                                128
+                            ],
+                            "actual": [
+                                40,
+                                57,
+                                23,
+                                128
+                            ]
+                        },
+                        {
+                            "index": 3,
+                            "expected": [
+                                74,
+                                117,
+                                174,
+                                255
+                            ],
+                            "actual": [
+                                117,
+                                204,
+                                23,
+                                255
+                            ]
+                        },
+                        {
+                            "index": 4,
+                            "expected": [
+                                23,
+                                117,
+                                175,
+                                0
+                            ],
+                            "actual": [
+                                172,
+                                173,
+                                23,
+                                0
+                            ]
+                        },
+                        {
+                            "index": 5,
+                            "expected": [
+                                40,
+                                117,
+                                171,
+                                64
+                            ],
+                            "actual": [
+                                57,
+                                74,
+                                23,
+                                64
+                            ]
+                        },
+                        {
+                            "index": 6,
+                            "expected": [
+                                57,
+                                117,
+                                172,
+                                128
+                            ],
+                            "actual": [
+                                117,
+                                204,
+                                23,
+                                128
+                            ]
+                        },
+                        {
+                            "index": 7,
+                            "expected": [
+                                74,
+                                117,
+                                173,
+                                255
+                            ],
+                            "actual": [
+                                173,
+                                174,
+                                23,
+                                255
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "source": "legacy-rle-16.icns",
+            "source_sha256": "b61ff525f24b79e806c4d33afa715e66e7567a7931b260627a990c1871d35425",
+            "pillow_exact_rgba": true,
+            "native_returncode": 0,
+            "native_stderr": "",
+            "outputs": [
+                {
+                    "name": "icon_16x16.png",
+                    "size": [
+                        16,
+                        16
+                    ],
+                    "rgba_sha256": "f9ec99578634ad8514896849735388f33843aab74f79cd71b10661746f25820d",
+                    "different_pixels": 1,
+                    "different_alpha": 0,
+                    "different_visible_rgb": 1,
+                    "different_hidden_rgb": 0,
+                    "first_differences": [
+                        {
+                            "index": 255,
+                            "expected": [
+                                74,
+                                204,
+                                171,
+                                128
+                            ],
+                            "actual": [
+                                74,
+                                204,
+                                0,
+                                128
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "source": "legacy-raw-32.icns",
+            "source_sha256": "c59367dd394c78d668dbb2c0e593b16a2160a0b2496f160f43c3b43c4503dfae",
+            "pillow_exact_rgba": true,
+            "native_returncode": 0,
+            "native_stderr": "",
+            "outputs": [
+                {
+                    "name": "icon_32x32.png",
+                    "size": [
+                        32,
+                        32
+                    ],
+                    "rgba_sha256": "a9a26a553779bb074f41dc6ea215067eda73cb93334bcc1085e9d1cb4bfb6cf0",
+                    "different_pixels": 1024,
+                    "different_alpha": 0,
+                    "different_visible_rgb": 768,
+                    "different_hidden_rgb": 256,
+                    "first_differences": [
+                        {
+                            "index": 0,
+                            "expected": [
+                                23,
+                                117,
+                                171,
+                                0
+                            ],
+                            "actual": [
+                                117,
+                                117,
+                                172,
+                                0
+                            ]
+                        },
+                        {
+                            "index": 1,
+                            "expected": [
+                                40,
+                                117,
+                                172,
+                                64
+                            ],
+                            "actual": [
+                                171,
+                                175,
+                                74,
+                                64
+                            ]
+                        },
+                        {
+                            "index": 2,
+                            "expected": [
+                                57,
+                                117,
+                                173,
+                                128
+                            ],
+                            "actual": [
+                                40,
+                                74,
+                                117,
+                                128
+                            ]
+                        },
+                        {
+                            "index": 3,
+                            "expected": [
+                                74,
+                                117,
+                                174,
+                                255
+                            ],
+                            "actual": [
+                                117,
+                                117,
+                                173,
+                                255
+                            ]
+                        },
+                        {
+                            "index": 4,
+                            "expected": [
+                                23,
+                                117,
+                                175,
+                                0
+                            ],
+                            "actual": [
+                                172,
+                                171,
+                                23,
+                                0
+                            ]
+                        },
+                        {
+                            "index": 5,
+                            "expected": [
+                                40,
+                                117,
+                                171,
+                                64
+                            ],
+                            "actual": [
+                                57,
+                                23,
+                                117,
+                                64
+                            ]
+                        },
+                        {
+                            "index": 6,
+                            "expected": [
+                                57,
+                                117,
+                                172,
+                                128
+                            ],
+                            "actual": [
+                                117,
+                                117,
+                                174,
+                                128
+                            ]
+                        },
+                        {
+                            "index": 7,
+                            "expected": [
+                                74,
+                                117,
+                                173,
+                                255
+                            ],
+                            "actual": [
+                                173,
+                                172,
+                                40,
+                                255
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "source": "legacy-rle-32.icns",
+            "source_sha256": "10838b535835092171a6d967dcb777296ba2eb688f57833c5558f2e065b51452",
+            "pillow_exact_rgba": true,
+            "native_returncode": 0,
+            "native_stderr": "",
+            "outputs": [
+                {
+                    "name": "icon_32x32.png",
+                    "size": [
+                        32,
+                        32
+                    ],
+                    "rgba_sha256": "41ad1e1a2a767cffabbc7a2c44240c7b6c8a4d17ce49c639a541cfbf665c4eb3",
+                    "different_pixels": 1,
+                    "different_alpha": 0,
+                    "different_visible_rgb": 1,
+                    "different_hidden_rgb": 0,
+                    "first_differences": [
+                        {
+                            "index": 1023,
+                            "expected": [
+                                74,
+                                204,
+                                173,
+                                128
+                            ],
+                            "actual": [
+                                74,
+                                204,
+                                0,
+                                128
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "source": "legacy-terminal-repeat-16.icns",
+            "source_sha256": "1b5b7fb192cc383002babb378366c2a93a2e7b7edf95629d5262f3419eb18c8b",
+            "pillow_exact_rgba": true,
+            "native_returncode": 0,
+            "native_stderr": "",
+            "outputs": [
+                {
+                    "name": "icon_16x16.png",
+                    "size": [
+                        16,
+                        16
+                    ],
+                    "rgba_sha256": "b4328ded0a0127aa156737c087e407c37a7c7a7ed8bfb4ec0552f1f37528c697",
+                    "different_pixels": 126,
+                    "different_alpha": 0,
+                    "different_visible_rgb": 95,
+                    "different_hidden_rgb": 31,
+                    "first_differences": [
+                        {
+                            "index": 130,
+                            "expected": [
+                                57,
+                                117,
+                                171,
+                                128
+                            ],
+                            "actual": [
+                                57,
+                                117,
+                                0,
+                                128
+                            ]
+                        },
+                        {
+                            "index": 131,
+                            "expected": [
+                                74,
+                                117,
+                                171,
+                                255
+                            ],
+                            "actual": [
+                                74,
+                                117,
+                                0,
+                                255
+                            ]
+                        },
+                        {
+                            "index": 132,
+                            "expected": [
+                                23,
+                                117,
+                                171,
+                                0
+                            ],
+                            "actual": [
+                                23,
+                                117,
+                                0,
+                                0
+                            ]
+                        },
+                        {
+                            "index": 133,
+                            "expected": [
+                                40,
+                                117,
+                                171,
+                                64
+                            ],
+                            "actual": [
+                                40,
+                                117,
+                                0,
+                                64
+                            ]
+                        },
+                        {
+                            "index": 134,
+                            "expected": [
+                                57,
+                                117,
+                                171,
+                                128
+                            ],
+                            "actual": [
+                                57,
+                                117,
+                                0,
+                                128
+                            ]
+                        },
+                        {
+                            "index": 135,
+                            "expected": [
+                                74,
+                                117,
+                                171,
+                                255
+                            ],
+                            "actual": [
+                                74,
+                                117,
+                                0,
+                                255
+                            ]
+                        },
+                        {
+                            "index": 136,
+                            "expected": [
+                                23,
+                                117,
+                                171,
+                                0
+                            ],
+                            "actual": [
+                                23,
+                                117,
+                                0,
+                                0
+                            ]
+                        },
+                        {
+                            "index": 137,
+                            "expected": [
+                                40,
+                                117,
+                                171,
+                                64
+                            ],
+                            "actual": [
+                                40,
+                                117,
+                                0,
+                                64
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "source": "legacy-16.icns",
+            "source_sha256": "388e04e7acc1aabc7a0204fb36a1a75f861366ff3816c309fe67d65dab077c50",
+            "pillow_exact_rgba": true,
+            "native_returncode": 0,
+            "native_stderr": "",
+            "outputs": [
+                {
+                    "name": "icon_16x16.png",
+                    "size": [
+                        16,
+                        16
+                    ],
+                    "rgba_sha256": "f9ec99578634ad8514896849735388f33843aab74f79cd71b10661746f25820d",
+                    "different_pixels": 1,
+                    "different_alpha": 0,
+                    "different_visible_rgb": 1,
+                    "different_hidden_rgb": 0,
+                    "first_differences": [
+                        {
+                            "index": 255,
+                            "expected": [
+                                74,
+                                204,
+                                171,
+                                128
+                            ],
+                            "actual": [
+                                74,
+                                204,
+                                0,
+                                128
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "source": "raw-16.icns",
+            "source_sha256": "21be0d03828855875e753b4cb59d6665d169c27a0e320c656f652a9000ce74bf",
+            "pillow_exact_rgba": true,
+            "native_returncode": 0,
+            "native_stderr": "",
+            "outputs": [
+                {
+                    "name": "icon_16x16.png",
+                    "size": [
+                        16,
+                        16
+                    ],
+                    "rgba_sha256": "a683a1478ad5687a06793bf638bf21142b538c838a61203a4f471a81a4c85580",
+                    "different_pixels": 256,
+                    "different_alpha": 0,
+                    "different_visible_rgb": 192,
+                    "different_hidden_rgb": 64,
+                    "first_differences": [
+                        {
+                            "index": 0,
+                            "expected": [
+                                23,
+                                117,
+                                171,
+                                0
+                            ],
+                            "actual": [
+                                117,
+                                204,
+                                23,
+                                0
+                            ]
+                        },
+                        {
+                            "index": 1,
+                            "expected": [
+                                40,
+                                117,
+                                172,
+                                64
+                            ],
+                            "actual": [
+                                171,
+                                172,
+                                23,
+                                64
+                            ]
+                        },
+                        {
+                            "index": 2,
+                            "expected": [
+                                57,
+                                117,
+                                173,
+                                128
+                            ],
+                            "actual": [
+                                40,
+                                57,
+                                23,
+                                128
+                            ]
+                        },
+                        {
+                            "index": 3,
+                            "expected": [
+                                74,
+                                117,
+                                174,
+                                255
+                            ],
+                            "actual": [
+                                117,
+                                204,
+                                23,
+                                255
+                            ]
+                        },
+                        {
+                            "index": 4,
+                            "expected": [
+                                23,
+                                117,
+                                175,
+                                0
+                            ],
+                            "actual": [
+                                172,
+                                173,
+                                23,
+                                0
+                            ]
+                        },
+                        {
+                            "index": 5,
+                            "expected": [
+                                40,
+                                117,
+                                171,
+                                64
+                            ],
+                            "actual": [
+                                57,
+                                74,
+                                23,
+                                64
+                            ]
+                        },
+                        {
+                            "index": 6,
+                            "expected": [
+                                57,
+                                117,
+                                172,
+                                128
+                            ],
+                            "actual": [
+                                117,
+                                204,
+                                23,
+                                128
+                            ]
+                        },
+                        {
+                            "index": 7,
+                            "expected": [
+                                74,
+                                117,
+                                173,
+                                255
+                            ],
+                            "actual": [
+                                173,
+                                174,
+                                23,
+                                255
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "source": "legacy-32.icns",
+            "source_sha256": "db309aa52db795dd9e1ae58f25198a6004a01edc7879ab46873156667020957e",
+            "pillow_exact_rgba": true,
+            "native_returncode": 0,
+            "native_stderr": "",
+            "outputs": [
+                {
+                    "name": "icon_32x32.png",
+                    "size": [
+                        32,
+                        32
+                    ],
+                    "rgba_sha256": "41ad1e1a2a767cffabbc7a2c44240c7b6c8a4d17ce49c639a541cfbf665c4eb3",
+                    "different_pixels": 1,
+                    "different_alpha": 0,
+                    "different_visible_rgb": 1,
+                    "different_hidden_rgb": 0,
+                    "first_differences": [
+                        {
+                            "index": 1023,
+                            "expected": [
+                                74,
+                                204,
+                                173,
+                                128
+                            ],
+                            "actual": [
+                                74,
+                                204,
+                                0,
+                                128
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "source": "raw-32.icns",
+            "source_sha256": "219d42991e50b4f0c571909cece9521603f8ed8dc1cefa0982e32464fbbfdc91",
+            "pillow_exact_rgba": true,
+            "native_returncode": 0,
+            "native_stderr": "",
+            "outputs": [
+                {
+                    "name": "icon_32x32.png",
+                    "size": [
+                        32,
+                        32
+                    ],
+                    "rgba_sha256": "a9a26a553779bb074f41dc6ea215067eda73cb93334bcc1085e9d1cb4bfb6cf0",
+                    "different_pixels": 1024,
+                    "different_alpha": 0,
+                    "different_visible_rgb": 768,
+                    "different_hidden_rgb": 256,
+                    "first_differences": [
+                        {
+                            "index": 0,
+                            "expected": [
+                                23,
+                                117,
+                                171,
+                                0
+                            ],
+                            "actual": [
+                                117,
+                                117,
+                                172,
+                                0
+                            ]
+                        },
+                        {
+                            "index": 1,
+                            "expected": [
+                                40,
+                                117,
+                                172,
+                                64
+                            ],
+                            "actual": [
+                                171,
+                                175,
+                                74,
+                                64
+                            ]
+                        },
+                        {
+                            "index": 2,
+                            "expected": [
+                                57,
+                                117,
+                                173,
+                                128
+                            ],
+                            "actual": [
+                                40,
+                                74,
+                                117,
+                                128
+                            ]
+                        },
+                        {
+                            "index": 3,
+                            "expected": [
+                                74,
+                                117,
+                                174,
+                                255
+                            ],
+                            "actual": [
+                                117,
+                                117,
+                                173,
+                                255
+                            ]
+                        },
+                        {
+                            "index": 4,
+                            "expected": [
+                                23,
+                                117,
+                                175,
+                                0
+                            ],
+                            "actual": [
+                                172,
+                                171,
+                                23,
+                                0
+                            ]
+                        },
+                        {
+                            "index": 5,
+                            "expected": [
+                                40,
+                                117,
+                                171,
+                                64
+                            ],
+                            "actual": [
+                                57,
+                                23,
+                                117,
+                                64
+                            ]
+                        },
+                        {
+                            "index": 6,
+                            "expected": [
+                                57,
+                                117,
+                                172,
+                                128
+                            ],
+                            "actual": [
+                                117,
+                                117,
+                                174,
+                                128
+                            ]
+                        },
+                        {
+                            "index": 7,
+                            "expected": [
+                                74,
+                                117,
+                                173,
+                                255
+                            ],
+                            "actual": [
+                                173,
+                                172,
+                                40,
+                                255
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

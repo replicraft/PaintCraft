@@ -1,0 +1,56 @@
+{
+    "license": "MIT, repository-authored pixel/wire content",
+    "files": {
+        "legacy-raw-16.icns": {
+            "sha256": "6cd46280137250d0cd58255f639e3d507c6f75e40ceb1d17b0487bdc4bb76ff3",
+            "bytes": 1072,
+            "side": 16,
+            "tag": "is32",
+            "mask": "s8mk",
+            "encoding": "raw",
+            "seed": 9,
+            "rgba_sha256": "ef5c83f58369822cc334f2dd6aee1480b0f0213f14804e591c08fb94fad50d65"
+        },
+        "legacy-rle-16.icns": {
+            "sha256": "b61ff525f24b79e806c4d33afa715e66e7567a7931b260627a990c1871d35425",
+            "bytes": 1078,
+            "side": 16,
+            "tag": "is32",
+            "mask": "s8mk",
+            "encoding": "rle",
+            "seed": 9,
+            "rgba_sha256": "ef5c83f58369822cc334f2dd6aee1480b0f0213f14804e591c08fb94fad50d65"
+        },
+        "legacy-raw-32.icns": {
+            "sha256": "c59367dd394c78d668dbb2c0e593b16a2160a0b2496f160f43c3b43c4503dfae",
+            "bytes": 4144,
+            "side": 32,
+            "tag": "il32",
+            "mask": "l8mk",
+            "encoding": "raw",
+            "seed": 9,
+            "rgba_sha256": "a8caa7a74553e414cf11766b61c2df4d5990cf97eee44ed8108c7103927d2931"
+        },
+        "legacy-rle-32.icns": {
+            "sha256": "10838b535835092171a6d967dcb777296ba2eb688f57833c5558f2e065b51452",
+            "bytes": 4168,
+            "side": 32,
+            "tag": "il32",
+            "mask": "l8mk",
+            "encoding": "rle",
+            "seed": 9,
+            "rgba_sha256": "a8caa7a74553e414cf11766b61c2df4d5990cf97eee44ed8108c7103927d2931"
+        },
+        "legacy-terminal-repeat-16.icns": {
+            "sha256": "1b5b7fb192cc383002babb378366c2a93a2e7b7edf95629d5262f3419eb18c8b",
+            "bytes": 824,
+            "side": 16,
+            "tag": "is32",
+            "mask": "s8mk",
+            "encoding": "rle",
+            "seed": 9,
+            "blue_override": 171,
+            "rgba_sha256": "20d40e3cf3e43b64a85b2f860cabd51e36bc5ae01ba823c3d280c1bce5fec64d"
+        }
+    }
+}

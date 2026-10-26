@@ -1,0 +1,825 @@
+{
+    "system": "macOS-14.7.2-arm64-arm-64bit-Mach-O",
+    "python": "3.14.0",
+    "pillow": "13.0.0",
+    "iconutil_sha256": "716676e3fc6a731e8904c36d672edbc5403a15597e2ba696c301661e3fe494b6",
+    "cases": [
+        {
+            "case": "partial-alpha",
+            "writer_exit": 0,
+            "writer_stderr": "",
+            "source_png_sha256": {
+                "icon_128x128.png": "416fed58bd6a639d4bcf6f7a54bcfc4d5c215e33dc89c9ceef8bd1673d41ce47",
+                "icon_128x128@2x.png": "584f573a58acf57da27c4e697878c9f8aebfe1a334ea734629b41ee7f952b36f",
+                "icon_16x16.png": "8441d2d613e75dfdded604b0d34333b0c0c7237d9251122400fad7bd637ab2f5",
+                "icon_16x16@2x.png": "ea7064e25c15d725acec4d71c1c52a0710ce10033942f1d7ac36de633c170e87",
+                "icon_256x256.png": "584f573a58acf57da27c4e697878c9f8aebfe1a334ea734629b41ee7f952b36f",
+                "icon_256x256@2x.png": "e72fb55a2dcb12423c2fb68c7bc142feb1c1f4ad09657289953758bc426956a9",
+                "icon_32x32.png": "ea7064e25c15d725acec4d71c1c52a0710ce10033942f1d7ac36de633c170e87",
+                "icon_32x32@2x.png": "41218ec063cbc7ce20c5cc9a8ffa78d9b5fe56fa94d10ba3293080b5649596f6",
+                "icon_512x512.png": "e72fb55a2dcb12423c2fb68c7bc142feb1c1f4ad09657289953758bc426956a9",
+                "icon_512x512@2x.png": "5c49e8d64d4c9466d73fe8fced2ad386fd0bf9b6b4cf6d65a0b315f2323240b6"
+            },
+            "icns_sha256": "b3038d6556d09d36f676488cb8e08815ef3659fa8ceac48dc0460785adc15ae9",
+            "records": [
+                {
+                    "tag": "ic12",
+                    "length": 758,
+                    "payload_sha256": "b463b84c1e2f4d7f9b1168c10bf365bc852f13d253ef6baac51ae8f34f13f26d"
+                },
+                {
+                    "tag": "ic07",
+                    "length": 1800,
+                    "payload_sha256": "56df7e762961233fc32408fb455004cc0460e9c0b1e23b823bdf8b330a530dcb"
+                },
+                {
+                    "tag": "ic13",
+                    "length": 4639,
+                    "payload_sha256": "ad0e5b72453f97ae21499aa0d16e16cd6d856a4efb19cb4007250be006e6cc68"
+                },
+                {
+                    "tag": "ic08",
+                    "length": 4639,
+                    "payload_sha256": "ad0e5b72453f97ae21499aa0d16e16cd6d856a4efb19cb4007250be006e6cc68"
+                },
+                {
+                    "tag": "ic04",
+                    "length": 1036,
+                    "payload_sha256": "b9d67ba85ad3143acab67b4b75a87c52c0907268a2c300893e34bec13b0118cf",
+                    "independent_wire_refusal": "channel 3: truncated packet at pixel 128: needs 128, has 121"
+                },
+                {
+                    "tag": "ic14",
+                    "length": 15569,
+                    "payload_sha256": "2016f42aa31d32efb0f3d4442b39d7242c72bfe3f2af4d21872fe76c0ba73a7e"
+                },
+                {
+                    "tag": "ic09",
+                    "length": 15569,
+                    "payload_sha256": "2016f42aa31d32efb0f3d4442b39d7242c72bfe3f2af4d21872fe76c0ba73a7e"
+                },
+                {
+                    "tag": "ic05",
+                    "length": 4108,
+                    "payload_sha256": "a356fc59cade7949bfd1cf3478b909f95ac4323fd969b188c671fa312b96a7d8",
+                    "independent_wire_refusal": "channel 3: truncated packet at pixel 930: needs 94, has 70"
+                },
+                {
+                    "tag": "ic10",
+                    "length": 54263,
+                    "payload_sha256": "93ad7e90bf6b3197a9c9721b77e81d9746ba686f3ecbabc1140351c7e90d4978"
+                },
+                {
+                    "tag": "ic11",
+                    "length": 496,
+                    "payload_sha256": "7d02c85692eb303c7854207941525b08e2897786c6853b44cce73ea375143905"
+                },
+                {
+                    "tag": "info",
+                    "length": 318,
+                    "payload_sha256": "2e2d6939137875b0cf88bac255cc5697633279a39629ae8f18e4c57940423345"
+                }
+            ],
+            "extract_exit": 0,
+            "extract_stderr": "",
+            "small_entries": [
+                {
+                    "side": 16,
+                    "different_pixels": 194,
+                    "different_alpha": 0,
+                    "different_visible_rgb": 130,
+                    "different_hidden_rgb": 64,
+                    "first_differences": [
+                        {
+                            "index": 0,
+                            "expected": [
+                                23,
+                                117,
+                                171,
+                                0
+                            ],
+                            "actual": [
+                                0,
+                                0,
+                                0,
+                                0
+                            ]
+                        },
+                        {
+                            "index": 1,
+                            "expected": [
+                                40,
+                                117,
+                                172,
+                                64
+                            ],
+                            "actual": [
+                                159,
+                                255,
+                                255,
+                                64
+                            ]
+                        },
+                        {
+                            "index": 2,
+                            "expected": [
+                                57,
+                                117,
+                                173,
+                                128
+                            ],
+                            "actual": [
+                                116,
+                                235,
+                                255,
+                                128
+                            ]
+                        },
+                        {
+                            "index": 4,
+                            "expected": [
+                                23,
+                                117,
+                                175,
+                                0
+                            ],
+                            "actual": [
+                                0,
+                                0,
+                                0,
+                                0
+                            ]
+                        },
+                        {
+                            "index": 5,
+                            "expected": [
+                                40,
+                                117,
+                                171,
+                                64
+                            ],
+                            "actual": [
+                                159,
+                                255,
+                                255,
+                                64
+                            ]
+                        },
+                        {
+                            "index": 6,
+                            "expected": [
+                                57,
+                                117,
+                                172,
+                                128
+                            ],
+                            "actual": [
+                                116,
+                                235,
+                                255,
+                                128
+                            ]
+                        },
+                        {
+                            "index": 8,
+                            "expected": [
+                                23,
+                                117,
+                                174,
+                                0
+                            ],
+                            "actual": [
+                                0,
+                                0,
+                                0,
+                                0
+                            ]
+                        },
+                        {
+                            "index": 9,
+                            "expected": [
+                                40,
+                                117,
+                                175,
+                                64
+                            ],
+                            "actual": [
+                                159,
+                                255,
+                                255,
+                                64
+                            ]
+                        }
+                    ],
+                    "pillow_refusal": "KeyError('RGB')"
+                },
+                {
+                    "side": 32,
+                    "different_pixels": 774,
+                    "different_alpha": 0,
+                    "different_visible_rgb": 518,
+                    "different_hidden_rgb": 256,
+                    "first_differences": [
+                        {
+                            "index": 0,
+                            "expected": [
+                                23,
+                                117,
+                                171,
+                                0
+                            ],
+                            "actual": [
+                                0,
+                                0,
+                                0,
+                                0
+                            ]
+                        },
+                        {
+                            "index": 1,
+                            "expected": [
+                                40,
+                                117,
+                                172,
+                                64
+                            ],
+                            "actual": [
+                                159,
+                                255,
+                                255,
+                                64
+                            ]
+                        },
+                        {
+                            "index": 2,
+                            "expected": [
+                                57,
+                                117,
+                                173,
+                                128
+                            ],
+                            "actual": [
+                                116,
+                                235,
+                                255,
+                                128
+                            ]
+                        },
+                        {
+                            "index": 4,
+                            "expected": [
+                                23,
+                                117,
+                                175,
+                                0
+                            ],
+                            "actual": [
+                                0,
+                                0,
+                                0,
+                                0
+                            ]
+                        },
+                        {
+                            "index": 5,
+                            "expected": [
+                                40,
+                                117,
+                                171,
+                                64
+                            ],
+                            "actual": [
+                                159,
+                                255,
+                                255,
+                                64
+                            ]
+                        },
+                        {
+                            "index": 6,
+                            "expected": [
+                                57,
+                                117,
+                                172,
+                                128
+                            ],
+                            "actual": [
+                                116,
+                                235,
+                                255,
+                                128
+                            ]
+                        },
+                        {
+                            "index": 8,
+                            "expected": [
+                                23,
+                                117,
+                                174,
+                                0
+                            ],
+                            "actual": [
+                                0,
+                                0,
+                                0,
+                                0
+                            ]
+                        },
+                        {
+                            "index": 9,
+                            "expected": [
+                                40,
+                                117,
+                                175,
+                                64
+                            ],
+                            "actual": [
+                                159,
+                                255,
+                                255,
+                                64
+                            ]
+                        }
+                    ],
+                    "pillow_refusal": "KeyError('RGB')"
+                }
+            ]
+        },
+        {
+            "case": "opaque",
+            "writer_exit": 0,
+            "writer_stderr": "",
+            "source_png_sha256": {
+                "icon_128x128.png": "b130570de8db56c26c138758db42350ee7d082a557f0858e42c1c546899fb34a",
+                "icon_128x128@2x.png": "3d1d83131eb339133603e22034809e3062a3d19cbc14dbe1127c1f3f35cea294",
+                "icon_16x16.png": "9723e3172bc8423b0c3b2dcce4580207dbe9e1cb188d6885e79b8871e4da9c5a",
+                "icon_16x16@2x.png": "16dada26dc8f7d8cb40c376b2aa81d6fc9908444348adcc9a6e1d96356830206",
+                "icon_256x256.png": "3d1d83131eb339133603e22034809e3062a3d19cbc14dbe1127c1f3f35cea294",
+                "icon_256x256@2x.png": "af9cfe4e8a8b99a74a15ec3180d4b87453200f91e695896b5b6ed899319be92e",
+                "icon_32x32.png": "16dada26dc8f7d8cb40c376b2aa81d6fc9908444348adcc9a6e1d96356830206",
+                "icon_32x32@2x.png": "43ac5c6f4e8fd4517832572d5d2558b59ed7558b46ff3a1e0994fc394221a3e9",
+                "icon_512x512.png": "af9cfe4e8a8b99a74a15ec3180d4b87453200f91e695896b5b6ed899319be92e",
+                "icon_512x512@2x.png": "32c3e7b25bbf432d0c5ad441c7a5e8b7bb66e3a0ebca1389ce2d0b14ce0ad375"
+            },
+            "icns_sha256": "63375eca5b5df27adf69f2ee414fd77dfef1fdcdfcc99fa10509e3c8cafee938",
+            "records": [
+                {
+                    "tag": "ic12",
+                    "length": 533,
+                    "payload_sha256": "35924807958534d039458d3bd629d5e9902c1f9b8dc17a5e11f6311d673fbf74"
+                },
+                {
+                    "tag": "ic07",
+                    "length": 1247,
+                    "payload_sha256": "7a1904515905ccd7b6a9d09e1b219e40b75c2f2f14de648a23b4da1e5fc94ae4"
+                },
+                {
+                    "tag": "ic13",
+                    "length": 3718,
+                    "payload_sha256": "5acb0869407909d90abfc1dd3bbe5799c9fc2d979a92079dec827f37d4b8d6b7"
+                },
+                {
+                    "tag": "ic08",
+                    "length": 3718,
+                    "payload_sha256": "5acb0869407909d90abfc1dd3bbe5799c9fc2d979a92079dec827f37d4b8d6b7"
+                },
+                {
+                    "tag": "ic04",
+                    "length": 564,
+                    "payload_sha256": "ade4f0b62d85e7c3b7bf74c938f23c73cc935239e644267b269430cf73f4738b",
+                    "independent_wire_exact_rgba": true,
+                    "independent_wire_rgba_sha256": "b962028d88df7b1c32a66ba52ece46848ef1ddd0d7e98d7c4b9f1580e907a844"
+                },
+                {
+                    "tag": "ic14",
+                    "length": 10960,
+                    "payload_sha256": "11c60f6cc872d795bad5e50b01f526184a63d33e7a22c8759dd34b3f85dc4b24"
+                },
+                {
+                    "tag": "ic09",
+                    "length": 10960,
+                    "payload_sha256": "11c60f6cc872d795bad5e50b01f526184a63d33e7a22c8759dd34b3f85dc4b24"
+                },
+                {
+                    "tag": "ic05",
+                    "length": 2156,
+                    "payload_sha256": "cb6b3b9026670b256b1424e16da7f1046832acdfba02e6c017e3bdd4cb674c1e",
+                    "independent_wire_exact_rgba": true,
+                    "independent_wire_rgba_sha256": "3336a0bf941656ac239c51df2715dc4079362b630dbc184d912ecbfe4e2547b7"
+                },
+                {
+                    "tag": "ic10",
+                    "length": 39628,
+                    "payload_sha256": "1209dcc1ff728535448a5f3b550e5dfad8c95b18d14bf8661f59eae1f258c102"
+                },
+                {
+                    "tag": "ic11",
+                    "length": 335,
+                    "payload_sha256": "5dc928ac815fdf7ac8adb64a2eab4468de3c0ed9a139d41ff06f4ec1e5bbc1de"
+                },
+                {
+                    "tag": "info",
+                    "length": 318,
+                    "payload_sha256": "2e2d6939137875b0cf88bac255cc5697633279a39629ae8f18e4c57940423345"
+                }
+            ],
+            "extract_exit": 0,
+            "extract_stderr": "",
+            "small_entries": [
+                {
+                    "side": 16,
+                    "different_pixels": 1,
+                    "different_alpha": 0,
+                    "different_visible_rgb": 1,
+                    "different_hidden_rgb": 0,
+                    "first_differences": [
+                        {
+                            "index": 255,
+                            "expected": [
+                                74,
+                                204,
+                                171,
+                                255
+                            ],
+                            "actual": [
+                                74,
+                                204,
+                                0,
+                                255
+                            ]
+                        }
+                    ],
+                    "pillow_refusal": "KeyError('RGB')"
+                },
+                {
+                    "side": 32,
+                    "different_pixels": 1,
+                    "different_alpha": 0,
+                    "different_visible_rgb": 1,
+                    "different_hidden_rgb": 0,
+                    "first_differences": [
+                        {
+                            "index": 1023,
+                            "expected": [
+                                74,
+                                204,
+                                173,
+                                255
+                            ],
+                            "actual": [
+                                74,
+                                204,
+                                0,
+                                255
+                            ]
+                        }
+                    ],
+                    "pillow_refusal": "KeyError('RGB')"
+                }
+            ]
+        },
+        {
+            "case": "zero-alpha",
+            "writer_exit": 0,
+            "writer_stderr": "",
+            "source_png_sha256": {
+                "icon_128x128.png": "d069be25c94bfacd73253caff07f05c02afb052166cad7d785959fac75998ec2",
+                "icon_128x128@2x.png": "cbeb011b5b9562c8652cb5e27f6bdcb5550f55d0d77d797d67d5e23135039576",
+                "icon_16x16.png": "72b72607bddd397f63385607f6b9e1ebe0938897836c9a509d0a512e1b751655",
+                "icon_16x16@2x.png": "6a8b2610107efe7f7451702bfe86d4f524c422998a28577532d1aca4b7eb59cd",
+                "icon_256x256.png": "cbeb011b5b9562c8652cb5e27f6bdcb5550f55d0d77d797d67d5e23135039576",
+                "icon_256x256@2x.png": "d3134f507c6170996aee08c54c7eab22bd696b910a452d285464e113dba1a6eb",
+                "icon_32x32.png": "6a8b2610107efe7f7451702bfe86d4f524c422998a28577532d1aca4b7eb59cd",
+                "icon_32x32@2x.png": "e43cc6bb4d3e7c7177c1e95283b2c7a85412d99220546e11d183292a2b5a9d78",
+                "icon_512x512.png": "d3134f507c6170996aee08c54c7eab22bd696b910a452d285464e113dba1a6eb",
+                "icon_512x512@2x.png": "8677a0dfabddda8b9db8b35b1b4798ab05705963e12726cb297804d43c2667c7"
+            },
+            "icns_sha256": "ef1dc3cc5ca93ff193a1f05f4347e6fdbd93c000e7b6ca69d04d30e260330ea5",
+            "records": [
+                {
+                    "tag": "ic12",
+                    "length": 532,
+                    "payload_sha256": "5e4b9a8babf0927fb32d874634367115ecec7abe744253b24c1da5d98933871b"
+                },
+                {
+                    "tag": "ic07",
+                    "length": 1246,
+                    "payload_sha256": "27036cecfca56a6946e01f310d17dfca466ada5551e561dcc8dd5947f869d39d"
+                },
+                {
+                    "tag": "ic13",
+                    "length": 3717,
+                    "payload_sha256": "23f12aa48ac742849aea0817c701db97dd80bc6f91d28bf2e397e2571d527db4"
+                },
+                {
+                    "tag": "ic08",
+                    "length": 3717,
+                    "payload_sha256": "23f12aa48ac742849aea0817c701db97dd80bc6f91d28bf2e397e2571d527db4"
+                },
+                {
+                    "tag": "ic04",
+                    "length": 28,
+                    "payload_sha256": "32cc7eb313b0076ce694bb337891eadc7bf0e61e237668c60425d05c96c2b832",
+                    "independent_wire_exact_rgba": false,
+                    "independent_wire_rgba_sha256": "5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef"
+                },
+                {
+                    "tag": "ic14",
+                    "length": 10958,
+                    "payload_sha256": "9d2e8afbaa22eee41bab5fc6df478418458da2e4eedbef68fb5457180a460cc4"
+                },
+                {
+                    "tag": "ic09",
+                    "length": 10958,
+                    "payload_sha256": "9d2e8afbaa22eee41bab5fc6df478418458da2e4eedbef68fb5457180a460cc4"
+                },
+                {
+                    "tag": "ic05",
+                    "length": 76,
+                    "payload_sha256": "917c961301d054c25ea59469b5242cad30101339fa21f3a0c7bb9290424c0fed",
+                    "independent_wire_exact_rgba": false,
+                    "independent_wire_rgba_sha256": "ad7facb2586fc6e966c004d7d1d16b024f5805ff7cb47c7a85dabd8b48892ca7"
+                },
+                {
+                    "tag": "ic10",
+                    "length": 39627,
+                    "payload_sha256": "7a9195c55dcf22789a97d4c68f79ce7fb0621e1799a91e3e919a779b55694742"
+                },
+                {
+                    "tag": "ic11",
+                    "length": 333,
+                    "payload_sha256": "14a68490a5cbd6f78126abb2ec0d0dc01adab5687bf7d0e05dedb75801f8bba7"
+                },
+                {
+                    "tag": "info",
+                    "length": 318,
+                    "payload_sha256": "2e2d6939137875b0cf88bac255cc5697633279a39629ae8f18e4c57940423345"
+                }
+            ],
+            "extract_exit": 0,
+            "extract_stderr": "",
+            "small_entries": [
+                {
+                    "side": 16,
+                    "different_pixels": 256,
+                    "different_alpha": 0,
+                    "different_visible_rgb": 0,
+                    "different_hidden_rgb": 256,
+                    "first_differences": [
+                        {
+                            "index": 0,
+                            "expected": [
+                                23,
+                                117,
+                                171,
+                                0
+                            ],
+                            "actual": [
+                                0,
+                                0,
+                                0,
+                                0
+                            ]
+                        },
+                        {
+                            "index": 1,
+                            "expected": [
+                                40,
+                                117,
+                                172,
+                                0
+                            ],
+                            "actual": [
+                                0,
+                                0,
+                                0,
+                                0
+                            ]
+                        },
+                        {
+                            "index": 2,
+                            "expected": [
+                                57,
+                                117,
+                                173,
+                                0
+                            ],
+                            "actual": [
+                                0,
+                                0,
+                                0,
+                                0
+                            ]
+                        },
+                        {
+                            "index": 3,
+                            "expected": [
+                                74,
+                                117,
+                                174,
+                                0
+                            ],
+                            "actual": [
+                                0,
+                                0,
+                                0,
+                                0
+                            ]
+                        },
+                        {
+                            "index": 4,
+                            "expected": [
+                                23,
+                                117,
+                                175,
+                                0
+                            ],
+                            "actual": [
+                                0,
+                                0,
+                                0,
+                                0
+                            ]
+                        },
+                        {
+                            "index": 5,
+                            "expected": [
+                                40,
+                                117,
+                                171,
+                                0
+                            ],
+                            "actual": [
+                                0,
+                                0,
+                                0,
+                                0
+                            ]
+                        },
+                        {
+                            "index": 6,
+                            "expected": [
+                                57,
+                                117,
+                                172,
+                                0
+                            ],
+                            "actual": [
+                                0,
+                                0,
+                                0,
+                                0
+                            ]
+                        },
+                        {
+                            "index": 7,
+                            "expected": [
+                                74,
+                                117,
+                                173,
+                                0
+                            ],
+                            "actual": [
+                                0,
+                                0,
+                                0,
+                                0
+                            ]
+                        }
+                    ],
+                    "pillow_refusal": "KeyError('RGB')"
+                },
+                {
+                    "side": 32,
+                    "different_pixels": 1024,
+                    "different_alpha": 0,
+                    "different_visible_rgb": 0,
+                    "different_hidden_rgb": 1024,
+                    "first_differences": [
+                        {
+                            "index": 0,
+                            "expected": [
+                                23,
+                                117,
+                                171,
+                                0
+                            ],
+                            "actual": [
+                                0,
+                                0,
+                                0,
+                                0
+                            ]
+                        },
+                        {
+                            "index": 1,
+                            "expected": [
+                                40,
+                                117,
+                                172,
+                                0
+                            ],
+                            "actual": [
+                                0,
+                                0,
+                                0,
+                                0
+                            ]
+                        },
+                        {
+                            "index": 2,
+                            "expected": [
+                                57,
+                                117,
+                                173,
+                                0
+                            ],
+                            "actual": [
+                                0,
+                                0,
+                                0,
+                                0
+                            ]
+                        },
+                        {
+                            "index": 3,
+                            "expected": [
+                                74,
+                                117,
+                                174,
+                                0
+                            ],
+                            "actual": [
+                                0,
+                                0,
+                                0,
+                                0
+                            ]
+                        },
+                        {
+                            "index": 4,
+                            "expected": [
+                                23,
+                                117,
+                                175,
+                                0
+                            ],
+                            "actual": [
+                                0,
+                                0,
+                                0,
+                                0
+                            ]
+                        },
+                        {
+                            "index": 5,
+                            "expected": [
+                                40,
+                                117,
+                                171,
+                                0
+                            ],
+                            "actual": [
+                                0,
+                                0,
+                                0,
+                                0
+                            ]
+                        },
+                        {
+                            "index": 6,
+                            "expected": [
+                                57,
+                                117,
+                                172,
+                                0
+                            ],
+                            "actual": [
+                                0,
+                                0,
+                                0,
+                                0
+                            ]
+                        },
+                        {
+                            "index": 7,
+                            "expected": [
+                                74,
+                                117,
+                                173,
+                                0
+                            ],
+                            "actual": [
+                                0,
+                                0,
+                                0,
+                                0
+                            ]
+                        }
+                    ],
+                    "pillow_refusal": "KeyError('RGB')"
+                }
+            ]
+        }
+    ]
+}
