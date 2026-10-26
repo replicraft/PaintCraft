@@ -5,8 +5,21 @@ resources > Place shape…**. The current workflow is an explicit numeric form
 with X/Y, width, height, fill color, preview and conversion consent. Selecting a
 resource or looking at its outline does not paint the document.
 
-The select-preset-and-drag canvas tool is a following increment. Numeric
-placement does not complete the CSH tool or the broader format roadmap.
+Studio also offers **Use as shape tool…**. A separate review shows a sample-size
+filled preview and requests consent for converting future drawn shapes to
+pixels. After approval, drag the preset onto the canvas in the current color.
+Drag backwards or hold Shift for a square target box. Its preview and release
+use the same captured resource, preset, policy, RGBA color, layer and endpoints.
+The sample preview does not pretend to set a future drag's position or size.
+Each accepted stroke records one Shape edit, without another consent prompt.
+
+The toolbar shows the selected resource name and drag instructions in place of
+stock shape options. Selecting a stock tool, including Rectangle again, leaves
+the imported-shape tool. The color picker's Previous setting restores its exact
+source after sampling; a missing source is refused. Temporary Space-pan only
+changes the view. Cancelling or invalidating another adoption review retains
+the previous tool. Classic and Studio keep distinct document/tool ownership.
+These workflows do not complete the unsupported CSH profiles or wider roadmap.
 
 ## Qualified geometry
 
@@ -23,6 +36,12 @@ they are not replaced with a guessed polygon, stock shape or union-only fill.
 
 Every normalized control coordinate must be in [-1, 2]. Output sides are
 1 through 4096, with at most 4,194,304 pixels and 262,144 coverage spans.
+Canvas drag boxes use inclusive integer pointer endpoints. Browser drags have a
+smaller limit of 262,144 pixels, checked before raster allocation on preview and
+release. The entire oversized request fails visibly; no partial mask,
+downsampling or stock-shape fallback is published. Native drag requests retain
+the explicit-placement pixel limit.
+
 Positions are signed integers within the shared coordinate policy, including
 the right/bottom extent. Invalid/overflowing dimensions and positions refuse
 preparation. Negative positions clip normally.
@@ -57,7 +76,7 @@ mask; source-compatible outline/stroke styles are not implemented.
 
 ## Review and atomic publication
 
-Placement requires a displayed preview from an earlier frame and explicit
+Numeric placement requires a displayed preview from an earlier frame and explicit
 conversion consent. Position, size or color changes clear approval. Resource
 identity/epoch/index, originating document snapshot/ticket and selected target
 are checked before publication. Stale previews, missing/hidden targets,
@@ -68,9 +87,9 @@ transparent canvas-sized layer and mask in the same transaction. Fully clipped,
 zero-opacity and other ineffective masks leave no new layer or undo entry.
 Existing selections and compositing use the same mask executor as other tools.
 
-Native mask transaction preparation uses the existing editing worker. Explicit
-preview rasterization currently runs on the UI thread, like the SVG review
-workflow. Browser conversion and execution follow the current synchronous
+Native drag preview and mask transaction preparation use the existing workers.
+Explicit numeric/adoption preview rasterization currently runs on the UI thread,
+like the SVG review workflow. Browser conversion and execution follow the current synchronous
 editor architecture. Tiny-skia fill has checks before and after the call, with
 no interruption inside it. No interaction-latency or intra-call cancellation
 guarantee is made.
@@ -112,12 +131,22 @@ failure, retained-clone/drop and preview/copy lease release.
 Three Shape editor tests and five Brush regressions pass after sharing first
 layer assembly. A separate builder test verifies unchanged brush alias/name and
 explicit shape alias/name. Two shared widget tests cover invalid geometry and
-unchanged translucent colors. Four native placement tests exercise translated
-controls, exact signed pixels, one undo, hidden/stale/cancelled review, normal
-saving and real input-alias protection. Five browser shape workflow tests cover
-the numeric form, unchanged title, refusal/no-op behavior, resource staleness and
-narrow controls. English/Japanese controls and all seven language catalogs are
-checked. Strict host checks and a real production Wasm build pass.
+unchanged translucent colors. Seven native placement/review tests exercise
+translated controls, exact signed pixels, one undo, hidden/stale/cancelled review,
+normal saving and real input-alias protection for numeric and adopted tools.
+Two native controller tests verify worker preview/release equality, ineffective
+masks and exact picker-source restoration. Seven browser resource/review tests
+cover the numeric form, drag adoption, unchanged title, staleness, separate
+Classic ownership and narrow controls; two controller tests cover whole-request
+pixel limits, cancellation, missing sources, picker restoration and hidden layers.
+Four shared resource-gesture tests cover captured requests, Shift, backwards
+boxes, subpixel input, cancellation, explicit stock selection and view-only pan.
+
+Full host validation passes 458 native tests with 9 ignored, and 185 browser
+tests. All 27 tools unit tests, 3 picker integration tests and 8 Studio tests
+pass. English/Japanese controls, all seven language catalogs, strict host checks
+and a real production Wasm build pass. Browser admission bounds are correctness
+limits, not an interaction-performance qualification.
 
 A local headless Chrome production run uploaded CSH, displayed an unsupported
 Boolean assessment, previewed the cubic at 64 × 48, blocked unapproved placement,
@@ -129,6 +158,17 @@ claim independent exact edge-antialias values or original-application parity.
 Local artifacts/scripts are under ignored
 `docs/validation/format-specialists-2026-10-25/csh-placement/`.
 
-Remaining work includes the canvas drag tool, multiple/open/Boolean placement,
-persistent resource catalogs, additional source profiles and original-application
-qualification. The wider roadmap remains open.
+A second production run selected the drag tool with separate preview/consent,
+showed the named preset in both toolbar rows, cancelled a live preview with
+Escape, drew the cubic, and compared identical preview/release crops. Undo
+restored the original crop; Redo restored the painted crop. Its 801-byte PCND
+reopened through CLI. The observed pointer box was (99, 80), 64 × 47; 2,340
+analytic interior pixels matched, recovered alpha area was 1801.365 against
+1804.8 with tolerance 8, and pixels outside the target box stayed unchanged.
+The browser's public unsaved-work guard counts held gestures; cancelling the
+preview restored its clean state. This run had no page errors. Its screenshots,
+Wasm SHA-256, harness and independent verifier are under the ignored sibling
+`docs/validation/format-specialists-2026-10-25/csh-drag/`.
+
+Remaining work includes multiple/open/Boolean placement, persistent resource
+catalogs, additional source profiles and original-application qualification. The wider roadmap remains open.
