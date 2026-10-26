@@ -516,3 +516,5 @@ default-96-dpi = डिफ़ॉल्ट (96 dpi)
 convert-ycbcr-to-8-bit-srgb-with-rounding-and-clipping-4-2-0-uses-bilinear-chroma-interpolation = राउंडिंग और क्लिपिंग के साथ YCbCr को 8-बिट sRGB में बदलें; 4:2:0 में बिलीनियर क्रोमा इंटरपोलेशन का उपयोग होता है।
 
 heif-image-item-names-are-not-retained-in-the-new-document = नए दस्तावेज़ में HEIF छवि आइटम के नाम नहीं रखे जाते।
+
+avif-image-item-names-are-not-retained-in-the-new-document = नए दस्तावेज़ में AVIF छवि आइटमों के नाम नहीं रखे जाएंगे।

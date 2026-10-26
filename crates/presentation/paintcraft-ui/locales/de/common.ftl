@@ -516,3 +516,5 @@ default-96-dpi = Standard (96 dpi)
 convert-ycbcr-to-8-bit-srgb-with-rounding-and-clipping-4-2-0-uses-bilinear-chroma-interpolation = YCbCr mit Rundung und Begrenzung in 8-Bit-sRGB umwandeln; 4:2:0 verwendet bilineare Chromainterpolation.
 
 heif-image-item-names-are-not-retained-in-the-new-document = Die Namen der HEIF-Bildelemente werden im neuen Dokument nicht beibehalten.
+
+avif-image-item-names-are-not-retained-in-the-new-document = AVIF-Bildelementnamen werden im neuen Dokument nicht beibehalten.

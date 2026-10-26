@@ -71,6 +71,9 @@ pub fn import_loss_description(code: &str) -> Option<&'static str> {
         "heif-item-names-not-retained" => {
             "HEIF image item names are not retained in the new document."
         }
+        "avif-item-names-not-retained" => {
+            "AVIF image item names are not retained in the new document."
+        }
         _ => return None,
     })
 }
@@ -90,6 +93,7 @@ mod tests {
             "jxr-resolution-not-retained",
             "heif-color-reconstruction",
             "heif-item-names-not-retained",
+            "avif-item-names-not-retained",
             "icon-density-not-retained-in-flat-document",
             "dcx-other-pages-not-imported",
             "pdn-metadata-ignored",

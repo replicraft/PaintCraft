@@ -284,3 +284,7 @@ importing-jpeg-xl = Importando JPEG XL
 jpeg-xl-imported-as-an-editable-project-copy = JPEG XL importado como uma cópia editável do projeto.
 jpeg-xl-import-failed-the-current-document-was-kept = Falha ao importar JPEG XL; o documento atual foi mantido.
 jpeg-xl-importing-is-paused-for-this-tab-download-your-project-then-reload-this-tab-to-try-again = A importação de JPEG XL está pausada nesta aba. Baixe seu projeto e recarregue esta aba para tentar novamente.
+
+image-name = Nome da imagem
+
+transparency-name = Nome da transparência
