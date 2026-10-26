@@ -304,6 +304,19 @@ impl App {
             )?;
             return self.stage_svg_import_acquired(source, path.to_path_buf());
         }
+        if convert
+            && path
+                .extension()
+                .and_then(|ext| ext.to_str())
+                .and_then(paintcraft_formats::registry::Family::from_extension)
+                == Some(paintcraft_formats::registry::Family::Msp)
+        {
+            let source = crate::format_admission::acquire_resource_source(
+                path,
+                paintcraft_formats::msp::BYTES_MAX as u64,
+            )?;
+            return self.stage_msp_import_acquired(source, path.to_path_buf());
+        }
         let (bytes, binding) = crate::destination::acquire(path)?;
         if convert
             && matches!(

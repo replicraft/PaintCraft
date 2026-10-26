@@ -25,11 +25,14 @@ impl App {
                 )
                 .into_iter()
                 .filter(|extension| {
-                    kind != Kind::Import
-                        || registry::Family::from_extension(extension).is_some_and(|family| {
-                            !family.is_project()
-                                || paintcraft_formats::project_import::supports(family)
-                        })
+                    (kind != Kind::Import
+                        || frontend == registry::Frontend::Studio
+                        || registry::Family::from_extension(extension) != Some(Family::Msp))
+                        && (kind != Kind::Import
+                            || registry::Family::from_extension(extension).is_some_and(|family| {
+                                !family.is_project()
+                                    || paintcraft_formats::project_import::supports(family)
+                            }))
                 })
                 .map(str::to_owned)
                 .collect(),
@@ -65,6 +68,7 @@ impl App {
                     Family::Pnm => "PAM image",
                     Family::Farbfeld => "farbfeld image",
                     Family::Pcx => "PCX image",
+                    Family::Msp => "MSP image",
                     _ => return None,
                 };
                 Some(Filter {

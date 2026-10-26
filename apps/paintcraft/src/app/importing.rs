@@ -8,6 +8,8 @@ use paintcraft_ui::{i18n::import_loss_description, t};
 mod dcx;
 #[path = "importing/icons.rs"]
 mod icons;
+#[path = "importing/msp.rs"]
+mod msp;
 #[path = "importing/svg.rs"]
 mod svg;
 pub(super) use svg::FontPick;
@@ -138,7 +140,7 @@ impl App {
             return;
         }
         let result = (|| {
-            let converted = matches!(&pending.candidate, Candidate::Layered(_));
+            let converted = pending.convert || matches!(&pending.candidate, Candidate::Layered(_));
             let document = match pending.candidate {
                 Candidate::Raster(image) => {
                     import_image(image.width, image.height, &image.rgba, &pending.digest)?
