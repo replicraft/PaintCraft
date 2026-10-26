@@ -8,6 +8,7 @@ mod policy;
 mod svg;
 pub use policy::STUDIO_STOCK;
 pub use svg::admit_import_svg;
+pub const WEB_JXL_IMPORT_VARIANT: &str = "web-jxl-srgb8-worker-quarantine-v1";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Frontend {
@@ -314,6 +315,11 @@ pub fn admission(request: Request<'_>) -> Decision {
         && request.frontend == Frontend::Studio
         && request.platform == Platform::Native
         && request.variant == Some(crate::codec_worker::NATIVE_JXR_IMPORT_VARIANT);
+    let web_jxl_import = request.family == Family::Jxl
+        && request.operation == Operation::ImportConvert
+        && request.frontend == Frontend::Studio
+        && request.platform == Platform::Web
+        && request.variant == Some(WEB_JXL_IMPORT_VARIANT);
     let selected_page = request.family == Family::Dcx
         && request.operation == Operation::ImportConvert
         && request.variant == Some("dcx-selected-page");
@@ -356,6 +362,7 @@ pub fn admission(request: Request<'_>) -> Decision {
         && !fresh_entry_set
         && !svg_rasterization
         && !native_jxl_import
+        && !web_jxl_import
         && !native_jxr_import
     {
         return Decision::TemporarilyUnavailable(Reason::VariantUnqualified);
@@ -372,7 +379,11 @@ pub fn admission(request: Request<'_>) -> Decision {
     if !capability.backend_available || !request.backend_available {
         return Decision::TemporarilyUnavailable(Reason::BackendUnavailable);
     }
-    if !capability.qualified && !native_jxl_import && !native_jxr_import {
+    if !capability.qualified
+        && !native_jxl_import
+        && !web_jxl_import
+        && !native_jxr_import
+    {
         return Decision::TemporarilyUnavailable(Reason::VariantUnqualified);
     }
     if request.needs_preflight

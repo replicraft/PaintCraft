@@ -59,3 +59,35 @@ fn only_exact_native_studio_import_variant_is_qualified() {
     request.extension = Some("png");
     assert!(!registry::admission(request).available());
 }
+
+#[test]
+fn browser_jxl_requires_its_own_exact_studio_import_variant() {
+    use paintcraft_formats::registry::WEB_JXL_IMPORT_VARIANT;
+    for frontend in [
+        Frontend::Studio,
+        Frontend::ClassicV7,
+        Frontend::ClassicV10,
+        Frontend::ClassicV11,
+    ] {
+        for platform in [Platform::Native, Platform::Web] {
+            for operation in [
+                Operation::Open,
+                Operation::ImportConvert,
+                Operation::ExportFlat,
+                Operation::SaveAsCopy,
+                Operation::SavePreserving,
+            ] {
+                let mut request = Request::new(frontend, operation, Family::Jxl, platform);
+                request.variant = Some(WEB_JXL_IMPORT_VARIANT);
+                request.extension = Some("jxl");
+                assert_eq!(
+                    registry::admission(request).available(),
+                    frontend == Frontend::Studio
+                        && platform == Platform::Web
+                        && operation == Operation::ImportConvert,
+                    "{request:?}"
+                );
+            }
+        }
+    }
+}
