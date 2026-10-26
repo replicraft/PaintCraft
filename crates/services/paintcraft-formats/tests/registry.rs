@@ -196,7 +196,7 @@ fn stock_extended_asset_and_native_project_operations_do_not_leak() {
                 Platform::Native
             ))
             .available(),
-            family == Family::Ase
+            matches!(family, Family::Ase | Family::Csh)
         );
     }
     assert_eq!(
@@ -595,5 +595,36 @@ fn netpbm_writing_is_pam_only_and_new_export_aliases_are_discoverable() {
         );
         request.extension = Some(extension);
         assert!(!admission(request).available());
+    }
+}
+
+#[test]
+fn csh_resources_are_studio_assets_only_with_qualified_suffixes() {
+    for platform in [Platform::Native, Platform::Web] {
+        for frontend in FRONTENDS {
+            for operation in [
+                Operation::Open,
+                Operation::OpenProject,
+                Operation::OpenRaster,
+                Operation::ImportConvert,
+                Operation::SavePreserving,
+                Operation::SaveAsCopy,
+                Operation::ExportFlat,
+                Operation::ImportAsset,
+                Operation::ExportAsset,
+            ] {
+                let mut request = Request::new(frontend, operation, Family::Csh, platform);
+                request.extension = Some("CSH");
+                assert_eq!(
+                    admission(request).available(),
+                    frontend == Frontend::Studio
+                        && matches!(operation, Operation::ImportAsset | Operation::ExportAsset)
+                );
+            }
+        }
+        assert!(!enabled(Frontend::Studio, Operation::Open, platform).contains(&Family::Csh));
+        assert!(
+            enabled_extensions(Frontend::Studio, Operation::ImportAsset, platform).contains(&"csh")
+        );
     }
 }

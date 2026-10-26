@@ -97,6 +97,7 @@ impl Family {
             Self::Farbfeld => extension.eq_ignore_ascii_case("ff"),
             Self::Pcx => extension.eq_ignore_ascii_case("pcx"),
             Self::Ase => extension.eq_ignore_ascii_case("ase"),
+            Self::Csh => extension.eq_ignore_ascii_case("csh"),
             Self::Pnm => ["pnm", "pbm", "pgm", "ppm", "pam"]
                 .iter()
                 .any(|ext| ext.eq_ignore_ascii_case(extension)),

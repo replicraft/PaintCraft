@@ -188,6 +188,9 @@ pub fn capability(family: Family, operation: Operation, _platform: Platform) -> 
         Family::Ase if matches!(operation, Operation::ImportAsset | Operation::ExportAsset) => {
             Some("ag-psd-ase-finite-f32")
         }
+        Family::Csh if matches!(operation, Operation::ImportAsset | Operation::ExportAsset) => {
+            Some("ag-psd-csh-exact-i32")
+        }
         Family::Tiff if raster_operation && operation.is_write() => Some("tiff-rgba8"),
         Family::Pcnd if project_operation => Some("paintcraft-pcnd-v1"),
         Family::Png
@@ -263,7 +266,9 @@ pub fn capability(family: Family, operation: Operation, _platform: Platform) -> 
             }
             Family::Jxl | Family::Avif => operation == Operation::ExportFlat,
             Family::Svg => operation == Operation::ImportConvert,
-            Family::Ase => matches!(operation, Operation::ImportAsset | Operation::ExportAsset),
+            Family::Ase | Family::Csh => {
+                matches!(operation, Operation::ImportAsset | Operation::ExportAsset)
+            }
             Family::Pdn => matches!(
                 operation,
                 Operation::Open | Operation::OpenProject | Operation::ImportConvert
