@@ -514,3 +514,5 @@ the-jpeg-xr-picture-s-print-resolution-will-not-be-kept = The JPEG XR picture's 
 default-96-dpi = Default (96 dpi)
 
 convert-ycbcr-to-8-bit-srgb-with-rounding-and-clipping-4-2-0-uses-bilinear-chroma-interpolation = Convert YCbCr to 8-bit sRGB with rounding and clipping; 4:2:0 uses bilinear chroma interpolation.
+
+heif-image-item-names-are-not-retained-in-the-new-document = HEIF image item names are not retained in the new document.

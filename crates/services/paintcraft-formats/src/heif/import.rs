@@ -3,7 +3,8 @@ use super::*;
 use crate::codec_worker::NativeEncoding;
 use paintcraft_core::types::{ErrorCode, json::Value, policy::hex};
 use sha2::{Digest, Sha256};
-pub const KNOWN_IMPORT_LOSSES: &[&str] = &["heif-color-reconstruction"];
+pub const KNOWN_IMPORT_LOSSES: &[&str] =
+    &["heif-color-reconstruction", "heif-item-names-not-retained"];
 pub const COLOR_POLICY: &str = "heif-explicit-srgb8-bilinear-type0-v1";
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ImportAssessment {
@@ -33,10 +34,13 @@ impl ImportAssessment {
         self.sha256
     }
     pub fn losses(&self) -> &'static [&'static str] {
-        if self.color.matrix == 1 {
-            KNOWN_IMPORT_LOSSES
-        } else {
-            &[]
+        let names = !self.primary_name.is_empty()
+            || self.alpha.as_ref().is_some_and(|value| !value.1.is_empty());
+        match (self.color.matrix == 1, names) {
+            (true, true) => KNOWN_IMPORT_LOSSES,
+            (true, false) => &["heif-color-reconstruction"],
+            (false, true) => &["heif-item-names-not-retained"],
+            (false, false) => &[],
         }
     }
     pub fn require_losses(&self, allowed: &[String]) -> Result<()> {
@@ -55,7 +59,7 @@ impl ImportAssessment {
             .any(|code| !allowed.iter().any(|given| given == code))
         {
             return Err(unsupported(
-                "HEIF conversion requires heif-color-reconstruction consent",
+                "HEIF conversion requires consent for all reported import limitations",
             ));
         }
         Ok(())

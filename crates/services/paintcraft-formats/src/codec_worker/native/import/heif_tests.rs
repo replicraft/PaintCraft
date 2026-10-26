@@ -74,7 +74,10 @@ fn heif_consent_source_owner_and_resident_handoff_preserve_existing_session() {
     );
     assert_eq!(resident.usage().reserved, 0);
     assert_eq!(preparation.usage().reserved, 0);
-    let allowed = vec!["heif-color-reconstruction".into()];
+    let allowed = vec![
+        "heif-color-reconstruction".into(),
+        "heif-item-names-not-retained".into(),
+    ];
     assert_eq!(
         make()
             .adopt_with_losses(&["unknown".into()], &|| Ok(()), &|| Ok(owner))

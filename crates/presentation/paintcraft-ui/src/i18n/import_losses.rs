@@ -68,6 +68,9 @@ pub fn import_loss_description(code: &str) -> Option<&'static str> {
         "heif-color-reconstruction" => {
             "Convert YCbCr to 8-bit sRGB with rounding and clipping; 4:2:0 uses bilinear chroma interpolation."
         }
+        "heif-item-names-not-retained" => {
+            "HEIF image item names are not retained in the new document."
+        }
         _ => return None,
     })
 }
@@ -86,6 +89,7 @@ mod tests {
             "icns-metadata-ignored",
             "jxr-resolution-not-retained",
             "heif-color-reconstruction",
+            "heif-item-names-not-retained",
             "icon-density-not-retained-in-flat-document",
             "dcx-other-pages-not-imported",
             "pdn-metadata-ignored",

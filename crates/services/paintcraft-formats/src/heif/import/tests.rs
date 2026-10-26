@@ -26,11 +26,16 @@ fn exact_source_color_and_alpha_declarations_are_bound_to_sha_and_actual_losses(
             Some(hex(&Sha256::digest(bytes)).as_str())
         );
         assert!(assessment.require_losses(&["unknown".into()]).is_err());
-        assert_eq!(assessment.require_losses(&[]).is_ok(), matrix == 0);
+        assert!(assessment.require_losses(&[]).is_err());
         assessment
-            .require_losses(&[KNOWN_IMPORT_LOSSES[0].into()])
+            .require_losses(
+                &KNOWN_IMPORT_LOSSES
+                    .iter()
+                    .map(|code| (*code).into())
+                    .collect::<Vec<_>>(),
+            )
             .unwrap();
-        assert_eq!(assessment.losses().is_empty(), matrix == 0);
+        assert_eq!(assessment.losses().len(), if matrix == 0 { 1 } else { 2 });
     }
 }
 #[test]
@@ -67,5 +72,27 @@ fn unqualified_metadata_color_extents_and_cancellation_cannot_reach_adoption() {
             &|| Ok(())
         )
         .is_err()
+    );
+}
+#[test]
+fn unnamed_identity_has_no_color_or_item_name_loss() {
+    let source =
+        include_bytes!("../../../tests/heif-color-fixtures/anonymous-identity444-alpha.heic");
+    let assessment = assess_import(source, PIXELS_MAX, &|| Ok(())).unwrap();
+    assert!(assessment.losses().is_empty());
+    assessment.require_losses(&[]).unwrap();
+    assert_eq!(
+        assessment
+            .to_value()
+            .get("primary_item_name")
+            .and_then(Value::as_str),
+        Some("")
+    );
+    assert_eq!(
+        assessment
+            .to_value()
+            .get("alpha_item_name")
+            .and_then(Value::as_str),
+        Some("")
     );
 }

@@ -514,3 +514,5 @@ the-jpeg-xr-picture-s-print-resolution-will-not-be-kept = 不会保留 JPEG XR �
 default-96-dpi = 默认值（96 dpi）
 
 convert-ycbcr-to-8-bit-srgb-with-rounding-and-clipping-4-2-0-uses-bilinear-chroma-interpolation = 将 YCbCr 转换为 8 位 sRGB，并进行舍入和裁剪；4:2:0 使用双线性色度插值。
+
+heif-image-item-names-are-not-retained-in-the-new-document = 新文档不会保留 HEIF 图像项目名称。

@@ -514,3 +514,5 @@ the-jpeg-xr-picture-s-print-resolution-will-not-be-kept = A resolução de impre
 default-96-dpi = Padrão (96 dpi)
 
 convert-ycbcr-to-8-bit-srgb-with-rounding-and-clipping-4-2-0-uses-bilinear-chroma-interpolation = Converter YCbCr para sRGB de 8 bits com arredondamento e recorte; 4:2:0 usa interpolação bilinear de croma.
+
+heif-image-item-names-are-not-retained-in-the-new-document = Os nomes dos itens de imagem HEIF não são mantidos no novo documento.
