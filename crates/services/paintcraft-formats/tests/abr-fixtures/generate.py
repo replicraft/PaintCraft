@@ -44,9 +44,17 @@ def section(kind, payload):
 
 def sample(identifier, depth, compressed, values, minor):
     identifier = identifier.encode("ascii")
-    body = bytes([len(identifier)]) + identifier + b"\0" * (10 if minor == 1 else 264)
+    opaque_size = 10 if minor == 1 else 264
+    opaque = bytes((i * 13 + 7) % 256 for i in range(opaque_size)) if depth == 16 and compressed else b"\0" * opaque_size
+    body = bytes([len(identifier)]) + identifier + opaque
     body += struct.pack(">4iHB", -2, -1, 0, 2, depth, compressed)
-    if compressed:
+    if compressed and depth == 16:
+        assert values == [0, 1, 255, 256, 32769, 65535]
+        # Byte packets may cross 16-bit sample boundaries. No-op packets are
+        # legal; rows still expand to exactly six big-endian component bytes.
+        rows = [b"\x80\xfe\0\2\1\0\xff\x80", b"\5\1\0\x80\1\xff\xff"]
+        body += struct.pack(">HH", *(len(row) for row in rows)) + b"".join(rows)
+    elif compressed:
         # Two rows: three literal samples, then a replicated three-sample run.
         body += struct.pack(">HH", 4, 2) + b"\2" + bytes(values[:3]) + b"\xfe" + bytes([values[3]])
     elif depth == 8:
@@ -69,6 +77,11 @@ def main():
         "samples-v10.abr": struct.pack(">HH", 10, 2) + section("samp", sample("raw-8", 8, 0, [0, 1, 127, 128, 254, 255], 2)),
         "empty.abr": struct.pack(">HH", 6, 1),
     }
+    for major, minor in [(6, 1), (10, 2)]:
+        files[f"rle16-v{major}.abr"] = struct.pack(">HH", major, minor) + section("samp", sample("rle-16", 16, 1,
+                [0, 1, 255, 256, 32769, 65535], minor)) + section("desc", desc) + section("samp",
+                sample("raw-8", 8, 0, [0, 1, 127, 128, 254, 255], minor) + sample("raw-16", 16, 0,
+                [0, 1, 255, 256, 32769, 65535], minor)) + section("phry", hierarchy)
     manifest = {"generator": "generate.py, Python standard library", "license": "MIT, repository-authored", "files": {}}
     for name, data in files.items():
         (ROOT / name).write_bytes(data)

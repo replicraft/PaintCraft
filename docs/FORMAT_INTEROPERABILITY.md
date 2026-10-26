@@ -44,7 +44,7 @@ Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, 
 | SVG/SVGZ | Studio desktop/browser Import; CLI `import` with `--svg-width`/`--svg-height`; MCP `import_image` with `svg` options | Explicit size/DPI/fitting and rasterization consent. Studio previews use bundled fonts; CLI/MCP also accept additional outline fonts. No Classic access, ordinary Open or SVG export |
 | EXR/HDR, JP2, MSP, ICNS | Not yet enabled | Registry inventory or work in progress is not usable format support |
 | ASE | Studio Palettes dialog; CLI `palette inspect` / `palette export`; MCP `inspect_palette` / `export_palette` | Flat groups, exact names/order/models/types and finite f32 values. RGB/gray tool-color adoption is explicit; CMYK/LAB conversion, persistent catalogs and Adobe qualification remain |
-| ABR | Internal checked resource reader; no public workflow yet | Exact 8/16-bit sample masks, signed bounds and original descriptor/hierarchy payloads retained. Embedded patterns, 16-bit PackBits, brush-engine adoption and public Studio/CLI/MCP import remain |
+| ABR | Internal checked resource reader; no public workflow yet | Exact raw/PackBits 8/16-bit sample masks, signed bounds and original descriptor/hierarchy payloads retained. Embedded patterns, brush-engine adoption and public Studio/CLI/MCP import remain |
 | CSH | Studio Shape resources dialog; CLI `shape inspect` / `shape export`; MCP `inspect_shapes` / `export_shapes` | Retains bounds, names, IDs and exact ordered path records. Studio previews outlines without changing the painting. Shape placement, broader interoperability and original-application qualification remain |
 | RAW, PDF, KRA, XCF, animation, advanced DDS | Future profiles | No inherited Classic support or preserving-write claims |
 
@@ -163,10 +163,20 @@ observations of these resource workflows, not speedup or interactive guarantees.
 
 The internal `paintcraft-formats::abr` adapter preflights the complete admitted
 source before invoking selected `ag-psd` 0.3.0. ABR versions 6/7/9/10, minor 1/2,
-admit raw/PackBits 8-bit sample masks and raw 16-bit masks. Signed origins, IDs
+admit raw/PackBits 8-bit and 16-bit sample masks. Signed origins, IDs
 and full-precision mask values survive independently of the backend's narrowed
 8-bit convenience view. The selected parser also supplies computed/sampled and
 other recognized brush metadata; this does not install or render those brushes.
+
+The selected Rust reader lacks 16-bit PackBits. After exact byte-row decoding,
+the adapter gives it an equivalent private raw-16 view, admitted at no more than
+48 MiB before allocation. Only those compressed sample records are rewritten;
+IDs, opaque header data, signed bounds and depth stay exact, while unaffected
+sample records and all descriptor/hierarchy payloads are copied verbatim.
+Each emitted replacement is decoded and compared with every original `u16`
+before the selected library performs its metadata/high-byte check. Returned
+resource sections retain the original compressed payloads. This private decoder
+view is not a user-visible ABR writer and never changes the acquired file.
 
 Bounded Action Descriptor walks cover `desc` and `phry` sections before upstream
 tree allocation. Complete ordered section payloads remain available, including
@@ -185,10 +195,13 @@ decoder. They do not prove a hard allocator or cooperative cancellation-tail
 bound during upstream calls.
 
 The [owned fixture suite](../crates/services/paintcraft-formats/tests/abr-fixtures/README.md)
-has ten focused tests and a successful Node.js 24.10.0 / upstream JavaScript
-`ag-psd` 33.0.0 source-fixture check. The JavaScript reader and Rust port share
+has thirteen focused tests and successful Node.js 24.10.0 / upstream JavaScript
+`ag-psd` 33.0.0 checks for five source specimens and both Rust-generated private
+raw-16 views. The public JavaScript channel decoder verifies every low bit;
+metadata, signed bounds and opaque headers also match the compressed sources.
+The JavaScript reader and Rust port share
 lineage; this is cross-language evidence, not independent-algorithm or original
-Adobe qualification. Embedded `patt`, legacy ABR 1/2, 16-bit PackBits, previews,
+Adobe qualification. Embedded `patt`, legacy ABR 1/2, previews,
 actual brush adoption/rendering, public frontend import and wider qualification
 remain required. ABR export is outside the import-only asset policy.
 

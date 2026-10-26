@@ -4,6 +4,7 @@
 //! section bytes and full-precision sample masks remain available even where
 //! its convenience brush model omits descriptor fields or narrows alpha.
 mod descriptor;
+mod normalize;
 mod preflight;
 #[cfg(test)]
 mod tests;
@@ -11,6 +12,9 @@ mod tests;
 use paintcraft_core::types::{Error, ErrorCode, Result};
 
 pub const BYTES_MAX: usize = 16 << 20;
+/// Private raw-16 backend views may expand compressed source masks. This is a
+/// byte admission allowance, not a measured process/allocator memory bound.
+pub const NORMALIZED_BYTES_MAX: usize = 48 << 20;
 pub const SECTIONS_MAX: usize = 64;
 pub const SAMPLES_MAX: usize = 256;
 pub const SAMPLE_PIXELS_MAX: usize = 4 << 20;
@@ -83,9 +87,11 @@ impl Library {
 
 pub fn decode(bytes: &[u8], check: &dyn Fn() -> Result<()>) -> Result<Library> {
     let prepared = preflight::inspect(bytes, check)?;
+    let backend_view = normalize::view(bytes, &prepared, check)?;
     check()?;
-    let decoded = ag_psd::abr::read_abr(bytes, &Default::default())
+    let decoded = ag_psd::abr::read_abr(&backend_view, &Default::default())
         .map_err(|e| invalid(&format!("ABR decoding failed: {e}")))?;
+    drop(backend_view);
     check()?;
     if decoded.samples.len() != prepared.samples.len() || !decoded.patterns.is_empty() {
         return Err(invalid(

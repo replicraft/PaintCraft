@@ -13,6 +13,14 @@
         "empty.abr": {
             "bytes": 4,
             "sha256": "7ed8f861286320c196afbb4f31d9efb6f4bd3a9f8d79513faa0df6b74820e041"
+        },
+        "rle16-v6.abr": {
+            "bytes": 1012,
+            "sha256": "ad402be35bc9a5366c3a83898eaef7c9e3f319dc986f08a8027553ff27fa5aa9"
+        },
+        "rle16-v10.abr": {
+            "bytes": 1776,
+            "sha256": "53a38303a8328e1208624e18eeca4cb06ab0cf26bf2a7c81ad690d5d7e510945"
         }
     }
 }

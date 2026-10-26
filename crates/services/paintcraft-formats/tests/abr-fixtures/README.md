@@ -8,7 +8,7 @@ presets alone do not implement Photoshop brush behavior in PaintCraft.
 ## Admitted profile
 
 - ABR major versions 6, 7, 9 and 10, with minor version 1 or 2.
-- `samp` sections containing 8-bit raw/PackBits masks or 16-bit raw masks.
+- `samp` sections containing 8-bit or 16-bit raw/PackBits masks.
 - `desc` and `phry` version-16 Action Descriptors, including bounded nested
   descriptors/lists, references, finite numbers, units, text, enums, integers,
   Booleans, class structures, aliases, raw data, object arrays and file-path
@@ -24,6 +24,17 @@ cross-checks that decoded view but separately retains every original `u16`,
 including the low bits. There is no implicit color conversion, raster-document
 publication, preset installation or brush-engine mutation.
 
+For 16-bit PackBits, complete preflight expands each byte-oriented row to exactly
+twice its sample width and retains the big-endian `u16` values. Because pinned
+Rust `ag-psd` lacks this compression mode, PaintCraft builds a private equivalent
+raw-16 decoder view capped at 48 MiB. It copies descriptor/hierarchy sections and
+all unaffected sample records verbatim; only compressed 16-bit records change.
+IDs, opaque header bytes, signed bounds and depth stay exact. Each replacement
+record is decoded and compared with its full-precision source before the selected
+library verifies metadata and high-byte alpha. Original section payloads in the
+returned resource remain compressed and unchanged. This is internal decoder
+normalization, not ABR export or mutation of the acquired source file.
+
 Admission allows at most 16 MiB of source, 64 sections, 256 samples, 16,384 pixels
 per dimension, 4,194,304 pixels per sample and 16,777,216 aggregate sample pixels.
 Descriptor allowances are 32,768 aggregate counted items/values, nesting depth
@@ -36,7 +47,7 @@ These are structural/input allowances, not a measured hard allocator, resident
 memory, parser confinement or cancellation-tail guarantee. Checks surround
 upstream calls and run throughout preflight; upstream decoding has no internal
 cooperative cancellation callback. Embedded `patt` sections, legacy ABR 1/2,
-16-bit PackBits, actual brush rendering/adoption and original-application
+actual brush rendering/adoption and original-application
 qualification remain unimplemented or unqualified. ABR export is outside the
 requested import-only asset policy.
 
@@ -51,6 +62,8 @@ implementation source is copied. `sources.json` records byte counts and SHA-256.
 | `empty.abr` | 4 | Empty version-6/minor-1 resource |
 | `samples-v6.abr` | 992 | Raw/PackBits 8-bit and raw 16-bit masks, negative origin, computed/sampled brush descriptors, Unicode/non-BMP preset name, unknown retained field and hierarchy metadata |
 | `samples-v10.abr` | 316 | Minor-2 sample layout with its longer header |
+| `rle16-v6.abr` | 1012 | Minor-1 16-bit PackBits, byte runs crossing sample boundaries, no-ops, low bits, nonzero opaque header data and multiple sample sections separated by metadata |
+| `rle16-v10.abr` | 1776 | The same compressed-mask and preservation checks with minor-2 headers |
 
 The Rust tests also exercise all admitted major/minor combinations, malformed
 PackBits packets, every non-section-boundary truncated prefix, appended garbage,
@@ -61,11 +74,16 @@ zero/255 mutations at every position of the mixed fixture.
 The optional `oracle.cjs` reads these owned source specimens with upstream
 JavaScript [`ag-psd` 33.0.0](https://github.com/Agamnentzar/ag-psd), checking mask
 values, names, bounds, brush shape parameters and references. The 2026-10-25
-local run used Node.js **24.10.0** and passed all three fixtures. That reader and
+local run used Node.js **24.10.0** and passed all five fixtures. That reader and
 the selected Rust port share implementation lineage, so this is cross-language
 reader evidence rather than an independent algorithm or Adobe-application
 qualification. Both upstream convenience models narrow the 16-bit sample; the
 separate Rust assertion proves exact `[0,1,255,256,32769,65535]` retention.
+The JavaScript reader's public 16-bit channel helper additionally checks every
+low bit in both raw and compressed specimens. When supplied an optional directory
+of Rust-generated private raw-16 views, the oracle compares decoded preset
+metadata, signed bounds, opaque sample headers, descriptor/hierarchy bytes and
+every exact 16-bit mask value with the original compressed sources.
 The optional oracle does not qualify hierarchy interpretation, rendering parity,
 hostile-file memory behavior, external file outputs or other platforms.
 
@@ -80,6 +98,13 @@ mkdir -p /tmp/paintcraft-abr-oracle
 pnpm --dir /tmp/paintcraft-abr-oracle add --save-exact --ignore-scripts ag-psd@33.0.0
 node crates/services/paintcraft-formats/tests/abr-fixtures/oracle.cjs \
     /tmp/paintcraft-abr-oracle/node_modules/ag-psd
+
+# Use a new directory. The opt-in test refuses to overwrite previous evidence.
+PAINTCRAFT_ABR_NORMALIZED_DIR=/tmp/new-abr-private-views CARGO_INCREMENTAL=0 \
+    cargo test -p paintcraft-formats --lib \
+    abr::tests::rle16_masks_keep_every_bit_and_only_private_decoder_views_change --offline --locked
+node crates/services/paintcraft-formats/tests/abr-fixtures/oracle.cjs \
+    /tmp/paintcraft-abr-oracle/node_modules/ag-psd /tmp/new-abr-private-views
 ```
 
 The JavaScript package is optional development tooling in an isolated directory,

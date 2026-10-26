@@ -41,6 +41,7 @@ pub(super) struct Prepared {
     pub minor_version: u16,
     pub samples: Vec<Sample>,
     pub sections: Vec<Section>,
+    pub normalize: bool,
 }
 pub(super) fn inspect(bytes: &[u8], check: &dyn Fn() -> Result<()>) -> Result<Prepared> {
     check()?;
@@ -61,6 +62,7 @@ pub(super) fn inspect(bytes: &[u8], check: &dyn Fn() -> Result<()>) -> Result<Pr
         minor_version,
         samples: Vec::new(),
         sections: Vec::new(),
+        normalize: false,
     };
     let mut pixels = 0;
     let mut descriptor_budget = descriptor::Budget::default();
@@ -88,7 +90,8 @@ pub(super) fn inspect(bytes: &[u8], check: &dyn Fn() -> Result<()>) -> Result<Pr
                     }
                     let size = section.u32()? as usize;
                     let data = section.take(size)?;
-                    let sample = sample(data, minor_version, &mut pixels, check)?;
+                    let (sample, normalize) = sample(data, minor_version, &mut pixels, check)?;
+                    prepared.normalize |= normalize;
                     section.zeros((4 - size % 4) % 4)?;
                     prepared.samples.push(sample);
                 }
@@ -118,12 +121,12 @@ pub(super) fn inspect(bytes: &[u8], check: &dyn Fn() -> Result<()>) -> Result<Pr
     }
     Ok(prepared)
 }
-fn sample(
+pub(super) fn sample(
     bytes: &[u8],
     minor: u16,
     total: &mut usize,
     check: &dyn Fn() -> Result<()>,
-) -> Result<Sample> {
+) -> Result<(Sample, bool)> {
     let mut source = Cursor { bytes, pos: 0 };
     let n = usize::from(source.take(1)?[0]);
     let id = source.take(n)?;
@@ -172,9 +175,18 @@ fn sample(
         }
         (8, 1) => Alpha::U8(rle(&mut source, width, height, check)?),
         (16, 1) => {
-            return Err(unsupported(
-                "selected ABR codec does not decode 16-bit PackBits",
-            ));
+            let bytes = rle(&mut source, width * 2, height, check)?;
+            let mut values = Vec::new();
+            for row in bytes.chunks(width * 2) {
+                check()?;
+                values.extend(
+                    row.as_chunks::<2>()
+                        .0
+                        .iter()
+                        .map(|v| u16::from_be_bytes(*v)),
+                );
+            }
+            Alpha::U16(values)
         }
         _ => return Err(unsupported("unsupported ABR sample depth/compression")),
     };
@@ -182,7 +194,10 @@ fn sample(
         return Err(invalid("ABR sample has unexplained trailing data"));
     }
     source.zeros(bytes.len() - source.pos)?;
-    Ok(Sample { id, bounds, alpha })
+    Ok((
+        Sample { id, bounds, alpha },
+        depth == 16 && compression == 1,
+    ))
 }
 fn rle(
     source: &mut Cursor<'_>,

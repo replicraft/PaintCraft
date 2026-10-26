@@ -158,7 +158,7 @@ fn dangerous_dimensions_depths_sections_and_counts_fail_before_backend() {
     ] {
         assert!(decode(&sample(bounds, 8, 0, &[]), &|| Ok(())).is_err());
     }
-    for (depth, compression) in [(1, 0), (32, 0), (16, 1), (8, 2)] {
+    for (depth, compression) in [(1, 0), (32, 0), (8, 2)] {
         assert_eq!(
             decode(&sample([0, 0, 1, 1], depth, compression, &[0]), &|| Ok(()))
                 .unwrap_err()
@@ -334,6 +334,115 @@ fn cancellation_at_every_checkpoint_returns_no_partial_library() {
                     ErrorCode::OperationCancelled,
                     "test cancellation",
                 ))
+            } else {
+                Ok(())
+            }
+        });
+        assert_eq!(
+            result.unwrap_err().code,
+            ErrorCode::OperationCancelled,
+            "checkpoint {stop}"
+        );
+    }
+}
+
+#[test]
+fn rle16_masks_keep_every_bit_and_only_private_decoder_views_change() {
+    let directory = std::env::var_os("PAINTCRAFT_ABR_NORMALIZED_DIR").map(std::path::PathBuf::from);
+    if let Some(directory) = &directory {
+        std::fs::create_dir(directory).unwrap();
+    }
+    for (name, bytes) in [
+        (
+            "rle16-v6.abr",
+            include_bytes!("../../tests/abr-fixtures/rle16-v6.abr").as_slice(),
+        ),
+        (
+            "rle16-v10.abr",
+            include_bytes!("../../tests/abr-fixtures/rle16-v10.abr").as_slice(),
+        ),
+    ] {
+        let before = bytes.to_vec();
+        let prepared = preflight::inspect(bytes, &|| Ok(())).unwrap();
+        let normalized = normalize::view(bytes, &prepared, &|| Ok(())).unwrap();
+        assert_ne!(normalized.as_ref(), bytes);
+        assert!(normalized.len() <= NORMALIZED_BYTES_MAX);
+        // This is precisely the unsupported path that the adapter normalizes.
+        assert!(ag_psd::abr::read_abr(bytes, &Default::default()).is_err());
+        let library = decode(bytes, &|| Ok(())).unwrap();
+        assert_eq!(
+            library.samples()[0].alpha,
+            Alpha::U16(vec![0, 1, 255, 256, 32769, 65535])
+        );
+        let reparsed = preflight::inspect(&normalized, &|| Ok(())).unwrap();
+        assert!(!reparsed.normalize);
+        assert_eq!(reparsed.samples, prepared.samples);
+        assert_eq!(reparsed.version, prepared.version);
+        assert_eq!(reparsed.minor_version, prepared.minor_version);
+        assert_eq!(reparsed.sections.len(), prepared.sections.len());
+        for (source, output) in prepared.sections.iter().zip(&reparsed.sections) {
+            assert_eq!(source.kind, output.kind);
+            if source.kind != SectionKind::Samples {
+                assert_eq!(source.payload, output.payload);
+            }
+        }
+        assert_eq!(library.sections(), prepared.sections);
+        assert_eq!(bytes, before);
+        assert_eq!(library.brushes()[0].name, "Owned computed 🚀");
+        assert_eq!(library.brushes()[1].name, "Owned sampled");
+        for major in [6u16, 7, 9, 10] {
+            let mut variant = bytes.to_vec();
+            variant[..2].copy_from_slice(&major.to_be_bytes());
+            let parsed = decode(&variant, &|| Ok(())).unwrap();
+            assert_eq!(parsed.samples(), library.samples());
+            assert_eq!(parsed.sections(), library.sections());
+            assert_eq!(parsed.version(), (major, library.version().1));
+        }
+        if let Some(directory) = &directory {
+            use std::io::Write;
+            let mut file = std::fs::OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(directory.join(name))
+                .unwrap();
+            file.write_all(&normalized).unwrap();
+        }
+    }
+    let prepared = preflight::inspect(MIXED, &|| Ok(())).unwrap();
+    assert!(matches!(
+        normalize::view(MIXED, &prepared, &|| Ok(())).unwrap(),
+        std::borrow::Cow::Borrowed(_)
+    ));
+}
+
+#[test]
+fn malformed_rle16_byte_rows_and_partial_words_are_refused() {
+    for data in [
+        vec![0, 2, 0, 2, 252, 0, 251, 0], // five bytes, not three 16-bit values
+        vec![0, 2, 0, 2, 250, 0, 251, 0], // seven-byte run crosses six-byte row
+        vec![0, 2, 0, 2, 5, 0, 251, 0],   // missing literal bytes
+        vec![0, 1, 0, 2, 251, 251, 0],    // run missing its value
+    ] {
+        assert!(decode(&sample([0, 0, 2, 3], 16, 1, &data), &|| Ok(())).is_err());
+    }
+}
+
+#[test]
+fn rle16_normalization_cancellation_covers_each_exposed_checkpoint() {
+    let bytes = include_bytes!("../../tests/abr-fixtures/rle16-v6.abr");
+    let total = Cell::new(0);
+    decode(bytes, &|| {
+        total.set(total.get() + 1);
+        Ok(())
+    })
+    .unwrap();
+    for stop in 0..total.get() {
+        let calls = Cell::new(0);
+        let result = decode(bytes, &|| {
+            let n = calls.get();
+            calls.set(n + 1);
+            if n == stop {
+                Err(Error::new(ErrorCode::OperationCancelled, "test"))
             } else {
                 Ok(())
             }
