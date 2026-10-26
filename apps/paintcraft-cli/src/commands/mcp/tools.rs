@@ -1,7 +1,7 @@
 use super::super::format_profile;
 use super::super::{
     BATCH_V2_SCHEMA, Context, INPUT_MAX, ImageFormat, POLICY, PathBuf, Rgba, Session, export,
-    image, new_document, pcnd, read_bounded, read_captured, save, write_output,
+    image, new_document, pcnd, read_bounded, read_captured, save,
 };
 use super::{
     PaintingServer,
@@ -32,6 +32,7 @@ impl PaintingServer {
             session.mark_unsaved();
             state.session = Some(session);
             state.source = None;
+            state.project_identity = None;
             state.import_source = None;
             state.import_identity = None;
             state.import_resources.clear();
@@ -47,7 +48,7 @@ impl PaintingServer {
         self.work(move |state| {
             state.replace_allowed(p.discard_changes)?;
             let path = PathBuf::from(p.path);
-            let (bytes, sha) = read_bounded(&path, INPUT_MAX, "project")?;
+            let (bytes, sha, identity) = read_captured(&path, INPUT_MAX, "project")?;
             if format_profile::Options::default().admit_open(&path, &bytes)? != Family::Pcnd {
                 return Err(invalid(
                     "open_project expects PCND; use import_image for pictures",
@@ -56,6 +57,7 @@ impl PaintingServer {
             let doc = pcnd::read(&bytes)?;
             state.session = Some(Session::new(doc));
             state.source = Some((path, sha));
+            state.project_identity = Some(identity);
             state.import_source = None;
             state.import_identity = None;
             state.import_resources.clear();
@@ -221,6 +223,7 @@ impl PaintingServer {
             state.session = Some(session);
             // A picture is not a native project binding: saving must not replace its source implicitly.
             state.source = None;
+            state.project_identity = None;
             state.import_source = Some(path);
             state.import_identity = source_identity;
             state.brush_sources.clear();
@@ -333,7 +336,7 @@ impl PaintingServer {
     async fn export_image(&self, Parameters(p): Parameters<Export>) -> CallToolResult {
         self.work(move |s| {
             let path = PathBuf::from(p.path);
-            s.protect_import_sources(&path)?;
+            s.protect_copy_sources(&path)?;
             let format = ImageFormat::from_extension(&path)
                 .ok_or_else(|| invalid("unsupported image extension"))?;
             if p.pcx_encoding.is_some() && format != ImageFormat::Pcx {
@@ -354,7 +357,11 @@ impl PaintingServer {
                 losses_acknowledged: p.allow_losses,
                 destination: &path,
             };
-            let (receipt, ok, _) = write_output(&path, p.overwrite, Ok(flat.bytes), &ctx);
+            let outcome = s.write_copy_with(&path, p.overwrite, |sink| {
+                sink.write_all(&flat.bytes)
+                    .map_err(|error| super::super::storage("staged image", &error))
+            })?;
+            let (receipt, ok, _) = super::super::finish_output(&path, &ctx, outcome);
             let content = vec![ContentBlock::text(core_json(&receipt)?.to_string())];
             Ok(if ok {
                 CallToolResult::success(content)

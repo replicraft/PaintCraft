@@ -1,5 +1,5 @@
 //! Explicit typed ICNS exports from immutable fitted preview buffers.
-use super::super::{Context, PathBuf, same_file, save, write_output};
+use super::super::{Context, PathBuf, same_file, save};
 use super::{
     PaintingServer,
     state::{core_json, invalid},
@@ -103,7 +103,7 @@ impl PaintingServer {
         self.work(move |state| {
             icons::check_export_loss_codes(&p.allow_losses)?;
             let path = PathBuf::from(p.path);
-            state.protect_import_sources(&path)?;
+            state.protect_copy_sources(&path)?;
             if state
                 .source
                 .as_ref()
@@ -146,7 +146,11 @@ impl PaintingServer {
                 losses_acknowledged: prepared.losses().to_vec(),
                 destination: &path,
             };
-            let (receipt, ok, _) = write_output(&path, p.overwrite, Ok(bytes), &context);
+            let outcome = state.write_copy_with(&path, p.overwrite, |sink| {
+                sink.write_all(&bytes)
+                    .map_err(|error| super::super::storage("staged icon", &error))
+            })?;
+            let (receipt, ok, _) = super::super::finish_output(&path, &context, outcome);
             let content = vec![ContentBlock::text(core_json(&receipt)?.to_string())];
             Ok(if ok {
                 CallToolResult::success(content)

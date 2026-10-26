@@ -244,3 +244,6 @@ mod msp;
 
 #[path = "mcp/icns.rs"]
 mod icns;
+
+#[path = "mcp/project_source.rs"]
+mod project_source;

@@ -253,6 +253,7 @@ fn import_with_launch(
     }
     state.session = Some(session);
     state.source = None;
+    state.project_identity = None;
     state.import_source = Some(adopted.input);
     state.import_identity = Some(adopted.identity);
     state.import_resources.clear();

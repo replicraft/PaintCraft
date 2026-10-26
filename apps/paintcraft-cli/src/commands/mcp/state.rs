@@ -6,6 +6,7 @@ use serde_json::{Value as Json, json};
 pub struct State {
     pub session: Option<Session>,
     pub source: Option<(PathBuf, String)>,
+    pub project_identity: Option<paintcraft_platform::source::SourceIdentity>,
     pub import_source: Option<PathBuf>,
     pub import_identity: Option<paintcraft_platform::source::SourceIdentity>,
     pub import_resources: Vec<PathBuf>,
@@ -62,6 +63,36 @@ impl State {
             ));
         }
         Ok(())
+    }
+    /// Copy routes protect the retained native project too; intentional native
+    /// Save uses protect_import_sources and its existing digest checks instead.
+    pub fn protect_copy_sources(&self, path: &Path) -> Result<()> {
+        self.protect_import_sources(path)?;
+        if self.source.is_some() {
+            let identity = self.project_identity.as_ref().ok_or_else(|| invalid(
+                "captured project identity unavailable; reopen the saved project before exporting"
+            ))?;
+            if identity.matches_path(path)? {
+                return Err(invalid("copy must not replace its captured source project"));
+            }
+        }
+        Ok(())
+    }
+    /// Recheck captured sources after staging and immediately before publication.
+    pub fn write_copy_with(
+        &self,
+        path: &Path,
+        overwrite: bool,
+        encode: impl FnOnce(&mut dyn std::io::Write) -> Result<()>,
+    ) -> Result<Outcome> {
+        self.protect_copy_sources(path)?;
+        Ok(save::save_with_preparation(
+            path,
+            overwrite,
+            save::STAGED_FILE_BYTES_MAX,
+            encode,
+            |_| self.protect_copy_sources(path),
+        ))
     }
     pub fn session(&mut self) -> Result<&mut Session> {
         self.session
@@ -142,6 +173,13 @@ impl State {
                 .ok_or_else(|| invalid("saved receipt is missing its digest"))?
                 .to_owned();
             session.mark_saved();
+            // Publication already succeeded. Failure to capture the resulting
+            // binding cannot undo that fact: keep the truthful durable receipt,
+            // and let copy guards fail closed until the project is reopened.
+            self.project_identity =
+                paintcraft_platform::source::SourceIdentity::existing_destination(&path)
+                    .ok()
+                    .flatten();
             self.source = Some((path, sha));
         }
         let content = vec![ContentBlock::text(result.to_string())];
@@ -152,3 +190,7 @@ impl State {
         })
     }
 }
+
+#[cfg(test)]
+#[path = "state/source_tests.rs"]
+mod source_tests;
