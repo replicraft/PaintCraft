@@ -1,6 +1,6 @@
 //! Decode only inside the executable's fixed allocator/process boundary.
 use paintcraft_core::types::{Error, ErrorCode, Result};
-use paintcraft_formats::heif::{admission, wire};
+use paintcraft_formats::{codec_worker as wire, heif::admission, jxl};
 use std::io::{Read, Write};
 fn invalid(message: &str) -> Error {
     Error::new(ErrorCode::CodecFailed, message)
@@ -25,8 +25,7 @@ fn plane(samples: &[i32]) -> Result<Vec<u8>> {
     }
     Ok(out)
 }
-fn decode(header: wire::Header, source: &[u8]) -> Result<Vec<u8>> {
-    header.verify_source(source)?;
+fn decode_heif(header: wire::Header, source: &[u8]) -> Result<Vec<u8>> {
     let admission = admission::admit_gray8(source, u64::from(header.pixels), &|| Ok(()))?;
     let image = heic_decoder::decode_with(
         admission.source(),
@@ -66,17 +65,44 @@ fn decode(header: wire::Header, source: &[u8]) -> Result<Vec<u8>> {
         wire::Success {
             width: expected.0,
             height: expected.1,
-            gray: &gray,
-            alpha: alpha.as_deref(),
-            encoding: wire::NativeEncoding {
-                primaries: encoding.primaries,
-                transfer: encoding.transfer,
-                matrix: encoding.matrix,
-                full_range: encoding.full_range,
+            pixels: wire::Pixels::NativeGray8 {
+                gray: &gray,
+                alpha: alpha.as_deref(),
+                encoding: wire::NativeEncoding {
+                    primaries: encoding.primaries,
+                    transfer: encoding.transfer,
+                    matrix: encoding.matrix,
+                    full_range: encoding.full_range,
+                },
             },
         },
         crate::HEAP.peak() as u64,
     )
+}
+fn decode(header: wire::Header, source: &[u8]) -> Result<Vec<u8>> {
+    header.verify_source(source)?;
+    match header.codec {
+        wire::Codec::HeifGray8 => decode_heif(header, source),
+        wire::Codec::JxlRgba8 => {
+            let image =
+                jxl::decode_worker_rgba8_checked(source, u64::from(header.pixels), &|| Ok(()))?;
+            let jxl::Samples::Rgba8(rgba) = image.samples else {
+                return Err(invalid("worker JXL output precision changed"));
+            };
+            if !image.losses.is_empty() {
+                return Err(invalid("worker JXL output would discard metadata"));
+            }
+            wire::success(
+                header,
+                wire::Success {
+                    width: image.width,
+                    height: image.height,
+                    pixels: wire::Pixels::SrgbRgba8(&rgba),
+                },
+                crate::HEAP.peak() as u64,
+            )
+        }
+    }
 }
 pub fn run() -> Result<()> {
     rayon::ThreadPoolBuilder::new()

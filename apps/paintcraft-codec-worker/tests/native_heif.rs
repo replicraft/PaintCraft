@@ -1,8 +1,8 @@
 //! Actual subprocess qualification, without GUI initialization or document writes.
 use paintcraft_core::types::{Error, ErrorCode};
-use paintcraft_formats::heif::{
-    self,
-    wire::{self, Owner, Request},
+use paintcraft_formats::{
+    codec_worker::{self as wire, Owner, Request},
+    heif,
 };
 use paintcraft_runtime::process::{self, Limits};
 use std::{
@@ -69,17 +69,25 @@ fn actual_worker_primary_grid_alpha_match_independent_native_sample_oracle() {
                 })
             })
             .collect();
-        assert_eq!(frame.gray, expected);
-        assert_eq!(frame.alpha.is_some(), alpha);
-        if let Some(a) = frame.alpha {
+        let wire::Pixels::NativeGray8 {
+            gray,
+            alpha: decoded_alpha,
+            encoding,
+        } = frame.pixels
+        else {
+            panic!()
+        };
+        assert_eq!(gray, expected);
+        assert_eq!(decoded_alpha.is_some(), alpha);
+        if let Some(a) = decoded_alpha {
             assert!(a.iter().all(|sample| *sample == 17));
         }
         assert_eq!(
             (
-                frame.encoding.primaries,
-                frame.encoding.transfer,
-                frame.encoding.matrix,
-                frame.encoding.full_range
+                encoding.primaries,
+                encoding.transfer,
+                encoding.matrix,
+                encoding.full_range
             ),
             (2, 2, 2, true)
         );
@@ -223,7 +231,7 @@ fn existing_executor_reserves_full_fixed_heap_until_owned_completion_consumed() 
     };
     assert_eq!(executor.reserved_bytes(), 0);
     let frame = wire::decode(&result.bytes, &r, r.header.owner).unwrap();
-    assert_eq!(frame.gray.len(), 32 * 24);
+    assert!(matches!(frame.pixels, wire::Pixels::NativeGray8 { gray, .. } if gray.len() == 32*24));
 }
 
 #[test]
@@ -246,14 +254,14 @@ fn unsupported_profile_uses_canonical_protocol_refusal_not_generic_exit() {
 #[test]
 fn linked_helper_contains_cross_target_packaging_build_record() {
     let header = request(PRIMARY).header.encode();
-    assert_eq!(&header[..8], b"PCHEIF01");
-    assert_eq!(&header[8..10], &1u16.to_be_bytes());
+    assert_eq!(&header[..8], b"PCDEC002");
+    assert_eq!(&header[8..10], &2u16.to_be_bytes());
     assert_eq!(wire::HEAP_BYTES, 268435456);
     let bytes = std::fs::read(env!("CARGO_BIN_EXE_paintcraft-codec-worker")).unwrap();
     let record = concat!(
         "PAINTCRAFT_CODEC_WORKER_BUILD_V1\0",
         env!("CARGO_PKG_VERSION"),
-        "\0PCHEIF01\0HEAP268435456\0END_CODEC_WORKER_BUILD\0"
+        "\0PCDEC002\0HEAP268435456\0END_CODEC_WORKER_BUILD\0"
     )
     .as_bytes();
     assert!(
