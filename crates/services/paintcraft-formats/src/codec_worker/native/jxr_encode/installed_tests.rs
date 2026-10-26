@@ -99,7 +99,21 @@ fn actual_private_installed_encoder_parent_lifetime_and_pixels() {
     let producer_manifest = source.with_file_name(codec_helper::MANIFEST_NAME);
     let descriptor = fs::read(&producer_manifest).expect("actual producer schema3 descriptor");
     assert_eq!(json::parse(&descriptor).unwrap(), manifest(&helper));
-    fs::copy(&producer_manifest, root.join(codec_helper::MANIFEST_NAME)).unwrap();
+    let fixture_manifest = root.join(codec_helper::MANIFEST_NAME);
+    fs::copy(&producer_manifest, &fixture_manifest).unwrap();
+    // Only the private fixture copy must permit the later tamper negative.
+    // Keep the immutable producer descriptor and helper completely untouched.
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&fixture_manifest, fs::Permissions::from_mode(0o600)).unwrap();
+    }
+    #[cfg(not(unix))]
+    {
+        let mut permissions = fs::metadata(&fixture_manifest).unwrap().permissions();
+        permissions.set_readonly(false);
+        fs::set_permissions(&fixture_manifest, permissions).unwrap();
+    }
     let output = Command::new(&child)
         .args([
             "--exact",
@@ -316,13 +330,15 @@ fn installed_fixture() {
             },
         )
         .unwrap_err();
+        // The approved private child maps the selected API's untyped Io error
+        // (cap refusal or callback failure) to CodecFailed. A typed sink-error
+        // API remains separate followup; do not infer ResourceLimit from text.
         assert_eq!(
             error.code,
             match during {
-                0 => ErrorCode::ResourceLimit,
+                0 | 4 => ErrorCode::CodecFailed,
                 1 => ErrorCode::OperationCancelled,
                 2 | 3 => ErrorCode::ConflictStaleBase,
-                4 => ErrorCode::CodecFailed,
                 _ => unreachable!(),
             }
         );
