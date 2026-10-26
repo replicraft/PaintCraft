@@ -39,6 +39,8 @@ Available tools:
 - `save_project`: save a layered PCND project.
 - `export_image`: export an image using its filename extension.
 - `export_icons`: export a fresh multi-size ICO/CUR asset set with explicit sizes, PNG/bitmap encodings and cursor hotspots.
+- `inspect_icns`: list ordered ICNS entries, logical sizes, Retina densities and import qualification without changing the painting.
+- `export_icns`: export a fresh ICNS set using explicit qualified PNG tags and independently fitted entry sizes.
 - `inspect_palette`: inspect an ASE palette resource without creating or editing a painting.
 - `export_palette`: write a fresh ASE palette copy while retaining groups, names, color models, swatch types and precise channel values.
 - `inspect_shapes`: inspect a CSH custom shape library, including exact bounds and ordered path records.
@@ -313,3 +315,60 @@ Explicit CLI legacy import also accepts `--frontend classic-v7`, `classic-v10` o
 acquired native source identity through output validation; protection across
 later operations belongs to the live desktop/MCP workspace, rather than a global
 filesystem association.
+
+## ICNS entry conversion and fresh export
+
+Use `inspect_icns` before importing an icon. It returns the acquired source SHA,
+ordered record ranges and entry indices, tags, logical sizes, scales, pixel
+sizes and qualification. Inspection does not decode pixels or change the
+painting. `expect_source_sha256` optionally guards the inspected bytes.
+
+```json
+{"name":"inspect_icns","arguments":{"path":"/absolute/path/source.icns"}}
+{"name":"import_image","arguments":{"path":"/absolute/path/source.icns","entry":6,"allow_losses":["icns-metadata-ignored","icon-other-entries-not-imported","icon-density-not-retained-in-flat-document"]}}
+```
+
+`entry` is zero-based and mandatory; PaintCraft never chooses the largest entry
+or substitutes another encoding at the same size. Qualified PNG and small
+RGB/mask profiles are imported as a new unsaved flat picture. Unqualified ARGB,
+JPEG2000 or ambiguous mask pairings are refused. Actual metadata, density,
+unselected-entry, EXIF and palette losses need acknowledgment. The conversion
+receipt includes the selected source tag, record/index, logical size, scale and
+physical dimensions. The same opened native source remains protected against
+alias/rename overwrites, including after saving the converted PCND project.
+The source is never adopted as a preserving-save binding.
+
+Fresh output uses explicit PNG tags: `ic07/ic08/ic09` mean 128/256/512 at 1x;
+`ic11/ic12/ic13/ic14/ic10` mean 16/32/128/256/512 at 2x. These distinctions remain
+explicit even when two types have equal physical dimensions. Legacy small 1x
+RGB/mask, small 1x PNG and ARGB output are refused. The reader's small RGB/mask
+qualification is the documented PaintCraft/Pillow interoperability profile,
+with retained native readback differences; it is not general Apple application
+compatibility.
+
+```json
+{"name":"export_icns","arguments":{"path":"/absolute/path/copy.icns","types":["ic11","ic12","ic07"],"resampling":"nearest","allow_losses":["icon-resized"]}}
+```
+
+Every chosen type is fitted independently from the original canvas onto
+transparent padding; `lanczos3` is the default and `nearest` is available. Encoding
+uses the exact immutable prepared preview buffers. Actual `flatten`,
+`hidden-rgb` and `icon-resized` losses require consent. Eight distinct qualified
+types are available; source and aggregate target each admit at most 4,194,304
+pixels. Export preserves document pixels, layers, history, dirty state and save
+binding. Source aliases, invalid types, missing consent and write failures do
+not publish a document change.
+
+Equivalent Studio-profile CLI commands are:
+
+```sh
+paintcraft-cli inspect-icns source.icns --json
+paintcraft-cli import source.icns --entry 6 -o converted.pcnd \
+    --allow-loss icns-metadata-ignored,icon-other-entries-not-imported,icon-density-not-retained-in-flat-document
+paintcraft-cli export-icns painting.pcnd -o copy.icns --type ic11 --type ic12 \
+    --resampling nearest --allow-loss icon-resized
+```
+
+ICNS normal image Open, preserving Save, generic flat export and Classic routes
+remain unavailable. See [the format ledger](FORMAT_INTEROPERABILITY.md#icns-internal-backend-increment-2026-10-25)
+for the bounded profiles and independent positive/negative evidence.
