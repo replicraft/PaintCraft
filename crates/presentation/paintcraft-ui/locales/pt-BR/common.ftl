@@ -508,3 +508,5 @@ save-a-historical-monochrome-msp-picture-pixels-must-already-be-opaque-black-or-
 icns-container-metadata-will-not-be-kept-in-the-imported-picture = Os metadados do contêiner ICNS não serão mantidos na imagem importada.
 
 the-icon-s-logical-size-and-retina-density-will-not-be-kept-in-the-imported-picture = O tamanho lógico e a densidade Retina do ícone não serão mantidos na imagem importada.
+
+the-jpeg-xr-picture-s-print-resolution-will-not-be-kept = A resolução de impressão da imagem JPEG XR não será mantida.

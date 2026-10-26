@@ -508,3 +508,5 @@ save-a-historical-monochrome-msp-picture-pixels-must-already-be-opaque-black-or-
 icns-container-metadata-will-not-be-kept-in-the-imported-picture = 読み込んだ画像には ICNS コンテナーのメタデータは保持されません。
 
 the-icon-s-logical-size-and-retina-density-will-not-be-kept-in-the-imported-picture = 読み込んだ画像にはアイコンの論理サイズと Retina の密度は保持されません。
+
+the-jpeg-xr-picture-s-print-resolution-will-not-be-kept = JPEG XR 画像の印刷解像度は保持されません。

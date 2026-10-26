@@ -30,6 +30,7 @@ pub fn import_loss_description(code: &str) -> Option<&'static str> {
         "pcx-metadata-ignored" => {
             "PCX resolution, origin and header metadata will not be retained."
         }
+        "jxr-resolution-not-retained" => "The JPEG XR picture's print resolution will not be kept.",
         "icns-metadata-ignored" => {
             "ICNS container metadata will not be kept in the imported picture."
         }
@@ -80,6 +81,7 @@ mod tests {
             "pcx-metadata-ignored",
             "msp-metadata-ignored",
             "icns-metadata-ignored",
+            "jxr-resolution-not-retained",
             "icon-density-not-retained-in-flat-document",
             "dcx-other-pages-not-imported",
             "pdn-metadata-ignored",
