@@ -736,3 +736,7 @@ fn encode_quality_for_profile(
 #[cfg(test)]
 #[path = "files/dds_tests.rs"]
 mod dds_tests;
+
+#[cfg(test)]
+#[path = "files/jxl_tests.rs"]
+mod jxl_tests;

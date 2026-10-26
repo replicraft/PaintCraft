@@ -6,6 +6,10 @@ use paintcraft_ui::{actions::ImageExport, t};
 #[path = "export_options/palette_tests.rs"]
 mod palette_tests;
 
+#[cfg(test)]
+#[path = "export_options/jxl_tests.rs"]
+mod jxl_tests;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct Settings {
     pub jpeg_quality: u8,
