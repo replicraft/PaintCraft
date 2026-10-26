@@ -221,3 +221,27 @@ this-shape-s-control-points-exceed-the-placement-limits = This shape's control p
 x = X
 
 y = Y
+
+use-as-shape-tool-more = Use as shape tool…
+
+use-custom-shape-tool = Use custom shape tool
+
+drag-on-the-canvas-to-set-the-shape-size-hold-shift-for-a-square-box = Drag on the canvas to set the shape size. Hold Shift for a square box.
+
+each-shape-becomes-filled-pixels-in-the-current-color-its-original-resource-stays-unchanged = Each shape becomes filled pixels in the current color. Its original resource stays unchanged.
+
+this-preview-shows-the-shape-at-a-sample-size-drawing-uses-your-drag-box = This preview shows the shape at a sample size; drawing uses your drag box.
+
+i-accept-converting-each-drawn-shape-to-pixels = I accept converting each drawn shape to pixels.
+
+use-as-shape-tool = Use as shape tool
+
+format-selected-custom-shape-name = Selected custom shape: { $name }
+
+drag-to-size-hold-shift-for-a-square-box = Drag to size; hold Shift for a square box.
+
+custom-shape-size-or-position-exceeds-the-drawing-limit = Custom shape size or position exceeds the drawing limit
+
+the-selected-custom-shape-is-no-longer-available = The selected custom shape is no longer available
+
+custom-shape-tool-selected = Custom shape tool selected.

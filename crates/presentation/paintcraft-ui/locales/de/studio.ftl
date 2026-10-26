@@ -221,3 +221,27 @@ this-shape-s-control-points-exceed-the-placement-limits = Die Kontrollpunkte die
 x = X
 
 y = Y
+
+use-as-shape-tool-more = Als Formwerkzeug verwenden…
+
+use-custom-shape-tool = Eigene Form als Werkzeug verwenden
+
+drag-on-the-canvas-to-set-the-shape-size-hold-shift-for-a-square-box = Auf der Leinwand ziehen, um die Formgröße festzulegen. Mit Umschalt wird der Rahmen quadratisch.
+
+each-shape-becomes-filled-pixels-in-the-current-color-its-original-resource-stays-unchanged = Jede Form wird zu gefüllten Pixeln in der aktuellen Farbe. Die ursprüngliche Ressource bleibt unverändert.
+
+this-preview-shows-the-shape-at-a-sample-size-drawing-uses-your-drag-box = Diese Vorschau zeigt eine Beispielgröße; beim Zeichnen gilt der gezogene Rahmen.
+
+i-accept-converting-each-drawn-shape-to-pixels = Ich stimme zu, jede gezeichnete Form in Pixel umzuwandeln.
+
+use-as-shape-tool = Als Formwerkzeug verwenden
+
+format-selected-custom-shape-name = Ausgewählte eigene Form: { $name }
+
+drag-to-size-hold-shift-for-a-square-box = Zum Festlegen der Größe ziehen; mit Umschalt wird der Rahmen quadratisch.
+
+custom-shape-size-or-position-exceeds-the-drawing-limit = Größe oder Position der eigenen Form überschreitet die Zeichengrenze
+
+the-selected-custom-shape-is-no-longer-available = Die ausgewählte eigene Form ist nicht mehr verfügbar
+
+custom-shape-tool-selected = Werkzeug für eigene Formen ausgewählt.

@@ -221,3 +221,27 @@ this-shape-s-control-points-exceed-the-placement-limits = इस आकृति
 x = X
 
 y = Y
+
+use-as-shape-tool-more = आकृति उपकरण के रूप में उपयोग करें…
+
+use-custom-shape-tool = कस्टम आकृति उपकरण का उपयोग करें
+
+drag-on-the-canvas-to-set-the-shape-size-hold-shift-for-a-square-box = आकृति का आकार तय करने के लिए कैनवास पर खींचें। वर्गाकार बॉक्स के लिए Shift दबाए रखें।
+
+each-shape-becomes-filled-pixels-in-the-current-color-its-original-resource-stays-unchanged = हर आकृति वर्तमान रंग के भरे हुए पिक्सेल में बदलती है। मूल संसाधन अपरिवर्तित रहता है।
+
+this-preview-shows-the-shape-at-a-sample-size-drawing-uses-your-drag-box = यह पूर्वावलोकन आकृति को नमूना आकार में दिखाता है; चित्र बनाते समय आपके खींचे गए बॉक्स का उपयोग होता है।
+
+i-accept-converting-each-drawn-shape-to-pixels = मैं बनाई गई हर आकृति को पिक्सेल में बदलने के लिए सहमत हूँ।
+
+use-as-shape-tool = आकृति उपकरण के रूप में उपयोग करें
+
+format-selected-custom-shape-name = चयनित कस्टम आकृति: { $name }
+
+drag-to-size-hold-shift-for-a-square-box = आकार तय करने के लिए खींचें; वर्गाकार बॉक्स के लिए Shift दबाए रखें।
+
+custom-shape-size-or-position-exceeds-the-drawing-limit = कस्टम आकृति का आकार या स्थान चित्र बनाने की सीमा से अधिक है
+
+the-selected-custom-shape-is-no-longer-available = चयनित कस्टम आकृति अब उपलब्ध नहीं है
+
+custom-shape-tool-selected = कस्टम आकृति उपकरण चुना गया।

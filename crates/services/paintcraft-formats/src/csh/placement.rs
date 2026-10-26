@@ -17,6 +17,13 @@ const UNIT: i64 = 1 << 24;
 pub enum Policy {
     CubicFillV1,
 }
+impl Policy {
+    pub const fn id(self) -> &'static str {
+        match self {
+            Self::CubicFillV1 => "paintcraft.csh.cubic-fill/v1",
+        }
+    }
+}
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Unsupported {
     MissingPath,

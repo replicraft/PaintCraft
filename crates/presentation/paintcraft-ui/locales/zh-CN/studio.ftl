@@ -221,3 +221,27 @@ this-shape-s-control-points-exceed-the-placement-limits = 此形状的控制点�
 x = X
 
 y = Y
+
+use-as-shape-tool-more = 用作形状工具…
+
+use-custom-shape-tool = 使用自定义形状工具
+
+drag-on-the-canvas-to-set-the-shape-size-hold-shift-for-a-square-box = 在画布上拖动以设置形状大小。按住 Shift 可使用正方形边框。
+
+each-shape-becomes-filled-pixels-in-the-current-color-its-original-resource-stays-unchanged = 每个形状都会转换为以当前颜色填充的像素。原始资源保持不变。
+
+this-preview-shows-the-shape-at-a-sample-size-drawing-uses-your-drag-box = 此预览以示例大小显示形状；绘制时使用您拖出的边框。
+
+i-accept-converting-each-drawn-shape-to-pixels = 我同意将绘制的每个形状转换为像素。
+
+use-as-shape-tool = 用作形状工具
+
+format-selected-custom-shape-name = 已选自定义形状：{ $name }
+
+drag-to-size-hold-shift-for-a-square-box = 拖动以设置大小；按住 Shift 可使用正方形边框。
+
+custom-shape-size-or-position-exceeds-the-drawing-limit = 自定义形状的大小或位置超出绘制限制
+
+the-selected-custom-shape-is-no-longer-available = 所选的自定义形状已不可用
+
+custom-shape-tool-selected = 已选择自定义形状工具。

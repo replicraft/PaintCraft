@@ -221,3 +221,27 @@ this-shape-s-control-points-exceed-the-placement-limits = Los puntos de control 
 x = X
 
 y = Y
+
+use-as-shape-tool-more = Usar como herramienta de formas…
+
+use-custom-shape-tool = Usar herramienta de forma personalizada
+
+drag-on-the-canvas-to-set-the-shape-size-hold-shift-for-a-square-box = Arrastra en el lienzo para definir el tamaño. Mantén Mayús para un cuadro cuadrado.
+
+each-shape-becomes-filled-pixels-in-the-current-color-its-original-resource-stays-unchanged = Cada forma se convierte en píxeles rellenos del color actual. El recurso original no cambia.
+
+this-preview-shows-the-shape-at-a-sample-size-drawing-uses-your-drag-box = Esta vista previa muestra un tamaño de ejemplo; al dibujar se usa el cuadro que arrastres.
+
+i-accept-converting-each-drawn-shape-to-pixels = Acepto convertir cada forma dibujada en píxeles.
+
+use-as-shape-tool = Usar como herramienta de formas
+
+format-selected-custom-shape-name = Forma personalizada seleccionada: { $name }
+
+drag-to-size-hold-shift-for-a-square-box = Arrastra para cambiar el tamaño; mantén Mayús para un cuadro cuadrado.
+
+custom-shape-size-or-position-exceeds-the-drawing-limit = El tamaño o la posición de la forma personalizada supera el límite de dibujo
+
+the-selected-custom-shape-is-no-longer-available = La forma personalizada seleccionada ya no está disponible
+
+custom-shape-tool-selected = Herramienta de forma personalizada seleccionada.

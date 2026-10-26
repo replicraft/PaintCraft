@@ -29,6 +29,7 @@ pub enum Response {
     Export,
     Select(usize),
     Place,
+    UseTool,
 }
 
 pub fn dialog(
@@ -96,6 +97,7 @@ pub fn dialog(
                         preview(ui, shape);
                         for reason in &shape.placement_restrictions{ui.label(t!(ctx,*reason));}
                         if ui.add_enabled(!busy&&shape.placement_restrictions.is_empty(),egui::Button::new(t!(ctx,"Place shape…"))).clicked(){response=Response::Place;}
+                        if ui.add_enabled(!busy&&shape.placement_restrictions.is_empty(),egui::Button::new(t!(ctx,"Use as shape tool…"))).clicked(){response=Response::UseTool;}
                     }
                 } else {
                     ui.label(t!(ctx, "Import an Adobe custom shapes file to browse its shape presets."));

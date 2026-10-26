@@ -221,3 +221,27 @@ this-shape-s-control-points-exceed-the-placement-limits = この図形の制御�
 x = X
 
 y = Y
+
+use-as-shape-tool-more = 図形ツールとして使用…
+
+use-custom-shape-tool = カスタム図形ツールを使用
+
+drag-on-the-canvas-to-set-the-shape-size-hold-shift-for-a-square-box = キャンバス上でドラッグして図形のサイズを指定します。Shift キーを押すと正方形の枠になります。
+
+each-shape-becomes-filled-pixels-in-the-current-color-its-original-resource-stays-unchanged = 各図形は現在の色で塗られたピクセルになります。元のリソースは変更されません。
+
+this-preview-shows-the-shape-at-a-sample-size-drawing-uses-your-drag-box = このプレビューはサンプルサイズです。描画時はドラッグした枠のサイズになります。
+
+i-accept-converting-each-drawn-shape-to-pixels = 描画する各図形をピクセルに変換することに同意します。
+
+use-as-shape-tool = 図形ツールとして使用
+
+format-selected-custom-shape-name = 選択したカスタム図形: { $name }
+
+drag-to-size-hold-shift-for-a-square-box = ドラッグしてサイズを指定します。Shift キーで正方形の枠になります。
+
+custom-shape-size-or-position-exceeds-the-drawing-limit = カスタム図形のサイズまたは位置が描画の制限を超えています
+
+the-selected-custom-shape-is-no-longer-available = 選択したカスタム図形は利用できなくなりました
+
+custom-shape-tool-selected = カスタム図形ツールを選択しました。

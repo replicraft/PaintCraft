@@ -21,6 +21,7 @@ pub use windows::{floating_controls, layers_window};
 
 #[derive(Clone, Debug)]
 pub struct Workspace {
+    pub resource_shape: Option<String>,
     pub sampled_brush: Option<(String, (u32, u32))>,
     pub canvas_top: f32,
     pub tools: bool,
@@ -39,6 +40,7 @@ impl Default for Workspace {
     fn default() -> Self {
         Self {
             sampled_brush: None,
+            resource_shape: None,
             canvas_top: 150.0,
             tools: true,
             colors: true,

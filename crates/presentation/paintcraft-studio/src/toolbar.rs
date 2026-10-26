@@ -73,18 +73,38 @@ pub fn toolbar(
             }
         }
         ui.separator();
-        ui.label(t!(
-            ui.ctx(),
-            Action::SelectTool(state.tool)
-                .descriptor_for(context.frontend)
-                .label,
-        ));
+        if let Some(name) = &workspace.resource_shape {
+            ui.label(name);
+        } else {
+            ui.label(t!(
+                ui.ctx(),
+                Action::SelectTool(state.tool)
+                    .descriptor_for(context.frontend)
+                    .label,
+            ));
+        }
     });
     ui.separator();
     ui.add_enabled_ui(context.document_open, |ui| {
-        crate::shapes::picker(ui, state, &mut actions);
+        if workspace.resource_shape.is_none() {
+            crate::shapes::picker(ui, state, &mut actions);
+        }
         crate::selection::options(ui, state);
-        if state.tool == paintcraft_tools::Tool::Brush
+        if state.tool == paintcraft_tools::Tool::Rect
+            && let Some(name) = &workspace.resource_shape
+        {
+            ui.horizontal_wrapped(|ui| {
+                ui.label(t!(
+                    ui.ctx(),
+                    "Selected custom shape: { $name }",
+                    name = name
+                ));
+                ui.label(t!(ui.ctx(), "Drag to size; hold Shift for a square box."));
+                if ui.button(t!(ui.ctx(), "Shape resources…")).clicked() {
+                    actions.push(Action::ShapeResources);
+                }
+            });
+        } else if state.tool == paintcraft_tools::Tool::Brush
             && let Some((name, (width, height))) = &workspace.sampled_brush
         {
             ui.horizontal_wrapped(|ui| {
