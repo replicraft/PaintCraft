@@ -28,7 +28,7 @@ pub const DECODE_PIXELS_MAX: u64 = 268_435_456;
 const SIDE_MAX: u32 = 1_048_576;
 
 /// Source information the current RGBA8 import cannot retain.
-pub const KNOWN_IMPORT_LOSSES: [&str; 16] = [
+pub const KNOWN_IMPORT_LOSSES: [&str; 17] = [
     "dib-alpha-unspecified",
     "dib-alpha-mode-unspecified",
     "dib-metadata-ignored",
@@ -45,6 +45,7 @@ pub const KNOWN_IMPORT_LOSSES: [&str; 16] = [
     "pcx-metadata-ignored",
     "msp-metadata-ignored",
     "dcx-other-pages-not-imported",
+    crate::dds::OTHER_MIPS_LOSS,
 ];
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

@@ -22,7 +22,7 @@ pub(super) fn sniff_avif(bytes: &[u8]) -> bool {
             .any(|brand| matches!(brand, b"avif" | b"avis"))
 }
 pub(super) fn decode_dds(bytes: &[u8], pixels: u64) -> Result<Decoded> {
-    let info = crate::dds::inspect_checked(bytes, pixels, &|| Ok(()))?;
+    let info = crate::dds::inspect_top_mip_checked(bytes, pixels, &|| Ok(()))?.image;
     if info.transfer != crate::dds::Transfer::Srgb {
         return Err(unsupported(
             "DDS image import requires explicit sRGB transfer; linear or unspecified transfer needs conversion",
@@ -36,13 +36,18 @@ pub(super) fn decode_dds(bytes: &[u8], pixels: u64) -> Result<Decoded> {
             "DDS image import requires explicit straight or opaque alpha",
         ));
     }
-    let decoded = crate::dds::decode_with_pixel_limit(bytes, pixels)?;
+    let decoded = crate::dds::decode_top_mip_checked(bytes, pixels, &|| Ok(()))?;
+    let losses = decoded
+        .losses()
+        .iter()
+        .map(|loss| (*loss).to_owned())
+        .collect();
     Ok(Decoded {
         format: ImageFormat::Dds,
         width: info.width,
         height: info.height,
         rgba: decoded.rgba,
-        losses: Vec::new(),
+        losses,
     })
 }
 pub(super) fn encode(
