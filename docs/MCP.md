@@ -23,12 +23,19 @@ Configure your MCP client with the absolute path to that binary:
 
 The server uses stdio. Its stdout contains only MCP messages. It runs with your account's local file access; connect clients you trust.
 
-`export_layered` is registered for explicit fresh PSD/PSB copies but currently
-returns a capability refusal: the original Photoshop open/re-edit qualification
+`export_layered` is registered for explicit fresh PSD/PSB/PDN copies but currently
+returns a capability refusal: the original Photoshop/Paint.NET open/re-edit qualification
 required by the format plan is not yet recorded. Acknowledging title loss cannot
 bypass that registry gate. It does not flatten, change dirty state or enable
-foreign preserving Save. The CLI `export-layered --format psd|psb` uses the same
+foreign preserving Save. The CLI `export-layered --format psd|psb|pdn` uses the same
 gate. The implemented staged-copy path is tested separately from public enablement.
+PDN requires an explicit `pdn_background` choice (`ordinary` or `bottom`);
+`pdn_geometry` is `exact` by default, with explicit `materialize` for layer
+translation/padding. Actual title, added background behavior, geometry and
+outside-canvas losses require their named acknowledgments. Ordinary native layers
+do not incur a fabricated background-role loss. Policy/counts accompany successful
+internal preparation without changing the file-operation receipt. These options
+cannot override the current public capability refusal.
 
 Available tools:
 
