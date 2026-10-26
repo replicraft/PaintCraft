@@ -72,12 +72,13 @@ pub enum Codec {
     JxlRgba8 = 2,
     JxrRgb8 = 3,
     HeifSrgb8 = 4,
+    AvifSrgb8 = 5,
 }
 impl Codec {
     fn side_limit(self) -> u32 {
         match self {
             Self::HeifGray8 | Self::HeifSrgb8 => 16384,
-            Self::JxlRgba8 | Self::JxrRgb8 => 65536,
+            Self::JxlRgba8 | Self::JxrRgb8 | Self::AvifSrgb8 => 65536,
         }
     }
     fn decode(value: u8) -> Result<Self> {
@@ -86,6 +87,7 @@ impl Codec {
             2 => Ok(Self::JxlRgba8),
             3 if !cfg!(target_arch = "wasm32") => Ok(Self::JxrRgb8),
             4 if !cfg!(target_arch = "wasm32") => Ok(Self::HeifSrgb8),
+            5 if !cfg!(target_arch = "wasm32") => Ok(Self::AvifSrgb8),
             _ => Err(unsupported("worker codec request is not supported")),
         }
     }
@@ -121,7 +123,9 @@ impl Request {
         owner: Owner,
         pixels: u64,
     ) -> Result<Self> {
-        if cfg!(target_arch = "wasm32") && matches!(codec, Codec::JxrRgb8 | Codec::HeifSrgb8) {
+        if cfg!(target_arch = "wasm32")
+            && matches!(codec, Codec::JxrRgb8 | Codec::HeifSrgb8 | Codec::AvifSrgb8)
+        {
             return Err(unsupported("Requested codec worker is native-only"));
         }
         if owner.frontend != 3 {
@@ -227,7 +231,9 @@ impl Header {
         let owner = r.owner()?;
         let nonce = r.uuid()?;
         let sha256 = r.take()?;
-        if cfg!(target_arch = "wasm32") && matches!(codec, Codec::JxrRgb8 | Codec::HeifSrgb8) {
+        if cfg!(target_arch = "wasm32")
+            && matches!(codec, Codec::JxrRgb8 | Codec::HeifSrgb8 | Codec::AvifSrgb8)
+        {
             return Err(unsupported("Requested codec worker is native-only"));
         }
         if owner.frontend != 3 {
@@ -340,7 +346,10 @@ pub fn success(request: Header, result: Success<'_>, peak: u64) -> Result<Vec<u8
                 encoding,
             },
         ) => (gray, alpha, encoding, 1),
-        (Codec::JxlRgba8 | Codec::JxrRgb8 | Codec::HeifSrgb8, Pixels::SrgbRgba8(rgba)) => (
+        (
+            Codec::JxlRgba8 | Codec::JxrRgb8 | Codec::HeifSrgb8 | Codec::AvifSrgb8,
+            Pixels::SrgbRgba8(rgba),
+        ) => (
             rgba,
             None,
             NativeEncoding {
@@ -540,7 +549,7 @@ pub fn decode_with_header<'a>(
                 encoding,
             }
         }
-        Codec::JxlRgba8 | Codec::JxrRgb8 | Codec::HeifSrgb8 => {
+        Codec::JxlRgba8 | Codec::JxrRgb8 | Codec::HeifSrgb8 | Codec::AvifSrgb8 => {
             if y as u64 != pixels * 4
                 || a != 0
                 || alpha_flag != 0

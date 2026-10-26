@@ -5,7 +5,7 @@
 #include "dav1d/dav1d.h"
 
 struct PaintcraftAv1Info {
-    uint32_t width, height, layout, depth;
+    uint32_t width, height, layout, depth, profile, level, max_width, max_height;
     uint32_t primaries, transfer, matrix, full_range;
     uint32_t chroma_position, still_picture, reduced_header;
 };
@@ -57,7 +57,11 @@ int paintcraft_av1_decode(const uint8_t *input, size_t length,
         } else goto done;
     }
     if (calls == 1024 || !have_picture || picture.p.w <= 0 || picture.p.h <= 0 ||
-        picture.p.bpc != 8 || !picture.seq_hdr) {
+        picture.p.bpc != 8 || !picture.seq_hdr ||
+        picture.seq_hdr->num_operating_points != 1 ||
+        (!picture.seq_hdr->reduced_still_picture_header &&
+         picture.seq_hdr->operating_points[0].major_level < 2) ||
+        picture.seq_hdr->operating_points[0].minor_level > 3) {
         result = DAV1D_ERR(EINVAL); goto done;
     }
     const size_t width = picture.p.w, height = picture.p.h;
@@ -83,6 +87,14 @@ int paintcraft_av1_decode(const uint8_t *input, size_t length,
     *info = (struct PaintcraftAv1Info){
         .width = width, .height = height,
         .layout = picture.p.layout, .depth = picture.p.bpc,
+        .profile = picture.seq_hdr->profile,
+        /* dav1d stores the raw upper three bits for reduced-still headers,
+         * while non-reduced headers store nominal major level (raw + 2). */
+        .level = (picture.seq_hdr->operating_points[0].major_level -
+                  (picture.seq_hdr->reduced_still_picture_header ? 0 : 2)) * 4 +
+                 picture.seq_hdr->operating_points[0].minor_level,
+        .max_width = picture.seq_hdr->max_width,
+        .max_height = picture.seq_hdr->max_height,
         .primaries = picture.seq_hdr->pri, .transfer = picture.seq_hdr->trc,
         .matrix = picture.seq_hdr->mtrx, .full_range = picture.seq_hdr->color_range,
         .chroma_position = picture.seq_hdr->chr,

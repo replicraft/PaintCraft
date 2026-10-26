@@ -1,5 +1,5 @@
-//! Private native AV1 qualification boundary. No public AVIF read gate exists.
-// Private qualification until the existing worker protocol gains the AVIF route.
-#[cfg_attr(not(test), expect(dead_code))]
+//! Private native AVIF decoder; no public import gate is enabled.
+mod execute;
 mod ffi;
 mod heap;
+pub(crate) use execute::execute;

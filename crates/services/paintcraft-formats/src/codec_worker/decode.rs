@@ -83,6 +83,10 @@ pub fn execute(header: wire::Header, source: &[u8], peak: &dyn Fn() -> u64) -> R
     match header.codec {
         wire::Codec::HeifGray8 => decode_heif(header, source, peak),
         wire::Codec::HeifSrgb8 => heif_color::execute(header, source, peak),
+        wire::Codec::AvifSrgb8 => Err(Error::new(
+            ErrorCode::CapabilityUnsupported,
+            "AVIF requires the selected charged native decoder worker",
+        )),
         wire::Codec::JxrRgb8 => Err(Error::new(
             ErrorCode::CapabilityUnsupported,
             "JXR requires the native private-source worker",

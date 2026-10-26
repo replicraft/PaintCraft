@@ -35,6 +35,18 @@ pub fn run(jxr_source: Option<&std::path::Path>) -> Result<()> {
             crate::jxr::execute(header, &source, path, &|| crate::HEAP.peak() as u64)
         } else if jxr_source.is_some() {
             Err(invalid("Private JXR path supplied for another codec"))
+        } else if header.codec == wire::Codec::AvifSrgb8 {
+            #[cfg(feature = "avif-codec")]
+            {
+                crate::avif::execute(header, &source, &|| crate::HEAP.peak() as u64)
+            }
+            #[cfg(not(feature = "avif-codec"))]
+            {
+                Err(Error::new(
+                    ErrorCode::CapabilityUnsupported,
+                    "AVIF charged native decoder is not built",
+                ))
+            }
         } else {
             wire::execute(header, &source, &|| crate::HEAP.peak() as u64)
         }
@@ -44,7 +56,7 @@ pub fn run(jxr_source: Option<&std::path::Path>) -> Result<()> {
         Ok(output) => output,
         Err(error) => wire::error(header, &error, crate::HEAP.peak() as u64)?,
     };
-    // Live/peak counters cover requested Rust heap bytes, never physical RSS.
+    // Counters cover requested Rust and selected C-shim allocations, not RSS.
     debug_assert!(crate::HEAP.live() <= wire::HEAP_BYTES as usize);
     let mut stdout = std::io::stdout().lock();
     stdout

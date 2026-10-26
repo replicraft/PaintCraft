@@ -8,6 +8,10 @@ pub(super) struct Info {
     pub height: u32,
     pub layout: u32,
     pub depth: u32,
+    pub profile: u32,
+    pub level: u32,
+    pub max_width: u32,
+    pub max_height: u32,
     pub primaries: u32,
     pub transfer: u32,
     pub matrix: u32,
@@ -120,6 +124,20 @@ mod tests {
         for (plane, expected) in got.planes.as_chunks::<256>().0.iter().zip([90, 100, 80]) {
             assert!(plane.iter().all(|v| v.abs_diff(expected) <= 3));
         }
+        // Reduced-still major_level stores raw upper bits in dav1d's ABI.
+        // Exercise both the unconstrained31 fixture and a valid small level0.
+        assert_eq!(got.info.level, 31);
+        let mut level0 = raw.clone();
+        assert_eq!(&level0[..4], &[0x12, 0, 0x0a, 8]);
+        level0[4] &= 0xf8;
+        level0[5] &= 0x3f;
+        let sequence =
+            paintcraft_formats::avif::inspect_sequence(&[level0.as_slice()], 256, &|| Ok(()))
+                .unwrap();
+        assert_eq!(sequence.level, 0);
+        let lower = decode(&level0, 16, 16).unwrap();
+        assert_eq!(lower.info.level, 0);
+        assert_eq!(lower.planes, got.planes);
         assert!(decode(&raw, 15, 16).is_err());
         assert!(decode(&raw[..raw.len() / 2], 16, 16).is_err());
     }
@@ -170,6 +188,51 @@ mod tests {
         assert_eq!(crate::HEAP.live(), before + decoded.planes.capacity());
         drop(decoded);
         assert_eq!(crate::HEAP.live(), before);
+    }
+    #[test]
+    #[ignore = "writes controlled AVIF fixture planes for an external decoder comparison"]
+    fn fixture_export_owned_native_planes() {
+        let folder = std::path::PathBuf::from(
+            std::env::var_os("PAINTCRAFT_AVIF_ORACLE_DIR")
+                .expect("explicit oracle output directory"),
+        );
+        std::fs::create_dir_all(&folder).unwrap();
+        for (label, source) in [
+            (
+                "opaque",
+                include_bytes!(concat!(
+                    env!("CARGO_MANIFEST_DIR"),
+                    "/../../crates/services/paintcraft-formats/tests/avif-fixtures/opaque.avif"
+                ))
+                .as_slice(),
+            ),
+            (
+                "alpha",
+                include_bytes!(concat!(
+                    env!("CARGO_MANIFEST_DIR"),
+                    "/../../crates/services/paintcraft-formats/tests/avif-fixtures/alpha.avif"
+                ))
+                .as_slice(),
+            ),
+        ] {
+            let admitted = paintcraft_formats::avif::admit_srgb8(source, 256, &|| Ok(())).unwrap();
+            for (kind, item) in std::iter::once(("primary", &admitted.primary))
+                .chain(admitted.alpha.as_ref().map(|a| ("alpha", a)))
+            {
+                let coded: Vec<u8> = item.parts.iter().flat_map(|p| p.iter().copied()).collect();
+                assert_eq!(coded.len(), item.byte_len);
+                let decoded = decode(&coded, item.width, item.height).unwrap();
+                let stem = format!("{label}-{kind}");
+                std::fs::write(folder.join(format!("{stem}.obu")), &coded).unwrap();
+                std::fs::write(folder.join(format!("{stem}.dav1d.planes")), &decoded.planes)
+                    .unwrap();
+                std::fs::write(
+                    folder.join(format!("{stem}.dav1d.txt")),
+                    format!("{:?}\n", decoded.info),
+                )
+                .unwrap();
+            }
+        }
     }
     fn denied(kind: u32) {
         let raw = sample();

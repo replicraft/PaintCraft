@@ -320,3 +320,53 @@ fn heif_color_code4_is_native_only_and_requires_the_explicit_rgba_model() {
         .is_err()
     );
 }
+
+#[test]
+fn avif_code5_is_native_only_explicit_rgba_and_never_inline_decoded() {
+    let mut r = request();
+    r.header.codec = Codec::AvifSrgb8;
+    let captured = Request::capture_for(Codec::AvifSrgb8, r.source.clone(), r.header.owner, 16);
+    if cfg!(target_arch = "wasm32") {
+        assert!(captured.is_err());
+        assert!(Header::decode(&r.header.encode()).is_err());
+        return;
+    }
+    assert!(captured.is_ok());
+    assert_eq!(Header::decode(&r.header.encode()).unwrap(), r.header);
+    let rgba = [1, 2, 3, 0, 4, 5, 6, 255];
+    let out = success(
+        r.header,
+        Success {
+            width: 2,
+            height: 1,
+            pixels: Pixels::SrgbRgba8(&rgba),
+        },
+        4096,
+    )
+    .unwrap();
+    let frame = decode(&out, &r, r.header.owner).unwrap();
+    assert!(matches!(frame.pixels,Pixels::SrgbRgba8(v) if v == rgba));
+    assert!(
+        success(
+            r.header,
+            Success {
+                width: 2,
+                height: 1,
+                pixels: Pixels::NativeGray8 {
+                    gray: &[0, 0],
+                    alpha: None,
+                    encoding: NativeEncoding {
+                        primaries: 1,
+                        transfer: 13,
+                        matrix: 0,
+                        full_range: true
+                    }
+                }
+            },
+            0
+        )
+        .is_err()
+    );
+    #[cfg(feature = "heif-codec")]
+    assert!(execute(r.header, &r.source, &|| 0).is_err());
+}

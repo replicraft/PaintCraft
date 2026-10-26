@@ -41,6 +41,11 @@ impl Job {
         launch: impl FnOnce(Launch<'_>, &dyn Fn() -> Result<()>) -> Result<Vec<u8>>,
         consume: impl FnOnce(&Request, Frame<'_>, [u8; 32], &dyn Fn() -> Result<()>) -> Result<T>,
     ) -> Result<T> {
+        if self.codec == Codec::AvifSrgb8 {
+            return Err(unsupported(
+                "AVIF requires a separately verified AVIF-enabled helper contract",
+            ));
+        }
         if self.deadline.is_zero() || self.deadline > Duration::from_secs(120) {
             return Err(Error::new(
                 ErrorCode::InputSchema,
