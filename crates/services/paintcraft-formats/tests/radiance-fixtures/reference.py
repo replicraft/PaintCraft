@@ -74,6 +74,7 @@ def write(name, width, height, body, metadata='', error=None, resolution=None):
 
 
 literal = bytes([128, 64, 32, 129, 0, 0, 0, 0, 255, 1, 20, 140, 2, 3, 200, 96])
+write('exponents-10x1', 10, 1, b''.join(bytes([128, 64, 32, e]) for e in [0, 1, 96, 97, 128, 129, 159, 160, 200, 255]))
 write('literal-2x2', 2, 2, literal)
 write('calibrated-2x2', 2, 2, literal, 'EXPOSURE=2\nEXPOSURE=3\nCOLORCORR=2 1 .5\nCOLORCORR=.5 2 4\n# already adjusted stored values\n')
 write('explicit-rec709', 2, 2, literal, 'PRIMARIES=.64 .33 .30 .60 .15 .06 .3127 .3290\n')

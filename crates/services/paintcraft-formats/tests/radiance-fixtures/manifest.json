@@ -1,5 +1,13 @@
 [
     {
+        "file": "exponents-10x1.hdr",
+        "bytes": 86,
+        "sha256": "2778bfdfd18a07c504c1f3d05c5cc0b68cee6d0b941249c93cfbbef75335bfd2",
+        "width": 10,
+        "height": 1,
+        "expected_error": null
+    },
+    {
         "file": "literal-2x2.hdr",
         "bytes": 61,
         "sha256": "0e5c71e9b6f3f2db3b79b9c1600eddca6d492ce5d762bec46c15f5d9a8f9aad0",
