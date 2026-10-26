@@ -184,8 +184,30 @@ targets, symlink/FIFO rejection, file identity replacement, bounded records and
 concurrent same-descriptor captures. Workspace tests build the real helper;
 focused CLI installation tests require it to be built first.
 
-This is not public Studio Open/import activation. Source/destination guarding and
-resident admission through a real import/save remain integration work. Native
+This is not public Studio Open/import activation. The hidden qualification
+composition can now write a new PCND copy:
+
+```sh
+paintcraft-cli --json codec-import source.jxl --output converted.pcnd
+```
+
+It accepts only the worker's metadata-free straight sRGB RGBA8 profile, preserving
+hidden RGB and alpha in one editable Image layer. Metadata, ICC, depth and other
+unqualified variants are refused rather than silently converted. Receipts mark
+this as internal qualification and a new PCND copy. Normal `import` still consults
+the unchanged registry and refuses JXL reads.
+
+The existing Executor reservation is retained by the prepared document through
+PCND staging, final source/owner checks, publication and document destruction.
+Its logical declaration includes the fixed decoder heap, captured source/output,
+up to 64MiB of padded tiles plus 17MiB of tile-index/writer slack and 1MiB of IO slack;
+this is not an allocation-enforced cap on the host/native writer or physical RSS.
+The guard rejects captured-source aliases, changed source content, foreign owners
+and helper failures. Installed-CLI tests verify the independent six-pixel oracle
+and preserve sources/existing destinations on refusal. Public OS admission and
+containment policy remain release gates.
+
+Native
 transport BUILD_V2 / STDIN_PARENT_LEASE1 keeps the supervisor's sole stdin writer
 open after the exact bounded request; EOF, IO failure or an extra byte makes a
 separate helper watchdog exit without allocating (status76). The request reader
