@@ -9,6 +9,8 @@ publish.workspace = true
 
 [features]
 default = ["float-codecs"]
+# Private fresh-encode qualification only; never a default build capability.
+jxr-encode = ["float-codecs"]
 float-codecs = ["avif-sdr-codec", "paintcraft-formats/hdr-codec", "paintcraft-formats/exr-codec"]
 avif-codec = []
 avif-sdr-codec = ["avif-codec"]
@@ -24,6 +26,7 @@ libc.workspace = true
 jpegxr.workspace = true
 
 [dev-dependencies]
+sha2.workspace = true
 paintcraft-platform.workspace = true
 paintcraft-runtime.workspace = true
 uuid.workspace = true

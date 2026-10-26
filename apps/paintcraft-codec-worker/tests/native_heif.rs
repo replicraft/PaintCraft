@@ -292,8 +292,11 @@ fn linked_helper_contains_cross_target_packaging_build_record() {
         record,
         wire::native_avif_sdr_build_record(env!("CARGO_PKG_VERSION")).unwrap()
     );
-    #[cfg(feature = "float-codecs")]
+    #[cfg(all(feature = "float-codecs", not(feature = "jxr-encode")))]
     let record_buffer = wire::native_float_build_record(env!("CARGO_PKG_VERSION")).unwrap();
+    #[cfg(feature = "jxr-encode")]
+    let record_buffer =
+        wire::jxr_encode::candidate::build_record(env!("CARGO_PKG_VERSION")).unwrap();
     #[cfg(feature = "float-codecs")]
     let record = record_buffer.as_slice();
     assert!(
