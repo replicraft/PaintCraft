@@ -29,6 +29,7 @@ mod history;
 mod paste;
 mod preparation;
 mod residency;
+mod sampled_brush;
 pub use history::{HistoryTicket, HistoryView};
 pub use preparation::{Preparation, PreparedEdit, PreparedNavigation};
 pub use residency::PreparedHistoryMaintenance;
@@ -253,6 +254,15 @@ impl Session {
         admission: Admission,
         check: impl Fn() -> Result<()>,
     ) -> Result<Receipt> {
+        self.apply_checked_with_admission_label(batch, admission, history::label(batch), check)
+    }
+    fn apply_checked_with_admission_label(
+        &mut self,
+        batch: &Batch,
+        admission: Admission,
+        label: paintcraft_history::Label,
+        check: impl Fn() -> Result<()>,
+    ) -> Result<Receipt> {
         check()?;
         if batch.policy != POLICY {
             return Err(Error::new(
@@ -273,7 +283,7 @@ impl Session {
             admission.constrain_pixels(self.staged_pixels),
             &check,
         )?;
-        self.commit_staged(staged, &batch.digest, history::label(batch), check)
+        self.commit_staged(staged, &batch.digest, label, check)
     }
 
     fn commit_staged(
