@@ -43,4 +43,8 @@ The ignored `secondary::render_studio_secondary_stroke_for_review` test writes
 `/tmp/paintcraft-secondary-stroke.png` through the native GPU UI renderer. These
 are native implementation tests, not an independent Paint.NET input oracle or
 physical pen/tablet qualification. Reference-specific eraser, selection and text
-policies, pressure/tilt and platform capture traces remain roadmap work.
+policies and physical platform capture traces remain unqualified. Shared tablet
+sample/capture contracts, plain-round pressure geometry and guarded mask handoff
+are now implemented and tested; dedicated frontend pen capture, brush dynamics
+and hardware qualification remain in progress. See [Tablet input status](TABLET_INPUT.md)
+for the precise implemented and remaining scope.
