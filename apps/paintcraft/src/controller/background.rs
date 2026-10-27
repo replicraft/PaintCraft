@@ -12,6 +12,10 @@ pub(crate) use import::ImportPending;
 mod jxr_export;
 pub(crate) use jxr_export::{JxrExportPending, PreparedJxrExport};
 
+#[path = "background/dds_export.rs"]
+mod dds_export;
+pub(crate) use dds_export::DdsExportPending;
+
 // Provisional preparation admission, not allocator/RSS accounting. The service
 // admits one transaction across all documents, including unconsumed results.
 const PREPARATION_CHARGE: u64 = 2 << 30;
@@ -20,6 +24,7 @@ pub(super) enum Completion {
     Edit(PreparedEdit),
     CodecImport(Box<paintcraft_formats::codec_worker::native::PreparedImport>),
     JxrExport(Box<PreparedJxrExport>),
+    DdsExport(Box<crate::dds_export::worker::Prepared>),
     Pick(Box<picker::Picked>),
     Deferred(Box<retry::Deferred>),
     Navigation(PreparedNavigation),
@@ -379,7 +384,9 @@ impl Editor {
                     self.retarget();
                 }),
             Ok(Completion::Deferred(_)) => unreachable!("deferred edits were retained above"),
-            Ok(Completion::CodecImport(_) | Completion::JxrExport(_)) => Err(Error::new(
+            Ok(
+                Completion::CodecImport(_) | Completion::JxrExport(_) | Completion::DdsExport(_),
+            ) => Err(Error::new(
                 ErrorCode::InvariantViolation,
                 "Codec import completion belongs to the application",
             )),
