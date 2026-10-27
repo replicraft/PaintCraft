@@ -617,3 +617,42 @@ fn widget_capture_survives_its_own_same_session_publication_between_drain_and_ca
             .any(|event| matches!(event, egui::Event::PointerButton { pressed: false, .. }))
     );
 }
+
+#[test]
+fn drained_completed_pen_cannot_revive_after_cancel_or_restored_view() {
+    for cancel in [true, false] {
+        let (mut app, ctx) = setup();
+        let depth = app.editor.undo_depth();
+        let before = app.editor.document_snapshot();
+        push(&app, 1, Phase::Down, 1);
+        push(&app, 2, Phase::Up, 0);
+        drain(&mut app, &ctx);
+        assert_eq!(
+            app.tablet
+                .as_ref()
+                .unwrap()
+                .pending
+                .as_ref()
+                .unwrap()
+                .1
+                .frame
+                .samples
+                .len(),
+            2
+        );
+        if cancel {
+            app.tablet.as_ref().unwrap().source.cancel();
+        } else {
+            app.zoom = 2.0;
+            publish(&app);
+            app.zoom = 1.0;
+        }
+        // Identical owner and final view cannot resurrect the admitted batch.
+        publish(&app);
+        assert!(canvas(&mut app).is_empty());
+        app.editor.run_pending();
+        assert_eq!(app.editor.undo_depth(), depth);
+        assert!(app.editor.document().same_semantics(&before));
+        assert!(!app.tablet.as_ref().unwrap().controller_owned);
+    }
+}

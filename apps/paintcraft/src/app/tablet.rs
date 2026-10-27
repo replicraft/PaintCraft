@@ -348,12 +348,12 @@ impl App {
         if receiver.pass.suppress_legacy_pointer() {
             events.retain(|event| !pointer_event(event));
         }
-        if let Some((captured, batch)) = receiver.pending.take() {
-            let owner_changed = captured != owner
-                && (!batch.frame.samples.is_empty()
-                    || captured.session != owner.session
-                    || captured.interface != owner.interface);
-            if owner_changed
+        if let Some((_, batch)) = receiver.pending.take() {
+            // The opaque ingress binding also detects cancellation or a view
+            // changed and restored after drain. Matching Owner fields alone do
+            // not authorize replay of an already retired payload.
+            let current = receiver.source.batch_is_current(&batch, owner);
+            if !current
                 || !accept
                 || batch
                     .frame
