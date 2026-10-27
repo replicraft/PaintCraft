@@ -417,3 +417,8 @@ not-enough-memory-to-export-with-these-settings-use-a-smaller-image-or-fewer-lay
 msp-version = MSP संस्करण
 version-1-uncompressed = संस्करण 1 (असंपीड़ित)
 version-2-compressed = संस्करण 2 (संपीड़ित)
+
+# Native MSP preparation and actual encoded preview.
+preparing-msp-picture-more = MSP चित्र तैयार किया जा रहा है…
+format-encoded-size-bytes-bytes = एन्कोड किया गया आकार: { $bytes } बाइट
+msp-requires-opaque-black-or-white-pixels-no-automatic-conversion-is-applied = MSP के लिए अपारदर्शी काले या सफेद पिक्सेल आवश्यक हैं। कोई स्वचालित रूपांतरण नहीं किया जाता।

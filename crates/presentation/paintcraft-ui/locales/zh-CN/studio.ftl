@@ -417,3 +417,8 @@ not-enough-memory-to-export-with-these-settings-use-a-smaller-image-or-fewer-lay
 msp-version = MSP 版本
 version-1-uncompressed = 版本 1（未压缩）
 version-2-compressed = 版本 2（已压缩）
+
+# Native MSP preparation and actual encoded preview.
+preparing-msp-picture-more = 正在准备 MSP 图片…
+format-encoded-size-bytes-bytes = 编码后大小：{ $bytes } 字节
+msp-requires-opaque-black-or-white-pixels-no-automatic-conversion-is-applied = MSP 要求像素为不透明的黑色或白色。不进行自动转换。

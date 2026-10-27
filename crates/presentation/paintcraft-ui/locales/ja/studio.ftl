@@ -417,3 +417,8 @@ not-enough-memory-to-export-with-these-settings-use-a-smaller-image-or-fewer-lay
 msp-version = MSP バージョン
 version-1-uncompressed = バージョン 1（非圧縮）
 version-2-compressed = バージョン 2（圧縮）
+
+# Native MSP preparation and actual encoded preview.
+preparing-msp-picture-more = MSP 画像を準備中…
+format-encoded-size-bytes-bytes = エンコード後のサイズ：{ $bytes } バイト
+msp-requires-opaque-black-or-white-pixels-no-automatic-conversion-is-applied = MSP には不透明な黒または白のピクセルが必要です。自動変換は行いません。
