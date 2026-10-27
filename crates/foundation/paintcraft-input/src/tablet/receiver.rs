@@ -84,6 +84,7 @@ pub struct Receiver {
     cancelled: bool,
     suppress: bool,
     frame: Option<u64>,
+    cancellation_epoch: u64,
 }
 impl Receiver {
     /// Reserve source storage and three UI cancellation slots before installation.
@@ -111,6 +112,7 @@ impl Receiver {
             cancelled: false,
             suppress: false,
             frame: None,
+            cancellation_epoch: 0,
         })
     }
     pub fn storage_bytes(&self) -> usize {
@@ -118,6 +120,9 @@ impl Receiver {
     }
     pub fn pen_active(&self) -> bool {
         self.router.pen_active()
+    }
+    pub fn cancellation_epoch(&self) -> u64 {
+        self.cancellation_epoch
     }
     /// Includes a completed but not-yet-drained stroke and held UI buttons.
     /// A host owner change with no classified work must not suppress mouse input.
@@ -311,6 +316,7 @@ impl Receiver {
     /// Focus/modal/capture loss cancels private ink and releases UI buttons at the
     /// last valid UI position. This does not fabricate a hardware source sample.
     pub fn cancel(&mut self) {
+        self.cancellation_epoch = self.cancellation_epoch.saturating_add(1);
         self.router.cancel();
         // A cancellation retires every unpublished source record, including an
         // Up that already closed Queue ownership. The host first cancels its
