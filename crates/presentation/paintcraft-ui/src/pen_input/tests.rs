@@ -1,7 +1,7 @@
 use super::*;
 use paintcraft_input::{
     Modifiers,
-    tablet::{Buttons, Clock, DeviceKind, Identity, Time},
+    tablet::{Buttons, Clock, DeviceKind, Identity, Provenance, Time},
 };
 
 fn view() -> View {
@@ -265,4 +265,34 @@ fn owner_or_focus_change_without_pen_work_does_not_cancel_genuine_mouse() {
     let mut pass = Pass::default();
     assert!(pass.begin(1, &batch.frame));
     assert!(!pass.suppress_legacy_pointer());
+}
+
+#[test]
+fn foreign_positionless_cancel_and_leave_cannot_cancel_the_owned_pen() {
+    for phase in [Phase::Cancel, Phase::Leave] {
+        let budget = SharedBudget::new(1_000_000);
+        let source = source(&budget);
+        push(&source, 1, Phase::Down);
+        let mut foreign = raw(2, phase);
+        foreign.identity.pointer += 1;
+        foreign.logical_position = None;
+        assert_eq!(
+            source.submit_with(Delivery::ReceiverPointer, |_| Ok(foreign)),
+            Ok(Route::Suppressed)
+        );
+        push(&source, 3, Phase::Up);
+        let batch = source.take(1, view().owner, false).unwrap();
+        assert_eq!(batch.frame.samples.len(), 2);
+        assert!(!batch.frame.cancelled);
+        drop(batch);
+        push(&source, 4, Phase::Down);
+        let mut owned = raw(5, phase);
+        owned.logical_position = None;
+        source
+            .submit_with(Delivery::ReceiverPointer, |_| Ok(owned))
+            .unwrap();
+        let batch = source.take(2, view().owner, false).unwrap();
+        assert!(batch.frame.cancelled);
+        assert!(batch.frame.samples.is_empty());
+    }
 }

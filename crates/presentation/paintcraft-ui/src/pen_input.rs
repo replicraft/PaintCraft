@@ -5,7 +5,7 @@ use paintcraft_core::types::{
     resources::{AllocationClass, BudgetAccount, BudgetScope, SharedBudget},
 };
 use paintcraft_input::tablet::{
-    Invalid, Permissions, Phase, Provenance, RawSample, Sample, Transform,
+    Invalid, Permissions, Phase, RawSample, Sample, Transform,
     receiver::{Delivery, Frame, Receiver, Route, UiEvent},
 };
 use std::sync::{Arc, Mutex};
@@ -145,13 +145,8 @@ impl Source {
                 return Err(error);
             }
         };
-        // Native cancellation is a control operation; position may be absent.
-        if raw.provenance != Provenance::Predicted
-            && matches!(raw.phase, Phase::Cancel | Phase::Leave)
-        {
-            state.receiver.cancel();
-            return Ok(Route::Suppressed);
-        }
+        // Receiver checks stream identity before accepting positionless lifecycle
+        // events. Only the explicit Source.cancel() operation is window-wide.
         state.receiver.submit(
             raw,
             view.transform,
