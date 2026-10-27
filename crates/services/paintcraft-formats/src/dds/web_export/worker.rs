@@ -47,7 +47,7 @@ pub fn execute(bytes: &[u8], version: &str, check: &dyn Fn() -> Result<()>) -> R
                     .ok_or_else(|| resource("Browser DDS workspace overflow"))?;
                 if resident > RESIDENT_BYTES_MAX
                     || plan.encoded_bytes() > ENCODED_BYTES_MAX as u64
-                    || quote > 96 << 20
+                    || quote > 192 << 20
                 {
                     return Err(resource("Browser DDS worker payload allowance"));
                 }

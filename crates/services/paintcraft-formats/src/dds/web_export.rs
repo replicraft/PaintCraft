@@ -1,4 +1,4 @@
-//! Provisional browser-only advanced DDS preparation. No registry admission.
+//! Source-bound advanced Web Studio DDS preparation. Hosts admit the exact route.
 //! Native codec protocols and the legacy default DDS writer are independent.
 use super::*;
 use crate::{codec_worker::Owner, export, pcnd};
@@ -12,13 +12,13 @@ pub use request::Header;
 pub use response::{Frame, decode_response};
 pub use worker::execute;
 pub const PROTOCOL_VERSION: u16 = 1;
-pub const PROFILE: &str = "web-dds-pcnd16mib-1mp-v1";
-pub const PIXELS_MAX: u64 = 1_048_576;
+pub const PROFILE: &str = "web-dds-pcnd32mib-4mp-v1";
+pub const PIXELS_MAX: u64 = 4_194_304;
 pub const LAYERS_MAX: usize = 8;
-pub const STAGED_LAYER_PIXELS_MAX: u64 = 2_097_152;
-pub const RESIDENT_BYTES_MAX: u64 = 12 << 20;
-pub const SOURCE_BYTES_MAX: usize = 16 << 20;
-pub const ENCODED_BYTES_MAX: usize = (8 << 20) + 4096;
+pub const STAGED_LAYER_PIXELS_MAX: u64 = 8_388_608;
+pub const RESIDENT_BYTES_MAX: u64 = 24 << 20;
+pub const SOURCE_BYTES_MAX: usize = 32 << 20;
+pub const ENCODED_BYTES_MAX: usize = (24 << 20) + 4096;
 pub const PREVIEW_SIDE: u32 = 192;
 pub const PREVIEW_BYTES_MAX: usize = 192 * 192 * 4;
 pub const REQUEST_HEADER: usize = 128;
@@ -27,7 +27,7 @@ pub const RESPONSE_BYTES_MAX: usize =
     RESPONSE_HEADER + ENCODED_BYTES_MAX + PREVIEW_BYTES_MAX + 4096;
 /// Declares known copies and the entire 256MiB Worker linear-memory ceiling.
 /// This is logical payload admission, not aggregate browser/GPU/allocator RSS.
-pub const RESERVATION_BYTES: u64 = 416 << 20;
+pub const RESERVATION_BYTES: u64 = 640 << 20;
 pub const LOSSES: [&str; 5] = [
     "flatten",
     "hidden-rgb",

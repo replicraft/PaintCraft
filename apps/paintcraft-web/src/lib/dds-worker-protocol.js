@@ -6,14 +6,14 @@ import {
 	equal,
 	refusal,
 } from './codec-worker-protocol.js';
-export const DDS_SOURCE_MAX = 16 * 1024 * 1024;
-export const DDS_ENCODED_MAX = 8 * 1024 * 1024 + 4096;
+export const DDS_SOURCE_MAX = 32 * 1024 * 1024;
+export const DDS_ENCODED_MAX = 24 * 1024 * 1024 + 4096;
 export const DDS_PREVIEW_MAX = 192 * 192 * 4;
 export const DDS_REQUEST_HEADER = 128;
 export const DDS_RESPONSE_HEADER = 288;
 export const DDS_OUTPUT_MAX =
 	DDS_RESPONSE_HEADER + DDS_ENCODED_MAX + DDS_PREVIEW_MAX + 4096;
-export const DDS_RESERVATION = 416 * 1024 * 1024;
+export const DDS_RESERVATION = 640 * 1024 * 1024;
 const encoder = new TextEncoder();
 const decoder = new TextDecoder('utf-8', { fatal: true });
 const frozenPlans = new WeakSet();
@@ -40,7 +40,7 @@ export function freezeDdsPlan(plan) {
 		height < 1 ||
 		width > 65536 ||
 		height > 65536 ||
-		width * height > 1048576 ||
+		width * height > 4194304 ||
 		!Number.isInteger(sourceFlags) ||
 		sourceFlags < 0 ||
 		sourceFlags > 3 ||

@@ -424,7 +424,7 @@ format-encoded-size-bytes-bytes = Tamanho codificado: { $bytes } bytes
 msp-requires-opaque-black-or-white-pixels-no-automatic-conversion-is-applied = MSP exige pixels pretos ou brancos opacos. Nenhuma conversão automática é aplicada.
 
 # Advanced browser DDS export. Legacy default export is unchanged.
-this-browser-dds-profile-allows-up-to-1-048-576-canvas-pixels-and-8-layers-larger-or-more-complex-snapshots-are-refused = Esta exportação DDS no navegador permite até 1.048.576 pixels de tela e 8 camadas. Imagens maiores ou mais complexas são recusadas.
+this-browser-dds-profile-allows-up-to-4-194-304-canvas-pixels-and-8-layers-larger-or-more-complex-snapshots-are-refused = Esta exportação DDS no navegador permite até 4.194.304 pixels de tela e 8 camadas. Imagens maiores ou mais complexas são recusadas.
 dds-export-failed-the-current-document-was-kept = A exportação DDS falhou; o documento atual foi mantido.
 codec-jobs-are-paused-for-this-tab-download-your-project-then-reload-to-try-again = A conversão de imagens está pausada nesta aba. Baixe seu projeto e recarregue a página para tentar novamente.
 download-dds = Baixar DDS

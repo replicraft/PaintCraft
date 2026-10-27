@@ -26,7 +26,7 @@ impl WebApp {
                 .max_height((ctx.content_rect().height() - 96.0).max(1.0))
                 .show(ui, |ui| {
             ui.label(&review.filename);
-            ui.label(t!(ctx, "This browser DDS profile allows up to 1,048,576 canvas pixels and 8 layers. Larger or more complex snapshots are refused."));
+            ui.label(t!(ctx, "This browser DDS profile allows up to 4,194,304 canvas pixels and 8 layers. Larger or more complex snapshots are refused."));
             let size = self.editor.session.document().canvas;
             let changed = controls::controls(ui, &mut review.settings, size.0, size.1);
             if let Some(texture) = &review.texture {

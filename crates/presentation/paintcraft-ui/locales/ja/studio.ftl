@@ -424,7 +424,7 @@ format-encoded-size-bytes-bytes = エンコード後のサイズ：{ $bytes } �
 msp-requires-opaque-black-or-white-pixels-no-automatic-conversion-is-applied = MSP には不透明な黒または白のピクセルが必要です。自動変換は行いません。
 
 # Advanced browser DDS export. Legacy default export is unchanged.
-this-browser-dds-profile-allows-up-to-1-048-576-canvas-pixels-and-8-layers-larger-or-more-complex-snapshots-are-refused = ブラウザーでの DDS 書き出しは、キャンバス 1,048,576 ピクセル、8 レイヤーまでです。これを超える大きさや複雑さの画像は書き出せません。
+this-browser-dds-profile-allows-up-to-4-194-304-canvas-pixels-and-8-layers-larger-or-more-complex-snapshots-are-refused = ブラウザーでの DDS 書き出しは、キャンバス 4,194,304 ピクセル、8 レイヤーまでです。これを超える大きさや複雑さの画像は書き出せません。
 dds-export-failed-the-current-document-was-kept = DDS の書き出しに失敗しました。現在のドキュメントは保持されています。
 codec-jobs-are-paused-for-this-tab-download-your-project-then-reload-to-try-again = このタブでは画像変換が一時停止されています。プロジェクトをダウンロードしてから、再読み込みしてやり直してください。
 download-dds = DDS をダウンロード

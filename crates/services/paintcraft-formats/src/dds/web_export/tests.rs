@@ -210,7 +210,7 @@ fn canonical_refusals_preserve_binding_and_source_interpretation_without_output(
 }
 #[test]
 fn document_profile_refuses_instead_of_dropping_layers_or_excess_work() {
-    assert!(SourcePlan::capture(&doc(1025, 1024), options()).is_err());
+    assert!(SourcePlan::capture(&doc(2049, 2048), options()).is_err());
     assert!(SourcePlan::capture(&doc(65537, 1), options()).is_err());
     let mut document = doc(1, 1);
     for _ in 0..8 {
@@ -223,15 +223,15 @@ fn document_profile_refuses_instead_of_dropping_layers_or_excess_work() {
     let mut document = doc(1, 1);
     document.layers.get_mut(&document.roots[0]).unwrap().raster =
         paintcraft_raster::RasterLayer::new(
-            2048,
-            2048,
+            4096,
+            4096,
             paintcraft_core::types::Rgba([0, 0, 0, 255]),
         );
     assert!(SourcePlan::capture(&document, options()).is_err());
 }
 #[test]
-fn actual_one_megapixel_profile_boundary_retains_all_generated_levels_and_preview() {
-    let document = doc(1024, 1024);
+fn actual_four_megapixel_profile_boundary_retains_all_generated_levels_and_preview() {
+    let document = doc(2048, 2048);
     let selected = TextureOptions {
         mips: MipCount::Full,
         filter: MipFilter::BoxStored,
@@ -241,7 +241,7 @@ fn actual_one_megapixel_profile_boundary_retains_all_generated_levels_and_previe
     let output = execute(&bytes, "0.1.0", &|| Ok(())).unwrap();
     let (encoded, preview) = success(&output, &header);
     let inventory = inspect_top_mip_checked(&encoded, PIXELS_MAX, &|| Ok(())).unwrap();
-    assert_eq!(inventory.levels.len(), 11);
+    assert_eq!(inventory.levels.len(), 12);
     assert_eq!(preview.len(), 192 * 192 * 4);
     assert!(
         preview

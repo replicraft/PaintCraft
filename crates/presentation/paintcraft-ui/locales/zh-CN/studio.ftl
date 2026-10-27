@@ -424,7 +424,7 @@ format-encoded-size-bytes-bytes = 编码后大小：{ $bytes } 字节
 msp-requires-opaque-black-or-white-pixels-no-automatic-conversion-is-applied = MSP 要求像素为不透明的黑色或白色。不进行自动转换。
 
 # Advanced browser DDS export. Legacy default export is unchanged.
-this-browser-dds-profile-allows-up-to-1-048-576-canvas-pixels-and-8-layers-larger-or-more-complex-snapshots-are-refused = 浏览器 DDS 导出最多允许 1,048,576 个画布像素和 8 个图层。更大或更复杂的图像将被拒绝。
+this-browser-dds-profile-allows-up-to-4-194-304-canvas-pixels-and-8-layers-larger-or-more-complex-snapshots-are-refused = 浏览器 DDS 导出最多允许 4,194,304 个画布像素和 8 个图层。更大或更复杂的图像将被拒绝。
 dds-export-failed-the-current-document-was-kept = DDS 导出失败；当前文档已保留。
 codec-jobs-are-paused-for-this-tab-download-your-project-then-reload-to-try-again = 此标签页的图像转换已暂停。请下载项目，然后重新加载页面以重试。
 download-dds = 下载 DDS
