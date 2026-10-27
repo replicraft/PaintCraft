@@ -62,9 +62,10 @@ pub struct Buttons(pub u16);
 impl Buttons {
     pub const TIP: u16 = 1;
     pub const BARREL: u16 = 2;
+    pub const BARREL_UPPER: u16 = 4;
     pub const ERASER: u16 = 32;
     pub fn ink_button(self) -> PointerButton {
-        if self.0 & Self::BARREL != 0 {
+        if self.0 & (Self::BARREL | Self::BARREL_UPPER) != 0 {
             PointerButton::Secondary
         } else {
             PointerButton::Primary

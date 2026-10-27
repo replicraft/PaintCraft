@@ -298,3 +298,20 @@ fn platform_capture_requires_real_coordinates_and_preserves_optional_attributes(
         Err(Invalid::Coordinates)
     );
 }
+
+#[test]
+fn barrel_buttons_keep_distinct_identity_and_both_select_secondary_policy() {
+    assert_ne!(Buttons::BARREL, Buttons::BARREL_UPPER);
+    assert_eq!(
+        Buttons(Buttons::BARREL).ink_button(),
+        crate::PointerButton::Secondary
+    );
+    assert_eq!(
+        Buttons(Buttons::BARREL_UPPER).ink_button(),
+        crate::PointerButton::Secondary
+    );
+    assert_eq!(
+        Buttons(Buttons::TIP).ink_button(),
+        crate::PointerButton::Primary
+    );
+}
