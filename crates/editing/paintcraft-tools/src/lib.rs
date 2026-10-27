@@ -13,6 +13,7 @@ pub mod navigation;
 pub use contracts::*;
 mod geometry;
 mod path_admission;
+mod pen_gesture;
 pub mod pen_stroke;
 mod picker;
 mod preview_revision;
@@ -74,6 +75,7 @@ pub struct ToolState {
     previous_tool: Tool,
     previous_resource_shape: Option<resource_shape::Reference>,
     gesture: Option<Gesture>,
+    pen: Option<(u64, pen_stroke::PenStroke)>,
     floating: Option<FloatingSelection>,
     construction: Option<construction::Construction>,
     text: Option<TextEdit>,
@@ -95,6 +97,7 @@ impl Default for ToolState {
             previous_tool: Tool::Pencil,
             previous_resource_shape: None,
             gesture: None,
+            pen: None,
             floating: None,
             construction: None,
             text: None,
@@ -123,6 +126,9 @@ impl ToolState {
         }
     }
     pub fn begin_text(&mut self, layer: Uuid, at: (i64, i64)) {
+        if self.pen.is_some() {
+            self.cancel_gesture();
+        }
         if self.floating.is_some() {
             self.cancel_gesture();
         }
@@ -146,6 +152,9 @@ impl ToolState {
         self.pointer_down_button(layer, at, PointerButton::Primary);
     }
     pub fn pointer_down_button(&mut self, layer: Uuid, at: (i64, i64), button: PointerButton) {
+        if self.pen.is_some() {
+            return;
+        }
         if self.floating.is_some() && self.tool != Tool::Select {
             self.cancel_gesture();
         }
@@ -229,30 +238,46 @@ impl ToolState {
     }
 
     pub fn preview_token(&self) -> Option<u64> {
-        self.floating_selection()
-            .map(|f| f.token())
-            .or_else(|| self.gesture.as_ref().map(|g| g.token))
-            .or_else(|| self.construction.as_ref().map(|c| c.base.token))
-            .or_else(|| self.text.as_ref().map(|t| t.token))
+        self.pen.as_ref().map(|p| p.0).or_else(|| {
+            self.floating_selection()
+                .map(|f| f.token())
+                .or_else(|| self.gesture.as_ref().map(|g| g.token))
+                .or_else(|| self.construction.as_ref().map(|c| c.base.token))
+                .or_else(|| self.text.as_ref().map(|t| t.token))
+        })
     }
 
     pub fn gesture_token(&self) -> Option<u64> {
-        self.floating_selection()
-            .map(|f| f.token())
-            .or_else(|| self.gesture.as_ref().map(|g| g.token))
-            .or_else(|| self.construction.as_ref().map(|c| c.base.token))
+        self.pen.as_ref().map(|p| p.0).or_else(|| {
+            self.floating_selection()
+                .map(|f| f.token())
+                .or_else(|| self.gesture.as_ref().map(|g| g.token))
+                .or_else(|| self.construction.as_ref().map(|c| c.base.token))
+        })
     }
 
     pub fn gesture_button(&self) -> Option<PointerButton> {
-        self.floating_selection()
-            .filter(|floating| floating.pointer_is_down())
-            .map(|_| PointerButton::Primary)
-            .or_else(|| self.gesture.as_ref().map(|g| g.button))
+        self.pen
+            .as_ref()
+            .and_then(|p| p.1.samples().first())
+            .map(|s| {
+                if s.identity.kind == paintcraft_input::tablet::DeviceKind::Eraser {
+                    PointerButton::Primary
+                } else {
+                    s.buttons.ink_button()
+                }
+            })
             .or_else(|| {
-                self.construction
-                    .as_ref()
-                    .filter(|c| c.pressed)
-                    .map(|c| c.base.button)
+                self.floating_selection()
+                    .filter(|floating| floating.pointer_is_down())
+                    .map(|_| PointerButton::Primary)
+                    .or_else(|| self.gesture.as_ref().map(|g| g.button))
+                    .or_else(|| {
+                        self.construction
+                            .as_ref()
+                            .filter(|c| c.pressed)
+                            .map(|c| c.base.button)
+                    })
             })
     }
     pub fn gesture_is_path(&self) -> bool {
@@ -262,7 +287,10 @@ impl ToolState {
     }
 
     pub fn gesture_in_progress(&self) -> bool {
-        self.floating_selection().is_some() || self.gesture.is_some() || self.construction.is_some()
+        self.pen.is_some()
+            || self.floating_selection().is_some()
+            || self.gesture.is_some()
+            || self.construction.is_some()
     }
     pub fn pointer_is_down(&self) -> bool {
         self.gesture_button().is_some()
@@ -315,6 +343,9 @@ impl ToolState {
     }
 
     pub fn preview(&self) -> Option<Preview> {
+        if let Some((_, stroke)) = &self.pen {
+            return Some(Preview::PenStroke(stroke.clone()));
+        }
         if let Some(floating) = self.floating_selection() {
             return floating.preview();
         }
@@ -505,10 +536,11 @@ impl ToolState {
     }
 
     pub fn cancel_gesture(&mut self) {
+        let pen = self.pen.take().is_some();
         let floating = self.floating.take().is_some();
         let gesture = self.gesture.take().is_some();
         let construction = self.construction.take().is_some();
-        if floating || gesture || construction {
+        if pen || floating || gesture || construction {
             self.preview_revision.advance();
         }
     }

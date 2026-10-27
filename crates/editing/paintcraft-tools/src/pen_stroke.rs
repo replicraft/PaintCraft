@@ -342,3 +342,19 @@ impl ResolvedPenStroke {
         )
     }
 }
+
+impl PartialEq for PenStroke {
+    fn eq(&self, other: &Self) -> bool {
+        self.style == other.style && self.samples.values == other.samples.values
+    }
+}
+impl PenStroke {
+    /// Use the captured source's shared metadata realm for geometry and masks.
+    pub fn resolve_captured(
+        &self,
+        clip: Rect,
+        check: &dyn Fn() -> Result<()>,
+    ) -> Result<ResolvedPenStroke> {
+        self.resolve(clip, &self.samples.account.budget(), check)
+    }
+}
