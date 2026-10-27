@@ -233,13 +233,21 @@ fn inverted_eraser_has_one_erase_transaction_and_preserves_surviving_straight_wh
         );
         if studio {
             let edge = preview
-                .chunks_exact(4)
+                .as_chunks::<4>()
+                .0
+                .iter()
                 .find(|p| p[3] > 0 && p[3] < 255)
                 .expect("antialiased alpha edge");
             assert_eq!(&edge[..3], &[255, 255, 255]);
         } else {
-            assert!(preview.chunks_exact(4).all(|p| p[3] == 255));
-            assert!(preview.chunks_exact(4).any(|p| p == [231, 219, 207, 255]));
+            assert!(preview.as_chunks::<4>().0.iter().all(|p| p[3] == 255));
+            assert!(
+                preview
+                    .as_chunks::<4>()
+                    .0
+                    .iter()
+                    .any(|p| p == &[231, 219, 207, 255])
+            );
         }
     }
 }
