@@ -12,7 +12,7 @@ Desktop and browser share the frontend registry, with platform-specific qualific
 - Classic 7/10/11 open and export PNG, JPEG, BMP, still GIF and single-page TIFF. CLI Classic profiles can explicitly import the admitted PCX and MSP subsets; the Classic 11 CLI profile also admits the limited PAINT conversion. Desktop/browser Import image is currently a Studio action, so these headless allowances do not imply additional Classic menus.
 - Studio also opens TGA, still WebP and admitted 2D DDS top-mip images with loss review when lower levels are omitted, and opens the admitted historical PDN subset as a converted copy.
 - Studio's explicit Import image workflow adds QOI, Netpbm, farbfeld, PCX, historical monochrome MSP, selected DCX pages, OpenRaster layers with a limited neutral-group conversion and the admitted PAINT subset. These extended imports do not silently expand ordinary Open or Recent filters.
-- Studio offers **15 flat exports**: PNG, JPEG, BMP, GIF, TIFF, TGA, WebP, JPEG XL, DDS, AVIF, QOI, PAM, farbfeld, PCX with RGB24 or indexed palettes, and exact opaque black/white MSP1. PAM output always uses `.pam`, never a `.ppm`, `.pgm`, `.pbm` or generic `.pnm` filename.
+- Studio offers **15 flat exports**: PNG, JPEG, BMP, GIF, TIFF, TGA, WebP, JPEG XL, DDS, AVIF, QOI, PAM, farbfeld, PCX with RGB24 or indexed palettes, and exact opaque black/white MSP1. Native CLI/MCP can also explicitly select MSP2 row-RLE. PAM output always uses `.pam`, never a `.ppm`, `.pgm`, `.pbm` or generic `.pnm` filename.
 - Native Studio, CLI and MCP offer explicit DDS texture copies: uncompressed RGBA8 or lossy BC1/BC2/BC3, sRGB or converted linear8 samples, and generated mip levels. Native Studio previews the decoded base image and reviews losses before choosing the output. The browser retains its existing single-level RGBA8 exporter; advanced browser texture export is not enabled.
 - DCX requires a page choice. Desktop/browser stage a page chooser before decoding and loss confirmation; CLI `import --page` and MCP `import_image` use an explicit zero-based page index. There is no implicit page-zero import.
 - ICNS import requires a specific entry with logical size, Retina scale and physical pixels shown separately. Studio desktop/browser preview and review import/export losses; fresh export offers only eight qualified PNG types. CLI/MCP use the same explicit entry/type policy; ordinary Open and preserving ICNS Save stay denied.
@@ -50,7 +50,7 @@ Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, 
 | ICO/CUR | Studio explicit selected-entry Import on desktop/browser; CLI `--entry` and MCP `entry`. Fresh multi-entry export in Studio desktop/browser, CLI `export-icons` and MCP `export_icons` | Reports every admitted entry and cursor hotspot before selection. Fresh exports use explicit sizes, RGBA PNG or 32-bit bitmap entries, independent aspect-ratio fitting, and per-entry CUR hotspots. Desktop/browser exports require a displayed preview and explicit loss consent; foreign preserving save remains unavailable |
 | PSD/PSB | Studio explicit Import on desktop/browser; CLI `import` and MCP `import_image` | RGB8 Normal raster-layer subset retains names, offsets, opacity, visibility and alpha. Metadata losses need explicit consent. Groups, masks, text, effects, clipping and high depth remain unavailable. Internal fresh RGB8 layered writer has independent raw-layer/profile proof; public writing remains disabled pending original-application qualification |
 | SVG/SVGZ | Studio desktop/browser Import; CLI `import` with `--svg-width`/`--svg-height`; MCP `import_image` with `svg` options | Explicit size/DPI/fitting and rasterization consent. Studio previews use bundled fonts and additional font files; CLI/MCP accept outline fonts too. No Classic access, ordinary Open or SVG export |
-| MSP | Explicit Studio import/exact export in desktop, browser, CLI and MCP; headless Classic legacy import | DanM raw and admitted LinS row-RLE profile with independent Pillow pixel checks. Named metadata consent and frozen native source protection; no ordinary Classic Open, preserving MSP Save, hidden threshold/matte or MSP2 writer |
+| MSP | Explicit Studio import and fresh MSP1 export in desktop/browser/CLI/MCP; native CLI/MCP also select MSP1 or MSP2; headless Classic legacy import | DanM raw and admitted LinS row-RLE profiles with independent Pillow checks. Explicit versions use one monochrome composite and retained two-stage admission. No implicit threshold, dither, matte or alpha removal; actual flatten/hidden-RGB losses require consent. Native/browser UI version selection, original Windows Paint compatibility and preserving Save remain unqualified |
 | ICNS | Studio desktop/browser explicit selected-entry Import and fresh typed export; CLI `inspect-icns` / `import --entry` / `export-icns`; MCP `inspect_icns` / `import_image` / `export_icns` | Admitted PNG and small RGB/mask readers; eight explicit PNG output types. Logical size, Retina scale and physical pixels stay distinct. Displayed preview and loss consent required in Studio. No ordinary Open, preserving Save, Classic access, legacy writer or canonical ARGB support; native readback exclusions remain |
 | EXR/HDR | Native Studio explicit conversion; CLI `inspect-float` / `import-float`; MCP `inspect_float` / `import_float` | Verified final V7 helper, at most 16 MiB source and 1,048,576 pixels. Admitted RGBE or single-part scanline RGB[A] HALF/FLOAT becomes 8-bit sRGB under explicit settings and actual loss consent. No ordinary Open, Classic/browser conversion, HDR editing, foreign writer or preserving Save; broader source profiles remain unqualified |
 | JP2 | Not yet enabled | OpenJPEG remains a candidate; deferred F7 import requires its own bounded decoder, color/loss policy and independent consumer qualification |
@@ -109,7 +109,7 @@ consumer paths and prerequisites, rather than treating every candidate as a depe
 2. **Close the finite qualified stock profiles, then remaining required integrations.** Native identity sRGB8 and explicit SDR YCbCr AVIF profiles now have independently checked decoder/consumer routes, not full stock parity. V6 adds full/limited-range 4:4:4 and qualified 4:2:0 with reconstruction consent; unknown siting, HDR, grids, transforms and browser execution remain separate. HEIF has its narrow native color import below, while broader camera/grid/ICC/HDR/deep-color and browser profiles remain unqualified. The existing isolated helper and bounded preflight must remain the reader boundary; enabling `image`'s separate native feature alone is insufficient. HEIF writing remains prohibited.
 3. **Implement and qualify layered writes.** PDN has a bounded internal typed PDN3 writer and native layered-copy preparation; public and preserving writes still await actual Paint.NET open/edit/resave. PAINT now also has an internal bounded typed writer, immutable native preparation and gated CLI/MCP fresh-copy routes; public/preserving Windows Paint qualification is still required. Its UI-name, visibility and opacity extensions remain unqualified. ORA's internal writer is not publicly enabled; editable group semantics and original-application qualification remain. Neutral pass-through group conversion is a limited import profile, not hierarchy preservation. PSD/PSB now have a bounded internal fresh RGB8 Normal raster-layer writer with independent psd-tools/Pillow checks; public layered export still awaits actual Photoshop open/edit/resave qualification. Groups, masks, text, effects and high-depth output remain unsupported. Separately, JPEG XR has an isolated fixed-RGB8 writer, native parent preparation and actual Studio/CLI/MCP fresh-copy consumers with independent C evidence. Default promotion, broader writer profiles and release-target execution remain pending.
 4. **Extend qualified HDR/EXR conversion and distribution evidence.** Native isolated conversion, actual Studio preview/adoption and CLI/MCP inspection/import now work for the bounded profiles below. The final V7 helper uses selected image HDR and pinned `exr` 1.74.2 with Rayon disabled; standalone in-process qualification adapters are not the product isolation boundary. Explicit settings, digest-bound actual losses and the retained-linear-alpha compositing limitation remain required. Broader Radiance orientations/XYZE, EXR tiled/deep/multipart or differing windows, additional compression/color profiles and high-depth editing remain unsupported; their implementation and qualification cannot be inferred from the narrow route. All six native release targets and broader original-file/reference matrices still need execution. Zune HDR 0.5.2 failed retained exponent-wrap probes and is not adopted. JP2 remains deferred F7 work, not an implemented conversion or an initial-release dependency.
-5. **Complete remaining required profiles without widening labels.** Narrow subsets do not close the pack's broader format requirements. DDS now has top-mip imports with omission consent and native RGBA8/BC1/BC2/BC3 fresh exports with explicit generated-mip policy. This does not close the whole texture gate: advanced browser consumers, further qualified encoding/alpha/swizzle/filter profiles and release/reference evidence remain. The current array/face policy is explicit refusal of arrays, cubes and volumes. Custom stored mips are not represented in Document; exports derive new levels from the base and never claim to preserve or update stale source mips. `TEXTURE_ICON_VECTOR.md` conditions additional BC families on encoder/profile qualification; compiling broad container support does not enable them. Additional JXL/JXR profiles still need their specified implementation and evidence. Track DCX multi-page consumers, MSP2 consumers, original historical-app evidence, TIFF precision/pages, ABR dynamics/pattern behavior, ASE color adoption and CSH path variants against their individual contracts; being unimplemented is not a basis for calling a requirement optional. Explicitly future animation/multipage editing remains distinct from current single-image conversion. Foreign preserving Save remains a separate gate throughout.
+5. **Complete remaining required profiles without widening labels.** Narrow subsets do not close the pack's broader format requirements. DDS now has top-mip imports with omission consent and native RGBA8/BC1/BC2/BC3 fresh exports with explicit generated-mip policy. This does not close the whole texture gate: advanced browser consumers, further qualified encoding/alpha/swizzle/filter profiles and release/reference evidence remain. The current array/face policy is explicit refusal of arrays, cubes and volumes. Custom stored mips are not represented in Document; exports derive new levels from the base and never claim to preserve or update stale source mips. `TEXTURE_ICON_VECTOR.md` conditions additional BC families on encoder/profile qualification; compiling broad container support does not enable them. Additional JXL/JXR profiles still need their specified implementation and evidence. Track DCX multi-page consumers, remaining native/browser MSP2 UI selection, original historical-app evidence, TIFF precision/pages, ABR dynamics/pattern behavior, ASE color adoption and CSH path variants against their individual contracts; being unimplemented is not a basis for calling a requirement optional. Explicitly future animation/multipage editing remains distinct from current single-image conversion. Foreign preserving Save remains a separate gate throughout.
 6. **Keep optional F7 imports distinct from initial-format parity.** JP2, RAW, selected PDF pages, KRA/XCF and the animation model remain future capabilities. They need their own bounded services, source/loss policies and real reference consumers; compiling a library is insufficient.
 7. **Close the delivery gates for each implemented profile.** Complete the pack's hostile-input fuzzing, independent reference/version matrices, reproducible codec and whole-operation benchmark exports, failure/cancellation-tail tests and installed-helper/packaging coverage on all six release targets. Local controlled fixtures and headless UI tests do not establish general original-application compatibility or a hard aggregate-memory guarantee.
 
@@ -893,8 +893,9 @@ refusal, cancellation and mutations. See [fixtures, provenance and exact profile
 The primary Pillow implementation documents zero-length MSP2 rows as inferred
 white-fill; this profile refuses them. Original historical Windows Paint and a
 complete normative Microsoft specification were unavailable, so original-program
-compatibility remains unqualified. MSP2 writing and explicit threshold/dither/matte
-conversion controls remain work.
+compatibility remains unqualified. The separately qualified MSP2 writer now has
+native CLI/MCP consumers below; native/browser UI version selection and explicit
+threshold/dither/matte conversion controls remain unsupported.
 
 The shared image facade and profile gates support explicit Studio import and
 fresh flat export on native/browser, CLI and MCP paths. CLI `import --frontend`
@@ -922,6 +923,48 @@ publication. Export accepts only already opaque black or white output pixels;
 acknowledging an unrelated loss never grants an implicit threshold or matte.
 Existing flatten/hidden-RGB loss policy still applies. These gates qualify the
 bounded format profile, not every historical specimen or original application.
+
+#### Native headless MSP version selection, 2026-10-26
+
+CLI `render --msp-version v1|v2` and MCP `export_image` with optional
+`msp_version` expose explicit fresh copies. Absence preserves the old MSP1
+route byte for byte; explicit V1 uses the same guarded preparation as V2.
+`native-msp2-row-rle-v1` is admitted only for Native + Studio + ExportFlat with
+`.msp`. `.msp2` is not an alias. Native Studio and browser UI still export MSP1;
+the headless gate does not add a GUI version selector, Classic export or ordinary
+Open. Foreign preserving Save remains denied.
+
+Both versions require already opaque black/white rendered pixels. The writer
+adds no threshold, dithering, matte, alpha discard or compression loss; actual
+common `flatten`/`hidden-rgb` consent still applies. Fresh RGBA packing writes
+canonical zero unused tail bits and does not claim to retain an original MSP
+header or bitplane. The existing packed-bit backend can retain explicitly
+supplied tail bits independently. The V2 packet/count walk uses the existing
+writer algorithm, with nonzero u16 encoded row lengths, 16 MiB output, positive
+16-bit dimensions and 4,194,304 pixels.
+
+Before the sole render, admission prices its RGBA composite, fixed 8192-byte
+row-counting scratch and bounded metadata, with retained document raster payload
+reported separately. Counting determines the exact packed/output quote before
+those full buffers are allocated. Both acquired leases and the prepared bytes
+remain held through staging and publication; source aliases, cancellation and
+changed destinations refuse the copy. Success never clears dirty state, retargets
+the saved binding or performs a fallible cancellation/source recheck after the
+file replacement is acknowledged. These are logical payload bounds, not a whole
+process RSS or latency guarantee. The explicit CLI path currently requires one
+render worker and the default generic quality; absent options keep the old path.
+
+The existing MSP2 specimens have an independent packet parser and pinned Pillow
+13.0.0 evidence. Actual CLI/MCP tests check 14 complete files from two nonuniform
+owned sources, including odd-width rows. Default and explicit V1 bytes agree;
+V2 differs and matches the independently qualified complete `runs-2048.msp`
+golden. Pillow and independent parsing verify every packed byte and visible
+pixel. MCP success starts from an already-dirty bound PCND session after an
+actual layer-name edit; complete inspection/history remains unchanged through
+all exports and renamed-source alias refusals. No original historical Windows
+Paint, native/browser UI version selection, release-platform matrix or benchmark
+is qualified by these checks. See the [consumer proof](../apps/paintcraft-cli/tests/msp-version-fixtures/README.md)
+and [MSP2 backend evidence](../crates/services/paintcraft-formats/tests/msp2-writer-fixtures/README.md).
 
 ### CSH resource adapter, 2026-10-25
 

@@ -306,6 +306,7 @@ Open. Metadata consent is mandatory:
 ```json
 {"name":"import_image","arguments":{"path":"/absolute/path/legacy.msp","allow_losses":["msp-metadata-ignored"]}}
 {"name":"export_image","arguments":{"path":"/absolute/path/fresh.msp"}}
+{"name":"export_image","arguments":{"path":"/absolute/path/fresh-v2.msp","msp_version":"v2"}}
 ```
 
 The import result includes conversion details: source SHA-256, acknowledged
@@ -315,20 +316,43 @@ imports preserve the previous document and its retained source guards. The
 MCP session protects the original acquired MSP identity after rename, through
 hard-link aliases and after saving the converted project to PCND.
 
-MSP export writes a fresh MSP1 picture only when every rendered pixel is already
-opaque black or white. Color, gray and alpha are rejected; no implicit threshold,
-dither or white matte is applied. Existing layer-flattening consent still applies.
-MSP2 writing, ambiguous zero-length MSP2 rows and original Windows Paint
-compatibility remain unqualified. See the [exact profile and oracle evidence](../crates/services/paintcraft-formats/tests/msp-fixtures/README.md).
+Omitting `msp_version` retains fresh MSP1 output. Explicit `"v1"` selects raw
+MSP1 and `"v2"` selects MSP2 row-RLE through the same guarded preparation. Unknown
+versions, version options on other formats, and combined DDS/MSP options are
+refused. Every rendered pixel must already be opaque black or white. Color,
+gray and alpha are rejected; no implicit threshold, dither or white matte is
+applied. Actual common `flatten`/`hidden-rgb` losses still need `allow_losses`;
+compression itself invents no pixel-loss consent.
+
+Explicit-version responses include `export` metadata (version, pixel/row policy,
+dimensions, exact packed/encoded byte counts and output SHA-256), alongside the
+normal `save` file-operation receipt. Both resource-admission leases remain live
+through staging/publication. Exports do not change history, dirty state or the
+saved binding, including an already-dirty opened project. Renamed/hardlinked
+sources and stale destinations remain protected. Output limits are 16 MiB,
+positive dimensions up to 65,535 per side and 4,194,304 pixels. Fresh RGBA packing
+zeros unused tail bits; source header/device metadata is not preserved.
+
+The explicit MSP2 variant is native Studio-profile CLI/MCP only. Native and
+browser UI version selection, ambiguous zero-length MSP2 rows and original
+Windows Paint compatibility remain unqualified. See the
+[base profile](../crates/services/paintcraft-formats/tests/msp-fixtures/README.md),
+[MSP2 backend evidence](../crates/services/paintcraft-formats/tests/msp2-writer-fixtures/README.md)
+and [actual version consumers](../apps/paintcraft-cli/tests/msp-version-fixtures/README.md).
 
 Equivalent CLI commands are:
 
 ```sh
 paintcraft-cli import legacy.msp --allow-loss msp-metadata-ignored -o converted.pcnd
 paintcraft-cli render converted.pcnd -o fresh.msp
+paintcraft-cli render converted.pcnd --msp-version v2 -o fresh-v2.msp
 paintcraft-cli paste-image drawing.pcnd legacy.msp \
     --allow-loss msp-metadata-ignored -o placed.pcnd
 ```
+
+Explicit version selection requires `--render-workers 1` and the default
+`--quality`; use `--expect-input-sha256` to require the captured PCND source digest.
+MSP1 remains the default native/browser Studio UI export.
 
 Explicit CLI legacy import also accepts `--frontend classic-v7`, `classic-v10` or
 `classic-v11`. MSP flat export uses the Studio profile. Each command retains its
