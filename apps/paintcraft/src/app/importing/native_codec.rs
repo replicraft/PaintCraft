@@ -84,6 +84,31 @@ fn admit_avif_profile(
         decision => decision.require_allowed(request),
     }
 }
+fn admit_jxr_profile(
+    frontend: registry::Frontend,
+    extension: Option<&str>,
+    assessment: &paintcraft_formats::jxr::NativeImportAssessment,
+) -> Result<()> {
+    let mut request = Request::new(
+        frontend,
+        Operation::ImportConvert,
+        Family::Jxr,
+        Platform::Native,
+    );
+    request.extension = extension;
+    request.variant = Some(if assessment.is_writer_compatible() {
+        wire::jxr_encode::qualified::WRITER_IMPORT_VARIANT
+    } else {
+        wire::NATIVE_JXR_IMPORT_VARIANT
+    });
+    match registry::admission(request) {
+        registry::Decision::Allowed
+        | registry::Decision::AllowedWithPreflight(registry::Reason::ConvertRequiresConsent) => {
+            Ok(())
+        }
+        decision => decision.require_allowed(request),
+    }
+}
 impl App {
     pub(crate) fn stage_native_jxl(&mut self, path: PathBuf) -> Result<()> {
         self.stage_native_jxl_with_launch(path, Box::new(launch))
@@ -140,11 +165,23 @@ impl App {
         );
         request.extension = path.extension().and_then(|value| value.to_str());
         request.variant = Some(variant);
-        match registry::admission(request) {
-            registry::Decision::Allowed => {}
-            registry::Decision::AllowedWithPreflight(registry::Reason::ConvertRequiresConsent)
-                if matches!(family, Family::Jxr | Family::Heif | Family::Avif) => {}
-            other => other.require_allowed(request)?,
+        if family == Family::Jxr {
+            // This only admits the family to sealed header assessment. The exact
+            // selected profile is admitted again before any helper is discovered.
+            let mut writer = request;
+            writer.variant = Some(wire::jxr_encode::qualified::WRITER_IMPORT_VARIANT);
+            if !registry::admission(request).available() && !registry::admission(writer).available()
+            {
+                registry::admission(request).require_allowed(request)?;
+            }
+        } else {
+            match registry::admission(request) {
+                registry::Decision::Allowed => {}
+                registry::Decision::AllowedWithPreflight(
+                    registry::Reason::ConvertRequiresConsent,
+                ) if matches!(family, Family::Heif | Family::Avif) => {}
+                other => other.require_allowed(request)?,
+            }
         }
         if self.pending_import.is_some()
             || self.has_document_drafts()
@@ -202,7 +239,16 @@ impl App {
                 application_version: env!("CARGO_PKG_VERSION").into(),
                 expected_sha256: None,
             };
-            if family == Family::Avif {
+            if family == Family::Jxr {
+                job.prepare_jxr_family(
+                    residency,
+                    lease,
+                    &check,
+                    &|| Ok(captured),
+                    |assessment| admit_jxr_profile(frontend, extension.as_deref(), assessment),
+                    launch,
+                )
+            } else if family == Family::Avif {
                 job.prepare_avif_family(
                     residency,
                     lease,
