@@ -102,6 +102,11 @@ pub struct Session {
 }
 
 impl Session {
+    /// Process-local ownership of this open session. Reopening the same document
+    /// creates a different owner even when its state/publication IDs match.
+    pub fn owner_id(&self) -> Uuid {
+        self.owner
+    }
     /// Open a document at publication epoch 0 with no history.
     pub fn new(doc: Document) -> Session {
         let doc = Arc::new(doc);
