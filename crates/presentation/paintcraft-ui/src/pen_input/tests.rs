@@ -1,7 +1,7 @@
 use super::*;
 use paintcraft_input::{
     Modifiers,
-    tablet::{Buttons, Clock, DeviceKind, Identity, Provenance, Time},
+    tablet::{Buttons, Clock, DeviceKind, Identity, Provenance, Time, receiver::UiEvent},
 };
 
 fn view() -> View {
@@ -178,6 +178,7 @@ fn exclusions_and_held_ui_pen_reject_palm_but_keep_modal_buttons_available() {
             .frame
             .ui
             .iter()
+            .map(|record| &record.event)
             .filter(|e| matches!(e, UiEvent::Button { pressed: true, .. }))
             .count(),
         1
@@ -187,6 +188,7 @@ fn exclusions_and_held_ui_pen_reject_palm_but_keep_modal_buttons_available() {
             .frame
             .ui
             .iter()
+            .map(|record| &record.event)
             .filter(|e| matches!(e, UiEvent::Button { pressed: false, .. }))
             .count(),
         1
@@ -316,6 +318,7 @@ fn ui_slider_survives_same_session_document_and_canvas_changes() {
             .frame
             .ui
             .iter()
+            .map(|record| &record.event)
             .any(|e| matches!(e, UiEvent::Button { pressed: true, .. }))
     );
     drop(first);
@@ -341,6 +344,7 @@ fn ui_slider_survives_same_session_document_and_canvas_changes() {
             .frame
             .ui
             .iter()
+            .map(|record| &record.event)
             .any(|e| matches!(e, UiEvent::Move { .. }))
     );
     drop(moved);
@@ -354,6 +358,7 @@ fn ui_slider_survives_same_session_document_and_canvas_changes() {
             .frame
             .ui
             .iter()
+            .map(|record| &record.event)
             .any(|e| matches!(e, UiEvent::Button { pressed: false, .. }))
     );
 }
@@ -384,6 +389,7 @@ fn ui_capture_retires_for_session_interface_focus_and_physical_display_changes()
                 .frame
                 .ui
                 .iter()
+                .map(|record| &record.event)
                 .all(|e| !matches!(e, UiEvent::Button { pressed: true, .. }))
         );
     }
@@ -417,6 +423,7 @@ fn completed_unpublished_ui_click_cannot_cross_session_interface_or_focus_change
                 .frame
                 .ui
                 .iter()
+                .map(|record| &record.event)
                 .all(|e| !matches!(e, UiEvent::Button { pressed: true, .. })),
             "mode {mode}"
         );

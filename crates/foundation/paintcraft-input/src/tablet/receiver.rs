@@ -35,10 +35,18 @@ pub enum UiEvent {
     },
     Gone,
 }
+/// Source ordering is retained alongside each widget event. None is an internal
+/// cancellation boundary, ordered before fresh source records; Some(0) remains
+/// a valid source sequence and is never confused with that boundary.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct OrderedUiEvent {
+    pub sequence: Option<u64>,
+    pub event: UiEvent,
+}
 #[derive(Debug, Default)]
 pub struct Frame {
     pub samples: Vec<Sample>,
-    pub ui: Vec<UiEvent>,
+    pub ui: Vec<OrderedUiEvent>,
     /// Hosts send UI events to widgets but never back into legacy canvas tools.
     pub suppress_legacy_pointer: bool,
     /// Hosts cancel private tools and clear captured GUI pointer state before
@@ -61,7 +69,7 @@ struct Stream {
 #[derive(Debug)]
 pub struct Receiver {
     router: Router,
-    ui: VecDeque<UiEvent>,
+    ui: VecDeque<OrderedUiEvent>,
     ui_limit: usize,
     stream: Option<Stream>,
     ui_position: Option<(f64, f64)>,
@@ -106,7 +114,7 @@ impl Receiver {
         })
     }
     pub fn storage_bytes(&self) -> usize {
-        self.router.storage_bytes() + self.ui.capacity() * std::mem::size_of::<UiEvent>()
+        self.router.storage_bytes() + self.ui.capacity() * std::mem::size_of::<OrderedUiEvent>()
     }
     pub fn pen_active(&self) -> bool {
         self.router.pen_active()
@@ -244,7 +252,7 @@ impl Receiver {
             Target::Ui => {
                 self.suppress |= held || raw.phase == Phase::Up;
                 if delivery == Delivery::ReceiverPointer {
-                    self.ui_event(at, raw.buttons, raw.modifiers, contact)?;
+                    self.ui_event(at, raw.buttons, raw.modifiers, contact, raw.sequence)?;
                     Route::Ui
                 } else {
                     Route::System
@@ -262,6 +270,7 @@ impl Receiver {
         buttons: Buttons,
         modifiers: Modifiers,
         primary: bool,
+        sequence: u64,
     ) -> Result<(), Invalid> {
         let secondary = buttons.0 & (Buttons::BARREL | Buttons::BARREL_UPPER) != 0;
         let mut pending = [None; 3];
@@ -288,7 +297,11 @@ impl Receiver {
             self.cancel();
             return Err(Invalid::Capacity);
         }
-        self.ui.extend(pending.into_iter().flatten());
+        self.ui
+            .extend(pending.into_iter().flatten().map(|event| OrderedUiEvent {
+                sequence: Some(sequence),
+                event,
+            }));
         self.ui_position = Some(at);
         self.ui_primary = primary;
         self.ui_secondary = secondary;
@@ -319,15 +332,21 @@ impl Receiver {
                 (self.release_secondary, PointerButton::Secondary),
             ] {
                 if held {
-                    self.ui.push_back(UiEvent::Button {
-                        at,
-                        button,
-                        pressed: false,
-                        modifiers: self.ui_modifiers,
+                    self.ui.push_back(OrderedUiEvent {
+                        sequence: None,
+                        event: UiEvent::Button {
+                            at,
+                            button,
+                            pressed: false,
+                            modifiers: self.ui_modifiers,
+                        },
                     });
                 }
             }
-            self.ui.push_back(UiEvent::Gone);
+            self.ui.push_back(OrderedUiEvent {
+                sequence: None,
+                event: UiEvent::Gone,
+            });
         }
         self.ui_primary = false;
         self.ui_secondary = false;
@@ -359,7 +378,7 @@ impl Receiver {
             return Ok(Frame::default());
         }
         let bytes = self.router.pending_samples() * std::mem::size_of::<Sample>()
-            + self.ui.len() * std::mem::size_of::<UiEvent>();
+            + self.ui.len() * std::mem::size_of::<OrderedUiEvent>();
         if let Err(error) = admit(bytes) {
             self.cancel();
             return Err(error);

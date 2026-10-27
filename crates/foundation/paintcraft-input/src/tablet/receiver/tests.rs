@@ -137,6 +137,7 @@ fn ui_button_ownership_stays_with_ui_even_after_crossing_canvas_and_contact_chan
     assert!(f.suppress_legacy_pointer);
     let buttons: Vec<_> =
         f.ui.iter()
+            .map(|record| &record.event)
             .filter_map(|e| {
                 if let UiEvent::Button {
                     button, pressed, ..
@@ -174,6 +175,7 @@ fn eraser_identity_while_hovering_does_not_hold_a_ui_button_or_capture_forever()
     let f = r.take(1, |_| Ok(())).unwrap();
     let buttons: Vec<_> =
         f.ui.iter()
+            .map(|record| &record.event)
             .filter_map(|e| {
                 if let UiEvent::Button {
                     button, pressed, ..
@@ -319,15 +321,20 @@ fn ui_capacity_and_admission_failure_keep_guaranteed_button_release_slots() {
     );
     let f = r.take(1, |_| Ok(())).unwrap();
     assert!(f.cancelled);
-    assert!(matches!(f.ui.last(), Some(UiEvent::Gone)));
+    assert!(matches!(
+        f.ui.last().map(|record| &record.event),
+        Some(UiEvent::Gone)
+    ));
     assert_eq!(
         f.ui.iter()
+            .map(|record| &record.event)
             .filter(|e| matches!(e, UiEvent::Button { pressed: true, .. }))
             .count(),
         0
     );
     assert_eq!(
         f.ui.iter()
+            .map(|record| &record.event)
             .filter(|e| matches!(e, UiEvent::Button { pressed: false, .. }))
             .count(),
         2
@@ -389,6 +396,7 @@ fn repeated_cancel_never_replays_unpublished_ui_presses_or_loses_required_releas
         pressed
             .ui
             .iter()
+            .map(|record| &record.event)
             .filter(|e| matches!(e, UiEvent::Button { pressed: true, .. }))
             .count(),
         2
@@ -403,17 +411,22 @@ fn repeated_cancel_never_replays_unpublished_ui_presses_or_loses_required_releas
         !cancelled
             .ui
             .iter()
+            .map(|record| &record.event)
             .any(|e| matches!(e, UiEvent::Button { pressed: true, .. }))
     );
     assert_eq!(
         cancelled
             .ui
             .iter()
+            .map(|record| &record.event)
             .filter(|e| matches!(e, UiEvent::Button { pressed: false, .. }))
             .count(),
         2
     );
-    assert!(matches!(cancelled.ui.last(), Some(UiEvent::Gone)));
+    assert!(matches!(
+        cancelled.ui.last().map(|record| &record.event),
+        Some(UiEvent::Gone)
+    ));
 }
 
 #[test]
@@ -463,4 +476,53 @@ fn held_stream_suppresses_competing_pointer_even_without_new_source_records() {
         assert!(r.take(3, |_| Ok(())).unwrap().suppress_legacy_pointer);
         assert!(!r.take(4, |_| Ok(())).unwrap().suppress_legacy_pointer);
     }
+}
+
+#[test]
+fn ordered_ui_distinguishes_actual_zero_from_cancel_boundary_and_prices_one_record_vec() {
+    let mut r = Receiver::new(32, 32).unwrap();
+    push(
+        &mut r,
+        raw(0, Phase::Down, Buttons::TIP),
+        permissions(false),
+    );
+    let mut admitted = 0;
+    let first = r
+        .take(1, |bytes| {
+            admitted = bytes;
+            Ok(())
+        })
+        .unwrap();
+    assert_eq!(
+        admitted,
+        first.ui.len() * std::mem::size_of::<OrderedUiEvent>()
+    );
+    assert!(first.ui.iter().all(|record| record.sequence == Some(0)));
+    r.cancel();
+    let mut fresh = raw(2, Phase::Down, Buttons::TIP);
+    fresh.provenance = Provenance::Coalesced;
+    push(&mut r, fresh, permissions(false));
+    let next = r.take(2, |_| Ok(())).unwrap();
+    assert!(next.cancelled);
+    assert!(next.ui.iter().any(|record| record.sequence.is_none()));
+    assert!(next.ui.iter().any(|record| record.sequence == Some(2)));
+    let split = next
+        .ui
+        .iter()
+        .position(|record| record.sequence.is_some())
+        .unwrap();
+    assert!(
+        next.ui[..split]
+            .iter()
+            .all(|record| record.sequence.is_none())
+    );
+    assert!(
+        next.ui[split..]
+            .iter()
+            .all(|record| record.sequence == Some(2))
+    );
+    assert!(r.take(3, |_| Err(Invalid::Capacity)).is_err());
+    let cancelled = r.take(4, |_| Ok(())).unwrap();
+    assert!(cancelled.cancelled);
+    assert!(cancelled.ui.iter().all(|record| record.sequence.is_none()));
 }

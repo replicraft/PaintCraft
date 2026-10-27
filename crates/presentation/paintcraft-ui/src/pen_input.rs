@@ -6,7 +6,7 @@ use paintcraft_core::types::{
 };
 use paintcraft_input::tablet::{
     Invalid, Permissions, Phase, RawSample, Sample, Transform,
-    receiver::{Delivery, Frame, Receiver, Route, UiEvent},
+    receiver::{Delivery, Frame, OrderedUiEvent, Receiver, Route},
 };
 use std::sync::{Arc, Mutex};
 
@@ -86,7 +86,7 @@ impl Source {
             return Err(invalid(Invalid::Capacity));
         }
         let bytes = source_capacity * std::mem::size_of::<Sample>()
-            + (ui_capacity + 3) * std::mem::size_of::<UiEvent>();
+            + (ui_capacity + 3) * std::mem::size_of::<OrderedUiEvent>();
         let mut storage = budget.account(AllocationClass::PaintMetadata);
         storage.resize(bytes as u64)?;
         // Separate reservation for at most one full source/UI handoff. Acquiring
