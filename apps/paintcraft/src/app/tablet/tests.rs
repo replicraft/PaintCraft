@@ -575,3 +575,45 @@ fn over_bound_widget_burst_retires_without_a_translated_prefix_or_stuck_button()
         paintcraft_input::tablet::receiver::Route::Suppressed
     );
 }
+
+#[test]
+fn widget_capture_survives_its_own_same_session_publication_between_drain_and_canvas() {
+    let (mut app, ctx) = setup();
+    let source = app.tablet.as_ref().unwrap().source.clone();
+    source
+        .publish(CaptureView {
+            owner: app.tablet_owner(),
+            transform: app.tablet_transform().unwrap(),
+            pixels_per_point: 1.0,
+            canvas: Rect::ZERO,
+            exclusions: [None; 64],
+            focused: true,
+            blocked: false,
+            ime: false,
+        })
+        .unwrap();
+    push(&app, 1, Phase::Down, 1);
+    drain(&mut app, &ctx);
+    app.editor.request(
+        991,
+        Action::ClearCanvas {
+            color: Rgba([11, 41, 71, 255]),
+        },
+    );
+    app.editor.run_pending();
+    canvas(&mut app);
+    publish(&app);
+    push(&app, 2, Phase::Up, 0);
+    let mut input = egui::RawInput {
+        focused: true,
+        ..Default::default()
+    };
+    app.tablet_raw_input(&ctx, &mut input);
+    assert!(!app.tablet.as_ref().unwrap().pass.cancelled());
+    assert!(
+        input
+            .events
+            .iter()
+            .any(|event| matches!(event, egui::Event::PointerButton { pressed: false, .. }))
+    );
+}

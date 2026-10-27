@@ -341,7 +341,11 @@ impl App {
             events.retain(|event| !pointer_event(event));
         }
         if let Some((captured, batch)) = receiver.pending.take() {
-            if captured != owner
+            let owner_changed = captured != owner
+                && (!batch.frame.samples.is_empty()
+                    || captured.session != owner.session
+                    || captured.interface != owner.interface);
+            if owner_changed
                 || !accept
                 || batch
                     .frame
