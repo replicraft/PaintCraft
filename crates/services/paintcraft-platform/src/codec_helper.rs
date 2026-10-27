@@ -6,6 +6,10 @@
 //! are not verified here. A checked path is not atomic execution-by-handle, and
 //! observed-change checks do not eliminate concurrent traversal/write/spawn races.
 mod decode;
+mod mixed;
+pub use mixed::{
+    VerifiedDecoderInstallation, discover_decoder_compatible, for_application_decoder_compatible,
+};
 mod encode;
 pub use decode::{VerifiedSchema3DecoderHelper, discover_decoder, for_application_decoder};
 mod files;

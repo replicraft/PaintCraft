@@ -581,3 +581,6 @@ mod four;
 
 #[path = "tests/encoder.rs"]
 mod encoder;
+
+#[path = "tests/mixed.rs"]
+mod mixed;
