@@ -420,7 +420,8 @@ fn capabilities_report_avif_exact_native_import_with_required_v5_preflight() {
                 &[
                     wire::AVIF_NATIVE_PROFILE,
                     wire::AVIF_SDR_NATIVE_PROFILE,
-                    wire::FLOAT_NATIVE_PROFILE
+                    wire::FLOAT_NATIVE_PROFILE,
+                    wire::jxr_encode::qualified::NATIVE_PROFILE
                 ]
             );
             assert_eq!(
@@ -490,7 +491,11 @@ fn capabilities_report_avif_sdr_exact_native_import_with_required_v6_preflight()
                 .collect();
             assert_eq!(
                 accepted.as_slice(),
-                &[wire::AVIF_SDR_NATIVE_PROFILE, wire::FLOAT_NATIVE_PROFILE]
+                &[
+                    wire::AVIF_SDR_NATIVE_PROFILE,
+                    wire::FLOAT_NATIVE_PROFILE,
+                    wire::jxr_encode::qualified::NATIVE_PROFILE
+                ]
             );
             assert_eq!(
                 row.get("required_helper_profile_is_minimum")
@@ -586,7 +591,13 @@ fn capabilities_report_float_conversion_only_with_exact_v7_preflight() {
                     .iter()
                     .map(|value| value.as_str().unwrap())
                     .collect();
-                assert_eq!(accepted, [wire::FLOAT_NATIVE_PROFILE]);
+                assert_eq!(
+                    accepted,
+                    [
+                        wire::FLOAT_NATIVE_PROFILE,
+                        wire::jxr_encode::qualified::NATIVE_PROFILE
+                    ]
+                );
             }
             assert!(!rows.iter().any(|row| {
                 row.get("capability")
@@ -598,3 +609,6 @@ fn capabilities_report_float_conversion_only_with_exact_v7_preflight() {
         }
     }
 }
+
+#[path = "format_profiles/jxr.rs"]
+mod jxr;

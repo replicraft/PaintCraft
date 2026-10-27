@@ -437,6 +437,18 @@ alpha/deep precision remain unavailable. Short headers retain this legacy route.
 Qualified long writer headers are selected structurally before launch through
 `native-jxr-writer-rgb8-worker-v1`; there is no decoder-error fallback.
 
+`paintcraft-cli --json capabilities --frontend studio` distinguishes `jxr.rgb8.import` (established
+short headers), `jxr.writer-rgb8.import` (the explicit long-header subset), and
+`jxr.rgb8.lossless.write` (fresh copies). The last two require the exact public V8
+profile; historical private helpers are refused. Every native codec row lists
+its finite `accepted_helper_profiles`, including compatible public V8 imports.
+The historical `required_helper_profile` field is explanatory; the finite array
+defines accepted alternatives rather than a version-order rule. Discovery keeps
+`installation_preflight_required: true` and
+`runtime_installation_verified: false`: it does not verify an installed helper
+or claim release qualification. These rows do not enable Classic, browser,
+generic Open or preserving Save.
+
 ## Native JPEG XR fresh copies
 
 `export_jxr` writes a native Studio fresh copy through the optional qualified V8

@@ -74,6 +74,12 @@ pub fn run(a: Options, json: bool) -> Reply {
                         "jpegxr-pure-rs/native-worker",
                     ),
                     (
+                        Family::Jxr,
+                        codec_worker::jxr_encode::qualified::WRITER_IMPORT_VARIANT,
+                        "jxr.writer-rgb8.import",
+                        "jpegxr-pure-rs/native-worker",
+                    ),
+                    (
                         Family::Heif,
                         codec_worker::NATIVE_HEIF_IMPORT_VARIANT,
                         "heif.srgb8.import",
@@ -122,7 +128,15 @@ pub fn run(a: Options, json: bool) -> Reply {
                             );
                             fields
                                 .insert("runtime_installation_verified".into(), Value::Bool(false));
+                            let profiles = native_import_profiles(variant);
+                            fields.insert(
+                                "accepted_helper_profiles".into(),
+                                Value::Array(profiles.iter().copied().map(Value::str).collect()),
+                            );
                             if matches!(family, Family::Hdr | Family::Exr) {
+                                // Preserve the historical explanatory field. Exact
+                                // accepted alternatives, rather than version ordering,
+                                // govern installation compatibility.
                                 fields.insert(
                                     "required_helper_profile".into(),
                                     Value::str(codec_worker::FLOAT_NATIVE_PROFILE),
@@ -131,29 +145,7 @@ pub fn run(a: Options, json: bool) -> Reply {
                                     "required_helper_profile_is_minimum".into(),
                                     Value::Bool(false),
                                 );
-                                fields.insert(
-                                    "accepted_helper_profiles".into(),
-                                    Value::Array(vec![Value::str(
-                                        codec_worker::FLOAT_NATIVE_PROFILE,
-                                    )]),
-                                );
                             } else if family == Family::Avif {
-                                let profiles: &[&str] =
-                                    if variant == codec_worker::NATIVE_AVIF_SDR_IMPORT_VARIANT {
-                                        &[
-                                            codec_worker::AVIF_SDR_NATIVE_PROFILE,
-                                            codec_worker::FLOAT_NATIVE_PROFILE,
-                                        ]
-                                    } else {
-                                        &[
-                                            codec_worker::AVIF_NATIVE_PROFILE,
-                                            codec_worker::AVIF_SDR_NATIVE_PROFILE,
-                                            codec_worker::FLOAT_NATIVE_PROFILE,
-                                        ]
-                                    };
-                                // Keep the old field as explanatory minimum compatibility.
-                                // Only this finite array authorizes known contracts; no
-                                // ordering rule accepts a hypothetical newer profile.
                                 fields.insert(
                                     "required_helper_profile".into(),
                                     Value::str(profiles[0]),
@@ -162,16 +154,63 @@ pub fn run(a: Options, json: bool) -> Reply {
                                     "required_helper_profile_is_minimum".into(),
                                     Value::Bool(true),
                                 );
+                            } else if variant
+                                == codec_worker::jxr_encode::qualified::WRITER_IMPORT_VARIANT
+                            {
                                 fields.insert(
-                                    "accepted_helper_profiles".into(),
-                                    Value::Array(
-                                        profiles.iter().copied().map(Value::str).collect(),
-                                    ),
+                                    "required_helper_profile".into(),
+                                    Value::str(codec_worker::jxr_encode::qualified::NATIVE_PROFILE),
+                                );
+                                fields.insert(
+                                    "required_helper_profile_is_minimum".into(),
+                                    Value::Bool(false),
                                 );
                             }
                         }
                         frontend_rows.push(value);
                     }
+                }
+            }
+            if a.frontend
+                .is_none_or(|profile| matches!(profile, super::format_profile::Profile::Studio))
+            {
+                use paintcraft_formats::{
+                    codec_worker::jxr_encode::qualified,
+                    registry::{self, Family, Frontend, Operation, Platform, Request},
+                };
+                let mut request = Request::new(
+                    Frontend::Studio,
+                    Operation::ExportFlat,
+                    Family::Jxr,
+                    Platform::Native,
+                );
+                request.variant = Some(qualified::EXPORT_VARIANT);
+                if registry::admission(request).available() {
+                    let mut value = row(
+                        "jxr.rgb8.lossless.write",
+                        "frontend/studio",
+                        "fresh-write",
+                        "jpegxr-pure-rs/native-worker",
+                    );
+                    if let Value::Object(fields) = &mut value {
+                        fields.insert("variant".into(), Value::str(qualified::EXPORT_VARIANT));
+                        fields.insert("platform".into(), Value::str("native"));
+                        fields.insert("installation_preflight_required".into(), Value::Bool(true));
+                        fields.insert("runtime_installation_verified".into(), Value::Bool(false));
+                        fields.insert(
+                            "required_helper_profile".into(),
+                            Value::str(qualified::NATIVE_PROFILE),
+                        );
+                        fields.insert(
+                            "required_helper_profile_is_minimum".into(),
+                            Value::Bool(false),
+                        );
+                        fields.insert(
+                            "accepted_helper_profiles".into(),
+                            Value::Array(vec![Value::str(qualified::NATIVE_PROFILE)]),
+                        );
+                    }
+                    frontend_rows.push(value);
                 }
             }
             if a.frontend
@@ -306,4 +345,37 @@ pub fn run(a: Options, json: bool) -> Reply {
             )
         }),
     )
+}
+
+/// Mirrors the codec-specific exact contracts in native::installed_helper.
+/// These are finite identities, never a minimum-version acceptance rule.
+fn native_import_profiles(variant: &str) -> &'static [&'static str] {
+    use paintcraft_formats::codec_worker::{self as wire, jxr_encode::qualified};
+    match variant {
+        wire::NATIVE_HDR_SDR_IMPORT_VARIANT | wire::NATIVE_EXR_SDR_IMPORT_VARIANT => {
+            &[wire::FLOAT_NATIVE_PROFILE, qualified::NATIVE_PROFILE]
+        }
+        wire::NATIVE_AVIF_SDR_IMPORT_VARIANT => &[
+            wire::AVIF_SDR_NATIVE_PROFILE,
+            wire::FLOAT_NATIVE_PROFILE,
+            qualified::NATIVE_PROFILE,
+        ],
+        wire::NATIVE_AVIF_IMPORT_VARIANT => &[
+            wire::AVIF_NATIVE_PROFILE,
+            wire::AVIF_SDR_NATIVE_PROFILE,
+            wire::FLOAT_NATIVE_PROFILE,
+            qualified::NATIVE_PROFILE,
+        ],
+        qualified::WRITER_IMPORT_VARIANT => &[qualified::NATIVE_PROFILE],
+        wire::NATIVE_JXL_IMPORT_VARIANT
+        | wire::NATIVE_JXR_IMPORT_VARIANT
+        | wire::NATIVE_HEIF_IMPORT_VARIANT => &[
+            wire::NATIVE_PROFILE,
+            wire::AVIF_NATIVE_PROFILE,
+            wire::AVIF_SDR_NATIVE_PROFILE,
+            wire::FLOAT_NATIVE_PROFILE,
+            qualified::NATIVE_PROFILE,
+        ],
+        _ => &[],
+    }
 }
