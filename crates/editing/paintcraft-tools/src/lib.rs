@@ -13,6 +13,7 @@ pub mod navigation;
 pub use contracts::*;
 mod geometry;
 mod path_admission;
+pub mod pen_stroke;
 mod picker;
 mod preview_revision;
 mod selection;
