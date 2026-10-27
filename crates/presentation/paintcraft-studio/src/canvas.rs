@@ -1,5 +1,8 @@
 //! Studio canvas presentation. Layered navigation is independent of Classic.
+#[path = "canvas_anchor.rs"]
+mod anchor;
 mod geometry;
+pub use anchor::anchor_at;
 use geometry::Geometry;
 
 #[derive(Clone, Copy)]
@@ -71,6 +74,18 @@ pub fn canvas_for_profile<R>(
                 position = geometry.clamp(position - delta);
                 force_position = true;
             }
+            let anchor_key = id.with("studio-anchor-request");
+            let anchor = ui
+                .data_mut(|data| {
+                    let request = data.get_temp::<anchor::Anchor>(anchor_key);
+                    data.remove::<anchor::Anchor>(anchor_key);
+                    request
+                })
+                .filter(|request| request.scope == scope);
+            if let Some(request) = anchor {
+                position = request.offset(viewport.min, geometry.leading, geometry.maximum);
+                force_position = true;
+            }
             let mut area = egui::ScrollArea::both()
                 .id_salt(("studio-canvas", id))
                 .auto_shrink([false, false])
@@ -81,6 +96,13 @@ pub fn canvas_for_profile<R>(
             if force_position {
                 area = area.scroll_offset(position);
             }
+            // Egui's physics uses last frame's bounds. A new zoom can place a
+            // valid anchor beyond that old maximum and spuriously seed inertia.
+            let kinetic = ui.spacing().scroll.kinetic;
+            if anchor.is_some() {
+                ui.spacing_mut().scroll.kinetic.rubber_band = false;
+                ui.spacing_mut().scroll.kinetic.decay_time = 0.0;
+            }
             let output = area.show_viewport(ui, |ui, view| {
                 let actual = Geometry::new(view.size(), size, overscroll);
                 let (content, _) = ui.allocate_exact_size(actual.extent, egui::Sense::hover());
@@ -90,6 +112,18 @@ pub fn canvas_for_profile<R>(
                     id.with("studio-canvas-image"),
                     egui::Sense::click_and_drag(),
                 );
+                if anchor.is_some() {
+                    // Replace an already-running scroll-to target via the public
+                    // API; the next begin clears it at the selected anchor.
+                    ui.scroll_to_rect_animation(
+                        egui::Rect::from_center_size(
+                            viewport.min + view.size() * 0.5,
+                            egui::Vec2::ZERO,
+                        ),
+                        Some(egui::Align::Center),
+                        egui::style::ScrollAnimation::none(),
+                    );
+                }
                 let painter = ui.painter_at(rect);
                 ui.painter().rect_filled(
                     rect.expand(1.0),
@@ -98,6 +132,9 @@ pub fn canvas_for_profile<R>(
                 );
                 (paint(ui, response, painter), actual)
             });
+            if anchor.is_some() {
+                ui.spacing_mut().scroll.kinetic = kinetic;
+            }
             let (result, actual) = output.inner;
             ui.data_mut(|data| {
                 data.insert_temp(offset, output.state.clamped_offset());
@@ -110,6 +147,26 @@ pub fn canvas_for_profile<R>(
                     },
                 );
             });
+            if let Some(request) = anchor.and_then(|request| {
+                request.settle(
+                    geometry.viewport,
+                    actual.viewport,
+                    ui.ctx().cumulative_frame_nr(),
+                    (output.state.unclamped_offset() - position).length() < 1.0
+                        && output.state.velocity() == egui::Vec2::ZERO,
+                )
+            }) {
+                ui.data_mut(|data| {
+                    if data.get_temp::<anchor::Anchor>(anchor_key).is_none()
+                        && !data
+                            .get_temp::<(egui::Id, egui::Vec2)>(pending)
+                            .is_some_and(|(source, _)| source == scope)
+                    {
+                        data.insert_temp(anchor_key, request);
+                    }
+                });
+                ui.ctx().request_repaint();
+            }
             if (actual.viewport - geometry.viewport).length() > 0.5 {
                 ui.ctx().request_repaint();
             }
@@ -124,8 +181,15 @@ pub fn pan_by(ctx: &egui::Context, id: egui::Id, scope: egui::Id, delta: egui::V
     if !delta.is_finite() || delta == egui::Vec2::ZERO {
         return;
     }
+    let anchor_key = id.with("studio-anchor-request");
     let id = id.with("studio-pan-request");
     ctx.data_mut(|data| {
+        if data
+            .get_temp::<anchor::Anchor>(anchor_key)
+            .is_some_and(|request| request.scope == scope)
+        {
+            data.remove::<anchor::Anchor>(anchor_key);
+        }
         let previous = data
             .get_temp::<(egui::Id, egui::Vec2)>(id)
             .filter(|(source, _)| *source == scope)
@@ -227,3 +291,7 @@ mod tests {
         assert!((accepted.min - rejected.min - egui::vec2(-50.0, -25.0)).length() < 0.1);
     }
 }
+
+#[cfg(test)]
+#[path = "canvas_anchor_tests.rs"]
+mod anchor_tests;
