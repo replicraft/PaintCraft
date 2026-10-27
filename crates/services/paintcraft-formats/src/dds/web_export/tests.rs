@@ -21,6 +21,7 @@ fn doc(width: u32, height: u32) -> Document {
 }
 fn capture(doc: &Document, options: TextureOptions) -> (Header, Vec<u8>) {
     let plan = SourcePlan::capture(doc, options).unwrap();
+    assert_eq!(plan.source_flags() & 1, u8::from(doc.roots.len() > 1));
     let source = plan.snapshot(doc).unwrap();
     let header = Header::capture(
         &plan,

@@ -98,6 +98,9 @@ impl SourcePlan {
             source_flags,
         })
     }
+    pub fn source_flags(&self) -> u8 {
+        self.source_flags
+    }
     pub fn settings(&self) -> [u8; 8] {
         self.settings
     }
