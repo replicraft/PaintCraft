@@ -1,16 +1,16 @@
 //! Retain acquired input identities throughout preparation, picking and publication.
 use super::*;
-use paintcraft_core::types::resources::BudgetLease;
+use paintcraft_core::types::{Error, ErrorCode, Result, resources::BudgetLease};
 use paintcraft_platform::source::SourceIdentity;
 
 #[derive(Debug)]
-pub(super) struct Sources {
+pub(crate) struct Sources {
     paths: Vec<PathBuf>,
     identities: Vec<SourceIdentity>,
     _metadata: BudgetLease,
 }
 impl Sources {
-    pub(super) fn capture(app: &App, budget: &paintcraft_runtime::SharedBudget) -> Result<Self> {
+    pub(crate) fn capture(app: &App, budget: &paintcraft_runtime::SharedBudget) -> Result<Self> {
         let paths: Vec<_> = app
             .document_source_paths()
             .into_iter()
@@ -41,12 +41,15 @@ impl Sources {
             })
             .and_then(|sum| sum.checked_add(4096))
             .ok_or_else(|| {
-                Error::new(ErrorCode::ResourceLimit, "JPEG XR state metadata overflow")
+                Error::new(
+                    ErrorCode::ResourceLimit,
+                    "Image export state metadata overflow",
+                )
             })?;
         let identity_bytes = (retained.len() as u64).checked_mul(512).ok_or_else(|| {
             Error::new(
                 ErrorCode::ResourceLimit,
-                "JPEG XR identity metadata overflow",
+                "Image export identity metadata overflow",
             )
         })?;
         let metadata = paths
@@ -55,12 +58,18 @@ impl Sources {
                 sum.checked_add(path.as_os_str().as_encoded_bytes().len() as u64)
                     .and_then(|sum| sum.checked_add(512))
                     .ok_or_else(|| {
-                        Error::new(ErrorCode::ResourceLimit, "JPEG XR source metadata overflow")
+                        Error::new(
+                            ErrorCode::ResourceLimit,
+                            "Image export source metadata overflow",
+                        )
                     })
             })?
             .checked_add(identity_bytes)
             .ok_or_else(|| {
-                Error::new(ErrorCode::ResourceLimit, "JPEG XR source identity overflow")
+                Error::new(
+                    ErrorCode::ResourceLimit,
+                    "Image export source identity overflow",
+                )
             })?;
         let lease = budget.reserve(metadata)?;
         let mut identities: Vec<_> = retained.into_iter().cloned().collect();
@@ -75,7 +84,7 @@ impl Sources {
             _metadata: lease,
         })
     }
-    pub(super) fn check_destination(&self, destination: &Path) -> Result<()> {
+    pub(crate) fn check_destination(&self, destination: &Path) -> Result<()> {
         let candidate = SourceIdentity::existing_destination(destination)?;
         if self
             .paths

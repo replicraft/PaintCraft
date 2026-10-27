@@ -6,11 +6,9 @@ use paintcraft_formats::{
     registry::{self, Family, Operation, Platform, Request},
 };
 use paintcraft_ui::t;
-#[path = "jxr_export/sources.rs"]
-mod sources;
 #[path = "jxr_export/worker.rs"]
 mod worker;
-use sources::Sources;
+use crate::export_sources::Sources;
 
 type Prepared = controller::background::PreparedJxrExport;
 #[derive(Debug)]
