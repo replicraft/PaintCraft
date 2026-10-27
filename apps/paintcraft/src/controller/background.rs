@@ -8,6 +8,9 @@ use std::sync::Mutex;
 #[path = "background/import.rs"]
 mod import;
 pub(crate) use import::ImportPending;
+#[path = "background/jxr_export.rs"]
+mod jxr_export;
+pub(crate) use jxr_export::{JxrExportPending, PreparedJxrExport};
 
 // Provisional preparation admission, not allocator/RSS accounting. The service
 // admits one transaction across all documents, including unconsumed results.
@@ -16,6 +19,7 @@ const PREPARATION_CHARGE: u64 = 2 << 30;
 pub(super) enum Completion {
     Edit(PreparedEdit),
     CodecImport(Box<paintcraft_formats::codec_worker::native::PreparedImport>),
+    JxrExport(Box<PreparedJxrExport>),
     Pick(Box<picker::Picked>),
     Deferred(Box<retry::Deferred>),
     Navigation(PreparedNavigation),
@@ -375,7 +379,7 @@ impl Editor {
                     self.retarget();
                 }),
             Ok(Completion::Deferred(_)) => unreachable!("deferred edits were retained above"),
-            Ok(Completion::CodecImport(_)) => Err(Error::new(
+            Ok(Completion::CodecImport(_) | Completion::JxrExport(_)) => Err(Error::new(
                 ErrorCode::InvariantViolation,
                 "Codec import completion belongs to the application",
             )),
