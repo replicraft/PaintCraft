@@ -430,3 +430,9 @@ codec-jobs-are-paused-for-this-tab-download-your-project-then-reload-to-try-agai
 download-dds = DDS डाउनलोड करें
 dds-download-could-not-be-requested = DDS डाउनलोड शुरू नहीं किया जा सका।
 requesting-dds-download-more = DDS डाउनलोड शुरू किया जा रहा है…
+
+this-browser-msp2-profile-allows-up-to-4-194-304-canvas-pixels-and-8-layers-larger-or-more-complex-snapshots-are-refused = इस ब्राउज़र के MSP2 प्रोफ़ाइल में कैनवास के अधिकतम 4,194,304 पिक्सेल और 8 लेयर स्वीकार हैं। इससे बड़े या अधिक जटिल स्नैपशॉट अस्वीकार किए जाते हैं।
+msp-export-failed-the-current-document-was-kept = MSP निर्यात विफल हुआ; मौजूदा दस्तावेज़ सुरक्षित रखा गया है।
+download-msp = MSP डाउनलोड करें
+requesting-msp-download-more = MSP डाउनलोड का अनुरोध किया जा रहा है…
+msp-download-could-not-be-requested = MSP डाउनलोड का अनुरोध नहीं किया जा सका।

@@ -430,3 +430,9 @@ codec-jobs-are-paused-for-this-tab-download-your-project-then-reload-to-try-agai
 download-dds = DDS herunterladen
 dds-download-could-not-be-requested = Der DDS-Download konnte nicht angefordert werden.
 requesting-dds-download-more = DDS-Download wird angefordert…
+
+this-browser-msp2-profile-allows-up-to-4-194-304-canvas-pixels-and-8-layers-larger-or-more-complex-snapshots-are-refused = Dieses MSP2-Browserprofil erlaubt bis zu 4.194.304 Bildpunkte und 8 Ebenen. Größere oder komplexere Momentaufnahmen werden abgelehnt.
+msp-export-failed-the-current-document-was-kept = Der MSP-Export ist fehlgeschlagen. Das aktuelle Dokument wurde beibehalten.
+download-msp = MSP herunterladen
+requesting-msp-download-more = MSP-Download wird angefordert…
+msp-download-could-not-be-requested = Der MSP-Download konnte nicht angefordert werden.

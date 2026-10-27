@@ -430,3 +430,9 @@ codec-jobs-are-paused-for-this-tab-download-your-project-then-reload-to-try-agai
 download-dds = 下载 DDS
 dds-download-could-not-be-requested = 无法发起 DDS 下载。
 requesting-dds-download-more = 正在发起 DDS 下载…
+
+this-browser-msp2-profile-allows-up-to-4-194-304-canvas-pixels-and-8-layers-larger-or-more-complex-snapshots-are-refused = 此浏览器 MSP2 配置最多支持 4,194,304 个画布像素和 8 个图层。更大或更复杂的快照将被拒绝。
+msp-export-failed-the-current-document-was-kept = MSP 导出失败；当前文档已保留。
+download-msp = 下载 MSP
+requesting-msp-download-more = 正在请求下载 MSP…
+msp-download-could-not-be-requested = 无法请求下载 MSP。
