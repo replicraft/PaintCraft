@@ -34,6 +34,8 @@ mod selection;
 use paintcraft_tools::commands as raster_commands;
 pub(crate) use preview_cache::Stamp as PreviewStamp;
 pub(crate) use strokes::PreviewPreparation;
+#[path = "controller/pen.rs"]
+mod pen;
 #[path = "controller/residency.rs"]
 mod residency;
 #[path = "controller/resource_shape.rs"]
@@ -104,6 +106,7 @@ pub struct Editor {
     preview_lineage: Uuid,
     preview_queue_revision: paintcraft_tools::PreviewRevision,
     preview_cache: preview_cache::Cache,
+    pen_base: Option<paintcraft_editor::session::Ticket>,
     path: Option<PathBuf>,
     destination: Option<crate::destination::Binding>,
     status: String,
@@ -175,6 +178,7 @@ impl Editor {
             preview_lineage: Uuid::new_v4(),
             preview_queue_revision: Default::default(),
             preview_cache: Default::default(),
+            pen_base: None,
             destination: path
                 .as_ref()
                 .map(|_| crate::destination::Binding::authorized()),
@@ -564,6 +568,7 @@ impl Editor {
             Action::Stroke(stroke) => self.stroke(&stroke),
             Action::ToolFailure(message) => self.status = message.into(),
             Action::SampledStroke(stroke) => self.sampled_stroke(stroke),
+            Action::PenStroke(stroke) => self.pen_stroke(stroke),
             Action::ResourceShape(shape) => self.resource_shape_stroke(shape),
             Action::Fill {
                 layer,

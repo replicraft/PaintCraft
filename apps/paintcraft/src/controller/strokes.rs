@@ -166,6 +166,15 @@ impl PreviewPreparation {
                     })?
                     .operations(*shape, self.canvas, self.empty, &check)?
             }
+            Some(Preview::PenStroke(stroke)) => {
+                let operations = stroke
+                    .resolve_captured(self.canvas, &check)?
+                    .operations(&check)?;
+                if operations.is_empty() {
+                    return Ok(None);
+                }
+                operations
+            }
             Some(Preview::SampledStroke(stroke)) => {
                 let resolved = stroke.preview(
                     self.canvas,
@@ -267,25 +276,32 @@ impl PreviewPreparation {
             _ => return Ok(None),
         };
         check()?;
-        let batch = Batch::from_value(&Value::object([
-            ("schema", Value::str("paintcraft.batch/v2")),
-            ("atomic", Value::Bool(true)),
-            ("policy", Value::str(POLICY)),
-            (
-                "base",
-                Value::object([
-                    ("state_id", Value::str(self.ticket.state_id.to_string())),
-                    (
-                        "publication_epoch",
-                        Value::str(self.ticket.publication_epoch.to_string()),
-                    ),
-                ]),
-            ),
-            ("operations", Value::Array(operations)),
-        ]))?;
+        let batch = captured_batch(self.ticket, operations)?;
         check()?;
         Ok(Some(batch))
     }
+}
+
+pub(super) fn captured_batch(
+    ticket: paintcraft_editor::session::Ticket,
+    operations: Vec<Value>,
+) -> Result<Batch> {
+    Batch::from_value(&Value::object([
+        ("schema", Value::str("paintcraft.batch/v2")),
+        ("atomic", Value::Bool(true)),
+        ("policy", Value::str(POLICY)),
+        (
+            "base",
+            Value::object([
+                ("state_id", Value::str(ticket.state_id.to_string())),
+                (
+                    "publication_epoch",
+                    Value::str(ticket.publication_epoch.to_string()),
+                ),
+            ]),
+        ),
+        ("operations", Value::Array(operations)),
+    ]))
 }
 
 #[cfg(test)]

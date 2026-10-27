@@ -25,6 +25,7 @@ const PREPARATION_CHARGE: u64 = 2 << 30;
 #[derive(Debug)]
 pub(super) enum Completion {
     Edit(PreparedEdit),
+    PenEdit(super::pen::Prepared),
     CodecImport(Box<paintcraft_formats::codec_worker::native::PreparedImport>),
     JxrExport(Box<PreparedJxrExport>),
     DdsExport(Box<crate::dds_export::worker::Prepared>),
@@ -376,6 +377,11 @@ impl Editor {
                 .map(|receipt| {
                     self.accept_edit(&receipt, &pending.done, pending.target_alias, before_canvas);
                 }),
+            Ok(Completion::PenEdit(prepared)) => {
+                prepared.publish(&mut self.session).map(|receipt| {
+                    self.accept_edit(&receipt, &pending.done, pending.target_alias, before_canvas);
+                })
+            }
             Ok(Completion::Navigation(prepared)) => self
                 .session
                 .publish_navigation(prepared, || Ok(()))
@@ -436,6 +442,7 @@ pub(super) fn preview(action: &Action) -> Option<Preview> {
         Action::Contour(contour) => Some(Preview::Contour(contour.clone())),
         Action::Stroke(stroke) => Some(Preview::Path(stroke.clone())),
         Action::SampledStroke(stroke) => Some(Preview::SampledStroke(stroke.clone())),
+        Action::PenStroke(stroke) => Some(Preview::PenStroke(stroke.clone())),
         Action::ResourceShape(shape) => Some(Preview::ResourceShape(*shape)),
         Action::Shape {
             layer,

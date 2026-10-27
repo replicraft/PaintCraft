@@ -417,6 +417,7 @@ impl App {
                 preview,
                 Preview::ResourceShape(_)
                     | Preview::SampledStroke(_)
+                    | Preview::PenStroke(_)
                     | Preview::Path(_)
                     | Preview::Paths(_)
                     | Preview::Shape { .. }
@@ -428,6 +429,7 @@ impl App {
             Some(
                 Preview::ResourceShape(_)
                 | Preview::SampledStroke(_)
+                | Preview::PenStroke(_)
                 | Preview::Path(_)
                 | Preview::Paths(_)
                 | Preview::Shape { .. }

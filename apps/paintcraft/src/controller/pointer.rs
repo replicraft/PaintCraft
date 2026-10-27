@@ -151,6 +151,7 @@ impl Editor {
         }
     }
     pub fn cancel_gesture(&mut self) {
+        self.pen_base = None;
         self.interrupt_image_paste();
         self.floating_source = None;
         self.tools.cancel_gesture();
