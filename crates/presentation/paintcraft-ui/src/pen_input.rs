@@ -198,6 +198,15 @@ impl Source {
             delivery,
         )
     }
+    /// DOM/native intake can fence physical tails after host-side retirement.
+    /// Reading this token neither drains input nor invokes GUI callbacks.
+    pub fn cancellation_epoch(&self) -> u64 {
+        self.0
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .receiver
+            .cancellation_epoch()
+    }
     pub fn cancel(&self) {
         self.0
             .lock()

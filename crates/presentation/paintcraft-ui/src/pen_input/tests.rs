@@ -610,3 +610,18 @@ fn continuation_metadata_admits_only_monotonic_completion_before_a_later_contact
         Err(Invalid::Order)
     );
 }
+
+#[test]
+fn host_retirement_epoch_is_observable_after_the_entire_contact_left_the_queue() {
+    let budget = SharedBudget::new(1_000_000);
+    let source = source(&budget);
+    push(&source, 1, Phase::Down);
+    push(&source, 2, Phase::Up);
+    let batch = source.take(1, view().owner, false).unwrap();
+    let before = source.cancellation_epoch();
+    source.cancel();
+    assert_eq!(source.cancellation_epoch(), before + 1);
+    source.publish(view()).unwrap();
+    assert_eq!(source.cancellation_epoch(), before + 1);
+    assert!(!source.batch_is_current(&batch, view().owner));
+}
