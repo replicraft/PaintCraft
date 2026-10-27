@@ -186,7 +186,19 @@ fn prepare(
                 application_version: env!("CARGO_PKG_VERSION").into(),
                 expected_sha256: None,
             };
-            if codec == wire::Codec::AvifSrgb8 {
+            if codec == wire::Codec::JxrRgb8 {
+                job.prepare_jxr_family(
+                    residency,
+                    lease,
+                    &check,
+                    &|| Ok(captured),
+                    |assessment| {
+                        super::super::format_profile::Options::default()
+                            .admit_import_jxr_assessment(&source, assessment)
+                    },
+                    launch,
+                )
+            } else if codec == wire::Codec::AvifSrgb8 {
                 job.prepare_avif_family(
                     residency,
                     lease,

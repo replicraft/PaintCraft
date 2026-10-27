@@ -102,6 +102,18 @@ impl Options {
         };
         self.admit_import_native_variant(path, family, variant)
     }
+    pub fn admit_import_jxr_assessment(
+        &self,
+        path: &std::path::Path,
+        assessment: &paintcraft_formats::jxr::NativeImportAssessment,
+    ) -> Result<()> {
+        let variant = if assessment.is_writer_compatible() {
+            paintcraft_formats::codec_worker::jxr_encode::qualified::WRITER_IMPORT_VARIANT
+        } else {
+            paintcraft_formats::codec_worker::NATIVE_JXR_IMPORT_VARIANT
+        };
+        self.admit_import_native_variant(path, Family::Jxr, variant)
+    }
     pub fn admit_import_avif_codec(
         &self,
         path: &std::path::Path,

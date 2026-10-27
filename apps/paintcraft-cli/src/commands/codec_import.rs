@@ -33,6 +33,7 @@ struct Prepared {
     owner: wire::Owner,
     cancel: paintcraft_runtime::Cancellation,
     assessment: Option<paintcraft_formats::jxr::ImportAssessment>,
+    decoder_profile: &'static str,
     heif_assessment: Option<paintcraft_formats::heif::ImportAssessment>,
     avif_assessment: Option<paintcraft_formats::avif::ImportAssessment>,
     avif_sdr_assessment: Option<paintcraft_formats::avif::sdr::ImportAssessment>,
@@ -119,20 +120,7 @@ impl Prepared {
         let (receipt, ok, summary) = finish_output(&output.output, &ctx, outcome);
         Ok(Written {
             engine: Some(Value::object([
-                (
-                    "decoder_profile",
-                    Value::str(if self.heif_assessment.is_some() {
-                        wire::NATIVE_HEIF_IMPORT_VARIANT
-                    } else if self.assessment.is_some() {
-                        wire::NATIVE_JXR_IMPORT_VARIANT
-                    } else if self.avif_sdr_assessment.is_some() {
-                        wire::NATIVE_AVIF_SDR_IMPORT_VARIANT
-                    } else if self.avif_assessment.is_some() {
-                        wire::NATIVE_AVIF_IMPORT_VARIANT
-                    } else {
-                        wire::NATIVE_JXL_IMPORT_VARIANT
-                    }),
-                ),
+                ("decoder_profile", Value::str(self.decoder_profile)),
                 ("conversion", Value::str("new-pcnd-copy")),
                 ("reader_route", Value::str(reader_route)),
                 (
@@ -185,7 +173,20 @@ fn prepare(
     })?;
     let check = || cancel.check();
     let residency = paintcraft_runtime::SharedBudget::new(DOCUMENT_BYTES);
-    let prepared = if job.codec == wire::Codec::AvifSrgb8 {
+    let prepared = if job.codec == wire::Codec::JxrRgb8 {
+        let source = job.input.clone();
+        job.prepare_jxr_family(
+            residency,
+            lease.clone(),
+            &check,
+            &current_owner,
+            |assessment| {
+                super::format_profile::Options { frontend }
+                    .admit_import_jxr_assessment(&source, assessment)
+            },
+            super::codec_worker::launch,
+        )
+    } else if job.codec == wire::Codec::AvifSrgb8 {
         let source = job.input.clone();
         job.prepare_avif_family(
             residency,
@@ -206,6 +207,7 @@ fn prepare(
             super::codec_worker::launch,
         )
     }?;
+    let decoder_profile = prepared.decoder_profile();
     let adopted = prepared.adopt_with_losses(&allowed, &check, &current_owner)?;
     Ok(Prepared {
         document: adopted.document,
@@ -216,6 +218,7 @@ fn prepare(
         owner,
         cancel,
         assessment: adopted.jxr_assessment,
+        decoder_profile,
         heif_assessment: adopted.heif_assessment,
         avif_assessment: adopted.avif_assessment,
         avif_sdr_assessment: adopted.avif_sdr_assessment,
