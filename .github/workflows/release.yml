@@ -146,7 +146,7 @@ jobs:
           PAINTCRAFT_V7_HELPER: ${{ github.workspace }}/target/${{ matrix.target }}/release/paintcraft-codec-worker${{ runner.os == 'Windows' && '.exe' || '' }}
         run: |
           cargo test --locked --release -p paintcraft-codec-worker --features float-codecs --target ${{ matrix.target }} --tests -- --test-threads=1
-          cargo test --locked --release -p paintcraft-cli --target ${{ matrix.target }} --test installed_codec_worker -- --include-ignored --test-threads=1
+          python scripts/packaging/qualify_cli_helper.py --profile v7 --target ${{ matrix.target }} --helper "${{ env.PAINTCRAFT_V7_HELPER }}"
       - name: Test native clipboard transport and lifecycle
         if: runner.os == 'Windows' || runner.os == 'Linux'
         run: cargo test --locked -p paintcraft-platform --features clipboard --target ${{ matrix.target }} --lib

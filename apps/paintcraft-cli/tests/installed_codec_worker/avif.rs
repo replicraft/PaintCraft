@@ -19,6 +19,7 @@ fn installation() -> Installation {
             Some(wire::AVIF_NATIVE_PROFILE)
                 | Some(wire::AVIF_SDR_NATIVE_PROFILE)
                 | Some(wire::FLOAT_NATIVE_PROFILE)
+                | Some(wire::jxr_encode::qualified::NATIVE_PROFILE)
         ),
         "Build an actual V5, V6 or V7 AVIF-capable helper first"
     );

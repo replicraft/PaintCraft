@@ -40,7 +40,10 @@ impl Installation {
             "paintcraft-codec-worker"
         };
         let default_source = cli_source.parent().unwrap().join(name);
-        let source = selected_helper.unwrap_or(&default_source);
+        let qualified_source = std::env::var_os("PAINTCRAFT_QUALIFIED_HELPER").map(PathBuf::from);
+        let source = selected_helper
+            .or(qualified_source.as_deref())
+            .unwrap_or(&default_source);
         assert!(
             source.is_file(),
             "Build the real helper first: cargo build -p paintcraft-codec-worker; full workspace tests build it automatically"
@@ -50,6 +53,23 @@ impl Installation {
         fs::copy(cli_source, &cli).unwrap();
         fs::copy(source, &helper).unwrap();
         let helper_bytes = fs::read(&helper).unwrap();
+        let public_jxr = helper_bytes
+            .windows(wire::jxr_encode::qualified::BUILD_RECORD_MARKER.len())
+            .any(|bytes| bytes == wire::jxr_encode::qualified::BUILD_RECORD_MARKER);
+        assert!(
+            !helper_bytes
+                .windows(wire::jxr_encode::candidate::BUILD_RECORD_MARKER.len())
+                .any(|bytes| bytes == wire::jxr_encode::candidate::BUILD_RECORD_MARKER)
+        );
+        if public_jxr {
+            assert_eq!(
+                helper_bytes
+                    .windows(wire::jxr_encode::qualified::BUILD_RECORD.len())
+                    .filter(|bytes| *bytes == wire::jxr_encode::qualified::BUILD_RECORD)
+                    .count(),
+                1
+            );
+        }
         let avif = helper_bytes
             .windows(wire::AVIF_BUILD_RECORD_MARKER.len())
             .any(|bytes| bytes == wire::AVIF_BUILD_RECORD_MARKER);
@@ -59,7 +79,12 @@ impl Installation {
         let float = helper_bytes
             .windows(wire::FLOAT_BUILD_RECORD_MARKER.len())
             .any(|bytes| bytes == wire::FLOAT_BUILD_RECORD_MARKER);
-        let (profile, variants): (&str, &[&str]) = if float {
+        let (profile, variants): (&str, &[&str]) = if public_jxr {
+            (
+                wire::jxr_encode::qualified::NATIVE_PROFILE,
+                wire::jxr_encode::qualified::IMPORT_VARIANTS,
+            )
+        } else if float {
             (
                 wire::FLOAT_NATIVE_PROFILE,
                 wire::QUALIFIED_FLOAT_IMPORT_VARIANTS,
@@ -78,8 +103,8 @@ impl Installation {
             (wire::NATIVE_PROFILE, wire::QUALIFIED_NATIVE_IMPORT_VARIANTS)
         };
         let manifest = root.join("paintcraft-codec-worker.json");
-        let value = Value::object([
-            ("schema_version", Value::Int(2)),
+        let mut value = Value::object([
+            ("schema_version", Value::Int(if public_jxr { 3 } else { 2 })),
             ("embedded_build_record_verified", Value::Bool(true)),
             ("application_version", Value::str(env!("CARGO_PKG_VERSION"))),
             ("target", Value::str(target())),
@@ -107,6 +132,21 @@ impl Installation {
                 ),
             ),
         ]);
+        if public_jxr {
+            let Value::Object(fields) = &mut value else {
+                unreachable!()
+            };
+            fields.insert("encode_protocol_version".into(), Value::Int(1));
+            fields.insert(
+                "qualified_export_variants".into(),
+                Value::Array(
+                    wire::jxr_encode::qualified::EXPORT_VARIANTS
+                        .iter()
+                        .map(|v| Value::str(*v))
+                        .collect(),
+                ),
+            );
+        }
         fs::write(&manifest, json::canonical(&value)).unwrap();
         Self {
             root,

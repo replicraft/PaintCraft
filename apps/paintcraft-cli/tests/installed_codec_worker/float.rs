@@ -3,6 +3,9 @@ use super::mcp_client::Client;
 use super::*;
 use serde_json::Value as Json;
 fn installation() -> Installation {
+    if let Some(directory) = std::env::var_os("PAINTCRAFT_QUALIFIED_INSTALLATION") {
+        return Installation::from_installed(&PathBuf::from(directory));
+    }
     if let Some(directory) = std::env::var_os("PAINTCRAFT_V7_INSTALLATION") {
         return Installation::from_installed(&PathBuf::from(directory));
     }

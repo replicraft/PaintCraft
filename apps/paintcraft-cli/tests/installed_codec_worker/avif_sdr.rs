@@ -19,7 +19,9 @@ fn installation() -> Installation {
     assert!(
         matches!(
             value["profile"].as_str(),
-            Some(wire::AVIF_SDR_NATIVE_PROFILE) | Some(wire::FLOAT_NATIVE_PROFILE)
+            Some(wire::AVIF_SDR_NATIVE_PROFILE)
+                | Some(wire::FLOAT_NATIVE_PROFILE)
+                | Some(wire::jxr_encode::qualified::NATIVE_PROFILE)
         ),
         "Build the actual V6/V7 SDR-capable helper; V4/V5 remain unsupported"
     );

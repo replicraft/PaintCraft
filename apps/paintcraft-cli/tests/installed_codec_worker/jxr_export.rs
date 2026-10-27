@@ -185,7 +185,7 @@ fn installed_cli_fresh_copies_source_guards_and_own_output_read_are_real() {
     assert_eq!(fs::read(dest).unwrap(), b"preserve");
 }
 #[test]
-#[ignore = "requires complete nonprivate JXR installation"]
+#[ignore = "requires complete nonprivate JXR installation and pinned C oracle"]
 fn installed_mcp_fresh_copy_preserves_dirty_native_binding_and_real_alias_guards() {
     let installation = installation();
     let source = installation.fixture("session.pcnd", &project(4096, 1));
