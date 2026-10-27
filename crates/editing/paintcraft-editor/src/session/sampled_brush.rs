@@ -21,6 +21,32 @@ impl Preparation {
     ) -> Result<PreparedEdit> {
         self.apply_mask_with_label(batch, admission, paintcraft_history::Label::Brush, check)
     }
+    /// Preserve captured pen-tool intent independently of its color/blend policy.
+    /// Existing generic masks and sampled-brush defaults retain their old labels.
+    pub fn apply_pen_mask_stroke(
+        self,
+        batch: &Batch,
+        intent: paintcraft_core::types::policy::MaskIntent,
+        check: impl Fn() -> Result<()>,
+    ) -> Result<PreparedEdit> {
+        let admission = Admission::new(self.session.staged_pixels);
+        self.apply_pen_mask_stroke_with_admission(batch, admission, intent, check)
+    }
+    pub fn apply_pen_mask_stroke_with_admission(
+        self,
+        batch: &Batch,
+        admission: Admission,
+        intent: paintcraft_core::types::policy::MaskIntent,
+        check: impl Fn() -> Result<()>,
+    ) -> Result<PreparedEdit> {
+        use paintcraft_core::types::policy::MaskIntent;
+        let label = match intent {
+            MaskIntent::Brush => paintcraft_history::Label::Brush,
+            MaskIntent::Pencil => paintcraft_history::Label::Pencil,
+            MaskIntent::Erase => paintcraft_history::Label::Erase,
+        };
+        self.apply_mask_with_label(batch, admission, label, check)
+    }
     pub(super) fn apply_mask_with_label(
         mut self,
         batch: &Batch,

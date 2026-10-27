@@ -32,3 +32,11 @@ pub enum MaskMode {
     /// Attenuate destination alpha; retain its straight RGB even at alpha zero.
     DestinationOut,
 }
+
+/// Captured pen tool intent for history presentation; independent of blend mode.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum MaskIntent {
+    Brush,
+    Pencil,
+    Erase,
+}
