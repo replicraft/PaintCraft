@@ -350,6 +350,16 @@ pub fn admission(request: Request<'_>) -> Decision {
                 .trim_start_matches('.')
                 .eq_ignore_ascii_case("dds")
         });
+    let web_dds_texture_export = request.family == Family::Dds
+        && request.operation == Operation::ExportFlat
+        && request.frontend == Frontend::Studio
+        && request.platform == Platform::Web
+        && request.variant == Some("web-dds-texture-worker-v1")
+        && request.extension.is_some_and(|extension| {
+            extension
+                .trim_start_matches('.')
+                .eq_ignore_ascii_case("dds")
+        });
     let native_msp2_export = request.family == Family::Msp
         && request.operation == Operation::ExportFlat
         && request.frontend == Frontend::Studio
@@ -448,6 +458,7 @@ pub fn admission(request: Request<'_>) -> Decision {
         && !native_jxr_export
         && !native_msp2_export
         && !native_dds_texture_export
+        && !web_dds_texture_export
         && !native_heif_import
         && !native_avif_import
         && !native_float_import
@@ -481,6 +492,7 @@ pub fn admission(request: Request<'_>) -> Decision {
     if request.needs_preflight
         || native_msp2_export
         || native_dds_texture_export
+        || web_dds_texture_export
         || native_jxr_import
         || native_heif_import
         || native_avif_import
