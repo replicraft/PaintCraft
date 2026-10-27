@@ -13,8 +13,9 @@ workspaces. This ledger distinguishes connected features from remaining work.
 | Clipboard | PNG read/write, Copy/Cut/Copy visible and private ordinary Paste/new-layer Paste; desktop macOS now has private ordinary Paste too | Other native OS readers and browser/device permissions and cross-application fidelity remain unqualified |
 | View and workspace controls | Canvas fit/actual/selection zoom, scroll, layers, tool controls, shared pixel grid, Classic rulers, persistent status/toolbar visibility, live thumbnail and browser fullscreen | Broader Studio navigation parity remains open |
 | Frontends and documents | Classic 7, 10 and 11 skins; Studio toolbar, floating tools/colors and history, separate documents/history/views with a download/discard switch guard | Multiple documents within each workspace, tabs, Save All and remaining Studio navigation/parity workflows |
-| File adapters | Browser pickers, lossless compact PCND downloads, PNG/BMP/JPEG input and image export | Broader native codecs, format capabilities and export controls |
-| Runtime and recovery | Bounded synchronous browser editing; unload warning; preferences in local storage | Background preparation, larger document/resource handling, browser recovery/document persistence and GPU document composition |
+| File adapters | Browser pickers, compact binary PCND downloads and qualified image adapters; see the format ledger for each profile | Broader native codec and format-profile parity |
+| DDS texture copies | Studio uses shared RGBA8/BC1/BC2/BC3, transfer/mip/filter/effort controls with an isolated Worker, actual encoded preview and loss consent; default DDS is unchanged | Browser source-complexity limits differ from native; physical-device, cross-browser and broader texture-profile qualification |
+| Runtime and recovery | Bounded synchronous editing plus isolated jobs for qualified codec operations, unload warning and local preferences; uncertain Worker completion quarantines its declaration | Broader background editing, larger document/resource handling, durable recovery and GPU document composition |
 | Platform services | Browser file/clipboard interfaces, page title and private-image Print | Physical printing and broader browser/device qualification; native menu/OS registration stay platform-specific |
 
 ## Settings implementation and validation
@@ -185,3 +186,37 @@ private preview after deliberately delayed font arrival. Denial and unsupported
 API checks retain bundled fonts and leave a blank document clean. Evidence is
 local in ignored `docs/validation/browser-local-fonts-2026-10-25/`; other browser
 engines and physical platform rendering are not qualified by these checks.
+
+
+## Advanced Studio DDS export
+
+Studio now shares the desktop DDS controls for RGBA8, BC1/BC2/BC3, sRGB or real
+Linear8 conversion, generated mip levels, Nearest/stored-sample Box filtering
+and Normal/High BC effort. Advanced browser choices use the existing isolated
+codec service, while effective default DDS settings retain the old single-level
+RGBA8 route and capacity. Classic and preserving Save policy are unchanged.
+
+The named browser profile admits up to 4,194,304 canvas pixels, eight layers,
+8,388,608 logical layer pixels, 24 MiB padded tiles and 64 KiB metadata, with a
+32 MiB raw snapshot and 24 MiB + 4 KiB output bound. All layers and generated
+mips are kept or refused. The logical declaration is 640 MiB, including the
+Worker's 256 MiB hard linear-memory ceiling; it is not browser/GPU RSS.
+[The format ledger](FORMAT_INTEROPERABILITY.md#bounded-web-studio-dds-texture-export-2026-10-27)
+and [profile contract](../crates/services/paintcraft-formats/src/dds/web_export/README.md)
+record the full limits and copy accounting.
+
+A Worker prepares once; the UI validates and retains the actual encoded result
+and preview. A full visible preview and explicit actual-loss approval precede
+download. Editing options retires consent; cancel/stale results never download
+or change source ownership, title, dirty state or history. The retained lease
+survives download initiation until Blob URL retirement. Unknown completion
+quarantines the codec declaration until realm teardown; project-copy download
+remains usable. URL retirement does not prove persistence or memory reclamation.
+
+Real production headless Chrome 156 checks on Apple Silicon cover desktop and
+390×740 touch layouts, a frozen BC1 Box golden, Linear8 output, full 4MP RGBA
+preview/download, actual running-Worker cancel/stale quarantine, project-byte
+identity and recovery. Compact host checks cover English/Japanese scrolling and
+full-preview visibility. Evidence is in ignored
+`docs/validation/dds-web-production-2026-10-27/receipt.json`. Physical devices,
+other engines and full texture-format parity are not established by this proof.

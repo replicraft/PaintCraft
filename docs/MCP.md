@@ -686,7 +686,8 @@ Use `--dds-levels N` instead of `--dds-mips` for a bounded explicit count.
 The explicit DDS route requires `--render-workers 1` and the default generic
 `--quality`; `--dds-effort` controls BC effort. `--expect-input-sha256` binds the
 captured input project. Native Studio exposes these choices with a decoded base
-preview and loss review. Advanced browser DDS export remains pending. The
+preview and loss review. Browser Studio also offers bounded Worker-backed DDS
+texture export with separate [source/resource limits](FORMAT_INTEROPERABILITY.md#bounded-web-studio-dds-texture-export-2026-10-27). The
 public DDS importer still requires sRGB, so linear8 exports are not silently
 reopened as display-sRGB pictures. See the
 [DDS profile and evidence](FORMAT_INTEROPERABILITY.md#native-dds-texture-copies-2026-10-26)

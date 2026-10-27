@@ -13,7 +13,7 @@ Desktop and browser share the frontend registry, with platform-specific qualific
 - Studio also opens TGA, still WebP and admitted 2D DDS top-mip images with loss review when lower levels are omitted, and opens the admitted historical PDN subset as a converted copy.
 - Studio's explicit Import image workflow adds QOI, Netpbm, farbfeld, PCX, historical monochrome MSP, selected DCX pages, OpenRaster layers with a limited neutral-group conversion and the admitted PAINT subset. These extended imports do not silently expand ordinary Open or Recent filters.
 - Studio offers **15 flat exports**: PNG, JPEG, BMP, GIF, TIFF, TGA, WebP, JPEG XL, DDS, AVIF, QOI, PAM, farbfeld, PCX with RGB24 or indexed palettes, and exact opaque black/white MSP1. Native Studio, CLI and MCP can also explicitly select MSP2 row-RLE. PAM output always uses `.pam`, never a `.ppm`, `.pgm`, `.pbm` or generic `.pnm` filename.
-- Native Studio, CLI and MCP offer explicit DDS texture copies: uncompressed RGBA8 or lossy BC1/BC2/BC3, sRGB or converted linear8 samples, and generated mip levels. Native Studio previews the decoded base image and reviews losses before choosing the output. The browser retains its existing single-level RGBA8 exporter; advanced browser texture export is not enabled.
+- Native/browser Studio, CLI and MCP offer explicit DDS texture copies: uncompressed RGBA8 or lossy BC1/BC2/BC3, sRGB or converted linear8 samples, and generated mip levels. Studio previews the actual encoded base image and reviews losses before destination choice or download. Advanced browser exports use the bounded isolated Worker profile below; default single-level RGBA8 exports keep their old route and capacity.
 - DCX requires a page choice. Desktop/browser stage a page chooser before decoding and loss confirmation; CLI `import --page` and MCP `import_image` use an explicit zero-based page index. There is no implicit page-zero import.
 - ICNS import requires a specific entry with logical size, Retina scale and physical pixels shown separately. Studio desktop/browser preview and review import/export losses; fresh export offers only eight qualified PNG types. CLI/MCP use the same explicit entry/type policy; ordinary Open and preserving ICNS Save stay denied.
 - Studio explicitly imports the narrow metadata-free sRGB8 JPEG XL profile through a verified packaged native helper or the bounded browser Worker. CLI and native MCP use the native route. Ordinary Open and Classic JPEG XL reads remain denied; strict profiles without conversion losses do not invent an approval prompt.
@@ -34,7 +34,7 @@ Studio's planned stock inventory remains exactly PDN, PNG, JPEG, JXL, JXR, BMP, 
 | TIFF | Classic/Studio single-page integer grayscale/RGB/RGBA Open and RGBA8 Export | Precision/metadata losses explicit; multipage, CMYK, floating point, ambiguous/associated alpha and unqualified orientation variants refused; writer declares unassociated alpha |
 | TGA | Studio integer raster Open and lossless RGBA8 Export | Admitted orientation, RLE and palette profiles only; palette/metadata losses explicit |
 | WebP | Studio still Open and lossless RGBA8 Export | Animation and unqualified extensions refused; import metadata losses explicit |
-| DDS | Studio 2D top-mip import; default single-level RGBA8 export; native Studio/CLI/MCP explicit RGBA8 or BC1/BC2/BC3 texture copies with generated mips | Reader requires explicit sRGB and straight/opaque alpha, at most 64 MiB and 4,194,304 top-level pixels; lower levels are structurally checked and omitted with consent. Advanced fresh DX10 output offers sRGB or real linear8 conversion, single/full/custom mip counts, Nearest or stored-sample Box, and Normal/High BC effort. BC1 requires opaque input; BC2/BC3 use straight alpha. BC, actual hidden-RGB and linear8 quantization losses need consent. Browser advanced export, BC1 cutout, other BC formats/swizzles, custom mip preservation and foreign preserving Save remain unavailable; arrays, cubes and volumes are refused. See the DDS texture-copy profile below |
+| DDS | Studio 2D top-mip import; default single-level RGBA8 export; native/browser Studio and CLI/MCP explicit RGBA8 or BC1/BC2/BC3 texture copies with generated mips | Reader requires explicit sRGB and straight/opaque alpha, at most 64 MiB and 4,194,304 top-level pixels; lower levels are structurally checked and omitted with consent. Advanced fresh DX10 output offers sRGB or real linear8 conversion, single/full/custom mip counts, Nearest or stored-sample Box, and Normal/High BC effort. BC1 requires opaque input; BC2/BC3 use straight alpha. BC, actual hidden-RGB and linear8 quantization losses need consent. Browser advanced export has a separate 4MP/8-layer bounded source profile. BC1 cutout, other BC formats/swizzles, custom mip preservation and foreign preserving Save remain unavailable; arrays, cubes and volumes are refused. See the DDS texture-copy profile below |
 | JPEG XL | Studio lossless RGBA8 Export; native Studio/CLI/MCP explicit Import for `native-jxl-srgb8-worker-v1`; browser Studio explicit Import for `web-jxl-srgb8-worker-quarantine-v1` | Both readers require metadata-free static identity-oriented straight sRGB8, at most 64 MiB input and 4,194,304 pixels. Native import requires the matching packaged helper/schema 2 manifest. Browser import uses the production isolated Worker and persistent quarantine on uncertain completion. Ordinary Open and Classic reads remain denied. Export accepts 1-pixel dimensions and retains its 64 MiB output limit |
 | AVIF | Studio lossy RGBA8 Export; native Studio/CLI/MCP explicit Import for identity sRGB8 and SDR YCbCr variants | Reader: reduced-still identity 4:4:4 or explicit BT.709/sRGB8 full/limited-range 4:4:4 or 4:2:0 with qualified vertical/colocated siting, optional straight alpha, at most 64 MiB input and 4,194,304 pixels. SDR requires an exact V6/V7 helper/manifest and reconstruction consent; identity accepts V5/V6/V7. Named item loss also requires consent. Unknown 4:2:0 siting, HDR, grids, browser/Classic/Open and preserving Save remain denied. Export is lossy even at quality 100, may change alpha/hidden RGB, and retains its 1,048,576 pixels, 4096 per side and 16 MiB output limits |
 | QOI | Studio explicit Import and lossless RGBA8 Export | Strict complete raster/end marker and sRGB profile; linear declaration refused; exact alpha and hidden RGB retained by the codec |
@@ -109,7 +109,7 @@ consumer paths and prerequisites, rather than treating every candidate as a depe
 2. **Close the finite qualified stock profiles, then remaining required integrations.** Native identity sRGB8 and explicit SDR YCbCr AVIF profiles now have independently checked decoder/consumer routes, not full stock parity. V6 adds full/limited-range 4:4:4 and qualified 4:2:0 with reconstruction consent; unknown siting, HDR, grids, transforms and browser execution remain separate. HEIF has its narrow native color import below, while broader camera/grid/ICC/HDR/deep-color and browser profiles remain unqualified. The existing isolated helper and bounded preflight must remain the reader boundary; enabling `image`'s separate native feature alone is insufficient. HEIF writing remains prohibited.
 3. **Implement and qualify layered writes.** PDN has a bounded internal typed PDN3 writer and native layered-copy preparation; public and preserving writes still await actual Paint.NET open/edit/resave. PAINT now also has an internal bounded typed writer, immutable native preparation and gated CLI/MCP fresh-copy routes; public/preserving Windows Paint qualification is still required. Its UI-name, visibility and opacity extensions remain unqualified. ORA's internal writer is not publicly enabled; editable group semantics and original-application qualification remain. Neutral pass-through group conversion is a limited import profile, not hierarchy preservation. PSD/PSB now have a bounded internal fresh RGB8 Normal raster-layer writer with independent psd-tools/Pillow checks; public layered export still awaits actual Photoshop open/edit/resave qualification. Groups, masks, text, effects and high-depth output remain unsupported. Separately, JPEG XR has an isolated fixed-RGB8 writer, native parent preparation and actual Studio/CLI/MCP fresh-copy consumers with independent C evidence. Default promotion, broader writer profiles and release-target execution remain pending.
 4. **Extend qualified HDR/EXR conversion and distribution evidence.** Native isolated conversion, actual Studio preview/adoption and CLI/MCP inspection/import now work for the bounded profiles below. The final V7 helper uses selected image HDR and pinned `exr` 1.74.2 with Rayon disabled; standalone in-process qualification adapters are not the product isolation boundary. Explicit settings, digest-bound actual losses and the retained-linear-alpha compositing limitation remain required. Broader Radiance orientations/XYZE, EXR tiled/deep/multipart or differing windows, additional compression/color profiles and high-depth editing remain unsupported; their implementation and qualification cannot be inferred from the narrow route. All six native release targets and broader original-file/reference matrices still need execution. Zune HDR 0.5.2 failed retained exponent-wrap probes and is not adopted. JP2 remains deferred F7 work, not an implemented conversion or an initial-release dependency.
-5. **Complete remaining required profiles without widening labels.** Narrow subsets do not close the pack's broader format requirements. DDS now has top-mip imports with omission consent and native RGBA8/BC1/BC2/BC3 fresh exports with explicit generated-mip policy. This does not close the whole texture gate: advanced browser consumers, further qualified encoding/alpha/swizzle/filter profiles and release/reference evidence remain. The current array/face policy is explicit refusal of arrays, cubes and volumes. Custom stored mips are not represented in Document; exports derive new levels from the base and never claim to preserve or update stale source mips. `TEXTURE_ICON_VECTOR.md` conditions additional BC families on encoder/profile qualification; compiling broad container support does not enable them. Additional JXL/JXR profiles still need their specified implementation and evidence. Track DCX multi-page consumers, remaining browser MSP2 UI selection, original historical-app evidence, TIFF precision/pages, ABR dynamics/pattern behavior, ASE color adoption and CSH path variants against their individual contracts; being unimplemented is not a basis for calling a requirement optional. Explicitly future animation/multipage editing remains distinct from current single-image conversion. Foreign preserving Save remains a separate gate throughout.
+5. **Complete remaining required profiles without widening labels.** Narrow subsets do not close the pack's broader format requirements. DDS now has top-mip imports with omission consent and native/browser RGBA8/BC1/BC2/BC3 fresh exports with explicit generated-mip policy. This does not close the whole texture gate: cross-browser/device qualification, further encoding/alpha/swizzle/filter profiles and release/reference evidence remain. The current array/face policy is explicit refusal of arrays, cubes and volumes. Custom stored mips are not represented in Document; exports derive new levels from the base and never claim to preserve or update stale source mips. `TEXTURE_ICON_VECTOR.md` conditions additional BC families on encoder/profile qualification; compiling broad container support does not enable them. Additional JXL/JXR profiles still need their specified implementation and evidence. Track DCX multi-page consumers, remaining browser MSP2 UI selection, original historical-app evidence, TIFF precision/pages, ABR dynamics/pattern behavior, ASE color adoption and CSH path variants against their individual contracts; being unimplemented is not a basis for calling a requirement optional. Explicitly future animation/multipage editing remains distinct from current single-image conversion. Foreign preserving Save remains a separate gate throughout.
 6. **Keep optional F7 imports distinct from initial-format parity.** JP2, RAW, selected PDF pages, KRA/XCF and the animation model remain future capabilities. They need their own bounded services, source/loss policies and real reference consumers; compiling a library is insufficient.
 7. **Close the delivery gates for each implemented profile.** Complete the pack's hostile-input fuzzing, independent reference/version matrices, reproducible codec and whole-operation benchmark exports, failure/cancellation-tail tests and installed-helper/packaging coverage on all six release targets. Local controlled fixtures and headless UI tests do not establish general original-application compatibility or a hard aggregate-memory guarantee.
 
@@ -1650,8 +1650,8 @@ The exact `native-dds-texture-v1` profile is Native + Studio + ExportFlat with a
 `.dds` destination and required preflight. It is used by native Studio's DDS
 options, CLI `render --dds-*` and MCP `export_image` with nested `dds` settings.
 No DDS options retains the old single-level DX10 RGBA8 sRGB straight-alpha
-exporter and its bytes. Classic admission is unchanged. Advanced browser export
-is still pending; its existing default DDS exporter remains available.
+exporter and its bytes. Classic admission is unchanged. Browser advanced export
+has its own isolated route and source limits, described below.
 
 One immutable native sRGB document composite is admitted and rendered before
 encoding. Fresh output supports RGBA8, opaque BC1, or straight-alpha BC2/BC3;
@@ -1716,3 +1716,50 @@ quota recovery, cancel/stale/source/destination guards, and the same nonuniform
 whole-file comparison. This is local host UI/CPU evidence, not a production
 browser run, original texture application's reopen, six-platform runtime matrix
 or benchmark. See [consumer proof and reproduction](../apps/paintcraft-cli/tests/dds-texture-export-fixtures/README.md).
+
+
+#### Bounded Web Studio DDS texture export, 2026-10-27
+
+Exact Web + Studio + ExportFlat variant `web-dds-texture-worker-v1` admits only a
+`.dds` destination with preflight. It uses the same encoding, transfer, mip,
+filter and effort choices above through the existing isolated browser codec
+service. Default RGBA8/sRGB/single-level output keeps the legacy route and bytes;
+Classic, ordinary Open and source-preserving Save gain no new admission.
+
+The explicit browser profile supports 4,194,304 canvas pixels, sides up to
+65,536, at most eight layers and 8,388,608 logical layer pixels, 24 MiB of padded
+source tiles, 64 KiB metadata, a 32 MiB raw PCND snapshot, and at most 24 MiB +
+4 KiB encoded output. Every source layer and encoded mip is retained or the job
+is refused. A large thin populated raster can exceed the tile allowance despite
+fitting the canvas area. These bounds are not a claim of maximal browser size.
+
+The host reserves before serialization. One Worker preparation returns the
+complete DDS and its actual decoded thumbnail; Rust validates the entire frame,
+source/owner/options binding, hashes, DDS header and mip inventory before use.
+Linear8 preview RGB is converted for display without changing file samples.
+Settings changes retire the preview and explicit loss approval. A complete
+visible preview frame and fresh approval are required before downloading the
+retained artifact. Export does not retarget the project or clear dirty/history
+state. Cancellation or stale ownership publishes no DDS; uncertain completion
+holds the declaration in quarantine until realm teardown. Project downloads
+remain available for recovery.
+
+The service declares 640 MiB of conservative logical payload allowances and
+retains the artifact/lease through Blob URL retirement. The Worker has a 256 MiB
+hard linear-memory maximum and a separate 192 MiB pre-render payload quote.
+These are not aggregate browser RSS, GPU, allocator-peak or download-persistence
+guarantees. See the exact [profile and quote](../crates/services/paintcraft-formats/src/dds/web_export/README.md).
+
+Actual local headless Chrome 156 on Apple Silicon exercised the production
+picker, visible desktop/mobile touch controls, consent reset, downloads and
+unchanged PCND copies. Whole BC1 Box bytes match the independently qualified
+7×5 golden and differ from Nearest; Linear8 and a complete 4MP RGBA full-chain
+UI download match validated references. Real controller jobs cover 4MP BC
+High/Box, an eight-layer/24-MiB source, cancellation and public service-owner
+invalidation. That owner-protocol test is distinct from host editor replacement
+tests. The 640 MiB charge stays held during review/download initiation and
+releases after URL retirement; unknown/cancel/stale cases remain quarantined.
+All failed attempts are retained, including the corrected compact-modal defect.
+Receipt: `docs/validation/dds-web-production-2026-10-27/receipt.json`.
+Physical phones/tablets, other browser engines, original texture applications
+and broader DDS profiles remain separate qualification work.
