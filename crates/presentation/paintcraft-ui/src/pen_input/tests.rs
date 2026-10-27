@@ -429,3 +429,151 @@ fn completed_unpublished_ui_click_cannot_cross_session_interface_or_focus_change
         );
     }
 }
+
+#[test]
+fn drained_batch_remains_retired_after_cancel_invalidation_and_restored_view() {
+    for mode in 0..10 {
+        let budget = SharedBudget::new(1_000_000);
+        let source = source(&budget);
+        push(&source, 1, Phase::Down);
+        push(&source, 2, Phase::Up);
+        let mut batch = source.take(1, view().owner, false).unwrap();
+        assert!(source.batch_is_current(&batch, view().owner));
+        match mode {
+            0 => source.cancel(),
+            1 => source.invalidate_view(),
+            2 => source.fault(),
+            8 | 9 => {
+                let mut foreign = view().owner;
+                if mode == 8 {
+                    foreign.session += 1;
+                } else {
+                    foreign.state += 1;
+                }
+                drop(source.take(2, foreign, false).unwrap());
+            }
+            _ => {
+                let mut changed = view();
+                match mode {
+                    3 => changed.owner.session += 1,
+                    4 => changed.focused = false,
+                    5 => changed.transform.origin.0 += 1.0,
+                    6 => changed.owner.state += 1,
+                    _ => changed.blocked = true,
+                }
+                source.publish(changed).unwrap();
+            }
+        }
+        source.publish(view()).unwrap();
+        // Public payload edits cannot erase the admission's canvas classification.
+        batch.frame.samples.clear();
+        assert!(
+            !source.batch_is_current(&batch, view().owner),
+            "mode {mode}"
+        );
+    }
+}
+
+#[test]
+fn drained_ui_batch_keeps_workspace_policy_but_not_cross_source_or_cancel_authority() {
+    let budget = SharedBudget::new(1_000_000);
+    let source = source(&budget);
+    let mut ui = view();
+    ui.exclusions[0] = Some(ui.canvas);
+    source.publish(ui).unwrap();
+    for (n, phase) in [(1, Phase::Down), (2, Phase::Up)] {
+        source
+            .submit_with(Delivery::ReceiverPointer, |_| Ok(raw(n, phase)))
+            .unwrap();
+    }
+    let batch = source.take(1, ui.owner, false).unwrap();
+    ui.owner.state += 1;
+    ui.owner.publication += 1;
+    ui.transform.origin.0 += 20.0;
+    ui.transform.points_per_pixel *= 2.0;
+    source.publish(ui).unwrap();
+    assert!(source.batch_is_current(&batch, ui.owner));
+    let foreign = Source::new(16, 16, &budget).unwrap();
+    foreign.publish(ui).unwrap();
+    assert!(!foreign.batch_is_current(&batch, ui.owner));
+    source.cancel();
+    source.publish(ui).unwrap();
+    assert!(!source.batch_is_current(&batch, ui.owner));
+}
+
+fn predecessor() -> Predecessor {
+    let old = view();
+    let mut after = old.owner;
+    after.state += 1;
+    after.publication += 1;
+    Predecessor {
+        before: old.owner,
+        after,
+        sequence: 1,
+        transform: old.transform,
+        canvas: old.canvas,
+        pixels_per_point: old.pixels_per_point,
+        focused: true,
+        modal: false,
+        ime: false,
+    }
+}
+
+#[test]
+fn predecessor_requires_exact_admission_and_one_earlier_receipt_step() {
+    for mode in 0..12 {
+        let budget = SharedBudget::new(1_000_000);
+        let source = source(&budget);
+        push(&source, 2, Phase::Down);
+        push(&source, 3, Phase::Up);
+        let mut batch = source.take(1, view().owner, false).unwrap();
+        let mut proof = predecessor();
+        match mode {
+            0 => {}
+            1 => proof.before.state += 1,
+            2 => proof.after.session += 1,
+            3 => proof.after.interface += 1,
+            4 => proof.after.publication += 1,
+            5 => proof.after = proof.before, // no-op never acknowledges a receipt
+            6 => proof.transform.origin.0 += 1.0,
+            7 => proof.canvas.max.x += 1.0,
+            8 => proof.pixels_per_point *= 2.0,
+            9 => proof.modal = true,
+            10 => proof.focused = false,
+            _ => proof.ime = true,
+        }
+        let result = source.acknowledge_predecessor(&mut batch, proof);
+        assert_eq!(result.is_ok(), mode == 0, "mode {mode}");
+        if mode == 0 {
+            assert!(source.batch_is_current(&batch, proof.after));
+            assert!(source.acknowledge_predecessor(&mut batch, proof).is_err());
+        }
+    }
+}
+
+#[test]
+fn predecessor_cannot_use_edited_payload_or_revive_cancelled_admission() {
+    for mode in 0..3 {
+        let budget = SharedBudget::new(1_000_000);
+        let source = source(&budget);
+        push(&source, 2, Phase::Down);
+        push(&source, 3, Phase::Up);
+        let mut batch = source.take(1, view().owner, false).unwrap();
+        let mut proof = predecessor();
+        match mode {
+            0 => {
+                proof.sequence = 2;
+                batch.frame.samples[0].sequence = 100;
+            }
+            1 => {
+                source.cancel();
+                source.publish(view()).unwrap();
+            }
+            _ => {
+                source.invalidate_view();
+                source.publish(view()).unwrap();
+            }
+        }
+        assert!(source.acknowledge_predecessor(&mut batch, proof).is_err());
+    }
+}

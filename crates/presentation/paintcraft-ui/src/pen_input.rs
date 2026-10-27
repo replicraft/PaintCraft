@@ -70,6 +70,8 @@ struct State {
     // not allocator metadata, GUI framework storage, or process RSS.
     _storage: BudgetAccount,
     frames: BudgetScope,
+    window_epoch: u64,
+    canvas_epoch: u64,
 }
 /// Cloneable endpoint for native sinks/DOM listeners; it never touches egui Context.
 #[derive(Clone, Debug)]
@@ -79,6 +81,34 @@ pub struct Source(Arc<Mutex<State>>);
 pub struct Batch {
     pub frame: Frame,
     _storage: BudgetAccount,
+    binding: Binding,
+}
+#[derive(Debug)]
+struct Binding {
+    source: std::sync::Weak<Mutex<State>>,
+    owner: Owner,
+    view: Option<View>,
+    cancel_epoch: u64,
+    window_epoch: u64,
+    canvas_epoch: u64,
+    acknowledged: Option<u64>,
+    canvas_samples: bool,
+    first_down: Option<u64>,
+}
+/// The trusted host fills this only after an earlier acquisition-tagged MouseUp
+/// actually committed exactly one editor receipt. Current context is checked
+/// again; this is never an authorization to rebase unrelated GUI publications.
+#[derive(Clone, Copy, Debug)]
+pub struct Predecessor {
+    pub before: Owner,
+    pub after: Owner,
+    pub sequence: u64,
+    pub transform: Transform,
+    pub canvas: egui::Rect,
+    pub pixels_per_point: f64,
+    pub focused: bool,
+    pub modal: bool,
+    pub ime: bool,
 }
 impl Source {
     pub fn new(source_capacity: usize, ui_capacity: usize, budget: &SharedBudget) -> Result<Self> {
@@ -101,6 +131,8 @@ impl Source {
             view: None,
             _storage: storage,
             frames,
+            window_epoch: 0,
+            canvas_epoch: 0,
         }))))
     }
     /// Publish only a complete final layout. Changed owners/transforms retire
@@ -111,6 +143,7 @@ impl Source {
             if state.receiver.has_capture_or_samples() {
                 state.receiver.cancel();
             }
+            state.window_epoch = state.window_epoch.saturating_add(1);
             state.view = None;
             return Err(Invalid::Coordinates);
         }
@@ -121,9 +154,15 @@ impl Source {
                 || (!old.blocked && view.blocked)
                 || (!old.ime && view.ime)
         }) || !view.focused;
-        let retire_canvas = state
-            .view
-            .is_some_and(|old| old.owner != view.owner || old.transform != view.transform);
+        let retire_canvas = state.view.is_some_and(|old| {
+            old.owner != view.owner || old.transform != view.transform || old.canvas != view.canvas
+        });
+        if retire_all {
+            state.window_epoch = state.window_epoch.saturating_add(1);
+        }
+        if retire_canvas {
+            state.canvas_epoch = state.canvas_epoch.saturating_add(1);
+        }
         if (retire_all && state.receiver.has_capture_or_samples())
             || (retire_canvas && state.receiver.has_canvas_capture_or_samples())
         {
@@ -166,6 +205,16 @@ impl Source {
             .receiver
             .cancel();
     }
+    /// Display/window layout changed before a completed GUI pass. New pen
+    /// contacts wait for a fresh view instead of using the old scale/origin.
+    pub fn invalidate_view(&self) {
+        let mut state = self.0.lock().unwrap_or_else(|e| e.into_inner());
+        if state.receiver.has_capture_or_samples() {
+            state.receiver.cancel();
+        }
+        state.window_epoch = state.window_epoch.saturating_add(1);
+        state.view = None;
+    }
     pub fn fault(&self) {
         self.0
             .lock()
@@ -199,6 +248,12 @@ impl Source {
             let different_session = state.view.is_some_and(|view| {
                 view.owner.session != owner.session || view.owner.interface != owner.interface
             });
+            // A previous handoff may already own all records. Invalidation is
+            // independent of what remains in the ingress queue.
+            state.canvas_epoch = state.canvas_epoch.saturating_add(1);
+            if different_session {
+                state.window_epoch = state.window_epoch.saturating_add(1);
+            }
             let canvas = state.receiver.has_canvas_capture_or_samples();
             if (different_session && state.receiver.has_capture_or_samples()) || canvas {
                 state.receiver.cancel();
@@ -214,10 +269,113 @@ impl Source {
                 storage.resize(bytes as u64).map_err(|_| Invalid::Capacity)
             })
             .map_err(invalid)?;
+        let canvas_samples = !frame.samples.is_empty();
+        let first_down = frame
+            .samples
+            .iter()
+            .find(|s| s.phase == Phase::Down)
+            .map(|s| s.sequence);
         Ok(Batch {
             frame,
             _storage: storage,
+            binding: Binding {
+                source: Arc::downgrade(&self.0),
+                owner,
+                view: state.view,
+                cancel_epoch: state.receiver.cancellation_epoch(),
+                window_epoch: state.window_epoch,
+                canvas_epoch: state.canvas_epoch,
+                acknowledged: None,
+                canvas_samples,
+                first_down,
+            },
         })
+    }
+    /// A drained handoff stays scoped even though its records left the queue.
+    /// UI records permit same-workspace document/view changes; canvas data does not.
+    pub fn batch_is_current(&self, batch: &Batch, live_owner: Owner) -> bool {
+        let state = self.0.lock().unwrap_or_else(|e| e.into_inner());
+        self.current_in(&state, batch, live_owner)
+    }
+    fn current_in(&self, state: &State, batch: &Batch, live_owner: Owner) -> bool {
+        let binding = &batch.binding;
+        if binding.source.as_ptr() != Arc::as_ptr(&self.0)
+            || binding.cancel_epoch == u64::MAX
+            || binding.cancel_epoch != state.receiver.cancellation_epoch()
+            || binding.window_epoch == u64::MAX
+            || binding.window_epoch != state.window_epoch
+        {
+            return false;
+        }
+        let (Some(view), Some(captured)) = (state.view, binding.view) else {
+            return false;
+        };
+        if binding.owner.session != live_owner.session
+            || binding.owner.interface != live_owner.interface
+            || view.owner.session != live_owner.session
+            || view.owner.interface != live_owner.interface
+            || !view.focused
+            || captured.pixels_per_point != view.pixels_per_point
+        {
+            return false;
+        }
+        if !binding.canvas_samples {
+            return true;
+        }
+        binding.canvas_epoch != u64::MAX
+            && binding.canvas_epoch == state.canvas_epoch
+            && binding.owner == live_owner
+            && view.owner == live_owner
+            && !view.blocked
+            && !view.ime
+            && captured.transform == view.transform
+            && captured.canvas == view.canvas
+    }
+    /// Accept one proven earlier mouse completion before a later admitted pen
+    /// Down. The opaque batch, exact view and one receipt step are all required.
+    pub fn acknowledge_predecessor(
+        &self,
+        batch: &mut Batch,
+        proof: Predecessor,
+    ) -> std::result::Result<(), Invalid> {
+        let mut state = self.0.lock().unwrap_or_else(|e| e.into_inner());
+        if !self.current_in(&state, batch, proof.before) {
+            return Err(Invalid::Owner);
+        }
+        let Some(mut view) = state.view else {
+            return Err(Invalid::Owner);
+        };
+        if proof.before.session != proof.after.session
+            || proof.before.interface != proof.after.interface
+            || proof.before.publication.checked_add(1) != Some(proof.after.publication)
+            || !proof.focused
+            || proof.modal
+            || proof.ime
+            || proof.transform != view.transform
+            || proof.canvas != view.canvas
+            || proof.pixels_per_point != view.pixels_per_point
+        {
+            return Err(Invalid::Owner);
+        }
+        if batch
+            .binding
+            .acknowledged
+            .is_some_and(|old| proof.sequence <= old)
+            || !batch
+                .binding
+                .first_down
+                .is_some_and(|sequence| sequence > proof.sequence)
+        {
+            return Err(Invalid::Order);
+        }
+        view.owner = proof.after;
+        state.view = Some(view);
+        batch.binding.owner = proof.after;
+        if let Some(captured) = &mut batch.binding.view {
+            captured.owner = proof.after;
+        }
+        batch.binding.acknowledged = Some(proof.sequence);
+        Ok(())
     }
 }
 fn invalid(reason: Invalid) -> Error {
