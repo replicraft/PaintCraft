@@ -114,14 +114,19 @@ impl Source {
             state.view = None;
             return Err(Invalid::Coordinates);
         }
-        let retire = state.view.is_some_and(|old| {
-            old.owner != view.owner
-                || old.transform != view.transform
+        let retire_all = state.view.is_some_and(|old| {
+            old.owner.session != view.owner.session
+                || old.owner.interface != view.owner.interface
                 || old.pixels_per_point != view.pixels_per_point
                 || (!old.blocked && view.blocked)
                 || (!old.ime && view.ime)
         }) || !view.focused;
-        if retire && state.receiver.has_capture_or_samples() {
+        let retire_canvas = state
+            .view
+            .is_some_and(|old| old.owner != view.owner || old.transform != view.transform);
+        if (retire_all && state.receiver.has_capture_or_samples())
+            || (retire_canvas && state.receiver.has_canvas_capture_or_samples())
+        {
             state.receiver.cancel();
         }
         state.view = Some(view);
@@ -191,10 +196,16 @@ impl Source {
             state.receiver.fault();
         }
         if state.view.is_some_and(|view| view.owner != owner) {
-            if state.receiver.has_capture_or_samples() {
+            let different_session = state.view.is_some_and(|view| {
+                view.owner.session != owner.session || view.owner.interface != owner.interface
+            });
+            let canvas = state.receiver.has_canvas_capture_or_samples();
+            if (different_session && state.receiver.has_capture_or_samples()) || canvas {
                 state.receiver.cancel();
             }
-            state.view = None;
+            if different_session || canvas {
+                state.view = None;
+            }
         }
         let mut storage = state.frames.account();
         let frame = state

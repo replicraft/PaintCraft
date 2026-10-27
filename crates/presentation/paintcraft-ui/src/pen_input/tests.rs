@@ -296,3 +296,129 @@ fn foreign_positionless_cancel_and_leave_cannot_cancel_the_owned_pen() {
         assert!(batch.frame.samples.is_empty());
     }
 }
+
+#[test]
+fn ui_slider_survives_same_session_document_and_canvas_changes() {
+    let budget = SharedBudget::new(1_000_000);
+    let source = source(&budget);
+    let mut ui = view();
+    ui.exclusions[0] = Some(ui.canvas);
+    source.publish(ui).unwrap();
+    assert_eq!(
+        source
+            .submit_with(Delivery::ReceiverPointer, |_| Ok(raw(1, Phase::Down)))
+            .unwrap(),
+        Route::Ui
+    );
+    let first = source.take(1, ui.owner, false).unwrap();
+    assert!(
+        first
+            .frame
+            .ui
+            .iter()
+            .any(|e| matches!(e, UiEvent::Button { pressed: true, .. }))
+    );
+    drop(first);
+    ui.owner.state += 1;
+    ui.owner.publication += 1;
+    ui.transform.origin = (80.0, 90.0);
+    ui.transform.points_per_pixel = 1.25;
+    ui.transform.epoch += 1;
+    source.publish(ui).unwrap();
+    let mut motion = raw(2, Phase::Move);
+    motion.logical_position = Some((30.0, 40.0));
+    source
+        .submit_with(Delivery::ReceiverPointer, |_| Ok(motion))
+        .unwrap();
+    let mut newer = ui.owner;
+    newer.state += 1;
+    newer.publication += 1;
+    let moved = source.take(2, newer, false).unwrap();
+    assert!(!moved.frame.cancelled);
+    assert!(moved.frame.samples.is_empty());
+    assert!(
+        moved
+            .frame
+            .ui
+            .iter()
+            .any(|e| matches!(e, UiEvent::Move { .. }))
+    );
+    drop(moved);
+    source
+        .submit_with(Delivery::ReceiverPointer, |_| Ok(raw(3, Phase::Up)))
+        .unwrap();
+    let released = source.take(3, newer, false).unwrap();
+    assert!(!released.frame.cancelled);
+    assert!(
+        released
+            .frame
+            .ui
+            .iter()
+            .any(|e| matches!(e, UiEvent::Button { pressed: false, .. }))
+    );
+}
+
+#[test]
+fn ui_capture_retires_for_session_interface_focus_and_physical_display_changes() {
+    for mode in 0..4 {
+        let budget = SharedBudget::new(1_000_000);
+        let source = source(&budget);
+        let mut ui = view();
+        ui.exclusions[0] = Some(ui.canvas);
+        source.publish(ui).unwrap();
+        source
+            .submit_with(Delivery::ReceiverPointer, |_| Ok(raw(1, Phase::Down)))
+            .unwrap();
+        drop(source.take(1, ui.owner, false).unwrap());
+        match mode {
+            0 => ui.owner.session += 1,
+            1 => ui.owner.interface += 1,
+            2 => ui.focused = false,
+            _ => ui.pixels_per_point *= 2.0,
+        }
+        source.publish(ui).unwrap();
+        let batch = source.take(2, ui.owner, false).unwrap();
+        assert!(batch.frame.cancelled, "mode {mode}");
+        assert!(
+            batch
+                .frame
+                .ui
+                .iter()
+                .all(|e| !matches!(e, UiEvent::Button { pressed: true, .. }))
+        );
+    }
+}
+
+#[test]
+fn completed_unpublished_ui_click_cannot_cross_session_interface_or_focus_change() {
+    for mode in 0..3 {
+        let budget = SharedBudget::new(1_000_000);
+        let source = source(&budget);
+        let mut ui = view();
+        ui.exclusions[0] = Some(ui.canvas);
+        source.publish(ui).unwrap();
+        source
+            .submit_with(Delivery::ReceiverPointer, |_| Ok(raw(1, Phase::Down)))
+            .unwrap();
+        source
+            .submit_with(Delivery::ReceiverPointer, |_| Ok(raw(2, Phase::Up)))
+            .unwrap();
+        match mode {
+            0 => ui.owner.session += 1,
+            1 => ui.owner.interface += 1,
+            _ => ui.focused = false,
+        }
+        source.publish(ui).unwrap();
+        let batch = source.take(1, ui.owner, false).unwrap();
+        assert!(batch.frame.cancelled, "mode {mode}");
+        assert!(batch.frame.samples.is_empty());
+        assert!(
+            batch
+                .frame
+                .ui
+                .iter()
+                .all(|e| !matches!(e, UiEvent::Button { pressed: true, .. })),
+            "mode {mode}"
+        );
+    }
+}

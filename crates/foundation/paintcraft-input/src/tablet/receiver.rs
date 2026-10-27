@@ -114,7 +114,11 @@ impl Receiver {
     /// Includes a completed but not-yet-drained stroke and held UI buttons.
     /// A host owner change with no classified work must not suppress mouse input.
     pub fn has_capture_or_samples(&self) -> bool {
-        self.stream.is_some() || self.router.pending_samples() != 0
+        self.stream.is_some() || self.router.pending_samples() != 0 || !self.ui.is_empty()
+    }
+    /// Widget coordinates do not depend on document state or canvas geometry.
+    pub fn has_canvas_capture_or_samples(&self) -> bool {
+        self.router.pending_samples() != 0 || self.stream.is_some_and(|s| s.target != Target::Ui)
     }
     /// Genuine mouse capture wins over later pen hover/motion. Pen-held capture
     /// refuses a competing mouse gesture; hosts retain the same one-pointer rule.
