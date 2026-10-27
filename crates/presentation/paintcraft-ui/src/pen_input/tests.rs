@@ -577,3 +577,36 @@ fn predecessor_cannot_use_edited_payload_or_revive_cancelled_admission() {
         assert!(source.acknowledge_predecessor(&mut batch, proof).is_err());
     }
 }
+
+#[test]
+fn continuation_metadata_admits_only_monotonic_completion_before_a_later_contact() {
+    let budget = SharedBudget::new(1_000_000);
+    let source = source(&budget);
+    for (sequence, phase) in [
+        (2, Phase::Down),
+        (3, Phase::Up),
+        (4, Phase::Down),
+        (5, Phase::Up),
+    ] {
+        push(&source, sequence, phase);
+    }
+    let mut batch = source.take(1, view().owner, false).unwrap();
+    let first = predecessor();
+    source.acknowledge_predecessor(&mut batch, first).unwrap();
+    let mut second = first;
+    second.before = first.after;
+    second.after.state += 1;
+    second.after.publication += 1;
+    second.sequence = 3;
+    source.acknowledge_predecessor(&mut batch, second).unwrap();
+    assert!(source.batch_is_current(&batch, second.after));
+    let mut terminal = second;
+    terminal.before = second.after;
+    terminal.after.state += 1;
+    terminal.after.publication += 1;
+    terminal.sequence = 5;
+    assert_eq!(
+        source.acknowledge_predecessor(&mut batch, terminal),
+        Err(Invalid::Order)
+    );
+}

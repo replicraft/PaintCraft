@@ -93,9 +93,9 @@ struct Binding {
     canvas_epoch: u64,
     acknowledged: Option<u64>,
     canvas_samples: bool,
-    first_down: Option<u64>,
+    last_down: Option<u64>,
 }
-/// The trusted host fills this only after an earlier acquisition-tagged MouseUp
+/// The trusted host fills this only after an earlier acquisition-tagged contact completion
 /// actually committed exactly one editor receipt. Current context is checked
 /// again; this is never an authorization to rebase unrelated GUI publications.
 #[derive(Clone, Copy, Debug)]
@@ -270,10 +270,10 @@ impl Source {
             })
             .map_err(invalid)?;
         let canvas_samples = !frame.samples.is_empty();
-        let first_down = frame
+        let last_down = frame
             .samples
             .iter()
-            .find(|s| s.phase == Phase::Down)
+            .rfind(|s| s.phase == Phase::Down)
             .map(|s| s.sequence);
         Ok(Batch {
             frame,
@@ -287,7 +287,7 @@ impl Source {
                 canvas_epoch: state.canvas_epoch,
                 acknowledged: None,
                 canvas_samples,
-                first_down,
+                last_down,
             },
         })
     }
@@ -331,7 +331,7 @@ impl Source {
             && captured.transform == view.transform
             && captured.canvas == view.canvas
     }
-    /// Accept one proven earlier mouse completion before a later admitted pen
+    /// Accept one proven earlier contact completion before a later admitted pen
     /// Down. The opaque batch, exact view and one receipt step are all required.
     pub fn acknowledge_predecessor(
         &self,
@@ -363,7 +363,7 @@ impl Source {
             .is_some_and(|old| proof.sequence <= old)
             || !batch
                 .binding
-                .first_down
+                .last_down
                 .is_some_and(|sequence| sequence > proof.sequence)
         {
             return Err(Invalid::Order);
