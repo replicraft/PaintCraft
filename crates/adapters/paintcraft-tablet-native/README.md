@@ -132,3 +132,25 @@ The final source→GUI merge, display/view capture, native execution, Windows
 history, XI2/Wayland acquisition and physical hardware qualification are still
 required. `install_records` and passing collector controls alone do not make the
 unactivated App host acquisition-ready. Default startup remains disabled.
+
+### Focus recovery in the ordered collector
+
+Focus loss makes a previously observed local mouse hold uncertain: its Up may have occurred in
+another application. The retained AppKit monitor observes combined native button
+idle on key-window acquisition or a later native callback and emits the explicit
+`PointerIdle` recovery boundary. Only that source observation clears uncertain
+mouse ownership; framework receipt callbacks cannot authenticate it. No mouse Up
+or new Down is fabricated. Close retires the old collector; a new installation
+must meet its real native-idle admission condition.
+
+The monitor and its genuine proximity/device metadata remain retained across
+focus recovery, so an idle pen already in proximity needs no out/in ritual on the
+proven idle path. Interrupted held pen tails remain fenced until their actual
+release. When a local mouse hold was lost, if the first activation is a pen contact before any idle observation,
+combined pointer button bits cannot establish whether the old physical mouse is
+idle. That first-contact recovery case remains unresolved; the implementation
+does not subtract pen bits or claim comprehensive focus-return behavior. Headless
+source controls establish the state policy, not live AppKit or hardware behavior.
+
+Pen-only focus loss with no local mouse hold does not require an idle observation;
+unrelated mouse activity in another application creates no captured ownership.

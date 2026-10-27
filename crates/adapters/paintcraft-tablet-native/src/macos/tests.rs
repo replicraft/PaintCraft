@@ -430,3 +430,35 @@ fn native_gesture_mapping_fences_held_pen_before_up_without_inventing_mouse_moti
     }
     assert!(navigation_boundary(NSEventType::MouseEntered, None).is_none());
 }
+
+#[test]
+fn focus_cancellation_retains_genuine_proximity_for_resumed_contact() {
+    let mut s = state(0x2580, DeviceKind::Eraser);
+    let first = packet(&mut s, point(Buttons::TIP, 1));
+    let cancellations = s.cancel();
+    assert!(
+        cancellations
+            .iter()
+            .flatten()
+            .any(|p| p.raw.phase == Phase::Cancel)
+    );
+    // Keep the same monitor/State: no synthetic Enter or out/in ritual.
+    assert!(matches!(s.prepare(point(0, 2)), Action::Suppress));
+    let resumed = packet(&mut s, point(Buttons::TIP, 3));
+    assert_eq!(resumed.raw.phase, Phase::Down);
+    assert_eq!(resumed.raw.identity, first.raw.identity);
+    assert_eq!(resumed.raw.pressure, first.raw.pressure);
+    assert_eq!(resumed.raw.tilt, first.raw.tilt);
+}
+
+#[test]
+fn idle_pen_in_proximity_keeps_its_first_normal_contact_after_focus_return() {
+    let mut s = state(0x2580, DeviceKind::Pen);
+    let hover = packet(&mut s, point(0, 1));
+    assert!(s.cancel().iter().all(Option::is_none));
+    // The retained-monitor recovery never drops genuine tool metadata.
+    let resumed = packet(&mut s, point(Buttons::TIP, 2));
+    assert_eq!(resumed.raw.phase, Phase::Down);
+    assert_eq!(resumed.raw.identity, hover.raw.identity);
+    assert_eq!(resumed.raw.tilt, hover.raw.tilt);
+}

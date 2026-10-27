@@ -447,3 +447,106 @@ fn reused_pen_identity_keeps_monotonic_clock_after_up_and_handoff() {
         [PenRoute::Admitted]
     );
 }
+
+fn boundary(ordinal: u64, kind: Boundary) -> CaptureRecord {
+    CaptureRecord {
+        installation: 7,
+        ordinal,
+        event: CaptureEvent::Boundary { kind, time: None },
+    }
+}
+#[test]
+fn observed_idle_recovers_missing_outside_mouse_up_without_inventing_a_terminal() {
+    let mut c = collector();
+    c.accept(mouse(
+        0,
+        MouseKind::Button {
+            number: 0,
+            pressed: true,
+        },
+    ))
+    .unwrap();
+    c.accept(boundary(1, Boundary::FocusLost)).unwrap();
+    assert_eq!(c.mouse_buttons(), 1);
+    // There is no mouse Up in this source stream. Only actual native idle
+    // observation can retire that lost hold; proximity identity is unchanged.
+    c.accept(boundary(2, Boundary::PointerIdle)).unwrap();
+    assert_eq!(c.mouse_buttons(), 0);
+    c.accept(pen(3, Phase::Down, 1)).unwrap();
+    c.accept(pen(4, Phase::Up, 0)).unwrap();
+    let f = c.take(DeliveryHealth::Ready).unwrap();
+    assert_eq!(routes(&f), [PenRoute::Admitted, PenRoute::Admitted]);
+    assert_eq!(
+        f.records
+            .iter()
+            .filter(|r| matches!(r, Collected::Mouse { .. }))
+            .count(),
+        1
+    );
+}
+#[test]
+fn recovery_does_not_resurrect_a_pen_tail_or_accept_receipt_as_native_idle() {
+    let mut c = collector();
+    c.accept(mouse(
+        0,
+        MouseKind::Button {
+            number: 0,
+            pressed: true,
+        },
+    ))
+    .unwrap();
+    c.accept(boundary(1, Boundary::FocusLost)).unwrap();
+    c.accept(pen(2, Phase::Down, 1)).unwrap();
+    c.accept(boundary(3, Boundary::PointerIdle)).unwrap();
+    c.accept(pen(4, Phase::Move, 1)).unwrap();
+    c.accept(pen(5, Phase::Up, 0)).unwrap();
+    c.accept(pen(6, Phase::Down, 1)).unwrap();
+    c.accept(pen(7, Phase::Up, 0)).unwrap();
+    let f = c.take(DeliveryHealth::Ready).unwrap();
+    assert_eq!(
+        routes(&f),
+        [
+            PenRoute::Suppressed,
+            PenRoute::Suppressed,
+            PenRoute::Suppressed,
+            PenRoute::Admitted,
+            PenRoute::Admitted
+        ]
+    );
+    assert_eq!(
+        c.framework_boundary(Boundary::PointerIdle),
+        Err(RecordFault::Invalid)
+    );
+    assert!(c.failed());
+}
+#[test]
+fn closed_source_cannot_resume_but_a_fresh_idle_installation_can() {
+    let mut c = collector();
+    c.accept(boundary(0, Boundary::WindowClosed)).unwrap();
+    assert_eq!(
+        c.accept(boundary(1, Boundary::PointerIdle)),
+        Err(RecordFault::Retired)
+    );
+    let f = c.take(DeliveryHealth::Ready).unwrap();
+    assert_eq!(f.records.len(), 1);
+    let mut fresh = collector();
+    fresh.accept(pen(0, Phase::Down, 1)).unwrap();
+    assert_eq!(
+        routes(&fresh.take(DeliveryHealth::Ready).unwrap()),
+        [PenRoute::Admitted]
+    );
+}
+
+#[test]
+fn focus_without_a_local_mouse_hold_does_not_require_an_idle_ritual() {
+    let mut c = collector();
+    c.accept(pen(0, Phase::Hover, 0)).unwrap();
+    c.accept(boundary(1, Boundary::FocusLost)).unwrap();
+    // No native PointerIdle is needed: no locally captured mouse Up was lost.
+    c.accept(pen(2, Phase::Down, 1)).unwrap();
+    c.accept(pen(3, Phase::Up, 0)).unwrap();
+    assert_eq!(
+        routes(&c.take(DeliveryHealth::Ready).unwrap()),
+        [PenRoute::Admitted, PenRoute::Admitted, PenRoute::Admitted]
+    );
+}

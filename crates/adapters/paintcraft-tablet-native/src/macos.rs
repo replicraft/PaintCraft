@@ -9,7 +9,8 @@ use objc2::{
 use objc2_app_kit::{
     NSApplicationDidResignActiveNotification, NSEvent, NSEventMask, NSEventModifierFlags,
     NSEventPhase, NSEventSubtype, NSEventType, NSPointingDeviceType, NSView, NSWindow,
-    NSWindowDidResignKeyNotification, NSWindowWillCloseNotification,
+    NSWindowDidBecomeKeyNotification, NSWindowDidResignKeyNotification,
+    NSWindowWillCloseNotification,
 };
 use objc2_foundation::{NSNotification, NSNotificationCenter, NSObjectProtocol};
 use paintcraft_input::{Modifiers, tablet::DeviceKind};
@@ -72,6 +73,8 @@ impl Monitor {
         emitter.record_epoch.store(epoch, Ordering::Release);
         let state = Arc::new(Mutex::new(State::new(epoch)?));
         let closed = Arc::new(AtomicBool::new(false));
+        let recovery = Arc::new(recovery::Recovery::default());
+        let callback_recovery = recovery.clone();
         let callback_state = state.clone();
         let callback_closed = closed.clone();
         let callback_emitter = emitter.clone();
@@ -83,14 +86,28 @@ impl Monitor {
                 if callback_closed.load(Ordering::Acquire) {
                     return false;
                 }
-                process(
+                let owned = process(
                     event_ref,
                     &view,
                     &callback_window,
                     &callback_state,
                     &callback_emitter,
                     mtm,
-                )
+                );
+                // This is an explicit recovery observation, not a replacement
+                // for button edges or per-event queued mouse history.
+                if callback_emitter.records.is_some()
+                    && callback_recovery.observe_idle(
+                        callback_window.isKeyWindow(),
+                        NSEvent::pressedMouseButtons(),
+                    )
+                {
+                    callback_emitter.observe(CaptureEvent::Boundary {
+                        kind: Boundary::PointerIdle,
+                        time: None,
+                    });
+                }
+                owned
             }))
             .unwrap_or_else(|_| {
                 callback_emitter.source_failure();
@@ -137,11 +154,23 @@ impl Monitor {
             })?;
         let center = NSNotificationCenter::defaultCenter();
         let mut observers = Vec::new();
-        for (notification, closing, window_only) in [
-            (unsafe { NSWindowDidResignKeyNotification }, false, true),
-            (unsafe { NSWindowWillCloseNotification }, true, true),
+        for (notification, closing, window_only, gaining) in [
+            (
+                unsafe { NSWindowDidResignKeyNotification },
+                false,
+                true,
+                false,
+            ),
+            (
+                unsafe { NSWindowDidBecomeKeyNotification },
+                false,
+                true,
+                true,
+            ),
+            (unsafe { NSWindowWillCloseNotification }, true, true, false),
             (
                 unsafe { NSApplicationDidResignActiveNotification },
+                false,
                 false,
                 false,
             ),
@@ -149,7 +178,20 @@ impl Monitor {
             let state = state.clone();
             let closed = closed.clone();
             let emitter = emitter.clone();
+            let recovery = recovery.clone();
             let block = RcBlock::new(move |_event: NonNull<NSNotification>| {
+                if gaining {
+                    if emitter.records.is_some()
+                        && recovery.observe_idle(true, NSEvent::pressedMouseButtons())
+                    {
+                        emitter.observe(CaptureEvent::Boundary {
+                            kind: Boundary::PointerIdle,
+                            time: None,
+                        });
+                    }
+                    return;
+                }
+                recovery.focus_lost();
                 if closing {
                     closed.store(true, Ordering::Release);
                 }
@@ -525,3 +567,5 @@ fn cancel(state: &Mutex<State>, emitter: &Emitter) {
 
 #[cfg(test)]
 mod tests;
+
+mod recovery;

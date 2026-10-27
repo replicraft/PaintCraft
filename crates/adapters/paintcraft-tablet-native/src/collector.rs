@@ -55,6 +55,7 @@ pub struct Collector {
     next: u64,
     mouse: u32,
     mouse_route: MouseRoute,
+    mouse_uncertain: bool,
     mouse_time: Option<Time>,
     pens: [Option<Pen>; 64],
     // Clock lifetime survives contact-slot release; never silently rebase a
@@ -62,6 +63,7 @@ pub struct Collector {
     times: [Option<(Identity, Time)>; 64],
     owner: Option<Identity>,
     failed: bool,
+    closed: bool,
     _storage: BudgetAccount,
     frames: BudgetScope,
 }
@@ -101,11 +103,13 @@ impl Collector {
             next: 0,
             mouse: 0,
             mouse_route: MouseRoute::Client,
+            mouse_uncertain: false,
             mouse_time: None,
             pens: [None; 64],
             times: [None; 64],
             owner: None,
             failed: false,
+            closed: false,
             _storage: storage,
             frames,
         })
@@ -122,7 +126,7 @@ impl Collector {
     /// Called under the installation delivery gate. Storage and callback work
     /// are bounded; this never calls egui, the editor, or a native event pump.
     pub fn accept(&mut self, record: CaptureRecord) -> std::result::Result<(), RecordFault> {
-        if self.failed {
+        if self.failed || self.closed {
             return Err(RecordFault::Retired);
         }
         let result = self.accept_inner(record);
@@ -146,8 +150,8 @@ impl Collector {
             return Err(RecordFault::Capacity);
         }
         let output = match record.event {
-            CaptureEvent::Boundary { .. } => {
-                self.fence_pens();
+            CaptureEvent::Boundary { kind, .. } => {
+                self.apply_boundary(kind);
                 Collected::Boundary(record)
             }
             CaptureEvent::Mouse(mouse) => {
@@ -165,7 +169,7 @@ impl Collector {
                             .ok_or(RecordFault::Invalid)?;
                         if pressed {
                             if self.mouse == 0 {
-                                self.mouse_route = if self.owner.is_some() {
+                                self.mouse_route = if self.mouse_uncertain || self.owner.is_some() {
                                     MouseRoute::Suppressed
                                 } else if mouse.client {
                                     MouseRoute::Client
@@ -191,6 +195,7 @@ impl Collector {
                             MouseRoute::NativeChrome
                         }
                     }
+                    _ if self.mouse_uncertain => MouseRoute::Suppressed,
                     _ if self.mouse != 0 => self.mouse_route,
                     _ if self.owner.is_some() => MouseRoute::Suppressed,
                     _ if mouse.client => MouseRoute::Client,
@@ -266,7 +271,8 @@ impl Collector {
                         self.owner = None;
                     }
                 }
-                let competing_mouse = self.mouse != 0 && self.mouse_route != MouseRoute::Suppressed;
+                let competing_mouse = self.mouse_uncertain
+                    || (self.mouse != 0 && self.mouse_route != MouseRoute::Suppressed);
                 if held
                     && (competing_mouse || self.owner.is_some_and(|owner| owner != pen.identity))
                 {
@@ -301,17 +307,40 @@ impl Collector {
         self.queue.push_back(output);
         Ok(())
     }
+    fn apply_boundary(&mut self, kind: Boundary) {
+        match kind {
+            Boundary::PointerIdle => {
+                // An observed idle state retires the old physical hold without
+                // inventing a terminal edge. Held pen tails stay fenced.
+                self.mouse = 0;
+                self.mouse_route = MouseRoute::Client;
+                self.mouse_uncertain = false;
+            }
+            Boundary::FocusLost | Boundary::WindowClosed => {
+                self.closed |= kind == Boundary::WindowClosed;
+                // Only a locally observed hold can have a missing outside Up.
+                // Unrelated mouse activity elsewhere does not create ownership.
+                self.mouse_uncertain |= self.mouse != 0;
+                self.fence_pens();
+            }
+            _ => self.fence_pens(),
+        }
+    }
     /// Keyboard/IME callbacks without native provenance are explicit barriers,
     /// never joined by comparing clocks or guessing the last NSEvent identity.
     pub fn framework_boundary(&mut self, kind: Boundary) -> std::result::Result<(), RecordFault> {
-        if self.failed {
+        if kind == Boundary::PointerIdle {
+            self.fault();
+            return Err(RecordFault::Invalid);
+        }
+        if self.failed || self.closed {
             return Err(RecordFault::Retired);
         }
         if self.queue.len() == self.limit {
             self.fault();
             return Err(RecordFault::Capacity);
         }
-        self.fence_pens();
+        self.apply_boundary(kind);
         self.queue.push_back(Collected::FrameworkBoundary(kind));
         Ok(())
     }

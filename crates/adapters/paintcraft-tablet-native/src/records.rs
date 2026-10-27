@@ -13,6 +13,9 @@ pub type RecordSink = Arc<dyn Fn(CaptureRecord) -> Result<(), RecordFault> + Sen
 pub enum Boundary {
     Keyboard,
     FocusLost,
+    /// Source observed combined native buttons idle after focus loss. This is
+    /// a recovery boundary, never a fabricated mouse Up or pen proximity.
+    PointerIdle,
     WindowClosed,
     ImeReceipt,
     Reentrant,
