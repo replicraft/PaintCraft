@@ -367,3 +367,10 @@ only-the-full-size-dds-image-will-be-imported-its-smaller-mip-levels-will-stay-i
 
 layer-groups-their-names-and-separate-group-visibility-controls-will-not-be-kept-their-current-visibility-is-applied-to-the-layers = Layer groups, their names, and separate group visibility controls will not be kept. Their current visibility is applied to the layers.
 background-color = Background color
+
+jpeg-xr-picture = JPEG XR picture
+save-a-lossless-jpeg-xr-picture-the-picture-must-be-entirely-opaque = Save a lossless JPEG XR picture. The picture must be entirely opaque.
+preparing-jpeg-xr-picture-more = Preparing JPEG XR picture…
+jpeg-xr-export-requires-an-entirely-opaque-picture = JPEG XR export requires an entirely opaque picture.
+finish-the-current-editing-operation-before-exporting-a-picture = Finish the current editing operation before exporting a picture.
+background-image-export-is-unavailable = Background image export is unavailable.

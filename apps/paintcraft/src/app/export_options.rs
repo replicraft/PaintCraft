@@ -2,6 +2,9 @@
 use super::*;
 use paintcraft_ui::pcx_export::{self, Encoding};
 use paintcraft_ui::{actions::ImageExport, t};
+#[path = "export_options/choice.rs"]
+mod choice;
+use choice::Choice;
 #[cfg(test)]
 #[path = "export_options/palette_tests.rs"]
 mod palette_tests;
@@ -43,7 +46,7 @@ fn mode(encoding: Encoding) -> paintcraft_formats::pcx::Mode {
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct Draft {
     owner: Uuid,
-    format: ImageExport,
+    format: Choice,
     jpeg_quality: u8,
     pcx_encoding: Encoding,
 }
@@ -60,6 +63,17 @@ impl App {
             })
             .collect()
     }
+    fn enabled_export_choices(&self) -> Vec<Choice> {
+        let mut choices: Vec<_> = self
+            .enabled_export_formats()
+            .into_iter()
+            .map(Choice::Flat)
+            .collect();
+        if crate::jxr_export::admit(self.format_frontend(), Path::new("picture.jxr")).is_ok() {
+            choices.push(Choice::Jxr);
+        }
+        choices
+    }
     pub(super) fn begin_export_options(&mut self, format: ImageExport) {
         if self.document_count() == 0
             || !self.editor.shape_file_ready()
@@ -73,7 +87,7 @@ impl App {
         self.editor.cancel_gesture();
         self.confirm = Some(Confirm::ExportOptions(Draft {
             owner: self.active_tab_id(),
-            format,
+            format: Choice::Flat(format),
             jpeg_quality: 90,
             pcx_encoding: Encoding::Rgb24,
         }));
@@ -99,7 +113,7 @@ impl App {
                 egui::ComboBox::from_id_salt("export-format")
                     .selected_text(t!(ctx, draft.format.label()))
                     .show_ui(ui, |ui| {
-                        for format in self.enabled_export_formats() {
+                        for format in self.enabled_export_choices() {
                             ui.selectable_value(&mut draft.format, format, t!(ctx, format.label()));
                         }
                     })
@@ -107,7 +121,7 @@ impl App {
                     .labelled_by(label.id);
             });
             ui.label(t!(ctx, draft.format.description()));
-            if draft.format == ImageExport::Pcx {
+            if draft.format == Choice::Flat(ImageExport::Pcx) {
                 pcx_export::controls(ui, &mut draft.pcx_encoding);
                 let editor = &self.editor;
                 preview_ready =
@@ -142,7 +156,7 @@ impl App {
             if let Some(label) = draft.format.quality_label() {
                 ui.add_space(8.0);
                 ui.add(egui::Slider::new(&mut draft.jpeg_quality, 1..=100).text(t!(ctx, label)));
-                ui.label(t!(ctx, if draft.format == ImageExport::Avif {
+                ui.label(t!(ctx, if draft.format == Choice::Flat(ImageExport::Avif) {
                     "AVIF uses lossy compression for colors and transparency, even at quality 100."
                 } else {
                     "Higher quality creates a larger file. Transparent pixels are placed on white."
@@ -185,7 +199,9 @@ impl App {
         } else if accept {
             self.confirm = None;
             self.pcx_preview.clear();
-            if self.dialogs.is_some() {
+            if draft.format == Choice::Jxr {
+                self.begin_jxr_export();
+            } else if self.dialogs.is_some() {
                 let suggested = self
                     .bound
                     .as_deref()
@@ -226,7 +242,7 @@ mod tests {
         assert!(matches!(
             app.confirm,
             Some(Confirm::ExportOptions(Draft {
-                format: ImageExport::Jpeg,
+                format: Choice::Flat(ImageExport::Jpeg),
                 jpeg_quality: 90,
                 ..
             }))

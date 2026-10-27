@@ -367,3 +367,10 @@ only-the-full-size-dds-image-will-be-imported-its-smaller-mip-levels-will-stay-i
 
 layer-groups-their-names-and-separate-group-visibility-controls-will-not-be-kept-their-current-visibility-is-applied-to-the-layers = 不会保留图层组、组名和单独的组可见性控制。它们当前的可见性将应用于各图层。
 background-color = 背景颜色
+
+jpeg-xr-picture = JPEG XR 图片
+save-a-lossless-jpeg-xr-picture-the-picture-must-be-entirely-opaque = 保存无损 JPEG XR 图片。图片必须完全不透明。
+preparing-jpeg-xr-picture-more = 正在准备 JPEG XR 图片…
+jpeg-xr-export-requires-an-entirely-opaque-picture = JPEG XR 导出要求图片完全不透明。
+finish-the-current-editing-operation-before-exporting-a-picture = 请先完成当前编辑操作，再导出图片。
+background-image-export-is-unavailable = 后台图片导出不可用。

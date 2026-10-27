@@ -367,3 +367,10 @@ only-the-full-size-dds-image-will-be-imported-its-smaller-mip-levels-will-stay-i
 
 layer-groups-their-names-and-separate-group-visibility-controls-will-not-be-kept-their-current-visibility-is-applied-to-the-layers = परत समूह, उनके नाम और समूह की दृश्यता के अलग नियंत्रण नहीं रखे जाएंगे। उनकी वर्तमान दृश्यता परतों पर लागू की जाएगी।
 background-color = पृष्ठभूमि का रंग
+
+jpeg-xr-picture = JPEG XR चित्र
+save-a-lossless-jpeg-xr-picture-the-picture-must-be-entirely-opaque = दोषरहित JPEG XR चित्र सहेजें। चित्र पूरी तरह अपारदर्शी होना चाहिए।
+preparing-jpeg-xr-picture-more = JPEG XR चित्र तैयार किया जा रहा है…
+jpeg-xr-export-requires-an-entirely-opaque-picture = JPEG XR निर्यात के लिए चित्र पूरी तरह अपारदर्शी होना चाहिए।
+finish-the-current-editing-operation-before-exporting-a-picture = चित्र निर्यात करने से पहले वर्तमान संपादन पूरा करें।
+background-image-export-is-unavailable = पृष्ठभूमि में चित्र निर्यात उपलब्ध नहीं है।

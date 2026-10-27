@@ -42,6 +42,8 @@ mod icon_export;
 mod importing;
 #[path = "app/input.rs"]
 mod input;
+#[path = "app/jxr_export.rs"]
+mod jxr_export;
 #[path = "app/layer_panel.rs"]
 mod layer_panel;
 #[path = "app/layer_thumbnails.rs"]
@@ -168,6 +170,7 @@ enum Confirm {
     ExportOptions(export_options::Draft),
     IconExport,
     IcnsExport,
+    JxrExport,
     Palettes,
     Shapes,
     Brushes,
@@ -253,6 +256,8 @@ pub struct App {
     svg_font_picker: Option<importing::FontPick>,
     icon_export: Option<icon_export::State>,
     icns_export: Option<icns_export::State>,
+    jxr_export: Option<jxr_export::State>,
+    jxr_export_picker: bool,
     palettes: palettes::State,
     shapes: shapes::State,
     brushes: brushes::State,
@@ -395,6 +400,8 @@ impl App {
             svg_font_picker: None,
             icon_export: None,
             icns_export: None,
+            jxr_export: None,
+            jxr_export_picker: false,
             palettes: Default::default(),
             shapes: Default::default(),
             brushes: Default::default(),

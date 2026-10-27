@@ -1,0 +1,441 @@
+//! Native Studio fresh JPEG XR copies use the existing admitted worker and publisher.
+use super::*;
+use paintcraft_core::types::{Error, ErrorCode, Result};
+use paintcraft_formats::{
+    codec_worker::{self as wire, jxr_encode as encode},
+    registry::{self, Family, Operation, Platform, Request},
+};
+use paintcraft_ui::t;
+#[path = "jxr_export/sources.rs"]
+mod sources;
+#[path = "jxr_export/worker.rs"]
+mod worker;
+use sources::Sources;
+
+type Prepared = controller::background::PreparedJxrExport;
+#[derive(Debug)]
+struct Capture {
+    source: Arc<paintcraft_document::Document>,
+    stamp: controller::PreviewStamp,
+    owner: wire::Owner,
+    dirty: bool,
+    bound: Option<PathBuf>,
+    editor_path: Option<PathBuf>,
+    path_text: String,
+    sources: Sources,
+}
+#[derive(Debug)]
+pub(super) struct State {
+    tab: Uuid,
+    capture: Option<Capture>,
+    pending: Option<controller::background::JxrExportPending>,
+    prepared: Option<Prepared>,
+    destination: Option<(PathBuf, Option<save::Expectation>)>,
+}
+impl State {
+    fn current(&self, app: &App) -> bool {
+        self.tab == app.active_tab_id()
+            && app.experience() == Experience::Studio
+            && !app.has_document_drafts()
+            && !app.editor.has_floating_selection()
+            && self.capture.as_ref().is_none_or(|capture| {
+                Arc::ptr_eq(&capture.source, &app.editor.document_snapshot())
+                    && capture.stamp == app.editor.preview_stamp()
+                    && capture.owner == app.editor.native_import_owner()
+                    && capture.dirty == app.editor.is_dirty()
+                    && capture.bound == app.bound
+                    && capture.editor_path.as_deref() == app.editor.path()
+                    && capture.path_text == app.path_text
+                    && !app.editor.has_pending_edits()
+            })
+    }
+}
+pub(super) fn admit(frontend: registry::Frontend, path: &Path) -> Result<()> {
+    let mut request = Request::new(
+        frontend,
+        Operation::ExportFlat,
+        Family::Jxr,
+        Platform::Native,
+    );
+    request.extension = path.extension().and_then(|extension| extension.to_str());
+    request.variant = Some(encode::qualified::EXPORT_VARIANT);
+    if request.extension.is_none() {
+        return Err(Error::new(
+            ErrorCode::InputSchema,
+            "JPEG XR output requires its selected extension",
+        ));
+    }
+    match registry::admission(request) {
+        registry::Decision::Allowed
+        | registry::Decision::AllowedWithPreflight(registry::Reason::ConvertRequiresConsent) => {
+            Ok(())
+        }
+        decision => decision.require_allowed(request),
+    }
+}
+impl App {
+    pub(super) fn begin_jxr_export(&mut self) {
+        if self.jxr_export.is_some()
+            || self.confirm.is_some()
+            || self.dialogs.as_ref().is_some_and(NativeDialogs::pending)
+        {
+            self.editor.set_status(t!(
+                &self.context,
+                "Finish the current editing operation before exporting a picture."
+            ));
+            return;
+        }
+        let result = (|| {
+            admit(self.format_frontend(), Path::new("picture.jxr"))?;
+            if self.document_count() == 0
+                || self.has_document_drafts()
+                || self.editor.has_floating_selection()
+                || self.confirm.is_some()
+                || self.dialogs.as_ref().is_some_and(NativeDialogs::pending)
+            {
+                return Err(Error::new(
+                    ErrorCode::ConflictStaleBase,
+                    "Finish the current editing operation before exporting a picture",
+                ));
+            }
+            if self.editing.is_none() {
+                return Err(Error::new(
+                    ErrorCode::CapabilityUnsupported,
+                    "Background image export is unavailable",
+                ));
+            }
+            self.jxr_export = Some(State {
+                tab: self.active_tab_id(),
+                capture: None,
+                pending: None,
+                prepared: None,
+                destination: None,
+            });
+            self.defer_file(
+                editing::FileRequest::ExportJxr,
+                token(&self.context, code::EXPORT),
+            );
+            self.confirm = Some(Confirm::JxrExport);
+            Ok(())
+        })();
+        if let Err(error) = result {
+            self.export_jxr_error(error);
+        }
+    }
+    pub(super) fn jxr_waiting_for_edits(&self) -> bool {
+        self.jxr_export
+            .as_ref()
+            .is_some_and(|state| state.tab == self.active_tab_id() && state.capture.is_none())
+    }
+    pub(super) fn capture_jxr_export(&mut self) {
+        let Some(mut state) = self.jxr_export.take() else {
+            return;
+        };
+        let result = (|| {
+            if !state.current(self) {
+                return Err(stale());
+            }
+            let service = self.editing.as_ref().ok_or_else(|| {
+                Error::new(
+                    ErrorCode::CapabilityUnsupported,
+                    "Background image export is unavailable",
+                )
+            })?;
+            let source = self.editor.document_snapshot();
+            let layout =
+                encode::Layout::new(source.canvas.0, source.canvas.1, encode::ENCODED_BYTES_MAX)?;
+            let quote = worker::quote(layout)?;
+            let owner = self.editor.native_import_owner();
+            let sources = Sources::capture(self, &service.metadata_budget())?;
+            state.capture = Some(Capture {
+                source: source.clone(),
+                stamp: self.editor.preview_stamp(),
+                owner,
+                dirty: self.editor.is_dirty(),
+                bound: self.bound.clone(),
+                editor_path: self.editor.path().map(Path::to_path_buf),
+                path_text: self.path_text.clone(),
+                sources,
+            });
+            state.pending =
+                Some(service.submit_jxr_export(quote, move |cancel| {
+                    worker::prepare(source, owner, cancel)
+                })?);
+            Ok(())
+        })();
+        match result {
+            Ok(()) => self.jxr_export = Some(state),
+            Err(error) => self.export_jxr_error(error),
+        }
+    }
+    pub(super) fn poll_jxr_export(&mut self, ctx: &egui::Context) {
+        let Some(mut state) = self.jxr_export.take() else {
+            return;
+        };
+        if !self.jxr_export_picker && self.confirm != Some(Confirm::JxrExport) {
+            return; // Retire this job without replacing a newly opened foreign modal.
+        }
+        if !state.current(self) {
+            self.export_jxr_error(stale());
+            return;
+        }
+        if let Some(result) = state.pending.as_ref().and_then(|pending| pending.poll()) {
+            state.pending = None;
+            match result {
+                Ok(prepared) => state.prepared = Some(prepared),
+                Err(error) => {
+                    self.export_jxr_error(error);
+                    return;
+                }
+            }
+        }
+        let choose =
+            state.prepared.is_some() && state.destination.is_none() && !self.jxr_export_picker;
+        let pending = state.pending.is_some();
+        self.jxr_export = Some(state);
+        if choose {
+            self.choose_jxr_destination(ctx);
+        }
+        if pending {
+            ctx.request_repaint_after(Duration::from_millis(16));
+        }
+    }
+    fn choose_jxr_destination(&mut self, ctx: &egui::Context) {
+        let suggested = Path::new(&self.path_text).with_extension("jxr");
+        if let Some(dialogs) = &mut self.dialogs {
+            if dialogs.pending() {
+                self.export_jxr_error(stale());
+                return;
+            }
+            self.confirm = None;
+            self.jxr_export_picker = true;
+            let wake = ctx.clone();
+            dialogs.request_with_filters(
+                Kind::Export,
+                Some(&suggested),
+                &[paintcraft_platform::dialogs::Filter {
+                    name: t!(ctx, "JPEG XR picture"),
+                    extensions: vec!["jxr".into()],
+                }],
+                |text| t!(ctx, text),
+                move || wake.request_repaint(),
+            );
+        } else {
+            self.complete_jxr_picker(Some(suggested));
+        }
+    }
+    pub(super) fn complete_jxr_picker(&mut self, path: Option<PathBuf>) {
+        let Some(mut state) = self.jxr_export.take() else {
+            return;
+        };
+        self.confirm = None;
+        let Some(path) = path else {
+            return;
+        };
+        let result = (|| {
+            if !state.current(self) {
+                return Err(stale());
+            }
+            admit(self.format_frontend(), &path)?;
+            self.guard_export_destination(&path)?;
+            state
+                .capture
+                .as_ref()
+                .ok_or_else(stale)?
+                .sources
+                .check_destination(&path)?;
+            let expected = match std::fs::symlink_metadata(&path) {
+                Ok(_) => {
+                    let resolved = path.canonicalize().map_err(|_| {
+                        Error::new(
+                            ErrorCode::StorageFailed,
+                            "Cannot resolve JPEG XR destination",
+                        )
+                    })?;
+                    let source = crate::format_admission::acquire_resource_source(
+                        &resolved,
+                        encode::ENCODED_BYTES_MAX,
+                    )?;
+                    Some(save::Expectation::acquired(&resolved, &source.bytes))
+                }
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => None,
+                Err(_) => {
+                    return Err(Error::new(
+                        ErrorCode::StorageFailed,
+                        "Cannot inspect JPEG XR destination",
+                    ));
+                }
+            };
+            Ok(expected)
+        })();
+        match result {
+            Ok(expected) => {
+                state.destination = Some((path, expected));
+                self.jxr_export = Some(state);
+                self.confirm = Some(Confirm::JxrExport);
+            }
+            Err(error) => self.export_jxr_error(error),
+        }
+    }
+    pub(super) fn jxr_export_dialog(&mut self, ctx: &egui::Context) {
+        let Some(state) = &self.jxr_export else {
+            self.confirm = None;
+            return;
+        };
+        if !state.current(self) {
+            self.export_jxr_error(stale());
+            return;
+        }
+        let Some((path, expected)) = &state.destination else {
+            let response =
+                egui::Modal::new(egui::Id::unique("jxr-export-progress")).show(ctx, |ui| {
+                    ui.heading(t!(ctx, "Export image"));
+                    ui.spinner();
+                    ui.label(t!(ctx, "Preparing JPEG XR picture…"));
+                    ui.button(t!(ctx, "Cancel")).clicked()
+                });
+            if ctx.current_pass_index() == 0 && (response.inner || response.should_close()) {
+                self.jxr_export = None;
+                self.confirm = None;
+            }
+            return;
+        };
+        let Some(prepared) = &state.prepared else {
+            self.export_jxr_error(stale());
+            return;
+        };
+        let mut message = t!(
+            ctx,
+            "Export { $path } as { $format }.",
+            &[
+                ("path", path.display().to_string()),
+                ("format", "JPEG XR".into())
+            ]
+        );
+        for loss in &prepared.losses {
+            message.push('\n');
+            message.push_str(&t!(
+                ctx,
+                match loss.as_str() {
+                    "flatten" => "Visible layers will be flattened into one picture.",
+                    "hidden-rgb" => "Invisible color information will not be retained.",
+                    _ => loss.as_str(),
+                }
+            ));
+        }
+        if expected.is_some() {
+            message.push('\n');
+            message.push_str(&t!(ctx, "The file exists and will be replaced."));
+        }
+        let choice = paintcraft_ui::confirmation::show(
+            ctx,
+            egui::Id::unique("jxr-export-confirm"),
+            paintcraft_ui::confirmation::Prompt {
+                title: "Export",
+                message: &message,
+                accept: "Export now",
+                discard: None,
+            },
+        );
+        if ctx.current_pass_index() != 0 {
+            return;
+        }
+        match choice {
+            Some(paintcraft_ui::confirmation::Choice::Accept) => self.finish_jxr_export(),
+            Some(paintcraft_ui::confirmation::Choice::Cancel) => {
+                self.jxr_export = None;
+                self.confirm = None;
+            }
+            _ => {}
+        }
+    }
+    fn finish_jxr_export(&mut self) {
+        let Some(state) = self.jxr_export.take() else {
+            return;
+        };
+        self.confirm = None;
+        let result = (|| {
+            if !state.current(self) {
+                return Err(stale());
+            }
+            let capture = state.capture.as_ref().ok_or_else(stale)?;
+            let prepared = state.prepared.as_ref().ok_or_else(stale)?;
+            let (path, expected) = state.destination.as_ref().ok_or_else(stale)?;
+            let check = || {
+                if !state.current(self) {
+                    return Err(stale());
+                }
+                admit(self.format_frontend(), path)?;
+                self.guard_export_destination(path)?;
+                capture.sources.check_destination(path)
+            };
+            check()?;
+            let outcome = save::save_with_expectation_and_preparation(
+                path,
+                expected.is_some(),
+                encode::ENCODED_BYTES_MAX,
+                expected.as_ref(),
+                |sink| {
+                    std::io::Write::write_all(sink, prepared.encoded.bytes()).map_err(|_| {
+                        Error::new(ErrorCode::StorageFailed, "Cannot stage JPEG XR output")
+                    })
+                },
+                |_| {
+                    prepared
+                        .encoded
+                        .check_current(&check, &|| Ok(self.editor.native_import_owner()))
+                },
+            );
+            Ok(outcome)
+        })();
+        match result {
+            Ok(outcome) => self.editor.set_status(if outcome.is_success() {
+                format!(
+                    "Exported {}",
+                    state.destination.as_ref().unwrap().0.display()
+                )
+            } else {
+                format!("Cannot export: {}", outcome.reasons.join("; "))
+            }),
+            Err(error) => self.export_jxr_error(error),
+        }
+    }
+    fn export_jxr_error(&mut self, error: Error) {
+        self.jxr_export = None;
+        if self.confirm == Some(Confirm::JxrExport) {
+            self.confirm = None;
+        }
+        let detail = if error.message.starts_with("JXR RGB8 export requires") {
+            t!(
+                &self.context,
+                "JPEG XR export requires an entirely opaque picture."
+            )
+        } else if error.message == "Finish the current editing operation before exporting a picture"
+        {
+            t!(
+                &self.context,
+                "Finish the current editing operation before exporting a picture."
+            )
+        } else if error.message == "Background image export is unavailable" {
+            t!(&self.context, "Background image export is unavailable.")
+        } else if error.code == ErrorCode::ConflictStaleBase {
+            t!(
+                &self.context,
+                "The document changed; choose the image again."
+            )
+        } else {
+            error.to_string()
+        };
+        self.editor.set_status(format!("Cannot export: {detail}"));
+    }
+}
+fn stale() -> Error {
+    Error::new(
+        ErrorCode::ConflictStaleBase,
+        "The document changed; choose the image again.",
+    )
+}
+
+#[cfg(test)]
+#[path = "jxr_export/tests.rs"]
+mod tests;

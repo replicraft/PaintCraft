@@ -367,3 +367,10 @@ only-the-full-size-dds-image-will-be-imported-its-smaller-mip-levels-will-stay-i
 
 layer-groups-their-names-and-separate-group-visibility-controls-will-not-be-kept-their-current-visibility-is-applied-to-the-layers = レイヤーグループ、その名前、グループごとの表示設定は保持されません。現在の表示状態が各レイヤーに適用されます。
 background-color = 背景色
+
+jpeg-xr-picture = JPEG XR画像
+save-a-lossless-jpeg-xr-picture-the-picture-must-be-entirely-opaque = 可逆圧縮のJPEG XR画像を保存します。画像全体が不透明である必要があります。
+preparing-jpeg-xr-picture-more = JPEG XR画像を準備しています…
+jpeg-xr-export-requires-an-entirely-opaque-picture = JPEG XRへの書き出しには、画像全体が不透明である必要があります。
+finish-the-current-editing-operation-before-exporting-a-picture = 画像を書き出す前に、現在の編集操作を完了してください。
+background-image-export-is-unavailable = バックグラウンドで画像を書き出せません。
