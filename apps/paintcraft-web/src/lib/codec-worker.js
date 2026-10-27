@@ -13,6 +13,43 @@ import {
 	INPUT_BYTES_MAX,
 	REQUEST_HEADER,
 } from './codec-worker-protocol.js';
+import {
+	captureDds,
+	encodeDdsRequest,
+	decodeDdsResponse,
+	isCompletedDdsRefusal,
+	freezeDdsPlan,
+	DDS_SOURCE_MAX,
+	DDS_RESERVATION,
+} from './dds-worker-protocol.js';
+const DECODE = Object.freeze({
+	kind: 'decode',
+	inputMax: INPUT_BYTES_MAX,
+	capture: (source, owner, codec, pixels, nonce) =>
+		capture(source, owner, codec, pixels, globalThis.crypto, nonce),
+	encode: encodeRequest,
+	decode: decodeResponse,
+	completed: isCompletedRefusal,
+	digest: (captured) => captured.header.slice(80, 112),
+	quote: (length) =>
+		LINEAR_MEMORY_BYTES +
+		length * 3 +
+		REQUEST_HEADER +
+		OUTPUT_BYTES_MAX * 2 +
+		65 * 1024 * 1024 +
+		65536,
+});
+const DDS = Object.freeze({
+	kind: 'dds-export',
+	inputMax: DDS_SOURCE_MAX,
+	capture: (source, owner, _codec, _pixels, nonce, plan) =>
+		captureDds(source, owner, plan, nonce),
+	encode: encodeDdsRequest,
+	decode: decodeDdsResponse,
+	completed: isCompletedDdsRefusal,
+	digest: (captured) => captured.header.slice(81, 113),
+	quote: () => DDS_RESERVATION,
+});
 let reserved = 0;
 let quarantined = null;
 export function codecWorkerBudget() {
@@ -43,23 +80,29 @@ function reserve(bytes) {
 		},
 	};
 }
-async function decodeAdmitted({
-	source,
-	sourceLength,
-	readSource,
-	owner,
-	nonce,
-	codec,
-	pixels,
-	signal,
-	currentOwner,
-	applicationVersion,
-	deadlineMs = 10000,
-	createWorker = () =>
-		new Worker(new URL('./codec-worker-runtime.js', import.meta.url), {
-			type: 'module',
-		}),
-}) {
+async function runAdmitted(
+	{
+		source,
+		sourceLength,
+		readSource,
+		owner,
+		nonce,
+		codec,
+		pixels,
+		signal,
+		currentOwner,
+		applicationVersion,
+		deadlineMs = 10000,
+		createWorker = () =>
+			new Worker(new URL('./codec-worker-runtime.js', import.meta.url), {
+				type: 'module',
+			}),
+	},
+	operation = DECODE,
+	admittedLease,
+	admittedAt,
+	operationPlan,
+) {
 	if (
 		typeof applicationVersion !== 'string' ||
 		!/^[0-9]+\.[0-9]+\.[0-9]+(?:[-+][0-9A-Za-z.+-]+)?$/.test(
@@ -81,23 +124,16 @@ async function decodeAdmitted({
 	if (
 		!Number.isSafeInteger(sourceLength) ||
 		sourceLength < 1 ||
-		sourceLength > INPUT_BYTES_MAX
+		sourceLength > operation.inputMax
 	)
 		throw refusal('ResourceLimit', 'Codec source allowance');
 	if (signal?.aborted)
 		throw refusal('OperationCancelled', 'Codec Worker cancelled');
-	const started = performance.now();
+	const started = admittedAt ?? performance.now();
 	const capturedOwner = Object.freeze({ ...owner });
 	const expectedOwner = ownerBytes(capturedOwner);
 	if (nonce !== undefined) nonceBytes(nonce);
-	const lease = reserve(
-		LINEAR_MEMORY_BYTES +
-			sourceLength * 3 +
-			REQUEST_HEADER +
-			OUTPUT_BYTES_MAX * 2 +
-			65 * 1024 * 1024 +
-			65536,
-	);
+	const lease = admittedLease ?? reserve(operation.quote(sourceLength));
 	const release = lease.release;
 	let worker;
 	let attemptedWorker = false;
@@ -170,13 +206,13 @@ async function decodeAdmitted({
 		if (!(source instanceof Uint8Array) || source.length !== sourceLength)
 			throw refusal('ResourceLimit', 'Codec source length changed');
 		captured = await awaitBounded(
-			capture(
+			operation.capture(
 				source,
 				capturedOwner,
 				codec,
 				pixels,
-				globalThis.crypto,
 				nonce,
+				operationPlan,
 			),
 		);
 		check();
@@ -184,11 +220,15 @@ async function decodeAdmitted({
 		worker = createWorker();
 		const frame = await new Promise((resolve, reject) => {
 			let timer;
+			let received = false,
+				settled = false;
 			function cleanup() {
 				clearInterval(timer);
 				signal?.removeEventListener('abort', cancel);
 			}
 			function fail(error) {
+				if (settled) return;
+				settled = true;
 				cleanup();
 				reject(error);
 			}
@@ -206,8 +246,11 @@ async function decodeAdmitted({
 			worker.onerror = () =>
 				fail(refusal('CodecFailed', 'Isolated codec Worker failed'));
 			worker.onmessageerror = worker.onerror;
-			worker.onmessage = ({ data }) => {
+			worker.onmessage = async (event) => {
+				if (received || settled) return;
+				received = true;
 				try {
+					const { data } = event;
 					check();
 					if (
 						data?.kind !== 'result' ||
@@ -218,24 +261,32 @@ async function decodeAdmitted({
 							'Isolated codec Worker returned no valid result',
 						);
 					responseBytes = new Uint8Array(data.bytes);
-					const frame = decodeResponse(
+					const decoded = operation.decode(
 						responseBytes,
 						captured,
 						currentOwner(),
 						applicationVersion,
+						awaitBounded,
 					);
+					// Decoder2 is synchronous: preserve its original completion
+					// boundary, without a new await/late-abort race.
+					const frame = operation === DDS ? await decoded : decoded;
+					if (settled) return;
+					if (operation === DDS) check();
 					completed = true;
+					settled = true;
 					cleanup();
 					resolve(frame);
 				} catch (error) {
 					fail(error);
 				}
 			};
-			const request = encodeRequest(captured);
+			const request = operation.encode(captured);
 			try {
-				worker.postMessage({ kind: 'decode', bytes: request.buffer }, [
-					request.buffer,
-				]);
+				worker.postMessage(
+					{ kind: operation.kind, bytes: request.buffer },
+					[request.buffer],
+				);
 			} catch (error) {
 				fail(error);
 			}
@@ -243,11 +294,14 @@ async function decodeAdmitted({
 		// Keep admission charged until the caller consumes/discards this private
 		// result. A retained document needs a separate resident lease first.
 		return Object.freeze({
-			...frame,
+			...(operation === DDS ? {} : frame),
 			release,
+			// DDS encoded-header/mip validation remains mandatory in Rust before
+			// marking the caller lease valid. Never publish from JS slices alone.
+			requiresRustValidation: operation === DDS,
 			responseBytes,
 			requestHeader: captured.header.slice(),
-			sourceSha256: captured.header.slice(80, 112),
+			sourceSha256: operation.digest(captured),
 			quarantine() {
 				lease.quarantine();
 			},
@@ -257,7 +311,7 @@ async function decodeAdmitted({
 			unknownAsync ||
 			(attemptedWorker &&
 				!completed &&
-				!isCompletedRefusal(error, captured))
+				!operation.completed(error, captured))
 		) {
 			// terminate() is not a join. Retain this module's charge forever,
 			// refusing later jobs until realm teardown rather than inventing
@@ -278,16 +332,74 @@ export function decodeInWorker(options) {
 		return Promise.reject(
 			refusal('InputSchema', 'Codec source must be bytes'),
 		);
-	return decodeAdmitted({ ...options, sourceLength: options.source.length });
+	return runAdmitted({ ...options, sourceLength: options.source.length });
 }
 export function decodeFileInWorker({ file, ...options }) {
 	if (!(file instanceof File))
 		return Promise.reject(
 			refusal('InputSchema', 'Codec source must be a File'),
 		);
-	return decodeAdmitted({
+	return runAdmitted({
 		...options,
 		sourceLength: file.size,
 		readSource: async () => new Uint8Array(await file.arrayBuffer()),
+	});
+}
+
+// Admission precedes Rust snapshot serialization and every JS snapshot copy.
+// An unused ticket retains its declaration until the trusted host drops its
+// snapshots and calls release(). A timer/abort alone cannot prove that lifetime.
+export function admitDdsInWorker(options) {
+	const plan = freezeDdsPlan(options.plan);
+	ownerBytes(options.owner);
+	if (options.nonce !== undefined) nonceBytes(options.nonce);
+	const version = options.applicationVersion;
+	const deadline = options.deadlineMs ?? 10000;
+	if (
+		typeof version !== 'string' ||
+		!/^[0-9]+\.[0-9]+\.[0-9]+(?:[-+][0-9A-Za-z.+-]+)?$/.test(version) ||
+		version.length > 64 ||
+		typeof options.currentOwner !== 'function' ||
+		!Number.isInteger(deadline) ||
+		deadline < 1 ||
+		deadline > 120000
+	)
+		throw refusal('InputSchema', 'Invalid DDS Worker lifetime/version');
+	if (options.signal?.aborted)
+		throw refusal('OperationCancelled', 'Codec Worker cancelled');
+	if (!matchesOwner(options.currentOwner(), ownerBytes(options.owner)))
+		throw refusal('ConflictStaleBase', 'Codec Worker owner changed');
+	const captured = Object.freeze({
+		...options,
+		owner: Object.freeze({ ...options.owner }),
+		nonce: options.nonce ?? crypto.randomUUID(),
+	});
+	const lease = reserve(DDS_RESERVATION),
+		started = performance.now();
+	let used = false;
+	return Object.freeze({
+		async run(source) {
+			if (used)
+				throw refusal('InputSchema', 'DDS admission already consumed');
+			used = true;
+			try {
+				return await runAdmitted(
+					{ ...captured, source, sourceLength: source?.length },
+					DDS,
+					lease,
+					started,
+					plan,
+				);
+			} catch (error) {
+				lease.release();
+				throw error;
+			}
+		},
+		release() {
+			if (!used) {
+				used = true;
+				lease.release();
+			}
+		},
 	});
 }

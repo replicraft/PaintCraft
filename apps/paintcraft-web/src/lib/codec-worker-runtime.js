@@ -4,6 +4,8 @@ import initialize, {
 	protocol_version,
 	linear_memory_ceiling,
 	decode_request,
+	dds_export_protocol_version,
+	dds_export_request,
 } from '../../codec-worker-pkg/paintcraft_web_codec_worker.js';
 import {
 	INPUT_BYTES_MAX,
@@ -11,6 +13,11 @@ import {
 	LINEAR_MEMORY_BYTES,
 	OUTPUT_BYTES_MAX,
 } from './codec-worker-protocol.js';
+import {
+	DDS_SOURCE_MAX,
+	DDS_REQUEST_HEADER,
+	DDS_OUTPUT_MAX,
+} from './dds-worker-protocol.js';
 let used = false;
 self.onmessage = async ({ data }) => {
 	if (used) return;
@@ -39,15 +46,22 @@ self.onmessage = async ({ data }) => {
 			});
 			return;
 		}
+		const dds = data?.kind === 'dds-export';
+		const header = dds ? DDS_REQUEST_HEADER : REQUEST_HEADER;
+		const inputMax = dds ? DDS_SOURCE_MAX : INPUT_BYTES_MAX;
 		if (
-			data?.kind !== 'decode' ||
+			(!dds && data?.kind !== 'decode') ||
 			!(data.bytes instanceof ArrayBuffer) ||
-			data.bytes.byteLength < REQUEST_HEADER ||
-			data.bytes.byteLength > INPUT_BYTES_MAX + REQUEST_HEADER
+			data.bytes.byteLength < header ||
+			data.bytes.byteLength > inputMax + header
 		)
 			throw new Error('Codec Worker input allowance');
-		const output = decode_request(new Uint8Array(data.bytes));
-		if (output.byteLength > OUTPUT_BYTES_MAX)
+		if (dds && dds_export_protocol_version() !== 1)
+			throw new Error('DDS Worker contract mismatch');
+		const output = dds
+			? dds_export_request(new Uint8Array(data.bytes))
+			: decode_request(new Uint8Array(data.bytes));
+		if (output.byteLength > (dds ? DDS_OUTPUT_MAX : OUTPUT_BYTES_MAX))
 			throw new Error('Codec Worker output allowance');
 		self.postMessage({ kind: 'result', bytes: output.buffer }, [
 			output.buffer,
