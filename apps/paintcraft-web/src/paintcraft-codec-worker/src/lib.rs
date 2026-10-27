@@ -2,3 +2,6 @@
 //! the native helper; it does not initialize editor, GPU or application services.
 #[cfg(target_arch = "wasm32")]
 mod wasm;
+
+#[cfg(any(test, target_arch = "wasm32"))]
+mod dds;

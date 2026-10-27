@@ -48,3 +48,13 @@ fn request(bytes: &[u8]) -> Result<Vec<u8>> {
 pub fn decode_request(bytes: &[u8]) -> std::result::Result<Vec<u8>, JsValue> {
     request(bytes).map_err(|error| JsValue::from_str(&error.to_string()))
 }
+
+/// Separate browser-only advanced export contract. Native decoder2 is unchanged.
+#[wasm_bindgen]
+pub fn dds_export_protocol_version() -> u16 {
+    paintcraft_formats::dds::web_export::PROTOCOL_VERSION
+}
+#[wasm_bindgen]
+pub fn dds_export_request(bytes: &[u8]) -> std::result::Result<Vec<u8>, JsValue> {
+    super::dds::execute(bytes).map_err(|error| JsValue::from_str(&error.to_string()))
+}

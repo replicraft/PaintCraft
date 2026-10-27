@@ -19,5 +19,8 @@ rayon.workspace = true
 wasm-bindgen.workspace = true
 uuid = { workspace = true, features = ["js"] }
 
+[dev-dependencies]
+paintcraft-document.workspace = true
+
 [lints]
 workspace = true

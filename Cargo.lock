@@ -3610,6 +3610,7 @@ name = "paintcraft-web-codec-worker"
 version = "0.1.0"
 dependencies = [
  "paintcraft-core",
+ "paintcraft-document",
  "paintcraft-formats",
  "rayon",
  "uuid",
