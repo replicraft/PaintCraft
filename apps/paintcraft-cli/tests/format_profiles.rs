@@ -670,3 +670,46 @@ fn capabilities_report_explicit_dds_texture_without_replacing_default_rgba() {
         }
     }
 }
+
+#[test]
+fn capabilities_discover_exact_native_msp2_without_expanding_classic_or_default() {
+    use serde_json::Value;
+    for profile in [
+        None,
+        Some("studio"),
+        Some("classic-v7"),
+        Some("classic-v10"),
+        Some("classic-v11"),
+    ] {
+        let mut args = vec!["--json", "capabilities"];
+        if let Some(profile) = profile {
+            args.extend(["--frontend", profile]);
+        }
+        let reply = run(&args);
+        assert!(reply.status.success());
+        let value: Value = serde_json::from_slice(&reply.stdout).unwrap();
+        let rows = value["capabilities"].as_array().unwrap();
+        let row = rows
+            .iter()
+            .find(|row| row["capability"] == "msp.monochrome.v2.write");
+        assert_eq!(row.is_some(), matches!(profile, None | Some("studio")));
+        if let Some(row) = row {
+            assert_eq!(
+                row["variant"],
+                paintcraft_formats::msp::NATIVE_V2_EXPORT_VARIANT
+            );
+            assert_eq!(row["parameter"], "msp_version");
+            assert_eq!(row["parameter_value"], "v2");
+            assert_eq!(row["default_output_version"], "v1");
+            assert_eq!(row["platform"], "native");
+            assert_eq!(row["release_qualified"], false);
+            assert_eq!(row["external_helper_required"], false);
+            assert_eq!(row["original_application_qualified"], false);
+            assert_eq!(row["pixel_limit"], paintcraft_formats::msp::PIXELS_MAX);
+            assert_eq!(
+                row["encoded_bytes_limit"],
+                paintcraft_formats::msp::BYTES_MAX
+            );
+        }
+    }
+}

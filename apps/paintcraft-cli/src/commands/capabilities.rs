@@ -322,6 +322,56 @@ pub fn run(a: Options, json: bool) -> Reply {
                     frontend_rows.push(value);
                 }
             }
+            if a.frontend
+                .is_none_or(|profile| matches!(profile, super::format_profile::Profile::Studio))
+            {
+                use paintcraft_formats::{
+                    msp,
+                    registry::{self, Family, Frontend, Operation, Platform, Request},
+                };
+                let mut request = Request::new(
+                    Frontend::Studio,
+                    Operation::ExportFlat,
+                    Family::Msp,
+                    Platform::Native,
+                );
+                request.extension = Some("msp");
+                request.variant = Some(msp::NATIVE_V2_EXPORT_VARIANT);
+                if registry::admission(request).available() {
+                    let mut value = row(
+                        "msp.monochrome.v2.write",
+                        "frontend/studio",
+                        "fresh-write",
+                        "paintcraft-msp-row-rle-v2",
+                    );
+                    if let Value::Object(fields) = &mut value {
+                        fields.insert("variant".into(), Value::str(msp::NATIVE_V2_EXPORT_VARIANT));
+                        fields.insert("platform".into(), Value::str("native"));
+                        fields.insert("parameter".into(), Value::str("msp_version"));
+                        fields.insert("parameter_value".into(), Value::str("v2"));
+                        fields.insert("default_output_version".into(), Value::str("v1"));
+                        fields.insert("preflight_required".into(), Value::Bool(true));
+                        fields.insert("installation_preflight_required".into(), Value::Bool(false));
+                        fields.insert("external_helper_required".into(), Value::Bool(false));
+                        fields.insert("runtime_installation_verified".into(), Value::Bool(false));
+                        fields.insert("pixel_policy".into(),Value::str("exact opaque black/white, MSB-first; no threshold, dither or matte"));
+                        fields.insert(
+                            "loss_policy".into(),
+                            Value::str(
+                                "actual flatten/hidden-rgb consent; compression adds no pixel loss",
+                            ),
+                        );
+                        fields.insert("original_application_qualified".into(), Value::Bool(false));
+                        fields.insert("pixel_limit".into(), Value::Int(msp::PIXELS_MAX as i64));
+                        fields.insert("side_limit".into(), Value::Int(65535));
+                        fields.insert(
+                            "encoded_bytes_limit".into(),
+                            Value::Int(msp::BYTES_MAX as i64),
+                        );
+                    }
+                    frontend_rows.push(value);
+                }
+            }
             let mut rows = vec![
                 row(
                     "csh.shapes.read",
