@@ -33,6 +33,7 @@ pub enum LayerRef {
 pub use paintcraft_core::types::canvas::Anchor;
 
 pub use paintcraft_core::types::policy::BlendMode as Mode;
+pub use paintcraft_core::types::policy::MaskMode;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ShapeKind {
@@ -158,10 +159,12 @@ pub enum Op {
         layer: LayerRef,
         to_index: usize,
     },
-    /// v2: resolved grayscale text/paint coverage; no machine-dependent fonts.
+    /// v2: resolved grayscale text/paint coverage; optional mode defaults to source-over.
+    /// Replace interpolates all straight RGBA channels using exact 8-bit coverage.
     MaskSpans {
         layer: LayerRef,
         color: Rgba,
+        mode: MaskMode,
         spans: Vec<paintcraft_core::types::text::MaskSpan>,
     },
     /// v2: text in the built-in bitmap font, laid out from its top-left corner.

@@ -42,8 +42,20 @@ pub fn validate_mask_spans_checked(
     check()
 }
 
+fn mask_mode(value: Option<&Value>) -> Result<MaskMode> {
+    match value.and_then(Value::as_str) {
+        None if value.is_none() => Ok(MaskMode::SourceOver),
+        Some("source-over") => Ok(MaskMode::SourceOver),
+        Some("replace") => Ok(MaskMode::Replace),
+        Some("destination-out") => Ok(MaskMode::DestinationOut),
+        _ => Err(bad(
+            "mask mode must be source-over, replace or destination-out",
+        )),
+    }
+}
+
 pub(super) fn parse(v: &Value) -> Result<Op> {
-    let o = obj(v, &["op", "layer_ref", "color", "spans"], &[])?;
+    let o = obj(v, &["op", "layer_ref", "color", "spans"], &["mode"])?;
     let rows = o["spans"]
         .as_array()
         .ok_or_else(|| bad("spans must be an array"))?;
@@ -70,6 +82,7 @@ pub(super) fn parse(v: &Value) -> Result<Op> {
     Ok(Op::MaskSpans {
         layer: layer_ref(&o["layer_ref"])?,
         color: color(&o["color"])?,
+        mode: mask_mode(o.get("mode"))?,
         spans,
     })
 }
