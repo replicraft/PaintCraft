@@ -212,6 +212,7 @@ fn adopted_wire_fixture_paints_independent_pixels_through_the_existing_atomic_ex
         digest: "0".repeat(64),
         operations: vec![Op::MaskSpans {
             layer: LayerRef::Id(layer),
+            mode: paintcraft_commands::MaskMode::SourceOver,
             color: Rgba([100, 50, 25, 255]),
             spans: coverage.spans().to_vec(),
         }],

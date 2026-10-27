@@ -548,8 +548,9 @@ impl Stage<'_> {
             Op::MaskSpans {
                 layer,
                 color,
+                mode,
                 spans,
-            } => self.paint_mask(layer, *color, spans)?,
+            } => self.paint_mask(layer, *color, *mode, spans)?,
             Op::Text {
                 layer,
                 at,

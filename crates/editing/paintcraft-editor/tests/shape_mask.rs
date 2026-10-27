@@ -19,6 +19,7 @@ fn mask(layer: LayerRef, color: Rgba) -> Op {
     Op::MaskSpans {
         layer,
         color,
+        mode: paintcraft_commands::MaskMode::SourceOver,
         spans: vec![MaskSpan {
             x0: 0,
             x1: 7,

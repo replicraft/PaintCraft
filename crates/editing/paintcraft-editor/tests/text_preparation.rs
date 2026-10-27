@@ -43,6 +43,7 @@ fn cancelling_text_and_clipped_mask_scans_discards_private_prefixes() {
         },
         Op::MaskSpans {
             layer: LayerRef::Id(id),
+            mode: paintcraft_commands::MaskMode::SourceOver,
             color: Rgba([17, 88, 156, 128]),
             spans: (100..4196)
                 .map(|y| MaskSpan {

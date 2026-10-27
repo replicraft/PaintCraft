@@ -227,6 +227,7 @@ fn all_painting_families_compile_once_against_prior_logical_results() {
         Op::MaskSpans {
             layer: id.clone(),
             color,
+            mode: paintcraft_commands::MaskMode::SourceOver,
             spans: vec![MaskSpan {
                 y: 7,
                 x0: 250,

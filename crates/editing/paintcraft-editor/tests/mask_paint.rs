@@ -136,6 +136,7 @@ fn operations(id: uuid::Uuid) -> Vec<Op> {
         Op::MaskSpans {
             layer: layer.clone(),
             color,
+            mode: paintcraft_commands::MaskMode::SourceOver,
             spans: (0..20)
                 .map(|y| MaskSpan {
                     y,
@@ -146,6 +147,22 @@ fn operations(id: uuid::Uuid) -> Vec<Op> {
                 .collect(),
         },
     ];
+    for mode in [
+        paintcraft_commands::MaskMode::Replace,
+        paintcraft_commands::MaskMode::DestinationOut,
+    ] {
+        ops.push(Op::MaskSpans {
+            layer: layer.clone(),
+            color: Rgba([11, 29, 73, 191]),
+            mode,
+            spans: vec![MaskSpan {
+                y: 7,
+                x0: -2,
+                x1: 29,
+                coverage: 127,
+            }],
+        });
+    }
     for media in BrushMedia::ALL {
         ops.push(Op::StrokePath {
             media,
@@ -367,6 +384,105 @@ fn active_empty_is_noop_and_uniform_full_matches_unrestricted() {
             assert!(out.doc.same_semantics(&plain.doc));
         } else {
             assert!(out.doc.same_semantics(&doc));
+        }
+    }
+}
+
+#[test]
+fn replacement_masks_use_all_8bit_coverages_and_replay_one_atomic_edit() {
+    let original = Rgba([211, 123, 71, 239]);
+    for target in [Rgba::TRANSPARENT, Rgba([17, 45, 219, 87])] {
+        let mut doc = new_document(260, 3, Some(original), 1, POLICY).unwrap();
+        let id = doc.roots[0];
+        doc.layers.get_mut(&id).unwrap().origin = (2, 1);
+        let spans = (1..=255)
+            .map(|coverage| MaskSpan {
+                y: 1,
+                x0: i64::from(coverage) + 2,
+                x1: i64::from(coverage) + 2,
+                coverage,
+            })
+            .collect();
+        let b = batch(
+            &doc,
+            vec![Op::MaskSpans {
+                layer: LayerRef::Id(id),
+                color: target,
+                mode: paintcraft_commands::MaskMode::Replace,
+                spans,
+            }],
+        );
+        let before = doc.clone();
+        let mut session = Session::new(doc);
+        let prepared = session.preparation().unwrap().apply(&b, || Ok(())).unwrap();
+        let preview = prepared.document_snapshot();
+        assert_eq!(session.undo_depth(), 0);
+        assert!(session.snapshot().same_semantics(&before));
+        session.publish_prepared(prepared, || Ok(())).unwrap();
+        assert_eq!(session.undo_depth(), 1);
+        assert!(session.snapshot().same_semantics(&preview));
+        for x in 0..256 {
+            let mut expected = original;
+            for (out, (&src, &dst)) in expected
+                .0
+                .iter_mut()
+                .zip(target.0.iter().zip(original.0.iter()))
+            {
+                *out = ((u32::from(src) * x + u32::from(dst) * (255 - x) + 127) / 255) as u8;
+            }
+            assert_eq!(
+                preview.layers[&id].raster.get(i64::from(x), 0),
+                expected,
+                "coverage {x}"
+            );
+            assert_eq!(preview.layers[&id].raster.get(i64::from(x), 1), original);
+        }
+        session.undo().unwrap().unwrap();
+        assert!(session.snapshot().same_semantics(&before));
+        session.redo().unwrap().unwrap();
+        assert!(session.snapshot().same_semantics(&preview));
+    }
+}
+
+#[test]
+fn destination_out_preserves_straight_rgb_and_has_no_dark_eraser_fringe() {
+    use paintcraft_commands::MaskMode;
+    for original in [
+        Rgba([255; 4]),
+        Rgba([31, 73, 191, 127]),
+        Rgba([19, 29, 83, 0]),
+    ] {
+        for source_alpha in [0, 128, 255] {
+            let doc = new_document(256, 1, Some(original), 1, POLICY).unwrap();
+            let id = doc.roots[0];
+            let spans = (1..=255)
+                .map(|coverage| MaskSpan {
+                    y: 0,
+                    x0: i64::from(coverage),
+                    x1: i64::from(coverage),
+                    coverage,
+                })
+                .collect();
+            let b = batch(
+                &doc,
+                vec![Op::MaskSpans {
+                    layer: LayerRef::Id(id),
+                    color: Rgba([0, 0, 0, source_alpha]),
+                    mode: MaskMode::DestinationOut,
+                    spans,
+                }],
+            );
+            let out = execute::execute(&doc, Selection::Inactive, &b).unwrap();
+            for x in 0..256 {
+                let coverage = (u32::from(source_alpha) * x + 127) / 255;
+                let mut expected = original;
+                expected.0[3] = ((u32::from(original.a()) * (255 - coverage) + 127) / 255) as u8;
+                assert_eq!(
+                    out.doc.layers[&id].raster.get(i64::from(x), 0),
+                    expected,
+                    "coverage {x}, source alpha {source_alpha}"
+                );
+            }
         }
     }
 }

@@ -42,6 +42,7 @@ fn painting_families_admit_their_operation_before_allocating_a_tile_prefix() {
         Op::MaskSpans {
             layer: layer.clone(),
             color,
+            mode: paintcraft_commands::MaskMode::SourceOver,
             spans: vec![MaskSpan {
                 y: 8,
                 x0: 0,

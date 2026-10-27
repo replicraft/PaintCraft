@@ -56,6 +56,7 @@ fn all_painting_families_use_the_admitted_metadata_policy() {
         Op::MaskSpans {
             layer: layer.clone(),
             color,
+            mode: paintcraft_commands::MaskMode::SourceOver,
             spans: vec![MaskSpan {
                 y: 8,
                 x0: 0,

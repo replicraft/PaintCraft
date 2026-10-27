@@ -46,6 +46,7 @@ fn setup() -> (Session, Batch) {
     .unwrap();
     let operation = Op::MaskSpans {
         layer: LayerRef::Id(layer),
+        mode: paintcraft_commands::MaskMode::SourceOver,
         color: Rgba([100, 50, 25, 128]),
         spans: coverage.spans().to_vec(),
     };
@@ -208,6 +209,7 @@ fn empty_coverage_is_not_a_dirty_document_or_history_entry() {
         &session,
         vec![Op::MaskSpans {
             layer: LayerRef::Id(layer),
+            mode: paintcraft_commands::MaskMode::SourceOver,
             color: Rgba::TRANSPARENT,
             spans: vec![paintcraft_core::types::text::MaskSpan {
                 x0: 3,
@@ -250,6 +252,7 @@ fn first_sampled_stroke_is_one_atomic_layer_and_brush_edit_with_no_empty_layer_n
                 },
                 Op::MaskSpans {
                     layer: LayerRef::Alias("first".into()),
+                    mode: paintcraft_commands::MaskMode::SourceOver,
                     color: Rgba([11, 22, 33, alpha]),
                     spans: vec![MaskSpan {
                         y: 2,

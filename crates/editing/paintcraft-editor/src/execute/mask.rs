@@ -6,6 +6,7 @@ impl Stage<'_> {
         &mut self,
         layer: &LayerRef,
         color: Rgba,
+        mode: paintcraft_commands::MaskMode,
         spans: &[MaskSpan],
     ) -> Result<()> {
         paintcraft_commands::validate_mask_spans_checked(spans, self.check)?;
@@ -36,15 +37,37 @@ impl Stage<'_> {
                 if x0 > x1 {
                     continue;
                 }
-                let mut pixel = color;
-                pixel.0[3] = ((u16::from(color.a()) * u16::from(span.coverage) + 127) / 255) as u8;
-                self.add_paint_spans(
-                    id,
-                    &[Span { y: span.y, x0, x1 }],
-                    pixel,
-                    Mode::SourceOver,
-                    &mut plan,
-                )?;
+                if mode != paintcraft_commands::MaskMode::SourceOver {
+                    let (ox, oy) = self.doc.layers[&id].origin;
+                    let area = Rect {
+                        x0: x0 - ox,
+                        x1: x1 + 1 - ox,
+                        y0: span.y - oy,
+                        y1: span.y + 1 - oy,
+                    };
+                    match mode {
+                        paintcraft_commands::MaskMode::Replace => {
+                            plan.mask_rect(area, color, span.coverage)?
+                        }
+                        paintcraft_commands::MaskMode::DestinationOut => {
+                            let coverage = ((u16::from(color.a()) * u16::from(span.coverage) + 127)
+                                / 255) as u8;
+                            plan.erase_rect(area, coverage)?;
+                        }
+                        paintcraft_commands::MaskMode::SourceOver => unreachable!(),
+                    }
+                } else {
+                    let mut pixel = color;
+                    pixel.0[3] =
+                        ((u16::from(color.a()) * u16::from(span.coverage) + 127) / 255) as u8;
+                    self.add_paint_spans(
+                        id,
+                        &[Span { y: span.y, x0, x1 }],
+                        pixel,
+                        Mode::SourceOver,
+                        &mut plan,
+                    )?;
+                }
             }
         }
         self.apply_paint(id, &plan)
@@ -75,6 +98,7 @@ mod tests {
             digest: "0".repeat(64),
             operations: vec![Op::MaskSpans {
                 layer: LayerRef::Id(id),
+                mode: paintcraft_commands::MaskMode::SourceOver,
                 color: Rgba([200, 100, 50, 128]),
                 spans: vec![MaskSpan {
                     y: 2,

@@ -560,7 +560,12 @@ impl Stage<'_> {
                     return if spans.is_empty() {
                         Ok(())
                     } else {
-                        self.paint_mask(layer, *color, &spans)
+                        self.paint_mask(
+                            layer,
+                            *color,
+                            paintcraft_commands::MaskMode::SourceOver,
+                            &spans,
+                        )
                     };
                 }
                 if *smooth {
@@ -700,8 +705,9 @@ impl Stage<'_> {
             Op::MaskSpans {
                 layer,
                 color,
+                mode,
                 spans,
-            } => self.paint_mask(layer, *color, spans)?,
+            } => self.paint_mask(layer, *color, *mode, spans)?,
             Op::Text {
                 layer,
                 at,
