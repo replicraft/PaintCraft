@@ -95,6 +95,33 @@ class BundleTests(unittest.TestCase):
         self.assertEqual(sentinel.read_text(), "original")
         self.assertEqual(list(self.root.glob(".paintcraft-package-*")), [])
 
+    def test_helper_code_and_data_are_separate_and_mixed_layout_is_refused(self):
+        import codec_worker
+        bundle = self.root / "Split.app"
+        self.prepare(bundle)
+        editor = bundle / "Contents/Helpers/PaintCraft Editor.app/Contents"
+        code, resources = editor / "MacOS", editor / "Resources"
+        self.assertEqual({p.name for p in code.iterdir()}, {"paintcraft", "paintcraft-codec-worker"})
+        self.assertFalse((code / codec_worker.MANIFEST).exists())
+        for name in codec_worker.notices(codec_worker.NATIVE_PROFILE):
+            self.assertFalse((code / name).exists())
+            self.assertEqual((resources / name).read_bytes(), (PACK.ROOT / "packaging" / name).read_bytes())
+        codec_worker.verify_manifest(code, self.version, "aarch64-apple-darwin", resource_directory=resources)
+        manifest = resources / codec_worker.MANIFEST
+        original = manifest.read_bytes()
+        (code / codec_worker.MANIFEST).write_bytes(original)
+        with self.assertRaisesRegex(ValueError, "Mixed"):
+            codec_worker.verify_manifest(code, self.version, "aarch64-apple-darwin", resource_directory=resources)
+        manifest.unlink()
+        with self.assertRaisesRegex(ValueError, "Mixed"):
+            codec_worker.verify_manifest(code, self.version, "aarch64-apple-darwin", resource_directory=resources)
+        (code / codec_worker.MANIFEST).unlink()
+        manifest.write_bytes(original)
+        notice = resources / codec_worker.NOTICES[0]
+        notice.write_bytes(b"changed license")
+        with self.assertRaisesRegex(ValueError, "notice"):
+            codec_worker.verify_manifest(code, self.version, "aarch64-apple-darwin", resource_directory=resources)
+
     def test_build_pins_rust_target_and_verifies_reported_architecture_and_profile(self):
         import codec_worker
         for target, prefix, suffix in [

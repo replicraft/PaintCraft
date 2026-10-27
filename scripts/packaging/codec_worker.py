@@ -188,47 +188,60 @@ def installed_metadata(directory, version, target):
     return value
 
 
-def write_manifest(directory, version, target):
+def resource_path(directory, resource_directory):
+    resources = directory if resource_directory is None else resource_directory
+    if resources.is_symlink() or not resources.is_dir():
+        raise ValueError("Codec resources must be a regular directory")
+    return resources
+
+
+def write_manifest(directory, version, target, *, resource_directory=None):
     manifest = metadata(directory, version, target)
-    path = directory / MANIFEST
+    path = resource_path(directory, resource_directory) / MANIFEST
     if path.is_symlink():
         raise ValueError("Refusing symlink helper manifest")
     path.write_text(json.dumps(manifest, indent=4) + "\n", encoding="utf-8")
     return path
 
 
-def copy(binary, directory, version, target=None):
+def copy(binary, directory, version, target=None, *, resource_directory=None):
     target, helper = prepare(binary, version, target)
     destination = directory / filename(target)
     if destination.is_symlink():
         raise ValueError("Refusing symlink helper destination")
     import package_release as release
     profile, _ = verify_build_record(helper, version)
+    resources = resource_path(directory, resource_directory)
     for name in notices(profile):
-        notice = directory / name
+        notice = resources / name
         if notice.is_symlink():
             raise ValueError("Refusing symlink codec notice destination")
         shutil.copy2(release.ROOT / "packaging" / name, notice)
     shutil.copy2(helper, destination)
     destination.chmod(0o755)
-    write_manifest(directory, version, target)
+    write_manifest(directory, version, target, resource_directory=resource_directory)
     return destination
 
 
-def verify_manifest(directory, version, target):
+def verify_manifest(directory, version, target, *, resource_directory=None):
     # Packaging retains its checkout-version requirement.
     import package_release as release
     release.validate_package_input(version, target, directory / filename(target))
-    verify_installed_manifest(directory, version, target)
+    verify_installed_manifest(directory, version, target, resource_directory=resource_directory)
 
 
-def verify_installed_manifest(directory, version, target):
+def verify_installed_manifest(directory, version, target, *, resource_directory=None):
     import package_release as release
     expected = installed_metadata(directory, version, target)
-    if read_manifest(directory) != expected:
+    resources = resource_path(directory, resource_directory)
+    adjacent = directory / MANIFEST
+    if (resource_directory is not None and resources != directory
+            and (adjacent.exists() or adjacent.is_symlink())):
+        raise ValueError("Mixed adjacent and Resources helper manifests")
+    if read_manifest(resources) != expected:
         raise ValueError("Codec helper manifest does not match packaged executable")
     for name in notices(expected["profile"]):
-        notice = directory / name
+        notice = resources / name
         if not notice.is_file() or notice.is_symlink() or notice.read_bytes() != (release.ROOT / "packaging" / name).read_bytes():
             raise ValueError("Codec dependency notice is missing or changed")
 

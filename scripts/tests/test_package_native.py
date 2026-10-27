@@ -158,7 +158,7 @@ class NativePackageTests(unittest.TestCase):
         with zipfile.ZipFile(self.output / "fixture-update.zip") as archive:
             directory = "PaintCraft.app/Contents/Helpers/PaintCraft Editor.app/Contents/MacOS/"
             helper = archive.read(directory + "paintcraft-codec-worker")
-            manifest = json.loads(archive.read(directory + "paintcraft-codec-worker.json"))
+            manifest = json.loads(archive.read(directory.replace("/MacOS/", "/Resources/") + "paintcraft-codec-worker.json"))
             self.assertTrue(helper.endswith(b"signed helper fixture"))
             self.assertEqual(manifest["sha256"], hashlib.sha256(helper).hexdigest())
         self.assertTrue(any("verify" in command and command[0].endswith("hdiutil") for command in calls))

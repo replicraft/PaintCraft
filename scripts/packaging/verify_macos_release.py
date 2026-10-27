@@ -60,7 +60,8 @@ def verify(version, target, image, update):
                 raise ValueError(f"Updater ZIP lost executable permissions: {binary}")
         helper_directory = app / "Contents/Helpers/PaintCraft Editor.app/Contents/MacOS"
         codec_worker.prepare(helper_directory / "paintcraft", version, target)
-        codec_worker.verify_manifest(helper_directory, version, target)
+        codec_worker.verify_manifest(helper_directory, version, target,
+                                     resource_directory=helper_directory.parent / "Resources")
         mount = root / "mounted"
         mount.mkdir()
         subprocess.run(["/usr/bin/hdiutil", "attach", "-readonly", "-nobrowse", "-mountpoint",

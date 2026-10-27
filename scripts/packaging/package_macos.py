@@ -51,7 +51,7 @@ def populate_bundle(binary, destination, version, launcher):
     (editor / "Resources").mkdir()
     shutil.copy2(binary, executable)
     executable.chmod(executable.stat().st_mode | 0o111)
-    codec_worker.copy(binary, executable.parent, version)
+    codec_worker.copy(binary, executable.parent, version, resource_directory=editor / "Resources")
     shutil.copy2(ICON, editor / "Resources" / ICON.name)
     editor_info = metadata(version)
     editor_info["CFBundleIdentifier"] = BUNDLE_ID + ".editor"
@@ -144,12 +144,15 @@ def sign_bundle(bundle):
     editor = bundle / "Contents/Helpers/PaintCraft Editor.app/Contents"
     helper = editor / "MacOS/paintcraft-codec-worker"
     subprocess.run(["/usr/bin/codesign", "--force", "--sign", "-", "--timestamp=none", str(helper)], check=True)
-    with (editor / "MacOS" / codec_worker.MANIFEST).open(encoding="utf-8") as stream:
+    resources = editor / "Resources"
+    with (resources / codec_worker.MANIFEST).open(encoding="utf-8") as stream:
         manifest = json.load(stream)
     # Signing changes Mach-O bytes. Hash the signed helper before sealing the
     # editor and then outer app, so their signatures protect this exact manifest.
-    codec_worker.write_manifest(helper.parent, manifest["application_version"], manifest["target"])
-    codec_worker.verify_manifest(helper.parent, manifest["application_version"], manifest["target"])
+    codec_worker.write_manifest(helper.parent, manifest["application_version"], manifest["target"],
+                                resource_directory=resources)
+    codec_worker.verify_manifest(helper.parent, manifest["application_version"], manifest["target"],
+                                 resource_directory=resources)
     for app in [bundle / "Contents/Helpers/PaintCraft Editor.app", bundle]:
         subprocess.run(["/usr/bin/codesign", "--force", "--sign", "-", "--timestamp=none", str(app)], check=True)
     subprocess.run(["/usr/bin/codesign", "--verify", "--deep", "--strict", str(bundle)], check=True)

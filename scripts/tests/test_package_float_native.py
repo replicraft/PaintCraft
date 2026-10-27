@@ -52,7 +52,8 @@ class FloatNativeTests(unittest.TestCase):
         bundle = self.output / "PaintCraft.app"
         macos.populate_bundle(self.binary, bundle, self.version, launcher)
         helper_dir = bundle / "Contents/Helpers/PaintCraft Editor.app/Contents/MacOS"
-        before = codec_worker.read_manifest(helper_dir)["sha256"]
+        resources = helper_dir.parent / "Resources"
+        before = codec_worker.read_manifest(resources)["sha256"]
         helper = helper_dir / codec_worker.filename(target)
         def sign(command, **kwargs):
             if command[:2] == ["/usr/bin/codesign", "--force"] and Path(command[-1]) == helper:
@@ -60,6 +61,6 @@ class FloatNativeTests(unittest.TestCase):
             return subprocess.CompletedProcess(command, 0)
         with patch.object(macos.subprocess, "run", side_effect=sign):
             macos.sign_bundle(bundle)
-        self.assertNotEqual(codec_worker.read_manifest(helper_dir)["sha256"], before)
-        codec_worker.verify_manifest(helper_dir, self.version, target)
-        self.assertEqual((helper_dir / codec_worker.FLOAT_NOTICE).read_bytes(), (release.ROOT / "packaging" / codec_worker.FLOAT_NOTICE).read_bytes())
+        self.assertNotEqual(codec_worker.read_manifest(resources)["sha256"], before)
+        codec_worker.verify_manifest(helper_dir, self.version, target, resource_directory=resources)
+        self.assertEqual((resources / codec_worker.FLOAT_NOTICE).read_bytes(), (release.ROOT / "packaging" / codec_worker.FLOAT_NOTICE).read_bytes())
