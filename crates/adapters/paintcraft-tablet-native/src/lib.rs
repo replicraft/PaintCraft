@@ -4,11 +4,18 @@ mod capabilities;
 mod clock;
 mod delivery;
 pub use delivery::DeliveryHealth;
+mod collector;
 mod packet;
+mod records;
 #[cfg(any(target_os = "macos", test))]
 use capabilities::Report;
 pub use capabilities::{Axes, Backend, CapabilitySnapshot, Device};
+pub use collector::{Collected, CollectedFrame, Collector, MouseRoute, PenRoute};
 pub use packet::{Delivery, NativePacket, WindowPosition};
+pub use records::{
+    Boundary, CaptureEvent, CaptureRecord, MouseKind, MouseRecord, RecordFault, RecordSink,
+    WheelPhase,
+};
 #[cfg(target_os = "macos")]
 use paintcraft_core::types::{Error, ErrorCode, Result};
 #[cfg(target_os = "macos")]
