@@ -14,6 +14,8 @@ pub struct Options {
     /// PCX only: exact indexed colors or explicitly quantize to 256 colors.
     #[arg(long, value_enum)]
     pcx_encoding: Option<super::pcx_options::Encoding>,
+    #[command(flatten)]
+    dds: super::dds_options::Options,
     /// CPU render workers (one preserves the serial reference path).
     #[arg(long, default_value_t = 1, value_parser = clap::value_parser!(u16).range(1..=64))]
     render_workers: u16,
@@ -68,6 +70,9 @@ pub fn run(a: Options, json: bool) -> Reply {
                     ErrorCode::InputSchema,
                     "--pcx-encoding requires PCX output",
                 ));
+            }
+            if a.dds.requested() {
+                return advanced_dds(&a, format);
             }
             let family =
                 paintcraft_formats::registry::Family::from_id(format.name()).ok_or_else(|| {
@@ -139,4 +144,53 @@ pub fn run(a: Options, json: bool) -> Reply {
             })
         })(),
     )
+}
+
+fn advanced_dds(a: &Options, format: ImageFormat) -> Result<Written> {
+    a.dds.require_format(format)?;
+    if a.render_workers != 1 || a.quality != 90 {
+        return Err(Error::new(
+            ErrorCode::InputSchema,
+            "Explicit DDS options require render-workers=1 and default generic quality; use dds-effort for BC compression",
+        ));
+    }
+    let dest = &a.output.output;
+    dds_export::admit(a.profile.frontend.into(), dest)?;
+    let allowed = a.losses.allowed()?;
+    let (bytes, sha, identity) = read_captured(&a.input, INPUT_MAX, "DDS source project")?;
+    guard(a.expect_input_sha256.as_deref(), &sha)?;
+    if a.profile.admit_open(&a.input, &bytes)? != paintcraft_formats::registry::Family::Pcnd {
+        return Err(Error::new(
+            ErrorCode::CapabilityUnsupported,
+            "DDS render expects a PCND project",
+        ));
+    }
+    let doc = pcnd::read(&bytes)?;
+    drop(bytes);
+    let protect = |destination: &Path| {
+        if identity.matches_path(destination)? {
+            return Err(Error::new(
+                ErrorCode::InputSchema,
+                "DDS copy must not replace its captured source project",
+            ));
+        }
+        Ok(())
+    };
+    let (receipt, ok, summary, details) = dds_export::write_copy(
+        &doc,
+        a.dds.resolve(doc.canvas.0, doc.canvas.1)?,
+        dest,
+        a.output.overwrite,
+        &allowed,
+        Some(sha),
+        paintcraft_runtime::SharedBudget::new(512 << 20),
+        &protect,
+        &|| Ok(()),
+    )?;
+    Ok(Written {
+        engine: Some(details),
+        receipt,
+        ok,
+        summary,
+    })
 }
