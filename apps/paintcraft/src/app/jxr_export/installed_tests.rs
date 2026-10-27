@@ -56,6 +56,34 @@ fn directory() -> PathBuf {
         .unwrap()
         .to_path_buf()
 }
+// The driver may copy this test executable into a real Mac bundle layout.
+// Select that shape explicitly; a missing Resources payload is a fixture error,
+// never permission to retry adjacent metadata and mask production discovery.
+fn resources_manifest_path() -> PathBuf {
+    let directory = directory();
+    let adjacent = directory.join("paintcraft-codec-worker.json");
+    let contents = directory.parent();
+    let bundle = contents.and_then(Path::parent);
+    if cfg!(target_os = "macos")
+        && directory.file_name().is_some_and(|n| n == "MacOS")
+        && contents.is_some_and(|p| p.file_name().is_some_and(|n| n == "Contents"))
+        && bundle.is_some_and(|p| p.extension().is_some_and(|n| n == "app"))
+    {
+        assert!(
+            fs::symlink_metadata(&adjacent)
+                .is_err_and(|error| error.kind() == std::io::ErrorKind::NotFound),
+            "mixed bundle fixture"
+        );
+        let resources = contents.unwrap().join("Resources");
+        assert!(resources.is_dir() && !resources.is_symlink());
+        let manifest = resources.join("paintcraft-codec-worker.json");
+        assert!(manifest.is_file() && !manifest.is_symlink());
+        manifest
+    } else {
+        assert!(adjacent.is_file() && !adjacent.is_symlink());
+        adjacent
+    }
+}
 fn app(language: Language, source: &Path, document: paintcraft_document::Document) -> App {
     fs::write(source, paintcraft_formats::pcnd::write(&document).unwrap()).unwrap();
     let mut app = App::new(None);

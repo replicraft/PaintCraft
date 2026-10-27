@@ -4,7 +4,7 @@ use super::*;
 #[ignore = "copied real public V8 installation only"]
 fn fixture_real_export_review_and_guards() {
     let root = directory();
-    let manifest = root.join("paintcraft-codec-worker.json");
+    let manifest = resources_manifest_path();
     let original_manifest = fs::read(&manifest).unwrap();
     #[cfg(unix)]
     {
