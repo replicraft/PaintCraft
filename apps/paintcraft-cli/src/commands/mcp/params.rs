@@ -50,6 +50,8 @@ pub struct Export {
     pub pcx_encoding: Option<super::super::pcx_options::Encoding>,
     /// DDS only: explicit texture encoding, transfer, mip generation and BC effort.
     pub dds: Option<super::super::dds_options::Options>,
+    /// MSP only: v1 raw or v2 row-RLE. Omit for the unchanged default MSP1 path.
+    pub msp_version: Option<super::super::msp_options::Version>,
     #[serde(default)]
     pub overwrite: bool,
     /// Explicitly acknowledged losses, such as flatten or lossy-jpeg.

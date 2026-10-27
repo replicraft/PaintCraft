@@ -371,6 +371,24 @@ impl PaintingServer {
             if p.pcx_encoding.is_some() && format != ImageFormat::Pcx {
                 return Err(invalid("pcx_encoding requires PCX output"));
             }
+            if let Some(version) = p.msp_version {
+                version.require_format(format)?;
+                if p.dds.is_some() {
+                    return Err(invalid("DDS and MSP options cannot be combined"));
+                }
+                let check = || {
+                    if cancellation.is_cancelled()
+                        || dropped.load(std::sync::atomic::Ordering::Acquire)
+                    {
+                        return Err(paintcraft_core::types::Error::new(
+                            paintcraft_core::types::ErrorCode::OperationCancelled,
+                            "MSP export request was cancelled",
+                        ));
+                    }
+                    Ok(())
+                };
+                return super::msp::export(s, &path, p.overwrite, version, &p.allow_losses, &check);
+            }
             if let Some(options) = p.dds {
                 options.require_format(format)?;
                 let check = || {

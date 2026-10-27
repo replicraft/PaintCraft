@@ -7,6 +7,7 @@ mod icns;
 mod icons;
 mod jxr;
 mod layered;
+mod msp;
 mod native_codec;
 mod palettes;
 mod params;
