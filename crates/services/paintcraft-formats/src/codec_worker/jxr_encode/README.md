@@ -1,7 +1,7 @@
 # Private JPEG XR fresh encoder
 
 The fixed opaque RGB8 writer and its native parent preparation are implemented
-with locally qualified seekcap2 encoding. The new jxrread1 import mode is source-only and unexecuted. Public export, Studio controls, CLI/MCP commands,
+with locally qualified seekcap2 encoding and the separate private jxrread1 import mode. Public export, Studio controls, CLI/MCP commands,
 foreign preserving Save and default/release promotion remain unavailable.
 The native import profile is a separate existing operation.
 
@@ -88,14 +88,40 @@ only that typed condition to `ResourceLimit`. Callback IO/panic errors remain
 `CodecFailed`; global requested-heap exit 75 remains `ResourceLimit`.
 Earlier parent expectation/read-only-fixture failures are also retained.
 
-The current **seekcap2+jxrread1 candidate is not yet qualified**. Its exact new
-mode token/eighth import and dedicated `--jxr-writer-source` dispatch require a
-fresh immutable producer, child/C matrix and parent import execution. Existing
-artifacts must not be relabeled as this candidate. Its explicit assessment
-requires fresh v1, positive-zero density fields, fixed RGB8 planes/flags, either
-measured geometry header, at most 1MP/65536 sides and 64MiB encoded input.
-Ordinary `inspect_checked`/`assess_import` stay short-only. Encoded JXR input is
-64MiB; 16MiB is the ordinary RGBA response capacity for 4MP.
+The **private seekcap2+jxrread1 candidate is locally qualified** from immutable
+source `3223a99c4fff804f5d0052a9d4d53ae7686136c2`. Its optimized helper SHA256 is
+`e65b9c901d0784b6b2847e03152d03003c0b511af02f2636ab26f32641c4114d`,
+with manifest SHA256
+`5b2a9b035a432d33922b1ca1c654c77dced5aa3fbe1da819a5a9d2e97539d5f6`.
+The producer prefix is `/private/tmp/paintcraft-jxr-own-read-release-e8_03vwm/producer`.
+It binds the new 414-byte record and eight imports. No earlier artifact was
+relabeled. Fresh 29 encoder/C outputs and four typed-cap controls passed; the
+selected vendored decoder and independent C decoder also matched all 29 retained
+corrected-writer files. The ten-second child/C bounds remain unchanged.
+
+The actual installed parent fixture passed in 13.21 seconds, using twenty-second
+per-job deadlines. Nine writer imports cover four independently C-decoded small
+outputs, both established 4096-axis white fixtures, retained hash-pinned 65536×1
+and 1×65536 outputs, and the 1024×1024 gradient. Every case checks exact RGBA,
+actual resolution loss/adoption, PCND save/reopen, post-child owner rejection,
+private backing cleanup and resident/preparation lifetime. Checked padded tile
+quotes are 64MiB for the 65536 axes and 4MiB for the square. Each case also fails
+with a one-byte resident budget without publication or leaked charges. These are
+logical admission quotes, not RSS guarantees. Same-length raw mutation is covered
+by the shared legacy runner tests; this receipt does not claim a separate
+mode-specific mutation execution. Evidence:
+`docs/validation/jxr-own-output-parent-2026-10-26/65a21f56-bdbc-4e27-ad68-943df67b4fb8`.
+
+The explicit private assessment requires fresh v1, positive-zero density fields,
+fixed RGB8 planes/flags, either measured geometry header, at most 1MP/65536 sides
+and 64MiB encoded input. Ordinary `inspect_checked`/`assess_import` stay short-only.
+Encoded JXR input is 64MiB; 16MiB is ordinary RGBA response capacity for 4MP.
+A separate legitimate shared-target default build retains exactly the V7 record,
+refuses `--jxr-writer-source`, and refuses encoder argv/new frames; both focused
+controls passed. Its SHA256 is
+`fef7e86f298c400484df5ae78c5c10fc41804841ce4e91836730e35e25b87ad5`.
+Immutable producer prefixes remain unchanged. None of this enables a public gate,
+changes default discovery, or proves original Windows application compatibility.
 
 ## Explicit developer reproduction
 
@@ -119,9 +145,11 @@ The parent fixture is explicitly ignored too:
 `codec_worker::native::jxr_encode::installed_tests::actual_private_installed_encoder_parent_lifetime_and_pixels`.
 It requires `PAINTCRAFT_JXR_ENCODE_HELPER` pointing to a hash-frozen private
 producer with the exact adjacent schema 3 manifest, plus the same explicit C
-reference. A public V7 helper must never be relabeled as the candidate.
+reference. Set `PAINTCRAFT_JXR_WRITER_MATRIX` to the retained corrected producer
+root `/private/tmp/paintcraft-jxr-long-release-mgr_c7w6`; the parent pins three
+maximum/axis encoded and C-RGB hashes before using its `matrix-large` files. A public V7 helper must never be relabeled as the candidate.
 
-Next qualify the new private jxrread1 candidate and its parent import path;
-optimized seekcap2 encoder matrix evidence does not qualify that new reader. Windows WIC/Paint.NET and all
+Next qualify final nonprivate descriptors and staged-copy consumers before
+public promotion. Windows WIC/Paint.NET and all
 six native release targets remain unproved. Local C differential evidence does
 not establish full JPEG XR or original-application compatibility.
