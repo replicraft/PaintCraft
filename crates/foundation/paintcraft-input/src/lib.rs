@@ -1,4 +1,5 @@
 //! Frontend-independent input, after viewport-to-document mapping.
+pub mod tablet;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PointerButton {
     Primary,
@@ -24,13 +25,8 @@ pub enum PointerEvent {
     Up,
     Cancel,
 }
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub struct PenSample {
-    pub position: (f64, f64),
-    pub pressure: f32,
-    pub tilt: (f32, f32),
-    pub timestamp_micros: u64,
-}
+/// Rich optional-attribute pen input; missing force is never fabricated zero.
+pub type PenSample = tablet::Sample;
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Modifiers {
     pub shift: bool,
