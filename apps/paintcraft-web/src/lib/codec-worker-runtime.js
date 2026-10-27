@@ -1,28 +1,63 @@
 // One isolated job per Worker. Never imported by the editor's main Wasm module.
 import initialize, {
 	application_version,
-	protocol_version,
-	linear_memory_ceiling,
-	decode_request,
 	dds_export_protocol_version,
 	dds_export_request,
+	decode_request,
+	linear_memory_ceiling,
+	msp_export_protocol_version,
+	msp_export_request,
+	protocol_version,
 } from '../../codec-worker-pkg/paintcraft_web_codec_worker.js';
 import {
 	INPUT_BYTES_MAX,
-	REQUEST_HEADER,
 	LINEAR_MEMORY_BYTES,
 	OUTPUT_BYTES_MAX,
+	REQUEST_HEADER,
 } from './codec-worker-protocol.js';
 import {
-	DDS_SOURCE_MAX,
-	DDS_REQUEST_HEADER,
 	DDS_OUTPUT_MAX,
+	DDS_REQUEST_HEADER,
+	DDS_SOURCE_MAX,
 } from './dds-worker-protocol.js';
+import {
+	MSP_OUTPUT_MAX,
+	MSP_REQUEST_HEADER,
+	MSP_SOURCE_MAX,
+} from './msp-worker-protocol.js';
+
+const operations = Object.freeze({
+	decode: Object.freeze({
+		header: REQUEST_HEADER,
+		input: INPUT_BYTES_MAX,
+		output: OUTPUT_BYTES_MAX,
+		version: protocol_version,
+		expectedVersion: 2,
+		execute: decode_request,
+	}),
+	'dds-export': Object.freeze({
+		header: DDS_REQUEST_HEADER,
+		input: DDS_SOURCE_MAX,
+		output: DDS_OUTPUT_MAX,
+		version: dds_export_protocol_version,
+		expectedVersion: 1,
+		execute: dds_export_request,
+	}),
+	'msp-export': Object.freeze({
+		header: MSP_REQUEST_HEADER,
+		input: MSP_SOURCE_MAX,
+		output: MSP_OUTPUT_MAX,
+		version: msp_export_protocol_version,
+		expectedVersion: 1,
+		execute: msp_export_request,
+	}),
+});
 let used = false;
-self.onmessage = async ({ data }) => {
+self.onmessage = async (event) => {
 	if (used) return;
 	used = true;
 	try {
+		const { data } = event;
 		const wasm = await initialize();
 		if (
 			protocol_version() !== 2 ||
@@ -46,22 +81,20 @@ self.onmessage = async ({ data }) => {
 			});
 			return;
 		}
-		const dds = data?.kind === 'dds-export';
-		const header = dds ? DDS_REQUEST_HEADER : REQUEST_HEADER;
-		const inputMax = dds ? DDS_SOURCE_MAX : INPUT_BYTES_MAX;
+		const operation = Object.hasOwn(operations, data?.kind)
+			? operations[data.kind]
+			: undefined;
 		if (
-			(!dds && data?.kind !== 'decode') ||
+			!operation ||
 			!(data.bytes instanceof ArrayBuffer) ||
-			data.bytes.byteLength < header ||
-			data.bytes.byteLength > inputMax + header
+			data.bytes.byteLength < operation.header ||
+			data.bytes.byteLength > operation.input + operation.header
 		)
 			throw new Error('Codec Worker input allowance');
-		if (dds && dds_export_protocol_version() !== 1)
-			throw new Error('DDS Worker contract mismatch');
-		const output = dds
-			? dds_export_request(new Uint8Array(data.bytes))
-			: decode_request(new Uint8Array(data.bytes));
-		if (output.byteLength > (dds ? DDS_OUTPUT_MAX : OUTPUT_BYTES_MAX))
+		if (operation.version() !== operation.expectedVersion)
+			throw new Error('Codec Worker contract mismatch');
+		const output = operation.execute(new Uint8Array(data.bytes));
+		if (output.byteLength > operation.output)
 			throw new Error('Codec Worker output allowance');
 		self.postMessage({ kind: 'result', bytes: output.buffer }, [
 			output.buffer,
